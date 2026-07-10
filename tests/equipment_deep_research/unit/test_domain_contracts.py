@@ -52,9 +52,11 @@ def _recall(**overrides: object) -> RecallEnvelope:
     return RecallEnvelope(**values)
 
 
-def _assert_transport_metadata(value: object, stable_id: str) -> None:
+def _assert_transport_metadata(value: object, id_field: str) -> None:
     payload = to_plain(value)
+    stable_id = getattr(value, id_field)
     assert stable_id
+    assert payload[id_field] == stable_id
     assert payload["schema_version"] == "1.0"
     created_at = datetime.fromisoformat(payload["created_at"])
     assert created_at.utcoffset() == timezone.utc.utcoffset(created_at)
@@ -107,11 +109,25 @@ def test_new_transport_objects_are_versioned_json_serializable_and_identified() 
     recall = _recall()
     node = ResearchPlanNode("n1", "baseline", [], "pending", "agent-1", ["threat"])
     graph = ResearchPlanGraph(nodes=[node])
+    packet = BaselineFindingPacket(
+        packet_id="packet-1",
+        agent_id="agent-1",
+        capability_tags=["threat"],
+        topic_focus="低空威胁",
+        findings=["发现"],
+        evidence_ids=["evidence-1"],
+        confidence=0.8,
+        coverage_notes=[],
+        open_questions=[],
+        handoff_summary="完成",
+        checkpoint="agent-1: complete",
+    )
 
-    _assert_transport_metadata(task, task.task_id)
-    _assert_transport_metadata(recall, recall.recall_id)
-    _assert_transport_metadata(node, node.node_id)
-    _assert_transport_metadata(graph, graph.plan_id)
+    _assert_transport_metadata(task, "task_id")
+    _assert_transport_metadata(recall, "recall_id")
+    _assert_transport_metadata(node, "node_id")
+    _assert_transport_metadata(graph, "plan_id")
+    _assert_transport_metadata(packet, "packet_id")
 
 
 def test_baseline_packet_keeps_old_construction_and_defaults_compatibility_fields() -> None:

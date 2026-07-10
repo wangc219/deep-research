@@ -74,3 +74,39 @@ DONE
 ## 关注点
 
 - 无阻断关注点。JSON 传输沿用仓库既有 `to_plain()` 投影约定，而不是直接对 dataclass 实例调用 `json.dumps()`。
+
+## 审查修复
+
+### 修复说明
+
+- 在 `BaselineFindingPacket` 所有既有字段之后追加 `schema_version: str = "1.0"`，不改变旧位置参数顺序，也不要求既有关键字构造传入新参数。
+- 将 `BaselineFindingPacket` 纳入跨进程传输元数据测试，覆盖稳定 `packet_id`、UTC ISO `created_at`、`schema_version` 和 JSON 序列化。
+- `_assert_transport_metadata` 改为接收 ID 字段名，从对象读取对应属性，并断言序列化 payload 中同名 ID 非空且与对象属性一致。
+
+### RED 验证
+
+命令：`python3 -m pytest tests/equipment_deep_research/unit/test_domain_contracts.py -q`
+
+结果：退出码 1；`1 failed, 6 passed in 0.02s`。唯一失败为 `BaselineFindingPacket` 传输元数据缺失，原始关键错误为 `KeyError: 'schema_version'`。
+
+### 修复后覆盖测试
+
+命令：`python3 -m pytest tests/equipment_deep_research/unit/test_domain_contracts.py -q`
+
+结果：退出码 0；`7 passed in 0.01s`。
+
+命令：`python3 -m pytest tests/test_deep_research_runner.py -q`
+
+结果：退出码 0；`8 passed in 0.12s`。
+
+### 附加回归与自审
+
+命令：`python3 -m pytest -q`
+
+结果：退出码 0；`15 passed in 0.11s`。
+
+命令：`git diff --check`
+
+结果：退出码 0；无错误输出。
+
+- 修复限定在授权的模型、领域契约测试和任务报告文件；检查时未发现需要合并的他人并发修改。

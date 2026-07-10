@@ -80,6 +80,7 @@ class BaselineFindingPacket:
     claim_ids: list[str] = field(default_factory=list)
     search_log: list[str] = field(default_factory=list)
     limitations: list[str] = field(default_factory=list)
+    schema_version: str = "1.0"
 
 
 @dataclass(frozen=True)
