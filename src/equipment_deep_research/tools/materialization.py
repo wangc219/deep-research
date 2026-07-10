@@ -4,12 +4,11 @@ from dataclasses import dataclass
 import ipaddress
 from pathlib import Path
 import socket
-from typing import Any
-from urllib.parse import urlparse
-
-import requests
+from typing import Any, Callable
+from urllib.parse import urljoin, urlsplit
 
 from equipment_deep_research.domain.models import EvidenceCard
+from equipment_deep_research.tools.http_transport import HTTPTransport, PinnedHTTPTransport
 from knowledgegraph.demand_discovery.tools.artifacts import ArtifactStore
 
 
@@ -19,22 +18,45 @@ class MaterializedEvidence:
     material: dict[str, Any]
 
 
+@dataclass(frozen=True)
+class _ResolvedTarget:
+    hostname: str
+    port: int
+    connect_ip: str
+
+
 class EvidenceMaterializer:
     def __init__(
         self,
         artifact_dir: str | Path,
         *,
         timeout_seconds: int = 8,
+        max_redirects: int = 5,
+        resolver: Callable[..., list[tuple[Any, ...]]] | None = None,
+        transport: HTTPTransport | None = None,
     ) -> None:
         self.artifacts = ArtifactStore(artifact_dir)
         self.timeout_seconds = timeout_seconds
+        self.max_redirects = max_redirects
+        self.resolver = resolver or socket.getaddrinfo
+        self.transport = transport or PinnedHTTPTransport()
 
     def materialize(self, evidence: EvidenceCard, *, mode: str) -> MaterializedEvidence:
-        rejection_reason = _network_safety_rejection(evidence.source_url)
-        if rejection_reason:
-            return self._reject_network_safety(evidence=evidence, mode=mode, reason=rejection_reason)
-        if evidence.source_url.startswith("https://fixture.local") or evidence.source_url.startswith("http://fixture.local"):
-            return self._materialize_fixture(evidence=evidence, mode=mode)
+        parsed = urlsplit(evidence.source_url)
+        if parsed.scheme.lower() not in {"http", "https"}:
+            return self._reject_network_safety(
+                evidence=evidence,
+                mode=mode,
+                reason="scheme_not_allowed",
+            )
+        if (parsed.hostname or "").lower() == "fixture.local":
+            if mode == "fake":
+                return self._materialize_fixture(evidence=evidence, mode=mode)
+            return self._reject_network_safety(
+                evidence=evidence,
+                mode=mode,
+                reason="fixture_only_allowed_in_fake_mode",
+            )
         return self._materialize_public_url(evidence=evidence, mode=mode)
 
     def _reject_network_safety(
@@ -43,9 +65,12 @@ class EvidenceMaterializer:
         evidence: EvidenceCard,
         mode: str,
         reason: str,
+        rejected_url: str | None = None,
     ) -> MaterializedEvidence:
+        rejected_url = rejected_url or evidence.source_url
         diagnostic = (
             f"network_safety_rejected\nurl={evidence.source_url}\n"
+            f"rejected_url={rejected_url}\n"
             f"reason={reason}\n"
             "该地址未通过网络安全校验，诊断材料不进入正式证据集。\n"
         )
@@ -59,6 +84,7 @@ class EvidenceMaterializer:
                 "evidence_id": evidence.evidence_id,
                 "mode": mode,
                 "reason": reason,
+                "rejected_url": rejected_url,
             },
         )
         updated = EvidenceCard(
@@ -76,6 +102,7 @@ class EvidenceMaterializer:
                 "artifact_refs": [ref],
                 "url": evidence.source_url,
                 "reason": reason,
+                "rejected_url": rejected_url,
                 "formal_evidence_allowed": False,
             },
         )
@@ -118,13 +145,42 @@ class EvidenceMaterializer:
 
     def _materialize_public_url(self, *, evidence: EvidenceCard, mode: str) -> MaterializedEvidence:
         try:
-            response = requests.get(
-                evidence.source_url,
-                timeout=self.timeout_seconds,
-                headers={"User-Agent": "equipment-deep-research/0.1"},
-            )
+            current_url = evidence.source_url
+            redirects_followed = 0
+            while True:
+                target, rejection_reason = self._resolve_public_target(current_url)
+                if rejection_reason:
+                    return self._reject_network_safety(
+                        evidence=evidence,
+                        mode=mode,
+                        reason=rejection_reason,
+                        rejected_url=current_url,
+                    )
+                assert target is not None
+                response = self.transport.get(
+                    url=current_url,
+                    connect_ip=target.connect_ip,
+                    hostname=target.hostname,
+                    port=target.port,
+                    timeout_seconds=self.timeout_seconds,
+                    headers={"User-Agent": "equipment-deep-research/0.1"},
+                )
+                if response.status_code not in {301, 302, 303, 307, 308}:
+                    break
+                location = _response_header(response.headers, "location")
+                if not location:
+                    raise OSError("redirect response missing Location header")
+                if redirects_followed >= self.max_redirects:
+                    raise OSError(f"redirect limit exceeded: {self.max_redirects}")
+                current_url = urljoin(current_url, location)
+                redirects_followed += 1
+
             response.raise_for_status()
-            content_type = response.headers.get("content-type", "application/octet-stream")
+            content_type = _response_header(
+                response.headers,
+                "content-type",
+                default="application/octet-stream",
+            )
             raw_ref = self.artifacts.put(
                 response.content,
                 kind="html" if "html" in content_type.lower() else "raw",
@@ -134,6 +190,8 @@ class EvidenceMaterializer:
                     "materialization_status": "fetched",
                     "evidence_id": evidence.evidence_id,
                     "mode": mode,
+                    "final_url": current_url,
+                    "connect_ip": target.connect_ip,
                 },
             )
             updated = EvidenceCard(
@@ -150,6 +208,7 @@ class EvidenceMaterializer:
                     "status": "fetched",
                     "artifact_refs": [raw_ref],
                     "url": evidence.source_url,
+                    "final_url": current_url,
                     "content_type": content_type,
                     "formal_evidence_allowed": True,
                 },
@@ -190,37 +249,68 @@ class EvidenceMaterializer:
                 },
             )
 
-
-def _network_safety_rejection(url: str) -> str:
-    parsed = urlparse(url)
-    if parsed.scheme.lower() not in {"http", "https"}:
-        return "scheme_not_allowed"
-    host = (parsed.hostname or "").lower()
-    if not host:
-        return "missing_host"
-    if host == "fixture.local":
-        return ""
-    if host == "localhost" or host.endswith(".localhost"):
-        return "private_network_denied"
-    try:
-        address = ipaddress.ip_address(host)
-    except ValueError:
+    def _resolve_public_target(self, url: str) -> tuple[_ResolvedTarget | None, str]:
+        parsed = urlsplit(url)
+        scheme = parsed.scheme.lower()
+        if scheme not in {"http", "https"}:
+            return None, "scheme_not_allowed"
+        hostname = parsed.hostname
+        if not hostname:
+            return None, "missing_host"
+        host = hostname.lower()
+        if host == "localhost" or host.endswith(".localhost"):
+            return None, "private_network_denied"
         try:
-            addresses = {
-                row[4][0].split("%", 1)[0]
-                for row in socket.getaddrinfo(
-                    host,
-                    parsed.port or (443 if parsed.scheme.lower() == "https" else 80),
-                    type=socket.SOCK_STREAM,
-                )
-            }
-        except OSError:
-            return "host_resolution_failed"
-        if not addresses:
-            return "host_resolution_failed"
-        if any(not ipaddress.ip_address(item).is_global for item in addresses):
-            return "private_network_denied"
-        return ""
-    if not address.is_global:
-        return "private_network_denied"
-    return ""
+            port = parsed.port or (443 if scheme == "https" else 80)
+        except ValueError:
+            return None, "invalid_port"
+
+        try:
+            literal_address = ipaddress.ip_address(host)
+        except ValueError:
+            try:
+                rows = self.resolver(host, port, type=socket.SOCK_STREAM)
+            except OSError:
+                return None, "host_resolution_failed"
+            addresses: list[ipaddress.IPv4Address | ipaddress.IPv6Address] = []
+            seen: set[str] = set()
+            for row in rows:
+                raw_address = row[4][0].split("%", 1)[0]
+                try:
+                    address = ipaddress.ip_address(raw_address)
+                except ValueError:
+                    return None, "host_resolution_failed"
+                if str(address) not in seen:
+                    seen.add(str(address))
+                    addresses.append(address)
+            if not addresses:
+                return None, "host_resolution_failed"
+            if any(not address.is_global for address in addresses):
+                return None, "private_network_denied"
+            connect_ip = str(addresses[0])
+        else:
+            if not literal_address.is_global:
+                return None, "private_network_denied"
+            connect_ip = str(literal_address)
+
+        return (
+            _ResolvedTarget(
+                hostname=host,
+                port=port,
+                connect_ip=connect_ip,
+            ),
+            "",
+        )
+
+
+def _response_header(
+    headers: dict[str, str],
+    name: str,
+    *,
+    default: str = "",
+) -> str:
+    wanted = name.lower()
+    for header_name, value in headers.items():
+        if header_name.lower() == wanted:
+            return value
+    return default

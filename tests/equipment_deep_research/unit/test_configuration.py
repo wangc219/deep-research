@@ -30,7 +30,31 @@ def test_default_model_and_agent_policies() -> None:
 def test_evidence_policy_uses_quality_threshold_not_domains() -> None:
     policy = yaml.safe_load((CONFIG_ROOT / "evidence.yaml").read_text(encoding="utf-8"))
 
-    assert policy["acceptance"]["min_quality_score"] == 0.62
+    assert policy == {
+        "acceptance": {
+            "min_quality_score": 0.62,
+            "min_direct_support": 0.55,
+            "min_independent_sources_for_high_confidence": 2,
+        },
+        "weights": {
+            "relevance": 0.30,
+            "transparency": 0.15,
+            "freshness": 0.15,
+            "direct_support": 0.25,
+            "extraction_quality": 0.15,
+        },
+        "deduplication": {
+            "normalized_url": True,
+            "content_similarity_threshold": 0.88,
+        },
+        "contradiction": {"preserve_counter_evidence": True},
+        "network_safety": {
+            "allowed_schemes": ["http", "https"],
+            "deny_private_networks": True,
+            "max_response_bytes": 5242880,
+            "max_redirects": 5,
+        },
+    }
     assert "allowed" + "_domains" not in json.dumps(policy)
 
 

@@ -144,3 +144,82 @@ python3 -m pytest -q
 
 - `evidence.yaml` 中响应大小和重定向上限在本任务中仅完成统一配置；完整配置驱动的抓取器限额执行属于后续网络证据阶段。
 - 本任务按约束未把 provider/evidence 配置接入新的 CLI 参数，也未实现 `RunWorkspace` 或 resume。
+
+## 安全审查修复
+
+### 设计
+
+- 新增 `src/equipment_deep_research/tools/http_transport.py`，使用 Python 标准库 `http.client`、`socket`、`ssl` 实现受控传输，无新增第三方依赖。
+- materializer 对初始 URL 和每个 `Location` 跳转分别解析 hostname，校验解析结果全部为公网 IP 后，只把选中的数值 IP 交给传输层。
+- 传输层直接对数值 IP 创建 TCP socket，不再自由解析 hostname；HTTP `Host`、HTTPS SNI 和证书 hostname 校验仍使用 URL 原 hostname。
+- TLS context 强制 `check_hostname=true` 且 `verify_mode=CERT_REQUIRED`，不能通过 IP 绑定关闭证书校验。
+- `http.client` 不自动跟随重定向；materializer 手动处理 `301/302/303/307/308`，每跳重新解析、验证和绑定，最多跟随 5 跳。私网或保留地址在进入 transport 前返回 `network_safety_rejected`。
+- fixture 仅在 scheme 为 HTTP(S)、`mode == "fake"` 且解析后的 hostname 精确等于 `fixture.local` 时离线材料化；real 模式拒绝，userinfo 形式按实际 hostname 进入公开来源路径。
+- 保持 `fetch_failed` 与 `network_safety_rejected` 的正式证据隔离语义；未增加 Task 3 CLI、provider 接线、workspace 或 resume 功能。
+
+### RED
+
+安全回归测试首次运行：
+
+```text
+python3 -m pytest tests/test_deep_research_runner.py tests/equipment_deep_research/unit/test_configuration.py -q
+....FFFFFFFFF......                                                      [100%]
+9 failed, 10 passed in 0.15s
+```
+
+失败原因符合预期：原 materializer 不支持可注入 resolver/transport，也不存在绑定 IP 的 `PinnedHTTPTransport`；因此无法锁定 DNS 结果与 TCP 目标、逐跳拒绝私网重定向或 fixture mode 边界。
+
+补充 fixture scheme 回归测试首次运行：
+
+```text
+python3 -m pytest tests/test_deep_research_runner.py -q -k 'fake_fixture_does_not_bypass_allowed_schemes'
+F                                                                        [100%]
+1 failed, 19 deselected in 0.08s
+```
+
+失败证明重构中的 fixture 快路径一度会绕过 HTTP(S) scheme 限制；随后调整判断顺序修复。
+
+### 测试覆盖
+
+- 直接私网 IP 在 transport 前拒绝。
+- DNS 返回的已验证公网 IP 与 transport 收到的 `connect_ip` 完全一致。
+- 公网响应重定向到私网 hostname 时，第二跳在 transport 前拒绝，transport 只收到首个公网 IP 请求。
+- 重定向跳数达到上限后隔离为 `fetch_failed`。
+- pinned HTTPS 使用已验证 IP 建立连接，同时以原 hostname 执行 SNI；不接受关闭证书 hostname 校验的 TLS context。
+- fake fixture 精确 hostname 成功；real fixture 拒绝；`https://fixture.local@attacker.com/` 按 `attacker.com` 处理，不伪装 fixture。
+- 公开来源成功材料化和 `fetch_failed` 正式证据隔离继续通过。
+- evidence acceptance、weights、deduplication、contradiction、network_safety 全部精确值已由配置测试锁定。
+- 自定义 agent registry 在未显式传入 `agent_ids` 时动态选择自定义 baseline。
+
+### GREEN 与全量验证
+
+配置测试：
+
+```text
+python3 -m pytest tests/equipment_deep_research/unit/test_configuration.py -q
+...                                                                      [100%]
+3 passed in 0.02s
+```
+
+runner 与安全测试：
+
+```text
+python3 -m pytest tests/test_deep_research_runner.py -q
+....................                                                     [100%]
+20 passed in 0.24s
+```
+
+全量测试：
+
+```text
+python3 -m pytest -q
+..............................                                           [100%]
+30 passed in 0.24s
+```
+
+另执行 `git diff --check`，零输出、退出码 0。
+
+### 安全修复关注点
+
+- 受控传输刻意不使用环境 HTTP(S) 代理，因为经普通代理无法证明目标 TCP 连接绑定到本地已验证 IP；必须依赖强制代理的环境会得到隔离的 `fetch_failed`，后续如需代理支持应设计同等可验证的受控代理协议。
+- 当前重定向和响应大小上限使用与 `evidence.yaml` 一致的安全默认值；将其动态加载为运行时配置仍属于后续配置接线，不在本次 Task 2 修复范围内。
