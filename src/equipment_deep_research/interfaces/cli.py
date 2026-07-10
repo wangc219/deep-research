@@ -28,6 +28,16 @@ def main(argv: list[str] | None = None) -> int:
         "--preset-config",
         default=str(project_root / "configs" / "equipment_deep_research" / "presets.yaml"),
     )
+    parser.add_argument(
+        "--provider-config",
+        default=str(project_root / "configs" / "equipment_deep_research" / "providers.yaml"),
+    )
+    parser.add_argument(
+        "--evidence-config",
+        default=str(project_root / "configs" / "equipment_deep_research" / "evidence.yaml"),
+    )
+    parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--analyst-confirmed", action="store_true")
     args = parser.parse_args(argv)
     agent_ids = [item.strip() for item in args.agents.split(",") if item.strip()]
     runner = DeepResearchRunner(
@@ -35,6 +45,8 @@ def main(argv: list[str] | None = None) -> int:
         output_root=Path(args.output_root),
         agent_config_path=Path(args.agent_config),
         preset_config_path=Path(args.preset_config),
+        provider_config_path=Path(args.provider_config),
+        evidence_config_path=Path(args.evidence_config),
     )
     result = runner.run(
         mode=args.mode,
@@ -43,6 +55,8 @@ def main(argv: list[str] | None = None) -> int:
         run_id=args.run_id,
         agent_ids=agent_ids or None,
         max_rounds=args.max_rounds or None,
+        resume=args.resume,
+        analyst_confirmed=args.analyst_confirmed,
     )
     print(f"Run dir: {result['run_dir']}")
     print(f"Route: {result['route']}")

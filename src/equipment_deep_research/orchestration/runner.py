@@ -8,6 +8,7 @@ from equipment_deep_research.agents.provider import FakeAgentProvider, RealAgent
 from equipment_deep_research.agents.registry import AgentRegistry
 from equipment_deep_research.domain.models import ResearchProblem, TraceEvent, to_plain
 from equipment_deep_research.domain.store import DomainStore, TraceStore
+from equipment_deep_research.domain.workspace import RunWorkspace
 from equipment_deep_research.harness.scheduler import DiscoveryScheduler
 from equipment_deep_research.orchestration.coverage import coverage_for_route, load_preset_policy
 from equipment_deep_research.orchestration.reporting import audit_run, render_report
@@ -23,11 +24,26 @@ class DeepResearchRunner:
         output_root: Path,
         agent_config_path: Path,
         preset_config_path: Path,
+        provider_config_path: Path | None = None,
+        evidence_config_path: Path | None = None,
     ) -> None:
-        self.project_root = project_root
-        self.output_root = output_root
-        self.agent_config_path = agent_config_path
-        self.preset_config_path = preset_config_path
+        self.project_root = Path(project_root)
+        self.output_root = Path(output_root)
+        self.agent_config_path = Path(agent_config_path)
+        self.preset_config_path = Path(preset_config_path)
+        self.provider_config_path = (
+            Path(provider_config_path)
+            if provider_config_path is not None
+            else self.project_root / "configs" / "equipment_deep_research" / "providers.yaml"
+        )
+        self.evidence_config_path = (
+            Path(evidence_config_path)
+            if evidence_config_path is not None
+            else self.project_root / "configs" / "equipment_deep_research" / "evidence.yaml"
+        )
+        for config_path in (self.provider_config_path, self.evidence_config_path):
+            if not config_path.is_file():
+                raise FileNotFoundError(f"configuration file does not exist: {config_path}")
 
     def run(
         self,
@@ -38,7 +54,11 @@ class DeepResearchRunner:
         run_id: str,
         agent_ids: list[str] | None = None,
         max_rounds: int | None = None,
+        resume: bool = False,
+        analyst_confirmed: bool = False,
     ) -> dict[str, Any]:
+        if resume:
+            raise NotImplementedError("resume is enabled in Phase 1")
         if mode not in {"fake", "real"}:
             raise ValueError("mode must be fake or real")
         problem = ResearchProblem(topic=topic, research_route=research_route, selected_agent_ids=agent_ids or [])
@@ -52,8 +72,8 @@ class DeepResearchRunner:
         for agent in selected_agents:
             permissions.validate_agent_tools(agent)
         coverage = coverage_for_route(route=route, selected_agents=selected_agents, policy=policy)
-        run_dir = self.output_root / run_id
-        run_dir.mkdir(parents=True, exist_ok=True)
+        workspace = RunWorkspace.create(self.output_root, run_id)
+        run_dir = workspace.run_dir
         store = DomainStore()
         trace = TraceStore()
         trace.append(
@@ -62,7 +82,12 @@ class DeepResearchRunner:
                 event_type="run_started",
                 actor="orchestrator",
                 summary=f"run started for {topic}",
-                payload={"mode": mode, "route": route, "agent_ids": [agent.agent_id for agent in selected_agents]},
+                payload={
+                    "mode": mode,
+                    "route": route,
+                    "agent_ids": [agent.agent_id for agent in selected_agents],
+                    "analyst_confirmed": analyst_confirmed,
+                },
             )
         )
         provider = FakeAgentProvider() if mode == "fake" else RealAgentProvider()
@@ -121,6 +146,7 @@ class DeepResearchRunner:
             store=store,
             trace=trace,
             report_body=report.body,
+            analyst_confirmed=analyst_confirmed,
         )
         return {
             "run_id": run_id,
@@ -149,6 +175,7 @@ class DeepResearchRunner:
         store: DomainStore,
         trace: TraceStore,
         report_body: str,
+        analyst_confirmed: bool,
     ) -> None:
         (run_dir / "report.md").write_text(report_body, encoding="utf-8")
         (run_dir / "capability_images.json").write_text(
@@ -157,6 +184,7 @@ class DeepResearchRunner:
         )
         summary = {
             "mode": mode,
+            "analyst_confirmed": analyst_confirmed,
             "problem": to_plain(problem),
             "resolved_route": route,
             "selected_agent_ids": selected_agent_ids,
