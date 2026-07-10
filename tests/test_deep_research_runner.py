@@ -228,6 +228,28 @@ def test_private_network_source_is_rejected_before_fetch(tmp_path: Path, monkeyp
     assert summary["store_summary"]["evidence_count"] == 0
 
 
+def test_malformed_ipv6_source_does_not_skip_agent(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from equipment_deep_research.agents import provider
+
+    monkeypatch.setattr(
+        provider,
+        "_public_smoke_url_for_agent",
+        lambda agent_id: "http://[2001:db8::1/",
+    )
+    result = _runner(tmp_path).run(
+        mode="real",
+        topic="低空无人机探测预警能力缺口",
+        research_route="auto",
+        run_id="malformed-ipv6-source",
+        agent_ids=["international_situation"],
+    )
+
+    summary = json.loads(Path(result["summary_path"]).read_text(encoding="utf-8"))
+    assert len(summary["source_materials"]) == 1
+    assert summary["source_materials"][0]["status"] == "network_safety_rejected"
+    assert summary["store_summary"]["evidence_count"] == 0
+
+
 def test_private_ip_source_is_rejected_before_transport(tmp_path: Path) -> None:
     transport = _RecordingTransport()
     materializer = EvidenceMaterializer(tmp_path, transport=transport)

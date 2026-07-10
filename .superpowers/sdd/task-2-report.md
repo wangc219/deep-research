@@ -223,3 +223,74 @@ python3 -m pytest -q
 
 - 受控传输刻意不使用环境 HTTP(S) 代理，因为经普通代理无法证明目标 TCP 连接绑定到本地已验证 IP；必须依赖强制代理的环境会得到隔离的 `fetch_failed`，后续如需代理支持应设计同等可验证的受控代理协议。
 - 当前重定向和响应大小上限使用与 `evidence.yaml` 一致的安全默认值；将其动态加载为运行时配置仍属于后续配置接线，不在本次 Task 2 修复范围内。
+
+## 安全复审二次修复
+
+### 显式公网单播判定
+
+- 不再使用 `ipaddress.is_global` 作为准入判定。
+- IPv4 显式拒绝 private、loopback、link-local、unspecified、reserved、multicast 和 shared address space (`100.64.0.0/10`)。
+- IPv6 显式拒绝 private、loopback、link-local、unspecified、reserved、multicast、site-local 和带 zone identifier 的地址。
+- IPv4-mapped、IPv4-translated、6to4、Teredo、NAT64 well-known 和 ISATAP 地址提取其嵌入 IPv4，并复用同一 IPv4 公网单播判定。
+- NAT64 local-use `64:ff9b:1::/48` 的嵌入位置不能仅凭地址可靠确定，因此对整个前缀保守拒绝。
+- literal 与 DNS 返回地址均调用同一个 `_is_public_unicast_address()`；DNS 结果中任一地址不合格即在 transport 前拒绝整跳。
+
+### URL 与 hostname 隔离
+
+- `_parse_network_url()` 统一处理 `urlsplit`、scheme、hostname、port 和 IDNA；初始 URL 与每个重定向 URL 使用同一路径。
+- hostname 在 fixture 判断、DNS resolver、transport、HTTP `Host` 和 HTTPS SNI 前统一转换为小写 IDNA ASCII。
+- 畸形 IPv6 URL、无效 port 或 IDNA 编码失败均产生单条 `network_safety_rejected` 诊断，不再抛出到 scheduler 导致整个 agent 跳过。
+
+### RED
+
+首次执行新增覆盖：
+
+```text
+python3 -m pytest tests/equipment_deep_research/unit/test_http_transport.py tests/equipment_deep_research/unit/test_configuration.py tests/test_deep_research_runner.py -q
+FF.F...FFF..FF..............F.............                               [100%]
+9 failed, 33 passed in 0.37s
+```
+
+失败覆盖：`fec0::1`、NAT64 loopback 映射和 multicast literal/DNS 被错误放行；畸形 IPv6 URL 抛出到 scheduler；Unicode hostname 未转换为 IDNA ASCII。
+
+无效 IDNA 定向测试首次执行：
+
+```text
+python3 -m pytest tests/equipment_deep_research/unit/test_http_transport.py -q -k 'invalid_idna_hostname or invalid_port'
+F.                                                                       [100%]
+1 failed, 1 passed, 18 deselected in 0.08s
+```
+
+带 zone identifier 的公网 IPv6 定向测试首次执行为 `1 failed`，证明其会进入 transport；随后纳入保守拒绝。
+
+### 底层传输测试
+
+新增 `tests/equipment_deep_research/unit/test_http_transport.py`，覆盖：
+
+- site-local、NAT64 well-known/local-use、multicast、IPv4-mapped、IPv4-translated、6to4、Teredo、ISATAP 和 scoped IPv6 的 literal/DNS 拒绝。
+- 正常公网 IPv4/IPv6 literal 仍进入 pinned transport。
+- IDNA hostname 同时传给 resolver 和 transport。
+- numeric connect 对 IPv4 选择 `AF_INET`、对 IPv6 选择 `AF_INET6`。
+- IDNA hostname 与非默认端口的 `Host` header，以及 IPv6 Host 方括号格式。
+- 响应超过字节上限时抛出 `HTTPResponseTooLarge`，并在异常路径关闭连接。
+- 畸形 IPv6 URL 在直接 materializer 和 runner/scheduler 集成路径均只产生隔离诊断。
+
+### 最终验证
+
+复审指定覆盖命令：
+
+```text
+python3 -m pytest tests/equipment_deep_research/unit/test_http_transport.py tests/equipment_deep_research/unit/test_configuration.py tests/test_deep_research_runner.py -q
+...................................................                      [100%]
+51 passed in 0.30s
+```
+
+全量测试：
+
+```text
+python3 -m pytest -q
+..........................................................               [100%]
+58 passed in 0.29s
+```
+
+另执行 `git diff --check`，零输出、退出码 0。

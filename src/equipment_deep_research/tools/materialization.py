@@ -25,6 +25,19 @@ class _ResolvedTarget:
     connect_ip: str
 
 
+@dataclass(frozen=True)
+class _ParsedNetworkURL:
+    scheme: str
+    hostname: str
+    port: int
+
+
+_IPV4_SHARED_NETWORK = ipaddress.ip_network("100.64.0.0/10")
+_IPV4_TRANSLATED_NETWORK = ipaddress.ip_network("::ffff:0:0:0/96")
+_NAT64_WELL_KNOWN_NETWORK = ipaddress.ip_network("64:ff9b::/96")
+_NAT64_LOCAL_USE_NETWORK = ipaddress.ip_network("64:ff9b:1::/48")
+
+
 class EvidenceMaterializer:
     def __init__(
         self,
@@ -42,14 +55,15 @@ class EvidenceMaterializer:
         self.transport = transport or PinnedHTTPTransport()
 
     def materialize(self, evidence: EvidenceCard, *, mode: str) -> MaterializedEvidence:
-        parsed = urlsplit(evidence.source_url)
-        if parsed.scheme.lower() not in {"http", "https"}:
+        parsed, rejection_reason = _parse_network_url(evidence.source_url)
+        if rejection_reason:
             return self._reject_network_safety(
                 evidence=evidence,
                 mode=mode,
-                reason="scheme_not_allowed",
+                reason=rejection_reason,
             )
-        if (parsed.hostname or "").lower() == "fixture.local":
+        assert parsed is not None
+        if parsed.hostname == "fixture.local":
             if mode == "fake":
                 return self._materialize_fixture(evidence=evidence, mode=mode)
             return self._reject_network_safety(
@@ -250,26 +264,19 @@ class EvidenceMaterializer:
             )
 
     def _resolve_public_target(self, url: str) -> tuple[_ResolvedTarget | None, str]:
-        parsed = urlsplit(url)
-        scheme = parsed.scheme.lower()
-        if scheme not in {"http", "https"}:
-            return None, "scheme_not_allowed"
-        hostname = parsed.hostname
-        if not hostname:
-            return None, "missing_host"
-        host = hostname.lower()
+        parsed, rejection_reason = _parse_network_url(url)
+        if rejection_reason:
+            return None, rejection_reason
+        assert parsed is not None
+        host = parsed.hostname
         if host == "localhost" or host.endswith(".localhost"):
             return None, "private_network_denied"
-        try:
-            port = parsed.port or (443 if scheme == "https" else 80)
-        except ValueError:
-            return None, "invalid_port"
 
         try:
             literal_address = ipaddress.ip_address(host)
         except ValueError:
             try:
-                rows = self.resolver(host, port, type=socket.SOCK_STREAM)
+                rows = self.resolver(host, parsed.port, type=socket.SOCK_STREAM)
             except OSError:
                 return None, "host_resolution_failed"
             addresses: list[ipaddress.IPv4Address | ipaddress.IPv6Address] = []
@@ -285,18 +292,18 @@ class EvidenceMaterializer:
                     addresses.append(address)
             if not addresses:
                 return None, "host_resolution_failed"
-            if any(not address.is_global for address in addresses):
+            if any(not _is_public_unicast_address(address) for address in addresses):
                 return None, "private_network_denied"
             connect_ip = str(addresses[0])
         else:
-            if not literal_address.is_global:
+            if not _is_public_unicast_address(literal_address):
                 return None, "private_network_denied"
             connect_ip = str(literal_address)
 
         return (
             _ResolvedTarget(
                 hostname=host,
-                port=port,
+                port=parsed.port,
                 connect_ip=connect_ip,
             ),
             "",
@@ -314,3 +321,119 @@ def _response_header(
         if header_name.lower() == wanted:
             return value
     return default
+
+
+def _parse_network_url(url: str) -> tuple[_ParsedNetworkURL | None, str]:
+    try:
+        parsed = urlsplit(url)
+    except (UnicodeError, ValueError):
+        return None, "invalid_url"
+    scheme = parsed.scheme.lower()
+    if scheme not in {"http", "https"}:
+        return None, "scheme_not_allowed"
+    try:
+        hostname = parsed.hostname
+    except (UnicodeError, ValueError):
+        return None, "invalid_url"
+    if not hostname:
+        return None, "missing_host"
+    try:
+        explicit_port = parsed.port
+    except ValueError:
+        return None, "invalid_port"
+    normalized_hostname = _normalize_hostname(hostname)
+    if normalized_hostname is None:
+        return None, "invalid_hostname"
+    return (
+        _ParsedNetworkURL(
+            scheme=scheme,
+            hostname=normalized_hostname,
+            port=explicit_port or (443 if scheme == "https" else 80),
+        ),
+        "",
+    )
+
+
+def _normalize_hostname(hostname: str) -> str | None:
+    try:
+        address = ipaddress.ip_address(hostname)
+    except ValueError:
+        try:
+            ascii_hostname = hostname.encode("idna").decode("ascii").lower()
+        except UnicodeError:
+            return None
+        without_root_dot = ascii_hostname[:-1] if ascii_hostname.endswith(".") else ascii_hostname
+        labels = without_root_dot.split(".")
+        if (
+            not without_root_dot
+            or len(without_root_dot) > 253
+            or any(not label or len(label) > 63 for label in labels)
+        ):
+            return None
+        return ascii_hostname
+    return str(address).lower()
+
+
+def _is_public_unicast_address(
+    address: ipaddress.IPv4Address | ipaddress.IPv6Address,
+) -> bool:
+    if isinstance(address, ipaddress.IPv4Address):
+        return _is_public_ipv4_address(address)
+
+    if address.scope_id is not None:
+        return False
+    if address.ipv4_mapped is not None:
+        return _is_public_ipv4_address(address.ipv4_mapped)
+    if address in _IPV4_TRANSLATED_NETWORK:
+        return _is_public_ipv4_address(_last_32_bits_as_ipv4(address))
+    if address.sixtofour is not None:
+        return _is_public_ipv4_address(address.sixtofour)
+    if address.teredo is not None:
+        server, client = address.teredo
+        return _is_public_ipv4_address(server) and _is_public_ipv4_address(client)
+    if address in _NAT64_WELL_KNOWN_NETWORK:
+        return _is_public_ipv4_address(_last_32_bits_as_ipv4(address))
+    if address in _NAT64_LOCAL_USE_NETWORK:
+        return False
+
+    isatap_address = _isatap_embedded_ipv4(address)
+    if isatap_address is not None and not _is_public_ipv4_address(isatap_address):
+        return False
+
+    return not any(
+        (
+            address.is_private,
+            address.is_loopback,
+            address.is_link_local,
+            address.is_unspecified,
+            address.is_reserved,
+            address.is_multicast,
+            address.is_site_local,
+        )
+    )
+
+
+def _is_public_ipv4_address(address: ipaddress.IPv4Address) -> bool:
+    return not any(
+        (
+            address.is_private,
+            address.is_loopback,
+            address.is_link_local,
+            address.is_unspecified,
+            address.is_reserved,
+            address.is_multicast,
+            address in _IPV4_SHARED_NETWORK,
+        )
+    )
+
+
+def _last_32_bits_as_ipv4(address: ipaddress.IPv6Address) -> ipaddress.IPv4Address:
+    return ipaddress.IPv4Address(int(address) & 0xFFFF_FFFF)
+
+
+def _isatap_embedded_ipv4(address: ipaddress.IPv6Address) -> ipaddress.IPv4Address | None:
+    interface_identifier = int(address) & 0xFFFF_FFFF_FFFF_FFFF
+    marker = interface_identifier >> 32
+    if marker not in {0x0000_5EFE, 0x0200_5EFE}:
+        return None
+    return _last_32_bits_as_ipv4(address)
