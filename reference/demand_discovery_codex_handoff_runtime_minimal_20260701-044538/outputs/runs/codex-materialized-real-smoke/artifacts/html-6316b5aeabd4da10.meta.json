@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "html:6316b5aeabd4da10",
+  "content_path": "html-6316b5aeabd4da10.html",
+  "content_type": "text/html; charset=utf-8",
+  "encoding": "utf-8",
+  "fetched_at": "2026-06-30T20:19:31.784387+00:00",
+  "final_url": "http://www.81.cn/yw_208727/16456473.html",
+  "kind": "html",
+  "sha256": "6316b5aeabd4da1064dce5dfd5e6be8fa0bb2cec5b6fae438bdbff5c140c8db0",
+  "status_code": 200,
+  "transport": "http",
+  "url": "http://www.81.cn/yw_208727/16456473.html"
+}

@@ -1,0 +1,14 @@
+sources:
+  - source_id: public_official
+    name: 公开官方资料
+    tier: A
+    allowed_domains: [mod.gov.cn, 81.cn, gov.cn]
+  - source_id: public_research
+    name: 公开研究与智库资料
+    tier: B
+    allowed_domains: [rand.org, csis.org, iiss.org]
+  - source_id: fixture
+    name: 离线测试资料
+    tier: A
+    allowed_domains: [fixture.local]
+

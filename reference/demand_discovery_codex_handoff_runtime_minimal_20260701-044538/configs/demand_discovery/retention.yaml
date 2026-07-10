@@ -1,0 +1,14 @@
+long_term:
+  auto_delete: false
+  includes:
+    - domain_jsonl
+    - trace_jsonl
+    - scheduled_done_reports
+    - human_reviews
+    - silver_cases
+mid_term:
+  keep_days: 90
+short_term:
+  keep_days: 14
+runtime_log:
+  keep_days: 7

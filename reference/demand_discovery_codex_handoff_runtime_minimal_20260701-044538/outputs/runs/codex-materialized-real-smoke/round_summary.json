@@ -1,0 +1,1029 @@
+{
+  "accepted_evidence_ids": [
+    "ev-81-lowtarget-detect-gap",
+    "ev-81-multimodal-warning-need",
+    "ev-81-ground-airdefense-limit",
+    "ev-81-training-doctrine-need"
+  ],
+  "accepted_source_ids": [
+    "src-81-20260422-lowtarget",
+    "src-81-20250703-counteruas-war",
+    "src-81-20230824-counteruas-speed",
+    "src-81-20241218-us-counteruas-strategy"
+  ],
+  "audit": {
+    "audit_id": "audit-codex-1",
+    "candidate_id": "cand-codex-1",
+    "comments": "审计结论：候选需求可进入报告审阅。证据链能支持“低空无人机/巡航导弹等低空小目标造成探测、锁定、拦截链路压力，并形成多层次、多模态、空地协同侦察预警与训练条令补强需求信号”。但该结论必须限定为81.cn/解放军报/中国国防报公开军事媒体正文层面的能力难题与体系建设信号，不能扩写为本方具体装备型号、预算、采购计划或已确认采购缺口。",
+    "conclusion": "approved",
+    "created_at": "2026-06-30T20:21:20.083073+00:00",
+    "created_by": "codex-auditor",
+    "required_rework": [
+      "报告中必须保留来源集中于81.cn/解放军报/中国国防报体系的限制。",
+      "不得将外军案例或美国战略报道直接表述为本方装备采购缺口。",
+      "不得声称已有具体型号、预算、采购计划、量化性能指标或工程架构证据。",
+      "如后续要支撑普遍性或采购导向结论，需要补充中文期刊、RAND、Parameters、CSIS、IISS等跨来源正文证据。"
+    ],
+    "scorecard": {
+      "core_conclusion_supported": {
+        "reason": "候选核心结论已被四条白名单A类来源正文证据覆盖：威胁压力、低空小目标探测/锁定/拦截困难、多模态侦察预警需求、训练条令嵌入均有对应支撑。候选文本也已主动限定不能推定为具体型号、预算或采购缺口。",
+        "verdict": "pass"
+      },
+      "evidence_support": {
+        "evidence_reviews": {
+          "ev-81-ground-airdefense-limit": {
+            "evidence_id": "ev-81-ground-airdefense-limit",
+            "missing_link": "部分内容以外军发展和装备趋势为叙述对象，不能直接等同于本方装备缺口；仍缺少量化探测距离、拦截概率、体系架构和采购信号。",
+            "reason": "该证据直接描述小型无人机雷达锁定难、地面防空对低空无人机探测和拦截距离有限，并提出改进侦测系统、预警无人机、系统集成等方向，能支撑当前限制和组网/空地协同补强方向。",
+            "support_level": "direct",
+            "support_type": "inferred_gap",
+            "used_for_core": true
+          },
+          "ev-81-lowtarget-detect-gap": {
+            "evidence_id": "ev-81-lowtarget-detect-gap",
+            "missing_link": "不能单独支撑多模态体系建设或本方采购缺口；主要支撑低空小目标威胁、传统有人战机/机载雷达反制低效、拦截窗口和效费比错配。",
+            "reason": "该证据直接说明无人机和巡航导弹成为低空突防核心力量，并描述小RCS、贴地飞行、地杂波、发现难、锁定近、拦截窗口短等问题，语义上直接支撑候选中的威胁压力和当前探测/拦截限制。",
+            "support_level": "direct",
+            "support_type": "inferred_gap",
+            "used_for_core": true
+          },
+          "ev-81-multimodal-warning-need": {
+            "evidence_id": "ev-81-multimodal-warning-need",
+            "missing_link": "需要避免把体系建设要求扩写为具体装备型号或已立项研发计划；证据更适合支撑能力方向和体系需求。",
+            "reason": "该证据明确指向反无人作战体系中的侦察预警环节，包含全领域预警平台、多层次侦察设备、多模态探测、尽早尽远发现和稳定跟踪，直接支撑候选的多层次、多模态探测预警能力需求。",
+            "support_level": "direct",
+            "support_type": "explicit_demand",
+            "used_for_core": true
+          },
+          "ev-81-training-doctrine-need": {
+            "evidence_id": "ev-81-training-doctrine-need",
+            "missing_link": "该证据报道美国战略，不能直接支撑本方条令或训练体系已提出同类需求；只能作为公开军事媒体转述的外军案例和体系嵌入信号。",
+            "reason": "该证据直接列出提升探测、跟踪威胁能力，并将反无人机防御纳入理论、训练和政策核心部分，支撑候选中训练、条令和政策嵌入的体系补强维度，但对象主要是美国战略。",
+            "support_level": "partial",
+            "support_type": "inferred_gap",
+            "used_for_core": true
+          }
+        },
+        "reason": "四条证据均来自白名单A类81.cn体系并绑定source_id和正文材料位置；未见使用搜索摘要作为核心证据。证据足以支撑候选的公开媒体层面能力缺口和体系建设需求信号，但跨来源验证、量化指标、具体型号/预算/采购证据缺失，必须作为报告限制。",
+        "recheck_conditions": [
+          "若报告要上升为普遍性军事需求判断，需补充至少一个非81.cn体系的白名单A/B正文来源。",
+          "若报告要提出具体装备研发或采购判断，需补充型号、预算、采购、招标、演示验证、指标或工程约束证据。",
+          "若使用外军案例推断本方需求，需明确标注为外军经验观察或通用能力信号。"
+        ],
+        "recommended_report_status": "review_ready",
+        "verdict": "pass"
+      },
+      "evidence_supports_candidate": {
+        "reason": "候选文本与证据支持范围匹配，已经区分能力难题/体系建设信号与具体采购缺口。主要风险是来源集中和外军案例外推，但候选已将其列为开放问题和限制。",
+        "verdict": "pass"
+      }
+    }
+  },
+  "candidate": {
+    "candidate_id": "cand-codex-1",
+    "created_at": "2026-06-30T20:20:46.079384+00:00",
+    "created_by": "codex-synthesizer",
+    "demand_statement": "在无人机、巡航导弹等低空小目标成为低空突防和反无人作战重点压力的场景下，传统机载雷达、地面防空系统和既有拦截链路面对小雷达反射截面积、贴地飞行、地杂波、慢速低成本目标时，存在发现难、锁定近、探测/拦截距离有限、拦截窗口短和效费比错配的问题。候选需求可表述为：需要面向低空小目标的多层次、多模态、空地协同探测预警与稳定跟踪能力，并将其纳入指挥控制、拦截打击、训练和条令体系。当前证据支持这是公开军事媒体层面的能力难题和体系建设需求信号，但尚不能直接推定为本方具体装备型号、预算或采购缺口。",
+    "evidence_ids": [
+      "ev-81-lowtarget-detect-gap",
+      "ev-81-multimodal-warning-need",
+      "ev-81-ground-airdefense-limit",
+      "ev-81-training-doctrine-need"
+    ],
+    "open_questions": [
+      "现有证据全部来自81.cn/解放军报/中国国防报体系，缺少中文期刊、RAND、Parameters、CSIS、IISS等跨来源验证，普遍性判断需要保留限制。",
+      "部分证据通过外军案例或外国战略表达能力缺口，不能直接等同于本方装备缺口或采购需求披露。",
+      "仍需区分本方能力缺口、外军经验观察和通用低空无人机探测预警需求三类表述边界。",
+      "尚无具体型号、预算、采购计划或性能指标证据，不能展开为确定的产品需求。"
+    ],
+    "solution_signals": [
+      "多模态探测：证据支持将雷达之外的多种探测手段纳入侦察预警链路，用于尽早尽远发现和稳定跟踪低空无人目标。",
+      "多层次侦察与全领域预警平台：证据指向体系化预警，而非单点雷达性能提升。",
+      "空地协同与预警无人机：证据中出现预警无人机、侦测系统改进和系统集成方向，可作为组网探测能力的技术信号。",
+      "训练、条令和政策嵌入：证据支持反无人探测跟踪能力不仅是装备问题，也需要纳入训练和作战理论体系。"
+    ],
+    "status": "candidate_demand",
+    "superseded_by": null,
+    "superseded_reason": null,
+    "title": "低空小目标反无人探测预警体系补强需求",
+    "updated_at": "2026-06-30T20:20:46.079384+00:00"
+  },
+  "execution": "independent_codex_workflow",
+  "judgement": {
+    "blind_spots": [
+      {
+        "evidence_ids": [
+          "ev-81-lowtarget-detect-gap",
+          "ev-81-multimodal-warning-need",
+          "ev-81-ground-airdefense-limit",
+          "ev-81-training-doctrine-need"
+        ],
+        "lead_ids": [],
+        "text": "当前证据全部来自同一来源体系（81.cn/解放军报/中国国防报），尚未形成中文期刊、RAND/Parameters/CSIS/IISS等跨来源验证；这会限制报告中的普遍性判断，但不削弱已获得的官方正文需求信号。",
+        "worker_report_ids": [
+          "round-1-reader-task-1-reader-1"
+        ]
+      },
+      {
+        "evidence_ids": [
+          "ev-81-lowtarget-detect-gap",
+          "ev-81-ground-airdefense-limit",
+          "ev-81-training-doctrine-need"
+        ],
+        "lead_ids": [],
+        "text": "部分证据以外军案例或外国战略为叙述对象，不能直接等同于本方装备缺口或采购需求披露；报告应将其表述为公开军事媒体对低空无人机探测预警难题和体系需求的需求信号。",
+        "worker_report_ids": [
+          "round-1-reader-task-1-reader-1"
+        ]
+      }
+    ],
+    "consensus_points": [
+      {
+        "evidence_ids": [
+          "ev-81-lowtarget-detect-gap",
+          "ev-81-ground-airdefense-limit"
+        ],
+        "lead_ids": [],
+        "text": "正文证据共同支持低空无人机、巡航导弹等低空小目标正在加重防空与反无人作战压力，并暴露传统探测、锁定和拦截链路的错配。",
+        "worker_report_ids": [
+          "round-1-reader-task-1-reader-1"
+        ]
+      },
+      {
+        "evidence_ids": [
+          "ev-81-multimodal-warning-need",
+          "ev-81-training-doctrine-need"
+        ],
+        "lead_ids": [],
+        "text": "正文证据共同支持侦察预警能力是反无人作战体系中的关键需求，尤其包括尽早尽远发现、稳定跟踪、多层次侦察设备和多模态探测。",
+        "worker_report_ids": [
+          "round-1-reader-task-1-reader-1"
+        ]
+      },
+      {
+        "evidence_ids": [
+          "ev-81-multimodal-warning-need",
+          "ev-81-ground-airdefense-limit",
+          "ev-81-training-doctrine-need"
+        ],
+        "lead_ids": [],
+        "text": "正文证据共同支持能力缺口不只是单一装备问题，还涉及探测预警、指挥控制、拦截打击、训练、理论和政策嵌入等体系化补强需求。",
+        "worker_report_ids": [
+          "round-1-reader-task-1-reader-1"
+        ]
+      }
+    ],
+    "contradictions": [],
+    "created_at": "2026-06-30T20:20:13.619214+00:00",
+    "evidence_strength_map": {
+      "ev-81-ground-airdefense-limit": "direct",
+      "ev-81-lowtarget-detect-gap": "direct",
+      "ev-81-multimodal-warning-need": "strong",
+      "ev-81-training-doctrine-need": "direct"
+    },
+    "judgement_id": "judge-codex-1",
+    "next_round_plan": {
+      "controller_tasks": [],
+      "plan_version": 1,
+      "remaining_open_questions": [
+        "是否需要进一步区分中国本方装备能力缺口、外军经验观察、以及通用低空无人机探测预警需求，可留给候选合成和审计阶段处理。",
+        "若后续报告需要更强跨来源支撑，可另启白名单期刊/智库轮次；当前轮不建议因该限制继续扩搜。"
+      ],
+      "round_id": "round-1",
+      "stop_candidate_reason": "4条已接受证据均来自白名单A类官方来源正文，覆盖威胁变化、低空小目标探测/锁定/拦截难点、多模态预警体系需求和训练/条令需求，已足以进入候选需求合成与审计；剩余问题可作为报告限制披露。",
+      "summary": "停止继续研究。当前证据虽集中于81.cn且部分通过外军案例表达，但核心需求缺口已有多条正文证据直接或强支撑，继续检索的边际收益低于进入候选合成和审计。",
+      "worker_briefs": {}
+    },
+    "partial_coverage": [
+      {
+        "evidence_ids": [
+          "ev-81-lowtarget-detect-gap",
+          "ev-81-multimodal-warning-need",
+          "ev-81-ground-airdefense-limit",
+          "ev-81-training-doctrine-need"
+        ],
+        "lead_ids": [],
+        "text": "对“本方装备或采购缺口”的直接披露不足；现有材料更强地支持公开军事媒体层面的能力难题、体系建设方向和训练需求，而非具体型号、预算或采购缺口。",
+        "worker_report_ids": [
+          "round-1-reader-task-1-reader-1"
+        ]
+      }
+    ],
+    "rationale": "读者报告质量合格：证据均绑定accepted evidence_id/source_id/source_location，来自已读取正文而非搜索摘要，并明确说明来源体系和外军案例限制。核心低空无人机探测预警能力缺口已被4条A类官方正文证据覆盖，足以进入候选合成与审计；不建议因跨来源不足继续研究。",
+    "round_id": "round-1",
+    "stop_or_continue": "stop",
+    "unique_insights": [
+      {
+        "evidence_ids": [
+          "ev-81-lowtarget-detect-gap"
+        ],
+        "lead_ids": [],
+        "text": "“有人战机+吊舱+激光制导火箭弹”的案例提供了低空小目标反制中传统有人战机效费比和拦截窗口不足的具体作战场景，可用于候选需求中的成本效能与探测链路错配说明。",
+        "worker_report_ids": [
+          "round-1-reader-task-1-reader-1"
+        ]
+      },
+      {
+        "evidence_ids": [
+          "ev-81-ground-airdefense-limit",
+          "ev-81-multimodal-warning-need"
+        ],
+        "lead_ids": [],
+        "text": "预警无人机、侦测系统改进和系统集成方向说明缺口可能指向组网探测、空地协同和多传感器融合，而不是单点雷达性能提升。",
+        "worker_report_ids": [
+          "round-1-reader-task-1-reader-1"
+        ]
+      }
+    ]
+  },
+  "mode": "codex",
+  "rejected_evidence_ids": [],
+  "rejected_source_ids": [],
+  "report": {
+    "audit_id": "audit-codex-1",
+    "body": "## 结论摘要\n\n基于当前已接受证据，本候选可作为“公开军事媒体层面的能力难题与体系建设需求信号”进入报告审阅：低空无人机、巡航导弹等低空小目标正在对探测、锁定、跟踪、预警和拦截链路形成压力，需求方向集中在多层次、多模态、空地协同的探测预警与稳定跟踪能力，并需要与指挥控制、拦截打击、训练和条令体系衔接。该判断由 ev-81-lowtarget-detect-gap、ev-81-ground-airdefense-limit、ev-81-multimodal-warning-need 和 ev-81-training-doctrine-need 共同支撑，并经 audit-codex-1 审计为 approved。\n\n本报告不将该候选表述为已确认的本方具体装备型号、预算、采购计划、量化性能指标或工程架构缺口。现有证据主要来自 81.cn / 解放军报 / 中国国防报体系，部分材料通过外军案例或外国战略呈现能力压力，因此结论应限于公开军事媒体正文中的能力缺口和体系补强信号。\n\n## 场景与压力\n\n当前场景是低空突防与反无人作战压力上升。ev-81-lowtarget-detect-gap 指出，无人机和巡航导弹等低空小目标成为低空突防的重要压力源；这类目标具有小雷达反射截面积、贴地飞行、地杂波背景、慢速和低成本等特征，使传统有人战机和机载雷达在发现、锁定与拦截窗口上出现错配。\n\n地面防空链路也存在类似压力。ev-81-ground-airdefense-limit 描述了小型无人机雷达锁定难、地面防空系统对低空无人机探测和拦截距离有限等问题，并将侦测系统改进、预警无人机和系统集成作为补强方向。该证据支持“低空小目标不是单点拦截问题，而是探测、预警、跟踪和拦截链路协同问题”的判断。\n\n## 能力缺口拆解\n\n第一类缺口是早期发现与稳定跟踪不足。ev-81-lowtarget-detect-gap 和 ev-81-ground-airdefense-limit 共同支撑：低空小目标因小 RCS、低空/贴地飞行和复杂地杂波背景，容易造成发现难、锁定近、探测和拦截距离受限、拦截窗口短等问题。\n\n第二类缺口是侦察预警体系不足。ev-81-multimodal-warning-need 明确指向反无人作战体系中的侦察预警环节，强调全领域预警平台、多层次侦察设备、多模态探测、尽早尽远发现和稳定跟踪。这使需求方向更接近体系化探测预警，而不是单一雷达或单一拦截装备升级。\n\n第三类缺口是空地协同和系统集成不足。ev-81-ground-airdefense-limit 提到侦测系统改进、预警无人机和系统集成方向；结合 ev-81-multimodal-warning-need，可将其表述为组网探测、空地协同和多传感器融合的能力信号，但不能扩写为具体工程架构或已立项研发计划。\n\n第四类缺口是训练、理论和政策嵌入不足。ev-81-training-doctrine-need 报道的是美国反无人机战略，能够作为外军经验观察，说明探测、跟踪能力提升以及将反无人机防御纳入理论、训练和政策体系的重要性；但该证据不能直接证明本方训练条令已提出同类需求。\n\n## 证据矩阵\n\n- ev-81-lowtarget-detect-gap：来源 src-81-20260422-lowtarget，《兵器大观丨反低空目标作战的新选择》，中国军网-解放军报，2026-04-22。支撑低空无人机/巡航导弹威胁、传统有人战机和机载雷达面对低空小目标时的发现难、锁定近、拦截窗口短和效费比错配。审计支持等级为 direct。\n- ev-81-multimodal-warning-need：来源 src-81-20250703-counteruas-war，《军事论坛丨反无人作战重塑未来战争面貌》，中国军网-解放军报，2025-07-03。支撑多层次侦察设备、多模态探测、全领域预警平台、尽早尽远发现和稳定跟踪需求。审计支持等级为 direct，证据类型偏 explicit_demand。\n- ev-81-ground-airdefense-limit：来源 src-81-20230824-counteruas-speed，《反无人机作战发展不断提速》，中国军网-解放军报，2023-08-24。支撑小型无人机雷达锁定难、地面防空探测和拦截距离有限，以及侦测系统改进、预警无人机和系统集成方向。审计支持等级为 direct。\n- ev-81-training-doctrine-need：来源 src-81-20241218-us-counteruas-strategy，《美国出台反无人机新战略》，中国军网-中国国防报，2024-12-18。支撑探测跟踪能力、训练、理论和政策嵌入的重要性，但对象主要是美国战略，应作为外军案例和通用能力信号使用。审计支持等级为 partial。\n\n综合 judge-codex-1 的判断，四条证据覆盖威胁压力、探测/锁定/拦截困难、多模态预警体系需求和训练条令补强方向；未发现未解决矛盾，但存在来源集中和外军案例外推限制。\n\n## 审计结论与限制\n\n审计 audit-codex-1 结论为 approved，认为该候选可进入报告审阅。审计允许的核心表述是：低空无人机/巡航导弹等低空小目标造成探测、锁定、拦截链路压力，并形成多层次、多模态、空地协同侦察预警与训练条令补强需求信号。\n\n必须保留的限制包括：第一，证据集中于 81.cn / 解放军报 / 中国国防报体系，尚未形成中文期刊、RAND、Parameters、CSIS、IISS 等跨来源正文验证；第二，部分证据以外军案例或美国战略为叙述对象，不能直接等同于本方装备缺口或采购需求披露；第三，尚无具体型号、预算、采购计划、量化性能指标、演示验证或工程约束证据；第四，当前结论只能作为能力难题和体系建设方向信号，不应升级为确定产品需求或采购导向判断。\n\n## 后续验证计划\n\n若要将本结论升级为更普遍的军事需求判断，应补充至少一个非 81.cn 体系的白名单 A/B 类正文来源，例如中文期刊、RAND、Parameters、CSIS、IISS 等，并验证其是否独立支持低空小目标探测预警缺口。\n\n若要提出具体装备研发或采购判断，应继续寻找型号、预算、采购、招标、演示验证、性能指标、系统架构或工程约束证据。缺少这些材料前，不宜使用“已确认采购缺口”“明确型号需求”“已立项工程方案”等表述。\n\n若继续使用外军案例，应明确标注为外军经验观察或通用能力信号，并区分三类边界：本方能力难题、外军经验观察、通用低空无人机探测预警需求。\n\n## Supporting Evidence\n- ev-81-lowtarget-detect-gap: 中国军网正文将无人机和巡航导弹描述为低空突防核心力量，并指出低空小目标的小雷达反射截面积、贴地飞行和地杂波会造成传统机载雷达发现难、锁定近、拦截窗口短的问题。 (direct). Excerpt: 兵器大观丨反低空目标作战的新选择 - 中国军网 要闻 评论 图片 视频 更多 特战 女兵 外军 维和 兵器 空天 军粮 文化 搜索 显示与隐藏侧边栏 搜索 要闻 正文 兵器大观丨反低空目标作战的新选择 来源：中国军网-解放军报 作者：吴志峰 孙斌 责任编辑：王一亘 发布：2026-04-22 07:20:08 手机看 分享到 “有人战机+吊舱+激光制导火箭弹” 反低空目标作战的新选择 ■吴志峰 孙 斌 战机发射激光制导火箭弹（电脑合成图）。 近年来，为了应对无人机等低空目标，一些国家在积极发展各类陆基反无人机系统的同时，也在推进空中反无人机平台的研发。其中，为现役有人战机加装反无人机装备就是研发路径之一。 去年12月，乌军将集成了AN/AAQ-33“狙击手”ATP先进瞄准吊舱与APKWS II激光制导火箭弹的F-16战机，用于反无人机作战。 今年4月，BAE系统公司宣布，英国皇家空军“台风”战机在本土靶场成功试射了APKWS激光制导火箭弹。 这些反无人机平台，采用的都是“有人战机+吊舱+激光制导火箭弹”的组合方式。 那么，这种组合为何会成为反无人机作战的新选择？新组合现身的意义何在？除了优点外有哪些短板与局限性？请看本期解读。 有人战机单独出手效果不佳 现代战争中，无人机与巡航导弹已成为低空突防的核心力量。面对这类慢速、低成本的低空目标，传统有人战机对其进行反制，往往会陷入“高炮打蚊子”般的困境，作战效果不佳。 以2024年的一次空中对抗为例，4月13日夜间，在以色列周边空域，一架美军F-15E战机追击“沙赫德-136”无人机群，20分钟内耗尽8枚空空导弹，总价值超过800万… Location: text:edfc3a03bb905be6#para:0\n- ev-81-multimodal-warning-need: 中国军网正文认为反无人作战在侦察预警环节需要依托全领域预警平台、多层次侦察设备和多模态探测手段，实现对无人目标尽早尽远发现和稳定跟踪。 (strong). Excerpt: 军事论坛丨反无人作战重塑未来战争面貌 - 中国军网 要闻 评论 图片 视频 更多 特战 女兵 外军 维和 兵器 空天 军粮 文化 搜索 显示与隐藏侧边栏 搜索 要闻推荐 We Recommend 庆祝中国共产党成立105周年音乐会在京举行 《求是》杂志发表习近平总书记重要文章 《做焦裕禄式的县委书记》 习近平同塞舌尔总统赫米尼耶就中塞建交50周年互致贺电 中国共产党党内统计公报 热点专题 Special Reports 牢记初心使命 奋进复兴征程——庆祝中国共产党成立105周年 深入学习贯彻习近平党建思想 树立和践行正确政绩观学习教育 牢记初心使命 奋进复兴征程 视频推荐 Videos 一生跟党走！百岁老兵深情寄语党的105岁生日 “好记者讲好故事”宣讲团走进陆军航空兵学院 踏浪开火！两栖装甲海上实弹考核 张超国防班：少年有志，军校相见 军事酷图 Photos 第77集团军某旅装甲兵分队组织战术训练 霞光下的空军战机，看不够 星夜砺剑！直击空军航空兵夜间飞行训练现场 长江源头，他们与寂静为伴 军网理论 回答“时代之问”：推进理论创新和实践创新双飞跃 学有所思丨莫让理论学习陷于“客里空” 回答“人民之问”：坚持以人民为中心的研究导向 厚植文化底蕴 夯实胜战之基 要闻 正文 军事论坛丨反无人作战重塑未来战争面貌 来源：中国军网-解放军报 作者：杨敬华 罗进军 肖博 责任编辑：王一亘 2025-07-03 07:45:01 0 反无人作战重塑未来战争面貌 ■杨敬华 罗进军 肖 博 引言 21世纪以来，无人装备在全球多场战争冲突中大放异彩，在战场上的角色正从“助攻”加速向“主攻”转变… Location: text:b6632576500f6096#para:0\n- ev-81-ground-airdefense-limit: 中国军网正文指出现有雷达难以锁定小型无人机，地面防空系统对低空无人机探测和拦截距离有限，因而需要改进侦测系统、提升预警和拦截概率，并探索预警无人机等体系化补强。 (direct). Excerpt: 反无人机作战发展不断提速 - 中国军网 要闻 评论 图片 视频 更多 特战 女兵 外军 维和 兵器 空天 军粮 文化 搜索 显示与隐藏侧边栏 搜索 兵器 正文 反无人机作战发展不断提速 来源：中国军网-解放军报 作者：徐长帅 责任编辑：郭亮 发布：2023-08-24 08:35:18 手机看 分享到 反无人机作战发展不断提速 ■徐长帅 近日，据媒体报道，随着改装的廉价无人装备——穿越机被广泛应用于战场，相关防御手段也在不断升级。近年来，无人机作战与反无人机作战，已然成为战场重要作战样式。二者在“矛”与“盾”的较量中，呈现螺旋式发展，对战场态势产生显著影响。 德国 Skynex 高射炮系统可拦截巡 航导弹和无人机。 资料图片 伊朗“卡拉尔”无人机下方挂载导弹。 资料图片 相关战略陆续出台 近年来，大量小型自杀式无人机不断投入战场。这些无人机具有巡飞功能，既能执行侦察任务，在发现目标后又能实施攻击。面对迅速增长的无人机威胁，有关国家纷纷出台相关战略，试图在反无人机领域占据领先地位。 美军将无人机列为最具破坏力的空中威胁之一。2019年12月，美国国防部精简了本部门的各种反小型无人机系统项目，指定陆军为执行机构，成立联合反小型无人机系统办公室，负责指导监督国防部所有反无人机武器研发工作。2021年1月，该办公室发布国防部《反小型无人机系统战略》。截至目前，该办公室已组织四次反无人机演示，并计划在2024年6月进行第五次演示，聚焦反无人机蜂群。 俄军将无人机防御作战列为一项重要任务，频繁在战场上检验反无人机技战术，目前已在大部分军区组建了反无人机部队。自2019年起，俄军所有的重大… Location: text:5240a036d1ca359e#para:0\n- ev-81-training-doctrine-need: 中国军网正文报道的美国反无人机新战略把提升探测、跟踪威胁能力，以及将反无人机防御纳入理论、训练和政策核心部分，作为应对低慢小无人机威胁的重要措施。 (direct). Excerpt: 美国出台反无人机新战略 - 中国军网 要闻 评论 图片 视频 更多 特战 女兵 外军 维和 兵器 空天 军粮 文化 搜索 显示与隐藏侧边栏 搜索 兵器 正文 美国出台反无人机新战略 来源：中国军网-中国国防报 作者：王昌凡 责任编辑：徐占虎 发布：2024-12-18 08:53:25 手机看 分享到 美国出台反无人机新战略 ■王昌凡 美国陆军的EAGLS反无人机系统。 美国士兵进行反无人机训练。 据外媒报道，美国国防部长劳埃德·奥斯汀近日签署一项反无人机新战略，通过整合美国防部在不同时期推出的各种反无人机方法手段，保护相关设施和人员免受无人机威胁。 5项内容应对新威胁 报道称，虽然反无人机新战略目前处于保密阶段，但外界通过美国防部发表的一份说明报告，了解到该战略的基本情况。 报告指出，在近年来的地区冲突中，无人机对传统战法和作战原则形成新挑战。从战术层面看，部队的隐蔽、集中和机动变得困难；从战略层面看，人力和资金成本大幅降低，缩小整体实力差距。由于美国对此缺乏应对措施，导致无人机威胁事件频发。在海外，美国牵头组织的“繁荣卫士”红海护航联盟几乎每天遭到无人机袭击，被称为“美国海军自二战以来经历的最持久战斗”。美国在叙利亚、伊拉克的基地也受到无人机入侵。今年1月，1架无人机袭击了美军位于叙利亚和约旦边境的军事基地，造成3名美军士兵死亡，超过25人受伤。美国本土也遭受多起无人机威胁。据美媒报道，去年以来，弗吉尼亚州兰利空军基地、诺福克海军基地等发生无人机侵入事件，内华达州核试验基地上空也出现过5架不明身份的无人机。 为此，美国防部出台反无人机新战略，具体内容分为5项：一是加强对无… Location: text:0c4f7bc0b11149bd#para:0\n\n## Source Audit\n- src-81-20260422-lowtarget: 中国军网 | 兵器大观丨反低空目标作战的新选择 | tier=A | time=2026-04-22T00:00:00 | http://www.81.cn/yw_208727/16456473.html\n- src-81-20250703-counteruas-war: 中国军网 | 军事论坛丨反无人作战重塑未来战争面貌 | tier=A | time=2025-07-03T00:00:00 | http://www.81.cn/yw_208727/16394887.html\n- src-81-20230824-counteruas-speed: 中国军网 | 反无人机作战发展不断提速 | tier=A | time=2023-08-24T00:00:00 | http://www.81.cn/bq_208581/16247247.html\n- src-81-20241218-us-counteruas-strategy: 中国军网 | 美国出台反无人机新战略 | tier=A | time=2024-12-18T00:00:00 | http://www.81.cn/bq_208581/16359313.html",
+    "candidate_id": "cand-codex-1",
+    "created_at": "2026-06-30T20:22:00.719761+00:00",
+    "domain_trace_ids": [
+      "dt-4c8d41e1d785423dad7d68bda8ea2e63",
+      "dt-2586a11f73084c889ecd7377e01f95a9"
+    ],
+    "evidence_ids": [
+      "ev-81-lowtarget-detect-gap",
+      "ev-81-multimodal-warning-need",
+      "ev-81-ground-airdefense-limit",
+      "ev-81-training-doctrine-need"
+    ],
+    "report_id": "report-codex-1",
+    "review_status": "review_ready",
+    "sensitive_review_required": false,
+    "title": "低空小目标反无人探测预警体系补强需求报告"
+  },
+  "report_manifest_path": "D:\\amyproject\\knowledgegraph\\outputs\\runs\\codex-materialized-real-smoke\\report_manifest.json",
+  "report_md_path": "D:\\amyproject\\knowledgegraph\\outputs\\runs\\codex-materialized-real-smoke\\report.md",
+  "report_quality": {
+    "attempts": 1,
+    "issues": [],
+    "missing_recommended_sections": [],
+    "status": "passed",
+    "warnings": []
+  },
+  "role_output_paths": {
+    "auditor": "D:\\amyproject\\knowledgegraph\\outputs\\runs\\codex-materialized-real-smoke\\role_outputs\\auditor.json",
+    "planner": "D:\\amyproject\\knowledgegraph\\outputs\\runs\\codex-materialized-real-smoke\\role_outputs\\planner.json",
+    "reporter": "D:\\amyproject\\knowledgegraph\\outputs\\runs\\codex-materialized-real-smoke\\role_outputs\\reporter.json",
+    "round-1_judge": "D:\\amyproject\\knowledgegraph\\outputs\\runs\\codex-materialized-real-smoke\\role_outputs\\round-1_judge.json",
+    "round-1_reader_1": "D:\\amyproject\\knowledgegraph\\outputs\\runs\\codex-materialized-real-smoke\\role_outputs\\round-1_reader_1.json",
+    "synthesizer": "D:\\amyproject\\knowledgegraph\\outputs\\runs\\codex-materialized-real-smoke\\role_outputs\\synthesizer.json"
+  },
+  "roles": [
+    "planner",
+    "reader",
+    "judge",
+    "synthesizer",
+    "auditor",
+    "reporter"
+  ],
+  "round_count": 1,
+  "rounds": [
+    {
+      "created_at": "2026-06-30T20:15:15.851226+00:00",
+      "hypothesis": "Codex workflow researches demand signals for: 低空无人机探测预警能力缺口",
+      "index": 1,
+      "judgement": {
+        "blind_spots": [
+          {
+            "evidence_ids": [
+              "ev-81-lowtarget-detect-gap",
+              "ev-81-multimodal-warning-need",
+              "ev-81-ground-airdefense-limit",
+              "ev-81-training-doctrine-need"
+            ],
+            "lead_ids": [],
+            "text": "当前证据全部来自同一来源体系（81.cn/解放军报/中国国防报），尚未形成中文期刊、RAND/Parameters/CSIS/IISS等跨来源验证；这会限制报告中的普遍性判断，但不削弱已获得的官方正文需求信号。",
+            "worker_report_ids": [
+              "round-1-reader-task-1-reader-1"
+            ]
+          },
+          {
+            "evidence_ids": [
+              "ev-81-lowtarget-detect-gap",
+              "ev-81-ground-airdefense-limit",
+              "ev-81-training-doctrine-need"
+            ],
+            "lead_ids": [],
+            "text": "部分证据以外军案例或外国战略为叙述对象，不能直接等同于本方装备缺口或采购需求披露；报告应将其表述为公开军事媒体对低空无人机探测预警难题和体系需求的需求信号。",
+            "worker_report_ids": [
+              "round-1-reader-task-1-reader-1"
+            ]
+          }
+        ],
+        "consensus_points": [
+          {
+            "evidence_ids": [
+              "ev-81-lowtarget-detect-gap",
+              "ev-81-ground-airdefense-limit"
+            ],
+            "lead_ids": [],
+            "text": "正文证据共同支持低空无人机、巡航导弹等低空小目标正在加重防空与反无人作战压力，并暴露传统探测、锁定和拦截链路的错配。",
+            "worker_report_ids": [
+              "round-1-reader-task-1-reader-1"
+            ]
+          },
+          {
+            "evidence_ids": [
+              "ev-81-multimodal-warning-need",
+              "ev-81-training-doctrine-need"
+            ],
+            "lead_ids": [],
+            "text": "正文证据共同支持侦察预警能力是反无人作战体系中的关键需求，尤其包括尽早尽远发现、稳定跟踪、多层次侦察设备和多模态探测。",
+            "worker_report_ids": [
+              "round-1-reader-task-1-reader-1"
+            ]
+          },
+          {
+            "evidence_ids": [
+              "ev-81-multimodal-warning-need",
+              "ev-81-ground-airdefense-limit",
+              "ev-81-training-doctrine-need"
+            ],
+            "lead_ids": [],
+            "text": "正文证据共同支持能力缺口不只是单一装备问题，还涉及探测预警、指挥控制、拦截打击、训练、理论和政策嵌入等体系化补强需求。",
+            "worker_report_ids": [
+              "round-1-reader-task-1-reader-1"
+            ]
+          }
+        ],
+        "contradictions": [],
+        "created_at": "2026-06-30T20:20:13.619214+00:00",
+        "evidence_strength_map": {
+          "ev-81-ground-airdefense-limit": "direct",
+          "ev-81-lowtarget-detect-gap": "direct",
+          "ev-81-multimodal-warning-need": "strong",
+          "ev-81-training-doctrine-need": "direct"
+        },
+        "judgement_id": "judge-codex-1",
+        "next_round_plan": {
+          "controller_tasks": [],
+          "plan_version": 1,
+          "remaining_open_questions": [
+            "是否需要进一步区分中国本方装备能力缺口、外军经验观察、以及通用低空无人机探测预警需求，可留给候选合成和审计阶段处理。",
+            "若后续报告需要更强跨来源支撑，可另启白名单期刊/智库轮次；当前轮不建议因该限制继续扩搜。"
+          ],
+          "round_id": "round-1",
+          "stop_candidate_reason": "4条已接受证据均来自白名单A类官方来源正文，覆盖威胁变化、低空小目标探测/锁定/拦截难点、多模态预警体系需求和训练/条令需求，已足以进入候选需求合成与审计；剩余问题可作为报告限制披露。",
+          "summary": "停止继续研究。当前证据虽集中于81.cn且部分通过外军案例表达，但核心需求缺口已有多条正文证据直接或强支撑，继续检索的边际收益低于进入候选合成和审计。",
+          "worker_briefs": {}
+        },
+        "partial_coverage": [
+          {
+            "evidence_ids": [
+              "ev-81-lowtarget-detect-gap",
+              "ev-81-multimodal-warning-need",
+              "ev-81-ground-airdefense-limit",
+              "ev-81-training-doctrine-need"
+            ],
+            "lead_ids": [],
+            "text": "对“本方装备或采购缺口”的直接披露不足；现有材料更强地支持公开军事媒体层面的能力难题、体系建设方向和训练需求，而非具体型号、预算或采购缺口。",
+            "worker_report_ids": [
+              "round-1-reader-task-1-reader-1"
+            ]
+          }
+        ],
+        "rationale": "读者报告质量合格：证据均绑定accepted evidence_id/source_id/source_location，来自已读取正文而非搜索摘要，并明确说明来源体系和外军案例限制。核心低空无人机探测预警能力缺口已被4条A类官方正文证据覆盖，足以进入候选合成与审计；不建议因跨来源不足继续研究。",
+        "round_id": "round-1",
+        "stop_or_continue": "stop",
+        "unique_insights": [
+          {
+            "evidence_ids": [
+              "ev-81-lowtarget-detect-gap"
+            ],
+            "lead_ids": [],
+            "text": "“有人战机+吊舱+激光制导火箭弹”的案例提供了低空小目标反制中传统有人战机效费比和拦截窗口不足的具体作战场景，可用于候选需求中的成本效能与探测链路错配说明。",
+            "worker_report_ids": [
+              "round-1-reader-task-1-reader-1"
+            ]
+          },
+          {
+            "evidence_ids": [
+              "ev-81-ground-airdefense-limit",
+              "ev-81-multimodal-warning-need"
+            ],
+            "lead_ids": [],
+            "text": "预警无人机、侦测系统改进和系统集成方向说明缺口可能指向组网探测、空地协同和多传感器融合，而不是单点雷达性能提升。",
+            "worker_report_ids": [
+              "round-1-reader-task-1-reader-1"
+            ]
+          }
+        ]
+      },
+      "judgement_id": "judge-codex-1",
+      "next_round_plan": {
+        "controller_tasks": [],
+        "plan_version": 1,
+        "remaining_open_questions": [
+          "是否需要进一步区分中国本方装备能力缺口、外军经验观察、以及通用低空无人机探测预警需求，可留给候选合成和审计阶段处理。",
+          "若后续报告需要更强跨来源支撑，可另启白名单期刊/智库轮次；当前轮不建议因该限制继续扩搜。"
+        ],
+        "round_id": "round-1",
+        "stop_candidate_reason": "4条已接受证据均来自白名单A类官方来源正文，覆盖威胁变化、低空小目标探测/锁定/拦截难点、多模态预警体系需求和训练/条令需求，已足以进入候选需求合成与审计；剩余问题可作为报告限制披露。",
+        "summary": "停止继续研究。当前证据虽集中于81.cn且部分通过外军案例表达，但核心需求缺口已有多条正文证据直接或强支撑，继续检索的边际收益低于进入候选合成和审计。",
+        "worker_briefs": {}
+      },
+      "plan_assessment": {
+        "errors": [],
+        "is_valid": true,
+        "warnings": []
+      },
+      "round_id": "round-1",
+      "run_id": "codex-materialized-real-smoke",
+      "source_materials": [
+        {
+          "artifact_ref": "html:6316b5aeabd4da10",
+          "evidence_id": "ev-81-lowtarget-detect-gap",
+          "matched_source_location": "text:edfc3a03bb905be6#para:0",
+          "material_id": "mat-3ce6409ff090",
+          "page_type": "listing",
+          "read_document": {
+            "is_error": false,
+            "returned_range": [
+              0,
+              1
+            ],
+            "total_paragraphs": 1,
+            "truncated": false
+          },
+          "read_excerpt": "兵器大观丨反低空目标作战的新选择 - 中国军网 要闻 评论 图片 视频 更多 特战 女兵 外军 维和 兵器 空天 军粮 文化 搜索 显示与隐藏侧边栏 搜索 要闻 正文 兵器大观丨反低空目标作战的新选择 来源：中国军网-解放军报 作者：吴志峰 孙斌 责任编辑：王一亘 发布：2026-04-22 07:20:08 手机看 分享到 “有人战机+吊舱+激光制导火箭弹” 反低空目标作战的新选择 ■吴志峰 孙 斌 战机发射激光制导火箭弹（电脑合成图）。 近年来，为了应对无人机等低空目标，一些国家在积极发展各类陆基反无人机系统的同时，也在推进空中反无人机平台的研发。其中，为现役有人战机加装反无人机装备就是研发路径之一。 去年12月，乌军将集成了AN/AAQ-33“狙击手”ATP先进瞄准吊舱与APKWS II激光制导火箭弹的F-16战机，用于反无人机作战。 今年4月，BAE系统公司宣布，英国皇家空军“台风”战机在本土靶场成功试射了APKWS激光制导火箭弹。 这些反无人机平台，采用的都是“有人战机+吊舱+激光制导火箭弹”的组合方式。 那么，这种组合为何会成为反无人机作战的新选择？新组合现身的意义何在？除了优点外有哪些短板与局限性？请看本期解读。 有人战机单独出手效果不佳 现代战争中，无人机与巡航导弹已成为低空突防的核心力量。面对这类慢速、低成本的低空目标，传统有人战机对其进行反制，往往会陷入“高炮打蚊子”般的困境，作战效果不佳。 以2024年的一次空中对抗为例，4月13日夜间，在以色列周边空域，一架美军F-15E战机追击“沙赫德-136”无人机群，20分钟内耗尽8枚空空导弹，总价值超过800万…",
+          "reason": "matched reader evidence to stored body paragraph",
+          "simplified_ref": "text:edfc3a03bb905be6",
+          "source_id": "src-81-20260422-lowtarget",
+          "status": "matched",
+          "url": "http://www.81.cn/yw_208727/16456473.html"
+        },
+        {
+          "artifact_ref": "html:543d7e8611ab8310",
+          "evidence_id": "ev-81-multimodal-warning-need",
+          "matched_source_location": "text:b6632576500f6096#para:0",
+          "material_id": "mat-881d8cee3461",
+          "page_type": "article",
+          "read_document": {
+            "is_error": false,
+            "returned_range": [
+              0,
+              1
+            ],
+            "total_paragraphs": 1,
+            "truncated": false
+          },
+          "read_excerpt": "军事论坛丨反无人作战重塑未来战争面貌 - 中国军网 要闻 评论 图片 视频 更多 特战 女兵 外军 维和 兵器 空天 军粮 文化 搜索 显示与隐藏侧边栏 搜索 要闻推荐 We Recommend 庆祝中国共产党成立105周年音乐会在京举行 《求是》杂志发表习近平总书记重要文章 《做焦裕禄式的县委书记》 习近平同塞舌尔总统赫米尼耶就中塞建交50周年互致贺电 中国共产党党内统计公报 热点专题 Special Reports 牢记初心使命 奋进复兴征程——庆祝中国共产党成立105周年 深入学习贯彻习近平党建思想 树立和践行正确政绩观学习教育 牢记初心使命 奋进复兴征程 视频推荐 Videos 一生跟党走！百岁老兵深情寄语党的105岁生日 “好记者讲好故事”宣讲团走进陆军航空兵学院 踏浪开火！两栖装甲海上实弹考核 张超国防班：少年有志，军校相见 军事酷图 Photos 第77集团军某旅装甲兵分队组织战术训练 霞光下的空军战机，看不够 星夜砺剑！直击空军航空兵夜间飞行训练现场 长江源头，他们与寂静为伴 军网理论 回答“时代之问”：推进理论创新和实践创新双飞跃 学有所思丨莫让理论学习陷于“客里空” 回答“人民之问”：坚持以人民为中心的研究导向 厚植文化底蕴 夯实胜战之基 要闻 正文 军事论坛丨反无人作战重塑未来战争面貌 来源：中国军网-解放军报 作者：杨敬华 罗进军 肖博 责任编辑：王一亘 2025-07-03 07:45:01 0 反无人作战重塑未来战争面貌 ■杨敬华 罗进军 肖 博 引言 21世纪以来，无人装备在全球多场战争冲突中大放异彩，在战场上的角色正从“助攻”加速向“主攻”转变…",
+          "reason": "matched reader evidence to stored body paragraph",
+          "simplified_ref": "text:b6632576500f6096",
+          "source_id": "src-81-20250703-counteruas-war",
+          "status": "matched",
+          "url": "http://www.81.cn/yw_208727/16394887.html"
+        },
+        {
+          "artifact_ref": "html:21ce585933933179",
+          "evidence_id": "ev-81-ground-airdefense-limit",
+          "matched_source_location": "text:5240a036d1ca359e#para:0",
+          "material_id": "mat-b49e72c67398",
+          "page_type": "listing",
+          "read_document": {
+            "is_error": false,
+            "returned_range": [
+              0,
+              1
+            ],
+            "total_paragraphs": 1,
+            "truncated": false
+          },
+          "read_excerpt": "反无人机作战发展不断提速 - 中国军网 要闻 评论 图片 视频 更多 特战 女兵 外军 维和 兵器 空天 军粮 文化 搜索 显示与隐藏侧边栏 搜索 兵器 正文 反无人机作战发展不断提速 来源：中国军网-解放军报 作者：徐长帅 责任编辑：郭亮 发布：2023-08-24 08:35:18 手机看 分享到 反无人机作战发展不断提速 ■徐长帅 近日，据媒体报道，随着改装的廉价无人装备——穿越机被广泛应用于战场，相关防御手段也在不断升级。近年来，无人机作战与反无人机作战，已然成为战场重要作战样式。二者在“矛”与“盾”的较量中，呈现螺旋式发展，对战场态势产生显著影响。 德国 Skynex 高射炮系统可拦截巡 航导弹和无人机。 资料图片 伊朗“卡拉尔”无人机下方挂载导弹。 资料图片 相关战略陆续出台 近年来，大量小型自杀式无人机不断投入战场。这些无人机具有巡飞功能，既能执行侦察任务，在发现目标后又能实施攻击。面对迅速增长的无人机威胁，有关国家纷纷出台相关战略，试图在反无人机领域占据领先地位。 美军将无人机列为最具破坏力的空中威胁之一。2019年12月，美国国防部精简了本部门的各种反小型无人机系统项目，指定陆军为执行机构，成立联合反小型无人机系统办公室，负责指导监督国防部所有反无人机武器研发工作。2021年1月，该办公室发布国防部《反小型无人机系统战略》。截至目前，该办公室已组织四次反无人机演示，并计划在2024年6月进行第五次演示，聚焦反无人机蜂群。 俄军将无人机防御作战列为一项重要任务，频繁在战场上检验反无人机技战术，目前已在大部分军区组建了反无人机部队。自2019年起，俄军所有的重大…",
+          "reason": "matched reader evidence to stored body paragraph",
+          "simplified_ref": "text:5240a036d1ca359e",
+          "source_id": "src-81-20230824-counteruas-speed",
+          "status": "matched",
+          "url": "http://www.81.cn/bq_208581/16247247.html"
+        },
+        {
+          "artifact_ref": "html:e69d4b5d4d1272e7",
+          "evidence_id": "ev-81-training-doctrine-need",
+          "matched_source_location": "text:0c4f7bc0b11149bd#para:0",
+          "material_id": "mat-15224ca4c7f6",
+          "page_type": "listing",
+          "read_document": {
+            "is_error": false,
+            "returned_range": [
+              0,
+              1
+            ],
+            "total_paragraphs": 1,
+            "truncated": false
+          },
+          "read_excerpt": "美国出台反无人机新战略 - 中国军网 要闻 评论 图片 视频 更多 特战 女兵 外军 维和 兵器 空天 军粮 文化 搜索 显示与隐藏侧边栏 搜索 兵器 正文 美国出台反无人机新战略 来源：中国军网-中国国防报 作者：王昌凡 责任编辑：徐占虎 发布：2024-12-18 08:53:25 手机看 分享到 美国出台反无人机新战略 ■王昌凡 美国陆军的EAGLS反无人机系统。 美国士兵进行反无人机训练。 据外媒报道，美国国防部长劳埃德·奥斯汀近日签署一项反无人机新战略，通过整合美国防部在不同时期推出的各种反无人机方法手段，保护相关设施和人员免受无人机威胁。 5项内容应对新威胁 报道称，虽然反无人机新战略目前处于保密阶段，但外界通过美国防部发表的一份说明报告，了解到该战略的基本情况。 报告指出，在近年来的地区冲突中，无人机对传统战法和作战原则形成新挑战。从战术层面看，部队的隐蔽、集中和机动变得困难；从战略层面看，人力和资金成本大幅降低，缩小整体实力差距。由于美国对此缺乏应对措施，导致无人机威胁事件频发。在海外，美国牵头组织的“繁荣卫士”红海护航联盟几乎每天遭到无人机袭击，被称为“美国海军自二战以来经历的最持久战斗”。美国在叙利亚、伊拉克的基地也受到无人机入侵。今年1月，1架无人机袭击了美军位于叙利亚和约旦边境的军事基地，造成3名美军士兵死亡，超过25人受伤。美国本土也遭受多起无人机威胁。据美媒报道，去年以来，弗吉尼亚州兰利空军基地、诺福克海军基地等发生无人机侵入事件，内华达州核试验基地上空也出现过5架不明身份的无人机。 为此，美国防部出台反无人机新战略，具体内容分为5项：一是加强对无…",
+          "reason": "matched reader evidence to stored body paragraph",
+          "simplified_ref": "text:0c4f7bc0b11149bd",
+          "source_id": "src-81-20241218-us-counteruas-strategy",
+          "status": "matched",
+          "url": "http://www.81.cn/bq_208581/16359313.html"
+        }
+      ],
+      "source_strategy_id": "strategy-f797a92bc639",
+      "status": "stopped",
+      "stop_reason": "judge_stop",
+      "topic": "低空无人机探测预警能力缺口",
+      "updated_at": "2026-06-30T20:20:13.619214+00:00",
+      "worker_report_ids": [
+        "round-1-reader-task-1-reader-1"
+      ],
+      "worker_reports": [
+        {
+          "accepted_evidence_ids": [
+            "ev-81-lowtarget-detect-gap",
+            "ev-81-multimodal-warning-need",
+            "ev-81-ground-airdefense-limit",
+            "ev-81-training-doctrine-need"
+          ],
+          "accepted_source_ids": [
+            "src-81-20260422-lowtarget",
+            "src-81-20250703-counteruas-war",
+            "src-81-20230824-counteruas-speed",
+            "src-81-20241218-us-counteruas-strategy"
+          ],
+          "evidence_refs": [
+            "ev-81-lowtarget-detect-gap",
+            "ev-81-multimodal-warning-need",
+            "ev-81-ground-airdefense-limit",
+            "ev-81-training-doctrine-need"
+          ],
+          "findings": [
+            "ev-81-lowtarget-detect-gap: 81.cn正文直接支撑低空无人机/巡航导弹威胁变化及传统探测拦截错配，位置 text:http://www.81.cn/yw_208727/16456473.html#para:32-37。",
+            "ev-81-multimodal-warning-need: 81.cn正文直接提出全领域预警平台、多层次侦察设备、多模态探测的体系需求，位置 text:http://www.81.cn/yw_208727/16394887.html#para:43。",
+            "ev-81-ground-airdefense-limit: 81.cn正文直接说明小型无人机雷达锁定难、地面防空低空探测拦截距离有限，位置 text:http://www.81.cn/bq_208581/16247247.html#para:39-43。",
+            "ev-81-training-doctrine-need: 81.cn正文直接覆盖探测跟踪能力提升及反无人机训练/政策核心化需求，位置 text:http://www.81.cn/bq_208581/16359313.html#para:31。"
+          ],
+          "need_more_sources": false,
+          "new_evidence_cards": [
+            "ev-81-lowtarget-detect-gap",
+            "ev-81-multimodal-warning-need",
+            "ev-81-ground-airdefense-limit",
+            "ev-81-training-doctrine-need"
+          ],
+          "objective": "在中国军网/解放军报体系内寻找低空无人机探测预警能力缺口的官方表述，重点是训练、战场防空、反无人机、低空慢小目标发现难等正文证据。",
+          "open_questions": [
+            "none"
+          ],
+          "partial_findings": [
+            "ev-81-lowtarget-detect-gap: 81.cn正文直接支撑低空无人机/巡航导弹威胁变化及传统探测拦截错配，位置 text:http://www.81.cn/yw_208727/16456473.html#para:32-37。",
+            "ev-81-multimodal-warning-need: 81.cn正文直接提出全领域预警平台、多层次侦察设备、多模态探测的体系需求，位置 text:http://www.81.cn/yw_208727/16394887.html#para:43。",
+            "ev-81-ground-airdefense-limit: 81.cn正文直接说明小型无人机雷达锁定难、地面防空低空探测拦截距离有限，位置 text:http://www.81.cn/bq_208581/16247247.html#para:39-43。",
+            "ev-81-training-doctrine-need: 81.cn正文直接覆盖探测跟踪能力提升及反无人机训练/政策核心化需求，位置 text:http://www.81.cn/bq_208581/16359313.html#para:31。"
+          ],
+          "rejected_evidence_ids": [],
+          "rejected_source_ids": [],
+          "remaining_gaps": [
+            "none"
+          ],
+          "report_id": "round-1-reader-task-1-reader-1",
+          "risk_or_conflict": [
+            "证据限定在81.cn中国军网/解放军报体系；部分材料通过外军案例说明能力缺口和发展方向，不等同于对本方装备缺口的直接披露。",
+            "发现路径使用Bing站点查询定位81.cn正文页；正式证据均来自已读取的81.cn正文页面，不使用搜索摘要作为EvidenceCard。"
+          ],
+          "role": "reader",
+          "round_id": "round-1",
+          "source_materials": [
+            {
+              "artifact_ref": "html:6316b5aeabd4da10",
+              "evidence_id": "ev-81-lowtarget-detect-gap",
+              "matched_source_location": "text:edfc3a03bb905be6#para:0",
+              "material_id": "mat-3ce6409ff090",
+              "page_type": "listing",
+              "read_document": {
+                "is_error": false,
+                "returned_range": [
+                  0,
+                  1
+                ],
+                "total_paragraphs": 1,
+                "truncated": false
+              },
+              "read_excerpt": "兵器大观丨反低空目标作战的新选择 - 中国军网 要闻 评论 图片 视频 更多 特战 女兵 外军 维和 兵器 空天 军粮 文化 搜索 显示与隐藏侧边栏 搜索 要闻 正文 兵器大观丨反低空目标作战的新选择 来源：中国军网-解放军报 作者：吴志峰 孙斌 责任编辑：王一亘 发布：2026-04-22 07:20:08 手机看 分享到 “有人战机+吊舱+激光制导火箭弹” 反低空目标作战的新选择 ■吴志峰 孙 斌 战机发射激光制导火箭弹（电脑合成图）。 近年来，为了应对无人机等低空目标，一些国家在积极发展各类陆基反无人机系统的同时，也在推进空中反无人机平台的研发。其中，为现役有人战机加装反无人机装备就是研发路径之一。 去年12月，乌军将集成了AN/AAQ-33“狙击手”ATP先进瞄准吊舱与APKWS II激光制导火箭弹的F-16战机，用于反无人机作战。 今年4月，BAE系统公司宣布，英国皇家空军“台风”战机在本土靶场成功试射了APKWS激光制导火箭弹。 这些反无人机平台，采用的都是“有人战机+吊舱+激光制导火箭弹”的组合方式。 那么，这种组合为何会成为反无人机作战的新选择？新组合现身的意义何在？除了优点外有哪些短板与局限性？请看本期解读。 有人战机单独出手效果不佳 现代战争中，无人机与巡航导弹已成为低空突防的核心力量。面对这类慢速、低成本的低空目标，传统有人战机对其进行反制，往往会陷入“高炮打蚊子”般的困境，作战效果不佳。 以2024年的一次空中对抗为例，4月13日夜间，在以色列周边空域，一架美军F-15E战机追击“沙赫德-136”无人机群，20分钟内耗尽8枚空空导弹，总价值超过800万…",
+              "reason": "matched reader evidence to stored body paragraph",
+              "simplified_ref": "text:edfc3a03bb905be6",
+              "source_id": "src-81-20260422-lowtarget",
+              "status": "matched",
+              "url": "http://www.81.cn/yw_208727/16456473.html"
+            },
+            {
+              "artifact_ref": "html:543d7e8611ab8310",
+              "evidence_id": "ev-81-multimodal-warning-need",
+              "matched_source_location": "text:b6632576500f6096#para:0",
+              "material_id": "mat-881d8cee3461",
+              "page_type": "article",
+              "read_document": {
+                "is_error": false,
+                "returned_range": [
+                  0,
+                  1
+                ],
+                "total_paragraphs": 1,
+                "truncated": false
+              },
+              "read_excerpt": "军事论坛丨反无人作战重塑未来战争面貌 - 中国军网 要闻 评论 图片 视频 更多 特战 女兵 外军 维和 兵器 空天 军粮 文化 搜索 显示与隐藏侧边栏 搜索 要闻推荐 We Recommend 庆祝中国共产党成立105周年音乐会在京举行 《求是》杂志发表习近平总书记重要文章 《做焦裕禄式的县委书记》 习近平同塞舌尔总统赫米尼耶就中塞建交50周年互致贺电 中国共产党党内统计公报 热点专题 Special Reports 牢记初心使命 奋进复兴征程——庆祝中国共产党成立105周年 深入学习贯彻习近平党建思想 树立和践行正确政绩观学习教育 牢记初心使命 奋进复兴征程 视频推荐 Videos 一生跟党走！百岁老兵深情寄语党的105岁生日 “好记者讲好故事”宣讲团走进陆军航空兵学院 踏浪开火！两栖装甲海上实弹考核 张超国防班：少年有志，军校相见 军事酷图 Photos 第77集团军某旅装甲兵分队组织战术训练 霞光下的空军战机，看不够 星夜砺剑！直击空军航空兵夜间飞行训练现场 长江源头，他们与寂静为伴 军网理论 回答“时代之问”：推进理论创新和实践创新双飞跃 学有所思丨莫让理论学习陷于“客里空” 回答“人民之问”：坚持以人民为中心的研究导向 厚植文化底蕴 夯实胜战之基 要闻 正文 军事论坛丨反无人作战重塑未来战争面貌 来源：中国军网-解放军报 作者：杨敬华 罗进军 肖博 责任编辑：王一亘 2025-07-03 07:45:01 0 反无人作战重塑未来战争面貌 ■杨敬华 罗进军 肖 博 引言 21世纪以来，无人装备在全球多场战争冲突中大放异彩，在战场上的角色正从“助攻”加速向“主攻”转变…",
+              "reason": "matched reader evidence to stored body paragraph",
+              "simplified_ref": "text:b6632576500f6096",
+              "source_id": "src-81-20250703-counteruas-war",
+              "status": "matched",
+              "url": "http://www.81.cn/yw_208727/16394887.html"
+            },
+            {
+              "artifact_ref": "html:21ce585933933179",
+              "evidence_id": "ev-81-ground-airdefense-limit",
+              "matched_source_location": "text:5240a036d1ca359e#para:0",
+              "material_id": "mat-b49e72c67398",
+              "page_type": "listing",
+              "read_document": {
+                "is_error": false,
+                "returned_range": [
+                  0,
+                  1
+                ],
+                "total_paragraphs": 1,
+                "truncated": false
+              },
+              "read_excerpt": "反无人机作战发展不断提速 - 中国军网 要闻 评论 图片 视频 更多 特战 女兵 外军 维和 兵器 空天 军粮 文化 搜索 显示与隐藏侧边栏 搜索 兵器 正文 反无人机作战发展不断提速 来源：中国军网-解放军报 作者：徐长帅 责任编辑：郭亮 发布：2023-08-24 08:35:18 手机看 分享到 反无人机作战发展不断提速 ■徐长帅 近日，据媒体报道，随着改装的廉价无人装备——穿越机被广泛应用于战场，相关防御手段也在不断升级。近年来，无人机作战与反无人机作战，已然成为战场重要作战样式。二者在“矛”与“盾”的较量中，呈现螺旋式发展，对战场态势产生显著影响。 德国 Skynex 高射炮系统可拦截巡 航导弹和无人机。 资料图片 伊朗“卡拉尔”无人机下方挂载导弹。 资料图片 相关战略陆续出台 近年来，大量小型自杀式无人机不断投入战场。这些无人机具有巡飞功能，既能执行侦察任务，在发现目标后又能实施攻击。面对迅速增长的无人机威胁，有关国家纷纷出台相关战略，试图在反无人机领域占据领先地位。 美军将无人机列为最具破坏力的空中威胁之一。2019年12月，美国国防部精简了本部门的各种反小型无人机系统项目，指定陆军为执行机构，成立联合反小型无人机系统办公室，负责指导监督国防部所有反无人机武器研发工作。2021年1月，该办公室发布国防部《反小型无人机系统战略》。截至目前，该办公室已组织四次反无人机演示，并计划在2024年6月进行第五次演示，聚焦反无人机蜂群。 俄军将无人机防御作战列为一项重要任务，频繁在战场上检验反无人机技战术，目前已在大部分军区组建了反无人机部队。自2019年起，俄军所有的重大…",
+              "reason": "matched reader evidence to stored body paragraph",
+              "simplified_ref": "text:5240a036d1ca359e",
+              "source_id": "src-81-20230824-counteruas-speed",
+              "status": "matched",
+              "url": "http://www.81.cn/bq_208581/16247247.html"
+            },
+            {
+              "artifact_ref": "html:e69d4b5d4d1272e7",
+              "evidence_id": "ev-81-training-doctrine-need",
+              "matched_source_location": "text:0c4f7bc0b11149bd#para:0",
+              "material_id": "mat-15224ca4c7f6",
+              "page_type": "listing",
+              "read_document": {
+                "is_error": false,
+                "returned_range": [
+                  0,
+                  1
+                ],
+                "total_paragraphs": 1,
+                "truncated": false
+              },
+              "read_excerpt": "美国出台反无人机新战略 - 中国军网 要闻 评论 图片 视频 更多 特战 女兵 外军 维和 兵器 空天 军粮 文化 搜索 显示与隐藏侧边栏 搜索 兵器 正文 美国出台反无人机新战略 来源：中国军网-中国国防报 作者：王昌凡 责任编辑：徐占虎 发布：2024-12-18 08:53:25 手机看 分享到 美国出台反无人机新战略 ■王昌凡 美国陆军的EAGLS反无人机系统。 美国士兵进行反无人机训练。 据外媒报道，美国国防部长劳埃德·奥斯汀近日签署一项反无人机新战略，通过整合美国防部在不同时期推出的各种反无人机方法手段，保护相关设施和人员免受无人机威胁。 5项内容应对新威胁 报道称，虽然反无人机新战略目前处于保密阶段，但外界通过美国防部发表的一份说明报告，了解到该战略的基本情况。 报告指出，在近年来的地区冲突中，无人机对传统战法和作战原则形成新挑战。从战术层面看，部队的隐蔽、集中和机动变得困难；从战略层面看，人力和资金成本大幅降低，缩小整体实力差距。由于美国对此缺乏应对措施，导致无人机威胁事件频发。在海外，美国牵头组织的“繁荣卫士”红海护航联盟几乎每天遭到无人机袭击，被称为“美国海军自二战以来经历的最持久战斗”。美国在叙利亚、伊拉克的基地也受到无人机入侵。今年1月，1架无人机袭击了美军位于叙利亚和约旦边境的军事基地，造成3名美军士兵死亡，超过25人受伤。美国本土也遭受多起无人机威胁。据美媒报道，去年以来，弗吉尼亚州兰利空军基地、诺福克海军基地等发生无人机侵入事件，内华达州核试验基地上空也出现过5架不明身份的无人机。 为此，美国防部出台反无人机新战略，具体内容分为5项：一是加强对无…",
+              "reason": "matched reader evidence to stored body paragraph",
+              "simplified_ref": "text:0c4f7bc0b11149bd",
+              "source_id": "src-81-20241218-us-counteruas-strategy",
+              "status": "matched",
+              "url": "http://www.81.cn/bq_208581/16359313.html"
+            }
+          ],
+          "stop_reason": "evidence_sufficient",
+          "suggested_next_routes": [
+            "none"
+          ],
+          "task_brief": "只采正文页面、报纸正文或文章正文，不采搜索结果页、专题列表页、站内列表摘要。保留每条证据的URL、标题、发布日期、来源栏目、正文摘录位置和对应查询字符串。",
+          "task_id": "reader-task-1",
+          "worker_report_id": "round-1-reader-task-1-reader-1"
+        }
+      ]
+    }
+  ],
+  "run_id": "codex-materialized-real-smoke",
+  "source_materials": [
+    {
+      "artifact_ref": "html:6316b5aeabd4da10",
+      "evidence_id": "ev-81-lowtarget-detect-gap",
+      "matched_source_location": "text:edfc3a03bb905be6#para:0",
+      "material_id": "mat-3ce6409ff090",
+      "page_type": "listing",
+      "read_document": {
+        "is_error": false,
+        "returned_range": [
+          0,
+          1
+        ],
+        "total_paragraphs": 1,
+        "truncated": false
+      },
+      "read_excerpt": "兵器大观丨反低空目标作战的新选择 - 中国军网 要闻 评论 图片 视频 更多 特战 女兵 外军 维和 兵器 空天 军粮 文化 搜索 显示与隐藏侧边栏 搜索 要闻 正文 兵器大观丨反低空目标作战的新选择 来源：中国军网-解放军报 作者：吴志峰 孙斌 责任编辑：王一亘 发布：2026-04-22 07:20:08 手机看 分享到 “有人战机+吊舱+激光制导火箭弹” 反低空目标作战的新选择 ■吴志峰 孙 斌 战机发射激光制导火箭弹（电脑合成图）。 近年来，为了应对无人机等低空目标，一些国家在积极发展各类陆基反无人机系统的同时，也在推进空中反无人机平台的研发。其中，为现役有人战机加装反无人机装备就是研发路径之一。 去年12月，乌军将集成了AN/AAQ-33“狙击手”ATP先进瞄准吊舱与APKWS II激光制导火箭弹的F-16战机，用于反无人机作战。 今年4月，BAE系统公司宣布，英国皇家空军“台风”战机在本土靶场成功试射了APKWS激光制导火箭弹。 这些反无人机平台，采用的都是“有人战机+吊舱+激光制导火箭弹”的组合方式。 那么，这种组合为何会成为反无人机作战的新选择？新组合现身的意义何在？除了优点外有哪些短板与局限性？请看本期解读。 有人战机单独出手效果不佳 现代战争中，无人机与巡航导弹已成为低空突防的核心力量。面对这类慢速、低成本的低空目标，传统有人战机对其进行反制，往往会陷入“高炮打蚊子”般的困境，作战效果不佳。 以2024年的一次空中对抗为例，4月13日夜间，在以色列周边空域，一架美军F-15E战机追击“沙赫德-136”无人机群，20分钟内耗尽8枚空空导弹，总价值超过800万…",
+      "reason": "matched reader evidence to stored body paragraph",
+      "simplified_ref": "text:edfc3a03bb905be6",
+      "source_id": "src-81-20260422-lowtarget",
+      "status": "matched",
+      "url": "http://www.81.cn/yw_208727/16456473.html"
+    },
+    {
+      "artifact_ref": "html:543d7e8611ab8310",
+      "evidence_id": "ev-81-multimodal-warning-need",
+      "matched_source_location": "text:b6632576500f6096#para:0",
+      "material_id": "mat-881d8cee3461",
+      "page_type": "article",
+      "read_document": {
+        "is_error": false,
+        "returned_range": [
+          0,
+          1
+        ],
+        "total_paragraphs": 1,
+        "truncated": false
+      },
+      "read_excerpt": "军事论坛丨反无人作战重塑未来战争面貌 - 中国军网 要闻 评论 图片 视频 更多 特战 女兵 外军 维和 兵器 空天 军粮 文化 搜索 显示与隐藏侧边栏 搜索 要闻推荐 We Recommend 庆祝中国共产党成立105周年音乐会在京举行 《求是》杂志发表习近平总书记重要文章 《做焦裕禄式的县委书记》 习近平同塞舌尔总统赫米尼耶就中塞建交50周年互致贺电 中国共产党党内统计公报 热点专题 Special Reports 牢记初心使命 奋进复兴征程——庆祝中国共产党成立105周年 深入学习贯彻习近平党建思想 树立和践行正确政绩观学习教育 牢记初心使命 奋进复兴征程 视频推荐 Videos 一生跟党走！百岁老兵深情寄语党的105岁生日 “好记者讲好故事”宣讲团走进陆军航空兵学院 踏浪开火！两栖装甲海上实弹考核 张超国防班：少年有志，军校相见 军事酷图 Photos 第77集团军某旅装甲兵分队组织战术训练 霞光下的空军战机，看不够 星夜砺剑！直击空军航空兵夜间飞行训练现场 长江源头，他们与寂静为伴 军网理论 回答“时代之问”：推进理论创新和实践创新双飞跃 学有所思丨莫让理论学习陷于“客里空” 回答“人民之问”：坚持以人民为中心的研究导向 厚植文化底蕴 夯实胜战之基 要闻 正文 军事论坛丨反无人作战重塑未来战争面貌 来源：中国军网-解放军报 作者：杨敬华 罗进军 肖博 责任编辑：王一亘 2025-07-03 07:45:01 0 反无人作战重塑未来战争面貌 ■杨敬华 罗进军 肖 博 引言 21世纪以来，无人装备在全球多场战争冲突中大放异彩，在战场上的角色正从“助攻”加速向“主攻”转变…",
+      "reason": "matched reader evidence to stored body paragraph",
+      "simplified_ref": "text:b6632576500f6096",
+      "source_id": "src-81-20250703-counteruas-war",
+      "status": "matched",
+      "url": "http://www.81.cn/yw_208727/16394887.html"
+    },
+    {
+      "artifact_ref": "html:21ce585933933179",
+      "evidence_id": "ev-81-ground-airdefense-limit",
+      "matched_source_location": "text:5240a036d1ca359e#para:0",
+      "material_id": "mat-b49e72c67398",
+      "page_type": "listing",
+      "read_document": {
+        "is_error": false,
+        "returned_range": [
+          0,
+          1
+        ],
+        "total_paragraphs": 1,
+        "truncated": false
+      },
+      "read_excerpt": "反无人机作战发展不断提速 - 中国军网 要闻 评论 图片 视频 更多 特战 女兵 外军 维和 兵器 空天 军粮 文化 搜索 显示与隐藏侧边栏 搜索 兵器 正文 反无人机作战发展不断提速 来源：中国军网-解放军报 作者：徐长帅 责任编辑：郭亮 发布：2023-08-24 08:35:18 手机看 分享到 反无人机作战发展不断提速 ■徐长帅 近日，据媒体报道，随着改装的廉价无人装备——穿越机被广泛应用于战场，相关防御手段也在不断升级。近年来，无人机作战与反无人机作战，已然成为战场重要作战样式。二者在“矛”与“盾”的较量中，呈现螺旋式发展，对战场态势产生显著影响。 德国 Skynex 高射炮系统可拦截巡 航导弹和无人机。 资料图片 伊朗“卡拉尔”无人机下方挂载导弹。 资料图片 相关战略陆续出台 近年来，大量小型自杀式无人机不断投入战场。这些无人机具有巡飞功能，既能执行侦察任务，在发现目标后又能实施攻击。面对迅速增长的无人机威胁，有关国家纷纷出台相关战略，试图在反无人机领域占据领先地位。 美军将无人机列为最具破坏力的空中威胁之一。2019年12月，美国国防部精简了本部门的各种反小型无人机系统项目，指定陆军为执行机构，成立联合反小型无人机系统办公室，负责指导监督国防部所有反无人机武器研发工作。2021年1月，该办公室发布国防部《反小型无人机系统战略》。截至目前，该办公室已组织四次反无人机演示，并计划在2024年6月进行第五次演示，聚焦反无人机蜂群。 俄军将无人机防御作战列为一项重要任务，频繁在战场上检验反无人机技战术，目前已在大部分军区组建了反无人机部队。自2019年起，俄军所有的重大…",
+      "reason": "matched reader evidence to stored body paragraph",
+      "simplified_ref": "text:5240a036d1ca359e",
+      "source_id": "src-81-20230824-counteruas-speed",
+      "status": "matched",
+      "url": "http://www.81.cn/bq_208581/16247247.html"
+    },
+    {
+      "artifact_ref": "html:e69d4b5d4d1272e7",
+      "evidence_id": "ev-81-training-doctrine-need",
+      "matched_source_location": "text:0c4f7bc0b11149bd#para:0",
+      "material_id": "mat-15224ca4c7f6",
+      "page_type": "listing",
+      "read_document": {
+        "is_error": false,
+        "returned_range": [
+          0,
+          1
+        ],
+        "total_paragraphs": 1,
+        "truncated": false
+      },
+      "read_excerpt": "美国出台反无人机新战略 - 中国军网 要闻 评论 图片 视频 更多 特战 女兵 外军 维和 兵器 空天 军粮 文化 搜索 显示与隐藏侧边栏 搜索 兵器 正文 美国出台反无人机新战略 来源：中国军网-中国国防报 作者：王昌凡 责任编辑：徐占虎 发布：2024-12-18 08:53:25 手机看 分享到 美国出台反无人机新战略 ■王昌凡 美国陆军的EAGLS反无人机系统。 美国士兵进行反无人机训练。 据外媒报道，美国国防部长劳埃德·奥斯汀近日签署一项反无人机新战略，通过整合美国防部在不同时期推出的各种反无人机方法手段，保护相关设施和人员免受无人机威胁。 5项内容应对新威胁 报道称，虽然反无人机新战略目前处于保密阶段，但外界通过美国防部发表的一份说明报告，了解到该战略的基本情况。 报告指出，在近年来的地区冲突中，无人机对传统战法和作战原则形成新挑战。从战术层面看，部队的隐蔽、集中和机动变得困难；从战略层面看，人力和资金成本大幅降低，缩小整体实力差距。由于美国对此缺乏应对措施，导致无人机威胁事件频发。在海外，美国牵头组织的“繁荣卫士”红海护航联盟几乎每天遭到无人机袭击，被称为“美国海军自二战以来经历的最持久战斗”。美国在叙利亚、伊拉克的基地也受到无人机入侵。今年1月，1架无人机袭击了美军位于叙利亚和约旦边境的军事基地，造成3名美军士兵死亡，超过25人受伤。美国本土也遭受多起无人机威胁。据美媒报道，去年以来，弗吉尼亚州兰利空军基地、诺福克海军基地等发生无人机侵入事件，内华达州核试验基地上空也出现过5架不明身份的无人机。 为此，美国防部出台反无人机新战略，具体内容分为5项：一是加强对无…",
+      "reason": "matched reader evidence to stored body paragraph",
+      "simplified_ref": "text:0c4f7bc0b11149bd",
+      "source_id": "src-81-20241218-us-counteruas-strategy",
+      "status": "matched",
+      "url": "http://www.81.cn/bq_208581/16359313.html"
+    }
+  ],
+  "source_strategy": {
+    "held_sources": [],
+    "rationale": "Selected A/B tier HTTP sources with whitelist entry URLs; browser sources are held unless explicitly allowed.",
+    "seed_urls": [
+      "http://www.81.cn/",
+      "https://www.xdfyjs.cn/CN/article/showBrowseTopList.do",
+      "https://press.armywarcollege.edu/parameters/",
+      "https://www.rand.org/topics/uncrewed-aerial-vehicles.html"
+    ],
+    "selected_sources": [
+      {
+        "content_languages": [
+          "zh"
+        ],
+        "default_queries": [],
+        "entry_urls": [
+          "http://www.81.cn/"
+        ],
+        "fetch_transport": "http",
+        "interaction_profile": "site_search",
+        "planned_queries": [
+          "低空无人机探测预警能力缺口",
+          "低空无人机探测预警 能力 缺口"
+        ],
+        "rationale": "topic-derived query plan and public whitelisted entry",
+        "source_name": "中国军网",
+        "source_tier": "A",
+        "source_type": "official"
+      },
+      {
+        "content_languages": [
+          "zh"
+        ],
+        "default_queries": [],
+        "entry_urls": [
+          "https://www.xdfyjs.cn/CN/article/showBrowseTopList.do"
+        ],
+        "fetch_transport": "http",
+        "interaction_profile": "static_listing",
+        "planned_queries": [
+          "低空无人机探测预警能力缺口",
+          "低空无人机探测预警 能力 缺口"
+        ],
+        "rationale": "topic-derived query plan and public whitelisted entry",
+        "source_name": "现代防御技术",
+        "source_tier": "A",
+        "source_type": "journal"
+      },
+      {
+        "content_languages": [
+          "en"
+        ],
+        "default_queries": [],
+        "entry_urls": [
+          "https://press.armywarcollege.edu/parameters/"
+        ],
+        "fetch_transport": "http",
+        "interaction_profile": "static_listing",
+        "planned_queries": [
+          "low altitude drones unmanned systems detection early warning capability gap gap capability"
+        ],
+        "rationale": "topic-derived query plan and public whitelisted entry",
+        "source_name": "Parameters",
+        "source_tier": "A",
+        "source_type": "journal"
+      },
+      {
+        "content_languages": [
+          "en"
+        ],
+        "default_queries": [],
+        "entry_urls": [
+          "https://www.rand.org/topics/uncrewed-aerial-vehicles.html"
+        ],
+        "fetch_transport": "http",
+        "interaction_profile": "static_listing",
+        "planned_queries": [
+          "low altitude drones unmanned systems detection early warning capability gap gap capability"
+        ],
+        "rationale": "topic-derived query plan and public whitelisted entry",
+        "source_name": "美国兰德公司",
+        "source_tier": "A",
+        "source_type": "thinktank"
+      }
+    ],
+    "strategy_id": "strategy-f797a92bc639",
+    "topic": "低空无人机探测预警能力缺口"
+  },
+  "topic": "低空无人机探测预警能力缺口",
+  "trace_event_count": 14,
+  "worker_reports": [
+    {
+      "accepted_evidence_ids": [
+        "ev-81-lowtarget-detect-gap",
+        "ev-81-multimodal-warning-need",
+        "ev-81-ground-airdefense-limit",
+        "ev-81-training-doctrine-need"
+      ],
+      "accepted_source_ids": [
+        "src-81-20260422-lowtarget",
+        "src-81-20250703-counteruas-war",
+        "src-81-20230824-counteruas-speed",
+        "src-81-20241218-us-counteruas-strategy"
+      ],
+      "evidence_refs": [
+        "ev-81-lowtarget-detect-gap",
+        "ev-81-multimodal-warning-need",
+        "ev-81-ground-airdefense-limit",
+        "ev-81-training-doctrine-need"
+      ],
+      "findings": [
+        "ev-81-lowtarget-detect-gap: 81.cn正文直接支撑低空无人机/巡航导弹威胁变化及传统探测拦截错配，位置 text:http://www.81.cn/yw_208727/16456473.html#para:32-37。",
+        "ev-81-multimodal-warning-need: 81.cn正文直接提出全领域预警平台、多层次侦察设备、多模态探测的体系需求，位置 text:http://www.81.cn/yw_208727/16394887.html#para:43。",
+        "ev-81-ground-airdefense-limit: 81.cn正文直接说明小型无人机雷达锁定难、地面防空低空探测拦截距离有限，位置 text:http://www.81.cn/bq_208581/16247247.html#para:39-43。",
+        "ev-81-training-doctrine-need: 81.cn正文直接覆盖探测跟踪能力提升及反无人机训练/政策核心化需求，位置 text:http://www.81.cn/bq_208581/16359313.html#para:31。"
+      ],
+      "need_more_sources": false,
+      "new_evidence_cards": [
+        "ev-81-lowtarget-detect-gap",
+        "ev-81-multimodal-warning-need",
+        "ev-81-ground-airdefense-limit",
+        "ev-81-training-doctrine-need"
+      ],
+      "objective": "在中国军网/解放军报体系内寻找低空无人机探测预警能力缺口的官方表述，重点是训练、战场防空、反无人机、低空慢小目标发现难等正文证据。",
+      "open_questions": [
+        "none"
+      ],
+      "partial_findings": [
+        "ev-81-lowtarget-detect-gap: 81.cn正文直接支撑低空无人机/巡航导弹威胁变化及传统探测拦截错配，位置 text:http://www.81.cn/yw_208727/16456473.html#para:32-37。",
+        "ev-81-multimodal-warning-need: 81.cn正文直接提出全领域预警平台、多层次侦察设备、多模态探测的体系需求，位置 text:http://www.81.cn/yw_208727/16394887.html#para:43。",
+        "ev-81-ground-airdefense-limit: 81.cn正文直接说明小型无人机雷达锁定难、地面防空低空探测拦截距离有限，位置 text:http://www.81.cn/bq_208581/16247247.html#para:39-43。",
+        "ev-81-training-doctrine-need: 81.cn正文直接覆盖探测跟踪能力提升及反无人机训练/政策核心化需求，位置 text:http://www.81.cn/bq_208581/16359313.html#para:31。"
+      ],
+      "rejected_evidence_ids": [],
+      "rejected_source_ids": [],
+      "remaining_gaps": [
+        "none"
+      ],
+      "report_id": "round-1-reader-task-1-reader-1",
+      "risk_or_conflict": [
+        "证据限定在81.cn中国军网/解放军报体系；部分材料通过外军案例说明能力缺口和发展方向，不等同于对本方装备缺口的直接披露。",
+        "发现路径使用Bing站点查询定位81.cn正文页；正式证据均来自已读取的81.cn正文页面，不使用搜索摘要作为EvidenceCard。"
+      ],
+      "role": "reader",
+      "round_id": "round-1",
+      "source_materials": [
+        {
+          "artifact_ref": "html:6316b5aeabd4da10",
+          "evidence_id": "ev-81-lowtarget-detect-gap",
+          "matched_source_location": "text:edfc3a03bb905be6#para:0",
+          "material_id": "mat-3ce6409ff090",
+          "page_type": "listing",
+          "read_document": {
+            "is_error": false,
+            "returned_range": [
+              0,
+              1
+            ],
+            "total_paragraphs": 1,
+            "truncated": false
+          },
+          "read_excerpt": "兵器大观丨反低空目标作战的新选择 - 中国军网 要闻 评论 图片 视频 更多 特战 女兵 外军 维和 兵器 空天 军粮 文化 搜索 显示与隐藏侧边栏 搜索 要闻 正文 兵器大观丨反低空目标作战的新选择 来源：中国军网-解放军报 作者：吴志峰 孙斌 责任编辑：王一亘 发布：2026-04-22 07:20:08 手机看 分享到 “有人战机+吊舱+激光制导火箭弹” 反低空目标作战的新选择 ■吴志峰 孙 斌 战机发射激光制导火箭弹（电脑合成图）。 近年来，为了应对无人机等低空目标，一些国家在积极发展各类陆基反无人机系统的同时，也在推进空中反无人机平台的研发。其中，为现役有人战机加装反无人机装备就是研发路径之一。 去年12月，乌军将集成了AN/AAQ-33“狙击手”ATP先进瞄准吊舱与APKWS II激光制导火箭弹的F-16战机，用于反无人机作战。 今年4月，BAE系统公司宣布，英国皇家空军“台风”战机在本土靶场成功试射了APKWS激光制导火箭弹。 这些反无人机平台，采用的都是“有人战机+吊舱+激光制导火箭弹”的组合方式。 那么，这种组合为何会成为反无人机作战的新选择？新组合现身的意义何在？除了优点外有哪些短板与局限性？请看本期解读。 有人战机单独出手效果不佳 现代战争中，无人机与巡航导弹已成为低空突防的核心力量。面对这类慢速、低成本的低空目标，传统有人战机对其进行反制，往往会陷入“高炮打蚊子”般的困境，作战效果不佳。 以2024年的一次空中对抗为例，4月13日夜间，在以色列周边空域，一架美军F-15E战机追击“沙赫德-136”无人机群，20分钟内耗尽8枚空空导弹，总价值超过800万…",
+          "reason": "matched reader evidence to stored body paragraph",
+          "simplified_ref": "text:edfc3a03bb905be6",
+          "source_id": "src-81-20260422-lowtarget",
+          "status": "matched",
+          "url": "http://www.81.cn/yw_208727/16456473.html"
+        },
+        {
+          "artifact_ref": "html:543d7e8611ab8310",
+          "evidence_id": "ev-81-multimodal-warning-need",
+          "matched_source_location": "text:b6632576500f6096#para:0",
+          "material_id": "mat-881d8cee3461",
+          "page_type": "article",
+          "read_document": {
+            "is_error": false,
+            "returned_range": [
+              0,
+              1
+            ],
+            "total_paragraphs": 1,
+            "truncated": false
+          },
+          "read_excerpt": "军事论坛丨反无人作战重塑未来战争面貌 - 中国军网 要闻 评论 图片 视频 更多 特战 女兵 外军 维和 兵器 空天 军粮 文化 搜索 显示与隐藏侧边栏 搜索 要闻推荐 We Recommend 庆祝中国共产党成立105周年音乐会在京举行 《求是》杂志发表习近平总书记重要文章 《做焦裕禄式的县委书记》 习近平同塞舌尔总统赫米尼耶就中塞建交50周年互致贺电 中国共产党党内统计公报 热点专题 Special Reports 牢记初心使命 奋进复兴征程——庆祝中国共产党成立105周年 深入学习贯彻习近平党建思想 树立和践行正确政绩观学习教育 牢记初心使命 奋进复兴征程 视频推荐 Videos 一生跟党走！百岁老兵深情寄语党的105岁生日 “好记者讲好故事”宣讲团走进陆军航空兵学院 踏浪开火！两栖装甲海上实弹考核 张超国防班：少年有志，军校相见 军事酷图 Photos 第77集团军某旅装甲兵分队组织战术训练 霞光下的空军战机，看不够 星夜砺剑！直击空军航空兵夜间飞行训练现场 长江源头，他们与寂静为伴 军网理论 回答“时代之问”：推进理论创新和实践创新双飞跃 学有所思丨莫让理论学习陷于“客里空” 回答“人民之问”：坚持以人民为中心的研究导向 厚植文化底蕴 夯实胜战之基 要闻 正文 军事论坛丨反无人作战重塑未来战争面貌 来源：中国军网-解放军报 作者：杨敬华 罗进军 肖博 责任编辑：王一亘 2025-07-03 07:45:01 0 反无人作战重塑未来战争面貌 ■杨敬华 罗进军 肖 博 引言 21世纪以来，无人装备在全球多场战争冲突中大放异彩，在战场上的角色正从“助攻”加速向“主攻”转变…",
+          "reason": "matched reader evidence to stored body paragraph",
+          "simplified_ref": "text:b6632576500f6096",
+          "source_id": "src-81-20250703-counteruas-war",
+          "status": "matched",
+          "url": "http://www.81.cn/yw_208727/16394887.html"
+        },
+        {
+          "artifact_ref": "html:21ce585933933179",
+          "evidence_id": "ev-81-ground-airdefense-limit",
+          "matched_source_location": "text:5240a036d1ca359e#para:0",
+          "material_id": "mat-b49e72c67398",
+          "page_type": "listing",
+          "read_document": {
+            "is_error": false,
+            "returned_range": [
+              0,
+              1
+            ],
+            "total_paragraphs": 1,
+            "truncated": false
+          },
+          "read_excerpt": "反无人机作战发展不断提速 - 中国军网 要闻 评论 图片 视频 更多 特战 女兵 外军 维和 兵器 空天 军粮 文化 搜索 显示与隐藏侧边栏 搜索 兵器 正文 反无人机作战发展不断提速 来源：中国军网-解放军报 作者：徐长帅 责任编辑：郭亮 发布：2023-08-24 08:35:18 手机看 分享到 反无人机作战发展不断提速 ■徐长帅 近日，据媒体报道，随着改装的廉价无人装备——穿越机被广泛应用于战场，相关防御手段也在不断升级。近年来，无人机作战与反无人机作战，已然成为战场重要作战样式。二者在“矛”与“盾”的较量中，呈现螺旋式发展，对战场态势产生显著影响。 德国 Skynex 高射炮系统可拦截巡 航导弹和无人机。 资料图片 伊朗“卡拉尔”无人机下方挂载导弹。 资料图片 相关战略陆续出台 近年来，大量小型自杀式无人机不断投入战场。这些无人机具有巡飞功能，既能执行侦察任务，在发现目标后又能实施攻击。面对迅速增长的无人机威胁，有关国家纷纷出台相关战略，试图在反无人机领域占据领先地位。 美军将无人机列为最具破坏力的空中威胁之一。2019年12月，美国国防部精简了本部门的各种反小型无人机系统项目，指定陆军为执行机构，成立联合反小型无人机系统办公室，负责指导监督国防部所有反无人机武器研发工作。2021年1月，该办公室发布国防部《反小型无人机系统战略》。截至目前，该办公室已组织四次反无人机演示，并计划在2024年6月进行第五次演示，聚焦反无人机蜂群。 俄军将无人机防御作战列为一项重要任务，频繁在战场上检验反无人机技战术，目前已在大部分军区组建了反无人机部队。自2019年起，俄军所有的重大…",
+          "reason": "matched reader evidence to stored body paragraph",
+          "simplified_ref": "text:5240a036d1ca359e",
+          "source_id": "src-81-20230824-counteruas-speed",
+          "status": "matched",
+          "url": "http://www.81.cn/bq_208581/16247247.html"
+        },
+        {
+          "artifact_ref": "html:e69d4b5d4d1272e7",
+          "evidence_id": "ev-81-training-doctrine-need",
+          "matched_source_location": "text:0c4f7bc0b11149bd#para:0",
+          "material_id": "mat-15224ca4c7f6",
+          "page_type": "listing",
+          "read_document": {
+            "is_error": false,
+            "returned_range": [
+              0,
+              1
+            ],
+            "total_paragraphs": 1,
+            "truncated": false
+          },
+          "read_excerpt": "美国出台反无人机新战略 - 中国军网 要闻 评论 图片 视频 更多 特战 女兵 外军 维和 兵器 空天 军粮 文化 搜索 显示与隐藏侧边栏 搜索 兵器 正文 美国出台反无人机新战略 来源：中国军网-中国国防报 作者：王昌凡 责任编辑：徐占虎 发布：2024-12-18 08:53:25 手机看 分享到 美国出台反无人机新战略 ■王昌凡 美国陆军的EAGLS反无人机系统。 美国士兵进行反无人机训练。 据外媒报道，美国国防部长劳埃德·奥斯汀近日签署一项反无人机新战略，通过整合美国防部在不同时期推出的各种反无人机方法手段，保护相关设施和人员免受无人机威胁。 5项内容应对新威胁 报道称，虽然反无人机新战略目前处于保密阶段，但外界通过美国防部发表的一份说明报告，了解到该战略的基本情况。 报告指出，在近年来的地区冲突中，无人机对传统战法和作战原则形成新挑战。从战术层面看，部队的隐蔽、集中和机动变得困难；从战略层面看，人力和资金成本大幅降低，缩小整体实力差距。由于美国对此缺乏应对措施，导致无人机威胁事件频发。在海外，美国牵头组织的“繁荣卫士”红海护航联盟几乎每天遭到无人机袭击，被称为“美国海军自二战以来经历的最持久战斗”。美国在叙利亚、伊拉克的基地也受到无人机入侵。今年1月，1架无人机袭击了美军位于叙利亚和约旦边境的军事基地，造成3名美军士兵死亡，超过25人受伤。美国本土也遭受多起无人机威胁。据美媒报道，去年以来，弗吉尼亚州兰利空军基地、诺福克海军基地等发生无人机侵入事件，内华达州核试验基地上空也出现过5架不明身份的无人机。 为此，美国防部出台反无人机新战略，具体内容分为5项：一是加强对无…",
+          "reason": "matched reader evidence to stored body paragraph",
+          "simplified_ref": "text:0c4f7bc0b11149bd",
+          "source_id": "src-81-20241218-us-counteruas-strategy",
+          "status": "matched",
+          "url": "http://www.81.cn/bq_208581/16359313.html"
+        }
+      ],
+      "stop_reason": "evidence_sufficient",
+      "suggested_next_routes": [
+        "none"
+      ],
+      "task_brief": "只采正文页面、报纸正文或文章正文，不采搜索结果页、专题列表页、站内列表摘要。保留每条证据的URL、标题、发布日期、来源栏目、正文摘录位置和对应查询字符串。",
+      "task_id": "reader-task-1",
+      "worker_report_id": "round-1-reader-task-1-reader-1"
+    }
+  ]
+}

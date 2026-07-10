@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "html:21ce585933933179",
+  "content_path": "html-21ce585933933179.html",
+  "content_type": "text/html; charset=utf-8",
+  "encoding": "utf-8",
+  "fetched_at": "2026-06-30T20:19:37.310080+00:00",
+  "final_url": "http://www.81.cn/bq_208581/16247247.html",
+  "kind": "html",
+  "sha256": "21ce5859339331797e4ce270ae136310c85cc81ea0ae3b3cbb4ee01f4c0b5774",
+  "status_code": 200,
+  "transport": "http",
+  "url": "http://www.81.cn/bq_208581/16247247.html"
+}

@@ -1,0 +1,17 @@
+# Consolidated dependencies for Python scripts in this repository.
+# Standard-library modules and local project modules are intentionally omitted.
+
+# HTTP and HTML processing
+requests
+beautifulsoup4
+markdownify
+PyYAML
+
+# Browser automation and crawlers
+playwright
+DrissionPage>=4.0.0
+
+# Optional real Neo4j GraphRAG comparison path
+neo4j
+neo4j-graphrag
+openai

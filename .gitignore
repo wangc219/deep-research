@@ -1,0 +1,40 @@
+# macOS and editors
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# Frontend
+node_modules/
+apps/web/dist/
+apps/web/playwright-report/
+apps/web/test-results/
+
+# Runtime and generated working data
+outputs/runs/
+tmp/
+*.db
+*.db-shm
+*.db-wal
+*.log
+
+# Local planning UI state
+.superpowers/brainstorm/
