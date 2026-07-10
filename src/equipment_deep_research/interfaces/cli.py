@@ -28,10 +28,6 @@ def main(argv: list[str] | None = None) -> int:
         "--preset-config",
         default=str(project_root / "configs" / "equipment_deep_research" / "presets.yaml"),
     )
-    parser.add_argument(
-        "--source-whitelist",
-        default=str(project_root / "configs" / "equipment_deep_research" / "source_whitelist.yaml"),
-    )
     args = parser.parse_args(argv)
     agent_ids = [item.strip() for item in args.agents.split(",") if item.strip()]
     runner = DeepResearchRunner(
@@ -39,7 +35,6 @@ def main(argv: list[str] | None = None) -> int:
         output_root=Path(args.output_root),
         agent_config_path=Path(args.agent_config),
         preset_config_path=Path(args.preset_config),
-        source_whitelist_path=Path(args.source_whitelist),
     )
     result = runner.run(
         mode=args.mode,

@@ -1,0 +1,40 @@
+search:
+  default_provider: responses_web_search
+  providers:
+    responses_web_search:
+      type: responses_web_search
+    static:
+      type: static
+tools:
+  search_sources:
+    kind: search
+    network_access: true
+    produces: [SearchLead]
+  fetch_page:
+    kind: materialization
+    network_access: true
+    produces: [SourceMaterial]
+  create_evidence_card:
+    kind: object_write
+    network_access: false
+    produces: [EvidenceCard]
+  write_stage_output:
+    kind: object_write
+    network_access: false
+    produces: [WinningMechanismStageOutput]
+  create_recall_request:
+    kind: object_write
+    network_access: false
+    produces: [RecallRequest]
+  create_capability_image:
+    kind: object_write
+    network_access: false
+    produces: [CapabilityImageItem]
+  write_audit:
+    kind: object_write
+    network_access: false
+    produces: [AuditResult]
+  write_report:
+    kind: object_write
+    network_access: false
+    produces: [ResearchReport]

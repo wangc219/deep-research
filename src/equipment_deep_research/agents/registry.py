@@ -18,6 +18,8 @@ class AgentDef:
     enabled: bool = True
     input_contract: dict[str, Any] = field(default_factory=dict)
     output_contract: dict[str, Any] = field(default_factory=dict)
+    object_read_scopes: list[str] = field(default_factory=list)
+    object_write_scopes: list[str] = field(default_factory=list)
 
 
 class AgentRegistry:
@@ -40,9 +42,11 @@ class AgentRegistry:
                 enabled=bool(row.get("enabled", True)),
                 input_contract=dict(row.get("input_contract", {})),
                 output_contract=dict(row.get("output_contract", {})),
+                object_read_scopes=list(row.get("object_read_scopes", [])),
+                object_write_scopes=list(row.get("object_write_scopes", [])),
             )
             agents[agent.agent_id] = agent
-        return cls(agents=agents, default_model=str(data.get("default_model", "gpt-5.6-sol")))
+        return cls(agents=agents, default_model=str(data.get("default_model", "gpt-5.5")))
 
     def get(self, agent_id: str) -> AgentDef:
         if agent_id not in self._agents:
@@ -67,4 +71,3 @@ class AgentRegistry:
 
     def all_agent_ids(self) -> list[str]:
         return sorted(self._agents)
-

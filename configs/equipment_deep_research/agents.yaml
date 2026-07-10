@@ -1,4 +1,4 @@
-default_model: gpt-5.6-sol
+default_model: gpt-5.5
 agents:
   - agent_id: international_situation
     display_name: 国际形势
@@ -6,8 +6,10 @@ agents:
     capability_tags: [situation, threat, strategy]
     tools: [search_sources, fetch_page, create_evidence_card]
     context_policy:
-      visible_sections: [task, source_policy, own_checkpoint, recall_request]
+      visible_sections: [task, evidence_policy, own_checkpoint, recall_request]
       hide_other_agent_raw_sessions: true
+    object_read_scopes: [ResearchProblem, EvidenceCard, WorkingCheckpoint]
+    object_write_scopes: [EvidenceCard, BaselineFindingPacket, WorkingCheckpoint]
     enabled: true
   - agent_id: combat_scenario
     display_name: 作战场景
@@ -15,8 +17,10 @@ agents:
     capability_tags: [scenario, coa, environment]
     tools: [search_sources, fetch_page, create_evidence_card]
     context_policy:
-      visible_sections: [task, source_policy, own_checkpoint, recall_request]
+      visible_sections: [task, evidence_policy, own_checkpoint, recall_request]
       hide_other_agent_raw_sessions: true
+    object_read_scopes: [ResearchProblem, EvidenceCard, WorkingCheckpoint]
+    object_write_scopes: [EvidenceCard, BaselineFindingPacket, WorkingCheckpoint]
     enabled: true
   - agent_id: weapon_equipment
     display_name: 武器装备
@@ -24,8 +28,10 @@ agents:
     capability_tags: [equipment, capability_gap, technology_readiness]
     tools: [search_sources, fetch_page, create_evidence_card]
     context_policy:
-      visible_sections: [task, source_policy, own_checkpoint, recall_request]
+      visible_sections: [task, evidence_policy, own_checkpoint, recall_request]
       hide_other_agent_raw_sessions: true
+    object_read_scopes: [ResearchProblem, EvidenceCard, WorkingCheckpoint]
+    object_write_scopes: [EvidenceCard, BaselineFindingPacket, WorkingCheckpoint]
     enabled: true
   - agent_id: operational_employment
     display_name: 作战运用
@@ -33,8 +39,10 @@ agents:
     capability_tags: [operation, coordination, lessons]
     tools: [search_sources, fetch_page, create_evidence_card]
     context_policy:
-      visible_sections: [task, source_policy, own_checkpoint, recall_request]
+      visible_sections: [task, evidence_policy, own_checkpoint, recall_request]
       hide_other_agent_raw_sessions: true
+    object_read_scopes: [ResearchProblem, EvidenceCard, WorkingCheckpoint]
+    object_write_scopes: [EvidenceCard, BaselineFindingPacket, WorkingCheckpoint]
     enabled: true
   - agent_id: winning_mechanism
     display_name: 制胜机理
@@ -44,6 +52,8 @@ agents:
     context_policy:
       visible_sections: [task, baseline_summaries, evidence_index, coverage, checkpoints]
       hide_other_agent_raw_sessions: true
+    object_read_scopes: [ResearchProblem, EvidenceCard, BaselineFindingPacket, WorkingCheckpoint]
+    object_write_scopes: [WinningMechanismStageOutput, RecallRequest, CapabilityImageItem, WorkingCheckpoint]
     enabled: true
   - agent_id: auditor
     display_name: 审计
@@ -53,6 +63,8 @@ agents:
     context_policy:
       visible_sections: [task, evidence_index, stage_outputs, capability_images, trace_summary]
       hide_other_agent_raw_sessions: true
+    object_read_scopes: [ResearchProblem, EvidenceCard, WinningMechanismStageOutput, CapabilityImageItem, TraceEvent]
+    object_write_scopes: [AuditResult]
     enabled: true
   - agent_id: reporter
     display_name: 报告
@@ -62,5 +74,6 @@ agents:
     context_policy:
       visible_sections: [task, evidence_index, capability_images, audit, coverage, trace_summary]
       hide_other_agent_raw_sessions: true
+    object_read_scopes: [ResearchProblem, EvidenceCard, CapabilityImageItem, AuditResult, TraceEvent]
+    object_write_scopes: [ResearchReport]
     enabled: true
-

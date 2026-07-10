@@ -26,9 +26,10 @@ class ContextPackBuilder:
         del store
         sections = {
             "task": {"topic": topic, "research_route": research_route},
-            "source_policy": {
+            "evidence_policy": {
                 "public_sources_only": True,
-                "white_list_required_for_formal_evidence": True,
+                "quality_threshold_required_for_formal_evidence": True,
+                "failed_material_is_formal_evidence": False,
             },
             "own_checkpoint": "",
             "recall_request": recall_request or {},
@@ -67,4 +68,3 @@ class ContextPackBuilder:
                 ],
             },
         )
-

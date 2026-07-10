@@ -10,7 +10,6 @@ from equipment_deep_research.domain.models import TraceEvent
 from equipment_deep_research.domain.store import DomainStore, TraceStore
 from equipment_deep_research.harness.context import ContextPackBuilder
 from equipment_deep_research.tools.materialization import EvidenceMaterializer
-from equipment_deep_research.tools.source_policy import SourceWhitelist
 
 
 @dataclass(frozen=True)
@@ -34,7 +33,6 @@ class DiscoveryScheduler:
         store: DomainStore,
         trace: TraceStore,
         mode: str = "fake",
-        source_whitelist: SourceWhitelist | None = None,
         context_builder: ContextPackBuilder | None = None,
     ) -> None:
         self.run_id = run_id
@@ -46,7 +44,7 @@ class DiscoveryScheduler:
         self.context_builder = context_builder or ContextPackBuilder()
         self.sessions_dir = run_dir / "agent_sessions"
         self.sessions_dir.mkdir(parents=True, exist_ok=True)
-        self.materializer = EvidenceMaterializer(run_dir / "artifacts", source_whitelist=source_whitelist)
+        self.materializer = EvidenceMaterializer(run_dir / "artifacts")
         self.source_materials: list[dict] = []
 
     def run_baseline_agents(
@@ -99,7 +97,7 @@ class DiscoveryScheduler:
                         "evidence_ids": accepted_evidence_ids,
                         "coverage_notes": [
                             *packet.coverage_notes,
-                            "部分来源未通过白名单或材料化校验，已从正式证据集中剔除。",
+                            "部分来源未通过网络安全或材料化校验，已从正式证据集中剔除。",
                         ],
                     }
                 )

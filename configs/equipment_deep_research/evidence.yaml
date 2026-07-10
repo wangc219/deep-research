@@ -1,0 +1,20 @@
+acceptance:
+  min_quality_score: 0.62
+  min_direct_support: 0.55
+  min_independent_sources_for_high_confidence: 2
+weights:
+  relevance: 0.30
+  transparency: 0.15
+  freshness: 0.15
+  direct_support: 0.25
+  extraction_quality: 0.15
+deduplication:
+  normalized_url: true
+  content_similarity_threshold: 0.88
+contradiction:
+  preserve_counter_evidence: true
+network_safety:
+  allowed_schemes: [http, https]
+  deny_private_networks: true
+  max_response_bytes: 5242880
+  max_redirects: 5

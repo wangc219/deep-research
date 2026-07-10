@@ -13,7 +13,6 @@ from equipment_deep_research.orchestration.coverage import coverage_for_route, l
 from equipment_deep_research.orchestration.reporting import audit_run, render_report
 from equipment_deep_research.orchestration.winning import WinningMechanismEngine
 from equipment_deep_research.tools.permissions import ToolPermissionRegistry
-from equipment_deep_research.tools.source_policy import SourceWhitelist
 
 
 class DeepResearchRunner:
@@ -24,15 +23,11 @@ class DeepResearchRunner:
         output_root: Path,
         agent_config_path: Path,
         preset_config_path: Path,
-        source_whitelist_path: Path | None = None,
     ) -> None:
         self.project_root = project_root
         self.output_root = output_root
         self.agent_config_path = agent_config_path
         self.preset_config_path = preset_config_path
-        self.source_whitelist_path = source_whitelist_path or (
-            project_root / "configs" / "equipment_deep_research" / "source_whitelist.yaml"
-        )
 
     def run(
         self,
@@ -71,9 +66,6 @@ class DeepResearchRunner:
             )
         )
         provider = FakeAgentProvider() if mode == "fake" else RealAgentProvider()
-        source_whitelist = None
-        if self.source_whitelist_path.exists():
-            source_whitelist = SourceWhitelist.load(self.source_whitelist_path)
         scheduler = DiscoveryScheduler(
             run_id=run_id,
             run_dir=run_dir,
@@ -81,7 +73,6 @@ class DeepResearchRunner:
             store=store,
             trace=trace,
             mode=mode,
-            source_whitelist=source_whitelist,
         )
         worker_reports = scheduler.run_baseline_agents(
             agents=selected_agents,

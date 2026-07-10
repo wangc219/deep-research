@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import socket
 
 import pytest
 
@@ -86,19 +87,63 @@ def test_real_smoke_materializes_public_source_diagnostics(tmp_path: Path) -> No
     assert all(row["artifact_refs"] for row in summary["source_materials"])
 
 
-def test_unapproved_public_source_is_not_formal_evidence(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_public_source_is_not_blocked_by_domain(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     from equipment_deep_research.agents import provider
+    from equipment_deep_research.tools import materialization
 
-    monkeypatch.setattr(provider, "_public_smoke_url_for_agent", lambda agent_id: "https://example.com/not-approved")
+    class SuccessfulResponse:
+        content = b"public source content"
+        headers = {"content-type": "text/plain"}
+
+        @staticmethod
+        def raise_for_status() -> None:
+            return None
+
+    monkeypatch.setattr(provider, "_public_smoke_url_for_agent", lambda agent_id: "https://example.com/public")
+    monkeypatch.setattr(
+        materialization.socket,
+        "getaddrinfo",
+        lambda *args, **kwargs: [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))],
+    )
+    monkeypatch.setattr(materialization.requests, "get", lambda *args, **kwargs: SuccessfulResponse())
     result = _runner(tmp_path).run(
         mode="real",
         topic="低空无人机探测预警能力缺口",
         research_route="auto",
-        run_id="blocked-source",
+        run_id="public-source",
         agent_ids=["international_situation"],
     )
     summary = json.loads(Path(result["summary_path"]).read_text(encoding="utf-8"))
-    assert summary["source_materials"][0]["status"] == "blocked_unapproved_source"
+    assert summary["source_materials"][0]["status"] == "fetched"
+    assert summary["store_summary"]["evidence_count"] == 1
+    domain_rows = [
+        json.loads(line)
+        for line in (Path(result["run_dir"]) / "domain.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    packets = [row["payload"] for row in domain_rows if row["type"] == "BaselineFindingPacket"]
+    assert packets[0]["evidence_ids"]
+
+
+def test_failed_public_fetch_is_not_formal_evidence(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from equipment_deep_research.agents import provider
+    from equipment_deep_research.tools import materialization
+
+    monkeypatch.setattr(provider, "_public_smoke_url_for_agent", lambda agent_id: "https://example.com/unavailable")
+    monkeypatch.setattr(
+        materialization.socket,
+        "getaddrinfo",
+        lambda *args, **kwargs: [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))],
+    )
+    monkeypatch.setattr(materialization.requests, "get", lambda *args, **kwargs: (_ for _ in ()).throw(OSError("offline")))
+    result = _runner(tmp_path).run(
+        mode="real",
+        topic="低空无人机探测预警能力缺口",
+        research_route="auto",
+        run_id="failed-source",
+        agent_ids=["international_situation"],
+    )
+    summary = json.loads(Path(result["summary_path"]).read_text(encoding="utf-8"))
+    assert summary["source_materials"][0]["status"] == "fetch_failed"
     assert summary["store_summary"]["evidence_count"] == 0
     domain_rows = [
         json.loads(line)
@@ -107,6 +152,37 @@ def test_unapproved_public_source_is_not_formal_evidence(tmp_path: Path, monkeyp
     packets = [row["payload"] for row in domain_rows if row["type"] == "BaselineFindingPacket"]
     assert packets[0]["evidence_ids"] == []
     assert result["audit_status"] == "limited"
+
+
+def test_private_network_source_is_rejected_before_fetch(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from equipment_deep_research.agents import provider
+    from equipment_deep_research.tools import materialization
+
+    requested = False
+
+    def unexpected_get(*args: object, **kwargs: object) -> object:
+        nonlocal requested
+        requested = True
+        raise AssertionError("private network URL must not be fetched")
+
+    monkeypatch.setattr(provider, "_public_smoke_url_for_agent", lambda agent_id: "http://internal.example/private")
+    monkeypatch.setattr(
+        materialization.socket,
+        "getaddrinfo",
+        lambda *args, **kwargs: [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("10.0.0.7", 80))],
+    )
+    monkeypatch.setattr(materialization.requests, "get", unexpected_get)
+    result = _runner(tmp_path).run(
+        mode="real",
+        topic="低空无人机探测预警能力缺口",
+        research_route="auto",
+        run_id="private-source",
+        agent_ids=["international_situation"],
+    )
+    summary = json.loads(Path(result["summary_path"]).read_text(encoding="utf-8"))
+    assert requested is False
+    assert summary["source_materials"][0]["status"] == "network_safety_rejected"
+    assert summary["store_summary"]["evidence_count"] == 0
 
 
 def test_recall_requests_are_traceable_for_missing_coverage(tmp_path: Path) -> None:
@@ -131,7 +207,7 @@ def test_custom_agent_config_can_replace_default_baseline(tmp_path: Path) -> Non
     custom_agents = tmp_path / "agents.yaml"
     custom_agents.write_text(
         """
-default_model: gpt-5.6-sol
+default_model: gpt-5.5
 agents:
   - agent_id: integrated_research
     display_name: 综合研判
@@ -139,7 +215,7 @@ agents:
     capability_tags: [situation, threat, scenario, equipment, operation]
     tools: [search_sources, fetch_page, create_evidence_card]
     context_policy:
-      visible_sections: [task, source_policy, own_checkpoint, recall_request]
+      visible_sections: [task, evidence_policy, own_checkpoint, recall_request]
     enabled: true
 """.strip()
         + "\n",

@@ -1,0 +1,10 @@
+default_provider: responses
+providers:
+  responses:
+    type: responses_http
+    model: gpt-5.5
+    base_url_env: EQUIPMENT_DR_BASE_URL
+    api_key_env: EQUIPMENT_DR_API_KEY
+    timeout_seconds: 120
+  fake:
+    type: fake

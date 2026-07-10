@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import ipaddress
 from pathlib import Path
+import socket
 from typing import Any
+from urllib.parse import urlparse
 
 import requests
 
 from equipment_deep_research.domain.models import EvidenceCard
-from equipment_deep_research.tools.source_policy import SourceWhitelist
 from knowledgegraph.demand_discovery.tools.artifacts import ArtifactStore
 
 
@@ -23,25 +25,29 @@ class EvidenceMaterializer:
         artifact_dir: str | Path,
         *,
         timeout_seconds: int = 8,
-        source_whitelist: SourceWhitelist | None = None,
     ) -> None:
         self.artifacts = ArtifactStore(artifact_dir)
         self.timeout_seconds = timeout_seconds
-        self.source_whitelist = source_whitelist
 
     def materialize(self, evidence: EvidenceCard, *, mode: str) -> MaterializedEvidence:
-        if self.source_whitelist and not self.source_whitelist.allows(evidence.source_url):
-            return self._block_unapproved_source(evidence=evidence, mode=mode)
+        rejection_reason = _network_safety_rejection(evidence.source_url)
+        if rejection_reason:
+            return self._reject_network_safety(evidence=evidence, mode=mode, reason=rejection_reason)
         if evidence.source_url.startswith("https://fixture.local") or evidence.source_url.startswith("http://fixture.local"):
             return self._materialize_fixture(evidence=evidence, mode=mode)
         return self._materialize_public_url(evidence=evidence, mode=mode)
 
-    def _block_unapproved_source(self, *, evidence: EvidenceCard, mode: str) -> MaterializedEvidence:
-        host = self.source_whitelist.host_for(evidence.source_url) if self.source_whitelist else ""
+    def _reject_network_safety(
+        self,
+        *,
+        evidence: EvidenceCard,
+        mode: str,
+        reason: str,
+    ) -> MaterializedEvidence:
         diagnostic = (
-            f"blocked_unapproved_source\nurl={evidence.source_url}\n"
-            f"host={host or 'unknown'}\n"
-            "该来源未进入首版白名单，只记录为建议新增信源，不进入正式证据集。\n"
+            f"network_safety_rejected\nurl={evidence.source_url}\n"
+            f"reason={reason}\n"
+            "该地址未通过网络安全校验，诊断材料不进入正式证据集。\n"
         )
         ref = self.artifacts.put(
             diagnostic,
@@ -49,27 +55,27 @@ class EvidenceMaterializer:
             meta={
                 "url": evidence.source_url,
                 "content_type": "text/plain",
-                "materialization_status": "blocked_unapproved_source",
+                "materialization_status": "network_safety_rejected",
                 "evidence_id": evidence.evidence_id,
                 "mode": mode,
-                "suggested_source_domain": host,
+                "reason": reason,
             },
         )
         updated = EvidenceCard(
             **{
                 **evidence.__dict__,
                 "artifact_refs": [*evidence.artifact_refs, ref],
-                "quality_assessment": f"{evidence.quality_assessment}; blocked_unapproved_source",
+                "quality_assessment": f"{evidence.quality_assessment}; network_safety_rejected",
             }
         )
         return MaterializedEvidence(
             evidence=updated,
             material={
                 "evidence_id": evidence.evidence_id,
-                "status": "blocked_unapproved_source",
+                "status": "network_safety_rejected",
                 "artifact_refs": [ref],
                 "url": evidence.source_url,
-                "suggested_source_domain": host,
+                "reason": reason,
                 "formal_evidence_allowed": False,
             },
         )
@@ -183,3 +189,38 @@ class EvidenceMaterializer:
                     "formal_evidence_allowed": False,
                 },
             )
+
+
+def _network_safety_rejection(url: str) -> str:
+    parsed = urlparse(url)
+    if parsed.scheme.lower() not in {"http", "https"}:
+        return "scheme_not_allowed"
+    host = (parsed.hostname or "").lower()
+    if not host:
+        return "missing_host"
+    if host == "fixture.local":
+        return ""
+    if host == "localhost" or host.endswith(".localhost"):
+        return "private_network_denied"
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        try:
+            addresses = {
+                row[4][0].split("%", 1)[0]
+                for row in socket.getaddrinfo(
+                    host,
+                    parsed.port or (443 if parsed.scheme.lower() == "https" else 80),
+                    type=socket.SOCK_STREAM,
+                )
+            }
+        except OSError:
+            return "host_resolution_failed"
+        if not addresses:
+            return "host_resolution_failed"
+        if any(not ipaddress.ip_address(item).is_global for item in addresses):
+            return "private_network_denied"
+        return ""
+    if not address.is_global:
+        return "private_network_denied"
+    return ""
