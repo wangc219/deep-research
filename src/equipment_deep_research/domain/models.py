@@ -77,6 +77,9 @@ class BaselineFindingPacket:
     handoff_summary: str
     checkpoint: str
     created_at: str = field(default_factory=now_iso)
+    claim_ids: list[str] = field(default_factory=list)
+    search_log: list[str] = field(default_factory=list)
+    limitations: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
