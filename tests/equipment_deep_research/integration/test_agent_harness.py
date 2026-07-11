@@ -151,6 +151,19 @@ class FailSavepointOnceSession:
         self.delegate.append(record)
 
 
+class FailAllSessionWrites:
+    def __init__(self, path: str, *, root_dir: Path) -> None:
+        self.delegate = JsonlSessionStore(path, root_dir=root_dir)
+        self.path = self.delegate.path
+
+    def append(self, record: Mapping[str, Any]) -> None:
+        del record
+        raise RuntimeError("session remains unavailable")
+
+    def read_all(self) -> list[dict[str, Any]]:
+        return self.delegate.read_all()
+
+
 class RecordingStore:
     def __init__(self, delegate: SqliteRunStore, *, fail_on_commit: int | None = None):
         self.delegate = delegate
@@ -953,22 +966,49 @@ def test_savepoint_session_failure_is_marked_in_database_for_reconciliation(
     tmp_path: Path,
 ) -> None:
     async def scenario() -> None:
-        store = SqliteRunStore(tmp_path / "run.db", run_id="run-1")
+        database = tmp_path / "run.db"
+        sessions_root = tmp_path / "sessions"
+        store = SqliteRunStore(database, run_id="run-1")
+
+        async def create_evidence(
+            call: ToolCall,
+            context: ToolExecutionContext,
+        ) -> ToolResult:
+            del context
+            return ToolResult(
+                call.call_id,
+                "created",
+                domain_proposals=(
+                    DomainWriteProposal(
+                        "recovery-domain",
+                        "EvidenceCard",
+                        "upsert",
+                        {
+                            "evidence_id": "recovery-evidence",
+                            "claim": "persist once",
+                            "schema_version": "1.0",
+                            "created_at": CREATED_AT,
+                        },
+                        "recovery-evidence",
+                    ),
+                ),
+            )
 
         def session_factory(path: str, root_dir: Path) -> FailSavepointOnceSession:
             return FailSavepointOnceSession(path, root_dir=root_dir)
 
         harness = AgentHarness(
-            ScriptedProvider([final_text("done")]),
-            [],
+            ScriptedProvider([final_call("call-1", "create_evidence_card")]),
+            [tool("create_evidence_card", create_evidence)],
             store,
-            sessions_root=tmp_path / "sessions",
+            sessions_root=sessions_root,
             session_store_factory=session_factory,
         )
 
-        result = await harness.execute(task(allowed_tools=[]))
+        result = await harness.execute(task(allowed_tools=["create_evidence_card"]))
 
         assert result.status == "failed"
+        assert store.count("EvidenceCard") == 1
         events = store.trace_events()
         reconciliation = next(
             event for event in events if event["event_type"] == "session_write_failed"
@@ -981,13 +1021,122 @@ def test_savepoint_session_failure_is_marked_in_database_for_reconciliation(
             "checkpoint-"
         )
         assert store.recover()["checkpoint_id"] == result.checkpoint_id
-        records = session_records(tmp_path / "sessions")
+        unresolved = store.recover()["unresolved_session_writes"]
+        assert len(unresolved) == 1
+        marker = unresolved[0]
+        assert marker["checkpoint_id"] == reconciliation["payload"][
+            "committed_checkpoint_id"
+        ]
+        assert marker["batch_hash"] == reconciliation["payload"]["batch_hash"]
+        assert marker["turn_index"] == 1
+        assert marker["task_id"] == "task-1"
+        assert marker["agent_id"] == "agent-a"
+        assert marker["session_ref"].endswith(".jsonl")
+
+        original_session = sessions_root / marker["session_ref"]
+        records = [
+            json.loads(line)
+            for line in original_session.read_text(encoding="utf-8").splitlines()
+        ]
         assert [record["event_type"] for record in records][-2:] == [
             "savepoint_pending",
             "task_failed",
         ]
         persisted = json.dumps(records)
         assert "session-secret" not in persisted
+
+        restarted_store = SqliteRunStore(database, run_id="run-1")
+        restarted_provider = ScriptedProvider([final_text("restart complete")])
+        restarted = AgentHarness(
+            restarted_provider,
+            [],
+            restarted_store,
+            sessions_root=sessions_root,
+        )
+        restarted_result = await restarted.execute(task(allowed_tools=[]))
+
+        assert restarted_result.status == "completed"
+        assert restarted_provider.calls == 1
+        assert restarted_store.count("EvidenceCard") == 1
+        assert restarted_store.recover()["unresolved_session_writes"] == []
+        repaired_records = [
+            json.loads(line)
+            for line in original_session.read_text(encoding="utf-8").splitlines()
+        ]
+        assert [
+            record["event_type"]
+            for record in repaired_records
+            if record.get("reconciliation_marker_id") == marker["marker_id"]
+        ] == ["savepoint", "session_reconciled"]
+        reconciled_traces = [
+            event
+            for event in restarted_store.trace_events()
+            if event["event_type"] == "session_reconciled"
+        ]
+        assert len(reconciled_traces) == 1
+        assert reconciled_traces[0]["payload"]["marker_id"] == marker["marker_id"]
+
+        repaired_line_count = len(repaired_records)
+        third_store = SqliteRunStore(database, run_id="run-1")
+        third = AgentHarness(
+            ScriptedProvider([final_text("third start")]),
+            [],
+            third_store,
+            sessions_root=sessions_root,
+        )
+        await third.execute(task(allowed_tools=[]))
+
+        assert third_store.count("EvidenceCard") == 1
+        assert len(
+            [
+                event
+                for event in third_store.trace_events()
+                if event["event_type"] == "session_reconciled"
+            ]
+        ) == 1
+        assert len(original_session.read_text(encoding="utf-8").splitlines()) == (
+            repaired_line_count
+        )
+
+    run(scenario())
+
+
+def test_unwritable_reconciliation_session_prevents_provider_start(tmp_path: Path) -> None:
+    async def scenario() -> None:
+        database = tmp_path / "run.db"
+        sessions_root = tmp_path / "sessions"
+        first_store = SqliteRunStore(database, run_id="run-1")
+
+        def fail_savepoint(path: str, root_dir: Path) -> FailSavepointOnceSession:
+            return FailSavepointOnceSession(path, root_dir=root_dir)
+
+        first = AgentHarness(
+            ScriptedProvider([final_text("committed")]),
+            [],
+            first_store,
+            sessions_root=sessions_root,
+            session_store_factory=fail_savepoint,
+        )
+        first_result = await first.execute(task(allowed_tools=[]))
+        assert first_result.status == "failed"
+        assert first_store.recover()["unresolved_session_writes"]
+
+        def fail_all(path: str, root_dir: Path) -> FailAllSessionWrites:
+            return FailAllSessionWrites(path, root_dir=root_dir)
+
+        blocked_provider = ScriptedProvider([final_text("must not run")])
+        blocked = AgentHarness(
+            blocked_provider,
+            [],
+            SqliteRunStore(database, run_id="run-1"),
+            sessions_root=sessions_root,
+            session_store_factory=fail_all,
+        )
+
+        blocked_result = await blocked.execute(task(allowed_tools=[]))
+
+        assert blocked_result.status == "failed"
+        assert blocked_provider.calls == 0
 
     run(scenario())
 

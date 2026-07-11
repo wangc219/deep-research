@@ -15,6 +15,10 @@ tool handler 均不接触 store/session，harness 通过 `prepare_turn` 与 type
 - `AgentHarness.on_event(callback)`：返回 unsubscribe；普通 listener 异常及 listener
   自行抛出的 `CancelledError` 被隔离并计数，调用方真实取消继续传播。回调实际订阅
   harness 接受或创建的 `EventBus`，不存在第二条 RuntimeEvent 发布通道。
+- `EventBus` 隔离 `CancelledError`、`GeneratorExit` 等非进程级 `BaseException`；
+  `KeyboardInterrupt/SystemExit` 在当前 run queue 完成清理/交棒后重抛。每个 delivery 的
+  completion 与 drainer state 均在 finally/空队列临界区完成，listener 失败不会使后续
+  publisher 永久等待。
 - `Budget`：支持 `max_turns`、`max_tool_calls`、`max_seconds`、`max_tokens`；未知键
   显式 `ValueError`，非整数 turn/tool/token 和负数/非有限值被拒绝。
 - `ToolAuthorizationPolicy.authorize()`：同时检查 active tool allowlist、required read
@@ -108,14 +112,24 @@ task_received
 
 ### RecoveryManager 识别规则
 
-1. 读取 session 最后一个 `savepoint_pending`，取得 `turn_index` 与 `batch_hash`。
-2. 若后续存在匹配 batch hash 的 session `savepoint`，该 turn 已完成，无需协调。
-3. 若没有 session `savepoint`，查询 DB `trace_events`。存在
-   `event_type="session_write_failed"` 且 turn/batch hash 匹配时，使用其
-   `committed_checkpoint_id` 确认领域/trace batch 已提交，并将当前 DB checkpoint 作为
-   reconciliation checkpoint；恢复流程只补 session/index 状态，不重放 tool proposal。
-4. 若既没有匹配 savepoint，也没有 DB marker，则 commit 未确认，RecoveryManager 不得
-   假设成功，可从上一个确认 checkpoint 重试该 turn。
+1. `SqliteRunStore.unresolved_session_writes(agent_id, task_id)` 在当前 run trace 中配对
+   `session_write_failed` 与 `session_reconciled` marker；`recover()` 同时返回
+   `unresolved_session_writes`，包含 marker/checkpoint/batch/turn/task/agent/execution/
+   session ref 和 trace sequence。
+2. `AgentHarness.execute()` 创建当前 session 后、写 `task_received` 前查询同 run/agent/task
+   未解决 marker。若 marker 缺少稳定字段或原 session 不可读写，执行返回 failed，provider
+   不启动。
+3. 对每个 marker，harness 打开受 trusted sessions root 约束的原 `session_ref`。若缺失
+   matching savepoint，追加 `recovered=true` 的 savepoint；若缺失 session-level
+   `session_reconciled`，再追加该记录。已有部分记录会被识别，不重复追加。
+4. session 修补完成后提交确定性 proposal id 的 `session_reconciled` trace；其 payload
+   包含 marker/checkpoint/batch/turn/task/agent/session ref 和
+   `recovery_status="reconciled"`。store 查询据此关闭 marker。
+5. 若 session 行已写但 trace commit 失败，下一次启动只重试幂等 trace；若 trace 已提交，
+   后续启动不再打开原 session，不重复行或 trace。领域 proposal 永不重放。
+
+此闭环只消费 session write marker，不恢复 pending task、messages、预算或 provider turn，
+未提前实现 Task 5。
 
 失败策略：provider/loop/store/session 普通失败返回 `AgentExecutionResult(status="failed")`
 并尽力追加 `task_failed`；权限拒绝先追加安全 `task_failed` 再传播 `PermissionError`；
@@ -140,7 +154,7 @@ CancelledError: listener-only
 修复后聚焦结果：
 
 ```text
-24 passed
+25 passed
 ```
 
 审查修复 RED 首次运行：`10 failed, 14 passed`，分别复现候选工具整轮拒绝、恶意 domain
@@ -153,20 +167,25 @@ tool-call 原子消费、token usage、wall-clock timeout、proposal 批量提�
 pending/commit/reconciliation、session 脱敏、external listener 隔离、稳定结果 schema 和
 取消传播。
 
+第二次复审 RED：EventBus `CancelledError` 直接逃逸，`SystemExit` 后 drainer 残留使 sequence
+2 不派发；reconciliation restart 测试因 `recover()` 缺少 unresolved marker 查询失败。
+GREEN 后 listener error 计数、fatal rethrow/cleanup、跨实例自动 session 修补、domain 不重放、
+重复启动幂等和 session 持续不可写 provider=0 均有回归覆盖。
+
 ## 验证证据
 
 ```text
 python3 -m pytest tests/equipment_deep_research/integration/test_agent_harness.py -q
-24 passed
+25 passed
 
 python3 -m pytest tests/equipment_deep_research -q -k "permission or scope or snapshot"
-6 passed, 157 deselected
+6 passed, 160 deselected
 
 python3 -m pytest tests/test_deep_research_runner.py -q
 23 passed
 
 python3 -m pytest -q
-186 passed
+189 passed
 
 ruff check src/equipment_deep_research/harness/event_bus.py \
   src/equipment_deep_research/harness/agent_harness.py \

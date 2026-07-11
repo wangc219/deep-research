@@ -138,17 +138,9 @@ class AgentHarness:
             raise TypeError("task must be a TaskEnvelope")
         self._begin_execution()
         execution_id = new_stable_id("execution")
+        session_ref = f"{execution_id}.jsonl"
         try:
-            if self._session_store_factory is None:
-                session = JsonlSessionStore(
-                    f"{execution_id}.jsonl",
-                    root_dir=self.sessions_root,
-                )
-            else:
-                session = self._session_store_factory(
-                    f"{execution_id}.jsonl",
-                    self.sessions_root,
-                )
+            session = self._open_session_store(session_ref)
         except BaseException:
             self._end_execution()
             raise
@@ -186,12 +178,12 @@ class AgentHarness:
         def append_session(event_type: str, payload: Mapping[str, Any]) -> None:
             record = sanitize_runtime_payload(
                 {
-                "event_type": event_type,
-                "execution_id": execution_id,
-                "task_id": task.task_id,
-                "agent_id": task.target_agent_id,
-                "created_at": now_iso(),
-                "schema_version": "1.0",
+                    "event_type": event_type,
+                    "execution_id": execution_id,
+                    "task_id": task.task_id,
+                    "agent_id": task.target_agent_id,
+                    "created_at": now_iso(),
+                    "schema_version": "1.0",
                     **dict(payload),
                 },
                 max_string_length=self.event_bus.max_string_length,
@@ -255,15 +247,19 @@ class AgentHarness:
                     },
                 )
             except BaseException as session_error:
+                marker_id = f"session-write-failed-{execution_id}-turn-{turn_index}"
                 reconciliation = TraceProposal(
-                    proposal_id=f"reconcile-{execution_id}-turn-{turn_index}",
+                    proposal_id=marker_id,
                     event_type="session_write_failed",
                     actor=task.target_agent_id,
                     payload={
+                        "marker_id": marker_id,
                         "execution_id": execution_id,
                         "task_id": task.task_id,
+                        "agent_id": task.target_agent_id,
                         "turn_index": turn_index,
                         "session_event": "savepoint",
+                        "session_ref": session_ref,
                         "batch_hash": batch_hash,
                         "committed_checkpoint_id": committed_checkpoint_id,
                         "recovery_status": "reconcile_required",
@@ -310,6 +306,9 @@ class AgentHarness:
             commit_batch(turn_index, (), (trace,))
 
         try:
+            reconciled_checkpoint = self._reconcile_unresolved_sessions(task)
+            if reconciled_checkpoint is not None:
+                checkpoint_id = reconciled_checkpoint
             append_session(
                 "task_received",
                 {
@@ -709,6 +708,109 @@ class AgentHarness:
                     with self._state_lock:
                         self._async_listener_error_count += 1
 
+    def _open_session_store(self, session_ref: str) -> Any:
+        if self._session_store_factory is None:
+            return JsonlSessionStore(session_ref, root_dir=self.sessions_root)
+        return self._session_store_factory(session_ref, self.sessions_root)
+
+    def _reconcile_unresolved_sessions(self, task: TaskEnvelope) -> str | None:
+        marker_source = self.store
+        query = getattr(marker_source, "unresolved_session_writes", None)
+        if not callable(query):
+            marker_source = getattr(self.store, "delegate", None)
+            query = getattr(marker_source, "unresolved_session_writes", None)
+        if not callable(query):
+            return None
+        markers = query(
+            agent_id=task.target_agent_id,
+            task_id=task.task_id,
+        )
+        latest_checkpoint: str | None = None
+        for marker in markers:
+            marker_id = _required_marker_text(marker, "marker_id")
+            checkpoint_id = _required_marker_text(marker, "checkpoint_id")
+            batch_hash = _required_marker_text(marker, "batch_hash")
+            session_ref = _required_marker_text(marker, "session_ref")
+            execution_id = _required_marker_text(marker, "execution_id")
+            marker_task_id = _required_marker_text(marker, "task_id")
+            marker_agent_id = _required_marker_text(marker, "agent_id")
+            turn_index = marker.get("turn_index")
+            if isinstance(turn_index, bool) or not isinstance(turn_index, int):
+                raise RuntimeError(
+                    f"session reconciliation marker {marker_id} has invalid turn_index"
+                )
+
+            session = self._open_session_store(session_ref)
+            records = session.read_all()
+            has_savepoint = any(
+                record.get("event_type") == "savepoint"
+                and record.get("checkpoint_id") == checkpoint_id
+                and record.get("batch_hash") == batch_hash
+                for record in records
+            )
+            if not has_savepoint:
+                session.append(
+                    _safe_session_record(
+                        {
+                            "event_type": "savepoint",
+                            "execution_id": execution_id,
+                            "task_id": marker_task_id,
+                            "agent_id": marker_agent_id,
+                            "turn_index": turn_index,
+                            "checkpoint_id": checkpoint_id,
+                            "batch_hash": batch_hash,
+                            "recovered": True,
+                            "reconciliation_marker_id": marker_id,
+                            "created_at": now_iso(),
+                            "schema_version": "1.0",
+                        },
+                        max_string_length=self.event_bus.max_string_length,
+                    )
+                )
+                records = [*records, {"event_type": "savepoint"}]
+
+            has_session_reconciled = any(
+                record.get("event_type") == "session_reconciled"
+                and record.get("reconciliation_marker_id") == marker_id
+                for record in records
+            )
+            if not has_session_reconciled:
+                session.append(
+                    _safe_session_record(
+                        {
+                            "event_type": "session_reconciled",
+                            "execution_id": execution_id,
+                            "task_id": marker_task_id,
+                            "agent_id": marker_agent_id,
+                            "turn_index": turn_index,
+                            "checkpoint_id": checkpoint_id,
+                            "batch_hash": batch_hash,
+                            "reconciliation_marker_id": marker_id,
+                            "created_at": now_iso(),
+                            "schema_version": "1.0",
+                        },
+                        max_string_length=self.event_bus.max_string_length,
+                    )
+                )
+
+            resolved_trace = TraceProposal(
+                proposal_id=f"{marker_id}-reconciled",
+                event_type="session_reconciled",
+                actor=marker_agent_id,
+                payload={
+                    "marker_id": marker_id,
+                    "checkpoint_id": checkpoint_id,
+                    "batch_hash": batch_hash,
+                    "turn_index": turn_index,
+                    "task_id": marker_task_id,
+                    "agent_id": marker_agent_id,
+                    "session_ref": session_ref,
+                    "recovery_status": "reconciled",
+                },
+            )
+            latest_checkpoint = self.store.commit((), (resolved_trace,))
+        return latest_checkpoint
+
     def _consume_next_turn_tools(self) -> tuple[str, ...] | None:
         with self._state_lock:
             value = self._next_turn_tools
@@ -837,6 +939,30 @@ def _reference_projection(values: Sequence[str]) -> dict[str, Any]:
         "count": len(values),
         "refs": [_hash_plain(value) for value in values],
     }
+
+
+def _required_marker_text(marker: Mapping[str, Any], key: str) -> str:
+    value = marker.get(key)
+    if not isinstance(value, str) or not value:
+        marker_id = marker.get("marker_id", "unknown")
+        raise RuntimeError(
+            f"session reconciliation marker {marker_id} has invalid {key}"
+        )
+    return value
+
+
+def _safe_session_record(
+    record: Mapping[str, Any],
+    *,
+    max_string_length: int,
+) -> Mapping[str, Any]:
+    safe = sanitize_runtime_payload(
+        record,
+        max_string_length=max_string_length,
+    )
+    if not isinstance(safe, Mapping):
+        raise TypeError("session reconciliation record must be an object")
+    return safe
 
 
 def _hash_plain(value: Any) -> str:

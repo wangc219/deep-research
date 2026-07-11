@@ -341,7 +341,7 @@ class SqliteRunStore:
             checkpoint_id = (
                 str(checkpoint["checkpoint_id"]) if checkpoint is not None else None
             )
-            return {
+            summary = {
                 "run_id": self.run_id,
                 "checkpoint_id": checkpoint_id,
                 "last_checkpoint": checkpoint_id,
@@ -352,6 +352,52 @@ class SqliteRunStore:
             }
         finally:
             connection.close()
+        summary["unresolved_session_writes"] = self.unresolved_session_writes()
+        return summary
+
+    def unresolved_session_writes(
+        self,
+        *,
+        agent_id: str | None = None,
+        task_id: str | None = None,
+    ) -> list[dict[str, Any]]:
+        events = self.trace_events(after_sequence=0)
+        resolved_marker_ids = {
+            str(event["payload"].get("marker_id"))
+            for event in events
+            if event["event_type"] == "session_reconciled"
+            and event["payload"].get("marker_id")
+        }
+        markers: list[dict[str, Any]] = []
+        for event in events:
+            if event["event_type"] != "session_write_failed":
+                continue
+            payload = event["payload"]
+            marker_id = str(payload.get("marker_id") or event["proposal_id"])
+            marker_agent_id = str(payload.get("agent_id") or event["actor"])
+            marker_task_id = str(payload.get("task_id") or "")
+            if marker_id in resolved_marker_ids:
+                continue
+            if agent_id is not None and marker_agent_id != agent_id:
+                continue
+            if task_id is not None and marker_task_id != task_id:
+                continue
+            markers.append(
+                {
+                    "marker_id": marker_id,
+                    "run_id": self.run_id,
+                    "checkpoint_id": payload.get("committed_checkpoint_id"),
+                    "batch_hash": payload.get("batch_hash"),
+                    "turn_index": payload.get("turn_index"),
+                    "task_id": marker_task_id,
+                    "agent_id": marker_agent_id,
+                    "execution_id": payload.get("execution_id"),
+                    "session_ref": payload.get("session_ref"),
+                    "session_event": payload.get("session_event"),
+                    "trace_sequence": event["sequence"],
+                }
+            )
+        return markers
 
     def count(self, object_type: str) -> int:
         connection = self._connect()

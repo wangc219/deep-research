@@ -113,6 +113,51 @@ def test_subscriber_failure_is_isolated_without_reusing_sequence() -> None:
     assert bus.listener_error_count == 2
 
 
+def test_cancelled_error_listener_is_isolated_and_next_event_is_delivered() -> None:
+    bus = EventBus()
+    seen: list[tuple[str, int]] = []
+    failed_once = False
+
+    def cancel_once(event: RuntimeEvent) -> None:
+        nonlocal failed_once
+        if not failed_once:
+            failed_once = True
+            raise asyncio.CancelledError("listener cancelled itself")
+
+    bus.subscribe(cancel_once)
+    bus.subscribe(lambda event: seen.append((event.event_type, event.sequence)))
+
+    first = bus.publish(RuntimeEvent("agent", "first", "run-1"))
+    second = bus.publish(RuntimeEvent("agent", "second", "run-1"))
+
+    assert (first.sequence, second.sequence) == (1, 2)
+    assert seen == [("first", 1), ("second", 2)]
+    assert bus.listener_error_count == 1
+
+
+def test_process_level_listener_error_rethrows_after_drainer_cleanup() -> None:
+    bus = EventBus()
+    seen: list[int] = []
+    failed_once = False
+
+    def exit_once(_: RuntimeEvent) -> None:
+        nonlocal failed_once
+        if not failed_once:
+            failed_once = True
+            raise SystemExit("stop")
+
+    bus.subscribe(exit_once)
+    bus.subscribe(lambda event: seen.append(event.sequence))
+
+    with pytest.raises(SystemExit, match="stop"):
+        bus.publish(RuntimeEvent("agent", "first", "run-1"))
+
+    second = bus.publish(RuntimeEvent("agent", "second", "run-1"))
+
+    assert second.sequence == 2
+    assert seen == [2]
+
+
 def test_same_run_concurrent_publish_is_delivered_strictly_in_sequence() -> None:
     bus = EventBus()
     first_started = Event()

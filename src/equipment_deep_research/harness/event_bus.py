@@ -125,15 +125,23 @@ class EventBus:
         return safe_event
 
     def _drain(self, run_queue: _RunQueue) -> None:
+        process_error: KeyboardInterrupt | SystemExit | None = None
         while True:
             with self._lock:
                 if not run_queue.deliveries:
                     run_queue.draining = False
                     run_queue.drainer_thread_id = None
-                    return
+                    break
                 delivery = run_queue.deliveries.popleft()
-            self._deliver(delivery)
-            delivery.completed.set()
+            try:
+                self._deliver(delivery)
+            except (KeyboardInterrupt, SystemExit) as exc:
+                if process_error is None:
+                    process_error = exc
+            finally:
+                delivery.completed.set()
+        if process_error is not None:
+            raise process_error
 
     def _deliver(self, delivery: _Delivery) -> None:
         for handler, categories, run_id in delivery.subscribers:
@@ -144,7 +152,9 @@ class EventBus:
                 continue
             try:
                 handler(safe_event)
-            except Exception:
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except BaseException:
                 with self._lock:
                     self.listener_error_count += 1
 
