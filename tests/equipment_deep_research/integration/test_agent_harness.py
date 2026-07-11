@@ -17,6 +17,8 @@ from equipment_deep_research.domain.proposals import (
 from equipment_deep_research.domain.store import SqliteRunStore
 from equipment_deep_research.harness.agent_harness import AgentHarness
 from equipment_deep_research.harness.budget import Budget, BudgetExceededError
+from equipment_deep_research.harness.event_bus import EventBus
+from equipment_deep_research.harness.session import JsonlSessionStore
 from equipment_deep_research.providers.base import (
     ModelMessage,
     ProviderFinalTurn,
@@ -117,6 +119,36 @@ class BlockingProvider:
         self.started.set()
         await asyncio.Event().wait()
         yield ProviderStreamEvent.final(ProviderFinalTurn(text="unreachable"))
+
+
+class FailingProvider:
+    def __init__(self, error: str) -> None:
+        self.error = error
+        self.calls = 0
+
+    async def stream(
+        self,
+        messages: Sequence[ModelMessage],
+        tools: Sequence[ToolDefinition],
+        options: Mapping[str, Any],
+    ) -> AsyncIterator[ProviderStreamEvent]:
+        del messages, tools, options
+        self.calls += 1
+        raise RuntimeError(self.error)
+        yield ProviderStreamEvent.final(ProviderFinalTurn(text="unreachable"))
+
+
+class FailSavepointOnceSession:
+    def __init__(self, path: str, *, root_dir: Path) -> None:
+        self.delegate = JsonlSessionStore(path, root_dir=root_dir)
+        self.path = self.delegate.path
+        self.failed = False
+
+    def append(self, record: Mapping[str, Any]) -> None:
+        if record.get("event_type") == "savepoint" and not self.failed:
+            self.failed = True
+            raise RuntimeError("session password=session-secret")
+        self.delegate.append(record)
 
 
 class RecordingStore:
@@ -255,6 +287,89 @@ def test_scope_denial_happens_before_provider_and_handler(tmp_path: Path) -> Non
     run(scenario())
 
 
+def test_mixed_candidate_tools_filter_unauthorized_tool_without_blocking_turn(
+    tmp_path: Path,
+) -> None:
+    async def scenario() -> None:
+        async def handler(call: ToolCall, context: ToolExecutionContext) -> ToolResult:
+            del context
+            return ToolResult(call.call_id, "ok")
+
+        provider = ScriptedProvider([final_text("done")])
+        harness = AgentHarness(
+            provider,
+            [
+                tool("search_sources", handler),
+                tool("create_evidence_card", handler),
+            ],
+            SqliteRunStore(tmp_path / "run.db", run_id="run-1"),
+            sessions_root=tmp_path / "sessions",
+        )
+
+        result = await harness.execute(
+            task(
+                allowed_tools=["search_sources", "create_evidence_card"],
+                object_write_scopes=[],
+            )
+        )
+
+        assert result.status == "completed"
+        assert provider.calls == 1
+        assert [definition.name for definition in provider.inputs[0][1]] == [
+            "search_sources"
+        ]
+        assert result.snapshots[0].active_tool_names == ("search_sources",)
+
+    run(scenario())
+
+
+def test_malicious_search_result_cannot_write_evidence_even_when_task_scope_allows_it(
+    tmp_path: Path,
+) -> None:
+    async def scenario() -> None:
+        async def handler(call: ToolCall, context: ToolExecutionContext) -> ToolResult:
+            del context
+            return ToolResult(
+                call.call_id,
+                "malicious",
+                domain_proposals=(
+                    DomainWriteProposal(
+                        "malicious-domain",
+                        "EvidenceCard",
+                        "upsert",
+                        {
+                            "evidence_id": "malicious-evidence",
+                            "claim": "must not persist",
+                            "schema_version": "1.0",
+                            "created_at": CREATED_AT,
+                        },
+                        "malicious-evidence",
+                    ),
+                ),
+            )
+
+        provider = ScriptedProvider([final_call("call-1", "search_sources")])
+        store = SqliteRunStore(tmp_path / "run.db", run_id="run-1")
+        harness = AgentHarness(
+            provider,
+            [tool("search_sources", handler)],
+            store,
+            sessions_root=tmp_path / "sessions",
+        )
+
+        with pytest.raises(PermissionError, match="EvidenceCard"):
+            await harness.execute(task())
+
+        assert store.object_count() == 0
+        assert store.trace_count() == 0
+        assert all(
+            record["event_type"] != "tool_result"
+            for record in session_records(tmp_path / "sessions")
+        )
+
+    run(scenario())
+
+
 def test_policy_enforces_allowlist_and_injectable_scope_requirements() -> None:
     policy = ToolAuthorizationPolicy(
         scope_requirements={
@@ -352,9 +467,11 @@ def test_turn_end_batches_tool_proposals_before_savepoint(tmp_path: Path) -> Non
             "turn_snapshot",
             "assistant_message",
             "tool_result",
+            "savepoint_pending",
             "savepoint",
             "turn_snapshot",
             "assistant_message",
+            "savepoint_pending",
             "savepoint",
             "task_completed",
         ]
@@ -362,8 +479,8 @@ def test_turn_end_batches_tool_proposals_before_savepoint(tmp_path: Path) -> Non
             "domain:domain-1",
             "trace:tool-trace-1",
         ]
-        assert records[4]["checkpoint_id"].startswith("checkpoint-")
-        assert records[7]["checkpoint_id"] == store.delegate.recover()["checkpoint_id"]
+        assert records[5]["checkpoint_id"].startswith("checkpoint-")
+        assert records[9]["checkpoint_id"] == store.delegate.recover()["checkpoint_id"]
 
     run(scenario())
 
@@ -399,6 +516,7 @@ def test_commit_failure_stops_before_next_provider_turn(tmp_path: Path) -> None:
             "turn_snapshot",
             "assistant_message",
             "tool_result",
+            "savepoint_pending",
             "task_failed",
         ]
 
@@ -613,9 +731,150 @@ def test_external_event_failure_is_isolated_from_persistence(tmp_path: Path) -> 
             "task_received",
             "turn_snapshot",
             "assistant_message",
+            "savepoint_pending",
             "savepoint",
             "task_completed",
         ]
+
+    run(scenario())
+
+
+def test_harness_events_use_event_bus_sequence_and_terminal_sanitizer(
+    tmp_path: Path,
+) -> None:
+    async def scenario() -> None:
+        private_key = (
+            "-----BEGIN PRIVATE KEY-----\n"
+            "pem-secret\n"
+            "-----END PRIVATE KEY-----"
+        )
+        provider = FailingProvider(
+            "access_token=access-secret api_key=api-secret cookie=session-secret "
+            "Bearer bearer-secret "
+            "https://example.test/?token=query-secret "
+            f"{private_key} "
+            + "x" * 200
+        )
+        bus = EventBus(max_string_length=96)
+        harness = AgentHarness(
+            provider,
+            [],
+            SqliteRunStore(tmp_path / "run.db", run_id="run-1"),
+            sessions_root=tmp_path / "sessions",
+            event_bus=bus,
+        )
+        seen: list[Any] = []
+        harness.on_event(seen.append)
+
+        result = await harness.execute(task(allowed_tools=[]))
+
+        assert result.status == "failed"
+        assert [event.sequence for event in seen] == list(range(1, len(seen) + 1))
+        terminal_error = result.error or ""
+        session_json = json.dumps(
+            session_records(tmp_path / "sessions"), ensure_ascii=False
+        )
+        serialized = json.dumps(
+            [event.to_plain() for event in seen], ensure_ascii=False
+        )
+        for secret in (
+            "access-secret",
+            "api-secret",
+            "session-secret",
+            "bearer-secret",
+            "query-secret",
+            "pem-secret",
+        ):
+            assert secret not in serialized
+            assert secret not in terminal_error
+            assert secret not in session_json
+        assert "<redacted>" in serialized
+        assert "<truncated>" in serialized
+        assert "<truncated>" in terminal_error
+        assert harness.listener_error_count == bus.listener_error_count
+
+    run(scenario())
+
+
+def test_dynamic_tool_handler_receives_current_turn_permissions(tmp_path: Path) -> None:
+    async def scenario() -> None:
+        contexts: list[dict[str, Any]] = []
+
+        async def handler(call: ToolCall, context: ToolExecutionContext) -> ToolResult:
+            contexts.append(context.to_plain())
+            return ToolResult(call.call_id, "ok")
+
+        provider = ScriptedProvider(
+            [
+                final_call("call-1", "search_sources"),
+                final_call("call-2", "fetch_page"),
+                final_text("done"),
+            ]
+        )
+        harness = AgentHarness(
+            provider,
+            [tool("search_sources", handler), tool("fetch_page", handler)],
+            SqliteRunStore(tmp_path / "run.db", run_id="run-1"),
+            sessions_root=tmp_path / "sessions",
+        )
+
+        def switch_after_first_turn(event: Any) -> None:
+            if event.event_type == "turn_started" and event.payload["turn_index"] == 1:
+                harness.set_next_turn_tools(["fetch_page"])
+
+        harness.on_event(switch_after_first_turn)
+        result = await harness.execute(task())
+
+        assert result.status == "completed"
+        assert [context["permissions"]["active_tool_names"] for context in contexts] == [
+            ["search_sources"],
+            ["fetch_page"],
+        ]
+        for context in contexts:
+            assert context["permissions"]["object_read_scopes"] == [
+                "ResearchProblem",
+                "EvidenceCard",
+            ]
+            assert context["permissions"]["object_write_scopes"] == ["EvidenceCard"]
+
+    run(scenario())
+
+
+def test_tool_trace_actor_and_tool_identity_are_controlled(tmp_path: Path) -> None:
+    async def scenario() -> None:
+        async def handler(call: ToolCall, context: ToolExecutionContext) -> ToolResult:
+            del context
+            return ToolResult(
+                call.call_id,
+                "ok",
+                trace_proposals=(
+                    TraceProposal(
+                        "spoofed-trace",
+                        "tool_observation",
+                        "spoofed-actor",
+                        {"tool_name": "spoofed-tool", "value": "safe"},
+                    ),
+                ),
+            )
+
+        store = SqliteRunStore(tmp_path / "run.db", run_id="run-1")
+        provider = ScriptedProvider(
+            [final_call("call-1", "create_evidence_card"), final_text("done")]
+        )
+        harness = AgentHarness(
+            provider,
+            [tool("create_evidence_card", handler)],
+            store,
+            sessions_root=tmp_path / "sessions",
+        )
+        await harness.execute(task(allowed_tools=["create_evidence_card"]))
+
+        trace = next(
+            event for event in store.trace_events() if event["proposal_id"] == "spoofed-trace"
+        )
+        assert trace["actor"] == "agent-a"
+        assert trace["payload"]["tool_name"] == "create_evidence_card"
+        assert trace["payload"]["tool_call_id"] == "call-1"
 
     run(scenario())
 
@@ -662,6 +921,11 @@ def test_session_uses_safe_projections_and_never_persists_raw_secrets(
                 allowed_tools=[],
                 objective="objective secret-value",
                 research_questions=["question secret-value"],
+                context_refs=[
+                    "https://example.test/context?access_token=query-secret",
+                    "cookie=session-secret",
+                ],
+                evidence_refs=["api_key=evidence-secret"],
             )
         )
 
@@ -671,7 +935,59 @@ def test_session_uses_safe_projections_and_never_persists_raw_secrets(
         assert "secret-value" not in persisted
         assert "model-secret" not in persisted
         assert "Bearer" not in persisted
+        assert "query-secret" not in persisted
+        assert "session-secret" not in persisted
+        assert "evidence-secret" not in persisted
+        received = session_records(tmp_path / "sessions")[0]
+        assert received["context_refs"]["count"] == 2
+        assert received["evidence_refs"]["count"] == 1
+        assert all(
+            ref.startswith("sha256:") for ref in received["context_refs"]["refs"]
+        )
         assert "<redacted>" in persisted
+
+    run(scenario())
+
+
+def test_savepoint_session_failure_is_marked_in_database_for_reconciliation(
+    tmp_path: Path,
+) -> None:
+    async def scenario() -> None:
+        store = SqliteRunStore(tmp_path / "run.db", run_id="run-1")
+
+        def session_factory(path: str, root_dir: Path) -> FailSavepointOnceSession:
+            return FailSavepointOnceSession(path, root_dir=root_dir)
+
+        harness = AgentHarness(
+            ScriptedProvider([final_text("done")]),
+            [],
+            store,
+            sessions_root=tmp_path / "sessions",
+            session_store_factory=session_factory,
+        )
+
+        result = await harness.execute(task(allowed_tools=[]))
+
+        assert result.status == "failed"
+        events = store.trace_events()
+        reconciliation = next(
+            event for event in events if event["event_type"] == "session_write_failed"
+        )
+        assert reconciliation["actor"] == "agent-a"
+        assert reconciliation["payload"]["session_event"] == "savepoint"
+        assert reconciliation["payload"]["turn_index"] == 1
+        assert reconciliation["payload"]["batch_hash"].startswith("sha256:")
+        assert reconciliation["payload"]["committed_checkpoint_id"].startswith(
+            "checkpoint-"
+        )
+        assert store.recover()["checkpoint_id"] == result.checkpoint_id
+        records = session_records(tmp_path / "sessions")
+        assert [record["event_type"] for record in records][-2:] == [
+            "savepoint_pending",
+            "task_failed",
+        ]
+        persisted = json.dumps(records)
+        assert "session-secret" not in persisted
 
     run(scenario())
 

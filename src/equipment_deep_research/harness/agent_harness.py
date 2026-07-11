@@ -8,7 +8,6 @@ from hashlib import sha256
 import inspect
 import json
 from pathlib import Path
-import re
 from threading import Lock
 import time
 from typing import Any, cast
@@ -33,6 +32,10 @@ from equipment_deep_research.harness.agent_loop import (
     TurnSnapshotInput,
 )
 from equipment_deep_research.harness.budget import Budget
+from equipment_deep_research.harness.event_bus import (
+    EventBus,
+    sanitize_runtime_payload,
+)
 from equipment_deep_research.harness.events import RuntimeEvent
 from equipment_deep_research.harness.session import JsonlSessionStore
 from equipment_deep_research.providers.base import ModelMessage, ModelProvider
@@ -47,16 +50,6 @@ from equipment_deep_research.tools.permissions import ToolAuthorizationPolicy
 
 HarnessEventCallback = Callable[[RuntimeEvent], None | Awaitable[None]]
 
-_SECRET_KEY_PARTS = (
-    "authorization",
-    "apikey",
-    "accesstoken",
-    "refreshtoken",
-    "password",
-    "secret",
-    "credential",
-)
-_BEARER_PATTERN = re.compile(r"(?i)\bBearer\s+[^\s,;]+")
 _LONG_ERROR_LIMIT = 512
 _OBJECT_ID_FIELDS = {
     "ResearchProblem": "problem_id",
@@ -86,6 +79,8 @@ class AgentHarness:
         model_options: Mapping[str, Any] | None = None,
         authorization_policy: ToolAuthorizationPolicy | None = None,
         on_event: HarnessEventCallback | None = None,
+        event_bus: EventBus | None = None,
+        session_store_factory: Callable[[str, Path], Any] | None = None,
         monotonic: Callable[[], float] = time.monotonic,
     ) -> None:
         self.provider = provider
@@ -97,35 +92,39 @@ class AgentHarness:
             Mapping[str, Any], freeze_plain(model_options or {})
         )
         self.authorization_policy = authorization_policy or ToolAuthorizationPolicy.default()
+        self.event_bus = event_bus or EventBus()
+        self._session_store_factory = session_store_factory
         self._monotonic = monotonic
         self._tools = _normalize_tools(tools)
-        self._listeners: list[HarnessEventCallback] = []
-        if on_event is not None:
-            self._listeners.append(on_event)
-        self._listener_error_count = 0
         self._state_lock = Lock()
+        self._pending_listener_awaitables: list[Awaitable[Any]] = []
+        self._async_listener_error_count = 0
         self._next_turn_tools: tuple[str, ...] | None = None
         self._executing = False
         self.last_session_store: JsonlSessionStore | None = None
         self.last_session_path: Path | None = None
+        if on_event is not None:
+            self.on_event(on_event)
 
     @property
     def listener_error_count(self) -> int:
         with self._state_lock:
-            return self._listener_error_count
+            return self.event_bus.listener_error_count + self._async_listener_error_count
 
     def on_event(self, callback: HarnessEventCallback) -> Callable[[], None]:
         if not callable(callback):
             raise TypeError("event callback must be callable")
-        with self._state_lock:
-            self._listeners.append(callback)
 
-        def unsubscribe() -> None:
-            with self._state_lock:
-                if callback in self._listeners:
-                    self._listeners.remove(callback)
+        def bus_listener(event: RuntimeEvent) -> None:
+            response = callback(event)
+            if inspect.isawaitable(response):
+                with self._state_lock:
+                    self._pending_listener_awaitables.append(response)
 
-        return unsubscribe
+        return self.event_bus.subscribe(
+            bus_listener,
+            categories={"agent_harness"},
+        )
 
     def set_next_turn_tools(self, tool_names: Sequence[str]) -> None:
         names = tuple(str(name) for name in tool_names)
@@ -140,10 +139,16 @@ class AgentHarness:
         self._begin_execution()
         execution_id = new_stable_id("execution")
         try:
-            session = JsonlSessionStore(
-                f"{execution_id}.jsonl",
-                root_dir=self.sessions_root,
-            )
+            if self._session_store_factory is None:
+                session = JsonlSessionStore(
+                    f"{execution_id}.jsonl",
+                    root_dir=self.sessions_root,
+                )
+            else:
+                session = self._session_store_factory(
+                    f"{execution_id}.jsonl",
+                    self.sessions_root,
+                )
         except BaseException:
             self._end_execution()
             raise
@@ -161,6 +166,7 @@ class AgentHarness:
         pending_traces: dict[int, list[TraceProposal]] = {}
         tool_call_ids: dict[int, list[str]] = {}
         core_error: BaseException | None = None
+        tool_permission_errors: list[PermissionError] = []
         budget: Budget | None = None
         terminal_recorded = False
 
@@ -178,30 +184,102 @@ class AgentHarness:
             )
 
         def append_session(event_type: str, payload: Mapping[str, Any]) -> None:
-            record = {
+            record = sanitize_runtime_payload(
+                {
                 "event_type": event_type,
                 "execution_id": execution_id,
                 "task_id": task.task_id,
                 "agent_id": task.target_agent_id,
                 "created_at": now_iso(),
                 "schema_version": "1.0",
-                **cast(dict[str, Any], _safe_plain(payload)),
-            }
-            session.append(record)
+                    **dict(payload),
+                },
+                max_string_length=self.event_bus.max_string_length,
+            )
+            session.append(cast(Mapping[str, Any], record))
 
         async def emit_external(event_type: str, payload: Mapping[str, Any]) -> None:
-            await self._emit_external(
+            await self._publish_external(
                 RuntimeEvent(
                     category="agent_harness",
                     event_type=event_type,
                     run_id=task.run_id,
-                    payload=cast(Mapping[str, Any], _safe_plain(payload)),
+                    payload=payload,
                 )
             )
 
-        def commit_turn(turn_index: int, status: str) -> None:
+        def commit_batch(
+            turn_index: int,
+            domains: Sequence[DomainWriteProposal],
+            traces: Sequence[TraceProposal],
+        ) -> None:
             nonlocal checkpoint_id
             commit_attempted.add(turn_index)
+            domain_batch = tuple(domains)
+            trace_batch = tuple(traces)
+            batch_hash = _hash_plain(
+                {
+                    "domain_proposals": [
+                        proposal.to_plain() for proposal in domain_batch
+                    ],
+                    "trace_proposals": [proposal.to_plain() for proposal in trace_batch],
+                }
+            )
+            append_session(
+                "savepoint_pending",
+                {
+                    "turn_index": turn_index,
+                    "batch_hash": batch_hash,
+                    "domain_proposal_count": len(domain_batch),
+                    "trace_proposal_count": len(trace_batch),
+                },
+            )
+            committed_checkpoint_id = self.store.commit(domain_batch, trace_batch)
+            checkpoint_id = committed_checkpoint_id
+            committed_turns.add(turn_index)
+            _extend_output_refs(output_refs, evidence_ids, domain_batch)
+            try:
+                append_session(
+                    "savepoint",
+                    {
+                        "turn_index": turn_index,
+                        "batch_hash": batch_hash,
+                        "checkpoint_id": checkpoint_id,
+                        "domain_proposal_refs": [
+                            f"domain:{proposal.proposal_id}"
+                            for proposal in domain_batch
+                        ],
+                        "trace_proposal_refs": [
+                            f"trace:{proposal.proposal_id}" for proposal in trace_batch
+                        ],
+                    },
+                )
+            except BaseException as session_error:
+                reconciliation = TraceProposal(
+                    proposal_id=f"reconcile-{execution_id}-turn-{turn_index}",
+                    event_type="session_write_failed",
+                    actor=task.target_agent_id,
+                    payload={
+                        "execution_id": execution_id,
+                        "task_id": task.task_id,
+                        "turn_index": turn_index,
+                        "session_event": "savepoint",
+                        "batch_hash": batch_hash,
+                        "committed_checkpoint_id": committed_checkpoint_id,
+                        "recovery_status": "reconcile_required",
+                        "error_type": type(session_error).__name__,
+                    },
+                )
+                try:
+                    checkpoint_id = self.store.commit((), (reconciliation,))
+                except BaseException as reconciliation_error:
+                    session_error.add_note(
+                        "failed to persist session reconciliation marker: "
+                        f"{type(reconciliation_error).__name__}"
+                    )
+                raise
+
+        def commit_turn(turn_index: int, status: str) -> None:
             domains = tuple(pending_domains.get(turn_index, ()))
             traces = tuple(pending_traces.get(turn_index, ())) + (
                 _harness_trace(
@@ -213,22 +291,7 @@ class AgentHarness:
                     tool_call_ids=tool_call_ids.get(turn_index, ()),
                 ),
             )
-            checkpoint_id = self.store.commit(domains, traces)
-            committed_turns.add(turn_index)
-            _extend_output_refs(output_refs, evidence_ids, domains)
-            append_session(
-                "savepoint",
-                {
-                    "turn_index": turn_index,
-                    "checkpoint_id": checkpoint_id,
-                    "domain_proposal_refs": [
-                        f"domain:{proposal.proposal_id}" for proposal in domains
-                    ],
-                    "trace_proposal_refs": [
-                        f"trace:{proposal.proposal_id}" for proposal in traces
-                    ],
-                },
-            )
+            commit_batch(turn_index, domains, traces)
 
         def finalize_uncommitted_turn(status: str) -> None:
             if not snapshots:
@@ -236,7 +299,6 @@ class AgentHarness:
             turn_index = snapshots[-1].turn_index
             if turn_index in committed_turns or turn_index in commit_attempted:
                 return
-            commit_attempted.add(turn_index)
             trace = _harness_trace(
                 execution_id=execution_id,
                 task=task,
@@ -245,18 +307,7 @@ class AgentHarness:
                 snapshot=snapshots[-1],
                 tool_call_ids=tool_call_ids.get(turn_index, ()),
             )
-            nonlocal checkpoint_id
-            checkpoint_id = self.store.commit((), (trace,))
-            committed_turns.add(turn_index)
-            append_session(
-                "savepoint",
-                {
-                    "turn_index": turn_index,
-                    "checkpoint_id": checkpoint_id,
-                    "domain_proposal_refs": [],
-                    "trace_proposal_refs": [f"trace:{trace.proposal_id}"],
-                },
-            )
+            commit_batch(turn_index, (), (trace,))
 
         try:
             append_session(
@@ -269,8 +320,8 @@ class AgentHarness:
                     "research_question_refs": [
                         _hash_plain(question) for question in task.research_questions
                     ],
-                    "context_refs": list(task.context_refs),
-                    "evidence_refs": list(task.evidence_refs),
+                    "context_refs": _reference_projection(task.context_refs),
+                    "evidence_refs": _reference_projection(task.evidence_refs),
                     "allowed_tools": list(task.allowed_tools),
                     "object_read_scopes": list(task.object_read_scopes),
                     "object_write_scopes": list(task.object_write_scopes),
@@ -290,33 +341,55 @@ class AgentHarness:
 
             initial_messages = (_task_message(task),)
 
+            def record_tool_permission_error(error: PermissionError) -> None:
+                if not tool_permission_errors:
+                    tool_permission_errors.append(error)
+
             async def prepare_turn(snapshot_input: TurnSnapshotInput) -> TurnSnapshotInput:
                 nonlocal active_tool_names, core_error
                 try:
                     next_tools = self._consume_next_turn_tools()
                     if next_tools is not None:
                         active_tool_names = next_tools
-                    selected: list[ToolDefinition] = []
-                    for name in active_tool_names:
+                    requested_tool_names = active_tool_names
+                    authorized_definitions: list[ToolDefinition] = []
+                    candidate_denials: list[PermissionError] = []
+                    for name in requested_tool_names:
                         definition = self._tools.get(name)
                         if definition is None:
                             raise ValueError(f"unknown active tool: {name}")
-                        self.authorization_policy.authorize(
-                            name,
+                        try:
+                            self.authorization_policy.authorize(
+                                name,
+                                active_tool_names=requested_tool_names,
+                                object_read_scopes=read_scopes,
+                                object_write_scopes=write_scopes,
+                            )
+                        except PermissionError as exc:
+                            candidate_denials.append(exc)
+                            continue
+                        authorized_definitions.append(definition)
+
+                    if requested_tool_names and not authorized_definitions:
+                        raise PermissionError(
+                            "; ".join(str(error) for error in candidate_denials)
+                            or "no active tools are authorized"
+                        )
+                    active_tool_names = tuple(
+                        definition.name for definition in authorized_definitions
+                    )
+                    selected = tuple(
+                        _authorized_tool(
+                            definition,
+                            policy=self.authorization_policy,
                             active_tool_names=active_tool_names,
                             object_read_scopes=read_scopes,
                             object_write_scopes=write_scopes,
+                            budget=budget,
+                            on_permission_error=record_tool_permission_error,
                         )
-                        selected.append(
-                            _authorized_tool(
-                                definition,
-                                policy=self.authorization_policy,
-                                active_tool_names=active_tool_names,
-                                object_read_scopes=read_scopes,
-                                object_write_scopes=write_scopes,
-                                budget=budget,
-                            )
-                        )
+                        for definition in authorized_definitions
+                    )
 
                     if not budget.try_start_turn():
                         denied_turns.add(snapshot_input.turn_index)
@@ -325,7 +398,7 @@ class AgentHarness:
                     prepared = TurnSnapshotInput(
                         turn_index=snapshot_input.turn_index,
                         messages=snapshot_input.messages,
-                        tools=tuple(selected),
+                        tools=selected,
                         options=self.model_options,
                     )
                     frozen_snapshot = _turn_snapshot(
@@ -336,7 +409,7 @@ class AgentHarness:
                     snapshots.append(frozen_snapshot)
                     append_session(
                         "turn_snapshot",
-                        cast(Mapping[str, Any], _safe_plain(frozen_snapshot.to_plain())),
+                        frozen_snapshot.to_plain(),
                     )
                     await emit_external(
                         "turn_snapshot",
@@ -506,11 +579,16 @@ class AgentHarness:
                 )
                 return result("budget_exhausted")
 
+            if tool_permission_errors:
+                raise tool_permission_errors[0]
             if isinstance(core_error, PermissionError):
                 raise core_error
             if loop_result.status == "failed":
                 finalize_uncommitted_turn("failed")
-                error = _safe_error(core_error or loop_result.error or "execution failed")
+                error = _safe_error(
+                    core_error or loop_result.error or "execution failed",
+                    max_string_length=self.event_bus.max_string_length,
+                )
                 append_session(
                     "task_failed",
                     {
@@ -561,7 +639,10 @@ class AgentHarness:
                     )
             raise
         except PermissionError as exc:
-            error = _safe_error(exc)
+            error = _safe_error(
+                exc,
+                max_string_length=self.event_bus.max_string_length,
+            )
             if not terminal_recorded:
                 try:
                     append_session(
@@ -585,7 +666,10 @@ class AgentHarness:
                 finalize_uncommitted_turn("failed")
             except Exception:
                 pass
-            error = _safe_error(exc)
+            error = _safe_error(
+                exc,
+                max_string_length=self.event_bus.max_string_length,
+            )
             if not terminal_recorded:
                 try:
                     append_session(
@@ -604,23 +688,26 @@ class AgentHarness:
         finally:
             self._end_execution()
 
-    async def _emit_external(self, event: RuntimeEvent) -> None:
-        with self._state_lock:
-            listeners = tuple(self._listeners)
-        for listener in listeners:
-            try:
-                response = listener(event)
-                if inspect.isawaitable(response):
-                    await response
-            except asyncio.CancelledError:
-                current_task = asyncio.current_task()
-                if current_task is not None and current_task.cancelling() > 0:
-                    raise
-                with self._state_lock:
-                    self._listener_error_count += 1
-            except Exception:
-                with self._state_lock:
-                    self._listener_error_count += 1
+    async def _publish_external(self, event: RuntimeEvent) -> None:
+        self.event_bus.publish(event)
+        while True:
+            with self._state_lock:
+                awaitables = tuple(self._pending_listener_awaitables)
+                self._pending_listener_awaitables.clear()
+            if not awaitables:
+                return
+            for awaitable in awaitables:
+                try:
+                    await awaitable
+                except asyncio.CancelledError:
+                    current_task = asyncio.current_task()
+                    if current_task is not None and current_task.cancelling() > 0:
+                        raise
+                    with self._state_lock:
+                        self._async_listener_error_count += 1
+                except Exception:
+                    with self._state_lock:
+                        self._async_listener_error_count += 1
 
     def _consume_next_turn_tools(self) -> tuple[str, ...] | None:
         with self._state_lock:
@@ -660,19 +747,44 @@ def _authorized_tool(
     object_read_scopes: Sequence[str],
     object_write_scopes: Sequence[str],
     budget: Budget,
+    on_permission_error: Callable[[PermissionError], None],
 ) -> ToolDefinition:
     async def authorized_handler(
         call: ToolCall,
         context: ToolExecutionContext,
     ) -> ToolResult:
-        policy.authorize(
-            call.name,
-            active_tool_names=active_tool_names,
-            object_read_scopes=object_read_scopes,
-            object_write_scopes=object_write_scopes,
-        )
-        budget.record_tool_call()
-        return await definition.handler(call, context)
+        try:
+            policy.authorize(
+                call.name,
+                active_tool_names=active_tool_names,
+                object_read_scopes=object_read_scopes,
+                object_write_scopes=object_write_scopes,
+            )
+            budget.record_tool_call()
+            current_context = ToolExecutionContext(
+                run_id=context.run_id,
+                agent_id=context.agent_id,
+                permissions={
+                    "active_tool_names": list(active_tool_names),
+                    "object_read_scopes": list(object_read_scopes),
+                    "object_write_scopes": list(object_write_scopes),
+                },
+            )
+            result = await definition.handler(call, current_context)
+            if not isinstance(result, ToolResult):
+                return cast(ToolResult, result)
+            return policy.authorize_result(
+                call.name,
+                result,
+                active_tool_names=active_tool_names,
+                object_read_scopes=object_read_scopes,
+                object_write_scopes=object_write_scopes,
+                agent_id=current_context.agent_id,
+                call_id=call.call_id,
+            )
+        except PermissionError as exc:
+            on_permission_error(exc)
+            raise
 
     return ToolDefinition(
         name=definition.name,
@@ -718,6 +830,13 @@ def _turn_snapshot(
 
 def _message_ref(message: ModelMessage) -> str:
     return _hash_plain(message.to_plain())
+
+
+def _reference_projection(values: Sequence[str]) -> dict[str, Any]:
+    return {
+        "count": len(values),
+        "refs": [_hash_plain(value) for value in values],
+    }
 
 
 def _hash_plain(value: Any) -> str:
@@ -796,29 +915,16 @@ def _usage_tokens(metadata: Mapping[str, Any]) -> int:
     return count
 
 
-def _safe_plain(value: Any) -> Any:
-    if isinstance(value, Mapping):
-        safe: dict[str, Any] = {}
-        for key, item in value.items():
-            normalized = re.sub(r"[^a-z0-9]", "", str(key).lower())
-            if any(part in normalized for part in _SECRET_KEY_PARTS):
-                safe[str(key)] = "<redacted>"
-            else:
-                safe[str(key)] = _safe_plain(item)
-        return safe
-    if isinstance(value, (list, tuple)):
-        return [_safe_plain(item) for item in value]
-    if isinstance(value, str):
-        return _BEARER_PATTERN.sub("<redacted>", value)
-    return value
-
-
-def _safe_error(error: BaseException | str) -> str:
-    text = str(error)
-    text = _BEARER_PATTERN.sub("<redacted>", text)
-    if len(text) > _LONG_ERROR_LIMIT:
-        text = text[:_LONG_ERROR_LIMIT] + "<truncated>"
-    return text or "execution failed"
+def _safe_error(
+    error: BaseException | str,
+    *,
+    max_string_length: int = _LONG_ERROR_LIMIT,
+) -> str:
+    safe = sanitize_runtime_payload(
+        str(error),
+        max_string_length=min(max_string_length, _LONG_ERROR_LIMIT),
+    )
+    return safe if isinstance(safe, str) and safe else "execution failed"
 
 
 def _error_type(error: BaseException | None) -> str:

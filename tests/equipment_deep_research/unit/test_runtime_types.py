@@ -9,7 +9,7 @@ from threading import Event
 import pytest
 
 from equipment_deep_research.domain.proposals import DomainWriteProposal, TraceProposal
-from equipment_deep_research.harness.event_bus import EventBus
+from equipment_deep_research.harness.event_bus import EventBus, sanitize_runtime_payload
 from equipment_deep_research.harness.events import RuntimeEvent
 from equipment_deep_research.tools.definitions import (
     ToolCall,
@@ -45,6 +45,44 @@ def test_event_bus_redacts_credentials_and_truncates_payload() -> None:
     assert seen[0].payload["nested"]["items"][0]["refresh_token"] == "<redacted>"
     assert seen[0].payload["text"].endswith("<truncated>")
     assert "TAIL-MUST-NOT-LEAK" not in seen[0].payload["text"]
+
+
+def test_public_sanitizer_redacts_secrets_inside_strings_urls_and_pem() -> None:
+    private_key = (
+        "-----BEGIN PRIVATE KEY-----\n"
+        "pem-secret-material\n"
+        "-----END PRIVATE KEY-----"
+    )
+    safe = sanitize_runtime_payload(
+        {
+            "text": (
+                "access_token=access-secret api_key=api-secret token=token-secret "
+                "password=password-secret secret=secret-value cookie=session-secret "
+                "Authorization: Bearer bearer-secret "
+                "https://example.test/path?ok=1&access_token=query-secret "
+                f"{private_key}"
+            ),
+            "long_error": "x" * 80 + " api_key=tail-secret",
+        },
+        max_string_length=48,
+    )
+
+    serialized = json.dumps(safe, ensure_ascii=False)
+    for secret in (
+        "access-secret",
+        "api-secret",
+        "token-secret",
+        "password-secret",
+        "secret-value",
+        "session-secret",
+        "bearer-secret",
+        "query-secret",
+        "pem-secret-material",
+        "tail-secret",
+    ):
+        assert secret not in serialized
+    assert "<redacted>" in serialized
+    assert safe["long_error"].endswith("<truncated>")
 
 
 def test_event_bus_assigns_monotonic_sequences_per_run() -> None:

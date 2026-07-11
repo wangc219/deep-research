@@ -606,6 +606,8 @@ class AgentLoop:
             result = await tool.handler(runtime_call, context)
         except asyncio.CancelledError:
             raise
+        except PermissionError:
+            raise
         except Exception as exc:
             return _error_result(
                 provider_call,

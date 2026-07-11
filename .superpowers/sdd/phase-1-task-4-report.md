@@ -13,11 +13,14 @@ tool handler 均不接触 store/session，harness 通过 `prepare_turn` 与 type
 - `AgentHarness.set_next_turn_tools(names)`：仅在下一次 `prepare_turn` 消费，不修改已
   开始的 snapshot。
 - `AgentHarness.on_event(callback)`：返回 unsubscribe；普通 listener 异常及 listener
-  自行抛出的 `CancelledError` 被隔离并计数，调用方真实取消继续传播。
+  自行抛出的 `CancelledError` 被隔离并计数，调用方真实取消继续传播。回调实际订阅
+  harness 接受或创建的 `EventBus`，不存在第二条 RuntimeEvent 发布通道。
 - `Budget`：支持 `max_turns`、`max_tool_calls`、`max_seconds`、`max_tokens`；未知键
   显式 `ValueError`，非整数 turn/tool/token 和负数/非有限值被拒绝。
 - `ToolAuthorizationPolicy.authorize()`：同时检查 active tool allowlist、required read
   scopes 和 required write scopes；scope 映射可注入覆盖，未覆盖项保留默认映射。
+- `ToolAuthorizationPolicy.authorize_result()`：真实 handler 返回后逐项校验 domain proposal
+  object type，并重建受控 actor/tool identity 的 trace proposal。
 - 旧 `ToolPermissionRegistry.default()`、`validate_agent_tools()`、
   `enforce_active_tool()` API 原样保留。
 
@@ -48,10 +51,21 @@ model_options/budget_remaining/created_at/schema_version`，所有 sequence/mapp
 - `write_audit -> AuditResult`
 - `write_report -> ResearchReport`
 
-`search_sources` / `fetch_page` 不读取 domain store，因此默认无 object scope；Phase 2 可
-通过构造参数注入 custom tool 的 read/write requirement。每轮在 provider 前预检全部
-active tools，scope 缺失时 provider 和 handler 均不执行并可传播 `PermissionError`；
-每个 wrapper handler 在真实 handler 前再次授权并原子消耗 tool-call budget。
+`search_sources` / `fetch_page` 不读取 domain store，因此默认无 object scope 且不允许
+domain write；Phase 2 可通过构造参数注入 custom tool 的 read/write requirement 与
+`allowed_write_types`。
+
+每轮 prepare 对候选 active tools 逐个授权，只向 provider 暴露当前 task scopes 下可调用
+的子集；一个未授权候选不会阻断其他合法候选，只有原 active set 全部不可授权时才在
+provider 前传播 `PermissionError`。每个 wrapper 在真实 handler 前再次检查 allowlist、
+read/write scopes 并原子消耗 tool-call budget；传给 handler 的新
+`ToolExecutionContext.permissions` 来自当前 snapshot，而不是 AgentLoop 初始 context。
+
+handler 返回后执行第二层授权：每个 `DomainWriteProposal.object_type` 必须同时存在于
+task `object_write_scopes` 和该工具 `allowed_write_types`。任一违规会丢弃整个 result、
+传播 `PermissionError`，不产生 tool_result session event，不进入 pending 或 store。
+`TraceProposal` 可写，但 actor 强制为当前 agent，payload 中 `tool_name/tool_call_id` 由
+harness 覆盖，工具不能伪造调用身份。
 
 预算达到上限时，下一次 turn admission 返回 `budget_exhausted`。`max_seconds` 同时使用
 monotonic admission 检查和 `asyncio.wait_for` wall-clock 限制；超时取消内部 loop、写入
@@ -66,6 +80,7 @@ task_received
 -> turn_snapshot
 -> assistant_message
 -> tool_result (provider call order) x N
+-> savepoint_pending(turn, canonical batch hash)
 -> SqliteRunStore.commit(domain proposals, tool traces, harness trace)
 -> savepoint
 -> ... next turn ...
@@ -76,12 +91,31 @@ task_received
 - 每个正常 turn 至少加入一条 `harness_turn` trace proposal；provider 失败、超时和取消
   若已开始 turn 但没有 `turn_end`，只提交 terminal harness trace，不提交未到
   `turn_end` 的 tool proposals。
-- `savepoint` 仅在 store commit 成功后写 session；commit 失败不会进入下一 provider
-  turn，也不会伪造 savepoint。
+- `savepoint_pending` 在 commit 前写 session，保存 turn、canonical strict JSON batch hash
+  和 proposal counts；`savepoint` 仅在 store commit 成功后写 session。
+- commit 失败不会进入下一 provider turn，也不会伪造 savepoint。若 DB commit 已成功但
+  session `savepoint` append 失败，harness 立即向 DB 提交 `session_write_failed` trace，
+  记录原 committed checkpoint、batch hash、turn、session event 和
+  `recovery_status="reconcile_required"`，并使执行失败。
 - handler 仅收到 `ToolCall` 与 `ToolExecutionContext`，不会获得 store。
 - session 使用 `JsonlSessionStore(path, root_dir=trusted_sessions_root)`；任务正文、assistant
   正文和 tool result 正文只保存稳定引用/安全 projection。敏感 key 递归替换为
-  `<redacted>`，terminal session error 使用安全类别文案，不保存 provider/store 原始错误。
+  `<redacted>`；`context_refs/evidence_refs` 只写 count 和 SHA-256 ref IDs。所有 session
+  字符串与 external event payload 共用公共 `sanitize_runtime_payload()`，覆盖敏感 key、
+  access token/API key/token/password/secret/cookie 字符串、URL query credentials、Bearer、
+  PEM private key 和统一截断。terminal session error 使用安全类别文案，result/external
+  terminal error 也经过同一 sanitizer。
+
+### RecoveryManager 识别规则
+
+1. 读取 session 最后一个 `savepoint_pending`，取得 `turn_index` 与 `batch_hash`。
+2. 若后续存在匹配 batch hash 的 session `savepoint`，该 turn 已完成，无需协调。
+3. 若没有 session `savepoint`，查询 DB `trace_events`。存在
+   `event_type="session_write_failed"` 且 turn/batch hash 匹配时，使用其
+   `committed_checkpoint_id` 确认领域/trace batch 已提交，并将当前 DB checkpoint 作为
+   reconciliation checkpoint；恢复流程只补 session/index 状态，不重放 tool proposal。
+4. 若既没有匹配 savepoint，也没有 DB marker，则 commit 未确认，RecoveryManager 不得
+   假设成功，可从上一个确认 checkpoint 重试该 turn。
 
 失败策略：provider/loop/store/session 普通失败返回 `AgentExecutionResult(status="failed")`
 并尽力追加 `task_failed`；权限拒绝先追加安全 `task_failed` 再传播 `PermissionError`；
@@ -106,26 +140,40 @@ CancelledError: listener-only
 修复后聚焦结果：
 
 ```text
-18 passed in 0.09s
+24 passed
 ```
 
-覆盖 snapshot 深不可变/下一轮切换、scope/provider/handler 拒绝、allowlist、逐调用预算、
-并发 tool-call 原子消费、token usage、wall-clock timeout、proposal 批量提交、savepoint
-顺序、commit 失败、session 脱敏、external listener 隔离、稳定结果 schema 和取消传播。
+审查修复 RED 首次运行：`10 failed, 14 passed`，分别复现候选工具整轮拒绝、恶意 domain
+proposal 入库、动态 context 过期、EventBus 未接入、trace identity 可伪造、原始 refs
+泄漏、缺少 savepoint pending/reconciliation marker。公共 sanitizer RED 为 import error。
+
+覆盖 snapshot 深不可变/下一轮切换、scope/provider/handler 拒绝、混合候选过滤、返回后
+proposal 授权、trace identity、动态 context、EventBus sequence/脱敏、逐调用预算、并发
+tool-call 原子消费、token usage、wall-clock timeout、proposal 批量提交、savepoint
+pending/commit/reconciliation、session 脱敏、external listener 隔离、稳定结果 schema 和
+取消传播。
 
 ## 验证证据
 
 ```text
+python3 -m pytest tests/equipment_deep_research/integration/test_agent_harness.py -q
+24 passed
+
 python3 -m pytest tests/equipment_deep_research -q -k "permission or scope or snapshot"
-4 passed, 152 deselected
+6 passed, 157 deselected
 
 python3 -m pytest tests/test_deep_research_runner.py -q
 23 passed
 
 python3 -m pytest -q
-179 passed
+186 passed
 
-ruff check <owned implementation/test files>
+ruff check src/equipment_deep_research/harness/event_bus.py \
+  src/equipment_deep_research/harness/agent_harness.py \
+  src/equipment_deep_research/harness/agent_loop.py \
+  src/equipment_deep_research/tools/permissions.py \
+  tests/equipment_deep_research/unit/test_runtime_types.py \
+  tests/equipment_deep_research/integration/test_agent_harness.py
 All checks passed!
 
 python3 -m compileall -q src/equipment_deep_research
@@ -141,6 +189,7 @@ exit 0
 rg -n "equipment_deep_research\.(orchestration|interfaces)|DomainStore|TraceStore" \
   src/equipment_deep_research/harness/budget.py \
   src/equipment_deep_research/harness/agent_harness.py \
+  src/equipment_deep_research/harness/event_bus.py \
   src/equipment_deep_research/tools/permissions.py
 
 rg -n "store" \
@@ -150,12 +199,13 @@ rg -n "store" \
 
 ## 自审与关注点
 
-- 仅修改任务所有权文件、允许的 `domain/messages.py` 兼容接口及本报告，未回退其他工作。
+- 审查修复额外修改公共 `event_bus.py` sanitizer、`agent_loop.py` 的 PermissionError 传播和
+  对应 runtime tests；未回退其他工作。
 - `AgentHarness` 明确为 single-flight 实例；并发 task 应使用独立 harness 实例，避免
   `set_next_turn_tools` 在执行间串扰。
 - 未配置 `max_turns` 时保留 loop 的 64-turn 防失控上限；显式 task budget 达限使用
   `budget_exhausted`，而不是 `max_turns`。
 - 真实 provider token usage 依赖 `total_tokens`，或 input/output、prompt/completion token
   字段；未知 usage 字段不会猜测计费。
-- 原子提交主题：`feat: add agent harness snapshots and authorization`；实际提交哈希在最终
-  回复中报告，避免报告自引用改变提交内容。
+- 原子修复提交主题：`fix: harden agent harness authorization and recovery`；实际提交哈希在
+  最终回复中报告，避免报告自引用改变提交内容。

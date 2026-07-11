@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from typing import Any
 
 from equipment_deep_research.agents.registry import AgentDef
+from equipment_deep_research.domain.proposals import TraceProposal, thaw_plain
+from equipment_deep_research.tools.definitions import ToolResult
 
 
 KNOWN_TOOLS = {
@@ -23,10 +25,13 @@ KNOWN_TOOLS = {
 class ToolScopeRequirement:
     read_scopes: tuple[str, ...] = ()
     write_scopes: tuple[str, ...] = ()
+    allowed_write_types: tuple[str, ...] | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "read_scopes", tuple(self.read_scopes))
         object.__setattr__(self, "write_scopes", tuple(self.write_scopes))
+        allowed = self.write_scopes if self.allowed_write_types is None else self.allowed_write_types
+        object.__setattr__(self, "allowed_write_types", tuple(allowed))
 
 
 DEFAULT_TOOL_SCOPE_REQUIREMENTS: dict[str, ToolScopeRequirement] = {
@@ -115,6 +120,61 @@ class ToolAuthorizationPolicy:
                 details.append(f"missing write scopes {missing_write}")
             raise PermissionError(f"tool {tool_name} denied: {'; '.join(details)}")
 
+    def authorize_result(
+        self,
+        tool_name: str,
+        result: ToolResult,
+        *,
+        active_tool_names: Iterable[str],
+        object_read_scopes: Iterable[str] = (),
+        object_write_scopes: Iterable[str] = (),
+        agent_id: str,
+        call_id: str,
+    ) -> ToolResult:
+        self.authorize(
+            tool_name,
+            active_tool_names=active_tool_names,
+            object_read_scopes=object_read_scopes,
+            object_write_scopes=object_write_scopes,
+        )
+        requirement = self.scope_requirements.get(tool_name, ToolScopeRequirement())
+        task_writable = frozenset(object_write_scopes)
+        tool_writable = frozenset(requirement.allowed_write_types or ())
+        denied = sorted(
+            {
+                proposal.object_type
+                for proposal in result.domain_proposals
+                if proposal.object_type not in task_writable
+                or proposal.object_type not in tool_writable
+            }
+        )
+        if denied:
+            raise PermissionError(
+                f"tool {tool_name} returned unauthorized object types: {denied}"
+            )
+
+        controlled_traces = tuple(
+            TraceProposal(
+                proposal_id=proposal.proposal_id,
+                event_type=proposal.event_type,
+                actor=agent_id,
+                payload={
+                    **thaw_plain(proposal.payload),
+                    "tool_name": tool_name,
+                    "tool_call_id": call_id,
+                },
+            )
+            for proposal in result.trace_proposals
+        )
+        return ToolResult(
+            call_id=result.call_id,
+            content=result.content,
+            details=result.details,
+            domain_proposals=result.domain_proposals,
+            trace_proposals=controlled_traces,
+            is_error=result.is_error,
+        )
+
 
 def _coerce_requirement(
     value: ToolScopeRequirement | Mapping[str, Any],
@@ -125,7 +185,12 @@ def _coerce_requirement(
         raise TypeError("tool scope requirements must be objects")
     read = value.get("read_scopes", value.get("object_read_scopes", ()))
     write = value.get("write_scopes", value.get("object_write_scopes", ()))
-    return ToolScopeRequirement(tuple(read), tuple(write))
+    allowed = value.get("allowed_write_types")
+    return ToolScopeRequirement(
+        tuple(read),
+        tuple(write),
+        None if allowed is None else tuple(allowed),
+    )
 
 
 __all__ = [
