@@ -308,6 +308,30 @@ def test_runtime_values_reject_non_json_mutable_values() -> None:
         RuntimeEvent("tool", "called", "run-1", {"unsupported": {"mutable"}})
 
 
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
+def test_runtime_values_reject_non_finite_floats(value: float) -> None:
+    with pytest.raises(ValueError, match="finite"):
+        DomainWriteProposal(
+            "p1",
+            "EvidenceCard",
+            "upsert",
+            {"score": value},
+            "save-e1",
+        )
+
+
+def test_runtime_values_support_strict_json_serialization() -> None:
+    proposal = DomainWriteProposal(
+        "p1",
+        "EvidenceCard",
+        "upsert",
+        {"score": 0.5},
+        "save-e1",
+    )
+
+    json.dumps(proposal.to_plain(), allow_nan=False)
+
+
 def test_tool_definition_requires_async_handler_and_excludes_it_from_plain_data() -> None:
     async def handler(call: ToolCall, context: ToolExecutionContext) -> ToolResult:
         return ToolResult(

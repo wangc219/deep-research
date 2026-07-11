@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, is_dataclass
+import math
 from types import MappingProxyType
 from typing import Any, Literal, cast
 
@@ -9,6 +10,8 @@ from equipment_deep_research.domain.models import to_plain
 
 
 def freeze_plain(value: Any) -> Any:
+    if isinstance(value, float) and not math.isfinite(value):
+        raise ValueError("runtime payload floats must be finite")
     if value is None or isinstance(value, (bool, int, float, str)):
         return value
     if isinstance(value, Mapping):
