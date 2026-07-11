@@ -7,8 +7,21 @@ from datetime import datetime, timezone
 import pytest
 
 from equipment_deep_research.domain.messages import RecallEnvelope, TaskEnvelope
-from equipment_deep_research.domain.models import BaselineFindingPacket, to_plain
+from equipment_deep_research.domain.models import (
+    AgentRecommendation,
+    AuditResult,
+    BaselineFindingPacket,
+    CapabilityImageItem,
+    EvidenceCard,
+    RecallRequest,
+    ResearchProblem,
+    ResearchReport,
+    TraceEvent,
+    WinningMechanismStageOutput,
+    to_plain,
+)
 from equipment_deep_research.domain.planning import ResearchPlanGraph, ResearchPlanNode
+from equipment_deep_research.harness.scheduler import WorkerReport
 
 
 def _task(**overrides: object) -> TaskEnvelope:
@@ -148,3 +161,114 @@ def test_baseline_packet_keeps_old_construction_and_defaults_compatibility_field
     assert packet.claim_ids == []
     assert packet.search_log == []
     assert packet.limitations == []
+
+
+def test_persisted_objects_are_versioned_json_serializable_and_identified() -> None:
+    recall = RecallRequest(
+        recall_id="recall-1",
+        source_layer="L1",
+        target_agent_id=None,
+        target_capability_tag="threat",
+        reason="missing evidence",
+        required_data=["source"],
+        return_node="L1",
+        urgency="high",
+    )
+    values = [
+        (ResearchProblem(topic="topic"), "problem_id"),
+        (
+            EvidenceCard(
+                "evidence-1",
+                "source",
+                "https://example.com",
+                "A",
+                "claim",
+                "excerpt",
+                "page:1",
+                "accepted",
+                "agent-1",
+            ),
+            "evidence_id",
+        ),
+        (recall, "recall_id"),
+        (
+            AgentRecommendation("recommendation-1", "threat", "gap", "new agent"),
+            "recommendation_id",
+        ),
+        (
+            WinningMechanismStageOutput(
+                "stage-1",
+                "L1",
+                "stage",
+                {"result": "value"},
+                0.8,
+                ["evidence-1"],
+                True,
+                [],
+                [recall],
+            ),
+            "stage_id",
+        ),
+        (
+            CapabilityImageItem(
+                "capability-1",
+                "capability",
+                "equipment",
+                "upgrade",
+                "logic",
+                "scenario",
+                "high",
+                "gap",
+                "image",
+                ["evidence-1"],
+                0.8,
+            ),
+            "capability_id",
+        ),
+        (AuditResult("audit-1", "approved", {"coverage": True}, []), "audit_id"),
+        (
+            ResearchReport("report-1", "title", "body", ["capability-1"], ["evidence-1"], "audit-1"),
+            "report_id",
+        ),
+        (TraceEvent("trace-1", "event", "actor", "summary"), "event_id"),
+        (
+            WorkerReport("agent-1", "completed", ["evidence-1"], "packet-1", "done", "session.jsonl"),
+            "worker_report_id",
+        ),
+    ]
+
+    for value, id_field in values:
+        _assert_transport_metadata(value, id_field)
+
+
+def test_new_metadata_fields_preserve_old_positional_and_keyword_construction() -> None:
+    created_at = "2026-07-10T00:00:00+00:00"
+    problem = ResearchProblem("topic", "auto", [], [], created_at)
+    evidence = EvidenceCard(
+        "evidence-1",
+        "source",
+        "https://example.com",
+        "A",
+        "claim",
+        "excerpt",
+        "page:1",
+        "accepted",
+        "agent-1",
+        [],
+        created_at,
+    )
+    worker = WorkerReport(
+        agent_id="agent-1",
+        status="completed",
+        new_evidence_ids=[],
+        packet_id="packet-1",
+        handoff_summary="done",
+        session_path="session.jsonl",
+    )
+
+    assert problem.created_at == created_at
+    assert problem.problem_id
+    assert evidence.created_at == created_at
+    assert evidence.schema_version == "1.0"
+    assert worker.worker_report_id
+    assert worker.schema_version == "1.0"

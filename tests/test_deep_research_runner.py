@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 import json
 from pathlib import Path
 import socket
@@ -9,8 +10,11 @@ from typing import Any
 
 import pytest
 
+from equipment_deep_research.agents.provider import FakeAgentProvider
 from equipment_deep_research.agents.registry import AgentDef
 from equipment_deep_research.domain.models import EvidenceCard
+from equipment_deep_research.domain.store import DomainStore, TraceStore
+from equipment_deep_research.harness.scheduler import DiscoveryScheduler
 from equipment_deep_research.orchestration.runner import DeepResearchRunner
 from equipment_deep_research.tools.materialization import EvidenceMaterializer
 from equipment_deep_research.tools.permissions import ToolPermissionRegistry
@@ -66,6 +70,13 @@ def _runner(tmp_path: Path) -> DeepResearchRunner:
     )
 
 
+def _assert_persisted_payload(payload: dict[str, Any], id_field: str) -> None:
+    assert payload[id_field]
+    assert payload["schema_version"] == "1.0"
+    created_at = datetime.fromisoformat(payload["created_at"])
+    assert created_at.utcoffset() == timezone.utc.utcoffset(created_at)
+
+
 def test_fake_default_full_loop_outputs_files(tmp_path: Path) -> None:
     result = _runner(tmp_path).run(
         mode="fake",
@@ -87,6 +98,34 @@ def test_fake_default_full_loop_outputs_files(tmp_path: Path) -> None:
     summary = json.loads((run_dir / "round_summary.json").read_text(encoding="utf-8"))
     assert summary["store_summary"]["materialized_evidence_count"] == 4
     assert len(summary["source_materials"]) == 4
+    _assert_persisted_payload(summary["problem"], "problem_id")
+    for worker_report in summary["worker_reports"]:
+        _assert_persisted_payload(worker_report, "worker_report_id")
+
+    id_fields = {
+        "EvidenceCard": "evidence_id",
+        "BaselineFindingPacket": "packet_id",
+        "WinningMechanismStageOutput": "stage_id",
+        "CapabilityImageItem": "capability_id",
+        "AuditResult": "audit_id",
+        "ResearchReport": "report_id",
+    }
+    domain_rows = [
+        json.loads(line)
+        for line in (run_dir / "domain.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    assert set(id_fields) <= {row["type"] for row in domain_rows}
+    for row in domain_rows:
+        _assert_persisted_payload(row["payload"], id_fields[row["type"]])
+
+    trace_rows = [
+        json.loads(line)
+        for line in (run_dir / "trace.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    assert trace_rows
+    for row in trace_rows:
+        assert row["type"] == "TraceEvent"
+        _assert_persisted_payload(row["payload"], "event_id")
 
 
 def test_subset_agents_runs_with_coverage_limits(tmp_path: Path) -> None:
@@ -100,6 +139,12 @@ def test_subset_agents_runs_with_coverage_limits(tmp_path: Path) -> None:
     summary = json.loads(Path(result["summary_path"]).read_text(encoding="utf-8"))
     assert summary["selected_agent_ids"] == ["combat_scenario", "weapon_equipment"]
     assert summary["coverage"]["missing_required_tags"]
+    assert summary["recall_requests"]
+    assert summary["agent_recommendations"]
+    for recall in summary["recall_requests"]:
+        _assert_persisted_payload(recall, "recall_id")
+    for recommendation in summary["agent_recommendations"]:
+        _assert_persisted_payload(recommendation, "recommendation_id")
     report = Path(result["report_path"]).read_text(encoding="utf-8")
     assert "缺失关键能力标签" in report
 
@@ -445,7 +490,7 @@ def test_custom_agent_config_is_selected_without_explicit_agent_ids(tmp_path: Pa
         """
 default_model: gpt-5.5
 agents:
-  - agent_id: integrated_research
+  - agent_id: custom.agent_01-v2
     display_name: 综合研判
     description: 覆盖首版新制胜机理路线所需标签的替换agent。
     capability_tags: [situation, threat, scenario, equipment, operation]
@@ -469,8 +514,70 @@ agents:
         run_id="custom-agent",
     )
     summary = json.loads(Path(result["summary_path"]).read_text(encoding="utf-8"))
-    assert summary["selected_agent_ids"] == ["integrated_research"]
+    assert summary["selected_agent_ids"] == ["custom.agent_01-v2"]
     assert summary["coverage"]["coverage_passed"] is True
+    assert (Path(result["run_dir"]) / "agent_sessions" / "custom.agent_01-v2.jsonl").is_file()
+
+
+def test_scheduler_revalidates_agent_id_before_building_session_path(tmp_path: Path) -> None:
+    run_dir = tmp_path / "run"
+    scheduler = DiscoveryScheduler(
+        run_id="run",
+        run_dir=run_dir,
+        provider=FakeAgentProvider(),
+        store=DomainStore(),
+        trace=TraceStore(),
+    )
+    agent = AgentDef(
+        agent_id="../escape",
+        display_name="invalid",
+        description="invalid",
+        capability_tags=["threat"],
+        tools=[],
+        context_policy={},
+    )
+
+    with pytest.raises(ValueError, match="agent_id"):
+        scheduler.run_baseline_agents(
+            agents=[agent],
+            topic="topic",
+            research_route="auto",
+        )
+
+    assert not (tmp_path / "escape.jsonl").exists()
+
+
+def test_scheduler_rejects_existing_session_symlink(tmp_path: Path) -> None:
+    run_dir = tmp_path / "run"
+    session_dir = run_dir / "agent_sessions"
+    session_dir.mkdir(parents=True)
+    external = tmp_path / "external-session.jsonl"
+    external.write_text("unchanged\n", encoding="utf-8")
+    (session_dir / "safe-agent.jsonl").symlink_to(external)
+    scheduler = DiscoveryScheduler(
+        run_id="run",
+        run_dir=run_dir,
+        provider=FakeAgentProvider(),
+        store=DomainStore(),
+        trace=TraceStore(),
+    )
+    agent = AgentDef(
+        agent_id="safe-agent",
+        display_name="safe",
+        description="safe",
+        capability_tags=["threat"],
+        tools=[],
+        context_policy={},
+    )
+
+    with pytest.raises(ValueError, match="symlink"):
+        scheduler.run_baseline_agents(
+            agents=[agent],
+            topic="topic",
+            research_route="auto",
+        )
+
+    assert external.read_text(encoding="utf-8") == "unchanged\n"
 
 
 def test_tool_permission_denial_is_enforced() -> None:

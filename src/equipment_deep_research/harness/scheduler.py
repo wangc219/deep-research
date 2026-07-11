@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 import json
 
 from equipment_deep_research.agents.provider import AgentProvider, AgentRunRequest
 from equipment_deep_research.agents.registry import AgentDef
-from equipment_deep_research.domain.models import TraceEvent
+from equipment_deep_research.domain.identifiers import safe_identifier_path
+from equipment_deep_research.domain.models import TraceEvent, new_stable_id, now_iso
 from equipment_deep_research.domain.store import DomainStore, TraceStore
 from equipment_deep_research.harness.context import ContextPackBuilder
 from equipment_deep_research.tools.materialization import EvidenceMaterializer
@@ -21,6 +22,9 @@ class WorkerReport:
     handoff_summary: str
     session_path: str
     error: str = ""
+    worker_report_id: str = field(default_factory=lambda: new_stable_id("worker-report"))
+    created_at: str = field(default_factory=now_iso)
+    schema_version: str = "1.0"
 
 
 class DiscoveryScheduler:
@@ -42,8 +46,16 @@ class DiscoveryScheduler:
         self.trace = trace
         self.mode = mode
         self.context_builder = context_builder or ContextPackBuilder()
+        if self.run_dir.is_symlink():
+            raise ValueError("run_dir must not be a symlink")
         self.sessions_dir = run_dir / "agent_sessions"
+        if self.sessions_dir.is_symlink():
+            raise ValueError("agent_sessions must not be a symlink")
         self.sessions_dir.mkdir(parents=True, exist_ok=True)
+        if self.sessions_dir.is_symlink():
+            raise ValueError("agent_sessions must not be a symlink")
+        if self.sessions_dir.resolve(strict=True).parent != self.run_dir.resolve(strict=True):
+            raise ValueError("agent_sessions must stay within run_dir")
         self.materializer = EvidenceMaterializer(run_dir / "artifacts")
         self.source_materials: list[dict] = []
 
@@ -62,7 +74,12 @@ class DiscoveryScheduler:
         return reports
 
     def _run_one(self, *, agent: AgentDef, topic: str, research_route: str) -> WorkerReport:
-        session_path = self.sessions_dir / f"{agent.agent_id}.jsonl"
+        session_path = safe_identifier_path(
+            self.sessions_dir,
+            agent.agent_id,
+            suffix=".jsonl",
+            field_name="agent_id",
+        )
         before_evidence = set(self.store.evidence)
         try:
             context = self.context_builder.build_for_baseline_agent(

@@ -58,6 +58,13 @@ def test_workspace_allows_double_dot_inside_run_id(tmp_path: Path) -> None:
     assert workspace.run_dir.is_dir()
 
 
+def test_workspace_rejects_preexisting_empty_run_directory(tmp_path: Path) -> None:
+    (tmp_path / "existing-empty").mkdir()
+
+    with pytest.raises(FileExistsError):
+        RunWorkspace.create(tmp_path, "existing-empty")
+
+
 def test_workspace_rejects_symlink_escape_without_modifying_target(tmp_path: Path) -> None:
     output_root = tmp_path / "runs"
     output_root.mkdir()
@@ -67,11 +74,61 @@ def test_workspace_rejects_symlink_escape_without_modifying_target(tmp_path: Pat
     marker.write_text("unchanged\n", encoding="utf-8")
     (output_root / "escape").symlink_to(external_target, target_is_directory=True)
 
-    with pytest.raises(ValueError, match="output_root"):
+    with pytest.raises(FileExistsError):
         RunWorkspace.create(output_root, "escape")
 
     assert marker.read_text(encoding="utf-8") == "unchanged\n"
     assert {path.name for path in external_target.iterdir()} == {"marker.txt"}
+
+
+def test_runner_rejects_reused_run_id_before_writing(tmp_path: Path) -> None:
+    run_id = "reused-run"
+    first = _runner(tmp_path).run(
+        mode="fake",
+        topic="first run",
+        research_route="auto",
+        run_id=run_id,
+    )
+    run_dir = Path(first["run_dir"])
+    original_files = {
+        path.relative_to(run_dir): path.read_bytes()
+        for path in run_dir.rglob("*")
+        if path.is_file()
+    }
+    original_directories = {
+        path.relative_to(run_dir)
+        for path in run_dir.rglob("*")
+        if path.is_dir()
+    }
+
+    with pytest.raises(FileExistsError):
+        _runner(tmp_path).run(
+            mode="fake",
+            topic="second run",
+            research_route="auto",
+            run_id=run_id,
+            agent_ids=["weapon_equipment"],
+        )
+
+    assert {
+        path.relative_to(run_dir): path.read_bytes()
+        for path in run_dir.rglob("*")
+        if path.is_file()
+    } == original_files
+    assert {
+        path.relative_to(run_dir)
+        for path in run_dir.rglob("*")
+        if path.is_dir()
+    } == original_directories
+    assert {
+        "report.md",
+        "capability_images.json",
+        "round_summary.json",
+        "domain.jsonl",
+        "trace.jsonl",
+        "agent_sessions",
+        "artifacts",
+    } <= {path.name for path in run_dir.iterdir()}
 
 
 def test_runner_uses_default_provider_and_evidence_configs(tmp_path: Path) -> None:

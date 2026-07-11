@@ -6,6 +6,8 @@ from typing import Any
 
 import yaml
 
+from equipment_deep_research.domain.identifiers import validate_internal_identifier
+
 
 @dataclass(frozen=True)
 class AgentDef:
@@ -32,8 +34,12 @@ class AgentRegistry:
         data = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
         agents: dict[str, AgentDef] = {}
         for row in data.get("agents", []):
+            agent_id = validate_internal_identifier(
+                str(row["agent_id"]),
+                field_name="agent_id",
+            )
             agent = AgentDef(
-                agent_id=str(row["agent_id"]),
+                agent_id=agent_id,
                 display_name=str(row.get("display_name", row["agent_id"])),
                 description=str(row.get("description", "")),
                 capability_tags=list(row.get("capability_tags", [])),

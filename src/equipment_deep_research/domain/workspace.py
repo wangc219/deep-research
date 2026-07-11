@@ -27,14 +27,15 @@ class RunWorkspace:
         output_root.mkdir(parents=True, exist_ok=True)
         resolved_root = output_root.resolve()
         run_dir = output_root / run_id
-        if run_dir.resolve(strict=False).parent != resolved_root:
+        run_dir.mkdir(exist_ok=False)
+        if run_dir.resolve(strict=True).parent != resolved_root:
             raise ValueError("run_id must stay within output_root")
 
         sessions_dir = run_dir / "agent_sessions"
         artifacts_dir = run_dir / "artifacts"
         checkpoints_dir = run_dir / "checkpoints"
-        for path in (run_dir, sessions_dir, artifacts_dir, checkpoints_dir):
-            path.mkdir(parents=True, exist_ok=True)
+        for path in (sessions_dir, artifacts_dir, checkpoints_dir):
+            path.mkdir(exist_ok=False)
         return cls(
             run_dir=run_dir,
             sessions_dir=sessions_dir,

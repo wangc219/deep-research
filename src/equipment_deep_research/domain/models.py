@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field, is_dataclass
 from datetime import datetime, timezone
 from typing import Any, Literal
+from uuid import uuid4
 
 
 ResearchRoute = Literal[
@@ -17,6 +18,10 @@ CapabilityImageType = Literal["new_capability", "upgrade"]
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def new_stable_id(prefix: str) -> str:
+    return f"{prefix}-{uuid4()}"
 
 
 def to_plain(value: Any) -> Any:
@@ -36,6 +41,8 @@ class ResearchProblem:
     selected_agent_ids: list[str] = field(default_factory=list)
     constraints: list[str] = field(default_factory=list)
     created_at: str = field(default_factory=now_iso)
+    problem_id: str = field(default_factory=lambda: new_stable_id("problem"))
+    schema_version: str = "1.0"
 
     def resolved_route(self) -> str:
         if self.research_route != "auto":
@@ -61,6 +68,7 @@ class EvidenceCard:
     created_by: str
     artifact_refs: list[str] = field(default_factory=list)
     created_at: str = field(default_factory=now_iso)
+    schema_version: str = "1.0"
 
 
 @dataclass(frozen=True)
@@ -95,6 +103,7 @@ class RecallRequest:
     urgency: str
     status: str = "pending"
     created_at: str = field(default_factory=now_iso)
+    schema_version: str = "1.0"
 
     def target_key(self) -> str:
         return self.target_agent_id or self.target_capability_tag or "unroutable"
@@ -107,6 +116,7 @@ class AgentRecommendation:
     reason: str
     suggested_agent_description: str
     created_at: str = field(default_factory=now_iso)
+    schema_version: str = "1.0"
 
 
 @dataclass(frozen=True)
@@ -121,6 +131,7 @@ class WinningMechanismStageOutput:
     gate_reasons: list[str]
     recall_requests: list[RecallRequest] = field(default_factory=list)
     created_at: str = field(default_factory=now_iso)
+    schema_version: str = "1.0"
 
 
 @dataclass(frozen=True)
@@ -137,6 +148,7 @@ class CapabilityImageItem:
     evidence_ids: list[str]
     confidence: float
     created_at: str = field(default_factory=now_iso)
+    schema_version: str = "1.0"
 
     def validate(self) -> None:
         required = [
@@ -163,6 +175,7 @@ class AuditResult:
     checks: dict[str, bool]
     comments: list[str]
     created_at: str = field(default_factory=now_iso)
+    schema_version: str = "1.0"
 
 
 @dataclass(frozen=True)
@@ -174,6 +187,7 @@ class ResearchReport:
     evidence_ids: list[str]
     audit_id: str
     created_at: str = field(default_factory=now_iso)
+    schema_version: str = "1.0"
 
 
 @dataclass(frozen=True)
@@ -186,3 +200,4 @@ class TraceEvent:
     output_refs: list[str] = field(default_factory=list)
     payload: dict[str, Any] = field(default_factory=dict)
     created_at: str = field(default_factory=now_iso)
+    schema_version: str = "1.0"

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
 import yaml
 
 from equipment_deep_research.agents.registry import AgentRegistry
@@ -74,3 +75,62 @@ def test_provider_and_tool_configuration_are_structured() -> None:
     configured_tools = set(tools["tools"])
     declared_tools = {tool for agent_id in registry.all_agent_ids() for tool in registry.get(agent_id).tools}
     assert declared_tools <= configured_tools
+
+
+@pytest.mark.parametrize(
+    "agent_id",
+    [
+        "../escape",
+        "/tmp/absolute-agent",
+        "nested/agent",
+        r"nested\agent",
+        ".",
+        "..",
+        "agent\nid",
+        "a" * 129,
+    ],
+)
+def test_registry_rejects_agent_ids_that_are_not_safe_internal_identifiers(
+    tmp_path: Path,
+    agent_id: str,
+) -> None:
+    config_path = tmp_path / "agents.yaml"
+    config_path.write_text(
+        yaml.safe_dump(
+            {
+                "agents": [
+                    {
+                        "agent_id": agent_id,
+                        "display_name": "invalid",
+                        "capability_tags": ["threat"],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="agent_id"):
+        AgentRegistry.load(config_path)
+
+
+def test_registry_accepts_safe_custom_agent_id(tmp_path: Path) -> None:
+    config_path = tmp_path / "agents.yaml"
+    config_path.write_text(
+        yaml.safe_dump(
+            {
+                "agents": [
+                    {
+                        "agent_id": "custom.agent_01-v2",
+                        "display_name": "custom",
+                        "capability_tags": ["threat"],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    registry = AgentRegistry.load(config_path)
+
+    assert registry.all_agent_ids() == ["custom.agent_01-v2"]
