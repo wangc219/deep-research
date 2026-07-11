@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
+from typing import Any, cast
 
-from equipment_deep_research.domain.models import now_iso
+from equipment_deep_research.domain.models import new_stable_id, now_iso
+from equipment_deep_research.domain.proposals import freeze_plain, thaw_plain
 
 
 @dataclass(frozen=True)
@@ -51,3 +54,85 @@ class RecallEnvelope:
 
     def target_key(self) -> str:
         return self.target_agent_id or self.target_capability_tag or "unroutable"
+
+
+@dataclass(frozen=True)
+class TurnSnapshot:
+    message_refs: Sequence[str]
+    context_hash: str
+    active_tool_names: Sequence[str]
+    model_name: str
+    model_options: Mapping[str, Any]
+    budget_remaining: Mapping[str, Any]
+    turn_index: int
+    snapshot_id: str = field(default_factory=lambda: new_stable_id("turn-snapshot"))
+    created_at: str = field(default_factory=now_iso)
+    schema_version: str = "1.0"
+
+    def __post_init__(self) -> None:
+        if self.turn_index < 1:
+            raise ValueError("turn_index must be positive")
+        object.__setattr__(self, "message_refs", tuple(self.message_refs))
+        object.__setattr__(self, "active_tool_names", tuple(self.active_tool_names))
+        object.__setattr__(
+            self,
+            "model_options",
+            cast(Mapping[str, Any], freeze_plain(self.model_options)),
+        )
+        object.__setattr__(
+            self,
+            "budget_remaining",
+            cast(Mapping[str, Any], freeze_plain(self.budget_remaining)),
+        )
+
+    def to_plain(self) -> dict[str, Any]:
+        return {
+            "snapshot_id": self.snapshot_id,
+            "turn_index": self.turn_index,
+            "message_refs": list(self.message_refs),
+            "context_hash": self.context_hash,
+            "active_tool_names": list(self.active_tool_names),
+            "model_name": self.model_name,
+            "model_options": thaw_plain(self.model_options),
+            "budget_remaining": thaw_plain(self.budget_remaining),
+            "created_at": self.created_at,
+            "schema_version": self.schema_version,
+        }
+
+
+@dataclass(frozen=True)
+class AgentExecutionResult:
+    execution_id: str
+    task_id: str
+    agent_id: str
+    status: str
+    output_refs: Sequence[str] = field(default_factory=tuple)
+    evidence_ids: Sequence[str] = field(default_factory=tuple)
+    checkpoint_id: str | None = None
+    error: str | None = None
+    snapshots: Sequence[TurnSnapshot] = field(default_factory=tuple)
+    created_at: str = field(default_factory=now_iso)
+    schema_version: str = "1.0"
+
+    def __post_init__(self) -> None:
+        snapshots = tuple(self.snapshots)
+        if not all(isinstance(snapshot, TurnSnapshot) for snapshot in snapshots):
+            raise TypeError("snapshots must contain only TurnSnapshot values")
+        object.__setattr__(self, "output_refs", tuple(self.output_refs))
+        object.__setattr__(self, "evidence_ids", tuple(self.evidence_ids))
+        object.__setattr__(self, "snapshots", snapshots)
+
+    def to_plain(self) -> dict[str, Any]:
+        return {
+            "execution_id": self.execution_id,
+            "task_id": self.task_id,
+            "agent_id": self.agent_id,
+            "status": self.status,
+            "output_refs": list(self.output_refs),
+            "evidence_ids": list(self.evidence_ids),
+            "checkpoint_id": self.checkpoint_id,
+            "error": self.error,
+            "snapshots": [snapshot.to_plain() for snapshot in self.snapshots],
+            "created_at": self.created_at,
+            "schema_version": self.schema_version,
+        }
