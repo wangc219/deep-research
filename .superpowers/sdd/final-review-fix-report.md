@@ -69,8 +69,8 @@ GREEN：
 
 ```text
 python3 -m pytest -q tests/equipment_deep_research/unit/test_domain_contracts.py tests/equipment_deep_research/unit/test_configuration.py tests/equipment_deep_research/integration/test_cli_workspace.py tests/test_deep_research_runner.py
-...............................................................          [100%]
-63 passed in 0.36s
+................................................................         [100%]
+64 passed in 0.35s
 ```
 
 ## 定向测试原始结果
@@ -176,3 +176,10 @@ Summary: /tmp/equipment-deep-research-phase-0-final.ScfUWB/phase-0-smoke/round_s
 
 - 无阻断关注点。
 - `FileExistsError` 现在是 `resume=False` 同名 run 目录冲突的明确失败信号；调用方需要为每次新运行提供唯一 `run-id`。
+
+## 最终复审证据修正
+
+- 在当前 HEAD `ef3b07cf389647fd2dffbfd7f86a0f9627818983` 精确重跑四个指定测试文件，原始结果为 `64 passed in 0.35s`。
+- 先前较小的组合测试计数产生于追加 129 字符超长 `agent_id` 配置用例之前，现已全部修正为当前 HEAD 的精确结果。
+- 本轮仅修正文档证据，未修改实现，按要求未重跑 smoke 或全量测试。
+- 本文档提交哈希：`<DOCUMENTATION_COMMIT_SHA>`。该值由包含本文档的提交生成，无法在同一提交内容中自引用回填；实际哈希以最终回复和 `git log -1 --format=%H` 为准。

@@ -6,15 +6,27 @@ Phase 0 的最终整体审查修复已完成。除既有公开来源材料化、
 
 当前已知限制：**真实模型循环和真实搜索尚未接入**。
 
-## 2. 变更文件
+## 2. Phase 0 主要变更文件
 
+- `configs/equipment_deep_research/agents.yaml`
+- `configs/equipment_deep_research/evidence.yaml`
+- `configs/equipment_deep_research/providers.yaml`
+- `configs/equipment_deep_research/tools.yaml`
+- `src/equipment_deep_research/domain/messages.py`
 - `src/equipment_deep_research/domain/identifiers.py`
 - `src/equipment_deep_research/domain/models.py`
+- `src/equipment_deep_research/domain/planning.py`
 - `src/equipment_deep_research/domain/workspace.py`
 - `src/equipment_deep_research/agents/registry.py`
+- `src/equipment_deep_research/harness/context.py`
 - `src/equipment_deep_research/harness/scheduler.py`
+- `src/equipment_deep_research/interfaces/cli.py`
+- `src/equipment_deep_research/orchestration/runner.py`
+- `src/equipment_deep_research/tools/http_transport.py`
+- `src/equipment_deep_research/tools/materialization.py`
 - `tests/equipment_deep_research/unit/test_domain_contracts.py`
 - `tests/equipment_deep_research/unit/test_configuration.py`
+- `tests/equipment_deep_research/unit/test_http_transport.py`
 - `tests/equipment_deep_research/integration/test_cli_workspace.py`
 - `tests/test_deep_research_runner.py`
 - `README.md`
@@ -24,6 +36,14 @@ Phase 0 的最终整体审查修复已完成。除既有公开来源材料化、
 - `.superpowers/sdd/final-review-fix-report.md`
 
 ## 3. 测试命令和精确结果
+
+最终复审定向组合（当前 HEAD `ef3b07cf389647fd2dffbfd7f86a0f9627818983`）：
+
+```text
+python3 -m pytest -q tests/equipment_deep_research/unit/test_domain_contracts.py tests/equipment_deep_research/unit/test_configuration.py tests/equipment_deep_research/integration/test_cli_workspace.py tests/test_deep_research_runner.py
+................................................................         [100%]
+64 passed in 0.35s
+```
 
 领域契约：
 
