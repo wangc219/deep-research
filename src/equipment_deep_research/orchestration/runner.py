@@ -41,9 +41,14 @@ class DeepResearchRunner:
             if evidence_config_path is not None
             else self.project_root / "configs" / "equipment_deep_research" / "evidence.yaml"
         )
-        for config_path in (self.provider_config_path, self.evidence_config_path):
-            if not config_path.is_file():
-                raise FileNotFoundError(f"configuration file does not exist: {config_path}")
+        if provider_config_path is not None and not self.provider_config_path.is_file():
+            raise FileNotFoundError(
+                f"configuration file does not exist: {self.provider_config_path}"
+            )
+        if evidence_config_path is not None and not self.evidence_config_path.is_file():
+            raise FileNotFoundError(
+                f"configuration file does not exist: {self.evidence_config_path}"
+            )
 
     def run(
         self,

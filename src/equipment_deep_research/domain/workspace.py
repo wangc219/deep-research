@@ -17,7 +17,7 @@ class RunWorkspace:
         if (
             not run_id.strip()
             or Path(run_id).is_absolute()
-            or ".." in run_id
+            or run_id in {".", ".."}
             or "/" in run_id
             or "\\" in run_id
         ):

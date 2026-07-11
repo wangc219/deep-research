@@ -117,5 +117,74 @@ smoke 的 `round_summary.json` 显示四个默认 agent 为 `international_situa
 ## 关注点
 
 - `run.db` 在 Phase 0 仅有稳定路径，不创建数据库文件；SQLite 持久化和 resume 属于 Phase 1。
-- provider/evidence 配置当前只做存在性校验，结构解析和真实 provider 接线属于后续阶段。
+- provider/evidence 配置显式传入时只做存在性校验，结构解析和真实 provider 接线属于后续阶段。
 - `analyst_confirmed` 当前仅记录，不阻断审计或发布，符合本阶段约束。
+
+## 审查修复
+
+### 修复内容
+
+- 恢复旧 programmatic 构造兼容：省略 `provider_config_path`、`evidence_config_path` 时，只保存 `project_root` 下的默认路径，不因默认文件尚不存在而在构造阶段失败。
+- 显式传入 provider/evidence 配置时继续要求 `is_file()`，不存在或不是文件均抛出 `FileNotFoundError`。CLI 会显式传入项目默认路径，因此 CLI 仍执行存在性校验。
+- `run_id` 仅拒绝独立的 `.`、`..` 路径组件；路径分隔符和绝对路径仍单独拒绝，`release..1` 等普通标识可用。
+- 新增真实符号链接逃逸回归：当 `output_root/run_id` 指向外部目录时抛出 `ValueError`，外部 marker 内容和目录成员均保持不变。
+
+### RED
+
+命令：
+
+```text
+python3 -m pytest tests/equipment_deep_research/integration/test_cli_workspace.py -q
+```
+
+结果：退出码 1；`2 failed, 16 passed in 0.12s`。
+
+- `test_workspace_allows_double_dot_inside_run_id` 因旧 `".." in run_id` 检查失败。
+- `test_runner_allows_omitted_new_configs_for_custom_project_root` 因省略参数后仍校验不存在的默认 provider 配置而失败。
+- symlink 逃逸测试在 RED 阶段已通过，确认原有解析后父目录检查有效。
+
+### GREEN 与回归
+
+Task 3 集成测试：
+
+```text
+python3 -m pytest tests/equipment_deep_research/integration/test_cli_workspace.py -q
+18 passed in 0.09s
+```
+
+审查指定回归：
+
+```text
+python3 -m pytest tests/equipment_deep_research/integration/test_cli_workspace.py tests/test_deep_research_runner.py -q
+39 passed in 0.27s
+```
+
+全量测试：
+
+```text
+python3 -m pytest -q
+76 passed in 0.32s
+```
+
+### Fake Smoke 复验
+
+命令：
+
+```text
+python3 scripts/run_deep_research.py \
+  --mode fake \
+  --topic "低空无人机探测预警能力缺口" \
+  --research-route auto \
+  --run-id phase-0-task3-review \
+  --output-root /tmp/equipment-dr-phase0-task3-review
+```
+
+结果：退出码 0；`route=traditional_gap`，`audit_status=approved`。运行目录包含七类既有产物及 `checkpoints/`。
+
+### 修复自审
+
+- programmatic 调用只有显式提供新配置时才承担文件存在性契约，省略参数维持 Phase 0 旧行为。
+- CLI 参数始终显式转换为 `Path` 传入 runner，未绕过配置文件检查。
+- `release..1` 不包含路径组件或分隔符，放行不会扩大目录逃逸面。
+- 符号链接测试直接针对外部真实目录，验证拒绝发生后外部文件内容和成员集合不变。
+- 未修改七类产物名、scheduler 目录传递、registry 动态默认 agent 选择、resume 或 analyst 标记语义。

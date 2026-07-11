@@ -39,6 +39,7 @@ def test_workspace_creates_required_paths(tmp_path: Path) -> None:
     "run_id",
     [
         "/tmp/equipment-dr-absolute-escape",
+        ".",
         "..",
         "../equipment-dr-parent-escape",
         "nested/run",
@@ -50,11 +51,53 @@ def test_workspace_rejects_run_id_path_escape(tmp_path: Path, run_id: str) -> No
         RunWorkspace.create(tmp_path, run_id)
 
 
+def test_workspace_allows_double_dot_inside_run_id(tmp_path: Path) -> None:
+    workspace = RunWorkspace.create(tmp_path, "release..1")
+
+    assert workspace.run_dir == tmp_path / "release..1"
+    assert workspace.run_dir.is_dir()
+
+
+def test_workspace_rejects_symlink_escape_without_modifying_target(tmp_path: Path) -> None:
+    output_root = tmp_path / "runs"
+    output_root.mkdir()
+    external_target = tmp_path / "external-target"
+    external_target.mkdir()
+    marker = external_target / "marker.txt"
+    marker.write_text("unchanged\n", encoding="utf-8")
+    (output_root / "escape").symlink_to(external_target, target_is_directory=True)
+
+    with pytest.raises(ValueError, match="output_root"):
+        RunWorkspace.create(output_root, "escape")
+
+    assert marker.read_text(encoding="utf-8") == "unchanged\n"
+    assert {path.name for path in external_target.iterdir()} == {"marker.txt"}
+
+
 def test_runner_uses_default_provider_and_evidence_configs(tmp_path: Path) -> None:
     runner = _runner(tmp_path)
 
     assert runner.provider_config_path == ROOT / "configs" / "equipment_deep_research" / "providers.yaml"
     assert runner.evidence_config_path == ROOT / "configs" / "equipment_deep_research" / "evidence.yaml"
+
+
+def test_runner_allows_omitted_new_configs_for_custom_project_root(tmp_path: Path) -> None:
+    project_root = tmp_path / "minimal-project"
+    project_root.mkdir()
+
+    runner = DeepResearchRunner(
+        project_root=project_root,
+        output_root=tmp_path / "runs",
+        agent_config_path=ROOT / "configs" / "equipment_deep_research" / "agents.yaml",
+        preset_config_path=ROOT / "configs" / "equipment_deep_research" / "presets.yaml",
+    )
+
+    assert runner.provider_config_path == (
+        project_root / "configs" / "equipment_deep_research" / "providers.yaml"
+    )
+    assert runner.evidence_config_path == (
+        project_root / "configs" / "equipment_deep_research" / "evidence.yaml"
+    )
 
 
 @pytest.mark.parametrize("config_name", ["provider_config_path", "evidence_config_path"])
