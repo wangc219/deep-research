@@ -459,3 +459,321 @@ async def test_cancellation_propagates_after_emitting_cancelled_status() -> None
 
     assert events[-1].event_type == "loop_failed"
     assert events[-1].payload["status"] == "cancelled"
+
+
+@async_test
+async def test_self_cancelled_tool_cancels_and_drains_unfinished_sibling() -> None:
+    sibling_started = asyncio.Event()
+    sibling_cancelled = asyncio.Event()
+    sibling_completed = False
+
+    async def cancel_self(
+        call: ToolCall, context: ToolExecutionContext
+    ) -> ToolResult:
+        del call, context
+        await sibling_started.wait()
+        raise asyncio.CancelledError("tool requested cancellation")
+
+    async def sibling(call: ToolCall, context: ToolExecutionContext) -> ToolResult:
+        nonlocal sibling_completed
+        del context
+        sibling_started.set()
+        try:
+            await asyncio.sleep(60)
+        except asyncio.CancelledError:
+            await asyncio.sleep(0.01)
+            sibling_cancelled.set()
+            raise
+        sibling_completed = True
+        return ToolResult(call.call_id, "should not complete")
+
+    provider = ScriptedProvider(
+        [assistant_with_calls([call("c1", "cancel"), call("c2", "sibling")])]
+    )
+
+    with pytest.raises(asyncio.CancelledError, match="tool requested cancellation"):
+        await AgentLoop().run(
+            [user("start")],
+            provider,
+            [tool("cancel", cancel_self), tool("sibling", sibling)],
+            config(),
+        )
+
+    assert sibling_cancelled.is_set()
+    assert sibling_completed is False
+
+
+@async_test
+async def test_external_cancellation_cancels_and_drains_all_tool_siblings() -> None:
+    both_started = asyncio.Event()
+    started_count = 0
+    cancelled: set[str] = set()
+    completed: set[str] = set()
+
+    async def blocking(call: ToolCall, context: ToolExecutionContext) -> ToolResult:
+        nonlocal started_count
+        del context
+        started_count += 1
+        if started_count == 2:
+            both_started.set()
+        try:
+            await asyncio.sleep(60)
+        except asyncio.CancelledError:
+            await asyncio.sleep(0.01)
+            cancelled.add(call.call_id)
+            raise
+        completed.add(call.call_id)
+        return ToolResult(call.call_id, "should not complete")
+
+    provider = ScriptedProvider(
+        [assistant_with_calls([call("c1", "block"), call("c2", "block")])]
+    )
+    task = asyncio.create_task(
+        AgentLoop().run(
+            [user("start")], provider, [tool("block", blocking)], config()
+        )
+    )
+    await both_started.wait()
+    task.cancel("external cancellation")
+
+    with pytest.raises(asyncio.CancelledError, match="external cancellation"):
+        await task
+
+    assert cancelled == {"c1", "c2"}
+    assert completed == set()
+
+
+@async_test
+async def test_final_explicit_empty_text_overrides_streamed_text_delta() -> None:
+    provider = ScriptedProvider(
+        [
+            [
+                ProviderStreamEvent.text_delta("discard me"),
+                ProviderStreamEvent.final(ProviderFinalTurn(text="")),
+            ]
+        ]
+    )
+
+    result = await AgentLoop().run([user("start")], provider, [], config())
+
+    assert result.status == "completed"
+    assert result.messages[-1].content == ""
+
+
+@async_test
+async def test_final_explicit_empty_tool_calls_override_streamed_tool_call() -> None:
+    executed = False
+
+    async def echo(call: ToolCall, context: ToolExecutionContext) -> ToolResult:
+        nonlocal executed
+        del context
+        executed = True
+        return ToolResult(call.call_id, "unexpected")
+
+    provider = ScriptedProvider(
+        [
+            [
+                ProviderStreamEvent.tool_call_event(call("c1", "echo")),
+                ProviderStreamEvent.final(ProviderFinalTurn(tool_calls=())),
+            ]
+        ]
+    )
+
+    result = await AgentLoop().run(
+        [user("start")], provider, [tool("echo", echo)], config()
+    )
+
+    assert result.status == "completed"
+    assert result.messages[-1].tool_calls == ()
+    assert executed is False
+
+
+@async_test
+async def test_call_ids_from_history_are_reserved_for_entire_run() -> None:
+    executed: list[str] = []
+
+    async def echo(call: ToolCall, context: ToolExecutionContext) -> ToolResult:
+        del context
+        executed.append(call.call_id)
+        return ToolResult(call.call_id, "unexpected")
+
+    history = [
+        user("start"),
+        ModelMessage(
+            role="assistant",
+            content="",
+            tool_calls=[call("history-assistant", "echo")],
+        ),
+        ModelMessage(
+            role="tool",
+            content="old result",
+            tool_call_id="history-tool",
+            name="echo",
+        ),
+    ]
+    provider = ScriptedProvider(
+        [
+            assistant_with_calls(
+                [
+                    call("history-assistant", "echo"),
+                    call("history-tool", "echo"),
+                ]
+            ),
+            assistant_text("done"),
+        ]
+    )
+
+    result = await AgentLoop().run(history, provider, [tool("echo", echo)], config())
+
+    new_tool_messages = [
+        message for message in result.messages[len(history) :] if message.role == "tool"
+    ]
+    assert executed == []
+    assert [message.metadata["error_code"] for message in new_tool_messages] == [
+        "duplicate_call_id",
+        "duplicate_call_id",
+    ]
+
+
+@async_test
+async def test_call_ids_are_reserved_across_provider_turns() -> None:
+    executed: list[str] = []
+
+    async def echo(call: ToolCall, context: ToolExecutionContext) -> ToolResult:
+        del context
+        executed.append(call.call_id)
+        return ToolResult(call.call_id, "ok")
+
+    provider = ScriptedProvider(
+        [
+            assistant_with_calls([call("c1", "echo")]),
+            assistant_with_calls([call("c1", "echo")]),
+            assistant_text("done"),
+        ]
+    )
+    events: list[AgentLoopEvent] = []
+
+    result = await AgentLoop().run(
+        [user("start")],
+        provider,
+        [tool("echo", echo)],
+        config(on_event=events.append),
+    )
+
+    tool_messages = [message for message in result.messages if message.role == "tool"]
+    tool_events = [event for event in events if event.event_type == "tool_result"]
+    assert executed == ["c1"]
+    assert tool_messages[1].metadata["error_code"] == "duplicate_call_id"
+    assert tool_messages[1].metadata["turn_index"] == 2
+    assert tool_messages[1].metadata["call_index"] == 0
+    assert tool_events[1].payload["call_index"] == 0
+
+
+@async_test
+async def test_failed_event_callback_does_not_replace_provider_error() -> None:
+    class FailingProvider:
+        async def stream(
+            self,
+            messages: Sequence[ModelMessage],
+            tools: Sequence[ToolDefinition],
+            options: dict[str, Any],
+        ) -> AsyncIterator[ProviderStreamEvent]:
+            del messages, tools, options
+            raise RuntimeError("provider original")
+            yield ProviderStreamEvent.final(ProviderFinalTurn())
+
+    def fail_terminal_event(event: AgentLoopEvent) -> None:
+        if event.event_type == "loop_failed":
+            raise RuntimeError("event sink secondary")
+
+    result = await AgentLoop().run(
+        [user("start")],
+        FailingProvider(),
+        [],
+        config(on_event=fail_terminal_event),
+    )
+
+    assert result.status == "failed"
+    assert result.error == "provider original"
+    assert result.secondary_errors == ("RuntimeError: event sink secondary",)
+
+
+@async_test
+async def test_cancelled_event_callback_does_not_replace_original_cancellation() -> None:
+    entered = asyncio.Event()
+
+    class BlockingProvider:
+        async def stream(
+            self,
+            messages: Sequence[ModelMessage],
+            tools: Sequence[ToolDefinition],
+            options: dict[str, Any],
+        ) -> AsyncIterator[ProviderStreamEvent]:
+            del messages, tools, options
+            entered.set()
+            await asyncio.Event().wait()
+            yield ProviderStreamEvent.final(ProviderFinalTurn())
+
+    def fail_terminal_event(event: AgentLoopEvent) -> None:
+        if event.event_type == "loop_failed":
+            raise RuntimeError("cancel event secondary")
+
+    task = asyncio.create_task(
+        AgentLoop().run(
+            [user("start")],
+            BlockingProvider(),
+            [],
+            config(on_event=fail_terminal_event),
+        )
+    )
+    await entered.wait()
+    task.cancel("original cancellation")
+
+    with pytest.raises(asyncio.CancelledError, match="original cancellation") as caught:
+        await task
+
+    assert any(
+        "cancel event secondary" in note
+        for note in getattr(caught.value, "__notes__", ())
+    )
+
+
+@async_test
+async def test_normal_event_callback_failure_returns_failed_status() -> None:
+    event_types: list[str] = []
+
+    def fail_assistant_event(event: AgentLoopEvent) -> None:
+        event_types.append(event.event_type)
+        if event.event_type == "assistant_message":
+            raise RuntimeError("assistant event failed")
+
+    result = await AgentLoop().run(
+        [user("start")],
+        ScriptedProvider([assistant_text("done")]),
+        [],
+        config(on_event=fail_assistant_event),
+    )
+
+    assert result.status == "failed"
+    assert result.error == "assistant event failed"
+    assert event_types == ["turn_started", "assistant_message", "loop_failed"]
+
+
+@async_test
+async def test_completed_and_failed_terminal_callback_errors_are_not_replaced() -> None:
+    def fail_terminal_events(event: AgentLoopEvent) -> None:
+        if event.event_type == "loop_completed":
+            raise RuntimeError("completion event primary")
+        if event.event_type == "loop_failed":
+            raise RuntimeError("failed event secondary")
+
+    result = await AgentLoop().run(
+        [user("start")],
+        ScriptedProvider([assistant_text("done")]),
+        [],
+        config(on_event=fail_terminal_events),
+    )
+
+    assert result.status == "failed"
+    assert result.error == "completion event primary"
+    assert result.secondary_errors == ("RuntimeError: failed event secondary",)

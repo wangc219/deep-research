@@ -104,14 +104,14 @@ class ModelMessage:
 class ProviderFinalTurn:
     """The authoritative final state of one streamed assistant turn."""
 
-    text: str = ""
-    tool_calls: Sequence[ProviderToolCall] = field(default_factory=tuple)
+    text: str | None = None
+    tool_calls: Sequence[ProviderToolCall] | None = None
     finish_reason: str | None = None
     usage: Mapping[str, Any] = field(default_factory=dict)
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        if not isinstance(self.text, str):
+        if self.text is not None and not isinstance(self.text, str):
             raise TypeError("provider final turn text must be a string")
         if self.finish_reason is not None and not isinstance(self.finish_reason, str):
             raise TypeError("provider finish_reason must be a string")
@@ -119,8 +119,10 @@ class ProviderFinalTurn:
             raise TypeError("provider usage must be an object")
         if not isinstance(self.metadata, Mapping):
             raise TypeError("provider metadata must be an object")
-        calls = tuple(self.tool_calls)
-        if not all(isinstance(call, ProviderToolCall) for call in calls):
+        calls = None if self.tool_calls is None else tuple(self.tool_calls)
+        if calls is not None and not all(
+            isinstance(call, ProviderToolCall) for call in calls
+        ):
             raise TypeError("tool_calls must contain only ProviderToolCall values")
         object.__setattr__(self, "tool_calls", calls)
         object.__setattr__(
@@ -137,7 +139,11 @@ class ProviderFinalTurn:
     def to_plain(self) -> dict[str, Any]:
         value: dict[str, Any] = {
             "text": self.text,
-            "tool_calls": [call.to_plain() for call in self.tool_calls],
+            "tool_calls": (
+                None
+                if self.tool_calls is None
+                else [call.to_plain() for call in self.tool_calls]
+            ),
             "usage": thaw_plain(self.usage),
             "metadata": thaw_plain(self.metadata),
         }

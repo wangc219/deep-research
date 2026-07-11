@@ -170,10 +170,12 @@ class AgentLoopResult:
     turn_count: int
     turn_snapshots: Sequence[TurnSnapshotInput] = field(default_factory=tuple)
     error: str | None = None
+    secondary_errors: Sequence[str] = field(default_factory=tuple)
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "messages", tuple(self.messages))
         object.__setattr__(self, "turn_snapshots", tuple(self.turn_snapshots))
+        object.__setattr__(self, "secondary_errors", tuple(self.secondary_errors))
 
     @property
     def snapshots(self) -> tuple[TurnSnapshotInput, ...]:
@@ -186,6 +188,7 @@ class AgentLoopResult:
             "turn_count": self.turn_count,
             "turn_snapshots": [snapshot.to_plain() for snapshot in self.turn_snapshots],
             "error": self.error,
+            "secondary_errors": list(self.secondary_errors),
         }
 
 
@@ -201,6 +204,7 @@ class AgentLoop:
     ) -> AgentLoopResult:
         working_messages = list(_freeze_messages(messages))
         base_tools = _freeze_tools(tools)
+        reserved_call_ids = _call_ids_from_messages(working_messages)
         snapshots: list[TurnSnapshotInput] = []
         execution_context = ToolExecutionContext(
             run_id=config.run_id,
@@ -227,6 +231,7 @@ class AgentLoop:
                             tools=prepared.tools,
                             options=prepared.options,
                         )
+                reserved_call_ids.update(_call_ids_from_messages(snapshot.messages))
 
                 if await _callback_is_true(config.should_stop, snapshot):
                     return await self._complete(
@@ -272,9 +277,17 @@ class AgentLoop:
                     calls,
                     snapshot.tools,
                     execution_context,
+                    reserved_call_ids,
                 )
-                for provider_call, result in zip(calls, results, strict=True):
-                    message = _tool_message(provider_call, result)
+                for call_index, (provider_call, result) in enumerate(
+                    zip(calls, results, strict=True)
+                ):
+                    message = _tool_message(
+                        provider_call,
+                        result,
+                        turn_index=turn_index,
+                        call_index=call_index,
+                    )
                     working_messages.append(message)
                     await self._emit(
                         config,
@@ -284,6 +297,7 @@ class AgentLoop:
                             "tool_call": provider_call.to_plain(),
                             "result": result.to_plain(),
                             "message": message.to_plain(),
+                            "call_index": call_index,
                         },
                         message=message,
                         tool_call=provider_call,
@@ -303,31 +317,48 @@ class AgentLoop:
             return await self._complete(
                 "max_turns", working_messages, snapshots, config
             )
-        except asyncio.CancelledError:
-            await self._emit(
+        except asyncio.CancelledError as exc:
+            await self._emit_terminal(
                 config,
                 "loop_failed",
                 snapshots[-1].turn_index if snapshots else None,
-                {"status": "cancelled", "error": "cancelled"},
+                {"status": "cancelled", "error": str(exc) or "cancelled"},
+                primary_error=exc,
             )
             raise
         except Exception as exc:
-            await self._emit(
-                config,
-                "loop_failed",
-                snapshots[-1].turn_index if snapshots else None,
-                {
-                    "status": "failed",
-                    "error": str(exc),
-                    "error_type": type(exc).__name__,
-                },
-            )
+            try:
+                secondary_errors = await self._emit_terminal(
+                    config,
+                    "loop_failed",
+                    snapshots[-1].turn_index if snapshots else None,
+                    {
+                        "status": "failed",
+                        "error": str(exc),
+                        "error_type": type(exc).__name__,
+                    },
+                    primary_error=exc,
+                )
+            except asyncio.CancelledError as cancel_exc:
+                cancel_exc.add_note(
+                    "loop was already handling failure: "
+                    f"{type(exc).__name__}: {exc}"
+                )
+                await self._emit_terminal(
+                    config,
+                    "loop_failed",
+                    snapshots[-1].turn_index if snapshots else None,
+                    {"status": "cancelled", "error": str(cancel_exc) or "cancelled"},
+                    primary_error=cancel_exc,
+                )
+                raise
             return AgentLoopResult(
                 status="failed",
                 messages=working_messages,
                 turn_count=len(snapshots),
                 turn_snapshots=snapshots,
                 error=str(exc),
+                secondary_errors=_format_errors(secondary_errors),
             )
 
     async def _complete(
@@ -337,12 +368,35 @@ class AgentLoop:
         snapshots: Sequence[TurnSnapshotInput],
         config: AgentLoopConfig,
     ) -> AgentLoopResult:
-        await self._emit(
+        completion_errors = await self._emit_terminal(
             config,
             "loop_completed",
             snapshots[-1].turn_index if snapshots else None,
             {"status": status, "turn_count": len(snapshots)},
         )
+        if completion_errors:
+            primary_error = completion_errors[0]
+            failure_errors = await self._emit_terminal(
+                config,
+                "loop_failed",
+                snapshots[-1].turn_index if snapshots else None,
+                {
+                    "status": "failed",
+                    "error": str(primary_error),
+                    "error_type": type(primary_error).__name__,
+                },
+                primary_error=primary_error,
+            )
+            return AgentLoopResult(
+                status="failed",
+                messages=messages,
+                turn_count=len(snapshots),
+                turn_snapshots=snapshots,
+                error=str(primary_error),
+                secondary_errors=_format_errors(
+                    (*completion_errors[1:], *failure_errors)
+                ),
+            )
         return AgentLoopResult(
             status=status,
             messages=messages,
@@ -377,6 +431,50 @@ class AgentLoop:
         )
         await _maybe_await(config.on_event(event))
 
+    async def _emit_terminal(
+        self,
+        config: AgentLoopConfig,
+        event_type: str,
+        turn_index: int | None,
+        payload: Mapping[str, Any],
+        *,
+        primary_error: BaseException | None = None,
+    ) -> tuple[BaseException, ...]:
+        if config.on_event is None:
+            return ()
+        event = AgentLoopEvent(
+            event_type=event_type,
+            run_id=config.run_id,
+            agent_id=config.agent_id,
+            turn_index=turn_index,
+            payload=payload,
+        )
+        try:
+            await _maybe_await(config.on_event(event))
+        except asyncio.CancelledError as exc:
+            current_task = asyncio.current_task()
+            externally_cancelled = (
+                current_task is not None and current_task.cancelling() > 0
+            )
+            if primary_error is None or (
+                not isinstance(primary_error, asyncio.CancelledError)
+                and externally_cancelled
+            ):
+                raise
+            primary_error.add_note(
+                f"terminal event {event_type!r} also failed: "
+                f"CancelledError: {exc}"
+            )
+            return (exc,)
+        except Exception as exc:
+            if primary_error is not None:
+                primary_error.add_note(
+                    f"terminal event {event_type!r} also failed: "
+                    f"{type(exc).__name__}: {exc}"
+                )
+            return (exc,)
+        return ()
+
     async def _collect_assistant(
         self,
         provider: ModelProvider,
@@ -409,8 +507,12 @@ class AgentLoop:
         if final_turn is None:
             raise RuntimeError("provider stream ended without a final turn")
 
-        text = final_turn.text or "".join(text_parts)
-        calls = final_turn.tool_calls or tuple(streamed_calls)
+        text = "".join(text_parts) if final_turn.text is None else final_turn.text
+        calls = (
+            tuple(streamed_calls)
+            if final_turn.tool_calls is None
+            else final_turn.tool_calls
+        )
         metadata = thaw_plain(final_turn.metadata)
         if final_turn.finish_reason is not None:
             metadata["finish_reason"] = final_turn.finish_reason
@@ -430,26 +532,32 @@ class AgentLoop:
         calls: Sequence[ProviderToolCall],
         tools: Sequence[ToolDefinition],
         context: ToolExecutionContext,
+        reserved_call_ids: set[str],
     ) -> tuple[ToolResult, ...]:
         registry = {tool.name: tool for tool in tools}
         duplicate_indexes: set[int] = set()
-        seen_call_ids: set[str] = set()
         for index, call in enumerate(calls):
-            if call.call_id in seen_call_ids:
+            if call.call_id in reserved_call_ids:
                 duplicate_indexes.add(index)
             else:
-                seen_call_ids.add(call.call_id)
+                reserved_call_ids.add(call.call_id)
 
-        pending = [
-            self._execute_one(
-                call,
-                registry,
-                context,
-                duplicate=index in duplicate_indexes,
+        tasks = [
+            asyncio.create_task(
+                self._execute_one(
+                    call,
+                    registry,
+                    context,
+                    duplicate=index in duplicate_indexes,
+                )
             )
             for index, call in enumerate(calls)
         ]
-        results = await asyncio.gather(*pending)
+        try:
+            results = await asyncio.gather(*tasks)
+        except BaseException as primary_error:
+            await _cancel_and_drain(tasks, primary_error)
+            raise
         return tuple(results)
 
     async def _execute_one(
@@ -537,10 +645,52 @@ def _freeze_tools(tools: Sequence[ToolDefinition]) -> tuple[ToolDefinition, ...]
     return frozen
 
 
+def _call_ids_from_messages(messages: Sequence[ModelMessage]) -> set[str]:
+    call_ids: set[str] = set()
+    for message in messages:
+        call_ids.update(call.call_id for call in message.tool_calls)
+        if message.tool_call_id is not None:
+            call_ids.add(message.tool_call_id)
+    return call_ids
+
+
+def _format_errors(errors: Sequence[BaseException]) -> tuple[str, ...]:
+    return tuple(f"{type(error).__name__}: {error}" for error in errors)
+
+
 async def _maybe_await(value: Any) -> Any:
     if inspect.isawaitable(value):
         return await value
     return value
+
+
+async def _cancel_and_drain(
+    tasks: Sequence[asyncio.Task[ToolResult]],
+    primary_error: BaseException,
+) -> None:
+    for task in tasks:
+        if not task.done():
+            task.cancel()
+
+    drain = asyncio.gather(*tasks, return_exceptions=True)
+    while not drain.done():
+        try:
+            await asyncio.shield(drain)
+        except asyncio.CancelledError as secondary_cancel:
+            primary_error.add_note(
+                "secondary cancellation while draining tool siblings: "
+                f"{secondary_cancel}"
+            )
+
+    results = drain.result()
+    for result in results:
+        if isinstance(result, BaseException) and not isinstance(
+            result, asyncio.CancelledError
+        ):
+            primary_error.add_note(
+                "tool sibling failed during cancellation cleanup: "
+                f"{type(result).__name__}: {result}"
+            )
 
 
 async def _callback_is_true(
@@ -552,9 +702,19 @@ async def _callback_is_true(
     return bool(await _maybe_await(callback(snapshot)))
 
 
-def _tool_message(call: ProviderToolCall, result: ToolResult) -> ModelMessage:
+def _tool_message(
+    call: ProviderToolCall,
+    result: ToolResult,
+    *,
+    turn_index: int,
+    call_index: int,
+) -> ModelMessage:
     result_plain = result.to_plain()
-    metadata: dict[str, Any] = {"tool_result": result_plain}
+    metadata: dict[str, Any] = {
+        "tool_result": result_plain,
+        "turn_index": turn_index,
+        "call_index": call_index,
+    }
     error_code = result.details.get("error_code")
     if error_code is not None:
         metadata["error_code"] = error_code
