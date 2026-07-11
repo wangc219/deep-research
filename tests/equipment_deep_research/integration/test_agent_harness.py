@@ -917,6 +917,112 @@ def test_listener_self_cancellation_isolated_but_real_task_cancellation_propagat
     run(scenario())
 
 
+def test_async_listener_base_exceptions_are_isolated_and_auditable(
+    tmp_path: Path,
+) -> None:
+    async def scenario() -> None:
+        provider = ScriptedProvider([final_text("done")])
+        harness = AgentHarness(
+            provider,
+            [],
+            SqliteRunStore(tmp_path / "run.db", run_id="run-1"),
+            sessions_root=tmp_path / "sessions",
+        )
+        seen: list[str] = []
+
+        async def unstable_listener(event: Any) -> None:
+            if event.event_type == "turn_snapshot":
+                raise GeneratorExit("listener generator exit")
+            if event.event_type == "assistant_message":
+                raise asyncio.CancelledError("listener cancelled")
+
+        harness.on_event(unstable_listener)
+        harness.on_event(lambda event: seen.append(event.event_type))
+
+        result = await harness.execute(task(allowed_tools=[]))
+
+        assert result.status == "completed"
+        assert seen[-1] == "task_completed"
+        assert "turn_end" in seen
+        assert harness.listener_error_count == 2
+        assert {
+            (record["event_type"], record["error_type"])
+            for record in harness.listener_errors
+        } == {
+            ("turn_snapshot", "GeneratorExit"),
+            ("assistant_message", "CancelledError"),
+        }
+
+    run(scenario())
+
+
+def test_parent_cancellation_while_awaiting_listener_is_not_isolated(
+    tmp_path: Path,
+) -> None:
+    async def scenario() -> None:
+        listener_started = asyncio.Event()
+        provider = ScriptedProvider([final_text("must not run")])
+        harness = AgentHarness(
+            provider,
+            [],
+            SqliteRunStore(tmp_path / "run.db", run_id="run-1"),
+            sessions_root=tmp_path / "sessions",
+        )
+
+        async def blocking_listener(event: Any) -> None:
+            if event.event_type == "turn_snapshot":
+                listener_started.set()
+                await asyncio.Event().wait()
+
+        harness.on_event(blocking_listener)
+        execution = asyncio.create_task(harness.execute(task(allowed_tools=[])))
+        await listener_started.wait()
+        execution.cancel("caller cancelled during listener")
+
+        with pytest.raises(
+            asyncio.CancelledError,
+            match="caller cancelled during listener",
+        ):
+            await execution
+
+        assert provider.calls == 0
+        assert harness.listener_error_count == 0
+        assert session_records(tmp_path / "sessions")[-1]["event_type"] == (
+            "task_cancelled"
+        )
+
+    run(scenario())
+
+
+@pytest.mark.parametrize("error_type", [KeyboardInterrupt, SystemExit])
+def test_async_listener_process_level_errors_are_rethrown(
+    tmp_path: Path,
+    error_type: type[BaseException],
+) -> None:
+    async def scenario() -> None:
+        provider = ScriptedProvider([final_text("must not run")])
+        harness = AgentHarness(
+            provider,
+            [],
+            SqliteRunStore(tmp_path / "run.db", run_id="run-1"),
+            sessions_root=tmp_path / "sessions",
+        )
+
+        async def process_error_listener(event: Any) -> None:
+            if event.event_type == "task_received":
+                raise error_type("listener process error")
+
+        harness.on_event(process_error_listener)
+
+        with pytest.raises(error_type, match="listener process error"):
+            await harness.execute(task(allowed_tools=[]))
+
+        assert provider.calls == 0
+        assert harness.listener_error_count == 0
+
+    run(scenario())
+
+
 def test_session_uses_safe_projections_and_never_persists_raw_secrets(
     tmp_path: Path,
 ) -> None:

@@ -98,7 +98,7 @@ class AgentHarness:
         self._tools = _normalize_tools(tools)
         self._state_lock = Lock()
         self._pending_listener_awaitables: list[Awaitable[Any]] = []
-        self._async_listener_error_count = 0
+        self._async_listener_errors: list[dict[str, Any]] = []
         self._next_turn_tools: tuple[str, ...] | None = None
         self._executing = False
         self.last_session_store: JsonlSessionStore | None = None
@@ -109,7 +109,12 @@ class AgentHarness:
     @property
     def listener_error_count(self) -> int:
         with self._state_lock:
-            return self.event_bus.listener_error_count + self._async_listener_error_count
+            return self.event_bus.listener_error_count + len(self._async_listener_errors)
+
+    @property
+    def listener_errors(self) -> tuple[dict[str, Any], ...]:
+        with self._state_lock:
+            return tuple(dict(record) for record in self._async_listener_errors)
 
     def on_event(self, callback: HarnessEventCallback) -> Callable[[], None]:
         if not callable(callback):
@@ -688,7 +693,7 @@ class AgentHarness:
             self._end_execution()
 
     async def _publish_external(self, event: RuntimeEvent) -> None:
-        self.event_bus.publish(event)
+        published_event = self.event_bus.publish(event)
         while True:
             with self._state_lock:
                 awaitables = tuple(self._pending_listener_awaitables)
@@ -696,17 +701,47 @@ class AgentHarness:
             if not awaitables:
                 return
             for awaitable in awaitables:
+                listener_task = asyncio.create_task(
+                    _capture_listener_outcome(awaitable)
+                )
                 try:
-                    await awaitable
+                    listener_error = await asyncio.shield(listener_task)
                 except asyncio.CancelledError:
                     current_task = asyncio.current_task()
                     if current_task is not None and current_task.cancelling() > 0:
+                        listener_task.cancel()
+                        try:
+                            await listener_task
+                        except BaseException:
+                            pass
                         raise
-                    with self._state_lock:
-                        self._async_listener_error_count += 1
-                except Exception:
-                    with self._state_lock:
-                        self._async_listener_error_count += 1
+                    listener_error = asyncio.CancelledError(
+                        "listener task cancelled"
+                    )
+                if listener_error is None:
+                    continue
+                if isinstance(listener_error, (KeyboardInterrupt, SystemExit)):
+                    raise listener_error
+                self._record_async_listener_error(published_event, listener_error)
+
+    def _record_async_listener_error(
+        self,
+        event: RuntimeEvent,
+        error: BaseException,
+    ) -> None:
+        record = {
+            "event_id": event.event_id,
+            "event_type": event.event_type,
+            "run_id": event.run_id,
+            "sequence": event.sequence,
+            "error_type": type(error).__name__,
+            "error": _safe_error(
+                error,
+                max_string_length=self.event_bus.max_string_length,
+            ),
+        }
+        with self._state_lock:
+            self._async_listener_errors.append(record)
 
     def _open_session_store(self, session_ref: str) -> Any:
         if self._session_store_factory is None:
@@ -827,6 +862,16 @@ class AgentHarness:
         with self._state_lock:
             self._executing = False
             self._next_turn_tools = None
+
+
+async def _capture_listener_outcome(
+    awaitable: Awaitable[Any],
+) -> BaseException | None:
+    try:
+        await awaitable
+    except BaseException as error:
+        return error
+    return None
 
 
 def _normalize_tools(

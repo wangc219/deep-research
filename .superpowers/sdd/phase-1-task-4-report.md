@@ -13,8 +13,13 @@ tool handler 均不接触 store/session，harness 通过 `prepare_turn` 与 type
 - `AgentHarness.set_next_turn_tools(names)`：仅在下一次 `prepare_turn` 消费，不修改已
   开始的 snapshot。
 - `AgentHarness.on_event(callback)`：返回 unsubscribe；普通 listener 异常及 listener
-  自行抛出的 `CancelledError` 被隔离并计数，调用方真实取消继续传播。回调实际订阅
-  harness 接受或创建的 `EventBus`，不存在第二条 RuntimeEvent 发布通道。
+  自行抛出的 `CancelledError`/`GeneratorExit` 等非进程级 `BaseException` 被隔离并计数，
+  调用方真实取消继续传播。回调实际订阅 harness 接受或创建的 `EventBus`，不存在第二条
+  RuntimeEvent 发布通道。
+- async listener awaitable 在独立 child Task 中执行，并由 `asyncio.shield` 区分 listener
+  自身异常与 Harness 父任务取消。listener 异常写入安全 `listener_errors` 审计记录，包含
+  event id/type/run/sequence、error type 和脱敏截断消息；`KeyboardInterrupt/SystemExit`
+  明确重抛且不计 listener error。
 - `EventBus` 隔离 `CancelledError`、`GeneratorExit` 等非进程级 `BaseException`；
   `KeyboardInterrupt/SystemExit` 在当前 run queue 完成清理/交棒后重抛。每个 delivery 的
   completion 与 drainer state 均在 finally/空队列临界区完成，listener 失败不会使后续
@@ -172,6 +177,11 @@ pending/commit/reconciliation、session 脱敏、external listener 隔离、稳�
 GREEN 后 listener error 计数、fatal rethrow/cleanup、跨实例自动 session 修补、domain 不重放、
 重复启动幂等和 session 持续不可写 provider=0 均有回归覆盖。
 
+最终复审 RED：async listener 抛 `GeneratorExit` 时直接逃逸并中断 execute。GREEN 后
+`GeneratorExit` 与 listener-originated `CancelledError` 均被隔离、计数并形成审计记录，
+健康 listener 继续收到 `turn_end/task_completed`；父任务在 listener await 期间被取消时仍
+传播原 `CancelledError`，`KeyboardInterrupt/SystemExit` 仍按策略重抛。
+
 ## 验证证据
 
 ```text
@@ -185,7 +195,12 @@ python3 -m pytest tests/test_deep_research_runner.py -q
 23 passed
 
 python3 -m pytest -q
-189 passed
+193 passed
+
+python3 -m pytest \
+  tests/equipment_deep_research/integration/test_agent_harness.py \
+  tests/equipment_deep_research/unit/test_runtime_types.py -q
+50 passed
 
 ruff check src/equipment_deep_research/harness/event_bus.py \
   src/equipment_deep_research/harness/agent_harness.py \
@@ -228,3 +243,4 @@ rg -n "store" \
   字段；未知 usage 字段不会猜测计费。
 - 原子修复提交主题：`fix: harden agent harness authorization and recovery`；实际提交哈希在
   最终回复中报告，避免报告自引用改变提交内容。
+- 最终复审提交主题：`fix: isolate async harness listener failures`。
