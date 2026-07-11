@@ -215,7 +215,7 @@ def test_cli_passes_new_configuration_and_run_flags(
     assert calls["run"]["analyst_confirmed"] is True
 
 
-def test_cli_no_longer_exposes_source_whitelist() -> None:
+def test_cli_exposes_provider_and_evidence_controls_without_domain_gate() -> None:
     parser_text = (ROOT / "src" / "equipment_deep_research" / "interfaces" / "cli.py").read_text(
         encoding="utf-8"
     )

@@ -130,7 +130,10 @@ def test_real_smoke_materializes_public_source_diagnostics(tmp_path: Path) -> No
     assert all(row["artifact_refs"] for row in summary["source_materials"])
 
 
-def test_public_source_is_not_blocked_by_domain(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_public_source_passes_network_and_quality_gates(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     from equipment_deep_research.agents import provider
     from equipment_deep_research.tools import materialization
 

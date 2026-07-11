@@ -2,94 +2,60 @@
 
 ## 1. 方案定位
 
-本系统面向“市场需求挖掘、制胜机理研判、装备能力图像生成”场景，首版交付一个可运行、可审计、可演示的 Deep Research 多智能体闭环。用户输入研究主题后，系统可配置选择多个 agent，检索和材料化公开资料，完成多轮研判、门控和再调，最终输出能力画像报告。
+当前交付为 Phase 0 研究运行基线，目标是固化领域契约、配置边界、运行工作区、公开材料安全材料化、证据隔离、三层制胜机理输出和审计产物，为后续接入真实模型、真实搜索、持久化与企业应用提供稳定接口。
 
-## 2. 项目要求对应
+本方案严格区分两类范围：
 
-- 新制胜机理路线：研判国际形势、威胁力量和对抗场景，从新制胜机制、新作战打法、新体系组合中提出新装备能力需求。
-- 传统能力缺口路线：基于传统场景、传统制胜、传统战法，与当前装备能力对比，挖掘能力不足、空白领域和装备升级需求。
-- 局部战争案例路线：对局部战争案例进行多轮检索，总结新能力、新打法、经验不足，研判未来可布局方向。
-- 架构图主流程：分析师输入 -> 编排器问题解析 -> 基线 agent 池并发研判 -> 编排器汇总初检 -> 制胜机理 L1/L2/L3 -> 再调迭代 -> 五判据检查 -> 作战能力图像需求输出。
+- **Phase 0 已完成**：当前仓库已经实现且可由自动化测试和 smoke 验证的能力。
+- **后续阶段**：已经定义接口或目录边界，但尚未接入的能力，不作为本阶段验收完成项。
 
-## 3. 参考项目设计吸收
+## 2. Phase 0 已完成
 
-- Pi：小内核、大 harness；turn snapshot；save point；append-only session。
-- Nanobot：MessageBus / AgentLoop / AgentRunner 分层；provider/tool/agent registry 分离；config 与 workspace 分离。
-- GenericAgent：上下文信息密度优先；最小原子工具集；working checkpoint；任务可拆时再使用 map-reduce 式 subagent。
+### 2.1 研究路线与领域输出
 
-## 4. 总体架构
+- 支持 `new_winning_mechanism`、`traditional_gap`、`war_case_learning` 三类研究路线。
+- 支持 L1 制胜逻辑分析、L2 概念创新评估、L3 能力图像生成。
+- 能力图像固定输出九字段：能力编号、名称、装备类别、类型、来源制胜逻辑、关联场景、优先级、能力差距、能力画像。
+- 领域对象、计划节点、任务消息、召回消息、trace 和报告对象具备稳定序列化契约。
 
-- `interfaces`：CLI 入口，与 Web/API 共享 application service。
-- `api/application`：FastAPI、版本化 API、业务用例服务、RBAC、SSE 和导出。
-- `queue/persistence`：独立 worker、任务队列、PostgreSQL/SQLite 仓储、配置 revision 和恢复。
-- `orchestration`：问题解析、研究路线选择、agent 选择、并发调度、门控、再调、最终判据。
-- `harness`：通用运行时，包括 scheduler、context pack、session、artifact materialization。
-- `agents`：可配置 agent registry，默认提供国际形势、作战场景、武器装备、作战运用、制胜机理、审计、报告 agent。
-- `domain`：研究问题、研究路线、证据卡、基线发现、制胜阶段输出、再调请求、能力画像、报告对象。
-- `tools`：工具权限、证据材料化、公开 URL 抓取、artifact 落盘。
-- `apps/web`：React 企业研究工作台，覆盖研究发起、实时监控、证据审阅、制胜机理、能力画像、报告评审和系统配置。
+### 2.2 Agent 设计
 
-## 5. Agent 设计
+默认提供国际形势、作战场景、武器装备、作战运用四个 baseline agent。四路 agent 由 `AgentRegistry` 和配置文件管理，不在 runner 中按固定 ID 分支：
 
-默认四类基线 agent 只是预设，不写死。系统通过 `AgentRegistry` 管理：
+- 默认可运行全部四路。
+- `--agents` 可选择任意子集。
+- `agents.yaml` 可替换或新增 agent。
+- 每个 agent 声明能力标签、工具、上下文策略和领域对象读写范围。
+- 每个所选 agent 生成独立 `agent_sessions/<agent-id>.jsonl`，其他 agent 原始会话不进入其上下文。
 
-- `agent_id`
-- `display_name`
-- `capability_tags`
-- `input_contract`
-- `output_contract`
-- `tools`
-- `context_policy`
-- `enabled`
+Phase 0 scheduler 已建立统一调度契约和覆盖度计算；生产级并行执行、弹性 worker 和分布式队列属于后续阶段。
 
-统一输出 `BaselineFindingPacket`，编排器可以按 `--agents` 只选择其中几个 agent。缺失能力必须在报告中显式标注，不允许伪造全覆盖结论。
+### 2.3 Provider 与模型边界
 
-## 6. 制胜机理核心
+- 默认模型配置为 `gpt-5.5`。
+- `providers.yaml` 定义 Responses-compatible HTTP provider 的模型、地址环境变量、密钥环境变量和超时字段。
+- `fake` provider 提供稳定离线闭环。
+- `real` provider 当前为模板占位实现：生成受控公开 URL 线索并进入材料化流程，未执行真实模型推理循环。
 
-制胜机理智能体消费 `BaselineFindingPacket[]` 和 capability 覆盖度，不依赖固定四路名称。
+真实模型循环和真实搜索尚未接入。现阶段不得将 `real` 模式描述为生产级联网研究能力。
 
-四库：
+### 2.4 公开材料与证据治理
 
-- 理论工具库
-- 战例库
-- 前沿情报库
-- 问题链
+公开来源采用“广泛搜集 + 网络安全 + 质量阈值 + 失败材料隔离”策略：
 
-六步推理：
+- 不按来源域名设置准入门槛，公开 HTTP(S) 线索可进入统一抓取流程。
+- 网络层拒绝非 HTTP(S)、本机地址、私网/保留地址和解析到非公网地址的目标。
+- DNS 校验后的数值 IP 与实际 TCP 连接绑定；HTTPS 保留原 hostname 执行 SNI 和证书校验。
+- 每次重定向重新执行 URL、DNS 和地址安全检查，并限制重定向次数和响应大小。
+- 证据配置预留相关性、透明度、时效性、直接支撑和提取质量权重及阈值。
+- 抓取失败和网络安全拒绝材料保留诊断 artifact，设置为不可进入正式证据集。
+- scheduler 只把允许形成正式证据的材料写入 `EvidenceCard`，并同步修正 baseline packet 的 evidence IDs。
 
-- 防御解构
-- 制胜路径
-- 效果链
-- 能力映射
-- 差距量化
-- 图像生成
+Phase 0 已验证材料化安全与失败隔离；配置驱动的完整搜索、质量评分、去重、独立印证和冲突推理将在后续阶段接入。
 
-三层分析：
+### 2.5 工作区与产物契约
 
-- L1 制胜逻辑分析。
-- L2 概念创新评估。
-- L3 能力图像生成。
-
-## 7. 再调与多轮机制
-
-- 再调对象使用 `target_agent_id` 或 `target_capability_tag`。
-- 再调格式包含来源层、目标、原因、所需数据、回传节点、紧迫度。
-- 总轮次最多 5 轮；同一目标最多 3 次；补充后从断点继续。
-- 首版在缺失 capability 覆盖时生成 `RecallRequest`，并写入 `round_summary.json` 与 `trace.jsonl`，保证再调原因、目标和所需数据可审计。
-
-## 8. 证据与联网检索
-
-- 公开网络搜索不使用来源域名硬门控，以扩大有效信息搜集范围。
-- 网络层执行 URL/SSRF、响应大小、重定向、超时和限速安全控制。
-- 证据层执行相关性、透明度、时效性、直接支撑、提取质量评分，并进行去重、独立印证、冲突检测和反证保留。
-- 未达到质量阈值的材料保留为 candidate/rejected 及诊断记录，不进入正式 claim 支撑。
-- 每条 `EvidenceCard` 包含来源、URL/路径、摘录、位置、质量评估、支撑 claim、创建 agent、artifact 引用。
-- 网页和文档落入 `artifacts/`，报告引用证据卡和 artifact，不引用模型口述来源。
-- 材料化失败的材料只保留诊断 artifact，不写入正式证据集。
-
-## 9. 输出与交付物
-
-运行产物：
+`RunWorkspace` 为每次运行创建独立目录，并校验 `run-id` 不得逃逸输出根目录。七类稳定产物为：
 
 - `report.md`
 - `capability_images.json`
@@ -99,34 +65,46 @@
 - `agent_sessions/`
 - `artifacts/`
 
-能力画像九字段：
+新增 `checkpoints/` 预留目录，但 Phase 0 不写入恢复点。`database_path` 只定义未来 `run.db` 的稳定位置，Phase 0 不创建数据库文件，也不提供恢复执行。
 
-- 能力编号
-- 名称
-- 装备类别
-- 类型
-- 来源制胜逻辑
-- 关联场景
-- 优先级
-- 能力差距
-- 能力画像
+### 2.6 审计与限制呈现
 
-## 10. 验收标准
+- trace 记录运行启动、baseline agent 完成、覆盖度、三层分析和审计结果。
+- agent 子集运行时，缺失能力标签和召回请求进入 summary、trace 与报告限制说明。
+- 失败材料不被报告引用为正式支撑。
+- `analyst_confirmed` 当前只记录到 trace 和 summary，不构成发布门控。
 
-- 默认四 agent 可跑，任意子集 agent 可跑，自定义替换 agent 可跑。
-- agent 原始上下文隔离，工具权限由执行层强制。
-- 三条研究路线均有 fake E2E。
-- real smoke 能生成联网材料化状态；公网不可达时必须降级为 `limited` 并保留诊断 artifact。
-- L1/L2/L3 门控、再调、五判据均可在 trace 中审计。
-- 报告明确区分新作战能力方向和现有装备升级需求。
-- 正式源码不包含旧演示执行链路入口。
-- 默认模型为 `gpt-5.5`，模型调用通过 Responses-compatible HTTP provider，不调用外部模型命令行。
-- Web、CLI、API 和导出文件消费同一领域对象，关键结论可追溯到 evidence 与 artifact。
-- Web 支持创建、启动、暂停、恢复、取消、证据审阅、L1/L2/L3 复核、能力画像、报告评审和导出。
-- 企业部署包含 FastAPI、worker、PostgreSQL、Redis、React Web、反向代理、RBAC/OIDC、健康检查和审计日志。
+## 3. Phase 0 运行结构
 
-## 11. 前后端企业级设计
+```text
+CLI
+  -> DeepResearchRunner
+      -> AgentRegistry / preset policy
+      -> RunWorkspace
+      -> DiscoveryScheduler
+          -> fake provider 或模板 real provider
+          -> EvidenceMaterializer
+          -> agent_sessions / artifacts
+      -> WinningMechanismEngine (L1/L2/L3)
+      -> audit_run / render_report
+      -> 七类稳定产物 + checkpoints 预留目录
+```
 
-详细设计见：[装备能力图像 Deep Research 前后端一体化企业级设计方案](superpowers/specs/2026-07-10-equipment-deep-research-frontend-backend-enterprise-design.md)。
+## 4. 后续阶段
 
-实施计划见：[装备能力图像 Deep Research 多智能体系统总实施计划](superpowers/plans/2026-07-10-equipment-deep-research-master-plan.md)。
+以下能力尚未完成，不纳入 Phase 0 完成声明：
+
+- 真实 Responses 模型循环和真实搜索 provider。
+- 配置驱动的搜索查询规划、质量评分、去重、独立印证、冲突检测和反证推理闭环。
+- 持久化 checkpoint、`run.db`、resume、暂停、取消和故障恢复。
+- 真正并行的 agent 执行、独立 worker、任务队列和资源治理。
+- FastAPI、SSE、RBAC/OIDC、PostgreSQL、Redis、React Web、报告审批与企业部署。
+
+上述能力进入实施前必须保持 Phase 0 七类产物和领域对象契约兼容，新增能力不得破坏现有 CLI 和离线回归基线。
+
+## 5. 技术验收原则
+
+- 以自动化测试、严格残留扫描和独立输出根 smoke 为验收证据。
+- 文档中的“已完成”必须能在当前代码和测试中定位。
+- 后续能力只能标为预留、规划或进入条件，不得写成当前已交付。
+- 公网不可达时允许 `real` smoke 降级并保留诊断，但不得伪造抓取成功或正式证据。

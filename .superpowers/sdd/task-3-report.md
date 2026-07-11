@@ -4,9 +4,9 @@
 
 - 状态：DONE
 - 实现提交：`fef977b6d556cb3028ca2dba979cee107ee7bcab` (`feat: define CLI run workspace contract`)
-- CLI 已新增 `--provider-config`、`--evidence-config`、`--resume`、`--analyst-confirmed`。
+- CLI 已新增 `--provider-config`、`--evidence-config`、`--resume`、`--analyst-confirmed` 接口边界；其中恢复执行仍未实现。
 - runner 使用 `RunWorkspace` 统一运行目录，并保持 scheduler 接收同一个 `run_dir`。
-- 七类既有产物名称未改变；新增预留 `checkpoints/`，`run.db` 由 `database_path` 固定定位。
+- 七类既有产物名称未改变；新增 `checkpoints/` 预留目录，Phase 0 不创建 `run.db`。
 
 ## 变更文件
 
