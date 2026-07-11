@@ -74,3 +74,54 @@
 - 原 RuntimeEvent 不被修改；publish 使用 `dataclasses.replace()` 产生安全事件，
   保留 event id 和创建时间。
 - 范围保持在 brief 指定所有权内，未增加不必要的包导出或 orchestration 耦合。
+
+## Review Fix: Ordered Delivery And Deep Isolation
+
+### Review RED
+
+- 在原聚焦测试上新增并发、重入、不可变和 proposal 类型边界后运行：
+  `python3 -m pytest tests/equipment_deep_research/unit/test_runtime_types.py -q`
+- 结果：`6 failed, 7 passed`。
+- 失败分别证明：同 run 并发 publish 可交错派发；重入 publish 会在当前事件的后续
+  listener 之前插队；内部 list/dict 仍引用构造参数；listener 可修改后续 listener
+  和返回值看到的 payload；ToolResult 不拒绝错误 proposal 通道。
+- 对非 JSON 可变值另做一次 RED：`1 failed, 13 deselected`，证明原冻结逻辑会
+  原样保留 `set`，仍可能泄漏可变引用并破坏 JSON 契约。
+
+### Review Implementation
+
+- EventBus 现在为每个 `run_id` 维护独立 FIFO delivery queue 和单一 drainer。
+- sequence 分配、入队和 drainer 选举在同一锁内完成；listener 调用不持有全局锁，
+  因此不同 run 可由不同线程同时派发。
+- 普通并发 publisher 在自己的 delivery 完成前等待；同一 drainer 线程内的同 run
+  重入 publish 只完成 sequence 分配和入队后返回，避免死锁。重入事件只会在当前
+  事件的所有 listener 返回后派发。
+- subscriber 异常继续隔离并累计 `listener_error_count`，不会回收或跳过 sequence。
+- `freeze_plain()` 递归复制 JSON mapping/list/tuple，并投影为只读
+  `MappingProxyType`/tuple；非 JSON 值立即 `TypeError`。
+- RuntimeEvent payload、ToolCall arguments、ToolExecutionContext permissions、
+  ToolResult details/proposal 集合、ToolDefinition input_schema、两类 proposal payload
+  均在 `__post_init__` 冻结。`to_plain()` 递归还原普通 dict/list。
+- ToolResult 将 proposal 集合固定为 tuple，并在构造时逐项校验；错误通道立即
+  `TypeError`。
+
+### Review GREEN
+
+- 聚焦测试：`14 passed in 0.01s`。
+- `equipment_deep_research` 单元测试：`62 passed in 0.16s`。
+- 仓库全量测试：`105 passed in 0.41s`。
+- 并发 smoke：16 个 worker 发布 100 个同 run 事件，listener 观察结果严格为
+  `1..100`。
+- 依赖扫描：
+  `rg -n "equipment_deep_research\.orchestration" src/equipment_deep_research/harness src/equipment_deep_research/tools/definitions.py`
+  无命中。
+
+### Review Self-Review
+
+- 并发测试验证第二个同 run publisher 在第一事件 listener 被阻塞时不会提前返回。
+- 重入测试验证 nested publish 不死锁、先返回，并在 outer 的全部 listener 后派发。
+- 跨 run 测试验证 run-1 listener 阻塞时 run-2 可独立完成且 sequence 从 1 开始。
+- 构造隔离测试在对象创建后修改所有原始嵌套容器和 proposal list，对象投影不变。
+- listener mutation 测试验证只读 payload 拒绝写入，后续 listener 与 publish 返回值
+  仍观察原值。
+- 修复提交主题：`fix: serialize runtime event delivery`。

@@ -1,7 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import replace
-from threading import Lock
+from collections import deque
+from collections.abc import Mapping
+from dataclasses import dataclass, field, replace
+from threading import Event as CompletionEvent
+from threading import Lock, get_ident
 from typing import Any, Callable
 
 from equipment_deep_research.harness.events import RuntimeEvent
@@ -18,6 +21,20 @@ _SENSITIVE_KEY_SUFFIXES = (
 )
 
 
+@dataclass
+class _Delivery:
+    event: RuntimeEvent
+    subscribers: list[tuple[EventHandler, set[str] | None, str | None]]
+    completed: CompletionEvent = field(default_factory=CompletionEvent)
+
+
+@dataclass
+class _RunQueue:
+    deliveries: deque[_Delivery] = field(default_factory=deque)
+    draining: bool = False
+    drainer_thread_id: int | None = None
+
+
 class EventBus:
     def __init__(self, *, max_string_length: int = 1000) -> None:
         if max_string_length < 1:
@@ -25,6 +42,7 @@ class EventBus:
         self.max_string_length = max_string_length
         self.listener_error_count = 0
         self._sequences: dict[str, int] = {}
+        self._run_queues: dict[str, _RunQueue] = {}
         self._subscribers: list[tuple[EventHandler, set[str] | None, str | None]] = []
         self._lock = Lock()
 
@@ -49,17 +67,51 @@ class EventBus:
         return unsubscribe
 
     def publish(self, event: RuntimeEvent) -> RuntimeEvent:
+        """Publish synchronously, except same-run reentrant calls only enqueue.
+
+        A normal concurrent publisher returns after its own event has reached all
+        matching listeners. A listener that publishes to the run currently being
+        drained returns after enqueueing, which avoids deadlock; that nested event
+        is delivered after every listener for the current event has returned.
+        """
+        safe_payload = _redact(event.payload, max_string_length=self.max_string_length)
+        current_thread_id = get_ident()
         with self._lock:
             sequence = self._sequences.get(event.run_id, 0) + 1
             self._sequences[event.run_id] = sequence
-            subscribers = list(self._subscribers)
+            safe_event = replace(event, payload=safe_payload, sequence=sequence)
+            delivery = _Delivery(safe_event, list(self._subscribers))
+            run_queue = self._run_queues.setdefault(event.run_id, _RunQueue())
+            run_queue.deliveries.append(delivery)
+            is_reentrant = (
+                run_queue.draining
+                and run_queue.drainer_thread_id == current_thread_id
+            )
+            should_drain = not run_queue.draining
+            if should_drain:
+                run_queue.draining = True
+                run_queue.drainer_thread_id = current_thread_id
 
-        safe_event = replace(
-            event,
-            payload=_redact(event.payload, max_string_length=self.max_string_length),
-            sequence=sequence,
-        )
-        for handler, categories, run_id in subscribers:
+        if should_drain:
+            self._drain(run_queue)
+        elif not is_reentrant:
+            delivery.completed.wait()
+        return safe_event
+
+    def _drain(self, run_queue: _RunQueue) -> None:
+        while True:
+            with self._lock:
+                if not run_queue.deliveries:
+                    run_queue.draining = False
+                    run_queue.drainer_thread_id = None
+                    return
+                delivery = run_queue.deliveries.popleft()
+            self._deliver(delivery)
+            delivery.completed.set()
+
+    def _deliver(self, delivery: _Delivery) -> None:
+        for handler, categories, run_id in delivery.subscribers:
+            safe_event = delivery.event
             if categories is not None and safe_event.category not in categories:
                 continue
             if run_id is not None and safe_event.run_id != run_id:
@@ -69,11 +121,10 @@ class EventBus:
             except Exception:
                 with self._lock:
                     self.listener_error_count += 1
-        return safe_event
 
 
 def _redact(value: Any, *, max_string_length: int) -> Any:
-    if isinstance(value, dict):
+    if isinstance(value, Mapping):
         return {
             str(key): (
                 "<redacted>"

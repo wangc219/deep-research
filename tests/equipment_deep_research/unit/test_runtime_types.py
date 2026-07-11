@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 import json
+from threading import Event
 
 import pytest
 
@@ -73,6 +75,101 @@ def test_subscriber_failure_is_isolated_without_reusing_sequence() -> None:
     assert bus.listener_error_count == 2
 
 
+def test_same_run_concurrent_publish_is_delivered_strictly_in_sequence() -> None:
+    bus = EventBus()
+    first_started = Event()
+    release_first = Event()
+    observed: list[tuple[str, int]] = []
+
+    def listener(event: RuntimeEvent) -> None:
+        observed.append(("start", event.sequence))
+        if event.sequence == 1:
+            first_started.set()
+            assert release_first.wait(timeout=2)
+        observed.append(("end", event.sequence))
+
+    bus.subscribe(listener)
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        first_future = executor.submit(
+            bus.publish,
+            RuntimeEvent("tool", "first", "run-1"),
+        )
+        assert first_started.wait(timeout=2)
+        second_future = executor.submit(
+            bus.publish,
+            RuntimeEvent("tool", "second", "run-1"),
+        )
+        assert not second_future.done()
+        release_first.set()
+        first = first_future.result(timeout=2)
+        second = second_future.result(timeout=2)
+
+    assert (first.sequence, second.sequence) == (1, 2)
+    assert observed == [("start", 1), ("end", 1), ("start", 2), ("end", 2)]
+
+
+def test_reentrant_publish_waits_until_current_event_finishes_all_listeners() -> None:
+    bus = EventBus()
+    observed: list[str] = []
+    nested_events: list[RuntimeEvent] = []
+
+    def first_listener(event: RuntimeEvent) -> None:
+        observed.append(f"first:{event.event_type}")
+        if event.event_type == "outer":
+            nested_events.append(bus.publish(RuntimeEvent("tool", "inner", "run-1")))
+            observed.append("nested:return")
+
+    def second_listener(event: RuntimeEvent) -> None:
+        observed.append(f"second:{event.event_type}")
+
+    bus.subscribe(first_listener)
+    bus.subscribe(second_listener)
+
+    outer = bus.publish(RuntimeEvent("tool", "outer", "run-1"))
+
+    assert outer.sequence == 1
+    assert nested_events[0].sequence == 2
+    assert observed == [
+        "first:outer",
+        "nested:return",
+        "second:outer",
+        "first:inner",
+        "second:inner",
+    ]
+
+
+def test_different_runs_have_independent_drainers() -> None:
+    bus = EventBus()
+    run_one_started = Event()
+    release_run_one = Event()
+    run_two_seen = Event()
+
+    def listener(event: RuntimeEvent) -> None:
+        if event.run_id == "run-1":
+            run_one_started.set()
+            assert release_run_one.wait(timeout=2)
+        else:
+            run_two_seen.set()
+
+    bus.subscribe(listener)
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        run_one_future = executor.submit(
+            bus.publish,
+            RuntimeEvent("tool", "called", "run-1"),
+        )
+        assert run_one_started.wait(timeout=2)
+        run_two_future = executor.submit(
+            bus.publish,
+            RuntimeEvent("tool", "called", "run-2"),
+        )
+        assert run_two_seen.wait(timeout=2)
+        assert run_two_future.result(timeout=2).sequence == 1
+        release_run_one.set()
+        assert run_one_future.result(timeout=2).sequence == 1
+
+
 def test_runtime_event_has_stable_transport_metadata() -> None:
     event = RuntimeEvent("tool", "called", "run-1")
 
@@ -108,11 +205,107 @@ def test_tool_result_keeps_domain_and_trace_proposals_separate() -> None:
         trace_proposals=[trace],
     )
 
-    assert result.domain_proposals == [domain]
-    assert result.trace_proposals == [trace]
+    assert result.domain_proposals == (domain,)
+    assert result.trace_proposals == (trace,)
     assert result.to_plain()["domain_proposals"][0]["proposal_id"] == "p1"
     assert result.to_plain()["trace_proposals"][0]["proposal_id"] == "t1"
     json.dumps(result.to_plain(), ensure_ascii=False, sort_keys=True)
+
+
+def test_tool_result_rejects_proposals_in_the_wrong_channel() -> None:
+    domain = DomainWriteProposal("p1", "EvidenceCard", "upsert", {}, "ev-1")
+    trace = TraceProposal("t1", "created", "agent-a", {})
+
+    with pytest.raises(TypeError, match="domain_proposals"):
+        ToolResult("c1", "bad", domain_proposals=[trace])  # type: ignore[list-item]
+    with pytest.raises(TypeError, match="trace_proposals"):
+        ToolResult("c1", "bad", trace_proposals=[domain])  # type: ignore[list-item]
+
+
+def test_runtime_values_are_isolated_from_constructor_containers() -> None:
+    event_payload = {"nested": {"items": ["original"]}}
+    call_arguments = {"nested": {"items": ["original"]}}
+    permissions = {"nested": {"items": ["original"]}}
+    details = {"nested": {"items": ["original"]}}
+    input_schema = {"properties": {"value": {"type": "string"}}}
+    domain_payload = {"nested": {"items": ["original"]}}
+    trace_payload = {"nested": {"items": ["original"]}}
+
+    domain = DomainWriteProposal("p1", "EvidenceCard", "upsert", domain_payload, "ev-1")
+    trace = TraceProposal("t1", "created", "agent-a", trace_payload)
+    domain_proposals = [domain]
+    trace_proposals = [trace]
+    result = ToolResult(
+        "c1",
+        "ok",
+        details,
+        domain_proposals,
+        trace_proposals,
+    )
+
+    async def handler(call: ToolCall, context: ToolExecutionContext) -> ToolResult:
+        return result
+
+    values = [
+        RuntimeEvent("tool", "called", "run-1", event_payload),
+        ToolCall("c1", "echo", call_arguments),
+        ToolExecutionContext("run-1", "agent-a", permissions),
+        result,
+        ToolDefinition("echo", "Echo", input_schema, handler),
+        domain,
+        trace,
+    ]
+
+    event_payload["nested"]["items"].append("mutated")
+    call_arguments["nested"]["items"].append("mutated")
+    permissions["nested"]["items"].append("mutated")
+    details["nested"]["items"].append("mutated")
+    input_schema["properties"]["value"]["type"] = "number"
+    domain_payload["nested"]["items"].append("mutated")
+    trace_payload["nested"]["items"].append("mutated")
+    domain_proposals.clear()
+    trace_proposals.clear()
+
+    for value in values:
+        plain = value.to_plain()
+        json.dumps(plain, ensure_ascii=False, sort_keys=True)
+
+    assert values[0].to_plain()["payload"]["nested"]["items"] == ["original"]
+    assert values[1].to_plain()["arguments"]["nested"]["items"] == ["original"]
+    assert values[2].to_plain()["permissions"]["nested"]["items"] == ["original"]
+    assert result.to_plain()["details"]["nested"]["items"] == ["original"]
+    assert values[4].to_plain()["input_schema"]["properties"]["value"]["type"] == "string"
+    assert domain.to_plain()["payload"]["nested"]["items"] == ["original"]
+    assert trace.to_plain()["payload"]["nested"]["items"] == ["original"]
+    assert result.domain_proposals == (domain,)
+    assert result.trace_proposals == (trace,)
+
+
+def test_listener_cannot_mutate_event_seen_by_later_subscribers() -> None:
+    bus = EventBus()
+    seen: list[dict[str, object]] = []
+
+    def mutating_listener(event: RuntimeEvent) -> None:
+        event.payload["status"] = "mutated"  # type: ignore[index]
+
+    def recording_listener(event: RuntimeEvent) -> None:
+        seen.append(event.to_plain()["payload"])
+
+    bus.subscribe(mutating_listener)
+    bus.subscribe(recording_listener)
+
+    published = bus.publish(
+        RuntimeEvent("tool", "called", "run-1", {"status": "original"})
+    )
+
+    assert bus.listener_error_count == 1
+    assert seen == [{"status": "original"}]
+    assert published.to_plain()["payload"] == {"status": "original"}
+
+
+def test_runtime_values_reject_non_json_mutable_values() -> None:
+    with pytest.raises(TypeError, match="JSON-compatible"):
+        RuntimeEvent("tool", "called", "run-1", {"unsupported": {"mutable"}})
 
 
 def test_tool_definition_requires_async_handler_and_excludes_it_from_plain_data() -> None:
