@@ -136,3 +136,110 @@ class AgentExecutionResult:
             "created_at": self.created_at,
             "schema_version": self.schema_version,
         }
+
+
+@dataclass(frozen=True)
+class RunCheckpoint:
+    run_id: str
+    checkpoint_id: str
+    completed_task_ids: list[str]
+    pending_task_ids: list[str]
+    round_index: int
+    budget_remaining: dict[str, int]
+    status: str = "running"
+    task_statuses: dict[str, str] = field(default_factory=dict)
+    topic: str = ""
+    research_route: str = ""
+    resolved_route: str = ""
+    selected_agent_ids: list[str] = field(default_factory=list)
+    source_materials: list[dict[str, Any]] = field(default_factory=list)
+    worker_reports: list[dict[str, Any]] = field(default_factory=list)
+    mode: str = "fake"
+    config_fingerprint: str = ""
+    resume_count: int = 0
+    created_at: str = field(default_factory=now_iso)
+    schema_version: str = "1.0"
+
+    def validate(self) -> None:
+        if not self.run_id or not self.checkpoint_id:
+            raise ValueError("run checkpoint requires run_id and checkpoint_id")
+        if self.status not in {"running", "completed"}:
+            raise ValueError(f"invalid run checkpoint status: {self.status}")
+        if self.round_index < 0 or self.resume_count < 0:
+            raise ValueError("run checkpoint counters must be non-negative")
+        completed = set(self.completed_task_ids)
+        pending = set(self.pending_task_ids)
+        if completed & pending:
+            raise ValueError("completed and pending task ids must not overlap")
+        if any(
+            status not in {"pending", "running", "completed"}
+            for status in self.task_statuses.values()
+        ):
+            raise ValueError("invalid task status in run checkpoint")
+        if len(self.selected_agent_ids) != len(set(self.selected_agent_ids)):
+            raise ValueError("selected agent ids must be unique")
+        if self.task_statuses:
+            expected_task_ids = {
+                f"baseline:{agent_id}" for agent_id in self.selected_agent_ids
+            }
+            if set(self.task_statuses) != expected_task_ids:
+                raise ValueError("task statuses do not match selected agents")
+            status_completed = {
+                task_id
+                for task_id, status in self.task_statuses.items()
+                if status == "completed"
+            }
+            status_pending = {
+                task_id
+                for task_id, status in self.task_statuses.items()
+                if status == "pending"
+            }
+            if completed != status_completed or pending != status_pending:
+                raise ValueError("task status lists are inconsistent")
+        if self.status == "completed" and (
+            self.pending_task_ids
+            or any(status != "completed" for status in self.task_statuses.values())
+        ):
+            raise ValueError("completed run checkpoint cannot contain unfinished tasks")
+
+    @classmethod
+    def from_plain(cls, payload: Mapping[str, Any]) -> "RunCheckpoint":
+        checkpoint = cls(
+            run_id=str(payload["run_id"]),
+            checkpoint_id=str(payload["checkpoint_id"]),
+            completed_task_ids=[str(item) for item in payload["completed_task_ids"]],
+            pending_task_ids=[str(item) for item in payload["pending_task_ids"]],
+            round_index=int(payload["round_index"]),
+            budget_remaining={
+                str(key): int(value)
+                for key, value in cast(Mapping[str, Any], payload["budget_remaining"]).items()
+            },
+            status=str(payload.get("status", "running")),
+            task_statuses={
+                str(key): str(value)
+                for key, value in cast(
+                    Mapping[str, Any], payload.get("task_statuses", {})
+                ).items()
+            },
+            topic=str(payload.get("topic", "")),
+            research_route=str(payload.get("research_route", "")),
+            resolved_route=str(payload.get("resolved_route", "")),
+            selected_agent_ids=[
+                str(item) for item in payload.get("selected_agent_ids", [])
+            ],
+            source_materials=[
+                dict(cast(Mapping[str, Any], item))
+                for item in payload.get("source_materials", [])
+            ],
+            worker_reports=[
+                dict(cast(Mapping[str, Any], item))
+                for item in payload.get("worker_reports", [])
+            ],
+            mode=str(payload.get("mode", "fake")),
+            config_fingerprint=str(payload.get("config_fingerprint", "")),
+            resume_count=int(payload.get("resume_count", 0)),
+            created_at=str(payload["created_at"]),
+            schema_version=str(payload["schema_version"]),
+        )
+        checkpoint.validate()
+        return checkpoint

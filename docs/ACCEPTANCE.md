@@ -1,10 +1,10 @@
-# Phase 0 验收说明
+# Phase 0/Phase 1 基础验收说明
 
 ## 1. 验收范围
 
-Phase 0 验收对象是可运行、可回归、可审计的研究基线，包括三类研究路线、可配置 baseline agent、受控公开 URL 材料化、失败材料隔离、L1/L2/L3 输出、工作区和稳定产物。Phase 0 只是甲方首版实施计划的基础阶段，不等于甲方首版完成。
+当前验收对象是可运行、可回归、可审计、可从已提交 checkpoint 恢复的研究基线，包括三类研究路线、可配置 baseline agent、受控公开 URL 材料化、失败材料隔离、L1/L2/L3 输出、安全工作区、SQLite savepoint 和稳定产物。这仍不等于甲方首版完成。
 
-真实模型循环和真实搜索尚未接入。Web/API、持久化、恢复执行、分布式 worker 和生产部署不属于本阶段完成项。
+真实模型循环和真实搜索尚未接入。Web/API、真正并行调度、分布式 worker 和生产部署不属于本阶段完成项。
 
 ## 2. 必验能力
 
@@ -46,7 +46,16 @@ Phase 0 验收对象是可运行、可回归、可审计的研究基线，包括
 - `agent_sessions/`
 - `artifacts/`
 
-同时必须创建 `checkpoints/` 预留目录。Phase 0 不要求写入 checkpoint，不创建 `run.db`，不支持 resume。`resume=False` 不得复用任何已存在的同名 run 目录；第二次同 `run-id` 必须在写入前失败，旧产物和 session 保持不变。
+同时必须创建 `run.db` 与 `checkpoints/`，正常完成必须写入 completed `RunCheckpoint`。`resume=False` 不得复用任何已存在的同名 run 目录；第二次同 `run-id` 必须在写入前失败，旧产物和 session 保持不变。
+
+### 2.5 恢复
+
+- 每个 baseline agent 完成后，新增 `EvidenceCard`、`BaselineFindingPacket`、`TraceEvent` 与最新 `RunCheckpoint` 必须在一个 SQLite savepoint 中提交。
+- 崩溃后 `--resume` 必须跳过 completed agent，仅继续 pending/running agent，且不得重复 evidence、packet、session 前缀或 idempotency key。
+- 恢复前必须先完成 unresolved session reconciliation；`session_reconciled` trace 顺序早于 `run_resumed`。
+- topic、请求/解析路线、selected agents 或配置指纹不一致，以及不存在、损坏或 symlink 逃逸的 workspace，必须拒绝恢复。
+- completed run 再次 resume 必须幂等，不重新调用 provider。
+- 正常结果必须返回 `status=completed`，并保持七类稳定产物不变。
 
 `domain.jsonl`、`trace.jsonl` 和 `round_summary.json` 中实际持久化的领域 dataclass payload 必须可 JSON 序列化，并包含稳定 ID、UTC `created_at` 与 `schema_version="1.0"`；新增尾部默认字段不得破坏旧位置或关键字构造。
 
@@ -67,25 +76,25 @@ python3 scripts/run_deep_research.py \
   --mode fake \
   --topic "低空无人机探测预警能力缺口" \
   --research-route auto \
-  --run-id phase-0-smoke \
-  --output-root /tmp/equipment-deep-research-phase-0-task-4
+  --run-id phase-1-fresh-smoke \
+  --output-root /tmp/equipment-deep-research-phase-1
 ```
 
-smoke 必须核对：七类稳定产物、`checkpoints/`、agent session 数量、resolved route、audit status、所选 agent、来源材料数量和正式证据数量。
+另需执行一次 crash+resume smoke。smoke 必须核对：七类稳定产物、`run.db`、completed checkpoint、agent session 数量、`run_resumed`、resolved route、audit status、所选 agent、来源材料数量和正式证据数量。
 
 ## 4. 甲方首版规划入口
 
 - [装备能力图像 Deep Research 多智能体系统总实施计划](superpowers/plans/2026-07-10-equipment-deep-research-master-plan.md)
 - [装备能力图像 Deep Research 前后端一体化企业级设计方案](superpowers/specs/2026-07-10-equipment-deep-research-frontend-backend-enterprise-design.md)
 
-两份规划文件定义首版完整范围；本文件只验收 Phase 0 基础阶段。
+两份规划文件定义首版完整范围；本文件只验收 Phase 0 与 Phase 1 harness 基础阶段。
 
-## 5. Phase 1 进入条件
+## 5. 后续阶段进入条件
 
 只有同时满足以下条件，才可进入 Phase 1：
 
 - 全量测试通过，严格一致性扫描零命中。
-- `phase-0-smoke` 在独立输出根成功生成七类稳定产物和 `checkpoints/`。
+- fresh+resume smoke 在独立输出根成功生成七类稳定产物、`run.db` 和 completed checkpoint。
 - Phase 0 文档、配置、测试和运行行为对默认模型、来源策略、provider 边界及已知限制无矛盾。
 - Task 1-4 审查结论均无阻断问题，遗留项已明确归入后续阶段。
 - 已明确运行时加载 `evidence.yaml` 并执行质量评分的设计、测试和正式证据准入规则。
@@ -98,5 +107,5 @@ smoke 必须核对：七类稳定产物、`checkpoints/`、agent session 数量�
 - 真实 Responses 模型循环与真实搜索 provider。
 - 真实检索和模型驱动的多轮研究、再调与收敛。
 - 运行时质量评分、去重、独立印证、冲突检测与反证推理。
-- 并行调度、checkpoint 持久化、`run.db`、resume、暂停、取消和故障恢复。
+- 真正并行调度、暂停、取消、分布式 worker 和跨进程调度恢复。
 - Web 工作台、API、SSE、队列、数据库、权限、审批和企业部署。

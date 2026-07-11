@@ -59,6 +59,7 @@ def main(argv: list[str] | None = None) -> int:
         analyst_confirmed=args.analyst_confirmed,
     )
     print(f"Run dir: {result['run_dir']}")
+    print(f"Status: {result.get('status', 'completed')}")
     print(f"Route: {result['route']}")
     print(f"Audit status: {result['audit_status']}")
     print(f"Report: {result['report_path']}")

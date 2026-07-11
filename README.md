@@ -1,6 +1,6 @@
 # 装备能力图像 Deep Research 多智能体系统
 
-本项目面向装备能力图像需求生成，当前交付范围为 **Phase 0 可运行基线**。Phase 0 只是甲方首版实施计划的基础阶段，不等于甲方首版已经完成；其作用是验证领域契约、基础编排、公开材料受控材料化、失败材料隔离和可审计产物，为首版后续能力建设提供稳定起点。
+本项目面向装备能力图像需求生成，当前已完成 **Phase 0 可运行基线** 与 **Phase 1 harness/checkpoint 恢复闭环**。这些阶段仍只是甲方首版实施计划的基础，不等于甲方首版已经完成。
 
 ## Phase 0 已完成
 
@@ -17,14 +17,23 @@
 - agent 内部标识符使用受限 ASCII 契约，registry 和 session 路径边界都会拒绝路径分隔符、控制字符与 symlink 逃逸。
 - `resume=False` 的每个 `run-id` 必须对应全新目录；已存在的空目录、非空目录或 symlink 都会在任何运行产物写入前被原子拒绝。
 
+## Phase 1 已完成
+
+- baseline agent 在 runner 中逐个执行；每个 agent 完成后，新增 `EvidenceCard`、`BaselineFindingPacket`、`TraceEvent` 与最新 `RunCheckpoint` 原子提交到 `run.db`。
+- `RunCheckpoint` 保存 run/task 状态、轮次、剩余预算、topic、请求/解析路线、所选 agent、来源材料、worker report、配置指纹、UTC 时间与 schema version。
+- `--resume` 从最后已提交 savepoint 恢复 `DomainStore`、`TraceStore`、来源材料、worker report 和 session tail；已完成 agent 不重复执行，`pending/running` task 按原 agent 顺序继续。
+- 恢复前先处理 `session_write_failed` reconciliation marker；旧 session 只追加，不重写。
+- `RunWorkspace.open_existing()` 校验 run 目录、session、artifact、checkpoint 与 `run.db` 的类型、边界和 symlink 安全。
+- 正常完成返回 `status=completed`，数据库保存 completed checkpoint，并继续生成七类稳定产物。
+
 ## 当前实现边界
 
 - `fake` 模式提供稳定的离线闭环，用于回归测试和交付演示。
 - `real` 模式当前仍使用模板占位 provider，可对受控 URL 执行材料化并记录成功、失败或网络安全拒绝状态。
 - 真实模型循环和真实搜索尚未接入。`providers.yaml` 和 `tools.yaml` 已预留 Responses-compatible provider 与搜索工具配置边界，但当前 runner 尚未加载并执行真实 Responses 模型循环或真实搜索 provider。
 - `evidence.yaml` 已定义质量阈值以及相关性、透明度、时效性、直接支撑、提取质量五维权重，但 runner 尚未加载并执行质量评分。当前成功抓取的材料会进入正式证据，不能表述为已经经过运行时质量阈值门控。
-- `--resume` 仅建立接口边界，调用时会明确返回未实现；`run.db` 不会创建，SQLite 持久化和恢复执行属于后续阶段。
-- 七类稳定产物保持不变，`checkpoints/` 仅作为后续恢复点目录预留。
+- 新运行会创建 `run.db` 并在 `checkpoints/` 保存各 savepoint 快照与 `latest.json`；`--resume` 已可执行。
+- 当前恢复粒度覆盖现有顺序 baseline agent 与后续 winning/report 闭环；真正并行调度、暂停、取消和分布式 worker 仍属后续阶段。
 - `domain.jsonl`、`trace.jsonl` 和 `round_summary.json` 中实际持久化的领域对象包含稳定 ID、UTC `created_at` 与 `schema_version="1.0"`。
 
 ## 运行
@@ -61,6 +70,19 @@ python3 scripts/run_deep_research.py \
 
 `real` smoke 只验证占位 provider、受控 URL 材料化和失败材料隔离边界。公网不可达或网络安全校验拒绝时，系统会在 `artifacts/` 中保留诊断信息，并禁止失败材料进入正式证据集，不会伪造联网成功。
 
+恢复已有运行：
+
+```bash
+python3 scripts/run_deep_research.py \
+  --mode fake \
+  --topic "低空无人机探测预警能力缺口" \
+  --research-route auto \
+  --run-id interrupted-run \
+  --resume
+```
+
+恢复参数的 topic、路线、agent 集合和配置指纹必须与原运行一致。
+
 ## 当前证据行为
 
 1. 广泛接收公开网络线索，不按域名预先筛除，并对公开 HTTP(S) URL 执行材料化。
@@ -73,11 +95,11 @@ python3 scripts/run_deep_research.py \
 - [装备能力图像 Deep Research 多智能体系统总实施计划](docs/superpowers/plans/2026-07-10-equipment-deep-research-master-plan.md)
 - [装备能力图像 Deep Research 前后端一体化企业级设计方案](docs/superpowers/specs/2026-07-10-equipment-deep-research-frontend-backend-enterprise-design.md)
 
-甲方首版仍需完成：真实模型循环、真实搜索、多轮研究、运行时质量评分、并行调度与恢复、Web 工作台和企业部署。Phase 0 的七类产物与配置边界是这些后续工作的基础，不是首版完成证明。
+甲方首版仍需完成：真实模型循环、真实搜索、多轮研究、运行时质量评分、真正并行调度、Web 工作台和企业部署。当前七类产物、SQLite savepoint 与恢复边界是这些后续工作的基础，不是首版完成证明。
 
 ## 输出
 
-每次运行写入新的 `outputs/runs/<run-id>/`；Phase 0 不覆盖或续写已存在的 run 目录。七类稳定产物为：
+新运行写入新的 `outputs/runs/<run-id>/`；只有显式 `--resume` 才可打开已有 run。七类稳定产物为：
 
 - `report.md`：甲方可读能力画像报告。
 - `capability_images.json`：能力画像结构化数据。
@@ -87,7 +109,7 @@ python3 scripts/run_deep_research.py \
 - `agent_sessions/`：所选 baseline agent 的独立会话。
 - `artifacts/`：网页、正文、元数据或失败诊断材料。
 
-同时创建 `checkpoints/` 预留目录；Phase 0 不写入恢复点。
+同时创建 `run.db` 与 `checkpoints/`；它们用于事务 savepoint 与恢复，不替代七类稳定产物。
 
 ## 验证
 
@@ -95,4 +117,4 @@ python3 scripts/run_deep_research.py \
 python3 -m pytest -q
 ```
 
-Phase 0 测试结论见 `docs/testing/phase-0-test-report.md`，验收边界见 `docs/ACCEPTANCE.md`。
+Phase 0 测试结论见 `docs/testing/phase-0-test-report.md`，Phase 1 测试结论见 `docs/testing/phase-1-test-report.md`，验收边界见 `docs/ACCEPTANCE.md`。

@@ -1,0 +1,108 @@
+# Phase 1 Harness 与恢复测试报告
+
+## 1. 范围
+
+本报告覆盖 Phase 1 的 runtime types、append-only session、事务型 SQLite savepoint、agent loop/harness、session reconciliation，以及 Task 5 的 runner/CLI checkpoint 恢复接入。
+
+当前 Phase 1 不接入 Phase 2 的真实 `ModelProvider`、真实 Responses 模型循环或真实搜索 provider。runner 继续使用现有高层 `FakeAgentProvider` / `RealAgentProvider` 闭环；`RealAgentProvider` 仍是受控 URL 材料化占位实现。
+
+## 2. SQLite Schema 与 RunCheckpoint
+
+`run.db` 继续使用四张表：
+
+- `domain_objects`：按 `(run_id, object_type, object_id)` 保存严格 JSON 领域对象。
+- `trace_events`：保存 run 内单调 sequence、proposal ID、event type、actor 和严格 JSON payload。
+- `savepoints`：保存事务 ordinal、request fingerprint、proposal keys 和 UTC 时间。
+- `proposal_ledger`：保存 proposal ID 与 domain idempotency key 的内容 hash，用于幂等和冲突拒绝。
+
+Task 5 将 `RunCheckpoint` 加入受支持领域类型，固定对象 ID 为单 run 的稳定 workflow checkpoint，按 savepoint upsert 最新快照。字段包括：
+
+- run status、completed/pending task IDs 与每个 task 的 `pending/running/completed` 状态；
+- round index、剩余 round/baseline task budget；
+- topic、请求路线、解析路线、selected agents 和 mode；
+- source materials、worker reports、resume count；
+- agents/presets/providers/evidence 配置内容与运行参数形成的 SHA-256 指纹；
+- UTC `created_at` 与 `schema_version="1.0"`。
+
+每个 baseline agent 完成时，新增 `EvidenceCard`、`BaselineFindingPacket`、`TraceEvent` 与新 `RunCheckpoint` 在同一个 SQLite savepoint 中提交。正常结束时，L1/L2/L3、capability images、recommendations、audit、report、相关 trace 与 completed checkpoint 原子提交。
+
+## 3. Session 与 Checkpoint 样例
+
+baseline session 只追加，不覆盖旧行。典型尾记录为：
+
+```json
+{"event_type":"baseline_result","agent_id":"international_situation","packet_id":"packet-international_situation","evidence_ids":["ev-international_situation-1"]}
+{"event_type":"savepoint","agent_id":"international_situation","checkpoint_id":"checkpoint-...","packet_id":"packet-international_situation"}
+```
+
+若数据库已提交但 harness session savepoint 写入失败，恢复先消费 `session_write_failed` marker：补写缺失 savepoint、追加 `session_reconciled`，再提交同 marker 的幂等 reconciliation trace。`session_reconciled` 的 trace sequence 必须早于本次 `run_resumed`。
+
+## 4. 崩溃注入与恢复结果
+
+E2E 使用构造器注入兼容 `AgentProvider`。第一 agent 正常完成并提交 savepoint，第二次 provider 调用抛出 `InjectedCrash`，异常向调用方传播。
+
+崩溃后数据库保持：
+
+- 1 个 `EvidenceCard`；
+- 1 个 `BaselineFindingPacket`；
+- 1 个最新 `RunCheckpoint`，第一 task completed、第二 task running、其余 pending；
+- 第一 agent session 已追加 result/savepoint。
+
+恢复时：
+
+1. `RunWorkspace.open_existing()` 验证 run 目录、sessions、artifacts、checkpoints 和 `run.db` 均在输出根内且不是逃逸 symlink。
+2. session reconciliation 先完成。
+3. `RecoveryManager.load()` 从最后 savepoint 和 `RunCheckpoint` 恢复 `DomainStore`、`TraceStore`、source materials、worker reports 与 session tails。
+4. `running` 归一为 `pending`，按原 selected agent 顺序继续；completed task 和已提交 idempotency key 不重放。
+5. 追加一次 `run_resumed`，继续 winning/report，写 completed checkpoint、`run.db` 与七类稳定产物。
+
+恢复结果验证：首 agent 未重复调用，旧 session 字节前缀不变；剩余 agent 完成；evidence IDs 无重复；completed resume 不启动 provider、不增加 trace/savepoint/session；topic、路线、agent 集合、配置指纹、不存在 run、损坏 SQLite 和 symlink workspace 均明确拒绝。
+
+## 5. 测试与 Smoke
+
+专项测试：
+
+```text
+python3 -m pytest tests/equipment_deep_research/e2e/test_resume_run.py -q
+12 passed
+
+python3 -m pytest \
+  tests/equipment_deep_research/e2e/test_resume_run.py \
+  tests/equipment_deep_research/integration/test_agent_harness.py -q
+41 passed
+```
+
+核心回归：
+
+```text
+python3 -m pytest tests/test_deep_research_runner.py \
+  tests/equipment_deep_research/integration/test_cli_workspace.py -q
+43 passed
+
+python3 -m pytest tests/equipment_deep_research/unit/test_configuration.py \
+  tests/equipment_deep_research/unit/test_domain_contracts.py \
+  tests/equipment_deep_research/unit/test_store_savepoint.py -q
+50 passed
+```
+
+全量：
+
+```text
+python3 -m pytest -q
+205 passed
+```
+
+fresh CLI smoke：退出码 0，`status=completed`、route=`traditional_gap`、audit=`approved`；4 个 agent sessions、4 条正式 evidence、16 个 SQLite domain objects，七类产物、`run.db` 和 completed checkpoint 齐全。
+
+crash+resume smoke：第二 agent 调用注入崩溃；恢复只调用第二、第三 agent，最终 3 条 evidence 全部唯一，`run_resumed=1`、checkpoint completed、七类稳定产物齐全。
+
+## 6. Ruff 范围更正
+
+Phase 1 Task 2 报告中的 Ruff 结论是目标文件范围，不是全仓库 Ruff 证明。准确范围为当时修改的 `domain/store.py`、`harness/session.py` 与对应 Task 2 测试；Task 5 使用显式 touched-file Ruff 命令，并另行执行全量 pytest、compileall、`git diff --check` 和依赖/残留扫描。
+
+## 7. 仍未接入
+
+- Phase 2 真实 `ModelProvider`、Responses API 模型循环与真实搜索 provider。
+- 真正并行 baseline 调度、暂停、取消、分布式 worker 和跨进程队列恢复。
+- `evidence.yaml` 驱动的运行时质量评分、去重、独立印证和冲突推理。
+- Web/API/SSE、权限、审批和企业部署。

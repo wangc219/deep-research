@@ -2,11 +2,11 @@
 
 ## 1. 方案定位
 
-当前交付为 Phase 0 研究运行基线，目标是固化领域契约、配置边界、运行工作区、公开材料安全材料化、失败材料隔离、三层制胜机理输出和审计产物，为后续接入真实模型、真实搜索、持久化与企业应用提供稳定接口。Phase 0 只是甲方首版实施计划的基础阶段，不等于甲方首版完成。
+当前交付包含 Phase 0 研究运行基线与 Phase 1 harness/checkpoint 恢复闭环，已固化领域契约、配置边界、安全工作区、公开材料治理、事务 savepoint、顺序 baseline agent 恢复和三层制胜机理产物。它们仍只是甲方首版实施计划的基础阶段，不等于甲方首版完成。
 
 本方案严格区分两类范围：
 
-- **Phase 0 已完成**：当前仓库已经实现且可由自动化测试和 smoke 验证的能力。
+- **Phase 0/Phase 1 已完成**：当前仓库已经实现且可由自动化测试和 smoke 验证的能力。
 - **后续阶段**：已经定义接口或目录边界，但尚未接入的能力，不作为本阶段验收完成项。
 
 ## 2. Phase 0 已完成
@@ -29,7 +29,7 @@
 - 每个所选 agent 生成独立 `agent_sessions/<agent-id>.jsonl`，其他 agent 原始会话不进入其上下文。
 - `agent_id` 必须以 ASCII 字母或数字开头，后续仅允许 ASCII 字母、数字、点、下划线和连字符，最长 128 字符；registry 入站和 scheduler session 路径出站均校验，已存在 session symlink 会被拒绝。
 
-Phase 0 scheduler 已建立统一调度契约和覆盖度计算；生产级并行执行、弹性 worker 和分布式队列属于后续阶段。
+Phase 1 runner 已将 baseline agents 改为逐 agent 执行和提交；生产级并行执行、弹性 worker 和分布式队列属于后续阶段。
 
 ### 2.3 Provider 与模型边界
 
@@ -67,29 +67,40 @@ Phase 0 已验证公开材料化安全与失败隔离；配置驱动的质量评
 - `agent_sessions/`
 - `artifacts/`
 
-新增 `checkpoints/` 预留目录，但 Phase 0 不写入恢复点。`database_path` 只定义未来 `run.db` 的稳定位置，Phase 0 不创建数据库文件，也不提供恢复执行。
+每个新运行同时创建 `run.db` 与 `checkpoints/`。SQLite 使用 `domain_objects`、`trace_events`、`savepoints`、`proposal_ledger` 四张表；每个 agent 完成后将新增 evidence、packet、trace 和最新 `RunCheckpoint` 原子提交。`checkpoints/` 保存对应快照与 `latest.json`，SQLite 是恢复权威来源。
 
-### 2.6 审计与限制呈现
+`RunWorkspace.open_existing()` 在 resume 前验证 run 目录、`agent_sessions/`、`artifacts/`、`checkpoints/` 和 `run.db` 均位于输出根内，拒绝顶层 symlink 和路径逃逸。`resume=False` 仍原子拒绝同名目录。
+
+### 2.6 Checkpoint 与恢复
+
+- `RunCheckpoint` 记录 completed/pending/running task、round、budget、status、topic、请求/解析路线、selected agents、source materials、worker reports、配置指纹、UTC 时间和 schema。
+- task 开始前持久化 `running`；恢复时只把 `pending/running` 重新排队，completed task 与既有 idempotency key 不重放。
+- `RecoveryManager.load()` 先修复 unresolved session marker，再加载最后 savepoint 和 `RunCheckpoint`，恢复领域对象、trace、来源材料、worker report 与 session tail。
+- topic、路线、agent 集合或配置指纹不一致时拒绝 resume；completed run 的再次 resume 不启动 provider，也不新增 trace 或 session 行。
+- 崩溃继续向调用方传播，但此前已提交的 agent 状态可用于下一次恢复。
+
+### 2.7 审计与限制呈现
 
 - trace 记录运行启动、baseline agent 完成、覆盖度、三层分析和审计结果。
 - agent 子集运行时，缺失能力标签和召回请求进入 summary、trace 与报告限制说明。
 - 失败材料不被报告引用为正式支撑。
 - `analyst_confirmed` 当前只记录到 trace 和 summary，不构成发布门控。
 
-## 3. Phase 0 运行结构
+## 3. 当前运行结构
 
 ```text
 CLI
   -> DeepResearchRunner
       -> AgentRegistry / preset policy
       -> RunWorkspace
+      -> SqliteRunStore / RunCheckpoint
       -> DiscoveryScheduler
           -> fake provider 或模板 real provider
           -> EvidenceMaterializer
           -> agent_sessions / artifacts
       -> WinningMechanismEngine (L1/L2/L3)
       -> audit_run / render_report
-      -> 七类稳定产物 + checkpoints 预留目录
+      -> completed checkpoint + 七类稳定产物
 ```
 
 ## 4. 甲方首版规划入口
@@ -106,10 +117,10 @@ CLI
 - 真实 Responses 模型循环和真实搜索 provider。
 - 由真实检索和模型驱动的多轮研究、再调和收敛执行。
 - 加载 `evidence.yaml` 的运行时质量评分、去重、独立印证、冲突检测和反证推理闭环。
-- 真正并行的 agent 调度、持久化 checkpoint、`run.db`、resume、暂停、取消和故障恢复。
+- 真正并行的 agent 调度、暂停、取消、分布式 worker 和跨进程调度恢复。
 - FastAPI、SSE、React Web 工作台、报告审批、RBAC/OIDC、PostgreSQL、Redis、反向代理和企业部署。
 
-上述能力进入实施前必须保持 Phase 0 七类产物和领域对象契约兼容，新增能力不得破坏现有 CLI 和离线回归基线。
+上述能力进入实施前必须保持七类产物、SQLite checkpoint、领域对象和 resume 契约兼容，新增能力不得破坏现有 CLI 和离线回归基线。
 
 ## 6. 技术验收原则
 

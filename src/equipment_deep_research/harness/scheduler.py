@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 import json
+from typing import Any
 
 from equipment_deep_research.agents.provider import AgentProvider, AgentRunRequest
 from equipment_deep_research.agents.registry import AgentDef
@@ -38,6 +39,7 @@ class DiscoveryScheduler:
         trace: TraceStore,
         mode: str = "fake",
         context_builder: ContextPackBuilder | None = None,
+        source_materials: list[dict[str, Any]] | None = None,
     ) -> None:
         self.run_id = run_id
         self.run_dir = run_dir
@@ -57,7 +59,7 @@ class DiscoveryScheduler:
         if self.sessions_dir.resolve(strict=True).parent != self.run_dir.resolve(strict=True):
             raise ValueError("agent_sessions must stay within run_dir")
         self.materializer = EvidenceMaterializer(run_dir / "artifacts")
-        self.source_materials: list[dict] = []
+        self.source_materials = source_materials if source_materials is not None else []
 
     def run_baseline_agents(
         self,
@@ -69,11 +71,22 @@ class DiscoveryScheduler:
         reports: list[WorkerReport] = []
         for agent in agents:
             reports.append(
-                self._run_one(agent=agent, topic=topic, research_route=research_route)
+                self.run_agent(
+                    agent=agent,
+                    topic=topic,
+                    research_route=research_route,
+                )
             )
         return reports
 
-    def _run_one(self, *, agent: AgentDef, topic: str, research_route: str) -> WorkerReport:
+    def run_agent(
+        self,
+        *,
+        agent: AgentDef,
+        topic: str,
+        research_route: str,
+        raise_on_error: bool = False,
+    ) -> WorkerReport:
         session_path = safe_identifier_path(
             self.sessions_dir,
             agent.agent_id,
@@ -122,6 +135,7 @@ class DiscoveryScheduler:
             self._append_session(
                 session_path,
                 {
+                    "event_type": "baseline_result",
                     "agent_id": agent.agent_id,
                     "context_sections": sorted(context.sections),
                     "raw_message": result.raw_message,
@@ -149,7 +163,9 @@ class DiscoveryScheduler:
                 handoff_summary=packet.handoff_summary,
                 session_path=str(session_path),
             )
-        except Exception as exc:  # pragma: no cover - defensive path
+        except Exception as exc:
+            if raise_on_error:
+                raise
             self.trace.append(
                 TraceEvent(
                     event_id=f"trace-{agent.agent_id}-failed",
@@ -167,6 +183,21 @@ class DiscoveryScheduler:
                 session_path=str(session_path),
                 error=str(exc),
             )
+
+    def append_savepoint(self, report: WorkerReport, checkpoint_id: str) -> None:
+        self._append_session(
+            Path(report.session_path),
+            {
+                "event_type": "savepoint",
+                "agent_id": report.agent_id,
+                "checkpoint_id": checkpoint_id,
+                "worker_report_id": report.worker_report_id,
+                "packet_id": report.packet_id,
+                "evidence_ids": report.new_evidence_ids,
+                "created_at": now_iso(),
+                "schema_version": "1.0",
+            },
+        )
 
     @staticmethod
     def _append_session(path: Path, row: dict) -> None:

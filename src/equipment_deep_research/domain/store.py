@@ -10,10 +10,13 @@ import sqlite3
 from typing import Any
 
 from equipment_deep_research.domain.models import (
+    AgentRecommendation,
     AuditResult,
     BaselineFindingPacket,
     CapabilityImageItem,
     EvidenceCard,
+    RecallRequest,
+    ResearchProblem,
     ResearchReport,
     TraceEvent,
     WinningMechanismStageOutput,
@@ -45,6 +48,7 @@ _OBJECT_ID_FIELDS = {
     "CapabilityImageItem": "capability_id",
     "AuditResult": "audit_id",
     "ResearchReport": "report_id",
+    "RunCheckpoint": "checkpoint_id",
 }
 
 
@@ -68,18 +72,30 @@ class _ValidatedTraceProposal:
 
 class DomainStore:
     def __init__(self) -> None:
+        self.problems: dict[str, ResearchProblem] = {}
         self.evidence: dict[str, EvidenceCard] = {}
         self.baseline_packets: dict[str, BaselineFindingPacket] = {}
+        self.recall_requests: dict[str, RecallRequest] = {}
+        self.recommendations: dict[str, AgentRecommendation] = {}
         self.stage_outputs: dict[str, WinningMechanismStageOutput] = {}
         self.capability_images: dict[str, CapabilityImageItem] = {}
         self.audits: dict[str, AuditResult] = {}
         self.reports: dict[str, ResearchReport] = {}
+
+    def add_problem(self, item: ResearchProblem) -> None:
+        self.problems[item.problem_id] = item
 
     def add_evidence(self, item: EvidenceCard) -> None:
         self.evidence[item.evidence_id] = item
 
     def add_baseline_packet(self, item: BaselineFindingPacket) -> None:
         self.baseline_packets[item.packet_id] = item
+
+    def add_recall_request(self, item: RecallRequest) -> None:
+        self.recall_requests[item.recall_id] = item
+
+    def add_recommendation(self, item: AgentRecommendation) -> None:
+        self.recommendations[item.recommendation_id] = item
 
     def add_stage_output(self, item: WinningMechanismStageOutput) -> None:
         self.stage_outputs[item.stage_id] = item
@@ -115,8 +131,11 @@ class DomainStore:
     def export_jsonl(self, path: Path) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         rows: list[dict[str, Any]] = []
+        rows.extend({"type": "ResearchProblem", "payload": to_plain(item)} for item in self.problems.values())
         rows.extend({"type": "EvidenceCard", "payload": to_plain(item)} for item in self.evidence.values())
         rows.extend({"type": "BaselineFindingPacket", "payload": to_plain(item)} for item in self.baseline_packets.values())
+        rows.extend({"type": "RecallRequest", "payload": to_plain(item)} for item in self.recall_requests.values())
+        rows.extend({"type": "AgentRecommendation", "payload": to_plain(item)} for item in self.recommendations.values())
         rows.extend({"type": "WinningMechanismStageOutput", "payload": to_plain(item)} for item in self.stage_outputs.values())
         rows.extend({"type": "CapabilityImageItem", "payload": to_plain(item)} for item in self.capability_images.values())
         rows.extend({"type": "AuditResult", "payload": to_plain(item)} for item in self.audits.values())
@@ -137,8 +156,11 @@ class DomainStore:
 
     def summary(self) -> dict[str, Any]:
         return {
+            "problem_count": len(self.problems),
             "evidence_count": len(self.evidence),
             "baseline_packet_count": len(self.baseline_packets),
+            "recall_request_count": len(self.recall_requests),
+            "recommendation_count": len(self.recommendations),
             "stage_output_count": len(self.stage_outputs),
             "capability_image_count": len(self.capability_images),
             "audit_count": len(self.audits),
@@ -464,6 +486,32 @@ class SqliteRunStore:
         try:
             rows = connection.execute(sql, parameters).fetchall()
             return [self._trace_row_to_plain(row) for row in rows]
+        finally:
+            connection.close()
+
+    def domain_objects(self, *, object_type: str | None = None) -> list[dict[str, Any]]:
+        sql = """
+            SELECT object_type, object_id, payload_json, updated_at
+            FROM domain_objects
+            WHERE run_id = ?
+        """
+        parameters: list[Any] = [self.run_id]
+        if object_type is not None:
+            sql += " AND object_type = ?"
+            parameters.append(object_type)
+        sql += " ORDER BY object_type, object_id"
+        connection = self._connect()
+        try:
+            rows = connection.execute(sql, parameters).fetchall()
+            return [
+                {
+                    "type": str(row["object_type"]),
+                    "object_id": str(row["object_id"]),
+                    "payload": json.loads(row["payload_json"]),
+                    "updated_at": str(row["updated_at"]),
+                }
+                for row in rows
+            ]
         finally:
             connection.close()
 

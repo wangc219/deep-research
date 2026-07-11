@@ -165,8 +165,8 @@ def test_runner_rejects_missing_new_config_paths(tmp_path: Path, config_name: st
         _runner(tmp_path, **{config_name: missing_path})
 
 
-def test_runner_resume_is_explicitly_deferred(tmp_path: Path) -> None:
-    with pytest.raises(NotImplementedError) as exc_info:
+def test_runner_resume_requires_an_existing_run(tmp_path: Path) -> None:
+    with pytest.raises(FileNotFoundError, match="run directory does not exist"):
         _runner(tmp_path).run(
             mode="fake",
             topic="resume test",
@@ -175,7 +175,6 @@ def test_runner_resume_is_explicitly_deferred(tmp_path: Path) -> None:
             resume=True,
         )
 
-    assert exc_info.value.args == ("resume is enabled in Phase 1",)
     assert not (tmp_path / "resume-test").exists()
 
 

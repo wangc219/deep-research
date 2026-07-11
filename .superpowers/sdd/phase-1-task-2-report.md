@@ -155,7 +155,7 @@ python3 -m pytest -q
 135 passed
 ```
 
-质量检查：`ruff check`、`python3 -m compileall -q src/equipment_deep_research`、`git diff --check` 均通过；目标文件未出现 orchestration 反向依赖。
+质量检查：目标文件范围的 `ruff check`、`python3 -m compileall -q src/equipment_deep_research`、`git diff --check` 均通过；目标文件未出现 orchestration 反向依赖。这里的 Ruff 结论仅覆盖 Task 2 修改的 `domain/store.py`、`harness/session.py` 与对应测试，不代表全仓库 Ruff 扫描。
 
 原子修复提交消息：`fix: harden session paths and store preflight`；实际提交哈希记录在最终交付回复中。
 
