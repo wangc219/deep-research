@@ -2,7 +2,7 @@
 
 ## 1. 验收范围
 
-Phase 0 验收对象是可运行、可回归、可审计的研究基线，包括三类研究路线、可配置 baseline agent、受控公开 URL 材料化、失败材料隔离、L1/L2/L3 输出、工作区和稳定产物。
+Phase 0 验收对象是可运行、可回归、可审计的研究基线，包括三类研究路线、可配置 baseline agent、受控公开 URL 材料化、失败材料隔离、L1/L2/L3 输出、工作区和稳定产物。Phase 0 只是甲方首版实施计划的基础阶段，不等于甲方首版完成。
 
 真实模型循环和真实搜索尚未接入。Web/API、持久化、恢复执行、分布式 worker 和生产部署不属于本阶段完成项。
 
@@ -27,8 +27,10 @@ Phase 0 验收对象是可运行、可回归、可审计的研究基线，包括
 
 - 公开来源不按域名设置准入门槛。
 - URL、DNS、IP、重定向、响应大小和 TLS 安全控制由材料化层强制执行。
-- 成功抓取且允许形成正式证据的材料可进入 `EvidenceCard` 和 baseline packet。
+- SSRF/网络安全拒绝和抓取失败材料必须隔离；成功抓取的材料当前会进入 `EvidenceCard` 和 baseline packet。
 - `fetch_failed`、`network_safety_rejected` 等失败材料必须保留诊断 artifact，但不得进入正式 evidence IDs。
+- `evidence.yaml` 已定义质量阈值和相关性、透明度、时效性、直接支撑、提取质量五维权重，但 runner 尚未加载执行质量评分。
+- Phase 0 不验收运行时质量阈值门控；该能力属于甲方首版后续进入条件。
 - 公网不可达时允许 `real` smoke 降级，不得伪造抓取成功。
 
 ### 2.4 产物与工作区
@@ -68,7 +70,14 @@ python3 scripts/run_deep_research.py \
 
 smoke 必须核对：七类稳定产物、`checkpoints/`、agent session 数量、resolved route、audit status、所选 agent、来源材料数量和正式证据数量。
 
-## 4. Phase 1 进入条件
+## 4. 甲方首版规划入口
+
+- [装备能力图像 Deep Research 多智能体系统总实施计划](superpowers/plans/2026-07-10-equipment-deep-research-master-plan.md)
+- [装备能力图像 Deep Research 前后端一体化企业级设计方案](superpowers/specs/2026-07-10-equipment-deep-research-frontend-backend-enterprise-design.md)
+
+两份规划文件定义首版完整范围；本文件只验收 Phase 0 基础阶段。
+
+## 5. Phase 1 进入条件
 
 只有同时满足以下条件，才可进入 Phase 1：
 
@@ -76,13 +85,15 @@ smoke 必须核对：七类稳定产物、`checkpoints/`、agent session 数量�
 - `phase-0-smoke` 在独立输出根成功生成七类稳定产物和 `checkpoints/`。
 - Phase 0 文档、配置、测试和运行行为对默认模型、来源策略、provider 边界及已知限制无矛盾。
 - Task 1-4 审查结论均无阻断问题，遗留项已明确归入后续阶段。
+- 已明确运行时加载 `evidence.yaml` 并执行质量评分的设计、测试和正式证据准入规则。
 - 后续实现承诺兼容现有领域对象、CLI 参数和七类稳定产物契约。
 
-## 5. 后续阶段验收项
+## 6. 首版后续验收项
 
 以下项目从 Phase 1 起另行设计和验收：
 
 - 真实 Responses 模型循环与真实搜索 provider。
-- checkpoint 持久化、`run.db`、resume、暂停、取消和故障恢复。
-- 并行 worker、队列、数据库、Web/API、SSE、权限、审批和企业部署。
-- 完整证据评分、去重、独立印证、冲突检测与反证推理。
+- 真实检索和模型驱动的多轮研究、再调与收敛。
+- 运行时质量评分、去重、独立印证、冲突检测与反证推理。
+- 并行调度、checkpoint 持久化、`run.db`、resume、暂停、取消和故障恢复。
+- Web 工作台、API、SSE、队列、数据库、权限、审批和企业部署。

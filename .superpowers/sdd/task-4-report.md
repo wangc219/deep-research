@@ -4,7 +4,7 @@
 
 - 状态：DONE。
 - 完成 README、技术方案、验收说明和阶段测试报告同步。
-- 核对 Task 2 已提前实现的公开来源、失败材料隔离和网络安全质量门控测试，仅调整测试名称与现行语义一致。
+- 核对 Task 2 已提前实现的广泛公开来源材料化、SSRF/网络安全拒绝和抓取失败隔离测试，仅调整测试名称与现行语义一致。
 - 修正 Task 3 报告两处过时结果表述，明确恢复执行未实现且 Phase 0 不创建 `run.db`。
 - 全量测试通过，严格扫描零命中，独立 `phase-0-smoke` 成功。
 
@@ -31,7 +31,8 @@
 
 - 明确当前交付是 Phase 0 可运行基线，不是生产级真实 Deep Research 服务。
 - 默认模型统一表述为 `gpt-5.5`。
-- 公开来源策略统一表述为广泛搜集、网络安全控制、质量阈值和失败材料隔离，不按域名设置准入门槛。
+- 公开来源运行行为统一表述为广泛公开来源材料化、网络安全拒绝和抓取失败隔离，不按域名设置准入门槛。
+- `evidence.yaml` 的质量阈值和五维权重统一表述为配置边界；runner 尚未加载执行质量评分，成功抓取当前会进入正式证据。
 - 明确 `real` provider 当前为模板占位，可执行受控 URL 材料化，但真实模型循环和真实搜索尚未接入。
 - 明确四路 baseline agent 是 registry 预设，可选择子集、替换或新增。
 - 明确七类产物稳定，`checkpoints/` 只作预留；resume、`run.db` 和 SQLite 持久化未实现。
@@ -40,7 +41,7 @@
 ## 测试基线核对
 
 - `tests/test_deep_research_runner.py` 已包含公开来源成功材料化、失败抓取隔离、私网拒绝、DNS 与连接 IP 绑定、重定向逐跳检查、响应限制、TLS 校验和 fixture 边界测试。
-- 仅将公开来源测试改名为 `test_public_source_passes_network_and_quality_gates`，保留成功状态、正式证据数量和 baseline evidence IDs 断言。
+- 仅将公开来源测试改名为 `test_public_domain_fetch_is_materialized_without_domain_gate`，保留成功状态、正式证据数量和 baseline evidence IDs 断言。
 - 将 CLI 集成测试函数改名为 `test_cli_exposes_provider_and_evidence_controls_without_domain_gate`，测试行为不变。
 - 未引入旧来源配置字段、旧阻断状态或旧模型名。
 
@@ -147,3 +148,54 @@ python3 scripts/run_deep_research.py \
 - `tests/test_deep_research_runner.py` 未重复实现 Task 2 行为，只做必要命名一致性修改。
 - 文档中所有 Phase 0 完成声明均可在当前代码、测试或 smoke 产物中定位。
 - 后续 Phase 1+ 能力均明确标记为未实现或后续进入条件。
+
+## 审查修复：文档真实性
+
+### 修复内容
+
+- README、技术方案、验收说明、阶段测试报告和本实施报告统一为当前运行时事实：Phase 0 已实现广泛公开来源材料化、SSRF/网络安全拒绝和抓取失败隔离。
+- 明确 `evidence.yaml` 已定义质量阈值以及相关性、透明度、时效性、直接支撑、提取质量五维权重，但 runner 目前只保存并校验配置路径，尚未加载执行质量评分。
+- 明确成功抓取的材料当前设置为可进入正式证据；不得声称运行时质量阈值门控已经完成。
+- 将公开来源测试改名为 `test_public_domain_fetch_is_materialized_without_domain_gate`，保留 `fetched`、正式证据数量和 baseline evidence IDs 断言。
+- 三份主文档明确 Phase 0 只是甲方首版实施计划的基础阶段，不等于甲方首版完成。
+- 三份主文档恢复总实施计划和前后端企业级设计方案入口，并列明首版仍需真实模型循环、真实搜索、多轮研究、运行时质量评分、并行调度与恢复、Web 工作台和企业部署。
+- 阶段测试报告的结论、进入条件和 Task 4 摘要改为“配置边界已一致，运行时评分是后续进入条件”。
+
+### 定向测试
+
+命令：
+
+```text
+python3 -m pytest -q tests/test_deep_research_runner.py -k public_domain_fetch_is_materialized_without_domain_gate
+```
+
+结果：
+
+```text
+.                                                                        [100%]
+1 passed, 20 deselected in 0.16s
+```
+
+### 全量测试
+
+命令：
+
+```text
+python3 -m pytest -q
+```
+
+结果：
+
+```text
+........................................................................ [ 94%]
+....                                                                     [100%]
+76 passed in 0.36s
+```
+
+### 严格扫描
+
+按 Task 4 brief 指定的四组退役表述和目标路径执行扫描。结果为零输出、退出码 1，符合无匹配预期。
+
+### Smoke 决策
+
+本次只修改文档和测试函数名称，断言与运行行为未变化，因此按审查要求未重跑 smoke。此前独立 `phase-0-smoke` 的七类产物、4 个 agent sessions、空 `checkpoints/` 和关键状态记录继续作为 Phase 0 运行基线。

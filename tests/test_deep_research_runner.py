@@ -130,7 +130,7 @@ def test_real_smoke_materializes_public_source_diagnostics(tmp_path: Path) -> No
     assert all(row["artifact_refs"] for row in summary["source_materials"])
 
 
-def test_public_source_passes_network_and_quality_gates(
+def test_public_domain_fetch_is_materialized_without_domain_gate(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
