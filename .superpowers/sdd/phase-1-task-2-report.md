@@ -115,3 +115,47 @@ Trace：
 - `python3 -m compileall -q src/equipment_deep_research`、`ruff check`、`git diff --check` 纳入最终提交前验证。
 - 原子提交消息：`feat: add transactional run persistence`；实际提交哈希记录在最终交付回复中。
 - 自审未发现阻断项。后续 Task 5 可在不移除现有 recover keys 的前提下扩展恢复摘要。
+
+## 审查修复追加（2026-07-11）
+
+### Rooted Session Path
+
+- `JsonlSessionStore` 构造接口调整为 `JsonlSessionStore(path, root_dir=trusted_root)`；锁 key 使用 canonical root 与规范化 relative path。
+- trusted root 先创建并 `resolve(strict=True)`，因此 `/tmp` 等系统级 symlink root 可作为显式受信入口；root 内部的任意祖先 symlink/junction 和最终文件 symlink 均拒绝。
+- relative candidate 拒绝 `..`；absolute candidate 必须位于 requested root 或 canonical root 内，越界直接失败。
+- POSIX 主路径用 root directory fd 锚定访问，逐组件执行 `stat(..., follow_symlinks=False)`、`mkdir(..., dir_fd=...)`、`open(..., dir_fd=..., O_DIRECTORY|O_NOFOLLOW)`；最终文件使用 `O_NOFOLLOW` 并以 `fstat` 对照 inode/device。
+- 无 dir fd 但仍有 `O_NOFOLLOW` 时，fallback 逐组件 `lstat`、检查 canonical boundary、记录祖先 inode/device、打开后 `fstat` 对照并再次检查祖先快照。
+- 缺少 `O_NOFOLLOW` 或基础校验能力时 fail closed，绝不以 `flag=0` 静默打开。
+- 新测试覆盖祖先 symlink、最终 symlink、root 外 relative/absolute path、trusted root symlink、实际 `/tmp` resolved root、无 dir fd fallback、无 `O_NOFOLLOW` fail closed，以及 8 个 worker 并发执行 100 次 append。
+
+### SQLite Zero-Write Preflight
+
+- `BEGIN IMMEDIATE` 后先完成 request fingerprint、proposal ledger、idempotency ledger、同 batch object key 和 append target 的全部只读 preflight。
+- preflight 生成最终 `domains_to_write` / `traces_to_write`；通过后才进入第一个 `INSERT`/`UPDATE` 循环。
+- 同 batch 对相同 `(object_type, object_id)` 的不同有效 proposal 显式抛出 `StoreConflictError`；完全相同 idempotent proposal 仍去重。
+- append 已存在目标的检查从 `_write_domain()` 移到 preflight。spy 测试确认 `[upsert-new, append-existing]` 失败时 `_write_domain()` 调用次数为 `0`；同 batch object 冲突同样为 `0`。
+
+### 修复 RED / GREEN
+
+RED：
+
+```text
+python3 -m pytest tests/equipment_deep_research/unit/test_store_savepoint.py -q
+10 failed, 14 passed
+```
+
+关键 RED 证据：append conflict 前 `write_calls == 2`；同 batch object 未抛错；rooted session 新接口与安全测试全部失败。
+
+GREEN：
+
+```text
+python3 -m pytest tests/equipment_deep_research/unit/test_store_savepoint.py -q
+26 passed
+
+python3 -m pytest -q
+135 passed
+```
+
+质量检查：`ruff check`、`python3 -m compileall -q src/equipment_deep_research`、`git diff --check` 均通过；目标文件未出现 orchestration 反向依赖。
+
+原子修复提交消息：`fix: harden session paths and store preflight`；实际提交哈希记录在最终交付回复中。

@@ -249,23 +249,14 @@ class SqliteRunStore:
                 connection.commit()
                 return str(existing_checkpoint["checkpoint_id"])
 
-            existing_proposals, existing_idempotency = self._check_ledger(
+            domains_to_write, traces_to_write = self._preflight_writes(
                 connection, domains, traces
             )
-            written_idempotency: set[str] = set(existing_idempotency)
-            for item in domains:
-                proposal = item.proposal
-                if proposal.proposal_id in existing_proposals:
-                    continue
-                if proposal.idempotency_key in written_idempotency:
-                    continue
+            for item in domains_to_write:
                 self._write_domain(connection, item, committed_at)
-                written_idempotency.add(proposal.idempotency_key)
 
             next_sequence = self._last_trace_sequence(connection)
-            for item in traces:
-                if item.proposal.proposal_id in existing_proposals:
-                    continue
+            for item in traces_to_write:
                 next_sequence += 1
                 connection.execute(
                     """
@@ -681,14 +672,42 @@ class SqliteRunStore:
             existing_idempotency.add(key)
         return existing_proposals, existing_idempotency
 
-    def _write_domain(
+    def _preflight_writes(
         self,
         connection: sqlite3.Connection,
-        item: _ValidatedDomainProposal,
-        committed_at: str,
-    ) -> None:
-        proposal = item.proposal
-        if proposal.operation == "append":
+        domains: Sequence[_ValidatedDomainProposal],
+        traces: Sequence[_ValidatedTraceProposal],
+    ) -> tuple[list[_ValidatedDomainProposal], list[_ValidatedTraceProposal]]:
+        existing_proposals, existing_idempotency = self._check_ledger(
+            connection,
+            domains,
+            traces,
+        )
+        seen_idempotency = set(existing_idempotency)
+        object_writes: dict[tuple[str, str], _ValidatedDomainProposal] = {}
+        domains_to_write: list[_ValidatedDomainProposal] = []
+        for item in domains:
+            proposal = item.proposal
+            if proposal.proposal_id in existing_proposals:
+                continue
+            if proposal.idempotency_key in seen_idempotency:
+                continue
+            object_key = (proposal.object_type, item.object_id)
+            previous = object_writes.get(object_key)
+            if previous is not None:
+                raise StoreConflictError(
+                    "batch object conflict for "
+                    f"{proposal.object_type}/{item.object_id}: "
+                    f"{previous.proposal.proposal_id} and {proposal.proposal_id}"
+                )
+            object_writes[object_key] = item
+            domains_to_write.append(item)
+            seen_idempotency.add(proposal.idempotency_key)
+
+        for item in domains_to_write:
+            proposal = item.proposal
+            if proposal.operation != "append":
+                continue
             existing = connection.execute(
                 """
                 SELECT 1 FROM domain_objects
@@ -700,6 +719,22 @@ class SqliteRunStore:
                 raise StoreConflictError(
                     f"append conflict for {proposal.object_type}/{item.object_id}"
                 )
+
+        traces_to_write = [
+            item
+            for item in traces
+            if item.proposal.proposal_id not in existing_proposals
+        ]
+        return domains_to_write, traces_to_write
+
+    def _write_domain(
+        self,
+        connection: sqlite3.Connection,
+        item: _ValidatedDomainProposal,
+        committed_at: str,
+    ) -> None:
+        proposal = item.proposal
+        if proposal.operation == "append":
             connection.execute(
                 """
                 INSERT INTO domain_objects (
