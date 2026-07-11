@@ -443,26 +443,50 @@ def test_jsonl_session_store_accepts_resolved_tmp_root() -> None:
         assert store.read_all() == [{"root": "resolved"}]
 
 
-def test_jsonl_session_store_checked_fallback_without_dir_fd(
+@pytest.mark.parametrize("missing", ["dir_fd", "O_NOFOLLOW", "O_DIRECTORY"])
+def test_jsonl_session_store_fails_closed_when_secure_capability_is_missing(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    missing: str,
 ) -> None:
+    target = tmp_path / "nested" / "agent.jsonl"
+    if missing == "dir_fd":
+        monkeypatch.setattr(session_module.os, "supports_dir_fd", set())
+    else:
+        monkeypatch.setattr(session_module.os, missing, 0)
+
+    with pytest.raises(RuntimeError, match="secure session path operations require"):
+        JsonlSessionStore("nested/agent.jsonl", root_dir=tmp_path)
+
+    assert not target.exists()
+
+
+@pytest.mark.parametrize("operation", ["append", "read"])
+def test_jsonl_session_store_io_fails_closed_without_opening_target(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    operation: str,
+) -> None:
+    target = tmp_path / "agent.jsonl"
+    store = JsonlSessionStore("agent.jsonl", root_dir=tmp_path)
+    real_open = session_module.os.open
+    open_calls: list[object] = []
+
+    def tracking_open(*args: object, **kwargs: object) -> int:
+        open_calls.append(args[0])
+        return real_open(*args, **kwargs)  # type: ignore[arg-type]
+
     monkeypatch.setattr(session_module.os, "supports_dir_fd", set())
-    store = JsonlSessionStore("nested/agent.jsonl", root_dir=tmp_path)
-
-    store.append({"mode": "fallback"})
-
-    assert store.read_all() == [{"mode": "fallback"}]
-
-
-def test_jsonl_session_store_fails_closed_without_o_nofollow(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(session_module.os, "O_NOFOLLOW", 0)
+    monkeypatch.setattr(session_module.os, "open", tracking_open)
 
     with pytest.raises(RuntimeError, match="secure session path operations"):
-        JsonlSessionStore("agent.jsonl", root_dir=tmp_path)
+        if operation == "append":
+            store.append({"unsafe": False})
+        else:
+            store.read_all()
+
+    assert open_calls == []
+    assert not target.exists()
 
 
 def test_store_validates_created_at_is_timezone_aware(tmp_path: Path) -> None:

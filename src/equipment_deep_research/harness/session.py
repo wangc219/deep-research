@@ -14,10 +14,15 @@ _LOCKS_GUARD = Lock()
 _PATH_LOCKS: dict[str, RLock] = {}
 
 
+class UnsupportedPlatformError(RuntimeError):
+    pass
+
+
 class JsonlSessionStore:
     """Rooted, thread-safe append-only JSONL session storage."""
 
     def __init__(self, path: str | Path, *, root_dir: Path) -> None:
+        _require_secure_platform()
         requested_root = Path(root_dir)
         requested_root.mkdir(parents=True, exist_ok=True)
         self.root_dir = requested_root.resolve(strict=True)
@@ -29,7 +34,6 @@ class JsonlSessionStore:
             canonical_root=self.root_dir,
         )
         self.path = self.root_dir / self.relative_path
-        self._access_mode = _secure_access_mode()
         key = f"{self.root_dir}\0{self.relative_path.as_posix()}"
         with _LOCKS_GUARD:
             self._lock = _PATH_LOCKS.setdefault(key, RLock())
@@ -37,6 +41,7 @@ class JsonlSessionStore:
             self._validate_existing_path()
 
     def append(self, record: Mapping[str, Any]) -> None:
+        _require_secure_platform()
         if not isinstance(record, Mapping):
             raise TypeError("session records must be JSON objects")
         encoded = (
@@ -50,17 +55,12 @@ class JsonlSessionStore:
             + "\n"
         ).encode("utf-8")
         with self._lock:
-            if self._access_mode == "dir_fd":
-                self._append_dir_fd(encoded)
-            else:
-                self._append_fallback(encoded)
+            self._append_dir_fd(encoded)
 
     def read_all(self) -> list[dict[str, Any]]:
+        _require_secure_platform()
         with self._lock:
-            if self._access_mode == "dir_fd":
-                lines = self._read_lines_dir_fd()
-            else:
-                lines = self._read_lines_fallback()
+            lines = self._read_lines_dir_fd()
 
         records: list[dict[str, Any]] = []
         for line_number, line in enumerate(lines, start=1):
@@ -83,43 +83,25 @@ class JsonlSessionStore:
         return self.read_tail(limit)
 
     def _validate_existing_path(self) -> None:
-        if self._access_mode == "dir_fd":
-            parent_fd = self._open_parent_dir_fd(create=False)
-            if parent_fd is None:
-                return
-            try:
-                file_stat = _lstat_at(self.relative_path.name, parent_fd)
-                if file_stat is None:
-                    return
-                _require_regular_file(file_stat, self.path)
-                descriptor = _open_at(
-                    self.relative_path.name,
-                    os.O_RDONLY | _close_on_exec() | _no_follow(),
-                    dir_fd=parent_fd,
-                )
-                try:
-                    _require_same_file(file_stat, os.fstat(descriptor), self.path)
-                finally:
-                    os.close(descriptor)
-            finally:
-                os.close(parent_fd)
+        parent_fd = self._open_parent_dir_fd(create=False)
+        if parent_fd is None:
             return
-        snapshots = self._fallback_parent_snapshots(create=False)
-        if snapshots is None:
-            return
-        file_stat = _lstat_path(self.path)
-        if file_stat is None:
-            return
-        _require_regular_file(file_stat, self.path)
-        descriptor = os.open(
-            self.path,
-            os.O_RDONLY | _close_on_exec() | _no_follow(),
-        )
         try:
-            _require_same_file(file_stat, os.fstat(descriptor), self.path)
-            self._recheck_fallback_snapshots(snapshots)
+            file_stat = _lstat_at(self.relative_path.name, parent_fd)
+            if file_stat is None:
+                return
+            _require_regular_file(file_stat, self.path)
+            descriptor = _open_at(
+                self.relative_path.name,
+                os.O_RDONLY | _close_on_exec() | _no_follow(),
+                dir_fd=parent_fd,
+            )
+            try:
+                _require_same_file(file_stat, os.fstat(descriptor), self.path)
+            finally:
+                os.close(descriptor)
         finally:
-            os.close(descriptor)
+            os.close(parent_fd)
 
     def _append_dir_fd(self, encoded: bytes) -> None:
         parent_fd = self._open_parent_dir_fd(create=True)
@@ -216,101 +198,6 @@ class JsonlSessionStore:
                 pass
             raise
 
-    def _append_fallback(self, encoded: bytes) -> None:
-        snapshots = self._fallback_parent_snapshots(create=True)
-        assert snapshots is not None
-        existing = _lstat_path(self.path)
-        if existing is not None:
-            _require_regular_file(existing, self.path)
-        descriptor = os.open(
-            self.path,
-            os.O_APPEND
-            | os.O_CREAT
-            | os.O_WRONLY
-            | _close_on_exec()
-            | _no_follow(),
-            0o600,
-        )
-        try:
-            opened = os.fstat(descriptor)
-            _require_regular_file(opened, self.path)
-            current = _lstat_path(self.path)
-            if current is None:
-                raise RuntimeError("session file disappeared after opening")
-            _require_same_file(current, opened, self.path)
-            if existing is not None:
-                _require_same_file(existing, opened, self.path)
-            self._recheck_fallback_snapshots(snapshots)
-            _write_all(descriptor, encoded)
-            os.fsync(descriptor)
-            self._recheck_fallback_snapshots(snapshots)
-        finally:
-            os.close(descriptor)
-
-    def _read_lines_fallback(self) -> list[str]:
-        snapshots = self._fallback_parent_snapshots(create=False)
-        if snapshots is None:
-            return []
-        existing = _lstat_path(self.path)
-        if existing is None:
-            return []
-        _require_regular_file(existing, self.path)
-        descriptor = os.open(
-            self.path,
-            os.O_RDONLY | _close_on_exec() | _no_follow(),
-        )
-        try:
-            _require_same_file(existing, os.fstat(descriptor), self.path)
-            self._recheck_fallback_snapshots(snapshots)
-            with os.fdopen(descriptor, "r", encoding="utf-8") as handle:
-                descriptor = -1
-                return handle.readlines()
-        finally:
-            if descriptor >= 0:
-                os.close(descriptor)
-
-    def _fallback_parent_snapshots(
-        self,
-        *,
-        create: bool,
-    ) -> list[tuple[Path, tuple[int, int]]] | None:
-        snapshots: list[tuple[Path, tuple[int, int]]] = []
-        current = self.root_dir
-        root_stat = os.lstat(current)
-        _require_directory(root_stat, current)
-        snapshots.append((current, _identity(root_stat)))
-        for component in self.relative_path.parts[:-1]:
-            current = current / component
-            _require_within_root(current, self.root_dir)
-            component_stat = _lstat_path(current)
-            if component_stat is None:
-                if not create:
-                    return None
-                try:
-                    os.mkdir(current, 0o700)
-                except FileExistsError:
-                    pass
-                component_stat = _lstat_path(current)
-                if component_stat is None:
-                    raise RuntimeError("session directory disappeared during creation")
-            _require_directory(component_stat, current)
-            if current.resolve(strict=True) != current:
-                raise ValueError(f"session path contains a symlink: {current}")
-            snapshots.append((current, _identity(component_stat)))
-        _require_within_root(self.path, self.root_dir)
-        return snapshots
-
-    def _recheck_fallback_snapshots(
-        self,
-        snapshots: list[tuple[Path, tuple[int, int]]],
-    ) -> None:
-        for path, identity in snapshots:
-            current = os.lstat(path)
-            _require_directory(current, path)
-            if _identity(current) != identity:
-                raise RuntimeError(f"session path changed during access: {path}")
-        _require_within_root(self.path, self.root_dir)
-
 
 def _relative_session_path(
     path: str | Path,
@@ -346,22 +233,24 @@ def _relative_session_path(
     return normalized
 
 
-def _secure_access_mode() -> str:
-    if _no_follow() == 0:
-        raise RuntimeError(
-            "secure session path operations require O_NOFOLLOW; refusing unsafe fallback"
-        )
+def _require_secure_platform() -> None:
     supports_dir_fd = getattr(os, "supports_dir_fd", set())
-    if (
-        _directory_only() != 0
-        and os.open in supports_dir_fd
-        and os.mkdir in supports_dir_fd
-        and os.stat in supports_dir_fd
+    missing: list[str] = []
+    if _no_follow() == 0:
+        missing.append("O_NOFOLLOW")
+    if _directory_only() == 0:
+        missing.append("O_DIRECTORY")
+    for name, function in (
+        ("os.open(dir_fd)", os.open),
+        ("os.mkdir(dir_fd)", os.mkdir),
+        ("os.stat(dir_fd)", os.stat),
     ):
-        return "dir_fd"
-    if all(callable(getattr(os, name, None)) for name in ("lstat", "fstat", "open")):
-        return "fallback"
-    raise RuntimeError("secure session path operations are unavailable on this platform")
+        if function not in supports_dir_fd:
+            missing.append(name)
+    if missing:
+        raise UnsupportedPlatformError(
+            "secure session path operations require " + ", ".join(missing)
+        )
 
 
 def _open_at(
@@ -382,16 +271,6 @@ def _open_at(
 def _lstat_at(path: str, dir_fd: int) -> os.stat_result | None:
     try:
         result = os.stat(path, dir_fd=dir_fd, follow_symlinks=False)
-    except FileNotFoundError:
-        return None
-    if _is_link_like(result):
-        raise ValueError(f"session path contains a symlink: {path}")
-    return result
-
-
-def _lstat_path(path: Path) -> os.stat_result | None:
-    try:
-        result = os.lstat(path)
     except FileNotFoundError:
         return None
     if _is_link_like(result):
