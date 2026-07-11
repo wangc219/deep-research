@@ -16,7 +16,7 @@
 - 支持 `new_winning_mechanism`、`traditional_gap`、`war_case_learning` 三类研究路线。
 - 支持 L1 制胜逻辑分析、L2 概念创新评估、L3 能力图像生成。
 - 能力图像固定输出九字段：能力编号、名称、装备类别、类型、来源制胜逻辑、关联场景、优先级、能力差距、能力画像。
-- 领域对象、计划节点、任务消息、召回消息、trace 和报告对象具备稳定序列化契约。
+- 实际持久化的领域对象、worker summary、计划节点、任务消息和召回消息具备稳定 JSON 契约；持久化 payload 包含稳定 ID、UTC `created_at` 与 `schema_version="1.0"`。
 
 ### 2.2 Agent 设计
 
@@ -27,6 +27,7 @@
 - `agents.yaml` 可替换或新增 agent。
 - 每个 agent 声明能力标签、工具、上下文策略和领域对象读写范围。
 - 每个所选 agent 生成独立 `agent_sessions/<agent-id>.jsonl`，其他 agent 原始会话不进入其上下文。
+- `agent_id` 必须以 ASCII 字母或数字开头，后续仅允许 ASCII 字母、数字、点、下划线和连字符，最长 128 字符；registry 入站和 scheduler session 路径出站均校验，已存在 session symlink 会被拒绝。
 
 Phase 0 scheduler 已建立统一调度契约和覆盖度计算；生产级并行执行、弹性 worker 和分布式队列属于后续阶段。
 
@@ -56,7 +57,7 @@ Phase 0 已验证公开材料化安全与失败隔离；配置驱动的质量评
 
 ### 2.5 工作区与产物契约
 
-`RunWorkspace` 为每次运行创建独立目录，并校验 `run-id` 不得逃逸输出根目录。七类稳定产物为：
+`RunWorkspace` 为每次运行原子创建独立目录，并校验 `run-id` 不得逃逸输出根目录。`resume=False` 时，任何已存在的同名 run 目录或 symlink 都会由 `mkdir(exist_ok=False)` 在产物写入前拒绝，不允许覆盖或续写旧 session。七类稳定产物为：
 
 - `report.md`
 - `capability_images.json`

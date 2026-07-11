@@ -15,6 +15,7 @@ Phase 0 验收对象是可运行、可回归、可审计的研究基线，包括
 - `--agents` 可运行任意子集；缺失能力标签必须进入 summary 和报告限制说明。
 - 自定义配置可替换默认 baseline agent，runner 不依赖固定 agent ID 分支。
 - 每个所选 agent 生成独立 session 文件。
+- `agent_id` 必须符合受限 ASCII 内部标识符契约；路径分隔符、绝对路径、`.`、`..`、控制字符和超长值必须在 registry 入站时拒绝，scheduler 构造 session 路径时必须再次校验并拒绝已存在 symlink。
 
 ### 2.2 模型与 Provider
 
@@ -45,7 +46,9 @@ Phase 0 验收对象是可运行、可回归、可审计的研究基线，包括
 - `agent_sessions/`
 - `artifacts/`
 
-同时必须创建 `checkpoints/` 预留目录。Phase 0 不要求写入 checkpoint，不创建 `run.db`，不支持 resume。
+同时必须创建 `checkpoints/` 预留目录。Phase 0 不要求写入 checkpoint，不创建 `run.db`，不支持 resume。`resume=False` 不得复用任何已存在的同名 run 目录；第二次同 `run-id` 必须在写入前失败，旧产物和 session 保持不变。
+
+`domain.jsonl`、`trace.jsonl` 和 `round_summary.json` 中实际持久化的领域 dataclass payload 必须可 JSON 序列化，并包含稳定 ID、UTC `created_at` 与 `schema_version="1.0"`；新增尾部默认字段不得破坏旧位置或关键字构造。
 
 ## 3. 必验命令
 

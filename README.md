@@ -14,6 +14,8 @@
 - 输出包含能力编号、名称、装备类别、类型、来源制胜逻辑、关联场景、优先级、能力差距、能力画像九个字段。
 - 默认模型配置为 `gpt-5.5`。
 - 已实现广泛公开来源材料化、SSRF/网络安全拒绝和抓取失败隔离，不按来源域名设置准入门槛。
+- agent 内部标识符使用受限 ASCII 契约，registry 和 session 路径边界都会拒绝路径分隔符、控制字符与 symlink 逃逸。
+- `resume=False` 的每个 `run-id` 必须对应全新目录；已存在的空目录、非空目录或 symlink 都会在任何运行产物写入前被原子拒绝。
 
 ## 当前实现边界
 
@@ -23,6 +25,7 @@
 - `evidence.yaml` 已定义质量阈值以及相关性、透明度、时效性、直接支撑、提取质量五维权重，但 runner 尚未加载并执行质量评分。当前成功抓取的材料会进入正式证据，不能表述为已经经过运行时质量阈值门控。
 - `--resume` 仅建立接口边界，调用时会明确返回未实现；`run.db` 不会创建，SQLite 持久化和恢复执行属于后续阶段。
 - 七类稳定产物保持不变，`checkpoints/` 仅作为后续恢复点目录预留。
+- `domain.jsonl`、`trace.jsonl` 和 `round_summary.json` 中实际持久化的领域对象包含稳定 ID、UTC `created_at` 与 `schema_version="1.0"`。
 
 ## 运行
 
@@ -74,7 +77,7 @@ python3 scripts/run_deep_research.py \
 
 ## 输出
 
-每次运行写入 `outputs/runs/<run-id>/`。七类稳定产物为：
+每次运行写入新的 `outputs/runs/<run-id>/`；Phase 0 不覆盖或续写已存在的 run 目录。七类稳定产物为：
 
 - `report.md`：甲方可读能力画像报告。
 - `capability_images.json`：能力画像结构化数据。
