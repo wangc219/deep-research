@@ -1,0 +1,17 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      EQUIPMENT_DR_API_KEY: ${EQUIPMENT_DR_API_KEY:-}
+    volumes:
+      - research-data:/app/outputs
+    restart: unless-stopped
+  web:
+    build: ./apps/web
+    depends_on: [api]
+    ports: ["8080:80"]
+    restart: unless-stopped
+volumes:
+  research-data:

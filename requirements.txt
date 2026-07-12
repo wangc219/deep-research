@@ -4,3 +4,4 @@ beautifulsoup4
 pytest
 fastapi
 uvicorn
+SQLAlchemy
