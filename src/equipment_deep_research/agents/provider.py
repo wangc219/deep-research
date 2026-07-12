@@ -17,6 +17,7 @@ class AgentRunRequest:
     topic: str
     research_route: str
     context: dict
+    round_index: int = 1
 
 
 @dataclass(frozen=True)
@@ -36,8 +37,9 @@ class FakeAgentProvider:
         agent = request.agent
         prefix = agent.display_name
         topic = request.topic
+        suffix = "-1" if request.round_index == 1 else f"-r{request.round_index}"
         evidence = EvidenceCard(
-            evidence_id=f"ev-{agent.agent_id}-1",
+            evidence_id=f"ev-{agent.agent_id}{suffix}",
             source_title=f"{prefix}离线验证材料",
             source_url=f"https://fixture.local/{agent.agent_id}",
             source_tier="A",
@@ -49,7 +51,11 @@ class FakeAgentProvider:
         )
         findings = _findings_for_agent(agent.agent_id, topic, request.research_route)
         packet = BaselineFindingPacket(
-            packet_id=f"packet-{agent.agent_id}",
+            packet_id=(
+                f"packet-{agent.agent_id}"
+                if request.round_index == 1
+                else f"packet-{agent.agent_id}-r{request.round_index}"
+            ),
             agent_id=agent.agent_id,
             capability_tags=list(agent.capability_tags),
             topic_focus=topic,
@@ -64,7 +70,7 @@ class FakeAgentProvider:
                 f"{prefix}维度仍需进一步联网补充高置信资料。",
             ],
             handoff_summary=f"{prefix}围绕{topic}形成{len(findings)}条基线发现。",
-            checkpoint=f"{agent.agent_id}: baseline complete",
+            checkpoint=f"{agent.agent_id}: baseline round {request.round_index} complete",
         )
         return AgentRunResult(packet=packet, evidence=[evidence], raw_message=packet.handoff_summary)
 
@@ -128,7 +134,11 @@ class ResponsesAgentProvider:
         confidence = float(payload.get("confidence", 0.45))
         confidence = min(1.0, max(0.0, confidence))
         packet = BaselineFindingPacket(
-            packet_id=f"packet-{request.agent.agent_id}",
+            packet_id=(
+                f"packet-{request.agent.agent_id}"
+                if request.round_index == 1
+                else f"packet-{request.agent.agent_id}-r{request.round_index}"
+            ),
             agent_id=request.agent.agent_id,
             capability_tags=list(request.agent.capability_tags),
             topic_focus=request.topic,

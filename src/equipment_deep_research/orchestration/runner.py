@@ -394,6 +394,9 @@ class DeepResearchRunner:
                 coverage=coverage,
             )
             recall_coordinator = RecallCoordinator(max_rounds=resolved_max_rounds)
+            recall_packet_ids: list[str] = []
+            recall_evidence_ids: list[str] = []
+            recall_reports: list[WorkerReport] = []
             for stage in stage_outputs:
                 for recall in stage.recall_requests:
                     routed = recall_coordinator.route(
@@ -403,6 +406,46 @@ class DeepResearchRunner:
                         round_index=checkpoint.round_index,
                     )
                     store.add_recall_request(routed.recall)
+                    if routed.status == "routed" and routed.target_agent_id:
+                        recall_report = scheduler.run_agent(
+                            agent=agents_by_id[routed.target_agent_id],
+                            topic=topic,
+                            research_route=route,
+                            round_index=checkpoint.round_index + 1,
+                            recall_request={
+                                "recall_id": routed.recall.recall_id,
+                                "reason": routed.recall.reason,
+                                "required_data": routed.recall.required_data,
+                                "return_node": routed.recall.return_node,
+                                "evidence_index": store.evidence_index(),
+                            },
+                            raise_on_error=True,
+                        )
+                        completed = recall_coordinator.complete(routed)
+                        store.add_recall_request(completed.recall)
+                        recall_reports.append(recall_report)
+                        recall_packet_ids.append(recall_report.packet_id)
+                        recall_evidence_ids.extend(recall_report.new_evidence_ids)
+                        trace.append(
+                            TraceEvent(
+                                event_id=f"trace-recall-completed-{recall.recall_id}",
+                                event_type="recall_task_completed",
+                                actor=routed.target_agent_id,
+                                summary=f"recall completed and returned to {completed.recall.return_node}",
+                                input_refs=[recall.recall_id],
+                                output_refs=[recall_report.packet_id, *recall_report.new_evidence_ids],
+                            )
+                        )
+                        trace.append(
+                            TraceEvent(
+                                event_id=f"trace-winning-resumed-{recall.recall_id}",
+                                event_type="winning_stage_resumed",
+                                actor="winning_mechanism",
+                                summary=f"resumed from {completed.recall.return_node}",
+                                input_refs=[recall_report.packet_id],
+                                output_refs=[completed.recall.return_node],
+                            )
+                        )
                     if routed.recommendation is not None:
                         recommendations.append(routed.recommendation)
                     trace.append(
@@ -423,6 +466,22 @@ class DeepResearchRunner:
                             ),
                         )
                     )
+            if recall_reports:
+                # The first attempt remains in trace; active stage state is the
+                # resumed attempt, which consumes the returned packet(s).
+                store.stage_outputs.clear()
+                store.capability_images.clear()
+                checkpoint = replace(checkpoint, round_index=checkpoint.round_index + 1)
+                stage_outputs, images, resumed_recommendations = engine.run(
+                    topic=topic,
+                    route=route,
+                    store=store,
+                    trace=trace,
+                    coverage=coverage,
+                    attempt=checkpoint.round_index,
+                )
+                recommendations.extend(resumed_recommendations)
+                worker_reports.extend(recall_reports)
             for recommendation in recommendations:
                 store.add_recommendation(recommendation)
             audit = audit_run(
@@ -460,6 +519,14 @@ class DeepResearchRunner:
             )
             checkpoint.validate()
             final_domain_proposals = [
+                *(
+                    self._domain_proposal("EvidenceCard", store.evidence[item])
+                    for item in sorted(set(recall_evidence_ids))
+                ),
+                *(
+                    self._domain_proposal("BaselineFindingPacket", store.baseline_packets[item])
+                    for item in sorted(set(recall_packet_ids))
+                ),
                 *(
                     self._domain_proposal("WinningMechanismStageOutput", item)
                     for item in stage_outputs

@@ -29,6 +29,7 @@ class WinningMechanismEngine:
         store: DomainStore,
         trace: TraceStore,
         coverage: dict[str, Any],
+        attempt: int = 1,
     ) -> tuple[list[WinningMechanismStageOutput], list[CapabilityImageItem], list[AgentRecommendation]]:
         packets = list(store.baseline_packets.values())
         evidence_ids = sorted({evidence_id for packet in packets for evidence_id in packet.evidence_ids})
@@ -41,7 +42,11 @@ class WinningMechanismEngine:
         for node in reasoning.critical_nodes():
             trace.append(
                 TraceEvent(
-                    event_id=f"trace-{node.object_id}",
+                    event_id=(
+                        f"trace-{node.object_id}"
+                        if attempt == 1
+                        else f"trace-{node.object_id}-r{attempt}"
+                    ),
                     event_type="winning_reasoning_step_completed",
                     actor="winning_mechanism",
                     summary=node.summary,
@@ -56,7 +61,8 @@ class WinningMechanismEngine:
                 )
             )
         recommendations = self._recommend_missing_agents(coverage)
-        l1 = self._l1(topic=topic, route=route, packets=packets, evidence_ids=evidence_ids, coverage=coverage)
+        suffix = "" if attempt == 1 else f"-r{attempt}"
+        l1 = self._l1(topic=topic, route=route, packets=packets, evidence_ids=evidence_ids, coverage=coverage, stage_id=f"stage-L1{suffix}")
         l1.outputs["reasoning_refs"] = [
             reasoning.defense_decomposition.object_id,
             reasoning.winning_paths.object_id,
@@ -65,7 +71,7 @@ class WinningMechanismEngine:
         store.add_stage_output(l1)
         trace.append(
             TraceEvent(
-                event_id="trace-winning-l1",
+                event_id=f"trace-winning-l1{suffix}",
                 event_type="winning_stage_completed",
                 actor="winning_mechanism",
                 summary=f"L1 completed: gate={l1.gate_passed}",
@@ -84,19 +90,19 @@ class WinningMechanismEngine:
                     payload=to_plain(recall),
                 )
             )
-        l2 = self._l2(topic=topic, route=route, l1=l1, evidence_ids=evidence_ids, coverage=coverage)
+        l2 = self._l2(topic=topic, route=route, l1=l1, evidence_ids=evidence_ids, coverage=coverage, stage_id=f"stage-L2{suffix}")
         l2.outputs["reasoning_refs"] = [reasoning.capability_mapping.object_id]
         store.add_stage_output(l2)
         trace.append(
             TraceEvent(
-                event_id="trace-winning-l2",
+                event_id=f"trace-winning-l2{suffix}",
                 event_type="winning_stage_completed",
                 actor="winning_mechanism",
                 summary=f"L2 completed: gate={l2.gate_passed}",
                 output_refs=[l2.stage_id],
             )
         )
-        l3 = self._l3(topic=topic, route=route, l1=l1, l2=l2, evidence_ids=evidence_ids, coverage=coverage)
+        l3 = self._l3(topic=topic, route=route, l1=l1, l2=l2, evidence_ids=evidence_ids, coverage=coverage, stage_id=f"stage-L3{suffix}")
         l3.outputs["reasoning_refs"] = [
             reasoning.gap_matrix.object_id,
             *[item.object_id for item in reasoning.image_drafts],
@@ -104,14 +110,14 @@ class WinningMechanismEngine:
         store.add_stage_output(l3)
         trace.append(
             TraceEvent(
-                event_id="trace-winning-l3",
+                event_id=f"trace-winning-l3{suffix}",
                 event_type="winning_stage_completed",
                 actor="winning_mechanism",
                 summary=f"L3 completed: gate={l3.gate_passed}",
                 output_refs=[l3.stage_id],
             )
         )
-        images = self._capability_images(topic=topic, route=route, l3=l3, evidence_ids=evidence_ids, coverage=coverage)
+        images = self._capability_images(topic=topic, route=route, l3=l3, evidence_ids=evidence_ids, coverage=coverage, attempt=attempt)
         for image in images:
             store.add_capability_image(image)
             trace.append(
@@ -134,6 +140,7 @@ class WinningMechanismEngine:
         packets: list[BaselineFindingPacket],
         evidence_ids: list[str],
         coverage: dict[str, Any],
+        stage_id: str,
     ) -> WinningMechanismStageOutput:
         confidence = _avg_confidence(packets)
         recalls = [
@@ -149,9 +156,23 @@ class WinningMechanismEngine:
             )
             for tag in coverage.get("missing_required_tags", [])
         ]
+        if confidence < self.min_confidence and packets:
+            target = min(packets, key=lambda packet: packet.confidence)
+            recalls.append(
+                RecallRequest(
+                    recall_id=f"recall-L1-confidence-{target.agent_id}",
+                    source_layer="L1",
+                    target_agent_id=target.agent_id,
+                    target_capability_tag=None,
+                    reason="L1 综合置信度未达到门控，需要定向补充高置信证据。",
+                    required_data=[f"补充{topic}相关可材料化公开证据和结构化判断"],
+                    return_node="L1",
+                    urgency="high",
+                )
+            )
         gate_passed = confidence >= self.min_confidence and not recalls
         return WinningMechanismStageOutput(
-            stage_id="stage-L1",
+            stage_id=stage_id,
             layer="L1",
             title="制胜逻辑分析",
             outputs={
@@ -182,12 +203,13 @@ class WinningMechanismEngine:
         l1: WinningMechanismStageOutput,
         evidence_ids: list[str],
         coverage: dict[str, Any],
+        stage_id: str,
     ) -> WinningMechanismStageOutput:
         feasibility = 4 if l1.gate_passed else 2
         confidence = min(0.86, max(0.55, l1.confidence - (0 if l1.gate_passed else 0.08)))
         gate_passed = feasibility >= self.min_l2_feasibility and l1.gate_passed
         return WinningMechanismStageOutput(
-            stage_id="stage-L2",
+            stage_id=stage_id,
             layer="L2",
             title="概念创新评估",
             outputs={
@@ -218,11 +240,12 @@ class WinningMechanismEngine:
         l2: WinningMechanismStageOutput,
         evidence_ids: list[str],
         coverage: dict[str, Any],
+        stage_id: str,
     ) -> WinningMechanismStageOutput:
         confidence = min(l1.confidence, l2.confidence)
         gate_passed = l2.gate_passed
         return WinningMechanismStageOutput(
-            stage_id="stage-L3",
+            stage_id=stage_id,
             layer="L3",
             title="能力图像生成",
             outputs={
@@ -246,6 +269,7 @@ class WinningMechanismEngine:
         l3: WinningMechanismStageOutput,
         evidence_ids: list[str],
         coverage: dict[str, Any],
+        attempt: int = 1,
     ) -> list[CapabilityImageItem]:
         limit_suffix = ""
         if coverage.get("missing_required_tags"):
@@ -258,7 +282,7 @@ class WinningMechanismEngine:
             new_name = "传统战法缺口牵引的新能力补位"
         return [
             CapabilityImageItem(
-                capability_id="cap-new-001",
+                capability_id="cap-new-001" if attempt == 1 else f"cap-new-001-r{attempt}",
                 name=new_name,
                 equipment_category="导弹/火箭及配套感知、指控、载荷体系",
                 capability_type="new_capability",
@@ -271,7 +295,7 @@ class WinningMechanismEngine:
                 confidence=l3.confidence,
             ),
             CapabilityImageItem(
-                capability_id="cap-upgrade-001",
+                capability_id="cap-upgrade-001" if attempt == 1 else f"cap-upgrade-001-r{attempt}",
                 name=upgrade_name,
                 equipment_category="现有导弹/火箭装备与保障系统",
                 capability_type="upgrade",

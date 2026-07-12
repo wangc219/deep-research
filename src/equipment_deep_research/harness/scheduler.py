@@ -121,6 +121,7 @@ class DiscoveryScheduler:
         research_route: str,
         raise_on_error: bool = False,
         recall_request: dict[str, Any] | None = None,
+        round_index: int = 1,
     ) -> WorkerReport:
         if self.workspace is not None:
             validated_agent_id = validate_internal_identifier(
@@ -152,6 +153,7 @@ class DiscoveryScheduler:
                     topic=topic,
                     research_route=research_route,
                     context=context.sections,
+                    round_index=round_index,
                 )
             )
             materialized_refs: list[str] = []
@@ -208,7 +210,11 @@ class DiscoveryScheduler:
             new_evidence = sorted(set(self.store.evidence) - before_evidence)
             self.trace.append(
                 TraceEvent(
-                    event_id=f"trace-{agent.agent_id}-baseline",
+                    event_id=(
+                        f"trace-{agent.agent_id}-baseline"
+                        if round_index == 1
+                        else f"trace-{agent.agent_id}-baseline-r{round_index}"
+                    ),
                     event_type="baseline_agent_completed",
                     actor=agent.agent_id,
                     summary=packet.handoff_summary,
@@ -229,7 +235,11 @@ class DiscoveryScheduler:
                 raise
             self.trace.append(
                 TraceEvent(
-                    event_id=f"trace-{agent.agent_id}-failed",
+                    event_id=(
+                        f"trace-{agent.agent_id}-failed"
+                        if round_index == 1
+                        else f"trace-{agent.agent_id}-failed-r{round_index}"
+                    ),
                     event_type="baseline_agent_failed",
                     actor=agent.agent_id,
                     summary=str(exc),
