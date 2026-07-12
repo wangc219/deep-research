@@ -92,6 +92,30 @@ class BaselineFindingPacket:
 
 
 @dataclass(frozen=True)
+class WorkingCheckpoint:
+    """Compact durable state supplied only to the owning research agent."""
+
+    checkpoint_id: str
+    agent_id: str
+    round_index: int
+    completed_steps: list[str] = field(default_factory=list)
+    accepted_evidence_ids: list[str] = field(default_factory=list)
+    rejected_lead_ids: list[str] = field(default_factory=list)
+    open_questions: list[str] = field(default_factory=list)
+    conflicts: list[str] = field(default_factory=list)
+    next_actions: list[str] = field(default_factory=list)
+    return_node: str = "baseline"
+    status: str = "pending"
+
+    def to_dict(self) -> dict[str, Any]:
+        return to_plain(self)
+
+    @classmethod
+    def from_dict(cls, value: dict[str, Any]) -> "WorkingCheckpoint":
+        return cls(**value)
+
+
+@dataclass(frozen=True)
 class RecallRequest:
     recall_id: str
     source_layer: str
