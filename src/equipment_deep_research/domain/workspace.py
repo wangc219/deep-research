@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import errno
+import ctypes
 import os
 from pathlib import Path
 import secrets
@@ -138,8 +139,7 @@ class RunWorkspace:
         checkpoints_fd: int | None = None
         database_fd: int | None = None
         try:
-            os.mkdir(run_id, 0o700, dir_fd=output_fd)
-            run_fd = _open_directory_at(output_fd, run_id)
+            run_fd = _create_directory_at(output_fd, run_id)
             sessions_fd = _create_directory_at(run_fd, "agent_sessions")
             artifacts_fd = _create_directory_at(run_fd, "artifacts")
             checkpoints_fd = _create_directory_at(run_fd, "checkpoints")
@@ -511,8 +511,69 @@ class _RootedAtomicWriter:
 
 
 def _create_directory_at(parent_fd: int, name: str) -> int:
-    os.mkdir(name, 0o700, dir_fd=parent_fd)
-    return _open_directory_at(parent_fd, name)
+    temporary_name = f".{name}.{secrets.token_hex(16)}.creating"
+    descriptor: int | None = None
+    published = False
+    os.mkdir(temporary_name, 0o700, dir_fd=parent_fd)
+    try:
+        descriptor = _open_directory_at(parent_fd, temporary_name)
+        created_identity = _identity(os.fstat(descriptor))
+        _rename_noreplace_at(parent_fd, temporary_name, name)
+        published = True
+        published_stat = _lstat_at(name, parent_fd)
+        if published_stat is None or _identity(published_stat) != created_identity:
+            raise RuntimeError(f"created directory changed during publication: {name}")
+        return descriptor
+    except BaseException:
+        if descriptor is not None:
+            os.close(descriptor)
+        raise
+    finally:
+        if not published:
+            try:
+                os.rmdir(temporary_name, dir_fd=parent_fd)
+            except FileNotFoundError:
+                pass
+
+
+def _rename_noreplace_at(
+    parent_fd: int,
+    source: str,
+    destination: str,
+) -> None:
+    libc = ctypes.CDLL(None, use_errno=True)
+    source_bytes = os.fsencode(source)
+    destination_bytes = os.fsencode(destination)
+    if sys.platform == "darwin":
+        renameatx_np = getattr(libc, "renameatx_np", None)
+        if renameatx_np is None:
+            raise RuntimeError("atomic no-replace directory publication is unavailable")
+        result = renameatx_np(
+            parent_fd,
+            source_bytes,
+            parent_fd,
+            destination_bytes,
+            0x00000004,  # RENAME_EXCL
+        )
+    elif sys.platform.startswith("linux"):
+        renameat2 = getattr(libc, "renameat2", None)
+        if renameat2 is None:
+            raise RuntimeError("atomic no-replace directory publication is unavailable")
+        result = renameat2(
+            parent_fd,
+            source_bytes,
+            parent_fd,
+            destination_bytes,
+            1,  # RENAME_NOREPLACE
+        )
+    else:
+        raise RuntimeError("atomic no-replace directory publication is unavailable")
+    if result == 0:
+        return
+    error = ctypes.get_errno()
+    if error == errno.EEXIST:
+        raise FileExistsError(error, os.strerror(error), destination)
+    raise OSError(error, os.strerror(error), destination)
 
 
 def _open_directory_at(parent_fd: int, name: str) -> int:

@@ -19,8 +19,11 @@ from equipment_deep_research.domain.store import (
     StoreConflictError,
     StoreValidationError,
 )
+from equipment_deep_research.domain import store as store_module
 from equipment_deep_research.harness import session as session_module
 from equipment_deep_research.harness.session import JsonlSessionStore
+from equipment_deep_research.harness.recovery import RecoveryState
+from equipment_deep_research.orchestration.runner import _RunResourceScope
 
 
 CREATED_AT = "2026-07-11T00:00:00+00:00"
@@ -393,6 +396,43 @@ def test_jsonl_session_store_rejects_symlink(tmp_path: Path) -> None:
         JsonlSessionStore("agent.jsonl", root_dir=root)
 
 
+def test_jsonl_session_constructor_failure_cannot_double_close_reused_fd(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root_file = tmp_path / "not-a-directory"
+    root_file.write_text("root", encoding="utf-8")
+    root_fd = os.open(root_file, os.O_RDONLY)
+    sentinel = tmp_path / "sentinel"
+    sentinel.write_text("sentinel", encoding="utf-8")
+    real_dup = session_module.os.dup
+    real_close = session_module.os.close
+    owned: list[int] = []
+    sentinel_fd: list[int] = []
+
+    def capture_dup(descriptor: int) -> int:
+        duplicated = real_dup(descriptor)
+        owned.append(duplicated)
+        return duplicated
+
+    def reuse_after_close(descriptor: int) -> None:
+        real_close(descriptor)
+        if owned and descriptor == owned[0] and not sentinel_fd:
+            sentinel_fd.append(os.open(sentinel, os.O_RDONLY))
+
+    monkeypatch.setattr(session_module.os, "dup", capture_dup)
+    monkeypatch.setattr(session_module.os, "close", reuse_after_close)
+    try:
+        with pytest.raises(ValueError, match="directory"):
+            JsonlSessionStore("agent.jsonl", root_fd=root_fd)
+        assert sentinel_fd == owned
+        assert os.fstat(sentinel_fd[0]).st_size == len("sentinel")
+    finally:
+        real_close(root_fd)
+        if sentinel_fd:
+            real_close(sentinel_fd[0])
+
+
 def test_jsonl_session_store_rejects_leaf_replaced_after_check(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -601,3 +641,70 @@ def test_sqlite_store_close_releases_persistent_connection(tmp_path: Path) -> No
 
     with pytest.raises(RuntimeError, match="closed"):
         store.recover()
+
+
+def test_unbound_sqlite_path_api_does_not_require_descriptor_auditing(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def unavailable() -> Path:
+        raise RuntimeError("SQLite descriptor auditing is unavailable")
+
+    monkeypatch.setattr(store_module, "_descriptor_directory", unavailable)
+    store = SqliteRunStore(tmp_path / "run.db", run_id="run-1")
+    try:
+        assert store.object_count() == 0
+    finally:
+        store.close()
+
+
+def test_sqlite_close_failure_still_releases_every_owned_descriptor(tmp_path: Path) -> None:
+    store = SqliteRunStore(tmp_path / "run.db", run_id="run-1")
+    store.close()
+    database_fd = os.open(tmp_path / "run.db", os.O_RDWR)
+    directory_fd = os.open(tmp_path, os.O_RDONLY | os.O_DIRECTORY)
+    sqlite_fd = os.dup(database_fd)
+
+    class FailingConnection:
+        def close(self) -> None:
+            raise RuntimeError("injected SQLite close failure")
+
+    store._connection = FailingConnection()  # type: ignore[assignment]
+    store._database_fd = database_fd
+    store._database_dir_fd = directory_fd
+    store._sqlite_handle_fd = sqlite_fd
+
+    with pytest.raises(RuntimeError, match="injected SQLite close failure"):
+        store.close()
+
+    for descriptor in (database_fd, directory_fd, sqlite_fd):
+        with pytest.raises(OSError):
+            os.fstat(descriptor)
+
+
+def test_resource_scopes_close_workspace_after_store_close_failure() -> None:
+    events: list[str] = []
+
+    class FailingStore:
+        def close(self) -> None:
+            events.append("store")
+            raise RuntimeError("injected close failure")
+
+    class Workspace:
+        def close(self) -> None:
+            events.append("workspace")
+
+    scope = _RunResourceScope()
+    scope.sqlite_store = FailingStore()  # type: ignore[assignment]
+    scope.workspace = Workspace()  # type: ignore[assignment]
+    with pytest.raises(RuntimeError, match="injected close failure"):
+        scope.close()
+    assert events == ["store", "workspace"]
+
+    events.clear()
+    state = object.__new__(RecoveryState)
+    object.__setattr__(state, "sqlite_store", FailingStore())
+    object.__setattr__(state, "workspace", Workspace())
+    with pytest.raises(RuntimeError, match="injected close failure"):
+        state.close()
+    assert events == ["store", "workspace"]

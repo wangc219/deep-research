@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import sqlite3
 from typing import Any
 
 import pytest
@@ -11,9 +12,11 @@ from equipment_deep_research.domain.workspace import RunWorkspace
 from equipment_deep_research.domain import workspace as workspace_module
 from equipment_deep_research.domain.proposals import TraceProposal
 from equipment_deep_research.domain.store import SqliteRunStore
+from equipment_deep_research.domain import store as store_module
 from equipment_deep_research.harness.session import JsonlSessionStore
 from equipment_deep_research.interfaces import cli
 from equipment_deep_research.orchestration.runner import DeepResearchRunner
+from equipment_deep_research.orchestration import runner as runner_module
 from equipment_deep_research.tools.artifacts import SecureArtifactStore
 
 
@@ -40,6 +43,153 @@ def test_workspace_creates_required_paths(tmp_path: Path) -> None:
     assert workspace.checkpoints_dir.is_dir()
     assert workspace.database_path == workspace.run_dir / "run.db"
     workspace.close()
+
+
+def test_workspace_create_never_binds_an_ordinary_race_replacement(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    output_root = tmp_path / "runs"
+    output_root.mkdir()
+    attacker = tmp_path / "attacker"
+    attacker.mkdir()
+    (attacker / "marker.txt").write_text("untouched", encoding="utf-8")
+    real_publish = workspace_module._rename_noreplace_at
+
+    def race_publish(parent_fd: int, source: str, destination: str) -> None:
+        os.rename(attacker, destination, dst_dir_fd=parent_fd)
+        real_publish(parent_fd, source, destination)
+
+    monkeypatch.setattr(workspace_module, "_rename_noreplace_at", race_publish)
+
+    with pytest.raises(FileExistsError):
+        RunWorkspace.create(output_root, "run-1")
+
+    assert (output_root / "run-1" / "marker.txt").read_text(encoding="utf-8") == "untouched"
+    assert not any(path.name.endswith(".creating") for path in output_root.iterdir())
+
+
+def test_workspace_create_fails_closed_without_atomic_publication(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    output_root = tmp_path / "runs"
+
+    def unavailable(*args: object, **kwargs: object) -> None:
+        raise RuntimeError("atomic no-replace directory publication is unavailable")
+
+    monkeypatch.setattr(workspace_module, "_rename_noreplace_at", unavailable)
+
+    with pytest.raises(RuntimeError, match="atomic no-replace"):
+        RunWorkspace.create(output_root, "run-1")
+
+    assert not (output_root / "run-1").exists()
+    assert list(output_root.iterdir()) == []
+
+
+def test_bound_sqlite_rejects_aba_path_replacement_before_attacker_write(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    output_root = tmp_path / "runs"
+    workspace = RunWorkspace.create(output_root, "run-1")
+    database_fd = workspace.dup_database_fd()
+    database_dir_fd = workspace.dup_run_fd()
+    attacker_root = tmp_path / "attacker-root"
+    attacker_run = attacker_root / "run-1"
+    attacker_run.mkdir(parents=True)
+    attacker_db = attacker_run / "run.db"
+    connection = sqlite3.connect(attacker_db)
+    connection.execute("CREATE TABLE attacker_marker(value TEXT)")
+    connection.execute("INSERT INTO attacker_marker VALUES ('untouched')")
+    connection.commit()
+    connection.close()
+    original_bytes = attacker_db.read_bytes()
+    real_connect = store_module.sqlite3.connect
+
+    def aba_connect(*args: object, **kwargs: object) -> sqlite3.Connection:
+        bound_root = tmp_path / "bound-root"
+        output_root.rename(bound_root)
+        attacker_root.rename(output_root)
+        opened = real_connect(*args, **kwargs)
+        output_root.rename(attacker_root)
+        bound_root.rename(output_root)
+        return opened
+
+    monkeypatch.setattr(store_module.sqlite3, "connect", aba_connect)
+    try:
+        with pytest.raises(RuntimeError, match="bound database file"):
+            SqliteRunStore(
+                workspace.database_path,
+                run_id="run-1",
+                database_fd=database_fd,
+                database_dir_fd=database_dir_fd,
+            )
+    finally:
+        os.close(database_fd)
+        os.close(database_dir_fd)
+        workspace.close()
+
+    assert attacker_db.read_bytes() == original_bytes
+    assert not (attacker_run / "run.db-wal").exists()
+    assert not (attacker_run / "run.db-shm").exists()
+
+
+def test_bound_sqlite_fails_closed_without_descriptor_auditing(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace = RunWorkspace.create(tmp_path / "runs", "run-1")
+    database_fd = workspace.dup_database_fd()
+    database_dir_fd = workspace.dup_run_fd()
+
+    def unavailable() -> Path:
+        raise RuntimeError("SQLite descriptor auditing is unavailable")
+
+    monkeypatch.setattr(store_module, "_descriptor_directory", unavailable)
+    try:
+        with pytest.raises(RuntimeError, match="descriptor auditing"):
+            SqliteRunStore(
+                workspace.database_path,
+                run_id="run-1",
+                database_fd=database_fd,
+                database_dir_fd=database_dir_fd,
+            )
+    finally:
+        os.close(database_fd)
+        os.close(database_dir_fd)
+        workspace.close()
+
+
+def test_runner_closes_workspace_when_sqlite_constructor_fails(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: list[RunWorkspace] = []
+    real_create = RunWorkspace.create
+
+    def capture_create(cls: type[RunWorkspace], output_root: Path, run_id: str) -> RunWorkspace:
+        workspace = real_create(output_root, run_id)
+        captured.append(workspace)
+        return workspace
+
+    class FailingStore:
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            raise RuntimeError("injected store construction failure")
+
+    monkeypatch.setattr(runner_module.RunWorkspace, "create", classmethod(capture_create))
+    monkeypatch.setattr(runner_module, "SqliteRunStore", FailingStore)
+
+    with pytest.raises(RuntimeError, match="injected store construction failure"):
+        _runner(tmp_path).run(
+            mode="fake",
+            topic="cleanup",
+            research_route="new_winning_mechanism",
+            run_id="cleanup-run",
+        )
+
+    with pytest.raises(RuntimeError, match="workspace is closed"):
+        captured[0].dup_run_fd()
 
 
 @pytest.mark.parametrize("replacement", ["symlink", "directory"])

@@ -208,16 +208,20 @@ class DeepResearchRunner:
                 return result
         else:
             workspace = RunWorkspace.create(self.output_root, run_id)
+            resources.bind_workspace(workspace)
             database_fd = workspace.dup_database_fd()
+            database_dir_fd = workspace.dup_run_fd()
             try:
                 sqlite_store = SqliteRunStore(
                     workspace.database_path,
                     run_id=run_id,
                     database_fd=database_fd,
+                    database_dir_fd=database_dir_fd,
                 )
             finally:
                 os.close(database_fd)
-            resources.bind(workspace, sqlite_store)
+                os.close(database_dir_fd)
+            resources.bind_store(sqlite_store)
             self._emit_hook("after_workspace_created", workspace)
             store = DomainStore()
             store.add_problem(problem)
@@ -270,6 +274,7 @@ class DeepResearchRunner:
             session_store_factory=self.session_store_factory,
             workspace=workspace,
         )
+        resources.bind_scheduler(scheduler)
         reports_by_agent = {report.agent_id: report for report in worker_reports}
         agents_by_id = {agent.agent_id: agent for agent in selected_agents}
         for agent_id in selected_agent_ids:
@@ -859,19 +864,36 @@ class _RunResourceScope:
     def __init__(self) -> None:
         self.workspace: RunWorkspace | None = None
         self.sqlite_store: SqliteRunStore | None = None
+        self.scheduler: DiscoveryScheduler | None = None
+
+    def bind_workspace(self, workspace: RunWorkspace) -> None:
+        self.workspace = workspace
+
+    def bind_store(self, sqlite_store: SqliteRunStore) -> None:
+        self.sqlite_store = sqlite_store
+
+    def bind_scheduler(self, scheduler: DiscoveryScheduler) -> None:
+        self.scheduler = scheduler
 
     def bind(
         self,
         workspace: RunWorkspace,
         sqlite_store: SqliteRunStore,
     ) -> None:
-        self.workspace = workspace
-        self.sqlite_store = sqlite_store
+        self.bind_workspace(workspace)
+        self.bind_store(sqlite_store)
 
     def close(self) -> None:
-        if self.sqlite_store is not None:
-            self.sqlite_store.close()
-            self.sqlite_store = None
-        if self.workspace is not None:
-            self.workspace.close()
-            self.workspace = None
+        scheduler, self.scheduler = self.scheduler, None
+        sqlite_store, self.sqlite_store = self.sqlite_store, None
+        workspace, self.workspace = self.workspace, None
+        try:
+            if scheduler is not None:
+                scheduler.close()
+        finally:
+            try:
+                if sqlite_store is not None:
+                    sqlite_store.close()
+            finally:
+                if workspace is not None:
+                    workspace.close()

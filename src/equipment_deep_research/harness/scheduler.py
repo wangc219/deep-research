@@ -80,6 +80,15 @@ class DiscoveryScheduler:
         )
         self.source_materials = source_materials if source_materials is not None else []
 
+    def close(self) -> None:
+        self.materializer.close()
+
+    def __enter__(self) -> "DiscoveryScheduler":
+        return self
+
+    def __exit__(self, *exc_info: object) -> None:
+        self.close()
+
     def run_baseline_agents(
         self,
         *,

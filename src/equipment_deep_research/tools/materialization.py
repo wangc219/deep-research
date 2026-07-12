@@ -61,6 +61,15 @@ class EvidenceMaterializer:
         self.resolver = resolver or socket.getaddrinfo
         self.transport = transport or PinnedHTTPTransport()
 
+    def close(self) -> None:
+        self.artifacts.close()
+
+    def __enter__(self) -> "EvidenceMaterializer":
+        return self
+
+    def __exit__(self, *exc_info: object) -> None:
+        self.close()
+
     def materialize(self, evidence: EvidenceCard, *, mode: str) -> MaterializedEvidence:
         parsed, rejection_reason = _parse_network_url(evidence.source_url)
         if rejection_reason:

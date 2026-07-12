@@ -47,15 +47,14 @@ class JsonlSessionStore:
                 raise ValueError("root_fd must reference an open directory") from exc
             root_stat = os.fstat(self._root_fd)
             if not stat.S_ISDIR(root_stat.st_mode):
-                os.close(self._root_fd)
+                self.close()
                 raise ValueError("root_fd must reference a directory")
             self.root_dir = Path(root_label) if root_label is not None else Path(".")
             self.anchor_dir = None
             try:
                 self.relative_path = _relative_handle_path(path)
             except BaseException:
-                os.close(self._root_fd)
-                self._root_fd = None
+                self.close()
                 raise
         else:
             requested_root = Path(anchor_dir if anchor_dir is not None else root_dir)
@@ -71,8 +70,7 @@ class JsonlSessionStore:
                     canonical_root=self.root_dir,
                 )
             except BaseException:
-                os.close(self._root_fd)
-                self._root_fd = None
+                self.close()
                 raise
         self.path = self.root_dir / self.relative_path
         root_identity = _identity(os.fstat(self._root_fd))
@@ -83,7 +81,7 @@ class JsonlSessionStore:
             with self._lock:
                 self._validate_existing_path()
         except BaseException:
-            os.close(self._root_fd)
+            self.close()
             raise
 
     def close(self) -> None:

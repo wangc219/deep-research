@@ -83,3 +83,68 @@ crash+resume smoke 覆盖 agent 中途、最后 baseline 后、engine 后最终�
 - 安全 artifact/session 路径依赖 `O_NOFOLLOW`、`O_DIRECTORY` 与 dirfd 操作；平台缺少这些原语时明确 fail closed。
 - SQLite fd 绑定路径解析当前支持 macOS `F_GETPATH` 与 Linux `/proc/self/fd`；缺失时 fail closed。遭遇恶意 rename 后，返回结果中的路径字符串可能不再指向绑定 inode，安全写入权威始终是持有 fd。
 - `RealAgentProvider` 仍为模板占位，真实模型循环和真实搜索属于 Phase 2。
+
+## 最终复审修复
+
+### Reviewer finding 验证
+
+六项 finding 均在 `f90741c` 上确认有效，没有因可移植性或正确性原因驳回的项：
+
+- `RunWorkspace.create` 原实现的 `mkdir(run_id)` 与首次 `lstat/open` 之间确实可接受攻击者替换的普通目录。现改为随机临时目录先打开并绑定 inode，再通过 macOS `renameatx_np(RENAME_EXCL)` 或 Linux `renameat2(RENAME_NOREPLACE)` 原子发布；原语缺失时 fail closed。确定性竞争测试证明目标名被攻击者抢占时不绑定、不修改攻击者目录，并清理临时目录。
+- Python 标准库 SQLite 不能直接从既有 fd 打开带 WAL 的数据库；`F_GETPATH`/`/proc/self/fd` 反解路径后的 pathname stat 不能证明 SQLite 实际打开的 handle。正确替代是在保留持久连接与 WAL 语义的同时，使用 `mode=rw` 禁止错误 namespace 创建 DB，在任何 schema 写入前审计进程 fd 表并匹配绑定 DB inode；runner/recovery 同时传入绑定 run-dir fd，WAL/SHM 必须由该目录的 regular-file inode 且由进程持有。SQLite 的 POSIX 同 inode fd 复用只在绑定目录已有打开的 WAL/SHM 时接受。macOS 使用 `/dev/fd`，Linux 使用 `/proc/self/fd`，缺失时 fail closed。ABA 回归证明攻击者 DB、WAL、SHM 保持未修改。
+- `JsonlSessionStore` 构造失败路径确实会在未清空 `_root_fd` 时关闭，随后 `__del__` 可能关闭被 OS 复用的 descriptor。所有失败路径现统一调用先清空所有权的幂等 `close()`；回归测试在首次 close 内立即复用同一 fd，并证明 sentinel fd 仍然打开。
+- fresh runner 原先在 store 构造成功后才注册 workspace。现在 workspace 创建后立即进入 `_RunResourceScope`，store 和 scheduler 分阶段绑定；store 构造失败测试证明 workspace 已关闭。
+- runner、recovery 和 store close 链原先会被前一个 close 异常截断。现使用嵌套 `try/finally`，并在关闭前清空所有权；SQLite close 失败仍释放 DB/run-dir/audit fd，store close 失败仍关闭 workspace。
+- workspace-free scheduler 原先依赖析构释放 artifact fd。`EvidenceMaterializer` 与 `DiscoveryScheduler` 现提供幂等 `close`/context-manager 生命周期，runner scope 确定性关闭 scheduler；standalone 回归证明 artifact fd 无泄漏且重复 close 安全。
+
+### Fresh 验证结果
+
+```text
+pytest -q tests/equipment_deep_research/e2e/test_resume_run.py
+29 passed in 0.76s
+
+pytest -q tests/equipment_deep_research/integration/test_cli_workspace.py
+40 passed in 0.22s
+
+pytest -q tests/equipment_deep_research/integration/test_agent_harness.py
+30 passed in 0.18s
+
+pytest -q tests/equipment_deep_research/unit/test_store_savepoint.py
+37 passed in 0.10s
+
+pytest -q tests/equipment_deep_research/unit/test_secure_artifacts.py
+2 passed in 0.01s
+
+pytest -q tests/equipment_deep_research/e2e/test_resume_run.py \
+  tests/equipment_deep_research/integration/test_cli_workspace.py \
+  tests/equipment_deep_research/integration/test_agent_harness.py \
+  tests/equipment_deep_research/unit/test_store_savepoint.py \
+  tests/equipment_deep_research/unit/test_secure_artifacts.py
+138 passed in 1.13s
+
+pytest -q tests/equipment_deep_research/unit/test_secure_artifacts.py \
+  tests/equipment_deep_research/unit/test_http_transport.py
+29 passed in 0.05s
+
+pytest -q tests/equipment_deep_research/integration/test_agent_harness.py \
+  tests/equipment_deep_research/unit/test_agent_loop.py \
+  tests/equipment_deep_research/unit/test_http_transport.py \
+  tests/equipment_deep_research/unit/test_runtime_types.py
+101 passed in 0.26s
+
+pytest -q
+253 passed in 1.61s
+
+ruff check src/equipment_deep_research tests/equipment_deep_research
+All checks passed!
+
+python -m compileall -q src/equipment_deep_research tests/equipment_deep_research
+exit 0
+
+git diff --check
+exit 0
+```
+
+全仓 `ruff check src tests` 仍报告 `knowledgegraph/demand_discovery` 下 6 个既有未使用 import；Task 5 scoped Ruff clean，本次未改动或回退这些其他所有者文件。
+
+fresh CLI smoke 与同 run completed-resume smoke 均返回 `Status: completed`。恢复后 SQLite 为 `objects=14`、`trace=12`、`run_resumed=1`、稳定文件总数 `18`；E2E 的 completed-resume provider 断言保持 `0`，DB trace 与 `trace.jsonl` 一致。

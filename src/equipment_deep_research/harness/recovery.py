@@ -48,8 +48,10 @@ class RecoveryState:
     last_savepoint_id: str
 
     def close(self) -> None:
-        self.sqlite_store.close()
-        self.workspace.close()
+        try:
+            self.sqlite_store.close()
+        finally:
+            self.workspace.close()
 
     def __enter__(self) -> "RecoveryState":
         return self
@@ -76,14 +78,17 @@ class RecoveryManager:
         sqlite_store: SqliteRunStore | None = None
         try:
             database_fd = workspace.dup_database_fd()
+            database_dir_fd = workspace.dup_run_fd()
             try:
                 sqlite_store = SqliteRunStore(
                     workspace.database_path,
                     run_id=run_id,
                     database_fd=database_fd,
+                    database_dir_fd=database_dir_fd,
                 )
             finally:
                 os.close(database_fd)
+                os.close(database_dir_fd)
             recovery_summary = sqlite_store.recover()
             last_savepoint = recovery_summary.get("last_checkpoint")
             if not isinstance(last_savepoint, str) or not last_savepoint:
@@ -132,14 +137,18 @@ class RecoveryManager:
                 last_savepoint_id=latest_savepoint,
             )
         except sqlite3.DatabaseError as exc:
-            if sqlite_store is not None:
-                sqlite_store.close()
-            workspace.close()
+            try:
+                if sqlite_store is not None:
+                    sqlite_store.close()
+            finally:
+                workspace.close()
             raise RecoveryError(f"SQLite run database is invalid: {exc}") from exc
         except BaseException:
-            if sqlite_store is not None:
-                sqlite_store.close()
-            workspace.close()
+            try:
+                if sqlite_store is not None:
+                    sqlite_store.close()
+            finally:
+                workspace.close()
             raise
 
     @staticmethod

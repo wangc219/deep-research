@@ -4,6 +4,7 @@ import asyncio
 from collections.abc import AsyncIterator, Mapping, Sequence
 from datetime import datetime
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -14,11 +15,12 @@ from equipment_deep_research.domain.proposals import (
     DomainWriteProposal,
     TraceProposal,
 )
-from equipment_deep_research.domain.store import SqliteRunStore
+from equipment_deep_research.domain.store import DomainStore, SqliteRunStore, TraceStore
 from equipment_deep_research.harness.agent_harness import AgentHarness
 from equipment_deep_research.harness.budget import Budget, BudgetExceededError
 from equipment_deep_research.harness.event_bus import EventBus
 from equipment_deep_research.harness.session import JsonlSessionStore
+from equipment_deep_research.harness.scheduler import DiscoveryScheduler
 from equipment_deep_research.providers.base import (
     ModelMessage,
     ProviderFinalTurn,
@@ -1296,3 +1298,24 @@ def test_phase_zero_permission_registry_api_is_preserved() -> None:
     assert "fetch_page" in registry.known_tools
     assert callable(registry.validate_agent_tools)
     assert callable(registry.enforce_active_tool)
+
+
+def test_workspace_free_scheduler_close_releases_artifact_fd_idempotently(
+    tmp_path: Path,
+) -> None:
+    run_dir = tmp_path / "run"
+    scheduler = DiscoveryScheduler(
+        run_id="run-1",
+        run_dir=run_dir,
+        provider=object(),  # type: ignore[arg-type]
+        store=DomainStore(),
+        trace=TraceStore(),
+    )
+    descriptor = scheduler.materializer.artifacts._root_fd
+    assert descriptor is not None
+
+    scheduler.close()
+    scheduler.close()
+
+    with pytest.raises(OSError):
+        os.fstat(descriptor)
