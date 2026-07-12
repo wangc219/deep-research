@@ -21,13 +21,25 @@ class UnsupportedPlatformError(RuntimeError):
 class JsonlSessionStore:
     """Rooted, thread-safe append-only JSONL session storage."""
 
-    def __init__(self, path: str | Path, *, root_dir: Path) -> None:
+    def __init__(
+        self,
+        path: str | Path,
+        *,
+        root_dir: Path | None = None,
+        anchor_dir: Path | None = None,
+    ) -> None:
         _require_secure_platform()
-        requested_root = Path(root_dir)
-        requested_root.mkdir(parents=True, exist_ok=True)
+        if (root_dir is None) == (anchor_dir is None):
+            raise ValueError("provide exactly one of root_dir or anchor_dir")
+        requested_root = Path(anchor_dir if anchor_dir is not None else root_dir)
+        if anchor_dir is None:
+            requested_root.mkdir(parents=True, exist_ok=True)
+        elif not requested_root.exists():
+            raise FileNotFoundError(f"anchor_dir does not exist: {requested_root}")
         self.root_dir = requested_root.resolve(strict=True)
         if not self.root_dir.is_dir():
-            raise ValueError("root_dir must resolve to a directory")
+            raise ValueError("session root must resolve to a directory")
+        self.anchor_dir = self.root_dir if anchor_dir is not None else None
         self.relative_path = _relative_session_path(
             path,
             requested_root=requested_root,

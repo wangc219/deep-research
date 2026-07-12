@@ -155,20 +155,19 @@ class DeepResearchRunner:
             )
             self._write_checkpoint_file(workspace, checkpoint, savepoint_id)
             if checkpoint.status == "completed":
-                if not self._outputs_complete(workspace):
-                    self._write_recovered_outputs(
-                        workspace=workspace,
-                        mode=mode,
-                        problem=problem,
-                        route=route,
-                        selected_agent_ids=selected_agent_ids,
-                        coverage=coverage,
-                        worker_reports=worker_reports,
-                        source_materials=source_materials,
-                        store=store,
-                        trace=trace,
-                        analyst_confirmed=analyst_confirmed,
-                    )
+                self._write_recovered_outputs(
+                    workspace=workspace,
+                    mode=mode,
+                    problem=problem,
+                    route=route,
+                    selected_agent_ids=selected_agent_ids,
+                    coverage=coverage,
+                    worker_reports=worker_reports,
+                    source_materials=source_materials,
+                    store=store,
+                    trace=trace,
+                    analyst_confirmed=analyst_confirmed,
+                )
                 return self._result(
                     run_id=run_id,
                     run_dir=workspace.run_dir,
@@ -228,6 +227,7 @@ class DeepResearchRunner:
             mode=mode,
             source_materials=source_materials,
             session_store_factory=self.session_store_factory,
+            workspace=workspace,
         )
         reports_by_agent = {report.agent_id: report for report in worker_reports}
         agents_by_id = {agent.agent_id: agent for agent in selected_agents}
@@ -576,25 +576,32 @@ class DeepResearchRunner:
         session_ref = Path(report.session_path).name
         marker_seed = f"{run_id}:{task_id}:{checkpoint_id}:{batch_hash}:{session_ref}"
         marker_id = f"runner-session-{sha256(marker_seed.encode('utf-8')).hexdigest()[:24]}"
+        marker_event = TraceEvent(
+            event_id=marker_id,
+            event_type="session_write_failed",
+            actor=report.agent_id,
+            summary=f"session savepoint write failed for {task_id}",
+            payload={
+                "marker_id": marker_id,
+                "committed_checkpoint_id": checkpoint_id,
+                "batch_hash": batch_hash,
+                "turn_index": 1,
+                "task_id": task_id,
+                "agent_id": report.agent_id,
+                "execution_id": report.worker_report_id,
+                "session_ref": session_ref,
+                "session_event": "savepoint",
+                "recovery_status": "reconcile_required",
+            },
+        )
         sqlite_store.commit(
             (),
             (
                 TraceProposal(
                     proposal_id=marker_id,
-                    event_type="session_write_failed",
+                    event_type=marker_event.event_type,
                     actor=report.agent_id,
-                    payload={
-                        "marker_id": marker_id,
-                        "committed_checkpoint_id": checkpoint_id,
-                        "batch_hash": batch_hash,
-                        "turn_index": 1,
-                        "task_id": task_id,
-                        "agent_id": report.agent_id,
-                        "execution_id": report.worker_report_id,
-                        "session_ref": session_ref,
-                        "session_event": "savepoint",
-                        "recovery_status": "reconcile_required",
-                    },
+                    payload=to_plain(marker_event),
                 ),
             ),
         )
@@ -646,19 +653,6 @@ class DeepResearchRunner:
         )
         workspace.write_checkpoint_text(f"{savepoint_id}.json", encoded)
         workspace.write_checkpoint_text("latest.json", encoded)
-
-    @staticmethod
-    def _outputs_complete(workspace: RunWorkspace) -> bool:
-        return all(
-            workspace.run_file_is_regular(name)
-            for name in (
-                "report.md",
-                "capability_images.json",
-                "round_summary.json",
-                "domain.jsonl",
-                "trace.jsonl",
-            )
-        )
 
     def _write_recovered_outputs(
         self,

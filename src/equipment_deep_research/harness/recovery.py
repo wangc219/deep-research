@@ -6,7 +6,7 @@ from pathlib import Path
 import sqlite3
 from typing import Any, Mapping, cast
 
-from equipment_deep_research.domain.identifiers import safe_identifier_path
+from equipment_deep_research.domain.identifiers import validate_internal_identifier
 from equipment_deep_research.domain.messages import FINALIZE_TASK_ID, RunCheckpoint
 from equipment_deep_research.domain.models import (
     AgentRecommendation,
@@ -20,6 +20,7 @@ from equipment_deep_research.domain.models import (
     TraceEvent,
     WinningMechanismStageOutput,
     now_iso,
+    to_plain,
 )
 from equipment_deep_research.domain.proposals import TraceProposal
 from equipment_deep_research.domain.store import DomainStore, SqliteRunStore, TraceStore
@@ -204,8 +205,8 @@ class RecoveryManager:
                 )
             try:
                 session = JsonlSessionStore(
-                    session_ref,
-                    root_dir=workspace.sessions_dir,
+                    workspace.session_relative_path(session_ref),
+                    anchor_dir=workspace.output_root,
                 )
                 records = session.read_all()
             except (OSError, TypeError, ValueError, RuntimeError) as exc:
@@ -253,23 +254,30 @@ class RecoveryManager:
                         "schema_version": "1.0",
                     }
                 )
+            reconciled_event = TraceEvent(
+                event_id=f"{marker_id}-reconciled",
+                event_type="session_reconciled",
+                actor=agent_id,
+                summary=f"session write reconciled for {task_id}",
+                payload={
+                    "marker_id": marker_id,
+                    "checkpoint_id": checkpoint_id,
+                    "batch_hash": batch_hash,
+                    "turn_index": turn_index,
+                    "task_id": task_id,
+                    "agent_id": agent_id,
+                    "session_ref": session_ref,
+                    "recovery_status": "reconciled",
+                },
+            )
             sqlite_store.commit(
                 (),
                 (
                     TraceProposal(
-                        proposal_id=f"{marker_id}-reconciled",
-                        event_type="session_reconciled",
+                        proposal_id=reconciled_event.event_id,
+                        event_type=reconciled_event.event_type,
                         actor=agent_id,
-                        payload={
-                            "marker_id": marker_id,
-                            "checkpoint_id": checkpoint_id,
-                            "batch_hash": batch_hash,
-                            "turn_index": turn_index,
-                            "task_id": task_id,
-                            "agent_id": agent_id,
-                            "session_ref": session_ref,
-                            "recovery_status": "reconciled",
-                        },
+                        payload=to_plain(reconciled_event),
                     ),
                 ),
             )
@@ -283,26 +291,24 @@ class RecoveryManager:
         reports_by_agent = {report.agent_id: report for report in worker_reports}
         tails: dict[str, list[dict[str, Any]]] = {}
         for agent_id in checkpoint.selected_agent_ids:
-            path = safe_identifier_path(
-                workspace.sessions_dir,
+            validated_agent_id = validate_internal_identifier(
                 agent_id,
-                suffix=".jsonl",
                 field_name="agent_id",
             )
-            if not path.exists():
-                if f"baseline:{agent_id}" in checkpoint.completed_task_ids:
-                    raise RecoveryError(
-                        f"completed agent session is missing: {agent_id}"
-                    )
-                tails[agent_id] = []
-                continue
+            session_ref = f"{validated_agent_id}.jsonl"
             try:
-                session = JsonlSessionStore(path, root_dir=workspace.sessions_dir)
-                tails[agent_id] = session.read_tail(2)
+                session = JsonlSessionStore(
+                    workspace.session_relative_path(session_ref),
+                    anchor_dir=workspace.output_root,
+                )
+                records = session.read_all()
             except (OSError, TypeError, ValueError, RuntimeError) as exc:
                 raise RecoveryError(f"agent session is invalid for {agent_id}: {exc}") from exc
+            if not records and f"baseline:{agent_id}" in checkpoint.completed_task_ids:
+                raise RecoveryError(f"completed agent session is missing: {agent_id}")
+            tails[agent_id] = records[-2:]
             report = reports_by_agent.get(agent_id)
-            if report is not None and Path(report.session_path).name != path.name:
+            if report is not None and Path(report.session_path).name != session_ref:
                 raise RecoveryError(f"worker report session mismatch for {agent_id}")
         return tails
 

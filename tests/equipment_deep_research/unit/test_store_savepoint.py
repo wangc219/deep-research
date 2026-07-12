@@ -437,6 +437,27 @@ def test_jsonl_session_store_rejects_ancestor_symlink(tmp_path: Path) -> None:
         JsonlSessionStore("linked/agent.jsonl", root_dir=root)
 
 
+def test_jsonl_session_store_anchor_rejects_replaced_session_component(
+    tmp_path: Path,
+) -> None:
+    output_root = tmp_path / "runs"
+    sessions = output_root / "run-1" / "agent_sessions"
+    sessions.mkdir(parents=True)
+    store = JsonlSessionStore(
+        "run-1/agent_sessions/agent.jsonl",
+        anchor_dir=output_root.resolve(strict=True),
+    )
+    external = tmp_path / "external-sessions"
+    external.mkdir()
+    sessions.rmdir()
+    sessions.symlink_to(external, target_is_directory=True)
+
+    with pytest.raises(ValueError, match="symlink"):
+        store.append({"blocked": True})
+
+    assert list(external.iterdir()) == []
+
+
 @pytest.mark.parametrize("candidate", ["../outside.jsonl", "nested/../../outside.jsonl"])
 def test_jsonl_session_store_rejects_paths_outside_root(
     tmp_path: Path,

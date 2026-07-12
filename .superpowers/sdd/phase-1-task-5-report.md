@@ -45,6 +45,15 @@ python3 -m pytest -q
 最终安全 stat race 补强后：workspace writer/stat 8 passed；resume E2E + domain contracts 30 passed。
 ```
 
+## 第二轮审查修复
+
+- 新增项目自有 `SecureArtifactStore`，保持旧 `ArtifactStore` 的 content-addressed ref、扩展名和 metadata schema；runner 的 `EvidenceMaterializer` 通过 `RunWorkspace` 从 run dirfd 逐组件打开 `artifacts/`，不再裸写 artifact 路径。
+- `JsonlSessionStore` 新增显式 `anchor_dir`，同时保留 Harness 使用的 `path + root_dir` 接口。runner/recovery 以 canonical output root 为锚，逐组件 no-follow 打开 `run_id/agent_sessions/session_ref`，不再把可变 `agent_sessions.resolve()` 当信任根。
+- completed resume 在提交 `run_resumed` 后，无条件使用 SQLite 恢复的 domain/trace/checkpoint 状态安全重写五个稳定文件；`trace.jsonl` payload 与数据库 trace payload 保持一致，provider 调用仍为 0。
+- 新增 artifact/session ancestor 替换 TOCTOU、reconciliation 外写阻断、安全原语缺失、SecureArtifactStore 兼容 metadata、completed resume 陈旧文件与审计链刷新测试。
+
+本轮 fresh 结果：resume E2E `24 passed`；resume E2E + Harness `53 passed`；材料化/安全 artifact `52 passed`；Phase 0 组合 `72 passed`；全量 `229 passed`。
+
 ## Smoke
 
 fresh smoke：`status=completed`、ResearchProblem=1、finalize completed、stage=3、report=1；七类产物、`run.db`、checkpoint snapshots 与 `latest.json` 齐全。
@@ -61,4 +70,5 @@ crash+resume smoke 覆盖 agent 中途、最后 baseline 后、engine 后最终�
 
 - 当前恢复粒度是现有顺序 baseline agent 与 winning/report 闭环，不宣称真正并行或分布式恢复。
 - checkpoint JSON 文件是审计快照，SQLite `run.db` 是恢复权威来源。
+- 安全 artifact/session 路径依赖 `O_NOFOLLOW`、`O_DIRECTORY` 与 dirfd 操作；平台缺少这些原语时明确 fail closed。
 - `RealAgentProvider` 仍为模板占位，真实模型循环和真实搜索属于 Phase 2。

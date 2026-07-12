@@ -8,8 +8,8 @@ from typing import Any, Callable
 from urllib.parse import urljoin, urlsplit
 
 from equipment_deep_research.domain.models import EvidenceCard
+from equipment_deep_research.tools.artifacts import SecureArtifactStore
 from equipment_deep_research.tools.http_transport import HTTPTransport, PinnedHTTPTransport
-from knowledgegraph.demand_discovery.tools.artifacts import ArtifactStore
 
 
 @dataclass(frozen=True)
@@ -41,14 +41,21 @@ _NAT64_LOCAL_USE_NETWORK = ipaddress.ip_network("64:ff9b:1::/48")
 class EvidenceMaterializer:
     def __init__(
         self,
-        artifact_dir: str | Path,
+        artifact_dir: str | Path | None = None,
         *,
+        artifact_store: SecureArtifactStore | None = None,
         timeout_seconds: int = 8,
         max_redirects: int = 5,
         resolver: Callable[..., list[tuple[Any, ...]]] | None = None,
         transport: HTTPTransport | None = None,
     ) -> None:
-        self.artifacts = ArtifactStore(artifact_dir)
+        if artifact_store is not None and artifact_dir is not None:
+            raise ValueError("provide artifact_dir or artifact_store, not both")
+        if artifact_store is None:
+            if artifact_dir is None:
+                raise ValueError("artifact_dir is required")
+            artifact_store = SecureArtifactStore(artifact_dir)
+        self.artifacts = artifact_store
         self.timeout_seconds = timeout_seconds
         self.max_redirects = max_redirects
         self.resolver = resolver or socket.getaddrinfo

@@ -23,6 +23,8 @@ class RunWorkspace:
     artifacts_dir: Path
     checkpoints_dir: Path
     database_path: Path
+    output_root: Path
+    run_id: str
 
     def write_run_text(self, relative_path: str | Path, text: str) -> None:
         self.write_run_bytes(relative_path, text.encode("utf-8"))
@@ -36,6 +38,30 @@ class RunWorkspace:
             text.encode("utf-8"),
         )
 
+    def write_artifact_bytes(self, relative_path: str | Path, content: bytes) -> None:
+        _RootedAtomicWriter(self.run_dir).write(
+            Path("artifacts") / _relative_workspace_path(relative_path),
+            content,
+        )
+
+    def read_artifact_bytes(self, relative_path: str | Path) -> bytes:
+        return _RootedAtomicWriter(self.run_dir).read(
+            Path("artifacts") / _relative_workspace_path(relative_path)
+        )
+
+    def artifact_file_is_regular(self, relative_path: str | Path) -> bool:
+        return _RootedAtomicWriter(self.run_dir).is_regular_file(
+            Path("artifacts") / _relative_workspace_path(relative_path)
+        )
+
+    def artifact_file_names(self) -> list[str]:
+        return _RootedAtomicWriter(self.run_dir).list_regular_file_names("artifacts")
+
+    def session_relative_path(self, relative_path: str | Path) -> Path:
+        return Path(self.run_id) / "agent_sessions" / _relative_workspace_path(
+            relative_path
+        )
+
     def run_file_is_regular(self, relative_path: str | Path) -> bool:
         return _RootedAtomicWriter(self.run_dir).is_regular_file(relative_path)
 
@@ -46,9 +72,10 @@ class RunWorkspace:
         output_root = Path(output_root)
         output_root.mkdir(parents=True, exist_ok=True)
         resolved_root = output_root.resolve()
-        run_dir = output_root / run_id
-        run_dir.mkdir(exist_ok=False)
-        if run_dir.resolve(strict=True).parent != resolved_root:
+        requested_run_dir = output_root / run_id
+        requested_run_dir.mkdir(exist_ok=False)
+        run_dir = requested_run_dir.resolve(strict=True)
+        if run_dir.parent != resolved_root:
             raise ValueError("run_id must stay within output_root")
 
         sessions_dir = run_dir / "agent_sessions"
@@ -62,6 +89,8 @@ class RunWorkspace:
             artifacts_dir=artifacts_dir,
             checkpoints_dir=checkpoints_dir,
             database_path=run_dir / "run.db",
+            output_root=resolved_root,
+            run_id=run_id,
         )
 
     @classmethod
@@ -73,13 +102,14 @@ class RunWorkspace:
         if not output_root.is_dir():
             raise ValueError("output_root must be a directory")
         resolved_root = output_root.resolve(strict=True)
-        run_dir = output_root / run_id
-        if not run_dir.exists():
-            raise FileNotFoundError(f"run directory does not exist: {run_dir}")
-        _require_directory(run_dir, "run_dir")
-        resolved_run = run_dir.resolve(strict=True)
+        requested_run_dir = output_root / run_id
+        if not requested_run_dir.exists():
+            raise FileNotFoundError(f"run directory does not exist: {requested_run_dir}")
+        _require_directory(requested_run_dir, "run_dir")
+        resolved_run = requested_run_dir.resolve(strict=True)
         if resolved_run.parent != resolved_root:
             raise ValueError("run_dir must stay within output_root")
+        run_dir = resolved_run
 
         sessions_dir = run_dir / "agent_sessions"
         artifacts_dir = run_dir / "artifacts"
@@ -108,6 +138,8 @@ class RunWorkspace:
             artifacts_dir=artifacts_dir,
             checkpoints_dir=checkpoints_dir,
             database_path=database_path,
+            output_root=resolved_root,
+            run_id=run_id,
         )
 
 
@@ -207,6 +239,51 @@ class _RootedAtomicWriter:
         finally:
             os.close(parent_fd)
 
+    def read(self, relative_path: str | Path) -> bytes:
+        _require_secure_writer_platform()
+        relative = _relative_workspace_path(relative_path)
+        parent_fd = self._open_parent(relative)
+        descriptor: int | None = None
+        try:
+            existing = _lstat_at(relative.name, parent_fd)
+            if existing is None:
+                raise FileNotFoundError(relative)
+            _require_regular_file(existing, relative)
+            descriptor = _open_at(
+                relative.name,
+                os.O_RDONLY | _close_on_exec() | _no_follow(),
+                dir_fd=parent_fd,
+            )
+            opened = os.fstat(descriptor)
+            _require_regular_file(opened, relative)
+            if _identity(existing) != _identity(opened):
+                raise RuntimeError(f"workspace path changed during access: {relative}")
+            return _read_all(descriptor)
+        finally:
+            if descriptor is not None:
+                os.close(descriptor)
+            os.close(parent_fd)
+
+    def list_regular_file_names(self, relative_dir: str | Path) -> list[str]:
+        _require_secure_writer_platform()
+        _require_secure_list_platform()
+        candidate = Path(relative_dir)
+        relative = (
+            Path()
+            if candidate == Path(".")
+            else _relative_workspace_path(candidate)
+        )
+        directory_fd = self._open_parent(relative / ".list")
+        try:
+            names: list[str] = []
+            for name in sorted(os.listdir(directory_fd)):
+                value = _lstat_at(name, directory_fd)
+                if value is not None and stat.S_ISREG(value.st_mode):
+                    names.append(name)
+            return names
+        finally:
+            os.close(directory_fd)
+
     def _open_parent(self, relative: Path) -> int:
         if self.root_dir.is_symlink():
             raise ValueError(f"workspace root must not be a symlink: {self.root_dir}")
@@ -289,6 +366,11 @@ def _require_secure_writer_platform() -> None:
         )
 
 
+def _require_secure_list_platform() -> None:
+    if os.listdir not in getattr(os, "supports_fd", set()):
+        raise RuntimeError("secure workspace path operations require os.listdir(fd)")
+
+
 def _open_at(
     path: str,
     flags: int,
@@ -334,6 +416,15 @@ def _write_all(descriptor: int, content: bytes) -> None:
         if written < 1:
             raise OSError("workspace write made no progress")
         view = view[written:]
+
+
+def _read_all(descriptor: int) -> bytes:
+    chunks: list[bytes] = []
+    while True:
+        chunk = os.read(descriptor, 1024 * 1024)
+        if not chunk:
+            return b"".join(chunks)
+        chunks.append(chunk)
 
 
 def _no_follow() -> int:

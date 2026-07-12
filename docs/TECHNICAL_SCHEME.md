@@ -78,8 +78,9 @@ Phase 0 已验证公开材料化安全与失败隔离；配置驱动的质量评
 - `RecoveryManager.load()` 先修复 unresolved session marker，再加载最后 savepoint 和 `RunCheckpoint`，恢复领域对象、trace、来源材料、worker report 与 session tail。
 - topic、路线、agent 集合、持久化 `ResearchProblem` 或配置指纹不一致时拒绝 resume；completed run 的再次 resume 不启动 provider，但仍新增 `run_resumed` trace/savepoint。
 - 最后 baseline 完成后 finalize 仍 pending；engine 前 finalize=running，stage/image/recommendation/audit/report 与 finalize/run completed checkpoint 在同一最终事务提交。
-- runner session 使用 rooted `JsonlSessionStore`；DB 已提交而 session savepoint 失败时自动记录 reconciliation marker。
-- 最终输出与 checkpoint 文件使用 rooted dirfd 原子 writer，临时文件 `O_EXCL|O_NOFOLLOW`、文件和目录 fsync、同 dirfd rename；安全原语缺失时 fail closed。
+- runner/recovery session 使用 canonical output root anchor 的 rooted `JsonlSessionStore`；DB 已提交而 session savepoint 失败时自动记录 reconciliation marker，Harness 旧 `path + root_dir` 接口保持兼容。
+- 项目自有 `SecureArtifactStore` 保持旧 ref/metadata 契约；最终输出、checkpoint 与 artifact 文件使用 rooted dirfd 原子 writer，临时文件 `O_EXCL|O_NOFOLLOW`、文件和目录 fsync、同 dirfd rename；安全原语缺失时 fail closed。
+- completed resume 提交 `run_resumed` 后无条件从 SQLite 恢复态重写稳定输出，provider 为 0，文件 trace 与数据库 trace 一致。
 - 崩溃继续向调用方传播，但此前已提交的 agent 状态可用于下一次恢复。
 
 ### 2.7 审计与限制呈现

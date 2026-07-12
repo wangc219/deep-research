@@ -16,6 +16,7 @@ from equipment_deep_research.agents.provider import (
 from equipment_deep_research.domain.store import SqliteRunStore
 from equipment_deep_research.domain.workspace import RunWorkspace
 from equipment_deep_research.harness.recovery import RecoveryError
+from equipment_deep_research.harness import recovery as recovery_module
 from equipment_deep_research.harness.session import JsonlSessionStore
 from equipment_deep_research.orchestration.runner import DeepResearchRunner
 
@@ -65,6 +66,18 @@ class SessionSymlinkProvider:
 
     def run_baseline_agent(self, request: AgentRunRequest) -> AgentRunResult:
         self.session_path.symlink_to(self.external)
+        return self.delegate.run_baseline_agent(request)
+
+
+class ArtifactDirectorySymlinkProvider:
+    def __init__(self, artifacts_dir: Path, external: Path) -> None:
+        self.delegate = FakeAgentProvider()
+        self.artifacts_dir = artifacts_dir
+        self.external = external
+
+    def run_baseline_agent(self, request: AgentRunRequest) -> AgentRunResult:
+        self.artifacts_dir.rmdir()
+        self.artifacts_dir.symlink_to(self.external, target_is_directory=True)
         return self.delegate.run_baseline_agent(request)
 
 
@@ -264,6 +277,37 @@ def test_completed_resume_is_idempotent_and_does_not_run_provider(tmp_path: Path
     } == session_prefixes
 
 
+def test_completed_resume_rewrites_stable_outputs_from_sqlite(tmp_path: Path) -> None:
+    first = build_runner(tmp_path, provider=RecordingProvider()).run(
+        **run_args(agent_ids=AGENTS[:1])
+    )
+    run_dir = Path(first["run_dir"])
+    for leaf in (
+        "report.md",
+        "capability_images.json",
+        "round_summary.json",
+        "domain.jsonl",
+        "trace.jsonl",
+    ):
+        (run_dir / leaf).write_text("stale\n", encoding="utf-8")
+
+    resumed = build_runner(tmp_path, provider=RejectingProvider()).run(
+        **run_args(agent_ids=AGENTS[:1], resume=True)
+    )
+
+    assert resumed["status"] == "completed"
+    database = SqliteRunStore(run_dir / "run.db", run_id="resume-1")
+    trace_payloads = [row["payload"] for row in jsonl_rows(run_dir / "trace.jsonl")]
+    assert trace_payloads == [row["payload"] for row in database.trace_events()]
+    assert trace_payloads[-1]["event_type"] == "run_resumed"
+    summary = json.loads((run_dir / "round_summary.json").read_text(encoding="utf-8"))
+    assert len(summary["trace_summary"]) == database.trace_count()
+    assert summary["trace_summary"][-1]["event_type"] == "run_resumed"
+    assert json.loads((run_dir / "capability_images.json").read_text(encoding="utf-8"))
+    assert jsonl_rows(run_dir / "domain.jsonl")
+    assert (run_dir / "report.md").read_text(encoding="utf-8") != "stale\n"
+
+
 def test_real_session_savepoint_failure_is_reconciled_before_skipping_completed(
     tmp_path: Path,
 ) -> None:
@@ -303,6 +347,9 @@ def test_real_session_savepoint_failure_is_reconciled_before_skipping_completed(
         for row in reconciled
         if row.get("reconciliation_marker_id") == marker["marker_id"]
     ] == ["savepoint", "session_reconciled"]
+    assert [row["payload"] for row in jsonl_rows(run_dir / "trace.jsonl")] == [
+        row["payload"] for row in store.trace_events()
+    ]
     assert store.recover()["unresolved_session_writes"] == []
     reconciled_line_count = len(reconciled)
 
@@ -318,6 +365,54 @@ def test_real_session_savepoint_failure_is_reconciled_before_skipping_completed(
             if event["event_type"] == "session_reconciled"
         ]
     ) == 1
+
+
+def test_reconciliation_fails_before_external_write_if_sessions_dir_changes_after_open(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    FailSavepointOnceSession.failed = False
+
+    def session_factory(path: str, root_dir: Path) -> FailSavepointOnceSession:
+        return FailSavepointOnceSession(path, root_dir=root_dir)
+
+    with pytest.raises(OSError, match="savepoint append failure"):
+        build_runner(
+            tmp_path,
+            provider=RecordingProvider(),
+            session_store_factory=session_factory,
+        ).run(**run_args(agent_ids=AGENTS[:1]))
+
+    run_dir = tmp_path / "runs" / "resume-1"
+    sessions_dir = run_dir / "agent_sessions"
+    external = tmp_path / "external-sessions"
+    external.mkdir()
+    original_open_existing = RunWorkspace.open_existing
+
+    def replace_after_open(
+        cls: type[RunWorkspace],
+        output_root: str | Path,
+        run_id: str,
+    ) -> RunWorkspace:
+        workspace = original_open_existing(output_root, run_id)
+        for child in sessions_dir.iterdir():
+            child.unlink()
+        sessions_dir.rmdir()
+        sessions_dir.symlink_to(external, target_is_directory=True)
+        return workspace
+
+    monkeypatch.setattr(
+        recovery_module.RunWorkspace,
+        "open_existing",
+        classmethod(replace_after_open),
+    )
+
+    with pytest.raises(RecoveryError, match="reconciliation session"):
+        build_runner(tmp_path, provider=RejectingProvider()).run(
+            **run_args(agent_ids=AGENTS[:1], resume=True)
+        )
+
+    assert list(external.iterdir()) == []
 
 
 def test_fresh_run_still_rejects_existing_run_name_without_mutation(tmp_path: Path) -> None:
@@ -521,6 +616,22 @@ def test_runner_session_append_rejects_leaf_replaced_by_symlink(tmp_path: Path) 
         )
 
     assert external.read_text(encoding="utf-8") == "external\n"
+
+
+def test_runner_artifact_write_rejects_directory_replaced_after_scheduler_init(
+    tmp_path: Path,
+) -> None:
+    artifacts_dir = tmp_path / "runs" / "resume-1" / "artifacts"
+    external = tmp_path / "external-artifacts"
+    external.mkdir()
+    provider = ArtifactDirectorySymlinkProvider(artifacts_dir, external)
+
+    with pytest.raises(ValueError, match="symlink"):
+        build_runner(tmp_path, provider=provider).run(
+            **run_args(agent_ids=AGENTS[:1])
+        )
+
+    assert list(external.iterdir()) == []
 
 
 @pytest.mark.parametrize("leaf", ["report.md", "domain.jsonl"])

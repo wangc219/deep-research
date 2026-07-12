@@ -9,8 +9,10 @@ from equipment_deep_research.agents.registry import AgentDef
 from equipment_deep_research.domain.identifiers import safe_identifier_path
 from equipment_deep_research.domain.models import TraceEvent, new_stable_id, now_iso
 from equipment_deep_research.domain.store import DomainStore, TraceStore
+from equipment_deep_research.domain.workspace import RunWorkspace
 from equipment_deep_research.harness.context import ContextPackBuilder
 from equipment_deep_research.harness.session import JsonlSessionStore
+from equipment_deep_research.tools.artifacts import SecureArtifactStore
 from equipment_deep_research.tools.materialization import EvidenceMaterializer
 
 
@@ -41,6 +43,7 @@ class DiscoveryScheduler:
         context_builder: ContextPackBuilder | None = None,
         source_materials: list[dict[str, Any]] | None = None,
         session_store_factory: Callable[[str, Path], Any] | None = None,
+        workspace: RunWorkspace | None = None,
     ) -> None:
         self.run_id = run_id
         self.run_dir = run_dir
@@ -50,6 +53,9 @@ class DiscoveryScheduler:
         self.mode = mode
         self.context_builder = context_builder or ContextPackBuilder()
         self.session_store_factory = session_store_factory
+        self.workspace = workspace
+        if workspace is not None and workspace.run_dir != self.run_dir.resolve(strict=True):
+            raise ValueError("workspace and run_dir must identify the same run")
         if self.run_dir.is_symlink():
             raise ValueError("run_dir must not be a symlink")
         self.sessions_dir = run_dir / "agent_sessions"
@@ -60,7 +66,13 @@ class DiscoveryScheduler:
             raise ValueError("agent_sessions must not be a symlink")
         if self.sessions_dir.resolve(strict=True).parent != self.run_dir.resolve(strict=True):
             raise ValueError("agent_sessions must stay within run_dir")
-        self.materializer = EvidenceMaterializer(run_dir / "artifacts")
+        self.materializer = EvidenceMaterializer(
+            artifact_store=(
+                SecureArtifactStore.for_workspace(workspace)
+                if workspace is not None
+                else SecureArtifactStore(run_dir / "artifacts")
+            )
+        )
         self.source_materials = source_materials if source_materials is not None else []
 
     def run_baseline_agents(
@@ -214,4 +226,9 @@ class DiscoveryScheduler:
     def _open_session_store(self, session_ref: str) -> Any:
         if self.session_store_factory is not None:
             return self.session_store_factory(session_ref, self.sessions_dir)
+        if self.workspace is not None:
+            return JsonlSessionStore(
+                self.workspace.session_relative_path(session_ref),
+                anchor_dir=self.workspace.output_root,
+            )
         return JsonlSessionStore(session_ref, root_dir=self.sessions_dir)

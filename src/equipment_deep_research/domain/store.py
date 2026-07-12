@@ -383,16 +383,16 @@ class SqliteRunStore:
     ) -> list[dict[str, Any]]:
         events = self.trace_events(after_sequence=0)
         resolved_marker_ids = {
-            str(event["payload"].get("marker_id"))
+            str(_session_marker_payload(event["payload"]).get("marker_id"))
             for event in events
             if event["event_type"] == "session_reconciled"
-            and event["payload"].get("marker_id")
+            and _session_marker_payload(event["payload"]).get("marker_id")
         }
         markers: list[dict[str, Any]] = []
         for event in events:
             if event["event_type"] != "session_write_failed":
                 continue
-            payload = event["payload"]
+            payload = _session_marker_payload(event["payload"])
             marker_id = str(payload.get("marker_id") or event["proposal_id"])
             marker_agent_id = str(payload.get("agent_id") or event["actor"])
             marker_task_id = str(payload.get("task_id") or "")
@@ -954,6 +954,16 @@ def _required_text(
     if not isinstance(value, str) or not value.strip():
         raise error_type(f"{field_name} must be a non-empty string")
     return value
+
+
+def _session_marker_payload(payload: Mapping[str, Any]) -> Mapping[str, Any]:
+    nested = payload.get("payload")
+    if (
+        payload.get("event_type") in {"session_write_failed", "session_reconciled"}
+        and isinstance(nested, Mapping)
+    ):
+        return nested
+    return payload
 
 
 def _validate_created_at(value: Any) -> str:

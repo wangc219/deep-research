@@ -35,9 +35,9 @@ baseline session 只追加，不覆盖旧行。典型尾记录为：
 {"event_type":"savepoint","agent_id":"international_situation","checkpoint_id":"checkpoint-...","packet_id":"packet-international_situation"}
 ```
 
-runner session 使用 `JsonlSessionStore(session_ref, root_dir=trusted_sessions_root)`，不使用裸 `path.open`。若数据库已提交但 runner/harness session savepoint 写入失败，runner 自动提交含 agent/task/checkpoint/batch/session ref 的 `session_write_failed` marker 并传播原异常。恢复先消费 marker：补写 `recovered=true` savepoint、追加 `session_reconciled`，再提交同 marker 的幂等 reconciliation trace。`session_reconciled` 的 trace sequence 必须早于本次 `run_resumed`。
+Harness 继续使用兼容接口 `JsonlSessionStore(path, root_dir=...)`。runner/recovery 使用 `JsonlSessionStore(run_id/agent_sessions/session_ref, anchor_dir=canonical_output_root)`，从不可变锚逐组件 no-follow 打开，不把可变 `agent_sessions.resolve()` 当信任根。若数据库已提交但 runner/harness session savepoint 写入失败，runner 自动提交含 agent/task/checkpoint/batch/session ref 的 `session_write_failed` marker 并传播原异常。恢复先消费 marker：补写 `recovered=true` savepoint、追加 `session_reconciled`，再提交同 marker 的幂等 reconciliation trace。`session_reconciled` 的 trace sequence 必须早于本次 `run_resumed`。
 
-所有 `report/json/domain/trace/checkpoint latest/history` 写入均由 `RunWorkspace` 的 rooted dirfd writer 完成：逐组件拒绝 symlink，临时文件使用 `O_EXCL|O_NOFOLLOW`，写入后 fsync 文件，以同一 parent dirfd 原子 rename 并 fsync 目录。缺少安全原语时 fail closed。`outputs_complete` 使用 no-follow stat，遇到 symlink 明确拒绝。
+项目自有 `SecureArtifactStore` 保持旧 store 的 `kind:sha256[:16]` ref、content 文件扩展名和 metadata 字段。runner 的全部材料化 artifact 通过 `RunWorkspace` 从 run dirfd 进入 `artifacts/`。所有 `report/json/domain/trace/checkpoint latest/history/artifact` 写入均由 rooted dirfd writer 完成：逐组件拒绝 symlink，临时文件使用 `O_EXCL|O_NOFOLLOW`，写入后 fsync 文件，以同一 parent dirfd 原子 rename 并 fsync 目录。缺少安全原语时 fail closed。
 
 ## 4. 崩溃注入与恢复结果
 
@@ -56,9 +56,9 @@ E2E 使用构造器注入兼容 `AgentProvider`。第一 agent 正常完成并�
 2. session reconciliation 先完成。
 3. `RecoveryManager.load()` 从最后 savepoint 和 `RunCheckpoint` 恢复 `DomainStore`、`TraceStore`、source materials、worker reports 与 session tails。
 4. `running` 归一为 `pending`，按原 selected agent 顺序继续；completed task 和已提交 idempotency key 不重放。
-5. 无论 checkpoint 是 running 还是 completed，resume 都先提交一次 `run_resumed` 与新 savepoint；running 继续未完成 baseline/finalize，completed 只补缺失文件或返回。
+5. 无论 checkpoint 是 running 还是 completed，resume 都先提交一次 `run_resumed` 与新 savepoint；running 继续未完成 baseline/finalize，completed 无条件从 SQLite 恢复态重写稳定输出后返回。
 
-恢复结果验证：首 agent 未重复调用，旧 session 字节前缀不变；剩余 agent 完成；evidence IDs 无重复；最后 baseline 后崩溃时 finalize pending，engine 后最终事务前崩溃时 finalize running，二者恢复后均执行 finalize 且不重复 domain/trace；completed resume 不启动 provider但会增加 `run_resumed` trace/savepoint。topic、路线、agent 集合、配置指纹、持久化 `ResearchProblem`、不存在 run、损坏 SQLite 和 symlink workspace 均校验；source materials 与 worker reports 恢复时去重。
+恢复结果验证：首 agent 未重复调用，旧 session 字节前缀不变；剩余 agent 完成；evidence IDs 无重复；最后 baseline 后崩溃时 finalize pending，engine 后最终事务前崩溃时 finalize running，二者恢复后均执行 finalize 且不重复 domain/trace；completed resume 不启动 provider但会增加 `run_resumed` trace/savepoint，并刷新 `trace.jsonl`、`round_summary.json` 及其余稳定输出。topic、路线、agent 集合、配置指纹、持久化 `ResearchProblem`、不存在 run、损坏 SQLite 和 symlink workspace 均校验；source materials 与 worker reports 恢复时去重。artifact/session 目录在初始化或 `open_existing()` 后被替换为 symlink 时，后续写入在外部文件产生前失败。
 
 ## 5. 测试与 Smoke
 
@@ -66,12 +66,12 @@ E2E 使用构造器注入兼容 `AgentProvider`。第一 agent 正常完成并�
 
 ```text
 python3 -m pytest tests/equipment_deep_research/e2e/test_resume_run.py -q
-21 passed
+24 passed
 
 python3 -m pytest \
   tests/equipment_deep_research/e2e/test_resume_run.py \
   tests/equipment_deep_research/integration/test_agent_harness.py -q
-50 passed
+53 passed
 ```
 
 核心回归：
@@ -82,14 +82,14 @@ python3 -m pytest tests/test_deep_research_runner.py \
   tests/equipment_deep_research/unit/test_configuration.py \
   tests/equipment_deep_research/unit/test_domain_contracts.py \
   tests/equipment_deep_research/unit/test_http_transport.py -q
-98 passed
+99 passed
 ```
 
 全量：
 
 ```text
 python3 -m pytest -q
-222 passed
+229 passed
 ```
 
 最终 no-follow stat race 补强后的受影响范围：
@@ -101,7 +101,22 @@ python3 -m pytest tests/equipment_deep_research/integration/test_cli_workspace.p
 
 python3 -m pytest tests/equipment_deep_research/e2e/test_resume_run.py \
   tests/equipment_deep_research/unit/test_domain_contracts.py -q
-30 passed
+33 passed
+```
+
+第二轮材料化与 Phase 0 fresh 回归：
+
+```text
+python3 -m pytest -q tests/equipment_deep_research/unit/test_http_transport.py \
+  tests/equipment_deep_research/unit/test_secure_artifacts.py \
+  tests/test_deep_research_runner.py
+52 passed
+
+python3 -m pytest -q tests/equipment_deep_research/unit/test_domain_contracts.py \
+  tests/equipment_deep_research/unit/test_configuration.py \
+  tests/equipment_deep_research/integration/test_cli_workspace.py \
+  tests/test_deep_research_runner.py
+72 passed
 ```
 
 fresh smoke：`status=completed`、`ResearchProblem=1`、finalize completed、3 stage、1 report，七类产物、`run.db` 和 completed checkpoint 齐全。
