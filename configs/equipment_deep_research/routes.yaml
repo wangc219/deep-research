@@ -1,0 +1,10 @@
+routes:
+  new_winning_mechanism:
+    question_chain: [形势与威胁, 对抗场景, 防御解构, 新制胜机制, 新作战运用打法, 新体系组合, 装备功能]
+    required_outputs: [threat_assessment, scenario, winning_logic, equipment_functions]
+  traditional_gap:
+    question_chain: [传统场景, 传统制胜, 传统战法, 当前装备, 目标能力, 差距与空白, 升级功能]
+    required_outputs: [equipment_baseline, gap_matrix, upgrade_functions]
+  war_case_learning:
+    question_chain: [时间线, 参战方, 装备, 新打法, 效果, 不足, 可迁移方向]
+    required_outputs: [case_timeline, new_tactics, lessons, future_directions]
