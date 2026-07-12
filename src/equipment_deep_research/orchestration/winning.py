@@ -13,6 +13,7 @@ from equipment_deep_research.domain.models import (
     to_plain,
 )
 from equipment_deep_research.domain.store import DomainStore, TraceStore
+from equipment_deep_research.orchestration.winning_reasoning import SixStepReasoner
 
 
 class WinningMechanismEngine:
@@ -31,8 +32,36 @@ class WinningMechanismEngine:
     ) -> tuple[list[WinningMechanismStageOutput], list[CapabilityImageItem], list[AgentRecommendation]]:
         packets = list(store.baseline_packets.values())
         evidence_ids = sorted({evidence_id for packet in packets for evidence_id in packet.evidence_ids})
+        reasoning = SixStepReasoner().run(
+            topic=topic,
+            route=route,
+            packets=packets,
+            evidence=list(store.evidence.values()),
+        )
+        for node in reasoning.critical_nodes():
+            trace.append(
+                TraceEvent(
+                    event_id=f"trace-{node.object_id}",
+                    event_type="winning_reasoning_step_completed",
+                    actor="winning_mechanism",
+                    summary=node.summary,
+                    input_refs=node.input_refs,
+                    output_refs=[node.object_id],
+                    payload={
+                        "title": node.title,
+                        "evidence_ids": node.evidence_ids,
+                        "confidence": node.confidence,
+                        "assumptions": node.assumptions,
+                    },
+                )
+            )
         recommendations = self._recommend_missing_agents(coverage)
         l1 = self._l1(topic=topic, route=route, packets=packets, evidence_ids=evidence_ids, coverage=coverage)
+        l1.outputs["reasoning_refs"] = [
+            reasoning.defense_decomposition.object_id,
+            reasoning.winning_paths.object_id,
+            reasoning.effect_chain.object_id,
+        ]
         store.add_stage_output(l1)
         trace.append(
             TraceEvent(
@@ -56,6 +85,7 @@ class WinningMechanismEngine:
                 )
             )
         l2 = self._l2(topic=topic, route=route, l1=l1, evidence_ids=evidence_ids, coverage=coverage)
+        l2.outputs["reasoning_refs"] = [reasoning.capability_mapping.object_id]
         store.add_stage_output(l2)
         trace.append(
             TraceEvent(
@@ -67,6 +97,10 @@ class WinningMechanismEngine:
             )
         )
         l3 = self._l3(topic=topic, route=route, l1=l1, l2=l2, evidence_ids=evidence_ids, coverage=coverage)
+        l3.outputs["reasoning_refs"] = [
+            reasoning.gap_matrix.object_id,
+            *[item.object_id for item in reasoning.image_drafts],
+        ]
         store.add_stage_output(l3)
         trace.append(
             TraceEvent(
