@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+from collections.abc import Awaitable, Sequence as AsyncSequence
 from dataclasses import dataclass, field
 import os
 from pathlib import Path
@@ -18,6 +20,7 @@ from equipment_deep_research.harness.context import ContextPackBuilder
 from equipment_deep_research.harness.session import JsonlSessionStore
 from equipment_deep_research.tools.artifacts import SecureArtifactStore
 from equipment_deep_research.tools.materialization import EvidenceMaterializer
+from equipment_deep_research.domain.messages import AgentExecutionResult, TaskEnvelope
 
 
 @dataclass(frozen=True)
@@ -267,3 +270,31 @@ class DiscoveryScheduler:
             finally:
                 os.close(root_fd)
         return JsonlSessionStore(session_ref, root_dir=self.sessions_dir)
+
+
+class SubagentWaveScheduler:
+    """Bounded concurrent runtime scheduler for isolated TaskEnvelope waves."""
+
+    def __init__(self, execute: Callable[[TaskEnvelope], Awaitable[AgentExecutionResult]], *, max_concurrency: int = 4) -> None:
+        if max_concurrency < 1:
+            raise ValueError("max_concurrency must be positive")
+        self.execute = execute
+        self.max_concurrency = max_concurrency
+        self._cancelled = False
+
+    def cancel(self) -> None:
+        self._cancelled = True
+
+    async def run_wave(self, tasks: AsyncSequence[TaskEnvelope]) -> list[AgentExecutionResult]:
+        semaphore = asyncio.Semaphore(self.max_concurrency)
+
+        async def execute_one(task: TaskEnvelope) -> AgentExecutionResult:
+            if self._cancelled:
+                return AgentExecutionResult("cancelled", task.task_id, task.target_agent_id, "cancelled", error="wave cancelled")
+            async with semaphore:
+                try:
+                    return await self.execute(task)
+                except Exception as exc:
+                    return AgentExecutionResult("failed", task.task_id, task.target_agent_id, "failed", error=f"{type(exc).__name__}: {exc}")
+
+        return list(await asyncio.gather(*(execute_one(task) for task in tasks)))

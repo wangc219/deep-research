@@ -10,6 +10,12 @@ def main(argv: list[str] | None = None) -> int:
     project_root = Path(__file__).resolve().parents[3]
     parser = argparse.ArgumentParser(description="Run equipment capability image Deep Research.")
     parser.add_argument("--mode", choices=["fake", "real"], default="fake")
+    parser.add_argument(
+        "--provider",
+        choices=["fake", "responses", "smoke"],
+        default=None,
+        help="Execution backend. real mode defaults to responses when credentials exist, otherwise smoke.",
+    )
     parser.add_argument("--topic", required=True)
     parser.add_argument(
         "--research-route",
@@ -55,6 +61,7 @@ def main(argv: list[str] | None = None) -> int:
         run_id=args.run_id,
         agent_ids=agent_ids or None,
         max_rounds=args.max_rounds or None,
+        provider_name=args.provider,
         resume=args.resume,
         analyst_confirmed=args.analyst_confirmed,
     )

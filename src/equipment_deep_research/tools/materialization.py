@@ -10,6 +10,7 @@ from urllib.parse import urljoin, urlsplit
 from equipment_deep_research.domain.models import EvidenceCard
 from equipment_deep_research.tools.artifacts import SecureArtifactStore
 from equipment_deep_research.tools.http_transport import HTTPTransport, PinnedHTTPTransport
+from equipment_deep_research.tools.simplify import simplify_html
 
 
 @dataclass(frozen=True)
@@ -224,10 +225,20 @@ class EvidenceMaterializer:
                     "connect_ip": target.connect_ip,
                 },
             )
+            simplified_ref = ""
+            paragraph_locations: list[str] = []
+            if "html" in content_type.lower():
+                page = simplify_html(response.content, self.artifacts)
+                simplified_ref = page.simplified_artifact_ref
+                paragraph_locations = [item.location for item in page.paragraphs]
             updated = EvidenceCard(
                 **{
                     **evidence.__dict__,
-                    "artifact_refs": [*evidence.artifact_refs, raw_ref],
+                    "artifact_refs": [
+                        *evidence.artifact_refs,
+                        raw_ref,
+                        *([simplified_ref] if simplified_ref else []),
+                    ],
                     "quality_assessment": f"{evidence.quality_assessment}; fetched",
                 }
             )
@@ -240,6 +251,8 @@ class EvidenceMaterializer:
                     "url": evidence.source_url,
                     "final_url": current_url,
                     "content_type": content_type,
+                    "simplified_artifact_ref": simplified_ref,
+                    "paragraph_locations": paragraph_locations,
                     "formal_evidence_allowed": True,
                 },
             )

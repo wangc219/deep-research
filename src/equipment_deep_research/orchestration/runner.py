@@ -4,6 +4,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import replace
 from hashlib import sha256
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -11,6 +12,7 @@ from equipment_deep_research.agents.provider import (
     AgentProvider,
     FakeAgentProvider,
     RealAgentProvider,
+    ResponsesAgentProvider,
 )
 from equipment_deep_research.agents.registry import AgentRegistry
 from equipment_deep_research.domain.messages import FINALIZE_TASK_ID, RunCheckpoint
@@ -88,6 +90,7 @@ class DeepResearchRunner:
         run_id: str,
         agent_ids: list[str] | None = None,
         max_rounds: int | None = None,
+        provider_name: str | None = None,
         resume: bool = False,
         analyst_confirmed: bool = False,
     ) -> dict[str, Any]:
@@ -100,6 +103,7 @@ class DeepResearchRunner:
                 run_id=run_id,
                 agent_ids=agent_ids,
                 max_rounds=max_rounds,
+                provider_name=provider_name,
                 resume=resume,
                 analyst_confirmed=analyst_confirmed,
                 resources=resources,
@@ -116,6 +120,7 @@ class DeepResearchRunner:
         run_id: str,
         agent_ids: list[str] | None,
         max_rounds: int | None,
+        provider_name: str | None,
         resume: bool,
         analyst_confirmed: bool,
         resources: "_RunResourceScope",
@@ -252,9 +257,7 @@ class DeepResearchRunner:
             )
             self._write_checkpoint_file(workspace, checkpoint, savepoint_id)
 
-        provider = self.provider or (
-            FakeAgentProvider() if mode == "fake" else RealAgentProvider()
-        )
+        provider = self._select_agent_provider(mode, provider_name)
         scheduler = DiscoveryScheduler(
             run_id=run_id,
             run_dir=workspace.run_dir,
@@ -480,6 +483,29 @@ class DeepResearchRunner:
             store=store,
         )
         return result
+
+    def _select_agent_provider(
+        self,
+        mode: str,
+        provider_name: str | None,
+    ) -> AgentProvider:
+        if self.provider is not None:
+            return self.provider
+        if provider_name == "fake" or mode == "fake":
+            return FakeAgentProvider()
+        if provider_name in {None, "responses"} and os.environ.get("EQUIPMENT_DR_API_KEY"):
+            model_provider = ProviderRegistry.load(self.provider_config_path).create(
+                "responses"
+            )
+            return ResponsesAgentProvider(model_provider)  # type: ignore[arg-type]
+        if provider_name == "responses":
+            # Deliberately surface the credential/configuration failure instead of
+            # silently downgrading an explicitly requested real model run.
+            model_provider = ProviderRegistry.load(self.provider_config_path).create(
+                "responses"
+            )
+            return ResponsesAgentProvider(model_provider)  # type: ignore[arg-type]
+        return RealAgentProvider()
 
     def _initial_checkpoint(
         self,

@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import asyncio
+import json
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Any, Protocol
 
 from equipment_deep_research.agents.registry import AgentDef
 from equipment_deep_research.domain.models import BaselineFindingPacket, EvidenceCard
+from equipment_deep_research.providers.base import ModelMessage, ModelProvider
 
 
 @dataclass(frozen=True)
@@ -103,6 +106,75 @@ class RealAgentProvider(FakeAgentProvider):
             }
         )
         return AgentRunResult(packet=packet, evidence=evidence, raw_message=packet.handoff_summary)
+
+
+class ResponsesAgentProvider:
+    """Turns a Responses-compatible model result into a constrained handoff.
+
+    This adapter deliberately does not turn model-claimed URLs into evidence.
+    Evidence must still be produced by the network tool/materialization chain.
+    """
+
+    def __init__(self, provider: ModelProvider, *, model_options: dict[str, Any] | None = None) -> None:
+        self.provider = provider
+        self.model_options = model_options or {"reasoning_effort": "high", "max_output_tokens": 5000}
+
+    def run_baseline_agent(self, request: AgentRunRequest) -> AgentRunResult:
+        text = asyncio.run(self._run(request))
+        payload = _parse_baseline_payload(text)
+        findings = [str(item) for item in payload.get("findings", []) if str(item).strip()]
+        if not findings:
+            findings = [f"{request.agent.display_name}未返回可采纳的结构化发现。"]
+        confidence = float(payload.get("confidence", 0.45))
+        confidence = min(1.0, max(0.0, confidence))
+        packet = BaselineFindingPacket(
+            packet_id=f"packet-{request.agent.agent_id}",
+            agent_id=request.agent.agent_id,
+            capability_tags=list(request.agent.capability_tags),
+            topic_focus=request.topic,
+            findings=findings,
+            evidence_ids=[],
+            confidence=confidence,
+            coverage_notes=["模型输出已通过结构化回传适配；正式证据仅由联网工具材料化后写入。"],
+            open_questions=[str(item) for item in payload.get("open_questions", [])],
+            handoff_summary=str(payload.get("handoff_summary", findings[0])),
+            checkpoint=f"{request.agent.agent_id}: model turn complete",
+            limitations=["尚未写入可材料化 EvidenceCard，结论必须在证据链补齐后提升置信度。"],
+        )
+        return AgentRunResult(packet=packet, evidence=[], raw_message=text)
+
+    async def _run(self, request: AgentRunRequest) -> str:
+        schema = {
+            "findings": ["string"], "confidence": "0..1",
+            "open_questions": ["string"], "handoff_summary": "string",
+        }
+        messages = [
+            ModelMessage("system", "你是受限的研究子智能体。不要虚构来源或证据 URL，只输出 JSON。"),
+            ModelMessage("user", {
+                "agent": request.agent.display_name,
+                "capability_tags": request.agent.capability_tags,
+                "topic": request.topic,
+                "route": request.research_route,
+                "context": request.context,
+                "output_schema": schema,
+            }),
+        ]
+        fragments: list[str] = []
+        async for event in self.provider.stream(messages, [], self.model_options):
+            if event.event_type == "text_delta":
+                fragments.append(event.delta)
+            elif event.event_type == "final" and event.final_turn and event.final_turn.text:
+                if not fragments:
+                    fragments.append(event.final_turn.text)
+        return "".join(fragments).strip()
+
+
+def _parse_baseline_payload(text: str) -> dict[str, Any]:
+    try:
+        value = json.loads(text)
+    except json.JSONDecodeError:
+        return {"findings": [text], "confidence": 0.45, "open_questions": [], "handoff_summary": text}
+    return value if isinstance(value, dict) else {"findings": [text], "confidence": 0.45}
 
 
 def _findings_for_agent(agent_id: str, topic: str, route: str) -> list[str]:
