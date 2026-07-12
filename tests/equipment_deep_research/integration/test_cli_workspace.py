@@ -13,6 +13,7 @@ from equipment_deep_research.domain import workspace as workspace_module
 from equipment_deep_research.domain.proposals import TraceProposal
 from equipment_deep_research.domain.store import SqliteRunStore
 from equipment_deep_research.domain import store as store_module
+from equipment_deep_research.harness.recovery import RecoveryError
 from equipment_deep_research.harness.session import JsonlSessionStore
 from equipment_deep_research.interfaces import cli
 from equipment_deep_research.orchestration.runner import DeepResearchRunner
@@ -668,6 +669,55 @@ def test_runner_allows_omitted_new_configs_for_custom_project_root(tmp_path: Pat
     assert runner.evidence_config_path == (
         project_root / "configs" / "equipment_deep_research" / "evidence.yaml"
     )
+    absent_fingerprint = runner._config_fingerprint(
+        mode="fake",
+        max_rounds=5,
+        analyst_confirmed=False,
+    )
+    assert absent_fingerprint == runner._config_fingerprint(
+        mode="fake",
+        max_rounds=5,
+        analyst_confirmed=False,
+    )
+    result = runner.run(
+        mode="fake",
+        topic="minimal custom project",
+        research_route="auto",
+        run_id="minimal-custom-root",
+        agent_ids=["weapon_equipment"],
+    )
+    assert result["status"] == "completed"
+
+
+def test_optional_config_appearance_changes_resume_fingerprint(tmp_path: Path) -> None:
+    project_root = tmp_path / "minimal-project"
+    project_root.mkdir()
+    runner = DeepResearchRunner(
+        project_root=project_root,
+        output_root=tmp_path / "runs",
+        agent_config_path=ROOT / "configs" / "equipment_deep_research" / "agents.yaml",
+        preset_config_path=ROOT / "configs" / "equipment_deep_research" / "presets.yaml",
+    )
+    runner.run(
+        mode="fake",
+        topic="optional config fingerprint",
+        research_route="auto",
+        run_id="optional-config",
+        agent_ids=["weapon_equipment"],
+    )
+    config_dir = project_root / "configs" / "equipment_deep_research"
+    config_dir.mkdir(parents=True)
+    (config_dir / "providers.yaml").write_text("providers: {}\n", encoding="utf-8")
+
+    with pytest.raises(RecoveryError, match="configuration"):
+        runner.run(
+            mode="fake",
+            topic="optional config fingerprint",
+            research_route="auto",
+            run_id="optional-config",
+            agent_ids=["weapon_equipment"],
+            resume=True,
+        )
 
 
 @pytest.mark.parametrize("config_name", ["provider_config_path", "evidence_config_path"])

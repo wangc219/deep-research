@@ -544,6 +544,96 @@ async def test_external_cancellation_cancels_and_drains_all_tool_siblings() -> N
 
 
 @async_test
+async def test_sibling_failure_does_not_wait_forever_for_cancellation_resistance() -> None:
+    sibling_started = asyncio.Event()
+    sibling_cancelled = asyncio.Event()
+    release_sibling = asyncio.Event()
+
+    async def denied(call: ToolCall, context: ToolExecutionContext) -> ToolResult:
+        del call, context
+        await sibling_started.wait()
+        raise PermissionError("permission denied")
+
+    async def cancellation_resistant(
+        call: ToolCall, context: ToolExecutionContext
+    ) -> ToolResult:
+        del context
+        sibling_started.set()
+        try:
+            await asyncio.Event().wait()
+        except asyncio.CancelledError:
+            sibling_cancelled.set()
+            await release_sibling.wait()
+        return ToolResult(call.call_id, "late result must be ignored")
+
+    execution = asyncio.create_task(
+        AgentLoop().run(
+            [user("start")],
+            ScriptedProvider(
+                [assistant_with_calls([call("c1", "denied"), call("c2", "resist")])]
+            ),
+            [tool("denied", denied), tool("resist", cancellation_resistant)],
+            config(),
+        )
+    )
+    try:
+        done, _ = await asyncio.wait({execution}, timeout=0.25)
+        assert done == {execution}
+        result = execution.result()
+        assert result.status == "failed"
+        assert result.error == "permission denied"
+        assert sibling_cancelled.is_set()
+    finally:
+        release_sibling.set()
+        if not execution.done():
+            result = await execution
+            assert result.status == "failed"
+        await asyncio.sleep(0)
+
+
+@async_test
+async def test_external_cancellation_is_bounded_when_tool_suppresses_cancellation() -> None:
+    handler_started = asyncio.Event()
+    handler_cancelled = asyncio.Event()
+    release_handler = asyncio.Event()
+
+    async def cancellation_resistant(
+        call: ToolCall, context: ToolExecutionContext
+    ) -> ToolResult:
+        del context
+        handler_started.set()
+        try:
+            await asyncio.Event().wait()
+        except asyncio.CancelledError:
+            handler_cancelled.set()
+            await release_handler.wait()
+        return ToolResult(call.call_id, "late result must be ignored")
+
+    execution = asyncio.create_task(
+        AgentLoop().run(
+            [user("start")],
+            ScriptedProvider([assistant_with_calls([call("c1", "resist")])]),
+            [tool("resist", cancellation_resistant)],
+            config(),
+        )
+    )
+    await handler_started.wait()
+    execution.cancel("caller cancelled")
+    try:
+        done, _ = await asyncio.wait({execution}, timeout=0.25)
+        assert done == {execution}
+        with pytest.raises(asyncio.CancelledError, match="caller cancelled"):
+            execution.result()
+        assert handler_cancelled.is_set()
+    finally:
+        release_handler.set()
+        if not execution.done():
+            with pytest.raises(asyncio.CancelledError, match="caller cancelled"):
+                await execution
+        await asyncio.sleep(0)
+
+
+@async_test
 async def test_final_explicit_empty_text_overrides_streamed_text_delta() -> None:
     provider = ScriptedProvider(
         [

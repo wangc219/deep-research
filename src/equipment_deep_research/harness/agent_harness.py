@@ -51,6 +51,8 @@ from equipment_deep_research.tools.permissions import ToolAuthorizationPolicy
 HarnessEventCallback = Callable[[RuntimeEvent], None | Awaitable[None]]
 
 _LONG_ERROR_LIMIT = 512
+_LOOP_CANCELLATION_GRACE_SECONDS = 0.1
+_QUARANTINED_LOOP_TASKS: set[asyncio.Task[AgentLoopResult]] = set()
 _OBJECT_ID_FIELDS = {
     "ResearchProblem": "problem_id",
     "EvidenceCard": "evidence_id",
@@ -62,6 +64,26 @@ _OBJECT_ID_FIELDS = {
     "AuditResult": "audit_id",
     "ResearchReport": "report_id",
 }
+
+
+class _ExecutionGate:
+    def __init__(self) -> None:
+        self._open = True
+        self._lock = Lock()
+
+    def close(self) -> None:
+        with self._lock:
+            self._open = False
+
+    def is_open(self) -> bool:
+        with self._lock:
+            return self._open
+
+    def require_open(self) -> None:
+        if not self.is_open():
+            raise asyncio.CancelledError(
+                "harness no longer accepts agent-loop activity"
+            )
 
 
 class AgentHarness:
@@ -149,8 +171,10 @@ class AgentHarness:
         except BaseException:
             self._end_execution()
             raise
-        self.last_session_store = session
+        self.last_session_store = None
         self.last_session_path = session.path
+        self._seed_event_bus(task.run_id)
+        loop_gate = _ExecutionGate()
 
         snapshots: list[TurnSnapshot] = []
         output_refs: list[str] = []
@@ -233,6 +257,7 @@ class AgentHarness:
             )
             committed_checkpoint_id = self.store.commit(domain_batch, trace_batch)
             checkpoint_id = committed_checkpoint_id
+            self._seed_event_bus(task.run_id)
             committed_turns.add(turn_index)
             _extend_output_refs(output_refs, evidence_ids, domain_batch)
             try:
@@ -273,6 +298,7 @@ class AgentHarness:
                 )
                 try:
                     checkpoint_id = self.store.commit((), (reconciliation,))
+                    self._seed_event_bus(task.run_id)
                 except BaseException as reconciliation_error:
                     session_error.add_note(
                         "failed to persist session reconciliation marker: "
@@ -352,6 +378,7 @@ class AgentHarness:
             async def prepare_turn(snapshot_input: TurnSnapshotInput) -> TurnSnapshotInput:
                 nonlocal active_tool_names, core_error
                 try:
+                    loop_gate.require_open()
                     next_tools = self._consume_next_turn_tools()
                     if next_tools is not None:
                         active_tool_names = next_tools
@@ -391,6 +418,7 @@ class AgentHarness:
                             object_write_scopes=write_scopes,
                             budget=budget,
                             on_permission_error=record_tool_permission_error,
+                            execution_gate=loop_gate,
                         )
                         for definition in authorized_definitions
                     )
@@ -433,6 +461,8 @@ class AgentHarness:
 
             async def on_loop_event(event: AgentLoopEvent) -> None:
                 nonlocal core_error
+                if not loop_gate.is_open():
+                    return
                 try:
                     turn_index = event.turn_index
                     if event.event_type == "turn_started":
@@ -550,23 +580,18 @@ class AgentHarness:
             loop_result: AgentLoopResult
             timeout = budget.remaining_seconds()
             try:
-                if timeout is None or timeout <= 0:
-                    loop_result = await self.loop.run(
+                if timeout is not None and timeout <= 0:
+                    raise TimeoutError("wall-clock budget expired")
+                loop_result = await _run_loop_with_deadline(
+                    self.loop.run(
                         initial_messages,
                         self.provider,
                         tuple(self._tools.values()),
                         loop_config,
-                    )
-                else:
-                    loop_result = await asyncio.wait_for(
-                        self.loop.run(
-                            initial_messages,
-                            self.provider,
-                            tuple(self._tools.values()),
-                            loop_config,
-                        ),
-                        timeout=timeout,
-                    )
+                    ),
+                    timeout=timeout,
+                    on_cancel=loop_gate.close,
+                )
             except TimeoutError:
                 finalize_uncommitted_turn("budget_exhausted")
                 append_session(
@@ -690,7 +715,14 @@ class AgentHarness:
                     pass
             return result("failed", error)
         finally:
-            self._end_execution()
+            loop_gate.close()
+            try:
+                close = getattr(session, "close", None)
+                if callable(close):
+                    close()
+            finally:
+                self.last_session_store = None
+                self._end_execution()
 
     async def _publish_external(self, event: RuntimeEvent) -> None:
         published_event = self.event_bus.publish(event)
@@ -748,6 +780,15 @@ class AgentHarness:
             return JsonlSessionStore(session_ref, root_dir=self.sessions_root)
         return self._session_store_factory(session_ref, self.sessions_root)
 
+    def _seed_event_bus(self, run_id: str) -> None:
+        source = self.store
+        loader = getattr(source, "last_trace_sequence", None)
+        if not callable(loader):
+            source = getattr(self.store, "delegate", None)
+            loader = getattr(source, "last_trace_sequence", None)
+        if callable(loader) and getattr(source, "run_id", run_id) == run_id:
+            self.event_bus.seed(run_id, int(loader()))
+
     def _reconcile_unresolved_sessions(self, task: TaskEnvelope) -> str | None:
         marker_source = self.store
         query = getattr(marker_source, "unresolved_session_writes", None)
@@ -776,57 +817,62 @@ class AgentHarness:
                 )
 
             session = self._open_session_store(session_ref)
-            records = session.read_all()
-            has_savepoint = any(
-                record.get("event_type") == "savepoint"
-                and record.get("checkpoint_id") == checkpoint_id
-                and record.get("batch_hash") == batch_hash
-                for record in records
-            )
-            if not has_savepoint:
-                session.append(
-                    _safe_session_record(
-                        {
-                            "event_type": "savepoint",
-                            "execution_id": execution_id,
-                            "task_id": marker_task_id,
-                            "agent_id": marker_agent_id,
-                            "turn_index": turn_index,
-                            "checkpoint_id": checkpoint_id,
-                            "batch_hash": batch_hash,
-                            "recovered": True,
-                            "reconciliation_marker_id": marker_id,
-                            "created_at": now_iso(),
-                            "schema_version": "1.0",
-                        },
-                        max_string_length=self.event_bus.max_string_length,
-                    )
+            try:
+                records = session.read_all()
+                has_savepoint = any(
+                    record.get("event_type") == "savepoint"
+                    and record.get("checkpoint_id") == checkpoint_id
+                    and record.get("batch_hash") == batch_hash
+                    for record in records
                 )
-                records = [*records, {"event_type": "savepoint"}]
+                if not has_savepoint:
+                    session.append(
+                        _safe_session_record(
+                            {
+                                "event_type": "savepoint",
+                                "execution_id": execution_id,
+                                "task_id": marker_task_id,
+                                "agent_id": marker_agent_id,
+                                "turn_index": turn_index,
+                                "checkpoint_id": checkpoint_id,
+                                "batch_hash": batch_hash,
+                                "recovered": True,
+                                "reconciliation_marker_id": marker_id,
+                                "created_at": now_iso(),
+                                "schema_version": "1.0",
+                            },
+                            max_string_length=self.event_bus.max_string_length,
+                        )
+                    )
+                    records = [*records, {"event_type": "savepoint"}]
 
-            has_session_reconciled = any(
-                record.get("event_type") == "session_reconciled"
-                and record.get("reconciliation_marker_id") == marker_id
-                for record in records
-            )
-            if not has_session_reconciled:
-                session.append(
-                    _safe_session_record(
-                        {
-                            "event_type": "session_reconciled",
-                            "execution_id": execution_id,
-                            "task_id": marker_task_id,
-                            "agent_id": marker_agent_id,
-                            "turn_index": turn_index,
-                            "checkpoint_id": checkpoint_id,
-                            "batch_hash": batch_hash,
-                            "reconciliation_marker_id": marker_id,
-                            "created_at": now_iso(),
-                            "schema_version": "1.0",
-                        },
-                        max_string_length=self.event_bus.max_string_length,
-                    )
+                has_session_reconciled = any(
+                    record.get("event_type") == "session_reconciled"
+                    and record.get("reconciliation_marker_id") == marker_id
+                    for record in records
                 )
+                if not has_session_reconciled:
+                    session.append(
+                        _safe_session_record(
+                            {
+                                "event_type": "session_reconciled",
+                                "execution_id": execution_id,
+                                "task_id": marker_task_id,
+                                "agent_id": marker_agent_id,
+                                "turn_index": turn_index,
+                                "checkpoint_id": checkpoint_id,
+                                "batch_hash": batch_hash,
+                                "reconciliation_marker_id": marker_id,
+                                "created_at": now_iso(),
+                                "schema_version": "1.0",
+                            },
+                            max_string_length=self.event_bus.max_string_length,
+                        )
+                    )
+            finally:
+                close = getattr(session, "close", None)
+                if callable(close):
+                    close()
 
             resolved_trace = TraceProposal(
                 proposal_id=f"{marker_id}-reconciled",
@@ -844,6 +890,7 @@ class AgentHarness:
                 },
             )
             latest_checkpoint = self.store.commit((), (resolved_trace,))
+            self._seed_event_bus(task.run_id)
         return latest_checkpoint
 
     def _consume_next_turn_tools(self) -> tuple[str, ...] | None:
@@ -862,6 +909,68 @@ class AgentHarness:
         with self._state_lock:
             self._executing = False
             self._next_turn_tools = None
+
+
+async def _run_loop_with_deadline(
+    loop_awaitable: Awaitable[AgentLoopResult],
+    *,
+    timeout: float | None,
+    on_cancel: Callable[[], None],
+) -> AgentLoopResult:
+    task = asyncio.create_task(loop_awaitable)
+    try:
+        if timeout is None:
+            return await asyncio.shield(task)
+        done, _ = await asyncio.wait({task}, timeout=timeout)
+        if task in done:
+            return task.result()
+        timeout_error = TimeoutError("wall-clock budget expired")
+        on_cancel()
+        task.cancel("wall-clock budget expired")
+        await _cancel_loop_task(task, timeout_error)
+        raise timeout_error
+    except asyncio.CancelledError as primary_error:
+        on_cancel()
+        task.cancel(str(primary_error) or "caller cancelled")
+        await _cancel_loop_task(task, primary_error)
+        raise
+
+
+async def _cancel_loop_task(
+    task: asyncio.Task[AgentLoopResult],
+    primary_error: BaseException,
+) -> None:
+    deadline = asyncio.get_running_loop().time() + _LOOP_CANCELLATION_GRACE_SECONDS
+    while not task.done():
+        remaining = deadline - asyncio.get_running_loop().time()
+        if remaining <= 0:
+            _quarantine_loop_task(task)
+            return
+        try:
+            await asyncio.wait({task}, timeout=remaining)
+        except asyncio.CancelledError as secondary_error:
+            primary_error.add_note(
+                "secondary cancellation while draining agent loop: "
+                f"{secondary_error}"
+            )
+    try:
+        task.exception()
+    except asyncio.CancelledError:
+        pass
+
+
+def _quarantine_loop_task(task: asyncio.Task[AgentLoopResult]) -> None:
+    _QUARANTINED_LOOP_TASKS.add(task)
+    task.set_name(f"quarantined-{task.get_name()}")
+
+    def consume(completed: asyncio.Task[AgentLoopResult]) -> None:
+        _QUARANTINED_LOOP_TASKS.discard(completed)
+        try:
+            completed.exception()
+        except BaseException:
+            pass
+
+    task.add_done_callback(consume)
 
 
 async def _capture_listener_outcome(
@@ -895,12 +1004,14 @@ def _authorized_tool(
     object_write_scopes: Sequence[str],
     budget: Budget,
     on_permission_error: Callable[[PermissionError], None],
+    execution_gate: _ExecutionGate,
 ) -> ToolDefinition:
     async def authorized_handler(
         call: ToolCall,
         context: ToolExecutionContext,
     ) -> ToolResult:
         try:
+            execution_gate.require_open()
             policy.authorize(
                 call.name,
                 active_tool_names=active_tool_names,
@@ -918,6 +1029,7 @@ def _authorized_tool(
                 },
             )
             result = await definition.handler(call, current_context)
+            execution_gate.require_open()
             if not isinstance(result, ToolResult):
                 return cast(ToolResult, result)
             return policy.authorize_result(

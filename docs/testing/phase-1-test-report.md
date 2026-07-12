@@ -146,3 +146,38 @@ Phase 1 Task 2 报告中的 Ruff 结论是目标文件范围，不是全仓库 R
 - 真正并行 baseline 调度、暂停、取消、分布式 worker 和跨进程队列恢复。
 - `evidence.yaml` 驱动的运行时质量评分、去重、独立印证和冲突推理。
 - Web/API/SSE、权限、审批和企业部署。
+
+## 8. Phase 1 最终整体审查修复
+
+最终修复波覆盖以下合同：wall-clock timeout、外部取消和 sibling failure 在有限 grace 内返回；抑制 `CancelledError` 的进程内 task 被 quarantine，迟到异常被消费，execution gate 阻止其再写 session、proposal、savepoint、domain state 或 RuntimeEvent。`AgentHarness` execution/reconciliation session 确定性关闭；`JsonlSessionStore` 最后 owner 关闭后回收 path-lock registry。EventBus 在 execution 开始和每次 SQLite trace commit 后以 `last_trace_sequence()` reseed。最小 custom `project_root` 可在没有 `providers.yaml`/`evidence.yaml` 时 fake-run，缺失状态的 fingerprint 是确定的，之后文件出现会拒绝 resume。
+
+安全与耐久性结论以当前 UID 控制、非 shared-writable 的 trusted root 为边界；不声称抵御恶意同 UID 进程持续竞速 `mkdir`/`open` 私有 namespace。SQLite 的单一持久 connection 和 committed SQLite state 是运行权威。安全 workspace 使用 MEMORY journal/no-sidecar，不提供 WAL 等价的 process-kill 或 power-loss durability。
+
+精确验证结果（2026-07-12）：
+
+```text
+python3 -m pytest -q tests/equipment_deep_research/integration/test_agent_harness.py
+39 passed in 0.40s
+
+python3 -m pytest -q tests/equipment_deep_research/unit/test_agent_loop.py
+25 passed in 0.20s
+
+python3 -m pytest -q tests/equipment_deep_research/unit/test_runtime_types.py tests/equipment_deep_research/unit/test_store_savepoint.py
+67 passed in 0.12s
+
+python3 -m pytest -q tests/equipment_deep_research/unit -k budget
+1 passed, 141 deselected in 0.04s
+
+python3 -m pytest -q tests/equipment_deep_research/e2e/test_resume_run.py
+29 passed in 0.81s
+
+python3 -m pytest -q tests/equipment_deep_research/integration/test_cli_workspace.py
+45 passed in 0.24s
+
+python3 -m pytest -q
+278 passed in 1.98s
+```
+
+Scoped Ruff returned `All checks passed!`; `python3 -m compileall -q src/equipment_deep_research tests` and `git diff --check` returned zero output with exit 0. The local source security scan found no dynamic execution, shell subprocess, unsafe YAML/pickle, or TLS-verification bypass API. `codex --help` completed, while `codex review --uncommitted` could not run in the workspace sandbox because it requires external-service access to uncommitted code; this is the remaining verification limitation.
+
+Fresh and completed-resume CLI smoke used private workspace-local `tmp/phase-1-final-review-smoke`. Both returned `Status: completed`; the resumed checkpoint was `completed` with `resume_count=1`, SQLite trace counts included `run_resumed=1` and `baseline_agent_completed=4`, all seven stable artifacts plus `run.db` and checkpoints existed, and no `run.db-wal`, `run.db-shm`, or rollback-journal sidecar existed.

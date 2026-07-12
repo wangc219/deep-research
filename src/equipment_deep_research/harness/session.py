@@ -13,7 +13,15 @@ from equipment_deep_research.domain.workspace import open_directory_handle
 
 
 _LOCKS_GUARD = Lock()
-_PATH_LOCKS: dict[str, RLock] = {}
+
+
+class _PathLockEntry:
+    def __init__(self) -> None:
+        self.lock = RLock()
+        self.owners = 0
+
+
+_PATH_LOCKS: dict[str, _PathLockEntry] = {}
 
 
 class UnsupportedPlatformError(RuntimeError):
@@ -33,6 +41,7 @@ class JsonlSessionStore:
         root_label: Path | None = None,
     ) -> None:
         _require_secure_platform()
+        self._lock_key: str | None = None
         roots_provided = sum(
             value is not None for value in (root_dir, anchor_dir, root_fd)
         )
@@ -76,7 +85,10 @@ class JsonlSessionStore:
         root_identity = _identity(os.fstat(self._root_fd))
         key = f"{root_identity}\0{self.relative_path.as_posix()}"
         with _LOCKS_GUARD:
-            self._lock = _PATH_LOCKS.setdefault(key, RLock())
+            entry = _PATH_LOCKS.setdefault(key, _PathLockEntry())
+            entry.owners += 1
+            self._lock = entry.lock
+            self._lock_key = key
         try:
             with self._lock:
                 self._validate_existing_path()
@@ -86,13 +98,24 @@ class JsonlSessionStore:
 
     def close(self) -> None:
         descriptor = getattr(self, "_root_fd", None)
-        if descriptor is None:
+        lock_key = getattr(self, "_lock_key", None)
+        if descriptor is None and lock_key is None:
             return
         self._root_fd = None
+        self._lock_key = None
         try:
-            os.close(descriptor)
+            if descriptor is not None:
+                os.close(descriptor)
         except OSError:
             pass
+        finally:
+            if lock_key is not None:
+                with _LOCKS_GUARD:
+                    entry = _PATH_LOCKS.get(lock_key)
+                    if entry is not None and entry.lock is self._lock:
+                        entry.owners -= 1
+                        if entry.owners == 0:
+                            _PATH_LOCKS.pop(lock_key, None)
 
     def __enter__(self) -> "JsonlSessionStore":
         self._require_root_fd()

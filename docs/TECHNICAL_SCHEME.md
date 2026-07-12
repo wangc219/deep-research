@@ -57,7 +57,7 @@ Phase 0 已验证公开材料化安全与失败隔离；配置驱动的质量评
 
 ### 2.5 工作区与产物契约
 
-`RunWorkspace` 为每次运行原子创建独立目录，并校验 `run-id` 不得逃逸输出根目录。`resume=False` 时，任何已存在的同名 run 目录或 symlink 都会由 `mkdir(exist_ok=False)` 在产物写入前拒绝，不允许覆盖或续写旧 session。七类稳定产物为：
+`RunWorkspace` 为每次运行原子创建独立目录，并校验 `run-id` 不得逃逸输出根目录。`resume=False` 时，任何已存在的同名 run 目录或 symlink 都会在产物写入前拒绝，不允许覆盖或续写旧 session。安全保证以当前 UID 拥有且非 group/world writable 的私有 output root 为信任边界；随机 staging 与 no-replace 发布覆盖公开名称抢占和已测试 rename race，但不声称抵御持续枚举并操作同 UID 私有 namespace 的本机恶意进程。七类稳定产物为：
 
 - `report.md`
 - `capability_images.json`
@@ -80,10 +80,14 @@ Phase 0 已验证公开材料化安全与失败隔离；配置驱动的质量评
 - 最后 baseline 完成后 finalize 仍 pending；engine 前 finalize=running，stage/image/recommendation/audit/report 与 finalize/run completed checkpoint 在同一最终事务提交。
 - `RunWorkspace` 从文件系统根逐组件打开 canonical output root，原子创建/打开 run、三个子目录和 DB，并持有私有 fd/inode；rooted writer 只从 handle `dup()` 开始。
 - runner/recovery session 使用 workspace dup sessions fd 的 `JsonlSessionStore(root_fd=...)`；DB 已提交而 session savepoint 失败时自动记录 reconciliation marker，Harness 旧 `path + root_dir` 接口保持兼容。
+- Harness 兼容接口中的 `root_dir` 是调用方指定的信任锚；store 从打开后的 root fd 逐组件 no-follow 访问相对路径，但不会把任意共享目录升级为可信安全边界。每次 execution 与 reconciliation 都关闭其拥有的 session fd，最后一个 owner 关闭时释放全局 path lock entry。
 - 项目自有 `SecureArtifactStore` 保持旧 ref/metadata 契约；最终输出、checkpoint 与 artifact 文件使用持有 fd 的 rooted dirfd 原子 writer，临时文件 `O_EXCL|O_NOFOLLOW`、文件和目录 fsync、同 dirfd rename；安全原语缺失时 fail closed。
-- runner/recovery SQLite 使用 workspace DB fd 校验 identity 并持有单一连接，避免 root/run path 替换后的外部 DB 重连。
+- runner/recovery SQLite 使用 workspace DB fd 校验 identity 并持有单一连接，避免 root/run path 替换后的外部 DB 重连。安全 workspace 模式使用 `journal_mode=MEMORY` 与 `synchronous=FULL`，不创建 WAL/SHM sidecar，并在连接前拒绝 legacy WAL/SHM/journal；这保留已测试的事务和 committed-savepoint 恢复，不提供 WAL 等价的掉电或 kill-mid-transaction durability。
 - completed resume 提交 `run_resumed` 后无条件从 SQLite 恢复态重写稳定输出，provider 为 0，文件 trace 与数据库 trace 一致。
 - 崩溃继续向调用方传播，但此前已提交的 agent 状态可用于下一次恢复。
+- `AgentLoop` 并发执行同轮工具并按 call 顺序投影结果。timeout、外部取消或 sibling failure 先取消并在短 grace 内 drain；仍抑制 `CancelledError` 的进程内 task 被 quarantine，异常由 done callback 消费。Harness execution gate 在取消发起时关闭，阻止迟到 callback、后续工具启动、session/proposal/savepoint/domain/event 写入。已经开始执行的不合作代码可能继续产生 harness 之外的副作用，强制终止需要进程/worker 隔离。
+- EventBus sequence 以 SQLite `last_trace_sequence()` 为权威下界：execution 开始和每次成功 trace commit 后 reseed，只前移不回退，因此新 bus、恢复和单次提交大量 trace 都不会让后续 RuntimeEvent sequence 落后。
+- 威胁与耐久性边界固定为当前 UID 控制、非 shared-writable 的 trusted root；不声称抵御恶意同 UID 进程在私有 namespace 中持续竞速 `mkdir`/`open`。运行权威是单一持久 SQLite connection 的 committed state；MEMORY journal/no-sidecar 仅保留已测事务与 resume 语义，不等同 WAL 的 process-kill 或 power-loss durability。
 
 ### 2.7 审计与限制呈现
 
@@ -114,11 +118,11 @@ CLI
 - [装备能力图像 Deep Research 多智能体系统总实施计划](superpowers/plans/2026-07-10-equipment-deep-research-master-plan.md)
 - [装备能力图像 Deep Research 前后端一体化企业级设计方案](superpowers/specs/2026-07-10-equipment-deep-research-frontend-backend-enterprise-design.md)
 
-上述文件定义甲方首版的完整实施范围。Phase 0 仅提供基础契约和运行基线，不能替代首版整体验收。
+上述文件定义甲方首版的完整实施范围。Phase 0/Phase 1 仅提供基础契约、运行基线与 harness/recovery 闭环，不能替代首版整体验收。
 
 ## 5. 首版后续能力
 
-以下能力尚未完成，不纳入 Phase 0 完成声明：
+以下能力尚未完成，不纳入 Phase 0/Phase 1 完成声明：
 
 - 真实 Responses 模型循环和真实搜索 provider。
 - 由真实检索和模型驱动的多轮研究、再调和收敛执行。

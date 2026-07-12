@@ -56,8 +56,13 @@
 - 恢复前必须先完成 unresolved session reconciliation；`session_reconciled` trace 顺序早于 `run_resumed`。
 - topic、请求/解析路线、selected agents 或配置指纹不一致，以及不存在、损坏或 symlink 逃逸的 workspace，必须拒绝恢复。
 - completed run 再次 resume 不得调用 provider，但必须先追加 `run_resumed` trace/savepoint，并无条件从 SQLite 权威态重写稳定输出。
-- workspace 必须从文件系统根逐组件 no-follow 打开 canonical output root，并持有 run、agent_sessions、artifacts、checkpoints 和 DB fd/inode。runner/recovery session 必须使用 workspace dup 的 sessions handle；Harness 的 `path + root_dir` 接口保持兼容。
-- report/json/domain/trace/checkpoint/artifact 叶子必须从持有 fd 的 rooted dirfd writer 开始；SQLite 必须使用安全 DB fd 绑定的持久连接。替换 output root、run dir 或子目录为 symlink/普通目录时，只允许写原绑定 inode 或 fail closed，攻击者目录不得出现文件。
+- workspace 必须从文件系统根逐组件 no-follow 打开 canonical output root，并持有 run、agent_sessions、artifacts、checkpoints 和 DB fd/inode。runner/recovery session 必须使用 workspace dup 的 sessions handle；Harness 的 `path + root_dir` 接口保持兼容且把 `root_dir` 明确定义为调用方提供的可信锚。
+- report/json/domain/trace/checkpoint/artifact 叶子必须从持有 fd 的 rooted dirfd writer 开始；SQLite 必须使用安全 DB fd 绑定的持久连接。替换 output root、run dir 或子目录为 symlink/普通目录时，只允许写原绑定 inode 或 fail closed。该结论适用于当前 UID 拥有、非 group/world writable 的私有 output root 及已测试抢占/rename race，不扩张为抵御持续操纵同 UID namespace 的恶意本机进程。
+- 安全 workspace SQLite 必须使用 `journal_mode=MEMORY`、`synchronous=FULL`，不得创建 `run.db-wal`、`run.db-shm` 或 rollback-journal sidecar；legacy sidecar/WAL header 必须要求离线可信迁移并在修改数据库前拒绝。验收仅覆盖事务、进程内 crash 注入和 committed-savepoint resume，不宣称 WAL 等价的掉电/kill durability。
+- AgentHarness timeout、外部取消和工具 sibling failure 必须在有界时间返回；不合作的进程内 task 可被 quarantine，但其迟到 callback/result 不得继续写 session、proposal、savepoint、domain state 或 RuntimeEvent，异常必须被消费且不得产生 unhandled-task warning。已经开始的任意外部副作用不在 asyncio 可撤销保证内，强终止要求进程或远程 worker 隔离。
+- Harness 拥有的 execution/reconciliation session fd 必须在成功、失败、权限拒绝和取消路径关闭；session path lock registry 必须在最后 owner 关闭后回收。EventBus 必须以权威 persisted trace sequence 为下界，并在每次 trace commit 后继续前移。
+- 缺少可选 `providers.yaml` / `evidence.yaml` 的最小自定义 `project_root` 必须可运行 fake mode；这些文件的缺失/出现状态属于配置指纹，resume 不得静默接受变化。
+- trusted root 的验收前提是当前 UID 控制且非 shared-writable；不把该前提扩张为抵御恶意同 UID 进程持续竞速 `mkdir`/`open`。SQLite authority 是单一持久 connection 的 committed state；`journal_mode=MEMORY`/no-sidecar 不验收任何 WAL 等价的 process-kill 或 power-loss durability。
 - 正常结果必须返回 `status=completed`，并保持七类稳定产物不变。
 
 `domain.jsonl`、`trace.jsonl` 和 `round_summary.json` 中实际持久化的领域 dataclass payload 必须可 JSON 序列化，并包含稳定 ID、UTC `created_at` 与 `schema_version="1.0"`；新增尾部默认字段不得破坏旧位置或关键字构造。
@@ -94,18 +99,18 @@ python3 scripts/run_deep_research.py \
 
 ## 5. 后续阶段进入条件
 
-只有同时满足以下条件，才可进入 Phase 1：
+只有同时满足以下条件，才可进入 Phase 2：
 
 - 全量测试通过，严格一致性扫描零命中。
 - fresh+resume smoke 在独立输出根成功生成七类稳定产物、`run.db` 和 completed checkpoint。
-- Phase 0 文档、配置、测试和运行行为对默认模型、来源策略、provider 边界及已知限制无矛盾。
-- Task 1-4 审查结论均无阻断问题，遗留项已明确归入后续阶段。
+- Phase 0/Phase 1 文档、配置、测试和运行行为对默认模型、来源策略、provider、harness、恢复及已知限制无矛盾。
+- Phase 1 Task 1-5 与最终复审结论均无阻断问题，遗留项已明确归入后续阶段。
 - 已明确运行时加载 `evidence.yaml` 并执行质量评分的设计、测试和正式证据准入规则。
 - 后续实现承诺兼容现有领域对象、CLI 参数和七类稳定产物契约。
 
 ## 6. 首版后续验收项
 
-以下项目从 Phase 1 起另行设计和验收：
+以下项目从 Phase 2 起另行设计和验收：
 
 - 真实 Responses 模型循环与真实搜索 provider。
 - 真实检索和模型驱动的多轮研究、再调与收敛。

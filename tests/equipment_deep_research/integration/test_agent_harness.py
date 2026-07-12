@@ -123,6 +123,49 @@ class BlockingProvider:
         yield ProviderStreamEvent.final(ProviderFinalTurn(text="unreachable"))
 
 
+class CancellationResistantProvider:
+    def __init__(self, tool_name: str) -> None:
+        self.tool_name = tool_name
+        self.started = asyncio.Event()
+        self.cancelled = asyncio.Event()
+        self.release = asyncio.Event()
+        self.finished = asyncio.Event()
+
+    async def stream(
+        self,
+        messages: Sequence[ModelMessage],
+        tools: Sequence[ToolDefinition],
+        options: Mapping[str, Any],
+    ) -> AsyncIterator[ProviderStreamEvent]:
+        del messages, tools, options
+        self.started.set()
+        try:
+            await asyncio.Event().wait()
+        except asyncio.CancelledError:
+            self.cancelled.set()
+            await self.release.wait()
+        try:
+            yield ProviderStreamEvent.final(
+                ProviderFinalTurn(
+                    tool_calls=(ProviderToolCall("late-call", self.tool_name, {}),)
+                )
+            )
+        finally:
+            self.finished.set()
+
+
+class TrackingSession(JsonlSessionStore):
+    def __init__(self, path: str, *, root_dir: Path) -> None:
+        self.close_calls = 0
+        super().__init__(path, root_dir=root_dir)
+        self.opened_root_fd = self._root_fd
+
+    def close(self) -> None:
+        if getattr(self, "_root_fd", None) is not None:
+            self.close_calls += 1
+        super().close()
+
+
 class FailingProvider:
     def __init__(self, error: str) -> None:
         self.error = error
@@ -694,6 +737,153 @@ def test_wall_clock_budget_times_out_as_budget_exhausted(tmp_path: Path) -> None
     run(scenario())
 
 
+def test_wall_clock_timeout_returns_with_cancellation_resistant_tool(
+    tmp_path: Path,
+) -> None:
+    async def scenario() -> None:
+        handler_started = asyncio.Event()
+        handler_cancelled = asyncio.Event()
+        release_handler = asyncio.Event()
+
+        async def cancellation_resistant(
+            call: ToolCall, context: ToolExecutionContext
+        ) -> ToolResult:
+            del context
+            handler_started.set()
+            try:
+                await asyncio.Event().wait()
+            except asyncio.CancelledError:
+                handler_cancelled.set()
+                await release_handler.wait()
+            return ToolResult(call.call_id, "late result must be ignored")
+
+        harness = AgentHarness(
+            ScriptedProvider([final_call("call-1", "resist")]),
+            [tool("resist", cancellation_resistant)],
+            SqliteRunStore(tmp_path / "run.db", run_id="run-1"),
+            sessions_root=tmp_path / "sessions",
+        )
+        execution = asyncio.create_task(
+            harness.execute(
+                task(
+                    allowed_tools=["resist"],
+                    budget={
+                        "max_turns": 4,
+                        "max_tool_calls": 4,
+                        "max_tokens": 1000,
+                        "max_seconds": 0.02,
+                    },
+                )
+            )
+        )
+        await handler_started.wait()
+        try:
+            done, _ = await asyncio.wait({execution}, timeout=0.3)
+            assert done == {execution}
+            assert execution.result().status == "budget_exhausted"
+            assert handler_cancelled.is_set()
+        finally:
+            release_handler.set()
+            if not execution.done():
+                assert (await execution).status == "budget_exhausted"
+            await asyncio.sleep(0)
+
+    run(scenario())
+
+
+def test_detached_provider_cannot_emit_or_start_tools_after_harness_returns(
+    tmp_path: Path,
+) -> None:
+    async def scenario() -> None:
+        provider = CancellationResistantProvider("late_tool")
+        handler_calls: list[str] = []
+
+        async def late_tool(
+            call: ToolCall, context: ToolExecutionContext
+        ) -> ToolResult:
+            del context
+            handler_calls.append(call.call_id)
+            return ToolResult(
+                call.call_id,
+                "late proposal",
+                domain_proposals=(
+                    DomainWriteProposal(
+                        "late-domain",
+                        "EvidenceCard",
+                        "upsert",
+                        {
+                            "evidence_id": "late-evidence",
+                            "claim": "must not persist",
+                            "schema_version": "1.0",
+                            "created_at": CREATED_AT,
+                        },
+                        "late-evidence",
+                    ),
+                ),
+            )
+
+        store = SqliteRunStore(tmp_path / "run.db", run_id="run-1")
+        bus = EventBus()
+        seen: list[Any] = []
+        bus.subscribe(seen.append)
+        harness = AgentHarness(
+            provider,
+            [tool("late_tool", late_tool)],
+            store,
+            sessions_root=tmp_path / "sessions",
+            event_bus=bus,
+        )
+        execution = asyncio.create_task(
+            harness.execute(
+                task(
+                    allowed_tools=["late_tool"],
+                    budget={"max_turns": 4, "max_seconds": 0.02},
+                )
+            )
+        )
+        await provider.started.wait()
+        result = await execution
+        assert result.status == "budget_exhausted"
+        assert provider.cancelled.is_set()
+        session_path = next((tmp_path / "sessions").glob("*.jsonl"))
+        frozen_session = session_path.read_bytes()
+        frozen_trace_count = store.trace_count()
+        frozen_events = tuple(seen)
+
+        provider.release.set()
+        await provider.finished.wait()
+        await asyncio.sleep(0)
+        await asyncio.sleep(0)
+
+        assert handler_calls == []
+        assert store.count("EvidenceCard") == 0
+        assert store.trace_count() == frozen_trace_count
+        assert session_path.read_bytes() == frozen_session
+        assert tuple(seen) == frozen_events
+
+    run(scenario())
+
+
+def test_zero_wall_clock_budget_is_expired_not_unbounded(tmp_path: Path) -> None:
+    async def scenario() -> None:
+        provider = BlockingProvider()
+        harness = AgentHarness(
+            provider,
+            [],
+            SqliteRunStore(tmp_path / "run.db", run_id="run-1"),
+            sessions_root=tmp_path / "sessions",
+        )
+
+        result = await harness.execute(
+            task(allowed_tools=[], budget={"max_turns": 4, "max_seconds": 0})
+        )
+
+        assert result.status == "budget_exhausted"
+        assert provider.calls == 0
+
+    run(scenario())
+
+
 def test_budget_rejects_unknown_keys_and_records_atomic_consumption() -> None:
     now = [100.0]
     with pytest.raises(ValueError, match="unknown budget keys.*mystery"):
@@ -721,6 +911,109 @@ def test_budget_rejects_unknown_keys_and_records_atomic_consumption() -> None:
     assert budget.is_exhausted()
     with pytest.raises(BudgetExceededError, match="max_seconds"):
         budget.record_tool_call()
+
+    precise_now = [50.0]
+    precise = Budget({"max_seconds": 0.0000004}, monotonic=lambda: precise_now[0])
+    precise_now[0] += 0.0000001
+    remaining = precise.remaining_seconds()
+    assert remaining is not None
+    assert 0 < remaining < 0.0000004
+
+
+def test_harness_seeds_new_event_bus_from_sqlite_trace_sequence(tmp_path: Path) -> None:
+    async def scenario() -> None:
+        database = tmp_path / "run.db"
+        original_store = SqliteRunStore(database, run_id="run-1")
+        original_store.commit(
+            (),
+            tuple(
+                TraceProposal(
+                    proposal_id=f"prior-{index}",
+                    event_type="prior_event",
+                    actor="orchestrator",
+                    payload={"index": index},
+                )
+                for index in range(1, 4)
+            ),
+        )
+        authoritative_sequence = original_store.last_trace_sequence()
+        original_store.close()
+
+        store = SqliteRunStore(database, run_id="run-1")
+        bus = EventBus()
+        seen: list[Any] = []
+        bus.subscribe(seen.append)
+        harness = AgentHarness(
+            ScriptedProvider([final_text("done")]),
+            [],
+            store,
+            sessions_root=tmp_path / "sessions",
+            event_bus=bus,
+        )
+
+        result = await harness.execute(task(allowed_tools=[]))
+
+        assert result.status == "completed"
+        assert seen[0].sequence == authoritative_sequence + 1
+        assert [event.sequence for event in seen] == list(
+            range(authoritative_sequence + 1, authoritative_sequence + len(seen) + 1)
+        )
+        store.close()
+
+    run(scenario())
+
+
+def test_harness_reseeds_event_bus_after_each_trace_commit(tmp_path: Path) -> None:
+    async def scenario() -> None:
+        async def many_traces(
+            call: ToolCall, context: ToolExecutionContext
+        ) -> ToolResult:
+            del context
+            return ToolResult(
+                call.call_id,
+                "traces",
+                trace_proposals=tuple(
+                    TraceProposal(
+                        proposal_id=f"tool-trace-{index}",
+                        event_type="tool_trace",
+                        actor="agent-a",
+                        payload={"index": index},
+                    )
+                    for index in range(8)
+                ),
+            )
+
+        store = SqliteRunStore(tmp_path / "run.db", run_id="run-1")
+        bus = EventBus()
+        turn_end_observations: list[tuple[int, int]] = []
+
+        def observe(event: Any) -> None:
+            if event.event_type == "turn_end":
+                turn_end_observations.append(
+                    (event.sequence, store.last_trace_sequence())
+                )
+
+        bus.subscribe(observe)
+        harness = AgentHarness(
+            ScriptedProvider(
+                [final_call("call-1", "many_traces"), final_text("done")]
+            ),
+            [tool("many_traces", many_traces)],
+            store,
+            sessions_root=tmp_path / "sessions",
+            event_bus=bus,
+        )
+
+        result = await harness.execute(task(allowed_tools=["many_traces"]))
+
+        assert result.status == "completed"
+        assert turn_end_observations
+        assert all(
+            event_sequence > persisted_sequence
+            for event_sequence, persisted_sequence in turn_end_observations
+        )
+
+    run(scenario())
 
 
 def test_external_event_failure_is_isolated_from_persistence(tmp_path: Path) -> None:
@@ -1155,11 +1448,19 @@ def test_savepoint_session_failure_is_marked_in_database_for_reconciliation(
 
         restarted_store = SqliteRunStore(database, run_id="run-1")
         restarted_provider = ScriptedProvider([final_text("restart complete")])
+        restarted_sessions: list[TrackingSession] = []
+
+        def tracking_factory(path: str, root_dir: Path) -> TrackingSession:
+            session = TrackingSession(path, root_dir=root_dir)
+            restarted_sessions.append(session)
+            return session
+
         restarted = AgentHarness(
             restarted_provider,
             [],
             restarted_store,
             sessions_root=sessions_root,
+            session_store_factory=tracking_factory,
         )
         restarted_result = await restarted.execute(task(allowed_tools=[]))
 
@@ -1183,6 +1484,12 @@ def test_savepoint_session_failure_is_marked_in_database_for_reconciliation(
         ]
         assert len(reconciled_traces) == 1
         assert reconciled_traces[0]["payload"]["marker_id"] == marker["marker_id"]
+        assert len(restarted_sessions) == 2
+        assert all(session.close_calls == 1 for session in restarted_sessions)
+        for tracked in restarted_sessions:
+            assert tracked.opened_root_fd is not None
+            with pytest.raises(OSError):
+                os.fstat(tracked.opened_root_fd)
 
         repaired_line_count = len(repaired_records)
         third_store = SqliteRunStore(database, run_id="run-1")
@@ -1270,6 +1577,65 @@ def test_execution_result_has_stable_utc_schema_contract(tmp_path: Path) -> None
     json.dumps(result.to_plain(), allow_nan=False)
 
 
+@pytest.mark.parametrize("outcome", ["success", "failure", "permission"])
+def test_harness_closes_owned_session_on_terminal_outcomes(
+    tmp_path: Path,
+    outcome: str,
+) -> None:
+    async def scenario() -> None:
+        sessions: list[TrackingSession] = []
+
+        def session_factory(path: str, root_dir: Path) -> TrackingSession:
+            session = TrackingSession(path, root_dir=root_dir)
+            sessions.append(session)
+            return session
+
+        async def denied(
+            call: ToolCall, context: ToolExecutionContext
+        ) -> ToolResult:
+            del call, context
+            raise PermissionError("denied")
+
+        provider: Any
+        tools: list[ToolDefinition]
+        execution_task = task(allowed_tools=[])
+        if outcome == "success":
+            provider = ScriptedProvider([final_text("done")])
+            tools = []
+        elif outcome == "failure":
+            provider = FailingProvider("provider failed")
+            tools = []
+        else:
+            provider = ScriptedProvider([final_call("call-1", "denied")])
+            tools = [tool("denied", denied)]
+            execution_task = task(allowed_tools=["denied"])
+
+        harness = AgentHarness(
+            provider,
+            tools,
+            SqliteRunStore(tmp_path / outcome / "run.db", run_id="run-1"),
+            sessions_root=tmp_path / outcome / "sessions",
+            session_store_factory=session_factory,
+        )
+
+        if outcome == "permission":
+            with pytest.raises(PermissionError, match="denied"):
+                await harness.execute(execution_task)
+        else:
+            result = await harness.execute(execution_task)
+            assert result.status == ("completed" if outcome == "success" else "failed")
+
+        assert len(sessions) == 1
+        assert sessions[0].close_calls == 1
+        assert sessions[0].opened_root_fd is not None
+        with pytest.raises(OSError):
+            os.fstat(sessions[0].opened_root_fd)
+        assert harness.last_session_store is None
+        assert harness.last_session_path == sessions[0].path
+
+    run(scenario())
+
+
 def test_cancellation_propagates_after_safe_terminal_record(tmp_path: Path) -> None:
     async def scenario() -> None:
         provider = BlockingProvider()
@@ -1289,6 +1655,39 @@ def test_cancellation_propagates_after_safe_terminal_record(tmp_path: Path) -> N
         records = session_records(tmp_path / "sessions")
         assert records[-1]["event_type"] == "task_cancelled"
         assert "caller cancelled" not in json.dumps(records)
+
+    run(scenario())
+
+
+def test_harness_closes_owned_session_on_external_cancellation(tmp_path: Path) -> None:
+    async def scenario() -> None:
+        sessions: list[TrackingSession] = []
+
+        def session_factory(path: str, root_dir: Path) -> TrackingSession:
+            session = TrackingSession(path, root_dir=root_dir)
+            sessions.append(session)
+            return session
+
+        provider = BlockingProvider()
+        harness = AgentHarness(
+            provider,
+            [],
+            SqliteRunStore(tmp_path / "run.db", run_id="run-1"),
+            sessions_root=tmp_path / "sessions",
+            session_store_factory=session_factory,
+        )
+        execution = asyncio.create_task(harness.execute(task(allowed_tools=[])))
+        await provider.started.wait()
+        execution.cancel("caller cancelled")
+
+        with pytest.raises(asyncio.CancelledError, match="caller cancelled"):
+            await execution
+
+        assert sessions[0].close_calls == 1
+        assert sessions[0].opened_root_fd is not None
+        with pytest.raises(OSError):
+            os.fstat(sessions[0].opened_root_fd)
+        assert harness.last_session_store is None
 
     run(scenario())
 

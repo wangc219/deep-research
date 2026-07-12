@@ -33,6 +33,9 @@ AgentLoopStatus = Literal[
     "cancelled",
 ]
 
+TOOL_CANCELLATION_GRACE_SECONDS = 0.05
+_QUARANTINED_TOOL_TASKS: set[asyncio.Task[Any]] = set()
+
 
 @dataclass(frozen=True)
 class TurnSnapshotInput:
@@ -553,12 +556,21 @@ class AgentLoop:
             )
             for index, call in enumerate(calls)
         ]
+        pending = set(tasks)
         try:
-            results = await asyncio.gather(*tasks)
+            while pending:
+                done, pending = await asyncio.wait(
+                    pending,
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
+                for task in tasks:
+                    if task not in done:
+                        continue
+                    task.result()
+            return tuple(task.result() for task in tasks)
         except BaseException as primary_error:
             await _cancel_and_drain(tasks, primary_error)
             raise
-        return tuple(results)
 
     async def _execute_one(
         self,
@@ -674,25 +686,59 @@ async def _cancel_and_drain(
         if not task.done():
             task.cancel()
 
-    drain = asyncio.gather(*tasks, return_exceptions=True)
-    while not drain.done():
+    pending = {task for task in tasks if not task.done()}
+    deadline = asyncio.get_running_loop().time() + TOOL_CANCELLATION_GRACE_SECONDS
+    while pending:
+        remaining = deadline - asyncio.get_running_loop().time()
+        if remaining <= 0:
+            break
         try:
-            await asyncio.shield(drain)
+            done, pending = await asyncio.wait(pending, timeout=remaining)
         except asyncio.CancelledError as secondary_cancel:
             primary_error.add_note(
                 "secondary cancellation while draining tool siblings: "
                 f"{secondary_cancel}"
             )
+            continue
+        for task in done:
+            _record_task_failure(task, primary_error)
 
-    results = drain.result()
-    for result in results:
-        if isinstance(result, BaseException) and not isinstance(
-            result, asyncio.CancelledError
-        ):
+    for task in pending:
+        _quarantine_tool_task(task)
+    for task in tasks:
+        if task.done():
+            _record_task_failure(task, primary_error)
+
+
+def _record_task_failure(
+    task: asyncio.Task[ToolResult],
+    primary_error: BaseException,
+) -> None:
+    try:
+        error = task.exception()
+    except asyncio.CancelledError:
+        return
+    if error is not None and error is not primary_error:
+        if not isinstance(error, asyncio.CancelledError):
             primary_error.add_note(
                 "tool sibling failed during cancellation cleanup: "
-                f"{type(result).__name__}: {result}"
+                f"{type(error).__name__}: {error}"
             )
+
+
+def _quarantine_tool_task(task: asyncio.Task[ToolResult]) -> None:
+    """Track a non-cooperative in-process handler and discard its late result."""
+    _QUARANTINED_TOOL_TASKS.add(task)
+    task.set_name(f"quarantined-{task.get_name()}")
+
+    def consume(completed: asyncio.Task[ToolResult]) -> None:
+        _QUARANTINED_TOOL_TASKS.discard(completed)
+        try:
+            completed.exception()
+        except BaseException:
+            pass
+
+    task.add_done_callback(consume)
 
 
 async def _callback_is_true(
@@ -821,5 +867,6 @@ __all__ = [
     "EventCallback",
     "PrepareTurnCallback",
     "StopCallback",
+    "TOOL_CANCELLATION_GRACE_SECONDS",
     "TurnSnapshotInput",
 ]

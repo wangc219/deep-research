@@ -656,7 +656,11 @@ class DeepResearchRunner:
         }
         payload = {
             "files": {
-                name: sha256(path.read_bytes()).hexdigest()
+                name: (
+                    None
+                    if name in {"providers", "evidence"} and not path.exists()
+                    else sha256(path.read_bytes()).hexdigest()
+                )
                 for name, path in files.items()
             },
             "mode": mode,

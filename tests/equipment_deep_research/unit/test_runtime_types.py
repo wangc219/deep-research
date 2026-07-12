@@ -95,6 +95,16 @@ def test_event_bus_assigns_monotonic_sequences_per_run() -> None:
     assert [first.sequence, other_run.sequence, second.sequence] == [1, 1, 2]
 
 
+def test_event_bus_seed_continues_above_authoritative_run_sequence() -> None:
+    bus = EventBus(initial_sequences={"run-1": 7})
+
+    first = bus.publish(RuntimeEvent("agent", "resumed", "run-1"))
+    bus.seed("run-1", 3)
+    second = bus.publish(RuntimeEvent("agent", "finished", "run-1"))
+
+    assert [first.sequence, second.sequence] == [8, 9]
+
+
 def test_subscriber_failure_is_isolated_without_reusing_sequence() -> None:
     bus = EventBus()
     seen: list[RuntimeEvent] = []

@@ -50,6 +50,12 @@ class Budget:
         self._limits = normalized
         self._monotonic = monotonic
         self._started_at = float(monotonic())
+        max_seconds = normalized["max_seconds"]
+        self._deadline = (
+            None
+            if max_seconds is None
+            else self._started_at + float(max_seconds)
+        )
         self._turns = 0
         self._tool_calls = 0
         self._tokens = 0
@@ -64,6 +70,11 @@ class Budget:
     def max_turns(self) -> int | None:
         value = self._limits["max_turns"]
         return None if value is None else int(value)
+
+    @property
+    def deadline(self) -> float | None:
+        """Absolute monotonic deadline; ``None`` is the only unbounded value."""
+        return self._deadline
 
     def try_start_turn(self) -> bool:
         with self._lock:
@@ -101,20 +112,19 @@ class Budget:
 
     def remaining(self) -> dict[str, int | float | None]:
         with self._lock:
-            elapsed = max(0.0, float(self._monotonic()) - self._started_at)
             return {
                 "max_turns": _remaining_int(self._limits["max_turns"], self._turns),
                 "max_tool_calls": _remaining_int(
                     self._limits["max_tool_calls"], self._tool_calls
                 ),
-                "max_seconds": _remaining_seconds(
-                    self._limits["max_seconds"], elapsed
-                ),
+                "max_seconds": self._remaining_seconds_locked(),
                 "max_tokens": _remaining_int(self._limits["max_tokens"], self._tokens),
             }
 
     def remaining_seconds(self) -> float | None:
-        return self.remaining()["max_seconds"]  # type: ignore[return-value]
+        """Return exact remaining time; ``0.0`` means already expired."""
+        with self._lock:
+            return self._remaining_seconds_locked()
 
     def to_plain(self) -> dict[str, Any]:
         with self._lock:
@@ -136,8 +146,7 @@ class Budget:
     ) -> str | None:
         max_seconds = self._limits["max_seconds"]
         if max_seconds is not None:
-            elapsed = max(0.0, float(self._monotonic()) - self._started_at)
-            if elapsed >= float(max_seconds):
+            if self._remaining_seconds_locked() <= 0:
                 return "max_seconds"
         max_tool_calls = self._limits["max_tool_calls"]
         if max_tool_calls is not None and self._tool_calls >= int(max_tool_calls):
@@ -157,17 +166,16 @@ class Budget:
             key = self._exhausted_key_locked(include_turn=True) or "unknown"
         return f"budget exhausted: {key}"
 
+    def _remaining_seconds_locked(self) -> float | None:
+        if self._deadline is None:
+            return None
+        return max(0.0, self._deadline - float(self._monotonic()))
+
 
 def _remaining_int(limit: int | float | None, consumed: int) -> int | None:
     if limit is None:
         return None
     return max(0, int(limit) - consumed)
-
-
-def _remaining_seconds(limit: int | float | None, elapsed: float) -> float | None:
-    if limit is None:
-        return None
-    return max(0.0, round(float(limit) - elapsed, 6))
 
 
 __all__ = ["BUDGET_KEYS", "Budget", "BudgetExceededError"]

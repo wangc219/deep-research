@@ -32,7 +32,7 @@
 - 主键：`(run_id, key_kind, key_value)`。
 - 分别记录全局 proposal ID 和 domain idempotency key 的内容 hash，用于区分“完全重复”与“同 key 内容冲突”。
 
-数据库连接设置：WAL、`busy_timeout=5000ms`（可配置）、foreign keys；每次公开操作使用独立连接，避免跨线程共享 connection。
+当前最终实现使用单一持久 SQLite connection、`busy_timeout=5000ms`（可配置）和 foreign keys，并用进程内锁串行化 lease。安全 workspace 模式固定为 `journal_mode=MEMORY`、`synchronous=FULL`，不创建 WAL/SHM/rollback-journal sidecar；legacy WAL header 或 sidecar 在数据库修改前 fail closed。该模式不提供 WAL 等价的掉电或进程被杀中途恢复保证。
 
 ## 事务算法
 
@@ -121,11 +121,11 @@ Trace：
 ### Rooted Session Path
 
 - `JsonlSessionStore` 构造接口调整为 `JsonlSessionStore(path, root_dir=trusted_root)`；锁 key 使用 canonical root 与规范化 relative path。
-- trusted root 先创建并 `resolve(strict=True)`，因此 `/tmp` 等系统级 symlink root 可作为显式受信入口；root 内部的任意祖先 symlink/junction 和最终文件 symlink 均拒绝。
+- `root_dir` 是调用方明确指定的信任锚；构造时打开 canonical root fd，之后仅从该 fd 逐组件访问相对路径。根本身若位于共享可写 namespace，调用方仍须承担该信任决定；standalone `JsonlSessionStore` 不声称把任意 `/tmp` 路径升级为对恶意同 UID 进程安全的根。
 - relative candidate 拒绝 `..`；absolute candidate 必须位于 requested root 或 canonical root 内，越界直接失败。
 - POSIX 主路径用 root directory fd 锚定访问，逐组件执行 `stat(..., follow_symlinks=False)`、`mkdir(..., dir_fd=...)`、`open(..., dir_fd=..., O_DIRECTORY|O_NOFOLLOW)`；最终文件使用 `O_NOFOLLOW` 并以 `fstat` 对照 inode/device。
 - 不提供完整路径式 fallback。缺少 `os.open/os.mkdir/os.stat` 的 dir fd 支持、`O_NOFOLLOW` 或 `O_DIRECTORY` 任一能力时，构造及每次 I/O 都以 `UnsupportedPlatformError` fail closed。
-- 新测试覆盖祖先 symlink、最终 symlink、root 外 relative/absolute path、trusted root symlink、实际 `/tmp` resolved root、缺失安全能力 fail closed，以及 8 个 worker 并发执行 100 次 append。
+- 新测试覆盖相对路径祖先 symlink、最终 symlink、root 外 relative/absolute path、显式 root canonicalization、实际 `/tmp` resolved root、缺失安全能力 fail closed，以及 8 个 worker 并发执行 100 次 append。
 
 ### SQLite Zero-Write Preflight
 
@@ -188,3 +188,11 @@ python3 -m pytest -q
 ```
 
 最终原子提交消息：`fix: fail closed without secure session primitives`；实际提交哈希记录在最终交付回复中。
+
+## Phase 1 最终复审合同更正
+
+- `JsonlSessionStore.close()` 现在同时释放 root fd 与 path-lock owner；同一路径的多个 live store 继续共享同一锁，最后 owner 关闭后全局 registry entry 删除，避免长进程中按 session path 无界增长。
+- `AgentHarness` 在每次 execution 的全部终态关闭 session store，reconciliation 临时打开的旧 session 也在 `finally` 中关闭。`last_session_path` 保留可观测路径，`last_session_store` 不再保留已关闭 handle。
+- SQLite 当前合同以安全 workspace 的持久 connection + MEMORY journal/no-sidecar 为准，本文前述 WAL/per-operation connection 描述已由本节和第 35 行更正，不再代表最终实现。
+- 安全路径结论以 caller-designated trusted root 和 Phase 1 Task 5 的 private output-root threat model 为边界；不声称抵御持续操作同 UID 私有 namespace 的恶意本机进程。
+- 该 trusted-root 前提要求当前 UID 控制且非 shared-writable；不声称抵御恶意同 UID 进程持续竞速 `mkdir`/`open`。SQLite authority 是单一持久 connection 的 committed state；MEMORY journal/no-sidecar 不提供 WAL 等价的 process-kill 或 power-loss durability。

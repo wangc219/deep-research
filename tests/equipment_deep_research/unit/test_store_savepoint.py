@@ -391,6 +391,31 @@ def test_jsonl_session_store_is_thread_safe_and_rejects_non_finite_values(
     assert len(store.read_all()) == 100
 
 
+def test_jsonl_session_path_lock_registry_releases_last_owner(tmp_path: Path) -> None:
+    baseline_keys = set(session_module._PATH_LOCKS)
+    first = JsonlSessionStore("agent.jsonl", root_dir=tmp_path)
+    second = JsonlSessionStore("agent.jsonl", root_dir=tmp_path)
+    shared_lock = first._lock
+
+    assert second._lock is shared_lock
+    assert len(set(session_module._PATH_LOCKS) - baseline_keys) == 1
+
+    first.close()
+    third = JsonlSessionStore("agent.jsonl", root_dir=tmp_path)
+    assert third._lock is shared_lock
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        list(
+            executor.map(
+                lambda item: item[0].append({"value": item[1]}),
+                ((second, 1), (third, 2)),
+            )
+        )
+
+    second.close()
+    third.close()
+    assert set(session_module._PATH_LOCKS) == baseline_keys
+
+
 def test_jsonl_session_store_rejects_symlink(tmp_path: Path) -> None:
     root = tmp_path / "sessions"
     root.mkdir()

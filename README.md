@@ -25,9 +25,12 @@
 - `ResearchProblem` 与初始 checkpoint 同事务持久化；恢复前先处理 `session_write_failed` reconciliation marker；旧 session 只追加，不重写。
 - `RunWorkspace.open_existing()` 校验 run 目录、session、artifact、checkpoint 与 `run.db` 的类型、边界和 symlink 安全。
 - completed resume 也先写 `run_resumed` trace/savepoint；正常完成返回 `status=completed`，数据库保存 finalize/run completed checkpoint，并继续生成七类稳定产物。
-- `RunWorkspace` 从文件系统根逐组件安全打开 canonical output root，并在运行期持有 run、session、artifact、checkpoint 与 DB fd/inode；报告、JSON/JSONL、checkpoint、artifact 和 runner/recovery session 都从这些 handle 开始，拒绝 symlink/TOCTOU 逃逸并在缺少安全原语时 fail closed。
-- runner/recovery 的 SQLite 使用安全 DB fd 绑定并持有单一连接，不按可变 run path 重连。
+- `RunWorkspace` 从文件系统根逐组件安全打开 canonical output root，并在运行期持有 run、session、artifact、checkpoint 与 DB fd/inode；报告、JSON/JSONL、checkpoint、artifact 和 runner/recovery session 都从这些 handle 开始，拒绝已测试的 symlink/名称替换逃逸并在缺少安全原语时 fail closed。该保证以当前 UID 拥有、非 group/world writable 的私有 output root 为信任边界，不声称抵御持续操纵同 UID 私有 namespace 的本机恶意进程。
+- runner/recovery 的 SQLite 使用安全 DB fd 绑定并持有单一连接，不按可变 run path 重连；安全 workspace 模式固定为 `journal_mode=MEMORY`、`synchronous=FULL`，拒绝遗留 WAL/SHM/journal sidecar。该模式不宣称具备 WAL 等价的掉电或进程被杀中途恢复保证。
 - completed resume 提交 `run_resumed` 后始终从 SQLite 权威态重写稳定输出，provider 不重复执行，文件 trace 与数据库审计链一致。
+- AgentHarness 的 wall-clock timeout、外部取消和 sibling failure 都有有界清理；不合作的进程内 provider/tool task 会被隔离并消费迟到异常，迟到结果不能再写 harness session、proposal、savepoint、domain state 或 RuntimeEvent。任意进程内代码已经开始的外部副作用无法由 asyncio 强制撤销，生产级强隔离需要子进程或远程 worker 边界。
+- Harness 每次 execution 和 reconciliation 都确定性关闭 session handle；进程内 session path lock registry 在最后 owner 关闭后回收。EventBus 从 SQLite 权威 trace sequence 初始化，并在每次提交后继续前移，run 内 sequence 不因新实例或恢复而回退。
+- 威胁与耐久性边界：受信 root 必须由当前 UID 控制且不位于 shared-writable namespace；实现不声称抵御恶意同 UID 进程持续竞速 `mkdir`/`open` 私有 namespace。SQLite 的单一持久 connection 与已提交 SQLite 状态是运行权威；安全 workspace 使用 MEMORY journal 且不留 sidecar，但不提供 WAL 等价的进程被杀或掉电耐久性保证。
 
 ## 当前实现边界
 
@@ -36,8 +39,9 @@
 - 真实模型循环和真实搜索尚未接入。`providers.yaml` 和 `tools.yaml` 已预留 Responses-compatible provider 与搜索工具配置边界，但当前 runner 尚未加载并执行真实 Responses 模型循环或真实搜索 provider。
 - `evidence.yaml` 已定义质量阈值以及相关性、透明度、时效性、直接支撑、提取质量五维权重，但 runner 尚未加载并执行质量评分。当前成功抓取的材料会进入正式证据，不能表述为已经经过运行时质量阈值门控。
 - 新运行会创建 `run.db` 并在 `checkpoints/` 保存各 savepoint 快照与 `latest.json`；`--resume` 已可执行。
-- 当前恢复粒度覆盖现有顺序 baseline agent 与后续 winning/report 闭环；真正并行调度、暂停、取消和分布式 worker 仍属后续阶段。
+- 当前恢复粒度覆盖现有顺序 baseline agent 与后续 winning/report 闭环；AgentHarness 已提供有界进程内取消语义，但 runner 级暂停、真正并行调度、分布式 worker 和跨进程强制终止仍属后续阶段。
 - `domain.jsonl`、`trace.jsonl` 和 `round_summary.json` 中实际持久化的领域对象包含稳定 ID、UTC `created_at` 与 `schema_version="1.0"`。
+- 自定义 `project_root` 可省略尚未启用的 `providers.yaml` 与 `evidence.yaml`；配置指纹将“文件缺失”作为权威状态，文件后来出现时 resume 会因指纹变化而拒绝。
 
 ## 运行
 

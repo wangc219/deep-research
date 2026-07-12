@@ -59,7 +59,12 @@ class _RunQueue:
 
 
 class EventBus:
-    def __init__(self, *, max_string_length: int = 1000) -> None:
+    def __init__(
+        self,
+        *,
+        max_string_length: int = 1000,
+        initial_sequences: Mapping[str, int] | None = None,
+    ) -> None:
         if max_string_length < 1:
             raise ValueError("max_string_length must be positive")
         self.max_string_length = max_string_length
@@ -68,6 +73,17 @@ class EventBus:
         self._run_queues: dict[str, _RunQueue] = {}
         self._subscribers: list[tuple[EventHandler, set[str] | None, str | None]] = []
         self._lock = Lock()
+        for run_id, sequence in (initial_sequences or {}).items():
+            self.seed(str(run_id), sequence)
+
+    def seed(self, run_id: str, sequence: int) -> None:
+        """Advance a run to an authoritative persisted sequence without rewinding."""
+        if not run_id:
+            raise ValueError("run_id must not be empty")
+        if isinstance(sequence, bool) or not isinstance(sequence, int) or sequence < 0:
+            raise ValueError("sequence seed must be a non-negative integer")
+        with self._lock:
+            self._sequences[run_id] = max(self._sequences.get(run_id, 0), sequence)
 
     def subscribe(
         self,
