@@ -191,7 +191,7 @@ Summary: /tmp/equipment-deep-research-phase-0-final.ScfUWB/phase-0-smoke/round_s
 - AgentLoop 对 timeout、外部取消与 sibling failure 采用有限 grace drain；不合作 tool task 被 quarantine，并在完成时消费异常。
 - AgentHarness 在取消开始时关闭 execution gate，隔离迟到 provider/tool callback；zero timeout 直接过期，subsecond deadline 保持精度；harness loop task 同样有有限 drain/quarantine。
 - 每个 execution 及 reconciliation session 都在 `finally` 关闭；`last_session_store` 不再暴露已关闭 handle。`JsonlSessionStore` 的 path-lock entry 以 owner refcount 管理，最后 owner 关闭后移除。
-- EventBus 从 SQLite `last_trace_sequence()` 设定 run 下界，并在每次 trace commit 后仅向前 reseed，确保新 bus 与恢复后续号不回退。
+- EventBus 对 SQLite store 绑定 durable runtime sequence allocator；旧数据库首次迁移以 trace high-water 作为兼容下界，之后 runtime high-water 与 trace sequence 独立推进。
 - custom `project_root` 可省略 Phase 2 的 `providers.yaml`/`evidence.yaml`；文件缺失是确定 fingerprint 输入，后续出现文件会安全地拒绝 resume。
 
 ### 威胁与耐久性合同
@@ -229,3 +229,101 @@ python3 -m pytest -q
 - 本地 security scan 未发现 dynamic execution、shell subprocess、unsafe YAML/pickle 或 TLS-verification bypass API。
 - `codex --help` 成功；`codex review --uncommitted` 因 workspace sandbox 不允许向外部服务发送未提交代码而未执行，属于唯一外部审查限制。
 - Fresh 和 completed-resume CLI smoke 均返回 `Status: completed`。completed resume 的 checkpoint 为 `completed`、`resume_count=1`；trace 中 `run_resumed=1`、`baseline_agent_completed=4`；七类稳定产物、`run.db` 和 checkpoints 齐全，且无 `run.db-wal`、`run.db-shm` 或 rollback-journal sidecar。
+
+## Phase 1 最后两项修复续作（2026-07-12）
+
+### 状态
+
+DONE
+
+最终实现提交哈希无法在同一提交内容中自引用，精确 SHA 见最终回复与 `git log -1 --format=%H`。
+
+### 修复内容
+
+- 新增 `runtime_event_state(run_id, last_sequence)`，`SqliteRunStore.allocate_runtime_event_sequence()` 使用 `BEGIN IMMEDIATE` 原子分配。多个 store/EventBus 实例并发 publish 时 SQLite 串行化分配，不产生重复 sequence。
+- 旧 `run.db` 缺少新表时，以该 run 已有 trace high-water 初始化一次；已有 runtime state 不会因后续 trace commit 或 reopen 被抬升，避免混淆 TraceEvent 与 RuntimeEvent sequence。
+- `AgentHarness` 优先把 EventBus 绑定到 store 的 durable allocator；只有不提供 allocator 的兼容 store 才保留旧 trace seed fallback。
+- 外部 async listener 在父任务取消时统一 cancel，并在 `0.1s` grace 内 drain；仍未完成的 task 进入 quarantine，done callback 消费迟到结果/异常，不向 event loop 泄漏未处理异常。
+- listener task 从收到 cancel 前即进入 mutation-blocked 集合，并在 grace drain/quarantine 全程保持；其调用 `set_next_turn_tools()` 会被拒绝，即使新的 harness execution 已开始。listener outcome 不再回写 harness error state。execution `finally` 在返回前关闭 session，测试直接验证 root fd 已失效。
+
+### TDD RED 证据
+
+```text
+python3 -m pytest -q tests/equipment_deep_research/integration/test_agent_harness.py tests/equipment_deep_research/unit/test_store_savepoint.py
+ERROR tests/equipment_deep_research/integration/test_agent_harness.py
+ImportError: cannot import name 'EXTERNAL_LISTENER_CANCELLATION_GRACE_SECONDS'
+1 error in 0.08s
+```
+
+```text
+python3 -m pytest -q tests/equipment_deep_research/unit/test_store_savepoint.py
+3 failed, 45 passed in 0.12s
+```
+
+三个失败分别命中缺失 `EventBus.bind_sequence_allocator()`、`SqliteRunStore.last_runtime_event_sequence()` 与 `SqliteRunStore.allocate_runtime_event_sequence()`。
+
+最终边界自审追加 RED：listener 抑制 `CancelledError` 后在 grace 窗口立即调用 `set_next_turn_tools()`，原实现出现 `1 failed in 0.21s`；在 cancel 前标记 mutation-blocked 后，该用例 `1 passed in 0.14s`。
+
+### 精确定向与回归结果
+
+```text
+python3 -m pytest -q tests/equipment_deep_research/integration/test_agent_harness.py::test_new_harness_bus_continues_after_all_prior_runtime_events tests/equipment_deep_research/integration/test_agent_harness.py::test_trace_commits_do_not_reseed_runtime_event_sequence tests/equipment_deep_research/integration/test_agent_harness.py::test_parent_cancellation_is_bounded_for_resistant_early_listener tests/equipment_deep_research/integration/test_agent_harness.py::test_parent_cancellation_is_bounded_for_resistant_terminal_listener tests/equipment_deep_research/integration/test_agent_harness.py::test_cooperative_async_listener_still_observes_terminal_event tests/equipment_deep_research/unit/test_store_savepoint.py::test_concurrent_event_buses_allocate_unique_durable_runtime_sequences tests/equipment_deep_research/unit/test_store_savepoint.py::test_runtime_sequence_state_migrates_existing_database_and_survives_reopen tests/equipment_deep_research/unit/test_store_savepoint.py::test_runtime_sequence_allocation_does_not_change_domain_trace_atomicity
+8 passed in 0.29s
+```
+
+```text
+python3 -m pytest -q tests/equipment_deep_research/integration/test_agent_harness.py
+43 passed in 0.67s
+
+python3 -m pytest -q tests/equipment_deep_research/unit/test_agent_loop.py
+25 passed in 0.19s
+
+python3 -m pytest -q tests/equipment_deep_research/unit/test_runtime_types.py tests/equipment_deep_research/unit/test_store_savepoint.py
+70 passed in 0.11s
+
+python3 -m pytest -q tests/equipment_deep_research/unit -k budget
+1 passed, 144 deselected in 0.04s
+
+python3 -m pytest -q tests/equipment_deep_research/e2e/test_resume_run.py
+29 passed in 0.79s
+
+python3 -m pytest -q tests/equipment_deep_research/integration/test_cli_workspace.py
+45 passed in 0.24s
+
+python3 -m pytest -q
+285 passed in 2.18s
+```
+
+### 静态检查与扫描
+
+```text
+python3 -m ruff check src/equipment_deep_research/domain/store.py src/equipment_deep_research/harness/event_bus.py src/equipment_deep_research/harness/agent_harness.py tests/equipment_deep_research/integration/test_agent_harness.py tests/equipment_deep_research/unit/test_store_savepoint.py
+All checks passed!
+```
+
+- `python3 -m compileall -q src/equipment_deep_research tests`：零输出，退出码 0。
+- `git diff --check`：零输出，退出码 0。
+- dynamic execution、shell subprocess、unsafe YAML/pickle、TLS verification bypass API 扫描：零匹配，`rg` 退出码 1，符合预期。
+
+### Fresh 与 Completed-Resume Smoke
+
+workspace：`tmp/phase-1-final-two-fixes.BXHeni`。
+
+```text
+python3 scripts/run_deep_research.py --mode fake --topic 低空无人机探测预警能力缺口 --research-route auto --run-id phase-1-final-two-fixes --output-root tmp/phase-1-final-two-fixes.BXHeni
+Status: completed
+
+python3 scripts/run_deep_research.py --mode fake --topic 低空无人机探测预警能力缺口 --research-route auto --run-id phase-1-final-two-fixes --output-root tmp/phase-1-final-two-fixes.BXHeni --resume
+Status: completed
+```
+
+- completed checkpoint：`status=completed`、`resume_count=1`，五个 task 均在 `completed_task_ids`。
+- SQLite trace：`baseline_agent_completed=4`、`run_resumed=1`、`last_trace_sequence=12`。
+- CLI 路径未发布 RuntimeEvent，因此独立的 `runtime_event_state.last_sequence=0`，证明 reopen/resume 未以 trace sequence 持续抬升 runtime high-water。
+- `report.md`、`capability_images.json`、`round_summary.json`、`domain.jsonl`、`trace.jsonl`、四个 agent session、八个 artifact 文件、`run.db` 与 checkpoint history 齐全。
+- 未发现 `run.db-wal`、`run.db-shm` 或 `run.db-journal` sidecar。
+
+### 关注点
+
+- 无阻断关注点。
+- runtime sequence 分配与 RuntimeEvent payload 的持久化仍是两个不同合同：本轮保证 durable high-water 和无重复分配，不新增 RuntimeEvent 表或 SSE replay 存储。

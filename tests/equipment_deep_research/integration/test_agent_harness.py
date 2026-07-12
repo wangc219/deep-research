@@ -6,6 +6,8 @@ from datetime import datetime
 import json
 import os
 from pathlib import Path
+import sqlite3
+import time
 from typing import Any
 
 import pytest
@@ -16,7 +18,10 @@ from equipment_deep_research.domain.proposals import (
     TraceProposal,
 )
 from equipment_deep_research.domain.store import DomainStore, SqliteRunStore, TraceStore
-from equipment_deep_research.harness.agent_harness import AgentHarness
+from equipment_deep_research.harness.agent_harness import (
+    EXTERNAL_LISTENER_CANCELLATION_GRACE_SECONDS,
+    AgentHarness,
+)
 from equipment_deep_research.harness.budget import Budget, BudgetExceededError
 from equipment_deep_research.harness.event_bus import EventBus
 from equipment_deep_research.harness.session import JsonlSessionStore
@@ -920,7 +925,9 @@ def test_budget_rejects_unknown_keys_and_records_atomic_consumption() -> None:
     assert 0 < remaining < 0.0000004
 
 
-def test_harness_seeds_new_event_bus_from_sqlite_trace_sequence(tmp_path: Path) -> None:
+def test_harness_migrates_legacy_trace_sequence_into_runtime_state(
+    tmp_path: Path,
+) -> None:
     async def scenario() -> None:
         database = tmp_path / "run.db"
         original_store = SqliteRunStore(database, run_id="run-1")
@@ -938,6 +945,8 @@ def test_harness_seeds_new_event_bus_from_sqlite_trace_sequence(tmp_path: Path) 
         )
         authoritative_sequence = original_store.last_trace_sequence()
         original_store.close()
+        with sqlite3.connect(database) as connection:
+            connection.execute("DROP TABLE runtime_event_state")
 
         store = SqliteRunStore(database, run_id="run-1")
         bus = EventBus()
@@ -963,7 +972,63 @@ def test_harness_seeds_new_event_bus_from_sqlite_trace_sequence(tmp_path: Path) 
     run(scenario())
 
 
-def test_harness_reseeds_event_bus_after_each_trace_commit(tmp_path: Path) -> None:
+def test_new_harness_bus_continues_after_all_prior_runtime_events(
+    tmp_path: Path,
+) -> None:
+    async def scenario() -> None:
+        database = tmp_path / "run.db"
+        first_store = SqliteRunStore(database, run_id="run-1")
+        first_bus = EventBus()
+        first_seen: list[Any] = []
+        first_bus.subscribe(first_seen.append)
+        first_harness = AgentHarness(
+            ScriptedProvider([final_text("first")]),
+            [],
+            first_store,
+            sessions_root=tmp_path / "sessions",
+            event_bus=first_bus,
+        )
+
+        first_result = await first_harness.execute(
+            task(task_id="task-first", allowed_tools=[])
+        )
+        first_runtime_high_water = first_store.last_runtime_event_sequence()
+
+        assert first_result.status == "completed"
+        assert first_runtime_high_water == first_seen[-1].sequence
+        assert first_runtime_high_water > first_store.last_trace_sequence()
+        first_store.close()
+
+        second_store = SqliteRunStore(database, run_id="run-1")
+        second_bus = EventBus()
+        second_seen: list[Any] = []
+        second_bus.subscribe(second_seen.append)
+        second_harness = AgentHarness(
+            ScriptedProvider([final_text("second")]),
+            [],
+            second_store,
+            sessions_root=tmp_path / "sessions",
+            event_bus=second_bus,
+        )
+
+        second_result = await second_harness.execute(
+            task(task_id="task-second", allowed_tools=[])
+        )
+
+        assert second_result.status == "completed"
+        assert second_seen[0].sequence == first_runtime_high_water + 1
+        assert [event.sequence for event in second_seen] == list(
+            range(
+                first_runtime_high_water + 1,
+                first_runtime_high_water + len(second_seen) + 1,
+            )
+        )
+        second_store.close()
+
+    run(scenario())
+
+
+def test_trace_commits_do_not_reseed_runtime_event_sequence(tmp_path: Path) -> None:
     async def scenario() -> None:
         async def many_traces(
             call: ToolCall, context: ToolExecutionContext
@@ -985,9 +1050,11 @@ def test_harness_reseeds_event_bus_after_each_trace_commit(tmp_path: Path) -> No
 
         store = SqliteRunStore(tmp_path / "run.db", run_id="run-1")
         bus = EventBus()
+        seen_sequences: list[int] = []
         turn_end_observations: list[tuple[int, int]] = []
 
         def observe(event: Any) -> None:
+            seen_sequences.append(event.sequence)
             if event.event_type == "turn_end":
                 turn_end_observations.append(
                     (event.sequence, store.last_trace_sequence())
@@ -1008,10 +1075,9 @@ def test_harness_reseeds_event_bus_after_each_trace_commit(tmp_path: Path) -> No
 
         assert result.status == "completed"
         assert turn_end_observations
-        assert all(
-            event_sequence > persisted_sequence
-            for event_sequence, persisted_sequence in turn_end_observations
-        )
+        assert seen_sequences == list(range(1, len(seen_sequences) + 1))
+        assert turn_end_observations[0][0] < turn_end_observations[0][1]
+        assert store.last_runtime_event_sequence() == seen_sequences[-1]
 
     run(scenario())
 
@@ -1285,6 +1351,221 @@ def test_parent_cancellation_while_awaiting_listener_is_not_isolated(
         assert session_records(tmp_path / "sessions")[-1]["event_type"] == (
             "task_cancelled"
         )
+
+    run(scenario())
+
+
+def test_parent_cancellation_is_bounded_for_resistant_early_listener(
+    tmp_path: Path,
+) -> None:
+    async def scenario() -> None:
+        listener_started = asyncio.Event()
+        listener_cancelled = asyncio.Event()
+        release_listener = asyncio.Event()
+        listener_finished = asyncio.Event()
+        immediate_mutation_blocked = asyncio.Event()
+        mutation_blocked = asyncio.Event()
+        second_turn_started = asyncio.Event()
+        provider_gate = asyncio.Event()
+        unhandled: list[dict[str, Any]] = []
+        sessions: list[TrackingSession] = []
+        block_first_delivery = True
+        loop = asyncio.get_running_loop()
+        previous_handler = loop.get_exception_handler()
+        loop.set_exception_handler(lambda _loop, context: unhandled.append(context))
+
+        def session_factory(path: str, root_dir: Path) -> TrackingSession:
+            session = TrackingSession(path, root_dir=root_dir)
+            sessions.append(session)
+            return session
+
+        harness = AgentHarness(
+            ScriptedProvider(
+                [final_text("second execution")],
+                first_turn_gate=provider_gate,
+            ),
+            [],
+            SqliteRunStore(tmp_path / "run.db", run_id="run-1"),
+            sessions_root=tmp_path / "sessions",
+            session_store_factory=session_factory,
+        )
+
+        async def resistant_listener(event: Any) -> None:
+            nonlocal block_first_delivery
+            if event.event_type != "task_received" or not block_first_delivery:
+                return
+            block_first_delivery = False
+            listener_started.set()
+            try:
+                await asyncio.Event().wait()
+            except asyncio.CancelledError:
+                listener_cancelled.set()
+                try:
+                    harness.set_next_turn_tools(["immediate-listener-tool"])
+                except RuntimeError:
+                    immediate_mutation_blocked.set()
+                await release_listener.wait()
+            try:
+                harness.set_next_turn_tools(["late-listener-tool"])
+            except RuntimeError:
+                mutation_blocked.set()
+            listener_finished.set()
+            raise RuntimeError("late early-listener failure")
+
+        harness.on_event(resistant_listener)
+        harness.on_event(
+            lambda event: (
+                second_turn_started.set()
+                if event.event_type == "turn_started"
+                else None
+            )
+        )
+        execution = asyncio.create_task(harness.execute(task(allowed_tools=[])))
+        await listener_started.wait()
+        started_at = time.monotonic()
+        execution.cancel("cancel resistant early listener")
+
+        try:
+            with pytest.raises(
+                asyncio.CancelledError,
+                match="cancel resistant early listener",
+            ):
+                await execution
+            elapsed = time.monotonic() - started_at
+            assert elapsed < EXTERNAL_LISTENER_CANCELLATION_GRACE_SECONDS + 0.5
+            assert listener_cancelled.is_set()
+            assert immediate_mutation_blocked.is_set()
+            assert session_records(tmp_path / "sessions")[-1]["event_type"] == (
+                "task_cancelled"
+            )
+            assert harness.last_session_store is None
+            assert sessions[0].close_calls == 1
+            assert sessions[0].opened_root_fd is not None
+            with pytest.raises(OSError):
+                os.fstat(sessions[0].opened_root_fd)
+
+            second_execution = asyncio.create_task(
+                harness.execute(
+                    task(task_id="task-second", allowed_tools=[])
+                )
+            )
+            await second_turn_started.wait()
+            release_listener.set()
+            await asyncio.wait_for(listener_finished.wait(), timeout=1)
+            await asyncio.sleep(0)
+            assert mutation_blocked.is_set()
+            provider_gate.set()
+            second_result = await second_execution
+            assert second_result.status == "completed"
+            assert second_result.snapshots[0].active_tool_names == ()
+            assert unhandled == []
+        finally:
+            loop.set_exception_handler(previous_handler)
+
+    run(scenario())
+
+
+def test_parent_cancellation_is_bounded_for_resistant_terminal_listener(
+    tmp_path: Path,
+) -> None:
+    async def scenario() -> None:
+        listener_started = asyncio.Event()
+        listener_cancelled = asyncio.Event()
+        release_listener = asyncio.Event()
+        listener_finished = asyncio.Event()
+        mutation_blocked = asyncio.Event()
+        unhandled: list[dict[str, Any]] = []
+        sessions: list[TrackingSession] = []
+        loop = asyncio.get_running_loop()
+        previous_handler = loop.get_exception_handler()
+        loop.set_exception_handler(lambda _loop, context: unhandled.append(context))
+
+        def session_factory(path: str, root_dir: Path) -> TrackingSession:
+            session = TrackingSession(path, root_dir=root_dir)
+            sessions.append(session)
+            return session
+
+        harness = AgentHarness(
+            ScriptedProvider([final_text("done")]),
+            [],
+            SqliteRunStore(tmp_path / "run.db", run_id="run-1"),
+            sessions_root=tmp_path / "sessions",
+            session_store_factory=session_factory,
+        )
+
+        async def resistant_listener(event: Any) -> None:
+            if event.event_type != "task_completed":
+                return
+            listener_started.set()
+            try:
+                await asyncio.Event().wait()
+            except asyncio.CancelledError:
+                listener_cancelled.set()
+                await release_listener.wait()
+            try:
+                harness.set_next_turn_tools(["late-listener-tool"])
+            except RuntimeError:
+                mutation_blocked.set()
+            listener_finished.set()
+            raise RuntimeError("late terminal-listener failure")
+
+        harness.on_event(resistant_listener)
+        execution = asyncio.create_task(harness.execute(task(allowed_tools=[])))
+        await listener_started.wait()
+        started_at = time.monotonic()
+        execution.cancel("cancel resistant terminal listener")
+
+        try:
+            with pytest.raises(
+                asyncio.CancelledError,
+                match="cancel resistant terminal listener",
+            ):
+                await execution
+            elapsed = time.monotonic() - started_at
+            assert elapsed < EXTERNAL_LISTENER_CANCELLATION_GRACE_SECONDS + 0.5
+            assert listener_cancelled.is_set()
+            assert session_records(tmp_path / "sessions")[-1]["event_type"] == (
+                "task_completed"
+            )
+            assert harness.last_session_store is None
+            assert sessions[0].close_calls == 1
+            assert sessions[0].opened_root_fd is not None
+            with pytest.raises(OSError):
+                os.fstat(sessions[0].opened_root_fd)
+
+            release_listener.set()
+            await asyncio.wait_for(listener_finished.wait(), timeout=1)
+            await asyncio.sleep(0)
+            assert mutation_blocked.is_set()
+            assert unhandled == []
+        finally:
+            loop.set_exception_handler(previous_handler)
+
+    run(scenario())
+
+
+def test_cooperative_async_listener_still_observes_terminal_event(
+    tmp_path: Path,
+) -> None:
+    async def scenario() -> None:
+        seen: list[str] = []
+        harness = AgentHarness(
+            ScriptedProvider([final_text("done")]),
+            [],
+            SqliteRunStore(tmp_path / "run.db", run_id="run-1"),
+            sessions_root=tmp_path / "sessions",
+        )
+
+        async def cooperative_listener(event: Any) -> None:
+            await asyncio.sleep(0)
+            seen.append(event.event_type)
+
+        harness.on_event(cooperative_listener)
+        result = await harness.execute(task(allowed_tools=[]))
+
+        assert result.status == "completed"
+        assert seen[-1] == "task_completed"
+        assert harness.listener_error_count == 0
 
     run(scenario())
 

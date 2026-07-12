@@ -13,6 +13,7 @@ from equipment_deep_research.harness.events import RuntimeEvent
 
 
 EventHandler = Callable[[RuntimeEvent], None]
+SequenceAllocator = Callable[[], int]
 
 _SENSITIVE_KEY_SUFFIXES = (
     "authorization",
@@ -70,6 +71,7 @@ class EventBus:
         self.max_string_length = max_string_length
         self.listener_error_count = 0
         self._sequences: dict[str, int] = {}
+        self._sequence_allocators: dict[str, SequenceAllocator] = {}
         self._run_queues: dict[str, _RunQueue] = {}
         self._subscribers: list[tuple[EventHandler, set[str] | None, str | None]] = []
         self._lock = Lock()
@@ -105,6 +107,19 @@ class EventBus:
 
         return unsubscribe
 
+    def bind_sequence_allocator(
+        self,
+        run_id: str,
+        allocator: SequenceAllocator,
+    ) -> None:
+        """Use an authoritative allocator for future events in one run."""
+        if not run_id:
+            raise ValueError("run_id must not be empty")
+        if not callable(allocator):
+            raise TypeError("sequence allocator must be callable")
+        with self._lock:
+            self._sequence_allocators[run_id] = allocator
+
     def publish(self, event: RuntimeEvent) -> RuntimeEvent:
         """Publish synchronously, except same-run reentrant calls only enqueue.
 
@@ -119,7 +134,23 @@ class EventBus:
         )
         current_thread_id = get_ident()
         with self._lock:
-            sequence = self._sequences.get(event.run_id, 0) + 1
+            allocator = self._sequence_allocators.get(event.run_id)
+            if allocator is None:
+                sequence = self._sequences.get(event.run_id, 0) + 1
+            else:
+                sequence = allocator()
+                if (
+                    isinstance(sequence, bool)
+                    or not isinstance(sequence, int)
+                    or sequence < 1
+                ):
+                    raise ValueError(
+                        "sequence allocator must return a positive integer"
+                    )
+                if sequence <= self._sequences.get(event.run_id, 0):
+                    raise RuntimeError(
+                        "sequence allocator did not advance the run high-water"
+                    )
             self._sequences[event.run_id] = sequence
             safe_event = replace(event, payload=safe_payload, sequence=sequence)
             delivery = _Delivery(safe_event, list(self._subscribers))
@@ -264,4 +295,9 @@ def _redact_assignment(match: re.Match[str]) -> str:
     return f"{prefix}=<redacted>"
 
 
-__all__ = ["EventBus", "EventHandler", "sanitize_runtime_payload"]
+__all__ = [
+    "EventBus",
+    "EventHandler",
+    "SequenceAllocator",
+    "sanitize_runtime_payload",
+]

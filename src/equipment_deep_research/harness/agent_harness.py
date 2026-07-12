@@ -52,7 +52,12 @@ HarnessEventCallback = Callable[[RuntimeEvent], None | Awaitable[None]]
 
 _LONG_ERROR_LIMIT = 512
 _LOOP_CANCELLATION_GRACE_SECONDS = 0.1
+EXTERNAL_LISTENER_CANCELLATION_GRACE_SECONDS = 0.1
 _QUARANTINED_LOOP_TASKS: set[asyncio.Task[AgentLoopResult]] = set()
+_CANCELLED_LISTENER_TASKS: set[asyncio.Task[BaseException | None]] = set()
+_QUARANTINED_LISTENER_TASKS: set[
+    asyncio.Task[BaseException | None]
+] = set()
 _OBJECT_ID_FIELDS = {
     "ResearchProblem": "problem_id",
     "EvidenceCard": "evidence_id",
@@ -158,6 +163,8 @@ class AgentHarness:
         if len(names) != len(set(names)):
             raise ValueError("next-turn tool names must be unique")
         with self._state_lock:
+            if _current_listener_task_is_blocked():
+                raise RuntimeError("cancelled listener cannot mutate harness state")
             self._next_turn_tools = names
 
     async def execute(self, task: TaskEnvelope) -> AgentExecutionResult:
@@ -173,7 +180,7 @@ class AgentHarness:
             raise
         self.last_session_store = None
         self.last_session_path = session.path
-        self._seed_event_bus(task.run_id)
+        self._sync_event_bus_sequence(task.run_id)
         loop_gate = _ExecutionGate()
 
         snapshots: list[TurnSnapshot] = []
@@ -257,7 +264,7 @@ class AgentHarness:
             )
             committed_checkpoint_id = self.store.commit(domain_batch, trace_batch)
             checkpoint_id = committed_checkpoint_id
-            self._seed_event_bus(task.run_id)
+            self._sync_event_bus_sequence(task.run_id)
             committed_turns.add(turn_index)
             _extend_output_refs(output_refs, evidence_ids, domain_batch)
             try:
@@ -298,7 +305,7 @@ class AgentHarness:
                 )
                 try:
                     checkpoint_id = self.store.commit((), (reconciliation,))
-                    self._seed_event_bus(task.run_id)
+                    self._sync_event_bus_sequence(task.run_id)
                 except BaseException as reconciliation_error:
                     session_error.add_note(
                         "failed to persist session reconciliation marker: "
@@ -732,29 +739,36 @@ class AgentHarness:
                 self._pending_listener_awaitables.clear()
             if not awaitables:
                 return
-            for awaitable in awaitables:
-                listener_task = asyncio.create_task(
-                    _capture_listener_outcome(awaitable)
-                )
-                try:
-                    listener_error = await asyncio.shield(listener_task)
-                except asyncio.CancelledError:
-                    current_task = asyncio.current_task()
-                    if current_task is not None and current_task.cancelling() > 0:
-                        listener_task.cancel()
-                        try:
-                            await listener_task
-                        except BaseException:
-                            pass
-                        raise
-                    listener_error = asyncio.CancelledError(
-                        "listener task cancelled"
+            listener_tasks = [
+                asyncio.create_task(_capture_listener_outcome(awaitable))
+                for awaitable in awaitables
+            ]
+            try:
+                for listener_task in listener_tasks:
+                    try:
+                        listener_error = await asyncio.shield(listener_task)
+                    except asyncio.CancelledError:
+                        current_task = asyncio.current_task()
+                        if current_task is not None and current_task.cancelling() > 0:
+                            await _cancel_listener_tasks(listener_tasks)
+                            raise
+                        listener_error = asyncio.CancelledError(
+                            "listener task cancelled"
+                        )
+                    if listener_error is None:
+                        continue
+                    if isinstance(listener_error, (KeyboardInterrupt, SystemExit)):
+                        await _cancel_listener_tasks(listener_tasks)
+                        raise listener_error
+                    self._record_async_listener_error(
+                        published_event,
+                        listener_error,
                     )
-                if listener_error is None:
-                    continue
-                if isinstance(listener_error, (KeyboardInterrupt, SystemExit)):
-                    raise listener_error
-                self._record_async_listener_error(published_event, listener_error)
+            except BaseException:
+                for listener_task in listener_tasks:
+                    if not listener_task.done():
+                        _quarantine_listener_task(listener_task)
+                raise
 
     def _record_async_listener_error(
         self,
@@ -780,7 +794,16 @@ class AgentHarness:
             return JsonlSessionStore(session_ref, root_dir=self.sessions_root)
         return self._session_store_factory(session_ref, self.sessions_root)
 
-    def _seed_event_bus(self, run_id: str) -> None:
+    def _sync_event_bus_sequence(self, run_id: str) -> None:
+        source = self.store
+        allocator = getattr(source, "allocate_runtime_event_sequence", None)
+        if not callable(allocator):
+            source = getattr(self.store, "delegate", None)
+            allocator = getattr(source, "allocate_runtime_event_sequence", None)
+        if callable(allocator) and getattr(source, "run_id", run_id) == run_id:
+            self.event_bus.bind_sequence_allocator(run_id, allocator)
+            return
+
         source = self.store
         loader = getattr(source, "last_trace_sequence", None)
         if not callable(loader):
@@ -890,7 +913,7 @@ class AgentHarness:
                 },
             )
             latest_checkpoint = self.store.commit((), (resolved_trace,))
-            self._seed_event_bus(task.run_id)
+            self._sync_event_bus_sequence(task.run_id)
         return latest_checkpoint
 
     def _consume_next_turn_tools(self) -> tuple[str, ...] | None:
@@ -971,6 +994,70 @@ def _quarantine_loop_task(task: asyncio.Task[AgentLoopResult]) -> None:
             pass
 
     task.add_done_callback(consume)
+
+
+async def _cancel_listener_tasks(
+    tasks: Sequence[asyncio.Task[BaseException | None]],
+) -> None:
+    pending = {task for task in tasks if not task.done()}
+    _CANCELLED_LISTENER_TASKS.update(pending)
+    for task in pending:
+        task.cancel("harness event delivery cancelled")
+    deadline = (
+        asyncio.get_running_loop().time()
+        + EXTERNAL_LISTENER_CANCELLATION_GRACE_SECONDS
+    )
+    while pending:
+        remaining = deadline - asyncio.get_running_loop().time()
+        if remaining <= 0:
+            break
+        try:
+            done, pending = await asyncio.wait(pending, timeout=remaining)
+        except asyncio.CancelledError:
+            continue
+        for task in done:
+            _consume_listener_task(task)
+    for task in pending:
+        _quarantine_listener_task(task)
+
+
+def _consume_listener_task(
+    task: asyncio.Task[BaseException | None],
+) -> None:
+    _CANCELLED_LISTENER_TASKS.discard(task)
+    try:
+        task.result()
+    except BaseException:
+        pass
+
+
+def _quarantine_listener_task(
+    task: asyncio.Task[BaseException | None],
+) -> None:
+    if task.done():
+        _consume_listener_task(task)
+        return
+    if task in _QUARANTINED_LISTENER_TASKS:
+        return
+    _QUARANTINED_LISTENER_TASKS.add(task)
+    task.set_name(f"quarantined-{task.get_name()}")
+
+    def consume(completed: asyncio.Task[BaseException | None]) -> None:
+        _QUARANTINED_LISTENER_TASKS.discard(completed)
+        _consume_listener_task(completed)
+
+    task.add_done_callback(consume)
+
+
+def _current_listener_task_is_blocked() -> bool:
+    try:
+        current = asyncio.current_task()
+    except RuntimeError:
+        return False
+    return (
+        current in _CANCELLED_LISTENER_TASKS
+        or current in _QUARANTINED_LISTENER_TASKS
+    )
 
 
 async def _capture_listener_outcome(

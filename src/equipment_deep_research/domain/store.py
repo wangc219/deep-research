@@ -553,6 +553,9 @@ class SqliteRunStore:
                 "object_count": sum(object_counts.values()),
                 "trace_count": trace_count,
                 "last_trace_sequence": self._last_trace_sequence(connection),
+                "last_runtime_event_sequence": (
+                    self._last_runtime_event_sequence(connection)
+                ),
                 "object_counts": object_counts,
             }
         finally:
@@ -641,6 +644,55 @@ class SqliteRunStore:
         connection = self._connect()
         try:
             return self._last_trace_sequence(connection)
+        finally:
+            connection.close()
+
+    def allocate_runtime_event_sequence(self) -> int:
+        """Atomically advance and return this run's durable runtime sequence."""
+        connection = self._connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute(
+                """
+                SELECT last_sequence
+                FROM runtime_event_state
+                WHERE run_id = ?
+                """,
+                (self.run_id,),
+            ).fetchone()
+            if row is None:
+                current = self._last_trace_sequence(connection)
+                connection.execute(
+                    """
+                    INSERT INTO runtime_event_state (run_id, last_sequence)
+                    VALUES (?, ?)
+                    """,
+                    (self.run_id, current),
+                )
+            else:
+                current = int(row["last_sequence"])
+            next_sequence = current + 1
+            connection.execute(
+                """
+                UPDATE runtime_event_state
+                SET last_sequence = ?
+                WHERE run_id = ?
+                """,
+                (next_sequence, self.run_id),
+            )
+            connection.commit()
+            return next_sequence
+        except BaseException:
+            if connection.in_transaction:
+                connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def last_runtime_event_sequence(self) -> int:
+        connection = self._connect()
+        try:
+            return self._last_runtime_event_sequence(connection)
         finally:
             connection.close()
 
@@ -778,11 +830,24 @@ class SqliteRunStore:
                     created_at TEXT NOT NULL,
                     PRIMARY KEY (run_id, key_kind, key_value)
                 );
+                CREATE TABLE IF NOT EXISTS runtime_event_state (
+                    run_id TEXT PRIMARY KEY,
+                    last_sequence INTEGER NOT NULL CHECK (last_sequence >= 0)
+                );
                 CREATE INDEX IF NOT EXISTS domain_objects_run_type
                     ON domain_objects (run_id, object_type);
                 CREATE INDEX IF NOT EXISTS trace_events_run_sequence
                     ON trace_events (run_id, run_sequence);
                 """
+            )
+            connection.execute(
+                """
+                INSERT OR IGNORE INTO runtime_event_state (run_id, last_sequence)
+                SELECT ?, COALESCE(MAX(run_sequence), 0)
+                FROM trace_events
+                WHERE run_id = ?
+                """,
+                (self.run_id, self.run_id),
             )
         finally:
             connection.close()
@@ -1138,6 +1203,19 @@ class SqliteRunStore:
             """,
             (self.run_id,),
         ).fetchone()
+        return int(row["last_sequence"])
+
+    def _last_runtime_event_sequence(self, connection: sqlite3.Connection) -> int:
+        row = connection.execute(
+            """
+            SELECT last_sequence
+            FROM runtime_event_state
+            WHERE run_id = ?
+            """,
+            (self.run_id,),
+        ).fetchone()
+        if row is None:
+            return self._last_trace_sequence(connection)
         return int(row["last_sequence"])
 
     def _trace_row_to_plain(self, row: sqlite3.Row) -> dict[str, Any]:

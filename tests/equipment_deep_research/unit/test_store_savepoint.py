@@ -5,6 +5,7 @@ from datetime import datetime
 import json
 import os
 from pathlib import Path
+import sqlite3
 from tempfile import TemporaryDirectory
 
 import pytest
@@ -21,6 +22,8 @@ from equipment_deep_research.domain.store import (
 from equipment_deep_research.domain import store as store_module
 from equipment_deep_research.domain.workspace import RunWorkspace
 from equipment_deep_research.harness import session as session_module
+from equipment_deep_research.harness.event_bus import EventBus
+from equipment_deep_research.harness.events import RuntimeEvent
 from equipment_deep_research.harness.session import JsonlSessionStore
 from equipment_deep_research.harness.recovery import RecoveryState
 from equipment_deep_research.orchestration.runner import _RunResourceScope
@@ -301,6 +304,84 @@ def test_concurrent_identical_commits_share_one_checkpoint(tmp_path: Path) -> No
     assert not Path(f"{database}-shm").exists()
     for store in stores:
         store.close()
+
+
+def test_concurrent_event_buses_allocate_unique_durable_runtime_sequences(
+    tmp_path: Path,
+) -> None:
+    database = tmp_path / "run.db"
+    stores = [SqliteRunStore(database, run_id="run-1") for _ in range(2)]
+    buses = [EventBus(), EventBus()]
+    for bus, store in zip(buses, stores, strict=True):
+        bus.bind_sequence_allocator("run-1", store.allocate_runtime_event_sequence)
+
+    def publish(index: int) -> int:
+        event = buses[index % len(buses)].publish(
+            RuntimeEvent("agent_harness", f"event-{index}", "run-1")
+        )
+        return event.sequence
+
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        sequences = list(executor.map(publish, range(80)))
+
+    assert sorted(sequences) == list(range(1, 81))
+    assert stores[0].last_runtime_event_sequence() == 80
+    for store in stores:
+        store.close()
+
+
+def test_runtime_sequence_state_migrates_existing_database_and_survives_reopen(
+    tmp_path: Path,
+) -> None:
+    database = tmp_path / "run.db"
+    legacy = SqliteRunStore(database, run_id="run-1")
+    legacy.commit((), (_trace("t1"), _trace("t2"), _trace("t3")))
+    legacy.close()
+    with sqlite3.connect(database) as connection:
+        connection.execute("DROP TABLE IF EXISTS runtime_event_state")
+
+    migrated = SqliteRunStore(database, run_id="run-1")
+    assert migrated.last_runtime_event_sequence() == 3
+    assert migrated.allocate_runtime_event_sequence() == 4
+    migrated.close()
+
+    recovered = SqliteRunStore(database, run_id="run-1")
+    assert recovered.last_runtime_event_sequence() == 4
+    assert recovered.allocate_runtime_event_sequence() == 5
+    recovered.close()
+
+
+def test_runtime_sequence_allocation_does_not_change_domain_trace_atomicity(
+    tmp_path: Path,
+) -> None:
+    store = SqliteRunStore(tmp_path / "run.db", run_id="run-1")
+    assert [store.allocate_runtime_event_sequence() for _ in range(5)] == [
+        1,
+        2,
+        3,
+        4,
+        5,
+    ]
+
+    checkpoint = store.commit([_domain()], [_trace()])
+    with pytest.raises(StoreValidationError, match="packet_id"):
+        store.commit(
+            [
+                DomainWriteProposal(
+                    "invalid",
+                    "BaselineFindingPacket",
+                    "upsert",
+                    {"schema_version": "1.0", "created_at": CREATED_AT},
+                    "invalid",
+                )
+            ],
+            [TraceProposal("rolled-back", "must_not_commit", "agent-a", {})],
+        )
+
+    assert checkpoint == store.recover()["last_checkpoint"]
+    assert store.object_count() == 1
+    assert store.trace_count() == 1
+    assert store.last_runtime_event_sequence() == 5
 
 
 def test_recover_and_trace_export_expose_run_monotonic_sequences(

@@ -8,12 +8,13 @@
 
 ## 2. SQLite Schema 与 RunCheckpoint
 
-`run.db` 继续使用四张表：
+`run.db` 使用五张表：
 
 - `domain_objects`：按 `(run_id, object_type, object_id)` 保存严格 JSON 领域对象。
 - `trace_events`：保存 run 内单调 sequence、proposal ID、event type、actor 和严格 JSON payload。
 - `savepoints`：保存事务 ordinal、request fingerprint、proposal keys 和 UTC 时间。
 - `proposal_ledger`：保存 proposal ID 与 domain idempotency key 的内容 hash，用于幂等和冲突拒绝。
+- `runtime_event_state`：按 `run_id` 保存 RuntimeEvent sequence high-water；`BEGIN IMMEDIATE` 分配保证多个 store/EventBus 实例并发 publish 时不重复。旧数据库首次迁移时仅以现有 trace sequence 作为兼容下界，之后 runtime 与 trace sequence 独立推进。
 
 Task 5 将 `RunCheckpoint` 加入受支持领域类型，固定对象 ID 为单 run 的稳定 workflow checkpoint，按 savepoint upsert 最新快照。字段包括：
 
@@ -149,7 +150,7 @@ Phase 1 Task 2 报告中的 Ruff 结论是目标文件范围，不是全仓库 R
 
 ## 8. Phase 1 最终整体审查修复
 
-最终修复波覆盖以下合同：wall-clock timeout、外部取消和 sibling failure 在有限 grace 内返回；抑制 `CancelledError` 的进程内 task 被 quarantine，迟到异常被消费，execution gate 阻止其再写 session、proposal、savepoint、domain state 或 RuntimeEvent。`AgentHarness` execution/reconciliation session 确定性关闭；`JsonlSessionStore` 最后 owner 关闭后回收 path-lock registry。EventBus 在 execution 开始和每次 SQLite trace commit 后以 `last_trace_sequence()` reseed。最小 custom `project_root` 可在没有 `providers.yaml`/`evidence.yaml` 时 fake-run，缺失状态的 fingerprint 是确定的，之后文件出现会拒绝 resume。
+最终修复波覆盖以下合同：wall-clock timeout、外部取消和 sibling failure 在有限 grace 内返回；抑制 `CancelledError` 的进程内 task 被 quarantine，迟到异常被消费，execution gate 阻止其再写 session、proposal、savepoint、domain state 或 RuntimeEvent。`AgentHarness` execution/reconciliation session 确定性关闭；`JsonlSessionStore` 最后 owner 关闭后回收 path-lock registry。EventBus 对 SQLite store 绑定 durable runtime sequence allocator；trace commit 不再 reseed runtime high-water。外部 async listener 的取消同样采用有限 grace drain/quarantine，迟到结果只消费不回写 harness，session fd 在 harness 返回前关闭。最小 custom `project_root` 可在没有 `providers.yaml`/`evidence.yaml` 时 fake-run，缺失状态的 fingerprint 是确定的，之后文件出现会拒绝 resume。
 
 安全与耐久性结论以当前 UID 控制、非 shared-writable 的 trusted root 为边界；不声称抵御恶意同 UID 进程持续竞速 `mkdir`/`open` 私有 namespace。SQLite 的单一持久 connection 和 committed SQLite state 是运行权威。安全 workspace 使用 MEMORY journal/no-sidecar，不提供 WAL 等价的 process-kill 或 power-loss durability。
 
