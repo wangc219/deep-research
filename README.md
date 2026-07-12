@@ -20,11 +20,12 @@
 ## Phase 1 已完成
 
 - baseline agent 在 runner 中逐个执行；每个 agent 完成后，新增 `EvidenceCard`、`BaselineFindingPacket`、`TraceEvent` 与最新 `RunCheckpoint` 原子提交到 `run.db`。
-- `RunCheckpoint` 保存 run/task 状态、轮次、剩余预算、topic、请求/解析路线、所选 agent、来源材料、worker report、配置指纹、UTC 时间与 schema version。
+- `RunCheckpoint` 保存 baseline tasks 与显式 `finalize:winning-report` task、run/task 状态、轮次、剩余预算、topic、请求/解析路线、所选 agent、来源材料、worker report、配置指纹、UTC 时间与 schema version。
 - `--resume` 从最后已提交 savepoint 恢复 `DomainStore`、`TraceStore`、来源材料、worker report 和 session tail；已完成 agent 不重复执行，`pending/running` task 按原 agent 顺序继续。
-- 恢复前先处理 `session_write_failed` reconciliation marker；旧 session 只追加，不重写。
+- `ResearchProblem` 与初始 checkpoint 同事务持久化；恢复前先处理 `session_write_failed` reconciliation marker；旧 session 只追加，不重写。
 - `RunWorkspace.open_existing()` 校验 run 目录、session、artifact、checkpoint 与 `run.db` 的类型、边界和 symlink 安全。
-- 正常完成返回 `status=completed`，数据库保存 completed checkpoint，并继续生成七类稳定产物。
+- completed resume 也先写 `run_resumed` trace/savepoint；正常完成返回 `status=completed`，数据库保存 finalize/run completed checkpoint，并继续生成七类稳定产物。
+- session、报告、JSON/JSONL 与 checkpoint 文件使用 rooted dirfd 安全写入，拒绝 symlink/TOCTOU 逃逸并在缺少安全原语时 fail closed。
 
 ## 当前实现边界
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import sqlite3
-from typing import Any
+from typing import Any, Callable
 
 import pytest
 
@@ -13,7 +13,6 @@ from equipment_deep_research.agents.provider import (
     AgentRunResult,
     FakeAgentProvider,
 )
-from equipment_deep_research.domain.proposals import TraceProposal
 from equipment_deep_research.domain.store import SqliteRunStore
 from equipment_deep_research.domain.workspace import RunWorkspace
 from equipment_deep_research.harness.recovery import RecoveryError
@@ -23,6 +22,7 @@ from equipment_deep_research.orchestration.runner import DeepResearchRunner
 
 ROOT = Path(__file__).resolve().parents[3]
 AGENTS = ["international_situation", "combat_scenario", "weapon_equipment"]
+FINALIZE_TASK = "finalize:winning-report"
 
 
 class InjectedCrash(RuntimeError):
@@ -47,11 +47,34 @@ class RejectingProvider:
         raise AssertionError(f"completed run repeated {request.agent.agent_id}")
 
 
+class FailSavepointOnceSession(JsonlSessionStore):
+    failed = False
+
+    def append(self, record: dict[str, Any]) -> None:
+        if record.get("event_type") == "savepoint" and not type(self).failed:
+            type(self).failed = True
+            raise OSError("injected savepoint append failure")
+        super().append(record)
+
+
+class SessionSymlinkProvider:
+    def __init__(self, session_path: Path, external: Path) -> None:
+        self.delegate = FakeAgentProvider()
+        self.session_path = session_path
+        self.external = external
+
+    def run_baseline_agent(self, request: AgentRunRequest) -> AgentRunResult:
+        self.session_path.symlink_to(self.external)
+        return self.delegate.run_baseline_agent(request)
+
+
 def build_runner(
     tmp_path: Path,
     *,
     provider: AgentProvider | None = None,
     preset_config_path: Path | None = None,
+    run_hook: Callable[[str, RunWorkspace], None] | None = None,
+    session_store_factory: Callable[[str, Path], Any] | None = None,
 ) -> DeepResearchRunner:
     return DeepResearchRunner(
         project_root=ROOT,
@@ -60,6 +83,8 @@ def build_runner(
         preset_config_path=preset_config_path
         or ROOT / "configs" / "equipment_deep_research" / "presets.yaml",
         provider=provider,
+        run_hook=run_hook,
+        session_store_factory=session_store_factory,
     )
 
 
@@ -121,7 +146,8 @@ def test_resume_continues_after_last_committed_agent_savepoint(tmp_path: Path) -
     assert checkpoint["status"] == "completed"
     assert checkpoint["pending_task_ids"] == []
     assert checkpoint["completed_task_ids"] == [
-        f"baseline:{agent_id}" for agent_id in AGENTS
+        *[f"baseline:{agent_id}" for agent_id in AGENTS],
+        FINALIZE_TASK,
     ]
     assert checkpoint["round_index"] == 1
     assert checkpoint["budget_remaining"]["baseline_tasks"] == 0
@@ -222,68 +248,52 @@ def test_completed_resume_is_idempotent_and_does_not_run_provider(tmp_path: Path
     database = SqliteRunStore(run_dir / "run.db", run_id="resume-1")
     before = database.recover()
     session_prefixes = {agent_id: session_bytes(run_dir, agent_id) for agent_id in AGENTS}
-    trace_before = (run_dir / "trace.jsonl").read_bytes()
+    trace_before = database.trace_count()
 
     resumed = build_runner(tmp_path, provider=RejectingProvider()).run(
         **run_args(resume=True)
     )
 
     assert resumed["status"] == "completed"
-    assert database.recover() == before
-    assert (run_dir / "trace.jsonl").read_bytes() == trace_before
+    after = database.recover()
+    assert after["trace_count"] == trace_before + 1
+    assert after["last_checkpoint"] != before["last_checkpoint"]
+    assert database.trace_events()[-1]["event_type"] == "run_resumed"
     assert {
         agent_id: session_bytes(run_dir, agent_id) for agent_id in AGENTS
     } == session_prefixes
 
 
-def test_session_reconciliation_finishes_before_run_resumed(tmp_path: Path) -> None:
-    with pytest.raises(InjectedCrash):
-        build_runner(tmp_path, provider=RecordingProvider(crash_on_call=2)).run(
-            **run_args()
-        )
+def test_real_session_savepoint_failure_is_reconciled_before_skipping_completed(
+    tmp_path: Path,
+) -> None:
+    FailSavepointOnceSession.failed = False
+
+    def session_factory(path: str, root_dir: Path) -> FailSavepointOnceSession:
+        return FailSavepointOnceSession(path, root_dir=root_dir)
+
+    with pytest.raises(OSError, match="savepoint append failure"):
+        build_runner(
+            tmp_path,
+            provider=RecordingProvider(),
+            session_store_factory=session_factory,
+        ).run(**run_args(agent_ids=AGENTS[:1]))
 
     run_dir = tmp_path / "runs" / "resume-1"
     store = SqliteRunStore(run_dir / "run.db", run_id="resume-1")
-    session_ref = "reconcile-agent.jsonl"
-    session = JsonlSessionStore(session_ref, root_dir=run_dir / "agent_sessions")
-    session.append(
-        {
-            "event_type": "savepoint_pending",
-            "execution_id": "execution-reconcile",
-            "task_id": "task-reconcile",
-            "agent_id": "reconcile-agent",
-            "turn_index": 1,
-            "batch_hash": "sha256:test",
-            "created_at": "2026-07-11T00:00:00+00:00",
-            "schema_version": "1.0",
-        }
+    unresolved = store.recover()["unresolved_session_writes"]
+    assert len(unresolved) == 1
+    marker = unresolved[0]
+    session = JsonlSessionStore(
+        marker["session_ref"], root_dir=run_dir / "agent_sessions"
     )
-    store.commit(
-        (),
-        (
-            TraceProposal(
-                "marker-reconcile",
-                "session_write_failed",
-                "reconcile-agent",
-                {
-                    "marker_id": "marker-reconcile",
-                    "committed_checkpoint_id": "checkpoint-reconcile",
-                    "batch_hash": "sha256:test",
-                    "turn_index": 1,
-                    "task_id": "task-reconcile",
-                    "agent_id": "reconcile-agent",
-                    "execution_id": "execution-reconcile",
-                    "session_ref": session_ref,
-                    "session_event": "savepoint",
-                },
-            ),
-        ),
+    assert [row["event_type"] for row in session.read_all()] == ["baseline_result"]
+
+    resumed = build_runner(tmp_path, provider=RejectingProvider()).run(
+        **run_args(agent_ids=AGENTS[:1], resume=True)
     )
 
-    build_runner(tmp_path, provider=RecordingProvider()).run(
-        **run_args(resume=True)
-    )
-
+    assert resumed["status"] == "completed"
     events = store.trace_events()
     event_types = [event["event_type"] for event in events]
     assert event_types.index("session_reconciled") < event_types.index("run_resumed")
@@ -291,9 +301,23 @@ def test_session_reconciliation_finishes_before_run_resumed(tmp_path: Path) -> N
     assert [
         row["event_type"]
         for row in reconciled
-        if row.get("reconciliation_marker_id") == "marker-reconcile"
+        if row.get("reconciliation_marker_id") == marker["marker_id"]
     ] == ["savepoint", "session_reconciled"]
     assert store.recover()["unresolved_session_writes"] == []
+    reconciled_line_count = len(reconciled)
+
+    build_runner(tmp_path, provider=RejectingProvider()).run(
+        **run_args(agent_ids=AGENTS[:1], resume=True)
+    )
+
+    assert len(session.read_all()) == reconciled_line_count
+    assert len(
+        [
+            event
+            for event in store.trace_events()
+            if event["event_type"] == "session_reconciled"
+        ]
+    ) == 1
 
 
 def test_fresh_run_still_rejects_existing_run_name_without_mutation(tmp_path: Path) -> None:
@@ -326,5 +350,237 @@ def test_run_database_contains_one_completed_checkpoint(tmp_path: Path) -> None:
     assert row is not None
     checkpoint = json.loads(row[0])
     assert checkpoint["status"] == "completed"
+    assert checkpoint["task_statuses"][FINALIZE_TASK] == "completed"
     assert checkpoint["schema_version"] == "1.0"
     assert checkpoint["created_at"].endswith("+00:00")
+
+
+def test_finalize_remains_pending_after_last_baseline_crash(tmp_path: Path) -> None:
+    def crash_after_baselines(event: str, workspace: RunWorkspace) -> None:
+        del workspace
+        if event == "after_baseline_agents":
+            raise InjectedCrash(event)
+
+    with pytest.raises(InjectedCrash, match="after_baseline_agents"):
+        build_runner(
+            tmp_path,
+            provider=RecordingProvider(),
+            run_hook=crash_after_baselines,
+        ).run(**run_args())
+
+    run_dir = tmp_path / "runs" / "resume-1"
+    checkpoint = SqliteRunStore(run_dir / "run.db", run_id="resume-1").domain_objects(
+        object_type="RunCheckpoint"
+    )[0]["payload"]
+    assert checkpoint["status"] == "running"
+    assert checkpoint["task_statuses"][FINALIZE_TASK] == "pending"
+    assert checkpoint["pending_task_ids"] == [FINALIZE_TASK]
+
+    resumed = build_runner(tmp_path, provider=RejectingProvider()).run(
+        **run_args(resume=True)
+    )
+
+    assert resumed["status"] == "completed"
+    assert resumed["stage_count"] == 3
+
+
+def test_finalize_running_is_retried_after_engine_crash_before_commit(
+    tmp_path: Path,
+) -> None:
+    def crash_after_engine(event: str, workspace: RunWorkspace) -> None:
+        del workspace
+        if event == "after_finalize_engine":
+            raise InjectedCrash(event)
+
+    with pytest.raises(InjectedCrash, match="after_finalize_engine"):
+        build_runner(
+            tmp_path,
+            provider=RecordingProvider(),
+            run_hook=crash_after_engine,
+        ).run(**run_args())
+
+    run_dir = tmp_path / "runs" / "resume-1"
+    store = SqliteRunStore(run_dir / "run.db", run_id="resume-1")
+    checkpoint = store.domain_objects(object_type="RunCheckpoint")[0]["payload"]
+    assert checkpoint["status"] == "running"
+    assert checkpoint["task_statuses"][FINALIZE_TASK] == "running"
+    assert store.count("WinningMechanismStageOutput") == 0
+    assert store.count("ResearchReport") == 0
+
+    resumed = build_runner(tmp_path, provider=RejectingProvider()).run(
+        **run_args(resume=True)
+    )
+
+    assert resumed["status"] == "completed"
+    assert store.count("WinningMechanismStageOutput") == 3
+    assert store.count("CapabilityImageItem") == 2
+    assert store.count("ResearchReport") == 1
+    proposal_ids = [event["proposal_id"] for event in store.trace_events()]
+    assert len(proposal_ids) == len(set(proposal_ids))
+
+
+def test_initial_transaction_persists_research_problem_and_resume_validates_it(
+    tmp_path: Path,
+) -> None:
+    with pytest.raises(InjectedCrash):
+        build_runner(tmp_path, provider=RecordingProvider(crash_on_call=2)).run(
+            **run_args()
+        )
+
+    run_dir = tmp_path / "runs" / "resume-1"
+    store = SqliteRunStore(run_dir / "run.db", run_id="resume-1")
+    problems = store.domain_objects(object_type="ResearchProblem")
+    assert len(problems) == 1
+    assert problems[0]["payload"]["selected_agent_ids"] == AGENTS
+
+    connection = sqlite3.connect(run_dir / "run.db")
+    try:
+        row = connection.execute(
+            """
+            SELECT payload_json FROM domain_objects
+            WHERE run_id = ? AND object_type = 'RunCheckpoint'
+            """,
+            ("resume-1",),
+        ).fetchone()
+        assert row is not None
+        checkpoint = json.loads(row[0])
+        checkpoint["topic"] = "different topic"
+        connection.execute(
+            """
+            UPDATE domain_objects SET payload_json = ?
+            WHERE run_id = ? AND object_type = 'RunCheckpoint'
+            """,
+            (json.dumps(checkpoint), "resume-1"),
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    with pytest.raises(RecoveryError, match="ResearchProblem"):
+        build_runner(tmp_path, provider=RecordingProvider()).run(
+            **run_args(topic="different topic", resume=True)
+        )
+
+
+def test_recovery_deduplicates_checkpoint_materials_and_worker_reports(
+    tmp_path: Path,
+) -> None:
+    with pytest.raises(InjectedCrash):
+        build_runner(tmp_path, provider=RecordingProvider(crash_on_call=2)).run(
+            **run_args()
+        )
+
+    run_dir = tmp_path / "runs" / "resume-1"
+    connection = sqlite3.connect(run_dir / "run.db")
+    try:
+        row = connection.execute(
+            """
+            SELECT payload_json FROM domain_objects
+            WHERE run_id = ? AND object_type = 'RunCheckpoint'
+            """,
+            ("resume-1",),
+        ).fetchone()
+        assert row is not None
+        checkpoint = json.loads(row[0])
+        checkpoint["source_materials"] *= 2
+        checkpoint["worker_reports"] *= 2
+        connection.execute(
+            """
+            UPDATE domain_objects SET payload_json = ?
+            WHERE run_id = ? AND object_type = 'RunCheckpoint'
+            """,
+            (json.dumps(checkpoint), "resume-1"),
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    resumed = build_runner(tmp_path, provider=RecordingProvider()).run(
+        **run_args(resume=True)
+    )
+    summary = json.loads(Path(resumed["summary_path"]).read_text(encoding="utf-8"))
+    assert len(summary["source_materials"]) == len(AGENTS)
+    assert len(summary["worker_reports"]) == len(AGENTS)
+
+
+def test_runner_session_append_rejects_leaf_replaced_by_symlink(tmp_path: Path) -> None:
+    external = tmp_path / "external-session.jsonl"
+    external.write_text("external\n", encoding="utf-8")
+    session_path = (
+        tmp_path
+        / "runs"
+        / "resume-1"
+        / "agent_sessions"
+        / f"{AGENTS[0]}.jsonl"
+    )
+    provider = SessionSymlinkProvider(session_path, external)
+
+    with pytest.raises(ValueError, match="symlink"):
+        build_runner(tmp_path, provider=provider).run(
+            **run_args(agent_ids=AGENTS[:1])
+        )
+
+    assert external.read_text(encoding="utf-8") == "external\n"
+
+
+@pytest.mark.parametrize("leaf", ["report.md", "domain.jsonl"])
+def test_runner_final_outputs_reject_leaf_symlink(
+    tmp_path: Path,
+    leaf: str,
+) -> None:
+    external = tmp_path / f"external-{leaf}"
+    external.write_text("external\n", encoding="utf-8")
+
+    def install_symlink(event: str, workspace: RunWorkspace) -> None:
+        if event == "before_outputs":
+            (workspace.run_dir / leaf).symlink_to(external)
+
+    with pytest.raises(ValueError, match="symlink"):
+        build_runner(
+            tmp_path,
+            provider=RecordingProvider(),
+            run_hook=install_symlink,
+        ).run(**run_args(agent_ids=AGENTS[:1]))
+
+    assert external.read_text(encoding="utf-8") == "external\n"
+
+
+def test_runner_checkpoint_latest_rejects_leaf_symlink(tmp_path: Path) -> None:
+    external = tmp_path / "external-checkpoint.json"
+    external.write_text("external\n", encoding="utf-8")
+
+    def install_symlink(event: str, workspace: RunWorkspace) -> None:
+        if event == "after_final_commit":
+            latest = workspace.checkpoints_dir / "latest.json"
+            latest.unlink()
+            latest.symlink_to(external)
+
+    with pytest.raises(ValueError, match="symlink"):
+        build_runner(
+            tmp_path,
+            provider=RecordingProvider(),
+            run_hook=install_symlink,
+        ).run(**run_args(agent_ids=AGENTS[:1]))
+
+    assert external.read_text(encoding="utf-8") == "external\n"
+
+
+def test_completed_resume_outputs_complete_rejects_report_symlink(
+    tmp_path: Path,
+) -> None:
+    first = build_runner(tmp_path, provider=RecordingProvider()).run(
+        **run_args(agent_ids=AGENTS[:1])
+    )
+    run_dir = Path(first["run_dir"])
+    external = tmp_path / "external-completed-report.md"
+    external.write_text("external\n", encoding="utf-8")
+    report = run_dir / "report.md"
+    report.unlink()
+    report.symlink_to(external)
+
+    with pytest.raises(ValueError, match="symlink"):
+        build_runner(tmp_path, provider=RejectingProvider()).run(
+            **run_args(agent_ids=AGENTS[:1], resume=True)
+        )
+
+    assert external.read_text(encoding="utf-8") == "external\n"

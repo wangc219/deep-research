@@ -102,8 +102,9 @@ def test_fake_default_full_loop_outputs_files(tmp_path: Path) -> None:
     for worker_report in summary["worker_reports"]:
         _assert_persisted_payload(worker_report, "worker_report_id")
 
-    id_fields = {
-        "EvidenceCard": "evidence_id",
+        id_fields = {
+            "ResearchProblem": "problem_id",
+            "EvidenceCard": "evidence_id",
         "BaselineFindingPacket": "packet_id",
         "WinningMechanismStageOutput": "stage_id",
         "CapabilityImageItem": "capability_id",

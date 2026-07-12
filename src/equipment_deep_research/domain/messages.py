@@ -8,6 +8,9 @@ from equipment_deep_research.domain.models import new_stable_id, now_iso
 from equipment_deep_research.domain.proposals import freeze_plain, thaw_plain
 
 
+FINALIZE_TASK_ID = "finalize:winning-report"
+
+
 @dataclass(frozen=True)
 class TaskEnvelope:
     task_id: str
@@ -178,24 +181,24 @@ class RunCheckpoint:
             raise ValueError("invalid task status in run checkpoint")
         if len(self.selected_agent_ids) != len(set(self.selected_agent_ids)):
             raise ValueError("selected agent ids must be unique")
-        if self.task_statuses:
-            expected_task_ids = {
-                f"baseline:{agent_id}" for agent_id in self.selected_agent_ids
-            }
-            if set(self.task_statuses) != expected_task_ids:
-                raise ValueError("task statuses do not match selected agents")
-            status_completed = {
-                task_id
-                for task_id, status in self.task_statuses.items()
-                if status == "completed"
-            }
-            status_pending = {
-                task_id
-                for task_id, status in self.task_statuses.items()
-                if status == "pending"
-            }
-            if completed != status_completed or pending != status_pending:
-                raise ValueError("task status lists are inconsistent")
+        expected_task_ids = {
+            *(f"baseline:{agent_id}" for agent_id in self.selected_agent_ids),
+            FINALIZE_TASK_ID,
+        }
+        if set(self.task_statuses) != expected_task_ids:
+            raise ValueError("task statuses do not match selected agents")
+        status_completed = {
+            task_id
+            for task_id, status in self.task_statuses.items()
+            if status == "completed"
+        }
+        status_pending = {
+            task_id
+            for task_id, status in self.task_statuses.items()
+            if status == "pending"
+        }
+        if completed != status_completed or pending != status_pending:
+            raise ValueError("task status lists are inconsistent")
         if self.status == "completed" and (
             self.pending_task_ids
             or any(status != "completed" for status in self.task_statuses.values())

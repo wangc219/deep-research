@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
 import pytest
 
 from equipment_deep_research.domain.workspace import RunWorkspace
+from equipment_deep_research.domain import workspace as workspace_module
 from equipment_deep_research.interfaces import cli
 from equipment_deep_research.orchestration.runner import DeepResearchRunner
 
@@ -33,6 +35,127 @@ def test_workspace_creates_required_paths(tmp_path: Path) -> None:
     assert workspace.artifacts_dir.is_dir()
     assert workspace.checkpoints_dir.is_dir()
     assert workspace.database_path == workspace.run_dir / "run.db"
+
+
+@pytest.mark.parametrize(
+    ("root_name", "leaf"),
+    [
+        ("run", "report.md"),
+        ("run", "domain.jsonl"),
+        ("checkpoints", "latest.json"),
+    ],
+)
+def test_workspace_atomic_writer_rejects_leaf_symlink_without_touching_external(
+    tmp_path: Path,
+    root_name: str,
+    leaf: str,
+) -> None:
+    workspace = RunWorkspace.create(tmp_path, "run-1")
+    external = tmp_path / f"external-{leaf}"
+    external.write_text("external\n", encoding="utf-8")
+    root = workspace.run_dir if root_name == "run" else workspace.checkpoints_dir
+    (root / leaf).symlink_to(external)
+
+    with pytest.raises(ValueError, match="symlink"):
+        if root_name == "run":
+            workspace.write_run_text(leaf, "replacement\n")
+        else:
+            workspace.write_checkpoint_text(leaf, "replacement\n")
+
+    assert external.read_text(encoding="utf-8") == "external\n"
+
+
+@pytest.mark.parametrize(
+    ("root_name", "leaf"),
+    [
+        ("run", "report.md"),
+        ("run", "domain.jsonl"),
+        ("checkpoints", "latest.json"),
+    ],
+)
+def test_workspace_atomic_writer_replaces_checked_leaf_without_following_race_symlink(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    root_name: str,
+    leaf: str,
+) -> None:
+    workspace = RunWorkspace.create(tmp_path, "run-1")
+    external = tmp_path / f"external-race-{leaf}"
+    external.write_text("external\n", encoding="utf-8")
+    root = workspace.run_dir if root_name == "run" else workspace.checkpoints_dir
+    target = root / leaf
+    target.write_text("old\n", encoding="utf-8")
+    real_rename = os.rename
+
+    def racing_rename(
+        src: str,
+        dst: str,
+        *,
+        src_dir_fd: int | None = None,
+        dst_dir_fd: int | None = None,
+    ) -> None:
+        assert dst == leaf
+        target.unlink()
+        target.symlink_to(external)
+        real_rename(
+            src,
+            dst,
+            src_dir_fd=src_dir_fd,
+            dst_dir_fd=dst_dir_fd,
+        )
+
+    monkeypatch.setattr(workspace_module.os, "rename", racing_rename)
+    if root_name == "run":
+        workspace.write_run_text(leaf, "replacement\n")
+    else:
+        workspace.write_checkpoint_text(leaf, "replacement\n")
+
+    assert external.read_text(encoding="utf-8") == "external\n"
+    assert target.read_text(encoding="utf-8") == "replacement\n"
+
+
+def test_workspace_writer_fails_closed_without_secure_primitives(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace = RunWorkspace.create(tmp_path, "run-1")
+    monkeypatch.setattr(workspace_module.os, "supports_dir_fd", set())
+
+    with pytest.raises(RuntimeError, match="secure workspace path operations"):
+        workspace.write_run_text("report.md", "blocked\n")
+
+    assert not (workspace.run_dir / "report.md").exists()
+
+
+def test_workspace_safe_stat_rejects_leaf_replaced_after_check(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace = RunWorkspace.create(tmp_path, "run-1")
+    target = workspace.run_dir / "report.md"
+    target.write_text("report\n", encoding="utf-8")
+    external = tmp_path / "external-stat-report.md"
+    external.write_text("external\n", encoding="utf-8")
+    real_open_at = workspace_module._open_at
+
+    def racing_open_at(
+        path: str,
+        flags: int,
+        mode: int = 0o777,
+        *,
+        dir_fd: int,
+    ) -> int:
+        if path == "report.md":
+            target.unlink()
+            target.symlink_to(external)
+        return real_open_at(path, flags, mode, dir_fd=dir_fd)
+
+    monkeypatch.setattr(workspace_module, "_open_at", racing_open_at)
+
+    with pytest.raises(ValueError, match="symlink"):
+        workspace.run_file_is_regular("report.md")
+
+    assert external.read_text(encoding="utf-8") == "external\n"
 
 
 @pytest.mark.parametrize(

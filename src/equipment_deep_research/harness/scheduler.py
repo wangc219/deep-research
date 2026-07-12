@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-import json
-from typing import Any
+from typing import Any, Callable
 
 from equipment_deep_research.agents.provider import AgentProvider, AgentRunRequest
 from equipment_deep_research.agents.registry import AgentDef
@@ -11,6 +10,7 @@ from equipment_deep_research.domain.identifiers import safe_identifier_path
 from equipment_deep_research.domain.models import TraceEvent, new_stable_id, now_iso
 from equipment_deep_research.domain.store import DomainStore, TraceStore
 from equipment_deep_research.harness.context import ContextPackBuilder
+from equipment_deep_research.harness.session import JsonlSessionStore
 from equipment_deep_research.tools.materialization import EvidenceMaterializer
 
 
@@ -40,6 +40,7 @@ class DiscoveryScheduler:
         mode: str = "fake",
         context_builder: ContextPackBuilder | None = None,
         source_materials: list[dict[str, Any]] | None = None,
+        session_store_factory: Callable[[str, Path], Any] | None = None,
     ) -> None:
         self.run_id = run_id
         self.run_dir = run_dir
@@ -48,6 +49,7 @@ class DiscoveryScheduler:
         self.trace = trace
         self.mode = mode
         self.context_builder = context_builder or ContextPackBuilder()
+        self.session_store_factory = session_store_factory
         if self.run_dir.is_symlink():
             raise ValueError("run_dir must not be a symlink")
         self.sessions_dir = run_dir / "agent_sessions"
@@ -93,6 +95,7 @@ class DiscoveryScheduler:
             suffix=".jsonl",
             field_name="agent_id",
         )
+        session = self._open_session_store(session_path.name)
         before_evidence = set(self.store.evidence)
         try:
             context = self.context_builder.build_for_baseline_agent(
@@ -132,8 +135,7 @@ class DiscoveryScheduler:
                     }
                 )
             self.store.add_baseline_packet(packet)
-            self._append_session(
-                session_path,
+            session.append(
                 {
                     "event_type": "baseline_result",
                     "agent_id": agent.agent_id,
@@ -184,13 +186,23 @@ class DiscoveryScheduler:
                 error=str(exc),
             )
 
-    def append_savepoint(self, report: WorkerReport, checkpoint_id: str) -> None:
-        self._append_session(
-            Path(report.session_path),
+    def append_savepoint(
+        self,
+        report: WorkerReport,
+        checkpoint_id: str,
+        *,
+        task_id: str,
+        batch_hash: str,
+    ) -> None:
+        session_ref = Path(report.session_path).name
+        session = self._open_session_store(session_ref)
+        session.append(
             {
                 "event_type": "savepoint",
                 "agent_id": report.agent_id,
+                "task_id": task_id,
                 "checkpoint_id": checkpoint_id,
+                "batch_hash": batch_hash,
                 "worker_report_id": report.worker_report_id,
                 "packet_id": report.packet_id,
                 "evidence_ids": report.new_evidence_ids,
@@ -199,8 +211,7 @@ class DiscoveryScheduler:
             },
         )
 
-    @staticmethod
-    def _append_session(path: Path, row: dict) -> None:
-        with path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(row, ensure_ascii=False, sort_keys=True))
-            handle.write("\n")
+    def _open_session_store(self, session_ref: str) -> Any:
+        if self.session_store_factory is not None:
+            return self.session_store_factory(session_ref, self.sessions_dir)
+        return JsonlSessionStore(session_ref, root_dir=self.sessions_dir)

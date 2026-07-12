@@ -130,6 +130,9 @@ class DomainStore:
 
     def export_jsonl(self, path: Path) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(self.jsonl_text(), encoding="utf-8")
+
+    def jsonl_text(self) -> str:
         rows: list[dict[str, Any]] = []
         rows.extend({"type": "ResearchProblem", "payload": to_plain(item)} for item in self.problems.values())
         rows.extend({"type": "EvidenceCard", "payload": to_plain(item)} for item in self.evidence.values())
@@ -140,19 +143,15 @@ class DomainStore:
         rows.extend({"type": "CapabilityImageItem", "payload": to_plain(item)} for item in self.capability_images.values())
         rows.extend({"type": "AuditResult", "payload": to_plain(item)} for item in self.audits.values())
         rows.extend({"type": "ResearchReport", "payload": to_plain(item)} for item in self.reports.values())
-        path.write_text(
-            "\n".join(
-                json.dumps(
-                    row,
-                    ensure_ascii=False,
-                    sort_keys=True,
-                    allow_nan=False,
-                )
-                for row in rows
+        return "\n".join(
+            json.dumps(
+                row,
+                ensure_ascii=False,
+                sort_keys=True,
+                allow_nan=False,
             )
-            + ("\n" if rows else ""),
-            encoding="utf-8",
-        )
+            for row in rows
+        ) + ("\n" if rows else "")
 
     def summary(self) -> dict[str, Any]:
         return {
@@ -179,19 +178,18 @@ class TraceStore:
 
     def export_jsonl(self, path: Path) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(
-            "\n".join(
-                json.dumps(
-                    {"type": "TraceEvent", "payload": to_plain(event)},
-                    ensure_ascii=False,
-                    sort_keys=True,
-                    allow_nan=False,
-                )
-                for event in self.events
+        path.write_text(self.jsonl_text(), encoding="utf-8")
+
+    def jsonl_text(self) -> str:
+        return "\n".join(
+            json.dumps(
+                {"type": "TraceEvent", "payload": to_plain(event)},
+                ensure_ascii=False,
+                sort_keys=True,
+                allow_nan=False,
             )
-            + ("\n" if self.events else ""),
-            encoding="utf-8",
-        )
+            for event in self.events
+        ) + ("\n" if self.events else "")
 
     def summary(self) -> list[dict[str, Any]]:
         return [

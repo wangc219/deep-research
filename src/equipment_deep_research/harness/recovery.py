@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+import json
 from pathlib import Path
 import sqlite3
 from typing import Any, Mapping, cast
 
 from equipment_deep_research.domain.identifiers import safe_identifier_path
-from equipment_deep_research.domain.messages import RunCheckpoint
+from equipment_deep_research.domain.messages import FINALIZE_TASK_ID, RunCheckpoint
 from equipment_deep_research.domain.models import (
     AgentRecommendation,
     AuditResult,
@@ -36,6 +37,7 @@ class RecoveryState:
     workspace: RunWorkspace
     sqlite_store: SqliteRunStore
     checkpoint: RunCheckpoint
+    problem: ResearchProblem
     domain_store: DomainStore
     trace_store: TraceStore
     source_materials: list[dict[str, Any]]
@@ -78,8 +80,15 @@ class RecoveryManager:
             selected_agent_ids=selected_agent_ids,
             config_fingerprint=config_fingerprint,
         )
-        checkpoint = _normalize_unfinished_tasks(checkpoint)
         domain_store = _restore_domain_store(sqlite_store.domain_objects())
+        problem = self._load_problem(
+            domain_store,
+            topic=topic,
+            research_route=research_route,
+            resolved_route=resolved_route,
+            selected_agent_ids=selected_agent_ids,
+        )
+        checkpoint = _normalize_unfinished_tasks(checkpoint)
         trace_store = _restore_trace_store(sqlite_store.trace_events())
         worker_reports = _restore_worker_reports(checkpoint.worker_reports)
         session_tails = self._load_session_tails(
@@ -95,9 +104,10 @@ class RecoveryManager:
             workspace=workspace,
             sqlite_store=sqlite_store,
             checkpoint=checkpoint,
+            problem=problem,
             domain_store=domain_store,
             trace_store=trace_store,
-            source_materials=[dict(item) for item in checkpoint.source_materials],
+            source_materials=_dedupe_plain_rows(checkpoint.source_materials),
             worker_reports=worker_reports,
             session_tails=session_tails,
             last_savepoint_id=latest_savepoint,
@@ -117,6 +127,34 @@ class RecoveryManager:
         if checkpoint.run_id != run_id:
             raise RecoveryError("RunCheckpoint run_id mismatch")
         return checkpoint
+
+    @staticmethod
+    def _load_problem(
+        domain_store: DomainStore,
+        *,
+        topic: str | None,
+        research_route: str | None,
+        resolved_route: str | None,
+        selected_agent_ids: list[str] | None,
+    ) -> ResearchProblem:
+        problems = list(domain_store.problems.values())
+        if len(problems) != 1:
+            raise RecoveryError(
+                f"run database must contain exactly one ResearchProblem, found {len(problems)}"
+            )
+        problem = problems[0]
+        if topic is not None and problem.topic != topic:
+            raise RecoveryError("ResearchProblem topic mismatch")
+        if research_route is not None and problem.research_route != research_route:
+            raise RecoveryError("ResearchProblem research route mismatch")
+        if resolved_route is not None and problem.resolved_route() != resolved_route:
+            raise RecoveryError("ResearchProblem resolved route mismatch")
+        if (
+            selected_agent_ids is not None
+            and problem.selected_agent_ids != selected_agent_ids
+        ):
+            raise RecoveryError("ResearchProblem selected agent mismatch")
+        return problem
 
     @staticmethod
     def _validate_identity(
@@ -274,7 +312,10 @@ def _normalize_unfinished_tasks(checkpoint: RunCheckpoint) -> RunCheckpoint:
         task_id: "pending" if status == "running" else status
         for task_id, status in checkpoint.task_statuses.items()
     }
-    ordered_tasks = [f"baseline:{agent_id}" for agent_id in checkpoint.selected_agent_ids]
+    ordered_tasks = [
+        *[f"baseline:{agent_id}" for agent_id in checkpoint.selected_agent_ids],
+        FINALIZE_TASK_ID,
+    ]
     completed = [
         task_id for task_id in ordered_tasks if statuses.get(task_id) == "completed"
     ]
@@ -286,7 +327,12 @@ def _normalize_unfinished_tasks(checkpoint: RunCheckpoint) -> RunCheckpoint:
         completed_task_ids=completed,
         pending_task_ids=pending,
         task_statuses=statuses,
-        status="completed" if not pending else "running",
+        status=(
+            "completed"
+            if statuses.get(FINALIZE_TASK_ID) == "completed"
+            and all(status == "completed" for status in statuses.values())
+            else "running"
+        ),
     )
     normalized.validate()
     return normalized
@@ -361,12 +407,40 @@ def _restore_trace_store(rows: list[dict[str, Any]]) -> TraceStore:
 
 def _restore_worker_reports(rows: list[dict[str, Any]]) -> list[WorkerReport]:
     reports: list[WorkerReport] = []
+    by_agent: dict[str, WorkerReport] = {}
     for row in rows:
         try:
-            reports.append(WorkerReport(**row))
+            report = WorkerReport(**row)
         except (TypeError, ValueError) as exc:
             raise RecoveryError(f"worker report is invalid: {exc}") from exc
+        existing = by_agent.get(report.agent_id)
+        if existing is not None:
+            if existing != report:
+                raise RecoveryError(
+                    f"conflicting worker reports for agent {report.agent_id}"
+                )
+            continue
+        by_agent[report.agent_id] = report
+        reports.append(report)
     return reports
+
+
+def _dedupe_plain_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    unique: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for row in rows:
+        encoded = json.dumps(
+            row,
+            ensure_ascii=False,
+            sort_keys=True,
+            allow_nan=False,
+            separators=(",", ":"),
+        )
+        if encoded in seen:
+            continue
+        seen.add(encoded)
+        unique.append(dict(row))
+    return unique
 
 
 def _marker_text(marker: Mapping[str, Any], key: str) -> str:

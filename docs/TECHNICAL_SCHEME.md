@@ -73,10 +73,13 @@ Phase 0 已验证公开材料化安全与失败隔离；配置驱动的质量评
 
 ### 2.6 Checkpoint 与恢复
 
-- `RunCheckpoint` 记录 completed/pending/running task、round、budget、status、topic、请求/解析路线、selected agents、source materials、worker reports、配置指纹、UTC 时间和 schema。
+- `RunCheckpoint` 记录 baseline tasks 与 `finalize:winning-report`、completed/pending/running task、round、budget、status、topic、请求/解析路线、selected agents、source materials、worker reports、配置指纹、UTC 时间和 schema。`ResearchProblem` 与初始 checkpoint 同事务保存。
 - task 开始前持久化 `running`；恢复时只把 `pending/running` 重新排队，completed task 与既有 idempotency key 不重放。
 - `RecoveryManager.load()` 先修复 unresolved session marker，再加载最后 savepoint 和 `RunCheckpoint`，恢复领域对象、trace、来源材料、worker report 与 session tail。
-- topic、路线、agent 集合或配置指纹不一致时拒绝 resume；completed run 的再次 resume 不启动 provider，也不新增 trace 或 session 行。
+- topic、路线、agent 集合、持久化 `ResearchProblem` 或配置指纹不一致时拒绝 resume；completed run 的再次 resume 不启动 provider，但仍新增 `run_resumed` trace/savepoint。
+- 最后 baseline 完成后 finalize 仍 pending；engine 前 finalize=running，stage/image/recommendation/audit/report 与 finalize/run completed checkpoint 在同一最终事务提交。
+- runner session 使用 rooted `JsonlSessionStore`；DB 已提交而 session savepoint 失败时自动记录 reconciliation marker。
+- 最终输出与 checkpoint 文件使用 rooted dirfd 原子 writer，临时文件 `O_EXCL|O_NOFOLLOW`、文件和目录 fsync、同 dirfd rename；安全原语缺失时 fail closed。
 - 崩溃继续向调用方传播，但此前已提交的 agent 状态可用于下一次恢复。
 
 ### 2.7 审计与限制呈现

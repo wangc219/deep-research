@@ -393,6 +393,39 @@ def test_jsonl_session_store_rejects_symlink(tmp_path: Path) -> None:
         JsonlSessionStore("agent.jsonl", root_dir=root)
 
 
+def test_jsonl_session_store_rejects_leaf_replaced_after_check(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = tmp_path / "sessions"
+    root.mkdir()
+    target = root / "agent.jsonl"
+    target.write_text("existing\n", encoding="utf-8")
+    external = tmp_path / "external-session.jsonl"
+    external.write_text("external\n", encoding="utf-8")
+    store = JsonlSessionStore("agent.jsonl", root_dir=root)
+    real_open_at = session_module._open_at
+
+    def racing_open_at(
+        path: str,
+        flags: int,
+        mode: int = 0o777,
+        *,
+        dir_fd: int,
+    ) -> int:
+        if path == "agent.jsonl" and flags & os.O_APPEND:
+            target.unlink()
+            target.symlink_to(external)
+        return real_open_at(path, flags, mode, dir_fd=dir_fd)
+
+    monkeypatch.setattr(session_module, "_open_at", racing_open_at)
+
+    with pytest.raises(ValueError, match="symlink"):
+        store.append({"blocked": True})
+
+    assert external.read_text(encoding="utf-8") == "external\n"
+
+
 def test_jsonl_session_store_rejects_ancestor_symlink(tmp_path: Path) -> None:
     root = tmp_path / "sessions"
     outside = tmp_path / "outside"

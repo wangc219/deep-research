@@ -51,10 +51,13 @@
 ### 2.5 恢复
 
 - 每个 baseline agent 完成后，新增 `EvidenceCard`、`BaselineFindingPacket`、`TraceEvent` 与最新 `RunCheckpoint` 必须在一个 SQLite savepoint 中提交。
+- 初始事务必须持久化 `ResearchProblem`；checkpoint 必须包含 `finalize:winning-report`。最后 baseline 后 run 仍 running/finalize pending，engine 前 finalize running，最终领域对象与 finalize/run completed checkpoint 同事务提交。
 - 崩溃后 `--resume` 必须跳过 completed agent，仅继续 pending/running agent，且不得重复 evidence、packet、session 前缀或 idempotency key。
 - 恢复前必须先完成 unresolved session reconciliation；`session_reconciled` trace 顺序早于 `run_resumed`。
 - topic、请求/解析路线、selected agents 或配置指纹不一致，以及不存在、损坏或 symlink 逃逸的 workspace，必须拒绝恢复。
-- completed run 再次 resume 必须幂等，不重新调用 provider。
+- completed run 再次 resume 不得调用 provider，但必须先追加 `run_resumed` trace/savepoint。
+- runner session 必须使用 rooted append-only store；DB commit 后 savepoint append 失败必须记录 marker，并在跳过 completed task 前完成幂等 reconciliation。
+- report/json/domain/trace/checkpoint 叶子必须使用 rooted dirfd 原子 writer；symlink、TOCTOU 替换和缺失安全原语必须 fail closed且不得修改外部文件。
 - 正常结果必须返回 `status=completed`，并保持七类稳定产物不变。
 
 `domain.jsonl`、`trace.jsonl` 和 `round_summary.json` 中实际持久化的领域 dataclass payload 必须可 JSON 序列化，并包含稳定 ID、UTC `created_at` 与 `schema_version="1.0"`；新增尾部默认字段不得破坏旧位置或关键字构造。

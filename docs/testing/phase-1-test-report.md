@@ -18,13 +18,13 @@
 Task 5 将 `RunCheckpoint` 加入受支持领域类型，固定对象 ID 为单 run 的稳定 workflow checkpoint，按 savepoint upsert 最新快照。字段包括：
 
 - run status、completed/pending task IDs 与每个 task 的 `pending/running/completed` 状态；
-- round index、剩余 round/baseline task budget；
+- baseline tasks 加显式 `finalize:winning-report` task；round index、剩余 round/baseline/finalize task budget；
 - topic、请求路线、解析路线、selected agents 和 mode；
 - source materials、worker reports、resume count；
 - agents/presets/providers/evidence 配置内容与运行参数形成的 SHA-256 指纹；
 - UTC `created_at` 与 `schema_version="1.0"`。
 
-每个 baseline agent 完成时，新增 `EvidenceCard`、`BaselineFindingPacket`、`TraceEvent` 与新 `RunCheckpoint` 在同一个 SQLite savepoint 中提交。正常结束时，L1/L2/L3、capability images、recommendations、audit、report、相关 trace 与 completed checkpoint 原子提交。
+初始事务同时保存 `ResearchProblem`、初始 `RunCheckpoint` 和 `run_started`。每个 baseline agent 完成时，新增 `EvidenceCard`、`BaselineFindingPacket`、`TraceEvent` 与新 `RunCheckpoint` 在同一个 SQLite savepoint 中提交。最后一个 baseline 完成后 finalize 仍为 pending、run 仍为 running；进入 engine 前先提交 finalize running。L1/L2/L3、capability images、recommendations、audit、report、相关 trace、finalize completed 与 run completed checkpoint 在同一个最终事务中提交。
 
 ## 3. Session 与 Checkpoint 样例
 
@@ -35,7 +35,9 @@ baseline session 只追加，不覆盖旧行。典型尾记录为：
 {"event_type":"savepoint","agent_id":"international_situation","checkpoint_id":"checkpoint-...","packet_id":"packet-international_situation"}
 ```
 
-若数据库已提交但 harness session savepoint 写入失败，恢复先消费 `session_write_failed` marker：补写缺失 savepoint、追加 `session_reconciled`，再提交同 marker 的幂等 reconciliation trace。`session_reconciled` 的 trace sequence 必须早于本次 `run_resumed`。
+runner session 使用 `JsonlSessionStore(session_ref, root_dir=trusted_sessions_root)`，不使用裸 `path.open`。若数据库已提交但 runner/harness session savepoint 写入失败，runner 自动提交含 agent/task/checkpoint/batch/session ref 的 `session_write_failed` marker 并传播原异常。恢复先消费 marker：补写 `recovered=true` savepoint、追加 `session_reconciled`，再提交同 marker 的幂等 reconciliation trace。`session_reconciled` 的 trace sequence 必须早于本次 `run_resumed`。
+
+所有 `report/json/domain/trace/checkpoint latest/history` 写入均由 `RunWorkspace` 的 rooted dirfd writer 完成：逐组件拒绝 symlink，临时文件使用 `O_EXCL|O_NOFOLLOW`，写入后 fsync 文件，以同一 parent dirfd 原子 rename 并 fsync 目录。缺少安全原语时 fail closed。`outputs_complete` 使用 no-follow stat，遇到 symlink 明确拒绝。
 
 ## 4. 崩溃注入与恢复结果
 
@@ -54,9 +56,9 @@ E2E 使用构造器注入兼容 `AgentProvider`。第一 agent 正常完成并�
 2. session reconciliation 先完成。
 3. `RecoveryManager.load()` 从最后 savepoint 和 `RunCheckpoint` 恢复 `DomainStore`、`TraceStore`、source materials、worker reports 与 session tails。
 4. `running` 归一为 `pending`，按原 selected agent 顺序继续；completed task 和已提交 idempotency key 不重放。
-5. 追加一次 `run_resumed`，继续 winning/report，写 completed checkpoint、`run.db` 与七类稳定产物。
+5. 无论 checkpoint 是 running 还是 completed，resume 都先提交一次 `run_resumed` 与新 savepoint；running 继续未完成 baseline/finalize，completed 只补缺失文件或返回。
 
-恢复结果验证：首 agent 未重复调用，旧 session 字节前缀不变；剩余 agent 完成；evidence IDs 无重复；completed resume 不启动 provider、不增加 trace/savepoint/session；topic、路线、agent 集合、配置指纹、不存在 run、损坏 SQLite 和 symlink workspace 均明确拒绝。
+恢复结果验证：首 agent 未重复调用，旧 session 字节前缀不变；剩余 agent 完成；evidence IDs 无重复；最后 baseline 后崩溃时 finalize pending，engine 后最终事务前崩溃时 finalize running，二者恢复后均执行 finalize 且不重复 domain/trace；completed resume 不启动 provider但会增加 `run_resumed` trace/savepoint。topic、路线、agent 集合、配置指纹、持久化 `ResearchProblem`、不存在 run、损坏 SQLite 和 symlink workspace 均校验；source materials 与 worker reports 恢复时去重。
 
 ## 5. 测试与 Smoke
 
@@ -64,37 +66,47 @@ E2E 使用构造器注入兼容 `AgentProvider`。第一 agent 正常完成并�
 
 ```text
 python3 -m pytest tests/equipment_deep_research/e2e/test_resume_run.py -q
-12 passed
+21 passed
 
 python3 -m pytest \
   tests/equipment_deep_research/e2e/test_resume_run.py \
   tests/equipment_deep_research/integration/test_agent_harness.py -q
-41 passed
+50 passed
 ```
 
 核心回归：
 
 ```text
 python3 -m pytest tests/test_deep_research_runner.py \
-  tests/equipment_deep_research/integration/test_cli_workspace.py -q
-43 passed
-
-python3 -m pytest tests/equipment_deep_research/unit/test_configuration.py \
+  tests/equipment_deep_research/integration/test_cli_workspace.py \
+  tests/equipment_deep_research/unit/test_configuration.py \
   tests/equipment_deep_research/unit/test_domain_contracts.py \
-  tests/equipment_deep_research/unit/test_store_savepoint.py -q
-50 passed
+  tests/equipment_deep_research/unit/test_http_transport.py -q
+98 passed
 ```
 
 全量：
 
 ```text
 python3 -m pytest -q
-205 passed
+222 passed
 ```
 
-fresh CLI smoke：退出码 0，`status=completed`、route=`traditional_gap`、audit=`approved`；4 个 agent sessions、4 条正式 evidence、16 个 SQLite domain objects，七类产物、`run.db` 和 completed checkpoint 齐全。
+最终 no-follow stat race 补强后的受影响范围：
 
-crash+resume smoke：第二 agent 调用注入崩溃；恢复只调用第二、第三 agent，最终 3 条 evidence 全部唯一，`run_resumed=1`、checkpoint completed、七类稳定产物齐全。
+```text
+python3 -m pytest tests/equipment_deep_research/integration/test_cli_workspace.py \
+  -q -k 'atomic_writer or secure_primitives or safe_stat'
+8 passed
+
+python3 -m pytest tests/equipment_deep_research/e2e/test_resume_run.py \
+  tests/equipment_deep_research/unit/test_domain_contracts.py -q
+30 passed
+```
+
+fresh smoke：`status=completed`、`ResearchProblem=1`、finalize completed、3 stage、1 report，七类产物、`run.db` 和 completed checkpoint 齐全。
+
+crash/resume smoke 覆盖三窗口：第二 agent 调用崩溃、最后 baseline 后崩溃、engine 后最终事务前崩溃。恢复分别只执行剩余 baseline 或仅 finalize；最终 domain/trace key 唯一、`run_resumed=1`、checkpoint completed、七类稳定产物齐全。completed resume 额外验证 provider 调用为 0 且 `run_resumed=1`。
 
 ## 6. Ruff 范围更正
 

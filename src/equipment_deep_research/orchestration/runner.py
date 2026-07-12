@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
 from dataclasses import replace
 from hashlib import sha256
 import json
@@ -12,7 +13,7 @@ from equipment_deep_research.agents.provider import (
     RealAgentProvider,
 )
 from equipment_deep_research.agents.registry import AgentRegistry
-from equipment_deep_research.domain.messages import RunCheckpoint
+from equipment_deep_research.domain.messages import FINALIZE_TASK_ID, RunCheckpoint
 from equipment_deep_research.domain.models import ResearchProblem, TraceEvent, to_plain
 from equipment_deep_research.domain.proposals import DomainWriteProposal, TraceProposal
 from equipment_deep_research.domain.store import DomainStore, SqliteRunStore, TraceStore
@@ -39,6 +40,8 @@ class DeepResearchRunner:
         provider_config_path: Path | None = None,
         evidence_config_path: Path | None = None,
         provider: AgentProvider | None = None,
+        run_hook: Callable[[str, RunWorkspace], None] | None = None,
+        session_store_factory: Callable[[str, Path], Any] | None = None,
     ) -> None:
         self.project_root = Path(project_root)
         self.output_root = Path(output_root)
@@ -61,6 +64,8 @@ class DeepResearchRunner:
             / "evidence.yaml"
         )
         self.provider = provider
+        self.run_hook = run_hook
+        self.session_store_factory = session_store_factory
         if provider_config_path is not None and not self.provider_config_path.is_file():
             raise FileNotFoundError(
                 f"configuration file does not exist: {self.provider_config_path}"
@@ -84,18 +89,19 @@ class DeepResearchRunner:
     ) -> dict[str, Any]:
         if mode not in {"fake", "real"}:
             raise ValueError("mode must be fake or real")
-        problem = ResearchProblem(
+        requested_problem = ResearchProblem(
             topic=topic,
             research_route=research_route,
-            selected_agent_ids=agent_ids or [],
+            selected_agent_ids=[],
         )
-        route = problem.resolved_route()
+        route = requested_problem.resolved_route()
         registry = AgentRegistry.load(self.agent_config_path)
         policy = load_preset_policy(self.preset_config_path)
         gate_policy = dict(policy.gate_policy)
         resolved_max_rounds = max_rounds or int(gate_policy.get("max_rounds", 5))
         selected_agents = registry.select_agents(agent_ids)
         selected_agent_ids = [agent.agent_id for agent in selected_agents]
+        problem = replace(requested_problem, selected_agent_ids=selected_agent_ids)
         permissions = ToolPermissionRegistry.default()
         for agent in selected_agents:
             permissions.validate_agent_tools(agent)
@@ -123,18 +129,35 @@ class DeepResearchRunner:
             sqlite_store = recovered.sqlite_store
             store = recovered.domain_store
             trace = recovered.trace_store
-            checkpoint = recovered.checkpoint
+            checkpoint = replace(
+                recovered.checkpoint,
+                resume_count=recovered.checkpoint.resume_count + 1,
+            )
+            problem = recovered.problem
             worker_reports = list(recovered.worker_reports)
-            source_materials = list(recovered.source_materials)
+            source_materials = _dedupe_plain_rows(recovered.source_materials)
+            resumed_event = TraceEvent(
+                event_id=f"trace-run-resumed-{checkpoint.resume_count}",
+                event_type="run_resumed",
+                actor="orchestrator",
+                summary=f"run resumed for {topic}",
+                payload={
+                    "resume_count": checkpoint.resume_count,
+                    "completed_task_ids": checkpoint.completed_task_ids,
+                    "pending_task_ids": checkpoint.pending_task_ids,
+                    "status": checkpoint.status,
+                },
+            )
+            trace.append(resumed_event)
+            savepoint_id = sqlite_store.commit(
+                (self._checkpoint_proposal(checkpoint, f"resume-{checkpoint.resume_count}"),),
+                (self._trace_proposal(resumed_event),),
+            )
+            self._write_checkpoint_file(workspace, checkpoint, savepoint_id)
             if checkpoint.status == "completed":
-                if not self._outputs_complete(workspace.run_dir):
-                    self._write_checkpoint_file(
-                        workspace,
-                        checkpoint,
-                        recovered.last_savepoint_id,
-                    )
+                if not self._outputs_complete(workspace):
                     self._write_recovered_outputs(
-                        run_dir=workspace.run_dir,
+                        workspace=workspace,
                         mode=mode,
                         problem=problem,
                         route=route,
@@ -152,28 +175,12 @@ class DeepResearchRunner:
                     route=route,
                     store=store,
                 )
-            checkpoint = replace(checkpoint, resume_count=checkpoint.resume_count + 1)
-            resumed_event = TraceEvent(
-                event_id=f"trace-run-resumed-{checkpoint.resume_count}",
-                event_type="run_resumed",
-                actor="orchestrator",
-                summary=f"run resumed for {topic}",
-                payload={
-                    "resume_count": checkpoint.resume_count,
-                    "completed_task_ids": checkpoint.completed_task_ids,
-                    "pending_task_ids": checkpoint.pending_task_ids,
-                },
-            )
-            trace.append(resumed_event)
-            savepoint_id = sqlite_store.commit(
-                (self._checkpoint_proposal(checkpoint, f"resume-{checkpoint.resume_count}"),),
-                (self._trace_proposal(resumed_event),),
-            )
-            self._write_checkpoint_file(workspace, checkpoint, savepoint_id)
         else:
             workspace = RunWorkspace.create(self.output_root, run_id)
+            self._emit_hook("after_workspace_created", workspace)
             sqlite_store = SqliteRunStore(workspace.database_path, run_id=run_id)
             store = DomainStore()
+            store.add_problem(problem)
             trace = TraceStore()
             worker_reports: list[WorkerReport] = []
             source_materials: list[dict[str, Any]] = []
@@ -201,7 +208,10 @@ class DeepResearchRunner:
             )
             trace.append(started_event)
             savepoint_id = sqlite_store.commit(
-                (self._checkpoint_proposal(checkpoint, "initial"),),
+                (
+                    self._domain_proposal("ResearchProblem", problem),
+                    self._checkpoint_proposal(checkpoint, "initial"),
+                ),
                 (self._trace_proposal(started_event),),
             )
             self._write_checkpoint_file(workspace, checkpoint, savepoint_id)
@@ -217,6 +227,7 @@ class DeepResearchRunner:
             trace=trace,
             mode=mode,
             source_materials=source_materials,
+            session_store_factory=self.session_store_factory,
         )
         reports_by_agent = {report.agent_id: report for report in worker_reports}
         agents_by_id = {agent.agent_id: agent for agent in selected_agents}
@@ -254,7 +265,7 @@ class DeepResearchRunner:
             checkpoint = self._set_task_status(checkpoint, task_id, "completed")
             checkpoint = replace(
                 checkpoint,
-                source_materials=[dict(item) for item in scheduler.source_materials],
+                source_materials=_dedupe_plain_rows(scheduler.source_materials),
                 worker_reports=[to_plain(item) for item in worker_reports],
             )
             domain_proposals = [
@@ -277,88 +288,140 @@ class DeepResearchRunner:
             trace_proposals = [
                 self._trace_proposal(event) for event in trace.events[trace_start:]
             ]
+            batch_hash = _proposal_batch_hash(domain_proposals, trace_proposals)
             savepoint_id = sqlite_store.commit(domain_proposals, trace_proposals)
-            scheduler.append_savepoint(report, savepoint_id)
+            try:
+                scheduler.append_savepoint(
+                    report,
+                    savepoint_id,
+                    task_id=task_id,
+                    batch_hash=batch_hash,
+                )
+            except Exception:
+                self._record_session_write_failure(
+                    sqlite_store=sqlite_store,
+                    run_id=run_id,
+                    report=report,
+                    task_id=task_id,
+                    checkpoint_id=savepoint_id,
+                    batch_hash=batch_hash,
+                )
+                raise
             self._write_checkpoint_file(workspace, checkpoint, savepoint_id)
 
-        final_trace_start = len(trace.events)
-        trace.append(
-            TraceEvent(
-                event_id="trace-baseline-summary",
-                event_type="baseline_agents_summarized",
-                actor="orchestrator",
-                summary=f"{len(worker_reports)} baseline agents completed",
-                output_refs=[
-                    report.packet_id for report in worker_reports if report.packet_id
-                ],
-            )
-        )
-        engine = WinningMechanismEngine(
-            min_confidence=float(gate_policy.get("min_stage_confidence", 0.7)),
-            min_l2_feasibility=int(gate_policy.get("min_l2_feasibility", 3)),
-        )
-        stage_outputs, images, recommendations = engine.run(
-            topic=topic,
-            route=route,
-            store=store,
-            trace=trace,
-            coverage=coverage,
-        )
-        for recommendation in recommendations:
-            store.add_recommendation(recommendation)
-        audit = audit_run(
-            store=store,
-            coverage=coverage,
-            max_rounds=resolved_max_rounds,
-            source_materials=scheduler.source_materials,
-        )
-        store.add_audit(audit)
-        report = render_report(
-            topic=topic,
-            route=route,
-            store=store,
-            coverage=coverage,
-            audit=audit,
-        )
-        store.add_report(report)
-        checkpoint = replace(
-            checkpoint,
-            completed_task_ids=[_task_id(agent_id) for agent_id in selected_agent_ids],
-            pending_task_ids=[],
-            task_statuses={
-                _task_id(agent_id): "completed" for agent_id in selected_agent_ids
-            },
-            budget_remaining={
-                **checkpoint.budget_remaining,
-                "baseline_tasks": 0,
-                "rounds": max(resolved_max_rounds - 1, 0),
-            },
-            status="completed",
-            source_materials=[dict(item) for item in scheduler.source_materials],
-            worker_reports=[to_plain(item) for item in worker_reports],
-        )
-        checkpoint.validate()
-        final_domain_proposals = [
-            *(self._domain_proposal("WinningMechanismStageOutput", item) for item in stage_outputs),
-            *(self._domain_proposal("CapabilityImageItem", item) for item in images),
-            *(self._domain_proposal("AgentRecommendation", item) for item in recommendations),
-            self._domain_proposal("AuditResult", audit),
-            self._domain_proposal("ResearchReport", report),
-            self._checkpoint_proposal(
+        self._emit_hook("after_baseline_agents", workspace)
+        if checkpoint.task_statuses.get(FINALIZE_TASK_ID) != "completed":
+            checkpoint = self._set_task_status(
                 checkpoint,
-                f"completed-r{checkpoint.resume_count}",
-            ),
-        ]
-        final_trace_proposals = [
-            self._trace_proposal(event) for event in trace.events[final_trace_start:]
-        ]
-        savepoint_id = sqlite_store.commit(
-            final_domain_proposals,
-            final_trace_proposals,
-        )
-        self._write_checkpoint_file(workspace, checkpoint, savepoint_id)
+                FINALIZE_TASK_ID,
+                "running",
+            )
+            savepoint_id = sqlite_store.commit(
+                (
+                    self._checkpoint_proposal(
+                        checkpoint,
+                        f"{FINALIZE_TASK_ID}-running-r{checkpoint.resume_count}",
+                    ),
+                ),
+                (),
+            )
+            self._write_checkpoint_file(workspace, checkpoint, savepoint_id)
+
+            final_trace_start = len(trace.events)
+            trace.append(
+                TraceEvent(
+                    event_id="trace-baseline-summary",
+                    event_type="baseline_agents_summarized",
+                    actor="orchestrator",
+                    summary=f"{len(worker_reports)} baseline agents completed",
+                    output_refs=[
+                        report.packet_id for report in worker_reports if report.packet_id
+                    ],
+                )
+            )
+            engine = WinningMechanismEngine(
+                min_confidence=float(gate_policy.get("min_stage_confidence", 0.7)),
+                min_l2_feasibility=int(gate_policy.get("min_l2_feasibility", 3)),
+            )
+            stage_outputs, images, recommendations = engine.run(
+                topic=topic,
+                route=route,
+                store=store,
+                trace=trace,
+                coverage=coverage,
+            )
+            for recommendation in recommendations:
+                store.add_recommendation(recommendation)
+            audit = audit_run(
+                store=store,
+                coverage=coverage,
+                max_rounds=resolved_max_rounds,
+                source_materials=scheduler.source_materials,
+            )
+            store.add_audit(audit)
+            report = render_report(
+                topic=topic,
+                route=route,
+                store=store,
+                coverage=coverage,
+                audit=audit,
+            )
+            store.add_report(report)
+            self._emit_hook("after_finalize_engine", workspace)
+            checkpoint = self._set_task_status(
+                checkpoint,
+                FINALIZE_TASK_ID,
+                "completed",
+            )
+            checkpoint = replace(
+                checkpoint,
+                budget_remaining={
+                    **checkpoint.budget_remaining,
+                    "baseline_tasks": 0,
+                    "finalize_tasks": 0,
+                    "rounds": max(resolved_max_rounds - 1, 0),
+                },
+                status="completed",
+                source_materials=_dedupe_plain_rows(scheduler.source_materials),
+                worker_reports=[to_plain(item) for item in worker_reports],
+            )
+            checkpoint.validate()
+            final_domain_proposals = [
+                *(
+                    self._domain_proposal("WinningMechanismStageOutput", item)
+                    for item in stage_outputs
+                ),
+                *(
+                    self._domain_proposal("CapabilityImageItem", item)
+                    for item in images
+                ),
+                *(
+                    self._domain_proposal("AgentRecommendation", item)
+                    for item in recommendations
+                ),
+                self._domain_proposal("AuditResult", audit),
+                self._domain_proposal("ResearchReport", report),
+                self._checkpoint_proposal(
+                    checkpoint,
+                    f"completed-r{checkpoint.resume_count}",
+                ),
+            ]
+            final_trace_proposals = [
+                self._trace_proposal(event) for event in trace.events[final_trace_start:]
+            ]
+            savepoint_id = sqlite_store.commit(
+                final_domain_proposals,
+                final_trace_proposals,
+            )
+            self._emit_hook("after_final_commit", workspace)
+            self._write_checkpoint_file(workspace, checkpoint, savepoint_id)
+        else:  # pragma: no cover - normalized completed checkpoints return above
+            recommendations = list(store.recommendations.values())
+            report = next(iter(store.reports.values()))
+
+        self._emit_hook("before_outputs", workspace)
         self._write_outputs(
-            run_dir=workspace.run_dir,
+            workspace=workspace,
             mode=mode,
             problem=problem,
             route=route,
@@ -366,7 +429,7 @@ class DeepResearchRunner:
             coverage=coverage,
             worker_reports=worker_reports,
             recommendations=recommendations,
-            source_materials=scheduler.source_materials,
+            source_materials=_dedupe_plain_rows(scheduler.source_materials),
             store=store,
             trace=trace,
             report_body=report.body,
@@ -391,7 +454,10 @@ class DeepResearchRunner:
         mode: str,
         config_fingerprint: str,
     ) -> RunCheckpoint:
-        task_ids = [_task_id(agent_id) for agent_id in selected_agent_ids]
+        task_ids = [
+            *[_task_id(agent_id) for agent_id in selected_agent_ids],
+            FINALIZE_TASK_ID,
+        ]
         checkpoint = RunCheckpoint(
             run_id=run_id,
             checkpoint_id=f"run-checkpoint-{run_id}",
@@ -400,7 +466,8 @@ class DeepResearchRunner:
             round_index=1,
             budget_remaining={
                 "rounds": max_rounds,
-                "baseline_tasks": len(task_ids),
+                "baseline_tasks": len(selected_agent_ids),
+                "finalize_tasks": 1,
             },
             status="running",
             task_statuses={task_id: "pending" for task_id in task_ids},
@@ -424,7 +491,10 @@ class DeepResearchRunner:
     ) -> RunCheckpoint:
         statuses = dict(checkpoint.task_statuses)
         statuses[task_id] = status
-        ordered_tasks = [_task_id(agent_id) for agent_id in checkpoint.selected_agent_ids]
+        ordered_tasks = [
+            *[_task_id(agent_id) for agent_id in checkpoint.selected_agent_ids],
+            FINALIZE_TASK_ID,
+        ]
         completed = [item for item in ordered_tasks if statuses[item] == "completed"]
         pending = [item for item in ordered_tasks if statuses[item] == "pending"]
         updated = replace(
@@ -435,7 +505,12 @@ class DeepResearchRunner:
             budget_remaining={
                 **checkpoint.budget_remaining,
                 "baseline_tasks": sum(
-                    1 for item in ordered_tasks if statuses[item] != "completed"
+                    1
+                    for item in ordered_tasks
+                    if item != FINALIZE_TASK_ID and statuses[item] != "completed"
+                ),
+                "finalize_tasks": int(
+                    statuses.get(FINALIZE_TASK_ID) != "completed"
                 ),
             },
         )
@@ -446,6 +521,7 @@ class DeepResearchRunner:
     def _domain_proposal(object_type: str, value: Any) -> DomainWriteProposal:
         payload = to_plain(value)
         id_fields = {
+            "ResearchProblem": "problem_id",
             "EvidenceCard": "evidence_id",
             "BaselineFindingPacket": "packet_id",
             "AgentRecommendation": "recommendation_id",
@@ -487,6 +563,42 @@ class DeepResearchRunner:
             payload=to_plain(event),
         )
 
+    @staticmethod
+    def _record_session_write_failure(
+        *,
+        sqlite_store: SqliteRunStore,
+        run_id: str,
+        report: WorkerReport,
+        task_id: str,
+        checkpoint_id: str,
+        batch_hash: str,
+    ) -> None:
+        session_ref = Path(report.session_path).name
+        marker_seed = f"{run_id}:{task_id}:{checkpoint_id}:{batch_hash}:{session_ref}"
+        marker_id = f"runner-session-{sha256(marker_seed.encode('utf-8')).hexdigest()[:24]}"
+        sqlite_store.commit(
+            (),
+            (
+                TraceProposal(
+                    proposal_id=marker_id,
+                    event_type="session_write_failed",
+                    actor=report.agent_id,
+                    payload={
+                        "marker_id": marker_id,
+                        "committed_checkpoint_id": checkpoint_id,
+                        "batch_hash": batch_hash,
+                        "turn_index": 1,
+                        "task_id": task_id,
+                        "agent_id": report.agent_id,
+                        "execution_id": report.worker_report_id,
+                        "session_ref": session_ref,
+                        "session_event": "savepoint",
+                        "recovery_status": "reconcile_required",
+                    },
+                ),
+            ),
+        )
+
     def _config_fingerprint(
         self,
         *,
@@ -523,19 +635,22 @@ class DeepResearchRunner:
         checkpoint: RunCheckpoint,
         savepoint_id: str,
     ) -> None:
-        payload = {
-            "savepoint_id": savepoint_id,
-            "checkpoint": to_plain(checkpoint),
-        }
-        history_path = workspace.checkpoints_dir / f"{savepoint_id}.json"
-        if not history_path.exists():
-            _atomic_write_json(history_path, payload)
-        _atomic_write_json(workspace.checkpoints_dir / "latest.json", payload)
+        encoded = json.dumps(
+            {
+                "savepoint_id": savepoint_id,
+                "checkpoint": to_plain(checkpoint),
+            },
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+        workspace.write_checkpoint_text(f"{savepoint_id}.json", encoded)
+        workspace.write_checkpoint_text("latest.json", encoded)
 
     @staticmethod
-    def _outputs_complete(run_dir: Path) -> bool:
+    def _outputs_complete(workspace: RunWorkspace) -> bool:
         return all(
-            (run_dir / name).is_file()
+            workspace.run_file_is_regular(name)
             for name in (
                 "report.md",
                 "capability_images.json",
@@ -548,7 +663,7 @@ class DeepResearchRunner:
     def _write_recovered_outputs(
         self,
         *,
-        run_dir: Path,
+        workspace: RunWorkspace,
         mode: str,
         problem: ResearchProblem,
         route: str,
@@ -564,7 +679,7 @@ class DeepResearchRunner:
             raise RuntimeError("completed checkpoint has no research report")
         report = next(iter(store.reports.values()))
         self._write_outputs(
-            run_dir=run_dir,
+            workspace=workspace,
             mode=mode,
             problem=problem,
             route=route,
@@ -582,7 +697,7 @@ class DeepResearchRunner:
     def _write_outputs(
         self,
         *,
-        run_dir: Path,
+        workspace: RunWorkspace,
         mode: str,
         problem: ResearchProblem,
         route: str,
@@ -596,15 +711,15 @@ class DeepResearchRunner:
         report_body: str,
         analyst_confirmed: bool,
     ) -> None:
-        (run_dir / "report.md").write_text(report_body, encoding="utf-8")
-        (run_dir / "capability_images.json").write_text(
+        workspace.write_run_text("report.md", report_body)
+        workspace.write_run_text(
+            "capability_images.json",
             json.dumps(
                 [to_plain(item) for item in store.capability_images.values()],
                 ensure_ascii=False,
                 indent=2,
                 sort_keys=True,
             ),
-            encoding="utf-8",
         )
         summary = {
             "mode": mode,
@@ -624,12 +739,12 @@ class DeepResearchRunner:
             "store_summary": store.summary(),
             "trace_summary": trace.summary(),
         }
-        (run_dir / "round_summary.json").write_text(
+        workspace.write_run_text(
+            "round_summary.json",
             json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True),
-            encoding="utf-8",
         )
-        store.export_jsonl(run_dir / "domain.jsonl")
-        trace.export_jsonl(run_dir / "trace.jsonl")
+        workspace.write_run_text("domain.jsonl", store.jsonl_text())
+        workspace.write_run_text("trace.jsonl", trace.jsonl_text())
 
     @staticmethod
     def _result(
@@ -655,19 +770,50 @@ class DeepResearchRunner:
             "stage_count": len(store.stage_outputs),
         }
 
+    def _emit_hook(self, event: str, workspace: RunWorkspace) -> None:
+        if self.run_hook is not None:
+            self.run_hook(event, workspace)
+
 
 def _task_id(agent_id: str) -> str:
     return f"baseline:{agent_id}"
 
 
-def _atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
-    if path.is_symlink():
-        raise ValueError(f"checkpoint path must not be a symlink: {path}")
-    temporary = path.with_name(f".{path.name}.tmp")
-    if temporary.is_symlink():
-        raise ValueError(f"checkpoint temporary path must not be a symlink: {temporary}")
-    temporary.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True),
-        encoding="utf-8",
-    )
-    temporary.replace(path)
+def _proposal_batch_hash(
+    domain_proposals: Sequence[DomainWriteProposal],
+    trace_proposals: Sequence[TraceProposal],
+) -> str:
+    rows = [
+        {"channel": "domain", **proposal.to_plain()}
+        for proposal in domain_proposals
+    ] + [
+        {"channel": "trace", **proposal.to_plain()}
+        for proposal in trace_proposals
+    ]
+    rows.sort(key=lambda row: (str(row["proposal_id"]), str(row["channel"])))
+    encoded = json.dumps(
+        rows,
+        ensure_ascii=False,
+        sort_keys=True,
+        allow_nan=False,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return f"sha256:{sha256(encoded).hexdigest()}"
+
+
+def _dedupe_plain_rows(rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
+    unique: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for row in rows:
+        encoded = json.dumps(
+            row,
+            ensure_ascii=False,
+            sort_keys=True,
+            allow_nan=False,
+            separators=(",", ":"),
+        )
+        if encoded in seen:
+            continue
+        seen.add(encoded)
+        unique.append(dict(row))
+    return unique
