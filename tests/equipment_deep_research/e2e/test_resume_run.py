@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import sqlite3
 from typing import Any, Callable
@@ -121,6 +122,79 @@ def session_bytes(run_dir: Path, agent_id: str) -> bytes:
     return (run_dir / "agent_sessions" / f"{agent_id}.jsonl").read_bytes()
 
 
+def install_output_root_replacement(
+    output_root: Path,
+    *,
+    replacement: str,
+    attacker_root: Path,
+    bound_root: Path,
+    run_id: str,
+) -> None:
+    output_root.rename(bound_root)
+    attacker_root.mkdir()
+    if replacement == "symlink":
+        output_root.symlink_to(attacker_root, target_is_directory=True)
+        replacement_root = attacker_root
+    else:
+        output_root.mkdir()
+        replacement_root = output_root
+    replacement_run = replacement_root / run_id
+    replacement_run.mkdir()
+    for name in ("agent_sessions", "artifacts", "checkpoints"):
+        (replacement_run / name).mkdir()
+
+
+@pytest.mark.parametrize("replacement", ["symlink", "directory"])
+def test_fresh_run_stays_on_bound_output_root_after_path_replacement(
+    tmp_path: Path,
+    replacement: str,
+) -> None:
+    output_root = tmp_path / "runs"
+    attacker_root = tmp_path / "attacker-output"
+    bound_root = tmp_path / "bound-output"
+    captured_identity: list[tuple[int, int]] = []
+
+    def replace_root(event: str, workspace: RunWorkspace) -> None:
+        if event != "after_workspace_created":
+            return
+        captured_identity.append(workspace.run_identity)
+        install_output_root_replacement(
+            output_root,
+            replacement=replacement,
+            attacker_root=attacker_root,
+            bound_root=bound_root,
+            run_id="resume-1",
+        )
+        run_fd = workspace.dup_run_fd()
+        try:
+            assert (os.fstat(run_fd).st_dev, os.fstat(run_fd).st_ino) == captured_identity[0]
+        finally:
+            os.close(run_fd)
+
+    result = build_runner(
+        tmp_path,
+        provider=RecordingProvider(),
+        run_hook=replace_root,
+    ).run(**run_args(agent_ids=AGENTS[:1]))
+
+    assert result["status"] == "completed"
+    bound_run = bound_root / "resume-1"
+    for leaf in (
+        "report.md",
+        "capability_images.json",
+        "round_summary.json",
+        "domain.jsonl",
+        "trace.jsonl",
+        "run.db",
+    ):
+        assert (bound_run / leaf).is_file()
+    assert list((bound_run / "artifacts").glob("*.meta.json"))
+    assert (bound_run / "agent_sessions" / f"{AGENTS[0]}.jsonl").is_file()
+    assert (bound_run / "checkpoints" / "latest.json").is_file()
+    attack_location = attacker_root if replacement == "symlink" else output_root
+    assert [path for path in attack_location.rglob("*") if path.is_file()] == []
+
+
 def test_resume_continues_after_last_committed_agent_savepoint(tmp_path: Path) -> None:
     crashing = RecordingProvider(crash_on_call=2)
     with pytest.raises(InjectedCrash, match="combat_scenario"):
@@ -192,6 +266,42 @@ def test_resume_rejects_run_identity_mismatch(
         build_runner(tmp_path, provider=RecordingProvider()).run(
             **run_args(resume=True, **overrides)
         )
+
+
+def test_failed_recovery_closes_bound_workspace_handles(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with pytest.raises(InjectedCrash):
+        build_runner(tmp_path, provider=RecordingProvider(crash_on_call=2)).run(
+            **run_args()
+        )
+    captured: list[RunWorkspace] = []
+    original_open_existing = RunWorkspace.open_existing
+
+    def capture_open(
+        cls: type[RunWorkspace],
+        output_root: str | Path,
+        run_id: str,
+    ) -> RunWorkspace:
+        workspace = original_open_existing(output_root, run_id)
+        captured.append(workspace)
+        return workspace
+
+    monkeypatch.setattr(
+        recovery_module.RunWorkspace,
+        "open_existing",
+        classmethod(capture_open),
+    )
+
+    with pytest.raises(RecoveryError, match="topic"):
+        build_runner(tmp_path, provider=RecordingProvider()).run(
+            **run_args(topic="different topic", resume=True)
+        )
+
+    assert len(captured) == 1
+    with pytest.raises(RuntimeError, match="closed"):
+        captured[0].dup_run_fd()
 
 
 def test_resume_rejects_missing_and_corrupt_runs(tmp_path: Path) -> None:
@@ -415,6 +525,69 @@ def test_reconciliation_fails_before_external_write_if_sessions_dir_changes_afte
     assert list(external.iterdir()) == []
 
 
+@pytest.mark.parametrize("replacement", ["symlink", "directory"])
+def test_resume_reconciliation_stays_on_bound_root_after_open_existing(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    replacement: str,
+) -> None:
+    FailSavepointOnceSession.failed = False
+
+    def session_factory(path: str, root_dir: Path) -> FailSavepointOnceSession:
+        return FailSavepointOnceSession(path, root_dir=root_dir)
+
+    with pytest.raises(OSError, match="savepoint append failure"):
+        build_runner(
+            tmp_path,
+            provider=RecordingProvider(),
+            session_store_factory=session_factory,
+        ).run(**run_args(agent_ids=AGENTS[:1]))
+
+    output_root = tmp_path / "runs"
+    attacker_root = tmp_path / "attacker-resume"
+    bound_root = tmp_path / "bound-resume"
+    original_open_existing = RunWorkspace.open_existing
+
+    def replace_after_open(
+        cls: type[RunWorkspace],
+        requested_root: str | Path,
+        run_id: str,
+    ) -> RunWorkspace:
+        workspace = original_open_existing(requested_root, run_id)
+        install_output_root_replacement(
+            output_root,
+            replacement=replacement,
+            attacker_root=attacker_root,
+            bound_root=bound_root,
+            run_id=run_id,
+        )
+        return workspace
+
+    monkeypatch.setattr(
+        recovery_module.RunWorkspace,
+        "open_existing",
+        classmethod(replace_after_open),
+    )
+
+    resumed = build_runner(tmp_path, provider=RejectingProvider()).run(
+        **run_args(agent_ids=AGENTS[:1], resume=True)
+    )
+
+    assert resumed["status"] == "completed"
+    bound_run = bound_root / "resume-1"
+    bound_store = SqliteRunStore(bound_run / "run.db", run_id="resume-1")
+    assert bound_store.recover()["unresolved_session_writes"] == []
+    bound_event_types = [event["event_type"] for event in bound_store.trace_events()]
+    assert bound_event_types.index("session_reconciled") < bound_event_types.index(
+        "run_resumed"
+    )
+    bound_store.close()
+    assert (bound_run / "report.md").is_file()
+    assert (bound_run / "checkpoints" / "latest.json").is_file()
+    attack_location = attacker_root if replacement == "symlink" else output_root
+    assert [path for path in attack_location.rglob("*") if path.is_file()] == []
+
+
 def test_fresh_run_still_rejects_existing_run_name_without_mutation(tmp_path: Path) -> None:
     first = build_runner(tmp_path, provider=RecordingProvider()).run(**run_args())
     run_dir = Path(first["run_dir"])
@@ -610,7 +783,7 @@ def test_runner_session_append_rejects_leaf_replaced_by_symlink(tmp_path: Path) 
     )
     provider = SessionSymlinkProvider(session_path, external)
 
-    with pytest.raises(ValueError, match="symlink"):
+    with pytest.raises((OSError, ValueError)):
         build_runner(tmp_path, provider=provider).run(
             **run_args(agent_ids=AGENTS[:1])
         )
@@ -626,7 +799,7 @@ def test_runner_artifact_write_rejects_directory_replaced_after_scheduler_init(
     external.mkdir()
     provider = ArtifactDirectorySymlinkProvider(artifacts_dir, external)
 
-    with pytest.raises(ValueError, match="symlink"):
+    with pytest.raises((OSError, ValueError)):
         build_runner(tmp_path, provider=provider).run(
             **run_args(agent_ids=AGENTS[:1])
         )

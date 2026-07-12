@@ -4,6 +4,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import replace
 from hashlib import sha256
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -87,6 +88,35 @@ class DeepResearchRunner:
         resume: bool = False,
         analyst_confirmed: bool = False,
     ) -> dict[str, Any]:
+        resources = _RunResourceScope()
+        try:
+            return self._run_impl(
+                mode=mode,
+                topic=topic,
+                research_route=research_route,
+                run_id=run_id,
+                agent_ids=agent_ids,
+                max_rounds=max_rounds,
+                resume=resume,
+                analyst_confirmed=analyst_confirmed,
+                resources=resources,
+            )
+        finally:
+            resources.close()
+
+    def _run_impl(
+        self,
+        *,
+        mode: str,
+        topic: str,
+        research_route: str,
+        run_id: str,
+        agent_ids: list[str] | None,
+        max_rounds: int | None,
+        resume: bool,
+        analyst_confirmed: bool,
+        resources: "_RunResourceScope",
+    ) -> dict[str, Any]:
         if mode not in {"fake", "real"}:
             raise ValueError("mode must be fake or real")
         requested_problem = ResearchProblem(
@@ -127,6 +157,7 @@ class DeepResearchRunner:
             )
             workspace = recovered.workspace
             sqlite_store = recovered.sqlite_store
+            resources.bind(workspace, sqlite_store)
             store = recovered.domain_store
             trace = recovered.trace_store
             checkpoint = replace(
@@ -168,16 +199,26 @@ class DeepResearchRunner:
                     trace=trace,
                     analyst_confirmed=analyst_confirmed,
                 )
-                return self._result(
+                result = self._result(
                     run_id=run_id,
                     run_dir=workspace.run_dir,
                     route=route,
                     store=store,
                 )
+                return result
         else:
             workspace = RunWorkspace.create(self.output_root, run_id)
+            database_fd = workspace.dup_database_fd()
+            try:
+                sqlite_store = SqliteRunStore(
+                    workspace.database_path,
+                    run_id=run_id,
+                    database_fd=database_fd,
+                )
+            finally:
+                os.close(database_fd)
+            resources.bind(workspace, sqlite_store)
             self._emit_hook("after_workspace_created", workspace)
-            sqlite_store = SqliteRunStore(workspace.database_path, run_id=run_id)
             store = DomainStore()
             store.add_problem(problem)
             trace = TraceStore()
@@ -435,12 +476,13 @@ class DeepResearchRunner:
             report_body=report.body,
             analyst_confirmed=analyst_confirmed,
         )
-        return self._result(
+        result = self._result(
             run_id=run_id,
             run_dir=workspace.run_dir,
             route=route,
             store=store,
         )
+        return result
 
     def _initial_checkpoint(
         self,
@@ -811,3 +853,25 @@ def _dedupe_plain_rows(rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
         seen.add(encoded)
         unique.append(dict(row))
     return unique
+
+
+class _RunResourceScope:
+    def __init__(self) -> None:
+        self.workspace: RunWorkspace | None = None
+        self.sqlite_store: SqliteRunStore | None = None
+
+    def bind(
+        self,
+        workspace: RunWorkspace,
+        sqlite_store: SqliteRunStore,
+    ) -> None:
+        self.workspace = workspace
+        self.sqlite_store = sqlite_store
+
+    def close(self) -> None:
+        if self.sqlite_store is not None:
+            self.sqlite_store.close()
+            self.sqlite_store = None
+        if self.workspace is not None:
+            self.workspace.close()
+            self.workspace = None

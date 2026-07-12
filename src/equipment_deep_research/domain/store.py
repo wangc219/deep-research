@@ -5,8 +5,11 @@ from dataclasses import dataclass
 from datetime import datetime
 from hashlib import sha256
 import json
+import os
 from pathlib import Path
 import sqlite3
+import stat
+from threading import RLock
 from typing import Any
 
 from equipment_deep_research.domain.models import (
@@ -28,6 +31,7 @@ from equipment_deep_research.domain.proposals import (
     TraceProposal,
     thaw_plain,
 )
+from equipment_deep_research.domain.workspace import path_from_fd
 
 
 class StoreValidationError(ValueError):
@@ -203,6 +207,22 @@ class TraceStore:
         ]
 
 
+class _ConnectionLease:
+    def __init__(self, connection: sqlite3.Connection, lock: RLock) -> None:
+        self._connection = connection
+        self._lock = lock
+        self._closed = False
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._connection, name)
+
+    def close(self) -> None:
+        if self._closed:
+            return
+        self._closed = True
+        self._lock.release()
+
+
 class SqliteRunStore:
     def __init__(
         self,
@@ -210,18 +230,80 @@ class SqliteRunStore:
         *,
         run_id: str,
         busy_timeout_ms: int = 5000,
+        database_fd: int | None = None,
     ) -> None:
         self.path = Path(path)
         self.run_id = _required_text(run_id, "run_id")
         if busy_timeout_ms < 1:
             raise ValueError("busy_timeout_ms must be positive")
         self.busy_timeout_ms = busy_timeout_ms
-        if self.path.is_symlink():
-            raise ValueError("SQLite path must not be a symlink")
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        if self.path.is_symlink():
-            raise ValueError("SQLite path must not be a symlink")
-        self._initialize()
+        self._connection_lock = RLock()
+        self._database_fd: int | None = None
+        self._connection: sqlite3.Connection | None = None
+        if database_fd is not None:
+            try:
+                self._database_fd = os.dup(database_fd)
+            except OSError as exc:
+                raise ValueError("database_fd must be open") from exc
+            bound_stat = os.fstat(self._database_fd)
+            if not stat.S_ISREG(bound_stat.st_mode):
+                self.close()
+                raise ValueError("database_fd must reference a regular file")
+            try:
+                connection_path = path_from_fd(self._database_fd)
+                current_stat = os.stat(connection_path, follow_symlinks=False)
+            except BaseException:
+                self.close()
+                raise
+            if _file_identity(bound_stat) != _file_identity(current_stat):
+                self.close()
+                raise RuntimeError("bound SQLite file changed before connection")
+        else:
+            if self.path.is_symlink():
+                raise ValueError("SQLite path must not be a symlink")
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            if self.path.is_symlink():
+                raise ValueError("SQLite path must not be a symlink")
+            connection_path = self.path
+        try:
+            self._connection = sqlite3.connect(
+                connection_path,
+                timeout=self.busy_timeout_ms / 1000,
+                isolation_level=None,
+                check_same_thread=False,
+            )
+            self._connection.row_factory = sqlite3.Row
+            self._connection.execute(f"PRAGMA busy_timeout={self.busy_timeout_ms}")
+            self._connection.execute("PRAGMA foreign_keys=ON")
+            if self._database_fd is not None:
+                opened_stat = os.stat(connection_path, follow_symlinks=False)
+                if _file_identity(os.fstat(self._database_fd)) != _file_identity(
+                    opened_stat
+                ):
+                    raise RuntimeError("bound SQLite file changed during connection")
+            self._initialize()
+        except BaseException:
+            self.close()
+            raise
+
+    def close(self) -> None:
+        connection = getattr(self, "_connection", None)
+        self._connection = None
+        if connection is not None:
+            connection.close()
+        descriptor = getattr(self, "_database_fd", None)
+        self._database_fd = None
+        if descriptor is not None:
+            try:
+                os.close(descriptor)
+            except OSError:
+                pass
+
+    def __del__(self) -> None:
+        try:
+            self.close()
+        except Exception:
+            pass
 
     def commit(
         self,
@@ -600,16 +682,13 @@ class SqliteRunStore:
         finally:
             connection.close()
 
-    def _connect(self) -> sqlite3.Connection:
-        connection = sqlite3.connect(
-            self.path,
-            timeout=self.busy_timeout_ms / 1000,
-            isolation_level=None,
-        )
-        connection.row_factory = sqlite3.Row
-        connection.execute(f"PRAGMA busy_timeout={self.busy_timeout_ms}")
-        connection.execute("PRAGMA foreign_keys=ON")
-        return connection
+    def _connect(self) -> _ConnectionLease:
+        self._connection_lock.acquire()
+        connection = self._connection
+        if connection is None:
+            self._connection_lock.release()
+            raise RuntimeError("SQLite store is closed")
+        return _ConnectionLease(connection, self._connection_lock)
 
     def _validate_proposals(
         self,
@@ -964,6 +1043,10 @@ def _session_marker_payload(payload: Mapping[str, Any]) -> Mapping[str, Any]:
     ):
         return nested
     return payload
+
+
+def _file_identity(value: os.stat_result) -> tuple[int, int]:
+    return value.st_dev, value.st_ino
 
 
 def _validate_created_at(value: Any) -> str:

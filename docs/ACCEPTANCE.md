@@ -56,8 +56,8 @@
 - 恢复前必须先完成 unresolved session reconciliation；`session_reconciled` trace 顺序早于 `run_resumed`。
 - topic、请求/解析路线、selected agents 或配置指纹不一致，以及不存在、损坏或 symlink 逃逸的 workspace，必须拒绝恢复。
 - completed run 再次 resume 不得调用 provider，但必须先追加 `run_resumed` trace/savepoint，并无条件从 SQLite 权威态重写稳定输出。
-- runner/recovery session 必须以 canonical output root 为 anchor 使用 rooted append-only store；DB commit 后 savepoint append 失败必须记录 marker，并在跳过 completed task 前完成幂等 reconciliation。Harness 的 `path + root_dir` 接口保持兼容。
-- report/json/domain/trace/checkpoint/artifact 叶子必须使用 rooted dirfd 原子 writer；symlink、TOCTOU 替换和缺失安全原语必须 fail closed且不得修改外部文件。
+- workspace 必须从文件系统根逐组件 no-follow 打开 canonical output root，并持有 run、agent_sessions、artifacts、checkpoints 和 DB fd/inode。runner/recovery session 必须使用 workspace dup 的 sessions handle；Harness 的 `path + root_dir` 接口保持兼容。
+- report/json/domain/trace/checkpoint/artifact 叶子必须从持有 fd 的 rooted dirfd writer 开始；SQLite 必须使用安全 DB fd 绑定的持久连接。替换 output root、run dir 或子目录为 symlink/普通目录时，只允许写原绑定 inode 或 fail closed，攻击者目录不得出现文件。
 - 正常结果必须返回 `status=completed`，并保持七类稳定产物不变。
 
 `domain.jsonl`、`trace.jsonl` 和 `round_summary.json` 中实际持久化的领域 dataclass payload 必须可 JSON 序列化，并包含稳定 ID、UTC `created_at` 与 `schema_version="1.0"`；新增尾部默认字段不得破坏旧位置或关键字构造。

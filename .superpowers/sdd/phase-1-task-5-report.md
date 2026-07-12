@@ -54,6 +54,16 @@ python3 -m pytest -q
 
 本轮 fresh 结果：resume E2E `24 passed`；resume E2E + Harness `53 passed`；材料化/安全 artifact `52 passed`；Phase 0 组合 `72 passed`；全量 `229 passed`。
 
+## 最终复审根锚定修复
+
+- `RunWorkspace.create/open_existing` 先把 output root 转为 canonical 绝对路径，再从文件系统根开始逐组件 `O_DIRECTORY|O_NOFOLLOW` 打开并比对 `lstat/fstat` identity；run、`agent_sessions`、`artifacts`、`checkpoints` 和 `run.db` 均通过 dirfd 原子创建或打开。
+- workspace 生命周期内持有 run、三个子目录和 DB 的私有 fd，公开 `dup_*_fd()` 与幂等 `close()`；rooted writer 从绑定 fd 的 `dup()` 开始，不再通过 `os.open(self.root_dir)` 重开路径。runner 正常、崩溃和恢复失败路径均在 `finally` 关闭 SQLite/workspace 资源。
+- `SecureArtifactStore` 的 runner 路径只调用 workspace fd API；`JsonlSessionStore` 新增 `root_fd` handle 接口，runner scheduler/recovery 只传 workspace dup 的 sessions fd，Harness 原 `path + root_dir` 接口保留。
+- runner/recovery 的 `SqliteRunStore` 使用 workspace 安全打开的 DB fd，解析绑定 inode 的当前路径并在写入前校验 identity，之后生命周期内复用一个持久 SQLite 连接，不再按可变 run path 重连。
+- 新增 output root 被替换为 symlink/普通目录、run dir 和三个子目录被替换、reconciliation open 后 root 替换、异常资源关闭与安全原语缺失测试。所有 checkpoint/output/artifact/session/DB 写入只落到原绑定目录或 fail closed，攻击者目录无文件。
+
+最终 fresh 结果：resume E2E `29 passed`；resume E2E + Harness `58 passed`；materialization/artifact `52 passed`；store `33 passed`；Phase 0 组合 `79 passed`；全量 `243 passed`。
+
 ## Smoke
 
 fresh smoke：`status=completed`、ResearchProblem=1、finalize completed、stage=3、report=1；七类产物、`run.db`、checkpoint snapshots 与 `latest.json` 齐全。
@@ -71,4 +81,5 @@ crash+resume smoke 覆盖 agent 中途、最后 baseline 后、engine 后最终�
 - 当前恢复粒度是现有顺序 baseline agent 与 winning/report 闭环，不宣称真正并行或分布式恢复。
 - checkpoint JSON 文件是审计快照，SQLite `run.db` 是恢复权威来源。
 - 安全 artifact/session 路径依赖 `O_NOFOLLOW`、`O_DIRECTORY` 与 dirfd 操作；平台缺少这些原语时明确 fail closed。
+- SQLite fd 绑定路径解析当前支持 macOS `F_GETPATH` 与 Linux `/proc/self/fd`；缺失时 fail closed。遭遇恶意 rename 后，返回结果中的路径字符串可能不再指向绑定 inode，安全写入权威始终是持有 fd。
 - `RealAgentProvider` 仍为模板占位，真实模型循环和真实搜索属于 Phase 2。

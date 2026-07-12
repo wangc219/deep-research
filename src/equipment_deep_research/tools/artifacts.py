@@ -3,10 +3,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
+import os
 from pathlib import Path
 from typing import Any, Callable
 
-from equipment_deep_research.domain.workspace import RunWorkspace, _RootedAtomicWriter
+from equipment_deep_research.domain.workspace import (
+    RunWorkspace,
+    _RootedAtomicWriter,
+    open_directory_handle,
+)
 
 
 @dataclass(frozen=True)
@@ -21,10 +26,7 @@ class SecureArtifactStore:
     """Content-addressed artifacts written through rooted dirfd operations."""
 
     def __init__(self, root: str | Path) -> None:
-        self.root = Path(root)
-        if self.root.is_symlink():
-            raise ValueError("artifact root must not be a symlink")
-        self.root.mkdir(parents=True, exist_ok=True)
+        self.root, self._root_fd = open_directory_handle(root, create=True)
         self._write_bytes: Callable[[str, bytes], None] = self._directory_write
         self._read_bytes: Callable[[str], bytes] = self._directory_read
         self._is_regular: Callable[[str], bool] = self._directory_is_regular
@@ -34,11 +36,26 @@ class SecureArtifactStore:
     def for_workspace(cls, workspace: RunWorkspace) -> "SecureArtifactStore":
         store = cls.__new__(cls)
         store.root = workspace.artifacts_dir
+        store._root_fd = None
         store._write_bytes = workspace.write_artifact_bytes
         store._read_bytes = workspace.read_artifact_bytes
         store._is_regular = workspace.artifact_file_is_regular
         store._list_names = workspace.artifact_file_names
         return store
+
+    def close(self) -> None:
+        if self._root_fd is None:
+            return
+        try:
+            os.close(self._root_fd)
+        finally:
+            self._root_fd = None
+
+    def __del__(self) -> None:
+        try:
+            self.close()
+        except Exception:
+            pass
 
     def put(self, content: bytes | str, *, kind: str, meta: dict[str, Any]) -> str:
         data = content.encode("utf-8") if isinstance(content, str) else bytes(content)
@@ -127,16 +144,21 @@ class SecureArtifactStore:
         )
 
     def _directory_write(self, name: str, content: bytes) -> None:
-        _RootedAtomicWriter(self.root).write(name, content)
+        _RootedAtomicWriter(self._require_root_fd()).write(name, content)
 
     def _directory_read(self, name: str) -> bytes:
-        return _RootedAtomicWriter(self.root).read(name)
+        return _RootedAtomicWriter(self._require_root_fd()).read(name)
 
     def _directory_is_regular(self, name: str) -> bool:
-        return _RootedAtomicWriter(self.root).is_regular_file(name)
+        return _RootedAtomicWriter(self._require_root_fd()).is_regular_file(name)
 
     def _directory_list_names(self) -> list[str]:
-        return _RootedAtomicWriter(self.root).list_regular_file_names(".")
+        return _RootedAtomicWriter(self._require_root_fd()).list_regular_file_names(".")
+
+    def _require_root_fd(self) -> int:
+        if self._root_fd is None:
+            raise RuntimeError("artifact store is closed")
+        return self._root_fd
 
 
 def _parse_ref(ref: str) -> tuple[str, str]:

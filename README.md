@@ -25,7 +25,8 @@
 - `ResearchProblem` 与初始 checkpoint 同事务持久化；恢复前先处理 `session_write_failed` reconciliation marker；旧 session 只追加，不重写。
 - `RunWorkspace.open_existing()` 校验 run 目录、session、artifact、checkpoint 与 `run.db` 的类型、边界和 symlink 安全。
 - completed resume 也先写 `run_resumed` trace/savepoint；正常完成返回 `status=completed`，数据库保存 finalize/run completed checkpoint，并继续生成七类稳定产物。
-- runner/recovery session 以 canonical output root 为 anchor 逐组件 no-follow 打开；报告、JSON/JSONL、checkpoint 与 artifact 使用 rooted dirfd 安全写入，拒绝 symlink/TOCTOU 逃逸并在缺少安全原语时 fail closed。
+- `RunWorkspace` 从文件系统根逐组件安全打开 canonical output root，并在运行期持有 run、session、artifact、checkpoint 与 DB fd/inode；报告、JSON/JSONL、checkpoint、artifact 和 runner/recovery session 都从这些 handle 开始，拒绝 symlink/TOCTOU 逃逸并在缺少安全原语时 fail closed。
+- runner/recovery 的 SQLite 使用安全 DB fd 绑定并持有单一连接，不按可变 run path 重连。
 - completed resume 提交 `run_resumed` 后始终从 SQLite 权威态重写稳定输出，provider 不重复执行，文件 trace 与数据库审计链一致。
 
 ## 当前实现边界

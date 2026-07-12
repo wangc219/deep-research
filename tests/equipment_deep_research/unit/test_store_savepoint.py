@@ -458,6 +458,27 @@ def test_jsonl_session_store_anchor_rejects_replaced_session_component(
     assert list(external.iterdir()) == []
 
 
+def test_jsonl_session_store_root_fd_remains_bound_after_path_replacement(
+    tmp_path: Path,
+) -> None:
+    sessions = tmp_path / "sessions"
+    sessions.mkdir()
+    root_fd = os.open(sessions, os.O_RDONLY | os.O_DIRECTORY)
+    store = JsonlSessionStore("agent.jsonl", root_fd=root_fd)
+    os.close(root_fd)
+    bound = tmp_path / "bound-sessions"
+    sessions.rename(bound)
+    attacker = tmp_path / "attacker-sessions"
+    attacker.mkdir()
+    sessions.symlink_to(attacker, target_is_directory=True)
+
+    store.append({"bound": True})
+    store.close()
+
+    assert (bound / "agent.jsonl").is_file()
+    assert list(attacker.iterdir()) == []
+
+
 @pytest.mark.parametrize("candidate", ["../outside.jsonl", "nested/../../outside.jsonl"])
 def test_jsonl_session_store_rejects_paths_outside_root(
     tmp_path: Path,
@@ -571,3 +592,12 @@ def test_store_rejects_non_finite_payload_without_partial_write(tmp_path: Path) 
 
     assert store.object_count() == 0
     assert store.trace_count() == 0
+
+
+def test_sqlite_store_close_releases_persistent_connection(tmp_path: Path) -> None:
+    store = SqliteRunStore(tmp_path / "run.db", run_id="run-1")
+
+    store.close()
+
+    with pytest.raises(RuntimeError, match="closed"):
+        store.recover()

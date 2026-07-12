@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 import json
+import os
 from pathlib import Path
 import sqlite3
 from typing import Any, Mapping, cast
@@ -46,6 +47,16 @@ class RecoveryState:
     session_tails: dict[str, list[dict[str, Any]]]
     last_savepoint_id: str
 
+    def close(self) -> None:
+        self.sqlite_store.close()
+        self.workspace.close()
+
+    def __enter__(self) -> "RecoveryState":
+        return self
+
+    def __exit__(self, *exc_info: object) -> None:
+        self.close()
+
 
 class RecoveryManager:
     def __init__(self, output_root: str | Path) -> None:
@@ -62,57 +73,74 @@ class RecoveryManager:
         config_fingerprint: str | None = None,
     ) -> RecoveryState:
         workspace = RunWorkspace.open_existing(self.output_root, run_id)
+        sqlite_store: SqliteRunStore | None = None
         try:
-            sqlite_store = SqliteRunStore(workspace.database_path, run_id=run_id)
+            database_fd = workspace.dup_database_fd()
+            try:
+                sqlite_store = SqliteRunStore(
+                    workspace.database_path,
+                    run_id=run_id,
+                    database_fd=database_fd,
+                )
+            finally:
+                os.close(database_fd)
             recovery_summary = sqlite_store.recover()
-        except sqlite3.DatabaseError as exc:
-            raise RecoveryError(f"SQLite run database is invalid: {exc}") from exc
-        last_savepoint = recovery_summary.get("last_checkpoint")
-        if not isinstance(last_savepoint, str) or not last_savepoint:
-            raise RecoveryError("run database has no committed savepoint")
+            last_savepoint = recovery_summary.get("last_checkpoint")
+            if not isinstance(last_savepoint, str) or not last_savepoint:
+                raise RecoveryError("run database has no committed savepoint")
 
-        self._reconcile_unresolved_sessions(workspace, sqlite_store)
-        checkpoint = self._load_checkpoint(sqlite_store, run_id)
-        self._validate_identity(
-            checkpoint,
-            topic=topic,
-            research_route=research_route,
-            resolved_route=resolved_route,
-            selected_agent_ids=selected_agent_ids,
-            config_fingerprint=config_fingerprint,
-        )
-        domain_store = _restore_domain_store(sqlite_store.domain_objects())
-        problem = self._load_problem(
-            domain_store,
-            topic=topic,
-            research_route=research_route,
-            resolved_route=resolved_route,
-            selected_agent_ids=selected_agent_ids,
-        )
-        checkpoint = _normalize_unfinished_tasks(checkpoint)
-        trace_store = _restore_trace_store(sqlite_store.trace_events())
-        worker_reports = _restore_worker_reports(checkpoint.worker_reports)
-        session_tails = self._load_session_tails(
-            workspace,
-            checkpoint,
-            worker_reports,
-        )
-        latest_summary = sqlite_store.recover()
-        latest_savepoint = latest_summary.get("last_checkpoint")
-        if not isinstance(latest_savepoint, str) or not latest_savepoint:
-            raise RecoveryError("run database lost its committed savepoint")
-        return RecoveryState(
-            workspace=workspace,
-            sqlite_store=sqlite_store,
-            checkpoint=checkpoint,
-            problem=problem,
-            domain_store=domain_store,
-            trace_store=trace_store,
-            source_materials=_dedupe_plain_rows(checkpoint.source_materials),
-            worker_reports=worker_reports,
-            session_tails=session_tails,
-            last_savepoint_id=latest_savepoint,
-        )
+            self._reconcile_unresolved_sessions(workspace, sqlite_store)
+            checkpoint = self._load_checkpoint(sqlite_store, run_id)
+            self._validate_identity(
+                checkpoint,
+                topic=topic,
+                research_route=research_route,
+                resolved_route=resolved_route,
+                selected_agent_ids=selected_agent_ids,
+                config_fingerprint=config_fingerprint,
+            )
+            domain_store = _restore_domain_store(sqlite_store.domain_objects())
+            problem = self._load_problem(
+                domain_store,
+                topic=topic,
+                research_route=research_route,
+                resolved_route=resolved_route,
+                selected_agent_ids=selected_agent_ids,
+            )
+            checkpoint = _normalize_unfinished_tasks(checkpoint)
+            trace_store = _restore_trace_store(sqlite_store.trace_events())
+            worker_reports = _restore_worker_reports(checkpoint.worker_reports)
+            session_tails = self._load_session_tails(
+                workspace,
+                checkpoint,
+                worker_reports,
+            )
+            latest_summary = sqlite_store.recover()
+            latest_savepoint = latest_summary.get("last_checkpoint")
+            if not isinstance(latest_savepoint, str) or not latest_savepoint:
+                raise RecoveryError("run database lost its committed savepoint")
+            return RecoveryState(
+                workspace=workspace,
+                sqlite_store=sqlite_store,
+                checkpoint=checkpoint,
+                problem=problem,
+                domain_store=domain_store,
+                trace_store=trace_store,
+                source_materials=_dedupe_plain_rows(checkpoint.source_materials),
+                worker_reports=worker_reports,
+                session_tails=session_tails,
+                last_savepoint_id=latest_savepoint,
+            )
+        except sqlite3.DatabaseError as exc:
+            if sqlite_store is not None:
+                sqlite_store.close()
+            workspace.close()
+            raise RecoveryError(f"SQLite run database is invalid: {exc}") from exc
+        except BaseException:
+            if sqlite_store is not None:
+                sqlite_store.close()
+            workspace.close()
+            raise
 
     @staticmethod
     def _load_checkpoint(sqlite_store: SqliteRunStore, run_id: str) -> RunCheckpoint:
@@ -203,57 +231,72 @@ class RecoveryManager:
                 raise RecoveryError(
                     f"session reconciliation marker {marker_id} has invalid turn_index"
                 )
+            session: JsonlSessionStore | None = None
             try:
-                session = JsonlSessionStore(
-                    workspace.session_relative_path(session_ref),
-                    anchor_dir=workspace.output_root,
-                )
+                root_fd = workspace.dup_sessions_fd()
+                try:
+                    session = JsonlSessionStore(
+                        session_ref,
+                        root_fd=root_fd,
+                        root_label=workspace.sessions_dir,
+                    )
+                finally:
+                    os.close(root_fd)
                 records = session.read_all()
             except (OSError, TypeError, ValueError, RuntimeError) as exc:
+                if session is not None:
+                    session.close()
                 raise RecoveryError(
                     f"cannot open reconciliation session {session_ref}: {exc}"
                 ) from exc
-            if not any(
-                row.get("event_type") == "savepoint"
-                and row.get("checkpoint_id") == checkpoint_id
-                and row.get("batch_hash") == batch_hash
-                for row in records
-            ):
-                session.append(
-                    {
-                        "event_type": "savepoint",
-                        "execution_id": execution_id,
-                        "task_id": task_id,
-                        "agent_id": agent_id,
-                        "turn_index": turn_index,
-                        "checkpoint_id": checkpoint_id,
-                        "batch_hash": batch_hash,
-                        "recovered": True,
-                        "reconciliation_marker_id": marker_id,
-                        "created_at": now_iso(),
-                        "schema_version": "1.0",
-                    }
-                )
-                records = [*records, {"event_type": "savepoint"}]
-            if not any(
-                row.get("event_type") == "session_reconciled"
-                and row.get("reconciliation_marker_id") == marker_id
-                for row in records
-            ):
-                session.append(
-                    {
-                        "event_type": "session_reconciled",
-                        "execution_id": execution_id,
-                        "task_id": task_id,
-                        "agent_id": agent_id,
-                        "turn_index": turn_index,
-                        "checkpoint_id": checkpoint_id,
-                        "batch_hash": batch_hash,
-                        "reconciliation_marker_id": marker_id,
-                        "created_at": now_iso(),
-                        "schema_version": "1.0",
-                    }
-                )
+            try:
+                if not any(
+                    row.get("event_type") == "savepoint"
+                    and row.get("checkpoint_id") == checkpoint_id
+                    and row.get("batch_hash") == batch_hash
+                    for row in records
+                ):
+                    session.append(
+                        {
+                            "event_type": "savepoint",
+                            "execution_id": execution_id,
+                            "task_id": task_id,
+                            "agent_id": agent_id,
+                            "turn_index": turn_index,
+                            "checkpoint_id": checkpoint_id,
+                            "batch_hash": batch_hash,
+                            "recovered": True,
+                            "reconciliation_marker_id": marker_id,
+                            "created_at": now_iso(),
+                            "schema_version": "1.0",
+                        }
+                    )
+                    records = [*records, {"event_type": "savepoint"}]
+                if not any(
+                    row.get("event_type") == "session_reconciled"
+                    and row.get("reconciliation_marker_id") == marker_id
+                    for row in records
+                ):
+                    session.append(
+                        {
+                            "event_type": "session_reconciled",
+                            "execution_id": execution_id,
+                            "task_id": task_id,
+                            "agent_id": agent_id,
+                            "turn_index": turn_index,
+                            "checkpoint_id": checkpoint_id,
+                            "batch_hash": batch_hash,
+                            "reconciliation_marker_id": marker_id,
+                            "created_at": now_iso(),
+                            "schema_version": "1.0",
+                        }
+                    )
+            except (OSError, TypeError, ValueError, RuntimeError) as exc:
+                raise RecoveryError(
+                    f"cannot update reconciliation session {session_ref}: {exc}"
+                ) from exc
+            finally:
+                session.close()
             reconciled_event = TraceEvent(
                 event_id=f"{marker_id}-reconciled",
                 event_type="session_reconciled",
@@ -297,11 +340,19 @@ class RecoveryManager:
             )
             session_ref = f"{validated_agent_id}.jsonl"
             try:
-                session = JsonlSessionStore(
-                    workspace.session_relative_path(session_ref),
-                    anchor_dir=workspace.output_root,
-                )
-                records = session.read_all()
+                root_fd = workspace.dup_sessions_fd()
+                try:
+                    session = JsonlSessionStore(
+                        session_ref,
+                        root_fd=root_fd,
+                        root_label=workspace.sessions_dir,
+                    )
+                finally:
+                    os.close(root_fd)
+                try:
+                    records = session.read_all()
+                finally:
+                    session.close()
             except (OSError, TypeError, ValueError, RuntimeError) as exc:
                 raise RecoveryError(f"agent session is invalid for {agent_id}: {exc}") from exc
             if not records and f"baseline:{agent_id}" in checkpoint.completed_task_ids:

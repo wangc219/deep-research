@@ -9,8 +9,12 @@ import pytest
 
 from equipment_deep_research.domain.workspace import RunWorkspace
 from equipment_deep_research.domain import workspace as workspace_module
+from equipment_deep_research.domain.proposals import TraceProposal
+from equipment_deep_research.domain.store import SqliteRunStore
+from equipment_deep_research.harness.session import JsonlSessionStore
 from equipment_deep_research.interfaces import cli
 from equipment_deep_research.orchestration.runner import DeepResearchRunner
+from equipment_deep_research.tools.artifacts import SecureArtifactStore
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -35,6 +39,148 @@ def test_workspace_creates_required_paths(tmp_path: Path) -> None:
     assert workspace.artifacts_dir.is_dir()
     assert workspace.checkpoints_dir.is_dir()
     assert workspace.database_path == workspace.run_dir / "run.db"
+    workspace.close()
+
+
+@pytest.mark.parametrize("replacement", ["symlink", "directory"])
+def test_workspace_handles_bind_original_run_and_subdirectories(
+    tmp_path: Path,
+    replacement: str,
+) -> None:
+    output_root = tmp_path / "runs"
+    workspace = RunWorkspace.create(output_root, "run-1")
+    original_run = output_root / "bound-run-1"
+    workspace.run_dir.rename(original_run)
+    attacker_root = tmp_path / "attacker-run"
+    attacker_root.mkdir()
+    if replacement == "symlink":
+        workspace.run_dir.symlink_to(attacker_root, target_is_directory=True)
+        replacement_run = attacker_root
+    else:
+        workspace.run_dir.mkdir()
+        replacement_run = workspace.run_dir
+    attack_location = replacement_run
+    for name in ("agent_sessions", "artifacts", "checkpoints"):
+        (replacement_run / name).mkdir()
+
+    run_fd = workspace.dup_run_fd()
+    sessions_fd = workspace.dup_sessions_fd()
+    database_fd = workspace.dup_database_fd()
+    try:
+        assert (os.fstat(run_fd).st_dev, os.fstat(run_fd).st_ino) == workspace.run_identity
+        workspace.write_run_text("report.md", "bound\n")
+        workspace.write_checkpoint_text("latest.json", "{}")
+        artifacts = SecureArtifactStore.for_workspace(workspace)
+        artifacts.put("artifact", kind="text", meta={"content_type": "text/plain"})
+        session = JsonlSessionStore("agent.jsonl", root_fd=sessions_fd)
+        session.append({"event_type": "bound"})
+        session.close()
+        database = SqliteRunStore(
+            workspace.database_path,
+            run_id="run-1",
+            database_fd=database_fd,
+        )
+        database.commit(
+            (),
+            (
+                TraceProposal(
+                    proposal_id="bound-trace",
+                    event_type="bound",
+                    actor="test",
+                    payload={"bound": True},
+                ),
+            ),
+        )
+        database.close()
+    finally:
+        os.close(run_fd)
+        os.close(sessions_fd)
+        os.close(database_fd)
+        workspace.close()
+
+    assert (original_run / "report.md").read_text(encoding="utf-8") == "bound\n"
+    assert (original_run / "checkpoints" / "latest.json").is_file()
+    assert list((original_run / "artifacts").glob("*.meta.json"))
+    assert (original_run / "agent_sessions" / "agent.jsonl").is_file()
+    assert (original_run / "run.db").is_file()
+    assert [path for path in attack_location.rglob("*") if path.is_file()] == []
+
+
+def test_workspace_close_invalidates_handle_duplication(tmp_path: Path) -> None:
+    workspace = RunWorkspace.create(tmp_path, "run-1")
+    run_fd = workspace.dup_run_fd()
+
+    workspace.close()
+
+    with pytest.raises(RuntimeError, match="closed"):
+        workspace.dup_run_fd()
+    os.fstat(run_fd)
+    os.close(run_fd)
+
+
+@pytest.mark.parametrize("replacement", ["symlink", "directory"])
+def test_workspace_subdirectory_handles_ignore_replacement_paths(
+    tmp_path: Path,
+    replacement: str,
+) -> None:
+    workspace = RunWorkspace.create(tmp_path / "runs", "run-1")
+    bound_directories: dict[str, Path] = {}
+    attacker_directories: dict[str, Path] = {}
+    for name in ("agent_sessions", "artifacts", "checkpoints"):
+        current = workspace.run_dir / name
+        bound = workspace.run_dir / f"bound-{name}"
+        current.rename(bound)
+        attacker = tmp_path / f"attacker-{name}"
+        attacker.mkdir()
+        if replacement == "symlink":
+            current.symlink_to(attacker, target_is_directory=True)
+        else:
+            current.mkdir()
+            attacker = current
+        bound_directories[name] = bound
+        attacker_directories[name] = attacker
+
+    workspace.write_checkpoint_text("latest.json", "{}")
+    SecureArtifactStore.for_workspace(workspace).put(
+        "artifact",
+        kind="text",
+        meta={"content_type": "text/plain"},
+    )
+    sessions_fd = workspace.dup_sessions_fd()
+    try:
+        session = JsonlSessionStore("agent.jsonl", root_fd=sessions_fd)
+    finally:
+        os.close(sessions_fd)
+    session.append({"event_type": "bound"})
+    session.close()
+    workspace.close()
+
+    assert (bound_directories["checkpoints"] / "latest.json").is_file()
+    assert list(bound_directories["artifacts"].glob("*.meta.json"))
+    assert (bound_directories["agent_sessions"] / "agent.jsonl").is_file()
+    for attacker in attacker_directories.values():
+        assert [path for path in attacker.rglob("*") if path.is_file()] == []
+
+
+def test_runner_closes_workspace_handles_when_hook_raises(tmp_path: Path) -> None:
+    captured: list[RunWorkspace] = []
+
+    def fail_after_create(event: str, workspace: RunWorkspace) -> None:
+        if event == "after_workspace_created":
+            captured.append(workspace)
+            raise RuntimeError("stop after create")
+
+    with pytest.raises(RuntimeError, match="stop after create"):
+        _runner(tmp_path, run_hook=fail_after_create).run(
+            mode="fake",
+            topic="handle cleanup",
+            research_route="auto",
+            run_id="cleanup-run",
+        )
+
+    assert len(captured) == 1
+    with pytest.raises(RuntimeError, match="closed"):
+        captured[0].dup_run_fd()
 
 
 @pytest.mark.parametrize(
@@ -125,6 +271,19 @@ def test_workspace_writer_fails_closed_without_secure_primitives(
         workspace.write_run_text("report.md", "blocked\n")
 
     assert not (workspace.run_dir / "report.md").exists()
+
+
+def test_workspace_create_fails_closed_before_creating_root_without_dirfd(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    output_root = tmp_path / "blocked-runs"
+    monkeypatch.setattr(workspace_module.os, "supports_dir_fd", set())
+
+    with pytest.raises(RuntimeError, match="secure workspace path operations"):
+        RunWorkspace.create(output_root, "run-1")
+
+    assert not output_root.exists()
 
 
 def test_workspace_safe_stat_rejects_leaf_replaced_after_check(

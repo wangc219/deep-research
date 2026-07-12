@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import os
 from pathlib import Path
 from typing import Any, Callable
 
 from equipment_deep_research.agents.provider import AgentProvider, AgentRunRequest
 from equipment_deep_research.agents.registry import AgentDef
-from equipment_deep_research.domain.identifiers import safe_identifier_path
+from equipment_deep_research.domain.identifiers import (
+    safe_identifier_path,
+    validate_internal_identifier,
+)
 from equipment_deep_research.domain.models import TraceEvent, new_stable_id, now_iso
 from equipment_deep_research.domain.store import DomainStore, TraceStore
 from equipment_deep_research.domain.workspace import RunWorkspace
@@ -54,18 +58,19 @@ class DiscoveryScheduler:
         self.context_builder = context_builder or ContextPackBuilder()
         self.session_store_factory = session_store_factory
         self.workspace = workspace
-        if workspace is not None and workspace.run_dir != self.run_dir.resolve(strict=True):
-            raise ValueError("workspace and run_dir must identify the same run")
-        if self.run_dir.is_symlink():
-            raise ValueError("run_dir must not be a symlink")
         self.sessions_dir = run_dir / "agent_sessions"
-        if self.sessions_dir.is_symlink():
-            raise ValueError("agent_sessions must not be a symlink")
-        self.sessions_dir.mkdir(parents=True, exist_ok=True)
-        if self.sessions_dir.is_symlink():
-            raise ValueError("agent_sessions must not be a symlink")
-        if self.sessions_dir.resolve(strict=True).parent != self.run_dir.resolve(strict=True):
-            raise ValueError("agent_sessions must stay within run_dir")
+        if workspace is None:
+            if self.run_dir.is_symlink():
+                raise ValueError("run_dir must not be a symlink")
+            if self.sessions_dir.is_symlink():
+                raise ValueError("agent_sessions must not be a symlink")
+            self.sessions_dir.mkdir(parents=True, exist_ok=True)
+            if self.sessions_dir.is_symlink():
+                raise ValueError("agent_sessions must not be a symlink")
+            if self.sessions_dir.resolve(strict=True).parent != self.run_dir.resolve(
+                strict=True
+            ):
+                raise ValueError("agent_sessions must stay within run_dir")
         self.materializer = EvidenceMaterializer(
             artifact_store=(
                 SecureArtifactStore.for_workspace(workspace)
@@ -101,12 +106,19 @@ class DiscoveryScheduler:
         research_route: str,
         raise_on_error: bool = False,
     ) -> WorkerReport:
-        session_path = safe_identifier_path(
-            self.sessions_dir,
-            agent.agent_id,
-            suffix=".jsonl",
-            field_name="agent_id",
-        )
+        if self.workspace is not None:
+            validated_agent_id = validate_internal_identifier(
+                agent.agent_id,
+                field_name="agent_id",
+            )
+            session_path = self.sessions_dir.joinpath(f"{validated_agent_id}.jsonl")
+        else:
+            session_path = safe_identifier_path(
+                self.sessions_dir,
+                agent.agent_id,
+                suffix=".jsonl",
+                field_name="agent_id",
+            )
         session = self._open_session_store(session_path.name)
         before_evidence = set(self.store.evidence)
         try:
@@ -197,6 +209,10 @@ class DiscoveryScheduler:
                 session_path=str(session_path),
                 error=str(exc),
             )
+        finally:
+            close = getattr(session, "close", None)
+            if callable(close):
+                close()
 
     def append_savepoint(
         self,
@@ -208,27 +224,37 @@ class DiscoveryScheduler:
     ) -> None:
         session_ref = Path(report.session_path).name
         session = self._open_session_store(session_ref)
-        session.append(
-            {
-                "event_type": "savepoint",
-                "agent_id": report.agent_id,
-                "task_id": task_id,
-                "checkpoint_id": checkpoint_id,
-                "batch_hash": batch_hash,
-                "worker_report_id": report.worker_report_id,
-                "packet_id": report.packet_id,
-                "evidence_ids": report.new_evidence_ids,
-                "created_at": now_iso(),
-                "schema_version": "1.0",
-            },
-        )
+        try:
+            session.append(
+                {
+                    "event_type": "savepoint",
+                    "agent_id": report.agent_id,
+                    "task_id": task_id,
+                    "checkpoint_id": checkpoint_id,
+                    "batch_hash": batch_hash,
+                    "worker_report_id": report.worker_report_id,
+                    "packet_id": report.packet_id,
+                    "evidence_ids": report.new_evidence_ids,
+                    "created_at": now_iso(),
+                    "schema_version": "1.0",
+                },
+            )
+        finally:
+            close = getattr(session, "close", None)
+            if callable(close):
+                close()
 
     def _open_session_store(self, session_ref: str) -> Any:
         if self.session_store_factory is not None:
             return self.session_store_factory(session_ref, self.sessions_dir)
         if self.workspace is not None:
-            return JsonlSessionStore(
-                self.workspace.session_relative_path(session_ref),
-                anchor_dir=self.workspace.output_root,
-            )
+            root_fd = self.workspace.dup_sessions_fd()
+            try:
+                return JsonlSessionStore(
+                    session_ref,
+                    root_fd=root_fd,
+                    root_label=self.sessions_dir,
+                )
+            finally:
+                os.close(root_fd)
         return JsonlSessionStore(session_ref, root_dir=self.sessions_dir)

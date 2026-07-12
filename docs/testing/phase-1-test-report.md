@@ -35,9 +35,11 @@ baseline session 只追加，不覆盖旧行。典型尾记录为：
 {"event_type":"savepoint","agent_id":"international_situation","checkpoint_id":"checkpoint-...","packet_id":"packet-international_situation"}
 ```
 
-Harness 继续使用兼容接口 `JsonlSessionStore(path, root_dir=...)`。runner/recovery 使用 `JsonlSessionStore(run_id/agent_sessions/session_ref, anchor_dir=canonical_output_root)`，从不可变锚逐组件 no-follow 打开，不把可变 `agent_sessions.resolve()` 当信任根。若数据库已提交但 runner/harness session savepoint 写入失败，runner 自动提交含 agent/task/checkpoint/batch/session ref 的 `session_write_failed` marker 并传播原异常。恢复先消费 marker：补写 `recovered=true` savepoint、追加 `session_reconciled`，再提交同 marker 的幂等 reconciliation trace。`session_reconciled` 的 trace sequence 必须早于本次 `run_resumed`。
+Harness 继续使用兼容接口 `JsonlSessionStore(path, root_dir=...)`。runner/recovery 使用 `JsonlSessionStore(session_ref, root_fd=workspace.dup_sessions_fd())`，不 resolve 或重开 output/run/session 路径。若数据库已提交但 runner/harness session savepoint 写入失败，runner 自动提交含 agent/task/checkpoint/batch/session ref 的 `session_write_failed` marker 并传播原异常。恢复先消费 marker：补写 `recovered=true` savepoint、追加 `session_reconciled`，再提交同 marker 的幂等 reconciliation trace。`session_reconciled` 的 trace sequence 必须早于本次 `run_resumed`。
 
-项目自有 `SecureArtifactStore` 保持旧 store 的 `kind:sha256[:16]` ref、content 文件扩展名和 metadata 字段。runner 的全部材料化 artifact 通过 `RunWorkspace` 从 run dirfd 进入 `artifacts/`。所有 `report/json/domain/trace/checkpoint latest/history/artifact` 写入均由 rooted dirfd writer 完成：逐组件拒绝 symlink，临时文件使用 `O_EXCL|O_NOFOLLOW`，写入后 fsync 文件，以同一 parent dirfd 原子 rename 并 fsync 目录。缺少安全原语时 fail closed。
+`RunWorkspace.create/open_existing` 从文件系统根逐组件安全打开 canonical output root，原子创建/打开 run、三个子目录和 DB，并持有对应 fd/inode。项目自有 `SecureArtifactStore` 保持旧 store 的 `kind:sha256[:16]` ref、content 文件扩展名和 metadata 字段，runner 的全部材料化 artifact 只消费 workspace artifact handle。所有 `report/json/domain/trace/checkpoint latest/history/artifact` 写入均从绑定 fd 的 `dup()` 开始：逐组件拒绝 symlink，临时文件使用 `O_EXCL|O_NOFOLLOW`，写入后 fsync 文件，以同一 parent dirfd 原子 rename 并 fsync 目录。缺少安全原语时 fail closed。
+
+runner/recovery 的 `SqliteRunStore` 接收 workspace 安全打开的 DB fd，校验当前路径与 fd identity 后建立单一持久连接；后续 savepoint/recover/query 不再按可变路径重连。macOS 使用 `F_GETPATH`，Linux 使用 `/proc/self/fd`，缺失时 fail closed。
 
 ## 4. 崩溃注入与恢复结果
 
@@ -66,12 +68,12 @@ E2E 使用构造器注入兼容 `AgentProvider`。第一 agent 正常完成并�
 
 ```text
 python3 -m pytest tests/equipment_deep_research/e2e/test_resume_run.py -q
-24 passed
+29 passed
 
 python3 -m pytest \
   tests/equipment_deep_research/e2e/test_resume_run.py \
   tests/equipment_deep_research/integration/test_agent_harness.py -q
-53 passed
+58 passed
 ```
 
 核心回归：
@@ -82,14 +84,14 @@ python3 -m pytest tests/test_deep_research_runner.py \
   tests/equipment_deep_research/unit/test_configuration.py \
   tests/equipment_deep_research/unit/test_domain_contracts.py \
   tests/equipment_deep_research/unit/test_http_transport.py -q
-99 passed
+106 passed
 ```
 
 全量：
 
 ```text
 python3 -m pytest -q
-229 passed
+243 passed
 ```
 
 最终 no-follow stat race 补强后的受影响范围：
@@ -101,7 +103,7 @@ python3 -m pytest tests/equipment_deep_research/integration/test_cli_workspace.p
 
 python3 -m pytest tests/equipment_deep_research/e2e/test_resume_run.py \
   tests/equipment_deep_research/unit/test_domain_contracts.py -q
-33 passed
+38 passed
 ```
 
 第二轮材料化与 Phase 0 fresh 回归：
@@ -116,7 +118,18 @@ python3 -m pytest -q tests/equipment_deep_research/unit/test_domain_contracts.py
   tests/equipment_deep_research/unit/test_configuration.py \
   tests/equipment_deep_research/integration/test_cli_workspace.py \
   tests/test_deep_research_runner.py
-72 passed
+79 passed
+```
+
+最终 store/fd 根锚定回归：
+
+```text
+python3 -m pytest tests/equipment_deep_research/unit/test_store_savepoint.py -q
+33 passed
+
+python3 -m pytest tests/equipment_deep_research/e2e/test_resume_run.py \
+  tests/equipment_deep_research/integration/test_agent_harness.py -q
+58 passed
 ```
 
 fresh smoke：`status=completed`、`ResearchProblem=1`、finalize completed、3 stage、1 report，七类产物、`run.db` 和 completed checkpoint 齐全。

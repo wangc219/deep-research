@@ -9,6 +9,8 @@ import stat
 from threading import Lock, RLock
 from typing import Any
 
+from equipment_deep_research.domain.workspace import open_directory_handle
+
 
 _LOCKS_GUARD = Lock()
 _PATH_LOCKS: dict[str, RLock] = {}
@@ -27,30 +29,85 @@ class JsonlSessionStore:
         *,
         root_dir: Path | None = None,
         anchor_dir: Path | None = None,
+        root_fd: int | None = None,
+        root_label: Path | None = None,
     ) -> None:
         _require_secure_platform()
-        if (root_dir is None) == (anchor_dir is None):
-            raise ValueError("provide exactly one of root_dir or anchor_dir")
-        requested_root = Path(anchor_dir if anchor_dir is not None else root_dir)
-        if anchor_dir is None:
-            requested_root.mkdir(parents=True, exist_ok=True)
-        elif not requested_root.exists():
-            raise FileNotFoundError(f"anchor_dir does not exist: {requested_root}")
-        self.root_dir = requested_root.resolve(strict=True)
-        if not self.root_dir.is_dir():
-            raise ValueError("session root must resolve to a directory")
-        self.anchor_dir = self.root_dir if anchor_dir is not None else None
-        self.relative_path = _relative_session_path(
-            path,
-            requested_root=requested_root,
-            canonical_root=self.root_dir,
+        roots_provided = sum(
+            value is not None for value in (root_dir, anchor_dir, root_fd)
         )
+        if roots_provided != 1:
+            raise ValueError(
+                "provide exactly one of root_dir, anchor_dir, or root_fd"
+            )
+        if root_fd is not None:
+            try:
+                self._root_fd = os.dup(root_fd)
+            except OSError as exc:
+                raise ValueError("root_fd must reference an open directory") from exc
+            root_stat = os.fstat(self._root_fd)
+            if not stat.S_ISDIR(root_stat.st_mode):
+                os.close(self._root_fd)
+                raise ValueError("root_fd must reference a directory")
+            self.root_dir = Path(root_label) if root_label is not None else Path(".")
+            self.anchor_dir = None
+            try:
+                self.relative_path = _relative_handle_path(path)
+            except BaseException:
+                os.close(self._root_fd)
+                self._root_fd = None
+                raise
+        else:
+            requested_root = Path(anchor_dir if anchor_dir is not None else root_dir)
+            self.root_dir, self._root_fd = open_directory_handle(
+                requested_root,
+                create=anchor_dir is None,
+            )
+            self.anchor_dir = self.root_dir if anchor_dir is not None else None
+            try:
+                self.relative_path = _relative_session_path(
+                    path,
+                    requested_root=requested_root,
+                    canonical_root=self.root_dir,
+                )
+            except BaseException:
+                os.close(self._root_fd)
+                self._root_fd = None
+                raise
         self.path = self.root_dir / self.relative_path
-        key = f"{self.root_dir}\0{self.relative_path.as_posix()}"
+        root_identity = _identity(os.fstat(self._root_fd))
+        key = f"{root_identity}\0{self.relative_path.as_posix()}"
         with _LOCKS_GUARD:
             self._lock = _PATH_LOCKS.setdefault(key, RLock())
-        with self._lock:
-            self._validate_existing_path()
+        try:
+            with self._lock:
+                self._validate_existing_path()
+        except BaseException:
+            os.close(self._root_fd)
+            raise
+
+    def close(self) -> None:
+        descriptor = getattr(self, "_root_fd", None)
+        if descriptor is None:
+            return
+        self._root_fd = None
+        try:
+            os.close(descriptor)
+        except OSError:
+            pass
+
+    def __enter__(self) -> "JsonlSessionStore":
+        self._require_root_fd()
+        return self
+
+    def __exit__(self, *exc_info: object) -> None:
+        self.close()
+
+    def __del__(self) -> None:
+        try:
+            self.close()
+        except Exception:
+            pass
 
     def append(self, record: Mapping[str, Any]) -> None:
         _require_secure_platform()
@@ -167,10 +224,7 @@ class JsonlSessionStore:
             return handle.readlines()
 
     def _open_parent_dir_fd(self, *, create: bool) -> int | None:
-        current_fd = os.open(
-            self.root_dir,
-            os.O_RDONLY | _directory_only() | _close_on_exec() | _no_follow(),
-        )
+        current_fd = os.dup(self._require_root_fd())
         try:
             for component in self.relative_path.parts[:-1]:
                 component_stat = _lstat_at(component, current_fd)
@@ -209,6 +263,23 @@ class JsonlSessionStore:
             except OSError:
                 pass
             raise
+
+    def _require_root_fd(self) -> int:
+        descriptor = self._root_fd
+        if descriptor is None:
+            raise RuntimeError("session store is closed")
+        return descriptor
+
+
+def _relative_handle_path(path: str | Path) -> Path:
+    candidate = Path(path)
+    if candidate.is_absolute() or any(
+        part in {"", ".", ".."} for part in candidate.parts
+    ):
+        raise ValueError("session path must stay within root_fd")
+    if not candidate.parts:
+        raise ValueError("session path must name a file within root_fd")
+    return candidate
 
 
 def _relative_session_path(
