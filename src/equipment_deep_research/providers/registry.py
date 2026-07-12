@@ -66,3 +66,22 @@ class ProviderRegistry:
             api_key=api_key,
             timeout_seconds=int(profile.get("timeout_seconds", 120)),
         )
+
+    def profile_snapshot(self, profile_name: str | None = None) -> dict[str, str]:
+        name = profile_name or self.default_provider
+        try:
+            profile = self._profiles[name]
+        except KeyError as exc:
+            raise ProviderConfigurationError(f"unknown provider profile: {name}") from exc
+        kind = str(profile.get("type", ""))
+        if kind == "fake":
+            return {"type": "fake", "model": "fake", "base_url_host": ""}
+        base_url = os.environ.get(
+            str(profile.get("base_url_env", "")),
+            "https://api.openai.com/v1/responses",
+        )
+        return {
+            "type": "responses",
+            "model": str(profile.get("model", "gpt-5.5")),
+            "base_url_host": urlsplit(base_url).hostname or "",
+        }

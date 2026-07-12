@@ -24,8 +24,12 @@ from equipment_deep_research.orchestration.coverage import (
     coverage_for_route,
     load_preset_policy,
 )
+from equipment_deep_research.orchestration.planning import ResearchPlanner
 from equipment_deep_research.orchestration.reporting import audit_run, render_report
 from equipment_deep_research.orchestration.winning import WinningMechanismEngine
+from equipment_deep_research.orchestration.winning_reasoning import SixStepReasoner
+from equipment_deep_research.providers.registry import ProviderRegistry
+from equipment_deep_research.tools.evidence import EvidenceGovernor
 from equipment_deep_research.tools.permissions import ToolPermissionRegistry
 
 
@@ -771,6 +775,14 @@ class DeepResearchRunner:
             "source_materials": source_materials,
             "store_summary": store.summary(),
             "trace_summary": trace.summary(),
+            "provider": self._provider_snapshot(mode),
+            "plan_graph": self._plan_graph_view(problem),
+            "six_step_reasoning": self._six_step_view(
+                topic=problem.topic,
+                route=route,
+                store=store,
+            ),
+            "evidence_assessments": self._evidence_assessments(store),
         }
         workspace.write_run_text(
             "round_summary.json",
@@ -778,6 +790,85 @@ class DeepResearchRunner:
         )
         workspace.write_run_text("domain.jsonl", store.jsonl_text())
         workspace.write_run_text("trace.jsonl", trace.jsonl_text())
+
+    def _provider_snapshot(self, mode: str) -> dict[str, str]:
+        if mode == "fake":
+            return {"type": "fake", "model": "fake", "base_url_host": ""}
+        if not self.provider_config_path.exists():
+            return {"type": "responses", "model": "gpt-5.5", "base_url_host": ""}
+        registry = ProviderRegistry.load(self.provider_config_path)
+        profile = registry.profile_snapshot("responses")
+        return {str(key): str(value) for key, value in profile.items()}
+
+    def _plan_graph_view(self, problem: ResearchProblem) -> dict[str, Any]:
+        registry = AgentRegistry.load(self.agent_config_path)
+        selected = registry.select_agents(problem.selected_agent_ids)
+        graph = ResearchPlanner(load_preset_policy(self.preset_config_path)).build(
+            problem,
+            selected,
+        )
+        return {
+            "plan_id": graph.plan_id,
+            "baseline_map_count": sum(
+                node.node_type == "baseline_map" for node in graph.nodes
+            ),
+            "nodes": [to_plain(node) for node in graph.nodes],
+        }
+
+    @staticmethod
+    def _six_step_view(
+        *,
+        topic: str,
+        route: str,
+        store: DomainStore,
+    ) -> dict[str, Any]:
+        result = SixStepReasoner().run(
+            topic=topic,
+            route=route,
+            packets=list(store.baseline_packets.values()),
+            evidence=list(store.evidence.values()),
+        )
+        return {
+            "defense_decomposition": to_plain(result.defense_decomposition),
+            "winning_paths": to_plain(result.winning_paths),
+            "effect_chain": to_plain(result.effect_chain),
+            "capability_mapping": to_plain(result.capability_mapping),
+            "gap_matrix": to_plain(result.gap_matrix),
+            "image_drafts": [to_plain(item) for item in result.image_drafts],
+        }
+
+    def _evidence_assessments(self, store: DomainStore) -> list[dict[str, Any]]:
+        minimum_score = 0.62
+        if self.evidence_config_path.exists():
+            import yaml
+
+            payload = yaml.safe_load(
+                self.evidence_config_path.read_text(encoding="utf-8")
+            ) or {}
+            minimum_score = float(
+                payload.get("acceptance", {}).get("min_quality_score", minimum_score)
+            )
+        governor = EvidenceGovernor(minimum_score=minimum_score)
+        accepted: list[Any] = []
+        rows: list[dict[str, Any]] = []
+        for evidence in store.evidence.values():
+            materialized = bool(evidence.artifact_refs)
+            dimensions = {
+                "relevance": 0.85,
+                "transparency": 0.8 if evidence.source_location else 0.3,
+                "freshness": 0.7,
+                "direct_support": 0.8 if evidence.excerpt else 0.2,
+                "extraction_quality": 0.85 if materialized else 0.45,
+            }
+            assessment = governor.assess(
+                evidence,
+                dimensions,
+                existing=accepted,
+            )
+            if assessment.decision == "accepted":
+                accepted.append(evidence)
+            rows.append(to_plain(assessment))
+        return rows
 
     @staticmethod
     def _result(
