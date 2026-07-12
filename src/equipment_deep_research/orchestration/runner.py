@@ -28,6 +28,7 @@ from equipment_deep_research.orchestration.coverage import (
 )
 from equipment_deep_research.orchestration.planning import ResearchPlanner
 from equipment_deep_research.orchestration.reporting import audit_run, render_report
+from equipment_deep_research.orchestration.recall import RecallCoordinator
 from equipment_deep_research.orchestration.winning import WinningMechanismEngine
 from equipment_deep_research.orchestration.winning_reasoning import SixStepReasoner
 from equipment_deep_research.providers.registry import ProviderRegistry
@@ -391,6 +392,36 @@ class DeepResearchRunner:
                 trace=trace,
                 coverage=coverage,
             )
+            recall_coordinator = RecallCoordinator(max_rounds=resolved_max_rounds)
+            for stage in stage_outputs:
+                for recall in stage.recall_requests:
+                    routed = recall_coordinator.route(
+                        recall,
+                        registry,
+                        selected_agent_ids,
+                        round_index=checkpoint.round_index,
+                    )
+                    store.add_recall_request(routed.recall)
+                    if routed.recommendation is not None:
+                        recommendations.append(routed.recommendation)
+                    trace.append(
+                        TraceEvent(
+                            event_id=f"trace-recall-route-{recall.recall_id}",
+                            event_type=f"recall_{routed.status}",
+                            actor="orchestrator",
+                            summary=(
+                                f"recall routed to {routed.target_agent_id}"
+                                if routed.target_agent_id
+                                else "recall limited because no selected agent can cover target"
+                            ),
+                            input_refs=[recall.recall_id],
+                            output_refs=(
+                                [routed.target_agent_id]
+                                if routed.target_agent_id
+                                else ([routed.recommendation.recommendation_id] if routed.recommendation else [])
+                            ),
+                        )
+                    )
             for recommendation in recommendations:
                 store.add_recommendation(recommendation)
             audit = audit_run(
@@ -439,6 +470,10 @@ class DeepResearchRunner:
                 *(
                     self._domain_proposal("AgentRecommendation", item)
                     for item in recommendations
+                ),
+                *(
+                    self._domain_proposal("RecallRequest", item)
+                    for item in store.recall_requests.values()
                 ),
                 self._domain_proposal("AuditResult", audit),
                 self._domain_proposal("ResearchReport", report),
@@ -589,6 +624,7 @@ class DeepResearchRunner:
             "ResearchProblem": "problem_id",
             "EvidenceCard": "evidence_id",
             "BaselineFindingPacket": "packet_id",
+            "RecallRequest": "recall_id",
             "AgentRecommendation": "recommendation_id",
             "WinningMechanismStageOutput": "stage_id",
             "CapabilityImageItem": "capability_id",
