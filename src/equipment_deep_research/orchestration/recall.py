@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, replace
+from typing import Any
 
 from equipment_deep_research.agents.registry import AgentRegistry
 from equipment_deep_research.domain.models import AgentRecommendation, RecallRequest
@@ -14,6 +17,15 @@ class RecallRoute:
     status: str
     target_agent_id: str | None
     recommendation: AgentRecommendation | None = None
+
+
+@dataclass(frozen=True)
+class RecallExecutionResult:
+    recall: RecallRequest
+    target_agent_id: str | None
+    return_node: str
+    status: str
+    output_refs: list[str]
 
 
 class RecallCoordinator:
@@ -40,3 +52,27 @@ class RecallCoordinator:
 
     def complete(self, routed: RecallRoute) -> RecallRoute:
         return replace(routed, recall=replace(routed.recall, status="completed"), status="completed")
+
+    async def execute_pending(
+        self,
+        routed: RecallRoute,
+        execute: Callable[[str, RecallRequest], Awaitable[list[str]]],
+    ) -> RecallExecutionResult:
+        """Execute only a routed target and return a structured resume token."""
+        if routed.status != "routed" or not routed.target_agent_id:
+            return RecallExecutionResult(
+                routed.recall,
+                routed.target_agent_id,
+                routed.recall.return_node,
+                routed.status,
+                [],
+            )
+        refs = await execute(routed.target_agent_id, routed.recall)
+        completed = self.complete(routed)
+        return RecallExecutionResult(
+            completed.recall,
+            completed.target_agent_id,
+            completed.recall.return_node,
+            "completed",
+            list(refs),
+        )

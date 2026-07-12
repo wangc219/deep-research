@@ -120,6 +120,7 @@ class DiscoveryScheduler:
         topic: str,
         research_route: str,
         raise_on_error: bool = False,
+        recall_request: dict[str, Any] | None = None,
     ) -> WorkerReport:
         if self.workspace is not None:
             validated_agent_id = validate_internal_identifier(
@@ -142,6 +143,7 @@ class DiscoveryScheduler:
                 topic=topic,
                 research_route=research_route,
                 store=self.store,
+                recall_request=recall_request,
             )
             result = self.provider.run_baseline_agent(
                 AgentRunRequest(
