@@ -139,6 +139,7 @@ class RunWorkspace:
         checkpoints_fd: int | None = None
         database_fd: int | None = None
         try:
+            _require_trusted_output_root(os.fstat(output_fd), resolved_root)
             run_fd = _create_directory_at(output_fd, run_id)
             sessions_fd = _create_directory_at(run_fd, "agent_sessions")
             artifacts_fd = _create_directory_at(run_fd, "artifacts")
@@ -191,6 +192,7 @@ class RunWorkspace:
         checkpoints_fd: int | None = None
         database_fd: int | None = None
         try:
+            _require_trusted_output_root(os.fstat(output_fd), resolved_root)
             if _lstat_at(run_id, output_fd) is None:
                 raise FileNotFoundError(
                     f"run directory does not exist: {resolved_root / run_id}"
@@ -276,15 +278,10 @@ def open_directory_handle(
             if component_stat is None:
                 if not create:
                     raise FileNotFoundError(f"directory does not exist: {resolved}")
-                try:
-                    os.mkdir(component, 0o700, dir_fd=current_fd)
-                except FileExistsError:
-                    pass
-                component_stat = _lstat_at(component, current_fd)
-                if component_stat is None:
-                    raise RuntimeError(
-                        f"directory disappeared during creation: {component}"
-                    )
+                next_fd = _create_directory_at(current_fd, component)
+                os.close(current_fd)
+                current_fd = next_fd
+                continue
             _require_directory(component_stat, Path(component))
             next_fd = _open_at(
                 component,
@@ -348,6 +345,15 @@ def _validate_run_id(run_id: str) -> None:
         or "\\" in run_id
     ):
         raise ValueError("run_id must be a single relative path component")
+
+
+def _require_trusted_output_root(value: os.stat_result, path: Path) -> None:
+    if value.st_uid != os.geteuid():
+        raise PermissionError(f"output root must be owned by the current user: {path}")
+    if value.st_mode & (stat.S_IWGRP | stat.S_IWOTH):
+        raise PermissionError(
+            f"output root must not be group/world writable: {path}"
+        )
 
 
 class _RootedAtomicWriter:

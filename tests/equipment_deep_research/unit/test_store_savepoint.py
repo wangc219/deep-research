@@ -5,7 +5,6 @@ from datetime import datetime
 import json
 import os
 from pathlib import Path
-import sqlite3
 from tempfile import TemporaryDirectory
 
 import pytest
@@ -20,6 +19,7 @@ from equipment_deep_research.domain.store import (
     StoreValidationError,
 )
 from equipment_deep_research.domain import store as store_module
+from equipment_deep_research.domain.workspace import RunWorkspace
 from equipment_deep_research.harness import session as session_module
 from equipment_deep_research.harness.session import JsonlSessionStore
 from equipment_deep_research.harness.recovery import RecoveryState
@@ -292,8 +292,15 @@ def test_concurrent_identical_commits_share_one_checkpoint(tmp_path: Path) -> No
     assert len(set(checkpoints)) == 1
     assert stores[0].object_count() == 1
     assert stores[0].trace_count() == 1
-    with sqlite3.connect(database) as connection:
-        assert connection.execute("PRAGMA journal_mode").fetchone()[0] == "wal"
+    assert all(
+        store._connection.execute("PRAGMA journal_mode").fetchone()[0] == "memory"
+        for store in stores
+        if store._connection is not None
+    )
+    assert not Path(f"{database}-wal").exists()
+    assert not Path(f"{database}-shm").exists()
+    for store in stores:
+        store.close()
 
 
 def test_recover_and_trace_export_expose_run_monotonic_sequences(
@@ -656,6 +663,149 @@ def test_unbound_sqlite_path_api_does_not_require_descriptor_auditing(
         assert store.object_count() == 0
     finally:
         store.close()
+
+
+@pytest.mark.parametrize("failure_stage", ["database_dup", "directory_dup", "audit"])
+def test_bound_sqlite_constructor_releases_partial_fd_ownership(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    failure_stage: str,
+) -> None:
+    workspace = RunWorkspace.create(tmp_path / "runs", "run-1")
+    database_fd = workspace.dup_database_fd()
+    directory_fd = workspace.dup_run_fd()
+    real_dup = store_module.os.dup
+    duplicated: list[int] = []
+    calls = 0
+
+    def injected_dup(descriptor: int) -> int:
+        nonlocal calls
+        calls += 1
+        if failure_stage == "database_dup" and calls == 1:
+            raise OSError("injected database dup failure")
+        if failure_stage == "directory_dup" and calls == 2:
+            raise OSError("injected directory dup failure")
+        value = real_dup(descriptor)
+        duplicated.append(value)
+        return value
+
+    monkeypatch.setattr(store_module.os, "dup", injected_dup)
+    if failure_stage == "audit":
+        monkeypatch.setattr(
+            store_module,
+            "_open_descriptor_stats",
+            lambda: (_ for _ in ()).throw(RuntimeError("injected audit failure")),
+        )
+    try:
+        with pytest.raises((RuntimeError, ValueError), match="injected|must be open"):
+            SqliteRunStore(
+                workspace.database_path,
+                run_id="run-1",
+                database_fd=database_fd,
+                database_dir_fd=directory_fd,
+            )
+        for descriptor in duplicated:
+            with pytest.raises(OSError):
+                os.fstat(descriptor)
+        os.fstat(database_fd)
+        os.fstat(directory_fd)
+    finally:
+        os.close(database_fd)
+        os.close(directory_fd)
+        workspace.close()
+
+
+@pytest.mark.parametrize("failure_stage", ["database", "directory"])
+def test_workspace_store_factory_releases_acquired_inputs_on_dup_failure(
+    tmp_path: Path,
+    failure_stage: str,
+) -> None:
+    database = tmp_path / "run.db"
+    database.touch()
+    database_source = os.open(database, os.O_RDWR)
+    directory_source = os.open(tmp_path, os.O_RDONLY | os.O_DIRECTORY)
+    acquired: list[int] = []
+
+    class FailingWorkspace:
+        database_path = database
+
+        def dup_database_fd(self) -> int:
+            if failure_stage == "database":
+                raise OSError("injected database acquisition failure")
+            descriptor = os.dup(database_source)
+            acquired.append(descriptor)
+            return descriptor
+
+        def dup_run_fd(self) -> int:
+            raise OSError("injected directory acquisition failure")
+
+    try:
+        with pytest.raises(OSError, match="injected"):
+            SqliteRunStore.for_workspace(FailingWorkspace(), run_id="run-1")  # type: ignore[arg-type]
+        for descriptor in acquired:
+            with pytest.raises(OSError):
+                os.fstat(descriptor)
+    finally:
+        os.close(database_source)
+        os.close(directory_source)
+
+
+@pytest.mark.parametrize("close_position", [1, 2])
+def test_workspace_store_factory_closes_all_inputs_when_one_close_fails(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    close_position: int,
+) -> None:
+    database = tmp_path / "run.db"
+    database.touch()
+    database_source = os.open(database, os.O_RDWR)
+    directory_source = os.open(tmp_path, os.O_RDONLY | os.O_DIRECTORY)
+    acquired: list[int] = []
+
+    class Workspace:
+        database_path = database
+
+        def dup_database_fd(self) -> int:
+            descriptor = os.dup(database_source)
+            acquired.append(descriptor)
+            return descriptor
+
+        def dup_run_fd(self) -> int:
+            descriptor = os.dup(directory_source)
+            acquired.append(descriptor)
+            return descriptor
+
+    class StubStore(SqliteRunStore):
+        instance: "StubStore | None" = None
+
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            self.closed = False
+            type(self).instance = self
+
+        def close(self) -> None:
+            self.closed = True
+
+    real_close = store_module.os.close
+    close_calls = 0
+
+    def injected_close(descriptor: int) -> None:
+        nonlocal close_calls
+        close_calls += 1
+        real_close(descriptor)
+        if close_calls == close_position:
+            raise OSError(f"injected close failure {close_position}")
+
+    monkeypatch.setattr(store_module.os, "close", injected_close)
+    try:
+        with pytest.raises(OSError, match="injected close failure"):
+            StubStore.for_workspace(Workspace(), run_id="run-1")  # type: ignore[arg-type]
+        assert StubStore.instance is not None and StubStore.instance.closed
+        for descriptor in acquired:
+            with pytest.raises(OSError):
+                os.fstat(descriptor)
+    finally:
+        real_close(database_source)
+        real_close(directory_source)
 
 
 def test_sqlite_close_failure_still_releases_every_owned_descriptor(tmp_path: Path) -> None:

@@ -77,18 +77,7 @@ class RecoveryManager:
         workspace = RunWorkspace.open_existing(self.output_root, run_id)
         sqlite_store: SqliteRunStore | None = None
         try:
-            database_fd = workspace.dup_database_fd()
-            database_dir_fd = workspace.dup_run_fd()
-            try:
-                sqlite_store = SqliteRunStore(
-                    workspace.database_path,
-                    run_id=run_id,
-                    database_fd=database_fd,
-                    database_dir_fd=database_dir_fd,
-                )
-            finally:
-                os.close(database_fd)
-                os.close(database_dir_fd)
+            sqlite_store = SqliteRunStore.for_workspace(workspace, run_id=run_id)
             recovery_summary = sqlite_store.recover()
             last_savepoint = recovery_summary.get("last_checkpoint")
             if not isinstance(last_savepoint, str) or not last_savepoint:

@@ -4,7 +4,6 @@ from collections.abc import Callable, Sequence
 from dataclasses import replace
 from hashlib import sha256
 import json
-import os
 from pathlib import Path
 from typing import Any
 
@@ -209,18 +208,7 @@ class DeepResearchRunner:
         else:
             workspace = RunWorkspace.create(self.output_root, run_id)
             resources.bind_workspace(workspace)
-            database_fd = workspace.dup_database_fd()
-            database_dir_fd = workspace.dup_run_fd()
-            try:
-                sqlite_store = SqliteRunStore(
-                    workspace.database_path,
-                    run_id=run_id,
-                    database_fd=database_fd,
-                    database_dir_fd=database_dir_fd,
-                )
-            finally:
-                os.close(database_fd)
-                os.close(database_dir_fd)
+            sqlite_store = SqliteRunStore.for_workspace(workspace, run_id=run_id)
             resources.bind_store(sqlite_store)
             self._emit_hook("after_workspace_created", workspace)
             store = DomainStore()

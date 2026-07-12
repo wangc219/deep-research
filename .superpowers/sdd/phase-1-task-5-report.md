@@ -148,3 +148,88 @@ exit 0
 全仓 `ruff check src tests` 仍报告 `knowledgegraph/demand_discovery` 下 6 个既有未使用 import；Task 5 scoped Ruff clean，本次未改动或回退这些其他所有者文件。
 
 fresh CLI smoke 与同 run completed-resume smoke 均返回 `Status: completed`。恢复后 SQLite 为 `objects=14`、`trace=12`、`run_resumed=1`、稳定文件总数 `18`；E2E 的 completed-resume provider 断言保持 `0`，DB trace 与 `trace.jsonl` 一致。
+
+## 最终复审后再修复
+
+### Critical 1 技术结论与保证边界
+
+Reviewer 对缺失 output-root 组件的判断成立：旧 `open_directory_handle(create=True)` 对缺失组件使用直接 `mkdirat` 后再 `lstat/openat`，公开组件名存在 mkdir-to-open 替换窗口。现已改为与 run/子目录相同的随机私有 staging：先以 128-bit 随机名创建、打开并记录 inode，再用 macOS `renameatx_np(RENAME_EXCL)` 或 Linux `renameat2(RENAME_NOREPLACE)` 发布。目标名被抢占时原子失败，不绑定或修改攻击者目录。create/open_existing 还要求最终 output root 由当前 effective UID 拥有，且不可 group/world writable；新建组件固定 `0700`。
+
+Reviewer 关于“私有 staging 目录自身仍有 mkdir-to-open 窗口”的观察在恶意同 UID 进程模型下也成立，但要求完全消除此窗口超出 POSIX/macOS/Linux 现有目录 API 能力：`mkdirat(2)` 不返回新目录 fd，`openat(2)` 不能创建目录，macOS `renameatx_np` 与 Linux `renameat2` 只解决发布阶段，不能把目录创建和 handle 返回合并成一个 syscall。同 UID 进程还可读取同 UID namespace 并任意 rename/chmod；再加一次 pathname 检查只会移动 TOCTOU。除自定义 filesystem/VFS、特权 broker 或把攻击者隔离到不同 UID/mount namespace 外，不能诚实声称完全抵御持续枚举 staging 名的恶意同 UID 进程。
+
+本任务实际保证的 invariant 是：
+
+- 对预置目标、公开名称抢占、symlink/普通目录替换和测试 hook 所模拟的 rename race，published output/run/子目录要么是已绑定的创建 inode，要么 fail closed；绝不接受目标名中已有的攻击者普通目录。
+- output root 是当前 UID 的私有非共享可写目录；随机 staging 名不作为公开接口，发布使用 no-replace 原语。
+- 已发布后所有 Task 5 writer 从持有 fd 出发；output/run 名称后续被替换时只写原绑定 inode或 fail closed。
+- 不声称抵御可持续枚举并操作同 UID 私有 namespace 的本机恶意进程；这是明确的 threat-model 边界，不以额外 stat 检查伪装成已解决。
+
+新增回归覆盖缺失 output-root 组件抢占、run 名抢占、no-replace 原语缺失、shared-writable output root 拒绝，以及攻击者 marker/目录保持未修改。
+
+### Critical 2 SQLite 无 sidecar 合同
+
+WAL/SHM 的 pathname VFS 打开无法通过 Python 标准库预先绑定，因此删除该攻击面，而不是在写后审计：安全 workspace 模式在任何 schema 写前先用 `mode=rw` 打开，审计进程实际打开的主库 fd/inode，再设置 `PRAGMA journal_mode=MEMORY` 与 `PRAGMA synchronous=FULL`。`run.db-wal`/`run.db-shm` 不再创建。SQLite POSIX fd 复用场景只在没有出现新 regular-file descriptor、`PRAGMA database_list` 当前仍指向绑定 inode时接受；若 ABA 打开攻击者 inode，会观察到新错误 inode并在 schema 初始化前失败。
+
+store 生命周期保留主库绑定 fd、SQLite audit fd 和 run-dir fd；每次 `_connect()` lease 前重新验证三者 identity 以及绑定目录中的 `run.db` 名称。leaf 被替换时后续 read/write 在 SQL 前失败，攻击者 DB 不变。fresh/output-root replacement、resume reconciliation replacement 与 leaf replacement 测试均证明攻击者 namespace 无 DB/sidecar 写入。
+
+安全模式还会在 `sqlite3.connect` 前通过绑定 DB fd 检查 SQLite header 的 WAL read/write version，并通过绑定 run-dir fd拒绝遗留 `-wal`、`-shm`、`-journal`。旧 WAL 数据库不会在可变 pathname 上做隐式切换，而是要求离线可信迁移并 fail closed；回归证明拒绝发生前数据库 bytes 不变。
+
+该模式保留 Phase 1 已测试的事务、异常注入、进程内 crash/resume 与 committed-savepoint 恢复合同；`MEMORY` journal 不提供 WAL 等价的掉电/进程被杀中途崩溃恢复保证，本报告不作该声明。若后续需要该等级 durability，需引入支持 fd/openat 的自定义 SQLite VFS 或把 SQLite 放入隔离 broker。
+
+### Important 3 descriptor 生命周期
+
+- `SqliteRunStore` 的全部 bound-fd acquisition 和 audit 已纳入统一异常清理；database dup、run-dir dup、类型/stat/path/audit/connect/initialize 任一失败都会先清空所有权并释放已取得 fd。
+- 新增 `SqliteRunStore.for_workspace()`，runner/recovery 不再各自顺序取得两个 dup fd。factory 用 `ExitStack` 分阶段接管输入 handle；第 1/第 2 个 acquisition 失败和第 1/第 2 个 close 失败均保证其余 handle 继续关闭。若 input cleanup 在 store 构造成功后失败，已构造 store 也确定性关闭。
+- 失败注入覆盖 constructor 的 database dup、directory dup、两 fd 后 audit，factory 的两个 acquisition 位置和两个 close 位置；caller 原 fd 保持有效，所有 partial-owned fd 均已关闭。
+
+### 本轮 Fresh 结果
+
+```text
+pytest -q tests/equipment_deep_research/e2e/test_resume_run.py
+29 passed in 0.77s
+
+pytest -q tests/equipment_deep_research/integration/test_cli_workspace.py
+44 passed in 0.18s
+
+pytest -q tests/equipment_deep_research/integration/test_agent_harness.py
+30 passed in 0.14s
+
+pytest -q tests/equipment_deep_research/unit/test_store_savepoint.py
+44 passed in 0.17s
+
+pytest -q tests/equipment_deep_research/unit/test_secure_artifacts.py
+2 passed in 0.02s
+
+pytest -q tests/equipment_deep_research/e2e/test_resume_run.py \
+  tests/equipment_deep_research/integration/test_cli_workspace.py \
+  tests/equipment_deep_research/integration/test_agent_harness.py \
+  tests/equipment_deep_research/unit/test_store_savepoint.py \
+  tests/equipment_deep_research/unit/test_secure_artifacts.py
+149 passed in 1.04s
+
+pytest -q tests/equipment_deep_research/unit/test_secure_artifacts.py \
+  tests/equipment_deep_research/unit/test_http_transport.py
+29 passed in 0.11s
+
+pytest -q tests/equipment_deep_research/integration/test_agent_harness.py \
+  tests/equipment_deep_research/unit/test_agent_loop.py \
+  tests/equipment_deep_research/unit/test_http_transport.py \
+  tests/equipment_deep_research/unit/test_runtime_types.py
+101 passed in 0.27s
+
+pytest -q
+264 passed in 1.67s
+
+ruff check src/equipment_deep_research tests/equipment_deep_research
+All checks passed!
+
+python -m compileall -q src/equipment_deep_research tests/equipment_deep_research
+exit 0
+
+git diff --check
+exit 0
+```
+
+安全扫描：`journal_mode=WAL` 在 Task 5 源码中无命中，测试中的唯一命中用于构造必须 fail closed 的 legacy-WAL 负向样本；`run.db-wal/shm` 仅命中“必须不存在”的断言；裸 `workspace.database_path.write_bytes` 仅命中 corrupt-DB 负向测试；`sessions_dir.resolve` 仅存在于 workspace-free Harness 兼容分支，runner/recovery 使用 handle 接口。`SqliteRunStore` 的 `dup_database_fd/dup_run_fd` 只存在于统一 factory。
+
+fresh 与 completed-resume CLI smoke 均为 `Status: completed`。resume 后：`objects=14`、`trace=12`、`run_resumed=1`、`wal=False`、`shm=False`、`journal=False`、稳定文件总数 `16`；completed-resume provider E2E 保持 `0`。

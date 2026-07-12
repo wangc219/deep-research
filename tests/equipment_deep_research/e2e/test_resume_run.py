@@ -191,6 +191,8 @@ def test_fresh_run_stays_on_bound_output_root_after_path_replacement(
     assert list((bound_run / "artifacts").glob("*.meta.json"))
     assert (bound_run / "agent_sessions" / f"{AGENTS[0]}.jsonl").is_file()
     assert (bound_run / "checkpoints" / "latest.json").is_file()
+    assert not (bound_run / "run.db-wal").exists()
+    assert not (bound_run / "run.db-shm").exists()
     attack_location = attacker_root if replacement == "symlink" else output_root
     assert [path for path in attack_location.rglob("*") if path.is_file()] == []
 
@@ -584,6 +586,8 @@ def test_resume_reconciliation_stays_on_bound_root_after_open_existing(
     bound_store.close()
     assert (bound_run / "report.md").is_file()
     assert (bound_run / "checkpoints" / "latest.json").is_file()
+    assert not (bound_run / "run.db-wal").exists()
+    assert not (bound_run / "run.db-shm").exists()
     attack_location = attacker_root if replacement == "symlink" else output_root
     assert [path for path in attack_location.rglob("*") if path.is_file()] == []
 

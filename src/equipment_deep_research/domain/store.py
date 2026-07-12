@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from contextlib import ExitStack
 from dataclasses import dataclass
 from datetime import datetime
 from hashlib import sha256
@@ -32,7 +33,7 @@ from equipment_deep_research.domain.proposals import (
     TraceProposal,
     thaw_plain,
 )
-from equipment_deep_research.domain.workspace import path_from_fd
+from equipment_deep_research.domain.workspace import RunWorkspace, path_from_fd
 
 
 class StoreValidationError(ValueError):
@@ -225,6 +226,34 @@ class _ConnectionLease:
 
 
 class SqliteRunStore:
+    @classmethod
+    def for_workspace(
+        cls,
+        workspace: RunWorkspace,
+        *,
+        run_id: str,
+        busy_timeout_ms: int = 5000,
+    ) -> "SqliteRunStore":
+        store: SqliteRunStore | None = None
+        try:
+            with ExitStack() as handles:
+                database_fd = workspace.dup_database_fd()
+                handles.callback(os.close, database_fd)
+                database_dir_fd = workspace.dup_run_fd()
+                handles.callback(os.close, database_dir_fd)
+                store = cls(
+                    workspace.database_path,
+                    run_id=run_id,
+                    busy_timeout_ms=busy_timeout_ms,
+                    database_fd=database_fd,
+                    database_dir_fd=database_dir_fd,
+                )
+            return store
+        except BaseException:
+            if store is not None:
+                store.close()
+            raise
+
     def __init__(
         self,
         path: Path,
@@ -244,52 +273,14 @@ class SqliteRunStore:
         self._database_dir_fd: int | None = None
         self._sqlite_handle_fd: int | None = None
         self._connection: sqlite3.Connection | None = None
-        if database_dir_fd is not None:
-            try:
-                self._database_dir_fd = os.dup(database_dir_fd)
-            except OSError as exc:
-                raise ValueError("database_dir_fd must be open") from exc
-            if not stat.S_ISDIR(os.fstat(self._database_dir_fd).st_mode):
-                self.close()
-                raise ValueError("database_dir_fd must reference a directory")
-        if database_fd is not None:
-            try:
-                self._database_fd = os.dup(database_fd)
-            except OSError as exc:
-                raise ValueError("database_fd must be open") from exc
-            bound_stat = os.fstat(self._database_fd)
-            if not stat.S_ISREG(bound_stat.st_mode):
-                self.close()
-                raise ValueError("database_fd must reference a regular file")
-            try:
-                connection_path = path_from_fd(self._database_fd)
-                current_stat = os.stat(connection_path, follow_symlinks=False)
-            except BaseException:
-                self.close()
-                raise
-            if _file_identity(bound_stat) != _file_identity(current_stat):
-                self.close()
-                raise RuntimeError("bound SQLite file changed before connection")
-            if self._database_dir_fd is not None:
-                directory_stat = os.stat(
-                    self.path.name,
-                    dir_fd=self._database_dir_fd,
-                    follow_symlinks=False,
-                )
-                if _file_identity(bound_stat) != _file_identity(directory_stat):
-                    self.close()
-                    raise RuntimeError("bound SQLite directory does not contain run.db")
-        else:
-            if self.path.is_symlink():
-                raise ValueError("SQLite path must not be a symlink")
-            self.path.parent.mkdir(parents=True, exist_ok=True)
-            if self.path.is_symlink():
-                raise ValueError("SQLite path must not be a symlink")
-            connection_path = self.path
-        descriptors_before = (
-            set(_open_descriptor_stats()) if self._database_fd is not None else set()
-        )
         try:
+            connection_path = self._prepare_connection_path(
+                database_fd=database_fd,
+                database_dir_fd=database_dir_fd,
+            )
+            descriptors_before = (
+                _open_descriptor_stats() if self._database_fd is not None else {}
+            )
             sqlite_target: str | Path = connection_path
             connect_kwargs: dict[str, Any] = {}
             if self._database_fd is not None:
@@ -312,17 +303,80 @@ class SqliteRunStore:
                         descriptors_before=descriptors_before,
                     )
                 except RuntimeError:
-                    if not self._bound_sqlite_sidecars_are_open():
-                        raise
-                    self._sqlite_handle_fd = _duplicate_matching_descriptor(
-                        os.fstat(self._database_fd)
+                    self._sqlite_handle_fd = _duplicate_reused_sqlite_descriptor(
+                        expected=os.fstat(self._database_fd),
+                        descriptors_before=descriptors_before,
+                        connection=self._connection,
                     )
             self._initialize()
-            if self._database_dir_fd is not None:
-                self._audit_sqlite_sidecars()
         except BaseException:
             self.close()
             raise
+
+    def _prepare_connection_path(
+        self,
+        *,
+        database_fd: int | None,
+        database_dir_fd: int | None,
+    ) -> Path:
+        if database_dir_fd is not None and database_fd is None:
+            raise ValueError("database_dir_fd requires database_fd")
+        if database_fd is None:
+            if self.path.is_symlink():
+                raise ValueError("SQLite path must not be a symlink")
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            if self.path.is_symlink():
+                raise ValueError("SQLite path must not be a symlink")
+            return self.path
+        try:
+            self._database_fd = os.dup(database_fd)
+        except OSError as exc:
+            raise ValueError("database_fd must be open") from exc
+        bound_stat = os.fstat(self._database_fd)
+        if not stat.S_ISREG(bound_stat.st_mode):
+            raise ValueError("database_fd must reference a regular file")
+        connection_path = path_from_fd(self._database_fd)
+        current_stat = os.stat(connection_path, follow_symlinks=False)
+        if _file_identity(bound_stat) != _file_identity(current_stat):
+            raise RuntimeError("bound SQLite file changed before connection")
+        if database_dir_fd is not None:
+            try:
+                self._database_dir_fd = os.dup(database_dir_fd)
+            except OSError as exc:
+                raise ValueError("database_dir_fd must be open") from exc
+            if not stat.S_ISDIR(os.fstat(self._database_dir_fd).st_mode):
+                raise ValueError("database_dir_fd must reference a directory")
+        if self._database_dir_fd is not None:
+            directory_stat = os.stat(
+                self.path.name,
+                dir_fd=self._database_dir_fd,
+                follow_symlinks=False,
+            )
+            if _file_identity(bound_stat) != _file_identity(directory_stat):
+                raise RuntimeError("bound SQLite directory does not contain run.db")
+            self._reject_legacy_sqlite_sidecars()
+        return connection_path
+
+    def _reject_legacy_sqlite_sidecars(self) -> None:
+        if self._database_fd is None or self._database_dir_fd is None:
+            return
+        header = os.pread(self._database_fd, 20, 0)
+        if len(header) >= 20 and (header[18] == 2 or header[19] == 2):
+            raise RuntimeError(
+                "legacy WAL SQLite databases require an offline trusted migration"
+            )
+        for suffix in ("-wal", "-shm", "-journal"):
+            try:
+                os.stat(
+                    f"{self.path.name}{suffix}",
+                    dir_fd=self._database_dir_fd,
+                    follow_symlinks=False,
+                )
+            except FileNotFoundError:
+                continue
+            raise RuntimeError(
+                f"legacy SQLite sidecar requires an offline trusted migration: {suffix}"
+            )
 
     def close(self) -> None:
         connection = getattr(self, "_connection", None)
@@ -347,50 +401,6 @@ class SqliteRunStore:
                         os.close(owned_descriptor)
                     except OSError:
                         pass
-
-    def _audit_sqlite_sidecars(self) -> None:
-        directory_fd = self._database_dir_fd
-        if directory_fd is None:
-            return
-        open_identities = {
-            _file_identity(value)
-            for value in _open_descriptor_stats().values()
-            if stat.S_ISREG(value.st_mode)
-        }
-        for suffix in ("-wal", "-shm"):
-            name = f"{self.path.name}{suffix}"
-            try:
-                value = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
-            except FileNotFoundError:
-                continue
-            if not stat.S_ISREG(value.st_mode):
-                raise RuntimeError(f"SQLite sidecar is not a regular file: {name}")
-            if _file_identity(value) not in open_identities:
-                raise RuntimeError(f"SQLite sidecar is not bound to the run directory: {name}")
-
-    def _bound_sqlite_sidecars_are_open(self) -> bool:
-        directory_fd = self._database_dir_fd
-        if directory_fd is None:
-            return False
-        open_identities = {
-            _file_identity(value)
-            for value in _open_descriptor_stats().values()
-            if stat.S_ISREG(value.st_mode)
-        }
-        found = False
-        for suffix in ("-wal", "-shm"):
-            try:
-                value = os.stat(
-                    f"{self.path.name}{suffix}",
-                    dir_fd=directory_fd,
-                    follow_symlinks=False,
-                )
-            except FileNotFoundError:
-                continue
-            found = True
-            if _file_identity(value) not in open_identities:
-                return False
-        return found
 
     def __del__(self) -> None:
         try:
@@ -718,8 +728,10 @@ class SqliteRunStore:
     def _initialize(self) -> None:
         connection = self._connect()
         try:
-            connection.execute("PRAGMA journal_mode=WAL")
-            connection.execute("PRAGMA synchronous=NORMAL")
+            journal_mode = connection.execute("PRAGMA journal_mode=MEMORY").fetchone()[0]
+            if str(journal_mode).lower() != "memory":
+                raise RuntimeError("SQLite memory journal mode is unavailable")
+            connection.execute("PRAGMA synchronous=FULL")
             connection.executescript(
                 """
                 CREATE TABLE IF NOT EXISTS domain_objects (
@@ -781,7 +793,30 @@ class SqliteRunStore:
         if connection is None:
             self._connection_lock.release()
             raise RuntimeError("SQLite store is closed")
+        try:
+            self._verify_bound_database_handles()
+        except BaseException:
+            self._connection_lock.release()
+            raise
         return _ConnectionLease(connection, self._connection_lock)
+
+    def _verify_bound_database_handles(self) -> None:
+        if self._database_fd is None:
+            return
+        if self._sqlite_handle_fd is None:
+            raise RuntimeError("SQLite bound database audit handle is missing")
+        expected = os.fstat(self._database_fd)
+        audited = os.fstat(self._sqlite_handle_fd)
+        if _file_identity(expected) != _file_identity(audited):
+            raise RuntimeError("SQLite bound database handle changed")
+        if self._database_dir_fd is not None:
+            current = os.stat(
+                self.path.name,
+                dir_fd=self._database_dir_fd,
+                follow_symlinks=False,
+            )
+            if _file_identity(expected) != _file_identity(current):
+                raise RuntimeError("SQLite bound database name changed")
 
     def _validate_proposals(
         self,
@@ -1174,23 +1209,48 @@ def _open_descriptor_stats() -> dict[int, os.stat_result]:
 def _duplicate_new_matching_descriptor(
     *,
     expected: os.stat_result,
-    descriptors_before: set[int],
+    descriptors_before: Mapping[int, os.stat_result],
 ) -> int:
     expected_identity = _file_identity(expected)
     for descriptor, value in _open_descriptor_stats().items():
-        if descriptor in descriptors_before:
+        previous = descriptors_before.get(descriptor)
+        if previous is not None and _file_identity(previous) == _file_identity(value):
             continue
         if stat.S_ISREG(value.st_mode) and _file_identity(value) == expected_identity:
             return os.dup(descriptor)
     raise RuntimeError("SQLite did not retain a handle to the bound database file")
 
 
-def _duplicate_matching_descriptor(expected: os.stat_result) -> int:
+def _duplicate_reused_sqlite_descriptor(
+    *,
+    expected: os.stat_result,
+    descriptors_before: Mapping[int, os.stat_result],
+    connection: sqlite3.Connection,
+) -> int:
     expected_identity = _file_identity(expected)
-    for descriptor, value in _open_descriptor_stats().items():
+    current = _open_descriptor_stats()
+    new_regular = [
+        value
+        for descriptor, value in current.items()
+        if stat.S_ISREG(value.st_mode)
+        and (
+            descriptor not in descriptors_before
+            or _file_identity(descriptors_before[descriptor]) != _file_identity(value)
+        )
+    ]
+    if new_regular:
+        raise RuntimeError("SQLite opened a database outside the bound inode")
+    database_rows = connection.execute("PRAGMA database_list").fetchall()
+    if len(database_rows) != 1:
+        raise RuntimeError("SQLite database handle audit is ambiguous")
+    database_path = Path(str(database_rows[0][2]))
+    current_path_stat = os.stat(database_path, follow_symlinks=False)
+    if _file_identity(current_path_stat) != expected_identity:
+        raise RuntimeError("SQLite database path no longer references the bound inode")
+    for descriptor, value in current.items():
         if stat.S_ISREG(value.st_mode) and _file_identity(value) == expected_identity:
             return os.dup(descriptor)
-    raise RuntimeError("SQLite bound database handle disappeared")
+    raise RuntimeError("SQLite reusable database handle disappeared")
 
 
 def _validate_created_at(value: Any) -> str:
