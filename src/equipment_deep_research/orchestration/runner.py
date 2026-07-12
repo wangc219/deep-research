@@ -269,6 +269,7 @@ class DeepResearchRunner:
             source_materials=source_materials,
             session_store_factory=self.session_store_factory,
             workspace=workspace,
+            evidence_governor=self._evidence_governor(),
         )
         resources.bind_scheduler(scheduler)
         reports_by_agent = {report.agent_id: report for report in worker_reports}
@@ -900,17 +901,7 @@ class DeepResearchRunner:
         }
 
     def _evidence_assessments(self, store: DomainStore) -> list[dict[str, Any]]:
-        minimum_score = 0.62
-        if self.evidence_config_path.exists():
-            import yaml
-
-            payload = yaml.safe_load(
-                self.evidence_config_path.read_text(encoding="utf-8")
-            ) or {}
-            minimum_score = float(
-                payload.get("acceptance", {}).get("min_quality_score", minimum_score)
-            )
-        governor = EvidenceGovernor(minimum_score=minimum_score)
+        governor = self._evidence_governor()
         accepted: list[Any] = []
         rows: list[dict[str, Any]] = []
         for evidence in store.evidence.values():
@@ -931,6 +922,25 @@ class DeepResearchRunner:
                 accepted.append(evidence)
             rows.append(to_plain(assessment))
         return rows
+
+    def _evidence_governor(self) -> EvidenceGovernor:
+        if not self.evidence_config_path.exists():
+            return EvidenceGovernor()
+        import yaml
+
+        payload = yaml.safe_load(
+            self.evidence_config_path.read_text(encoding="utf-8")
+        ) or {}
+        return EvidenceGovernor(
+            minimum_score=float(
+                payload.get("acceptance", {}).get("min_quality_score", 0.62)
+            ),
+            weights={
+                str(key): float(value)
+                for key, value in payload.get("weights", {}).items()
+            }
+            or None,
+        )
 
     @staticmethod
     def _result(

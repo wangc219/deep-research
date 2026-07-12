@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 
 from equipment_deep_research.domain.models import EvidenceCard
-from equipment_deep_research.tools.evidence import EvidenceGovernor
+from equipment_deep_research.tools.evidence import EvidenceGovernor, normalize_url
 from equipment_deep_research.tools.search import SearchAggregator, SearchHit, StaticSearchProvider
 
 
@@ -24,3 +24,7 @@ def test_search_aggregates_public_providers_without_domain_allowlist() -> None:
     rows = asyncio.run(SearchAggregator([StaticSearchProvider("a", [hit]), StaticSearchProvider("b", [hit])]).search("test"))
     assert len(rows) == 1
     assert rows[0].provider_names == ["a", "b"]
+
+
+def test_malformed_url_is_stable_governance_input() -> None:
+    assert normalize_url("http://[2001:db8::1/").startswith("invalid:")

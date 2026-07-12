@@ -20,6 +20,7 @@ from equipment_deep_research.harness.context import ContextPackBuilder
 from equipment_deep_research.harness.session import JsonlSessionStore
 from equipment_deep_research.tools.artifacts import SecureArtifactStore
 from equipment_deep_research.tools.materialization import EvidenceMaterializer
+from equipment_deep_research.tools.evidence import EvidenceGovernor
 from equipment_deep_research.domain.messages import AgentExecutionResult, TaskEnvelope
 
 
@@ -51,6 +52,7 @@ class DiscoveryScheduler:
         source_materials: list[dict[str, Any]] | None = None,
         session_store_factory: Callable[[str, Path], Any] | None = None,
         workspace: RunWorkspace | None = None,
+        evidence_governor: EvidenceGovernor | None = None,
     ) -> None:
         self.run_id = run_id
         self.run_dir = run_dir
@@ -82,6 +84,7 @@ class DiscoveryScheduler:
             )
         )
         self.source_materials = source_materials if source_materials is not None else []
+        self.evidence_governor = evidence_governor or EvidenceGovernor()
 
     def close(self) -> None:
         self.materializer.close()
@@ -153,9 +156,27 @@ class DiscoveryScheduler:
             accepted_evidence_ids: list[str] = []
             for evidence in result.evidence:
                 materialized = self.materializer.materialize(evidence, mode=self.mode)
-                self.source_materials.append(materialized.material)
+                assessment = self.evidence_governor.assess(
+                    materialized.evidence,
+                    {
+                        "relevance": 0.85,
+                        "transparency": 0.8 if materialized.evidence.source_location else 0.3,
+                        "freshness": 0.7,
+                        "direct_support": 0.8 if materialized.evidence.excerpt else 0.2,
+                        "extraction_quality": 0.85 if materialized.evidence.artifact_refs else 0.3,
+                    },
+                    existing=list(self.store.evidence.values()),
+                )
+                material = {
+                    **materialized.material,
+                    "evidence_assessment": assessment.__dict__,
+                }
+                self.source_materials.append(material)
                 materialized_refs.extend(materialized.material.get("artifact_refs", []))
-                if materialized.material.get("formal_evidence_allowed", True):
+                if (
+                    materialized.material.get("formal_evidence_allowed", True)
+                    and assessment.decision == "accepted"
+                ):
                     self.store.add_evidence(materialized.evidence)
                     accepted_evidence_ids.append(materialized.evidence.evidence_id)
             packet = result.packet
