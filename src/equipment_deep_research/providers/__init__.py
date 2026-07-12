@@ -7,6 +7,8 @@ from equipment_deep_research.providers.base import (
     ProviderStreamEvent,
     ProviderToolCall,
 )
+from equipment_deep_research.providers.fake import ScriptedFakeProvider
+from equipment_deep_research.providers.registry import ProviderConfigurationError, ProviderRegistry
 
 __all__ = [
     "ModelMessage",
@@ -14,4 +16,7 @@ __all__ = [
     "ProviderFinalTurn",
     "ProviderStreamEvent",
     "ProviderToolCall",
+    "ProviderConfigurationError",
+    "ProviderRegistry",
+    "ScriptedFakeProvider",
 ]
