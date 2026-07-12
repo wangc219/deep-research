@@ -1365,6 +1365,7 @@ def test_parent_cancellation_is_bounded_for_resistant_early_listener(
         listener_finished = asyncio.Event()
         immediate_mutation_blocked = asyncio.Event()
         mutation_blocked = asyncio.Event()
+        child_mutation_blocked = asyncio.Event()
         second_turn_started = asyncio.Event()
         provider_gate = asyncio.Event()
         unhandled: list[dict[str, Any]] = []
@@ -1404,6 +1405,15 @@ def test_parent_cancellation_is_bounded_for_resistant_early_listener(
                     harness.set_next_turn_tools(["immediate-listener-tool"])
                 except RuntimeError:
                     immediate_mutation_blocked.set()
+
+                async def late_child() -> None:
+                    await release_listener.wait()
+                    try:
+                        harness.set_next_turn_tools(["late-child-tool"])
+                    except RuntimeError:
+                        child_mutation_blocked.set()
+
+                asyncio.create_task(late_child())
                 await release_listener.wait()
             try:
                 harness.set_next_turn_tools(["late-listener-tool"])
@@ -1454,6 +1464,7 @@ def test_parent_cancellation_is_bounded_for_resistant_early_listener(
             await asyncio.wait_for(listener_finished.wait(), timeout=1)
             await asyncio.sleep(0)
             assert mutation_blocked.is_set()
+            assert child_mutation_blocked.is_set()
             provider_gate.set()
             second_result = await second_execution
             assert second_result.status == "completed"

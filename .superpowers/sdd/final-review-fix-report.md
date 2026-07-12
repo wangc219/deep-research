@@ -327,3 +327,10 @@ Status: completed
 
 - 无阻断关注点。
 - runtime sequence 分配与 RuntimeEvent payload 的持久化仍是两个不同合同：本轮保证 durable high-water 和无重复分配，不新增 RuntimeEvent 表或 SSE replay 存储。
+
+## Phase 1 快速最终收尾
+
+- 监听器 execution capability 改为 `ContextVar` 传播：监听器派生的子任务会继承原 execution identity；原 execution 结束后，该 identity 与当前 active execution 不一致，`set_next_turn_tools()` 必须拒绝，因此 quarantine 隔离对派生任务同样有效。
+- `TECHNICAL_SCHEME.md` 与 `ACCEPTANCE.md` 已明确 SQLite 共五张表，并将 RuntimeEvent sequence 权威改为独立 `runtime_event_state` 原子分配，不再以 TraceEvent sequence 充当持续权威。
+- 定向回归：`4 passed in 0.32s`。
+- 最终全量：`285 passed in 2.26s`；全范围 Ruff `All checks passed!`；compileall、`git diff --check` 均为 exit 0；旧 Codex CLI/动态 shell 调用扫描无命中。

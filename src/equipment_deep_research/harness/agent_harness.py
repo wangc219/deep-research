@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Awaitable, Callable, Mapping, Sequence
+from contextvars import ContextVar
 from hashlib import sha256
 import inspect
 import json
@@ -58,6 +59,10 @@ _CANCELLED_LISTENER_TASKS: set[asyncio.Task[BaseException | None]] = set()
 _QUARANTINED_LISTENER_TASKS: set[
     asyncio.Task[BaseException | None]
 ] = set()
+_LISTENER_EXECUTION_ID: ContextVar[str | None] = ContextVar(
+    "equipment_dr_listener_execution_id",
+    default=None,
+)
 _OBJECT_ID_FIELDS = {
     "ResearchProblem": "problem_id",
     "EvidenceCard": "evidence_id",
@@ -128,6 +133,7 @@ class AgentHarness:
         self._async_listener_errors: list[dict[str, Any]] = []
         self._next_turn_tools: tuple[str, ...] | None = None
         self._executing = False
+        self._active_execution_id: str | None = None
         self.last_session_store: JsonlSessionStore | None = None
         self.last_session_path: Path | None = None
         if on_event is not None:
@@ -163,20 +169,26 @@ class AgentHarness:
         if len(names) != len(set(names)):
             raise ValueError("next-turn tool names must be unique")
         with self._state_lock:
-            if _current_listener_task_is_blocked():
+            listener_execution_id = _LISTENER_EXECUTION_ID.get()
+            if _current_listener_task_is_blocked() or (
+                listener_execution_id is not None
+                and listener_execution_id != self._active_execution_id
+            ):
                 raise RuntimeError("cancelled listener cannot mutate harness state")
             self._next_turn_tools = names
 
     async def execute(self, task: TaskEnvelope) -> AgentExecutionResult:
         if not isinstance(task, TaskEnvelope):
             raise TypeError("task must be a TaskEnvelope")
-        self._begin_execution()
         execution_id = new_stable_id("execution")
+        self._begin_execution(execution_id)
+        listener_context_token = _LISTENER_EXECUTION_ID.set(execution_id)
         session_ref = f"{execution_id}.jsonl"
         try:
             session = self._open_session_store(session_ref)
         except BaseException:
-            self._end_execution()
+            self._end_execution(execution_id)
+            _LISTENER_EXECUTION_ID.reset(listener_context_token)
             raise
         self.last_session_store = None
         self.last_session_path = session.path
@@ -729,7 +741,8 @@ class AgentHarness:
                     close()
             finally:
                 self.last_session_store = None
-                self._end_execution()
+                self._end_execution(execution_id)
+                _LISTENER_EXECUTION_ID.reset(listener_context_token)
 
     async def _publish_external(self, event: RuntimeEvent) -> None:
         published_event = self.event_bus.publish(event)
@@ -922,15 +935,19 @@ class AgentHarness:
             self._next_turn_tools = None
             return value
 
-    def _begin_execution(self) -> None:
+    def _begin_execution(self, execution_id: str) -> None:
         with self._state_lock:
             if self._executing:
                 raise RuntimeError("AgentHarness.execute does not support concurrent tasks")
             self._executing = True
+            self._active_execution_id = execution_id
 
-    def _end_execution(self) -> None:
+    def _end_execution(self, execution_id: str) -> None:
         with self._state_lock:
+            if self._active_execution_id != execution_id:
+                raise RuntimeError("execution identity changed before cleanup")
             self._executing = False
+            self._active_execution_id = None
             self._next_turn_tools = None
 
 

@@ -67,7 +67,7 @@ Phase 0 已验证公开材料化安全与失败隔离；配置驱动的质量评
 - `agent_sessions/`
 - `artifacts/`
 
-每个新运行同时创建 `run.db` 与 `checkpoints/`。SQLite 使用 `domain_objects`、`trace_events`、`savepoints`、`proposal_ledger` 四张表；每个 agent 完成后将新增 evidence、packet、trace 和最新 `RunCheckpoint` 原子提交。`checkpoints/` 保存对应快照与 `latest.json`，SQLite 是恢复权威来源。
+每个新运行同时创建 `run.db` 与 `checkpoints/`。SQLite 使用 `domain_objects`、`trace_events`、`savepoints`、`proposal_ledger`、`runtime_event_state` 五张表；每个 agent 完成后将新增 evidence、packet、trace 和最新 `RunCheckpoint` 原子提交，`runtime_event_state` 独立保存每个 run 的 RuntimeEvent sequence 高水位。`checkpoints/` 保存对应快照与 `latest.json`，SQLite 是恢复权威来源。
 
 `RunWorkspace.open_existing()` 在 resume 前验证 run 目录、`agent_sessions/`、`artifacts/`、`checkpoints/` 和 `run.db` 均位于输出根内，拒绝顶层 symlink 和路径逃逸。`resume=False` 仍原子拒绝同名目录。
 
@@ -86,7 +86,7 @@ Phase 0 已验证公开材料化安全与失败隔离；配置驱动的质量评
 - completed resume 提交 `run_resumed` 后无条件从 SQLite 恢复态重写稳定输出，provider 为 0，文件 trace 与数据库 trace 一致。
 - 崩溃继续向调用方传播，但此前已提交的 agent 状态可用于下一次恢复。
 - `AgentLoop` 并发执行同轮工具并按 call 顺序投影结果。timeout、外部取消或 sibling failure 先取消并在短 grace 内 drain；仍抑制 `CancelledError` 的进程内 task 被 quarantine，异常由 done callback 消费。Harness execution gate 在取消发起时关闭，阻止迟到 callback、后续工具启动、session/proposal/savepoint/domain/event 写入。已经开始执行的不合作代码可能继续产生 harness 之外的副作用，强制终止需要进程/worker 隔离。
-- EventBus sequence 以 SQLite `last_trace_sequence()` 为权威下界：execution 开始和每次成功 trace commit 后 reseed，只前移不回退，因此新 bus、恢复和单次提交大量 trace 都不会让后续 RuntimeEvent sequence 落后。
+- EventBus sequence 由 SQLite `runtime_event_state` 独立、原子分配，和 TraceEvent sequence 分开管理；新 bus、并发 publish 与恢复均从持久高水位继续。旧数据库首次使用时可由既有 trace 高水位初始化，但后续 trace 提交不再重置 RuntimeEvent 高水位。
 - 威胁与耐久性边界固定为当前 UID 控制、非 shared-writable 的 trusted root；不声称抵御恶意同 UID 进程在私有 namespace 中持续竞速 `mkdir`/`open`。运行权威是单一持久 SQLite connection 的 committed state；MEMORY journal/no-sidecar 仅保留已测事务与 resume 语义，不等同 WAL 的 process-kill 或 power-loss durability。
 
 ### 2.7 审计与限制呈现

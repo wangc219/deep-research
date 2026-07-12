@@ -176,9 +176,11 @@ python3 -m pytest -q tests/equipment_deep_research/integration/test_cli_workspac
 45 passed in 0.24s
 
 python3 -m pytest -q
-278 passed in 1.98s
+285 passed in 2.26s
 ```
 
 Scoped Ruff returned `All checks passed!`; `python3 -m compileall -q src/equipment_deep_research tests` and `git diff --check` returned zero output with exit 0. The local source security scan found no dynamic execution, shell subprocess, unsafe YAML/pickle, or TLS-verification bypass API. `codex --help` completed, while `codex review --uncommitted` could not run in the workspace sandbox because it requires external-service access to uncommitted code; this is the remaining verification limitation.
 
 Fresh and completed-resume CLI smoke used private workspace-local `tmp/phase-1-final-review-smoke`. Both returned `Status: completed`; the resumed checkpoint was `completed` with `resume_count=1`, SQLite trace counts included `run_resumed=1` and `baseline_agent_completed=4`, all seven stable artifacts plus `run.db` and checkpoints existed, and no `run.db-wal`, `run.db-shm`, or rollback-journal sidecar existed.
+
+最终快速收尾复审补充验证：监听器派生子任务继承 execution capability，原 execution 结束后即使新 execution 已开始，也不能调用 `set_next_turn_tools()` 修改后续轮次；技术方案和验收说明已同步 `runtime_event_state` 独立权威高水位合同。定向 4 项回归通过，全量仍为 `285 passed`，全范围 Ruff、compileall 与 `git diff --check` 通过。

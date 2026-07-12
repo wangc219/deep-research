@@ -60,7 +60,7 @@
 - report/json/domain/trace/checkpoint/artifact 叶子必须从持有 fd 的 rooted dirfd writer 开始；SQLite 必须使用安全 DB fd 绑定的持久连接。替换 output root、run dir 或子目录为 symlink/普通目录时，只允许写原绑定 inode 或 fail closed。该结论适用于当前 UID 拥有、非 group/world writable 的私有 output root 及已测试抢占/rename race，不扩张为抵御持续操纵同 UID namespace 的恶意本机进程。
 - 安全 workspace SQLite 必须使用 `journal_mode=MEMORY`、`synchronous=FULL`，不得创建 `run.db-wal`、`run.db-shm` 或 rollback-journal sidecar；legacy sidecar/WAL header 必须要求离线可信迁移并在修改数据库前拒绝。验收仅覆盖事务、进程内 crash 注入和 committed-savepoint resume，不宣称 WAL 等价的掉电/kill durability。
 - AgentHarness timeout、外部取消和工具 sibling failure 必须在有界时间返回；不合作的进程内 task 可被 quarantine，但其迟到 callback/result 不得继续写 session、proposal、savepoint、domain state 或 RuntimeEvent，异常必须被消费且不得产生 unhandled-task warning。已经开始的任意外部副作用不在 asyncio 可撤销保证内，强终止要求进程或远程 worker 隔离。
-- Harness 拥有的 execution/reconciliation session fd 必须在成功、失败、权限拒绝和取消路径关闭；session path lock registry 必须在最后 owner 关闭后回收。EventBus 必须以权威 persisted trace sequence 为下界，并在每次 trace commit 后继续前移。
+- Harness 拥有的 execution/reconciliation session fd 必须在成功、失败、权限拒绝和取消路径关闭；session path lock registry 必须在最后 owner 关闭后回收。EventBus 必须通过 SQLite `runtime_event_state` 独立、原子分配每个 run 的 RuntimeEvent sequence，高水位不得与 TraceEvent sequence 混用；新 bus、并发 publish 与恢复不得重复或回退。
 - 缺少可选 `providers.yaml` / `evidence.yaml` 的最小自定义 `project_root` 必须可运行 fake mode；这些文件的缺失/出现状态属于配置指纹，resume 不得静默接受变化。
 - trusted root 的验收前提是当前 UID 控制且非 shared-writable；不把该前提扩张为抵御恶意同 UID 进程持续竞速 `mkdir`/`open`。SQLite authority 是单一持久 connection 的 committed state；`journal_mode=MEMORY`/no-sidecar 不验收任何 WAL 等价的 process-kill 或 power-loss durability。
 - 正常结果必须返回 `status=completed`，并保持七类稳定产物不变。
