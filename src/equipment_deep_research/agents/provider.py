@@ -8,6 +8,7 @@ from typing import Any, Protocol
 from equipment_deep_research.agents.registry import AgentDef
 from equipment_deep_research.domain.models import BaselineFindingPacket, EvidenceCard
 from equipment_deep_research.providers.base import ModelMessage, ModelProvider
+from equipment_deep_research.agents.prompts import BaselinePromptBuilder
 
 
 @dataclass(frozen=True)
@@ -158,14 +159,16 @@ class ResponsesAgentProvider:
             "findings": ["string"], "confidence": "0..1",
             "open_questions": ["string"], "handoff_summary": "string",
         }
+        prompt = BaselinePromptBuilder().build(
+            agent=request.agent,
+            route=request.research_route,
+            task={"topic": request.topic},
+            context=request.context,
+        )
         messages = [
             ModelMessage("system", "你是受限的研究子智能体。不要虚构来源或证据 URL，只输出 JSON。"),
             ModelMessage("user", {
-                "agent": request.agent.display_name,
-                "capability_tags": request.agent.capability_tags,
-                "topic": request.topic,
-                "route": request.research_route,
-                "context": request.context,
+                "assignment": prompt,
                 "output_schema": schema,
             }),
         ]

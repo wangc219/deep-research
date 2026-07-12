@@ -4,6 +4,9 @@ agents:
     display_name: 国际形势
     description: 研判国际形势、潜在威胁力量、战略格局和对手动向。
     capability_tags: [situation, threat, strategy]
+    output_contract:
+      name: baseline_finding_packet
+      properties: [situation_assessment, threat_assessment, strategic_pattern, opponent_moves]
     tools: [search_sources, fetch_page, create_evidence_card]
     context_policy:
       visible_sections: [task, evidence_policy, own_checkpoint, recall_request]
@@ -15,6 +18,9 @@ agents:
     display_name: 作战场景
     description: 构建作战场景框架、敌方方案、关键时间节点和地形环境约束。
     capability_tags: [scenario, coa, environment]
+    output_contract:
+      name: baseline_finding_packet
+      properties: [scenario_framework, enemy_coa, critical_timeline, environment_constraints]
     tools: [search_sources, fetch_page, create_evidence_card]
     context_policy:
       visible_sections: [task, evidence_policy, own_checkpoint, recall_request]
@@ -26,6 +32,9 @@ agents:
     display_name: 武器装备
     description: 分析现有装备参数、在研型号、技术成熟度和能力约束。
     capability_tags: [equipment, capability_gap, technology_readiness]
+    output_contract:
+      name: baseline_finding_packet
+      properties: [current_parameters, development_models, technology_readiness, capability_constraints]
     tools: [search_sources, fetch_page, create_evidence_card]
     context_policy:
       visible_sections: [task, evidence_policy, own_checkpoint, recall_request]
@@ -37,6 +46,9 @@ agents:
     display_name: 作战运用
     description: 分析作战约束、兵力协同、COA和经验教训。
     capability_tags: [operation, coordination, lessons]
+    output_contract:
+      name: baseline_finding_packet
+      properties: [operational_constraints, force_coordination, coa, lessons]
     tools: [search_sources, fetch_page, create_evidence_card]
     context_policy:
       visible_sections: [task, evidence_policy, own_checkpoint, recall_request]
