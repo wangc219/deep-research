@@ -44,6 +44,10 @@ load_dotenv_defaults() {
 load_dotenv_defaults
 
 PYTHON_BIN="${EQUIPMENT_DR_PYTHON_BIN:-python3}"
+if ! "$PYTHON_BIN" -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 11) else 1)' >/dev/null 2>&1; then
+  echo "项目要求 Python 3.11+；可通过 EQUIPMENT_DR_PYTHON_BIN 指定兼容解释器。" >&2
+  exit 1
+fi
 if ! "$PYTHON_BIN" -c 'import uvicorn' >/dev/null 2>&1; then
   if command -v python >/dev/null 2>&1 \
     && python -c 'import uvicorn' >/dev/null 2>&1; then

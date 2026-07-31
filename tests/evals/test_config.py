@@ -18,7 +18,7 @@ def test_real_baseline_config_is_valid_and_keeps_secrets_hidden(monkeypatch) -> 
     monkeypatch.setenv("EQUIPMENT_EVAL_DASHSCOPE_API_KEY", "dashscope-secret")
     monkeypatch.setenv(
         "EQUIPMENT_EVAL_ZHIPU_BASE_URL",
-        "https://yunwu.ai/v1",
+        "https://open.bigmodel.cn/api/paas/v4",
     )
     monkeypatch.setenv("EQUIPMENT_EVAL_ZHIPU_API_KEY", "zhipu-secret")
     config = load_eval_config(ROOT / "evals" / "config.yaml", project_root=ROOT)

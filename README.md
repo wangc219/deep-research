@@ -27,6 +27,38 @@ Real 模式提供两种 Agent 接入：`codex` 表示 Codex CLI 作为架构 Age
 
 ## 快速运行
 
+### 环境准备
+
+- Python 3.11+（容器运行时使用 Python 3.12）
+- Node.js 22+ 与 npm 10+
+- 如需真实 Agent 执行，还需要 Codex CLI；仅运行 `fake` 模式和测试时不需要 API 密钥
+
+首次 clone 后安装依赖：
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+npm ci --prefix apps/web
+```
+
+macOS 自带的 Python 3.9 不满足项目版本要求。可将 Python 3.11+ 的解释器显式传给启动脚本：
+
+```bash
+EQUIPMENT_DR_PYTHON_BIN=/path/to/python3.12 ./scripts/start-local.sh
+```
+
+不希望安装本地运行时依赖时，可直接使用 Docker：
+
+```bash
+docker compose up --build
+```
+
+Web 默认地址为 `http://127.0.0.1:8080`。
+
+### CLI 烟测
+
 ```bash
 python3 scripts/run_deep_research.py \
   --mode fake \
