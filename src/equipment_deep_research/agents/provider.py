@@ -29,6 +29,7 @@ from equipment_deep_research.domain.models import (
     SpecialistTask,
     WinningAgentInstance,
     WinningContribution,
+    WinningExpertAssessment,
     WinningHypothesis,
     to_plain,
 )
@@ -399,6 +400,8 @@ class ResponsesAgentProvider:
         self._run_started_at = monotonic()
         self._budget_started_calls = 0
         self._budget_started_delivery_calls = 0
+        self._budget_started_swarm_calls = 0
+        self._budget_started_quality_judge_calls = 0
         self._search_batches_started = 0
         self._last_report_quality_issues: list[str] = []
         self._latest_report_draft = ""
@@ -412,6 +415,8 @@ class ResponsesAgentProvider:
             self._run_started_at = monotonic()
             self._budget_started_calls = 0
             self._budget_started_delivery_calls = 0
+            self._budget_started_swarm_calls = 0
+            self._budget_started_quality_judge_calls = 0
             self._search_batches_started = 0
         if budgets:
             self._call_gate.cap_concurrency(
@@ -427,6 +432,15 @@ class ResponsesAgentProvider:
                     "enabled": False,
                     "mode": "normal",
                     "elapsed_seconds": 0.0,
+                    "remaining_seconds": None,
+                }
+            if not bool(
+                self._runtime_budgets.get("wall_clock_deadlines_enabled", True)
+            ):
+                return {
+                    "enabled": False,
+                    "mode": "normal",
+                    "elapsed_seconds": monotonic() - self._run_started_at,
                     "remaining_seconds": None,
                 }
             elapsed = monotonic() - self._run_started_at
@@ -579,6 +593,9 @@ class ResponsesAgentProvider:
             if not self._runtime_budgets:
                 return None
             elapsed = monotonic() - self._run_started_at
+            wall_clock_deadlines_enabled = bool(
+                self._runtime_budgets.get("wall_clock_deadlines_enabled", True)
+            )
             hard_deadline = float(
                 self._runtime_budgets.get("hard_deadline_seconds", 900)
             )
@@ -596,6 +613,50 @@ class ResponsesAgentProvider:
             soft_calls = int(
                 self._runtime_budgets.get("maximum_model_calls", 7)
             )
+            if priority == "swarm":
+                swarm_calls = int(
+                    self._runtime_budgets.get("maximum_swarm_model_calls", 16)
+                )
+                if wall_clock_deadlines_enabled and elapsed >= hard_deadline:
+                    raise RuntimeError("Harness v2 swarm deadline reached")
+                if (
+                    count_toward_model_budget
+                    and self._budget_started_swarm_calls >= swarm_calls
+                ):
+                    raise RuntimeError(
+                        "Harness v2 swarm model-call budget exhausted"
+                    )
+                if count_toward_model_budget:
+                    self._budget_started_swarm_calls += 1
+                return (
+                    max(0.1, hard_deadline - elapsed)
+                    if wall_clock_deadlines_enabled
+                    else None
+                )
+            if priority == "quality_gate":
+                quality_calls = int(
+                    self._runtime_budgets.get(
+                        "maximum_quality_judge_model_calls", 1
+                    )
+                )
+                if wall_clock_deadlines_enabled and elapsed >= hard_deadline:
+                    raise RuntimeError(
+                        "Harness v2 quality-judge deadline reached"
+                    )
+                if (
+                    count_toward_model_budget
+                    and self._budget_started_quality_judge_calls >= quality_calls
+                ):
+                    raise RuntimeError(
+                        "Harness v2 quality-judge model-call budget exhausted"
+                    )
+                if count_toward_model_budget:
+                    self._budget_started_quality_judge_calls += 1
+                return (
+                    max(0.1, hard_deadline - elapsed)
+                    if wall_clock_deadlines_enabled
+                    else None
+                )
             if priority == "delivery":
                 delivery_grace = float(
                     self._runtime_budgets.get("delivery_grace_seconds", 300)
@@ -607,7 +668,7 @@ class ResponsesAgentProvider:
                 delivery_calls = int(
                     self._runtime_budgets.get("maximum_delivery_model_calls", 4)
                 )
-                if elapsed >= delivery_deadline:
+                if wall_clock_deadlines_enabled and elapsed >= delivery_deadline:
                     raise RuntimeError(
                         "Harness v2 delivery deadline reached; report model call may not start"
                     )
@@ -620,6 +681,8 @@ class ResponsesAgentProvider:
                     )
                 if count_toward_model_budget:
                     self._budget_started_delivery_calls += 1
+                if not wall_clock_deadlines_enabled:
+                    return None
                 remaining = max(0.1, delivery_deadline - elapsed)
                 retry_reserve = max(
                     0.0,
@@ -640,7 +703,7 @@ class ResponsesAgentProvider:
                 ):
                     remaining -= retry_reserve
                 return max(0.1, remaining)
-            if elapsed >= hard_deadline:
+            if wall_clock_deadlines_enabled and elapsed >= hard_deadline:
                 if priority != "critical":
                     raise RuntimeError(
                         "Harness v2 hard deadline reached; no new model call may start"
@@ -666,11 +729,17 @@ class ResponsesAgentProvider:
             if count_toward_model_budget and self._budget_started_calls >= hard_calls:
                 raise RuntimeError("Harness v2 model-call hard budget exhausted")
             if count_toward_model_budget and priority != "critical" and (
-                elapsed >= soft_deadline or self._budget_started_calls >= soft_calls
+                (
+                    wall_clock_deadlines_enabled
+                    and elapsed >= soft_deadline
+                )
+                or self._budget_started_calls >= soft_calls
             ):
                 raise RuntimeError("Harness v2 soft budget reached; optional model call skipped")
             if count_toward_model_budget:
                 self._budget_started_calls += 1
+            if not wall_clock_deadlines_enabled:
+                return None
             active_deadline = (
                 critical_fast_deadline
                 if priority == "critical" and elapsed >= hard_deadline
@@ -1038,6 +1107,25 @@ class ResponsesAgentProvider:
         reporter_agent = self.agent_definitions.get("reporter")
         reporter_input = _reporter_generation_payload(payload, reporter_agent)
         output_token_budget = _reporter_output_token_budget(payload, default=12000)
+        if (
+            str(payload.get("execution_profile_id", ""))
+            == "winning_swarm_dynamic_v2"
+            and os.environ.get("EQUIPMENT_DR_PARALLEL_REPORTER", "1") != "0"
+        ):
+            try:
+                return self._draft_parallel_report(
+                    payload,
+                    reporter_input=reporter_input,
+                    output_token_budget=output_token_budget,
+                    timeout_seconds=min(timeout_seconds, 300.0),
+                )
+            except (TimeoutError, ProviderRequestError, ValueError, RuntimeError) as exc:
+                # Dynamic v2 must not reintroduce a four-to-five-minute serial
+                # tail after its parallel layers finish.  Preserve the best
+                # assembled layer draft and deterministically complete the
+                # delivery contract instead of launching a full monolithic
+                # Reporter retry.
+                return self._limited_report_delivery(payload, failure=exc)
         try:
             return self._draft_report_attempt(
                 payload,
@@ -1091,6 +1179,104 @@ class ResponsesAgentProvider:
                     payload,
                     failure=retry_exc,
                 )
+
+    def _draft_parallel_report(
+        self,
+        payload: Mapping[str, Any],
+        *,
+        reporter_input: dict[str, Any],
+        output_token_budget: int,
+        timeout_seconds: float,
+    ) -> str:
+        """Generate the three canonical report layers concurrently."""
+
+        sections = (
+            (
+                "layer_1_demand",
+                "第一层：需求挖掘层",
+                ["① 需求研判", "② 制胜机理", "③ 装备能力需求"],
+            ),
+            (
+                "layer_2_technology",
+                "第二层：技术攻关层",
+                ["④ 能力实现途径", "⑤ 核心技术", "⑥ 技术耦合与风险"],
+            ),
+            (
+                "layer_3_portfolio",
+                "第三层：能力图像与效能贡献层",
+                ["⑦ 装备能力图像", "⑧ 效能贡献", "⑨ 发展抓手"],
+            ),
+        )
+        per_layer_tokens = min(
+            4200,
+            max(3200, int(output_token_budget / len(sections)) + 200),
+        )
+
+        async def generate_layers() -> list[str]:
+            calls = []
+            for layer_id, h2, h3s in sections:
+                layer_input = dict(reporter_input)
+                layer_input["parallel_section_contract"] = {
+                    "layer_id": layer_id,
+                    "required_h2": h2,
+                    "required_h3": h3s,
+                    "output_scope": "only_assigned_layer",
+                    "no_h1": True,
+                    "standalone_complete_prose": True,
+                    "cross_layer_repetition_forbidden": True,
+                    "source_index": (
+                        "append_after_layer" if layer_id == "layer_3_portfolio" else "omit"
+                    ),
+                }
+                system = (
+                    _report_writer_system_prompt(payload)
+                    + f"\n你是并行Reporter分片 {layer_id}。只输出二级标题“{h2}”及其三个指定三级标题："
+                    + "、".join(h3s)
+                    + "。不得输出其他层、总标题、前言或过程说明。每个判断必须完整、可独立拼接，"
+                    "避免复述其他层；第三层负责附加核心公开来源索引。"
+                )
+                calls.append(
+                    asyncio.wait_for(
+                        self._run_reporter_text(
+                        system,
+                        layer_input,
+                        per_layer_tokens,
+                        phase=f"report_generation_{layer_id}",
+                        run_id=str(payload.get("run_id", "")),
+                            isolation_id=f"{payload.get('run_id', 'run')}:{layer_id}",
+                        ),
+                        timeout=timeout_seconds,
+                    )
+                )
+            results = await asyncio.gather(*calls, return_exceptions=True)
+            return [
+                item if isinstance(item, str) else ""
+                for item in results
+            ]
+
+        layer_texts = asyncio.run(generate_layers())
+        merged = "\n\n".join(
+            _sanitize_reporter_output(_normalize_report_summary(item))
+            for item in layer_texts
+            if str(item).strip()
+        )
+        normalized = _stabilize_report_delivery_contract(
+            _normalize_report_structure_deterministically(
+                _normalize_branch_report_labels(merged, payload)
+            ),
+            payload,
+        )
+        self._latest_report_draft = normalized
+        quality_issues = _report_draft_quality_issues(normalized, payload)
+        blocking = _report_delivery_blocking_issues(quality_issues)
+        if blocking or not _minimum_viable_model_report(normalized, payload):
+            self._last_report_quality_issues = list(quality_issues)
+            raise ValueError(
+                "parallel Reporter assembly is not reviewable: "
+                + "；".join((blocking or quality_issues)[:8])
+            )
+        self._last_report_quality_issues = list(quality_issues)
+        return normalized
 
     def _limited_report_delivery(
         self,
@@ -1288,17 +1474,22 @@ class ResponsesAgentProvider:
         *,
         phase: str,
         run_id: str = "",
+        isolation_id: str = "",
     ) -> str:
         """Run Reporter in a fresh minimal Codex context without agent runtime."""
 
-        del max_output_tokens
         # Reporter is a delivery-quality boundary, not a deadline relief valve.
         # Keep this invariant local to the actual provider call so a future
         # caller, legacy phase name (including fast_finalize/timeout_retry),
         # registry override, or global Codex performance profile cannot silently
         # lower report reasoning depth or truncate the output allowance.
-        configured_effort = "xhigh"
-        configured_max_tokens = 12000
+        parallel_layer = "_layer_" in phase
+        configured_effort = "medium" if parallel_layer else "xhigh"
+        configured_max_tokens = (
+            min(12000, max(1800, int(max_output_tokens)))
+            if parallel_layer
+            else 12000
+        )
         options = _apply_codex_performance_options(
             {
                 "reasoning_effort": _phase_reasoning_effort(
@@ -1313,7 +1504,7 @@ class ResponsesAgentProvider:
             quality_critical=True,
         )
         text, metadata = await self._collect_stream(
-            self._provider_for("reporter"),
+            self._provider_for("reporter", isolation_id=isolation_id),
             [
                 ModelMessage("system", system),
                 ModelMessage("user", payload),
@@ -4584,7 +4775,10 @@ class ResponsesAgentProvider:
             ) -> set[str]:
                 if item.hypothesis_id:
                     return {item.hypothesis_id}
-                if item.mission_node == "S6" and ledger_snapshot is not None:
+                if (
+                    item.archetype == "independent_portfolio_reviewer"
+                    and ledger_snapshot is not None
+                ):
                     return {
                         hypothesis.hypothesis_id
                         for hypothesis in ledger_snapshot.hypotheses
@@ -4595,6 +4789,555 @@ class ResponsesAgentProvider:
                     for hypothesis_id in instance_hypothesis_ids.get(
                         dependency, set()
                     )
+                }
+
+            async def execute_quality_expert_judge(
+                ledger_snapshot: HypothesisLedgerVersion,
+            ) -> tuple[dict[str, WinningExpertAssessment], dict[str, Any]]:
+                """Run one isolated, read-only Codex CLI blind review.
+
+                The judge cannot contribute to or rewrite a hypothesis.  It
+                receives no producer identity, prior score or selection status;
+                its normalized dimensions become the portfolio objectives.
+                """
+
+                if not swarm_controller.policy.get("expert_judge_enabled"):
+                    return {}, {"status": "disabled", "assessments": []}
+                spec = SWARM_SPECIALIST_ARCHETYPES["quality_expert_judge"]
+                contract = swarm_controller.govern_role_contract(
+                    {"archetype": "quality_expert_judge", **spec},
+                    mission_node="convergence",
+                )
+                instance_id = (
+                    "winning-quality-judge-"
+                    + sha256(
+                        f"{graph.graph_id}:{ledger_snapshot.version}".encode()
+                    ).hexdigest()[:16]
+                )
+                task = SpecialistTask(
+                    task_id=instance_id,
+                    agent_instance_id=instance_id,
+                    archetype="quality_expert_judge",
+                    display_name=contract.display_name,
+                    wave=max((item.wave for item in graph.agent_instances), default=0) + 1,
+                    purpose=contract.purpose,
+                    merge_target="convergence",
+                    expected_quality_gain=0.0,
+                    max_output_tokens=3600,
+                    allow_child_spawn=False,
+                )
+                runtime_agent_id = "winning_quality_expert_judge"
+                scoped_provider = self._provider_for(
+                    runtime_agent_id, isolation_id=instance_id
+                )
+                runtime_contract = _swarm_runtime_audit_contract(
+                    task,
+                    getattr(scoped_provider, "snapshot", lambda: {})(),
+                    runtime_agent_id=runtime_agent_id,
+                    session_ref=_swarm_session_ref(task),
+                )
+                ordered = sorted(
+                    ledger_snapshot.hypotheses,
+                    key=lambda item: sha256(
+                        f"{graph.graph_id}:{item.hypothesis_id}".encode()
+                    ).hexdigest(),
+                )
+                label_map = {
+                    f"候选-{index:02d}": item
+                    for index, item in enumerate(ordered, start=1)
+                }
+                blind_candidates = []
+                for blind_label, item in label_map.items():
+                    blind_candidates.append(
+                        {
+                            "blind_label": blind_label,
+                            "title": item.title,
+                            "nearest_public_baseline": item.nearest_public_baseline,
+                            "changed_confrontation_variable": item.changed_confrontation_variable,
+                            "mechanism_chain": list(item.mechanism_chain),
+                            "direct_military_effects": list(item.direct_military_effects),
+                            "equipment_forms": list(item.equipment_forms),
+                            "novelty_delta": item.novelty_delta,
+                            "evidence_ids": list(item.evidence_ids),
+                            "evidence_boundary": item.evidence_boundary,
+                            "counterevidence": list(item.counterevidence),
+                            "adversary_adaptations": list(item.adversary_adaptations),
+                            "failure_boundaries": list(item.failure_boundaries),
+                            "trl_constraints": list(item.trl_constraints),
+                            "cost_constraints": list(item.cost_constraints),
+                            "industrial_constraints": list(item.industrial_constraints),
+                            "cross_scenario_results": list(item.cross_scenario_results),
+                            "validation_plan": list(item.validation_plan),
+                            "implementation_path": item.implementation_path,
+                            "deterministic_hard_gate": to_plain(
+                                swarm_controller.evaluate_gate(item, stage="final")
+                            ),
+                        }
+                    )
+                output_schema = {
+                    "assessments": [
+                        {
+                            "blind_label": "exact candidate blind_label",
+                            "verdict": "pass|revise|reject",
+                            "dimension_scores": {
+                                "domain_relevance": "0..1",
+                                "equipment_capability_fit": "0..1",
+                                "innovation": "0..1",
+                                "military_value": "0..1",
+                                "causal_coherence": "0..1",
+                                "credibility": "0..1",
+                                "engineering_feasibility": "0..1",
+                                "robustness": "0..1",
+                            },
+                            "strengths": ["specific strength"],
+                            "weaknesses": ["specific weakness"],
+                            "rejection_reasons": ["blocking reason"],
+                            "residuals": ["quality residual"],
+                            "equipment_classification": "direct_combat|unmanned_combat|upgrade|system_link|support_only|non_equipment",
+                            "innovation_type": "mechanism|operational|equipment_architecture|integration|incremental|none",
+                            "confidence": "0..1",
+                            "evidence_ids": ["exact evidence_id used in judgement"],
+                        }
+                    ],
+                    "portfolio_findings": ["cross-candidate finding"],
+                    "stop_reason": "string",
+                }
+                emit_swarm_event(
+                    "winning_quality_judge_recruited",
+                    actor=instance_id,
+                    graph_id=graph.graph_id,
+                    role_contract=to_plain(contract),
+                    candidate_count=len(blind_candidates),
+                    **runtime_contract,
+                )
+                emit_swarm_event(
+                    "winning_quality_judge_started",
+                    actor=instance_id,
+                    graph_id=graph.graph_id,
+                    ledger_id=ledger_snapshot.ledger_id,
+                    ledger_version=ledger_snapshot.version,
+                    **runtime_contract,
+                )
+                started_at = monotonic()
+                try:
+                    text = await self._run_core_json(
+                        runtime_agent_id,
+                        "你是制胜机理与军事装备论证的独立质量专家。你只评判、不生成候选、不修改账本。"
+                        "必须逐项判断研究对象是否落在任务领域，是否形成具体装备能力而非算法/通信/保障空壳，"
+                        "相对最近公开基线是否存在实质创新，军事价值是否由因果链直接导出，证据与工程判断是否可信。"
+                        "不得因字段齐全而给满分；必须拉开候选差异。领域偏离、支撑能力冒充主装备、热门词堆叠、"
+                        "因果断裂、无证据精确指标或无失败边界应降分或驳回。忽略候选顺序，只输出严格JSON。",
+                        {
+                            "topic": shared["topic"],
+                            "research_route": shared["research_route"],
+                            "evaluation_contract": {
+                                "minimum_weighted_score": swarm_controller.policy[
+                                    "expert_judge_minimum_score"
+                                ],
+                                "critical_dimension_minimum": swarm_controller.policy[
+                                    "expert_judge_critical_dimension_minimum"
+                                ],
+                                "hard_gate_precedence": True,
+                                "read_only": True,
+                                "producer_identity_hidden": True,
+                            },
+                            "blind_candidates": blind_candidates,
+                            "evidence_index": _compact_prompt_value(
+                                shared.get("evidence_index", []),
+                                max_string_chars=420,
+                                max_list_items=32,
+                            ),
+                            "valid_reference_ids": sorted(valid_reference_ids),
+                        },
+                        output_schema,
+                        task.max_output_tokens,
+                        phase="winning_quality_expert_review",
+                    )
+                    result = _parse_json_object(text)
+                    if not result:
+                        raise ValueError("quality expert returned invalid JSON")
+                    raw_assessments = result.get("assessments", [])
+                    if not isinstance(raw_assessments, list):
+                        raw_assessments = []
+                    assessment_by_id: dict[str, WinningExpertAssessment] = {}
+                    seen_labels: set[str] = set()
+                    for raw in raw_assessments:
+                        if not isinstance(raw, Mapping):
+                            continue
+                        blind_label = str(raw.get("blind_label", "")).strip()
+                        hypothesis = label_map.get(blind_label)
+                        if hypothesis is None or blind_label in seen_labels:
+                            continue
+                        seen_labels.add(blind_label)
+                        assessment = swarm_controller.expert_assessment_from_mapping(
+                            raw,
+                            hypothesis=hypothesis,
+                            blind_label=blind_label,
+                            valid_evidence_ids=set(valid_reference_ids),
+                            session_ref=runtime_contract["session_ref"],
+                        )
+                        assessment_by_id[hypothesis.hypothesis_id] = assessment
+                        emit_swarm_event(
+                            "winning_quality_judge_assessed",
+                            actor=instance_id,
+                            graph_id=graph.graph_id,
+                            hypothesis_id=hypothesis.hypothesis_id,
+                            assessment=to_plain(assessment),
+                        )
+                    missing_ids = [
+                        item.hypothesis_id
+                        for item in ordered
+                        if item.hypothesis_id not in assessment_by_id
+                    ]
+                    emit_swarm_event(
+                        "winning_quality_judge_completed",
+                        actor=instance_id,
+                        graph_id=graph.graph_id,
+                        assessed_count=len(assessment_by_id),
+                        missing_hypothesis_ids=missing_ids,
+                        elapsed_seconds=round(monotonic() - started_at, 3),
+                        **runtime_contract,
+                    )
+                    return assessment_by_id, {
+                        "status": (
+                            "completed" if not missing_ids else "limited"
+                        ),
+                        "role_contract": to_plain(contract),
+                        "agent_instance_id": instance_id,
+                        "session_ref": runtime_contract["session_ref"],
+                        "assessments": [
+                            to_plain(item) for item in assessment_by_id.values()
+                        ],
+                        "portfolio_findings": [
+                            str(item)
+                            for item in result.get("portfolio_findings", [])
+                            if str(item).strip()
+                        ][:8],
+                        "missing_hypothesis_ids": missing_ids,
+                        "elapsed_seconds": round(monotonic() - started_at, 3),
+                    }
+                except BaseException as exc:
+                    emit_swarm_event(
+                        "winning_quality_judge_failed",
+                        actor=instance_id,
+                        graph_id=graph.graph_id,
+                        failure_type=type(exc).__name__,
+                        error_message=str(exc)[:500],
+                        **runtime_contract,
+                    )
+                    return {}, {
+                        "status": "failed",
+                        "role_contract": to_plain(contract),
+                        "agent_instance_id": instance_id,
+                        "session_ref": runtime_contract["session_ref"],
+                        "assessments": [],
+                        "error_type": type(exc).__name__,
+                        "error_message": str(exc)[:500],
+                    }
+
+            async def execute_expert_repair_wave(
+                assessments: Mapping[str, WinningExpertAssessment],
+            ) -> dict[str, Any]:
+                """Repair the strongest ``revise`` candidates, then rebase.
+
+                The expert remains read-only.  Its residuals are routed to
+                existing governed S3/S4/S5 roles, executed in parallel against
+                one ledger snapshot, and committed through normal versioned
+                merge receipts.
+                """
+
+                nonlocal graph, ledger, batch_index, maximum_observed_concurrency
+                if (
+                    ledger is None
+                    or not swarm_controller.policy.get("expert_repair_enabled")
+                ):
+                    return {"status": "disabled", "tasks": [], "merged_count": 0}
+                minimum_score = float(
+                    swarm_controller.policy["expert_repair_minimum_score"]
+                )
+                maximum_candidates = int(
+                    swarm_controller.policy["expert_repair_max_candidates"]
+                )
+                eligible = sorted(
+                    (
+                        item
+                        for item in assessments.values()
+                        if item.verdict == "revise"
+                        and item.weighted_score >= minimum_score
+                    ),
+                    key=lambda item: (-item.weighted_score, item.hypothesis_id),
+                )[:maximum_candidates]
+                repair_instances: list[WinningAgentInstance] = []
+                repair_rows: list[dict[str, Any]] = []
+                for assessment in eligible:
+                    if len(graph.agent_instances) >= graph.maximum_instances:
+                        break
+                    archetype = swarm_controller.repair_archetype_for_assessment(
+                        assessment
+                    )
+                    spec = SWARM_SPECIALIST_ARCHETYPES.get(archetype)
+                    if not spec:
+                        continue
+                    residuals = list(
+                        dict.fromkeys(
+                            [
+                                *assessment.residuals,
+                                *assessment.rejection_reasons,
+                                *assessment.weaknesses,
+                            ]
+                        )
+                    )[:8]
+                    contract = swarm_controller.govern_role_contract(
+                        {
+                            "archetype": archetype,
+                            **spec,
+                            "purpose": (
+                                str(spec["purpose"])
+                                + " 本实例只修复专家首轮盲评指出的残差，"
+                                "不得扩写无关背景或覆盖其他候选。"
+                            ),
+                            "trigger_residuals": residuals,
+                        },
+                        mission_node=str(spec["merge_target"]),
+                    )
+                    graph = swarm_controller.recruit_into_mission_graph(
+                        graph,
+                        contract,
+                        hypothesis_id=assessment.hypothesis_id,
+                        expected_quality_gain=max(
+                            float(swarm_controller.policy["minimum_expected_gain"]),
+                            0.04,
+                        ),
+                        depends_on=[],
+                    )
+                    recruited = graph.agent_instances[-1]
+                    repair_wave = max(
+                        (item.wave for item in graph.agent_instances[:-1]),
+                        default=0,
+                    ) + 1
+                    recruited = replace(
+                        recruited,
+                        wave=repair_wave,
+                        trigger_residuals=residuals,
+                    )
+                    graph = replace(
+                        graph,
+                        role_contracts=[*graph.role_contracts[:-1], contract],
+                        agent_instances=[*graph.agent_instances[:-1], recruited],
+                        waves=[
+                            [
+                                item
+                                for item in wave
+                                if item != recruited.instance_id
+                            ]
+                            for wave in graph.waves
+                            if any(
+                                item != recruited.instance_id for item in wave
+                            )
+                        ]
+                        + [[recruited.instance_id]],
+                    )
+                    contracts[contract.role_contract_id] = contract
+                    repair_instances.append(recruited)
+                    repair_rows.append(
+                        {
+                            "agent_instance_id": recruited.instance_id,
+                            "hypothesis_id": assessment.hypothesis_id,
+                            "archetype": archetype,
+                            "merge_target": recruited.merge_target,
+                            "expert_assessment_id": assessment.assessment_id,
+                            "residuals": residuals,
+                        }
+                    )
+                    emit_swarm_event(
+                        "winning_quality_repair_planned",
+                        actor=recruited.instance_id,
+                        graph_id=graph.graph_id,
+                        role_contract=to_plain(contract),
+                        instance=to_plain(recruited),
+                        expert_assessment_id=assessment.assessment_id,
+                        hypothesis_id=assessment.hypothesis_id,
+                        residuals=residuals,
+                    )
+                if not repair_instances:
+                    return {
+                        "status": "not_needed_or_no_capacity",
+                        "tasks": repair_rows,
+                        "merged_count": 0,
+                    }
+                snapshot = ledger
+                batch_index += 1
+                execution_batches.append(
+                    {
+                        "batch": batch_index,
+                        "instance_ids": [item.instance_id for item in repair_instances],
+                        "mission_nodes": [item.mission_node for item in repair_instances],
+                        "base_ledger_version": snapshot.version,
+                        "purpose": "expert_residual_repair",
+                    }
+                )
+                maximum_observed_concurrency = max(
+                    maximum_observed_concurrency, len(repair_instances)
+                )
+                outcomes = await asyncio.gather(
+                    *[
+                        call_instance(
+                            item,
+                            ledger_snapshot=snapshot,
+                            batch_index=batch_index,
+                            candidate_scope={item.hypothesis_id},
+                        )
+                        for item in repair_instances
+                    ],
+                    return_exceptions=True,
+                )
+                merged_count = 0
+                failed_count = 0
+                for instance, outcome in zip(repair_instances, outcomes):
+                    completed_instances.add(instance.instance_id)
+                    instance_hypothesis_ids[instance.instance_id] = {
+                        instance.hypothesis_id
+                    }
+                    if isinstance(outcome, BaseException):
+                        failed_instances.add(instance.instance_id)
+                        failed_count += 1
+                        emit_swarm_event(
+                            "winning_quality_repair_failed",
+                            actor=instance.instance_id,
+                            graph_id=graph.graph_id,
+                            hypothesis_id=instance.hypothesis_id,
+                            failure_type=type(outcome).__name__,
+                            error_message=str(outcome)[:500],
+                        )
+                        continue
+                    _, result, base_version = outcome
+                    runs.append(
+                        {
+                            "step": int(instance.mission_node[1:]),
+                            "agent_id": instance.instance_id,
+                            "template_agent_id": f"winning_swarm_{instance.archetype}",
+                            "middle_cycle": 1,
+                            "execution_mode": "expert_residual_repair",
+                            "wave": instance.wave,
+                            "batch": batch_index,
+                            "merge_target": instance.merge_target,
+                            "status": "completed",
+                        }
+                    )
+                    raw_rows = result.get("contributions", [])
+                    if isinstance(raw_rows, Mapping):
+                        raw_rows = [raw_rows]
+                    if not isinstance(raw_rows, list):
+                        raw_rows = []
+                    for ordinal, raw in enumerate(raw_rows[:2], start=1):
+                        if not isinstance(raw, Mapping):
+                            continue
+                        hypothesis_id = str(raw.get("hypothesis_id", ""))
+                        if hypothesis_id != instance.hypothesis_id:
+                            continue
+                        try:
+                            quality = max(
+                                0.0,
+                                min(1.0, float(raw.get("incremental_quality", 0.0))),
+                            )
+                        except (TypeError, ValueError):
+                            quality = 0.0
+                        recommendation = str(
+                            raw.get("recommendation", "revise")
+                        )[:80]
+                        findings = [
+                            str(item)
+                            for item in raw.get("findings", [])
+                            if str(item).strip()
+                        ][:8]
+                        accepted = bool(
+                            findings
+                            and recommendation != "reject"
+                            and quality
+                            >= float(
+                                swarm_controller.policy["minimum_expected_gain"]
+                            )
+                        )
+                        patch_fields = {
+                            key: raw.get(key)
+                            for key in (
+                                "findings",
+                                "mechanism_chain_updates",
+                                "direct_military_effects",
+                                "equipment_forms",
+                                "novelty_delta",
+                                "evidence_boundary",
+                                "counterevidence",
+                                "adversary_adaptations",
+                                "failure_boundaries",
+                                "trl_constraints",
+                                "cost_constraints",
+                                "industrial_constraints",
+                                "cross_scenario_results",
+                                "validation_plan",
+                                "implementation_path",
+                            )
+                            if raw.get(key) not in (None, "", [], {})
+                        }
+                        contribution = WinningContribution(
+                            contribution_id=(
+                                "winning-expert-repair-"
+                                + sha256(
+                                    f"{instance.instance_id}:{hypothesis_id}:{ordinal}".encode()
+                                ).hexdigest()[:16]
+                            ),
+                            agent_instance_id=instance.instance_id,
+                            role_contract_id=instance.role_contract_id,
+                            hypothesis_id=hypothesis_id,
+                            merge_target=instance.merge_target,
+                            base_ledger_version=base_version,
+                            hypothesis_patch=patch_fields,
+                            quality_dimensions={"incremental_quality": quality},
+                            evidence_ids=swarm_controller.sanitize_evidence_ids(
+                                raw.get("evidence_ids", raw.get("evidence_refs", [])),
+                                set(valid_reference_ids),
+                            ),
+                            residuals_resolved=[
+                                str(item)
+                                for item in raw.get("residuals_resolved", [])
+                                if str(item).strip()
+                            ][:8],
+                            incremental_quality=quality,
+                            recommendation=recommendation,
+                            accepted=accepted,
+                        )
+                        contribution_rows.append(contribution)
+                        ledger_after, receipt = swarm_controller.merge_contribution(
+                            ledger, contribution
+                        )
+                        merge_receipts.append(receipt)
+                        if receipt.rebase_required:
+                            contribution = swarm_controller.rebase_contribution(
+                                contribution, ledger
+                            )
+                            ledger_after, receipt = swarm_controller.merge_contribution(
+                                ledger, contribution
+                            )
+                            merge_receipts.append(receipt)
+                        ledger = ledger_after
+                        if receipt.status == "merged":
+                            merged_count += 1
+                        emit_swarm_event(
+                            "winning_quality_repair_completed",
+                            actor=instance.instance_id,
+                            graph_id=graph.graph_id,
+                            hypothesis_id=hypothesis_id,
+                            contribution_id=contribution.contribution_id,
+                            status=receipt.status,
+                            resulting_ledger_version=receipt.resulting_ledger_version,
+                        )
+                return {
+                    "status": "completed" if not failed_count else "limited",
+                    "tasks": repair_rows,
+                    "merged_count": merged_count,
+                    "failed_count": failed_count,
+                    "base_ledger_version": snapshot.version,
+                    "resulting_ledger_version": ledger.version,
                 }
 
             emit_swarm_event(
@@ -4614,15 +5357,17 @@ class ResponsesAgentProvider:
                         for item in pending.values()
                         if all(dep in completed_instances for dep in item.depends_on)
                         and (
-                            item.mission_node != "S6"
+                            item.archetype != "independent_portfolio_reviewer"
                             or (
                                 not any(
                                     other.instance_id != item.instance_id
-                                    and other.mission_node != "S6"
+                                    and other.archetype
+                                    != "independent_portfolio_reviewer"
                                     for other in pending.values()
                                 )
                                 and not any(
-                                    running_item.mission_node != "S6"
+                                    running_item.archetype
+                                    != "independent_portfolio_reviewer"
                                     for running_item, _, _ in running_instances.values()
                                 )
                             )
@@ -5010,7 +5755,40 @@ class ResponsesAgentProvider:
 
             if ledger is None:
                 ledger = swarm_controller.create_ledger([])
-            decision: PortfolioDecision = swarm_controller.portfolio_decision(ledger)
+            initial_expert_assessments, initial_expert_summary = (
+                await execute_quality_expert_judge(ledger)
+            )
+            expert_repair_summary = await execute_expert_repair_wave(
+                initial_expert_assessments
+            )
+            if expert_repair_summary.get("merged_count", 0):
+                expert_assessments, final_expert_summary = (
+                    await execute_quality_expert_judge(ledger)
+                )
+                expert_judge_summary = {
+                    **final_expert_summary,
+                    "status": final_expert_summary.get("status", "limited"),
+                    "round_count": 2,
+                    "rounds": [initial_expert_summary, final_expert_summary],
+                    "repair_wave": expert_repair_summary,
+                }
+            else:
+                expert_assessments = initial_expert_assessments
+                expert_judge_summary = {
+                    **initial_expert_summary,
+                    "round_count": 1,
+                    "rounds": [initial_expert_summary],
+                    "repair_wave": expert_repair_summary,
+                }
+            expert_objectives = {
+                hypothesis_id: swarm_controller.expert_objective_scores(assessment)
+                for hypothesis_id, assessment in expert_assessments.items()
+            }
+            decision: PortfolioDecision = swarm_controller.portfolio_decision(
+                ledger,
+                objective_scores=expert_objectives,
+                expert_assessments=expert_assessments,
+            )
             selected_ids = set(decision.selected_hypothesis_ids)
             final_hypotheses = [
                 item for item in ledger.hypotheses if item.hypothesis_id in selected_ids
@@ -5033,6 +5811,16 @@ class ResponsesAgentProvider:
                     "evidence_ids": list(item.evidence_ids),
                     "failure_boundaries": list(item.failure_boundaries),
                     "score": item.score,
+                    "expert_score": (
+                        expert_assessments[item.hypothesis_id].weighted_score
+                        if item.hypothesis_id in expert_assessments
+                        else None
+                    ),
+                    "expert_assessment_id": (
+                        expert_assessments[item.hypothesis_id].assessment_id
+                        if item.hypothesis_id in expert_assessments
+                        else ""
+                    ),
                     "direct_combat_equipment": (
                         swarm_controller.is_direct_combat_equipment(item)
                     ),
@@ -5046,6 +5834,8 @@ class ResponsesAgentProvider:
             portfolio_quality_gate_passed = (
                 5 <= len(equipment_portfolio) <= 7
                 and direct_combat_count >= 4
+                and decision.quality_judge_passed
+                and expert_judge_summary.get("status") == "completed"
             )
             dynamic_outputs = [
                 {
@@ -5077,6 +5867,10 @@ class ResponsesAgentProvider:
                 "contributions": [to_plain(item) for item in contribution_rows],
                 "merge_receipts": [to_plain(item) for item in merge_receipts],
                 "portfolio_decision": to_plain(decision),
+                "expert_judge": expert_judge_summary,
+                "expert_assessments": [
+                    to_plain(item) for item in expert_assessments.values()
+                ],
                 "finalists": [to_plain(item) for item in final_hypotheses],
                 "final_equipment_portfolio": equipment_portfolio,
                 "portfolio_quality_gate": {
@@ -5085,6 +5879,12 @@ class ResponsesAgentProvider:
                     "direct_combat_equipment_count": direct_combat_count,
                     "required_direction_range": [5, 7],
                     "minimum_direct_combat_equipment": 4,
+                    "expert_judge_required": bool(
+                        swarm_controller.policy.get("expert_judge_required")
+                    ),
+                    "expert_judge_status": expert_judge_summary.get("status"),
+                    "expert_judge_passed": decision.quality_judge_passed,
+                    "expert_assessed_count": len(expert_assessments),
                 },
                 "execution_batches": execution_batches,
                 "events_version": "winning_swarm_dynamic_v2",
@@ -5096,6 +5896,11 @@ class ResponsesAgentProvider:
                     "maximum_instances": graph.maximum_instances,
                     "maximum_concurrency": graph.maximum_concurrency,
                     "maximum_observed_concurrency": maximum_observed_concurrency,
+                    "reserved_quality_judge_calls": int(
+                        self._runtime_budgets.get(
+                            "maximum_quality_judge_model_calls", 1
+                        )
+                    ),
                 },
                 "stop_reason": (
                     "mission_graph_complete"
@@ -7176,6 +7981,18 @@ class ResponsesAgentProvider:
             dynamic_portfolio_ready = bool(
                 swarm_summary.get("final_equipment_portfolio", [])
             )
+            raw_portfolio_gate = swarm_summary.get("portfolio_quality_gate", {})
+            raw_portfolio_gate = (
+                raw_portfolio_gate
+                if isinstance(raw_portfolio_gate, Mapping)
+                else {}
+            )
+            portfolio_quality_gate_passed = (
+                bool(raw_portfolio_gate.get("passed"))
+                if str(swarm_controller.policy.get("policy_id"))
+                == "winning_swarm_dynamic_v2"
+                else bool(raw_portfolio_gate.get("passed", finalist_count > 0))
+            )
             final_merge = {
                 "strategy": "candidate_ledger_plus_isolated_core_commits",
                 "candidate_ledger_ready": finalist_count > 0,
@@ -7190,6 +8007,7 @@ class ResponsesAgentProvider:
                     6 not in active_set or bool(accumulated.get("concept_directions")) or dynamic_portfolio_ready
                 ),
                 "core_quality_gate_passed": core_gate_passed,
+                "portfolio_quality_gate_passed": portfolio_quality_gate_passed,
             }
             final_merge["passed"] = bool(
                 final_merge["candidate_ledger_ready"]
@@ -7197,6 +8015,7 @@ class ResponsesAgentProvider:
                 and final_merge["s5_gap_review_ready"]
                 and final_merge["s6_portfolio_ready"]
                 and final_merge["core_quality_gate_passed"]
+                and final_merge["portfolio_quality_gate_passed"]
             )
             swarm_summary["final_merge"] = final_merge
             if not final_merge["passed"]:
@@ -7395,7 +8214,9 @@ class ResponsesAgentProvider:
             options,
             self.provider_kind,
             quality_critical=(
-                agent_id == "reporter" or phase.startswith("report_generation")
+                agent_id == "reporter"
+                or phase.startswith("report_generation")
+                or phase.startswith("winning_quality_expert")
             ),
         )
         if output_schema is not None:
@@ -7457,6 +8278,10 @@ class ResponsesAgentProvider:
             priority=(
                 "delivery"
                 if agent_id == "reporter" or phase.startswith("report_generation")
+                else "quality_gate"
+                if phase.startswith("winning_quality_expert")
+                else "swarm"
+                if phase.startswith("winning_swarm_")
                 else "normal"
                 if any(marker in phase for marker in ("critic", "review", "convergence", "audit"))
                 else "critical"

@@ -3302,6 +3302,7 @@ def test_dynamic_v2_releases_fast_candidate_branch_before_slow_s3_and_scopes_mer
     progress_rows: list[dict] = []
     provider.set_winning_progress_callback(progress_rows.append)
     seed_index = 0
+    judge_round = 0
     scoped_merge_inputs: list[tuple[str, list[str], list[str]]] = []
 
     async def fake_run_core_json(
@@ -3313,8 +3314,68 @@ def test_dynamic_v2_releases_fast_candidate_branch_before_slow_s3_and_scopes_mer
         *,
         phase="structured_analysis",
     ):
-        nonlocal seed_index
+        nonlocal seed_index, judge_round
         del system, output_schema, max_output_tokens
+        if phase == "winning_quality_expert_review":
+            judge_round += 1
+            return json.dumps(
+                {
+                    "assessments": [
+                        {
+                            "blind_label": item["blind_label"],
+                            "verdict": (
+                                "reject"
+                                if index == 1
+                                else "revise"
+                                if index == 2 and judge_round == 1
+                                else "pass"
+                            ),
+                            "dimension_scores": {
+                                "domain_relevance": 0.86,
+                                "equipment_capability_fit": (
+                                    0.35
+                                    if index == 1
+                                    else 0.70
+                                    if index == 2 and judge_round == 1
+                                    else 0.84
+                                ),
+                                "innovation": 0.78,
+                                "military_value": 0.45 if index == 1 else 0.88,
+                                "causal_coherence": 0.82,
+                                "credibility": 0.80,
+                                "engineering_feasibility": 0.76,
+                                "robustness": 0.74,
+                            },
+                            "strengths": ["形成具体无人战斗装备落点"],
+                            "weaknesses": ["工程参数仍需试验校准"],
+                            "rejection_reasons": (
+                                ["支撑能力未形成具体战斗装备落点"]
+                                if index == 1
+                                else ["装备构型需要进一步具体化"]
+                                if index == 2 and judge_round == 1
+                                else []
+                            ),
+                            "residuals": (
+                                ["equipment_not_concrete"]
+                                if index == 1
+                                else ["equipment_not_concrete"]
+                                if index == 2 and judge_round == 1
+                                else []
+                            ),
+                            "equipment_classification": "unmanned_combat",
+                            "innovation_type": "mechanism",
+                            "confidence": 0.82,
+                            "evidence_ids": ["ev-1"],
+                        }
+                        for index, item in enumerate(
+                            payload["blind_candidates"], start=1
+                        )
+                    ],
+                    "portfolio_findings": ["候选之间形成机制差异"],
+                    "stop_reason": "review_complete",
+                },
+                ensure_ascii=False,
+            )
         task = payload["specialist_task"]
         mission_node = task["merge_target"]
         if phase == "winning_swarm_dynamic_seed":
@@ -3425,14 +3486,23 @@ def test_dynamic_v2_releases_fast_candidate_branch_before_slow_s3_and_scopes_mer
     assert swarm["budget"]["maximum_observed_concurrency"] <= 6
     assert 5 <= len(swarm["final_equipment_portfolio"]) <= 7
     assert swarm["portfolio_quality_gate"]["passed"] is True
+    assert swarm["portfolio_quality_gate"]["expert_judge_passed"] is True
+    assert swarm["expert_judge"]["status"] == "completed"
+    assert swarm["expert_judge"]["round_count"] == 2
+    assert swarm["expert_judge"]["repair_wave"]["merged_count"] >= 1
+    assert len(swarm["expert_assessments"]) == len(swarm["hypotheses"])
+    rejected_by_expert = {
+        item["hypothesis_id"]
+        for item in swarm["expert_assessments"]
+        if item["passed"] is False
+    }
+    assert len(rejected_by_expert) == 1
+    assert rejected_by_expert.isdisjoint(
+        swarm["portfolio_decision"]["selected_hypothesis_ids"]
+    )
     assert swarm["portfolio_quality_gate"]["direct_combat_equipment_count"] >= 4
     assert all(
         row[1] == row[2]
-        for row in scoped_merge_inputs
-        if row[0] in {"S4", "S5"}
-    )
-    assert all(
-        len(row[1]) == 1
         for row in scoped_merge_inputs
         if row[0] in {"S4", "S5"}
     )
@@ -3452,11 +3522,38 @@ def test_dynamic_v2_releases_fast_candidate_branch_before_slow_s3_and_scopes_mer
         if row.get("event_type") == "winning_agent_session_completed"
         and row.get("agent_id") == fast_s3_id
     )
-    first_s4 = next(
+    frontier_s4_id = next(
+        item["instance_id"]
+        for item in swarm["task_graph"]
+        if item["archetype"] == "frontier_equipment_miner"
+    )
+    architect_s4_id = next(
+        item["instance_id"]
+        for item in swarm["task_graph"]
+        if item["archetype"] == "equipment_realization_architect"
+    )
+    evidence_s5_id = next(
+        item["instance_id"]
+        for item in swarm["task_graph"]
+        if item["archetype"] == "evidence_verifier"
+    )
+    frontier_s4_started = next(
         index
         for index, row in enumerate(progress_rows)
         if row.get("event_type") == "winning_agent_session_started"
-        and row.get("mission_node") == "S4"
+        and row.get("agent_id") == frontier_s4_id
+    )
+    architect_s4_started = next(
+        index
+        for index, row in enumerate(progress_rows)
+        if row.get("event_type") == "winning_agent_session_started"
+        and row.get("agent_id") == architect_s4_id
+    )
+    evidence_s5_started = next(
+        index
+        for index, row in enumerate(progress_rows)
+        if row.get("event_type") == "winning_agent_session_started"
+        and row.get("agent_id") == evidence_s5_id
     )
     slow_s3 = next(
         index
@@ -3464,7 +3561,9 @@ def test_dynamic_v2_releases_fast_candidate_branch_before_slow_s3_and_scopes_mer
         if row.get("event_type") == "winning_agent_session_completed"
         and row.get("agent_id") == slow_s3_id
     )
-    assert fast_s3 < first_s4 < slow_s3
+    assert frontier_s4_started < slow_s3
+    assert fast_s3 < evidence_s5_started < slow_s3
+    assert fast_s3 < architect_s4_started
 
 
 def test_codex_l4_meta_review_uses_orchestrator_runtime() -> None:

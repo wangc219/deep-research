@@ -44,13 +44,19 @@ class BranchExecutionContract:
     maximum_model_calls_with_residuals: int = 14
     maximum_searches: int = 12
     codex_concurrency: int = 5
-    soft_deadline_seconds: int = 1050
-    hard_deadline_seconds: int = 1500
-    delivery_grace_seconds: int = 900
-    absolute_deadline_seconds: int = 2400
+    wall_clock_deadlines_enabled: bool = False
+    soft_deadline_seconds: int = 0
+    # There is no intermediate wall-clock hard stop.  Work may continue until
+    # the single 40-minute absolute deadline; call budgets and the soft budget
+    # still prevent unbounded optional expansion.
+    hard_deadline_seconds: int = 0
+    delivery_grace_seconds: int = 0
+    absolute_deadline_seconds: int = 0
     maximum_delivery_model_calls: int = 4
+    maximum_swarm_model_calls: int = 16
+    maximum_quality_judge_model_calls: int = 2
     deadline_downshift_window_seconds: int = 240
-    critical_fast_finalize_seconds: int = 120
+    critical_fast_finalize_seconds: int = 0
     delivery_retry_reserve_seconds: int = 45
     fast_finalize_output_token_cap: int = 4200
     schema_version: str = "2.0"
@@ -62,13 +68,18 @@ class BranchExecutionContract:
             raise ValueError("step_intensity must define S1-S6")
         if not 1 <= self.maximum_rounds <= 3:
             raise ValueError("Harness v2 allows one to three rounds")
-        if not 0 < self.soft_deadline_seconds <= self.hard_deadline_seconds:
+        if self.wall_clock_deadlines_enabled and not (
+            0 < self.soft_deadline_seconds <= self.hard_deadline_seconds
+        ):
             raise ValueError("soft deadline must be positive and no later than hard deadline")
         if not 0 <= self.delivery_grace_seconds <= 900:
             raise ValueError("delivery grace must be between zero and fifteen minutes")
-        if self.absolute_deadline_seconds > 2400:
+        if self.wall_clock_deadlines_enabled and self.absolute_deadline_seconds > 2400:
             raise ValueError("absolute deadline may not exceed 40 minutes")
-        if self.hard_deadline_seconds + self.delivery_grace_seconds > self.absolute_deadline_seconds:
+        if self.wall_clock_deadlines_enabled and (
+            self.hard_deadline_seconds + self.delivery_grace_seconds
+            > self.absolute_deadline_seconds
+        ):
             raise ValueError("hard deadline plus delivery grace exceeds absolute deadline")
         if not 1 <= self.maximum_delivery_model_calls <= 4:
             raise ValueError(
@@ -166,7 +177,6 @@ _COMMON_STOP_CONDITIONS = (
     "accepted_claims_traceable_to_public_sources",
     "no_repeated_residual_without_new_evidence",
     "estimated_quality_gain_below_0.03",
-    "hard_deadline_enters_fast_finalize",
 )
 
 
@@ -348,13 +358,14 @@ def optimized_v2_profile() -> ExecutionProfile:
             "residual_model_calls": 14,
             "searches": 12,
             "codex_concurrency": 5,
-            "soft_deadline_seconds": 1050,
-            "hard_deadline_seconds": 1500,
-            "delivery_grace_seconds": 900,
-            "absolute_deadline_seconds": 2400,
+            "wall_clock_deadlines_enabled": False,
+            "soft_deadline_seconds": 0,
+            "hard_deadline_seconds": 0,
+            "delivery_grace_seconds": 0,
+            "absolute_deadline_seconds": 0,
             "maximum_delivery_model_calls": 4,
             "deadline_downshift_window_seconds": 240,
-            "critical_fast_finalize_seconds": 120,
+            "critical_fast_finalize_seconds": 0,
             "delivery_retry_reserve_seconds": 45,
             "fast_finalize_output_token_cap": 4200,
             "max_rounds": 3,
@@ -485,6 +496,15 @@ def apply_execution_profile_to_blueprint(
                 "mission_graph_min_instances": 8,
                 "mission_graph_target_instances": 12,
                 "mission_graph_max_instances": 16,
+                "finalist_minimum": 5,
+                "finalist_maximum": 7,
+                "expert_judge_enabled": True,
+                "expert_judge_required": True,
+                "expert_judge_minimum_score": 0.72,
+                "expert_judge_critical_dimension_minimum": 0.60,
+                "expert_repair_enabled": True,
+                "expert_repair_max_candidates": 3,
+                "expert_repair_minimum_score": 0.70,
             }
         )
     result["winning_swarm_policy"] = normalize_winning_swarm_policy(
@@ -496,11 +516,14 @@ def apply_execution_profile_to_blueprint(
         "maximum_model_calls_with_residuals": contract.maximum_model_calls_with_residuals,
         "maximum_searches": contract.maximum_searches,
         "codex_concurrency": contract.codex_concurrency,
+        "wall_clock_deadlines_enabled": contract.wall_clock_deadlines_enabled,
         "soft_deadline_seconds": contract.soft_deadline_seconds,
         "hard_deadline_seconds": contract.hard_deadline_seconds,
         "delivery_grace_seconds": contract.delivery_grace_seconds,
         "absolute_deadline_seconds": contract.absolute_deadline_seconds,
         "maximum_delivery_model_calls": contract.maximum_delivery_model_calls,
+        "maximum_swarm_model_calls": contract.maximum_swarm_model_calls,
+        "maximum_quality_judge_model_calls": contract.maximum_quality_judge_model_calls,
         "deadline_downshift_window_seconds": contract.deadline_downshift_window_seconds,
         "critical_fast_finalize_seconds": contract.critical_fast_finalize_seconds,
         "delivery_retry_reserve_seconds": contract.delivery_retry_reserve_seconds,

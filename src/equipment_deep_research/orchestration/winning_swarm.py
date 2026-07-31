@@ -25,6 +25,7 @@ from equipment_deep_research.domain.models import (
     SwarmPlan,
     WinningAgentInstance,
     WinningContribution,
+    WinningExpertAssessment,
     WinningHypothesis,
     WinningMissionGraph,
     WinningRoleContract,
@@ -80,6 +81,21 @@ SWARM_SPECIALIST_ARCHETYPES: dict[str, dict[str, Any]] = {
         "merge_target": "S4",
         "residuals": ["equipment_not_concrete", "engineering_feasibility_insufficient"],
     },
+    "equipment_capability_image_repairer": {
+        "display_name": "装备能力画像定向修复",
+        "purpose": (
+            "依据专家残差重写单一候选的装备能力闭环，必须贯通任务效果、作战运用、"
+            "功能、性能与约束、体系接口、具体武器或无人作战装备形态、公开基线差异、"
+            "失效边界和可证伪验证指标；通信、算法、网关与治理只能嵌入具体战斗装备，"
+            "不得独立包装为主要装备方向。"
+        ),
+        "merge_target": "S4",
+        "residuals": [
+            "equipment_not_concrete",
+            "capability_portrait_incomplete",
+            "direct_combat_equipment_insufficient",
+        ],
+    },
     "trl_cost_industrial_auditor": {
         "display_name": "成熟度成本产能审查",
         "purpose": "审查TRL、成本、产能、工业依赖和规模化补充约束，拒绝无依据精确判断。",
@@ -108,6 +124,12 @@ SWARM_SPECIALIST_ARCHETYPES: dict[str, dict[str, Any]] = {
         "display_name": "独立组合评审",
         "purpose": "独立审查候选组合的非支配性、证据边界、反适应韧性和装备落点。",
         "merge_target": "S6",
+        "residuals": [],
+    },
+    "quality_expert_judge": {
+        "display_name": "制胜机理质量专家评判",
+        "purpose": "只读盲评候选的领域契合、装备能力落点、创新性、军事价值、因果可信度、证据质量和工程可行性，并给出可审计淘汰理由。",
+        "merge_target": "convergence",
         "residuals": [],
     },
 }
@@ -165,6 +187,14 @@ def default_winning_swarm_policy(
         "finalist_maximum": 7 if dynamic_v2 else 4,
         "recursive_recruitment_allowed": False,
         "raw_session_sharing_allowed": False,
+        "expert_judge_enabled": dynamic_v2,
+        "expert_judge_required": dynamic_v2,
+        "expert_judge_minimum_score": 0.72,
+        "expert_judge_critical_dimension_minimum": 0.60,
+        "expert_repair_enabled": dynamic_v2,
+        "expert_repair_max_candidates": 3,
+        "expert_repair_minimum_score": 0.70,
+        "expert_repair_reserved_instances": 3,
         "promotion": {
             "minimum_eligible_runs": 10,
             "minimum_positive_increment_rate": 0.70,
@@ -236,6 +266,33 @@ def normalize_winning_swarm_policy(
             ),
             "recursive_recruitment_allowed": False,
             "raw_session_sharing_allowed": False,
+            "expert_judge_enabled": bool(
+                raw.get("expert_judge_enabled", dynamic_v2)
+            ),
+            "expert_judge_required": bool(
+                raw.get("expert_judge_required", dynamic_v2)
+            ),
+            "expert_judge_minimum_score": _bounded_float(
+                raw.get("expert_judge_minimum_score"), 0.0, 1.0, 0.72
+            ),
+            "expert_judge_critical_dimension_minimum": _bounded_float(
+                raw.get("expert_judge_critical_dimension_minimum"),
+                0.0,
+                1.0,
+                0.60,
+            ),
+            "expert_repair_enabled": bool(
+                raw.get("expert_repair_enabled", dynamic_v2)
+            ),
+            "expert_repair_max_candidates": _bounded_int(
+                raw.get("expert_repair_max_candidates"), 0, 4, 3
+            ),
+            "expert_repair_minimum_score": _bounded_float(
+                raw.get("expert_repair_minimum_score"), 0.0, 1.0, 0.70
+            ),
+            "expert_repair_reserved_instances": _bounded_int(
+                raw.get("expert_repair_reserved_instances"), 0, 4, 3
+            ),
         }
     )
     if base["breadth_hypothesis_minimum"] > base["breadth_hypothesis_maximum"]:
@@ -460,14 +517,8 @@ class WinningSwarmController:
                     allow_child_spawn=False,
                 )
             )
-        core_waves = self.core_execution_waves(range(1, 7))
-        wave_by_node = {
-            f"S{step}": wave_index
-            for wave_index, wave in enumerate(core_waves, start=1)
-            for step in wave
-        }
         dependencies: dict[str, list[str]] = {}
-        resolved_instances: list[WinningAgentInstance] = []
+        dependency_instances: list[WinningAgentInstance] = []
         node_ordinals: dict[str, int] = {f"S{step}": 0 for step in range(1, 7)}
         for instance in instances:
             step = int(instance.mission_node[1:])
@@ -479,31 +530,65 @@ class WinningSwarmController:
                     for node in ("S1", "S2")
                     if node_instances[node]
                 ]
+            elif step == 4 and instance.archetype == "frontier_equipment_miner":
+                depends_on = [
+                    node_instances[node][ordinal % len(node_instances[node])]
+                    for node in ("S1", "S2")
+                    if node_instances[node]
+                ]
             elif step == 4:
+                upstream = node_instances["S3"]
+                depends_on = [upstream[ordinal % len(upstream)]] if upstream else []
+            elif step == 5 and instance.archetype == "evidence_verifier":
                 upstream = node_instances["S3"]
                 depends_on = [upstream[ordinal % len(upstream)]] if upstream else []
             elif step == 5:
                 upstream = node_instances["S4"]
                 depends_on = [upstream[ordinal % len(upstream)]] if upstream else []
+            elif step == 6 and instance.archetype == "validation_experiment_designer":
+                depends_on = [
+                    upstream[ordinal % len(upstream)]
+                    for upstream in (node_instances["S3"], node_instances["S4"])
+                    if upstream
+                ]
             elif step == 6:
-                depends_on = [*node_instances["S4"], *node_instances["S5"]]
+                validation_ids = [
+                    item.instance_id
+                    for item in instances
+                    if item.mission_node == "S6"
+                    and item.archetype == "validation_experiment_designer"
+                ]
+                depends_on = [
+                    *node_instances["S4"],
+                    *node_instances["S5"],
+                    *validation_ids,
+                ]
             else:
                 depends_on = []
             dependencies[instance.instance_id] = depends_on
-            resolved_instances.append(
+            dependency_instances.append(
                 replace(
                     instance,
-                    wave=wave_by_node[instance.mission_node],
                     depends_on=depends_on,
                 )
             )
+        wave_by_instance: dict[str, int] = {}
+        resolved_instances: list[WinningAgentInstance] = []
+        for instance in dependency_instances:
+            wave = 1 + max(
+                (wave_by_instance.get(item, 0) for item in instance.depends_on),
+                default=0,
+            )
+            wave_by_instance[instance.instance_id] = wave
+            resolved_instances.append(replace(instance, wave=wave))
+        maximum_wave = max(wave_by_instance.values(), default=0)
         waves = [
             [
                 instance.instance_id
                 for instance in resolved_instances
                 if instance.wave == wave_index
             ]
-            for wave_index in range(1, len(core_waves) + 1)
+            for wave_index in range(1, maximum_wave + 1)
         ]
         return WinningMissionGraph(
             graph_id=_stable_id("winning-mission-graph", execution_profile_id, topic),
@@ -517,6 +602,7 @@ class WinningSwarmController:
             minimum_instances=minimum,
             maximum_instances=maximum,
             maximum_concurrency=min(6, int(self.policy.get("max_concurrency", 6))),
+            merge_strategy="artifact_ready_speculative_parallel_then_versioned_rebase",
         )
 
     def recruit_into_mission_graph(
@@ -685,6 +771,7 @@ class WinningSwarmController:
         ledger: HypothesisLedgerVersion,
         *,
         objective_scores: Mapping[str, Mapping[str, float]] | None = None,
+        expert_assessments: Mapping[str, WinningExpertAssessment] | None = None,
     ) -> PortfolioDecision:
         scores: dict[str, dict[str, float]] = {}
         final_gates: dict[str, SwarmGateResult] = {}
@@ -704,6 +791,14 @@ class WinningSwarmController:
             item.hypothesis_id
             for item in ledger.hypotheses
             if final_gates[item.hypothesis_id].passed
+            and (
+                not self.policy.get("expert_judge_required")
+                or expert_assessments is None
+                or (
+                    item.hypothesis_id in (expert_assessments or {})
+                    and (expert_assessments or {})[item.hypothesis_id].passed
+                )
+            )
         ]
 
         def dominates(left: str, right: str) -> bool:
@@ -776,7 +871,154 @@ class WinningSwarmController:
             rejected_hypothesis_ids=rejected,
             objective_scores=scores,
             dominance_reasons=reasons,
+            expert_assessment_ids=[
+                (expert_assessments or {})[item].assessment_id
+                for item in selected
+                if item in (expert_assessments or {})
+            ],
+            quality_judge_passed=(
+                expert_assessments is not None
+                and bool(selected)
+                and all(
+                    item in (expert_assessments or {})
+                    and (expert_assessments or {})[item].passed
+                    for item in selected
+                )
+            ),
         )
+
+    def expert_assessment_from_mapping(
+        self,
+        value: Mapping[str, Any],
+        *,
+        hypothesis: WinningHypothesis,
+        blind_label: str,
+        valid_evidence_ids: set[str],
+        session_ref: str,
+    ) -> WinningExpertAssessment:
+        """Validate and normalize one independent expert judgement."""
+
+        dimension_names = (
+            "domain_relevance",
+            "equipment_capability_fit",
+            "innovation",
+            "military_value",
+            "causal_coherence",
+            "credibility",
+            "engineering_feasibility",
+            "robustness",
+        )
+        raw_scores = value.get("dimension_scores", {})
+        raw_scores = raw_scores if isinstance(raw_scores, Mapping) else {}
+        scores: dict[str, float] = {}
+        for name in dimension_names:
+            try:
+                score = float(raw_scores.get(name, 0.0))
+            except (TypeError, ValueError):
+                score = 0.0
+            scores[name] = round(max(0.0, min(1.0, score)), 4)
+        weights = {
+            "domain_relevance": 0.10,
+            "equipment_capability_fit": 0.17,
+            "innovation": 0.15,
+            "military_value": 0.17,
+            "causal_coherence": 0.12,
+            "credibility": 0.14,
+            "engineering_feasibility": 0.08,
+            "robustness": 0.07,
+        }
+        weighted_score = round(
+            sum(scores[name] * weights[name] for name in dimension_names), 4
+        )
+        verdict = str(value.get("verdict", "revise")).strip().lower()
+        if verdict not in {"pass", "revise", "reject"}:
+            verdict = "revise"
+        critical_minimum = float(
+            self.policy["expert_judge_critical_dimension_minimum"]
+        )
+        critical_dimensions = (
+            "domain_relevance",
+            "equipment_capability_fit",
+            "military_value",
+            "credibility",
+        )
+        passed = (
+            verdict == "pass"
+            and weighted_score >= float(self.policy["expert_judge_minimum_score"])
+            and all(scores[name] >= critical_minimum for name in critical_dimensions)
+        )
+        rejection_reasons = _text_list(value.get("rejection_reasons", []), limit=8)
+        if not passed and not rejection_reasons:
+            rejection_reasons = ["专家评判未达到综合分或关键维度门槛"]
+        evidence_ids = self.sanitize_evidence_ids(
+            value.get("evidence_ids", []), valid_evidence_ids
+        )
+        return WinningExpertAssessment(
+            assessment_id=_stable_id(
+                "winning-expert-assessment",
+                hypothesis.hypothesis_id,
+                session_ref,
+            ),
+            hypothesis_id=hypothesis.hypothesis_id,
+            blind_label=blind_label,
+            verdict=verdict,
+            passed=passed,
+            weighted_score=weighted_score,
+            dimension_scores=scores,
+            strengths=_text_list(value.get("strengths", []), limit=8),
+            weaknesses=_text_list(value.get("weaknesses", []), limit=8),
+            rejection_reasons=rejection_reasons,
+            residuals=_text_list(value.get("residuals", []), limit=10),
+            equipment_classification=str(
+                value.get("equipment_classification", "")
+            ).strip()[:120],
+            innovation_type=str(value.get("innovation_type", "")).strip()[:120],
+            confidence=_bounded_float(value.get("confidence"), 0.0, 1.0, 0.0),
+            evidence_ids=evidence_ids,
+            session_ref=session_ref,
+        )
+
+    @staticmethod
+    def expert_objective_scores(
+        assessment: WinningExpertAssessment,
+    ) -> dict[str, float]:
+        scores = assessment.dimension_scores
+        return {
+            "quality": assessment.weighted_score,
+            "evidence": scores.get("credibility", 0.0),
+            "novelty": scores.get("innovation", 0.0),
+            "robustness": scores.get("robustness", 0.0),
+            "feasibility": scores.get("engineering_feasibility", 0.0),
+            "military_value": scores.get("military_value", 0.0),
+            "equipment_fit": scores.get("equipment_capability_fit", 0.0),
+            "causal_coherence": scores.get("causal_coherence", 0.0),
+        }
+
+    @staticmethod
+    def repair_archetype_for_assessment(
+        assessment: WinningExpertAssessment,
+    ) -> str:
+        """Route an expert residual to the narrowest governed repair role."""
+
+        scores = assessment.dimension_scores
+        if (
+            scores.get("equipment_capability_fit", 0.0) < 0.82
+            or assessment.equipment_classification
+            in {"system_link", "support", "non_materiel"}
+        ):
+            return "equipment_capability_image_repairer"
+        if scores.get("credibility", 0.0) < 0.70:
+            return "evidence_verifier"
+        if scores.get("engineering_feasibility", 0.0) < 0.68:
+            return "trl_cost_industrial_auditor"
+        if (
+            scores.get("innovation", 0.0) < 0.72
+            or scores.get("causal_coherence", 0.0) < 0.72
+        ):
+            return "disruptive_mechanism_generator"
+        if scores.get("robustness", 0.0) < 0.72:
+            return "adversary_counter_adaptation_red_team"
+        return "baseline_delta_analyst"
 
     def core_execution_waves(
         self,

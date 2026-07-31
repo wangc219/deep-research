@@ -60,11 +60,14 @@ def test_abc_v2_contracts_encode_required_counts_and_cohorts() -> None:
     assert a.scenarios_per_background == (2, 2)
     assert a.physical_cohorts == ((1, 2), (3, 4, 5))
     assert "thirty_capability_indicators" in a.branch_products
-    assert a.soft_deadline_seconds == 1050
-    assert a.hard_deadline_seconds == 1500
-    assert a.delivery_grace_seconds == 900
-    assert a.absolute_deadline_seconds == 2400
+    assert a.soft_deadline_seconds == 0
+    assert a.wall_clock_deadlines_enabled is False
+    assert a.hard_deadline_seconds == 0
+    assert a.delivery_grace_seconds == 0
+    assert a.absolute_deadline_seconds == 0
     assert a.maximum_delivery_model_calls == 4
+    assert a.maximum_swarm_model_calls == 16
+    assert a.maximum_quality_judge_model_calls == 2
     assert b.physical_cohorts == ((1, 2, 3), (4, 5))
     assert b.step_intensity[4] == b.step_intensity[5] == "deep"
     assert a.step_intensity[6] == b.step_intensity[6] == "deep"
@@ -87,13 +90,16 @@ def test_v2_blueprint_reserves_reporter_delivery_lane() -> None:
         "maximum_model_calls_with_residuals": 14,
         "maximum_searches": 12,
         "codex_concurrency": 5,
-        "soft_deadline_seconds": 1050,
-        "hard_deadline_seconds": 1500,
-        "delivery_grace_seconds": 900,
-        "absolute_deadline_seconds": 2400,
+        "wall_clock_deadlines_enabled": False,
+        "soft_deadline_seconds": 0,
+        "hard_deadline_seconds": 0,
+        "delivery_grace_seconds": 0,
+        "absolute_deadline_seconds": 0,
         "maximum_delivery_model_calls": 4,
+        "maximum_swarm_model_calls": 16,
+        "maximum_quality_judge_model_calls": 2,
         "deadline_downshift_window_seconds": 240,
-        "critical_fast_finalize_seconds": 120,
+        "critical_fast_finalize_seconds": 0,
         "delivery_retry_reserve_seconds": 45,
         "fast_finalize_output_token_cap": 4200,
     }

@@ -178,6 +178,23 @@
       ],
       "url": "https://amti.csis.org/exploring-chinas-unmanned-ocean-network/"
     },
+    "https://api.army.mil/e2/c/downloads/2021/10/06/ffd892d0/afc-concept-for-command-and-control-2028-pursuing-decision-dominance-oct21.pdf": {
+      "accepted_count": 0,
+      "agent_ids": [
+        "combat_scenario"
+      ],
+      "domain": "api.army.mil",
+      "failure_count": 1,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-07-31T15:07:33.817187+00:00",
+      "last_status": "network_safety_rejected",
+      "success_count": 0,
+      "title": "U.S. Army Concept for Command and Control",
+      "topics": [
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
+      ],
+      "url": "https://api.army.mil/e2/c/downloads/2021/10/06/ffd892d0/afc-concept-for-command-and-control-2028-pursuing-decision-dominance-oct21.pdf"
+    },
     "https://api.army.mil/e2/c/downloads/2023/01/31/693ac148/21-655-nagorno-karabakh-2020-conflict-catalog-aug-21-public.pdf": {
       "accepted_count": 0,
       "agent_ids": [
@@ -506,6 +523,23 @@
       ],
       "url": "https://carnegieendowment.org/research/2024/10/assessing-russian-military-adaptation-in-2023?center=europe&lang=en"
     },
+    "https://cdn.northropgrumman.com/-/media/Project/Northrop-Grumman/ngc/what-we-do/advanced-weapons/AARGM-ER-DataSheet-001.pdf?rev=b1a72cb37e414d0da4ccf3756130b7e7&sc_lang=en": {
+      "accepted_count": 0,
+      "agent_ids": [
+        "weapon_equipment"
+      ],
+      "domain": "cdn.northropgrumman.com",
+      "failure_count": 1,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-07-31T11:38:52.719009+00:00",
+      "last_status": "network_safety_rejected",
+      "success_count": 0,
+      "title": "AARGM-ER-Data-Sheet",
+      "topics": [
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
+      ],
+      "url": "https://cdn.northropgrumman.com/-/media/Project/Northrop-Grumman/ngc/what-we-do/advanced-weapons/AARGM-ER-DataSheet-001.pdf?rev=b1a72cb37e414d0da4ccf3756130b7e7&sc_lang=en"
+    },
     "https://cepa.org/comprehensive-reports/adaptation-under-fire-mass-speed-and-accuracy-transform-russias-kill-chain-in-": {
       "accepted_count": 1,
       "agent_ids": [
@@ -770,7 +804,7 @@
       "url": "https://comptroller.defense.gov/Portals/45/Documents/defbudget/FY2026/FY2026_Budget_Request_Overview_Book.pdf"
     },
     "https://comptroller.defense.gov/Portals/45/Documents/defbudget/FY2026/FY2026_Pacific_Deterrence_Initiative.pdf": {
-      "accepted_count": 46,
+      "accepted_count": 47,
       "agent_ids": [
         "weapon_equipment",
         "opponent_monitoring",
@@ -781,16 +815,16 @@
       "domain": "comptroller.defense.gov",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-28T21:46:55.273737+00:00",
-      "last_status": "hosted_search_citation",
-      "success_count": 59,
+      "last_seen_at": "2026-07-31T11:37:04.237307+00:00",
+      "last_status": "reader_fetched",
+      "success_count": 60,
       "title": "comptroller.defense.gov · FY2026 Pacific Deterrence Initiative.pdf",
       "topics": [
-        "西太补给线节点抗毁场景问题研究",
         "日本西南岛链压力条件下保障分析",
         "挖掘在西太反介入体系下的装备能力缺口",
         "强干扰、弱通信条件下低信息依赖精确打击装备最终发布验收",
-        "多源异构战场信息融合精确打击研究"
+        "多源异构战场信息融合精确打击研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://comptroller.defense.gov/Portals/45/Documents/defbudget/FY2026/FY2026_Pacific_Deterrence_Initiative.pdf"
     },
@@ -829,7 +863,7 @@
       "url": "https://comptroller.defense.gov/Portals/45/Documents/defbudget/FY2026/FY2026_Security_Cooperation_Justification_Book.pdf"
     },
     "https://comptroller.defense.gov/Portals/45/Documents/defbudget/FY2026/FY2026_Weapons.pdf": {
-      "accepted_count": 3,
+      "accepted_count": 6,
       "agent_ids": [
         "weapon_equipment",
         "operational_employment"
@@ -837,15 +871,16 @@
       "domain": "comptroller.defense.gov",
       "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-28T21:26:43.723728+00:00",
+      "last_seen_at": "2026-07-31T15:10:26.869909+00:00",
       "last_status": "hosted_search_citation",
-      "success_count": 3,
+      "success_count": 6,
       "title": "comptroller.defense.gov · FY2026 Weapons.pdf",
       "topics": [
         "挖掘在西太反介入体系下的装备能力缺口",
         "近岸低空区节点抗毁场景问题研究",
         "人工智能与自主协同技术演进对我军无人作战和精确制导武器发展的装备需求",
-        "复杂电磁环境自适应精打武器研究"
+        "复杂电磁环境自适应精打武器研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://comptroller.defense.gov/Portals/45/Documents/defbudget/FY2026/FY2026_Weapons.pdf"
     },
@@ -1881,7 +1916,7 @@
       "url": "https://files.gao.gov/reports/GAO-25-107034/index.html"
     },
     "https://files.gao.gov/reports/GAO-25-107263/index.html": {
-      "accepted_count": 9,
+      "accepted_count": 10,
       "agent_ids": [
         "weapon_equipment",
         "combat_scenario",
@@ -1890,16 +1925,16 @@
       "domain": "files.gao.gov",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-29T08:45:24.816902+00:00",
+      "last_seen_at": "2026-07-31T12:23:37.407309+00:00",
       "last_status": "fetched",
-      "success_count": 10,
+      "success_count": 11,
       "title": "GAO-25-107263, ARMY MODERNIZATION: Leading Practices Could Better Support Delivery of Artillery and Missiles",
       "topics": [
-        "多源异构战场信息融合精确打击研究",
         "目标持续监视与精确打击一体化研究",
         "分布式作战体系精确打击研究",
         "高价值时敏目标快速精确打击研究",
-        "强干扰、弱通信条件下低信息依赖精确打击研究"
+        "强干扰、弱通信条件下低信息依赖精确打击研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://files.gao.gov/reports/GAO-25-107263/index.html"
     },
@@ -2813,7 +2848,7 @@
       "url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS"
     },
     "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF": {
-      "accepted_count": 109,
+      "accepted_count": 115,
       "agent_ids": [
         "international_situation",
         "weapon_equipment",
@@ -2822,21 +2857,22 @@
         "cross_domain_fusion",
         "case_research",
         "nontraditional_security",
-        "operational_employment"
+        "operational_employment",
+        "scenario_divergence"
       ],
       "domain": "media.defense.gov",
       "failure_count": 0,
-      "last_decision": "duplicate",
-      "last_seen_at": "2026-07-30T13:05:20.453664+00:00",
+      "last_decision": "accepted",
+      "last_seen_at": "2026-07-31T15:06:27.751308+00:00",
       "last_status": "reader_fetched",
-      "success_count": 154,
-      "title": "Fact Sheet: DoD Strategy for Countering Unmanned Systems",
+      "success_count": 163,
+      "title": "media.defense.gov · FACT SHEET STRATEGY FOR COUNTERING UNMANNED SYSTEMS.PDF",
       "topics": [
-        "天基低时延信息支撑精确打击体系研究",
         "动态时敏目标快速感知—决策—打击一体化研究",
         "低轨巨型星座支撑体系条件下精打对抗研究",
         "目标持续监视与精确打击一体化研究",
-        "高机动宽域变轨战术精打飞行器研究"
+        "高机动宽域变轨战术精打飞行器研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
     },
@@ -3286,6 +3322,40 @@
       ],
       "url": "https://mod.gov.ua/en/news/drone-line-implementing-a-new-warfare-doctrine"
     },
+    "https://mod.gov.ua/en/news/jatec-helped-integrate-ukrainian-battlefield-scenarios-into-nato-exercises": {
+      "accepted_count": 1,
+      "agent_ids": [
+        "combat_scenario"
+      ],
+      "domain": "mod.gov.ua",
+      "failure_count": 0,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-07-31T14:16:36.288308+00:00",
+      "last_status": "fetched",
+      "success_count": 1,
+      "title": "JATEC helped integrate Ukrainian battlefield scenarios into NATO exercises | MoD News",
+      "topics": [
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
+      ],
+      "url": "https://mod.gov.ua/en/news/jatec-helped-integrate-ukrainian-battlefield-scenarios-into-nato-exercises"
+    },
+    "https://mod.gov.ua/en/news/middle-strike-operations-how-ukrainian-drones-are-degrading-russia-s-military-potential": {
+      "accepted_count": 1,
+      "agent_ids": [
+        "scenario_divergence"
+      ],
+      "domain": "mod.gov.ua",
+      "failure_count": 0,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-07-31T12:21:35.468628+00:00",
+      "last_status": "reader_fetched",
+      "success_count": 1,
+      "title": "Middle-strike operations: how Ukrainian drones are degrading russia’s military potential | MoD News",
+      "topics": [
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
+      ],
+      "url": "https://mod.gov.ua/en/news/middle-strike-operations-how-ukrainian-drones-are-degrading-russia-s-military-potential"
+    },
     "https://mod.gov.ua/en/news/the-command-of-the-unmanned-systems-forces-has-been-granted-the-authority-to-act-as-a-procurement-body-for-ua-vs-and-electronic-warfare-systems-following-the-ministry-of-defense-and-state-special-communications-service-procurements": {
       "accepted_count": 1,
       "agent_ids": [
@@ -3595,20 +3665,21 @@
       "url": "https://news.lockheedmartin.com/2017-07-19-U-S-Air-Force-Awards-Lockheed-Martin-37-Million-For-New-JASSM-R-ER-Wing-Design"
     },
     "https://news.lockheedmartin.com/2026-03-12-PrSM-Increment-2-Takes-Flight-and-Advances-Army-s-Moving-Target-and-maritime-capability": {
-      "accepted_count": 2,
+      "accepted_count": 5,
       "agent_ids": [
         "weapon_equipment"
       ],
       "domain": "news.lockheedmartin.com",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-28T22:35:00.875400+00:00",
+      "last_seen_at": "2026-07-31T14:22:30.623781+00:00",
       "last_status": "fetched",
-      "success_count": 2,
+      "success_count": 5,
       "title": "Media - Lockheed Martin - Releases",
       "topics": [
         "强干扰、弱通信条件下低信息依赖精确打击研究",
-        "多模态自主目标识别精打武器研究"
+        "多模态自主目标识别精打武器研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://news.lockheedmartin.com/2026-03-12-PrSM-Increment-2-Takes-Flight-and-Advances-Army-s-Moving-Target-and-maritime-capability"
     },
@@ -4967,6 +5038,23 @@
       ],
       "url": "https://www.aflcmc.af.mil/NEWS/Article/4288671/collaborative-combat-aircraft-yfq-42a-takes-to-the-air-for-flight-testing/"
     },
+    "https://www.aflcmc.af.mil/NEWS/Article/4474125/air-force-advances-dragon-cart-palletized-effects-program/": {
+      "accepted_count": 0,
+      "agent_ids": [
+        "weapon_equipment"
+      ],
+      "domain": "www.aflcmc.af.mil",
+      "failure_count": 1,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-07-31T12:24:07.589007+00:00",
+      "last_status": "network_safety_rejected",
+      "success_count": 0,
+      "title": "aflcmc.af.mil · air force advances dragon cart palletized effects program",
+      "topics": [
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
+      ],
+      "url": "https://www.aflcmc.af.mil/NEWS/Article/4474125/air-force-advances-dragon-cart-palletized-effects-program/"
+    },
     "https://www.afmc.af.mil/News/Article-Display/Article/155587/jassm-the-air-forces-next-generation-cruise-missile": {
       "accepted_count": 3,
       "agent_ids": [
@@ -5157,6 +5245,23 @@
       ],
       "url": "https://www.afrl.af.mil/News/Article/2526535/afrl-completes-golden-horde-collaborative-small-diameter-bomb-second-flight-dem/"
     },
+    "https://www.afrl.af.mil/News/Article/2876048/rapid-dragons-first-live-fire-test-of-a-palletized-weapon-system-deployed-from/": {
+      "accepted_count": 0,
+      "agent_ids": [
+        "weapon_equipment"
+      ],
+      "domain": "www.afrl.af.mil",
+      "failure_count": 1,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-07-31T12:23:57.561623+00:00",
+      "last_status": "network_safety_rejected",
+      "success_count": 0,
+      "title": "afrl.af.mil · rapid dragons first live fire test of a palletized weapon system deployed from",
+      "topics": [
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
+      ],
+      "url": "https://www.afrl.af.mil/News/Article/2876048/rapid-dragons-first-live-fire-test-of-a-palletized-weapon-system-deployed-from/"
+    },
     "https://www.ai.mil/Initiatives/CJADC2/": {
       "accepted_count": 6,
       "agent_ids": [
@@ -5166,17 +5271,18 @@
         "operational_employment"
       ],
       "domain": "www.ai.mil",
-      "failure_count": 1,
+      "failure_count": 2,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-29T08:44:51.222821+00:00",
-      "last_status": "hosted_search_citation",
+      "last_seen_at": "2026-07-31T11:38:44.689579+00:00",
+      "last_status": "network_safety_rejected",
       "success_count": 7,
       "title": "ai.mil · CJADC2",
       "topics": [
         "高消耗战场边缘智能影响响应研究",
         "多源异构战场信息融合精确打击研究",
         "目标持续监视与精确打击一体化研究",
-        "动态时敏目标快速感知—决策—打击一体化研究"
+        "动态时敏目标快速感知—决策—打击一体化研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.ai.mil/Initiatives/CJADC2/"
     },
@@ -5540,6 +5646,23 @@
       ],
       "url": "https://www.army.mil/article-amp/284546/adapting_to_multi_domain_battlefield_developing_emissions_control_sop"
     },
+    "https://www.army.mil/article-amp/285100/letter_to_the_force_army_transformation_initiative": {
+      "accepted_count": 0,
+      "agent_ids": [
+        "operational_employment"
+      ],
+      "domain": "www.army.mil",
+      "failure_count": 1,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-07-31T12:22:52.756431+00:00",
+      "last_status": "network_safety_rejected",
+      "success_count": 0,
+      "title": "army.mil · letter to the force army transformation initiative",
+      "topics": [
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
+      ],
+      "url": "https://www.army.mil/article-amp/285100/letter_to_the_force_army_transformation_initiative"
+    },
     "https://www.army.mil/article-amp/285302/u_s_army_partnerships_bring_critical_assured_pnt_capabilities_to_american_soldiers": {
       "accepted_count": 1,
       "agent_ids": [
@@ -5700,18 +5823,18 @@
         "scenario_divergence"
       ],
       "domain": "www.army.mil",
-      "failure_count": 0,
+      "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-29T07:55:56.721124+00:00",
-      "last_status": "hosted_search_citation",
+      "last_seen_at": "2026-07-31T15:10:27.433092+00:00",
+      "last_status": "network_safety_rejected",
       "success_count": 10,
-      "title": "https://www.army.mil/article-amp/291321/portfolio_acquisition_executive_for_fires_hosts_precision_strike_missile_increment_4_industry_day?utm_source=openai",
+      "title": "army.mil · portfolio acquisition executive for fires hosts precision strike missile increment 4 industry day",
       "topics": [
-        "挖掘在西太反介入体系下的装备能力缺口",
         "强干扰、弱通信条件下低信息依赖精确打击研究",
         "复杂电磁环境自适应精打武器研究",
         "高机动目标持续跟踪精确打击研究",
-        "高价值时敏目标快速精确打击研究"
+        "高价值时敏目标快速精确打击研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.army.mil/article-amp/291321/portfolio_acquisition_executive_for_fires_hosts_precision_strike_missile_increment_4_industry_day"
     },
@@ -5860,16 +5983,17 @@
         "weapon_equipment"
       ],
       "domain": "www.army.mil",
-      "failure_count": 1,
+      "failure_count": 2,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-29T08:18:02.211541+00:00",
-      "last_status": "hosted_search_citation",
+      "last_seen_at": "2026-07-31T15:10:27.455041+00:00",
+      "last_status": "network_safety_rejected",
       "success_count": 4,
       "title": "army.mil · the u s armys pae fires demonstrates autonomy and one to many control with lrpm at african lion 2026",
       "topics": [
         "强干扰、弱通信条件下低信息依赖精确打击研究",
         "天基低时延信息支撑精确打击体系研究",
-        "高价值时敏目标快速精确打击研究"
+        "高价值时敏目标快速精确打击研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.army.mil/article-amp/293800/the_u_s_armys_pae_fires_demonstrates_autonomy_and_one_to_many_control_with_lrpm_at_african_lion_2026"
     },
@@ -6087,17 +6211,18 @@
         "operational_employment"
       ],
       "domain": "www.army.mil",
-      "failure_count": 0,
+      "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-28T22:17:58.502320+00:00",
-      "last_status": "hosted_search_citation",
+      "last_seen_at": "2026-07-31T14:16:46.333519+00:00",
+      "last_status": "network_safety_rejected",
       "success_count": 6,
       "title": "army.mil · project convergence 22 connecting sensor to shooter to sustainer",
       "topics": [
         "强干扰、弱通信条件下低信息依赖精确打击研究",
         "强干扰、弱通信条件下低信息依赖精确打击装备稳定性验收",
         "多源异构战场信息融合精确打击研究",
-        "高机动目标持续跟踪精确打击研究"
+        "高机动目标持续跟踪精确打击研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.army.mil/article/262271/project_convergence_22_connecting_sensor_to_shooter_to_sustainer"
     },
@@ -6247,15 +6372,16 @@
         "operational_employment"
       ],
       "domain": "www.army.mil",
-      "failure_count": 0,
+      "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-24T14:07:28.423060+00:00",
-      "last_status": "hosted_search_citation",
+      "last_seen_at": "2026-07-31T11:38:52.702993+00:00",
+      "last_status": "network_safety_rejected",
       "success_count": 4,
       "title": "army.mil · theater sustainment transformation lessons from the russia ukraine war",
       "topics": [
         "从近年局部战争中挖掘我军装备发展需求",
-        "完整利用一个案例，从近年局部战争中挖掘我军装备发展需求"
+        "完整利用一个案例，从近年局部战争中挖掘我军装备发展需求",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.army.mil/article/274914/theater_sustainment_transformation_lessons_from_the_russia_ukraine_war"
     },
@@ -6371,18 +6497,18 @@
         "weapon_equipment"
       ],
       "domain": "www.army.mil",
-      "failure_count": 0,
+      "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-30T13:05:25.249822+00:00",
-      "last_status": "reader_fetched",
+      "last_seen_at": "2026-07-31T12:23:37.383260+00:00",
+      "last_status": "network_safety_rejected",
       "success_count": 11,
       "title": "army.mil · army awards precision strike missile early operational capability contract",
       "topics": [
-        "低轨巨型星座支撑体系条件下精打对抗研究",
         "动态时敏目标快速感知—决策—打击一体化研究",
         "分布式作战体系精确打击研究",
         "大规模离散目标低成本精确打击研究",
-        "高机动宽域变轨战术精打飞行器研究"
+        "高机动宽域变轨战术精打飞行器研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.army.mil/article/284406/army_awards_precision_strike_missile_early_operational_capability_contract"
     },
@@ -6552,18 +6678,18 @@
         "scenario_divergence"
       ],
       "domain": "www.army.mil",
-      "failure_count": 0,
+      "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-29T08:29:17.815102+00:00",
-      "last_status": "hosted_search_citation",
+      "last_seen_at": "2026-07-31T11:38:52.692402+00:00",
+      "last_status": "network_safety_rejected",
       "success_count": 22,
-      "title": "army.mil · precision strike missile increment 1 achieves milestone c approval",
+      "title": "Precision Strike Missile Increment 1 Achieves Milestone C Approval | Article | The United States Army",
       "topics": [
-        "天基低时延信息支撑精确打击体系研究",
         "间歇暴露目标搜索与精确打击研究",
         "不完备与不确定战场信息条件下精确打击研究",
         "多源异构战场信息融合精确打击研究",
-        "动态时敏目标快速感知—决策—打击一体化研究"
+        "动态时敏目标快速感知—决策—打击一体化研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.army.mil/article/286878/precision_strike_missile_increment_1_achieves_milestone_c_approval"
     },
@@ -6655,6 +6781,23 @@
         "公开信息条件下低空无人机探测预警体系的能力缺口与装备发展方向"
       ],
       "url": "https://www.army.mil/article/288598/drones_101_welcome_to_dows_joint_counter_small_uas_university"
+    },
+    "https://www.army.mil/article/288874/soldiers_complete_successful_flight_test_series_of_the_u_s_armys_precision_strike_missile": {
+      "accepted_count": 0,
+      "agent_ids": [
+        "weapon_equipment"
+      ],
+      "domain": "www.army.mil",
+      "failure_count": 1,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-07-31T15:10:16.783413+00:00",
+      "last_status": "network_safety_rejected",
+      "success_count": 0,
+      "title": "army.mil · soldiers complete successful flight test series of the u s armys precision strike missile",
+      "topics": [
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
+      ],
+      "url": "https://www.army.mil/article/288874/soldiers_complete_successful_flight_test_series_of_the_u_s_armys_precision_strike_missile"
     },
     "https://www.army.mil/article/289184/air_defenders_in_europe_test_new_counter_uas_technologies_during_project_flytrap_4_5": {
       "accepted_count": 4,
@@ -6878,6 +7021,23 @@
       ],
       "url": "https://www.army.mil/article/294076/u_s_army_yuma_proving_ground_tests_low_altitude_stalking_and_striking_ordnance"
     },
+    "https://www.armyupress.army.mil/Journals/Military-Review/English-Edition-Archives/July-August-2025/Unmanned-Aircraft-Revolution/": {
+      "accepted_count": 0,
+      "agent_ids": [
+        "operational_employment"
+      ],
+      "domain": "www.armyupress.army.mil",
+      "failure_count": 1,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-07-31T15:09:26.916526+00:00",
+      "last_status": "network_safety_rejected",
+      "success_count": 0,
+      "title": "armyupress.army.mil · Unmanned Aircraft Revolution",
+      "topics": [
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
+      ],
+      "url": "https://www.armyupress.army.mil/Journals/Military-Review/English-Edition-Archives/July-August-2025/Unmanned-Aircraft-Revolution/"
+    },
     "https://www.armyupress.army.mil/Journals/Military-Review/English-Edition-Archives/March-2024/Russia-Ukraine-Conflict-Laboratory/": {
       "accepted_count": 2,
       "agent_ids": [
@@ -6937,19 +7097,21 @@
       "agent_ids": [
         "weapon_equipment",
         "scenario_divergence",
-        "combat_scenario"
+        "combat_scenario",
+        "operational_employment"
       ],
       "domain": "www.armyupress.army.mil",
-      "failure_count": 0,
+      "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-29T02:15:18.534386+00:00",
-      "last_status": "hosted_search_citation",
+      "last_seen_at": "2026-07-31T12:45:27.079026+00:00",
+      "last_status": "network_safety_rejected",
       "success_count": 3,
-      "title": "Russia’s Changes in the Conduct of War Based on Lessons from Ukraine: Adapting Technology, Force Structures, and the Defense Industry",
+      "title": "armyupress.army.mil · Lessons from Ukraine",
       "topics": [
         "完整利用一个案例，从近年局部战争中挖掘我军装备发展需求",
         "强干扰弱通信下无人远程精确打击武器装备质量与效率终验",
-        "强干扰、弱通信条件下低信息依赖精确打击研究"
+        "强干扰、弱通信条件下低信息依赖精确打击研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.armyupress.army.mil/Journals/Military-Review/English-Edition-Archives/September-October-2025/Lessons-from-Ukraine/"
     },
@@ -6959,15 +7121,16 @@
         "operational_employment"
       ],
       "domain": "www.armyupress.army.mil",
-      "failure_count": 1,
+      "failure_count": 2,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-28T22:17:01.084979+00:00",
-      "last_status": "hosted_search_citation",
+      "last_seen_at": "2026-07-31T12:45:27.068404+00:00",
+      "last_status": "network_safety_rejected",
       "success_count": 1,
-      "title": "Bayraktars and Grenade-Dropping Quadcopters II: Year Two of Ukraine- Russia Drone Warfare",
+      "title": "armyupress.army.mil · Grenade Dropping Quadcopters II",
       "topics": [
         "从近年局部战争中挖掘我军装备发展需求",
-        "间歇暴露目标搜索与精确打击研究"
+        "间歇暴露目标搜索与精确打击研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.armyupress.army.mil/Journals/Military-Review/Online-Exclusive/2024-OLE/Grenade-Dropping-Quadcopters-II/"
     },
@@ -6978,16 +7141,17 @@
         "combat_scenario"
       ],
       "domain": "www.armyupress.army.mil",
-      "failure_count": 1,
+      "failure_count": 2,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-24T14:41:46.075634+00:00",
-      "last_status": "hosted_search_citation",
+      "last_seen_at": "2026-07-31T12:45:27.034569+00:00",
+      "last_status": "network_safety_rejected",
       "success_count": 2,
-      "title": "Something Old and Something New: Lessons from the Ukraine- Russia War",
+      "title": "armyupress.army.mil · Lessons Ukraine Russia War",
       "topics": [
         "完整利用一个案例，从近年局部战争中挖掘我军装备发展需求",
         "从近年局部战争中挖掘我军装备发展需求",
-        "面向西太高强度对抗，研究无人集群与远程精确火力协同形成新制胜机理的装备需求"
+        "面向西太高强度对抗，研究无人集群与远程精确火力协同形成新制胜机理的装备需求",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.armyupress.army.mil/Journals/Military-Review/Online-Exclusive/2024-OLE/Lessons-Ukraine-Russia-War/"
     },
@@ -7170,18 +7334,18 @@
         "scenario_divergence"
       ],
       "domain": "www.asafm.army.mil",
-      "failure_count": 1,
+      "failure_count": 4,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-30T13:05:25.279071+00:00",
-      "last_status": "hosted_search_citation",
+      "last_seen_at": "2026-07-31T15:10:27.444777+00:00",
+      "last_status": "network_safety_rejected",
       "success_count": 24,
       "title": "asafm.army.mil · Missile%20Procurement%20Army.pdf",
       "topics": [
-        "搜索—识别—跟踪—打击一体化精打武器研究",
         "强干扰、弱通信条件下低信息依赖精确打击研究",
         "天基低时延信息支撑精确打击体系研究",
         "不完备与不确定战场信息条件下精确打击研究",
-        "高机动宽域变轨战术精打飞行器研究"
+        "高机动宽域变轨战术精打飞行器研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2026/Discretionary%20Budget/Procurement/Missile%20Procurement%20Army.pdf"
     },
@@ -7227,18 +7391,18 @@
         "weapon_equipment"
       ],
       "domain": "www.asafm.army.mil",
-      "failure_count": 0,
+      "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-30T13:05:25.229550+00:00",
-      "last_status": "reader_fetched",
+      "last_seen_at": "2026-07-31T15:10:16.798998+00:00",
+      "last_status": "network_safety_rejected",
       "success_count": 7,
       "title": "asafm.army.mil · RDTE%20 %20Vol%203%20 %20Budget%20Activity%205D.pdf",
       "topics": [
-        "强干扰弱通信低信息依赖远程精确打击装备发布验证",
         "低轨巨型星座支撑体系条件下精打对抗研究",
         "高速机动海空目标精确打击研究",
         "复杂电磁环境自适应精打武器研究",
-        "高机动宽域变轨战术精打飞行器研究"
+        "高机动宽域变轨战术精打飞行器研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2027/Discretionary%20Budget/rdte/RDTE%20-%20Vol%203%20-%20Budget%20Activity%205D.pdf"
     },
@@ -7311,7 +7475,7 @@
       "url": "https://www.avinc.com/solution/switchblade-600-block-2/"
     },
     "https://www.avinc.com/solution/switchblade-600/": {
-      "accepted_count": 11,
+      "accepted_count": 13,
       "agent_ids": [
         "weapon_equipment",
         "technology_radar",
@@ -7320,16 +7484,16 @@
       "domain": "www.avinc.com",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-29T08:29:17.774020+00:00",
+      "last_seen_at": "2026-07-31T14:22:34.093528+00:00",
       "last_status": "fetched",
-      "success_count": 12,
+      "success_count": 14,
       "title": "Switchblade® 600 - AeroVironment",
       "topics": [
-        "高机动目标持续跟踪精确打击研究",
         "复杂背景低特征目标精确打击研究",
         "分布式作战体系精确打击研究",
         "大规模离散目标低成本精确打击研究",
-        "动态时敏目标快速感知—决策—打击一体化研究"
+        "动态时敏目标快速感知—决策—打击一体化研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.avinc.com/solution/switchblade-600/"
     },
@@ -8709,21 +8873,24 @@
       "url": "https://www.csis.org/analysis/cost-and-value-air-and-missile-defense-intercepts"
     },
     "https://www.csis.org/analysis/defining-autonomy-why-software-not-drones-will-decide-next-war": {
-      "accepted_count": 2,
+      "accepted_count": 5,
       "agent_ids": [
         "technology_radar",
-        "operational_employment"
+        "operational_employment",
+        "scenario_divergence",
+        "combat_scenario"
       ],
       "domain": "www.csis.org",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-28T11:38:34.675650+00:00",
+      "last_seen_at": "2026-07-31T15:07:33.794393+00:00",
       "last_status": "fetched",
-      "success_count": 2,
+      "success_count": 5,
       "title": "Defining Autonomy: Why Software, Not Drones, Will Decide the Next War",
       "topics": [
         "高消耗战场边缘智能影响响应研究",
-        "强干扰、弱通信条件下低信息依赖精确打击研究"
+        "强干扰、弱通信条件下低信息依赖精确打击研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.csis.org/analysis/defining-autonomy-why-software-not-drones-will-decide-next-war"
     },
@@ -9066,7 +9233,7 @@
       "url": "https://www.csis.org/analysis/space-threat-assessment-2024"
     },
     "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare": {
-      "accepted_count": 18,
+      "accepted_count": 21,
       "agent_ids": [
         "combat_scenario",
         "technology_radar",
@@ -9075,16 +9242,16 @@
       "domain": "www.csis.org",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-29T08:03:32.481655+00:00",
+      "last_seen_at": "2026-07-31T15:07:33.844823+00:00",
       "last_status": "fetched",
-      "success_count": 19,
+      "success_count": 22,
       "title": "Ukraine’s Future Vision and Current Capabilities for Waging AI-Enabled Autonomous Warfare",
       "topics": [
-        "完整利用一个案例，从近年局部战争中挖掘我军装备发展需求",
         "面向西太高强度对抗，研究无人集群与远程精确火力协同形成新制胜机理的装备需求",
         "强干扰、弱通信条件下低信息依赖精确打击研究",
         "强干扰弱通信下无人远程精确打击武器装备质量与效率终验",
-        "多源异构战场信息融合精确打击研究"
+        "多源异构战场信息融合精确打击研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare"
     },
@@ -9123,7 +9290,7 @@
       "url": "https://www.csis.org/analysis/united-states-prepared-war-china"
     },
     "https://www.csis.org/analysis/unleashing-us-military-drone-dominance-what-united-states-can-learn-ukraine": {
-      "accepted_count": 4,
+      "accepted_count": 6,
       "agent_ids": [
         "case_research",
         "weapon_equipment",
@@ -9133,13 +9300,14 @@
       "domain": "www.csis.org",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-29T05:02:26.401001+00:00",
+      "last_seen_at": "2026-07-31T12:45:16.905156+00:00",
       "last_status": "fetched",
-      "success_count": 6,
+      "success_count": 8,
       "title": "Unleashing U.S. Military Drone Dominance: What the United States Can Learn from Ukraine",
       "topics": [
         "从近年局部战争中挖掘我军装备发展需求",
-        "强干扰、弱通信条件下低信息依赖精确打击研究"
+        "强干扰、弱通信条件下低信息依赖精确打击研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.csis.org/analysis/unleashing-us-military-drone-dominance-what-united-states-can-learn-ukraine"
     },
@@ -9161,7 +9329,7 @@
       "url": "https://www.csis.org/analysis/why-ukraine-establishing-unmanned-forces"
     },
     "https://www.csis.org/index.php/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience": {
-      "accepted_count": 11,
+      "accepted_count": 14,
       "agent_ids": [
         "case_research",
         "scenario_divergence",
@@ -9170,17 +9338,17 @@
       ],
       "domain": "www.csis.org",
       "failure_count": 0,
-      "last_decision": "accepted",
-      "last_seen_at": "2026-07-29T05:03:29.960791+00:00",
-      "last_status": "hosted_search_citation",
-      "success_count": 13,
-      "title": "csis.org · lessons ukraine conflict modern warfare age autonomy information and resilience",
+      "last_decision": "duplicate",
+      "last_seen_at": "2026-07-31T12:45:27.051464+00:00",
+      "last_status": "fetched",
+      "success_count": 17,
+      "title": "Lessons from the Ukraine Conflict: Modern Warfare in the Age of Autonomy, Information, and Resilience",
       "topics": [
-        "从近年局部战争中挖掘我军装备发展需求",
         "强干扰、弱通信条件下低信息依赖精确打击研究",
         "强干扰弱通信低信息依赖远程精确打击装备发布验证",
         "强干扰、弱通信条件下低信息依赖精确打击装备最终发布验收",
-        "卫星拒止条件下多源自主导航精打武器研究"
+        "卫星拒止条件下多源自主导航精打武器研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.csis.org/index.php/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience"
     },
@@ -9376,6 +9544,23 @@
       ],
       "url": "https://www.darpa.mil/news/2026/darpa-us-air-force-fly-ai-controlled-f-16"
     },
+    "https://www.darpa.mil/news/2026/long-shot-success": {
+      "accepted_count": 0,
+      "agent_ids": [
+        "weapon_equipment"
+      ],
+      "domain": "www.darpa.mil",
+      "failure_count": 1,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-07-31T15:10:16.810521+00:00",
+      "last_status": "network_safety_rejected",
+      "success_count": 0,
+      "title": "darpa.mil · long shot success",
+      "topics": [
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
+      ],
+      "url": "https://www.darpa.mil/news/2026/long-shot-success"
+    },
     "https://www.darpa.mil/news/2026/rockn-enables-gps-free-operations": {
       "accepted_count": 3,
       "agent_ids": [
@@ -9511,18 +9696,20 @@
       "agent_ids": [
         "technology_radar",
         "operational_employment",
-        "weapon_equipment"
+        "weapon_equipment",
+        "combat_scenario"
       ],
       "domain": "www.darpa.mil",
-      "failure_count": 0,
+      "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-26T08:16:16.508847+00:00",
-      "last_status": "fetched",
+      "last_seen_at": "2026-07-31T12:22:33.767102+00:00",
+      "last_status": "network_safety_rejected",
       "success_count": 6,
-      "title": "DICE | DARPA",
+      "title": "darpa.mil · decentralized artificial intelligence through controlled emergence",
       "topics": [
         "高消耗战场边缘智能影响响应研究",
-        "人工智能与自主协同技术演进对我军无人作战和精确制导武器发展的装备需求"
+        "人工智能与自主协同技术演进对我军无人作战和精确制导武器发展的装备需求",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.darpa.mil/research/programs/decentralized-artificial-intelligence-through-controlled-emergence"
     },
@@ -9667,17 +9854,19 @@
       "agent_ids": [
         "system_confrontation",
         "weapon_equipment",
-        "operational_employment"
+        "operational_employment",
+        "scenario_divergence"
       ],
       "domain": "www.darpa.mil",
-      "failure_count": 0,
-      "last_decision": "duplicate",
-      "last_seen_at": "2026-07-19T16:56:05.527808+00:00",
-      "last_status": "fetched",
+      "failure_count": 5,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-07-31T15:09:26.925120+00:00",
+      "last_status": "network_safety_rejected",
       "success_count": 3,
-      "title": "OFFensive Swarm-Enabled Tactics",
+      "title": "darpa.mil · offensive swarm enabled tactics",
       "topics": [
-        "探索无人智能集群条件下的新作战战法及装备需求"
+        "探索无人智能集群条件下的新作战战法及装备需求",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.darpa.mil/research/programs/offensive-swarm-enabled-tactics"
     },
@@ -9999,7 +10188,7 @@
       "url": "https://www.defense.gov/News/News-Stories/Article/Article/3157239/ukraines-success-was-a-surprise-only-to-the-russians/"
     },
     "https://www.defense.gov/News/News-Stories/Article/Article/3518827/hicks-discusses-replicator-initiative/": {
-      "accepted_count": 5,
+      "accepted_count": 6,
       "agent_ids": [
         "weapon_equipment",
         "operational_employment"
@@ -10007,13 +10196,14 @@
       "domain": "www.defense.gov",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-26T08:40:58.143288+00:00",
+      "last_seen_at": "2026-07-31T11:38:52.670126+00:00",
       "last_status": "reader_fetched",
-      "success_count": 5,
-      "title": "Hicks Discusses Replicator Initiative > U.S. Department of War > Defense Department News | U.S. Department of War",
+      "success_count": 6,
+      "title": "Hicks Discusses Replicator Initiative > U.S. Department of Defense > Defense Department News",
       "topics": [
         "南海通信遮断无人协同压力能力研究",
-        "高消耗战场边缘智能影响响应研究"
+        "高消耗战场边缘智能影响响应研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.defense.gov/News/News-Stories/Article/Article/3518827/hicks-discusses-replicator-initiative/"
     },
@@ -10432,25 +10622,42 @@
       ],
       "url": "https://www.defense.gov/News/Releases/Release/Article/3703410/department-of-defense-releases-the-presidents-fiscal-year-2025-defense-budget/"
     },
+    "https://www.defense.gov/News/Releases/Release/Article/3765644/deputy-secretary-hicks-announces-first-tranche-of-replicator-capabil/": {
+      "accepted_count": 2,
+      "agent_ids": [
+        "weapon_equipment"
+      ],
+      "domain": "www.defense.gov",
+      "failure_count": 0,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-07-31T12:46:39.984113+00:00",
+      "last_status": "reader_fetched",
+      "success_count": 2,
+      "title": "defense.gov · deputy secretary hicks announces first tranche of replicator capabil",
+      "topics": [
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
+      ],
+      "url": "https://www.defense.gov/News/Releases/Release/Article/3765644/deputy-secretary-hicks-announces-first-tranche-of-replicator-capabil/"
+    },
     "https://www.defense.gov/News/Releases/Release/Article/3765644/deputy-secretary-of-defense-hicks-announces-first-tranche-of-replicator-capabil/": {
-      "accepted_count": 45,
+      "accepted_count": 47,
       "agent_ids": [
         "weapon_equipment",
         "operational_employment"
       ],
       "domain": "www.defense.gov",
       "failure_count": 1,
-      "last_decision": "accepted",
-      "last_seen_at": "2026-07-29T08:45:24.847368+00:00",
-      "last_status": "hosted_search_citation",
-      "success_count": 45,
+      "last_decision": "duplicate",
+      "last_seen_at": "2026-07-31T15:10:27.420657+00:00",
+      "last_status": "reader_fetched",
+      "success_count": 49,
       "title": "defense.gov · deputy secretary of defense hicks announces first tranche of replicator capabil",
       "topics": [
-        "目标持续监视与精确打击一体化研究",
         "间歇暴露目标搜索与精确打击研究",
         "不完备与不确定战场信息条件下精确打击研究",
         "卫星拒止条件下多源自主导航精打武器研究",
-        "多源异构战场信息融合精确打击研究"
+        "多源异构战场信息融合精确打击研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.defense.gov/News/Releases/Release/Article/3765644/deputy-secretary-of-defense-hicks-announces-first-tranche-of-replicator-capabil/"
     },
@@ -10587,7 +10794,7 @@
       "url": "https://www.defense.gov/News/Releases/Release/Article/3944394/aukus-partners-complete-successful-tests-of-autonomous-and-networked-systems-in/"
     },
     "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/": {
-      "accepted_count": 129,
+      "accepted_count": 135,
       "agent_ids": [
         "international_situation",
         "system_confrontation",
@@ -10601,16 +10808,16 @@
       "domain": "www.defense.gov",
       "failure_count": 2,
       "last_decision": "duplicate",
-      "last_seen_at": "2026-07-30T13:05:12.644782+00:00",
-      "last_status": "hosted_search_citation",
-      "success_count": 226,
-      "title": "Deputy Secretary of Defense Kathleen Hicks Announces Additional Replicator All-Domain Attritable Autonomous Capabilities > U.S. Department of War > Release | U.S. Department of War",
+      "last_seen_at": "2026-07-31T15:10:16.764766+00:00",
+      "last_status": "reader_fetched",
+      "success_count": 237,
+      "title": "defense.gov · deputy secretary of defense kathleen hicks announces additional replicator all",
       "topics": [
-        "间歇通信条件下精打武器任务保持与任务续接研究",
         "不完备与不确定战场信息条件下精确打击研究",
         "动态时敏目标快速感知—决策—打击一体化研究",
         "低轨巨型星座支撑体系条件下精打对抗研究",
-        "高机动宽域变轨战术精打飞行器研究"
+        "高机动宽域变轨战术精打飞行器研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
     },
@@ -10744,19 +10951,21 @@
       "url": "https://www.defense.gov/News/Releases/Release/article/4137869/united-statesphilippines-joint-statement-on-secretary-hegseths-inaugural-visit/"
     },
     "https://www.defense.gov/News/Speeches/Speech/Article/3507156/deputy-secretary-of-defense-kathleen-hicks-keynote-address-the-urgency-to-innov/": {
-      "accepted_count": 1,
+      "accepted_count": 2,
       "agent_ids": [
-        "international_situation"
+        "international_situation",
+        "operational_employment"
       ],
       "domain": "www.defense.gov",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-21T12:09:55.798537+00:00",
+      "last_seen_at": "2026-07-31T14:16:36.264863+00:00",
       "last_status": "reader_fetched",
-      "success_count": 1,
+      "success_count": 2,
       "title": "defense.gov · deputy secretary of defense kathleen hicks keynote address the urgency to innov",
       "topics": [
-        "挖掘在西太反介入体系下的装备能力缺口"
+        "挖掘在西太反介入体系下的装备能力缺口",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.defense.gov/News/Speeches/Speech/Article/3507156/deputy-secretary-of-defense-kathleen-hicks-keynote-address-the-urgency-to-innov/"
     },
@@ -10881,6 +11090,23 @@
       ],
       "url": "https://www.defense.gov/News/Transcripts/Transcript/Article/4228828/background-briefing-on-fy-2026-defense-budget/"
     },
+    "https://www.defense.gov/Spotlights/Project-Convergence/": {
+      "accepted_count": 2,
+      "agent_ids": [
+        "combat_scenario"
+      ],
+      "domain": "www.defense.gov",
+      "failure_count": 0,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-07-31T12:45:12.858994+00:00",
+      "last_status": "reader_fetched",
+      "success_count": 2,
+      "title": "defense.gov · Project Convergence",
+      "topics": [
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
+      ],
+      "url": "https://www.defense.gov/Spotlights/Project-Convergence/"
+    },
     "https://www.diu.mil/latest/autonomous-maritime-domain-capabilities-awarded-in-support-of-replicator": {
       "accepted_count": 3,
       "agent_ids": [
@@ -10925,18 +11151,18 @@
         "scenario_divergence"
       ],
       "domain": "www.diu.mil",
-      "failure_count": 1,
+      "failure_count": 3,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-28T22:51:42.452923+00:00",
-      "last_status": "fetched",
+      "last_seen_at": "2026-07-31T14:09:44.478845+00:00",
+      "last_status": "network_safety_rejected",
       "success_count": 70,
-      "title": "Defense Innovation Unit Announces Software Vendors to Support Replicator",
+      "title": "diu.mil · defense innovation unit announces software vendors to support replicator",
       "topics": [
-        "复杂背景低特征目标精确打击研究",
         "分布式作战体系精确打击研究",
         "搜索—识别—跟踪—打击一体化精打武器研究",
         "多节点目标群协同精确打击研究",
-        "大规模离散目标低成本精确打击研究"
+        "大规模离散目标低成本精确打击研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.diu.mil/latest/defense-innovation-unit-announces-software-vendors-to-support-replicator"
     },
@@ -11457,6 +11683,23 @@
       ],
       "url": "https://www.eglin.af.mil/News/Article-Display/Article/392354/jassm-achieves-success-in-reliability-flight-tests/"
     },
+    "https://www.eglin.af.mil/News/Article-Display/Article/4475375/air-force-advances-dragon-cart-palletized-effects-program/": {
+      "accepted_count": 0,
+      "agent_ids": [
+        "weapon_equipment"
+      ],
+      "domain": "www.eglin.af.mil",
+      "failure_count": 1,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-07-31T11:39:02.791433+00:00",
+      "last_status": "network_safety_rejected",
+      "success_count": 0,
+      "title": "Air Force Advances Dragon Cart Palletized Effects Program > Eglin Air Force Base > Article Display",
+      "topics": [
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
+      ],
+      "url": "https://www.eglin.af.mil/News/Article-Display/Article/4475375/air-force-advances-dragon-cart-palletized-effects-program/"
+    },
     "https://www.eia.gov/international/content/analysis/regions_of_interest/South_China_Sea/": {
       "accepted_count": 2,
       "agent_ids": [
@@ -11681,6 +11924,23 @@
         "边境接触带丛林通信影响能力研究"
       ],
       "url": "https://www.foi.se/en/foi/reports/report-summary.html?reportNo=FOI-R--4734--SE"
+    },
+    "https://www.ga-asi.com/air-force-awards-darpa-ga-asi-longshot-new-designation-x-68a": {
+      "accepted_count": 1,
+      "agent_ids": [
+        "weapon_equipment"
+      ],
+      "domain": "www.ga-asi.com",
+      "failure_count": 0,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-07-31T15:10:26.882804+00:00",
+      "last_status": "fetched",
+      "success_count": 1,
+      "title": "Air Force Awards DARPA/GA-ASI LongShot New Designation: X-68A | General Atomics Aeronautical Systems Inc.",
+      "topics": [
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
+      ],
+      "url": "https://www.ga-asi.com/air-force-awards-darpa-ga-asi-longshot-new-designation-x-68a"
     },
     "https://www.ga-asi.com/images/products/aircraft_systems/pdf/mq9b-skyguardian-datasheet.pdf": {
       "accepted_count": 1,
@@ -12824,7 +13084,7 @@
       "url": "https://www.hqmc.marines.mil/Portals/142/Users/183/35/4535/211201_A%20Concept%20for%20Stand-In%20Forces.pdf?ver=MFOzu2hs_IWHZlsOAkfZsQ%3D%3D"
     },
     "https://www.ifri.org/en/studies/mapping-miltech-war-eight-lessons-ukraines-battlefield": {
-      "accepted_count": 4,
+      "accepted_count": 5,
       "agent_ids": [
         "combat_scenario",
         "operational_employment"
@@ -12832,15 +13092,16 @@
       "domain": "www.ifri.org",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-29T00:03:00.112987+00:00",
+      "last_seen_at": "2026-07-31T11:37:55.155677+00:00",
       "last_status": "fetched",
-      "success_count": 4,
+      "success_count": 5,
       "title": "Mapping the MilTech War: Eight Lessons from Ukraine’s Battlefield | Ifri",
       "topics": [
         "边境村镇态势感知条件下影响分析",
         "从近年局部战争中挖掘我军装备发展需求",
         "高机动目标持续跟踪精确打击研究",
-        "搜索—识别—跟踪—打击一体化精打武器研究"
+        "搜索—识别—跟踪—打击一体化精打武器研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.ifri.org/en/studies/mapping-miltech-war-eight-lessons-ukraines-battlefield"
     },
@@ -13644,6 +13905,23 @@
       ],
       "url": "https://www.lineofdeparture.army.mil/Journals/Army-Sustainment/Army-Sustainment-Archive/ASPB-Summer-2025/Surviving-the-Kill-Web/"
     },
+    "https://www.lineofdeparture.army.mil/Journals/Army-Sustainment/Army-Sustainment-Archive/ASPB-Summer-2025/Transforming-in-Contact-20/": {
+      "accepted_count": 0,
+      "agent_ids": [
+        "operational_employment"
+      ],
+      "domain": "www.lineofdeparture.army.mil",
+      "failure_count": 1,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-07-31T15:09:16.898403+00:00",
+      "last_status": "network_safety_rejected",
+      "success_count": 0,
+      "title": "lineofdeparture.army.mil · Transforming in Contact 20",
+      "topics": [
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
+      ],
+      "url": "https://www.lineofdeparture.army.mil/Journals/Army-Sustainment/Army-Sustainment-Archive/ASPB-Summer-2025/Transforming-in-Contact-20/"
+    },
     "https://www.lineofdeparture.army.mil/Journals/Aviation-Digest/Aviation-Digest-January-March-2025/Counter-Small-Unmanned-Aircraft-Systems/": {
       "accepted_count": 1,
       "agent_ids": [
@@ -13686,16 +13964,17 @@
         "combat_scenario"
       ],
       "domain": "www.lineofdeparture.army.mil",
-      "failure_count": 0,
+      "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-29T08:28:42.089985+00:00",
-      "last_status": "hosted_search_citation",
+      "last_seen_at": "2026-07-31T11:37:51.705951+00:00",
+      "last_status": "network_safety_rejected",
       "success_count": 6,
-      "title": "lineofdeparture.army.mil · Project Convergence",
+      "title": "Project Convergence: Revolutionizing Targeting in Large-Scale Combat Operations",
       "topics": [
         "多源联通低轨韧性背景下风险研判",
         "动态时敏目标快速感知—决策—打击一体化研究",
-        "复杂背景低特征目标精确打击研究"
+        "复杂背景低特征目标精确打击研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2025-E-Edition/Project-Convergence/"
     },
@@ -13829,6 +14108,23 @@
       ],
       "url": "https://www.lockheedmartin.com/content/dam/lockheed-martin/mfc/documents/business-area-landing/25-10145-ADSW-JASSM-Fast_Facts.pdf"
     },
+    "https://www.lockheedmartin.com/en-us/news/features/2025/scaling-precision-how-lockheed-martin-is-building-the-arsenal-for-the-armys-next-generation-strike-missile.html": {
+      "accepted_count": 1,
+      "agent_ids": [
+        "weapon_equipment"
+      ],
+      "domain": "www.lockheedmartin.com",
+      "failure_count": 0,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-07-31T12:23:47.479779+00:00",
+      "last_status": "fetched",
+      "success_count": 1,
+      "title": "Scaling Precision: How Lockheed Martin is Building the Arsenal for the Army’s Next-Generation Strike Missile | Lockheed Martin",
+      "topics": [
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
+      ],
+      "url": "https://www.lockheedmartin.com/en-us/news/features/2025/scaling-precision-how-lockheed-martin-is-building-the-arsenal-for-the-armys-next-generation-strike-missile.html"
+    },
     "https://www.lockheedmartin.com/en-us/news/features/history/jassm.html": {
       "accepted_count": 7,
       "agent_ids": [
@@ -13849,22 +14145,23 @@
       "url": "https://www.lockheedmartin.com/en-us/news/features/history/jassm.html"
     },
     "https://www.lockheedmartin.com/en-us/products/jassm.html": {
-      "accepted_count": 7,
+      "accepted_count": 8,
       "agent_ids": [
         "weapon_equipment"
       ],
       "domain": "www.lockheedmartin.com",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-29T05:58:43.239588+00:00",
+      "last_seen_at": "2026-07-31T11:39:04.536884+00:00",
       "last_status": "fetched",
-      "success_count": 7,
+      "success_count": 8,
       "title": "JASSM | Lockheed Martin",
       "topics": [
         "强干扰、弱通信条件下低信息依赖精确打击研究",
         "间歇通信条件下精打武器任务保持与任务续接研究",
         "复杂电磁环境自适应精打武器研究",
-        "卫星拒止条件下多源自主导航精打武器研究"
+        "卫星拒止条件下多源自主导航精打武器研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.lockheedmartin.com/en-us/products/jassm.html"
     },
@@ -13903,21 +14200,22 @@
       "url": "https://www.lockheedmartin.com/en-us/products/long-range-anti-ship-missile/lrasm-media-kit.html"
     },
     "https://www.lockheedmartin.com/en-us/products/precision-strike-missile.html/": {
-      "accepted_count": 3,
+      "accepted_count": 5,
       "agent_ids": [
         "weapon_equipment"
       ],
       "domain": "www.lockheedmartin.com",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-28T22:56:58.981561+00:00",
+      "last_seen_at": "2026-07-31T14:22:30.606404+00:00",
       "last_status": "fetched",
-      "success_count": 3,
+      "success_count": 5,
       "title": "Precision Strike Missile (PrSM) | Lockheed Martin",
       "topics": [
         "复杂背景低特征目标精确打击研究",
         "多模态自主目标识别精打武器研究",
-        "高价值时敏目标快速精确打击研究"
+        "高价值时敏目标快速精确打击研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.lockheedmartin.com/en-us/products/precision-strike-missile.html/"
     },
@@ -14161,18 +14459,18 @@
         "cross_domain_fusion"
       ],
       "domain": "www.marines.mil",
-      "failure_count": 3,
-      "last_decision": "duplicate",
-      "last_seen_at": "2026-07-30T13:05:12.629093+00:00",
-      "last_status": "hosted_search_citation",
+      "failure_count": 16,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-07-31T15:09:16.887792+00:00",
+      "last_status": "network_safety_rejected",
       "success_count": 332,
-      "title": "Force Design",
+      "title": "marines.mil · Force Design",
       "topics": [
-        "多源异构战场信息融合精确打击研究",
         "不完备与不确定战场信息条件下精确打击研究",
         "动态时敏目标快速感知—决策—打击一体化研究",
         "目标持续监视与精确打击一体化研究",
-        "高机动宽域变轨战术精打飞行器研究"
+        "高机动宽域变轨战术精打飞行器研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.marines.mil/Force-Design/"
     },
@@ -14207,18 +14505,18 @@
         "nontraditional_security"
       ],
       "domain": "www.marines.mil",
-      "failure_count": 1,
+      "failure_count": 6,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-30T13:05:23.527364+00:00",
-      "last_status": "reader_fetched",
+      "last_seen_at": "2026-07-31T15:06:27.774151+00:00",
+      "last_status": "network_safety_rejected",
       "success_count": 198,
-      "title": "Expeditionary Advanced Base Operations (EABO) > United States Marine Corps Flagship > Modernization Priorities",
+      "title": "marines.mil · expeditionary advanced base operations eabo",
       "topics": [
-        "复杂电磁环境自适应精打武器研究",
         "天基低时延信息支撑精确打击体系研究",
         "不完备与不确定战场信息条件下精确打击研究",
         "低轨巨型星座支撑体系条件下精打对抗研究",
-        "高机动宽域变轨战术精打飞行器研究"
+        "高机动宽域变轨战术精打飞行器研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/"
     },
@@ -14259,19 +14557,21 @@
     "https://www.marines.mil/Force-Design/Priorities/Article/2708140/stand-in-forces/": {
       "accepted_count": 5,
       "agent_ids": [
-        "operational_employment"
+        "operational_employment",
+        "combat_scenario"
       ],
       "domain": "www.marines.mil",
-      "failure_count": 0,
+      "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-29T05:55:59.554908+00:00",
-      "last_status": "hosted_search_citation",
+      "last_seen_at": "2026-07-31T15:07:33.776825+00:00",
+      "last_status": "network_safety_rejected",
       "success_count": 5,
-      "title": "marines.mil · stand in forces",
+      "title": "Stand-In Forces > United States Marine Corps Flagship > Modernization Priorities",
       "topics": [
         "强干扰、弱通信条件下低信息依赖精确打击研究",
         "复杂电磁环境自适应精打武器研究",
-        "卫星拒止条件下多源自主导航精打武器研究"
+        "卫星拒止条件下多源自主导航精打武器研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.marines.mil/Force-Design/Priorities/Article/2708140/stand-in-forces/"
     },
@@ -14370,6 +14670,23 @@
         "南海远海维修低空穿透背景下影响分析"
       ],
       "url": "https://www.marines.mil/Force-Design/；见检索行L147-L155、L159-L181"
+    },
+    "https://www.marines.mil/Installations-and-Logistics/": {
+      "accepted_count": 0,
+      "agent_ids": [
+        "operational_employment"
+      ],
+      "domain": "www.marines.mil",
+      "failure_count": 1,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-07-31T15:09:27.489549+00:00",
+      "last_status": "network_safety_rejected",
+      "success_count": 0,
+      "title": "marines.mil · Installations and Logistics",
+      "topics": [
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
+      ],
+      "url": "https://www.marines.mil/Installations-and-Logistics/"
     },
     "https://www.marines.mil/News/News-Display/Article/1870987/corps-moving-forward-with-full-rate-production-of-gator-system/": {
       "accepted_count": 2,
@@ -15006,18 +15323,18 @@
         "operational_employment"
       ],
       "domain": "www.mcwl.marines.mil",
-      "failure_count": 0,
+      "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-29T00:04:37.551835+00:00",
-      "last_status": "hosted_search_citation",
+      "last_seen_at": "2026-07-31T12:22:33.749057+00:00",
+      "last_status": "network_safety_rejected",
       "success_count": 6,
       "title": "mcwl.marines.mil · TM EABO",
       "topics": [
-        "南海远海维修低空穿透背景下影响分析",
         "近岸低空区节点抗毁场景问题研究",
         "强干扰、弱通信条件下低信息依赖精确打击研究",
         "分布式作战体系精确打击研究",
-        "搜索—识别—跟踪—打击一体化精打武器研究"
+        "搜索—识别—跟踪—打击一体化精打武器研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.mcwl.marines.mil/TM-EABO/"
     },
@@ -16022,6 +16339,23 @@
       ],
       "url": "https://www.nato.int/en/news-and-events/articles/news/2024/05/23/nato-holds-first-meeting-of-critical-undersea-infrastructure-network"
     },
+    "https://www.nato.int/en/news-and-events/articles/news/2024/09/19/ukraine-joins-nato-counter-drone-exercise-for-first-time": {
+      "accepted_count": 1,
+      "agent_ids": [
+        "combat_scenario"
+      ],
+      "domain": "www.nato.int",
+      "failure_count": 0,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-07-31T12:45:12.877200+00:00",
+      "last_status": "fetched",
+      "success_count": 1,
+      "title": "Ukraine joins NATO counter-drone exercise for first time | NATO News",
+      "topics": [
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
+      ],
+      "url": "https://www.nato.int/en/news-and-events/articles/news/2024/09/19/ukraine-joins-nato-counter-drone-exercise-for-first-time"
+    },
     "https://www.nato.int/en/news-and-events/articles/news/2024/09/19/ukraine-joins-nato-counter-drone-exercise-for-first-time?selectedLocale=ru": {
       "accepted_count": 1,
       "agent_ids": [
@@ -16089,6 +16423,23 @@
         "边境村镇态势感知条件下影响分析"
       ],
       "url": "https://www.nato.int/en/news-and-events/articles/news/2026/01/14/nato-and-ukraine-share-lessons-learned-for-strengthening-civilian-resilience-and-critical-infrastructure"
+    },
+    "https://www.nato.int/en/news-and-events/articles/news/2026/03/18/new-nato-innovation-range-starts-counter-drone-technology-testing-in-latvia": {
+      "accepted_count": 1,
+      "agent_ids": [
+        "combat_scenario"
+      ],
+      "domain": "www.nato.int",
+      "failure_count": 0,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-07-31T14:16:36.272609+00:00",
+      "last_status": "fetched",
+      "success_count": 1,
+      "title": "New NATO Innovation Range starts counter-drone technology testing in Latvia | NATO News",
+      "topics": [
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
+      ],
+      "url": "https://www.nato.int/en/news-and-events/articles/news/2026/03/18/new-nato-innovation-range-starts-counter-drone-technology-testing-in-latvia"
     },
     "https://www.nato.int/en/what-we-do/deterrence-and-defence/emerging-and-disruptive-technologies": {
       "accepted_count": 1,
@@ -16361,15 +16712,16 @@
         "weapon_equipment"
       ],
       "domain": "www.navair.navy.mil",
-      "failure_count": 0,
+      "failure_count": 2,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-29T07:55:56.734582+00:00",
-      "last_status": "hosted_search_citation",
+      "last_seen_at": "2026-07-31T15:10:26.855649+00:00",
+      "last_status": "network_safety_rejected",
       "success_count": 2,
-      "title": "https://www.navair.navy.mil/news/US-Navy-declares-initial-operational-capability-Next-Generation-Jammer-Mid-Band-system/Mon?utm_source=openai",
+      "title": "navair.navy.mil · Mon",
       "topics": [
         "挖掘在西太反介入体系下的装备能力缺口",
-        "复杂电磁环境自适应精打武器研究"
+        "复杂电磁环境自适应精打武器研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.navair.navy.mil/news/US-Navy-declares-initial-operational-capability-Next-Generation-Jammer-Mid-Band-system/Mon"
     },
@@ -18100,19 +18452,20 @@
       "url": "https://www.ncia.nato.int/about-us/newsroom/nato-tests-counter-drone-technology-during-interoperability-exercise"
     },
     "https://www.ncia.nato.int/newsroom/news/allies-and-industry-test-the-latest-counterdrone-technology-during-nato-exercise": {
-      "accepted_count": 1,
+      "accepted_count": 2,
       "agent_ids": [
         "combat_scenario"
       ],
       "domain": "www.ncia.nato.int",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-26T08:39:29.230838+00:00",
+      "last_seen_at": "2026-07-31T15:07:33.806900+00:00",
       "last_status": "reader_fetched",
-      "success_count": 1,
+      "success_count": 2,
       "title": "NCIA | Allies and industry test the latest counter-drone technology during NATO exercise",
       "topics": [
-        "分散补给无人巡控背景下风险研判"
+        "分散补给无人巡控背景下风险研判",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.ncia.nato.int/newsroom/news/allies-and-industry-test-the-latest-counterdrone-technology-during-nato-exercise"
     },
@@ -19554,22 +19907,23 @@
       "url": "https://www.rtx.com/raytheon/news/2024/02/08/meet-lids-a-sure-shot-against-drones"
     },
     "https://www.rtx.com/raytheon/what-we-do/air/mald-decoy": {
-      "accepted_count": 4,
+      "accepted_count": 6,
       "agent_ids": [
         "weapon_equipment"
       ],
       "domain": "www.rtx.com",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-29T07:55:56.744673+00:00",
+      "last_seen_at": "2026-07-31T15:10:26.837725+00:00",
       "last_status": "fetched",
-      "success_count": 4,
+      "success_count": 6,
       "title": "MALD Decoy | Raytheon",
       "topics": [
         "目标持续监视与精确打击一体化研究",
         "多节点目标群协同精确打击研究",
         "高价值时敏目标快速精确打击研究",
-        "复杂电磁环境自适应精打武器研究"
+        "复杂电磁环境自适应精打武器研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.rtx.com/raytheon/what-we-do/air/mald-decoy"
     },
@@ -19696,68 +20050,7 @@
       ],
       "url": "https://www.rusi.org/explore-our-research/publications/commentary/mlrs-and-totality-battlefield?oref=d_brief_nl"
     },
-    "https://www.rusi.org/explore-our-research/publications/insights-papers/emergent-approaches-combined-arms-manoeuvre-ukraine": {
-      "accepted_count": 6,
-      "agent_ids": [
-        "combat_scenario",
-        "case_research",
-        "scenario_divergence"
-      ],
-      "domain": "www.rusi.org",
-      "failure_count": 0,
-      "last_decision": "accepted",
-      "last_seen_at": "2026-07-28T22:15:55.555548+00:00",
-      "last_status": "fetched",
-      "success_count": 6,
-      "title": "Emergent Approaches to Combined Arms Manoeuvre in Ukraine | Royal United Services Institute",
-      "topics": [
-        "完整利用一个案例，从近年局部战争中挖掘我军装备发展需求",
-        "从近年局部战争中挖掘我军装备发展需求",
-        "强干扰弱通信下无人远程精确打击武器装备质量与效率终验",
-        "间歇暴露目标搜索与精确打击研究"
-      ],
-      "url": "https://www.rusi.org/explore-our-research/publications/insights-papers/emergent-approaches-combined-arms-manoeuvre-ukraine"
-    },
-    "https://www.rusi.org/explore-our-research/publications/occasional-papers/competitive-electronic-warfare-modern-land-operations": {
-      "accepted_count": 4,
-      "agent_ids": [
-        "combat_scenario"
-      ],
-      "domain": "www.rusi.org",
-      "failure_count": 0,
-      "last_decision": "accepted",
-      "last_seen_at": "2026-07-28T09:50:16.906570+00:00",
-      "last_status": "fetched",
-      "success_count": 4,
-      "title": "Competitive Electronic Warfare in Modern Land Operations | Royal United Services Institute",
-      "topics": [
-        "强干扰、弱通信条件下低信息依赖精确打击研究"
-      ],
-      "url": "https://www.rusi.org/explore-our-research/publications/occasional-papers/competitive-electronic-warfare-modern-land-operations"
-    },
-    "https://www.rusi.org/explore-our-research/publications/occasional-papers/mass-precision-strike-designing-uav-complexes-land-forces": {
-      "accepted_count": 10,
-      "agent_ids": [
-        "combat_scenario",
-        "operational_employment"
-      ],
-      "domain": "www.rusi.org",
-      "failure_count": 0,
-      "last_decision": "accepted",
-      "last_seen_at": "2026-07-29T05:56:48.904450+00:00",
-      "last_status": "fetched",
-      "success_count": 11,
-      "title": "Mass Precision Strike: Designing UAV Complexes for Land Forces | Royal United Services Institute",
-      "topics": [
-        "评估我军现役海上区域拒止体系在强干扰与饱和突防条件下的装备能力差距",
-        "强干扰、弱通信条件下低信息依赖精确打击研究",
-        "多节点目标群协同精确打击研究",
-        "大规模离散目标低成本精确打击研究",
-        "分布式作战体系精确打击研究"
-      ],
-      "url": "https://www.rusi.org/explore-our-research/publications/occasional-papers/mass-precision-strike-designing-uav-complexes-land-forces"
-    },
-    "https://www.rusi.org/explore-our-research/publications/occasional-papers/protecting-force-uncrewed-aerial-systems": {
+    "https://www.rusi.org/explore-our-research/publications/commentary/uncrewed-platforms-have-been-critical-ukraines-success-black-sea": {
       "accepted_count": 1,
       "agent_ids": [
         "operational_employment"
@@ -19765,12 +20058,95 @@
       "domain": "www.rusi.org",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-26T09:01:36.807597+00:00",
+      "last_seen_at": "2026-07-31T12:22:53.738293+00:00",
       "last_status": "fetched",
       "success_count": 1,
-      "title": "Protecting the Force from Uncrewed Aerial Systems | Royal United Services Institute",
+      "title": "rusi.org · uncrewed platforms have been critical ukraines success black sea",
       "topics": [
-        "近岸低空区节点抗毁场景问题研究"
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
+      ],
+      "url": "https://www.rusi.org/explore-our-research/publications/commentary/uncrewed-platforms-have-been-critical-ukraines-success-black-sea"
+    },
+    "https://www.rusi.org/explore-our-research/publications/insights-papers/emergent-approaches-combined-arms-manoeuvre-ukraine": {
+      "accepted_count": 8,
+      "agent_ids": [
+        "combat_scenario",
+        "case_research",
+        "scenario_divergence",
+        "operational_employment"
+      ],
+      "domain": "www.rusi.org",
+      "failure_count": 0,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-07-31T12:45:16.913404+00:00",
+      "last_status": "fetched",
+      "success_count": 8,
+      "title": "Emergent Approaches to Combined Arms Manoeuvre in Ukraine | Royal United Services Institute",
+      "topics": [
+        "完整利用一个案例，从近年局部战争中挖掘我军装备发展需求",
+        "从近年局部战争中挖掘我军装备发展需求",
+        "强干扰弱通信下无人远程精确打击武器装备质量与效率终验",
+        "间歇暴露目标搜索与精确打击研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
+      ],
+      "url": "https://www.rusi.org/explore-our-research/publications/insights-papers/emergent-approaches-combined-arms-manoeuvre-ukraine"
+    },
+    "https://www.rusi.org/explore-our-research/publications/occasional-papers/competitive-electronic-warfare-modern-land-operations": {
+      "accepted_count": 5,
+      "agent_ids": [
+        "combat_scenario",
+        "scenario_divergence"
+      ],
+      "domain": "www.rusi.org",
+      "failure_count": 0,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-07-31T12:21:35.479135+00:00",
+      "last_status": "fetched",
+      "success_count": 5,
+      "title": "Competitive Electronic Warfare in Modern Land Operations | Royal United Services Institute",
+      "topics": [
+        "强干扰、弱通信条件下低信息依赖精确打击研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
+      ],
+      "url": "https://www.rusi.org/explore-our-research/publications/occasional-papers/competitive-electronic-warfare-modern-land-operations"
+    },
+    "https://www.rusi.org/explore-our-research/publications/occasional-papers/mass-precision-strike-designing-uav-complexes-land-forces": {
+      "accepted_count": 12,
+      "agent_ids": [
+        "combat_scenario",
+        "operational_employment"
+      ],
+      "domain": "www.rusi.org",
+      "failure_count": 0,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-07-31T15:09:16.875316+00:00",
+      "last_status": "fetched",
+      "success_count": 13,
+      "title": "Mass Precision Strike: Designing UAV Complexes for Land Forces | Royal United Services Institute",
+      "topics": [
+        "强干扰、弱通信条件下低信息依赖精确打击研究",
+        "多节点目标群协同精确打击研究",
+        "大规模离散目标低成本精确打击研究",
+        "分布式作战体系精确打击研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
+      ],
+      "url": "https://www.rusi.org/explore-our-research/publications/occasional-papers/mass-precision-strike-designing-uav-complexes-land-forces"
+    },
+    "https://www.rusi.org/explore-our-research/publications/occasional-papers/protecting-force-uncrewed-aerial-systems": {
+      "accepted_count": 2,
+      "agent_ids": [
+        "operational_employment"
+      ],
+      "domain": "www.rusi.org",
+      "failure_count": 0,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-07-31T12:22:53.719793+00:00",
+      "last_status": "fetched",
+      "success_count": 2,
+      "title": "rusi.org · protecting force uncrewed aerial systems",
+      "topics": [
+        "近岸低空区节点抗毁场景问题研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.rusi.org/explore-our-research/publications/occasional-papers/protecting-force-uncrewed-aerial-systems"
     },
@@ -20002,16 +20378,34 @@
         "weapon_equipment"
       ],
       "domain": "www.saffm.hq.af.mil",
-      "failure_count": 0,
+      "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-29T08:05:17.353186+00:00",
-      "last_status": "hosted_search_citation",
+      "last_seen_at": "2026-07-31T12:23:47.522026+00:00",
+      "last_status": "network_safety_rejected",
       "success_count": 3,
       "title": "saffm.hq.af.mil · FY25%20Air%20Force%20Missile%20Procurement.pdf",
       "topics": [
-        "间歇通信条件下精打武器任务保持与任务续接研究"
+        "间歇通信条件下精打武器任务保持与任务续接研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.saffm.hq.af.mil/Portals/84/documents/FY25/FY25%20Air%20Force%20Missile%20Procurement.pdf"
+    },
+    "https://www.saffm.hq.af.mil/Portals/84/documents/FY26/FY26%20Air%20Force%20Missile%20Procurement.pdf": {
+      "accepted_count": 0,
+      "agent_ids": [
+        "weapon_equipment"
+      ],
+      "domain": "www.saffm.hq.af.mil",
+      "failure_count": 1,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-07-31T14:22:30.677354+00:00",
+      "last_status": "network_safety_rejected",
+      "success_count": 0,
+      "title": "saffm.hq.af.mil · FY26%20Air%20Force%20Missile%20Procurement.pdf",
+      "topics": [
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
+      ],
+      "url": "https://www.saffm.hq.af.mil/Portals/84/documents/FY26/FY26%20Air%20Force%20Missile%20Procurement.pdf"
     },
     "https://www.sbir.gov/awards/102538": {
       "accepted_count": 1,
@@ -20080,18 +20474,18 @@
         "generic_researcher"
       ],
       "domain": "www.sda.mil",
-      "failure_count": 0,
+      "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-29T08:28:42.102649+00:00",
-      "last_status": "fetched",
+      "last_seen_at": "2026-07-31T11:37:51.720406+00:00",
+      "last_status": "network_safety_rejected",
       "success_count": 28,
       "title": "FAQ – Space Development Agency",
       "topics": [
-        "不完备与不确定战场信息条件下精确打击研究",
         "天基低时延信息支撑精确打击体系研究",
         "低轨巨型星座支撑体系条件下精打对抗研究",
         "动态时敏目标快速感知—决策—打击一体化研究",
-        "目标持续监视与精确打击一体化研究"
+        "目标持续监视与精确打击一体化研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.sda.mil/home/about-us/faq/"
     },
@@ -21373,14 +21767,15 @@
         "combat_scenario"
       ],
       "domain": "www.usarpac.army.mil",
-      "failure_count": 0,
+      "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-29T08:28:42.113022+00:00",
-      "last_status": "hosted_search_citation",
+      "last_seen_at": "2026-07-31T11:37:51.713673+00:00",
+      "last_status": "network_safety_rejected",
       "success_count": 2,
-      "title": "usarpac.army.mil · army advances multi domain command pacific following successful operational exp",
+      "title": "Army Advances Multi-Domain Command-Pacific Following Successful Operational Experiment > U.S. Army Pacific > Article Display",
       "topics": [
-        "动态时敏目标快速感知—决策—打击一体化研究"
+        "动态时敏目标快速感知—决策—打击一体化研究",
+        "面向2030年前后强对抗与通信受限环境，研究如何通过低成本无人作战集群改变侦察—决策—打击链，形成具有公开证据支撑、可验证且落实到具体前瞻军事装备形态的制胜机理与装备组合"
       ],
       "url": "https://www.usarpac.army.mil/Our-Story/Our-News/Article-Display/Article/4487093/army-advances-multi-domain-command-pacific-following-successful-operational-exp/"
     },
@@ -21720,5 +22115,5 @@
       "url": "https://www.weather.gov.hk/en/wservice/tsheet/marine.htm"
     }
   },
-  "updated_at": "2026-07-31T09:36:54.470714+00:00"
+  "updated_at": "2026-07-31T15:10:27.455046+00:00"
 }

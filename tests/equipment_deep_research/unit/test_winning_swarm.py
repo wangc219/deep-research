@@ -83,6 +83,12 @@ def test_dynamic_v2_profile_enables_six_concurrency_and_sixteen_instance_budget(
     assert profile.parent_profile_id == "swarm_quality_v1"
     assert resolve_execution_profile("winning_swarm_dynamic_v2") == profile
     assert blueprint["winning_swarm_policy"]["policy_id"] == "winning_swarm_dynamic_v2"
+    assert blueprint["winning_swarm_policy"]["expert_judge_enabled"] is True
+    assert blueprint["winning_swarm_policy"]["expert_judge_required"] is True
+    assert blueprint["winning_swarm_policy"]["finalist_minimum"] == 5
+    assert blueprint["winning_swarm_policy"]["finalist_maximum"] == 7
+    assert blueprint["runtime_budgets"]["maximum_quality_judge_model_calls"] == 2
+    assert blueprint["runtime_budgets"]["maximum_swarm_model_calls"] == 16
     assert blueprint["winning_swarm_policy"]["max_dynamic_instances"] == 16
     assert blueprint["winning_swarm_policy"]["max_concurrency"] == 6
     assert blueprint["winning_swarm_policy"]["mission_graph_min_instances"] == 8
@@ -124,8 +130,25 @@ def test_dynamic_v2_mission_graph_seeds_s1_s6_with_parallel_instances() -> None:
     assert all(graph.s_node_seeds[node] for node in graph.s_node_seeds)
     assert len(graph.waves[0]) >= 4
     assert all(instance.allow_child_spawn is False for instance in graph.agent_instances)
-    s6 = next(item for item in graph.agent_instances if item.mission_node == "S6")
-    assert s6.depends_on
+    by_archetype = {item.archetype: item for item in graph.agent_instances}
+    frontier = by_archetype["frontier_equipment_miner"]
+    architect = by_archetype["equipment_realization_architect"]
+    evidence = by_archetype["evidence_verifier"]
+    trl = by_archetype["trl_cost_industrial_auditor"]
+    validation = by_archetype["validation_experiment_designer"]
+    reviewer = by_archetype["independent_portfolio_reviewer"]
+    node_by_id = {
+        item.instance_id: item.mission_node for item in graph.agent_instances
+    }
+    assert {node_by_id[item] for item in frontier.depends_on} == {"S1", "S2"}
+    assert {node_by_id[item] for item in architect.depends_on} == {"S3"}
+    assert {node_by_id[item] for item in evidence.depends_on} == {"S3"}
+    assert {node_by_id[item] for item in trl.depends_on} == {"S4"}
+    assert {node_by_id[item] for item in validation.depends_on} == {"S3", "S4"}
+    assert validation.instance_id in reviewer.depends_on
+    assert frontier.wave == by_archetype["disruptive_mechanism_generator"].wave
+    assert evidence.wave == architect.wave
+    assert graph.merge_strategy.startswith("artifact_ready_speculative_parallel")
 
     with pytest.raises(ValueError, match="may not recruit"):
         controller.govern_role_contract(
@@ -169,6 +192,80 @@ def test_versioned_ledger_requires_rebase_and_builds_pareto_decision() -> None:
     assert decision.ledger_version == 2
     assert decision.pareto_front == ["h1"]
     assert decision.selected_hypothesis_ids == ["h1"]
+
+
+def test_quality_expert_judge_normalizes_scores_and_blocks_weak_equipment_fit() -> None:
+    controller = WinningSwarmController(
+        {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
+    )
+    strong = _hypothesis(hypothesis_id="strong")
+    weak = _hypothesis(
+        hypothesis_id="weak",
+        title="通用算法与通信中台",
+        equipment_forms=["通用算法中台"],
+    )
+    ledger = controller.create_ledger([strong, weak])
+    strong_assessment = controller.expert_assessment_from_mapping(
+        {
+            "verdict": "pass",
+            "dimension_scores": {
+                "domain_relevance": 0.9,
+                "equipment_capability_fit": 0.86,
+                "innovation": 0.8,
+                "military_value": 0.88,
+                "causal_coherence": 0.84,
+                "credibility": 0.8,
+                "engineering_feasibility": 0.74,
+                "robustness": 0.72,
+            },
+            "strengths": ["形成直接战斗装备落点"],
+            "evidence_ids": ["ev-1", "invented"],
+            "confidence": 0.82,
+        },
+        hypothesis=strong,
+        blind_label="候选-01",
+        valid_evidence_ids={"ev-1"},
+        session_ref="session-judge",
+    )
+    weak_assessment = controller.expert_assessment_from_mapping(
+        {
+            "verdict": "pass",
+            "dimension_scores": {
+                "domain_relevance": 0.8,
+                "equipment_capability_fit": 0.35,
+                "innovation": 0.7,
+                "military_value": 0.45,
+                "causal_coherence": 0.65,
+                "credibility": 0.7,
+                "engineering_feasibility": 0.8,
+                "robustness": 0.7,
+            },
+            "rejection_reasons": ["支撑能力没有绑定具体战斗装备"],
+            "confidence": 0.75,
+        },
+        hypothesis=weak,
+        blind_label="候选-02",
+        valid_evidence_ids={"ev-1"},
+        session_ref="session-judge",
+    )
+
+    assert strong_assessment.passed is True
+    assert strong_assessment.evidence_ids == ["ev-1"]
+    assert weak_assessment.passed is False
+    assert strong_assessment.weighted_score != weak_assessment.weighted_score
+
+    assessments = {"strong": strong_assessment, "weak": weak_assessment}
+    decision = controller.portfolio_decision(
+        ledger,
+        objective_scores={
+            key: controller.expert_objective_scores(value)
+            for key, value in assessments.items()
+        },
+        expert_assessments=assessments,
+    )
+    assert decision.selected_hypothesis_ids == ["strong"]
+    assert decision.rejected_hypothesis_ids == ["weak"]
+    assert decision.quality_judge_passed is True
 
 
 def test_dynamic_v2_portfolio_keeps_five_to_seven_with_four_direct_equipment() -> None:

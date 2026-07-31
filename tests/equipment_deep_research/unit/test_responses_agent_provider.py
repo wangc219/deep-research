@@ -276,6 +276,146 @@ def test_reporter_has_separate_delivery_grace_and_call_budget() -> None:
         provider._reserve_model_call(priority="critical")
 
 
+def test_swarm_and_quality_judge_have_separate_reserved_call_budgets() -> None:
+    provider = ResponsesAgentProvider(ScriptedFakeProvider([]))
+    provider.configure_run_budget(
+        {
+            "maximum_model_calls": 1,
+            "maximum_model_calls_with_residuals": 1,
+            "maximum_swarm_model_calls": 2,
+            "maximum_quality_judge_model_calls": 1,
+            "hard_deadline_seconds": 900,
+            "absolute_deadline_seconds": 1800,
+        }
+    )
+
+    provider._reserve_model_call(priority="critical")
+    with pytest.raises(RuntimeError, match="model-call hard budget"):
+        provider._reserve_model_call(priority="critical")
+
+    assert provider._reserve_model_call(priority="swarm") is not None
+    assert provider._reserve_model_call(priority="swarm") is not None
+    with pytest.raises(RuntimeError, match="swarm model-call budget"):
+        provider._reserve_model_call(priority="swarm")
+
+    assert provider._reserve_model_call(priority="quality_gate") is not None
+    with pytest.raises(RuntimeError, match="quality-judge model-call budget"):
+        provider._reserve_model_call(priority="quality_gate")
+
+
+def test_dynamic_v2_reporter_generates_three_layers_in_parallel(monkeypatch) -> None:
+    provider = ResponsesAgentProvider(ScriptedFakeProvider([]))
+    running = 0
+    maximum_running = 0
+    phases: list[str] = []
+
+    async def fake_reporter(
+        system,
+        payload,
+        max_output_tokens,
+        *,
+        phase,
+        run_id="",
+        isolation_id="",
+    ):
+        nonlocal running, maximum_running
+        del system, max_output_tokens, run_id, isolation_id
+        running += 1
+        maximum_running = max(maximum_running, running)
+        phases.append(phase)
+        await asyncio.sleep(0.02)
+        running -= 1
+        contract = payload["parallel_section_contract"]
+        return "\n".join(
+            [f"## {contract['required_h2']}"]
+            + [f"### {item}\n完整研究判断。" for item in contract["required_h3"]]
+        )
+
+    provider._run_reporter_text = fake_reporter  # type: ignore[method-assign]
+    monkeypatch.setattr(
+        "equipment_deep_research.agents.provider._report_draft_quality_issues",
+        lambda report, payload: [],
+    )
+    monkeypatch.setattr(
+        "equipment_deep_research.agents.provider._minimum_viable_model_report",
+        lambda report, payload: True,
+    )
+
+    result = provider.draft_report(
+        {
+            "run_id": "parallel-reporter",
+            "topic": "动态集群装备研究",
+            "execution_profile_id": "winning_swarm_dynamic_v2",
+            "branch": "A",
+        }
+    )
+
+    assert maximum_running == 3
+    assert set(phases) == {
+        "report_generation_layer_1_demand",
+        "report_generation_layer_2_technology",
+        "report_generation_layer_3_portfolio",
+    }
+    assert "## 第一层：需求挖掘层" in result
+    assert "## 第三层：能力图像与效能贡献层" in result
+
+
+def test_dynamic_v2_reporter_never_falls_back_to_full_serial_report(monkeypatch) -> None:
+    provider = ResponsesAgentProvider(ScriptedFakeProvider([]))
+    full_attempted = False
+
+    def fail_parallel(*args, **kwargs):
+        del args, kwargs
+        provider._latest_report_draft = "## 第一层：需求挖掘层\n已完成的并行草稿。"
+        raise ValueError("parallel assembly needs deterministic completion")
+
+    def fail_full(*args, **kwargs):
+        nonlocal full_attempted
+        del args, kwargs
+        full_attempted = True
+        raise AssertionError("full serial Reporter must not start")
+
+    monkeypatch.setattr(provider, "_draft_parallel_report", fail_parallel)
+    monkeypatch.setattr(provider, "_draft_report_attempt", fail_full)
+    monkeypatch.setattr(
+        provider,
+        "_limited_report_delivery",
+        lambda payload, failure: "deterministically completed report",
+    )
+
+    result = provider.draft_report(
+        {
+            "topic": "动态集群装备研究",
+            "execution_profile_id": "winning_swarm_dynamic_v2",
+        }
+    )
+
+    assert result == "deterministically completed report"
+    assert full_attempted is False
+
+
+def test_parallel_reporter_layer_uses_medium_reasoning() -> None:
+    backend = ScriptedFakeProvider(
+        [[ProviderStreamEvent.final(ProviderFinalTurn(text="# report layer"))]]
+    )
+    provider = ResponsesAgentProvider(backend)
+    provider.provider_kind = "codex_cli"
+
+    result = asyncio.run(
+        provider._run_reporter_text(
+            "write one layer",
+            {"query": "test"},
+            4200,
+            phase="report_generation_layer_1_demand",
+        )
+    )
+
+    assert result == "# report layer"
+    _, _, options = backend.inputs[0]
+    assert options["reasoning_effort"] == "medium"
+    assert options["max_output_tokens"] == 4200
+
+
 def test_reporter_keeps_full_quality_after_hard_deadline(
     monkeypatch,
 ) -> None:
@@ -316,6 +456,31 @@ def test_reporter_keeps_full_quality_after_hard_deadline(
     assert "retry_instruction" not in messages[1].content
     metric = provider._call_metrics_since(0)[-1]
     assert metric["deadline_mode"] == "fast_finalize"
+
+
+def test_disabled_wall_clock_deadlines_do_not_block_complete_real_run() -> None:
+    provider = ResponsesAgentProvider(ScriptedFakeProvider([]))
+    provider.configure_run_budget(
+        {
+            "wall_clock_deadlines_enabled": False,
+            "soft_deadline_seconds": 0,
+            "hard_deadline_seconds": 0,
+            "delivery_grace_seconds": 0,
+            "absolute_deadline_seconds": 0,
+            "maximum_model_calls": 10,
+            "maximum_model_calls_with_residuals": 14,
+            "maximum_swarm_model_calls": 16,
+            "maximum_quality_judge_model_calls": 2,
+            "maximum_delivery_model_calls": 4,
+        }
+    )
+    provider._run_started_at -= 24 * 60 * 60
+
+    assert provider._deadline_state(priority="swarm")["enabled"] is False
+    assert provider._reserve_model_call(priority="swarm") is None
+    assert provider._reserve_model_call(priority="quality_gate") is None
+    assert provider._reserve_model_call(priority="delivery") is None
+    assert provider._reserve_model_call(priority="normal") is None
 
 
 def test_deadline_is_recomputed_after_model_queue_wait() -> None:

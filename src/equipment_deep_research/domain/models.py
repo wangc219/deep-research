@@ -822,6 +822,35 @@ class SwarmGateResult:
 
 
 @dataclass(frozen=True)
+class WinningExpertAssessment:
+    """Independent Codex-CLI judgement for one winning hypothesis.
+
+    The assessment is intentionally separate from agent contributions: the
+    judge may score, reject or request revision, but may not mutate the ledger.
+    """
+
+    assessment_id: str
+    hypothesis_id: str
+    blind_label: str
+    verdict: str
+    passed: bool
+    weighted_score: float
+    dimension_scores: dict[str, float] = field(default_factory=dict)
+    strengths: list[str] = field(default_factory=list)
+    weaknesses: list[str] = field(default_factory=list)
+    rejection_reasons: list[str] = field(default_factory=list)
+    residuals: list[str] = field(default_factory=list)
+    equipment_classification: str = ""
+    innovation_type: str = ""
+    confidence: float = 0.0
+    evidence_ids: list[str] = field(default_factory=list)
+    evaluator_agent_id: str = "winning_quality_expert_judge"
+    session_ref: str = ""
+    created_at: str = field(default_factory=now_iso)
+    schema_version: str = "1.0"
+
+
+@dataclass(frozen=True)
 class AgentPromotionRecord:
     promotion_id: str
     archetype: str
@@ -971,6 +1000,8 @@ class PortfolioDecision:
     rejected_hypothesis_ids: list[str]
     objective_scores: dict[str, dict[str, float]] = field(default_factory=dict)
     dominance_reasons: dict[str, list[str]] = field(default_factory=dict)
+    expert_assessment_ids: list[str] = field(default_factory=list)
+    quality_judge_passed: bool = False
     status: str = "proposed"
     requires_human_review: bool = True
     created_at: str = field(default_factory=now_iso)

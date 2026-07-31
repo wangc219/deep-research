@@ -84,6 +84,14 @@ _KEY_INTERACTION_EVENT_TYPES = frozenset(
         "winning_contribution_rebase_required",
         "winning_contribution_merged",
         "winning_portfolio_merge_completed",
+        "winning_quality_judge_recruited",
+        "winning_quality_judge_started",
+        "winning_quality_judge_assessed",
+        "winning_quality_judge_completed",
+        "winning_quality_judge_failed",
+        "winning_quality_repair_planned",
+        "winning_quality_repair_completed",
+        "winning_quality_repair_failed",
         "hypothesis_created",
         "hypothesis_merged",
         "hypothesis_rejected",
@@ -1279,6 +1287,138 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
                         details.get("reason", "unsatisfied_dependency")
                     )
                 update_dynamic_agent(instance_id, safe_fields)
+            continue
+        if event_type in {
+            "winning_quality_judge_recruited",
+            "winning_quality_judge_started",
+            "winning_quality_judge_completed",
+            "winning_quality_judge_failed",
+        }:
+            swarm_event_seen = True
+            instance_id = str(row.get("actor", "")).strip()
+            if instance_id:
+                swarm_member_ids.add(instance_id)
+                status = {
+                    "winning_quality_judge_recruited": "recruiting",
+                    "winning_quality_judge_started": "running",
+                    "winning_quality_judge_completed": "completed",
+                    "winning_quality_judge_failed": "failed",
+                }[event_type]
+                role_contract = details.get("role_contract", {})
+                role_contract = (
+                    role_contract if isinstance(role_contract, dict) else {}
+                )
+                update_dynamic_agent(
+                    instance_id,
+                    {
+                        "agent_instance_id": instance_id,
+                        "display_name": str(
+                            role_contract.get(
+                                "display_name", "制胜机理质量专家评判"
+                            )
+                        ),
+                        "archetype": "quality_expert_judge",
+                        "mission_node": "convergence",
+                        "merge_target": "convergence",
+                        "execution_backend": "independent_codex_cli",
+                        "context_isolation": "ephemeral_read_only",
+                        "allow_child_spawn": False,
+                        "candidate_count": details.get("candidate_count"),
+                        "assessed_count": details.get("assessed_count"),
+                        "session_ref": str(details.get("session_ref", "")),
+                        "status": status,
+                        "failure_type": str(details.get("failure_type", "")),
+                        "error_message": str(details.get("error_message", "")),
+                        "last_event_type": event_type,
+                        "last_sequence": row.get("sequence", 0),
+                    },
+                )
+            continue
+        if event_type == "winning_quality_judge_assessed":
+            swarm_event_seen = True
+            hypothesis_id = str(details.get("hypothesis_id", "")).strip()
+            assessment = details.get("assessment", {})
+            assessment = assessment if isinstance(assessment, dict) else {}
+            if hypothesis_id:
+                update_candidate(
+                    hypothesis_id,
+                    {
+                        "expert_assessment_id": str(
+                            assessment.get("assessment_id", "")
+                        ),
+                        "expert_verdict": str(assessment.get("verdict", "")),
+                        "expert_passed": assessment.get("passed") is True,
+                        "expert_score": assessment.get("weighted_score"),
+                        "expert_dimension_scores": dict(
+                            assessment.get("dimension_scores", {})
+                        )
+                        if isinstance(assessment.get("dimension_scores"), dict)
+                        else {},
+                        "expert_rejection_reasons": safe_string_list(
+                            assessment.get("rejection_reasons", []), limit=8
+                        ),
+                        "status": (
+                            "expert_passed"
+                            if assessment.get("passed") is True
+                            else "expert_rejected"
+                        ),
+                    },
+                )
+            continue
+        if event_type in {
+            "winning_quality_repair_planned",
+            "winning_quality_repair_completed",
+            "winning_quality_repair_failed",
+        }:
+            swarm_event_seen = True
+            instance_id = str(row.get("actor", "")).strip()
+            hypothesis_id = str(details.get("hypothesis_id", "")).strip()
+            if instance_id:
+                status = {
+                    "winning_quality_repair_planned": "queued",
+                    "winning_quality_repair_completed": "completed",
+                    "winning_quality_repair_failed": "failed",
+                }[event_type]
+                update_dynamic_agent(
+                    instance_id,
+                    {
+                        "agent_instance_id": instance_id,
+                        "hypothesis_id": hypothesis_id,
+                        "archetype": str(
+                            details.get("archetype", "expert_residual_repair")
+                        ),
+                        "execution_backend": "independent_codex_cli",
+                        "context_isolation": "ephemeral",
+                        "allow_child_spawn": False,
+                        "expert_assessment_id": str(
+                            details.get("expert_assessment_id", "")
+                        ),
+                        "repair_residuals": safe_string_list(
+                            details.get("residuals", []), limit=8
+                        ),
+                        "status": status,
+                        "error_message": str(details.get("error_message", "")),
+                        "last_event_type": event_type,
+                        "last_sequence": row.get("sequence", 0),
+                    },
+                )
+            if hypothesis_id:
+                update_candidate(
+                    hypothesis_id,
+                    {
+                        "status": (
+                            "expert_repair_completed"
+                            if event_type == "winning_quality_repair_completed"
+                            else "expert_repair_failed"
+                            if event_type == "winning_quality_repair_failed"
+                            else "expert_repair_queued"
+                        ),
+                        "expert_repair_agent_id": instance_id,
+                        "expert_repair_merge_status": str(
+                            details.get("status", "")
+                        ),
+                    },
+                )
             continue
         if event_type == "winning_candidate_branch_created":
             swarm_event_seen = True
