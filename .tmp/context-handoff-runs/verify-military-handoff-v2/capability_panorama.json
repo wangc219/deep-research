@@ -1,0 +1,47 @@
+{
+  "actual_counts": {
+    "capability_domains": 2,
+    "capability_indicators": 0,
+    "capability_items": 2
+  },
+  "branch": "B",
+  "branch_name": "传统能力缺口发现",
+  "cross_domain_indicators": [],
+  "domains": [
+    {
+      "capability_ids": [
+        "cap-new-001"
+      ],
+      "domain": "任务补位平台、传感器、效应器与协同节点",
+      "evidence_ids": [
+        "ev-combat_scenario-1",
+        "ev-international_situation-1",
+        "ev-operational_employment-1",
+        "ev-weapon_equipment-1"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "挖掘在西太反介入体系下的装备能力缺口"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-upgrade-001"
+      ],
+      "domain": "现役装备、任务软件、通信指控与保障系统",
+      "evidence_ids": [
+        "ev-combat_scenario-1",
+        "ev-international_situation-1",
+        "ev-operational_employment-1",
+        "ev-weapon_equipment-1"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "挖掘在西太反介入体系下的装备能力缺口"
+      ]
+    }
+  ],
+  "equipment_forms": [],
+  "target_counts": {},
+  "topic": "挖掘在西太反介入体系下的装备能力缺口"
+}

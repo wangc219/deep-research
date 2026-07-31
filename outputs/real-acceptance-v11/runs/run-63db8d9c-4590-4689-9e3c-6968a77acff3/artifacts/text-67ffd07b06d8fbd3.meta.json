@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:67ffd07b06d8fbd3",
+  "content_path": "text-67ffd07b06d8fbd3.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-operational_employment-web-0a7d27b38e0c",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "67ffd07b06d8fbd326187dfdda1914979c6ca4dfb02544365af1e97cfa3d0474",
+  "url": "https://www.armyupress.army.mil/Journals/Military-Review/English-Edition-Archives/March-April-2021/Scott-Counter-UAS/"
+}

@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:44eb6bf010a4dfdb",
+  "content_path": "text-44eb6bf010a4dfdb.txt",
+  "content_type": "text/plain",
+  "direct_error": "TimeoutError: _ssl.c:1015: The handshake operation timed out",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-693a5c53438f",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "44eb6bf010a4dfdb186cb0ad94ec4065dadfcac6877fee92d28d9e16743e60c1",
+  "url": "https://www.afmc.af.mil/News/Article-Display/Article/4475375/air-force-advances-dragon-cart-palletized-effects-program/"
+}

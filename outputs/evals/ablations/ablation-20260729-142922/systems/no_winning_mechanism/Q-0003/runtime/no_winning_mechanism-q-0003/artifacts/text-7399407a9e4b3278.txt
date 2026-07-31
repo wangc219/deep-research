@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=darpa.mil · pinpoint
+source_url=https://www.darpa.mil/research/programs/pinpoint
+claim=S3：DARPA将过度依赖GPS列为关键脆弱性，并发展GPS拒止环境下的小型化惯性能力；贡献S4/S5的打击与持续适应装备基线判断。
+excerpt=
+retrieval=Hosted web search citation metadata

@@ -1,0 +1,137 @@
+[
+  {
+    "bundle_id": "claims-6f93754f522d",
+    "claims": [
+      {
+        "claim_id": "claim-fca426ce0590",
+        "claim_type": "hypothesis",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "未发现来源之间的直接事实矛盾；主要差异在证据层级：S1偏作战经验和火力体系原则，S2/S3/S4偏研发项目目标与演示，S5偏具体导引头测试，S6偏威胁环境观察。",
+          "S2/S3对自主协同能力的描述不能直接等同于已列装、可规模化运用能力；与S1强调通信退化必然发生并不矛盾，但不能作为完全替代C2链路的证据。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-generic_researcher-web-3393b98b73a1",
+          "ev-generic_researcher-web-b1f3cacc93cd",
+          "ev-generic_researcher-web-8ad4fbe44718",
+          "ev-generic_researcher-web-29409c926255"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/",
+          "https://www.darpa.mil/news/2019/code-success",
+          "https://www.darpa.mil/news/2018/collaborative-autonomy-unmanned-aerial-systems",
+          "https://www.darpa.mil/research/programs/pinpoint"
+        ],
+        "text": "决定性信息1（贡献项：S4装备基线与五档差距）：公开资料显示，大规模作战中的火力体系会面临持续电磁频谱争夺，通信、传感器与传感器到射手链路会被探测、干扰和利用；对TACSAT和上层战术互联网的过度依赖被明确认为不再可靠。对任务效果的含义是：强干扰、弱通信条件下，精确打击的首要短板往往是杀伤链连续性，而不只是弹药射程或战斗部效能。作用机理是链路退化导致发现、上报、处理、决策、打击、评估各环节延迟、断裂或暴露。失效边界是：若体系仍要求持续回传高带宽传感器数据或逐级集中授权，则在强压制电磁环境下难以维持稳定精确打击。"
+      },
+      {
+        "claim_id": "claim-ac9f9de97033",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "未发现来源之间的直接事实矛盾；主要差异在证据层级：S1偏作战经验和火力体系原则，S2/S3/S4偏研发项目目标与演示，S5偏具体导引头测试，S6偏威胁环境观察。",
+          "S2/S3对自主协同能力的描述不能直接等同于已列装、可规模化运用能力；与S1强调通信退化必然发生并不矛盾，但不能作为完全替代C2链路的证据。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-generic_researcher-web-3393b98b73a1",
+          "ev-generic_researcher-web-b1f3cacc93cd",
+          "ev-generic_researcher-web-8ad4fbe44718",
+          "ev-generic_researcher-web-29409c926255"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/",
+          "https://www.darpa.mil/news/2019/code-success",
+          "https://www.darpa.mil/news/2018/collaborative-autonomy-unmanned-aerial-systems",
+          "https://www.darpa.mil/research/programs/pinpoint"
+        ],
+        "text": "决定性信息2（贡献项：S5需求卡片）：DARPA CODE相关公开资料显示，无人机群在通信离线、GPS不可用条件下仍可围绕任务目标推进，并通过本地协同、自主共享信息和适应新目标或威胁来维持任务。对任务效果的含义是：低信息依赖精确打击需要把部分搜索、目标保持、协同和重规划能力前置到平台或群体本地，而不是依赖连续上行链路。作用机理是平台间局部自主协同替代集中式实时遥控，降低通信中断对打击链闭合的影响。失效边界是：公开资料没有证明其在高强度对抗、复杂诱饵和严格交战规则下能稳定完成真实武器级杀伤链。"
+      },
+      {
+        "claim_id": "claim-c825beb2d9bd",
+        "claim_type": "hypothesis",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "未发现来源之间的直接事实矛盾；主要差异在证据层级：S1偏作战经验和火力体系原则，S2/S3/S4偏研发项目目标与演示，S5偏具体导引头测试，S6偏威胁环境观察。",
+          "S2/S3对自主协同能力的描述不能直接等同于已列装、可规模化运用能力；与S1强调通信退化必然发生并不矛盾，但不能作为完全替代C2链路的证据。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-generic_researcher-web-3393b98b73a1",
+          "ev-generic_researcher-web-b1f3cacc93cd",
+          "ev-generic_researcher-web-8ad4fbe44718",
+          "ev-generic_researcher-web-29409c926255"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/",
+          "https://www.darpa.mil/news/2019/code-success",
+          "https://www.darpa.mil/news/2018/collaborative-autonomy-unmanned-aerial-systems",
+          "https://www.darpa.mil/research/programs/pinpoint"
+        ],
+        "text": "决定性信息3（贡献项：S5需求卡片、S6能力全景图）：DARPA PINPOINT指出美军系统存在对GPS的系统性过度依赖，目标是发展小型高精度MEMS惯性测量能力，在GPS拒止环境中于多小时任务内提供接近GPS质量的定位；同时指出现有紧凑低成本MEMS IMU在GPS丢失后会快速漂移。对任务效果的含义是：低外部信息依赖精确打击必须强化抗GNSS拒止的弹上/平台端导航基线。作用机理是以高精度惯导或组合导航延缓定位误差积累，保障武器、无人平台和传感器在通信与卫星导航退化时仍能维持可用定位。失效边界是：惯导仍存在漂移，若任务时间过长且缺少可用校正源，定位误差会重新成为精确打击瓶颈。"
+      },
+      {
+        "claim_id": "claim-c7144e2ad141",
+        "claim_type": "hypothesis",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "未发现来源之间的直接事实矛盾；主要差异在证据层级：S1偏作战经验和火力体系原则，S2/S3/S4偏研发项目目标与演示，S5偏具体导引头测试，S6偏威胁环境观察。",
+          "S2/S3对自主协同能力的描述不能直接等同于已列装、可规模化运用能力；与S1强调通信退化必然发生并不矛盾，但不能作为完全替代C2链路的证据。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-generic_researcher-web-3393b98b73a1",
+          "ev-generic_researcher-web-b1f3cacc93cd",
+          "ev-generic_researcher-web-8ad4fbe44718",
+          "ev-generic_researcher-web-29409c926255"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/",
+          "https://www.darpa.mil/news/2019/code-success",
+          "https://www.darpa.mil/news/2018/collaborative-autonomy-unmanned-aerial-systems",
+          "https://www.darpa.mil/research/programs/pinpoint"
+        ],
+        "text": "决定性信息4（贡献项：S5需求卡片、S6能力全景图）：美陆军PrSM先进多模导引头测试资料称，多传感器可在坐标质量不足时提高目标定位能力，并可针对海上移动目标无线电信号及通信车、防空机动雷达等陆上目标。对任务效果的含义是：在弱先验坐标、目标更新困难和通信受限条件下，弹载多模导引与弹上处理是提高末段捕获、识别和修正能力的关键装备方向。作用机理是由武器端被动/多传感器信息补偿外部目标数据不足，缩短末段对外部指令更新的依赖。失效边界是：若目标静默、诱骗信号充分、背景电磁环境复杂或目标特征不可分，末段导引可靠性仍可能下降。"
+      }
+    ],
+    "packet_id": "packet-generic_researcher",
+    "schema_version": "1.0"
+  }
+]

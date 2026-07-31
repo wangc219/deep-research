@@ -1,0 +1,382 @@
+{
+  "checkpoint": {
+    "budget_remaining": {
+      "baseline_tasks": 0,
+      "finalize_tasks": 1,
+      "rounds": 1
+    },
+    "checkpoint_id": "run-checkpoint-no_winning_mechanism-q-0002",
+    "completed_task_ids": [
+      "baseline:combat_scenario",
+      "baseline:weapon_equipment",
+      "baseline:operational_employment"
+    ],
+    "config_fingerprint": "sha256:ffc868d7366336e2ae63758ec4af41a853245ebc766a4dc7c8a949488c110116",
+    "created_at": "2026-07-29T05:52:16.601104+00:00",
+    "mode": "real",
+    "pending_task_ids": [
+      "finalize:winning-report"
+    ],
+    "research_route": "auto",
+    "resolved_route": "traditional_gap",
+    "resume_count": 0,
+    "round_index": 1,
+    "run_id": "no_winning_mechanism-q-0002",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "combat_scenario",
+      "weapon_equipment",
+      "operational_employment"
+    ],
+    "source_materials": [
+      {
+        "artifact_refs": [
+          "html:4bad2f4eb856c257"
+        ],
+        "content_type": "text/html",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-d1e2709becf6",
+          "normalized_url": "https://www.darpa.mil/research/programs/precise-robust-inertial-guidance-for-munitions",
+          "reasons": [],
+          "score": 0.858
+        },
+        "evidence_id": "ev-operational_employment-web-d1e2709becf6",
+        "fetch_cache_hit": true,
+        "final_url": "https://www.darpa.mil/research/programs/precise-robust-inertial-guidance-for-munitions",
+        "formal_evidence_allowed": true,
+        "paragraph_locations": [
+          "text:fb70192ca66faeb9#p1",
+          "text:fb70192ca66faeb9#p2",
+          "text:fb70192ca66faeb9#p3",
+          "text:fb70192ca66faeb9#p4"
+        ],
+        "simplified_artifact_ref": "text:fb70192ca66faeb9",
+        "status": "fetched",
+        "url": "https://www.darpa.mil/research/programs/precise-robust-inertial-guidance-for-munitions"
+      },
+      {
+        "artifact_refs": [
+          "text:7eb8227d7a369541"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-93fa7f00aaa0",
+          "normalized_url": "https://www.gao.gov/products/gao-22-106010",
+          "reasons": [],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-93fa7f00aaa0",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.gao.gov/products/gao-22-106010"
+      },
+      {
+        "artifact_refs": [
+          "text:fe4d0d37e6696cf7"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-c68cf1b2ba99",
+          "normalized_url": "https://stib.cto.mil/wp-content/uploads/2024/07/DSB_PNT-Control_ExecutiveSummary_5-1-24.pdf",
+          "reasons": [],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-c68cf1b2ba99",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://stib.cto.mil/wp-content/uploads/2024/07/DSB_PNT-Control_ExecutiveSummary_5-1-24.pdf"
+      },
+      {
+        "artifact_refs": [
+          "text:43927e5e30705970"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-c43f411dc7fc",
+          "normalized_url": "https://www.marines.mil/Force-Design/Priorities/Article/2708140/stand-in-forces",
+          "reasons": [],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-c43f411dc7fc",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.marines.mil/Force-Design/Priorities/Article/2708140/stand-in-forces/"
+      },
+      {
+        "artifact_refs": [
+          "text:b25c8d6e544ff513"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-8380652b27d7",
+          "normalized_url": "https://www.gao.gov/products/gao-21-320sp",
+          "reasons": [],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-8380652b27d7",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.gao.gov/products/gao-21-320sp"
+      },
+      {
+        "artifact_refs": [
+          "text:c4e2b9dbf28b34e2"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-f42ad4ad8ea8",
+          "normalized_url": "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo",
+          "reasons": [],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-f42ad4ad8ea8",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/"
+      },
+      {
+        "artifact_refs": [
+          "text:77c1a63de23f1506"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-90c16fec06a5",
+          "normalized_url": "https://www.army.mil/article-amp/288793/next_gen_navigation_systems_reach_army_units",
+          "reasons": [],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-90c16fec06a5",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.army.mil/article-amp/288793/next_gen_navigation_systems_reach_army_units"
+      },
+      {
+        "artifact_refs": [
+          "text:52e061ea32de305f"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-bd31fc668713",
+          "normalized_url": "https://www.lineofdeparture.army.mil/Journals/Gray-Space/Archive/Summer-2025/Strategic-APNT",
+          "reasons": [],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-bd31fc668713",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.lineofdeparture.army.mil/Journals/Gray-Space/Archive/Summer-2025/Strategic-APNT/"
+      },
+      {
+        "artifact_refs": [
+          "text:b6547c25b2f33874"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-5c5d031569b4",
+          "normalized_url": "https://www.navair.navy.mil/product/Long-Range-Anti-Ship-Missile-LRASM",
+          "reasons": [],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-5c5d031569b4",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.navair.navy.mil/product/Long-Range-Anti-Ship-Missile-LRASM"
+      },
+      {
+        "artifact_refs": [
+          "html:a4b5a56b5899990e"
+        ],
+        "content_type": "text/html",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-a8803f4abe7d",
+          "normalized_url": "https://www.darpa.mil/research/programs/long-range-anti-ship-missile",
+          "reasons": [],
+          "score": 0.852
+        },
+        "evidence_id": "ev-weapon_equipment-web-a8803f4abe7d",
+        "fetch_cache_hit": true,
+        "final_url": "https://www.darpa.mil/research/programs/long-range-anti-ship-missile",
+        "formal_evidence_allowed": true,
+        "paragraph_locations": [
+          "text:8046340fa2b948aa#p1",
+          "text:8046340fa2b948aa#p2",
+          "text:8046340fa2b948aa#p3",
+          "text:8046340fa2b948aa#p4",
+          "text:8046340fa2b948aa#p5"
+        ],
+        "simplified_artifact_ref": "text:8046340fa2b948aa",
+        "status": "fetched",
+        "url": "https://www.darpa.mil/research/programs/long-range-anti-ship-missile"
+      },
+      {
+        "artifact_refs": [
+          "html:76c06d10add90369"
+        ],
+        "content_type": "text/html;charset=utf-8",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-7e3a29e9fdaf",
+          "normalized_url": "https://www.lockheedmartin.com/en-us/products/jassm.html",
+          "reasons": [],
+          "score": 0.852
+        },
+        "evidence_id": "ev-weapon_equipment-web-7e3a29e9fdaf",
+        "fetch_cache_hit": true,
+        "final_url": "https://www.lockheedmartin.com/en-us/products/jassm.html",
+        "formal_evidence_allowed": true,
+        "paragraph_locations": [
+          "text:3f035f3c3ea732f1#p1",
+          "text:3f035f3c3ea732f1#p2",
+          "text:3f035f3c3ea732f1#p3",
+          "text:3f035f3c3ea732f1#p4",
+          "text:3f035f3c3ea732f1#p5",
+          "text:3f035f3c3ea732f1#p6",
+          "text:3f035f3c3ea732f1#p7",
+          "text:3f035f3c3ea732f1#p8",
+          "text:3f035f3c3ea732f1#p9",
+          "text:3f035f3c3ea732f1#p10",
+          "text:3f035f3c3ea732f1#p11"
+        ],
+        "simplified_artifact_ref": "text:3f035f3c3ea732f1",
+        "status": "fetched",
+        "url": "https://www.lockheedmartin.com/en-us/products/jassm.html"
+      },
+      {
+        "artifact_refs": [
+          "text:c3d2369c8ff545c5"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-7531b6427838",
+          "normalized_url": "https://www.esd.whs.mil/Portals/54/Documents/FOID/Reading%20Room/Selected_Acquisition_Reports/FY_2018_SARS/19-F-1098_DOC_45_JASSM_SAR_Dec_2018.pdf",
+          "reasons": [],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-7531b6427838",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.esd.whs.mil/Portals/54/Documents/FOID/Reading%20Room/Selected_Acquisition_Reports/FY_2018_SARS/19-F-1098_DOC_45_JASSM_SAR_Dec_2018.pdf"
+      }
+    ],
+    "status": "running",
+    "task_statuses": {
+      "baseline:combat_scenario": "completed",
+      "baseline:operational_employment": "completed",
+      "baseline:weapon_equipment": "completed",
+      "finalize:winning-report": "pending"
+    },
+    "topic": "卫星拒止条件下多源自主导航精打武器研究",
+    "worker_reports": [
+      {
+        "active_skill_ids": [
+          "scenario_engineering",
+          "modern_battlespace_analysis",
+          "adversary_coa_analysis"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "create_evidence_card",
+          "stress_test_scenario"
+        ],
+        "agent_id": "combat_scenario",
+        "created_at": "2026-07-29T05:56:59.297125+00:00",
+        "domain_object_id": "scenario-packet-combat_scenario",
+        "domain_object_type": "ScenarioModel",
+        "error": "",
+        "handoff_summary": "本场景分析将“卫星拒止条件下多源自主导航精打武器”的核心矛盾收敛为：PNT可信度、低带宽再组织、受控自治、末段抗诱饵识别和平台-弹药接口能否闭合任务链。建议后续装备需求优先聚焦RC1弹药级PNT可信度管理套件、RC2低带宽/失联任务重构软件、RC4末段抗诱饵识别模块、RC5平台-弹药PNT质量标记接口，并以S4/S5/S6作为主压力测试场景。",
+        "harness_profile": "scenario_research_v1",
+        "new_evidence_ids": [
+          "ev-combat_scenario-web-8380652b27d7",
+          "ev-combat_scenario-web-90c16fec06a5",
+          "ev-combat_scenario-web-bd31fc668713",
+          "ev-combat_scenario-web-f42ad4ad8ea8"
+        ],
+        "packet_id": "packet-combat_scenario",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment research/outputs/evals/ablations/ablation-20260729-124053/systems/no_winning_mechanism/Q-0002/runtime/no_winning_mechanism-q-0002/agent_sessions/combat_scenario.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-7ad3b0ab-e76e-4496-a19d-ccbc9958650e"
+      },
+      {
+        "active_skill_ids": [
+          "equipment_osint",
+          "capability_comparison",
+          "technology_readiness_analysis",
+          "defensive_countermeasure_analysis"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "create_evidence_card",
+          "compare_equipment_capability"
+        ],
+        "agent_id": "weapon_equipment",
+        "created_at": "2026-07-29T05:58:43.260362+00:00",
+        "domain_object_id": "equipment-packet-weapon_equipment",
+        "domain_object_type": "EquipmentObservation",
+        "error": "",
+        "handoff_summary": "国外装备基线显示，卫星拒止精打武器的能力竞争已转向多源自主导航、弹载多模感知、链路受限自治和远域压制协同。需求闭环应以现役巡航导弹/反辐射弹/制导弹药升级为近期重点，以可消耗远程无人效应器、低成本精确弹药导航套件和压制-诱骗-毁伤协同装备族为新研方向，并用强干扰、断链、伪装、复杂气象和大规模补给场景验证。",
+        "harness_profile": "equipment_research_v1",
+        "new_evidence_ids": [
+          "ev-weapon_equipment-web-5c5d031569b4",
+          "ev-weapon_equipment-web-7531b6427838",
+          "ev-weapon_equipment-web-7e3a29e9fdaf",
+          "ev-weapon_equipment-web-a8803f4abe7d"
+        ],
+        "packet_id": "packet-weapon_equipment",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment research/outputs/evals/ablations/ablation-20260729-124053/systems/no_winning_mechanism/Q-0002/runtime/no_winning_mechanism-q-0002/agent_sessions/weapon_equipment.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-d916bc48-dfb5-4939-929d-dd5aa6e0f2cb"
+      },
+      {
+        "active_skill_ids": [
+          "operational_synthesis",
+          "coa_comparison",
+          "joint_force_coordination",
+          "lessons_transfer"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "create_evidence_card",
+          "compare_coa"
+        ],
+        "agent_id": "operational_employment",
+        "created_at": "2026-07-29T05:55:59.573031+00:00",
+        "domain_object_id": "operational-packet-operational_employment",
+        "domain_object_type": "OperationalSynthesis",
+        "error": "",
+        "handoff_summary": "作战运用判断：卫星拒止条件下，多源自主导航精打武器应按任务闭环建设。装备主线为弹上多源PNT融合、高性能小型INS、末端多模确认、源可信度管理和任务数据快速装定；近期用抗扰GPS/INS维持存量弹药可用性；持续作战用分布式杀伤网和低成本自主弹药承担压制、诱饵消耗、BDA补射和区域拒止。关键失效边界为PNT冲突不可判别、任务数据陈旧、末端识别受骗、中途更新中断和分散保障断裂。",
+        "harness_profile": "operational_synthesis_v1",
+        "new_evidence_ids": [
+          "ev-operational_employment-web-93fa7f00aaa0",
+          "ev-operational_employment-web-c43f411dc7fc",
+          "ev-operational_employment-web-c68cf1b2ba99",
+          "ev-operational_employment-web-d1e2709becf6"
+        ],
+        "packet_id": "packet-operational_employment",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment research/outputs/evals/ablations/ablation-20260729-124053/systems/no_winning_mechanism/Q-0002/runtime/no_winning_mechanism-q-0002/agent_sessions/operational_employment.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-13e6076a-f157-4fc2-a151-59d3bbc0aa24"
+      }
+    ]
+  },
+  "savepoint_id": "checkpoint-399f4854b43ee982dfe5a5b6"
+}

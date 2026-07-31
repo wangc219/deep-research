@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=gao.gov · gao 22 106010
+source_url=https://www.gao.gov/products/gao-22-106010
+claim=GAO确认GPS面临干扰、欺骗、网络和反卫星威胁，且GPS现代化不能完全消除PNT脆弱性。
+excerpt=
+retrieval=Hosted web search citation metadata

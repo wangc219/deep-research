@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=Project Convergence: Revolutionizing Targeting in Large-Scale Combat Operations
+source_url=https://www.lineofdeparture.army.mil/Portals/144/PDF/Journals/Field-Artillery/FA-E-Edition-2025/Project-Convergence-UA.pdf
+claim=E2：Project Convergence公开材料将AI、JADC2和战术云用于整合传感器与射手，缓解带宽、通信效率和传感器到射手数据传输延迟问题。
+excerpt=
+retrieval=Hosted web search citation metadata

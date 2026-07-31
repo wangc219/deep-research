@@ -1,0 +1,39 @@
+{
+  "acquisition_id": "acq-c387e55b08b0",
+  "diagnostics": {
+    "documents_returned": 0,
+    "documents_seen": 0,
+    "query_count": 1,
+    "sources_attempted": 1,
+    "sources_requested": 1
+  },
+  "documents": [],
+  "queries": [
+    {
+      "intent": "evidence_discovery",
+      "language": "zh",
+      "text": "低空无人机"
+    }
+  ],
+  "query_used": "低空无人机",
+  "research_direction_id": "",
+  "round_id": "round-1",
+  "scope": "whitelist",
+  "source_statuses": [
+    {
+      "diagnostics": {
+        "action": "skip_source_for_this_round",
+        "checked_at": "",
+        "provider": "",
+        "ttl_seconds": 1800
+      },
+      "documents": 0,
+      "reason": "entry_url_probe_failed",
+      "route_used": "source_health",
+      "source_name": "Source A",
+      "source_tier": "A",
+      "source_type": "official",
+      "status": "unreachable"
+    }
+  ]
+}

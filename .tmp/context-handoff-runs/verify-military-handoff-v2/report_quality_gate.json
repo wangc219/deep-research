@@ -1,0 +1,79 @@
+{
+  "depth": {
+    "dimension": "深度性",
+    "indicators": {
+      "has_causality": true,
+      "has_detailed_analysis": true,
+      "has_evidence_support": true,
+      "has_mechanism": false,
+      "has_quantification": true
+    },
+    "passed": true,
+    "score": 0.8,
+    "suggestions": [
+      "解释底层机制和原理"
+    ]
+  },
+  "foresight": {
+    "dimension": "前瞻性",
+    "indicators": {
+      "has_evolution_path": true,
+      "has_future_prediction": false,
+      "has_trend_analysis": true,
+      "has_trigger_conditions": true,
+      "has_uncertainty": true
+    },
+    "passed": true,
+    "score": 0.8,
+    "suggestions": [
+      "给出未来 3-10 年预测"
+    ]
+  },
+  "format_integrity": {
+    "dimension": "格式完整性",
+    "indicators": {
+      "has_bounded_heading_depth": true,
+      "has_bounded_tables": true,
+      "has_canonical_order": false,
+      "has_canonical_sections": false,
+      "has_complete_paragraphs": true
+    },
+    "passed": false,
+    "score": 0.6,
+    "suggestions": [
+      "使用固定六个二级章节，且不要增删或改名",
+      "按核心判断至不确定性验证的顺序组织章节"
+    ]
+  },
+  "military_value": {
+    "dimension": "军事价值性",
+    "indicators": {
+      "has_capability_gap": true,
+      "has_effectiveness": true,
+      "has_priority": true,
+      "has_resilience": true,
+      "has_scenarios": true
+    },
+    "passed": true,
+    "score": 1.0,
+    "suggestions": []
+  },
+  "novelty": {
+    "dimension": "新颖性",
+    "indicators": {
+      "has_breakthrough": false,
+      "has_comparison": false,
+      "has_cross_domain": true,
+      "has_innovation": true
+    },
+    "passed": true,
+    "score": 0.5,
+    "suggestions": [
+      "与基线或传统方案对比",
+      "说明突破传统认知的地方"
+    ]
+  },
+  "overall_score": 0.78,
+  "passed": false,
+  "summary": "总体评分: 78.0%\n质量门控: ❌ 未通过\n\n深度性: 80.0% ✅\n军事价值性: 100.0% ✅\n新颖性: 50.0% ✅\n前瞻性: 80.0% ✅\n格式完整性: 60.0% ❌\n\n改进建议:\n  1. 解释底层机制和原理\n  2. 与基线或传统方案对比\n  3. 说明突破传统认知的地方\n  4. 给出未来 3-10 年预测\n  5. 使用固定六个二级章节，且不要增删或改名"
+}

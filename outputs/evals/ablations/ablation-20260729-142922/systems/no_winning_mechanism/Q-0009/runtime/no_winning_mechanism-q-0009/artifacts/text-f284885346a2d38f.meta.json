@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:f284885346a2d38f",
+  "content_path": "text-f284885346a2d38f.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: cached_origin_failure:HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-43915f10ae4b",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "f284885346a2d38f3dfa47767bce0d71f91f04e49bb5d7ddb1f42ad475794b4d",
+  "url": "https://www.army.mil/article/286878/precision_strike_missile_increment_1_achieves_milestone_c_approval"
+}

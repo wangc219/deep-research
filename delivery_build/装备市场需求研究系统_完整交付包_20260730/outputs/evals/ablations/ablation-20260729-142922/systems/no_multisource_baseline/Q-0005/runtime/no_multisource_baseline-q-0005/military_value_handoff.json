@@ -1,0 +1,75 @@
+{
+  "branch_products": {},
+  "claims": [
+    {
+      "claim_id": "claim-f1b007c6f598",
+      "claim_type": "hypothesis",
+      "confidence": 0.78,
+      "downstream_steps": [
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-generic_researcher-web-3393b98b73a1",
+        "ev-generic_researcher-web-93fa7f00aaa0"
+      ],
+      "failure_boundary": "官方来源能证明GPS/PNT、通信和EMS环境存在系统性脆弱性，但不能证明所有现役精确打击系统在同等程度上受影响；后续不得把体系级风险直接等同于具体型号失效。",
+      "mechanism": "决定性信息1：精确打击的公开证据基线应从单一弹药精度扩展为端到端杀伤链韧性。美陆军资料把火力链路拆为传感、探测、报告、处理、决策、打击、评估，并指出大规模作战中电磁频谱会被持续争夺，过度依赖TACSAT、上级战术互联网、集中式C2和持续发射雷达会形成脆弱点。对S4的贡献：装备基线不能只列侦察平台、火炮/导弹和指挥系统，还必须把通信完整性、频谱暴露控制、雷达机动发射和快速火力通道列为基线项；五档差距的关键分水岭是能否在通信受扰、节点暴露、C2降级时继续闭合杀伤链。对S5的贡献：需求卡片应优先提出分布式低暴露火力数据链、PACE通信架构、机动雷达/传感节点和降级条件下的快速火力流程。对S6的贡献：能力全景图应以“传感器-通信-处理决策-射手-评估”链路表达，而不是按单件装备堆",
+      "military_effects": [
+        "侦察预警",
+        "指挥决策",
+        "打击歼灭",
+        "生存抗毁",
+        "持续作战",
+        "体系协同"
+      ],
+      "packet_id": "packet-generic_researcher",
+      "source_agent_id": "generic_researcher",
+      "source_urls": [
+        "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/"
+      ]
+    },
+    {
+      "claim_id": "claim-5416401530c5",
+      "claim_type": "inference",
+      "confidence": 0.78,
+      "downstream_steps": [
+        "S1",
+        "S2",
+        "S4"
+      ],
+      "evidence_ids": [
+        "ev-generic_researcher-web-3393b98b73a1",
+        "ev-generic_researcher-web-93fa7f00aaa0"
+      ],
+      "failure_boundary": "官方来源能证明GPS/PNT、通信和EMS环境存在系统性脆弱性，但不能证明所有现役精确打击系统在同等程度上受影响；后续不得把体系级风险直接等同于具体型号失效。",
+      "mechanism": "决定性信息3：协同自治可缓解集中式控制和连续通信依赖，但公开证据仍主要停留在演示层。DARPA CODE公开演示中，多架无人机在通信离线和GPS不可用条件下继续协同并适应目标或威胁变化，目标是让单名操作员指挥多架无人系统，并可移植至既有无人机系统。对S4的贡献：协同自治与分布式融合的基线可从“人工逐机控制/集中回传”提升到“多无人节点本地共享、任务级自治、通信间歇条件下继续执行”。对S5的贡献：需求卡片可提出分布式无人ISR/中继/诱饵/评估节点、边缘融合处理、任务级自治控制、人机监督边界和断链续行能力。对S6的贡献：能力全景图应加入“分布式传感-边缘处理-局部决策-断续回传”的旁路链路，以降低对单一C2节点的依赖。置信度：中。失效边界：公开演示不能证明在强实战电磁压制、",
+      "military_effects": [
+        "指挥决策",
+        "拦截反制",
+        "体系协同"
+      ],
+      "packet_id": "packet-generic_researcher",
+      "source_agent_id": "generic_researcher",
+      "source_urls": [
+        "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/"
+      ]
+    }
+  ],
+  "conflicts": [],
+  "open_questions": [
+    "公开资料不足以给出各类替代PNT、协同自治系统和低暴露数据链的实战量化指标，例如误差增长率、抗干扰阈值、链路容量、端到端时延和毁伤评估可靠性。"
+  ],
+  "query_anchor": "多源异构战场信息融合精确打击研究",
+  "schema": "military_value_handoff_v1",
+  "statistics": {
+    "candidate_claim_count": 4,
+    "compression_ratio": 0.687,
+    "evidence_url_count": 1,
+    "input_chars": 3233,
+    "input_packet_count": 1,
+    "output_chars": 2221,
+    "selected_claim_count": 2,
+    "source_agent_count": 1
+  }
+}

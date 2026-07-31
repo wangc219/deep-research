@@ -1,0 +1,37 @@
+{
+  "answer_chars": 2877,
+  "answer_sha256": "484984b21993e9e87fef303343cffbed81688b698b658b23df50d94ee1804d87",
+  "artifact_refs": [],
+  "citations": [],
+  "created_at": "2026-07-28T21:17:33.882324+00:00",
+  "dataset_id": "tactical-strike-frontiers-50-v1",
+  "duration_seconds": 70.01,
+  "estimated_cost": 0.0,
+  "mode": "real",
+  "model_snapshot": {
+    "base_url_host": "yunwu.ai",
+    "model": "glm-5.2",
+    "protocol": "chat_completions"
+  },
+  "query": "多模态自主目标识别精打武器研究",
+  "query_id": "Q-0014",
+  "query_sha256": "b9c0c13df148a4e8c56bb611f97533174c93cb257d1506eeb92e143a2c61aefa",
+  "report_id": "BR-d7df9585ce45c300d97257b3",
+  "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-d7df9585ce45c300d97257b3/report.md",
+  "schema_version": "1.0",
+  "source_eval_id": "baseline-first20-three-layer-nine-20260729",
+  "sources": [],
+  "status": "completed",
+  "system_id": "zhipu_llm",
+  "usage": {
+    "completion_tokens": 3948,
+    "completion_tokens_details": {
+      "reasoning_tokens": 2088
+    },
+    "prompt_tokens": 350,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "total_tokens": 4298
+  }
+}

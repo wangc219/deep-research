@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" data-pptx-page-role="content">
+  <rect id="background" data-pptx-role="background" x="0" y="0" width="1280" height="720" fill="#FFFFFF"/>
+  <g id="header" data-pptx-bounds="64 42 1152 100">
+    <text x="64" y="88" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="42" font-weight="bold" fill="#173B5E">Benchmark &#x6D4B;&#x8BD5;&#x601D;&#x8DEF;</text>
+    <text x="64" y="128" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#6B7785">&#x771F;&#x5B9E;&#x4EA7;&#x7269;&#x590D;&#x7528; + &#x533F;&#x540D; A/B &#x4E0E; B/A &#x53CC;&#x987A;&#x5E8F;&#x76F2;&#x8BC4;</text>
+    <text x="1216" y="84" text-anchor="end" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#6B7785">14</text>
+  </g>
+  <g id="benchmark-flow" data-pptx-bounds="64 174 426 420">
+    <text x="64" y="206" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" font-weight="bold" fill="#173B5E">&#x540C;&#x4E00; Query&#xFF0C;&#x56DB;&#x5957;&#x7CFB;&#x7EDF;</text>
+    <line x1="88" y1="252" x2="88" y2="496" stroke="#B7C7D6" stroke-width="4"/>
+    <circle cx="88" cy="266" r="18" fill="#2F6FAE"/>
+    <text x="120" y="274" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#1D2733">&#x5B8C;&#x6574;&#x65B9;&#x6CD5;</text>
+    <circle cx="88" cy="334" r="18" fill="#2F6FAE"/>
+    <text x="120" y="342" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#1D2733">&#x901A;&#x7528; Codex Agent</text>
+    <circle cx="88" cy="402" r="18" fill="#2F6FAE"/>
+    <text x="120" y="410" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#1D2733">&#x7EAF; LLM</text>
+    <circle cx="88" cy="470" r="18" fill="#2F6FAE"/>
+    <text x="120" y="478" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#1D2733">&#x667A;&#x8C31; GLM</text>
+    <rect x="64" y="514" width="426" height="70" fill="#173B5E"/>
+    <text x="277" y="558" text-anchor="middle" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" font-weight="bold" fill="#FFFFFF">&#x533F;&#x540D;&#x53CC;&#x987A;&#x5E8F; &#xB7; &#x53CC; Judge</text>
+  </g>
+  <g id="frontend-evidence" data-pptx-bounds="526 174 690 430">
+    <rect x="526" y="174" width="690" height="388" fill="#F3F6F9" stroke="#2F6FAE" stroke-width="2"/>
+    <image href="../images/frontend_benchmark_overview.png" x="538" y="186" width="666" height="375" preserveAspectRatio="xMidYMid meet"/>
+    <text x="526" y="596" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#6B7785">&#x524D;&#x7AEF;&#x771F;&#x5B9E;&#x8FD0;&#x884C;&#x8BB0;&#x5F55;&#xFF1A;&#x5386;&#x53F2; Benchmark&#x3001;80/80 &#x7ED3;&#x679C;&#x4E0E; 120 &#x4E2A;&#x76F2;&#x5316;&#x914D;&#x5BF9;</text>
+  </g>
+  <g id="kpi-strip" data-pptx-bounds="64 618 1152 60">
+    <text x="64" y="662" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="30" font-weight="bold" fill="#2F6FAE">20</text>
+    <text x="114" y="660" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">Query</text>
+    <text x="244" y="662" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="30" font-weight="bold" fill="#2F6FAE">80</text>
+    <text x="294" y="660" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x56DE;&#x7B54;</text>
+    <text x="424" y="662" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="30" font-weight="bold" fill="#2F6FAE">120</text>
+    <text x="490" y="660" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">Pair</text>
+    <text x="650" y="662" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="30" font-weight="bold" fill="#2F6FAE">2</text>
+    <text x="684" y="660" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">GPT-5.5 Judge</text>
+    <text x="930" y="662" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="30" font-weight="bold" fill="#2E8B66">0</text>
+    <text x="964" y="660" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">Judge error</text>
+  </g>
+</svg>

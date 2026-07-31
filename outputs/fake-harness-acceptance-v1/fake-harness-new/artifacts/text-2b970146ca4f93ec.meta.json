@@ -1,0 +1,11 @@
+{
+  "artifact_ref": "text:2b970146ca4f93ec",
+  "content_path": "text-2b970146ca4f93ec.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-1",
+  "kind": "text",
+  "materialization_status": "fixture_materialized",
+  "sha256": "2b970146ca4f93ec19faa213acbc88c504fab0614f2a7fccf7caaeeacf8b8f3a",
+  "url": "https://fixture.local/weapon_equipment"
+}

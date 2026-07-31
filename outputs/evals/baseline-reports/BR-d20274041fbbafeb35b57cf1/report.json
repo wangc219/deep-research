@@ -1,0 +1,68 @@
+{
+  "answer_chars": 6117,
+  "answer_sha256": "83cdff2a6c24f285a9da2cc8d30d65716306cc8375a7a884c31ae5011d5a9030",
+  "artifact_refs": [
+    "runtime/codex-events.jsonl",
+    "runtime/codex-stderr.log"
+  ],
+  "citations": [
+    "https://document.acqirc.org/publication_documents/reports/1670425668.JADC2_REPORT.pdf",
+    "https://dodcio.defense.gov/Portals/0/Documents/Library/DoD-ZTStrategy.pdf",
+    "https://www.ai.mil/Initiatives/CJADC2/",
+    "https://www.capellaspace.com/",
+    "https://www.gao.gov/products/gao-24-106841",
+    "https://www.lineofdeparture.army.mil/Journals/Air-Defense-Artillery/ADA-Archive/2024-Edition/IBCS-Any-Sensor-Best-Shooter/",
+    "https://www.ll.mit.edu/news/lincoln-laboratory-supports-missile-defense-agency-space-sensor-testing",
+    "https://www.ssc.spaceforce.mil/Newsroom/Article/4467880/securing-the-ultimate-high-ground-how-the-space-force-is-revolutionizing-airbor",
+    "https://www.war.gov/News/Releases/Release/Article/3676902/mda-sda-announce-upcoming-launch-of-the-hypersonic-and-ballistic-tracking-space/",
+    "https://www.war.gov/Spotlights/Project-Convergence/"
+  ],
+  "created_at": "2026-07-28T20:53:47.213117+00:00",
+  "dataset_id": "tactical-strike-frontiers-50-v1",
+  "duration_seconds": 158.88,
+  "estimated_cost": 0.0,
+  "mode": "real",
+  "model_snapshot": {
+    "adapter": "codex_cli",
+    "auth_mode": "eval_api_key",
+    "base_url_host": "codexpro.wwxb1123.xyz",
+    "codex_version": "codex-cli 0.144.1",
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "sandbox": "read-only",
+    "search_context_size": "medium",
+    "web_search": "live"
+  },
+  "query": "高机动目标持续跟踪精确打击研究",
+  "query_id": "Q-0011",
+  "query_sha256": "eb1b661f7b965aced8f1742489d1743467fe690fe5cc7597a9b2fbd6d9f81d67",
+  "report_id": "BR-d20274041fbbafeb35b57cf1",
+  "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-d20274041fbbafeb35b57cf1/report.md",
+  "schema_version": "1.0",
+  "source_eval_id": "baseline-first20-three-layer-nine-20260729",
+  "sources": [
+    "https://document.acqirc.org/publication_documents/reports/1670425668.JADC2_REPORT.pdf",
+    "https://dodcio.defense.gov/Portals/0/Documents/Library/DoD-ZTStrategy.pdf",
+    "https://www.ai.mil/Initiatives/CJADC2/",
+    "https://www.army.mil/article/249422/project_convergence_21_to_showcase_abilities_of_the_joint_force",
+    "https://www.capellaspace.com/",
+    "https://www.gao.gov/products/gao-24-106841",
+    "https://www.lineofdeparture.army.mil/Journals/Air-Defense-Artillery/ADA-Archive/2024-Edition/IBCS-Any-Sensor-Best-Shooter/",
+    "https://www.ll.mit.edu/news/lincoln-laboratory-supports-missile-defense-agency-space-sensor-testing",
+    "https://www.mitchellaerospacepower.org/app/uploads/2023/05/Scale_Scope_Speed_Survivability_-KillChain_-Policy_Paper_40-New.pdf",
+    "https://www.ssc.spaceforce.mil/Newsroom/Article/4467880/securing-the-ultimate-high-ground-how-the-space-force-is-revolutionizing-airbor",
+    "https://www.war.gov/News/Releases/Release/Article/3676902/mda-sda-announce-upcoming-launch-of-the-hypersonic-and-ballistic-tracking-space/",
+    "https://www.war.gov/Spotlights/Project-Convergence/"
+  ],
+  "status": "completed",
+  "system_id": "generic_agent",
+  "usage": {
+    "cached_input_tokens": 8576,
+    "input_tokens": 63473,
+    "output_tokens": 5850,
+    "reasoning_output_tokens": 1829,
+    "search_query_count": 10,
+    "tool_call_count": 10,
+    "web_search_calls": 10
+  }
+}

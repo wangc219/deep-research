@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · Force Design
+source_url=https://www.marines.mil/Force-Design/
+claim=用于支撑分布式前沿力量、联合杀伤网、NMESIS、HIMARS、G/ATOR、MQ-9A、MADIS/MRIC/O-CSUAS和远征制造等公开装备与能力基线。
+excerpt=
+retrieval=Hosted web search citation metadata

@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=media.defense.gov · FACT SHEET STRATEGY FOR COUNTERING UNMANNED SYSTEMS.PDF
+source_url=https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF
+claim=DoD反无人系统战略指出无人系统与AI、自治、网络技术结合使部队更难隐藏、集中、通信和机动，并扩散精确打击能力。
+excerpt=
+retrieval=Hosted web search citation metadata

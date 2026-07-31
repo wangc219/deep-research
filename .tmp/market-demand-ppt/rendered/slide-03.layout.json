@@ -1,0 +1,912 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/3tgyjg",
+    "id": "3tgyjg",
+    "slide": 3,
+    "layoutId": "e2953d98-247d-46e9-8e62-6503de8891ad",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "b35d4ec9-8aab-46cc-956d-d491de6dc268",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "e2953d98-247d-46e9-8e62-6503de8891ad",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "b35d4ec9-8aab-46cc-956d-d491de6dc268",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "b35d4ec9-8aab-46cc-956d-d491de6dc268",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ydgzel0j",
+      "id": "1",
+      "bbox": [
+        72,
+        34,
+        520,
+        24
+      ],
+      "geometry": "rect",
+      "text": "01 REQUIREMENT DECOMPOSITION",
+      "textPreview": "01 REQUIREMENT DECOMPOSITION",
+      "resolvedFontSize": 13,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 13,
+        "typeface": "+mn-lt",
+        "color": "#2563A6",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "01 REQUIREMENT DECOMPOSITION"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "01 REQUIREMENT DECOMPOSITION",
+          "resolvedTextStyle": {
+            "fontSize": 13,
+            "color": "#2563A6",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "01 REQUIREMENT DECOMPOSITION",
+              "fontSize": 13,
+              "color": "#2563A6",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/lg7yp0za",
+      "id": "2",
+      "bbox": [
+        72,
+        64,
+        1136,
+        52
+      ],
+      "geometry": "rect",
+      "text": "原始需求被拆解为四类可验收能力",
+      "textPreview": "原始需求被拆解为四类可验收能力",
+      "resolvedFontSize": 36,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 36,
+        "typeface": "+mn-lt",
+        "color": "#17202A",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "原始需求被拆解为四类可验收能力"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "原始需求被拆解为四类可验收能力",
+          "resolvedTextStyle": {
+            "fontSize": 36,
+            "color": "#17202A",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "原始需求被拆解为四类可验收能力",
+              "fontSize": 36,
+              "color": "#17202A",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/0fyhgvip",
+      "id": "3",
+      "bbox": [
+        72,
+        124,
+        1136,
+        1
+      ],
+      "geometry": "rect",
+      "fillColor": "#D7DEE7",
+      "lineColor": "#D7DEE7",
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/bqpgj6h8",
+      "id": "4",
+      "bbox": [
+        1150,
+        672,
+        58,
+        20
+      ],
+      "geometry": "rect",
+      "text": "03",
+      "textPreview": "03",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 12,
+        "typeface": "+mn-lt",
+        "color": "#64748B",
+        "alignment": "right",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "03"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "03",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "color": "#64748B",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "03",
+              "fontSize": 12,
+              "color": "#64748B",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/qpwza10n",
+      "id": "5",
+      "bbox": [
+        72,
+        672,
+        360,
+        20
+      ],
+      "geometry": "rect",
+      "text": "装备能力图像 Deep Research",
+      "textPreview": "装备能力图像 Deep Research",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 12,
+        "typeface": "+mn-lt",
+        "color": "#64748B",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "装备能力图像 Deep Research"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "装备能力图像 Deep Research",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "color": "#64748B",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "装备能力图像 Deep Research",
+              "fontSize": 12,
+              "color": "#64748B",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/dc7ylgze",
+      "id": "6",
+      "bbox": [
+        72,
+        158,
+        1136,
+        90
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#F4F7FA",
+      "lineColor": "#D7DEE7",
+      "lineWidth": 1
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/cbyhcbit",
+      "id": "7",
+      "bbox": [
+        96,
+        174,
+        190,
+        56
+      ],
+      "geometry": "rect",
+      "text": "研究范围",
+      "textPreview": "研究范围",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 22,
+        "typeface": "+mn-lt",
+        "color": "#16324F",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "研究范围"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "研究范围",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "color": "#16324F",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "研究范围",
+              "fontSize": 22,
+              "color": "#16324F",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/v690vahc",
+      "id": "8",
+      "bbox": [
+        298,
+        170,
+        870,
+        64
+      ],
+      "geometry": "rect",
+      "text": "无人远程火力打击；体系化、实战化、智能化、颠覆化；兼顾通用化与规模化",
+      "textPreview": "无人远程火力打击；体系化、实战化、智能化、颠覆化；兼顾通用化与规模化",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#334155",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "无人远程火力打击；体系化、实战化、智能化、颠覆化；兼顾通用化与规模化"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "无人远程火力打击；体系化、实战化、智能化、颠覆化；兼顾通用化与规模化",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#334155",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "无人远程火力打击；体系化、实战化、智能化、颠覆化；兼顾通用化与规模化",
+              "fontSize": 18,
+              "color": "#334155",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/al0zm5gr",
+      "id": "9",
+      "bbox": [
+        72,
+        270,
+        1136,
+        90
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#FFFFFF",
+      "lineColor": "#D7DEE7",
+      "lineWidth": 1
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/gbux0beh",
+      "id": "10",
+      "bbox": [
+        96,
+        286,
+        190,
+        56
+      ],
+      "geometry": "rect",
+      "text": "问题空间",
+      "textPreview": "问题空间",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 22,
+        "typeface": "+mn-lt",
+        "color": "#16324F",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "问题空间"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "问题空间",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "color": "#16324F",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "问题空间",
+              "fontSize": 22,
+              "color": "#16324F",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/hc3y9gf2",
+      "id": "11",
+      "bbox": [
+        298,
+        282,
+        870,
+        64
+      ],
+      "geometry": "rect",
+      "text": "正向扫描、局部战争、国际形势、潜在场景、技术革命、作战任务、新质毁伤",
+      "textPreview": "正向扫描、局部战争、国际形势、潜在场景、技术革命、作战任务、新质毁伤",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#334155",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "正向扫描、局部战争、国际形势、潜在场景、技术革命、作战任务、新质毁伤"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "正向扫描、局部战争、国际形势、潜在场景、技术革命、作战任务、新质毁伤",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#334155",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "正向扫描、局部战争、国际形势、潜在场景、技术革命、作战任务、新质毁伤",
+              "fontSize": 18,
+              "color": "#334155",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/u9cfy1wb",
+      "id": "12",
+      "bbox": [
+        72,
+        382,
+        1136,
+        90
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#F4F7FA",
+      "lineColor": "#D7DEE7",
+      "lineWidth": 1
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/falw76xw",
+      "id": "13",
+      "bbox": [
+        96,
+        398,
+        190,
+        56
+      ],
+      "geometry": "rect",
+      "text": "颠覆逻辑",
+      "textPreview": "颠覆逻辑",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 22,
+        "typeface": "+mn-lt",
+        "color": "#16324F",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "颠覆逻辑"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "颠覆逻辑",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "color": "#16324F",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "颠覆逻辑",
+              "fontSize": 22,
+              "color": "#16324F",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/s7uxwre5",
+      "id": "14",
+      "bbox": [
+        298,
+        394,
+        870,
+        64
+      ],
+      "geometry": "rect",
+      "text": "成本、平台、时间、毁伤、体系、伦理与博弈六个维度，支持继续发散",
+      "textPreview": "成本、平台、时间、毁伤、体系、伦理与博弈六个维度，支持继续发散",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#334155",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "成本、平台、时间、毁伤、体系、伦理与博弈六个维度，支持继续发散"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "成本、平台、时间、毁伤、体系、伦理与博弈六个维度，支持继续发散",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#334155",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "成本、平台、时间、毁伤、体系、伦理与博弈六个维度，支持继续发散",
+              "fontSize": 18,
+              "color": "#334155",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/t83e5wfq",
+      "id": "15",
+      "bbox": [
+        72,
+        494,
+        1136,
+        90
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#FFFFFF",
+      "lineColor": "#D7DEE7",
+      "lineWidth": 1
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6lsfu1gf",
+      "id": "16",
+      "bbox": [
+        96,
+        510,
+        190,
+        56
+      ],
+      "geometry": "rect",
+      "text": "交付与验收",
+      "textPreview": "交付与验收",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 22,
+        "typeface": "+mn-lt",
+        "color": "#16324F",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "交付与验收"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "交付与验收",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "color": "#16324F",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "交付与验收",
+              "fontSize": 22,
+              "color": "#16324F",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7mlw3mxk",
+      "id": "17",
+      "bbox": [
+        298,
+        506,
+        870,
+        64
+      ],
+      "geometry": "rect",
+      "text": "三层九项报告；领域符合性、能力图像、制胜效能、创新性、可实现性五项评估",
+      "textPreview": "三层九项报告；领域符合性、能力图像、制胜效能、创新性、可实现性五项评估",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#334155",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "三层九项报告；领域符合性、能力图像、制胜效能、创新性、可实现性五项评估"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "三层九项报告；领域符合性、能力图像、制胜效能、创新性、可实现性五项评估",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#334155",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "三层九项报告；领域符合性、能力图像、制胜效能、创新性、可实现性五项评估",
+              "fontSize": 18,
+              "color": "#334155",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

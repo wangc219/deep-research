@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" data-pptx-page-role="ending">
+  <rect id="background" data-pptx-role="background" x="0" y="0" width="1280" height="720" fill="#173B5E"/>
+  <g id="header" data-pptx-bounds="64 46 1152 112">
+    <text x="64" y="94" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="42" font-weight="bold" fill="#FFFFFF">&#x4E0B;&#x4E00;&#x9636;&#x6BB5;&#xFF1A;&#x8865;&#x8BC1;&#x636E;&#x3001;&#x6269;&#x6837;&#x672C;&#x3001;&#x964D;&#x65F6;&#x5EF6;</text>
+    <text x="64" y="138" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#C8D5E2">&#x4E0D;&#x518D;&#x6269;&#x5927;&#x65B9;&#x6CD5;&#x590D;&#x6742;&#x5EA6;&#xFF0C;&#x5148;&#x628A;&#x53EF;&#x4FE1;&#x5EA6;&#x4E0E;&#x89C4;&#x6A21;&#x5316;&#x80FD;&#x529B;&#x505A;&#x5B9E;</text>
+    <text x="1216" y="90" text-anchor="end" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#C8D5E2">18</text>
+  </g>
+  <g id="work-package-1" data-pptx-bounds="64 204 340 282">
+    <text x="64" y="270" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="66" font-weight="bold" fill="#2E8B66">01</text>
+    <text x="64" y="322" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="32" font-weight="bold" fill="#FFFFFF">&#x8BC1;&#x636E;&#x8D28;&#x91CF;&#x4E13;&#x9879;</text>
+    <line x1="64" y1="344" x2="380" y2="344" stroke="#6D89A3" stroke-width="2"/>
+    <text x="64" y="390" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#FFFFFF">&#x6B63;&#x6587;&#x2014;&#x8BC1;&#x636E;&#x5361;&#x5F3A;&#x7ED1;&#x5B9A;</text>
+    <text x="64" y="432" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#FFFFFF">&#x5173;&#x952E;&#x6570;&#x5B57;&#x6838;&#x9A8C;</text>
+    <text x="64" y="474" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#FFFFFF">&#x6765;&#x6E90;&#x8D28;&#x91CF;&#x5206;&#x7EA7;</text>
+  </g>
+  <g id="work-package-2" data-pptx-bounds="470 204 360 282">
+    <text x="470" y="270" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="66" font-weight="bold" fill="#2F6FAE">02</text>
+    <text x="470" y="322" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="32" font-weight="bold" fill="#FFFFFF">50 &#x6761;&#x5168;&#x91CF; Benchmark</text>
+    <line x1="470" y1="344" x2="786" y2="344" stroke="#6D89A3" stroke-width="2"/>
+    <text x="470" y="390" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#FFFFFF">&#x56FA;&#x5B9A;&#x4EE3;&#x7801;&#x4E0E;&#x6A21;&#x578B;&#x7248;&#x672C;</text>
+    <text x="470" y="432" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#FFFFFF">&#x9884;&#x6CE8;&#x518C;&#x8BC4;&#x6D4B;&#x53E3;&#x5F84;</text>
+    <text x="470" y="474" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#FFFFFF">&#x62A5;&#x544A;&#x7F6E;&#x4FE1;&#x533A;&#x95F4;</text>
+  </g>
+  <g id="work-package-3" data-pptx-bounds="876 204 340 282">
+    <text x="876" y="270" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="66" font-weight="bold" fill="#C97A32">03</text>
+    <text x="876" y="322" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="32" font-weight="bold" fill="#FFFFFF">&#x540C;&#x7248;&#x672C;&#x6D88;&#x878D;&#x590D;&#x6D4B;</text>
+    <line x1="876" y1="344" x2="1192" y2="344" stroke="#6D89A3" stroke-width="2"/>
+    <text x="876" y="390" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#FFFFFF">&#x5B8C;&#x6574;&#x65B9;&#x6CD5;&#x540C;&#x6279;&#x8FD0;&#x884C;</text>
+    <text x="876" y="432" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#FFFFFF">&#x8BB0;&#x5F55;&#x8D28;&#x91CF; / &#x65F6;&#x5EF6; / &#x6210;&#x672C;</text>
+    <text x="876" y="474" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#FFFFFF">&#x5F62;&#x6210;&#x7A33;&#x5B9A;&#x56E0;&#x679C;&#x8BC1;&#x636E;</text>
+  </g>
+  <g id="decision-ask" data-pptx-bounds="64 564 1152 96">
+    <rect x="64" y="564" width="1152" height="96" fill="#FFFFFF"/>
+    <text x="92" y="624" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="32" font-weight="bold" fill="#173B5E">&#x5EFA;&#x8BAE;&#x51B3;&#x7B56;&#xFF1A;&#x6279;&#x51C6;&#x4E09;&#x9879;&#x5DE5;&#x4F5C;&#x5305;&#x8FDB;&#x5165;&#x4E0B;&#x4E00;&#x9636;&#x6BB5;</text>
+    <text x="1188" y="624" text-anchor="end" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="30" font-weight="bold" fill="#2E8B66">GO</text>
+  </g>
+</svg>

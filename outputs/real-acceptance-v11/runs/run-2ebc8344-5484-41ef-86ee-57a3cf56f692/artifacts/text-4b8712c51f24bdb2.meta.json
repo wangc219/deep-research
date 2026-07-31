@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:4b8712c51f24bdb2",
+  "content_path": "text-4b8712c51f24bdb2.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-a2db3c7815e2",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "4b8712c51f24bdb2be97de106a4cae8887c4d59aaf6e3826a64c0137a5ce0de8",
+  "url": "https://www.sto.nato.int/public/20240223_UC_Book_%20of_%20Abstracts%202023_web.pdf?utm_source=openai"
+}

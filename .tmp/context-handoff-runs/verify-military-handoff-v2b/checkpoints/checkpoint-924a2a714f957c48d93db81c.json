@@ -1,0 +1,45 @@
+{
+  "checkpoint": {
+    "budget_remaining": {
+      "baseline_tasks": 4,
+      "finalize_tasks": 1,
+      "rounds": 2
+    },
+    "checkpoint_id": "run-checkpoint-verify-military-handoff-v2b",
+    "completed_task_ids": [],
+    "config_fingerprint": "sha256:e2f14d53fe56923d49735466f911b11536286529884e76a1e5fb27e413c8e5e9",
+    "created_at": "2026-07-21T17:52:30.984007+00:00",
+    "mode": "fake",
+    "pending_task_ids": [
+      "baseline:international_situation",
+      "baseline:combat_scenario",
+      "baseline:weapon_equipment",
+      "baseline:operational_employment",
+      "finalize:winning-report"
+    ],
+    "research_route": "traditional_gap",
+    "resolved_route": "traditional_gap",
+    "resume_count": 0,
+    "round_index": 1,
+    "run_id": "verify-military-handoff-v2b",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "international_situation",
+      "combat_scenario",
+      "weapon_equipment",
+      "operational_employment"
+    ],
+    "source_materials": [],
+    "status": "running",
+    "task_statuses": {
+      "baseline:combat_scenario": "pending",
+      "baseline:international_situation": "pending",
+      "baseline:operational_employment": "pending",
+      "baseline:weapon_equipment": "pending",
+      "finalize:winning-report": "pending"
+    },
+    "topic": "挖掘在西太反介入体系下的装备能力缺口",
+    "worker_reports": []
+  },
+  "savepoint_id": "checkpoint-924a2a714f957c48d93db81c"
+}

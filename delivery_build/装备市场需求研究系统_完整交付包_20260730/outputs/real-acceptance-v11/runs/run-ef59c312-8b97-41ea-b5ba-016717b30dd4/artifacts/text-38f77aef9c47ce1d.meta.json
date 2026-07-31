@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:38f77aef9c47ce1d",
+  "content_path": "text-38f77aef9c47ce1d.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-combat_scenario-web-4eb092bc25f4",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "38f77aef9c47ce1ddfb5b238956a280fe96366e06b9ca61bfeee1e4e7a413881",
+  "url": "https://www.darpa.mil/research/programs/frosty?utm_source=openai"
+}

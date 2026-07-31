@@ -1,0 +1,485 @@
+[
+  {
+    "bundle_id": "claims-978ac9dc8329",
+    "claims": [
+      {
+        "claim_id": "claim-5b6add3f899c",
+        "claim_type": "fact",
+        "confidence": 0.76,
+        "counter_evidence": [
+          "集中高价值精打在授权、毁伤质量和固定目标打击上更稳，但与间歇通信下的持续任务续接要求冲突；因此只能作为保留能力而非主方案。",
+          "可消耗自主系统的规模优势与反无人体系快速扩散相互抵消；数量本身不能替代任务包一致性、抗扰导航、识别可信度和保障再生成能力。",
+          "前沿分布式节点提升闭环韧性，同时增加能源、弹药、频谱、维护和暴露面；若保障体系未同步分布化，COA-2会由韧性方案转化为多点失效。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-189e631d8bcb",
+          "ev-operational_employment-web-04daa1ccebf5",
+          "ev-operational_employment-web-f42ad4ad8ea8",
+          "ev-operational_employment-web-6c1c84a0e24e"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://dodcio.defense.gov/Portals/0/Documents/DoD-C3-Strategy.pdf",
+          "https://irp.fas.org/doddir/army/fm3-0.pdf",
+          "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/",
+          "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+        ],
+        "text": "决定性信息1（贡献：任务链/装备功能需求）：D-DIL应作为默认通信基线，精打任务不能依赖连续遥控；任务意图、授权边界、有效期、退出条件和版本号必须在发射前封装，并在短通信窗口内只做状态对账和关键更新。"
+      },
+      {
+        "claim_id": "claim-4cdb5a0ca988",
+        "claim_type": "fact",
+        "confidence": 0.76,
+        "counter_evidence": [
+          "集中高价值精打在授权、毁伤质量和固定目标打击上更稳，但与间歇通信下的持续任务续接要求冲突；因此只能作为保留能力而非主方案。",
+          "可消耗自主系统的规模优势与反无人体系快速扩散相互抵消；数量本身不能替代任务包一致性、抗扰导航、识别可信度和保障再生成能力。",
+          "前沿分布式节点提升闭环韧性，同时增加能源、弹药、频谱、维护和暴露面；若保障体系未同步分布化，COA-2会由韧性方案转化为多点失效。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-189e631d8bcb",
+          "ev-operational_employment-web-04daa1ccebf5",
+          "ev-operational_employment-web-f42ad4ad8ea8",
+          "ev-operational_employment-web-6c1c84a0e24e"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://dodcio.defense.gov/Portals/0/Documents/DoD-C3-Strategy.pdf",
+          "https://irp.fas.org/doddir/army/fm3-0.pdf",
+          "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/",
+          "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+        ],
+        "text": "决定性信息2（贡献：力量协同/保障韧性）：前沿分布式节点比后方集中C2更适合作为任务续接主承载，可承担近实时感知、发射、中继、BDA摘要和邻近接替，但生存力受低特征机动、能源、弹药、维修、频谱治理和补给暴露共同限制。"
+      },
+      {
+        "claim_id": "claim-630db027b3c4",
+        "claim_type": "inference",
+        "confidence": 0.76,
+        "counter_evidence": [
+          "集中高价值精打在授权、毁伤质量和固定目标打击上更稳，但与间歇通信下的持续任务续接要求冲突；因此只能作为保留能力而非主方案。",
+          "可消耗自主系统的规模优势与反无人体系快速扩散相互抵消；数量本身不能替代任务包一致性、抗扰导航、识别可信度和保障再生成能力。",
+          "前沿分布式节点提升闭环韧性，同时增加能源、弹药、频谱、维护和暴露面；若保障体系未同步分布化，COA-2会由韧性方案转化为多点失效。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-189e631d8bcb",
+          "ev-operational_employment-web-04daa1ccebf5",
+          "ev-operational_employment-web-f42ad4ad8ea8",
+          "ev-operational_employment-web-6c1c84a0e24e"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://dodcio.defense.gov/Portals/0/Documents/DoD-C3-Strategy.pdf",
+          "https://irp.fas.org/doddir/army/fm3-0.pdf",
+          "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/",
+          "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+        ],
+        "text": "决定性信息3（贡献：COA/失败模式）：低成本可消耗自主系统能扩大压制、诱导侦察和补击节奏，但对手反无人、电子战、低成本拦截和基地防护会快速削弱成本交换优势，因此不宜单独作为主方案。"
+      },
+      {
+        "claim_id": "claim-0cc367cb1eb8",
+        "claim_type": "fact",
+        "confidence": 0.76,
+        "counter_evidence": [
+          "集中高价值精打在授权、毁伤质量和固定目标打击上更稳，但与间歇通信下的持续任务续接要求冲突；因此只能作为保留能力而非主方案。",
+          "可消耗自主系统的规模优势与反无人体系快速扩散相互抵消；数量本身不能替代任务包一致性、抗扰导航、识别可信度和保障再生成能力。",
+          "前沿分布式节点提升闭环韧性，同时增加能源、弹药、频谱、维护和暴露面；若保障体系未同步分布化，COA-2会由韧性方案转化为多点失效。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-189e631d8bcb",
+          "ev-operational_employment-web-04daa1ccebf5",
+          "ev-operational_employment-web-f42ad4ad8ea8",
+          "ev-operational_employment-web-6c1c84a0e24e"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://dodcio.defense.gov/Portals/0/Documents/DoD-C3-Strategy.pdf",
+          "https://irp.fas.org/doddir/army/fm3-0.pdf",
+          "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/",
+          "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+        ],
+        "text": "决定性信息4（贡献：任务链/失败模式/装备功能需求）：俄乌公开战例显示GPS干扰、通信压制和电子战适应会显著影响无人系统与精确制导弹药，任务保持必须把多源导航、边缘再识别、任务过期控制、BDA摘要和软件/战术快速迭代列为硬需求。"
+      }
+    ],
+    "packet_id": "packet-operational_employment",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-39ff1148f328",
+    "claims": [
+      {
+        "claim_id": "claim-89821cec3705",
+        "claim_type": "hypothesis",
+        "confidence": 0.73,
+        "counter_evidence": [
+          "公开作战概念强调分布式、低辐射和自治，但公开安全治理讨论又要求人在回路、可审计和授权边界；两者在通信间歇条件下存在天然张力。",
+          "增加低成本可消耗系统可缓解库存压力，但会放大任务授权、BDA汇聚和断链协同负担。",
+          "依赖多源PNT可降低GPS单点失效，但海雾、开放海面、城市峡谷和欺骗环境会使替代PNT质量不稳定。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-c38f07c3ceb3",
+          "ev-combat_scenario-web-3393b98b73a1",
+          "ev-combat_scenario-web-ba7af247bc5e",
+          "ev-combat_scenario-web-d27e41bd8d64"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/News/News-Display/Article/2708120/expeditionary-advanced-base-operations-eabo/",
+          "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/",
+          "https://www.defense.gov/News/Releases/Release/Article/2397850/electromagnetic-spectrum-superiority-strategy-released/",
+          "https://www.belfercenter.org/research-analysis/navigating-without-gps-cascading-alt-pnt-architecture-american-defense"
+        ],
+        "text": "判断1：间歇通信下精打武器的主要缺口不是单次命中，而是任务包能否在断链后约束“继续、等待、改任、终止”。军事任务价值在于维持压制/拒止火力连续性，同时避免目标状态过期仍执行。证据边界：公开资料仅能证明电磁频谱、分布式作战和GPS受扰构成普遍压力，不能证明具体型号具备或不具备某一续接逻辑。失效条件：若目标固定、授权长期有效且通信可稳定恢复，该缺口对任务成败的决定性下降。"
+      },
+      {
+        "claim_id": "claim-8ded420bf5f9",
+        "claim_type": "hypothesis",
+        "confidence": 0.73,
+        "counter_evidence": [
+          "公开作战概念强调分布式、低辐射和自治，但公开安全治理讨论又要求人在回路、可审计和授权边界；两者在通信间歇条件下存在天然张力。",
+          "增加低成本可消耗系统可缓解库存压力，但会放大任务授权、BDA汇聚和断链协同负担。",
+          "依赖多源PNT可降低GPS单点失效，但海雾、开放海面、城市峡谷和欺骗环境会使替代PNT质量不稳定。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-c38f07c3ceb3",
+          "ev-combat_scenario-web-3393b98b73a1",
+          "ev-combat_scenario-web-ba7af247bc5e",
+          "ev-combat_scenario-web-d27e41bd8d64"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/News/News-Display/Article/2708120/expeditionary-advanced-base-operations-eabo/",
+          "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/",
+          "https://www.defense.gov/News/Releases/Release/Article/2397850/electromagnetic-spectrum-superiority-strategy-released/",
+          "https://www.belfercenter.org/research-analysis/navigating-without-gps-cascading-alt-pnt-architecture-american-defense"
+        ],
+        "text": "判断2：S4持续压制再组织是最能暴露体系短板的场景，因为BDA迟滞、库存消耗、任务库过期和补给受损会同时打断“评估—再组织”。军事任务价值在于检验火力循环能否从一次打击转为多轮断续闭合。证据边界：Replicator、EABO/Force Design和韧性火力资料支持分散、可消耗、重构和低带宽需求，但具体战损率与补给节奏无法由公开资料量化。失效条件：若对手无法持续压制C4ISR/后勤，或己方拥有冗余高带宽链路和充足库存，S4压力会显著降低。"
+      },
+      {
+        "claim_id": "claim-95c43ca4d780",
+        "claim_type": "hypothesis",
+        "confidence": 0.73,
+        "counter_evidence": [
+          "公开作战概念强调分布式、低辐射和自治，但公开安全治理讨论又要求人在回路、可审计和授权边界；两者在通信间歇条件下存在天然张力。",
+          "增加低成本可消耗系统可缓解库存压力，但会放大任务授权、BDA汇聚和断链协同负担。",
+          "依赖多源PNT可降低GPS单点失效，但海雾、开放海面、城市峡谷和欺骗环境会使替代PNT质量不稳定。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-c38f07c3ceb3",
+          "ev-combat_scenario-web-3393b98b73a1",
+          "ev-combat_scenario-web-ba7af247bc5e",
+          "ev-combat_scenario-web-d27e41bd8d64"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/News/News-Display/Article/2708120/expeditionary-advanced-base-operations-eabo/",
+          "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/",
+          "https://www.defense.gov/News/Releases/Release/Article/2397850/electromagnetic-spectrum-superiority-strategy-released/",
+          "https://www.belfercenter.org/research-analysis/navigating-without-gps-cascading-alt-pnt-architecture-american-defense"
+        ],
+        "text": "判断3：S5远海/远域稀疏通信场景的关键不是“实时控制”，而是计划窗口内交换最小任务数据：目标有效期、授权状态、武器状态、PNT可信度和BDA摘要。军事任务价值在于使远域打击、拒止或拦截任务在低辐射、低带宽状态下仍可续接。证据边界：EABO/DMO和Alt-PNT资料可支撑概念性需求，不能推断具体通信容量、报文格式或武器软件实现。失效条件：若目标机动速度超过通信窗口刷新频率，且武器没有等待/终止规则，任务续接会退化为过期授权执行。"
+      },
+      {
+        "claim_id": "claim-a8e971151235",
+        "claim_type": "hypothesis",
+        "confidence": 0.73,
+        "counter_evidence": [
+          "公开作战概念强调分布式、低辐射和自治，但公开安全治理讨论又要求人在回路、可审计和授权边界；两者在通信间歇条件下存在天然张力。",
+          "增加低成本可消耗系统可缓解库存压力，但会放大任务授权、BDA汇聚和断链协同负担。",
+          "依赖多源PNT可降低GPS单点失效，但海雾、开放海面、城市峡谷和欺骗环境会使替代PNT质量不稳定。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-c38f07c3ceb3",
+          "ev-combat_scenario-web-3393b98b73a1",
+          "ev-combat_scenario-web-ba7af247bc5e",
+          "ev-combat_scenario-web-d27e41bd8d64"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/News/News-Display/Article/2708120/expeditionary-advanced-base-operations-eabo/",
+          "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/",
+          "https://www.defense.gov/News/Releases/Release/Article/2397850/electromagnetic-spectrum-superiority-strategy-released/",
+          "https://www.belfercenter.org/research-analysis/navigating-without-gps-cascading-alt-pnt-architecture-american-defense"
+        ],
+        "text": "判断4：S6授权漂移场景要求把禁止区、友邻/民用混杂、目标置信度和人工再授权条件作为硬约束嵌入任务包。军事任务价值在于保持威慑和压制机会的同时，降低误击、越权和高价值弹药浪费。证据边界：公开自主武器讨论和巡飞弹案例支持人在回路、传感器误差、欺骗与合法性风险，但不能替代具体交战规则和系统安全认证。失效条件：若系统把类别相似性等同于授权目标确认，或在再授权链路不可用时扩大自主交战范围，该场景下任务保持能力反而会放大风险。"
+      },
+      {
+        "claim_id": "claim-1fddc43679b7",
+        "claim_type": "hypothesis",
+        "confidence": 0.73,
+        "counter_evidence": [
+          "公开作战概念强调分布式、低辐射和自治，但公开安全治理讨论又要求人在回路、可审计和授权边界；两者在通信间歇条件下存在天然张力。",
+          "增加低成本可消耗系统可缓解库存压力，但会放大任务授权、BDA汇聚和断链协同负担。",
+          "依赖多源PNT可降低GPS单点失效，但海雾、开放海面、城市峡谷和欺骗环境会使替代PNT质量不稳定。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-c38f07c3ceb3",
+          "ev-combat_scenario-web-3393b98b73a1",
+          "ev-combat_scenario-web-ba7af247bc5e",
+          "ev-combat_scenario-web-d27e41bd8d64"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/News/News-Display/Article/2708120/expeditionary-advanced-base-operations-eabo/",
+          "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/",
+          "https://www.defense.gov/News/Releases/Release/Article/2397850/electromagnetic-spectrum-superiority-strategy-released/",
+          "https://www.belfercenter.org/research-analysis/navigating-without-gps-cascading-alt-pnt-architecture-american-defense"
+        ],
+        "text": "判断5：装备差距应按五档能力衡量：L0链路依赖型、L1惯性保持型、L2低带宽续接型、L3多源PNT与任务重构型、L4有边界自治与可审计续接型。军事任务价值在于把装备发展从“抗干扰导航”扩展到完整任务链闭合验证。证据边界：公开来源支持能力维度划分，但不支持判定现役全部精打装备实际等级。失效条件：若评估只看命中精度和射程，不测断链授权、BDA回传、任务重构和补给恢复，五档差距会被低估。"
+      }
+    ],
+    "packet_id": "packet-combat_scenario",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-42e2d45402c3",
+    "claims": [
+      {
+        "claim_id": "claim-adff2113f4e2",
+        "claim_type": "fact",
+        "confidence": 0.74,
+        "counter_evidence": [
+          "部分web_discovery URL存在拼接或截断，例如Tomahawk、DARPA LongShot、AeroVironment Switchblade和NAVAIR CCA条目，不能作为精确页面级引用，只能保留为待复核来源线索。",
+          "公开资料中“半自主”“降低对ISR/GPS/数据链依赖”不能等同于“断链自主攻击新目标”，两者在授权、误击控制和法律/交战规则约束上存在明显差异。",
+          "无人平台长航时和远程武器挂载提升任务续接潜力，但高威胁防空空域内生存性与链路抗扰公开证据不足，不能直接推导为稳定战役级续接能力。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-c2466ad02545",
+          "ev-weapon_equipment-web-84f5c7f4b57b",
+          "ev-weapon_equipment-web-e894862926e0",
+          "ev-weapon_equipment-web-0bfd87a5752c"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.navy.mil/Resources/Fact-Files/Display-FactFiles/Article/2169229/tomahawk-cruise-missile://www.navair.navy.mil/product/Tomah",
+          "https://www.saffm.hq.af.mil/Portals/84/documents/FY25/FY25%20Air%20Force%20Missile%20Procurement.pdf",
+          "https://www.army.mil/article-amp/291321/portfolio_acquisition_executive_for_fires_hosts_precision_strike_missile_increment_4_industry、增量路线及Inc",
+          "https://files.gao.gov/reports/GAO"
+        ],
+        "text": "判断1：国外现役与在研精打装备的基线差距不在单一射程，而在“断链任务保持、复链任务续接、目标变化后的可控重定向”三段能力是否闭环。军事任务价值是提升纵深精确毁伤和火力协同，在通信窗口短促时仍能按预置意图保持任务并在复链后更新目标或中止。证据边界是Tomahawk Block IV/V、JASSM-D、LRASM、PrSM增量公开资料能够证明飞行中更新、武器数据链、半自主末端和移动目标寻的方向，但不能证明断链期间自主改打新目标、复链一致性算法和目标误识别率。失效条件是GPS/INS受骗、目标特征库过期、复链窗口被压缩、末端传感被遮蔽或授权规则不清导致任务续接错误。"
+      },
+      {
+        "claim_id": "claim-437a33de7fbb",
+        "claim_type": "fact",
+        "confidence": 0.74,
+        "counter_evidence": [
+          "部分web_discovery URL存在拼接或截断，例如Tomahawk、DARPA LongShot、AeroVironment Switchblade和NAVAIR CCA条目，不能作为精确页面级引用，只能保留为待复核来源线索。",
+          "公开资料中“半自主”“降低对ISR/GPS/数据链依赖”不能等同于“断链自主攻击新目标”，两者在授权、误击控制和法律/交战规则约束上存在明显差异。",
+          "无人平台长航时和远程武器挂载提升任务续接潜力，但高威胁防空空域内生存性与链路抗扰公开证据不足，不能直接推导为稳定战役级续接能力。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-c2466ad02545",
+          "ev-weapon_equipment-web-84f5c7f4b57b",
+          "ev-weapon_equipment-web-e894862926e0",
+          "ev-weapon_equipment-web-0bfd87a5752c"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.navy.mil/Resources/Fact-Files/Display-FactFiles/Article/2169229/tomahawk-cruise-missile://www.navair.navy.mil/product/Tomah",
+          "https://www.saffm.hq.af.mil/Portals/84/documents/FY25/FY25%20Air%20Force%20Missile%20Procurement.pdf",
+          "https://www.army.mil/article-amp/291321/portfolio_acquisition_executive_for_fires_hosts_precision_strike_missile_increment_4_industry、增量路线及Inc",
+          "https://files.gao.gov/reports/GAO"
+        ],
+        "text": "判断2：远程无人打击平台的关键价值是把一次性弹药任务链延长为“等待、搜索、复核、低带宽摘要回传、授权后释放”的空中续接节点。军事任务价值是增强目标发现、持续监视、战果评估和二次火力重分配，尤其适合重定位目标和低频复链场景。证据边界是MQ-9B、Switchblade 600、ALTIUS-600M、CCA/LongShot公开资料可支撑平台航时、载荷、人在回路、取消/重新接战和协同自治方向，但不能确认断链自治攻击权限、蜂群协同细节和强对抗空域生存概率。失效条件是卫星链路受扰、空域防空威胁过高、天气或光电遮蔽削弱传感、有人授权延迟超过目标窗口。"
+      },
+      {
+        "claim_id": "claim-b5ccca861796",
+        "claim_type": "inference",
+        "confidence": 0.74,
+        "counter_evidence": [
+          "部分web_discovery URL存在拼接或截断，例如Tomahawk、DARPA LongShot、AeroVironment Switchblade和NAVAIR CCA条目，不能作为精确页面级引用，只能保留为待复核来源线索。",
+          "公开资料中“半自主”“降低对ISR/GPS/数据链依赖”不能等同于“断链自主攻击新目标”，两者在授权、误击控制和法律/交战规则约束上存在明显差异。",
+          "无人平台长航时和远程武器挂载提升任务续接潜力，但高威胁防空空域内生存性与链路抗扰公开证据不足，不能直接推导为稳定战役级续接能力。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-c2466ad02545",
+          "ev-weapon_equipment-web-84f5c7f4b57b",
+          "ev-weapon_equipment-web-e894862926e0",
+          "ev-weapon_equipment-web-0bfd87a5752c"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.navy.mil/Resources/Fact-Files/Display-FactFiles/Article/2169229/tomahawk-cruise-missile://www.navair.navy.mil/product/Tomah",
+          "https://www.saffm.hq.af.mil/Portals/84/documents/FY25/FY25%20Air%20Force%20Missile%20Procurement.pdf",
+          "https://www.army.mil/article-amp/291321/portfolio_acquisition_executive_for_fires_hosts_precision_strike_missile_increment_4_industry、增量路线及Inc",
+          "https://files.gao.gov/reports/GAO"
+        ],
+        "text": "判断3：远域压制效应器是间歇通信精打链条的窗口制造者，而非任务续接本体。军事任务价值是通过AARGM/AARGM-ER打击防空辐射源、MALD/MALD-J诱骗牵引、NGJ-MB/EA-18G电子攻击，削弱敌雷达、通信和火控链，短时打开目标刷新、突防和复链窗口。证据边界是公开来源可确认SEAD/DEAD、诱饵和中频段电子攻击任务，但不披露有效干扰距离、持续压制时间、对特定一体化防空系统的压制概率。失效条件是敌方频率捷变、被动探测、诱饵识别、雷达静默与低成本拦截形成反适应。"
+      },
+      {
+        "claim_id": "claim-03fd943cecb3",
+        "claim_type": "fact",
+        "confidence": 0.74,
+        "counter_evidence": [
+          "部分web_discovery URL存在拼接或截断，例如Tomahawk、DARPA LongShot、AeroVironment Switchblade和NAVAIR CCA条目，不能作为精确页面级引用，只能保留为待复核来源线索。",
+          "公开资料中“半自主”“降低对ISR/GPS/数据链依赖”不能等同于“断链自主攻击新目标”，两者在授权、误击控制和法律/交战规则约束上存在明显差异。",
+          "无人平台长航时和远程武器挂载提升任务续接潜力，但高威胁防空空域内生存性与链路抗扰公开证据不足，不能直接推导为稳定战役级续接能力。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-c2466ad02545",
+          "ev-weapon_equipment-web-84f5c7f4b57b",
+          "ev-weapon_equipment-web-e894862926e0",
+          "ev-weapon_equipment-web-0bfd87a5752c"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.navy.mil/Resources/Fact-Files/Display-FactFiles/Article/2169229/tomahawk-cruise-missile://www.navair.navy.mil/product/Tomah",
+          "https://www.saffm.hq.af.mil/Portals/84/documents/FY25/FY25%20Air%20Force%20Missile%20Procurement.pdf",
+          "https://www.army.mil/article-amp/291321/portfolio_acquisition_executive_for_fires_hosts_precision_strike_missile_increment_4_industry、增量路线及Inc",
+          "https://files.gao.gov/reports/GAO"
+        ],
+        "text": "判断4：现役做优应优先在既有导弹、巡飞弹和无人平台上补齐通用任务续接组件，而不是等待全新平台成熟。军事任务价值是以较低改装风险提升抗扰导航、复链重定向、安全中止、审计记录、目标置信门限和低带宽任务摘要能力，直接增强反制抗扰、误击控制和持续保障。证据边界是Tomahawk双向通信、JASSM-D WDL、Switchblade wave-off/recommit可作为功能锚点，但公开证据不足以证明跨型号通用接口已经成熟。失效条件是平台任务计算机封闭、武器数据链带宽不足、目标库更新慢、军种接口割裂或安全认证周期过长。"
+      },
+      {
+        "claim_id": "claim-2dbef87f1ddc",
+        "claim_type": "fact",
+        "confidence": 0.74,
+        "counter_evidence": [
+          "部分web_discovery URL存在拼接或截断，例如Tomahawk、DARPA LongShot、AeroVironment Switchblade和NAVAIR CCA条目，不能作为精确页面级引用，只能保留为待复核来源线索。",
+          "公开资料中“半自主”“降低对ISR/GPS/数据链依赖”不能等同于“断链自主攻击新目标”，两者在授权、误击控制和法律/交战规则约束上存在明显差异。",
+          "无人平台长航时和远程武器挂载提升任务续接潜力，但高威胁防空空域内生存性与链路抗扰公开证据不足，不能直接推导为稳定战役级续接能力。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-c2466ad02545",
+          "ev-weapon_equipment-web-84f5c7f4b57b",
+          "ev-weapon_equipment-web-e894862926e0",
+          "ev-weapon_equipment-web-0bfd87a5752c"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.navy.mil/Resources/Fact-Files/Display-FactFiles/Article/2169229/tomahawk-cruise-missile://www.navair.navy.mil/product/Tomah",
+          "https://www.saffm.hq.af.mil/Portals/84/documents/FY25/FY25%20Air%20Force%20Missile%20Procurement.pdf",
+          "https://www.army.mil/article-amp/291321/portfolio_acquisition_executive_for_fires_hosts_precision_strike_missile_increment_4_industry、增量路线及Inc",
+          "https://files.gao.gov/reports/GAO"
+        ],
+        "text": "判断5：新研拓新应形成“长航时续接节点+可消耗巡飞任务包+远域压制效应器+通用任务状态机”的装备族，而不是泛化远程打击能力。军事任务价值是把目标发现、火力协同、打击毁伤、压制突防、抗毁恢复和战果评估串成可中断、可恢复、可审计的任务链。证据边界是Replicator/CCA/LongShot、PrSM后续增量、ALTIUS/Switchblade和NGJ/AARGM/MALD体现方向，但大量仍处演示、采购推进或能力保密阶段。失效条件是规模采购不足、可消耗平台成本失控、训练数据与实战电磁环境不匹配、复链授权流程不能适应时敏目标。"
+      }
+    ],
+    "packet_id": "packet-weapon_equipment",
+    "schema_version": "1.0"
+  }
+]

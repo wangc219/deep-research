@@ -1,0 +1,15 @@
+{
+  "artifact_ref": "html:f2da104c9c2c4028",
+  "connect_ip": "198.18.2.122",
+  "content_path": "html-f2da104c9c2c4028.html",
+  "content_type": "text/html; charset=UTF-8",
+  "encoding": null,
+  "evidence_id": "ev-operational_employment-web-06d26c44006f",
+  "fetch_cache_hit": true,
+  "final_url": "https://www.sda.mil/home/about-us/faq/",
+  "kind": "html",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "f2da104c9c2c40284a04d85b459228ca7237b24f96b15c28ad740a961f9221b8",
+  "url": "https://www.sda.mil/home/about-us/faq/"
+}

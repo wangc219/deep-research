@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · expeditionary advanced base operations eabo
+source_url=https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/
+claim=E1：EABO强调在受争夺海域内由移动、低特征、相对易维持的前沿力量支撑海上控制、海上拒止、前沿C4ISR、目标指示和前沿保障。
+excerpt=
+retrieval=Hosted web search citation metadata

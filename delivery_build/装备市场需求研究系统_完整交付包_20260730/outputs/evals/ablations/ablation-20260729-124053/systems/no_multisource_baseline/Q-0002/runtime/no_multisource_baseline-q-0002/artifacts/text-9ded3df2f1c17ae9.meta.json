@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:9ded3df2f1c17ae9",
+  "content_path": "text-9ded3df2f1c17ae9.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: cached_origin_failure:HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-generic_researcher-web-29409c926255",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "9ded3df2f1c17ae95454262e17d0d34a2c6fcd3f452b34f4469e6edfdfec1984",
+  "url": "https://www.darpa.mil/research/programs/pinpoint"
+}

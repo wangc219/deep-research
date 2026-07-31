@@ -1,0 +1,4 @@
+fetch_failed
+url=https://www.act.nato.int/article/lci-x-builds-approach-fast-moving-threat/
+error=SSLEOFError: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)
+该诊断用于保留真实联网smoke边界；正式结论不应仅依赖失败材料。

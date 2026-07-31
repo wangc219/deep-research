@@ -1,0 +1,6 @@
+Primary source: /Users/wangchen/equipment research/市场需求query及模板V2.docx
+Implementation evidence: README.md, configs/equipment_deep_research/harness.yaml, outputs/runs/run-a4106237-6032-4a8a-b0c8-70f68ffef540/*
+Benchmark evidence: outputs/evals/web-benchmark-20260729-082159/{web-run.json,summary.json,results.jsonl,pairwise_prompt.md}
+Ablation evidence: outputs/evals/ablations/ablation-20260729-142922/{manifest.json,summary.json,ablation-report.md}
+No external images or external web claims were used.
+

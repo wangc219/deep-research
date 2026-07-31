@@ -1,0 +1,121 @@
+[
+  {
+    "bundle_id": "claims-6f93754f522d",
+    "claims": [
+      {
+        "claim_id": "claim-92c42765aff1",
+        "claim_type": "fact",
+        "confidence": 0.74,
+        "counter_evidence": [
+          "SDA资料强调PWSA/Transport Layer可提供低时延传输、传感器到射手连接和时敏目标跟踪能力；陆军火力资料同时强调大规模作战中电磁频谱会被持续争夺，通信完整性必须通过PACE、分散C2和机动来维持。这说明低时延空间骨干不是稳定充分条件，必须与抗干扰、降级运行和战术层冗余配套。",
+          "DARPA CODE展示通信/GPS受限下的自主协同潜力；GAO关于替代PNT缺少总体战略的判断提示，相关能力可能仍存在跨军种、跨平台集成不足，不能直接推断为成熟体系能力。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-generic_researcher-web-3393b98b73a1",
+          "ev-generic_researcher-web-06d26c44006f"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/",
+          "https://www.sda.mil/home/about-us/faq/"
+        ],
+        "text": "S4 装备基线与差距：公开资料显示，现有动态时敏目标链路的基线正在从单一传感器/单一射手转向“LEO低时延传输层+战术数据链+分散式火力C2”的组合。其任务效果是压缩发现至打击的链路时延，并提高跨域传感器到射手连接概率；作用机理是用LEO星座、光学星间链路、Link-16/IBS集成和直达平台通信减少中继层级。失效边界在于电磁频谱持续受争夺、战术链路被压制、节点机动导致链路中断时，低时延优势会退化为局部、间歇可用能力。"
+      },
+      {
+        "claim_id": "claim-46ce7bfaf162",
+        "claim_type": "fact",
+        "confidence": 0.74,
+        "counter_evidence": [
+          "SDA资料强调PWSA/Transport Layer可提供低时延传输、传感器到射手连接和时敏目标跟踪能力；陆军火力资料同时强调大规模作战中电磁频谱会被持续争夺，通信完整性必须通过PACE、分散C2和机动来维持。这说明低时延空间骨干不是稳定充分条件，必须与抗干扰、降级运行和战术层冗余配套。",
+          "DARPA CODE展示通信/GPS受限下的自主协同潜力；GAO关于替代PNT缺少总体战略的判断提示，相关能力可能仍存在跨军种、跨平台集成不足，不能直接推断为成熟体系能力。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-generic_researcher-web-3393b98b73a1",
+          "ev-generic_researcher-web-06d26c44006f"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/",
+          "https://www.sda.mil/home/about-us/faq/"
+        ],
+        "text": "S5 需求卡片方向：最值得保留的装备需求不是单一打击武器，而是“抗干扰低时延目标数据分发/火力协调构型”。公开证据支持其关键指标应围绕低时延、加密区域持续连接、战术数据链兼容、传感器到射手直连、PACE通信和分散式C2展开。其军事任务效果是支撑动态目标持续跟踪、快速火力通道和多射手协同，优先级高；但公开资料不足以给出具体秒级时延、杀伤链闭合时间或可执行火力参数。"
+      },
+      {
+        "claim_id": "claim-77a23013c195",
+        "claim_type": "fact",
+        "confidence": 0.74,
+        "counter_evidence": [
+          "SDA资料强调PWSA/Transport Layer可提供低时延传输、传感器到射手连接和时敏目标跟踪能力；陆军火力资料同时强调大规模作战中电磁频谱会被持续争夺，通信完整性必须通过PACE、分散C2和机动来维持。这说明低时延空间骨干不是稳定充分条件，必须与抗干扰、降级运行和战术层冗余配套。",
+          "DARPA CODE展示通信/GPS受限下的自主协同潜力；GAO关于替代PNT缺少总体战略的判断提示，相关能力可能仍存在跨军种、跨平台集成不足，不能直接推断为成熟体系能力。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-generic_researcher-web-3393b98b73a1",
+          "ev-generic_researcher-web-06d26c44006f"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/",
+          "https://www.sda.mil/home/about-us/faq/"
+        ],
+        "text": "S6 能力全景图：DARPA CODE显示无人系统自主协同可在通信/GPS受限条件下完成信息共享、协同规划、任务分配，并对预设与突发目标形成交战级响应。对动态时敏目标而言，其价值在于把部分决策与协同下沉到前沿无人平台，降低对连续上级链路的依赖；失效边界是人类仍处于监督式任务指挥，公开信息不能证明其已形成大规模实战部署能力或可替代完整联合火力C2。"
+      },
+      {
+        "claim_id": "claim-da0a621c3a7b",
+        "claim_type": "hypothesis",
+        "confidence": 0.74,
+        "counter_evidence": [
+          "SDA资料强调PWSA/Transport Layer可提供低时延传输、传感器到射手连接和时敏目标跟踪能力；陆军火力资料同时强调大规模作战中电磁频谱会被持续争夺，通信完整性必须通过PACE、分散C2和机动来维持。这说明低时延空间骨干不是稳定充分条件，必须与抗干扰、降级运行和战术层冗余配套。",
+          "DARPA CODE展示通信/GPS受限下的自主协同潜力；GAO关于替代PNT缺少总体战略的判断提示，相关能力可能仍存在跨军种、跨平台集成不足，不能直接推断为成熟体系能力。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-generic_researcher-web-3393b98b73a1",
+          "ev-generic_researcher-web-06d26c44006f"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/",
+          "https://www.sda.mil/home/about-us/faq/"
+        ],
+        "text": "S4/S5 反证与风险：GAO指出DOD发展替代PNT但缺少总体战略，这会直接制约时敏目标打击链在GPS受限环境下的可靠性。其影响不是单点导航误差，而是目标定位、平台授时、弹药制导和跨域协同时间基准同时承压；因此任何装备差距评估若只强化通信链路而忽略PNT韧性，结论会高估体系闭合能力。"
+      }
+    ],
+    "packet_id": "packet-generic_researcher",
+    "schema_version": "1.0"
+  }
+]

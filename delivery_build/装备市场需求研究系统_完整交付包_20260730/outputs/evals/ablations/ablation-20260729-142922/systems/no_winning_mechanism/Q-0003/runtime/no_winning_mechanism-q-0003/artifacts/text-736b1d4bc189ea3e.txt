@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=https://www.navair.navy.mil/news/US-Navy-declares-initial-operational-capability-Next-Generation-Jammer-Mid-Band-system/Mon?utm_source=openai
+source_url=https://www.navair.navy.mil/news/US-Navy-declares-initial-operational-capability-Next-Generation-Jammer-Mid-Band-system/Mon
+claim=美国海军宣布Next Generation Jammer Mid-Band达到初始作战能力，公开定位用于干扰、拒止和降级敌防空及通信系统。
+excerpt=
+retrieval=Hosted web search citation metadata

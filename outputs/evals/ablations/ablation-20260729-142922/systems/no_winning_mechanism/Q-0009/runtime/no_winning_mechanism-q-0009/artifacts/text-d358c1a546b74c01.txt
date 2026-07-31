@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=usarpac.army.mil · army advances multi domain command pacific following successful operational exp
+source_url=https://www.usarpac.army.mil/Our-Story/Our-News/Article-Display/Article/4487093/army-advances-multi-domain-command-pacific-following-successful-operational-exp/
+claim=支撑印太多域指挥实验、跨军种协同、任务指挥和数据融合需求对战区级快速闭环的重要性。
+excerpt=
+retrieval=Hosted web search citation metadata

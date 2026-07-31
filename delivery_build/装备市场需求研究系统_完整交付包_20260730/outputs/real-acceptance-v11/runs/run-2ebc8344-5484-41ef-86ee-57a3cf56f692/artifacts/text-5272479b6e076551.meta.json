@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:5272479b6e076551",
+  "content_path": "text-5272479b6e076551.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-operational_employment-web-cd6e2ea69601",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "5272479b6e076551d79cfd64d7344ffbd05a180722c9a8d219b31dbf25a9c132",
+  "url": "https://www.rand.org/content/dam/rand/pubs/research_reports/RRA100/RRA108-21/RAND_RRA108-21.pdf"
+}

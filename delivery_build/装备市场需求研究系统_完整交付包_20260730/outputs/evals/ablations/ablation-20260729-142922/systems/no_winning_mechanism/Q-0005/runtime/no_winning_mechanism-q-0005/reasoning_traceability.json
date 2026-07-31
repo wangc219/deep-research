@@ -1,0 +1,92 @@
+{
+  "agent_handoffs": [
+    {
+      "agent_id": "operational_employment",
+      "claim_ids": [
+        "claim-6f5fa5da7a20",
+        "claim-6f9d4299daa8",
+        "claim-32182ad8fa9d",
+        "claim-b68db26b2ae2",
+        "claim-575766fc71fe"
+      ],
+      "confidence": 0.78,
+      "evidence_ids": [
+        "ev-operational_employment-web-5824f31b34e3",
+        "ev-operational_employment-web-6c1c84a0e24e",
+        "ev-operational_employment-web-bc1c2e8c3176",
+        "ev-operational_employment-web-5fae80c02f40"
+      ],
+      "handoff_summary": "作战运用结论：以分布式杀伤网为主COA，将多源感知、任务级融合C2、火力分配、毁伤评估和保障续接纳入同一任务闭环；高端平台负责高价值硬目标毁伤，前沿低特征节点负责局部发现、指示、防护和续接，低成本无人/可消耗系统负责侦察饱和、诱饵、软目标压制和评估。下一步应把闭环时延、抗干扰降级、库存消耗率、毁伤评估可靠性、节点战损续接时间作为验证指标。",
+      "limitations": [
+        "公开概念强调分布式、低特征和前沿持续存在，但分布式节点一旦通信、发射或补给暴露，其生存性可能低于集中式高价值平台，必须以低特征、机动、反无人和替补节点抵消该矛盾。",
+        "低成本可消耗系统强调规模和成本优势，但在强电子战与廉价反无人体系下可能快速失效；其价值应限定为侦察、诱饵、中继、软目标压制和毁伤评估，而非独立承担重防护目标歼灭。",
+        "多源融合可提高目标置信度，但也可能因诱饵、数据延迟和算法误判形成更具迷惑性的共同态势图；必须保留目标置信度追溯、人在回路和毁伤评估回灌。"
+      ],
+      "open_questions": [
+        "公开资料仍不足以量化强干扰条件下的闭环时延、降级任务完成率、目标置信度阈值和节点战损续接时间。",
+        "需要在同一目标集、同一库存约束和同一电磁对抗条件下，对中心化高端平台、分布式杀伤网、低成本规模化无人三类COA进行可比推演。",
+        "需继续核验2026年以后CJADC2、Replicator、Force Design、Project Convergence和IBCS公开进展，以更新装备基线和差距等级。"
+      ],
+      "packet_id": "packet-operational_employment"
+    },
+    {
+      "agent_id": "combat_scenario",
+      "claim_ids": [
+        "claim-d394d97905a0",
+        "claim-f642178a0056",
+        "claim-0f400f552d39",
+        "claim-5eeb00f74339",
+        "claim-6ba994fea34b"
+      ],
+      "confidence": 0.72,
+      "evidence_ids": [
+        "ev-combat_scenario-web-dfd350108fde",
+        "ev-combat_scenario-web-2d2daa3dc2aa",
+        "ev-combat_scenario-web-742b75e39cf4"
+      ],
+      "handoff_summary": "多源异构战场信息融合精确打击应以“杀伤链能否在拒止、战损、欺骗、反无人饱和和联盟数据受限条件下持续闭合”为主轴建模。六个场景显示，装备缺口集中在边缘可信融合、低带宽协同与任务重构、可消耗无人侦察/BDA节点、反无人容量防护、解释型火力资源分配和远征维修补充。下一步应把每项装备需求绑定T0-T6、T6-T24、D1-D7、D7以后四个时间窗，开展红队数据污染、链路降级、节点战损和补给中断压力测试。",
+      "limitations": [
+        "公开资料同时强调AI/JADC2可缩短目标流程，但CSIS战例压力显示EW、数据量和边缘处理需求会持续拉长或破坏闭环；因此不能把演训中的分钟级流程直接外推为拒止实战能力。",
+        "NATO数据战略强调共享数据空间和互操作，但战时数据主权、密级、授权和法律限制可能与快速杀伤网重构相冲突。",
+        "USMC Force Design列出反无人能力建设，但其同时承认小型UAS低门槛造成容量压力，说明已有系统不等于具备持续成本优势。"
+      ],
+      "open_questions": [
+        "各战区可用链路、频谱压制强度、目标窗口时长和无人节点实际补充率缺少公开可验证数据。",
+        "跨密级、跨盟友数据共享的战时授权时延和接口成熟度需要通过具体体系试验验证。",
+        "反无人容量防护的成本交换、饱和目标处理上限和友邻识别误差率需要独立红队评估。"
+      ],
+      "packet_id": "packet-combat_scenario"
+    },
+    {
+      "agent_id": "weapon_equipment",
+      "claim_ids": [
+        "claim-8daa1603e10f",
+        "claim-73922bf65b09",
+        "claim-2adb7447959c",
+        "claim-a0d202edba1e"
+      ],
+      "confidence": 0.78,
+      "evidence_ids": [
+        "ev-weapon_equipment-web-ea43c417a791",
+        "ev-weapon_equipment-web-43915f10ae4b",
+        "ev-weapon_equipment-web-09baa8584e45",
+        "ev-weapon_equipment-web-ef58d44e5694"
+      ],
+      "handoff_summary": "装备研究结论应围绕“多源异构信息融合能否稳定支撑精确打击闭环”展开：以国外现役和在研装备为基线，优先补齐跨域目标融合、抗扰链路、动态目标更新、可消耗无人侦打、远域压制协同和低成本持续补充能力。",
+      "limitations": [
+        "PrSM公开射程口径存在条件差异：Army新闻称射程大于400公里，GAO资料采用70至499公里区间；不应将后续增量目标射程直接覆盖Inc.1公开能力。",
+        "预算采购资料可证明JASSM/AGM-158D采购数量和成本口径，但不能证明实战突防率、命中率或对动态目标的闭环能力。",
+        "MQ-9B制造商资料证明航时、航程、载荷和接口能力，不等于其在高威胁综合防空和强电子战环境中具备稳定生存能力。"
+      ],
+      "open_questions": [
+        "公开资料缺少强电子战条件下的目标更新频率、误识别率、链路中断后的自治降级规则和真实任务完成率。",
+        "JASSM/AGM-158D、PrSM后续增量和Replicator系统的战时产能、库存消耗承受力、跨军种火控接口成熟度仍需继续核验。",
+        "AARGM-ER与MALD组合在现代综合防空体系中的持续压制时间、再攻击节奏和对手反适应效果公开证据不足。"
+      ],
+      "packet_id": "packet-weapon_equipment"
+    }
+  ],
+  "reasoning_nodes": [],
+  "stage_outputs": [],
+  "trace_rule": "正式结论应由需求卡片回溯至能力画像、S1-S6节点、中间Agent Packet和EvidenceCard。"
+}

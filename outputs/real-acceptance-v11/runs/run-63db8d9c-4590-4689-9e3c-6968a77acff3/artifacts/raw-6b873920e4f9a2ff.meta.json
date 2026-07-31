@@ -1,0 +1,14 @@
+{
+  "artifact_ref": "raw:6b873920e4f9a2ff",
+  "connect_ip": "198.18.0.221",
+  "content_path": "raw-6b873920e4f9a2ff.bin",
+  "content_type": "application/pdf",
+  "encoding": null,
+  "evidence_id": "ev-weapon_equipment-web-041f833282fb",
+  "final_url": "https://static.rusi.org/winning-the-industrial-war-comparing-russia-europe-ukraine-2022-24.pdf?utm_source=openai",
+  "kind": "raw",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "6b873920e4f9a2fffd59825d28d303d62d47af663282017eae9a6aecb8646621",
+  "url": "https://static.rusi.org/winning-the-industrial-war-comparing-russia-europe-ukraine-2022-24.pdf?utm_source=openai"
+}

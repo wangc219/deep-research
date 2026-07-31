@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:bef5f43e9199dd75",
+  "content_path": "text-bef5f43e9199dd75.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-operational_employment-web-feeb4abdf5ba",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "bef5f43e9199dd755adb42fef19cd9846c39f90932acea7c893a445fd8c83ed5",
+  "url": "https://nllp.jallc.nato.int/iks/sharing%20public/231208-ruswar-ukraine-lessons-curriculum.pdf"
+}

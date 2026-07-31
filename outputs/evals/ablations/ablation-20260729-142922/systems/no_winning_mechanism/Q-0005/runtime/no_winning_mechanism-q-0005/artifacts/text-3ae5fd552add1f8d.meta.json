@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:3ae5fd552add1f8d",
+  "content_path": "text-3ae5fd552add1f8d.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: cached_origin_failure:HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-combat_scenario-web-dfd350108fde",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "3ae5fd552add1f8d1fd44eea0d68eb6557c7c5b0570b0d007f1ca64fc37694b8",
+  "url": "https://www.lineofdeparture.army.mil/Portals/144/PDF/Journals/Field-Artillery/FA-E-Edition-2025/Project-Convergence-UA.pdf"
+}

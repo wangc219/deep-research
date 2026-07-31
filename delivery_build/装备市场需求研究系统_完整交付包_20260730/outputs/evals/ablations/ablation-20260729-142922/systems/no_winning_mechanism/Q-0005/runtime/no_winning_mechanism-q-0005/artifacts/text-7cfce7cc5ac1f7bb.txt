@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=gao.gov · gao 25 106454
+source_url=https://www.gao.gov/products/gao-25-106454
+claim=用于支撑CJADC2仍需统一投资评估框架、经验共享机制和关键挑战治理的判断。
+excerpt=
+retrieval=Hosted web search citation metadata

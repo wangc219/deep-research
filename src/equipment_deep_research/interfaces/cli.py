@@ -4,17 +4,31 @@ import argparse
 from pathlib import Path
 
 from equipment_deep_research.orchestration.runner import DeepResearchRunner
+from equipment_deep_research.harness.optimizations import (
+    apply_quick_optimizations,
+    print_performance_report,
+)
+from equipment_deep_research.providers.codex_optimizations import (
+    apply_codex_optimizations,
+    print_codex_performance_report,
+)
 
 
 def main(argv: list[str] | None = None) -> int:
+    # 应用所有性能优化
+    apply_quick_optimizations()
+    apply_codex_optimizations()
     project_root = Path(__file__).resolve().parents[3]
     parser = argparse.ArgumentParser(description="Run equipment capability image Deep Research.")
     parser.add_argument("--mode", choices=["fake", "real"], default="fake")
     parser.add_argument(
         "--provider",
-        choices=["fake", "responses", "smoke"],
+        choices=["fake", "codex", "responses", "smoke"],
         default=None,
-        help="Execution backend. real mode defaults to responses when credentials exist, otherwise smoke.",
+        help=(
+            "Execution backend. Codex uses isolated codex exec sessions; "
+            "Responses requires API credentials; smoke must be selected explicitly."
+        ),
     )
     parser.add_argument("--topic", required=True)
     parser.add_argument(
@@ -44,6 +58,21 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--analyst-confirmed", action="store_true")
+    parser.add_argument("--as-of-date", default="", help="Research evidence cutoff date (YYYY-MM-DD).")
+    parser.add_argument("--interaction-mode", choices=["expert", "autonomous"], default="expert")
+    parser.add_argument("--discovery-branch", choices=["auto", "A", "B", "C", "D", "E", "F", "G", "H"], default="auto")
+    parser.add_argument(
+        "--execution-profile-id",
+        choices=["legacy_v1", "optimized_v2", "swarm_quality_v1", "winning_swarm_dynamic_v2"],
+        default="legacy_v1",
+        help="Select the harness implementation. Legacy v1 remains the production champion; quality profiles are evaluation challengers.",
+    )
+    parser.add_argument(
+        "--stage-policy-id",
+        choices=["full_method", "no_multisource_baseline", "no_winning_mechanism"],
+        default="full_method",
+        help="Evaluation-only stage policy. Ordinary runs must keep full_method.",
+    )
     args = parser.parse_args(argv)
     agent_ids = [item.strip() for item in args.agents.split(",") if item.strip()]
     runner = DeepResearchRunner(
@@ -64,6 +93,11 @@ def main(argv: list[str] | None = None) -> int:
         provider_name=args.provider,
         resume=args.resume,
         analyst_confirmed=args.analyst_confirmed,
+        as_of_date=args.as_of_date,
+        interaction_mode=args.interaction_mode,
+        discovery_branch=args.discovery_branch,
+        execution_profile_id=args.execution_profile_id,
+        stage_policy_id=args.stage_policy_id,
     )
     print(f"Run dir: {result['run_dir']}")
     print(f"Status: {result.get('status', 'completed')}")
@@ -72,4 +106,9 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Report: {result['report_path']}")
     print(f"Capability images: {result['capability_images_path']}")
     print(f"Summary: {result['summary_path']}")
+
+    # 打印性能报告（如果启用了监控）
+    print_performance_report()
+    print_codex_performance_report()
+
     return 0

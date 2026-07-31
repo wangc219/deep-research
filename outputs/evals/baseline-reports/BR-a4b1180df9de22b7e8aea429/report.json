@@ -1,0 +1,65 @@
+{
+  "answer_chars": 8816,
+  "answer_sha256": "9d81385c58033474ffd7d75754c49a19536cf5e54bdde2b01c339cbe99d6b9f5",
+  "artifact_refs": [
+    "runtime/codex-events.jsonl",
+    "runtime/codex-stderr.log"
+  ],
+  "citations": [
+    "https://api.army.mil/e2/c/downloads/2025/03/04/0b7f95c5/army-unified-network-plan-2-0.pdf",
+    "https://media.defense.gov/2020/Oct/08/2002514180/-1/-1/0/dod-data-strategy.pdf",
+    "https://media.defense.gov/2022/Mar/17/2002958406/-1/-1/1/SUMMARY-OF-THE-JOINT-ALL-DOMAIN-COMMAND-AND-CONTROL-STRATEGY.pdf",
+    "https://www.army.mil/article/293357/connecting_the_battlefield_engineering_the_armys_future_command_and_control_fabric",
+    "https://www.darpa.mil/news/2017/sto-mosaic-warfare?utm_source=openai",
+    "https://www.dote.osd.mil/Portals/97/pub/reports/FY2025/army/2025aiamd.pdf?ver=Ck2dDv_vH-zVLg7muBJR0Q%3D%3D",
+    "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2025-E-Edition/Project-Convergence/",
+    "https://www.sda.mil/space-development-agency-successfully-completes-third-launch-of-tranche-1-satellites/",
+    "https://www.sda.mil/wp-content/uploads/2023/11/Tracking-Layer-Fact-Sheet_FINAL_Oct-2023-1.pdf"
+  ],
+  "created_at": "2026-07-28T20:53:47.210288+00:00",
+  "dataset_id": "tactical-strike-frontiers-50-v1",
+  "duration_seconds": 195.101,
+  "estimated_cost": 0.0,
+  "mode": "real",
+  "model_snapshot": {
+    "adapter": "codex_cli",
+    "auth_mode": "eval_api_key",
+    "base_url_host": "codexpro.wwxb1123.xyz",
+    "codex_version": "codex-cli 0.144.1",
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "sandbox": "read-only",
+    "search_context_size": "medium",
+    "web_search": "live"
+  },
+  "query": "多源异构战场信息融合精确打击研究",
+  "query_id": "Q-0005",
+  "query_sha256": "d51128069936c94ea4a8da8730be846b5826f564cf9fecd594232a1266268558",
+  "report_id": "BR-a4b1180df9de22b7e8aea429",
+  "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-a4b1180df9de22b7e8aea429/report.md",
+  "schema_version": "1.0",
+  "source_eval_id": "baseline-first20-three-layer-nine-20260729",
+  "sources": [
+    "https://api.army.mil/e2/c/downloads/2025/03/04/0b7f95c5/army-unified-network-plan-2-0.pdf",
+    "https://media.defense.gov/2020/Oct/08/2002514180/-1/-1/0/dod-data-strategy.pdf",
+    "https://media.defense.gov/2022/Mar/17/2002958406/-1/-1/1/SUMMARY-OF-THE-JOINT-ALL-DOMAIN-COMMAND-AND-CONTROL-STRATEGY.pdf",
+    "https://www.army.mil/article/293357/connecting_the_battlefield_engineering_the_armys_future_command_and_control_fabric",
+    "https://www.darpa.mil/news/2017/sto-mosaic-warfare?utm_source=openai",
+    "https://www.darpa.mil/news/2020/cross-domain-kill-webs",
+    "https://www.dote.osd.mil/Portals/97/pub/reports/FY2025/army/2025aiamd.pdf?ver=Ck2dDv_vH-zVLg7muBJR0Q%3D%3D",
+    "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2025-E-Edition/Project-Convergence/",
+    "https://www.sda.mil/space-development-agency-successfully-completes-third-launch-of-tranche-1-satellites/",
+    "https://www.sda.mil/wp-content/uploads/2023/11/Tracking-Layer-Fact-Sheet_FINAL_Oct-2023-1.pdf"
+  ],
+  "status": "completed",
+  "system_id": "generic_agent",
+  "usage": {
+    "cached_input_tokens": 2432,
+    "input_tokens": 64655,
+    "output_tokens": 7162,
+    "reasoning_output_tokens": 2073,
+    "search_query_count": 10,
+    "tool_call_count": 10,
+    "web_search_calls": 10
+  }
+}

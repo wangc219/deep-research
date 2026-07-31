@@ -1,0 +1,107 @@
+[1] The Russian invasion of Ukraine highlights the critical importance of an agile, cross-domain, and joint targeting cycle to quickly prosecute enemy targets and retain a decisive advantage in a sensor-saturated and increasingly transparent battlefield. While Russian forces struggled to implement and exploit a dynamic kill chain during the first year of the invasion, they have progressively improved and adapted the reconnaissance-strike and fire loops to make them more responsive and fit, learning from the pace and demands of the Ukrainian battlefield. This military adaptation and continued learning creates challenges, opportunities, and risks for the US and NATO allies.
+
+[2] Russia’s targeting challenges in 2022
+
+[3] The first year of the full-scale invasion of Ukraine revealed all the limitations and difficulties of Russia’s existing kill chain. Challenges concerned both the reconnaissance-strike contour — tasked with target engagement at strategic and operational depth — and the reconnaissance-fire contour, considered its tactical-level equivalent. These challenges were the consequence of a combination of six major factors:
+
+[4] First, Russia had insufficient capabilities for persistent, deep-looking intelligence, surveillance, and reconnaissance (ISR), most notably space-based earth observation assets and mass-deployable long-range uncrewed aerial systems (UAS) with target acquisition payloads. Despite an assorted inventory of tactical UAS, these were too few in number to compensate for high attrition and properly service all units across a multi-axis battlefield. Equally important, Russia’s aging and scarce fleet of remote surveillance satellites — consisting of only three optical and three synthetic aperture radar systems — has proved largely inadequate for the pace and requirements of combat operations in Ukraine, resulting in critical latency issues. 1
+
+[5] Second, Russian forces had scant capacity and a cumbersome process for near-real-time analysis of intelligence data and their rapid dissemination and exploitation. Although to different extents across the front line, reports from Russian sources indicated frequent delays of up to four hours for indirect fire missions, with much longer intervals between collection, processing, and final use of geospatial data for cruise and ballistic missile strikes. 2 Space assets have nonetheless supported strategic strikes against critical infrastructure and military sites as part of Russia’s Strategic Operation for the Destruction of Critically Important Target actions, albeit with mixed results.
+
+[6] Third, there was an inadequate orchestration of precision strike missions in terms of planning and capability selection. For instance, according to some analysts, despite a sufficient magazine depth, Russian targeteers across the board have often prioritized targets and allocated precision-guided munitions (PGMs) “in a completely inappropriate way,” with valuable Iskander-M tactical ballistic missiles launched against small troop concentrations and strike packages consisting of a handful of cruise missiles aimed at large airfields. 3
+
+[7] Fourth, Russia’s command, control, communications, computers, intelligence, surveillance, and reconnaissance (C4ISR) infrastructure showed severe deficits, from broken communications to unclear areas of responsibility. 4 Moreover, deficient training and experience levels exist across nonspecialist infantry in the use of C4I technologies to direct fires in contested environments. This problem is compounded by the limited interoperability and uneven availability of C4I systems across the services of the Russian military. 5 Most Russian army units, for example, either did not have access to Strelets tactical C4I ruggedized computers or misused them, if they were used at all. 6
+
+[8] Fifth, Russian forces showed a suboptimal integration of sensors and shooters. Russia started its invasion with a very scarce inventory of loitering munitions and strike-capable UAS and struggled to conduct dynamic targeting throughout 2022 and part of 2023. Lancet-3 loitering munitions were rare, and only a handful of Orion medium-altitude long-endurance combat drones were operational in February 2022, flying combat sorties from occupied Crimea but soon relegated to a secondary role as Ukrainian air defenses improved and shot down at least six of them.
+
+[9] Last but not least, Ukrainian forces’ adaptation to more mobile and dispersed formations has reduced the effectiveness of the Russian kill chain.
+
+[10] Russia is reconnecting its kill chain’s links
+
+[11] Amid a deteriorating situation at the beginning of 2023, Russia’s kill-chain adaptation started with the injection of massive numbers of short- and medium-range UAS 7 — including commercial systems — into ground formations to improve their situational awareness and target detection capabilities. Orlan-10/30, Zala, Eleron 3S, and Supercam fixed-wing UAS began roaming Ukrainian airspace en masse, to a point where Ukrainian forces often found themselves being observed by several Russian drones feeding different but interlocked targeting circuits. 8 These drones are typically used by axis commanders’ and artillery brigades’ UAS companies to spot and acquire targets for both tactical artillery and long-range fires, often exploiting coverage gaps and deficits in short-range air defenses (SHORAD) to penetrate deep behind the forward line of enemy troops. Since the second half of 2023, there has been a steady increment in Russian precision strikes against high-value targets in Ukraine’s operational rear (e.g., airfields, S-300 and Patriot air defense systems, High Mobility Artillery Rocket Systems) using Iskander-M tactical ballistic missiles and D-30SN glide bombs launched from both Su-34 fighter jets and Tornado-S rocket artillery. 9 At tactical range, Orlan-30 UAS equipped with gyrostabilized laser designators provide illumination of stationary and moving targets for 3F5 Daredevil 240-millimeter (mm) (range of 9 kilometers) and 9K25 Krasnopol 152-mm laser-guided projectiles and new Kh-38ML laser-guided air-to-surface cruise missiles. 10 The growing use and responsiveness of Iskander strikes may also indicate the possible attachment of organic Iskander-M battalions to Army artillery brigades besides traditional Army Group formations, giving long-range precision strike options to tactical-level commanders.
+
+[12] Improved targeting and data sharing
+
+[13] Throughout the conflict, Russia has also worked to improve data sharing and processing across its military. Measures have included establishing more integrated command centers where real-time ISR data from UAS, forward observers, signals intelligence, and electronic warfare are fed into a single operational picture. 11 In this context, the widespread adoption of commercial technology — such as Android-based universal awareness software, smartphones, and Starlink satellite terminals — has allowed multi-device and redundant connectivity for improved targeting across the joint force. 12 Russia is also working to integrate artificial intelligence (AI) into its command and control enterprise and strike platforms for decision support and superior targeting capabilities.
+
+[14] Russia is closing the tactical sensor-to-shooter gap
+
+[15] One of the most consequential adaptations has been the mass incorporation of loitering munitions, in particular, Zala Lancets-3s and weaponized first-person-view drones into the recce-fire circuit. These low-signature systems fuse sensors and effectors into a single platform, allowing for accurate, dynamic prosecution of targets in real time, and conduct missions ranging from counter-battery fire and anti-armor to anti-personnel. Lancet 3s have also been employed in combination with ISR Zala UAS with signal relay capabilities against high payoff targets some 70 kilometers behind the forward line of enemy troops and — as shown in Figure 1 — since January 2024, there have been almost 1,500 Lancet strikes publicly documented (65% of the total since January 2023). 13 These scalable and cost-effective platforms provide Russian forces with a responsive, organic, beyond-line-of-sight precision strike capability that complements their fires, and have prompted the establishment of small, specialized hunter-killer UAS teams.
+
+[16] Russia’s defense-industrial base adaptation
+
+[17] The Russian defense industry is evolving to support these rapid developments. Despite Western sanctions, the production of both precision-guided munitions and UAS has steadily increased, with some manufacturers even converting closed shopping malls into manufacturing centers. 14 At the same time, a mix of state-led and volunteer initiatives delivers tens of thousands of first-person-view drones to frontline units every month. The Kremlin also established a vast factory in Alabuga, Kazan, aiming to produce up to 10,000 Geran one-way-attack UAS annually. 15 Furthermore, recent statements from Russian government officials, along with the thematic focus of this year’s army defense exposition in Moscow, emphasize the need for speed, accuracy, and mass, unmistakably underscoring the prioritization of UAS, robotic systems, and AI applications in research and development initiatives and future capabilities development. 16
+
+[18] Overall, these advancements are indicative of Russia’s steadily improving kill-chain and joint-force integration. However, adaptation greatly varies across units, and the overlapping of different targeting circuits creates interoperability and deconfliction challenges, potentially complicating the assignment and responsiveness of fire missions.
+
+[19] Implications and recommendations for the US and NATO
+
+[20] US and NATO military planners can distill critical lessons as they work to bridge key capability gaps and train to defend and deter against Russia and peer adversaries on an increasingly transparent and lethal battlefield, including the following:
+
+[21] Cost-effective UAS, loitering munitions, and commercial communication technologies have augmented and democratized Russia’s kill chain, providing more agility and adaptation to battlefield conditions and making its fires more accurate and responsive.
+
+[22] Russia’s growing reliance on precision-guided munitions and unmanned systems of all types will likely drive force design adjustments, including the possible attachment of dedicated Iskander-M battalions to army artillery brigades and the creation of specialized UAS units at different echelons across the military.
+
+[23] The full potential of Russia’s reconnaissance strike and fire contours is still limited by challenges in multiple subsystems integration and interoperability, slow transfer of target data, and poorly trained personnel.
+
+[24] Russia’s (and Red forces’) improved targeting circuits will commensurately increase the threat to Blue forces and underscore the critical importance of disaggregation, operational security, and signature discipline to minimize exposure to hostile sensors and effectors.
+
+[25] Russia’s critical dependence on foreign high-tech components and precision machinery represents a structural vulnerability that the US and NATO should further exploit.
+
+[26] US and NATO allies should heavily invest in scalable, cost-effective, multirole UAS and loitering munitions to complement their fires inventory and enhance their kill chains.
+
+[27] US and NATO allies should prioritize interoperability and rapid cross-cueing of different sensors to and among UAS, ground formations, air assets, and naval units to fully unlock multi-echelon, cross-domain fires in multinational operations.
+
+[28] US and NATO should boost their counter drone, SHORAD, cyber, and electronic warfare capabilities to wear down and disrupt Red forces’ C4ISR systems.
+
+[29] US and NATO should dramatically expand training and operational experimentation with UAS, loitering munitions, and commercial mobile communication technologies for rapid kill-chain applications.
+
+[30] About the Author
+
+[31] Federico Borsari is a Resident Fellow with the Transatlantic Defense and Security Program at the Center for European Policy Analysis (CEPA) and was a cohort of the NATO 2030 Global Fellowship.
+
+[32] At CEPA he focuses on issues at the intersection between technology and international security and his portfolio also includes NATO and transatlantic defense and security. He has authored several analyses and publications on the use and security implications of unmanned aerial systems (UAS) by both state and non-state actors and he is a frequent commentator on defense and drone technology across national and international outlets. Borsari is also a member of the NATO C-UAS Community of Interest (COI).
+
+[33] Acknowledgments
+
+[34] This report was funded by the Russia Strategic Initiative, US European Command. The views expressed in this paper do not necessarily represent the Department of Defense or the United States government.
+
+[35] CEPA is a nonpartisan, nonprofit, public policy institution. All opinions expressed are those of the author(s) alone and may not represent those of the institutions they represent or the Center for European Policy Analysis. CEPA maintains a strict intellectual independence policy across all its projects and publications.
+
+[36] M. Connell, The Role of Space in Russia’s Operations in Ukraine (Arlington, VA: CNA Corporation, November 2023), https://www.cna.org/reports/2023/11/Role-of-Space-in-Russias-Operations-in-Ukraine.pdf , 11. [ ↩ ]
+
+[37] Connell, The Role of Space , 8; Connell, The Role of Space , 8; P. Shishkin, “A serious problem for Russian forces in Ukraine has been identified,” Военные Дела , October 26, 2022, https://voennoedelo.com/posts/id33025 (translated). [ ↩ ]
+
+[38] Justin Bronk in How the Russian Air Force Failed in Ukraine , Geopolitics Decanted Podcast by Silverado, Episode 29, November 17, 2022, https://podcasts.apple.com/gb/podcast/how-the-russian-air-force-failed-in-ukraine/id1614010500?i=1000586627593 . [ ↩ ]
+
+[39] See, for example, S. Miller, Russian Army Tactical Communications , Wavell Room, December 19, 2022, https://wavellroom.com/2022/12/19/russian-army-tactical-communications/ ; M. Boulègue, J. Bronk, K. Hird, J. Kerr, R. Lee, and M.B. Petersen, Assessing Russian Plans for Military Regeneration: Modernization and Reconstitution Challenges for Moscow’s War Machine (London: Chatham House, July 2024), https://www.chathamhouse.org/sites/default/files/2024-07/2024-07-09-assessing-russian-plans-military-boulegue-et-al.pdf . [ ↩ ]
+
+[40] R. McDermott and C.K. Bartles, The Russian Military Decision-Making Process & Automated Command and Control (Hamburg: German Institute for Defence and Strategic Studies, 2020), https://www.armyupress.army.mil/Portals/7/Hot-Spots/docs/Russia/GIDSresearch2020_02_McDermott_Bartles%20(2).pdf . [ ↩ ]
+
+[41] J. Watling and N. Reynolds, Meatgrinder: Russian Tactics in the Second Year of Its Invasion of Ukraine , Special Report (London: RUSI, May 2023), https://static.rusi.org/403-SR-Russian-Tactics-web-final.pdf , 13. [ ↩ ]
+
+[42] “Orlan Drone Supplies Skyrocketing — Russian Defense Minister,” TASS, July 11, 2023, https://tass.com/defense/1645501 . [ ↩ ]
+
+[43] Watling and Reynolds, Meatgrinder . [ ↩ ]
+
+[44] See @Aviahub, May 23, 2023, 11:21 pm, Telegram, https://t.me/Aviahub34/2755 , and @warhistoryalconafter, May 22, 2023, 10:40 am, Telegram, https://t.me/warhistoryalconafter/165139 , accessed August 28, 2024. [ ↩ ]
+
+[45] “Russia Starts Promoting Orlan Drone with Laser Target Designation System,” TASS, August 17, 2023, https://tass.com/defense/1661863 . [ ↩ ]
+
+[46] See, for example, SIMPLICIUS Ѱ (@simpatico771 ), “Combat Command Post of the Russian Armed Forces in the Toretsk Direction,” X, August 17, 2024, https://x.com/i/status/1824706966754582608 . [ ↩ ]
+
+[47] See ““The Awareness Enhancement System,” or in short, KPO-A”, NPO Dvina, n.d., https://npo-dvina.ru/software/ (translated), accessed August 28, 2024; See “Media: The Russian Military Detects the Artillery of the Armed Forces of Ukraine Using Smartphones,” РИА Новости , January 12, 2023, https://ria.ru/20230112/artilleriya-1844277493.html?utm_source=yxnews&utm_medium=desktop (translated). [ ↩ ]
+
+[48] See, for example, Ukraine Weapons Tracker (@UAWeapons), “#Ukraine: A Ukrainian MiG-29 fighter aircraft was damaged by a Russian Lancet loitering munition at the airfield of Kryvyi Rih,” X, September 19, 2023, https://x.com/UAWeapons/status/1704157972937498935 ; “The use of ‘Lancet’ loitering munitions in the Special Military Operation zone,” Lost Armour, n.d., https://lostarmour.info/tags/lancet#intense (translated), accessed on August 27, 2024. [ ↩ ]
+
+[49] See: “HUR Reveals Russia’s Missile Stockpile and Production Capacity,” Kyiv Post , November 6, 2023, https://www.kyivpost.com/post/23736 . “Russia Ramps Up Krasnopol-M2 Sniper Shell Production by 25 Times to Target Ukrainian Tanks,” Army Recognition , August 17, 2023, https://armyrecognition.com/focus-analysis-conflicts/army/conflicts-in-the-world/russia-ukraine-war-2022/russia-ramps-up-krasnopol-m2-sniper-shell-production-by-25-times-to-target-ukrainian-tanks?utm_content=cmp-true ; E. Vincent and C. Hoorman, “The Scale of Russia’s Rearmament Has NATO Worried,” Le Monde , July 11, 2024, https://www.lemonde.fr/en/international/article/2024/07/11/the-scale-of-russia-s-rearmament-has-nato-worried_6681537_4.html ; “How Russians Manufacture ‘Shaheds’ and ‘Lancets’ in Shopping Malls: Exposing the Family of the Chief Constructor,” Molfar , December 5, 2023, https://molfar.com/en/blog/rosiyany-vyroblyayut-shahedy-ta-lancety-v-trc-deanon-golovnogo-konstruktora . [ ↩ ]
+
+[50] D. Albright, I. Anokhin, S. Burkhard, V. Cheng, and S. Faragasso, Alabuga’s Greatly Expanded Production Rate of Shahed 136 Drones (Washington, DC: Institute for Science and International Security, May 10, 2024), https://isis-online.org/uploads/isis-reports/documents/Alabuga%E2%80%99s_Greatly_Expanded_Production_Rate_of_Shahed_136_Drones_May_10_2024_Final.pdf . [ ↩ ]
+
+[51] “Russia’s Drone Production Should Increase Fivefold by 2030 — PM Mishustin,” TASS, August 27, 2024, https://tass.com/defense/1834769 . [ ↩ ]
+
+[52] Related Articles
+
+[53] Related Issue Tags
+
+[54] Image Credit

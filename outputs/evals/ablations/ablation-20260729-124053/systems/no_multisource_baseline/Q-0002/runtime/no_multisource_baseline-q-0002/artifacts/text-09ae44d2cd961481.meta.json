@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:09ae44d2cd961481",
+  "content_path": "text-09ae44d2cd961481.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: cached_origin_failure:HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-generic_researcher-web-24c97a65f331",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "09ae44d2cd96148149f0ac0e55c05a7b0b6694ef279044bf35ba642a57d0d941",
+  "url": "https://www.gao.gov/products/gao-21-145"
+}

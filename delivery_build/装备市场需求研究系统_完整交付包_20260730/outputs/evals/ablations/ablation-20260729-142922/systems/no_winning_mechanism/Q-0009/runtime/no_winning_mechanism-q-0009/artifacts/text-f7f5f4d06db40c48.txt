@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · Force Design
+source_url=https://www.marines.mil/Force-Design/
+claim=支撑陆战队分布式前沿、联合杀伤网、无人系统、韧性C2、先进感知网络、前沿制造和反无人能力作为濒海拒止与战损再组织场景依据。
+excerpt=
+retrieval=Hosted web search citation metadata

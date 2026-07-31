@@ -1,0 +1,554 @@
+{
+  "checkpoint": {
+    "budget_remaining": {
+      "baseline_tasks": 0,
+      "finalize_tasks": 1,
+      "rounds": 1
+    },
+    "checkpoint_id": "run-checkpoint-no_winning_mechanism-q-0007",
+    "completed_task_ids": [
+      "baseline:combat_scenario",
+      "baseline:operational_employment",
+      "baseline:weapon_equipment"
+    ],
+    "config_fingerprint": "sha256:c9857d02deee71ecae1729512cebb7b4c927f988dc0c689b32fc096d83d4cfd4",
+    "created_at": "2026-07-29T08:14:59.884687+00:00",
+    "mode": "real",
+    "pending_task_ids": [
+      "finalize:winning-report"
+    ],
+    "research_route": "auto",
+    "resolved_route": "traditional_gap",
+    "resume_count": 0,
+    "round_index": 1,
+    "run_id": "no_winning_mechanism-q-0007",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "combat_scenario",
+      "operational_employment",
+      "weapon_equipment"
+    ],
+    "source_materials": [
+      {
+        "artifact_refs": [
+          "text:667ec1a018e37a86"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-d56e3a0c7cfa",
+          "normalized_url": "https://www.spaceforce.mil/News/Article-Display/Article/4545203/space-development-agency-issues-awards-to-build-36-accelerated-missile-defense",
+          "reasons": [],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-d56e3a0c7cfa",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.spaceforce.mil/News/Article-Display/Article/4545203/space-development-agency-issues-awards-to-build-36-accelerated-missile-defense/"
+      },
+      {
+        "artifact_refs": [
+          "text:5e2519bf362f5f5f"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-f42ad4ad8ea8",
+          "normalized_url": "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo",
+          "reasons": [],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-f42ad4ad8ea8",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/"
+      },
+      {
+        "artifact_refs": [
+          "html:9a953ae8dd0b0acc"
+        ],
+        "content_type": "text/html; charset=UTF-8",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-bc1c2e8c3176",
+          "normalized_url": "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "reasons": [],
+          "score": 0.858
+        },
+        "evidence_id": "ev-operational_employment-web-bc1c2e8c3176",
+        "fetch_cache_hit": true,
+        "final_url": "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+        "formal_evidence_allowed": true,
+        "paragraph_locations": [
+          "text:ee03938bb7a95449#p1"
+        ],
+        "simplified_artifact_ref": "text:ee03938bb7a95449",
+        "status": "fetched",
+        "url": "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience"
+      },
+      {
+        "artifact_refs": [
+          "html:b21e84f3a22203e4"
+        ],
+        "content_type": "text/html; charset=UTF-8",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-7d70929b0c3b",
+          "normalized_url": "https://www.sda.mil/index",
+          "reasons": [],
+          "score": 0.858
+        },
+        "evidence_id": "ev-operational_employment-web-7d70929b0c3b",
+        "fetch_cache_hit": true,
+        "final_url": "https://www.sda.mil/index/",
+        "formal_evidence_allowed": true,
+        "paragraph_locations": [
+          "text:b053be82bf08af14#p1",
+          "text:b053be82bf08af14#p2",
+          "text:b053be82bf08af14#p3",
+          "text:b053be82bf08af14#p4",
+          "text:b053be82bf08af14#p5",
+          "text:b053be82bf08af14#p6",
+          "text:b053be82bf08af14#p7",
+          "text:b053be82bf08af14#p8",
+          "text:b053be82bf08af14#p9",
+          "text:b053be82bf08af14#p10",
+          "text:b053be82bf08af14#p11",
+          "text:b053be82bf08af14#p12",
+          "text:b053be82bf08af14#p13",
+          "text:b053be82bf08af14#p14",
+          "text:b053be82bf08af14#p15",
+          "text:b053be82bf08af14#p16",
+          "text:b053be82bf08af14#p17",
+          "text:b053be82bf08af14#p18",
+          "text:b053be82bf08af14#p19",
+          "text:b053be82bf08af14#p20",
+          "text:b053be82bf08af14#p21",
+          "text:b053be82bf08af14#p22",
+          "text:b053be82bf08af14#p23",
+          "text:b053be82bf08af14#p24",
+          "text:b053be82bf08af14#p25",
+          "text:b053be82bf08af14#p26",
+          "text:b053be82bf08af14#p27",
+          "text:b053be82bf08af14#p28",
+          "text:b053be82bf08af14#p29",
+          "text:b053be82bf08af14#p30",
+          "text:b053be82bf08af14#p31",
+          "text:b053be82bf08af14#p32",
+          "text:b053be82bf08af14#p33",
+          "text:b053be82bf08af14#p34",
+          "text:b053be82bf08af14#p35",
+          "text:b053be82bf08af14#p36",
+          "text:b053be82bf08af14#p37"
+        ],
+        "simplified_artifact_ref": "text:b053be82bf08af14",
+        "status": "fetched",
+        "url": "https://www.sda.mil/index/"
+      },
+      {
+        "artifact_refs": [
+          "html:ac54eb49d73d8319"
+        ],
+        "content_type": "text/html; charset=UTF-8",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-06d26c44006f",
+          "normalized_url": "https://www.sda.mil/home/about-us/faq",
+          "reasons": [],
+          "score": 0.861
+        },
+        "evidence_id": "ev-combat_scenario-web-06d26c44006f",
+        "fetch_cache_hit": true,
+        "final_url": "https://www.sda.mil/home/about-us/faq/",
+        "formal_evidence_allowed": true,
+        "paragraph_locations": [
+          "text:e98434cc5c4d7597#p1",
+          "text:e98434cc5c4d7597#p2",
+          "text:e98434cc5c4d7597#p3",
+          "text:e98434cc5c4d7597#p4",
+          "text:e98434cc5c4d7597#p5",
+          "text:e98434cc5c4d7597#p6",
+          "text:e98434cc5c4d7597#p7",
+          "text:e98434cc5c4d7597#p8",
+          "text:e98434cc5c4d7597#p9",
+          "text:e98434cc5c4d7597#p10",
+          "text:e98434cc5c4d7597#p11",
+          "text:e98434cc5c4d7597#p12",
+          "text:e98434cc5c4d7597#p13",
+          "text:e98434cc5c4d7597#p14",
+          "text:e98434cc5c4d7597#p15",
+          "text:e98434cc5c4d7597#p16",
+          "text:e98434cc5c4d7597#p17",
+          "text:e98434cc5c4d7597#p18",
+          "text:e98434cc5c4d7597#p19",
+          "text:e98434cc5c4d7597#p20",
+          "text:e98434cc5c4d7597#p21",
+          "text:e98434cc5c4d7597#p22",
+          "text:e98434cc5c4d7597#p23",
+          "text:e98434cc5c4d7597#p24",
+          "text:e98434cc5c4d7597#p25",
+          "text:e98434cc5c4d7597#p26",
+          "text:e98434cc5c4d7597#p27",
+          "text:e98434cc5c4d7597#p28",
+          "text:e98434cc5c4d7597#p29",
+          "text:e98434cc5c4d7597#p30",
+          "text:e98434cc5c4d7597#p31",
+          "text:e98434cc5c4d7597#p32",
+          "text:e98434cc5c4d7597#p33",
+          "text:e98434cc5c4d7597#p34",
+          "text:e98434cc5c4d7597#p35",
+          "text:e98434cc5c4d7597#p36",
+          "text:e98434cc5c4d7597#p37",
+          "text:e98434cc5c4d7597#p38",
+          "text:e98434cc5c4d7597#p39",
+          "text:e98434cc5c4d7597#p40",
+          "text:e98434cc5c4d7597#p41",
+          "text:e98434cc5c4d7597#p42",
+          "text:e98434cc5c4d7597#p43"
+        ],
+        "simplified_artifact_ref": "text:e98434cc5c4d7597",
+        "status": "fetched",
+        "url": "https://www.sda.mil/home/about-us/faq/"
+      },
+      {
+        "artifact_refs": [
+          "text:bf4f31ededc6b7dd"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-614112de1ec0",
+          "normalized_url": "https://www.army.mil/article/263145/army_developing_faster_improved_data_kill_chain_for_lethal_and_non_lethal_fires",
+          "reasons": [],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-614112de1ec0",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.army.mil/article/263145/army_developing_faster_improved_data_kill_chain_for_lethal_and_non_lethal_fires"
+      },
+      {
+        "artifact_refs": [
+          "text:9af271e9ce326b41"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "duplicate",
+          "evidence_id": "ev-combat_scenario-web-f42ad4ad8ea8",
+          "normalized_url": "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo",
+          "reasons": [
+            "与 ev-operational_employment-web-f42ad4ad8ea8 URL 重复"
+          ],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-f42ad4ad8ea8",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/"
+      },
+      {
+        "artifact_refs": [
+          "text:6ef44023b8d5daa9"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-8952c3805d5a",
+          "normalized_url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "reasons": [],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-8952c3805d5a",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+      },
+      {
+        "artifact_refs": [
+          "html:9a953ae8dd0b0acc"
+        ],
+        "content_type": "text/html; charset=UTF-8",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "duplicate",
+          "evidence_id": "ev-combat_scenario-web-bc1c2e8c3176",
+          "normalized_url": "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "reasons": [
+            "与 ev-operational_employment-web-bc1c2e8c3176 URL 重复"
+          ],
+          "score": 0.861
+        },
+        "evidence_id": "ev-combat_scenario-web-bc1c2e8c3176",
+        "fetch_cache_hit": true,
+        "final_url": "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+        "formal_evidence_allowed": true,
+        "paragraph_locations": [
+          "text:ee03938bb7a95449#p1"
+        ],
+        "simplified_artifact_ref": "text:ee03938bb7a95449",
+        "status": "fetched",
+        "url": "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience"
+      },
+      {
+        "artifact_refs": [
+          "html:5b22753bbef9e396"
+        ],
+        "content_type": "text/html; charset=UTF-8",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-d6c1d3eec8e6",
+          "normalized_url": "https://www.sda.mil/custody",
+          "reasons": [],
+          "score": 0.852
+        },
+        "evidence_id": "ev-weapon_equipment-web-d6c1d3eec8e6",
+        "fetch_cache_hit": true,
+        "final_url": "https://www.sda.mil/custody/",
+        "formal_evidence_allowed": true,
+        "paragraph_locations": [
+          "text:2a26034811362d41#p1",
+          "text:2a26034811362d41#p2",
+          "text:2a26034811362d41#p3",
+          "text:2a26034811362d41#p4",
+          "text:2a26034811362d41#p5",
+          "text:2a26034811362d41#p6",
+          "text:2a26034811362d41#p7",
+          "text:2a26034811362d41#p8",
+          "text:2a26034811362d41#p9",
+          "text:2a26034811362d41#p10"
+        ],
+        "simplified_artifact_ref": "text:2a26034811362d41",
+        "status": "fetched",
+        "url": "https://www.sda.mil/custody/"
+      },
+      {
+        "artifact_refs": [
+          "text:53301f8923a0779d"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-43915f10ae4b",
+          "normalized_url": "https://www.army.mil/article/286878/precision_strike_missile_increment_1_achieves_milestone_c_approval",
+          "reasons": [],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-43915f10ae4b",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.army.mil/article/286878/precision_strike_missile_increment_1_achieves_milestone_c_approval"
+      },
+      {
+        "artifact_refs": [
+          "text:2181f543e16fbf66"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-5b58dc887688",
+          "normalized_url": "https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2026/Discretionary%20Budget/Procurement/Missile%20Procurement%20Army.pdf",
+          "reasons": [],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-5b58dc887688",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2026/Discretionary%20Budget/Procurement/Missile%20Procurement%20Army.pdf"
+      },
+      {
+        "artifact_refs": [
+          "html:ac54eb49d73d8319"
+        ],
+        "content_type": "text/html; charset=UTF-8",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "duplicate",
+          "evidence_id": "ev-weapon_equipment-web-06d26c44006f",
+          "normalized_url": "https://www.sda.mil/home/about-us/faq",
+          "reasons": [
+            "与 ev-combat_scenario-web-06d26c44006f URL 重复"
+          ],
+          "score": 0.852
+        },
+        "evidence_id": "ev-weapon_equipment-web-06d26c44006f",
+        "fetch_cache_hit": true,
+        "final_url": "https://www.sda.mil/home/about-us/faq/",
+        "formal_evidence_allowed": true,
+        "paragraph_locations": [
+          "text:e98434cc5c4d7597#p1",
+          "text:e98434cc5c4d7597#p2",
+          "text:e98434cc5c4d7597#p3",
+          "text:e98434cc5c4d7597#p4",
+          "text:e98434cc5c4d7597#p5",
+          "text:e98434cc5c4d7597#p6",
+          "text:e98434cc5c4d7597#p7",
+          "text:e98434cc5c4d7597#p8",
+          "text:e98434cc5c4d7597#p9",
+          "text:e98434cc5c4d7597#p10",
+          "text:e98434cc5c4d7597#p11",
+          "text:e98434cc5c4d7597#p12",
+          "text:e98434cc5c4d7597#p13",
+          "text:e98434cc5c4d7597#p14",
+          "text:e98434cc5c4d7597#p15",
+          "text:e98434cc5c4d7597#p16",
+          "text:e98434cc5c4d7597#p17",
+          "text:e98434cc5c4d7597#p18",
+          "text:e98434cc5c4d7597#p19",
+          "text:e98434cc5c4d7597#p20",
+          "text:e98434cc5c4d7597#p21",
+          "text:e98434cc5c4d7597#p22",
+          "text:e98434cc5c4d7597#p23",
+          "text:e98434cc5c4d7597#p24",
+          "text:e98434cc5c4d7597#p25",
+          "text:e98434cc5c4d7597#p26",
+          "text:e98434cc5c4d7597#p27",
+          "text:e98434cc5c4d7597#p28",
+          "text:e98434cc5c4d7597#p29",
+          "text:e98434cc5c4d7597#p30",
+          "text:e98434cc5c4d7597#p31",
+          "text:e98434cc5c4d7597#p32",
+          "text:e98434cc5c4d7597#p33",
+          "text:e98434cc5c4d7597#p34",
+          "text:e98434cc5c4d7597#p35",
+          "text:e98434cc5c4d7597#p36",
+          "text:e98434cc5c4d7597#p37",
+          "text:e98434cc5c4d7597#p38",
+          "text:e98434cc5c4d7597#p39",
+          "text:e98434cc5c4d7597#p40",
+          "text:e98434cc5c4d7597#p41",
+          "text:e98434cc5c4d7597#p42",
+          "text:e98434cc5c4d7597#p43"
+        ],
+        "simplified_artifact_ref": "text:e98434cc5c4d7597",
+        "status": "fetched",
+        "url": "https://www.sda.mil/home/about-us/faq/"
+      },
+      {
+        "artifact_refs": [
+          "text:9b098075175cdd84"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-328871b56c44",
+          "normalized_url": "https://www.army.mil/article-amp/293800/the_u_s_armys_pae_fires_demonstrates_autonomy_and_one_to_many_control_with_lrpm_at_african_lion_2026",
+          "reasons": [],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-328871b56c44",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.army.mil/article-amp/293800/the_u_s_armys_pae_fires_demonstrates_autonomy_and_one_to_many_control_with_lrpm_at_african_lion_2026"
+      }
+    ],
+    "status": "running",
+    "task_statuses": {
+      "baseline:combat_scenario": "completed",
+      "baseline:operational_employment": "completed",
+      "baseline:weapon_equipment": "completed",
+      "finalize:winning-report": "pending"
+    },
+    "topic": "天基低时延信息支撑精确打击体系研究",
+    "worker_reports": [
+      {
+        "active_skill_ids": [
+          "scenario_engineering",
+          "modern_battlespace_analysis",
+          "adversary_coa_analysis"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "create_evidence_card",
+          "stress_test_scenario"
+        ],
+        "agent_id": "combat_scenario",
+        "created_at": "2026-07-29T08:17:51.509666+00:00",
+        "domain_object_id": "scenario-packet-combat_scenario",
+        "domain_object_type": "ScenarioModel",
+        "error": "",
+        "handoff_summary": "场景建模将课题收敛为任务链闭合检验：在拒止、战损、诱饵、电子压制和持续消耗条件下，天基低时延信息必须使发现、决策、协同、打击、评估、再组织在目标窗口内闭合。后续装备基线与五档差距应重点评估网状重路由、抗扰接入、边缘融合、跨域授权、BDA冗余和战损重组能力。",
+        "harness_profile": "scenario_research_v1",
+        "new_evidence_ids": [
+          "ev-combat_scenario-web-06d26c44006f",
+          "ev-combat_scenario-web-614112de1ec0",
+          "ev-combat_scenario-web-8952c3805d5a"
+        ],
+        "packet_id": "packet-combat_scenario",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment research/outputs/evals/ablations/ablation-20260729-142922/systems/no_winning_mechanism/Q-0007/runtime/no_winning_mechanism-q-0007/agent_sessions/combat_scenario.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-e096cb98-0884-461e-be95-fb8af915acc2"
+      },
+      {
+        "active_skill_ids": [
+          "operational_synthesis",
+          "coa_comparison",
+          "joint_force_coordination",
+          "lessons_transfer"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "create_evidence_card",
+          "compare_coa"
+        ],
+        "agent_id": "operational_employment",
+        "created_at": "2026-07-29T08:17:41.149886+00:00",
+        "domain_object_id": "operational-packet-operational_employment",
+        "domain_object_type": "OperationalSynthesis",
+        "error": "",
+        "handoff_summary": "作战运用结论：应采用“高端低轨骨干+前沿分布式杀伤网+军民混合补盲续接”的混合COA。COA-A负责战役级覆盖、导弹预警/跟踪和跨域分发，COA-B负责局部识别、目标保持和拒止火力窗口，COA-C负责战损后最低态势、BDA和恢复。装备需求优先级为低时延抗扰传输层、连续目标保持层、边缘融合/战术网关、抗扰用户终端、边缘BDA和快速补网保障包。下一步应按对空反导、对海拒止、对陆时间敏感目标三类场景，建立能力-任务矩阵和五档差距评估。",
+        "harness_profile": "operational_synthesis_v1",
+        "new_evidence_ids": [
+          "ev-operational_employment-web-7d70929b0c3b",
+          "ev-operational_employment-web-bc1c2e8c3176",
+          "ev-operational_employment-web-d56e3a0c7cfa",
+          "ev-operational_employment-web-f42ad4ad8ea8"
+        ],
+        "packet_id": "packet-operational_employment",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment research/outputs/evals/ablations/ablation-20260729-142922/systems/no_winning_mechanism/Q-0007/runtime/no_winning_mechanism-q-0007/agent_sessions/operational_employment.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-5c3e089d-4f79-4d68-bb25-107e6e48c67d"
+      },
+      {
+        "active_skill_ids": [
+          "equipment_osint",
+          "capability_comparison",
+          "technology_readiness_analysis",
+          "defensive_countermeasure_analysis"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "create_evidence_card",
+          "compare_equipment_capability"
+        ],
+        "agent_id": "weapon_equipment",
+        "created_at": "2026-07-29T08:18:02.228378+00:00",
+        "domain_object_id": "equipment-packet-weapon_equipment",
+        "domain_object_type": "EquipmentObservation",
+        "error": "",
+        "handoff_summary": "天基低时延信息支撑精确打击体系的装备矛盾是：低轨杀伤网能否把分散传感器数据稳定转化为武器质量航迹，并供远程精确导弹、远程无人打击和远域压制效应器在强对抗环境下持续使用。应以PrSM、LRPM/Launched Effects、Replicator类可消耗系统、AARGM-ER/NGJ-MB和PWSA为国外装备锚点，按目标发现、火力协同、打击毁伤、反制抗扰、区域拒止和抗毁恢复形成需求闭环。",
+        "harness_profile": "equipment_research_v1",
+        "new_evidence_ids": [
+          "ev-weapon_equipment-web-328871b56c44",
+          "ev-weapon_equipment-web-43915f10ae4b",
+          "ev-weapon_equipment-web-5b58dc887688",
+          "ev-weapon_equipment-web-d6c1d3eec8e6"
+        ],
+        "packet_id": "packet-weapon_equipment",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment research/outputs/evals/ablations/ablation-20260729-142922/systems/no_winning_mechanism/Q-0007/runtime/no_winning_mechanism-q-0007/agent_sessions/weapon_equipment.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-063fec17-c696-4d44-b5a6-a8e53e40fee4"
+      }
+    ]
+  },
+  "savepoint_id": "checkpoint-417805cfc1841d14de78e32e"
+}

@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:dd3064f28422a790",
+  "content_path": "text-dd3064f28422a790.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-d5a8e6a1e5e0",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "dd3064f28422a790f256ac3ebe498f2e2e1c23ede6d0bc6919b2360cdc186c24",
+  "url": "https://api.army.mil/e2/c/downloads/2025/05/21/71f75107/equipment-at-army-festival-parade.pdf"
+}

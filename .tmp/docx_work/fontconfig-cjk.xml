@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+<fontconfig>
+  <dir>/Library/Fonts</dir>
+  <dir>/System/Library/Fonts</dir>
+  <dir>/System/Library/Fonts/Supplemental</dir>
+  <cachedir>/Users/wangchen/equipment research/.tmp/docx_work/font-cache</cachedir>
+  <config></config>
+</fontconfig>

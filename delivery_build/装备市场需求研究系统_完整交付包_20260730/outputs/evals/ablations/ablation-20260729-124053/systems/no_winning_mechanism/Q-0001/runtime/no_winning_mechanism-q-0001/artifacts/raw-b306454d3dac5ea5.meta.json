@@ -1,0 +1,15 @@
+{
+  "artifact_ref": "raw:b306454d3dac5ea5",
+  "connect_ip": "198.18.1.38",
+  "content_path": "raw-b306454d3dac5ea5.bin",
+  "content_type": "application/pdf",
+  "encoding": null,
+  "evidence_id": "ev-weapon_equipment-web-8205857980c0",
+  "fetch_cache_hit": false,
+  "final_url": "https://www.lockheedmartin.com/content/dam/lockheed-martin/mfc/documents/business-area-landing/25-10145-ADSW-JASSM-Fast_Facts.pdf",
+  "kind": "raw",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "b306454d3dac5ea5d20c08645622ddd5c5399a456d3728c0f22f605fa031db37",
+  "url": "https://www.lockheedmartin.com/content/dam/lockheed-martin/mfc/documents/business-area-landing/25-10145-ADSW-JASSM-Fast_Facts.pdf"
+}

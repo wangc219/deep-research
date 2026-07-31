@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:80dce8ea57266f04",
+  "content_path": "text-80dce8ea57266f04.txt",
+  "content_type": "text/plain",
+  "direct_error": "TimeoutError: _ssl.c:1015: The handshake operation timed out",
+  "encoding": "utf-8",
+  "evidence_id": "ev-operational_employment-web-730405c29b0b",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "80dce8ea57266f044388eea0332a36390e1975ccd9642cf1b86a0c65e7a58fe5",
+  "url": "https://www.airuniversity.af.edu/Office-of-Sponsored-Programs/Research/Article-Display/Article/4189093/offense-versus-defense-dominance-unmanned-systems-and-retrospective-lessons-fro/"
+}

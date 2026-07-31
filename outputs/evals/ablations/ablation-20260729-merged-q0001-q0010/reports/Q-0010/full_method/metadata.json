@@ -1,0 +1,31 @@
+{
+  "artifact_refs": [
+    "/Users/wangchen/equipment research/outputs/runs/run-d0acc3bc-fde2-4ac9-9f93-5be37616a5dd/report.md",
+    "/Users/wangchen/equipment research/outputs/runs/run-d0acc3bc-fde2-4ac9-9f93-5be37616a5dd/round_summary.json"
+  ],
+  "citations": [
+    "https://www.marines.mil/Force-Design/",
+    "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+    "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+    "https://www.army.mil/article/286198/army_software_enables_quicker_precision_drone_strikes_against_threats",
+    "https://www.defense.gov/News/Releases/Release/Article/3765644/deputy-secretary-of-defense-hicks-announces-first-tranche-of-replicator-capabil/",
+    "https://files.gao.gov/reports/GAO-25-107263/index.html",
+    "https://www.navair.navy.mil/product/AARGM",
+    "https://www.rtx.com/raytheon/what-we-do/air/mald-decoy",
+    "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+    "https://www.gao.gov/products/gao-25-106454",
+    "https://www.ai.mil/Initiatives/CJADC2/",
+    "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/",
+    "https://www.defense.gov/News/Releases/Release/article/2970094/dod-announces-release-of-jadc2-implementation-plan/",
+    "https://www.airuniversity.af.edu/Office-of-Sponsored-Programs/Research/Article-Display/Article/4189093/offense-versus-defense-dominance-unmanned-systems-and-retrospective-lessons-fro/",
+    "https://media.defense.gov/2022/Mar/17/2002958406/-1/-1/1/SUMMARY-OFTHE-JOINT-ALL-DOMAIN-COMMAND-AND-CONTROL-STRATEGY.pdf",
+    "https://www.defense.gov/News/News-Stories/Article/Article/3611153/space-development-agency-providing-capability-to-warfighters/"
+  ],
+  "duration_seconds": 1191.161,
+  "error": "",
+  "estimated_cost": 0.0,
+  "query_id": "Q-0010",
+  "status": "completed",
+  "system_id": "full_method",
+  "usage": {}
+}

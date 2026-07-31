@@ -1,0 +1,14 @@
+{
+  "artifact_ref": "html:d2e5be183c4c302b",
+  "connect_ip": "198.18.1.204",
+  "content_path": "html-d2e5be183c4c302b.html",
+  "content_type": "text/html; charset=utf-8",
+  "encoding": null,
+  "evidence_id": "ev-operational_employment-web-38b628ca4782",
+  "final_url": "https://www.gov.uk/government/news/british-soldiers-take-down-drone-swarm-in-groundbreaking-use-of-radio-wave-weapon",
+  "kind": "html",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "d2e5be183c4c302bfe1a5890f6ecf6208efa66750e73e34bcfbf87dad25873a5",
+  "url": "https://www.gov.uk/government/news/british-soldiers-take-down-drone-swarm-in-groundbreaking-use-of-radio-wave-weapon"
+}

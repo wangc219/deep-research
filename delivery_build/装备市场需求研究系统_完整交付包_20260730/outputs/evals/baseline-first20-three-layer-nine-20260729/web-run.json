@@ -1,0 +1,490 @@
+{
+  "baseline_concurrency": 5,
+  "baseline_execution_required": [
+    "generic_agent",
+    "bare_llm",
+    "zhipu_llm"
+  ],
+  "baseline_reports": {},
+  "baseline_systems": [
+    "generic_agent",
+    "bare_llm",
+    "zhipu_llm"
+  ],
+  "baseline_task_count": 60,
+  "completed_at": "2026-07-28T21:17:33.890045+00:00",
+  "created_at": "2026-07-28T21:06:18.481545+00:00",
+  "dataset_id": "tactical-strike-frontiers-50-v1",
+  "dataset_path": "/Users/wangchen/equipment research/outputs/evals/datasets/tactical-strike-frontiers-50-v1/queries.jsonl",
+  "display_name": "Baseline预生成 · 前20个Query（三层九项）",
+  "error": "",
+  "eval_id": "baseline-first20-three-layer-nine-20260729",
+  "external_data_confirmed": true,
+  "full_method_source": "not_included",
+  "judge_mode": "none",
+  "limit": 20,
+  "merged_at": "2026-07-30T08:43:17.934917+00:00",
+  "merged_into": "benchmark-evidence-aware-full-vs-codex-20260730",
+  "mode": "real",
+  "notes": "前20个Query的generic_agent、bare_llm、zhipu_llm三类baseline均已完成并保存。",
+  "pairwise_system": null,
+  "pairwise_systems": [],
+  "progress": {
+    "completed": 60,
+    "percent": 100.0,
+    "total": 60
+  },
+  "project_runs": {},
+  "result_counts": {
+    "bare_llm:completed": 20,
+    "generic_agent:completed": 20,
+    "zhipu_llm:completed": 20
+  },
+  "run_result": {
+    "cancelled": false,
+    "cancelled_tasks": 0,
+    "completed": 60,
+    "eval_id": "baseline-first20-three-layer-nine-20260729",
+    "failed": 0,
+    "parallel_workers": 5,
+    "query_count": 20,
+    "result_count": 60,
+    "results": "/Users/wangchen/equipment research/outputs/evals/baseline-first20-three-layer-nine-20260729/results.jsonl",
+    "scheduled_tasks": 60,
+    "system_count": 3
+  },
+  "saved_baseline_reports": [
+    {
+      "query": "高价值时敏目标快速精确打击研究",
+      "query_id": "Q-0020",
+      "report_id": "BR-f5f973790cf72c87a775e658",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-f5f973790cf72c87a775e658/report.md",
+      "system_id": "zhipu_llm"
+    },
+    {
+      "query": "高速机动海空目标精确打击研究",
+      "query_id": "Q-0019",
+      "report_id": "BR-c82a64fdabbf29924a74faff",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-c82a64fdabbf29924a74faff/report.md",
+      "system_id": "zhipu_llm"
+    },
+    {
+      "query": "大规模离散目标低成本精确打击研究",
+      "query_id": "Q-0018",
+      "report_id": "BR-4c016fc7046fe9b871dea258",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-4c016fc7046fe9b871dea258/report.md",
+      "system_id": "zhipu_llm"
+    },
+    {
+      "query": "多节点目标群协同精确打击研究",
+      "query_id": "Q-0017",
+      "report_id": "BR-407fca34116ac1e52d23f573",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-407fca34116ac1e52d23f573/report.md",
+      "system_id": "zhipu_llm"
+    },
+    {
+      "query": "分布式作战体系精确打击研究",
+      "query_id": "Q-0016",
+      "report_id": "BR-a0f88e10ed14ec0d1a62fc44",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-a0f88e10ed14ec0d1a62fc44/report.md",
+      "system_id": "zhipu_llm"
+    },
+    {
+      "query": "搜索—识别—跟踪—打击一体化精打武器研究",
+      "query_id": "Q-0015",
+      "report_id": "BR-84ee83e573618f6004df592e",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-84ee83e573618f6004df592e/report.md",
+      "system_id": "zhipu_llm"
+    },
+    {
+      "query": "多模态自主目标识别精打武器研究",
+      "query_id": "Q-0014",
+      "report_id": "BR-d7df9585ce45c300d97257b3",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-d7df9585ce45c300d97257b3/report.md",
+      "system_id": "zhipu_llm"
+    },
+    {
+      "query": "复杂背景低特征目标精确打击研究",
+      "query_id": "Q-0013",
+      "report_id": "BR-e2921a8a1a50ef480ca6e4a1",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-e2921a8a1a50ef480ca6e4a1/report.md",
+      "system_id": "zhipu_llm"
+    },
+    {
+      "query": "间歇暴露目标搜索与精确打击研究",
+      "query_id": "Q-0012",
+      "report_id": "BR-24b759fecfbb25b7dff58a04",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-24b759fecfbb25b7dff58a04/report.md",
+      "system_id": "zhipu_llm"
+    },
+    {
+      "query": "高机动目标持续跟踪精确打击研究",
+      "query_id": "Q-0011",
+      "report_id": "BR-03dfb89a22b637182fb71cb5",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-03dfb89a22b637182fb71cb5/report.md",
+      "system_id": "zhipu_llm"
+    },
+    {
+      "query": "目标持续监视与精确打击一体化研究",
+      "query_id": "Q-0010",
+      "report_id": "BR-567b1305080883addfc23c01",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-567b1305080883addfc23c01/report.md",
+      "system_id": "zhipu_llm"
+    },
+    {
+      "query": "动态时敏目标快速感知—决策—打击一体化研究",
+      "query_id": "Q-0009",
+      "report_id": "BR-2d0dac8dd22fe311ac3c7d0f",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-2d0dac8dd22fe311ac3c7d0f/report.md",
+      "system_id": "zhipu_llm"
+    },
+    {
+      "query": "低轨巨型星座支撑体系条件下精打对抗研究",
+      "query_id": "Q-0008",
+      "report_id": "BR-fa653cb5a35bc3ff99aa19a7",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-fa653cb5a35bc3ff99aa19a7/report.md",
+      "system_id": "zhipu_llm"
+    },
+    {
+      "query": "天基低时延信息支撑精确打击体系研究",
+      "query_id": "Q-0007",
+      "report_id": "BR-193c8e6f6f22cdd180a1019c",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-193c8e6f6f22cdd180a1019c/report.md",
+      "system_id": "zhipu_llm"
+    },
+    {
+      "query": "不完备与不确定战场信息条件下精确打击研究",
+      "query_id": "Q-0006",
+      "report_id": "BR-4091b183c4880bfefdc34a23",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-4091b183c4880bfefdc34a23/report.md",
+      "system_id": "zhipu_llm"
+    },
+    {
+      "query": "多源异构战场信息融合精确打击研究",
+      "query_id": "Q-0005",
+      "report_id": "BR-6b6f23a9305d461ead79e86d",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-6b6f23a9305d461ead79e86d/report.md",
+      "system_id": "zhipu_llm"
+    },
+    {
+      "query": "间歇通信条件下精打武器任务保持与任务续接研究",
+      "query_id": "Q-0004",
+      "report_id": "BR-edffc4f56726f9e5aab6ff40",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-edffc4f56726f9e5aab6ff40/report.md",
+      "system_id": "zhipu_llm"
+    },
+    {
+      "query": "复杂电磁环境自适应精打武器研究",
+      "query_id": "Q-0003",
+      "report_id": "BR-2fe3d8760971ec5b5600d335",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-2fe3d8760971ec5b5600d335/report.md",
+      "system_id": "zhipu_llm"
+    },
+    {
+      "query": "卫星拒止条件下多源自主导航精打武器研究",
+      "query_id": "Q-0002",
+      "report_id": "BR-6c34b79cd9e962397337b2fe",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-6c34b79cd9e962397337b2fe/report.md",
+      "system_id": "zhipu_llm"
+    },
+    {
+      "query": "强干扰、弱通信条件下低信息依赖精确打击研究",
+      "query_id": "Q-0001",
+      "report_id": "BR-685cb112da7734e65ab4c8e9",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-685cb112da7734e65ab4c8e9/report.md",
+      "system_id": "zhipu_llm"
+    },
+    {
+      "query": "大规模离散目标低成本精确打击研究",
+      "query_id": "Q-0018",
+      "report_id": "BR-313fc7e12a349915c3228ce4",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-313fc7e12a349915c3228ce4/report.md",
+      "system_id": "bare_llm"
+    },
+    {
+      "query": "多节点目标群协同精确打击研究",
+      "query_id": "Q-0017",
+      "report_id": "BR-7f9e9636199860263da0efe1",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-7f9e9636199860263da0efe1/report.md",
+      "system_id": "bare_llm"
+    },
+    {
+      "query": "分布式作战体系精确打击研究",
+      "query_id": "Q-0016",
+      "report_id": "BR-367a3d3cc005a0828dc6c002",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-367a3d3cc005a0828dc6c002/report.md",
+      "system_id": "bare_llm"
+    },
+    {
+      "query": "搜索—识别—跟踪—打击一体化精打武器研究",
+      "query_id": "Q-0015",
+      "report_id": "BR-d0df3eb14900c08a37921036",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-d0df3eb14900c08a37921036/report.md",
+      "system_id": "bare_llm"
+    },
+    {
+      "query": "多模态自主目标识别精打武器研究",
+      "query_id": "Q-0014",
+      "report_id": "BR-61a36608a911af6b631da1a8",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-61a36608a911af6b631da1a8/report.md",
+      "system_id": "bare_llm"
+    },
+    {
+      "query": "复杂背景低特征目标精确打击研究",
+      "query_id": "Q-0013",
+      "report_id": "BR-68ed0fca1f46b58b90506e9e",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-68ed0fca1f46b58b90506e9e/report.md",
+      "system_id": "bare_llm"
+    },
+    {
+      "query": "高速机动海空目标精确打击研究",
+      "query_id": "Q-0019",
+      "report_id": "BR-ee2cb053ed60864d2680cbbc",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-ee2cb053ed60864d2680cbbc/report.md",
+      "system_id": "bare_llm"
+    },
+    {
+      "query": "高价值时敏目标快速精确打击研究",
+      "query_id": "Q-0020",
+      "report_id": "BR-4a038161451be1e3bb9fd234",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-4a038161451be1e3bb9fd234/report.md",
+      "system_id": "generic_agent"
+    },
+    {
+      "query": "高价值时敏目标快速精确打击研究",
+      "query_id": "Q-0020",
+      "report_id": "BR-0ea5293b6cf44d554945a3d9",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-0ea5293b6cf44d554945a3d9/report.md",
+      "system_id": "bare_llm"
+    },
+    {
+      "query": "高速机动海空目标精确打击研究",
+      "query_id": "Q-0019",
+      "report_id": "BR-9ee19038fcb48571528b0c35",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-9ee19038fcb48571528b0c35/report.md",
+      "system_id": "generic_agent"
+    },
+    {
+      "query": "大规模离散目标低成本精确打击研究",
+      "query_id": "Q-0018",
+      "report_id": "BR-ef31ab9c3652ed7cdf24ce64",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-ef31ab9c3652ed7cdf24ce64/report.md",
+      "system_id": "generic_agent"
+    },
+    {
+      "query": "多节点目标群协同精确打击研究",
+      "query_id": "Q-0017",
+      "report_id": "BR-f6937409d87cd8f0344c631d",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-f6937409d87cd8f0344c631d/report.md",
+      "system_id": "generic_agent"
+    },
+    {
+      "query": "分布式作战体系精确打击研究",
+      "query_id": "Q-0016",
+      "report_id": "BR-7f6509f359b6e4bbba2f3729",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-7f6509f359b6e4bbba2f3729/report.md",
+      "system_id": "generic_agent"
+    },
+    {
+      "query": "搜索—识别—跟踪—打击一体化精打武器研究",
+      "query_id": "Q-0015",
+      "report_id": "BR-7190a3770fe7baabf2456b0e",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-7190a3770fe7baabf2456b0e/report.md",
+      "system_id": "generic_agent"
+    },
+    {
+      "query": "多模态自主目标识别精打武器研究",
+      "query_id": "Q-0014",
+      "report_id": "BR-31eb21dd9c2138b26020693a",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-31eb21dd9c2138b26020693a/report.md",
+      "system_id": "generic_agent"
+    },
+    {
+      "query": "复杂背景低特征目标精确打击研究",
+      "query_id": "Q-0013",
+      "report_id": "BR-856e299853f21d219b248a9c",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-856e299853f21d219b248a9c/report.md",
+      "system_id": "generic_agent"
+    },
+    {
+      "query": "间歇暴露目标搜索与精确打击研究",
+      "query_id": "Q-0012",
+      "report_id": "BR-3efa46cc00c1ab8981dae923",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-3efa46cc00c1ab8981dae923/report.md",
+      "system_id": "generic_agent"
+    },
+    {
+      "query": "间歇暴露目标搜索与精确打击研究",
+      "query_id": "Q-0012",
+      "report_id": "BR-029c2490d423599844e10852",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-029c2490d423599844e10852/report.md",
+      "system_id": "bare_llm"
+    },
+    {
+      "query": "高机动目标持续跟踪精确打击研究",
+      "query_id": "Q-0011",
+      "report_id": "BR-d20274041fbbafeb35b57cf1",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-d20274041fbbafeb35b57cf1/report.md",
+      "system_id": "generic_agent"
+    },
+    {
+      "query": "高机动目标持续跟踪精确打击研究",
+      "query_id": "Q-0011",
+      "report_id": "BR-4a9891ccb27655bae8392d6e",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-4a9891ccb27655bae8392d6e/report.md",
+      "system_id": "bare_llm"
+    },
+    {
+      "query": "目标持续监视与精确打击一体化研究",
+      "query_id": "Q-0010",
+      "report_id": "BR-3243ee70ea5239785722ad4f",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-3243ee70ea5239785722ad4f/report.md",
+      "system_id": "generic_agent"
+    },
+    {
+      "query": "目标持续监视与精确打击一体化研究",
+      "query_id": "Q-0010",
+      "report_id": "BR-313c030e444e8f9ae8aef37a",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-313c030e444e8f9ae8aef37a/report.md",
+      "system_id": "bare_llm"
+    },
+    {
+      "query": "动态时敏目标快速感知—决策—打击一体化研究",
+      "query_id": "Q-0009",
+      "report_id": "BR-ba6910208062806d36e9fe4d",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-ba6910208062806d36e9fe4d/report.md",
+      "system_id": "generic_agent"
+    },
+    {
+      "query": "动态时敏目标快速感知—决策—打击一体化研究",
+      "query_id": "Q-0009",
+      "report_id": "BR-88b1c9eb48de7b4bdc39cbe4",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-88b1c9eb48de7b4bdc39cbe4/report.md",
+      "system_id": "bare_llm"
+    },
+    {
+      "query": "低轨巨型星座支撑体系条件下精打对抗研究",
+      "query_id": "Q-0008",
+      "report_id": "BR-9157741aa034d72a9fb93ea6",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-9157741aa034d72a9fb93ea6/report.md",
+      "system_id": "generic_agent"
+    },
+    {
+      "query": "低轨巨型星座支撑体系条件下精打对抗研究",
+      "query_id": "Q-0008",
+      "report_id": "BR-cc613cc9c8e9b56a288dbded",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-cc613cc9c8e9b56a288dbded/report.md",
+      "system_id": "bare_llm"
+    },
+    {
+      "query": "天基低时延信息支撑精确打击体系研究",
+      "query_id": "Q-0007",
+      "report_id": "BR-b65d46ced9a8aef52adada41",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-b65d46ced9a8aef52adada41/report.md",
+      "system_id": "generic_agent"
+    },
+    {
+      "query": "天基低时延信息支撑精确打击体系研究",
+      "query_id": "Q-0007",
+      "report_id": "BR-6533156398cb0b98c06acf13",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-6533156398cb0b98c06acf13/report.md",
+      "system_id": "bare_llm"
+    },
+    {
+      "query": "不完备与不确定战场信息条件下精确打击研究",
+      "query_id": "Q-0006",
+      "report_id": "BR-27841c0b2ea884037b03fe95",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-27841c0b2ea884037b03fe95/report.md",
+      "system_id": "generic_agent"
+    },
+    {
+      "query": "不完备与不确定战场信息条件下精确打击研究",
+      "query_id": "Q-0006",
+      "report_id": "BR-69dc73121e4ab497ab7d5bfe",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-69dc73121e4ab497ab7d5bfe/report.md",
+      "system_id": "bare_llm"
+    },
+    {
+      "query": "多源异构战场信息融合精确打击研究",
+      "query_id": "Q-0005",
+      "report_id": "BR-a4b1180df9de22b7e8aea429",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-a4b1180df9de22b7e8aea429/report.md",
+      "system_id": "generic_agent"
+    },
+    {
+      "query": "多源异构战场信息融合精确打击研究",
+      "query_id": "Q-0005",
+      "report_id": "BR-2b64933fa46bc8bbe36e4280",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-2b64933fa46bc8bbe36e4280/report.md",
+      "system_id": "bare_llm"
+    },
+    {
+      "query": "间歇通信条件下精打武器任务保持与任务续接研究",
+      "query_id": "Q-0004",
+      "report_id": "BR-31b9a5cb13d9c6ef3b524a9e",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-31b9a5cb13d9c6ef3b524a9e/report.md",
+      "system_id": "generic_agent"
+    },
+    {
+      "query": "间歇通信条件下精打武器任务保持与任务续接研究",
+      "query_id": "Q-0004",
+      "report_id": "BR-7f0bc20ed45d462d19d79f0c",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-7f0bc20ed45d462d19d79f0c/report.md",
+      "system_id": "bare_llm"
+    },
+    {
+      "query": "复杂电磁环境自适应精打武器研究",
+      "query_id": "Q-0003",
+      "report_id": "BR-3f14883442f11a4669074202",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-3f14883442f11a4669074202/report.md",
+      "system_id": "generic_agent"
+    },
+    {
+      "query": "复杂电磁环境自适应精打武器研究",
+      "query_id": "Q-0003",
+      "report_id": "BR-521543a9d6f2321d0162b49a",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-521543a9d6f2321d0162b49a/report.md",
+      "system_id": "bare_llm"
+    },
+    {
+      "query": "卫星拒止条件下多源自主导航精打武器研究",
+      "query_id": "Q-0002",
+      "report_id": "BR-8c66066d4ba7b74c2bc68732",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-8c66066d4ba7b74c2bc68732/report.md",
+      "system_id": "generic_agent"
+    },
+    {
+      "query": "卫星拒止条件下多源自主导航精打武器研究",
+      "query_id": "Q-0002",
+      "report_id": "BR-b95c87f0563f9e6410f3a07b",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-b95c87f0563f9e6410f3a07b/report.md",
+      "system_id": "bare_llm"
+    },
+    {
+      "query": "强干扰、弱通信条件下低信息依赖精确打击研究",
+      "query_id": "Q-0001",
+      "report_id": "BR-c10f65c9ff0078e98ae35575",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-c10f65c9ff0078e98ae35575/report.md",
+      "system_id": "generic_agent"
+    },
+    {
+      "query": "强干扰、弱通信条件下低信息依赖精确打击研究",
+      "query_id": "Q-0001",
+      "report_id": "BR-977f12ea888a4fad552e8af8",
+      "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-977f12ea888a4fad552e8af8/report.md",
+      "system_id": "bare_llm"
+    }
+  ],
+  "schema_version": "1.4",
+  "selected_query_ids": [],
+  "selection_mode": "split_limit",
+  "split": "all",
+  "stage": "completed",
+  "status": "completed",
+  "systems": [
+    "generic_agent",
+    "bare_llm",
+    "zhipu_llm"
+  ],
+  "updated_at": "2026-07-30T08:43:17.935664+00:00"
+}

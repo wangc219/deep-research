@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" data-pptx-page-role="content">
+  <rect id="background" data-pptx-role="background" x="0" y="0" width="1280" height="720" fill="#FFFFFF"/>
+  <g id="header" data-pptx-bounds="64 42 1152 98">
+    <text x="64" y="88" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="42" font-weight="bold" fill="#173B5E">&#x6D88;&#x878D;&#x5B9E;&#x9A8C;&#x8BBE;&#x8BA1;</text>
+    <text x="64" y="128" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#6B7785">&#x5206;&#x522B;&#x9A8C;&#x8BC1;&#x591A;&#x6E90;&#x57FA;&#x7EBF;&#x4E0E;&#x5236;&#x80DC;&#x673A;&#x7406;&#x7684;&#x8FB9;&#x9645;&#x8D21;&#x732E;</text>
+    <text x="1216" y="84" text-anchor="end" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#6B7785">21</text>
+  </g>
+  <g id="arm-full" data-pptx-bounds="64 166 360 174">
+    <rect x="64" y="166" width="360" height="174" fill="#173B5E"/>
+    <text x="88" y="208" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" font-weight="bold" fill="#FFFFFF">&#x5B8C;&#x6574;&#x65B9;&#x6CD5;</text>
+    <text x="88" y="252" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#FFFFFF">&#x591A;&#x89D2;&#x8272;&#x3001;&#x591A;&#x901A;&#x9053;</text>
+    <text x="88" y="284" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#FFFFFF">S1&#x2013;S6 + L1&#x2013;L4</text>
+    <text x="88" y="318" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#2E8B66">&#x63A7;&#x5236;&#x7EC4;</text>
+  </g>
+  <g id="arm-no-source" data-pptx-bounds="460 166 360 174">
+    <rect x="460" y="166" width="360" height="174" fill="#F3F6F9"/>
+    <rect x="460" y="166" width="360" height="7" fill="#2F6FAE"/>
+    <text x="484" y="208" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" font-weight="bold" fill="#173B5E">&#x53BB;&#x591A;&#x6E90;&#x57FA;&#x7EBF;</text>
+    <text x="484" y="252" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x5355;&#x53D7;&#x9650;&#x901A;&#x7528;&#x68C0;&#x7D22; Agent</text>
+    <text x="484" y="284" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x4FDD;&#x7559; S1&#x2013;S6 + L1&#x2013;L4</text>
+    <text x="484" y="318" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#2F6FAE">&#x9A8C;&#x8BC1;&#x591A;&#x6E90;&#x8D21;&#x732E;</text>
+  </g>
+  <g id="arm-no-mechanism" data-pptx-bounds="856 166 360 174">
+    <rect x="856" y="166" width="360" height="174" fill="#F3F6F9"/>
+    <rect x="856" y="166" width="360" height="7" fill="#C97A32"/>
+    <text x="880" y="208" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" font-weight="bold" fill="#173B5E">&#x53BB;&#x5236;&#x80DC;&#x673A;&#x7406;</text>
+    <text x="880" y="252" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x4FDD;&#x7559;&#x591A;&#x6E90;&#x57FA;&#x7EBF;</text>
+    <text x="880" y="284" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x8DF3;&#x8FC7; S1&#x2013;S6&#xFF0C;&#x5FAA;&#x73AF;&#x5173;&#x95ED;</text>
+    <text x="880" y="318" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#C97A32">&#x9A8C;&#x8BC1;&#x673A;&#x7406;&#x8D21;&#x732E;</text>
+  </g>
+  <g id="experiment-notes" data-pptx-bounds="64 356 520 326">
+    <rect x="64" y="356" width="520" height="326" fill="#173B5E"/>
+    <text x="92" y="408" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="32" font-weight="bold" fill="#FFFFFF">&#x5B9E;&#x9A8C;&#x53E3;&#x5F84;</text>
+    <text x="92" y="486" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="66" font-weight="bold" fill="#2E8B66">10 Query</text>
+    <text x="92" y="536" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#FFFFFF">&#x533F;&#x540D;&#x6B63;&#x53CD;&#x5E8F; &#xB7; &#x53CC; Judge</text>
+    <line x1="92" y1="570" x2="556" y2="570" stroke="#6D89A3" stroke-width="2"/>
+    <text x="92" y="614" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#C8D5E2">&#x63A2;&#x7D22;&#x6027;&#x7ED3;&#x679C;&#xFF0C;&#x4E0D;&#x4F5C;&#x6700;&#x7EC8;&#x56E0;&#x679C;&#x7ED3;&#x8BBA;</text>
+    <text x="92" y="650" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#C8D5E2">&#x89C2;&#x5BDF;&#xFF1A;&#x8D28;&#x91CF;&#x3001;&#x7968;&#x578B;&#x3001;&#x8017;&#x65F6;</text>
+  </g>
+  <g id="frontend-ablation" data-pptx-bounds="626 356 590 332">
+    <rect x="626" y="356" width="590" height="332" fill="#F3F6F9" stroke="#2F6FAE" stroke-width="2"/>
+    <image href="../images/frontend_ablation_overview.png" x="636" y="366" width="570" height="321" preserveAspectRatio="xMidYMid meet"/>
+  </g>
+</svg>

@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=spaceforce.mil · OFD 2040 Baseline Final.pdf
+source_url=https://www.spaceforce.mil/Portals/2/Documents/SAF_2026/OFD_2040_Baseline_Final.pdf
+claim=Space Force 2040强调受争夺条件下的分布式C2、地理多样化设施、战场管理、目标指挥控制和战损评估能力。
+excerpt=
+retrieval=Hosted web search citation metadata

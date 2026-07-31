@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:9b098075175cdd84",
+  "content_path": "text-9b098075175cdd84.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-328871b56c44",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "9b098075175cdd8482d904cf0c84a13d28d8ae4afec3ebadd8a6052cb69ee8a3",
+  "url": "https://www.army.mil/article-amp/293800/the_u_s_armys_pae_fires_demonstrates_autonomy_and_one_to_many_control_with_lrpm_at_african_lion_2026"
+}

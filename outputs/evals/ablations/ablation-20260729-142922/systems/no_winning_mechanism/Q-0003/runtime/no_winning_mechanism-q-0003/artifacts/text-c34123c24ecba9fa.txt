@@ -1,0 +1,59 @@
+[1] Explore Our Research
+
+[2] Publications
+
+[3] Special Resources
+
+[4] Associated Press / Alamy Stock Photo
+
+[5] The purpose of this report is to examine the causes of the failure of the Ukrainian offensive in 2023 to avoid the repetition of such errors in the future and to inform the regeneration of offensive combat power in NATO militaries.
+
+[6] The original concept of operations for the Ukrainian offensive was sound. It required 12 armoured and mechanised brigades to achieve a breakthrough along 30 km of frontage, the isolation of Tokmak within seven days, and thereafter a breakout south towards Melitopol. Tempo was supposed to prevent Russia from bringing the majority of its forces to bear, so that the attacking force would need to overcome only six regiments in defence.
+
+[7] This concept of operation was not implemented. This arose from operational errors made by both Ukraine and its international partners. Ukraine’s international partners missed two critical decision points prior to the offensive. First, whereas Russia began to transition to a war economy from May 2022 and began the mobilisation of troops from the autumn, Ukraine’s international partners did not take significant steps to address their industrial limitations. In consequence, while many nations gifted Ukraine a significant proportion of their national stocks, this did not amount to a sufficient volume of equipment to provide the doctrinal minimum of critical enablers required for the concept of operation to be executed.
+
+[8] The second decision point missed was when that equipment needed to arrive in Ukraine. Ukraine’s international partners wasted four months in deciding to act, so that only a part of the pledged equipment arrived in Ukraine prior to the offensive, and the Ukrainian brigades did not have enough time to train on the equipment that did arrive. The brigades were, therefore, undertrained at the start of the offensive, which accounts for a significant proportion of the tactical mistakes made during the execution of the operation.
+
+[9] Ukraine also made a series of errors. First, experienced troops were used to hold the line of contact and thereafter conduct fixing operations during the offensive, while the main force was for the most part newly raised. This left the lead elements with a dearth of combat experience, which led to tactical errors during the execution of the operation. Second, Ukrainian planners exacerbated their shortage of properly equipped forces by committing troops on multiple axes, which were then further resourced with ammunition and enablers, at the expense of the main effort. The combination of these two errors limited the ability of the force to operate at and maintain tempo.
+
+[10] The most serious error made in planning by Ukraine appears to have been the basis on which it was determined that the main effort could succeed under these circumstances. Rather than using tempo and concentration to defeat six Russian regiments, it was hoped that shock action would cause Russian troops to break, as had occurred around Kharkiv in 2022. Insufficient planning was done to assess how the critical conditions for such a collapse in morale could be achieved, so that this proved an overly optimistic planning assumption. In the event, the initial attacks failed, and tempo was lost, such that Russia could fight the battle with the full 105,000 troops it had in the target sector.
+
+[11] A lesson for both Ukraine and its international partners is that operational security was inadequate, such that Russia knew precisely where and approximately when the offensive was to take place. This problem was exacerbated by the fact that with only a couple of brigades properly equipped for offensive operations, Russia only had to track a small number of units to determine Ukrainian intent. Given that this lack of security partly stemmed from the multinational process of organising the offensive, this should be examined carefully by NATO, which relies on comparable processes.
+
+[12] There are a great many tactical lessons identified in this paper. Some, however, raise questions about necessary adaptations to prevailing doctrine. First, there is a need to have an effective counter-reconnaissance capability to reduce sustained enemy observation of the intended axes of advance. The inability to screen axes of advance from enemy ISR risks sustained exposure to precision fires, producing an unacceptable rate of equipment loss.
+
+[13] Second is the need for electronic protection, and a corresponding requirement for electromagnetic command and control. Fratricide in the electromagnetic spectrum (EMS) is a major problem for controlling large-scale operations under modern conditions. Given the density of systems dependent on the EMS and the actively contested condition of the spectrum, it is not viable to simply deconflict frequencies at the divisional level.
+
+[14] It was also evident during the offensive that while software-defined systems were critical to the competitiveness of the force, they were also susceptible to targeted electronic warfare interference. This was especially true in relation to precision strike. Over time, the enemy developed hard counters to a range of Ukrainian capabilities including Excalibur and GMLRS (guided multiple-launch rocket systems). It is therefore evident that retaining technological advantage requires the ability to rapidly update systems in the field.
+
+[15] The combination of sustained enemy observation and long-range fires meant that once troops were committed to offensive operations, their ground lines of communication became predictable and targetable, collapsing tempo. Where operations required gap crossing, the issue of sustainment became insurmountable. The question of how enduring protection of crossing points to sustain a force across a wet gap can be established should be a critical area of capability focus for NATO forces.
+
+[16] Finally, the density of precision effects, even at tactical echelons, has left prestige enablers, such as offensive breaching vehicles, exceedingly vulnerable. Without such assets, there is no mobility, and thus no scope for manoeuvre. NATO militaries should therefore carefully examine how the density of enablers can be increased without overburdening the force, or how enabling capabilities can augment other platforms, such as to improve the organic mobility of units. Dependence on small fleets of specialist enablers is increasingly non-viable when the enemy can discern and engage specific targets within a formation and will do so throughout the depth of an operation.
+
+[17] For Ukraine, the lead times involved in regenerating offensive combat power mean that renewed offensive operations are not viable in the foreseeable future. To that end, Ukraine must now reprioritise inflicting as much damage as possible on the Armed Forces of the Russian Federation to buy the necessary time. At the same time, Ukraine is likely to pursue trying to constrain Russian revenue generation through strikes on Russian revenue-generating infrastructure. Time can be bought, albeit at a heavy price. The question for Ukraine and its international partners is what is done with it.
+
+[18] Stay up to date with the latest publications and events from the Military Sciences Research Group
+
+[19] Land Warfare
+
+[20] Global Security
+
+[21] Russia and Eurasia
+
+[22] Military Sciences
+
+[23] Dr Jack Watling
+
+[24] Senior Research Fellow for Applied Military Sciences
+
+[25] Military Sciences
+
+[26] Oleksandr V Danylyuk
+
+[27] RUSI Associate Fellow, Military Sciences
+
+[28] Nick Reynolds
+
+[29] Research Fellow, Land Warfare
+
+[30] Military Sciences

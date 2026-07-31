@@ -1,0 +1,65 @@
+[
+  {
+    "adopted_by_capability_ids": [
+      "cap-upgrade-001",
+      "cap-new-001",
+      "cap-new-002",
+      "cap-new-003",
+      "cap-new-004",
+      "cap-new-005"
+    ],
+    "adopted_by_report_sections": [
+      "final_report"
+    ],
+    "adopted_by_s_steps": {
+      "S1": [
+        "claim-2dde7b1b794c",
+        "claim-ef46f3293595",
+        "claim-9c13812fa5dc",
+        "claim-37d402b1f3b7"
+      ],
+      "S2": [
+        "claim-2dde7b1b794c",
+        "claim-ef46f3293595",
+        "claim-9c13812fa5dc",
+        "claim-37d402b1f3b7"
+      ],
+      "S3": [
+        "claim-2dde7b1b794c",
+        "claim-ef46f3293595",
+        "claim-9c13812fa5dc",
+        "claim-37d402b1f3b7"
+      ],
+      "S4": [
+        "claim-2dde7b1b794c",
+        "claim-ef46f3293595",
+        "claim-9c13812fa5dc",
+        "claim-37d402b1f3b7"
+      ],
+      "S5": [
+        "claim-2dde7b1b794c",
+        "claim-ef46f3293595",
+        "claim-9c13812fa5dc",
+        "claim-37d402b1f3b7"
+      ],
+      "S6": [
+        "claim-2dde7b1b794c",
+        "claim-ef46f3293595",
+        "claim-9c13812fa5dc",
+        "claim-37d402b1f3b7"
+      ]
+    },
+    "agent_id": "generic_researcher",
+    "contributed": true,
+    "loao_quality_delta": null,
+    "model_calls": 2,
+    "observation_id": "contribution-packet-generic_researcher",
+    "packet_id": "packet-generic_researcher",
+    "produced_claim_ids": [
+      "claim-2dde7b1b794c",
+      "claim-ef46f3293595",
+      "claim-9c13812fa5dc",
+      "claim-37d402b1f3b7"
+    ]
+  }
+]

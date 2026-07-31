@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:7cf6027bc8a4c26c",
+  "content_path": "text-7cf6027bc8a4c26c.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-b3f46c6960bc",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "7cf6027bc8a4c26c5444c5b2ab9acc5cb4ac00f48e6d572f651b70ab03e36067",
+  "url": "https://armysbir.army.mil/topics/asymmetric-collaborative-counter-swarm/?utm_source=openai"
+}

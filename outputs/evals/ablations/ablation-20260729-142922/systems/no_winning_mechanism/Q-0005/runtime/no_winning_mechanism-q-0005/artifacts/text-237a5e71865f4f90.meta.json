@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:237a5e71865f4f90",
+  "content_path": "text-237a5e71865f4f90.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: cached_origin_failure:HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-ea43c417a791",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "237a5e71865f4f900c731a3440ea319ddb037d35faef1cce76ae6863a9f734f2",
+  "url": "https://www.gao.gov/products/gao-25-107263"
+}

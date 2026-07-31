@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:5369cb07bf221834",
+  "content_path": "text-5369cb07bf221834.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-c0df21e6fd05",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "5369cb07bf2218340bc73a56272d3837356f15b6e3802fff97372370fa136773",
+  "url": "https://dpa.mod.gov.ua/document/9f2b616e-19bf-412d-8f5b-cfdcc1468dc6?utm_source=openai"
+}

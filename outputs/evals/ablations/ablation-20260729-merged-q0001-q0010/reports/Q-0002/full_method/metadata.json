@@ -1,0 +1,29 @@
+{
+  "artifact_refs": [
+    "/Users/wangchen/equipment research/outputs/runs/run-62fe8395-ccdd-4a1e-869c-edeaff677c38/report.md",
+    "/Users/wangchen/equipment research/outputs/runs/run-62fe8395-ccdd-4a1e-869c-edeaff677c38/round_summary.json"
+  ],
+  "citations": [
+    "https://www.marines.mil/Force-Design/",
+    "https://www.afrl.af.mil/News/Article-Display/Article/2464776/afrl-demonstrates-first-ever-collaborative-weapon-technologies/",
+    "https://www.gao.gov/products/gao-22-106010",
+    "https://www.darpa.mil/news/2026/rockn-enables-gps-free-operations",
+    "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/",
+    "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+    "https://www.csis.org/index.php/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+    "https://www.darpa.mil/research/programs/precise-robust-inertial-guidance-for-munitions",
+    "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+    "https://www.army.mil/article/285302/u_s_army_partnerships_bring_critical_assured_pnt_capabilities_to_american_soldiers",
+    "https://www.dyess.af.mil/News/Article/267932/jassm-er-nears-operational-employment/",
+    "https://news.lockheedmartin.com/2017-07-19-U-S-Air-Force-Awards-Lockheed-Martin-37-Million-For-New-JASSM-R-ER-Wing-Design",
+    "https://www.lockheedmartin.com/en-us/products/long-range-anti-ship-missile/lrasm-media-kit.html",
+    "https://www.af.mil/About-Us/Fact-Sheets/Display/Article/104572/joint-direct-attack-munition-gbu-313238/"
+  ],
+  "duration_seconds": 1536.624,
+  "error": "",
+  "estimated_cost": 0.0,
+  "query_id": "Q-0002",
+  "status": "completed",
+  "system_id": "full_method",
+  "usage": {}
+}

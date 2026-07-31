@@ -1,0 +1,38 @@
+{
+  "answer_chars": 10488,
+  "answer_sha256": "bd022f32877d1b65817e6dce7256f72fc3fa518f506415b32cd5cda9d4f206d4",
+  "artifact_refs": [],
+  "citations": [],
+  "created_at": "2026-07-28T20:53:47.216202+00:00",
+  "dataset_id": "tactical-strike-frontiers-50-v1",
+  "duration_seconds": 202.469,
+  "estimated_cost": 0.0,
+  "mode": "real",
+  "model_snapshot": {
+    "base_url_host": "codexpro.wwxb1123.xyz",
+    "model": "gpt-5.5",
+    "protocol": "responses"
+  },
+  "query": "高价值时敏目标快速精确打击研究",
+  "query_id": "Q-0020",
+  "query_sha256": "5b647d39c4a1046c97f15faaa406ef1c488dd7478e1bf17d4d94286423185949",
+  "report_id": "BR-0ea5293b6cf44d554945a3d9",
+  "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-0ea5293b6cf44d554945a3d9/report.md",
+  "schema_version": "1.0",
+  "source_eval_id": "baseline-first20-three-layer-nine-20260729",
+  "sources": [],
+  "status": "completed",
+  "system_id": "bare_llm",
+  "usage": {
+    "input_tokens": 717,
+    "input_tokens_details": {
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "output_tokens": 7606,
+    "output_tokens_details": {
+      "reasoning_tokens": 121
+    },
+    "total_tokens": 8323
+  }
+}

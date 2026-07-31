@@ -1,0 +1,15 @@
+{
+  "artifact_ref": "raw:f11dcf3c274ec6bc",
+  "connect_ip": "198.18.1.236",
+  "content_path": "raw-f11dcf3c274ec6bc.bin",
+  "content_type": "application/pdf",
+  "encoding": null,
+  "evidence_id": "ev-weapon_equipment-web-35481296eae4",
+  "fetch_cache_hit": false,
+  "final_url": "https://www.ga-asi.com/remotely-piloted-aircraft/pdf/2209_Gray_Eagle_25M_Datasheet_P07481_29SEPT22.pdf",
+  "kind": "raw",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "f11dcf3c274ec6bcf54900d12e134cb19eeb254b7569ebbaf1a2522c50dc022b",
+  "url": "https://www.ga-asi.com/remotely-piloted-aircraft/pdf/2209_Gray_Eagle_25M_Datasheet_P07481_29SEPT22.pdf"
+}

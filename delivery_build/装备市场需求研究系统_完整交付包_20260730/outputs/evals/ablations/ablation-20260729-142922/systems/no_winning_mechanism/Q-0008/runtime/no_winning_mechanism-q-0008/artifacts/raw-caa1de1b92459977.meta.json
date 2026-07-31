@@ -1,0 +1,15 @@
+{
+  "artifact_ref": "raw:caa1de1b92459977",
+  "connect_ip": "198.18.2.122",
+  "content_path": "raw-caa1de1b92459977.bin",
+  "content_type": "application/pdf",
+  "encoding": null,
+  "evidence_id": "ev-combat_scenario-web-9cfe769e94db",
+  "fetch_cache_hit": false,
+  "final_url": "https://www.sda.mil/wp-content/uploads/2024/08/Transport-Layer-Fact-Sheet_V6.9-distro-A.pdf",
+  "kind": "raw",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "caa1de1b924599778752af31c0fe0d4f9065fab5ac4d082b7462ec93fa99447e",
+  "url": "https://www.sda.mil/wp-content/uploads/2024/08/Transport-Layer-Fact-Sheet_V6.9-distro-A.pdf"
+}

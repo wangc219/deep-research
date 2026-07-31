@@ -1,0 +1,36 @@
+{
+  "architecture_source": [
+    "基于多智能体协作的JS装备市场需求深度挖掘系统架构设计.docx",
+    "编排器与动态智能体_总体架构图.pdf",
+    "制胜机理智能体_详细架构图.pdf"
+  ],
+  "audit_status": "approved",
+  "checks": {
+    "a_h_blueprint_executable": true,
+    "bounded_wave_concurrency_enforced": true,
+    "codex_inner_and_middle_loops_recorded": true,
+    "core_agent_sessions": true,
+    "coverage_explicit": true,
+    "cross_scenario_convergence_present": true,
+    "dynamic_agent_selection_recorded": true,
+    "failure_handoff_contracts_persisted": true,
+    "final_report_present": true,
+    "five_criteria_audit_present": true,
+    "formal_evidence_present": true,
+    "four_knowledge_resources_projected": true,
+    "isolated_agent_sessions": true,
+    "l1_l2_l3_present": true,
+    "nine_field_capability_images": true,
+    "outer_and_meta_loops_recorded": true,
+    "permission_and_budget_contracts_recorded": true,
+    "plan_graph_complete": true,
+    "real_or_fake_mode_recorded": true,
+    "recoverable_checkpoint_lineage": true,
+    "six_step_reasoning_complete": true,
+    "structured_map_reduce_handoffs": true
+  },
+  "limitations": [],
+  "release_ready": true,
+  "runtime_complete": true,
+  "schema_version": "1.0"
+}

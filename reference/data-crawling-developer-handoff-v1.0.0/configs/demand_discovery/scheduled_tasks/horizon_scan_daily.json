@@ -1,0 +1,18 @@
+{
+  "task_name": "horizon_scan_daily",
+  "task_type": "horizon_scan",
+  "schedule": "08:00",
+  "repeat": "daily",
+  "enabled": true,
+  "max_delay_hours": 6,
+  "task_brief": "对白名单 A/B 级 http 信源做一轮 horizon scanning：采集近 3 日新文章，分流登记 raw_signal/researchable_signal，对高分线索补一轮扩检。不生成正式报告。",
+  "budget": {
+    "max_tokens": 200000,
+    "max_tool_calls": 120,
+    "max_wall_clock_ms": 3600000
+  },
+  "source_filter": {
+    "tiers": ["A", "B"],
+    "transports": ["http"]
+  }
+}

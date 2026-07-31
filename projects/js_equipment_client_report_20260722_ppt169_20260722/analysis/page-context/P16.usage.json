@@ -1,0 +1,87 @@
+{
+  "schema": "ppt-master.page-context-usage.v2",
+  "page": "P16",
+  "output_mode": "compact",
+  "route": {
+    "mode": "flat"
+  },
+  "encoding": "o200k_base",
+  "token_status": "unavailable",
+  "image_selection": "explicit",
+  "inputs": [
+    {
+      "scope": "project",
+      "path": "spec_lock.md",
+      "exists": true,
+      "sha256": "ad46026344b2a549ead7170eea83342b37f79a6f30cc26b53c2827b3b8670201"
+    },
+    {
+      "scope": "project",
+      "path": "design_spec.md",
+      "exists": true,
+      "sha256": "71ce10ac926fcfaf5cf0b1da79b2bf4b5ff57fbaee3e07e9a66d3a84d777d5dc"
+    },
+    {
+      "scope": "skill",
+      "path": "templates/charts/stacked_bar_chart.svg",
+      "exists": true,
+      "sha256": "d11f43f161c4f3117a46d690bc6f463325ff0ed3e033e5463d880c8ca5f19eb7"
+    }
+  ],
+  "references": [
+    {
+      "kind": "design-spec",
+      "scope": "project",
+      "path": "design_spec.md",
+      "sha256": "71ce10ac926fcfaf5cf0b1da79b2bf4b5ff57fbaee3e07e9a66d3a84d777d5dc",
+      "load_policy": "once-per-execution-context",
+      "same_context_edit_policy": "targeted-readback-and-rebind"
+    },
+    {
+      "kind": "chart-svg",
+      "scope": "skill",
+      "path": "templates/charts/stacked_bar_chart.svg",
+      "sha256": "d11f43f161c4f3117a46d690bc6f463325ff0ed3e033e5463d880c8ca5f19eb7",
+      "load_policy": "once-per-execution-context"
+    }
+  ],
+  "documents": [
+    {
+      "kind": "page-context",
+      "scope": "page",
+      "path": "stdout:page-context",
+      "sha256": "6903883208413fdd9270e29c2e143997e39086722fd9bd7933b0b524772e3add",
+      "utf8_bytes": 4867,
+      "characters": 3683,
+      "tokens": null
+    },
+    {
+      "kind": "lock-projection",
+      "scope": "component",
+      "path": "stdout:global",
+      "sha256": "ee80a509e51196eeef052e4cd5a10d262370249331bb145a0907bdb5c6c426e2",
+      "utf8_bytes": 2170,
+      "characters": 1814,
+      "tokens": null
+    }
+  ],
+  "controlled_output": {
+    "sha256": "6903883208413fdd9270e29c2e143997e39086722fd9bd7933b0b524772e3add",
+    "utf8_bytes": 4867,
+    "characters": 3683,
+    "tokens": null
+  },
+  "totals": {
+    "page_context": null,
+    "lock_projection": null
+  },
+  "targets": {
+    "page_context_max_tokens": 2000,
+    "lock_projection_max_tokens": 1000
+  },
+  "untracked": [
+    "source-material reads",
+    "once-per-execution-context reference payloads",
+    "other session-level prompt references"
+  ]
+}

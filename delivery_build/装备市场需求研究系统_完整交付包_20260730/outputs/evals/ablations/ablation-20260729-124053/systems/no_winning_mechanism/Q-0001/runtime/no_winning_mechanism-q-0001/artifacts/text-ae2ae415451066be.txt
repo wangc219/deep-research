@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=media.defense.gov · SUMMARY OFTHE JOINT ALL DOMAIN COMMAND AND CONTROL STRATEGY.pdf
+source_url=https://media.defense.gov/2022/Mar/17/2002958406/-1/-1/1/SUMMARY-OFTHE-JOINT-ALL-DOMAIN-COMMAND-AND-CONTROL-STRATEGY.pdf
+claim=JADC2公开战略支撑在受争夺、退化电磁环境中通过数据标准、任务式指挥、自动化和韧性C2维持感知-理解-行动闭环的判断。
+excerpt=
+retrieval=Hosted web search citation metadata

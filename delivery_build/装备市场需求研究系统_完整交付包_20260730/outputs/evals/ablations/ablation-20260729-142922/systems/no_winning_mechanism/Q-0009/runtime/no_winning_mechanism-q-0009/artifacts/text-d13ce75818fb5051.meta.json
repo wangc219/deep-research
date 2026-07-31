@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:d13ce75818fb5051",
+  "content_path": "text-d13ce75818fb5051.txt",
+  "content_type": "text/plain",
+  "direct_error": "TimeoutError: _ssl.c:1015: The handshake operation timed out",
+  "encoding": "utf-8",
+  "evidence_id": "ev-operational_employment-web-ddc144a8f0f1",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "d13ce75818fb50519d8d4de9c2848dab48040882e8f6580a4ee3076ea400f84f",
+  "url": "https://www.ai.mil/Initiatives/CJADC2/"
+}

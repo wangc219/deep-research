@@ -1,0 +1,37 @@
+{
+  "answer_chars": 3044,
+  "answer_sha256": "20710b7efef340b58193a4dc24d192110917310c4dc66d27c638d4612a84d9d9",
+  "artifact_refs": [],
+  "citations": [],
+  "created_at": "2026-07-28T21:17:33.883848+00:00",
+  "dataset_id": "tactical-strike-frontiers-50-v1",
+  "duration_seconds": 41.628,
+  "estimated_cost": 0.0,
+  "mode": "real",
+  "model_snapshot": {
+    "base_url_host": "yunwu.ai",
+    "model": "glm-5.2",
+    "protocol": "chat_completions"
+  },
+  "query": "高速机动海空目标精确打击研究",
+  "query_id": "Q-0019",
+  "query_sha256": "084d817fce3f9d6ff9311dd22f8d66ca97eceaa0580abefc564c91a18f95a384",
+  "report_id": "BR-c82a64fdabbf29924a74faff",
+  "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-c82a64fdabbf29924a74faff/report.md",
+  "schema_version": "1.0",
+  "source_eval_id": "baseline-first20-three-layer-nine-20260729",
+  "sources": [],
+  "status": "completed",
+  "system_id": "zhipu_llm",
+  "usage": {
+    "completion_tokens": 3542,
+    "completion_tokens_details": {
+      "reasoning_tokens": 1569
+    },
+    "prompt_tokens": 348,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "total_tokens": 3890
+  }
+}

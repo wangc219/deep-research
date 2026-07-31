@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=Fact Sheet: DoD Strategy for Countering Unmanned Systems
+source_url=https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF
+claim=DoD C-UAS事实表指出无人系统快速扩散正在改变冲突特征，并把反无人系统能力列为重要防护方向。
+excerpt=
+retrieval=Hosted web search citation metadata

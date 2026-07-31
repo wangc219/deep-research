@@ -1,0 +1,1463 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/er1h71",
+    "id": "er1h71",
+    "slide": 14,
+    "layoutId": "e2953d98-247d-46e9-8e62-6503de8891ad",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "b35d4ec9-8aab-46cc-956d-d491de6dc268",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "e2953d98-247d-46e9-8e62-6503de8891ad",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "b35d4ec9-8aab-46cc-956d-d491de6dc268",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "b35d4ec9-8aab-46cc-956d-d491de6dc268",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/wfmdwz21",
+      "id": "1",
+      "bbox": [
+        72,
+        34,
+        520,
+        24
+      ],
+      "geometry": "rect",
+      "text": "06 NEXT STEPS",
+      "textPreview": "06 NEXT STEPS",
+      "resolvedFontSize": 13,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 13,
+        "typeface": "+mn-lt",
+        "color": "#2563A6",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "06 NEXT STEPS"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "06 NEXT STEPS",
+          "resolvedTextStyle": {
+            "fontSize": 13,
+            "color": "#2563A6",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "06 NEXT STEPS",
+              "fontSize": 13,
+              "color": "#2563A6",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/vedc3u1g",
+      "id": "2",
+      "bbox": [
+        72,
+        64,
+        1136,
+        52
+      ],
+      "geometry": "rect",
+      "text": "下一阶段聚焦证据闭环、规模验证与效率优化",
+      "textPreview": "下一阶段聚焦证据闭环、规模验证与效率优化",
+      "resolvedFontSize": 36,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 36,
+        "typeface": "+mn-lt",
+        "color": "#17202A",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "下一阶段聚焦证据闭环、规模验证与效率优化"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "下一阶段聚焦证据闭环、规模验证与效率优化",
+          "resolvedTextStyle": {
+            "fontSize": 36,
+            "color": "#17202A",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "下一阶段聚焦证据闭环、规模验证与效率优化",
+              "fontSize": 36,
+              "color": "#17202A",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ud4vupkv",
+      "id": "3",
+      "bbox": [
+        72,
+        124,
+        1136,
+        1
+      ],
+      "geometry": "rect",
+      "fillColor": "#D7DEE7",
+      "lineColor": "#D7DEE7",
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/5kfe94ji",
+      "id": "4",
+      "bbox": [
+        1150,
+        672,
+        58,
+        20
+      ],
+      "geometry": "rect",
+      "text": "14",
+      "textPreview": "14",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 12,
+        "typeface": "+mn-lt",
+        "color": "#64748B",
+        "alignment": "right",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "14"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "14",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "color": "#64748B",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "14",
+              "fontSize": 12,
+              "color": "#64748B",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/4j6d0z2x",
+      "id": "5",
+      "bbox": [
+        72,
+        672,
+        360,
+        20
+      ],
+      "geometry": "rect",
+      "text": "装备能力图像 Deep Research",
+      "textPreview": "装备能力图像 Deep Research",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 12,
+        "typeface": "+mn-lt",
+        "color": "#64748B",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "装备能力图像 Deep Research"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "装备能力图像 Deep Research",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "color": "#64748B",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "装备能力图像 Deep Research",
+              "fontSize": 12,
+              "color": "#64748B",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/jixc7u1s",
+      "id": "6",
+      "bbox": [
+        72,
+        154,
+        76,
+        58
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#B5524B",
+      "lineColor": "#B5524B",
+      "lineWidth": 1
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ihovypk7",
+      "id": "7",
+      "bbox": [
+        72,
+        154,
+        76,
+        58
+      ],
+      "geometry": "rect",
+      "text": "P0",
+      "textPreview": "P0",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "P0"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "P0",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "P0",
+              "fontSize": 18,
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/tozedoju",
+      "id": "8",
+      "bbox": [
+        174,
+        154,
+        240,
+        58
+      ],
+      "geometry": "rect",
+      "text": "强化证据绑定",
+      "textPreview": "强化证据绑定",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 20,
+        "typeface": "+mn-lt",
+        "color": "#17202A",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "强化证据绑定"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "强化证据绑定",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#17202A",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "强化证据绑定",
+              "fontSize": 20,
+              "color": "#17202A",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/snqd4j29",
+      "id": "9",
+      "bbox": [
+        426,
+        154,
+        756,
+        58
+      ],
+      "geometry": "rect",
+      "text": "正文关键结论逐条绑定正式Evidence ID；消除“证据卡未登记/需核验”的残留输出",
+      "textPreview": "正文关键结论逐条绑定正式Evidence ID；消除“证据卡未登记/需核验”的残留输出",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 17,
+        "typeface": "+mn-lt",
+        "color": "#334155",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "正文关键结论逐条绑定正式Evidence ID；消除“证据卡未登记/需核验”的残留输出"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "正文关键结论逐条绑定正式Evidence ID；消除“证据卡未登记/需核验”的残留输出",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "color": "#334155",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "正文关键结论逐条绑定正式Evidence ID；消除“证据卡未登记/需核验”的残留输出",
+              "fontSize": 17,
+              "color": "#334155",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/edgfipw7",
+      "id": "10",
+      "bbox": [
+        72,
+        242,
+        76,
+        58
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#B5524B",
+      "lineColor": "#B5524B",
+      "lineWidth": 1
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/zepwruxs",
+      "id": "11",
+      "bbox": [
+        72,
+        242,
+        76,
+        58
+      ],
+      "geometry": "rect",
+      "text": "P0",
+      "textPreview": "P0",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "P0"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "P0",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "P0",
+              "fontSize": 18,
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/0fyxkzex",
+      "id": "12",
+      "bbox": [
+        174,
+        242,
+        240,
+        58
+      ],
+      "geometry": "rect",
+      "text": "扩大Benchmark",
+      "textPreview": "扩大Benchmark",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 20,
+        "typeface": "+mn-lt",
+        "color": "#17202A",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "扩大Benchmark"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "扩大Benchmark",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#17202A",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "扩大Benchmark",
+              "fontSize": 20,
+              "color": "#17202A",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/107et4fi",
+      "id": "13",
+      "bbox": [
+        426,
+        242,
+        756,
+        58
+      ],
+      "geometry": "rect",
+      "text": "从20条扩至50条全量；加入专家人工抽检与跨评审模型一致性检查",
+      "textPreview": "从20条扩至50条全量；加入专家人工抽检与跨评审模型一致性检查",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 17,
+        "typeface": "+mn-lt",
+        "color": "#334155",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "从20条扩至50条全量；加入专家人工抽检与跨评审模型一致性检查"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "从20条扩至50条全量；加入专家人工抽检与跨评审模型一致性检查",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "color": "#334155",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "从20条扩至50条全量；加入专家人工抽检与跨评审模型一致性检查",
+              "fontSize": 17,
+              "color": "#334155",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/m10fm9w3",
+      "id": "14",
+      "bbox": [
+        72,
+        330,
+        76,
+        58
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#C88A2B",
+      "lineColor": "#C88A2B",
+      "lineWidth": 1
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/n29wvuxo",
+      "id": "15",
+      "bbox": [
+        72,
+        330,
+        76,
+        58
+      ],
+      "geometry": "rect",
+      "text": "P1",
+      "textPreview": "P1",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "P1"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "P1",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "P1",
+              "fontSize": 18,
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/o3ixoze9",
+      "id": "16",
+      "bbox": [
+        174,
+        330,
+        240,
+        58
+      ],
+      "geometry": "rect",
+      "text": "严格重跑消融",
+      "textPreview": "严格重跑消融",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 20,
+        "typeface": "+mn-lt",
+        "color": "#17202A",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "严格重跑消融"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "严格重跑消融",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#17202A",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "严格重跑消融",
+              "fontSize": 20,
+              "color": "#17202A",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/94ryx4fu",
+      "id": "17",
+      "bbox": [
+        426,
+        330,
+        756,
+        58
+      ],
+      "geometry": "rect",
+      "text": "同模型、同时间窗、同配置独立执行；增加去反馈循环、去证据门控等组别",
+      "textPreview": "同模型、同时间窗、同配置独立执行；增加去反馈循环、去证据门控等组别",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 17,
+        "typeface": "+mn-lt",
+        "color": "#334155",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "同模型、同时间窗、同配置独立执行；增加去反馈循环、去证据门控等组别"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "同模型、同时间窗、同配置独立执行；增加去反馈循环、去证据门控等组别",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "color": "#334155",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "同模型、同时间窗、同配置独立执行；增加去反馈循环、去证据门控等组别",
+              "fontSize": 17,
+              "color": "#334155",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 18,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/25wfa5gz",
+      "id": "18",
+      "bbox": [
+        72,
+        418,
+        76,
+        58
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#C88A2B",
+      "lineColor": "#C88A2B",
+      "lineWidth": 1
+    },
+    {
+      "order": 19,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/365wjaxk",
+      "id": "19",
+      "bbox": [
+        72,
+        418,
+        76,
+        58
+      ],
+      "geometry": "rect",
+      "text": "P1",
+      "textPreview": "P1",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "P1"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "P1",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "P1",
+              "fontSize": 18,
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 20,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7alcr6dc",
+      "id": "20",
+      "bbox": [
+        174,
+        418,
+        240,
+        58
+      ],
+      "geometry": "rect",
+      "text": "优化时延成本",
+      "textPreview": "优化时延成本",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 20,
+        "typeface": "+mn-lt",
+        "color": "#17202A",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "优化时延成本"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "优化时延成本",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#17202A",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "优化时延成本",
+              "fontSize": 20,
+              "color": "#17202A",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 21,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6psbi1wr",
+      "id": "21",
+      "bbox": [
+        426,
+        418,
+        756,
+        58
+      ],
+      "geometry": "rect",
+      "text": "并发检索、增量搜索、上下文裁剪、局部恢复；建立质量—耗时Pareto看板",
+      "textPreview": "并发检索、增量搜索、上下文裁剪、局部恢复；建立质量—耗时Pareto看板",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 17,
+        "typeface": "+mn-lt",
+        "color": "#334155",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "并发检索、增量搜索、上下文裁剪、局部恢复；建立质量—耗时Pareto看板"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "并发检索、增量搜索、上下文裁剪、局部恢复；建立质量—耗时Pareto看板",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "color": "#334155",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "并发检索、增量搜索、上下文裁剪、局部恢复；建立质量—耗时Pareto看板",
+              "fontSize": 17,
+              "color": "#334155",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 22,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/tc3utgv2",
+      "id": "22",
+      "bbox": [
+        72,
+        506,
+        76,
+        58
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#2563A6",
+      "lineColor": "#2563A6",
+      "lineWidth": 1
+    },
+    {
+      "order": 23,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/sbutkbex",
+      "id": "23",
+      "bbox": [
+        72,
+        506,
+        76,
+        58
+      ],
+      "geometry": "rect",
+      "text": "P2",
+      "textPreview": "P2",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "P2"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "P2",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "P2",
+              "fontSize": 18,
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 24,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/jm1cn6d0",
+      "id": "24",
+      "bbox": [
+        174,
+        506,
+        240,
+        58
+      ],
+      "geometry": "rect",
+      "text": "深化需求覆盖",
+      "textPreview": "深化需求覆盖",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 20,
+        "typeface": "+mn-lt",
+        "color": "#17202A",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "深化需求覆盖"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "深化需求覆盖",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#17202A",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "深化需求覆盖",
+              "fontSize": 20,
+              "color": "#17202A",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 25,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ilsbe1wf",
+      "id": "25",
+      "bbox": [
+        426,
+        506,
+        756,
+        58
+      ],
+      "geometry": "rect",
+      "text": "围绕文档12类分类提问和6类颠覆逻辑建立分层覆盖率与缺口清单",
+      "textPreview": "围绕文档12类分类提问和6类颠覆逻辑建立分层覆盖率与缺口清单",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 17,
+        "typeface": "+mn-lt",
+        "color": "#334155",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "围绕文档12类分类提问和6类颠覆逻辑建立分层覆盖率与缺口清单"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "围绕文档12类分类提问和6类颠覆逻辑建立分层覆盖率与缺口清单",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "color": "#334155",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "围绕文档12类分类提问和6类颠覆逻辑建立分层覆盖率与缺口清单",
+              "fontSize": 17,
+              "color": "#334155",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 26,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/5ojupwv6",
+      "id": "26",
+      "bbox": [
+        72,
+        610,
+        1136,
+        42
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#16324F",
+      "lineColor": "#16324F",
+      "lineWidth": 1
+    },
+    {
+      "order": 27,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/knatgrel",
+      "id": "27",
+      "bbox": [
+        86,
+        610,
+        1108,
+        42
+      ],
+      "geometry": "rect",
+      "text": "建议决策：批准进入“证据质量专项 + 50条全量Benchmark + 同版本消融复测”阶段。",
+      "textPreview": "建议决策：批准进入“证据质量专项 + 50条全量Benchmark + 同版本消融复测”阶段。",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "建议决策：批准进入“证据质量专项 + 50条全量Benchmark + 同版本消融复测”阶段。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "建议决策：批准进入“证据质量专项 + 50条全量Benchmark + 同版本消融复测”阶段。",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "建议决策：批准进入“证据质量专项 + 50条全量Benchmark + 同版本消融复测”阶段。",
+              "fontSize": 18,
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

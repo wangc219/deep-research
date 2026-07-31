@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=gao.gov · gao 22 106010
+source_url=https://www.gao.gov/products/gao-22-106010
+claim=GAO指出DOD的GPS/PNT面临干扰、欺骗、反卫星和网络等威胁，DOD正在发展M-code、抗干扰天线和替代PNT，但整体进展度量不足且GPS脆弱性仍会存在。
+excerpt=
+retrieval=Hosted web search citation metadata

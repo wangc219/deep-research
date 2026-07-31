@@ -1,0 +1,99 @@
+{
+  "checkpoint": {
+    "budget_remaining": {
+      "baseline_tasks": 0,
+      "finalize_tasks": 1,
+      "rounds": 2
+    },
+    "checkpoint_id": "run-checkpoint-no_multisource_baseline-q-0007",
+    "completed_task_ids": [
+      "baseline:generic_researcher"
+    ],
+    "config_fingerprint": "sha256:eba0527a791e6c4a9c468b82ee9785f3dd845ec2f2f2454db68c9ada45b52328",
+    "created_at": "2026-07-29T07:05:08.244530+00:00",
+    "mode": "real",
+    "pending_task_ids": [],
+    "research_route": "auto",
+    "resolved_route": "traditional_gap",
+    "resume_count": 0,
+    "round_index": 1,
+    "run_id": "no_multisource_baseline-q-0007",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "generic_researcher"
+    ],
+    "source_materials": [
+      {
+        "artifact_refs": [
+          "text:d56c63618f2d6f02"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-generic_researcher-web-06d26c44006f",
+          "normalized_url": "https://www.sda.mil/home/about-us/faq",
+          "reasons": [],
+          "score": 0.85
+        },
+        "evidence_id": "ev-generic_researcher-web-06d26c44006f",
+        "formal_evidence_allowed": true,
+        "reader_attempt": 1,
+        "reader_url": "https://r.jina.ai/http://www.sda.mil/home/about-us/faq/",
+        "status": "reader_fetched",
+        "url": "https://www.sda.mil/home/about-us/faq/"
+      },
+      {
+        "artifact_refs": [
+          "text:6dece8552e4e731c"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-generic_researcher-web-9cfe769e94db",
+          "normalized_url": "https://www.sda.mil/wp-content/uploads/2024/08/Transport-Layer-Fact-Sheet_V6.9-distro-A.pdf",
+          "reasons": [],
+          "score": 0.85
+        },
+        "evidence_id": "ev-generic_researcher-web-9cfe769e94db",
+        "formal_evidence_allowed": true,
+        "reader_attempt": 1,
+        "reader_url": "https://r.jina.ai/http://www.sda.mil/wp-content/uploads/2024/08/Transport-Layer-Fact-Sheet_V6.9-distro-A.pdf",
+        "status": "reader_fetched",
+        "url": "https://www.sda.mil/wp-content/uploads/2024/08/Transport-Layer-Fact-Sheet_V6.9-distro-A.pdf"
+      }
+    ],
+    "status": "running",
+    "task_statuses": {
+      "baseline:generic_researcher": "completed",
+      "finalize:winning-report": "running"
+    },
+    "topic": "天基低时延信息支撑精确打击体系研究",
+    "worker_reports": [
+      {
+        "active_skill_ids": [],
+        "active_tool_names": [
+          "search_sources",
+          "create_evidence_card"
+        ],
+        "agent_id": "generic_researcher",
+        "created_at": "2026-07-29T07:08:04.220330+00:00",
+        "domain_object_id": "",
+        "domain_object_type": "",
+        "error": "",
+        "handoff_summary": "公开证据支持将研究重点收敛为三条装备/能力需求：LEO低时延战术数据传输、天基多层目标跟踪到火控级轨迹支撑、GPS拒止与电磁压制下的PNT/通信韧性。军事任务效果是压缩传感器到射手链路、提高超视距目标保持和火力任务连续性；主要失效边界是火控级性能未公开、强电磁环境下链路可靠性不足证、PNT替代体系成熟度和部署度不明。下一步应围绕S4-S6建立差距矩阵：以传统脆弱链路为0档，以提示级近全球跟踪为中间档，以强对抗下稳定闭合杀伤链为目标档，并对每档列出可公开验证指标与不可证实指标。",
+        "harness_profile": "discovery_research_v1",
+        "new_evidence_ids": [
+          "ev-generic_researcher-web-06d26c44006f",
+          "ev-generic_researcher-web-9cfe769e94db"
+        ],
+        "packet_id": "packet-generic_researcher",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment research/outputs/evals/ablations/ablation-20260729-142922/systems/no_multisource_baseline/Q-0007/runtime/no_multisource_baseline-q-0007/agent_sessions/generic_researcher.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-b76df4b3-face-46b5-a27c-5328f83875a8"
+      }
+    ]
+  },
+  "savepoint_id": "checkpoint-586232d9ed8705c407418d8f"
+}

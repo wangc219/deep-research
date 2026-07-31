@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" data-pptx-page-role="ending">
+  <rect id="background" data-pptx-role="background" x="0" y="0" width="1280" height="720" fill="#123B63"/>
+  <image id="closing-echo" data-pptx-role="decoration" href="../images/cover_multi_agent_closed_loop.png" x="0" y="0" width="1280" height="720" preserveAspectRatio="xMidYMid slice" opacity="0.10"/>
+  <rect id="closing-wash" data-pptx-role="decoration" x="0" y="0" width="1280" height="720" fill="#123B63" fill-opacity="0.84"/>
+  <circle id="closing-orb" data-pptx-role="decoration" cx="1140" cy="38" r="230" fill="#2A7F9E" fill-opacity="0.22"/>
+
+  <g id="closing-title" data-pptx-bounds="48 32 1184 126">
+    <text x="56" y="72" font-family="Georgia, 'Noto Serif CJK SC', 'Songti SC', serif" font-size="36" font-weight="700" fill="#FFFFFF">下一阶段不再扩功能面：<tspan x="56" dy="42">先补齐证据可信，再在质量守门下提速并完成投产</tspan></text>
+    <rect x="1030" y="38" width="194" height="34" rx="17" fill="#FFFFFF" fill-opacity="0.14" stroke="#FFFFFF" stroke-opacity="0.28"/>
+    <text x="1127" y="61" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="16" font-weight="700" fill="#FFFFFF">CODEX 项目诊断</text>
+    <text x="58" y="151" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="18" fill="#DDEAF2">依据：盲评唯一短板 · 真实耗时差距 · 模块贡献待归因 · 目标环境复验项</text>
+  </g>
+
+  <g id="priority-p0" data-pptx-bounds="56 176 356 394">
+    <rect x="56" y="176" width="356" height="394" rx="24" fill="#FFFFFF" fill-opacity="0.97"/>
+    <rect x="56" y="176" width="356" height="8" fill="#B94747"/>
+    <rect x="80" y="198" width="48" height="28" rx="14" fill="#B94747"/>
+    <text x="104" y="217" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#FFFFFF">P0</text>
+    <text x="140" y="219" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="21" font-weight="700" fill="#123B63">证据可信</text>
+    <use data-icon="tabler-outline/shield-check" x="354" y="197" width="32" height="32" fill="#B94747" stroke-width="2"/>
+    <text x="80" y="248" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" fill="#5B6B7C">盲评唯一系统性短板，必须先形成发布门槛</text>
+
+    <rect x="80" y="260" width="308" height="66" rx="16" fill="#FFF0F0"/>
+    <text x="98" y="303" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#B94747">2 : 3 : 67</text>
+    <text x="304" y="285" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="12" fill="#5B6B7C">完整方法 : 平 : 通用 Agent</text>
+    <text x="304" y="308" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" font-weight="700" fill="#8C3232">证据与事实可靠性</text>
+
+    <text x="80" y="354" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="16" font-weight="700" fill="#123B63">关键优化动作</text>
+    <text x="80" y="382" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="16" fill="#17212B">• 结论—引用一一绑定，正文来源可核查<tspan x="80" dy="26">• 时效 / 冲突 / 独立性 / 材料化全链审计</tspan><tspan x="80" dy="26">• 专家仲裁 + 自动引用审计 + 失败复盘</tspan></text>
+
+    <rect x="80" y="484" width="308" height="68" rx="16" fill="#FFF7E8" stroke="#D59A24"/>
+    <text x="96" y="507" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" font-weight="700" fill="#8A5D10">验收门槛</text>
+    <text x="96" y="529" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="16" font-weight="700" fill="#B94747">引用有效率 ≥95%</text>
+    <text x="96" y="549" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" fill="#6E5A34">低质/失败来源 0 进入正式链</text>
+  </g>
+
+  <g id="priority-p1" data-pptx-bounds="432 176 356 394">
+    <rect x="432" y="176" width="356" height="394" rx="24" fill="#FFFFFF" fill-opacity="0.97"/>
+    <rect x="432" y="176" width="356" height="8" fill="#2A7F9E"/>
+    <rect x="456" y="198" width="48" height="28" rx="14" fill="#2A7F9E"/>
+    <text x="480" y="217" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#FFFFFF">P1</text>
+    <text x="516" y="219" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="21" font-weight="700" fill="#123B63">协作与性能</text>
+    <use data-icon="tabler-outline/clock" x="730" y="197" width="32" height="32" fill="#2A7F9E" stroke-width="2"/>
+    <text x="456" y="248" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" fill="#5B6B7C">质量领先，但当前端到端耗时需专项优化</text>
+
+    <rect x="456" y="260" width="308" height="66" rx="16" fill="#E7F6F8"/>
+    <text x="474" y="306" font-family="Arial, sans-serif" font-size="38" font-weight="700" fill="#2A7F9E">5.2×</text>
+    <text x="584" y="285" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" fill="#5B6B7C">完整方法 1188.6 s / 题</text>
+    <text x="584" y="308" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" font-weight="700" fill="#174D79">通用 Agent 226.7 s / 题</text>
+
+    <text x="456" y="354" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="16" font-weight="700" fill="#123B63">关键优化动作</text>
+    <text x="456" y="382" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="16" fill="#17212B">• 关键路径拆解，Wave / S1–S6 并发调度<tspan x="456" dy="26">• 证据缓存、材料化缓存与增量复用</tspan><tspan x="456" dy="26">• 分支裁剪 / 提前停止 / 模型工具分层路由</tspan></text>
+
+    <rect x="456" y="484" width="308" height="68" rx="16" fill="#EAF0F7" stroke="#2A7F9E"/>
+    <text x="472" y="507" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" font-weight="700" fill="#174D79">验收门槛</text>
+    <text x="472" y="529" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" fill="#123B63">P50 / P95 / Token / 工具 / 成本可观测</text>
+    <text x="472" y="549" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" font-weight="700" fill="#2E8B6D">七项专业优势不退化</text>
+  </g>
+
+  <g id="priority-p2" data-pptx-bounds="808 176 416 394">
+    <rect x="808" y="176" width="416" height="394" rx="24" fill="#FFFFFF" fill-opacity="0.97"/>
+    <rect x="808" y="176" width="416" height="8" fill="#2E8B6D"/>
+    <rect x="832" y="198" width="48" height="28" rx="14" fill="#2E8B6D"/>
+    <text x="856" y="217" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#FFFFFF">P2</text>
+    <text x="892" y="219" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="21" font-weight="700" fill="#123B63">消融评测与投产验证</text>
+    <use data-icon="tabler-outline/chart-bar" x="1170" y="197" width="32" height="32" fill="#2E8B6D" stroke-width="2"/>
+    <text x="832" y="248" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" fill="#5B6B7C">统一 Query、模型预算、工具权限与专家盲评口径</text>
+
+    <rect x="832" y="260" width="104" height="28" rx="14" fill="#EAF0F7"/><text x="884" y="279" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" fill="#123B63">单 Agent</text>
+    <rect x="944" y="260" width="124" height="28" rx="14" fill="#EAF0F7"/><text x="1006" y="279" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" fill="#123B63">无路线 / A–H</text>
+    <rect x="1076" y="260" width="124" height="28" rx="14" fill="#EAF0F7"/><text x="1138" y="279" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" fill="#123B63">无 S1–S6</text>
+    <rect x="832" y="296" width="176" height="28" rx="14" fill="#FFF3D8"/><text x="920" y="315" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" fill="#8A5D10">无 L1–L4 / Recall</text>
+    <rect x="1016" y="296" width="184" height="28" rx="14" fill="#FFF0F0"/><text x="1108" y="315" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" fill="#8C3232">无证据治理</text>
+
+    <text x="832" y="354" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="16" font-weight="700" fill="#123B63">评测、扩面与投产动作</text>
+    <text x="832" y="382" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="16" fill="#17212B">• 比较质量 / 耗时 / 成本 / 稳定性 / 边际贡献<tspan x="832" dy="26">• Full-480 + DeepGold-72 全量运行</tspan><tspan x="832" dy="26">• PostgreSQL / Redis / OIDC / TLS / 备份 / 容量 / 试点</tspan></text>
+
+    <rect x="832" y="484" width="368" height="68" rx="16" fill="#E9F6F1" stroke="#2E8B6D"/>
+    <text x="848" y="507" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" font-weight="700" fill="#1F7156">发布门槛</text>
+    <text x="848" y="529" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" fill="#123B63">Full ≥75 · DeepGold ≥70 · 可靠性 ≥85</text>
+    <text x="848" y="549" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" font-weight="700" fill="#2E8B6D">完成率 ≥98% · 严重安全事件 0</text>
+  </g>
+
+  <g id="decision-ask" data-pptx-bounds="56 590 1168 76">
+    <rect x="56" y="590" width="1168" height="76" rx="24" fill="#FFFFFF" fill-opacity="0.13" stroke="#FFFFFF" stroke-opacity="0.26"/>
+    <use data-icon="tabler-outline/target-arrow" x="80" y="611" width="34" height="34" fill="#D59A24" stroke-width="2"/>
+    <text x="132" y="617" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" font-weight="700" fill="#D59A24">建议本轮共同确认</text>
+    <text x="132" y="646" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="20" font-weight="700" fill="#FFFFFF">P0 证据专项优先级 · 消融实验矩阵 · 目标环境参数 · 专家仲裁机制 · 首批试点场景</text>
+  </g>
+
+  <g id="source-note" data-pptx-bounds="56 676 1080 24">
+    <text x="56" y="696" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="12" fill="#DDEAF2">依据：2026-07-22 Pairwise Benchmark · Benchmark v1.0 发布门槛 · 企业交付验收记录</text>
+  </g>
+  <text id="page-number" data-pptx-role="page-number" x="1226" y="696" text-anchor="end" font-family="Arial, sans-serif" font-size="14" fill="#DDEAF2">17</text>
+</svg>

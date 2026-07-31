@@ -1,0 +1,5 @@
+来源：作战运用离线验证材料
+URL：https://fixture.local/operational_employment
+claim：作战运用发现与“挖掘在西太反介入体系下的装备能力缺口”相关的关键能力信号。
+excerpt：围绕挖掘在西太反介入体系下的装备能力缺口的公开资料显示，作战运用维度存在可用于能力画像研判的信号。
+mode：fake

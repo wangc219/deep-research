@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:60582ca5f40dca24",
+  "content_path": "text-60582ca5f40dca24.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-ab5d51e87a2d",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "60582ca5f40dca24fa6df0f8e4cd64a0fc962bcf38a00b469b5caca90f9e192c",
+  "url": "https://innovation.army.mil/Test-Page/dvpTag/M-LIDS/?utm_source=openai"
+}

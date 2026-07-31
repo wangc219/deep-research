@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:3efd1c1879d70376",
+  "content_path": "text-3efd1c1879d70376.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: cached_origin_failure:HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-combat_scenario-web-c38f07c3ceb3",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "3efd1c1879d70376d0b7773672c0cac5dc40fc70ac510e461bb84c3bd6d05ea9",
+  "url": "https://www.marines.mil/News/News-Display/Article/2708120/expeditionary-advanced-base-operations-eabo/"
+}

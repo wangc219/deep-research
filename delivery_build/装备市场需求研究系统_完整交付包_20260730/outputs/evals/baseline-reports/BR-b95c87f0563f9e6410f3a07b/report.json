@@ -1,0 +1,38 @@
+{
+  "answer_chars": 10354,
+  "answer_sha256": "d8a4f80fdc708c8bbca73b3e1b2035ef281c52df7d19a3659511b4d9a75dfe3e",
+  "artifact_refs": [],
+  "citations": [],
+  "created_at": "2026-07-28T20:53:47.208544+00:00",
+  "dataset_id": "tactical-strike-frontiers-50-v1",
+  "duration_seconds": 140.748,
+  "estimated_cost": 0.0,
+  "mode": "real",
+  "model_snapshot": {
+    "base_url_host": "codexpro.wwxb1123.xyz",
+    "model": "gpt-5.5",
+    "protocol": "responses"
+  },
+  "query": "卫星拒止条件下多源自主导航精打武器研究",
+  "query_id": "Q-0002",
+  "query_sha256": "38ea5b4aef50d22c51ee5054de2b507e2da5a8325f3c3349b90cbabd6a963182",
+  "report_id": "BR-b95c87f0563f9e6410f3a07b",
+  "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-b95c87f0563f9e6410f3a07b/report.md",
+  "schema_version": "1.0",
+  "source_eval_id": "baseline-first20-three-layer-nine-20260729",
+  "sources": [],
+  "status": "completed",
+  "system_id": "bare_llm",
+  "usage": {
+    "input_tokens": 721,
+    "input_tokens_details": {
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "output_tokens": 7755,
+    "output_tokens_details": {
+      "reasoning_tokens": 400
+    },
+    "total_tokens": 8476
+  }
+}

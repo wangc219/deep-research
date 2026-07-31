@@ -1,0 +1,14 @@
+{
+  "artifact_ref": "html:17f33d1197a66522",
+  "connect_ip": "198.18.2.62",
+  "content_path": "html-17f33d1197a66522.html",
+  "content_type": "text/html;charset=utf-8",
+  "encoding": null,
+  "evidence_id": "ev-international_situation-web-906fb4b16de0",
+  "final_url": "https://nato.int/en/work-with-us/business-and-project-opportunities/demand-signal",
+  "kind": "html",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "17f33d1197a665222399fae581b3fdd8ae0da96019d0227b4eb6f8abd03c5455",
+  "url": "https://nato.int/en/work-with-us/business-and-project-opportunities/demand-signal"
+}

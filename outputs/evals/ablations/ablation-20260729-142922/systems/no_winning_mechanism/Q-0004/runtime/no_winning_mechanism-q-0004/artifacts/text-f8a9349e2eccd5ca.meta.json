@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:f8a9349e2eccd5ca",
+  "content_path": "text-f8a9349e2eccd5ca.txt",
+  "content_type": "text/plain",
+  "direct_error": "UnicodeEncodeError: 'ascii' codec can't encode characters in position 117-122: ordinal not in range(128)",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-e894862926e0",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "f8a9349e2eccd5ca7c21fa069e35802528ab14302bb93c7eccf5c4bb0dc48fbd",
+  "url": "https://www.army.mil/article-amp/291321/portfolio_acquisition_executive_for_fires_hosts_precision_strike_missile_increment_4_industry、增量路线及Inc"
+}

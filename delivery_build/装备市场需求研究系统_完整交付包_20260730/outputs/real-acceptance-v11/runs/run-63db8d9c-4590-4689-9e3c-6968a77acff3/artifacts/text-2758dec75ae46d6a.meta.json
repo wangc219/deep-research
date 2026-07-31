@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:2758dec75ae46d6a",
+  "content_path": "text-2758dec75ae46d6a.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-622ddbadbff9",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "2758dec75ae46d6acd125149a92185404f0ed779e74eae50ce73c0a2483c23f1",
+  "url": "https://nllp.jallc.nato.int/iks/sharing%20public/231208-ruswar-ukraine-lessons-curriculum.pdf?utm_source=openai"
+}

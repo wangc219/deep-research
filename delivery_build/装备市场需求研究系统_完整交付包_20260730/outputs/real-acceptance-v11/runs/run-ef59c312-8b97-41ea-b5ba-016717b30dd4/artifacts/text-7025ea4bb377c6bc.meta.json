@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:7025ea4bb377c6bc",
+  "content_path": "text-7025ea4bb377c6bc.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-combat_scenario-web-27af88f8ada0",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "7025ea4bb377c6bc804fd9dfb26bf79a81ecd705798c238abd694bddf644a4ea",
+  "url": "https://media.defense.gov/2026/Jul/08/2003958884/-1/-1/1/SMALL-DRONES-BIG-PROBLEMS-A-FIRST-PRINCIPLES-APPROACH-TO-COUNTER-UAS.PDF?utm_source=openai"
+}

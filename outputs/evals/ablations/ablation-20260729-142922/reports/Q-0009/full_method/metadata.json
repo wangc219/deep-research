@@ -1,0 +1,28 @@
+{
+  "artifact_refs": [
+    "/Users/wangchen/equipment research/outputs/runs/run-53e667a3-cb9c-4e84-aa69-59d3760d42c9/report.md",
+    "/Users/wangchen/equipment research/outputs/runs/run-53e667a3-cb9c-4e84-aa69-59d3760d42c9/round_summary.json"
+  ],
+  "citations": [
+    "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/",
+    "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+    "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+    "https://www.diu.mil/latest/defense-innovation-unit-announces-software-vendors-to-support-replicator",
+    "https://www.marines.mil/Force-Design/",
+    "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+    "https://www.defense.gov/News/Transcripts/Transcript/Article/3704566/army-officials-hold-a-press-briefing-on-president-bidens-fiscal-2025-army-budget/",
+    "https://www.army.mil/article/284406/army_awards_precision_strike_missile_early_operational_capability_contract",
+    "https://www.afmc.af.mil/News/Article-Display/Article/4475375/air-force-advances-dragon-cart-palletized-effects-program/",
+    "https://www.congress.gov/crs_external_products/IF/PDF/IF12611/IF12611.8.pdf",
+    "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2025-E-Edition/Project-Convergence/",
+    "https://www.sda.mil/home/about-us/faq/",
+    "https://www.usarpac.army.mil/Our-Story/Our-News/Article-Display/Article/4487093/army-advances-multi-domain-command-pacific-following-successful-operational-exp/"
+  ],
+  "duration_seconds": 1145.884,
+  "error": "",
+  "estimated_cost": 0.0,
+  "query_id": "Q-0009",
+  "status": "completed",
+  "system_id": "full_method",
+  "usage": {}
+}

@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=media.defense.gov · FACT SHEET STRATEGY FOR COUNTERING UNMANNED SYSTEMS.PDF
+source_url=https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF
+claim=E4：美防部反无人系统战略事实表指出，无人系统使部队更难隐藏、集中、通信和机动，低成本可得性推动精确打击扩散，并呈现更自主、联网和集群化趋势。
+excerpt=
+retrieval=Hosted web search citation metadata

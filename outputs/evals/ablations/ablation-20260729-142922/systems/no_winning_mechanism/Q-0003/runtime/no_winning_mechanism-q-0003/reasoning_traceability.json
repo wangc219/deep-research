@@ -1,0 +1,93 @@
+{
+  "agent_handoffs": [
+    {
+      "agent_id": "operational_employment",
+      "claim_ids": [
+        "claim-12db1364761e",
+        "claim-7cb163cba73a",
+        "claim-f115a8e20806",
+        "claim-7f9f70e5d9c8"
+      ],
+      "confidence": 0.76,
+      "evidence_ids": [
+        "ev-operational_employment-web-f5c6743744b1",
+        "ev-operational_employment-web-ba7af247bc5e",
+        "ev-operational_employment-web-f42ad4ad8ea8",
+        "ev-operational_employment-web-8952c3805d5a"
+      ],
+      "handoff_summary": "作战运用判断：复杂电磁环境自适应精打武器应按任务系统建设，首要缺口是受扰条件下维持发现、识别、授权、交战、BDA、再攻击和恢复闭环。推荐COA为分层杀伤网与自适应弹药混合运用，以高端精打、低成本可消耗弹药、前沿低特征节点、电子战/频谱管理、反无人防护和前沿保障恢复构成持续拒止与打击体系。下一步需求卡应聚焦开放架构多模末制导组件、分层可消耗弹药族、电磁任务管理/批量规划套件、前沿低特征杀伤链节点包、快速软件任务数据刷新和前沿保障恢复模块。",
+      "limitations": [
+        "高端远程精打提高首波关键节点毁伤和威慑，但库存、成本、ISR/C2/BDA依赖高，不能单独支撑持续压制。",
+        "低成本规模化弹药可扩大搜索、诱骗和消耗效果，但若目标识别、抗扰导引、任务规划和前沿补给不足，规模优势会转化为弹药浪费和误击风险。",
+        "完全人工确认可降低误击风险，但在机动目标和短时窗口下会拖慢杀伤链；完全自动交战可提速，但在诱饵、欺骗和低置信度目标条件下风险不可接受。"
+      ],
+      "open_questions": [
+        "现有装备基线中，哪些弹药和传感/通信组件已具备开放架构任务数据刷新能力，哪些仍依赖封闭式厂商流程？",
+        "预授权边界、人在回路/人在监督回路和低置信度放弃交战规则如何在强干扰、短窗口目标条件下落地？",
+        "前沿低特征节点的补给、备件、能源、软件回滚和反无人防护能力是否已纳入同一装备需求包？"
+      ],
+      "packet_id": "packet-operational_employment"
+    },
+    {
+      "agent_id": "combat_scenario",
+      "claim_ids": [
+        "claim-2842df6a801b",
+        "claim-28f29f3d27cd",
+        "claim-62d3141eb52c",
+        "claim-fa8cd648cad5",
+        "claim-5ddd5252cca1",
+        "claim-45b72a1a270c",
+        "claim-d912b632a017"
+      ],
+      "confidence": 0.74,
+      "evidence_ids": [
+        "ev-combat_scenario-web-f75c406e50db",
+        "ev-combat_scenario-web-8e1a36b7c297",
+        "ev-combat_scenario-web-29409c926255",
+        "ev-combat_scenario-web-b0ac592cca7d"
+      ],
+      "handoff_summary": "本研判将复杂电磁环境自适应精打武器收敛为三类任务压力：S4纵深防空/反无人/电子战节点压制，S5长期消耗下弹药与软件适应，S6反无人饱和背景下精打保链。核心判断是装备发展必须从单弹精度转向断链、受骗、低带宽、快反制条件下的体系闭环。",
+      "limitations": [
+        "若敌方电子战能力弱、目标静止且链路稳定，则复杂自适应能力的边际价值下降，传统精确弹药可能具备足够任务效果。",
+        "若可消耗节点供应不足或成本交换失败，规模化诱饵/中继/评估组合会从韧性来源转为保障负担。"
+      ],
+      "open_questions": [
+        "公开来源不足以量化各类抗干扰、多模识别和低占空比链路的具体性能阈值；后续应以演训数据或仿真红队压力测试补齐。",
+        "不同战区地形、海况、城市遮蔽和敌方频谱管制强度会改变S4/S5/S6权重，当前结论适用于任务级能力研究，不等同于具体作战方案。"
+      ],
+      "packet_id": "packet-combat_scenario"
+    },
+    {
+      "agent_id": "weapon_equipment",
+      "claim_ids": [
+        "claim-b9cb8beb725f",
+        "claim-3786be8e4b42",
+        "claim-f3a1bcc8b362",
+        "claim-b3dc310fb3eb",
+        "claim-18ea8b647d38"
+      ],
+      "confidence": 0.76,
+      "evidence_ids": [
+        "ev-weapon_equipment-web-99f4c3fcfe4d",
+        "ev-weapon_equipment-web-77ce03b08076",
+        "ev-weapon_equipment-web-12e2909b414a",
+        "ev-weapon_equipment-web-baf47ceda80d"
+      ],
+      "handoff_summary": "复杂电磁环境自适应精打武器的国外装备基线应按远打精打导弹、远程无人打击、远域压制三族建立，而不是合并为泛化远程打击。现役做优应优先增强抗扰导航、多模末制导、任务数据更新、诱骗压制协同和低成本补打；新研拓新应形成断链自治精打弹药、可消耗远程巡飞弹、诱骗-干扰-反辐射一体化效应器和跨平台通用任务载荷。",
+      "limitations": [
+        "PrSM Increment 4公开目标包含1000 km以上和移动海上/可迁移陆上目标，但其状态是快速原型和后续竞争飞行验证，不能按现役成熟能力处理。",
+        "MALD公开宣称低成本可消耗和约500海里航程，但压制/诱骗效果高度依赖对手雷达工作状态、威胁库和协同时间窗，不能直接推导为稳定突防率。",
+        "MQ-9B公开航时和SATCOM起降能力证明远程无人平台的持续性，但复杂电磁压制下链路可靠性和授权规则未公开，不能直接等同断链自主打击能力。"
+      ],
+      "open_questions": [
+        "公开证据不足以核验各型弹药在强GNSS欺骗、链路压制和诱饵环境下的命中概率、重捕获概率和末端识别准确率。",
+        "PrSM Increment 4、Replicator部分系统、NGJ-LB等在研/推进项目的批次状态、飞行验证结果和形成库存时间仍需持续复核。",
+        "成本、产能、库存弹药可用率和战时补充速度缺少同口径公开数据，限制全寿命与持续作战评估。"
+      ],
+      "packet_id": "packet-weapon_equipment"
+    }
+  ],
+  "reasoning_nodes": [],
+  "stage_outputs": [],
+  "trace_rule": "正式结论应由需求卡片回溯至能力画像、S1-S6节点、中间Agent Packet和EvidenceCard。"
+}

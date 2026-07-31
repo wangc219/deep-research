@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:26598016721b6974",
+  "content_path": "text-26598016721b6974.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-14f3401e6630",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "26598016721b69747b1bfa17ba13ffda7991f63205961d22ba2233fac5e3c157",
+  "url": "https://www.defense.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/?utm_source=openai"
+}

@@ -1,0 +1,144 @@
+{
+  "checkpoint": {
+    "budget_remaining": {
+      "baseline_tasks": 0,
+      "finalize_tasks": 1,
+      "rounds": 2
+    },
+    "checkpoint_id": "run-checkpoint-no_multisource_baseline-q-0010",
+    "completed_task_ids": [
+      "baseline:generic_researcher"
+    ],
+    "config_fingerprint": "sha256:eba0527a791e6c4a9c468b82ee9785f3dd845ec2f2f2454db68c9ada45b52328",
+    "created_at": "2026-07-29T07:38:14.019636+00:00",
+    "mode": "real",
+    "pending_task_ids": [],
+    "research_route": "auto",
+    "resolved_route": "traditional_gap",
+    "resume_count": 0,
+    "round_index": 1,
+    "run_id": "no_multisource_baseline-q-0010",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "generic_researcher"
+    ],
+    "source_materials": [
+      {
+        "artifact_refs": [
+          "text:3cac0f215e1e5273"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-generic_researcher-web-3393b98b73a1",
+          "normalized_url": "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in",
+          "reasons": [],
+          "score": 0.688
+        },
+        "evidence_id": "ev-generic_researcher-web-3393b98b73a1",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/"
+      },
+      {
+        "artifact_refs": [
+          "html:ac54eb49d73d8319"
+        ],
+        "content_type": "text/html; charset=UTF-8",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-generic_researcher-web-06d26c44006f",
+          "normalized_url": "https://www.sda.mil/home/about-us/faq",
+          "reasons": [],
+          "score": 0.85
+        },
+        "evidence_id": "ev-generic_researcher-web-06d26c44006f",
+        "fetch_cache_hit": false,
+        "final_url": "https://www.sda.mil/home/about-us/faq/",
+        "formal_evidence_allowed": true,
+        "paragraph_locations": [
+          "text:e98434cc5c4d7597#p1",
+          "text:e98434cc5c4d7597#p2",
+          "text:e98434cc5c4d7597#p3",
+          "text:e98434cc5c4d7597#p4",
+          "text:e98434cc5c4d7597#p5",
+          "text:e98434cc5c4d7597#p6",
+          "text:e98434cc5c4d7597#p7",
+          "text:e98434cc5c4d7597#p8",
+          "text:e98434cc5c4d7597#p9",
+          "text:e98434cc5c4d7597#p10",
+          "text:e98434cc5c4d7597#p11",
+          "text:e98434cc5c4d7597#p12",
+          "text:e98434cc5c4d7597#p13",
+          "text:e98434cc5c4d7597#p14",
+          "text:e98434cc5c4d7597#p15",
+          "text:e98434cc5c4d7597#p16",
+          "text:e98434cc5c4d7597#p17",
+          "text:e98434cc5c4d7597#p18",
+          "text:e98434cc5c4d7597#p19",
+          "text:e98434cc5c4d7597#p20",
+          "text:e98434cc5c4d7597#p21",
+          "text:e98434cc5c4d7597#p22",
+          "text:e98434cc5c4d7597#p23",
+          "text:e98434cc5c4d7597#p24",
+          "text:e98434cc5c4d7597#p25",
+          "text:e98434cc5c4d7597#p26",
+          "text:e98434cc5c4d7597#p27",
+          "text:e98434cc5c4d7597#p28",
+          "text:e98434cc5c4d7597#p29",
+          "text:e98434cc5c4d7597#p30",
+          "text:e98434cc5c4d7597#p31",
+          "text:e98434cc5c4d7597#p32",
+          "text:e98434cc5c4d7597#p33",
+          "text:e98434cc5c4d7597#p34",
+          "text:e98434cc5c4d7597#p35",
+          "text:e98434cc5c4d7597#p36",
+          "text:e98434cc5c4d7597#p37",
+          "text:e98434cc5c4d7597#p38",
+          "text:e98434cc5c4d7597#p39",
+          "text:e98434cc5c4d7597#p40",
+          "text:e98434cc5c4d7597#p41",
+          "text:e98434cc5c4d7597#p42",
+          "text:e98434cc5c4d7597#p43"
+        ],
+        "simplified_artifact_ref": "text:e98434cc5c4d7597",
+        "status": "fetched",
+        "url": "https://www.sda.mil/home/about-us/faq/"
+      }
+    ],
+    "status": "running",
+    "task_statuses": {
+      "baseline:generic_researcher": "completed",
+      "finalize:winning-report": "running"
+    },
+    "topic": "目标持续监视与精确打击一体化研究",
+    "worker_reports": [
+      {
+        "active_skill_ids": [],
+        "active_tool_names": [
+          "search_sources",
+          "create_evidence_card"
+        ],
+        "agent_id": "generic_researcher",
+        "created_at": "2026-07-29T07:40:52.780170+00:00",
+        "domain_object_id": "",
+        "domain_object_type": "",
+        "error": "",
+        "handoff_summary": "决定性事实集中在四个边界：一是火力闭环本质是sensor-to-shooter链路，通信与C2韧性决定持续监视能否转化为打击；二是SDA式分布式低轨传输/跟踪/战斗管理架构提供公开可证的装备发展方向，但能力随批次递进；三是GPS/PNT脆弱性会同时影响定位、导航、授时和网络协同，替代PNT是高优先级缺口；四是监视节点在电磁与反火力环境下必须低暴露、机动、可降级运行，协同自主无人系统可作为通信受限时的补强方向。",
+        "harness_profile": "discovery_research_v1",
+        "new_evidence_ids": [
+          "ev-generic_researcher-web-06d26c44006f",
+          "ev-generic_researcher-web-3393b98b73a1"
+        ],
+        "packet_id": "packet-generic_researcher",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment research/outputs/evals/ablations/ablation-20260729-142922/systems/no_multisource_baseline/Q-0010/runtime/no_multisource_baseline-q-0010/agent_sessions/generic_researcher.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-2e66446e-1754-469c-a24f-4873a3973d53"
+      }
+    ]
+  },
+  "savepoint_id": "checkpoint-e9891919fac14696984a267e"
+}

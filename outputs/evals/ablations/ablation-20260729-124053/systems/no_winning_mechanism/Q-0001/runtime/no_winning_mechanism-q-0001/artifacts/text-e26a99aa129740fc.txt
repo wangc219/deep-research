@@ -1,0 +1,41 @@
+[1] Explore Our Research
+
+[2] Publications
+
+[3] Occasional Papers
+
+[4] Jack Watling
+
+[5] This paper addresses the question of what components are necessary for land forces to field a UAV complex that can deliver precision effects en masse to maximise the efficiency of exchange with an enemy.
+
+[6] Russia’s full-scale invasion of Ukraine has led to the extensive employment of UAVs to deliver precision effects at scale. Militaries observing the conflict are assessing how they can integrate these capabilities into their own forces and mitigate the threat from them. This paper is the first in a series. It examines how UAVs offer the most utility to land forces; subsequent papers will consider counter-UAV methodologies and their role across the joint force. There are six critical conclusions that can be drawn from the present paper.
+
+[7] First, UAVs’ primary offer is their ability to deliver effect at either a cost or a scale that cannot be matched by other means. This means that UAV designs should be ruthlessly simplified and optimised for defined tasks. However, there are also limits to the extent to which costs can be driven down if a system is to be reliable and resilient. There are, in fact, very particular intersections between price and capability where UAVs are optimally effective.
+
+[8] Second, UAVs should be treated not as platforms but as systems. Any UAV becomes increasingly ineffective over time as the adversary refines its countermeasures. Ensuring that a UAV complex can continue to function effectively requires updates to software, behavioural logic, sensors and radios, every six to 12 weeks. The airframe is the constant but least important component. UAV procurement must reflect this, with suppliers contracted to provide subsystems, not integrated packages.
+
+[9] Third, the effectiveness of UAVs is largely determined by their layered employment, by crew skill, and by the capacity to plan flights. The latter requires access to electromagnetic surveys, meteorological data, intelligence on enemy air defences, and awareness of other UAV activity. The need to scale effect, and to have access to a support structure that must often draw on highly classified capabilities, means that while some UAVs may be widely distributed as tactical tools, most classes of UAV are better grouped into a specialist formation that is able to use different kinds of UAV in combination, and that has the in-house capacity to update and reconfigure its UAVs.
+
+[10] Fourth, a UAV battalion, equipped to deliver close and deep strike, deep ISR and enabling action, can support a large area of battlespace. While the capabilities they offer can pose challenges to the enemy, however, UAV effectiveness is ultimately dependent upon their interaction with artillery, electronic warfare, air defence and other force elements. UAVs may redistribute the balance of missions assigned to different systems, but they do not eliminate the requirement for traditional artillery.
+
+[11] The fifth critical conclusion is that regulation of UAVs is a major constraint upon their effective design, procurement and employment, and thus on their battlefield effectiveness. There are trade-offs between the speed of evolution necessary to keep these systems competitive and the safety requirements for airspace deconfliction. It is evident that the structures that exist in NATO countries today tend to increase cost and slow down development to such an extent as to prevent NATO states from employing UAVs effectively. The approach to regulation should be scrutinised, as it has an impact on the operational outputs of the force in this area.
+
+[12] Finally, a force that is aware of and equipped to counter the threat of massed UAVs can degrade their efficiency. There are many limitations to UAVs that can be worked around through adaptive tactics. These methods are difficult to scale. However, a force that is not aware of or equipped to counter UAVs risks ceding the enemy an insurmountable advantage in situational awareness, and suffering from a scale of precision effects that will prove crippling. Armies cannot, therefore, afford to be unprepared.
+
+[13] Land Warfare
+
+[14] Russia and Eurasia
+
+[15] Military Sciences
+
+[16] Justin Bronk
+
+[17] Senior Research Fellow, Airpower & Technology
+
+[18] Military Sciences
+
+[19] Dr Jack Watling
+
+[20] Senior Research Fellow for Applied Military Sciences
+
+[21] Military Sciences

@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:b4d0540f87b5e4af",
+  "content_path": "text-b4d0540f87b5e4af.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-10373f1e5f0d",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "b4d0540f87b5e4afc1cda71969c2143ed8e64d30e475c90b1f363bf923cda3ed",
+  "url": "https://asc.army.mil/web/news-innovation-draws-international-interest/"
+}

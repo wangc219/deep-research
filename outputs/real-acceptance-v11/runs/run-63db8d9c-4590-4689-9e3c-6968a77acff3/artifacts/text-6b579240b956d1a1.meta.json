@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:6b579240b956d1a1",
+  "content_path": "text-6b579240b956d1a1.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-a1859c7c570f",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "6b579240b956d1a17f7b38e81b0414f0eb3829be1a5d7a2bdd4fe5a59c119e92",
+  "url": "https://www.army.mil/article-amp/273625/army_announces_rapid_acquisition_authority_contract_for_coyote_interceptors?utm_source=openai"
+}

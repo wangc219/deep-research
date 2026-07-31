@@ -1,0 +1,14 @@
+{
+  "artifact_ref": "text:33daf5cf80d4917c",
+  "content_path": "text-33daf5cf80d4917c.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-1c45a003e7c6",
+  "kind": "text",
+  "materialization_status": "network_safety_rejected",
+  "mode": "real",
+  "reason": "host_resolution_failed",
+  "rejected_url": "https://rosap.ntl.bts.gov/view/dot/49142/dot_49142_DS1.pdf?utm_source=openai",
+  "sha256": "33daf5cf80d4917cf48f905fe480672c0aa24f8e0cf4331fb997710df477034f",
+  "url": "https://rosap.ntl.bts.gov/view/dot/49142/dot_49142_DS1.pdf?utm_source=openai"
+}

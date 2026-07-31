@@ -1,0 +1,14 @@
+{
+  "artifact_ref": "text:fbf885cf0fa76549",
+  "content_path": "text-fbf885cf0fa76549.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-018dc87eeede",
+  "kind": "text",
+  "materialization_status": "network_safety_rejected",
+  "mode": "real",
+  "reason": "host_resolution_failed",
+  "rejected_url": "https://www.congress.gov/crs-product/R48477?utm_source=openai",
+  "sha256": "fbf885cf0fa76549c39079f5d371f39766046bd8a1b3a55c2952f620fe19a89e",
+  "url": "https://www.congress.gov/crs-product/R48477?utm_source=openai"
+}

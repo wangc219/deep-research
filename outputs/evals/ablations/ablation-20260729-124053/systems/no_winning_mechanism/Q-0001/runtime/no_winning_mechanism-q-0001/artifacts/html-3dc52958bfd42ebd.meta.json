@@ -1,0 +1,15 @@
+{
+  "artifact_ref": "html:3dc52958bfd42ebd",
+  "connect_ip": "198.18.1.33",
+  "content_path": "html-3dc52958bfd42ebd.html",
+  "content_type": "text/html",
+  "encoding": null,
+  "evidence_id": "ev-operational_employment-web-6fbc3dab99d5",
+  "fetch_cache_hit": true,
+  "final_url": "https://www.rusi.org/explore-our-research/publications/occasional-papers/mass-precision-strike-designing-uav-complexes-land-forces",
+  "kind": "html",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "3dc52958bfd42ebd60c701f36c78be05f076c107e3bc9e4340a258e361f7d9d4",
+  "url": "https://www.rusi.org/explore-our-research/publications/occasional-papers/mass-precision-strike-designing-uav-complexes-land-forces"
+}

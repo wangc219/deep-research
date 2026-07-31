@@ -1,0 +1,445 @@
+[1] Report to Congressional Committees
+
+[2] GAO- 25-107263
+
+[3] United States Government Accountability Office
+
+[4] Hi g hli g hts
+
+[5] For more information, contact Mona Sehgal at sehgalm@gao.gov .
+
+[6] Highlights of GAO-25-107263 , a report to congressional committees
+
+[7] ARMY MODERNIZATION
+
+[8] Leading Practices Could Better Support Delivery of Artillery and Missiles
+
+[9] Why GAO Did This Study
+
+[10] The Army is modernizing its artillery, rocket, and missile systems to provide long-range fires capabilities to counter advances by potential adversaries. With the Army’s shift in focus from counterinsurgency to large-scale combat operations, it urgently needs artillery and missile systems that are more mobile, survivable, and lethal than existing systems.
+
+[11] A House report and Senate report include provisions for GAO to review the Army’s long-range fires modernization efforts. This report (1) describes capability gaps identified by the Army, (2) examines Army’s progress in developing modernized systems for long-range fires, and (3) assesses the extent to which the Army applied leading practices for iterative product development in these efforts.
+
+[12] GAO reviewed requirements documents, acquisition approaches and plans, schedules and program status updates, and budget requests. GAO conducted site visits to Army requirements and acquisition offices at Fort Sill in Oklahoma and Redstone Arsenal in Alabama. GAO compared acquisition plans and progress against leading practices for iterative product development.
+
+[13] What GAO Recommends
+
+[14] GAO is making three recommendations related to Army’s adoption of leading practices for three systems. GAO previously made a recommendation on iterative development for Long-Range Hypersonic Weapon. The Department of Defense concurred with the recommendations.
+
+[15] What GAO Found
+
+[16] Since 2018, the Army’s focus has shifted from counterinsurgency, particularly in Iraq and Afghanistan, to large-scale combat operations with near-peer adversaries. At that time, the Army began modernizing its major weapon systems, including the missiles and artillery known as long-range fires to counter the capabilities of near-peer adversaries.
+
+[17] The Army identified four capability gaps to support modernization and developed corresponding requirements, such as increased range, for four new or upgraded long-range fires systems: the Extended Range Cannon Artillery, the Precision Strike Missile, the Mid-Range Capability missile system, and the Long-Range Hypersonic Weapon.
+
+[18] Ranges of Existing Systems and Long-Range Fires Modernization Programs
+
+[19] The Army had mixed success in rapidly developing and fielding its long-range fires systems. For instance, after extensive testing, the Army ended one system due to development challenges from immature technologies. For another system, it began production but missed its fielding goal. In contrast, for the other two systems, the Army successfully developed and tested one system, developed a prototype for the other, and it is fielding both.
+
+[20] The Army did not consistently apply leading practices for iterative product development to its long-range fires efforts. For example, with Extended Range Cannon Artillery, the Army did not maintain a sound business case by re-evaluating the technical feasibility of the effort, which contributed to the Army not continuing the program. The Army is currently seeking a self-propelled howitzer to meet this requirement. The Army used a linear (versus iterative) approach for Precision Strike Missile. Adopting an iterative development approach, which includes digital engineering, could shorten development of future increments. Mid-Range Capability used some elements of an iterative approach, including establishing a sound business case with flexible requirements. Implementing other aspects, such as developing a virtual representation of the system, known as a digital twin, could aid future development and production.
+
+[21] Abbreviations
+
+[22] Abbreviated Capability Development Document
+
+[23] Army Futures Command
+
+[24] Army Tactical Missile System
+
+[25] Capability Development Document
+
+[26] Department of Defense
+
+[27] early operational capability
+
+[28] Extended Range Cannon Artillery
+
+[29] Capabilities Development and Integration Directorate for Fires
+
+[30] High Mobility Artillery Rocket System
+
+[31] Long-Range Hypersonic Weapon
+
+[32] Long Range Precision Fires Cross-Functional Team
+
+[33] M109A7 Paladin Self-Propelled Howitzer
+
+[34] major capability acquisition
+
+[35] Multiple Launch Rocket System
+
+[36] Mid-Range Capability
+
+[37] middle tier of acquisition
+
+[38] other transaction agreement
+
+[39] Precision Strike Missile
+
+[40] Rapid Capabilities and Critical Technologies Office
+
+[41] self-propelled howitzer
+
+[42] This is a work of the U.S. government and is not subject to copyright protection in the United States. The published product may be reproduced and distributed in its entirety without further permission from GAO. However, because this work may contain copyrighted images or other material, permission from the copyright holder may be necessary if you wish to reproduce this material separately.
+
+[43] June 5, 2025
+
+[44] Congressional Committees
+
+[45] The Army is modernizing its artillery, rocket, and missile systems to achieve what it refers to as long-range fires capabilities. The Army requires these capabilities to counter advances in the technologies fielded by potential adversaries. For example, the Army previously relied on air support to counter threats beyond the front lines but can no longer fully rely on this capability due to advances in enemy air defenses. With the Army’s shift in focus from counterinsurgency to large-scale combat operations, it finds itself in urgent need of artillery and missile systems that are more mobile, survivable, and lethal than the systems it fields today. Failure to successfully procure systems that provide these capabilities brings significant risk to the warfighter.
+
+[46] Senate and House reports accompanying the National Defense Authorization Act for Fiscal Year 2024 include provisions for GAO to assess Army’s long-range fires modernization efforts. [1] This report: (1) describes gaps the Army identified in current long-range fires capabilities, and the requirements it identified for new systems to mitigate those gaps, (2) examines the results of the Army’s efforts to acquire systems for long-range fires modernization, and (3) assesses the extent to which the Army applied leading practices for iterative product development in these acquisition efforts.
+
+[47] For each of the objectives, in addition to the documentary evidence that we analyzed by objective below, we conducted interviews with Department of Defense (DOD) and Army officials on Army’s long-range fires efforts. We conducted site visits to meet with Army officials responsible for requirements and program execution at Fort Sill in Oklahoma and Redstone Arsenal in Alabama.
+
+[48] To describe requirements development for long-range fires, we reviewed the Army’s requirements process and applicable documents to understand how the Army identified gaps and developed the requirements for modernized systems. Our review of documents included ones that informed the Army’s modernization efforts.
+
+[49] To examine how the Army is acquiring these systems, we reviewed the Army’s acquisition approaches for systems identified in the Army’s 2021 Modernization Strategy. We reviewed acquisition plans and program status updates. We analyzed changes to Army budget request estimates and their associated schedules since fiscal year 2021.
+
+[50] To assess the extent to which the Army applied leading practices for iterative product development, we compared the individual acquisition plans for each of the four signature Army long-range fires modernization programs against GAO’s leading practices for iterative product development. [2] We assessed whether the programs were iterative or linear and discussed applicable practices for each program. We excluded another effort, the Strategic Long-Range Cannon, from our review because it was cancelled prior to transitioning to an acquisition pathway. See appendix I for a more detailed description of our objectives, scope, and methodology.
+
+[51] We conducted this performance audit from January 2024 to June 2025 in accordance with generally accepted government auditing standards. Those standards require that we plan and perform the audit to obtain sufficient, appropriate evidence to provide a reasonable basis for our findings and conclusions based on our audit objectives. We believe that the evidence obtained provides a reasonable basis for our findings and conclusions based on our audit objectives.
+
+[52] As the National Defense Strategy shifted from a focus on counterinsurgency in the conflicts in Iraq and Afghanistan to a focus on large-scale combat operations with near-peer adversaries in 2018, the Army began a campaign to modernize its major weapon systems. The 2021 Army Modernization Strategy identified long-range fires as one of its six priority areas. The Modernization Strategy identified four signature long-range fires efforts. [3]
+
+[53] · Extended Range Cannon Artillery (ERCA) was intended to provide a capability with increased range over the current M109A7 Paladin Self-Propelled Howitzer (M109A7) system and provide more effective munitions. The effort included the self-propelled howitzer prototype with associated enabling technologies and munition upgrades.
+
+[54] · Precision Strike Missile (PrSM ) is intended to replace the Army Tactical Missile System (ATACMS). It is designed for compatibility with the Multiple Launch Rocket System (MLRS) and the High Mobility Artillery Rocket System (HIMARS), which are currently deployed worldwide.
+
+[55] · Mid-Range Capability (MRC) adapts existing Navy technologies, including missiles and a launcher, for ground operations.
+
+[56] · Long-Range Hypersonic Weapon (LRHW) seeks to develop a ground-launched, hypersonic, non-nuclear strategic deterrent with a range of more than 2,000 kilometers and speeds exceeding five times the speed of sound.
+
+[57] See figure 1 for a comparison of the ranges of existing systems with the four long-range fires modernization programs.
+
+[58] Figure 1: Ranges of Existing Systems and Long-Range Fires Modernization Programs
+
+[59] Per DOD and Army policy, the Army acquires materiel solutions based on established requirements. Requirements describe the capability desired and include testable and measurable characteristics of a proposed system intended to mitigate identified capability gaps. [4] Depending on an acquisition’s strategy, the Army may choose to create a more flexible, less formalized set of desired capabilities and use prototypes and testing to refine them into formal requirements. If that approach is chosen, the desired capabilities are documented in an Abbreviated Capability Development Document (A-CDD). The Army Requirements Oversight Council, which includes both the civilian and military leadership of the Army, reviews and approves A-CDDs.
+
+[60] As the desired capabilities are refined, the Army documents the formal requirements in a Capability Development Document (CDD). The CDD specifies capability requirements in terms of Key Performance Parameters and other related information that the proposed system must meet. The chief military officers of the Joint Requirements Oversight Council review and approve CDDs at the DOD level.
+
+[61] In January 2020, DOD established the Adaptive Acquisition Framework. [5] The framework emphasizes several principles that include simplifying acquisition policy, tailoring acquisition approaches, and conducting data-driven analysis. The Adaptive Acquisition Framework contains six acquisition pathways. The three pathways that the Army used for the long-range fires efforts follow:
+
+[62] · The major capability acquisition (MCA) pathway leads complex acquisitions through multiple phases. The most relevant for this review are: technology development, system development, and production. DOD separates these phases by major reviews known as milestone decisions.
+
+[63] · The middle tier of acquisition (MTA) pathway includes two expedited paths. The first path, rapid prototyping, is intended to quickly develop and demonstrate a capability in an operational environment within 5 years. One objective of rapid prototyping is to provide residual operational capability—any fieldable, military utility usable by the warfighter. The second path, rapid fielding, is intended to begin production of a new or upgraded capability within 6 months, require minimal development, and complete fielding of that capability within 5 years. [6] Acquisitions using the MTA pathway are generally not subject to the same acquisition and requirements processes as those on the MCA pathway. [7] Upon completion of either MTA pathway, the program may transition to a different acquisition pathway, such as an MCA, or move into operations and sustainment.
+
+[64] · The urgent capability acquisition pathway is intended to field capabilities to fulfill urgent existing or emerging operational needs or provide a quick reaction capability in less than 2 years.
+
+[65] Different Army offices are responsible for developing the requirements and acquiring the systems for modernizing long-range fires capabilities. Army Futures Command (AFC) identifies gaps by comparing the Army’s current capabilities for long-range fires, how the Army intends to use these capabilities to deter or engage in conflict, and the threats posed by the capabilities of potential adversaries. The process is continuous—AFC revisits gaps identified previously to re-validate or refine them. AFC includes several requirements and technology development organizations that have roles in long-range fires modernization, including:
+
+[66] · the Capabilities Development and Integration Directorate for Fires (Fires CDID), which is responsible for identifying requirements and solutions for long-range fires, and
+
+[67] · the Long Range Precision Fires Cross-Functional Team (LRPF CFT), which facilitates modernization by coordinating the inputs of requirements developers, acquisition experts, representatives from other communities, and end users.
+
+[68] Together, the Fires CDID and the LRPF CFT work to determine the capabilities the Army requires to execute its warfighting strategy and refine the requirements for systems that provide these capabilities. See figure 2 for a high-level overview of the organizations.
+
+[69] Figure 2: Army Long-Range Fires Requirements and Acquisition Organizations
+
+[70] Multiple Army organizations have responsibility for acquiring systems to modernize long-range fires capabilities, including the following:
+
+[71] · The Assistant Secretary of the Army for Acquisition, Logistics, and Technology is responsible for delivering long-range fires systems to the warfighter. The Assistant Secretary is the civilian authority responsible for overseeing all Army acquisition functions and can serve as the milestone decision authority. This Assistant Secretary oversees program executive offices that acquire different types of systems or equipment across the Army, including the long-range fires portfolio. Program Executive Office for Missiles and Space is responsible for overseeing the long-range fires portfolio of acquisition programs, among others, and delivering a suite of capabilities to warfighters.
+
+[72] · The Army Rapid Capabilities and Critical Technologies Office (RCCTO) is responsible for maturing technologies to develop prototypes, which help to refine requirements before efforts transition to acquisition program offices. RCCTO reports directly to a board of directors led by the Secretary of the Army and includes the Chief of Staff of the Army; Under Secretary of the Army; Vice Chief of Staff of the Army; the Assistant Secretary of the Army for Acquisition, Logistics, and Technology; and the Commanding General of AFC. RCCTO has been delegated acquisition authority and, according to Army officials, has its own in-house contracting officials to facilitate its efforts.
+
+[73] We have identified leading practices for iterative product development that are based on practices used by leading companies to develop complex, innovative products. Leading companies use iterative processes to design, validate, and deliver complex products with speed. [8] The iterative process involves a continuous cycle, through which companies rapidly develop and deploy products. For example, leading companies employ iterative development approaches that integrate modern software practices with hardware development processes. Iterative practices can include the following.
+
+[74] · Attain and maintain a sound business case. A sound business case consists of elements such as using mature technologies, continuous evaluation of progress, and willingness to end development if the business case is no longer sound. A solid, executable business case provides credible evidence that (1) the customer’s needs are valid and that they can best be met with the chosen concept, and (2) the chosen concept can be developed and produced within existing resources—such as technologies, design knowledge, funding, and time. Leading companies conduct market research and obtain and use customer feedback to establish and then continually maintain a sound business case throughout development.
+
+[75] · Identify a minimum viable product. Leading companies identify a minimum viable product—a product with the minimum capabilities needed for customers to recognize value that can then be followed by successive updates.
+
+[76] · Obtain stakeholder and end user feedback. Leading companies seek and obtain continuous stakeholder and end user feedback—feedback from the actual operators of the product—throughout the iterative cycles. These companies capture this feedback to determine the minimum viable product and to inform improvements to the minimum viable product.
+
+[77] · Prioritize schedule by off-ramping capabilities when necessary. To achieve speed to market, leading companies will prioritize developing a minimum viable product by removing capabilities that pose a risk to delivering the product on schedule. The off-ramped capabilities can be deferred to a later release or terminated.
+
+[78] · Use digital tools. Leading companies use digital engineering tools, including digital twins—virtual representations of physical products—and digital threads. Digital twins incorporate dynamic data of a physical object or a system—meaning the model changes and updates in real-time as new information becomes available. Digital twins differ from high-fidelity digital models, which are static visualizations and data that are updated manually and are essentially paper design drawings in digital form. Digital threads are a common source of information that connect stakeholders with real-time data across the product life cycle.
+
+[79] The iterative development approach differs from traditional linear development, which defines fixed requirements up front and focuses development efforts on complying with those original requirements.
+
+[80] Army Identified Four Long-Range Fires Gaps and Proposed Four Systems to Meet Them
+
+[81] Several AFC organizations helped develop and refine the Army’s long-range fires requirements, including identifying and prioritizing capability gaps. For example, the Fires CDID was the lead for the analysis, models and simulations, experimentation, and war games that identified gaps in long-range fires capabilities and the means to mitigate those gaps. Further, the CDID’s Battle Lab analyzed and determined the most appropriate models and simulations to use for these efforts. The CDID officials also stated that they conducted tabletop exercises and war games that used existing and proposed capabilities against an adversary force to determine the capabilities needed.
+
+[82] In addition, AFC officials stated that other AFC organizations, such as The Research and Analysis Center, used models and simulations of existing and proposed capabilities to provide information on requirements. The Research and Analysis Center officials stated that the models and simulations used were verified by engineers, senior leaders, and the LRPF CFT to ensure that they adequately met the intent of the analysis and the needs of the warfighter. The CDID includes Army Capability Managers who represent the interests of the operational units and communicates with them regularly to identify issues and solutions.
+
+[83] Using these processes, AFC identified four long-range fires capabilities gaps:
+
+[84] · Range. The Army required the capability to engage targets at greater ranges to counter adversaries’ air and missile threats, as well as to counter weapons that deny Army forces access to an area or expand the area where Army forces are under threat. Consequently, the Army needed increased range to defend its ground forces and allow them to attack and maneuver.
+
+[85] · Lethality. The Army required increased rates and volume of fires, as well as increased precision and effectiveness of munitions.
+
+[86] · Mobility. The Army required long-range fires capabilities that can set up, shoot, and move quickly to counter adversaries’ capabilities.
+
+[87] · Survivability. The Army needed systems that were not only mobile, which increases survivability, but also had capabilities to counter the adversaries’ ability to target long-range fires assets, such as camouflage and the use of decoys.
+
+[88] AFC used new information about Army operations in large-scale combat operations and the threats posed by the capabilities of potential adversaries to identify and better quantify these gaps. The four capabilities reflect long-standing Army needs. The Army is working with greater urgency to mitigate these gaps as they have become a greater priority due to the shift in focus to large-scale combat operations.
+
+[89] To mitigate the identified gaps, the Army developed documentation that identified the desired capabilities or requirements for the four new long-range fires systems. The Army included these systems in its 2021 Army Modernization Strategy. The Fires CDID was central to the development of this documentation and was supported by the LRPF CFT. Army officials stated that they consult others as well. This includes gathering input from stakeholders like the commanders of operational units in theater and an end-user representative responsible for presenting the soldier’s perspective.
+
+[90] · ERCA. AFC described the desired capabilities for ERCA in an A-CDD in 2019. The LRPF CFT developed and refined these capabilities, but Army officials stated that they were based on requirements for an upgraded M109A7 Paladin that the Fires CDID prepared for that program in 2016.
+
+[91] · PrSM. The Army developed the requirements document for the first increment of PrSM in 2016 prior to the creation of AFC and the LRPF CFT. Fires CDID officials told us that the CDID developed the CDD for the program, but the LRPF CFT is facilitating the approval and refinement of that document and developing the requirements for future increments of capability for fielding beyond 2030.
+
+[92] · MRC and LRHW. The Army developed A-CDDs for both efforts in 2020. According to Army officials, the Fires CDID has primary responsibility for the development of the desired capabilities of these efforts as they focus on the fielding of capabilities before 2030.
+
+[93] According to DOD officials, the Army’s desired long-range fires modernization capabilities and requirements were established prior to the start of the conflict in Ukraine, but analysis of the conflict resulted in revalidation of the existing requirements. For example, the analysis elevated the need for mobility and survivability on the modern battlefield as well as the need to increase effective ranges. Officials also stated that the Army revisited its doctrine and other policies for operating long-range fires platforms as a part of applying observations from the field.
+
+[94] Army Had Mixed Results in Rapidly Developing and Fielding Its Long-Range Fires Acquisition Efforts
+
+[95] The Army initiated the four signature long-range fires efforts with the intent to develop and field them rapidly but has had mixed results. The Army ended the 5-year ERCA MTA prototyping effort after it determined further development did not make sense, considering technical challenges due to the use of immature technologies. In contrast, the Army successfully developed and tested some PrSM missiles and a prototype for MRC and is in the process of fielding both. The Army completed development of an LRHW prototype despite challenges that have extended its schedule.
+
+[96] Extended Range Cannon Artillery (ERCA)
+
+[97] ERCA was intended to provide a capability with increased range and lethality compared to the current M109A7 Paladin self-propelled howitzer system.
+
+[98] Source: U.S. Army. | GAO‑25‑107263
+
+[99] Extended Range Cannon Artillery (ERCA). The Army initiated development of the ERCA XM1299 self-propelled howitzer and specific enabling technologies under the Program Executive Office for Ground Combat Systems in September 2018 as an MTA for rapid prototyping. The Army planned to extend the range of its current self-propelled howitzer system, Paladin, by upgrading the top half of the system, consisting of the turret and gun tube that fire the munitions, while maintaining the chassis and power train in the bottom half of the system. In addition, to achieve the desired ranges, the Army initiated efforts for improved munitions as part of the ERCA effort, but outside the scope of the MTA.
+
+[100] Army and DOD officials stated that the Army was able to achieve the desired ranges, but could not do so consistently due, in part, to the use of immature technologies. For example, the Army found that the upgraded turret and gun tube could not withstand multiple gun firings due to the force from the munitions exceeding design limits. The Army noted that firing the gun damaged key parts, such as the vertical rails of the loader assist tray. In February 2023, we reported on ERCA’s issues with technology development and the detrimental effects this had on the program. [9] In December 2022, the program paused testing and attempted to resolve the technical challenges but was unable to do so. As a result, the Army ended the MTA for developing the self-propelled howitzer prototype and specific enabling technologies in 2023. Overall, the Army’s budget request estimate was $955 million for fiscal years 2021 through 2025 to support development of the self-propelled howitzer. [10]
+
+[101] Although the Army ended development of the self-propelled howitzer prototype, Army officials stated that the range requirement for a self-propelled cannon system remains valid and are pursuing two efforts to deliver the capability. Army officials from multiple offices told us that the Tactical Fires Study, which the Army completed in 2024, provided justification for the requirement and future efforts. For the first effort, the Army is continuing to develop the extended range munitions that were a part of the ERCA effort, such as the XM1113. The XM1113 is a rocket-assisted projectile that has a longer range than similar sized munitions and is compatible with Paladin.
+
+[102] For the second effort, the Army is assessing existing, mature self-propelled howitzer systems from five industry partners. The Army entered a prototype project agreement, valued at $4.2 million in September 2024 for performance demonstrations of these systems. [11] The Army concluded demonstration of these systems in January 2025 and plans to competitively award production contracts before the end of fiscal year 2027.
+
+[103] Precision Strike Missile (PrSM)
+
+[104] PrSM is a ballistic missile designed to attack targets at distances ranging from 70 to 499 kilometers.
+
+[105] Source: Lockheed Martin. | GAO‑25‑107263
+
+[106] Precision Strike Missile (PrSM). The Army intends to develop and produce PrSM in a series of four increments that increase the capability of the missile over time. The Army initiated efforts using two acquisition pathways to develop and produce PrSM Increment 1 missiles. The Army first initiated the PrSM Increment 1 program under the Program Executive Office for Missiles and Space in March 2017 on what is now referred to as the MCA pathway. In August 2021, the office initiated a second effort on the urgent capability acquisition pathway. Officials stated that they procured the first lot of about 30 Increment 1 missiles as an early operational capability (EOC). [12] The Program Executive Office for Missiles and Space is simultaneously continuing to develop and test the other Increment 1 missiles on the MCA pathway and has a planned initial capability date in 2026. The Office also plans to procure an additional four lots of EOC missiles on the MCA pathway. Figure 3 illustrates the timelines associated with each pathway.
+
+[107] Figure 3: Precision Strike Missile Increment 1 Acquisition Efforts
+
+[108] By using the urgent capability acquisition pathway, the PrSM program was able to procure EOC missiles 26 months earlier than planned on the MCA pathway. According to program officials, the program was able to bypass some of the testing—which generally determines whether the system components meet specifications—for the first lot of EOC missiles and thus accelerate their procurement. Program officials stated that they will complete this testing in 2025, prior to the initial capability decision. This testing is one of multiple sequences of testing that is normally done prior to the initial capability decision on the MCA pathway. The program plans to conduct further testing, including operational testing and evaluation, which is normally the final sequence of testing prior to the initial capability decision, of Increment 1 missiles while it is procuring the second lot of EOC missiles.
+
+[109] Army officials acknowledge that they may discover deficiencies during testing that require modifications to future Increment 1 missiles. However, Army officials said that they would not modify any of the planned lots of EOC missiles, because they need the capability to remain in the field and for EOC missile procurement to stay on schedule. PrSM program officials said that they did not need to make any changes to Increment 1 missiles after they completed testing to determine whether the system components meet specifications. They also said that EOC missiles’ and Increment 1 missiles’ configurations remained the same. Overall, the Army’s budget request estimate was $2.3 billion for fiscal years 2021 through 2025 to support procurement of PrSM missiles.
+
+[110] While the program plans to continue developing, testing, and producing Increment 1 missiles, it is also focused on development of future increments. The PrSM program has begun technology development for Increment 2, which will upgrade the missile with a seeker to hit moving targets. The Army also plans for Increments 3 and 4, which will upgrade the payload and range of the missile, respectively. PrSM program officials noted that the Army has yet to schedule when it plans to initiate acquisition of Increments 3 and 4.
+
+[111] Mid-Range Capability (MRC)
+
+[112] MRC is a mobile, ground-based missile system that is intended to bridge the range between systems designed for short- and long-range fires. MRC is modifying the Navy’s ship-based vertical launching system for use with existing Army vehicles. MRC leverages existing Navy Standard Missile-6 and Tomahawk cruise missiles.
+
+[113] Source: Lockheed Martin with edits from U.S. Army Rapid Capabilities and Critical Technologies Office. | GAO‑25‑107263
+
+[114] Mid-Range Capability (MRC). RCCTO initiated MRC in November 2020 under its accelerated prototyping authority. [13] Under this authority, RCCTO successfully conducted the first flight test and accepted delivery of the first MRC prototype battery and 16 missiles. According to officials, RCCTO fielded the first battery in the U.S. and then deployed it in the Philippines to further test the system and obtain end-user feedback. It then transitioned the effort to the Program Executive Office for Missiles and Space, which had initiated an MTA for rapid prototyping in November 2023.
+
+[115] The Program Executive Office for Missiles and Space expects to upgrade the capabilities of MRC. The office took delivery of the second battery in September 2024 and is planning to produce two additional batteries by 2026 under the MTA for rapid prototyping pathway. The upgraded capabilities include enhanced communications, increased survivability, and integration of future Standard Missile-6 and Tomahawk cruise missile variants. The office also plans to initiate an MTA for rapid fielding pathway in the future to produce a fifth MRC battery but has yet to do so. Overall, the Army’s budget request estimate was $1.7 billion for fiscal years 2021 through 2025 to support development of MRC.
+
+[116] Long-Range Hypersonic Weapon (LRHW)
+
+[117] LRHW seeks to deliver a truck-based long-range missile system capable of launching a hypersonic payload. The LRHW effort consists of newly developed launchers and related equipment. The Army procures the hypersonic missile and canister through an associated Navy effort, while design and production responsibilities for certain subsystems of the missile are divided between the Army and Navy.
+
+[118] Source: U.S. Army. | GAO‑25‑107263
+
+[119] Long-Range Hypersonic Weapon (LRHW). RCCTO initiated LRHW in 2019 under its accelerated prototyping authority with plans to transition it to the Program Executive Office for Missiles and Space.
+
+[120] After delivering the LRHW launcher and ground equipment in 2021 to end users for feedback, RCCTO encountered a series of challenges in integrating the LRHW launcher with missiles. The Army attempted to conduct four tests in 2023 and 2024 that were not completed due to various launcher, launch sequence, and missile production quality issues. These issues affected missile deliveries as well.
+
+[121] The Army reported putting a hold on the completion of the missiles for the first battery until a successful end-to-end flight test verified the design worked. The Army successfully conducted an end-to-end test for LRHW during the first quarter of fiscal year 2025. Based on successful test results, the Army authorized the contractor to resume production of the first set of eight missiles for the initial battery. The Program Executive Office plans to produce and field two additional batteries under the MTA.
+
+[122] However, the Army will not field its first LRHW battery—including missiles—until the third quarter of fiscal year 2025, which is at least 18 months later than its initial goal. The estimated cost of fielding the first LRHW battery also increased by $150 million since last year. According to the Army, the cost growth was attributed to increases in the cost of the missiles and testing issues that resulted in investigations and re-tests. Overall, the Army’s budget request estimate was $4.7 billion for fiscal years 2021 through 2025 to support development of LRHW.
+
+[123] Army Efforts Did Not Consistently Implement Leading Practices for Product Development
+
+[124] The Army employed both linear and iterative approaches in development of its long-range fires modernization efforts with mixed results. The Army structured two of the efforts, ERCA and PrSM, as linear development approaches. In doing so, the Army did not implement leading practices for product development focused on iterative design cycles, although PrSM did implement some practices, such as the use of modeling and simulation, that reflect aspects of an iterative approach. The remaining two efforts, MRC and LRHW, used iterative development approaches and displayed several aspects of the leading practices. However, we identified instances where the Army could further adopt and implement elements of the leading practices, such as improving the development and use of digital twins and digital threads.
+
+[125] The ERCA cannon prototype followed a linear development approach and did not follow leading practices associated with iterative product development. An iterative product development process consists of elements such as using mature technologies, continuous evaluation of progress, and willingness to end development if the business case is no longer sound. With ERCA, the Army pursued concurrent development efforts to build a prototype cannon based on immature technologies and longer-range munitions. Although significant technical challenges were identified during testing, the Army did not reevaluate its business case to determine if the program was still the best way to meet its needs.
+
+[126] Before initiating development of the ERCA cannon prototype, the Army began assessing available self-propelled howitzer systems from international industry partners in support of its business case. Army determined that those systems could match but not exceed the performance and capabilities of near-peer adversaries. As a result, the Army determined that international systems would not meet the Army’s requirements for range, among others. Instead, Army focused on upgrading its existing self-propelled howitzer system, the M109A7 Paladin, to meet the requirements.
+
+[127] The use of immature technologies, however, resulted in significant technical challenges. Army officials told us that, to meet the range requirements, the ERCA effort included not only upgrading the cannon but also developing long-range munitions with greater amounts of propellant. Early developmental testing in July 2021 revealed that the Army had to replace several cannon tubes due to excessive wear after firing a relatively low number of rounds with supercharged propellant. In addition, a DOD testing official told us that the ERCA cannon design was unable to fire an acceptable number of rounds without experiencing failure. DOD and Army officials stated that it would not be feasible for the Army to continue into production and fielding for a system that required frequent cannon tube replacement. Rather than reevaluate the business case, the Army allowed the cannon prototype development effort to continue until the end of the 5-year MTA period, having requested $955 million for development.
+
+[128] Our leading practices for product development state that companies start with a sound business case and continuously evaluate elements of the business case—such as technology maturity—and terminate product development promptly if that business case is no longer sound. According to officials, the Army accepted the risks its approach posed as it was concerned about the identified capability gaps for long-range cannon artillery and the immediacy of those gaps. However, the Army did not continuously evaluate the ERCA prototype business case based on the test failures experienced due to the use of immature technologies. Had it used an iterative process that continuously reevaluated the business case, then Army may have been able to end the effort sooner.
+
+[129] Since the Army ended efforts for the cannon prototype, it is planning to develop or acquire a new self-propelled howitzer system capable of long-range fires under the Self-Propelled Howitzer Modernization effort. The Army has begun reassessing existing systems from international industry partners and continues to develop munitions to mitigate the existing capability gap. The Army has an opportunity in this next effort to incorporate leading practices for iterative product development, including using mature technologies, to help it avoid the types of challenges experienced by the ERCA program.
+
+[130] The Army set fixed requirements before starting its PrSM program and employed a linear development approach that precluded the effort from fully realizing the benefits of digital engineering tools, such as digital twinning, which is a key iterative product development tool. PrSM has four planned increments that have characteristics of linear development, such as fixed requirements upfront and development efforts to comply with those original requirements. This contrasts with an iterative approach that uses broader statements of capability needs to develop a minimum viable product, which the developer then builds upon iteratively using mature technologies and input from the user. While the Army’s linear approach provides an overview of how the program plans to increase capabilities over time, each increment represents a different design with specific capabilities that do not iteratively build off the previous designs.
+
+[131] Beginning in 2016, the Army identified the capabilities needed for PrSM Increment 1, as well as planned capability improvement for future increments, and fixed these requirements in the capabilities development document before starting development. While all PrSM increments share the same basic canister dimensions and compatibility with launchers, each increment will provide different capabilities that feature new and different designs. For example, Increment 2 is based on the Increment 1 design but adds additional capability by incorporating seeker technology, which changes the shape of the missile. Plans for Increments 3 and 4 use new designs with different, advanced technologies focused on delivering other desired capabilities relating to speed, range, and types of munitions.
+
+[132] To enhance its linear development process, PrSM program officials stated that the program uses some digital engineering tools, such as high-fidelity digital models. We previously found that companies develop digital engineering models during design modeling and simulation based on specific needs. However, high-fidelity digital modeling is a static visualization and representation of a physical object—meaning it cannot be updated without manually inputting new data. In contrast, digital twins are virtual representations of physical products; the model incorporates automated updates as new information becomes available. Digital twins enable real-time collaboration throughout a product’s lifespan and allow for informed decision-making with stakeholders and users to deliver products with speed.
+
+[133] According to the Army, PrSM developed two high-fidelity digital models to predict and assess flight testing performance. The Army used these models to simulate the missile’s performance before conducting physical tests. Program Executive Office for Missiles and Space officials told us that using these models for simulation played a vital role in developing Increment 1 missiles by mitigating risks, increasing speed of development, and reducing testing costs. The PrSM program found that the data collected from the high-fidelity digital models closely aligned with data collected during physical testing, which also demonstrated the effectiveness of using the models.
+
+[134] While high-fidelity digital models are useful in development, they are not equivalent to a digital twin, which uses dynamic input from a physical prototype to update a virtual model of the prototype in real time, to support iterative product development. Officials stated that they plan to develop and use a digital twin for Increment 2 to assist in the integration of seeker technologies to strike moving targets. Officials stated that development of the digital twin depends on ongoing negotiations with the contractor but did not provide a timeline to complete negotiations and develop the twin.
+
+[135] Program officials noted that the Army is developing a digital thread for some planning functions, but PrSM does not have any plans to develop a digital thread for the PrSM program as a whole. A digital thread is a common, authoritative source of information that connects stakeholders with real-time data across the product life cycle. It supports the feedback loop to integrate user feedback and allows decision-makers to access, integrate, and transform data into actionable information. Program officials noted that, outside of the PrSM program, the Army’s Fire Direction Center is developing a digital thread that will incorporate operational planning for PrSM. However, this effort will not support ongoing or future development of the PrSM program.
+
+[136] Our past work highlighted that leading companies use digital engineering tools to allow for faster iterative design cycles than what is possible with physical prototypes alone. [14] Further, DOD issued a policy in December 2023 requiring efforts initiated after that date to incorporate digital engineering, which can include the use of a digital twin and digital threads. [15] The policy states that existing efforts, such as PrSM, may incorporate digital engineering when it is practical, beneficial, and affordable, but are not required to do so under the policy.
+
+[137] In the absence of an iterative approach for the future PrSM increments, the program could miss the opportunities and efficiencies provided by digital engineering tools and other leading practices we have identified. Our previous work has found that leading companies ensure the success of their products by continuously monitoring the business case, developing minimal viable products, and incorporating user feedback. This also includes the ability to anticipate potential design flaws, optimize manufacturing, and reduce costs using digital tools. A formal, documented assessment of whether and how to implement an iterative product development approach would better position Increment 2 and future increments of PrSM to take full advantage of the benefits an iterative product development approach can provide.
+
+[138] The Army’s MRC effort reflected several attributes of an iterative product development approach as it established a business case with flexible requirements focused on a minimum viable product, prioritized schedule by off-ramping capabilities, incorporated user feedback throughout its development, and used some digital design tools. However, the MRC effort does not intend to develop a digital twin to aid in developing and improving the minimum viable product.
+
+[139] In developing the business case for MRC, the Army developed an A-CDD, which captured high-level operational needs for the minimum viable product and allowed for refinement of detailed requirements through iterative development cycles. Program officials pointed to the A-CDD as a method to begin the effort quickly by identifying notional or desired requirements up front, then finalizing them into a more formal CDD over time. We found that the Army’s approach generally aligned with leading companies’ approaches, which do not attempt to start development with a business case that includes a detailed specification of requirements. Instead, development begins with a high-level need statement or idea, which is continuously refined into distinct requirements through iterative development cycles.
+
+[140] According to program officials, the MRC Battery 1 was a minimum viable product and will be used by the Program Executive Office for Missiles and Space to iterate on the design. As part of its prototyping effort for MRC Batteries 2 through 4, the program plans to conduct an annual insertion of new capabilities, based in part on the maturity of the technology required and the availability of the system for upgrades. During these technology insertion points, all previous prototypes will be retrofitted with the latest improvements. This iterative approach is consistent with product development at leading companies, where the companies and customer agree on the minimum viable product and then make iterative improvements over time.
+
+[141] MRC prioritized air transport and delayed capabilities for rail and sea transportability to field a minimal viable product as early as possible. While the original desired requirements were to support air, rail, and maritime transportation of the MRC system, officials noted a decision to off-ramp rail and sea transportability requirements early in RCCTO’s initial prototyping effort. They noted challenges with loading MRC onto trains and ships due to the size and weight of the system. By focusing exclusively on the air transportation requirement, the program could more quickly field the capability and defer the other modes of transportation until a later time.
+
+[142] According to the program office, MRC made multiple design changes during development based on user input provided during new equipment training and other exercises. Officials stated that these changes include improvements to reduce the reloading timeline and the stress and breakage of components. For example, because of the orientation of the launcher, soldiers suggested moving certain access points and panel connections on the trailer to make it easier to reload, operate, and maintain. Officials noted that the MRC program incorporated these changes into the Battery 1 prototype. The program continues to collect user input. The program collected input from end users and maintainers on the Battery 1 prototype beginning in April 2024 after deploying to the Philippines.
+
+[143] MRC used some digital engineering tools to inform development but did not use other tools such as digital threads or a digital twin. Since much of the MRC system’s design relied on modular components from other fielded systems, program officials acknowledged that the contractor made limited use of digital modeling. Program officials told us that the contractor completed digital models for some of the newer components on the MRC system and maintained a system integration lab comprised of hardware-in-the-loop and software-in-the-loop configurations. The contractor also used a pluggable interface known as a “missile in a box” that represented the characteristics of the Standard Missile-6 and Tomahawk cruise missiles for testing purposes.
+
+[144] The program expects to assess the feasibility of implementing a digital twin and digital thread by the end of fiscal year 2025. However, in summer 2024, program officials told us that developing a digital twin for the MRC could prove difficult because its underlying systems, such as the launcher and missiles, are sourced from other existing programs in the Navy, which may not have required its contractors to develop and use digital twinning or digital threads. Given the Army’s use of Navy hardware and software for the MRC system, the program expects the Navy to play a role in these decisions.
+
+[145] We previously found that digital engineering tools—including digital threads and digital twins—allow companies to create a common source of authoritative information and virtual representations of their physical products to enable efficiencies during the design-build-test phase of development which can help deliver a capability quickly. Further, our leading practices state that a digital thread and digital twins have benefits throughout a product’s life cycle, including when developing new capabilities and preparing for production, not just in developing a minimal viable product. Creating a digital thread could have benefits for MRC as the Army is utilizing existing Navy systems and will need to coordinate with them on further development. In addition, DOD’s December 2023 policy encourages the use of digital engineering tools including digital threads and twins.
+
+[146] As the program continues to prototype the MRC system and develop upgraded capabilities, the program may be able to do so more efficiently by developing a digital thread and digital twin. While fully utilizing digital engineering tools, such as digital twins, can pose certain challenges, the Army may be missing opportunities to take advantage of the efficiencies they can provide. This includes the ability to anticipate potential design flaws, optimize manufacturing, and reduce costs. A formal, documented assessment of whether and how to implement these tools would better position these efforts to take full advantage of the benefits they can provide.
+
+[147] Army’s LRHW effort reflects several attributes of an iterative product development approach in that the Army established a flexible set of desired capabilities, developed a minimal viable product, incorporated user feedback, and used digital engineering tools. However, it has not developed a digital twin for the ground support equipment or a digital thread to provide an authoritative source of information for all components of the system.
+
+[148] The Army determined the capabilities required for a minimum viable product for LRHW through an A-CDD, which captured high-level operational needs or desired capabilities for the program and allowed detailed requirements to be refined during iterative development cycles. The A-CDD included input from user representatives and other stakeholders, which are key practices for iterative product development. Program officials told us that RCCTO’s approach is used to inform and refine the capabilities desired for the system.
+
+[149] Throughout LRHW’s prototyping to develop the minimum viable product, the program also incorporated user feedback. The Army gathered this feedback by deploying the ground support equipment, without missiles, to the intended users and maintainers of the system for a 2-year period. Program officials solicited extensive feedback from operators and maintainers during this period. In doing so, the program revised system requirements through direct user feedback from a field unit. Program officials reported that this resulted in changes to the design of the minimum viable product as well as refinement of operational concepts.
+
+[150] We found that LRHW used some digital engineering tools in developing the minimum viable product. LRHW officials told us they have used digital models to design the ground support equipment. For example, officials noted that the program used these tools to create a virtual reality model of the launcher that users could interact with to identify potential design flaws and challenges based on the placement of specific components, such as a generator.
+
+[151] The limited number of batteries challenged the implementation of some digital engineering tools. LRHW program officials stated that because of this challenge, they do not plan to develop digital twins or threads for the ground support equipment or the entirety of the system. In July 2024, we recommended that the Army assess whether developing a digital twin could benefit the program. [16] However, LRHW program officials said that they completed a digital engineering assessment and expect the Army to review and approve it by May 2025. Program officials said that they determined that the current suite of digital tools is sufficient to support the production of the remaining two batteries of LRHW. [17] In October 2024, program officials stated that they do not see LRHW as a viable program for digital twinning. To justify the effort of creating a full digital twin for the LRHW, program officials said that the Army would need to procure additional batteries of the capability. Currently, the Army plans to procure three batteries.
+
+[152] The Navy, which is responsible for developing the hypersonic missile, approved a digital engineering plan that includes development of a digital thread and digital twin. However, Navy hypersonic missile program officials stated in December 2024 that they no longer plan to fully implement a digital twin for the missile system due to the complexity, time, and cost. According to these officials, the challenge is bringing the various models and information for the missile, launcher, and ground support equipment together to create a full digital representation. Instead, the Navy hypersonic missile program is in the process of implementing a digital twin at the subsystem level, including a digital prototype of missile components and subsystems by 2027. The officials noted that the program also will not have a full digital thread, but it plans to improve digital integration of systems and link organizations supporting the program.
+
+[153] The Army prioritized modernization of long-range fires, taking advantage of flexibilities in its acquisition approaches in an attempt to deliver capabilities sooner, and increased funding to support developing and procuring key systems. Still, some of Army’s efforts, such as developing extended range cannons and hypersonic missiles, have failed or are behind schedule. While the Army incorporated some elements of leading practices for iterative product development in long-range fires modernization efforts, it stopped short of consistently applying these practices. Given the Army’s goal to rapidly develop and field these systems, it would benefit from fully adopting the leading practices for iterative development, such as the use of digital engineering tools like digital threads and digital twins. Expanded use of these digital engineering tools will help these efforts to iterate more quickly on designs than is possible with physical prototyping alone. Additionally, digital tools can help reduce time and cost by improving the ability to anticipate potential design flaws and optimizing manufacturing.
+
+[154] Recommendations for Executive Action
+
+[155] We are making the following three recommendations to the Department of the Army:
+
+[156] The Secretary of the Army should ensure that new efforts to meet requirements for a self-propelled howitzer capable of long-range fires incorporate leading practices for iterative product development, such as continuous evaluation of the business case, including the assessment of technology maturation. (Recommendation 1)
+
+[157] The Secretary of the Army should ensure that the Precision Strike Missile (PrSM) program assesses the practicality, benefits, and affordability of implementing an iterative product development approach that includes digital engineering tools, such as digital threads and digital twinning, for missile development. (Recommendation 2)
+
+[158] The Secretary of the Army should ensure that the Mid-Range Capability (MRC) program’s planned assessment of the practicality, benefits, and affordability of implementing digital engineering includes consideration of the use of digital threads and digital twinning, and whether to incorporate these tools into the program. (Recommendation 3)
+
+[159] Agency Comments
+
+[160] We provided a draft of this report to DOD for review and comment. In its comments, reproduced in appendix II, DOD concurred with our recommendations.
+
+[161] We are sending copies of this report to the appropriate congressional committees, the Secretary of Defense, the Secretary of the Army, the Secretary of the Navy, and other interested parties. In addition, the report is available at no charge on the GAO website at https://www.gao.gov .
+
+[162] If you or your staff have any questions about this report, please contact me at sehgalm@gao.gov . Contact points for our Offices of Congressional
+
+[163] Relations and Public Affairs may be found on the last page of this report. Key contributors to this report are listed in appendix III.
+
+[164] Mona Sehgal Director, Contracting and National Security Acquisitions
+
+[165] List of Committees
+
+[166] The Honorable Roger Wicker Chairman The Honorable Jack Reed Ranking Member Committee on Armed Services United States Senate
+
+[167] The Honorable Mitch McConnell Chair The Honorable Christopher Coons Ranking Member Subcommittee on Defense Committee on Appropriations United States Senate
+
+[168] The Honorable Mike Rogers Chairman The Honorable Adam Smith Ranking Member Committee on Armed Services House of Representatives
+
+[169] The Honorable Ken Calvert Chairman The Honorable Betty McCollum Ranking Member Subcommittee on Defense Committee on Appropriations House of Representatives
+
+[170] Appendix I: Objectives, Scope, and Methodology
+
+[171] The Senate (S. Rep. No. 118-58) and House (H.R. Rep. No. 118-125) reports accompanying the National Defense Authorization Act for Fiscal Year 2024 (Pub. L. No. 118-31) include provisions for GAO to assess Army’s long-range fires modernization efforts. This report: (1) describes gaps the Army identified in current long-range fires capabilities, and the requirements it identified for new systems to mitigate those gaps, (2) examines the results of the Army’s efforts to acquire systems for long-range fires modernization, and (3) assesses the extent to which the Army applied leading practices for iterative product development in these acquisition efforts.
+
+[172] To identify specific efforts supporting Army’s modernization of its long-range fires, we used the 2021 Army Modernization Strategy which identified the following “signature” efforts: Extended Range Cannon Artillery (ERCA), Precision Strike Missile (PrSM), Mid-Range Capability (MRC), and Long-Range Hypersonic Weapon (LRHW). In addition, the Army Modernization Strategy identified the Strategic Long-Range Cannon as a fifth modernization effort. However, we excluded it from our analyses due to the Army’s cancellation of that effort in late fiscal year 2021.
+
+[173] For each of the objectives, in addition to the documentary evidence that we analyzed by objective below, we conducted interviews with Department of Defense (DOD) and Army officials on Army’s long-range fires requirements process, acquisition efforts, budget requests, and use of leading practices for iterative product development. We interviewed officials from DOD Cost Assessment and Program Evaluation, Director of Operational Test and Evaluation, Army Futures Command, Army Program Executive Office for Missile and Space, Program Executive Office for Ground Combat Systems, and Joint Program Executive Office Armaments and Ammunition. We conducted site visits at Fort Sill in Oklahoma and Redstone Arsenal in Alabama to meet with Army officials responsible for the requirements and program offices.
+
+[174] To describe how the Army conducted requirements development for long-range fires and what needs it identified to support modernization, we reviewed Army’s requirements process and applicable documents, such as the Long Range Precision Fires Cross-Functional Team Charter, to understand how the Army identified gaps and developed the requirements for modernized systems. Our review of documents included ones that informed the Army’s modernization efforts, such as the Cannon Modernization Strategy. We reviewed the capability documents for each of the four signature fires modernization programs including documents such as Capability Development Documents (CDD) and Abbreviated Capability Development Documents (A-CDD), where applicable. We interviewed Army officials within the Army Futures Command (AFC) including offices responsible for identifying capability gaps and identified their process for capturing and validating requirements to close them.
+
+[175] To examine how the Army is acquiring systems for long-range fires modernization, we reviewed the Army’s acquisition approaches for systems identified in the Army’s 2021 Modernization Strategy. We reviewed documentation including acquisition plans and recent program status updates for each of the efforts. We collected these documents in support of our DOD Weapon Systems Annual Assessments and annual Budget Justification Reviews. We also reviewed acquisition decision memorandums, acquisition strategies, program cost and schedule estimates, and documents related to technical maturity and testing.
+
+[176] We reviewed the Army’s budget requests and their associated schedules for the current year of the request for fiscal years 2021 through 2025. We identified budget lines supporting each of the efforts by utilizing budget program element numbers from the Army’s annual budget requests since 2021. Using the budget program elements, we identified specific budget lines supporting research, development, test, and evaluation and procurement activities within each effort. Similar to our annual budget justification reviews, we selected budget program elements for which the respective Army program had authority over the budget program element. We totaled these budget lines and analyzed year-over-year changes to the Army’s request for each effort. We did not use future years’ budget request data. We found these data sufficiently reliable for the purposes of this report. In addition, to assess changes in the budget requests for each effort, we reviewed documentation produced by the Army as part of its annual budget request.
+
+[177] To assess the extent to which the Army applied leading practices for iterative product development for these efforts, we compared the Army’s activities with practices identified in our prior work. [18] For our Weapon Systems Annual Assessments, we distributed questionnaires to the four program offices that manage the Army’s long-range modernization programs. Steps taken to develop the questionnaires are described in GAO‑24‑106831 . We examined acquisition plans and program responses to questions on iterative product development that were collected for the program assessments in our Weapon Systems Annual Assessments. [19] The program questionnaires included questions regarding the extent to which the Army performed or plan to perform activities such as refining the minimum set of capabilities to be included in a minimum viable product based on user feedback; conducting integrated, system-level prototype testing with users and stakeholders, in a digital environment, physical environment, or both; and using digital engineering tools, such as digital twins and a digital thread, throughout all iterative cycles of development. We assessed whether the programs were iterative or linear and discussed applicable practices for each program. We excluded another effort, the Strategic Long-Range Cannon, from our review because it was canceled prior to transitioning to an acquisition pathway.
+
+[178] We also analyzed the acquisition strategies to determine whether these efforts employed an iterative approach to product development and incorporate leading practices associated with this approach. We searched each acquisition strategy document for key terms and concepts related to the common elements of an iterative development approach identified in our prior work—including, for example, continuous user feedback that informs development; identification of a minimum viable product or initial fieldable capability; and the use of digital engineering tools, such as automation, digital twins, and digital modeling.
+
+[179] We conducted this performance audit from January 2024 to June 2025 in accordance with generally accepted government auditing standards. Those standards require that we plan and perform the audit to obtain sufficient, appropriate evidence to provide a reasonable basis for our findings and conclusions based on our audit objectives. We believe that the evidence obtained provides a reasonable basis for our findings and conclusions based on our audit objectives.
+
+[180] Appendix II: Comments from the Department of Defense
+
+[181] Appendix III: GAO Contact and Staff Acknowledgments
+
+[182] Mona Sehgal, sehgalm@gao.gov
+
+[183] Staff Acknowledgments
+
+[184] In addition to the contact named above, J. Kristopher Keener (Assistant Director), Nicolaus R. Heun, Kyle O’Brien, Dominique Belanger, Peter Anderson, and L. Adam Wolfe made key contributions to this report. Other staff who made contributions include Matthew Drerup, Christopher Durbin, Scott Hepler, Breanne Cave, Emile Ettedgui, Chi L. Mai, Jennifer Leotta, Mary Weiland, and Kevin O’Neill.
+
+[185] GAO’s Mission
+
+[186] The Government Accountability Office, the audit, evaluation, and investigative arm of Congress, exists to support Congress in meeting its constitutional responsibilities and to help improve the performance and accountability of the federal government for the American people. GAO examines the use of public funds; evaluates federal programs and policies; and provides analyses, recommendations, and other assistance to help Congress make informed oversight, policy, and funding decisions. GAO’s commitment to good government is reflected in its core values of accountability, integrity, and reliability.
+
+[187] Obtaining Copies of GAO Reports and Testimony
+
+[188] The fastest and easiest way to obtain copies of GAO documents at no cost is through our website. Each weekday afternoon, GAO posts on its website newly released reports, testimony, and correspondence. You can also subscribe to GAO’s email updates to receive notification of newly posted products.
+
+[189] Order by Phone
+
+[190] The price of each GAO publication reflects GAO’s actual cost of production and distribution and depends on the number of pages in the publication and whether the publication is printed in color or black and white. Pricing and ordering information is posted on GAO’s website, https://www.gao.gov/ordering.htm .
+
+[191] Place orders by calling (202) 512-6000, toll free (866) 801-7077, or TDD (202) 512-2537.
+
+[192] Orders may be paid for using American Express, Discover Card, MasterCard, Visa, check, or money order. Call for additional information.
+
+[193] Connect with GAO
+
+[194] Connect with GAO on X , LinkedIn , Instagram , and YouTube . Subscribe to our Email Updates . Listen to our Podcasts . Visit GAO on the web at https://www.gao.gov .
+
+[195] To Report Fraud, Waste, and Abuse in Federal Programs
+
+[196] Contact FraudNet:
+
+[197] Website: https://www.gao.gov/about/what-gao-does/fraudnet
+
+[198] Automated answering system: (800) 424-5454
+
+[199] Media Relations
+
+[200] Sarah Kaczmarek, Managing Director, Media@gao.gov
+
+[201] Congressional Relations
+
+[202] A. Nicole Clowers, Managing Director, CongRel@gao.gov
+
+[203] General Inquiries
+
+[204] https://www.gao.gov/about/contact-us
+
+[205] [1] S. Rep. No. 118-58; H.R. Rep. No. 118-125; National Defense Authorization Act for Fiscal Year 2024, Pub. L. No. 118-31 (2023).
+
+[206] [2] GAO, Leading Practices: Iterative Cycles Enable Rapid Delivery of Complex, Innovative Products , GAO‑23‑106222 (Washington, D.C.: July 27, 2023).
+
+[207] [3] When fielding capabilities such as long-range fires, the Army also develops the doctrine, training, personnel, facilities and other “planning elements” necessary to support the capability. In 2024, we recommended that the Army adjust its planning element process. The Army concurred with our recommendation, but as of February 2025, the Army has not implemented it. See GAO, Army Modernization: Actions Needed to Support Fielding New Equipment , GAO‑24‑107566 (Washington, D.C.: July 15, 2024).
+
+[208] [4] Chairman of the Joint Chiefs of Staff Instruction 5123.01I, Charter of the Joint Requirements Oversight Council and Implementation of the Joint Capabilities Integration and Development System (Oct. 30, 2021); Army Regulation 71-9, Warfighting Capabilities Determination (June 29, 2021).
+
+[209] [5] Department of Defense Directive 5000.01, The Defense Acquisition System (Sept. 9, 2020) (incorporating change 1, July 28, 2022); Department of Defense Instruction 5000.02, Operation of the Adaptive Acquisition Framework (Jan. 23, 2020) (incorporating change 1 June 8, 2022).
+
+[210] [6] For programs using the MTA pathway, the start date for the 5-year timeframe for programs designated on or after December 30, 2019, is generally the date that an acquisition decision memorandum was signed initiating the program. MTA programs designated before December 30, 2019, generally maintain their MTA program start date as the date funds were first obligated.
+
+[211] [7] 10 U.S.C. § 3602(c)(1); Department of Defense Instruction 5000.80, Operation of the Middle Tier of Acquisition (Dec. 30, 2019) (incorporating change 1 Nov. 25, 2024.) For additional information on DOD’s use of the MTA pathway, see GAO, Middle-Tier Defense Acquisitions: Rapid Prototyping and Fielding Requires Changes to Oversight and Development Approaches , GAO‑23‑105008 (Washington, D.C.: Feb. 7, 2023) and Weapon Systems Annual Assessment: DOD Is Not Yet Well-Positioned to Field Systems with Speed, GAO‑24‑106831 (Washington, D.C.: June 17, 2024).
+
+[212] [8] GAO‑23‑106222 .
+
+[213] [9] GAO‑23‑105008 .
+
+[214] [10] The Army also requested $637 million for fiscal years 2021 through 2025 to support ERCA-related munitions efforts, which are ongoing according to officials. For the four modernization efforts (ERCA and related munitions, PrSM, MRC, and LRHW), Army requested $10.2 billion for fiscal years 2021 through 2025.
+
+[215] [11] The prototype project agreement was awarded to the National Advanced Mobility Consortium under an existing other transaction agreement (OTA) between the Army and the Consortium. OTAs are agreements other than procurement contracts, cooperative agreements, and grants, and are generally not subject to the Federal Acquisition Regulation. DOD can award OTAs directly to individual organizations or through a consortium, which is an association of organizations established to provide DOD with a pool of stakeholders to innovate in specific technology areas.
+
+[216] [12] The PrSM program uses the phrase “Early Operational Capability” to refer to missiles acquired in advance of completing certain testing and formally entering production on the MCA pathway. The program completed procurement of the first lot of about 30 EOC missiles on the urgent capability acquisition pathway in January 2025. The remaining missiles will be procured on the MCA pathway. The PrSM program office intends to procure up to 628 EOC missiles in five lots. The EOC quantity increased due to supplemental funding of more than $700 million related to the conflict in Ukraine.
+
+[217] [13] According to the Army, RCCTO’s charter permitted it to initiate such projects on its own authority without using the MTA rapid prototyping pathway. The MRC effort’s acquisition strategy still resembled a rapid prototyping effort, with plans to demonstrate the capability while also creating a residual or limited operational capability at the conclusion of the effort.
+
+[218] [14] GAO‑23‑106222 .
+
+[219] [15] Department of Defense Instruction 5000.97, Digital Engineering (Dec. 21, 2023). The program’s decision authority can provide an exception to using digital engineering.
+
+[220] [16] GAO, Hypersonic Weapons: DOD Could Reduce Cost and Schedule Risks by Following Leading Practices , GAO‑24‑106792 (Washington, D.C.: July 29, 2024).
+
+[221] [17] GAO plans to evaluate the Army’s implementation of this recommendation following the completion of a digital engineering assessment for LRHW.
+
+[222] [18] GAO, Leading Practices: Iterative Cycles Enable Rapid Delivery of Complex, Innovative Products , GAO‑23‑106222 (Washington, D.C.: July 27, 2023).
+
+[223] [19] GAO, Weapon Systems Annual Assessment: DOD Is Not Yet Well-Positioned to Field Systems with Speed [Reissued with revisions on Jul. 18, 2024] , GAO‑24‑106831 (Washington, D.C.: June 17, 2024).

@@ -1,0 +1,30 @@
+{
+  "artifact_refs": [
+    "/Users/wangchen/equipment research/outputs/runs/run-a4106237-6032-4a8a-b0c8-70f68ffef540/report.md",
+    "/Users/wangchen/equipment research/outputs/runs/run-a4106237-6032-4a8a-b0c8-70f68ffef540/round_summary.json"
+  ],
+  "citations": [
+    "https://www.marines.mil/Force-Design/",
+    "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+    "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/",
+    "https://www.army.mil/article/286878/precision_strike_missile_increment_1_achieves_milestone_c_approval",
+    "https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2026/Discretionary%20Budget/Procurement/Missile%20Procurement%20Army.pdf",
+    "https://www.navair.navy.mil/news/Navy-completes-first-delivery-Block-V-Tomahawk-Missile/Wed-03242021-1700",
+    "https://www.ga-asi.com/remotely-piloted-aircraft/gray-eagle-25m",
+    "https://www.marines.mil/News/News-Display/Article/2708120/expeditionary-advanced-base-operations-eabo/",
+    "https://www.rusi.org/explore-our-research/publications/commentary/jamming-jdam-threat-us-munitions-russian-electronic-warfare",
+    "https://nllp.jallc.nato.int/iks/sharing%20public/rand_rra2950-1.pdf",
+    "https://www.nato.int/cps/en/natohq/news_230917.htm?selectedLocale=en",
+    "https://media.defense.gov/2022/Mar/17/2002958406/-1/-1/1/SUMMARY-OFTHE-JOINT-ALL-DOMAIN-COMMAND-AND-CONTROL-STRATEGY.pdf",
+    "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/",
+    "https://www.rusi.org/explore-our-research/publications/occasional-papers/mass-precision-strike-designing-uav-complexes-land-forces",
+    "https://www.gao.gov/products/gao-21-145"
+  ],
+  "duration_seconds": 1707.701,
+  "error": "",
+  "estimated_cost": 0.0,
+  "query_id": "Q-0001",
+  "status": "completed",
+  "system_id": "full_method",
+  "usage": {}
+}

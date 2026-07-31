@@ -1,0 +1,38 @@
+{
+  "answer_chars": 11695,
+  "answer_sha256": "15d592b2e711cc6797e56aeb07b52de343c088f9ded0ba53fa3375879cf622e4",
+  "artifact_refs": [],
+  "citations": [],
+  "created_at": "2026-07-28T20:53:47.210522+00:00",
+  "dataset_id": "tactical-strike-frontiers-50-v1",
+  "duration_seconds": 152.903,
+  "estimated_cost": 0.0,
+  "mode": "real",
+  "model_snapshot": {
+    "base_url_host": "codexpro.wwxb1123.xyz",
+    "model": "gpt-5.5",
+    "protocol": "responses"
+  },
+  "query": "不完备与不确定战场信息条件下精确打击研究",
+  "query_id": "Q-0006",
+  "query_sha256": "8e2c572ca590ab711442606eab4cc121b3698af2ddf3763631ebdf5ebc645bad",
+  "report_id": "BR-69dc73121e4ab497ab7d5bfe",
+  "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-69dc73121e4ab497ab7d5bfe/report.md",
+  "schema_version": "1.0",
+  "source_eval_id": "baseline-first20-three-layer-nine-20260729",
+  "sources": [],
+  "status": "completed",
+  "system_id": "bare_llm",
+  "usage": {
+    "input_tokens": 722,
+    "input_tokens_details": {
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "output_tokens": 8385,
+    "output_tokens_details": {
+      "reasoning_tokens": 146
+    },
+    "total_tokens": 9107
+  }
+}

@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=lineofdeparture.army.mil · Engineering Resilient Fire Support in
+source_url=https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/
+claim=大规模作战中的火力体系依赖通信完整性、PACE通信、分散式C2、快速火力通道、雷达短时发射和频繁机动，说明传感器到射手链路必须具备抗压和降级运行能力。
+excerpt=
+retrieval=Hosted web search citation metadata

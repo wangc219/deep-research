@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=files.gao.gov · GAO
+source_url=https://files.gao.gov/reports/GAO
+claim=GAO报告线索用于支撑陆军现代化和PrSM增量发展方向，但当前URL过于笼统，需定位具体报告。
+excerpt=
+retrieval=Hosted web search citation metadata

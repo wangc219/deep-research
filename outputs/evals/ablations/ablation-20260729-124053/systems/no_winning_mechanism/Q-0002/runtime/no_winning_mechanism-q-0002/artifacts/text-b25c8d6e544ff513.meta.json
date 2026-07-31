@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:b25c8d6e544ff513",
+  "content_path": "text-b25c8d6e544ff513.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: cached_origin_failure:HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-combat_scenario-web-8380652b27d7",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "b25c8d6e544ff513e929c6be7368a386d0331343e2d55ad2d670edc838b6504b",
+  "url": "https://www.gao.gov/products/gao-21-320sp"
+}

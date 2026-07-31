@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=> U.S. Department of Defense > Contract
+source_url=https://www.defense.gov/News/Contracts/Contract/Article/606726/
+claim=2014年DoD合同显示SARA承担JDAM和SDB-I平台Home-on-Jam演示，将导引头集成到弹药并支持政府飞行测试。
+excerpt=
+retrieval=Hosted web search citation metadata

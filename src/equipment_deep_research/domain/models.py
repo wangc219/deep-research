@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field, is_dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field, fields, is_dataclass
 from datetime import datetime, timezone
+import re
 from typing import Any, Literal
 from uuid import uuid4
 
@@ -12,6 +14,8 @@ ResearchRoute = Literal[
     "traditional_gap",
     "war_case_learning",
 ]
+InteractionMode = Literal["expert", "autonomous"]
+DiscoveryBranch = Literal["auto", "A", "B", "C", "D", "E", "F", "G", "H"]
 
 CapabilityImageType = Literal["new_capability", "upgrade"]
 
@@ -26,11 +30,18 @@ def new_stable_id(prefix: str) -> str:
 
 def to_plain(value: Any) -> Any:
     if is_dataclass(value):
-        return {key: to_plain(item) for key, item in asdict(value).items()}
-    if isinstance(value, list):
-        return [to_plain(item) for item in value]
-    if isinstance(value, dict):
+        # ``dataclasses.asdict`` performs a deepcopy and therefore attempts to
+        # pickle immutable provider containers such as MappingProxyType.
+        # Reading fields directly keeps conversion deterministic without
+        # copying opaque runtime container implementations.
+        return {
+            item.name: to_plain(getattr(value, item.name))
+            for item in fields(value)
+        }
+    if isinstance(value, Mapping):
         return {str(key): to_plain(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [to_plain(item) for item in value]
     return value
 
 
@@ -43,16 +54,315 @@ class ResearchProblem:
     created_at: str = field(default_factory=now_iso)
     problem_id: str = field(default_factory=lambda: new_stable_id("problem"))
     schema_version: str = "1.0"
+    as_of_date: str = ""
+    interaction_mode: InteractionMode = "expert"
+    discovery_branch: DiscoveryBranch = "auto"
+    max_rounds_hint: int = 2
+    supplemental_information: str = ""
+
+    def analysis_text(self) -> str:
+        """Return the complete user input used for routing and task analysis."""
+
+        supplement = self.supplemental_information.strip()
+        return self.topic if not supplement else f"{self.topic}\n{supplement}"
+
+    def structured_query_brief(self) -> dict[str, Any]:
+        """Compress optional user context into a bounded downstream handoff.
+
+        The original supplement remains stored on the ResearchProblem for audit,
+        while worker Agents receive this short structure instead of a long raw
+        paragraph.  Model-generated blueprint fields may refine this baseline.
+        """
+
+        supplement = re.sub(r"\s+", " ", self.supplemental_information).strip()
+        if not supplement:
+            return {
+                "core_query": self.topic.strip(),
+                "supplement_present": False,
+                "focus_questions": [],
+                "expansion_dimensions": [],
+                "constraints_and_assumptions": [],
+            }
+
+        clauses = [
+            item.strip(" ；;。")
+            for item in re.split(r"(?<=[？?。；;])\s*", supplement)
+            if item.strip(" ；;。")
+        ]
+        focus_questions = [
+            item for item in clauses if "？" in item or "?" in item
+        ][:6]
+        if not focus_questions:
+            focus_questions = clauses[:4]
+
+        dimension_rules = (
+            ("成本交换与效费比", ("成本", "效费比", "1/", "低成本", "廉价")),
+            ("规模化生产与工业动员", ("万枚", "量产", "产能", "规模化", "工业")),
+            ("持续消耗与战役韧性", ("持续", "消耗", "补充", "韧性")),
+            ("攻防适应与体系反制", ("防空", "拦截", "对手", "强敌", "反制")),
+            ("精度、目标价值与毁伤收益", ("精确", "精打", "制导", "高价值目标")),
+            ("火力配系与弹药基数", ("火力配系", "弹药基数", "火力", "弹药")),
+            ("后勤保障与快速再生", ("后勤", "保障", "补给", "再生")),
+            ("规划打击下的生存与恢复", ("规划化打击", "打击", "生存", "恢复")),
+        )
+        expansion_dimensions = [
+            label
+            for label, signals in dimension_rules
+            if any(signal.lower() in supplement.lower() for signal in signals)
+        ][:8]
+        if not expansion_dimensions:
+            expansion_dimensions = ["任务效果", "能力边界", "对手适应", "保障约束"]
+
+        constraints_and_assumptions = [
+            item
+            for item in clauses
+            if any(
+                signal in item
+                for signal in ("如果", "假设", "前提", "约束", "以下", "达到", "降至")
+            )
+        ][:4]
+        dimension_summary = "、".join(expansion_dimensions[:4])
+        if len(expansion_dimensions) > 4:
+            dimension_summary += "等"
+        supplement_summary = (
+            f"补充研究聚焦{dimension_summary}；已提取{len(focus_questions)}个焦点问题"
+            f"和{len(constraints_and_assumptions)}项待验证约束/假设。"
+        )
+
+        return {
+            "core_query": self.topic.strip(),
+            "supplement_present": True,
+            "supplement_summary": supplement_summary[:1200],
+            "focus_questions": focus_questions,
+            "expansion_dimensions": expansion_dimensions,
+            "constraints_and_assumptions": constraints_and_assumptions,
+            "handoff_rule": "补充信息用于拓展分析方向；其中假设需验证，不视为既成事实。",
+        }
 
     def resolved_route(self) -> str:
         if self.research_route != "auto":
             return self.research_route
-        topic = self.topic
-        if any(word in topic for word in ["战例", "战争", "案例", "经验"]):
+        branch = self.resolved_discovery_branch()["primary"]
+        if branch == "B" or branch == "F":
+            return "traditional_gap"
+        if branch == "C":
+            return "war_case_learning"
+        topic = self.analysis_text()
+        if any(
+            word in topic
+            for word in [
+                "战例",
+                "战争案例",
+                "局部战争",
+                "冲突复盘",
+                "经验教训",
+            ]
+        ):
             return "war_case_learning"
         if any(word in topic for word in ["传统", "现有", "升级", "缺口", "不足"]):
             return "traditional_gap"
         return "new_winning_mechanism"
+
+    def resolved_discovery_branch(self) -> dict[str, Any]:
+        """Return the target A-H discovery branch without changing runtime routes.
+
+        The field is intentionally additive: existing callers continue to use the
+        three executable research routes, while audit and reporting consumers can
+        inspect the finer target-architecture classification.
+        """
+        topic = self.analysis_text().lower()
+        rules = [
+            (
+                "C",
+                "局部战争案例经验",
+                (
+                    "战例",
+                    "战争案例",
+                    "局部战争",
+                    "一个案例",
+                    "单一案例",
+                    "冲突复盘",
+                    "经验教训",
+                    "时间线",
+                    "俄乌",
+                    "美伊",
+                    "中东冲突",
+                ),
+            ),
+            (
+                "D",
+                "技术驱动发现",
+                (
+                    "技术驱动",
+                    "技术雷达",
+                    "量子",
+                    "新材料",
+                    "生物技术",
+                    "边缘智能",
+                    "人工智能",
+                    "智能算法",
+                    "量子信息",
+                    "颠覆性技术",
+                    "太空技术",
+                    "电磁技术",
+                    "新质毁伤",
+                    "新质效应",
+                    "trl",
+                    "技术成熟度",
+                ),
+            ),
+            (
+                "E",
+                "对手动向牵引发现",
+                (
+                    "对手动向",
+                    "采购变化",
+                    "演训变化",
+                    "条令变化",
+                    "力量建设",
+                    "部署变化",
+                    "全球部署",
+                    "威慑投送",
+                    "军事合作",
+                    "金穹",
+                    "多层防御",
+                    "预警拦截",
+                ),
+            ),
+            (
+                "F",
+                "体系对抗博弈发现",
+                (
+                    "体系对抗",
+                    "体系仿真",
+                    "补链强链",
+                    "体系脆弱",
+                    "级联失效",
+                    "a2/ad",
+                    "反介入",
+                    "区域拒止",
+                    "穿透性制空",
+                    "马赛克战",
+                    "决策中心战",
+                    "分布式杀伤",
+                ),
+            ),
+            (
+                "G",
+                "跨域融合发现",
+                (
+                    "跨域",
+                    "域间",
+                    "陆海空天",
+                    "多域融合",
+                    "协同缝隙",
+                    "空天一体",
+                    "深海作战",
+                    "无人潜航器",
+                    "电磁频谱",
+                    "联合电磁频谱",
+                    "网电融合",
+                    "网络作战",
+                ),
+            ),
+            (
+                "H",
+                "非传统安全牵引",
+                (
+                    "非传统安全",
+                    "灰色地带",
+                    "认知影响",
+                    "认知空间",
+                    "认知域",
+                    "太空态势",
+                    "深海安全",
+                    "复合灾害",
+                ),
+            ),
+            (
+                "B",
+                "传统能力缺口发现",
+                (
+                    "传统能力缺口",
+                    "现役升级",
+                    "能力缺口",
+                    "能力不足",
+                    "能力空白",
+                    "周边控制",
+                    "远海前出",
+                    "远程快打",
+                    "全球到达",
+                    "全球达到",
+                    "第一岛链",
+                    "第二岛链",
+                    "第三岛链",
+                ),
+            ),
+            (
+                "A",
+                "新战法发现",
+                (
+                    "新战法",
+                    "新作战概念",
+                    "作战运用创新",
+                    "新制胜机制",
+                    "智能化大规模全域联合作战",
+                    "未来战争形态",
+                ),
+            ),
+        ]
+        if self.discovery_branch != "auto":
+            label = next(
+                label for code, label, _ in rules if code == self.discovery_branch
+            )
+            return {
+                "primary": self.discovery_branch,
+                "secondary": [],
+                "confidence": 1.0,
+                "rationale": f"专家显式指定{label}分支。",
+                "label": label,
+            }
+        candidates: list[tuple[str, str, list[str]]] = []
+        for code, label, keywords in rules:
+            matches = [keyword for keyword in keywords if keyword in topic]
+            if matches:
+                candidates.append((code, label, matches))
+        if candidates:
+            candidates.sort(
+                key=lambda item: (
+                    -len(item[2]),
+                    [row[0] for row in rules].index(item[0]),
+                )
+            )
+            code, label, matches = candidates[0]
+            return {
+                "primary": code,
+                "secondary": [item[0] for item in candidates[1:3]],
+                "confidence": min(0.95, 0.72 + 0.06 * len(matches)),
+                "rationale": f"任务文本命中{label}特征：{', '.join(matches[:4])}",
+                "label": label,
+            }
+        route_fallbacks = {
+            "new_winning_mechanism": ("A", "新战法发现"),
+            "traditional_gap": ("B", "传统能力缺口发现"),
+            "war_case_learning": ("C", "局部战争案例经验"),
+        }
+        if self.research_route in route_fallbacks:
+            code, label = route_fallbacks[self.research_route]
+            return {
+                "primary": code,
+                "secondary": [],
+                "confidence": 0.9,
+                "rationale": f"任务未命中更细分关键词，继承专家指定的{self.research_route}研究路线。",
+                "label": label,
+            }
+        return {
+            "primary": "B",
+            "secondary": [],
+            "confidence": 0.55,
+            "rationale": "未命中明确的新战法、案例、技术或专项驱动词，按通用装备能力缺口发现处理。",
+            "label": "传统能力缺口发现",
+        }
 
 
 @dataclass(frozen=True)
@@ -89,6 +399,255 @@ class BaselineFindingPacket:
     search_log: list[str] = field(default_factory=list)
     limitations: list[str] = field(default_factory=list)
     schema_version: str = "1.0"
+    analysis_sections: dict[str, Any] = field(default_factory=dict)
+    payload_type: str = ""
+    payload: dict[str, Any] = field(default_factory=dict)
+    claim_bundle_ref: str = ""
+    admission_status: Literal["", "accepted", "limited", "rejected"] = ""
+
+    def validate_for_submit(self) -> None:
+        if not self.schema_version.startswith("2"):
+            return
+        expected = BASELINE_PAYLOAD_TYPES.get(self.agent_id)
+        if expected is None:
+            raise ValueError(f"v2 packet has unsupported agent role: {self.agent_id}")
+        payload_type, required_fields = expected
+        if self.payload_type != payload_type:
+            raise ValueError(
+                f"v2 packet for {self.agent_id} requires payload_type={payload_type}"
+            )
+        missing = [
+            name
+            for name in required_fields
+            if name not in self.payload or self.payload[name] in (None, "", [], {})
+        ]
+        if missing:
+            raise ValueError(f"v2 packet payload missing required fields: {missing}")
+
+
+BASELINE_PAYLOAD_TYPES: dict[str, tuple[str, tuple[str, ...]]] = {
+    "international_situation": (
+        "strategic_assessment_v1",
+        (
+            "situation_assessment",
+            "threat_assessment",
+            "strategic_pattern",
+            "opponent_moves",
+            "warning_indicators",
+            "alternative_hypotheses",
+            "scenario_drivers",
+        ),
+    ),
+    "combat_scenario": (
+        "scenario_model_v1",
+        (
+            "scenario_framework",
+            "enemy_coa",
+            "critical_timeline",
+            "environment_constraints",
+            "scenario_branches",
+            "capability_pressure_points",
+            "assumptions",
+        ),
+    ),
+    "weapon_equipment": (
+        "equipment_observation_v1",
+        (
+            "equipment_profiles",
+            "current_parameters",
+            "parameter_observations",
+            "parameter_conflicts",
+            "development_models",
+            "technology_readiness",
+            "capability_constraints",
+            "scenario_fit",
+            "capability_gaps",
+        ),
+    ),
+    "operational_employment": (
+        "operational_synthesis_v1",
+        (
+            "operational_constraints",
+            "mission_chain",
+            "force_coordination",
+            "coa",
+            "sustainment_resilience",
+            "failure_modes",
+            "lessons",
+            "equipment_function_requirements",
+        ),
+    ),
+    "opponent_monitoring": (
+        "opponent_change_assessment_v1",
+        (
+            "change_baseline",
+            "observed_moves",
+            "formation_timeline",
+            "threat_effects",
+            "system_dependencies",
+            "counter_requirements",
+            "warning_indicators",
+        ),
+    ),
+    "system_confrontation": (
+        "system_confrontation_model_v1",
+        (
+            "system_boundaries",
+            "red_blue_models",
+            "dependency_graph",
+            "cascading_failures",
+            "critical_vulnerabilities",
+            "alternative_configs",
+            "reinforcement_directions",
+        ),
+    ),
+}
+
+BASELINE_OPTIONAL_PAYLOAD_FIELDS: dict[str, tuple[str, ...]] = {
+    "weapon_equipment": (
+        "foreign_equipment_landscape",
+        "system_dependencies",
+        "long_range_precision_missile_evidence",
+        "long_range_unmanned_strike_evidence",
+        "standoff_suppression_evidence",
+        "defensive_countermeasure_options",
+        "upgrade_requirements",
+        "new_equipment_requirements",
+        "verification_plan",
+    ),
+}
+
+
+@dataclass(frozen=True)
+class StrategicAssessment:
+    assessment_id: str
+    packet_id: str
+    situation_assessment: Any
+    threat_assessment: Any
+    strategic_pattern: Any
+    opponent_moves: Any
+    warning_indicators: Any
+    alternative_hypotheses: Any
+    scenario_drivers: Any
+    evidence_ids: list[str]
+    created_at: str = field(default_factory=now_iso)
+    schema_version: str = "1.0"
+
+
+@dataclass(frozen=True)
+class ScenarioModel:
+    scenario_id: str
+    packet_id: str
+    scenario_framework: Any
+    enemy_coa: Any
+    critical_timeline: Any
+    environment_constraints: Any
+    scenario_branches: Any
+    capability_pressure_points: Any
+    assumptions: Any
+    evidence_ids: list[str]
+    created_at: str = field(default_factory=now_iso)
+    schema_version: str = "1.0"
+
+
+@dataclass(frozen=True)
+class EquipmentObservation:
+    observation_id: str
+    packet_id: str
+    equipment_profiles: Any
+    current_parameters: Any
+    parameter_observations: Any
+    parameter_conflicts: Any
+    development_models: Any
+    technology_readiness: Any
+    capability_constraints: Any
+    scenario_fit: Any
+    capability_gaps: Any
+    evidence_ids: list[str]
+    foreign_equipment_landscape: Any = field(default_factory=list)
+    system_dependencies: Any = field(default_factory=list)
+    long_range_precision_missile_evidence: Any = field(default_factory=list)
+    long_range_unmanned_strike_evidence: Any = field(default_factory=list)
+    standoff_suppression_evidence: Any = field(default_factory=list)
+    defensive_countermeasure_options: Any = field(default_factory=list)
+    upgrade_requirements: Any = field(default_factory=list)
+    new_equipment_requirements: Any = field(default_factory=list)
+    verification_plan: Any = field(default_factory=list)
+    created_at: str = field(default_factory=now_iso)
+    schema_version: str = "1.0"
+
+
+@dataclass(frozen=True)
+class OperationalSynthesis:
+    synthesis_id: str
+    packet_id: str
+    operational_constraints: Any
+    mission_chain: Any
+    force_coordination: Any
+    coa: Any
+    sustainment_resilience: Any
+    failure_modes: Any
+    lessons: Any
+    equipment_function_requirements: Any
+    evidence_ids: list[str]
+    created_at: str = field(default_factory=now_iso)
+    schema_version: str = "1.0"
+
+
+def typed_domain_object_from_packet(
+    packet: BaselineFindingPacket,
+) -> (
+    StrategicAssessment
+    | ScenarioModel
+    | EquipmentObservation
+    | OperationalSynthesis
+    | None
+):
+    if not packet.schema_version.startswith("2"):
+        return None
+    packet.validate_for_submit()
+    common = {"packet_id": packet.packet_id, "evidence_ids": list(packet.evidence_ids)}
+    if packet.agent_id == "international_situation":
+        return StrategicAssessment(
+            assessment_id=f"strategic-{packet.packet_id}",
+            **common,
+            **{
+                name: packet.payload[name]
+                for name in BASELINE_PAYLOAD_TYPES[packet.agent_id][1]
+            },
+        )
+    if packet.agent_id == "combat_scenario":
+        return ScenarioModel(
+            scenario_id=f"scenario-{packet.packet_id}",
+            **common,
+            **{
+                name: packet.payload[name]
+                for name in BASELINE_PAYLOAD_TYPES[packet.agent_id][1]
+            },
+        )
+    if packet.agent_id == "weapon_equipment":
+        return EquipmentObservation(
+            observation_id=f"equipment-{packet.packet_id}",
+            **common,
+            **{
+                name: packet.payload[name]
+                for name in BASELINE_PAYLOAD_TYPES[packet.agent_id][1]
+            },
+            **{
+                name: packet.payload.get(name, [])
+                for name in BASELINE_OPTIONAL_PAYLOAD_FIELDS.get(packet.agent_id, ())
+            },
+        )
+    if packet.agent_id == "operational_employment":
+        return OperationalSynthesis(
+            synthesis_id=f"operational-{packet.packet_id}",
+            **common,
+            **{
+                name: packet.payload[name]
+                for name in BASELINE_PAYLOAD_TYPES[packet.agent_id][1]
+            },
+        )
+    return None
 
 
 @dataclass(frozen=True)
@@ -143,6 +702,327 @@ class AgentRecommendation:
     schema_version: str = "1.0"
 
 
+WinningHypothesisStatus = Literal[
+    "draft",
+    "challenging",
+    "finalist",
+    "accepted",
+    "merged",
+    "rejected",
+]
+
+
+@dataclass(frozen=True)
+class WinningHypothesis:
+    """Auditable candidate ledger for one mechanism-distinct winning thesis."""
+
+    hypothesis_id: str
+    title: str
+    nearest_public_baseline: str
+    changed_confrontation_variable: str
+    mechanism_chain: list[str]
+    direct_military_effects: list[str]
+    equipment_forms: list[str]
+    novelty_delta: str
+    evidence_ids: list[str] = field(default_factory=list)
+    counterevidence: list[str] = field(default_factory=list)
+    adversary_adaptations: list[str] = field(default_factory=list)
+    failure_boundaries: list[str] = field(default_factory=list)
+    trl_constraints: list[str] = field(default_factory=list)
+    cost_constraints: list[str] = field(default_factory=list)
+    industrial_constraints: list[str] = field(default_factory=list)
+    cross_scenario_results: list[str] = field(default_factory=list)
+    validation_plan: list[str] = field(default_factory=list)
+    evidence_boundary: str = ""
+    implementation_path: str = ""
+    merge_targets: list[str] = field(default_factory=list)
+    source_task_ids: list[str] = field(default_factory=list)
+    residuals: list[str] = field(default_factory=list)
+    score: float = 0.0
+    status: WinningHypothesisStatus = "draft"
+    created_at: str = field(default_factory=now_iso)
+    schema_version: str = "1.0"
+
+
+@dataclass(frozen=True)
+class SpecialistTask:
+    task_id: str
+    agent_instance_id: str
+    archetype: str
+    display_name: str
+    wave: int
+    purpose: str
+    merge_target: str
+    hypothesis_id: str = ""
+    trigger_residuals: list[str] = field(default_factory=list)
+    depends_on: list[str] = field(default_factory=list)
+    expected_quality_gain: float = 0.0
+    max_output_tokens: int = 1800
+    allow_child_spawn: bool = False
+    status: str = "planned"
+    created_at: str = field(default_factory=now_iso)
+    schema_version: str = "1.0"
+
+
+@dataclass(frozen=True)
+class SwarmPlan:
+    plan_id: str
+    execution_profile_id: str
+    policy: dict[str, Any]
+    tasks: list[SpecialistTask]
+    waves: list[list[str]]
+    stop_reason: str = ""
+    created_at: str = field(default_factory=now_iso)
+    schema_version: str = "1.0"
+
+
+@dataclass(frozen=True)
+class SpecialistContribution:
+    contribution_id: str
+    task_id: str
+    agent_instance_id: str
+    hypothesis_id: str
+    merge_target: str
+    findings: list[str]
+    mechanism_chain_updates: list[str] = field(default_factory=list)
+    direct_military_effects: list[str] = field(default_factory=list)
+    equipment_forms: list[str] = field(default_factory=list)
+    novelty_delta: str = ""
+    evidence_boundary: str = ""
+    implementation_path: str = ""
+    evidence_ids: list[str] = field(default_factory=list)
+    counterevidence: list[str] = field(default_factory=list)
+    adversary_adaptations: list[str] = field(default_factory=list)
+    failure_boundaries: list[str] = field(default_factory=list)
+    trl_constraints: list[str] = field(default_factory=list)
+    cost_constraints: list[str] = field(default_factory=list)
+    industrial_constraints: list[str] = field(default_factory=list)
+    cross_scenario_results: list[str] = field(default_factory=list)
+    validation_plan: list[str] = field(default_factory=list)
+    residuals_resolved: list[str] = field(default_factory=list)
+    incremental_quality: float = 0.0
+    recommendation: str = "retain"
+    accepted: bool = False
+    created_at: str = field(default_factory=now_iso)
+    schema_version: str = "1.0"
+
+
+@dataclass(frozen=True)
+class SwarmGateResult:
+    gate_id: str
+    hypothesis_id: str
+    stage: str
+    passed: bool
+    score: float
+    residuals: list[str] = field(default_factory=list)
+    rejection_reasons: list[str] = field(default_factory=list)
+    evidence_ids: list[str] = field(default_factory=list)
+    created_at: str = field(default_factory=now_iso)
+    schema_version: str = "1.0"
+
+
+@dataclass(frozen=True)
+class AgentPromotionRecord:
+    promotion_id: str
+    archetype: str
+    eligible_runs: int
+    positive_increment_runs: int
+    evidence_hard_failures: int
+    permission_hard_failures: int
+    positive_increment_rate: float
+    offline_evaluation_passed: bool = False
+    human_approved: bool = False
+    status: str = "candidate"
+    version: str = "candidate-v1"
+    rollback_ref: str = ""
+    created_at: str = field(default_factory=now_iso)
+    schema_version: str = "1.0"
+
+
+@dataclass(frozen=True)
+class WinningRoleContract:
+    """Governed, versioned role definition for one mission-graph specialist."""
+
+    role_contract_id: str
+    archetype: str
+    display_name: str
+    purpose: str
+    mission_node: str
+    merge_targets: list[str]
+    trigger_residuals: list[str] = field(default_factory=list)
+    methodology: list[str] = field(default_factory=list)
+    quality_gates: list[str] = field(default_factory=list)
+    output_fields: list[str] = field(default_factory=list)
+    skill_ids: list[str] = field(default_factory=list)
+    tool_ids: list[str] = field(default_factory=list)
+    max_instances: int = 1
+    allow_child_spawn: bool = False
+    authority_scope: str = "bounded_analysis_only"
+    generated_by: str = "winning_swarm_controller"
+    status: str = "governed"
+    created_at: str = field(default_factory=now_iso)
+    schema_version: str = "2.0"
+
+
+@dataclass(frozen=True)
+class WinningAgentInstance:
+    """One isolated, disposable execution instance bound to a role contract."""
+
+    instance_id: str
+    role_contract_id: str
+    archetype: str
+    display_name: str
+    mission_node: str
+    wave: int
+    merge_target: str
+    hypothesis_id: str = ""
+    depends_on: list[str] = field(default_factory=list)
+    trigger_residuals: list[str] = field(default_factory=list)
+    expected_quality_gain: float = 0.0
+    execution_backend: str = "independent_codex_cli"
+    context_isolation: str = "ephemeral"
+    allow_child_spawn: bool = False
+    status: str = "planned"
+    created_at: str = field(default_factory=now_iso)
+    schema_version: str = "2.0"
+
+
+@dataclass(frozen=True)
+class WinningMissionGraph:
+    """Dependency-aware graph joining S1-S6 seed instances and recruited roles."""
+
+    graph_id: str
+    execution_profile_id: str
+    mission_objective: str
+    role_contracts: list[WinningRoleContract]
+    agent_instances: list[WinningAgentInstance]
+    dependencies: dict[str, list[str]]
+    waves: list[list[str]]
+    s_node_seeds: dict[str, list[str]]
+    minimum_instances: int = 8
+    maximum_instances: int = 16
+    maximum_concurrency: int = 6
+    merge_strategy: str = "versioned_ledger_rebase_then_pareto"
+    status: str = "planned"
+    created_at: str = field(default_factory=now_iso)
+    schema_version: str = "2.0"
+
+
+@dataclass(frozen=True)
+class WinningContribution:
+    """A merge-scoped patch produced against one immutable ledger version."""
+
+    contribution_id: str
+    agent_instance_id: str
+    role_contract_id: str
+    hypothesis_id: str
+    merge_target: str
+    base_ledger_version: int
+    hypothesis_patch: dict[str, Any]
+    quality_dimensions: dict[str, float] = field(default_factory=dict)
+    evidence_ids: list[str] = field(default_factory=list)
+    residuals_resolved: list[str] = field(default_factory=list)
+    incremental_quality: float = 0.0
+    recommendation: str = "retain"
+    rebase_count: int = 0
+    accepted: bool = True
+    created_at: str = field(default_factory=now_iso)
+    schema_version: str = "2.0"
+
+
+@dataclass(frozen=True)
+class MergeReceipt:
+    receipt_id: str
+    contribution_id: str
+    hypothesis_id: str
+    merge_target: str
+    base_ledger_version: int
+    resulting_ledger_version: int
+    status: str
+    changed_fields: list[str] = field(default_factory=list)
+    conflicts: list[str] = field(default_factory=list)
+    quality_delta: float = 0.0
+    rebase_required: bool = False
+    created_at: str = field(default_factory=now_iso)
+    schema_version: str = "2.0"
+
+
+@dataclass(frozen=True)
+class HypothesisLedgerVersion:
+    ledger_id: str
+    version: int
+    hypotheses: list[WinningHypothesis]
+    parent_version: int | None = None
+    merge_receipts: list[MergeReceipt] = field(default_factory=list)
+    change_summary: str = ""
+    created_by: str = "winning_swarm_controller"
+    status: str = "active"
+    created_at: str = field(default_factory=now_iso)
+    schema_version: str = "2.0"
+
+
+@dataclass(frozen=True)
+class PortfolioDecision:
+    decision_id: str
+    ledger_id: str
+    ledger_version: int
+    pareto_front: list[str]
+    selected_hypothesis_ids: list[str]
+    rejected_hypothesis_ids: list[str]
+    objective_scores: dict[str, dict[str, float]] = field(default_factory=dict)
+    dominance_reasons: dict[str, list[str]] = field(default_factory=dict)
+    status: str = "proposed"
+    requires_human_review: bool = True
+    created_at: str = field(default_factory=now_iso)
+    schema_version: str = "2.0"
+
+
+@dataclass(frozen=True)
+class WinningMechanismInput:
+    input_id: str
+    research_route: str
+    problem_frame: dict[str, Any]
+    packet_ids: list[str]
+    evidence_index: list[dict[str, Any]]
+    coverage_map: dict[str, Any]
+    conflict_set: list[str]
+    open_questions: list[str]
+    round_budget: dict[str, int]
+    attempt: int = 1
+    created_at: str = field(default_factory=now_iso)
+    schema_version: str = "1.0"
+
+
+@dataclass(frozen=True)
+class WinningKnowledgeProjection:
+    projection_id: str
+    input_id: str
+    theory_tools: list[dict[str, Any]]
+    case_resources: list[dict[str, Any]]
+    frontier_resources: list[dict[str, Any]]
+    question_chain: list[dict[str, Any]]
+    evidence_ids: list[str]
+    created_at: str = field(default_factory=now_iso)
+    schema_version: str = "1.0"
+
+
+@dataclass(frozen=True)
+class WinningReasoningNode:
+    object_id: str
+    step: int
+    title: str
+    summary: str
+    input_refs: list[str]
+    evidence_ids: list[str]
+    claim_ids: list[str]
+    confidence: float
+    assumptions: list[str]
+    route: str
+    next_action: dict[str, Any]
+    created_at: str = field(default_factory=now_iso)
+    schema_version: str = "1.0"
+
+
 @dataclass(frozen=True)
 class WinningMechanismStageOutput:
     stage_id: str
@@ -173,6 +1053,26 @@ class CapabilityImageItem:
     confidence: float
     created_at: str = field(default_factory=now_iso)
     schema_version: str = "1.0"
+    mission_effect: str = ""
+    system_dependencies: list[str] = field(default_factory=list)
+    risk_boundaries: list[str] = field(default_factory=list)
+    military_utility: str = ""
+    strike_countermeasure_value: str = ""
+    novelty: str = ""
+    foresight: str = ""
+    operational_constraints: list[str] = field(default_factory=list)
+    evidence_basis: list[str] = field(default_factory=list)
+    agent_contributions: list[str] = field(default_factory=list)
+    reasoning_refs: list[str] = field(default_factory=list)
+    deep_capability_portrait: str = ""
+    equipment_form: str = ""
+    operational_mechanism: str = ""
+    development_path: str = ""
+    baseline_system: str = ""
+    upgrade_package: list[str] = field(default_factory=list)
+    combat_effect_uplift: str = ""
+    strike_chain_contribution: str = ""
+    upgrade_boundary: str = ""
 
     def validate(self) -> None:
         required = [

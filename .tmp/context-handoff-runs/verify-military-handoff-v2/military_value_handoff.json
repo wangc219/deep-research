@@ -1,0 +1,207 @@
+{
+  "branch_products": {},
+  "claims": [
+    {
+      "claim_id": "claim-4a9f5cba2d2b",
+      "claim_type": "fact",
+      "confidence": 0.78,
+      "downstream_steps": [
+        "S1",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-weapon_equipment-1"
+      ],
+      "failure_boundary": "武器装备维度仍需进一步联网补充高置信资料。",
+      "mechanism": "国外装备的体系依赖、任务优势和能力边界应分别映射为防御性反制选项、现役升级需求与新装备研发需求。",
+      "military_effects": [
+        "拦截反制",
+        "体系协同"
+      ],
+      "mission_condition": "挖掘在西太反介入体系下的装备能力缺口",
+      "packet_id": "packet-weapon_equipment",
+      "selection_score": 0.6048,
+      "source_agent_id": "weapon_equipment",
+      "source_urls": [
+        "https://fixture.local/weapon_equipment"
+      ]
+    },
+    {
+      "claim_id": "claim-c23d8ae2bd77",
+      "claim_type": "fact",
+      "confidence": 0.78,
+      "downstream_steps": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-combat_scenario-1"
+      ],
+      "failure_boundary": "作战场景维度仍需进一步联网补充高置信资料。",
+      "mechanism": "挖掘在西太反介入体系下的装备能力缺口应落入明确任务场景，包含敌方方案、关键时间窗和环境约束。",
+      "military_effects": [
+        "拒止制衡",
+        "体系协同"
+      ],
+      "mission_condition": "挖掘在西太反介入体系下的装备能力缺口",
+      "packet_id": "packet-combat_scenario",
+      "selection_score": 0.5648,
+      "source_agent_id": "combat_scenario",
+      "source_urls": [
+        "https://fixture.local/combat_scenario"
+      ]
+    },
+    {
+      "claim_id": "claim-955a25921722",
+      "claim_type": "fact",
+      "confidence": 0.78,
+      "downstream_steps": [
+        "S1",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-international_situation-1"
+      ],
+      "failure_boundary": "国际形势维度仍需进一步联网补充高置信资料。",
+      "mechanism": "围绕挖掘在西太反介入体系下的装备能力缺口，需要先识别潜在威胁力量和对抗压力。",
+      "military_effects": [
+        "拒止制衡",
+        "体系协同"
+      ],
+      "mission_condition": "挖掘在西太反介入体系下的装备能力缺口",
+      "packet_id": "packet-international_situation",
+      "selection_score": 0.5648,
+      "source_agent_id": "international_situation",
+      "source_urls": [
+        "https://fixture.local/international_situation"
+      ]
+    },
+    {
+      "claim_id": "claim-3861bb2956ae",
+      "claim_type": "fact",
+      "confidence": 0.78,
+      "downstream_steps": [
+        "S2",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-operational_employment-1"
+      ],
+      "failure_boundary": "作战运用维度仍需进一步联网补充高置信资料。",
+      "mechanism": "挖掘在西太反介入体系下的装备能力缺口需要结合COA、兵力协同和经验教训判断可用作战样式。",
+      "military_effects": [
+        "拒止制衡",
+        "体系协同"
+      ],
+      "mission_condition": "挖掘在西太反介入体系下的装备能力缺口",
+      "packet_id": "packet-operational_employment",
+      "selection_score": 0.5648,
+      "source_agent_id": "operational_employment",
+      "source_urls": [
+        "https://fixture.local/operational_employment"
+      ]
+    },
+    {
+      "claim_id": "claim-9b5b029dc50e",
+      "claim_type": "fact",
+      "confidence": 0.78,
+      "downstream_steps": [
+        "S1",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-weapon_equipment-1"
+      ],
+      "failure_boundary": "武器装备维度仍需进一步联网补充高置信资料。",
+      "mechanism": "需要围绕挖掘在西太反介入体系下的装备能力缺口建立国外现役、在研和替代装备的型号谱系与能力证据矩阵。",
+      "military_effects": [
+        "拒止制衡",
+        "体系协同"
+      ],
+      "mission_condition": "挖掘在西太反介入体系下的装备能力缺口",
+      "packet_id": "packet-weapon_equipment",
+      "selection_score": 0.5648,
+      "source_agent_id": "weapon_equipment",
+      "source_urls": [
+        "https://fixture.local/weapon_equipment"
+      ]
+    },
+    {
+      "claim_id": "claim-7e2bf9387cdb",
+      "claim_type": "hypothesis",
+      "confidence": 0.78,
+      "downstream_steps": [
+        "S1",
+        "S3",
+        "S4"
+      ],
+      "evidence_ids": [
+        "ev-international_situation-1"
+      ],
+      "failure_boundary": "国际形势维度仍需进一步联网补充高置信资料。",
+      "mechanism": "战略格局变化可能推动新型装备能力从单点性能转向体系贡献。",
+      "military_effects": [
+        "体系协同"
+      ],
+      "mission_condition": "挖掘在西太反介入体系下的装备能力缺口",
+      "packet_id": "packet-international_situation",
+      "selection_score": 0.4448,
+      "source_agent_id": "international_situation",
+      "source_urls": [
+        "https://fixture.local/international_situation"
+      ]
+    },
+    {
+      "claim_id": "claim-52dabe1775df",
+      "claim_type": "fact",
+      "confidence": 0.78,
+      "downstream_steps": [
+        "S2",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-operational_employment-1"
+      ],
+      "failure_boundary": "作战运用维度仍需进一步联网补充高置信资料。",
+      "mechanism": "作战运用约束用于校验能力画像是否能进入真实任务链条。",
+      "military_effects": [
+        "体系协同"
+      ],
+      "mission_condition": "挖掘在西太反介入体系下的装备能力缺口",
+      "packet_id": "packet-operational_employment",
+      "selection_score": 0.4048,
+      "source_agent_id": "operational_employment",
+      "source_urls": [
+        "https://fixture.local/operational_employment"
+      ]
+    }
+  ],
+  "conflicts": [],
+  "open_questions": [
+    "武器装备维度仍需进一步联网补充高置信资料。",
+    "国际形势维度仍需进一步联网补充高置信资料。",
+    "作战场景维度仍需进一步联网补充高置信资料。",
+    "作战运用维度仍需进一步联网补充高置信资料。"
+  ],
+  "query_anchor": "挖掘在西太反介入体系下的装备能力缺口",
+  "schema": "military_value_handoff_v1",
+  "statistics": {
+    "candidate_claim_count": 7,
+    "compression_ratio": 0.8962,
+    "evidence_url_count": 4,
+    "input_chars": 4373,
+    "input_packet_count": 4,
+    "output_chars": 3919,
+    "selected_claim_count": 7,
+    "source_agent_count": 4
+  }
+}

@@ -1,0 +1,182 @@
+[
+  {
+    "adopted_by_capability_ids": [
+      "cap-new-001",
+      "cap-upgrade-001"
+    ],
+    "adopted_by_report_sections": [
+      "final_report"
+    ],
+    "adopted_by_s_steps": {
+      "S1": [
+        "claim-c23d8ae2bd77",
+        "claim-3910504a32b4"
+      ],
+      "S2": [
+        "claim-c23d8ae2bd77",
+        "claim-3910504a32b4"
+      ],
+      "S3": [
+        "claim-c23d8ae2bd77",
+        "claim-3910504a32b4"
+      ],
+      "S4": [
+        "claim-c23d8ae2bd77",
+        "claim-3910504a32b4"
+      ],
+      "S5": [
+        "claim-c23d8ae2bd77",
+        "claim-3910504a32b4"
+      ],
+      "S6": [
+        "claim-c23d8ae2bd77",
+        "claim-3910504a32b4"
+      ]
+    },
+    "agent_id": "combat_scenario",
+    "contributed": true,
+    "loao_quality_delta": null,
+    "model_calls": 0,
+    "observation_id": "contribution-packet-combat_scenario",
+    "packet_id": "packet-combat_scenario",
+    "produced_claim_ids": [
+      "claim-c23d8ae2bd77",
+      "claim-3910504a32b4"
+    ]
+  },
+  {
+    "adopted_by_capability_ids": [
+      "cap-new-001",
+      "cap-upgrade-001"
+    ],
+    "adopted_by_report_sections": [
+      "final_report"
+    ],
+    "adopted_by_s_steps": {
+      "S1": [
+        "claim-9b5b029dc50e",
+        "claim-4a9f5cba2d2b"
+      ],
+      "S2": [
+        "claim-9b5b029dc50e",
+        "claim-4a9f5cba2d2b"
+      ],
+      "S3": [
+        "claim-9b5b029dc50e",
+        "claim-4a9f5cba2d2b"
+      ],
+      "S4": [
+        "claim-9b5b029dc50e",
+        "claim-4a9f5cba2d2b"
+      ],
+      "S5": [
+        "claim-9b5b029dc50e",
+        "claim-4a9f5cba2d2b"
+      ],
+      "S6": [
+        "claim-9b5b029dc50e",
+        "claim-4a9f5cba2d2b"
+      ]
+    },
+    "agent_id": "weapon_equipment",
+    "contributed": true,
+    "loao_quality_delta": null,
+    "model_calls": 0,
+    "observation_id": "contribution-packet-weapon_equipment",
+    "packet_id": "packet-weapon_equipment",
+    "produced_claim_ids": [
+      "claim-9b5b029dc50e",
+      "claim-4a9f5cba2d2b"
+    ]
+  },
+  {
+    "adopted_by_capability_ids": [
+      "cap-new-001",
+      "cap-upgrade-001"
+    ],
+    "adopted_by_report_sections": [
+      "final_report"
+    ],
+    "adopted_by_s_steps": {
+      "S1": [
+        "claim-955a25921722",
+        "claim-7e2bf9387cdb"
+      ],
+      "S2": [
+        "claim-955a25921722",
+        "claim-7e2bf9387cdb"
+      ],
+      "S3": [
+        "claim-955a25921722",
+        "claim-7e2bf9387cdb"
+      ],
+      "S4": [
+        "claim-955a25921722",
+        "claim-7e2bf9387cdb"
+      ],
+      "S5": [
+        "claim-955a25921722",
+        "claim-7e2bf9387cdb"
+      ],
+      "S6": [
+        "claim-955a25921722",
+        "claim-7e2bf9387cdb"
+      ]
+    },
+    "agent_id": "international_situation",
+    "contributed": true,
+    "loao_quality_delta": null,
+    "model_calls": 0,
+    "observation_id": "contribution-packet-international_situation",
+    "packet_id": "packet-international_situation",
+    "produced_claim_ids": [
+      "claim-955a25921722",
+      "claim-7e2bf9387cdb"
+    ]
+  },
+  {
+    "adopted_by_capability_ids": [
+      "cap-new-001",
+      "cap-upgrade-001"
+    ],
+    "adopted_by_report_sections": [
+      "final_report"
+    ],
+    "adopted_by_s_steps": {
+      "S1": [
+        "claim-3861bb2956ae",
+        "claim-52dabe1775df"
+      ],
+      "S2": [
+        "claim-3861bb2956ae",
+        "claim-52dabe1775df"
+      ],
+      "S3": [
+        "claim-3861bb2956ae",
+        "claim-52dabe1775df"
+      ],
+      "S4": [
+        "claim-3861bb2956ae",
+        "claim-52dabe1775df"
+      ],
+      "S5": [
+        "claim-3861bb2956ae",
+        "claim-52dabe1775df"
+      ],
+      "S6": [
+        "claim-3861bb2956ae",
+        "claim-52dabe1775df"
+      ]
+    },
+    "agent_id": "operational_employment",
+    "contributed": true,
+    "loao_quality_delta": null,
+    "model_calls": 0,
+    "observation_id": "contribution-packet-operational_employment",
+    "packet_id": "packet-operational_employment",
+    "produced_claim_ids": [
+      "claim-3861bb2956ae",
+      "claim-52dabe1775df"
+    ]
+  }
+]

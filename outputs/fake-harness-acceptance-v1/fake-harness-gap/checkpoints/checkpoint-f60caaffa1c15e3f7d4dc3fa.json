@@ -1,0 +1,40 @@
+{
+  "checkpoint": {
+    "budget_remaining": {
+      "baseline_tasks": 3,
+      "finalize_tasks": 1,
+      "rounds": 5
+    },
+    "checkpoint_id": "run-checkpoint-fake-harness-gap",
+    "completed_task_ids": [],
+    "config_fingerprint": "sha256:e3aab4e8e3119feddd082586d888a99457ba5d61e1a72999b9029ce15d3da013",
+    "created_at": "2026-07-14T11:52:24.898390+00:00",
+    "mode": "fake",
+    "pending_task_ids": [
+      "baseline:operational_employment",
+      "finalize:winning-report"
+    ],
+    "research_route": "traditional_gap",
+    "resolved_route": "traditional_gap",
+    "resume_count": 0,
+    "round_index": 1,
+    "run_id": "fake-harness-gap",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "weapon_equipment",
+      "combat_scenario",
+      "operational_employment"
+    ],
+    "source_materials": [],
+    "status": "running",
+    "task_statuses": {
+      "baseline:combat_scenario": "running",
+      "baseline:operational_employment": "pending",
+      "baseline:weapon_equipment": "running",
+      "finalize:winning-report": "pending"
+    },
+    "topic": "复杂地形下现役低空预警装备能力缺口",
+    "worker_reports": []
+  },
+  "savepoint_id": "checkpoint-f60caaffa1c15e3f7d4dc3fa"
+}

@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=Justification Book
+source_url=https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2026/Discretionary%20Budget/Procurement/Missile%20Procurement%20Army.pdf
+claim=美国陆军FY2026导弹采购文件列明PrSM和PrSM Increment 2采购数量、预算与交付安排，同时列出Launched Effects Family/LASSO数量与金额，支撑部署成熟度和规模边界判断。
+excerpt=
+retrieval=Hosted web search citation metadata

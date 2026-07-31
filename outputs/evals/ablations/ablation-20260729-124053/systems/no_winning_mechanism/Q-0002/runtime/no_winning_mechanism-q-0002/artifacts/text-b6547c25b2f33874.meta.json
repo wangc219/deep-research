@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:b6547c25b2f33874",
+  "content_path": "text-b6547c25b2f33874.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: cached_origin_failure:HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-5c5d031569b4",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "b6547c25b2f338744b3b944e092dd780b7de2d8f476e817875327964bb171fa2",
+  "url": "https://www.navair.navy.mil/product/Long-Range-Anti-Ship-Missile-LRASM"
+}

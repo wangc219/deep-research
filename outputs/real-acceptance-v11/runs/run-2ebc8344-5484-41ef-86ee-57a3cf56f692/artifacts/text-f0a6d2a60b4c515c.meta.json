@@ -1,0 +1,10 @@
+{
+  "artifact_ref": "text:f0a6d2a60b4c515c",
+  "content_hash": "46b4c40411e76c334c5eb0126f0b91aaf4290cca26a4b17fca6422504b58c8b8",
+  "content_path": "text-f0a6d2a60b4c515c.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "kind": "text",
+  "materialization_status": "simplified",
+  "sha256": "f0a6d2a60b4c515cbe247165f1439c2b0e74adcb79bdffdde9c229b6f5911739"
+}

@@ -1,0 +1,15 @@
+{
+  "artifact_ref": "html:a4b5a56b5899990e",
+  "connect_ip": "198.18.1.200",
+  "content_path": "html-a4b5a56b5899990e.html",
+  "content_type": "text/html",
+  "encoding": null,
+  "evidence_id": "ev-weapon_equipment-web-a8803f4abe7d",
+  "fetch_cache_hit": true,
+  "final_url": "https://www.darpa.mil/research/programs/long-range-anti-ship-missile",
+  "kind": "html",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "a4b5a56b5899990e479d22f91cb89840bf094dd03ceaf8e4fd8be9d960a7a97f",
+  "url": "https://www.darpa.mil/research/programs/long-range-anti-ship-missile"
+}

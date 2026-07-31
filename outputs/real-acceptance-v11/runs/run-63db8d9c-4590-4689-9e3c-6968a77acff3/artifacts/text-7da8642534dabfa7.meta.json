@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:7da8642534dabfa7",
+  "content_path": "text-7da8642534dabfa7.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-combat_scenario-web-db6535b061c8",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "7da8642534dabfa775e61e3a7cce767855a0e3e2c7b54c534a4e5a6ce0b9cc3a",
+  "url": "https://www.usni.org/magazines/proceedings/2025/september/supply-morale-and-self-sufficiency-lessons-red-sea"
+}

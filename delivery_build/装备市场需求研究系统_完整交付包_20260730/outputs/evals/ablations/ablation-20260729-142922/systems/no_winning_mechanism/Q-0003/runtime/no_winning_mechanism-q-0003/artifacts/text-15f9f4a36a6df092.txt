@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=army.mil · adapting to multi domain battlefield developing emissions control sop
+source_url=https://www.army.mil/article/284546/adapting_to_multi_domain_battlefield_developing_emissions_control_sop
+claim=S2：俄军电子战可干扰无人机控制站和GPS接收器，并通过射频测向发现控制站；贡献S6的侦察预警/协同/抗毁判断。
+excerpt=
+retrieval=Hosted web search citation metadata

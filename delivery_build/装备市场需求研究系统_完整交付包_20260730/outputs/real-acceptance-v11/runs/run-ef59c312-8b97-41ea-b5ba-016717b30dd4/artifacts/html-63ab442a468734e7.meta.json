@@ -1,0 +1,14 @@
+{
+  "artifact_ref": "html:63ab442a468734e7",
+  "connect_ip": "198.18.2.116",
+  "content_path": "html-63ab442a468734e7.html",
+  "content_type": "text/html",
+  "encoding": null,
+  "evidence_id": "ev-international_situation-web-ce3f3e70cc3f",
+  "final_url": "https://www.darpa.mil/news/2025/roqs-launches-first-phase",
+  "kind": "html",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "63ab442a468734e70d712d19c73cce9d5d881e24d4bf369cec0a4867e35ce19b",
+  "url": "https://www.darpa.mil/news/2025/roqs-launches-first-phase"
+}

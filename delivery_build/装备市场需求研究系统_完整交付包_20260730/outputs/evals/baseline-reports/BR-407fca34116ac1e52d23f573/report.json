@@ -1,0 +1,37 @@
+{
+  "answer_chars": 3104,
+  "answer_sha256": "2e116c70447160dcb53d6edb482d91fdf187c28036b4977b7c19b987213193d2",
+  "artifact_refs": [],
+  "citations": [],
+  "created_at": "2026-07-28T21:17:33.883357+00:00",
+  "dataset_id": "tactical-strike-frontiers-50-v1",
+  "duration_seconds": 43.933,
+  "estimated_cost": 0.0,
+  "mode": "real",
+  "model_snapshot": {
+    "base_url_host": "yunwu.ai",
+    "model": "glm-5.2",
+    "protocol": "chat_completions"
+  },
+  "query": "多节点目标群协同精确打击研究",
+  "query_id": "Q-0017",
+  "query_sha256": "fa37e910ef2e3c2a1b5ade85c2fa71986188d4b6ac19338f1c192499336d29ed",
+  "report_id": "BR-407fca34116ac1e52d23f573",
+  "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-407fca34116ac1e52d23f573/report.md",
+  "schema_version": "1.0",
+  "source_eval_id": "baseline-first20-three-layer-nine-20260729",
+  "sources": [],
+  "status": "completed",
+  "system_id": "zhipu_llm",
+  "usage": {
+    "completion_tokens": 3556,
+    "completion_tokens_details": {
+      "reasoning_tokens": 1535
+    },
+    "prompt_tokens": 348,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "total_tokens": 3904
+  }
+}

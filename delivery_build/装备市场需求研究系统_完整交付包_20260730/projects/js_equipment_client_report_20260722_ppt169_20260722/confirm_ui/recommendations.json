@@ -1,0 +1,12 @@
+{
+  "stage": "stage3",
+  "lang": "zh",
+  "recommend": {
+    "image_ai_path": "host-native",
+    "formula_policy": "text-only",
+    "generation_mode": "continuous"
+  },
+  "refine_spec": {
+    "value": false
+  }
+}

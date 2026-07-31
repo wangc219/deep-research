@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:b8952e2035f0b4f6",
+  "content_path": "text-b8952e2035f0b4f6.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-generic_researcher-web-81d680f5e398",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "b8952e2035f0b4f6f346814ea065cc705a400af3f5dcab728df72f900a094828",
+  "url": "https://www.defense.gov/News/Contracts/Contract/Article/606726/"
+}

@@ -1,0 +1,746 @@
+default_model: gpt-5.5
+agents:
+- agent_id: orchestrator
+  harness_profile: orchestration_v1
+  skill_ids:
+  - requirement_semantics_analysis
+  - discovery_driver_recognition
+  - discovery_blueprint_generation
+  - dag_loop_orchestration
+  display_name: 主控智能体 Chief Orchestrator
+  description: 以资深JS专家人格解析任务语义和边界，识别A-H及OTHER驱动源，生成S1-S6动态蓝图，形成最小充分Agent DAG，并控制内、中、外和元循环的进入、回溯、预算与停止。
+  capability_tags:
+  - planning
+  - delegation
+  - loop_control
+  output_contract: baseline_finding_packet
+  tools:
+  - analyze_research_request
+  - classify_discovery_drivers
+  - build_discovery_blueprint
+  - plan_execution_waves
+  - evaluate_loop_transition
+  research_policy:
+    required_outputs:
+    - 任务语义卡
+    - 驱动源评分与OTHER说明
+    - A-H主次路径
+    - S1-S6执行强度
+    - 能力覆盖矩阵
+    - Agent DAG与执行波次
+    - 循环预算与停止条件
+    stopping_conditions:
+    - 目标交付物与禁止边界明确
+    - 主次驱动源有任务依据
+    - Agent集合最小且能力覆盖充分
+    - 并发与结构化交接明确
+    - 每级循环有上限回溯点和无增益停止规则
+  handoff_policy:
+    accept_from: []
+    wait_for: []
+    publish_to:
+    - scenario_divergence
+    - case_research
+    - technology_radar
+    - opponent_monitoring
+    - system_confrontation
+    - cross_domain_fusion
+    - nontraditional_security
+    - international_situation
+    - combat_scenario
+    - weapon_equipment
+    - operational_employment
+    - winning_mechanism
+  model_profile:
+    provider: codex
+    model: gpt-5.5
+    reasoning_effort: high
+    max_output_tokens: 3600
+  context_policy:
+    visible_sections:
+    - task
+    - evidence_policy
+    - coverage
+    - checkpoints
+    - trace_summary
+    - agent_harness
+    token_budget: 7000
+    hide_other_agent_raw_sessions: true
+  object_read_scopes:
+  - ResearchProblem
+  - EvidenceCard
+  - BaselineFindingPacket
+  - WorkingCheckpoint
+  - TraceEvent
+  object_write_scopes:
+  - WorkingCheckpoint
+  enabled: true
+  system_agent: true
+- agent_id: winning_mechanism
+  harness_profile: winning_core_v1
+  skill_ids:
+  - defense_decomposition
+  - winning_path_analysis
+  - effect_chain_analysis
+  - capability_mapping
+  - gap_quantification
+  - capability_image_generation
+  display_name: 制胜机理
+  description: 基于基线发现执行L1/L2/L3制胜机理分析并生成能力画像。
+  capability_tags:
+  - winning_mechanism
+  - capability_image
+  tools:
+  - prepare_winning_input
+  - project_winning_resources
+  - write_reasoning_node
+  - write_stage_output
+  - create_recall_request
+  - create_capability_image
+  context_policy:
+    visible_sections:
+    - task
+    - baseline_summaries
+    - evidence_index
+    - coverage
+    - checkpoints
+    hide_other_agent_raw_sessions: true
+  object_read_scopes:
+  - ResearchProblem
+  - EvidenceCard
+  - BaselineFindingPacket
+  - WorkingCheckpoint
+  object_write_scopes:
+  - WinningMechanismInput
+  - WinningKnowledgeProjection
+  - WinningReasoningNode
+  - WinningMechanismStageOutput
+  - RecallRequest
+  - CapabilityImageItem
+  - WorkingCheckpoint
+  model_profile:
+    provider: codex
+    model: gpt-5.5
+    reasoning_effort: high
+    max_output_tokens: 8000
+  enabled: true
+- agent_id: convergence_fusion
+  harness_profile: convergence_v1
+  skill_ids:
+  - demand_signal_clustering
+  - multi_criteria_prioritization
+  display_name: 收敛融合
+  description: 跨背景、跨场景、跨分支聚类需求，处理冲突、去重、排序并形成制胜机理输入摘要。
+  capability_tags:
+  - convergence
+  - clustering
+  - prioritization
+  tools:
+  - cluster_demand_signals
+  - rank_capability_priorities
+  - prepare_winning_input
+  - project_winning_resources
+  context_policy:
+    visible_sections:
+    - task
+    - baseline_summaries
+    - evidence_index
+    - coverage
+    hide_other_agent_raw_sessions: true
+  object_read_scopes:
+  - ResearchProblem
+  - EvidenceCard
+  - BaselineFindingPacket
+  object_write_scopes:
+  - WinningMechanismInput
+  - WinningKnowledgeProjection
+  model_profile:
+    provider: codex
+    model: gpt-5.5
+    reasoning_effort: high
+    max_output_tokens: 4000
+  system_agent: true
+  enabled: true
+- agent_id: winning_s1_opponent
+  harness_profile: winning_step_v1
+  skill_ids:
+  - defense_decomposition
+  - ooda_vulnerability_analysis
+  display_name: S1 对手分析
+  description: 以Query为锚发散竞争性对手体系与反适应假设，解构关键依赖、薄弱环节、替代链和证据边界。
+  capability_tags:
+  - opponent_analysis
+  - defense_decomposition
+  tools:
+  - prepare_winning_input
+  - project_winning_resources
+  - analyze_ooda_vulnerability
+  - write_reasoning_node
+  - write_stage_output
+  - create_recall_request
+  context_policy:
+    visible_sections:
+    - task
+    - baseline_summaries
+    - evidence_index
+    - coverage
+    hide_other_agent_raw_sessions: true
+  object_read_scopes:
+  - ResearchProblem
+  - EvidenceCard
+  - BaselineFindingPacket
+  object_write_scopes:
+  - WinningMechanismInput
+  - WinningKnowledgeProjection
+  - WinningReasoningNode
+  - WinningMechanismStageOutput
+  - RecallRequest
+  model_profile:
+    provider: codex
+    model: gpt-5.5
+    reasoning_effort: high
+    max_output_tokens: 3200
+  system_agent: true
+  enabled: true
+- agent_id: winning_s2_operations
+  harness_profile: winning_step_v1
+  skill_ids:
+  - winning_path_analysis
+  - doctrine_operational_review
+  display_name: S2 作战运用审查
+  description: 以Query为锚发散机制不同的战法与运用路径，审查任务链、协同、保障、失败模式和军事效果。
+  capability_tags:
+  - operational_review
+  - winning_path
+  tools:
+  - write_reasoning_node
+  - write_stage_output
+  - create_recall_request
+  context_policy:
+    visible_sections:
+    - task
+    - baseline_summaries
+    - evidence_index
+    - coverage
+    hide_other_agent_raw_sessions: true
+  object_read_scopes:
+  - ResearchProblem
+  - EvidenceCard
+  - BaselineFindingPacket
+  - WinningReasoningNode
+  object_write_scopes:
+  - WinningReasoningNode
+  - WinningMechanismStageOutput
+  - RecallRequest
+  model_profile:
+    provider: codex
+    model: gpt-5.5
+    reasoning_effort: high
+    max_output_tokens: 3200
+  system_agent: true
+  enabled: true
+- agent_id: winning_s3_breakthrough
+  harness_profile: winning_step_v1
+  skill_ids:
+  - effect_chain_analysis
+  - counterfactual_triz_innovation
+  display_name: S3 突破口思考
+  description: 围绕Query核心矛盾，通过反事实与替代假设，在成本、平台、时间、效应、体系、可控性及OTHER维度发散竞争性突破方向并构建可追溯军事效果链。
+  capability_tags:
+  - breakthrough
+  - effect_chain
+  tools:
+  - generate_counterfactual_option
+  - apply_triz_contradiction
+  - write_reasoning_node
+  - write_stage_output
+  - create_recall_request
+  context_policy:
+    visible_sections:
+    - task
+    - baseline_summaries
+    - evidence_index
+    - coverage
+    hide_other_agent_raw_sessions: true
+  object_read_scopes:
+  - ResearchProblem
+  - EvidenceCard
+  - BaselineFindingPacket
+  - WinningReasoningNode
+  object_write_scopes:
+  - WinningReasoningNode
+  - WinningMechanismStageOutput
+  - RecallRequest
+  model_profile:
+    provider: codex
+    model: gpt-5.5
+    reasoning_effort: high
+    max_output_tokens: 3200
+  system_agent: true
+  enabled: true
+- agent_id: winning_s4_capability
+  harness_profile: winning_step_v1
+  skill_ids:
+  - capability_mapping
+  - dotmlpf_capability_mapping
+  display_name: S4 装备能力映射
+  description: 从Query要求的直接作战效果反推装备功能、做优接口、拓新装备族、性能约束和体系接口，避免支撑能力主导组合。
+  capability_tags:
+  - capability_mapping
+  - equipment_requirement
+  tools:
+  - map_dotmlpf_requirement
+  - write_reasoning_node
+  - write_stage_output
+  - create_recall_request
+  context_policy:
+    visible_sections:
+    - task
+    - baseline_summaries
+    - evidence_index
+    - coverage
+    hide_other_agent_raw_sessions: true
+  object_read_scopes:
+  - ResearchProblem
+  - EvidenceCard
+  - BaselineFindingPacket
+  - WinningReasoningNode
+  object_write_scopes:
+  - WinningReasoningNode
+  - WinningMechanismStageOutput
+  - RecallRequest
+  model_profile:
+    provider: codex
+    model: gpt-5.5
+    reasoning_effort: high
+    max_output_tokens: 3200
+  system_agent: true
+  enabled: true
+- agent_id: winning_s5_gap
+  harness_profile: winning_step_v1
+  skill_ids:
+  - gap_quantification
+  - equipment_system_gap_assessment
+  display_name: S5 装备现状与差距
+  description: 以Query的作战后果对齐现役、在研装备和体系约束，比较升级、新研与非装备缓解并形成五档差距。
+  capability_tags:
+  - equipment_baseline
+  - gap_quantification
+  tools:
+  - write_reasoning_node
+  - write_stage_output
+  - create_recall_request
+  context_policy:
+    visible_sections:
+    - task
+    - baseline_summaries
+    - evidence_index
+    - coverage
+    hide_other_agent_raw_sessions: true
+  object_read_scopes:
+  - ResearchProblem
+  - EvidenceCard
+  - BaselineFindingPacket
+  - WinningReasoningNode
+  object_write_scopes:
+  - WinningReasoningNode
+  - WinningMechanismStageOutput
+  - RecallRequest
+  model_profile:
+    provider: codex
+    model: gpt-5.5
+    reasoning_effort: high
+    max_output_tokens: 3200
+  system_agent: true
+  enabled: true
+- agent_id: winning_s6_image
+  harness_profile: winning_step_v1
+  skill_ids:
+  - capability_image_generation
+  - capability_portfolio_synthesis
+  - multi_criteria_prioritization
+  display_name: S6 能力图像综合
+  description: 去重归并前五步结果，形成可追溯的新能力与升级方向画像，并检查组合是否超越单纯渐进补齐且保持场景、证据与装备对象落地。
+  capability_tags:
+  - capability_image
+  - convergence
+  tools:
+  - rank_capability_priorities
+  - project_winning_resources
+  - write_reasoning_node
+  - write_stage_output
+  - create_capability_image
+  - create_recall_request
+  context_policy:
+    visible_sections:
+    - task
+    - baseline_summaries
+    - evidence_index
+    - coverage
+    hide_other_agent_raw_sessions: true
+  object_read_scopes:
+  - ResearchProblem
+  - EvidenceCard
+  - BaselineFindingPacket
+  - WinningReasoningNode
+  - WinningMechanismStageOutput
+  object_write_scopes:
+  - WinningKnowledgeProjection
+  - WinningReasoningNode
+  - WinningMechanismStageOutput
+  - CapabilityImageItem
+  - RecallRequest
+  model_profile:
+    provider: codex
+    model: gpt-5.5
+    reasoning_effort: high
+    max_output_tokens: 6200
+  system_agent: true
+  enabled: true
+- agent_id: winning_step_critic
+  harness_profile: critic_v1
+  skill_ids:
+  - step_quality_critique
+  display_name: 制胜步骤批判
+  description: 在每个S步骤后检查证据、完整性、跨步跳跃和安全边界，驱动内循环重试。
+  capability_tags:
+  - step_critique
+  - inner_loop
+  tools:
+  - evaluate_reasoning_step
+  - create_recall_request
+  context_policy:
+    visible_sections:
+    - task
+    - baseline_summaries
+    - evidence_index
+    - coverage
+    hide_other_agent_raw_sessions: true
+  object_read_scopes:
+  - ResearchProblem
+  - EvidenceCard
+  - BaselineFindingPacket
+  - WinningReasoningNode
+  object_write_scopes:
+  - RecallRequest
+  model_profile:
+    provider: codex
+    model: gpt-5.5
+    reasoning_effort: high
+    max_output_tokens: 1200
+  system_agent: true
+  enabled: true
+- agent_id: winning_round_critic
+  harness_profile: critic_v1
+  skill_ids:
+  - round_causal_critique
+  display_name: 制胜中循环批判
+  description: 检查S1-S6因果连续性、路线侧重和可追溯性，指定中循环回溯点。
+  capability_tags:
+  - round_critique
+  - middle_loop
+  tools:
+  - evaluate_reasoning_round
+  - create_recall_request
+  context_policy:
+    visible_sections:
+    - task
+    - baseline_summaries
+    - evidence_index
+    - coverage
+    hide_other_agent_raw_sessions: true
+  object_read_scopes:
+  - ResearchProblem
+  - EvidenceCard
+  - BaselineFindingPacket
+  - WinningReasoningNode
+  object_write_scopes:
+  - RecallRequest
+  model_profile:
+    provider: codex
+    model: gpt-5.5
+    reasoning_effort: high
+    max_output_tokens: 1600
+  system_agent: true
+  enabled: true
+- agent_id: winning_dynamic_specialist
+  harness_profile: winning_step_v1
+  skill_ids:
+  - dynamic_specialist_synthesis
+  knowledge_pack_ids:
+  - doctrine_library
+  - case_library
+  - frontier_technology_library
+  display_name: 制胜机理动态专用Agent模板
+  description: 由Codex主控仅在固定Agent无法覆盖可分离专业缺口时实例化，绑定共享Skill、知识包、受治理Tool、合并节点、预算和停止条件，任务完成后回收。
+  capability_tags:
+  - dynamic_specialist
+  - gap_filling
+  output_contract: baseline_finding_packet
+  tools:
+  - search_sources
+  - fetch_page
+  - create_evidence_card
+  - create_recall_request
+  research_policy:
+    required_outputs:
+    - 专业发现
+    - 证据引用
+    - 对S1-S6的贡献
+    - 假设与开放问题
+    - 合并目标
+    - 停止理由
+    stopping_conditions:
+    - 只处理动态契约定义的缺口
+    - 引用来自有效证据或Packet
+    - 合并目标明确
+    - 达到预算或闭合条件即回收
+  handoff_policy:
+    accept_from:
+    - winning_mechanism
+    wait_for: []
+    publish_to:
+    - winning_mechanism
+  model_profile:
+    provider: codex
+    model: gpt-5.5
+    reasoning_effort: high
+    max_output_tokens: 3200
+  context_policy:
+    visible_sections:
+    - task
+    - evidence_policy
+    - upstream_handoffs
+    - evidence_index
+    - stage_outputs
+    - agent_harness
+    token_budget: 6000
+    hide_other_agent_raw_sessions: true
+  object_read_scopes:
+  - ResearchProblem
+  - EvidenceCard
+  - BaselineFindingPacket
+  - WinningKnowledgeProjection
+  - WinningReasoningNode
+  object_write_scopes:
+  - EvidenceCard
+  - BaselineFindingPacket
+  - RecallRequest
+  enabled: true
+  system_agent: true
+- agent_id: auditor
+  harness_profile: audit_v1
+  skill_ids:
+  - independent_release_audit
+  display_name: 审计
+  description: 审查证据支撑、覆盖限制、门控结果和最终报告状态。
+  capability_tags:
+  - audit
+  - evidence_review
+  tools:
+  - evaluate_release_readiness
+  - write_audit
+  context_policy:
+    visible_sections:
+    - task
+    - evidence_index
+    - stage_outputs
+    - capability_images
+    - trace_summary
+    hide_other_agent_raw_sessions: true
+  object_read_scopes:
+  - ResearchProblem
+  - EvidenceCard
+  - WinningMechanismStageOutput
+  - CapabilityImageItem
+  - TraceEvent
+  object_write_scopes:
+  - AuditResult
+  model_profile:
+    provider: codex
+    model: gpt-5.5
+    reasoning_effort: medium
+    max_output_tokens: 1200
+  enabled: true
+- agent_id: reporter
+  harness_profile: report_v1
+  skill_ids:
+  - evidence_based_delivery
+  knowledge_pack_ids: []
+  display_name: 军事装备研究报告
+  description: 以原始Query为主、前置处理后的精简高价值研判和代表性公开来源为辅，围绕无人化、低空无人机、远程精确打击及强打击歼灭压制毁伤装备，形成三层九项市场需求深研报告。
+  capability_tags:
+  - report
+  - military_synthesis
+  - demand_discovery
+  - technology_breakdown
+  - capability_mapping
+  - effectiveness_assessment
+  - evidence_review
+  input_contract: research_task
+  output_contract:
+    name: research_report
+    properties:
+    - operational_scenarios
+    - winning_mechanism
+    - capability_features
+    - realization_paths
+    - core_technologies
+    - technology_coupling
+    - capability_image
+    - effectiveness_contribution
+    - development_priority
+    - citations
+  tools:
+  - write_report
+  research_policy:
+    required_outputs:
+    - 典型作战场景
+    - 新战法或新概念技术及制胜机理
+    - 装备能力特征清单
+    - 能力实现途径
+    - 核心技术清单与攻关优先级
+    - 技术耦合与短板风险
+    - 装备能力图像
+    - 效能贡献评估
+    - 发展优先级与演示验证抓手
+    writing_priorities:
+    - Query主题发散
+    - 前置研判高价值压缩
+    - 无人化与低空无人机
+    - 远程精确打击
+    - 强打击歼灭压制毁伤
+    - 能力指标方向
+    - 技术成熟度与瓶颈
+    - 补链强链开链效能
+    - 近期可启动抓手
+    evidence_policy:
+    - 只使用输入公开URL
+    - 关键事实区分事实推断假设
+    - 保留反证与证据边界
+    - 不虚构数字型号和来源
+    structure_policy:
+    - 固定三层九项
+    - 先场景战法后能力技术再能力图像效能
+    - 分支产物仅作前置素材并融入九项
+    - 同一结论只写一次
+    - 表格只承载高密度清单
+    stopping_conditions:
+    - 三层九项完整
+    - 军事任务价值具体
+    - 场景战法能力技术效能链闭环
+    - 技术短板和优先级明确
+    - 引用可追溯
+    - 篇幅与结构门控通过
+  handoff_policy:
+    accept_from:
+    - winning_mechanism
+    - auditor
+    wait_for: []
+    publish_to: []
+    publish_fields:
+    - report_body
+    - citations
+    - capability_image
+    - effectiveness_contribution
+    - development_priorities
+    - validation_boundaries
+  context_policy:
+    visible_sections:
+    - task
+    - evidence_index
+    - audit
+    token_budget: 12000
+    hide_other_agent_raw_sessions: true
+  object_read_scopes:
+  - ResearchProblem
+  - EvidenceCard
+  - AuditResult
+  object_write_scopes:
+  - ResearchReport
+  model_profile:
+    provider: codex
+    model: gpt-5.5
+    reasoning_effort: xhigh
+    max_output_tokens: 12000
+  enabled: true
+  system_agent: true
+- agent_id: generic_researcher
+  harness_profile: discovery_research_v1
+  skill_ids: []
+  knowledge_pack_ids: []
+  display_name: 受限通用检索Agent
+  description: 只进行通用公开资料检索和事实摘录，不承担军事场景建模、装备能力映射、技术成熟度判断、作战运用综合或多专业融合。
+  capability_tags:
+  - general_research
+  - open_source_retrieval
+  output_contract:
+    name: baseline_finding_packet
+    properties:
+    - source_summary
+    - fact_extracts
+    - source_conflicts
+    - open_questions
+  tools:
+  - search_sources
+  - fetch_page
+  - create_evidence_card
+  skills:
+  - name: general_public_research
+    objective: 进行非垂类公开资料检索、来源整理和事实摘录。
+    method: 按Query关键词检索并摘录来源；禁止生成装备需求、能力差距、作战机理、成熟度结论或跨来源军事综合。
+  research_policy:
+    search_tracks:
+    - 通用公开资料
+    target_source_count: 2
+    evidence_accept_target: 2
+    evidence_min_count: 1
+    evidence_min_domains: 1
+    evidence_materialize_attempts: 2
+    search_intensity: light
+    max_search_batches: 1
+    min_source_families: 1
+    require_counter_evidence: false
+    required_outputs:
+    - 来源清单
+    - 事实摘录
+    - 来源冲突
+    - 未决问题
+    stopping_conditions:
+    - 核心关键词已有公开来源
+    - 事实与推断已分离
+  handoff_policy:
+    accept_from: []
+    wait_for: []
+    publish_to:
+    - winning_mechanism
+    publish_fields:
+    - findings
+    - evidence_ids
+    - confidence
+    - open_questions
+  model_profile:
+    provider: codex
+    model: gpt-5.5
+    reasoning_effort: medium
+    max_output_tokens: 1800
+    search_context_size: low
+  context_policy:
+    visible_sections:
+    - task
+    - evidence_policy
+    - own_checkpoint
+    - recall_request
+    token_budget: 2800
+    max_items_per_section: 4
+    hide_other_agent_raw_sessions: true
+  object_read_scopes:
+  - ResearchProblem
+  - EvidenceCard
+  - WorkingCheckpoint
+  object_write_scopes:
+  - EvidenceCard
+  - BaselineFindingPacket
+  - WorkingCheckpoint
+  enabled: true
+  system_agent: false

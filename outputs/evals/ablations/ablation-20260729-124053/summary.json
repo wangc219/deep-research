@@ -1,0 +1,826 @@
+{
+  "causal_comparison_valid": false,
+  "comparisons": {
+    "no_multisource_baseline": {
+      "adjudication_queue": [
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A引用数量少，且部分装备方向主要由DARPA项目和火力韧性材料间接支撑，需要进一步补充实装、试验或案例证据。",
+                "回答B声称有15项正式证据但正文仅列示6项核心来源，且多处标注“证据卡未登记、正式使用前需核验”，正文与证据绑定不足。",
+                "回答B部分来源如厂商页面、EABO/JADC2材料与具体低信息精确打击装备需求之间为间接关系，不能直接支撑成熟度或效能判断。"
+              ],
+              "confidence": 0.86,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#ablation-1",
+              "pair_id": "P-003d8a059c4e",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "no_multisource_baseline"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A多处称存在完整证据索引、证据卡或15项正式证据，但正文仅列部分来源，且部分来源标注为未登记、正式使用前需核验，削弱核心结论支撑力。",
+                "回答A引用数量较多但与具体装备方向和效能判断的绑定不稳定，部分来源只能提供背景性支撑。",
+                "回答B引用数量较少且多为间接支撑，但对证据边界说明较清楚，未明显将引用外推为确定实战能力。"
+              ],
+              "confidence": 0.73,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#ablation-1",
+              "pair_id": "P-8f15aae072cb",
+              "primary_route": "B",
+              "route_confidence": 0.84,
+              "system_winner": "no_multisource_baseline"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A引用数量较少，且部分来源标注为“证据卡未登记；正式使用前需核验”，但其正文较好地限制了推断强度。",
+                "回答B声称有15项正式证据但正文只列示部分，且若干来源与具体装备结论绑定较弱；部分可行性评分、置信度和效能判断未见来源支撑。",
+                "在无法联网核验条件下，未将上述问题判为伪造来源，但降低回答B的证据可信度。"
+              ],
+              "confidence": 0.84,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#ablation-2",
+              "pair_id": "P-003d8a059c4e",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "no_multisource_baseline"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A多处引用标注为“证据卡未登记”“正式使用前需核验”，正文与来源的逐项绑定不足，不能因引用数量较多而提高证据可信度。",
+                "回答A部分来源与具体装备能力、成熟度分值和效能判断之间关系较弱，存在以背景材料支撑较具体装备方向的外推问题。",
+                "回答B引用数量较少且多为DARPA项目或火力韧性背景资料，只能支撑方向性需求和概念基础，不能支撑具体型号成熟度或效能数字；但其文本中较好地承认了这一边界。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#ablation-2",
+              "pair_id": "P-8f15aae072cb",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "no_multisource_baseline"
+            }
+          ],
+          "query_id": "Q-0001",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B的JASSM-ER翼设计/采购类来源只能支撑该弹族持续改进或现役锚点，不能直接支撑其具备或适合多源自主导航拒止升级能力。",
+                "回答B的LRASM来源来自厂商资料，适合作为设计理念锚点，但不宜作为成熟实战能力或具体效能的强证据。",
+                "回答B的CSIS乌克兰战争来源在索引中重复列为E03和E05，且主要是背景性证据。",
+                "回答B的DoD反无人系统和陆军Assured PNT材料与精打武器直接关联较弱，更多只能作体系背景支撑。",
+                "回答A多处标注证据卡未登记、正式使用前需核验；但其主要引用与论点相关性总体较强。"
+              ],
+              "confidence": 0.76,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#ablation-1",
+              "pair_id": "P-1d7a4eefcf61",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A存在引用重复和若干来源标注为“证据卡未登记；正式使用前需核验”，正式评审时需核查原文与论断绑定关系",
+                "回答A部分使用厂商资料作为装备能力锚点，适合作为类别参考，但不宜直接支撑成熟度或实战效能结论",
+                "回答B引用更集中且与论点匹配度较高，但SBIR和合同类材料只能证明项目或演示基础，不能直接证明装备成熟度"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#ablation-1",
+              "pair_id": "P-9485bc3761cc",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B的部分来源与核心装备结论之间为间接支撑，例如Lockheed Martin LRASM宣传资料、JASSM-ER翼设计合同、DoD反无人系统材料，不能直接证明所述多源自主导航精打升级能力已形成。",
+                "回答B核心来源索引中CSIS乌克兰战争研究出现重复条目，且部分来源标注为需核验。",
+                "回答A引用整体更保守且相关性较强，但其来源索引同样多处标注为证据卡未登记、正式使用前需核验。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#ablation-2",
+              "pair_id": "P-1d7a4eefcf61",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A的来源索引中CSIS相关条目存在重复，且部分条目标注“证据卡未登记、正式使用前需核验”，降低证据规范性。",
+                "回答A对JASSM-ER拒止精打升级、远域反辐射压制无人僚机、低信息侦打巡飞弹等方向的具体化程度高于公开证据直接支撑，应视为类别级推断而非已证实装备能力。",
+                "回答B部分引用标题格式不规范或来源说明较粗，但总体与PNT拒止、M-code、PRIGM/PINPOINT和Home-on-Jam主题相关。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#ablation-2",
+              "pair_id": "P-9485bc3761cc",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0002",
+          "reasons": [
+            "citation_issue"
+          ]
+        }
+      ],
+      "dimension_votes": {
+        "capability_mapping_and_demand_quality": {
+          "full_method": 6,
+          "no_multisource_baseline": 2
+        },
+        "causal_and_mechanism_depth": {
+          "full_method": 4,
+          "no_multisource_baseline": 4
+        },
+        "evidence_and_factuality": {
+          "no_multisource_baseline": 8
+        },
+        "military_operational_value": {
+          "full_method": 4,
+          "no_multisource_baseline": 3,
+          "tie": 1
+        },
+        "novelty_and_foresight": {
+          "full_method": 4,
+          "no_multisource_baseline": 4
+        },
+        "route_task_fulfillment": {
+          "full_method": 4,
+          "no_multisource_baseline": 4
+        },
+        "system_and_cross_scenario_robustness": {
+          "full_method": 4,
+          "no_multisource_baseline": 4
+        },
+        "uncertainty_and_validation": {
+          "no_multisource_baseline": 8
+        }
+      },
+      "hard_failures": {},
+      "judgment_count": 8,
+      "query_count": 2,
+      "query_outcomes": [
+        {
+          "query_id": "Q-0001",
+          "votes": {
+            "no_multisource_baseline": 4
+          },
+          "winner": "no_multisource_baseline"
+        },
+        {
+          "query_id": "Q-0002",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        }
+      ],
+      "runtime": {
+        "full_method": {
+          "completion_rate": 1.0,
+          "mean_duration_seconds": 1622.162,
+          "mean_estimated_cost": 0.0,
+          "mean_usage": {},
+          "run_count": 2
+        },
+        "no_multisource_baseline": {
+          "completion_rate": 1.0,
+          "mean_duration_seconds": 1046.849,
+          "mean_estimated_cost": 0.0,
+          "mean_usage": {
+            "cached_input_tokens": 60032.0,
+            "input_tokens": 314804.5,
+            "output_tokens": 71204.5,
+            "reasoning_output_tokens": 2735.5,
+            "search_event_count": 0.0,
+            "tool_call_count": 0.0,
+            "total_tokens": 70504.0,
+            "trace_event_count": 171.5
+          },
+          "run_count": 2
+        },
+        "no_winning_mechanism": {
+          "completion_rate": 1.0,
+          "mean_duration_seconds": 747.763,
+          "mean_estimated_cost": 0.0,
+          "mean_usage": {
+            "cached_input_tokens": 20736.0,
+            "input_tokens": 264750.0,
+            "output_tokens": 81514.0,
+            "reasoning_output_tokens": 348.0,
+            "search_event_count": 0.0,
+            "tool_call_count": 0.0,
+            "total_tokens": 200468.0,
+            "trace_event_count": 115.0
+          },
+          "run_count": 2
+        }
+      },
+      "schema_version": "1.0",
+      "systems": {
+        "full_method": {
+          "bootstrap_95pct": [
+            0.0,
+            1.0
+          ],
+          "losses": 1,
+          "score_rate": 0.5,
+          "ties": 0,
+          "wins": 1
+        },
+        "no_multisource_baseline": {
+          "bootstrap_95pct": [
+            0.0,
+            1.0
+          ],
+          "losses": 1,
+          "score_rate": 0.5,
+          "ties": 0,
+          "wins": 1
+        }
+      }
+    },
+    "no_winning_mechanism": {
+      "adjudication_queue": [
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A和回答B均引用了未随附的evidence_references.md或内部证据编号，无法核验完整证据卡、摘录和正文绑定关系",
+                "回答A部分来源标注为“证据卡未登记；正式使用前需核验”，其关键结论只能视为有限支撑",
+                "回答B的B01-B20、REQ-1至REQ-6属于内部编号或需求卡片，正文未提供足够来源映射，不能因编号本身视为证据",
+                "回答B部分公开来源与具体装备成熟度、优先级和能力指标之间的支撑关系较间接"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#ablation-rerun-1",
+              "pair_id": "P-524e936e4ae4",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "两份回答均声称存在随附evidence_references.md、正式证据索引或证据卡，但当前材料中未提供，无法核验其完整证据链。",
+                "回答A多处标注“证据卡未登记”“正式使用前需核验”，且正文对部分来源的支撑作用较弱，不能仅凭URL视为事实充分。",
+                "回答B出现“置信度0.81”和部分可行性评分，但未说明评分方法或证据来源。",
+                "两份回答均引用部分未来年份或背景性材料，若用于支撑具体装备能力或成熟度，需要外部核验。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#ablation-rerun-1",
+              "pair_id": "P-a373b183c200",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "两份回答均声称存在随附 evidence_references.md，但当前文本未提供，导致引用与具体正文判断的逐条追溯不足",
+                "两份回答均有部分来源标注为“证据卡未登记；正式使用前需核验”，说明证据链尚未完全闭合",
+                "回答A和B均使用若干公开来源作为背景支撑，但很多关键装备能力、效能贡献和成熟度判断未直接绑定到可核验出处",
+                "回答A出现未充分依据化的置信度数值，回答B出现B01-B20内部编号但并非外部可核验来源"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#ablation-rerun-2",
+              "pair_id": "P-524e936e4ae4",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A存在大量B01-B07等内部编号，但这些编号与公开来源之间绑定不清，且多处重复同一REQ文本，不能视为有效证据链。",
+                "回答A和回答B均声明部分证据卡未登记或需正式核验，公开来源更多是背景和间接支撑，无法充分验证具体装备能力与效能结论。",
+                "回答B的来源整体相关性较A更好，但仍主要支撑强电磁干扰、PNT受扰、无人系统和现役装备背景，不能直接证明其全部新研装备概念已成熟可用。"
+              ],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#ablation-rerun-2",
+              "pair_id": "P-a373b183c200",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0001",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A部分来源标注为“证据卡未登记；正式使用前需核验”，且CSIS来源存在重复列示，远域无人僚机、低信息侦打巡飞弹等类别级方向公开证据较弱，但A总体上明确了证据边界，未将其直接表述为成熟能力。",
+                "回答B正文多次引用DSB PNT、GAO GPS Alternatives、Stand-In Forces、乌克兰电子战复盘等证据链，但核心公开来源索引未完整对应或未充分展开，且[B01]至[B20]更像内部交接编号，外部可追溯性较弱。",
+                "回答B部分表述将不同装备、需求卡片和触发条件机械拼接，存在引用与论点支撑关系不清的问题。"
+              ],
+              "confidence": 0.91,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#ablation-rerun-1",
+              "pair_id": "P-7db80e18417e",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A多处引用“DARPA PRIGM、DSB PNT、GAO G/GAO GPS Alternatives”等作为证据链，但最终来源目录未完整列出DSB PNT，且存在截断占位，削弱可追溯性。",
+                "回答A称完整证据索引见随附 evidence_references.md，但评审材料中未提供，部分证据等级和摘录无法核验。",
+                "回答B的CSIS乌克兰战争来源在核心公开来源索引中重复列为E03和E05，属于引用整理问题。",
+                "回答B若干公开来源对远域无人僚机、低信息侦打巡飞弹等类别只能形成间接支撑，回答已基本承认证据边界，但仍需后续补证。"
+              ],
+              "confidence": 0.89,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#ablation-rerun-1",
+              "pair_id": "P-f704e73ad7d6",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A部分来源标注为“证据卡未登记；正式使用前需核验”，且E03/E05均为CSIS同一主题来源，存在重复引用和证据索引不够整洁的问题，但核心论证总体未依赖不可追溯的虚构数字。",
+                "回答A多处以JASSM-ER、LRASM、PRIGM、AFRL协同武器演示作为类别锚点，基本相关，但具体改装余量、批量列装和复杂对抗可靠性仍需外部核验。",
+                "回答B正文反复引用DSB PNT、GAO GPS Alternatives、Stand-In Forces、乌克兰电子战复盘等证据链，但公开来源索引未完整对应或未明确出处，引用与具体判断之间的绑定较弱。",
+                "回答B存在“正常高深度报告调用未能在运行预算内完成”的限制说明，说明其证据核验和研究完整性不足。"
+              ],
+              "confidence": 0.93,
+              "hard_failures": [
+                "回答B的装备能力图像大量复制需求卡片文本，未形成有效的任务效果—作战运用—装备功能—性能约束—体系接口—验证指标映射，接近缺失所选路径核心产物。",
+                "回答B多项装备方向的能力域、指标画像和谱系位置明显错配，例如把LRASM低信息依赖升级直接归为新研远程可消耗效应器族，把EA-18G+NGJ/MALD与弹上多源PNT套件混排，削弱了结论可信度。"
+              ],
+              "judge_id": "gpt-5.5#ablation-rerun-2",
+              "pair_id": "P-7db80e18417e",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A多处引用呈现为缩写或截断形式，如“GAO G”“PGK/JD”，且正文与来源的绑定关系较弱；部分证据标注写明“证据卡未登记、正式使用前需核验”，降低可采信度。",
+                "回答A引用数量和来源目录不能弥补正文中装备方向与证据之间的错配，例如将电子战/诱骗平台直接放入精打武器能力图像但缺少充分证据链。",
+                "回答B的CSIS来源在索引中重复列出，部分未来装备方向如远域反辐射压制无人僚机、低信息侦打巡飞弹主要是类别级推断，仍需外部证据补强。",
+                "回答B总体上能较好区分公开事实、类别级锚点和待验证推断，未明显把概念演示直接宣称为成熟实战能力。"
+              ],
+              "confidence": 0.91,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#ablation-rerun-2",
+              "pair_id": "P-f704e73ad7d6",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0002",
+          "reasons": [
+            "citation_issue",
+            "hard_failure"
+          ]
+        }
+      ],
+      "dimension_votes": {
+        "capability_mapping_and_demand_quality": {
+          "full_method": 8
+        },
+        "causal_and_mechanism_depth": {
+          "full_method": 8
+        },
+        "evidence_and_factuality": {
+          "full_method": 6,
+          "no_winning_mechanism": 2
+        },
+        "military_operational_value": {
+          "full_method": 8
+        },
+        "novelty_and_foresight": {
+          "full_method": 8
+        },
+        "route_task_fulfillment": {
+          "full_method": 8
+        },
+        "system_and_cross_scenario_robustness": {
+          "full_method": 8
+        },
+        "uncertainty_and_validation": {
+          "full_method": 8
+        }
+      },
+      "hard_failures": {
+        "回答B多项装备方向的能力域、指标画像和谱系位置明显错配，例如把LRASM低信息依赖升级直接归为新研远程可消耗效应器族，把EA-18G+NGJ/MALD与弹上多源PNT套件混排，削弱了结论可信度。": 1,
+        "回答B的装备能力图像大量复制需求卡片文本，未形成有效的任务效果—作战运用—装备功能—性能约束—体系接口—验证指标映射，接近缺失所选路径核心产物。": 1
+      },
+      "judgment_count": 8,
+      "query_count": 2,
+      "query_outcomes": [
+        {
+          "query_id": "Q-0001",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0002",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        }
+      ],
+      "runtime": {
+        "full_method": {
+          "completion_rate": 1.0,
+          "mean_duration_seconds": 1622.162,
+          "mean_estimated_cost": 0.0,
+          "mean_usage": {},
+          "run_count": 2
+        },
+        "no_multisource_baseline": {
+          "completion_rate": 1.0,
+          "mean_duration_seconds": 1046.849,
+          "mean_estimated_cost": 0.0,
+          "mean_usage": {
+            "cached_input_tokens": 60032.0,
+            "input_tokens": 314804.5,
+            "output_tokens": 71204.5,
+            "reasoning_output_tokens": 2735.5,
+            "search_event_count": 0.0,
+            "tool_call_count": 0.0,
+            "total_tokens": 70504.0,
+            "trace_event_count": 171.5
+          },
+          "run_count": 2
+        },
+        "no_winning_mechanism": {
+          "completion_rate": 1.0,
+          "mean_duration_seconds": 747.763,
+          "mean_estimated_cost": 0.0,
+          "mean_usage": {
+            "cached_input_tokens": 20736.0,
+            "input_tokens": 264750.0,
+            "output_tokens": 81514.0,
+            "reasoning_output_tokens": 348.0,
+            "search_event_count": 0.0,
+            "tool_call_count": 0.0,
+            "total_tokens": 200468.0,
+            "trace_event_count": 115.0
+          },
+          "run_count": 2
+        }
+      },
+      "schema_version": "1.0",
+      "systems": {
+        "full_method": {
+          "bootstrap_95pct": [
+            1.0,
+            1.0
+          ],
+          "losses": 0,
+          "score_rate": 1.0,
+          "ties": 0,
+          "wins": 2
+        },
+        "no_winning_mechanism": {
+          "bootstrap_95pct": [
+            0.0,
+            0.0
+          ],
+          "losses": 2,
+          "score_rate": 0.0,
+          "ties": 0,
+          "wins": 0
+        }
+      }
+    }
+  },
+  "effects": {
+    "no_multisource_baseline": {
+      "ablation_id": "no_multisource_baseline",
+      "conservative_95pct": [
+        -1.0,
+        1.0
+      ],
+      "paired_bootstrap_95pct": [
+        -1.0,
+        1.0
+      ],
+      "score_delta": 0.0,
+      "status": "unsupported"
+    },
+    "no_winning_mechanism": {
+      "ablation_id": "no_winning_mechanism",
+      "conservative_95pct": [
+        1.0,
+        1.0
+      ],
+      "paired_bootstrap_95pct": [
+        1.0,
+        1.0
+      ],
+      "score_delta": 1.0,
+      "status": "supported"
+    }
+  },
+  "experiment_id": "ablation-20260729-124053",
+  "exploratory_only": true,
+  "schema_version": "1.0",
+  "targeted_rerun": {
+    "backup": "",
+    "completed_at": "2026-07-29T14:07:09.186510+08:00",
+    "query_ids": [
+      "Q-0001",
+      "Q-0002"
+    ],
+    "variant": "no_winning_mechanism",
+    "old_artifacts_deleted": true
+  },
+  "validity": {
+    "no_multisource_baseline": {
+      "query_checks": [
+        {
+          "actors": [
+            "auditor",
+            "convergence_fusion",
+            "generic_researcher",
+            "orchestrator",
+            "packet_admission_gate",
+            "report_quality_gate",
+            "reporter",
+            "winning_cohort-s1-s2-s3",
+            "winning_cohort-s4-s5",
+            "winning_mechanism",
+            "winning_round_critic",
+            "winning_s1_opponent",
+            "winning_s2_operations",
+            "winning_s3_breakthrough",
+            "winning_s4_capability",
+            "winning_s5_gap",
+            "winning_s6_image",
+            "winning_step_critic"
+          ],
+          "events": [
+            "agent_harness_completed",
+            "agent_model_call_completed",
+            "agent_task_delegated",
+            "audit_completed",
+            "baseline_agent_completed",
+            "baseline_agents_summarized",
+            "baseline_analysis_completed",
+            "baseline_analysis_started",
+            "baseline_discovery_completed",
+            "baseline_discovery_lane_completed",
+            "baseline_discovery_lane_started",
+            "baseline_discovery_started",
+            "baseline_materialization_progress",
+            "baseline_model_call_completed",
+            "baseline_model_call_progress",
+            "baseline_model_call_started",
+            "baseline_pipeline_started",
+            "baseline_wave_completed",
+            "baseline_wave_started",
+            "capability_image_created",
+            "discovery_convergence_completed",
+            "discovery_meta_loop_evaluated",
+            "military_value_handoff_created",
+            "packet_admission_evaluated",
+            "report_completed",
+            "report_model_call_completed",
+            "report_model_call_progress",
+            "report_model_call_started",
+            "report_quality_gate_evaluated",
+            "run_started",
+            "stop_policy_evaluated",
+            "tool_call",
+            "tool_result",
+            "winning_inner_loop_evaluated",
+            "winning_input_prepared",
+            "winning_middle_loop_evaluated",
+            "winning_model_call_completed",
+            "winning_model_call_progress",
+            "winning_model_call_started",
+            "winning_outer_loop_evaluated",
+            "winning_reasoning_step_completed",
+            "winning_resources_projected",
+            "winning_stage_completed",
+            "winning_subagent_completed"
+          ],
+          "reason": "",
+          "trace_path": "/Users/wangchen/equipment research/outputs/evals/ablations/ablation-20260729-124053/systems/no_multisource_baseline/Q-0001/runtime/no_multisource_baseline-q-0001/trace.jsonl",
+          "valid": true
+        },
+        {
+          "actors": [
+            "auditor",
+            "convergence_fusion",
+            "generic_researcher",
+            "orchestrator",
+            "packet_admission_gate",
+            "report_quality_gate",
+            "reporter",
+            "winning_cohort-s1-s2-s3",
+            "winning_cohort-s4-s5",
+            "winning_mechanism",
+            "winning_round_critic",
+            "winning_s1_opponent",
+            "winning_s2_operations",
+            "winning_s3_breakthrough",
+            "winning_s4_capability",
+            "winning_s5_gap",
+            "winning_s6_image",
+            "winning_step_critic"
+          ],
+          "events": [
+            "agent_harness_completed",
+            "agent_model_call_completed",
+            "agent_task_delegated",
+            "audit_completed",
+            "baseline_agent_completed",
+            "baseline_agents_summarized",
+            "baseline_analysis_completed",
+            "baseline_analysis_started",
+            "baseline_discovery_completed",
+            "baseline_discovery_lane_completed",
+            "baseline_discovery_lane_started",
+            "baseline_discovery_started",
+            "baseline_materialization_progress",
+            "baseline_model_call_completed",
+            "baseline_model_call_progress",
+            "baseline_model_call_started",
+            "baseline_pipeline_started",
+            "baseline_wave_completed",
+            "baseline_wave_started",
+            "capability_image_created",
+            "coverage_recomputed_after_recall",
+            "discovery_convergence_completed",
+            "discovery_meta_loop_evaluated",
+            "military_value_handoff_created",
+            "packet_admission_evaluated",
+            "recall_limited",
+            "recall_requested",
+            "recall_routed",
+            "recall_supplement_compressed",
+            "recall_task_completed",
+            "report_completed",
+            "report_model_call_completed",
+            "report_model_call_progress",
+            "report_model_call_started",
+            "report_quality_gate_evaluated",
+            "run_started",
+            "stop_policy_evaluated",
+            "tool_call",
+            "tool_result",
+            "winning_inner_loop_evaluated",
+            "winning_input_prepared",
+            "winning_middle_loop_evaluated",
+            "winning_model_call_completed",
+            "winning_model_call_progress",
+            "winning_model_call_started",
+            "winning_outer_loop_evaluated",
+            "winning_reasoning_step_completed",
+            "winning_resources_projected",
+            "winning_stage_completed",
+            "winning_stage_gate_reevaluated",
+            "winning_subagent_completed"
+          ],
+          "reason": "",
+          "trace_path": "/Users/wangchen/equipment research/outputs/evals/ablations/ablation-20260729-124053/systems/no_multisource_baseline/Q-0002/runtime/no_multisource_baseline-q-0002/trace.jsonl",
+          "valid": true
+        }
+      ],
+      "reason": "",
+      "valid": true
+    },
+    "no_winning_mechanism": {
+      "query_checks": [
+        {
+          "actors": [
+            "combat_scenario",
+            "convergence_fusion",
+            "operational_employment",
+            "orchestrator",
+            "packet_admission_gate",
+            "reporter",
+            "weapon_equipment"
+          ],
+          "events": [
+            "agent_harness_completed",
+            "agent_model_call_completed",
+            "agent_task_delegated",
+            "baseline_agent_completed",
+            "baseline_agents_summarized",
+            "baseline_analysis_completed",
+            "baseline_analysis_started",
+            "baseline_discovery_completed",
+            "baseline_discovery_lane_completed",
+            "baseline_discovery_lane_started",
+            "baseline_discovery_started",
+            "baseline_materialization_progress",
+            "baseline_model_call_completed",
+            "baseline_model_call_progress",
+            "baseline_model_call_started",
+            "baseline_pipeline_started",
+            "baseline_wave_completed",
+            "baseline_wave_started",
+            "discovery_convergence_completed",
+            "packet_admission_evaluated",
+            "report_completed",
+            "run_started",
+            "stop_policy_evaluated",
+            "tool_call"
+          ],
+          "reason": "",
+          "trace_path": "/Users/wangchen/equipment research/outputs/evals/ablations/ablation-20260729-124053/systems/no_winning_mechanism/Q-0001/runtime/no_winning_mechanism-q-0001/trace.jsonl",
+          "valid": true
+        },
+        {
+          "actors": [
+            "combat_scenario",
+            "convergence_fusion",
+            "operational_employment",
+            "orchestrator",
+            "packet_admission_gate",
+            "reporter",
+            "weapon_equipment"
+          ],
+          "events": [
+            "agent_harness_completed",
+            "agent_model_call_completed",
+            "agent_task_delegated",
+            "baseline_agent_completed",
+            "baseline_agents_summarized",
+            "baseline_analysis_completed",
+            "baseline_analysis_started",
+            "baseline_discovery_completed",
+            "baseline_discovery_lane_completed",
+            "baseline_discovery_lane_started",
+            "baseline_discovery_started",
+            "baseline_materialization_progress",
+            "baseline_model_call_completed",
+            "baseline_model_call_progress",
+            "baseline_model_call_started",
+            "baseline_pipeline_started",
+            "baseline_wave_completed",
+            "baseline_wave_started",
+            "discovery_convergence_completed",
+            "packet_admission_evaluated",
+            "report_completed",
+            "run_started",
+            "stop_policy_evaluated",
+            "tool_call"
+          ],
+          "reason": "",
+          "trace_path": "/Users/wangchen/equipment research/outputs/evals/ablations/ablation-20260729-124053/systems/no_winning_mechanism/Q-0002/runtime/no_winning_mechanism-q-0002/trace.jsonl",
+          "valid": true
+        }
+      ],
+      "reason": "",
+      "valid": true
+    }
+  }
+}

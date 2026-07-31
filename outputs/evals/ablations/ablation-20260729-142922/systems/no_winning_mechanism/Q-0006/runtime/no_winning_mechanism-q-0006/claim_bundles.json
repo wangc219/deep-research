@@ -1,0 +1,480 @@
+[
+  {
+    "bundle_id": "claims-978ac9dc8329",
+    "claims": [
+      {
+        "claim_id": "claim-084ed8e20d13",
+        "claim_type": "fact",
+        "confidence": 0.81,
+        "counter_evidence": [
+          "高端联网精确火力提供高毁伤可信度，但在诱饵、断链和长期消耗下成本交换比恶化；低成本规模系统提升覆盖和持续性，但在强EW和C-UAS下单体可靠性下降。",
+          "分布式部署提高抗毁和战损续接潜力，但若接口、权限、保障和防护不同步，会增加节点数量与暴露面。",
+          "提高目标置信度门槛可降低误击和诱饵消耗，但对高时敏目标可能牺牲打击窗口。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-5824f31b34e3",
+          "ev-operational_employment-web-85fc01f1f838",
+          "ev-operational_employment-web-5a5a0ba6dfe6",
+          "ev-operational_employment-web-5ca69bd8715a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://www.war.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+          "https://cepa.org/comprehensive-reports/adaptation-under-fire-mass-speed-and-accuracy-transform-russias-kill-chain-in-ukraine/",
+          "https://www.lineofdeparture.army.mil/Journals/Air-Defense-Artillery/ADA-Archive/2024-Edition/IBCS-Any-Sensor-Best-Shooter/"
+        ],
+        "text": "判断：不完备与不确定信息条件下，精确打击的核心能力不是单发命中精度，而是“感知-确认-分配-打击-评估-再打击”闭环在断链、诱饵、目标机动和战损下的可重构性。军事任务价值：可提高动态目标复核概率，减少误击、重复打击和高价值弹药浪费，并在敌强侦察打击下维持压制与拒止。证据边界：公开证据主要支持分布式杀伤网、韧性C2、无人系统和保障分散趋势，不能证明任何一型系统在特定战场必然有效。失效条件：同质传感器被共同欺骗、授权链过长、数据接口不通或BDA缺失时，闭环会退化为慢速、昂贵且易误判的传统火力流程。"
+      },
+      {
+        "claim_id": "claim-55c35c9eb990",
+        "claim_type": "hypothesis",
+        "confidence": 0.81,
+        "counter_evidence": [
+          "高端联网精确火力提供高毁伤可信度，但在诱饵、断链和长期消耗下成本交换比恶化；低成本规模系统提升覆盖和持续性，但在强EW和C-UAS下单体可靠性下降。",
+          "分布式部署提高抗毁和战损续接潜力，但若接口、权限、保障和防护不同步，会增加节点数量与暴露面。",
+          "提高目标置信度门槛可降低误击和诱饵消耗，但对高时敏目标可能牺牲打击窗口。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-5824f31b34e3",
+          "ev-operational_employment-web-85fc01f1f838",
+          "ev-operational_employment-web-5a5a0ba6dfe6",
+          "ev-operational_employment-web-5ca69bd8715a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://www.war.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+          "https://cepa.org/comprehensive-reports/adaptation-under-fire-mass-speed-and-accuracy-transform-russias-kill-chain-in-ukraine/",
+          "https://www.lineofdeparture.army.mil/Journals/Air-Defense-Artillery/ADA-Archive/2024-Edition/IBCS-Any-Sensor-Best-Shooter/"
+        ],
+        "text": "判断：三类COA中，“弹性杀伤网加分布式节点”应作为主架构，“高端联网精确打击”和“低成本规模精确效应”分别作为高价值终结与覆盖补盲手段。军事任务价值：主架构负责战损续接和持续作战，高端火力负责关键节点歼灭，低成本无人/巡飞系统负责侦察、诱导、压制、机会打击和BDA。证据边界：公开来源能证明美军和俄乌战场均强调传感器-射手融合、无人系统规模化和分散部署，但不同战区地理、电磁环境和工业补充能力差异很大。失效条件：若分布式节点缺少统一数据标准、频谱管理、C-UAS防护和补给微节点，分散部署会扩大暴露面而非提升韧性。"
+      },
+      {
+        "claim_id": "claim-880727367559",
+        "claim_type": "inference",
+        "confidence": 0.81,
+        "counter_evidence": [
+          "高端联网精确火力提供高毁伤可信度，但在诱饵、断链和长期消耗下成本交换比恶化；低成本规模系统提升覆盖和持续性，但在强EW和C-UAS下单体可靠性下降。",
+          "分布式部署提高抗毁和战损续接潜力，但若接口、权限、保障和防护不同步，会增加节点数量与暴露面。",
+          "提高目标置信度门槛可降低误击和诱饵消耗，但对高时敏目标可能牺牲打击窗口。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-5824f31b34e3",
+          "ev-operational_employment-web-85fc01f1f838",
+          "ev-operational_employment-web-5a5a0ba6dfe6",
+          "ev-operational_employment-web-5ca69bd8715a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://www.war.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+          "https://cepa.org/comprehensive-reports/adaptation-under-fire-mass-speed-and-accuracy-transform-russias-kill-chain-in-ukraine/",
+          "https://www.lineofdeparture.army.mil/Journals/Air-Defense-Artillery/ADA-Archive/2024-Edition/IBCS-Any-Sensor-Best-Shooter/"
+        ],
+        "text": "判断：目标置信度融合必须成为火力分配的前置条件，而不是ISR附属显示功能。军事任务价值：通过目标真实性、位置时效、诱饵风险、授权等级和BDA状态共同约束打击决策，可在不确定信息下区分“可打击、需复核、诱导观察、暂缓”，提升打击/歼灭效果并降低附带风险。证据边界：公开资料支持多源融合、数据驱动决策和近实时杀伤链改进方向，但目标置信度模型、阈值和算法细节不能从公开资料直接外推。失效条件：高时敏目标窗口极短时，复核门槛过高会错失战机；门槛过低则会被诱饵、伪装和错误共识牵引消耗。"
+      },
+      {
+        "claim_id": "claim-e9a861c1c0cb",
+        "claim_type": "fact",
+        "confidence": 0.81,
+        "counter_evidence": [
+          "高端联网精确火力提供高毁伤可信度，但在诱饵、断链和长期消耗下成本交换比恶化；低成本规模系统提升覆盖和持续性，但在强EW和C-UAS下单体可靠性下降。",
+          "分布式部署提高抗毁和战损续接潜力，但若接口、权限、保障和防护不同步，会增加节点数量与暴露面。",
+          "提高目标置信度门槛可降低误击和诱饵消耗，但对高时敏目标可能牺牲打击窗口。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-5824f31b34e3",
+          "ev-operational_employment-web-85fc01f1f838",
+          "ev-operational_employment-web-5a5a0ba6dfe6",
+          "ev-operational_employment-web-5ca69bd8715a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://www.war.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+          "https://cepa.org/comprehensive-reports/adaptation-under-fire-mass-speed-and-accuracy-transform-russias-kill-chain-in-ukraine/",
+          "https://www.lineofdeparture.army.mil/Journals/Air-Defense-Artillery/ADA-Archive/2024-Edition/IBCS-Any-Sensor-Best-Shooter/"
+        ],
+        "text": "判断：低成本可消耗无人系统与巡飞弹不是高端精确火力替代品，而是不确定信息环境下的覆盖、试探、压制和BDA补强层。军事任务价值：它们能提高搜索密度、迫使敌暴露、消耗敌C-UAS和防空资源，并用可承受战损支撑持续拒止；高端弹药则保留给高价值、已确认或时间敏感目标。证据边界：Replicator、Force Design和俄乌复盘均支持规模化无人/自主系统趋势，但低成本系统在强EW、恶劣天气和密集反无人体系中的稳定效能仍依赖具体技术与战术适配。失效条件：电池、光电组件、数据链、操作员训练、批量补充和抗干扰能力不足时，规模优势会快速转化为消耗负担。"
+      },
+      {
+        "claim_id": "claim-6856075be2f9",
+        "claim_type": "fact",
+        "confidence": 0.81,
+        "counter_evidence": [
+          "高端联网精确火力提供高毁伤可信度，但在诱饵、断链和长期消耗下成本交换比恶化；低成本规模系统提升覆盖和持续性，但在强EW和C-UAS下单体可靠性下降。",
+          "分布式部署提高抗毁和战损续接潜力，但若接口、权限、保障和防护不同步，会增加节点数量与暴露面。",
+          "提高目标置信度门槛可降低误击和诱饵消耗，但对高时敏目标可能牺牲打击窗口。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-5824f31b34e3",
+          "ev-operational_employment-web-85fc01f1f838",
+          "ev-operational_employment-web-5a5a0ba6dfe6",
+          "ev-operational_employment-web-5ca69bd8715a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://www.war.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+          "https://cepa.org/comprehensive-reports/adaptation-under-fire-mass-speed-and-accuracy-transform-russias-kill-chain-in-ukraine/",
+          "https://www.lineofdeparture.army.mil/Journals/Air-Defense-Artillery/ADA-Archive/2024-Edition/IBCS-Any-Sensor-Best-Shooter/"
+        ],
+        "text": "判断：保障韧性与反无人防护应被视为精确打击任务链的组成部分，而不是后方支援或被动防护。军事任务价值：弹药、电池、备件、能源、数据链设备和反无人耗材同步补充，才能让前沿传感器、C2、火力和BDA节点在被侦察打击后续接任务。证据边界：公开保障复盘显示集中后勤在传感器饱和战场上脆弱，但具体补给节奏、库存规模和节点布局不能公开推导。失效条件：集中补给点、固定路线、无C-UAS保护的保障节点被发现后，持续打击能力会先于火力平台本身失效。"
+      }
+    ],
+    "packet_id": "packet-operational_employment",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-39ff1148f328",
+    "claims": [
+      {
+        "claim_id": "claim-b7487df194ab",
+        "claim_type": "hypothesis",
+        "confidence": 0.8,
+        "counter_evidence": [
+          "公开概念强调分布式、低特征、可消耗和弹性网络，但公开装备项目仍可能依赖高价值中继、空间通信和复杂数据链，存在“分布式部署但关键节点集中”的结构性矛盾。",
+          "可消耗无人系统有助于改善数量和成本交换，但在强电子战、欺骗BDA和补给受扰条件下，规模化投入可能加快消耗而非提高闭合率。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-f42ad4ad8ea8",
+          "ev-combat_scenario-web-bc1c2e8c3176",
+          "ev-combat_scenario-web-8952c3805d5a",
+          "ev-combat_scenario-web-6c1c84a0e24e"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/",
+          "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+        ],
+        "text": "判断1：不完备与不确定信息条件下，精确打击首要缺口是目标置信度与态势时效管理，而非末端命中精度。军事任务价值在于把“发现—决策”环节从单源识别转为多源证据融合、冲突提示和过期告警，降低诱饵、遮蔽、海面杂波、城市背景造成的误击、漏击和重复打击。证据边界：公开资料能证明美军强调传感器—射手连接、战术边缘数据融合和任务数据关联，但不能证明具体算法精度或战时误报率。失效条件：若对手实施高质量伪装欺骗、传感源高度同质化或数据训练偏差严重，融合系统可能放大错误置信度。"
+      },
+      {
+        "claim_id": "claim-c1b2736b62f4",
+        "claim_type": "hypothesis",
+        "confidence": 0.8,
+        "counter_evidence": [
+          "公开概念强调分布式、低特征、可消耗和弹性网络，但公开装备项目仍可能依赖高价值中继、空间通信和复杂数据链，存在“分布式部署但关键节点集中”的结构性矛盾。",
+          "可消耗无人系统有助于改善数量和成本交换，但在强电子战、欺骗BDA和补给受扰条件下，规模化投入可能加快消耗而非提高闭合率。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-f42ad4ad8ea8",
+          "ev-combat_scenario-web-bc1c2e8c3176",
+          "ev-combat_scenario-web-8952c3805d5a",
+          "ev-combat_scenario-web-6c1c84a0e24e"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/",
+          "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+        ],
+        "text": "判断2：断链和低带宽条件下，kill web闭合能力取决于分布式C2、多路径通信、离线任务包和安全降级机制。军事任务价值在于通信/GNSS受扰时仍能维持最低可用协同、授权边界、打击中止和BDA回传，避免网络中心体系退化为孤立平台。证据边界：SDA、Project Convergence和Force Design公开信息支持“弹性网络、增殖式空间、边缘处理”方向，但不提供复杂电子战下的链路可用率。失效条件：若卫星、空中中继和地面局部网被同步压制，且预授权规则不清，应降级为侦察、监视或脱离，而非继续精确打击。"
+      },
+      {
+        "claim_id": "claim-ae8429a83f12",
+        "claim_type": "hypothesis",
+        "confidence": 0.8,
+        "counter_evidence": [
+          "公开概念强调分布式、低特征、可消耗和弹性网络，但公开装备项目仍可能依赖高价值中继、空间通信和复杂数据链，存在“分布式部署但关键节点集中”的结构性矛盾。",
+          "可消耗无人系统有助于改善数量和成本交换，但在强电子战、欺骗BDA和补给受扰条件下，规模化投入可能加快消耗而非提高闭合率。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-f42ad4ad8ea8",
+          "ev-combat_scenario-web-bc1c2e8c3176",
+          "ev-combat_scenario-web-8952c3805d5a",
+          "ev-combat_scenario-web-6c1c84a0e24e"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/",
+          "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+        ],
+        "text": "判断3：高消耗无人化战场使精确打击的成本交换和持续补充成为任务闭合的硬约束。军事任务价值在于用可消耗无人侦打一体节点、低成本精确效应器、快速维修和电源/弹药/备件状态感知保持多轮打击能力。证据边界：反无人系统战略、Replicator和乌克兰战争研究支持无人系统规模化、低成本化和高消耗趋势，但公开来源不足以量化具体消耗比。失效条件：若前沿保障、批量维护和抗干扰控制不足，可消耗系统会变成一次性侦察消耗，不能支撑持续精确打击。"
+      },
+      {
+        "claim_id": "claim-59daf967bdd6",
+        "claim_type": "hypothesis",
+        "confidence": 0.8,
+        "counter_evidence": [
+          "公开概念强调分布式、低特征、可消耗和弹性网络，但公开装备项目仍可能依赖高价值中继、空间通信和复杂数据链，存在“分布式部署但关键节点集中”的结构性矛盾。",
+          "可消耗无人系统有助于改善数量和成本交换，但在强电子战、欺骗BDA和补给受扰条件下，规模化投入可能加快消耗而非提高闭合率。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-f42ad4ad8ea8",
+          "ev-combat_scenario-web-bc1c2e8c3176",
+          "ev-combat_scenario-web-8952c3805d5a",
+          "ev-combat_scenario-web-6c1c84a0e24e"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/",
+          "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+        ],
+        "text": "判断4：濒海拒止和前沿分散部署场景中，短窗口打击的关键压力点是低特征生存、快速目标指示、可替代射手和抗欺骗BDA。军事任务价值在于在节点被发现和压制前完成发现、授权、打击、评估和再组织，形成连续拒止而非单次发射。证据边界：EABO与Force Design公开材料明确支持前沿C4ISR、目标指示、低特征分布和前沿保障需求，但不披露真实对抗中的暴露时间和战损率。失效条件：若前沿节点补给不可持续或BDA不可置信，体系将出现重复打击、错失二次窗口或被迫退出。"
+      },
+      {
+        "claim_id": "claim-caf24a7fad4a",
+        "claim_type": "hypothesis",
+        "confidence": 0.8,
+        "counter_evidence": [
+          "公开概念强调分布式、低特征、可消耗和弹性网络，但公开装备项目仍可能依赖高价值中继、空间通信和复杂数据链，存在“分布式部署但关键节点集中”的结构性矛盾。",
+          "可消耗无人系统有助于改善数量和成本交换，但在强电子战、欺骗BDA和补给受扰条件下，规模化投入可能加快消耗而非提高闭合率。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-f42ad4ad8ea8",
+          "ev-combat_scenario-web-bc1c2e8c3176",
+          "ev-combat_scenario-web-8952c3805d5a",
+          "ev-combat_scenario-web-6c1c84a0e24e"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/",
+          "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+        ],
+        "text": "判断5：高原、山地、远海等远域环境把精确打击矛盾从“射程不足”转化为“态势过期、链路退化和授权边界不确定”。军事任务价值在于通过替代导航、分层自治、低带宽摘要共享和人在回路/人在监督回路界面，维持可解释、可审计、可终止的任务闭合。证据边界：公开资料能支撑远程受争夺环境的网络鲁棒性和空间通信需求，缺少高原极端气象、复杂地形和远海补给条件下的实测指标。失效条件：若目标、友军、民用背景或气象数据超过有效期且无法复核，打击任务应中止或转为非打击任务。"
+      }
+    ],
+    "packet_id": "packet-combat_scenario",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-42e2d45402c3",
+    "claims": [
+      {
+        "claim_id": "claim-6f84f1dc4f81",
+        "claim_type": "fact",
+        "confidence": 0.76,
+        "counter_evidence": [
+          "PrSM公开资料强调远程精确打击和进入生产部署，但未披露复杂对抗环境下命中率、目标更新链和BDA可靠性，因此不能用射程证据替代不确定信息条件下的闭环效能证据。",
+          "Replicator公开叙事强调规模化可消耗自主系统，但具体数量、体系接口、自治边界和抗干扰表现大多未公开，应保留为方向性能力而非既成战役级能力。",
+          "YFQ-44A实弹测试证明武器集成推进，但对数字目标发射空空导弹不等同于对复杂地面/海上目标的自主精确打击成熟。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-43915f10ae4b",
+          "ev-weapon_equipment-web-5b58dc887688",
+          "ev-weapon_equipment-web-ef58d44e5694",
+          "ev-weapon_equipment-web-7afe61571086"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.army.mil/article/286878/precision_strike_missile_increment_1_achieves_milestone_c_approval",
+          "https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2026/Discretionary%20Budget/Procurement/Missile%20Procurement%20Army.pdf",
+          "https://www.defense.gov/News/Releases/Release/Article/3765644/deputy-secretary-of-defense-hicks-announces-first-tranche-of-replicator-capabil/",
+          "https://www.af.mil/News/Article-Display/Article/4545856/air-force-conducts-live-fire-test-for-collaborative-combat-aircraft-program/"
+        ],
+        "text": "[贡献：S4装备基线与五档差距] 国外基线已形成三类互补装备族：PrSM/HIMARS-M270A2负责400公里以上战役纵深精确火力，Switchblade 600/Replicator ADA2与YFQ-44A CCA补前出感知和可消耗打击，AARGM/AARGM-ER与MALD/MALD-J负责诱骗、反辐射和远域压制；其共同指向不是单发精度最大化，而是在目标不完备、链路受扰、BDA不确定条件下维持杀伤链连续性。"
+      },
+      {
+        "claim_id": "claim-2b56df424a88",
+        "claim_type": "fact",
+        "confidence": 0.76,
+        "counter_evidence": [
+          "PrSM公开资料强调远程精确打击和进入生产部署，但未披露复杂对抗环境下命中率、目标更新链和BDA可靠性，因此不能用射程证据替代不确定信息条件下的闭环效能证据。",
+          "Replicator公开叙事强调规模化可消耗自主系统，但具体数量、体系接口、自治边界和抗干扰表现大多未公开，应保留为方向性能力而非既成战役级能力。",
+          "YFQ-44A实弹测试证明武器集成推进，但对数字目标发射空空导弹不等同于对复杂地面/海上目标的自主精确打击成熟。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-43915f10ae4b",
+          "ev-weapon_equipment-web-5b58dc887688",
+          "ev-weapon_equipment-web-ef58d44e5694",
+          "ev-weapon_equipment-web-7afe61571086"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.army.mil/article/286878/precision_strike_missile_increment_1_achieves_milestone_c_approval",
+          "https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2026/Discretionary%20Budget/Procurement/Missile%20Procurement%20Army.pdf",
+          "https://www.defense.gov/News/Releases/Release/Article/3765644/deputy-secretary-of-defense-hicks-announces-first-tranche-of-replicator-capabil/",
+          "https://www.af.mil/News/Article-Display/Article/4545856/air-force-conducts-live-fire-test-for-collaborative-combat-aircraft-program/"
+        ],
+        "text": "[贡献：S5体系依赖与能力边界] 关键瓶颈从弹药射程转向目标置信度、目标数据新鲜度、低带宽协同、安全降级和抗欺骗BDA；PrSM的射程和生产部署证据较强，但公开资料不能证明强电磁压制、诱饵欺骗、卫星受扰和高速机动目标条件下仍有稳定闭环成功率。"
+      },
+      {
+        "claim_id": "claim-4fd46214840d",
+        "claim_type": "fact",
+        "confidence": 0.76,
+        "counter_evidence": [
+          "PrSM公开资料强调远程精确打击和进入生产部署，但未披露复杂对抗环境下命中率、目标更新链和BDA可靠性，因此不能用射程证据替代不确定信息条件下的闭环效能证据。",
+          "Replicator公开叙事强调规模化可消耗自主系统，但具体数量、体系接口、自治边界和抗干扰表现大多未公开，应保留为方向性能力而非既成战役级能力。",
+          "YFQ-44A实弹测试证明武器集成推进，但对数字目标发射空空导弹不等同于对复杂地面/海上目标的自主精确打击成熟。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-43915f10ae4b",
+          "ev-weapon_equipment-web-5b58dc887688",
+          "ev-weapon_equipment-web-ef58d44e5694",
+          "ev-weapon_equipment-web-7afe61571086"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.army.mil/article/286878/precision_strike_missile_increment_1_achieves_milestone_c_approval",
+          "https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2026/Discretionary%20Budget/Procurement/Missile%20Procurement%20Army.pdf",
+          "https://www.defense.gov/News/Releases/Release/Article/3765644/deputy-secretary-of-defense-hicks-announces-first-tranche-of-replicator-capabil/",
+          "https://www.af.mil/News/Article-Display/Article/4545856/air-force-conducts-live-fire-test-for-collaborative-combat-aircraft-program/"
+        ],
+        "text": "[贡献：S6现役升级/新研需求] 现役做优应优先改造PrSM火控接入、AARGM/MALD诱骗-压制协同和无人BDA回传；新研拓新应发展可消耗侦打一体节点、通用载荷接口、低带宽边缘融合、置信度管理与任务安全降级模块，以提高目标发现、火力协同、反制抗扰和持续补充能力。"
+      },
+      {
+        "claim_id": "claim-3c312a10b5af",
+        "claim_type": "fact",
+        "confidence": 0.76,
+        "counter_evidence": [
+          "PrSM公开资料强调远程精确打击和进入生产部署，但未披露复杂对抗环境下命中率、目标更新链和BDA可靠性，因此不能用射程证据替代不确定信息条件下的闭环效能证据。",
+          "Replicator公开叙事强调规模化可消耗自主系统，但具体数量、体系接口、自治边界和抗干扰表现大多未公开，应保留为方向性能力而非既成战役级能力。",
+          "YFQ-44A实弹测试证明武器集成推进，但对数字目标发射空空导弹不等同于对复杂地面/海上目标的自主精确打击成熟。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-43915f10ae4b",
+          "ev-weapon_equipment-web-5b58dc887688",
+          "ev-weapon_equipment-web-ef58d44e5694",
+          "ev-weapon_equipment-web-7afe61571086"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.army.mil/article/286878/precision_strike_missile_increment_1_achieves_milestone_c_approval",
+          "https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2026/Discretionary%20Budget/Procurement/Missile%20Procurement%20Army.pdf",
+          "https://www.defense.gov/News/Releases/Release/Article/3765644/deputy-secretary-of-defense-hicks-announces-first-tranche-of-replicator-capabil/",
+          "https://www.af.mil/News/Article-Display/Article/4545856/air-force-conducts-live-fire-test-for-collaborative-combat-aircraft-program/"
+        ],
+        "text": "[贡献：S6反证与验证] Replicator和YFQ-44A提供远程无人打击方向证据，但公开证据仍停留在首批能力、受控测试和有人监督武器释放层面，不能外推为复杂战场大规模自主侦察-识别-授权-毁伤评估闭环成熟能力；验证重点应从平台参数转向体系级闭环成功率和高消耗补充速率。"
+      }
+    ],
+    "packet_id": "packet-weapon_equipment",
+    "schema_version": "1.0"
+  }
+]

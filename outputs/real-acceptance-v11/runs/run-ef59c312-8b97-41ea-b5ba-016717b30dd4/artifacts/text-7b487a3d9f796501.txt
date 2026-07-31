@@ -1,0 +1,19 @@
+[1] The Defense Advanced Research Projects Agency (DARPA) has officially launched Phase 1 of its Robust Quantum Sensors (RoQS) program, a groundbreaking effort to make quantum sensing viable beyond the lab – on the ground, at sea, in the air, and even in space.
+
+[2] Quantum sensors offer unmatched precision in detecting magnetic and electric fields, acceleration, rotation, and gravity, but their extraordinary sensitivity has made them notoriously fragile in real-world environments. Even minor vibrations or electromagnetic interference can degrade performance, limiting their operational use. RoQS is taking a fundamentally new approach to this challenge: not by applying temporary fixes like shielding or isolation, but by rethinking sensor design from the ground up.
+
+[3] RoQS aims to create inherently robust sensors that reject interference, withstand motion, and deliver reliable, state-of-the-art performance across domains. The goal is to break through long-standing barriers to field deployment, accelerate the transition from lab to mission, and unlock new capabilities in navigation, threat detection, and situational awareness.
+
+[4] The first phase of the program is in progress, with two technical areas kicking off in parallel:
+
+[5] Sensor Development: Performer teams will build compact, “walk-on/walk-off” quantum sensors and test them on a government-provided helicopter. The helicopter environment was chosen for its inherent challenges – strong electromagnetic fields, vibrations, and gradients – so that sensors that pass this test can be trusted to work on a wide range of other Department of Defense (DOD) platforms.
+
+[6] Platform Integration Studies: Performers will work with the defense industrial base to identify specific Programs of Record (PoRs) and platform types where quantum sensors could deliver strategic value. These could range from ground vehicles and submarines to satellites and UAVs. The studies will help shape integration paths and technical requirements for RoQS’ second phase.
+
+[7] While RoQS is focused today on prototyping and platform studies, its real impact will be realized in the program’s second phase, during which quantum sensors will be integrated onto actual DOD platforms to meet mission-critical requirements. DARPA is asking government platform owners and mission stakeholders across the services to begin engaging with the RoQS team now.
+
+[8] “We’re looking beyond helicopters,” explains Jonathan Hoffman, program manager for RoQS in DARPA’s Microsystems Technology Office . “The sensor technologies we’re developing should be applicable to a broad range of DOD platforms – no matter the domain. The ultimate goal of RoQS is real-world transition, and that will require strong government partnerships.”
+
+[9] For further technical details, please refer to the original program solicitation (DARPA-PS-25-11). Interested DOD stakeholders should reach out to the RoQS program team .
+
+[10] Media with inquiries should contact DARPA Public Affairs .

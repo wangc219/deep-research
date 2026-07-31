@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:16d48c8bbac9f741",
+  "content_path": "text-16d48c8bbac9f741.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-operational_employment-web-5824f31b34e3",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "16d48c8bbac9f741b810515f12aae4fd287213741960d3e941f79c165d7028d0",
+  "url": "https://www.marines.mil/Force-Design/"
+}

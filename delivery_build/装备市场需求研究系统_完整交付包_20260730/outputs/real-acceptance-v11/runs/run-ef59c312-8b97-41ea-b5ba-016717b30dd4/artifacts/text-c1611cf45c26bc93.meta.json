@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:c1611cf45c26bc93",
+  "content_path": "text-c1611cf45c26bc93.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-international_situation-web-bbe3c1156418",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "c1611cf45c26bc932d1d78ac1f03cbd4c29cae2867bac68a7e175c4761e2623e",
+  "url": "https://media.defense.gov/2026/Mar/09/2003896718/-1/-1/1/GUIDE-FOR-THE-SCIENCE-OF-COUNTER-UAS-OPERATIONS-SAFEGUARDING-FREEDOMS-AND-PRESERVING-PRIVACY.PDF"
+}

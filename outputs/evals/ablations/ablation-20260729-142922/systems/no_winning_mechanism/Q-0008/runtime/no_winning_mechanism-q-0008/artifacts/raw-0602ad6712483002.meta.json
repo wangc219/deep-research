@@ -1,0 +1,15 @@
+{
+  "artifact_ref": "raw:0602ad6712483002",
+  "connect_ip": "198.18.2.122",
+  "content_path": "raw-0602ad6712483002.bin",
+  "content_type": "application/pdf",
+  "encoding": null,
+  "evidence_id": "ev-weapon_equipment-web-a0c56c58b8a2",
+  "fetch_cache_hit": false,
+  "final_url": "https://www.sda.mil/wp-content/uploads/2025/09/PWSA-Tranche-1-Factsheet-UPDATE_09.05.2025.pdf",
+  "kind": "raw",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "0602ad67124830024a26c282541960e4bdfecde6a3b8828ea3437f4517927efb",
+  "url": "https://www.sda.mil/wp-content/uploads/2025/09/PWSA-Tranche-1-Factsheet-UPDATE_09.05.2025.pdf"
+}

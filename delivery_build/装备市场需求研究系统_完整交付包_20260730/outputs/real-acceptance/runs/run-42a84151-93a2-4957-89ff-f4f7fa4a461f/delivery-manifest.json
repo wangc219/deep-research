@@ -1,0 +1,118 @@
+{
+  "file_count": 21,
+  "files": [
+    {
+      "path": "agent_sessions/combat_scenario.jsonl",
+      "sha256": "13de26d30ace60c5f395e5c540de68487790a647fe5d97432aaccabb35b70ed8",
+      "size": 42509
+    },
+    {
+      "path": "agent_sessions/international_situation.jsonl",
+      "sha256": "9ca54a513c51e09220d6331d88a7bf81cceb35d1c6b072ffdc8b7d38b0d5eed2",
+      "size": 33236
+    },
+    {
+      "path": "agent_sessions/operational_employment.jsonl",
+      "sha256": "d1f31244525d2a3af53062e82bb21b2b1ce386c38cc094a674e3178abe080533",
+      "size": 44619
+    },
+    {
+      "path": "agent_sessions/weapon_equipment.jsonl",
+      "sha256": "3523d9c5f78b805733438b68a790c0c686a012c7f45b535c57eb6aab04a6cd6c",
+      "size": 66338
+    },
+    {
+      "path": "architecture-acceptance.json",
+      "sha256": "f4474651856b21021df407c58cb6ba0b4d128d9d38112d5d8c9ef5157b9db575",
+      "size": 875
+    },
+    {
+      "path": "capability_images.json",
+      "sha256": "0d7a859954247810cab46609398e6642155690f4d4e544b2f8aa523e62bdb892",
+      "size": 18827
+    },
+    {
+      "path": "checkpoints/checkpoint-038e46cffea03060ad205f09.json",
+      "sha256": "e083c6add2f41ece2f65c7539cee8c5dd3bf5a7d5f8440ba0ec53c04ce65e8e3",
+      "size": 1492
+    },
+    {
+      "path": "checkpoints/checkpoint-4e98b2d4dd1b81b3518de04a.json",
+      "sha256": "dc4a48efca0c3e9174e4b24a96b9e4f21e69f63d335d42fc58c2cffc2a42540b",
+      "size": 77579
+    },
+    {
+      "path": "checkpoints/checkpoint-6b9271460536be1482375b93.json",
+      "sha256": "28d4e90efeabb545e03814d4b93f3eb7090224dc93b27ef7be6a05afc60abb9a",
+      "size": 2955
+    },
+    {
+      "path": "checkpoints/checkpoint-76af367722d88b77f85d4f48.json",
+      "sha256": "3c781335b7e0735c56a2458d552c8a0e6a5d6a92a54c91e1c58a3a8cd1b06df5",
+      "size": 104343
+    },
+    {
+      "path": "checkpoints/checkpoint-8e0cd0c9e26f867b4b514084.json",
+      "sha256": "9a13986e5beb790bbdd5175f63dd3fdf97bef4731660425f360d65f133775b32",
+      "size": 3024
+    },
+    {
+      "path": "checkpoints/checkpoint-96f026ae9e91c4fd9ea293ee.json",
+      "sha256": "5015912b8e7be1903c1c26139f9ecfbad9a6c97d7333e5062fdf2a78e15f765c",
+      "size": 1534
+    },
+    {
+      "path": "checkpoints/checkpoint-df38554527aa5c49216aec1a.json",
+      "sha256": "fa6a11b02d2a828c1eb9472eecb191a85d134a7e908764e95f3aad5d4ae1a1fe",
+      "size": 77538
+    },
+    {
+      "path": "checkpoints/checkpoint-e7b2bf5081d0af7f043dc17f.json",
+      "sha256": "13b06fc60b3c76dc579c0ffacc82d9f25e2a38e05916fa7c15acd0951d073f54",
+      "size": 78974
+    },
+    {
+      "path": "checkpoints/checkpoint-fbde9df2a0a3dd21b48fbb9d.json",
+      "sha256": "32f39ade4035a29b2760c5d0e0fac07011e70a7a4af954819cb3f9e18708aed1",
+      "size": 79011
+    },
+    {
+      "path": "checkpoints/latest.json",
+      "sha256": "3c781335b7e0735c56a2458d552c8a0e6a5d6a92a54c91e1c58a3a8cd1b06df5",
+      "size": 104343
+    },
+    {
+      "path": "domain.jsonl",
+      "sha256": "555ca70766e6196def990d6c4d6837be052c2a4fbbc2e56541a60cec9b8fe5c4",
+      "size": 472300
+    },
+    {
+      "path": "report.md",
+      "sha256": "fb3f6eb8b42781b4c6428ed06660a9b2988c4cdd76439d8e48560f776c15a275",
+      "size": 35311
+    },
+    {
+      "path": "round_summary.json",
+      "sha256": "ebe1f9bf0cb5f25958fc601b2b01d5e46ac031c8f2dd6b846308d9a9608089aa",
+      "size": 486004
+    },
+    {
+      "path": "run.db",
+      "sha256": "8b8f54470495cef56122469c5c166e62384b8ebdabf80bb8aacfbc51797fad41",
+      "size": 970752
+    },
+    {
+      "path": "trace.jsonl",
+      "sha256": "e9f63ef3f5a5a383eec216aab89514eaecd8cd3d3789857960e4177d14dd8d36",
+      "size": 191496
+    }
+  ],
+  "required_outputs": [
+    "report.md",
+    "capability_images.json",
+    "round_summary.json",
+    "domain.jsonl",
+    "trace.jsonl"
+  ],
+  "schema_version": "1.0"
+}

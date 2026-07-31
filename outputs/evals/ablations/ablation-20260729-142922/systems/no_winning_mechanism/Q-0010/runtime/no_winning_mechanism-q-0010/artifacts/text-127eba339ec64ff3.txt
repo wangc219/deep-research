@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=defense.gov · deputy secretary of defense hicks announces first tranche of replicator capabil
+source_url=https://www.defense.gov/News/Releases/Release/Article/3765644/deputy-secretary-of-defense-hicks-announces-first-tranche-of-replicator-capabil/
+claim=DoD Replicator首批能力公告支撑Switchblade-600、USV/UAS/c-UAS和FY24约5亿美元资金等规模化可消耗系统方向。
+excerpt=
+retrieval=Hosted web search citation metadata

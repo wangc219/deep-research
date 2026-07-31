@@ -1,0 +1,71 @@
+{
+  "answer_chars": 7478,
+  "answer_sha256": "d1c98c475f91e4d3cb0e108eb25b536daaa9ba28711b39e14b967d5ee0ac74c7",
+  "artifact_refs": [
+    "runtime/codex-events.jsonl",
+    "runtime/codex-stderr.log"
+  ],
+  "citations": [
+    "https://media.defense.gov/2022/Mar/17/2002958406/-1/-1/1/SUMMARY-OF-THE-JOINT-ALL-DOMAIN-COMMAND-AND-CONTROL-STRATEGY.pdf",
+    "https://static.rusi.org/tactical-developments-third-year-russo-ukrainian-war-february-2205.pdf",
+    "https://www.af.mil/About-Us/Fact-Sheets/Display/Article/104507/e-8c-joint-stars/",
+    "https://www.airandspaceforces.com/article/0303killchain/",
+    "https://www.darpa.mil/research/programs/offensive-swarm-enabled-tactics",
+    "https://www.defense.gov/News/Releases/Release/article/2970094/dod-announces-release-of-jadc2-implementation-plan/",
+    "https://www.doctrine.af.mil/Portals/61/documents/AFDP_3-60/3-60-AFDP-TARGETING.pdf",
+    "https://www.dote.osd.mil/Portals/97/pub/reports/FY2014/army/2014q-53counterfire_target_acquisition_radar.pdf?ver=2019-08-22-110521-813",
+    "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2025-E-Edition/Project-Convergence/",
+    "https://www.marketsandmarkets.com/ResearchInsight/loitering-munitions-market-size.asp",
+    "https://www.rand.org/content/dam/rand/pubs/research_reports/RRA500/RRA573-1/RAND_RRA573-1.pdf",
+    "https://www.swcs.mil/Special-Warfare-Journal/Article/4338971/loitering-munitions-in-modern-combat-addressing-tactical-gaps-at-the-small-unit/"
+  ],
+  "created_at": "2026-07-28T20:53:47.213688+00:00",
+  "dataset_id": "tactical-strike-frontiers-50-v1",
+  "duration_seconds": 192.872,
+  "estimated_cost": 0.0,
+  "mode": "real",
+  "model_snapshot": {
+    "adapter": "codex_cli",
+    "auth_mode": "eval_api_key",
+    "base_url_host": "codexpro.wwxb1123.xyz",
+    "codex_version": "codex-cli 0.144.1",
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "sandbox": "read-only",
+    "search_context_size": "medium",
+    "web_search": "live"
+  },
+  "query": "间歇暴露目标搜索与精确打击研究",
+  "query_id": "Q-0012",
+  "query_sha256": "f71030462688b98025cd3921a1bcab3890d079cb549ede38bc4759d60d4aa4ff",
+  "report_id": "BR-3efa46cc00c1ab8981dae923",
+  "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-3efa46cc00c1ab8981dae923/report.md",
+  "schema_version": "1.0",
+  "source_eval_id": "baseline-first20-three-layer-nine-20260729",
+  "sources": [
+    "https://media.defense.gov/2022/Mar/17/2002958406/-1/-1/1/SUMMARY-OF-THE-JOINT-ALL-DOMAIN-COMMAND-AND-CONTROL-STRATEGY.pdf",
+    "https://static.rusi.org/tactical-developments-third-year-russo-ukrainian-war-february-2205.pdf",
+    "https://www.af.mil/About-Us/Fact-Sheets/Display/Article/104507/e-8c-joint-stars/",
+    "https://www.airandspaceforces.com/article/0303killchain/",
+    "https://www.darpa.mil/news/2016/offset-swarm-capabilities",
+    "https://www.darpa.mil/research/programs/offensive-swarm-enabled-tactics",
+    "https://www.defense.gov/News/Releases/Release/article/2970094/dod-announces-release-of-jadc2-implementation-plan/",
+    "https://www.doctrine.af.mil/Portals/61/documents/AFDP_3-60/3-60-AFDP-TARGETING.pdf",
+    "https://www.dote.osd.mil/Portals/97/pub/reports/FY2014/army/2014q-53counterfire_target_acquisition_radar.pdf?ver=2019-08-22-110521-813",
+    "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2025-E-Edition/Project-Convergence/",
+    "https://www.marketsandmarkets.com/ResearchInsight/loitering-munitions-market-size.asp",
+    "https://www.rand.org/content/dam/rand/pubs/research_reports/RRA500/RRA573-1/RAND_RRA573-1.pdf",
+    "https://www.swcs.mil/Special-Warfare-Journal/Article/4338971/loitering-munitions-in-modern-combat-addressing-tactical-gaps-at-the-small-unit/"
+  ],
+  "status": "completed",
+  "system_id": "generic_agent",
+  "usage": {
+    "cached_input_tokens": 2432,
+    "input_tokens": 70501,
+    "output_tokens": 6815,
+    "reasoning_output_tokens": 1917,
+    "search_query_count": 9,
+    "tool_call_count": 9,
+    "web_search_calls": 9
+  }
+}

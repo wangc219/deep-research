@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" data-pptx-page-role="content">
+  <rect id="background" data-pptx-role="background" x="0" y="0" width="1280" height="720" fill="#F7F9FC"/>
+  <g id="header" data-pptx-bounds="48 32 1180 90"><text x="54" y="82" font-family="Georgia, 'Noto Serif CJK SC', 'Songti SC', serif" font-size="40" font-weight="700" fill="#123B63">证据治理贯穿检索、材料化、引用和交付校验</text><text x="56" y="114" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="18" fill="#5B6B7C">只有通过安全、材料化与质量门控的来源进入正式支撑链，交付结果可通过 Manifest 与 SHA-256 复核。</text></g>
+  <g id="evidence-funnel" data-pptx-bounds="54 150 566 458">
+    <rect x="54" y="150" width="566" height="458" rx="24" fill="#FFFFFF" stroke="#D7E0EA"/>
+    <text x="82" y="194" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="25" font-weight="700" fill="#123B63">来源进入正式支撑链的四道门</text>
+    <polygon points="98,232 574,232 520,298 152,298" fill="#EAF0F7"/><text x="336" y="272" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="21" font-weight="700" fill="#123B63">① 网络安全：SSRF 防护与公开来源约束</text>
+    <polygon points="152,316 520,316 470,382 202,382" fill="#DFF0F3"/><text x="336" y="356" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="21" font-weight="700" fill="#123B63">② 材料化：正文简化与位置索引</text>
+    <polygon points="202,400 470,400 426,466 246,466" fill="#FFF3D8"/><text x="336" y="440" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="21" font-weight="700" fill="#8A5D10">③ 质量评分与正式证据门控</text>
+    <polygon points="246,484 426,484 392,550 280,550" fill="#123B63"/><text x="336" y="524" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="20" font-weight="700" fill="#FFFFFF">④ 事实 / 推断 / 假设分离</text>
+    <path d="M478 410C548 428 552 500 534 552" fill="none" stroke="#B94747" stroke-width="4" stroke-dasharray="8 5"/>
+    <rect x="462" y="530" width="132" height="54" rx="16" fill="#FFF0F0" stroke="#B94747"/><text x="528" y="553" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="15" font-weight="700" fill="#B94747">低质量 / 失败材料</text><text x="528" y="573" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" fill="#8C3232">拒绝进入正式支撑</text>
+  </g>
+  <g id="delivery-stack" data-pptx-bounds="660 150 564 458">
+    <rect x="660" y="150" width="564" height="458" rx="24" fill="#123B63"/>
+    <text x="688" y="194" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="25" font-weight="700" fill="#FFFFFF">可审计、可校验的交付栈</text>
+    <g><rect x="700" y="226" width="430" height="54" rx="16" fill="#FFFFFF"/><!-- icon: tabler-outline/file-check -->
+  <g transform="translate(718, 237) scale(1.33333)" fill="none" stroke="#123B63" stroke-width="2">
+    <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+    <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" />
+    <path d="M9 15l2 2l4 -4" />
+  </g><text x="768" y="260" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="20" font-weight="700" fill="#123B63">深度报告 + 需求卡片</text></g>
+    <g><rect x="722" y="296" width="430" height="54" rx="16" fill="#DFF0F3"/><!-- icon: tabler-outline/network -->
+  <g transform="translate(740, 307) scale(1.33333)" fill="none" stroke="#2A7F9E" stroke-width="2">
+    <path d="M6 9a6 6 0 1 0 12 0a6 6 0 0 0 -12 0" />
+    <path d="M12 3c1.333 .333 2 2.333 2 6s-.667 5.667 -2 6" />
+    <path d="M12 3c-1.333 .333 -2 2.333 -2 6s.667 5.667 2 6" />
+    <path d="M6 9h12" />
+    <path d="M3 20h7" />
+    <path d="M14 20h7" />
+    <path d="M10 20a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+    <path d="M12 15v3" />
+  </g><text x="790" y="330" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="20" font-weight="700" fill="#123B63">能力全景图 + 能力画像</text></g>
+    <g><rect x="744" y="366" width="430" height="54" rx="16" fill="#FFF3D8"/><!-- icon: tabler-outline/timeline -->
+  <g transform="translate(762, 377) scale(1.33333)" fill="none" stroke="#A87312" stroke-width="2">
+    <path d="M4 16l6 -7l5 5l5 -6" />
+    <path d="M14 14a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+    <path d="M9 9a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+    <path d="M3 16a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+    <path d="M19 8a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+  </g><text x="812" y="400" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="20" font-weight="700" fill="#8A5D10">推理追溯 + 质量门控记录</text></g>
+    <g><rect x="766" y="436" width="430" height="54" rx="16" fill="#FFFFFF"/><!-- icon: tabler-outline/activity -->
+  <g transform="translate(784, 447) scale(1.33333)" fill="none" stroke="#2A7F9E" stroke-width="2">
+    <path d="M3 12h4l3 8l4 -16l3 8h4" />
+  </g><text x="834" y="470" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="20" font-weight="700" fill="#123B63">持久化 SSE + 断线重放</text></g>
+    <g><rect x="788" y="506" width="408" height="66" rx="16" fill="#D59A24"/><!-- icon: tabler-outline/shield-check -->
+  <g transform="translate(806, 522) scale(1.41667)" fill="none" stroke="#FFFFFF" stroke-width="2">
+    <path d="M11.46 20.846a12 12 0 0 1 -7.96 -14.846a12 12 0 0 0 8.5 -3a12 12 0 0 0 8.5 3a12 12 0 0 1 -.09 7.06" />
+    <path d="M15 19l2 2l4 -4" />
+  </g><text x="858" y="535" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="21" font-weight="700" fill="#FFFFFF">Delivery Manifest + SHA-256</text><text x="858" y="560" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="15" fill="#FFF7E5">完整性可机器复核</text></g>
+  </g>
+  <g id="security-strip" data-pptx-bounds="96 626 1088 38"><text x="640" y="650" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="18" fill="#5B6B7C">基础 RBAC · 最小权限 · Agent 原始会话隔离 · 正式证据与低质量材料严格分流</text></g>
+  <text id="page-number" data-pptx-role="page-number" x="1222" y="688" text-anchor="end" font-family="Arial, sans-serif" font-size="14" fill="#5B6B7C">09</text>
+</svg>

@@ -1,0 +1,228 @@
+{
+  "checkpoint": {
+    "budget_remaining": {
+      "baseline_tasks": 0,
+      "finalize_tasks": 1,
+      "rounds": 2
+    },
+    "checkpoint_id": "run-checkpoint-verify-military-handoff-v2",
+    "completed_task_ids": [
+      "baseline:international_situation",
+      "baseline:combat_scenario",
+      "baseline:weapon_equipment",
+      "baseline:operational_employment"
+    ],
+    "config_fingerprint": "sha256:e2f14d53fe56923d49735466f911b11536286529884e76a1e5fb27e413c8e5e9",
+    "created_at": "2026-07-21T17:50:32.382672+00:00",
+    "mode": "fake",
+    "pending_task_ids": [],
+    "research_route": "traditional_gap",
+    "resolved_route": "traditional_gap",
+    "resume_count": 0,
+    "round_index": 1,
+    "run_id": "verify-military-handoff-v2",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "international_situation",
+      "combat_scenario",
+      "weapon_equipment",
+      "operational_employment"
+    ],
+    "source_materials": [
+      {
+        "artifact_refs": [
+          "text:10c1617d9a1badfc"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-1",
+          "normalized_url": "https://fixture.local/combat_scenario",
+          "reasons": [],
+          "score": 0.861
+        },
+        "evidence_id": "ev-combat_scenario-1",
+        "formal_evidence_allowed": true,
+        "status": "fixture_materialized",
+        "url": "https://fixture.local/combat_scenario"
+      },
+      {
+        "artifact_refs": [
+          "text:12403346cfe9d1e2"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-1",
+          "normalized_url": "https://fixture.local/weapon_equipment",
+          "reasons": [],
+          "score": 0.852
+        },
+        "evidence_id": "ev-weapon_equipment-1",
+        "formal_evidence_allowed": true,
+        "status": "fixture_materialized",
+        "url": "https://fixture.local/weapon_equipment"
+      },
+      {
+        "artifact_refs": [
+          "text:80e23417cbb46f05"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-international_situation-1",
+          "normalized_url": "https://fixture.local/international_situation",
+          "reasons": [],
+          "score": 0.873
+        },
+        "evidence_id": "ev-international_situation-1",
+        "formal_evidence_allowed": true,
+        "status": "fixture_materialized",
+        "url": "https://fixture.local/international_situation"
+      },
+      {
+        "artifact_refs": [
+          "text:d04a7e601404f69a"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-1",
+          "normalized_url": "https://fixture.local/operational_employment",
+          "reasons": [],
+          "score": 0.858
+        },
+        "evidence_id": "ev-operational_employment-1",
+        "formal_evidence_allowed": true,
+        "status": "fixture_materialized",
+        "url": "https://fixture.local/operational_employment"
+      }
+    ],
+    "status": "running",
+    "task_statuses": {
+      "baseline:combat_scenario": "completed",
+      "baseline:international_situation": "completed",
+      "baseline:operational_employment": "completed",
+      "baseline:weapon_equipment": "completed",
+      "finalize:winning-report": "running"
+    },
+    "topic": "挖掘在西太反介入体系下的装备能力缺口",
+    "worker_reports": [
+      {
+        "active_skill_ids": [
+          "strategic_osint",
+          "threat_forecasting",
+          "force_posture_tracking"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "create_evidence_card",
+          "test_competing_hypothesis"
+        ],
+        "agent_id": "international_situation",
+        "created_at": "2026-07-21T17:50:32.464485+00:00",
+        "domain_object_id": "strategic-packet-international_situation",
+        "domain_object_type": "StrategicAssessment",
+        "error": "",
+        "handoff_summary": "国际形势围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。",
+        "harness_profile": "strategic_research_v1",
+        "new_evidence_ids": [
+          "ev-international_situation-1"
+        ],
+        "packet_id": "packet-international_situation",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment research/.tmp/context-handoff-runs/verify-military-handoff-v2/agent_sessions/international_situation.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-684e1139-daf9-4eb2-81ff-24093d2eb44a"
+      },
+      {
+        "active_skill_ids": [
+          "scenario_engineering",
+          "modern_battlespace_analysis",
+          "adversary_coa_analysis"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "create_evidence_card",
+          "stress_test_scenario"
+        ],
+        "agent_id": "combat_scenario",
+        "created_at": "2026-07-21T17:50:32.451886+00:00",
+        "domain_object_id": "scenario-packet-combat_scenario",
+        "domain_object_type": "ScenarioModel",
+        "error": "",
+        "handoff_summary": "作战场景围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。",
+        "harness_profile": "scenario_research_v1",
+        "new_evidence_ids": [
+          "ev-combat_scenario-1"
+        ],
+        "packet_id": "packet-combat_scenario",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment research/.tmp/context-handoff-runs/verify-military-handoff-v2/agent_sessions/combat_scenario.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-d7a59557-d89f-4030-a07b-7d9d51c40541"
+      },
+      {
+        "active_skill_ids": [
+          "equipment_osint",
+          "capability_comparison",
+          "technology_readiness_analysis",
+          "defensive_countermeasure_analysis"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "create_evidence_card",
+          "compare_equipment_capability"
+        ],
+        "agent_id": "weapon_equipment",
+        "created_at": "2026-07-21T17:50:32.459946+00:00",
+        "domain_object_id": "equipment-packet-weapon_equipment",
+        "domain_object_type": "EquipmentObservation",
+        "error": "",
+        "handoff_summary": "武器装备围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。",
+        "harness_profile": "equipment_research_v1",
+        "new_evidence_ids": [
+          "ev-weapon_equipment-1"
+        ],
+        "packet_id": "packet-weapon_equipment",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment research/.tmp/context-handoff-runs/verify-military-handoff-v2/agent_sessions/weapon_equipment.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-42b6f0b1-7ac5-477b-ad04-5464866dc0cf"
+      },
+      {
+        "active_skill_ids": [
+          "operational_synthesis",
+          "coa_comparison",
+          "joint_force_coordination",
+          "lessons_transfer"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "create_evidence_card",
+          "compare_coa"
+        ],
+        "agent_id": "operational_employment",
+        "created_at": "2026-07-21T17:50:32.468583+00:00",
+        "domain_object_id": "operational-packet-operational_employment",
+        "domain_object_type": "OperationalSynthesis",
+        "error": "",
+        "handoff_summary": "作战运用围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。",
+        "harness_profile": "operational_synthesis_v1",
+        "new_evidence_ids": [
+          "ev-operational_employment-1"
+        ],
+        "packet_id": "packet-operational_employment",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment research/.tmp/context-handoff-runs/verify-military-handoff-v2/agent_sessions/operational_employment.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-537f0558-4b5f-4dc0-b2a4-095c80ffe147"
+      }
+    ]
+  },
+  "savepoint_id": "checkpoint-cb5f7e704a01002ac2e7c964"
+}

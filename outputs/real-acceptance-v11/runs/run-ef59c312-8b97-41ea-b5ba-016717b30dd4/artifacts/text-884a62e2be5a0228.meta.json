@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:884a62e2be5a0228",
+  "content_path": "text-884a62e2be5a0228.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-operational_employment-web-74e0f9c1f2ad",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "884a62e2be5a0228b3c6b4c4e8f2b665cb4d696f0844cdeb60b80942055fb2b9",
+  "url": "https://www.defense.gov/News/News-Stories/Article/Article/3986843/austin-signs-new-strategy-for-countering-effects-of-unmanned-systems/"
+}

@@ -1,0 +1,125 @@
+[
+  {
+    "bundle_id": "claims-6f93754f522d",
+    "claims": [
+      {
+        "claim_id": "claim-f1b007c6f598",
+        "claim_type": "hypothesis",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "官方来源能证明GPS/PNT、通信和EMS环境存在系统性脆弱性，但不能证明所有现役精确打击系统在同等程度上受影响；后续不得把体系级风险直接等同于具体型号失效。",
+          "DARPA CODE、PRIGM、PINPOINT证明技术方向和演示/项目存在，但公开资料不足以证明其已经形成大规模部署的成熟作战能力。",
+          "CSIS/AMTI影像分析对设施用途和能力存在不确定性；可作为威胁环境证据，不应作为对手具体电子战性能定量依据。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-generic_researcher-web-3393b98b73a1",
+          "ev-generic_researcher-web-93fa7f00aaa0"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/",
+          "https://www.gao.gov/products/gao-22-106010"
+        ],
+        "text": "决定性信息1：精确打击的公开证据基线应从单一弹药精度扩展为端到端杀伤链韧性。美陆军资料把火力链路拆为传感、探测、报告、处理、决策、打击、评估，并指出大规模作战中电磁频谱会被持续争夺，过度依赖TACSAT、上级战术互联网、集中式C2和持续发射雷达会形成脆弱点。对S4的贡献：装备基线不能只列侦察平台、火炮/导弹和指挥系统，还必须把通信完整性、频谱暴露控制、雷达机动发射和快速火力通道列为基线项；五档差距的关键分水岭是能否在通信受扰、节点暴露、C2降级时继续闭合杀伤链。对S5的贡献：需求卡片应优先提出分布式低暴露火力数据链、PACE通信架构、机动雷达/传感节点和降级条件下的快速火力流程。对S6的贡献：能力全景图应以“传感器-通信-处理决策-射手-评估”链路表达，而不是按单件装备堆叠。置信度：高。失效边界：若敌方电子压制、欺骗或物理打击同时破坏传感输入和通信中继，融合链路会退化为局部、延迟或不可验证信息，无法稳定支撑精确打击。"
+      },
+      {
+        "claim_id": "claim-5b5ab7ca23e9",
+        "claim_type": "hypothesis",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "官方来源能证明GPS/PNT、通信和EMS环境存在系统性脆弱性，但不能证明所有现役精确打击系统在同等程度上受影响；后续不得把体系级风险直接等同于具体型号失效。",
+          "DARPA CODE、PRIGM、PINPOINT证明技术方向和演示/项目存在，但公开资料不足以证明其已经形成大规模部署的成熟作战能力。",
+          "CSIS/AMTI影像分析对设施用途和能力存在不确定性；可作为威胁环境证据，不应作为对手具体电子战性能定量依据。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-generic_researcher-web-3393b98b73a1",
+          "ev-generic_researcher-web-93fa7f00aaa0"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/",
+          "https://www.gao.gov/products/gao-22-106010"
+        ],
+        "text": "决定性信息2：GPS/PNT脆弱性是多源融合精确打击的硬约束。GAO确认美军依赖GPS提供PNT，GPS面临反卫星、干扰、欺骗和网络威胁；即使M-code、抗干扰天线等升级推进后，脆弱性仍会存在，且替代PNT发展缺少完整进展度量。DARPA PRIGM和PINPOINT均指向GPS拒止条件下的小型化高精度惯性导航能力。对S4的贡献：PNT/制导基线需区分“依赖GPS增强”“具备抗干扰GPS”“具备替代PNT组合”“弹药/平台内生导航可持续工作”等档位。对S5的贡献：高优先级需求为小型化导航级MEMS IMU、gun-hard惯性传感器、弹药/无人平台可集成替代PNT模块，公开指标可限定为低SWaP、GPS不可用条件下维持任务级导航、多小时级精度保持、适配既有平台。对S6的贡献：PNT应作为跨域支撑能力嵌入侦察定位、火力解算、时序同步、飞行/末段制导和毁伤评估。置信度：中高。失效边界：惯性系统存在漂移，若缺乏可信校正源或任务持续时间超过漂移容限，精确打击误差会累积；公开资料不足以量化具体CEP或抗欺骗阈值。"
+      },
+      {
+        "claim_id": "claim-5416401530c5",
+        "claim_type": "inference",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "官方来源能证明GPS/PNT、通信和EMS环境存在系统性脆弱性，但不能证明所有现役精确打击系统在同等程度上受影响；后续不得把体系级风险直接等同于具体型号失效。",
+          "DARPA CODE、PRIGM、PINPOINT证明技术方向和演示/项目存在，但公开资料不足以证明其已经形成大规模部署的成熟作战能力。",
+          "CSIS/AMTI影像分析对设施用途和能力存在不确定性；可作为威胁环境证据，不应作为对手具体电子战性能定量依据。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-generic_researcher-web-3393b98b73a1",
+          "ev-generic_researcher-web-93fa7f00aaa0"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/",
+          "https://www.gao.gov/products/gao-22-106010"
+        ],
+        "text": "决定性信息3：协同自治可缓解集中式控制和连续通信依赖，但公开证据仍主要停留在演示层。DARPA CODE公开演示中，多架无人机在通信离线和GPS不可用条件下继续协同并适应目标或威胁变化，目标是让单名操作员指挥多架无人系统，并可移植至既有无人机系统。对S4的贡献：协同自治与分布式融合的基线可从“人工逐机控制/集中回传”提升到“多无人节点本地共享、任务级自治、通信间歇条件下继续执行”。对S5的贡献：需求卡片可提出分布式无人ISR/中继/诱饵/评估节点、边缘融合处理、任务级自治控制、人机监督边界和断链续行能力。对S6的贡献：能力全景图应加入“分布式传感-边缘处理-局部决策-断续回传”的旁路链路，以降低对单一C2节点的依赖。置信度：中。失效边界：公开演示不能证明在强实战电磁压制、复杂交战规则、目标伪装、误识别风险和大规模部署中的可靠性；不宜直接推断为成熟作战能力。"
+      },
+      {
+        "claim_id": "claim-d1ce4cfb5d2d",
+        "claim_type": "hypothesis",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "官方来源能证明GPS/PNT、通信和EMS环境存在系统性脆弱性，但不能证明所有现役精确打击系统在同等程度上受影响；后续不得把体系级风险直接等同于具体型号失效。",
+          "DARPA CODE、PRIGM、PINPOINT证明技术方向和演示/项目存在，但公开资料不足以证明其已经形成大规模部署的成熟作战能力。",
+          "CSIS/AMTI影像分析对设施用途和能力存在不确定性；可作为威胁环境证据，不应作为对手具体电子战性能定量依据。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-generic_researcher-web-3393b98b73a1",
+          "ev-generic_researcher-web-93fa7f00aaa0"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/",
+          "https://www.gao.gov/products/gao-22-106010"
+        ],
+        "text": "决定性信息4：对手区域ISR/EW基础设施会压缩多源融合链路的安全窗口。CSIS/AMTI基于公开影像判断，南沙部分岛礁存在新增固定天线、雷达罩和疑似SIGINT/EW/ISR设施，可能支撑广域、重叠ISR覆盖并争夺电磁频谱。对S4的贡献：装备基线与差距评估必须引入对手侧固定/半固定ISR、电子侦察和电子干扰环境，而不能假设侦察通信处于许可环境。对S5的贡献：需求卡片应增加低可探测通信、频谱管理/欺骗防护、机动中继、抗干扰传感器融合和节点快速重构。对S6的贡献：能力全景图需把敌方ISR/EW作为作用于己方输入源、链路、频谱和节点生存性的外部压力层。置信度：中。失效边界：公开影像不能确认具体型号、频段、功率、覆盖范围和战时效能；该证据适合作为场景边界和威胁假设，不适合作为精确性能参数。"
+      }
+    ],
+    "packet_id": "packet-generic_researcher",
+    "schema_version": "1.0"
+  }
+]

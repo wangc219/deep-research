@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · expeditionary advanced base operations eabo
+source_url=https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/
+claim=美国海军陆战队EABO资料支持临时、简陋、低特征岸上或近岸位置执行海上拒止和支援舰队作战的场景设定。
+excerpt=
+retrieval=Hosted web search citation metadata

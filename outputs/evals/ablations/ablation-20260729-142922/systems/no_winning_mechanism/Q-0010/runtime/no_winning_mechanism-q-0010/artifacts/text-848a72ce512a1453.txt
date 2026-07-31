@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=defense.gov · dod announces release of jadc2 implementation plan
+source_url=https://www.defense.gov/News/Releases/Release/article/2970094/dod-announces-release-of-jadc2-implementation-plan/
+claim=该来源支持将联合全域指挥控制视为跨域传感器、指挥节点与射手连接的制度和实施方向，是“发现到火力分发”任务链的公开依据。
+excerpt=
+retrieval=Hosted web search citation metadata

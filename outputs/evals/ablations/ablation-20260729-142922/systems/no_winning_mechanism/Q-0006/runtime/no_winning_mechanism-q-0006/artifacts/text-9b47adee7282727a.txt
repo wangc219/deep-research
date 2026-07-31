@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=asafm.army.mil · Missile%20Procurement%20Army.pdf
+source_url=https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2026/Discretionary%20Budget/Procurement/Missile%20Procurement%20Army.pdf
+claim=FY2026预算材料给出PrSM Increment 1与Increment 2共享约400枚/年生产能力口径，是持续精确打击能力的重要约束。
+excerpt=
+retrieval=Hosted web search citation metadata

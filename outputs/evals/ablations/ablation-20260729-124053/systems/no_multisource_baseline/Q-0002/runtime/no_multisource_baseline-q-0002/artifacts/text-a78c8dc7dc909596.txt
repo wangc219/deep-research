@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=darpa.mil · precise robust inertial guidance for munitions
+source_url=https://www.darpa.mil/research/programs/precise-robust-inertial-guidance-for-munitions
+claim=PRIGM面向GPS拒止环境发展弹药用惯性传感器，覆盖MEMS导航级IMU和高冲击、高带宽、高动态范围GPS-free微传感器方向。
+excerpt=
+retrieval=Hosted web search citation metadata

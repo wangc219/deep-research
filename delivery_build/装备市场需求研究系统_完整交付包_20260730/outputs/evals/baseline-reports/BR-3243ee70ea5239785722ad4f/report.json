@@ -1,0 +1,60 @@
+{
+  "answer_chars": 6922,
+  "answer_sha256": "5fb84365579a5d812adf33cb7f44b6e148818e1b8bd0db4b30f22c59056bde1a",
+  "artifact_refs": [
+    "runtime/codex-events.jsonl",
+    "runtime/codex-stderr.log"
+  ],
+  "citations": [
+    "https://dodcio.defense.gov/Portals/0/Documents/DOD-C3-Strategy.pdf",
+    "https://static.rusi.org/359-SR-Ukraine-Preliminary-Lessons-Feb-July-2022-web-final.pdf",
+    "https://www.army.mil/article/235067/delivering_an_on_demand_sensor_to_shooter_warfighting_capability",
+    "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2025-E-Edition/Project-Convergence/",
+    "https://www.sda.mil/custody/",
+    "https://www.sda.mil/space-development-agency-makes-awards-to-build-72-tracking-layer-satellites-for-tranche-3/"
+  ],
+  "created_at": "2026-07-28T20:53:47.212649+00:00",
+  "dataset_id": "tactical-strike-frontiers-50-v1",
+  "duration_seconds": 158.515,
+  "estimated_cost": 0.0,
+  "mode": "real",
+  "model_snapshot": {
+    "adapter": "codex_cli",
+    "auth_mode": "eval_api_key",
+    "base_url_host": "codexpro.wwxb1123.xyz",
+    "codex_version": "codex-cli 0.144.1",
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "sandbox": "read-only",
+    "search_context_size": "medium",
+    "web_search": "live"
+  },
+  "query": "目标持续监视与精确打击一体化研究",
+  "query_id": "Q-0010",
+  "query_sha256": "9d3317b45f6023ee3bb5a68e618b2db416d19ef3fc402754678e3e56f4d4b05b",
+  "report_id": "BR-3243ee70ea5239785722ad4f",
+  "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-3243ee70ea5239785722ad4f/report.md",
+  "schema_version": "1.0",
+  "source_eval_id": "baseline-first20-three-layer-nine-20260729",
+  "sources": [
+    "https://dodcio.defense.gov/Portals/0/Documents/DOD-C3-Strategy.pdf",
+    "https://static.rusi.org/359-SR-Ukraine-Preliminary-Lessons-Feb-July-2022-web-final.pdf",
+    "https://www.army.mil/article/235067/delivering_an_on_demand_sensor_to_shooter_warfighting_capability",
+    "https://www.defense.gov/News/News-Stories/Article/Article/2948282/dod-officials-discuss-advancements-in-joint-all-domain-command-control/",
+    "https://www.diu.mil/latest/implementing-the-department-of-defense-replicator-initiative-to-accelerate",
+    "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2025-E-Edition/Project-Convergence/",
+    "https://www.sda.mil/custody/",
+    "https://www.sda.mil/space-development-agency-makes-awards-to-build-72-tracking-layer-satellites-for-tranche-3/"
+  ],
+  "status": "completed",
+  "system_id": "generic_agent",
+  "usage": {
+    "cached_input_tokens": 8576,
+    "input_tokens": 38003,
+    "output_tokens": 6073,
+    "reasoning_output_tokens": 1446,
+    "search_query_count": 5,
+    "tool_call_count": 5,
+    "web_search_calls": 5
+  }
+}

@@ -1,0 +1,485 @@
+[
+  {
+    "bundle_id": "claims-978ac9dc8329",
+    "claims": [
+      {
+        "claim_id": "claim-df286a2a6989",
+        "claim_type": "fact",
+        "confidence": 0.76,
+        "counter_evidence": [
+          "低成本无人系统可提高监视密度，但其效能又高度依赖通信、导航、载荷、天气和操作员/算法处理能力，因此不能简单等同于低成本持续精确打击能力。",
+          "高端联合杀伤网能提供最高单次毁伤效能，但高价值节点和精确弹药库存会成为持久战短板，因此“更高端”不必然意味着“更持续”。",
+          "前沿分布式节点提高抗毁和拒止能力，但节点越前出，对补给、隐蔽、短防和反无人机的要求越高，分布式本身不自动产生韧性。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-65658b6cc7db",
+          "ev-operational_employment-web-4471cf21534c",
+          "ev-operational_employment-web-5824f31b34e3",
+          "ev-operational_employment-web-730405c29b0b"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.defense.gov/News/Releases/Release/article/2970094/dod-announces-release-of-jadc2-implementation-plan/",
+          "https://media.defense.gov/2022/Mar/17/2002958406/-1/-1/1/SUMMARY-OFTHE-JOINT-ALL-DOMAIN-COMMAND-AND-CONTROL-STRATEGY.pdf",
+          "https://www.marines.mil/Force-Design/",
+          "https://www.airuniversity.af.edu/Office-of-Sponsored-Programs/Research/Article-Display/Article/4189093/offense-versus-defense-dominance-unmanned-systems-and-retrospective-lessons-fro/"
+        ],
+        "text": "判断：目标持续监视与精确打击一体化的核心作战矛盾是“目标链持续性”而非单次打击精度。军事任务价值：把发现、确认、跟踪、分发、打击、毁伤评估、再攻击和战损续接连成闭环，可提升动态目标压制/歼灭概率，并降低目标信息过期导致的无效射击。证据边界：公开JADC2资料和SDA能力表述支持多域数据连接与战场能力下沉的方向，但不证明任一具体体系在强对抗中可稳定闭环。失效条件：电磁压制、反卫星/反无人机、诱饵伪装、授权迟滞或弹药不足任一环节超过系统冗余能力时，闭环退化为间歇性打击。"
+      },
+      {
+        "claim_id": "claim-aeba8d7badff",
+        "claim_type": "fact",
+        "confidence": 0.76,
+        "counter_evidence": [
+          "低成本无人系统可提高监视密度，但其效能又高度依赖通信、导航、载荷、天气和操作员/算法处理能力，因此不能简单等同于低成本持续精确打击能力。",
+          "高端联合杀伤网能提供最高单次毁伤效能，但高价值节点和精确弹药库存会成为持久战短板，因此“更高端”不必然意味着“更持续”。",
+          "前沿分布式节点提高抗毁和拒止能力，但节点越前出，对补给、隐蔽、短防和反无人机的要求越高，分布式本身不自动产生韧性。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-65658b6cc7db",
+          "ev-operational_employment-web-4471cf21534c",
+          "ev-operational_employment-web-5824f31b34e3",
+          "ev-operational_employment-web-730405c29b0b"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.defense.gov/News/Releases/Release/article/2970094/dod-announces-release-of-jadc2-implementation-plan/",
+          "https://media.defense.gov/2022/Mar/17/2002958406/-1/-1/1/SUMMARY-OFTHE-JOINT-ALL-DOMAIN-COMMAND-AND-CONTROL-STRATEGY.pdf",
+          "https://www.marines.mil/Force-Design/",
+          "https://www.airuniversity.af.edu/Office-of-Sponsored-Programs/Research/Article-Display/Article/4189093/offense-versus-defense-dominance-unmanned-systems-and-retrospective-lessons-fro/"
+        ],
+        "text": "判断：最佳COA不是单一路径，而是“COA-2分布式前沿节点为韧性骨架、COA-3低成本无人系统提供监视密度与消耗层、COA-1高端联合火力用于关键窗口歼灭”。军事任务价值：兼顾濒海/关键通道拒止、持久监视补盲、短窗口高价值目标精确打击和战损续接。证据边界：美国海军陆战队Force Design与EABO公开材料能支撑前沿分布式节点和远征前进基地的作战逻辑，但不能外推为所有战区均适用。失效条件：前沿补给、短程防空/反无人机、频谱管理和低特征机动不足时，COA-2骨架会先被持续监视打击削弱。"
+      },
+      {
+        "claim_id": "claim-af91652f02ec",
+        "claim_type": "fact",
+        "confidence": 0.76,
+        "counter_evidence": [
+          "低成本无人系统可提高监视密度，但其效能又高度依赖通信、导航、载荷、天气和操作员/算法处理能力，因此不能简单等同于低成本持续精确打击能力。",
+          "高端联合杀伤网能提供最高单次毁伤效能，但高价值节点和精确弹药库存会成为持久战短板，因此“更高端”不必然意味着“更持续”。",
+          "前沿分布式节点提高抗毁和拒止能力，但节点越前出，对补给、隐蔽、短防和反无人机的要求越高，分布式本身不自动产生韧性。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-65658b6cc7db",
+          "ev-operational_employment-web-4471cf21534c",
+          "ev-operational_employment-web-5824f31b34e3",
+          "ev-operational_employment-web-730405c29b0b"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.defense.gov/News/Releases/Release/article/2970094/dod-announces-release-of-jadc2-implementation-plan/",
+          "https://media.defense.gov/2022/Mar/17/2002958406/-1/-1/1/SUMMARY-OFTHE-JOINT-ALL-DOMAIN-COMMAND-AND-CONTROL-STRATEGY.pdf",
+          "https://www.marines.mil/Force-Design/",
+          "https://www.airuniversity.af.edu/Office-of-Sponsored-Programs/Research/Article-Display/Article/4189093/offense-versus-defense-dominance-unmanned-systems-and-retrospective-lessons-fro/"
+        ],
+        "text": "判断：COA-1高端集中式联合杀伤网适合高价值、短窗口、强授权目标，但不宜作为持久作战唯一骨干。军事任务价值：可在目标置信度高、打击窗口短时对指挥节点、防空节点、远程火力平台或重要舰艇形成快速歼灭/压制。证据边界：JADC2战略与实施计划支持跨域指控和火力分发方向，但公开资料不能证明其在节点战损、链路降级和库存消耗下的持续效能。失效条件：高价值ISR/C2节点被压制、精确弹药库存不足、诱饵消耗昂贵弹药或授权慢于目标机动窗口。"
+      },
+      {
+        "claim_id": "claim-675dc8a7eda3",
+        "claim_type": "fact",
+        "confidence": 0.76,
+        "counter_evidence": [
+          "低成本无人系统可提高监视密度，但其效能又高度依赖通信、导航、载荷、天气和操作员/算法处理能力，因此不能简单等同于低成本持续精确打击能力。",
+          "高端联合杀伤网能提供最高单次毁伤效能，但高价值节点和精确弹药库存会成为持久战短板，因此“更高端”不必然意味着“更持续”。",
+          "前沿分布式节点提高抗毁和拒止能力，但节点越前出，对补给、隐蔽、短防和反无人机的要求越高，分布式本身不自动产生韧性。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-65658b6cc7db",
+          "ev-operational_employment-web-4471cf21534c",
+          "ev-operational_employment-web-5824f31b34e3",
+          "ev-operational_employment-web-730405c29b0b"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.defense.gov/News/Releases/Release/article/2970094/dod-announces-release-of-jadc2-implementation-plan/",
+          "https://media.defense.gov/2022/Mar/17/2002958406/-1/-1/1/SUMMARY-OFTHE-JOINT-ALL-DOMAIN-COMMAND-AND-CONTROL-STRATEGY.pdf",
+          "https://www.marines.mil/Force-Design/",
+          "https://www.airuniversity.af.edu/Office-of-Sponsored-Programs/Research/Article-Display/Article/4189093/offense-versus-defense-dominance-unmanned-systems-and-retrospective-lessons-fro/"
+        ],
+        "text": "判断：COA-3低成本规模化无人监视/精确效应群的主要价值是提高覆盖密度、战损补盲和成本强加，而非替代高置信杀伤链。军事任务价值：可用于长期消耗、低风险BDA、诱饵/欺骗、低中价值目标压制，并迫使对手持续投入电子战、防空和反无人机资源。证据边界：公开无人系统战例研究支持低成本无人系统提升发现密度和改变攻防成本交换，但不支持忽视电子战、天气、载荷和误识别限制。失效条件：导航/通信受扰、天气恶化、载荷不足、目标识别置信度低或指控拥塞时，规模优势难以转化为有效打击。"
+      },
+      {
+        "claim_id": "claim-3d7118ad1dc1",
+        "claim_type": "hypothesis",
+        "confidence": 0.76,
+        "counter_evidence": [
+          "低成本无人系统可提高监视密度，但其效能又高度依赖通信、导航、载荷、天气和操作员/算法处理能力，因此不能简单等同于低成本持续精确打击能力。",
+          "高端联合杀伤网能提供最高单次毁伤效能，但高价值节点和精确弹药库存会成为持久战短板，因此“更高端”不必然意味着“更持续”。",
+          "前沿分布式节点提高抗毁和拒止能力，但节点越前出，对补给、隐蔽、短防和反无人机的要求越高，分布式本身不自动产生韧性。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-65658b6cc7db",
+          "ev-operational_employment-web-4471cf21534c",
+          "ev-operational_employment-web-5824f31b34e3",
+          "ev-operational_employment-web-730405c29b0b"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.defense.gov/News/Releases/Release/article/2970094/dod-announces-release-of-jadc2-implementation-plan/",
+          "https://media.defense.gov/2022/Mar/17/2002958406/-1/-1/1/SUMMARY-OFTHE-JOINT-ALL-DOMAIN-COMMAND-AND-CONTROL-STRATEGY.pdf",
+          "https://www.marines.mil/Force-Design/",
+          "https://www.airuniversity.af.edu/Office-of-Sponsored-Programs/Research/Article-Display/Article/4189093/offense-versus-defense-dominance-unmanned-systems-and-retrospective-lessons-fro/"
+        ],
+        "text": "判断：装备发展优先级应从“平台性能追加”转向“抗毁数据织网、边缘目标确认、可消耗ISR/效应器、前沿短防反无人机、快速补给维修”五类任务缺口。军事任务价值：这些能力直接支撑目标链续接、火力分发、压制保持、战损恢复和持续作战。证据边界：公开来源能支撑能力方向和任务机理，不能给出具体指标阈值、部署数量或战术参数。失效条件：若后方工业补充、精确弹药生产、高端传感器/电子部件供应不足，前沿快速维修和低成本平台只能缓解局部损耗，不能维持长期高强度闭环。"
+      }
+    ],
+    "packet_id": "packet-operational_employment",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-39ff1148f328",
+    "claims": [
+      {
+        "claim_id": "claim-0bd1a0ab0514",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "CJADC2公开目标强调跨层级互联与互操作，但GAO指出评估框架、共享实验和经验固化仍需加强；因此不能把概念目标等同于已形成稳定战损闭环能力。",
+          "无人系统提高持续监视和精确打击效率，但同一证据链也显示其受电子战、反无人火力、天气、伪装和操作员负荷显著制约；因此不能将无人系统数量直接等同于闭环可靠性。",
+          "EABO和Force Design强调低特征、机动、分布式前沿力量，但持续补给、维修、能源和通信会反向提高暴露面；因此分布式部署若无低特征保障网络，可能只是在更多地点形成脆弱节点。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-cc05e629e2f6",
+          "ev-combat_scenario-web-5fae80c02f40",
+          "ev-combat_scenario-web-ddc144a8f0f1",
+          "ev-combat_scenario-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Portals/1/Docs/230509-Tentative-Manual-For-Expeditionary-Advanced-Base-Operations-2nd-Edition.pdf?ver=05KvG8wWlhI7uE0amD5uYg%3D%3D",
+          "https://www.gao.gov/products/gao-25-106454",
+          "https://www.ai.mil/Initiatives/CJADC2/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "判断1：S4的核心缺口是“无人侦察发现”到“可信目标进入火力分配”的中间层脆弱，军事任务价值在于链路/PNT受扰时仍能完成发现—决策—协同闭合，避免动态目标脱离交战窗口。证据边界：公开证据仅能支持无人系统、电子战、反无人系统和AI识别受天气/伪装/干扰影响的任务级判断，不支持具体抗干扰参数。失效条件：敌方持续覆盖全部可用通信/导航源，或目标识别必须依赖连续高清视频且无替代传感器复核。"
+      },
+      {
+        "claim_id": "claim-d0ebce0fa52e",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "CJADC2公开目标强调跨层级互联与互操作，但GAO指出评估框架、共享实验和经验固化仍需加强；因此不能把概念目标等同于已形成稳定战损闭环能力。",
+          "无人系统提高持续监视和精确打击效率，但同一证据链也显示其受电子战、反无人火力、天气、伪装和操作员负荷显著制约；因此不能将无人系统数量直接等同于闭环可靠性。",
+          "EABO和Force Design强调低特征、机动、分布式前沿力量，但持续补给、维修、能源和通信会反向提高暴露面；因此分布式部署若无低特征保障网络，可能只是在更多地点形成脆弱节点。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-cc05e629e2f6",
+          "ev-combat_scenario-web-5fae80c02f40",
+          "ev-combat_scenario-web-ddc144a8f0f1",
+          "ev-combat_scenario-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Portals/1/Docs/230509-Tentative-Manual-For-Expeditionary-Advanced-Base-Operations-2nd-Edition.pdf?ver=05KvG8wWlhI7uE0amD5uYg%3D%3D",
+          "https://www.gao.gov/products/gao-25-106454",
+          "https://www.ai.mil/Initiatives/CJADC2/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "判断2：S5的关键不是单个C2节点抗毁，而是战损后能否快速重建“残存传感器—低带宽数据层—射手状态—授权规则”的最低可用闭环，军事任务价值在于阶段转换前保留有限再打击能力。证据边界：CJADC2公开资料和GAO报告支持跨域连接、评估框架和互操作仍是建设重点，但不能证明特定系统已达到战损自治水平。失效条件：恢复时间超过敌方再组织或转移窗口，或态势数据过期仍被自动用于再打击。"
+      },
+      {
+        "claim_id": "claim-3839e52c0335",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "CJADC2公开目标强调跨层级互联与互操作，但GAO指出评估框架、共享实验和经验固化仍需加强；因此不能把概念目标等同于已形成稳定战损闭环能力。",
+          "无人系统提高持续监视和精确打击效率，但同一证据链也显示其受电子战、反无人火力、天气、伪装和操作员负荷显著制约；因此不能将无人系统数量直接等同于闭环可靠性。",
+          "EABO和Force Design强调低特征、机动、分布式前沿力量，但持续补给、维修、能源和通信会反向提高暴露面；因此分布式部署若无低特征保障网络，可能只是在更多地点形成脆弱节点。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-cc05e629e2f6",
+          "ev-combat_scenario-web-5fae80c02f40",
+          "ev-combat_scenario-web-ddc144a8f0f1",
+          "ev-combat_scenario-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Portals/1/Docs/230509-Tentative-Manual-For-Expeditionary-Advanced-Base-Operations-2nd-Edition.pdf?ver=05KvG8wWlhI7uE0amD5uYg%3D%3D",
+          "https://www.gao.gov/products/gao-25-106454",
+          "https://www.ai.mil/Initiatives/CJADC2/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "判断3：S6显示持续监视与精确打击一体化的后半段瓶颈是补给、维修、能源和库存可视化，而非火力单次命中率；军事任务价值在于支撑多轮发现—打击—评估—再组织。证据边界：EABO、Force Design和I&L 2030支持分布式、低特征、韧性保障方向，但公开证据不足以量化补给吞吐和损耗率阈值。失效条件：补给节点被持续监视并遭二次压制，或修复/补充节奏低于无人系统、电池、弹药和关键通信件消耗。"
+      },
+      {
+        "claim_id": "claim-71deca84da88",
+        "claim_type": "hypothesis",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "CJADC2公开目标强调跨层级互联与互操作，但GAO指出评估框架、共享实验和经验固化仍需加强；因此不能把概念目标等同于已形成稳定战损闭环能力。",
+          "无人系统提高持续监视和精确打击效率，但同一证据链也显示其受电子战、反无人火力、天气、伪装和操作员负荷显著制约；因此不能将无人系统数量直接等同于闭环可靠性。",
+          "EABO和Force Design强调低特征、机动、分布式前沿力量，但持续补给、维修、能源和通信会反向提高暴露面；因此分布式部署若无低特征保障网络，可能只是在更多地点形成脆弱节点。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-cc05e629e2f6",
+          "ev-combat_scenario-web-5fae80c02f40",
+          "ev-combat_scenario-web-ddc144a8f0f1",
+          "ev-combat_scenario-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Portals/1/Docs/230509-Tentative-Manual-For-Expeditionary-Advanced-Base-Operations-2nd-Edition.pdf?ver=05KvG8wWlhI7uE0amD5uYg%3D%3D",
+          "https://www.gao.gov/products/gao-25-106454",
+          "https://www.ai.mil/Initiatives/CJADC2/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "判断4：装备基线的五档差距应按闭环断点排序：前沿多源感知3级、边缘目标识别3级、传感器—射手协同软件4级、CJADC2/联合数据层4级、拒止环境精确火力3级、有机巡飞/小型打击无人系统2级、反无人机与被动防护3级、分布式保障与恢复4级。军事任务价值在于把采购优先级从平台清单转为闭环短板。证据边界：等级为基于公开资料的任务建模评估，不代表官方成熟度。失效条件：若实际体系已有可靠的离线任务包、边缘可信融合和分布式保障数据层，则缺口等级需下调。"
+      },
+      {
+        "claim_id": "claim-10991a1bf662",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "CJADC2公开目标强调跨层级互联与互操作，但GAO指出评估框架、共享实验和经验固化仍需加强；因此不能把概念目标等同于已形成稳定战损闭环能力。",
+          "无人系统提高持续监视和精确打击效率，但同一证据链也显示其受电子战、反无人火力、天气、伪装和操作员负荷显著制约；因此不能将无人系统数量直接等同于闭环可靠性。",
+          "EABO和Force Design强调低特征、机动、分布式前沿力量，但持续补给、维修、能源和通信会反向提高暴露面；因此分布式部署若无低特征保障网络，可能只是在更多地点形成脆弱节点。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-cc05e629e2f6",
+          "ev-combat_scenario-web-5fae80c02f40",
+          "ev-combat_scenario-web-ddc144a8f0f1",
+          "ev-combat_scenario-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Portals/1/Docs/230509-Tentative-Manual-For-Expeditionary-Advanced-Base-Operations-2nd-Edition.pdf?ver=05KvG8wWlhI7uE0amD5uYg%3D%3D",
+          "https://www.gao.gov/products/gao-25-106454",
+          "https://www.ai.mil/Initiatives/CJADC2/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "判断5：最危险敌方COA是“无人持续监视+电子压制+假目标诱导+二次打击保障节点”的复合打法，军事任务价值在于迫使己方同时承受误打、迟打、断链、缺弹和无法评估的压力。证据边界：公开资料支持无人系统扩散、反无人系统需求、EABO拒止环境和乌克兰战场侦打链脆弱性，但不支持具体敌方战术流程。失效条件：敌方缺乏持续ISR、远程打击或电子战同步能力，复合COA会退化为局部干扰或局部火力袭扰。"
+      }
+    ],
+    "packet_id": "packet-combat_scenario",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-42e2d45402c3",
+    "claims": [
+      {
+        "claim_id": "claim-8984531591e8",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "PrSM公开射程70-499公里适用于当前公开口径，不能覆盖后续增程型或未披露批次；因此不得把该数值泛化为全族上限。",
+          "Replicator公开强调多千套、快速交付和可消耗自主系统，但这证明规模化采购意图，不等同于复杂战场互操作和抗扰体系已经成熟。",
+          "AARGM/AARGM-ER具备反辐射和反关机能力，但若对手采用被动探测、间歇开机、诱饵辐射源和严格火力纪律，压制效果会下降。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-f8c0d41d68d6",
+          "ev-weapon_equipment-web-c61f2666e126",
+          "ev-weapon_equipment-web-ef58d44e5694",
+          "ev-weapon_equipment-web-9fc35ee84c42"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://files.gao.gov/reports/GAO-25-107263/index.html",
+          "https://www.army.mil/article/272301/army_announces_first_precision_strike_missiles_delivery",
+          "https://www.defense.gov/News/Releases/Release/Article/3765644/deputy-secretary-of-defense-hicks-announces-first-tranche-of-replicator-capabil/",
+          "https://www.navair.navy.mil/product/AARGM"
+        ],
+        "text": "【贡献：装备层-国外装备基线/差距】国外现役与在研装备已形成“长航时监视/可消耗侦打-远域压制开窗-高价值远程精打”的分层基线：PrSM/LRHW负责纵深毁伤，MQ-9B与Replicator ADA2类无人系统负责持续发现、前沿确认和低成本消耗，AARGM/AARGM-ER与MALD/MALD-J负责防空压制、诱骗和干扰开窗。"
+      },
+      {
+        "claim_id": "claim-a5e358a2639f",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "PrSM公开射程70-499公里适用于当前公开口径，不能覆盖后续增程型或未披露批次；因此不得把该数值泛化为全族上限。",
+          "Replicator公开强调多千套、快速交付和可消耗自主系统，但这证明规模化采购意图，不等同于复杂战场互操作和抗扰体系已经成熟。",
+          "AARGM/AARGM-ER具备反辐射和反关机能力，但若对手采用被动探测、间歇开机、诱饵辐射源和严格火力纪律，压制效果会下降。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-f8c0d41d68d6",
+          "ev-weapon_equipment-web-c61f2666e126",
+          "ev-weapon_equipment-web-ef58d44e5694",
+          "ev-weapon_equipment-web-9fc35ee84c42"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://files.gao.gov/reports/GAO-25-107263/index.html",
+          "https://www.army.mil/article/272301/army_announces_first_precision_strike_missiles_delivery",
+          "https://www.defense.gov/News/Releases/Release/Article/3765644/deputy-secretary-of-defense-hicks-announces-first-tranche-of-replicator-capabil/",
+          "https://www.navair.navy.mil/product/AARGM"
+        ],
+        "text": "【贡献：体系层-体系依赖/能力边界】目标持续监视与精确打击一体化的核心矛盾不是单件武器射程，而是目标更新、抗扰链路、火控分发、毁伤评估和补给恢复能否闭合；高端导弹无法替代持续搜索，可消耗无人系统也无法替代高置信纵深毁伤。"
+      },
+      {
+        "claim_id": "claim-c467cf81c98c",
+        "claim_type": "inference",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "PrSM公开射程70-499公里适用于当前公开口径，不能覆盖后续增程型或未披露批次；因此不得把该数值泛化为全族上限。",
+          "Replicator公开强调多千套、快速交付和可消耗自主系统，但这证明规模化采购意图，不等同于复杂战场互操作和抗扰体系已经成熟。",
+          "AARGM/AARGM-ER具备反辐射和反关机能力，但若对手采用被动探测、间歇开机、诱饵辐射源和严格火力纪律，压制效果会下降。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-f8c0d41d68d6",
+          "ev-weapon_equipment-web-c61f2666e126",
+          "ev-weapon_equipment-web-ef58d44e5694",
+          "ev-weapon_equipment-web-9fc35ee84c42"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://files.gao.gov/reports/GAO-25-107263/index.html",
+          "https://www.army.mil/article/272301/army_announces_first_precision_strike_missiles_delivery",
+          "https://www.defense.gov/News/Releases/Release/Article/3765644/deputy-secretary-of-defense-hicks-announces-first-tranche-of-replicator-capabil/",
+          "https://www.navair.navy.mil/product/AARGM"
+        ],
+        "text": "【贡献：任务层-反制抗扰/区域拒止】强防空、强电子战、GNSS拒止、假目标和电磁沉默会分别压缩长航时无人机抵近监视、小型UAS导航控制、反辐射弹目标捕获和MALD类诱饵欺骗效果，因此应把抗扰数据链、被动/多源识别、任务自治和消耗补充列为优先指标。"
+      },
+      {
+        "claim_id": "claim-70d6666e0125",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "PrSM公开射程70-499公里适用于当前公开口径，不能覆盖后续增程型或未披露批次；因此不得把该数值泛化为全族上限。",
+          "Replicator公开强调多千套、快速交付和可消耗自主系统，但这证明规模化采购意图，不等同于复杂战场互操作和抗扰体系已经成熟。",
+          "AARGM/AARGM-ER具备反辐射和反关机能力，但若对手采用被动探测、间歇开机、诱饵辐射源和严格火力纪律，压制效果会下降。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-f8c0d41d68d6",
+          "ev-weapon_equipment-web-c61f2666e126",
+          "ev-weapon_equipment-web-ef58d44e5694",
+          "ev-weapon_equipment-web-9fc35ee84c42"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://files.gao.gov/reports/GAO-25-107263/index.html",
+          "https://www.army.mil/article/272301/army_announces_first_precision_strike_missiles_delivery",
+          "https://www.defense.gov/News/Releases/Release/Article/3765644/deputy-secretary-of-defense-hicks-announces-first-tranche-of-replicator-capabil/",
+          "https://www.navair.navy.mil/product/AARGM"
+        ],
+        "text": "【贡献：研发层-现役升级/新研拓新】现役做优应围绕PrSM、MQ-9B、AARGM、MALD类装备补齐目标更新、BDA回传、分布式任务规划和抗扰链路；新研拓新应优先发展通用载荷长航时无人监视平台、可消耗侦打弹、低成本诱饵/干扰弹和可复用目标识别火控软件。"
+      }
+    ],
+    "packet_id": "packet-weapon_equipment",
+    "schema_version": "1.0"
+  }
+]

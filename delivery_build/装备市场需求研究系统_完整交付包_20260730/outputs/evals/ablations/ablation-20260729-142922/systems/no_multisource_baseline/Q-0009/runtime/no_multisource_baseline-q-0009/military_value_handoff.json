@@ -1,0 +1,72 @@
+{
+  "branch_products": {},
+  "claims": [
+    {
+      "claim_id": "claim-92c42765aff1",
+      "claim_type": "fact",
+      "confidence": 0.74,
+      "downstream_steps": [
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-generic_researcher-web-3393b98b73a1",
+        "ev-generic_researcher-web-06d26c44006f"
+      ],
+      "failure_boundary": "SDA资料强调PWSA/Transport Layer可提供低时延传输、传感器到射手连接和时敏目标跟踪能力；陆军火力资料同时强调大规模作战中电磁频谱会被持续争夺，通信完整性必须通过PACE、分散C2和机动来维持。这说明低时延空间骨干不是稳定充分条件，必须与抗干扰、降级运行和战术层冗余配套。",
+      "mechanism": "S4 装备基线与差距：公开资料显示，现有动态时敏目标链路的基线正在从单一传感器/单一射手转向“LEO低时延传输层+战术数据链+分散式火力C2”的组合。其任务效果是压缩发现至打击的链路时延，并提高跨域传感器到射手连接概率；作用机理是用LEO星座、光学星间链路、Link-16/IBS集成和直达平台通信减少中继层级。失效边界在于电磁频谱持续受争夺、战术链路被压制、节点机动导致链路中断时，低时延优势会退化为局部、间歇可用能力。",
+      "military_effects": [
+        "打击歼灭",
+        "拦截反制",
+        "生存抗毁",
+        "体系协同"
+      ],
+      "packet_id": "packet-generic_researcher",
+      "source_agent_id": "generic_researcher",
+      "source_urls": [
+        "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/"
+      ]
+    },
+    {
+      "claim_id": "claim-77a23013c195",
+      "claim_type": "fact",
+      "confidence": 0.74,
+      "downstream_steps": [
+        "S2",
+        "S4"
+      ],
+      "evidence_ids": [
+        "ev-generic_researcher-web-3393b98b73a1",
+        "ev-generic_researcher-web-06d26c44006f"
+      ],
+      "failure_boundary": "SDA资料强调PWSA/Transport Layer可提供低时延传输、传感器到射手连接和时敏目标跟踪能力；陆军火力资料同时强调大规模作战中电磁频谱会被持续争夺，通信完整性必须通过PACE、分散C2和机动来维持。这说明低时延空间骨干不是稳定充分条件，必须与抗干扰、降级运行和战术层冗余配套。",
+      "mechanism": "S6 能力全景图：DARPA CODE显示无人系统自主协同可在通信/GPS受限条件下完成信息共享、协同规划、任务分配，并对预设与突发目标形成交战级响应。对动态时敏目标而言，其价值在于把部分决策与协同下沉到前沿无人平台，降低对连续上级链路的依赖；失效边界是人类仍处于监督式任务指挥，公开信息不能证明其已形成大规模实战部署能力或可替代完整联合火力C2。",
+      "military_effects": [
+        "指挥决策",
+        "打击歼灭",
+        "体系协同"
+      ],
+      "packet_id": "packet-generic_researcher",
+      "source_agent_id": "generic_researcher",
+      "source_urls": [
+        "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/"
+      ]
+    }
+  ],
+  "conflicts": [],
+  "open_questions": [
+    "公开来源未给出PWSA/Transport Layer对具体动态陆海目标的端到端杀伤链闭合时延，无法量化五档差距的边界阈值。"
+  ],
+  "query_anchor": "动态时敏目标快速感知—决策—打击一体化研究",
+  "schema": "military_value_handoff_v1",
+  "statistics": {
+    "candidate_claim_count": 4,
+    "compression_ratio": 0.8334,
+    "evidence_url_count": 1,
+    "input_chars": 2425,
+    "input_packet_count": 1,
+    "output_chars": 2021,
+    "selected_claim_count": 2,
+    "source_agent_count": 1
+  }
+}

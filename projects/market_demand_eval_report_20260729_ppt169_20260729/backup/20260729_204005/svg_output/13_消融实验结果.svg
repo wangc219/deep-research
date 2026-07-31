@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" data-pptx-page-role="content">
+  <rect id="background" data-pptx-role="background" x="0" y="0" width="1280" height="720" fill="#FFFFFF"/>
+  <g id="header" data-pptx-bounds="64 42 1152 102">
+    <text x="64" y="88" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="42" font-weight="bold" fill="#173B5E">&#x6D88;&#x878D;&#x5B9E;&#x9A8C;&#x7ED3;&#x679C;</text>
+    <text x="64" y="130" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#6B7785">&#x5236;&#x80DC;&#x673A;&#x7406;&#x8D21;&#x732E;&#x660E;&#x786E;&#xFF0C;&#x591A;&#x6E90;&#x8D21;&#x732E;&#x9700;&#x6269;&#x5927;&#x6837;&#x672C;&#x590D;&#x6D4B;</text>
+    <text x="1216" y="84" text-anchor="end" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#6B7785">13</text>
+  </g>
+  <g id="ablation-chart" data-pptx-bounds="64 174 528 432">
+    <rect x="64" y="174" width="528" height="432" fill="#F3F6F9"/>
+    <g id="chartArea">
+      <line x1="116" y1="522" x2="552" y2="522" stroke="#94A3B8" stroke-width="2"/>
+      <line x1="116" y1="246" x2="116" y2="522" stroke="#94A3B8" stroke-width="2"/>
+      <line x1="116" y1="384" x2="552" y2="384" stroke="#D8E1EA" stroke-width="2" stroke-dasharray="6,6"/>
+      <!-- chart-plot-area: 116,246,552,522 -->
+      <rect x="207.5" y="349.5" width="110" height="172.5" fill="#2F6FAE"/>
+      <rect x="350.5" y="263.1" width="110" height="258.9" fill="#2E8B66"/>
+      <text x="262.5" y="334" text-anchor="middle" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="30" font-weight="bold" fill="#2F6FAE">62.5%</text>
+      <text x="405.5" y="248" text-anchor="middle" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="30" font-weight="bold" fill="#2E8B66">93.8%</text>
+      <text x="262.5" y="554" text-anchor="middle" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">vs 去多源</text>
+      <text x="405.5" y="554" text-anchor="middle" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">vs 去制胜机理</text>
+    </g>
+    <text x="92" y="214" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" font-weight="bold" fill="#173B5E">&#x5B8C;&#x6574;&#x65B9;&#x6CD5;&#x5F97;&#x5206;&#x7387;</text>
+  </g>
+  <g id="frontend-ablation-result" data-pptx-bounds="626 174 590 374">
+    <rect x="626" y="174" width="590" height="332" fill="#FFFFFF" stroke="#2F6FAE" stroke-width="2"/>
+    <image href="../images/frontend_ablation_result.png" x="636" y="184" width="570" height="321" preserveAspectRatio="xMidYMid meet"/>
+    <text x="626" y="536" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#6B7785">&#x524D;&#x7AEF;&#x7ED3;&#x679C;&#x8BC1;&#x636E;&#xFF1A;8 &#x6761; Query &#x7684;&#x4E24;&#x7EC4;&#x6D88;&#x878D;&#x7968;&#x578B;</text>
+  </g>
+  <g id="result-interpretation" data-pptx-bounds="64 620 1152 62">
+    <rect x="64" y="620" width="552" height="62" fill="#FFF4E8"/>
+    <text x="82" y="648" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#C97A32">&#x65B9;&#x5411;&#x6027;&#x8BC1;&#x636E;</text>
+    <text x="82" y="674" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x53BB;&#x591A;&#x6E90;&#xFF1A;5&#x80DC;0&#x5E73;3&#x8D1F;&#xFF0C;&#x533A;&#x95F4;&#x8DE8;0&#xFF1B;1545&#x79D2; vs 1274&#x79D2;</text>
+    <rect x="636" y="620" width="580" height="62" fill="#EAF5F0"/>
+    <text x="654" y="648" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#2E8B66">&#x5F97;&#x5230;&#x652F;&#x6301;</text>
+    <text x="654" y="674" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x53BB;&#x5236;&#x80DC;&#x673A;&#x7406;&#xFF1A;7&#x80DC;1&#x5E73;0&#x8D1F;&#xFF1B;95%&#x533A;&#x95F4;62.5%&#x2013;100%&#xFF1B;804&#x79D2;</text>
+  </g>
+</svg>

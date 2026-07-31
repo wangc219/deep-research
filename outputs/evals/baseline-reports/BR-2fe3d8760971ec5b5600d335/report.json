@@ -1,0 +1,37 @@
+{
+  "answer_chars": 2498,
+  "answer_sha256": "5a5601d49932c4516aa9630b4de9b725c04712cc61875c244e30df3c72b86820",
+  "artifact_refs": [],
+  "citations": [],
+  "created_at": "2026-07-28T21:17:33.879429+00:00",
+  "dataset_id": "tactical-strike-frontiers-50-v1",
+  "duration_seconds": 55.687,
+  "estimated_cost": 0.0,
+  "mode": "real",
+  "model_snapshot": {
+    "base_url_host": "yunwu.ai",
+    "model": "glm-5.2",
+    "protocol": "chat_completions"
+  },
+  "query": "复杂电磁环境自适应精打武器研究",
+  "query_id": "Q-0003",
+  "query_sha256": "01a3f7fff6603c9a31118c42480f43d1da0aee88853cdc2232b74260dbea0a83",
+  "report_id": "BR-2fe3d8760971ec5b5600d335",
+  "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-2fe3d8760971ec5b5600d335/report.md",
+  "schema_version": "1.0",
+  "source_eval_id": "baseline-first20-three-layer-nine-20260729",
+  "sources": [],
+  "status": "completed",
+  "system_id": "zhipu_llm",
+  "usage": {
+    "completion_tokens": 3370,
+    "completion_tokens_details": {
+      "reasoning_tokens": 1809
+    },
+    "prompt_tokens": 348,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "total_tokens": 3718
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:6b38585eb612a388",
+  "content_path": "text-6b38585eb612a388.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-operational_employment-web-216e7bc5782c",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "6b38585eb612a3885e51f019a1cb2af54d88228d5012788d1a7506dc3ac5c8a0",
+  "url": "https://nllp.jallc.nato.int/iks/sharing%20public/20260201_u_article_ifri%20ukraine%20battlefield%20lessons.pdf"
+}

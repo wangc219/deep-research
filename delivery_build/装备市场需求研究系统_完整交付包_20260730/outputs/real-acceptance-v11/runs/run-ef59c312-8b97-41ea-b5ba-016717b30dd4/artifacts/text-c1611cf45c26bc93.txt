@@ -1,0 +1,4 @@
+fetch_failed
+url=https://media.defense.gov/2026/Mar/09/2003896718/-1/-1/1/GUIDE-FOR-THE-SCIENCE-OF-COUNTER-UAS-OPERATIONS-SAFEGUARDING-FREEDOMS-AND-PRESERVING-PRIVACY.PDF
+error=HTTPStatusError: HTTP 403: Forbidden
+该诊断用于保留真实联网smoke边界；正式结论不应仅依赖失败材料。

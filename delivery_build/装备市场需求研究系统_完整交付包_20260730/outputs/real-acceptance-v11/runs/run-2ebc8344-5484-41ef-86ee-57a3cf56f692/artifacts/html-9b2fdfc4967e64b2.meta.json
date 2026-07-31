@@ -1,0 +1,14 @@
+{
+  "artifact_ref": "html:9b2fdfc4967e64b2",
+  "connect_ip": "198.18.1.175",
+  "content_path": "html-9b2fdfc4967e64b2.html",
+  "content_type": "text/html; charset=UTF-8",
+  "encoding": null,
+  "evidence_id": "ev-weapon_equipment-web-e9c9cd579be6",
+  "final_url": "https://armysbir.army.mil/topics/low-altitude-passive-detection-system/?utm_source=openai",
+  "kind": "html",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "9b2fdfc4967e64b2ac1b73a99306bc9269a3c6dfbd06417bc35f494808ddf8f8",
+  "url": "https://armysbir.army.mil/topics/low-altitude-passive-detection-system/?utm_source=openai"
+}

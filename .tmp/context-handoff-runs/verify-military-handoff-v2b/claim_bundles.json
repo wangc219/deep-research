@@ -1,0 +1,214 @@
+[
+  {
+    "bundle_id": "claims-39ff1148f328",
+    "claims": [
+      {
+        "claim_id": "claim-c23d8ae2bd77",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-1"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://fixture.local/combat_scenario"
+        ],
+        "text": "挖掘在西太反介入体系下的装备能力缺口应落入明确任务场景，包含敌方方案、关键时间窗和环境约束。"
+      },
+      {
+        "claim_id": "claim-3910504a32b4",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-1"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://fixture.local/combat_scenario"
+        ],
+        "text": "场景约束决定能力画像不能只写技术方向，必须转化为任务功能。"
+      }
+    ],
+    "packet_id": "packet-combat_scenario",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-978ac9dc8329",
+    "claims": [
+      {
+        "claim_id": "claim-3861bb2956ae",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-1"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://fixture.local/operational_employment"
+        ],
+        "text": "挖掘在西太反介入体系下的装备能力缺口需要结合COA、兵力协同和经验教训判断可用作战样式。"
+      },
+      {
+        "claim_id": "claim-52dabe1775df",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-1"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://fixture.local/operational_employment"
+        ],
+        "text": "作战运用约束用于校验能力画像是否能进入真实任务链条。"
+      }
+    ],
+    "packet_id": "packet-operational_employment",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-2c10f17e400f",
+    "claims": [
+      {
+        "claim_id": "claim-955a25921722",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-international_situation-1"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://fixture.local/international_situation"
+        ],
+        "text": "围绕挖掘在西太反介入体系下的装备能力缺口，需要先识别潜在威胁力量和对抗压力。"
+      },
+      {
+        "claim_id": "claim-7e2bf9387cdb",
+        "claim_type": "hypothesis",
+        "confidence": 0.78,
+        "counter_evidence": [],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-international_situation-1"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://fixture.local/international_situation"
+        ],
+        "text": "战略格局变化可能推动新型装备能力从单点性能转向体系贡献。"
+      }
+    ],
+    "packet_id": "packet-international_situation",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-42e2d45402c3",
+    "claims": [
+      {
+        "claim_id": "claim-9b5b029dc50e",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-1"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://fixture.local/weapon_equipment"
+        ],
+        "text": "需要围绕挖掘在西太反介入体系下的装备能力缺口建立国外现役、在研和替代装备的型号谱系与能力证据矩阵。"
+      },
+      {
+        "claim_id": "claim-4a9f5cba2d2b",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-1"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://fixture.local/weapon_equipment"
+        ],
+        "text": "国外装备的体系依赖、任务优势和能力边界应分别映射为防御性反制选项、现役升级需求与新装备研发需求。"
+      }
+    ],
+    "packet_id": "packet-weapon_equipment",
+    "schema_version": "1.0"
+  }
+]

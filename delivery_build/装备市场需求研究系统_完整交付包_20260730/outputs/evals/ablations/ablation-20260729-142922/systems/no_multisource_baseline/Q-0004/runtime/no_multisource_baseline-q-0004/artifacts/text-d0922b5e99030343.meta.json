@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:d0922b5e99030343",
+  "content_path": "text-d0922b5e99030343.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: cached_origin_failure:HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-generic_researcher-web-912bbaba1ca2",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "d0922b5e9903034345a0f68c21b45e6b614c21d8aa68f0c9f14e2fc28f472e46",
+  "url": "https://www.darpa.mil/research/programs/collaborative-operations-in-denied-environment"
+}

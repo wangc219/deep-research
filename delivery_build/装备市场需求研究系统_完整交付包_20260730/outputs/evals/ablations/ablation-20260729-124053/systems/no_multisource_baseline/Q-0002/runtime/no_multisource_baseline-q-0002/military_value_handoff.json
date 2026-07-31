@@ -1,0 +1,66 @@
+{
+  "branch_products": {},
+  "claims": [
+    {
+      "claim_id": "claim-a8e220240710",
+      "claim_type": "hypothesis",
+      "confidence": 0.82,
+      "downstream_steps": [
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-generic_researcher-web-d1e2709becf6",
+        "ev-generic_researcher-web-93fa7f00aaa0"
+      ],
+      "failure_boundary": "没有发现公开来源否定多源自主导航需求；主要张力在于GPS现代化资料强调M-code/抗干扰增强，而GAO同时指出升级后脆弱性仍存在且接收机集成进度受限。",
+      "mechanism": "【贡献项：装备基线与五档差距/S4】公开基线显示，典型现役精确弹药仍以GPS+INS坐标打击为主，Laser JDAM等通过半主动激光补强末制导与动目标修正能力；在卫星拒止下，单纯GPS/INS构型的主要失效机理是GPS更新消失后惯导漂移累积，导致中段导航误差扩大，末段若无可用传感器或外部指示链则难以恢复命中精度。置信度：高。",
+      "military_effects": [
+        "打击歼灭",
+        "拒止制衡",
+        "保障恢复"
+      ],
+      "packet_id": "packet-generic_researcher",
+      "source_agent_id": "generic_researcher",
+      "source_urls": [
+        "https://www.darpa.mil/research/programs/precise-robust-inertial-guidance-for-munitions"
+      ]
+    },
+    {
+      "claim_id": "claim-129d496a4712",
+      "claim_type": "hypothesis",
+      "confidence": 0.82,
+      "evidence_ids": [
+        "ev-generic_researcher-web-d1e2709becf6",
+        "ev-generic_researcher-web-93fa7f00aaa0"
+      ],
+      "failure_boundary": "没有发现公开来源否定多源自主导航需求；主要张力在于GPS现代化资料强调M-code/抗干扰增强，而GAO同时指出升级后脆弱性仍存在且接收机集成进度受限。",
+      "mechanism": "【贡献项：深度研究报告/S4/S5】公开火力资料指出大规模作战中电磁频谱将持续受争夺并被主动攻击，过度依赖卫星通信、数字火力网络和精确PNT会形成火力链脆弱点。对精打武器研究的直接意义是：导航自主性只是打击链一环，若目标更新、发射授权、照射/指示链路或战损评估链路被压制，武器端多源导航只能降低飞行段误差，不能单独保证完整精确打击效果。置信度：中高。",
+      "military_effects": [
+        "打击歼灭",
+        "拦截反制"
+      ],
+      "packet_id": "packet-generic_researcher",
+      "source_agent_id": "generic_researcher",
+      "source_urls": [
+        "https://www.darpa.mil/research/programs/precise-robust-inertial-guidance-for-munitions"
+      ]
+    }
+  ],
+  "conflicts": [],
+  "open_questions": [
+    "公开资料不足以量化不同MEMS IMU、战术级IMU、导航级IMU在弹药高过载环境下的漂移率、成本、体积和量产可用性差距。"
+  ],
+  "query_anchor": "卫星拒止条件下多源自主导航精打武器研究",
+  "schema": "military_value_handoff_v1",
+  "statistics": {
+    "candidate_claim_count": 4,
+    "compression_ratio": 0.636,
+    "evidence_url_count": 1,
+    "input_chars": 2607,
+    "input_packet_count": 1,
+    "output_chars": 1658,
+    "selected_claim_count": 2,
+    "source_agent_count": 1
+  }
+}

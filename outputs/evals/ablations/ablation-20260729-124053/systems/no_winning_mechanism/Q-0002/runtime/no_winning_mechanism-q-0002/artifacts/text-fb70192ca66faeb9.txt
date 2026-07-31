@@ -1,0 +1,7 @@
+[1] The Precise Robust Inertial Guidance for Munitions (PRIGM) program is developing inertial sensor technologies to enable positioning, navigation, and timing (PNT) in GPS-denied environments. PRIGM comprises two focus areas: development of a navigation-grade inertial measurement unit (NGIMU) based on micro-electromechanical systems (MEMS) platforms, and basic research of advanced inertial micro sensor (AIMS) technologies for future gun-hard, high-bandwidth, high-dynamic-range, GPS-free navigation.
+
+[2] The PRIGM:NGIMU focus area will develop a MEMS-based navigation-grade inertial measurement unit (IMU) that has a mechanical/electronic interface compatible with drop-in replacement for existing tactical-grade IMUs on legacy DoD platforms. DoD Service Labs have been actively involved throughout the program’s development and remain engaged to perform field demonstrations and facilitate rapid transition of NGIMU technology.
+
+[3] PRIGM:AIMS is a basic research program exploring alternative technologies and modalities for inertial sensing, including photonic and MEMS-photonic integration, as well as novel architectures and materials systems. The principal objective of PRIGM:AIMS is to identify promising candidate technologies for further development as high-performance inertial sensors for long-duration missions and deployment in extreme environments.
+
+[4] This content is available for reference purposes. This page is no longer maintained.

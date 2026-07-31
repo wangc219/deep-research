@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:d358c1a546b74c01",
+  "content_path": "text-d358c1a546b74c01.txt",
+  "content_type": "text/plain",
+  "direct_error": "TimeoutError: _ssl.c:1015: The handshake operation timed out",
+  "encoding": "utf-8",
+  "evidence_id": "ev-combat_scenario-web-44832bb470cd",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "d358c1a546b74c01a9b038498e5b9235b4d9c6198d0914ff5e188b7685f9ce23",
+  "url": "https://www.usarpac.army.mil/Our-Story/Our-News/Article-Display/Article/4487093/army-advances-multi-domain-command-pacific-following-successful-operational-exp/"
+}

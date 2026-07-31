@@ -1,0 +1,3 @@
+Communication job: By the end, project stakeholders should understand that the document requirements have been operationalized, the method shows strong initial benchmark performance, and the next approval should focus on evidence quality, full-scale evaluation, and controlled ablations.
+Visual direction: simple business style; white background, navy/gray base, restrained blue/green/amber accents; editable native PowerPoint objects; no external images.
+Narrative: requirements -> implementation -> evaluation design -> benchmark evidence -> ablation evidence -> next decision.

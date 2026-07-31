@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:920a3200dbdff22c",
+  "content_path": "text-920a3200dbdff22c.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-d1c1db812f27",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "920a3200dbdff22cd5fbf1e3001252392fc7ec1e2eb032c12b385ec8ff33c0db",
+  "url": "https://www.lineofdeparture.army.mil/Journals/Air-Defense-Artillery/ADA-Archive/2026-E-Edition/Armor-in-2025/"
+}

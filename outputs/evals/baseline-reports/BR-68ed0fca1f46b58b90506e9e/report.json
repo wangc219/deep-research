@@ -1,0 +1,38 @@
+{
+  "answer_chars": 12828,
+  "answer_sha256": "55df376d257d7b5b9fe0c4b5a17175dc7b076175cbea9d0e128edd79603bc7ab",
+  "artifact_refs": [],
+  "citations": [],
+  "created_at": "2026-07-28T21:06:18.478512+00:00",
+  "dataset_id": "tactical-strike-frontiers-50-v1",
+  "duration_seconds": 175.336,
+  "estimated_cost": 0.0,
+  "mode": "real",
+  "model_snapshot": {
+    "base_url_host": "codexpro.wwxb1123.xyz",
+    "model": "gpt-5.5",
+    "protocol": "responses"
+  },
+  "query": "复杂背景低特征目标精确打击研究",
+  "query_id": "Q-0013",
+  "query_sha256": "edfb9da5f646a93b982ad70ef95b3d7bc89f69e053a56fdf477a4b9666f00eb9",
+  "report_id": "BR-68ed0fca1f46b58b90506e9e",
+  "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-68ed0fca1f46b58b90506e9e/report.md",
+  "schema_version": "1.0",
+  "source_eval_id": "baseline-first20-three-layer-nine-20260729",
+  "sources": [],
+  "status": "completed",
+  "system_id": "bare_llm",
+  "usage": {
+    "input_tokens": 717,
+    "input_tokens_details": {
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "output_tokens": 9540,
+    "output_tokens_details": {
+      "reasoning_tokens": 448
+    },
+    "total_tokens": 10257
+  }
+}

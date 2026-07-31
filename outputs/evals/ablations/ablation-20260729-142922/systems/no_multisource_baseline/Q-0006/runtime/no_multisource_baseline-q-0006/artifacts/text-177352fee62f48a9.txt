@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=lineofdeparture.army.mil · Engineering Resilient Fire Support in
+source_url=https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/
+claim=大规模作战中电磁频谱会被持续争夺，通信退化会影响准确火力投送；火力链路可表述为Sensor-Detect-Report-Process-Decide-Engage-Assess，雷达和火力节点需通过发射管控、分散部署和快速执行提高生存性。
+excerpt=
+retrieval=Hosted web search citation metadata

@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:05bb95dc7cf39241",
+  "content_path": "text-05bb95dc7cf39241.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-combat_scenario-web-285cadba0df4",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "05bb95dc7cf392414407c8663c5ac0f7a47dfbdeff556d34a7046469fddda278",
+  "url": "https://www.ncia.nato.int/newsroom/news/allies-and-industry-test-the-latest-counterdrone-technology-during-nATO-exercise"
+}

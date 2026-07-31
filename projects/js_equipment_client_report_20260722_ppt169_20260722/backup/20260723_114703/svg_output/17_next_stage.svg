@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" data-pptx-page-role="ending">
+  <rect id="background" data-pptx-role="background" x="0" y="0" width="1280" height="720" fill="#123B63"/>
+  <image id="closing-echo" data-pptx-role="decoration" href="../images/cover_multi_agent_closed_loop.png" x="0" y="0" width="1280" height="720" preserveAspectRatio="xMidYMid slice" opacity="0.10"/>
+  <rect id="closing-wash" data-pptx-role="decoration" x="0" y="0" width="1280" height="720" fill="#123B63" fill-opacity="0.84"/>
+  <circle id="closing-orb" data-pptx-role="decoration" cx="1140" cy="38" r="230" fill="#2A7F9E" fill-opacity="0.22"/>
+
+  <g id="closing-title" data-pptx-bounds="48 32 1184 126">
+    <text x="56" y="72" font-family="Georgia, 'Noto Serif CJK SC', 'Songti SC', serif" font-size="36" font-weight="700" fill="#FFFFFF">下一阶段从“功能闭环”走向：<tspan x="56" dy="42">专业能力资产化与可验证运行</tspan></text>
+    <rect x="1030" y="38" width="194" height="34" rx="17" fill="#FFFFFF" fill-opacity="0.14" stroke="#FFFFFF" stroke-opacity="0.28"/>
+    <text x="1127" y="61" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="16" font-weight="700" fill="#FFFFFF">CODEX 架构对照</text>
+    <text x="58" y="151" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="18" fill="#DDEAF2">已落地：三路线 · A–H 元编排 · 专用 Agent · S1–S6 · 循环门控 · 能力画像</text>
+  </g>
+
+  <g id="priority-p0" data-pptx-bounds="56 176 356 394">
+    <rect x="56" y="176" width="356" height="394" rx="24" fill="#FFFFFF" fill-opacity="0.97"/>
+    <rect x="56" y="176" width="356" height="8" fill="#D59A24"/>
+    <rect x="80" y="198" width="48" height="28" rx="14" fill="#D59A24"/>
+    <text x="104" y="217" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#FFFFFF">P0</text>
+    <text x="140" y="219" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="21" font-weight="700" fill="#123B63">专业知识底座实装</text>
+    <use data-icon="tabler-outline/database" x="354" y="197" width="32" height="32" fill="#D59A24" stroke-width="2"/>
+    <text x="80" y="248" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" fill="#5B6B7C">架构目标：知识操作层由“契约”走向“实装”</text>
+
+    <rect x="80" y="260" width="308" height="66" rx="16" fill="#FFF7E8"/>
+    <text x="96" y="283" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="12" font-weight="700" fill="#8A5D10">当前基础 → 目标形态</text>
+    <text x="96" y="311" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="18" font-weight="700" fill="#123B63">Knowledge Pack → 业务知识资产</text>
+
+    <text x="80" y="354" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="16" font-weight="700" fill="#123B63">下一步建设动作</text>
+    <text x="80" y="382" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="15" fill="#17212B">• 接入装备、条令、案例与前沿技术数据<tspan x="80" dy="26">• 型号 / 批次 / 参数 / 接口 / 时间版本建模</tspan><tspan x="80" dy="26">• 冲突保留、权限分域、变更追溯</tspan></text>
+
+    <rect x="80" y="484" width="308" height="68" rx="16" fill="#FFF7E8" stroke="#D59A24"/>
+    <text x="96" y="507" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" font-weight="700" fill="#8A5D10">验收形态</text>
+    <text x="96" y="529" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="15" font-weight="700" fill="#123B63">跨任务可检索 · 可复用 · 可版本对比</text>
+    <text x="96" y="549" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" fill="#6E5A34">专家可维护术语、规则与实体关系</text>
+  </g>
+
+  <g id="priority-p1" data-pptx-bounds="432 176 356 394">
+    <rect x="432" y="176" width="356" height="394" rx="24" fill="#FFFFFF" fill-opacity="0.97"/>
+    <rect x="432" y="176" width="356" height="8" fill="#2A7F9E"/>
+    <rect x="456" y="198" width="48" height="28" rx="14" fill="#2A7F9E"/>
+    <text x="480" y="217" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#FFFFFF">P1</text>
+    <text x="516" y="219" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="21" font-weight="700" fill="#123B63">推演仿真与需求验证</text>
+    <use data-icon="tabler-outline/activity" x="730" y="197" width="32" height="32" fill="#2A7F9E" stroke-width="2"/>
+    <text x="456" y="248" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" fill="#5B6B7C">架构目标：体系仿真、效果链与蒙特卡洛推演</text>
+
+    <rect x="456" y="260" width="308" height="66" rx="16" fill="#E7F6F8"/>
+    <text x="472" y="283" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="12" font-weight="700" fill="#174D79">当前基础 → 目标形态</text>
+    <text x="472" y="311" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="22" font-weight="700" fill="#2A7F9E">定性研判 → 参数化验证</text>
+
+    <text x="456" y="354" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="16" font-weight="700" fill="#123B63">下一步建设动作</text>
+    <text x="456" y="382" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="15" fill="#17212B">• 场景、红蓝体系依赖与任务链参数化<tspan x="456" dy="26">• 效果链 / Monte Carlo / 敏感性分析</tspan><tspan x="456" dy="26">• 失效注入、半实物联试与演训校准</tspan></text>
+
+    <rect x="456" y="484" width="308" height="68" rx="16" fill="#EAF0F7" stroke="#2A7F9E"/>
+    <text x="472" y="507" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" font-weight="700" fill="#174D79">验收形态</text>
+    <text x="472" y="529" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="15" font-weight="700" fill="#123B63">每项重点需求形成可复核验证卡</text>
+    <text x="472" y="549" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" fill="#174D79">假设 → 指标 → 仿真 → 结论 → 优先级调整</text>
+  </g>
+
+  <g id="priority-p2" data-pptx-bounds="808 176 416 394">
+    <rect x="808" y="176" width="416" height="394" rx="24" fill="#FFFFFF" fill-opacity="0.97"/>
+    <rect x="808" y="176" width="416" height="8" fill="#2E8B6D"/>
+    <rect x="832" y="198" width="48" height="28" rx="14" fill="#2E8B6D"/>
+    <text x="856" y="217" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#FFFFFF">P2</text>
+    <text x="892" y="219" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="21" font-weight="700" fill="#123B63">持续研判与专家运营</text>
+    <use data-icon="tabler-outline/timeline" x="1170" y="197" width="32" height="32" fill="#2E8B6D" stroke-width="2"/>
+    <text x="832" y="248" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" fill="#5B6B7C">架构目标：态势、对手、技术持续扫描与循环发现</text>
+
+    <rect x="832" y="260" width="368" height="66" rx="16" fill="#E9F6F1"/>
+    <text x="848" y="283" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="12" font-weight="700" fill="#1F7156">当前基础 → 目标形态</text>
+    <text x="848" y="311" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="22" font-weight="700" fill="#2E8B6D">单次研究 → 持续能力运营</text>
+
+    <text x="832" y="354" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="16" font-weight="700" fill="#123B63">下一步建设动作</text>
+    <text x="832" y="382" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="15" fill="#17212B">• 主题订阅、变化基线与预警触发<tspan x="832" dy="26">• 增量检索、差异重跑、结论版本管理</tspan><tspan x="832" dy="26">• 专家批注 / 裁决 / 立项 / 回退闭环</tspan></text>
+
+    <rect x="832" y="484" width="368" height="68" rx="16" fill="#E9F6F1" stroke="#2E8B6D"/>
+    <text x="848" y="507" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" font-weight="700" fill="#1F7156">验收形态</text>
+    <text x="848" y="529" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="15" font-weight="700" fill="#123B63">变化自动触发相关 Agent 与需求复核</text>
+    <text x="848" y="549" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" fill="#1F7156">形成月度态势、专题预警、能力组合路线图</text>
+  </g>
+
+  <g id="decision-ask" data-pptx-bounds="56 590 1168 76">
+    <rect x="56" y="590" width="1168" height="76" rx="24" fill="#FFFFFF" fill-opacity="0.13" stroke="#FFFFFF" stroke-opacity="0.26"/>
+    <use data-icon="tabler-outline/target-arrow" x="80" y="611" width="34" height="34" fill="#D59A24" stroke-width="2"/>
+    <text x="132" y="617" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" font-weight="700" fill="#D59A24">建议本轮共同确认</text>
+    <text x="132" y="646" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="20" font-weight="700" fill="#FFFFFF">首批知识库范围 · 首个仿真场景 · 监测主题 · 专家治理 · 消融验证矩阵</text>
+  </g>
+
+  <g id="source-note" data-pptx-bounds="56 676 1120 24">
+    <text x="56" y="696" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="12" fill="#DDEAF2">依据：架构设计与已落地功能对照 · 横向验证采用约100条专家标注全分支 Benchmark + 模块消融 Baseline</text>
+  </g>
+  <text id="page-number" data-pptx-role="page-number" x="1226" y="696" text-anchor="end" font-family="Arial, sans-serif" font-size="14" fill="#DDEAF2">17</text>
+</svg>

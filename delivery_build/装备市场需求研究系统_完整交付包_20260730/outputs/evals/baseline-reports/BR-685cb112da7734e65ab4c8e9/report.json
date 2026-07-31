@@ -1,0 +1,37 @@
+{
+  "answer_chars": 2697,
+  "answer_sha256": "ff50bd2978859fcca47ade744919f595f62b4772439b2ac87485b2f458211398",
+  "artifact_refs": [],
+  "citations": [],
+  "created_at": "2026-07-28T21:17:33.878695+00:00",
+  "dataset_id": "tactical-strike-frontiers-50-v1",
+  "duration_seconds": 39.374,
+  "estimated_cost": 0.0,
+  "mode": "real",
+  "model_snapshot": {
+    "base_url_host": "yunwu.ai",
+    "model": "glm-5.2",
+    "protocol": "chat_completions"
+  },
+  "query": "强干扰、弱通信条件下低信息依赖精确打击研究",
+  "query_id": "Q-0001",
+  "query_sha256": "c02ef5db5b3a00d8d7eedb4630436cf59b7c7b068aafa32b3f53ed18a15642dc",
+  "report_id": "BR-685cb112da7734e65ab4c8e9",
+  "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-685cb112da7734e65ab4c8e9/report.md",
+  "schema_version": "1.0",
+  "source_eval_id": "baseline-first20-three-layer-nine-20260729",
+  "sources": [],
+  "status": "completed",
+  "system_id": "zhipu_llm",
+  "usage": {
+    "completion_tokens": 3073,
+    "completion_tokens_details": {
+      "reasoning_tokens": 1385
+    },
+    "prompt_tokens": 352,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "total_tokens": 3425
+  }
+}

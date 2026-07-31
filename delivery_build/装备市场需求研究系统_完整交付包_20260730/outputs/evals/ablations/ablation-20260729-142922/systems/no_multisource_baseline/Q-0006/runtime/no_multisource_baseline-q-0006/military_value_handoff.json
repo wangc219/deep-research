@@ -1,0 +1,77 @@
+{
+  "branch_products": {},
+  "claims": [
+    {
+      "claim_id": "claim-67e1651cd3ef",
+      "claim_type": "hypothesis",
+      "confidence": 0.78,
+      "downstream_steps": [
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-generic_researcher-web-3393b98b73a1",
+        "ev-generic_researcher-web-912bbaba1ca2"
+      ],
+      "failure_boundary": "DARPA CODE支持自主协同方向，但其项目页偏目标能力陈述，不能作为装备成熟度或实战效能的充分证据。",
+      "mechanism": "决定性信息1（贡献项：S4 装备基线与五档差距）：公开资料显示，精确打击在不完备/不确定信息下的主要短板不是单枚弹药标称精度，而是传感器-处理-决策-交战-评估链路在电磁压制、通信退化和节点暴露条件下的韧性。作用机理是通信受扰导致目标报告、更新和毁伤评估延迟，火力节点持续发射又提高被侦察定位概率，最终降低打击时效与生存性。失效边界：若完全断链且没有预案、分布式任务规则或本地目标确认能力，精确打击链路仍可能中断。",
+      "military_effects": [
+        "侦察预警",
+        "指挥决策",
+        "打击歼灭",
+        "拦截反制",
+        "生存抗毁",
+        "持续作战"
+      ],
+      "packet_id": "packet-generic_researcher",
+      "source_agent_id": "generic_researcher",
+      "source_urls": [
+        "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/"
+      ]
+    },
+    {
+      "claim_id": "claim-0747244c9a11",
+      "claim_type": "hypothesis",
+      "confidence": 0.78,
+      "downstream_steps": [
+        "S1",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-generic_researcher-web-3393b98b73a1",
+        "ev-generic_researcher-web-912bbaba1ca2"
+      ],
+      "failure_boundary": "DARPA CODE支持自主协同方向，但其项目页偏目标能力陈述，不能作为装备成熟度或实战效能的充分证据。",
+      "mechanism": "决定性信息4（贡献项：S6 能力全景图、深度研究报告证据边界）：南沙ISR/EW设施升级说明作战环境中的不确定性包括固定和机动ISR/EW网络带来的探测、干扰、欺骗和频谱争夺压力。作用机理是对手通过岸基/岛礁ISR、电子战和可能的广域重叠覆盖压缩隐蔽接近、通信和目标更新窗口。失效边界：公开卫星图像和智库判断不能确认具体系统型号、功率、频段、覆盖边界或实战效能，不能据此推出精确打击可执行参数。",
+      "military_effects": [
+        "侦察预警",
+        "打击歼灭",
+        "拦截反制",
+        "生存抗毁",
+        "体系协同"
+      ],
+      "packet_id": "packet-generic_researcher",
+      "source_agent_id": "generic_researcher",
+      "source_urls": [
+        "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/"
+      ]
+    }
+  ],
+  "conflicts": [],
+  "open_questions": [
+    "现有替代PNT和高精度MEMS IMU在可部署装备中的成熟度、数量、成本和抗毁验证数据仍缺少公开闭环证据。"
+  ],
+  "query_anchor": "不完备与不确定战场信息条件下精确打击研究",
+  "schema": "military_value_handoff_v1",
+  "statistics": {
+    "candidate_claim_count": 4,
+    "compression_ratio": 0.729,
+    "evidence_url_count": 1,
+    "input_chars": 2598,
+    "input_packet_count": 1,
+    "output_chars": 1894,
+    "selected_claim_count": 2,
+    "source_agent_count": 1
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "artifact_ref": "html:b21e84f3a22203e4",
+  "connect_ip": "198.18.2.122",
+  "content_path": "html-b21e84f3a22203e4.html",
+  "content_type": "text/html; charset=UTF-8",
+  "encoding": null,
+  "evidence_id": "ev-operational_employment-web-7d70929b0c3b",
+  "fetch_cache_hit": true,
+  "final_url": "https://www.sda.mil/index/",
+  "kind": "html",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "b21e84f3a22203e464d2b8d73245c788d642a81b79ef61a9a88f1ae90137e089",
+  "url": "https://www.sda.mil/index/"
+}

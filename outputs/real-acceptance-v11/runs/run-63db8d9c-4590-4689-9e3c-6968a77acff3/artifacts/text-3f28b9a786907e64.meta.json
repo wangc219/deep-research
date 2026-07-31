@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:3f28b9a786907e64",
+  "content_path": "text-3f28b9a786907e64.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-555089a832cd",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "3f28b9a786907e64cba0651ce4aa0d980f3e2828070e2908dbadc518610ec42e",
+  "url": "https://www.rand.org/content/dam/rand/pubs/research_reports/RRA3400/RRA3400-1/RAND_RRA3400-1.pdf?utm_source=openai"
+}

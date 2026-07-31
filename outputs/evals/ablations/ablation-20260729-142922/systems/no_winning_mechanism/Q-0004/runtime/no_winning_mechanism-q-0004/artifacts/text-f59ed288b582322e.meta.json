@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:f59ed288b582322e",
+  "content_path": "text-f59ed288b582322e.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-75fef2cdc041",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "reader_error": "attempt_1:HTTPStatusError: HTTP 401: Unauthorized",
+  "sha256": "f59ed288b582322ec7a3aa3ce0332dee49a3a52ab8aa3f9f6e0a91c1aca0d2bd",
+  "url": "https://comptroller.defense.gov/Portals/45/Documents/defbudget/FY2025/FY2025"
+}

@@ -1,0 +1,15 @@
+{
+  "artifact_ref": "text:d56c63618f2d6f02",
+  "content_path": "text-d56c63618f2d6f02.txt",
+  "content_type": "text/plain; charset=utf-8",
+  "direct_error": "TimeoutError: _ssl.c:1015: The handshake operation timed out",
+  "encoding": "utf-8",
+  "evidence_id": "ev-generic_researcher-web-06d26c44006f",
+  "kind": "text",
+  "materialization_status": "reader_fetched",
+  "mode": "real",
+  "reader_attempt": 1,
+  "reader_url": "https://r.jina.ai/http://www.sda.mil/home/about-us/faq/",
+  "sha256": "d56c63618f2d6f0229aae56e7b05202876d14ae6bf34375557488396c9c30203",
+  "url": "https://www.sda.mil/home/about-us/faq/"
+}

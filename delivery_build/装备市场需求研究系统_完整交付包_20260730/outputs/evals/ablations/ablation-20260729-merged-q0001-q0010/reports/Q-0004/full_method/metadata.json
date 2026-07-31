@@ -1,0 +1,29 @@
+{
+  "artifact_refs": [
+    "/Users/wangchen/equipment research/outputs/runs/run-d313955f-f4c9-4eab-b4af-77d2db6af132/report.md",
+    "/Users/wangchen/equipment research/outputs/runs/run-d313955f-f4c9-4eab-b4af-77d2db6af132/round_summary.json"
+  ],
+  "citations": [
+    "https://afresearchlab.com/golden-horde-networked-collaborative-weapons/",
+    "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+    "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+    "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/",
+    "https://www.marines.mil/Force-Design/",
+    "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+    "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/",
+    "https://www.belfercenter.org/research-analysis/navigating-without-gps-cascading-alt-pnt-architecture-american-defense",
+    "https://www.washingtonpost.com/world/2024/05/24/russia-jamming-us-weapons-ukraine/",
+    "https://www.defense.gov/News/Releases/Release/Article/2397850/electromagnetic-spectrum-superiority-strategy-released/",
+    "https://www.lockheedmartin.com/en-us/products/jassm.html",
+    "https://www.afmc.af.mil/News/Article-Display/Article/155587/jassm-the-air-forces-next-generation-cruise-missile",
+    "https://www.saffm.hq.af.mil/Portals/84/documents/FY25/FY25%20Air%20Force%20Missile%20Procurement.pdf",
+    "https://www.navair.navy.mil/product/Long-Range-Anti-Ship-Missile-LRASM"
+  ],
+  "duration_seconds": 1618.471,
+  "error": "",
+  "estimated_cost": 0.0,
+  "query_id": "Q-0004",
+  "status": "completed",
+  "system_id": "full_method",
+  "usage": {}
+}

@@ -1,0 +1,26 @@
+{
+  "artifact_refs": [
+    "/Users/wangchen/equipment research/outputs/runs/run-81ff93a3-5cd3-42ca-ac6b-ed1e2300015b/report.md",
+    "/Users/wangchen/equipment research/outputs/runs/run-81ff93a3-5cd3-42ca-ac6b-ed1e2300015b/round_summary.json"
+  ],
+  "citations": [
+    "https://www.marines.mil/Force-Design/",
+    "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+    "https://www.darpa.mil/research/programs/seeker-cost-transformation",
+    "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/",
+    "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+    "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+    "https://static.rusi.org/lessons-learned-ukraine-offensive-2022-23.pdf",
+    "https://comptroller.defense.gov/Portals/45/Documents/defbudget/FY2026/FY2026_Weapons.pdf",
+    "https://www.army.mil/article-amp/291321/portfolio_acquisition_executive_for_fires_hosts_precision_strike_missile_increment_4_industry_day",
+    "https://www.lockheedmartin.com/en-us/products/jassm.html",
+    "https://www.congress.gov/crs_external_products/IF/HTML/IF11353.html"
+  ],
+  "duration_seconds": 2070.291,
+  "error": "",
+  "estimated_cost": 0.0,
+  "query_id": "Q-0003",
+  "status": "completed",
+  "system_id": "full_method",
+  "usage": {}
+}

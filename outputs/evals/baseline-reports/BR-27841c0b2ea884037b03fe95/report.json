@@ -1,0 +1,67 @@
+{
+  "answer_chars": 6857,
+  "answer_sha256": "b6541dff45b480fc3c9b0f1388195b7b738015a5a2778d2de1d48e1f8e518f33",
+  "artifact_refs": [
+    "runtime/codex-events.jsonl",
+    "runtime/codex-stderr.log"
+  ],
+  "citations": [
+    "https://api.army.mil/e2/c/downloads/2021/10/06/869ca62b/afc-concept-for-fires-2028-oct21.pdf",
+    "https://files.gao.gov/reports/GAO-25-106454/index.html",
+    "https://nllp.jallc.nato.int/iks/sharing%20public/20260201_u_article_ifri%20ukraine%20battlefield%20lessons.pdf",
+    "https://www.ai.mil/Portals/137/Documents/Resources%20Page/DoD%20Responsible%20AI%20Strategy%20and%20Implementation%20Pathway.pdf",
+    "https://www.army.mil/article/284276/enabling_fires_modernization_how_peo_iews_supports_the_fires_community",
+    "https://www.cto.mil/wp-content/uploads/2025/02/TE_of_AIES_Guidebook_Final_26Feb25.pdf",
+    "https://www.defense.gov/News/News-Stories/article/article/2427998/joint-all-domain-command-control-framework-belongs-to-warfighters/",
+    "https://www.rand.org/content/dam/rand/pubs/research_reports/RRA4300/RRA4316-1/RAND_RRA4316-1.pdf",
+    "https://www.sda.mil/custody/",
+    "https://www.sda.mil/the-national-defense-space-architecture-ndsa-an-explainer/"
+  ],
+  "created_at": "2026-07-28T20:53:47.210734+00:00",
+  "dataset_id": "tactical-strike-frontiers-50-v1",
+  "duration_seconds": 158.593,
+  "estimated_cost": 0.0,
+  "mode": "real",
+  "model_snapshot": {
+    "adapter": "codex_cli",
+    "auth_mode": "eval_api_key",
+    "base_url_host": "codexpro.wwxb1123.xyz",
+    "codex_version": "codex-cli 0.144.1",
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "sandbox": "read-only",
+    "search_context_size": "medium",
+    "web_search": "live"
+  },
+  "query": "不完备与不确定战场信息条件下精确打击研究",
+  "query_id": "Q-0006",
+  "query_sha256": "8e2c572ca590ab711442606eab4cc121b3698af2ddf3763631ebdf5ebc645bad",
+  "report_id": "BR-27841c0b2ea884037b03fe95",
+  "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-27841c0b2ea884037b03fe95/report.md",
+  "schema_version": "1.0",
+  "source_eval_id": "baseline-first20-three-layer-nine-20260729",
+  "sources": [
+    "https://api.army.mil/e2/c/downloads/2021/10/06/869ca62b/afc-concept-for-fires-2028-oct21.pdf",
+    "https://files.gao.gov/reports/GAO-25-106454/index.html",
+    "https://nllp.jallc.nato.int/iks/sharing%20public/20260201_u_article_ifri%20ukraine%20battlefield%20lessons.pdf",
+    "https://www.ai.mil/Portals/137/Documents/Resources%20Page/DoD%20Responsible%20AI%20Strategy%20and%20Implementation%20Pathway.pdf",
+    "https://www.army.mil/article/284276/enabling_fires_modernization_how_peo_iews_supports_the_fires_community",
+    "https://www.cto.mil/wp-content/uploads/2025/02/TE_of_AIES_Guidebook_Final_26Feb25.pdf",
+    "https://www.defense.gov/News/News-Stories/Article/Article/2948282/dod-officials-discuss-advancements-in-joint-all-domain-command-control/",
+    "https://www.defense.gov/News/News-Stories/article/article/2427998/joint-all-domain-command-control-framework-belongs-to-warfighters/",
+    "https://www.rand.org/content/dam/rand/pubs/research_reports/RRA4300/RRA4316-1/RAND_RRA4316-1.pdf",
+    "https://www.sda.mil/custody/",
+    "https://www.sda.mil/the-national-defense-space-architecture-ndsa-an-explainer/"
+  ],
+  "status": "completed",
+  "system_id": "generic_agent",
+  "usage": {
+    "cached_input_tokens": 8576,
+    "input_tokens": 47017,
+    "output_tokens": 5838,
+    "reasoning_output_tokens": 1420,
+    "search_query_count": 6,
+    "tool_call_count": 6,
+    "web_search_calls": 6
+  }
+}

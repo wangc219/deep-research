@@ -1,0 +1,24 @@
+[
+  {
+    "index": 1,
+    "filename": "image_001.emf",
+    "original_filename": "image_001.emf",
+    "asset_kind": "office_vector",
+    "svg_renderable": false,
+    "pptx_native_supported": true,
+    "pixel_width": 1177,
+    "pixel_height": 1202,
+    "pixel_ratio": 0.979201,
+    "relationship_id": "rId9",
+    "source_target": "media/image1.emf",
+    "source_path": "word/media/image1.emf",
+    "source_ext": ".emf",
+    "source_sha256": "6b5ac39c15287e0d19b4f662b2f203b6a9ef08ad7cbfb7183822f0b4e71a1a26",
+    "source_kind": "vml",
+    "display_width_emu": 7137400,
+    "display_height_emu": 6837045,
+    "display_width_in": 7.8056,
+    "display_height_in": 7.4771,
+    "display_ratio": 1.043931
+  }
+]

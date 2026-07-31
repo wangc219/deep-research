@@ -1,0 +1,465 @@
+{
+  "checkpoint": {
+    "budget_remaining": {
+      "baseline_tasks": 0,
+      "finalize_tasks": 1,
+      "rounds": 1
+    },
+    "checkpoint_id": "run-checkpoint-no_winning_mechanism-q-0004",
+    "completed_task_ids": [
+      "baseline:combat_scenario",
+      "baseline:weapon_equipment",
+      "baseline:operational_employment"
+    ],
+    "config_fingerprint": "sha256:ffc868d7366336e2ae63758ec4af41a853245ebc766a4dc7c8a949488c110116",
+    "created_at": "2026-07-29T07:59:38.962545+00:00",
+    "mode": "real",
+    "pending_task_ids": [],
+    "research_route": "auto",
+    "resolved_route": "traditional_gap",
+    "resume_count": 0,
+    "round_index": 1,
+    "run_id": "no_winning_mechanism-q-0004",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "combat_scenario",
+      "weapon_equipment",
+      "operational_employment"
+    ],
+    "source_materials": [
+      {
+        "artifact_refs": [
+          "text:d9e41a45d5210148"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-189e631d8bcb",
+          "normalized_url": "https://dodcio.defense.gov/Portals/0/Documents/DoD-C3-Strategy.pdf",
+          "reasons": [],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-189e631d8bcb",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://dodcio.defense.gov/Portals/0/Documents/DoD-C3-Strategy.pdf"
+      },
+      {
+        "artifact_refs": [
+          "html:e3b0c44298fc1c14"
+        ],
+        "content_type": "text/html; charset=UTF-8",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-04daa1ccebf5",
+          "normalized_url": "https://irp.fas.org/doddir/army/fm3-0.pdf",
+          "reasons": [],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-04daa1ccebf5",
+        "fetch_cache_hit": true,
+        "final_url": "https://irp.fas.org/doddir/army/fm3-0.pdf",
+        "formal_evidence_allowed": true,
+        "paragraph_locations": [],
+        "simplified_artifact_ref": "text:e3b0c44298fc1c14",
+        "status": "fetched",
+        "url": "https://irp.fas.org/doddir/army/fm3-0.pdf"
+      },
+      {
+        "artifact_refs": [
+          "text:6b507e46d984f29d"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-f42ad4ad8ea8",
+          "normalized_url": "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo",
+          "reasons": [],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-f42ad4ad8ea8",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/"
+      },
+      {
+        "artifact_refs": [
+          "text:7ee8d27dfbc4ccd9"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-6c1c84a0e24e",
+          "normalized_url": "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all",
+          "reasons": [],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-6c1c84a0e24e",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+      },
+      {
+        "artifact_refs": [
+          "text:3efd1c1879d70376"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-c38f07c3ceb3",
+          "normalized_url": "https://www.marines.mil/News/News-Display/Article/2708120/expeditionary-advanced-base-operations-eabo",
+          "reasons": [],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-c38f07c3ceb3",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.marines.mil/News/News-Display/Article/2708120/expeditionary-advanced-base-operations-eabo/"
+      },
+      {
+        "artifact_refs": [
+          "text:c1946573739c0272"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-3393b98b73a1",
+          "normalized_url": "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in",
+          "reasons": [],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-3393b98b73a1",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/"
+      },
+      {
+        "artifact_refs": [
+          "text:abb5eb497cac1267"
+        ],
+        "evidence_assessment": {
+          "conflict_group": "conflict-50a8af0865",
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-ba7af247bc5e",
+          "normalized_url": "https://www.defense.gov/News/Releases/Release/Article/2397850/electromagnetic-spectrum-superiority-strategy-released",
+          "reasons": [
+            "保留为冲突/反证材料"
+          ],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-ba7af247bc5e",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.defense.gov/News/Releases/Release/Article/2397850/electromagnetic-spectrum-superiority-strategy-released/"
+      },
+      {
+        "artifact_refs": [
+          "html:0365f044a3ac90ad"
+        ],
+        "content_type": "text/html; charset=UTF-8",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-d27e41bd8d64",
+          "normalized_url": "https://www.belfercenter.org/research-analysis/navigating-without-gps-cascading-alt-pnt-architecture-american-defense",
+          "reasons": [],
+          "score": 0.861
+        },
+        "evidence_id": "ev-combat_scenario-web-d27e41bd8d64",
+        "fetch_cache_hit": false,
+        "final_url": "https://www.belfercenter.org/research-analysis/navigating-without-gps-cascading-alt-pnt-architecture-american-defense",
+        "formal_evidence_allowed": true,
+        "paragraph_locations": [
+          "text:e9b4a527fa7079e3#p1",
+          "text:e9b4a527fa7079e3#p2",
+          "text:e9b4a527fa7079e3#p3",
+          "text:e9b4a527fa7079e3#p4",
+          "text:e9b4a527fa7079e3#p5",
+          "text:e9b4a527fa7079e3#p6",
+          "text:e9b4a527fa7079e3#p7",
+          "text:e9b4a527fa7079e3#p8",
+          "text:e9b4a527fa7079e3#p9",
+          "text:e9b4a527fa7079e3#p10",
+          "text:e9b4a527fa7079e3#p11",
+          "text:e9b4a527fa7079e3#p12",
+          "text:e9b4a527fa7079e3#p13",
+          "text:e9b4a527fa7079e3#p14",
+          "text:e9b4a527fa7079e3#p15",
+          "text:e9b4a527fa7079e3#p16",
+          "text:e9b4a527fa7079e3#p17",
+          "text:e9b4a527fa7079e3#p18",
+          "text:e9b4a527fa7079e3#p19",
+          "text:e9b4a527fa7079e3#p20",
+          "text:e9b4a527fa7079e3#p21",
+          "text:e9b4a527fa7079e3#p22",
+          "text:e9b4a527fa7079e3#p23",
+          "text:e9b4a527fa7079e3#p24",
+          "text:e9b4a527fa7079e3#p25",
+          "text:e9b4a527fa7079e3#p26",
+          "text:e9b4a527fa7079e3#p27",
+          "text:e9b4a527fa7079e3#p28",
+          "text:e9b4a527fa7079e3#p29",
+          "text:e9b4a527fa7079e3#p30",
+          "text:e9b4a527fa7079e3#p31",
+          "text:e9b4a527fa7079e3#p32",
+          "text:e9b4a527fa7079e3#p33",
+          "text:e9b4a527fa7079e3#p34",
+          "text:e9b4a527fa7079e3#p35",
+          "text:e9b4a527fa7079e3#p36",
+          "text:e9b4a527fa7079e3#p37",
+          "text:e9b4a527fa7079e3#p38",
+          "text:e9b4a527fa7079e3#p39",
+          "text:e9b4a527fa7079e3#p40",
+          "text:e9b4a527fa7079e3#p41",
+          "text:e9b4a527fa7079e3#p42",
+          "text:e9b4a527fa7079e3#p43",
+          "text:e9b4a527fa7079e3#p44",
+          "text:e9b4a527fa7079e3#p45",
+          "text:e9b4a527fa7079e3#p46",
+          "text:e9b4a527fa7079e3#p47",
+          "text:e9b4a527fa7079e3#p48",
+          "text:e9b4a527fa7079e3#p49",
+          "text:e9b4a527fa7079e3#p50",
+          "text:e9b4a527fa7079e3#p51",
+          "text:e9b4a527fa7079e3#p52",
+          "text:e9b4a527fa7079e3#p53",
+          "text:e9b4a527fa7079e3#p54",
+          "text:e9b4a527fa7079e3#p55",
+          "text:e9b4a527fa7079e3#p56",
+          "text:e9b4a527fa7079e3#p57",
+          "text:e9b4a527fa7079e3#p58",
+          "text:e9b4a527fa7079e3#p59",
+          "text:e9b4a527fa7079e3#p60",
+          "text:e9b4a527fa7079e3#p61",
+          "text:e9b4a527fa7079e3#p62",
+          "text:e9b4a527fa7079e3#p63",
+          "text:e9b4a527fa7079e3#p64",
+          "text:e9b4a527fa7079e3#p65",
+          "text:e9b4a527fa7079e3#p66",
+          "text:e9b4a527fa7079e3#p67",
+          "text:e9b4a527fa7079e3#p68",
+          "text:e9b4a527fa7079e3#p69",
+          "text:e9b4a527fa7079e3#p70",
+          "text:e9b4a527fa7079e3#p71",
+          "text:e9b4a527fa7079e3#p72",
+          "text:e9b4a527fa7079e3#p73",
+          "text:e9b4a527fa7079e3#p74",
+          "text:e9b4a527fa7079e3#p75",
+          "text:e9b4a527fa7079e3#p76",
+          "text:e9b4a527fa7079e3#p77",
+          "text:e9b4a527fa7079e3#p78",
+          "text:e9b4a527fa7079e3#p79",
+          "text:e9b4a527fa7079e3#p80",
+          "text:e9b4a527fa7079e3#p81",
+          "text:e9b4a527fa7079e3#p82",
+          "text:e9b4a527fa7079e3#p83",
+          "text:e9b4a527fa7079e3#p84",
+          "text:e9b4a527fa7079e3#p85",
+          "text:e9b4a527fa7079e3#p86",
+          "text:e9b4a527fa7079e3#p87",
+          "text:e9b4a527fa7079e3#p88",
+          "text:e9b4a527fa7079e3#p89"
+        ],
+        "simplified_artifact_ref": "text:e9b4a527fa7079e3",
+        "status": "fetched",
+        "url": "https://www.belfercenter.org/research-analysis/navigating-without-gps-cascading-alt-pnt-architecture-american-defense"
+      },
+      {
+        "artifact_refs": [
+          "text:61fe22833ee52a42"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-c2466ad02545",
+          "normalized_url": "https://www.navy.mil/Resources/Fact-Files/Display-FactFiles/Article/2169229/tomahawk-cruise-missile://www.navair.navy.mil/product/Tomah",
+          "reasons": [],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-c2466ad02545",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.navy.mil/Resources/Fact-Files/Display-FactFiles/Article/2169229/tomahawk-cruise-missile://www.navair.navy.mil/product/Tomah"
+      },
+      {
+        "artifact_refs": [
+          "text:f59ed288b582322e"
+        ],
+        "error": "HTTPStatusError: cached_origin_failure:HTTPStatusError: HTTP 403: Forbidden",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-75fef2cdc041",
+          "normalized_url": "https://comptroller.defense.gov/Portals/45/Documents/defbudget/FY2025/FY2025",
+          "reasons": [],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-75fef2cdc041",
+        "formal_evidence_allowed": false,
+        "reader_error": "attempt_1:HTTPStatusError: HTTP 401: Unauthorized",
+        "status": "fetch_failed",
+        "url": "https://comptroller.defense.gov/Portals/45/Documents/defbudget/FY2025/FY2025"
+      },
+      {
+        "artifact_refs": [
+          "text:f5a2d43ba9bdfc9f"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-84f5c7f4b57b",
+          "normalized_url": "https://www.saffm.hq.af.mil/Portals/84/documents/FY25/FY25%20Air%20Force%20Missile%20Procurement.pdf",
+          "reasons": [],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-84f5c7f4b57b",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.saffm.hq.af.mil/Portals/84/documents/FY25/FY25%20Air%20Force%20Missile%20Procurement.pdf"
+      },
+      {
+        "artifact_refs": [
+          "text:f8a9349e2eccd5ca"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-e894862926e0",
+          "normalized_url": "https://www.army.mil/article-amp/291321/portfolio_acquisition_executive_for_fires_hosts_precision_strike_missile_increment_4_industry、增量路线及Inc",
+          "reasons": [],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-e894862926e0",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.army.mil/article-amp/291321/portfolio_acquisition_executive_for_fires_hosts_precision_strike_missile_increment_4_industry、增量路线及Inc"
+      },
+      {
+        "artifact_refs": [
+          "text:cf264b906f78c241"
+        ],
+        "evidence_assessment": {
+          "conflict_group": "conflict-481e526210",
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-0bfd87a5752c",
+          "normalized_url": "https://files.gao.gov/reports/GAO",
+          "reasons": [
+            "保留为冲突/反证材料"
+          ],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-0bfd87a5752c",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://files.gao.gov/reports/GAO"
+      }
+    ],
+    "status": "running",
+    "task_statuses": {
+      "baseline:combat_scenario": "completed",
+      "baseline:operational_employment": "completed",
+      "baseline:weapon_equipment": "completed",
+      "finalize:winning-report": "running"
+    },
+    "topic": "间歇通信条件下精打武器任务保持与任务续接研究",
+    "worker_reports": [
+      {
+        "active_skill_ids": [
+          "scenario_engineering",
+          "modern_battlespace_analysis",
+          "adversary_coa_analysis"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "create_evidence_card",
+          "stress_test_scenario"
+        ],
+        "agent_id": "combat_scenario",
+        "created_at": "2026-07-29T08:04:43.359938+00:00",
+        "domain_object_id": "scenario-packet-combat_scenario",
+        "domain_object_type": "ScenarioModel",
+        "error": "",
+        "handoff_summary": "面向“间歇通信条件下精打武器任务保持与任务续接”，核心场景应聚焦S4持续压制再组织、S5远域稀疏通信续接、S6授权漂移下任务重构/终止，并用六个分支检验发现—决策—协同—打击—评估—再组织链闭合。装备发展优先级为任务包续接模块、多源PNT可信度组件、低带宽续接网关、末段合法性/诱饵抑制组件和BDA—再组织接口。",
+        "harness_profile": "scenario_research_v1",
+        "new_evidence_ids": [
+          "ev-combat_scenario-web-3393b98b73a1",
+          "ev-combat_scenario-web-ba7af247bc5e",
+          "ev-combat_scenario-web-c38f07c3ceb3",
+          "ev-combat_scenario-web-d27e41bd8d64"
+        ],
+        "packet_id": "packet-combat_scenario",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment research/outputs/evals/ablations/ablation-20260729-142922/systems/no_winning_mechanism/Q-0004/runtime/no_winning_mechanism-q-0004/agent_sessions/combat_scenario.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-8ea62c13-3610-4fad-91fa-154813d60e17"
+      },
+      {
+        "active_skill_ids": [
+          "equipment_osint",
+          "capability_comparison",
+          "technology_readiness_analysis",
+          "defensive_countermeasure_analysis"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "create_evidence_card",
+          "compare_equipment_capability"
+        ],
+        "agent_id": "weapon_equipment",
+        "created_at": "2026-07-29T08:05:23.862625+00:00",
+        "domain_object_id": "equipment-packet-weapon_equipment",
+        "domain_object_type": "EquipmentObservation",
+        "error": "",
+        "handoff_summary": "装备基线显示，间歇通信条件下精打武器的核心能力闭环应按装备基线、体系依赖、能力差距、现役升级/新研拓新和验证推进：以Tomahawk、JASSM-D、LRASM、PrSM为远打精打基线，以MQ-9B、Switchblade 600、ALTIUS、CCA/LongShot为无人续接节点，以AARGM、MALD、NGJ-MB为远域压制窗口制造手段。近期应现役做优补强WDL/低带宽摘要、安全中止、目标置信门限和审计；中期新研通用任务续接控制组件、模块化巡飞任务包和跨平台任务状态机；验证重点是断链保持、复链一致性、目标重定位、抗欺骗和压制窗口耦合试验。",
+        "harness_profile": "equipment_research_v1",
+        "new_evidence_ids": [
+          "ev-weapon_equipment-web-0bfd87a5752c",
+          "ev-weapon_equipment-web-84f5c7f4b57b",
+          "ev-weapon_equipment-web-c2466ad02545",
+          "ev-weapon_equipment-web-e894862926e0"
+        ],
+        "packet_id": "packet-weapon_equipment",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment research/outputs/evals/ablations/ablation-20260729-142922/systems/no_winning_mechanism/Q-0004/runtime/no_winning_mechanism-q-0004/agent_sessions/weapon_equipment.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-2f808420-135d-49ec-9e92-ebbc53582c75"
+      },
+      {
+        "active_skill_ids": [
+          "operational_synthesis",
+          "coa_comparison",
+          "joint_force_coordination",
+          "lessons_transfer"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "create_evidence_card",
+          "compare_coa"
+        ],
+        "agent_id": "operational_employment",
+        "created_at": "2026-07-29T08:03:23.166953+00:00",
+        "domain_object_id": "operational-packet-operational_employment",
+        "domain_object_type": "OperationalSynthesis",
+        "error": "",
+        "handoff_summary": "间歇通信下精打武器任务保持的关键矛盾是杀伤链状态连续性，而不是单枚弹药性能。推荐以COA-2“分布式前沿节点+断链任务包+多路径状态对账”为主方案，COA-3提供规模压制和补击，COA-1保留用于高价值、强授权、固定或准固定目标。装备发展应优先补齐断链任务包、多模抗扰导航、边缘再确认、BDA摘要、任务包版本管理和前沿分布式保障能力。",
+        "harness_profile": "operational_synthesis_v1",
+        "new_evidence_ids": [
+          "ev-operational_employment-web-04daa1ccebf5",
+          "ev-operational_employment-web-189e631d8bcb",
+          "ev-operational_employment-web-6c1c84a0e24e",
+          "ev-operational_employment-web-f42ad4ad8ea8"
+        ],
+        "packet_id": "packet-operational_employment",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment research/outputs/evals/ablations/ablation-20260729-142922/systems/no_winning_mechanism/Q-0004/runtime/no_winning_mechanism-q-0004/agent_sessions/operational_employment.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-713c7c30-2355-4edf-972b-20c4394d4330"
+      }
+    ]
+  },
+  "savepoint_id": "checkpoint-b74595672853bbf86613ea3d"
+}

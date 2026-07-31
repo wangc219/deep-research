@@ -1,0 +1,15 @@
+{
+  "artifact_ref": "html:7ebf34991b492a8b",
+  "connect_ip": "198.18.1.32",
+  "content_path": "html-7ebf34991b492a8b.html",
+  "content_type": "text/html; charset=UTF-8",
+  "encoding": null,
+  "evidence_id": "ev-combat_scenario-web-742b75e39cf4",
+  "fetch_cache_hit": true,
+  "final_url": "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare",
+  "kind": "html",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "7ebf34991b492a8be36924662d9e46fd8d6f3c74936882a1d887c2a386c67c6c",
+  "url": "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare"
+}

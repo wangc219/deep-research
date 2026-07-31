@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" data-pptx-page-role="content">
+  <rect id="background" data-pptx-role="background" x="0" y="0" width="1280" height="720" fill="#FFFFFF"/>
+  <g id="header" data-pptx-bounds="64 42 1152 92">
+    <text x="64" y="88" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="42" font-weight="bold" fill="#173B5E">&#x53D1;&#x6563;&#x8981;&#x6C42;&#x843D;&#x5B9E;&#x77E9;&#x9635;</text>
+    <text x="1216" y="84" text-anchor="end" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#6B7785">05</text>
+    <rect x="64" y="112" width="116" height="5" fill="#2E8B66"/>
+  </g>
+  <g id="three-layer-matrix" data-pptx-bounds="64 162 792 470">
+    <rect x="64" y="162" width="792" height="470" fill="#F3F6F9"/>
+    <text x="92" y="206" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" font-weight="bold" fill="#173B5E">&#x4E09;&#x5C42;&#x4E5D;&#x9879;&#x4EA4;&#x4ED8;&#x5408;&#x540C;</text>
+    <rect x="92" y="232" width="220" height="110" fill="#DCE9F5"/>
+    <text x="108" y="266" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#2F6FAE">&#x7B2C;&#x4E00;&#x5C42; &#xB7; &#x9700;&#x6C42;&#x6316;&#x6398;</text>
+    <text x="108" y="302" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x2460; &#x573A;&#x666F;  &#x2461; &#x6218;&#x6CD5;/&#x673A;&#x7406;</text>
+    <text x="108" y="328" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x2462; &#x80FD;&#x529B;&#x7279;&#x5F81;</text>
+    <rect x="324" y="232" width="244" height="110" fill="#E6EEF6"/>
+    <text x="340" y="266" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#2F6FAE">&#x7B2C;&#x4E8C;&#x5C42; &#xB7; &#x6280;&#x672F;&#x653B;&#x5173;</text>
+    <text x="340" y="302" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x2463; &#x5B9E;&#x73B0;&#x9014;&#x5F84;  &#x2464; &#x6838;&#x5FC3;&#x6280;&#x672F;</text>
+    <text x="340" y="328" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x2465; &#x8026;&#x5408;&#x77ED;&#x677F;</text>
+    <rect x="580" y="232" width="248" height="110" fill="#DDEDE7"/>
+    <text x="596" y="266" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#2E8B66">&#x7B2C;&#x4E09;&#x5C42; &#xB7; &#x88C5;&#x5907;&#x51B3;&#x7B56;</text>
+    <text x="596" y="302" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x2466; &#x88C5;&#x5907;&#x6620;&#x5C04;  &#x2467; &#x6F14;&#x793A;&#x9A8C;&#x8BC1;</text>
+    <text x="596" y="328" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x2468; &#x4F18;&#x5148;&#x7EA7;&#x6293;&#x624B;</text>
+    <line x1="92" y1="380" x2="828" y2="380" stroke="#C9D5E0" stroke-width="2"/>
+    <text x="92" y="422" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" font-weight="bold" fill="#173B5E">&#x5173;&#x952E;&#x8FD0;&#x884C;&#x9A8C;&#x6536;</text>
+    <text x="92" y="466" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">A&#x2013;H &#x8DEF;&#x7531;&#x68C0;&#x67E5;</text>
+    <text x="316" y="466" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x516D;&#x6B65;&#x63A8;&#x7406;&#x68C0;&#x67E5;</text>
+    <text x="540" y="466" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x4E5D;&#x5B57;&#x6BB5;&#x80FD;&#x529B;&#x753B;&#x50CF;</text>
+    <text x="92" y="512" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x8BC1;&#x636E;&#x5F15;&#x7528;&#x4E0E;&#x7ED1;&#x5B9A;</text>
+    <text x="316" y="512" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x5BA1;&#x8BA1;&#x4E0E;&#x6062;&#x590D;</text>
+    <text x="540" y="512" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x5E76;&#x53D1;&#x4E0E;&#x4EFB;&#x52A1;&#x7F16;&#x6392;</text>
+    <rect x="92" y="552" width="736" height="54" fill="#2E8B66"/>
+    <text x="460" y="587" text-anchor="middle" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" font-weight="bold" fill="#FFFFFF">&#x4E3B;&#x8981;&#x9A8C;&#x6536;&#x9879;&#x5747;&#x4E3A; true</text>
+  </g>
+  <g id="engineering-status" data-pptx-bounds="884 162 332 470">
+    <rect x="884" y="162" width="332" height="470" fill="#173B5E"/>
+    <text x="912" y="210" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="32" font-weight="bold" fill="#FFFFFF">&#x5DE5;&#x7A0B;&#x72B6;&#x6001;</text>
+    <text x="912" y="286" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="66" font-weight="bold" fill="#2E8B66">TRUE</text>
+    <text x="912" y="330" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#FFFFFF">runtime_complete</text>
+    <text x="912" y="390" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="66" font-weight="bold" fill="#2E8B66">TRUE</text>
+    <text x="912" y="434" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#FFFFFF">release_ready</text>
+    <line x1="912" y1="474" x2="1188" y2="474" stroke="#6D89A3" stroke-width="2"/>
+    <text x="912" y="520" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" font-weight="bold" fill="#FFFFFF">&#x5BA1;&#x8BA1;&#x72B6;&#x6001;</text>
+    <text x="912" y="570" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="30" font-weight="bold" fill="#2E8B66">APPROVED</text>
+  </g>
+  <g id="footer" data-pptx-bounds="64 650 1152 38">
+    <text x="64" y="676" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#6B7785">&#x6765;&#x6E90;&#xFF1A;architecture-acceptance.json&#xFF1B;&#x5E02;&#x573A;&#x9700;&#x6C42; query &#x53CA;&#x6A21;&#x677F; V2</text>
+  </g>
+</svg>

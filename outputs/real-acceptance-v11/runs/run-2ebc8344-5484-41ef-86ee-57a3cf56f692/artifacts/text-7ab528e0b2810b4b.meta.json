@@ -1,0 +1,14 @@
+{
+  "artifact_ref": "text:7ab528e0b2810b4b",
+  "content_path": "text-7ab528e0b2810b4b.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-a729d9c3b6a9",
+  "kind": "text",
+  "materialization_status": "network_safety_rejected",
+  "mode": "real",
+  "reason": "host_resolution_failed",
+  "rejected_url": "https://www.act.nato.int/wp-content/uploads/2025/05/rfip025048.pdf?utm_source=openai",
+  "sha256": "7ab528e0b2810b4b70258dff72a600fcc3a7dabe416123c9873671a8e6e32e71",
+  "url": "https://www.act.nato.int/wp-content/uploads/2025/05/rfip025048.pdf?utm_source=openai"
+}

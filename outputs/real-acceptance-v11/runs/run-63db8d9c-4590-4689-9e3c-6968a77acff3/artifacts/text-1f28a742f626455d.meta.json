@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:1f28a742f626455d",
+  "content_path": "text-1f28a742f626455d.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-25be639b0a68",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "1f28a742f626455d9c0736207e69879aa9d7b1b489934db8b327167f5a250274",
+  "url": "https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2025/Base%20Budget/Procurement/Missile-Procurement-Army.pdf?utm_source=openai"
+}

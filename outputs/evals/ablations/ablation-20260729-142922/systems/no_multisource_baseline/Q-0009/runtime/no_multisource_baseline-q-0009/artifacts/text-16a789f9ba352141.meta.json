@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:16a789f9ba352141",
+  "content_path": "text-16a789f9ba352141.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: cached_origin_failure:HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-generic_researcher-web-3393b98b73a1",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "16a789f9ba352141c8e6e61ea700894f56e8fb3d2f61990351eef68e4edf5a04",
+  "url": "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/"
+}

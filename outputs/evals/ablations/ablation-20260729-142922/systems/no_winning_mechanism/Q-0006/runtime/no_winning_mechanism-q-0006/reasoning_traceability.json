@@ -1,0 +1,92 @@
+{
+  "agent_handoffs": [
+    {
+      "agent_id": "operational_employment",
+      "claim_ids": [
+        "claim-084ed8e20d13",
+        "claim-55c35c9eb990",
+        "claim-880727367559",
+        "claim-e9a861c1c0cb",
+        "claim-6856075be2f9"
+      ],
+      "confidence": 0.81,
+      "evidence_ids": [
+        "ev-operational_employment-web-5824f31b34e3",
+        "ev-operational_employment-web-85fc01f1f838",
+        "ev-operational_employment-web-5a5a0ba6dfe6",
+        "ev-operational_employment-web-5ca69bd8715a"
+      ],
+      "handoff_summary": "作战运用结论：在不完备与不确定战场信息条件下，应以弹性杀伤网为主架构，把目标置信度融合、任意传感器-最佳射手分配、低成本无人/巡飞系统补盲、高端精确火力终结、BDA再打击和分散保障防护合成一条任务链。装备建设优先级应指向五类缺口：不确定目标置信度融合与BDA闭环系统、低成本规模精确效应装备族、弹性C2与跨域火力分配节点、分散保障与战损续接系统、任务链级反无人防护。下一步建议用能力-任务矩阵分别验证目标置信度、链路重构时间、射手匹配成功率、BDA闭环率、无人系统补充率和保障微节点抗毁性。",
+      "limitations": [
+        "高端联网精确火力提供高毁伤可信度，但在诱饵、断链和长期消耗下成本交换比恶化；低成本规模系统提升覆盖和持续性，但在强EW和C-UAS下单体可靠性下降。",
+        "分布式部署提高抗毁和战损续接潜力，但若接口、权限、保障和防护不同步，会增加节点数量与暴露面。",
+        "提高目标置信度门槛可降低误击和诱饵消耗，但对高时敏目标可能牺牲打击窗口。"
+      ],
+      "open_questions": [
+        "不同作战方向上，动态目标平均暴露窗口、通信可用率和BDA回传时延缺少可公开验证的量化基线。",
+        "低成本无人/巡飞系统在强电子战、复杂地形和高密度C-UAS下的真实损耗率仍需按场景分层验证。",
+        "跨域目标置信度、授权规则和BDA格式的标准化程度决定杀伤网能否实战重构，但公开资料无法确认具体成熟度。"
+      ],
+      "packet_id": "packet-operational_employment"
+    },
+    {
+      "agent_id": "combat_scenario",
+      "claim_ids": [
+        "claim-b7487df194ab",
+        "claim-c1b2736b62f4",
+        "claim-ae8429a83f12",
+        "claim-59daf967bdd6",
+        "claim-caf24a7fad4a"
+      ],
+      "confidence": 0.8,
+      "evidence_ids": [
+        "ev-combat_scenario-web-f42ad4ad8ea8",
+        "ev-combat_scenario-web-bc1c2e8c3176",
+        "ev-combat_scenario-web-8952c3805d5a",
+        "ev-combat_scenario-web-6c1c84a0e24e"
+      ],
+      "handoff_summary": "六个场景共同显示，精确打击能力缺口集中在目标可信生成、弹性协同、低成本可消耗效应、抗欺骗BDA和持续保障恢复。后续装备基线与需求卡片应围绕链条闭合能力评估，而不是按单个平台射程、载荷或命中精度排序。",
+      "limitations": [
+        "公开概念强调分布式、低特征、可消耗和弹性网络，但公开装备项目仍可能依赖高价值中继、空间通信和复杂数据链，存在“分布式部署但关键节点集中”的结构性矛盾。",
+        "可消耗无人系统有助于改善数量和成本交换，但在强电子战、欺骗BDA和补给受扰条件下，规模化投入可能加快消耗而非提高闭合率。"
+      ],
+      "open_questions": [
+        "公开资料不足以确定各类电子战强度下的实际链路可用率、无人平台损耗率和BDA误判率。",
+        "装备需求仍需用兵棋推演、硬件在环和野外对抗试验验证五档差距的量级。",
+        "不同作战规则下人在回路、人在监督回路和预授权边界会显著改变断链打击可行性。"
+      ],
+      "packet_id": "packet-combat_scenario"
+    },
+    {
+      "agent_id": "weapon_equipment",
+      "claim_ids": [
+        "claim-6f84f1dc4f81",
+        "claim-2b56df424a88",
+        "claim-4fd46214840d",
+        "claim-3c312a10b5af"
+      ],
+      "confidence": 0.76,
+      "evidence_ids": [
+        "ev-weapon_equipment-web-43915f10ae4b",
+        "ev-weapon_equipment-web-5b58dc887688",
+        "ev-weapon_equipment-web-ef58d44e5694",
+        "ev-weapon_equipment-web-7afe61571086"
+      ],
+      "handoff_summary": "国外装备路线正从远程精确弹药单点突破转向导弹、可消耗无人节点和远域压制的组合式kill web。能力差距主要在目标置信度管理、链路退化协同、安全降级、抗欺骗BDA和持续补充，而非单纯射程或CEP。",
+      "limitations": [
+        "PrSM公开资料强调远程精确打击和进入生产部署，但未披露复杂对抗环境下命中率、目标更新链和BDA可靠性，因此不能用射程证据替代不确定信息条件下的闭环效能证据。",
+        "Replicator公开叙事强调规模化可消耗自主系统，但具体数量、体系接口、自治边界和抗干扰表现大多未公开，应保留为方向性能力而非既成战役级能力。",
+        "YFQ-44A实弹测试证明武器集成推进，但对数字目标发射空空导弹不等同于对复杂地面/海上目标的自主精确打击成熟。"
+      ],
+      "open_questions": [
+        "PrSM Inc 1/2在复杂电磁环境下是否具备可靠发射后目标更新、抗欺骗导航和BDA联动能力，公开证据不足。",
+        "Replicator ADA2首批能力的实际交付数量、单价、损耗率、抗干扰链路性能和战时补充节奏未公开。",
+        "YFQ-44A CCA测试为AIM-120对数字目标实弹验证，尚不能判定其对地/对海不确定目标精确打击闭环成熟度。"
+      ],
+      "packet_id": "packet-weapon_equipment"
+    }
+  ],
+  "reasoning_nodes": [],
+  "stage_outputs": [],
+  "trace_rule": "正式结论应由需求卡片回溯至能力画像、S1-S6节点、中间Agent Packet和EvidenceCard。"
+}

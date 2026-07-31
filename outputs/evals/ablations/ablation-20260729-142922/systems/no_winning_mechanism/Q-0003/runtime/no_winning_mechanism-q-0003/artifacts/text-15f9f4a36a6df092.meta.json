@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:15f9f4a36a6df092",
+  "content_path": "text-15f9f4a36a6df092.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-combat_scenario-web-8e1a36b7c297",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "15f9f4a36a6df0922d58591595e26e50b4b0254b0eed68f565fd838f3165aa6c",
+  "url": "https://www.army.mil/article/284546/adapting_to_multi_domain_battlefield_developing_emissions_control_sop"
+}

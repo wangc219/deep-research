@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=Deputy Secretary of Defense Kathleen Hicks Announces Additional Replicator All-Domain Attritable Autonomous Capabilities > U.S. Department of Defense > Release
+source_url=https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/
+claim=Replicator公开目标是规模化部署全域可消耗自主能力，支撑用数量、速度和可消耗性增强搜索、跟踪、打击与BDA韧性的判断。
+excerpt=
+retrieval=Hosted web search citation metadata

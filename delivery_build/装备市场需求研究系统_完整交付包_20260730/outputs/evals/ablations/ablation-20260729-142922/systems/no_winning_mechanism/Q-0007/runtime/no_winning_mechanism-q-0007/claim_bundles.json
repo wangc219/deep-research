@@ -1,0 +1,475 @@
+[
+  {
+    "bundle_id": "claims-978ac9dc8329",
+    "claims": [
+      {
+        "claim_id": "claim-c156cfdbc96e",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "低轨扩散星座提高抗毁和低时延，但GAO公开风险提示其成本、技术成熟度、进度和需求透明度仍可能削弱按期形成战役能力。",
+          "商业空间能力可增强规模和恢复弹性，但其数据质量、安全性、优先级和抗干扰能力与火控级军事链路存在天然张力。",
+          "前沿分布式节点可提高近域识别和反应速度，但其低特征、小型化和可持续保障之间存在矛盾：越靠前越有打击价值，也越容易被侦察、压制和断供。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-d56e3a0c7cfa",
+          "ev-operational_employment-web-f42ad4ad8ea8",
+          "ev-operational_employment-web-bc1c2e8c3176",
+          "ev-operational_employment-web-7d70929b0c3b"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.spaceforce.mil/News/Article-Display/Article/4545203/space-development-agency-issues-awards-to-build-36-accelerated-missile-defense/",
+          "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/",
+          "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "https://www.sda.mil/index/"
+        ],
+        "text": "判断1：体系建设重心应从“单星/单链路提速”转为“发现-跟踪-分发-决策-交战-BDA-再打击”的可降级闭环。军事任务价值在于把天基低时延转化为对时间敏感目标、海上机动编队和空天威胁的打击/拦截窗口，而不是仅提高态势显示速度。证据边界：公开资料能证明SDA/PWSA强调传输层、跟踪层、战斗管理层和低时延数据连接，但不能证明其在强对抗中已稳定达到火控级闭环。失效条件：目标身份不清、航迹断裂、交战授权迟滞、射手不可用或BDA延迟时，低时延信息只能形成态势优势，不能形成毁伤效果。"
+      },
+      {
+        "claim_id": "claim-8f7d6802c9c5",
+        "claim_type": "hypothesis",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "低轨扩散星座提高抗毁和低时延，但GAO公开风险提示其成本、技术成熟度、进度和需求透明度仍可能削弱按期形成战役能力。",
+          "商业空间能力可增强规模和恢复弹性，但其数据质量、安全性、优先级和抗干扰能力与火控级军事链路存在天然张力。",
+          "前沿分布式节点可提高近域识别和反应速度，但其低特征、小型化和可持续保障之间存在矛盾：越靠前越有打击价值，也越容易被侦察、压制和断供。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-d56e3a0c7cfa",
+          "ev-operational_employment-web-f42ad4ad8ea8",
+          "ev-operational_employment-web-bc1c2e8c3176",
+          "ev-operational_employment-web-7d70929b0c3b"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.spaceforce.mil/News/Article-Display/Article/4545203/space-development-agency-issues-awards-to-build-36-accelerated-missile-defense/",
+          "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/",
+          "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "https://www.sda.mil/index/"
+        ],
+        "text": "判断2：COA-A“高端低轨扩散式杀伤网”适合作为高端冲突初期的战役级骨干，但不能单独承担持续精确打击体系。军事任务价值在于支撑广域预警、导弹跟踪、跨战区目标分发和远域对海/对陆打击协同；其优势是覆盖、速度和多节点抗毁，短板是成本、地面网关、战斗司令部需求对接和火控级数据质量。证据边界：GAO和SDA公开信息可支撑其规模、成本和能力层方向判断，但不支撑具体交战性能参数。失效条件：反卫星、电磁压制、网络攻击、地面站受损或链路拥塞叠加时，空间段扩散仍可能被地面段和用户终端瓶颈拖垮。"
+      },
+      {
+        "claim_id": "claim-7a1df8614fc6",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "低轨扩散星座提高抗毁和低时延，但GAO公开风险提示其成本、技术成熟度、进度和需求透明度仍可能削弱按期形成战役能力。",
+          "商业空间能力可增强规模和恢复弹性，但其数据质量、安全性、优先级和抗干扰能力与火控级军事链路存在天然张力。",
+          "前沿分布式节点可提高近域识别和反应速度，但其低特征、小型化和可持续保障之间存在矛盾：越靠前越有打击价值，也越容易被侦察、压制和断供。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-d56e3a0c7cfa",
+          "ev-operational_employment-web-f42ad4ad8ea8",
+          "ev-operational_employment-web-bc1c2e8c3176",
+          "ev-operational_employment-web-7d70929b0c3b"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.spaceforce.mil/News/Article-Display/Article/4545203/space-development-agency-issues-awards-to-build-36-accelerated-missile-defense/",
+          "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/",
+          "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "https://www.sda.mil/index/"
+        ],
+        "text": "判断3：COA-B“前沿分布式节点+天基支撑”是把天基信息转化为局部拒止和快速打击效果的关键方案。军事任务价值在于岛链、濒海、海峡和关键航道场景中，用近域传感器补足天基识别和连续保持不足，并把岸基、舰载、空基、无人平台和远火接入同一杀伤网。证据边界：EABO和Stand-in Forces公开概念能支撑前沿C4ISR、海上拒止、目标指示/反目标指示和低特征机动力量的任务逻辑，但不能证明任一具体部署点的可生存性。失效条件：前沿节点被持续侦察定位、补给/能源/密钥/弹药中断，或战术网关不能跨域融合时，体系会从“杀伤网”退化为孤立传感点。"
+      },
+      {
+        "claim_id": "claim-91757f508480",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "低轨扩散星座提高抗毁和低时延，但GAO公开风险提示其成本、技术成熟度、进度和需求透明度仍可能削弱按期形成战役能力。",
+          "商业空间能力可增强规模和恢复弹性，但其数据质量、安全性、优先级和抗干扰能力与火控级军事链路存在天然张力。",
+          "前沿分布式节点可提高近域识别和反应速度，但其低特征、小型化和可持续保障之间存在矛盾：越靠前越有打击价值，也越容易被侦察、压制和断供。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-d56e3a0c7cfa",
+          "ev-operational_employment-web-f42ad4ad8ea8",
+          "ev-operational_employment-web-bc1c2e8c3176",
+          "ev-operational_employment-web-7d70929b0c3b"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.spaceforce.mil/News/Article-Display/Article/4545203/space-development-agency-issues-awards-to-build-36-accelerated-missile-defense/",
+          "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/",
+          "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "https://www.sda.mil/index/"
+        ],
+        "text": "判断4：COA-C“军民混合补盲与战损续接网”应作为持续作战和战损恢复层，而非主火控层。军事任务价值在于主用军用链路受损后维持最低态势更新、BDA、目标池刷新和成本强加，使杀伤链可续接、可补盲、可恢复。证据边界：乌克兰相关公开经验可支持商业空间、无人系统、电子战和组织适应性的重要性，但商业数据的安全性、优先级、刷新率和抗干扰能力不足以直接推导为火控级能力。失效条件：商业服务被拒止、数据被污染、密级隔离无法快速处理、低成本节点缺少认证和时间同步时，补盲层会引入误击风险和目标池污染。"
+      },
+      {
+        "claim_id": "claim-4e6856d09630",
+        "claim_type": "hypothesis",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "低轨扩散星座提高抗毁和低时延，但GAO公开风险提示其成本、技术成熟度、进度和需求透明度仍可能削弱按期形成战役能力。",
+          "商业空间能力可增强规模和恢复弹性，但其数据质量、安全性、优先级和抗干扰能力与火控级军事链路存在天然张力。",
+          "前沿分布式节点可提高近域识别和反应速度，但其低特征、小型化和可持续保障之间存在矛盾：越靠前越有打击价值，也越容易被侦察、压制和断供。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-d56e3a0c7cfa",
+          "ev-operational_employment-web-f42ad4ad8ea8",
+          "ev-operational_employment-web-bc1c2e8c3176",
+          "ev-operational_employment-web-7d70929b0c3b"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.spaceforce.mil/News/Article-Display/Article/4545203/space-development-agency-issues-awards-to-build-36-accelerated-missile-defense/",
+          "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/",
+          "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "https://www.sda.mil/index/"
+        ],
+        "text": "判断5：装备差距的主轴不是“有没有卫星”，而是传输、跟踪、融合、抗扰终端、边缘BDA和快速补网六类能力是否成体系。军事任务价值在于补齐从信息优势到打击/歼灭效果之间的短板：低时延传输解决分发，连续跟踪解决可交战航迹，边缘融合解决跨源可信度，抗扰终端解决前沿可用性，BDA解决再打击，快速补网解决战损续接。证据边界：公开来源可证明相关能力方向和风险，不足以给出可执行战术参数。失效条件：若装备建设仍按平台孤岛推进，缺少统一数据标准、时间同步、战术网关、抗干扰链路和保障包，体系在强对抗中会出现“看得到、传不到、判不准、打不了、补不上”的断裂。"
+      }
+    ],
+    "packet_id": "packet-operational_employment",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-39ff1148f328",
+    "claims": [
+      {
+        "claim_id": "claim-b76e1f33bb52",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "低轨星座降低传输时延，但云层、地面站、终端暴露、跨密级网关和授权流程可能使体系端到端时延仍不满足时敏目标窗口。",
+          "自动化目标融合可加速杀伤链，但在诱饵、数据污染和BDA欺骗条件下可能把速度优势转化为高置信错误。",
+          "分布式前沿节点提高生存性，但低特征静默与高频目标更新存在内在冲突。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-06d26c44006f",
+          "ev-combat_scenario-web-614112de1ec0",
+          "ev-combat_scenario-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.sda.mil/home/about-us/faq/",
+          "https://www.army.mil/article/263145/army_developing_faster_improved_data_kill_chain_for_lethal_and_non_lethal_fires",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "判断1：天基低时延支撑精确打击的主要缺口不是单链路带宽，而是战损和干扰下任务链闭合能力；军事任务价值在于把发现、决策、协同、打击、评估、再组织压缩进目标机动窗口，支撑拒止与远程精确打击。证据边界：公开来源仅证明低轨网状传输、杀伤链自动化、EABO分布式前沿和乌克兰电磁压制经验的方向性需求，不能证明实战端到端时延和抗扰性能。失效条件：PNT、下行链路、战术数据链和授权接口被同步压制，或跨级授权慢于目标窗口。"
+      },
+      {
+        "claim_id": "claim-759363b290c4",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "低轨星座降低传输时延，但云层、地面站、终端暴露、跨密级网关和授权流程可能使体系端到端时延仍不满足时敏目标窗口。",
+          "自动化目标融合可加速杀伤链，但在诱饵、数据污染和BDA欺骗条件下可能把速度优势转化为高置信错误。",
+          "分布式前沿节点提高生存性，但低特征静默与高频目标更新存在内在冲突。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-06d26c44006f",
+          "ev-combat_scenario-web-614112de1ec0",
+          "ev-combat_scenario-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.sda.mil/home/about-us/faq/",
+          "https://www.army.mil/article/263145/army_developing_faster_improved_data_kill_chain_for_lethal_and_non_lethal_fires",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "判断2：西太/第一岛链场景的关键矛盾是前沿节点低暴露生存与高频目标更新需求冲突；军事任务价值在于支持海空机动目标持续跟踪、远程射手分发和BDA回传。证据边界：EABO公开概念支持分布式前沿、海上拒止和C4ISR-T任务，SDA公开资料支持低轨网状低时延传输方向，但目标保持精度、抗截获通信和射手接口细节不可由公开资料确认。失效条件：前沿终端因发射暴露被定位摧毁，或海面杂波、诱饵和电磁压制导致目标航迹不连续。"
+      },
+      {
+        "claim_id": "claim-47c08714d419",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "低轨星座降低传输时延，但云层、地面站、终端暴露、跨密级网关和授权流程可能使体系端到端时延仍不满足时敏目标窗口。",
+          "自动化目标融合可加速杀伤链，但在诱饵、数据污染和BDA欺骗条件下可能把速度优势转化为高置信错误。",
+          "分布式前沿节点提高生存性，但低特征静默与高频目标更新存在内在冲突。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-06d26c44006f",
+          "ev-combat_scenario-web-614112de1ec0",
+          "ev-combat_scenario-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.sda.mil/home/about-us/faq/",
+          "https://www.army.mil/article/263145/army_developing_faster_improved_data_kill_chain_for_lethal_and_non_lethal_fires",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "判断3：纵深陆战/持续消耗场景的关键矛盾从“能否发现”转为“能否筛选、确认、排序并经济用弹”；军事任务价值在于压制敌火力节点、无人系统和机动目标，同时避免高端弹药被诱饵消耗。证据边界：陆军公开资料支持AI/ML、TITAN和统一数据网络压缩杀伤链，CSIS与DoD资料支持无人、电子战和信息过载压力，但公开来源无法量化算法误判率和战时数据污染强度。失效条件：诱饵集群造成高置信误判，BDA被遮蔽或伪造，后勤和终端补给低于持续消耗节奏。"
+      },
+      {
+        "claim_id": "claim-3b618d2d4106",
+        "claim_type": "hypothesis",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "低轨星座降低传输时延，但云层、地面站、终端暴露、跨密级网关和授权流程可能使体系端到端时延仍不满足时敏目标窗口。",
+          "自动化目标融合可加速杀伤链，但在诱饵、数据污染和BDA欺骗条件下可能把速度优势转化为高置信错误。",
+          "分布式前沿节点提高生存性，但低特征静默与高频目标更新存在内在冲突。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-06d26c44006f",
+          "ev-combat_scenario-web-614112de1ec0",
+          "ev-combat_scenario-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.sda.mil/home/about-us/faq/",
+          "https://www.army.mil/article/263145/army_developing_faster_improved_data_kill_chain_for_lethal_and_non_lethal_fires",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "判断4：远海前出/远域快打场景的瓶颈更可能出现在授权、数据格式、保密域和战区外射手协同，而非传感器本身；军事任务价值在于把远域传感转化为合法、可信、可执行的任务数据包，形成跨域威慑和快速打击。证据边界：SDA、EABO和陆军杀伤链资料支持跨域连接方向，但公开来源不披露交战规则、数据标记标准和跨密级流程。失效条件：信息虽可获得但无法跨域释放，或误伤/升级风险使授权链超过目标生命周期。"
+      },
+      {
+        "claim_id": "claim-03e4b902508d",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "低轨星座降低传输时延，但云层、地面站、终端暴露、跨密级网关和授权流程可能使体系端到端时延仍不满足时敏目标窗口。",
+          "自动化目标融合可加速杀伤链，但在诱饵、数据污染和BDA欺骗条件下可能把速度优势转化为高置信错误。",
+          "分布式前沿节点提高生存性，但低特征静默与高频目标更新存在内在冲突。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-06d26c44006f",
+          "ev-combat_scenario-web-614112de1ec0",
+          "ev-combat_scenario-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.sda.mil/home/about-us/faq/",
+          "https://www.army.mil/article/263145/army_developing_faster_improved_data_kill_chain_for_lethal_and_non_lethal_fires",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "判断5：未来装备需求应优先围绕低轨网状战术接入、抗扰低特征终端、边缘融合与置信度管理、BDA冗余和战损重组设计；军事任务价值在于使杀伤网在节点损失、链路退化和持续消耗中保持最低可用闭环。证据边界：公开资料可支撑能力方向和压力点，不能支撑具体型号参数、部署位置或可执行交战参数。失效条件：装备指标只追求峰值时延或单点性能，未覆盖受扰重路由、目标置信度、授权接口、补给恢复和降级模式。"
+      }
+    ],
+    "packet_id": "packet-combat_scenario",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-42e2d45402c3",
+    "claims": [
+      {
+        "claim_id": "claim-9b2b1eeb1ee4",
+        "claim_type": "fact",
+        "confidence": 0.74,
+        "counter_evidence": [
+          "PrSM Inc 1已进入生产部署阶段，但公开证据主要证明固定/指定目标远程精确火力，不能证明完整时敏移动目标闭环能力。",
+          "LRPM公开演示一控多、在飞控制和半自主协同，但演训环境不等同于强综合防空、强电子压制和大规模反无人系统环境。",
+          "Replicator强调数量、低成本和可扩展，但具体平台差异很大，不能把整个计划等同为单一远程打击装备。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-d6c1d3eec8e6",
+          "ev-weapon_equipment-web-43915f10ae4b",
+          "ev-weapon_equipment-web-5b58dc887688",
+          "ev-weapon_equipment-web-328871b56c44"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.sda.mil/custody/",
+          "https://www.army.mil/article/286878/precision_strike_missile_increment_1_achieves_milestone_c_approval",
+          "https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2026/Discretionary%20Budget/Procurement/Missile%20Procurement%20Army.pdf",
+          "https://www.army.mil/article-amp/293800/the_u_s_armys_pae_fires_demonstrates_autonomy_and_one_to_many_control_with_lrpm_at_african_lion_2026"
+        ],
+        "text": "装备基线：国外公开路线已形成“低轨低时延传输/托管/跟踪层-战术BMC3与数据链-远程效应器”三层杀伤网雏形；PWSA Custody Layer的关键价值在于把目标掌握、在轨融合、低时延分发和sensor-to-shooter闭合推向武器质量航迹，而不是单纯提供通信带宽。"
+      },
+      {
+        "claim_id": "claim-1a790f711a31",
+        "claim_type": "fact",
+        "confidence": 0.74,
+        "counter_evidence": [
+          "PrSM Inc 1已进入生产部署阶段，但公开证据主要证明固定/指定目标远程精确火力，不能证明完整时敏移动目标闭环能力。",
+          "LRPM公开演示一控多、在飞控制和半自主协同，但演训环境不等同于强综合防空、强电子压制和大规模反无人系统环境。",
+          "Replicator强调数量、低成本和可扩展，但具体平台差异很大，不能把整个计划等同为单一远程打击装备。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-d6c1d3eec8e6",
+          "ev-weapon_equipment-web-43915f10ae4b",
+          "ev-weapon_equipment-web-5b58dc887688",
+          "ev-weapon_equipment-web-328871b56c44"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.sda.mil/custody/",
+          "https://www.army.mil/article/286878/precision_strike_missile_increment_1_achieves_milestone_c_approval",
+          "https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2026/Discretionary%20Budget/Procurement/Missile%20Procurement%20Army.pdf",
+          "https://www.army.mil/article-amp/293800/the_u_s_armys_pae_fires_demonstrates_autonomy_and_one_to_many_control_with_lrpm_at_african_lion_2026"
+        ],
+        "text": "体系依赖：远程精确导弹、远程无人打击和远域压制对天基低时延的依赖强度不同；固定目标打击可依赖预案和传统ISR，移动/时敏目标、协同无人效应器和防空压制窗口则高度依赖低时延目标更新、航迹质量、战术链路可用率和授权流程。"
+      },
+      {
+        "claim_id": "claim-64c6d5c29792",
+        "claim_type": "inference",
+        "confidence": 0.74,
+        "counter_evidence": [
+          "PrSM Inc 1已进入生产部署阶段，但公开证据主要证明固定/指定目标远程精确火力，不能证明完整时敏移动目标闭环能力。",
+          "LRPM公开演示一控多、在飞控制和半自主协同，但演训环境不等同于强综合防空、强电子压制和大规模反无人系统环境。",
+          "Replicator强调数量、低成本和可扩展，但具体平台差异很大，不能把整个计划等同为单一远程打击装备。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-d6c1d3eec8e6",
+          "ev-weapon_equipment-web-43915f10ae4b",
+          "ev-weapon_equipment-web-5b58dc887688",
+          "ev-weapon_equipment-web-328871b56c44"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.sda.mil/custody/",
+          "https://www.army.mil/article/286878/precision_strike_missile_increment_1_achieves_milestone_c_approval",
+          "https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2026/Discretionary%20Budget/Procurement/Missile%20Procurement%20Army.pdf",
+          "https://www.army.mil/article-amp/293800/the_u_s_armys_pae_fires_demonstrates_autonomy_and_one_to_many_control_with_lrpm_at_african_lion_2026"
+        ],
+        "text": "能力差距：公开资料能支撑装备状态、射程口径、发射平台、演示能力和任务方向判断，但不能支撑高对抗环境下闭环时延、命中率、抗干扰可用率、库存补充和单位效应成本判断；因此应按五档差距将“可部署远程火力”与“强对抗实时杀伤网”分开评估。"
+      },
+      {
+        "claim_id": "claim-4a5c66f79070",
+        "claim_type": "fact",
+        "confidence": 0.74,
+        "counter_evidence": [
+          "PrSM Inc 1已进入生产部署阶段，但公开证据主要证明固定/指定目标远程精确火力，不能证明完整时敏移动目标闭环能力。",
+          "LRPM公开演示一控多、在飞控制和半自主协同，但演训环境不等同于强综合防空、强电子压制和大规模反无人系统环境。",
+          "Replicator强调数量、低成本和可扩展，但具体平台差异很大，不能把整个计划等同为单一远程打击装备。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-d6c1d3eec8e6",
+          "ev-weapon_equipment-web-43915f10ae4b",
+          "ev-weapon_equipment-web-5b58dc887688",
+          "ev-weapon_equipment-web-328871b56c44"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.sda.mil/custody/",
+          "https://www.army.mil/article/286878/precision_strike_missile_increment_1_achieves_milestone_c_approval",
+          "https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2026/Discretionary%20Budget/Procurement/Missile%20Procurement%20Army.pdf",
+          "https://www.army.mil/article-amp/293800/the_u_s_armys_pae_fires_demonstrates_autonomy_and_one_to_many_control_with_lrpm_at_african_lion_2026"
+        ],
+        "text": "研发取向：现役做优应围绕PrSM/HIMARS-MLRS、AARGM-ER/NGJ-MB和现有战术数据链接入低时延目标分发；新研拓新应围绕LRPM/Launched Effects、可消耗自主系统、分布式诱饵压制弹药和通用侦察/诱骗/电子载荷复用，重点验证抗扰、自治、批量补充和毁伤评估闭环。"
+      }
+    ],
+    "packet_id": "packet-weapon_equipment",
+    "schema_version": "1.0"
+  }
+]

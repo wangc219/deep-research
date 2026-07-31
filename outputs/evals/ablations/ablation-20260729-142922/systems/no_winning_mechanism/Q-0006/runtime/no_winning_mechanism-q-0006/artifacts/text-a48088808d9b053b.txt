@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=defense.gov · deputy secretary of defense hicks announces first tranche of replicator capabil
+source_url=https://www.defense.gov/News/Releases/Release/Article/3765644/deputy-secretary-of-defense-hicks-announces-first-tranche-of-replicator-capabil/
+claim=Replicator首批ADA2能力包括Switchblade 600、无人水面艇、UAS和反无人系统，并以规模化可消耗自主系统为重点。
+excerpt=
+retrieval=Hosted web search citation metadata

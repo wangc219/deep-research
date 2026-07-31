@@ -1,0 +1,28 @@
+{
+  "schema": "ppt-master.source_to_md.profile.v1",
+  "converter": "doc_to_md.py",
+  "conversion_type": "docx",
+  "source": {
+    "path": "JS装备市场需求深度挖掘Benchmark_v1.0_设计说明.docx",
+    "name": "JS装备市场需求深度挖掘Benchmark_v1.0_设计说明.docx",
+    "suffix": ".docx",
+    "kind": "file",
+    "exists": true,
+    "size_bytes": 48408
+  },
+  "outputs": {
+    "markdown": "JS装备市场需求深度挖掘Benchmark_v1.0_设计说明.md",
+    "asset_dir": "",
+    "image_manifest": "",
+    "image_count": 0
+  },
+  "markdown": {
+    "line_count": 177,
+    "char_count": 10256,
+    "heading_count": 14,
+    "table_count": 12,
+    "image_ref_count": 0,
+    "link_count": 0
+  },
+  "warnings": []
+}

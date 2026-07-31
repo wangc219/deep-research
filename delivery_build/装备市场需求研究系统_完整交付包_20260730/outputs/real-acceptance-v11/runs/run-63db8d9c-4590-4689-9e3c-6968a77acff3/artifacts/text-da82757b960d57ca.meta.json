@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:da82757b960d57ca",
+  "content_path": "text-da82757b960d57ca.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-operational_employment-web-65658b6cc7db",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "da82757b960d57cae9f563b234263c4b65e2478e7a8b9d9d08afc66f7969d5d7",
+  "url": "https://www.defense.gov/News/Releases/Release/article/2970094/dod-announces-release-of-jadc2-implementation-plan/"
+}

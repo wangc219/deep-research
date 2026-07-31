@@ -1,0 +1,736 @@
+{
+  "blueprint_required_outputs": [
+    "装备基线与五档差距",
+    "需求卡片（能力域/关键指标/优先级/支撑场景/证据链）",
+    "能力全景图",
+    "深度研究报告（含推理链可回溯）",
+    "深度研究主报告（深度性、创新性、前瞻性、军事价值性）",
+    "分支专用收敛产物"
+  ],
+  "branch": "B",
+  "branch_name": "传统能力缺口发现",
+  "completion": {
+    "capability_panorama": {
+      "actual": 2,
+      "met": true,
+      "target": 1
+    },
+    "demand_cards": {
+      "actual": 2,
+      "met": true,
+      "target": 1
+    },
+    "reasoning_traceability": {
+      "actual": 6,
+      "met": true,
+      "target": 1
+    }
+  },
+  "delivery_status": "complete",
+  "non_fabrication_rule": "未达到数量门槛时必须披露缺口，不得用同义改写或无证据条目凑数。",
+  "products": {
+    "capability_panorama": {
+      "actual_counts": {
+        "capability_domains": 2,
+        "capability_indicators": 0,
+        "capability_items": 2
+      },
+      "branch": "B",
+      "branch_name": "传统能力缺口发现",
+      "cross_domain_indicators": [],
+      "domains": [
+        {
+          "capability_ids": [
+            "cap-new-001"
+          ],
+          "domain": "任务补位平台、传感器、效应器与协同节点",
+          "evidence_ids": [
+            "ev-combat_scenario-1",
+            "ev-international_situation-1",
+            "ev-operational_employment-1",
+            "ev-weapon_equipment-1"
+          ],
+          "indicators": [],
+          "supporting_scenarios": [
+            "挖掘在西太反介入体系下的装备能力缺口"
+          ]
+        },
+        {
+          "capability_ids": [
+            "cap-upgrade-001"
+          ],
+          "domain": "现役装备、任务软件、通信指控与保障系统",
+          "evidence_ids": [
+            "ev-combat_scenario-1",
+            "ev-international_situation-1",
+            "ev-operational_employment-1",
+            "ev-weapon_equipment-1"
+          ],
+          "indicators": [],
+          "supporting_scenarios": [
+            "挖掘在西太反介入体系下的装备能力缺口"
+          ]
+        }
+      ],
+      "equipment_forms": [],
+      "target_counts": {},
+      "topic": "挖掘在西太反介入体系下的装备能力缺口"
+    },
+    "demand_cards": [
+      {
+        "agent_contributions": [
+          "combat_scenario：作战场景围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。",
+          "operational_employment：作战运用围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。",
+          "international_situation：国际形势围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。",
+          "weapon_equipment：武器装备围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。"
+        ],
+        "baseline_system": "",
+        "capability_domain": "任务补位平台、传感器、效应器与协同节点",
+        "capability_gap": "现有装备组合无法覆盖传统作战链中的关键空白节点或极端边界条件；本次基线：梳理与挖掘在西太反介入体系下的装备能力缺口相关的现有装备功能、参数和体系接口。；识别探测、决策、载荷、协同、保障和成本边界。；按可获得性、验证程度、集成条件和工程风险评估成熟度。",
+        "capability_id": "cap-new-001",
+        "capability_name": "传统战法能力空白补位能力",
+        "card_id": "card-cap-new-001",
+        "combat_effect_uplift": "",
+        "confidence": 0.78,
+        "deep_capability_portrait": "面向“挖掘在西太反介入体系下的装备能力缺口”中的关键任务链断点，传统战法能力空白补位能力不应被理解为单项参数升级，而应形成任务补位平台、传感器、效应器与协同节点：发展具备缺口场景专用探测、快速接入既有指挥链、模块化任务载荷和低成本补位能力的产品。其核心机理是通过分布式感知、弹性协同和多样化任务效应提升复杂环境下的发现、压制抵抗、反制与任务续接能力。，从而补齐传统任务链关键空白节点，在极端边界条件下提供可快速接入的专用能力。。区别于既有方案，该方向把智能研判、分布式协同、模块化载荷和低成本规模运用组合为可验证的新型体系能力。。面向未来演化，跟踪对手体系、频谱环境、智能化任务链和低成本规模化手段变化，按触发条件滚动调整能力基线。。建设上，按数字仿真、半实物联试和分阶段演训逐级收敛装备形态与任务指标。军事运用上，应以任务链连续性而非单装峰值参数衡量收益：在链路受扰、节点受损或保障节奏下降时，能力组合仍应维持最低任务闭环，并能在条件恢复后快速重构。相对现有基线，新增机制应体现在跨节点功能组合、降级运行和可替换接口，而不是简单叠加传感器、算力或载荷。现役升级与新研边界需由接口兼容性、平台余量和体系联试结果决定；能够通过软件、模块和开放网关实现的优先纳入近期升级，涉及新型载体、能源或任务架构重构的进入中期新研。该判断仍受公开资料完备度、未来对抗样式和工程成熟度约束，必须以任务级仿真、半实物联试、强约束演训和失效注入进行证伪；若任务效果增益不能跨场景复现，或体系依赖成本超过可承受范围，应降低优先级并回到上游效果链重新校准。",
+        "development_path": "按数字仿真、半实物联试和分阶段演训逐级收敛装备形态与任务指标。",
+        "equipment_form": "任务补位平台、传感器、效应器与协同节点",
+        "evidence_basis": [
+          "combat_scenario（ev-combat_scenario-1）：挖掘在西太反介入体系下的装备能力缺口应落入明确任务场景，包含敌方方案、关键时间窗和环境约束。；场景约束决定能力画像不能只写技术方向，必须转化为任务功能。",
+          "operational_employment（ev-operational_employment-1）：挖掘在西太反介入体系下的装备能力缺口需要结合COA、兵力协同和经验教训判断可用作战样式。；作战运用约束用于校验能力画像是否能进入真实任务链条。",
+          "international_situation（ev-international_situation-1）：围绕挖掘在西太反介入体系下的装备能力缺口，需要先识别潜在威胁力量和对抗压力。；战略格局变化可能推动新型装备能力从单点性能转向体系贡献。",
+          "weapon_equipment（ev-weapon_equipment-1）：需要围绕挖掘在西太反介入体系下的装备能力缺口建立国外现役、在研和替代装备的型号谱系与能力证据矩阵。；国外装备的体系依赖、任务优势和能力边界应分别映射为防御性反制选项、现役升级需求与新装备研发需求。"
+        ],
+        "evidence_chain": [
+          "ev-combat_scenario-1",
+          "ev-international_situation-1",
+          "ev-operational_employment-1",
+          "ev-weapon_equipment-1"
+        ],
+        "foresight": "跟踪对手体系、频谱环境、智能化任务链和低成本规模化手段变化，按触发条件滚动调整能力基线。",
+        "military_utility": "补齐传统任务链关键空白节点，在极端边界条件下提供可快速接入的专用能力。",
+        "mission_effect": "补齐传统任务链关键空白节点，在极端边界条件下提供可快速接入的专用能力。",
+        "novelty": "把智能研判、分布式协同、模块化载荷和低成本规模运用组合为可验证的新型体系能力。",
+        "operational_constraints": [
+          "公开证据不足的参数不得转化为确定性指标，保留区间与置信度",
+          "不以单一平台性能替代体系任务效果，不假设持续高带宽连接"
+        ],
+        "operational_mechanism": "通过分布式感知、弹性协同和多样化任务效应提升复杂环境下的发现、压制抵抗、反制与任务续接能力。",
+        "priority": "高：关键性高、紧迫性高、可行性中高",
+        "reasoning_refs": [
+          "reason-bdbfa48b3b5f",
+          "reason-60e13883c43c"
+        ],
+        "risk_boundaries": [
+          "公开证据不足的参数不得转化为确定性指标，保留区间与置信度",
+          "不以单一平台性能替代体系任务效果，不假设持续高带宽连接"
+        ],
+        "source_winning_logic": "传统场景/制胜/战法 -> 当前装备对比 -> 能力空白 -> 新功能产品补位",
+        "strike_chain_contribution": "",
+        "strike_countermeasure_value": "通过分布式感知、弹性协同和多样化任务效应提升复杂环境下的发现、压制抵抗、反制与任务续接能力。",
+        "supporting_scenarios": [
+          "挖掘在西太反介入体系下的装备能力缺口"
+        ],
+        "system_dependencies": [
+          "与现有指挥信息、情报侦察、保障和训练体系形成标准化接口",
+          "在通信受限、数据不完备和局部节点失效条件下支持降级运行"
+        ],
+        "upgrade_boundary": "",
+        "upgrade_package": []
+      },
+      {
+        "agent_contributions": [
+          "combat_scenario：作战场景围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。",
+          "operational_employment：作战运用围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。",
+          "international_situation：国际形势围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。",
+          "weapon_equipment：武器装备围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。"
+        ],
+        "baseline_system": "现役任务平台及其指挥、感知、通信和保障分系统。",
+        "capability_domain": "现役装备、任务软件、通信指控与保障系统",
+        "capability_gap": "现有装备在复杂环境识别、抗干扰、协同接口、任务重构和持续保障方面存在差距；本次基线：梳理与挖掘在西太反介入体系下的装备能力缺口相关的现有装备功能、参数和体系接口。；识别探测、决策、载荷、协同、保障和成本边界。；按可获得性、验证程度、集成条件和工程风险评估成熟度。",
+        "capability_id": "cap-upgrade-001",
+        "capability_name": "现有装备传统场景能力提升",
+        "card_id": "card-cap-upgrade-001",
+        "combat_effect_uplift": "以较短工程周期提升现役装备在复杂环境中的体系贡献度、任务适配性和持续保障能力。",
+        "confidence": 0.78,
+        "deep_capability_portrait": "面向“挖掘在西太反介入体系下的装备能力缺口”中的关键任务链断点，现有装备传统场景能力提升不应被理解为单项参数升级，而应形成现役装备、任务软件、通信指控与保障系统：提升现有产品的复杂环境识别、抗干扰通信、跨平台协同、软件定义任务重构和持续保障功能。其核心机理是优先增强现役装备对复杂目标、电子压制、链路受扰和体系节点失效的发现、抗扰、反制与恢复能力。，从而以较短工程周期提升现役装备在复杂环境中的体系贡献度、任务适配性和持续保障能力。。区别于既有方案，该方向以开放架构、软件定义和任务模块替代单项参数堆叠，使现役平台能够持续吸收新算法、新载荷和新协同方式。。面向未来演化，跟踪对手体系、频谱环境、智能化任务链和低成本规模化手段变化，按触发条件滚动调整能力基线。。建设上，优先采用开放接口、任务软件和模块化改装形成近期能力，再以联试演训决定后续硬件升级范围。军事运用上，应以任务链连续性而非单装峰值参数衡量收益：在链路受扰、节点受损或保障节奏下降时，能力组合仍应维持最低任务闭环，并能在条件恢复后快速重构。相对现有基线，新增机制应体现在跨节点功能组合、降级运行和可替换接口，而不是简单叠加传感器、算力或载荷。现役升级与新研边界需由接口兼容性、平台余量和体系联试结果决定；能够通过软件、模块和开放网关实现的优先纳入近期升级，涉及新型载体、能源或任务架构重构的进入中期新研。该判断仍受公开资料完备度、未来对抗样式和工程成熟度约束，必须以任务级仿真、半实物联试、强约束演训和失效注入进行证伪；若任务效果增益不能跨场景复现，或体系依赖成本超过可承受范围，应降低优先级并回到上游效果链重新校准。",
+        "development_path": "优先采用开放接口、任务软件和模块化改装形成近期能力，再以联试演训决定后续硬件升级范围。",
+        "equipment_form": "现役装备、任务软件、通信指控与保障系统",
+        "evidence_basis": [
+          "combat_scenario（ev-combat_scenario-1）：挖掘在西太反介入体系下的装备能力缺口应落入明确任务场景，包含敌方方案、关键时间窗和环境约束。；场景约束决定能力画像不能只写技术方向，必须转化为任务功能。",
+          "operational_employment（ev-operational_employment-1）：挖掘在西太反介入体系下的装备能力缺口需要结合COA、兵力协同和经验教训判断可用作战样式。；作战运用约束用于校验能力画像是否能进入真实任务链条。",
+          "international_situation（ev-international_situation-1）：围绕挖掘在西太反介入体系下的装备能力缺口，需要先识别潜在威胁力量和对抗压力。；战略格局变化可能推动新型装备能力从单点性能转向体系贡献。",
+          "weapon_equipment（ev-weapon_equipment-1）：需要围绕挖掘在西太反介入体系下的装备能力缺口建立国外现役、在研和替代装备的型号谱系与能力证据矩阵。；国外装备的体系依赖、任务优势和能力边界应分别映射为防御性反制选项、现役升级需求与新装备研发需求。"
+        ],
+        "evidence_chain": [
+          "ev-combat_scenario-1",
+          "ev-international_situation-1",
+          "ev-operational_employment-1",
+          "ev-weapon_equipment-1"
+        ],
+        "foresight": "跟踪对手体系、频谱环境、智能化任务链和低成本规模化手段变化，按触发条件滚动调整能力基线。",
+        "military_utility": "以较短工程周期提升现役装备在复杂环境中的体系贡献度、任务适配性和持续保障能力。",
+        "mission_effect": "以较短工程周期提升现役装备在复杂环境中的体系贡献度、任务适配性和持续保障能力。",
+        "novelty": "以开放架构、软件定义和任务模块替代单项参数堆叠，使现役平台能够持续吸收新算法、新载荷和新协同方式。",
+        "operational_constraints": [
+          "公开证据不足的参数不得转化为确定性指标，保留区间与置信度",
+          "不以单一平台性能替代体系任务效果，不假设持续高带宽连接"
+        ],
+        "operational_mechanism": "优先增强现役装备对复杂目标、电子压制、链路受扰和体系节点失效的发现、抗扰、反制与恢复能力。",
+        "priority": "中高：紧迫性高、工程可行性高",
+        "reasoning_refs": [
+          "reason-bdbfa48b3b5f",
+          "reason-60e13883c43c"
+        ],
+        "risk_boundaries": [
+          "公开证据不足的参数不得转化为确定性指标，保留区间与置信度",
+          "不以单一平台性能替代体系任务效果，不假设持续高带宽连接"
+        ],
+        "source_winning_logic": "传统打法目标能力 -> 当前装备参数与运用表现 -> 残余差距 -> 升级需求",
+        "strike_chain_contribution": "优先增强现役装备对复杂目标、电子压制、链路受扰和体系节点失效的发现、抗扰、反制与恢复能力。",
+        "strike_countermeasure_value": "优先增强现役装备对复杂目标、电子压制、链路受扰和体系节点失效的发现、抗扰、反制与恢复能力。",
+        "supporting_scenarios": [
+          "挖掘在西太反介入体系下的装备能力缺口"
+        ],
+        "system_dependencies": [
+          "与现有指挥信息、情报侦察、保障和训练体系形成标准化接口",
+          "在通信受限、数据不完备和局部节点失效条件下支持降级运行"
+        ],
+        "upgrade_boundary": "软件、接口和模块化载荷能够实现的纳入现役升级；若平台余量、能源或任务架构无法承载，则转入新研。",
+        "upgrade_package": [
+          "提升现有产品的复杂环境识别、抗干扰通信、跨平台协同、软件定义任务重构和持续保障功能",
+          "开放数据与任务接口",
+          "软件定义任务重构",
+          "抗扰协同与故障降级"
+        ]
+      }
+    ],
+    "reasoning_traceability": {
+      "agent_handoffs": [
+        {
+          "agent_id": "combat_scenario",
+          "claim_ids": [
+            "claim-c23d8ae2bd77",
+            "claim-3910504a32b4"
+          ],
+          "confidence": 0.78,
+          "evidence_ids": [
+            "ev-combat_scenario-1"
+          ],
+          "handoff_summary": "作战场景围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。",
+          "limitations": [],
+          "open_questions": [
+            "作战场景维度仍需进一步联网补充高置信资料。"
+          ],
+          "packet_id": "packet-combat_scenario"
+        },
+        {
+          "agent_id": "operational_employment",
+          "claim_ids": [
+            "claim-3861bb2956ae",
+            "claim-52dabe1775df"
+          ],
+          "confidence": 0.78,
+          "evidence_ids": [
+            "ev-operational_employment-1"
+          ],
+          "handoff_summary": "作战运用围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。",
+          "limitations": [],
+          "open_questions": [
+            "作战运用维度仍需进一步联网补充高置信资料。"
+          ],
+          "packet_id": "packet-operational_employment"
+        },
+        {
+          "agent_id": "international_situation",
+          "claim_ids": [
+            "claim-955a25921722",
+            "claim-7e2bf9387cdb"
+          ],
+          "confidence": 0.78,
+          "evidence_ids": [
+            "ev-international_situation-1"
+          ],
+          "handoff_summary": "国际形势围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。",
+          "limitations": [],
+          "open_questions": [
+            "国际形势维度仍需进一步联网补充高置信资料。"
+          ],
+          "packet_id": "packet-international_situation"
+        },
+        {
+          "agent_id": "weapon_equipment",
+          "claim_ids": [
+            "claim-9b5b029dc50e",
+            "claim-4a9f5cba2d2b"
+          ],
+          "confidence": 0.78,
+          "evidence_ids": [
+            "ev-weapon_equipment-1"
+          ],
+          "handoff_summary": "武器装备围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。",
+          "limitations": [],
+          "open_questions": [
+            "武器装备维度仍需进一步联网补充高置信资料。"
+          ],
+          "packet_id": "packet-weapon_equipment"
+        }
+      ],
+      "reasoning_nodes": [
+        {
+          "assumptions": [
+            "仅基于已接纳公开证据",
+            "路线：traditional_gap",
+            "公开资料结论需由分析师确认"
+          ],
+          "claim_ids": [
+            "claim-3861bb2956ae",
+            "claim-3910504a32b4",
+            "claim-4a9f5cba2d2b",
+            "claim-52dabe1775df",
+            "claim-7e2bf9387cdb",
+            "claim-955a25921722",
+            "claim-9b5b029dc50e",
+            "claim-c23d8ae2bd77"
+          ],
+          "confidence": 0.78,
+          "created_at": "2026-07-21T17:52:31.079307+00:00",
+          "evidence_ids": [
+            "ev-combat_scenario-1",
+            "ev-operational_employment-1",
+            "ev-international_situation-1",
+            "ev-weapon_equipment-1"
+          ],
+          "input_refs": [
+            "winning-input-r1",
+            "winning-resources-r1"
+          ],
+          "next_action": {
+            "action": "continue",
+            "reason": "S1完成后进入下一有效步骤S2。",
+            "target_step": 2
+          },
+          "object_id": "reason-eddb685a9069",
+          "route": "traditional_gap",
+          "schema_version": "1.0",
+          "step": 1,
+          "summary": "围绕挖掘在西太反介入体系下的装备能力缺口，按感知、决策、处置、冗余/恢复四层解构。主要压力依据：识别潜在威胁力量、能力增长点、可能意图与对抗压力。；构造敌方可能行动方案、关键节点和可观测行为。；明确地形、气象、电磁、网络和部署空间约束。。证据边界：无已登记冲突。",
+          "title": "防御解构"
+        },
+        {
+          "assumptions": [
+            "仅基于已接纳公开证据",
+            "路线：traditional_gap",
+            "公开资料结论需由分析师确认"
+          ],
+          "claim_ids": [
+            "claim-3861bb2956ae",
+            "claim-3910504a32b4",
+            "claim-4a9f5cba2d2b",
+            "claim-52dabe1775df",
+            "claim-7e2bf9387cdb",
+            "claim-955a25921722",
+            "claim-9b5b029dc50e",
+            "claim-c23d8ae2bd77"
+          ],
+          "confidence": 0.78,
+          "created_at": "2026-07-21T17:52:31.079318+00:00",
+          "evidence_ids": [
+            "ev-combat_scenario-1",
+            "ev-operational_employment-1",
+            "ev-international_situation-1",
+            "ev-weapon_equipment-1"
+          ],
+          "input_refs": [
+            "reason-eddb685a9069"
+          ],
+          "next_action": {
+            "action": "continue",
+            "reason": "S2完成后进入下一有效步骤S3。",
+            "target_step": 3
+          },
+          "object_id": "reason-8a8be6438125",
+          "route": "traditional_gap",
+          "schema_version": "1.0",
+          "step": 2,
+          "summary": "传统场景/战法与现有装备对比，识别能力缺口并提出升级功能。 候选路径比较依据：{'baseline': '集中式基线', 'distributed': '弹性分布', 'resource_constrained': '资源受限'}；分析跨军兵种、有人无人、传感器与火力单元协同关系。；将挖掘在西太反介入体系下的装备能力缺口映射到任务背景、作战阶段、参与力量和胜负条件。。",
+          "title": "制胜路径"
+        },
+        {
+          "assumptions": [
+            "仅基于已接纳公开证据",
+            "路线：traditional_gap",
+            "公开资料结论需由分析师确认"
+          ],
+          "claim_ids": [
+            "claim-3861bb2956ae",
+            "claim-3910504a32b4",
+            "claim-4a9f5cba2d2b",
+            "claim-52dabe1775df",
+            "claim-7e2bf9387cdb",
+            "claim-955a25921722",
+            "claim-9b5b029dc50e",
+            "claim-c23d8ae2bd77"
+          ],
+          "confidence": 0.78,
+          "created_at": "2026-07-21T17:52:31.079324+00:00",
+          "evidence_ids": [
+            "ev-combat_scenario-1",
+            "ev-operational_employment-1",
+            "ev-international_situation-1",
+            "ev-weapon_equipment-1"
+          ],
+          "input_refs": [
+            "reason-8a8be6438125"
+          ],
+          "next_action": {
+            "action": "continue",
+            "reason": "S3完成后进入下一有效步骤S4。",
+            "target_step": 4
+          },
+          "object_id": "reason-9c9110b45f5a",
+          "route": "traditional_gap",
+          "schema_version": "1.0",
+          "step": 3,
+          "summary": "任务压力形成→现有任务链暴露失效窗口→新机制改变对抗关系→能力映射→验证",
+          "title": "效果链"
+        },
+        {
+          "assumptions": [
+            "仅基于已接纳公开证据",
+            "路线：traditional_gap",
+            "公开资料结论需由分析师确认"
+          ],
+          "claim_ids": [
+            "claim-3861bb2956ae",
+            "claim-3910504a32b4",
+            "claim-4a9f5cba2d2b",
+            "claim-52dabe1775df",
+            "claim-7e2bf9387cdb",
+            "claim-955a25921722",
+            "claim-9b5b029dc50e",
+            "claim-c23d8ae2bd77"
+          ],
+          "confidence": 0.78,
+          "created_at": "2026-07-21T17:52:31.079328+00:00",
+          "evidence_ids": [
+            "ev-combat_scenario-1",
+            "ev-operational_employment-1",
+            "ev-international_situation-1",
+            "ev-weapon_equipment-1"
+          ],
+          "input_refs": [
+            "reason-9c9110b45f5a"
+          ],
+          "next_action": {
+            "action": "continue",
+            "reason": "S4完成后进入下一有效步骤S5。",
+            "target_step": 5
+          },
+          "object_id": "reason-64ba1f10fd06",
+          "route": "traditional_gap",
+          "schema_version": "1.0",
+          "step": 4,
+          "summary": "把任务效果映射为功能、指标、接口和验证条件",
+          "title": "能力映射"
+        },
+        {
+          "assumptions": [
+            "仅基于已接纳公开证据",
+            "路线：traditional_gap",
+            "公开资料结论需由分析师确认"
+          ],
+          "claim_ids": [
+            "claim-3861bb2956ae",
+            "claim-3910504a32b4",
+            "claim-4a9f5cba2d2b",
+            "claim-52dabe1775df",
+            "claim-7e2bf9387cdb",
+            "claim-955a25921722",
+            "claim-9b5b029dc50e",
+            "claim-c23d8ae2bd77"
+          ],
+          "confidence": 0.78,
+          "created_at": "2026-07-21T17:52:31.079333+00:00",
+          "evidence_ids": [
+            "ev-combat_scenario-1",
+            "ev-operational_employment-1",
+            "ev-international_situation-1",
+            "ev-weapon_equipment-1"
+          ],
+          "input_refs": [
+            "reason-64ba1f10fd06"
+          ],
+          "next_action": {
+            "action": "continue",
+            "reason": "S5完成后进入下一有效步骤S6。",
+            "target_step": 6
+          },
+          "object_id": "reason-bdbfa48b3b5f",
+          "route": "traditional_gap",
+          "schema_version": "1.0",
+          "step": 5,
+          "summary": "{'capability': '任务链韧性', 'grade': '关键差距', 'basis': '公开证据与场景压力'}",
+          "title": "差距量化"
+        },
+        {
+          "assumptions": [
+            "仅基于已接纳公开证据",
+            "路线：traditional_gap",
+            "公开资料结论需由分析师确认"
+          ],
+          "claim_ids": [
+            "claim-3861bb2956ae",
+            "claim-3910504a32b4",
+            "claim-4a9f5cba2d2b",
+            "claim-52dabe1775df",
+            "claim-7e2bf9387cdb",
+            "claim-955a25921722",
+            "claim-9b5b029dc50e",
+            "claim-c23d8ae2bd77"
+          ],
+          "confidence": 0.78,
+          "created_at": "2026-07-21T17:52:31.079337+00:00",
+          "evidence_ids": [
+            "ev-combat_scenario-1",
+            "ev-operational_employment-1",
+            "ev-international_situation-1",
+            "ev-weapon_equipment-1"
+          ],
+          "input_refs": [
+            "reason-bdbfa48b3b5f"
+          ],
+          "next_action": {
+            "action": "stop",
+            "reason": "S1-S6推理链已完成，进入L1-L3门控与独立审计。",
+            "target_step": 0
+          },
+          "object_id": "reason-60e13883c43c",
+          "route": "traditional_gap",
+          "schema_version": "1.0",
+          "step": 6,
+          "summary": "依据前五步去重归并，分别形成新作战能力方向和现有装备升级需求，并写入制胜逻辑、关联场景、优先级、差距、功能画像和证据引用。路线=traditional_gap，基线发现=8条，待闭合问题=4项。",
+          "title": "能力画像生成"
+        }
+      ],
+      "stage_outputs": [
+        {
+          "confidence": 0.78,
+          "created_at": "2026-07-21T17:52:31.079382+00:00",
+          "evidence_ids": [
+            "ev-combat_scenario-1",
+            "ev-international_situation-1",
+            "ev-operational_employment-1",
+            "ev-weapon_equipment-1"
+          ],
+          "gate_passed": true,
+          "gate_reasons": [],
+          "layer": "L1",
+          "outputs": {
+            "assumptions": [
+              "公开资料足以支撑初步画像，不替代专家论证。"
+            ],
+            "core_agent_analysis": {
+              "assumptions": [
+                "离线fixture仅验证合同与数据流，不代表真实军事结论"
+              ],
+              "defense_decomposition": [],
+              "dynamic_subagent_outputs": [],
+              "dynamic_subagent_runs": [],
+              "effect_chain": [
+                "任务压力形成→现有任务链暴露失效窗口→新机制改变对抗关系→能力映射→验证"
+              ],
+              "loop_trace": [],
+              "middle_loop_limited": false,
+              "subagent_runs": [],
+              "winning_paths": []
+            },
+            "coverage_limits": [],
+            "effect_chain": "行动 -> 直接效果 -> 间接效果 -> 最终能力收益。",
+            "evidence_grounded_findings": [
+              {
+                "agent_id": "combat_scenario",
+                "capability_tags": [
+                  "scenario",
+                  "coa",
+                  "environment"
+                ],
+                "confidence": 0.78,
+                "evidence_ids": [
+                  "ev-combat_scenario-1"
+                ],
+                "findings": [
+                  "挖掘在西太反介入体系下的装备能力缺口应落入明确任务场景，包含敌方方案、关键时间窗和环境约束。",
+                  "场景约束决定能力画像不能只写技术方向，必须转化为任务功能。"
+                ]
+              },
+              {
+                "agent_id": "operational_employment",
+                "capability_tags": [
+                  "operation",
+                  "coordination",
+                  "lessons"
+                ],
+                "confidence": 0.78,
+                "evidence_ids": [
+                  "ev-operational_employment-1"
+                ],
+                "findings": [
+                  "挖掘在西太反介入体系下的装备能力缺口需要结合COA、兵力协同和经验教训判断可用作战样式。",
+                  "作战运用约束用于校验能力画像是否能进入真实任务链条。"
+                ]
+              },
+              {
+                "agent_id": "international_situation",
+                "capability_tags": [
+                  "situation",
+                  "threat",
+                  "strategy"
+                ],
+                "confidence": 0.78,
+                "evidence_ids": [
+                  "ev-international_situation-1"
+                ],
+                "findings": [
+                  "围绕挖掘在西太反介入体系下的装备能力缺口，需要先识别潜在威胁力量和对抗压力。",
+                  "战略格局变化可能推动新型装备能力从单点性能转向体系贡献。"
+                ]
+              },
+              {
+                "agent_id": "weapon_equipment",
+                "capability_tags": [
+                  "equipment",
+                  "capability_gap",
+                  "technology_readiness"
+                ],
+                "confidence": 0.78,
+                "evidence_ids": [
+                  "ev-weapon_equipment-1"
+                ],
+                "findings": [
+                  "需要围绕挖掘在西太反介入体系下的装备能力缺口建立国外现役、在研和替代装备的型号谱系与能力证据矩阵。",
+                  "国外装备的体系依赖、任务优势和能力边界应分别映射为防御性反制选项、现役升级需求与新装备研发需求。"
+                ]
+              }
+            ],
+            "key_capabilities": [
+              "感知发现",
+              "快速决策",
+              "精确打击/拦截",
+              "体系协同"
+            ],
+            "reasoning_refs": [
+              "reason-eddb685a9069",
+              "reason-8a8be6438125",
+              "reason-9c9110b45f5a"
+            ],
+            "weakness_map": [
+              "围绕敌体系感知、决策、拦截、冗余进行分层解构。",
+              "挖掘在西太反介入体系下的装备能力缺口的关键弱点需由场景、装备和运用证据共同支撑。"
+            ],
+            "winning_paths": [
+              "传统打法能力缺口 -> 当前装备对比 -> 残余差距 -> 升级需求。",
+              "以战例和公开证据校验制胜路径假设。"
+            ]
+          },
+          "recall_requests": [],
+          "schema_version": "1.0",
+          "stage_id": "stage-L1",
+          "title": "制胜逻辑分析"
+        },
+        {
+          "confidence": 0.78,
+          "created_at": "2026-07-21T17:52:31.079393+00:00",
+          "evidence_ids": [
+            "ev-combat_scenario-1",
+            "ev-international_situation-1",
+            "ev-operational_employment-1",
+            "ev-weapon_equipment-1"
+          ],
+          "gate_passed": true,
+          "gate_reasons": [],
+          "layer": "L2",
+          "outputs": {
+            "analogy_innovation": "七维分解并进行跨域移植评估。",
+            "concept_scan": [
+              "扫描高超、模块化、低成本、AI自主、诱饵、巡飞弹等前沿样式。",
+              "结合挖掘在西太反介入体系下的装备能力缺口判断可迁移的新能力空间。"
+            ],
+            "core_agent_concept_directions": [],
+            "feasibility_score": 3,
+            "frontier_evidence_count": 0,
+            "frontier_evidence_ids": [],
+            "reasoning_refs": [
+              "reason-64ba1f10fd06"
+            ],
+            "route": "traditional_gap",
+            "screened_directions": [
+              "新能力方向：体系化感知-决策-火力闭环。",
+              "改进方向：现有装备在复杂场景下的探测、协同和抗干扰能力提升。"
+            ],
+            "validation_capability": "capability_gap",
+            "validation_source": "业务Agent覆盖"
+          },
+          "recall_requests": [],
+          "schema_version": "1.0",
+          "stage_id": "stage-L2",
+          "title": "概念创新评估"
+        },
+        {
+          "confidence": 0.78,
+          "created_at": "2026-07-21T17:52:31.079399+00:00",
+          "evidence_ids": [
+            "ev-combat_scenario-1",
+            "ev-international_situation-1",
+            "ev-operational_employment-1",
+            "ev-weapon_equipment-1"
+          ],
+          "gate_passed": true,
+          "gate_reasons": [],
+          "layer": "L3",
+          "outputs": {
+            "branch_products": {},
+            "category_mapping": "按平台、任务、射程、速度、载荷和保障约束映射。",
+            "core_agent_gap_assessment": [
+              {
+                "basis": "公开证据与场景压力",
+                "capability": "任务链韧性",
+                "grade": "关键差距"
+              }
+            ],
+            "coverage_limits": [],
+            "dedup_grouping": "合并L1关键能力与L2创新方向，形成能力条目组。",
+            "gap_basis": "梳理与挖掘在西太反介入体系下的装备能力缺口相关的现有装备功能、参数和体系接口。；识别探测、决策、载荷、协同、保障和成本边界。；按可获得性、验证程度、集成条件和工程风险评估成熟度。",
+            "gap_quantification": "按空白、关键差距、部分差距、满足、超出五档评估。",
+            "priority_method": "关键性 x 紧迫性 x 可行性。",
+            "reasoning_refs": [
+              "reason-bdbfa48b3b5f",
+              "reason-60e13883c43c"
+            ]
+          },
+          "recall_requests": [],
+          "schema_version": "1.0",
+          "stage_id": "stage-L3",
+          "title": "能力图像生成"
+        }
+      ],
+      "trace_rule": "正式结论应由需求卡片回溯至能力画像、S1-S6节点、中间Agent Packet和EvidenceCard。"
+    }
+  },
+  "report_contract": {
+    "future_test": "避免把公开资料未覆盖等同于能力空白，结合成熟度、接口余量和未来威胁演化确定建设时序。",
+    "military_test": "重点说明缺口如何削弱探测、指挥、突防、打击、抗毁、保障或持续作战能力，以及补齐后能够恢复哪一段任务效果。",
+    "thesis": "以现有任务链和装备基线为参照，定位在具体对抗条件下会导致任务失败或效能骤降的能力缺口，再论证升级与新研边界。"
+  },
+  "report_quality_requirements": {
+    "军事价值性": "明确对任务效能、体系韧性、作战节奏、建设优先级和装备形态的实际贡献。",
+    "创新性": "说明相对现有战法、装备基线或体系组合的新增机制、差异化价值和可验证创新点。",
+    "前瞻性": "给出未来场景、触发条件、时间窗口与不确定性；推断必须标注前提和置信度。",
+    "深度性": "解释事实、场景压力、制胜机制、能力需求之间的因果关系，而非并列罗列材料。"
+  },
+  "required_sections": [
+    "需求卡片",
+    "能力全景图",
+    "深度研究报告（含推理链可回溯）"
+  ]
+}

@@ -1,0 +1,61 @@
+[
+  {
+    "adopted_by_capability_ids": [],
+    "adopted_by_report_sections": [
+      "final_report"
+    ],
+    "adopted_by_s_steps": {},
+    "agent_id": "weapon_equipment",
+    "contributed": true,
+    "loao_quality_delta": null,
+    "model_calls": 2,
+    "observation_id": "contribution-packet-weapon_equipment",
+    "packet_id": "packet-weapon_equipment",
+    "produced_claim_ids": [
+      "claim-5896ec459f8c",
+      "claim-c3db4f888c24",
+      "claim-14d7e219c1d0",
+      "claim-0ab9802cee9f"
+    ]
+  },
+  {
+    "adopted_by_capability_ids": [],
+    "adopted_by_report_sections": [
+      "final_report"
+    ],
+    "adopted_by_s_steps": {},
+    "agent_id": "combat_scenario",
+    "contributed": true,
+    "loao_quality_delta": null,
+    "model_calls": 2,
+    "observation_id": "contribution-packet-combat_scenario",
+    "packet_id": "packet-combat_scenario",
+    "produced_claim_ids": [
+      "claim-6dbe1ffe6859",
+      "claim-91a1e3de60e2",
+      "claim-c1085e29490b",
+      "claim-729dbceb216d",
+      "claim-2f1dd686bfc9"
+    ]
+  },
+  {
+    "adopted_by_capability_ids": [],
+    "adopted_by_report_sections": [
+      "final_report"
+    ],
+    "adopted_by_s_steps": {},
+    "agent_id": "operational_employment",
+    "contributed": true,
+    "loao_quality_delta": null,
+    "model_calls": 2,
+    "observation_id": "contribution-packet-operational_employment",
+    "packet_id": "packet-operational_employment",
+    "produced_claim_ids": [
+      "claim-24744a48cd83",
+      "claim-de2b0d115e62",
+      "claim-a7ef778f7ebb",
+      "claim-36911e998308",
+      "claim-8402750abde1"
+    ]
+  }
+]

@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:c3fe8beda3c0aa87",
+  "content_path": "text-c3fe8beda3c0aa87.txt",
+  "content_type": "text/plain",
+  "direct_error": "TimeoutError: _ssl.c:1015: The handshake operation timed out",
+  "encoding": "utf-8",
+  "evidence_id": "ev-combat_scenario-web-b0ac592cca7d",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "c3fe8beda3c0aa877abaabdd9776df1fea048497e8cbe5dd9e55af7ea35e42cf",
+  "url": "https://www.marines.mil/force-design/"
+}

@@ -1,0 +1,72 @@
+schema_version: "1.1"
+
+# Benchmark credentials are deliberately isolated from production credentials.
+# Existing process environment variables win over values loaded from this file.
+dotenv_files:
+  - evals/.env
+
+providers:
+  dashscope:
+    type: dashscope
+    base_url_env: EQUIPMENT_EVAL_DASHSCOPE_BASE_URL
+    api_key_env: EQUIPMENT_EVAL_DASHSCOPE_API_KEY
+
+  openai:
+    type: responses
+    base_url_env: EQUIPMENT_EVAL_OPENAI_BASE_URL
+    api_key_env: EQUIPMENT_EVAL_OPENAI_API_KEY
+
+  zhipu:
+    type: openai_compatible
+    base_url_env: EQUIPMENT_EVAL_ZHIPU_BASE_URL
+    api_key_env: EQUIPMENT_EVAL_ZHIPU_API_KEY
+
+systems:
+  generic_deep_research:
+    adapter: dashscope_deep_research
+    provider: dashscope
+    model: qwen-deep-research
+    output_format: model_detailed_report
+    timeout_seconds: 7200
+    clarification_answer: >-
+      无需进一步澄清。请严格按照原始问题覆盖全部范围，优先使用公开、可核验、
+      时效明确的资料，区分事实与推断，直接开展深入研究并输出详细中文报告。
+
+  generic_agent:
+    adapter: codex_cli
+    provider: openai
+    auth_mode: eval_api_key
+    command: codex
+    model: gpt-5.5
+    reasoning_effort: high
+    sandbox: read-only
+    timeout_seconds: 1800
+    max_tool_calls: 12
+    max_output_tokens: 7000
+    web_search:
+      enabled: true
+      search_context_size: medium
+
+  bare_llm:
+    adapter: compatible_llm
+    provider: openai
+    api_protocol: responses
+    model: gpt-5.5
+    reasoning_effort: none
+    timeout_seconds: 900
+    temperature: 0.2
+    max_output_tokens: 8000
+    web_search:
+      enabled: false
+
+  zhipu_llm:
+    adapter: compatible_llm
+    provider: zhipu
+    api_protocol: chat_completions
+    model: glm-5.2
+    reasoning_effort: none
+    timeout_seconds: 900
+    temperature: 0.2
+    max_output_tokens: 8000
+    web_search:
+      enabled: false

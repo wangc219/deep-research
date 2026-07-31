@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:bf4f31ededc6b7dd",
+  "content_path": "text-bf4f31ededc6b7dd.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: cached_origin_failure:HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-combat_scenario-web-614112de1ec0",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "bf4f31ededc6b7dd05ec95493a42a36d74dfccf0b9db34cc42828e9cde43e5c9",
+  "url": "https://www.army.mil/article/263145/army_developing_faster_improved_data_kill_chain_for_lethal_and_non_lethal_fires"
+}

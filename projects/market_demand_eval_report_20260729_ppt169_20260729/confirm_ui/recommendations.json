@@ -1,0 +1,11 @@
+{
+  "stage": "stage3",
+  "lang": "zh",
+  "recommend": {
+    "formula_policy": "text-only",
+    "generation_mode": "continuous"
+  },
+  "refine_spec": {
+    "value": false
+  }
+}

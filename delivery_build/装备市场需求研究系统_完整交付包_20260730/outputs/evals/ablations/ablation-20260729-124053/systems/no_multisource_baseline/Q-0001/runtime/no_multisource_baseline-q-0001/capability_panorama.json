@@ -1,0 +1,97 @@
+{
+  "actual_counts": {
+    "capability_domains": 6,
+    "capability_indicators": 0,
+    "capability_items": 6
+  },
+  "branch": "B",
+  "branch_name": "传统能力缺口发现",
+  "cross_domain_indicators": [],
+  "domains": [
+    {
+      "capability_ids": [
+        "cap-new-001"
+      ],
+      "domain": "中远程空射、陆射或舰射精确制导弹药族，含抗拒止导航舱段、多模被动末制导、弹上任务图执行器和低成本批产战斗部。",
+      "evidence_ids": [
+        "ev-generic_researcher-web-b1f3cacc93cd",
+        "ev-generic_researcher-web-3393b98b73a1"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "强干扰、弱通信条件下低信息依赖精确打击研究"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-upgrade-001"
+      ],
+      "domain": "现役精确弹药制导舱段、任务规划终端和火力控制软件的成体系改装，配套抗拒止组合导航模块、可验证任务图执行器、低带宽装订接口和末段多模复核传感器。",
+      "evidence_ids": [
+        "ev-generic_researcher-web-3393b98b73a1",
+        "ev-generic_researcher-web-b1f3cacc93cd"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "强干扰、弱通信条件下低信息依赖精确打击研究"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-002"
+      ],
+      "domain": "中型无人僚机、垂直起降无人机或车载无人机系统，挂载被动射频侦察、红外/光电复核、小型制导弹药和低功率电子压制载荷。",
+      "evidence_ids": [
+        "ev-generic_researcher-web-b1f3cacc93cd",
+        "ev-generic_researcher-web-3393b98b73a1"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "强干扰、弱通信条件下低信息依赖精确打击研究"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-003"
+      ],
+      "domain": "车载、舰载或无人平台投放的反辐射巡飞弹，配备宽带被动射频接收、简易光电复核、可编程战斗部和安全自毁逻辑。",
+      "evidence_ids": [
+        "ev-generic_researcher-web-3393b98b73a1"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "强干扰、弱通信条件下低信息依赖精确打击研究"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-004"
+      ],
+      "domain": "履带或轮式无人车，集成短程精确弹药、可编程迫击弹、小型反装甲导弹、被动侦察桅杆和本地火力分配计算单元。",
+      "evidence_ids": [
+        "ev-generic_researcher-web-b1f3cacc93cd",
+        "ev-generic_researcher-web-3393b98b73a1"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "强干扰、弱通信条件下低信息依赖精确打击研究"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-005"
+      ],
+      "domain": "陆基巡飞弹箱组，配任务图执行器、独立时空基准、低带宽校正接收、被动目标线索接入和安全终止机制。",
+      "evidence_ids": [
+        "ev-generic_researcher-web-3393b98b73a1"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "强干扰、弱通信条件下低信息依赖精确打击研究"
+      ]
+    }
+  ],
+  "equipment_forms": [],
+  "target_counts": {},
+  "topic": "强干扰、弱通信条件下低信息依赖精确打击研究"
+}

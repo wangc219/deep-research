@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:f5a2d43ba9bdfc9f",
+  "content_path": "text-f5a2d43ba9bdfc9f.txt",
+  "content_type": "text/plain",
+  "direct_error": "TimeoutError: _ssl.c:1015: The handshake operation timed out",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-84f5c7f4b57b",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "f5a2d43ba9bdfc9ff5794c289076052ee793e240f865cdb73582453ebfca6ea5",
+  "url": "https://www.saffm.hq.af.mil/Portals/84/documents/FY25/FY25%20Air%20Force%20Missile%20Procurement.pdf"
+}

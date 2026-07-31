@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · 230509 Tentative Manual For Expeditionary Advanced Base Operations 2nd Edition.pdf
+source_url=https://www.marines.mil/Portals/1/Docs/230509-Tentative-Manual-For-Expeditionary-Advanced-Base-Operations-2nd-Edition.pdf?ver=05KvG8wWlhI7uE0amD5uYg%3D%3D
+claim=EABO公开概念支持低特征、机动、分布式和相对易保障的前沿力量，用于通信、海空优势和保障受压的濒海争夺环境。
+excerpt=
+retrieval=Hosted web search citation metadata

@@ -1,0 +1,68 @@
+{
+  "canvas": "ppt169",
+  "audience": "甲方项目负责人、业务领域专家、技术负责人及验收管理人员",
+  "communication_intent": "以成果汇报和验收说明为主，先证明项目已形成业务、工程与评测闭环，再突出多智能体协作、以及制胜S1-S6智能体功能、可审计推理和专业质量优势，同时透明呈现风险，推动下一阶段试点优化与正式环境投产决策",
+  "audience_outcome": "甲方能够清晰判断项目完成度、核心特色和实际业务价值，认可真实盲评所验证的质量优势，并就证据可靠性、运行效率和正式环境试点的下一阶段工作达成共识",
+  "core_message": "JS装备市场需求深度挖掘系统的核心闭环已初步落地，真实专家盲评验证其在机理推演、能力映射和体系分析上较为显著优于对照方案；下一阶段应聚焦多智能体搭建以及协作优化，证据可信度、执行效率与正式环境投产",
+  "delivery_context": "甲方现场汇报约15–20分钟，有主讲和讨论环节",
+  "artifact_afterlife": "会后作为项目成果说明、阶段验收依据、试点决策材料和后续建设沟通底稿",
+  "content_divergence": "允许将架构设计文档重组为结论先行的成果汇报叙事；保留全部关键事实与真实评测口径，优先采用系统真实截图、架构图、流程图和数据可视化，避免大段照搬原文",
+  "delivery_purpose": "balanced",
+  "page_count": "16–18页",
+  "mode": "pyramid",
+  "visual_style": "soft-rounded",
+  "color": {
+    "name": "深海蓝与成果金",
+    "palette": {
+      "background": "#F7F9FC",
+      "secondary_bg": "#EAF0F7",
+      "primary": "#123B63",
+      "accent": "#D59A24",
+      "secondary_accent": "#2A7F9E",
+      "body_text": "#17212B"
+    }
+  },
+  "icons": "tabler-outline",
+  "typography": {
+    "name": "研究报告体",
+    "heading": {
+      "cjk": "Noto Serif CJK SC",
+      "css": "Georgia, 'Noto Serif CJK SC', serif",
+      "latin": "Georgia",
+      "sample_cjk": "",
+      "sample_latin": ""
+    },
+    "body": {
+      "cjk": "Microsoft YaHei",
+      "css": "Arial, 'Microsoft YaHei', sans-serif",
+      "latin": "Arial",
+      "sample_cjk": "",
+      "sample_latin": ""
+    },
+    "body_size": 24,
+    "sizes": {
+      "annotation": 18,
+      "subtitle": 32,
+      "title": 42
+    },
+    "body_size_unit": "px"
+  },
+  "image_usage": [
+    "provided",
+    "ai"
+  ],
+  "image_notes": "以系统真实截图和架构文档原生矢量图为权威素材：研究指挥台用于总览，S1–S6界面用于核心智能体成果，多智能体交互界面用于协作与审计，能力画像界面用于交付成果，Benchmark截图用于评测实证；全部截图与图表禁止裁切关键信息。\n生成配图可以利用用户提供图以及一些业务流程，生成更加完善的有特色的可视化说明图",
+  "formula_policy": "text-only",
+  "image_ai_path": "api",
+  "generation_mode": "continuous",
+  "refine_spec": false,
+  "image_strategy": {
+    "name": "",
+    "rendering": "",
+    "visual": "",
+    "mood": ""
+  },
+  "stage": "final",
+  "status": "confirmed",
+  "confirmed_at": "2026-07-22T21:34:20"
+}

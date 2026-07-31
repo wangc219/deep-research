@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:f0bbafd51710c22a",
+  "content_path": "text-f0bbafd51710c22a.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-20e071bd7bc7",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "f0bbafd51710c22ab18fea38a3d7cac39a033e1fbd776befdbb4b788ff15ff0b",
+  "url": "https://rdl.train.army.mil/catalog-ws/view/100.ATSC/B6A1625F-6975-4367-82C8-E67E901218C7-1753193840461/ATP3_01x81.pdf?utm_source=openai"
+}

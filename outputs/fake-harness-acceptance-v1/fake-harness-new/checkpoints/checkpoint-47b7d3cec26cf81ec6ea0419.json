@@ -1,0 +1,97 @@
+{
+  "checkpoint": {
+    "budget_remaining": {
+      "baseline_tasks": 3,
+      "finalize_tasks": 1,
+      "rounds": 5
+    },
+    "checkpoint_id": "run-checkpoint-fake-harness-new",
+    "completed_task_ids": [
+      "baseline:international_situation"
+    ],
+    "config_fingerprint": "sha256:e3aab4e8e3119feddd082586d888a99457ba5d61e1a72999b9029ce15d3da013",
+    "created_at": "2026-07-14T11:52:24.824042+00:00",
+    "mode": "fake",
+    "pending_task_ids": [
+      "baseline:combat_scenario",
+      "baseline:weapon_equipment",
+      "baseline:operational_employment",
+      "finalize:winning-report"
+    ],
+    "research_route": "new_winning_mechanism",
+    "resolved_route": "new_winning_mechanism",
+    "resume_count": 0,
+    "round_index": 1,
+    "run_id": "fake-harness-new",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "international_situation",
+      "combat_scenario",
+      "weapon_equipment",
+      "operational_employment"
+    ],
+    "source_materials": [
+      {
+        "artifact_refs": [
+          "text:3a485fd8dbcd690b"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-international_situation-1",
+          "normalized_url": "https://fixture.local/international_situation",
+          "reasons": [],
+          "score": 0.873
+        },
+        "evidence_id": "ev-international_situation-1",
+        "formal_evidence_allowed": true,
+        "status": "fixture_materialized",
+        "url": "https://fixture.local/international_situation"
+      }
+    ],
+    "status": "running",
+    "task_statuses": {
+      "baseline:combat_scenario": "pending",
+      "baseline:international_situation": "completed",
+      "baseline:operational_employment": "pending",
+      "baseline:weapon_equipment": "pending",
+      "finalize:winning-report": "pending"
+    },
+    "topic": "面向强干扰低空蜂群威胁的分布式预警制胜机理",
+    "worker_reports": [
+      {
+        "active_skill_ids": [
+          "strategic_osint",
+          "threat_forecasting",
+          "force_posture_tracking"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "fetch_page",
+          "create_evidence_card",
+          "register_event_timeline",
+          "compare_actor_positions",
+          "register_warning_indicator",
+          "test_competing_hypothesis"
+        ],
+        "agent_id": "international_situation",
+        "created_at": "2026-07-14T11:52:24.841318+00:00",
+        "domain_object_id": "strategic-packet-international_situation",
+        "domain_object_type": "StrategicAssessment",
+        "error": "",
+        "handoff_summary": "国际形势围绕面向强干扰低空蜂群威胁的分布式预警制胜机理形成2条基线发现，并按交接策略输出给下游。",
+        "harness_profile": "strategic_research_v1",
+        "new_evidence_ids": [
+          "ev-international_situation-1"
+        ],
+        "packet_id": "packet-international_situation",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment deep research/outputs/fake-harness-acceptance-v1/fake-harness-new/agent_sessions/international_situation.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-45f6fcdd-6926-4071-ae29-057207430915"
+      }
+    ]
+  },
+  "savepoint_id": "checkpoint-47b7d3cec26cf81ec6ea0419"
+}

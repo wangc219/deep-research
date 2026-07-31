@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=army.mil · army awards precision strike missile early operational capability contract
+source_url=https://www.army.mil/article/284406/army_awards_precision_strike_missile_early_operational_capability_contract
+claim=美国陆军PrSM早期作战能力合同表明PrSM正在替代ATACMS并进入现役采购链，构成陆基远程精确火力基线。
+excerpt=
+retrieval=Hosted web search citation metadata

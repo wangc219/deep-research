@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:cd8270b212c7f19e",
+  "content_path": "text-cd8270b212c7f19e.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-combat_scenario-web-71945fbf6f68",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "cd8270b212c7f19e5782112adcbb0c4e027041b38b2938a34de33ac42cd917d1",
+  "url": "https://www.army.mil/article/292099/listening_to_the_sky_acoustic_drone_detection_systems_ukraine_emerging_technologies?utm_source=openai"
+}

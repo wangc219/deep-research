@@ -1,0 +1,14 @@
+{
+  "artifact_ref": "raw:f519f5767f7f4769",
+  "connect_ip": "198.18.0.232",
+  "content_path": "raw-f519f5767f7f4769.bin",
+  "content_type": "application/pdf",
+  "encoding": null,
+  "evidence_id": "ev-weapon_equipment-web-8d0e6f36873e",
+  "final_url": "https://assets.publishing.service.gov.uk/media/65d724022197b201e57fa708/Defence_Drone_Strategy_-_the_UK_s_approach_to_Defence_Uncrewed_Systems.pdf?utm_source=openai",
+  "kind": "raw",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "f519f5767f7f4769a8349a7ee6ca6899afa55993040936b76f99a54ff8043258",
+  "url": "https://assets.publishing.service.gov.uk/media/65d724022197b201e57fa708/Defence_Drone_Strategy_-_the_UK_s_approach_to_Defence_Uncrewed_Systems.pdf?utm_source=openai"
+}

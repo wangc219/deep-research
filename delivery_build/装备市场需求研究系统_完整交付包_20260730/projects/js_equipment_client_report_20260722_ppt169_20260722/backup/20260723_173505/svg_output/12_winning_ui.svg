@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" data-pptx-page-role="content">
+  <rect id="background" data-pptx-role="background" x="0" y="0" width="1280" height="720" fill="#EAF0F7"/>
+
+  <g id="header" data-pptx-bounds="48 26 1184 92">
+    <text x="54" y="70" font-family="Georgia, 'Noto Serif CJK SC', 'Songti SC', serif" font-size="32" font-weight="700" fill="#123B63">架构执行总览将 A–H 蓝图、S1–S6 Agent 与四层循环完整展开</text>
+    <text x="56" y="105" font-family="Arial, 'Microsoft YaHei', 'PingFang SC', sans-serif" font-size="18" fill="#5B6B7C">真实前端集中呈现发现蓝图、专用 Agent、循环门控状态与动态参与的业务 Agent。</text>
+  </g>
+
+  <g id="architecture-execution-shot" data-pptx-bounds="329 144 622 528">
+    <rect x="329" y="144" width="622" height="528" rx="14" fill="#FFFFFF" stroke="#D59A24" stroke-width="3"/>
+    <image href="../images/architecture_execution_overview.png" x="333" y="148" width="614" height="520" preserveAspectRatio="xMidYMid meet"/>
+  </g>
+
+  <g id="callout-blueprint" data-pptx-bounds="28 162 270 90">
+    <rect x="28" y="162" width="270" height="90" rx="18" fill="#123B63"/>
+    <circle cx="60" cy="194" r="17" fill="#FFFFFF"/>
+    <text x="60" y="200" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#123B63">01</text>
+    <text x="88" y="190" font-family="Arial, 'Microsoft YaHei', 'PingFang SC', sans-serif" font-size="17" font-weight="700" fill="#FFFFFF">A–H 发现蓝图</text>
+    <text x="88" y="218" font-family="Arial, 'Microsoft YaHei', 'PingFang SC', sans-serif" font-size="16" fill="#DCEAF6">六阶段执行状态</text>
+    <path d="M298 207 C316 207 318 198 333 198 L470 198" fill="none" stroke="#123B63" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="470" cy="198" r="8" fill="#FFFFFF" stroke="#123B63" stroke-width="3"/>
+    <circle cx="470" cy="198" r="3" fill="#123B63"/>
+  </g>
+
+  <g id="callout-special-agents" data-pptx-bounds="982 258 270 90">
+    <rect x="982" y="258" width="270" height="90" rx="18" fill="#2A7F9E"/>
+    <circle cx="1014" cy="290" r="17" fill="#FFFFFF"/>
+    <text x="1014" y="296" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#2A7F9E">02</text>
+    <text x="1042" y="286" font-family="Arial, 'Microsoft YaHei', 'PingFang SC', sans-serif" font-size="17" font-weight="700" fill="#FFFFFF">S1–S6 专用 Agent</text>
+    <text x="1042" y="314" font-family="Arial, 'Microsoft YaHei', 'PingFang SC', sans-serif" font-size="16" fill="#DDF3FA">6 / 6 已完成</text>
+    <path d="M982 303 C966 303 963 292 947 292 L830 292" fill="none" stroke="#2A7F9E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="830" cy="292" r="8" fill="#FFFFFF" stroke="#2A7F9E" stroke-width="3"/>
+    <circle cx="830" cy="292" r="3" fill="#2A7F9E"/>
+  </g>
+
+  <g id="callout-quality-loops" data-pptx-bounds="28 452 270 90">
+    <rect x="28" y="452" width="270" height="90" rx="18" fill="#FFF3D8" stroke="#D59A24" stroke-width="2"/>
+    <circle cx="60" cy="484" r="17" fill="#D59A24"/>
+    <text x="60" y="490" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#FFFFFF">03</text>
+    <text x="88" y="480" font-family="Arial, 'Microsoft YaHei', 'PingFang SC', sans-serif" font-size="17" font-weight="700" fill="#8A5D10">L1–L4 循环门控</text>
+    <text x="88" y="508" font-family="Arial, 'Microsoft YaHei', 'PingFang SC', sans-serif" font-size="16" fill="#8A5D10">次数与最近状态</text>
+    <path d="M298 497 C316 497 318 500 333 500 L470 500" fill="none" stroke="#D59A24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="470" cy="500" r="8" fill="#FFFFFF" stroke="#D59A24" stroke-width="3"/>
+    <circle cx="470" cy="500" r="3" fill="#D59A24"/>
+  </g>
+
+  <g id="callout-business-agents" data-pptx-bounds="982 570 270 90">
+    <rect x="982" y="570" width="270" height="90" rx="18" fill="#FFFFFF" stroke="#2E8B6D" stroke-width="2"/>
+    <circle cx="1014" cy="602" r="17" fill="#2E8B6D"/>
+    <text x="1014" y="608" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#FFFFFF">04</text>
+    <text x="1042" y="598" font-family="Arial, 'Microsoft YaHei', 'PingFang SC', sans-serif" font-size="17" font-weight="700" fill="#1F7156">参与业务 Agent</text>
+    <text x="1042" y="626" font-family="Arial, 'Microsoft YaHei', 'PingFang SC', sans-serif" font-size="16" fill="#1F7156">主控动态编排</text>
+    <path d="M982 615 C966 615 963 610 947 610 L830 610" fill="none" stroke="#2E8B6D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="830" cy="610" r="8" fill="#FFFFFF" stroke="#2E8B6D" stroke-width="3"/>
+    <circle cx="830" cy="610" r="3" fill="#2E8B6D"/>
+  </g>
+
+  <text id="page-number" data-pptx-role="page-number" x="1232" y="700" text-anchor="end" font-family="Arial, sans-serif" font-size="14" fill="#5B6B7C">12</text>
+</svg>

@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" data-pptx-page-role="content">
+  <rect id="background" data-pptx-role="background" x="0" y="0" width="1280" height="720" fill="#FFFFFF"/>
+  <g id="header" data-pptx-bounds="64 42 1152 102">
+    <text x="64" y="88" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="42" font-weight="bold" fill="#173B5E">&#x8D28;&#x91CF;&#x2014;&#x65F6;&#x5EF6;&#x6743;&#x8861;</text>
+    <text x="64" y="130" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#6B7785">&#x6548;&#x679C;&#x9886;&#x5148;&#xFF0C;&#x4F46;&#x5E73;&#x5747;&#x8017;&#x65F6;&#x6BD4;&#x901A;&#x7528; Agent &#x9AD8;&#x7EA6; 7.5 &#x500D;</text>
+    <text x="1216" y="84" text-anchor="end" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#6B7785">17</text>
+  </g>
+  <g id="tradeoff-chart" data-pptx-bounds="50 174 834 438">
+    <rect x="64" y="174" width="780" height="438" fill="#F3F6F9"/>
+    <g id="chartArea">
+      <line x1="124" y1="548" x2="804" y2="548" stroke="#173B5E" stroke-width="2"/>
+      <line x1="124" y1="224" x2="124" y2="548" stroke="#173B5E" stroke-width="2"/>
+      <line x1="266" y1="224" x2="266" y2="548" stroke="#B7C7D6" stroke-width="2" stroke-dasharray="6,6"/>
+      <line x1="124" y1="288.8" x2="804" y2="288.8" stroke="#B7C7D6" stroke-width="2" stroke-dasharray="6,6"/>
+      <!-- chart-plot-area: 124,224,804,548 -->
+      <text x="136" y="250" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#2E8B66">&#x9AD8;&#x8D28;&#x91CF; &#xB7; &#x4F4E;&#x65F6;&#x5EF6;</text>
+      <text x="628" y="250" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#C97A32">&#x9AD8;&#x8D28;&#x91CF; &#xB7; &#x9AD8;&#x65F6;&#x5EF6;</text>
+      <circle cx="773" cy="280.7" r="34" fill="#2F6FAE" fill-opacity="0.82"/>
+      <text x="716" y="336" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#173B5E">&#x5B8C;&#x6574;&#x65B9;&#x6CD5;</text>
+      <text x="716" y="360" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#173B5E">22.9 min &#xB7; 14.3&#x6E90;</text>
+      <circle cx="209" cy="491.3" r="30" fill="#C97A32" fill-opacity="0.78"/>
+      <text x="244" y="484" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#173B5E">&#x901A;&#x7528; Agent</text>
+      <text x="244" y="508" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#173B5E">3.0 min &#xB7; 11.8&#x6E90;</text>
+      <circle cx="195" cy="539.9" r="10" fill="#6B7785"/>
+      <text x="220" y="540" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x7EAF; LLM &#xB7; 2.5 min</text>
+      <circle cx="147" cy="539.9" r="10" fill="#B7C7D6"/>
+      <text x="108" y="582" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x667A;&#x8C31; &#xB7; 0.8 min</text>
+      <text x="464" y="590" text-anchor="middle" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#6B7785">&#x5E73;&#x5747;&#x8017;&#x65F6;&#xFF08;&#x5206;&#x949F;&#xFF09; &#x2192;</text>
+      <text x="84" y="410" text-anchor="middle" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#6B7785">&#x5F97;&#x5206;&#x7387;</text>
+    </g>
+  </g>
+  <g id="optimization-actions" data-pptx-bounds="876 174 340 438">
+    <rect x="876" y="174" width="340" height="438" fill="#173B5E"/>
+    <text x="904" y="222" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="32" font-weight="bold" fill="#FFFFFF">&#x6548;&#x7387;&#x4F18;&#x5316;&#x65B9;&#x5411;</text>
+    <text x="904" y="294" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="66" font-weight="bold" fill="#C97A32">7.5&#xD7;</text>
+    <text x="904" y="334" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#FFFFFF">&#x76F8;&#x5BF9;&#x901A;&#x7528; Agent &#x7684;&#x65F6;&#x5EF6;&#x500D;&#x6570;</text>
+    <line x1="904" y1="370" x2="1188" y2="370" stroke="#6D89A3" stroke-width="2"/>
+    <text x="904" y="420" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" font-weight="bold" fill="#FFFFFF">01 &#x8F7B;&#x91CF;&#x7B5B;&#x9009;</text>
+    <text x="904" y="464" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" font-weight="bold" fill="#FFFFFF">02 &#x6DF1;&#x7814;&#x5347;&#x7EA7;</text>
+    <text x="904" y="508" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" font-weight="bold" fill="#FFFFFF">03 &#x8BC1;&#x636E;&#x7F13;&#x5B58;</text>
+    <text x="904" y="552" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" font-weight="bold" fill="#FFFFFF">04 &#x5E76;&#x884C;&#x9884;&#x7B97;</text>
+  </g>
+  <g id="footer" data-pptx-bounds="64 640 1152 38">
+    <text x="64" y="670" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#6B7785">&#x6C14;&#x6CE1;&#x5927;&#x5C0F;&#x8868;&#x793A;&#x5E73;&#x5747;&#x6765;&#x6E90;&#x6570;&#xFF1B;&#x5F97;&#x5206;&#x7387;&#x91C7;&#x7528; Pairwise &#x8BC4;&#x6D4B;&#x53E3;&#x5F84;</text>
+  </g>
+</svg>

@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:a51a3fcae199db23",
+  "content_path": "text-a51a3fcae199db23.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-da33b1ef4345",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "a51a3fcae199db23ec08004e6a5412e1da1260c943b3b833c7d9c94484ed38b4",
+  "url": "https://www.army.mil/article/236713/army_announces_selection_of_interim_c_suas_systems?utm_source=openai"
+}

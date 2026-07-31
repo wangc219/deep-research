@@ -1,0 +1,42 @@
+[
+  {
+    "capability_gap": "现有能力难以通过新型体系组合快速闭合感知、认知、决策和处置链路；本次基线：梳理与面向强干扰低空蜂群威胁的分布式预警制胜机理相关的现有装备功能、参数和体系接口。；识别探测、决策、载荷、协同、保障和成本边界。；按可获得性、验证程度、集成条件和工程风险评估成熟度。",
+    "capability_id": "cap-new-001",
+    "capability_image": "发展具备多源自主感知、智能判读、分布式决策、弹性协同、低成本规模处置和任务载荷快速适配能力的产品；证据驱动重点：明确地形、气象、电磁、网络和部署空间约束。；识别探测、决策、载荷、协同、保障和成本边界。；分析跨军兵种、有人无人、传感器与火力单元协同关系。",
+    "capability_type": "new_capability",
+    "confidence": 0.78,
+    "created_at": "2026-07-14T11:52:24.855912+00:00",
+    "equipment_category": "新概念平台、智能载荷、分布式感知与指挥效应体系",
+    "evidence_ids": [
+      "ev-combat_scenario-1",
+      "ev-international_situation-1",
+      "ev-operational_employment-1",
+      "ev-weapon_equipment-1"
+    ],
+    "name": "新制胜机理牵引的体系化快速制胜能力",
+    "priority": "高：关键性高、紧迫性高、可行性中高",
+    "related_scenario": "面向强干扰低空蜂群威胁的分布式预警制胜机理",
+    "schema_version": "1.0",
+    "source_winning_logic": "新制胜机制 + 新作战运用打法 + 新体系组合 -> 新装备能力增长点"
+  },
+  {
+    "capability_gap": "现有装备在数据互联、智能辅助决策、抗干扰、快速任务重构和体系贡献度方面存在差距；本次基线：梳理与面向强干扰低空蜂群威胁的分布式预警制胜机理相关的现有装备功能、参数和体系接口。；识别探测、决策、载荷、协同、保障和成本边界。；按可获得性、验证程度、集成条件和工程风险评估成熟度。",
+    "capability_id": "cap-upgrade-001",
+    "capability_image": "提升现有产品的数据开放接口、智能辅助决策、抗干扰协同、任务软件快速重构和体系级效能评估功能；证据驱动重点：明确地形、气象、电磁、网络和部署空间约束。；识别探测、决策、载荷、协同、保障和成本边界。；分析跨军兵种、有人无人、传感器与火力单元协同关系。",
+    "capability_type": "upgrade",
+    "confidence": 0.78,
+    "created_at": "2026-07-14T11:52:24.855914+00:00",
+    "equipment_category": "现役平台、传感器、指控软件、效应载荷与保障系统",
+    "evidence_ids": [
+      "ev-combat_scenario-1",
+      "ev-international_situation-1",
+      "ev-operational_employment-1",
+      "ev-weapon_equipment-1"
+    ],
+    "name": "新作战样式适配的现有装备升级能力",
+    "priority": "中高：紧迫性高、工程可行性高",
+    "related_scenario": "面向强干扰低空蜂群威胁的分布式预警制胜机理",
+    "schema_version": "1.0",
+    "source_winning_logic": "新制胜路径对既有装备提出的新接口、新节奏和新环境适应要求 -> 升级需求"
+  }
+]

@@ -1,0 +1,94 @@
+{
+  "actual_counts": {
+    "capability_domains": 6,
+    "capability_indicators": 0,
+    "capability_items": 6
+  },
+  "branch": "B",
+  "branch_name": "传统能力缺口发现",
+  "cross_domain_indicators": [],
+  "domains": [
+    {
+      "capability_ids": [
+        "cap-upgrade-001"
+      ],
+      "domain": "现役多源ISR、火力指挥节点和精确打击平台上的任务计算单元、证据状态显示、风险门控火控软件与边缘降级模块。",
+      "evidence_ids": [
+        "ev-generic_researcher-web-3393b98b73a1"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "不完备与不确定战场信息条件下精确打击研究"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-001"
+      ],
+      "domain": "公开证据不足，保留类别级：远程制导弹药本体、抗干扰导航、任务数据接收单元、末段目标复核传感器和安全失效逻辑。",
+      "evidence_ids": [
+        "ev-generic_researcher-web-3393b98b73a1"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "不完备与不确定战场信息条件下精确打击研究"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-002"
+      ],
+      "domain": "小中型无人机群、模块化光电侦察载荷、电子诱骗与压制载荷、小型精确毁伤载荷、边缘任务计算和监督控制席位。",
+      "evidence_ids": [
+        "ev-generic_researcher-web-912bbaba1ca2",
+        "ev-generic_researcher-web-3393b98b73a1"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "不完备与不确定战场信息条件下精确打击研究"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-003"
+      ],
+      "domain": "低成本巡飞弹体、可配置射频诱饵、简化电子压制载荷、小型战斗部、任务重规划模块和批量发射单元。",
+      "evidence_ids": [
+        "ev-generic_researcher-web-3393b98b73a1"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "不完备与不确定战场信息条件下精确打击研究"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-004"
+      ],
+      "domain": "机动电子压制车辆、宽带电子侦察阵列、方向测量设备、任务干扰发射机、火力目标提示终端和低可探测机动供电单元。",
+      "evidence_ids": [
+        "ev-generic_researcher-web-3393b98b73a1"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "不完备与不确定战场信息条件下精确打击研究"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-005"
+      ],
+      "domain": "火炮制导弹药、弹道修正组件、目标复核数据装订器、火炮火控适配模块和快速校射评估单元。",
+      "evidence_ids": [
+        "ev-generic_researcher-web-3393b98b73a1"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "不完备与不确定战场信息条件下精确打击研究"
+      ]
+    }
+  ],
+  "equipment_forms": [],
+  "target_counts": {},
+  "topic": "不完备与不确定战场信息条件下精确打击研究"
+}

@@ -1,0 +1,96 @@
+{
+  "checkpoint": {
+    "budget_remaining": {
+      "baseline_tasks": 0,
+      "finalize_tasks": 0,
+      "rounds": 1
+    },
+    "checkpoint_id": "run-checkpoint-no_multisource_baseline-q-0003",
+    "completed_task_ids": [
+      "baseline:generic_researcher",
+      "finalize:winning-report"
+    ],
+    "config_fingerprint": "sha256:eba0527a791e6c4a9c468b82ee9785f3dd845ec2f2f2454db68c9ada45b52328",
+    "created_at": "2026-07-29T06:29:22.460046+00:00",
+    "mode": "real",
+    "pending_task_ids": [],
+    "research_route": "auto",
+    "resolved_route": "traditional_gap",
+    "resume_count": 0,
+    "round_index": 1,
+    "run_id": "no_multisource_baseline-q-0003",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "generic_researcher"
+    ],
+    "source_materials": [
+      {
+        "artifact_refs": [
+          "text:1d81d91a39bf63e9"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-generic_researcher-web-3393b98b73a1",
+          "normalized_url": "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in",
+          "reasons": [],
+          "score": 0.688
+        },
+        "evidence_id": "ev-generic_researcher-web-3393b98b73a1",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/"
+      },
+      {
+        "artifact_refs": [
+          "text:6f26ef51b97b0992"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-generic_researcher-web-93fa7f00aaa0",
+          "normalized_url": "https://www.gao.gov/products/gao-22-106010",
+          "reasons": [],
+          "score": 0.688
+        },
+        "evidence_id": "ev-generic_researcher-web-93fa7f00aaa0",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.gao.gov/products/gao-22-106010"
+      }
+    ],
+    "status": "completed",
+    "task_statuses": {
+      "baseline:generic_researcher": "completed",
+      "finalize:winning-report": "completed"
+    },
+    "topic": "复杂电磁环境自适应精打武器研究",
+    "worker_reports": [
+      {
+        "active_skill_ids": [],
+        "active_tool_names": [
+          "search_sources",
+          "create_evidence_card"
+        ],
+        "agent_id": "generic_researcher",
+        "created_at": "2026-07-29T06:31:50.070396+00:00",
+        "domain_object_id": "",
+        "domain_object_type": "",
+        "error": "",
+        "handoff_summary": "对后续装备缺口与需求生成最有用的边界判断是：复杂电磁环境下的核心缺口不是单点制导精度，而是PNT、通信、感知、C2和末段修正同时受扰时的任务闭环韧性。下一步应优先围绕“抗干扰GNSS+GPS-free惯导+多源PNT/末段感知+断链自主+弹性火力链”生成需求卡片，并把公开证据不足项作为指标不确定性处理。",
+        "harness_profile": "discovery_research_v1",
+        "new_evidence_ids": [
+          "ev-generic_researcher-web-3393b98b73a1",
+          "ev-generic_researcher-web-93fa7f00aaa0"
+        ],
+        "packet_id": "packet-generic_researcher",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment research/outputs/evals/ablations/ablation-20260729-142922/systems/no_multisource_baseline/Q-0003/runtime/no_multisource_baseline-q-0003/agent_sessions/generic_researcher.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-bb0d964e-7074-4c65-ac80-b847719f1e5f"
+      }
+    ]
+  },
+  "savepoint_id": "checkpoint-a9e70af8f2d4cc58b7619f84"
+}

@@ -1,0 +1,63 @@
+{
+  "answer_chars": 6557,
+  "answer_sha256": "dbdb7cc41a6f0010d30e3da0c9f32f9dfc701ae9b2cd2957ac6bc03045d0e550",
+  "artifact_refs": [
+    "runtime/codex-events.jsonl",
+    "runtime/codex-stderr.log"
+  ],
+  "citations": [
+    "https://api.army.mil/e2/c/downloads/2021/10/06/869ca62b/afc-concept-for-fires-2028-oct21.pdf",
+    "https://files.gao.gov/reports/GAO-25-106454/index.html",
+    "https://media.defense.gov/2022/Mar/17/2002958406/-1/-1/1/SUMMARY-OF-THE-JOINT-ALL-DOMAIN-COMMAND-AND-CONTROL-STRATEGY.pdf",
+    "https://www.army.mil/article/263145/army_developing_faster_improved_data_kill_chain_for_lethal_and_non_lethal_fires",
+    "https://www.csis.org/analysis/chapter-9-technological-evolution-battlefield",
+    "https://www.marines.mil/Force-Design/",
+    "https://www.navy.mil/Press-Office/Speeches/display-speech/Article/4464830/cno-remarks-at-sea-air-space/",
+    "https://www.rand.org/content/dam/rand/pubs/research_reports/RRA3100/RRA3141-2/RAND_RRA3141-2.pdf"
+  ],
+  "created_at": "2026-07-28T20:53:47.215274+00:00",
+  "dataset_id": "tactical-strike-frontiers-50-v1",
+  "duration_seconds": 184.62,
+  "estimated_cost": 0.0,
+  "mode": "real",
+  "model_snapshot": {
+    "adapter": "codex_cli",
+    "auth_mode": "eval_api_key",
+    "base_url_host": "codexpro.wwxb1123.xyz",
+    "codex_version": "codex-cli 0.144.1",
+    "model": "gpt-5.5",
+    "reasoning_effort": "high",
+    "sandbox": "read-only",
+    "search_context_size": "medium",
+    "web_search": "live"
+  },
+  "query": "分布式作战体系精确打击研究",
+  "query_id": "Q-0016",
+  "query_sha256": "bc49c0ab84de6b54bd960fd316932d158d59d27575dff4eac03b01a585bd115e",
+  "report_id": "BR-7f6509f359b6e4bbba2f3729",
+  "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-7f6509f359b6e4bbba2f3729/report.md",
+  "schema_version": "1.0",
+  "source_eval_id": "baseline-first20-three-layer-nine-20260729",
+  "sources": [
+    "https://api.army.mil/e2/c/downloads/2021/10/06/869ca62b/afc-concept-for-fires-2028-oct21.pdf",
+    "https://files.gao.gov/reports/GAO-25-106454/index.html",
+    "https://media.defense.gov/2022/Mar/17/2002958406/-1/-1/1/SUMMARY-OF-THE-JOINT-ALL-DOMAIN-COMMAND-AND-CONTROL-STRATEGY.pdf",
+    "https://www.army.mil/article/263145/army_developing_faster_improved_data_kill_chain_for_lethal_and_non_lethal_fires",
+    "https://www.csis.org/analysis/chapter-9-technological-evolution-battlefield",
+    "https://www.marines.mil/Force-Design/",
+    "https://www.navy.mil/Press-Office/Speeches/display-speech/Article/4464830/cno-remarks-at-sea-air-space/",
+    "https://www.navy.mil/resources/fact-files/",
+    "https://www.rand.org/content/dam/rand/pubs/research_reports/RRA3100/RRA3141-2/RAND_RRA3141-2.pdf"
+  ],
+  "status": "completed",
+  "system_id": "generic_agent",
+  "usage": {
+    "cached_input_tokens": 8576,
+    "input_tokens": 53221,
+    "output_tokens": 7279,
+    "reasoning_output_tokens": 3229,
+    "search_query_count": 6,
+    "tool_call_count": 6,
+    "web_search_calls": 6
+  }
+}

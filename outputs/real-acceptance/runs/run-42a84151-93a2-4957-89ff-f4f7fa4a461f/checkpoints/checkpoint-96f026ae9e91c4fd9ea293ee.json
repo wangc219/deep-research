@@ -1,0 +1,45 @@
+{
+  "checkpoint": {
+    "budget_remaining": {
+      "baseline_tasks": 4,
+      "finalize_tasks": 1,
+      "rounds": 2
+    },
+    "checkpoint_id": "run-checkpoint-run-42a84151-93a2-4957-89ff-f4f7fa4a461f",
+    "completed_task_ids": [],
+    "config_fingerprint": "sha256:952736f39c472f1cd9d3d91ac6915c36b1028f99bb1268e916812204f6d7b2a9",
+    "created_at": "2026-07-13T13:02:57.182595+00:00",
+    "mode": "real",
+    "pending_task_ids": [
+      "baseline:international_situation",
+      "baseline:combat_scenario",
+      "baseline:weapon_equipment",
+      "baseline:operational_employment",
+      "finalize:winning-report"
+    ],
+    "research_route": "new_winning_mechanism",
+    "resolved_route": "new_winning_mechanism",
+    "resume_count": 0,
+    "round_index": 1,
+    "run_id": "run-42a84151-93a2-4957-89ff-f4f7fa4a461f",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "international_situation",
+      "combat_scenario",
+      "weapon_equipment",
+      "operational_employment"
+    ],
+    "source_materials": [],
+    "status": "running",
+    "task_statuses": {
+      "baseline:combat_scenario": "pending",
+      "baseline:international_situation": "pending",
+      "baseline:operational_employment": "pending",
+      "baseline:weapon_equipment": "pending",
+      "finalize:winning-report": "pending"
+    },
+    "topic": "面向强电磁干扰与低空蜂群威胁的新型分布式探测预警制胜机理与装备能力需求",
+    "worker_reports": []
+  },
+  "savepoint_id": "checkpoint-96f026ae9e91c4fd9ea293ee"
+}

@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=Force Design
+source_url=https://www.marines.mil/Force-Design/
+claim=E1：USMC Force Design将无人系统、远程精确火力、电子战、韧性C2、数据驱动决策、精确火力和争夺环境后勤作为现代战场关键能力方向，并列出MADIS、L-MADIS、MRIC、O-CSUAS等反无人/防空能力。
+excerpt=
+retrieval=Hosted web search citation metadata

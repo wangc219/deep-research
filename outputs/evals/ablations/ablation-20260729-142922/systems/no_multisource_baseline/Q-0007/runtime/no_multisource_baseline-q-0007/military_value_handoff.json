@@ -1,0 +1,73 @@
+{
+  "branch_products": {},
+  "claims": [
+    {
+      "claim_id": "claim-37d402b1f3b7",
+      "claim_type": "fact",
+      "confidence": 0.78,
+      "downstream_steps": [
+        "S4"
+      ],
+      "evidence_ids": [
+        "ev-generic_researcher-web-06d26c44006f",
+        "ev-generic_researcher-web-9cfe769e94db"
+      ],
+      "failure_boundary": "SDA资料强调PWSA低时延、网状网络和火控级发展目标；GAO资料同时提示技术成熟度、成本、进度和战区需求对齐风险，因此公开目标不能直接视为已形成稳定战力。",
+      "mechanism": "S6 能力全景图/深度研究边界：强电磁争夺下，单纯建设天基低时延链路不足以保证火力任务连续性。陆军炮兵公开文章反证了过度依赖TACSAT和上层战术互联网的风险，要求PACE通信、发射管控、节点分散、短时开机和去中心化火力处理与天基链路共同构成韧性闭环。",
+      "military_effects": [
+        "指挥决策",
+        "打击歼灭",
+        "生存抗毁",
+        "持续作战"
+      ],
+      "packet_id": "packet-generic_researcher",
+      "source_agent_id": "generic_researcher",
+      "source_urls": [
+        "https://www.sda.mil/home/about-us/faq/"
+      ]
+    },
+    {
+      "claim_id": "claim-9c13812fa5dc",
+      "claim_type": "inference",
+      "confidence": 0.78,
+      "downstream_steps": [
+        "S1",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-generic_researcher-web-06d26c44006f",
+        "ev-generic_researcher-web-9cfe769e94db"
+      ],
+      "failure_boundary": "SDA资料强调PWSA低时延、网状网络和火控级发展目标；GAO资料同时提示技术成熟度、成本、进度和战区需求对齐风险，因此公开目标不能直接视为已形成稳定战力。",
+      "mechanism": "S5 需求卡片：GPS拒止下的PNT韧性是精确打击体系的硬约束。M-code、抗干扰天线和替代PNT可降低单点依赖，但GAO指出GPS仍面临反卫星、干扰、欺骗和网络威胁，且替代PNT组合管理与度量不足；因此需求优先级应落在多源PNT、授时保持、平台/弹药适配和降级模式验证。",
+      "military_effects": [
+        "打击歼灭",
+        "拦截反制",
+        "拒止制衡",
+        "持续作战",
+        "体系协同"
+      ],
+      "packet_id": "packet-generic_researcher",
+      "source_agent_id": "generic_researcher",
+      "source_urls": [
+        "https://www.sda.mil/home/about-us/faq/"
+      ]
+    }
+  ],
+  "conflicts": [],
+  "open_questions": [
+    "PWSA Transport Layer在真实战区条件下的端到端时延、可用率、拥塞退化曲线和抗干扰性能未公开。"
+  ],
+  "query_anchor": "天基低时延信息支撑精确打击体系研究",
+  "schema": "military_value_handoff_v1",
+  "statistics": {
+    "candidate_claim_count": 4,
+    "compression_ratio": 0.6488,
+    "evidence_url_count": 1,
+    "input_chars": 2366,
+    "input_packet_count": 1,
+    "output_chars": 1535,
+    "selected_claim_count": 2,
+    "source_agent_count": 1
+  }
+}

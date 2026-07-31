@@ -1,0 +1,80 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" data-pptx-page-role="content">
+  <rect id="background" data-pptx-role="background" x="0" y="0" width="1280" height="720" fill="#FFFFFF"/>
+  <g id="header" data-pptx-bounds="64 42 1152 100">
+    <text x="64" y="86" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="40" font-weight="bold" fill="#173B5E">发散问题没有整段复制进 Prompt，而是压缩为四层机制</text>
+    <text x="64" y="126" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#6B7785">保留发散能力，同时控制上下文规模与概念漂移</text>
+    <text x="1216" y="84" text-anchor="end" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#6B7785">04</text>
+  </g>
+  <g id="mechanism-cards" data-pptx-bounds="64 158 1152 190">
+    <rect x="64" y="158" width="276" height="190" fill="#F3F6F9" />
+    <rect x="64" y="158" width="276" height="8" fill="#173B5E" />
+    <text x="84" y="206" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="30" font-weight="bold" fill="#2F6FAE">01</text>
+    <text x="132" y="206" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" font-weight="bold" fill="#173B5E">分支内核</text>
+    <text x="84" y="250" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">12 类问题 → 唯一责任分支<tspan x="84" dy="32">每个分支只保留一句任务内核</tspan></text>
+    <text x="84" y="320" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#6B7785">A–H / 专业 Agent</text>
+
+    <rect x="356" y="158" width="276" height="190" fill="#F3F6F9" />
+    <rect x="356" y="158" width="276" height="8" fill="#2F6FAE" />
+    <text x="376" y="206" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="30" font-weight="bold" fill="#2F6FAE">02</text>
+    <text x="424" y="206" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" font-weight="bold" fill="#173B5E">Agent 专属镜头</text>
+    <text x="376" y="250" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">按职责配置，不重复分析全量问题<tspan x="376" dy="32">每个前置 Agent 最多 3 个镜头</tspan></text>
+    <text x="376" y="320" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#6B7785">场景 / 装备 / 体系 / 技术</text>
+
+    <rect x="648" y="158" width="276" height="190" fill="#F3F6F9" />
+    <rect x="648" y="158" width="276" height="8" fill="#2E8B66" />
+    <text x="668" y="206" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="30" font-weight="bold" fill="#2E8B66">03</text>
+    <text x="716" y="206" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" font-weight="bold" fill="#173B5E">颠覆性种子卡</text>
+    <text x="668" y="250" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">六类逻辑 → A1–F2 十二张短卡<tspan x="668" dy="32">根据 Query 通常只选 2–3 张</tspan></text>
+    <text x="668" y="320" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#6B7785">关系变化 / 装备牵引 / 风险</text>
+
+    <rect x="940" y="158" width="276" height="190" fill="#F3F6F9" />
+    <rect x="940" y="158" width="276" height="8" fill="#C97A32" />
+    <text x="960" y="206" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="30" font-weight="bold" fill="#C97A32">04</text>
+    <text x="1008" y="206" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" font-weight="bold" fill="#173B5E">质量门</text>
+    <text x="960" y="250" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">S1–S6 逐步发散并收敛<tspan x="960" dy="32">最终通过五项业务验收标准</tspan></text>
+    <text x="960" y="320" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#6B7785">5–7 项 · 可验证 · 有边界</text>
+  </g>
+  <g id="process-flow" data-pptx-bounds="64 370 1152 184">
+    <text x="64" y="394" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#173B5E">运行落点 · S1–S6 完整链路</text>
+    <rect x="64" y="406" width="172" height="56" fill="#173B5E"/>
+    <text x="150" y="430" text-anchor="middle" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#FFFFFF">原始 Query</text><text x="150" y="452" text-anchor="middle" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#FFFFFF">任务输入</text>
+    <path d="M240 427 L256 434 L240 441 Z" fill="#94A3B8"/>
+    <rect x="260" y="406" width="172" height="56" fill="#DCE9F5"/>
+    <text x="346" y="430" text-anchor="middle" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#173B5E">A–H</text><text x="346" y="452" text-anchor="middle" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#173B5E">路径识别</text>
+    <path d="M436 427 L452 434 L436 441 Z" fill="#94A3B8"/>
+    <rect x="456" y="406" width="172" height="56" fill="#DCE9F5"/>
+    <text x="542" y="430" text-anchor="middle" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#173B5E">前置专业 Agent</text><text x="542" y="452" text-anchor="middle" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#173B5E">专属发散镜头</text>
+    <path d="M632 427 L648 434 L632 441 Z" fill="#94A3B8"/>
+    <rect x="652" y="406" width="172" height="56" fill="#2F6FAE"/>
+    <text x="738" y="430" text-anchor="middle" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#FFFFFF">S1</text><text x="738" y="452" text-anchor="middle" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#FFFFFF">对手体系与反适应</text>
+    <path d="M828 427 L844 434 L828 441 Z" fill="#94A3B8"/>
+    <rect x="848" y="406" width="172" height="56" fill="#2F6FAE"/>
+    <text x="934" y="430" text-anchor="middle" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#FFFFFF">S2</text><text x="934" y="452" text-anchor="middle" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#FFFFFF">竞争性作战路径</text>
+    <path d="M1024 427 L1040 434 L1024 441 Z" fill="#94A3B8"/>
+    <rect x="1044" y="406" width="172" height="56" fill="#2F6FAE"/>
+    <text x="1130" y="430" text-anchor="middle" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#FFFFFF">S3</text><text x="1130" y="452" text-anchor="middle" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#FFFFFF">突破机制与效果链</text>
+    <path d="M1130 466 L1130 474 L1122 474 L1130 482 L1138 474 L1130 474" fill="#94A3B8"/>
+    <rect x="1042" y="486" width="174" height="56" fill="#2F6FAE"/>
+    <text x="1129" y="510" text-anchor="middle" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#FFFFFF">S4</text><text x="1129" y="532" text-anchor="middle" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#FFFFFF">能力映射</text>
+    <path d="M1038 507 L1022 514 L1038 521 Z" fill="#94A3B8"/>
+    <rect x="822" y="486" width="174" height="56" fill="#2F6FAE"/>
+    <text x="909" y="510" text-anchor="middle" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#FFFFFF">S5</text><text x="909" y="532" text-anchor="middle" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#FFFFFF">差距与成熟度</text>
+    <path d="M818 507 L802 514 L818 521 Z" fill="#94A3B8"/>
+    <rect x="602" y="486" width="174" height="56" fill="#2E8B66"/>
+    <text x="689" y="510" text-anchor="middle" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#FFFFFF">S6</text><text x="689" y="532" text-anchor="middle" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#FFFFFF">形成 5–7 项装备</text>
+    <path d="M598 507 L582 514 L598 521 Z" fill="#94A3B8"/>
+    <rect x="382" y="486" width="174" height="56" fill="#DDEDE7"/>
+    <text x="469" y="510" text-anchor="middle" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#173B5E">Reporter</text><text x="469" y="532" text-anchor="middle" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#173B5E">三层九项报告</text>
+    <path d="M378 507 L362 514 L378 521 Z" fill="#94A3B8"/>
+    <rect x="162" y="486" width="174" height="56" fill="#173B5E"/>
+    <text x="249" y="510" text-anchor="middle" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#FFFFFF">五项质量门</text><text x="249" y="532" text-anchor="middle" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#FFFFFF">收敛与验收</text>
+  </g>
+  <g id="guardrails" data-pptx-bounds="64 574 1152 94">
+    <rect x="64" y="574" width="1152" height="94" fill="#F3F6F9"/>
+    <text x="88" y="606" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#173B5E">三条运行边界</text>
+    <text x="88" y="642" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">① 本地确定性选卡，不增加模型调用</text>
+    <text x="450" y="642" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">② bounded_exploration 最多挑战一个既有前提</text>
+    <text x="878" y="642" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">③ 种子不是事实、指标或必选目录</text>
+  </g>
+</svg>

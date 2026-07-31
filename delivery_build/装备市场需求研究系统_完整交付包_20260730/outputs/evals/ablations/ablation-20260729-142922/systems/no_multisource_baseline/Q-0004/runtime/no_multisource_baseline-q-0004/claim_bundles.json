@@ -1,0 +1,125 @@
+[
+  {
+    "bundle_id": "claims-6f93754f522d",
+    "claims": [
+      {
+        "claim_id": "claim-62fe9429328e",
+        "claim_type": "hypothesis",
+        "confidence": 0.72,
+        "counter_evidence": [
+          "DARPA项目页说明能力研发方向明确，但并不等同于能力已批量装备或可在实战中稳定达成。",
+          "GAO既确认DOD正在发展GPS替代与抗干扰能力，也指出进展度量不足和GPS升级后仍有脆弱性，因此不能把替代PNT视为已解决问题。",
+          "CSIS/AMTI对南沙设施用途的判断具有场景启发价值，但部分设施功能识别存在不确定性，不能直接推导具体干扰能力或覆盖效果。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-generic_researcher-web-912bbaba1ca2",
+          "ev-generic_researcher-web-93fa7f00aaa0"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.darpa.mil/research/programs/collaborative-operations-in-denied-environment",
+          "https://www.gao.gov/products/gao-22-106010"
+        ],
+        "text": "【S4 保障恢复】间歇通信下的任务保持不能只依赖连续遥控链路；公开资料中DARPA CODE明确把“带宽受限、通信中断、被拒止环境”下的协同自治作为目标，说明精打武器/无人载荷需要具备本机任务状态保持、断链期间规则化继续执行、恢复链路后再同步的能力。作用机理是把持续控制改为监督控制与任务级自治，降低链路中断造成任务中止的概率。失效边界是目标快速变化、规则约束不足或态势感知过期时，自治保持可能无法合法、有效续接。"
+      },
+      {
+        "claim_id": "claim-06495b1f2c43",
+        "claim_type": "hypothesis",
+        "confidence": 0.72,
+        "counter_evidence": [
+          "DARPA项目页说明能力研发方向明确，但并不等同于能力已批量装备或可在实战中稳定达成。",
+          "GAO既确认DOD正在发展GPS替代与抗干扰能力，也指出进展度量不足和GPS升级后仍有脆弱性，因此不能把替代PNT视为已解决问题。",
+          "CSIS/AMTI对南沙设施用途的判断具有场景启发价值，但部分设施功能识别存在不确定性，不能直接推导具体干扰能力或覆盖效果。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-generic_researcher-web-912bbaba1ca2",
+          "ev-generic_researcher-web-93fa7f00aaa0"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.darpa.mil/research/programs/collaborative-operations-in-denied-environment",
+          "https://www.gao.gov/products/gao-22-106010"
+        ],
+        "text": "【S5 抗毁】GPS/PNT是精打任务保持的关键脆弱点。GAO指出GPS面临干扰、欺骗、反卫星和网络威胁，且即使GPS升级后脆弱性仍存在；DARPA PRIGM/PINPOINT则把GPS拒止下弹药/平台PNT能力作为研发重点。作用机理是以高性能惯导、MEMS IMU、改进时钟或组合PNT降低外部信号不可用时的位置漂移。失效边界是公开资料未证明这些能力已全面装备化，且低成本小型MEMS IMU在失去GPS后会快速漂移，长时断链或长时GPS拒止仍可能导致精度失效。"
+      },
+      {
+        "claim_id": "claim-720eed11c7c0",
+        "claim_type": "hypothesis",
+        "confidence": 0.72,
+        "counter_evidence": [
+          "DARPA项目页说明能力研发方向明确，但并不等同于能力已批量装备或可在实战中稳定达成。",
+          "GAO既确认DOD正在发展GPS替代与抗干扰能力，也指出进展度量不足和GPS升级后仍有脆弱性，因此不能把替代PNT视为已解决问题。",
+          "CSIS/AMTI对南沙设施用途的判断具有场景启发价值，但部分设施功能识别存在不确定性，不能直接推导具体干扰能力或覆盖效果。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-generic_researcher-web-912bbaba1ca2",
+          "ev-generic_researcher-web-93fa7f00aaa0"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.darpa.mil/research/programs/collaborative-operations-in-denied-environment",
+          "https://www.gao.gov/products/gao-22-106010"
+        ],
+        "text": "【S6 反制/拒止】火力链续接需要分布式、低暴露通信与C2架构，而不是单点卫星通信或上层战术互联网。美国陆军Field Artillery文章认为大规模作战中通信降级是必然事件，并强调PACE通信、分散C2、信号纪律、减少持续发射和快速火力通道。作用机理是压缩暴露时间、提供替代链路和控制权切换路径，使传感器-决策-射手链在间歇窗口中恢复。失效边界是强电子战、节点被定位压制或通信窗口过短时，再同步和任务续接仍可能失败。"
+      },
+      {
+        "claim_id": "claim-8f1447084dcb",
+        "claim_type": "hypothesis",
+        "confidence": 0.72,
+        "counter_evidence": [
+          "DARPA项目页说明能力研发方向明确，但并不等同于能力已批量装备或可在实战中稳定达成。",
+          "GAO既确认DOD正在发展GPS替代与抗干扰能力，也指出进展度量不足和GPS升级后仍有脆弱性，因此不能把替代PNT视为已解决问题。",
+          "CSIS/AMTI对南沙设施用途的判断具有场景启发价值，但部分设施功能识别存在不确定性，不能直接推导具体干扰能力或覆盖效果。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-generic_researcher-web-912bbaba1ca2",
+          "ev-generic_researcher-web-93fa7f00aaa0"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.darpa.mil/research/programs/collaborative-operations-in-denied-environment",
+          "https://www.gao.gov/products/gao-22-106010"
+        ],
+        "text": "【S5/S6 场景边界】CSIS/AMTI关于南沙ISR/EW设施升级的公开分析表明，潜在热点区域可能存在固定/机动ISR与电子战基础设施，增加通信间歇、链路暴露和频谱争夺风险。该证据改变需求优先级：任务保持研究不能只看弹上制导，还必须覆盖抗干扰PNT、低可探测通信、分布式C2和断点续接流程。失效边界是该来源基于商业卫星图像和分析判断，具体系统功能存在不确定性。"
+      }
+    ],
+    "packet_id": "packet-generic_researcher",
+    "schema_version": "1.0"
+  }
+]

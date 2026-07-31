@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:b1930c89a75dcb57",
+  "content_path": "text-b1930c89a75dcb57.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-aac05eb51df1",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "b1930c89a75dcb57022424ee79b61c3920dd1e7e26e11ad755384fdd9f44eeef",
+  "url": "https://www.armyupress.army.mil/Portals/7/military-review/Archives/English/JA-24/C-UAS%20Operations/C-UAS-Operations-UA.pdf?utm_source=openai"
+}

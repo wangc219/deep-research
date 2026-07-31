@@ -1,0 +1,22 @@
+[
+  {
+    "accepted_claim_ids": [
+      "claim-62fe9429328e",
+      "claim-06495b1f2c43",
+      "claim-720eed11c7c0",
+      "claim-8f1447084dcb"
+    ],
+    "incremental_value": 1.0,
+    "packet_id": "packet-generic_researcher",
+    "reasons": [],
+    "rejected_claim_ids": [],
+    "scores": {
+      "claim_evidence_match": 1.0,
+      "incremental_value": 1.0,
+      "source_quality": 0.8,
+      "task_relevance": 1.0,
+      "upstream_acceptance": 1.0
+    },
+    "status": "accepted"
+  }
+]

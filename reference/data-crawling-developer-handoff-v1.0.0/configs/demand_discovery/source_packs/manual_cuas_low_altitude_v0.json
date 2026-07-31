@@ -1,0 +1,197 @@
+{
+  "version": 1,
+  "pack_id": "manual-cuas-low-altitude-v0",
+  "created_at": "2026-06-11",
+  "language": "zh-CN",
+  "topic_brief": "低空小型无人机威胁下的探测、预警与防护能力缺口。请只基于本 source pack 形成证据卡、候选需求、审核结论和需求报告，不要搜索、抓取或读取新的网页。",
+  "research_goal": "验证 manual source pack real run 是否能从公开资料中形成 source -> evidence -> candidate -> audit -> report -> trace 的可追溯闭环，并观察模型是否能把材料归纳为需求/能力缺口，而不是写成装备或技术方案口号。",
+  "run_constraints": {
+    "allow_network_search": false,
+    "allow_url_fetch": false,
+    "allowed_tools": [
+      "create_source_record",
+      "create_evidence_card",
+      "create_or_update_candidate",
+      "run_audit",
+      "generate_demand_report"
+    ],
+    "disallowed_tools": [
+      "search_sources",
+      "fetch_page",
+      "read_document",
+      "spawn_worker"
+    ],
+    "report_gate": "generate_demand_report must cite an approved audit_id and at least one candidate evidence item from a non-C/D source with an excerpt."
+  },
+  "suggested_ids": {
+    "candidate_id": "cand-low-altitude-cuas-sensing-gap",
+    "audit_id": "audit-low-altitude-cuas-sensing-gap",
+    "report_id": "report-low-altitude-cuas-sensing-gap"
+  },
+  "source_pack_usage_prompt": "You are a demand discovery analyst. First register every source as SourceRecord. Then create EvidenceCard records for the provided evidence seeds. Then synthesize one CandidateDemand only if the evidence supports a task scenario, threat or constraint, and capability gap or new capability space. Run audit using a checklist-style judgment. Generate a DemandReport only if the audit conclusion is approved/pass/通过 and the evidence gate is met. If the evidence is insufficient, do not generate a report; leave an audit with required_rework.",
+  "sources": [
+    {
+      "source_id": "src-dod-csuas-strategy-2021",
+      "title": "Department of Defense Counter-Small Unmanned Aircraft Systems Strategy",
+      "source_name": "U.S. Department of Defense",
+      "source_tier": "A",
+      "source_type": "official_strategy_pdf",
+      "publish_time": "2021-01-07T00:00:00Z",
+      "url_or_path": "https://media.defense.gov/2021/Jan/07/2002561080/-1/-1/0/DEPARTMENT-OF-DEFENSE-COUNTER-SMALL-UNMANNED-AIRCRAFT-SYSTEMS-STRATEGY.pdf",
+      "summary_text": "DoD frames small UAS as a growing hazard and threat across homeland, host-nation, and contingency environments, requiring protection of personnel, facilities, assets, and operations through joint force innovation, risk-based defense, and enterprise alignment.",
+      "summary_source": "manual_pack_paraphrase",
+      "collection_decision": "use_as_evidence",
+      "author_or_org": "U.S. Department of Defense",
+      "is_repost": false,
+      "original_source": "",
+      "institutional_stance": "official U.S. defense strategy",
+      "evidence_seed": {
+        "evidence_id": "ev-dod-csuas-growing-shared-airspace",
+        "claim": "Small UAS create a persistent protection problem for personnel, installations, assets, and DoD aircraft across multiple operating environments.",
+        "evidence_summary": "The strategy explicitly treats small UAS as an expanding hazard and adversary-enabled threat, not just an isolated technology trend.",
+        "excerpt": "Paraphrase: increasing numbers of sUAS share skies with aircraft, overfly installations, and can be used by adversaries.",
+        "source_location": "Introduction, p. 5",
+        "evidence_assessment": "strong; official strategy source; supports threat/constraint and mission-protection context, but does not by itself define a specific sensing architecture."
+      }
+    },
+    {
+      "source_id": "src-faa-uas-detection-airports",
+      "title": "UAS Detection, Mitigation, and Response on Airports",
+      "source_name": "Federal Aviation Administration",
+      "source_tier": "A",
+      "source_type": "official_guidance_page",
+      "publish_time": "",
+      "url_or_path": "https://www.faa.gov/airports/new_entrants/uas_detection_mitigation_response",
+      "summary_text": "FAA describes growing airport interest in UAS detection and mitigation as UAS activity rises in the National Airspace System, while emphasizing legal, electromagnetic-interference, airspace-processing, and safety impacts before deployment.",
+      "summary_source": "manual_pack_paraphrase",
+      "collection_decision": "use_as_evidence",
+      "author_or_org": "FAA Office of Airports",
+      "is_repost": false,
+      "original_source": "",
+      "institutional_stance": "official U.S. aviation authority guidance",
+      "evidence_seed": {
+        "evidence_id": "ev-faa-detection-deployment-constraints",
+        "claim": "UAS detection deployment is constrained by airspace safety, legal considerations, potential interference, and site-specific airport impacts.",
+        "evidence_summary": "The source supports a demand for deployable awareness systems that are technically useful without disrupting communication, navigation, or regulated airspace operations.",
+        "excerpt": "Paraphrase: FAA says airport deployment should assess legal issues, EMI, airspace processing, and local impacts.",
+        "source_location": "UAS Detection, Mitigation, and Response on Airports, overview paragraphs",
+        "evidence_assessment": "strong; official aviation authority source; supports operational constraints and integration requirements, not military-specific effects."
+      }
+    },
+    {
+      "source_id": "src-northcom-hc-suas-lead-2024",
+      "title": "United States Northern Command Assigned as DOD's Lead Synchronizer for Counter Small Unmanned Aircraft Systems Operations",
+      "source_name": "U.S. Northern Command",
+      "source_tier": "A",
+      "source_type": "official_press_release",
+      "publish_time": "2024-12-05T00:00:00Z",
+      "url_or_path": "https://www.northcom.mil/Newsroom/Press-Releases/Article/3986453/united-states-northern-command-assigned-as-dods-lead-synchronizer-for-counter-s/",
+      "summary_text": "DoD assigned U.S. Northern Command as lead synchronizer for homeland counter-small-UAS operations in the continental United States and Alaska, implying a cross-organizational coordination need beyond isolated unit-level responses.",
+      "summary_source": "manual_pack_paraphrase",
+      "collection_decision": "use_as_evidence",
+      "author_or_org": "U.S. Northern Command Public Affairs",
+      "is_repost": false,
+      "original_source": "",
+      "institutional_stance": "official U.S. combatant command release",
+      "evidence_seed": {
+        "evidence_id": "ev-northcom-synchronization-need",
+        "claim": "Counter-small-UAS operations require synchronization across organizations and locations, especially in homeland defense contexts.",
+        "evidence_summary": "A designated lead synchronizer indicates that the pain point is partly operational coordination and shared awareness, not only detection hardware.",
+        "excerpt": "Paraphrase: USNORTHCOM was designated lead synchronizer for homeland C-sUAS operations in CONUS and Alaska.",
+        "source_location": "Press release lead paragraph",
+        "evidence_assessment": "strong; official organizational decision; supports coordination/command-and-control demand, not a specific technical solution."
+      }
+    },
+    {
+      "source_id": "src-army-acoustic-drone-detection-ukraine-2026",
+      "title": "Listening to the Sky: Acoustic Drone Detection Systems, Ukraine Emerging Technologies",
+      "source_name": "U.S. Army / Center for Army Lessons Learned",
+      "source_tier": "B",
+      "source_type": "official_lessons_learned_article",
+      "publish_time": "2026-04-30T00:00:00Z",
+      "url_or_path": "https://www.army.mil/article/292099/listening_to_the_sky_acoustic_drone_detection_systems_ukraine_emerging_technologies",
+      "summary_text": "The article discusses Ukraine's use of distributed, low-cost acoustic monitoring networks to detect and respond to UAS and FPV attack drones, emphasizing passive sensors, early warning, and cueing of local defenses.",
+      "summary_source": "manual_pack_paraphrase",
+      "collection_decision": "use_as_evidence",
+      "author_or_org": "Center for Army Lessons Learned",
+      "is_repost": false,
+      "original_source": "",
+      "institutional_stance": "official U.S. Army lessons-learned publication",
+      "evidence_seed": {
+        "evidence_id": "ev-army-distributed-passive-sensing-signal",
+        "claim": "Distributed passive sensing is a visible solution signal for low-cost early warning, but it also highlights a broader need for scalable detection and cueing under low-altitude drone pressure.",
+        "evidence_summary": "The evidence points to a potential application shape: passive/distributed detection can improve warning, but the demand should be framed as scalable sensing and cueing, not as copying one named system.",
+        "excerpt": "Paraphrase: low-cost acoustic monitoring networks can detect UAS/FPV drones and cue local defenses.",
+        "source_location": "Article summary and opening section",
+        "evidence_assessment": "medium-strong; official lessons-learned article; contains solution signal, so audit should keep demand wording separate from implementation."
+      }
+    },
+    {
+      "source_id": "src-gao-airport-drone-response-2024",
+      "title": "Aviation Safety: Federal Efforts to Address Unauthorized Drone Flights Near Airports",
+      "source_name": "U.S. Government Accountability Office",
+      "source_tier": "B",
+      "source_type": "government_oversight_report",
+      "publish_time": "2024-04-17T00:00:00Z",
+      "url_or_path": "https://www.gao.gov/products/gao-24-107195",
+      "summary_text": "GAO reports that unauthorized drone flights near airports create safety and security threats; federal and local roles, legal authorities, and FAA planning all affect response. GAO also identifies an assessment gap around how drone detection and mitigation technologies interact with broader drone integration efforts.",
+      "summary_source": "manual_pack_paraphrase",
+      "collection_decision": "use_as_evidence",
+      "author_or_org": "GAO",
+      "is_repost": false,
+      "original_source": "",
+      "institutional_stance": "U.S. federal oversight and audit report",
+      "evidence_seed": {
+        "evidence_id": "ev-gao-assessment-integration-gap",
+        "claim": "Drone detection and mitigation need assessment against broader integration, safety, authority, and response-plan constraints.",
+        "evidence_summary": "The source supports a residual demand for governance-aware, safety-compatible, and operationally coordinated detection/response planning.",
+        "excerpt": "Paraphrase: GAO says FAA testing and planning do not yet fully address effects on broader drone integration efforts.",
+        "source_location": "What GAO Found / Recommendations",
+        "evidence_assessment": "medium-strong; oversight source; supports validation and coordination gaps, but airport context must not be overgeneralized."
+      }
+    }
+  ],
+  "candidate_guidance": {
+    "preferred_focus": "Frame the candidate as a capability demand around low-altitude small-UAS detection, early warning, cross-site awareness, and operational validation.",
+    "avoid": [
+      "Do not turn the main demand into a weapon design.",
+      "Do not make acoustic detection the only answer.",
+      "Do not claim all cited environments are identical; distinguish homeland facility protection, critical infrastructure, and military operating environments.",
+      "Do not cite source heat or trend popularity as proof of demand strength."
+    ],
+    "possible_demand_statement_seed": "需要一种面向低空小型无人机威胁的可扩展、多源探测与早期预警能力，使要地/设施/行动单元能够在复杂空域、低空遮蔽、跨组织协同和真实部署约束下形成可审计的空域态势、告警和处置 cue，从而弥补单一传感器、单点部署和未充分实测验证造成的残余能力缺口。"
+  },
+  "audit_expectations": {
+    "minimum_result_for_report": "approved",
+    "checklist": [
+      "是否能明确任务场景或潜在应用场景。",
+      "是否能明确威胁、对抗环境或部署约束。",
+      "是否说明能力缺口或新能力空间，而不是只复述小型无人机很热门。",
+      "是否至少引用一条 A/B 级、有 source_location 和 excerpt 的证据。",
+      "是否区分需求主结论与方案线索。",
+      "是否记录不确定性，例如不同场景之间不能直接外推。",
+      "是否避免生成具体武器设计、敏感参数优化或作战实施细节。"
+    ],
+    "expected_open_questions": [
+      "不同应用场景中最难满足的是探测、识别、告警延迟、协同共享还是验证评估？",
+      "哪些现有方案已经部分解决问题，仍残留哪些缺口？",
+      "低成本分布式传感、现有雷达/光电/RF 体系和人工观察之间如何进行任务分工，仍需补充哪些公开证据？",
+      "关键部署约束是法律/空域、误报、城市杂波、低空遮蔽、网络连通还是跨部门流程？"
+    ]
+  },
+  "manual_review_questions": [
+    "SourceRecord 是否保留 source_tier、url_or_path、source_name、summary_source 和 collection_decision？",
+    "EvidenceCard.claim 是否是 claim 级判断，而不是大段资料摘要？",
+    "CandidateDemand.demand_statement 是否表达问题/缺口/新能力空间？",
+    "AuditReport 是否能说明通过、补证或退回的理由？",
+    "DemandReport 是否围绕需求成立原因、证据链、不确定性和相关方案线索展开？",
+    "DomainTraceEvent 是否可重建 source -> evidence -> candidate -> audit -> report？"
+  ],
+  "source_urls_used_for_pack": [
+    "https://media.defense.gov/2021/Jan/07/2002561080/-1/-1/0/DEPARTMENT-OF-DEFENSE-COUNTER-SMALL-UNMANNED-AIRCRAFT-SYSTEMS-STRATEGY.pdf",
+    "https://www.faa.gov/airports/new_entrants/uas_detection_mitigation_response",
+    "https://www.northcom.mil/Newsroom/Press-Releases/Article/3986453/united-states-northern-command-assigned-as-dods-lead-synchronizer-for-counter-s/",
+    "https://www.army.mil/article/292099/listening_to_the_sky_acoustic_drone_detection_systems_ukraine_emerging_technologies",
+    "https://www.gao.gov/products/gao-24-107195"
+  ]
+}

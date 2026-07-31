@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · stand in forces
+source_url=https://www.marines.mil/Force-Design/Priorities/Article/2708140/stand-in-forces/
+claim=贡献项：力量协同/保障韧性。Stand-In Forces概念支持前沿低特征、分布式、无人平台和远征前进基地力量嵌入武器交战区内执行持续拒止。
+excerpt=
+retrieval=Hosted web search citation metadata

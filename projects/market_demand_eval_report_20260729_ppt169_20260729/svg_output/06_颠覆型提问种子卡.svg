@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" data-pptx-page-role="content">
+  <rect id="background" data-pptx-role="background" x="0" y="0" width="1280" height="720" fill="#FFFFFF"/>
+  <g id="header" data-pptx-bounds="64 42 1152 102">
+    <text x="64" y="84" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="40" font-weight="bold" fill="#173B5E">颠覆型提问落实为 12 张有界反常规发散种子卡</text>
+    <text x="64" y="126" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="22" fill="#6B7785">不是固定目录：智能体可在 Query 因果约束与质量门下自主提出 OTHER 新方向</text>
+    <text x="1216" y="84" text-anchor="end" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#6B7785">06</text>
+  </g>
+
+  <g id="seed-card-table" data-pptx-bounds="64 158 1152 418">
+    <rect x="64" y="158" width="1152" height="418" fill="#FFFFFF" stroke="#C9D5E0" stroke-width="2"/>
+    <rect x="64" y="158" width="1152" height="38" fill="#173B5E"/>
+    <text x="82" y="184" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#FFFFFF">原始颠覆维度</text>
+    <text x="370" y="184" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#FFFFFF">项目种子卡</text>
+    <text x="596" y="184" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#FFFFFF">重点研究关系</text>
+    <line x1="350" y1="158" x2="350" y2="576" stroke="#C9D5E0" stroke-width="2"/>
+    <line x1="574" y1="158" x2="574" y2="576" stroke="#C9D5E0" stroke-width="2"/>
+
+    <rect x="64" y="196" width="1152" height="31" fill="#F3F6F9"/>
+    <rect x="64" y="196" width="6" height="31" fill="#2F6FAE"/>
+    <text x="82" y="218" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#1D2733">拦截经济学反转</text>
+    <text x="370" y="218" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" font-weight="bold" fill="#2F6FAE">A1 成本强加</text>
+    <text x="596" y="218" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#1D2733">单件性能竞争 → 体系交换比竞争</text>
+
+    <rect x="64" y="227" width="6" height="31" fill="#2F6FAE"/>
+    <text x="82" y="249" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#1D2733">前线弹药工厂</text>
+    <text x="370" y="249" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" font-weight="bold" fill="#2F6FAE">A2 制造即战力</text>
+    <text x="596" y="249" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#1D2733">后方库存 → 分布式按需制造</text>
+
+    <rect x="64" y="258" width="1152" height="31" fill="#F3F6F9"/>
+    <rect x="64" y="258" width="6" height="31" fill="#2E8B66"/>
+    <text x="82" y="280" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#1D2733">徘徊火力云</text>
+    <text x="370" y="280" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" font-weight="bold" fill="#2E8B66">B1 持续火力场</text>
+    <text x="596" y="280" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#1D2733">临时发射 → 战区持续存在</text>
+
+    <rect x="64" y="289" width="6" height="31" fill="#2E8B66"/>
+    <text x="82" y="311" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#1D2733">和平预置、战时激活</text>
+    <text x="370" y="311" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" font-weight="bold" fill="#2E8B66">B2 预置任务节点</text>
+    <text x="596" y="311" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#1D2733">战时部署 → 预先部署和可信激活</text>
+
+    <rect x="64" y="320" width="1152" height="31" fill="#F3F6F9"/>
+    <rect x="64" y="320" width="6" height="31" fill="#C97A32"/>
+    <text x="82" y="342" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#1D2733">毁平台转向毁节奏</text>
+    <text x="370" y="342" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" font-weight="bold" fill="#C97A32">C1 决策节奏对抗</text>
+    <text x="596" y="342" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#1D2733">物理摧毁 → 压缩或扰乱决策周期</text>
+
+    <rect x="64" y="351" width="6" height="31" fill="#C97A32"/>
+    <text x="82" y="373" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#1D2733">越打越聪明</text>
+    <text x="370" y="373" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" font-weight="bold" fill="#C97A32">C2 战役内学习</text>
+    <text x="596" y="373" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#1D2733">固定策略 → 批次间快速学习</text>
+
+    <rect x="64" y="382" width="1152" height="31" fill="#F3F6F9"/>
+    <rect x="64" y="382" width="6" height="31" fill="#2F6FAE"/>
+    <text x="82" y="404" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#1D2733">非动能点穴瘫痪</text>
+    <text x="370" y="404" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" font-weight="bold" fill="#2F6FAE">D1 功能压制</text>
+    <text x="596" y="404" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#1D2733">结构毁伤 → 关键功能失效</text>
+
+    <rect x="64" y="413" width="6" height="31" fill="#2F6FAE"/>
+    <text x="82" y="435" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#1D2733">打击作为战略信号</text>
+    <text x="370" y="435" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" font-weight="bold" fill="#2F6FAE">D2 战略信号</text>
+    <text x="596" y="435" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#1D2733">单纯毁伤 → 打击与认知效应结合</text>
+
+    <rect x="64" y="444" width="1152" height="31" fill="#F3F6F9"/>
+    <rect x="64" y="444" width="6" height="31" fill="#2E8B66"/>
+    <text x="82" y="466" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#1D2733">任意传感器匹配最优射手</text>
+    <text x="370" y="466" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" font-weight="bold" fill="#2E8B66">E1 火力即服务</text>
+    <text x="596" y="466" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#1D2733">平台绑定 → 传感器与射手解耦</text>
+
+    <rect x="64" y="475" width="6" height="31" fill="#2E8B66"/>
+    <text x="82" y="497" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#1D2733">蜂群对蜂群</text>
+    <text x="370" y="497" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" font-weight="bold" fill="#2E8B66">E2 集群对抗生态</text>
+    <text x="596" y="497" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#1D2733">单平台对抗 → 算法和种群对抗</text>
+
+    <rect x="64" y="506" width="1152" height="31" fill="#F3F6F9"/>
+    <rect x="64" y="506" width="6" height="31" fill="#C97A32"/>
+    <text x="82" y="528" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#1D2733">算法威慑、选择性透明</text>
+    <text x="370" y="528" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" font-weight="bold" fill="#C97A32">F1 可验证自主</text>
+    <text x="596" y="528" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#1D2733">黑箱自主 → 可约束、可验证自主</text>
+
+    <rect x="64" y="537" width="6" height="39" fill="#C97A32"/>
+    <text x="82" y="561" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#1D2733">越降级越自主</text>
+    <text x="370" y="561" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" font-weight="bold" fill="#C97A32">F2 拒止环境自主</text>
+    <text x="596" y="561" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#1D2733">网络依赖 → 断链条件下任务自治</text>
+  </g>
+
+  <g id="bounded-exploration" data-pptx-bounds="64 596 1152 82">
+    <rect x="64" y="596" width="1152" height="82" fill="#173B5E"/>
+    <rect x="64" y="596" width="10" height="82" fill="#2E8B66"/>
+    <text x="92" y="628" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#FFFFFF">12 张卡只是有界起始镜头，不是固定答案、事实或装备清单</text>
+    <text x="92" y="658" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#C8D5E2">智能体可自主发散 OTHER；但不为“六维齐全”机械增加无关概念</text>
+  </g>
+</svg>

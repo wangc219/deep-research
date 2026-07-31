@@ -1,0 +1,11 @@
+{
+  "artifact_ref": "text:80e23417cbb46f05",
+  "content_path": "text-80e23417cbb46f05.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-international_situation-1",
+  "kind": "text",
+  "materialization_status": "fixture_materialized",
+  "sha256": "80e23417cbb46f052c4037df4c64e831499f818180e93b72ec928475bcaf8509",
+  "url": "https://fixture.local/international_situation"
+}

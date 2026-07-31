@@ -1,0 +1,90 @@
+{
+  "branch_products": {},
+  "claims": [
+    {
+      "claim_id": "claim-4a9f5cba2d2b",
+      "claim_type": "fact",
+      "confidence": 0.78,
+      "downstream_steps": [
+        "S1",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-weapon_equipment-1"
+      ],
+      "mechanism": "国外装备的体系依赖、任务优势和能力边界应分别映射为防御性反制选项、现役升级需求与新装备研发需求。",
+      "military_effects": [
+        "拦截反制",
+        "体系协同"
+      ],
+      "packet_id": "packet-weapon_equipment",
+      "source_agent_id": "weapon_equipment",
+      "source_urls": [
+        "https://fixture.local/weapon_equipment"
+      ]
+    },
+    {
+      "claim_id": "claim-3861bb2956ae",
+      "claim_type": "fact",
+      "confidence": 0.78,
+      "downstream_steps": [
+        "S2",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-operational_employment-1"
+      ],
+      "mechanism": "挖掘在西太反介入体系下的装备能力缺口需要结合COA、兵力协同和经验教训判断可用作战样式。",
+      "military_effects": [
+        "体系协同"
+      ],
+      "packet_id": "packet-operational_employment",
+      "source_agent_id": "operational_employment",
+      "source_urls": [
+        "https://fixture.local/operational_employment"
+      ]
+    },
+    {
+      "claim_id": "claim-7e2bf9387cdb",
+      "claim_type": "hypothesis",
+      "confidence": 0.78,
+      "downstream_steps": [
+        "S1",
+        "S3",
+        "S4"
+      ],
+      "evidence_ids": [
+        "ev-international_situation-1"
+      ],
+      "mechanism": "战略格局变化可能推动新型装备能力从单点性能转向体系贡献。",
+      "military_effects": [
+        "体系协同"
+      ],
+      "packet_id": "packet-international_situation",
+      "source_agent_id": "international_situation",
+      "source_urls": [
+        "https://fixture.local/international_situation"
+      ]
+    }
+  ],
+  "conflicts": [],
+  "open_questions": [
+    "国际形势维度仍需进一步联网补充高置信资料。",
+    "作战运用维度仍需进一步联网补充高置信资料。",
+    "武器装备维度仍需进一步联网补充高置信资料。"
+  ],
+  "query_anchor": "挖掘在西太反介入体系下的装备能力缺口",
+  "schema": "military_value_handoff_v1",
+  "statistics": {
+    "candidate_claim_count": 4,
+    "compression_ratio": 0.3311,
+    "evidence_url_count": 3,
+    "input_chars": 4373,
+    "input_packet_count": 4,
+    "output_chars": 1448,
+    "selected_claim_count": 3,
+    "source_agent_count": 3
+  }
+}

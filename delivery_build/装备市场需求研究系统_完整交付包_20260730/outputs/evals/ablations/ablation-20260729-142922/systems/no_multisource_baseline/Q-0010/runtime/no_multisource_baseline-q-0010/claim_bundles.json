@@ -1,0 +1,125 @@
+[
+  {
+    "bundle_id": "claims-6f93754f522d",
+    "claims": [
+      {
+        "claim_id": "claim-c29709a33b29",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "公开资料同时支持PWSA/Transport Layer作为低时延sensor-to-shooter骨干方向，但也显示其能力按Tranche递进，区域持续与全球持续能力不可混同。",
+          "GAO资料表明DOD正在发展替代PNT，但也指出缺少总体战略目标、度量指标和部分业务论证不足，因此不能把替代PNT视为已经体系化解决。",
+          "DARPA CODE和PRIGM证明研发方向存在，但公开材料不足以证明它们已转化为规模化、可在强对抗环境稳定运行的作战装备体系。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-generic_researcher-web-3393b98b73a1",
+          "ev-generic_researcher-web-06d26c44006f"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/",
+          "https://www.sda.mil/home/about-us/faq/"
+        ],
+        "text": "S4 装备基线与五档差距：公开资料支持将基线从“单点传感器/单链路/GPS主导PNT”上移到“分布式传感器-传输-BMC3-射手闭环”。作用机理是以低时延网状传输和战术数据链把目标发现、报告、处理、决策、交战、评估压缩为可连续运转的sensor-to-shooter链路；失效边界是强电磁压制、通信中断、中心化C2依赖或单节点辐射暴露会拉长甚至中断闭环。"
+      },
+      {
+        "claim_id": "claim-feb874893669",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "公开资料同时支持PWSA/Transport Layer作为低时延sensor-to-shooter骨干方向，但也显示其能力按Tranche递进，区域持续与全球持续能力不可混同。",
+          "GAO资料表明DOD正在发展替代PNT，但也指出缺少总体战略目标、度量指标和部分业务论证不足，因此不能把替代PNT视为已经体系化解决。",
+          "DARPA CODE和PRIGM证明研发方向存在，但公开材料不足以证明它们已转化为规模化、可在强对抗环境稳定运行的作战装备体系。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-generic_researcher-web-3393b98b73a1",
+          "ev-generic_researcher-web-06d26c44006f"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/",
+          "https://www.sda.mil/home/about-us/faq/"
+        ],
+        "text": "S4/S5 装备选择与需求优先级：SDA PWSA/Transport Layer类低轨分布式传输层是持续监视与精确打击一体化的关键公开方向。其价值在于把Tracking/Custody、Transport和BMC3耦合，支撑时间敏感陆海目标custody与跨域数据分发；边界是公开批次能力从T0演示、T1区域持续接入到T2全球持续能力递进，不能把后续全球持续能力视为当前完全成熟能力。"
+      },
+      {
+        "claim_id": "claim-3513b3b51e58",
+        "claim_type": "inference",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "公开资料同时支持PWSA/Transport Layer作为低时延sensor-to-shooter骨干方向，但也显示其能力按Tranche递进，区域持续与全球持续能力不可混同。",
+          "GAO资料表明DOD正在发展替代PNT，但也指出缺少总体战略目标、度量指标和部分业务论证不足，因此不能把替代PNT视为已经体系化解决。",
+          "DARPA CODE和PRIGM证明研发方向存在，但公开材料不足以证明它们已转化为规模化、可在强对抗环境稳定运行的作战装备体系。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-generic_researcher-web-3393b98b73a1",
+          "ev-generic_researcher-web-06d26c44006f"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/",
+          "https://www.sda.mil/home/about-us/faq/"
+        ],
+        "text": "S5/S6 技术优先级：GPS/PNT脆弱性是精确打击闭环的刚性缺口。GAO明确指出GPS面临反卫星、干扰、欺骗和网络威胁，且M-code与抗干扰天线升级后仍有脆弱性；因此替代PNT、惯性导航升级和GPS拒止环境下的弹药/平台导航保持能力，应列为高优先级需求。失效边界是公开资料同时指出DOD替代PNT缺乏总体战略目标和度量，成熟度与体系闭合仍不确定。"
+      },
+      {
+        "claim_id": "claim-88e7eefcde32",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "公开资料同时支持PWSA/Transport Layer作为低时延sensor-to-shooter骨干方向，但也显示其能力按Tranche递进，区域持续与全球持续能力不可混同。",
+          "GAO资料表明DOD正在发展替代PNT，但也指出缺少总体战略目标、度量指标和部分业务论证不足，因此不能把替代PNT视为已经体系化解决。",
+          "DARPA CODE和PRIGM证明研发方向存在，但公开材料不足以证明它们已转化为规模化、可在强对抗环境稳定运行的作战装备体系。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-generic_researcher-web-3393b98b73a1",
+          "ev-generic_researcher-web-06d26c44006f"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/",
+          "https://www.sda.mil/home/about-us/faq/"
+        ],
+        "text": "S5/S6 反制与抗毁边界：持续监视节点不能按静态、高辐射、高依赖回传节点设计。陆军公开资料提出雷达需最小化辐射、短发射窗口、频繁转移、欺骗、地形遮蔽并与电子战整合；DARPA CODE显示低带宽/通信中断下协同无人系统是保持前沿搜索与目标交接的研发方向。其作用机理是降低被探测和被反火力打击概率，同时在链路受限时保持局部协同；边界是公开资料主要证明方向和演示目标，不能证明强对抗实战下已规模化成熟。"
+      }
+    ],
+    "packet_id": "packet-generic_researcher",
+    "schema_version": "1.0"
+  }
+]

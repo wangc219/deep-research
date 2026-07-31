@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=army.mil · precision strike missile increment 1 achieves milestone c approval
+source_url=https://www.army.mil/article/286878/precision_strike_missile_increment_1_achieves_milestone_c_approval
+claim=PrSM Increment 1进入Milestone C并面向400公里以上A2/AD目标，为固定/半固定战役纵深目标压制提供公开证据。
+excerpt=
+retrieval=Hosted web search citation metadata

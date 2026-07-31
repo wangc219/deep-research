@@ -1,0 +1,97 @@
+{
+  "checkpoint": {
+    "budget_remaining": {
+      "baseline_tasks": 0,
+      "finalize_tasks": 1,
+      "rounds": 2
+    },
+    "checkpoint_id": "run-checkpoint-no_multisource_baseline-q-0004",
+    "completed_task_ids": [
+      "baseline:generic_researcher"
+    ],
+    "config_fingerprint": "sha256:eba0527a791e6c4a9c468b82ee9785f3dd845ec2f2f2454db68c9ada45b52328",
+    "created_at": "2026-07-29T06:29:22.460027+00:00",
+    "mode": "real",
+    "pending_task_ids": [
+      "finalize:winning-report"
+    ],
+    "research_route": "auto",
+    "resolved_route": "traditional_gap",
+    "resume_count": 0,
+    "round_index": 1,
+    "run_id": "no_multisource_baseline-q-0004",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "generic_researcher"
+    ],
+    "source_materials": [
+      {
+        "artifact_refs": [
+          "text:d0922b5e99030343"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-generic_researcher-web-912bbaba1ca2",
+          "normalized_url": "https://www.darpa.mil/research/programs/collaborative-operations-in-denied-environment",
+          "reasons": [],
+          "score": 0.688
+        },
+        "evidence_id": "ev-generic_researcher-web-912bbaba1ca2",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.darpa.mil/research/programs/collaborative-operations-in-denied-environment"
+      },
+      {
+        "artifact_refs": [
+          "text:b4997875ba76f045"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-generic_researcher-web-93fa7f00aaa0",
+          "normalized_url": "https://www.gao.gov/products/gao-22-106010",
+          "reasons": [],
+          "score": 0.688
+        },
+        "evidence_id": "ev-generic_researcher-web-93fa7f00aaa0",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.gao.gov/products/gao-22-106010"
+      }
+    ],
+    "status": "running",
+    "task_statuses": {
+      "baseline:generic_researcher": "completed",
+      "finalize:winning-report": "pending"
+    },
+    "topic": "间歇通信条件下精打武器任务保持与任务续接研究",
+    "worker_reports": [
+      {
+        "active_skill_ids": [],
+        "active_tool_names": [
+          "search_sources",
+          "create_evidence_card"
+        ],
+        "agent_id": "generic_researcher",
+        "created_at": "2026-07-29T06:31:59.482484+00:00",
+        "domain_object_id": "",
+        "domain_object_type": "",
+        "error": "",
+        "handoff_summary": "决定性事实收敛为三条能力缺口：断链任务管理/协同自治用于保持任务状态，高性能替代PNT用于GPS拒止下维持制导连续性，分布式低暴露火力网络用于通信恢复后的任务续接。公开证据足以支撑需求方向，但不足以支撑具体武器指标、实战成功率或成熟度定级。",
+        "harness_profile": "discovery_research_v1",
+        "new_evidence_ids": [
+          "ev-generic_researcher-web-912bbaba1ca2",
+          "ev-generic_researcher-web-93fa7f00aaa0"
+        ],
+        "packet_id": "packet-generic_researcher",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment research/outputs/evals/ablations/ablation-20260729-142922/systems/no_multisource_baseline/Q-0004/runtime/no_multisource_baseline-q-0004/agent_sessions/generic_researcher.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-ec4df4ed-c4fe-429e-b5c9-6d559e1b5145"
+      }
+    ]
+  },
+  "savepoint_id": "checkpoint-a993e73ed9213986b1cea94f"
+}

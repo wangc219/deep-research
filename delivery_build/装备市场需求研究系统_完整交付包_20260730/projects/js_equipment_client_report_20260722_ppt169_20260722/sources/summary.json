@@ -1,0 +1,2798 @@
+{
+  "baseline_order": [
+    "generic_agent",
+    "bare_llm"
+  ],
+  "comparisons": {
+    "bare_llm": {
+      "adjudication_queue": [
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A中P-8A Increment 3 Block 2于2026年4月达到IOC及对应NAVAIR链接属于较具体事实，当前评审无法联网核验，建议后续核对。",
+                "回答B的参考来源多为资料类型而非具体可追溯文献或链接，证据可核查性较弱。"
+              ],
+              "confidence": 0.86,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-9a147fd651df",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-a47ae07cd358",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B参考来源多为资料类型或泛化来源，缺少具体出处、版本或可追溯链接。",
+                "回答A个别公开资料和日期仍需外部核验，但引用与论点总体相关，且较好区分了公开事实、推断和假设。"
+              ],
+              "confidence": 0.84,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-9a147fd651df",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B引用的P-8A 2026年IOC事项和具体网页需要外部核验；当前仅能判断其与论点相关，不能确认网页真实性和日期准确性。",
+                "回答B证据来源主要集中于美军和盟友体系，对印度洋其他基地、周边国家和非美支撑节点的覆盖有限。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-a47ae07cd358",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0002",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A部分表述如“CSIS信息韧性”“CSIS后勤韧性”未给出精确出处，个别链接和公开资料相关性需外部核验，但未构成明显硬伤。",
+                "回答B主要使用资料类型和机构名称，缺少具体文献题名、链接或页码，引用可追溯性弱于A。"
+              ],
+              "confidence": 0.88,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-5d76b7aa4fc5",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A多为资料类型引用，缺少具体页码、链接或可精确追溯条目，但未发现明显错配。",
+                "回答B部分表述如“CSIS信息韧性”“现代战争复盘”等证据链较概括，需外部核验具体来源；但主要公开项目和机构引用与论证主题相关。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-fca77bdebc53",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.88,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-5d76b7aa4fc5",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-fca77bdebc53",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0003",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A个别引用与军事装备需求的支撑关系偏间接，例如AI治理原则主要支撑规则边界而非直接支撑台海军事态势判断。",
+                "回答B参考来源多为概括性资料类型，未给出具体版本、链接或可直接追溯的出处，证据链弱于A。"
+              ],
+              "confidence": 0.88,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-51ebb078cb16",
+              "primary_route": "G",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-707f22def76f",
+              "primary_route": "G",
+              "route_confidence": 0.78,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A部分网页链接需外部核验其稳定性和具体内容是否与表述完全一致，但引用主题总体相关，未构成明显硬失败。",
+                "回答B多采用资料类型列举而非具体可追溯出处，证据可核验性弱于回答A。"
+              ],
+              "confidence": 0.88,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-51ebb078cb16",
+              "primary_route": "G",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-707f22def76f",
+              "primary_route": "G",
+              "route_confidence": 0.78,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0004",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "B主要列出来源类型而非具体可追溯文献或版本，证据可核验性弱于A"
+              ],
+              "confidence": 0.86,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-04b328e3f977",
+              "primary_route": "B",
+              "route_confidence": 0.9,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-c4483083e4aa",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.86,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-04b328e3f977",
+              "primary_route": "B",
+              "route_confidence": 0.9,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-c4483083e4aa",
+              "primary_route": "B",
+              "route_confidence": 0.9,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0005",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-0ee80404cde9",
+              "primary_route": "D",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.84,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-14569e19e880",
+              "primary_route": "D",
+              "route_confidence": 0.78,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B的参考来源多为机构或资料类别列举，缺少具体报告题名、日期或链接，可追溯性弱于回答A。",
+                "回答A引用更具体且相关性较强，但个别公开项目材料与报告结论之间仍属于推断关系，需要外部核验其原文是否完全支持相应判断。"
+              ],
+              "confidence": 0.88,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-0ee80404cde9",
+              "primary_route": "D",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A的参考来源多为资料类别和机构名称，缺少具体文献题名、发布时间或可追溯链接，证据可核验性弱于回答B。",
+                "回答B提供了较具体的公开来源链接，但当前未联网核验，只能判断其相关性和表面可追溯性较好。"
+              ],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-14569e19e880",
+              "primary_route": "D",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0007",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "B的参考来源多为泛称或书目级来源，缺少具体页码、URL或可核验出处，证据可追溯性弱于A。",
+                "A的部分引用如MQ-4C审计与远海维修质量放行之间属于类比支撑，相关性有限，但报告中已说明不能直接外推，未构成严重问题。"
+              ],
+              "confidence": 0.88,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-15c312f13100",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B中MQ-4C Triton审计材料用于提示复杂无人系统测试成熟度和质量放行风险，相关性存在一定间接性，不能直接外推为南海远海维修效能证据。",
+                "回答A参考来源较多为通用书目和公开资料，缺少具体页码、链接或可直接追溯条目，但未构成明显事实错误。"
+              ],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-686cfbf8c05d",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "A的部分引用与具体结论之间是类比支撑而非直接证据，例如MQ-4C审计用于提示复杂系统质量放行风险，相关性有限但已说明不能直接外推。",
+                "B列出的参考来源多为通用资料和书目，未提供具体页码、链接或可追溯出处，证据可核验性弱于A。"
+              ],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-15c312f13100",
+              "primary_route": "B",
+              "route_confidence": 0.88,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-686cfbf8c05d",
+              "primary_route": "B",
+              "route_confidence": 0.88,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0008",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B关于日本防卫省将12式能力向上型地面发射型命名为25式地对舰导弹及相关部署信息的具体网页和事实需要外部核验；该点不是其全部论证的唯一基础，暂不构成硬失败。"
+              ],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-bcd8f857c05f",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B的参考来源多为资料类型或笼统来源，缺少精确可追溯的出处、页码或链接，证据链弱于回答A。",
+                "回答A个别具体公开资料表述仍需外部核验，但未构成明显事实硬伤。"
+              ],
+              "confidence": 0.83,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-e4e75ace4b45",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B关于日本防卫省2026年页面及“25式地对舰导弹”相关表述需要外部核验；在无法联网核验条件下不作为硬性错误处理。",
+                "回答A多使用资料类型和机构来源而非精确出处，可追溯性弱于带具体链接的引用，但其事实表述整体较保守。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-bcd8f857c05f",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A引用的日本防卫省2026年具体页面及“25式地对舰导弹”相关表述需要外部核验；目前无法确认其准确性，但未构成明显硬性失败。",
+                "回答B多引用资料类型和文件名称而非具体页码或链接，可追溯性弱于A。"
+              ],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-e4e75ace4b45",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0009",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A主要使用资料类别和通用事实说明，引用可追溯性弱于回答B",
+                "回答B部分具体公开来源如GAO 2026报告需外部核验，但未发现明显与任务错配或支撑核心结论的虚构数字"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-4ca1d28d0030",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.88,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-df6de92b5389",
+              "primary_route": "F",
+              "route_confidence": 0.84,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B中个别较新的GAO 2026报告和具体公告链接需外部联网核验其准确性与内容对应性",
+                "回答A的参考来源多为资料类别而非具体文献，虽然没有明显错误，但可追溯性有限"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-4ca1d28d0030",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "A中部分具体公开链接和GAO 2026报告编号在无法联网条件下仍需外部核验，但其引用方向与论证主题相关，未构成明显硬伤。",
+                "B的参考来源多为资料类别而非具体文献、链接或文件编号，可追溯性较弱。"
+              ],
+              "confidence": 0.84,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-df6de92b5389",
+              "primary_route": "F",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0010",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-2c2a6f4fd6eb",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "A的部分URL和公开报道细节仍需外部核验，但引用与论证主题相关，未见明显错配。",
+                "B主动说明未联网核验，参考来源多为概括性列举，缺少具体页码、链接或可直接追溯的出处。"
+              ],
+              "confidence": 0.84,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-b054e3f896d6",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-2c2a6f4fd6eb",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.84,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-b054e3f896d6",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0011",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B部分引用来自美方官方或相关军事媒体，能支撑事件和演训事实，但对动机、效果和作战影响的推断需降权使用；未构成明显硬伤。",
+                "回答A参考来源多为资料类型或宽泛来源，可靠性较稳健，但可追溯到具体事实的粒度较低。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-08b514e951e6",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A部分引用来自美国军方或相关媒体，虽与论点相关且可追溯，但其叙事立场和事件表述需要降权使用，回答A已部分说明这一边界。",
+                "回答A中美国防部年度报告链接和日期需外部核验，当前仅能判断其形式上可追溯，不能确认链接有效性。",
+                "回答B列出的参考来源多为资料类型或机构名称，缺少具体页码、链接或版本细节，可追溯性弱于A。"
+              ],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-3a5bce4fa424",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B部分外部链接和年度报告年份、发布时间需要联网核验；但引用主题与论证方向总体相关，未构成明显硬伤。",
+                "回答A参考来源多为资料类型或泛称，缺少具体页码、版本或可直接追溯链接，证据支撑偏概括。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-08b514e951e6",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A个别外部链接和具体报告日期、演训细节仍需外部核验，但未构成明显硬伤；回答B多数参考来源为资料类型罗列，缺少具体可追溯页码或链接。"
+              ],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-3a5bce4fa424",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0012",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.84,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-4b6143e3b11c",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "B的证据主要依托美军、盟友演训和美国公开审计资料，对南海一般性分散补给结论存在一定外推，需要后续结合更多区域和本方保障体系资料核验。",
+                "A的部分贸易和能源通道数据使用较早公开口径，但已明确其仅用于趋势判断，未构成严重问题。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-ee41bca69a77",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.84,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-4b6143e3b11c",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-ee41bca69a77",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0013",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B的参考来源多为资料类别和机构名称，缺少具体报告题名、链接或可追溯出处，证据支撑弱于回答A。",
+                "回答A的个别公开来源仍需外部核验其具体内容是否完全支撑文中判断，但引用方向与任务相关，未见明显错配。"
+              ],
+              "confidence": 0.86,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-0db67641d1f5",
+              "primary_route": "B",
+              "route_confidence": 0.88,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-85c9148969a6",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.87,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-0db67641d1f5",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-85c9148969a6",
+              "primary_route": "B",
+              "route_confidence": 0.88,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0014",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.86,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-aa9f7fa5a42a",
+              "primary_route": "B",
+              "route_confidence": 0.88,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B部分引用与结论之间存在间接支撑关系，例如DIU Replicator软件项目用于支撑后勤C2韧性需求，相关但不是专门后勤节点抗毁证据；不构成严重问题。",
+                "回答A参考来源多为资料类型或概念文件概述，整体可信但可追溯性弱于回答B。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-f9ceea2483d4",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B的参考来源多为宽泛资料类别或概念文件名称，缺少具体出处、版本或可追溯链接；但未发现明显严重伪造。",
+                "回答A个别引用与后勤节点抗毁的关联属于间接支撑，例如DIU Replicator软件方向用于推断断连后勤C2需求，相关性可接受但并非直接证据。"
+              ],
+              "confidence": 0.87,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-aa9f7fa5a42a",
+              "primary_route": "B",
+              "route_confidence": 0.88,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B部分引用如DIU Replicator、NMESIS、G/ATOR与后勤节点抗毁的关系属于间接支撑，相关性不如联合后勤、基地韧性和补给研究直接，但未构成明显事实错误。",
+                "回答A参考来源多为资料类型和公开概念概述，缺少精确页码、链接或具体出处，证据可追溯性弱于回答B。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-f9ceea2483d4",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0016",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A的参考来源多为资料类型和机构方向，精确可追溯性弱于正式文献引用",
+                "回答B提供了URL和机构来源，但当前未联网核验，只能判断其相关性和表面一致性，不能确认全部细节准确"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-42170115d356",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B的参考来源多为资料类型或机构名称，缺少具体文献题名、链接或可追溯出处，证据支撑力度较弱。",
+                "回答B个别指标性表述如“节点损失30%条件下保持关键业务连通”未给出来源或推导依据，更像论证设定而非证据结论。",
+                "回答A的部分公开来源仍需外部核验具体内容是否完全支撑对应推断，但引用更具体、相关性更强，且较好地区分事实与推断。"
+              ],
+              "confidence": 0.86,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-5c40972c2edd",
+              "primary_route": "B",
+              "route_confidence": 0.9,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-42170115d356",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.86,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-5c40972c2edd",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0017",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B部分引用主要来自美军和国外智库，能支撑趋势类判断，但与具体中国边境村镇场景之间仍存在迁移假设，不能直接证明本地威胁强度或装备现状。",
+                "回答B引用的美国防部中国军力报告链接和发布时间需要外部核验；即使为真实来源，其与边境村镇态势感知装备需求的直接相关性也偏间接。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-464f20fff93e",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A引用的美军、智库材料能够支撑无人系统扩散、频谱争夺和短程侦察趋势，但与具体边境村镇场景之间仍主要是类比推断，不能直接证明特定地区需求。",
+                "回答A个别引用如美国防部中国军力报告链接和具体表述需外部核验其准确性与可访问性；但未构成明显硬失败。",
+                "回答B多数来源为法律法规、标准和通用技术事实，可靠性较高，但对军事装备需求和体系对抗的直接支撑较弱。"
+              ],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-8ad70824ab3c",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B引用的美军、Ifri和美国防部材料主要能支撑无人系统扩散、频谱受争夺和多域作战趋势，但对具体中国边境村镇态势感知需求的直接证明力有限，存在跨场景迁移推断。",
+                "回答B中“2025年度报告”链接和发布日期等细节需要外部核验；当前仅能判断其引用方向与论证主题大体相关，不能确认来源完全准确。",
+                "回答A未提供URL，但所列法律、标准和北斗公开能力属于较可追溯的公开事实方向。"
+              ],
+              "confidence": 0.76,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-464f20fff93e",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A引用的部分外军和智库资料与无人系统、频谱受扰、多域作战趋势相关，但其对具体边境村镇场景的适用性主要是类比推断，不是直接实证。",
+                "回答A中关于美国防部2025年度中国军力报告的具体URL和发布日期样式需要外部核验；该点不构成核心结论支撑。",
+                "回答B引用的法律、标准和公开技术方向总体可信，但更多支撑合规治理和信息化建设，对军事影响和装备需求的直接证据支撑较弱。"
+              ],
+              "confidence": 0.84,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-8ad70824ab3c",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0018",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "A的部分引用如Force Design、反无人系统战略等与水下机器视觉不是直接对应关系，只能作为分布式前沿处理和低成本无人威胁趋势的间接支撑。",
+                "B列举的基础文献和数据集方向总体可信，但未给出可直接追溯链接，且多数证据停留在基础海洋光学和公开数据集层面，对具体军事预警装备现状支撑较弱。"
+              ],
+              "confidence": 0.84,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-5d6140dee8f0",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B部分引用如Force Design、CSIS乌克兰自主系统经验、DoD反无人系统战略属于跨域类比，能够支撑分布式边缘处理和低成本无人威胁趋势，但不能直接证明水下机器视觉装备能力成熟度；回答B已基本说明其证据边界，未构成严重问题。"
+              ],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-905803f57acf",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A部分引用如Force Design、CSIS乌克兰自主系统、DoD反无人系统战略属于跨域类比证据，相关性可接受但不是水下机器视觉的直接证据，应视为支撑体系韧性和低成本无人威胁趋势的间接依据。",
+                "回答B列出的Mobley、Jaffe、Schettini等来源与水下光学和图像处理高度相关，但未给出可直接追溯链接或具体页码；在无法联网核验条件下不构成硬伤。"
+              ],
+              "confidence": 0.86,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-5d6140dee8f0",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B部分引用如乌克兰自主系统、Force Design、反无人系统战略等与水下机器视觉不是直接同领域证据，主要支撑跨域类比和体系韧性判断，外推性较强；但其证据边界有说明，未构成严重失败。",
+                "回答A引用多为基础著作和公开数据集，相关性较强，但未提供可直接追溯链接；在无法联网核验条件下不视为问题。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-905803f57acf",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0019",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.74,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-71ba339be57c",
+              "primary_route": "B",
+              "route_confidence": 0.88,
+              "system_winner": "bare_llm"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B的参考来源多为资料类型或来源方向，缺少具体版本、链接或可追溯条目，证据链相对较弱。"
+              ],
+              "confidence": 0.88,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-c2cfbf62387f",
+              "primary_route": "B",
+              "route_confidence": 0.9,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A主要列举公开资料类型和来源方向，未给出精确版本、出处或可追溯链接，证据可核验性弱于回答B。",
+                "回答B引用多为美军公开系统、条令或监督报告，相关性较强但存在一定场景和国家体系外推风险，不能直接等同于所有海上护航管控条件。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-71ba339be57c",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B明确未联网核验，参考来源多为资料类型而非具体可追溯文献或链接，证据支撑强度有限。",
+                "回答A引用整体与论点相关且可追溯，但部分由美军公开资料推导到一般护航管控需求，属于合理推断而非直接证明。"
+              ],
+              "confidence": 0.84,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-c2cfbf62387f",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0020",
+          "reasons": [
+            "judge_or_order_disagreement",
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B的参考来源多为机构或资料类型，缺少具体标题、发布时间、链接或可核查条目，证据可追溯性较弱。",
+                "回答A虽给出较具体公开来源和链接，但部分涉及最新通报和外军项目的细节仍需外部核验；未发现明显错配到足以构成严重失败的问题。"
+              ],
+              "confidence": 0.84,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-6e4c271604ff",
+              "primary_route": "B",
+              "route_confidence": 0.88,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B中个别具体通报数字和网页内容需要外部核验，但引用方向与论证主题相关，未发现明显硬伤。",
+                "回答A多为来源类型列举而非具体可追溯出处，证据可核验性弱于回答B。"
+              ],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-724c447a767f",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B多处使用“RUSI、IISS、CSIS、公开报道”等来源类别，缺少具体报告题名、日期或链接，证据可追溯性较弱。",
+                "回答A的部分引用虽更具体且相关，但仍需外部核验其链接内容是否完全支撑相应判断。"
+              ],
+              "confidence": 0.88,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-6e4c271604ff",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-724c447a767f",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0021",
+          "reasons": [
+            "citation_issue"
+          ]
+        }
+      ],
+      "dimension_votes": {
+        "capability_mapping_and_demand_quality": {
+          "bare_llm": 1,
+          "full_method": 75
+        },
+        "causal_and_mechanism_depth": {
+          "full_method": 76
+        },
+        "evidence_and_factuality": {
+          "bare_llm": 4,
+          "full_method": 61,
+          "tie": 11
+        },
+        "military_operational_value": {
+          "full_method": 75,
+          "tie": 1
+        },
+        "novelty_and_foresight": {
+          "full_method": 76
+        },
+        "route_task_fulfillment": {
+          "bare_llm": 1,
+          "full_method": 75
+        },
+        "system_and_cross_scenario_robustness": {
+          "full_method": 75,
+          "tie": 1
+        },
+        "uncertainty_and_validation": {
+          "bare_llm": 2,
+          "full_method": 55,
+          "tie": 19
+        }
+      },
+      "hard_failures": {},
+      "judgment_count": 76,
+      "query_count": 19,
+      "query_outcomes": [
+        {
+          "query_id": "Q-0002",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0003",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0004",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0005",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0007",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0008",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0009",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0010",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0011",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0012",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0013",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0014",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0015",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0016",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0017",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0018",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0019",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0020",
+          "votes": {
+            "bare_llm": 1,
+            "full_method": 3
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0021",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        }
+      ],
+      "runtime": {
+        "bare_llm": {
+          "completion_rate": 1.0,
+          "mean_duration_seconds": 138.874,
+          "mean_estimated_cost": 0.0,
+          "mean_usage": {
+            "input_tokens": 757.211,
+            "output_tokens": 6379.0,
+            "total_tokens": 7136.211
+          },
+          "run_count": 19
+        },
+        "full_method": {
+          "completion_rate": 1.0,
+          "mean_duration_seconds": 1188.604,
+          "mean_estimated_cost": 0.0,
+          "mean_usage": {},
+          "run_count": 19
+        },
+        "generic_agent": {
+          "completion_rate": 1.0,
+          "mean_duration_seconds": 226.728,
+          "mean_estimated_cost": 0.0,
+          "mean_usage": {
+            "cached_input_tokens": 8791.579,
+            "input_tokens": 76346.526,
+            "output_tokens": 8575.368,
+            "reasoning_output_tokens": 2454.579,
+            "search_query_count": 11.684,
+            "tool_call_count": 12.158,
+            "web_search_calls": 12.158
+          },
+          "run_count": 19
+        }
+      },
+      "schema_version": "1.0",
+      "systems": {
+        "bare_llm": {
+          "bootstrap_95pct": [
+            0.0,
+            0.0
+          ],
+          "losses": 19,
+          "score_rate": 0.0,
+          "ties": 0,
+          "wins": 0
+        },
+        "full_method": {
+          "bootstrap_95pct": [
+            1.0,
+            1.0
+          ],
+          "losses": 0,
+          "score_rate": 1.0,
+          "ties": 0,
+          "wins": 19
+        }
+      }
+    },
+    "generic_agent": {
+      "adjudication_queue": [
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A引用的P-8A Increment 3 Block 2 IOC信息时间点较具体，若用于严肃报告需外部核验其发布日期和IOC表述是否准确。",
+                "回答B个别来源链接带有utm_source参数，但不影响核心证据判断；其事实仍需按正式引用格式清洗。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-96fecd47c0e8",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B部分关键论据集中在P-8A、Force Design、NMESIS和CRS基础设施材料，与印度洋基地强扰链路的直接相关性较弱，部分具体事实如P-8A 2026 IOC需外部核验。",
+                "回答A个别来源如IFC-IOR链接带有utm参数，且部分最新航运数据需外部核验，但总体引用与论点匹配度较高。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-ccb1a016ca4e",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "generic_agent"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A中个别现役能力状态和未来日期类引用，如P-8A Increment 3 Block 2 IOC信息，若用于关键结论需外部核验；但其不是支撑总体结论的唯一依据。",
+                "回答B部分统计数据和2025/2026时点信息需要联网核验，但引用来源与论点总体相关且可追溯。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-96fecd47c0e8",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B部分引用用于支撑较大范围体系判断，但与印度洋基地强扰链路的直接相关性较弱；例如Force Design、NMESIS、P-8A升级更多证明美军分布式/平台能力方向，不能直接证明印度洋基地链路支撑缺口。",
+                "回答A个别来源和数据涉及较新的时间点，若用于正式报告仍需外部核验，但从可追溯性和任务相关性看未构成明显硬伤。"
+              ],
+              "confidence": 0.74,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-ccb1a016ca4e",
+              "primary_route": "B",
+              "route_confidence": 0.78,
+              "system_winner": "generic_agent"
+            }
+          ],
+          "query_id": "Q-0002",
+          "reasons": [
+            "judge_or_order_disagreement",
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B部分证据链表述较笼统，如“CSIS信息韧性”“现代战争复盘”等未给出明确可追溯来源或具体结论出处。",
+                "回答A若干较新的数字和报告日期需要外部核验，但引用整体与论点相关且可追溯性较好。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-3582f0a4f974",
+              "primary_route": "F",
+              "route_confidence": 0.74,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A部分表述引用为概念性依据，如“CSIS信息韧性”“现代战争复盘”等未始终给出明确可追溯出处，证据颗粒度弱于B。",
+                "回答B包含若干较新的或未来时点来源与数字，当前无法联网核验时只能视为需外部复核，未据此判定硬失败。"
+              ],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-8121ba5eaa71",
+              "primary_route": "B",
+              "route_confidence": 0.84,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B部分证据链表述较概括，如“CSIS信息韧性”“现代战争复盘”等未给出具体可追溯出处，事实支撑弱于回答A。",
+                "回答A个别未来时间点和来源细节需要外部核验，但未构成可确认的严重事实失败。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-3582f0a4f974",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A部分证据链以概念性来源或未完全展开的机构名支撑，如“CSIS信息韧性”“CSIS后勤韧性”，可追溯性弱于回答B。",
+                "回答B部分较新的来源和数字需要外部核验，但从文本呈现看与论点相关，未构成明显硬失败。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-8121ba5eaa71",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0003",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B使用了多项精确的2025年度数字和报告链接，表面上相关且可追溯，但关键数字仍需外部核验；本评审未因数量本身加分。",
+                "回答A部分来源较少，且个别链接如AI治理页面与台海军事态势的直接关联较弱，但整体事实与推断区分较清楚。"
+              ],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-462dd151ceef",
+              "primary_route": "H",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.76,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-8e702677a8a5",
+              "primary_route": "H",
+              "route_confidence": 0.78,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-462dd151ceef",
+              "primary_route": "H",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "A中若干2025年度精确数字、年度报告链接和安全部门统计具有较强时效性，当前无法联网核验，只能按可追溯性和相关性评价，建议后续人工复核关键数据。",
+                "B引用的台湾防务部门动态页面和中国国防部发布页面可能具有动态更新或单方叙事属性，作为事实边界示例可用，但不宜单独支撑强归因判断。"
+              ],
+              "confidence": 0.74,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-8e702677a8a5",
+              "primary_route": "H",
+              "route_confidence": 0.78,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0004",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.86,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-04e3b0fbe48d",
+              "primary_route": "B",
+              "route_confidence": 0.9,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-223418146b1a",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-04e3b0fbe48d",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B部分引用如GAO、Stand-in Forces、反无人战略与丛林通信的直接相关性较间接，更多用于类比支撑未来对抗判断；未构成硬失败。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-223418146b1a",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0005",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A个别较新的2026年来源和统计需外部核验，但未发现足以构成严重失败的明显错配；回答B引用较少，对高消耗战场经验的事实支撑相对不足。"
+              ],
+              "confidence": 0.72,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-1148c5f3722a",
+              "primary_route": "D",
+              "route_confidence": 0.78,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-94336c28d3be",
+              "primary_route": "D",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.7,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-1148c5f3722a",
+              "primary_route": "D",
+              "route_confidence": 0.78,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-94336c28d3be",
+              "primary_route": "D",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0007",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "A引用的部分未来年份报告或研究需要外部核验其实际存在性与具体数据准确性，但引用主题总体相关。",
+                "B部分引用如MQ-4C审计、Replicator、Force Design与南海远海维修属于间接支撑，相关性弱于A的南海和海上后勤资料。"
+              ],
+              "confidence": 0.77,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-0d8f3f38240b",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A部分引用与核心结论的直接支撑关系偏间接，例如MQ-4C审计主要提示复杂系统测试/成熟度风险，不能直接证明南海远海维修质量放行问题。",
+                "回答B部分来源时间和具体报告链接需要外部核验，尤其是2025/2026年报告与材料的具体可访问性；但其引用主题与南海、低空探测和分布式后勤的相关性较高。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-a72e15190b08",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B部分引用如MQ-4C审计、Replicator和Force Design与南海远海维修的直接证据关系较弱，更多是类比支撑，需要谨慎外推。",
+                "回答A部分较新的报告和链接在无法联网条件下不能核验真实性与具体表述，但引用方向与论点总体相关。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-0d8f3f38240b",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B关于“2022年全球运输货物约64%经过南海”的表述与常见公开认知可能不一致，且作为关键背景数字需外部核验",
+                "回答B引用的2025年美国国防部涉华军事报告和若干2026年材料需要核验其实际存在、发布日期及是否支持文中具体表述",
+                "回答A个别引用如MQ-4C审计与远海维修质量放行的关联较间接，但未构成核心事实错误"
+              ],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-a72e15190b08",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0008",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-be27bd6648d3",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A中部分2026年预算和新闻链接的时间、文件日期需要外部核验，但未构成明显硬失败。",
+                "回答B关于日本防卫省将12式能力向上型命名为25式地对舰导弹及相关部署信息的引用需要外部核验；其部分证据更多来自美军EABO、乌克兰经验和通用反无人资料，与日本西南岛链的直接对应性弱于A。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-e8dfa79fb266",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-be27bd6648d3",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "两篇均包含部分未来时间或需外部核验的公开资料链接；在无法联网条件下未判定为硬失败。回答B关于“25式地对舰导弹”及具体部署信息的事实需要进一步核验。"
+              ],
+              "confidence": 0.72,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-e8dfa79fb266",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "generic_agent"
+            }
+          ],
+          "query_id": "Q-0009",
+          "reasons": [
+            "judge_or_order_disagreement",
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "B中部分来源表述如“DoD/DOW”“war.gov”以及若干2025/2026资料的具体标题和日期需外部核验，但未构成可判定的严重失败",
+                "A中GAO 2026报告等未来/近未来公开资料同样需外部核验，但其核心论证不依赖单一可疑来源"
+              ],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-047257b434cf",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A的引用更贴近南海，但个别较新的智库条目和官方链接需要外部核验，当前无法仅凭URL确认其事实细节完全准确。",
+                "回答B的引用多与美军及伙伴无人系统、互操作和审计问题相关，对南海通信遮断场景的直接证据支撑偏间接。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-ca09ffa58e11",
+              "primary_route": "F",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A部分引用如GAO 2026报告、回答B部分2025/2026智库材料及DoD/DOW链接在当前无法联网条件下需外部核验，但未发现足以构成硬失败的明显错配。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-047257b434cf",
+              "primary_route": "F",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "A中部分引用时间和机构页面需外部核验，尤其个别2025/2026智库条目和DoD/DOW或war.gov链接的具体存在性；但未构成明显硬失败。",
+                "B的引用多偏向美国及伙伴无人系统、C2和审计材料，对南海本地通信/EW环境的直接证据支撑弱于A。"
+              ],
+              "confidence": 0.73,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-ca09ffa58e11",
+              "primary_route": "F",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0010",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B个别来源和表述需要外部核验，例如部分2026年战场数据、媒体损耗率以及美方发布域名/项目信息；但其已说明部分数据属于趋势证据，未构成严重失败。"
+              ],
+              "confidence": 0.84,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-183f80bbcaac",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A个别来源或表述需外部核验，例如使用较新的2026年乌克兰官方和媒体数据，以及个别未在参考文献中完整列出的Breaking Defense相关说法；但未构成明确硬失败。",
+                "回答A引用的部分精确数字如目标由无人机提供比例、发现到毁伤时间等，对结论有支撑作用但需要外部核验其原文语境和适用范围。"
+              ],
+              "confidence": 0.74,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-33547d5d5b18",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B正文提到NATO无人地面系统白皮书、Breaking Defense重载无人机方案，但参考来源列表中未完整列出对应出处，证据链略有缺口",
+                "回答B引用2026年乌克兰国防部和媒体数据，虽标注了官方/媒体属性，但任务量、损耗率等数字仍需外部核验后才能作为采购规模依据",
+                "回答A部分引用用于支撑宏观趋势较合适，但对某些装备能力成熟度的具体判断仍主要来自推断而非直接试验数据"
+              ],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-183f80bbcaac",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A个别引用或表述需要外部核验，例如DoD发布链接使用war.gov域名、文中提到的NATO白皮书和Breaking Defense报道未完整列入参考来源；但未构成可确认的严重失败。",
+                "回答A部分2026年乌克兰官方和媒体数据属于战时或媒体公开信息，回答自身已提示可能存在宣传和样本偏差，宜作为趋势证据而非精确采购依据。",
+                "回答B部分来源较宏观，例如Force Design和DoD反无人战略事实页，对具体分散补给能力的直接证据支撑弱于A。"
+              ],
+              "confidence": 0.74,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-33547d5d5b18",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0011",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "A中个别2025/2026年份数据和报告日期、B中对CJADC2/Replicator/Force Design向南海数据压力的外推，均需外部核验后才能确认强度，但未构成明显硬失败。"
+              ],
+              "confidence": 0.72,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-a4261fac4928",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "generic_agent"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "A和B均包含部分未来年份或政府报告链接，当前无法联网核验，只能按可追溯性和相关性评价；未构成明确硬失败。",
+                "B引用的若干数量化事实较多，但部分事实与核心装备需求之间仍需进一步说明因果强度。"
+              ],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-c122ed2e4b07",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A引用了若干2025、2026年材料和具体数字，若用于正式报告应进一步核验其发布日期、链接有效性和统计口径；但引用主题与论点总体匹配。",
+                "回答B关于CJADC2、Replicator、Force Design等材料与未来威胁方向相关，但与南海多源数据压力的直接证据关系相对间接。"
+              ],
+              "confidence": 0.76,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-a4261fac4928",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "generic_agent"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "两份回答均引用若干未来年份或较新的公开报告与网页，当前无法联网核验其具体内容和URL有效性；未发现足以构成硬失败的明显伪造或错配。",
+                "回答A部分对Replicator、Force Design、CJADC2等材料的外推较强，证据可支撑趋势判断但不足以单独证明其在南海方向的实际成熟部署。",
+                "回答B个别数字性表述如“2025年记录在案行动163次”需要外部核验，且部分来源更多支撑区域活动强度而非直接支撑装备能力缺口。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-c122ed2e4b07",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0012",
+          "reasons": [
+            "judge_or_order_disagreement",
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-df8d8fb8c2bc",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A个别较新的公开来源和具体数据如UNCTAD 2025、PACOM 2026报道需要外部核验，但未构成明显硬伤。",
+                "回答B部分引用对南海分散补给的支撑较为间接，例如CJADC2、C-UAS和DIU Replicator更多用于类比能力缺口，而非直接证明南海场景事实。"
+              ],
+              "confidence": 0.74,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-f1ae7682b04d",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-df8d8fb8c2bc",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B部分引用较偏美国现役任务、CJADC2和演训信息，对南海关键航道本身的地理、贸易和能源数据支撑弱于回答A",
+                "回答B称“只使用输入给定公开来源”与题面实际不完全一致，属于表述不严谨",
+                "未联网核验，个别2025/2026来源和具体报道需外部确认，但未发现足以构成硬失败的明显伪造迹象"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-f1ae7682b04d",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0013",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-786b02495146",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A包含若干2026年公开资料和具体数字，当前无法联网核验其真实性，但引用主题与论点相关，未构成明显硬伤",
+                "回答B部分证据集中于美国海军陆战队Force Design、G/ATOR、MADIS等案例，对一般化近岸低空节点的适用性需要更多跨案例支撑"
+              ],
+              "confidence": 0.76,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-c2485a63bec7",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-786b02495146",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-c2485a63bec7",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0014",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-d797158bbda9",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.86,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-d797158bbda9",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B部分外军规划和未来年份材料的具体可用性需要外部核验，但未构成明显硬失败",
+                "回答A个别公开来源如商业公司宣传性指标、智库数据库和ResearchGate转载文献需注意来源立场与时效边界，但整体相关性较强"
+              ],
+              "confidence": 0.76,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-f2b7b327739a",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0015",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B部分引用如DIU Replicator、NMESIS、G/ATOR与补给线节点抗毁的关系较间接，更多是趋势锚点而非直接后勤证据。",
+                "回答A引用了若干较新的2025、2026公开材料，当前无法联网核验其具体数字，但从表述上未见明显自相矛盾。"
+              ],
+              "confidence": 0.74,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-43de1cfb1327",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-1511ba2e9df0",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A引用的部分2025、2026年公开报告和数据需外部核验；当前仅能判断其相关性和可追溯性较强。",
+                "回答B中NMESIS、G/ATOR和DIU Replicator等来源与补给线节点抗毁存在间接关联，作为证据锚点支撑后勤装备需求时说服力弱于直接后勤、港航、燃料和盟友保障资料。"
+              ],
+              "confidence": 0.72,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-43de1cfb1327",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "generic_agent"
+            }
+          ],
+          "query_id": "Q-0016",
+          "reasons": [
+            "judge_or_order_disagreement",
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B部分引用较宏观，更多支撑电磁战、韧性通信和联合C2趋势，不能直接证明其所有具体能力优先序。",
+                "回答A个别来源用于支撑较宽泛结论，部分指标和优先级仍主要来自分析推断而非公开实测数据。"
+              ],
+              "confidence": 0.76,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-8db2ddad4ee6",
+              "primary_route": "B",
+              "route_confidence": 0.84,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-4ee97f661907",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-8db2ddad4ee6",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0017",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B的主要证据来自美军、智库和外军装备采购趋势，对中国边境村镇具体场景的直接证明力有限，部分结论属于趋势类迁移推断。",
+                "回答A部分政策和国际经验来源较旧，能够支撑结构性背景，但对当前具体装备现状和边境一线真实盲区的证明仍需实地或专项数据补充。"
+              ],
+              "confidence": 0.74,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-83806b3a4357",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-e69b55c2914a",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B引用多来自美军、美国智库和乌克兰战场经验，对中国边境村镇的直接证明力有限，更多支撑趋势推断而非本地实证。",
+                "回答A部分较新的公开报道和链接需外部核验，但其引用主题与边境村镇、通信、法律政策和治理风险的相关性总体更强。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-83806b3a4357",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "A部分引用为美军、乌克兰战场或外国智库材料，能够支撑无人系统扩散、频谱受扰等趋势，但与具体边境村镇态势感知的直接证据链较弱。",
+                "A引用的个别年度报告和链接需要外部核验其存在性、时效性及具体内容是否支持文中判断。",
+                "B引用的国内政策、法律和北斗/应急通信资料与村镇治理相关性较强，但其2026年新华社数据和部分国际架构材料仍需外部核验；且这些证据更多支撑治理和应急，而非军事装备需求。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-e69b55c2914a",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0018",
+          "reasons": [
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答A个别引用存在需核验之处，例如以2026年MDPI条目支撑RUOD数据集规模，可能需要确认来源与数据集描述是否完全匹配。",
+                "回答B部分引用与水下机器视觉的直接相关性较弱，如Force Design、DoD反无人系统、CSIS乌克兰自主系统经验主要是跨域类比证据，不能直接证明水下预警装备效能。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-6b2ed7b3de8d",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.76,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-fd65959cd885",
+              "primary_route": "B",
+              "route_confidence": 0.82,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "B中Knifefish材料只能说明无人反水雷平台应用，不能直接证明港区连续视觉预警或机器视觉适应能力成熟",
+                "B中CSIS乌克兰、Force Design、DoD反无人系统等引用主要是跨域类比，对水下机器视觉预警的直接支撑较弱",
+                "A中部分来源为较新的综述或公开资料，若用于定型指标仍需外场数据复核，但与论题相关性较高"
+              ],
+              "confidence": 0.76,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-6b2ed7b3de8d",
+              "primary_route": "D",
+              "route_confidence": 0.72,
+              "system_winner": "generic_agent"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-fd65959cd885",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0019",
+          "reasons": [
+            "judge_or_order_disagreement",
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B引用若干2025/2026年度报告和网页，若需严格核验，应人工确认其发布日期、统计口径和链接有效性；但从文本内部看未构成明显硬失败。"
+              ],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-14cf62815fff",
+              "primary_route": "B",
+              "route_confidence": 0.88,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.84,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-14cf62815fff",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-4a7c13e3be07",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "generic_agent"
+            }
+          ],
+          "query_id": "Q-0020",
+          "reasons": [
+            "judge_or_order_disagreement",
+            "citation_issue"
+          ]
+        },
+        {
+          "judgments": [
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "B使用较多智库、媒体和二手统计来源，相关性总体较强，但个别具体数字和未来报告发布时间需要外部核验后才能确认准确性。",
+                "A和B均引用公开来源支撑台海压力和反无人机趋势，但均未能直接证明海峡方向已存在特定规模的低空饱和攻击能力；A对此边界说明更充分。"
+              ],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-07446efbf940",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-1",
+              "pair_id": "P-4b90cba0e201",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "回答B个别引用的时效和可追溯性需外部核验，例如美国防部2025年中国军力报告链接路径显示为2025年12月发布，当前评审无法确认其真实性与具体内容。",
+                "回答B部分数据来自二级分析机构统计，虽相关但应注意与台湾官方口径之间可能存在统计口径差异。",
+                "回答A部分链接也需核验具体页面是否对应所述通报，但其核心判断对单一数字依赖较低，且证据边界表述较审慎。"
+              ],
+              "confidence": 0.82,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-07446efbf940",
+              "primary_route": "B",
+              "route_confidence": 0.88,
+              "system_winner": "full_method"
+            },
+            {
+              "adjudication_reasons": [],
+              "adjudication_required": false,
+              "citation_issues": [
+                "A所引部分未来年度或具体发布时间的官方报告链接与数据需外部核验，但未构成明显硬失败。",
+                "B部分来源链接指向可能较宽泛的发布页或新闻材料，证据密度低于A，需要进一步核验具体出处。"
+              ],
+              "confidence": 0.78,
+              "hard_failures": [],
+              "judge_id": "gpt-5.5#expert-2",
+              "pair_id": "P-4b90cba0e201",
+              "primary_route": "B",
+              "route_confidence": 0.86,
+              "system_winner": "full_method"
+            }
+          ],
+          "query_id": "Q-0021",
+          "reasons": [
+            "citation_issue"
+          ]
+        }
+      ],
+      "dimension_votes": {
+        "capability_mapping_and_demand_quality": {
+          "full_method": 65,
+          "generic_agent": 5,
+          "tie": 2
+        },
+        "causal_and_mechanism_depth": {
+          "full_method": 69,
+          "generic_agent": 1,
+          "tie": 2
+        },
+        "evidence_and_factuality": {
+          "full_method": 2,
+          "generic_agent": 67,
+          "tie": 3
+        },
+        "military_operational_value": {
+          "full_method": 65,
+          "generic_agent": 1,
+          "tie": 6
+        },
+        "novelty_and_foresight": {
+          "full_method": 62,
+          "tie": 10
+        },
+        "route_task_fulfillment": {
+          "full_method": 60,
+          "generic_agent": 8,
+          "tie": 4
+        },
+        "system_and_cross_scenario_robustness": {
+          "full_method": 70,
+          "tie": 2
+        },
+        "uncertainty_and_validation": {
+          "full_method": 66,
+          "generic_agent": 2,
+          "tie": 4
+        }
+      },
+      "hard_failures": {},
+      "judgment_count": 72,
+      "query_count": 19,
+      "query_outcomes": [
+        {
+          "query_id": "Q-0002",
+          "votes": {
+            "full_method": 2,
+            "generic_agent": 2
+          },
+          "winner": "tie"
+        },
+        {
+          "query_id": "Q-0003",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0004",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0005",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0007",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0008",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0009",
+          "votes": {
+            "full_method": 3,
+            "generic_agent": 1
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0010",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0011",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0012",
+          "votes": {
+            "full_method": 2,
+            "generic_agent": 2
+          },
+          "winner": "tie"
+        },
+        {
+          "query_id": "Q-0013",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0014",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0015",
+          "votes": {
+            "full_method": 3
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0016",
+          "votes": {
+            "full_method": 2,
+            "generic_agent": 1
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0017",
+          "votes": {
+            "full_method": 3
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0018",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0019",
+          "votes": {
+            "full_method": 3,
+            "generic_agent": 1
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0020",
+          "votes": {
+            "full_method": 2,
+            "generic_agent": 1
+          },
+          "winner": "full_method"
+        },
+        {
+          "query_id": "Q-0021",
+          "votes": {
+            "full_method": 4
+          },
+          "winner": "full_method"
+        }
+      ],
+      "runtime": {
+        "bare_llm": {
+          "completion_rate": 1.0,
+          "mean_duration_seconds": 138.874,
+          "mean_estimated_cost": 0.0,
+          "mean_usage": {
+            "input_tokens": 757.211,
+            "output_tokens": 6379.0,
+            "total_tokens": 7136.211
+          },
+          "run_count": 19
+        },
+        "full_method": {
+          "completion_rate": 1.0,
+          "mean_duration_seconds": 1188.604,
+          "mean_estimated_cost": 0.0,
+          "mean_usage": {},
+          "run_count": 19
+        },
+        "generic_agent": {
+          "completion_rate": 1.0,
+          "mean_duration_seconds": 226.728,
+          "mean_estimated_cost": 0.0,
+          "mean_usage": {
+            "cached_input_tokens": 8791.579,
+            "input_tokens": 76346.526,
+            "output_tokens": 8575.368,
+            "reasoning_output_tokens": 2454.579,
+            "search_query_count": 11.684,
+            "tool_call_count": 12.158,
+            "web_search_calls": 12.158
+          },
+          "run_count": 19
+        }
+      },
+      "schema_version": "1.0",
+      "systems": {
+        "full_method": {
+          "bootstrap_95pct": [
+            0.8684,
+            1.0
+          ],
+          "losses": 0,
+          "score_rate": 0.9474,
+          "ties": 2,
+          "wins": 17
+        },
+        "generic_agent": {
+          "bootstrap_95pct": [
+            0.0,
+            0.1316
+          ],
+          "losses": 17,
+          "score_rate": 0.0526,
+          "ties": 2,
+          "wins": 0
+        }
+      }
+    }
+  },
+  "schema_version": "2.0"
+}

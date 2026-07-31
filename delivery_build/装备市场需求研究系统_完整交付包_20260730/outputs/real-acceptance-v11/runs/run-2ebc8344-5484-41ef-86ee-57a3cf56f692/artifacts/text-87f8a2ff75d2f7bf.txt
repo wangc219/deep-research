@@ -1,0 +1,4 @@
+fetch_failed
+url=https://www.dote.osd.mil/Portals/97/pub/reports/FY2020/other/2020DOTEAnnualReport.pdf?ver=rvLsaCQ_njLmPDrNIFJBWQ%3D%3D
+error=HTTPStatusError: HTTP 403: Forbidden
+该诊断用于保留真实联网smoke边界；正式结论不应仅依赖失败材料。

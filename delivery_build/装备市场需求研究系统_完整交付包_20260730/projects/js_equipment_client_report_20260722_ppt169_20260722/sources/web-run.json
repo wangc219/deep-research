@@ -1,0 +1,287 @@
+{
+  "baseline_concurrency": 4,
+  "baseline_execution_required": [],
+  "baseline_reports": {
+    "Q-0002": {
+      "bare_llm": "BR-88cf4afe744205d135b863ec",
+      "generic_agent": "BR-01492b4814bf4392fc1e62ff"
+    },
+    "Q-0003": {
+      "bare_llm": "BR-69b5ef69fa6976ca585bf3c3",
+      "generic_agent": "BR-c9ea38ac2a770cbe1055925d"
+    },
+    "Q-0004": {
+      "bare_llm": "BR-347bf0dc3b18556f80b899ce",
+      "generic_agent": "BR-aa9e05930d93c17e5a6b667a"
+    },
+    "Q-0005": {
+      "bare_llm": "BR-9c9f04dbe847b555a606152b",
+      "generic_agent": "BR-75b38dbb08e726c302d488d1"
+    },
+    "Q-0007": {
+      "bare_llm": "BR-d6a7f4b0fa38866444147eee",
+      "generic_agent": "BR-3e9e6dc5f367c8c91c962f3f"
+    },
+    "Q-0008": {
+      "bare_llm": "BR-d2be8dee546ed0ec046c82e0",
+      "generic_agent": "BR-5ca203ce2c96e8b626ca52c2"
+    },
+    "Q-0009": {
+      "bare_llm": "BR-94f2f715e161306d1191f2bf",
+      "generic_agent": "BR-6870525473bf5dad56f3b78a"
+    },
+    "Q-0010": {
+      "bare_llm": "BR-740253fc027a33218e9dcd8e",
+      "generic_agent": "BR-346f6cfaf305b9f683898195"
+    },
+    "Q-0011": {
+      "bare_llm": "BR-5099944cbe47876d38436b4c",
+      "generic_agent": "BR-a78219ab94e195c5afdf3377"
+    },
+    "Q-0012": {
+      "bare_llm": "BR-c6893fd4179d2284f6b8796b",
+      "generic_agent": "BR-d38bd7cb7950b85d5cb91757"
+    },
+    "Q-0013": {
+      "bare_llm": "BR-913bf6fcd30c9902de85b473",
+      "generic_agent": "BR-14a0338432737d2bd310dd0e"
+    },
+    "Q-0014": {
+      "bare_llm": "BR-f5a6ed7d9679b5f82b0e5deb",
+      "generic_agent": "BR-c0122304faac9379f89d2c9b"
+    },
+    "Q-0015": {
+      "bare_llm": "BR-40aba9c8d587b373d01ee305",
+      "generic_agent": "BR-03099bbbb367e093216d7d4d"
+    },
+    "Q-0016": {
+      "bare_llm": "BR-0836db70232729433da8b7e8",
+      "generic_agent": "BR-c19f595ed3d6bbfe77c92422"
+    },
+    "Q-0017": {
+      "bare_llm": "BR-ef7550611940f56b579c0f5a",
+      "generic_agent": "BR-63f53e2b9c8450ddde4170ed"
+    },
+    "Q-0018": {
+      "bare_llm": "BR-f4a20f838929e43c773e73ec",
+      "generic_agent": "BR-2d605cec68d5679685dcf59f"
+    },
+    "Q-0019": {
+      "bare_llm": "BR-20e12428ad12c8930a1931bc",
+      "generic_agent": "BR-a54be953a0839b5af66d817e"
+    },
+    "Q-0020": {
+      "bare_llm": "BR-4d967348ee3185328d5b0291",
+      "generic_agent": "BR-9d3fc090774dff7a4240a081"
+    },
+    "Q-0021": {
+      "bare_llm": "BR-5f44fbaeec5096d4b63569e8",
+      "generic_agent": "BR-286849bc7ae8dc65056f7632"
+    }
+  },
+  "baseline_systems": [
+    "generic_agent",
+    "bare_llm"
+  ],
+  "baseline_task_count": 38,
+  "completed_at": "2026-07-22T04:24:08.696240+00:00",
+  "created_at": "2026-07-22T03:47:40.259959+00:00",
+  "dataset_id": "expert-local-v1",
+  "dataset_path": "/Users/wangchen/equipment research/outputs/evals/datasets/expert-local-v1/queries.jsonl",
+  "display_name": "",
+  "error": "",
+  "eval_id": "web-benchmark-20260722-114740",
+  "external_data_confirmed": true,
+  "full_method_source": "existing_research_run",
+  "judge_errors": 4,
+  "judge_llm": {
+    "api_key_present": true,
+    "api_protocol": "responses",
+    "auth_mode": "eval_api_key",
+    "base_url_host": "codexpro.wwxb1123.xyz",
+    "credential_source": "project_env",
+    "max_output_tokens": 2500,
+    "model": "gpt-5.5",
+    "replicas": 2,
+    "runtime": "llm_api",
+    "temperature": 0.0
+  },
+  "judge_mode": "real",
+  "judge_prompt": {
+    "character_count": 4274,
+    "filename": "pairwise_prompt.md",
+    "path": "/Users/wangchen/equipment research/outputs/evals/web-benchmark-20260722-114740/pairwise_prompt.md",
+    "prompt_id": "pairwise_prompt_v1",
+    "sha256": "563cdca4fe91b9b37634091ae66df69fe04226c3e902a4305f9e802a200913eb",
+    "source": "pairwise_prompt_v1"
+  },
+  "judge_results": {
+    "bare_llm": {
+      "cancelled": false,
+      "error_count": 0,
+      "judge_count": 2,
+      "judgment_count": 76,
+      "parallel_workers": 2,
+      "usage": {
+        "gpt-5.5#expert-1": {
+          "input_tokens": 568110,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 14080
+          },
+          "output_tokens": 41060,
+          "output_tokens_details": {
+            "reasoning_tokens": 516
+          },
+          "total_tokens": 609170
+        },
+        "gpt-5.5#expert-2": {
+          "input_tokens": 568110,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 39584,
+          "output_tokens_details": {
+            "reasoning_tokens": 515
+          },
+          "total_tokens": 607694
+        }
+      }
+    },
+    "generic_agent": {
+      "cancelled": false,
+      "error_count": 4,
+      "judge_count": 2,
+      "judgment_count": 72,
+      "parallel_workers": 2,
+      "usage": {
+        "gpt-5.5#expert-1": {
+          "input_tokens": 516438,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 40887,
+          "output_tokens_details": {
+            "reasoning_tokens": 425
+          },
+          "total_tokens": 557325
+        },
+        "gpt-5.5#expert-2": {
+          "input_tokens": 578387,
+          "input_tokens_details": {
+            "cache_write_tokens": 0,
+            "cached_tokens": 0
+          },
+          "output_tokens": 46077,
+          "output_tokens_details": {
+            "reasoning_tokens": 427
+          },
+          "total_tokens": 624464
+        }
+      }
+    }
+  },
+  "limit": 19,
+  "mode": "real",
+  "notes": "",
+  "pair_result": {
+    "pair_count": 76,
+    "query_count": 19
+  },
+  "pair_results": {
+    "bare_llm": {
+      "pair_count": 38,
+      "query_count": 19
+    },
+    "generic_agent": {
+      "pair_count": 38,
+      "query_count": 19
+    }
+  },
+  "pairwise_system": "generic_agent",
+  "pairwise_systems": [
+    "generic_agent",
+    "bare_llm"
+  ],
+  "progress": {
+    "completed": 1,
+    "percent": 100,
+    "total": 1
+  },
+  "project_runs": {
+    "Q-0002": "run-2b8e958a-2aaf-4c5e-879e-21840739ad62",
+    "Q-0003": "run-a47233fa-93d6-4c84-a281-9fac3d3764fb",
+    "Q-0004": "run-ec0586cb-5cf2-45a6-8c77-11d1bb7a01fc",
+    "Q-0005": "run-77a3c9d8-49f6-4747-85e8-c96a8cb47c8d",
+    "Q-0007": "run-a455c34e-e0a1-4bd2-8369-e482b1de9334",
+    "Q-0008": "run-cf9bc34d-9904-4709-99f4-f1335b07c667",
+    "Q-0009": "run-15284b74-1b87-4199-9270-e23117bde824",
+    "Q-0010": "run-8ff1a920-9554-4335-abb2-2df01493e0f6",
+    "Q-0011": "run-4e638c88-d1de-4f8d-8c0b-885e729500ac",
+    "Q-0012": "run-32484f0f-2a31-4076-b8ad-2a1e95bb8114",
+    "Q-0013": "run-6823f4aa-d9d1-487e-b6a5-fb8d7fc7d375",
+    "Q-0014": "run-eaae894d-8f02-4f2c-861c-be671b3bd7fb",
+    "Q-0015": "run-6dce7c57-9c44-409b-ac38-266c234770f3",
+    "Q-0016": "run-33b35f85-57c3-44b9-bc46-4e6f4988cd36",
+    "Q-0017": "run-0743ddb4-52bd-4451-a1b9-42b9cd003622",
+    "Q-0018": "run-f5fbb8e3-6bf0-459e-af23-ba2cfb578279",
+    "Q-0019": "run-73d00728-f5a7-40cb-953c-9951bc9932bd",
+    "Q-0020": "run-4ed296d4-58d9-42b2-b489-f965d7682f66",
+    "Q-0021": "run-72c2f694-7abb-4037-a8d0-77aae7cecdec"
+  },
+  "query_residuals": {
+    "count": 19,
+    "official_count": 10,
+    "path": "/Users/wangchen/equipment research/outputs/evals/web-benchmark-20260722-114740/query_residuals.jsonl"
+  },
+  "resumed_at": null,
+  "run_result": {
+    "cancelled": false,
+    "cancelled_tasks": 0,
+    "completed": 57,
+    "eval_id": "web-benchmark-20260722-114740",
+    "failed": 0,
+    "parallel_workers": 1,
+    "query_count": 19,
+    "result_count": 57,
+    "results": "/Users/wangchen/equipment research/outputs/evals/web-benchmark-20260722-114740/results.jsonl",
+    "scheduled_tasks": 0,
+    "system_count": 3
+  },
+  "saved_baseline_reports": [],
+  "schema_version": "1.4",
+  "selected_query_ids": [
+    "Q-0002",
+    "Q-0003",
+    "Q-0004",
+    "Q-0005",
+    "Q-0007",
+    "Q-0008",
+    "Q-0009",
+    "Q-0010",
+    "Q-0011",
+    "Q-0012",
+    "Q-0013",
+    "Q-0014",
+    "Q-0015",
+    "Q-0016",
+    "Q-0017",
+    "Q-0018",
+    "Q-0019",
+    "Q-0020",
+    "Q-0021"
+  ],
+  "selection_mode": "manual",
+  "split": "manual",
+  "stage": "completed",
+  "started_at": "2026-07-22T03:47:40.260300+00:00",
+  "status": "completed",
+  "systems": [
+    "full_method",
+    "generic_agent",
+    "bare_llm"
+  ],
+  "updated_at": "2026-07-22T04:24:08.696249+00:00"
+}

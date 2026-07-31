@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:2181f543e16fbf66",
+  "content_path": "text-2181f543e16fbf66.txt",
+  "content_type": "text/plain",
+  "direct_error": "TimeoutError: _ssl.c:1015: The handshake operation timed out",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-5b58dc887688",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "2181f543e16fbf669e0e98cb86e0406df218bb9690e34b493904cd8f03d39a26",
+  "url": "https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2026/Discretionary%20Budget/Procurement/Missile%20Procurement%20Army.pdf"
+}

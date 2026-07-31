@@ -1,0 +1,14 @@
+{
+  "artifact_ref": "text:3a8e6cdb26059f37",
+  "content_path": "text-3a8e6cdb26059f37.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-f4296ea33c5f",
+  "kind": "text",
+  "materialization_status": "network_safety_rejected",
+  "mode": "real",
+  "reason": "host_resolution_failed",
+  "rejected_url": "https://www.congress.gov/committee-report/118th-congress/house-report/529/1?utm_source=openai",
+  "sha256": "3a8e6cdb26059f37d4e0a3f3b77e59509dfeda4ff1e3d5ed6450232babbc6de8",
+  "url": "https://www.congress.gov/committee-report/118th-congress/house-report/529/1?utm_source=openai"
+}

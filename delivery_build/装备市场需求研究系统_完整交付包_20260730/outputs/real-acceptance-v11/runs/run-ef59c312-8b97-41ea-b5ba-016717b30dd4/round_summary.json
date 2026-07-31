@@ -1,0 +1,3021 @@
+{
+  "agent_models": {
+    "auditor": {
+      "api_key_env": "EQUIPMENT_DR_API_KEY",
+      "base_url_host": "codexpro.wwxb1123.xyz",
+      "model": "gpt-5.4-mini"
+    },
+    "combat_scenario": {
+      "api_key_env": "EQUIPMENT_DR_API_KEY",
+      "base_url_host": "codexpro.wwxb1123.xyz",
+      "model": "gpt-5.5"
+    },
+    "international_situation": {
+      "api_key_env": "EQUIPMENT_DR_API_KEY",
+      "base_url_host": "codexpro.wwxb1123.xyz",
+      "model": "gpt-5.4"
+    },
+    "operational_employment": {
+      "api_key_env": "EQUIPMENT_DR_API_KEY",
+      "base_url_host": "codexpro.wwxb1123.xyz",
+      "model": "gpt-5.4"
+    },
+    "orchestrator": {
+      "api_key_env": "EQUIPMENT_DR_API_KEY",
+      "base_url_host": "codexpro.wwxb1123.xyz",
+      "model": "gpt-5.4-mini"
+    },
+    "reporter": {
+      "api_key_env": "EQUIPMENT_DR_API_KEY",
+      "base_url_host": "codexpro.wwxb1123.xyz",
+      "model": "gpt-5.4"
+    },
+    "weapon_equipment": {
+      "api_key_env": "EQUIPMENT_DR_API_KEY",
+      "base_url_host": "codexpro.wwxb1123.xyz",
+      "model": "gpt-5.6-terra"
+    },
+    "winning_mechanism": {
+      "api_key_env": "EQUIPMENT_DR_API_KEY",
+      "base_url_host": "codexpro.wwxb1123.xyz",
+      "model": "gpt-5.6-sol"
+    }
+  },
+  "agent_recommendations": [],
+  "analyst_confirmed": true,
+  "architecture_conformance": {
+    "architecture_source": [
+      "编排器与动态智能体_总体架构图.pdf",
+      "制胜机理智能体_详细架构图.pdf"
+    ],
+    "audit_status": "approved",
+    "checks": {
+      "core_agent_sessions": true,
+      "coverage_explicit": true,
+      "dynamic_agent_selection_recorded": true,
+      "final_report_present": true,
+      "five_criteria_audit_present": true,
+      "formal_evidence_present": true,
+      "four_knowledge_resources_projected": true,
+      "isolated_agent_sessions": true,
+      "l1_l2_l3_present": true,
+      "nine_field_capability_images": true,
+      "plan_graph_complete": true,
+      "real_or_fake_mode_recorded": true,
+      "six_step_reasoning_complete": true
+    },
+    "limitations": [],
+    "release_ready": true,
+    "runtime_complete": true,
+    "schema_version": "1.0"
+  },
+  "coverage": {
+    "by_agent": {
+      "combat_scenario": [
+        "scenario",
+        "coa",
+        "environment"
+      ],
+      "international_situation": [
+        "situation",
+        "threat",
+        "strategy"
+      ],
+      "operational_employment": [
+        "operation",
+        "coordination",
+        "lessons"
+      ],
+      "weapon_equipment": [
+        "equipment",
+        "capability_gap",
+        "technology_readiness"
+      ]
+    },
+    "coverage_passed": true,
+    "missing_required_tags": [],
+    "optional_tags": [
+      "coordination",
+      "technology_readiness"
+    ],
+    "provided_tags": [
+      "capability_gap",
+      "coa",
+      "coordination",
+      "environment",
+      "equipment",
+      "lessons",
+      "operation",
+      "scenario",
+      "situation",
+      "strategy",
+      "technology_readiness",
+      "threat"
+    ],
+    "required_tags": [
+      "equipment",
+      "operation",
+      "scenario",
+      "situation",
+      "threat"
+    ],
+    "route": "new_winning_mechanism"
+  },
+  "evidence_assessments": [
+    {
+      "conflict_group": null,
+      "decision": "accepted",
+      "evidence_id": "ev-international_situation-web-906fb4b16de0",
+      "normalized_url": "https://nato.int/en/work-with-us/business-and-project-opportunities/demand-signal",
+      "reasons": [],
+      "score": 0.807
+    },
+    {
+      "conflict_group": null,
+      "decision": "accepted",
+      "evidence_id": "ev-international_situation-web-49f2eb1a8e44",
+      "normalized_url": "https://www.nato.int/en/multimedia/multimedia/videos/2025/12/09/nato-and-the-us-army-demonstrate-low-cost-counter-uas-system-to-protect-nato-airspace",
+      "reasons": [],
+      "score": 0.807
+    },
+    {
+      "conflict_group": null,
+      "decision": "accepted",
+      "evidence_id": "ev-international_situation-web-2d1ba4398caa",
+      "normalized_url": "https://www.nato.int/content/dam/nato/webready/documents/sps/grants/sps-special-call-for-proposals-2026-2.pdf",
+      "reasons": [],
+      "score": 0.657
+    },
+    {
+      "conflict_group": null,
+      "decision": "accepted",
+      "evidence_id": "ev-international_situation-web-ce3f3e70cc3f",
+      "normalized_url": "https://www.darpa.mil/news/2025/roqs-launches-first-phase",
+      "reasons": [],
+      "score": 0.807
+    },
+    {
+      "conflict_group": null,
+      "decision": "accepted",
+      "evidence_id": "ev-international_situation-web-c36d9569d02b",
+      "normalized_url": "https://www.gov.uk/government/speeches/russias-intensified-aerial-attacks-against-ukraine-and-irresponsible-threats-uk-statement-to-the-osce",
+      "reasons": [],
+      "score": 0.807
+    },
+    {
+      "conflict_group": null,
+      "decision": "accepted",
+      "evidence_id": "ev-combat_scenario-web-d40decce698d",
+      "normalized_url": "https://www.nato.int/en/multimedia/multimedia/videos/2025/10/03/drones-lessons-from-ukraine?utm_source=openai",
+      "reasons": [],
+      "score": 0.807
+    },
+    {
+      "conflict_group": null,
+      "decision": "accepted",
+      "evidence_id": "ev-weapon_equipment-web-7b8e214d9931",
+      "normalized_url": "https://xtech.army.mil/wp-content/uploads/2025/09/xTechDisrupt-RFI.pdf?utm_source=openai",
+      "reasons": [],
+      "score": 0.657
+    },
+    {
+      "conflict_group": null,
+      "decision": "accepted",
+      "evidence_id": "ev-weapon_equipment-web-3b7612d514fb",
+      "normalized_url": "https://www.doncio.navy.mil/mobile/ContentView.aspx?ID=15733&TypeID=21&utm_source=openai",
+      "reasons": [],
+      "score": 0.807
+    },
+    {
+      "conflict_group": null,
+      "decision": "accepted",
+      "evidence_id": "ev-operational_employment-web-15c4d1e616fe",
+      "normalized_url": "https://www.nato.int/en/about-us/official-texts-and-resources/official-texts/2025/02/13/nato-integrated-air-and-missile-defence-policy",
+      "reasons": [],
+      "score": 0.807
+    },
+    {
+      "conflict_group": null,
+      "decision": "accepted",
+      "evidence_id": "ev-operational_employment-web-38b628ca4782",
+      "normalized_url": "https://www.gov.uk/government/news/british-soldiers-take-down-drone-swarm-in-groundbreaking-use-of-radio-wave-weapon",
+      "reasons": [],
+      "score": 0.807
+    }
+  ],
+  "mode": "real",
+  "plan_graph": {
+    "baseline_map_count": 4,
+    "dependency_edges": [
+      {
+        "from": "map:international_situation",
+        "to": "reduce:baseline"
+      },
+      {
+        "from": "map:combat_scenario",
+        "to": "reduce:baseline"
+      },
+      {
+        "from": "map:weapon_equipment",
+        "to": "reduce:baseline"
+      },
+      {
+        "from": "map:operational_employment",
+        "to": "reduce:baseline"
+      },
+      {
+        "from": "reduce:baseline",
+        "to": "winning:L1-L3"
+      },
+      {
+        "from": "winning:L1-L3",
+        "to": "audit:five-criteria"
+      },
+      {
+        "from": "audit:five-criteria",
+        "to": "report:final"
+      }
+    ],
+    "execution_waves": [
+      {
+        "agent_ids": [
+          "international_situation"
+        ],
+        "concurrent": false,
+        "wave": 1
+      },
+      {
+        "agent_ids": [
+          "combat_scenario",
+          "weapon_equipment"
+        ],
+        "concurrent": true,
+        "wave": 2
+      },
+      {
+        "agent_ids": [
+          "operational_employment"
+        ],
+        "concurrent": false,
+        "wave": 3
+      }
+    ],
+    "gate_points": [
+      {
+        "after": "reduce:baseline",
+        "gate": "baseline_contract_and_evidence"
+      },
+      {
+        "after": "L1",
+        "gate": "L1_confidence_coverage",
+        "threshold": 0.7
+      },
+      {
+        "after": "L2",
+        "gate": "L2_feasibility_consistency",
+        "threshold": 3
+      },
+      {
+        "after": "L3",
+        "gate": "L3_nine_field_traceability"
+      },
+      {
+        "after": "audit:five-criteria",
+        "gate": "five_criteria_audit"
+      }
+    ],
+    "nodes": [
+      {
+        "capability_tags": [
+          "situation",
+          "threat",
+          "strategy"
+        ],
+        "created_at": "2026-07-14T05:57:16.677269+00:00",
+        "depends_on": [],
+        "node_id": "map:international_situation",
+        "node_type": "baseline_map",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "international_situation"
+      },
+      {
+        "capability_tags": [
+          "scenario",
+          "coa",
+          "environment"
+        ],
+        "created_at": "2026-07-14T05:57:16.677281+00:00",
+        "depends_on": [],
+        "node_id": "map:combat_scenario",
+        "node_type": "baseline_map",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "combat_scenario"
+      },
+      {
+        "capability_tags": [
+          "equipment",
+          "capability_gap",
+          "technology_readiness"
+        ],
+        "created_at": "2026-07-14T05:57:16.677284+00:00",
+        "depends_on": [],
+        "node_id": "map:weapon_equipment",
+        "node_type": "baseline_map",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "weapon_equipment"
+      },
+      {
+        "capability_tags": [
+          "operation",
+          "coordination",
+          "lessons"
+        ],
+        "created_at": "2026-07-14T05:57:16.677287+00:00",
+        "depends_on": [],
+        "node_id": "map:operational_employment",
+        "node_type": "baseline_map",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "operational_employment"
+      },
+      {
+        "capability_tags": [],
+        "created_at": "2026-07-14T05:57:16.677289+00:00",
+        "depends_on": [
+          "map:international_situation",
+          "map:combat_scenario",
+          "map:weapon_equipment",
+          "map:operational_employment"
+        ],
+        "node_id": "reduce:baseline",
+        "node_type": "baseline_reduce",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "winning_mechanism"
+      },
+      {
+        "capability_tags": [
+          "winning_mechanism"
+        ],
+        "created_at": "2026-07-14T05:57:16.677291+00:00",
+        "depends_on": [
+          "reduce:baseline"
+        ],
+        "node_id": "winning:L1-L3",
+        "node_type": "winning_mechanism",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "winning_mechanism"
+      },
+      {
+        "capability_tags": [
+          "audit"
+        ],
+        "created_at": "2026-07-14T05:57:16.677293+00:00",
+        "depends_on": [
+          "winning:L1-L3"
+        ],
+        "node_id": "audit:five-criteria",
+        "node_type": "audit",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "auditor"
+      },
+      {
+        "capability_tags": [
+          "report"
+        ],
+        "created_at": "2026-07-14T05:57:16.677295+00:00",
+        "depends_on": [
+          "audit:five-criteria"
+        ],
+        "node_id": "report:final",
+        "node_type": "report",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "reporter"
+      }
+    ],
+    "plan_id": "plan-f7495182-fed5-4831-830d-9f366711ae81",
+    "recall_return_nodes": [
+      "L1",
+      "L2",
+      "L3"
+    ]
+  },
+  "problem": {
+    "constraints": [],
+    "created_at": "2026-07-14T05:44:25.999574+00:00",
+    "problem_id": "problem-69782cf1-fe94-46d3-9223-58cef9afa18f",
+    "research_route": "new_winning_mechanism",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "international_situation",
+      "combat_scenario",
+      "weapon_equipment",
+      "operational_employment"
+    ],
+    "topic": "面向强电磁干扰与低空蜂群威胁的新型分布式探测预警制胜机理与装备能力需求"
+  },
+  "provider": {
+    "base_url_host": "codexpro.wwxb1123.xyz",
+    "model": "gpt-5.5",
+    "type": "responses"
+  },
+  "recall_requests": [],
+  "resolved_route": "new_winning_mechanism",
+  "selected_agent_ids": [
+    "international_situation",
+    "combat_scenario",
+    "weapon_equipment",
+    "operational_employment"
+  ],
+  "six_step_reasoning": {
+    "capability_mapping": {
+      "assumptions": [
+        "仅基于已接纳公开证据",
+        "路线：new_winning_mechanism",
+        "公开资料结论需由分析师确认"
+      ],
+      "claim_ids": [
+        "claim-074db2f0bd63",
+        "claim-2074854b25ee",
+        "claim-2835a7470d9f",
+        "claim-28c4f44a44b3",
+        "claim-299f8cebeea8",
+        "claim-2c27e43aa108",
+        "claim-2d9f702d9487",
+        "claim-36fcbf51208c",
+        "claim-42a1c33839b5",
+        "claim-436011bc6367",
+        "claim-50954b96ccdd",
+        "claim-5b147a7fed7f",
+        "claim-7145a19b7db8",
+        "claim-798f71fd16d5",
+        "claim-87baa8da4883",
+        "claim-8dc69af25142",
+        "claim-9014aa80da5c",
+        "claim-acb61ce75035",
+        "claim-b3723c3f8906",
+        "claim-b3bb9fad0f9e",
+        "claim-be9542e6ac7a",
+        "claim-c01a0d999c3b",
+        "claim-c0f5583d0b5b",
+        "claim-cf8976f5b21c"
+      ],
+      "confidence": 0.715,
+      "created_at": "2026-07-14T05:57:16.677658+00:00",
+      "evidence_ids": [
+        "ev-international_situation-web-906fb4b16de0",
+        "ev-international_situation-web-49f2eb1a8e44",
+        "ev-international_situation-web-2d1ba4398caa",
+        "ev-international_situation-web-ce3f3e70cc3f",
+        "ev-international_situation-web-c36d9569d02b",
+        "ev-combat_scenario-web-d40decce698d",
+        "ev-weapon_equipment-web-7b8e214d9931",
+        "ev-weapon_equipment-web-3b7612d514fb",
+        "ev-operational_employment-web-15c4d1e616fe",
+        "ev-operational_employment-web-38b628ca4782"
+      ],
+      "input_refs": [
+        "reason-593788adb924"
+      ],
+      "object_id": "reason-f71d737adcd1",
+      "route": "new_winning_mechanism",
+      "schema_version": "1.0",
+      "step": 4,
+      "summary": "将效果链逐项转换为效果 -> 功能 -> 性能/约束，覆盖多源感知、可信判别、快速决策、协同处置和韧性保障。装备与工程依据：[{'model': 'FS-LIDS', 'status': '现役固定式反小型无人机系统', 'sensing_and_effectors': '雷达、EO/IR、测向、反无人机电磁战；可结合Ku波段雷达和Coyote Block 2硬杀伤。', 'interfaces': 'FAAD C2、Link-16；公开配置还包括网状IP电台。', 'parameters_and_confidence': '公开材料未给出可核验的统一探测距离、同时航迹数、反应时间或单套成本；体系构成与接口置信度高，性能数值未知。'}, {'model': 'M-LIDS', 'status': '现役机动伴随型LIDS', 'sensing_and_effectors': '增加测向、多任务雷达和30毫米链炮，体现机动防护、软硬杀伤并用。', 'interfaces': '同属LIDS/陆军防空反导体系；公开材料未充分披露全部数据链与射手接口。', 'parameters_and_confidence': '装备构成和机动定位置信度中高；越野机动性、供电持续时间、抗干扰门限和弹药持续力未知。'}, {'model': 'I-CsUAS', 'status': '海军陆战队固定设施反小型无人机能力', 'sensing_and_effectors': '雷达、光电、被动RF融合，目标面向商规I、II类无人机。', 'interfaces_and_support': '公开重点是固定设施应用和能力即服务保障，而非跨军种火控接口。', 'parameters_and_confidence': '目标类别和传感器组合置信度中高；实际探测性能、服务合同成本、战时脱离承包商后的维持能力未知。'}]；{'electromagnetic_boundary': 'RF侦测/压制对存在可感知或可干扰信号链的目标最有效；面对电磁静默、预编程、惯导或视觉自主平台，其作用可能下降。因此需把雷达、EO/IR、被动RF/测向及视情声学作为冗余节点，而非将任一模态视为充分条件。', 'network_boundary': '开放接口、FAAD C2、Link-16和Joint Data Network改善扩展性，但集中融合节点、数据链、频谱和授时仍可能构成共同失效面；需求应明确边缘本地识别、缓存航迹、授权规则和断续回传能力。', 'saturation_boundary': '蜂群防御受传感器航迹处理、目标识别、效应器库存、装填补给和交战管理共同约束。应优先评估单位时间可稳定处理的目标流，而非仅比较单次发现或单发拦截能力。', 'support_boundary': '能力即服务和合同商保障有利于快速更新，却增加软件许可、专有数据库、现场维护、备件与电源保障依赖；公开资料未形成统一全寿命成本数据，现阶段不宜比较具体单位成本。', 'defensive_requirements': '建议形成四类可验收需求：多模态节点在单一模态降级下维持目标航迹；边缘融合在链路中断时保持有限自治；开放数据与射手接口支持增量接入；按持续饱和来袭条件考核软件更新、供电、备件、训练和低成本效应器补充。'}；{'fielded': 'FS-LIDS/M-LIDS已被陆军条令纳入防空反导营运用框架，技术成熟度最高；其短板是公开性能数据不足，不能仅凭列装认定强电磁条件下的韧性。', 'operational_experiment': 'Flytrap代表多传感器融合走向战术试验，适合验证复杂背景和部队使用流程，但尚非替代正式装备的证据。', 'research_and_prototyping': '分布式AI反蜂群、协同无人平台、微波/激光等由SBIR和征询驱动，成熟度应以原型、实测和保障方案为门槛，不能由概念先进性推断。', 'industrial_readiness': 'FY2026 C-UXS申请31.87亿美元显示投入增加；不过预算申请、产能扩张和可持续战备并非同一指标。'}。",
+      "title": "能力映射"
+    },
+    "defense_decomposition": {
+      "assumptions": [
+        "仅基于已接纳公开证据",
+        "路线：new_winning_mechanism",
+        "公开资料结论需由分析师确认"
+      ],
+      "claim_ids": [
+        "claim-074db2f0bd63",
+        "claim-2074854b25ee",
+        "claim-2835a7470d9f",
+        "claim-28c4f44a44b3",
+        "claim-299f8cebeea8",
+        "claim-2c27e43aa108",
+        "claim-2d9f702d9487",
+        "claim-36fcbf51208c",
+        "claim-42a1c33839b5",
+        "claim-436011bc6367",
+        "claim-50954b96ccdd",
+        "claim-5b147a7fed7f",
+        "claim-7145a19b7db8",
+        "claim-798f71fd16d5",
+        "claim-87baa8da4883",
+        "claim-8dc69af25142",
+        "claim-9014aa80da5c",
+        "claim-acb61ce75035",
+        "claim-b3723c3f8906",
+        "claim-b3bb9fad0f9e",
+        "claim-be9542e6ac7a",
+        "claim-c01a0d999c3b",
+        "claim-c0f5583d0b5b",
+        "claim-cf8976f5b21c"
+      ],
+      "confidence": 0.715,
+      "created_at": "2026-07-14T05:57:16.677517+00:00",
+      "evidence_ids": [
+        "ev-international_situation-web-906fb4b16de0",
+        "ev-international_situation-web-49f2eb1a8e44",
+        "ev-international_situation-web-2d1ba4398caa",
+        "ev-international_situation-web-ce3f3e70cc3f",
+        "ev-international_situation-web-c36d9569d02b",
+        "ev-combat_scenario-web-d40decce698d",
+        "ev-weapon_equipment-web-7b8e214d9931",
+        "ev-weapon_equipment-web-3b7612d514fb",
+        "ev-operational_employment-web-15c4d1e616fe",
+        "ev-operational_employment-web-38b628ca4782"
+      ],
+      "input_refs": [],
+      "object_id": "reason-347f75524783",
+      "route": "new_winning_mechanism",
+      "schema_version": "1.0",
+      "step": 1,
+      "summary": "围绕面向强电磁干扰与低空蜂群威胁的新型分布式探测预警制胜机理与装备能力需求，按感知、决策、处置、冗余/恢复四层解构。主要压力依据：{'conclusion': '近期最现实威胁是高密度低成本饱和袭扰叠加强电磁压制；中期风险是部分自主化、抗干扰化无人机进一步削弱传统RF链路优势；远期才可能出现更成熟的高协同蜂群。', 'key_parameters': ['近期：抗饱和、抗拒止、深弹药池', '中期：EM静默/预编程/视觉惯导无人机增加', '远期：更强自治协同与更难侦测的感知规避'], 'boundaries': ['当前证据对‘自主蜂群成熟度’支撑弱于对‘规模化袭扰’的支撑', '对手侧真实电子战-无人机协同战术公开度不足']}；[{'name': '最可能方案：多批次低成本低空混合袭扰', 'intent': '以数量、诱饵和多方向接近制造预警饱和与资源消耗。', 'observable_indicators': ['低空小目标告警密度上升', '声学/RF/雷达线索短时、分散、置信度不一致', '同一区域多次小规模试探后出现更高密度批次', '民用通信或遥控频段活动异常但不稳定'], 'defender_pressure_points': ['低空盲区和地物遮蔽', '误警过滤与目标分类', '边缘节点电源和维护', '低成本目标导致处置资源消耗'], 'risk_to_adversary': '若防御方多源融合和本地告警成熟，低成本平台可能被较早识别并被分层处置。'}, {'name': '最危险方案：电磁压制同步低空多轴饱和', 'intent': '在关键窗口同时压低防御方RF探测、通信、授时和C2效率，缩短从首次发现到可信告警的时间。', 'observable_indicators': ['频谱噪声底、链路丢包、授时异常与低空告警同时出现', '上级C2态势更新滞后但本地传感器仍有碎片化线索', '多个传感器族给出不一致告警', '指挥所或通信节点暴露风险增加'], 'defender_pressure_points': ['断链情况下的本地自治', '跨源数据置信度评估', '抗干扰通信和备用授时', 'C2节点分散与伪装'], 'risk_to_adversary': '复杂协同要求高，若同步失败，电磁活动本身可能成为防御方预警信号。'}, {'name': '替代方案：RF静默/预编程/抗干扰平台渗透', 'intent': '减少可被被动RF发现的特征，利用低空遮蔽和背景杂波穿透预警网。', 'observable_indicators': ['RF线索较弱但声学、EO/IR或微小目标雷达出现异常', '目标航迹更稳定或更少出现遥控链路特征', '传统干扰对目标行为影响有限', '低空进入点与地形遮蔽高度相关'], 'defender_pressure_points': ['非RF传感器覆盖密度', '低慢小目标识别算法', '城市/地形杂波中的轨迹连续性', '多源传感器时间同步'], 'risk_to_adversary': '平台成本和导航复杂度上升，规模化程度可能低于普通低成本袭扰。'}]；[{'constraint': '强电磁干扰与频谱拥塞', 'effect_on_scenario': 'RF探测距离、链路稳定性、无人机控制链路识别和C2同步均可能下降。', 'equipment_mapping': ['被动RF与非RF传感器互补', '边缘融合和本地告警', '抗干扰/低可探测通信', '备用授时与无GNSS运行', '频谱态势感知和自适应阈值'], 'boundary': '电子战既可能削弱敌无人机，也可能削弱己方预警网络，不能作为单一制胜手段。'}, {'constraint': '低空地平线、地形遮蔽和地物杂波', 'effect_on_scenario': '低慢小目标发现距离短，单部雷达易形成盲区，城市/山地/海岸背景会加大跟踪难度。', 'equipment_mapping': ['分布式前沿节点', '高点/机动/临时补盲传感器', '多基线测向与三角定位', '微小目标雷达与EO/IR交叉确认'], 'boundary': '超视距或复杂信号处理是重要方向，但近中期仍需靠密度、位置和多源融合弥补低空遮蔽。'}, {'constraint': '城市、机场、港口等复杂电磁/声学背景', 'effect_on_scenario': '民用无人机、车辆、机械噪声、鸟群和基础设施反射会推高误警。', 'equipment_mapping': ['本地环境基线库', '声纹/RF/图像多模分类', '可解释置信度输出', '人工复核与自动阈值调整'], 'boundary': '过度降低误警可能增加漏警；阈值需按任务阶段动态调整。'}, {'constraint': '天气、能见度、风雨和昼夜变化', 'effect_on_scenario': 'EO/IR、声学和小目标雷达的有效性会随环境显著波动。', 'equipment_mapping': ['全天候传感器组合', '传感器健康监测', '环境自适应融合权重', '冗余供电和防护封装'], 'boundary': '公开资料不足以给出跨地域统一性能参数，需要实测数据库支撑。'}, {'constraint': '网络、空间和C2受限', 'effect_on_scenario': '上级态势图可能延迟或中断，节点间数据一致性下降，误警处置压力上升。', 'equipment_mapping': ['断续联网', '本地自治预警', '数据缓存与延迟同步', '开放接口和跨系统互操作', 'C2节点分散部署'], 'boundary': '互操作测试证明方向可行，但强干扰实战表现仍需验证。'}, {'constraint': '持续作战与节点战损', 'effect_on_scenario': '大量低成本目标会消耗人力、传感器寿命、供电、带宽和处置资源。', 'equipment_mapping': ['低成本可替换节点', '自动校准和远程健康管理', '快速补网工具', '深备件与模块化维护', '误警负荷管理'], 'boundary': '分布式并不等于无限韧性；补网速度、后勤和训练水平决定持续效果。'}]。证据边界：时间一致性问题：多份关键来源标注为2025-2026，相对当前时点存在未来日期；这些材料可用于趋势识别，但对已形成能力的证明力弱于已实施采购/演训证据。；能力与需求之间存在落差：NATO Demand Signal与SPS资助更能证明缺口和优先方向，而不能直接证明分布式抗干扰预警体系已大规模成熟部署。。",
+      "title": "防御解构"
+    },
+    "effect_chain": {
+      "assumptions": [
+        "仅基于已接纳公开证据",
+        "路线：new_winning_mechanism",
+        "公开资料结论需由分析师确认"
+      ],
+      "claim_ids": [
+        "claim-074db2f0bd63",
+        "claim-2074854b25ee",
+        "claim-2835a7470d9f",
+        "claim-28c4f44a44b3",
+        "claim-299f8cebeea8",
+        "claim-2c27e43aa108",
+        "claim-2d9f702d9487",
+        "claim-36fcbf51208c",
+        "claim-42a1c33839b5",
+        "claim-436011bc6367",
+        "claim-50954b96ccdd",
+        "claim-5b147a7fed7f",
+        "claim-7145a19b7db8",
+        "claim-798f71fd16d5",
+        "claim-87baa8da4883",
+        "claim-8dc69af25142",
+        "claim-9014aa80da5c",
+        "claim-acb61ce75035",
+        "claim-b3723c3f8906",
+        "claim-b3bb9fad0f9e",
+        "claim-be9542e6ac7a",
+        "claim-c01a0d999c3b",
+        "claim-c0f5583d0b5b",
+        "claim-cf8976f5b21c"
+      ],
+      "confidence": 0.715,
+      "created_at": "2026-07-14T05:57:16.677626+00:00",
+      "evidence_ids": [
+        "ev-international_situation-web-906fb4b16de0",
+        "ev-international_situation-web-49f2eb1a8e44",
+        "ev-international_situation-web-2d1ba4398caa",
+        "ev-international_situation-web-ce3f3e70cc3f",
+        "ev-international_situation-web-c36d9569d02b",
+        "ev-combat_scenario-web-d40decce698d",
+        "ev-weapon_equipment-web-7b8e214d9931",
+        "ev-weapon_equipment-web-3b7612d514fb",
+        "ev-operational_employment-web-15c4d1e616fe",
+        "ev-operational_employment-web-38b628ca4782"
+      ],
+      "input_refs": [
+        "reason-a1f45acdcddf"
+      ],
+      "object_id": "reason-593788adb924",
+      "route": "new_winning_mechanism",
+      "schema_version": "1.0",
+      "step": 3,
+      "summary": "依据关键时间窗和运用约束形成：持续发现 -> 可信识别/态势形成 -> 威胁排序与资源分配 -> 分层处置 -> 任务连续性。约束依据：[{'window': 'T-30天至T-7天：危机前基线期', 'key_event': '建立区域频谱、声学、低空航迹、鸟群/民用无人活动基线。', 'defender_decision': '是否前推临时节点、提高采样频率、预置补网单元。', 'basis': '公开战例显示分布式声学与C2生存准备具有价值；具体提前量为场景假设。'}, {'window': 'T-72小时至T-6小时：接触前扰动期', 'key_event': '出现异常侦察、频谱活动、低空试探或对关键设施周边的传感器异常。', 'defender_decision': '调整告警阈值，确认传感器健康状态，启用断链运行预案。', 'basis': 'UAS、电子战和C2压力在公开经验中具有关联；同步程度属对抗假设。'}, {'window': 'T0至T+15分钟：初始低空告警窗口', 'key_event': '低空小目标可能因地平线、地物遮蔽和杂波导致发现距离短、确认时间紧。', 'defender_decision': '是否由单源提示升级为多源可信告警；是否启用本地区域告警而等待上级确认。', 'basis': '低空探测受地平线限制和RF可靠性约束；分钟级窗口为低空近距防御的规划假设。'}, {'window': 'T+15分钟至T+2小时：体系对抗高压期', 'key_event': '多批次目标、诱饵、电磁干扰、链路拥塞和C2生存压力叠加。', 'defender_decision': '切换降级通信/备用授时；在局部态势不完整时维持告警连续性。', 'basis': 'NATO演训强调C-UAS互操作，DoD和陆军材料显示频谱与EW会影响探测和C2。'}, {'window': 'T+2小时至T+24小时：持续消耗期', 'key_event': '节点损耗、误警累积、人员疲劳、电源和维护压力显现。', 'defender_decision': '补网优先级、模型更新、误警抑制和资源分配。', 'basis': '分布式节点提高韧性但带来维护和融合复杂度；公开资料缺少统一量化。'}, {'window': 'T+24小时至T+72小时：战损重构期', 'key_event': '恢复覆盖、重建数据链、替换受损节点、复盘漏警/误警。', 'defender_decision': '是否恢复上级C2融合，或继续保持本地自治分区防御。', 'basis': 'C2分散生存和互操作需求得到公开材料支持；重构速度需装备试验验证。'}]；{'conclusion': '作战约束沿任务链逐级传递：低空遮蔽与复杂背景先压缩发现距离，电磁压制再削弱链路、授时与共享，随后节点损耗和误警压力放大持续作战难度；因此需求核心是‘降级后仍可用’，不是‘理想状态下最优’。', 'key_parameters': ['环境：低空地平线/地物遮蔽、城市港口机场杂波、天气昼夜变化', '对抗：干扰、欺骗、频谱拥塞、GNSS受限、网络断续', '体系：节点可损耗、上级C2可能中断、人工复核负荷有限', '效能判据：可用预警覆盖、可信告警时间、目标连续性、误警/漏警、人机负荷、补网恢复时间'], 'boundaries': ['公开资料支持方向性结论，难提供统一量化门限', '近期应按混合袭扰基线设计，但需预留RF静默/更高自治目标分支', '电子战既能削弱敌方也会削弱己方预警链，不能被视为单一制胜手段']}；待验证：输入材料中多份关键来源标注为2025-2026且相对当前时间存在前瞻性，实际是已发布、预发布还是规划稿？这影响对能力形成节奏的判断。；北约/美军现有低成本反无人机系统在强干扰、断链、GNSS受限条件下，能否维持与更大C2网络的稳定互操作？公开材料不足以确认。。",
+      "title": "效果链"
+    },
+    "gap_matrix": {
+      "assumptions": [
+        "仅基于已接纳公开证据",
+        "路线：new_winning_mechanism",
+        "公开资料结论需由分析师确认"
+      ],
+      "claim_ids": [
+        "claim-074db2f0bd63",
+        "claim-2074854b25ee",
+        "claim-2835a7470d9f",
+        "claim-28c4f44a44b3",
+        "claim-299f8cebeea8",
+        "claim-2c27e43aa108",
+        "claim-2d9f702d9487",
+        "claim-36fcbf51208c",
+        "claim-42a1c33839b5",
+        "claim-436011bc6367",
+        "claim-50954b96ccdd",
+        "claim-5b147a7fed7f",
+        "claim-7145a19b7db8",
+        "claim-798f71fd16d5",
+        "claim-87baa8da4883",
+        "claim-8dc69af25142",
+        "claim-9014aa80da5c",
+        "claim-acb61ce75035",
+        "claim-b3723c3f8906",
+        "claim-b3bb9fad0f9e",
+        "claim-be9542e6ac7a",
+        "claim-c01a0d999c3b",
+        "claim-c0f5583d0b5b",
+        "claim-cf8976f5b21c"
+      ],
+      "confidence": 0.715,
+      "created_at": "2026-07-14T05:57:16.677687+00:00",
+      "evidence_ids": [
+        "ev-international_situation-web-906fb4b16de0",
+        "ev-international_situation-web-49f2eb1a8e44",
+        "ev-international_situation-web-2d1ba4398caa",
+        "ev-international_situation-web-ce3f3e70cc3f",
+        "ev-international_situation-web-c36d9569d02b",
+        "ev-combat_scenario-web-d40decce698d",
+        "ev-weapon_equipment-web-7b8e214d9931",
+        "ev-weapon_equipment-web-3b7612d514fb",
+        "ev-operational_employment-web-15c4d1e616fe",
+        "ev-operational_employment-web-38b628ca4782"
+      ],
+      "input_refs": [
+        "reason-f71d737adcd1"
+      ],
+      "object_id": "reason-2055d251b650",
+      "route": "new_winning_mechanism",
+      "schema_version": "1.0",
+      "step": 5,
+      "summary": "按空白、关键差距、部分差距、满足、超出五档，将场景所需功能与现有/在研能力比较。比较基线：[{'model': 'FS-LIDS', 'status': '现役固定式反小型无人机系统', 'sensing_and_effectors': '雷达、EO/IR、测向、反无人机电磁战；可结合Ku波段雷达和Coyote Block 2硬杀伤。', 'interfaces': 'FAAD C2、Link-16；公开配置还包括网状IP电台。', 'parameters_and_confidence': '公开材料未给出可核验的统一探测距离、同时航迹数、反应时间或单套成本；体系构成与接口置信度高，性能数值未知。'}, {'model': 'M-LIDS', 'status': '现役机动伴随型LIDS', 'sensing_and_effectors': '增加测向、多任务雷达和30毫米链炮，体现机动防护、软硬杀伤并用。', 'interfaces': '同属LIDS/陆军防空反导体系；公开材料未充分披露全部数据链与射手接口。', 'parameters_and_confidence': '装备构成和机动定位置信度中高；越野机动性、供电持续时间、抗干扰门限和弹药持续力未知。'}, {'model': 'I-CsUAS', 'status': '海军陆战队固定设施反小型无人机能力', 'sensing_and_effectors': '雷达、光电、被动RF融合，目标面向商规I、II类无人机。', 'interfaces_and_support': '公开重点是固定设施应用和能力即服务保障，而非跨军种火控接口。', 'parameters_and_confidence': '目标类别和传感器组合置信度中高；实际探测性能、服务合同成本、战时脱离承包商后的维持能力未知。'}]；[{'model_or_program': 'Project Flytrap', 'development_direction': '战术层级雷达、RF、EO、声学异构融合与部队直接使用。', 'maturity_judgment': '试验和快速迭代，不能按成熟批量列装估计。'}, {'model_or_program': 'Asymmetric Collaborative Counter Swarm', 'development_direction': '无中心节点的分布式AI、多无人协同、兼容既有自主和感知系统。', 'maturity_judgment': 'SBIR课题，属于研发/原型导向；不应视为已形成作战能力。'}, {'model_or_program': 'Replicator 2与xTechDisrupt方向', 'development_direction': '关键资产反小型无人机防护、开放架构、系统集成、分布式决策、RF/EO-IR融合和定向能候选方案。', 'maturity_judgment': '预算申请和征询反映优先级及工业动员，后续应以合同、测试和列装结果校验。'}]；{'electromagnetic_boundary': 'RF侦测/压制对存在可感知或可干扰信号链的目标最有效；面对电磁静默、预编程、惯导或视觉自主平台，其作用可能下降。因此需把雷达、EO/IR、被动RF/测向及视情声学作为冗余节点，而非将任一模态视为充分条件。', 'network_boundary': '开放接口、FAAD C2、Link-16和Joint Data Network改善扩展性，但集中融合节点、数据链、频谱和授时仍可能构成共同失效面；需求应明确边缘本地识别、缓存航迹、授权规则和断续回传能力。', 'saturation_boundary': '蜂群防御受传感器航迹处理、目标识别、效应器库存、装填补给和交战管理共同约束。应优先评估单位时间可稳定处理的目标流，而非仅比较单次发现或单发拦截能力。', 'support_boundary': '能力即服务和合同商保障有利于快速更新，却增加软件许可、专有数据库、现场维护、备件与电源保障依赖；公开资料未形成统一全寿命成本数据，现阶段不宜比较具体单位成本。', 'defensive_requirements': '建议形成四类可验收需求：多模态节点在单一模态降级下维持目标航迹；边缘融合在链路中断时保持有限自治；开放数据与射手接口支持增量接入；按持续饱和来袭条件考核软件更新、供电、备件、训练和低成本效应器补充。'}；不确定性：时间一致性问题：多份关键来源标注为2025-2026，相对当前时点存在未来日期；这些材料可用于趋势识别，但对已形成能力的证明力弱于已实施采购/演训证据。；能力与需求之间存在落差：NATO Demand Signal与SPS资助更能证明缺口和优先方向，而不能直接证明分布式抗干扰预警体系已大规模成熟部署。。",
+      "title": "差距量化"
+    },
+    "image_drafts": [
+      {
+        "assumptions": [
+          "仅基于已接纳公开证据",
+          "路线：new_winning_mechanism",
+          "公开资料结论需由分析师确认"
+        ],
+        "claim_ids": [
+          "claim-074db2f0bd63",
+          "claim-2074854b25ee",
+          "claim-2835a7470d9f",
+          "claim-28c4f44a44b3",
+          "claim-299f8cebeea8",
+          "claim-2c27e43aa108",
+          "claim-2d9f702d9487",
+          "claim-36fcbf51208c",
+          "claim-42a1c33839b5",
+          "claim-436011bc6367",
+          "claim-50954b96ccdd",
+          "claim-5b147a7fed7f",
+          "claim-7145a19b7db8",
+          "claim-798f71fd16d5",
+          "claim-87baa8da4883",
+          "claim-8dc69af25142",
+          "claim-9014aa80da5c",
+          "claim-acb61ce75035",
+          "claim-b3723c3f8906",
+          "claim-b3bb9fad0f9e",
+          "claim-be9542e6ac7a",
+          "claim-c01a0d999c3b",
+          "claim-c0f5583d0b5b",
+          "claim-cf8976f5b21c"
+        ],
+        "confidence": 0.715,
+        "created_at": "2026-07-14T05:57:16.677692+00:00",
+        "evidence_ids": [
+          "ev-international_situation-web-906fb4b16de0",
+          "ev-international_situation-web-49f2eb1a8e44",
+          "ev-international_situation-web-2d1ba4398caa",
+          "ev-international_situation-web-ce3f3e70cc3f",
+          "ev-international_situation-web-c36d9569d02b",
+          "ev-combat_scenario-web-d40decce698d",
+          "ev-weapon_equipment-web-7b8e214d9931",
+          "ev-weapon_equipment-web-3b7612d514fb",
+          "ev-operational_employment-web-15c4d1e616fe",
+          "ev-operational_employment-web-38b628ca4782"
+        ],
+        "input_refs": [
+          "reason-2055d251b650"
+        ],
+        "object_id": "reason-9851e25b0c93",
+        "route": "new_winning_mechanism",
+        "schema_version": "1.0",
+        "step": 6,
+        "summary": "依据前五步去重归并，分别形成新作战能力方向和现有装备升级需求，并写入制胜逻辑、关联场景、优先级、差距、功能画像和证据引用。路线=new_winning_mechanism，基线发现=24条，待闭合问题=16项。",
+        "title": "能力画像生成"
+      }
+    ],
+    "winning_paths": {
+      "assumptions": [
+        "仅基于已接纳公开证据",
+        "路线：new_winning_mechanism",
+        "公开资料结论需由分析师确认"
+      ],
+      "claim_ids": [
+        "claim-074db2f0bd63",
+        "claim-2074854b25ee",
+        "claim-2835a7470d9f",
+        "claim-28c4f44a44b3",
+        "claim-299f8cebeea8",
+        "claim-2c27e43aa108",
+        "claim-2d9f702d9487",
+        "claim-36fcbf51208c",
+        "claim-42a1c33839b5",
+        "claim-436011bc6367",
+        "claim-50954b96ccdd",
+        "claim-5b147a7fed7f",
+        "claim-7145a19b7db8",
+        "claim-798f71fd16d5",
+        "claim-87baa8da4883",
+        "claim-8dc69af25142",
+        "claim-9014aa80da5c",
+        "claim-acb61ce75035",
+        "claim-b3723c3f8906",
+        "claim-b3bb9fad0f9e",
+        "claim-be9542e6ac7a",
+        "claim-c01a0d999c3b",
+        "claim-c0f5583d0b5b",
+        "claim-cf8976f5b21c"
+      ],
+      "confidence": 0.715,
+      "created_at": "2026-07-14T05:57:16.677595+00:00",
+      "evidence_ids": [
+        "ev-international_situation-web-906fb4b16de0",
+        "ev-international_situation-web-49f2eb1a8e44",
+        "ev-international_situation-web-2d1ba4398caa",
+        "ev-international_situation-web-ce3f3e70cc3f",
+        "ev-international_situation-web-c36d9569d02b",
+        "ev-combat_scenario-web-d40decce698d",
+        "ev-weapon_equipment-web-7b8e214d9931",
+        "ev-weapon_equipment-web-3b7612d514fb",
+        "ev-operational_employment-web-15c4d1e616fe",
+        "ev-operational_employment-web-38b628ca4782"
+      ],
+      "input_refs": [
+        "reason-347f75524783"
+      ],
+      "object_id": "reason-a1f45acdcddf",
+      "route": "new_winning_mechanism",
+      "schema_version": "1.0",
+      "step": 2,
+      "summary": "新制胜机制、新作战打法和新体系组合牵引新装备能力增长点。 候选路径比较依据：[{'name': 'COA-1 基线集中式要点防御', 'concept': '依托少量高性能传感器和中心C2保卫关键点位，外围仅配置有限补盲节点。', 'suitable_conditions': ['威胁密度中低', '电磁压制有限', '目标区范围较小且保障较好'], 'strengths': ['建设快、训练与维护简单', '和平时期常态值守成本较低'], 'risks_and_failure_modes': ['中心节点、授时或骨干链路受压即整体降效', '低空多轴饱和和复杂杂波下易出现发现迟滞与误警堆积', '成本交换比差，持续作战能力弱'], 'deployment_principles': ['仅适合作为过渡基线或低威胁区方案', '必须至少补上有限边缘自治与断链告警'], 'infeasible_boundary': '不适合强电磁压制、节点高损耗或大范围多方向低空袭扰场景。'}, {'name': 'COA-2 弹性分布式预警网络', 'concept': '前沿分布多模感知节点，边缘先融合并本地告警，上级C2断续接入，配套机动补网和分层处置。', 'suitable_conditions': ['高价值基地、机场、港口、前沿指挥所等核心目标区', '预期存在强电磁干扰、低空饱和和持续袭扰'], 'strengths': ['对节点损耗和链路降级更有韧性', '更适合低空遮蔽环境和复杂背景', '能改善高价值效应器的资源分配效率'], 'risks_and_failure_modes': ['建设与维护复杂，训练门槛高', '若开放接口、时间同步和置信度管理不到位，会出现融合失真', '补网、供电、备件与软件更新成为持续作战瓶颈'], 'deployment_principles': ['优先围绕关键方向构建多层扇区和可替换节点', '把‘本地自治+断续联网’列为刚性需求', '先做现役传感器/效应器的模块化接入，再追求新型颠覆传感器'], 'infeasible_boundary': '若缺乏最低限度开放接口、备用授时和本地授权规则，分布式会退化为碎片化而非韧性。'}, {'name': 'COA-3 资源受限最小可用方案', 'concept': '聚焦少数关键资产与最危险接近方向，采用低成本节点、区域告警和人工复核为主，形成最低可用预警单元。', 'suitable_conditions': ['预算、兵力或后勤受限', '短期内难以完成全域体系建设', '需要快速补齐明显空白'], 'strengths': ['部署快、成本较低', '便于在高风险方向先形成能力'], 'risks_and_failure_modes': ['覆盖不连续，易被绕开或被多轴饱和突破', '人工负荷较高，连续作战时误警和疲劳风险大', '难与更大防空网络形成完整闭环'], 'deployment_principles': ['明确仅服务于关键点最低阈值防护', '优先建设环境基线、移动补盲和简化的本地自治规则', '保留向COA-2扩展的开放接口'], 'infeasible_boundary': '不能被视为全域或高强度对抗下的充分解决方案。'}]；{'conclusion': '有效协同应按‘前沿异构感知节点—边缘融合单元—本地预警与授权规则—上级C2/防空网络—机动补网与维护保障’组织，强调多节点并行、功能分散和断续联网，而非单中心汇聚。', 'key_parameters': ['传感器层：雷达、被动RF/测向、EO/IR、声学互补，支持本地时间同步与置信度输出', 'C2层：多节点并行、缓存与延迟同步、开放接口接入更大空情/防空网络', '处置层：软硬杀伤分层，优先把高成本效应器留给高可信高威胁目标', '保障层：低成本可替换节点、供电/备件、软件与数据库更新、快速重标定和补网'], 'boundaries': ['跨军种/跨盟国互操作的公开证据多为试验或政策信号，实战级稳定性未充分公开', '节点越分散，融合、维护和训练复杂度越高，若没有边缘自治会形成新的管理瓶颈', '在资源有限条件下，应优先覆盖关键方向和关键资产，而非追求全域均匀密度']}；{'scenario_name': '强电磁干扰下低空无人蜂群/蜂群化袭扰的分布式探测预警对抗场景', 'background': '防御方保护基地、机场、港口、前沿指挥所或关键基础设施；敌方通过低空小型无人平台、诱饵、局部电磁压制和信息扰动压缩预警时间、制造误警并消耗防御资源。', 'participants': {'defender': ['分布式雷达、被动RF、声学、EO/IR、测向/三角定位节点', '边缘融合与本地预警单元', '上级C2/防空反无人体系', '机动补网和战损重构分队'], 'adversary': ['低空小型无人机/巡飞类平台', '诱饵或低价值消耗目标', '电子战与通信压制力量', '可能的RF静默、预编程或抗干扰平台']}, 'objectives': {'defender': '在强干扰、低空遮蔽、链路降级和节点损耗下维持可用预警覆盖、可信告警、航迹连续性和本地处置提示。', 'adversary': '通过饱和、误导、压制和消耗破坏预警链，迫使防御方误判、迟滞或暴露关键C2节点。'}, 'assumptions_and_boundaries': ['场景为防御性能力论证，不涉及具体攻击路径、目标坐标或可执行打击步骤。', '近期基线威胁设为大规模混合袭扰；高度自主协同蜂群作为最危险分支。', '分布式预警节点可部分联网，但必须能在通信/GNSS受限时本地自治运行。'], 'phase_tree': [{'phase': '危机前预警', 'trigger': '区域频谱异常、无人活动增多、对方演训/侦察活跃、关键设施周边低空告警增多。', 'defender_focus': '建立声学/RF/雷达/EO基线，部署可替换节点，校准误警库，预置断链告警规则。', 'termination_condition': '形成可用环境基线和多源告警阈值，或进入初始接触。'}, {'phase': '初始接触', 'trigger': '单源或多源出现低空小目标、异常声纹、方向测量或短时RF线索。', 'defender_focus': '以边缘融合压缩确认时间，区分鸟群、民用无人机、杂波与真实威胁，避免过早暴露高价值节点。', 'termination_condition': '形成可信航迹/区域告警，或判定为误警并更新模型。'}, {'phase': '体系对抗', 'trigger': '多批次低空目标与电磁干扰、链路降级、诱饵或C2压力同步出现。', 'defender_focus': '切换降级通信，本地自治告警，跨传感器补盲，保护C2节点，维持局部态势图。', 'termination_condition': '压制窗口结束、主要威胁批次通过/被处置，或进入持续作战消耗。'}, {'phase': '持续作战', 'trigger': '敌方重复小批量袭扰、节点损耗、传感器电源/维护压力、误警累积。', 'defender_focus': '快速补网、传感器健康管理、声纹/RF/图像模型更新、库存与人机协同压力控制。', 'termination_condition': '防御覆盖恢复到最低阈值，或体系降级至局部防御状态。'}, {'phase': '战损重构', 'trigger': '部分节点、通信链路、授时源或C2接口失效。', 'defender_focus': '启用备用授时和本地数据缓存，重新标定传感器，恢复互操作接口，复盘误警和漏警。', 'termination_condition': '恢复持续预警能力，或转入机动防御/撤收重组。'}], 'scenario_branches': [{'branch': 'A：抗干扰分布式网络保持有效', 'condition': '多模节点仍能局部联网或断续同步，边缘融合可维持低误警告警。', 'outcome': '防御方获得足够预警时间，可将高价值效应器留给高可信目标，并通过补网维持覆盖。'}, {'branch': 'B：骨干链路和授时受损', 'condition': '通信/GNSS/上级C2不可持续，部分RF探测被噪声或干扰淹没。', 'outcome': '防御转入本地自治和区域告警，胜负取决于节点自同步、缓存、人工确认和快速重构能力。'}, {'branch': 'C：RF静默或抗干扰平台比例上升', 'condition': '来袭目标减少可侦测链路特征，依赖预编程、惯性/视觉或其他抗干扰方式。', 'outcome': '被动RF边际价值下降，声学、EO/IR、微小目标雷达和轨迹异常识别权重上升。'}], 'victory_criteria': ['关键区域低空预警覆盖在节点损耗后仍保持最低可用阈值。', '告警链可在上级C2断续或降级时本地运行。', '误警率、漏警率和人工负荷未导致防御体系瘫痪。', '战损后可在可接受时间内补网、重标定并恢复态势共享。']}。",
+      "title": "制胜路径"
+    }
+  },
+  "source_materials": [
+    {
+      "artifact_refs": [
+        "text:bce31075ed541966"
+      ],
+      "error": "HTTPStatusError: HTTP 403: Forbidden",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-international_situation-web-dc55e947df2e",
+        "normalized_url": "https://www.defense.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems",
+        "reasons": [],
+        "score": 0.71
+      },
+      "evidence_id": "ev-international_situation-web-dc55e947df2e",
+      "formal_evidence_allowed": false,
+      "status": "fetch_failed",
+      "url": "https://www.defense.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/"
+    },
+    {
+      "artifact_refs": [
+        "text:e90f6d774de0b147"
+      ],
+      "error": "HTTPStatusError: HTTP 403: Forbidden",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-international_situation-web-62dd1226d7e0",
+        "normalized_url": "https://www.act.nato.int/article/lci-x-builds-approach-fast-moving-threat",
+        "reasons": [],
+        "score": 0.71
+      },
+      "evidence_id": "ev-international_situation-web-62dd1226d7e0",
+      "formal_evidence_allowed": false,
+      "status": "fetch_failed",
+      "url": "https://www.act.nato.int/article/lci-x-builds-approach-fast-moving-threat/"
+    },
+    {
+      "artifact_refs": [
+        "text:01f5b09f8771e457"
+      ],
+      "error": "HTTPStatusError: HTTP 403: Forbidden",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-international_situation-web-fb3960202dd3",
+        "normalized_url": "https://www.act.nato.int/article/lci-x-crucible-2",
+        "reasons": [],
+        "score": 0.71
+      },
+      "evidence_id": "ev-international_situation-web-fb3960202dd3",
+      "formal_evidence_allowed": false,
+      "status": "fetch_failed",
+      "url": "https://www.act.nato.int/article/lci-x-crucible-2/"
+    },
+    {
+      "artifact_refs": [
+        "html:17f33d1197a66522"
+      ],
+      "content_type": "text/html;charset=utf-8",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-international_situation-web-906fb4b16de0",
+        "normalized_url": "https://nato.int/en/work-with-us/business-and-project-opportunities/demand-signal",
+        "reasons": [],
+        "score": 0.873
+      },
+      "evidence_id": "ev-international_situation-web-906fb4b16de0",
+      "final_url": "https://nato.int/en/work-with-us/business-and-project-opportunities/demand-signal",
+      "formal_evidence_allowed": true,
+      "paragraph_locations": [
+        "text:e571f57286791407#p1",
+        "text:e571f57286791407#p2",
+        "text:e571f57286791407#p3"
+      ],
+      "simplified_artifact_ref": "text:e571f57286791407",
+      "status": "fetched",
+      "url": "https://nato.int/en/work-with-us/business-and-project-opportunities/demand-signal"
+    },
+    {
+      "artifact_refs": [
+        "html:4fb1109f349734d2"
+      ],
+      "content_type": "text/html;charset=utf-8",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-international_situation-web-49f2eb1a8e44",
+        "normalized_url": "https://www.nato.int/en/multimedia/multimedia/videos/2025/12/09/nato-and-the-us-army-demonstrate-low-cost-counter-uas-system-to-protect-nato-airspace",
+        "reasons": [],
+        "score": 0.873
+      },
+      "evidence_id": "ev-international_situation-web-49f2eb1a8e44",
+      "final_url": "https://www.nato.int/en/multimedia/multimedia/videos/2025/12/09/nato-and-the-us-army-demonstrate-low-cost-counter-uas-system-to-protect-nato-airspace",
+      "formal_evidence_allowed": true,
+      "paragraph_locations": [
+        "text:e571f57286791407#p1",
+        "text:e571f57286791407#p2",
+        "text:e571f57286791407#p3"
+      ],
+      "simplified_artifact_ref": "text:e571f57286791407",
+      "status": "fetched",
+      "url": "https://www.nato.int/en/multimedia/multimedia/videos/2025/12/09/nato-and-the-us-army-demonstrate-low-cost-counter-uas-system-to-protect-nato-airspace"
+    },
+    {
+      "artifact_refs": [
+        "raw:d4e3d5f4497334de"
+      ],
+      "content_type": "application/pdf",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-international_situation-web-2d1ba4398caa",
+        "normalized_url": "https://www.nato.int/content/dam/nato/webready/documents/sps/grants/sps-special-call-for-proposals-2026-2.pdf",
+        "reasons": [],
+        "score": 0.71
+      },
+      "evidence_id": "ev-international_situation-web-2d1ba4398caa",
+      "final_url": "https://www.nato.int/content/dam/nato/webready/documents/sps/grants/sps-special-call-for-proposals-2026-2.pdf",
+      "formal_evidence_allowed": true,
+      "paragraph_locations": [],
+      "simplified_artifact_ref": "",
+      "status": "fetched",
+      "url": "https://www.nato.int/content/dam/nato/webready/documents/sps/grants/sps-special-call-for-proposals-2026-2.pdf"
+    },
+    {
+      "artifact_refs": [
+        "html:63ab442a468734e7"
+      ],
+      "content_type": "text/html",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-international_situation-web-ce3f3e70cc3f",
+        "normalized_url": "https://www.darpa.mil/news/2025/roqs-launches-first-phase",
+        "reasons": [],
+        "score": 0.873
+      },
+      "evidence_id": "ev-international_situation-web-ce3f3e70cc3f",
+      "final_url": "https://www.darpa.mil/news/2025/roqs-launches-first-phase",
+      "formal_evidence_allowed": true,
+      "paragraph_locations": [
+        "text:7b487a3d9f796501#p1",
+        "text:7b487a3d9f796501#p2",
+        "text:7b487a3d9f796501#p3",
+        "text:7b487a3d9f796501#p4",
+        "text:7b487a3d9f796501#p5",
+        "text:7b487a3d9f796501#p6",
+        "text:7b487a3d9f796501#p7",
+        "text:7b487a3d9f796501#p8",
+        "text:7b487a3d9f796501#p9",
+        "text:7b487a3d9f796501#p10"
+      ],
+      "simplified_artifact_ref": "text:7b487a3d9f796501",
+      "status": "fetched",
+      "url": "https://www.darpa.mil/news/2025/roqs-launches-first-phase"
+    },
+    {
+      "artifact_refs": [
+        "text:c1611cf45c26bc93"
+      ],
+      "error": "HTTPStatusError: HTTP 403: Forbidden",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-international_situation-web-bbe3c1156418",
+        "normalized_url": "https://media.defense.gov/2026/Mar/09/2003896718/-1/-1/1/GUIDE-FOR-THE-SCIENCE-OF-COUNTER-UAS-OPERATIONS-SAFEGUARDING-FREEDOMS-AND-PRESERVING-PRIVACY.PDF",
+        "reasons": [],
+        "score": 0.71
+      },
+      "evidence_id": "ev-international_situation-web-bbe3c1156418",
+      "formal_evidence_allowed": false,
+      "status": "fetch_failed",
+      "url": "https://media.defense.gov/2026/Mar/09/2003896718/-1/-1/1/GUIDE-FOR-THE-SCIENCE-OF-COUNTER-UAS-OPERATIONS-SAFEGUARDING-FREEDOMS-AND-PRESERVING-PRIVACY.PDF"
+    },
+    {
+      "artifact_refs": [
+        "html:d189f3b1dfba3bbc"
+      ],
+      "content_type": "text/html; charset=utf-8",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-international_situation-web-c36d9569d02b",
+        "normalized_url": "https://www.gov.uk/government/speeches/russias-intensified-aerial-attacks-against-ukraine-and-irresponsible-threats-uk-statement-to-the-osce",
+        "reasons": [],
+        "score": 0.873
+      },
+      "evidence_id": "ev-international_situation-web-c36d9569d02b",
+      "final_url": "https://www.gov.uk/government/speeches/russias-intensified-aerial-attacks-against-ukraine-and-irresponsible-threats-uk-statement-to-the-osce",
+      "formal_evidence_allowed": true,
+      "paragraph_locations": [
+        "text:7052d9d361218985#p1",
+        "text:7052d9d361218985#p2",
+        "text:7052d9d361218985#p3",
+        "text:7052d9d361218985#p4",
+        "text:7052d9d361218985#p5",
+        "text:7052d9d361218985#p6",
+        "text:7052d9d361218985#p7",
+        "text:7052d9d361218985#p8",
+        "text:7052d9d361218985#p9",
+        "text:7052d9d361218985#p10",
+        "text:7052d9d361218985#p11",
+        "text:7052d9d361218985#p12",
+        "text:7052d9d361218985#p13",
+        "text:7052d9d361218985#p14",
+        "text:7052d9d361218985#p15",
+        "text:7052d9d361218985#p16"
+      ],
+      "simplified_artifact_ref": "text:7052d9d361218985",
+      "status": "fetched",
+      "url": "https://www.gov.uk/government/speeches/russias-intensified-aerial-attacks-against-ukraine-and-irresponsible-threats-uk-statement-to-the-osce"
+    },
+    {
+      "artifact_refs": [
+        "text:af3583554e3741d1"
+      ],
+      "error": "HTTPStatusError: HTTP 403: Forbidden",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-weapon_equipment-web-6bf29ef9d3ed",
+        "normalized_url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF?utm_source=openai",
+        "reasons": [],
+        "score": 0.689
+      },
+      "evidence_id": "ev-weapon_equipment-web-6bf29ef9d3ed",
+      "formal_evidence_allowed": false,
+      "status": "fetch_failed",
+      "url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF?utm_source=openai"
+    },
+    {
+      "artifact_refs": [
+        "text:016e10929bef9b7d"
+      ],
+      "error": "SSLEOFError: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-weapon_equipment-web-94ad9cd5d782",
+        "normalized_url": "https://comptroller.defense.gov/Portals/45/Documents/defbudget/FY2026/FY2026_Budget_Request_Overview_Book.pdf?utm_source=openai",
+        "reasons": [],
+        "score": 0.689
+      },
+      "evidence_id": "ev-weapon_equipment-web-94ad9cd5d782",
+      "formal_evidence_allowed": false,
+      "status": "fetch_failed",
+      "url": "https://comptroller.defense.gov/Portals/45/Documents/defbudget/FY2026/FY2026_Budget_Request_Overview_Book.pdf?utm_source=openai"
+    },
+    {
+      "artifact_refs": [
+        "text:f0bbafd51710c22a"
+      ],
+      "error": "TimeoutError: _ssl.c:1015: The handshake operation timed out",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-weapon_equipment-web-20e071bd7bc7",
+        "normalized_url": "https://rdl.train.army.mil/catalog-ws/view/100.ATSC/B6A1625F-6975-4367-82C8-E67E901218C7-1753193840461/ATP3_01x81.pdf?utm_source=openai",
+        "reasons": [],
+        "score": 0.689
+      },
+      "evidence_id": "ev-weapon_equipment-web-20e071bd7bc7",
+      "formal_evidence_allowed": false,
+      "status": "fetch_failed",
+      "url": "https://rdl.train.army.mil/catalog-ws/view/100.ATSC/B6A1625F-6975-4367-82C8-E67E901218C7-1753193840461/ATP3_01x81.pdf?utm_source=openai"
+    },
+    {
+      "artifact_refs": [
+        "text:dc8b4592825a9504"
+      ],
+      "error": "TimeoutError: _ssl.c:1015: The handshake operation timed out",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-weapon_equipment-web-016c30464e74",
+        "normalized_url": "https://rdl.train.army.mil/catalog-ws/view/100.ATSC/C01CC9C1-DA1C-4D5E-A6EB-5FCFAE218DCD-1398170439966/FM_3_01wc1.pdf?utm_source=openai",
+        "reasons": [],
+        "score": 0.689
+      },
+      "evidence_id": "ev-weapon_equipment-web-016c30464e74",
+      "formal_evidence_allowed": false,
+      "status": "fetch_failed",
+      "url": "https://rdl.train.army.mil/catalog-ws/view/100.ATSC/C01CC9C1-DA1C-4D5E-A6EB-5FCFAE218DCD-1398170439966/FM_3_01wc1.pdf?utm_source=openai"
+    },
+    {
+      "artifact_refs": [
+        "text:7cf6027bc8a4c26c"
+      ],
+      "error": "SSLEOFError: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-weapon_equipment-web-b3f46c6960bc",
+        "normalized_url": "https://armysbir.army.mil/topics/asymmetric-collaborative-counter-swarm?utm_source=openai",
+        "reasons": [],
+        "score": 0.689
+      },
+      "evidence_id": "ev-weapon_equipment-web-b3f46c6960bc",
+      "formal_evidence_allowed": false,
+      "status": "fetch_failed",
+      "url": "https://armysbir.army.mil/topics/asymmetric-collaborative-counter-swarm/?utm_source=openai"
+    },
+    {
+      "artifact_refs": [
+        "text:cd8270b212c7f19e"
+      ],
+      "error": "SSLEOFError: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-combat_scenario-web-71945fbf6f68",
+        "normalized_url": "https://www.army.mil/article/292099/listening_to_the_sky_acoustic_drone_detection_systems_ukraine_emerging_technologies?utm_source=openai",
+        "reasons": [],
+        "score": 0.698
+      },
+      "evidence_id": "ev-combat_scenario-web-71945fbf6f68",
+      "formal_evidence_allowed": false,
+      "status": "fetch_failed",
+      "url": "https://www.army.mil/article/292099/listening_to_the_sky_acoustic_drone_detection_systems_ukraine_emerging_technologies?utm_source=openai"
+    },
+    {
+      "artifact_refs": [
+        "html:d6c7968152eb54b8"
+      ],
+      "content_type": "text/html;charset=utf-8",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-combat_scenario-web-d40decce698d",
+        "normalized_url": "https://www.nato.int/en/multimedia/multimedia/videos/2025/10/03/drones-lessons-from-ukraine?utm_source=openai",
+        "reasons": [],
+        "score": 0.861
+      },
+      "evidence_id": "ev-combat_scenario-web-d40decce698d",
+      "final_url": "https://www.nato.int/en/multimedia/multimedia/videos/2025/10/03/drones-lessons-from-ukraine?utm_source=openai",
+      "formal_evidence_allowed": true,
+      "paragraph_locations": [
+        "text:e571f57286791407#p1",
+        "text:e571f57286791407#p2",
+        "text:e571f57286791407#p3"
+      ],
+      "simplified_artifact_ref": "text:e571f57286791407",
+      "status": "fetched",
+      "url": "https://www.nato.int/en/multimedia/multimedia/videos/2025/10/03/drones-lessons-from-ukraine?utm_source=openai"
+    },
+    {
+      "artifact_refs": [
+        "text:616893356dbfacfa"
+      ],
+      "error": "HTTPStatusError: HTTP 403: Forbidden",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-weapon_equipment-web-8b9fef4d0c7c",
+        "normalized_url": "https://www.defense.gov/News/News-Stories/Article/article/4260215/armys-project-flytrap-advances-defense-secretarys-drone-dominance-agenda?utm_source=openai",
+        "reasons": [],
+        "score": 0.689
+      },
+      "evidence_id": "ev-weapon_equipment-web-8b9fef4d0c7c",
+      "formal_evidence_allowed": false,
+      "status": "fetch_failed",
+      "url": "https://www.defense.gov/News/News-Stories/Article/article/4260215/armys-project-flytrap-advances-defense-secretarys-drone-dominance-agenda/?utm_source=openai"
+    },
+    {
+      "artifact_refs": [
+        "text:36b427920af4f5dc"
+      ],
+      "error": "TimeoutError: _ssl.c:1015: The handshake operation timed out",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-combat_scenario-web-72f51d1c29d5",
+        "normalized_url": "https://www.army.mil/article-amp/273510/lessons_learned_from_the_ukrainian_territorial_defense_forces_command_post_survivability?utm_source=openai",
+        "reasons": [],
+        "score": 0.698
+      },
+      "evidence_id": "ev-combat_scenario-web-72f51d1c29d5",
+      "formal_evidence_allowed": false,
+      "status": "fetch_failed",
+      "url": "https://www.army.mil/article-amp/273510/lessons_learned_from_the_ukrainian_territorial_defense_forces_command_post_survivability?utm_source=openai"
+    },
+    {
+      "artifact_refs": [
+        "text:6e8a91333c63dfe3"
+      ],
+      "error": "HTTPStatusError: HTTP 403: Forbidden",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-combat_scenario-web-e3330ca1d5ab",
+        "normalized_url": "https://www.ncia.nato.int/newsroom/news/allies-and-industry-test-the-latest-counterdrone-technology-during-nato-exercise?utm_source=openai",
+        "reasons": [],
+        "score": 0.698
+      },
+      "evidence_id": "ev-combat_scenario-web-e3330ca1d5ab",
+      "formal_evidence_allowed": false,
+      "status": "fetch_failed",
+      "url": "https://www.ncia.nato.int/newsroom/news/allies-and-industry-test-the-latest-counterdrone-technology-during-nato-exercise?utm_source=openai"
+    },
+    {
+      "artifact_refs": [
+        "raw:9b180313125896da"
+      ],
+      "content_type": "application/pdf",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-weapon_equipment-web-7b8e214d9931",
+        "normalized_url": "https://xtech.army.mil/wp-content/uploads/2025/09/xTechDisrupt-RFI.pdf?utm_source=openai",
+        "reasons": [],
+        "score": 0.689
+      },
+      "evidence_id": "ev-weapon_equipment-web-7b8e214d9931",
+      "final_url": "https://xtech.army.mil/wp-content/uploads/2025/09/xTechDisrupt-RFI.pdf?utm_source=openai",
+      "formal_evidence_allowed": true,
+      "paragraph_locations": [],
+      "simplified_artifact_ref": "",
+      "status": "fetched",
+      "url": "https://xtech.army.mil/wp-content/uploads/2025/09/xTechDisrupt-RFI.pdf?utm_source=openai"
+    },
+    {
+      "artifact_refs": [
+        "text:7025ea4bb377c6bc"
+      ],
+      "error": "SSLEOFError: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-combat_scenario-web-27af88f8ada0",
+        "normalized_url": "https://media.defense.gov/2026/Jul/08/2003958884/-1/-1/1/SMALL-DRONES-BIG-PROBLEMS-A-FIRST-PRINCIPLES-APPROACH-TO-COUNTER-UAS.PDF?utm_source=openai",
+        "reasons": [],
+        "score": 0.698
+      },
+      "evidence_id": "ev-combat_scenario-web-27af88f8ada0",
+      "formal_evidence_allowed": false,
+      "status": "fetch_failed",
+      "url": "https://media.defense.gov/2026/Jul/08/2003958884/-1/-1/1/SMALL-DRONES-BIG-PROBLEMS-A-FIRST-PRINCIPLES-APPROACH-TO-COUNTER-UAS.PDF?utm_source=openai"
+    },
+    {
+      "artifact_refs": [
+        "text:5ad1e44ecd8959d3"
+      ],
+      "error": "SSLEOFError: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-combat_scenario-web-793d357fd961",
+        "normalized_url": "https://www.armyupress.army.mil/Journals/Military-Review/English-Edition-Archives/September-October-2025/Lessons-from-Ukraine?utm_source=openai",
+        "reasons": [],
+        "score": 0.698
+      },
+      "evidence_id": "ev-combat_scenario-web-793d357fd961",
+      "formal_evidence_allowed": false,
+      "status": "fetch_failed",
+      "url": "https://www.armyupress.army.mil/Journals/Military-Review/English-Edition-Archives/September-October-2025/Lessons-from-Ukraine/?utm_source=openai"
+    },
+    {
+      "artifact_refs": [
+        "text:33517640dcb5a462"
+      ],
+      "error": "TimeoutError: _ssl.c:1015: The handshake operation timed out",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-weapon_equipment-web-99350144ccb8",
+        "normalized_url": "https://asc.army.mil/web/news-innovation-draws-international-interest?utm_source=openai",
+        "reasons": [],
+        "score": 0.689
+      },
+      "evidence_id": "ev-weapon_equipment-web-99350144ccb8",
+      "formal_evidence_allowed": false,
+      "status": "fetch_failed",
+      "url": "https://asc.army.mil/web/news-innovation-draws-international-interest/?utm_source=openai"
+    },
+    {
+      "artifact_refs": [
+        "text:38f77aef9c47ce1d"
+      ],
+      "error": "SSLEOFError: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-combat_scenario-web-4eb092bc25f4",
+        "normalized_url": "https://www.darpa.mil/research/programs/frosty?utm_source=openai",
+        "reasons": [],
+        "score": 0.698
+      },
+      "evidence_id": "ev-combat_scenario-web-4eb092bc25f4",
+      "formal_evidence_allowed": false,
+      "status": "fetch_failed",
+      "url": "https://www.darpa.mil/research/programs/frosty?utm_source=openai"
+    },
+    {
+      "artifact_refs": [
+        "html:2e75fc119c479916"
+      ],
+      "content_type": "text/html",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-weapon_equipment-web-3b7612d514fb",
+        "normalized_url": "https://www.doncio.navy.mil/mobile/ContentView.aspx?ID=15733&TypeID=21&utm_source=openai",
+        "reasons": [],
+        "score": 0.852
+      },
+      "evidence_id": "ev-weapon_equipment-web-3b7612d514fb",
+      "final_url": "https://www.doncio.navy.mil/mobile/ContentView.aspx?ID=15733&TypeID=21&utm_source=openai",
+      "formal_evidence_allowed": true,
+      "paragraph_locations": [
+        "text:7df3cf70c3bd45a8#p1"
+      ],
+      "simplified_artifact_ref": "text:7df3cf70c3bd45a8",
+      "status": "fetched",
+      "url": "https://www.doncio.navy.mil/mobile/ContentView.aspx?ID=15733&TypeID=21&utm_source=openai"
+    },
+    {
+      "artifact_refs": [
+        "text:11a3e45b0de7bb4e"
+      ],
+      "error": "TimeoutError: _ssl.c:1015: The handshake operation timed out",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-weapon_equipment-web-91525232bb14",
+        "normalized_url": "https://www.armyupress.army.mil/Journals/Military-Review/Online-Exclusive/2024-OLE/C-UAS-Operations?utm_source=openai",
+        "reasons": [],
+        "score": 0.689
+      },
+      "evidence_id": "ev-weapon_equipment-web-91525232bb14",
+      "formal_evidence_allowed": false,
+      "status": "fetch_failed",
+      "url": "https://www.armyupress.army.mil/Journals/Military-Review/Online-Exclusive/2024-OLE/C-UAS-Operations/?utm_source=openai"
+    },
+    {
+      "artifact_refs": [
+        "html:2ca7a4c7c2fbf6d6"
+      ],
+      "content_type": "text/html;charset=utf-8",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-operational_employment-web-15c4d1e616fe",
+        "normalized_url": "https://www.nato.int/en/about-us/official-texts-and-resources/official-texts/2025/02/13/nato-integrated-air-and-missile-defence-policy",
+        "reasons": [],
+        "score": 0.858
+      },
+      "evidence_id": "ev-operational_employment-web-15c4d1e616fe",
+      "final_url": "https://www.nato.int/en/about-us/official-texts-and-resources/official-texts/2025/02/13/nato-integrated-air-and-missile-defence-policy",
+      "formal_evidence_allowed": true,
+      "paragraph_locations": [
+        "text:e571f57286791407#p1",
+        "text:e571f57286791407#p2",
+        "text:e571f57286791407#p3"
+      ],
+      "simplified_artifact_ref": "text:e571f57286791407",
+      "status": "fetched",
+      "url": "https://www.nato.int/en/about-us/official-texts-and-resources/official-texts/2025/02/13/nato-integrated-air-and-missile-defence-policy"
+    },
+    {
+      "artifact_refs": [
+        "text:e90f6d774de0b147"
+      ],
+      "error": "HTTPStatusError: HTTP 403: Forbidden",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-operational_employment-web-62dd1226d7e0",
+        "normalized_url": "https://www.act.nato.int/article/lci-x-builds-approach-fast-moving-threat",
+        "reasons": [],
+        "score": 0.695
+      },
+      "evidence_id": "ev-operational_employment-web-62dd1226d7e0",
+      "formal_evidence_allowed": false,
+      "status": "fetch_failed",
+      "url": "https://www.act.nato.int/article/lci-x-builds-approach-fast-moving-threat/"
+    },
+    {
+      "artifact_refs": [
+        "text:01f5b09f8771e457"
+      ],
+      "error": "HTTPStatusError: HTTP 403: Forbidden",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-operational_employment-web-fb3960202dd3",
+        "normalized_url": "https://www.act.nato.int/article/lci-x-crucible-2",
+        "reasons": [],
+        "score": 0.695
+      },
+      "evidence_id": "ev-operational_employment-web-fb3960202dd3",
+      "formal_evidence_allowed": false,
+      "status": "fetch_failed",
+      "url": "https://www.act.nato.int/article/lci-x-crucible-2/"
+    },
+    {
+      "artifact_refs": [
+        "text:884a62e2be5a0228"
+      ],
+      "error": "HTTPStatusError: HTTP 403: Forbidden",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-operational_employment-web-74e0f9c1f2ad",
+        "normalized_url": "https://www.defense.gov/News/News-Stories/Article/Article/3986843/austin-signs-new-strategy-for-countering-effects-of-unmanned-systems",
+        "reasons": [],
+        "score": 0.695
+      },
+      "evidence_id": "ev-operational_employment-web-74e0f9c1f2ad",
+      "formal_evidence_allowed": false,
+      "status": "fetch_failed",
+      "url": "https://www.defense.gov/News/News-Stories/Article/Article/3986843/austin-signs-new-strategy-for-countering-effects-of-unmanned-systems/"
+    },
+    {
+      "artifact_refs": [
+        "text:23a424ef9e1c527b"
+      ],
+      "error": "HTTPStatusError: HTTP 403: Forbidden",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-operational_employment-web-ba7af247bc5e",
+        "normalized_url": "https://www.defense.gov/News/Releases/Release/Article/2397850/electromagnetic-spectrum-superiority-strategy-released",
+        "reasons": [],
+        "score": 0.695
+      },
+      "evidence_id": "ev-operational_employment-web-ba7af247bc5e",
+      "formal_evidence_allowed": false,
+      "status": "fetch_failed",
+      "url": "https://www.defense.gov/News/Releases/Release/Article/2397850/electromagnetic-spectrum-superiority-strategy-released/"
+    },
+    {
+      "artifact_refs": [
+        "text:c7e8994d742bb4e1"
+      ],
+      "error": "HTTPStatusError: HTTP 403: Forbidden",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-operational_employment-web-1772ab5f8282",
+        "normalized_url": "https://www.army.mil/article/293486/the_dispersed_screen_integrating_suas_for_resilient_reconnaissance",
+        "reasons": [],
+        "score": 0.695
+      },
+      "evidence_id": "ev-operational_employment-web-1772ab5f8282",
+      "formal_evidence_allowed": false,
+      "status": "fetch_failed",
+      "url": "https://www.army.mil/article/293486/the_dispersed_screen_integrating_suas_for_resilient_reconnaissance"
+    },
+    {
+      "artifact_refs": [
+        "text:a9052629485c0852"
+      ],
+      "error": "HTTPStatusError: HTTP 403: Forbidden",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-operational_employment-web-75f7dbadbda3",
+        "normalized_url": "https://www.af.mil/News/Article-Display/Article/4241485/air-force-battle-lab-advances-the-kill-chain-with-ai-c2-innovation",
+        "reasons": [],
+        "score": 0.695
+      },
+      "evidence_id": "ev-operational_employment-web-75f7dbadbda3",
+      "formal_evidence_allowed": false,
+      "status": "fetch_failed",
+      "url": "https://www.af.mil/News/Article-Display/Article/4241485/air-force-battle-lab-advances-the-kill-chain-with-ai-c2-innovation/"
+    },
+    {
+      "artifact_refs": [
+        "html:d2e5be183c4c302b"
+      ],
+      "content_type": "text/html; charset=utf-8",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-operational_employment-web-38b628ca4782",
+        "normalized_url": "https://www.gov.uk/government/news/british-soldiers-take-down-drone-swarm-in-groundbreaking-use-of-radio-wave-weapon",
+        "reasons": [],
+        "score": 0.858
+      },
+      "evidence_id": "ev-operational_employment-web-38b628ca4782",
+      "final_url": "https://www.gov.uk/government/news/british-soldiers-take-down-drone-swarm-in-groundbreaking-use-of-radio-wave-weapon",
+      "formal_evidence_allowed": true,
+      "paragraph_locations": [
+        "text:aea4fe3e4db5324b#p1",
+        "text:aea4fe3e4db5324b#p2",
+        "text:aea4fe3e4db5324b#p3",
+        "text:aea4fe3e4db5324b#p4",
+        "text:aea4fe3e4db5324b#p5",
+        "text:aea4fe3e4db5324b#p6",
+        "text:aea4fe3e4db5324b#p7",
+        "text:aea4fe3e4db5324b#p8",
+        "text:aea4fe3e4db5324b#p9",
+        "text:aea4fe3e4db5324b#p10",
+        "text:aea4fe3e4db5324b#p11",
+        "text:aea4fe3e4db5324b#p12",
+        "text:aea4fe3e4db5324b#p13",
+        "text:aea4fe3e4db5324b#p14",
+        "text:aea4fe3e4db5324b#p15",
+        "text:aea4fe3e4db5324b#p16",
+        "text:aea4fe3e4db5324b#p17",
+        "text:aea4fe3e4db5324b#p18",
+        "text:aea4fe3e4db5324b#p19",
+        "text:aea4fe3e4db5324b#p20",
+        "text:aea4fe3e4db5324b#p21",
+        "text:aea4fe3e4db5324b#p22",
+        "text:aea4fe3e4db5324b#p23",
+        "text:aea4fe3e4db5324b#p24",
+        "text:aea4fe3e4db5324b#p25",
+        "text:aea4fe3e4db5324b#p26",
+        "text:aea4fe3e4db5324b#p27",
+        "text:aea4fe3e4db5324b#p28",
+        "text:aea4fe3e4db5324b#p29"
+      ],
+      "simplified_artifact_ref": "text:aea4fe3e4db5324b",
+      "status": "fetched",
+      "url": "https://www.gov.uk/government/news/british-soldiers-take-down-drone-swarm-in-groundbreaking-use-of-radio-wave-weapon"
+    },
+    {
+      "artifact_refs": [
+        "text:0c48f99337fb836c"
+      ],
+      "error": "HTTPStatusError: HTTP 403: Forbidden",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-operational_employment-web-0e7193bd8f78",
+        "normalized_url": "https://nllp.jallc.nato.int/iks/sharing%20public/20240801_cui_24-901_surviving_the%20_swarm_c-uas_ttps_at_bde_and_below.pdf",
+        "reasons": [],
+        "score": 0.695
+      },
+      "evidence_id": "ev-operational_employment-web-0e7193bd8f78",
+      "formal_evidence_allowed": false,
+      "status": "fetch_failed",
+      "url": "https://nllp.jallc.nato.int/iks/sharing%20public/20240801_cui_24-901_surviving_the%20_swarm_c-uas_ttps_at_bde_and_below.pdf"
+    }
+  ],
+  "store_summary": {
+    "audit_count": 1,
+    "baseline_packet_count": 4,
+    "capability_image_count": 2,
+    "coverage_tags": [
+      "capability_gap",
+      "coa",
+      "coordination",
+      "environment",
+      "equipment",
+      "lessons",
+      "operation",
+      "scenario",
+      "situation",
+      "strategy",
+      "technology_readiness",
+      "threat"
+    ],
+    "evidence_count": 10,
+    "knowledge_projection_count": 1,
+    "materialized_evidence_count": 10,
+    "problem_count": 1,
+    "reasoning_node_count": 6,
+    "recall_request_count": 0,
+    "recommendation_count": 0,
+    "report_count": 1,
+    "stage_output_count": 3,
+    "winning_input_count": 1
+  },
+  "trace_summary": [
+    {
+      "actor": "orchestrator",
+      "event_type": "run_started",
+      "output_refs": [],
+      "summary": "run started for 面向强电磁干扰与低空蜂群威胁的新型分布式探测预警制胜机理与装备能力需求"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "baseline_wave_started",
+      "output_refs": [
+        "baseline:international_situation"
+      ],
+      "summary": "baseline wave 1 started with 1 agent(s)"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "agent_task_delegated",
+      "output_refs": [
+        "baseline:international_situation"
+      ],
+      "summary": "委派给国际形势：面向未来威胁预警，持续研判国际安全态势、潜在威胁力量、联盟与战略格局、对手能力建设和可观测动向。"
+    },
+    {
+      "actor": "international_situation",
+      "event_type": "baseline_agent_completed",
+      "output_refs": [
+        "packet-international_situation",
+        "ev-international_situation-web-2d1ba4398caa",
+        "ev-international_situation-web-49f2eb1a8e44",
+        "ev-international_situation-web-906fb4b16de0",
+        "ev-international_situation-web-c36d9569d02b",
+        "ev-international_situation-web-ce3f3e70cc3f"
+      ],
+      "summary": "国际公开信号显示：美军与北约已把低空无人威胁视为体系级问题，重点转向可在强电磁干扰下运行的分布式探测预警网络，并以低成本效应器和深弹药池支撑抗饱和。对装备论证的直接牵引是：优先建设多源分布式探测节点、边缘融合与本地自治、抗干扰通信/授时、开放接口和可快速接入更大C2网络的体系，而将高端新型传感器视为中远期增量项。近期威胁更像大规模混合袭扰而非完全成熟的自主蜂群，故需求优先级应放在‘抗饱和+抗拒止+低成本连续作战’。"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "baseline_wave_completed",
+      "output_refs": [
+        "packet-international_situation"
+      ],
+      "summary": "baseline wave 1 completed"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "baseline_wave_started",
+      "output_refs": [
+        "baseline:combat_scenario",
+        "baseline:weapon_equipment"
+      ],
+      "summary": "baseline wave 2 started with 2 agent(s)"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "agent_task_delegated",
+      "output_refs": [
+        "baseline:combat_scenario"
+      ],
+      "summary": "委派给作战场景：将威胁研判转化为现代化、多域、动态对抗场景，分析阶段演化、敌方行动方案、关键时间窗口和环境约束。"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "agent_task_delegated",
+      "output_refs": [
+        "baseline:weapon_equipment"
+      ],
+      "summary": "委派给武器装备：面向国外装备能力发展与防御性反制需求，比较现役和在研装备、体系接口、技术成熟度、保障成本及能力边界。"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_agent_completed",
+      "output_refs": [
+        "packet-combat_scenario",
+        "ev-combat_scenario-web-d40decce698d"
+      ],
+      "summary": "面向强电磁干扰与低空蜂群威胁的作战场景应按“低空饱和+电磁降级+节点损耗”的体系对抗设计，而非单装性能对比。装备需求应优先支持多源分布式节点、边缘融合、本地自治、抗干扰通信/授时、开放接口、快速补网和复杂环境低误警；近期基线威胁是大规模混合袭扰，中远期分支是RF静默、抗干扰和更高自主协同无人系统。"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_agent_completed",
+      "output_refs": [
+        "packet-weapon_equipment",
+        "ev-weapon_equipment-web-3b7612d514fb",
+        "ev-weapon_equipment-web-7b8e214d9931"
+      ],
+      "summary": "装备侧结论是：国外可验证的近端优势并非某一“抗干扰神奇传感器”，而是将现役雷达、EO/IR、被动RF/测向、电子战、硬杀伤和C2以模块化接口组合，并向分布式边缘自治演进。面向低空蜂群与强电磁干扰，应把装备需求排序为：多模态分布感知与本地融合、断链降级指挥和韧性授时通信、开放C2/射手接口、软硬杀伤分层及低成本可持续保障。对在研分布式AI反蜂群和协同无人平台宜作为中期增量，不应假设其已经替代现役LIDS类体系。"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "baseline_wave_completed",
+      "output_refs": [
+        "packet-combat_scenario",
+        "packet-weapon_equipment"
+      ],
+      "summary": "baseline wave 2 completed"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "baseline_wave_started",
+      "output_refs": [
+        "baseline:operational_employment"
+      ],
+      "summary": "baseline wave 3 started with 1 agent(s)"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "agent_task_delegated",
+      "output_refs": [
+        "baseline:operational_employment"
+      ],
+      "summary": "委派给作战运用：综合局势、场景和装备结构化交接，评估作战约束、力量协同、备选行动方案、部署原则和公开战例经验。"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_agent_completed",
+      "output_refs": [
+        "packet-operational_employment",
+        "ev-operational_employment-web-15c4d1e616fe",
+        "ev-operational_employment-web-38b628ca4782"
+      ],
+      "summary": "综合上游局势、场景与装备材料，并用北约/美英公开来源交叉校核后，可形成的作战运用结论是：面向强电磁干扰与低空蜂群化袭扰，制胜机理应从“单站发现—集中判决—点状拦截”转为“异构分布式节点—边缘融合—本地自治—断续联网协同—低成本分层处置”。近期基线威胁更接近大规模混合低空袭扰叠加电子战，而非已被充分证实的成熟高自治蜂群，因此装备需求优先级应放在抗饱和、抗拒止、低误警和持续作战；真正高自治蜂群应作为高影响分支纳入冗余设计，而不宜替代近期基线。"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "baseline_wave_completed",
+      "output_refs": [
+        "packet-operational_employment"
+      ],
+      "summary": "baseline wave 3 completed"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "baseline_agents_summarized",
+      "output_refs": [
+        "packet-international_situation",
+        "packet-combat_scenario",
+        "packet-weapon_equipment",
+        "packet-operational_employment"
+      ],
+      "summary": "4 baseline agents completed"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_call",
+      "output_refs": [],
+      "summary": "核心制胜机理 Agent 调用独立真实模型"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_result",
+      "output_refs": [
+        "winning-model-analysis"
+      ],
+      "summary": "核心制胜机理 Agent 已返回结构化六步分析"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "winning_input_prepared",
+      "output_refs": [
+        "winning-input-r1"
+      ],
+      "summary": "制胜机理输入包已完成上下文投影与一致性初检"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_resources_projected",
+      "output_refs": [
+        "winning-resources-r1"
+      ],
+      "summary": "理论工具、战例、前沿情报与问题链已按本次任务动态投影"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_reasoning_step_completed",
+      "output_refs": [
+        "reason-347f75524783"
+      ],
+      "summary": "威胁输入层：近期基线为低成本、多批次、多轴、混合式低空袭扰叠加电子战压制；成熟高自治蜂群仅作为高影响不确定分支，不能替代现实需求基线。；探测对抗层：低空地平线、地物遮蔽、城市港口机场杂波及昼夜天气变化压缩发现距离；RF静默、预编程或惯性/视觉导航目标会降低被动RF的边际价值。；电磁与网络层：频谱干扰、欺骗、链路丢包和GNSS受限可能同时破坏探测、授时、共享与上级C2，集中式网络存在共同失效面。；融合决策层：多源线索短时、不一致且置信度波动，鸟群、民用无人机和环境噪声推高误警；若依赖中心确认，将进一步压缩可信告警窗口。；部署生存层：少量高价值节点易受压制或损耗；分布式部署虽提高韧性，但会增加时间同步、供电、标定、维护和训练复杂度。；持续作战层：饱和目标流、人工复核负荷、效应器库存、软件与数据库更新、备件和补网速度共同决定体系效能，单次发现距离或单发拦截率不足以代表制胜能力。"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_reasoning_step_completed",
+      "output_refs": [
+        "reason-a1f45acdcddf"
+      ],
+      "summary": "以COA-2弹性分布式预警网络为主路径：前沿和高点部署雷达、被动RF/测向、EO/IR及视情声学节点，由边缘单元先形成局部航迹和可信告警，再断续接入上级C2。；以多模交叉确认破解单一模态失效：RF线索有效时用于快速提示和测向；RF静默或受压制时，提高微小目标雷达、EO/IR、声学及轨迹异常识别权重。；以本地自治破解断链：预置分级告警、缓存航迹、局部授权和延迟同步规则，使上级C2、骨干链路或GNSS中断时仍保持最低可用预警与处置提示。；以开放接口破解装备迭代和资源错配：统一传感器、航迹、置信度及射手接口，将高成本效应器保留给高可信高威胁目标，并兼容低成本或群体处置手段。；以机动补网和战损重构破解持续消耗：采用可替换节点、备用授时、自动重标定、远程健康管理和模块化保障，在节点损耗后优先恢复关键方向覆盖。；以环境基线和闭环更新破解误警饱和：危机前建立频谱、声学、图像和低空航迹基线，持续复盘误警漏警并动态调整融合权重，而非固定阈值运行。"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_reasoning_step_completed",
+      "output_refs": [
+        "reason-593788adb924"
+      ],
+      "summary": "环境基线建立与频谱态势感知→识别异常扰动和接触征候→前推或唤醒低成本节点→扩大关键方向有效预警覆盖。；异构节点分散采集→跨模态相互提示与补盲→降低单一传感器被干扰、遮蔽或欺骗造成的漏警风险。；边缘时间对齐、目标关联和置信度融合→形成可信航迹或区域告警→压缩从首次接触到本地告警的决策时间。；链路或GNSS降级→切换备用授时、缓存和本地自治规则→维持局部态势连续性→避免中心失效导致全网瘫痪。；可信告警断续回传上级C2→与更大空情和射手网络关联→按威胁等级实施软硬杀伤分层和效应器经济性分配。；节点损耗与误警累积→健康评估、机动补网、重标定和模型更新→恢复最低覆盖阈值→支撑持续预警与下一轮对抗。"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_reasoning_step_completed",
+      "output_refs": [
+        "reason-f71d737adcd1"
+      ],
+      "summary": "早期发现能力：分布式微小目标雷达、被动RF/测向、EO/IR和视情声学节点；需求门槛应是单一模态降级后仍可通过其他模态形成有效提示或航迹。；可信确认能力：边缘融合、时间对齐、目标关联、信号指纹及声纹/图像分类、可解释置信度输出；重点考核复杂背景下误警、漏警和人工负荷。；拒止生存能力：抗干扰和低可探测通信、断续联网、数据缓存、延迟同步、备用授时及无GNSS运行；重点考核断链后的本地自治时长和态势连续性。；体系协同能力：开放式传感器、航迹、C2和射手接口，兼容现役防空反无人网络及增量效应器；不得把可物理接入直接等同于全条件互操作。；战损重构能力：低成本可替换节点、机动补盲、自动校准、远程健康管理和快速重组工具；重点考核节点损耗后的补网与重标定时间。；持续保障能力：冗余供电、备件与模块化维修、软件和频谱数据库离线更新、训练及人机负荷管理；按持续饱和目标流验收，而非仅按单次任务验收。"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_reasoning_step_completed",
+      "output_refs": [
+        "reason-2055d251b650"
+      ],
+      "summary": "{'capability': '常态或有限干扰条件下的多传感器—C2—软硬杀伤闭环', 'grade': '满足', 'basis': 'packet-weapon_equipment将FS-LIDS/M-LIDS列为已进入陆军防空反导体系的现役参照，具备雷达、EO/IR、测向或被动RF及软硬杀伤集成；但该结论不外推至强干扰和断链条件。'}；{'capability': '面向复杂背景的多模态分布式探测与交叉确认', 'grade': '部分差距', 'basis': '现役和试验系统已采用雷达、光电、被动RF及声学等组合，北约需求也明确指向小目标探测、融合和被动雷达；但节点密度、复杂地域误警率及全天候性能缺少统一验证。依据ev-international_situation-web-2d1ba4398caa、ev-weapon_equipment-web-3b7612d514fb。'}；{'capability': '断链条件下的边缘融合、本地自治告警与航迹连续性', 'grade': '关键差距', 'basis': '需求侧明确要求电磁拒止或降级运行，Flytrap等仍属战术试验，分布式AI主要处于研发或原型阶段；公开证据不能证明现役体系已形成稳定自治能力。依据ev-international_situation-web-906fb4b16de0、ev-weapon_equipment-web-7b8e214d9931。'}；{'capability': '抗干扰通信、备用授时、缓存和跨系统断续同步', 'grade': '关键差距', 'basis': 'FAAD C2、Link-16、网状IP电台等体现接口基础，北约政策强调韧性内建；但GNSS拒止、骨干网断链和强压制下的端到端互操作性能未获公开量化证实。依据ev-operational_employment-web-15c4d1e616fe。'}；{'capability': '节点战损后的机动补网、自动重标定与持续保障', 'grade': '关键差距', 'basis': 'packet普遍将补网、供电、备件、数据库更新和合同商依赖列为瓶颈；能力即服务模式反映持续维护需求，但公开材料未给出战时脱离承包商后的恢复速度和可用度。依据ev-weapon_equipment-web-3b7612d514fb。'}；{'capability': '强干扰、GNSS拒止和节点损耗条件下的统一量化试验评估体系', 'grade': '空白', 'basis': '各packet均指出探测概率、虚警率、融合时延、本地自治时长、补网时间和目标流处理能力缺少公开可横向比较数据；因此只能判定公开可验证基线为空白，不能据此断言实际能力绝对不存在。'}"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_reasoning_step_completed",
+      "output_refs": [
+        "reason-9851e25b0c93"
+      ],
+      "summary": "{'name': '多模分布式低空感知节点族', 'type': 'upgrade', 'function': '模块化组合微小目标雷达、被动RF/测向、EO/IR及视情声学，支持前沿、高点和机动补盲部署，并在单模态降级时维持交叉提示。', 'feasibility': 5}；{'name': '边缘融合与本地自治预警单元', 'type': 'upgrade', 'function': '在节点侧完成时间对齐、目标关联、置信度融合、区域告警、航迹缓存和断链规则执行，降低对中心C2持续在线的依赖。', 'feasibility': 4}；{'name': '拒止环境韧性通信授时组件', 'type': 'upgrade', 'function': '提供抗干扰或低可探测链路、备用授时、无GNSS运行、延迟同步和最小数据量回传，支撑降级态势共享。', 'feasibility': 4}；{'name': '开放式预警C2与射手接口中间件', 'type': 'upgrade', 'function': '统一传感器、航迹、置信度和效应器接口，支持滚动接入现役系统、低成本效应器及群体压制手段，并隔离单点接口故障。', 'feasibility': 4}；{'name': '机动补网与战损快速重构套件', 'type': 'new_capability', 'function': '集成可替换节点、便携供电、快速测绘布站、自动校准、健康诊断和离线模型更新，优先恢复关键方向最低可用覆盖。', 'feasibility': 4}；{'name': '无中心协同AI反蜂群增量', 'type': 'new_capability', 'function': '探索节点间分布式任务分配、协同跟踪和动态融合权重调整；仅作为中期增量，不作为近期体系唯一决策或探测依赖。', 'feasibility': 2}"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_stage_completed",
+      "output_refs": [
+        "stage-L1"
+      ],
+      "summary": "L1 completed: gate=True"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_stage_completed",
+      "output_refs": [
+        "stage-L2"
+      ],
+      "summary": "L2 completed: gate=True"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_stage_completed",
+      "output_refs": [
+        "stage-L3"
+      ],
+      "summary": "L3 completed: gate=True"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "capability_image_created",
+      "output_refs": [
+        "cap-new-001"
+      ],
+      "summary": "机动补网与战损快速重构套件"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "capability_image_created",
+      "output_refs": [
+        "cap-upgrade-001"
+      ],
+      "summary": "多模分布式低空感知节点族"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_call",
+      "output_refs": [],
+      "summary": "写入L1制胜机理阶段输出"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_result",
+      "output_refs": [
+        "stage-L1"
+      ],
+      "summary": "L1阶段输出已写入"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_call",
+      "output_refs": [],
+      "summary": "写入L2制胜机理阶段输出"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_result",
+      "output_refs": [
+        "stage-L2"
+      ],
+      "summary": "L2阶段输出已写入"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_call",
+      "output_refs": [],
+      "summary": "写入L3制胜机理阶段输出"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_result",
+      "output_refs": [
+        "stage-L3"
+      ],
+      "summary": "L3阶段输出已写入"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_call",
+      "output_refs": [],
+      "summary": "生成能力画像：机动补网与战损快速重构套件"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_result",
+      "output_refs": [
+        "cap-new-001"
+      ],
+      "summary": "能力画像已生成：机动补网与战损快速重构套件"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_call",
+      "output_refs": [],
+      "summary": "生成能力画像：多模分布式低空感知节点族"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_result",
+      "output_refs": [
+        "cap-upgrade-001"
+      ],
+      "summary": "能力画像已生成：多模分布式低空感知节点族"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "agent_task_delegated",
+      "output_refs": [],
+      "summary": "委派审计智能体执行五判据检查"
+    },
+    {
+      "actor": "auditor",
+      "event_type": "tool_call",
+      "output_refs": [],
+      "summary": "执行证据、覆盖、门控、追溯和轮次五判据审计"
+    },
+    {
+      "actor": "auditor",
+      "event_type": "tool_call",
+      "output_refs": [],
+      "summary": "审计 Agent 调用独立真实模型复核确定性判据"
+    },
+    {
+      "actor": "auditor",
+      "event_type": "tool_result",
+      "output_refs": [],
+      "summary": "独立审计模型复核完成"
+    },
+    {
+      "actor": "auditor",
+      "event_type": "tool_result",
+      "output_refs": [
+        "audit-001"
+      ],
+      "summary": "五判据审计完成：approved"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "agent_task_delegated",
+      "output_refs": [],
+      "summary": "委派报告智能体生成甲方可读能力画像报告"
+    },
+    {
+      "actor": "reporter",
+      "event_type": "tool_call",
+      "output_refs": [],
+      "summary": "生成研究路线、证据、制胜逻辑、能力缺口和能力画像报告"
+    },
+    {
+      "actor": "reporter",
+      "event_type": "tool_call",
+      "output_refs": [],
+      "summary": "报告 Agent 调用独立真实模型生成执行摘要"
+    },
+    {
+      "actor": "reporter",
+      "event_type": "tool_result",
+      "output_refs": [],
+      "summary": "报告 Agent 执行摘要生成完成"
+    },
+    {
+      "actor": "reporter",
+      "event_type": "tool_result",
+      "output_refs": [
+        "report-001"
+      ],
+      "summary": "甲方能力画像报告已生成"
+    }
+  ],
+  "winning_mechanism": {
+    "inputs": [
+      {
+        "attempt": 1,
+        "conflict_set": [
+          "现役LIDS路径强调经FAAD C2进行融合和联网，而陆军SBIR反蜂群课题明确要求不依赖中央控制节点；二者不是直接矛盾，而是“现役集中/层级式C2”与“未来边缘自治”并存，过渡期接口、授权和冲突消解仍是风险点。"
+        ],
+        "coverage_map": {
+          "by_agent": {
+            "combat_scenario": [
+              "scenario",
+              "coa",
+              "environment"
+            ],
+            "international_situation": [
+              "situation",
+              "threat",
+              "strategy"
+            ],
+            "operational_employment": [
+              "operation",
+              "coordination",
+              "lessons"
+            ],
+            "weapon_equipment": [
+              "equipment",
+              "capability_gap",
+              "technology_readiness"
+            ]
+          },
+          "coverage_passed": true,
+          "missing_required_tags": [],
+          "optional_tags": [
+            "coordination",
+            "technology_readiness"
+          ],
+          "provided_tags": [
+            "capability_gap",
+            "coa",
+            "coordination",
+            "environment",
+            "equipment",
+            "lessons",
+            "operation",
+            "scenario",
+            "situation",
+            "strategy",
+            "technology_readiness",
+            "threat"
+          ],
+          "required_tags": [
+            "equipment",
+            "operation",
+            "scenario",
+            "situation",
+            "threat"
+          ],
+          "route": "new_winning_mechanism"
+        },
+        "created_at": "2026-07-14T05:56:26.745537+00:00",
+        "evidence_index": [
+          {
+            "claim": "北约公开能力需求明确要求面对多轴、多批次、全天候、蜂群化自主无人机时，体系需具备实时探测、识别、跟踪、共享、交战、抗饱和和在电磁拒止/降级下运行的能力。",
+            "created_by": "international_situation",
+            "evidence_id": "ev-international_situation-web-906fb4b16de0",
+            "source_tier": "B",
+            "source_title": "Demand Signal"
+          },
+          {
+            "claim": "北约公开展示低成本反无人机系统Merops，并称波兰和罗马尼亚已快速采购/接装，强调其面向低成本大批量目标的成本优势。",
+            "created_by": "international_situation",
+            "evidence_id": "ev-international_situation-web-49f2eb1a8e44",
+            "source_tier": "B",
+            "source_title": "NATO and the US Army demonstrate low-cost counter-UAS system to protect NATO airspace | NATO Video"
+          },
+          {
+            "claim": "北约科研资助方向把困难条件下小目标探测、传感器融合和被动雷达列为重点，并点名高干扰/高流量环境及城市、港口、机场、关键基础设施场景。",
+            "created_by": "international_situation",
+            "evidence_id": "ev-international_situation-web-2d1ba4398caa",
+            "source_tier": "B",
+            "source_title": "https://www.nato.int/content/dam/nato/webready/documents/sps/grants/sps-special-call-for-proposals-2026-2.pdf"
+          },
+          {
+            "claim": "DARPA已启动鲁棒量子传感器项目第一阶段，目标是在强电磁、强振动和动态平台条件下保持可靠探测，说明美方正布局下一代抗干扰感知器件。",
+            "created_by": "international_situation",
+            "evidence_id": "ev-international_situation-web-ce3f3e70cc3f",
+            "source_tier": "B",
+            "source_title": "From fragile to field-ready: RoQS program launches first phase | DARPA"
+          },
+          {
+            "claim": "英国政府在OSCE声明中披露，俄罗斯对乌实施过约600架无人机和90枚导弹的空袭，并提到24小时内约1530个空袭弹药/平台的纪录，表明大规模饱和化空袭已成现实基线。",
+            "created_by": "international_situation",
+            "evidence_id": "ev-international_situation-web-c36d9569d02b",
+            "source_tier": "B",
+            "source_title": "Russia’s intensified aerial attacks against Ukraine and irresponsible threats: UK statement to the OSCE - GOV.UK"
+          },
+          {
+            "claim": "NATO材料指出俄乌战场无人机大量充斥前线，并提到光纤无人机可规避电子干扰，说明低空威胁规模化与抗干扰化需要纳入场景分支。",
+            "created_by": "combat_scenario",
+            "evidence_id": "ev-combat_scenario-web-d40decce698d",
+            "source_tier": "B",
+            "source_title": "Drones – Lessons from Ukraine | NATO Video"
+          },
+          {
+            "claim": "美国陆军xTechDisrupt征询覆盖可扩展蜂群架构、分布式决策与任务分配、机间通信、RF与EO/IR融合、接入政府推荐C2网络，以及微波和激光等定向能反制方向。",
+            "created_by": "weapon_equipment",
+            "evidence_id": "ev-weapon_equipment-web-7b8e214d9931",
+            "source_tier": "B",
+            "source_title": "The U.S. Army xTech Program – xTechDisrupt Competition Announcement"
+          },
+          {
+            "claim": "美国海军陆战队固定设施I-CsUAS面向商规I、II类无人机，采用雷达、光电和被动RF融合；其采用“反无人机能力即服务”合同模式，反映持续维护和软件升级的保障需求。",
+            "created_by": "weapon_equipment",
+            "evidence_id": "ev-weapon_equipment-web-3b7612d514fb",
+            "source_tier": "B",
+            "source_title": "Request Rejected"
+          },
+          {
+            "claim": "北约把防空反导体系建设强调为“韧性内建”和多层防御，并把网络攻击、电磁战等非动能破坏纳入体系设计背景。",
+            "created_by": "operational_employment",
+            "evidence_id": "ev-operational_employment-web-15c4d1e616fe",
+            "source_tier": "B",
+            "source_title": "NATO Integrated Air and Missile Defence Policy | NATO Official text"
+          },
+          {
+            "claim": "英国政府公开反蜂群试验显示射频武器具备对多架无人机实施群体压制的潜力，说明反蜂群不宜只依赖点对点拦截弹。",
+            "created_by": "operational_employment",
+            "evidence_id": "ev-operational_employment-web-38b628ca4782",
+            "source_tier": "B",
+            "source_title": "British soldiers take down drone swarm in groundbreaking use of radio wave weapon - GOV.UK"
+          }
+        ],
+        "input_id": "winning-input-r1",
+        "open_questions": [
+          "输入材料中多份关键来源标注为2025-2026且相对当前时间存在前瞻性，实际是已发布、预发布还是规划稿？这影响对能力形成节奏的判断。",
+          "北约/美军现有低成本反无人机系统在强干扰、断链、GNSS受限条件下，能否维持与更大C2网络的稳定互操作？公开材料不足以确认。",
+          "现实高强度空袭中，来袭无人机有多大比例依赖RF/GNSS链路、又有多大比例具备预编程或视觉/惯导自主能力？这将直接改变被动RF传感的边际价值。",
+          "除俄乌战场示范外，哪些主要国家正在把‘无人机集群+电子战压制+低成本饱和’固化为常态化作战概念并形成规模化采购，目前公开证据仍不均衡。",
+          "公开资料仍难量化真实战场中RF链路无人机、预编程无人机、光纤/抗干扰无人机的比例，影响被动RF探测与电子压制价值评估。",
+          "NATO/美军演训中互操作测试结果多反映方向和规模，公开证据不足以确认其在强干扰、断链、GNSS受限条件下的稳定性能。",
+          "声学、EO/IR、被动RF在城市、海岸、山区、高寒等复杂环境中的误警率和维护负担缺少统一公开基准。",
+          "高自主协同蜂群的实战成熟度仍不确定；若其提前成熟，现有以链路侦测和人工确认为核心的预警流程会被显著压缩。",
+          "FS-LIDS、M-LIDS与I-CsUAS在强压制、GNSS拒止和骨干网断链条件下的探测概率、虚警率、航迹融合时延和本地自治时长，公开资料未见可横向比较的量化数据。",
+          "FAAD C2、Link-16、Joint Data Network和网状IP电台之间的实际数据标准、跨域安全机制及带宽占用未公开，不能将“可接入”直接等同于“全条件互操作”。",
+          "低成本来袭无人机中有多少仍暴露可探测/可压制RF链路、多少已转向预编程航路、惯导或视觉自主，决定被动RF和电子压制在未来体系中的边际效益。",
+          "FY2026预算、Replicator 2及部分2025文件反映的是申请、规划或征询，仍需以后续拨款、合同、部队列装和演训结果验证其实际形成节奏。",
+          "强压制、GNSS拒止和骨干网断链条件下，现役分布式反无人体系的探测概率、虚警率、融合时延和本地自治时长公开量化数据仍不足。",
+          "真实战场中来袭目标依赖RF链路、预编程航线、惯导/视觉自主或其他抗干扰导航的比例不清，直接影响被动RF和电子压制的边际价值评估。",
+          "城市、港口、机场、海岸和山区等复杂背景下，声学、EO/IR、被动RF与小目标雷达的最优融合权重和维护负担缺少统一公开基准。",
+          "若前瞻性项目中的分布式AI反蜂群与多节点C2比预期更早成熟，现有以人工复核和区域告警为核心的流程是否需要重构，公开证据尚不足。"
+        ],
+        "packet_ids": [
+          "packet-international_situation",
+          "packet-combat_scenario",
+          "packet-weapon_equipment",
+          "packet-operational_employment"
+        ],
+        "problem_frame": {
+          "objective": "回答需要发展具备什么功能的产品",
+          "route_frame": "以国际形势、潜在威胁和对抗场景为起点，从新制胜机制、新作战打法和新体系组合推导新质装备功能。",
+          "topic": "面向强电磁干扰与低空蜂群威胁的新型分布式探测预警制胜机理与装备能力需求"
+        },
+        "research_route": "new_winning_mechanism",
+        "round_budget": {
+          "current_round": 1,
+          "maximum_rounds": 5,
+          "same_target_recall_limit": 3
+        },
+        "schema_version": "1.0"
+      }
+    ],
+    "reasoning_nodes": [
+      {
+        "assumptions": [
+          "仅基于已接纳公开证据",
+          "路线：new_winning_mechanism",
+          "公开资料结论需由分析师确认"
+        ],
+        "claim_ids": [
+          "claim-074db2f0bd63",
+          "claim-2074854b25ee",
+          "claim-2835a7470d9f",
+          "claim-28c4f44a44b3",
+          "claim-299f8cebeea8",
+          "claim-2c27e43aa108",
+          "claim-2d9f702d9487",
+          "claim-36fcbf51208c",
+          "claim-42a1c33839b5",
+          "claim-436011bc6367",
+          "claim-50954b96ccdd",
+          "claim-5b147a7fed7f",
+          "claim-7145a19b7db8",
+          "claim-798f71fd16d5",
+          "claim-87baa8da4883",
+          "claim-8dc69af25142",
+          "claim-9014aa80da5c",
+          "claim-acb61ce75035",
+          "claim-b3723c3f8906",
+          "claim-b3bb9fad0f9e",
+          "claim-be9542e6ac7a",
+          "claim-c01a0d999c3b",
+          "claim-c0f5583d0b5b",
+          "claim-cf8976f5b21c"
+        ],
+        "confidence": 0.715,
+        "created_at": "2026-07-14T05:56:26.746568+00:00",
+        "evidence_ids": [
+          "ev-international_situation-web-906fb4b16de0",
+          "ev-international_situation-web-49f2eb1a8e44",
+          "ev-international_situation-web-2d1ba4398caa",
+          "ev-international_situation-web-ce3f3e70cc3f",
+          "ev-international_situation-web-c36d9569d02b",
+          "ev-combat_scenario-web-d40decce698d",
+          "ev-weapon_equipment-web-7b8e214d9931",
+          "ev-weapon_equipment-web-3b7612d514fb",
+          "ev-operational_employment-web-15c4d1e616fe",
+          "ev-operational_employment-web-38b628ca4782"
+        ],
+        "input_refs": [
+          "winning-input-r1",
+          "winning-resources-r1"
+        ],
+        "object_id": "reason-347f75524783",
+        "route": "new_winning_mechanism",
+        "schema_version": "1.0",
+        "step": 1,
+        "summary": "威胁输入层：近期基线为低成本、多批次、多轴、混合式低空袭扰叠加电子战压制；成熟高自治蜂群仅作为高影响不确定分支，不能替代现实需求基线。；探测对抗层：低空地平线、地物遮蔽、城市港口机场杂波及昼夜天气变化压缩发现距离；RF静默、预编程或惯性/视觉导航目标会降低被动RF的边际价值。；电磁与网络层：频谱干扰、欺骗、链路丢包和GNSS受限可能同时破坏探测、授时、共享与上级C2，集中式网络存在共同失效面。；融合决策层：多源线索短时、不一致且置信度波动，鸟群、民用无人机和环境噪声推高误警；若依赖中心确认，将进一步压缩可信告警窗口。；部署生存层：少量高价值节点易受压制或损耗；分布式部署虽提高韧性，但会增加时间同步、供电、标定、维护和训练复杂度。；持续作战层：饱和目标流、人工复核负荷、效应器库存、软件与数据库更新、备件和补网速度共同决定体系效能，单次发现距离或单发拦截率不足以代表制胜能力。",
+        "title": "防御解构"
+      },
+      {
+        "assumptions": [
+          "仅基于已接纳公开证据",
+          "路线：new_winning_mechanism",
+          "公开资料结论需由分析师确认"
+        ],
+        "claim_ids": [
+          "claim-074db2f0bd63",
+          "claim-2074854b25ee",
+          "claim-2835a7470d9f",
+          "claim-28c4f44a44b3",
+          "claim-299f8cebeea8",
+          "claim-2c27e43aa108",
+          "claim-2d9f702d9487",
+          "claim-36fcbf51208c",
+          "claim-42a1c33839b5",
+          "claim-436011bc6367",
+          "claim-50954b96ccdd",
+          "claim-5b147a7fed7f",
+          "claim-7145a19b7db8",
+          "claim-798f71fd16d5",
+          "claim-87baa8da4883",
+          "claim-8dc69af25142",
+          "claim-9014aa80da5c",
+          "claim-acb61ce75035",
+          "claim-b3723c3f8906",
+          "claim-b3bb9fad0f9e",
+          "claim-be9542e6ac7a",
+          "claim-c01a0d999c3b",
+          "claim-c0f5583d0b5b",
+          "claim-cf8976f5b21c"
+        ],
+        "confidence": 0.715,
+        "created_at": "2026-07-14T05:56:26.746575+00:00",
+        "evidence_ids": [
+          "ev-international_situation-web-906fb4b16de0",
+          "ev-international_situation-web-49f2eb1a8e44",
+          "ev-international_situation-web-2d1ba4398caa",
+          "ev-international_situation-web-ce3f3e70cc3f",
+          "ev-international_situation-web-c36d9569d02b",
+          "ev-combat_scenario-web-d40decce698d",
+          "ev-weapon_equipment-web-7b8e214d9931",
+          "ev-weapon_equipment-web-3b7612d514fb",
+          "ev-operational_employment-web-15c4d1e616fe",
+          "ev-operational_employment-web-38b628ca4782"
+        ],
+        "input_refs": [
+          "reason-347f75524783"
+        ],
+        "object_id": "reason-a1f45acdcddf",
+        "route": "new_winning_mechanism",
+        "schema_version": "1.0",
+        "step": 2,
+        "summary": "以COA-2弹性分布式预警网络为主路径：前沿和高点部署雷达、被动RF/测向、EO/IR及视情声学节点，由边缘单元先形成局部航迹和可信告警，再断续接入上级C2。；以多模交叉确认破解单一模态失效：RF线索有效时用于快速提示和测向；RF静默或受压制时，提高微小目标雷达、EO/IR、声学及轨迹异常识别权重。；以本地自治破解断链：预置分级告警、缓存航迹、局部授权和延迟同步规则，使上级C2、骨干链路或GNSS中断时仍保持最低可用预警与处置提示。；以开放接口破解装备迭代和资源错配：统一传感器、航迹、置信度及射手接口，将高成本效应器保留给高可信高威胁目标，并兼容低成本或群体处置手段。；以机动补网和战损重构破解持续消耗：采用可替换节点、备用授时、自动重标定、远程健康管理和模块化保障，在节点损耗后优先恢复关键方向覆盖。；以环境基线和闭环更新破解误警饱和：危机前建立频谱、声学、图像和低空航迹基线，持续复盘误警漏警并动态调整融合权重，而非固定阈值运行。",
+        "title": "制胜路径"
+      },
+      {
+        "assumptions": [
+          "仅基于已接纳公开证据",
+          "路线：new_winning_mechanism",
+          "公开资料结论需由分析师确认"
+        ],
+        "claim_ids": [
+          "claim-074db2f0bd63",
+          "claim-2074854b25ee",
+          "claim-2835a7470d9f",
+          "claim-28c4f44a44b3",
+          "claim-299f8cebeea8",
+          "claim-2c27e43aa108",
+          "claim-2d9f702d9487",
+          "claim-36fcbf51208c",
+          "claim-42a1c33839b5",
+          "claim-436011bc6367",
+          "claim-50954b96ccdd",
+          "claim-5b147a7fed7f",
+          "claim-7145a19b7db8",
+          "claim-798f71fd16d5",
+          "claim-87baa8da4883",
+          "claim-8dc69af25142",
+          "claim-9014aa80da5c",
+          "claim-acb61ce75035",
+          "claim-b3723c3f8906",
+          "claim-b3bb9fad0f9e",
+          "claim-be9542e6ac7a",
+          "claim-c01a0d999c3b",
+          "claim-c0f5583d0b5b",
+          "claim-cf8976f5b21c"
+        ],
+        "confidence": 0.715,
+        "created_at": "2026-07-14T05:56:26.746580+00:00",
+        "evidence_ids": [
+          "ev-international_situation-web-906fb4b16de0",
+          "ev-international_situation-web-49f2eb1a8e44",
+          "ev-international_situation-web-2d1ba4398caa",
+          "ev-international_situation-web-ce3f3e70cc3f",
+          "ev-international_situation-web-c36d9569d02b",
+          "ev-combat_scenario-web-d40decce698d",
+          "ev-weapon_equipment-web-7b8e214d9931",
+          "ev-weapon_equipment-web-3b7612d514fb",
+          "ev-operational_employment-web-15c4d1e616fe",
+          "ev-operational_employment-web-38b628ca4782"
+        ],
+        "input_refs": [
+          "reason-a1f45acdcddf"
+        ],
+        "object_id": "reason-593788adb924",
+        "route": "new_winning_mechanism",
+        "schema_version": "1.0",
+        "step": 3,
+        "summary": "环境基线建立与频谱态势感知→识别异常扰动和接触征候→前推或唤醒低成本节点→扩大关键方向有效预警覆盖。；异构节点分散采集→跨模态相互提示与补盲→降低单一传感器被干扰、遮蔽或欺骗造成的漏警风险。；边缘时间对齐、目标关联和置信度融合→形成可信航迹或区域告警→压缩从首次接触到本地告警的决策时间。；链路或GNSS降级→切换备用授时、缓存和本地自治规则→维持局部态势连续性→避免中心失效导致全网瘫痪。；可信告警断续回传上级C2→与更大空情和射手网络关联→按威胁等级实施软硬杀伤分层和效应器经济性分配。；节点损耗与误警累积→健康评估、机动补网、重标定和模型更新→恢复最低覆盖阈值→支撑持续预警与下一轮对抗。",
+        "title": "效果链"
+      },
+      {
+        "assumptions": [
+          "仅基于已接纳公开证据",
+          "路线：new_winning_mechanism",
+          "公开资料结论需由分析师确认"
+        ],
+        "claim_ids": [
+          "claim-074db2f0bd63",
+          "claim-2074854b25ee",
+          "claim-2835a7470d9f",
+          "claim-28c4f44a44b3",
+          "claim-299f8cebeea8",
+          "claim-2c27e43aa108",
+          "claim-2d9f702d9487",
+          "claim-36fcbf51208c",
+          "claim-42a1c33839b5",
+          "claim-436011bc6367",
+          "claim-50954b96ccdd",
+          "claim-5b147a7fed7f",
+          "claim-7145a19b7db8",
+          "claim-798f71fd16d5",
+          "claim-87baa8da4883",
+          "claim-8dc69af25142",
+          "claim-9014aa80da5c",
+          "claim-acb61ce75035",
+          "claim-b3723c3f8906",
+          "claim-b3bb9fad0f9e",
+          "claim-be9542e6ac7a",
+          "claim-c01a0d999c3b",
+          "claim-c0f5583d0b5b",
+          "claim-cf8976f5b21c"
+        ],
+        "confidence": 0.715,
+        "created_at": "2026-07-14T05:56:26.746583+00:00",
+        "evidence_ids": [
+          "ev-international_situation-web-906fb4b16de0",
+          "ev-international_situation-web-49f2eb1a8e44",
+          "ev-international_situation-web-2d1ba4398caa",
+          "ev-international_situation-web-ce3f3e70cc3f",
+          "ev-international_situation-web-c36d9569d02b",
+          "ev-combat_scenario-web-d40decce698d",
+          "ev-weapon_equipment-web-7b8e214d9931",
+          "ev-weapon_equipment-web-3b7612d514fb",
+          "ev-operational_employment-web-15c4d1e616fe",
+          "ev-operational_employment-web-38b628ca4782"
+        ],
+        "input_refs": [
+          "reason-593788adb924"
+        ],
+        "object_id": "reason-f71d737adcd1",
+        "route": "new_winning_mechanism",
+        "schema_version": "1.0",
+        "step": 4,
+        "summary": "早期发现能力：分布式微小目标雷达、被动RF/测向、EO/IR和视情声学节点；需求门槛应是单一模态降级后仍可通过其他模态形成有效提示或航迹。；可信确认能力：边缘融合、时间对齐、目标关联、信号指纹及声纹/图像分类、可解释置信度输出；重点考核复杂背景下误警、漏警和人工负荷。；拒止生存能力：抗干扰和低可探测通信、断续联网、数据缓存、延迟同步、备用授时及无GNSS运行；重点考核断链后的本地自治时长和态势连续性。；体系协同能力：开放式传感器、航迹、C2和射手接口，兼容现役防空反无人网络及增量效应器；不得把可物理接入直接等同于全条件互操作。；战损重构能力：低成本可替换节点、机动补盲、自动校准、远程健康管理和快速重组工具；重点考核节点损耗后的补网与重标定时间。；持续保障能力：冗余供电、备件与模块化维修、软件和频谱数据库离线更新、训练及人机负荷管理；按持续饱和目标流验收，而非仅按单次任务验收。",
+        "title": "能力映射"
+      },
+      {
+        "assumptions": [
+          "仅基于已接纳公开证据",
+          "路线：new_winning_mechanism",
+          "公开资料结论需由分析师确认"
+        ],
+        "claim_ids": [
+          "claim-074db2f0bd63",
+          "claim-2074854b25ee",
+          "claim-2835a7470d9f",
+          "claim-28c4f44a44b3",
+          "claim-299f8cebeea8",
+          "claim-2c27e43aa108",
+          "claim-2d9f702d9487",
+          "claim-36fcbf51208c",
+          "claim-42a1c33839b5",
+          "claim-436011bc6367",
+          "claim-50954b96ccdd",
+          "claim-5b147a7fed7f",
+          "claim-7145a19b7db8",
+          "claim-798f71fd16d5",
+          "claim-87baa8da4883",
+          "claim-8dc69af25142",
+          "claim-9014aa80da5c",
+          "claim-acb61ce75035",
+          "claim-b3723c3f8906",
+          "claim-b3bb9fad0f9e",
+          "claim-be9542e6ac7a",
+          "claim-c01a0d999c3b",
+          "claim-c0f5583d0b5b",
+          "claim-cf8976f5b21c"
+        ],
+        "confidence": 0.715,
+        "created_at": "2026-07-14T05:56:26.746594+00:00",
+        "evidence_ids": [
+          "ev-international_situation-web-906fb4b16de0",
+          "ev-international_situation-web-49f2eb1a8e44",
+          "ev-international_situation-web-2d1ba4398caa",
+          "ev-international_situation-web-ce3f3e70cc3f",
+          "ev-international_situation-web-c36d9569d02b",
+          "ev-combat_scenario-web-d40decce698d",
+          "ev-weapon_equipment-web-7b8e214d9931",
+          "ev-weapon_equipment-web-3b7612d514fb",
+          "ev-operational_employment-web-15c4d1e616fe",
+          "ev-operational_employment-web-38b628ca4782"
+        ],
+        "input_refs": [
+          "reason-f71d737adcd1"
+        ],
+        "object_id": "reason-2055d251b650",
+        "route": "new_winning_mechanism",
+        "schema_version": "1.0",
+        "step": 5,
+        "summary": "{'capability': '常态或有限干扰条件下的多传感器—C2—软硬杀伤闭环', 'grade': '满足', 'basis': 'packet-weapon_equipment将FS-LIDS/M-LIDS列为已进入陆军防空反导体系的现役参照，具备雷达、EO/IR、测向或被动RF及软硬杀伤集成；但该结论不外推至强干扰和断链条件。'}；{'capability': '面向复杂背景的多模态分布式探测与交叉确认', 'grade': '部分差距', 'basis': '现役和试验系统已采用雷达、光电、被动RF及声学等组合，北约需求也明确指向小目标探测、融合和被动雷达；但节点密度、复杂地域误警率及全天候性能缺少统一验证。依据ev-international_situation-web-2d1ba4398caa、ev-weapon_equipment-web-3b7612d514fb。'}；{'capability': '断链条件下的边缘融合、本地自治告警与航迹连续性', 'grade': '关键差距', 'basis': '需求侧明确要求电磁拒止或降级运行，Flytrap等仍属战术试验，分布式AI主要处于研发或原型阶段；公开证据不能证明现役体系已形成稳定自治能力。依据ev-international_situation-web-906fb4b16de0、ev-weapon_equipment-web-7b8e214d9931。'}；{'capability': '抗干扰通信、备用授时、缓存和跨系统断续同步', 'grade': '关键差距', 'basis': 'FAAD C2、Link-16、网状IP电台等体现接口基础，北约政策强调韧性内建；但GNSS拒止、骨干网断链和强压制下的端到端互操作性能未获公开量化证实。依据ev-operational_employment-web-15c4d1e616fe。'}；{'capability': '节点战损后的机动补网、自动重标定与持续保障', 'grade': '关键差距', 'basis': 'packet普遍将补网、供电、备件、数据库更新和合同商依赖列为瓶颈；能力即服务模式反映持续维护需求，但公开材料未给出战时脱离承包商后的恢复速度和可用度。依据ev-weapon_equipment-web-3b7612d514fb。'}；{'capability': '强干扰、GNSS拒止和节点损耗条件下的统一量化试验评估体系', 'grade': '空白', 'basis': '各packet均指出探测概率、虚警率、融合时延、本地自治时长、补网时间和目标流处理能力缺少公开可横向比较数据；因此只能判定公开可验证基线为空白，不能据此断言实际能力绝对不存在。'}",
+        "title": "差距量化"
+      },
+      {
+        "assumptions": [
+          "仅基于已接纳公开证据",
+          "路线：new_winning_mechanism",
+          "公开资料结论需由分析师确认"
+        ],
+        "claim_ids": [
+          "claim-074db2f0bd63",
+          "claim-2074854b25ee",
+          "claim-2835a7470d9f",
+          "claim-28c4f44a44b3",
+          "claim-299f8cebeea8",
+          "claim-2c27e43aa108",
+          "claim-2d9f702d9487",
+          "claim-36fcbf51208c",
+          "claim-42a1c33839b5",
+          "claim-436011bc6367",
+          "claim-50954b96ccdd",
+          "claim-5b147a7fed7f",
+          "claim-7145a19b7db8",
+          "claim-798f71fd16d5",
+          "claim-87baa8da4883",
+          "claim-8dc69af25142",
+          "claim-9014aa80da5c",
+          "claim-acb61ce75035",
+          "claim-b3723c3f8906",
+          "claim-b3bb9fad0f9e",
+          "claim-be9542e6ac7a",
+          "claim-c01a0d999c3b",
+          "claim-c0f5583d0b5b",
+          "claim-cf8976f5b21c"
+        ],
+        "confidence": 0.715,
+        "created_at": "2026-07-14T05:56:26.746602+00:00",
+        "evidence_ids": [
+          "ev-international_situation-web-906fb4b16de0",
+          "ev-international_situation-web-49f2eb1a8e44",
+          "ev-international_situation-web-2d1ba4398caa",
+          "ev-international_situation-web-ce3f3e70cc3f",
+          "ev-international_situation-web-c36d9569d02b",
+          "ev-combat_scenario-web-d40decce698d",
+          "ev-weapon_equipment-web-7b8e214d9931",
+          "ev-weapon_equipment-web-3b7612d514fb",
+          "ev-operational_employment-web-15c4d1e616fe",
+          "ev-operational_employment-web-38b628ca4782"
+        ],
+        "input_refs": [
+          "reason-2055d251b650"
+        ],
+        "object_id": "reason-9851e25b0c93",
+        "route": "new_winning_mechanism",
+        "schema_version": "1.0",
+        "step": 6,
+        "summary": "{'name': '多模分布式低空感知节点族', 'type': 'upgrade', 'function': '模块化组合微小目标雷达、被动RF/测向、EO/IR及视情声学，支持前沿、高点和机动补盲部署，并在单模态降级时维持交叉提示。', 'feasibility': 5}；{'name': '边缘融合与本地自治预警单元', 'type': 'upgrade', 'function': '在节点侧完成时间对齐、目标关联、置信度融合、区域告警、航迹缓存和断链规则执行，降低对中心C2持续在线的依赖。', 'feasibility': 4}；{'name': '拒止环境韧性通信授时组件', 'type': 'upgrade', 'function': '提供抗干扰或低可探测链路、备用授时、无GNSS运行、延迟同步和最小数据量回传，支撑降级态势共享。', 'feasibility': 4}；{'name': '开放式预警C2与射手接口中间件', 'type': 'upgrade', 'function': '统一传感器、航迹、置信度和效应器接口，支持滚动接入现役系统、低成本效应器及群体压制手段，并隔离单点接口故障。', 'feasibility': 4}；{'name': '机动补网与战损快速重构套件', 'type': 'new_capability', 'function': '集成可替换节点、便携供电、快速测绘布站、自动校准、健康诊断和离线模型更新，优先恢复关键方向最低可用覆盖。', 'feasibility': 4}；{'name': '无中心协同AI反蜂群增量', 'type': 'new_capability', 'function': '探索节点间分布式任务分配、协同跟踪和动态融合权重调整；仅作为中期增量，不作为近期体系唯一决策或探测依赖。', 'feasibility': 2}",
+        "title": "能力画像生成"
+      }
+    ],
+    "resource_projections": [
+      {
+        "case_resources": [],
+        "created_at": "2026-07-14T05:56:26.745590+00:00",
+        "evidence_ids": [
+          "ev-international_situation-web-906fb4b16de0",
+          "ev-international_situation-web-49f2eb1a8e44",
+          "ev-international_situation-web-2d1ba4398caa",
+          "ev-international_situation-web-ce3f3e70cc3f",
+          "ev-international_situation-web-c36d9569d02b",
+          "ev-combat_scenario-web-d40decce698d",
+          "ev-weapon_equipment-web-7b8e214d9931",
+          "ev-weapon_equipment-web-3b7612d514fb",
+          "ev-operational_employment-web-15c4d1e616fe",
+          "ev-operational_employment-web-38b628ca4782"
+        ],
+        "frontier_resources": [
+          {
+            "evidence_id": "ev-international_situation-web-906fb4b16de0",
+            "use": "新概念、新技术、新手段与成熟度研判"
+          },
+          {
+            "evidence_id": "ev-international_situation-web-49f2eb1a8e44",
+            "use": "新概念、新技术、新手段与成熟度研判"
+          },
+          {
+            "evidence_id": "ev-international_situation-web-c36d9569d02b",
+            "use": "新概念、新技术、新手段与成熟度研判"
+          },
+          {
+            "evidence_id": "ev-combat_scenario-web-d40decce698d",
+            "use": "新概念、新技术、新手段与成熟度研判"
+          },
+          {
+            "evidence_id": "ev-weapon_equipment-web-3b7612d514fb",
+            "use": "新概念、新技术、新手段与成熟度研判"
+          },
+          {
+            "evidence_id": "ev-operational_employment-web-38b628ca4782",
+            "use": "新概念、新技术、新手段与成熟度研判"
+          }
+        ],
+        "input_id": "winning-input-r1",
+        "projection_id": "winning-resources-r1",
+        "question_chain": [
+          {
+            "order": 1,
+            "question": "敌方重心与关键体系依赖是什么？",
+            "status": "open"
+          },
+          {
+            "order": 2,
+            "question": "可形成何种制胜逻辑与优选路径？",
+            "status": "open"
+          },
+          {
+            "order": 3,
+            "question": "效果链要求哪些功能与性能能力？",
+            "status": "open"
+          },
+          {
+            "order": 4,
+            "question": "能否通过新机制、新打法或新体系组合创造新能力增长点？",
+            "status": "open"
+          },
+          {
+            "order": 5,
+            "question": "输入材料中多份关键来源标注为2025-2026且相对当前时间存在前瞻性，实际是已发布、预发布还是规划稿？这影响对能力形成节奏的判断。",
+            "status": "open"
+          },
+          {
+            "order": 6,
+            "question": "北约/美军现有低成本反无人机系统在强干扰、断链、GNSS受限条件下，能否维持与更大C2网络的稳定互操作？公开材料不足以确认。",
+            "status": "open"
+          },
+          {
+            "order": 7,
+            "question": "现实高强度空袭中，来袭无人机有多大比例依赖RF/GNSS链路、又有多大比例具备预编程或视觉/惯导自主能力？这将直接改变被动RF传感的边际价值。",
+            "status": "open"
+          },
+          {
+            "order": 8,
+            "question": "除俄乌战场示范外，哪些主要国家正在把‘无人机集群+电子战压制+低成本饱和’固化为常态化作战概念并形成规模化采购，目前公开证据仍不均衡。",
+            "status": "open"
+          },
+          {
+            "order": 9,
+            "question": "公开资料仍难量化真实战场中RF链路无人机、预编程无人机、光纤/抗干扰无人机的比例，影响被动RF探测与电子压制价值评估。",
+            "status": "open"
+          },
+          {
+            "order": 10,
+            "question": "NATO/美军演训中互操作测试结果多反映方向和规模，公开证据不足以确认其在强干扰、断链、GNSS受限条件下的稳定性能。",
+            "status": "open"
+          },
+          {
+            "order": 11,
+            "question": "声学、EO/IR、被动RF在城市、海岸、山区、高寒等复杂环境中的误警率和维护负担缺少统一公开基准。",
+            "status": "open"
+          },
+          {
+            "order": 12,
+            "question": "高自主协同蜂群的实战成熟度仍不确定；若其提前成熟，现有以链路侦测和人工确认为核心的预警流程会被显著压缩。",
+            "status": "open"
+          },
+          {
+            "order": 13,
+            "question": "FS-LIDS、M-LIDS与I-CsUAS在强压制、GNSS拒止和骨干网断链条件下的探测概率、虚警率、航迹融合时延和本地自治时长，公开资料未见可横向比较的量化数据。",
+            "status": "open"
+          },
+          {
+            "order": 14,
+            "question": "FAAD C2、Link-16、Joint Data Network和网状IP电台之间的实际数据标准、跨域安全机制及带宽占用未公开，不能将“可接入”直接等同于“全条件互操作”。",
+            "status": "open"
+          },
+          {
+            "order": 15,
+            "question": "低成本来袭无人机中有多少仍暴露可探测/可压制RF链路、多少已转向预编程航路、惯导或视觉自主，决定被动RF和电子压制在未来体系中的边际效益。",
+            "status": "open"
+          },
+          {
+            "order": 16,
+            "question": "FY2026预算、Replicator 2及部分2025文件反映的是申请、规划或征询，仍需以后续拨款、合同、部队列装和演训结果验证其实际形成节奏。",
+            "status": "open"
+          },
+          {
+            "order": 17,
+            "question": "强压制、GNSS拒止和骨干网断链条件下，现役分布式反无人体系的探测概率、虚警率、融合时延和本地自治时长公开量化数据仍不足。",
+            "status": "open"
+          },
+          {
+            "order": 18,
+            "question": "真实战场中来袭目标依赖RF链路、预编程航线、惯导/视觉自主或其他抗干扰导航的比例不清，直接影响被动RF和电子压制的边际价值评估。",
+            "status": "open"
+          },
+          {
+            "order": 19,
+            "question": "城市、港口、机场、海岸和山区等复杂背景下，声学、EO/IR、被动RF与小目标雷达的最优融合权重和维护负担缺少统一公开基准。",
+            "status": "open"
+          },
+          {
+            "order": 20,
+            "question": "若前瞻性项目中的分布式AI反蜂群与多节点C2比预期更早成熟，现有以人工复核和区域告警为核心的流程是否需要重构，公开证据尚不足。",
+            "status": "open"
+          }
+        ],
+        "schema_version": "1.0",
+        "theory_tools": [
+          {
+            "dimensions": [
+              "感知",
+              "决策",
+              "拦截",
+              "冗余"
+            ],
+            "name": "防御分层解析"
+          },
+          {
+            "dimensions": [
+              "重心",
+              "依赖",
+              "时间窗口",
+              "风险"
+            ],
+            "name": "重心与击败机制识别"
+          },
+          {
+            "dimensions": [
+              "行动",
+              "直接效果",
+              "间接效果",
+              "最终效果"
+            ],
+            "name": "效果链因果建模"
+          },
+          {
+            "dimensions": [
+              "效果",
+              "功能",
+              "性能"
+            ],
+            "name": "效果-功能-性能映射"
+          },
+          {
+            "dimensions": [
+              "空白",
+              "关键差距",
+              "部分差距",
+              "满足",
+              "超出"
+            ],
+            "name": "五档差距评估"
+          }
+        ]
+      }
+    ],
+    "stages": [
+      {
+        "confidence": 0.715,
+        "created_at": "2026-07-14T05:56:26.749511+00:00",
+        "evidence_ids": [
+          "ev-combat_scenario-web-d40decce698d",
+          "ev-international_situation-web-2d1ba4398caa",
+          "ev-international_situation-web-49f2eb1a8e44",
+          "ev-international_situation-web-906fb4b16de0",
+          "ev-international_situation-web-c36d9569d02b",
+          "ev-international_situation-web-ce3f3e70cc3f",
+          "ev-operational_employment-web-15c4d1e616fe",
+          "ev-operational_employment-web-38b628ca4782",
+          "ev-weapon_equipment-web-3b7612d514fb",
+          "ev-weapon_equipment-web-7b8e214d9931"
+        ],
+        "gate_passed": true,
+        "gate_reasons": [],
+        "layer": "L1",
+        "outputs": {
+          "assumptions": [
+            "公开资料足以支撑初步画像，不替代专家论证。"
+          ],
+          "core_agent_analysis": {
+            "assumptions": [
+              "任务对象为基地、机场、港口、前沿指挥所或关键基础设施的防御性探测预警，不涉及具体攻击路径和目标坐标。",
+              "近期威胁基线采用大规模混合式低空袭扰叠加电子战压制，高自治协同蜂群作为最危险分支而非已证实常态。",
+              "分布式节点允许部分联网，但必须具备通信或GNSS受限时的有限本地自治能力。",
+              "公开证据不足以推导探测距离、探测概率、虚警率、自治时长和恢复时间等具体门限，相关指标须通过本地试验确定。",
+              "正式证据以B级北约、美英及项目材料为主，存在地域视角和需求或试验信息不能等同成熟列装的边界。",
+              "输入未提供独立显式冲突集，结论按各packet中的边界、反证和成熟度门控作保守归纳。"
+            ],
+            "defense_decomposition": [
+              "威胁输入层：近期基线为低成本、多批次、多轴、混合式低空袭扰叠加电子战压制；成熟高自治蜂群仅作为高影响不确定分支，不能替代现实需求基线。",
+              "探测对抗层：低空地平线、地物遮蔽、城市港口机场杂波及昼夜天气变化压缩发现距离；RF静默、预编程或惯性/视觉导航目标会降低被动RF的边际价值。",
+              "电磁与网络层：频谱干扰、欺骗、链路丢包和GNSS受限可能同时破坏探测、授时、共享与上级C2，集中式网络存在共同失效面。",
+              "融合决策层：多源线索短时、不一致且置信度波动，鸟群、民用无人机和环境噪声推高误警；若依赖中心确认，将进一步压缩可信告警窗口。",
+              "部署生存层：少量高价值节点易受压制或损耗；分布式部署虽提高韧性，但会增加时间同步、供电、标定、维护和训练复杂度。",
+              "持续作战层：饱和目标流、人工复核负荷、效应器库存、软件与数据库更新、备件和补网速度共同决定体系效能，单次发现距离或单发拦截率不足以代表制胜能力。"
+            ],
+            "effect_chain": [
+              "环境基线建立与频谱态势感知→识别异常扰动和接触征候→前推或唤醒低成本节点→扩大关键方向有效预警覆盖。",
+              "异构节点分散采集→跨模态相互提示与补盲→降低单一传感器被干扰、遮蔽或欺骗造成的漏警风险。",
+              "边缘时间对齐、目标关联和置信度融合→形成可信航迹或区域告警→压缩从首次接触到本地告警的决策时间。",
+              "链路或GNSS降级→切换备用授时、缓存和本地自治规则→维持局部态势连续性→避免中心失效导致全网瘫痪。",
+              "可信告警断续回传上级C2→与更大空情和射手网络关联→按威胁等级实施软硬杀伤分层和效应器经济性分配。",
+              "节点损耗与误警累积→健康评估、机动补网、重标定和模型更新→恢复最低覆盖阈值→支撑持续预警与下一轮对抗。"
+            ],
+            "winning_paths": [
+              "以COA-2弹性分布式预警网络为主路径：前沿和高点部署雷达、被动RF/测向、EO/IR及视情声学节点，由边缘单元先形成局部航迹和可信告警，再断续接入上级C2。",
+              "以多模交叉确认破解单一模态失效：RF线索有效时用于快速提示和测向；RF静默或受压制时，提高微小目标雷达、EO/IR、声学及轨迹异常识别权重。",
+              "以本地自治破解断链：预置分级告警、缓存航迹、局部授权和延迟同步规则，使上级C2、骨干链路或GNSS中断时仍保持最低可用预警与处置提示。",
+              "以开放接口破解装备迭代和资源错配：统一传感器、航迹、置信度及射手接口，将高成本效应器保留给高可信高威胁目标，并兼容低成本或群体处置手段。",
+              "以机动补网和战损重构破解持续消耗：采用可替换节点、备用授时、自动重标定、远程健康管理和模块化保障，在节点损耗后优先恢复关键方向覆盖。",
+              "以环境基线和闭环更新破解误警饱和：危机前建立频谱、声学、图像和低空航迹基线，持续复盘误警漏警并动态调整融合权重，而非固定阈值运行。"
+            ]
+          },
+          "effect_chain": "行动 -> 直接效果 -> 间接效果 -> 最终能力收益。",
+          "evidence_grounded_findings": [
+            {
+              "agent_id": "international_situation",
+              "capability_tags": [
+                "situation",
+                "threat",
+                "strategy"
+              ],
+              "confidence": 0.67,
+              "evidence_ids": [
+                "ev-international_situation-web-906fb4b16de0",
+                "ev-international_situation-web-49f2eb1a8e44",
+                "ev-international_situation-web-2d1ba4398caa",
+                "ev-international_situation-web-ce3f3e70cc3f",
+                "ev-international_situation-web-c36d9569d02b"
+              ],
+              "findings": [
+                "外军反低空无人威胁的重心已由“单装发现/单点拦截”转向“分布式感知—跨域融合—联网指挥—低成本规模化处置”。这一变化不是单一装备升级，而是制胜机理从平台中心转向体系中心。",
+                "强电磁对抗已被纳入正式试验条件和能力需求。北约实装试验直接把欺骗与干扰作为场景，需求侧明确要求在电磁拒止/降级条件下维持探测、共享与交战，说明未来预警节点必须具备本地自治、断续联网和降级运行能力。",
+                "近期可验证的装备需求正在收敛到多源分布式探测：雷达、被动RF、EO/IR、声学、测向/三角定位、信号指纹库匹配，以及面向城市/港口/机场等复杂背景的小目标探测与传感器融合。"
+              ]
+            },
+            {
+              "agent_id": "combat_scenario",
+              "capability_tags": [
+                "scenario",
+                "coa",
+                "environment"
+              ],
+              "confidence": 0.72,
+              "evidence_ids": [
+                "ev-combat_scenario-web-d40decce698d"
+              ],
+              "findings": [
+                "场景重心不是“单点发现蜂群”，而是在强电磁压制、低空遮蔽和节点损耗下，保持分布式探测—边缘融合—本地预警—上级C2断续接入的连续性；制胜关键从单传感器性能转向体系韧性、降级运行和多源交叉确认。",
+                "近期最可信威胁是低空、小型、批量、多轴、混合式袭扰叠加电子战压制；公开证据对“大规模低空无人威胁”和“EW快速适应”支撑较强，对完全成熟的高度自主蜂群支撑较弱，应作为高影响不确定分支而非近期基线。",
+                "敌方最可能方案是以低成本无人机、诱饵、局部电磁压制和多批次消耗制造预警饱和；最危险方案是将RF静默/预编程/抗干扰无人平台与电磁、网络、火力威胁同步，压缩防御方从首次探测到可信告警的时间窗口。"
+              ]
+            },
+            {
+              "agent_id": "weapon_equipment",
+              "capability_tags": [
+                "equipment",
+                "capability_gap",
+                "technology_readiness"
+              ],
+              "confidence": 0.74,
+              "evidence_ids": [
+                "ev-weapon_equipment-web-7b8e214d9931",
+                "ev-weapon_equipment-web-3b7612d514fb"
+              ],
+              "findings": [
+                "现役能力的可验证主线是美国陆军LIDS：FS-LIDS面向固定要地、M-LIDS面向机动伴随，均以雷达、EO/IR、测向/被动RF与反无人机电磁战组合接入FAAD C2；其优势不在单部传感器指标，而在可把软杀伤、Coyote等硬杀伤和防空指挥链整合为闭环。",
+                "面向强电磁干扰与低空饱和目标的制胜机理应由“单站发现—集中判决—单一效应器”转为“异构分布式节点—边缘航迹融合—断续联网协同—分层低成本处置”。RF探测和压制仍有价值，但不能是唯一发现或失能手段。",
+                "体系接口正成为装备竞争核心：美军公开路径已出现FAAD C2、Link-16、Joint Data Network、网状IP电台及政府推荐C2网络等接口；开放模块化有利于快速接入新传感器和效应器，但公开材料尚不能证明跨军种、跨盟国和断链条件下的端到端互操作性能。"
+              ]
+            },
+            {
+              "agent_id": "operational_employment",
+              "capability_tags": [
+                "operation",
+                "coordination",
+                "lessons"
+              ],
+              "confidence": 0.73,
+              "evidence_ids": [
+                "ev-operational_employment-web-15c4d1e616fe",
+                "ev-operational_employment-web-38b628ca4782"
+              ],
+              "findings": [
+                "首要作战约束不是单传感器性能，而是在低空遮蔽、频谱压制、GNSS/链路降级和节点损耗下，能否维持可用预警覆盖、可信告警与局部态势连续性。",
+                "公开证据更强地支持“低成本、多批次、混合式低空袭扰+电子战压制”这一近期威胁基线；对“成熟高自治协同蜂群已广泛实战化”的直接证据相对弱，因此需求排序应先抗饱和、再追求高端自治对抗。",
+                "最优力量组织不是集中式大节点，而是雷达、被动RF、EO/IR、声学、测向等小型异构节点前推分布，边缘融合先形成本地可信告警，再断续接入更大C2/防空网络。"
+              ]
+            }
+          ],
+          "key_capabilities": [
+            "感知发现",
+            "快速决策",
+            "精确打击/拦截",
+            "体系协同"
+          ],
+          "reasoning_refs": [
+            "reason-347f75524783",
+            "reason-a1f45acdcddf",
+            "reason-593788adb924"
+          ],
+          "weakness_map": [
+            "围绕敌体系感知、决策、拦截、冗余进行分层解构。",
+            "面向强电磁干扰与低空蜂群威胁的新型分布式探测预警制胜机理与装备能力需求的关键弱点需由场景、装备和运用证据共同支撑。"
+          ],
+          "winning_paths": [
+            "新制胜机制/新体系组合/新作战样式 -> 新装备能力增长点。",
+            "以战例和公开证据校验制胜路径假设。"
+          ]
+        },
+        "recall_requests": [],
+        "schema_version": "1.0",
+        "stage_id": "stage-L1",
+        "title": "制胜逻辑分析"
+      },
+      {
+        "confidence": 0.715,
+        "created_at": "2026-07-14T05:56:26.749869+00:00",
+        "evidence_ids": [
+          "ev-combat_scenario-web-d40decce698d",
+          "ev-international_situation-web-2d1ba4398caa",
+          "ev-international_situation-web-49f2eb1a8e44",
+          "ev-international_situation-web-906fb4b16de0",
+          "ev-international_situation-web-c36d9569d02b",
+          "ev-international_situation-web-ce3f3e70cc3f",
+          "ev-operational_employment-web-15c4d1e616fe",
+          "ev-operational_employment-web-38b628ca4782",
+          "ev-weapon_equipment-web-3b7612d514fb",
+          "ev-weapon_equipment-web-7b8e214d9931"
+        ],
+        "gate_passed": true,
+        "gate_reasons": [],
+        "layer": "L2",
+        "outputs": {
+          "analogy_innovation": "七维分解并进行跨域移植评估。",
+          "concept_scan": [
+            "扫描高超、模块化、低成本、AI自主、诱饵、巡飞弹等前沿样式。",
+            "结合面向强电磁干扰与低空蜂群威胁的新型分布式探测预警制胜机理与装备能力需求判断可迁移的新能力空间。"
+          ],
+          "core_agent_concept_directions": [
+            {
+              "feasibility": 5,
+              "function": "模块化组合微小目标雷达、被动RF/测向、EO/IR及视情声学，支持前沿、高点和机动补盲部署，并在单模态降级时维持交叉提示。",
+              "name": "多模分布式低空感知节点族",
+              "type": "upgrade"
+            },
+            {
+              "feasibility": 4,
+              "function": "在节点侧完成时间对齐、目标关联、置信度融合、区域告警、航迹缓存和断链规则执行，降低对中心C2持续在线的依赖。",
+              "name": "边缘融合与本地自治预警单元",
+              "type": "upgrade"
+            },
+            {
+              "feasibility": 4,
+              "function": "提供抗干扰或低可探测链路、备用授时、无GNSS运行、延迟同步和最小数据量回传，支撑降级态势共享。",
+              "name": "拒止环境韧性通信授时组件",
+              "type": "upgrade"
+            },
+            {
+              "feasibility": 4,
+              "function": "统一传感器、航迹、置信度和效应器接口，支持滚动接入现役系统、低成本效应器及群体压制手段，并隔离单点接口故障。",
+              "name": "开放式预警C2与射手接口中间件",
+              "type": "upgrade"
+            },
+            {
+              "feasibility": 4,
+              "function": "集成可替换节点、便携供电、快速测绘布站、自动校准、健康诊断和离线模型更新，优先恢复关键方向最低可用覆盖。",
+              "name": "机动补网与战损快速重构套件",
+              "type": "new_capability"
+            },
+            {
+              "feasibility": 2,
+              "function": "探索节点间分布式任务分配、协同跟踪和动态融合权重调整；仅作为中期增量，不作为近期体系唯一决策或探测依赖。",
+              "name": "无中心协同AI反蜂群增量",
+              "type": "new_capability"
+            }
+          ],
+          "feasibility_score": 4,
+          "frontier_evidence_count": 6,
+          "frontier_evidence_ids": [
+            "ev-international_situation-web-906fb4b16de0",
+            "ev-international_situation-web-49f2eb1a8e44",
+            "ev-international_situation-web-c36d9569d02b",
+            "ev-combat_scenario-web-d40decce698d",
+            "ev-weapon_equipment-web-3b7612d514fb",
+            "ev-operational_employment-web-38b628ca4782"
+          ],
+          "reasoning_refs": [
+            "reason-f71d737adcd1"
+          ],
+          "route": "new_winning_mechanism",
+          "screened_directions": [
+            "新能力方向：体系化感知-决策-火力闭环。",
+            "改进方向：现有装备在复杂场景下的探测、协同和抗干扰能力提升。"
+          ],
+          "validation_capability": "technology_readiness"
+        },
+        "recall_requests": [],
+        "schema_version": "1.0",
+        "stage_id": "stage-L2",
+        "title": "概念创新评估"
+      },
+      {
+        "confidence": 0.715,
+        "created_at": "2026-07-14T05:56:26.750222+00:00",
+        "evidence_ids": [
+          "ev-combat_scenario-web-d40decce698d",
+          "ev-international_situation-web-2d1ba4398caa",
+          "ev-international_situation-web-49f2eb1a8e44",
+          "ev-international_situation-web-906fb4b16de0",
+          "ev-international_situation-web-c36d9569d02b",
+          "ev-international_situation-web-ce3f3e70cc3f",
+          "ev-operational_employment-web-15c4d1e616fe",
+          "ev-operational_employment-web-38b628ca4782",
+          "ev-weapon_equipment-web-3b7612d514fb",
+          "ev-weapon_equipment-web-7b8e214d9931"
+        ],
+        "gate_passed": true,
+        "gate_reasons": [],
+        "layer": "L3",
+        "outputs": {
+          "category_mapping": "按平台、任务、射程、速度、载荷和保障约束映射。",
+          "core_agent_gap_assessment": [
+            {
+              "basis": "packet-weapon_equipment将FS-LIDS/M-LIDS列为已进入陆军防空反导体系的现役参照，具备雷达、EO/IR、测向或被动RF及软硬杀伤集成；但该结论不外推至强干扰和断链条件。",
+              "capability": "常态或有限干扰条件下的多传感器—C2—软硬杀伤闭环",
+              "grade": "满足"
+            },
+            {
+              "basis": "现役和试验系统已采用雷达、光电、被动RF及声学等组合，北约需求也明确指向小目标探测、融合和被动雷达；但节点密度、复杂地域误警率及全天候性能缺少统一验证。依据ev-international_situation-web-2d1ba4398caa、ev-weapon_equipment-web-3b7612d514fb。",
+              "capability": "面向复杂背景的多模态分布式探测与交叉确认",
+              "grade": "部分差距"
+            },
+            {
+              "basis": "需求侧明确要求电磁拒止或降级运行，Flytrap等仍属战术试验，分布式AI主要处于研发或原型阶段；公开证据不能证明现役体系已形成稳定自治能力。依据ev-international_situation-web-906fb4b16de0、ev-weapon_equipment-web-7b8e214d9931。",
+              "capability": "断链条件下的边缘融合、本地自治告警与航迹连续性",
+              "grade": "关键差距"
+            },
+            {
+              "basis": "FAAD C2、Link-16、网状IP电台等体现接口基础，北约政策强调韧性内建；但GNSS拒止、骨干网断链和强压制下的端到端互操作性能未获公开量化证实。依据ev-operational_employment-web-15c4d1e616fe。",
+              "capability": "抗干扰通信、备用授时、缓存和跨系统断续同步",
+              "grade": "关键差距"
+            },
+            {
+              "basis": "packet普遍将补网、供电、备件、数据库更新和合同商依赖列为瓶颈；能力即服务模式反映持续维护需求，但公开材料未给出战时脱离承包商后的恢复速度和可用度。依据ev-weapon_equipment-web-3b7612d514fb。",
+              "capability": "节点战损后的机动补网、自动重标定与持续保障",
+              "grade": "关键差距"
+            },
+            {
+              "basis": "各packet均指出探测概率、虚警率、融合时延、本地自治时长、补网时间和目标流处理能力缺少公开可横向比较数据；因此只能判定公开可验证基线为空白，不能据此断言实际能力绝对不存在。",
+              "capability": "强干扰、GNSS拒止和节点损耗条件下的统一量化试验评估体系",
+              "grade": "空白"
+            }
+          ],
+          "coverage_limits": [],
+          "dedup_grouping": "合并L1关键能力与L2创新方向，形成能力条目组。",
+          "gap_basis": "[{'model': 'FS-LIDS', 'status': '现役固定式反小型无人机系统', 'sensing_and_effectors': '雷达、EO/IR、测向、反无人机电磁战；可结合Ku波段雷达和Coyote Block 2硬杀伤。', 'interfaces': 'FAAD C2、Link-16；公开配置还包括网状IP电台。', 'parameters_and_confidence': '公开材料未给出可核验的统一探测距离、同时航迹数、反应时间或单套成本；体系构成与接口置信度高，性能数值未知。'}, {'model': 'M-LIDS', 'status': '现役机动伴随型LIDS', 'sensing_and_effectors': '增加测向、多任务雷达和30毫米链炮，体现机动防护、软硬杀伤并用。', 'interfaces': '同属LIDS/陆军防空反导体系；公开材料未充分披露全部数据链与射手接口。', 'parameters_and_confidence': '装备构成和机动定位置信度中高；越野机动性、供电持续时间、抗干扰门限和弹药持续力未知。'}, {'model': 'I-CsUAS', 'status': '海军陆战队固定设施反小型无人机能力', 'sensing_and_effectors': '雷达、光电、被动RF融合，目标面向商规I、II类无人机。', 'interfaces_and_support': '公开重点是固定设施应用和能力即服务保障，而非跨军种火控接口。', 'parameters_and_confidence': '目标类别和传感器组合置信度中高；实际探测性能、服务合同成本、战时脱离承包商后的维持能力未知。'}]；{'electromagnetic_boundary': 'RF侦测/压制对存在可感知或可干扰信号链的目标最有效；面对电磁静默、预编程、惯导或视觉自主平台，其作用可能下降。因此需把雷达、EO/IR、被动RF/测向及视情声学作为冗余节点，而非将任一模态视为充分条件。', 'network_boundary': '开放接口、FAAD C2、Link-16和Joint Data Network改善扩展性，但集中融合节点、数据链、频谱和授时仍可能构成共同失效面；需求应明确边缘本地识别、缓存航迹、授权规则和断续回传能力。', 'saturation_boundary': '蜂群防御受传感器航迹处理、目标识别、效应器库存、装填补给和交战管理共同约束。应优先评估单位时间可稳定处理的目标流，而非仅比较单次发现或单发拦截能力。', 'support_boundary': '能力即服务和合同商保障有利于快速更新，却增加软件许可、专有数据库、现场维护、备件与电源保障依赖；公开资料未形成统一全寿命成本数据，现阶段不宜比较具体单位成本。', 'defensive_requirements': '建议形成四类可验收需求：多模态节点在单一模态降级下维持目标航迹；边缘融合在链路中断时保持有限自治；开放数据与射手接口支持增量接入；按持续饱和来袭条件考核软件更新、供电、备件、训练和低成本效应器补充。'}；{'fielded': 'FS-LIDS/M-LIDS已被陆军条令纳入防空反导营运用框架，技术成熟度最高；其短板是公开性能数据不足，不能仅凭列装认定强电磁条件下的韧性。', 'operational_experiment': 'Flytrap代表多传感器融合走向战术试验，适合验证复杂背景和部队使用流程，但尚非替代正式装备的证据。', 'research_and_prototyping': '分布式AI反蜂群、协同无人平台、微波/激光等由SBIR和征询驱动，成熟度应以原型、实测和保障方案为门槛，不能由概念先进性推断。', 'industrial_readiness': 'FY2026 C-UXS申请31.87亿美元显示投入增加；不过预算申请、产能扩张和可持续战备并非同一指标。'}",
+          "gap_quantification": "按空白、关键差距、部分差距、满足、超出五档评估。",
+          "priority_method": "关键性 x 紧迫性 x 可行性。",
+          "reasoning_refs": [
+            "reason-2055d251b650",
+            "reason-9851e25b0c93"
+          ]
+        },
+        "recall_requests": [],
+        "schema_version": "1.0",
+        "stage_id": "stage-L3",
+        "title": "能力图像生成"
+      }
+    ]
+  },
+  "worker_reports": [
+    {
+      "agent_id": "international_situation",
+      "created_at": "2026-07-14T05:47:50.611939+00:00",
+      "error": "",
+      "handoff_summary": "国际公开信号显示：美军与北约已把低空无人威胁视为体系级问题，重点转向可在强电磁干扰下运行的分布式探测预警网络，并以低成本效应器和深弹药池支撑抗饱和。对装备论证的直接牵引是：优先建设多源分布式探测节点、边缘融合与本地自治、抗干扰通信/授时、开放接口和可快速接入更大C2网络的体系，而将高端新型传感器视为中远期增量项。近期威胁更像大规模混合袭扰而非完全成熟的自主蜂群，故需求优先级应放在‘抗饱和+抗拒止+低成本连续作战’。",
+      "new_evidence_ids": [
+        "ev-international_situation-web-2d1ba4398caa",
+        "ev-international_situation-web-49f2eb1a8e44",
+        "ev-international_situation-web-906fb4b16de0",
+        "ev-international_situation-web-c36d9569d02b",
+        "ev-international_situation-web-ce3f3e70cc3f"
+      ],
+      "packet_id": "packet-international_situation",
+      "schema_version": "1.0",
+      "session_path": "/Users/wangchen/equipment deep research/outputs/real-acceptance-v11/runs/run-ef59c312-8b97-41ea-b5ba-016717b30dd4/agent_sessions/international_situation.jsonl",
+      "status": "completed",
+      "worker_report_id": "worker-report-72f779c0-0a49-4689-bdbb-fcd193983b85"
+    },
+    {
+      "agent_id": "combat_scenario",
+      "created_at": "2026-07-14T05:51:20.779461+00:00",
+      "error": "",
+      "handoff_summary": "面向强电磁干扰与低空蜂群威胁的作战场景应按“低空饱和+电磁降级+节点损耗”的体系对抗设计，而非单装性能对比。装备需求应优先支持多源分布式节点、边缘融合、本地自治、抗干扰通信/授时、开放接口、快速补网和复杂环境低误警；近期基线威胁是大规模混合袭扰，中远期分支是RF静默、抗干扰和更高自主协同无人系统。",
+      "new_evidence_ids": [
+        "ev-combat_scenario-web-d40decce698d"
+      ],
+      "packet_id": "packet-combat_scenario",
+      "schema_version": "1.0",
+      "session_path": "/Users/wangchen/equipment deep research/outputs/real-acceptance-v11/runs/run-ef59c312-8b97-41ea-b5ba-016717b30dd4/agent_sessions/combat_scenario.jsonl",
+      "status": "completed",
+      "worker_report_id": "worker-report-568ea5e2-f9ca-4285-8446-4f1944721bfa"
+    },
+    {
+      "agent_id": "weapon_equipment",
+      "created_at": "2026-07-14T05:51:31.250330+00:00",
+      "error": "",
+      "handoff_summary": "装备侧结论是：国外可验证的近端优势并非某一“抗干扰神奇传感器”，而是将现役雷达、EO/IR、被动RF/测向、电子战、硬杀伤和C2以模块化接口组合，并向分布式边缘自治演进。面向低空蜂群与强电磁干扰，应把装备需求排序为：多模态分布感知与本地融合、断链降级指挥和韧性授时通信、开放C2/射手接口、软硬杀伤分层及低成本可持续保障。对在研分布式AI反蜂群和协同无人平台宜作为中期增量，不应假设其已经替代现役LIDS类体系。",
+      "new_evidence_ids": [
+        "ev-weapon_equipment-web-3b7612d514fb",
+        "ev-weapon_equipment-web-7b8e214d9931"
+      ],
+      "packet_id": "packet-weapon_equipment",
+      "schema_version": "1.0",
+      "session_path": "/Users/wangchen/equipment deep research/outputs/real-acceptance-v11/runs/run-ef59c312-8b97-41ea-b5ba-016717b30dd4/agent_sessions/weapon_equipment.jsonl",
+      "status": "completed",
+      "worker_report_id": "worker-report-35abf3c9-8d33-4ff4-9bd8-805ec525be21"
+    },
+    {
+      "agent_id": "operational_employment",
+      "created_at": "2026-07-14T05:54:43.390898+00:00",
+      "error": "",
+      "handoff_summary": "综合上游局势、场景与装备材料，并用北约/美英公开来源交叉校核后，可形成的作战运用结论是：面向强电磁干扰与低空蜂群化袭扰，制胜机理应从“单站发现—集中判决—点状拦截”转为“异构分布式节点—边缘融合—本地自治—断续联网协同—低成本分层处置”。近期基线威胁更接近大规模混合低空袭扰叠加电子战，而非已被充分证实的成熟高自治蜂群，因此装备需求优先级应放在抗饱和、抗拒止、低误警和持续作战；真正高自治蜂群应作为高影响分支纳入冗余设计，而不宜替代近期基线。",
+      "new_evidence_ids": [
+        "ev-operational_employment-web-15c4d1e616fe",
+        "ev-operational_employment-web-38b628ca4782"
+      ],
+      "packet_id": "packet-operational_employment",
+      "schema_version": "1.0",
+      "session_path": "/Users/wangchen/equipment deep research/outputs/real-acceptance-v11/runs/run-ef59c312-8b97-41ea-b5ba-016717b30dd4/agent_sessions/operational_employment.jsonl",
+      "status": "completed",
+      "worker_report_id": "worker-report-306bc203-33e0-4e09-aacf-25fac7eddde2"
+    }
+  ]
+}

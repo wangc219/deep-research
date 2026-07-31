@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=lineofdeparture.army.mil · Engineering Resilient Fire Support in
+source_url=https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/
+claim=美陆军公开资料将火力杀伤链表述为传感、探测、报告、处理、决策、打击、评估，并强调大规模作战中的电磁频谱争夺、PACE通信、分布式架构、信号纪律和雷达机动使用。
+excerpt=
+retrieval=Hosted web search citation metadata

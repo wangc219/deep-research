@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=Electromagnetic Spectrum Superiority Strategy Released > U.S. Department of War > Release | U.S. Department of War
+source_url=https://www.defense.gov/News/Releases/Release/Article/2397850/electromagnetic-spectrum-superiority-strategy-released/
+claim=DoD电磁频谱优势战略表明电磁频谱是联合行动竞争空间，通信、导航、传感和C2不能假设连续安全可用。
+excerpt=
+retrieval=Hosted web search citation metadata

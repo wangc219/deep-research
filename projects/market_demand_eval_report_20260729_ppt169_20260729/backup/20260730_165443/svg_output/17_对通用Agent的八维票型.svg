@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" data-pptx-page-role="content">
+  <rect id="background" data-pptx-role="background" x="0" y="0" width="1280" height="720" fill="#FFFFFF"/>
+  <g id="header" data-pptx-bounds="64 42 1152 98">
+    <text x="64" y="88" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="42" font-weight="bold" fill="#173B5E">对通用 Codex Agent 的八维票型</text>
+    <text x="64" y="128" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#6B7785">八维全部领先，证据维度差距最小</text>
+    <text x="1216" y="84" text-anchor="end" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#6B7785">17</text>
+  </g>
+  <g id="dimension-chart" data-pptx-bounds="64 174 944 452">
+    <g id="chartArea">
+      <line x1="300" y1="196" x2="900" y2="196" stroke="#94A3B8" stroke-width="2"/>
+      <!-- chart-plot-area: 300,196,900,604 -->
+      <text x="64" y="230" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x4EFB;&#x52A1;&#x4E0E;&#x8DEF;&#x5F84;&#x5B8C;&#x6210;</text>
+      <rect x="300" y="208" width="426.4" height="24" fill="#2F6FAE"/>
+      <rect x="726.4" y="208" width="49" height="24" fill="#B7C7D6"/>
+      <rect x="775.4" y="208" width="124.6" height="24" fill="#C97A32"/>
+      <text x="918" y="228" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">71:1:8</text>
+      <text x="64" y="280" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#C97A32">&#x8BC1;&#x636E;&#x4E0E;&#x4E8B;&#x5B9E;&#x53EF;&#x9760;&#x6027;</text>
+      <rect x="300" y="258" width="262.4" height="24" fill="#2F6FAE"/>
+      <rect x="562.4" y="258" width="157.2" height="24" fill="#B7C7D6"/>
+      <rect x="719.6" y="258" width="180.4" height="24" fill="#C97A32"/>
+      <text x="918" y="278" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#C97A32">38:16:26</text>
+      <text x="64" y="330" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x56E0;&#x679C;&#x4E0E;&#x673A;&#x7406;&#x6DF1;&#x5EA6;</text>
+      <rect x="300" y="308" width="440.3" height="24" fill="#2F6FAE"/>
+      <rect x="740.3" y="308" width="159.7" height="24" fill="#C97A32"/>
+      <text x="918" y="328" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">68:0:12</text>
+      <text x="64" y="380" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x80FD;&#x529B;&#x6620;&#x5C04;&#x4E0E;&#x9700;&#x6C42;&#x8D28;&#x91CF;</text>
+      <rect x="300" y="358" width="472.3" height="24" fill="#2F6FAE"/>
+      <rect x="772.3" y="358" width="127.7" height="24" fill="#C97A32"/>
+      <text x="918" y="378" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">73:0:7</text>
+      <text x="64" y="430" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x4E0D;&#x786E;&#x5B9A;&#x6027;&#x4E0E;&#x9A8C;&#x8BC1;</text>
+      <rect x="300" y="408" width="375.2" height="24" fill="#2F6FAE"/>
+      <rect x="675.2" y="408" width="118.3" height="24" fill="#B7C7D6"/>
+      <rect x="793.5" y="408" width="106.5" height="24" fill="#C97A32"/>
+      <text x="918" y="428" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">66:7:7</text>
+      <text x="64" y="480" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x519B;&#x4E8B;&#x8FD0;&#x7528;&#x4EF7;&#x503C;</text>
+      <rect x="300" y="458" width="432.8" height="24" fill="#2F6FAE"/>
+      <rect x="732.8" y="458" width="49.5" height="24" fill="#B7C7D6"/>
+      <rect x="782.3" y="458" width="117.7" height="24" fill="#C97A32"/>
+      <text x="918" y="478" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">72:1:7</text>
+      <text x="64" y="530" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x524D;&#x77BB;&#x521B;&#x65B0;&#x6027;</text>
+      <rect x="300" y="508" width="460.4" height="24" fill="#2F6FAE"/>
+      <rect x="760.4" y="508" width="73.5" height="24" fill="#B7C7D6"/>
+      <rect x="833.9" y="508" width="66.1" height="24" fill="#C97A32"/>
+      <text x="918" y="528" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">76:2:2</text>
+      <text x="64" y="580" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x4F53;&#x7CFB;&#x4E0E;&#x8DE8;&#x573A;&#x666F;&#x7A33;&#x5065;</text>
+      <rect x="300" y="558" width="395.1" height="24" fill="#2F6FAE"/>
+      <rect x="695.1" y="558" width="80.1" height="24" fill="#B7C7D6"/>
+      <rect x="775.2" y="558" width="124.8" height="24" fill="#C97A32"/>
+      <text x="918" y="578" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">68:3:9</text>
+    </g>
+  </g>
+  <g id="evidence-gap" data-pptx-bounds="974 174 242 408">
+    <rect x="974" y="174" width="242" height="408" fill="#173B5E"/>
+    <text x="998" y="222" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" font-weight="bold" fill="#FFFFFF">总体得分率</text>
+    <text x="998" y="294" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="66" font-weight="bold" fill="#2E8B66">90%</text>
+    <text x="998" y="334" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#FFFFFF">17 胜 · 2 平 · 1 负</text>
+    <line x1="998" y1="370" x2="1192" y2="370" stroke="#6D89A3" stroke-width="2"/>
+    <text x="998" y="414" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" font-weight="bold" fill="#FFFFFF">最小领先维度</text>
+    <text x="998" y="456" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#FFFFFF">证据与事实可靠性</text>
+    <text x="998" y="500" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="30" font-weight="bold" fill="#C97A32">38:16:26</text>
+    <text x="998" y="540" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#C8D5E2">95% CI 78%–100%</text>
+  </g>
+  <g id="legend" data-pptx-bounds="64 640 1152 38">
+    <rect x="64" y="648" width="18" height="18" fill="#2F6FAE"/>
+    <text x="92" y="664" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x5B8C;&#x6574;&#x65B9;&#x6CD5;</text>
+    <rect x="230" y="648" width="18" height="18" fill="#B7C7D6"/>
+    <text x="258" y="664" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">&#x5E73;&#x7968;</text>
+    <rect x="360" y="648" width="18" height="18" fill="#C97A32"/>
+    <text x="388" y="664" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">通用 Codex Agent</text>
+    <text x="620" y="664" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#6B7785">条长采用 √票数压缩；准确票数以右侧数字为准</text>
+  </g>
+</svg>

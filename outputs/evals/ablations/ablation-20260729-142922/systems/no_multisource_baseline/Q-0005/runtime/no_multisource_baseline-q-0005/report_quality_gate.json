@@ -1,0 +1,159 @@
+{
+  "depth": {
+    "dimension": "深度性",
+    "indicators": {
+      "has_causality": false,
+      "has_detailed_analysis": true,
+      "has_evidence_bounded_feasibility": true,
+      "has_evidence_support": true,
+      "has_mechanism": true,
+      "has_quantification": true
+    },
+    "passed": true,
+    "score": 0.8333333333333334,
+    "suggestions": [
+      "增加因果关系分析（如：因此、导致、由于）"
+    ]
+  },
+  "fitness": {
+    "创新性": {
+      "dimension": "创新性",
+      "indicators": {
+        "has_adversary_readaptation": true,
+        "has_disruptive_relationship_diversity": true,
+        "has_failure_boundary": true,
+        "has_new_track_or_cross_generation_result": true,
+        "has_relative_baseline_change": true,
+        "innovation_reaches_equipment_directions": true
+      },
+      "passed": true,
+      "score": 1.0,
+      "suggestions": []
+    },
+    "制胜效能": {
+      "dimension": "制胜效能",
+      "indicators": {
+        "covers_each_equipment_direction": true,
+        "has_chain_contribution_type": true,
+        "has_cross_generation_or_new_track_advantage": true,
+        "has_evidence_boundary_for_effect": true,
+        "has_quantifiable_effect_directions": true,
+        "has_three_winning_tracks": true
+      },
+      "passed": true,
+      "score": 1.0,
+      "suggestions": []
+    },
+    "可实现性（成熟度）": {
+      "dimension": "可实现性（成熟度）",
+      "indicators": {
+        "covers_each_equipment_direction": true,
+        "has_bottleneck_and_priority": true,
+        "has_coupling_single_point_risk": true,
+        "has_evidence_boundary": true,
+        "has_maturity_per_direction": true,
+        "has_specific_core_technologies": true,
+        "has_validation_and_failure_conditions": true
+      },
+      "passed": true,
+      "score": 1.0,
+      "suggestions": []
+    },
+    "装备能力图像": {
+      "dimension": "装备能力图像",
+      "indicators": {
+        "each_row_has_capability_indicator_and_employment": true,
+        "has_5_to_7_rows": true,
+        "has_capability_domain_and_lineage_position": true,
+        "has_exact_equipment_direction_set": true,
+        "indicator_portraits_are_direction_specific": true,
+        "operational_employment_concepts_are_specific": true
+      },
+      "passed": true,
+      "score": 1.0,
+      "suggestions": []
+    },
+    "领域属性符合性": {
+      "dimension": "领域属性符合性",
+      "indicators": {
+        "has_5_to_7_equipment_directions": true,
+        "has_at_least_4_direct_combat_weapons": true,
+        "has_no_support_only_main_direction": true,
+        "has_query_aligned_offensive_portfolio": true,
+        "has_remote_precision_missile_equipment": true,
+        "has_unmanned_combat_equipment": true,
+        "report_stays_in_unmanned_remote_fire_domain": true
+      },
+      "passed": true,
+      "score": 1.0,
+      "suggestions": []
+    }
+  },
+  "foresight": {
+    "dimension": "前瞻性",
+    "indicators": {
+      "has_evolution_path": true,
+      "has_future_prediction": true,
+      "has_maturity_assessment": true,
+      "has_trend_analysis": true,
+      "has_trigger_conditions": true,
+      "has_uncertainty": true
+    },
+    "passed": true,
+    "score": 1.0,
+    "suggestions": []
+  },
+  "format_integrity": {
+    "dimension": "格式完整性",
+    "indicators": {
+      "has_bounded_heading_depth": true,
+      "has_bounded_report_length": false,
+      "has_bounded_tables": true,
+      "has_canonical_item_order": true,
+      "has_canonical_items": true,
+      "has_canonical_order": true,
+      "has_canonical_sections": true,
+      "has_complete_paragraphs": true,
+      "has_exact_capability_direction_set": true,
+      "has_exact_heading_counts": true,
+      "has_no_report_owned_h1": true
+    },
+    "passed": true,
+    "score": 1.0,
+    "suggestions": []
+  },
+  "military_value": {
+    "dimension": "军事价值性",
+    "indicators": {
+      "has_capability_and_operational_concept": true,
+      "has_capability_gap": true,
+      "has_effectiveness": true,
+      "has_priority": true,
+      "has_resilience": true,
+      "has_scenarios": true,
+      "has_three_track_winning_effect": true,
+      "has_unmanned_remote_fire_domain_alignment": true
+    },
+    "passed": true,
+    "score": 1.0,
+    "suggestions": []
+  },
+  "novelty": {
+    "dimension": "新颖性",
+    "indicators": {
+      "has_breakthrough": true,
+      "has_comparison": true,
+      "has_cross_domain": true,
+      "has_cross_generation_or_new_track": true,
+      "has_disruptive_relationship_diversity": true,
+      "has_evidence_grounded_novelty": true,
+      "has_innovation": true
+    },
+    "passed": true,
+    "score": 1.0,
+    "suggestions": []
+  },
+  "overall_score": 1.0,
+  "passed": true,
+  "summary": "总体评分: 100.0%\n质量门控: ✅ 通过\n\n领域属性符合性: 100.0% ✅\n装备能力图像: 100.0% ✅\n制胜效能: 100.0% ✅\n创新性: 100.0% ✅\n可实现性（成熟度）: 100.0% ✅\n\n通用深度诊断: 83.3% ✅\n通用军事价值诊断: 100.0% ✅\n通用新颖性诊断: 100.0% ✅\n通用前瞻性诊断: 100.0% ✅\n格式完整性: 100.0% ✅"
+}

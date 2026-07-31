@@ -1,0 +1,11 @@
+{
+  "artifact_ref": "text:10c1617d9a1badfc",
+  "content_path": "text-10c1617d9a1badfc.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-combat_scenario-1",
+  "kind": "text",
+  "materialization_status": "fixture_materialized",
+  "sha256": "10c1617d9a1badfcb973ca74a952ab72e9bbe074d3b7d2674f7cea20f4d6f35c",
+  "url": "https://fixture.local/combat_scenario"
+}

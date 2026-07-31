@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=GPS Alternatives: DOD is Developing Navigation Systems but is Not Measuring Overall Progress | U.S. GAO
+source_url=https://www.gao.gov/products/gao-22-106010
+claim=GAO确认DOD依赖GPS/PNT，GPS面临干扰、欺骗等威胁，且即使升级后脆弱性仍会存在。
+excerpt=
+retrieval=Hosted web search citation metadata

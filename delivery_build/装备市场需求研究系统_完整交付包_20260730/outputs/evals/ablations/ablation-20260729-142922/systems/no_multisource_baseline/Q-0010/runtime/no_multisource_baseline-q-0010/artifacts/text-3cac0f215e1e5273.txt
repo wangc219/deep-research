@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=lineofdeparture.army.mil · Engineering Resilient Fire Support in
+source_url=https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/
+claim=陆军资料将火力链路表述为Sensor、Detect、Report、Process、Decide、Engage、Assess闭环，并强调大规模作战中电磁频谱持续受争夺，雷达/火力网络需降低辐射暴露、机动和与电子战整合。
+excerpt=
+retrieval=Hosted web search citation metadata

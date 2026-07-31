@@ -1,0 +1,1853 @@
+{
+  "agent_models": {},
+  "agent_recommendations": [],
+  "analyst_confirmed": true,
+  "architecture_conformance": {
+    "architecture_source": [
+      "编排器与动态智能体_总体架构图.pdf",
+      "制胜机理智能体_详细架构图.pdf"
+    ],
+    "audit_status": "approved",
+    "checks": {
+      "core_agent_sessions": true,
+      "coverage_explicit": true,
+      "dynamic_agent_selection_recorded": true,
+      "final_report_present": true,
+      "five_criteria_audit_present": true,
+      "formal_evidence_present": true,
+      "four_knowledge_resources_projected": true,
+      "isolated_agent_sessions": true,
+      "l1_l2_l3_present": true,
+      "nine_field_capability_images": true,
+      "plan_graph_complete": true,
+      "real_or_fake_mode_recorded": true,
+      "six_step_reasoning_complete": true
+    },
+    "limitations": [],
+    "release_ready": true,
+    "runtime_complete": true,
+    "schema_version": "1.0"
+  },
+  "coverage": {
+    "by_agent": {
+      "combat_scenario": [
+        "scenario",
+        "coa",
+        "environment"
+      ],
+      "international_situation": [
+        "situation",
+        "threat",
+        "strategy"
+      ],
+      "operational_employment": [
+        "operation",
+        "coordination",
+        "lessons"
+      ],
+      "weapon_equipment": [
+        "equipment",
+        "capability_gap",
+        "technology_readiness"
+      ]
+    },
+    "coverage_passed": true,
+    "missing_required_tags": [],
+    "optional_tags": [
+      "coordination",
+      "technology_readiness"
+    ],
+    "provided_tags": [
+      "capability_gap",
+      "coa",
+      "coordination",
+      "environment",
+      "equipment",
+      "lessons",
+      "operation",
+      "scenario",
+      "situation",
+      "strategy",
+      "technology_readiness",
+      "threat"
+    ],
+    "required_tags": [
+      "equipment",
+      "operation",
+      "scenario",
+      "situation",
+      "threat"
+    ],
+    "route": "new_winning_mechanism"
+  },
+  "evidence_assessments": [
+    {
+      "conflict_group": null,
+      "decision": "accepted",
+      "evidence_id": "ev-international_situation-1",
+      "normalized_url": "https://fixture.local/international_situation",
+      "reasons": [],
+      "score": 0.807
+    },
+    {
+      "conflict_group": null,
+      "decision": "accepted",
+      "evidence_id": "ev-combat_scenario-1",
+      "normalized_url": "https://fixture.local/combat_scenario",
+      "reasons": [],
+      "score": 0.807
+    },
+    {
+      "conflict_group": null,
+      "decision": "accepted",
+      "evidence_id": "ev-weapon_equipment-1",
+      "normalized_url": "https://fixture.local/weapon_equipment",
+      "reasons": [],
+      "score": 0.807
+    },
+    {
+      "conflict_group": null,
+      "decision": "accepted",
+      "evidence_id": "ev-operational_employment-1",
+      "normalized_url": "https://fixture.local/operational_employment",
+      "reasons": [],
+      "score": 0.807
+    }
+  ],
+  "mode": "fake",
+  "plan_graph": {
+    "baseline_map_count": 4,
+    "dependency_edges": [
+      {
+        "from": "map:international_situation",
+        "to": "reduce:baseline"
+      },
+      {
+        "from": "map:combat_scenario",
+        "to": "reduce:baseline"
+      },
+      {
+        "from": "map:weapon_equipment",
+        "to": "reduce:baseline"
+      },
+      {
+        "from": "map:operational_employment",
+        "to": "reduce:baseline"
+      },
+      {
+        "from": "reduce:baseline",
+        "to": "winning:L1-L3"
+      },
+      {
+        "from": "winning:L1-L3",
+        "to": "audit:five-criteria"
+      },
+      {
+        "from": "audit:five-criteria",
+        "to": "report:final"
+      }
+    ],
+    "execution_waves": [
+      {
+        "agent_ids": [
+          "international_situation"
+        ],
+        "concurrent": false,
+        "wave": 1
+      },
+      {
+        "agent_ids": [
+          "combat_scenario",
+          "weapon_equipment"
+        ],
+        "concurrent": true,
+        "wave": 2
+      },
+      {
+        "agent_ids": [
+          "operational_employment"
+        ],
+        "concurrent": false,
+        "wave": 3
+      }
+    ],
+    "gate_points": [
+      {
+        "after": "reduce:baseline",
+        "gate": "baseline_contract_and_evidence"
+      },
+      {
+        "after": "L1",
+        "gate": "L1_confidence_coverage",
+        "threshold": 0.7
+      },
+      {
+        "after": "L2",
+        "gate": "L2_feasibility_consistency",
+        "threshold": 3
+      },
+      {
+        "after": "L3",
+        "gate": "L3_nine_field_traceability"
+      },
+      {
+        "after": "audit:five-criteria",
+        "gate": "five_criteria_audit"
+      }
+    ],
+    "nodes": [
+      {
+        "capability_tags": [
+          "situation",
+          "threat",
+          "strategy"
+        ],
+        "created_at": "2026-07-14T11:52:24.873676+00:00",
+        "depends_on": [],
+        "node_id": "map:international_situation",
+        "node_type": "baseline_map",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "international_situation"
+      },
+      {
+        "capability_tags": [
+          "scenario",
+          "coa",
+          "environment"
+        ],
+        "created_at": "2026-07-14T11:52:24.873679+00:00",
+        "depends_on": [],
+        "node_id": "map:combat_scenario",
+        "node_type": "baseline_map",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "combat_scenario"
+      },
+      {
+        "capability_tags": [
+          "equipment",
+          "capability_gap",
+          "technology_readiness"
+        ],
+        "created_at": "2026-07-14T11:52:24.873681+00:00",
+        "depends_on": [],
+        "node_id": "map:weapon_equipment",
+        "node_type": "baseline_map",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "weapon_equipment"
+      },
+      {
+        "capability_tags": [
+          "operation",
+          "coordination",
+          "lessons"
+        ],
+        "created_at": "2026-07-14T11:52:24.873682+00:00",
+        "depends_on": [],
+        "node_id": "map:operational_employment",
+        "node_type": "baseline_map",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "operational_employment"
+      },
+      {
+        "capability_tags": [],
+        "created_at": "2026-07-14T11:52:24.873684+00:00",
+        "depends_on": [
+          "map:international_situation",
+          "map:combat_scenario",
+          "map:weapon_equipment",
+          "map:operational_employment"
+        ],
+        "node_id": "reduce:baseline",
+        "node_type": "baseline_reduce",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "winning_mechanism"
+      },
+      {
+        "capability_tags": [
+          "winning_mechanism"
+        ],
+        "created_at": "2026-07-14T11:52:24.873685+00:00",
+        "depends_on": [
+          "reduce:baseline"
+        ],
+        "node_id": "winning:L1-L3",
+        "node_type": "winning_mechanism",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "winning_mechanism"
+      },
+      {
+        "capability_tags": [
+          "audit"
+        ],
+        "created_at": "2026-07-14T11:52:24.873686+00:00",
+        "depends_on": [
+          "winning:L1-L3"
+        ],
+        "node_id": "audit:five-criteria",
+        "node_type": "audit",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "auditor"
+      },
+      {
+        "capability_tags": [
+          "report"
+        ],
+        "created_at": "2026-07-14T11:52:24.873687+00:00",
+        "depends_on": [
+          "audit:five-criteria"
+        ],
+        "node_id": "report:final",
+        "node_type": "report",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "reporter"
+      }
+    ],
+    "plan_id": "plan-7fa15746-94ea-497f-90f3-9d127d533ed5",
+    "recall_return_nodes": [
+      "L1",
+      "L2",
+      "L3"
+    ]
+  },
+  "problem": {
+    "constraints": [],
+    "created_at": "2026-07-14T11:52:24.803986+00:00",
+    "problem_id": "problem-b7b5f76c-5a5c-4ba5-98aa-c6bd08e930af",
+    "research_route": "new_winning_mechanism",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "international_situation",
+      "combat_scenario",
+      "weapon_equipment",
+      "operational_employment"
+    ],
+    "topic": "面向强干扰低空蜂群威胁的分布式预警制胜机理"
+  },
+  "provider": {
+    "base_url_host": "",
+    "model": "fake",
+    "type": "fake"
+  },
+  "recall_requests": [],
+  "resolved_route": "new_winning_mechanism",
+  "selected_agent_ids": [
+    "international_situation",
+    "combat_scenario",
+    "weapon_equipment",
+    "operational_employment"
+  ],
+  "six_step_reasoning": {
+    "capability_mapping": {
+      "assumptions": [
+        "仅基于已接纳公开证据",
+        "路线：new_winning_mechanism",
+        "公开资料结论需由分析师确认"
+      ],
+      "claim_ids": [
+        "claim-03376f990eb2",
+        "claim-34428ef34779",
+        "claim-3910504a32b4",
+        "claim-40a14475e591",
+        "claim-52dabe1775df",
+        "claim-7e2bf9387cdb",
+        "claim-80fe03cde839",
+        "claim-8902ed5b4138",
+        "claim-a331ecc41d3e",
+        "claim-a7848a1b1d82",
+        "claim-dca11f15430e"
+      ],
+      "confidence": 0.78,
+      "created_at": "2026-07-14T11:52:24.873794+00:00",
+      "evidence_ids": [
+        "ev-international_situation-1",
+        "ev-combat_scenario-1",
+        "ev-weapon_equipment-1",
+        "ev-operational_employment-1"
+      ],
+      "input_refs": [
+        "reason-800f465fcae9"
+      ],
+      "object_id": "reason-cd860a5d48fa",
+      "route": "new_winning_mechanism",
+      "schema_version": "1.0",
+      "step": 4,
+      "summary": "将效果链逐项转换为效果 -> 功能 -> 性能/约束，覆盖多源感知、可信判别、快速决策、协同处置和韧性保障。装备与工程依据：梳理与面向强干扰低空蜂群威胁的分布式预警制胜机理相关的现有装备功能、参数和体系接口。；识别探测、决策、载荷、协同、保障和成本边界。；按可获得性、验证程度、集成条件和工程风险评估成熟度。。",
+      "title": "能力映射"
+    },
+    "defense_decomposition": {
+      "assumptions": [
+        "仅基于已接纳公开证据",
+        "路线：new_winning_mechanism",
+        "公开资料结论需由分析师确认"
+      ],
+      "claim_ids": [
+        "claim-03376f990eb2",
+        "claim-34428ef34779",
+        "claim-3910504a32b4",
+        "claim-40a14475e591",
+        "claim-52dabe1775df",
+        "claim-7e2bf9387cdb",
+        "claim-80fe03cde839",
+        "claim-8902ed5b4138",
+        "claim-a331ecc41d3e",
+        "claim-a7848a1b1d82",
+        "claim-dca11f15430e"
+      ],
+      "confidence": 0.78,
+      "created_at": "2026-07-14T11:52:24.873778+00:00",
+      "evidence_ids": [
+        "ev-international_situation-1",
+        "ev-combat_scenario-1",
+        "ev-weapon_equipment-1",
+        "ev-operational_employment-1"
+      ],
+      "input_refs": [],
+      "object_id": "reason-893e5dc24530",
+      "route": "new_winning_mechanism",
+      "schema_version": "1.0",
+      "step": 1,
+      "summary": "围绕面向强干扰低空蜂群威胁的分布式预警制胜机理，按感知、决策、处置、冗余/恢复四层解构。主要压力依据：识别潜在威胁力量、能力增长点、可能意图与对抗压力。；构造敌方可能行动方案、关键节点和可观测行为。；明确地形、气象、电磁、网络和部署空间约束。。证据边界：无已登记冲突。",
+      "title": "防御解构"
+    },
+    "effect_chain": {
+      "assumptions": [
+        "仅基于已接纳公开证据",
+        "路线：new_winning_mechanism",
+        "公开资料结论需由分析师确认"
+      ],
+      "claim_ids": [
+        "claim-03376f990eb2",
+        "claim-34428ef34779",
+        "claim-3910504a32b4",
+        "claim-40a14475e591",
+        "claim-52dabe1775df",
+        "claim-7e2bf9387cdb",
+        "claim-80fe03cde839",
+        "claim-8902ed5b4138",
+        "claim-a331ecc41d3e",
+        "claim-a7848a1b1d82",
+        "claim-dca11f15430e"
+      ],
+      "confidence": 0.78,
+      "created_at": "2026-07-14T11:52:24.873790+00:00",
+      "evidence_ids": [
+        "ev-international_situation-1",
+        "ev-combat_scenario-1",
+        "ev-weapon_equipment-1",
+        "ev-operational_employment-1"
+      ],
+      "input_refs": [
+        "reason-69bdd0edee31"
+      ],
+      "object_id": "reason-800f465fcae9",
+      "route": "new_winning_mechanism",
+      "schema_version": "1.0",
+      "step": 3,
+      "summary": "依据关键时间窗和运用约束形成：持续发现 -> 可信识别/态势形成 -> 威胁排序与资源分配 -> 分层处置 -> 任务连续性。约束依据：标注预警、决策、交战、重构和保障的关键时间窗口。；明确面向强干扰低空蜂群威胁的分布式预警制胜机理在任务规则、指挥关系和保障条件下的运用约束。；待验证：国际形势维度仍需进一步联网补充高置信资料。；作战场景维度仍需进一步联网补充高置信资料。。",
+      "title": "效果链"
+    },
+    "gap_matrix": {
+      "assumptions": [
+        "仅基于已接纳公开证据",
+        "路线：new_winning_mechanism",
+        "公开资料结论需由分析师确认"
+      ],
+      "claim_ids": [
+        "claim-03376f990eb2",
+        "claim-34428ef34779",
+        "claim-3910504a32b4",
+        "claim-40a14475e591",
+        "claim-52dabe1775df",
+        "claim-7e2bf9387cdb",
+        "claim-80fe03cde839",
+        "claim-8902ed5b4138",
+        "claim-a331ecc41d3e",
+        "claim-a7848a1b1d82",
+        "claim-dca11f15430e"
+      ],
+      "confidence": 0.78,
+      "created_at": "2026-07-14T11:52:24.873796+00:00",
+      "evidence_ids": [
+        "ev-international_situation-1",
+        "ev-combat_scenario-1",
+        "ev-weapon_equipment-1",
+        "ev-operational_employment-1"
+      ],
+      "input_refs": [
+        "reason-cd860a5d48fa"
+      ],
+      "object_id": "reason-d5fb98c1a3bb",
+      "route": "new_winning_mechanism",
+      "schema_version": "1.0",
+      "step": 5,
+      "summary": "按空白、关键差距、部分差距、满足、超出五档，将场景所需功能与现有/在研能力比较。比较基线：梳理与面向强干扰低空蜂群威胁的分布式预警制胜机理相关的现有装备功能、参数和体系接口。；跟踪在研型号、验证项目、替代路线和潜在迭代方向。；识别探测、决策、载荷、协同、保障和成本边界。；不确定性：无已登记冲突。",
+      "title": "差距量化"
+    },
+    "image_drafts": [
+      {
+        "assumptions": [
+          "仅基于已接纳公开证据",
+          "路线：new_winning_mechanism",
+          "公开资料结论需由分析师确认"
+        ],
+        "claim_ids": [
+          "claim-03376f990eb2",
+          "claim-34428ef34779",
+          "claim-3910504a32b4",
+          "claim-40a14475e591",
+          "claim-52dabe1775df",
+          "claim-7e2bf9387cdb",
+          "claim-80fe03cde839",
+          "claim-8902ed5b4138",
+          "claim-a331ecc41d3e",
+          "claim-a7848a1b1d82",
+          "claim-dca11f15430e"
+        ],
+        "confidence": 0.78,
+        "created_at": "2026-07-14T11:52:24.873799+00:00",
+        "evidence_ids": [
+          "ev-international_situation-1",
+          "ev-combat_scenario-1",
+          "ev-weapon_equipment-1",
+          "ev-operational_employment-1"
+        ],
+        "input_refs": [
+          "reason-d5fb98c1a3bb"
+        ],
+        "object_id": "reason-dcc7befb688f",
+        "route": "new_winning_mechanism",
+        "schema_version": "1.0",
+        "step": 6,
+        "summary": "依据前五步去重归并，分别形成新作战能力方向和现有装备升级需求，并写入制胜逻辑、关联场景、优先级、差距、功能画像和证据引用。路线=new_winning_mechanism，基线发现=11条，待闭合问题=4项。",
+        "title": "能力画像生成"
+      }
+    ],
+    "winning_paths": {
+      "assumptions": [
+        "仅基于已接纳公开证据",
+        "路线：new_winning_mechanism",
+        "公开资料结论需由分析师确认"
+      ],
+      "claim_ids": [
+        "claim-03376f990eb2",
+        "claim-34428ef34779",
+        "claim-3910504a32b4",
+        "claim-40a14475e591",
+        "claim-52dabe1775df",
+        "claim-7e2bf9387cdb",
+        "claim-80fe03cde839",
+        "claim-8902ed5b4138",
+        "claim-a331ecc41d3e",
+        "claim-a7848a1b1d82",
+        "claim-dca11f15430e"
+      ],
+      "confidence": 0.78,
+      "created_at": "2026-07-14T11:52:24.873786+00:00",
+      "evidence_ids": [
+        "ev-international_situation-1",
+        "ev-combat_scenario-1",
+        "ev-weapon_equipment-1",
+        "ev-operational_employment-1"
+      ],
+      "input_refs": [
+        "reason-893e5dc24530"
+      ],
+      "object_id": "reason-69bdd0edee31",
+      "route": "new_winning_mechanism",
+      "schema_version": "1.0",
+      "step": 2,
+      "summary": "新制胜机制、新作战打法和新体系组合牵引新装备能力增长点。 候选路径比较依据：{'baseline': '集中式基线', 'distributed': '弹性分布', 'resource_constrained': '资源受限'}；分析跨军兵种、有人无人、传感器与火力单元协同关系。；将面向强干扰低空蜂群威胁的分布式预警制胜机理映射到任务背景、作战阶段、参与力量和胜负条件。。",
+      "title": "制胜路径"
+    }
+  },
+  "source_materials": [
+    {
+      "artifact_refs": [
+        "text:3a485fd8dbcd690b"
+      ],
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-international_situation-1",
+        "normalized_url": "https://fixture.local/international_situation",
+        "reasons": [],
+        "score": 0.873
+      },
+      "evidence_id": "ev-international_situation-1",
+      "formal_evidence_allowed": true,
+      "status": "fixture_materialized",
+      "url": "https://fixture.local/international_situation"
+    },
+    {
+      "artifact_refs": [
+        "text:c19bb399dc18bf0c"
+      ],
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-combat_scenario-1",
+        "normalized_url": "https://fixture.local/combat_scenario",
+        "reasons": [],
+        "score": 0.861
+      },
+      "evidence_id": "ev-combat_scenario-1",
+      "formal_evidence_allowed": true,
+      "status": "fixture_materialized",
+      "url": "https://fixture.local/combat_scenario"
+    },
+    {
+      "artifact_refs": [
+        "text:2b970146ca4f93ec"
+      ],
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-weapon_equipment-1",
+        "normalized_url": "https://fixture.local/weapon_equipment",
+        "reasons": [],
+        "score": 0.852
+      },
+      "evidence_id": "ev-weapon_equipment-1",
+      "formal_evidence_allowed": true,
+      "status": "fixture_materialized",
+      "url": "https://fixture.local/weapon_equipment"
+    },
+    {
+      "artifact_refs": [
+        "text:4b8ebeeab8686ccc"
+      ],
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-operational_employment-1",
+        "normalized_url": "https://fixture.local/operational_employment",
+        "reasons": [],
+        "score": 0.858
+      },
+      "evidence_id": "ev-operational_employment-1",
+      "formal_evidence_allowed": true,
+      "status": "fixture_materialized",
+      "url": "https://fixture.local/operational_employment"
+    }
+  ],
+  "store_summary": {
+    "audit_count": 1,
+    "baseline_packet_count": 4,
+    "capability_image_count": 2,
+    "coverage_tags": [
+      "capability_gap",
+      "coa",
+      "coordination",
+      "environment",
+      "equipment",
+      "lessons",
+      "operation",
+      "scenario",
+      "situation",
+      "strategy",
+      "technology_readiness",
+      "threat"
+    ],
+    "equipment_observation_count": 1,
+    "evidence_count": 4,
+    "knowledge_projection_count": 1,
+    "materialized_evidence_count": 4,
+    "operational_synthesis_count": 1,
+    "problem_count": 1,
+    "reasoning_node_count": 6,
+    "recall_request_count": 0,
+    "recommendation_count": 0,
+    "report_count": 1,
+    "scenario_model_count": 1,
+    "stage_output_count": 3,
+    "strategic_assessment_count": 1,
+    "winning_input_count": 1
+  },
+  "trace_summary": [
+    {
+      "actor": "orchestrator",
+      "event_type": "run_started",
+      "output_refs": [],
+      "summary": "run started for 面向强干扰低空蜂群威胁的分布式预警制胜机理"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "baseline_wave_started",
+      "output_refs": [
+        "baseline:international_situation"
+      ],
+      "summary": "baseline wave 1 started with 1 agent(s)"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "agent_task_delegated",
+      "output_refs": [
+        "baseline:international_situation"
+      ],
+      "summary": "委派给国际形势：面向未来威胁预警，持续研判国际安全态势、潜在威胁力量、联盟与战略格局、对手能力建设和可观测动向。"
+    },
+    {
+      "actor": "international_situation",
+      "event_type": "agent_harness_completed",
+      "output_refs": [],
+      "summary": "strategic_research_v1 completed: completed"
+    },
+    {
+      "actor": "international_situation",
+      "event_type": "stop_policy_evaluated",
+      "output_refs": [],
+      "summary": "baseline quality gates passed"
+    },
+    {
+      "actor": "international_situation",
+      "event_type": "baseline_agent_completed",
+      "output_refs": [
+        "packet-international_situation",
+        "ev-international_situation-1"
+      ],
+      "summary": "国际形势围绕面向强干扰低空蜂群威胁的分布式预警制胜机理形成2条基线发现，并按交接策略输出给下游。"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "baseline_wave_completed",
+      "output_refs": [
+        "packet-international_situation"
+      ],
+      "summary": "baseline wave 1 completed"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "baseline_wave_started",
+      "output_refs": [
+        "baseline:combat_scenario",
+        "baseline:weapon_equipment"
+      ],
+      "summary": "baseline wave 2 started with 2 agent(s)"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "agent_task_delegated",
+      "output_refs": [
+        "baseline:combat_scenario"
+      ],
+      "summary": "委派给作战场景：将威胁研判转化为现代化、多域、动态对抗场景，分析阶段演化、敌方行动方案、关键时间窗口和环境约束。"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "agent_task_delegated",
+      "output_refs": [
+        "baseline:weapon_equipment"
+      ],
+      "summary": "委派给武器装备：面向国外装备能力发展与防御性反制需求，比较现役和在研装备、体系接口、技术成熟度、保障成本及能力边界。"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "agent_harness_completed",
+      "output_refs": [],
+      "summary": "scenario_research_v1 completed: completed"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "agent_harness_completed",
+      "output_refs": [],
+      "summary": "equipment_research_v1 completed: completed"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "stop_policy_evaluated",
+      "output_refs": [],
+      "summary": "baseline quality gates passed"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "stop_policy_evaluated",
+      "output_refs": [],
+      "summary": "baseline quality gates passed"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_agent_completed",
+      "output_refs": [
+        "packet-combat_scenario",
+        "ev-combat_scenario-1"
+      ],
+      "summary": "作战场景围绕面向强干扰低空蜂群威胁的分布式预警制胜机理形成3条基线发现，并按交接策略输出给下游。"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_agent_completed",
+      "output_refs": [
+        "packet-weapon_equipment",
+        "ev-weapon_equipment-1"
+      ],
+      "summary": "武器装备围绕面向强干扰低空蜂群威胁的分布式预警制胜机理形成3条基线发现，并按交接策略输出给下游。"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "baseline_wave_completed",
+      "output_refs": [
+        "packet-combat_scenario",
+        "packet-weapon_equipment"
+      ],
+      "summary": "baseline wave 2 completed"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "baseline_wave_started",
+      "output_refs": [
+        "baseline:operational_employment"
+      ],
+      "summary": "baseline wave 3 started with 1 agent(s)"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "agent_task_delegated",
+      "output_refs": [
+        "baseline:operational_employment"
+      ],
+      "summary": "委派给作战运用：综合局势、场景和装备结构化交接，评估作战约束、力量协同、备选行动方案、部署原则和公开战例经验。"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "agent_harness_completed",
+      "output_refs": [],
+      "summary": "operational_synthesis_v1 completed: completed"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "stop_policy_evaluated",
+      "output_refs": [],
+      "summary": "baseline quality gates passed"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_agent_completed",
+      "output_refs": [
+        "packet-operational_employment",
+        "ev-operational_employment-1"
+      ],
+      "summary": "作战运用围绕面向强干扰低空蜂群威胁的分布式预警制胜机理形成3条基线发现，并按交接策略输出给下游。"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "baseline_wave_completed",
+      "output_refs": [
+        "packet-operational_employment"
+      ],
+      "summary": "baseline wave 3 completed"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "baseline_agents_summarized",
+      "output_refs": [
+        "packet-international_situation",
+        "packet-combat_scenario",
+        "packet-weapon_equipment",
+        "packet-operational_employment"
+      ],
+      "summary": "4 baseline agents completed"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "winning_input_prepared",
+      "output_refs": [
+        "winning-input-r1"
+      ],
+      "summary": "制胜机理输入包已完成上下文投影与一致性初检"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_resources_projected",
+      "output_refs": [
+        "winning-resources-r1"
+      ],
+      "summary": "理论工具、战例、前沿情报与问题链已按本次任务动态投影"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_reasoning_step_completed",
+      "output_refs": [
+        "reason-893e5dc24530"
+      ],
+      "summary": "围绕面向强干扰低空蜂群威胁的分布式预警制胜机理，按感知、决策、处置、冗余/恢复四层解构。主要压力依据：识别潜在威胁力量、能力增长点、可能意图与对抗压力。；构造敌方可能行动方案、关键节点和可观测行为。；明确地形、气象、电磁、网络和部署空间约束。。证据边界：无已登记冲突。"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_reasoning_step_completed",
+      "output_refs": [
+        "reason-69bdd0edee31"
+      ],
+      "summary": "新制胜机制、新作战打法和新体系组合牵引新装备能力增长点。 候选路径比较依据：{'baseline': '集中式基线', 'distributed': '弹性分布', 'resource_constrained': '资源受限'}；分析跨军兵种、有人无人、传感器与火力单元协同关系。；将面向强干扰低空蜂群威胁的分布式预警制胜机理映射到任务背景、作战阶段、参与力量和胜负条件。。"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_reasoning_step_completed",
+      "output_refs": [
+        "reason-800f465fcae9"
+      ],
+      "summary": "依据关键时间窗和运用约束形成：持续发现 -> 可信识别/态势形成 -> 威胁排序与资源分配 -> 分层处置 -> 任务连续性。约束依据：标注预警、决策、交战、重构和保障的关键时间窗口。；明确面向强干扰低空蜂群威胁的分布式预警制胜机理在任务规则、指挥关系和保障条件下的运用约束。；待验证：国际形势维度仍需进一步联网补充高置信资料。；作战场景维度仍需进一步联网补充高置信资料。。"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_reasoning_step_completed",
+      "output_refs": [
+        "reason-cd860a5d48fa"
+      ],
+      "summary": "将效果链逐项转换为效果 -> 功能 -> 性能/约束，覆盖多源感知、可信判别、快速决策、协同处置和韧性保障。装备与工程依据：梳理与面向强干扰低空蜂群威胁的分布式预警制胜机理相关的现有装备功能、参数和体系接口。；识别探测、决策、载荷、协同、保障和成本边界。；按可获得性、验证程度、集成条件和工程风险评估成熟度。。"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_reasoning_step_completed",
+      "output_refs": [
+        "reason-d5fb98c1a3bb"
+      ],
+      "summary": "按空白、关键差距、部分差距、满足、超出五档，将场景所需功能与现有/在研能力比较。比较基线：梳理与面向强干扰低空蜂群威胁的分布式预警制胜机理相关的现有装备功能、参数和体系接口。；跟踪在研型号、验证项目、替代路线和潜在迭代方向。；识别探测、决策、载荷、协同、保障和成本边界。；不确定性：无已登记冲突。"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_reasoning_step_completed",
+      "output_refs": [
+        "reason-dcc7befb688f"
+      ],
+      "summary": "依据前五步去重归并，分别形成新作战能力方向和现有装备升级需求，并写入制胜逻辑、关联场景、优先级、差距、功能画像和证据引用。路线=new_winning_mechanism，基线发现=11条，待闭合问题=4项。"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_stage_completed",
+      "output_refs": [
+        "stage-L1"
+      ],
+      "summary": "L1 completed: gate=True"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_stage_completed",
+      "output_refs": [
+        "stage-L2"
+      ],
+      "summary": "L2 completed: gate=True"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_stage_completed",
+      "output_refs": [
+        "stage-L3"
+      ],
+      "summary": "L3 completed: gate=True"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "capability_image_created",
+      "output_refs": [
+        "cap-new-001"
+      ],
+      "summary": "新制胜机理牵引的体系化快速制胜能力"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "capability_image_created",
+      "output_refs": [
+        "cap-upgrade-001"
+      ],
+      "summary": "新作战样式适配的现有装备升级能力"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_call",
+      "output_refs": [],
+      "summary": "写入L1制胜机理阶段输出"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_result",
+      "output_refs": [
+        "stage-L1"
+      ],
+      "summary": "L1阶段输出已写入"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_call",
+      "output_refs": [],
+      "summary": "写入L2制胜机理阶段输出"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_result",
+      "output_refs": [
+        "stage-L2"
+      ],
+      "summary": "L2阶段输出已写入"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_call",
+      "output_refs": [],
+      "summary": "写入L3制胜机理阶段输出"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_result",
+      "output_refs": [
+        "stage-L3"
+      ],
+      "summary": "L3阶段输出已写入"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_call",
+      "output_refs": [],
+      "summary": "生成能力画像：新制胜机理牵引的体系化快速制胜能力"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_result",
+      "output_refs": [
+        "cap-new-001"
+      ],
+      "summary": "能力画像已生成：新制胜机理牵引的体系化快速制胜能力"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_call",
+      "output_refs": [],
+      "summary": "生成能力画像：新作战样式适配的现有装备升级能力"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_result",
+      "output_refs": [
+        "cap-upgrade-001"
+      ],
+      "summary": "能力画像已生成：新作战样式适配的现有装备升级能力"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "agent_task_delegated",
+      "output_refs": [],
+      "summary": "委派审计智能体执行五判据检查"
+    },
+    {
+      "actor": "auditor",
+      "event_type": "tool_call",
+      "output_refs": [],
+      "summary": "执行证据、覆盖、门控、追溯和轮次五判据审计"
+    },
+    {
+      "actor": "auditor",
+      "event_type": "tool_result",
+      "output_refs": [
+        "audit-001"
+      ],
+      "summary": "五判据审计完成：approved"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "agent_task_delegated",
+      "output_refs": [],
+      "summary": "委派报告智能体生成甲方可读能力画像报告"
+    },
+    {
+      "actor": "reporter",
+      "event_type": "tool_call",
+      "output_refs": [],
+      "summary": "生成研究路线、证据、制胜逻辑、能力缺口和能力画像报告"
+    },
+    {
+      "actor": "reporter",
+      "event_type": "tool_result",
+      "output_refs": [
+        "report-001"
+      ],
+      "summary": "甲方能力画像报告已生成"
+    }
+  ],
+  "winning_mechanism": {
+    "inputs": [
+      {
+        "attempt": 1,
+        "conflict_set": [],
+        "coverage_map": {
+          "by_agent": {
+            "combat_scenario": [
+              "scenario",
+              "coa",
+              "environment"
+            ],
+            "international_situation": [
+              "situation",
+              "threat",
+              "strategy"
+            ],
+            "operational_employment": [
+              "operation",
+              "coordination",
+              "lessons"
+            ],
+            "weapon_equipment": [
+              "equipment",
+              "capability_gap",
+              "technology_readiness"
+            ]
+          },
+          "coverage_passed": true,
+          "missing_required_tags": [],
+          "optional_tags": [
+            "coordination",
+            "technology_readiness"
+          ],
+          "provided_tags": [
+            "capability_gap",
+            "coa",
+            "coordination",
+            "environment",
+            "equipment",
+            "lessons",
+            "operation",
+            "scenario",
+            "situation",
+            "strategy",
+            "technology_readiness",
+            "threat"
+          ],
+          "required_tags": [
+            "equipment",
+            "operation",
+            "scenario",
+            "situation",
+            "threat"
+          ],
+          "route": "new_winning_mechanism"
+        },
+        "created_at": "2026-07-14T11:52:24.855775+00:00",
+        "evidence_index": [
+          {
+            "claim": "国际形势发现与“面向强干扰低空蜂群威胁的分布式预警制胜机理”相关的关键能力信号。",
+            "created_by": "international_situation",
+            "evidence_id": "ev-international_situation-1",
+            "source_tier": "A",
+            "source_title": "国际形势离线验证材料"
+          },
+          {
+            "claim": "作战场景发现与“面向强干扰低空蜂群威胁的分布式预警制胜机理”相关的关键能力信号。",
+            "created_by": "combat_scenario",
+            "evidence_id": "ev-combat_scenario-1",
+            "source_tier": "A",
+            "source_title": "作战场景离线验证材料"
+          },
+          {
+            "claim": "武器装备发现与“面向强干扰低空蜂群威胁的分布式预警制胜机理”相关的关键能力信号。",
+            "created_by": "weapon_equipment",
+            "evidence_id": "ev-weapon_equipment-1",
+            "source_tier": "A",
+            "source_title": "武器装备离线验证材料"
+          },
+          {
+            "claim": "作战运用发现与“面向强干扰低空蜂群威胁的分布式预警制胜机理”相关的关键能力信号。",
+            "created_by": "operational_employment",
+            "evidence_id": "ev-operational_employment-1",
+            "source_tier": "A",
+            "source_title": "作战运用离线验证材料"
+          }
+        ],
+        "input_id": "winning-input-r1",
+        "open_questions": [
+          "国际形势维度仍需进一步联网补充高置信资料。",
+          "作战场景维度仍需进一步联网补充高置信资料。",
+          "武器装备维度仍需进一步联网补充高置信资料。",
+          "作战运用维度仍需进一步联网补充高置信资料。"
+        ],
+        "packet_ids": [
+          "packet-international_situation",
+          "packet-combat_scenario",
+          "packet-weapon_equipment",
+          "packet-operational_employment"
+        ],
+        "problem_frame": {
+          "objective": "回答需要发展具备什么功能的产品",
+          "route_frame": "以国际形势、潜在威胁和对抗场景为起点，从新制胜机制、新作战打法和新体系组合推导新质装备功能。",
+          "topic": "面向强干扰低空蜂群威胁的分布式预警制胜机理"
+        },
+        "research_route": "new_winning_mechanism",
+        "round_budget": {
+          "current_round": 1,
+          "maximum_rounds": 5,
+          "same_target_recall_limit": 3
+        },
+        "schema_version": "1.0"
+      }
+    ],
+    "reasoning_nodes": [
+      {
+        "assumptions": [
+          "仅基于已接纳公开证据",
+          "路线：new_winning_mechanism",
+          "公开资料结论需由分析师确认"
+        ],
+        "claim_ids": [
+          "claim-03376f990eb2",
+          "claim-34428ef34779",
+          "claim-3910504a32b4",
+          "claim-40a14475e591",
+          "claim-52dabe1775df",
+          "claim-7e2bf9387cdb",
+          "claim-80fe03cde839",
+          "claim-8902ed5b4138",
+          "claim-a331ecc41d3e",
+          "claim-a7848a1b1d82",
+          "claim-dca11f15430e"
+        ],
+        "confidence": 0.78,
+        "created_at": "2026-07-14T11:52:24.855817+00:00",
+        "evidence_ids": [
+          "ev-international_situation-1",
+          "ev-combat_scenario-1",
+          "ev-weapon_equipment-1",
+          "ev-operational_employment-1"
+        ],
+        "input_refs": [
+          "winning-input-r1",
+          "winning-resources-r1"
+        ],
+        "object_id": "reason-893e5dc24530",
+        "route": "new_winning_mechanism",
+        "schema_version": "1.0",
+        "step": 1,
+        "summary": "围绕面向强干扰低空蜂群威胁的分布式预警制胜机理，按感知、决策、处置、冗余/恢复四层解构。主要压力依据：识别潜在威胁力量、能力增长点、可能意图与对抗压力。；构造敌方可能行动方案、关键节点和可观测行为。；明确地形、气象、电磁、网络和部署空间约束。。证据边界：无已登记冲突。",
+        "title": "防御解构"
+      },
+      {
+        "assumptions": [
+          "仅基于已接纳公开证据",
+          "路线：new_winning_mechanism",
+          "公开资料结论需由分析师确认"
+        ],
+        "claim_ids": [
+          "claim-03376f990eb2",
+          "claim-34428ef34779",
+          "claim-3910504a32b4",
+          "claim-40a14475e591",
+          "claim-52dabe1775df",
+          "claim-7e2bf9387cdb",
+          "claim-80fe03cde839",
+          "claim-8902ed5b4138",
+          "claim-a331ecc41d3e",
+          "claim-a7848a1b1d82",
+          "claim-dca11f15430e"
+        ],
+        "confidence": 0.78,
+        "created_at": "2026-07-14T11:52:24.855824+00:00",
+        "evidence_ids": [
+          "ev-international_situation-1",
+          "ev-combat_scenario-1",
+          "ev-weapon_equipment-1",
+          "ev-operational_employment-1"
+        ],
+        "input_refs": [
+          "reason-893e5dc24530"
+        ],
+        "object_id": "reason-69bdd0edee31",
+        "route": "new_winning_mechanism",
+        "schema_version": "1.0",
+        "step": 2,
+        "summary": "新制胜机制、新作战打法和新体系组合牵引新装备能力增长点。 候选路径比较依据：{'baseline': '集中式基线', 'distributed': '弹性分布', 'resource_constrained': '资源受限'}；分析跨军兵种、有人无人、传感器与火力单元协同关系。；将面向强干扰低空蜂群威胁的分布式预警制胜机理映射到任务背景、作战阶段、参与力量和胜负条件。。",
+        "title": "制胜路径"
+      },
+      {
+        "assumptions": [
+          "仅基于已接纳公开证据",
+          "路线：new_winning_mechanism",
+          "公开资料结论需由分析师确认"
+        ],
+        "claim_ids": [
+          "claim-03376f990eb2",
+          "claim-34428ef34779",
+          "claim-3910504a32b4",
+          "claim-40a14475e591",
+          "claim-52dabe1775df",
+          "claim-7e2bf9387cdb",
+          "claim-80fe03cde839",
+          "claim-8902ed5b4138",
+          "claim-a331ecc41d3e",
+          "claim-a7848a1b1d82",
+          "claim-dca11f15430e"
+        ],
+        "confidence": 0.78,
+        "created_at": "2026-07-14T11:52:24.855829+00:00",
+        "evidence_ids": [
+          "ev-international_situation-1",
+          "ev-combat_scenario-1",
+          "ev-weapon_equipment-1",
+          "ev-operational_employment-1"
+        ],
+        "input_refs": [
+          "reason-69bdd0edee31"
+        ],
+        "object_id": "reason-800f465fcae9",
+        "route": "new_winning_mechanism",
+        "schema_version": "1.0",
+        "step": 3,
+        "summary": "依据关键时间窗和运用约束形成：持续发现 -> 可信识别/态势形成 -> 威胁排序与资源分配 -> 分层处置 -> 任务连续性。约束依据：标注预警、决策、交战、重构和保障的关键时间窗口。；明确面向强干扰低空蜂群威胁的分布式预警制胜机理在任务规则、指挥关系和保障条件下的运用约束。；待验证：国际形势维度仍需进一步联网补充高置信资料。；作战场景维度仍需进一步联网补充高置信资料。。",
+        "title": "效果链"
+      },
+      {
+        "assumptions": [
+          "仅基于已接纳公开证据",
+          "路线：new_winning_mechanism",
+          "公开资料结论需由分析师确认"
+        ],
+        "claim_ids": [
+          "claim-03376f990eb2",
+          "claim-34428ef34779",
+          "claim-3910504a32b4",
+          "claim-40a14475e591",
+          "claim-52dabe1775df",
+          "claim-7e2bf9387cdb",
+          "claim-80fe03cde839",
+          "claim-8902ed5b4138",
+          "claim-a331ecc41d3e",
+          "claim-a7848a1b1d82",
+          "claim-dca11f15430e"
+        ],
+        "confidence": 0.78,
+        "created_at": "2026-07-14T11:52:24.855832+00:00",
+        "evidence_ids": [
+          "ev-international_situation-1",
+          "ev-combat_scenario-1",
+          "ev-weapon_equipment-1",
+          "ev-operational_employment-1"
+        ],
+        "input_refs": [
+          "reason-800f465fcae9"
+        ],
+        "object_id": "reason-cd860a5d48fa",
+        "route": "new_winning_mechanism",
+        "schema_version": "1.0",
+        "step": 4,
+        "summary": "将效果链逐项转换为效果 -> 功能 -> 性能/约束，覆盖多源感知、可信判别、快速决策、协同处置和韧性保障。装备与工程依据：梳理与面向强干扰低空蜂群威胁的分布式预警制胜机理相关的现有装备功能、参数和体系接口。；识别探测、决策、载荷、协同、保障和成本边界。；按可获得性、验证程度、集成条件和工程风险评估成熟度。。",
+        "title": "能力映射"
+      },
+      {
+        "assumptions": [
+          "仅基于已接纳公开证据",
+          "路线：new_winning_mechanism",
+          "公开资料结论需由分析师确认"
+        ],
+        "claim_ids": [
+          "claim-03376f990eb2",
+          "claim-34428ef34779",
+          "claim-3910504a32b4",
+          "claim-40a14475e591",
+          "claim-52dabe1775df",
+          "claim-7e2bf9387cdb",
+          "claim-80fe03cde839",
+          "claim-8902ed5b4138",
+          "claim-a331ecc41d3e",
+          "claim-a7848a1b1d82",
+          "claim-dca11f15430e"
+        ],
+        "confidence": 0.78,
+        "created_at": "2026-07-14T11:52:24.855835+00:00",
+        "evidence_ids": [
+          "ev-international_situation-1",
+          "ev-combat_scenario-1",
+          "ev-weapon_equipment-1",
+          "ev-operational_employment-1"
+        ],
+        "input_refs": [
+          "reason-cd860a5d48fa"
+        ],
+        "object_id": "reason-d5fb98c1a3bb",
+        "route": "new_winning_mechanism",
+        "schema_version": "1.0",
+        "step": 5,
+        "summary": "按空白、关键差距、部分差距、满足、超出五档，将场景所需功能与现有/在研能力比较。比较基线：梳理与面向强干扰低空蜂群威胁的分布式预警制胜机理相关的现有装备功能、参数和体系接口。；跟踪在研型号、验证项目、替代路线和潜在迭代方向。；识别探测、决策、载荷、协同、保障和成本边界。；不确定性：无已登记冲突。",
+        "title": "差距量化"
+      },
+      {
+        "assumptions": [
+          "仅基于已接纳公开证据",
+          "路线：new_winning_mechanism",
+          "公开资料结论需由分析师确认"
+        ],
+        "claim_ids": [
+          "claim-03376f990eb2",
+          "claim-34428ef34779",
+          "claim-3910504a32b4",
+          "claim-40a14475e591",
+          "claim-52dabe1775df",
+          "claim-7e2bf9387cdb",
+          "claim-80fe03cde839",
+          "claim-8902ed5b4138",
+          "claim-a331ecc41d3e",
+          "claim-a7848a1b1d82",
+          "claim-dca11f15430e"
+        ],
+        "confidence": 0.78,
+        "created_at": "2026-07-14T11:52:24.855838+00:00",
+        "evidence_ids": [
+          "ev-international_situation-1",
+          "ev-combat_scenario-1",
+          "ev-weapon_equipment-1",
+          "ev-operational_employment-1"
+        ],
+        "input_refs": [
+          "reason-d5fb98c1a3bb"
+        ],
+        "object_id": "reason-dcc7befb688f",
+        "route": "new_winning_mechanism",
+        "schema_version": "1.0",
+        "step": 6,
+        "summary": "依据前五步去重归并，分别形成新作战能力方向和现有装备升级需求，并写入制胜逻辑、关联场景、优先级、差距、功能画像和证据引用。路线=new_winning_mechanism，基线发现=11条，待闭合问题=4项。",
+        "title": "能力画像生成"
+      }
+    ],
+    "resource_projections": [
+      {
+        "case_resources": [],
+        "created_at": "2026-07-14T11:52:24.855791+00:00",
+        "evidence_ids": [
+          "ev-international_situation-1",
+          "ev-combat_scenario-1",
+          "ev-weapon_equipment-1",
+          "ev-operational_employment-1"
+        ],
+        "frontier_resources": [
+          {
+            "evidence_id": "ev-international_situation-1",
+            "use": "新概念、新技术、新手段与成熟度研判"
+          },
+          {
+            "evidence_id": "ev-combat_scenario-1",
+            "use": "新概念、新技术、新手段与成熟度研判"
+          },
+          {
+            "evidence_id": "ev-weapon_equipment-1",
+            "use": "新概念、新技术、新手段与成熟度研判"
+          },
+          {
+            "evidence_id": "ev-operational_employment-1",
+            "use": "新概念、新技术、新手段与成熟度研判"
+          }
+        ],
+        "input_id": "winning-input-r1",
+        "projection_id": "winning-resources-r1",
+        "question_chain": [
+          {
+            "order": 1,
+            "question": "敌方重心与关键体系依赖是什么？",
+            "status": "open"
+          },
+          {
+            "order": 2,
+            "question": "可形成何种制胜逻辑与优选路径？",
+            "status": "open"
+          },
+          {
+            "order": 3,
+            "question": "效果链要求哪些功能与性能能力？",
+            "status": "open"
+          },
+          {
+            "order": 4,
+            "question": "能否通过新机制、新打法或新体系组合创造新能力增长点？",
+            "status": "open"
+          },
+          {
+            "order": 5,
+            "question": "国际形势维度仍需进一步联网补充高置信资料。",
+            "status": "open"
+          },
+          {
+            "order": 6,
+            "question": "作战场景维度仍需进一步联网补充高置信资料。",
+            "status": "open"
+          },
+          {
+            "order": 7,
+            "question": "武器装备维度仍需进一步联网补充高置信资料。",
+            "status": "open"
+          },
+          {
+            "order": 8,
+            "question": "作战运用维度仍需进一步联网补充高置信资料。",
+            "status": "open"
+          }
+        ],
+        "schema_version": "1.0",
+        "theory_tools": [
+          {
+            "dimensions": [
+              "感知",
+              "决策",
+              "拦截",
+              "冗余"
+            ],
+            "name": "防御分层解析"
+          },
+          {
+            "dimensions": [
+              "重心",
+              "依赖",
+              "时间窗口",
+              "风险"
+            ],
+            "name": "重心与击败机制识别"
+          },
+          {
+            "dimensions": [
+              "行动",
+              "直接效果",
+              "间接效果",
+              "最终效果"
+            ],
+            "name": "效果链因果建模"
+          },
+          {
+            "dimensions": [
+              "效果",
+              "功能",
+              "性能"
+            ],
+            "name": "效果-功能-性能映射"
+          },
+          {
+            "dimensions": [
+              "空白",
+              "关键差距",
+              "部分差距",
+              "满足",
+              "超出"
+            ],
+            "name": "五档差距评估"
+          }
+        ]
+      }
+    ],
+    "stages": [
+      {
+        "confidence": 0.78,
+        "created_at": "2026-07-14T11:52:24.855882+00:00",
+        "evidence_ids": [
+          "ev-combat_scenario-1",
+          "ev-international_situation-1",
+          "ev-operational_employment-1",
+          "ev-weapon_equipment-1"
+        ],
+        "gate_passed": true,
+        "gate_reasons": [],
+        "layer": "L1",
+        "outputs": {
+          "assumptions": [
+            "公开资料足以支撑初步画像，不替代专家论证。"
+          ],
+          "effect_chain": "行动 -> 直接效果 -> 间接效果 -> 最终能力收益。",
+          "evidence_grounded_findings": [
+            {
+              "agent_id": "international_situation",
+              "capability_tags": [
+                "situation",
+                "threat",
+                "strategy"
+              ],
+              "confidence": 0.78,
+              "evidence_ids": [
+                "ev-international_situation-1"
+              ],
+              "findings": [
+                "围绕面向强干扰低空蜂群威胁的分布式预警制胜机理，需要先识别潜在威胁力量和对抗压力。",
+                "战略格局变化可能推动新型装备能力从单点性能转向体系贡献。"
+              ]
+            },
+            {
+              "agent_id": "combat_scenario",
+              "capability_tags": [
+                "scenario",
+                "coa",
+                "environment"
+              ],
+              "confidence": 0.78,
+              "evidence_ids": [
+                "ev-combat_scenario-1"
+              ],
+              "findings": [
+                "面向强干扰低空蜂群威胁的分布式预警制胜机理应落入明确任务场景，包含敌方方案、关键时间窗和环境约束。",
+                "场景约束决定能力画像不能只写技术方向，必须转化为任务功能。",
+                "已综合上游结构化交接：international_situation；仅消费摘要、证据索引和开放问题。"
+              ]
+            },
+            {
+              "agent_id": "weapon_equipment",
+              "capability_tags": [
+                "equipment",
+                "capability_gap",
+                "technology_readiness"
+              ],
+              "confidence": 0.78,
+              "evidence_ids": [
+                "ev-weapon_equipment-1"
+              ],
+              "findings": [
+                "现有装备能力与面向强干扰低空蜂群威胁的分布式预警制胜机理的目标状态之间需要建立参数化差距矩阵。",
+                "在研型号和技术成熟度决定能力画像的近期升级或新概念属性。",
+                "已综合上游结构化交接：international_situation；仅消费摘要、证据索引和开放问题。"
+              ]
+            },
+            {
+              "agent_id": "operational_employment",
+              "capability_tags": [
+                "operation",
+                "coordination",
+                "lessons"
+              ],
+              "confidence": 0.78,
+              "evidence_ids": [
+                "ev-operational_employment-1"
+              ],
+              "findings": [
+                "面向强干扰低空蜂群威胁的分布式预警制胜机理需要结合COA、兵力协同和经验教训判断可用作战样式。",
+                "作战运用约束用于校验能力画像是否能进入真实任务链条。",
+                "已综合上游结构化交接：international_situation、combat_scenario、weapon_equipment；仅消费摘要、证据索引和开放问题。"
+              ]
+            }
+          ],
+          "key_capabilities": [
+            "感知发现",
+            "快速决策",
+            "精确打击/拦截",
+            "体系协同"
+          ],
+          "reasoning_refs": [
+            "reason-893e5dc24530",
+            "reason-69bdd0edee31",
+            "reason-800f465fcae9"
+          ],
+          "weakness_map": [
+            "围绕敌体系感知、决策、拦截、冗余进行分层解构。",
+            "面向强干扰低空蜂群威胁的分布式预警制胜机理的关键弱点需由场景、装备和运用证据共同支撑。"
+          ],
+          "winning_paths": [
+            "新制胜机制/新体系组合/新作战样式 -> 新装备能力增长点。",
+            "以战例和公开证据校验制胜路径假设。"
+          ]
+        },
+        "recall_requests": [],
+        "schema_version": "1.0",
+        "stage_id": "stage-L1",
+        "title": "制胜逻辑分析"
+      },
+      {
+        "confidence": 0.78,
+        "created_at": "2026-07-14T11:52:24.855892+00:00",
+        "evidence_ids": [
+          "ev-combat_scenario-1",
+          "ev-international_situation-1",
+          "ev-operational_employment-1",
+          "ev-weapon_equipment-1"
+        ],
+        "gate_passed": true,
+        "gate_reasons": [],
+        "layer": "L2",
+        "outputs": {
+          "analogy_innovation": "七维分解并进行跨域移植评估。",
+          "concept_scan": [
+            "扫描高超、模块化、低成本、AI自主、诱饵、巡飞弹等前沿样式。",
+            "结合面向强干扰低空蜂群威胁的分布式预警制胜机理判断可迁移的新能力空间。"
+          ],
+          "feasibility_score": 4,
+          "frontier_evidence_count": 4,
+          "frontier_evidence_ids": [
+            "ev-international_situation-1",
+            "ev-combat_scenario-1",
+            "ev-weapon_equipment-1",
+            "ev-operational_employment-1"
+          ],
+          "reasoning_refs": [
+            "reason-cd860a5d48fa"
+          ],
+          "route": "new_winning_mechanism",
+          "screened_directions": [
+            "新能力方向：体系化感知-决策-火力闭环。",
+            "改进方向：现有装备在复杂场景下的探测、协同和抗干扰能力提升。"
+          ],
+          "validation_capability": "technology_readiness"
+        },
+        "recall_requests": [],
+        "schema_version": "1.0",
+        "stage_id": "stage-L2",
+        "title": "概念创新评估"
+      },
+      {
+        "confidence": 0.78,
+        "created_at": "2026-07-14T11:52:24.855898+00:00",
+        "evidence_ids": [
+          "ev-combat_scenario-1",
+          "ev-international_situation-1",
+          "ev-operational_employment-1",
+          "ev-weapon_equipment-1"
+        ],
+        "gate_passed": true,
+        "gate_reasons": [],
+        "layer": "L3",
+        "outputs": {
+          "category_mapping": "按平台、任务、射程、速度、载荷和保障约束映射。",
+          "coverage_limits": [],
+          "dedup_grouping": "合并L1关键能力与L2创新方向，形成能力条目组。",
+          "gap_basis": "梳理与面向强干扰低空蜂群威胁的分布式预警制胜机理相关的现有装备功能、参数和体系接口。；识别探测、决策、载荷、协同、保障和成本边界。；按可获得性、验证程度、集成条件和工程风险评估成熟度。",
+          "gap_quantification": "按空白、关键差距、部分差距、满足、超出五档评估。",
+          "priority_method": "关键性 x 紧迫性 x 可行性。",
+          "reasoning_refs": [
+            "reason-d5fb98c1a3bb",
+            "reason-dcc7befb688f"
+          ]
+        },
+        "recall_requests": [],
+        "schema_version": "1.0",
+        "stage_id": "stage-L3",
+        "title": "能力图像生成"
+      }
+    ]
+  },
+  "worker_reports": [
+    {
+      "active_skill_ids": [
+        "strategic_osint",
+        "threat_forecasting",
+        "force_posture_tracking"
+      ],
+      "active_tool_names": [
+        "search_sources",
+        "fetch_page",
+        "create_evidence_card",
+        "register_event_timeline",
+        "compare_actor_positions",
+        "register_warning_indicator",
+        "test_competing_hypothesis"
+      ],
+      "agent_id": "international_situation",
+      "created_at": "2026-07-14T11:52:24.841318+00:00",
+      "domain_object_id": "strategic-packet-international_situation",
+      "domain_object_type": "StrategicAssessment",
+      "error": "",
+      "handoff_summary": "国际形势围绕面向强干扰低空蜂群威胁的分布式预警制胜机理形成2条基线发现，并按交接策略输出给下游。",
+      "harness_profile": "strategic_research_v1",
+      "new_evidence_ids": [
+        "ev-international_situation-1"
+      ],
+      "packet_id": "packet-international_situation",
+      "schema_version": "1.0",
+      "session_path": "/Users/wangchen/equipment deep research/outputs/fake-harness-acceptance-v1/fake-harness-new/agent_sessions/international_situation.jsonl",
+      "status": "completed",
+      "stop_reason": "quality_gates_passed",
+      "worker_report_id": "worker-report-45f6fcdd-6926-4071-ae29-057207430915"
+    },
+    {
+      "active_skill_ids": [
+        "scenario_engineering",
+        "modern_battlespace_analysis",
+        "adversary_coa_analysis"
+      ],
+      "active_tool_names": [
+        "search_sources",
+        "fetch_page",
+        "create_evidence_card",
+        "build_scenario_graph",
+        "branch_scenario",
+        "map_critical_window",
+        "map_environment_constraint",
+        "stress_test_scenario"
+      ],
+      "agent_id": "combat_scenario",
+      "created_at": "2026-07-14T11:52:24.847984+00:00",
+      "domain_object_id": "scenario-packet-combat_scenario",
+      "domain_object_type": "ScenarioModel",
+      "error": "",
+      "handoff_summary": "作战场景围绕面向强干扰低空蜂群威胁的分布式预警制胜机理形成3条基线发现，并按交接策略输出给下游。",
+      "harness_profile": "scenario_research_v1",
+      "new_evidence_ids": [
+        "ev-combat_scenario-1"
+      ],
+      "packet_id": "packet-combat_scenario",
+      "schema_version": "1.0",
+      "session_path": "/Users/wangchen/equipment deep research/outputs/fake-harness-acceptance-v1/fake-harness-new/agent_sessions/combat_scenario.jsonl",
+      "status": "completed",
+      "stop_reason": "quality_gates_passed",
+      "worker_report_id": "worker-report-78816301-4417-4693-a198-31783a89da1f"
+    },
+    {
+      "active_skill_ids": [
+        "equipment_osint",
+        "capability_comparison",
+        "technology_readiness_analysis"
+      ],
+      "active_tool_names": [
+        "search_sources",
+        "fetch_page",
+        "create_evidence_card",
+        "extract_parameter_observation",
+        "normalize_equipment_variant",
+        "reconcile_parameter_conflict",
+        "assess_technology_readiness",
+        "compare_equipment_capability"
+      ],
+      "agent_id": "weapon_equipment",
+      "created_at": "2026-07-14T11:52:24.848029+00:00",
+      "domain_object_id": "equipment-packet-weapon_equipment",
+      "domain_object_type": "EquipmentObservation",
+      "error": "",
+      "handoff_summary": "武器装备围绕面向强干扰低空蜂群威胁的分布式预警制胜机理形成3条基线发现，并按交接策略输出给下游。",
+      "harness_profile": "equipment_research_v1",
+      "new_evidence_ids": [
+        "ev-weapon_equipment-1"
+      ],
+      "packet_id": "packet-weapon_equipment",
+      "schema_version": "1.0",
+      "session_path": "/Users/wangchen/equipment deep research/outputs/fake-harness-acceptance-v1/fake-harness-new/agent_sessions/weapon_equipment.jsonl",
+      "status": "completed",
+      "stop_reason": "quality_gates_passed",
+      "worker_report_id": "worker-report-ff617e37-afbe-4946-bdc4-3a2535490b8b"
+    },
+    {
+      "active_skill_ids": [
+        "operational_synthesis",
+        "coa_comparison",
+        "joint_force_coordination",
+        "lessons_transfer"
+      ],
+      "active_tool_names": [
+        "search_sources",
+        "fetch_page",
+        "create_evidence_card",
+        "map_task_capability",
+        "build_coordination_dependency",
+        "compare_coa",
+        "assess_sustainment_resilience",
+        "transfer_case_lesson"
+      ],
+      "agent_id": "operational_employment",
+      "created_at": "2026-07-14T11:52:24.853340+00:00",
+      "domain_object_id": "operational-packet-operational_employment",
+      "domain_object_type": "OperationalSynthesis",
+      "error": "",
+      "handoff_summary": "作战运用围绕面向强干扰低空蜂群威胁的分布式预警制胜机理形成3条基线发现，并按交接策略输出给下游。",
+      "harness_profile": "operational_synthesis_v1",
+      "new_evidence_ids": [
+        "ev-operational_employment-1"
+      ],
+      "packet_id": "packet-operational_employment",
+      "schema_version": "1.0",
+      "session_path": "/Users/wangchen/equipment deep research/outputs/fake-harness-acceptance-v1/fake-harness-new/agent_sessions/operational_employment.jsonl",
+      "status": "completed",
+      "stop_reason": "quality_gates_passed",
+      "worker_report_id": "worker-report-c0ca566d-7cbf-48ed-a7a0-df0dbdc7ad79"
+    }
+  ]
+}

@@ -1,0 +1,204 @@
+Title: FAQ – Space Development Agency
+
+URL Source: http://www.sda.mil/home/about-us/faq/
+
+Markdown Content:
+[Skip to content](http://www.sda.mil/home/about-us/faq/#fl-main-content)
+
+[Space Development Agency](https://www.sda.mil/ "Space Development Agency")
+
+![Image 1: SDA-Logo-01-1-300x156](https://www.sda.mil/wp-content/uploads/2024/05/SDA-Logo-01-1-300x156-3.png)
+
+*   [HOME](https://www.sda.mil/)
+*   [ABOUT](https://www.sda.mil/home/about-us/) 
+    *   [Who We Are](https://www.sda.mil/home/who-we-are/)
+    *   [Leadership](https://www.sda.mil/home/leadership/)
+    *   [FAQ](https://www.sda.mil/home/about-us/faq/)
+
+*   [WORK WITH US](https://www.sda.mil/home/work-with-us/) 
+    *   [Opportunities](https://www.sda.mil/opportunities/)
+    *   [Resources](https://www.sda.mil/home/work-with-us/resources/)
+    *   [Small Business](https://www.sda.mil/home/work-with-us/small-business/)
+
+*   [CAREERS](https://www.sda.mil/careers/)
+*   [ON ORBIT](https://www.sda.mil/on-orbit/)
+*   [NEWS](https://www.sda.mil/home/news/) 
+    *   [News Releases](https://www.sda.mil/home/news/news-releases/)
+
+![Image 2: SDA-Logo-01-1-300x156](https://www.sda.mil/wp-content/uploads/2024/05/SDA-Logo-01-1-300x156-3.png)
+
+*   [HOME](https://www.sda.mil/)
+*   [ABOUT](https://www.sda.mil/home/about-us/) 
+    *   [Who We Are](https://www.sda.mil/home/who-we-are/)
+    *   [Leadership](https://www.sda.mil/home/leadership/)
+    *   [FAQ](https://www.sda.mil/home/about-us/faq/)
+
+*   [WORK WITH US](https://www.sda.mil/home/work-with-us/) 
+    *   [Opportunities](https://www.sda.mil/opportunities/)
+    *   [Resources](https://www.sda.mil/home/work-with-us/resources/)
+    *   [Small Business](https://www.sda.mil/home/work-with-us/small-business/)
+
+*   [CAREERS](https://www.sda.mil/careers/)
+*   [ON ORBIT](https://www.sda.mil/on-orbit/)
+*   [NEWS](https://www.sda.mil/home/news/) 
+    *   [News Releases](https://www.sda.mil/home/news/news-releases/)
+
+### Frequently Asked Questions
+
+[What does SDA do?](http://www.sda.mil/home/about-us/faq/)[_Expand_](http://www.sda.mil/home/about-us/faq/)
+
+SDA contributes to the defense of our nation by designing and rapidly deploying the Proliferated Warfighter Space Architecture, a threat-driven constellation of small satellites that deliver critical services to our warfighters from space. Services include low-latency data transport integrated with tactical data links, tracking of advanced missile threats, custody of time-critical land and maritime targets, and space-based battle management, to name a few.
+
+[What does your motto semper citius mean?](http://www.sda.mil/home/about-us/faq/)[_Expand_](http://www.sda.mil/home/about-us/faq/)
+
+Latin for "always faster". SDA recognizes that good enough capabilities in the hands of the joint warfighter sooner may be better than delivering the perfect solution too late. Because of this, it means we as an agency accept a higher level of risk, employ novel business models, and move to develop and field capabilities more quickly than you might see in "traditional" government agencies. We believe this builds resiliency into our people and our product-the Proliferated Warfighter Space Architecture.
+
+When we say "semper citius", we mean that we are moving at or ahead of the speed of the threat because we know the joint warfighter is counting on us.
+
+[What do you mean when you say pLEO?](http://www.sda.mil/home/about-us/faq/)[_Expand_](http://www.sda.mil/home/about-us/faq/)
+
+pLEO stands for proliferated low Earth orbit. This means a constellation of many (hundreds or thousands, potentially) satellites orbiting at altitudes of less than 2000 km. Many current space-based military systems are orbiting further from the earth in orbits called medium Earth orbit (MEO) or geosynchronous Earth orbit (GEO).
+
+A proliferated architecture of small satellites allows for resilience by providing capabilities that are not compromised by disruption or defeat of a small number of assets. By employing such design principles as mesh networks, the Proliferated Warfighter Space Architecture (PWSA) is built to continue functioning in the event that individual nodes become unavailable. The satellites that comprise the PWSA are also smaller, cheaper, and quicker to deliver and replace than some of our exquisite defense space assets deployed in limited quantities.
+
+SDA's model relies on proliferation as a key tenet. And our initial architecture will be primarily in low Earth orbit.
+
+[Why low Earth orbit (LEO)?](http://www.sda.mil/home/about-us/faq/)[_Expand_](http://www.sda.mil/home/about-us/faq/)
+
+Low Earth orbit offers a number of benefits when compared to orbits of higher altitude, including less expensive orbit insertion, better viewing geometries for space-based earth observation, and lower latencies and power requirements for communications transmissions to terrestrial systems. For these reasons, there has also been an emergence of technology providers in the commercial sector seeking to deliver communications capabilities through satellite constellations in LEO. These are some of the reason why SDA will initially proliferate capabilities in LEO.
+
+[What is a Layer?](http://www.sda.mil/home/about-us/faq/)[_Expand_](http://www.sda.mil/home/about-us/faq/)
+
+A "layer" in SDA's Proliferated Warfighter Space Architecture is a particular function of the architecture that delivers or enables a warfighting capability. For instance, the Transport Layer will provide a mesh network comprised of communication satellites that connect to one another and to other space vehicles and ground stations via optical intersatellite links (OISLs). The Tracking Layer and Custody Layer provide sensing functions for advanced missile threats and time-critical land and maritime targets, and connect to the Transport Layer to provide threat indications and targeting data to our warfighters in real time.
+
+Not every layer will have a dedicated constellation of satellites. Some layers will deliver capabilities with sensors, processors or other technologies hosted on another layer's satellites. For instance, the Battle Management Layer will provide a software framework and processing capabilities that will be hosted on most or all of the PWSA satellites
+
+[What is a tranche and what is SDA's plan for the many "tranches"?](http://www.sda.mil/home/about-us/faq/)[_Expand_](http://www.sda.mil/home/about-us/faq/)
+
+A tranche is essentially one generation, or iteration, of SDA's Proliferated Warfighter Space Architecture.
+
+Tranche 0 (FY22) -_Warfighter immersion:_ Demonstrated the feasibility of a proliferated architecture in cost, schedule, and scalability towards necessary performance for beyond line of sight targeting and advanced missile detection and tracking.
+
+Tranche 1 (FY24) - _Initial warfighting capability:_ Regional persistence for Link 16, advanced missile detection, and beyond line of sight targeting plus demonstration of UHF and S-band tactical satellite communications.
+
+Tranche 2 (FY26) - _Enhanced warfighting capability:_ Global persistence for all in Tranche 1 plus demonstration of advanced tactical data link(s) and future proliferated missions.
+
+Tranche 3 (FY28) - _Sustained capability:_ Advanced improvements over Tranche 2 plus future warfighting applications. This includes better sensitivity and accuracy for missile tracking, better targeting capabilities for BLOS, additional PNT capabilities, advances in lasercom, tactical data links, and RF communications, and advancements in autonomous operations.
+
+Tranche 4 (FY30) - _Autonomous operations:_ Continual advances across the architecture.
+
+[What does spiral development mean?](http://www.sda.mil/home/about-us/faq/)[_Expand_](http://www.sda.mil/home/about-us/faq/)
+
+Spiral development is the process of incrementally delivering new capabilities. SDA is committed to delivering new defense space capabilities in two-year tranches - with each tranche improving upon the last - and informing the development of those capabilities with the latest available technology advancements and intelligence assessments. Spiraling also enables SDA plans and architecture designs to quickly pivot in response or even preemptively to advances in the threat.
+
+[What is an RFI? RFP? BAA?](http://www.sda.mil/home/about-us/faq/)[_Expand_](http://www.sda.mil/home/about-us/faq/)
+
+These are all mechanisms federal agencies use to solicit input from potential product, capability, and service providers. Some of them, like a Request for Information (RFI), seek industry feedback and do not result in a contract award. Others, like a Broad Agency Announcement (BAA) or Request for Proposals (RFP), are looking for prospective performers to submit various types of proposals to an evaluation process likely resulting in some number of contracts awarded.
+
+SDA is often limited in their capacity to answer specific questions following the publication of solicitations so as not to provide an unfair advantage to one bidder over another.
+
+[How is SDA currently aligned within DoD?](http://www.sda.mil/home/about-us/faq/)[_Expand_](http://www.sda.mil/home/about-us/faq/)
+
+The Space Development Agency became part of the U.S. Space Force on October 1, 2022. As a direct reporting unit in the USSF, SDA reports to the Assistant Secretary of the Air Force for Space Acquisition and Integration for acquisition matters and to the Chief of Space Operations for all other matters.
+
+SDA originally stood up in March 2019 under the Office of the Under Secretary of Defense for Research and Engineering as an independent defense agency with the understanding that it would eventually become part of the USSF.
+
+Independence, regardless of alignment, is critical for SDA to continue to be the Department's constructive disruptor for space, and to allow the agency to innovate, flourish, and deliver.
+
+[How is SDA different than SSC? Than DARPA? Than the Space Rapid Capabilities Office?](http://www.sda.mil/home/about-us/faq/)[_Expand_](http://www.sda.mil/home/about-us/faq/)
+
+SDA's focus is on delivering the Proliferated Warfighter Space Architecture (PWSA) on a two-year spiral development model beginning with our inaugural tranche in 2022.
+
+DARPA and the Space Rapid Capabilities Office work to develop leap-ahead technologies that might enable the capabilities brought to the warfighter through the PWSA. SDA works in partnership with these organizations to potentially transition their technologies into further development and fielding.
+
+Space Systems Command (SSC) works to deliver many of the space-based systems on which the joint warfighter relies today. SDA is working closely with SSC to ensure the PWSA complements those systems and shares common resources, such as ground architecture and launch services, where feasible.
+
+SDA programs are an integral part of the space architecture in areas such as communications, data transport, and missile warning and tracking. Within the USSF, SDA, Space Systems Command, and the Space Rapid Capabilities Office provide space capabilities critical to ensuring the resilient architecture needed to counter today's emerging threats.
+
+[When did SDA transfer to be a part of the U.S. Space Force?](http://www.sda.mil/home/about-us/faq/)[_Expand_](http://www.sda.mil/home/about-us/faq/)
+
+The Space Development Agency, responsible for rapid delivery of space-based capabilities to the joint warfighter, transferred to the U.S. Space Force, Oct. 1, 2022, as part of a planned realignment mandated by Congress in the National Defense Authorization Act.
+
+SDA brings a unique acquisition strategy focused on proliferation and spiral development that enables faster and cheaper capability delivery by designing and rapidly deploying a threat-driven constellation of small satellites. SDA aims to provide responsive and resilient space capabilities and support the joint force, increasing the warfighter's lethality, maneuverability, and survivability.
+
+[How does SDA plan to dispose of their satellites when they reach the end of their useful life? What about collision avoidance?](http://www.sda.mil/home/about-us/faq/)[_Expand_](http://www.sda.mil/home/about-us/faq/)
+
+SDA will practice responsible space traffic management to both orbit and deorbit safely and securely as required by national standards and international norms.
+
+[Do SDA satellites track American citizens from space?](http://www.sda.mil/home/about-us/faq/)[_Expand_](http://www.sda.mil/home/about-us/faq/)
+
+No. SDA strictly adheres to Department of Defense policy regarding Earth imaging that protects the privacy of U.S. citizens.
+
+[Does SDA work with international partners? How can international companies get involved in supporting the PWSA?](http://www.sda.mil/home/about-us/faq/)[_Expand_](http://www.sda.mil/home/about-us/faq/)
+
+SDA is looking for the best technology to support our warfighters and we will always chose the best performers to support that through our competitive process. SDA will work with our Allies where it is practical and makes sense to deliver the best capabilities to the warfighter.
+
+International partners, both industry and Government, can get involved in a variety of ways, including:
+
+*       *   flying sensors, other payloads and/or Optical Communication Terminals (OCTs) that meet SDA interoperability standards and provide critical warfighter capabilities,
+
+*       *   hosting optical or other ground terminal sites, interoperable with the PWSA, in support of their indigenous constellations,
+
+*       *   teaming with U.S. industry already participating in, or planning to participate in, the PWSA, and
+
+*       *   investing in systems, components, and technologies for proliferated Architectures which could prove of value to the PWSA in a future tranche.
+
+Any international partnership will be subject to specific security and data information sharing standards prior to fully engaging with SDA.
+
+[Why did the name of SDA's satellite constellation change?](http://www.sda.mil/home/about-us/faq/)[_Expand_](http://www.sda.mil/home/about-us/faq/)
+
+The Proliferated Warfighter Space Architecture (PWSA), formerly known as the "National Defense Space Architecture," was renamed to more specifically reflect the agency's mission to deliver needed space-based capabilities to the joint warfighter to support terrestrial missions through development, fielding, and operation of a proliferated low Earth orbit (pLEO) constellation of satellites.The spiral development and fielding of SDA's mesh network has matured successfully, but the constellations' original name did not accurately convey its current scope and purpose. The new name was the outcome of an internal process that included SDA staff, SDA leadership, and Department of the Air Force leadership. The new constellation name became effective January 23, 2023.
+
+The constellation name change will have no impact to the SDA mission. Leveraging speed, delivery, and agility, SDA will continue to quickly deliver needed space-based capabilities to the joint warfighter to support terrestrial missions through development, fielding, and operation of the PWSA.
+
+![Image 3](https://www.sda.mil/wp-content/plugins/bb-plugin/img/pixel.png)
+
+![Image 4: SDA-Logo-01](https://www.sda.mil/wp-content/uploads/2020/04/SDA-Logo-01.png)
+
+![Image 5: United_States_Department_of_Defense_Seal.124](https://www.sda.mil/wp-content/uploads/2020/04/United_States_Department_of_Defense_Seal.124.png)
+
+![Image 6: space force logo](https://www.sda.mil/wp-content/uploads/2022/10/space-force-logo.png)
+
+## Contact Us
+
+Space Development Agency
+
+1670 Air Force Pentagon
+
+Washington, DC 20330
+
+[Contact SDA via e-mail](mailto:USSF.SDA.Outreach@mail.mil)
+
+LinkedIn:[Space Development Agency](https://www.linkedin.com/company/space-development-agency)
+
+X: [@SemperCitiusSDA](https://twitter.com/sempercitiussda?lang=en)
+
+[For website issues contact](mailto:marysa.e.mullen.ctr@mail.mil):[Webmaster](mailto:marysa.e.mullen.ctr@mail.mil)
+
+## DoD Links
+
+[Defense.gov](https://www.defense.gov/)
+
+[U.S. Space Force](https://www.spaceforce.mil/)
+
+[Inspector General](https://www.afinspectorgeneral.af.mil/)
+
+[FOIA | Privacy | Section 508](https://www.compliance.af.mil/)
+
+[External Links Disclaimer](https://www.af.mil/Disclaimer/)
+
+* Content is being reviewed and removed to align with the President's executive orders and DOD priorities in accordance with DOD Instruction 5400.17, Official Use of Social Media for Public Affairs Purposes.
+
+## **About Us**
+
+Speed. Delivery. Agility.
+
+Recognized as the Department of Defense's constructive disruptor for space acquisition, the Space Development Agency will quickly deliver needed space-based capabilities to
+
+the joint warfighter to support terrestrial missions through development, fielding, and operation of the Proliferated Warfighter Space Architecture.
+
+[![Image 7: in logo](https://www.sda.mil/wp-content/uploads/2024/09/in-logo.png?resize=300,300)](https://www.linkedin.com/company/space-development-agency)
+
+[![Image 8: x logo](https://www.sda.mil/wp-content/uploads/2024/09/x-logo.png?w=300)](https://x.com/sempercitiussda?lang=en)
+
+[Scroll To Top](http://www.sda.mil/home/about-us/faq/#)

@@ -1,0 +1,38 @@
+{
+  "answer_chars": 12085,
+  "answer_sha256": "05522a75d935d82ccee9ad800a5c7db8b029c69843d8d43adc4700abe3c738c7",
+  "artifact_refs": [],
+  "citations": [],
+  "created_at": "2026-07-28T20:53:47.209605+00:00",
+  "dataset_id": "tactical-strike-frontiers-50-v1",
+  "duration_seconds": 157.186,
+  "estimated_cost": 0.0,
+  "mode": "real",
+  "model_snapshot": {
+    "base_url_host": "codexpro.wwxb1123.xyz",
+    "model": "gpt-5.5",
+    "protocol": "responses"
+  },
+  "query": "间歇通信条件下精打武器任务保持与任务续接研究",
+  "query_id": "Q-0004",
+  "query_sha256": "adee62016e787223d4c2079ff155141c06a8400ef97181aebb99b9b53b530d42",
+  "report_id": "BR-7f0bc20ed45d462d19d79f0c",
+  "report_path": "/Users/wangchen/equipment research/outputs/evals/baseline-reports/BR-7f0bc20ed45d462d19d79f0c/report.md",
+  "schema_version": "1.0",
+  "source_eval_id": "baseline-first20-three-layer-nine-20260729",
+  "sources": [],
+  "status": "completed",
+  "system_id": "bare_llm",
+  "usage": {
+    "input_tokens": 723,
+    "input_tokens_details": {
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "output_tokens": 8570,
+    "output_tokens_details": {
+      "reasoning_tokens": 306
+    },
+    "total_tokens": 9293
+  }
+}

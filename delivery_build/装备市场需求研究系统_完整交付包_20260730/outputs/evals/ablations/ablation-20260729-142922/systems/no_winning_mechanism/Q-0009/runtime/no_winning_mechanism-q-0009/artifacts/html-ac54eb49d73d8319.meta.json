@@ -1,0 +1,15 @@
+{
+  "artifact_ref": "html:ac54eb49d73d8319",
+  "connect_ip": "198.18.2.122",
+  "content_path": "html-ac54eb49d73d8319.html",
+  "content_type": "text/html; charset=UTF-8",
+  "encoding": null,
+  "evidence_id": "ev-combat_scenario-web-06d26c44006f",
+  "fetch_cache_hit": false,
+  "final_url": "https://www.sda.mil/home/about-us/faq/",
+  "kind": "html",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "ac54eb49d73d83190d85ed64bb5a70c1ec2c67aaba480e99db59dde3fe56538f",
+  "url": "https://www.sda.mil/home/about-us/faq/"
+}

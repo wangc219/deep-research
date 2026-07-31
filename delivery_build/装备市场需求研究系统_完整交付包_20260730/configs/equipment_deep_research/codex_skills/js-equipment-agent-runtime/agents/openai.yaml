@@ -1,0 +1,7 @@
+interface:
+  display_name: "JS装备专用Agent运行时"
+  short_description: "按角色Skill、受治理Tool和Harness循环执行装备需求研究"
+  default_prompt: "使用 $js-equipment-agent-runtime 严格执行输入中的 agent_runtime 角色契约。"
+
+policy:
+  allow_implicit_invocation: false

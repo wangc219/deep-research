@@ -1,0 +1,110 @@
+{
+  "schema": "ppt-master.svg-quality-report.v1",
+  "stage": "first-page",
+  "target": "/Users/wangchen/equipment research/projects/js_equipment_client_report_20260722_ppt169_20260722",
+  "source_fingerprint": {
+    "algorithm": "sha256",
+    "digest": "c71d7544189b2de41cc5451abf7fbad6523a48c257929610cb7f3b14913180d7",
+    "file_count": 1,
+    "files": [
+      {
+        "file": "01_cover.svg",
+        "sha256": "321e9ed43b74b763b28f019266e2c1af6ac62ef5fdd737d17d7c599c950f913f"
+      }
+    ]
+  },
+  "summary": {
+    "total": 1,
+    "passed": 1,
+    "warnings": 0,
+    "errors": 0
+  },
+  "issue_types": {},
+  "categories": {
+    "blocking": {
+      "count": 0,
+      "issues": []
+    },
+    "introduced": {
+      "count": 0,
+      "issues": []
+    },
+    "inherited": {
+      "count": 0,
+      "issues": []
+    },
+    "source-import": {
+      "count": 0,
+      "summary": {
+        "warning_count": 0,
+        "by_code": {}
+      }
+    }
+  },
+  "drift": {
+    "colors": {
+      "#8FB7C9": [
+        "01_cover.svg"
+      ],
+      "#8FD0DB": [
+        "01_cover.svg"
+      ],
+      "#DDEAF2": [
+        "01_cover.svg"
+      ]
+    },
+    "fonts": {
+      "Arial, 'Microsoft YaHei', sans-serif": [
+        "01_cover.svg"
+      ],
+      "Arial, sans-serif": [
+        "01_cover.svg"
+      ],
+      "Georgia, 'Noto Serif CJK SC', 'Songti SC', serif": [
+        "01_cover.svg"
+      ]
+    },
+    "sizes": {}
+  },
+  "project_issues": {
+    "template": [],
+    "animation": [],
+    "illustration": [],
+    "communication_trace": [],
+    "pptx_structure": []
+  },
+  "files": [
+    {
+      "file": "01_cover.svg",
+      "path": "/Users/wangchen/equipment research/projects/js_equipment_client_report_20260722_ppt169_20260722/svg_output/01_cover.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [],
+      "info": {
+        "viewbox": "0 0 1280 720",
+        "fonts": [
+          "Arial, 'Microsoft YaHei', 'PingFang SC', sans-serif",
+          "Arial, 'Microsoft YaHei', sans-serif",
+          "Arial, sans-serif",
+          "Georgia, 'Noto Serif CJK SC', 'Songti SC', serif"
+        ],
+        "text_elements": 8,
+        "tspan_elements": 2,
+        "contextual_values": {
+          "colors": [
+            "#8FB7C9",
+            "#8FD0DB",
+            "#DDEAF2"
+          ],
+          "font_families": [
+            "Arial, 'Microsoft YaHei', sans-serif",
+            "Arial, sans-serif",
+            "Georgia, 'Noto Serif CJK SC', 'Songti SC', serif"
+          ]
+        }
+      },
+      "passed": true,
+      "source_sha256": "321e9ed43b74b763b28f019266e2c1af6ac62ef5fdd737d17d7c599c950f913f"
+    }
+  ]
+}

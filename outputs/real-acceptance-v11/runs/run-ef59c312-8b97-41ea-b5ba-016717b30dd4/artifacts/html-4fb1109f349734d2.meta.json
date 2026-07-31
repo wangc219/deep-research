@@ -1,0 +1,14 @@
+{
+  "artifact_ref": "html:4fb1109f349734d2",
+  "connect_ip": "198.18.1.175",
+  "content_path": "html-4fb1109f349734d2.html",
+  "content_type": "text/html;charset=utf-8",
+  "encoding": null,
+  "evidence_id": "ev-international_situation-web-49f2eb1a8e44",
+  "final_url": "https://www.nato.int/en/multimedia/multimedia/videos/2025/12/09/nato-and-the-us-army-demonstrate-low-cost-counter-uas-system-to-protect-nato-airspace",
+  "kind": "html",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "4fb1109f349734d20172f85f9d2283a700797b84a40608554d96fca6e4d0f876",
+  "url": "https://www.nato.int/en/multimedia/multimedia/videos/2025/12/09/nato-and-the-us-army-demonstrate-low-cost-counter-uas-system-to-protect-nato-airspace"
+}

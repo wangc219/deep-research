@@ -1,0 +1,73 @@
+[1] MODERNIZING THE MILITARY'S SPACE ARCHITECTURE
+
+[2] The Space Development Agency orchestrates the development and fielding of DoD's future threat-driven National Defense Space Architecture. SDA uses novel approaches to accelerate the military space capabilities necessary to ensure U.S. technological and military advantage in space for national defense.
+
+[3] CAPABILITY LAYERS
+
+[4] TRANSPORT LAYER
+
+[5] SDA's Transport Layer will provide assured, resilient, low-latency military data and communications connectivity worldwide to a full range of warfighter platforms.
+
+[6] BATTLE MANAGEMENT LAYER
+
+[7] SDA's Battle Management Layer will provide architecture tasking, mission command and control, and data dissemination to support time-sensitive kill chain closure at campaign scales.
+
+[8] TRACKING LAYER
+
+[9] SDA's Tracking Layer will provide global indications, warning, tracking, and targeting of advanced missile threats, including hypersonic missile systems.
+
+[10] CUSTODY LAYER
+
+[11] SDA's Custody Layer will provide 24/7, all-weather custody of time-sensitive, left-of-launch surface mobile targets to support targeting for advanced weapons.
+
+[12] EMERGING CAPABILITIES (DETERRENCE) LAYER
+
+[13] SDA's Emerging Capabilities Layer will incubate new mission concepts. Initial focus will be to deter hostile action in deep space (beyond Geosynchronous Earth Orbit (GEO) up to lunar distances).
+
+[14] NAVIGATION LAYER
+
+[15] SDA's Navigation Layer will provide alternate positioning, navigation, and timing (PNT) for Global Positioning System (GPS)-denied environments.
+
+[16] SUPPORT LAYER
+
+[17] SDA's Support Layer will enable ground and launch segments to support a responsive space architecture.
+
+[18] Space Development Agency Successfully Completes Third Launch of Tranche 1 Satellites
+
+[19] More than 60 data transport Tranche 1 satellites now on orbit for Proliferated Warfighter Space Architecture July 16, 2026 WASHINGTON, D.C. – The Space Development Agency (SDA) today announced the third successful launch of the Tranche 1 (T1) satellites for the Proliferated Warfighter Space Architecture (PWSA) from Space Launch Complex 4 East at Vandenberg Space…
+
+[20] Space Development Agency Issues Awards to Build 36 Accelerated Missile Defense Tracking Layer Satellites for Tranche 3 in Support of Golden Dome for America
+
+[21] Acceleration of missile warning/missile tracking and missile defense capabilities for Tracking Layer July 13, 2026 WASHINGTON, D.C. – The Space Development Agency (SDA), in support of the U.S. Space Force Portfolio Acquisition Executive for Missile Warning and Tracking, today announced the award of two agreements, with a total value of approximately $1.75 billion, to field…
+
+[22] Space Development Agency Director and Portfolio Acquisition Executive for Missile Warning and Tracking Announced
+
+[23] May 19, 2026 WASHINGTON, DC – The Space Development Agency (SDA) today announced selection of Dr. Gurpartap “GP” Sandhoo as the director of the agency, where he continues to lead the strategic direction and portfolio execution for acquisition and delivery of Tranche 1 & 2 of the Proliferated Warfighter Space Architecture (PWSA). Sandhoo has also…
+
+[24] SDA Makes Second HALO Europa Award
+
+[25] April 7, 2026 HALO Europa Track 1 Acquisition To Demonstrate Advanced Next-Generation Tactical Space Communications WASHINGTON, D.C. – The Space Development Agency (SDA) today announced it has awarded a prototype agreement under the Hybrid Acquisition for Proliferated Low Earth Orbit, or HALO, Europa Track 1 solicitation to Capella, an IonQ company, based in San Francisco,…
+
+[26] Space Development Agency, Proliferated Warfighter Space Architecture (PWSA) Systems, Technologies, and Emerging Capabilities (STEC) Broad Agency Announcement
+
+[27] Posted On: March 4, 2026 Original Date Offers Due: March 3, 2027 SDA has released an updated Systems, Technologies, and Emerging Capabilities (STEC) Broad Agency Announcement (BAA) to advance the Proliferated Warfighter Space Architecture (PWSA). SDA is soliciting executive summaries, invited proposal abstracts, and proposals for novel architecture concepts, systems, technologies, and capabilities that enable…
+
+[28] SDA Makes HALO Europa Award
+
+[29] Feb. 23, 2026 Initial HALO Europa Acquisition To Demonstrate Commercial TACSATCOM WASHINGTON, D.C. – The Space Development Agency (SDA) today announced it has awarded a $30 million prototype agreement for the first commercial solutions program under the Hybrid Acquisition for Proliferated Low Earth Orbit, or HALO, Europa Track 2 solicitation to AST SpaceMobile, Inc., Midland,…
+
+[30] SDA Issues Request for Information for Future Space-To-Air Optical Communication Terminals
+
+[31] Posted On: January 28, 2026 Response Date: February 27, 2026 Space Development Agency (SDA) today published a request for information (RFI) seeking industry solutions for airborne optical communication terminals. This initiative aims to equip aircraft with the ability to connect directly to SDA’s Proliferated Warfighter Space Architecture (PWSA), a resilient network of satellites in low…
+
+[32] Space Development Agency Makes Awards to Build 72 Tracking Layer Satellites for Tranche 3
+
+[33] Date: Dec. 19, 2025 Tracking Layer Tranche 3 expands upon missile warning/missile tracking and missile defense capabilities deployed in Tranches 1 and 2 WASHINGTON, D.C. – The Space Development Agency (SDA) today announced the award of four agreements, with a total value of approximately $3.5 billion, to build 72 Tracking Layer satellites to proliferate missile…
+
+[34] Space Development Agency Completes Successful Launch of First Tranche 1 Satellites
+
+[35] Photo credit: SpaceX
+
+[36] Acting Director Announced for Space Development Agency
+
+[37] Sept. 8, 2025 WASHINGTON, DC – The Space Development Agency (SDA) today announced the selection of Dr. Gurpartap “GP” Sandhoo as the acting director of SDA, where he will lead the strategic direction and program execution for acquisition, delivery, and operations of the Proliferated Warfighter Space Architecture (PWSA). Sandhoo, most recently the agency’s deputy director,…

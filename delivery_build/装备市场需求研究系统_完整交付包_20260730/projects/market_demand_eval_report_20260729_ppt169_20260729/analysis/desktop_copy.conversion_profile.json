@@ -1,0 +1,28 @@
+{
+  "schema": "ppt-master.source_to_md.profile.v1",
+  "converter": "ppt_to_md.py",
+  "conversion_type": "pptx",
+  "source": {
+    "path": "/Users/wangchen/Desktop/副本市场需求发散要求落实与评测汇报_增强版_20260729.pptx",
+    "name": "副本市场需求发散要求落实与评测汇报_增强版_20260729.pptx",
+    "suffix": ".pptx",
+    "kind": "file",
+    "exists": true,
+    "size_bytes": 938841
+  },
+  "outputs": {
+    "markdown": "desktop_copy.md",
+    "asset_dir": "desktop_copy_files",
+    "image_manifest": "desktop_copy_files/image_manifest.json",
+    "image_count": 8
+  },
+  "markdown": {
+    "line_count": 896,
+    "char_count": 7760,
+    "heading_count": 39,
+    "table_count": 0,
+    "image_ref_count": 11,
+    "link_count": 0
+  },
+  "warnings": []
+}

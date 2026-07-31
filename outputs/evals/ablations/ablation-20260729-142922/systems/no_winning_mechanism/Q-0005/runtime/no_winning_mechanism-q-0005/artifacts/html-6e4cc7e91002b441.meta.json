@@ -1,0 +1,15 @@
+{
+  "artifact_ref": "html:6e4cc7e91002b441",
+  "connect_ip": "198.18.2.99",
+  "content_path": "html-6e4cc7e91002b441.html",
+  "content_type": "text/html;charset=utf-8",
+  "encoding": null,
+  "evidence_id": "ev-combat_scenario-web-2d2daa3dc2aa",
+  "fetch_cache_hit": true,
+  "final_url": "https://www.nato.int/en/about-us/official-texts-and-resources/official-texts/2025/05/05/data-strategy-for-the-alliance",
+  "kind": "html",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "6e4cc7e91002b44130294b617917da35e52c4811e44694e06184bfc0b12f7b2f",
+  "url": "https://www.nato.int/en/about-us/official-texts-and-resources/official-texts/2025/05/05/data-strategy-for-the-alliance"
+}

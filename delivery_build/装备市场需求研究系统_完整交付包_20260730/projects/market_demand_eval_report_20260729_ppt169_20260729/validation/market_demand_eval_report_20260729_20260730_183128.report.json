@@ -1,0 +1,300 @@
+{
+  "schema": "ppt-master.pptx-postflight-report.v1",
+  "status": "passed-with-warnings",
+  "output": {
+    "path": "/Users/wangchen/equipment research/projects/market_demand_eval_report_20260729_ppt169_20260729/exports/market_demand_eval_report_20260729_20260730_183128.pptx",
+    "bytes": 642848
+  },
+  "source": {
+    "svg_slide_count": 23,
+    "layout_definition_count": 0,
+    "fingerprint": {
+      "algorithm": "sha256",
+      "digest": "23bd24c06df79c0551192951597a68154ca27f59498417c160f992d31d13aa80",
+      "file_count": 23,
+      "files": [
+        {
+          "file": "01_市场需求发散要求落实与评测汇报.svg",
+          "sha256": "84093ec30a057fc675af4e47fb167e056adfe46c57a502886ca1752552128dda"
+        },
+        {
+          "file": "02_核心结论.svg",
+          "sha256": "12d9b265ab9e0b9542417981b918e3e578980e1167b66ad3be4c239d497fb952"
+        },
+        {
+          "file": "03_原始需求拆解.svg",
+          "sha256": "babce1c2903bb5c4b6be5f69e5187f8aed2fd0b1d0a1f3e348af089fe52c1917"
+        },
+        {
+          "file": "04_发散问题工程化落实.svg",
+          "sha256": "ab7d04fbd63ca5dc785215a207517d1bb4784f48236140598d26ca2534ac2a92"
+        },
+        {
+          "file": "05_分类提问路由.svg",
+          "sha256": "14d134b35a607916347f52d608117c70ca732bc00ea8c51bf603dc061a7c3de1"
+        },
+        {
+          "file": "06_颠覆型提问种子卡.svg",
+          "sha256": "52e5697693513dff9947b75f21e873197766b7e833d391ee8acd4c94fc389118"
+        },
+        {
+          "file": "07_发散要求落实矩阵.svg",
+          "sha256": "e612092fe7b98e9d5845b56ebffc81513e2c304971656fd6c357f505368a1386"
+        },
+        {
+          "file": "08_项目主链已形成闭环.svg",
+          "sha256": "c604ad6be583462109eb8d7b3462a9dfd25a6aed2b9c7eddf6d634fdfee30c8c"
+        },
+        {
+          "file": "09_三层九项合同.svg",
+          "sha256": "b49136faad34fd6f81ee292cfb56db4dfbd4c3acedac081347ac5c43a4c03a7d"
+        },
+        {
+          "file": "10_前端效果总览.svg",
+          "sha256": "b2fbb68b0cd1e363ed345861ded99f83946fe1707b1c673e31e1c057d0c7c618"
+        },
+        {
+          "file": "11_交互过程可审计.svg",
+          "sha256": "8ea953ac82e65194f8cd8f900529ba42614523fcdc85da764168a8d2c5189919"
+        },
+        {
+          "file": "12_能力画像效果.svg",
+          "sha256": "5711b3cd8e6c573e94995ef04623c51531700fd04192e6732f5e923dd5f2b7c7"
+        },
+        {
+          "file": "13_研究报告效果.svg",
+          "sha256": "dfba728b77c79db25bd5d671f514541af45dc087d7e3fe1c8fd739d15c2086db"
+        },
+        {
+          "file": "14_Benchmark测试思路.svg",
+          "sha256": "d9bb7fc335c2c63c8f7919bf2818faee24cdc53d5a676781a0d3b87a12a377ca"
+        },
+        {
+          "file": "15_从五项要求到八维评测标准.svg",
+          "sha256": "4b19266a17dea51c269967aab6bde4f1c5d68633633cb24674dd17b8006d2b9a"
+        },
+        {
+          "file": "16_Benchmark总结果.svg",
+          "sha256": "b8250d3e130c8d72194026441ee7d896e97031cf40fd05b95c54f0bf13392687"
+        },
+        {
+          "file": "17_对通用Agent的八维票型.svg",
+          "sha256": "b05770ce274703216434b240fd7ccf716fec17b4e385662c3ca2558ea2d7d986"
+        },
+        {
+          "file": "18_对纯LLM的八维票型.svg",
+          "sha256": "5af13c550553086208e526baaad2aef7e7542c73fa05783a1f9654da6af3f5f9"
+        },
+        {
+          "file": "19_对智谱GLM的八维票型.svg",
+          "sha256": "d7bd3126aa8a728de5f05d8c3d5425683d07b0fcffe00db24354e60b6b30b83a"
+        },
+        {
+          "file": "20_Benchmark结果结论.svg",
+          "sha256": "5852ad2a1dba74bcfd69c9a0176fc239bdff4fd408787d83d29593e48bacc43d"
+        },
+        {
+          "file": "21_消融实验设计.svg",
+          "sha256": "f924bb3749f2269b7abe31dc35ed469e49e28868ad11e742f1e69478bedb3f1c"
+        },
+        {
+          "file": "22_合并后消融实验结果.svg",
+          "sha256": "07e13469c69423a31b92738214cbe6d184f1bd239ad25b4b89e3cf2a89da97f4"
+        },
+        {
+          "file": "23_下一阶段建议.svg",
+          "sha256": "3b308d72fbef6088bc01b558b60eadbc861aa9825387cc1c0aa18cd0224526a9"
+        }
+      ]
+    }
+  },
+  "package": {
+    "zip_integrity": "passed",
+    "corrupt_member": null,
+    "slides": 23,
+    "notes": 23,
+    "masters": 1,
+    "layouts": 1
+  },
+  "checks": {
+    "zip_integrity": "passed",
+    "slide_count": "passed",
+    "internal_relationships": "enforced-at-build",
+    "structured_package": "not-applicable",
+    "transitions": "enforced-at-build",
+    "animations": "enforced-at-build",
+    "quality_gate": "passed",
+    "quality_warnings": "warning",
+    "template_tokens": "passed",
+    "external_images": "passed",
+    "font_portability": "passed"
+  },
+  "quality": {
+    "status": "loaded",
+    "path": "/Users/wangchen/equipment research/projects/market_demand_eval_report_20260729_ppt169_20260729/validation/svg_quality_report.json",
+    "schema": "ppt-master.svg-quality-report.v1",
+    "stage": "final",
+    "source_match": "passed",
+    "source_fingerprint": {
+      "algorithm": "sha256",
+      "digest": "23bd24c06df79c0551192951597a68154ca27f59498417c160f992d31d13aa80",
+      "file_count": 23,
+      "files": [
+        {
+          "file": "01_市场需求发散要求落实与评测汇报.svg",
+          "sha256": "84093ec30a057fc675af4e47fb167e056adfe46c57a502886ca1752552128dda"
+        },
+        {
+          "file": "02_核心结论.svg",
+          "sha256": "12d9b265ab9e0b9542417981b918e3e578980e1167b66ad3be4c239d497fb952"
+        },
+        {
+          "file": "03_原始需求拆解.svg",
+          "sha256": "babce1c2903bb5c4b6be5f69e5187f8aed2fd0b1d0a1f3e348af089fe52c1917"
+        },
+        {
+          "file": "04_发散问题工程化落实.svg",
+          "sha256": "ab7d04fbd63ca5dc785215a207517d1bb4784f48236140598d26ca2534ac2a92"
+        },
+        {
+          "file": "05_分类提问路由.svg",
+          "sha256": "14d134b35a607916347f52d608117c70ca732bc00ea8c51bf603dc061a7c3de1"
+        },
+        {
+          "file": "06_颠覆型提问种子卡.svg",
+          "sha256": "52e5697693513dff9947b75f21e873197766b7e833d391ee8acd4c94fc389118"
+        },
+        {
+          "file": "07_发散要求落实矩阵.svg",
+          "sha256": "e612092fe7b98e9d5845b56ebffc81513e2c304971656fd6c357f505368a1386"
+        },
+        {
+          "file": "08_项目主链已形成闭环.svg",
+          "sha256": "c604ad6be583462109eb8d7b3462a9dfd25a6aed2b9c7eddf6d634fdfee30c8c"
+        },
+        {
+          "file": "09_三层九项合同.svg",
+          "sha256": "b49136faad34fd6f81ee292cfb56db4dfbd4c3acedac081347ac5c43a4c03a7d"
+        },
+        {
+          "file": "10_前端效果总览.svg",
+          "sha256": "b2fbb68b0cd1e363ed345861ded99f83946fe1707b1c673e31e1c057d0c7c618"
+        },
+        {
+          "file": "11_交互过程可审计.svg",
+          "sha256": "8ea953ac82e65194f8cd8f900529ba42614523fcdc85da764168a8d2c5189919"
+        },
+        {
+          "file": "12_能力画像效果.svg",
+          "sha256": "5711b3cd8e6c573e94995ef04623c51531700fd04192e6732f5e923dd5f2b7c7"
+        },
+        {
+          "file": "13_研究报告效果.svg",
+          "sha256": "dfba728b77c79db25bd5d671f514541af45dc087d7e3fe1c8fd739d15c2086db"
+        },
+        {
+          "file": "14_Benchmark测试思路.svg",
+          "sha256": "d9bb7fc335c2c63c8f7919bf2818faee24cdc53d5a676781a0d3b87a12a377ca"
+        },
+        {
+          "file": "15_从五项要求到八维评测标准.svg",
+          "sha256": "4b19266a17dea51c269967aab6bde4f1c5d68633633cb24674dd17b8006d2b9a"
+        },
+        {
+          "file": "16_Benchmark总结果.svg",
+          "sha256": "b8250d3e130c8d72194026441ee7d896e97031cf40fd05b95c54f0bf13392687"
+        },
+        {
+          "file": "17_对通用Agent的八维票型.svg",
+          "sha256": "b05770ce274703216434b240fd7ccf716fec17b4e385662c3ca2558ea2d7d986"
+        },
+        {
+          "file": "18_对纯LLM的八维票型.svg",
+          "sha256": "5af13c550553086208e526baaad2aef7e7542c73fa05783a1f9654da6af3f5f9"
+        },
+        {
+          "file": "19_对智谱GLM的八维票型.svg",
+          "sha256": "d7bd3126aa8a728de5f05d8c3d5425683d07b0fcffe00db24354e60b6b30b83a"
+        },
+        {
+          "file": "20_Benchmark结果结论.svg",
+          "sha256": "5852ad2a1dba74bcfd69c9a0176fc239bdff4fd408787d83d29593e48bacc43d"
+        },
+        {
+          "file": "21_消融实验设计.svg",
+          "sha256": "f924bb3749f2269b7abe31dc35ed469e49e28868ad11e742f1e69478bedb3f1c"
+        },
+        {
+          "file": "22_合并后消融实验结果.svg",
+          "sha256": "07e13469c69423a31b92738214cbe6d184f1bd239ad25b4b89e3cf2a89da97f4"
+        },
+        {
+          "file": "23_下一阶段建议.svg",
+          "sha256": "3b308d72fbef6088bc01b558b60eadbc861aa9825387cc1c0aa18cd0224526a9"
+        }
+      ]
+    },
+    "summary": {
+      "total": 23,
+      "passed": 19,
+      "warnings": 4,
+      "errors": 0
+    },
+    "categories": {
+      "blocking": {
+        "count": 0,
+        "issues": []
+      },
+      "introduced": {
+        "count": 4,
+        "issues": [
+          {
+            "file": "02_核心结论.svg",
+            "message": "Detected 1 paragraph-like line run(s) split across sibling <text> elements (<g id=\"card-implementation\"> x=92.0, y=346.0..422.0, 3 lines). If each run is one prose paragraph, combine it into one <text>: keep its first line as direct text and use direct <tspan> children with the parent x and positive relative dy values for later lines. An all-<tspan> form may start with dy=\"0\". Keep semantically independent text frames separate."
+          },
+          {
+            "file": "07_发散要求落实矩阵.svg",
+            "message": "Detected 3 paragraph-like line run(s) split across sibling <text> elements (<g id=\"three-layer-matrix\"> x=108.0, y=302.0..328.0, 2 lines; <g id=\"three-layer-matrix\"> x=340.0, y=302.0..328.0, 2 lines; <g id=\"three-layer-matrix\"> x=596.0, y=302.0..328.0, 2 lines). If each run is one prose paragraph, combine it into one <text>: keep its first line as direct text and use direct <tspan> children with the parent x and positive relative dy values for later lines. An all-<tspan> form may start with dy=\"0\". Keep semantically independent text frames separate."
+          },
+          {
+            "file": "21_消融实验设计.svg",
+            "message": "Detected 1 paragraph-like line run(s) split across sibling <text> elements (<g id=\"experiment-notes\"> x=92.0, y=614.0..650.0, 2 lines). If each run is one prose paragraph, combine it into one <text>: keep its first line as direct text and use direct <tspan> children with the parent x and positive relative dy values for later lines. An all-<tspan> form may start with dy=\"0\". Keep semantically independent text frames separate."
+          },
+          {
+            "file": "23_下一阶段建议.svg",
+            "message": "Detected 3 paragraph-like line run(s) split across sibling <text> elements (<g id=\"work-package-1\"> x=64.0, y=390.0..474.0, 3 lines; <g id=\"work-package-2\"> x=470.0, y=390.0..474.0, 3 lines; <g id=\"work-package-3\"> x=876.0, y=390.0..474.0, 3 lines). If each run is one prose paragraph, combine it into one <text>: keep its first line as direct text and use direct <tspan> children with the parent x and positive relative dy values for later lines. An all-<tspan> form may start with dy=\"0\". Keep semantically independent text frames separate."
+          }
+        ]
+      },
+      "inherited": {
+        "count": 0,
+        "issues": []
+      },
+      "source-import": {
+        "count": 0,
+        "summary": {
+          "warning_count": 0,
+          "by_code": {}
+        }
+      }
+    }
+  },
+  "resources": {
+    "unresolved_template_tokens": [],
+    "fonts": {
+      "stacks": [
+        "Arial, PingFang SC, Microsoft YaHei, sans-serif",
+        "PingFang SC, Arial, Microsoft YaHei, sans-serif"
+      ],
+      "generic_only_stacks": []
+    },
+    "images": {
+      "data_uri": 0,
+      "local": 10,
+      "external": 0,
+      "external_references": []
+    }
+  },
+  "backup_path": "/Users/wangchen/equipment research/projects/market_demand_eval_report_20260729_ppt169_20260729/backup/20260730_183128/svg_output",
+  "conversion_trace_path": null
+}

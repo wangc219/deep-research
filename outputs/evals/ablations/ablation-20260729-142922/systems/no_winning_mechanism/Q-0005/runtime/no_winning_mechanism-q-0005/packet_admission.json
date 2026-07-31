@@ -1,0 +1,64 @@
+[
+  {
+    "accepted_claim_ids": [
+      "claim-6f5fa5da7a20",
+      "claim-6f9d4299daa8",
+      "claim-32182ad8fa9d",
+      "claim-b68db26b2ae2",
+      "claim-575766fc71fe"
+    ],
+    "incremental_value": 1.0,
+    "packet_id": "packet-operational_employment",
+    "reasons": [],
+    "rejected_claim_ids": [],
+    "scores": {
+      "claim_evidence_match": 1.0,
+      "incremental_value": 1.0,
+      "source_quality": 0.8,
+      "task_relevance": 1.0,
+      "upstream_acceptance": 1.0
+    },
+    "status": "accepted"
+  },
+  {
+    "accepted_claim_ids": [
+      "claim-d394d97905a0",
+      "claim-f642178a0056",
+      "claim-0f400f552d39",
+      "claim-5eeb00f74339",
+      "claim-6ba994fea34b"
+    ],
+    "incremental_value": 1.0,
+    "packet_id": "packet-combat_scenario",
+    "reasons": [],
+    "rejected_claim_ids": [],
+    "scores": {
+      "claim_evidence_match": 1.0,
+      "incremental_value": 1.0,
+      "source_quality": 0.8,
+      "task_relevance": 1.0,
+      "upstream_acceptance": 1.0
+    },
+    "status": "accepted"
+  },
+  {
+    "accepted_claim_ids": [
+      "claim-8daa1603e10f",
+      "claim-73922bf65b09",
+      "claim-2adb7447959c",
+      "claim-a0d202edba1e"
+    ],
+    "incremental_value": 1.0,
+    "packet_id": "packet-weapon_equipment",
+    "reasons": [],
+    "rejected_claim_ids": [],
+    "scores": {
+      "claim_evidence_match": 1.0,
+      "incremental_value": 1.0,
+      "source_quality": 0.8,
+      "task_relevance": 1.0,
+      "upstream_acceptance": 1.0
+    },
+    "status": "accepted"
+  }
+]

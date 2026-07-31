@@ -1,0 +1,475 @@
+[
+  {
+    "bundle_id": "claims-978ac9dc8329",
+    "claims": [
+      {
+        "claim_id": "claim-6f5fa5da7a20",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "公开概念强调分布式、低特征和前沿持续存在，但分布式节点一旦通信、发射或补给暴露，其生存性可能低于集中式高价值平台，必须以低特征、机动、反无人和替补节点抵消该矛盾。",
+          "低成本可消耗系统强调规模和成本优势，但在强电子战与廉价反无人体系下可能快速失效；其价值应限定为侦察、诱饵、中继、软目标压制和毁伤评估，而非独立承担重防护目标歼灭。",
+          "多源融合可提高目标置信度，但也可能因诱饵、数据延迟和算法误判形成更具迷惑性的共同态势图；必须保留目标置信度追溯、人在回路和毁伤评估回灌。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-5824f31b34e3",
+          "ev-operational_employment-web-6c1c84a0e24e",
+          "ev-operational_employment-web-bc1c2e8c3176",
+          "ev-operational_employment-web-5fae80c02f40"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+          "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "https://www.gao.gov/products/gao-25-106454"
+        ],
+        "text": "判断：多源异构信息融合精确打击的核心瓶颈不在单一传感器或弹药性能，而在“发现-识别-授权-火力分配-毁伤评估-保障续接”任务闭环能否在强干扰、诱饵和节点战损下持续运行。军事任务价值：提升时间敏感目标打击、对海/对陆拒止、关键节点压制和再打击可靠性。证据边界：公开资料可支撑任务级能力结构判断，但不能支撑具体命中率、闭环秒级时延或抗干扰实测参数。失效条件：数据源权限割裂、时间戳不一致、目标置信度不可追溯或授权链过长时，融合系统会退化为态势显示，无法稳定形成可打击目标。"
+      },
+      {
+        "claim_id": "claim-6f9d4299daa8",
+        "claim_type": "hypothesis",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "公开概念强调分布式、低特征和前沿持续存在，但分布式节点一旦通信、发射或补给暴露，其生存性可能低于集中式高价值平台，必须以低特征、机动、反无人和替补节点抵消该矛盾。",
+          "低成本可消耗系统强调规模和成本优势，但在强电子战与廉价反无人体系下可能快速失效；其价值应限定为侦察、诱饵、中继、软目标压制和毁伤评估，而非独立承担重防护目标歼灭。",
+          "多源融合可提高目标置信度，但也可能因诱饵、数据延迟和算法误判形成更具迷惑性的共同态势图；必须保留目标置信度追溯、人在回路和毁伤评估回灌。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-5824f31b34e3",
+          "ev-operational_employment-web-6c1c84a0e24e",
+          "ev-operational_employment-web-bc1c2e8c3176",
+          "ev-operational_employment-web-5fae80c02f40"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+          "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "https://www.gao.gov/products/gao-25-106454"
+        ],
+        "text": "判断：主推荐COA应为分布式杀伤网与前沿低特征节点，高端平台、前沿节点、无人/可消耗系统和保障单元按任务链分工，而非由高价值平台集中承担全流程。军事任务价值：在前沿压制、基地受扰和链路间歇条件下维持局部快速闭环，增强拒止、压制和持续打击能力。证据边界：EABO/Force Design公开概念支持分布式、低特征、可持续前沿运用方向，但不证明任一具体编成在高烈度实战中的存活率。失效条件：前沿节点若因通信、发射、补给或电磁特征暴露，且缺少反无人、防空和替补节点，将被定位清除，杀伤网碎片化。"
+      },
+      {
+        "claim_id": "claim-32182ad8fa9d",
+        "claim_type": "hypothesis",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "公开概念强调分布式、低特征和前沿持续存在，但分布式节点一旦通信、发射或补给暴露，其生存性可能低于集中式高价值平台，必须以低特征、机动、反无人和替补节点抵消该矛盾。",
+          "低成本可消耗系统强调规模和成本优势，但在强电子战与廉价反无人体系下可能快速失效；其价值应限定为侦察、诱饵、中继、软目标压制和毁伤评估，而非独立承担重防护目标歼灭。",
+          "多源融合可提高目标置信度，但也可能因诱饵、数据延迟和算法误判形成更具迷惑性的共同态势图；必须保留目标置信度追溯、人在回路和毁伤评估回灌。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-5824f31b34e3",
+          "ev-operational_employment-web-6c1c84a0e24e",
+          "ev-operational_employment-web-bc1c2e8c3176",
+          "ev-operational_employment-web-5fae80c02f40"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+          "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "https://www.gao.gov/products/gao-25-106454"
+        ],
+        "text": "判断：低成本规模化无人/可消耗系统的主要价值是侦察饱和、诱饵消耗、中继、软目标压制和毁伤评估，不应被设计为独立替代高端精确火力。军事任务价值：迫使对手防空和电子战体系持续暴露与消耗，为高置信度精确打击创造窗口，并降低高端弹药浪费。证据边界：Replicator和乌克兰战例复盘可支撑“可消耗、自治、规模化和电子战适应”趋势判断，但公开资料不足以评估具体平台抗干扰能力和毁伤效果。失效条件：若电子战适应速度快、导航通信载荷脆弱、供应链补充不足或目标确认机制薄弱，规模优势会转化为战场拥塞和消耗负担。"
+      },
+      {
+        "claim_id": "claim-b68db26b2ae2",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "公开概念强调分布式、低特征和前沿持续存在，但分布式节点一旦通信、发射或补给暴露，其生存性可能低于集中式高价值平台，必须以低特征、机动、反无人和替补节点抵消该矛盾。",
+          "低成本可消耗系统强调规模和成本优势，但在强电子战与廉价反无人体系下可能快速失效；其价值应限定为侦察、诱饵、中继、软目标压制和毁伤评估，而非独立承担重防护目标歼灭。",
+          "多源融合可提高目标置信度，但也可能因诱饵、数据延迟和算法误判形成更具迷惑性的共同态势图；必须保留目标置信度追溯、人在回路和毁伤评估回灌。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-5824f31b34e3",
+          "ev-operational_employment-web-6c1c84a0e24e",
+          "ev-operational_employment-web-bc1c2e8c3176",
+          "ev-operational_employment-web-5fae80c02f40"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+          "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "https://www.gao.gov/products/gao-25-106454"
+        ],
+        "text": "判断：保障单元必须前置进入C2与火力分配逻辑，弹药、能源、电池、备件、维修、链路健康和软件版本状态应直接影响目标排序与COA切换。军事任务价值：避免首轮打击后无法维持压制、再打击和战损续接，提升持续作战韧性。证据边界：公开资料能说明争议环境后勤、远征制造和保障韧性的重要性，但无法证明具体库存、补给频率或维修周期。失效条件：保障数据滞后、补给路线受扰、模块化维修不足或软件更新无法快速下发时，杀伤链将在第二轮或第三轮任务中明显衰减。"
+      },
+      {
+        "claim_id": "claim-575766fc71fe",
+        "claim_type": "hypothesis",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "公开概念强调分布式、低特征和前沿持续存在，但分布式节点一旦通信、发射或补给暴露，其生存性可能低于集中式高价值平台，必须以低特征、机动、反无人和替补节点抵消该矛盾。",
+          "低成本可消耗系统强调规模和成本优势，但在强电子战与廉价反无人体系下可能快速失效；其价值应限定为侦察、诱饵、中继、软目标压制和毁伤评估，而非独立承担重防护目标歼灭。",
+          "多源融合可提高目标置信度，但也可能因诱饵、数据延迟和算法误判形成更具迷惑性的共同态势图；必须保留目标置信度追溯、人在回路和毁伤评估回灌。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-5824f31b34e3",
+          "ev-operational_employment-web-6c1c84a0e24e",
+          "ev-operational_employment-web-bc1c2e8c3176",
+          "ev-operational_employment-web-5fae80c02f40"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+          "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "https://www.gao.gov/products/gao-25-106454"
+        ],
+        "text": "判断：装备发展优先级应从“更远射程/更大毁伤”扩展为五类闭环装备：任务级融合C2、低成本侦察-诱饵-打击无人弹药族、前沿低特征感知-火力-保障节点、分层反无人与前沿防空、作战-保障一体化韧性管理系统。军事任务价值：形成从打击/歼灭到压制、反制、拒止、抗毁和恢复的完整能力组合。证据边界：该判断是对公开概念、审计报告和战例复盘的任务级归纳，不等同于具体采购清单或技术指标定型。失效条件：若只发展打击弹药而忽略融合标准、前沿防护、反无人和保障续接，整体精确打击能力仍会被诱饵、电子战和低成本反制削弱。"
+      }
+    ],
+    "packet_id": "packet-operational_employment",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-39ff1148f328",
+    "claims": [
+      {
+        "claim_id": "claim-d394d97905a0",
+        "claim_type": "fact",
+        "confidence": 0.72,
+        "counter_evidence": [
+          "公开资料同时强调AI/JADC2可缩短目标流程，但CSIS战例压力显示EW、数据量和边缘处理需求会持续拉长或破坏闭环；因此不能把演训中的分钟级流程直接外推为拒止实战能力。",
+          "NATO数据战略强调共享数据空间和互操作，但战时数据主权、密级、授权和法律限制可能与快速杀伤网重构相冲突。",
+          "USMC Force Design列出反无人能力建设，但其同时承认小型UAS低门槛造成容量压力，说明已有系统不等于具备持续成本优势。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-dfd350108fde",
+          "ev-combat_scenario-web-2d2daa3dc2aa",
+          "ev-combat_scenario-web-742b75e39cf4"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.lineofdeparture.army.mil/Portals/144/PDF/Journals/Field-Artillery/FA-E-Edition-2025/Project-Convergence-UA.pdf",
+          "https://www.nato.int/en/about-us/official-texts-and-resources/official-texts/2025/05/05/data-strategy-for-the-alliance",
+          "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare"
+        ],
+        "text": "判断：多源异构融合精确打击的首要场景压力不是传感器数量，而是T0-T24小时内在电子压制、目标机动和链路受损下能否形成带时间戳、来源、误差和置信度的低带宽目标包。军事任务价值：直接决定发现—决策—协同—打击链能否赶上目标窗口，并降低过期目标触发错误火力分配的概率。证据边界：Project Convergence和CSIS可支撑“传感器到射手延迟、EW干扰、数据量超过人工处理能力”的趋势判断，但不能证明任一现役体系在实战高压下稳定分钟级闭环。失效条件：时间同步失准、来源标签缺失、目标摘要不能断链缓存、人工复核规则缺位。"
+      },
+      {
+        "claim_id": "claim-f642178a0056",
+        "claim_type": "hypothesis",
+        "confidence": 0.72,
+        "counter_evidence": [
+          "公开资料同时强调AI/JADC2可缩短目标流程，但CSIS战例压力显示EW、数据量和边缘处理需求会持续拉长或破坏闭环；因此不能把演训中的分钟级流程直接外推为拒止实战能力。",
+          "NATO数据战略强调共享数据空间和互操作，但战时数据主权、密级、授权和法律限制可能与快速杀伤网重构相冲突。",
+          "USMC Force Design列出反无人能力建设，但其同时承认小型UAS低门槛造成容量压力，说明已有系统不等于具备持续成本优势。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-dfd350108fde",
+          "ev-combat_scenario-web-2d2daa3dc2aa",
+          "ev-combat_scenario-web-742b75e39cf4"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.lineofdeparture.army.mil/Portals/144/PDF/Journals/Field-Artillery/FA-E-Edition-2025/Project-Convergence-UA.pdf",
+          "https://www.nato.int/en/about-us/official-texts-and-resources/official-texts/2025/05/05/data-strategy-for-the-alliance",
+          "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare"
+        ],
+        "text": "判断：敌方最可能COA是电子压制+无人侦察消耗+目标快速机动，迫使己方从中心化杀伤链转入边缘融合和任务重构。军事任务价值：检验低带宽协同、可消耗侦察/BDA节点和火力重排能力是否能支撑持续打击。证据边界：CSIS乌克兰研究和USMC Force Design可支撑无人/EW/远程精确火力成为常态化战场压力，但具体损耗率和频谱压制强度需由战区情报另行校验。失效条件：无人节点补充断裂、单一GNSS或单一链路依赖、BDA节点被压制导致二次打击无法判定。"
+      },
+      {
+        "claim_id": "claim-0f400f552d39",
+        "claim_type": "fact",
+        "confidence": 0.72,
+        "counter_evidence": [
+          "公开资料同时强调AI/JADC2可缩短目标流程，但CSIS战例压力显示EW、数据量和边缘处理需求会持续拉长或破坏闭环；因此不能把演训中的分钟级流程直接外推为拒止实战能力。",
+          "NATO数据战略强调共享数据空间和互操作，但战时数据主权、密级、授权和法律限制可能与快速杀伤网重构相冲突。",
+          "USMC Force Design列出反无人能力建设，但其同时承认小型UAS低门槛造成容量压力，说明已有系统不等于具备持续成本优势。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-dfd350108fde",
+          "ev-combat_scenario-web-2d2daa3dc2aa",
+          "ev-combat_scenario-web-742b75e39cf4"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.lineofdeparture.army.mil/Portals/144/PDF/Journals/Field-Artillery/FA-E-Edition-2025/Project-Convergence-UA.pdf",
+          "https://www.nato.int/en/about-us/official-texts-and-resources/official-texts/2025/05/05/data-strategy-for-the-alliance",
+          "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare"
+        ],
+        "text": "判断：敌方最危险COA是数据污染+诱饵饱和+关键网关毁伤，其目标是让杀伤网在“看似信息丰富”状态下消耗精确弹药并误导BDA。军事任务价值：把反欺骗、数据审计、模型漂移监测和人在回路授权提升为精确打击闭环的核心抗毁能力。证据边界：NATO数据战略支撑可信、互操作、受控共享和元数据治理需求，DARPA ACK公开方向支撑跨域杀伤网适配需求，但公开来源不足以评估具体算法抗欺骗性能。失效条件：融合模型缺少来源审计、置信度分层不可解释、联盟或跨军种数据权限慢于目标窗口。"
+      },
+      {
+        "claim_id": "claim-5eeb00f74339",
+        "claim_type": "fact",
+        "confidence": 0.72,
+        "counter_evidence": [
+          "公开资料同时强调AI/JADC2可缩短目标流程，但CSIS战例压力显示EW、数据量和边缘处理需求会持续拉长或破坏闭环；因此不能把演训中的分钟级流程直接外推为拒止实战能力。",
+          "NATO数据战略强调共享数据空间和互操作，但战时数据主权、密级、授权和法律限制可能与快速杀伤网重构相冲突。",
+          "USMC Force Design列出反无人能力建设，但其同时承认小型UAS低门槛造成容量压力，说明已有系统不等于具备持续成本优势。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-dfd350108fde",
+          "ev-combat_scenario-web-2d2daa3dc2aa",
+          "ev-combat_scenario-web-742b75e39cf4"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.lineofdeparture.army.mil/Portals/144/PDF/Journals/Field-Artillery/FA-E-Edition-2025/Project-Convergence-UA.pdf",
+          "https://www.nato.int/en/about-us/official-texts-and-resources/official-texts/2025/05/05/data-strategy-for-the-alliance",
+          "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare"
+        ],
+        "text": "判断：反无人容量防护是精确打击体系持续性的前置条件，尤其保护C2、网关、火力装填点、传感器和BDA节点。军事任务价值：决定协同—评估—再组织链是否被廉价低慢小目标和巡飞弹持续削弱，支撑打击体系在D1-D7消耗阶段保持任务节奏。证据边界：USMC Force Design列明MADIS、L-MADIS、MRIC、O-CSUAS等能力和小型UAS容量缺口，但公开资料不能证明其在饱和、多轴、复合电磁威胁下具备成本优势。失效条件：拦截成本交换不利、友邻无人识别失败、防护系统辐射暴露后被远程火力压制。"
+      },
+      {
+        "claim_id": "claim-6ba994fea34b",
+        "claim_type": "fact",
+        "confidence": 0.72,
+        "counter_evidence": [
+          "公开资料同时强调AI/JADC2可缩短目标流程，但CSIS战例压力显示EW、数据量和边缘处理需求会持续拉长或破坏闭环；因此不能把演训中的分钟级流程直接外推为拒止实战能力。",
+          "NATO数据战略强调共享数据空间和互操作，但战时数据主权、密级、授权和法律限制可能与快速杀伤网重构相冲突。",
+          "USMC Force Design列出反无人能力建设，但其同时承认小型UAS低门槛造成容量压力，说明已有系统不等于具备持续成本优势。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-dfd350108fde",
+          "ev-combat_scenario-web-2d2daa3dc2aa",
+          "ev-combat_scenario-web-742b75e39cf4"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.lineofdeparture.army.mil/Portals/144/PDF/Journals/Field-Artillery/FA-E-Edition-2025/Project-Convergence-UA.pdf",
+          "https://www.nato.int/en/about-us/official-texts-and-resources/official-texts/2025/05/05/data-strategy-for-the-alliance",
+          "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare"
+        ],
+        "text": "判断：装备基线的关键差距应按“五档”定位为从3级到4级向5级过渡：已有多源接入、JADC2/数据战略/演训基础，但未充分证明拒止、战损、联盟权限和持续补给条件下的闭环韧性。军事任务价值：将需求收敛到边缘可信融合、低带宽任务重构、可消耗无人节点、反无人容量防护、解释型火力推荐和远征维修六类装备构型。证据边界：公开战略和演训资料能证明方向与局部验证，不能替代作战试验数据、红队欺骗测试和持续消耗评估。失效条件：需求只追求传感器接入数量或算法速度，而没有绑定失败条件、授权边界、战损替代和后勤恢复。"
+      }
+    ],
+    "packet_id": "packet-combat_scenario",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-42e2d45402c3",
+    "claims": [
+      {
+        "claim_id": "claim-8daa1603e10f",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "PrSM公开射程口径存在条件差异：Army新闻称射程大于400公里，GAO资料采用70至499公里区间；不应将后续增量目标射程直接覆盖Inc.1公开能力。",
+          "预算采购资料可证明JASSM/AGM-158D采购数量和成本口径，但不能证明实战突防率、命中率或对动态目标的闭环能力。",
+          "MQ-9B制造商资料证明航时、航程、载荷和接口能力，不等于其在高威胁综合防空和强电子战环境中具备稳定生存能力。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-ea43c417a791",
+          "ev-weapon_equipment-web-43915f10ae4b",
+          "ev-weapon_equipment-web-09baa8584e45",
+          "ev-weapon_equipment-web-ef58d44e5694"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.gao.gov/products/gao-25-107263",
+          "https://www.army.mil/article/286878/precision_strike_missile_increment_1_achieves_milestone_c_approval",
+          "https://www.af.mil/Portals/1/documents/Secretariat%20of%20the%20AF/SAF-FM/Budget%20-%202027/Budget%20docs/FY27%20Air%20Force%20Aircraft%20%20Missile%20Procurement.pdf?ver=6zKfXa_IITL18fK0xVVdIA%3D%3D",
+          "https://www.defense.gov/News/Releases/Release/Article/3765644/deputy-secretary-of-defense-hicks-announces-first-tranche-of-replicator-capabil/"
+        ],
+        "text": "国外装备基线呈现四层闭环：PrSM/JASSM/LRASM负责远程硬杀伤，MQ-9B与可消耗UAS负责持续发现和局部侦打，AARGM-ER/MALD负责压制开窗，联合火控网络负责把多源目标数据转化为火力任务。核心能力差距不在单一射程，而在强对抗条件下目标发现、确认、更新、压制、毁伤评估和再打击闭环的稳定性。"
+      },
+      {
+        "claim_id": "claim-73922bf65b09",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "PrSM公开射程口径存在条件差异：Army新闻称射程大于400公里，GAO资料采用70至499公里区间；不应将后续增量目标射程直接覆盖Inc.1公开能力。",
+          "预算采购资料可证明JASSM/AGM-158D采购数量和成本口径，但不能证明实战突防率、命中率或对动态目标的闭环能力。",
+          "MQ-9B制造商资料证明航时、航程、载荷和接口能力，不等于其在高威胁综合防空和强电子战环境中具备稳定生存能力。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-ea43c417a791",
+          "ev-weapon_equipment-web-43915f10ae4b",
+          "ev-weapon_equipment-web-09baa8584e45",
+          "ev-weapon_equipment-web-ef58d44e5694"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.gao.gov/products/gao-25-107263",
+          "https://www.army.mil/article/286878/precision_strike_missile_increment_1_achieves_milestone_c_approval",
+          "https://www.af.mil/Portals/1/documents/Secretariat%20of%20the%20AF/SAF-FM/Budget%20-%202027/Budget%20docs/FY27%20Air%20Force%20Aircraft%20%20Missile%20Procurement.pdf?ver=6zKfXa_IITL18fK0xVVdIA%3D%3D",
+          "https://www.defense.gov/News/Releases/Release/Article/3765644/deputy-secretary-of-defense-hicks-announces-first-tranche-of-replicator-capabil/"
+        ],
+        "text": "远打精打导弹已经具备成熟装备锚点，但其作战效果高度依赖目标质量、任务规划、PNT/链路抗扰和压制配合。公开证据支持PrSM Inc.1进入生产部署阶段、JASSM/AGM-158D持续采购，但不足以证明复杂电磁欺骗和机动目标环境下的实时闭环命中效果。"
+      },
+      {
+        "claim_id": "claim-2adb7447959c",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "PrSM公开射程口径存在条件差异：Army新闻称射程大于400公里，GAO资料采用70至499公里区间；不应将后续增量目标射程直接覆盖Inc.1公开能力。",
+          "预算采购资料可证明JASSM/AGM-158D采购数量和成本口径，但不能证明实战突防率、命中率或对动态目标的闭环能力。",
+          "MQ-9B制造商资料证明航时、航程、载荷和接口能力，不等于其在高威胁综合防空和强电子战环境中具备稳定生存能力。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-ea43c417a791",
+          "ev-weapon_equipment-web-43915f10ae4b",
+          "ev-weapon_equipment-web-09baa8584e45",
+          "ev-weapon_equipment-web-ef58d44e5694"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.gao.gov/products/gao-25-107263",
+          "https://www.army.mil/article/286878/precision_strike_missile_increment_1_achieves_milestone_c_approval",
+          "https://www.af.mil/Portals/1/documents/Secretariat%20of%20the%20AF/SAF-FM/Budget%20-%202027/Budget%20docs/FY27%20Air%20Force%20Aircraft%20%20Missile%20Procurement.pdf?ver=6zKfXa_IITL18fK0xVVdIA%3D%3D",
+          "https://www.defense.gov/News/Releases/Release/Article/3765644/deputy-secretary-of-defense-hicks-announces-first-tranche-of-replicator-capabil/"
+        ],
+        "text": "远程无人打击装备呈现两条路线：MQ-9B类长航时平台提升目标发现、确认、战损评估和有限打击；Replicator相关Switchblade-600、Ghost-X、C-100、Altius-600等可消耗系统补足规模消耗和近实时侦打。失效边界主要是防空威胁、电子战压制、天气、续航载荷和人在回路授权约束。"
+      },
+      {
+        "claim_id": "claim-a0d202edba1e",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "PrSM公开射程口径存在条件差异：Army新闻称射程大于400公里，GAO资料采用70至499公里区间；不应将后续增量目标射程直接覆盖Inc.1公开能力。",
+          "预算采购资料可证明JASSM/AGM-158D采购数量和成本口径，但不能证明实战突防率、命中率或对动态目标的闭环能力。",
+          "MQ-9B制造商资料证明航时、航程、载荷和接口能力，不等于其在高威胁综合防空和强电子战环境中具备稳定生存能力。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-ea43c417a791",
+          "ev-weapon_equipment-web-43915f10ae4b",
+          "ev-weapon_equipment-web-09baa8584e45",
+          "ev-weapon_equipment-web-ef58d44e5694"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.gao.gov/products/gao-25-107263",
+          "https://www.army.mil/article/286878/precision_strike_missile_increment_1_achieves_milestone_c_approval",
+          "https://www.af.mil/Portals/1/documents/Secretariat%20of%20the%20AF/SAF-FM/Budget%20-%202027/Budget%20docs/FY27%20Air%20Force%20Aircraft%20%20Missile%20Procurement.pdf?ver=6zKfXa_IITL18fK0xVVdIA%3D%3D",
+          "https://www.defense.gov/News/Releases/Release/Article/3765644/deputy-secretary-of-defense-hicks-announces-first-tranche-of-replicator-capabil/"
+        ],
+        "text": "远域压制装备以AARGM-ER硬杀伤和MALD/MALD-J诱骗干扰为代表，直接价值是迫使防空节点暴露、消耗拦截弹、制造突防窗口并降低远程精确弹药损耗。反证边界是防空系统关机、间歇辐射、被动探测、机动转移和诱饵识别能力提升。"
+      }
+    ],
+    "packet_id": "packet-weapon_equipment",
+    "schema_version": "1.0"
+  }
+]

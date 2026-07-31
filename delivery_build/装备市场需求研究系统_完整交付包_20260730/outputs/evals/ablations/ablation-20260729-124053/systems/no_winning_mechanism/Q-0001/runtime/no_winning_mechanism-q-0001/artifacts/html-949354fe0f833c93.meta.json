@@ -1,0 +1,15 @@
+{
+  "artifact_ref": "html:949354fe0f833c93",
+  "connect_ip": "198.18.1.33",
+  "content_path": "html-949354fe0f833c93.html",
+  "content_type": "text/html",
+  "encoding": null,
+  "evidence_id": "ev-combat_scenario-web-ed066a28be6f",
+  "fetch_cache_hit": true,
+  "final_url": "https://www.rusi.org/explore-our-research/publications/commentary/jamming-jdam-threat-us-munitions-russian-electronic-warfare",
+  "kind": "html",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "949354fe0f833c93efef4d400034fb494d14624d65778b3b7cbeca8a36a54139",
+  "url": "https://www.rusi.org/explore-our-research/publications/commentary/jamming-jdam-threat-us-munitions-russian-electronic-warfare"
+}

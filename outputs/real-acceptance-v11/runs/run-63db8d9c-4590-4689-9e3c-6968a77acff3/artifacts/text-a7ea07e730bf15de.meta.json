@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:a7ea07e730bf15de",
+  "content_path": "text-a7ea07e730bf15de.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-94ad9cd5d782",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "a7ea07e730bf15deb82e6e38e36a334fc48266a4413f8e892ee76c6f6a84c6c4",
+  "url": "https://comptroller.defense.gov/Portals/45/Documents/defbudget/FY2026/FY2026_Budget_Request_Overview_Book.pdf?utm_source=openai"
+}

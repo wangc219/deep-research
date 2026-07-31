@@ -1,0 +1,344 @@
+version: 1
+sources:
+  # 甲方设计案表 2：军事网站
+  - source_name: "中国军网"
+    source_tier: "A"
+    source_type: "official"
+    hosts: ["81.cn", "www.81.cn", "eng.chinamil.com.cn"]
+    path_prefixes: []
+    fetch_transport: "http"
+    search:
+      type: "dynamic_api"
+      template: "http://www.81.cn/ysym/ssjgy/index.html?keyword={query}&searchfield=TITLE&indexsearch=2"
+    rate_limit_ms: 3000
+    entry_urls: ["http://www.81.cn/"]
+    content_languages: ["zh"]
+    topic_tags: ["低空", "无人机", "探测", "预警", "防护", "air_defense", "uav"]
+    interaction_profile: "site_search"
+    requires_login: false
+    max_discovery_depth: 1
+    notes: "甲方表2军事网站；官方军事新闻与理论公开材料，可作为强证据信源。"
+  - source_name: "军事科学院期刊集群"
+    source_tier: "A"
+    source_type: "journal_cluster"
+    hosts: []
+    path_prefixes: []
+    fetch_transport: "http"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    notes: "甲方表2军事网站；机构/期刊集群强证据信源，首版暂缺可安全收窄的公开 host，待 P3.2/P3.4 接入站点方案后补齐。"
+  - source_name: "中国兵工学会"
+    source_tier: "A"
+    source_type: "professional_society"
+    hosts: ["csoe.org.cn"]
+    path_prefixes: []
+    fetch_transport: "http"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    notes: "甲方表2军事网站；专业学会与装备技术相关机构材料，host 为首版公开入口。"
+  - source_name: "英国国际战略研究所"
+    source_tier: "A"
+    source_type: "thinktank"
+    hosts: ["iiss.org"]
+    path_prefixes: []
+    fetch_transport: "http"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    entry_urls: ["https://www.iiss.org/research/"]
+    content_languages: ["en"]
+    topic_tags: ["logistics", "sustainment", "communications", "resilience", "contested_logistics", "补给", "后勤", "通信", "保障"]
+    interaction_profile: "static_listing"
+    requires_login: false
+    max_discovery_depth: 1
+    notes: "甲方表2军事网站；IISS 智库报告与 Survival 相关材料具备机构背景。"
+  - source_name: "美国兰德公司"
+    source_tier: "A"
+    source_type: "thinktank"
+    hosts: ["rand.org"]
+    path_prefixes: []
+    fetch_transport: "http"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    entry_urls: ["https://www.rand.org/topics/uncrewed-aerial-vehicles.html"]
+    content_languages: ["en"]
+    topic_tags: ["uav", "drone", "air_defense", "counter_uas", "low_altitude"]
+    interaction_profile: "static_listing"
+    requires_login: false
+    max_discovery_depth: 1
+    notes: "甲方表2军事网站；RAND 报告结构完整，适合支撑正式需求判断。"
+  - source_name: "美国战略与国际研究中心"
+    source_tier: "A"
+    source_type: "thinktank"
+    hosts: ["csis.org"]
+    path_prefixes: []
+    fetch_transport: "http"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    entry_urls: ["https://www.csis.org/topics/defense-and-security"]
+    content_languages: ["en"]
+    topic_tags: ["uav", "drone", "defense", "air_defense", "counter_uas"]
+    interaction_profile: "static_listing"
+    requires_login: false
+    max_discovery_depth: 1
+    notes: "甲方表2军事网站；CSIS 报告与分析具备明确机构背景。"
+
+  # 甲方设计案表 2：媒体/公众号
+  - source_name: "解放军报 / 中国军号"
+    source_tier: "A"
+    source_type: "official_media"
+    hosts: ["81.cn"]
+    path_prefixes: ["/jfjbmap", "/zg-jfj"]
+    fetch_transport: "http"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    notes: "甲方表2媒体/公众号；官方媒体材料，路径比中国军网通用条目更具体。"
+  - source_name: "国防科技要闻"
+    source_tier: "B"
+    source_type: "wemedia"
+    hosts: []
+    path_prefixes: []
+    fetch_transport: "browser_session"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    notes: "甲方表2媒体/公众号；专业动态线索源，首版不放行微信大域名，需人工导入或账号级规则。"
+  - source_name: "空天防务观察"
+    source_tier: "B"
+    source_type: "wemedia"
+    hosts: []
+    path_prefixes: []
+    fetch_transport: "browser_session"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    notes: "甲方表2媒体/公众号；讨论文档列为专业观察类来源，单独支撑正式需求需补证。"
+  - source_name: "远望智库"
+    source_tier: "B"
+    source_type: "wemedia"
+    hosts: ["techxcope.com", "www.techxcope.com", "techxcope.cn", "www.techxcope.cn"]
+    path_prefixes: []
+    fetch_transport: "browser_session"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    notes: "甲方表2媒体/公众号；公开官网为 techxcope.com，专业观察类来源，适合作为线索和交叉验证。"
+  - source_name: "军兴研究院"
+    source_tier: "C"
+    source_type: "wemedia"
+    hosts: []
+    path_prefixes: []
+    fetch_transport: "browser_session"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    notes: "甲方表2媒体/公众号；首版按公众号/二手分析线索源处理，不单独支撑正式报告。"
+  - source_name: "精确打击洞见"
+    source_tier: "C"
+    source_type: "wemedia"
+    hosts: []
+    path_prefixes: []
+    fetch_transport: "browser_session"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    notes: "甲方表2媒体/公众号；首版按线索源处理，需 A/B 级材料补证。"
+  - source_name: "蓝军开源情报"
+    source_tier: "B"
+    source_type: "wemedia"
+    hosts: []
+    path_prefixes: []
+    fetch_transport: "browser_session"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    notes: "甲方表2媒体/公众号；讨论文档列为专业观察类来源，适合发现线索与交叉验证。"
+  - source_name: "简氏防务周刊"
+    source_tier: "B"
+    source_type: "defense_media"
+    hosts: ["janes.com"]
+    path_prefixes: []
+    fetch_transport: "http"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    entry_urls: ["https://www.janes.com/defence-news"]
+    content_languages: ["en"]
+    topic_tags: ["defense", "technology", "communications", "logistics", "sustainment", "resilience", "通信", "补给", "后勤", "保障"]
+    interaction_profile: "static_listing"
+    requires_login: false
+    max_discovery_depth: 1
+    notes: "甲方表2媒体/公众号；专业防务媒体，单独升级为正式需求需谨慎。"
+  - source_name: "防务新闻"
+    source_tier: "B"
+    source_type: "defense_media"
+    hosts: ["defensenews.com"]
+    path_prefixes: []
+    fetch_transport: "http"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    entry_urls: ["https://www.defensenews.com/unmanned/"]
+    content_languages: ["en"]
+    topic_tags: ["uav", "drone", "counter_uas", "defense", "warning"]
+    interaction_profile: "static_listing"
+    requires_login: false
+    max_discovery_depth: 1
+    notes: "甲方表2媒体/公众号；专业防务媒体，适合动态线索与交叉验证。"
+  - source_name: "战争困境"
+    source_tier: "C"
+    source_type: "wemedia"
+    hosts: ["warontherocks.com"]
+    path_prefixes: []
+    fetch_transport: "browser_session"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    notes: "甲方表2媒体/公众号；对应 War on the Rocks，首版仍按观点/线索源处理，需补充可审计 A/B 级来源。"
+  - source_name: "Defense One"
+    source_tier: "B"
+    source_type: "defense_media"
+    hosts: ["defenseone.com"]
+    path_prefixes: []
+    fetch_transport: "http"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    entry_urls: ["https://www.defenseone.com/technology/"]
+    content_languages: ["en"]
+    topic_tags: ["defense", "technology", "communications", "logistics", "sustainment", "resilience", "通信", "补给", "后勤", "保障"]
+    interaction_profile: "static_listing"
+    requires_login: false
+    max_discovery_depth: 1
+    notes: "甲方表2媒体/公众号；专业防务媒体，适合动态线索与背景研判。"
+
+  # 甲方设计案表 2：重点期刊
+  - source_name: "中国军事期刊"
+    source_tier: "A"
+    source_type: "journal"
+    hosts: ["zsyyb.cn"]
+    path_prefixes: ["/journal/browseissue.htm", "/special/browseissue.htm"]
+    fetch_transport: "http"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    notes: "甲方表2重点期刊；首版以《中国军事科学》公开期刊页作为可审计入口，后续如甲方确认其他军事期刊再拆分独立条目。"
+  - source_name: "军事运筹与评估"
+    source_tier: "A"
+    source_type: "journal"
+    hosts: []
+    path_prefixes: []
+    fetch_transport: "http"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    notes: "甲方表2重点期刊；专业期刊，待补具体公开入口或本地库映射。"
+  - source_name: "军事科学文摘"
+    source_tier: "A"
+    source_type: "journal_digest"
+    hosts: []
+    path_prefixes: []
+    fetch_transport: "http"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    notes: "甲方表2重点期刊；文摘类材料可用于线索和背景，正式支撑需回溯原始来源。"
+  - source_name: "国防科技大学学报"
+    source_tier: "A"
+    source_type: "journal"
+    hosts: ["journal.nudt.edu.cn"]
+    path_prefixes: []
+    fetch_transport: "http"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    notes: "甲方表2重点期刊；国防高校学报，专业期刊强证据。"
+  - source_name: "世界军事"
+    source_tier: "A"
+    source_type: "journal"
+    hosts: ["www.bj.xinhuanet.com"]
+    path_prefixes: ["/xhsbk"]
+    fetch_transport: "http"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    notes: "甲方表2重点期刊；新华报刊页可确认《世界军事》为新华社解放军分社主办的综合性军事期刊。"
+  - source_name: "现代兵器"
+    source_tier: "A"
+    source_type: "journal"
+    hosts: []
+    path_prefixes: []
+    fetch_transport: "http"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    notes: "甲方表2重点期刊；装备类刊物，待补公开入口或本地数据库映射。"
+  - source_name: "现代防御技术"
+    source_tier: "A"
+    source_type: "journal"
+    hosts: ["xdfyjs.cn", "www.xdfyjs.cn"]
+    path_prefixes: ["/CN"]
+    fetch_transport: "http"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    entry_urls: ["https://www.xdfyjs.cn/CN/article/showBrowseTopList.do"]
+    content_languages: ["zh"]
+    topic_tags: ["低空", "无人机", "防御", "探测", "预警", "air_defense"]
+    interaction_profile: "static_listing"
+    requires_login: false
+    max_discovery_depth: 1
+    notes: "甲方表2重点期刊；《现代防御技术》官网 xdfyjs.cn，可读取目录、摘要、HTML/PDF 等公开期刊页面。"
+  - source_name: "联合部队季刊（JFQ）"
+    source_tier: "A"
+    source_type: "journal"
+    hosts: ["ndupress.ndu.edu"]
+    path_prefixes: []
+    fetch_transport: "http"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    notes: "甲方表2重点期刊；Joint Force Quarterly，官方/专业军事期刊。"
+  - source_name: "Parameters"
+    source_tier: "A"
+    source_type: "journal"
+    hosts: ["press.armywarcollege.edu"]
+    path_prefixes: ["/parameters"]
+    fetch_transport: "http"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    entry_urls: ["https://press.armywarcollege.edu/parameters/"]
+    content_languages: ["en"]
+    topic_tags: ["strategy", "operations", "logistics", "sustainment", "communications", "resilience", "通信", "补给", "后勤", "保障"]
+    interaction_profile: "static_listing"
+    requires_login: false
+    max_discovery_depth: 1
+    notes: "甲方表2重点期刊；美国陆军战争学院 Parameters。"
+  - source_name: "Naval War College Review"
+    source_tier: "A"
+    source_type: "journal"
+    hosts: ["digital-commons.usnwc.edu"]
+    path_prefixes: ["/nwc-review"]
+    fetch_transport: "http"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    notes: "甲方表2重点期刊；美国海军战争学院期刊。"
+  - source_name: "Journal of Strategic Studies"
+    source_tier: "A"
+    source_type: "journal"
+    hosts: ["tandfonline.com"]
+    path_prefixes: ["/toc/fjss20", "/journals/fjss20"]
+    fetch_transport: "http"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    notes: "甲方表2重点期刊；战略研究严肃期刊。"
+  - source_name: "Survival"
+    source_tier: "A"
+    source_type: "journal"
+    hosts: ["tandfonline.com"]
+    path_prefixes: ["/toc/tsur20", "/journals/tsur20"]
+    fetch_transport: "http"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    notes: "甲方表2重点期刊；IISS 相关战略研究期刊。"
+  - source_name: "International Security"
+    source_tier: "A"
+    source_type: "journal"
+    hosts: ["direct.mit.edu"]
+    path_prefixes: ["/isec"]
+    fetch_transport: "http"
+    search: {type: "none"}
+    rate_limit_ms: 3000
+    notes: "甲方表2重点期刊；MIT Press 国际安全期刊。"
+
+excluded:
+  - source_name: "无来源拼接内容"
+    hosts: []
+    reason: "D级排除信源；无作者、无出处或无法审计来源链。"
+  - source_name: "论坛传闻与社交媒体碎片"
+    hosts: []
+    reason: "D级排除信源；不能进入需求分析流程。"
+  - source_name: "非公开、疑似泄露或敏感来源"
+    hosts: []
+    reason: "D级排除信源；超出公开资料与安全边界。"

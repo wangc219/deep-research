@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=gao.gov · gao 22 106010
+source_url=https://www.gao.gov/products/gao-22-106010
+claim=GAO列出GPS/PNT面临反卫星、干扰、欺骗和网络威胁，并指出即使GPS升级，脆弱性仍会存在，替代PNT项目还存在管理和进展度量不足。
+excerpt=
+retrieval=Hosted web search citation metadata

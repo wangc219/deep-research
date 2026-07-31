@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:a78c8dc7dc909596",
+  "content_path": "text-a78c8dc7dc909596.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: cached_origin_failure:HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-generic_researcher-web-d1e2709becf6",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "a78c8dc7dc9095964850ce99aae9c9095dffc980925f8332f8c716bf4bde7eb1",
+  "url": "https://www.darpa.mil/research/programs/precise-robust-inertial-guidance-for-munitions"
+}

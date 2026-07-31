@@ -1,0 +1,85 @@
+{
+  "schema": "ppt-master.svg-quality-report.v1",
+  "stage": "first-page",
+  "target": "/Users/wangchen/equipment research/projects/market_demand_eval_report_20260729_ppt169_20260729",
+  "source_fingerprint": {
+    "algorithm": "sha256",
+    "digest": "1d5ce9621939fa6cdc15cc122ea4ec45a1d3844cc998db46a7d1e023338096a9",
+    "file_count": 1,
+    "files": [
+      {
+        "file": "01_市场需求发散要求落实与评测汇报.svg",
+        "sha256": "3189242d86114a62f27a2e71e1da1ba98492430421b6f9bd843e7155d5527f0e"
+      }
+    ]
+  },
+  "summary": {
+    "total": 1,
+    "passed": 1,
+    "warnings": 0,
+    "errors": 0
+  },
+  "issue_types": {},
+  "categories": {
+    "blocking": {
+      "count": 0,
+      "issues": []
+    },
+    "introduced": {
+      "count": 0,
+      "issues": []
+    },
+    "inherited": {
+      "count": 0,
+      "issues": []
+    },
+    "source-import": {
+      "count": 0,
+      "summary": {
+        "warning_count": 0,
+        "by_code": {}
+      }
+    }
+  },
+  "drift": {
+    "colors": {
+      "#D8E1EA": [
+        "01_市场需求发散要求落实与评测汇报.svg"
+      ]
+    },
+    "fonts": {},
+    "sizes": {}
+  },
+  "project_issues": {
+    "template": [],
+    "animation": [],
+    "illustration": [],
+    "communication_trace": [],
+    "pptx_structure": []
+  },
+  "files": [
+    {
+      "file": "01_市场需求发散要求落实与评测汇报.svg",
+      "path": "/Users/wangchen/equipment research/projects/market_demand_eval_report_20260729_ppt169_20260729/svg_output/01_市场需求发散要求落实与评测汇报.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [],
+      "info": {
+        "viewbox": "0 0 1280 720",
+        "fonts": [
+          "Arial, PingFang SC, Microsoft YaHei, sans-serif",
+          "PingFang SC, Arial, Microsoft YaHei, sans-serif"
+        ],
+        "text_elements": 14,
+        "tspan_elements": 1,
+        "contextual_values": {
+          "colors": [
+            "#D8E1EA"
+          ]
+        }
+      },
+      "passed": true,
+      "source_sha256": "3189242d86114a62f27a2e71e1da1ba98492430421b6f9bd843e7155d5527f0e"
+    }
+  ]
+}

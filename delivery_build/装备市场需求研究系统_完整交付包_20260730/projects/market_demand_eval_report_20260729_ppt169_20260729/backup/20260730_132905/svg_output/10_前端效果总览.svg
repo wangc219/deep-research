@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" data-pptx-page-role="content">
+  <rect id="background" data-pptx-role="background" x="0" y="0" width="1280" height="720" fill="#FFFFFF"/>
+  <g id="header" data-pptx-bounds="64 42 1152 108">
+    <text x="64" y="88" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="42" font-weight="bold" fill="#173B5E">核心发散能力已形成可验收前端闭环</text>
+    <text x="64" y="130" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#6B7785">过程可回放 · 画像可追溯 · 报告可评审</text>
+    <text x="1216" y="84" text-anchor="end" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#6B7785">10</text>
+  </g>
+  <g id="hero-number" data-pptx-bounds="64 170 230 102">
+    <text x="64" y="244" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="66" font-weight="bold" fill="#2F6FAE">3</text>
+    <text x="112" y="238" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#1D2733">类可验收产物</text>
+  </g>
+  <g id="gallery-interaction" data-pptx-bounds="64 290 352 280">
+    <rect x="64" y="290" width="352" height="198" fill="#F3F6F9" stroke="#2F6FAE" stroke-width="2"/>
+    <image href="../images/frontend_interaction_process.png" x="70" y="296" width="340" height="191" preserveAspectRatio="xMidYMid meet"/>
+    <text x="64" y="526" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" font-weight="bold" fill="#173B5E">01 交互过程</text>
+    <text x="64" y="558" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#6B7785">426 个事件 · 9 个保存点</text>
+  </g>
+  <g id="gallery-capability" data-pptx-bounds="464 250 352 294">
+    <rect x="464" y="250" width="352" height="198" fill="#F3F6F9" stroke="#2E8B66" stroke-width="2"/>
+    <image href="../images/frontend_capability_profile.png" x="470" y="256" width="340" height="191" preserveAspectRatio="xMidYMid meet"/>
+    <text x="464" y="486" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" font-weight="bold" fill="#173B5E">02 能力画像</text>
+    <text x="464" y="518" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#6B7785">6 个装备方向 · 79% 平均置信度</text>
+  </g>
+  <g id="gallery-report" data-pptx-bounds="864 210 352 334">
+    <rect x="864" y="210" width="352" height="198" fill="#F3F6F9" stroke="#C97A32" stroke-width="2"/>
+    <image href="../images/frontend_research_report.png" x="870" y="216" width="340" height="191" preserveAspectRatio="xMidYMid meet"/>
+    <text x="864" y="446" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" font-weight="bold" fill="#173B5E">03 研究报告</text>
+    <text x="864" y="478" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#6B7785">三层九项正文 · 可直接评审</text>
+  </g>
+  <g id="throughline" data-pptx-bounds="64 608 1152 72">
+    <line x1="64" y1="628" x2="1216" y2="628" stroke="#B7C7D6" stroke-width="2"/>
+    <circle cx="64" cy="628" r="8" fill="#2F6FAE"/>
+    <circle cx="640" cy="628" r="8" fill="#2E8B66"/>
+    <circle cx="1216" cy="628" r="8" fill="#C97A32"/>
+    <text x="64" y="666" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">执行记录</text>
+    <text x="640" y="666" text-anchor="middle" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">能力收敛</text>
+    <text x="1216" y="666" text-anchor="end" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#1D2733">正式交付</text>
+  </g>
+</svg>

@@ -1,0 +1,15 @@
+{
+  "artifact_ref": "html:2256fe899bc9f9d8",
+  "connect_ip": "198.18.2.99",
+  "content_path": "html-2256fe899bc9f9d8.html",
+  "content_type": "text/html;charset=utf-8",
+  "encoding": null,
+  "evidence_id": "ev-combat_scenario-web-12cf82af8fb0",
+  "fetch_cache_hit": false,
+  "final_url": "https://www.nato.int/en/news-and-events/articles/news/2025/06/02/nato-diana-unveils-10-new-challenges-to-accelerate-dual-use-technology-breakthroughs",
+  "kind": "html",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "2256fe899bc9f9d8381f5c6e5103cfbcea00466939d67fce766ffcd555ab1a83",
+  "url": "https://www.nato.int/en/news-and-events/articles/news/2025/06/02/nato-diana-unveils-10-new-challenges-to-accelerate-dual-use-technology-breakthroughs"
+}

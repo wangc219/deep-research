@@ -1,0 +1,133 @@
+{
+  "checkpoint": {
+    "budget_remaining": {
+      "baseline_tasks": 0,
+      "finalize_tasks": 1,
+      "rounds": 2
+    },
+    "checkpoint_id": "run-checkpoint-no_multisource_baseline-q-0001",
+    "completed_task_ids": [
+      "baseline:generic_researcher"
+    ],
+    "config_fingerprint": "sha256:7b1884d97c87a5f9b04d46450dc90afe2008894cab35bb5cfac60f520653539e",
+    "created_at": "2026-07-29T04:40:54.021631+00:00",
+    "mode": "real",
+    "pending_task_ids": [
+      "finalize:winning-report"
+    ],
+    "research_route": "auto",
+    "resolved_route": "traditional_gap",
+    "resume_count": 0,
+    "round_index": 1,
+    "run_id": "no_multisource_baseline-q-0001",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "generic_researcher"
+    ],
+    "source_materials": [
+      {
+        "artifact_refs": [
+          "text:7cda8a07a45bd14e"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-generic_researcher-web-3393b98b73a1",
+          "normalized_url": "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in",
+          "reasons": [],
+          "score": 0.688
+        },
+        "evidence_id": "ev-generic_researcher-web-3393b98b73a1",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/"
+      },
+      {
+        "artifact_refs": [
+          "text:cf5b6cc94be3b23d"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-generic_researcher-web-b1f3cacc93cd",
+          "normalized_url": "https://www.darpa.mil/news/2019/code-success",
+          "reasons": [],
+          "score": 0.688
+        },
+        "evidence_id": "ev-generic_researcher-web-b1f3cacc93cd",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.darpa.mil/news/2019/code-success"
+      },
+      {
+        "artifact_refs": [
+          "text:cbe2a9d3ab5b874d"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-generic_researcher-web-8ad4fbe44718",
+          "normalized_url": "https://www.darpa.mil/news/2018/collaborative-autonomy-unmanned-aerial-systems",
+          "reasons": [],
+          "score": 0.688
+        },
+        "evidence_id": "ev-generic_researcher-web-8ad4fbe44718",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.darpa.mil/news/2018/collaborative-autonomy-unmanned-aerial-systems"
+      },
+      {
+        "artifact_refs": [
+          "text:7b8358105412cff7"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-generic_researcher-web-29409c926255",
+          "normalized_url": "https://www.darpa.mil/research/programs/pinpoint",
+          "reasons": [],
+          "score": 0.688
+        },
+        "evidence_id": "ev-generic_researcher-web-29409c926255",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.darpa.mil/research/programs/pinpoint"
+      }
+    ],
+    "status": "running",
+    "task_statuses": {
+      "baseline:generic_researcher": "completed",
+      "finalize:winning-report": "pending"
+    },
+    "topic": "强干扰、弱通信条件下低信息依赖精确打击研究",
+    "worker_reports": [
+      {
+        "active_skill_ids": [],
+        "active_tool_names": [
+          "search_sources",
+          "create_evidence_card"
+        ],
+        "agent_id": "generic_researcher",
+        "created_at": "2026-07-29T04:44:15.313693+00:00",
+        "domain_object_id": "",
+        "domain_object_type": "",
+        "error": "",
+        "handoff_summary": "公开证据共同指向一个核心事实：强干扰、弱通信条件下的精确打击能力缺口主要集中在杀伤链韧性、抗GNSS拒止导航、平台/弹药端自主协同以及末段多模感知修正。对后续装备基线与需求卡片最有价值的方向是：减少对连续通信、实时集中C2和高质量先验坐标的依赖，把导航、目标保持、协同重规划和末段识别能力尽可能前置到平台或弹药端。",
+        "harness_profile": "discovery_research_v1",
+        "new_evidence_ids": [
+          "ev-generic_researcher-web-29409c926255",
+          "ev-generic_researcher-web-3393b98b73a1",
+          "ev-generic_researcher-web-8ad4fbe44718",
+          "ev-generic_researcher-web-b1f3cacc93cd"
+        ],
+        "packet_id": "packet-generic_researcher",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment research/outputs/evals/ablations/ablation-20260729-124053/systems/no_multisource_baseline/Q-0001/runtime/no_multisource_baseline-q-0001/agent_sessions/generic_researcher.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-0095befb-22fb-488e-9c16-03993b662eff"
+      }
+    ]
+  },
+  "savepoint_id": "checkpoint-9c03737603e9d7f091912821"
+}

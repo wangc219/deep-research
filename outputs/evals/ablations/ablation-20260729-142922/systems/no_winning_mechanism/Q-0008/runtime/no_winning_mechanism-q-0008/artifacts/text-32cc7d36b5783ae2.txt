@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=defense.gov · proliferation remains best deterrence against threats to us space access
+source_url=https://www.defense.gov/News/News-Stories/Article/Article/3722921/proliferation-remains-best-deterrence-against-threats-to-us-space-access/
+claim=DOD公开表述支持以大规模、光互联、网状低轨星座提升空间体系韧性，并将探测、跟踪、火控解算和向武器平台下传纳入闭环设想。
+excerpt=
+retrieval=Hosted web search citation metadata

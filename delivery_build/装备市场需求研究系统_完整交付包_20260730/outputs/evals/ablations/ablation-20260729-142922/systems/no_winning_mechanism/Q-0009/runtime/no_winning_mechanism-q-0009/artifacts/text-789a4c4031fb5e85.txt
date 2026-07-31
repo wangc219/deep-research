@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=defense.gov · deputy secretary of defense kathleen hicks announces additional replicator all
+source_url=https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/
+claim=美国防部Replicator ADA2公开纳入Altius-600、Ghost-X、C-100和Switchblade 600等能力，证明可消耗、分布式、批量化无人系统是当前发展重点。
+excerpt=
+retrieval=Hosted web search citation metadata

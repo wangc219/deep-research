@@ -1,0 +1,55 @@
+[1] Portfolio Data
+
+[2] Back to Award Search
+
+[3] Global Positioning System (GPS) Jammer Threat Homing Munition Guidance System
+
+[4] Award Year: 2005
+
+[5] UEI: MXT5BGZX32S3
+
+[6] HUBZone Owned: No
+
+[7] Woman Owned: No
+
+[8] Socially and Economically Disadvantaged: Yes
+
+[9] Congressional District: 47
+
+[10] Awarding Agency
+
+[11] Branch: USAF
+
+[12] Total Award Amount: $749,872
+
+[13] Contract Number: FA8651-05-C-0101
+
+[14] Agency Tracking Number: F041-168-0733
+
+[15] Solicitation Topic Code: AF04-168
+
+[16] Solicitation Number: 2004.1
+
+[17] A global positioning system (GPS) jammer, homing guidance system (i.e. Seeker) will be fabricated, ground tested, and flight tested. The Seeker consists of radio frequency sensors, a digital signal processor, and algorithms for homing and guidance. We will deliver Seeker systems to the Air Force that are capable of homing a submunition (i.e. small UAV) to GPS jammers. The program includes UAV flight testing of the Seeker to demonstrate and quantify the system’s homing performance. The Seeker will detect multiple jammers, determine the number of jammers and their directions, sort multiple jammers, select a jammer for homing, and generate steering commands for a small UAV. The Seeker can home to both narrowband and wideband jammers.
+
+[18] Award Schedule
+
+[19] 2004 Solicitation Year
+
+[20] 2004 Solicitation Year
+
+[21] 2005 Award Year
+
+[22] 2005 Award Year
+
+[23] March 8, 2005 Award Start Date
+
+[24] March 8, 2005 Award Start Date
+
+[25] November 15, 2006 Award End Date
+
+[26] November 15, 2006 Award End Date
+
+[27] Name: Michael Marino Phone: (714) 224-4410 Email: mmarino@sara.com
+
+[28] Name: James Wes Phone: (714) 224-4410 Email: jwes@sara.com

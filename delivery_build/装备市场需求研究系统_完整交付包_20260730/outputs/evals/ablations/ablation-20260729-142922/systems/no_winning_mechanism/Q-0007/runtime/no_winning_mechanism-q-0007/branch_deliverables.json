@@ -1,0 +1,158 @@
+{
+  "blueprint_required_outputs": [
+    "装备基线与五档差距",
+    "需求卡片（具体待发展武器装备/装备构型/关键指标/优先级/支撑场景/证据链）",
+    "能力全景图",
+    "深度研究报告（含推理链可回溯）",
+    "深度研究主报告（深度性、创新性、前瞻性、军事价值性）",
+    "分支专用收敛产物"
+  ],
+  "branch": "B",
+  "branch_name": "传统能力缺口发现",
+  "completion": {
+    "capability_panorama": {
+      "actual": 0,
+      "met": false,
+      "target": 1
+    },
+    "demand_cards": {
+      "actual": 0,
+      "met": false,
+      "target": 1
+    },
+    "reasoning_traceability": {
+      "actual": 0,
+      "met": false,
+      "target": 1
+    }
+  },
+  "delivery_status": "limited",
+  "non_fabrication_rule": "未达到数量门槛时必须披露缺口，不得用同义改写或无证据条目凑数。",
+  "products": {
+    "capability_panorama": {
+      "actual_counts": {
+        "capability_domains": 0,
+        "capability_indicators": 0,
+        "capability_items": 0
+      },
+      "branch": "B",
+      "branch_name": "传统能力缺口发现",
+      "cross_domain_indicators": [],
+      "domains": [],
+      "equipment_forms": [],
+      "target_counts": {},
+      "topic": "天基低时延信息支撑精确打击体系研究"
+    },
+    "demand_cards": [],
+    "reasoning_traceability": {
+      "agent_handoffs": [
+        {
+          "agent_id": "operational_employment",
+          "claim_ids": [
+            "claim-c156cfdbc96e",
+            "claim-8f7d6802c9c5",
+            "claim-7a1df8614fc6",
+            "claim-91757f508480",
+            "claim-4e6856d09630"
+          ],
+          "confidence": 0.78,
+          "evidence_ids": [
+            "ev-operational_employment-web-d56e3a0c7cfa",
+            "ev-operational_employment-web-f42ad4ad8ea8",
+            "ev-operational_employment-web-bc1c2e8c3176",
+            "ev-operational_employment-web-7d70929b0c3b"
+          ],
+          "handoff_summary": "作战运用结论：应采用“高端低轨骨干+前沿分布式杀伤网+军民混合补盲续接”的混合COA。COA-A负责战役级覆盖、导弹预警/跟踪和跨域分发，COA-B负责局部识别、目标保持和拒止火力窗口，COA-C负责战损后最低态势、BDA和恢复。装备需求优先级为低时延抗扰传输层、连续目标保持层、边缘融合/战术网关、抗扰用户终端、边缘BDA和快速补网保障包。下一步应按对空反导、对海拒止、对陆时间敏感目标三类场景，建立能力-任务矩阵和五档差距评估。",
+          "limitations": [
+            "低轨扩散星座提高抗毁和低时延，但GAO公开风险提示其成本、技术成熟度、进度和需求透明度仍可能削弱按期形成战役能力。",
+            "商业空间能力可增强规模和恢复弹性，但其数据质量、安全性、优先级和抗干扰能力与火控级军事链路存在天然张力。",
+            "前沿分布式节点可提高近域识别和反应速度，但其低特征、小型化和可持续保障之间存在矛盾：越靠前越有打击价值，也越容易被侦察、压制和断供。"
+          ],
+          "open_questions": [
+            "公开资料不足以判定PWSA/SDA各能力层在强干扰、跨密级网关和战区C2约束下的端到端闭环时延与可用率。",
+            "前沿分布式节点在持续侦察打击环境下的补给节奏、终端损耗率、密钥续接和弹药周转仍缺少公开可验证数据。",
+            "商业补盲数据从态势级进入目标级/BDA级使用时，质量认证、抗欺骗和授权边界需要进一步分层评估。"
+          ],
+          "packet_id": "packet-operational_employment"
+        },
+        {
+          "agent_id": "combat_scenario",
+          "claim_ids": [
+            "claim-b76e1f33bb52",
+            "claim-759363b290c4",
+            "claim-47c08714d419",
+            "claim-3b618d2d4106",
+            "claim-03e4b902508d"
+          ],
+          "confidence": 0.78,
+          "evidence_ids": [
+            "ev-combat_scenario-web-06d26c44006f",
+            "ev-combat_scenario-web-614112de1ec0",
+            "ev-combat_scenario-web-8952c3805d5a"
+          ],
+          "handoff_summary": "场景建模将课题收敛为任务链闭合检验：在拒止、战损、诱饵、电子压制和持续消耗条件下，天基低时延信息必须使发现、决策、协同、打击、评估、再组织在目标窗口内闭合。后续装备基线与五档差距应重点评估网状重路由、抗扰接入、边缘融合、跨域授权、BDA冗余和战损重组能力。",
+          "limitations": [
+            "低轨星座降低传输时延，但云层、地面站、终端暴露、跨密级网关和授权流程可能使体系端到端时延仍不满足时敏目标窗口。",
+            "自动化目标融合可加速杀伤链，但在诱饵、数据污染和BDA欺骗条件下可能把速度优势转化为高置信错误。",
+            "分布式前沿节点提高生存性，但低特征静默与高频目标更新存在内在冲突。"
+          ],
+          "open_questions": [
+            "公开资料缺少不同轨道层、链路层、战术数据链和授权流程组合下的真实端到端时延分布。",
+            "诱饵、数据污染和BDA欺骗对AI辅助目标融合的误判率仍需演训或仿真验证。",
+            "前沿小型终端在低截获、抗扰、低功耗和高吞吐之间的工程取舍需要装备试验数据支撑。"
+          ],
+          "packet_id": "packet-combat_scenario"
+        },
+        {
+          "agent_id": "weapon_equipment",
+          "claim_ids": [
+            "claim-9b2b1eeb1ee4",
+            "claim-1a790f711a31",
+            "claim-64c6d5c29792",
+            "claim-4a5c66f79070"
+          ],
+          "confidence": 0.74,
+          "evidence_ids": [
+            "ev-weapon_equipment-web-d6c1d3eec8e6",
+            "ev-weapon_equipment-web-43915f10ae4b",
+            "ev-weapon_equipment-web-5b58dc887688",
+            "ev-weapon_equipment-web-328871b56c44"
+          ],
+          "handoff_summary": "天基低时延信息支撑精确打击体系的装备矛盾是：低轨杀伤网能否把分散传感器数据稳定转化为武器质量航迹，并供远程精确导弹、远程无人打击和远域压制效应器在强对抗环境下持续使用。应以PrSM、LRPM/Launched Effects、Replicator类可消耗系统、AARGM-ER/NGJ-MB和PWSA为国外装备锚点，按目标发现、火力协同、打击毁伤、反制抗扰、区域拒止和抗毁恢复形成需求闭环。",
+          "limitations": [
+            "PrSM Inc 1已进入生产部署阶段，但公开证据主要证明固定/指定目标远程精确火力，不能证明完整时敏移动目标闭环能力。",
+            "LRPM公开演示一控多、在飞控制和半自主协同，但演训环境不等同于强综合防空、强电子压制和大规模反无人系统环境。",
+            "Replicator强调数量、低成本和可扩展，但具体平台差异很大，不能把整个计划等同为单一远程打击装备。",
+            "NGJ-MB/AARGM-ER可支撑远域压制链，但对严格辐射管控、诱饵雷达、机动防空和多频段抗干扰体系的实际压制持续时间未公开。"
+          ],
+          "open_questions": [
+            "PWSA到具体火控系统的端到端目标分发时延、链路可用率和武器质量航迹判据未公开，需用演训数据或仿真试验补证。",
+            "PrSM后续增量对移动目标、海上目标或重定位目标的实时重瞄能力公开证据不足，不能以Inc 1成熟度直接外推。",
+            "LRPM和Replicator类可消耗自主系统的战时产能、单位效应成本、强干扰下自治成功率和人机授权负荷仍缺少可核验公开数据。"
+          ],
+          "packet_id": "packet-weapon_equipment"
+        }
+      ],
+      "reasoning_nodes": [],
+      "stage_outputs": [],
+      "trace_rule": "正式结论应由需求卡片回溯至能力画像、S1-S6节点、中间Agent Packet和EvidenceCard。"
+    }
+  },
+  "report_contract": {
+    "future_test": "避免把公开资料未覆盖等同于能力空白，结合成熟度、接口余量和未来威胁演化确定建设时序。",
+    "military_test": "重点说明缺口如何削弱探测、指挥、突防、打击、抗毁、保障或持续作战能力，以及补齐后能够恢复哪一段任务效果。",
+    "thesis": "以现有任务链和装备基线为参照，定位在具体对抗条件下会导致任务失败或效能骤降的能力缺口，再论证升级与新研边界。"
+  },
+  "report_quality_requirements": {
+    "创新性": "说明相对现役基线改变的作战关系、对手反适应和失效边界，创新必须落实到具体装备。",
+    "制胜效能": "分别证明现役效能跃升、传统赛道跨代优势和新概念赛道开辟，并给出可校准效能方向。",
+    "可实现性（成熟度）": "逐项给出核心技术点、成熟度、工程瓶颈、证据边界和验证条件，禁止把推断写成既成能力。",
+    "装备能力图像": "形成5至7项具体装备，逐项给出能力域、差异化指标画像、作战运用概念和装备谱系位置。",
+    "领域属性符合性": "持续符合无人远程火力打击装备领域；通信、C2、保障和工程只能作为具体武器装备的内部依赖。"
+  },
+  "required_sections": [
+    "需求卡片",
+    "能力全景图",
+    "深度研究报告（含推理链可回溯）"
+  ]
+}

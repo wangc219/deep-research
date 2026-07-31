@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=Force Design
+source_url=https://www.marines.mil/Force-Design/
+claim=Force Design公开材料显示海军陆战队向MLR、传感器、无人系统、韧性C2和分层精确火力整合发展，支撑前沿分布式杀伤链建设判断。
+excerpt=
+retrieval=Hosted web search citation metadata

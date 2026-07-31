@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:c7e8994d742bb4e1",
+  "content_path": "text-c7e8994d742bb4e1.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-operational_employment-web-1772ab5f8282",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "c7e8994d742bb4e14dec8c7f76c4ccc987946a949a27c6624d022c41c7ca2ea6",
+  "url": "https://www.army.mil/article/293486/the_dispersed_screen_integrating_suas_for_resilient_reconnaissance"
+}

@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=af.mil · air force conducts live fire test for collaborative combat aircraft program
+source_url=https://www.af.mil/News/Article-Display/Article/4545856/air-force-conducts-live-fire-test-for-collaborative-combat-aircraft-program/
+claim=YFQ-44A CCA已完成AIM-120对数字目标实弹测试，并明确强调有人监督武器释放。
+excerpt=
+retrieval=Hosted web search citation metadata

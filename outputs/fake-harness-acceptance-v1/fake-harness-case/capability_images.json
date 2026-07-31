@@ -1,0 +1,40 @@
+[
+  {
+    "capability_gap": "既有体系难以快速复制战例中分布式感知、低成本消耗和跨域协同形成的非对称优势；本次基线：梳理与局部战争无人机攻防战例的体系韧性启示相关的现有装备功能、参数和体系接口。；识别探测、决策、载荷、协同、保障和成本边界。；按可获得性、验证程度、集成条件和工程风险评估成熟度。",
+    "capability_id": "cap-new-001",
+    "capability_image": "发展具备分布式感知、有人无人协同、快速目标分发、低成本规模运用和战损后重构能力的产品；证据驱动重点：明确地形、气象、电磁、网络和部署空间约束。；识别探测、决策、载荷、协同、保障和成本边界。；分析跨军兵种、有人无人、传感器与火力单元协同关系。",
+    "capability_type": "new_capability",
+    "confidence": 0.78,
+    "created_at": "2026-07-14T11:52:24.985711+00:00",
+    "equipment_category": "无人平台、远程效应器、分布式感知与指挥协同体系",
+    "evidence_ids": [
+      "ev-combat_scenario-1",
+      "ev-operational_employment-1",
+      "ev-weapon_equipment-1"
+    ],
+    "name": "战例牵引的新型体系协同能力",
+    "priority": "高：关键性高、紧迫性高、可行性中高",
+    "related_scenario": "局部战争无人机攻防战例的体系韧性启示",
+    "schema_version": "1.0",
+    "source_winning_logic": "局部战争案例 -> 新装备能力/新打法 -> 作战效果与不足 -> 可迁移未来布局"
+  },
+  {
+    "capability_gap": "战例表明现有装备在持续作战、目标识别、弹药经济性、体系互操作和战损适应方面存在不足；本次基线：梳理与局部战争无人机攻防战例的体系韧性启示相关的现有装备功能、参数和体系接口。；识别探测、决策、载荷、协同、保障和成本边界。；按可获得性、验证程度、集成条件和工程风险评估成熟度。",
+    "capability_id": "cap-upgrade-001",
+    "capability_image": "提升现有产品的持续值班、复杂目标识别、弹药成本控制、异构系统互操作和战损条件自主恢复功能；证据驱动重点：明确地形、气象、电磁、网络和部署空间约束。；识别探测、决策、载荷、协同、保障和成本边界。；分析跨军兵种、有人无人、传感器与火力单元协同关系。",
+    "capability_type": "upgrade",
+    "confidence": 0.78,
+    "created_at": "2026-07-14T11:52:24.985713+00:00",
+    "equipment_category": "现役防空反导、电子对抗、无人系统与综合保障装备",
+    "evidence_ids": [
+      "ev-combat_scenario-1",
+      "ev-operational_employment-1",
+      "ev-weapon_equipment-1"
+    ],
+    "name": "战例暴露问题牵引的现有装备改进",
+    "priority": "中高：紧迫性高、工程可行性高",
+    "related_scenario": "局部战争无人机攻防战例的体系韧性启示",
+    "schema_version": "1.0",
+    "source_winning_logic": "战例失败模式/经验教训 -> 现有装备约束 -> 适用条件修正 -> 升级需求"
+  }
+]

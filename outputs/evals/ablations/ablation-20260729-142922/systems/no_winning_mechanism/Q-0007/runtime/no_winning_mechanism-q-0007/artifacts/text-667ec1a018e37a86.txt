@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=spaceforce.mil · space development agency issues awards to build 36 accelerated missile defense
+source_url=https://www.spaceforce.mil/News/Article-Display/Article/4545203/space-development-agency-issues-awards-to-build-36-accelerated-missile-defense/
+claim=美国太空军公开信息显示SDA继续推进低轨导弹防御相关跟踪能力，并强调与低时延通信网络和战术数据分发结合。
+excerpt=
+retrieval=Hosted web search citation metadata

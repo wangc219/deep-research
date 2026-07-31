@@ -1,0 +1,3559 @@
+{
+  "agent_contributions": [
+    {
+      "adopted_by_capability_ids": [
+        "cap-new-001",
+        "cap-upgrade-001"
+      ],
+      "adopted_by_report_sections": [
+        "final_report"
+      ],
+      "adopted_by_s_steps": {
+        "S1": [
+          "claim-c23d8ae2bd77",
+          "claim-3910504a32b4"
+        ],
+        "S2": [
+          "claim-c23d8ae2bd77",
+          "claim-3910504a32b4"
+        ],
+        "S3": [
+          "claim-c23d8ae2bd77",
+          "claim-3910504a32b4"
+        ],
+        "S4": [
+          "claim-c23d8ae2bd77",
+          "claim-3910504a32b4"
+        ],
+        "S5": [
+          "claim-c23d8ae2bd77",
+          "claim-3910504a32b4"
+        ],
+        "S6": [
+          "claim-c23d8ae2bd77",
+          "claim-3910504a32b4"
+        ]
+      },
+      "agent_id": "combat_scenario",
+      "contributed": true,
+      "loao_quality_delta": null,
+      "model_calls": 0,
+      "observation_id": "contribution-packet-combat_scenario",
+      "packet_id": "packet-combat_scenario",
+      "produced_claim_ids": [
+        "claim-c23d8ae2bd77",
+        "claim-3910504a32b4"
+      ]
+    },
+    {
+      "adopted_by_capability_ids": [
+        "cap-new-001",
+        "cap-upgrade-001"
+      ],
+      "adopted_by_report_sections": [
+        "final_report"
+      ],
+      "adopted_by_s_steps": {
+        "S1": [
+          "claim-9b5b029dc50e",
+          "claim-4a9f5cba2d2b"
+        ],
+        "S2": [
+          "claim-9b5b029dc50e",
+          "claim-4a9f5cba2d2b"
+        ],
+        "S3": [
+          "claim-9b5b029dc50e",
+          "claim-4a9f5cba2d2b"
+        ],
+        "S4": [
+          "claim-9b5b029dc50e",
+          "claim-4a9f5cba2d2b"
+        ],
+        "S5": [
+          "claim-9b5b029dc50e",
+          "claim-4a9f5cba2d2b"
+        ],
+        "S6": [
+          "claim-9b5b029dc50e",
+          "claim-4a9f5cba2d2b"
+        ]
+      },
+      "agent_id": "weapon_equipment",
+      "contributed": true,
+      "loao_quality_delta": null,
+      "model_calls": 0,
+      "observation_id": "contribution-packet-weapon_equipment",
+      "packet_id": "packet-weapon_equipment",
+      "produced_claim_ids": [
+        "claim-9b5b029dc50e",
+        "claim-4a9f5cba2d2b"
+      ]
+    },
+    {
+      "adopted_by_capability_ids": [
+        "cap-new-001",
+        "cap-upgrade-001"
+      ],
+      "adopted_by_report_sections": [
+        "final_report"
+      ],
+      "adopted_by_s_steps": {
+        "S1": [
+          "claim-955a25921722",
+          "claim-7e2bf9387cdb"
+        ],
+        "S2": [
+          "claim-955a25921722",
+          "claim-7e2bf9387cdb"
+        ],
+        "S3": [
+          "claim-955a25921722",
+          "claim-7e2bf9387cdb"
+        ],
+        "S4": [
+          "claim-955a25921722",
+          "claim-7e2bf9387cdb"
+        ],
+        "S5": [
+          "claim-955a25921722",
+          "claim-7e2bf9387cdb"
+        ],
+        "S6": [
+          "claim-955a25921722",
+          "claim-7e2bf9387cdb"
+        ]
+      },
+      "agent_id": "international_situation",
+      "contributed": true,
+      "loao_quality_delta": null,
+      "model_calls": 0,
+      "observation_id": "contribution-packet-international_situation",
+      "packet_id": "packet-international_situation",
+      "produced_claim_ids": [
+        "claim-955a25921722",
+        "claim-7e2bf9387cdb"
+      ]
+    },
+    {
+      "adopted_by_capability_ids": [
+        "cap-new-001",
+        "cap-upgrade-001"
+      ],
+      "adopted_by_report_sections": [
+        "final_report"
+      ],
+      "adopted_by_s_steps": {
+        "S1": [
+          "claim-3861bb2956ae",
+          "claim-52dabe1775df"
+        ],
+        "S2": [
+          "claim-3861bb2956ae",
+          "claim-52dabe1775df"
+        ],
+        "S3": [
+          "claim-3861bb2956ae",
+          "claim-52dabe1775df"
+        ],
+        "S4": [
+          "claim-3861bb2956ae",
+          "claim-52dabe1775df"
+        ],
+        "S5": [
+          "claim-3861bb2956ae",
+          "claim-52dabe1775df"
+        ],
+        "S6": [
+          "claim-3861bb2956ae",
+          "claim-52dabe1775df"
+        ]
+      },
+      "agent_id": "operational_employment",
+      "contributed": true,
+      "loao_quality_delta": null,
+      "model_calls": 0,
+      "observation_id": "contribution-packet-operational_employment",
+      "packet_id": "packet-operational_employment",
+      "produced_claim_ids": [
+        "claim-3861bb2956ae",
+        "claim-52dabe1775df"
+      ]
+    }
+  ],
+  "agent_models": {
+    "reporter": {
+      "api_key_env": null,
+      "base_url_host": null,
+      "model": "gpt-5.5",
+      "provider": "codex"
+    }
+  },
+  "agent_recommendations": [],
+  "analyst_confirmed": false,
+  "architecture_conformance": {
+    "architecture_source": [
+      "基于多智能体协作的JS装备市场需求深度挖掘系统架构设计.docx",
+      "编排器与动态智能体_总体架构图.pdf",
+      "制胜机理智能体_详细架构图.pdf"
+    ],
+    "audit_status": "limited",
+    "checks": {
+      "a_h_blueprint_executable": true,
+      "codex_inner_and_middle_loops_recorded": true,
+      "core_agent_sessions": true,
+      "coverage_explicit": true,
+      "cross_scenario_convergence_present": true,
+      "dynamic_agent_selection_recorded": true,
+      "final_report_present": true,
+      "five_criteria_audit_present": true,
+      "formal_evidence_present": true,
+      "four_knowledge_resources_projected": true,
+      "isolated_agent_sessions": true,
+      "l1_l2_l3_present": true,
+      "nine_field_capability_images": true,
+      "outer_and_meta_loops_recorded": true,
+      "plan_graph_complete": true,
+      "real_or_fake_mode_recorded": true,
+      "six_step_reasoning_complete": true
+    },
+    "limitations": [
+      "运行链路可完整，但正式发布仍须满足覆盖、置信度、材料化、轮次和分析师确认判据。"
+    ],
+    "release_ready": false,
+    "runtime_complete": true,
+    "schema_version": "1.0"
+  },
+  "coverage": {
+    "by_agent": {
+      "combat_scenario": [
+        "scenario",
+        "coa",
+        "environment"
+      ],
+      "international_situation": [
+        "situation",
+        "threat",
+        "strategy"
+      ],
+      "operational_employment": [
+        "operation",
+        "coordination",
+        "lessons"
+      ],
+      "weapon_equipment": [
+        "equipment",
+        "capability_gap",
+        "technology_readiness"
+      ]
+    },
+    "convergence": {
+      "clusters": [
+        {
+          "name": "combat_scenario",
+          "packet_ids": [
+            "packet-combat_scenario"
+          ],
+          "shared_need": "作战场景围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。"
+        },
+        {
+          "name": "weapon_equipment",
+          "packet_ids": [
+            "packet-weapon_equipment"
+          ],
+          "shared_need": "武器装备围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。"
+        },
+        {
+          "name": "international_situation",
+          "packet_ids": [
+            "packet-international_situation"
+          ],
+          "shared_need": "国际形势围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。"
+        },
+        {
+          "name": "operational_employment",
+          "packet_ids": [
+            "packet-operational_employment"
+          ],
+          "shared_need": "作战运用围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。"
+        }
+      ],
+      "conflicts": [],
+      "cross_branch_links": [],
+      "fusion_mode": "local_cluster_dedupe_rank",
+      "meta_review": {
+        "added_secondary_branches": [],
+        "dynamic_subagents": [],
+        "focus_questions": [],
+        "rationale": "覆盖与收敛结果未触发实质性重规划条件，保留当前蓝图。",
+        "replan_required": false,
+        "step_mode_changes": [],
+        "step_mode_overrides": [],
+        "stop_reason": "lean_meta_gate_passed"
+      },
+      "model_call_skipped": true,
+      "open_questions": [
+        "作战场景维度仍需进一步联网补充高置信资料。",
+        "武器装备维度仍需进一步联网补充高置信资料。",
+        "国际形势维度仍需进一步联网补充高置信资料。",
+        "作战运用维度仍需进一步联网补充高置信资料。"
+      ],
+      "priorities": [
+        "作战场景围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。",
+        "武器装备围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。",
+        "国际形势围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。",
+        "作战运用围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。"
+      ]
+    },
+    "coverage_passed": true,
+    "discovery_blueprint": {
+      "adaptive_winning_step_modes": {
+        "1": "standard",
+        "2": "standard",
+        "3": "standard",
+        "4": "deep",
+        "5": "deep",
+        "6": "deep"
+      },
+      "assumptions": [],
+      "baseline_agent_plan": [
+        {
+          "agent_id": "international_situation",
+          "mode": "required",
+          "reason": "任务涉及外部地区、国外力量或国际安全环境，需要建立战略态势与对手能力建设基线。；B分支确定性基线建议"
+        },
+        {
+          "agent_id": "combat_scenario",
+          "mode": "required",
+          "reason": "B分支确定性基线建议"
+        },
+        {
+          "agent_id": "weapon_equipment",
+          "mode": "required",
+          "reason": "任务要求装备现状、能力差距、升级或新研判断，需要装备证据与成熟度分析。；B分支确定性基线建议"
+        },
+        {
+          "agent_id": "operational_employment",
+          "mode": "reference",
+          "reason": "B分支确定性基线建议"
+        },
+        {
+          "agent_id": "system_confrontation",
+          "mode": "callback",
+          "reason": "B分支确定性基线建议；任务明确涉及体系级对抗、依赖链或反介入/区域拒止，需要体系建模与补链强链分析。；B分支由S2/S5先承担该分析，仅在残差门触发时回调"
+        }
+      ],
+      "baseline_execution_mode": "query_dominant_isolated_parallel",
+      "blueprint_id": "blueprint-b-b6153191",
+      "blueprint_mode": "catalog",
+      "branch_name": "传统能力缺口发现",
+      "callback_agent_ids": [
+        "system_confrontation"
+      ],
+      "confidence": 1.0,
+      "custom_blueprint": {
+        "dependencies": [],
+        "dependency_cycle_rejected": false,
+        "driver_type": "",
+        "preferred_agent_ids": [],
+        "rationale": "",
+        "required_capability_tags": [],
+        "required_outputs": [],
+        "s1_s6_modes": {},
+        "stop_conditions": [],
+        "waves": []
+      },
+      "driver_scores": [],
+      "dynamic_subagents": [],
+      "emphasis": [
+        "S4",
+        "S5",
+        "S6"
+      ],
+      "execution_contract": {
+        "absolute_deadline_seconds": 2100,
+        "background_count": 3,
+        "backtrack_map": {
+          "capability_mapping": [
+            4,
+            5,
+            6
+          ],
+          "equipment_baseline": [
+            5,
+            6
+          ],
+          "priority": [
+            6
+          ],
+          "report_section": [],
+          "scenario_coverage": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        },
+        "branch": "B",
+        "branch_products": [
+          "three_backgrounds",
+          "six_to_nine_scenarios",
+          "five_level_gap_assessment",
+          "requirement_cards",
+          "capability_panorama",
+          "traceable_deep_report"
+        ],
+        "codex_concurrency": 4,
+        "contract_id": "branch-b-optimized-v2",
+        "delivery_grace_seconds": 300,
+        "hard_deadline_seconds": 1800,
+        "logical_agent_dag": {
+          "S1": [
+            "combat_scenario"
+          ],
+          "S2": [
+            "S1"
+          ],
+          "S3": [
+            "S2"
+          ],
+          "S4": [
+            "S3"
+          ],
+          "S5": [
+            "S4"
+          ],
+          "S6": [
+            "S4",
+            "S5"
+          ],
+          "combat_scenario": [
+            "international_situation"
+          ],
+          "international_situation": [],
+          "reporter": [
+            "S6"
+          ]
+        },
+        "maximum_delivery_model_calls": 4,
+        "maximum_model_calls": 10,
+        "maximum_model_calls_with_residuals": 14,
+        "maximum_rounds": 3,
+        "maximum_searches": 12,
+        "physical_cohorts": [
+          [
+            1,
+            2,
+            3
+          ],
+          [
+            4,
+            5
+          ]
+        ],
+        "scenarios_per_background": [
+          2,
+          3
+        ],
+        "schema_version": "2.0",
+        "soft_deadline_seconds": 1200,
+        "step_intensity": {
+          "1": "standard",
+          "2": "standard",
+          "3": "standard",
+          "4": "deep",
+          "5": "deep",
+          "6": "deep"
+        },
+        "stop_conditions": [
+          "all_required_branch_products_present",
+          "accepted_claims_traceable_to_public_sources",
+          "no_repeated_residual_without_new_evidence",
+          "estimated_quality_gain_below_0.03",
+          "hard_deadline_reached"
+        ]
+      },
+      "execution_profile_hash": "340bbf3b1885e7c823d19cb1a8432a767a0c47f760cf62015a3cdbf7f24cda79",
+      "execution_profile_id": "optimized_v2",
+      "focus_questions": [],
+      "generated_by": "deterministic_architecture_policy",
+      "hard_constraints": [],
+      "hard_dependencies": {
+        "combat_scenario": [
+          "international_situation"
+        ],
+        "international_situation": []
+      },
+      "initial_baseline_agent_ids": [
+        "international_situation",
+        "combat_scenario",
+        "weapon_equipment",
+        "operational_employment"
+      ],
+      "interaction_mode": "expert",
+      "loop_policy": {
+        "inner_max_iterations": 1,
+        "meta_max_cycles": 1,
+        "middle_max_cycles": 1,
+        "minimum_expected_gain": 0.03,
+        "outer_max_rounds": 3,
+        "residual_only_after_first_round": true
+      },
+      "maximum_business_agents": 4,
+      "meta_review": {
+        "added_secondary_branches": [],
+        "dynamic_subagents": [],
+        "focus_questions": [],
+        "rationale": "覆盖与收敛结果未触发实质性重规划条件，保留当前蓝图。",
+        "replan_required": false,
+        "step_mode_changes": [],
+        "step_mode_overrides": [],
+        "stop_reason": "lean_meta_gate_passed"
+      },
+      "meta_triggers": [
+        "出现跨分支高价值线索",
+        "当前分支无法覆盖关键能力标签",
+        "案例/技术/对手变化反向触发其他发现路径"
+      ],
+      "minimum_business_agents": 3,
+      "primary_branch": "B",
+      "prompt_version": "2.4",
+      "rationale": "专家显式指定传统能力缺口发现分支。",
+      "required_capability_tags": [
+        "equipment",
+        "capability_gap"
+      ],
+      "required_outputs": [
+        "装备基线与五档差距",
+        "需求卡片（能力域/关键指标/优先级/支撑场景/证据链）",
+        "能力全景图",
+        "深度研究报告（含推理链可回溯）",
+        "深度研究主报告（深度性、创新性、前瞻性、军事价值性）",
+        "分支专用收敛产物"
+      ],
+      "runtime_budgets": {
+        "absolute_deadline_seconds": 2100,
+        "codex_concurrency": 4,
+        "delivery_grace_seconds": 300,
+        "hard_deadline_seconds": 1800,
+        "maximum_delivery_model_calls": 4,
+        "maximum_model_calls": 10,
+        "maximum_model_calls_with_residuals": 14,
+        "maximum_searches": 12,
+        "soft_deadline_seconds": 1200
+      },
+      "runtime_route": "traditional_gap",
+      "secondary_branches": [],
+      "semantic_agent_signals": [
+        {
+          "agent_id": "international_situation",
+          "matched_signals": [
+            "西太"
+          ],
+          "mode": "required",
+          "priority": 100,
+          "reason": "任务涉及外部地区、国外力量或国际安全环境，需要建立战略态势与对手能力建设基线。"
+        },
+        {
+          "agent_id": "system_confrontation",
+          "matched_signals": [
+            "反介入"
+          ],
+          "mode": "required",
+          "priority": 98,
+          "reason": "任务明确涉及体系级对抗、依赖链或反介入/区域拒止，需要体系建模与补链强链分析。"
+        },
+        {
+          "agent_id": "weapon_equipment",
+          "matched_signals": [
+            "装备",
+            "能力缺口"
+          ],
+          "mode": "required",
+          "priority": 92,
+          "reason": "任务要求装备现状、能力差距、升级或新研判断，需要装备证据与成熟度分析。"
+        }
+      ],
+      "specialist_agent_ids": [],
+      "unmatched_driver": "",
+      "waves": [
+        [
+          "international_situation"
+        ],
+        [
+          "combat_scenario",
+          "weapon_equipment"
+        ]
+      ]
+    },
+    "discovery_branch": "B",
+    "missing_required_tags": [],
+    "optional_tags": [
+      "strategy",
+      "technology_readiness"
+    ],
+    "provided_tags": [
+      "capability_gap",
+      "coa",
+      "coordination",
+      "environment",
+      "equipment",
+      "lessons",
+      "operation",
+      "scenario",
+      "situation",
+      "strategy",
+      "technology_readiness",
+      "threat"
+    ],
+    "required_tags": [
+      "capability_gap",
+      "equipment",
+      "situation"
+    ],
+    "route": "traditional_gap"
+  },
+  "delivery_artifacts": {
+    "branch_deliverables": "branch_deliverables.json",
+    "capability_panorama": "capability_panorama.json",
+    "demand_cards": "demand_cards.json",
+    "reasoning_traceability": "reasoning_traceability.json"
+  },
+  "discovery_blueprint": {
+    "adaptive_winning_step_modes": {
+      "1": "standard",
+      "2": "standard",
+      "3": "standard",
+      "4": "deep",
+      "5": "deep",
+      "6": "deep"
+    },
+    "assumptions": [],
+    "baseline_agent_plan": [
+      {
+        "agent_id": "international_situation",
+        "mode": "required",
+        "reason": "任务涉及外部地区、国外力量或国际安全环境，需要建立战略态势与对手能力建设基线。；B分支确定性基线建议"
+      },
+      {
+        "agent_id": "combat_scenario",
+        "mode": "required",
+        "reason": "B分支确定性基线建议"
+      },
+      {
+        "agent_id": "weapon_equipment",
+        "mode": "required",
+        "reason": "任务要求装备现状、能力差距、升级或新研判断，需要装备证据与成熟度分析。；B分支确定性基线建议"
+      },
+      {
+        "agent_id": "operational_employment",
+        "mode": "reference",
+        "reason": "B分支确定性基线建议"
+      },
+      {
+        "agent_id": "system_confrontation",
+        "mode": "callback",
+        "reason": "B分支确定性基线建议；任务明确涉及体系级对抗、依赖链或反介入/区域拒止，需要体系建模与补链强链分析。；B分支由S2/S5先承担该分析，仅在残差门触发时回调"
+      }
+    ],
+    "baseline_execution_mode": "query_dominant_isolated_parallel",
+    "blueprint_id": "blueprint-b-b6153191",
+    "blueprint_mode": "catalog",
+    "branch_name": "传统能力缺口发现",
+    "callback_agent_ids": [
+      "system_confrontation"
+    ],
+    "confidence": 1.0,
+    "custom_blueprint": {
+      "dependencies": [],
+      "dependency_cycle_rejected": false,
+      "driver_type": "",
+      "preferred_agent_ids": [],
+      "rationale": "",
+      "required_capability_tags": [],
+      "required_outputs": [],
+      "s1_s6_modes": {},
+      "stop_conditions": [],
+      "waves": []
+    },
+    "driver_scores": [],
+    "dynamic_subagents": [],
+    "emphasis": [
+      "S4",
+      "S5",
+      "S6"
+    ],
+    "execution_contract": {
+      "absolute_deadline_seconds": 2100,
+      "background_count": 3,
+      "backtrack_map": {
+        "capability_mapping": [
+          4,
+          5,
+          6
+        ],
+        "equipment_baseline": [
+          5,
+          6
+        ],
+        "priority": [
+          6
+        ],
+        "report_section": [],
+        "scenario_coverage": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "branch": "B",
+      "branch_products": [
+        "three_backgrounds",
+        "six_to_nine_scenarios",
+        "five_level_gap_assessment",
+        "requirement_cards",
+        "capability_panorama",
+        "traceable_deep_report"
+      ],
+      "codex_concurrency": 4,
+      "contract_id": "branch-b-optimized-v2",
+      "delivery_grace_seconds": 300,
+      "hard_deadline_seconds": 1800,
+      "logical_agent_dag": {
+        "S1": [
+          "combat_scenario"
+        ],
+        "S2": [
+          "S1"
+        ],
+        "S3": [
+          "S2"
+        ],
+        "S4": [
+          "S3"
+        ],
+        "S5": [
+          "S4"
+        ],
+        "S6": [
+          "S4",
+          "S5"
+        ],
+        "combat_scenario": [
+          "international_situation"
+        ],
+        "international_situation": [],
+        "reporter": [
+          "S6"
+        ]
+      },
+      "maximum_delivery_model_calls": 4,
+      "maximum_model_calls": 10,
+      "maximum_model_calls_with_residuals": 14,
+      "maximum_rounds": 3,
+      "maximum_searches": 12,
+      "physical_cohorts": [
+        [
+          1,
+          2,
+          3
+        ],
+        [
+          4,
+          5
+        ]
+      ],
+      "scenarios_per_background": [
+        2,
+        3
+      ],
+      "schema_version": "2.0",
+      "soft_deadline_seconds": 1200,
+      "step_intensity": {
+        "1": "standard",
+        "2": "standard",
+        "3": "standard",
+        "4": "deep",
+        "5": "deep",
+        "6": "deep"
+      },
+      "stop_conditions": [
+        "all_required_branch_products_present",
+        "accepted_claims_traceable_to_public_sources",
+        "no_repeated_residual_without_new_evidence",
+        "estimated_quality_gain_below_0.03",
+        "hard_deadline_reached"
+      ]
+    },
+    "execution_profile_hash": "340bbf3b1885e7c823d19cb1a8432a767a0c47f760cf62015a3cdbf7f24cda79",
+    "execution_profile_id": "optimized_v2",
+    "focus_questions": [],
+    "generated_by": "deterministic_architecture_policy",
+    "hard_constraints": [],
+    "hard_dependencies": {
+      "combat_scenario": [
+        "international_situation"
+      ],
+      "international_situation": []
+    },
+    "initial_baseline_agent_ids": [
+      "international_situation",
+      "combat_scenario",
+      "weapon_equipment",
+      "operational_employment"
+    ],
+    "interaction_mode": "expert",
+    "loop_policy": {
+      "inner_max_iterations": 1,
+      "meta_max_cycles": 1,
+      "middle_max_cycles": 1,
+      "minimum_expected_gain": 0.03,
+      "outer_max_rounds": 3,
+      "residual_only_after_first_round": true
+    },
+    "maximum_business_agents": 4,
+    "meta_review": {
+      "added_secondary_branches": [],
+      "dynamic_subagents": [],
+      "focus_questions": [],
+      "rationale": "覆盖与收敛结果未触发实质性重规划条件，保留当前蓝图。",
+      "replan_required": false,
+      "step_mode_changes": [],
+      "step_mode_overrides": [],
+      "stop_reason": "lean_meta_gate_passed"
+    },
+    "meta_triggers": [
+      "出现跨分支高价值线索",
+      "当前分支无法覆盖关键能力标签",
+      "案例/技术/对手变化反向触发其他发现路径"
+    ],
+    "minimum_business_agents": 3,
+    "primary_branch": "B",
+    "prompt_version": "2.4",
+    "rationale": "专家显式指定传统能力缺口发现分支。",
+    "required_capability_tags": [
+      "equipment",
+      "capability_gap"
+    ],
+    "required_outputs": [
+      "装备基线与五档差距",
+      "需求卡片（能力域/关键指标/优先级/支撑场景/证据链）",
+      "能力全景图",
+      "深度研究报告（含推理链可回溯）",
+      "深度研究主报告（深度性、创新性、前瞻性、军事价值性）",
+      "分支专用收敛产物"
+    ],
+    "runtime_budgets": {
+      "absolute_deadline_seconds": 2100,
+      "codex_concurrency": 4,
+      "delivery_grace_seconds": 300,
+      "hard_deadline_seconds": 1800,
+      "maximum_delivery_model_calls": 4,
+      "maximum_model_calls": 10,
+      "maximum_model_calls_with_residuals": 14,
+      "maximum_searches": 12,
+      "soft_deadline_seconds": 1200
+    },
+    "runtime_route": "traditional_gap",
+    "secondary_branches": [],
+    "semantic_agent_signals": [
+      {
+        "agent_id": "international_situation",
+        "matched_signals": [
+          "西太"
+        ],
+        "mode": "required",
+        "priority": 100,
+        "reason": "任务涉及外部地区、国外力量或国际安全环境，需要建立战略态势与对手能力建设基线。"
+      },
+      {
+        "agent_id": "system_confrontation",
+        "matched_signals": [
+          "反介入"
+        ],
+        "mode": "required",
+        "priority": 98,
+        "reason": "任务明确涉及体系级对抗、依赖链或反介入/区域拒止，需要体系建模与补链强链分析。"
+      },
+      {
+        "agent_id": "weapon_equipment",
+        "matched_signals": [
+          "装备",
+          "能力缺口"
+        ],
+        "mode": "required",
+        "priority": 92,
+        "reason": "任务要求装备现状、能力差距、升级或新研判断，需要装备证据与成熟度分析。"
+      }
+    ],
+    "specialist_agent_ids": [],
+    "unmatched_driver": "",
+    "waves": [
+      [
+        "international_situation"
+      ],
+      [
+        "combat_scenario",
+        "weapon_equipment"
+      ]
+    ]
+  },
+  "discovery_branch": {
+    "confidence": 1.0,
+    "label": "传统能力缺口发现",
+    "primary": "B",
+    "rationale": "专家显式指定传统能力缺口发现分支。",
+    "secondary": []
+  },
+  "discovery_convergence": {
+    "clusters": [
+      {
+        "name": "combat_scenario",
+        "packet_ids": [
+          "packet-combat_scenario"
+        ],
+        "shared_need": "作战场景围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。"
+      },
+      {
+        "name": "weapon_equipment",
+        "packet_ids": [
+          "packet-weapon_equipment"
+        ],
+        "shared_need": "武器装备围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。"
+      },
+      {
+        "name": "international_situation",
+        "packet_ids": [
+          "packet-international_situation"
+        ],
+        "shared_need": "国际形势围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。"
+      },
+      {
+        "name": "operational_employment",
+        "packet_ids": [
+          "packet-operational_employment"
+        ],
+        "shared_need": "作战运用围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。"
+      }
+    ],
+    "conflicts": [],
+    "cross_branch_links": [],
+    "fusion_mode": "local_cluster_dedupe_rank",
+    "meta_review": {
+      "added_secondary_branches": [],
+      "dynamic_subagents": [],
+      "focus_questions": [],
+      "rationale": "覆盖与收敛结果未触发实质性重规划条件，保留当前蓝图。",
+      "replan_required": false,
+      "step_mode_changes": [],
+      "step_mode_overrides": [],
+      "stop_reason": "lean_meta_gate_passed"
+    },
+    "model_call_skipped": true,
+    "open_questions": [
+      "作战场景维度仍需进一步联网补充高置信资料。",
+      "武器装备维度仍需进一步联网补充高置信资料。",
+      "国际形势维度仍需进一步联网补充高置信资料。",
+      "作战运用维度仍需进一步联网补充高置信资料。"
+    ],
+    "priorities": [
+      "作战场景围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。",
+      "武器装备围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。",
+      "国际形势围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。",
+      "作战运用围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。"
+    ]
+  },
+  "evidence_assessments": [
+    {
+      "conflict_group": null,
+      "decision": "accepted",
+      "evidence_id": "ev-combat_scenario-1",
+      "normalized_url": "https://fixture.local/combat_scenario",
+      "reasons": [],
+      "score": 0.807
+    },
+    {
+      "conflict_group": null,
+      "decision": "accepted",
+      "evidence_id": "ev-weapon_equipment-1",
+      "normalized_url": "https://fixture.local/weapon_equipment",
+      "reasons": [],
+      "score": 0.807
+    },
+    {
+      "conflict_group": null,
+      "decision": "accepted",
+      "evidence_id": "ev-international_situation-1",
+      "normalized_url": "https://fixture.local/international_situation",
+      "reasons": [],
+      "score": 0.807
+    },
+    {
+      "conflict_group": null,
+      "decision": "accepted",
+      "evidence_id": "ev-operational_employment-1",
+      "normalized_url": "https://fixture.local/operational_employment",
+      "reasons": [],
+      "score": 0.807
+    }
+  ],
+  "interaction_mode": "expert",
+  "mode": "fake",
+  "performance_summary": {
+    "dynamic_agent_count": 0,
+    "inner_retry_count": 0,
+    "inner_review_count": 0,
+    "max_model_call_seconds": 0.0,
+    "max_queue_wait_seconds": 0.0,
+    "middle_cycle_count": 0,
+    "middle_review_count": 0,
+    "model_call_count": 0,
+    "model_elapsed_seconds_sum": 0,
+    "orchestration_setup_seconds": 0.053,
+    "reference_agent_count": 1,
+    "required_agent_count": 3,
+    "selected_agent_count": 4,
+    "selected_business_agent_count": 4,
+    "wall_time_seconds": 0.149,
+    "winning_step_call_counts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0,
+      "6": 0
+    }
+  },
+  "plan_graph": {
+    "baseline_map_count": 4,
+    "dependency_edges": [
+      {
+        "from": "map:international_situation",
+        "to": "reduce:baseline"
+      },
+      {
+        "from": "map:combat_scenario",
+        "to": "reduce:baseline"
+      },
+      {
+        "from": "map:weapon_equipment",
+        "to": "reduce:baseline"
+      },
+      {
+        "from": "map:operational_employment",
+        "to": "reduce:baseline"
+      },
+      {
+        "from": "reduce:baseline",
+        "to": "winning:L1-L3"
+      },
+      {
+        "from": "winning:L1-L3",
+        "to": "audit:five-criteria"
+      },
+      {
+        "from": "audit:five-criteria",
+        "to": "report:final"
+      }
+    ],
+    "discovery_blueprint": {
+      "adaptive_winning_step_modes": {
+        "1": "standard",
+        "2": "standard",
+        "3": "standard",
+        "4": "deep",
+        "5": "deep",
+        "6": "deep"
+      },
+      "assumptions": [],
+      "baseline_agent_plan": [
+        {
+          "agent_id": "international_situation",
+          "mode": "required",
+          "reason": "任务涉及外部地区、国外力量或国际安全环境，需要建立战略态势与对手能力建设基线。；B分支确定性基线建议"
+        },
+        {
+          "agent_id": "combat_scenario",
+          "mode": "required",
+          "reason": "B分支确定性基线建议"
+        },
+        {
+          "agent_id": "weapon_equipment",
+          "mode": "required",
+          "reason": "任务要求装备现状、能力差距、升级或新研判断，需要装备证据与成熟度分析。；B分支确定性基线建议"
+        },
+        {
+          "agent_id": "operational_employment",
+          "mode": "reference",
+          "reason": "B分支确定性基线建议"
+        },
+        {
+          "agent_id": "system_confrontation",
+          "mode": "callback",
+          "reason": "B分支确定性基线建议；任务明确涉及体系级对抗、依赖链或反介入/区域拒止，需要体系建模与补链强链分析。；B分支由S2/S5先承担该分析，仅在残差门触发时回调"
+        }
+      ],
+      "baseline_execution_mode": "query_dominant_isolated_parallel",
+      "blueprint_id": "blueprint-b-b6153191",
+      "blueprint_mode": "catalog",
+      "branch_name": "传统能力缺口发现",
+      "callback_agent_ids": [
+        "system_confrontation"
+      ],
+      "confidence": 1.0,
+      "custom_blueprint": {
+        "dependencies": [],
+        "dependency_cycle_rejected": false,
+        "driver_type": "",
+        "preferred_agent_ids": [],
+        "rationale": "",
+        "required_capability_tags": [],
+        "required_outputs": [],
+        "s1_s6_modes": {},
+        "stop_conditions": [],
+        "waves": []
+      },
+      "driver_scores": [],
+      "dynamic_subagents": [],
+      "emphasis": [
+        "S4",
+        "S5",
+        "S6"
+      ],
+      "execution_contract": {
+        "absolute_deadline_seconds": 2100,
+        "background_count": 3,
+        "backtrack_map": {
+          "capability_mapping": [
+            4,
+            5,
+            6
+          ],
+          "equipment_baseline": [
+            5,
+            6
+          ],
+          "priority": [
+            6
+          ],
+          "report_section": [],
+          "scenario_coverage": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        },
+        "branch": "B",
+        "branch_products": [
+          "three_backgrounds",
+          "six_to_nine_scenarios",
+          "five_level_gap_assessment",
+          "requirement_cards",
+          "capability_panorama",
+          "traceable_deep_report"
+        ],
+        "codex_concurrency": 4,
+        "contract_id": "branch-b-optimized-v2",
+        "delivery_grace_seconds": 300,
+        "hard_deadline_seconds": 1800,
+        "logical_agent_dag": {
+          "S1": [
+            "combat_scenario"
+          ],
+          "S2": [
+            "S1"
+          ],
+          "S3": [
+            "S2"
+          ],
+          "S4": [
+            "S3"
+          ],
+          "S5": [
+            "S4"
+          ],
+          "S6": [
+            "S4",
+            "S5"
+          ],
+          "combat_scenario": [
+            "international_situation"
+          ],
+          "international_situation": [],
+          "reporter": [
+            "S6"
+          ]
+        },
+        "maximum_delivery_model_calls": 4,
+        "maximum_model_calls": 10,
+        "maximum_model_calls_with_residuals": 14,
+        "maximum_rounds": 3,
+        "maximum_searches": 12,
+        "physical_cohorts": [
+          [
+            1,
+            2,
+            3
+          ],
+          [
+            4,
+            5
+          ]
+        ],
+        "scenarios_per_background": [
+          2,
+          3
+        ],
+        "schema_version": "2.0",
+        "soft_deadline_seconds": 1200,
+        "step_intensity": {
+          "1": "standard",
+          "2": "standard",
+          "3": "standard",
+          "4": "deep",
+          "5": "deep",
+          "6": "deep"
+        },
+        "stop_conditions": [
+          "all_required_branch_products_present",
+          "accepted_claims_traceable_to_public_sources",
+          "no_repeated_residual_without_new_evidence",
+          "estimated_quality_gain_below_0.03",
+          "hard_deadline_reached"
+        ]
+      },
+      "execution_profile_hash": "340bbf3b1885e7c823d19cb1a8432a767a0c47f760cf62015a3cdbf7f24cda79",
+      "execution_profile_id": "optimized_v2",
+      "focus_questions": [],
+      "generated_by": "deterministic_architecture_policy",
+      "hard_constraints": [],
+      "hard_dependencies": {
+        "combat_scenario": [
+          "international_situation"
+        ],
+        "international_situation": []
+      },
+      "initial_baseline_agent_ids": [
+        "international_situation",
+        "combat_scenario",
+        "weapon_equipment",
+        "operational_employment"
+      ],
+      "interaction_mode": "expert",
+      "loop_policy": {
+        "inner_max_iterations": 1,
+        "meta_max_cycles": 1,
+        "middle_max_cycles": 1,
+        "minimum_expected_gain": 0.03,
+        "outer_max_rounds": 3,
+        "residual_only_after_first_round": true
+      },
+      "maximum_business_agents": 4,
+      "meta_review": {
+        "added_secondary_branches": [],
+        "dynamic_subagents": [],
+        "focus_questions": [],
+        "rationale": "覆盖与收敛结果未触发实质性重规划条件，保留当前蓝图。",
+        "replan_required": false,
+        "step_mode_changes": [],
+        "step_mode_overrides": [],
+        "stop_reason": "lean_meta_gate_passed"
+      },
+      "meta_triggers": [
+        "出现跨分支高价值线索",
+        "当前分支无法覆盖关键能力标签",
+        "案例/技术/对手变化反向触发其他发现路径"
+      ],
+      "minimum_business_agents": 3,
+      "primary_branch": "B",
+      "prompt_version": "2.4",
+      "rationale": "专家显式指定传统能力缺口发现分支。",
+      "required_capability_tags": [
+        "equipment",
+        "capability_gap"
+      ],
+      "required_outputs": [
+        "装备基线与五档差距",
+        "需求卡片（能力域/关键指标/优先级/支撑场景/证据链）",
+        "能力全景图",
+        "深度研究报告（含推理链可回溯）",
+        "深度研究主报告（深度性、创新性、前瞻性、军事价值性）",
+        "分支专用收敛产物"
+      ],
+      "runtime_budgets": {
+        "absolute_deadline_seconds": 2100,
+        "codex_concurrency": 4,
+        "delivery_grace_seconds": 300,
+        "hard_deadline_seconds": 1800,
+        "maximum_delivery_model_calls": 4,
+        "maximum_model_calls": 10,
+        "maximum_model_calls_with_residuals": 14,
+        "maximum_searches": 12,
+        "soft_deadline_seconds": 1200
+      },
+      "runtime_route": "traditional_gap",
+      "secondary_branches": [],
+      "semantic_agent_signals": [
+        {
+          "agent_id": "international_situation",
+          "matched_signals": [
+            "西太"
+          ],
+          "mode": "required",
+          "priority": 100,
+          "reason": "任务涉及外部地区、国外力量或国际安全环境，需要建立战略态势与对手能力建设基线。"
+        },
+        {
+          "agent_id": "system_confrontation",
+          "matched_signals": [
+            "反介入"
+          ],
+          "mode": "required",
+          "priority": 98,
+          "reason": "任务明确涉及体系级对抗、依赖链或反介入/区域拒止，需要体系建模与补链强链分析。"
+        },
+        {
+          "agent_id": "weapon_equipment",
+          "matched_signals": [
+            "装备",
+            "能力缺口"
+          ],
+          "mode": "required",
+          "priority": 92,
+          "reason": "任务要求装备现状、能力差距、升级或新研判断，需要装备证据与成熟度分析。"
+        }
+      ],
+      "specialist_agent_ids": [],
+      "unmatched_driver": "",
+      "waves": [
+        [
+          "international_situation"
+        ],
+        [
+          "combat_scenario",
+          "weapon_equipment"
+        ]
+      ]
+    },
+    "execution_waves": [
+      {
+        "agent_ids": [
+          "international_situation"
+        ],
+        "concurrent": false,
+        "wave": 1
+      },
+      {
+        "agent_ids": [
+          "combat_scenario",
+          "weapon_equipment"
+        ],
+        "concurrent": true,
+        "wave": 2
+      },
+      {
+        "agent_ids": [
+          "operational_employment"
+        ],
+        "concurrent": false,
+        "wave": 3
+      }
+    ],
+    "gate_points": [
+      {
+        "after": "reduce:baseline",
+        "gate": "baseline_contract_and_evidence"
+      },
+      {
+        "after": "convergence_fusion",
+        "gate": "cross_scenario_convergence"
+      },
+      {
+        "after": "L1",
+        "gate": "L1_confidence_coverage",
+        "threshold": 0.7
+      },
+      {
+        "after": "L2",
+        "gate": "L2_feasibility_consistency",
+        "threshold": 3
+      },
+      {
+        "after": "L3",
+        "gate": "L3_nine_field_traceability"
+      },
+      {
+        "after": "audit:five-criteria",
+        "gate": "five_criteria_audit"
+      }
+    ],
+    "loops": {
+      "inner": "winning_step_critic",
+      "inner_max_iterations": 1,
+      "meta": "A-H蓝图选择、跨分支汇聚与重规划评估",
+      "meta_max_cycles": 1,
+      "middle": "winning_round_critic",
+      "middle_max_cycles": 1,
+      "minimum_expected_gain": 0.03,
+      "outer": "L1/L2/L3定向Recall与节点返回",
+      "outer_max_rounds": 3,
+      "residual_only_after_first_round": true
+    },
+    "nodes": [
+      {
+        "capability_tags": [
+          "situation",
+          "threat",
+          "strategy"
+        ],
+        "created_at": "2026-07-21T17:50:32.532304+00:00",
+        "depends_on": [],
+        "node_id": "map:international_situation",
+        "node_type": "baseline_map",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "international_situation"
+      },
+      {
+        "capability_tags": [
+          "scenario",
+          "coa",
+          "environment"
+        ],
+        "created_at": "2026-07-21T17:50:32.532309+00:00",
+        "depends_on": [],
+        "node_id": "map:combat_scenario",
+        "node_type": "baseline_map",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "combat_scenario"
+      },
+      {
+        "capability_tags": [
+          "equipment",
+          "capability_gap",
+          "technology_readiness"
+        ],
+        "created_at": "2026-07-21T17:50:32.532311+00:00",
+        "depends_on": [],
+        "node_id": "map:weapon_equipment",
+        "node_type": "baseline_map",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "weapon_equipment"
+      },
+      {
+        "capability_tags": [
+          "operation",
+          "coordination",
+          "lessons"
+        ],
+        "created_at": "2026-07-21T17:50:32.532313+00:00",
+        "depends_on": [],
+        "node_id": "map:operational_employment",
+        "node_type": "baseline_map",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "operational_employment"
+      },
+      {
+        "capability_tags": [],
+        "created_at": "2026-07-21T17:50:32.532315+00:00",
+        "depends_on": [
+          "map:international_situation",
+          "map:combat_scenario",
+          "map:weapon_equipment",
+          "map:operational_employment"
+        ],
+        "node_id": "reduce:baseline",
+        "node_type": "baseline_reduce",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "winning_mechanism"
+      },
+      {
+        "capability_tags": [
+          "winning_mechanism"
+        ],
+        "created_at": "2026-07-21T17:50:32.532317+00:00",
+        "depends_on": [
+          "reduce:baseline"
+        ],
+        "node_id": "winning:L1-L3",
+        "node_type": "winning_mechanism",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "winning_mechanism"
+      },
+      {
+        "capability_tags": [
+          "audit"
+        ],
+        "created_at": "2026-07-21T17:50:32.532318+00:00",
+        "depends_on": [
+          "winning:L1-L3"
+        ],
+        "node_id": "audit:five-criteria",
+        "node_type": "audit",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "auditor"
+      },
+      {
+        "capability_tags": [
+          "report"
+        ],
+        "created_at": "2026-07-21T17:50:32.532320+00:00",
+        "depends_on": [
+          "audit:five-criteria"
+        ],
+        "node_id": "report:final",
+        "node_type": "report",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "reporter"
+      }
+    ],
+    "plan_id": "plan-aed79758-e349-433c-8fec-c88b0a7f520b",
+    "recall_return_nodes": [
+      "L1",
+      "L2",
+      "L3"
+    ]
+  },
+  "problem": {
+    "as_of_date": "",
+    "constraints": [],
+    "created_at": "2026-07-21T17:50:32.330131+00:00",
+    "discovery_branch": "B",
+    "interaction_mode": "expert",
+    "max_rounds_hint": 2,
+    "problem_id": "problem-b6eff290-cfca-4c32-b149-f36bb6153191",
+    "research_route": "traditional_gap",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "international_situation",
+      "combat_scenario",
+      "weapon_equipment",
+      "operational_employment"
+    ],
+    "topic": "挖掘在西太反介入体系下的装备能力缺口"
+  },
+  "provider": {
+    "base_url_host": "",
+    "model": "fake",
+    "type": "fake"
+  },
+  "recall_requests": [],
+  "resolved_route": "traditional_gap",
+  "selected_agent_ids": [
+    "international_situation",
+    "combat_scenario",
+    "weapon_equipment",
+    "operational_employment"
+  ],
+  "six_step_reasoning": {
+    "capability_mapping": {
+      "assumptions": [
+        "仅基于已接纳公开证据",
+        "路线：traditional_gap",
+        "公开资料结论需由分析师确认"
+      ],
+      "claim_ids": [
+        "claim-3861bb2956ae",
+        "claim-3910504a32b4",
+        "claim-4a9f5cba2d2b",
+        "claim-52dabe1775df",
+        "claim-7e2bf9387cdb",
+        "claim-955a25921722",
+        "claim-9b5b029dc50e",
+        "claim-c23d8ae2bd77"
+      ],
+      "confidence": 0.78,
+      "created_at": "2026-07-21T17:50:32.532527+00:00",
+      "evidence_ids": [
+        "ev-combat_scenario-1",
+        "ev-weapon_equipment-1",
+        "ev-international_situation-1",
+        "ev-operational_employment-1"
+      ],
+      "input_refs": [
+        "reason-9c9110b45f5a"
+      ],
+      "next_action": {
+        "action": "continue",
+        "reason": "S4完成后进入下一有效步骤S5。",
+        "target_step": 5
+      },
+      "object_id": "reason-64ba1f10fd06",
+      "route": "traditional_gap",
+      "schema_version": "1.0",
+      "step": 4,
+      "summary": "将效果链逐项转换为效果 -> 功能 -> 性能/约束，覆盖多源感知、可信判别、快速决策、协同处置和韧性保障。装备与工程依据：梳理与挖掘在西太反介入体系下的装备能力缺口相关的现有装备功能、参数和体系接口。；识别探测、决策、载荷、协同、保障和成本边界。；按可获得性、验证程度、集成条件和工程风险评估成熟度。。",
+      "title": "能力映射"
+    },
+    "defense_decomposition": {
+      "assumptions": [
+        "仅基于已接纳公开证据",
+        "路线：traditional_gap",
+        "公开资料结论需由分析师确认"
+      ],
+      "claim_ids": [
+        "claim-3861bb2956ae",
+        "claim-3910504a32b4",
+        "claim-4a9f5cba2d2b",
+        "claim-52dabe1775df",
+        "claim-7e2bf9387cdb",
+        "claim-955a25921722",
+        "claim-9b5b029dc50e",
+        "claim-c23d8ae2bd77"
+      ],
+      "confidence": 0.78,
+      "created_at": "2026-07-21T17:50:32.532508+00:00",
+      "evidence_ids": [
+        "ev-combat_scenario-1",
+        "ev-weapon_equipment-1",
+        "ev-international_situation-1",
+        "ev-operational_employment-1"
+      ],
+      "input_refs": [],
+      "next_action": {
+        "action": "continue",
+        "reason": "S1完成后进入下一有效步骤S2。",
+        "target_step": 2
+      },
+      "object_id": "reason-eddb685a9069",
+      "route": "traditional_gap",
+      "schema_version": "1.0",
+      "step": 1,
+      "summary": "围绕挖掘在西太反介入体系下的装备能力缺口，按感知、决策、处置、冗余/恢复四层解构。主要压力依据：识别潜在威胁力量、能力增长点、可能意图与对抗压力。；构造敌方可能行动方案、关键节点和可观测行为。；明确地形、气象、电磁、网络和部署空间约束。。证据边界：无已登记冲突。",
+      "title": "防御解构"
+    },
+    "effect_chain": {
+      "assumptions": [
+        "仅基于已接纳公开证据",
+        "路线：traditional_gap",
+        "公开资料结论需由分析师确认"
+      ],
+      "claim_ids": [
+        "claim-3861bb2956ae",
+        "claim-3910504a32b4",
+        "claim-4a9f5cba2d2b",
+        "claim-52dabe1775df",
+        "claim-7e2bf9387cdb",
+        "claim-955a25921722",
+        "claim-9b5b029dc50e",
+        "claim-c23d8ae2bd77"
+      ],
+      "confidence": 0.78,
+      "created_at": "2026-07-21T17:50:32.532523+00:00",
+      "evidence_ids": [
+        "ev-combat_scenario-1",
+        "ev-weapon_equipment-1",
+        "ev-international_situation-1",
+        "ev-operational_employment-1"
+      ],
+      "input_refs": [
+        "reason-8a8be6438125"
+      ],
+      "next_action": {
+        "action": "continue",
+        "reason": "S3完成后进入下一有效步骤S4。",
+        "target_step": 4
+      },
+      "object_id": "reason-9c9110b45f5a",
+      "route": "traditional_gap",
+      "schema_version": "1.0",
+      "step": 3,
+      "summary": "依据关键时间窗和运用约束形成：持续发现 -> 可信识别/态势形成 -> 威胁排序与资源分配 -> 分层处置 -> 任务连续性。约束依据：标注预警、决策、交战、重构和保障的关键时间窗口。；明确挖掘在西太反介入体系下的装备能力缺口在任务规则、指挥关系和保障条件下的运用约束。；待验证：作战场景维度仍需进一步联网补充高置信资料。；武器装备维度仍需进一步联网补充高置信资料。。",
+      "title": "效果链"
+    },
+    "gap_matrix": {
+      "assumptions": [
+        "仅基于已接纳公开证据",
+        "路线：traditional_gap",
+        "公开资料结论需由分析师确认"
+      ],
+      "claim_ids": [
+        "claim-3861bb2956ae",
+        "claim-3910504a32b4",
+        "claim-4a9f5cba2d2b",
+        "claim-52dabe1775df",
+        "claim-7e2bf9387cdb",
+        "claim-955a25921722",
+        "claim-9b5b029dc50e",
+        "claim-c23d8ae2bd77"
+      ],
+      "confidence": 0.78,
+      "created_at": "2026-07-21T17:50:32.532531+00:00",
+      "evidence_ids": [
+        "ev-combat_scenario-1",
+        "ev-weapon_equipment-1",
+        "ev-international_situation-1",
+        "ev-operational_employment-1"
+      ],
+      "input_refs": [
+        "reason-64ba1f10fd06"
+      ],
+      "next_action": {
+        "action": "continue",
+        "reason": "S5完成后进入下一有效步骤S6。",
+        "target_step": 6
+      },
+      "object_id": "reason-bdbfa48b3b5f",
+      "route": "traditional_gap",
+      "schema_version": "1.0",
+      "step": 5,
+      "summary": "按空白、关键差距、部分差距、满足、超出五档，将场景所需功能与现有/在研能力比较。比较基线：梳理与挖掘在西太反介入体系下的装备能力缺口相关的现有装备功能、参数和体系接口。；跟踪在研型号、验证项目、替代路线和潜在迭代方向。；识别探测、决策、载荷、协同、保障和成本边界。；不确定性：无已登记冲突。",
+      "title": "差距量化"
+    },
+    "image_drafts": [
+      {
+        "assumptions": [
+          "仅基于已接纳公开证据",
+          "路线：traditional_gap",
+          "公开资料结论需由分析师确认"
+        ],
+        "claim_ids": [
+          "claim-3861bb2956ae",
+          "claim-3910504a32b4",
+          "claim-4a9f5cba2d2b",
+          "claim-52dabe1775df",
+          "claim-7e2bf9387cdb",
+          "claim-955a25921722",
+          "claim-9b5b029dc50e",
+          "claim-c23d8ae2bd77"
+        ],
+        "confidence": 0.78,
+        "created_at": "2026-07-21T17:50:32.532535+00:00",
+        "evidence_ids": [
+          "ev-combat_scenario-1",
+          "ev-weapon_equipment-1",
+          "ev-international_situation-1",
+          "ev-operational_employment-1"
+        ],
+        "input_refs": [
+          "reason-bdbfa48b3b5f"
+        ],
+        "next_action": {
+          "action": "stop",
+          "reason": "S1-S6推理链已完成，进入L1-L3门控与独立审计。",
+          "target_step": 0
+        },
+        "object_id": "reason-60e13883c43c",
+        "route": "traditional_gap",
+        "schema_version": "1.0",
+        "step": 6,
+        "summary": "依据前五步去重归并，分别形成新作战能力方向和现有装备升级需求，并写入制胜逻辑、关联场景、优先级、差距、功能画像和证据引用。路线=traditional_gap，基线发现=8条，待闭合问题=4项。",
+        "title": "能力画像生成"
+      }
+    ],
+    "winning_paths": {
+      "assumptions": [
+        "仅基于已接纳公开证据",
+        "路线：traditional_gap",
+        "公开资料结论需由分析师确认"
+      ],
+      "claim_ids": [
+        "claim-3861bb2956ae",
+        "claim-3910504a32b4",
+        "claim-4a9f5cba2d2b",
+        "claim-52dabe1775df",
+        "claim-7e2bf9387cdb",
+        "claim-955a25921722",
+        "claim-9b5b029dc50e",
+        "claim-c23d8ae2bd77"
+      ],
+      "confidence": 0.78,
+      "created_at": "2026-07-21T17:50:32.532517+00:00",
+      "evidence_ids": [
+        "ev-combat_scenario-1",
+        "ev-weapon_equipment-1",
+        "ev-international_situation-1",
+        "ev-operational_employment-1"
+      ],
+      "input_refs": [
+        "reason-eddb685a9069"
+      ],
+      "next_action": {
+        "action": "continue",
+        "reason": "S2完成后进入下一有效步骤S3。",
+        "target_step": 3
+      },
+      "object_id": "reason-8a8be6438125",
+      "route": "traditional_gap",
+      "schema_version": "1.0",
+      "step": 2,
+      "summary": "传统场景/战法与现有装备对比，识别能力缺口并提出升级功能。 候选路径比较依据：{'baseline': '集中式基线', 'distributed': '弹性分布', 'resource_constrained': '资源受限'}；分析跨军兵种、有人无人、传感器与火力单元协同关系。；将挖掘在西太反介入体系下的装备能力缺口映射到任务背景、作战阶段、参与力量和胜负条件。。",
+      "title": "制胜路径"
+    }
+  },
+  "source_materials": [
+    {
+      "artifact_refs": [
+        "text:10c1617d9a1badfc"
+      ],
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-combat_scenario-1",
+        "normalized_url": "https://fixture.local/combat_scenario",
+        "reasons": [],
+        "score": 0.861
+      },
+      "evidence_id": "ev-combat_scenario-1",
+      "formal_evidence_allowed": true,
+      "status": "fixture_materialized",
+      "url": "https://fixture.local/combat_scenario"
+    },
+    {
+      "artifact_refs": [
+        "text:12403346cfe9d1e2"
+      ],
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-weapon_equipment-1",
+        "normalized_url": "https://fixture.local/weapon_equipment",
+        "reasons": [],
+        "score": 0.852
+      },
+      "evidence_id": "ev-weapon_equipment-1",
+      "formal_evidence_allowed": true,
+      "status": "fixture_materialized",
+      "url": "https://fixture.local/weapon_equipment"
+    },
+    {
+      "artifact_refs": [
+        "text:80e23417cbb46f05"
+      ],
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-international_situation-1",
+        "normalized_url": "https://fixture.local/international_situation",
+        "reasons": [],
+        "score": 0.873
+      },
+      "evidence_id": "ev-international_situation-1",
+      "formal_evidence_allowed": true,
+      "status": "fixture_materialized",
+      "url": "https://fixture.local/international_situation"
+    },
+    {
+      "artifact_refs": [
+        "text:d04a7e601404f69a"
+      ],
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-operational_employment-1",
+        "normalized_url": "https://fixture.local/operational_employment",
+        "reasons": [],
+        "score": 0.858
+      },
+      "evidence_id": "ev-operational_employment-1",
+      "formal_evidence_allowed": true,
+      "status": "fixture_materialized",
+      "url": "https://fixture.local/operational_employment"
+    }
+  ],
+  "store_summary": {
+    "audit_count": 1,
+    "baseline_packet_count": 4,
+    "capability_image_count": 2,
+    "coverage_tags": [
+      "capability_gap",
+      "coa",
+      "coordination",
+      "environment",
+      "equipment",
+      "lessons",
+      "operation",
+      "scenario",
+      "situation",
+      "strategy",
+      "technology_readiness",
+      "threat"
+    ],
+    "equipment_observation_count": 1,
+    "evidence_count": 4,
+    "knowledge_projection_count": 1,
+    "materialized_evidence_count": 4,
+    "operational_synthesis_count": 1,
+    "problem_count": 1,
+    "reasoning_node_count": 6,
+    "recall_request_count": 0,
+    "recommendation_count": 0,
+    "report_count": 1,
+    "scenario_model_count": 1,
+    "stage_output_count": 3,
+    "strategic_assessment_count": 1,
+    "winning_input_count": 1
+  },
+  "trace_summary": [
+    {
+      "actor": "orchestrator",
+      "event_type": "run_started",
+      "output_refs": [],
+      "summary": "run started for 挖掘在西太反介入体系下的装备能力缺口"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "discovery_meta_loop_evaluated",
+      "output_refs": [
+        "blueprint-b-b6153191"
+      ],
+      "summary": "确定性元编排完成，形成A-H发现蓝图"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "baseline_wave_started",
+      "output_refs": [
+        "baseline:international_situation",
+        "baseline:combat_scenario",
+        "baseline:weapon_equipment",
+        "baseline:operational_employment"
+      ],
+      "summary": "baseline wave 1 started with 4 agent(s)"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "agent_task_delegated",
+      "output_refs": [
+        "baseline:combat_scenario"
+      ],
+      "summary": "委派给作战场景：将威胁研判转化为现代化、多域、动态对抗场景，分析阶段演化、敌方行动方案、关键时间窗口和环境约束。"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "agent_task_delegated",
+      "output_refs": [
+        "baseline:international_situation"
+      ],
+      "summary": "委派给国际形势：面向未来威胁预警，持续研判国际安全态势、潜在威胁力量、联盟与战略格局、对手能力建设和可观测动向。"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "agent_task_delegated",
+      "output_refs": [
+        "baseline:weapon_equipment"
+      ],
+      "summary": "委派给武器装备：深度检索国外现役、在研与替代装备，建立型号谱系、参数证据、体系依赖和能力边界，并围绕主题提出防御性反制能力、现役升级方向或新装备研发需求。"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "agent_task_delegated",
+      "output_refs": [
+        "baseline:operational_employment"
+      ],
+      "summary": "委派给作战运用：综合局势、场景和装备结构化交接，评估作战约束、力量协同、备选行动方案、部署原则和公开战例经验。"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "agent_harness_completed",
+      "output_refs": [],
+      "summary": "scenario_research_v1 completed: completed"
+    },
+    {
+      "actor": "international_situation",
+      "event_type": "agent_harness_completed",
+      "output_refs": [],
+      "summary": "strategic_research_v1 completed: completed"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "agent_harness_completed",
+      "output_refs": [],
+      "summary": "equipment_research_v1 completed: completed"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "agent_harness_completed",
+      "output_refs": [],
+      "summary": "operational_synthesis_v1 completed: completed"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_materialization_progress",
+      "output_refs": [
+        "ev-combat_scenario-1"
+      ],
+      "summary": "证据并行材料化 1/1（本批 1 路并行，缓存复用 0），正式接纳 1/4"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "stop_policy_evaluated",
+      "output_refs": [],
+      "summary": "baseline quality gates passed"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_materialization_progress",
+      "output_refs": [
+        "ev-weapon_equipment-1"
+      ],
+      "summary": "证据并行材料化 1/1（本批 1 路并行，缓存复用 0），正式接纳 1/4"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "stop_policy_evaluated",
+      "output_refs": [],
+      "summary": "baseline quality gates passed"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_agent_completed",
+      "output_refs": [
+        "packet-combat_scenario",
+        "ev-combat_scenario-1"
+      ],
+      "summary": "作战场景围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。"
+    },
+    {
+      "actor": "international_situation",
+      "event_type": "baseline_materialization_progress",
+      "output_refs": [
+        "ev-international_situation-1"
+      ],
+      "summary": "证据并行材料化 1/1（本批 1 路并行，缓存复用 0），正式接纳 1/4"
+    },
+    {
+      "actor": "international_situation",
+      "event_type": "stop_policy_evaluated",
+      "output_refs": [],
+      "summary": "baseline quality gates passed"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_agent_completed",
+      "output_refs": [
+        "packet-weapon_equipment",
+        "ev-weapon_equipment-1"
+      ],
+      "summary": "武器装备围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_materialization_progress",
+      "output_refs": [
+        "ev-operational_employment-1"
+      ],
+      "summary": "证据并行材料化 1/1（本批 1 路并行，缓存复用 0），正式接纳 1/4"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "stop_policy_evaluated",
+      "output_refs": [],
+      "summary": "baseline quality gates passed"
+    },
+    {
+      "actor": "international_situation",
+      "event_type": "baseline_agent_completed",
+      "output_refs": [
+        "packet-international_situation",
+        "ev-international_situation-1"
+      ],
+      "summary": "国际形势围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_agent_completed",
+      "output_refs": [
+        "packet-operational_employment",
+        "ev-operational_employment-1"
+      ],
+      "summary": "作战运用围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "baseline_wave_completed",
+      "output_refs": [
+        "packet-international_situation",
+        "packet-combat_scenario",
+        "packet-weapon_equipment",
+        "packet-operational_employment"
+      ],
+      "summary": "baseline wave 1 completed"
+    },
+    {
+      "actor": "packet_admission_gate",
+      "event_type": "packet_admission_evaluated",
+      "output_refs": [
+        "claims-39ff1148f328",
+        "claim-c23d8ae2bd77",
+        "claim-3910504a32b4"
+      ],
+      "summary": "combat_scenario packet accepted"
+    },
+    {
+      "actor": "packet_admission_gate",
+      "event_type": "packet_admission_evaluated",
+      "output_refs": [
+        "claims-42e2d45402c3",
+        "claim-9b5b029dc50e",
+        "claim-4a9f5cba2d2b"
+      ],
+      "summary": "weapon_equipment packet accepted"
+    },
+    {
+      "actor": "packet_admission_gate",
+      "event_type": "packet_admission_evaluated",
+      "output_refs": [
+        "claims-2c10f17e400f",
+        "claim-955a25921722",
+        "claim-7e2bf9387cdb"
+      ],
+      "summary": "international_situation packet accepted"
+    },
+    {
+      "actor": "packet_admission_gate",
+      "event_type": "packet_admission_evaluated",
+      "output_refs": [
+        "claims-978ac9dc8329",
+        "claim-3861bb2956ae",
+        "claim-52dabe1775df"
+      ],
+      "summary": "operational_employment packet accepted"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "baseline_agents_summarized",
+      "output_refs": [
+        "packet-international_situation",
+        "packet-combat_scenario",
+        "packet-weapon_equipment",
+        "packet-operational_employment"
+      ],
+      "summary": "4 baseline agents completed"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "agent_task_delegated",
+      "output_refs": [
+        "discovery-convergence"
+      ],
+      "summary": "委派收敛融合 Agent 执行跨背景、跨场景和跨分支汇聚"
+    },
+    {
+      "actor": "convergence_fusion",
+      "event_type": "tool_call",
+      "output_refs": [],
+      "summary": "聚类需求、保留冲突、形成优先序和跨分支关联"
+    },
+    {
+      "actor": "convergence_fusion",
+      "event_type": "discovery_convergence_completed",
+      "output_refs": [
+        "discovery-convergence"
+      ],
+      "summary": "发现结果收敛融合完成"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "discovery_meta_loop_evaluated",
+      "output_refs": [
+        "blueprint-b-b6153191"
+      ],
+      "summary": "L4元循环复核完成，保留当前执行蓝图"
+    },
+    {
+      "actor": "convergence_fusion",
+      "event_type": "military_value_handoff_created",
+      "output_refs": [
+        "military-value-handoff"
+      ],
+      "summary": "基线结果已收敛为7条高军事价值结论，仅向S1–S5按职责投影"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "winning_input_prepared",
+      "output_refs": [
+        "winning-input-r1"
+      ],
+      "summary": "制胜机理输入包已完成上下文投影与一致性初检"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_resources_projected",
+      "output_refs": [
+        "winning-resources-r1"
+      ],
+      "summary": "理论工具、战例、前沿情报与问题链已按本次任务动态投影"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_reasoning_step_completed",
+      "output_refs": [
+        "reason-eddb685a9069"
+      ],
+      "summary": "围绕挖掘在西太反介入体系下的装备能力缺口，按感知、决策、处置、冗余/恢复四层解构。主要压力依据：识别潜在威胁力量、能力增长点、可能意图与对抗压力。；构造敌方可能行动方案、关键节点和可观测行为。；明确地形、气象、电磁、网络和部署空间约束。。证据边界：无已登记冲突。"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_reasoning_step_completed",
+      "output_refs": [
+        "reason-8a8be6438125"
+      ],
+      "summary": "传统场景/战法与现有装备对比，识别能力缺口并提出升级功能。 候选路径比较依据：{'baseline': '集中式基线', 'distributed': '弹性分布', 'resource_constrained': '资源受限'}；分析跨军兵种、有人无人、传感器与火力单元协同关系。；将挖掘在西太反介入体系下的装备能力缺口映射到任务背景、作战阶段、参与力量和胜负条件。。"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_reasoning_step_completed",
+      "output_refs": [
+        "reason-9c9110b45f5a"
+      ],
+      "summary": "任务压力形成→现有任务链暴露失效窗口→新机制改变对抗关系→能力映射→验证"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_reasoning_step_completed",
+      "output_refs": [
+        "reason-64ba1f10fd06"
+      ],
+      "summary": "把任务效果映射为功能、指标、接口和验证条件"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_reasoning_step_completed",
+      "output_refs": [
+        "reason-bdbfa48b3b5f"
+      ],
+      "summary": "{'capability': '任务链韧性', 'grade': '关键差距', 'basis': '公开证据与场景压力'}"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_reasoning_step_completed",
+      "output_refs": [
+        "reason-60e13883c43c"
+      ],
+      "summary": "依据前五步去重归并，分别形成新作战能力方向和现有装备升级需求，并写入制胜逻辑、关联场景、优先级、差距、功能画像和证据引用。路线=traditional_gap，基线发现=8条，待闭合问题=4项。"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_stage_completed",
+      "output_refs": [
+        "stage-L1"
+      ],
+      "summary": "L1 completed: gate=True"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_stage_completed",
+      "output_refs": [
+        "stage-L2"
+      ],
+      "summary": "L2 completed: gate=True"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "winning_stage_completed",
+      "output_refs": [
+        "stage-L3"
+      ],
+      "summary": "L3 completed: gate=True"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "capability_image_created",
+      "output_refs": [
+        "cap-new-001"
+      ],
+      "summary": "传统战法能力空白补位能力"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "capability_image_created",
+      "output_refs": [
+        "cap-upgrade-001"
+      ],
+      "summary": "现有装备传统场景能力提升"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "winning_outer_loop_evaluated",
+      "output_refs": [],
+      "summary": "外循环评估完成，无需定向再调"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_call",
+      "output_refs": [],
+      "summary": "写入L1制胜机理阶段输出"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_result",
+      "output_refs": [
+        "stage-L1"
+      ],
+      "summary": "L1阶段输出已写入"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_call",
+      "output_refs": [],
+      "summary": "写入L2制胜机理阶段输出"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_result",
+      "output_refs": [
+        "stage-L2"
+      ],
+      "summary": "L2阶段输出已写入"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_call",
+      "output_refs": [],
+      "summary": "写入L3制胜机理阶段输出"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_result",
+      "output_refs": [
+        "stage-L3"
+      ],
+      "summary": "L3阶段输出已写入"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_call",
+      "output_refs": [],
+      "summary": "生成能力画像：传统战法能力空白补位能力"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_result",
+      "output_refs": [
+        "cap-new-001"
+      ],
+      "summary": "能力画像已生成：传统战法能力空白补位能力"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_call",
+      "output_refs": [],
+      "summary": "生成能力画像：现有装备传统场景能力提升"
+    },
+    {
+      "actor": "winning_mechanism",
+      "event_type": "tool_result",
+      "output_refs": [
+        "cap-upgrade-001"
+      ],
+      "summary": "能力画像已生成：现有装备传统场景能力提升"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "agent_task_delegated",
+      "output_refs": [],
+      "summary": "委派审计智能体执行五判据检查"
+    },
+    {
+      "actor": "auditor",
+      "event_type": "tool_call",
+      "output_refs": [],
+      "summary": "执行证据、覆盖、门控、追溯和轮次五判据审计"
+    },
+    {
+      "actor": "auditor",
+      "event_type": "tool_result",
+      "output_refs": [
+        "audit-001"
+      ],
+      "summary": "五判据审计完成：limited"
+    },
+    {
+      "actor": "auditor",
+      "event_type": "audit_completed",
+      "output_refs": [
+        "audit-001"
+      ],
+      "summary": "五判据审计完成：limited"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "agent_task_delegated",
+      "output_refs": [],
+      "summary": "委派Codex报告智能体按当前分支契约生成深度研究报告"
+    },
+    {
+      "actor": "reporter",
+      "event_type": "tool_call",
+      "output_refs": [],
+      "summary": "独立报告Agent接收少量高价值研判种子与公开来源，围绕Query重新构建深度报告"
+    },
+    {
+      "actor": "report_quality_gate",
+      "event_type": "report_quality_gate_evaluated",
+      "output_refs": [],
+      "summary": "报告质量或分支交付门受限"
+    },
+    {
+      "actor": "reporter",
+      "event_type": "tool_result",
+      "output_refs": [
+        "report-001"
+      ],
+      "summary": "能力画像研究报告已生成"
+    },
+    {
+      "actor": "reporter",
+      "event_type": "report_completed",
+      "output_refs": [
+        "report-001"
+      ],
+      "summary": "能力画像研究报告生成完成"
+    }
+  ],
+  "winning_mechanism": {
+    "inputs": [
+      {
+        "attempt": 1,
+        "conflict_set": [],
+        "coverage_map": {
+          "by_agent": {
+            "combat_scenario": [
+              "scenario",
+              "coa",
+              "environment"
+            ],
+            "international_situation": [
+              "situation",
+              "threat",
+              "strategy"
+            ],
+            "operational_employment": [
+              "operation",
+              "coordination",
+              "lessons"
+            ],
+            "weapon_equipment": [
+              "equipment",
+              "capability_gap",
+              "technology_readiness"
+            ]
+          },
+          "convergence": {
+            "clusters": [
+              {
+                "name": "combat_scenario",
+                "packet_ids": [
+                  "packet-combat_scenario"
+                ],
+                "shared_need": "作战场景围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。"
+              },
+              {
+                "name": "weapon_equipment",
+                "packet_ids": [
+                  "packet-weapon_equipment"
+                ],
+                "shared_need": "武器装备围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。"
+              },
+              {
+                "name": "international_situation",
+                "packet_ids": [
+                  "packet-international_situation"
+                ],
+                "shared_need": "国际形势围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。"
+              },
+              {
+                "name": "operational_employment",
+                "packet_ids": [
+                  "packet-operational_employment"
+                ],
+                "shared_need": "作战运用围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。"
+              }
+            ],
+            "conflicts": [],
+            "cross_branch_links": [],
+            "fusion_mode": "local_cluster_dedupe_rank",
+            "meta_review": {
+              "added_secondary_branches": [],
+              "dynamic_subagents": [],
+              "focus_questions": [],
+              "rationale": "覆盖与收敛结果未触发实质性重规划条件，保留当前蓝图。",
+              "replan_required": false,
+              "step_mode_changes": [],
+              "step_mode_overrides": [],
+              "stop_reason": "lean_meta_gate_passed"
+            },
+            "model_call_skipped": true,
+            "open_questions": [
+              "作战场景维度仍需进一步联网补充高置信资料。",
+              "武器装备维度仍需进一步联网补充高置信资料。",
+              "国际形势维度仍需进一步联网补充高置信资料。",
+              "作战运用维度仍需进一步联网补充高置信资料。"
+            ],
+            "priorities": [
+              "作战场景围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。",
+              "武器装备围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。",
+              "国际形势围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。",
+              "作战运用围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。"
+            ]
+          },
+          "coverage_passed": true,
+          "discovery_blueprint": {
+            "adaptive_winning_step_modes": {
+              "1": "standard",
+              "2": "standard",
+              "3": "standard",
+              "4": "deep",
+              "5": "deep",
+              "6": "deep"
+            },
+            "assumptions": [],
+            "baseline_agent_plan": [
+              {
+                "agent_id": "international_situation",
+                "mode": "required",
+                "reason": "任务涉及外部地区、国外力量或国际安全环境，需要建立战略态势与对手能力建设基线。；B分支确定性基线建议"
+              },
+              {
+                "agent_id": "combat_scenario",
+                "mode": "required",
+                "reason": "B分支确定性基线建议"
+              },
+              {
+                "agent_id": "weapon_equipment",
+                "mode": "required",
+                "reason": "任务要求装备现状、能力差距、升级或新研判断，需要装备证据与成熟度分析。；B分支确定性基线建议"
+              },
+              {
+                "agent_id": "operational_employment",
+                "mode": "reference",
+                "reason": "B分支确定性基线建议"
+              },
+              {
+                "agent_id": "system_confrontation",
+                "mode": "callback",
+                "reason": "B分支确定性基线建议；任务明确涉及体系级对抗、依赖链或反介入/区域拒止，需要体系建模与补链强链分析。；B分支由S2/S5先承担该分析，仅在残差门触发时回调"
+              }
+            ],
+            "baseline_execution_mode": "query_dominant_isolated_parallel",
+            "blueprint_id": "blueprint-b-b6153191",
+            "blueprint_mode": "catalog",
+            "branch_name": "传统能力缺口发现",
+            "callback_agent_ids": [
+              "system_confrontation"
+            ],
+            "confidence": 1.0,
+            "custom_blueprint": {
+              "dependencies": [],
+              "dependency_cycle_rejected": false,
+              "driver_type": "",
+              "preferred_agent_ids": [],
+              "rationale": "",
+              "required_capability_tags": [],
+              "required_outputs": [],
+              "s1_s6_modes": {},
+              "stop_conditions": [],
+              "waves": []
+            },
+            "driver_scores": [],
+            "dynamic_subagents": [],
+            "emphasis": [
+              "S4",
+              "S5",
+              "S6"
+            ],
+            "execution_contract": {
+              "absolute_deadline_seconds": 2100,
+              "background_count": 3,
+              "backtrack_map": {
+                "capability_mapping": [
+                  4,
+                  5,
+                  6
+                ],
+                "equipment_baseline": [
+                  5,
+                  6
+                ],
+                "priority": [
+                  6
+                ],
+                "report_section": [],
+                "scenario_coverage": [
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6
+                ]
+              },
+              "branch": "B",
+              "branch_products": [
+                "three_backgrounds",
+                "six_to_nine_scenarios",
+                "five_level_gap_assessment",
+                "requirement_cards",
+                "capability_panorama",
+                "traceable_deep_report"
+              ],
+              "codex_concurrency": 4,
+              "contract_id": "branch-b-optimized-v2",
+              "delivery_grace_seconds": 300,
+              "hard_deadline_seconds": 1800,
+              "logical_agent_dag": {
+                "S1": [
+                  "combat_scenario"
+                ],
+                "S2": [
+                  "S1"
+                ],
+                "S3": [
+                  "S2"
+                ],
+                "S4": [
+                  "S3"
+                ],
+                "S5": [
+                  "S4"
+                ],
+                "S6": [
+                  "S4",
+                  "S5"
+                ],
+                "combat_scenario": [
+                  "international_situation"
+                ],
+                "international_situation": [],
+                "reporter": [
+                  "S6"
+                ]
+              },
+              "maximum_delivery_model_calls": 4,
+              "maximum_model_calls": 10,
+              "maximum_model_calls_with_residuals": 14,
+              "maximum_rounds": 3,
+              "maximum_searches": 12,
+              "physical_cohorts": [
+                [
+                  1,
+                  2,
+                  3
+                ],
+                [
+                  4,
+                  5
+                ]
+              ],
+              "scenarios_per_background": [
+                2,
+                3
+              ],
+              "schema_version": "2.0",
+              "soft_deadline_seconds": 1200,
+              "step_intensity": {
+                "1": "standard",
+                "2": "standard",
+                "3": "standard",
+                "4": "deep",
+                "5": "deep",
+                "6": "deep"
+              },
+              "stop_conditions": [
+                "all_required_branch_products_present",
+                "accepted_claims_traceable_to_public_sources",
+                "no_repeated_residual_without_new_evidence",
+                "estimated_quality_gain_below_0.03",
+                "hard_deadline_reached"
+              ]
+            },
+            "execution_profile_hash": "340bbf3b1885e7c823d19cb1a8432a767a0c47f760cf62015a3cdbf7f24cda79",
+            "execution_profile_id": "optimized_v2",
+            "focus_questions": [],
+            "generated_by": "deterministic_architecture_policy",
+            "hard_constraints": [],
+            "hard_dependencies": {
+              "combat_scenario": [
+                "international_situation"
+              ],
+              "international_situation": []
+            },
+            "initial_baseline_agent_ids": [
+              "international_situation",
+              "combat_scenario",
+              "weapon_equipment",
+              "operational_employment"
+            ],
+            "interaction_mode": "expert",
+            "loop_policy": {
+              "inner_max_iterations": 1,
+              "meta_max_cycles": 1,
+              "middle_max_cycles": 1,
+              "minimum_expected_gain": 0.03,
+              "outer_max_rounds": 3,
+              "residual_only_after_first_round": true
+            },
+            "maximum_business_agents": 4,
+            "meta_review": {
+              "added_secondary_branches": [],
+              "dynamic_subagents": [],
+              "focus_questions": [],
+              "rationale": "覆盖与收敛结果未触发实质性重规划条件，保留当前蓝图。",
+              "replan_required": false,
+              "step_mode_changes": [],
+              "step_mode_overrides": [],
+              "stop_reason": "lean_meta_gate_passed"
+            },
+            "meta_triggers": [
+              "出现跨分支高价值线索",
+              "当前分支无法覆盖关键能力标签",
+              "案例/技术/对手变化反向触发其他发现路径"
+            ],
+            "minimum_business_agents": 3,
+            "primary_branch": "B",
+            "prompt_version": "2.4",
+            "rationale": "专家显式指定传统能力缺口发现分支。",
+            "required_capability_tags": [
+              "equipment",
+              "capability_gap"
+            ],
+            "required_outputs": [
+              "装备基线与五档差距",
+              "需求卡片（能力域/关键指标/优先级/支撑场景/证据链）",
+              "能力全景图",
+              "深度研究报告（含推理链可回溯）",
+              "深度研究主报告（深度性、创新性、前瞻性、军事价值性）",
+              "分支专用收敛产物"
+            ],
+            "runtime_budgets": {
+              "absolute_deadline_seconds": 2100,
+              "codex_concurrency": 4,
+              "delivery_grace_seconds": 300,
+              "hard_deadline_seconds": 1800,
+              "maximum_delivery_model_calls": 4,
+              "maximum_model_calls": 10,
+              "maximum_model_calls_with_residuals": 14,
+              "maximum_searches": 12,
+              "soft_deadline_seconds": 1200
+            },
+            "runtime_route": "traditional_gap",
+            "secondary_branches": [],
+            "semantic_agent_signals": [
+              {
+                "agent_id": "international_situation",
+                "matched_signals": [
+                  "西太"
+                ],
+                "mode": "required",
+                "priority": 100,
+                "reason": "任务涉及外部地区、国外力量或国际安全环境，需要建立战略态势与对手能力建设基线。"
+              },
+              {
+                "agent_id": "system_confrontation",
+                "matched_signals": [
+                  "反介入"
+                ],
+                "mode": "required",
+                "priority": 98,
+                "reason": "任务明确涉及体系级对抗、依赖链或反介入/区域拒止，需要体系建模与补链强链分析。"
+              },
+              {
+                "agent_id": "weapon_equipment",
+                "matched_signals": [
+                  "装备",
+                  "能力缺口"
+                ],
+                "mode": "required",
+                "priority": 92,
+                "reason": "任务要求装备现状、能力差距、升级或新研判断，需要装备证据与成熟度分析。"
+              }
+            ],
+            "specialist_agent_ids": [],
+            "unmatched_driver": "",
+            "waves": [
+              [
+                "international_situation"
+              ],
+              [
+                "combat_scenario",
+                "weapon_equipment"
+              ]
+            ]
+          },
+          "discovery_branch": "B",
+          "missing_required_tags": [],
+          "optional_tags": [
+            "strategy",
+            "technology_readiness"
+          ],
+          "provided_tags": [
+            "capability_gap",
+            "coa",
+            "coordination",
+            "environment",
+            "equipment",
+            "lessons",
+            "operation",
+            "scenario",
+            "situation",
+            "strategy",
+            "technology_readiness",
+            "threat"
+          ],
+          "required_tags": [
+            "capability_gap",
+            "equipment",
+            "situation"
+          ],
+          "route": "traditional_gap"
+        },
+        "created_at": "2026-07-21T17:50:32.475633+00:00",
+        "evidence_index": [
+          {
+            "claim": "作战场景发现与“挖掘在西太反介入体系下的装备能力缺口”相关的关键能力信号。",
+            "created_by": "combat_scenario",
+            "evidence_id": "ev-combat_scenario-1",
+            "excerpt": "围绕挖掘在西太反介入体系下的装备能力缺口的公开资料显示，作战场景维度存在可用于能力画像研判的信号。",
+            "quality_assessment": "offline_fixture; materialized",
+            "source_location": "fixture:1",
+            "source_tier": "A",
+            "source_title": "作战场景离线验证材料",
+            "source_url": "https://fixture.local/combat_scenario"
+          },
+          {
+            "claim": "武器装备发现与“挖掘在西太反介入体系下的装备能力缺口”相关的关键能力信号。",
+            "created_by": "weapon_equipment",
+            "evidence_id": "ev-weapon_equipment-1",
+            "excerpt": "围绕挖掘在西太反介入体系下的装备能力缺口的公开资料显示，武器装备维度存在可用于能力画像研判的信号。",
+            "quality_assessment": "offline_fixture; materialized",
+            "source_location": "fixture:1",
+            "source_tier": "A",
+            "source_title": "武器装备离线验证材料",
+            "source_url": "https://fixture.local/weapon_equipment"
+          },
+          {
+            "claim": "国际形势发现与“挖掘在西太反介入体系下的装备能力缺口”相关的关键能力信号。",
+            "created_by": "international_situation",
+            "evidence_id": "ev-international_situation-1",
+            "excerpt": "围绕挖掘在西太反介入体系下的装备能力缺口的公开资料显示，国际形势维度存在可用于能力画像研判的信号。",
+            "quality_assessment": "offline_fixture; materialized",
+            "source_location": "fixture:1",
+            "source_tier": "A",
+            "source_title": "国际形势离线验证材料",
+            "source_url": "https://fixture.local/international_situation"
+          },
+          {
+            "claim": "作战运用发现与“挖掘在西太反介入体系下的装备能力缺口”相关的关键能力信号。",
+            "created_by": "operational_employment",
+            "evidence_id": "ev-operational_employment-1",
+            "excerpt": "围绕挖掘在西太反介入体系下的装备能力缺口的公开资料显示，作战运用维度存在可用于能力画像研判的信号。",
+            "quality_assessment": "offline_fixture; materialized",
+            "source_location": "fixture:1",
+            "source_tier": "A",
+            "source_title": "作战运用离线验证材料",
+            "source_url": "https://fixture.local/operational_employment"
+          }
+        ],
+        "input_id": "winning-input-r1",
+        "open_questions": [
+          "作战场景维度仍需进一步联网补充高置信资料。",
+          "武器装备维度仍需进一步联网补充高置信资料。",
+          "国际形势维度仍需进一步联网补充高置信资料。",
+          "作战运用维度仍需进一步联网补充高置信资料。"
+        ],
+        "packet_ids": [
+          "packet-combat_scenario",
+          "packet-weapon_equipment",
+          "packet-international_situation",
+          "packet-operational_employment"
+        ],
+        "problem_frame": {
+          "objective": "回答需要发展具备什么功能的产品",
+          "route_frame": "以传统场景、传统制胜和传统战法为基线，对比当前装备能力并识别不足、空白与升级功能。",
+          "topic": "挖掘在西太反介入体系下的装备能力缺口"
+        },
+        "research_route": "traditional_gap",
+        "round_budget": {
+          "current_round": 1,
+          "maximum_rounds": 2,
+          "same_target_recall_limit": 3
+        },
+        "schema_version": "1.0"
+      }
+    ],
+    "reasoning_nodes": [
+      {
+        "assumptions": [
+          "仅基于已接纳公开证据",
+          "路线：traditional_gap",
+          "公开资料结论需由分析师确认"
+        ],
+        "claim_ids": [
+          "claim-3861bb2956ae",
+          "claim-3910504a32b4",
+          "claim-4a9f5cba2d2b",
+          "claim-52dabe1775df",
+          "claim-7e2bf9387cdb",
+          "claim-955a25921722",
+          "claim-9b5b029dc50e",
+          "claim-c23d8ae2bd77"
+        ],
+        "confidence": 0.78,
+        "created_at": "2026-07-21T17:50:32.475679+00:00",
+        "evidence_ids": [
+          "ev-combat_scenario-1",
+          "ev-weapon_equipment-1",
+          "ev-international_situation-1",
+          "ev-operational_employment-1"
+        ],
+        "input_refs": [
+          "winning-input-r1",
+          "winning-resources-r1"
+        ],
+        "next_action": {
+          "action": "continue",
+          "reason": "S1完成后进入下一有效步骤S2。",
+          "target_step": 2
+        },
+        "object_id": "reason-eddb685a9069",
+        "route": "traditional_gap",
+        "schema_version": "1.0",
+        "step": 1,
+        "summary": "围绕挖掘在西太反介入体系下的装备能力缺口，按感知、决策、处置、冗余/恢复四层解构。主要压力依据：识别潜在威胁力量、能力增长点、可能意图与对抗压力。；构造敌方可能行动方案、关键节点和可观测行为。；明确地形、气象、电磁、网络和部署空间约束。。证据边界：无已登记冲突。",
+        "title": "防御解构"
+      },
+      {
+        "assumptions": [
+          "仅基于已接纳公开证据",
+          "路线：traditional_gap",
+          "公开资料结论需由分析师确认"
+        ],
+        "claim_ids": [
+          "claim-3861bb2956ae",
+          "claim-3910504a32b4",
+          "claim-4a9f5cba2d2b",
+          "claim-52dabe1775df",
+          "claim-7e2bf9387cdb",
+          "claim-955a25921722",
+          "claim-9b5b029dc50e",
+          "claim-c23d8ae2bd77"
+        ],
+        "confidence": 0.78,
+        "created_at": "2026-07-21T17:50:32.475691+00:00",
+        "evidence_ids": [
+          "ev-combat_scenario-1",
+          "ev-weapon_equipment-1",
+          "ev-international_situation-1",
+          "ev-operational_employment-1"
+        ],
+        "input_refs": [
+          "reason-eddb685a9069"
+        ],
+        "next_action": {
+          "action": "continue",
+          "reason": "S2完成后进入下一有效步骤S3。",
+          "target_step": 3
+        },
+        "object_id": "reason-8a8be6438125",
+        "route": "traditional_gap",
+        "schema_version": "1.0",
+        "step": 2,
+        "summary": "传统场景/战法与现有装备对比，识别能力缺口并提出升级功能。 候选路径比较依据：{'baseline': '集中式基线', 'distributed': '弹性分布', 'resource_constrained': '资源受限'}；分析跨军兵种、有人无人、传感器与火力单元协同关系。；将挖掘在西太反介入体系下的装备能力缺口映射到任务背景、作战阶段、参与力量和胜负条件。。",
+        "title": "制胜路径"
+      },
+      {
+        "assumptions": [
+          "仅基于已接纳公开证据",
+          "路线：traditional_gap",
+          "公开资料结论需由分析师确认"
+        ],
+        "claim_ids": [
+          "claim-3861bb2956ae",
+          "claim-3910504a32b4",
+          "claim-4a9f5cba2d2b",
+          "claim-52dabe1775df",
+          "claim-7e2bf9387cdb",
+          "claim-955a25921722",
+          "claim-9b5b029dc50e",
+          "claim-c23d8ae2bd77"
+        ],
+        "confidence": 0.78,
+        "created_at": "2026-07-21T17:50:32.475698+00:00",
+        "evidence_ids": [
+          "ev-combat_scenario-1",
+          "ev-weapon_equipment-1",
+          "ev-international_situation-1",
+          "ev-operational_employment-1"
+        ],
+        "input_refs": [
+          "reason-8a8be6438125"
+        ],
+        "next_action": {
+          "action": "continue",
+          "reason": "S3完成后进入下一有效步骤S4。",
+          "target_step": 4
+        },
+        "object_id": "reason-9c9110b45f5a",
+        "route": "traditional_gap",
+        "schema_version": "1.0",
+        "step": 3,
+        "summary": "任务压力形成→现有任务链暴露失效窗口→新机制改变对抗关系→能力映射→验证",
+        "title": "效果链"
+      },
+      {
+        "assumptions": [
+          "仅基于已接纳公开证据",
+          "路线：traditional_gap",
+          "公开资料结论需由分析师确认"
+        ],
+        "claim_ids": [
+          "claim-3861bb2956ae",
+          "claim-3910504a32b4",
+          "claim-4a9f5cba2d2b",
+          "claim-52dabe1775df",
+          "claim-7e2bf9387cdb",
+          "claim-955a25921722",
+          "claim-9b5b029dc50e",
+          "claim-c23d8ae2bd77"
+        ],
+        "confidence": 0.78,
+        "created_at": "2026-07-21T17:50:32.475702+00:00",
+        "evidence_ids": [
+          "ev-combat_scenario-1",
+          "ev-weapon_equipment-1",
+          "ev-international_situation-1",
+          "ev-operational_employment-1"
+        ],
+        "input_refs": [
+          "reason-9c9110b45f5a"
+        ],
+        "next_action": {
+          "action": "continue",
+          "reason": "S4完成后进入下一有效步骤S5。",
+          "target_step": 5
+        },
+        "object_id": "reason-64ba1f10fd06",
+        "route": "traditional_gap",
+        "schema_version": "1.0",
+        "step": 4,
+        "summary": "把任务效果映射为功能、指标、接口和验证条件",
+        "title": "能力映射"
+      },
+      {
+        "assumptions": [
+          "仅基于已接纳公开证据",
+          "路线：traditional_gap",
+          "公开资料结论需由分析师确认"
+        ],
+        "claim_ids": [
+          "claim-3861bb2956ae",
+          "claim-3910504a32b4",
+          "claim-4a9f5cba2d2b",
+          "claim-52dabe1775df",
+          "claim-7e2bf9387cdb",
+          "claim-955a25921722",
+          "claim-9b5b029dc50e",
+          "claim-c23d8ae2bd77"
+        ],
+        "confidence": 0.78,
+        "created_at": "2026-07-21T17:50:32.475707+00:00",
+        "evidence_ids": [
+          "ev-combat_scenario-1",
+          "ev-weapon_equipment-1",
+          "ev-international_situation-1",
+          "ev-operational_employment-1"
+        ],
+        "input_refs": [
+          "reason-64ba1f10fd06"
+        ],
+        "next_action": {
+          "action": "continue",
+          "reason": "S5完成后进入下一有效步骤S6。",
+          "target_step": 6
+        },
+        "object_id": "reason-bdbfa48b3b5f",
+        "route": "traditional_gap",
+        "schema_version": "1.0",
+        "step": 5,
+        "summary": "{'capability': '任务链韧性', 'grade': '关键差距', 'basis': '公开证据与场景压力'}",
+        "title": "差距量化"
+      },
+      {
+        "assumptions": [
+          "仅基于已接纳公开证据",
+          "路线：traditional_gap",
+          "公开资料结论需由分析师确认"
+        ],
+        "claim_ids": [
+          "claim-3861bb2956ae",
+          "claim-3910504a32b4",
+          "claim-4a9f5cba2d2b",
+          "claim-52dabe1775df",
+          "claim-7e2bf9387cdb",
+          "claim-955a25921722",
+          "claim-9b5b029dc50e",
+          "claim-c23d8ae2bd77"
+        ],
+        "confidence": 0.78,
+        "created_at": "2026-07-21T17:50:32.475711+00:00",
+        "evidence_ids": [
+          "ev-combat_scenario-1",
+          "ev-weapon_equipment-1",
+          "ev-international_situation-1",
+          "ev-operational_employment-1"
+        ],
+        "input_refs": [
+          "reason-bdbfa48b3b5f"
+        ],
+        "next_action": {
+          "action": "stop",
+          "reason": "S1-S6推理链已完成，进入L1-L3门控与独立审计。",
+          "target_step": 0
+        },
+        "object_id": "reason-60e13883c43c",
+        "route": "traditional_gap",
+        "schema_version": "1.0",
+        "step": 6,
+        "summary": "依据前五步去重归并，分别形成新作战能力方向和现有装备升级需求，并写入制胜逻辑、关联场景、优先级、差距、功能画像和证据引用。路线=traditional_gap，基线发现=8条，待闭合问题=4项。",
+        "title": "能力画像生成"
+      }
+    ],
+    "resource_projections": [
+      {
+        "case_resources": [],
+        "created_at": "2026-07-21T17:50:32.475649+00:00",
+        "evidence_ids": [
+          "ev-combat_scenario-1",
+          "ev-weapon_equipment-1",
+          "ev-international_situation-1",
+          "ev-operational_employment-1"
+        ],
+        "frontier_resources": [],
+        "input_id": "winning-input-r1",
+        "projection_id": "winning-resources-r1",
+        "question_chain": [
+          {
+            "order": 1,
+            "question": "敌方重心与关键体系依赖是什么？",
+            "status": "open"
+          },
+          {
+            "order": 2,
+            "question": "可形成何种制胜逻辑与优选路径？",
+            "status": "open"
+          },
+          {
+            "order": 3,
+            "question": "效果链要求哪些功能与性能能力？",
+            "status": "open"
+          },
+          {
+            "order": 4,
+            "question": "能否通过新机制、新打法或新体系组合创造新能力增长点？",
+            "status": "open"
+          },
+          {
+            "order": 5,
+            "question": "作战场景维度仍需进一步联网补充高置信资料。",
+            "status": "open"
+          },
+          {
+            "order": 6,
+            "question": "武器装备维度仍需进一步联网补充高置信资料。",
+            "status": "open"
+          },
+          {
+            "order": 7,
+            "question": "国际形势维度仍需进一步联网补充高置信资料。",
+            "status": "open"
+          },
+          {
+            "order": 8,
+            "question": "作战运用维度仍需进一步联网补充高置信资料。",
+            "status": "open"
+          }
+        ],
+        "schema_version": "1.0",
+        "theory_tools": [
+          {
+            "dimensions": [
+              "感知",
+              "决策",
+              "拦截",
+              "冗余"
+            ],
+            "knowledge_pack_ids": [
+              "public_evidence_index",
+              "military_knowledge_base",
+              "equipment_ontology",
+              "doctrine_library",
+              "case_library",
+              "frontier_technology_library",
+              "short_term_memory",
+              "long_term_memory"
+            ],
+            "name": "防御分层解析"
+          },
+          {
+            "dimensions": [
+              "重心",
+              "依赖",
+              "时间窗口",
+              "风险"
+            ],
+            "name": "重心与击败机制识别"
+          },
+          {
+            "dimensions": [
+              "行动",
+              "直接效果",
+              "间接效果",
+              "最终效果"
+            ],
+            "name": "效果链因果建模"
+          },
+          {
+            "dimensions": [
+              "效果",
+              "功能",
+              "性能"
+            ],
+            "name": "效果-功能-性能映射"
+          },
+          {
+            "dimensions": [
+              "空白",
+              "关键差距",
+              "部分差距",
+              "满足",
+              "超出"
+            ],
+            "name": "五档差距评估"
+          }
+        ]
+      }
+    ],
+    "stages": [
+      {
+        "confidence": 0.78,
+        "created_at": "2026-07-21T17:50:32.475756+00:00",
+        "evidence_ids": [
+          "ev-combat_scenario-1",
+          "ev-international_situation-1",
+          "ev-operational_employment-1",
+          "ev-weapon_equipment-1"
+        ],
+        "gate_passed": true,
+        "gate_reasons": [],
+        "layer": "L1",
+        "outputs": {
+          "assumptions": [
+            "公开资料足以支撑初步画像，不替代专家论证。"
+          ],
+          "core_agent_analysis": {
+            "assumptions": [
+              "离线fixture仅验证合同与数据流，不代表真实军事结论"
+            ],
+            "defense_decomposition": [],
+            "dynamic_subagent_outputs": [],
+            "dynamic_subagent_runs": [],
+            "effect_chain": [
+              "任务压力形成→现有任务链暴露失效窗口→新机制改变对抗关系→能力映射→验证"
+            ],
+            "loop_trace": [],
+            "middle_loop_limited": false,
+            "subagent_runs": [],
+            "winning_paths": []
+          },
+          "coverage_limits": [],
+          "effect_chain": "行动 -> 直接效果 -> 间接效果 -> 最终能力收益。",
+          "evidence_grounded_findings": [
+            {
+              "agent_id": "combat_scenario",
+              "capability_tags": [
+                "scenario",
+                "coa",
+                "environment"
+              ],
+              "confidence": 0.78,
+              "evidence_ids": [
+                "ev-combat_scenario-1"
+              ],
+              "findings": [
+                "挖掘在西太反介入体系下的装备能力缺口应落入明确任务场景，包含敌方方案、关键时间窗和环境约束。",
+                "场景约束决定能力画像不能只写技术方向，必须转化为任务功能。"
+              ]
+            },
+            {
+              "agent_id": "weapon_equipment",
+              "capability_tags": [
+                "equipment",
+                "capability_gap",
+                "technology_readiness"
+              ],
+              "confidence": 0.78,
+              "evidence_ids": [
+                "ev-weapon_equipment-1"
+              ],
+              "findings": [
+                "需要围绕挖掘在西太反介入体系下的装备能力缺口建立国外现役、在研和替代装备的型号谱系与能力证据矩阵。",
+                "国外装备的体系依赖、任务优势和能力边界应分别映射为防御性反制选项、现役升级需求与新装备研发需求。"
+              ]
+            },
+            {
+              "agent_id": "international_situation",
+              "capability_tags": [
+                "situation",
+                "threat",
+                "strategy"
+              ],
+              "confidence": 0.78,
+              "evidence_ids": [
+                "ev-international_situation-1"
+              ],
+              "findings": [
+                "围绕挖掘在西太反介入体系下的装备能力缺口，需要先识别潜在威胁力量和对抗压力。",
+                "战略格局变化可能推动新型装备能力从单点性能转向体系贡献。"
+              ]
+            },
+            {
+              "agent_id": "operational_employment",
+              "capability_tags": [
+                "operation",
+                "coordination",
+                "lessons"
+              ],
+              "confidence": 0.78,
+              "evidence_ids": [
+                "ev-operational_employment-1"
+              ],
+              "findings": [
+                "挖掘在西太反介入体系下的装备能力缺口需要结合COA、兵力协同和经验教训判断可用作战样式。",
+                "作战运用约束用于校验能力画像是否能进入真实任务链条。"
+              ]
+            }
+          ],
+          "key_capabilities": [
+            "感知发现",
+            "快速决策",
+            "精确打击/拦截",
+            "体系协同"
+          ],
+          "reasoning_refs": [
+            "reason-eddb685a9069",
+            "reason-8a8be6438125",
+            "reason-9c9110b45f5a"
+          ],
+          "weakness_map": [
+            "围绕敌体系感知、决策、拦截、冗余进行分层解构。",
+            "挖掘在西太反介入体系下的装备能力缺口的关键弱点需由场景、装备和运用证据共同支撑。"
+          ],
+          "winning_paths": [
+            "传统打法能力缺口 -> 当前装备对比 -> 残余差距 -> 升级需求。",
+            "以战例和公开证据校验制胜路径假设。"
+          ]
+        },
+        "recall_requests": [],
+        "schema_version": "1.0",
+        "stage_id": "stage-L1",
+        "title": "制胜逻辑分析"
+      },
+      {
+        "confidence": 0.78,
+        "created_at": "2026-07-21T17:50:32.475767+00:00",
+        "evidence_ids": [
+          "ev-combat_scenario-1",
+          "ev-international_situation-1",
+          "ev-operational_employment-1",
+          "ev-weapon_equipment-1"
+        ],
+        "gate_passed": true,
+        "gate_reasons": [],
+        "layer": "L2",
+        "outputs": {
+          "analogy_innovation": "七维分解并进行跨域移植评估。",
+          "concept_scan": [
+            "扫描高超、模块化、低成本、AI自主、诱饵、巡飞弹等前沿样式。",
+            "结合挖掘在西太反介入体系下的装备能力缺口判断可迁移的新能力空间。"
+          ],
+          "core_agent_concept_directions": [],
+          "feasibility_score": 3,
+          "frontier_evidence_count": 0,
+          "frontier_evidence_ids": [],
+          "reasoning_refs": [
+            "reason-64ba1f10fd06"
+          ],
+          "route": "traditional_gap",
+          "screened_directions": [
+            "新能力方向：体系化感知-决策-火力闭环。",
+            "改进方向：现有装备在复杂场景下的探测、协同和抗干扰能力提升。"
+          ],
+          "validation_capability": "capability_gap",
+          "validation_source": "业务Agent覆盖"
+        },
+        "recall_requests": [],
+        "schema_version": "1.0",
+        "stage_id": "stage-L2",
+        "title": "概念创新评估"
+      },
+      {
+        "confidence": 0.78,
+        "created_at": "2026-07-21T17:50:32.475773+00:00",
+        "evidence_ids": [
+          "ev-combat_scenario-1",
+          "ev-international_situation-1",
+          "ev-operational_employment-1",
+          "ev-weapon_equipment-1"
+        ],
+        "gate_passed": true,
+        "gate_reasons": [],
+        "layer": "L3",
+        "outputs": {
+          "branch_products": {},
+          "category_mapping": "按平台、任务、射程、速度、载荷和保障约束映射。",
+          "core_agent_gap_assessment": [
+            {
+              "basis": "公开证据与场景压力",
+              "capability": "任务链韧性",
+              "grade": "关键差距"
+            }
+          ],
+          "coverage_limits": [],
+          "dedup_grouping": "合并L1关键能力与L2创新方向，形成能力条目组。",
+          "gap_basis": "梳理与挖掘在西太反介入体系下的装备能力缺口相关的现有装备功能、参数和体系接口。；识别探测、决策、载荷、协同、保障和成本边界。；按可获得性、验证程度、集成条件和工程风险评估成熟度。",
+          "gap_quantification": "按空白、关键差距、部分差距、满足、超出五档评估。",
+          "priority_method": "关键性 x 紧迫性 x 可行性。",
+          "reasoning_refs": [
+            "reason-bdbfa48b3b5f",
+            "reason-60e13883c43c"
+          ]
+        },
+        "recall_requests": [],
+        "schema_version": "1.0",
+        "stage_id": "stage-L3",
+        "title": "能力图像生成"
+      }
+    ]
+  },
+  "worker_reports": [
+    {
+      "active_skill_ids": [
+        "strategic_osint",
+        "threat_forecasting",
+        "force_posture_tracking"
+      ],
+      "active_tool_names": [
+        "search_sources",
+        "create_evidence_card",
+        "test_competing_hypothesis"
+      ],
+      "agent_id": "international_situation",
+      "created_at": "2026-07-21T17:50:32.464485+00:00",
+      "domain_object_id": "strategic-packet-international_situation",
+      "domain_object_type": "StrategicAssessment",
+      "error": "",
+      "handoff_summary": "国际形势围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。",
+      "harness_profile": "strategic_research_v1",
+      "new_evidence_ids": [
+        "ev-international_situation-1"
+      ],
+      "packet_id": "packet-international_situation",
+      "schema_version": "1.0",
+      "session_path": "/Users/wangchen/equipment research/.tmp/context-handoff-runs/verify-military-handoff-v2/agent_sessions/international_situation.jsonl",
+      "status": "completed",
+      "stop_reason": "quality_gates_passed",
+      "worker_report_id": "worker-report-684e1139-daf9-4eb2-81ff-24093d2eb44a"
+    },
+    {
+      "active_skill_ids": [
+        "scenario_engineering",
+        "modern_battlespace_analysis",
+        "adversary_coa_analysis"
+      ],
+      "active_tool_names": [
+        "search_sources",
+        "create_evidence_card",
+        "stress_test_scenario"
+      ],
+      "agent_id": "combat_scenario",
+      "created_at": "2026-07-21T17:50:32.451886+00:00",
+      "domain_object_id": "scenario-packet-combat_scenario",
+      "domain_object_type": "ScenarioModel",
+      "error": "",
+      "handoff_summary": "作战场景围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。",
+      "harness_profile": "scenario_research_v1",
+      "new_evidence_ids": [
+        "ev-combat_scenario-1"
+      ],
+      "packet_id": "packet-combat_scenario",
+      "schema_version": "1.0",
+      "session_path": "/Users/wangchen/equipment research/.tmp/context-handoff-runs/verify-military-handoff-v2/agent_sessions/combat_scenario.jsonl",
+      "status": "completed",
+      "stop_reason": "quality_gates_passed",
+      "worker_report_id": "worker-report-d7a59557-d89f-4030-a07b-7d9d51c40541"
+    },
+    {
+      "active_skill_ids": [
+        "equipment_osint",
+        "capability_comparison",
+        "technology_readiness_analysis",
+        "defensive_countermeasure_analysis"
+      ],
+      "active_tool_names": [
+        "search_sources",
+        "create_evidence_card",
+        "compare_equipment_capability"
+      ],
+      "agent_id": "weapon_equipment",
+      "created_at": "2026-07-21T17:50:32.459946+00:00",
+      "domain_object_id": "equipment-packet-weapon_equipment",
+      "domain_object_type": "EquipmentObservation",
+      "error": "",
+      "handoff_summary": "武器装备围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。",
+      "harness_profile": "equipment_research_v1",
+      "new_evidence_ids": [
+        "ev-weapon_equipment-1"
+      ],
+      "packet_id": "packet-weapon_equipment",
+      "schema_version": "1.0",
+      "session_path": "/Users/wangchen/equipment research/.tmp/context-handoff-runs/verify-military-handoff-v2/agent_sessions/weapon_equipment.jsonl",
+      "status": "completed",
+      "stop_reason": "quality_gates_passed",
+      "worker_report_id": "worker-report-42b6f0b1-7ac5-477b-ad04-5464866dc0cf"
+    },
+    {
+      "active_skill_ids": [
+        "operational_synthesis",
+        "coa_comparison",
+        "joint_force_coordination",
+        "lessons_transfer"
+      ],
+      "active_tool_names": [
+        "search_sources",
+        "create_evidence_card",
+        "compare_coa"
+      ],
+      "agent_id": "operational_employment",
+      "created_at": "2026-07-21T17:50:32.468583+00:00",
+      "domain_object_id": "operational-packet-operational_employment",
+      "domain_object_type": "OperationalSynthesis",
+      "error": "",
+      "handoff_summary": "作战运用围绕挖掘在西太反介入体系下的装备能力缺口形成2条基线发现，并按交接策略输出给下游。",
+      "harness_profile": "operational_synthesis_v1",
+      "new_evidence_ids": [
+        "ev-operational_employment-1"
+      ],
+      "packet_id": "packet-operational_employment",
+      "schema_version": "1.0",
+      "session_path": "/Users/wangchen/equipment research/.tmp/context-handoff-runs/verify-military-handoff-v2/agent_sessions/operational_employment.jsonl",
+      "status": "completed",
+      "stop_reason": "quality_gates_passed",
+      "worker_report_id": "worker-report-537f0558-4b5f-4dc0-b2a4-095c80ffe147"
+    }
+  ]
+}

@@ -1,0 +1,687 @@
+profiles:
+  - profile_id: strategic_research_v1
+    context_policy: {token_budget: 6500, hide_other_agent_raw_sessions: true}
+    budget: {max_turns: 8, max_searches: 16, max_tool_calls: 32, max_tokens: 6500}
+    evidence_policy: {double_source_major_claims: true, require_counter_evidence: true, require_time_horizon: true}
+    checkpoint_policy: {after_each_turn: true, after_required_artifact: true}
+    stop_conditions: [主要判断双源支撑, 存在替代假设, 时间尺度明确]
+    recovery_policy: {resume_from: earliest_incomplete_artifact, retry_limit: 2}
+    phase_tools:
+      baseline: [search_sources, fetch_page, create_evidence_card, register_event_timeline, compare_actor_positions, register_warning_indicator, test_competing_hypothesis]
+  - profile_id: scenario_research_v1
+    context_policy: {token_budget: 7500, hide_other_agent_raw_sessions: true}
+    budget: {max_turns: 8, max_searches: 10, max_tool_calls: 28, max_tokens: 7500}
+    evidence_policy: {evidence_or_explicit_assumption_per_node: true, require_counter_evidence: true}
+    checkpoint_policy: {after_each_turn: true, after_required_artifact: true}
+    stop_conditions: [至少两个场景分支, 关键节点具备证据或显式假设]
+    recovery_policy: {resume_from: earliest_incomplete_artifact, retry_limit: 2}
+    phase_tools:
+      baseline: [search_sources, fetch_page, create_evidence_card, build_scenario_graph, branch_scenario, map_critical_window, map_environment_constraint, stress_test_scenario]
+  - profile_id: equipment_research_v1
+    context_policy: {token_budget: 10000, hide_other_agent_raw_sessions: true}
+    budget: {max_turns: 12, max_searches: 24, max_tool_calls: 48, max_tokens: 10000}
+    evidence_policy: {double_source_key_models: true, preserve_conflicts: true, require_parameter_conditions: true, trace_countermeasures_to_foreign_capabilities: true}
+    checkpoint_policy: {after_each_turn: true, after_required_artifact: true}
+    stop_conditions: [关键型号双源核验, 参数包含单位批次条件和置信度, 反制与研发需求可追溯到国外装备能力, 升级与新研路径均有验证计划]
+    recovery_policy: {resume_from: earliest_incomplete_artifact, retry_limit: 2}
+    phase_tools:
+      baseline: [search_sources, fetch_page, create_evidence_card, extract_parameter_observation, normalize_equipment_variant, reconcile_parameter_conflict, assess_technology_readiness, compare_equipment_capability, map_defensive_countermeasure, formulate_equipment_requirement]
+  - profile_id: operational_synthesis_v1
+    context_policy: {token_budget: 10000, hide_other_agent_raw_sessions: true}
+    budget: {max_turns: 8, max_searches: 8, max_tool_calls: 28, max_tokens: 10000}
+    evidence_policy: {trace_upstream_constraints: true, require_three_coa_classes: true}
+    checkpoint_policy: {after_each_turn: true, after_required_artifact: true}
+    stop_conditions: [比较基线弹性分布资源受限三类COA, 约束可追溯]
+    recovery_policy: {resume_from: earliest_incomplete_artifact, retry_limit: 2}
+    phase_tools:
+      baseline: [search_sources, fetch_page, create_evidence_card, map_task_capability, build_coordination_dependency, compare_coa, assess_sustainment_resilience, transfer_case_lesson]
+  - profile_id: winning_core_v1
+    context_policy: {token_budget: 12000, hide_other_agent_raw_sessions: true, typed_packets_only: true}
+    budget: {max_turns: 5, max_tool_calls: 30, max_tokens: 12000}
+    evidence_policy: {typed_packets_only: true, raw_sessions_forbidden: true}
+    checkpoint_policy: {after_each_stage: true, earliest_failed_node: true}
+    stop_conditions: [L1置信度不低于0.7, L2可行性不低于3, L3需求卡片能力全景分支产物和深度画像完整]
+    recovery_policy: {resume_from: earliest_failed_node, same_target_recall_limit: 3}
+    phase_tools:
+      winning: [prepare_winning_input, project_winning_resources, write_reasoning_node, write_stage_output, create_recall_request, create_capability_image]
+  - profile_id: orchestration_v1
+    context_policy: {token_budget: 7000, hide_other_agent_raw_sessions: true, registry_only: true}
+    budget: {max_turns: 4, max_tool_calls: 16, max_tokens: 7000, max_seconds: 240}
+    evidence_policy: {task_evidence_not_required: true, configuration_trace_required: true}
+    checkpoint_policy: {after_semantic_analysis: true, after_driver_classification: true, after_blueprint: true, after_wave_plan: true}
+    stop_conditions: [任务语义与禁止边界明确, A-H及OTHER驱动源判断明确, S1-S6蓝图可执行, 最小充分Agent集合与DAG波次完整, 循环上限回溯点与无增益停止规则明确]
+    recovery_policy: {resume_from: earliest_incomplete_plan, retry_limit: 1}
+    phase_tools:
+      orchestration: [analyze_research_request, classify_discovery_drivers, build_discovery_blueprint, plan_execution_waves, evaluate_loop_transition]
+  - profile_id: discovery_research_v1
+    context_policy: {token_budget: 7000, hide_other_agent_raw_sessions: true}
+    budget: {max_turns: 6, max_searches: 10, max_tool_calls: 26, max_tokens: 7000, max_seconds: 900}
+    evidence_policy: {require_counter_evidence: true, weak_signals_are_hypotheses: true}
+    checkpoint_policy: {after_each_turn: true, after_required_artifact: true}
+    stop_conditions: [候选方向具有区分度, 每个方向含触发条件与边界假设, 推荐分支有证据或显式推断]
+    recovery_policy: {resume_from: earliest_incomplete_artifact, retry_limit: 1}
+    phase_tools:
+      baseline: [search_sources, fetch_page, create_evidence_card, build_scenario_graph, branch_scenario, test_competing_hypothesis, scan_emerging_threat, construct_disruptive_scenario]
+  - profile_id: case_research_v1
+    context_policy: {token_budget: 9000, hide_other_agent_raw_sessions: true}
+    budget: {max_turns: 10, max_searches: 18, max_tool_calls: 42, max_tokens: 9000, max_seconds: 1500}
+    evidence_policy: {multilingual_sources: true, facts_inference_disputes_separated: true, causal_claims_need_evidence: true}
+    checkpoint_policy: {after_timeline: true, after_causal_chain: true, after_cross_case_comparison: true}
+    stop_conditions: [事实时间线完整, 关键决策点可追溯, 因果链含反事实检验, 跨案例规律与迁移边界明确]
+    recovery_policy: {resume_from: earliest_incomplete_artifact, retry_limit: 2}
+    phase_tools:
+      baseline: [search_sources, fetch_page, create_evidence_card, register_event_timeline, reconstruct_case_timeline, build_causal_chain, compare_case_patterns, transfer_case_lesson, test_competing_hypothesis]
+  - profile_id: technology_discovery_v1
+    context_policy: {token_budget: 8500, hide_other_agent_raw_sessions: true}
+    budget: {max_turns: 8, max_searches: 16, max_tool_calls: 36, max_tokens: 8500, max_seconds: 1200}
+    evidence_policy: {separate_signal_readiness_potential: true, require_engineering_milestones: true}
+    checkpoint_policy: {after_signal_scan: true, after_readiness: true, after_scenario: true}
+    stop_conditions: [技术信号多源核验, TRL与能力潜力分开, 限制条件和颠覆场景完整, 验证路线分阶段]
+    recovery_policy: {resume_from: earliest_incomplete_artifact, retry_limit: 2}
+    phase_tools:
+      baseline: [search_sources, fetch_page, create_evidence_card, assess_technology_readiness, assess_technology_potential, construct_disruptive_scenario, compare_equipment_capability, test_competing_hypothesis]
+  - profile_id: monitoring_v1
+    context_policy: {token_budget: 7500, hide_other_agent_raw_sessions: true}
+    budget: {max_turns: 7, max_searches: 14, max_tool_calls: 32, max_tokens: 7500, max_seconds: 1000}
+    evidence_policy: {change_requires_baseline: true, require_competing_intent_hypotheses: true}
+    checkpoint_policy: {after_baseline: true, after_change_detection: true, after_forecast: true}
+    stop_conditions: [变化相对基线成立, 能力形成节奏含里程碑和不确定性, 预警指标可观测]
+    recovery_policy: {resume_from: earliest_incomplete_artifact, retry_limit: 1}
+    phase_tools:
+      baseline: [search_sources, fetch_page, create_evidence_card, register_event_timeline, detect_baseline_change, estimate_capability_formation, register_warning_indicator, compare_actor_positions, test_competing_hypothesis]
+  - profile_id: system_analysis_v1
+    context_policy: {token_budget: 9500, hide_other_agent_raw_sessions: true, typed_packets_only: true}
+    budget: {max_turns: 8, max_searches: 8, max_tool_calls: 34, max_tokens: 9500, max_seconds: 1200}
+    evidence_policy: {trace_upstream_constraints: true, assumptions_explicit: true, defensive_task_level_only: true}
+    checkpoint_policy: {after_model: true, after_gap_or_vulnerability: true, after_alternative: true}
+    stop_conditions: [体系或域边界明确, 依赖路径完整, 脆弱性或接口缝隙含前置条件, 替代链路与降级模式明确]
+    recovery_policy: {resume_from: earliest_incomplete_artifact, retry_limit: 2}
+    phase_tools:
+      baseline: [search_sources, fetch_page, create_evidence_card, build_scenario_graph, map_task_capability, build_coordination_dependency, build_system_model, identify_cascading_vulnerability, build_cross_domain_matrix, identify_interface_gap, stress_test_scenario, compare_coa, scan_emerging_threat, assess_legal_ethical_boundary, test_competing_hypothesis]
+  - profile_id: convergence_v1
+    context_policy: {token_budget: 7000, hide_other_agent_raw_sessions: true, typed_packets_only: true}
+    budget: {max_turns: 4, max_tool_calls: 18, max_tokens: 7000, max_seconds: 300}
+    evidence_policy: {packet_traceability_required: true, preserve_conflicts: true}
+    checkpoint_policy: {after_clustering: true, after_ranking: true}
+    stop_conditions: [需求簇可追溯, 冲突未被多数意见覆盖, 优先级依据完整, 开放问题保留]
+    recovery_policy: {resume_from: clustering, retry_limit: 1}
+    phase_tools:
+      convergence: [cluster_demand_signals, rank_capability_priorities, prepare_winning_input, project_winning_resources]
+  - profile_id: winning_step_v1
+    context_policy: {token_budget: 6000, hide_other_agent_raw_sessions: true, typed_packets_only: true}
+    budget: {max_turns: 3, max_tool_calls: 12, max_tokens: 6000, max_seconds: 300}
+    evidence_policy: {node_evidence_or_assumption: true, raw_sessions_forbidden: true}
+    checkpoint_policy: {after_reasoning_node: true}
+    stop_conditions: [节点包含认识证据置信度与下一步建议, 分支侧重满足, 不确定性显式]
+    recovery_policy: {resume_from: current_step, retry_limit: 2}
+    phase_tools:
+      winning: [write_reasoning_node, write_stage_output, create_recall_request, create_capability_image, analyze_ooda_vulnerability, generate_counterfactual_option, apply_triz_contradiction, map_dotmlpf_requirement, rank_capability_priorities]
+  - profile_id: critic_v1
+    context_policy: {token_budget: 3000, hide_other_agent_raw_sessions: true, typed_packets_only: true}
+    budget: {max_turns: 2, max_tool_calls: 4, max_tokens: 3000, max_seconds: 120}
+    evidence_policy: {review_only: true, no_fact_creation: true}
+    checkpoint_policy: {after_review: true}
+    stop_conditions: [问题具体可修复, 指定最早回溯点, 达到循环上限时明确限制]
+    recovery_policy: {resume_from: review, retry_limit: 0}
+    phase_tools:
+      critique: [evaluate_reasoning_step, evaluate_reasoning_round, create_recall_request]
+  - profile_id: audit_v1
+    context_policy: {token_budget: 2400, hide_other_agent_raw_sessions: true, typed_packets_only: true}
+    budget: {max_turns: 1, max_tool_calls: 2, max_tokens: 1600, max_seconds: 75}
+    evidence_policy: {independent_review: true, no_gate_relaxation: true}
+    checkpoint_policy: {after_audit: true}
+    stop_conditions: [五类判据均已检查, 风险关联具体对象, 发布建议与限制明确]
+    recovery_policy: {resume_from: audit, retry_limit: 1}
+    phase_tools:
+      audit: [evaluate_release_readiness, write_audit]
+  - profile_id: report_v1
+    context_policy: {token_budget: 12000, hide_other_agent_raw_sessions: true, typed_packets_only: true}
+    budget: {max_turns: 2, max_tool_calls: 2, max_tokens: 12000, max_seconds: 600}
+    evidence_policy: {audited_content_only: true, no_new_numbers_or_sources: true}
+    checkpoint_policy: {after_cards: true, after_report: true}
+    stop_conditions: [三层九项完整且分支信息已融入对应位置, 深度正文完成跨材料综合而非复述卡片, 场景战法能力技术效能形成闭环, 军事运用价值与未来演化进入因果论证, 证据边界和限制充分披露]
+    recovery_policy: {resume_from: earliest_incomplete_section, retry_limit: 1}
+    phase_tools:
+      report: [write_report]
+
+skills:
+  - skill_id: strategic_osint
+    triggers: [战略环境, 联盟格局, 力量态势]
+    allowed_tools: [search_sources, fetch_page, create_evidence_card, register_event_timeline, compare_actor_positions]
+    steps: [建立来源策略, 登记事件时间线, 比较行为体立场, 形成态势判断]
+    required_artifacts: [StrategicAssessment]
+    quality_gates: [主要判断至少双源支撑, 时间尺度明确]
+    stop_conditions: [态势判断和战略格局完整]
+    object_write_scopes: [EvidenceCard, StrategicAssessment, BaselineFindingPacket]
+  - skill_id: threat_forecasting
+    triggers: [威胁预测, 预警指标]
+    allowed_tools: [search_sources, fetch_page, create_evidence_card, register_warning_indicator, test_competing_hypothesis]
+    steps: [识别威胁假设, 登记预警指标, 搜索反证, 比较竞争假设]
+    required_artifacts: [StrategicAssessment]
+    quality_gates: [存在替代假设, 高影响低置信判断显式标注]
+    stop_conditions: [预警指标和替代假设完整]
+    object_write_scopes: [EvidenceCard, StrategicAssessment, BaselineFindingPacket]
+  - skill_id: force_posture_tracking
+    triggers: [力量建设, 部署演训, 采购投入]
+    allowed_tools: [search_sources, fetch_page, create_evidence_card, register_event_timeline]
+    steps: [建立趋势基线, 标记异常变化, 估计能力形成节奏]
+    required_artifacts: [StrategicAssessment]
+    quality_gates: [来源日期可追溯, 变化与基线可比较]
+    stop_conditions: [力量态势与不确定性完整]
+    object_write_scopes: [EvidenceCard, StrategicAssessment, BaselineFindingPacket]
+  - skill_id: scenario_engineering
+    triggers: [场景树, 阶段化场景]
+    allowed_tools: [search_sources, fetch_page, create_evidence_card, build_scenario_graph, branch_scenario, map_critical_window]
+    steps: [构建场景骨架, 划分阶段, 建立触发器, 生成分支]
+    required_artifacts: [ScenarioModel]
+    quality_gates: [至少两个场景分支, 每个关键节点有证据或假设]
+    stop_conditions: [场景框架和分支完整]
+    object_write_scopes: [EvidenceCard, ScenarioModel, BaselineFindingPacket]
+  - skill_id: modern_battlespace_analysis
+    triggers: [多域, 强电磁, 复杂地形]
+    allowed_tools: [search_sources, fetch_page, create_evidence_card, map_environment_constraint, stress_test_scenario]
+    steps: [登记环境约束, 映射体系依赖, 执行压力测试]
+    required_artifacts: [ScenarioModel]
+    quality_gates: [环境约束映射到能力压力点]
+    stop_conditions: [主要环境压力均已覆盖]
+    object_write_scopes: [EvidenceCard, ScenarioModel, BaselineFindingPacket]
+  - skill_id: adversary_coa_analysis
+    triggers: [敌方COA, 最可能方案, 最危险方案]
+    allowed_tools: [search_sources, fetch_page, create_evidence_card, branch_scenario, map_critical_window]
+    steps: [构建最可能方案, 构建最危险方案, 比较替代方案, 登记可观测指标]
+    required_artifacts: [ScenarioModel]
+    quality_gates: [至少两个敌方COA, 不输出可执行攻击指令]
+    stop_conditions: [COA与指标完整]
+    object_write_scopes: [EvidenceCard, ScenarioModel, BaselineFindingPacket]
+  - skill_id: equipment_osint
+    triggers: [型号参数, 装备档案]
+    allowed_tools: [search_sources, fetch_page, create_evidence_card, extract_parameter_observation, normalize_equipment_variant]
+    steps: [归一型号批次, 抽取参数观测, 登记来源条件, 形成装备档案]
+    required_artifacts: [EquipmentObservation]
+    quality_gates: [参数包含单位批次条件置信度]
+    stop_conditions: [关键型号档案完整]
+    object_write_scopes: [EvidenceCard, EquipmentObservation, BaselineFindingPacket]
+  - skill_id: capability_comparison
+    triggers: [能力比较, 场景适配]
+    allowed_tools: [search_sources, fetch_page, create_evidence_card, compare_equipment_capability, reconcile_parameter_conflict]
+    steps: [建立比较维度, 保留冲突参数, 比较能力边界, 映射场景适配]
+    required_artifacts: [EquipmentObservation]
+    quality_gates: [关键型号双源核验, 冲突数据不覆盖]
+    stop_conditions: [能力差距可追溯]
+    object_write_scopes: [EvidenceCard, EquipmentObservation, BaselineFindingPacket]
+  - skill_id: technology_readiness_analysis
+    triggers: [技术成熟度, 工业基础]
+    allowed_tools: [search_sources, fetch_page, create_evidence_card, assess_technology_readiness]
+    steps: [区分现役试验原型概念, 评估成熟度, 登记保障与成本边界]
+    required_artifacts: [EquipmentObservation]
+    quality_gates: [成熟度结论有实测或项目节点依据]
+    stop_conditions: [成熟度和保障边界完整]
+    object_write_scopes: [EvidenceCard, EquipmentObservation, BaselineFindingPacket]
+  - skill_id: defensive_countermeasure_analysis
+    triggers: [防御性反制, 现役升级, 新装备研发需求]
+    allowed_tools: [search_sources, fetch_page, create_evidence_card, compare_equipment_capability, assess_technology_readiness, map_defensive_countermeasure, formulate_equipment_requirement]
+    steps: [识别国外装备优势与体系依赖, 映射主题场景压力, 形成防御性反制选项, 比较现役升级与新研路径, 定义验证计划]
+    required_artifacts: [EquipmentObservation]
+    quality_gates: [反制建议回溯到国外装备能力和证据, 不输出具体攻击步骤, 新研需求包含任务目标能力边界成熟度与验证方法]
+    stop_conditions: [反制选项与升级新研需求完整且可追溯]
+    object_write_scopes: [EvidenceCard, EquipmentObservation, BaselineFindingPacket]
+  - skill_id: operational_synthesis
+    triggers: [任务链, 力量协同]
+    allowed_tools: [search_sources, fetch_page, create_evidence_card, map_task_capability, build_coordination_dependency]
+    steps: [消费上游Packet, 构建任务链, 映射能力与力量, 登记协同依赖]
+    required_artifacts: [OperationalSynthesis]
+    quality_gates: [约束可追溯到上游Packet]
+    stop_conditions: [任务链与协同依赖完整]
+    object_write_scopes: [EvidenceCard, OperationalSynthesis, BaselineFindingPacket]
+  - skill_id: coa_comparison
+    triggers: [COA比较]
+    allowed_tools: [search_sources, fetch_page, create_evidence_card, compare_coa]
+    steps: [建立基线COA, 建立弹性分布COA, 建立资源受限COA, 比较风险与边界]
+    required_artifacts: [OperationalSynthesis]
+    quality_gates: [三类COA均存在, 适用条件和不可行边界明确]
+    stop_conditions: [COA比较完整]
+    object_write_scopes: [EvidenceCard, OperationalSynthesis, BaselineFindingPacket]
+  - skill_id: joint_force_coordination
+    triggers: [联合协同, 有人无人协同]
+    allowed_tools: [search_sources, fetch_page, create_evidence_card, build_coordination_dependency]
+    steps: [分析信息流, 分析指挥关系, 映射接口和节奏]
+    required_artifacts: [OperationalSynthesis]
+    quality_gates: [协同接口与保障条件明确]
+    stop_conditions: [关键依赖均可追溯]
+    object_write_scopes: [EvidenceCard, OperationalSynthesis, BaselineFindingPacket]
+  - skill_id: lessons_transfer
+    triggers: [战例经验, 经验迁移]
+    allowed_tools: [search_sources, fetch_page, create_evidence_card, transfer_case_lesson, assess_sustainment_resilience]
+    steps: [还原背景差异, 提取因果链, 检验反事实, 形成迁移边界]
+    required_artifacts: [OperationalSynthesis]
+    quality_gates: [经验包含适用边界和失败模式]
+    stop_conditions: [可迁移与不可迁移项明确]
+    object_write_scopes: [EvidenceCard, OperationalSynthesis, BaselineFindingPacket]
+  - skill_id: defense_decomposition
+    triggers: [防御解构]
+    allowed_tools: [prepare_winning_input, project_winning_resources, write_reasoning_node, write_stage_output, create_recall_request]
+    steps: [准备输入包, 投影四库, 写防御解构节点, 执行L1门控]
+    required_artifacts: [WinningMechanismInput, WinningKnowledgeProjection, WinningReasoningNode, WinningMechanismStageOutput]
+    quality_gates: [L1置信度不低于0.7]
+    stop_conditions: [防御解构节点完成或已发起定向Recall]
+    object_write_scopes: [WinningMechanismInput, WinningKnowledgeProjection, WinningReasoningNode, WinningMechanismStageOutput, RecallRequest]
+  - skill_id: winning_path_analysis
+    triggers: [制胜路径]
+    allowed_tools: [write_reasoning_node, write_stage_output, create_recall_request]
+    steps: [写制胜路径节点, 关联证据和假设]
+    required_artifacts: [WinningReasoningNode]
+    quality_gates: [路径输入输出引用完整]
+    stop_conditions: [制胜路径节点完成]
+    object_write_scopes: [WinningReasoningNode, WinningMechanismStageOutput, RecallRequest]
+  - skill_id: effect_chain_analysis
+    triggers: [效果链]
+    allowed_tools: [write_reasoning_node, write_stage_output, create_recall_request]
+    steps: [写效果链节点, 检查直接与间接效果]
+    required_artifacts: [WinningReasoningNode]
+    quality_gates: [效果链可追溯]
+    stop_conditions: [效果链节点完成]
+    object_write_scopes: [WinningReasoningNode, WinningMechanismStageOutput, RecallRequest]
+  - skill_id: capability_mapping
+    triggers: [能力映射]
+    allowed_tools: [write_reasoning_node, write_stage_output, create_recall_request]
+    steps: [写能力映射节点, 执行L2可行性门控]
+    required_artifacts: [WinningReasoningNode, WinningMechanismStageOutput]
+    quality_gates: [L2可行性不低于3]
+    stop_conditions: [能力映射和L2完成]
+    object_write_scopes: [WinningReasoningNode, WinningMechanismStageOutput, RecallRequest]
+  - skill_id: gap_quantification
+    triggers: [差距量化]
+    allowed_tools: [write_reasoning_node, write_stage_output, create_recall_request]
+    steps: [形成五档差距矩阵, 登记依据, 执行追溯检查]
+    required_artifacts: [WinningReasoningNode, WinningMechanismStageOutput]
+    quality_gates: [每个差距等级具备依据]
+    stop_conditions: [差距矩阵完成]
+    object_write_scopes: [WinningReasoningNode, WinningMechanismStageOutput, RecallRequest]
+  - skill_id: capability_image_generation
+    triggers: [能力画像]
+    allowed_tools: [write_reasoning_node, write_stage_output, create_capability_image, create_recall_request]
+    steps: [生成画像草案, 去重归并, 填充需求卡片, 构建能力全景关系, 形成分支规律场景指标装备形态, 深度撰写能力画像, 执行L3门控]
+    required_artifacts: [WinningReasoningNode, WinningMechanismStageOutput, CapabilityImageItem]
+    quality_gates: [L3需求卡片以具体待发展武器装备为主对象, 无人导弹弹药等战斗装备与query直接匹配, 能力全景关系可追溯, 分支门槛满足或缺口披露, 深度画像不是字段罗列]
+    stop_conditions: [能力画像分支产物和回溯索引完成]
+    object_write_scopes: [WinningReasoningNode, WinningMechanismStageOutput, CapabilityImageItem, RecallRequest]
+  - skill_id: requirement_semantics_analysis
+    triggers: [任务解析, 需求语义, 专家模式, 智能模式, 需求粒度, 研究边界]
+    allowed_tools: [analyze_research_request]
+    steps: [识别目标交付物与禁止边界, 判断专家或智能模式, 判定战略战役战术粒度, 提取军兵种作战域与时间尺度, 分离用户假设事实未知和冲突, 形成可委派研究问题树]
+    required_artifacts: [WorkingCheckpoint]
+    quality_gates: [目标交付物边界无歧义, 研究问题可被专业Agent执行, 假设事实未知分离, 非阻塞歧义显式记录]
+    stop_conditions: [任务语义卡和研究问题树完整]
+    object_write_scopes: [WorkingCheckpoint]
+    budget_override: {max_turns: 1, max_tokens: 1800}
+  - skill_id: discovery_driver_recognition
+    triggers: [驱动源, A-H分支, Other, 挖掘方向, 路径识别]
+    allowed_tools: [classify_discovery_drivers]
+    steps: [逐项评估A-H匹配信号, 记录各分支排除理由与置信度, 选择一个主分支和最多两个次分支, 对未充分覆盖任务记录OTHER驱动源, 指定最接近A-H运行基座与L4触发器]
+    required_artifacts: [WorkingCheckpoint]
+    quality_gates: [主次分支有任务语义依据, OTHER不被伪装为第九固定分支, 专家显式分支不被覆盖]
+    stop_conditions: [驱动源评分主次分支与未覆盖项明确]
+    object_write_scopes: [WorkingCheckpoint]
+    budget_override: {max_turns: 1, max_tokens: 1600}
+  - skill_id: discovery_blueprint_generation
+    triggers: [蓝图, S1-S6, 动态组合, 路径生成, 元编排]
+    allowed_tools: [build_discovery_blueprint]
+    steps: [读取任务语义卡与驱动源判断, 组合S1-S6的skip light standard deep强度, 绑定必需输出与专业Agent, 定义关键假设进入条件失败条件和回溯点, 设置主次分支交汇与收敛接口]
+    required_artifacts: [WorkingCheckpoint]
+    quality_gates: [蓝图不是机械六步串联, 强弱跳步并行有业务依据, 每个节点有输入输出和失败处理]
+    stop_conditions: [可执行S1-S6蓝图完整]
+    object_write_scopes: [WorkingCheckpoint]
+    budget_override: {max_turns: 1, max_tokens: 1800}
+  - skill_id: dag_loop_orchestration
+    triggers: [DAG, Agent编排, 执行波次, 内循环, 中循环, 外循环, 元循环, 回溯]
+    allowed_tools: [plan_execution_waves, evaluate_loop_transition]
+    steps: [按能力覆盖选择最小充分Agent集合, 构建依赖DAG与结构化交接, 划分并发波次和关键路径, 为内中外L4循环设置预算门控和最早回溯节点, 无信息增益或达到上限时降级停止]
+    required_artifacts: [WorkingCheckpoint]
+    quality_gates: [能力标签无关键遗漏, 并发不破坏硬依赖, 回溯范围最小, 不重复无信息增益循环, 达到上限时降级输出]
+    stop_conditions: [Agent DAG执行波次循环策略下一动作与停止理由明确]
+    object_write_scopes: [WorkingCheckpoint]
+    budget_override: {max_turns: 1, max_tokens: 1600}
+  - skill_id: autonomous_scenario_divergence
+    triggers: [智能模式, 潜在场景, 弱信号]
+    allowed_tools: [search_sources, fetch_page, create_evidence_card, scan_emerging_threat, construct_disruptive_scenario, build_scenario_graph, branch_scenario]
+    steps: [扫描威胁技术案例弱信号, 形成互异问题框架, 生成候选场景, 标注触发器和边界, 推荐A-H分支]
+    required_artifacts: [EvidenceCard, StrategicAssessment, ScenarioModel, BaselineFindingPacket]
+    quality_gates: [候选方向不重复, 事实与想象分离, 每个场景含触发器与失败条件]
+    stop_conditions: [形成可排序候选主题和场景集合]
+    object_write_scopes: [EvidenceCard, StrategicAssessment, ScenarioModel, BaselineFindingPacket]
+  - skill_id: competing_hypothesis_design
+    triggers: [竞争假设, 替代解释]
+    allowed_tools: [test_competing_hypothesis, branch_scenario]
+    steps: [提出至少两个互斥解释, 定义支持与反证信号, 比较可观测性, 保留未决假设]
+    required_artifacts: [StrategicAssessment, ScenarioModel]
+    quality_gates: [假设可证伪, 不以单一来源确认高影响判断]
+    stop_conditions: [主假设替代假设和反证条件完整]
+    object_write_scopes: [StrategicAssessment, ScenarioModel, BaselineFindingPacket]
+  - skill_id: case_timeline_reconstruction
+    triggers: [案例还原, 战例时间线, 关键决策点]
+    allowed_tools: [search_sources, fetch_page, create_evidence_card, register_event_timeline, reconstruct_case_timeline]
+    steps: [多语言检索, 归一时间地点行为体装备, 区分确认争议事件, 标注关键决策点, 形成事实时间线]
+    required_artifacts: [EvidenceCard, StrategicAssessment, OperationalSynthesis]
+    quality_gates: [关键事件有来源定位, 争议事实并列保留, 决策点与后果不倒置]
+    stop_conditions: [时间线和关键决策点完整]
+    object_write_scopes: [EvidenceCard, StrategicAssessment, OperationalSynthesis, BaselineFindingPacket]
+  - skill_id: causal_chain_analysis
+    triggers: [因果链, 战果原因, 失败机制]
+    allowed_tools: [build_causal_chain, test_competing_hypothesis]
+    steps: [区分相关与因果, 建立条件机制结果链, 搜索替代解释, 执行反事实检验, 标记置信度]
+    required_artifacts: [OperationalSynthesis, StrategicAssessment]
+    quality_gates: [每条因果链含机制和证据, 反事实结果显式, 不作事后必然化解释]
+    stop_conditions: [关键因果链与替代解释完整]
+    object_write_scopes: [OperationalSynthesis, StrategicAssessment, BaselineFindingPacket]
+  - skill_id: cross_case_pattern_transfer
+    triggers: [跨案例, 规律抽取, 未来映射]
+    allowed_tools: [compare_case_patterns, transfer_case_lesson]
+    steps: [建立可比维度, 聚类共性与差异, 抽取稳定机制, 校正背景差异, 映射未来场景]
+    required_artifacts: [OperationalSynthesis]
+    quality_gates: [规律跨至少两个案例成立, 迁移边界明确, 不可迁移项保留]
+    stop_conditions: [跨案例规律和未来映射完整]
+    object_write_scopes: [OperationalSynthesis, BaselineFindingPacket]
+  - skill_id: frontier_technology_radar
+    triggers: [前沿技术, 技术雷达, 弱信号]
+    allowed_tools: [search_sources, fetch_page, create_evidence_card, assess_technology_readiness, assess_technology_potential]
+    steps: [扫描论文专利项目试验, 识别关键工程节点, 分离TRL与能力潜力, 评估成本产能依赖, 标记时间窗]
+    required_artifacts: [EvidenceCard, EquipmentObservation]
+    quality_gates: [技术信号多源核验, 成熟度有项目节点依据, 潜力不等于已形成能力]
+    stop_conditions: [技术信号成熟度潜力限制条件完整]
+    object_write_scopes: [EvidenceCard, EquipmentObservation, BaselineFindingPacket]
+  - skill_id: disruptive_scenario_construction
+    triggers: [颠覆场景, 技术反推场景]
+    allowed_tools: [construct_disruptive_scenario, test_competing_hypothesis]
+    steps: [建立无技术基线, 引入技术能力变化, 识别触发条件, 推演任务链变化, 检查失败模式]
+    required_artifacts: [ScenarioModel, StrategicAssessment]
+    quality_gates: [场景建立在技术边界内, 包含失败条件, 不跳过工程可行性]
+    stop_conditions: [颠覆场景和分阶段验证完整]
+    object_write_scopes: [ScenarioModel, StrategicAssessment, BaselineFindingPacket]
+  - skill_id: opponent_change_detection
+    triggers: [对手动向, 变化检测, 异常活动]
+    allowed_tools: [search_sources, fetch_page, create_evidence_card, register_event_timeline, detect_baseline_change, register_warning_indicator]
+    steps: [建立历史基线, 登记新观测, 检测装备演习条令一致变化, 评估显著性, 形成预警指标]
+    required_artifacts: [EvidenceCard, StrategicAssessment]
+    quality_gates: [变化相对基线成立, 偶发事件不直接推断长期意图, 指标可观测]
+    stop_conditions: [变化基线异常动向和预警指标完整]
+    object_write_scopes: [EvidenceCard, StrategicAssessment, BaselineFindingPacket]
+  - skill_id: capability_formation_forecast
+    triggers: [能力形成, 形成节奏, 里程碑]
+    allowed_tools: [estimate_capability_formation, test_competing_hypothesis]
+    steps: [识别预算采购试验部署里程碑, 建立依赖链, 估计时间窗口, 构造替代情景, 标注不确定性]
+    required_artifacts: [StrategicAssessment]
+    quality_gates: [时间窗口有里程碑依据, 供应链与训练依赖纳入, 替代假设完整]
+    stop_conditions: [能力形成节奏与不确定性完整]
+    object_write_scopes: [StrategicAssessment, BaselineFindingPacket]
+  - skill_id: system_confrontation_modeling
+    triggers: [体系对抗, 红蓝体系, 任务链]
+    allowed_tools: [build_system_model, map_task_capability, build_coordination_dependency, stress_test_scenario]
+    steps: [定义体系边界, 建立感知决策行动保障链, 映射节点接口与替代路径, 设置压力条件, 比较任务效果]
+    required_artifacts: [OperationalSynthesis, ScenarioModel]
+    quality_gates: [模型边界与假设显式, 任务链依赖完整, 结果保持任务级与防御性]
+    stop_conditions: [红蓝体系模型和压力测试完整]
+    object_write_scopes: [OperationalSynthesis, ScenarioModel, BaselineFindingPacket]
+  - skill_id: cascading_vulnerability_analysis
+    triggers: [级联失效, 体系脆弱点, 补链强链]
+    allowed_tools: [identify_cascading_vulnerability, compare_coa, test_competing_hypothesis]
+    steps: [识别单点依赖, 追踪级联路径, 评估替代链路, 比较韧性方案, 形成补链强链需求]
+    required_artifacts: [OperationalSynthesis, StrategicAssessment]
+    quality_gates: [脆弱性含触发条件和级联边界, 替代链路可验证, 不输出具体攻击步骤]
+    stop_conditions: [关键脆弱点替代链路和强链需求完整]
+    object_write_scopes: [OperationalSynthesis, StrategicAssessment, BaselineFindingPacket]
+  - skill_id: cross_domain_matrix_analysis
+    triggers: [跨域融合, 多域矩阵, 域间接口]
+    allowed_tools: [build_cross_domain_matrix, map_task_capability, build_coordination_dependency]
+    steps: [建立域任务能力矩阵, 枚举数据指挥时序保障接口, 追踪跨域任务流, 标记耦合依赖]
+    required_artifacts: [OperationalSynthesis]
+    quality_gates: [覆盖任务相关域, 接口条件可验证, 任务流端到端闭合]
+    stop_conditions: [跨域矩阵和接口依赖完整]
+    object_write_scopes: [OperationalSynthesis, BaselineFindingPacket]
+  - skill_id: interface_gap_analysis
+    triggers: [协同缝隙, 接口缺口, 降级运行]
+    allowed_tools: [identify_interface_gap, stress_test_scenario, compare_coa]
+    steps: [定位数据指挥时序保障缺口, 评估任务影响, 设计降级模式, 比较融合收益与耦合风险]
+    required_artifacts: [OperationalSynthesis, ScenarioModel]
+    quality_gates: [缺口与任务效果关联, 降级模式可执行, 同时披露耦合风险]
+    stop_conditions: [协同缝隙融合需求和降级方式完整]
+    object_write_scopes: [OperationalSynthesis, ScenarioModel, BaselineFindingPacket]
+  - skill_id: emerging_threat_scan
+    triggers: [灰色地带, 认知影响, 太空深海, 复合灾害]
+    allowed_tools: [search_sources, fetch_page, create_evidence_card, scan_emerging_threat, build_scenario_graph]
+    steps: [扫描新型威胁驱动源, 识别触发条件, 构造任务场景, 评估军民影响, 形成预警指标]
+    required_artifacts: [EvidenceCard, StrategicAssessment, ScenarioModel]
+    quality_gates: [威胁与触发器可追溯, 场景不过度军事化, 民用影响显式]
+    stop_conditions: [威胁画像触发条件和场景完整]
+    object_write_scopes: [EvidenceCard, StrategicAssessment, ScenarioModel, BaselineFindingPacket]
+  - skill_id: legal_ethical_boundary_review
+    triggers: [法律伦理, 军民边界, 跨部门]
+    allowed_tools: [assess_legal_ethical_boundary, map_environment_constraint]
+    steps: [识别利益相关方, 列出法律伦理与权限约束, 评估民用影响, 区分允许受限禁止响应, 形成跨部门接口]
+    required_artifacts: [OperationalSynthesis, ScenarioModel]
+    quality_gates: [边界具体可审查, 优先非致命与韧性方案, 跨部门责任明确]
+    stop_conditions: [法律伦理限制和跨部门边界完整]
+    object_write_scopes: [OperationalSynthesis, ScenarioModel, BaselineFindingPacket]
+  - skill_id: demand_signal_clustering
+    triggers: [跨背景聚类, 跨场景聚类, 需求去重]
+    allowed_tools: [cluster_demand_signals, prepare_winning_input, project_winning_resources]
+    steps: [按任务效果聚类, 归并同义需求, 保留冲突与少数观点, 建立跨分支关联, 生成回传问题]
+    required_artifacts: [WinningKnowledgeProjection, WinningMechanismInput]
+    quality_gates: [每簇可追溯到Packet, 冲突未被覆盖, 开放问题保留]
+    stop_conditions: [需求簇冲突和跨分支关联完整]
+    object_write_scopes: [WinningKnowledgeProjection, WinningMechanismInput]
+  - skill_id: multi_criteria_prioritization
+    triggers: [优先级, 需求排序, 组合选择]
+    allowed_tools: [rank_capability_priorities, project_winning_resources]
+    steps: [定义任务价值紧迫性可行性证据成熟度标准, 评估候选项, 识别依赖与互斥, 形成分层优先级]
+    required_artifacts: [WinningKnowledgeProjection]
+    quality_gates: [标准和评分依据透明, 依赖关系进入排序, 不以模型偏好替代证据]
+    stop_conditions: [优先序依赖和不确定性完整]
+    object_write_scopes: [WinningKnowledgeProjection]
+  - skill_id: ooda_vulnerability_analysis
+    triggers: [S1, OODA, 对手薄弱环节]
+    allowed_tools: [analyze_ooda_vulnerability, write_reasoning_node, create_recall_request]
+    steps: [解构观察判断决策行动保障恢复, 映射节点依赖, 识别脆弱性与替代路径, 比较竞争假设]
+    required_artifacts: [WinningReasoningNode, RecallRequest]
+    quality_gates: [薄弱环节有依赖依据, 事实推断假设分离, 不输出可执行攻击指令]
+    stop_conditions: [S1节点或定向召回完成]
+    object_write_scopes: [WinningReasoningNode, RecallRequest]
+  - skill_id: doctrine_operational_review
+    triggers: [S2, 条令审查, 战法本体]
+    allowed_tools: [write_reasoning_node, create_recall_request]
+    steps: [建立条令战法基线, 还原任务链协同与保障, 比较演习实战偏差, 识别失败模式, 形成候选制胜路径]
+    required_artifacts: [WinningReasoningNode, RecallRequest]
+    quality_gates: [战法与场景条件对应, 保障和失败边界完整, 证据不足触发召回]
+    stop_conditions: [S2节点或定向召回完成]
+    object_write_scopes: [WinningReasoningNode, RecallRequest]
+  - skill_id: counterfactual_triz_innovation
+    triggers: [S3, 反事实, TRIZ, 突破口]
+    allowed_tools: [generate_counterfactual_option, apply_triz_contradiction, write_reasoning_node, create_recall_request]
+    steps: [提取核心矛盾, 改变关键前提, 应用TRIZ原则生成选项, 构建效果链, 保留替代方向]
+    required_artifacts: [WinningReasoningNode, RecallRequest]
+    quality_gates: [突破方向具体可验证, 效果链可追溯, 至少一个替代方向]
+    stop_conditions: [S3突破方向效果链与验证建议完整]
+    object_write_scopes: [WinningReasoningNode, RecallRequest]
+  - skill_id: dotmlpf_capability_mapping
+    triggers: [S4, DOTMLPF, 能力任务映射]
+    allowed_tools: [map_dotmlpf_requirement, write_reasoning_node, write_stage_output, create_recall_request]
+    steps: [效果映射任务, 任务映射能力, 区分装备与非装备措施, 定义功能性能约束, 明确体系接口]
+    required_artifacts: [WinningReasoningNode, WinningMechanismStageOutput, RecallRequest]
+    quality_gates: [能力需求不直接跳成型号, DOTMLPF分类完整, 接口和适用边界明确]
+    stop_conditions: [S4能力矩阵和L2输入完整]
+    object_write_scopes: [WinningReasoningNode, WinningMechanismStageOutput, RecallRequest]
+  - skill_id: equipment_system_gap_assessment
+    triggers: [S5, 装备基线, 体系效能, 五档差距]
+    allowed_tools: [write_reasoning_node, write_stage_output, create_recall_request]
+    steps: [建立现役在研基线, 比较参数条件和成熟度, 纳入体系接口保障约束, 按五档分级, 标记冲突与未知]
+    required_artifacts: [WinningReasoningNode, WinningMechanismStageOutput, RecallRequest]
+    quality_gates: [每项差距有基准, 冲突参数保留, 型号能力不脱离体系]
+    stop_conditions: [S5五档差距矩阵完整]
+    object_write_scopes: [WinningReasoningNode, WinningMechanismStageOutput, RecallRequest]
+  - skill_id: capability_portfolio_synthesis
+    triggers: [S6, 能力图像, 需求卡片]
+    allowed_tools: [rank_capability_priorities, write_reasoning_node, write_stage_output, create_capability_image, create_recall_request]
+    steps: [归并专业研究与S1-S5结果, 保留冲突依赖, 多准则排序, 区分升级与新研, 生成需求卡片和能力全景图, 按A-H分支形成规律场景指标装备形态, 深度撰写能力画像]
+    required_artifacts: [WinningKnowledgeProjection, WinningReasoningNode, WinningMechanismStageOutput, CapabilityImageItem]
+    quality_gates: [每项追溯到证据和前序节点, 升级新研理由明确, 需求卡片主对象为与query匹配的具体无人导弹弹药或其他战斗装备, 通信算法接口保障不得单独成卡, 能力全景关系完整, 分支定量门槛满足或显式披露缺口]
+    stop_conditions: [S6能力组合深度画像分支产物和回溯索引完整]
+    object_write_scopes: [WinningKnowledgeProjection, WinningReasoningNode, WinningMechanismStageOutput, CapabilityImageItem, RecallRequest]
+  - skill_id: step_quality_critique
+    triggers: [内循环, 步骤批判]
+    allowed_tools: [evaluate_reasoning_step, create_recall_request]
+    steps: [核对输入覆盖, 检查证据越界, 识别跨步跳跃, 检查分支侧重与安全边界, 给出最小重试指引]
+    required_artifacts: [RecallRequest]
+    quality_gates: [问题具体可修复, 不代替原Agent重写, 召回目标明确]
+    stop_conditions: [通过或重试指引完整]
+    object_write_scopes: [RecallRequest]
+    budget_override: {max_turns: 1, max_tokens: 1200}
+  - skill_id: round_causal_critique
+    triggers: [中循环, 跨步骤批判]
+    allowed_tools: [evaluate_reasoning_round, create_recall_request]
+    steps: [检查S1-S6连接, 核对分支侧重, 定位最早失败步骤, 限定重跑范围, 披露剩余不确定性]
+    required_artifacts: [RecallRequest]
+    quality_gates: [回溯到最早不完整步骤, 重跑范围最小, 循环上限明确]
+    stop_conditions: [通过或中循环回溯计划完整]
+    object_write_scopes: [RecallRequest]
+    budget_override: {max_turns: 1, max_tokens: 1600}
+  - skill_id: independent_release_audit
+    triggers: [审计, 发布门控]
+    allowed_tools: [evaluate_release_readiness, write_audit]
+    steps: [检查证据一致性, 检查覆盖置信度和用户确认, 复核循环门控, 识别发布风险, 给出批准或限制建议]
+    required_artifacts: [AuditResult]
+    quality_gates: [不修改事实不放宽门控, 风险关联对象, 限制条件可执行]
+    stop_conditions: [五类判据和发布建议完整]
+    object_write_scopes: [AuditResult]
+  - skill_id: evidence_based_delivery
+    triggers: [报告, 需求卡片, 能力图像交付]
+    allowed_tools: [write_report]
+    steps: [以原始Query为最高优先级确定军事装备需求主题, 读取前置处理后的少量高价值研判锚点与代表性URL校准事实边界, 围绕对手地域烈度时间窗约束和行动反行动关系发散, 优先识别无人化低空无人机远程精确打击及强打击歼灭压制毁伤方向, 按场景战法能力特征技术攻关能力图像效能贡献三层九项收敛, 披露反证和验证边界]
+    required_artifacts: [ResearchReport]
+    quality_gates: [不新增数字来源, 不复述或逐项扩写上游锚点, 三层九项齐全且无平行旧模板, 每项关键结论体现深度性创新性前瞻性军事价值性, 能力特征可映射到实现途径核心技术和效能贡献, 预测与事实前提清晰, 能力与限制同等清晰]
+    stop_conditions: [三层九项主报告完整且当前分支必需信息已吸收]
+    object_write_scopes: [ResearchReport]
+  - skill_id: codex_deep_search_shared
+    shared: true
+    triggers: [DeepSearch, 多源检索, 递归查询扩展]
+    allowed_tools: [search_sources, fetch_page, create_evidence_card]
+    knowledge_pack_ids: [public_evidence_index, military_knowledge_base, equipment_ontology]
+    steps: [把研究问题拆成检索分轨, 优先一手与权威来源, 递归扩展别名时间线和反证查询, 将线索材料化为EvidenceCard]
+    required_artifacts: [EvidenceCard]
+    quality_gates: [正式结论只引用已材料化证据, 重要判断覆盖多类独立来源, 搜索摘要不直接升级为事实]
+    stop_conditions: [主要检索分轨闭合或继续搜索无明显信息增益]
+    object_write_scopes: [EvidenceCard]
+  - skill_id: codex_deep_research_shared
+    shared: true
+    triggers: [DeepResearch, 跨源融合, 矛盾检测, 假设生成]
+    allowed_tools: [test_competing_hypothesis, build_causal_chain, compare_case_patterns, assess_technology_readiness, compare_equipment_capability]
+    knowledge_pack_ids: [military_knowledge_base, doctrine_library, case_library, frontier_technology_library]
+    steps: [分离事实推断假设和冲突, 建立竞争假设与证伪条件, 跨源融合并保留少数反证, 形成适用边界与开放问题]
+    required_artifacts: [BaselineFindingPacket]
+    quality_gates: [结论可追溯, 冲突未被多数意见覆盖, 推断标明前提和置信度]
+    stop_conditions: [研究问题得到最小充分回答且剩余未知已登记]
+    object_write_scopes: [BaselineFindingPacket]
+  - skill_id: codex_evidence_governance_shared
+    shared: true
+    triggers: [证据治理, 可信度, 反证, 截止日期]
+    allowed_tools: [fetch_page, create_evidence_card, reconcile_parameter_conflict, test_competing_hypothesis]
+    knowledge_pack_ids: [public_evidence_index, short_term_memory, long_term_memory]
+    steps: [核对来源时间与正文位置, 评估直接支持和独立性, 并列保留冲突参数, 将未知和过期信息降级]
+    required_artifacts: [EvidenceCard, BaselineFindingPacket]
+    quality_gates: [证据ID真实存在, 结论不超出原文支持范围, 截止日期和适用条件明确]
+    stop_conditions: [关键主张均有证据或显式假设]
+    object_write_scopes: [EvidenceCard, BaselineFindingPacket]
+  - skill_id: codex_structured_handoff_shared
+    shared: true
+    triggers: [结构化交接, Packet, 节点合并, 上下文压缩]
+    allowed_tools: [prepare_winning_input, project_winning_resources, write_reasoning_node, create_recall_request]
+    knowledge_pack_ids: [short_term_memory, long_term_memory]
+    steps: [只传递下游必需字段, 保留证据冲突置信度与开放问题, 指定消费节点和回传契约, 禁止共享原始Agent会话]
+    required_artifacts: [BaselineFindingPacket, WinningKnowledgeProjection]
+    quality_gates: [交接高信息密度, 输入输出引用完整, 原始会话隔离]
+    stop_conditions: [下游可直接消费且无需猜测关键字段]
+    object_write_scopes: [BaselineFindingPacket, WinningMechanismInput, WinningKnowledgeProjection, WinningReasoningNode, RecallRequest]
+  - skill_id: dynamic_specialist_synthesis
+    triggers: [动态子Agent, 专业缺口, OTHER驱动源]
+    allowed_tools: [search_sources, fetch_page, create_evidence_card, create_recall_request]
+    knowledge_pack_ids: [public_evidence_index, military_knowledge_base, equipment_ontology, doctrine_library, case_library, frontier_technology_library]
+    steps: [读取动态角色契约, 只解决指定可分离缺口, 使用绑定知识包和证据索引, 输出对指定S节点的结构化贡献, 达到停止条件后回收]
+    required_artifacts: [BaselineFindingPacket, RecallRequest]
+    quality_gates: [角色权限不扩张, 合并目标明确, 引用仅来自有效证据或Packet, 动态角色最多三个]
+    stop_conditions: [专业缺口闭合或预算耗尽并披露限制]
+    object_write_scopes: [EvidenceCard, BaselineFindingPacket, RecallRequest]
+
+knowledge_packs:
+  - knowledge_pack_id: public_evidence_index
+    shared: true
+    description: 本次任务已材料化的公开证据索引，是所有正式事实引用的唯一入口。
+    source_types: [EvidenceCard, SourceMaterial]
+    retrieval_policy: {scope: current_run, access: exact_id_only, raw_session_access: false, freshness_required: true}
+    quality_gates: [证据ID存在且正文位置可追溯, 结论不超过直接支持范围]
+  - knowledge_pack_id: military_knowledge_base
+    shared: true
+    description: 军事概念、任务链、能力域和体系关系的受控术语与框架投影。
+    source_types: [curated_reference, accepted_packet]
+    retrieval_policy: {scope: task_projection, factual_authority: contextual_only, cite_public_evidence_for_claims: true}
+    quality_gates: [术语用于分析框架而非替代公开证据, 事实推断和规范性判断分离]
+  - knowledge_pack_id: equipment_ontology
+    shared: true
+    description: 装备型号、批次、任务载荷、参数、体系接口和保障属性的归一化知识投影。
+    source_types: [EquipmentObservation, EvidenceCard, accepted_packet]
+    retrieval_policy: {scope: current_run_and_curated_index, variant_normalization: required, conflict_preservation: required}
+    quality_gates: [型号批次单位和时间条件明确, 冲突参数并列保留]
+  - knowledge_pack_id: doctrine_library
+    description: 公开条令、作战概念、演习复盘与战法本体的任务级索引。
+    source_types: [public_doctrine, exercise_review, EvidenceCard]
+    retrieval_policy: {scope: task_projection, access: evidence_linked_summary}
+    quality_gates: [条令文本与实际运用分离, 适用场景和版本时间明确]
+  - knowledge_pack_id: case_library
+    description: 公开战例时间线、关键决策点、因果链、争议事实和迁移边界索引。
+    source_types: [case_timeline, EvidenceCard, OperationalSynthesis]
+    retrieval_policy: {scope: task_projection, multilingual: true, dispute_preservation: true}
+    quality_gates: [事实与事后推断分离, 因果关系包含替代解释, 迁移边界明确]
+  - knowledge_pack_id: frontier_technology_library
+    description: 前沿技术信号、试验里程碑、TRL、工业约束和潜在颠覆场景索引。
+    source_types: [paper, patent, program_record, test_report, EquipmentObservation]
+    retrieval_policy: {scope: task_projection, maturity_separate_from_potential: true}
+    quality_gates: [技术潜力不等同已形成能力, 成熟度有工程节点依据]
+  - knowledge_pack_id: short_term_memory
+    shared: true
+    description: 当前运行的任务语义卡、蓝图、检查点、结构化Packet和开放问题。
+    source_types: [WorkingCheckpoint, BaselineFindingPacket, TraceEvent]
+    retrieval_policy: {scope: current_run, raw_session_access: false, compaction: structured_only}
+    quality_gates: [只保留可审计结构化状态, 不泄露其他Agent原始会话]
+  - knowledge_pack_id: long_term_memory
+    shared: true
+    description: 经审计接受的历史规律、需求卡片、验证结果与失败模式索引。
+    source_types: [accepted_report, validated_capability_card, audited_lesson]
+    retrieval_policy: {scope: curated_and_versioned, provenance_required: true, stale_items_must_be_revalidated: true}
+    quality_gates: [每条记忆带来源版本和适用边界, 过期内容不得直接作为当前事实]
+  - knowledge_pack_id: situation_timeline_library
+    description: 国际形势行为体、政策、联盟、部署和预警指标的增量时间线投影。
+    source_types: [accepted_packet, EvidenceCard, incremental_memory]
+    retrieval_policy: {scope: agent_topic_projection, factual_authority: contextual_only, delta_first: true, revalidation_required: true}
+    quality_gates: [历史判断不得替代当前证据, 事件日期和竞争解释保留]
+  - knowledge_pack_id: opponent_change_library
+    description: 对手采购、部署、演训、条令和能力形成节点的版本化变化基线。
+    source_types: [accepted_packet, EvidenceCard, incremental_memory]
+    retrieval_policy: {scope: agent_topic_projection, factual_authority: contextual_only, change_detection: true, revalidation_required: true}
+    quality_gates: [变化相对基线可追溯, 能力形成与计划声明分离]
+  - knowledge_pack_id: scenario_pattern_library
+    description: 公开场景约束、关键时间窗、任务链压力点和场景分支模板索引。
+    source_types: [accepted_packet, ScenarioModel, EvidenceCard, incremental_memory]
+    retrieval_policy: {scope: agent_topic_projection, factual_authority: contextual_only, constraint_projection: true, revalidation_required: true}
+    quality_gates: [模板不能替代当前任务约束, 假设和事实分离]
+  - knowledge_pack_id: equipment_program_library
+    description: 装备型号、批次、项目状态、参数来源、接口和保障边界的增量项目库。
+    source_types: [accepted_packet, EquipmentObservation, EvidenceCard, incremental_memory]
+    retrieval_policy: {scope: agent_topic_projection, factual_authority: contextual_only, variant_normalization: required, revalidation_required: true}
+    quality_gates: [型号批次和日期明确, 冲突参数不得覆盖, 历史参数重新核验]
+  - knowledge_pack_id: system_dependency_library
+    description: 任务链、信息链、保障链、接口依赖和级联失效模式的版本化图谱投影。
+    source_types: [accepted_packet, ScenarioModel, OperationalSynthesis, EvidenceCard, incremental_memory]
+    retrieval_policy: {scope: agent_topic_projection, factual_authority: contextual_only, graph_delta: true, revalidation_required: true}
+    quality_gates: [依赖关系带适用边界, 体系推演不冒充实测事实]
+  - knowledge_pack_id: operational_pattern_library
+    description: 条令、战例、COA、协同接口、保障韧性和失败模式的增量运用库。
+    source_types: [accepted_packet, OperationalSynthesis, EvidenceCard, incremental_memory]
+    retrieval_policy: {scope: agent_topic_projection, factual_authority: contextual_only, coa_comparison: required, revalidation_required: true}
+    quality_gates: [条令与实际运用分离, 迁移边界和失败模式保留]

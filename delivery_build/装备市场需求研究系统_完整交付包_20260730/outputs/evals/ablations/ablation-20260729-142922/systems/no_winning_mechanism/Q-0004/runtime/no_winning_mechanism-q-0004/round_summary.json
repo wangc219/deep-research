@@ -1,0 +1,3134 @@
+{
+  "agent_contributions": [
+    {
+      "adopted_by_capability_ids": [],
+      "adopted_by_report_sections": [
+        "final_report"
+      ],
+      "adopted_by_s_steps": {},
+      "agent_id": "operational_employment",
+      "contributed": true,
+      "loao_quality_delta": null,
+      "model_calls": 2,
+      "observation_id": "contribution-packet-operational_employment",
+      "packet_id": "packet-operational_employment",
+      "produced_claim_ids": [
+        "claim-5b6add3f899c",
+        "claim-4cdb5a0ca988",
+        "claim-630db027b3c4",
+        "claim-0cc367cb1eb8"
+      ]
+    },
+    {
+      "adopted_by_capability_ids": [],
+      "adopted_by_report_sections": [
+        "final_report"
+      ],
+      "adopted_by_s_steps": {},
+      "agent_id": "combat_scenario",
+      "contributed": true,
+      "loao_quality_delta": null,
+      "model_calls": 2,
+      "observation_id": "contribution-packet-combat_scenario",
+      "packet_id": "packet-combat_scenario",
+      "produced_claim_ids": [
+        "claim-89821cec3705",
+        "claim-8ded420bf5f9",
+        "claim-95c43ca4d780",
+        "claim-a8e971151235",
+        "claim-1fddc43679b7"
+      ]
+    },
+    {
+      "adopted_by_capability_ids": [],
+      "adopted_by_report_sections": [
+        "final_report"
+      ],
+      "adopted_by_s_steps": {},
+      "agent_id": "weapon_equipment",
+      "contributed": true,
+      "loao_quality_delta": null,
+      "model_calls": 2,
+      "observation_id": "contribution-packet-weapon_equipment",
+      "packet_id": "packet-weapon_equipment",
+      "produced_claim_ids": [
+        "claim-adff2113f4e2",
+        "claim-437a33de7fbb",
+        "claim-b5ccca861796",
+        "claim-03fd943cecb3",
+        "claim-2dbef87f1ddc"
+      ]
+    }
+  ],
+  "agent_models": {
+    "reporter": {
+      "api_key_env": null,
+      "base_url_host": null,
+      "model": "gpt-5.5",
+      "provider": "codex"
+    }
+  },
+  "agent_recommendations": [],
+  "analyst_confirmed": true,
+  "architecture_conformance": {
+    "architecture_source": [
+      "基于多智能体协作的JS装备市场需求深度挖掘系统架构设计.docx",
+      "编排器与动态智能体_总体架构图.pdf",
+      "制胜机理智能体_详细架构图.pdf"
+    ],
+    "audit_status": "limited",
+    "checks": {
+      "a_h_blueprint_executable": true,
+      "bounded_wave_concurrency_enforced": true,
+      "codex_inner_and_middle_loops_recorded": false,
+      "core_agent_sessions": false,
+      "coverage_explicit": true,
+      "cross_scenario_convergence_present": true,
+      "dynamic_agent_selection_recorded": true,
+      "failure_handoff_contracts_persisted": true,
+      "final_report_present": true,
+      "five_criteria_audit_present": true,
+      "formal_evidence_present": true,
+      "four_knowledge_resources_projected": false,
+      "isolated_agent_sessions": true,
+      "l1_l2_l3_present": false,
+      "nine_field_capability_images": false,
+      "outer_and_meta_loops_recorded": false,
+      "permission_and_budget_contracts_recorded": true,
+      "plan_graph_complete": true,
+      "real_or_fake_mode_recorded": true,
+      "recoverable_checkpoint_lineage": true,
+      "six_step_reasoning_complete": false,
+      "structured_map_reduce_handoffs": true
+    },
+    "limitations": [
+      "运行链路可完整，但正式发布仍须满足覆盖、置信度、材料化、轮次和分析师确认判据。"
+    ],
+    "release_ready": false,
+    "runtime_complete": false,
+    "schema_version": "1.0"
+  },
+  "coverage": {
+    "by_agent": {
+      "combat_scenario": [
+        "scenario",
+        "coa",
+        "environment"
+      ],
+      "operational_employment": [
+        "operation",
+        "coordination",
+        "lessons"
+      ],
+      "weapon_equipment": [
+        "equipment",
+        "capability_gap",
+        "technology_readiness"
+      ]
+    },
+    "convergence": {
+      "clusters": [
+        {
+          "name": "断链任务包与复链一致性控制",
+          "packet_ids": [
+            "packet-operational_employment",
+            "packet-combat_scenario",
+            "packet-weapon_equipment"
+          ],
+          "shared_need": "共同任务需求：把任务意图、授权边界、目标有效期、退出/等待/终止规则、版本号和审计记录预封装为可断链执行的任务包，并在短通信窗口完成状态对账、关键更新和安全中止。作用机理：通信间歇时不追求连续遥控，而让武器/节点按受限状态机维持任务；复链时用版本管理和一致性校验防止过期任务、重复打击或越权改任。军事任务效果：提高远程快打、远海前出和持续压制中的火力循环连续性，同时降低误击与高价值弹药浪费。证据：packet-operational_employment指出D-DIL应作为默认通信基线且短窗口只做状态对账和关键更新；packet-combat_scenario指出主要缺口是断链后能否约束继续、等待、改任、终止；packet-weapon_equipment指出国外精打装备差距集中在断链保持、复链续接和可控重定向三段闭环。置信度：0.78。失效边界：目标高度机动且有效期短于复链周期、授权规则不清、任务包版本冲突不可判定、平台任务计算机封闭或数据链带宽不足时，该需求无法转化为稳定续接能力。下一步建议：优先形成通用任务状态机/任务包接口验证件，在仿真和演训中测通信窗口长度、丢包率、目标有效期与复链一致性成功率的耦合阈值。"
+        },
+        {
+          "name": "多源PNT可信度与边缘再识别",
+          "packet_ids": [
+            "packet-operational_employment",
+            "packet-combat_scenario",
+            "packet-weapon_equipment"
+          ],
+          "shared_need": "共同任务需求：把多源PNT、PNT可信度衰减、末段边缘再识别、诱饵抑制和目标置信门限纳入任务保持硬约束。作用机理：在GPS干扰、导航欺骗和通信受压条件下，武器不只保持航迹，还根据PNT质量和目标置信度决定继续、等待、重捕获或终止。军事任务效果：提升打击、拒止和反制任务在强电磁压制下的有效性，减少因导航欺骗、目标外观变化和诱饵导致的错误毁伤。证据：packet-operational_employment引用俄乌公开战例强调GPS干扰、通信压制和电子战适应对无人系统与精确制导弹药影响显著；packet-combat_scenario提出L3多源PNT与任务重构、L4有边界自治与可审计续接；packet-weapon_equipment把GPS/INS受骗、目标特征库过期和末端传感遮蔽列为失效条件。置信度：0.75。失效边界：海雾、开放海面、城市峡谷、烟尘遮蔽、伪装诱饵和强欺骗同时出现时，替代PNT与视觉/射频再识别可能同时降质，类别相似性不得替代授权目标确认。下一步建议：建立PNT可信度驱动的降级决策测试集，分固定目标、机动陆上目标、海上目标和混杂环境分别设定交战门限。"
+        },
+        {
+          "name": "前沿分布式续接节点与低带宽状态摘要",
+          "packet_ids": [
+            "packet-operational_employment",
+            "packet-combat_scenario",
+            "packet-weapon_equipment"
+          ],
+          "shared_need": "共同任务需求：以前沿分布式节点、长航时无人平台和低带宽续接网关承担近实时感知、等待搜索、BDA摘要、邻近接替和二次火力重分配。作用机理：把后方集中C2的一次性指令链拆分为前沿可生存的小型闭环，在低辐射和稀疏通信下仅传输目标有效期、授权状态、武器状态、PNT可信度和BDA摘要等最小任务数据。军事任务效果：增强远海前出、远域任务和持续压制中的任务续接能力，使打击链从一次发射扩展为断续闭合的发现—打击—评估—再组织循环。证据：packet-operational_employment认为前沿分布式节点比后方集中C2更适合作为任务续接主承载；packet-combat_scenario指出S5关键是计划窗口内交换最小任务数据；packet-weapon_equipment认为远程无人打击平台可成为等待、搜索、复核、摘要回传和授权后释放的空中续接节点。置信度：0.74。失效边界：前沿节点能源、弹药、维修、频谱治理和补给暴露不足时，多点韧性会转化为多点失效；高威胁防空、卫星链路受扰、天气遮蔽和授权延迟会削弱无人续接节点价值。下一步建议：优先验证低带宽BDA摘要格式、邻近任务接替协议和前沿补给再生成能力，而不是只验证单平台航时或载荷。"
+        },
+        {
+          "name": "远域压制窗口制造与精打续接耦合",
+          "packet_ids": [
+            "packet-combat_scenario",
+            "packet-weapon_equipment",
+            "packet-operational_employment"
+          ],
+          "shared_need": "共同任务需求：将SEAD/DEAD、诱饵、电子攻击和可消耗自主系统作为通信复链、目标刷新和突防窗口的制造手段，而非替代任务续接控制。作用机理：压制雷达、通信和火控链可短时降低敌方传感与拦截能力，为精打武器复链重定向、BDA回传和二次打击创造窗口；可消耗系统用于压制、诱导侦察和补击节奏。军事任务效果：提高反制与拒止能力，扩大远程快打的可用窗口，并支撑持续作战中的再组织。证据：packet-weapon_equipment明确远域压制效应器是窗口制造者；packet-combat_scenario指出S4持续压制再组织最能暴露BDA迟滞、库存消耗和补给受损短板；packet-operational_employment指出低成本可消耗自主系统可扩大压制、诱导侦察和补击节奏。置信度：0.70。失效边界：敌方频率捷变、被动探测、雷达静默、诱饵识别、低成本拦截和基地防护反适应会快速削弱成本交换优势；若压制窗口持续时间短于任务刷新/授权流程，则不能支撑续接。下一步建议：把压制窗口持续时间、复链成功率、BDA迟滞和补击库存消耗纳入同一演训指标，不把电子攻击或可消耗数量单独视为充分能力。"
+        },
+        {
+          "name": "五档装备基线与建设路径",
+          "packet_ids": [
+            "packet-combat_scenario",
+            "packet-weapon_equipment"
+          ],
+          "shared_need": "共同任务需求：按L0链路依赖型、L1惯性保持型、L2低带宽续接型、L3多源PNT与任务重构型、L4有边界自治与可审计续接型评估现役差距，并区分近期做优与中期拓新。作用机理：用断链授权、复链一致性、BDA回传、任务重构、补给恢复和审计记录评估装备，而不是只看射程、命中精度或抗干扰导航。军事任务效果：形成可直接支撑打击、反制、拒止和持续作战的装备建设优先序，避免把单项平台性能误判为体系续接能力。证据：packet-combat_scenario提出五档能力模型；packet-weapon_equipment建议近期在既有导弹、巡飞弹和无人平台上补齐通用任务续接组件，中期新研长航时续接节点、可消耗巡飞任务包、远域压制效应器和通用任务状态机。置信度：0.76。失效边界：公开资料不足以判定具体现役型号真实等级；若评估只使用公开宣传中的“半自主”“飞行中更新”等表述，可能高估断链自主边界和复链一致性成熟度。下一步建议：以任务级测试替代型号标签判断，输出每类装备的L0-L4等级、升级项、接口受限点和验证缺口。"
+        }
+      ],
+      "conflicts": [
+        "分布式自治与人在回路/授权可审计存在张力：packet-combat_scenario和packet-operational_employment要求低辐射、间歇通信下持续作战，但同时强调任务包必须嵌入授权边界、禁止区、目标置信度和人工再授权条件。军事后果是自治扩大可保持火力窗口，也可能在再授权不可用时放大越权与误击风险；置信度0.80。",
+        "可消耗自主系统的规模优势与反无人/低成本拦截扩散存在抵消：packet-operational_employment认为其可扩大压制与补击节奏，packet-weapon_equipment认为需发展可消耗巡飞任务包，但两者都承认敌方反无人、电子战和低成本拦截会削弱成本交换优势。军事后果是数量可制造压力，但不能替代任务包一致性、识别可信度和保障再生成；置信度0.73。",
+        "集中高价值精打与分布式前沿续接存在任务适配冲突：packet-operational_employment认为集中高价值精打适合强授权固定或准固定目标，但不适合作为间歇通信下持续续接主方案；packet-combat_scenario也指出目标固定且授权长期有效时续接缺口决定性下降。军事后果是不能用单一装备路径覆盖固定目标压制、机动目标拒止和混杂环境打击；置信度0.72。",
+        "公开装备证据与能力推断存在不确定性：packet-weapon_equipment多处指出Tomahawk、JASSM-D、PrSM等公开资料只能证明飞行中更新、武器数据链或增量方向，不能证明断链自主改打新目标、复链一致性算法或误识别率。军事后果是若直接把公开功能锚点等同于成熟战役级续接能力，会导致建设优先级失真；置信度0.78。",
+        "多源PNT降低GPS单点失效，但替代PNT在海雾、开放海面、城市峡谷、欺骗和遮蔽环境下质量不稳定。军事后果是L3/L4能力必须以可信度驱动降级，而不是默认替代导航总能支撑继续打击；置信度0.71。"
+      ],
+      "cross_branch_links": [
+        "S4持续压制再组织与装备基线直接相连：S4同时暴露BDA迟滞、库存消耗、任务库过期和补给受损，要求P1任务状态机、P3 BDA摘要接口和P4压制窗口验证同步推进；单纯提升弹药射程不能解决多轮火力循环。",
+        "S5远海/远域稀疏通信与前沿分布式节点相连：远域任务需要低辐射、低带宽条件下交换最小任务数据，连接P1任务包、P2 PNT可信度和P3低带宽网关；前沿节点生存力与能源、弹药、维修、频谱治理和补给暴露构成共同失效边界。",
+        "S6授权漂移与边界自治/审计相连：混杂环境、禁止区、友邻/民用目标和目标置信度变化要求P1任务包嵌入授权边界，P2再识别不得以类别相似替代授权确认；军事价值是保持威慑与压制机会同时控制误击和越权。",
+        "装备族构型与任务链六环节相连：长航时续接节点支撑发现/评估，通用任务状态机支撑决策/协同，可消耗巡飞任务包支撑打击/补击，远域压制效应器支撑突防/复链窗口；能力全景应以发现—决策—协同—打击—评估—再组织闭合度绘制。",
+        "传统能力缺口与作战运用冲突相连：装备侧主张现役做优和新研拓新，运用侧要求D-DIL默认基线和前沿分布式承载；二者共同指向接口标准、任务包版本管理和演训验证，而不是单一型号采购。"
+      ],
+      "meta_review": {
+        "added_secondary_branches": [],
+        "dynamic_subagents": [],
+        "focus_questions": [],
+        "rationale": "消融策略关闭L4元循环，固定首轮蓝图。",
+        "replan_required": false,
+        "step_mode_changes": [],
+        "step_mode_overrides": [],
+        "stop_reason": "disabled_by_stage_policy"
+      },
+      "open_questions": [
+        "不同通信窗口长度、带宽、丢包率和敌电磁压制强度下，任务包同步、复链一致性和安全中止的最低可接受阈值是多少？",
+        "固定目标压制、机动陆上目标拒止、海上目标拦截和混杂环境打击应分别采用哪些授权有效期、目标置信门限、等待/终止规则，是否允许跨任务类型共用任务包模板？",
+        "现役精打导弹、巡飞弹和无人平台中，哪些具备开放任务计算机、武器数据链和审计接口，哪些只能做外部流程优化而无法植入通用续接组件？",
+        "强电磁压制、GPS欺骗、复杂气象、烟尘遮蔽、伪装诱饵同时出现时，多源PNT和边缘再识别的联合降级规则如何设定，何时必须终止而不是继续任务？",
+        "前沿分布式节点的能源、弹药、维修、频谱治理和补给暴露如何量化，什么条件下COA-2会由韧性方案转化为多点失效？",
+        "远域压制效应器制造的复链/突防窗口通常是否足以支持目标刷新、BDA摘要回传和再授权流程，若不足，应优先压缩流程还是增加压制资源？",
+        "公开资料中Tomahawk、PrSM、GAO等部分证据URL存在拼接、截断或笼统问题，需要复核到原始页面后再用于报告级引用；在复核前只能作为方向性线索。"
+      ],
+      "priorities": [
+        "P1：通用断链任务包/任务状态机与复链一致性校验。追溯Packet：packet-operational_employment、packet-combat_scenario、packet-weapon_equipment。军事任务效果：直接改变间歇通信下打击链是否可保持、续接和安全终止，是远程快打、远海前出和持续压制的共同底座。作用机理：预置意图、授权边界、有效期、退出条件和版本号，复链时只传关键增量并做状态对账。证据置信度：0.78。失效边界：目标有效期短于通信刷新、规则冲突、平台接口封闭或数据链带宽不足。下一步：列为最高优先需求卡，指标包括任务包字段完备率、版本冲突检出率、复链一致性成功率、安全中止成功率和审计可追溯率。",
+        "P2：多源PNT可信度、边缘再确认和目标置信门限组件。追溯Packet：packet-operational_employment、packet-combat_scenario、packet-weapon_equipment。军事任务效果：在GPS干扰、欺骗和传感遮蔽下保持有效打击与拒止，同时减少过期/误识别打击。作用机理：将PNT可信度和目标置信度作为继续、等待、重捕获、改任或终止的硬输入。证据置信度：0.75。失效边界：复合遮蔽、诱饵和强欺骗下多源信息同时降质。下一步：形成PNT可信度衰减曲线、诱饵抑制测试集和不同目标类型交战门限。",
+        "P3：低带宽续接网关与BDA摘要/再组织接口。追溯Packet：packet-operational_employment、packet-combat_scenario、packet-weapon_equipment。军事任务效果：把一次打击转化为多轮断续闭合的火力循环，支撑持续压制、反制和远域任务。作用机理：前沿节点或无人续接平台在短窗口传输目标有效期、武器状态、PNT可信度和BDA摘要，驱动二次火力重分配。证据置信度：0.74。失效边界：BDA迟滞、补给受损、频谱暴露或授权延迟超过目标窗口。下一步：验证摘要格式、邻近接替协议、补给恢复阈值和通信窗口最小可用带宽。",
+        "P4：远域压制窗口制造装备与续接链耦合验证。追溯Packet：packet-combat_scenario、packet-weapon_equipment、packet-operational_employment。军事任务效果：通过电子攻击、诱饵、SEAD/DEAD和可消耗系统短时打开复链、突防、目标刷新和补击窗口，增强拒止与反制。作用机理：压制敌传感/火控/通信链，降低己方续接节点暴露和精打武器末段风险。证据置信度：0.70。失效边界：敌方反适应快、压制窗口短、可消耗成本失控或库存不足。下一步：把压制持续时间、复链窗口、BDA回传和补击库存放入联合指标。",
+        "P5：现役做优优先于等待全新平台，随后拓新装备族。追溯Packet：packet-weapon_equipment、packet-combat_scenario。军事任务效果：以较低改装风险快速补齐抗扰导航、复链重定向、安全中止、目标置信门限、审计记录和低带宽摘要；中期再形成长航时续接节点、模块化巡飞任务包、远域压制效应器和通用任务状态机装备族。作用机理：先在既有导弹、巡飞弹和无人平台上植入通用续接组件，减少跨型号能力断裂。证据置信度：0.76。失效边界：跨军种接口割裂、安全认证周期长、目标库更新慢、平台任务计算机封闭。下一步：按L0-L4对现役精打、巡飞和无人平台分级，明确每类可升级接口和不可改边界。"
+      ]
+    },
+    "coverage_passed": true,
+    "discovery_blueprint": {
+      "adaptive_winning_step_modes": {
+        "1": "standard",
+        "2": "standard",
+        "3": "standard",
+        "4": "deep",
+        "5": "deep",
+        "6": "deep"
+      },
+      "assumptions": [],
+      "baseline_agent_plan": [
+        {
+          "agent_id": "combat_scenario",
+          "mode": "required",
+          "reason": "B分支确定性基线建议"
+        },
+        {
+          "agent_id": "weapon_equipment",
+          "mode": "required",
+          "reason": "任务要求装备现状、能力差距、升级或新研判断，需要装备证据与成熟度分析。；B分支确定性基线建议"
+        },
+        {
+          "agent_id": "operational_employment",
+          "mode": "reference",
+          "reason": "B分支确定性基线建议"
+        },
+        {
+          "agent_id": "international_situation",
+          "mode": "callback",
+          "reason": "B分支确定性基线建议"
+        },
+        {
+          "agent_id": "system_confrontation",
+          "mode": "callback",
+          "reason": "B分支确定性基线建议"
+        }
+      ],
+      "baseline_execution_mode": "query_dominant_isolated_parallel",
+      "blueprint_id": "blueprint-b-c60725b5",
+      "blueprint_mode": "catalog",
+      "branch_name": "传统能力缺口发现",
+      "callback_agent_ids": [
+        "international_situation",
+        "system_confrontation"
+      ],
+      "confidence": 0.55,
+      "custom_blueprint": {
+        "dependencies": [],
+        "dependency_cycle_rejected": false,
+        "driver_type": "",
+        "preferred_agent_ids": [],
+        "rationale": "",
+        "required_capability_tags": [],
+        "required_outputs": [],
+        "s1_s6_modes": {},
+        "stop_conditions": [],
+        "waves": []
+      },
+      "driver_scores": [],
+      "dynamic_subagents": [],
+      "emphasis": [
+        "S4",
+        "S5",
+        "S6"
+      ],
+      "execution_contract": {
+        "absolute_deadline_seconds": 2400,
+        "background_count": 3,
+        "backtrack_map": {
+          "capability_mapping": [
+            4,
+            5,
+            6
+          ],
+          "equipment_baseline": [
+            5,
+            6
+          ],
+          "priority": [
+            6
+          ],
+          "report_section": [],
+          "scenario_coverage": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        },
+        "branch": "B",
+        "branch_products": [
+          "three_backgrounds",
+          "six_to_nine_scenarios",
+          "five_level_gap_assessment",
+          "requirement_cards",
+          "capability_panorama",
+          "traceable_deep_report"
+        ],
+        "codex_concurrency": 5,
+        "contract_id": "branch-b-optimized-v2",
+        "critical_fast_finalize_seconds": 120,
+        "deadline_downshift_window_seconds": 240,
+        "delivery_grace_seconds": 900,
+        "delivery_retry_reserve_seconds": 45,
+        "fast_finalize_output_token_cap": 4200,
+        "hard_deadline_seconds": 1500,
+        "logical_agent_dag": {
+          "S1": [
+            "combat_scenario"
+          ],
+          "S2": [
+            "S1"
+          ],
+          "S3": [
+            "S2"
+          ],
+          "S4": [
+            "S3"
+          ],
+          "S5": [
+            "S4"
+          ],
+          "S6": [
+            "S4",
+            "S5"
+          ],
+          "combat_scenario": [
+            "international_situation"
+          ],
+          "international_situation": [],
+          "reporter": [
+            "S6"
+          ]
+        },
+        "maximum_delivery_model_calls": 4,
+        "maximum_model_calls": 10,
+        "maximum_model_calls_with_residuals": 14,
+        "maximum_rounds": 3,
+        "maximum_searches": 12,
+        "physical_cohorts": [
+          [
+            1,
+            2,
+            3
+          ],
+          [
+            4,
+            5
+          ]
+        ],
+        "scenarios_per_background": [
+          2,
+          3
+        ],
+        "schema_version": "2.0",
+        "soft_deadline_seconds": 1050,
+        "step_intensity": {
+          "1": "standard",
+          "2": "standard",
+          "3": "standard",
+          "4": "deep",
+          "5": "deep",
+          "6": "deep"
+        },
+        "stop_conditions": [
+          "all_required_branch_products_present",
+          "accepted_claims_traceable_to_public_sources",
+          "no_repeated_residual_without_new_evidence",
+          "estimated_quality_gain_below_0.03",
+          "hard_deadline_enters_fast_finalize"
+        ]
+      },
+      "execution_profile_hash": "ea56dd79a5b4cab9ceeb1f92620cc32c0ad498fbc37adca81d11e4138e3ccf18",
+      "execution_profile_id": "optimized_v2",
+      "focus_questions": [],
+      "generated_by": "deterministic_architecture_policy",
+      "hard_constraints": [],
+      "hard_dependencies": {
+        "combat_scenario": [
+          "international_situation"
+        ],
+        "international_situation": []
+      },
+      "initial_baseline_agent_ids": [
+        "combat_scenario",
+        "weapon_equipment",
+        "operational_employment"
+      ],
+      "interaction_mode": "expert",
+      "loop_policy": {
+        "inner_max_iterations": 1,
+        "meta_max_cycles": 1,
+        "middle_max_cycles": 1,
+        "minimum_expected_gain": 0.03,
+        "outer_max_rounds": 3,
+        "residual_only_after_first_round": true
+      },
+      "maximum_business_agents": 4,
+      "meta_review": {
+        "added_secondary_branches": [],
+        "dynamic_subagents": [],
+        "focus_questions": [],
+        "rationale": "消融策略关闭L4元循环，固定首轮蓝图。",
+        "replan_required": false,
+        "step_mode_changes": [],
+        "step_mode_overrides": [],
+        "stop_reason": "disabled_by_stage_policy"
+      },
+      "meta_triggers": [
+        "出现跨分支高价值线索",
+        "当前分支无法覆盖关键能力标签",
+        "案例/技术/对手变化反向触发其他发现路径"
+      ],
+      "minimum_business_agents": 3,
+      "primary_branch": "B",
+      "prompt_version": "2.5",
+      "rationale": "未命中明确的新战法、案例、技术或专项驱动词，按通用装备能力缺口发现处理。",
+      "reference_focus": {
+        "source_items": [
+          11
+        ],
+        "task_kernel": "周边控制、远海前出、远程快打和远域任务→按对陆海空任务链检查现役短板与失效边界→交付做优清单、拓新接口和建设优先级。"
+      },
+      "required_capability_tags": [
+        "equipment",
+        "capability_gap"
+      ],
+      "required_outputs": [
+        "装备基线与五档差距",
+        "需求卡片（具体待发展武器装备/装备构型/关键指标/优先级/支撑场景/证据链）",
+        "能力全景图",
+        "深度研究报告（含推理链可回溯）",
+        "深度研究主报告（深度性、创新性、前瞻性、军事价值性）",
+        "分支专用收敛产物"
+      ],
+      "runtime_budgets": {
+        "absolute_deadline_seconds": 2400,
+        "codex_concurrency": 5,
+        "critical_fast_finalize_seconds": 120,
+        "deadline_downshift_window_seconds": 240,
+        "delivery_grace_seconds": 900,
+        "delivery_retry_reserve_seconds": 45,
+        "fast_finalize_output_token_cap": 4200,
+        "hard_deadline_seconds": 1500,
+        "maximum_delivery_model_calls": 4,
+        "maximum_model_calls": 10,
+        "maximum_model_calls_with_residuals": 14,
+        "maximum_searches": 12,
+        "soft_deadline_seconds": 1050
+      },
+      "runtime_route": "traditional_gap",
+      "secondary_branches": [],
+      "semantic_agent_signals": [
+        {
+          "agent_id": "weapon_equipment",
+          "matched_signals": [
+            "武器"
+          ],
+          "mode": "required",
+          "priority": 92,
+          "reason": "任务要求装备现状、能力差距、升级或新研判断，需要装备证据与成熟度分析。"
+        }
+      ],
+      "specialist_agent_ids": [],
+      "structured_query_brief": {
+        "constraints_and_assumptions": [],
+        "core_query": "间歇通信条件下精打武器任务保持与任务续接研究",
+        "expansion_dimensions": [],
+        "focus_questions": [],
+        "handoff_rule": "补充信息用于拓展分析方向；其中假设需验证，不视为既成事实。",
+        "supplement_present": false,
+        "supplement_summary": ""
+      },
+      "unmatched_driver": "",
+      "waves": [
+        [
+          "international_situation"
+        ],
+        [
+          "combat_scenario",
+          "weapon_equipment"
+        ]
+      ]
+    },
+    "discovery_branch": "B",
+    "missing_required_tags": [],
+    "optional_tags": [
+      "strategy",
+      "technology_readiness"
+    ],
+    "provided_tags": [
+      "capability_gap",
+      "coa",
+      "coordination",
+      "environment",
+      "equipment",
+      "lessons",
+      "operation",
+      "scenario",
+      "technology_readiness"
+    ],
+    "required_tags": [
+      "capability_gap",
+      "equipment"
+    ],
+    "route": "traditional_gap"
+  },
+  "delivery_artifacts": {
+    "branch_deliverables": "branch_deliverables.json",
+    "capability_panorama": "capability_panorama.json",
+    "demand_cards": "demand_cards.json",
+    "evidence_references": "evidence_references.md",
+    "reasoning_traceability": "reasoning_traceability.json"
+  },
+  "discovery_blueprint": {
+    "adaptive_winning_step_modes": {
+      "1": "standard",
+      "2": "standard",
+      "3": "standard",
+      "4": "deep",
+      "5": "deep",
+      "6": "deep"
+    },
+    "assumptions": [],
+    "baseline_agent_plan": [
+      {
+        "agent_id": "combat_scenario",
+        "mode": "required",
+        "reason": "B分支确定性基线建议"
+      },
+      {
+        "agent_id": "weapon_equipment",
+        "mode": "required",
+        "reason": "任务要求装备现状、能力差距、升级或新研判断，需要装备证据与成熟度分析。；B分支确定性基线建议"
+      },
+      {
+        "agent_id": "operational_employment",
+        "mode": "reference",
+        "reason": "B分支确定性基线建议"
+      },
+      {
+        "agent_id": "international_situation",
+        "mode": "callback",
+        "reason": "B分支确定性基线建议"
+      },
+      {
+        "agent_id": "system_confrontation",
+        "mode": "callback",
+        "reason": "B分支确定性基线建议"
+      }
+    ],
+    "baseline_execution_mode": "query_dominant_isolated_parallel",
+    "blueprint_id": "blueprint-b-c60725b5",
+    "blueprint_mode": "catalog",
+    "branch_name": "传统能力缺口发现",
+    "callback_agent_ids": [
+      "international_situation",
+      "system_confrontation"
+    ],
+    "confidence": 0.55,
+    "custom_blueprint": {
+      "dependencies": [],
+      "dependency_cycle_rejected": false,
+      "driver_type": "",
+      "preferred_agent_ids": [],
+      "rationale": "",
+      "required_capability_tags": [],
+      "required_outputs": [],
+      "s1_s6_modes": {},
+      "stop_conditions": [],
+      "waves": []
+    },
+    "driver_scores": [],
+    "dynamic_subagents": [],
+    "emphasis": [
+      "S4",
+      "S5",
+      "S6"
+    ],
+    "execution_contract": {
+      "absolute_deadline_seconds": 2400,
+      "background_count": 3,
+      "backtrack_map": {
+        "capability_mapping": [
+          4,
+          5,
+          6
+        ],
+        "equipment_baseline": [
+          5,
+          6
+        ],
+        "priority": [
+          6
+        ],
+        "report_section": [],
+        "scenario_coverage": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "branch": "B",
+      "branch_products": [
+        "three_backgrounds",
+        "six_to_nine_scenarios",
+        "five_level_gap_assessment",
+        "requirement_cards",
+        "capability_panorama",
+        "traceable_deep_report"
+      ],
+      "codex_concurrency": 5,
+      "contract_id": "branch-b-optimized-v2",
+      "critical_fast_finalize_seconds": 120,
+      "deadline_downshift_window_seconds": 240,
+      "delivery_grace_seconds": 900,
+      "delivery_retry_reserve_seconds": 45,
+      "fast_finalize_output_token_cap": 4200,
+      "hard_deadline_seconds": 1500,
+      "logical_agent_dag": {
+        "S1": [
+          "combat_scenario"
+        ],
+        "S2": [
+          "S1"
+        ],
+        "S3": [
+          "S2"
+        ],
+        "S4": [
+          "S3"
+        ],
+        "S5": [
+          "S4"
+        ],
+        "S6": [
+          "S4",
+          "S5"
+        ],
+        "combat_scenario": [
+          "international_situation"
+        ],
+        "international_situation": [],
+        "reporter": [
+          "S6"
+        ]
+      },
+      "maximum_delivery_model_calls": 4,
+      "maximum_model_calls": 10,
+      "maximum_model_calls_with_residuals": 14,
+      "maximum_rounds": 3,
+      "maximum_searches": 12,
+      "physical_cohorts": [
+        [
+          1,
+          2,
+          3
+        ],
+        [
+          4,
+          5
+        ]
+      ],
+      "scenarios_per_background": [
+        2,
+        3
+      ],
+      "schema_version": "2.0",
+      "soft_deadline_seconds": 1050,
+      "step_intensity": {
+        "1": "standard",
+        "2": "standard",
+        "3": "standard",
+        "4": "deep",
+        "5": "deep",
+        "6": "deep"
+      },
+      "stop_conditions": [
+        "all_required_branch_products_present",
+        "accepted_claims_traceable_to_public_sources",
+        "no_repeated_residual_without_new_evidence",
+        "estimated_quality_gain_below_0.03",
+        "hard_deadline_enters_fast_finalize"
+      ]
+    },
+    "execution_profile_hash": "ea56dd79a5b4cab9ceeb1f92620cc32c0ad498fbc37adca81d11e4138e3ccf18",
+    "execution_profile_id": "optimized_v2",
+    "focus_questions": [],
+    "generated_by": "deterministic_architecture_policy",
+    "hard_constraints": [],
+    "hard_dependencies": {
+      "combat_scenario": [
+        "international_situation"
+      ],
+      "international_situation": []
+    },
+    "initial_baseline_agent_ids": [
+      "combat_scenario",
+      "weapon_equipment",
+      "operational_employment"
+    ],
+    "interaction_mode": "expert",
+    "loop_policy": {
+      "inner_max_iterations": 1,
+      "meta_max_cycles": 1,
+      "middle_max_cycles": 1,
+      "minimum_expected_gain": 0.03,
+      "outer_max_rounds": 3,
+      "residual_only_after_first_round": true
+    },
+    "maximum_business_agents": 4,
+    "meta_review": {
+      "added_secondary_branches": [],
+      "dynamic_subagents": [],
+      "focus_questions": [],
+      "rationale": "消融策略关闭L4元循环，固定首轮蓝图。",
+      "replan_required": false,
+      "step_mode_changes": [],
+      "step_mode_overrides": [],
+      "stop_reason": "disabled_by_stage_policy"
+    },
+    "meta_triggers": [
+      "出现跨分支高价值线索",
+      "当前分支无法覆盖关键能力标签",
+      "案例/技术/对手变化反向触发其他发现路径"
+    ],
+    "minimum_business_agents": 3,
+    "primary_branch": "B",
+    "prompt_version": "2.5",
+    "rationale": "未命中明确的新战法、案例、技术或专项驱动词，按通用装备能力缺口发现处理。",
+    "reference_focus": {
+      "source_items": [
+        11
+      ],
+      "task_kernel": "周边控制、远海前出、远程快打和远域任务→按对陆海空任务链检查现役短板与失效边界→交付做优清单、拓新接口和建设优先级。"
+    },
+    "required_capability_tags": [
+      "equipment",
+      "capability_gap"
+    ],
+    "required_outputs": [
+      "装备基线与五档差距",
+      "需求卡片（具体待发展武器装备/装备构型/关键指标/优先级/支撑场景/证据链）",
+      "能力全景图",
+      "深度研究报告（含推理链可回溯）",
+      "深度研究主报告（深度性、创新性、前瞻性、军事价值性）",
+      "分支专用收敛产物"
+    ],
+    "runtime_budgets": {
+      "absolute_deadline_seconds": 2400,
+      "codex_concurrency": 5,
+      "critical_fast_finalize_seconds": 120,
+      "deadline_downshift_window_seconds": 240,
+      "delivery_grace_seconds": 900,
+      "delivery_retry_reserve_seconds": 45,
+      "fast_finalize_output_token_cap": 4200,
+      "hard_deadline_seconds": 1500,
+      "maximum_delivery_model_calls": 4,
+      "maximum_model_calls": 10,
+      "maximum_model_calls_with_residuals": 14,
+      "maximum_searches": 12,
+      "soft_deadline_seconds": 1050
+    },
+    "runtime_route": "traditional_gap",
+    "secondary_branches": [],
+    "semantic_agent_signals": [
+      {
+        "agent_id": "weapon_equipment",
+        "matched_signals": [
+          "武器"
+        ],
+        "mode": "required",
+        "priority": 92,
+        "reason": "任务要求装备现状、能力差距、升级或新研判断，需要装备证据与成熟度分析。"
+      }
+    ],
+    "specialist_agent_ids": [],
+    "stage_policy_id": "no_winning_mechanism",
+    "structured_query_brief": {
+      "constraints_and_assumptions": [],
+      "core_query": "间歇通信条件下精打武器任务保持与任务续接研究",
+      "expansion_dimensions": [],
+      "focus_questions": [],
+      "handoff_rule": "补充信息用于拓展分析方向；其中假设需验证，不视为既成事实。",
+      "supplement_present": false,
+      "supplement_summary": ""
+    },
+    "unmatched_driver": "",
+    "waves": [
+      [
+        "international_situation"
+      ],
+      [
+        "combat_scenario",
+        "weapon_equipment"
+      ]
+    ]
+  },
+  "discovery_branch": {
+    "confidence": 1.0,
+    "label": "传统能力缺口发现",
+    "primary": "B",
+    "rationale": "专家显式指定传统能力缺口发现分支。",
+    "secondary": []
+  },
+  "discovery_convergence": {
+    "clusters": [
+      {
+        "name": "断链任务包与复链一致性控制",
+        "packet_ids": [
+          "packet-operational_employment",
+          "packet-combat_scenario",
+          "packet-weapon_equipment"
+        ],
+        "shared_need": "共同任务需求：把任务意图、授权边界、目标有效期、退出/等待/终止规则、版本号和审计记录预封装为可断链执行的任务包，并在短通信窗口完成状态对账、关键更新和安全中止。作用机理：通信间歇时不追求连续遥控，而让武器/节点按受限状态机维持任务；复链时用版本管理和一致性校验防止过期任务、重复打击或越权改任。军事任务效果：提高远程快打、远海前出和持续压制中的火力循环连续性，同时降低误击与高价值弹药浪费。证据：packet-operational_employment指出D-DIL应作为默认通信基线且短窗口只做状态对账和关键更新；packet-combat_scenario指出主要缺口是断链后能否约束继续、等待、改任、终止；packet-weapon_equipment指出国外精打装备差距集中在断链保持、复链续接和可控重定向三段闭环。置信度：0.78。失效边界：目标高度机动且有效期短于复链周期、授权规则不清、任务包版本冲突不可判定、平台任务计算机封闭或数据链带宽不足时，该需求无法转化为稳定续接能力。下一步建议：优先形成通用任务状态机/任务包接口验证件，在仿真和演训中测通信窗口长度、丢包率、目标有效期与复链一致性成功率的耦合阈值。"
+      },
+      {
+        "name": "多源PNT可信度与边缘再识别",
+        "packet_ids": [
+          "packet-operational_employment",
+          "packet-combat_scenario",
+          "packet-weapon_equipment"
+        ],
+        "shared_need": "共同任务需求：把多源PNT、PNT可信度衰减、末段边缘再识别、诱饵抑制和目标置信门限纳入任务保持硬约束。作用机理：在GPS干扰、导航欺骗和通信受压条件下，武器不只保持航迹，还根据PNT质量和目标置信度决定继续、等待、重捕获或终止。军事任务效果：提升打击、拒止和反制任务在强电磁压制下的有效性，减少因导航欺骗、目标外观变化和诱饵导致的错误毁伤。证据：packet-operational_employment引用俄乌公开战例强调GPS干扰、通信压制和电子战适应对无人系统与精确制导弹药影响显著；packet-combat_scenario提出L3多源PNT与任务重构、L4有边界自治与可审计续接；packet-weapon_equipment把GPS/INS受骗、目标特征库过期和末端传感遮蔽列为失效条件。置信度：0.75。失效边界：海雾、开放海面、城市峡谷、烟尘遮蔽、伪装诱饵和强欺骗同时出现时，替代PNT与视觉/射频再识别可能同时降质，类别相似性不得替代授权目标确认。下一步建议：建立PNT可信度驱动的降级决策测试集，分固定目标、机动陆上目标、海上目标和混杂环境分别设定交战门限。"
+      },
+      {
+        "name": "前沿分布式续接节点与低带宽状态摘要",
+        "packet_ids": [
+          "packet-operational_employment",
+          "packet-combat_scenario",
+          "packet-weapon_equipment"
+        ],
+        "shared_need": "共同任务需求：以前沿分布式节点、长航时无人平台和低带宽续接网关承担近实时感知、等待搜索、BDA摘要、邻近接替和二次火力重分配。作用机理：把后方集中C2的一次性指令链拆分为前沿可生存的小型闭环，在低辐射和稀疏通信下仅传输目标有效期、授权状态、武器状态、PNT可信度和BDA摘要等最小任务数据。军事任务效果：增强远海前出、远域任务和持续压制中的任务续接能力，使打击链从一次发射扩展为断续闭合的发现—打击—评估—再组织循环。证据：packet-operational_employment认为前沿分布式节点比后方集中C2更适合作为任务续接主承载；packet-combat_scenario指出S5关键是计划窗口内交换最小任务数据；packet-weapon_equipment认为远程无人打击平台可成为等待、搜索、复核、摘要回传和授权后释放的空中续接节点。置信度：0.74。失效边界：前沿节点能源、弹药、维修、频谱治理和补给暴露不足时，多点韧性会转化为多点失效；高威胁防空、卫星链路受扰、天气遮蔽和授权延迟会削弱无人续接节点价值。下一步建议：优先验证低带宽BDA摘要格式、邻近任务接替协议和前沿补给再生成能力，而不是只验证单平台航时或载荷。"
+      },
+      {
+        "name": "远域压制窗口制造与精打续接耦合",
+        "packet_ids": [
+          "packet-combat_scenario",
+          "packet-weapon_equipment",
+          "packet-operational_employment"
+        ],
+        "shared_need": "共同任务需求：将SEAD/DEAD、诱饵、电子攻击和可消耗自主系统作为通信复链、目标刷新和突防窗口的制造手段，而非替代任务续接控制。作用机理：压制雷达、通信和火控链可短时降低敌方传感与拦截能力，为精打武器复链重定向、BDA回传和二次打击创造窗口；可消耗系统用于压制、诱导侦察和补击节奏。军事任务效果：提高反制与拒止能力，扩大远程快打的可用窗口，并支撑持续作战中的再组织。证据：packet-weapon_equipment明确远域压制效应器是窗口制造者；packet-combat_scenario指出S4持续压制再组织最能暴露BDA迟滞、库存消耗和补给受损短板；packet-operational_employment指出低成本可消耗自主系统可扩大压制、诱导侦察和补击节奏。置信度：0.70。失效边界：敌方频率捷变、被动探测、雷达静默、诱饵识别、低成本拦截和基地防护反适应会快速削弱成本交换优势；若压制窗口持续时间短于任务刷新/授权流程，则不能支撑续接。下一步建议：把压制窗口持续时间、复链成功率、BDA迟滞和补击库存消耗纳入同一演训指标，不把电子攻击或可消耗数量单独视为充分能力。"
+      },
+      {
+        "name": "五档装备基线与建设路径",
+        "packet_ids": [
+          "packet-combat_scenario",
+          "packet-weapon_equipment"
+        ],
+        "shared_need": "共同任务需求：按L0链路依赖型、L1惯性保持型、L2低带宽续接型、L3多源PNT与任务重构型、L4有边界自治与可审计续接型评估现役差距，并区分近期做优与中期拓新。作用机理：用断链授权、复链一致性、BDA回传、任务重构、补给恢复和审计记录评估装备，而不是只看射程、命中精度或抗干扰导航。军事任务效果：形成可直接支撑打击、反制、拒止和持续作战的装备建设优先序，避免把单项平台性能误判为体系续接能力。证据：packet-combat_scenario提出五档能力模型；packet-weapon_equipment建议近期在既有导弹、巡飞弹和无人平台上补齐通用任务续接组件，中期新研长航时续接节点、可消耗巡飞任务包、远域压制效应器和通用任务状态机。置信度：0.76。失效边界：公开资料不足以判定具体现役型号真实等级；若评估只使用公开宣传中的“半自主”“飞行中更新”等表述，可能高估断链自主边界和复链一致性成熟度。下一步建议：以任务级测试替代型号标签判断，输出每类装备的L0-L4等级、升级项、接口受限点和验证缺口。"
+      }
+    ],
+    "conflicts": [
+      "分布式自治与人在回路/授权可审计存在张力：packet-combat_scenario和packet-operational_employment要求低辐射、间歇通信下持续作战，但同时强调任务包必须嵌入授权边界、禁止区、目标置信度和人工再授权条件。军事后果是自治扩大可保持火力窗口，也可能在再授权不可用时放大越权与误击风险；置信度0.80。",
+      "可消耗自主系统的规模优势与反无人/低成本拦截扩散存在抵消：packet-operational_employment认为其可扩大压制与补击节奏，packet-weapon_equipment认为需发展可消耗巡飞任务包，但两者都承认敌方反无人、电子战和低成本拦截会削弱成本交换优势。军事后果是数量可制造压力，但不能替代任务包一致性、识别可信度和保障再生成；置信度0.73。",
+      "集中高价值精打与分布式前沿续接存在任务适配冲突：packet-operational_employment认为集中高价值精打适合强授权固定或准固定目标，但不适合作为间歇通信下持续续接主方案；packet-combat_scenario也指出目标固定且授权长期有效时续接缺口决定性下降。军事后果是不能用单一装备路径覆盖固定目标压制、机动目标拒止和混杂环境打击；置信度0.72。",
+      "公开装备证据与能力推断存在不确定性：packet-weapon_equipment多处指出Tomahawk、JASSM-D、PrSM等公开资料只能证明飞行中更新、武器数据链或增量方向，不能证明断链自主改打新目标、复链一致性算法或误识别率。军事后果是若直接把公开功能锚点等同于成熟战役级续接能力，会导致建设优先级失真；置信度0.78。",
+      "多源PNT降低GPS单点失效，但替代PNT在海雾、开放海面、城市峡谷、欺骗和遮蔽环境下质量不稳定。军事后果是L3/L4能力必须以可信度驱动降级，而不是默认替代导航总能支撑继续打击；置信度0.71。"
+    ],
+    "cross_branch_links": [
+      "S4持续压制再组织与装备基线直接相连：S4同时暴露BDA迟滞、库存消耗、任务库过期和补给受损，要求P1任务状态机、P3 BDA摘要接口和P4压制窗口验证同步推进；单纯提升弹药射程不能解决多轮火力循环。",
+      "S5远海/远域稀疏通信与前沿分布式节点相连：远域任务需要低辐射、低带宽条件下交换最小任务数据，连接P1任务包、P2 PNT可信度和P3低带宽网关；前沿节点生存力与能源、弹药、维修、频谱治理和补给暴露构成共同失效边界。",
+      "S6授权漂移与边界自治/审计相连：混杂环境、禁止区、友邻/民用目标和目标置信度变化要求P1任务包嵌入授权边界，P2再识别不得以类别相似替代授权确认；军事价值是保持威慑与压制机会同时控制误击和越权。",
+      "装备族构型与任务链六环节相连：长航时续接节点支撑发现/评估，通用任务状态机支撑决策/协同，可消耗巡飞任务包支撑打击/补击，远域压制效应器支撑突防/复链窗口；能力全景应以发现—决策—协同—打击—评估—再组织闭合度绘制。",
+      "传统能力缺口与作战运用冲突相连：装备侧主张现役做优和新研拓新，运用侧要求D-DIL默认基线和前沿分布式承载；二者共同指向接口标准、任务包版本管理和演训验证，而不是单一型号采购。"
+    ],
+    "meta_review": {
+      "added_secondary_branches": [],
+      "dynamic_subagents": [],
+      "focus_questions": [],
+      "rationale": "消融策略关闭L4元循环，固定首轮蓝图。",
+      "replan_required": false,
+      "step_mode_changes": [],
+      "step_mode_overrides": [],
+      "stop_reason": "disabled_by_stage_policy"
+    },
+    "open_questions": [
+      "不同通信窗口长度、带宽、丢包率和敌电磁压制强度下，任务包同步、复链一致性和安全中止的最低可接受阈值是多少？",
+      "固定目标压制、机动陆上目标拒止、海上目标拦截和混杂环境打击应分别采用哪些授权有效期、目标置信门限、等待/终止规则，是否允许跨任务类型共用任务包模板？",
+      "现役精打导弹、巡飞弹和无人平台中，哪些具备开放任务计算机、武器数据链和审计接口，哪些只能做外部流程优化而无法植入通用续接组件？",
+      "强电磁压制、GPS欺骗、复杂气象、烟尘遮蔽、伪装诱饵同时出现时，多源PNT和边缘再识别的联合降级规则如何设定，何时必须终止而不是继续任务？",
+      "前沿分布式节点的能源、弹药、维修、频谱治理和补给暴露如何量化，什么条件下COA-2会由韧性方案转化为多点失效？",
+      "远域压制效应器制造的复链/突防窗口通常是否足以支持目标刷新、BDA摘要回传和再授权流程，若不足，应优先压缩流程还是增加压制资源？",
+      "公开资料中Tomahawk、PrSM、GAO等部分证据URL存在拼接、截断或笼统问题，需要复核到原始页面后再用于报告级引用；在复核前只能作为方向性线索。"
+    ],
+    "priorities": [
+      "P1：通用断链任务包/任务状态机与复链一致性校验。追溯Packet：packet-operational_employment、packet-combat_scenario、packet-weapon_equipment。军事任务效果：直接改变间歇通信下打击链是否可保持、续接和安全终止，是远程快打、远海前出和持续压制的共同底座。作用机理：预置意图、授权边界、有效期、退出条件和版本号，复链时只传关键增量并做状态对账。证据置信度：0.78。失效边界：目标有效期短于通信刷新、规则冲突、平台接口封闭或数据链带宽不足。下一步：列为最高优先需求卡，指标包括任务包字段完备率、版本冲突检出率、复链一致性成功率、安全中止成功率和审计可追溯率。",
+      "P2：多源PNT可信度、边缘再确认和目标置信门限组件。追溯Packet：packet-operational_employment、packet-combat_scenario、packet-weapon_equipment。军事任务效果：在GPS干扰、欺骗和传感遮蔽下保持有效打击与拒止，同时减少过期/误识别打击。作用机理：将PNT可信度和目标置信度作为继续、等待、重捕获、改任或终止的硬输入。证据置信度：0.75。失效边界：复合遮蔽、诱饵和强欺骗下多源信息同时降质。下一步：形成PNT可信度衰减曲线、诱饵抑制测试集和不同目标类型交战门限。",
+      "P3：低带宽续接网关与BDA摘要/再组织接口。追溯Packet：packet-operational_employment、packet-combat_scenario、packet-weapon_equipment。军事任务效果：把一次打击转化为多轮断续闭合的火力循环，支撑持续压制、反制和远域任务。作用机理：前沿节点或无人续接平台在短窗口传输目标有效期、武器状态、PNT可信度和BDA摘要，驱动二次火力重分配。证据置信度：0.74。失效边界：BDA迟滞、补给受损、频谱暴露或授权延迟超过目标窗口。下一步：验证摘要格式、邻近接替协议、补给恢复阈值和通信窗口最小可用带宽。",
+      "P4：远域压制窗口制造装备与续接链耦合验证。追溯Packet：packet-combat_scenario、packet-weapon_equipment、packet-operational_employment。军事任务效果：通过电子攻击、诱饵、SEAD/DEAD和可消耗系统短时打开复链、突防、目标刷新和补击窗口，增强拒止与反制。作用机理：压制敌传感/火控/通信链，降低己方续接节点暴露和精打武器末段风险。证据置信度：0.70。失效边界：敌方反适应快、压制窗口短、可消耗成本失控或库存不足。下一步：把压制持续时间、复链窗口、BDA回传和补击库存放入联合指标。",
+      "P5：现役做优优先于等待全新平台，随后拓新装备族。追溯Packet：packet-weapon_equipment、packet-combat_scenario。军事任务效果：以较低改装风险快速补齐抗扰导航、复链重定向、安全中止、目标置信门限、审计记录和低带宽摘要；中期再形成长航时续接节点、模块化巡飞任务包、远域压制效应器和通用任务状态机装备族。作用机理：先在既有导弹、巡飞弹和无人平台上植入通用续接组件，减少跨型号能力断裂。证据置信度：0.76。失效边界：跨军种接口割裂、安全认证周期长、目标库更新慢、平台任务计算机封闭。下一步：按L0-L4对现役精打、巡飞和无人平台分级，明确每类可升级接口和不可改边界。"
+    ]
+  },
+  "evidence_assessments": [
+    {
+      "conflict_group": null,
+      "decision": "accepted",
+      "evidence_id": "ev-operational_employment-web-189e631d8bcb",
+      "normalized_url": "https://dodcio.defense.gov/Portals/0/Documents/DoD-C3-Strategy.pdf",
+      "reasons": [],
+      "score": 0.657
+    },
+    {
+      "conflict_group": null,
+      "decision": "accepted",
+      "evidence_id": "ev-operational_employment-web-04daa1ccebf5",
+      "normalized_url": "https://irp.fas.org/doddir/army/fm3-0.pdf",
+      "reasons": [],
+      "score": 0.657
+    },
+    {
+      "conflict_group": null,
+      "decision": "accepted",
+      "evidence_id": "ev-operational_employment-web-f42ad4ad8ea8",
+      "normalized_url": "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo",
+      "reasons": [],
+      "score": 0.657
+    },
+    {
+      "conflict_group": null,
+      "decision": "accepted",
+      "evidence_id": "ev-operational_employment-web-6c1c84a0e24e",
+      "normalized_url": "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all",
+      "reasons": [],
+      "score": 0.657
+    },
+    {
+      "conflict_group": null,
+      "decision": "accepted",
+      "evidence_id": "ev-combat_scenario-web-c38f07c3ceb3",
+      "normalized_url": "https://www.marines.mil/News/News-Display/Article/2708120/expeditionary-advanced-base-operations-eabo",
+      "reasons": [],
+      "score": 0.657
+    },
+    {
+      "conflict_group": null,
+      "decision": "accepted",
+      "evidence_id": "ev-combat_scenario-web-3393b98b73a1",
+      "normalized_url": "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in",
+      "reasons": [],
+      "score": 0.657
+    },
+    {
+      "conflict_group": "conflict-50a8af0865",
+      "decision": "accepted",
+      "evidence_id": "ev-combat_scenario-web-ba7af247bc5e",
+      "normalized_url": "https://www.defense.gov/News/Releases/Release/Article/2397850/electromagnetic-spectrum-superiority-strategy-released",
+      "reasons": [
+        "保留为冲突/反证材料"
+      ],
+      "score": 0.657
+    },
+    {
+      "conflict_group": null,
+      "decision": "accepted",
+      "evidence_id": "ev-combat_scenario-web-d27e41bd8d64",
+      "normalized_url": "https://www.belfercenter.org/research-analysis/navigating-without-gps-cascading-alt-pnt-architecture-american-defense",
+      "reasons": [],
+      "score": 0.807
+    },
+    {
+      "conflict_group": null,
+      "decision": "accepted",
+      "evidence_id": "ev-weapon_equipment-web-c2466ad02545",
+      "normalized_url": "https://www.navy.mil/Resources/Fact-Files/Display-FactFiles/Article/2169229/tomahawk-cruise-missile://www.navair.navy.mil/product/Tomah",
+      "reasons": [],
+      "score": 0.657
+    },
+    {
+      "conflict_group": null,
+      "decision": "accepted",
+      "evidence_id": "ev-weapon_equipment-web-84f5c7f4b57b",
+      "normalized_url": "https://www.saffm.hq.af.mil/Portals/84/documents/FY25/FY25%20Air%20Force%20Missile%20Procurement.pdf",
+      "reasons": [],
+      "score": 0.657
+    },
+    {
+      "conflict_group": null,
+      "decision": "accepted",
+      "evidence_id": "ev-weapon_equipment-web-e894862926e0",
+      "normalized_url": "https://www.army.mil/article-amp/291321/portfolio_acquisition_executive_for_fires_hosts_precision_strike_missile_increment_4_industry、增量路线及Inc",
+      "reasons": [],
+      "score": 0.657
+    },
+    {
+      "conflict_group": "conflict-481e526210",
+      "decision": "accepted",
+      "evidence_id": "ev-weapon_equipment-web-0bfd87a5752c",
+      "normalized_url": "https://files.gao.gov/reports/GAO",
+      "reasons": [
+        "保留为冲突/反证材料"
+      ],
+      "score": 0.657
+    }
+  ],
+  "interaction_mode": "expert",
+  "mode": "real",
+  "performance_summary": {
+    "baseline_wave_governance": [
+      {
+        "bounded": true,
+        "execution_batches": 1,
+        "max_concurrency": 3,
+        "wave_index": 1,
+        "wave_size": 3
+      }
+    ],
+    "dynamic_agent_count": 0,
+    "inner_retry_count": 0,
+    "inner_review_count": 0,
+    "max_model_call_seconds": 206.149,
+    "max_queue_wait_seconds": 0.0,
+    "middle_cycle_count": 0,
+    "middle_review_count": 0,
+    "model_call_count": 6,
+    "model_elapsed_seconds_sum": 848.565,
+    "orchestration_setup_seconds": 0.062,
+    "reference_agent_count": 1,
+    "required_agent_count": 2,
+    "selected_agent_count": 3,
+    "selected_business_agent_count": 3,
+    "wall_time_seconds": 920.674,
+    "winning_step_call_counts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0,
+      "6": 0
+    }
+  },
+  "plan_graph": {
+    "baseline_map_count": 3,
+    "dependency_edges": [
+      {
+        "from": "map:combat_scenario",
+        "to": "reduce:baseline"
+      },
+      {
+        "from": "map:weapon_equipment",
+        "to": "reduce:baseline"
+      },
+      {
+        "from": "map:operational_employment",
+        "to": "reduce:baseline"
+      },
+      {
+        "from": "reduce:baseline",
+        "to": "winning:L1-L3"
+      },
+      {
+        "from": "winning:L1-L3",
+        "to": "audit:five-criteria"
+      },
+      {
+        "from": "audit:five-criteria",
+        "to": "report:final"
+      }
+    ],
+    "discovery_blueprint": {
+      "adaptive_winning_step_modes": {
+        "1": "standard",
+        "2": "standard",
+        "3": "standard",
+        "4": "deep",
+        "5": "deep",
+        "6": "deep"
+      },
+      "assumptions": [],
+      "baseline_agent_plan": [
+        {
+          "agent_id": "combat_scenario",
+          "mode": "required",
+          "reason": "B分支确定性基线建议"
+        },
+        {
+          "agent_id": "weapon_equipment",
+          "mode": "required",
+          "reason": "任务要求装备现状、能力差距、升级或新研判断，需要装备证据与成熟度分析。；B分支确定性基线建议"
+        },
+        {
+          "agent_id": "operational_employment",
+          "mode": "reference",
+          "reason": "B分支确定性基线建议"
+        },
+        {
+          "agent_id": "international_situation",
+          "mode": "callback",
+          "reason": "B分支确定性基线建议"
+        },
+        {
+          "agent_id": "system_confrontation",
+          "mode": "callback",
+          "reason": "B分支确定性基线建议"
+        }
+      ],
+      "baseline_execution_mode": "query_dominant_isolated_parallel",
+      "blueprint_id": "blueprint-b-c60725b5",
+      "blueprint_mode": "catalog",
+      "branch_name": "传统能力缺口发现",
+      "callback_agent_ids": [
+        "international_situation",
+        "system_confrontation"
+      ],
+      "confidence": 0.55,
+      "custom_blueprint": {
+        "dependencies": [],
+        "dependency_cycle_rejected": false,
+        "driver_type": "",
+        "preferred_agent_ids": [],
+        "rationale": "",
+        "required_capability_tags": [],
+        "required_outputs": [],
+        "s1_s6_modes": {},
+        "stop_conditions": [],
+        "waves": []
+      },
+      "driver_scores": [],
+      "dynamic_subagents": [],
+      "emphasis": [
+        "S4",
+        "S5",
+        "S6"
+      ],
+      "execution_contract": {
+        "absolute_deadline_seconds": 2400,
+        "background_count": 3,
+        "backtrack_map": {
+          "capability_mapping": [
+            4,
+            5,
+            6
+          ],
+          "equipment_baseline": [
+            5,
+            6
+          ],
+          "priority": [
+            6
+          ],
+          "report_section": [],
+          "scenario_coverage": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        },
+        "branch": "B",
+        "branch_products": [
+          "three_backgrounds",
+          "six_to_nine_scenarios",
+          "five_level_gap_assessment",
+          "requirement_cards",
+          "capability_panorama",
+          "traceable_deep_report"
+        ],
+        "codex_concurrency": 5,
+        "contract_id": "branch-b-optimized-v2",
+        "critical_fast_finalize_seconds": 120,
+        "deadline_downshift_window_seconds": 240,
+        "delivery_grace_seconds": 900,
+        "delivery_retry_reserve_seconds": 45,
+        "fast_finalize_output_token_cap": 4200,
+        "hard_deadline_seconds": 1500,
+        "logical_agent_dag": {
+          "S1": [
+            "combat_scenario"
+          ],
+          "S2": [
+            "S1"
+          ],
+          "S3": [
+            "S2"
+          ],
+          "S4": [
+            "S3"
+          ],
+          "S5": [
+            "S4"
+          ],
+          "S6": [
+            "S4",
+            "S5"
+          ],
+          "combat_scenario": [
+            "international_situation"
+          ],
+          "international_situation": [],
+          "reporter": [
+            "S6"
+          ]
+        },
+        "maximum_delivery_model_calls": 4,
+        "maximum_model_calls": 10,
+        "maximum_model_calls_with_residuals": 14,
+        "maximum_rounds": 3,
+        "maximum_searches": 12,
+        "physical_cohorts": [
+          [
+            1,
+            2,
+            3
+          ],
+          [
+            4,
+            5
+          ]
+        ],
+        "scenarios_per_background": [
+          2,
+          3
+        ],
+        "schema_version": "2.0",
+        "soft_deadline_seconds": 1050,
+        "step_intensity": {
+          "1": "standard",
+          "2": "standard",
+          "3": "standard",
+          "4": "deep",
+          "5": "deep",
+          "6": "deep"
+        },
+        "stop_conditions": [
+          "all_required_branch_products_present",
+          "accepted_claims_traceable_to_public_sources",
+          "no_repeated_residual_without_new_evidence",
+          "estimated_quality_gain_below_0.03",
+          "hard_deadline_enters_fast_finalize"
+        ]
+      },
+      "execution_profile_hash": "ea56dd79a5b4cab9ceeb1f92620cc32c0ad498fbc37adca81d11e4138e3ccf18",
+      "execution_profile_id": "optimized_v2",
+      "focus_questions": [],
+      "generated_by": "deterministic_architecture_policy",
+      "hard_constraints": [],
+      "hard_dependencies": {
+        "combat_scenario": [
+          "international_situation"
+        ],
+        "international_situation": []
+      },
+      "initial_baseline_agent_ids": [
+        "combat_scenario",
+        "weapon_equipment",
+        "operational_employment"
+      ],
+      "interaction_mode": "expert",
+      "loop_policy": {
+        "inner_max_iterations": 1,
+        "meta_max_cycles": 1,
+        "middle_max_cycles": 1,
+        "minimum_expected_gain": 0.03,
+        "outer_max_rounds": 3,
+        "residual_only_after_first_round": true
+      },
+      "maximum_business_agents": 4,
+      "meta_review": {
+        "added_secondary_branches": [],
+        "dynamic_subagents": [],
+        "focus_questions": [],
+        "rationale": "消融策略关闭L4元循环，固定首轮蓝图。",
+        "replan_required": false,
+        "step_mode_changes": [],
+        "step_mode_overrides": [],
+        "stop_reason": "disabled_by_stage_policy"
+      },
+      "meta_triggers": [
+        "出现跨分支高价值线索",
+        "当前分支无法覆盖关键能力标签",
+        "案例/技术/对手变化反向触发其他发现路径"
+      ],
+      "minimum_business_agents": 3,
+      "primary_branch": "B",
+      "prompt_version": "2.5",
+      "rationale": "未命中明确的新战法、案例、技术或专项驱动词，按通用装备能力缺口发现处理。",
+      "reference_focus": {
+        "source_items": [
+          11
+        ],
+        "task_kernel": "周边控制、远海前出、远程快打和远域任务→按对陆海空任务链检查现役短板与失效边界→交付做优清单、拓新接口和建设优先级。"
+      },
+      "required_capability_tags": [
+        "equipment",
+        "capability_gap"
+      ],
+      "required_outputs": [
+        "装备基线与五档差距",
+        "需求卡片（具体待发展武器装备/装备构型/关键指标/优先级/支撑场景/证据链）",
+        "能力全景图",
+        "深度研究报告（含推理链可回溯）",
+        "深度研究主报告（深度性、创新性、前瞻性、军事价值性）",
+        "分支专用收敛产物"
+      ],
+      "runtime_budgets": {
+        "absolute_deadline_seconds": 2400,
+        "codex_concurrency": 5,
+        "critical_fast_finalize_seconds": 120,
+        "deadline_downshift_window_seconds": 240,
+        "delivery_grace_seconds": 900,
+        "delivery_retry_reserve_seconds": 45,
+        "fast_finalize_output_token_cap": 4200,
+        "hard_deadline_seconds": 1500,
+        "maximum_delivery_model_calls": 4,
+        "maximum_model_calls": 10,
+        "maximum_model_calls_with_residuals": 14,
+        "maximum_searches": 12,
+        "soft_deadline_seconds": 1050
+      },
+      "runtime_route": "traditional_gap",
+      "secondary_branches": [],
+      "semantic_agent_signals": [
+        {
+          "agent_id": "weapon_equipment",
+          "matched_signals": [
+            "武器"
+          ],
+          "mode": "required",
+          "priority": 92,
+          "reason": "任务要求装备现状、能力差距、升级或新研判断，需要装备证据与成熟度分析。"
+        }
+      ],
+      "specialist_agent_ids": [],
+      "stage_policy_id": "no_winning_mechanism",
+      "structured_query_brief": {
+        "constraints_and_assumptions": [],
+        "core_query": "间歇通信条件下精打武器任务保持与任务续接研究",
+        "expansion_dimensions": [],
+        "focus_questions": [],
+        "handoff_rule": "补充信息用于拓展分析方向；其中假设需验证，不视为既成事实。",
+        "supplement_present": false,
+        "supplement_summary": ""
+      },
+      "unmatched_driver": "",
+      "waves": [
+        [
+          "international_situation"
+        ],
+        [
+          "combat_scenario",
+          "weapon_equipment"
+        ]
+      ]
+    },
+    "execution_waves": [
+      {
+        "agent_ids": [
+          "combat_scenario",
+          "weapon_equipment"
+        ],
+        "concurrent": true,
+        "wave": 1
+      },
+      {
+        "agent_ids": [
+          "operational_employment"
+        ],
+        "concurrent": false,
+        "wave": 2
+      }
+    ],
+    "gate_points": [
+      {
+        "after": "reduce:baseline",
+        "gate": "baseline_contract_and_evidence"
+      },
+      {
+        "after": "convergence_fusion",
+        "gate": "cross_scenario_convergence"
+      },
+      {
+        "after": "L1",
+        "gate": "L1_confidence_coverage",
+        "threshold": 0.7
+      },
+      {
+        "after": "L2",
+        "gate": "L2_feasibility_consistency",
+        "threshold": 3
+      },
+      {
+        "after": "L3",
+        "gate": "L3_nine_field_traceability"
+      },
+      {
+        "after": "audit:five-criteria",
+        "gate": "five_criteria_audit"
+      }
+    ],
+    "loops": {
+      "inner": "winning_step_critic",
+      "inner_max_iterations": 1,
+      "meta": "A-H蓝图选择、跨分支汇聚与重规划评估",
+      "meta_max_cycles": 1,
+      "middle": "winning_round_critic",
+      "middle_max_cycles": 1,
+      "minimum_expected_gain": 0.03,
+      "outer": "L1/L2/L3定向Recall与节点返回",
+      "outer_max_rounds": 3,
+      "residual_only_after_first_round": true
+    },
+    "nodes": [
+      {
+        "capability_tags": [
+          "scenario",
+          "coa",
+          "environment"
+        ],
+        "created_at": "2026-07-29T08:14:59.640228+00:00",
+        "depends_on": [],
+        "node_id": "map:combat_scenario",
+        "node_type": "baseline_map",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "combat_scenario"
+      },
+      {
+        "capability_tags": [
+          "equipment",
+          "capability_gap",
+          "technology_readiness"
+        ],
+        "created_at": "2026-07-29T08:14:59.640236+00:00",
+        "depends_on": [],
+        "node_id": "map:weapon_equipment",
+        "node_type": "baseline_map",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "weapon_equipment"
+      },
+      {
+        "capability_tags": [
+          "operation",
+          "coordination",
+          "lessons"
+        ],
+        "created_at": "2026-07-29T08:14:59.640237+00:00",
+        "depends_on": [],
+        "node_id": "map:operational_employment",
+        "node_type": "baseline_map",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "operational_employment"
+      },
+      {
+        "capability_tags": [],
+        "created_at": "2026-07-29T08:14:59.640239+00:00",
+        "depends_on": [
+          "map:combat_scenario",
+          "map:weapon_equipment",
+          "map:operational_employment"
+        ],
+        "node_id": "reduce:baseline",
+        "node_type": "baseline_reduce",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "winning_mechanism"
+      },
+      {
+        "capability_tags": [
+          "winning_mechanism"
+        ],
+        "created_at": "2026-07-29T08:14:59.640241+00:00",
+        "depends_on": [
+          "reduce:baseline"
+        ],
+        "node_id": "winning:L1-L3",
+        "node_type": "winning_mechanism",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "winning_mechanism"
+      },
+      {
+        "capability_tags": [
+          "audit"
+        ],
+        "created_at": "2026-07-29T08:14:59.640242+00:00",
+        "depends_on": [
+          "winning:L1-L3"
+        ],
+        "node_id": "audit:five-criteria",
+        "node_type": "audit",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "auditor"
+      },
+      {
+        "capability_tags": [
+          "report"
+        ],
+        "created_at": "2026-07-29T08:14:59.640243+00:00",
+        "depends_on": [
+          "audit:five-criteria"
+        ],
+        "node_id": "report:final",
+        "node_type": "report",
+        "schema_version": "1.0",
+        "status": "pending",
+        "target_agent_id": "reporter"
+      }
+    ],
+    "plan_id": "plan-cb63a4d8-3a14-4a89-9c7e-ca3a77a556ae",
+    "recall_return_nodes": [
+      "L1",
+      "L2",
+      "L3"
+    ]
+  },
+  "problem": {
+    "as_of_date": "",
+    "constraints": [],
+    "created_at": "2026-07-29T07:59:38.901155+00:00",
+    "discovery_branch": "B",
+    "interaction_mode": "expert",
+    "max_rounds_hint": 1,
+    "problem_id": "problem-7a218da5-52c5-42f0-a568-f9f0c60725b5",
+    "research_route": "auto",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "combat_scenario",
+      "weapon_equipment",
+      "operational_employment"
+    ],
+    "supplemental_information": "",
+    "topic": "间歇通信条件下精打武器任务保持与任务续接研究"
+  },
+  "provider": {
+    "base_url_host": "",
+    "model": "(cli default)",
+    "type": "codex_cli"
+  },
+  "recall_requests": [],
+  "resolved_route": "traditional_gap",
+  "selected_agent_ids": [
+    "combat_scenario",
+    "weapon_equipment",
+    "operational_employment"
+  ],
+  "six_step_reasoning": {
+    "capability_mapping": {
+      "assumptions": [
+        "仅基于已接纳公开证据",
+        "路线：traditional_gap",
+        "公开资料结论需由分析师确认"
+      ],
+      "claim_ids": [
+        "claim-03fd943cecb3",
+        "claim-0cc367cb1eb8",
+        "claim-1fddc43679b7",
+        "claim-2dbef87f1ddc",
+        "claim-437a33de7fbb",
+        "claim-4cdb5a0ca988",
+        "claim-5b6add3f899c",
+        "claim-630db027b3c4",
+        "claim-89821cec3705",
+        "claim-8ded420bf5f9",
+        "claim-95c43ca4d780",
+        "claim-a8e971151235",
+        "claim-adff2113f4e2",
+        "claim-b5ccca861796"
+      ],
+      "confidence": 0.743,
+      "created_at": "2026-07-29T08:14:59.640528+00:00",
+      "evidence_ids": [
+        "ev-operational_employment-web-189e631d8bcb",
+        "ev-operational_employment-web-04daa1ccebf5",
+        "ev-operational_employment-web-f42ad4ad8ea8",
+        "ev-operational_employment-web-6c1c84a0e24e",
+        "ev-combat_scenario-web-c38f07c3ceb3",
+        "ev-combat_scenario-web-3393b98b73a1",
+        "ev-combat_scenario-web-ba7af247bc5e",
+        "ev-combat_scenario-web-d27e41bd8d64",
+        "ev-weapon_equipment-web-c2466ad02545",
+        "ev-weapon_equipment-web-84f5c7f4b57b",
+        "ev-weapon_equipment-web-e894862926e0",
+        "ev-weapon_equipment-web-0bfd87a5752c"
+      ],
+      "input_refs": [
+        "reason-5d2284cd08ed"
+      ],
+      "next_action": {
+        "action": "continue",
+        "reason": "S4完成后进入下一有效步骤S5。",
+        "target_step": 5
+      },
+      "object_id": "reason-908edd6aef1a",
+      "route": "traditional_gap",
+      "schema_version": "1.0",
+      "step": 4,
+      "summary": "将效果链逐项转换为效果 -> 功能 -> 性能/约束，覆盖多源感知、可信判别、快速决策、协同处置和韧性保障。装备与工程依据：['公开参数更常披露射程、航时、载荷、平台和任务对象，而间歇通信指标通常隐藏在“飞行中更新、发射后重定向、半自主、人在回路、取消攻击、重新接战、抗干扰导航”等描述中。', '较可信方向包括：Tomahawk具备飞行中任务更新方向，JASSM-D具备WDL重定向方向，LRASM强调弱链路/低ISR依赖，Switchblade 600强调人在回路与wave-off/recommit，NGJ-MB已进入IOC与生产推进。', '不可结构化确认的参数包括断链可保持时间、复链时延阈值、任务包版本冲突处理、多弹协同策略、末端目标识别概率和强干扰条件下的误击率。']；['无法公开确认断链期间自主目标更改权限、断链保持时间、复链一致性校验算法、多弹协同策略和抗欺骗性能。', '强电磁压制、导航欺骗、目标伪装、恶劣气象、烟尘遮蔽和传感器失效会同时削弱任务保持与任务续接。', '远程精打与人在回路授权存在速度和可控性矛盾，时敏目标和短复链窗口下尤为突出。']；['高成熟：Tomahawk Block IV/V、JASSM/JASSM-ER、MQ-9B、Switchblade 600、AARGM、MALD和EA-18G/NGJ-MB具备明确装备形态或部署基础。', '中成熟：LRASM弱链路反舰、JASSM-D WDL、PrSM后续增量、ALTIUS模块化巡飞弹具备清晰方向，但具体断链续接能力不透明。', '低成熟/待验证：CCA/LongShot跨平台自治协同、Replicator式规模化消耗作战、跨弹种任务状态机和复链一致性审计仍需试验验证。']。",
+      "title": "能力映射"
+    },
+    "defense_decomposition": {
+      "assumptions": [
+        "仅基于已接纳公开证据",
+        "路线：traditional_gap",
+        "公开资料结论需由分析师确认"
+      ],
+      "claim_ids": [
+        "claim-03fd943cecb3",
+        "claim-0cc367cb1eb8",
+        "claim-1fddc43679b7",
+        "claim-2dbef87f1ddc",
+        "claim-437a33de7fbb",
+        "claim-4cdb5a0ca988",
+        "claim-5b6add3f899c",
+        "claim-630db027b3c4",
+        "claim-89821cec3705",
+        "claim-8ded420bf5f9",
+        "claim-95c43ca4d780",
+        "claim-a8e971151235",
+        "claim-adff2113f4e2",
+        "claim-b5ccca861796"
+      ],
+      "confidence": 0.743,
+      "created_at": "2026-07-29T08:14:59.640479+00:00",
+      "evidence_ids": [
+        "ev-operational_employment-web-189e631d8bcb",
+        "ev-operational_employment-web-04daa1ccebf5",
+        "ev-operational_employment-web-f42ad4ad8ea8",
+        "ev-operational_employment-web-6c1c84a0e24e",
+        "ev-combat_scenario-web-c38f07c3ceb3",
+        "ev-combat_scenario-web-3393b98b73a1",
+        "ev-combat_scenario-web-ba7af247bc5e",
+        "ev-combat_scenario-web-d27e41bd8d64",
+        "ev-weapon_equipment-web-c2466ad02545",
+        "ev-weapon_equipment-web-84f5c7f4b57b",
+        "ev-weapon_equipment-web-e894862926e0",
+        "ev-weapon_equipment-web-0bfd87a5752c"
+      ],
+      "input_refs": [],
+      "next_action": {
+        "action": "continue",
+        "reason": "S1完成后进入下一有效步骤S2。",
+        "target_step": 2
+      },
+      "object_id": "reason-f9e288a4359d",
+      "route": "traditional_gap",
+      "schema_version": "1.0",
+      "step": 1,
+      "summary": "围绕间歇通信条件下精打武器任务保持与任务续接研究，按感知、决策、处置、冗余/恢复四层解构。主要压力依据：['最可能COA：对手周期性压制SATCOM、战术数据链和GNSS，并利用距离、地形、海况和低辐射约束让己方错过同步窗口，迫使武器按旧目标状态执行。', '最危险COA：对手同步制造诱饵、伪BDA和授权边界漂移，使己方在断链期间重复打击低价值目标或越界打击，从而造成弹药浪费、政治升级和再组织失败。', '替代COA：对手不连续压制，而是开关式干扰和电磁诱导，利用短暂恢复窗口诱使己方集中发射、暴露节点或传输过量数据。']；['电磁环境拥挤、受限且对抗性强，通信、PNT、传感和C2均不能假设连续可用。', '分布式前沿节点为生存必须低辐射、频繁机动，限制大带宽、长时发射和集中式规划。', '远海开放水面、海雾、低云、降雨、烟尘、城市峡谷、山地阴影会降低视觉/地形/红外/机会信号导航和识别可靠性。', '持续消耗使弹药库存、备用部件、电池、维护、任务数据更新和操作员负荷成为与命中精度同级的约束。']。证据边界：集中高价值精打在授权、毁伤质量和固定目标打击上更稳，但与间歇通信下的持续任务续接要求冲突；因此只能作为保留能力而非主方案。；可消耗自主系统的规模优势与反无人体系快速扩散相互抵消；数量本身不能替代任务包一致性、抗扰导航、识别可信度和保障再生成能力。。",
+      "title": "防御解构"
+    },
+    "effect_chain": {
+      "assumptions": [
+        "仅基于已接纳公开证据",
+        "路线：traditional_gap",
+        "公开资料结论需由分析师确认"
+      ],
+      "claim_ids": [
+        "claim-03fd943cecb3",
+        "claim-0cc367cb1eb8",
+        "claim-1fddc43679b7",
+        "claim-2dbef87f1ddc",
+        "claim-437a33de7fbb",
+        "claim-4cdb5a0ca988",
+        "claim-5b6add3f899c",
+        "claim-630db027b3c4",
+        "claim-89821cec3705",
+        "claim-8ded420bf5f9",
+        "claim-95c43ca4d780",
+        "claim-a8e971151235",
+        "claim-adff2113f4e2",
+        "claim-b5ccca861796"
+      ],
+      "confidence": 0.743,
+      "created_at": "2026-07-29T08:14:59.640517+00:00",
+      "evidence_ids": [
+        "ev-operational_employment-web-189e631d8bcb",
+        "ev-operational_employment-web-04daa1ccebf5",
+        "ev-operational_employment-web-f42ad4ad8ea8",
+        "ev-operational_employment-web-6c1c84a0e24e",
+        "ev-combat_scenario-web-c38f07c3ceb3",
+        "ev-combat_scenario-web-3393b98b73a1",
+        "ev-combat_scenario-web-ba7af247bc5e",
+        "ev-combat_scenario-web-d27e41bd8d64",
+        "ev-weapon_equipment-web-c2466ad02545",
+        "ev-weapon_equipment-web-84f5c7f4b57b",
+        "ev-weapon_equipment-web-e894862926e0",
+        "ev-weapon_equipment-web-0bfd87a5752c"
+      ],
+      "input_refs": [
+        "reason-9a41ec4e4ccb"
+      ],
+      "next_action": {
+        "action": "continue",
+        "reason": "S3完成后进入下一有效步骤S4。",
+        "target_step": 4
+      },
+      "object_id": "reason-5d2284cd08ed",
+      "route": "traditional_gap",
+      "schema_version": "1.0",
+      "step": 3,
+      "summary": "依据关键时间窗和运用约束形成：持续发现 -> 可信识别/态势形成 -> 威胁排序与资源分配 -> 分层处置 -> 任务连续性。约束依据：['T0 发射前任务包窗口：必须装订任务意图、目标有效期、授权区域、禁止区、备用任务、PNT降级规则、BDA摘要和安全终止条件。', 'T1 中段断链窗口：系统必须在目标状态衰减、PNT可信度下降和通信不可用之间选择保持、等待、转备用任务或终止。', 'T2 末段识别窗口：诱饵、伪装、民用/友邻混杂和天气遮蔽会决定是否允许形成有效打击。', 'T3 BDA—再打击窗口：若BDA摘要迟滞超过目标可再打击时间，后续火力会在错误状态上循环消耗。', 'T4 补给—任务库恢复窗口：弹药、能源、维护件、软件和任务数据必须同步恢复，否则无法再组织。']；['实时遥控只能作为机会性增益，不能作为精打武器任务保持的前提；基本假设应是链路间歇、低带宽、高延迟、局部失联和窗口同步并存。', '目标状态、友邻态势、禁止区和授权边界都有时效性；任务包必须内置时间戳、有效期、版本号和降级规则，防止按过期目标继续交战。', '通信、PNT和识别链可能同时受扰；若多源导航和末段再确认不能达到可信门限，武器应转为等待、盘旋、转移、返航或终止。']；待验证：公开资料不足以量化不同通信窗口长度、带宽和丢包率下的任务包同步成功率，需通过仿真或演训数据验证。；边缘自主识别在诱饵、遮蔽、机动目标外观变化和强电磁压制下的可信交战门限仍需专项试验确定。。",
+      "title": "效果链"
+    },
+    "gap_matrix": {
+      "assumptions": [
+        "仅基于已接纳公开证据",
+        "路线：traditional_gap",
+        "公开资料结论需由分析师确认"
+      ],
+      "claim_ids": [
+        "claim-03fd943cecb3",
+        "claim-0cc367cb1eb8",
+        "claim-1fddc43679b7",
+        "claim-2dbef87f1ddc",
+        "claim-437a33de7fbb",
+        "claim-4cdb5a0ca988",
+        "claim-5b6add3f899c",
+        "claim-630db027b3c4",
+        "claim-89821cec3705",
+        "claim-8ded420bf5f9",
+        "claim-95c43ca4d780",
+        "claim-a8e971151235",
+        "claim-adff2113f4e2",
+        "claim-b5ccca861796"
+      ],
+      "confidence": 0.743,
+      "created_at": "2026-07-29T08:14:59.640537+00:00",
+      "evidence_ids": [
+        "ev-operational_employment-web-189e631d8bcb",
+        "ev-operational_employment-web-04daa1ccebf5",
+        "ev-operational_employment-web-f42ad4ad8ea8",
+        "ev-operational_employment-web-6c1c84a0e24e",
+        "ev-combat_scenario-web-c38f07c3ceb3",
+        "ev-combat_scenario-web-3393b98b73a1",
+        "ev-combat_scenario-web-ba7af247bc5e",
+        "ev-combat_scenario-web-d27e41bd8d64",
+        "ev-weapon_equipment-web-c2466ad02545",
+        "ev-weapon_equipment-web-84f5c7f4b57b",
+        "ev-weapon_equipment-web-e894862926e0",
+        "ev-weapon_equipment-web-0bfd87a5752c"
+      ],
+      "input_refs": [
+        "reason-908edd6aef1a"
+      ],
+      "next_action": {
+        "action": "continue",
+        "reason": "S5完成后进入下一有效步骤S6。",
+        "target_step": 6
+      },
+      "object_id": "reason-a986188d76ba",
+      "route": "traditional_gap",
+      "schema_version": "1.0",
+      "step": 5,
+      "summary": "按空白、关键差距、部分差距、满足、超出五档，将场景所需功能与现有/在研能力比较。比较基线：['公开参数更常披露射程、航时、载荷、平台和任务对象，而间歇通信指标通常隐藏在“飞行中更新、发射后重定向、半自主、人在回路、取消攻击、重新接战、抗干扰导航”等描述中。', '较可信方向包括：Tomahawk具备飞行中任务更新方向，JASSM-D具备WDL重定向方向，LRASM强调弱链路/低ISR依赖，Switchblade 600强调人在回路与wave-off/recommit，NGJ-MB已进入IOC与生产推进。', '不可结构化确认的参数包括断链可保持时间、复链时延阈值、任务包版本冲突处理、多弹协同策略、末端目标识别概率和强干扰条件下的误击率。']；['现役做优：为JASSM/Tomahawk/PrSM/Switchblade/MQ-9B类装备补强抗干扰导航、WDL/卫星复链、低带宽任务摘要、安全中止、目标置信门限和任务审计。', '新研拓新：发展通用精打任务续接控制组件，包含任务意图表达、断链状态机、复链一致性校验、多模目标确认、人在回路授权接口和证据记录。', '通用载荷复用：将EO/IR、被动射频、反辐射、诱饵、通信中继、小型战斗部和战场评估载荷模块化，使巡飞弹、无人僚机、远火弹药和中继平台共享任务包。']；['无法公开确认断链期间自主目标更改权限、断链保持时间、复链一致性校验算法、多弹协同策略和抗欺骗性能。', '强电磁压制、导航欺骗、目标伪装、恶劣气象、烟尘遮蔽和传感器失效会同时削弱任务保持与任务续接。', '远程精打与人在回路授权存在速度和可控性矛盾，时敏目标和短复链窗口下尤为突出。']；不确定性：集中高价值精打在授权、毁伤质量和固定目标打击上更稳，但与间歇通信下的持续任务续接要求冲突；因此只能作为保留能力而非主方案。；可消耗自主系统的规模优势与反无人体系快速扩散相互抵消；数量本身不能替代任务包一致性、抗扰导航、识别可信度和保障再生成能力。。",
+      "title": "差距量化"
+    },
+    "image_drafts": [
+      {
+        "assumptions": [
+          "仅基于已接纳公开证据",
+          "路线：traditional_gap",
+          "公开资料结论需由分析师确认"
+        ],
+        "claim_ids": [
+          "claim-03fd943cecb3",
+          "claim-0cc367cb1eb8",
+          "claim-1fddc43679b7",
+          "claim-2dbef87f1ddc",
+          "claim-437a33de7fbb",
+          "claim-4cdb5a0ca988",
+          "claim-5b6add3f899c",
+          "claim-630db027b3c4",
+          "claim-89821cec3705",
+          "claim-8ded420bf5f9",
+          "claim-95c43ca4d780",
+          "claim-a8e971151235",
+          "claim-adff2113f4e2",
+          "claim-b5ccca861796"
+        ],
+        "confidence": 0.743,
+        "created_at": "2026-07-29T08:14:59.640542+00:00",
+        "evidence_ids": [
+          "ev-operational_employment-web-189e631d8bcb",
+          "ev-operational_employment-web-04daa1ccebf5",
+          "ev-operational_employment-web-f42ad4ad8ea8",
+          "ev-operational_employment-web-6c1c84a0e24e",
+          "ev-combat_scenario-web-c38f07c3ceb3",
+          "ev-combat_scenario-web-3393b98b73a1",
+          "ev-combat_scenario-web-ba7af247bc5e",
+          "ev-combat_scenario-web-d27e41bd8d64",
+          "ev-weapon_equipment-web-c2466ad02545",
+          "ev-weapon_equipment-web-84f5c7f4b57b",
+          "ev-weapon_equipment-web-e894862926e0",
+          "ev-weapon_equipment-web-0bfd87a5752c"
+        ],
+        "input_refs": [
+          "reason-a986188d76ba"
+        ],
+        "next_action": {
+          "action": "stop",
+          "reason": "S1-S6推理链已完成，进入L1-L3门控与独立审计。",
+          "target_step": 0
+        },
+        "object_id": "reason-ab8e70137a54",
+        "route": "traditional_gap",
+        "schema_version": "1.0",
+        "step": 6,
+        "summary": "依据前五步去重归并，分别形成新作战能力方向和现有装备升级需求，并写入制胜逻辑、关联场景、优先级、差距、功能画像和证据引用。路线=traditional_gap，基线发现=14条，待闭合问题=9项。",
+        "title": "能力画像生成"
+      }
+    ],
+    "winning_paths": {
+      "assumptions": [
+        "仅基于已接纳公开证据",
+        "路线：traditional_gap",
+        "公开资料结论需由分析师确认"
+      ],
+      "claim_ids": [
+        "claim-03fd943cecb3",
+        "claim-0cc367cb1eb8",
+        "claim-1fddc43679b7",
+        "claim-2dbef87f1ddc",
+        "claim-437a33de7fbb",
+        "claim-4cdb5a0ca988",
+        "claim-5b6add3f899c",
+        "claim-630db027b3c4",
+        "claim-89821cec3705",
+        "claim-8ded420bf5f9",
+        "claim-95c43ca4d780",
+        "claim-a8e971151235",
+        "claim-adff2113f4e2",
+        "claim-b5ccca861796"
+      ],
+      "confidence": 0.743,
+      "created_at": "2026-07-29T08:14:59.640503+00:00",
+      "evidence_ids": [
+        "ev-operational_employment-web-189e631d8bcb",
+        "ev-operational_employment-web-04daa1ccebf5",
+        "ev-operational_employment-web-f42ad4ad8ea8",
+        "ev-operational_employment-web-6c1c84a0e24e",
+        "ev-combat_scenario-web-c38f07c3ceb3",
+        "ev-combat_scenario-web-3393b98b73a1",
+        "ev-combat_scenario-web-ba7af247bc5e",
+        "ev-combat_scenario-web-d27e41bd8d64",
+        "ev-weapon_equipment-web-c2466ad02545",
+        "ev-weapon_equipment-web-84f5c7f4b57b",
+        "ev-weapon_equipment-web-e894862926e0",
+        "ev-weapon_equipment-web-0bfd87a5752c"
+      ],
+      "input_refs": [
+        "reason-f9e288a4359d"
+      ],
+      "next_action": {
+        "action": "continue",
+        "reason": "S2完成后进入下一有效步骤S3。",
+        "target_step": 3
+      },
+      "object_id": "reason-9a41ec4e4ccb",
+      "route": "traditional_gap",
+      "schema_version": "1.0",
+      "step": 2,
+      "summary": "传统场景/战法与现有装备对比，识别能力缺口并提出升级功能。 候选路径比较依据：['COA-1 集中控制高价值精打：适合固定或准固定高价值目标、强授权目标和毁伤质量优先任务。优势是交战控制清晰、单次毁伤质量高；弱点是C2/ISR集中脆弱、断链续接弱、战损恢复慢。判定为保留能力。', 'COA-2 分布式前沿节点+本地自治任务续接：适合拒止、压制、机动目标窗口捕获和战损接替。优势是缩短发现到打击闭环，断链时按意图继续，恢复通信后快速对账；弱点是前沿节点暴露、能源弹药补给、频谱拥塞和任务包冲突。判定为主推荐方案。', 'COA-3 低成本可消耗规模精打：适合防空/反无人消耗、诱导侦察、持续压制、末端补击和低价值大量目标。优势是以数量和节奏形成成本强加；弱点是单体毁伤和抗扰有限，易被电子战、低成本拦截和反无人体系适应。判定为补充方案。']；['高端ISR和后方C2负责战役级态势融合、目标优先级、授权规则和高价值窗口判断，不应承担全程实时控制。', '分布式前沿节点负责近实时感知、发射、中继、任务包更新、BDA摘要和战损接替，是间歇通信下任务续接主承载。', '可消耗无人系统和游荡弹药承担侦察、诱导、压制、BDA和补击，以数量维持节奏，但需纳入统一任务包、频谱和补给管理。', '电子战、网络、频谱管理和后勤必须嵌入火力计划，否则自治弹药数量增加会放大授权冲突、重复打击和无效消耗。']；['S1 高强度电子压制/最可能：任务为分布式精确火力续接；阶段为T0任务包固化、T1中段断链保持、T2末段识别、T3打击后BDA；约束为GNSS干扰、战术链路间歇、节点低辐射；失败条件为目标状态过期仍执行或无法安全终止；军事压力点为目标有效期、低带宽更新、多源PNT和BDA回传；证据ID：DoD EMS、Washington Post GPS干扰、韧性火力。', 'S2 高强度电子压制/最危险：任务为在诱饵与机动目标下保持有效压制；阶段为发现、授权、离架、中段重构、末段筛选；约束为诱饵密集、目标快速机动、通信窗口短；失败条件为末段识别被诱饵牵引或重复消耗高端弹药；军事压力点为目标置信度衰减、诱饵抑制、弹药节约和人在回路否决；证据ID：Brookings巡飞弹、Washington Post GPS干扰。', 'S3 冲突初期多域隔离/最可能：任务为首轮拒止火力在C2/PNT受扰下保持有限可用；阶段为预置任务、开战压制、局部自治打击、延迟评估；约束为空间、网络、通信、PNT同时不稳定；失败条件为杀伤网碎片化后平台孤立且无委托授权；军事压力点为缓存态势、委托权限、多路径通信和任务后数据回收；证据ID：DoD EMS、CSIS空间战场、韧性火力。', 'S4 冲突初期多域隔离/最危险：任务为C4ISR与后勤节点受打击后维持连续压制；阶段为节点损失、弹药消耗、任务库失配、BDA迟滞、再组织；约束为补给脆弱、维护件不足、任务数据无法快速更新；失败条件为BDA迟滞超过再打击窗口或库存消耗快于补给；军事压力点为边缘任务规划、快速再装填、软件/任务包迭代和低成本弹药组合；证据ID：Replicator、EABO、Force Design 2025。', 'S5 远海/远域稀疏通信/最可能：任务为计划通信窗口内完成远程精确打击续接；阶段为任务装订、静默航渡、窗口同步、末段确认、返回/回传；约束为带宽低、窗口稀疏、海雾和开放海面影响替代PNT；失败条件为错过通信窗口导致目标授权状态失真；军事压力点为短报文任务更新、目标有效期、PNT环境适配和延迟容忍同步；证据ID：EABO、DMO、Alt-PNT。', 'S6 远域目标授权漂移/替代高风险：任务为目标进入或离开授权区域时的任务重构/终止；阶段为目标状态衰减、备用目标判断、禁止区校验、终止或等待、审计摘要回传；约束为民用/友邻混杂、目标低特征静默、传感器受天气遮蔽；失败条件为低置信目标被自主扩大为可打击对象；军事压力点为可审计自主边界、禁止区约束、末段不确定性退出和人工再授权；证据ID：Brookings巡飞弹、韧性火力。']。",
+      "title": "制胜路径"
+    }
+  },
+  "source_materials": [
+    {
+      "artifact_refs": [
+        "text:d9e41a45d5210148"
+      ],
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-operational_employment-web-189e631d8bcb",
+        "normalized_url": "https://dodcio.defense.gov/Portals/0/Documents/DoD-C3-Strategy.pdf",
+        "reasons": [],
+        "score": 0.695
+      },
+      "evidence_id": "ev-operational_employment-web-189e631d8bcb",
+      "formal_evidence_allowed": true,
+      "status": "hosted_search_citation",
+      "url": "https://dodcio.defense.gov/Portals/0/Documents/DoD-C3-Strategy.pdf"
+    },
+    {
+      "artifact_refs": [
+        "html:e3b0c44298fc1c14"
+      ],
+      "content_type": "text/html; charset=UTF-8",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-operational_employment-web-04daa1ccebf5",
+        "normalized_url": "https://irp.fas.org/doddir/army/fm3-0.pdf",
+        "reasons": [],
+        "score": 0.695
+      },
+      "evidence_id": "ev-operational_employment-web-04daa1ccebf5",
+      "fetch_cache_hit": true,
+      "final_url": "https://irp.fas.org/doddir/army/fm3-0.pdf",
+      "formal_evidence_allowed": true,
+      "paragraph_locations": [],
+      "simplified_artifact_ref": "text:e3b0c44298fc1c14",
+      "status": "fetched",
+      "url": "https://irp.fas.org/doddir/army/fm3-0.pdf"
+    },
+    {
+      "artifact_refs": [
+        "text:6b507e46d984f29d"
+      ],
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-operational_employment-web-f42ad4ad8ea8",
+        "normalized_url": "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo",
+        "reasons": [],
+        "score": 0.695
+      },
+      "evidence_id": "ev-operational_employment-web-f42ad4ad8ea8",
+      "formal_evidence_allowed": true,
+      "status": "hosted_search_citation",
+      "url": "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/"
+    },
+    {
+      "artifact_refs": [
+        "text:7ee8d27dfbc4ccd9"
+      ],
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-operational_employment-web-6c1c84a0e24e",
+        "normalized_url": "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all",
+        "reasons": [],
+        "score": 0.695
+      },
+      "evidence_id": "ev-operational_employment-web-6c1c84a0e24e",
+      "formal_evidence_allowed": true,
+      "status": "hosted_search_citation",
+      "url": "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+    },
+    {
+      "artifact_refs": [
+        "text:3efd1c1879d70376"
+      ],
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-combat_scenario-web-c38f07c3ceb3",
+        "normalized_url": "https://www.marines.mil/News/News-Display/Article/2708120/expeditionary-advanced-base-operations-eabo",
+        "reasons": [],
+        "score": 0.698
+      },
+      "evidence_id": "ev-combat_scenario-web-c38f07c3ceb3",
+      "formal_evidence_allowed": true,
+      "status": "hosted_search_citation",
+      "url": "https://www.marines.mil/News/News-Display/Article/2708120/expeditionary-advanced-base-operations-eabo/"
+    },
+    {
+      "artifact_refs": [
+        "text:c1946573739c0272"
+      ],
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-combat_scenario-web-3393b98b73a1",
+        "normalized_url": "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in",
+        "reasons": [],
+        "score": 0.698
+      },
+      "evidence_id": "ev-combat_scenario-web-3393b98b73a1",
+      "formal_evidence_allowed": true,
+      "status": "hosted_search_citation",
+      "url": "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/"
+    },
+    {
+      "artifact_refs": [
+        "text:abb5eb497cac1267"
+      ],
+      "evidence_assessment": {
+        "conflict_group": "conflict-50a8af0865",
+        "decision": "accepted",
+        "evidence_id": "ev-combat_scenario-web-ba7af247bc5e",
+        "normalized_url": "https://www.defense.gov/News/Releases/Release/Article/2397850/electromagnetic-spectrum-superiority-strategy-released",
+        "reasons": [
+          "保留为冲突/反证材料"
+        ],
+        "score": 0.698
+      },
+      "evidence_id": "ev-combat_scenario-web-ba7af247bc5e",
+      "formal_evidence_allowed": true,
+      "status": "hosted_search_citation",
+      "url": "https://www.defense.gov/News/Releases/Release/Article/2397850/electromagnetic-spectrum-superiority-strategy-released/"
+    },
+    {
+      "artifact_refs": [
+        "html:0365f044a3ac90ad"
+      ],
+      "content_type": "text/html; charset=UTF-8",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-combat_scenario-web-d27e41bd8d64",
+        "normalized_url": "https://www.belfercenter.org/research-analysis/navigating-without-gps-cascading-alt-pnt-architecture-american-defense",
+        "reasons": [],
+        "score": 0.861
+      },
+      "evidence_id": "ev-combat_scenario-web-d27e41bd8d64",
+      "fetch_cache_hit": false,
+      "final_url": "https://www.belfercenter.org/research-analysis/navigating-without-gps-cascading-alt-pnt-architecture-american-defense",
+      "formal_evidence_allowed": true,
+      "paragraph_locations": [
+        "text:e9b4a527fa7079e3#p1",
+        "text:e9b4a527fa7079e3#p2",
+        "text:e9b4a527fa7079e3#p3",
+        "text:e9b4a527fa7079e3#p4",
+        "text:e9b4a527fa7079e3#p5",
+        "text:e9b4a527fa7079e3#p6",
+        "text:e9b4a527fa7079e3#p7",
+        "text:e9b4a527fa7079e3#p8",
+        "text:e9b4a527fa7079e3#p9",
+        "text:e9b4a527fa7079e3#p10",
+        "text:e9b4a527fa7079e3#p11",
+        "text:e9b4a527fa7079e3#p12",
+        "text:e9b4a527fa7079e3#p13",
+        "text:e9b4a527fa7079e3#p14",
+        "text:e9b4a527fa7079e3#p15",
+        "text:e9b4a527fa7079e3#p16",
+        "text:e9b4a527fa7079e3#p17",
+        "text:e9b4a527fa7079e3#p18",
+        "text:e9b4a527fa7079e3#p19",
+        "text:e9b4a527fa7079e3#p20",
+        "text:e9b4a527fa7079e3#p21",
+        "text:e9b4a527fa7079e3#p22",
+        "text:e9b4a527fa7079e3#p23",
+        "text:e9b4a527fa7079e3#p24",
+        "text:e9b4a527fa7079e3#p25",
+        "text:e9b4a527fa7079e3#p26",
+        "text:e9b4a527fa7079e3#p27",
+        "text:e9b4a527fa7079e3#p28",
+        "text:e9b4a527fa7079e3#p29",
+        "text:e9b4a527fa7079e3#p30",
+        "text:e9b4a527fa7079e3#p31",
+        "text:e9b4a527fa7079e3#p32",
+        "text:e9b4a527fa7079e3#p33",
+        "text:e9b4a527fa7079e3#p34",
+        "text:e9b4a527fa7079e3#p35",
+        "text:e9b4a527fa7079e3#p36",
+        "text:e9b4a527fa7079e3#p37",
+        "text:e9b4a527fa7079e3#p38",
+        "text:e9b4a527fa7079e3#p39",
+        "text:e9b4a527fa7079e3#p40",
+        "text:e9b4a527fa7079e3#p41",
+        "text:e9b4a527fa7079e3#p42",
+        "text:e9b4a527fa7079e3#p43",
+        "text:e9b4a527fa7079e3#p44",
+        "text:e9b4a527fa7079e3#p45",
+        "text:e9b4a527fa7079e3#p46",
+        "text:e9b4a527fa7079e3#p47",
+        "text:e9b4a527fa7079e3#p48",
+        "text:e9b4a527fa7079e3#p49",
+        "text:e9b4a527fa7079e3#p50",
+        "text:e9b4a527fa7079e3#p51",
+        "text:e9b4a527fa7079e3#p52",
+        "text:e9b4a527fa7079e3#p53",
+        "text:e9b4a527fa7079e3#p54",
+        "text:e9b4a527fa7079e3#p55",
+        "text:e9b4a527fa7079e3#p56",
+        "text:e9b4a527fa7079e3#p57",
+        "text:e9b4a527fa7079e3#p58",
+        "text:e9b4a527fa7079e3#p59",
+        "text:e9b4a527fa7079e3#p60",
+        "text:e9b4a527fa7079e3#p61",
+        "text:e9b4a527fa7079e3#p62",
+        "text:e9b4a527fa7079e3#p63",
+        "text:e9b4a527fa7079e3#p64",
+        "text:e9b4a527fa7079e3#p65",
+        "text:e9b4a527fa7079e3#p66",
+        "text:e9b4a527fa7079e3#p67",
+        "text:e9b4a527fa7079e3#p68",
+        "text:e9b4a527fa7079e3#p69",
+        "text:e9b4a527fa7079e3#p70",
+        "text:e9b4a527fa7079e3#p71",
+        "text:e9b4a527fa7079e3#p72",
+        "text:e9b4a527fa7079e3#p73",
+        "text:e9b4a527fa7079e3#p74",
+        "text:e9b4a527fa7079e3#p75",
+        "text:e9b4a527fa7079e3#p76",
+        "text:e9b4a527fa7079e3#p77",
+        "text:e9b4a527fa7079e3#p78",
+        "text:e9b4a527fa7079e3#p79",
+        "text:e9b4a527fa7079e3#p80",
+        "text:e9b4a527fa7079e3#p81",
+        "text:e9b4a527fa7079e3#p82",
+        "text:e9b4a527fa7079e3#p83",
+        "text:e9b4a527fa7079e3#p84",
+        "text:e9b4a527fa7079e3#p85",
+        "text:e9b4a527fa7079e3#p86",
+        "text:e9b4a527fa7079e3#p87",
+        "text:e9b4a527fa7079e3#p88",
+        "text:e9b4a527fa7079e3#p89"
+      ],
+      "simplified_artifact_ref": "text:e9b4a527fa7079e3",
+      "status": "fetched",
+      "url": "https://www.belfercenter.org/research-analysis/navigating-without-gps-cascading-alt-pnt-architecture-american-defense"
+    },
+    {
+      "artifact_refs": [
+        "text:61fe22833ee52a42"
+      ],
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-weapon_equipment-web-c2466ad02545",
+        "normalized_url": "https://www.navy.mil/Resources/Fact-Files/Display-FactFiles/Article/2169229/tomahawk-cruise-missile://www.navair.navy.mil/product/Tomah",
+        "reasons": [],
+        "score": 0.689
+      },
+      "evidence_id": "ev-weapon_equipment-web-c2466ad02545",
+      "formal_evidence_allowed": true,
+      "status": "hosted_search_citation",
+      "url": "https://www.navy.mil/Resources/Fact-Files/Display-FactFiles/Article/2169229/tomahawk-cruise-missile://www.navair.navy.mil/product/Tomah"
+    },
+    {
+      "artifact_refs": [
+        "text:f59ed288b582322e"
+      ],
+      "error": "HTTPStatusError: cached_origin_failure:HTTPStatusError: HTTP 403: Forbidden",
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-weapon_equipment-web-75fef2cdc041",
+        "normalized_url": "https://comptroller.defense.gov/Portals/45/Documents/defbudget/FY2025/FY2025",
+        "reasons": [],
+        "score": 0.689
+      },
+      "evidence_id": "ev-weapon_equipment-web-75fef2cdc041",
+      "formal_evidence_allowed": false,
+      "reader_error": "attempt_1:HTTPStatusError: HTTP 401: Unauthorized",
+      "status": "fetch_failed",
+      "url": "https://comptroller.defense.gov/Portals/45/Documents/defbudget/FY2025/FY2025"
+    },
+    {
+      "artifact_refs": [
+        "text:f5a2d43ba9bdfc9f"
+      ],
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-weapon_equipment-web-84f5c7f4b57b",
+        "normalized_url": "https://www.saffm.hq.af.mil/Portals/84/documents/FY25/FY25%20Air%20Force%20Missile%20Procurement.pdf",
+        "reasons": [],
+        "score": 0.689
+      },
+      "evidence_id": "ev-weapon_equipment-web-84f5c7f4b57b",
+      "formal_evidence_allowed": true,
+      "status": "hosted_search_citation",
+      "url": "https://www.saffm.hq.af.mil/Portals/84/documents/FY25/FY25%20Air%20Force%20Missile%20Procurement.pdf"
+    },
+    {
+      "artifact_refs": [
+        "text:f8a9349e2eccd5ca"
+      ],
+      "evidence_assessment": {
+        "conflict_group": null,
+        "decision": "accepted",
+        "evidence_id": "ev-weapon_equipment-web-e894862926e0",
+        "normalized_url": "https://www.army.mil/article-amp/291321/portfolio_acquisition_executive_for_fires_hosts_precision_strike_missile_increment_4_industry、增量路线及Inc",
+        "reasons": [],
+        "score": 0.689
+      },
+      "evidence_id": "ev-weapon_equipment-web-e894862926e0",
+      "formal_evidence_allowed": true,
+      "status": "hosted_search_citation",
+      "url": "https://www.army.mil/article-amp/291321/portfolio_acquisition_executive_for_fires_hosts_precision_strike_missile_increment_4_industry、增量路线及Inc"
+    },
+    {
+      "artifact_refs": [
+        "text:cf264b906f78c241"
+      ],
+      "evidence_assessment": {
+        "conflict_group": "conflict-481e526210",
+        "decision": "accepted",
+        "evidence_id": "ev-weapon_equipment-web-0bfd87a5752c",
+        "normalized_url": "https://files.gao.gov/reports/GAO",
+        "reasons": [
+          "保留为冲突/反证材料"
+        ],
+        "score": 0.689
+      },
+      "evidence_id": "ev-weapon_equipment-web-0bfd87a5752c",
+      "formal_evidence_allowed": true,
+      "status": "hosted_search_citation",
+      "url": "https://files.gao.gov/reports/GAO"
+    }
+  ],
+  "store_summary": {
+    "audit_count": 1,
+    "baseline_packet_count": 3,
+    "capability_image_count": 0,
+    "coverage_tags": [
+      "capability_gap",
+      "coa",
+      "coordination",
+      "environment",
+      "equipment",
+      "lessons",
+      "operation",
+      "scenario",
+      "technology_readiness"
+    ],
+    "equipment_observation_count": 1,
+    "evidence_count": 12,
+    "knowledge_projection_count": 0,
+    "materialized_evidence_count": 12,
+    "operational_synthesis_count": 1,
+    "problem_count": 1,
+    "reasoning_node_count": 0,
+    "recall_request_count": 0,
+    "recommendation_count": 0,
+    "report_count": 1,
+    "scenario_model_count": 1,
+    "stage_output_count": 0,
+    "strategic_assessment_count": 0,
+    "winning_input_count": 0
+  },
+  "trace_summary": [
+    {
+      "actor": "orchestrator",
+      "event_type": "run_started",
+      "output_refs": [],
+      "summary": "run started for 间歇通信条件下精打武器任务保持与任务续接研究"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "baseline_pipeline_started",
+      "output_refs": [
+        "baseline:combat_scenario",
+        "baseline:weapon_equipment",
+        "baseline:operational_employment"
+      ],
+      "summary": "六业务 Agent 检索阶段已按全局并发预算提前流水化启动"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "baseline_wave_started",
+      "output_refs": [
+        "baseline:combat_scenario",
+        "baseline:weapon_equipment",
+        "baseline:operational_employment"
+      ],
+      "summary": "baseline wave 1 started with 3 agent(s)"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_discovery_started",
+      "output_refs": [],
+      "summary": "Agent 多源检索已启动"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_discovery_lane_started",
+      "output_refs": [],
+      "summary": "Agent 检索通道已启动"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_model_call_started",
+      "output_refs": [],
+      "summary": "Agent 模型调用已启动"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_discovery_started",
+      "output_refs": [],
+      "summary": "Agent 多源检索已启动"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_discovery_lane_started",
+      "output_refs": [],
+      "summary": "Agent 检索通道已启动"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_model_call_started",
+      "output_refs": [],
+      "summary": "Agent 模型调用已启动"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_discovery_started",
+      "output_refs": [],
+      "summary": "Agent 多源检索已启动"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_discovery_lane_started",
+      "output_refs": [],
+      "summary": "Agent 检索通道已启动"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_model_call_started",
+      "output_refs": [],
+      "summary": "Agent 模型调用已启动"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "agent_task_delegated",
+      "output_refs": [
+        "baseline:combat_scenario"
+      ],
+      "summary": "委派给作战场景：将威胁研判转化为现代化、多域、动态对抗场景，分析阶段演化、敌方行动方案、关键时间窗口和环境约束。"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "agent_task_delegated",
+      "output_refs": [
+        "baseline:weapon_equipment"
+      ],
+      "summary": "委派给武器装备：深度检索国外现役、在研与替代装备，建立型号谱系、参数证据、体系依赖和能力边界；按需调用成本、平台、时间、效应、体系和可控性颠覆种子，形成现役做优与新研拓新的具体装备族需求。"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "agent_task_delegated",
+      "output_refs": [
+        "baseline:operational_employment"
+      ],
+      "summary": "委派给作战运用：综合局势、场景和装备结构化交接，评估作战约束、力量协同、备选行动方案、部署原则和公开战例经验。"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_model_call_completed",
+      "output_refs": [],
+      "summary": "Agent 模型调用已完成"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_discovery_lane_completed",
+      "output_refs": [],
+      "summary": "Agent 检索通道已返回"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_discovery_completed",
+      "output_refs": [],
+      "summary": "Agent 多源检索已完成"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_analysis_started",
+      "output_refs": [],
+      "summary": "Agent 结构化分析已启动"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_model_call_started",
+      "output_refs": [],
+      "summary": "Agent 模型调用已启动"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_model_call_completed",
+      "output_refs": [],
+      "summary": "Agent 模型调用已完成"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_discovery_lane_completed",
+      "output_refs": [],
+      "summary": "Agent 检索通道已返回"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_discovery_completed",
+      "output_refs": [],
+      "summary": "Agent 多源检索已完成"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_analysis_started",
+      "output_refs": [],
+      "summary": "Agent 结构化分析已启动"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_model_call_started",
+      "output_refs": [],
+      "summary": "Agent 模型调用已启动"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_model_call_completed",
+      "output_refs": [],
+      "summary": "Agent 模型调用已完成"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_discovery_lane_completed",
+      "output_refs": [],
+      "summary": "Agent 检索通道已返回"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_discovery_completed",
+      "output_refs": [],
+      "summary": "Agent 多源检索已完成"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_analysis_started",
+      "output_refs": [],
+      "summary": "Agent 结构化分析已启动"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_model_call_started",
+      "output_refs": [],
+      "summary": "Agent 模型调用已启动"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_model_call_completed",
+      "output_refs": [],
+      "summary": "Agent 模型调用已完成"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_analysis_completed",
+      "output_refs": [],
+      "summary": "Agent 结构化分析已完成"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "agent_harness_completed",
+      "output_refs": [],
+      "summary": "operational_synthesis_v1 completed: completed"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "agent_model_call_completed",
+      "output_refs": [],
+      "summary": "web_discovery_open completed in 149.711s"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "agent_model_call_completed",
+      "output_refs": [],
+      "summary": "evidence_analysis completed in 68.494s"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_materialization_progress",
+      "output_refs": [
+        "ev-operational_employment-web-189e631d8bcb",
+        "ev-operational_employment-web-04daa1ccebf5",
+        "ev-operational_employment-web-f42ad4ad8ea8",
+        "ev-operational_employment-web-6c1c84a0e24e"
+      ],
+      "summary": "证据并行材料化 4/5（本批 4 路并行，缓存复用 1），正式接纳 4/4；已达质量目标，停止扩证"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "stop_policy_evaluated",
+      "output_refs": [],
+      "summary": "baseline quality gates passed"
+    },
+    {
+      "actor": "operational_employment",
+      "event_type": "baseline_agent_completed",
+      "output_refs": [
+        "packet-operational_employment",
+        "ev-operational_employment-web-04daa1ccebf5",
+        "ev-operational_employment-web-189e631d8bcb",
+        "ev-operational_employment-web-6c1c84a0e24e",
+        "ev-operational_employment-web-f42ad4ad8ea8"
+      ],
+      "summary": "间歇通信下精打武器任务保持的关键矛盾是杀伤链状态连续性，而不是单枚弹药性能。推荐以COA-2“分布式前沿节点+断链任务包+多路径状态对账”为主方案，COA-3提供规模压制和补击，COA-1保留用于高价值、强授权、固定或准固定目标。装备发展应优先补齐断链任务包、多模抗扰导航、边缘再确认、BDA摘要、任务包版本管理和前沿分布式保障能力。"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_model_call_completed",
+      "output_refs": [],
+      "summary": "Agent 模型调用已完成"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_analysis_completed",
+      "output_refs": [],
+      "summary": "Agent 结构化分析已完成"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "agent_harness_completed",
+      "output_refs": [],
+      "summary": "scenario_research_v1 completed: completed"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "agent_model_call_completed",
+      "output_refs": [],
+      "summary": "web_discovery_open completed in 206.149s"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "agent_model_call_completed",
+      "output_refs": [],
+      "summary": "evidence_analysis completed in 92.425s"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_materialization_progress",
+      "output_refs": [
+        "ev-combat_scenario-web-c38f07c3ceb3",
+        "ev-combat_scenario-web-3393b98b73a1",
+        "ev-combat_scenario-web-ba7af247bc5e",
+        "ev-combat_scenario-web-d27e41bd8d64"
+      ],
+      "summary": "证据并行材料化 4/7（本批 4 路并行，缓存复用 0），正式接纳 4/4；已达质量目标，停止扩证"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "stop_policy_evaluated",
+      "output_refs": [],
+      "summary": "baseline quality gates passed"
+    },
+    {
+      "actor": "combat_scenario",
+      "event_type": "baseline_agent_completed",
+      "output_refs": [
+        "packet-combat_scenario",
+        "ev-combat_scenario-web-3393b98b73a1",
+        "ev-combat_scenario-web-ba7af247bc5e",
+        "ev-combat_scenario-web-c38f07c3ceb3",
+        "ev-combat_scenario-web-d27e41bd8d64"
+      ],
+      "summary": "面向“间歇通信条件下精打武器任务保持与任务续接”，核心场景应聚焦S4持续压制再组织、S5远域稀疏通信续接、S6授权漂移下任务重构/终止，并用六个分支检验发现—决策—协同—打击—评估—再组织链闭合。装备发展优先级为任务包续接模块、多源PNT可信度组件、低带宽续接网关、末段合法性/诱饵抑制组件和BDA—再组织接口。"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_model_call_progress",
+      "output_refs": [],
+      "summary": "Agent 模型调用持续执行中"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_model_call_completed",
+      "output_refs": [],
+      "summary": "Agent 模型调用已完成"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_analysis_completed",
+      "output_refs": [],
+      "summary": "Agent 结构化分析已完成"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "agent_harness_completed",
+      "output_refs": [],
+      "summary": "equipment_research_v1 completed: completed"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "agent_model_call_completed",
+      "output_refs": [],
+      "summary": "web_discovery_open completed in 175.631s"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "agent_model_call_completed",
+      "output_refs": [],
+      "summary": "evidence_analysis completed in 156.155s"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_materialization_progress",
+      "output_refs": [
+        "ev-weapon_equipment-web-c2466ad02545",
+        "ev-weapon_equipment-web-84f5c7f4b57b",
+        "ev-weapon_equipment-web-e894862926e0"
+      ],
+      "summary": "证据并行材料化 4/12（本批 4 路并行，缓存复用 0），正式接纳 3/4；已达最低门槛，继续补足质量目标"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_materialization_progress",
+      "output_refs": [
+        "ev-weapon_equipment-web-c2466ad02545",
+        "ev-weapon_equipment-web-84f5c7f4b57b",
+        "ev-weapon_equipment-web-e894862926e0",
+        "ev-weapon_equipment-web-0bfd87a5752c"
+      ],
+      "summary": "证据并行材料化 5/12（本批 1 路并行，缓存复用 0），正式接纳 4/4；已达质量目标，停止扩证"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "stop_policy_evaluated",
+      "output_refs": [],
+      "summary": "baseline quality gates passed"
+    },
+    {
+      "actor": "weapon_equipment",
+      "event_type": "baseline_agent_completed",
+      "output_refs": [
+        "packet-weapon_equipment",
+        "ev-weapon_equipment-web-0bfd87a5752c",
+        "ev-weapon_equipment-web-84f5c7f4b57b",
+        "ev-weapon_equipment-web-c2466ad02545",
+        "ev-weapon_equipment-web-e894862926e0"
+      ],
+      "summary": "装备基线显示，间歇通信条件下精打武器的核心能力闭环应按装备基线、体系依赖、能力差距、现役升级/新研拓新和验证推进：以Tomahawk、JASSM-D、LRASM、PrSM为远打精打基线，以MQ-9B、Switchblade 600、ALTIUS、CCA/LongShot为无人续接节点，以AARGM、MALD、NGJ-MB为远域压制窗口制造手段。近期应现役做优补强WDL/低带宽摘要、安全中止、目标置信门限和审计；中期新研通用任务续接控制组件、模块化巡飞任务包和跨平台任务状态机；验证重点是断链保持、复链一致性、目标重定位、抗欺骗和压制窗口耦合试验。"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "baseline_wave_completed",
+      "output_refs": [
+        "packet-combat_scenario",
+        "packet-weapon_equipment",
+        "packet-operational_employment"
+      ],
+      "summary": "baseline wave 1 completed"
+    },
+    {
+      "actor": "packet_admission_gate",
+      "event_type": "packet_admission_evaluated",
+      "output_refs": [
+        "claims-978ac9dc8329",
+        "claim-5b6add3f899c",
+        "claim-4cdb5a0ca988",
+        "claim-630db027b3c4",
+        "claim-0cc367cb1eb8"
+      ],
+      "summary": "operational_employment packet accepted"
+    },
+    {
+      "actor": "packet_admission_gate",
+      "event_type": "packet_admission_evaluated",
+      "output_refs": [
+        "claims-39ff1148f328",
+        "claim-89821cec3705",
+        "claim-8ded420bf5f9",
+        "claim-95c43ca4d780",
+        "claim-a8e971151235",
+        "claim-1fddc43679b7"
+      ],
+      "summary": "combat_scenario packet accepted"
+    },
+    {
+      "actor": "packet_admission_gate",
+      "event_type": "packet_admission_evaluated",
+      "output_refs": [
+        "claims-42e2d45402c3",
+        "claim-adff2113f4e2",
+        "claim-437a33de7fbb",
+        "claim-b5ccca861796",
+        "claim-03fd943cecb3",
+        "claim-2dbef87f1ddc"
+      ],
+      "summary": "weapon_equipment packet accepted"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "baseline_agents_summarized",
+      "output_refs": [
+        "packet-combat_scenario",
+        "packet-weapon_equipment",
+        "packet-operational_employment"
+      ],
+      "summary": "3 baseline agents completed"
+    },
+    {
+      "actor": "orchestrator",
+      "event_type": "agent_task_delegated",
+      "output_refs": [
+        "discovery-convergence"
+      ],
+      "summary": "委派收敛融合 Agent 执行跨背景、跨场景和跨分支汇聚"
+    },
+    {
+      "actor": "convergence_fusion",
+      "event_type": "tool_call",
+      "output_refs": [],
+      "summary": "聚类需求、保留冲突、形成优先序和跨分支关联"
+    },
+    {
+      "actor": "convergence_fusion",
+      "event_type": "discovery_convergence_completed",
+      "output_refs": [
+        "discovery-convergence"
+      ],
+      "summary": "发现结果收敛融合完成"
+    },
+    {
+      "actor": "reporter",
+      "event_type": "report_completed",
+      "output_refs": [
+        "report-001"
+      ],
+      "summary": "基线限定Reporter已生成去制胜机理消融报告"
+    }
+  ],
+  "winning_mechanism": {
+    "inputs": [],
+    "reasoning_nodes": [],
+    "resource_projections": [],
+    "stages": []
+  },
+  "worker_reports": [
+    {
+      "active_skill_ids": [
+        "scenario_engineering",
+        "modern_battlespace_analysis",
+        "adversary_coa_analysis"
+      ],
+      "active_tool_names": [
+        "search_sources",
+        "create_evidence_card",
+        "stress_test_scenario"
+      ],
+      "agent_id": "combat_scenario",
+      "created_at": "2026-07-29T08:04:43.359938+00:00",
+      "domain_object_id": "scenario-packet-combat_scenario",
+      "domain_object_type": "ScenarioModel",
+      "error": "",
+      "handoff_summary": "面向“间歇通信条件下精打武器任务保持与任务续接”，核心场景应聚焦S4持续压制再组织、S5远域稀疏通信续接、S6授权漂移下任务重构/终止，并用六个分支检验发现—决策—协同—打击—评估—再组织链闭合。装备发展优先级为任务包续接模块、多源PNT可信度组件、低带宽续接网关、末段合法性/诱饵抑制组件和BDA—再组织接口。",
+      "harness_profile": "scenario_research_v1",
+      "new_evidence_ids": [
+        "ev-combat_scenario-web-3393b98b73a1",
+        "ev-combat_scenario-web-ba7af247bc5e",
+        "ev-combat_scenario-web-c38f07c3ceb3",
+        "ev-combat_scenario-web-d27e41bd8d64"
+      ],
+      "packet_id": "packet-combat_scenario",
+      "schema_version": "1.0",
+      "session_path": "/Users/wangchen/equipment research/outputs/evals/ablations/ablation-20260729-142922/systems/no_winning_mechanism/Q-0004/runtime/no_winning_mechanism-q-0004/agent_sessions/combat_scenario.jsonl",
+      "status": "completed",
+      "stop_reason": "quality_gates_passed",
+      "worker_report_id": "worker-report-8ea62c13-3610-4fad-91fa-154813d60e17"
+    },
+    {
+      "active_skill_ids": [
+        "equipment_osint",
+        "capability_comparison",
+        "technology_readiness_analysis",
+        "defensive_countermeasure_analysis"
+      ],
+      "active_tool_names": [
+        "search_sources",
+        "create_evidence_card",
+        "compare_equipment_capability"
+      ],
+      "agent_id": "weapon_equipment",
+      "created_at": "2026-07-29T08:05:23.862625+00:00",
+      "domain_object_id": "equipment-packet-weapon_equipment",
+      "domain_object_type": "EquipmentObservation",
+      "error": "",
+      "handoff_summary": "装备基线显示，间歇通信条件下精打武器的核心能力闭环应按装备基线、体系依赖、能力差距、现役升级/新研拓新和验证推进：以Tomahawk、JASSM-D、LRASM、PrSM为远打精打基线，以MQ-9B、Switchblade 600、ALTIUS、CCA/LongShot为无人续接节点，以AARGM、MALD、NGJ-MB为远域压制窗口制造手段。近期应现役做优补强WDL/低带宽摘要、安全中止、目标置信门限和审计；中期新研通用任务续接控制组件、模块化巡飞任务包和跨平台任务状态机；验证重点是断链保持、复链一致性、目标重定位、抗欺骗和压制窗口耦合试验。",
+      "harness_profile": "equipment_research_v1",
+      "new_evidence_ids": [
+        "ev-weapon_equipment-web-0bfd87a5752c",
+        "ev-weapon_equipment-web-84f5c7f4b57b",
+        "ev-weapon_equipment-web-c2466ad02545",
+        "ev-weapon_equipment-web-e894862926e0"
+      ],
+      "packet_id": "packet-weapon_equipment",
+      "schema_version": "1.0",
+      "session_path": "/Users/wangchen/equipment research/outputs/evals/ablations/ablation-20260729-142922/systems/no_winning_mechanism/Q-0004/runtime/no_winning_mechanism-q-0004/agent_sessions/weapon_equipment.jsonl",
+      "status": "completed",
+      "stop_reason": "quality_gates_passed",
+      "worker_report_id": "worker-report-2f808420-135d-49ec-9e92-ebbc53582c75"
+    },
+    {
+      "active_skill_ids": [
+        "operational_synthesis",
+        "coa_comparison",
+        "joint_force_coordination",
+        "lessons_transfer"
+      ],
+      "active_tool_names": [
+        "search_sources",
+        "create_evidence_card",
+        "compare_coa"
+      ],
+      "agent_id": "operational_employment",
+      "created_at": "2026-07-29T08:03:23.166953+00:00",
+      "domain_object_id": "operational-packet-operational_employment",
+      "domain_object_type": "OperationalSynthesis",
+      "error": "",
+      "handoff_summary": "间歇通信下精打武器任务保持的关键矛盾是杀伤链状态连续性，而不是单枚弹药性能。推荐以COA-2“分布式前沿节点+断链任务包+多路径状态对账”为主方案，COA-3提供规模压制和补击，COA-1保留用于高价值、强授权、固定或准固定目标。装备发展应优先补齐断链任务包、多模抗扰导航、边缘再确认、BDA摘要、任务包版本管理和前沿分布式保障能力。",
+      "harness_profile": "operational_synthesis_v1",
+      "new_evidence_ids": [
+        "ev-operational_employment-web-04daa1ccebf5",
+        "ev-operational_employment-web-189e631d8bcb",
+        "ev-operational_employment-web-6c1c84a0e24e",
+        "ev-operational_employment-web-f42ad4ad8ea8"
+      ],
+      "packet_id": "packet-operational_employment",
+      "schema_version": "1.0",
+      "session_path": "/Users/wangchen/equipment research/outputs/evals/ablations/ablation-20260729-142922/systems/no_winning_mechanism/Q-0004/runtime/no_winning_mechanism-q-0004/agent_sessions/operational_employment.jsonl",
+      "status": "completed",
+      "stop_reason": "quality_gates_passed",
+      "worker_report_id": "worker-report-713c7c30-2355-4edf-972b-20c4394d4330"
+    }
+  ]
+}

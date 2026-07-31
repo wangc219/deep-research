@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:d46fd5c4708091c4",
+  "content_path": "text-d46fd5c4708091c4.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: cached_origin_failure:HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-ef58d44e5694",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "d46fd5c4708091c4af8dd081926bcbed7f87c05ddc903827ffe9255b31a154b6",
+  "url": "https://www.defense.gov/News/Releases/Release/Article/3765644/deputy-secretary-of-defense-hicks-announces-first-tranche-of-replicator-capabil/"
+}

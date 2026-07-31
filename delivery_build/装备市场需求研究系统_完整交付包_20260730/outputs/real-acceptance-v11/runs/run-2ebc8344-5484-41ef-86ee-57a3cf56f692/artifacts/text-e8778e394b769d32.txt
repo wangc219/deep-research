@@ -1,0 +1,439 @@
+[1] Defence and Security Accelerator
+
+[2] Published 9 April 2019
+
+[3] © Crown copyright 2019
+
+[4] This publication is licensed under the terms of the Open Government Licence v3.0 except where otherwise stated. To view this licence, visit nationalarchives.gov.uk/doc/open-government-licence/version/3 or write to the Information Policy Team, The National Archives, Kew, London TW9 4DU, or email: psi@nationalarchives.gov.uk .
+
+[5] Where we have identified any third party copyright information you will need to obtain permission from the copyright holders concerned.
+
+[6] This publication is available at https://www.gov.uk/government/publications/countering-drones-finding-and-neutralising-small-uas-threats/competition-document-countering-drones-finding-and-neutralising-small-uas-threats
+
+[7] 1. Introduction
+
+[8] This Defence and Security Accelerator ( DASA ) competition is seeking proposals that can develop the technology needed to counter Unmanned Air Systems ( C-UAS ) and demonstrate how these can be integrated together to form a capable system.
+
+[9] The introduction of UAS , or drones, has been one of the most significant technological advances of recent years and represents a paradigm shift in military capability. The threat has evolved rapidly and we and other nations are beginning to see the use of hostile improvised UAS threats in several roles in current overseas theatres of operation. There is a similar problem at home with the malicious use of drones becoming a security challenge at events, critical infrastructure and public establishments; not least the prolific use at prisons and the recent events at major UK airports.
+
+[10] Small commercially available UAS have already been used as weapons in overseas theatres and have allowed forces hostile to UK interests to deploy cheap, pervasive, low observable surveillance capability across the battlefield. This asymmetric change bypasses traditional air defence and ground security measures.
+
+[11] The UAS threat to national security is therefore a prevalent pan-departmental issue; there are many different UAS threats, each of which may require a different mitigation approach.
+
+[12] Reducing or eliminating the risk posed by a hostile UAS requires a range of capabilities; detecting the presence of a drone, locating it, identifying it and what it is seeking to do, and then supporting or deploying measures (effectors) to mitigate its effect. Each of these activities is dependent on the previous stage in the “kill chain”, and they must work quickly and effectively together in order to provide overall protection. Consequently countering UAS is reliant on a broad range of specialisations; technologies, policy, procedures & tactics, training and logistics.
+
+[13] There are three challenges in this competition that are covered in more detail below. Your proposal must meet one or more of these challenges. They are:
+
+[14] 1.1 Challenge 1 - Next Generation C-UAS Technologies
+
+[15] This challenge is focused on providing robust cost-effective security from the threat of drones that offer significant improvement over current systems. We are interested in technologies that offer minimal manning in complex environments, 24/7 coverage, and have a low impact on or risk to friendly forces’ equipment and personnel.
+
+[16] 1.2 Challenge 2 - Advanced and Flexible C-UAS Integration
+
+[17] This challenge is focused on how we can bring C-UAS technologies together in a flexible way and how we can link C-UAS sensor system output to other wide area surveillance systems and to cooperative drone awareness systems.
+
+[18] 1.3 Challenge 3 - Countering the Future UAS Threat
+
+[19] This challenge is focused on developing capability to detect and mitigate threats from UAS acting autonomously in highly congested airspace, both singly and as a swarm.
+
+[20] 2. Competition Scope
+
+[21] 2.1 Threat background
+
+[22] The threat that we wish to mitigate is that posed by commercial, improvised or military grade small UAS (sUAS), including both multi-rotor and fixed wing Unmanned Aerial Vehicles (UAVs). Our primary focus is on UAV platforms smaller than approx. 50kg Maximum Take Off Weight (MTOW); Class I(d) and below UAS under the NATO classification scheme (see below):
+
+[23] The small physical size, relatively low altitude and low speed associated with UAVs pose a significant detection challenge in themselves but these difficulties are compounded by other key attributes that make such UAS a very difficult air defence target:
+
+[24] the operator/ground control station (GCS) is often located some distance away; in some scenarios, defeating the operator/GCS is the preferred countermeasure
+
+[25] the signals used to control UAVs are long range and may use many different radio bands and are rapidly evolving. They may be unique or they might be difficult to pick out amongst the rest of the radio background
+
+[26] the sensors mounted on commercial off-the-shelf (COTS) and state sponsored UAV systems, can detect and track objects, in some cases autonomously, at ranges that typically preclude our awareness of their presence
+
+[27] extant control and navigation systems make current UAS easy to use and offer a level of redundancy
+
+[28] Our concerns are heightened by predicted developments in UAS capability. Future threat UAVs will be faster and less detectable, they will have a greater operational range, they will carry larger, more sophisticated payloads, they will incorporate advanced artificial intelligence (AI)-based navigation and situational awareness systems and they will use emerging communication methods (e.g. 5G).
+
+[29] Specific, key, concerns of this future threat are:
+
+[30] the increasing use of autonomy, and the associated increased threat from single UAVs, multiple-UAV attacks or swarms with minimal or no use of conventional communication signals
+
+[31] the increasing numbers of flying objects in the modern battlespace/local airspace, that will make the detection and identification of hostile single and multiple UAV very challenging amidst the growing legitimate users and clutter.
+
+[32] 3. Operational Context
+
+[33] There is no one, single, “Drone Threat”. There are, potentially, many different threats from UAS to UK interests, some of which we have yet to discover. Generic examples include a range of effects delivered either directly or enabled by UAS , including surveillance, targeting and explosive threats to:
+
+[34] land bases, ports (ships alongside) and airfields
+
+[35] vehicles and convoys
+
+[36] troops on the ground
+
+[37] maritime forces at sea
+
+[38] As there are many potential threats to various users across defence and security, C-UAS technology is faced with operating within a wide range of environmental factors such as weather, terrain and buildings, complex electro-magnetic ( EM ) environments and many different types of “clutter” ( such as birds).
+
+[39] Some of the most challenging factors that C-UAS will need to contend with are crowded physical spaces and “urban canyons” formed from large, tall buildings with concentrated, noisy EM environments. These conspire to reduce the effectiveness and range of traditional radar, electro-optical/infrared (EO/IR), acoustic and radio frequency/electronic support measures (RF/ESM) sensors.
+
+[40] Within most urban environments, operational rules of engagement and concerns about physical and EM fratricide and collateral damage will place severe limitations on the use of many current and proposed effectors.
+
+[41] Additionally many of the potential UAS threats will require defensive coverage 24/7 for extended periods. The manpower load to achieve this with current systems may be prohibitive.
+
+[42] This is a phased competition.
+
+[43] Phase 1 will deliver proof of concept of proposed advanced technology components and subsystems that meet Challenges 1 to 3 detailed below and which could be developed and integrated into full C-UAS systems. A full C-UAS system is one that can perform wide area detection, positively identify a threat, accurately track its location, successfully deny or defeat it, and positively confirm the effect on the threat. Accordingly, we expect candidates to physically demonstrate their concepts in some way; the demonstration must prove (or otherwise) the overall viability of the proposal.
+
+[44] At this stage we do not expect submissions to meet the needs of a full C-UAS system. However we are looking for solutions that have given some thought to how their subsystem or component will be integrated with other technologies to achieve such an end state.
+
+[45] 4.2 Future Phases
+
+[46] It is anticipated that additional funding will be available for further phases. The precise structure of future phases will depend on the outcome of Phase 1. The focus of future phases is likely to be development and maturation of successful Phase 1 projects and working with other suppliers in order to integrate solutions into full systems or sub-systems. Future phases may be open to new suppliers for certain elements. Suitable systems or sub-systems may also be invited to demonstrate at Bristow 2020 (a Dstl led, biennial, physical trial of C-UAS against representative threat scenarios).
+
+[47] 5. Challenges
+
+[48] Given the scope above, this DASA call aims to address the increasing UAS threat to the security of UK military forces at home and abroad, as well as to civilian assets, VIPs and the wider public. We are looking for responses that will contribute to solutions to the three challenges detailed below.
+
+[49] 5.1 Challenge 1 - Next Generation C-UAS Technologies
+
+[50] This challenge is focused on providing robust cost-effective security from the threat of drones that offer significant improvement over current systems. We are interested in technologies that:
+
+[51] require minimal manning in complex environments, 24/7
+
+[52] have a low impact on or risk to friendly forces equipment and personnel
+
+[53] There are a number of current technology solutions that provide UAS detection or mitigation options. They are effective in certain scenarios but have some key limitations, both now and as the threat evolves. Whilst we cannot resolve all of these limitations within this challenge, we wish to focus on reducing the manpower burden of current sensor solutions and reducing the collateral risk posed by deploying an effect against a target UAS .
+
+[54] In this challenge we are looking for suitable component technologies that, once proven in Phase 1, can be integrated and demonstrated in a system in a representative environment by the end of the multi-phase competition.
+
+[55] We need highly autonomous unattended C-UAS sensing that is capable of 24/7 operation with no operator intervention needed for the monitoring element; they may still be required for threat actioning. Key attributes of a successful bid under this challenge will include technological solutions that demonstrate:
+
+[56] robust automated UAS detection, tracking and/or identification against the Challenge target set; COTS-MOTS (military off-the-shelf)-Bespoke sub-50kg MTOW Class I UAS
+
+[57] a low False Alarm Rate; ideally well below 1 in a 24hr period
+
+[58] a high Probability of detection (Pd); ideally one that positively detects a real target 99% of the time
+
+[59] low latency (time from when the target enters the detection area to an alert); ideally below 1s
+
+[60] high target location accuracy; ideally in the region of 10-20m
+
+[61] the capability to detect and track multiple threats simultaneously; around 20 targets as an initial baseline, but with consideration of how performance would scale to a highly fractionated swarm
+
+[62] all weather operation with little or graceful degradation in performance
+
+[63] sensors that do not alert the enemy through their own electromagnetic emissions required for some scenarios
+
+[64] We also need to provide C-UAS sensing over wide and complex areas. This could require a distributed sensor solution to overcome the challenges posed by line of sight blockages and reduced effective range due to clutter across the signature spectrum. Consequently we are particularly interested in C-UAS sensors and sub-systems that offer:
+
+[65] low equipment costs, particularly those associated with individual sensor nodes
+
+[66] reduced running costs traditionally associated with logistics, manpower, infrastructure or the training burden
+
+[67] low bandwidth output to enable sensors to be scaled across a wide area
+
+[68] modular like compatibility with the integration solutions developed through Challenge 2
+
+[69] rapid and flexible installation and calibration
+
+[70] One of our primary concerns is to ensure that the mitigation is proportionate to the threat. Key factors include:
+
+[71] ensuring minimal fratricide and collateral impact on own force and civilian personnel and infrastructure
+
+[72] the capital cost of the solution and the cost per use
+
+[73] ensuring that the effect on the target is controllable
+
+[74] Accordingly, we are looking for effector solutions that can provide:
+
+[75] high probability of defeat/denial; ideally one that is successful greater than 99% of the time
+
+[76] robustness to different types of Class I UAS and operating modes; including fixed and rotary wing and those that are autonomous or less reliant on navigation links
+
+[77] graduated effects within realistic threat scenarios; we need a blend of technologies that offer greater ranges with less potent effects as well as technologies that offer very forceful effects close to the defended point
+
+[78] low collateral, including:
+
+[79] Negligible physical effect/impact on own force and neutral personnel whilst producing proportionate physical impact on hostile personnel
+
+[80] Minimal impact on own/civilian equipment (including RF spectrum, electronics and optics)
+
+[81] Known and controllable effects on the target
+
+[82] a timely response i.e. a response that has an effect that is sufficiently quick to mitigate the threat
+
+[83] a low requirement on skill level and training for its operation
+
+[84] It is unlikely one single effector will achieve all of our ambitions. At the system level we are looking to provide a “toolbox” of different types of effectors as part of a layered defence model; responders should identify how their proposed technologies would fit into the toolbox model.
+
+[85] There may be scenarios and environments where a C-UAS capability is required to operate outside of specific UK regulations; accordingly an inability to meet current regulations should not necessarily constrain responses. Notwithstanding, bidders should be prepared to justify their prospective solution should it fall outside of current UK regulation and law.
+
+[86] Careful thought should also be given to the role of an operator. In most cases we are expecting a “human-in-the-loop” to make the final decision on the deployment or activation of an effector. However bidders should consider which tasks are best done by a machine and which need the decision making skills and accountability of a human.
+
+[87] 5.2 Challenge 2 - Advanced and Flexible C-UAS Integration
+
+[88] This challenge is focused on:
+
+[89] how we can bring C-UAS technologies together in a flexible way and
+
+[90] how we can link C-UAS sensor system output to other wide area surveillance systems and to cooperative drone awareness systems
+
+[91] We recognise that no one sensor can provide wide area detection, tracking, and identification ( DTI ) across all C-UAS threat scenarios and environments and that robust C-UAS DTI solutions will require the use of a number of different types of sensors, potentially distributed across the battle space or around the vulnerable asset.
+
+[92] Similarly, the choice of effector will be guided by target vulnerability and a number of contributory factors. Moreover, for some scenarios, we may need to deploy a range of effectors in a “lines of defence” model where increasingly aggressive attack modes are used as the target approaches.
+
+[93] Integrating these components in an intelligent and flexible way has proved to be a complex and difficult challenge and most current integration attempts are less effective because they require:
+
+[94] a bespoke network to connect the sensors to the operator
+
+[95] bespoke processing and/or detection algorithms tuned to the performance characteristics of the sensors
+
+[96] bespoke warning rules tuned to the specific threat in the scenarios
+
+[97] A bespoke approach also provides limited scope for sensor changes, algorithm substitution or system reconfiguration that may be required for different scenarios or to accommodate the rapid development and proliferation of hostile target capability.
+
+[98] Accordingly, we are looking for integrated solutions that enable a highly automated, scalable, distributed and affordable C-UAS sensor and effector network. Our preference is that the SAPIENT concept is adopted for this as it is both an openly published interface and embodies the modular and autonomous approach that we seek. The SAPIENT Interface Control Document ( ICD ) will be updated to incorporate changes specific to C-UAS requirements within the bidding period of this call.
+
+[99] The SAPIENT ICD , XML Schema, Interface test harness and a research middleware can be made available as government furnished assets (GFA) for this call if requested.
+
+[100] Proposals that do not use the SAPIENT architecture should demonstrate how they will deliver a flexible solution that is both agnostic to the component technologies (which may be supplied by third parties who seek to protect their intellectual property ) and highly autonomous. In either case, the attributes that we are looking for include the ability to:
+
+[101] link multiple and different types of sensors together and fuse their output automatically and intelligently for probabilistic detection, tracking and identification
+
+[102] provide autonomous sensor management by intelligently tasking sensors based on the output of others
+
+[103] learn the strengths and weaknesses of sensors i.e. when to trust their output or not
+
+[104] “plug in” sensors with little prior information on performance characteristics
+
+[105] provide information that aids operators’ threat assessment and use of effectors
+
+[106] autonomously use networked sensors to confirm the effect on the threat
+
+[107] minimise bandwidth requirements
+
+[108] perform sensor and effector calibration with minimal operator input
+
+[109] We also invite proposals on how we can link non-cooperative C-UAS systems to other surveillance or cooperative drone awareness systems and improve understanding of the local “drone air picture”.
+
+[110] Through this challenge, we are looking to find solutions that can be demonstrated in a representative environment within a 2 year period; in Phase 1, we are looking to find the building blocks that enable an integrated solution once their feasibility has been proven.
+
+[111] For those proposals compliant with the SAPIENT concept, our aspiration is that this is focused around developing High Level Decision Making Modules ( HLDMM ) for the C-UAS application.
+
+[112] For non-SAPIENT compliant proposals we are looking for innovative fusion and command and control approaches. This could include development of novel methods and/or algorithms that enable the above functionality. We wouldn’t expect to fund the development of new interface control document, middleware or communications protocol, but would need to see evidence that these elements would be in place for future phases.
+
+[113] 5.3 Challenge 3 - Countering the Future UAS Threat
+
+[114] This challenge is focused on developing capability to detect and mitigate threats from UAS acting autonomously in highly congested airspace, both singly and as a swarm.
+
+[115] With the rapid advances in artificial intelligence/machine learning (AI/ML), sensing and navigation, future UAS are likely to have a high degree of autonomy. We are already starting to see some of this capability in the commercial drones market. This may include capabilities such as:
+
+[116] being able to operate independently of active data and navigation links
+
+[117] UAS sense and avoid without operator intervention
+
+[118] automatic target identification and tracking
+
+[119] novel power sources
+
+[120] long term “perch and stare”
+
+[121] Such capability becomes even more challenging when incorporated within a swarm. However there are many different types and definitions of “swarm”. For the purpose of this challenge the two types of swarm of concern are (working definitions):
+
+[122] Dumb Swarm: A dumb swarm consists of multiple UAS with discrete UAVs, each separately flown to a predetermined common goal via GNSS Waypoint or Terrain navigation on autopilot, or by human operators in real time. In-flight activity is coordinated only during pre-mission (human) planning and cannot readily respond to a changing situation without additional operator intervention, except through limited pre-programmed responses.
+
+[123] Smart Swarm: A smart, or “true”, swarm is an adaptive group of UAVs operating within a self-organising network as a single semi-autonomous UAS . It has the ability to assess a situation (including the actions or loss of other UAVs) and respond without operator intervention. A smart swarm will automatically adjust individual UAV roles to maintain the overarching central mission aim. It is a threat in its own right; it is not a tactic.
+
+[124] We are aware of dumb swarm attacks overseas and we are also aware of the development and demonstration of elements of smart swarm capability. Notwithstanding, even the most basic type of swarm could overwhelm (saturate) defences by sheer weight of numbers. Accordingly, we want to:
+
+[125] identify and develop technologies for mitigating the effect of dumb and smart swarm attacks across the Detect, Track, Identify and Defeat functions
+
+[126] develop system level concepts for a capability to protect against dumb and smart UAV swarm attacks across complete C-UAS kill chain, including decision making and command and control
+
+[127] Solutions should consider that:
+
+[128] smart swarms offer the most sophisticated challenge and capabilities that can detect and mitigate smart swarms may be able to counter single smart UAS and other types of swarm
+
+[129] smart swarming may be suited to missions in complex urban and littoral environments. Accordingly, the ability to defeat a swarm is likely to be exacerbated as the future Air Battlespace becomes more crowded with many more UAS , both our own, commercial operations and personal use. A swarm could operate covertly in and around other UAVs and could include use of “perch and stare” tactics
+
+[130] depending on the Rules of Engagement (RoE), control of the swarm in the pursuit of the aim could be by a single human operator, or could be completely automatic post-launch
+
+[131] Mitigation considerations may need to address:
+
+[132] a broad range of UAV sizes
+
+[133] rapidly re-configurable platforms, payloads and operating modes
+
+[134] novel multi-platform sensing techniques
+
+[135] novel and adaptable communication and control methods
+
+[136] Through this multiple phase challenge, we are looking to find component technologies and system concepts that can be integrated and demonstrated in a controlled environment by the end of the challenge. In Phase 1, we are looking to find suitable component technologies or approaches that can then be matured in Phase 2 once their feasibility has been proven.
+
+[137] 6. Clarification of what we want
+
+[138] We want novel ideas to benefit users working in UK Defence and Security. Your proposal should include evidence of:
+
+[139] innovation or a creative approach
+
+[140] clear demonstration of how the proposed work applies to any defence and security context
+
+[141] We are aiming to harness advances in integration, sensing, fusion, autonomy and non-lethal effectors to improve the ability of UK Defence to counter an adversary’s use of UAS across the battlefield while preventing or minimising collateral damage. Some of these solutions may also be applicable to the security challenge faced in the civilian sector. This could include systems or components that deliver or enable:
+
+[142] flexible and rapid multi-modal integration, particularly adopting the SAPIENT concept(s)
+
+[143] low cost efficient sensors, particularly those compliant with SAPIENT
+
+[144] ideas to provide automated and networked sensing systems over wide and complex areas
+
+[145] methods of robustly defeating or denying current and next generation drones in a range of scenarios and environments
+
+[146] innovative ideas for significant and rapid improvements to extant systems for deployment
+
+[147] autonomous decision making
+
+[148] signal processing to improve discrimination and identification
+
+[149] networked approaches which may use existing sensing systems such as CCTV etc.
+
+[150] ability to identify, locate and track the UAS operator
+
+[151] airborne, mobile or expendable solutions
+
+[152] 7. Clarification of what we don’t want
+
+[153] For this competition we are not interested in proposals that:
+
+[154] constitute consultancy, paper-based studies or literature reviews which just summarise the existing literature without any view of future innovation (which therefore cannot be extended into Phase 2)
+
+[155] are an identical resubmission of a previous bid to DASA or MOD without modification
+
+[156] offer demonstrations of off-the-shelf products requiring no experimental development (unless applied in a novel way to the challenge)
+
+[157] offer no real long-term prospect of integration into defence and security capabilities
+
+[158] offer no real prospect of out-competing existing technological solutions
+
+[159] offer manpower intensive detect, track and identification solutions
+
+[160] offer standard barrage jamming
+
+[161] offer highly bespoke, closed or crude integration
+
+[162] offer low potential for cost efficiency
+
+[163] 8. Exploitation
+
+[164] It is important that over the lifetime of DASA competitions, ideas are matured and accelerated towards appropriate end-users to enhance capability. How long this takes will be dependent on the nature and starting point of the innovation. Early identification and appropriate engagement with potential end-users during the competition and subsequent phases are essential in order to develop and implement an exploitation plan.
+
+[165] All proposals to DASA should articulate the expected development in technology maturity of the potential solution over the lifetime of the contract and how this relates to improved operational capability against the current known (or presumed) baseline. Your deliverables should be designed to evidence these aspects with the aim of making it as easy as possible for possible collaborators/stakeholders to identify the innovative elements of your proposal in order to consider routes for exploitation. DASA Innovation Partners are available to support you with defence and security context.
+
+[166] A higher technology maturity will be expected in subsequent phases. You may wish to include some of the following information, where known, to help the assessors understand how your solution could be exploited:
+
+[167] the intended defence or security users of your final product and whether you have previously engaged with them, their procurement arm or their research and development arm
+
+[168] awareness of, and alignment to, any existing end-user procurement programmes
+
+[169] the anticipated benefits (for example, in cost, time, improved capability) that your solution will provide to the user
+
+[170] whether it is likely to be a standalone product or integrated with other technologies or platforms
+
+[171] expected additional work required beyond the end of the contract to develop an operationally deployable commercial product (for example, “scaling up” for manufacture, cyber security, integration with existing technologies, environmental operating conditions)
+
+[172] additional future applications and wider markets for exploitation
+
+[173] wider collaborations and networks you have already developed or any additional relationships you see as a requirement to support exploitation
+
+[174] requirements for access to external assets, including GFA - for example, information, equipment, materials and facilities
+
+[175] how your product could be tested in a representative environment in later phases
+
+[176] any specific legal, ethical, commercial or regulatory considerations for exploitation
+
+[177] This competition will trial advance C-UAS technologies and concepts. We want to demonstrate to MOD and other government department stakeholders the benefits and potential limitations of the next generation of C-UAS and how this can evolve to meet the challenges of the future UAS threat.
+
+[178] The benefits of demonstrating this research to MOD will show:
+
+[179] what’s possible with the current state-of-the-art technologies
+
+[180] what may be possible with further research or investment
+
+[181] which approaches and techniques work well, and which don’t
+
+[182] Although this competition isn’t as yet tied to a specific procurement route, we aim to carry out capability assessment and operational analysis in parallel with the competition to provide evidence concerning the system solutions developed. The MOD will then be in a better position to consider the procurement and application of such a capability in the future.
+
+[183] This competition is being carried out as part of a wider MOD programme and with cognisance of cross-Government initiatives. We’re also collaborating with several organisations within the United States Department of Defence (US DoD) in this area and this may provide the opportunity to carry out international trials and demonstrations in the future.
+
+[184] 9. How to apply
+
+[185] Proposals for funding to meet these challenges must be submitted by Tuesday 28 May 2019 at midday via the DASA submission service for which you will be required to register.
+
+[186] The total funding for this challenge is expected to be at least £2M, split over multiple phases. The total funding available for Phase 1 of this competition is £800K, but individual proposals cannot exceed £100K. If successful, contracts will be awarded for a maximum duration of 9 months.
+
+[187] 9.2 What your proposal must include
+
+[188] Your proposal should focus on the Phase 1 requirements but must also include a brief (uncosted) outline of the next stages of work required for exploitation.
+
+[189] When submitting a proposal, you must complete all sections of the online form, including an appropriate level of technical information to allow assessment of the bid and a completed finances section.
+
+[190] Your proposal must demonstrate how you will complete all research and development activities/services and provide all deliverables within the competition timescales (for this competition, the competition timescales are 9 months maximum duration). A project plan with clear milestones and deliverables must be provided. Deliverables must be well defined and designed to provide evidence of progress against the project plan and the end-point for this phase; they must include a final report. Proposals with any deliverables (including final report) outside the competition timeline will be rejected as non-compliant.
+
+[191] A resourcing plan must also be provided that identifies, where possible, the nationalities of those proposed Research Workers that you intend working on this phase. In the event of proposals being recommended for funding, DASA reserves the right to undertake due diligence checks including the clearance of proposed Research Workers. Please note that this process will take as long as necessary and could take up to 6 weeks in some cases for non-UK nationals.
+
+[192] You must identify any ethical / legal / regulatory factors within your proposal and how the associated risks will be managed, including break points in the project if approvals are not received. MODREC approvals can take up to 3 months therefore you should plan your work programme accordingly. Further details are available in the DASA guidance. If you are unsure if your proposal will need to apply for MODREC approval, then please contact DASA for further guidance.
+
+[193] In addition, requirements for access to GFA should be included in your proposal. DASA cannot guarantee that GFA will be available beyond the SAPIENT offer detailed above.
+
+[194] Completed proposals must comply with the financial rules set for this competition. The upper-limit for this competition is £100K per proposal. Proposals will be rejected if the financial cost exceeds this capped level.
+
+[195] Proposals must include costed participation at the following two DASA events:
+
+[196] a collaboration event
+
+[197] a demonstration at your site
+
+[198] The collaboration event will be held in the UK.
+
+[199] Failure to provide any of the above listed will automatically render your proposal non-compliant.
+
+[200] 9.3 Public facing information
+
+[201] When submitting your proposal, you will be required to include a proposal title and a short abstract. If your proposal is funded, the title and abstract you provide will be used by DASA , and other government departments as appropriate, to describe the project and its intended outcomes and benefits. It will be used for inclusion at DASA events in relation to this competition and included in documentation such as brochures for the event. This information (proposal title and abstract) will also be published in the DASA transparency data on gov.uk, along with your company name, the amount of funding allocated, and the start and end dates of your contract.
+
+[202] 9.4 How your proposal will be assessed
+
+[203] All proposals will be checked for compliance with the competition document and may be rejected before full assessment if they do not comply. Only those proposals who demonstrate their compliance against the competition scope and DASA criteria will be taken forward to full assessment. Failure to achieve full compliance against stage 1 will render your proposal non-compliant and will not be considered any further:
+
+[204] Proposals will then be assessed against the standard DASA assessment criteria by subject matter experts from the MOD (including Dstl), other government departments and front-line military commands. You will not have the opportunity to comment on assessors comments.
+
+[205] DASA reserves the right to disclose on a confidential basis any information it receives from bidders during the procurement process (including information identified by the bidder as Commercially Sensitive Information in accordance with the provisions of this competition) to any third party engaged by DASA for the specific purpose of evaluating or assisting DASA in the evaluation of the bidder’s proposal. In providing such information the bidder consents to such disclosure. Appropriate confidentiality agreements will be put in place.
+
+[206] Further guidance on how your proposal will be assessed is available on the DASA website .
+
+[207] After assessment, proposals will be discussed internally at a Decision Conference where, based on the assessments, budget and wider strategic considerations, a decision will be made on the proposals that are recommended for funding.
+
+[208] Proposals that are unsuccessful will receive brief feedback after the Decision Conference.
+
+[209] 9.5 Things you should know about DASA contracts
+
+[210] Please read the DASA terms and conditions which contain important information for suppliers. For this competition we will be using the Short Form Contract ( SFC ).
+
+[211] Funded projects will be allocated a Technical Partner as a technical point of contact. In addition, the DASA team will work with you to support delivery and exploitation.
+
+[212] We will use deliverables from DASA contracts in accordance with our rights detailed in the contract terms and conditions.
+
+[213] For this phase, a maximum of £800k is available to fund proposals. There may be occasions where additional funding from other funding lines may subsequently become available to allow us to revisit those proposals deemed suitable for funding but where limitations on funding at the time prevented DASA from awarding a subsequent Contract. In such situations, DASA reserve the right to keep such proposals in reserve. In the event that additional funding subsequently becomes available, DASA may ask whether you would still be prepared to undertake the work outlined in your proposal under the same terms. Your official DASA feedback will indicate if your proposal was fundable or not.
+
+[214] 9.6 Phase 1 Dates
+
+[215] 9.7 Supporting events
+
+[216] Wednesday 17 April 2019 – A dial-in session providing further detail on the problem space and a chance to ask questions about this competition in an open forum. If you would like to participate, please register on the Eventbrite page .
+
+[217] Wednesday 17 April 2019 – A series of 20 minute one-to-one teleconference sessions, giving you the opportunity to ask specific questions relating to this competition. If you would like to participate, please register on the Eventbrite page .
+
+[218] Competition queries including on process, application, technical, commercial and intellectual property aspects should be sent to accelerator@dstl.gov.uk , quoting the competition title.
+
+[219] While all reasonable efforts will be made to answer queries, DASA reserves the right to impose management controls if volumes of queries restrict fair access of information to all potential suppliers.
+
+[220] *[UAV}: Unmanned air vehicle

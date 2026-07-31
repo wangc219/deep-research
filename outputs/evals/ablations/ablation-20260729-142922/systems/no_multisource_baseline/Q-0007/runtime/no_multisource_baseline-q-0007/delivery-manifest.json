@@ -1,0 +1,247 @@
+{
+  "file_count": 46,
+  "files": [
+    {
+      "path": "agent_contributions.json",
+      "sha256": "882389a9e983e79a9bbd98e44d51c714656ba261733042835332c2579260c71f",
+      "size": 1504
+    },
+    {
+      "path": "agent_sessions/convergence_fusion.jsonl",
+      "sha256": "248a6b9fff19908e68f9c10557acf49a834cfab5f184903dd107255f988d7622",
+      "size": 2172
+    },
+    {
+      "path": "agent_sessions/execution-a2e0cfa8-7eb9-4774-96fc-8313847eff1d.jsonl",
+      "sha256": "8ee366a1df828f70a05dea838cc2050c4af16ab23c519f07079612227342edf0",
+      "size": 3773
+    },
+    {
+      "path": "agent_sessions/execution-e8b4947e-454b-4104-b159-4f1d43cc9c9c.jsonl",
+      "sha256": "742f23a3b92ca0f6f5bace6109f284935fa72288142b224d8a38810bab4b489d",
+      "size": 3577
+    },
+    {
+      "path": "agent_sessions/generic_researcher.jsonl",
+      "sha256": "ad2f589dba472474a3a32a6e54f1fbddb8825512c83de01babe4c56155d4f2ec",
+      "size": 16946
+    },
+    {
+      "path": "agent_sessions/orchestrator.jsonl",
+      "sha256": "d0d9da516a5d094a47130bceac87665522e2b4e5699f5eb285328a7582f6c0d6",
+      "size": 5776
+    },
+    {
+      "path": "agent_sessions/reporter.jsonl",
+      "sha256": "25b4e2cf4ef26885927f26f4048d457fcccf0203495feffb3d9dc6280275a1f6",
+      "size": 60290
+    },
+    {
+      "path": "agent_sessions/winning_cohort-s1-s2-s3.jsonl",
+      "sha256": "7b5aab1295cd4ab59fe77c3b0bc232a938b8ac4a7d4e52b4aa2616b47c660130",
+      "size": 5023
+    },
+    {
+      "path": "agent_sessions/winning_cohort-s4-s5.jsonl",
+      "sha256": "8ea421a8abebde5816f2912b3544d02da6c4e3f6d76c3bfc3b0f75373baf9175",
+      "size": 4240
+    },
+    {
+      "path": "agent_sessions/winning_mechanism.jsonl",
+      "sha256": "68270159a2a6409f252b9623ebe87328ca671f78415f83d4a10f471fcfd405ec",
+      "size": 87679
+    },
+    {
+      "path": "agent_sessions/winning_round_critic.jsonl",
+      "sha256": "92336deb8e054e5eba563a4ac73a2ccdc963ba0d61e759b0ee198dd7a8100794",
+      "size": 3615
+    },
+    {
+      "path": "agent_sessions/winning_s1_opponent.jsonl",
+      "sha256": "6415520bbcf5f25a11fbfbfd4b46079d6033857065d53d0cd3b1f99fb3e679bc",
+      "size": 1257
+    },
+    {
+      "path": "agent_sessions/winning_s2_operations.jsonl",
+      "sha256": "69008671da6fdc9b4942358b48949d552e88073e48823073d79df0c5a3dcb86f",
+      "size": 1270
+    },
+    {
+      "path": "agent_sessions/winning_s3_breakthrough.jsonl",
+      "sha256": "499357c96c2d31c811b4f8cae57e3f4322cdf7de057994fb5cc40b89f753b4ba",
+      "size": 1442
+    },
+    {
+      "path": "agent_sessions/winning_s4_capability.jsonl",
+      "sha256": "ac1b11a8cbf503e39a72dd3eef3df11a9b31d6051a34e45955c5bbf26ccff433",
+      "size": 1041
+    },
+    {
+      "path": "agent_sessions/winning_s5_gap.jsonl",
+      "sha256": "53d145526e3130cc317574ea910b732eb6ed40a624540ea8eed3ca852648abbc",
+      "size": 994
+    },
+    {
+      "path": "agent_sessions/winning_s6_image.jsonl",
+      "sha256": "5e26e35972f303791c0be5cf9c8084dfddf68d0f71364d10a11babedda2a90b5",
+      "size": 10838
+    },
+    {
+      "path": "agent_sessions/winning_step_critic.jsonl",
+      "sha256": "7a109a62ba84e8dc43ebc3e3bf971ab5aad8292db203be9c8985b9e339dc0863",
+      "size": 4332
+    },
+    {
+      "path": "architecture-acceptance.json",
+      "sha256": "e9fcdb5e01c339b8a016bc0b11b779a5745881892265fc36cfec121ae1097b55",
+      "size": 1414
+    },
+    {
+      "path": "artifacts/text-6dece8552e4e731c.meta.json",
+      "sha256": "eb9487399649068345203c7847b57b7201edfda003b59921c0665bf60a8a8381",
+      "size": 720
+    },
+    {
+      "path": "artifacts/text-6dece8552e4e731c.txt",
+      "sha256": "6dece8552e4e731cb3bf3d5804d358ab59597dbf0a66fc2944dbb67db73014aa",
+      "size": 5305
+    },
+    {
+      "path": "artifacts/text-d56c63618f2d6f02.meta.json",
+      "sha256": "0878fbceefcf3c751afec3566435c543f1f437a56ed9aa7809981c4880685660",
+      "size": 614
+    },
+    {
+      "path": "artifacts/text-d56c63618f2d6f02.txt",
+      "sha256": "d56c63618f2d6f0229aae56e7b05202876d14ae6bf34375557488396c9c30203",
+      "size": 17163
+    },
+    {
+      "path": "branch_deliverables.json",
+      "sha256": "768794f2612c011909c55704300289a6abc02fa525d9f5da948a32c56b2ac3f8",
+      "size": 157870
+    },
+    {
+      "path": "capability_images.json",
+      "sha256": "6cc5f7517f02aada7b19699c7dd2bb03823e53e0edd97040417cb78dd40c4fc8",
+      "size": 67037
+    },
+    {
+      "path": "capability_panorama.json",
+      "sha256": "e113d2c80e6678c7423f49071f2e71e251971b293690893f839694c2ac0c3dea",
+      "size": 3076
+    },
+    {
+      "path": "checkpoints/checkpoint-3a32e08ceec0e0a854eba276.json",
+      "sha256": "883b967c68f7ec70bbafbacb2a945f999440f068368e7d900333ee95ce2a5a70",
+      "size": 4365
+    },
+    {
+      "path": "checkpoints/checkpoint-586232d9ed8705c407418d8f.json",
+      "sha256": "6304484651bc6c2a02797c0c048d6843959492720125ccd363c5437f2307001d",
+      "size": 4328
+    },
+    {
+      "path": "checkpoints/checkpoint-6c08c1126b9041e775f6da19.json",
+      "sha256": "a8a1dc6f1cf3295184582d981cf3814940ee811883fdbb38703dcb3200fb382c",
+      "size": 1049
+    },
+    {
+      "path": "checkpoints/checkpoint-6c16d3e2153c66ca4cc24ddd.json",
+      "sha256": "1fab854610f85c58f3a72b0409f8cf6bece69f5ac8ffdd12c61dcc51b5841ae2",
+      "size": 1086
+    },
+    {
+      "path": "checkpoints/checkpoint-b08193287cafbcbc8a5b5d2d.json",
+      "sha256": "064cffb71b7ee5da0418aef7df58295f2acb14f166231c1cffbe1a75c0fda506",
+      "size": 4365
+    },
+    {
+      "path": "checkpoints/latest.json",
+      "sha256": "064cffb71b7ee5da0418aef7df58295f2acb14f166231c1cffbe1a75c0fda506",
+      "size": 4365
+    },
+    {
+      "path": "claim_bundles.json",
+      "sha256": "ef0c282e5ebbb13d68b0d0831dce3936fffec411b4b0e1f4f14704f1647b55e5",
+      "size": 6144
+    },
+    {
+      "path": "claim_source_binding.json",
+      "sha256": "885b2d183f4c8eb3d424e8581120611c9dcbe89ca9318a448b42c97c8a172c59",
+      "size": 171
+    },
+    {
+      "path": "demand_cards.json",
+      "sha256": "91199b5bfb98ac30fbd1c7949cd0812b7a9c9ede78c7d61abaf469c75d49e31f",
+      "size": 57388
+    },
+    {
+      "path": "discovery_blueprint.json",
+      "sha256": "11bef56743ee0ddbfad7aba1370f3c1b6739c043985819c61e7bd542cecb1759",
+      "size": 6452
+    },
+    {
+      "path": "domain.jsonl",
+      "sha256": "2c9a06de8b4f1fb5f6bdf2994679fe5ab3829b795c34bbd996085b52b3dd28c4",
+      "size": 220429
+    },
+    {
+      "path": "evidence_references.md",
+      "sha256": "b935b4fe1fc71e0ab3ca439548e846ac146d6f4b34725dc605561dcb0506fd03",
+      "size": 2914
+    },
+    {
+      "path": "military_value_handoff.json",
+      "sha256": "8bc7d761a5a110644f1ad5d608421d49960c0a68d60cc32f889a15851b4e3084",
+      "size": 3061
+    },
+    {
+      "path": "packet_admission.json",
+      "sha256": "475440a02b91b838a29ddedcbba12ad0d8f40ec7b2272b4a46c3d02c9113c1ec",
+      "size": 488
+    },
+    {
+      "path": "reasoning_traceability.json",
+      "sha256": "4c96f61eff75a579116bf5c62c6948de1c4df6d8bd121f010e77e314310f31ed",
+      "size": 88570
+    },
+    {
+      "path": "report.md",
+      "sha256": "aee352e2b1c85b627e0802728216114061f2b9c7e656af49472c5cde0da70152",
+      "size": 56172
+    },
+    {
+      "path": "report_quality_gate.json",
+      "sha256": "1368515b14aa35b1303c6a9d5ae14801086f365037057661e3a3cda1b9930e32",
+      "size": 6645
+    },
+    {
+      "path": "round_summary.json",
+      "sha256": "ac4975cf98e4fb3a995ae0e9731dca3d0e06d41e22444109bd1342e3ab79be03",
+      "size": 199181
+    },
+    {
+      "path": "run.db",
+      "sha256": "63d90a766e0c58f830e8a8e62c1cd2a42bb7fd04566b7645fe00f4f4fc60cbed",
+      "size": 667648
+    },
+    {
+      "path": "trace.jsonl",
+      "sha256": "e028598c02c5d629c879c686475a580436547c6d8c097d6b2b335ec0c0807c1b",
+      "size": 149711
+    }
+  ],
+  "required_outputs": [
+    "report.md",
+    "capability_images.json",
+    "branch_deliverables.json",
+    "round_summary.json",
+    "domain.jsonl",
+    "trace.jsonl",
+    "demand_cards.json",
+    "capability_panorama.json",
+    "reasoning_traceability.json"
+  ],
+  "schema_version": "1.0"
+}

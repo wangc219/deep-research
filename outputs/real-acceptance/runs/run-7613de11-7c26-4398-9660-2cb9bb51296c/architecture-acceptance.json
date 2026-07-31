@@ -1,0 +1,27 @@
+{
+  "architecture_source": [
+    "编排器与动态智能体_总体架构图.pdf",
+    "制胜机理智能体_详细架构图.pdf"
+  ],
+  "audit_status": "limited",
+  "checks": {
+    "coverage_explicit": true,
+    "dynamic_agent_selection_recorded": true,
+    "final_report_present": true,
+    "five_criteria_audit_present": true,
+    "formal_evidence_present": false,
+    "four_knowledge_resources_projected": true,
+    "isolated_agent_sessions": true,
+    "l1_l2_l3_present": true,
+    "nine_field_capability_images": true,
+    "plan_graph_complete": true,
+    "real_or_fake_mode_recorded": true,
+    "six_step_reasoning_complete": true
+  },
+  "limitations": [
+    "运行链路可完整，但正式发布仍须满足覆盖、置信度、材料化、轮次和分析师确认判据。"
+  ],
+  "release_ready": false,
+  "runtime_complete": false,
+  "schema_version": "1.0"
+}

@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:65c97a86e7da0ce9",
+  "content_path": "text-65c97a86e7da0ce9.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-8fa91f1cb034",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "65c97a86e7da0ce9830cca439e76a62854067009f0551845df553607856e8d16",
+  "url": "https://www.act.nato.int/activities/lci-x/?utm_source=openai"
+}

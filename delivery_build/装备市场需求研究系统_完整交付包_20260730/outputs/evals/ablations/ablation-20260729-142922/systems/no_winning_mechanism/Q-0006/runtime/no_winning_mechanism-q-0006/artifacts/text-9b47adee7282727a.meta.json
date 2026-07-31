@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:9b47adee7282727a",
+  "content_path": "text-9b47adee7282727a.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-5b58dc887688",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "9b47adee7282727a0e373cd31aed2046c2ef07f8b733d2e1de4dd1e34b66d8c6",
+  "url": "https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2026/Discretionary%20Budget/Procurement/Missile%20Procurement%20Army.pdf"
+}

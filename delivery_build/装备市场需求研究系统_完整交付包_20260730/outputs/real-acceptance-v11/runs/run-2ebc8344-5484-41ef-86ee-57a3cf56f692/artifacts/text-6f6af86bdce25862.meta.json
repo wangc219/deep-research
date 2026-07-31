@@ -1,0 +1,14 @@
+{
+  "artifact_ref": "text:6f6af86bdce25862",
+  "content_path": "text-6f6af86bdce25862.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-5045e663aca6",
+  "kind": "text",
+  "materialization_status": "network_safety_rejected",
+  "mode": "real",
+  "reason": "host_resolution_failed",
+  "rejected_url": "https://www.sto.nato.int/publications/Management%20Reports/NATO_STO_Highlights_2020.pdf?utm_source=openai",
+  "sha256": "6f6af86bdce2586242fdca3eeff697ef1a06607227e2aa3a464004fa1cbf4d7b",
+  "url": "https://www.sto.nato.int/publications/Management%20Reports/NATO_STO_Highlights_2020.pdf?utm_source=openai"
+}

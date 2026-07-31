@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:c3d2369c8ff545c5",
+  "content_path": "text-c3d2369c8ff545c5.txt",
+  "content_type": "text/plain",
+  "direct_error": "TimeoutError: _ssl.c:1015: The handshake operation timed out",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-7531b6427838",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "c3d2369c8ff545c54dc07b269d8fb576f4efc23bfb7ecb5e55674c3d42d1f124",
+  "url": "https://www.esd.whs.mil/Portals/54/Documents/FOID/Reading%20Room/Selected_Acquisition_Reports/FY_2018_SARS/19-F-1098_DOC_45_JASSM_SAR_Dec_2018.pdf"
+}

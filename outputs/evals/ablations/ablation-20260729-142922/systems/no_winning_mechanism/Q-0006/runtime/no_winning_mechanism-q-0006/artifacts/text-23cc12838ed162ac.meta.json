@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:23cc12838ed162ac",
+  "content_path": "text-23cc12838ed162ac.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-operational_employment-web-5ca69bd8715a",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "23cc12838ed162acfc86994224e0761d2aabc55ce7b731431188fc3e7b162d74",
+  "url": "https://www.lineofdeparture.army.mil/Journals/Air-Defense-Artillery/ADA-Archive/2024-Edition/IBCS-Any-Sensor-Best-Shooter/"
+}

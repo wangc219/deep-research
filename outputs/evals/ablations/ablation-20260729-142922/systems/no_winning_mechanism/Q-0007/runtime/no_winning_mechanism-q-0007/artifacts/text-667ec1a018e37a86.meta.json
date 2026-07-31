@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:667ec1a018e37a86",
+  "content_path": "text-667ec1a018e37a86.txt",
+  "content_type": "text/plain",
+  "direct_error": "TimeoutError: _ssl.c:1015: The handshake operation timed out",
+  "encoding": "utf-8",
+  "evidence_id": "ev-operational_employment-web-d56e3a0c7cfa",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "667ec1a018e37a861a887f3e7e14613d36b8c317487b73c39aec143c37e7a5b6",
+  "url": "https://www.spaceforce.mil/News/Article-Display/Article/4545203/space-development-agency-issues-awards-to-build-36-accelerated-missile-defense/"
+}

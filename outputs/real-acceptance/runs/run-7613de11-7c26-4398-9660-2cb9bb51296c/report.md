@@ -1,0 +1,9974 @@
+# 复杂地形条件下现役低空无人机探测预警体系的传统能力缺口与升级需求 装备能力图像需求报告
+
+## 研究路线
+traditional_gap
+
+## Agent覆盖情况
+- 已覆盖能力标签：capability_gap, coa, coordination, environment, equipment, lessons, operation, scenario, technology_readiness
+- 缺失关键能力标签：无
+- 审计状态：limited
+
+## 制胜机理思考维度
+- 业务问题链：国际形势/威胁 -> 对抗场景 -> 传统场景/制胜/战法 -> 当前装备对比 -> 能力不足与空白 -> 新能力补位和现有装备升级。
+- 四类知识资源：理论工具、局部战争战例、前沿装备与技术情报、持续展开的问题链。
+- 六步推理：防御解构 -> 制胜路径 -> 效果链 -> 能力映射 -> 差距量化 -> 文字能力画像。
+- 分层门控：L1 制胜逻辑、L2 概念创新、L3 能力画像；证据或覆盖不足时定向再调。
+
+## 制胜机理阶段结论
+### L1 制胜逻辑分析
+- 置信度：0.45
+- 门控：未通过/受限
+- 原因：置信度或能力覆盖未达L1门控
+
+### L2 概念创新评估
+- 置信度：0.55
+- 门控：未通过/受限
+- 原因：L2可行性、证据或前置门控不足
+
+### L3 能力图像生成
+- 置信度：0.45
+- 门控：未通过/受限
+- 原因：L3差距依据、证据追溯或前置门控不足
+
+## 作战能力图像需求
+
+### cap-new-001-r2 传统战法能力空白补位能力
+- 类型：新作战能力方向
+- 装备类别：任务补位平台、传感器、效应器与协同节点
+- 来源制胜逻辑：传统场景/制胜/战法 -> 当前装备对比 -> 能力空白 -> 新功能产品补位
+- 关联场景：复杂地形条件下现役低空无人机探测预警体系的传统能力缺口与升级需求
+- 优先级：高：关键性高、紧迫性高、可行性中高
+- 能力差距：现有装备组合无法覆盖传统作战链中的关键空白节点或极端边界条件；本次基线：{
+  "findings": [
+    "传统能力缺口的核心不是“有没有雷达”，而是现役低空预警体系多按高空、快速、较大雷达截面积目标设计；在山地、城市、海岸等复杂地形中，小型低慢小无人机可被地形、建筑、植被、水面杂波和电磁噪声共同遮蔽，导致发现距离、识别置信度和可处置时间同步压缩。",
+    "公开战例显示，低成本无人机并非总能高成功率突防；但其数量、低成本、快速迭代和可消耗特征足以通过持续试探、诱饵、饱和和跨域协同消耗防空弹药、传感器值班能力和指挥决策带宽。",
+    "现役体系的传统缺口集中在六类：一是低空盲区和地形遮蔽；二是单传感器误警与漏警；三是RF依赖型探测/压制对静默、自主、跳频或替代链路目标适应不足；四是集中式C2在短处置窗口内延迟过大；五是末端防护成本交换不利；六是基层单位缺少有机化、可机动、可重构的探测预警与被动防护能力。",
+    "升级需求应从单点装备采购转为体系架构升级：地形建模与视域规划、分布式补盲雷达、被动RF/频谱监测、EO/IR与声学验证、边缘AI融合、低带宽降级运行、蓝白名单与民航/民用无人机去冲突、低成本拦截与被动欺骗共同构成“决策级置信度”。",
+    "复杂地形场景下，关键时间窗口不是拦截瞬间，而是从危机前异常模式建立到初始接触的数分钟至数十秒：若传感器只在目标临近防区后才给出低置信告警，后续识别、授权、处置和安全评估会被压缩到不可用。",
+    "反证与修正：电子战和传统防空并未失效，乌克兰、红海等案例显示分层防御、电子战、机动火力和共同作战图可显著降低无人机命中率；因此问题不是“传统能力完全无用”，而是其在复杂地形、饱和、低成本消耗和快速技术迭代下需要体系化补强。",
+    "面向下游装备与运用研究，应优先评估：复杂地形三维覆盖率、低空目标首警时间、虚警/漏警率、RF静默目标发现概率、网络降级下本地处置能力、低成本连续作战能力、以及不同地形下传感器—效应器—指挥授权链条的闭环时间。"
+  ],
+  "confidence": 0.82,
+  "open_questions": [
+    "不同现役雷达、被动RF、EO/IR和声学节点在山谷、城市峡谷、海岸水面和高原低温环境中的实测Pd/FAR、首警时间和连续跟踪能力仍需本级试验数据确认。",
+    "公开资料可证明无人机威胁趋势和能力缺口，但无法充分量化特定国家、特定部队、特定装备编制下的真实覆盖盲区和库存消耗速率。",
+    "AI自主、抗干扰链路、星链/蜂窝/中继式替代链路的发展速度存在不确定性；短期内受算力、重量、成本限制，但中期可能显著削弱RF依赖型防御。",
+    "复杂地形下低成本拦截器、定向能、电子战和被动防护之间的最佳成本交换组合，需要结合任务目标、授权规则和民用环境约束进一步建模。",
+    "国内/本土防御场景中，法律授权、民航安全、频谱管理和隐私限制可能比战区环境更强地约束探测与处置方式，需单独形成规则矩阵。"
+  ],
+  "handoff_summary": "本轮研究将“复杂地形条件下现役低空无人机探测预警体系的传统能力缺口”转化为一个多域、动态对抗场景：敌方以低慢小、低成本、可消耗无人机为核心，通过危机前试探、初始低空接触、体系饱和与电磁/网络压迫、持续迭代和战损后再渗透，压缩蓝方首警与处置窗口。蓝方传统缺口主要在低空盲区、单传感器不可靠、RF依赖、集中式C2延迟、基层缺少有机C-UAS能力和成本交换不利。建议下游weapon_equipment重点研究分布式多模态融合、地形感知部署、低成本拦截与边缘处理；operational_employment重点研究分层值班、降级网络、民用空域去冲突和基层有机防护；winning_mechanism重点研究以成本交换、时间窗口、体系韧性和快速迭代压制无人机威胁的机制。",
+  "search_plan": [
+    {
+      "track": "近年公开战例",
+      "queries": [
+        "Russia Ukraine war low altitude drones detection air defense lessons terrain urban 2024 report",
+        "Nagorno-Karabakh 2020 drones air defense lessons small UAV radar electronic warfare report",
+        "Houthi Red Sea drones air defense saturation lessons counter UAS low cost 2024 report",
+        "Drone Saturation Russia Shahed Campaign Ukraine air defense acoustic sensors electronic warfare"
+      ]
+    },
+    {
+      "track": "现代演训与作战概念",
+      "queries": [
+        "Joint Counter Small UAS Office counter drone swarm demonstration 2024 layered approach",
+        "DoD Strategy for Countering Unmanned Systems detection active passive defenses 2024",
+        "counter small unmanned aircraft systems strategy DOTMLPF-P layered active passive defense",
+        "Small Drones Big Problems First Principles Countering UAS 2026"
+      ]
+    },
+    {
+      "track": "无人和智能系统运用",
+      "queries": [
+        "Ukraine FPV drones AI autonomous navigation anti jamming CSIS 2025",
+        "sUAS infiltration Ukraine electronic warfare GNSS spoofing attritable tactics",
+        "low slow small UAS air littoral contested space drone warfare lessons",
+        "counter UAS sensor fusion radar RF EO acoustic review"
+      ]
+    },
+    {
+      "track": "电磁网络与太空约束",
+      "queries": [
+        "Russia Ukraine electronic warfare drones GPS jamming UAV losses RUSI",
+        "contested electromagnetic spectrum UAS PNT jamming spoofing Ukraine report",
+        "counter UAS RF detection limitations multipath interference line of sight FAA technical considerations",
+        "GPS jamming satellite communications drone countermeasure Ukraine report"
+      ]
+    },
+    {
+      "track": "城市海岸高原等环境变化",
+      "queries": [
+        "urban counter UAS detection line of sight multipath clutter acoustic radar RF EO IR report PDF",
+        "low altitude air surveillance radar terrain masking line of sight mountains official report",
+        "counter UAS coastal environment sea clutter weather rain wind acoustic false alarms report",
+        "complex terrain low altitude drone detection radar clutter acoustic RF challenges mountainous"
+      ]
+    }
+  ],
+  "contradictions": [
+    "电子战既是有效反无人机手段，也是体系脆弱点。IAMD COE和CSIS均显示EW能大规模压制无人机，但CSIS和2026年ISIS报告也显示抗干扰、CRPA、替代链路、摄像头/中继/网状链路正在削弱单纯RF压制的可靠性。",
+    "Shahed等大型一向攻击无人机整体命中率并不高，ISIS数据表明大量无人机被拦截、迷航或受EW影响；但CSIS和ISIS同时指出持续大规模发射可消耗防空资源并在恶劣天气和基础设施累积损伤下形成战略效果。",
+    "雷达仍是全天候、可探测静默/自主目标的关键传感器；但FAA、DoD和学术综述均指出，低空小目标在地形遮蔽、地物反射、MTI盲速、杂波和小RCS条件下会显著降低雷达可靠性，因此“雷达必要”不等于“雷达充分”。",
+    "复杂地形既帮助攻击方利用山脊、建筑、树木和水面杂波接近，也会缩短无人机自身通信链路、导航和续航可靠性；蓝方若能提前做视域、RF传播和网络路径建模，可把地形从缺口转化为防御条件。",
+    "AI自主被广泛视为未来威胁放大器；但IAMD COE报告提醒，小型商用无人机在短期内仍受机载算力、重量、功耗和成本限制，不能假设所有低空目标都已具备高可靠自主突防能力。"
+  ],
+  "confidence_basis": "证据覆盖政府/军方文件、国会研究、军种专业期刊、智库报告、学术综述和公开战例，来源族群超过3类且包含2024、2025、2026年资料。关于复杂地形物理约束、传感器局限和多模态融合的证据直接性较高；关于俄乌、纳卡、红海战例的证据可相互印证无人机饱和、低成本消耗和分层防御趋势。主要不确定性在于具体装备性能、特定地域覆盖率、实际库存消耗和敌方最新链路/自主能力通常不公开，因此场景参数采用公开资料支撑的区间化、假设化表达。",
+  "source_claims": [
+    {
+      "url": "https://media.defense.gov/2026/Jul/08/2003958884/-1/-1/1/SMALL-DRONES-BIG-PROBLEMS-A-FIRST-PRINCIPLES-APPROACH-TO-Counter-UAS.PDF",
+      "claim": "[E1] 该DoD/联合跨机构材料指出无人机防护没有单一银弹，需雷达、光电/红外、声学、RF等互补传感器形成决策级置信度；山地、城市、植被、天气、RF噪声和网络路径会共同影响探测与处置。"
+    },
+    {
+      "url": "https://www.war.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/",
+      "claim": "[E2] DoD 2024年发布反无人系统战略，称无人系统对人员、设施和资产构成紧迫且持久威胁，并强调需统一理解和跨部门方法应对快速演化的无人系统。"
+    },
+    {
+      "url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+      "claim": "[E3] DoD战略事实清单强调无人系统正在改变冲突特征，短期重点包括提升探测、主动防御和被动防御，并面向更大数量、更高自主化和网络化威胁做中长期准备。"
+    },
+    {
+      "url": "https://www.army.mil/article-amp/278404/joint_counter_small_uas_office_conducts_successful_counter_drone_swarm_demonstration",
+      "claim": "[E4] 美陆军JCO 2024年蜂群反制演示中，每轮发射40多个UAS目标并评估多套系统；结论是单一能力无法应对多方向、多速度、多尺寸的大规模无人机剖面，需要系统-of-systems和分层方法。"
+    },
+    {
+      "url": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_5.html",
+      "claim": "[E5] FAA雷达说明指出，低空航空器若被山体遮蔽或低于雷达波束/受地球曲率影响可能看不见；较小反射面目标也比大型飞机更难由一次雷达发现。"
+    },
+    {
+      "url": "https://www.faa.gov/sites/faa.gov/files/airports/airport_safety/Attachment-3-UAS-Detection-Technical-Considerations.pdf",
+      "claim": "[E6] FAA UAS探测技术考虑文件指出，雷达和RF常作为主探测源，EO和声学通常是验证/辅助传感器；树木、建筑、地形、RF干扰、多径、天气、悬停/垂直运动和虚警都会影响系统效能。"
+    },
+    {
+      "url": "https://www.faa.gov/airports/new_entrants/uas_detection_mitigation_response",
+      "claim": "[E7] FAA机场UAS探测页面指出，雷达、RF、EO和声学可单独或组合用于探测验证，但探测系统不能自行判断UAS意图或威胁等级，且部署需考虑法律、EMI和空域运行影响。"
+    },
+    {
+      "url": "https://www.armyupress.army.mil/Journals/Military-Review/Online-Exclusive/2024-OLE/Grenade-Dropping-Quadcopters-II/",
+      "claim": "[E8] Army University Press关于俄乌无人机战的文章指出，1-3类小型UAS提供持久且难探测的RISTA能力；高空易观测UAS在成熟战区被EW和防空显著压制，而基层仍缺少足够有机C-sUAS能力。"
+    },
+    {
+      "url": "https://www.armyupress.army.mil/Journals/Military-Review/English-Edition-Archives/Nov-Dec-2024/Cunning-Tools-of-War/",
+      "claim": "[E9] Army University Press文章将低空空域称为被争夺的air littoral，并指出乌克兰小型UAS可采用消耗性渗透，即便少量存活也能通过不同路线和频率寻找电子战防线弱点。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare",
+      "claim": "[E10] CSIS基于前线访谈指出多数低成本FPV任务成功率约10%至15%，熟练操作者可达30%至50%；同时EW对控制链和GPS构成持续威胁，而AI导航和抗干扰能力正在被探索。"
+    },
+    {
+      "url": "https://iamd-coe.org/wp-content/uploads/2024/02/The-Evolving-UAS-Threat-Lessons-from-the-Russian-Ukrainian-War-Since-2022-on-Future-Air-Defence-Challenges-and-Requirements.pdf",
+      "claim": "[E11] IAMD COE报告指出俄乌冲突中电磁频谱高度拥挤和受争夺，俄军约每10公里部署一套主要EW系统并造成乌军约每月1万架UAV损失；但AI/自主、抗EW和卫星通信发展使攻防平衡保持不稳定。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/air-and-missile-war-nagorno-karabakh-lessons-future-strike-and-defense",
+      "claim": "[E12] CSIS纳卡空中与导弹战研究指出，S-300等大型防空系统并非为反UAV任务设计且早期遭打击；核心教训是需要全谱系防空、机动SHORAD和被动防护。"
+    },
+    {
+      "url": "https://s3.us-east-1.amazonaws.com/files.cnas.org/documents/Report_CUAS_Defense_Sep-2025_final.pdf",
+      "claim": "[E13] CNAS红海研究称2023年11月至2025年1月美海空力量击落约480架胡塞无人机，成功依赖分层、多域一体防御和快速学习，但成本与高节奏不可持续，部分交战窗口仅为秒级。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/drone-saturation-russias-shahed-campaign",
+      "claim": "[E14] CSIS关于Shahed饱和攻击的研究指出，俄方自2024年9月起将Shahed发射从每周约200架提升到2025年3月超过1000架；乌方依靠声学传感器、共同作战系统、EW和机动防空降低成本交换，但饱和压力仍上升。"
+    },
+    {
+      "url": "https://isis-online.org/uploads/isis-reports/documents/January-2026-Updated-Analysis-of-Russian-Shahed-type-UAVs-Deployment-Against-Ukraine_Feb-10_2026.pdf",
+      "claim": "[E15] ISIS 2026年2月报告指出，2026年1月Shahed型UAV继续承担直接打击基础设施与消耗防空资源的双重任务，并出现CRPA、尝试Starlink连接、中继无人机网状链路、在线摄像头和实时航路调整等技术改进。"
+    },
+    {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10780901/",
+      "claim": "[E16] 学术综述总结雷达、RF、声学和视觉探测均有环境干扰因素：鸟类/野生动物、频率重叠/干扰、风雨噪声、夜间/雾雨雪、遮挡和复杂背景会增加漏警或虚警；多传感器融合可提升鲁棒性。"
+    }
+  ],
+  "analysis_sections": {
+    "scenario_framework": {
+      "scenario_name": "复杂地形低空无人机探测预警体系压力场景",
+      "purpose": "检验现役低空无人机探测预警体系在山地—城市—海岸复合环境中的传统能力缺口，并推导升级需求；场景仅用于防御性能力研判，不提供攻击执行步骤。",
+      "background": {
+        "operational_setting": "蓝方防区位于山地边缘城市与近海/河口交通节点交汇区，存在山脊、谷地、高层建筑、仓储园区、港口水面、通信基站、民用无人机活动和复杂电磁背景。",
+        "blue_mission": "在不干扰民航和民用通信的前提下，对低空无人机活动形成早期发现、连续跟踪、身份判别、威胁评估、告警分发和安全处置支持。",
+        "red_objective": "通过低成本、可消耗、低空、分散和多样化无人机活动压缩蓝方发现—识别—决策—处置窗口，消耗传感器值班与防空资源，并寻找体系盲区。",
+        "key_assumptions": [
+          "[A1] 敌方不需要每架无人机成功，只需通过持续试探和少量突防制造态势压力。",
+          "[A2] 蓝方现役体系以固定雷达、少量RF探测、EO/IR验证、人工值守和上级集中确认流程为主，基层有机C-UAS能力不足。",
+          "[A3] 民用环境中蓝方不能无限制使用干扰、激光或动能处置，必须先完成识别、授权和安全评估。",
+          "[A4] 复杂地形对攻防双方同时施加约束：既遮蔽无人机，也影响其链路、导航和续航。"
+        ],
+        "evidence_or_assumption_links": [
+          "E1",
+          "E3",
+          "E4",
+          "E5",
+          "E6",
+          "E7",
+          "E16",
+          "A1",
+          "A2",
+          "A3",
+          "A4"
+        ]
+      },
+      "forces_and_systems": {
+        "blue_force": [
+          "固定低空监视雷达与既有防空预警节点",
+          "若干机动补盲雷达/便携式雷达",
+          "被动RF侦测与频谱监测节点",
+          "EO/IR云台、热像仪、可见光摄像头",
+          "声学传感器或群众/哨兵观测渠道",
+          "本地指挥所、上级空情/防空C2、民航/公安/频谱管理联络机制",
+          "有限电子压制、低成本拦截、被动伪装/遮蔽/分散措施"
+        ],
+        "red_force_abstract": [
+          "低慢小四旋翼/多旋翼侦察无人机",
+          "FPV或一次性小型无人机",
+          "固定翼一向攻击或诱饵无人机",
+          "RF发射较弱、间歇通信或预编程航线无人机",
+          "用于制造虚警和资源消耗的非致命/诱饵平台",
+          "电磁侦察、网络压力和信息欺骗支援能力"
+        ]
+      },
+      "scenario_horizons": [
+        {
+          "phase": "危机前预警",
+          "description": "防区周边出现异常民用无人机活动、短时RF信号、夜间低空噪声、社交媒体/公开影像收集、山脊和楼顶附近可疑活动。敌方可能进行传感器覆盖摸底和蓝方响应时间观察。",
+          "blue_tasks": [
+            "建立基线：常态RF、民用无人机航迹、鸟群/船舶/车辆/风机/港口机械背景。",
+            "基于三维地形、建筑物和植被生成雷达/EO/RF/声学视域图。",
+            "把异常模式纳入预警而非等待明确入侵。",
+            "建立民航、公安、频谱和设施业主联动流程。"
+          ],
+          "triggers": [
+            "同一区域重复出现短时无人机信号或视觉观测",
+            "防区盲区边缘出现疑似测绘/观察活动",
+            "夜间或恶劣天气中出现多源弱告警"
+          ],
+          "termination_conditions": [
+            "完成盲区复核与传感器补位",
+            "未发现持续威胁且异常恢复常态",
+            "进入初始接触阶段"
+          ],
+          "evidence_or_assumption_links": [
+            "E1",
+            "E6",
+            "E7",
+            "E16",
+            "A1"
+          ]
+        },
+        {
+          "phase": "初始接触",
+          "description": "低空目标利用山脊、建筑群、树线或水面背景进入外围；雷达出现低置信小目标或间歇航迹，RF节点可能捕捉到短脉冲或完全静默，EO/IR受到天气、背景热源和遮挡影响。",
+          "blue_tasks": [
+            "多源交叉验证：雷达给出方位/速度，RF判别链路特征，EO/IR确认外形，声学和哨兵观测补充。",
+            "按威胁等级而非单点告警触发响应。",
+            "在不危及民用空域条件下发布分级告警和临时空域/设施防护动作。"
+          ],
+          "triggers": [
+            "多个传感器在相近时间/空间内出现弱相关",
+            "同一航迹在盲区边界反复消失再出现",
+            "RF噪声或GNSS异常与低空告警同时发生"
+          ],
+          "termination_conditions": [
+            "目标被识别为合法/无威胁并解除警戒",
+            "目标退出防区且无后续批次",
+            "出现多批次、多方向或电磁压迫迹象，进入体系对抗"
+          ],
+          "evidence_or_assumption_links": [
+            "E5",
+            "E6",
+            "E16",
+            "E1",
+            "A3"
+          ]
+        },
+        {
+          "phase": "体系对抗",
+          "description": "敌方由单机试探转为多批次、多方向、诱饵与真实目标混合；同时出现RF拥塞、GNSS干扰/欺骗、链路间歇、网络回传延迟和虚警增多。蓝方从单目标处置转为态势管理和资源分配。",
+          "blue_tasks": [
+            "维持共同作战图，但允许边缘节点在上级链路降级时本地生成威胁优先级。",
+            "将拦截资源优先用于穿越关键防护圈、具有高置信敌意或高危载荷迹象的目标。",
+            "采取被动防护：关键装备分散、遮蔽、诱饵、灯火/热源/电磁特征管理。",
+            "评估电子压制与民用通信、己方无人机和传感器之间的电磁互扰。"
+          ],
+          "triggers": [
+            "同一时间出现多方向航迹或诱饵/真实目标混杂",
+            "雷达/RF/EO传感器输出互相矛盾",
+            "上级链路延迟导致确认时间超过末端处置窗口",
+            "蓝方高价值节点被持续侦察或反复虚警牵制"
+          ],
+          "termination_conditions": [
+            "攻击批次停止且态势恢复稳定",
+            "蓝方资源消耗达到预设阈值并转入持续作战节奏",
+            "若出现传感器/通信节点损伤，则进入战损重构"
+          ],
+          "evidence_or_assumption_links": [
+            "E3",
+            "E4",
+            "E9",
+            "E11",
+            "E13",
+            "E14",
+            "E15",
+            "A2"
+          ]
+        },
+        {
+          "phase": "持续作战",
+          "description": "无人机威胁进入日常化、高频化和迭代化；敌方根据蓝方反应调整飞行高度、时间、链路、诱饵比例和目标类型。蓝方重点由单次成功拦截转为成本、人员、传感器维护和弹药库存的长期承受能力。",
+          "blue_tasks": [
+            "统计每类传感器虚警、漏警和维护负担，按地形区块调整部署。",
+            "低成本优先：对低价值目标采用监视、驱离、遮蔽和电子/非动能手段，对高价值威胁保留高端拦截。",
+            "更新RF/雷达/声学/视觉特征库，训练操作员识别新型诱饵和民用混杂目标。",
+            "形成24/7值守轮换、备件和电源/网络冗余。"
+          ],
+          "triggers": [
+            "连续多日多批次无人机活动",
+            "蓝方拦截成本明显高于来袭平台成本",
+            "传感器误警导致疲劳或响应迟滞",
+            "敌方出现新频段、新外形或新抗干扰特征"
+          ],
+          "termination_conditions": [
+            "威胁活动降至基线水平",
+            "完成战术/技术升级并恢复成本交换优势",
+            "发生关键节点损伤并转入战损重构"
+          ],
+          "evidence_or_assumption_links": [
+            "E8",
+            "E10",
+            "E11",
+            "E14",
+            "E15",
+            "E16"
+          ]
+        },
+        {
+          "phase": "战损重构",
+          "description": "部分传感器、通信、供电或C2节点失效；蓝方需要在地形和电磁约束下快速恢复低空态势感知，避免因单点损伤形成可重复利用的低空通道。",
+          "blue_tasks": [
+            "启用机动补盲节点、备用电源、离线地图和本地边缘处理。",
+            "将固定节点覆盖转为临时网格化覆盖，重点保护关键通道和高价值区域。",
+            "以最小网络依赖维持本地告警和跨单位简报。",
+            "记录敌方利用的盲区和触发条件，纳入下一轮部署优化。"
+          ],
+          "triggers": [
+            "关键传感器掉线或误差显著升高",
+            "回传链路拥塞/中断",
+            "多源空情无法融合或重复目标严重",
+            "敌方利用相同盲区重复进入"
+          ],
+          "termination_conditions": [
+            "恢复最低可接受覆盖和本地处置能力",
+            "完成备用节点部署和盲区重新评估",
+            "威胁降低或转入新一轮持续作战"
+          ],
+          "evidence_or_assumption_links": [
+            "E1",
+            "E3",
+            "E4",
+            "E6",
+            "A2",
+            "A4"
+          ]
+        }
+      ],
+      "victory_criteria": {
+        "blue_success": [
+          "低空关键通道首警时间满足识别和安全处置需要",
+          "多传感器融合后虚警可控、漏警下降",
+          "在网络降级和部分节点损伤下仍可本地告警与分级响应",
+          "拦截/处置成本与来袭成本差距缩小",
+          "敌方无法通过少量试探稳定复现低空通道"
+        ],
+        "red_success_abstract": [
+          "蓝方在多个关键地形区块出现持续盲区",
+          "虚警和诱饵迫使蓝方高成本响应",
+          "集中式确认流程导致处置窗口丧失",
+          "蓝方传感器/通信/值班体系出现疲劳或降级"
+        ]
+      }
+    },
+    "enemy_coa": [
+      {
+        "coa_name": "COA-1 最可能方案：低强度持续侦察试探与盲区测绘",
+        "intent": "以低成本、低风险平台持续观察蓝方反应、传感器覆盖和出动规律，逐步识别低空盲区和误警触发点。",
+        "conceptual_actions_non_executable": [
+          "在民用空域背景、城市边缘和山地遮蔽附近制造间歇低空活动。",
+          "混用可见RF发射目标、弱发射目标和合法/疑似合法活动以测试蓝方识别规则。",
+          "反复观察蓝方从首警到确认、授权和处置的时间。"
+        ],
+        "observable_indicators": [
+          "同一区域短时RF信号或无人机目击重复出现但未深入防区",
+          "雷达低置信航迹在山脊/建筑边缘消失再出现",
+          "民用无人机活动量与敏感时段、演训或重要保障活动异常相关",
+          "社交媒体、公开影像或人员观察活动增多"
+        ],
+        "key_nodes": [
+          {
+            "node": "基线污染",
+            "effect_on_blue": "使蓝方难以区分正常民用活动与威胁准备。",
+            "evidence_or_assumption_links": [
+              "E7",
+              "E16",
+              "A1"
+            ]
+          },
+          {
+            "node": "盲区确认",
+            "effect_on_blue": "暴露地形遮蔽、传感器死角和C2延迟。",
+            "evidence_or_assumption_links": [
+              "E5",
+              "E6",
+              "E1"
+            ]
+          }
+        ],
+        "risk_to_red": [
+          "低空链路受地形影响可能失联",
+          "频繁试探会暴露模式并给蓝方建立基线",
+          "民用环境中平台被识别后可能触发执法和空域管制"
+        ],
+        "blue_pressure_points": [
+          "身份判别",
+          "民用无人机去冲突",
+          "值班疲劳",
+          "低空盲区建模",
+          "跨部门信息共享"
+        ]
+      },
+      {
+        "coa_name": "COA-2 最危险方案：多轴饱和、诱饵混杂与电磁/网络压迫",
+        "intent": "以多批次、多方向、低成本无人机和诱饵目标迫使蓝方同时处理大量低置信告警，消耗拦截资源并压缩处置窗口。",
+        "conceptual_actions_non_executable": [
+          "将诱饵、侦察和真实威胁目标混杂，制造优先级排序困难。",
+          "利用地形、城市遮挡和水面/车辆/鸟群杂波增加虚警。",
+          "通过电磁拥塞、GNSS异常或网络压力降低蓝方传感器和C2融合质量。",
+          "在蓝方响应后改变频段、时段、航迹和平台类型，延长消耗战。"
+        ],
+        "observable_indicators": [
+          "同一时间多方向低空航迹增加",
+          "RF噪声底、GNSS异常、通信延迟与无人机告警同步出现",
+          "EO/IR被热背景、遮挡或诱饵牵引，确认时间延长",
+          "拦截弹药、值班人员和传感器维护负担快速上升"
+        ],
+        "key_nodes": [
+          {
+            "node": "态势过载",
+            "effect_on_blue": "传感器融合和人工确认产生队列积压，威胁排序错误概率上升。",
+            "evidence_or_assumption_links": [
+              "E4",
+              "E13",
+              "E14"
+            ]
+          },
+          {
+            "node": "成本交换施压",
+            "effect_on_blue": "诱使蓝方使用昂贵拦截手段对付低成本目标，削弱持续作战能力。",
+            "evidence_or_assumption_links": [
+              "E13",
+              "E14",
+              "E15"
+            ]
+          },
+          {
+            "node": "电磁/网络降级",
+            "effect_on_blue": "RF探测、GNSS时间/位置、视频回传和共同作战图出现不一致。",
+            "evidence_or_assumption_links": [
+              "E1",
+              "E6",
+              "E11",
+              "E15"
+            ]
+          }
+        ],
+        "risk_to_red": [
+          "大规模活动更易被多源发现",
+          "诱饵比例过高会降低实际效果",
+          "持续发射对后勤、组装和操作者训练提出要求"
+        ],
+        "blue_pressure_points": [
+          "多目标跟踪容量",
+          "威胁优先级排序",
+          "边缘授权",
+          "低成本处置",
+          "EW与己方通信去冲突",
+          "持续补给与人员轮换"
+        ]
+      },
+      {
+        "coa_name": "COA-3 替代方案：RF静默/半自主低空渗透与合法流量伪装",
+        "intent": "减少可被RF探测和压制的暴露特征，依赖预编程、惯导/视觉辅助或间歇链路，通过合法无人机/鸟群/车辆/港口机械背景降低识别置信度。",
+        "conceptual_actions_non_executable": [
+          "减少连续控制链路暴露，采用间歇通信或预编程任务。",
+          "选择蓝方RF强噪声区、城市遮挡区或复杂热背景区使探测结果不一致。",
+          "利用民用无人机密集时段或合法空域活动提高蓝方误判成本。"
+        ],
+        "observable_indicators": [
+          "雷达/EO有弱迹象但RF无对应链路",
+          "目标航迹规律性强但身份信息缺失",
+          "Remote ID或白名单数据与物理航迹不一致",
+          "蓝方RF压制后目标仍保持部分任务行为"
+        ],
+        "key_nodes": [
+          {
+            "node": "RF探测旁路",
+            "effect_on_blue": "RF依赖型预警和操作者定位能力下降。",
+            "evidence_or_assumption_links": [
+              "E6",
+              "E10",
+              "E11",
+              "E15"
+            ]
+          },
+          {
+            "node": "识别规则混淆",
+            "effect_on_blue": "合法/非法、威胁/非威胁分类时间增加。",
+            "evidence_or_assumption_links": [
+              "E7",
+              "E16",
+              "A3"
+            ]
+          }
+        ],
+        "risk_to_red": [
+          "小型平台自主能力受算力、重量、电源和成本约束",
+          "静默减少实时操控能力并提高任务不确定性",
+          "雷达、EO/IR和声学融合仍可能发现其物理存在"
+        ],
+        "blue_pressure_points": [
+          "非RF目标探测",
+          "多模态融合",
+          "白名单/Remote ID可信校验",
+          "本地AI分类",
+          "被动防护"
+        ]
+      }
+    ],
+    "critical_timeline": [
+      {
+        "time_window": "T-30至T-7天：危机前模式建立",
+        "red_activity_abstract": "低强度观察、民用流量混入、短时RF活动和公开信息收集。",
+        "blue_decision": "是否把弱异常纳入预警并开展盲区复核。",
+        "traditional_gap": "现役体系常等待明确空情告警，缺少把地形、RF基线和民用活动融合为异常模式的机制。",
+        "upgrade_need": "建立三维视域、RF传播、常态航迹和异常模式数据库；把民用/执法/频谱信息接入低空态势。",
+        "observable_indicators": [
+          "重复短时RF信号",
+          "固定区域目击报告",
+          "不寻常民用无人机集中",
+          "公开影像收集活动"
+        ],
+        "evidence_or_assumption_links": [
+          "E1",
+          "E6",
+          "E7",
+          "A1"
+        ]
+      },
+      {
+        "time_window": "T-72至T-24小时：传感器与响应摸底加剧",
+        "red_activity_abstract": "围绕防区边缘进行多点低空试探，观察蓝方响应节奏。",
+        "blue_decision": "是否调整机动传感器、值班等级和被动防护。",
+        "traditional_gap": "固定传感器对山体、建筑和水面杂波导致的低空盲区反应慢。",
+        "upgrade_need": "机动补盲雷达/被动RF/EO点位预案，临时升高传感器、边缘融合和地形补盲部署。",
+        "observable_indicators": [
+          "航迹在盲区边缘反复中断",
+          "不同传感器对同一事件判断不一致",
+          "低空噪声和视觉观测先于雷达确认"
+        ],
+        "evidence_or_assumption_links": [
+          "E5",
+          "E6",
+          "E16",
+          "A4"
+        ]
+      },
+      {
+        "time_window": "T-60至T-10分钟：初始接触与分级告警",
+        "red_activity_abstract": "小批次低空目标进入外围探测范围，可能伴随诱饵或RF噪声。",
+        "blue_decision": "是否升级为无人机威胁事件并启动空域/设施防护。",
+        "traditional_gap": "单传感器置信度不足导致等待人工确认，压缩后续处置时间。",
+        "upgrade_need": "多模态置信评分、自动关联、EO/IR slew-to-cue、声学/哨兵补充和快速分级告警。",
+        "observable_indicators": [
+          "低RCS低速航迹",
+          "间歇RF发射",
+          "EO/IR受到背景干扰",
+          "GNSS或网络异常同步出现"
+        ],
+        "evidence_or_assumption_links": [
+          "E1",
+          "E4",
+          "E6",
+          "E16"
+        ]
+      },
+      {
+        "time_window": "T-10分钟至T+30分钟：体系对抗窗口",
+        "red_activity_abstract": "多方向、多批次、诱饵/真实目标混合，叠加电磁和网络压力。",
+        "blue_decision": "如何在有限时间内排序目标、分配低成本与高端处置手段、维持共同作战图。",
+        "traditional_gap": "集中式C2、人工确认和高成本拦截难以应对饱和和秒级/分钟级窗口。",
+        "upgrade_need": "边缘授权、降级运行、威胁优先级算法、低成本拦截层、被动防护和网络断续下的本地态势。",
+        "observable_indicators": [
+          "多传感器目标重复或冲突",
+          "航迹数量超过人工处理能力",
+          "回传视频延迟",
+          "拦截资源快速消耗"
+        ],
+        "evidence_or_assumption_links": [
+          "E3",
+          "E4",
+          "E13",
+          "E14",
+          "E15"
+        ]
+      },
+      {
+        "time_window": "T+30分钟至T+72小时：持续消耗与快速迭代",
+        "red_activity_abstract": "根据蓝方响应改变平台、频段、时段、诱饵比例和接近方向。",
+        "blue_decision": "如何维持成本交换、人员轮换、传感器维护和特征库更新。",
+        "traditional_gap": "装备采购与软件/特征库更新周期慢，基层训练和备件不足。",
+        "upgrade_need": "开放式架构、快速软件更新、特征库共享、消耗品储备、训练闭环和跨单位经验回灌。",
+        "observable_indicators": [
+          "新频段或静默目标增加",
+          "诱饵比例变化",
+          "夜间/恶劣天气活动增加",
+          "传感器误警模式变化"
+        ],
+        "evidence_or_assumption_links": [
+          "E8",；{
+  "findings": [
+    "复杂地形下的传统低空无人机预警缺口主要不是单一雷达灵敏度不足，而是低空视距、地形遮蔽、建筑/林地杂波、多路径、电磁噪声和短预警时间叠加造成的体系性缺口。",
+    "现役成熟体系以美国LIDS家族为代表：FS-LIDS用于固定点防护，M-LIDS用于机动防护，核心由KuRFS/相关雷达、EO/IR、电子战、Coyote拦截器和FAAD C2组成；公开资料显示其目标对象主要为Group 1-3小型无人机及其他低飞威胁。",
+    "GAO与CRS资料显示，FS-LIDS、M-LIDS、Coyote、Ku-band雷达族和手持/下车系统已进入美陆军正式采办组合并在2024财年进入全速生产；但成本、测试逼真度、人员训练、跨军种C2和工业扩产仍是约束。",
+    "公开参数显示，若在开阔或合理布站条件下，专用小无人机雷达可提供数公里级发现：Saab Giraffe 1X宣称可在4 km发现很小UAV；Robin IRIS标准模式为5 km仪器化距离、长距模式可至12 km；Hensoldt SPEXER 2000 Coastal对0.2 m² RCS UAV公开探测距离为9 km。复杂地形中这些距离不应直接外推。",
+    "被动RF/协议解析、声学、EO/IR和多传感器融合可补足有源雷达暴露和遮蔽问题，但对自主航线、低发射控制、跳频、光纤控制、复杂电磁环境和恶劣天气均存在边界。",
+    "在研升级方向集中于低成本、低SWaP、模块化、被动/分布式传感器，车载/下车/系留或小型UAS搭载传感器，多源融合C2，以及低成本硬杀伤、非动能、定向能和高功率微波等多层反制。",
+    "对手优势在于小型无人机低成本、低雷达/声/热/RF特征、可低空贴地或利用地形遮蔽、可饱和攻击和快速迭代；其依赖包括导航、数据链、发射/回收点、能源、操作者和后勤补给，且森林、复杂地形和电磁干扰同样会限制无人机操控与传感链路。",
+    "场景适配度判断：固定基地和关键基础设施适合FS-LIDS/多传感器塔台化布设；机动分队适合M-LIDS、轻量雷达、被动RF和便携告警；山地、森林、城市峡谷和海岸/港口需要分布式多高度布站、被动探测和本地化低时延C2，而不能依赖单点远程雷达。",
+    "防御性升级需求应优先解决“发现—识别—告警—交接”链条：分布式传感器覆盖低空死角、融合算法降低鸟类/车辆/旋翼杂波误警、C2兼容FAAD/IBCS/TAK类接口、弹药/能源补给与低成本交战策略，以及常态化红蓝对抗测试。"
+  ],
+  "confidence": 0.82,
+  "open_questions": [
+    "各型雷达在山地、森林、城市峡谷等复杂地形中的有效发现距离、虚警率和跟踪连续性缺乏统一公开测试数据；公开厂商参数多基于开阔或理想布设条件。",
+    "KuRFS、XBAEU、AN/TPQ-50改型、SPEXER 2000 3D MkIII等具体批次间的探测距离、抗干扰能力和软件版本差异公开资料有限。",
+    "Coyote Block 2/Block 3NK、BLADE、DE M-SHORAD、IFPC-HEL/HPM和下一代C-UAS导弹的单位成本、弹药库存、可靠性和作战可用率缺少可交叉核验的公开数据。",
+    "FAAD C2与IBCS、JADC2、TAK、北约接口之间的具体数据模型、认证状态和网络抗毁性公开信息不足。",
+    "反制光纤控制FPV、自主终端识别、无RF发射航线飞行和大规模蜂群的体系效果仍需更多公开实测。"
+  ],
+  "handoff_summary": "本轮仅基于公开资料形成传统能力缺口研究包。结论是：现役低空无人机探测预警体系已具备成熟的点防护和机动C-UAS能力，但在复杂地形下仍受低空视距、地形遮蔽、杂波、虚警、C2交接、成本和饱和压力制约。建议下游围绕“多源分布式低空探测、低SWaP被动/主动融合、开放C2、低成本多层拦截、训练与后勤韧性”开展战法与制胜机理分析。",
+  "search_plan": [
+    {
+      "track": "现役型号与部署规模",
+      "queries": [
+        "site:army.mil counter small UAS low altitude detection radar complex terrain LIDS KuRFS 2025",
+        "LIDS Low Slow Small Unmanned Aircraft Integrated Defeat System KuRFS Coyote M-LIDS Army 2025 official",
+        "Leonardo DRS M-LIDS counter UAS system deployed Stryker 2025 official",
+        "DSCA UAE FS-LIDS 2026 Coyote KuRFS $2.10 billion official"
+      ]
+    },
+    {
+      "track": "在研项目与预算采购",
+      "queries": [
+        "FY 2026 budget counter-UAS Army LIDS M-LIDS FS-LIDS Coyote procurement 3.1 billion official",
+        "site:asafm.army.mil FY 2026 counter small UAS Coyote LIDS budget justification",
+        "Army SBIR low altitude passive detection system terrain curvature obstacles sUAS 2025",
+        "Next Generation Counter UAS Missile Army FY 2027 common launcher"
+      ]
+    },
+    {
+      "track": "关键参数和任务载荷",
+      "queries": [
+        "KuRFS radar specifications range 360 coverage counter UAS official",
+        "SAAB Giraffe 1X drone detection radar range official counter UAS",
+        "Robin Radar IRIS drone detection radar range official 2025",
+        "HENSOLDT SPEXER 2000 UAV 0.2 m2 RCS 9 km official"
+      ]
+    },
+    {
+      "track": "体系接口与联合作战能力",
+      "queries": [
+        "FAAD C2 counter UAS LIDS interface command and control official 2025",
+        "Northrop Grumman FAAD C2 counter UAS Forward Area Air Defense command control 2025 official",
+        "Army FAADC2 LIDS M-LIDS FS-LIDS command and control integration counter UAS 2025",
+        "IBCS FAAD C2 counter UAS integration LIDS 2025"
+      ]
+    },
+    {
+      "track": "技术成熟度工业基础与保障约束",
+      "queries": [
+        "GAO-25-107491 counter UAS FS-LIDS M-LIDS full rate production 2024",
+        "CRS Department of Defense Counter-UAS Background Issues Congress LIDS Coyote cost technical maturity 2025",
+        "RUSI Protecting the Force from Uncrewed Aerial Systems layered counter UAS 2024",
+        "NATO counter UAS fiber optic drone EW ineffective detection 2025"
+      ]
+    }
+  ],
+  "contradictions": [
+    "冲突/边界1：厂商公开参数显示专用雷达在开阔条件下具备数公里级小UAV发现能力，但陆军SBIR明确指出现有系统受地形、地球曲率和障碍物影响，低空sUAS预警窗口有限。因此“雷达能力强”与“复杂地形预警不足”并不矛盾，关键在布站和场景。",
+    "冲突/边界2：CRS记录Coyote已有实战拦截成功和大规模采购需求，但同一报告也指出其不一定适合廉价无人机的成本交换。因此成熟度高不等于成本可持续。",
+    "冲突/边界3：定向能和高功率微波常被描述为低单发成本方案，但CRS指出其M-SHORAD方向曾有延期和用户评价一般，同时规模化装备的前期成本可能抵消单发成本优势。",
+    "冲突/边界4：被动RF/协议解析系统可降低暴露并提供识别，但NATO相关资料显示光纤控制无人机使传统EW类反制失效或效果下降；自主/预编程航线也会削弱RF探测的可用性。",
+    "冲突/边界5：复杂地形既削弱防御方探测，也限制无人机操控、通信、导航和传感器视场；不能简单假设攻击方在山地/森林/城市峡谷中总是占优。",
+    "冲突/边界6：固定点C-UAS可通过多传感器冗余补足死角，但机动分队受车辆空间、电源、天线高度、人员训练和弹药补给限制，难以复制固定基地级覆盖。"
+  ],
+  "confidence_basis": "证据覆盖政府/军方、国会研究、GAO、厂商资料、智库和北约公开资料，来源家族超过3类；多数关键证据在2024年7月以后发布或仍为当前厂商页面，满足近两年新鲜度要求。LIDS、Coyote、KuRFS、FAAD、Giraffe 1X、IRIS等至少由政府/CRS/GAO与厂商资料交叉支撑。剩余不确定性主要来自：厂商参数通常不是复杂地形实测；关键系统真实作战距离、虚警率、库存和软件接口公开不足；在研定向能、HPM和下一代拦截器成熟度仍在变化。",
+  "source_claims": [
+    {
+      "url": "https://www.defense.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/",
+      "claim": "美国国防部2024年发布反无人系统战略，强调无人系统威胁快速演进，并将JCO、Warfighter Senior Integration Group和Replicator 2等作为主要举措。"
+    },
+    {
+      "url": "https://www.gao.gov/assets/gao-25-107491.pdf",
+      "claim": "GAO-25-107491显示，美陆军C-sUAS组合中FS-LIDS、M-LIDS、Coyote、Ku-band雷达族和手持/下车系统等进入正式采办；其中五项在2024财年进入全速生产。"
+    },
+    {
+      "url": "https://www.congress.gov/crs_external_products/R/PDF/R48477/R48477.2.pdf",
+      "claim": "CRS R48477说明LIDS由FS-LIDS和M-LIDS组成，面向Group 1-3无人机和其他低飞威胁；M-LIDS Increment 2.1从双M-ATV配置迁移为单Stryker配置。"
+    },
+    {
+      "url": "https://www.congress.gov/crs_external_products/R/PDF/R48477/R48477.2.pdf",
+      "claim": "CRS记录FS-LIDS使用KuRFS雷达、EO/IR、电子战和Coyote拦截器，FS-LIDS与M-LIDS均使用FAAD C2；FY2025陆军申请2.801亿美元采购FS-LIDS、M-LIDS及若干下车系统，并另申请1.174亿美元采购Coyote。"
+    },
+    {
+      "url": "https://www.congress.gov/crs_external_products/R/PDF/R48477/R48477.2.pdf",
+      "claim": "CRS记录Coyote是LIDS家族的反UAS拦截器，有动能和非动能版本；截至2024年公开报道已有170次成功拦截，但陆军官员也称其对廉价无人机未必成本有效。"
+    },
+    {
+      "url": "https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2026/Discretionary%20Budget/rdte/RDTE%20-%20Vol%204%20-%20Budget%20Activity%209.pdf",
+      "claim": "美陆军PB2026 RDT&E材料列出Counter Unmanned Aerial Systems Agile Development项目，FY2026项目经费合计约1.43618亿美元，并显示C-sUAS相关采购线I24000 FY2026合计约3.06568亿美元。"
+    },
+    {
+      "url": "https://www.defense.gov/News/Transcripts/Transcript/Article/4228828/background-briefing-on-fy-2026-defense-budget/",
+      "claim": "美国国防部FY2026预算吹风会称，跨军种counter-UAS总请求约31亿美元。"
+    },
+    {
+      "url": "https://armysbir.army.mil/announcement/launch-2m-funding-opportunity-low-altitude-suas-detection/",
+      "claim": "美陆军SBIR/STTR 2025年低空被动探测机会指出，现有系统偏向较大、更高空目标，受地形、地球曲率和障碍物影响，难以发现多架低空sUAS，且大型固定系统限制部署灵活性。"
+    },
+    {
+      "url": "https://armysbir.army.mil/topics/low-altitude-passive-detection-system/",
+      "claim": "陆军低空被动探测题目要求低成本、低SWaP、模块化能力，并希望可兼容Group 1 sUAS或系留UAS载荷接口，用于增加地面部队对0至6000英尺AGL低空威胁的预警时间。"
+    },
+    {
+      "url": "https://www.rtx.com/raytheon/what-we-do/integrated-air-and-missile-defense/kurfs",
+      "claim": "Raytheon公开称KuRFS是360度雷达，可持续探测、识别和跟踪从火箭/炮弹/迫击炮到各类无人机的空中威胁，并作为美陆军LIDS组成部分。"
+    },
+    {
+      "url": "https://www.rtx.com/raytheon/what-we-do/integrated-air-and-missile-defense/coyote",
+      "claim": "Raytheon公开称Coyote与KuRFS配合提供从单机到蜂群的探测与击败能力；Coyote Block 3NK可使用非动能载荷、可徘徊、击败蜂群并可召回再部署。"
+    },
+    {
+      "url": "https://www.northropgrumman.com/what-we-do/mission-solutions/forward-area-air-defense-faad",
+      "claim": "Northrop Grumman公开称FAAD将SHORAD、C-RAM和C-UAS任务集成到单一界面，提供实时空域监视、威胁识别和安全拦截所需跟踪数据，并为美国国防部选择的C-UAS C2系统。"
+    },
+    {
+      "url": "https://www.saab.com/products/giraffe-1x",
+      "claim": "Saab公开称Giraffe 1X可作为VSHORAD主传感器、GBAD补盲雷达或C-UAS解决方案；系统总重低于150 kg，可探测距离雷达4 km处小于牛奶盒重量的UAV。"
+    },
+    {
+      "url": "https://www.robinradar.com/products/iris-radar",
+      "claim": "Robin Radar公开称IRIS为3D无人机雷达，提供360度视场、60度俯仰覆盖、5 km仪器化距离和约78 km²覆盖面积。"
+    },
+    {
+      "url": "https://www.robinradar.com/news-events/robin-radar-deploys-off-the-shelf-cuas-radar-with-12km-range",
+      "claim": "Robin Radar 2025年发布称IRIS Long-Range Mode可在5 km和12 km仪器化距离间切换，体现软件/模式升级带来的探测距离提升。"
+    },
+    {
+      "url": "https://www.hensoldt.net/fileadmin/HENSOLDT_2019/Products/Radar_IFF_Datalink/0812_17_Spexer2000_Coastal_E_intranet.pdf",
+      "claim": "Hensoldt SPEXER 2000 Coastal资料列出对0.2 m² RCS UAV的探测距离为9 km。"
+    },
+    {
+      "url": "https://www.rheinmetall.com/Rheinmetall%20Group/brochure-download/Air-Defence/D994e0222-Oerlikon-Skyranger-30.pdf",
+      "claim": "Rheinmetall Skyranger 30资料显示其采用3D AESA搜索雷达、30 mm×173炮、1200发/分射速和自动目标探测/捕获/跟踪，代表炮基低空反无人机/SHORAD方向。"
+    },
+    {
+      "url": "https://www.rusi.org/explore-our-research/publications/occasional-papers/protecting-force-uncrewed-aerial-systems",
+      "claim": "RUSI 2024报告强调反UAS必须是分层且高效的能力，软件、检测分类识别、电子战和多层效果器与硬件同等重要。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare",
+      "claim": "CSIS关于乌克兰自主化战争的研究指出，EW干扰推动无人机与反无人机体系转向替代探测、传感和自主能力；雷达、声学等方法也各自存在性能边界。"
+    },
+    {
+      "url": "https://www.act.nato.int/wp-content/uploads/2025/05/rfip025048.pdf",
+      "claim": "NATO ACT 2025资料提到自2024年底以来俄方引入光纤控制无人机，传统EW counter-UAS对这类无人机无效或效果受限，且其机动、抗干扰和低特征增加探测难度。"
+    },
+    {
+      "url": "https://www.droneshield.com/products-software",
+      "claim": "DroneShield公开称DroneSentry-C2提供统一实时反无人机态势图，可与自有传感器和第三方系统互操作，并融合RF、雷达和光学传感器。"
+    },
+    {
+      "url": "https://sentrycs.com/news/sentrycs-unveils-version-6-0-of-its-counter-drone-software-delivering-unmatched-coverage-and-efficiency/",
+      "claim": "Sentrycs 2025年发布称其V6.0采用协议操纵/Cyber over RF方法，从无人机与操作者通信的数据层提取信息，不同于仅依赖雷达、EO和RF扫描的多层探测。"
+    }
+  ],
+  "analysis_sections": {
+    "current_parameters": {
+      "scope_note": "参数均为公开资料；复杂地形下不得将开阔场或厂商标称距离直接视为作战保证距离。置信度按公开来源直接性、交叉核验和参数完整性评估。",
+      "parameter_records": [
+        {
+          "system": "LIDS family: FS-LIDS / M-LIDS",
+          "status": "现役/正式采办；GAO称相关项目2024财年进入全速生产",
+          "mission_scope": "防御Group 1-3无人机及其他低飞威胁",
+          "configuration_batch": "FS-LIDS固定点；M-LIDS Increment 2.1单Stryker配置，早期M-LIDS为双M-ATV配置",
+          "sensors_payloads": "KuRFS/相关Ku波段雷达、EO/IR、电子战、Coyote拦截器、FAAD C2；M-LIDS另含RIwP/30 mm等武器站配置",
+          "public_quantity_budget": "FY2025陆军申请约2.801亿美元用于FS-LIDS、M-LIDS及下车系统；其中公开提及5套Stryker M-LIDS和6套FS-LIDS；另约1.174亿美元用于Coyote采购",
+          "units": "美元；套；无人机Group分类",
+          "confidence": "高"
+        },
+        {
+          "system": "Raytheon KuRFS",
+          "status": "现役/已部署于LIDS体系",
+          "configuration_batch": "Ku-band Radio Frequency Sensor；公开页面未给出标准探测距离",
+          "key_parameters": {
+            "coverage": "360度",
+            "functions": "持续探测、识别、跟踪空中威胁",
+            "target_set": "火箭、炮弹、迫击炮、各类无人机",
+            "notable_claim": "可识别/分辨极小目标，厂商称可看到和识别来袭9 mm子弹"
+          },
+          "units": "角度；目标类别",
+          "confidence": "中高；功能由厂商和CRS交叉支撑，具体距离未知"
+        },
+        {
+          "system": "Raytheon Coyote",
+          "status": "现役/采购扩大",
+          "configuration_batch": "Block 2动能；Block 3NK非动能；固定/机动发射",
+          "key_parameters": {
+            "launch": "rail-launched；boost rocket motor and turbine engine",
+            "payload": "动能和非动能",
+            "public_performance": "CRS记录截至2024年报道有170次成功拦截",
+            "planned_production_need": "CRS记录陆军估算FY2025-FY2029需6000枚动能Coyote及数百枚非动能拦截器"
+          },
+          "units": "枚；财年；拦截次数",
+          "confidence": "高；成本有效性为中等置信度，因为单位成本公开数据不一致"
+        },
+        {
+          "system": "FAAD C2",
+          "status": "现役C2/美DOD选定C-UAS C2",
+          "configuration_batch": "Forward Area Air Defense Command and Control",
+          "key_parameters": {
+            "missions": "SHORAD、C-RAM、C-UAS",
+            "interface_role": "将探测、识别、跟踪、交战授权/火控态势集成到单一界面",
+            "operational_relevance": "LIDS家族使用FAAD C2"
+          },
+          "units": "任务类型；C2功能",
+          "confidence": "高"
+        },
+        {
+          "system": "Saab Giraffe 1X",
+          "status": "现役/出口与北约国家采购中；C-UAS/VSHORAD补盲传感器",
+          "configuration_batch": "Giraffe 1X 3D多功能雷达",
+          "key_parameters": {
+            "system_weight": "<150 kg",
+            "topside_weight": "100 kg",
+            "small_uav_detection": "厂商称可在4 km探测小于牛奶盒重量的UAV",
+            "integration": "可集成到机动或固定安装"
+          },
+          "units": "kg；km",
+          "confidence": "高；复杂地形有效距离需实测"
+        },
+        {
+          "system": "Robin Radar IRIS",
+          "status": "商用/军警与机场类C-UAS应用，2025年推出长距模式",
+          "configuration_batch": "IRIS标准模式；IRIS Long-Range Mode",
+          "key_parameters": {
+            "azimuth_coverage": "360度",
+            "elevation_coverage": "60度",
+            "instrumented_range_standard": "5 km",
+            "coverage_area_standard": "78 km²",
+            "instrumented_range_long_range_mode": "12 km"
+          },
+          "units": "度；km；km²",
+          "confidence": "高；性能为厂商标称"
+        },
+        {
+          "system": "Hensoldt SPEXER 2000 Coastal / SPEXER短程雷达族",
+          "status": "现役雷达族；SPEXER 2000 3D MkIII另见乌克兰相关采购报道",
+          "configuration_batch": "SPEXER 2000 Coastal公开参数；不等同于所有MkIII批次",
+          "key_parameters": {
+            "uav_rcs_reference": "0.2 m² RCS",
+            "uav_detection_range": "9 km"
+          },
+          "units": "m² RCS；km",
+          "confidence": "中；型号批次存在差异，MkIII参数需单独核验"
+        },
+        {
+          "system": "Rheinmetall Skyranger 30",
+          "status": "在采购/验证与系列化交付阶段，属炮基SHORAD/C-UAS方向",
+          "configuration_batch": "Skyranger 30炮塔/系统",
+          "key_parameters": {
+            "search_radar": "3D AESA，S-band或X-band配置",
+            "gun": "30 mm×173",
+            "rate_of_fire": "1200 rounds/min",
+            "functions": "自动目标探测、捕获与跟踪"
+          },
+          "units": "mm；发/分；雷达波段",
+          "confidence": "中高；不同国家底盘和传感器配置可能不同"
+        },
+        {
+          "system": "DroneShield DroneSentry-C2 / Sentrycs Cyber over RF类系统",
+          "status": "现役商用/政府客户；软件快速迭代",
+          "configuration_batch": "DroneSentry-C2；Sentrycs V6.0",
+          "key_parameters": {
+            "sensor_fusion": "RF、雷达、光学及第三方系统融合",
+            "protocol_analytics": "从无人机与操作者通信协议层提取识别信息",
+            "limitation": "对无RF发射、自主航线或光纤控制目标能力受限"
+          },
+          "units": "传感器类型；协议/数据层",
+          "confidence": "中；厂商能力公开但缺少统一第三方性能测试"
+        }
+      ]
+    },
+    "development_models": [
+      {
+        "model_or_program": "Low-Altitude Passive Detection System, Army SBIR/STTR",
+        "type": "低成本、低SWaP、模块化、被动探测传感器",
+        "upgrade_need_addressed": "补足现有系统对低空、多速度sUAS的预警不足，缓解地形、地球曲率、障碍物和大型固定系统限制",
+        "maturity": "早期研发/小企业创新课题，估计TRL 3-5",
+        "confidence": "高"
+      },
+      {
+        "model_or_program": "Coyote Block 3NK",
+        "type": "非动能、可徘徊/可召回反无人机拦截器",
+        "upgrade_need_addressed": "降低附带损害并提升对蜂群/多目标反复交战能力",
+        "maturity": "厂商公开称已演示并属Coyote家族；估计TRL 6-8",
+        "confidence": "中高"
+      },
+      {
+        "model_or_program": "DE M-SHORAD / IFPC-HEL / IFPC-HPM",
+        "type": "定向能/高功率微波",
+        "upgrade_need_addressed": "降低单次交战成本、提高弹药深度、应对饱和无人机",
+        "maturity": "测试/开发阶段；公开资料显示仍有延期、用户评价和规模化成本不确定性，估计TRL 5-7",
+        "confidence": "中"
+      },
+      {
+        "model_or_program": "BLADE / 30 mm炮基近程反无人机",
+        "type": "车载炮基低空无人机拦截",
+        "upgrade_need_addressed": "为机动部队提供近程快速反应和相对低成本硬杀伤层",
+        "maturity": "演示/试验与训练验证，估计TRL 6-7",
+        "confidence": "中"
+      },
+      {
+        "model_or_program": "下一代C-UAS导弹与通用发射器",
+        "type": "低成本/新一代动能拦截器和发射架通用化",
+        "upgrade_need_addressed": "降低Coyote等现有拦截器成本压力，提升库存与平台适配",
+        "maturity": "概念/工程研制公开信息有限，；{
+  "findings": [
+    "现役低空无人机探测预警体系的传统缺口不是单项传感器缺失，而是“低空小目标—复杂地形—高虚警环境—短处置窗口”共同造成的体系性不连续：山体、建筑、树木、港区设施、风机、水面和电磁噪声会同时压缩雷达视距、RF截获、EO/IR确认和声学验证的有效范围。证据链：E3、E4、E5、E6、E14。",
+    "公开战例显示，低成本无人机和诱饵的主要作战效应常在于持续消耗和态势过载，而非单架平台高成功率。俄乌Shahed/FPV、纳卡无人机打击、红海反无人机作战均支持“分层防御有效但成本、库存和值班压力显著上升”的判断。证据链：E8、E9、E10、E11、E13、E16。",
+    "传统固定式、中心化低空预警体系在复杂地形中的主要缺口包括：低空盲区不可视、单传感器误警/漏警、RF依赖对静默或半自主目标脆弱、C2确认链过长、基层单位缺少有机补盲和近程告警能力、战损后覆盖重构慢。证据链：E2、E4、E5、E7、E10、E12、E14。",
+    "升级需求应从“采购更强单一雷达”转为“地形感知的分布式多模态预警体系”：固定与机动雷达、被动RF/频谱监测、EO/IR验证、声学/人工观测、边缘AI融合、低带宽降级运行、共同作战图、低成本处置和被动防护共同形成决策级置信度。证据链：E1、E2、E3、E4、E6、E7、E12、E14。",
+    "作战运用上，复杂地形防御的关键不是在末端才“看见并打掉”，而是在危机前建立常态低空/RF/民用活动基线，在初始弱告警时完成多源关联，并在网络或上级C2降级时保持本地分级告警能力。证据链：E1、E3、E4、E6、E7、E12。",
+    "反证与修正：电子战、传统雷达和传统防空并未失效；乌克兰的声学网、机动防空、电子战和共同作战图，以及红海分层防御经验，都显示传统能力经体系化整合后仍有显著价值。问题在于单一、固定、中心化和高成本模式难以长期承受复杂地形、饱和、诱饵和快速迭代。证据链：E8、E10、E11、E13、E16。",
+    "对装备功能的优先要求应转化为可测指标：三维地形覆盖率、关键低空通道首警时间、多传感器关联延迟、虚警/漏警率、RF静默目标发现概率、网络降级下本地态势保持、机动补盲部署时间、战损后最低覆盖恢复时间、单位目标处置成本。"
+  ],
+  "confidence": 0.84,
+  "open_questions": [
+    "不同型号现役雷达、RF、EO/IR、声学节点在山谷、城市峡谷、港区水面、高原低温和强电磁背景中的实测Pd、FAR、首警时间和连续跟踪能力仍需本级试验数据确认。",
+    "公开资料可证明低空无人机威胁趋势和体系缺口，但无法充分量化特定国家、特定部队和特定装备编成的真实覆盖盲区、库存消耗率和操作员疲劳阈值。",
+    "RF静默、光纤控制、视觉/惯导辅助、蜂窝/卫星/中继链路和AI导航的扩散速度存在不确定性；短期仍受成本、重量、算力和训练约束，中期可能显著削弱RF依赖型防御。",
+    "民用空域、隐私、频谱许可、机场运行、误伤风险和执法授权在本土/城市场景中可能比战区环境更强地约束探测和处置方式，需要单独形成规则矩阵。",
+    "上游缺少weapon_equipment与international_situation正式交接，因此本文对具体装备性能和政治/法律约束只作公开资料层面的通用化判断。"
+  ],
+  "handoff_summary": "本交接面向winning_mechanism：复杂地形下低空无人机探测预警的传统能力缺口，本质是低空物理视距、单传感器不可靠、集中式C2延迟、成本交换不利和持续保障脆弱共同造成的体系失配。公开战例支持三条可迁移经验：一是分层、多模态、机动和被动防护结合优于单点高端装备；二是C2必须从中心化确认转向共同作战图、边缘融合和降级运行；三是装备升级必须服务于可持续作战，包括低成本处置、快速软件/特征库更新、机动补盲和战损恢复。建议下游以“时间窗口、成本交换、覆盖韧性、快速迭代和跨域协同”作为胜利机制建模变量。",
+  "search_plan": [
+    {
+      "track": "公开战例与复盘",
+      "queries": [
+        "Nagorno Karabakh 2020 drones air defense lessons CSIS full spectrum air defense mobile SHORAD passive defenses",
+        "Red Sea counter UAS drones Houthi lessons layered defense cost exchange CNAS 2025 PDF",
+        "CSIS Drone Saturation Russia's Shahed Campaign acoustic sensors common operating picture electronic warfare 2025",
+        "Ukraine drone warfare electronic warfare C-UAS lessons 2025 report"
+      ]
+    },
+    {
+      "track": "联合和多域作战概念",
+      "queries": [
+        "DoD Strategy for Countering Unmanned Systems 2024 detection active passive defense PDF",
+        "Joint Counter Small UAS Office counter drone swarm demonstration 2024 layered system of systems",
+        "NATO uncrewed warfare report 2025 counter drone lessons Ukraine electronic warfare resilience",
+        "Small Unmanned Aircraft System Airspace Management and Control Handbook Army Leaders 2025 air ground littoral"
+      ]
+    },
+    {
+      "track": "有人无人协同",
+      "queries": [
+        "manned unmanned teaming counter UAS air defense sensor fusion command control 2025 Army",
+        "small unmanned aircraft system airspace management and control handbook Army leaders 2025 manned unmanned fired systems",
+        "UAS airspace management dynamic airspace planning manned unmanned fired systems air ground littoral 2025 handbook",
+        "Ukraine AI enabled autonomous warfare CSIS FPV drones electronic warfare human oversight 2025"
+      ]
+    },
+    {
+      "track": "指挥控制与保障韧性",
+      "queries": [
+        "counter UAS command and control resilience edge processing network degraded operations report 2024",
+        "Department of Defense Counter UAS Background and Issues for Congress FAADC2 MEDUSA command and control 2025 PDF",
+        "Army Project Flytrap counter drone command and control architecture 2025",
+        "FAA UAS Detection Technical Considerations radar RF EO acoustic false alarms site specific spectrum licensing PDF"
+      ]
+    },
+    {
+      "track": "持续作战和战损恢复",
+      "queries": [
+        "Innovating Under Fire Ukraine frontline drone workshops maintenance repair lessons 2025",
+        "Russia Ukraine FPV drones lightweight counter UAV electronic warfare company level lessons 2025 Army University Press",
+        "Mapping the MilTech War eight lessons Ukraine battlefield drone electronic warfare 2026 Ifri",
+        "NATO Innovation Range counter drone technology testing Latvia 2026 TEVV electronic warfare solutions"
+      ]
+    }
+  ],
+  "contradictions": [
+    "反证1：低成本无人机并非天然高成功率。CSIS前线访谈显示多数低成本FPV任务成功率很低，电子战、操作员技能、天气和复杂目标运动都会降低效果；但低成本、大量和快速迭代仍足以形成消耗与过载。因此不能把威胁建模为“每架必中”，应建模为“持续试探和少量突防仍有作战价值”。证据链：E12、E13。",
+    "反证2：电子战既是有效反无人机手段，也是脆弱依赖。俄乌资料显示EW可大量干扰FPV和GNSS/控制链，但光纤无人机、视觉/惯导、频率捷变和替代链路正在削弱单纯RF压制的可靠性。因此EW应作为分层体系一环，而非唯一防线。证据链：E12、E13、E16。",
+    "反证3：传统雷达仍不可替代。雷达能全天候发现物理目标，特别是RF静默或预编程目标；但FAA和RAND均指出低空、山体遮蔽、地物反射、小RCS、低速/悬停和虚警会显著影响效果。因此结论不是“雷达失效”，而是“雷达必要但不充分”。证据链：E3、E5、E14。",
+    "反证4：复杂地形并非只帮助攻击方。山地、城市和植被既遮蔽蓝方传感器，也会缩短敌方无人机通信视距、增加导航误差、降低续航可靠性。若蓝方提前完成三维视域、RF传播和机动补盲规划，可把部分地形转化为防御优势。证据链：E3、E5、E12。",
+    "反证5：分布式体系提升韧性但增加管理复杂度。多传感器、多节点和边缘C2可降低单点失效，但会带来时间同步、目标去重、频谱冲突、蓝军无人机去冲突、数据标准和训练负担。因此升级必须同步解决接口、规则和保障，而不是只增加节点数量。证据链：E2、E6、E7、E15。"
+  ],
+  "confidence_basis": "证据覆盖政府/军方公开文件、FAA民航技术资料、国会研究服务、NATO/盟国材料、智库报告、军种专业刊物和学术/研究机构报告，来源族群超过3类，且包含2024、2025、2026年的新近资料。关于低空雷达限制、传感器互补、C2集成、分层防御和成本交换的证据直接性较高；关于俄乌、纳卡和红海战例的资料可相互印证无人机饱和、电子战、机动防空和快速迭代趋势。主要不确定性在于特定装备性能、特定地域覆盖率、真实库存消耗、敌方最新链路/自主能力和本土法律授权通常不公开，因此结论以结构化能力缺口和升级需求表达，不给出可执行攻击指令或特定目标方案。",
+  "source_claims": [
+    {
+      "url": "https://www.defense.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/",
+      "claim": "[E1] DoD 2024年反无人系统战略发布说明强调，无人系统威胁紧迫且持久，相关工作建立在JCO、Warfighter Senior Integration Group和Replicator 2等跨部门/跨军种举措之上。"
+    },
+    {
+      "url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+      "claim": "[E2] DoD战略事实清单提出提升探测、跟踪、表征能力，改进主动/被动防御，简化和下放必要授权，采用开放、模块化、快速测试和规模化方案，并降低无人系统与反制措施之间的成本失衡。"
+    },
+    {
+      "url": "https://www.faa.gov/sites/faa.gov/files/uas/resources/policy_library/Attachment-3-UAS-Detection-Technical-Considerations.pdf",
+      "claim": "[E3] FAA UAS探测技术考虑文件指出，雷达、RF、EO/IR等探测技术受场地许可、背景杂波、虚警、特征库更新、EO/IR视场和验证能力等因素影响，EO/IR通常更适合作为验证/辅助传感器。"
+    },
+    {
+      "url": "https://www.faa.gov/airports/new_entrants/uas_detection_mitigation_response",
+      "claim": "[E4] FAA机场UAS探测页面说明，雷达、RF、EO和声学可单独或组合用于主探测和二次验证，部署还需考虑机场运行、法律授权、频谱和安全影响。"
+    },
+    {
+      "url": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_5.html",
+      "claim": "[E5] FAA AIM雷达章节指出，雷达波会被山体、地面障碍物、降水等反射/衰减或被高地屏蔽；低空目标可能因山体遮蔽或低于雷达波束/地球曲率而不可见，小反射面目标也更难由一次雷达发现。"
+    },
+    {
+      "url": "https://www.army.mil/article-amp/278404/joint_counter_small_uas_office_conducts_successful_counter_drone_swarm_demonstration",
+      "claim": "[E6] 美陆军JCO 2024年蜂群反制演示每轮发射40多个UAS目标，测试9套C-UAS系统；公开结论是单一能力难以应对多方向、多速度、多尺寸的大规模目标剖面，需要系统-of-systems和分层方法。"
+    },
+    {
+      "url": "https://www.army.mil/article-amp/288375/small_unmanned_aircraft_system_airspace_management_and_control",
+      "claim": "[E7] 美陆军CALL 2025年小型UAS空域管理手册说明，现代战场需要整合有人、无人和火力系统，实施动态空域规划并主导air-ground littoral。"
+    },
+    {
+      "url": "https://www.congress.gov/crs_external_products/R/PDF/R48477/R48477.2.pdf",
+      "claim": "[E8] CRS《Department of Defense Counter-UAS》报告说明，现有美军C-UAS任务指挥系统包括FAADC2、MEDUSA和ADSI等，2025年陆军/DIU关注替代或改进C2以适应机动C-UAS，且高端拦截器成本可显著高于低成本无人机。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/air-and-missile-war-nagorno-karabakh-lessons-future-strike-and-defense",
+      "claim": "[E9] CSIS纳卡研究认为，2020年纳卡空中战的主要教训是全谱系防空重要性；有限的SHORAD和不足的被动防护使地面重装备易受无人机与巡飞弹威胁。"
+    },
+    {
+      "url": "https://www.cnas.org/publications/reports/countering-the-swarm",
+      "claim": "[E10] CNAS红海反无人机研究显示，分层、多域防御可取得战术成功，但面对大量低成本无人机时，成本交换、交战节奏、库存和舰艇/空中力量持续值班会形成严重压力。"
+    },
+    {
+      "url": "https://www.nato-pa.int/document/2025-uncrewed-warfare-report-clement-023-stctts",
+      "claim": "[E11] NATO PA 2025年无人作战报告强调，乌克兰等冲突中的无人系统战术会被盟友和对手模仿，并建议发展定向能等低成本反无人技术以应对拦截成本不对称。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare",
+      "claim": "[E12] CSIS 2025年乌克兰AI自主作战研究基于访谈指出，低成本FPV任务成功率受电子战、天气、操作员和通信限制显著影响；AI导航、ATR和本地处理可提高效率，但现代无人系统尚未实现端到端全自主，仍需人类监督。"
+    },
+    {
+      "url": "https://csis-website-prod.s3.amazonaws.com/s3fs-public/2025-05/250501_Slusher_Ukraine_Conflict.pdf?VersionId=01UUwSkCxsWGAU5vOtwYQHmtq3F1.XKM",
+      "claim": "[E13] CSIS乌克兰冲突经验报告认为，乌克兰战争凸显自主系统、电子战、信息整合、受扰物流和防空演变；GPS干扰、通信干扰、频率捷变、卫星通信、网状网络和电子战韧性成为关键变量。"
+    },
+    {
+      "url": "https://www.rand.org/content/dam/rand/pubs/research_reports/RR3000/RR3023/RAND_RR3023.pdf",
+      "claim": "[E14] RAND关于小型UAS对抗能力的研究指出，sUAS因小尺寸、低速和环境背景导致探测、分类、识别、跟踪困难，通常需要多传感器协同；虚警会使操作员脱敏，雷达RCS随角度变化，EO/IR视场小，ELINT/RF易受自动化或静默目标规避。"
+    },
+    {
+      "url": "https://defensescoop.com/2025/07/09/army-counter-drone-command-and-control-project-flytrap-exercise/",
+      "claim": "[E15] Project Flytrap公开报道显示，美陆军C5ISR中心在欧洲测试反无人机C2架构，目标是把传感器数据从单兵到联合伙伴贯通，通过ATAK等终端共享，降低士兵认知负荷并把固定系统转向可机动运用。"
+    },
+    {
+      "url": "https://www.armyupress.army.mil/Portals/7/military-review/Archives/English/so25/Lessons-from-Ukraine/Lessons-from-Ukraine-ua.pdf",
+      "claim": "[E16] Army University Press 2025年俄军乌克兰经验文章指出，FPV无人机和轻量化C-UAV EW快速扩散；双方大量FPV受RF/GNSS干扰影响，同时光纤、车载/便携干扰器、探测器和基层C-UAV装备推动攻防快速迭代。"
+    },
+    {
+      "url": "https://mwi.westpoint.edu/innovating-under-fire-lessons-from-ukraines-frontline-drone-workshops/",
+      "claim": "[E17] Modern War Institute对乌克兰前线无人机维修/创新工作坊的研究显示，前沿维修、3D打印、软件更新、快速改频、移动维修车和操作者—工程师反馈闭环可将修复与适配周期压缩到小时级，从而支撑持续作战。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/drone-saturation-russias-shahed-campaign",
+      "claim": "[E18] CSIS关于俄罗斯Shahed饱和战役的研究指出，自2024年9月后Shahed发射量显著上升；乌克兰通过声学传感器、综合防空网络、机动防空和电子战等低成本组合来维持防御，但饱和压力仍然增加。"
+    },
+    {
+      "url": "https://www.nato.int/en/news-and-events/articles/news/2026/03/18/new-nato-innovation-range-starts-counter-drone-technology-testing-in-latvia",
+      "claim": "[E19] NATO 2026年拉脱维亚创新靶场信息显示，盟国和乌克兰用户正在通过TEVV活动测试UAS/C-UAS、拦截飞行和电子战方案，体现快速试验、验证和采纳的制度化趋势。"
+    }
+  ],
+  "analysis_sections": {
+    "operational_constraints": {
+      "mission_definition": "防御方任务是在复杂地形和民用空域约束下，对低慢小无人机形成早期发现、连续跟踪、身份判别、威胁评估、分级告警和安全处置支撑；本分析仅用于防御性能力评估，不提供攻击路径、目标选择或可执行伤害指令。",
+      "terrain_environment_constraints": [
+        {
+          "constraint": "山地/丘陵遮蔽",
+          "effect": "山体与地形起伏造成雷达、EO/IR、RF和通信链路视距中断，低空目标可能在关键通道外才被发现，首警时间被压缩。",
+          "evidence_links": [
+            "E5",
+            "E14"
+          ],
+          "operational_implication": "必须预先进行三维视域和RF传播建模，重点标注山谷、背坡、低空通道和传感器盲扇区。"
+        },
+        {
+          "constraint": "城市峡谷和设施密集区",
+          "effect": "高层建筑、钢结构、车辆、鸟群、风机和电磁反射造成多径、遮挡、杂波和虚警；EO/IR可能被热背景和遮挡牵引。",
+          "evidence_links": [
+            "E3",
+            "E4",
+            "E14"
+          ],
+          "operational_implication": "单传感器告警不应直接等同威胁，应采用时间同步、多源关联和白名单/合法流量去冲突。"
+        },
+        {
+          "constraint": "海岸/港区/水面背景",
+          "effect": "水面反射、船舶/港机热源、海风噪声和港区RF环境会影响雷达、声学、EO/IR与RF识别置信度。",
+          "evidence_links": [
+            "E3",
+            "E10",
+            "E14"
+          ],
+          "operational_implication": "港区应采用固定高点、机动补盲、被动传感和人工/哨兵报告结合，避免单一雷达阈值造成大量虚警。"
+        },
+        {
+          "constraint": "天气、夜间和季节变化",
+          "effect": "雨雾雪、低云、热背景变化和风噪影响EO/IR、声学和高频雷达表现；同一部署方案在不同季节的Pd/FAR会变化。",
+          "evidence_links": [
+            "E3",
+            "E12",
+            "E14"
+          ],
+          "operational_implication": "部署原则应包含季节性校准、传感器权重动态调整、夜间/恶劣天气补盲预案。"
+        },
+        {
+          "constraint": "电磁频谱拥挤与受扰",
+          "effect": "RF探测和干扰受民用通信、己方无人机、敌方跳频/静默/替代链路、GNSS干扰和频谱许可限制影响。",
+          "evidence_links": [
+            "E2",
+            "E3",
+            "E12",
+            "E13",
+            "E16"
+          ],
+          "operational_implication": "RF不能作为唯一首警源；干扰措施必须与民用通信、己方C2、友军无人机和空域安全去冲突。"
+        },
+        {
+          "constraint": "法律、民航和授权",
+          "effect": "本土、机场、城市和关键基础设施场景中，探测与处置系统部署涉及频谱许可、EMI、安全风险、隐私和执法授权。",
+          "evidence_links": [
+            "E3",
+            "E4"
+          ],
+          "operational_implication": "体系设计必须预置规则矩阵：谁可看、谁可判、谁可告警、谁可授权、何时可转入处置。"
+        },
+        {
+          "constraint": "持续作战和补给",
+          "effect": "大量低成本目标可通过诱饵、重复试探和饱和压迫消耗人员、传感器维护、弹药/拦截器和C2带宽。",
+          "evidence_links": [
+            "E8",
+            "E10",
+            "E11",
+            "E18"
+          ],
+          "operational_implication": "预警体系指标必须纳入成本交换、库存、备件、电源、网络和操作员轮换，而非只看单次拦截率。"
+        }
+      ],
+      "traditional_gap_to_upgrade_mapping": [
+        {
+          "traditional_gap": "固定雷达低空盲区",
+          "upgrade_need": "地形感知部署、机动补盲雷达、被动传感节点、临时升高平台、覆盖热力图。",
+          "metrics": [
+            "关键低空通道覆盖率",
+            "首警距离/时间",
+            "盲区重构时间"
+          ],
+          "evidence_links": [
+            "E5",
+            "E14"
+          ]
+        },
+        {
+          "traditional_gap": "单传感器误警/漏警",
+          "upgrade_need": "雷达+RF+EO/IR+声学+人工观测的多模态融合，目标去重和置信评分。",
+          "metrics": [
+            "融合后FAR",
+            "多源关联延迟",
+            "目标分类置信度"
+          ],
+          "evidence_links": [
+            "E3",
+            "E4",
+            "E6",
+            "E14"
+          ]
+        },
+        {
+          "traditional_gap": "RF依赖",
+          "upgrade_need": "可发现RF静默/预编程/半自主目标的雷达、EO/IR、声学和行为异常检测；RF仅作为被动首警和识别维度之一。",
+          "metrics": [
+            "RF静默目标发现概率",
+            "RF与非RF告警一致率",
+            "干扰后态势保持时间"
+          ],
+          "evidence_links": [
+            "E12",
+            "E13",
+            "E14",
+            "E16"
+          ]
+        },
+        {
+          "traditional_gap": "中心化C2延迟",
+          "upgrade_need": "共同作战图、边缘融合、分级授权、低带宽告警、断链本地处置支持。",
+          "metrics": [
+            "传感器到告警时间",
+            "告警到授权时间",
+            "网络降级下本地空情保持率"
+          ],
+          "evidence_links": [
+            "E2",
+            "E7",
+            "E8",
+            "E15"
+          ]
+        },
+        {
+          "traditional_gap": "高成本末端处置",
+          "upgrade_need": "低成本拦截、电子/非动能、被动防护、诱饵和任务影响评估结合，高端拦截器保留给高危目标。",
+          "metrics": [
+            "单位威胁处置成本",
+            "高端拦截器消耗率",
+            "关键资产任务中断时间"
+          ],
+          "evidence_links": [
+            "E2",
+            "E8",
+            "E10",
+            "E11",
+            "E18"
+          ]
+        },
+        {
+          "traditional_gap": "战损恢复慢",
+          "upgrade_need": "模块化节点、预案化机动补位、备用电源、离线地图、可快速更新特征库、前沿维修和备件包。",
+          "metrics": [
+            "最低覆盖恢复时间",
+            "节点替换时间",
+            "软件/特征库更新周期"
+          ],
+          "evidence_links": [
+            "E17",
+            "E19"
+          ]
+        }
+      ],
+      "measures_of_effectiveness": [
+        "首警时间是否足以完成识别、授权和安全处置。",
+        "复杂地形关键通道是否存在可被反复利用的稳定盲区。",
+        "融合后虚警是否低到操作员可持续处理。",
+        "网络降级和部分节点损伤后是否仍能保持本地分级告警。",
+        "每轮威胁处置成本是否低于可持续阈值。",
+        "敌方改变频段、时段、平台和诱饵比例后，体系是否可快速更新。"
+      ]
+    },
+    "force_coordination": {
+      "coordination_concept": "采用“区域低空态势单元+机动补盲分队+基层有机观察/处置单元+上级联合空情/C2+民航/公安/频谱联络”的分层协同。核心是把传感器、指挥、效应器、被动防护和保障纳入同一任务链，而不是让各装备孤立值守。",
+      "force_package": [
+        {
+          "element": "固定低空监视与既有防空预警节点",
+          "role": "提供连续背景空情、较远距离首警和与上级防空网络衔接。",
+          "limits": "低空盲区、地形遮蔽、小RCS和地物杂波显著影响可靠性。",
+          "evidence_links": [
+            "E5",
+            "E14"
+          ]
+        },
+        {
+          "element": "机动补盲雷达/便携传感节点",
+          "role": "在山谷、城市边缘、港区和战损空隙中快速补位，缩短低空关键通道发现距离缺口。",
+          "limits": "需要预设点位、电源、网络、频谱许可和安全防护；点位暴露后自身可能成为高价值节点。",
+          "evidence_links": [
+            "E6",
+            "E15"
+          ]
+        },
+        {
+          "element": "被动RF/频谱监测",
+          "role": "发现控制链、视频链、遥测和异常频谱活动，辅助定位操作者或链路方向，适合低可见度和低成本持续值守。",
+          "limits": "对RF静默、预编程、光纤、蜂窝/卫星/中继或强加密跳频目标适应不足。",
+          "evidence_links": [
+            "E3",
+            "E12",
+            "E14",
+            "E16"
+          ]
+        },
+        {
+          "element": "EO/IR与热像验证",
+          "role": "对雷达/RF/声学告警进行可视化确认、分类和证据留存。",
+          "limits": "视场较窄，受遮挡、天气、夜间热背景、诱饵和假目标影响；通常需由其他传感器cueing。",
+          "evidence_links": [
+            "E3",
+            "E14"
+          ]
+        },
+        {
+          "element": "声学/人工观测/群众或哨兵报告",
+          "role": "在低空慢速、夜间、雷达盲区和大型一向攻击无人机场景中提供低成本补充首警。",
+          "limits": "受环境噪声、风雨、车辆、港机和误报影响；必须与其他传感器关联后使用。",
+          "evidence_links": [
+            "E4",
+            "E18"
+          ]
+        },
+        {
+          "element": "C2与共同作战图",
+          "role": "整合多源告警、目标去重、威胁排序、授权流转、效应器分配和跨单位通报。",
+          "limits": "若高度中心化或接口不统一，会在饱和窗口中形成延迟和重复交战。",
+          "evidence_links": [
+            "E7",
+            "E8",
+            "E15"
+          ]
+        },
+        {
+          "element": "低成本处置与被动防护",
+          "role": "在合法授权下采用低成本、分层、按威胁优先级的防御措施，并通过分散、伪装、遮蔽、诱饵和关键功能冗余降低突防后果。",
+          "limits": "处置手段受民用环境、误伤、频谱和规则约束；必须避免把高端弹药消耗在低价值诱饵上。",
+          "evidence_links": [
+            "E2",
+            "E9",
+            "E10",
+            "E11"
+          ]
+        },
+        {
+          "element": "保障与快速适配单元",
+          "role": "负责传感器校准、软件/特征库更新、备件、电池、电源、网络、前沿维修和经验回灌。",
+          "limits": "若保障集中且距离前沿过远，难以跟上无人机技术和战术迭代速度。",
+          "evidence_links": [
+            "E17",
+            "E19"
+          ]
+        }
+      ],
+      "coordination_interfaces": [
+        {
+          "interface": "传感器到C2",
+          "requirements": [
+            "统一时间戳和坐标基准",
+            "目标ID去重",
+            "置信度评分",
+            "低带宽告警格式",
+            "原始数据留存以便复盘"
+          ],
+          "failure_if_missing": "多源重复目标、误关联、告警风暴和人工确认队列积压。",
+          "evidence_links": [
+            "E8",
+            "E15"
+          ]
+        },
+        {
+          "interface": "C2到基层单位",
+          "requirements": [
+            "分级告警",
+            "本地可执行防护动作清单",
+            "断链时的本地授权边界",
+            "友军无人机/有人机空域去冲突"
+          ],
+          "failure_if_missing": "上级确认延迟超过末端处置窗口，基层只能被动承受或过度反应。",
+          "evidence_links": [
+            "E2",
+            "E7"
+          ]
+        },
+        {
+          "interface": "军方到民航/公安/频谱/设施业主",
+          "requirements": [
+            "合法无人机白名单",
+            "Remote ID/许可信息校验",
+            "频谱使用和干扰限制",
+            "机场/城市安全通报机制",
+            "误报澄清流程"
+          ],
+          "failure_if_missing": "民用流量与敌对活动混杂，导致虚警上升、授权迟滞或违法干扰。",
+          "evidence_links": [
+            "E3",
+            "E4"
+          ]
+        },
+        {
+          "interface": "传感器到效应器",
+          "requirements": [
+            "按威胁等级分配低成本与高端处置资源",
+            "避免重复交战",
+            "确保民用安全扇区",
+            "记录交战与未交战原因"
+          ],
+          "failure_if_missing": "高端资源被诱饵消耗，真实高危目标获得窗口。",
+          "evidence_links": [
+            "E6",
+            "E8",
+            "E10"
+          ]
+        },
+        {
+          "interface": "有人—无人—火力系统空域管理",
+          "requirements": [
+            "动态空域控制",
+            "己方UAS任务计划共享",
+            "禁飞/限飞临时区域",
+            "安全高度层和时间窗",
+            "任务变更快速通报"
+          ],
+          "failure_if_missing": "友军无人机、有人航空器、防空火力和干扰措施相互冲突。",
+          "evidence_links": [
+            "E7"
+          ]
+        }
+      ],
+      "battle_rhythm": [
+        "常态：更新低空活动、RF背景、民用无人机、鸟群/车辆/港机/风机等基线；每班复核传感器健康和覆盖热力图。",
+        "预警：出现重复弱告警或异常RF/目视报告时，机动补盲节点前出，EO/IR和声学权重上调，设施被动防护升级。",
+        "接触：按多源置信度而非单点告警触发分级响应，优先保护关键通道和高价值节点。",
+        "饱和：C2转入目标优先级管理，边缘节点保留本地告警和安全处置建议，上级保留资源统筹和跨区协调。",
+        "复盘：每次事件后更新虚警样本、漏警路径、干扰影响、授权延迟、处置成本和补给消耗。"
+      ],
+      "degraded_mode": [
+        "网络降级时保留本地传感器融合、短报文告警和离线地图。",
+        "上级C2不可用时按预先批准的分级规则执行告警、疏散、遮蔽、停飞、设备关停/分散等防护动作。",
+        "固定节点损伤时启动机动补盲网格，优先恢复关键通道、指挥节点、弹药/燃料/电力/通信设施周边最低覆盖。",
+        "RF环境恶化时降低对RF首警权重，提高雷达、EO/IR、声学、人工观测和行为异常关联权重。",
+        "虚警过载时使用地理围栏、白名单、时间窗和多源阈值动态调节，避免操作员脱敏。"
+      ],
+      "support_requirements": [
+        "三维地形/建筑/植被/水面数据库和视域分析工具。",
+        "传感器点位预案、备用三脚架/桅杆、便携电源、加固网络和频谱授权包。",
+        "多传感器数据标准、时间同步、目标ID规则和C2接口。",
+        "操作员轮换、跨部门联络员、低空空域管制脚本和民用流量去冲突清单。",
+        "备件、电池、软件更新、特征库、校准工具和前沿维修能力。",
+        "战损后恢复演练和红队式盲区复核。"
+      ]
+    },
+    "coa": [
+      {
+        "name": "COA-1 基线方案：固定节点为主、中心化确认、有限机动补盲",
+        "concept": "沿用现役固定低空监视雷达、少量RF和EO/IR验证节点，由上级空情/C2集中确认并向基层发布告警；机动补盲只在明确事件后临时展开。",
+        "suitable_conditions": [
+          "地形相对开阔、民用无人机活动低、威胁为低频单机/小批量。",
+          "有充分处置时间，且上级C2链路稳定。",
+          "主要任务是常态监视、证据留存和低强度警戒。"
+        ],
+        "strengths": [
+          "组织改动小，训练和维护成本低。",
+          "便于统一授权、统一空情和降低误处置风险。",
+          "适合预算短期不足或威胁等级较低阶段。"
+        ],
+        "risks": [
+          "复杂地形盲区难以及时补齐。",
+          "单传感器虚警/漏警导致等待人工确认，压缩处置窗口。",
+          "遇到多方向、多批次和诱饵时C2与操作员易过载。",
+          "战损后恢复依赖固定节点，覆盖重构慢。"
+        ],
+        "infeasible_boundaries": [
+          "山地—城市—港区复合地形中存在多个稳定低空通道。",
+          "威胁进入持续饱和或电磁压迫阶段。",
+          "要求基层在断链或分钟级窗口内自主告警和防护。",
+          "民用流量密集且白名单/去冲突数据不完整。"
+        ],
+        "equipment_constraints": [
+          "固定雷达受地形遮蔽和小RCS影响。",
+          "EO/IR需要其他传感器cueing。",
+          "RF对静默/半自主目标不足。",
+          "传统C2接口可能难以快速接入新型传感器。"
+        ],
+        "evidence_links": [
+          "E3",
+          "E4",
+          "E5",
+          "E8",
+          "E14"
+        ],
+        "minimum_upgrade_if_selected": [
+          "完成三维覆盖审计和盲区清单。",
+          "建立民用无人机白名单和RF/空情基线。",
+          "为关键盲区预置机动补盲点位和供电/网络包。",
+          "设定弱告警触发的分级响应流程。"
+        ]
+      },
+      {
+        "name": "COA-2 弹性分布方案：多模态分布式传感、边缘融合、机动补盲与低成本分层处置",
+        "concept": "以固定节点为骨干，在山地通道、城市边缘、港区和关键设施周边部署可机动、可重构的雷达/RF/EO/IR/声学节点；通过共同作战图和边缘AI融合形成分级置信度，并把低成本处置、被动防护和战损重构纳入同一防御循环。",
+        "suitable_conditions": [
+          "复杂地形、多方向低空威胁和持续试探并存。",
+          "需要在网络受扰、节点损伤和上级C2延迟时保持本地预警。",
+          "关键设施价值高，且可投入一定传感器、C2、训练和保障资源。",
+          "需要长期应对低成本无人机消耗战。"
+        ],
+        "strengths": [
+          "低空覆盖韧性高，单点失效不致形成稳定通道。",
+          "多传感器融合降低单点虚警/漏警。",
+          "机动补盲可把地形缺口转化为预案化防御。",
+          "边缘融合和分级授权缩短告警到行动时间。",
+          "低成本处置和被动防护改善成本交换。"
+        ],
+        "risks": [
+          "部署和训练复杂度高。",
+          "多源数据标准、目标去重、时间同步和网络安全要求高。",
+          "节点增多带来电源、频谱、维护和暴露风险。",
+          "若缺少规则矩阵，边缘授权可能造成误处置或空域冲突。"
+        ],
+        "infeasible_boundaries": [
+          "没有统一C2接口和最低数据标准。",
+          "无法获得频谱、场地、供电或民用协同授权。",
+          "训练和保障无法支撑24/7分布式值守。",
+          "预算只能维持单点装备采购而不能支撑系统集成与软件更新。"
+        ],
+        "equipment_constraints": [
+          "需要开放式接口、边缘计算、低带宽数据链和传感器健康监测。",
+          "节点必须可快速部署、校准和替换。",
+          "EO/IR、声学、RF权重需要随天气和电磁环境动态调整。",
+          "效应器必须按威胁等级与民用安全限制联动。"
+        ],
+        "evidence_links": [
+          "E1",
+          "E2",
+          "E6",
+          "E7",
+          "E8",
+          "E10",
+          "E15",
+          "E18",
+          "E19"
+        ],
+        "priority_actions": [
+          "建立区域低空三维数字底图和传感器覆盖热力图。",
+          "将固定雷达、机动雷达、RF、EO/IR、声学和人工报告接入共同作战图。",
+          "为山谷、城市峡谷、港区水面和关键设施设置传感器组合模板。",
+          "定义本地分级告警和断链授权边界。",
+          "把低成本处置、被动防护、维修和软件更新纳入日常战备。"
+        ]
+      },
+      {
+        "name": "COA-3 资源受限方案：关键点防护、低成本补盲、被动防护和人工/民用协同",
+        "concept": "在装备和预算不足时，不追求全域连续覆盖，而是围绕关键资产、关键通道和高风险时段建立低成本、可移动、可降级的预警网；以被动防护、分散、伪装、遮蔽、临时空域管控和低成本传感为主，高端处置只保留给高置信高危目标。",
+        "suitable_conditions": [
+          "预算、传感器数量、人员或频谱授权不足。",
+          "防护对象明确，关键通道和关键时段可识别。",
+          "威胁主要为试探、侦察、小规模袭扰或诱饵消耗。",
+          "可接受非关键区域存在短时低置信盲区。"
+        ],
+        "strengths": [
+          "部署快，成本低，适合基层先行形成最低预警能力。",
+          "通过被动防护降低突防后果，减少高端资源消耗。",
+          "人工、声学、RF和廉价EO可补充传统雷达盲区。",
+          "便于逐步扩展为弹性分布方案。"
+        ],
+        "risks": [
+          "覆盖不连续，难以应对多方向饱和。",
+          "人工报告和低成本传感器虚警较高。",
+          "缺少自动融合时，告警质量依赖训练和流程。",
+          "若敌方快速迭代或采用静默/半自主目标，RF和人工体系效果下降。"
+        ],
+        "infeasible_boundaries": [
+          "任务要求对大范围复杂地形提供连续、实时、高置信预警。",
+          "同时面对多批次、多轴、诱饵和电磁压迫。",
+          "关键资产无法分散、遮蔽或降低特征。",
+          "没有民用/设施业主协同，无法管控合法无人机背景。"
+        ],
+        "equipment_constraints": [
+          "低成本传感器需严格校准并限定适用场景。",
+          "人工报告必须配套身份核验、地理标注和误报复核。",
+          "被动防护措施需要提前工程化，不能等接触后临时实施。",
+          "低成本方案仍需最小C2和数据记录能力，否则难以复盘改进。"
+        ],
+        "evidence_links": [
+          "E3",
+          "E4",
+          "E9",
+          "E11",
+          "E14",
+          "E17",
+          "E18"
+        ],
+        "priority_actions": [
+          "按关键资产价值和无人机可达性划分防护优先级。",
+          "建立低空观察哨、声学/目视/RF简易告警点和事件上报模板。",
+          "预置遮蔽、分散、诱饵、灯光/热源/电磁特征管理措施。",
+          "把高端处置资源保留给高置信、高危、接近关键保护圈的目标。",
+          "用事件复盘逐步识别最值得升级为固定或机动传感节点的位置。"
+        ]
+      }
+    ],
+    "lessons": {
+      "public_case_lessons": [
+        {
+          "case": "纳卡2020",
+          "lesson": "传统SHORAD数量、质量和体系化不足时，地面重装备与固定防空节点易受无人机和巡飞弹压迫；全谱系防空、机动SHORAD和被动防护应前置到战术层级。",
+          "transfer_to_complex_terrain": "复杂地形下固定节点更容易形成可识别盲区，战术单位必须具备有机告警、分散和被动防护能力。",
+          "evidence_links": [
+            "E9"
+          ]
+        },
+        {
+          "case": "俄乌持续无人机战",
+          "lesson": "无人机、电子战、AI/自主、频率调整、光纤/替代链路和基层C-UAV装备形成快速迭代循环；固定采购周期难以跟上战场软件和战术变化。",
+          "transfer_to_complex_terrain": "预警体系应采用开放式架构、可更新特征库、前沿维修和操作员—工程师反馈闭环。",
+          "evidence_links": [
+            "E12",
+            "E13",
+            "E16",
+            "E17"
+          ]
+        },
+        {
+          "case": "俄罗斯Shahed饱和战役",
+          "lesson": "大量低成本一向攻击无人机可通过持续发射消耗防空资源；乌克兰以声学网、共同作战图、EW、机动防空和低成本手段减轻成本压力。",
+          "transfer_to_complex_terrain": "对复杂地形低空预警，应把声学/人工观测作为补盲层，但必须与共同作战图和传感器融合结合，避免误报泛滥。",
+          "evidence_links": [
+            "E18"
+          ]
+        },
+        {
+          "case": "红海反无人机作战",
+          "lesson": "分层、多域防御可以在高威胁环境中有效击落大量无人机，但成本交换、库存、节奏和人员/平台持续值班压力难以长期忽视。",
+          "transfer_to_complex_terrain": "陆上复杂地形防御也不能只追求单次拦截率，必须以低成本处置、弹药管理和被动防护控制长期消耗。",
+          "evidence_links": [
+            "E10"
+          ]
+        },
+        {
+          "case": "JCO蜂群反制演示",
+          "lesson": "面对多方向、多速度、多尺寸目标，没有单一传感器或效应器能解决全部问题；需要系统-of-systems、分层探测、威胁排序和C2融合。",
+          "transfer_to_complex_terrain": "复杂地形中的“多弱告警”场景更需要目标去重、优先级排序和自动cueing，否则人工值守会被虚警和重复目标淹没。",
+          "evidence_links": [
+            "E6"
+          ]
+        }
+      ],
+      "deployment_principles": [
+        {
+          "principle": "地形先于装备",
+          "description": "先做三维视域、RF传播、民用流量、气象和关键通道分析，再决定雷达、RF、EO/IR、声学和机动点位。",
+          "evidence_links": [
+            "E3",
+            "E5",
+            "E14"
+          ]
+        },
+        {
+          "principle": "多模态互补而非单传感器最优",
+          "description": "低分辨率广域传感用于首警，高分辨率窄视场传感用于确认；RF、雷达、EO/IR、声学和人工报告按环境动态加权。",
+          "evidence_links": [
+            "E3",
+            "E4",
+            "E14"
+          ]
+        },
+        {
+          "principle": "固定骨干+机动补盲+基层有机告警",
+          "description": "固定节点提供连续背景，机动节点填补地形/战损空隙，基层单元保留最低本地告警和防护能力。",
+          "evidence_links": [
+            "E6",
+            "E15",
+            "E17"
+          ]
+        },
+        {
+          "principle": "C2降级可运行",
+          "description": "共同作战图重要，但不能成为单点依赖；断链时仍需本地分级告警、离线地图和预授权防护动作。",
+          "evidence_links": [
+            "E2",
+            "E7",
+            "E8",
+            "E15"
+          ]
+        },
+        {
+          "principle": "低成本优先，高端保留",
+          "description": "对低价值、低置信或诱饵目标优先采用监视、遮蔽、驱离、电子/非动能和低成本措施，高端拦截用于高置信高危目标。",
+          "evidence_links
+- 能力画像：发展具备缺口场景专用探测、快速接入既有指挥链、模块化任务载荷和低成本补位能力的产品；证据驱动重点：{
+  "findings": [
+    "传统能力缺口的核心不是“有没有雷达”，而是现役低空预警体系多按高空、快速、较大雷达截面积目标设计；在山地、城市、海岸等复杂地形中，小型低慢小无人机可被地形、建筑、植被、水面杂波和电磁噪声共同遮蔽，导致发现距离、识别置信度和可处置时间同步压缩。",
+    "公开战例显示，低成本无人机并非总能高成功率突防；但其数量、低成本、快速迭代和可消耗特征足以通过持续试探、诱饵、饱和和跨域协同消耗防空弹药、传感器值班能力和指挥决策带宽。",
+    "现役体系的传统缺口集中在六类：一是低空盲区和地形遮蔽；二是单传感器误警与漏警；三是RF依赖型探测/压制对静默、自主、跳频或替代链路目标适应不足；四是集中式C2在短处置窗口内延迟过大；五是末端防护成本交换不利；六是基层单位缺少有机化、可机动、可重构的探测预警与被动防护能力。",
+    "升级需求应从单点装备采购转为体系架构升级：地形建模与视域规划、分布式补盲雷达、被动RF/频谱监测、EO/IR与声学验证、边缘AI融合、低带宽降级运行、蓝白名单与民航/民用无人机去冲突、低成本拦截与被动欺骗共同构成“决策级置信度”。",
+    "复杂地形场景下，关键时间窗口不是拦截瞬间，而是从危机前异常模式建立到初始接触的数分钟至数十秒：若传感器只在目标临近防区后才给出低置信告警，后续识别、授权、处置和安全评估会被压缩到不可用。",
+    "反证与修正：电子战和传统防空并未失效，乌克兰、红海等案例显示分层防御、电子战、机动火力和共同作战图可显著降低无人机命中率；因此问题不是“传统能力完全无用”，而是其在复杂地形、饱和、低成本消耗和快速技术迭代下需要体系化补强。",
+    "面向下游装备与运用研究，应优先评估：复杂地形三维覆盖率、低空目标首警时间、虚警/漏警率、RF静默目标发现概率、网络降级下本地处置能力、低成本连续作战能力、以及不同地形下传感器—效应器—指挥授权链条的闭环时间。"
+  ],
+  "confidence": 0.82,
+  "open_questions": [
+    "不同现役雷达、被动RF、EO/IR和声学节点在山谷、城市峡谷、海岸水面和高原低温环境中的实测Pd/FAR、首警时间和连续跟踪能力仍需本级试验数据确认。",
+    "公开资料可证明无人机威胁趋势和能力缺口，但无法充分量化特定国家、特定部队、特定装备编制下的真实覆盖盲区和库存消耗速率。",
+    "AI自主、抗干扰链路、星链/蜂窝/中继式替代链路的发展速度存在不确定性；短期内受算力、重量、成本限制，但中期可能显著削弱RF依赖型防御。",
+    "复杂地形下低成本拦截器、定向能、电子战和被动防护之间的最佳成本交换组合，需要结合任务目标、授权规则和民用环境约束进一步建模。",
+    "国内/本土防御场景中，法律授权、民航安全、频谱管理和隐私限制可能比战区环境更强地约束探测与处置方式，需单独形成规则矩阵。"
+  ],
+  "handoff_summary": "本轮研究将“复杂地形条件下现役低空无人机探测预警体系的传统能力缺口”转化为一个多域、动态对抗场景：敌方以低慢小、低成本、可消耗无人机为核心，通过危机前试探、初始低空接触、体系饱和与电磁/网络压迫、持续迭代和战损后再渗透，压缩蓝方首警与处置窗口。蓝方传统缺口主要在低空盲区、单传感器不可靠、RF依赖、集中式C2延迟、基层缺少有机C-UAS能力和成本交换不利。建议下游weapon_equipment重点研究分布式多模态融合、地形感知部署、低成本拦截与边缘处理；operational_employment重点研究分层值班、降级网络、民用空域去冲突和基层有机防护；winning_mechanism重点研究以成本交换、时间窗口、体系韧性和快速迭代压制无人机威胁的机制。",
+  "search_plan": [
+    {
+      "track": "近年公开战例",
+      "queries": [
+        "Russia Ukraine war low altitude drones detection air defense lessons terrain urban 2024 report",
+        "Nagorno-Karabakh 2020 drones air defense lessons small UAV radar electronic warfare report",
+        "Houthi Red Sea drones air defense saturation lessons counter UAS low cost 2024 report",
+        "Drone Saturation Russia Shahed Campaign Ukraine air defense acoustic sensors electronic warfare"
+      ]
+    },
+    {
+      "track": "现代演训与作战概念",
+      "queries": [
+        "Joint Counter Small UAS Office counter drone swarm demonstration 2024 layered approach",
+        "DoD Strategy for Countering Unmanned Systems detection active passive defenses 2024",
+        "counter small unmanned aircraft systems strategy DOTMLPF-P layered active passive defense",
+        "Small Drones Big Problems First Principles Countering UAS 2026"
+      ]
+    },
+    {
+      "track": "无人和智能系统运用",
+      "queries": [
+        "Ukraine FPV drones AI autonomous navigation anti jamming CSIS 2025",
+        "sUAS infiltration Ukraine electronic warfare GNSS spoofing attritable tactics",
+        "low slow small UAS air littoral contested space drone warfare lessons",
+        "counter UAS sensor fusion radar RF EO acoustic review"
+      ]
+    },
+    {
+      "track": "电磁网络与太空约束",
+      "queries": [
+        "Russia Ukraine electronic warfare drones GPS jamming UAV losses RUSI",
+        "contested electromagnetic spectrum UAS PNT jamming spoofing Ukraine report",
+        "counter UAS RF detection limitations multipath interference line of sight FAA technical considerations",
+        "GPS jamming satellite communications drone countermeasure Ukraine report"
+      ]
+    },
+    {
+      "track": "城市海岸高原等环境变化",
+      "queries": [
+        "urban counter UAS detection line of sight multipath clutter acoustic radar RF EO IR report PDF",
+        "low altitude air surveillance radar terrain masking line of sight mountains official report",
+        "counter UAS coastal environment sea clutter weather rain wind acoustic false alarms report",
+        "complex terrain low altitude drone detection radar clutter acoustic RF challenges mountainous"
+      ]
+    }
+  ],
+  "contradictions": [
+    "电子战既是有效反无人机手段，也是体系脆弱点。IAMD COE和CSIS均显示EW能大规模压制无人机，但CSIS和2026年ISIS报告也显示抗干扰、CRPA、替代链路、摄像头/中继/网状链路正在削弱单纯RF压制的可靠性。",
+    "Shahed等大型一向攻击无人机整体命中率并不高，ISIS数据表明大量无人机被拦截、迷航或受EW影响；但CSIS和ISIS同时指出持续大规模发射可消耗防空资源并在恶劣天气和基础设施累积损伤下形成战略效果。",
+    "雷达仍是全天候、可探测静默/自主目标的关键传感器；但FAA、DoD和学术综述均指出，低空小目标在地形遮蔽、地物反射、MTI盲速、杂波和小RCS条件下会显著降低雷达可靠性，因此“雷达必要”不等于“雷达充分”。",
+    "复杂地形既帮助攻击方利用山脊、建筑、树木和水面杂波接近，也会缩短无人机自身通信链路、导航和续航可靠性；蓝方若能提前做视域、RF传播和网络路径建模，可把地形从缺口转化为防御条件。",
+    "AI自主被广泛视为未来威胁放大器；但IAMD COE报告提醒，小型商用无人机在短期内仍受机载算力、重量、功耗和成本限制，不能假设所有低空目标都已具备高可靠自主突防能力。"
+  ],
+  "confidence_basis": "证据覆盖政府/军方文件、国会研究、军种专业期刊、智库报告、学术综述和公开战例，来源族群超过3类且包含2024、2025、2026年资料。关于复杂地形物理约束、传感器局限和多模态融合的证据直接性较高；关于俄乌、纳卡、红海战例的证据可相互印证无人机饱和、低成本消耗和分层防御趋势。主要不确定性在于具体装备性能、特定地域覆盖率、实际库存消耗和敌方最新链路/自主能力通常不公开，因此场景参数采用公开资料支撑的区间化、假设化表达。",
+  "source_claims": [
+    {
+      "url": "https://media.defense.gov/2026/Jul/08/2003958884/-1/-1/1/SMALL-DRONES-BIG-PROBLEMS-A-FIRST-PRINCIPLES-APPROACH-TO-Counter-UAS.PDF",
+      "claim": "[E1] 该DoD/联合跨机构材料指出无人机防护没有单一银弹，需雷达、光电/红外、声学、RF等互补传感器形成决策级置信度；山地、城市、植被、天气、RF噪声和网络路径会共同影响探测与处置。"
+    },
+    {
+      "url": "https://www.war.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/",
+      "claim": "[E2] DoD 2024年发布反无人系统战略，称无人系统对人员、设施和资产构成紧迫且持久威胁，并强调需统一理解和跨部门方法应对快速演化的无人系统。"
+    },
+    {
+      "url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+      "claim": "[E3] DoD战略事实清单强调无人系统正在改变冲突特征，短期重点包括提升探测、主动防御和被动防御，并面向更大数量、更高自主化和网络化威胁做中长期准备。"
+    },
+    {
+      "url": "https://www.army.mil/article-amp/278404/joint_counter_small_uas_office_conducts_successful_counter_drone_swarm_demonstration",
+      "claim": "[E4] 美陆军JCO 2024年蜂群反制演示中，每轮发射40多个UAS目标并评估多套系统；结论是单一能力无法应对多方向、多速度、多尺寸的大规模无人机剖面，需要系统-of-systems和分层方法。"
+    },
+    {
+      "url": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_5.html",
+      "claim": "[E5] FAA雷达说明指出，低空航空器若被山体遮蔽或低于雷达波束/受地球曲率影响可能看不见；较小反射面目标也比大型飞机更难由一次雷达发现。"
+    },
+    {
+      "url": "https://www.faa.gov/sites/faa.gov/files/airports/airport_safety/Attachment-3-UAS-Detection-Technical-Considerations.pdf",
+      "claim": "[E6] FAA UAS探测技术考虑文件指出，雷达和RF常作为主探测源，EO和声学通常是验证/辅助传感器；树木、建筑、地形、RF干扰、多径、天气、悬停/垂直运动和虚警都会影响系统效能。"
+    },
+    {
+      "url": "https://www.faa.gov/airports/new_entrants/uas_detection_mitigation_response",
+      "claim": "[E7] FAA机场UAS探测页面指出，雷达、RF、EO和声学可单独或组合用于探测验证，但探测系统不能自行判断UAS意图或威胁等级，且部署需考虑法律、EMI和空域运行影响。"
+    },
+    {
+      "url": "https://www.armyupress.army.mil/Journals/Military-Review/Online-Exclusive/2024-OLE/Grenade-Dropping-Quadcopters-II/",
+      "claim": "[E8] Army University Press关于俄乌无人机战的文章指出，1-3类小型UAS提供持久且难探测的RISTA能力；高空易观测UAS在成熟战区被EW和防空显著压制，而基层仍缺少足够有机C-sUAS能力。"
+    },
+    {
+      "url": "https://www.armyupress.army.mil/Journals/Military-Review/English-Edition-Archives/Nov-Dec-2024/Cunning-Tools-of-War/",
+      "claim": "[E9] Army University Press文章将低空空域称为被争夺的air littoral，并指出乌克兰小型UAS可采用消耗性渗透，即便少量存活也能通过不同路线和频率寻找电子战防线弱点。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare",
+      "claim": "[E10] CSIS基于前线访谈指出多数低成本FPV任务成功率约10%至15%，熟练操作者可达30%至50%；同时EW对控制链和GPS构成持续威胁，而AI导航和抗干扰能力正在被探索。"
+    },
+    {
+      "url": "https://iamd-coe.org/wp-content/uploads/2024/02/The-Evolving-UAS-Threat-Lessons-from-the-Russian-Ukrainian-War-Since-2022-on-Future-Air-Defence-Challenges-and-Requirements.pdf",
+      "claim": "[E11] IAMD COE报告指出俄乌冲突中电磁频谱高度拥挤和受争夺，俄军约每10公里部署一套主要EW系统并造成乌军约每月1万架UAV损失；但AI/自主、抗EW和卫星通信发展使攻防平衡保持不稳定。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/air-and-missile-war-nagorno-karabakh-lessons-future-strike-and-defense",
+      "claim": "[E12] CSIS纳卡空中与导弹战研究指出，S-300等大型防空系统并非为反UAV任务设计且早期遭打击；核心教训是需要全谱系防空、机动SHORAD和被动防护。"
+    },
+    {
+      "url": "https://s3.us-east-1.amazonaws.com/files.cnas.org/documents/Report_CUAS_Defense_Sep-2025_final.pdf",
+      "claim": "[E13] CNAS红海研究称2023年11月至2025年1月美海空力量击落约480架胡塞无人机，成功依赖分层、多域一体防御和快速学习，但成本与高节奏不可持续，部分交战窗口仅为秒级。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/drone-saturation-russias-shahed-campaign",
+      "claim": "[E14] CSIS关于Shahed饱和攻击的研究指出，俄方自2024年9月起将Shahed发射从每周约200架提升到2025年3月超过1000架；乌方依靠声学传感器、共同作战系统、EW和机动防空降低成本交换，但饱和压力仍上升。"
+    },
+    {
+      "url": "https://isis-online.org/uploads/isis-reports/documents/January-2026-Updated-Analysis-of-Russian-Shahed-type-UAVs-Deployment-Against-Ukraine_Feb-10_2026.pdf",
+      "claim": "[E15] ISIS 2026年2月报告指出，2026年1月Shahed型UAV继续承担直接打击基础设施与消耗防空资源的双重任务，并出现CRPA、尝试Starlink连接、中继无人机网状链路、在线摄像头和实时航路调整等技术改进。"
+    },
+    {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10780901/",
+      "claim": "[E16] 学术综述总结雷达、RF、声学和视觉探测均有环境干扰因素：鸟类/野生动物、频率重叠/干扰、风雨噪声、夜间/雾雨雪、遮挡和复杂背景会增加漏警或虚警；多传感器融合可提升鲁棒性。"
+    }
+  ],
+  "analysis_sections": {
+    "scenario_framework": {
+      "scenario_name": "复杂地形低空无人机探测预警体系压力场景",
+      "purpose": "检验现役低空无人机探测预警体系在山地—城市—海岸复合环境中的传统能力缺口，并推导升级需求；场景仅用于防御性能力研判，不提供攻击执行步骤。",
+      "background": {
+        "operational_setting": "蓝方防区位于山地边缘城市与近海/河口交通节点交汇区，存在山脊、谷地、高层建筑、仓储园区、港口水面、通信基站、民用无人机活动和复杂电磁背景。",
+        "blue_mission": "在不干扰民航和民用通信的前提下，对低空无人机活动形成早期发现、连续跟踪、身份判别、威胁评估、告警分发和安全处置支持。",
+        "red_objective": "通过低成本、可消耗、低空、分散和多样化无人机活动压缩蓝方发现—识别—决策—处置窗口，消耗传感器值班与防空资源，并寻找体系盲区。",
+        "key_assumptions": [
+          "[A1] 敌方不需要每架无人机成功，只需通过持续试探和少量突防制造态势压力。",
+          "[A2] 蓝方现役体系以固定雷达、少量RF探测、EO/IR验证、人工值守和上级集中确认流程为主，基层有机C-UAS能力不足。",
+          "[A3] 民用环境中蓝方不能无限制使用干扰、激光或动能处置，必须先完成识别、授权和安全评估。",
+          "[A4] 复杂地形对攻防双方同时施加约束：既遮蔽无人机，也影响其链路、导航和续航。"
+        ],
+        "evidence_or_assumption_links": [
+          "E1",
+          "E3",
+          "E4",
+          "E5",
+          "E6",
+          "E7",
+          "E16",
+          "A1",
+          "A2",
+          "A3",
+          "A4"
+        ]
+      },
+      "forces_and_systems": {
+        "blue_force": [
+          "固定低空监视雷达与既有防空预警节点",
+          "若干机动补盲雷达/便携式雷达",
+          "被动RF侦测与频谱监测节点",
+          "EO/IR云台、热像仪、可见光摄像头",
+          "声学传感器或群众/哨兵观测渠道",
+          "本地指挥所、上级空情/防空C2、民航/公安/频谱管理联络机制",
+          "有限电子压制、低成本拦截、被动伪装/遮蔽/分散措施"
+        ],
+        "red_force_abstract": [
+          "低慢小四旋翼/多旋翼侦察无人机",
+          "FPV或一次性小型无人机",
+          "固定翼一向攻击或诱饵无人机",
+          "RF发射较弱、间歇通信或预编程航线无人机",
+          "用于制造虚警和资源消耗的非致命/诱饵平台",
+          "电磁侦察、网络压力和信息欺骗支援能力"
+        ]
+      },
+      "scenario_horizons": [
+        {
+          "phase": "危机前预警",
+          "description": "防区周边出现异常民用无人机活动、短时RF信号、夜间低空噪声、社交媒体/公开影像收集、山脊和楼顶附近可疑活动。敌方可能进行传感器覆盖摸底和蓝方响应时间观察。",
+          "blue_tasks": [
+            "建立基线：常态RF、民用无人机航迹、鸟群/船舶/车辆/风机/港口机械背景。",
+            "基于三维地形、建筑物和植被生成雷达/EO/RF/声学视域图。",
+            "把异常模式纳入预警而非等待明确入侵。",
+            "建立民航、公安、频谱和设施业主联动流程。"
+          ],
+          "triggers": [
+            "同一区域重复出现短时无人机信号或视觉观测",
+            "防区盲区边缘出现疑似测绘/观察活动",
+            "夜间或恶劣天气中出现多源弱告警"
+          ],
+          "termination_conditions": [
+            "完成盲区复核与传感器补位",
+            "未发现持续威胁且异常恢复常态",
+            "进入初始接触阶段"
+          ],
+          "evidence_or_assumption_links": [
+            "E1",
+            "E6",
+            "E7",
+            "E16",
+            "A1"
+          ]
+        },
+        {
+          "phase": "初始接触",
+          "description": "低空目标利用山脊、建筑群、树线或水面背景进入外围；雷达出现低置信小目标或间歇航迹，RF节点可能捕捉到短脉冲或完全静默，EO/IR受到天气、背景热源和遮挡影响。",
+          "blue_tasks": [
+            "多源交叉验证：雷达给出方位/速度，RF判别链路特征，EO/IR确认外形，声学和哨兵观测补充。",
+            "按威胁等级而非单点告警触发响应。",
+            "在不危及民用空域条件下发布分级告警和临时空域/设施防护动作。"
+          ],
+          "triggers": [
+            "多个传感器在相近时间/空间内出现弱相关",
+            "同一航迹在盲区边界反复消失再出现",
+            "RF噪声或GNSS异常与低空告警同时发生"
+          ],
+          "termination_conditions": [
+            "目标被识别为合法/无威胁并解除警戒",
+            "目标退出防区且无后续批次",
+            "出现多批次、多方向或电磁压迫迹象，进入体系对抗"
+          ],
+          "evidence_or_assumption_links": [
+            "E5",
+            "E6",
+            "E16",
+            "E1",
+            "A3"
+          ]
+        },
+        {
+          "phase": "体系对抗",
+          "description": "敌方由单机试探转为多批次、多方向、诱饵与真实目标混合；同时出现RF拥塞、GNSS干扰/欺骗、链路间歇、网络回传延迟和虚警增多。蓝方从单目标处置转为态势管理和资源分配。",
+          "blue_tasks": [
+            "维持共同作战图，但允许边缘节点在上级链路降级时本地生成威胁优先级。",
+            "将拦截资源优先用于穿越关键防护圈、具有高置信敌意或高危载荷迹象的目标。",
+            "采取被动防护：关键装备分散、遮蔽、诱饵、灯火/热源/电磁特征管理。",
+            "评估电子压制与民用通信、己方无人机和传感器之间的电磁互扰。"
+          ],
+          "triggers": [
+            "同一时间出现多方向航迹或诱饵/真实目标混杂",
+            "雷达/RF/EO传感器输出互相矛盾",
+            "上级链路延迟导致确认时间超过末端处置窗口",
+            "蓝方高价值节点被持续侦察或反复虚警牵制"
+          ],
+          "termination_conditions": [
+            "攻击批次停止且态势恢复稳定",
+            "蓝方资源消耗达到预设阈值并转入持续作战节奏",
+            "若出现传感器/通信节点损伤，则进入战损重构"
+          ],
+          "evidence_or_assumption_links": [
+            "E3",
+            "E4",
+            "E9",
+            "E11",
+            "E13",
+            "E14",
+            "E15",
+            "A2"
+          ]
+        },
+        {
+          "phase": "持续作战",
+          "description": "无人机威胁进入日常化、高频化和迭代化；敌方根据蓝方反应调整飞行高度、时间、链路、诱饵比例和目标类型。蓝方重点由单次成功拦截转为成本、人员、传感器维护和弹药库存的长期承受能力。",
+          "blue_tasks": [
+            "统计每类传感器虚警、漏警和维护负担，按地形区块调整部署。",
+            "低成本优先：对低价值目标采用监视、驱离、遮蔽和电子/非动能手段，对高价值威胁保留高端拦截。",
+            "更新RF/雷达/声学/视觉特征库，训练操作员识别新型诱饵和民用混杂目标。",
+            "形成24/7值守轮换、备件和电源/网络冗余。"
+          ],
+          "triggers": [
+            "连续多日多批次无人机活动",
+            "蓝方拦截成本明显高于来袭平台成本",
+            "传感器误警导致疲劳或响应迟滞",
+            "敌方出现新频段、新外形或新抗干扰特征"
+          ],
+          "termination_conditions": [
+            "威胁活动降至基线水平",
+            "完成战术/技术升级并恢复成本交换优势",
+            "发生关键节点损伤并转入战损重构"
+          ],
+          "evidence_or_assumption_links": [
+            "E8",
+            "E10",
+            "E11",
+            "E14",
+            "E15",
+            "E16"
+          ]
+        },
+        {
+          "phase": "战损重构",
+          "description": "部分传感器、通信、供电或C2节点失效；蓝方需要在地形和电磁约束下快速恢复低空态势感知，避免因单点损伤形成可重复利用的低空通道。",
+          "blue_tasks": [
+            "启用机动补盲节点、备用电源、离线地图和本地边缘处理。",
+            "将固定节点覆盖转为临时网格化覆盖，重点保护关键通道和高价值区域。",
+            "以最小网络依赖维持本地告警和跨单位简报。",
+            "记录敌方利用的盲区和触发条件，纳入下一轮部署优化。"
+          ],
+          "triggers": [
+            "关键传感器掉线或误差显著升高",
+            "回传链路拥塞/中断",
+            "多源空情无法融合或重复目标严重",
+            "敌方利用相同盲区重复进入"
+          ],
+          "termination_conditions": [
+            "恢复最低可接受覆盖和本地处置能力",
+            "完成备用节点部署和盲区重新评估",
+            "威胁降低或转入新一轮持续作战"
+          ],
+          "evidence_or_assumption_links": [
+            "E1",
+            "E3",
+            "E4",
+            "E6",
+            "A2",
+            "A4"
+          ]
+        }
+      ],
+      "victory_criteria": {
+        "blue_success": [
+          "低空关键通道首警时间满足识别和安全处置需要",
+          "多传感器融合后虚警可控、漏警下降",
+          "在网络降级和部分节点损伤下仍可本地告警与分级响应",
+          "拦截/处置成本与来袭成本差距缩小",
+          "敌方无法通过少量试探稳定复现低空通道"
+        ],
+        "red_success_abstract": [
+          "蓝方在多个关键地形区块出现持续盲区",
+          "虚警和诱饵迫使蓝方高成本响应",
+          "集中式确认流程导致处置窗口丧失",
+          "蓝方传感器/通信/值班体系出现疲劳或降级"
+        ]
+      }
+    },
+    "enemy_coa": [
+      {
+        "coa_name": "COA-1 最可能方案：低强度持续侦察试探与盲区测绘",
+        "intent": "以低成本、低风险平台持续观察蓝方反应、传感器覆盖和出动规律，逐步识别低空盲区和误警触发点。",
+        "conceptual_actions_non_executable": [
+          "在民用空域背景、城市边缘和山地遮蔽附近制造间歇低空活动。",
+          "混用可见RF发射目标、弱发射目标和合法/疑似合法活动以测试蓝方识别规则。",
+          "反复观察蓝方从首警到确认、授权和处置的时间。"
+        ],
+        "observable_indicators": [
+          "同一区域短时RF信号或无人机目击重复出现但未深入防区",
+          "雷达低置信航迹在山脊/建筑边缘消失再出现",
+          "民用无人机活动量与敏感时段、演训或重要保障活动异常相关",
+          "社交媒体、公开影像或人员观察活动增多"
+        ],
+        "key_nodes": [
+          {
+            "node": "基线污染",
+            "effect_on_blue": "使蓝方难以区分正常民用活动与威胁准备。",
+            "evidence_or_assumption_links": [
+              "E7",
+              "E16",
+              "A1"
+            ]
+          },
+          {
+            "node": "盲区确认",
+            "effect_on_blue": "暴露地形遮蔽、传感器死角和C2延迟。",
+            "evidence_or_assumption_links": [
+              "E5",
+              "E6",
+              "E1"
+            ]
+          }
+        ],
+        "risk_to_red": [
+          "低空链路受地形影响可能失联",
+          "频繁试探会暴露模式并给蓝方建立基线",
+          "民用环境中平台被识别后可能触发执法和空域管制"
+        ],
+        "blue_pressure_points": [
+          "身份判别",
+          "民用无人机去冲突",
+          "值班疲劳",
+          "低空盲区建模",
+          "跨部门信息共享"
+        ]
+      },
+      {
+        "coa_name": "COA-2 最危险方案：多轴饱和、诱饵混杂与电磁/网络压迫",
+        "intent": "以多批次、多方向、低成本无人机和诱饵目标迫使蓝方同时处理大量低置信告警，消耗拦截资源并压缩处置窗口。",
+        "conceptual_actions_non_executable": [
+          "将诱饵、侦察和真实威胁目标混杂，制造优先级排序困难。",
+          "利用地形、城市遮挡和水面/车辆/鸟群杂波增加虚警。",
+          "通过电磁拥塞、GNSS异常或网络压力降低蓝方传感器和C2融合质量。",
+          "在蓝方响应后改变频段、时段、航迹和平台类型，延长消耗战。"
+        ],
+        "observable_indicators": [
+          "同一时间多方向低空航迹增加",
+          "RF噪声底、GNSS异常、通信延迟与无人机告警同步出现",
+          "EO/IR被热背景、遮挡或诱饵牵引，确认时间延长",
+          "拦截弹药、值班人员和传感器维护负担快速上升"
+        ],
+        "key_nodes": [
+          {
+            "node": "态势过载",
+            "effect_on_blue": "传感器融合和人工确认产生队列积压，威胁排序错误概率上升。",
+            "evidence_or_assumption_links": [
+              "E4",
+              "E13",
+              "E14"
+            ]
+          },
+          {
+            "node": "成本交换施压",
+            "effect_on_blue": "诱使蓝方使用昂贵拦截手段对付低成本目标，削弱持续作战能力。",
+            "evidence_or_assumption_links": [
+              "E13",
+              "E14",
+              "E15"
+            ]
+          },
+          {
+            "node": "电磁/网络降级",
+            "effect_on_blue": "RF探测、GNSS时间/位置、视频回传和共同作战图出现不一致。",
+            "evidence_or_assumption_links": [
+              "E1",
+              "E6",
+              "E11",
+              "E15"
+            ]
+          }
+        ],
+        "risk_to_red": [
+          "大规模活动更易被多源发现",
+          "诱饵比例过高会降低实际效果",
+          "持续发射对后勤、组装和操作者训练提出要求"
+        ],
+        "blue_pressure_points": [
+          "多目标跟踪容量",
+          "威胁优先级排序",
+          "边缘授权",
+          "低成本处置",
+          "EW与己方通信去冲突",
+          "持续补给与人员轮换"
+        ]
+      },
+      {
+        "coa_name": "COA-3 替代方案：RF静默/半自主低空渗透与合法流量伪装",
+        "intent": "减少可被RF探测和压制的暴露特征，依赖预编程、惯导/视觉辅助或间歇链路，通过合法无人机/鸟群/车辆/港口机械背景降低识别置信度。",
+        "conceptual_actions_non_executable": [
+          "减少连续控制链路暴露，采用间歇通信或预编程任务。",
+          "选择蓝方RF强噪声区、城市遮挡区或复杂热背景区使探测结果不一致。",
+          "利用民用无人机密集时段或合法空域活动提高蓝方误判成本。"
+        ],
+        "observable_indicators": [
+          "雷达/EO有弱迹象但RF无对应链路",
+          "目标航迹规律性强但身份信息缺失",
+          "Remote ID或白名单数据与物理航迹不一致",
+          "蓝方RF压制后目标仍保持部分任务行为"
+        ],
+        "key_nodes": [
+          {
+            "node": "RF探测旁路",
+            "effect_on_blue": "RF依赖型预警和操作者定位能力下降。",
+            "evidence_or_assumption_links": [
+              "E6",
+              "E10",
+              "E11",
+              "E15"
+            ]
+          },
+          {
+            "node": "识别规则混淆",
+            "effect_on_blue": "合法/非法、威胁/非威胁分类时间增加。",
+            "evidence_or_assumption_links": [
+              "E7",
+              "E16",
+              "A3"
+            ]
+          }
+        ],
+        "risk_to_red": [
+          "小型平台自主能力受算力、重量、电源和成本约束",
+          "静默减少实时操控能力并提高任务不确定性",
+          "雷达、EO/IR和声学融合仍可能发现其物理存在"
+        ],
+        "blue_pressure_points": [
+          "非RF目标探测",
+          "多模态融合",
+          "白名单/Remote ID可信校验",
+          "本地AI分类",
+          "被动防护"
+        ]
+      }
+    ],
+    "critical_timeline": [
+      {
+        "time_window": "T-30至T-7天：危机前模式建立",
+        "red_activity_abstract": "低强度观察、民用流量混入、短时RF活动和公开信息收集。",
+        "blue_decision": "是否把弱异常纳入预警并开展盲区复核。",
+        "traditional_gap": "现役体系常等待明确空情告警，缺少把地形、RF基线和民用活动融合为异常模式的机制。",
+        "upgrade_need": "建立三维视域、RF传播、常态航迹和异常模式数据库；把民用/执法/频谱信息接入低空态势。",
+        "observable_indicators": [
+          "重复短时RF信号",
+          "固定区域目击报告",
+          "不寻常民用无人机集中",
+          "公开影像收集活动"
+        ],
+        "evidence_or_assumption_links": [
+          "E1",
+          "E6",
+          "E7",
+          "A1"
+        ]
+      },
+      {
+        "time_window": "T-72至T-24小时：传感器与响应摸底加剧",
+        "red_activity_abstract": "围绕防区边缘进行多点低空试探，观察蓝方响应节奏。",
+        "blue_decision": "是否调整机动传感器、值班等级和被动防护。",
+        "traditional_gap": "固定传感器对山体、建筑和水面杂波导致的低空盲区反应慢。",
+        "upgrade_need": "机动补盲雷达/被动RF/EO点位预案，临时升高传感器、边缘融合和地形补盲部署。",
+        "observable_indicators": [
+          "航迹在盲区边缘反复中断",
+          "不同传感器对同一事件判断不一致",
+          "低空噪声和视觉观测先于雷达确认"
+        ],
+        "evidence_or_assumption_links": [
+          "E5",
+          "E6",
+          "E16",
+          "A4"
+        ]
+      },
+      {
+        "time_window": "T-60至T-10分钟：初始接触与分级告警",
+        "red_activity_abstract": "小批次低空目标进入外围探测范围，可能伴随诱饵或RF噪声。",
+        "blue_decision": "是否升级为无人机威胁事件并启动空域/设施防护。",
+        "traditional_gap": "单传感器置信度不足导致等待人工确认，压缩后续处置时间。",
+        "upgrade_need": "多模态置信评分、自动关联、EO/IR slew-to-cue、声学/哨兵补充和快速分级告警。",
+        "observable_indicators": [
+          "低RCS低速航迹",
+          "间歇RF发射",
+          "EO/IR受到背景干扰",
+          "GNSS或网络异常同步出现"
+        ],
+        "evidence_or_assumption_links": [
+          "E1",
+          "E4",
+          "E6",
+          "E16"
+        ]
+      },
+      {
+        "time_window": "T-10分钟至T+30分钟：体系对抗窗口",
+        "red_activity_abstract": "多方向、多批次、诱饵/真实目标混合，叠加电磁和网络压力。",
+        "blue_decision": "如何在有限时间内排序目标、分配低成本与高端处置手段、维持共同作战图。",
+        "traditional_gap": "集中式C2、人工确认和高成本拦截难以应对饱和和秒级/分钟级窗口。",
+        "upgrade_need": "边缘授权、降级运行、威胁优先级算法、低成本拦截层、被动防护和网络断续下的本地态势。",
+        "observable_indicators": [
+          "多传感器目标重复或冲突",
+          "航迹数量超过人工处理能力",
+          "回传视频延迟",
+          "拦截资源快速消耗"
+        ],
+        "evidence_or_assumption_links": [
+          "E3",
+          "E4",
+          "E13",
+          "E14",
+          "E15"
+        ]
+      },
+      {
+        "time_window": "T+30分钟至T+72小时：持续消耗与快速迭代",
+        "red_activity_abstract": "根据蓝方响应改变平台、频段、时段、诱饵比例和接近方向。",
+        "blue_decision": "如何维持成本交换、人员轮换、传感器维护和特征库更新。",
+        "traditional_gap": "装备采购与软件/特征库更新周期慢，基层训练和备件不足。",
+        "upgrade_need": "开放式架构、快速软件更新、特征库共享、消耗品储备、训练闭环和跨单位经验回灌。",
+        "observable_indicators": [
+          "新频段或静默目标增加",
+          "诱饵比例变化",
+          "夜间/恶劣天气活动增加",
+          "传感器误警模式变化"
+        ],
+        "evidence_or_assumption_links": [
+          "E8",；{
+  "findings": [
+    "复杂地形下的传统低空无人机预警缺口主要不是单一雷达灵敏度不足，而是低空视距、地形遮蔽、建筑/林地杂波、多路径、电磁噪声和短预警时间叠加造成的体系性缺口。",
+    "现役成熟体系以美国LIDS家族为代表：FS-LIDS用于固定点防护，M-LIDS用于机动防护，核心由KuRFS/相关雷达、EO/IR、电子战、Coyote拦截器和FAAD C2组成；公开资料显示其目标对象主要为Group 1-3小型无人机及其他低飞威胁。",
+    "GAO与CRS资料显示，FS-LIDS、M-LIDS、Coyote、Ku-band雷达族和手持/下车系统已进入美陆军正式采办组合并在2024财年进入全速生产；但成本、测试逼真度、人员训练、跨军种C2和工业扩产仍是约束。",
+    "公开参数显示，若在开阔或合理布站条件下，专用小无人机雷达可提供数公里级发现：Saab Giraffe 1X宣称可在4 km发现很小UAV；Robin IRIS标准模式为5 km仪器化距离、长距模式可至12 km；Hensoldt SPEXER 2000 Coastal对0.2 m² RCS UAV公开探测距离为9 km。复杂地形中这些距离不应直接外推。",
+    "被动RF/协议解析、声学、EO/IR和多传感器融合可补足有源雷达暴露和遮蔽问题，但对自主航线、低发射控制、跳频、光纤控制、复杂电磁环境和恶劣天气均存在边界。",
+    "在研升级方向集中于低成本、低SWaP、模块化、被动/分布式传感器，车载/下车/系留或小型UAS搭载传感器，多源融合C2，以及低成本硬杀伤、非动能、定向能和高功率微波等多层反制。",
+    "对手优势在于小型无人机低成本、低雷达/声/热/RF特征、可低空贴地或利用地形遮蔽、可饱和攻击和快速迭代；其依赖包括导航、数据链、发射/回收点、能源、操作者和后勤补给，且森林、复杂地形和电磁干扰同样会限制无人机操控与传感链路。",
+    "场景适配度判断：固定基地和关键基础设施适合FS-LIDS/多传感器塔台化布设；机动分队适合M-LIDS、轻量雷达、被动RF和便携告警；山地、森林、城市峡谷和海岸/港口需要分布式多高度布站、被动探测和本地化低时延C2，而不能依赖单点远程雷达。",
+    "防御性升级需求应优先解决“发现—识别—告警—交接”链条：分布式传感器覆盖低空死角、融合算法降低鸟类/车辆/旋翼杂波误警、C2兼容FAAD/IBCS/TAK类接口、弹药/能源补给与低成本交战策略，以及常态化红蓝对抗测试。"
+  ],
+  "confidence": 0.82,
+  "open_questions": [
+    "各型雷达在山地、森林、城市峡谷等复杂地形中的有效发现距离、虚警率和跟踪连续性缺乏统一公开测试数据；公开厂商参数多基于开阔或理想布设条件。",
+    "KuRFS、XBAEU、AN/TPQ-50改型、SPEXER 2000 3D MkIII等具体批次间的探测距离、抗干扰能力和软件版本差异公开资料有限。",
+    "Coyote Block 2/Block 3NK、BLADE、DE M-SHORAD、IFPC-HEL/HPM和下一代C-UAS导弹的单位成本、弹药库存、可靠性和作战可用率缺少可交叉核验的公开数据。",
+    "FAAD C2与IBCS、JADC2、TAK、北约接口之间的具体数据模型、认证状态和网络抗毁性公开信息不足。",
+    "反制光纤控制FPV、自主终端识别、无RF发射航线飞行和大规模蜂群的体系效果仍需更多公开实测。"
+  ],
+  "handoff_summary": "本轮仅基于公开资料形成传统能力缺口研究包。结论是：现役低空无人机探测预警体系已具备成熟的点防护和机动C-UAS能力，但在复杂地形下仍受低空视距、地形遮蔽、杂波、虚警、C2交接、成本和饱和压力制约。建议下游围绕“多源分布式低空探测、低SWaP被动/主动融合、开放C2、低成本多层拦截、训练与后勤韧性”开展战法与制胜机理分析。",
+  "search_plan": [
+    {
+      "track": "现役型号与部署规模",
+      "queries": [
+        "site:army.mil counter small UAS low altitude detection radar complex terrain LIDS KuRFS 2025",
+        "LIDS Low Slow Small Unmanned Aircraft Integrated Defeat System KuRFS Coyote M-LIDS Army 2025 official",
+        "Leonardo DRS M-LIDS counter UAS system deployed Stryker 2025 official",
+        "DSCA UAE FS-LIDS 2026 Coyote KuRFS $2.10 billion official"
+      ]
+    },
+    {
+      "track": "在研项目与预算采购",
+      "queries": [
+        "FY 2026 budget counter-UAS Army LIDS M-LIDS FS-LIDS Coyote procurement 3.1 billion official",
+        "site:asafm.army.mil FY 2026 counter small UAS Coyote LIDS budget justification",
+        "Army SBIR low altitude passive detection system terrain curvature obstacles sUAS 2025",
+        "Next Generation Counter UAS Missile Army FY 2027 common launcher"
+      ]
+    },
+    {
+      "track": "关键参数和任务载荷",
+      "queries": [
+        "KuRFS radar specifications range 360 coverage counter UAS official",
+        "SAAB Giraffe 1X drone detection radar range official counter UAS",
+        "Robin Radar IRIS drone detection radar range official 2025",
+        "HENSOLDT SPEXER 2000 UAV 0.2 m2 RCS 9 km official"
+      ]
+    },
+    {
+      "track": "体系接口与联合作战能力",
+      "queries": [
+        "FAAD C2 counter UAS LIDS interface command and control official 2025",
+        "Northrop Grumman FAAD C2 counter UAS Forward Area Air Defense command control 2025 official",
+        "Army FAADC2 LIDS M-LIDS FS-LIDS command and control integration counter UAS 2025",
+        "IBCS FAAD C2 counter UAS integration LIDS 2025"
+      ]
+    },
+    {
+      "track": "技术成熟度工业基础与保障约束",
+      "queries": [
+        "GAO-25-107491 counter UAS FS-LIDS M-LIDS full rate production 2024",
+        "CRS Department of Defense Counter-UAS Background Issues Congress LIDS Coyote cost technical maturity 2025",
+        "RUSI Protecting the Force from Uncrewed Aerial Systems layered counter UAS 2024",
+        "NATO counter UAS fiber optic drone EW ineffective detection 2025"
+      ]
+    }
+  ],
+  "contradictions": [
+    "冲突/边界1：厂商公开参数显示专用雷达在开阔条件下具备数公里级小UAV发现能力，但陆军SBIR明确指出现有系统受地形、地球曲率和障碍物影响，低空sUAS预警窗口有限。因此“雷达能力强”与“复杂地形预警不足”并不矛盾，关键在布站和场景。",
+    "冲突/边界2：CRS记录Coyote已有实战拦截成功和大规模采购需求，但同一报告也指出其不一定适合廉价无人机的成本交换。因此成熟度高不等于成本可持续。",
+    "冲突/边界3：定向能和高功率微波常被描述为低单发成本方案，但CRS指出其M-SHORAD方向曾有延期和用户评价一般，同时规模化装备的前期成本可能抵消单发成本优势。",
+    "冲突/边界4：被动RF/协议解析系统可降低暴露并提供识别，但NATO相关资料显示光纤控制无人机使传统EW类反制失效或效果下降；自主/预编程航线也会削弱RF探测的可用性。",
+    "冲突/边界5：复杂地形既削弱防御方探测，也限制无人机操控、通信、导航和传感器视场；不能简单假设攻击方在山地/森林/城市峡谷中总是占优。",
+    "冲突/边界6：固定点C-UAS可通过多传感器冗余补足死角，但机动分队受车辆空间、电源、天线高度、人员训练和弹药补给限制，难以复制固定基地级覆盖。"
+  ],
+  "confidence_basis": "证据覆盖政府/军方、国会研究、GAO、厂商资料、智库和北约公开资料，来源家族超过3类；多数关键证据在2024年7月以后发布或仍为当前厂商页面，满足近两年新鲜度要求。LIDS、Coyote、KuRFS、FAAD、Giraffe 1X、IRIS等至少由政府/CRS/GAO与厂商资料交叉支撑。剩余不确定性主要来自：厂商参数通常不是复杂地形实测；关键系统真实作战距离、虚警率、库存和软件接口公开不足；在研定向能、HPM和下一代拦截器成熟度仍在变化。",
+  "source_claims": [
+    {
+      "url": "https://www.defense.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/",
+      "claim": "美国国防部2024年发布反无人系统战略，强调无人系统威胁快速演进，并将JCO、Warfighter Senior Integration Group和Replicator 2等作为主要举措。"
+    },
+    {
+      "url": "https://www.gao.gov/assets/gao-25-107491.pdf",
+      "claim": "GAO-25-107491显示，美陆军C-sUAS组合中FS-LIDS、M-LIDS、Coyote、Ku-band雷达族和手持/下车系统等进入正式采办；其中五项在2024财年进入全速生产。"
+    },
+    {
+      "url": "https://www.congress.gov/crs_external_products/R/PDF/R48477/R48477.2.pdf",
+      "claim": "CRS R48477说明LIDS由FS-LIDS和M-LIDS组成，面向Group 1-3无人机和其他低飞威胁；M-LIDS Increment 2.1从双M-ATV配置迁移为单Stryker配置。"
+    },
+    {
+      "url": "https://www.congress.gov/crs_external_products/R/PDF/R48477/R48477.2.pdf",
+      "claim": "CRS记录FS-LIDS使用KuRFS雷达、EO/IR、电子战和Coyote拦截器，FS-LIDS与M-LIDS均使用FAAD C2；FY2025陆军申请2.801亿美元采购FS-LIDS、M-LIDS及若干下车系统，并另申请1.174亿美元采购Coyote。"
+    },
+    {
+      "url": "https://www.congress.gov/crs_external_products/R/PDF/R48477/R48477.2.pdf",
+      "claim": "CRS记录Coyote是LIDS家族的反UAS拦截器，有动能和非动能版本；截至2024年公开报道已有170次成功拦截，但陆军官员也称其对廉价无人机未必成本有效。"
+    },
+    {
+      "url": "https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2026/Discretionary%20Budget/rdte/RDTE%20-%20Vol%204%20-%20Budget%20Activity%209.pdf",
+      "claim": "美陆军PB2026 RDT&E材料列出Counter Unmanned Aerial Systems Agile Development项目，FY2026项目经费合计约1.43618亿美元，并显示C-sUAS相关采购线I24000 FY2026合计约3.06568亿美元。"
+    },
+    {
+      "url": "https://www.defense.gov/News/Transcripts/Transcript/Article/4228828/background-briefing-on-fy-2026-defense-budget/",
+      "claim": "美国国防部FY2026预算吹风会称，跨军种counter-UAS总请求约31亿美元。"
+    },
+    {
+      "url": "https://armysbir.army.mil/announcement/launch-2m-funding-opportunity-low-altitude-suas-detection/",
+      "claim": "美陆军SBIR/STTR 2025年低空被动探测机会指出，现有系统偏向较大、更高空目标，受地形、地球曲率和障碍物影响，难以发现多架低空sUAS，且大型固定系统限制部署灵活性。"
+    },
+    {
+      "url": "https://armysbir.army.mil/topics/low-altitude-passive-detection-system/",
+      "claim": "陆军低空被动探测题目要求低成本、低SWaP、模块化能力，并希望可兼容Group 1 sUAS或系留UAS载荷接口，用于增加地面部队对0至6000英尺AGL低空威胁的预警时间。"
+    },
+    {
+      "url": "https://www.rtx.com/raytheon/what-we-do/integrated-air-and-missile-defense/kurfs",
+      "claim": "Raytheon公开称KuRFS是360度雷达，可持续探测、识别和跟踪从火箭/炮弹/迫击炮到各类无人机的空中威胁，并作为美陆军LIDS组成部分。"
+    },
+    {
+      "url": "https://www.rtx.com/raytheon/what-we-do/integrated-air-and-missile-defense/coyote",
+      "claim": "Raytheon公开称Coyote与KuRFS配合提供从单机到蜂群的探测与击败能力；Coyote Block 3NK可使用非动能载荷、可徘徊、击败蜂群并可召回再部署。"
+    },
+    {
+      "url": "https://www.northropgrumman.com/what-we-do/mission-solutions/forward-area-air-defense-faad",
+      "claim": "Northrop Grumman公开称FAAD将SHORAD、C-RAM和C-UAS任务集成到单一界面，提供实时空域监视、威胁识别和安全拦截所需跟踪数据，并为美国国防部选择的C-UAS C2系统。"
+    },
+    {
+      "url": "https://www.saab.com/products/giraffe-1x",
+      "claim": "Saab公开称Giraffe 1X可作为VSHORAD主传感器、GBAD补盲雷达或C-UAS解决方案；系统总重低于150 kg，可探测距离雷达4 km处小于牛奶盒重量的UAV。"
+    },
+    {
+      "url": "https://www.robinradar.com/products/iris-radar",
+      "claim": "Robin Radar公开称IRIS为3D无人机雷达，提供360度视场、60度俯仰覆盖、5 km仪器化距离和约78 km²覆盖面积。"
+    },
+    {
+      "url": "https://www.robinradar.com/news-events/robin-radar-deploys-off-the-shelf-cuas-radar-with-12km-range",
+      "claim": "Robin Radar 2025年发布称IRIS Long-Range Mode可在5 km和12 km仪器化距离间切换，体现软件/模式升级带来的探测距离提升。"
+    },
+    {
+      "url": "https://www.hensoldt.net/fileadmin/HENSOLDT_2019/Products/Radar_IFF_Datalink/0812_17_Spexer2000_Coastal_E_intranet.pdf",
+      "claim": "Hensoldt SPEXER 2000 Coastal资料列出对0.2 m² RCS UAV的探测距离为9 km。"
+    },
+    {
+      "url": "https://www.rheinmetall.com/Rheinmetall%20Group/brochure-download/Air-Defence/D994e0222-Oerlikon-Skyranger-30.pdf",
+      "claim": "Rheinmetall Skyranger 30资料显示其采用3D AESA搜索雷达、30 mm×173炮、1200发/分射速和自动目标探测/捕获/跟踪，代表炮基低空反无人机/SHORAD方向。"
+    },
+    {
+      "url": "https://www.rusi.org/explore-our-research/publications/occasional-papers/protecting-force-uncrewed-aerial-systems",
+      "claim": "RUSI 2024报告强调反UAS必须是分层且高效的能力，软件、检测分类识别、电子战和多层效果器与硬件同等重要。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare",
+      "claim": "CSIS关于乌克兰自主化战争的研究指出，EW干扰推动无人机与反无人机体系转向替代探测、传感和自主能力；雷达、声学等方法也各自存在性能边界。"
+    },
+    {
+      "url": "https://www.act.nato.int/wp-content/uploads/2025/05/rfip025048.pdf",
+      "claim": "NATO ACT 2025资料提到自2024年底以来俄方引入光纤控制无人机，传统EW counter-UAS对这类无人机无效或效果受限，且其机动、抗干扰和低特征增加探测难度。"
+    },
+    {
+      "url": "https://www.droneshield.com/products-software",
+      "claim": "DroneShield公开称DroneSentry-C2提供统一实时反无人机态势图，可与自有传感器和第三方系统互操作，并融合RF、雷达和光学传感器。"
+    },
+    {
+      "url": "https://sentrycs.com/news/sentrycs-unveils-version-6-0-of-its-counter-drone-software-delivering-unmatched-coverage-and-efficiency/",
+      "claim": "Sentrycs 2025年发布称其V6.0采用协议操纵/Cyber over RF方法，从无人机与操作者通信的数据层提取信息，不同于仅依赖雷达、EO和RF扫描的多层探测。"
+    }
+  ],
+  "analysis_sections": {
+    "current_parameters": {
+      "scope_note": "参数均为公开资料；复杂地形下不得将开阔场或厂商标称距离直接视为作战保证距离。置信度按公开来源直接性、交叉核验和参数完整性评估。",
+      "parameter_records": [
+        {
+          "system": "LIDS family: FS-LIDS / M-LIDS",
+          "status": "现役/正式采办；GAO称相关项目2024财年进入全速生产",
+          "mission_scope": "防御Group 1-3无人机及其他低飞威胁",
+          "configuration_batch": "FS-LIDS固定点；M-LIDS Increment 2.1单Stryker配置，早期M-LIDS为双M-ATV配置",
+          "sensors_payloads": "KuRFS/相关Ku波段雷达、EO/IR、电子战、Coyote拦截器、FAAD C2；M-LIDS另含RIwP/30 mm等武器站配置",
+          "public_quantity_budget": "FY2025陆军申请约2.801亿美元用于FS-LIDS、M-LIDS及下车系统；其中公开提及5套Stryker M-LIDS和6套FS-LIDS；另约1.174亿美元用于Coyote采购",
+          "units": "美元；套；无人机Group分类",
+          "confidence": "高"
+        },
+        {
+          "system": "Raytheon KuRFS",
+          "status": "现役/已部署于LIDS体系",
+          "configuration_batch": "Ku-band Radio Frequency Sensor；公开页面未给出标准探测距离",
+          "key_parameters": {
+            "coverage": "360度",
+            "functions": "持续探测、识别、跟踪空中威胁",
+            "target_set": "火箭、炮弹、迫击炮、各类无人机",
+            "notable_claim": "可识别/分辨极小目标，厂商称可看到和识别来袭9 mm子弹"
+          },
+          "units": "角度；目标类别",
+          "confidence": "中高；功能由厂商和CRS交叉支撑，具体距离未知"
+        },
+        {
+          "system": "Raytheon Coyote",
+          "status": "现役/采购扩大",
+          "configuration_batch": "Block 2动能；Block 3NK非动能；固定/机动发射",
+          "key_parameters": {
+            "launch": "rail-launched；boost rocket motor and turbine engine",
+            "payload": "动能和非动能",
+            "public_performance": "CRS记录截至2024年报道有170次成功拦截",
+            "planned_production_need": "CRS记录陆军估算FY2025-FY2029需6000枚动能Coyote及数百枚非动能拦截器"
+          },
+          "units": "枚；财年；拦截次数",
+          "confidence": "高；成本有效性为中等置信度，因为单位成本公开数据不一致"
+        },
+        {
+          "system": "FAAD C2",
+          "status": "现役C2/美DOD选定C-UAS C2",
+          "configuration_batch": "Forward Area Air Defense Command and Control",
+          "key_parameters": {
+            "missions": "SHORAD、C-RAM、C-UAS",
+            "interface_role": "将探测、识别、跟踪、交战授权/火控态势集成到单一界面",
+            "operational_relevance": "LIDS家族使用FAAD C2"
+          },
+          "units": "任务类型；C2功能",
+          "confidence": "高"
+        },
+        {
+          "system": "Saab Giraffe 1X",
+          "status": "现役/出口与北约国家采购中；C-UAS/VSHORAD补盲传感器",
+          "configuration_batch": "Giraffe 1X 3D多功能雷达",
+          "key_parameters": {
+            "system_weight": "<150 kg",
+            "topside_weight": "100 kg",
+            "small_uav_detection": "厂商称可在4 km探测小于牛奶盒重量的UAV",
+            "integration": "可集成到机动或固定安装"
+          },
+          "units": "kg；km",
+          "confidence": "高；复杂地形有效距离需实测"
+        },
+        {
+          "system": "Robin Radar IRIS",
+          "status": "商用/军警与机场类C-UAS应用，2025年推出长距模式",
+          "configuration_batch": "IRIS标准模式；IRIS Long-Range Mode",
+          "key_parameters": {
+            "azimuth_coverage": "360度",
+            "elevation_coverage": "60度",
+            "instrumented_range_standard": "5 km",
+            "coverage_area_standard": "78 km²",
+            "instrumented_range_long_range_mode": "12 km"
+          },
+          "units": "度；km；km²",
+          "confidence": "高；性能为厂商标称"
+        },
+        {
+          "system": "Hensoldt SPEXER 2000 Coastal / SPEXER短程雷达族",
+          "status": "现役雷达族；SPEXER 2000 3D MkIII另见乌克兰相关采购报道",
+          "configuration_batch": "SPEXER 2000 Coastal公开参数；不等同于所有MkIII批次",
+          "key_parameters": {
+            "uav_rcs_reference": "0.2 m² RCS",
+            "uav_detection_range": "9 km"
+          },
+          "units": "m² RCS；km",
+          "confidence": "中；型号批次存在差异，MkIII参数需单独核验"
+        },
+        {
+          "system": "Rheinmetall Skyranger 30",
+          "status": "在采购/验证与系列化交付阶段，属炮基SHORAD/C-UAS方向",
+          "configuration_batch": "Skyranger 30炮塔/系统",
+          "key_parameters": {
+            "search_radar": "3D AESA，S-band或X-band配置",
+            "gun": "30 mm×173",
+            "rate_of_fire": "1200 rounds/min",
+            "functions": "自动目标探测、捕获与跟踪"
+          },
+          "units": "mm；发/分；雷达波段",
+          "confidence": "中高；不同国家底盘和传感器配置可能不同"
+        },
+        {
+          "system": "DroneShield DroneSentry-C2 / Sentrycs Cyber over RF类系统",
+          "status": "现役商用/政府客户；软件快速迭代",
+          "configuration_batch": "DroneSentry-C2；Sentrycs V6.0",
+          "key_parameters": {
+            "sensor_fusion": "RF、雷达、光学及第三方系统融合",
+            "protocol_analytics": "从无人机与操作者通信协议层提取识别信息",
+            "limitation": "对无RF发射、自主航线或光纤控制目标能力受限"
+          },
+          "units": "传感器类型；协议/数据层",
+          "confidence": "中；厂商能力公开但缺少统一第三方性能测试"
+        }
+      ]
+    },
+    "development_models": [
+      {
+        "model_or_program": "Low-Altitude Passive Detection System, Army SBIR/STTR",
+        "type": "低成本、低SWaP、模块化、被动探测传感器",
+        "upgrade_need_addressed": "补足现有系统对低空、多速度sUAS的预警不足，缓解地形、地球曲率、障碍物和大型固定系统限制",
+        "maturity": "早期研发/小企业创新课题，估计TRL 3-5",
+        "confidence": "高"
+      },
+      {
+        "model_or_program": "Coyote Block 3NK",
+        "type": "非动能、可徘徊/可召回反无人机拦截器",
+        "upgrade_need_addressed": "降低附带损害并提升对蜂群/多目标反复交战能力",
+        "maturity": "厂商公开称已演示并属Coyote家族；估计TRL 6-8",
+        "confidence": "中高"
+      },
+      {
+        "model_or_program": "DE M-SHORAD / IFPC-HEL / IFPC-HPM",
+        "type": "定向能/高功率微波",
+        "upgrade_need_addressed": "降低单次交战成本、提高弹药深度、应对饱和无人机",
+        "maturity": "测试/开发阶段；公开资料显示仍有延期、用户评价和规模化成本不确定性，估计TRL 5-7",
+        "confidence": "中"
+      },
+      {
+        "model_or_program": "BLADE / 30 mm炮基近程反无人机",
+        "type": "车载炮基低空无人机拦截",
+        "upgrade_need_addressed": "为机动部队提供近程快速反应和相对低成本硬杀伤层",
+        "maturity": "演示/试验与训练验证，估计TRL 6-7",
+        "confidence": "中"
+      },
+      {
+        "model_or_program": "下一代C-UAS导弹与通用发射器",
+        "type": "低成本/新一代动能拦截器和发射架通用化",
+        "upgrade_need_addressed": "降低Coyote等现有拦截器成本压力，提升库存与平台适配",
+        "maturity": "概念/工程研制公开信息有限，；{
+  "findings": [
+    "现役低空无人机探测预警体系的传统缺口不是单项传感器缺失，而是“低空小目标—复杂地形—高虚警环境—短处置窗口”共同造成的体系性不连续：山体、建筑、树木、港区设施、风机、水面和电磁噪声会同时压缩雷达视距、RF截获、EO/IR确认和声学验证的有效范围。证据链：E3、E4、E5、E6、E14。",
+    "公开战例显示，低成本无人机和诱饵的主要作战效应常在于持续消耗和态势过载，而非单架平台高成功率。俄乌Shahed/FPV、纳卡无人机打击、红海反无人机作战均支持“分层防御有效但成本、库存和值班压力显著上升”的判断。证据链：E8、E9、E10、E11、E13、E16。",
+    "传统固定式、中心化低空预警体系在复杂地形中的主要缺口包括：低空盲区不可视、单传感器误警/漏警、RF依赖对静默或半自主目标脆弱、C2确认链过长、基层单位缺少有机补盲和近程告警能力、战损后覆盖重构慢。证据链：E2、E4、E5、E7、E10、E12、E14。",
+    "升级需求应从“采购更强单一雷达”转为“地形感知的分布式多模态预警体系”：固定与机动雷达、被动RF/频谱监测、EO/IR验证、声学/人工观测、边缘AI融合、低带宽降级运行、共同作战图、低成本处置和被动防护共同形成决策级置信度。证据链：E1、E2、E3、E4、E6、E7、E12、E14。",
+    "作战运用上，复杂地形防御的关键不是在末端才“看见并打掉”，而是在危机前建立常态低空/RF/民用活动基线，在初始弱告警时完成多源关联，并在网络或上级C2降级时保持本地分级告警能力。证据链：E1、E3、E4、E6、E7、E12。",
+    "反证与修正：电子战、传统雷达和传统防空并未失效；乌克兰的声学网、机动防空、电子战和共同作战图，以及红海分层防御经验，都显示传统能力经体系化整合后仍有显著价值。问题在于单一、固定、中心化和高成本模式难以长期承受复杂地形、饱和、诱饵和快速迭代。证据链：E8、E10、E11、E13、E16。",
+    "对装备功能的优先要求应转化为可测指标：三维地形覆盖率、关键低空通道首警时间、多传感器关联延迟、虚警/漏警率、RF静默目标发现概率、网络降级下本地态势保持、机动补盲部署时间、战损后最低覆盖恢复时间、单位目标处置成本。"
+  ],
+  "confidence": 0.84,
+  "open_questions": [
+    "不同型号现役雷达、RF、EO/IR、声学节点在山谷、城市峡谷、港区水面、高原低温和强电磁背景中的实测Pd、FAR、首警时间和连续跟踪能力仍需本级试验数据确认。",
+    "公开资料可证明低空无人机威胁趋势和体系缺口，但无法充分量化特定国家、特定部队和特定装备编成的真实覆盖盲区、库存消耗率和操作员疲劳阈值。",
+    "RF静默、光纤控制、视觉/惯导辅助、蜂窝/卫星/中继链路和AI导航的扩散速度存在不确定性；短期仍受成本、重量、算力和训练约束，中期可能显著削弱RF依赖型防御。",
+    "民用空域、隐私、频谱许可、机场运行、误伤风险和执法授权在本土/城市场景中可能比战区环境更强地约束探测和处置方式，需要单独形成规则矩阵。",
+    "上游缺少weapon_equipment与international_situation正式交接，因此本文对具体装备性能和政治/法律约束只作公开资料层面的通用化判断。"
+  ],
+  "handoff_summary": "本交接面向winning_mechanism：复杂地形下低空无人机探测预警的传统能力缺口，本质是低空物理视距、单传感器不可靠、集中式C2延迟、成本交换不利和持续保障脆弱共同造成的体系失配。公开战例支持三条可迁移经验：一是分层、多模态、机动和被动防护结合优于单点高端装备；二是C2必须从中心化确认转向共同作战图、边缘融合和降级运行；三是装备升级必须服务于可持续作战，包括低成本处置、快速软件/特征库更新、机动补盲和战损恢复。建议下游以“时间窗口、成本交换、覆盖韧性、快速迭代和跨域协同”作为胜利机制建模变量。",
+  "search_plan": [
+    {
+      "track": "公开战例与复盘",
+      "queries": [
+        "Nagorno Karabakh 2020 drones air defense lessons CSIS full spectrum air defense mobile SHORAD passive defenses",
+        "Red Sea counter UAS drones Houthi lessons layered defense cost exchange CNAS 2025 PDF",
+        "CSIS Drone Saturation Russia's Shahed Campaign acoustic sensors common operating picture electronic warfare 2025",
+        "Ukraine drone warfare electronic warfare C-UAS lessons 2025 report"
+      ]
+    },
+    {
+      "track": "联合和多域作战概念",
+      "queries": [
+        "DoD Strategy for Countering Unmanned Systems 2024 detection active passive defense PDF",
+        "Joint Counter Small UAS Office counter drone swarm demonstration 2024 layered system of systems",
+        "NATO uncrewed warfare report 2025 counter drone lessons Ukraine electronic warfare resilience",
+        "Small Unmanned Aircraft System Airspace Management and Control Handbook Army Leaders 2025 air ground littoral"
+      ]
+    },
+    {
+      "track": "有人无人协同",
+      "queries": [
+        "manned unmanned teaming counter UAS air defense sensor fusion command control 2025 Army",
+        "small unmanned aircraft system airspace management and control handbook Army leaders 2025 manned unmanned fired systems",
+        "UAS airspace management dynamic airspace planning manned unmanned fired systems air ground littoral 2025 handbook",
+        "Ukraine AI enabled autonomous warfare CSIS FPV drones electronic warfare human oversight 2025"
+      ]
+    },
+    {
+      "track": "指挥控制与保障韧性",
+      "queries": [
+        "counter UAS command and control resilience edge processing network degraded operations report 2024",
+        "Department of Defense Counter UAS Background and Issues for Congress FAADC2 MEDUSA command and control 2025 PDF",
+        "Army Project Flytrap counter drone command and control architecture 2025",
+        "FAA UAS Detection Technical Considerations radar RF EO acoustic false alarms site specific spectrum licensing PDF"
+      ]
+    },
+    {
+      "track": "持续作战和战损恢复",
+      "queries": [
+        "Innovating Under Fire Ukraine frontline drone workshops maintenance repair lessons 2025",
+        "Russia Ukraine FPV drones lightweight counter UAV electronic warfare company level lessons 2025 Army University Press",
+        "Mapping the MilTech War eight lessons Ukraine battlefield drone electronic warfare 2026 Ifri",
+        "NATO Innovation Range counter drone technology testing Latvia 2026 TEVV electronic warfare solutions"
+      ]
+    }
+  ],
+  "contradictions": [
+    "反证1：低成本无人机并非天然高成功率。CSIS前线访谈显示多数低成本FPV任务成功率很低，电子战、操作员技能、天气和复杂目标运动都会降低效果；但低成本、大量和快速迭代仍足以形成消耗与过载。因此不能把威胁建模为“每架必中”，应建模为“持续试探和少量突防仍有作战价值”。证据链：E12、E13。",
+    "反证2：电子战既是有效反无人机手段，也是脆弱依赖。俄乌资料显示EW可大量干扰FPV和GNSS/控制链，但光纤无人机、视觉/惯导、频率捷变和替代链路正在削弱单纯RF压制的可靠性。因此EW应作为分层体系一环，而非唯一防线。证据链：E12、E13、E16。",
+    "反证3：传统雷达仍不可替代。雷达能全天候发现物理目标，特别是RF静默或预编程目标；但FAA和RAND均指出低空、山体遮蔽、地物反射、小RCS、低速/悬停和虚警会显著影响效果。因此结论不是“雷达失效”，而是“雷达必要但不充分”。证据链：E3、E5、E14。",
+    "反证4：复杂地形并非只帮助攻击方。山地、城市和植被既遮蔽蓝方传感器，也会缩短敌方无人机通信视距、增加导航误差、降低续航可靠性。若蓝方提前完成三维视域、RF传播和机动补盲规划，可把部分地形转化为防御优势。证据链：E3、E5、E12。",
+    "反证5：分布式体系提升韧性但增加管理复杂度。多传感器、多节点和边缘C2可降低单点失效，但会带来时间同步、目标去重、频谱冲突、蓝军无人机去冲突、数据标准和训练负担。因此升级必须同步解决接口、规则和保障，而不是只增加节点数量。证据链：E2、E6、E7、E15。"
+  ],
+  "confidence_basis": "证据覆盖政府/军方公开文件、FAA民航技术资料、国会研究服务、NATO/盟国材料、智库报告、军种专业刊物和学术/研究机构报告，来源族群超过3类，且包含2024、2025、2026年的新近资料。关于低空雷达限制、传感器互补、C2集成、分层防御和成本交换的证据直接性较高；关于俄乌、纳卡和红海战例的资料可相互印证无人机饱和、电子战、机动防空和快速迭代趋势。主要不确定性在于特定装备性能、特定地域覆盖率、真实库存消耗、敌方最新链路/自主能力和本土法律授权通常不公开，因此结论以结构化能力缺口和升级需求表达，不给出可执行攻击指令或特定目标方案。",
+  "source_claims": [
+    {
+      "url": "https://www.defense.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/",
+      "claim": "[E1] DoD 2024年反无人系统战略发布说明强调，无人系统威胁紧迫且持久，相关工作建立在JCO、Warfighter Senior Integration Group和Replicator 2等跨部门/跨军种举措之上。"
+    },
+    {
+      "url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+      "claim": "[E2] DoD战略事实清单提出提升探测、跟踪、表征能力，改进主动/被动防御，简化和下放必要授权，采用开放、模块化、快速测试和规模化方案，并降低无人系统与反制措施之间的成本失衡。"
+    },
+    {
+      "url": "https://www.faa.gov/sites/faa.gov/files/uas/resources/policy_library/Attachment-3-UAS-Detection-Technical-Considerations.pdf",
+      "claim": "[E3] FAA UAS探测技术考虑文件指出，雷达、RF、EO/IR等探测技术受场地许可、背景杂波、虚警、特征库更新、EO/IR视场和验证能力等因素影响，EO/IR通常更适合作为验证/辅助传感器。"
+    },
+    {
+      "url": "https://www.faa.gov/airports/new_entrants/uas_detection_mitigation_response",
+      "claim": "[E4] FAA机场UAS探测页面说明，雷达、RF、EO和声学可单独或组合用于主探测和二次验证，部署还需考虑机场运行、法律授权、频谱和安全影响。"
+    },
+    {
+      "url": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_5.html",
+      "claim": "[E5] FAA AIM雷达章节指出，雷达波会被山体、地面障碍物、降水等反射/衰减或被高地屏蔽；低空目标可能因山体遮蔽或低于雷达波束/地球曲率而不可见，小反射面目标也更难由一次雷达发现。"
+    },
+    {
+      "url": "https://www.army.mil/article-amp/278404/joint_counter_small_uas_office_conducts_successful_counter_drone_swarm_demonstration",
+      "claim": "[E6] 美陆军JCO 2024年蜂群反制演示每轮发射40多个UAS目标，测试9套C-UAS系统；公开结论是单一能力难以应对多方向、多速度、多尺寸的大规模目标剖面，需要系统-of-systems和分层方法。"
+    },
+    {
+      "url": "https://www.army.mil/article-amp/288375/small_unmanned_aircraft_system_airspace_management_and_control",
+      "claim": "[E7] 美陆军CALL 2025年小型UAS空域管理手册说明，现代战场需要整合有人、无人和火力系统，实施动态空域规划并主导air-ground littoral。"
+    },
+    {
+      "url": "https://www.congress.gov/crs_external_products/R/PDF/R48477/R48477.2.pdf",
+      "claim": "[E8] CRS《Department of Defense Counter-UAS》报告说明，现有美军C-UAS任务指挥系统包括FAADC2、MEDUSA和ADSI等，2025年陆军/DIU关注替代或改进C2以适应机动C-UAS，且高端拦截器成本可显著高于低成本无人机。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/air-and-missile-war-nagorno-karabakh-lessons-future-strike-and-defense",
+      "claim": "[E9] CSIS纳卡研究认为，2020年纳卡空中战的主要教训是全谱系防空重要性；有限的SHORAD和不足的被动防护使地面重装备易受无人机与巡飞弹威胁。"
+    },
+    {
+      "url": "https://www.cnas.org/publications/reports/countering-the-swarm",
+      "claim": "[E10] CNAS红海反无人机研究显示，分层、多域防御可取得战术成功，但面对大量低成本无人机时，成本交换、交战节奏、库存和舰艇/空中力量持续值班会形成严重压力。"
+    },
+    {
+      "url": "https://www.nato-pa.int/document/2025-uncrewed-warfare-report-clement-023-stctts",
+      "claim": "[E11] NATO PA 2025年无人作战报告强调，乌克兰等冲突中的无人系统战术会被盟友和对手模仿，并建议发展定向能等低成本反无人技术以应对拦截成本不对称。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare",
+      "claim": "[E12] CSIS 2025年乌克兰AI自主作战研究基于访谈指出，低成本FPV任务成功率受电子战、天气、操作员和通信限制显著影响；AI导航、ATR和本地处理可提高效率，但现代无人系统尚未实现端到端全自主，仍需人类监督。"
+    },
+    {
+      "url": "https://csis-website-prod.s3.amazonaws.com/s3fs-public/2025-05/250501_Slusher_Ukraine_Conflict.pdf?VersionId=01UUwSkCxsWGAU5vOtwYQHmtq3F1.XKM",
+      "claim": "[E13] CSIS乌克兰冲突经验报告认为，乌克兰战争凸显自主系统、电子战、信息整合、受扰物流和防空演变；GPS干扰、通信干扰、频率捷变、卫星通信、网状网络和电子战韧性成为关键变量。"
+    },
+    {
+      "url": "https://www.rand.org/content/dam/rand/pubs/research_reports/RR3000/RR3023/RAND_RR3023.pdf",
+      "claim": "[E14] RAND关于小型UAS对抗能力的研究指出，sUAS因小尺寸、低速和环境背景导致探测、分类、识别、跟踪困难，通常需要多传感器协同；虚警会使操作员脱敏，雷达RCS随角度变化，EO/IR视场小，ELINT/RF易受自动化或静默目标规避。"
+    },
+    {
+      "url": "https://defensescoop.com/2025/07/09/army-counter-drone-command-and-control-project-flytrap-exercise/",
+      "claim": "[E15] Project Flytrap公开报道显示，美陆军C5ISR中心在欧洲测试反无人机C2架构，目标是把传感器数据从单兵到联合伙伴贯通，通过ATAK等终端共享，降低士兵认知负荷并把固定系统转向可机动运用。"
+    },
+    {
+      "url": "https://www.armyupress.army.mil/Portals/7/military-review/Archives/English/so25/Lessons-from-Ukraine/Lessons-from-Ukraine-ua.pdf",
+      "claim": "[E16] Army University Press 2025年俄军乌克兰经验文章指出，FPV无人机和轻量化C-UAV EW快速扩散；双方大量FPV受RF/GNSS干扰影响，同时光纤、车载/便携干扰器、探测器和基层C-UAV装备推动攻防快速迭代。"
+    },
+    {
+      "url": "https://mwi.westpoint.edu/innovating-under-fire-lessons-from-ukraines-frontline-drone-workshops/",
+      "claim": "[E17] Modern War Institute对乌克兰前线无人机维修/创新工作坊的研究显示，前沿维修、3D打印、软件更新、快速改频、移动维修车和操作者—工程师反馈闭环可将修复与适配周期压缩到小时级，从而支撑持续作战。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/drone-saturation-russias-shahed-campaign",
+      "claim": "[E18] CSIS关于俄罗斯Shahed饱和战役的研究指出，自2024年9月后Shahed发射量显著上升；乌克兰通过声学传感器、综合防空网络、机动防空和电子战等低成本组合来维持防御，但饱和压力仍然增加。"
+    },
+    {
+      "url": "https://www.nato.int/en/news-and-events/articles/news/2026/03/18/new-nato-innovation-range-starts-counter-drone-technology-testing-in-latvia",
+      "claim": "[E19] NATO 2026年拉脱维亚创新靶场信息显示，盟国和乌克兰用户正在通过TEVV活动测试UAS/C-UAS、拦截飞行和电子战方案，体现快速试验、验证和采纳的制度化趋势。"
+    }
+  ],
+  "analysis_sections": {
+    "operational_constraints": {
+      "mission_definition": "防御方任务是在复杂地形和民用空域约束下，对低慢小无人机形成早期发现、连续跟踪、身份判别、威胁评估、分级告警和安全处置支撑；本分析仅用于防御性能力评估，不提供攻击路径、目标选择或可执行伤害指令。",
+      "terrain_environment_constraints": [
+        {
+          "constraint": "山地/丘陵遮蔽",
+          "effect": "山体与地形起伏造成雷达、EO/IR、RF和通信链路视距中断，低空目标可能在关键通道外才被发现，首警时间被压缩。",
+          "evidence_links": [
+            "E5",
+            "E14"
+          ],
+          "operational_implication": "必须预先进行三维视域和RF传播建模，重点标注山谷、背坡、低空通道和传感器盲扇区。"
+        },
+        {
+          "constraint": "城市峡谷和设施密集区",
+          "effect": "高层建筑、钢结构、车辆、鸟群、风机和电磁反射造成多径、遮挡、杂波和虚警；EO/IR可能被热背景和遮挡牵引。",
+          "evidence_links": [
+            "E3",
+            "E4",
+            "E14"
+          ],
+          "operational_implication": "单传感器告警不应直接等同威胁，应采用时间同步、多源关联和白名单/合法流量去冲突。"
+        },
+        {
+          "constraint": "海岸/港区/水面背景",
+          "effect": "水面反射、船舶/港机热源、海风噪声和港区RF环境会影响雷达、声学、EO/IR与RF识别置信度。",
+          "evidence_links": [
+            "E3",
+            "E10",
+            "E14"
+          ],
+          "operational_implication": "港区应采用固定高点、机动补盲、被动传感和人工/哨兵报告结合，避免单一雷达阈值造成大量虚警。"
+        },
+        {
+          "constraint": "天气、夜间和季节变化",
+          "effect": "雨雾雪、低云、热背景变化和风噪影响EO/IR、声学和高频雷达表现；同一部署方案在不同季节的Pd/FAR会变化。",
+          "evidence_links": [
+            "E3",
+            "E12",
+            "E14"
+          ],
+          "operational_implication": "部署原则应包含季节性校准、传感器权重动态调整、夜间/恶劣天气补盲预案。"
+        },
+        {
+          "constraint": "电磁频谱拥挤与受扰",
+          "effect": "RF探测和干扰受民用通信、己方无人机、敌方跳频/静默/替代链路、GNSS干扰和频谱许可限制影响。",
+          "evidence_links": [
+            "E2",
+            "E3",
+            "E12",
+            "E13",
+            "E16"
+          ],
+          "operational_implication": "RF不能作为唯一首警源；干扰措施必须与民用通信、己方C2、友军无人机和空域安全去冲突。"
+        },
+        {
+          "constraint": "法律、民航和授权",
+          "effect": "本土、机场、城市和关键基础设施场景中，探测与处置系统部署涉及频谱许可、EMI、安全风险、隐私和执法授权。",
+          "evidence_links": [
+            "E3",
+            "E4"
+          ],
+          "operational_implication": "体系设计必须预置规则矩阵：谁可看、谁可判、谁可告警、谁可授权、何时可转入处置。"
+        },
+        {
+          "constraint": "持续作战和补给",
+          "effect": "大量低成本目标可通过诱饵、重复试探和饱和压迫消耗人员、传感器维护、弹药/拦截器和C2带宽。",
+          "evidence_links": [
+            "E8",
+            "E10",
+            "E11",
+            "E18"
+          ],
+          "operational_implication": "预警体系指标必须纳入成本交换、库存、备件、电源、网络和操作员轮换，而非只看单次拦截率。"
+        }
+      ],
+      "traditional_gap_to_upgrade_mapping": [
+        {
+          "traditional_gap": "固定雷达低空盲区",
+          "upgrade_need": "地形感知部署、机动补盲雷达、被动传感节点、临时升高平台、覆盖热力图。",
+          "metrics": [
+            "关键低空通道覆盖率",
+            "首警距离/时间",
+            "盲区重构时间"
+          ],
+          "evidence_links": [
+            "E5",
+            "E14"
+          ]
+        },
+        {
+          "traditional_gap": "单传感器误警/漏警",
+          "upgrade_need": "雷达+RF+EO/IR+声学+人工观测的多模态融合，目标去重和置信评分。",
+          "metrics": [
+            "融合后FAR",
+            "多源关联延迟",
+            "目标分类置信度"
+          ],
+          "evidence_links": [
+            "E3",
+            "E4",
+            "E6",
+            "E14"
+          ]
+        },
+        {
+          "traditional_gap": "RF依赖",
+          "upgrade_need": "可发现RF静默/预编程/半自主目标的雷达、EO/IR、声学和行为异常检测；RF仅作为被动首警和识别维度之一。",
+          "metrics": [
+            "RF静默目标发现概率",
+            "RF与非RF告警一致率",
+            "干扰后态势保持时间"
+          ],
+          "evidence_links": [
+            "E12",
+            "E13",
+            "E14",
+            "E16"
+          ]
+        },
+        {
+          "traditional_gap": "中心化C2延迟",
+          "upgrade_need": "共同作战图、边缘融合、分级授权、低带宽告警、断链本地处置支持。",
+          "metrics": [
+            "传感器到告警时间",
+            "告警到授权时间",
+            "网络降级下本地空情保持率"
+          ],
+          "evidence_links": [
+            "E2",
+            "E7",
+            "E8",
+            "E15"
+          ]
+        },
+        {
+          "traditional_gap": "高成本末端处置",
+          "upgrade_need": "低成本拦截、电子/非动能、被动防护、诱饵和任务影响评估结合，高端拦截器保留给高危目标。",
+          "metrics": [
+            "单位威胁处置成本",
+            "高端拦截器消耗率",
+            "关键资产任务中断时间"
+          ],
+          "evidence_links": [
+            "E2",
+            "E8",
+            "E10",
+            "E11",
+            "E18"
+          ]
+        },
+        {
+          "traditional_gap": "战损恢复慢",
+          "upgrade_need": "模块化节点、预案化机动补位、备用电源、离线地图、可快速更新特征库、前沿维修和备件包。",
+          "metrics": [
+            "最低覆盖恢复时间",
+            "节点替换时间",
+            "软件/特征库更新周期"
+          ],
+          "evidence_links": [
+            "E17",
+            "E19"
+          ]
+        }
+      ],
+      "measures_of_effectiveness": [
+        "首警时间是否足以完成识别、授权和安全处置。",
+        "复杂地形关键通道是否存在可被反复利用的稳定盲区。",
+        "融合后虚警是否低到操作员可持续处理。",
+        "网络降级和部分节点损伤后是否仍能保持本地分级告警。",
+        "每轮威胁处置成本是否低于可持续阈值。",
+        "敌方改变频段、时段、平台和诱饵比例后，体系是否可快速更新。"
+      ]
+    },
+    "force_coordination": {
+      "coordination_concept": "采用“区域低空态势单元+机动补盲分队+基层有机观察/处置单元+上级联合空情/C2+民航/公安/频谱联络”的分层协同。核心是把传感器、指挥、效应器、被动防护和保障纳入同一任务链，而不是让各装备孤立值守。",
+      "force_package": [
+        {
+          "element": "固定低空监视与既有防空预警节点",
+          "role": "提供连续背景空情、较远距离首警和与上级防空网络衔接。",
+          "limits": "低空盲区、地形遮蔽、小RCS和地物杂波显著影响可靠性。",
+          "evidence_links": [
+            "E5",
+            "E14"
+          ]
+        },
+        {
+          "element": "机动补盲雷达/便携传感节点",
+          "role": "在山谷、城市边缘、港区和战损空隙中快速补位，缩短低空关键通道发现距离缺口。",
+          "limits": "需要预设点位、电源、网络、频谱许可和安全防护；点位暴露后自身可能成为高价值节点。",
+          "evidence_links": [
+            "E6",
+            "E15"
+          ]
+        },
+        {
+          "element": "被动RF/频谱监测",
+          "role": "发现控制链、视频链、遥测和异常频谱活动，辅助定位操作者或链路方向，适合低可见度和低成本持续值守。",
+          "limits": "对RF静默、预编程、光纤、蜂窝/卫星/中继或强加密跳频目标适应不足。",
+          "evidence_links": [
+            "E3",
+            "E12",
+            "E14",
+            "E16"
+          ]
+        },
+        {
+          "element": "EO/IR与热像验证",
+          "role": "对雷达/RF/声学告警进行可视化确认、分类和证据留存。",
+          "limits": "视场较窄，受遮挡、天气、夜间热背景、诱饵和假目标影响；通常需由其他传感器cueing。",
+          "evidence_links": [
+            "E3",
+            "E14"
+          ]
+        },
+        {
+          "element": "声学/人工观测/群众或哨兵报告",
+          "role": "在低空慢速、夜间、雷达盲区和大型一向攻击无人机场景中提供低成本补充首警。",
+          "limits": "受环境噪声、风雨、车辆、港机和误报影响；必须与其他传感器关联后使用。",
+          "evidence_links": [
+            "E4",
+            "E18"
+          ]
+        },
+        {
+          "element": "C2与共同作战图",
+          "role": "整合多源告警、目标去重、威胁排序、授权流转、效应器分配和跨单位通报。",
+          "limits": "若高度中心化或接口不统一，会在饱和窗口中形成延迟和重复交战。",
+          "evidence_links": [
+            "E7",
+            "E8",
+            "E15"
+          ]
+        },
+        {
+          "element": "低成本处置与被动防护",
+          "role": "在合法授权下采用低成本、分层、按威胁优先级的防御措施，并通过分散、伪装、遮蔽、诱饵和关键功能冗余降低突防后果。",
+          "limits": "处置手段受民用环境、误伤、频谱和规则约束；必须避免把高端弹药消耗在低价值诱饵上。",
+          "evidence_links": [
+            "E2",
+            "E9",
+            "E10",
+            "E11"
+          ]
+        },
+        {
+          "element": "保障与快速适配单元",
+          "role": "负责传感器校准、软件/特征库更新、备件、电池、电源、网络、前沿维修和经验回灌。",
+          "limits": "若保障集中且距离前沿过远，难以跟上无人机技术和战术迭代速度。",
+          "evidence_links": [
+            "E17",
+            "E19"
+          ]
+        }
+      ],
+      "coordination_interfaces": [
+        {
+          "interface": "传感器到C2",
+          "requirements": [
+            "统一时间戳和坐标基准",
+            "目标ID去重",
+            "置信度评分",
+            "低带宽告警格式",
+            "原始数据留存以便复盘"
+          ],
+          "failure_if_missing": "多源重复目标、误关联、告警风暴和人工确认队列积压。",
+          "evidence_links": [
+            "E8",
+            "E15"
+          ]
+        },
+        {
+          "interface": "C2到基层单位",
+          "requirements": [
+            "分级告警",
+            "本地可执行防护动作清单",
+            "断链时的本地授权边界",
+            "友军无人机/有人机空域去冲突"
+          ],
+          "failure_if_missing": "上级确认延迟超过末端处置窗口，基层只能被动承受或过度反应。",
+          "evidence_links": [
+            "E2",
+            "E7"
+          ]
+        },
+        {
+          "interface": "军方到民航/公安/频谱/设施业主",
+          "requirements": [
+            "合法无人机白名单",
+            "Remote ID/许可信息校验",
+            "频谱使用和干扰限制",
+            "机场/城市安全通报机制",
+            "误报澄清流程"
+          ],
+          "failure_if_missing": "民用流量与敌对活动混杂，导致虚警上升、授权迟滞或违法干扰。",
+          "evidence_links": [
+            "E3",
+            "E4"
+          ]
+        },
+        {
+          "interface": "传感器到效应器",
+          "requirements": [
+            "按威胁等级分配低成本与高端处置资源",
+            "避免重复交战",
+            "确保民用安全扇区",
+            "记录交战与未交战原因"
+          ],
+          "failure_if_missing": "高端资源被诱饵消耗，真实高危目标获得窗口。",
+          "evidence_links": [
+            "E6",
+            "E8",
+            "E10"
+          ]
+        },
+        {
+          "interface": "有人—无人—火力系统空域管理",
+          "requirements": [
+            "动态空域控制",
+            "己方UAS任务计划共享",
+            "禁飞/限飞临时区域",
+            "安全高度层和时间窗",
+            "任务变更快速通报"
+          ],
+          "failure_if_missing": "友军无人机、有人航空器、防空火力和干扰措施相互冲突。",
+          "evidence_links": [
+            "E7"
+          ]
+        }
+      ],
+      "battle_rhythm": [
+        "常态：更新低空活动、RF背景、民用无人机、鸟群/车辆/港机/风机等基线；每班复核传感器健康和覆盖热力图。",
+        "预警：出现重复弱告警或异常RF/目视报告时，机动补盲节点前出，EO/IR和声学权重上调，设施被动防护升级。",
+        "接触：按多源置信度而非单点告警触发分级响应，优先保护关键通道和高价值节点。",
+        "饱和：C2转入目标优先级管理，边缘节点保留本地告警和安全处置建议，上级保留资源统筹和跨区协调。",
+        "复盘：每次事件后更新虚警样本、漏警路径、干扰影响、授权延迟、处置成本和补给消耗。"
+      ],
+      "degraded_mode": [
+        "网络降级时保留本地传感器融合、短报文告警和离线地图。",
+        "上级C2不可用时按预先批准的分级规则执行告警、疏散、遮蔽、停飞、设备关停/分散等防护动作。",
+        "固定节点损伤时启动机动补盲网格，优先恢复关键通道、指挥节点、弹药/燃料/电力/通信设施周边最低覆盖。",
+        "RF环境恶化时降低对RF首警权重，提高雷达、EO/IR、声学、人工观测和行为异常关联权重。",
+        "虚警过载时使用地理围栏、白名单、时间窗和多源阈值动态调节，避免操作员脱敏。"
+      ],
+      "support_requirements": [
+        "三维地形/建筑/植被/水面数据库和视域分析工具。",
+        "传感器点位预案、备用三脚架/桅杆、便携电源、加固网络和频谱授权包。",
+        "多传感器数据标准、时间同步、目标ID规则和C2接口。",
+        "操作员轮换、跨部门联络员、低空空域管制脚本和民用流量去冲突清单。",
+        "备件、电池、软件更新、特征库、校准工具和前沿维修能力。",
+        "战损后恢复演练和红队式盲区复核。"
+      ]
+    },
+    "coa": [
+      {
+        "name": "COA-1 基线方案：固定节点为主、中心化确认、有限机动补盲",
+        "concept": "沿用现役固定低空监视雷达、少量RF和EO/IR验证节点，由上级空情/C2集中确认并向基层发布告警；机动补盲只在明确事件后临时展开。",
+        "suitable_conditions": [
+          "地形相对开阔、民用无人机活动低、威胁为低频单机/小批量。",
+          "有充分处置时间，且上级C2链路稳定。",
+          "主要任务是常态监视、证据留存和低强度警戒。"
+        ],
+        "strengths": [
+          "组织改动小，训练和维护成本低。",
+          "便于统一授权、统一空情和降低误处置风险。",
+          "适合预算短期不足或威胁等级较低阶段。"
+        ],
+        "risks": [
+          "复杂地形盲区难以及时补齐。",
+          "单传感器虚警/漏警导致等待人工确认，压缩处置窗口。",
+          "遇到多方向、多批次和诱饵时C2与操作员易过载。",
+          "战损后恢复依赖固定节点，覆盖重构慢。"
+        ],
+        "infeasible_boundaries": [
+          "山地—城市—港区复合地形中存在多个稳定低空通道。",
+          "威胁进入持续饱和或电磁压迫阶段。",
+          "要求基层在断链或分钟级窗口内自主告警和防护。",
+          "民用流量密集且白名单/去冲突数据不完整。"
+        ],
+        "equipment_constraints": [
+          "固定雷达受地形遮蔽和小RCS影响。",
+          "EO/IR需要其他传感器cueing。",
+          "RF对静默/半自主目标不足。",
+          "传统C2接口可能难以快速接入新型传感器。"
+        ],
+        "evidence_links": [
+          "E3",
+          "E4",
+          "E5",
+          "E8",
+          "E14"
+        ],
+        "minimum_upgrade_if_selected": [
+          "完成三维覆盖审计和盲区清单。",
+          "建立民用无人机白名单和RF/空情基线。",
+          "为关键盲区预置机动补盲点位和供电/网络包。",
+          "设定弱告警触发的分级响应流程。"
+        ]
+      },
+      {
+        "name": "COA-2 弹性分布方案：多模态分布式传感、边缘融合、机动补盲与低成本分层处置",
+        "concept": "以固定节点为骨干，在山地通道、城市边缘、港区和关键设施周边部署可机动、可重构的雷达/RF/EO/IR/声学节点；通过共同作战图和边缘AI融合形成分级置信度，并把低成本处置、被动防护和战损重构纳入同一防御循环。",
+        "suitable_conditions": [
+          "复杂地形、多方向低空威胁和持续试探并存。",
+          "需要在网络受扰、节点损伤和上级C2延迟时保持本地预警。",
+          "关键设施价值高，且可投入一定传感器、C2、训练和保障资源。",
+          "需要长期应对低成本无人机消耗战。"
+        ],
+        "strengths": [
+          "低空覆盖韧性高，单点失效不致形成稳定通道。",
+          "多传感器融合降低单点虚警/漏警。",
+          "机动补盲可把地形缺口转化为预案化防御。",
+          "边缘融合和分级授权缩短告警到行动时间。",
+          "低成本处置和被动防护改善成本交换。"
+        ],
+        "risks": [
+          "部署和训练复杂度高。",
+          "多源数据标准、目标去重、时间同步和网络安全要求高。",
+          "节点增多带来电源、频谱、维护和暴露风险。",
+          "若缺少规则矩阵，边缘授权可能造成误处置或空域冲突。"
+        ],
+        "infeasible_boundaries": [
+          "没有统一C2接口和最低数据标准。",
+          "无法获得频谱、场地、供电或民用协同授权。",
+          "训练和保障无法支撑24/7分布式值守。",
+          "预算只能维持单点装备采购而不能支撑系统集成与软件更新。"
+        ],
+        "equipment_constraints": [
+          "需要开放式接口、边缘计算、低带宽数据链和传感器健康监测。",
+          "节点必须可快速部署、校准和替换。",
+          "EO/IR、声学、RF权重需要随天气和电磁环境动态调整。",
+          "效应器必须按威胁等级与民用安全限制联动。"
+        ],
+        "evidence_links": [
+          "E1",
+          "E2",
+          "E6",
+          "E7",
+          "E8",
+          "E10",
+          "E15",
+          "E18",
+          "E19"
+        ],
+        "priority_actions": [
+          "建立区域低空三维数字底图和传感器覆盖热力图。",
+          "将固定雷达、机动雷达、RF、EO/IR、声学和人工报告接入共同作战图。",
+          "为山谷、城市峡谷、港区水面和关键设施设置传感器组合模板。",
+          "定义本地分级告警和断链授权边界。",
+          "把低成本处置、被动防护、维修和软件更新纳入日常战备。"
+        ]
+      },
+      {
+        "name": "COA-3 资源受限方案：关键点防护、低成本补盲、被动防护和人工/民用协同",
+        "concept": "在装备和预算不足时，不追求全域连续覆盖，而是围绕关键资产、关键通道和高风险时段建立低成本、可移动、可降级的预警网；以被动防护、分散、伪装、遮蔽、临时空域管控和低成本传感为主，高端处置只保留给高置信高危目标。",
+        "suitable_conditions": [
+          "预算、传感器数量、人员或频谱授权不足。",
+          "防护对象明确，关键通道和关键时段可识别。",
+          "威胁主要为试探、侦察、小规模袭扰或诱饵消耗。",
+          "可接受非关键区域存在短时低置信盲区。"
+        ],
+        "strengths": [
+          "部署快，成本低，适合基层先行形成最低预警能力。",
+          "通过被动防护降低突防后果，减少高端资源消耗。",
+          "人工、声学、RF和廉价EO可补充传统雷达盲区。",
+          "便于逐步扩展为弹性分布方案。"
+        ],
+        "risks": [
+          "覆盖不连续，难以应对多方向饱和。",
+          "人工报告和低成本传感器虚警较高。",
+          "缺少自动融合时，告警质量依赖训练和流程。",
+          "若敌方快速迭代或采用静默/半自主目标，RF和人工体系效果下降。"
+        ],
+        "infeasible_boundaries": [
+          "任务要求对大范围复杂地形提供连续、实时、高置信预警。",
+          "同时面对多批次、多轴、诱饵和电磁压迫。",
+          "关键资产无法分散、遮蔽或降低特征。",
+          "没有民用/设施业主协同，无法管控合法无人机背景。"
+        ],
+        "equipment_constraints": [
+          "低成本传感器需严格校准并限定适用场景。",
+          "人工报告必须配套身份核验、地理标注和误报复核。",
+          "被动防护措施需要提前工程化，不能等接触后临时实施。",
+          "低成本方案仍需最小C2和数据记录能力，否则难以复盘改进。"
+        ],
+        "evidence_links": [
+          "E3",
+          "E4",
+          "E9",
+          "E11",
+          "E14",
+          "E17",
+          "E18"
+        ],
+        "priority_actions": [
+          "按关键资产价值和无人机可达性划分防护优先级。",
+          "建立低空观察哨、声学/目视/RF简易告警点和事件上报模板。",
+          "预置遮蔽、分散、诱饵、灯光/热源/电磁特征管理措施。",
+          "把高端处置资源保留给高置信、高危、接近关键保护圈的目标。",
+          "用事件复盘逐步识别最值得升级为固定或机动传感节点的位置。"
+        ]
+      }
+    ],
+    "lessons": {
+      "public_case_lessons": [
+        {
+          "case": "纳卡2020",
+          "lesson": "传统SHORAD数量、质量和体系化不足时，地面重装备与固定防空节点易受无人机和巡飞弹压迫；全谱系防空、机动SHORAD和被动防护应前置到战术层级。",
+          "transfer_to_complex_terrain": "复杂地形下固定节点更容易形成可识别盲区，战术单位必须具备有机告警、分散和被动防护能力。",
+          "evidence_links": [
+            "E9"
+          ]
+        },
+        {
+          "case": "俄乌持续无人机战",
+          "lesson": "无人机、电子战、AI/自主、频率调整、光纤/替代链路和基层C-UAV装备形成快速迭代循环；固定采购周期难以跟上战场软件和战术变化。",
+          "transfer_to_complex_terrain": "预警体系应采用开放式架构、可更新特征库、前沿维修和操作员—工程师反馈闭环。",
+          "evidence_links": [
+            "E12",
+            "E13",
+            "E16",
+            "E17"
+          ]
+        },
+        {
+          "case": "俄罗斯Shahed饱和战役",
+          "lesson": "大量低成本一向攻击无人机可通过持续发射消耗防空资源；乌克兰以声学网、共同作战图、EW、机动防空和低成本手段减轻成本压力。",
+          "transfer_to_complex_terrain": "对复杂地形低空预警，应把声学/人工观测作为补盲层，但必须与共同作战图和传感器融合结合，避免误报泛滥。",
+          "evidence_links": [
+            "E18"
+          ]
+        },
+        {
+          "case": "红海反无人机作战",
+          "lesson": "分层、多域防御可以在高威胁环境中有效击落大量无人机，但成本交换、库存、节奏和人员/平台持续值班压力难以长期忽视。",
+          "transfer_to_complex_terrain": "陆上复杂地形防御也不能只追求单次拦截率，必须以低成本处置、弹药管理和被动防护控制长期消耗。",
+          "evidence_links": [
+            "E10"
+          ]
+        },
+        {
+          "case": "JCO蜂群反制演示",
+          "lesson": "面对多方向、多速度、多尺寸目标，没有单一传感器或效应器能解决全部问题；需要系统-of-systems、分层探测、威胁排序和C2融合。",
+          "transfer_to_complex_terrain": "复杂地形中的“多弱告警”场景更需要目标去重、优先级排序和自动cueing，否则人工值守会被虚警和重复目标淹没。",
+          "evidence_links": [
+            "E6"
+          ]
+        }
+      ],
+      "deployment_principles": [
+        {
+          "principle": "地形先于装备",
+          "description": "先做三维视域、RF传播、民用流量、气象和关键通道分析，再决定雷达、RF、EO/IR、声学和机动点位。",
+          "evidence_links": [
+            "E3",
+            "E5",
+            "E14"
+          ]
+        },
+        {
+          "principle": "多模态互补而非单传感器最优",
+          "description": "低分辨率广域传感用于首警，高分辨率窄视场传感用于确认；RF、雷达、EO/IR、声学和人工报告按环境动态加权。",
+          "evidence_links": [
+            "E3",
+            "E4",
+            "E14"
+          ]
+        },
+        {
+          "principle": "固定骨干+机动补盲+基层有机告警",
+          "description": "固定节点提供连续背景，机动节点填补地形/战损空隙，基层单元保留最低本地告警和防护能力。",
+          "evidence_links": [
+            "E6",
+            "E15",
+            "E17"
+          ]
+        },
+        {
+          "principle": "C2降级可运行",
+          "description": "共同作战图重要，但不能成为单点依赖；断链时仍需本地分级告警、离线地图和预授权防护动作。",
+          "evidence_links": [
+            "E2",
+            "E7",
+            "E8",
+            "E15"
+          ]
+        },
+        {
+          "principle": "低成本优先，高端保留",
+          "description": "对低价值、低置信或诱饵目标优先采用监视、遮蔽、驱离、电子/非动能和低成本措施，高端拦截用于高置信高危目标。",
+          "evidence_links
+
+### cap-upgrade-001-r2 现有装备传统场景能力提升
+- 类型：现有装备升级需求
+- 装备类别：现役装备、任务软件、通信指控与保障系统
+- 来源制胜逻辑：传统打法目标能力 -> 当前装备参数与运用表现 -> 残余差距 -> 升级需求
+- 关联场景：复杂地形条件下现役低空无人机探测预警体系的传统能力缺口与升级需求
+- 优先级：中高：紧迫性高、工程可行性高
+- 能力差距：现有装备在复杂环境识别、抗干扰、协同接口、任务重构和持续保障方面存在差距；本次基线：{
+  "findings": [
+    "传统能力缺口的核心不是“有没有雷达”，而是现役低空预警体系多按高空、快速、较大雷达截面积目标设计；在山地、城市、海岸等复杂地形中，小型低慢小无人机可被地形、建筑、植被、水面杂波和电磁噪声共同遮蔽，导致发现距离、识别置信度和可处置时间同步压缩。",
+    "公开战例显示，低成本无人机并非总能高成功率突防；但其数量、低成本、快速迭代和可消耗特征足以通过持续试探、诱饵、饱和和跨域协同消耗防空弹药、传感器值班能力和指挥决策带宽。",
+    "现役体系的传统缺口集中在六类：一是低空盲区和地形遮蔽；二是单传感器误警与漏警；三是RF依赖型探测/压制对静默、自主、跳频或替代链路目标适应不足；四是集中式C2在短处置窗口内延迟过大；五是末端防护成本交换不利；六是基层单位缺少有机化、可机动、可重构的探测预警与被动防护能力。",
+    "升级需求应从单点装备采购转为体系架构升级：地形建模与视域规划、分布式补盲雷达、被动RF/频谱监测、EO/IR与声学验证、边缘AI融合、低带宽降级运行、蓝白名单与民航/民用无人机去冲突、低成本拦截与被动欺骗共同构成“决策级置信度”。",
+    "复杂地形场景下，关键时间窗口不是拦截瞬间，而是从危机前异常模式建立到初始接触的数分钟至数十秒：若传感器只在目标临近防区后才给出低置信告警，后续识别、授权、处置和安全评估会被压缩到不可用。",
+    "反证与修正：电子战和传统防空并未失效，乌克兰、红海等案例显示分层防御、电子战、机动火力和共同作战图可显著降低无人机命中率；因此问题不是“传统能力完全无用”，而是其在复杂地形、饱和、低成本消耗和快速技术迭代下需要体系化补强。",
+    "面向下游装备与运用研究，应优先评估：复杂地形三维覆盖率、低空目标首警时间、虚警/漏警率、RF静默目标发现概率、网络降级下本地处置能力、低成本连续作战能力、以及不同地形下传感器—效应器—指挥授权链条的闭环时间。"
+  ],
+  "confidence": 0.82,
+  "open_questions": [
+    "不同现役雷达、被动RF、EO/IR和声学节点在山谷、城市峡谷、海岸水面和高原低温环境中的实测Pd/FAR、首警时间和连续跟踪能力仍需本级试验数据确认。",
+    "公开资料可证明无人机威胁趋势和能力缺口，但无法充分量化特定国家、特定部队、特定装备编制下的真实覆盖盲区和库存消耗速率。",
+    "AI自主、抗干扰链路、星链/蜂窝/中继式替代链路的发展速度存在不确定性；短期内受算力、重量、成本限制，但中期可能显著削弱RF依赖型防御。",
+    "复杂地形下低成本拦截器、定向能、电子战和被动防护之间的最佳成本交换组合，需要结合任务目标、授权规则和民用环境约束进一步建模。",
+    "国内/本土防御场景中，法律授权、民航安全、频谱管理和隐私限制可能比战区环境更强地约束探测与处置方式，需单独形成规则矩阵。"
+  ],
+  "handoff_summary": "本轮研究将“复杂地形条件下现役低空无人机探测预警体系的传统能力缺口”转化为一个多域、动态对抗场景：敌方以低慢小、低成本、可消耗无人机为核心，通过危机前试探、初始低空接触、体系饱和与电磁/网络压迫、持续迭代和战损后再渗透，压缩蓝方首警与处置窗口。蓝方传统缺口主要在低空盲区、单传感器不可靠、RF依赖、集中式C2延迟、基层缺少有机C-UAS能力和成本交换不利。建议下游weapon_equipment重点研究分布式多模态融合、地形感知部署、低成本拦截与边缘处理；operational_employment重点研究分层值班、降级网络、民用空域去冲突和基层有机防护；winning_mechanism重点研究以成本交换、时间窗口、体系韧性和快速迭代压制无人机威胁的机制。",
+  "search_plan": [
+    {
+      "track": "近年公开战例",
+      "queries": [
+        "Russia Ukraine war low altitude drones detection air defense lessons terrain urban 2024 report",
+        "Nagorno-Karabakh 2020 drones air defense lessons small UAV radar electronic warfare report",
+        "Houthi Red Sea drones air defense saturation lessons counter UAS low cost 2024 report",
+        "Drone Saturation Russia Shahed Campaign Ukraine air defense acoustic sensors electronic warfare"
+      ]
+    },
+    {
+      "track": "现代演训与作战概念",
+      "queries": [
+        "Joint Counter Small UAS Office counter drone swarm demonstration 2024 layered approach",
+        "DoD Strategy for Countering Unmanned Systems detection active passive defenses 2024",
+        "counter small unmanned aircraft systems strategy DOTMLPF-P layered active passive defense",
+        "Small Drones Big Problems First Principles Countering UAS 2026"
+      ]
+    },
+    {
+      "track": "无人和智能系统运用",
+      "queries": [
+        "Ukraine FPV drones AI autonomous navigation anti jamming CSIS 2025",
+        "sUAS infiltration Ukraine electronic warfare GNSS spoofing attritable tactics",
+        "low slow small UAS air littoral contested space drone warfare lessons",
+        "counter UAS sensor fusion radar RF EO acoustic review"
+      ]
+    },
+    {
+      "track": "电磁网络与太空约束",
+      "queries": [
+        "Russia Ukraine electronic warfare drones GPS jamming UAV losses RUSI",
+        "contested electromagnetic spectrum UAS PNT jamming spoofing Ukraine report",
+        "counter UAS RF detection limitations multipath interference line of sight FAA technical considerations",
+        "GPS jamming satellite communications drone countermeasure Ukraine report"
+      ]
+    },
+    {
+      "track": "城市海岸高原等环境变化",
+      "queries": [
+        "urban counter UAS detection line of sight multipath clutter acoustic radar RF EO IR report PDF",
+        "low altitude air surveillance radar terrain masking line of sight mountains official report",
+        "counter UAS coastal environment sea clutter weather rain wind acoustic false alarms report",
+        "complex terrain low altitude drone detection radar clutter acoustic RF challenges mountainous"
+      ]
+    }
+  ],
+  "contradictions": [
+    "电子战既是有效反无人机手段，也是体系脆弱点。IAMD COE和CSIS均显示EW能大规模压制无人机，但CSIS和2026年ISIS报告也显示抗干扰、CRPA、替代链路、摄像头/中继/网状链路正在削弱单纯RF压制的可靠性。",
+    "Shahed等大型一向攻击无人机整体命中率并不高，ISIS数据表明大量无人机被拦截、迷航或受EW影响；但CSIS和ISIS同时指出持续大规模发射可消耗防空资源并在恶劣天气和基础设施累积损伤下形成战略效果。",
+    "雷达仍是全天候、可探测静默/自主目标的关键传感器；但FAA、DoD和学术综述均指出，低空小目标在地形遮蔽、地物反射、MTI盲速、杂波和小RCS条件下会显著降低雷达可靠性，因此“雷达必要”不等于“雷达充分”。",
+    "复杂地形既帮助攻击方利用山脊、建筑、树木和水面杂波接近，也会缩短无人机自身通信链路、导航和续航可靠性；蓝方若能提前做视域、RF传播和网络路径建模，可把地形从缺口转化为防御条件。",
+    "AI自主被广泛视为未来威胁放大器；但IAMD COE报告提醒，小型商用无人机在短期内仍受机载算力、重量、功耗和成本限制，不能假设所有低空目标都已具备高可靠自主突防能力。"
+  ],
+  "confidence_basis": "证据覆盖政府/军方文件、国会研究、军种专业期刊、智库报告、学术综述和公开战例，来源族群超过3类且包含2024、2025、2026年资料。关于复杂地形物理约束、传感器局限和多模态融合的证据直接性较高；关于俄乌、纳卡、红海战例的证据可相互印证无人机饱和、低成本消耗和分层防御趋势。主要不确定性在于具体装备性能、特定地域覆盖率、实际库存消耗和敌方最新链路/自主能力通常不公开，因此场景参数采用公开资料支撑的区间化、假设化表达。",
+  "source_claims": [
+    {
+      "url": "https://media.defense.gov/2026/Jul/08/2003958884/-1/-1/1/SMALL-DRONES-BIG-PROBLEMS-A-FIRST-PRINCIPLES-APPROACH-TO-Counter-UAS.PDF",
+      "claim": "[E1] 该DoD/联合跨机构材料指出无人机防护没有单一银弹，需雷达、光电/红外、声学、RF等互补传感器形成决策级置信度；山地、城市、植被、天气、RF噪声和网络路径会共同影响探测与处置。"
+    },
+    {
+      "url": "https://www.war.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/",
+      "claim": "[E2] DoD 2024年发布反无人系统战略，称无人系统对人员、设施和资产构成紧迫且持久威胁，并强调需统一理解和跨部门方法应对快速演化的无人系统。"
+    },
+    {
+      "url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+      "claim": "[E3] DoD战略事实清单强调无人系统正在改变冲突特征，短期重点包括提升探测、主动防御和被动防御，并面向更大数量、更高自主化和网络化威胁做中长期准备。"
+    },
+    {
+      "url": "https://www.army.mil/article-amp/278404/joint_counter_small_uas_office_conducts_successful_counter_drone_swarm_demonstration",
+      "claim": "[E4] 美陆军JCO 2024年蜂群反制演示中，每轮发射40多个UAS目标并评估多套系统；结论是单一能力无法应对多方向、多速度、多尺寸的大规模无人机剖面，需要系统-of-systems和分层方法。"
+    },
+    {
+      "url": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_5.html",
+      "claim": "[E5] FAA雷达说明指出，低空航空器若被山体遮蔽或低于雷达波束/受地球曲率影响可能看不见；较小反射面目标也比大型飞机更难由一次雷达发现。"
+    },
+    {
+      "url": "https://www.faa.gov/sites/faa.gov/files/airports/airport_safety/Attachment-3-UAS-Detection-Technical-Considerations.pdf",
+      "claim": "[E6] FAA UAS探测技术考虑文件指出，雷达和RF常作为主探测源，EO和声学通常是验证/辅助传感器；树木、建筑、地形、RF干扰、多径、天气、悬停/垂直运动和虚警都会影响系统效能。"
+    },
+    {
+      "url": "https://www.faa.gov/airports/new_entrants/uas_detection_mitigation_response",
+      "claim": "[E7] FAA机场UAS探测页面指出，雷达、RF、EO和声学可单独或组合用于探测验证，但探测系统不能自行判断UAS意图或威胁等级，且部署需考虑法律、EMI和空域运行影响。"
+    },
+    {
+      "url": "https://www.armyupress.army.mil/Journals/Military-Review/Online-Exclusive/2024-OLE/Grenade-Dropping-Quadcopters-II/",
+      "claim": "[E8] Army University Press关于俄乌无人机战的文章指出，1-3类小型UAS提供持久且难探测的RISTA能力；高空易观测UAS在成熟战区被EW和防空显著压制，而基层仍缺少足够有机C-sUAS能力。"
+    },
+    {
+      "url": "https://www.armyupress.army.mil/Journals/Military-Review/English-Edition-Archives/Nov-Dec-2024/Cunning-Tools-of-War/",
+      "claim": "[E9] Army University Press文章将低空空域称为被争夺的air littoral，并指出乌克兰小型UAS可采用消耗性渗透，即便少量存活也能通过不同路线和频率寻找电子战防线弱点。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare",
+      "claim": "[E10] CSIS基于前线访谈指出多数低成本FPV任务成功率约10%至15%，熟练操作者可达30%至50%；同时EW对控制链和GPS构成持续威胁，而AI导航和抗干扰能力正在被探索。"
+    },
+    {
+      "url": "https://iamd-coe.org/wp-content/uploads/2024/02/The-Evolving-UAS-Threat-Lessons-from-the-Russian-Ukrainian-War-Since-2022-on-Future-Air-Defence-Challenges-and-Requirements.pdf",
+      "claim": "[E11] IAMD COE报告指出俄乌冲突中电磁频谱高度拥挤和受争夺，俄军约每10公里部署一套主要EW系统并造成乌军约每月1万架UAV损失；但AI/自主、抗EW和卫星通信发展使攻防平衡保持不稳定。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/air-and-missile-war-nagorno-karabakh-lessons-future-strike-and-defense",
+      "claim": "[E12] CSIS纳卡空中与导弹战研究指出，S-300等大型防空系统并非为反UAV任务设计且早期遭打击；核心教训是需要全谱系防空、机动SHORAD和被动防护。"
+    },
+    {
+      "url": "https://s3.us-east-1.amazonaws.com/files.cnas.org/documents/Report_CUAS_Defense_Sep-2025_final.pdf",
+      "claim": "[E13] CNAS红海研究称2023年11月至2025年1月美海空力量击落约480架胡塞无人机，成功依赖分层、多域一体防御和快速学习，但成本与高节奏不可持续，部分交战窗口仅为秒级。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/drone-saturation-russias-shahed-campaign",
+      "claim": "[E14] CSIS关于Shahed饱和攻击的研究指出，俄方自2024年9月起将Shahed发射从每周约200架提升到2025年3月超过1000架；乌方依靠声学传感器、共同作战系统、EW和机动防空降低成本交换，但饱和压力仍上升。"
+    },
+    {
+      "url": "https://isis-online.org/uploads/isis-reports/documents/January-2026-Updated-Analysis-of-Russian-Shahed-type-UAVs-Deployment-Against-Ukraine_Feb-10_2026.pdf",
+      "claim": "[E15] ISIS 2026年2月报告指出，2026年1月Shahed型UAV继续承担直接打击基础设施与消耗防空资源的双重任务，并出现CRPA、尝试Starlink连接、中继无人机网状链路、在线摄像头和实时航路调整等技术改进。"
+    },
+    {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10780901/",
+      "claim": "[E16] 学术综述总结雷达、RF、声学和视觉探测均有环境干扰因素：鸟类/野生动物、频率重叠/干扰、风雨噪声、夜间/雾雨雪、遮挡和复杂背景会增加漏警或虚警；多传感器融合可提升鲁棒性。"
+    }
+  ],
+  "analysis_sections": {
+    "scenario_framework": {
+      "scenario_name": "复杂地形低空无人机探测预警体系压力场景",
+      "purpose": "检验现役低空无人机探测预警体系在山地—城市—海岸复合环境中的传统能力缺口，并推导升级需求；场景仅用于防御性能力研判，不提供攻击执行步骤。",
+      "background": {
+        "operational_setting": "蓝方防区位于山地边缘城市与近海/河口交通节点交汇区，存在山脊、谷地、高层建筑、仓储园区、港口水面、通信基站、民用无人机活动和复杂电磁背景。",
+        "blue_mission": "在不干扰民航和民用通信的前提下，对低空无人机活动形成早期发现、连续跟踪、身份判别、威胁评估、告警分发和安全处置支持。",
+        "red_objective": "通过低成本、可消耗、低空、分散和多样化无人机活动压缩蓝方发现—识别—决策—处置窗口，消耗传感器值班与防空资源，并寻找体系盲区。",
+        "key_assumptions": [
+          "[A1] 敌方不需要每架无人机成功，只需通过持续试探和少量突防制造态势压力。",
+          "[A2] 蓝方现役体系以固定雷达、少量RF探测、EO/IR验证、人工值守和上级集中确认流程为主，基层有机C-UAS能力不足。",
+          "[A3] 民用环境中蓝方不能无限制使用干扰、激光或动能处置，必须先完成识别、授权和安全评估。",
+          "[A4] 复杂地形对攻防双方同时施加约束：既遮蔽无人机，也影响其链路、导航和续航。"
+        ],
+        "evidence_or_assumption_links": [
+          "E1",
+          "E3",
+          "E4",
+          "E5",
+          "E6",
+          "E7",
+          "E16",
+          "A1",
+          "A2",
+          "A3",
+          "A4"
+        ]
+      },
+      "forces_and_systems": {
+        "blue_force": [
+          "固定低空监视雷达与既有防空预警节点",
+          "若干机动补盲雷达/便携式雷达",
+          "被动RF侦测与频谱监测节点",
+          "EO/IR云台、热像仪、可见光摄像头",
+          "声学传感器或群众/哨兵观测渠道",
+          "本地指挥所、上级空情/防空C2、民航/公安/频谱管理联络机制",
+          "有限电子压制、低成本拦截、被动伪装/遮蔽/分散措施"
+        ],
+        "red_force_abstract": [
+          "低慢小四旋翼/多旋翼侦察无人机",
+          "FPV或一次性小型无人机",
+          "固定翼一向攻击或诱饵无人机",
+          "RF发射较弱、间歇通信或预编程航线无人机",
+          "用于制造虚警和资源消耗的非致命/诱饵平台",
+          "电磁侦察、网络压力和信息欺骗支援能力"
+        ]
+      },
+      "scenario_horizons": [
+        {
+          "phase": "危机前预警",
+          "description": "防区周边出现异常民用无人机活动、短时RF信号、夜间低空噪声、社交媒体/公开影像收集、山脊和楼顶附近可疑活动。敌方可能进行传感器覆盖摸底和蓝方响应时间观察。",
+          "blue_tasks": [
+            "建立基线：常态RF、民用无人机航迹、鸟群/船舶/车辆/风机/港口机械背景。",
+            "基于三维地形、建筑物和植被生成雷达/EO/RF/声学视域图。",
+            "把异常模式纳入预警而非等待明确入侵。",
+            "建立民航、公安、频谱和设施业主联动流程。"
+          ],
+          "triggers": [
+            "同一区域重复出现短时无人机信号或视觉观测",
+            "防区盲区边缘出现疑似测绘/观察活动",
+            "夜间或恶劣天气中出现多源弱告警"
+          ],
+          "termination_conditions": [
+            "完成盲区复核与传感器补位",
+            "未发现持续威胁且异常恢复常态",
+            "进入初始接触阶段"
+          ],
+          "evidence_or_assumption_links": [
+            "E1",
+            "E6",
+            "E7",
+            "E16",
+            "A1"
+          ]
+        },
+        {
+          "phase": "初始接触",
+          "description": "低空目标利用山脊、建筑群、树线或水面背景进入外围；雷达出现低置信小目标或间歇航迹，RF节点可能捕捉到短脉冲或完全静默，EO/IR受到天气、背景热源和遮挡影响。",
+          "blue_tasks": [
+            "多源交叉验证：雷达给出方位/速度，RF判别链路特征，EO/IR确认外形，声学和哨兵观测补充。",
+            "按威胁等级而非单点告警触发响应。",
+            "在不危及民用空域条件下发布分级告警和临时空域/设施防护动作。"
+          ],
+          "triggers": [
+            "多个传感器在相近时间/空间内出现弱相关",
+            "同一航迹在盲区边界反复消失再出现",
+            "RF噪声或GNSS异常与低空告警同时发生"
+          ],
+          "termination_conditions": [
+            "目标被识别为合法/无威胁并解除警戒",
+            "目标退出防区且无后续批次",
+            "出现多批次、多方向或电磁压迫迹象，进入体系对抗"
+          ],
+          "evidence_or_assumption_links": [
+            "E5",
+            "E6",
+            "E16",
+            "E1",
+            "A3"
+          ]
+        },
+        {
+          "phase": "体系对抗",
+          "description": "敌方由单机试探转为多批次、多方向、诱饵与真实目标混合；同时出现RF拥塞、GNSS干扰/欺骗、链路间歇、网络回传延迟和虚警增多。蓝方从单目标处置转为态势管理和资源分配。",
+          "blue_tasks": [
+            "维持共同作战图，但允许边缘节点在上级链路降级时本地生成威胁优先级。",
+            "将拦截资源优先用于穿越关键防护圈、具有高置信敌意或高危载荷迹象的目标。",
+            "采取被动防护：关键装备分散、遮蔽、诱饵、灯火/热源/电磁特征管理。",
+            "评估电子压制与民用通信、己方无人机和传感器之间的电磁互扰。"
+          ],
+          "triggers": [
+            "同一时间出现多方向航迹或诱饵/真实目标混杂",
+            "雷达/RF/EO传感器输出互相矛盾",
+            "上级链路延迟导致确认时间超过末端处置窗口",
+            "蓝方高价值节点被持续侦察或反复虚警牵制"
+          ],
+          "termination_conditions": [
+            "攻击批次停止且态势恢复稳定",
+            "蓝方资源消耗达到预设阈值并转入持续作战节奏",
+            "若出现传感器/通信节点损伤，则进入战损重构"
+          ],
+          "evidence_or_assumption_links": [
+            "E3",
+            "E4",
+            "E9",
+            "E11",
+            "E13",
+            "E14",
+            "E15",
+            "A2"
+          ]
+        },
+        {
+          "phase": "持续作战",
+          "description": "无人机威胁进入日常化、高频化和迭代化；敌方根据蓝方反应调整飞行高度、时间、链路、诱饵比例和目标类型。蓝方重点由单次成功拦截转为成本、人员、传感器维护和弹药库存的长期承受能力。",
+          "blue_tasks": [
+            "统计每类传感器虚警、漏警和维护负担，按地形区块调整部署。",
+            "低成本优先：对低价值目标采用监视、驱离、遮蔽和电子/非动能手段，对高价值威胁保留高端拦截。",
+            "更新RF/雷达/声学/视觉特征库，训练操作员识别新型诱饵和民用混杂目标。",
+            "形成24/7值守轮换、备件和电源/网络冗余。"
+          ],
+          "triggers": [
+            "连续多日多批次无人机活动",
+            "蓝方拦截成本明显高于来袭平台成本",
+            "传感器误警导致疲劳或响应迟滞",
+            "敌方出现新频段、新外形或新抗干扰特征"
+          ],
+          "termination_conditions": [
+            "威胁活动降至基线水平",
+            "完成战术/技术升级并恢复成本交换优势",
+            "发生关键节点损伤并转入战损重构"
+          ],
+          "evidence_or_assumption_links": [
+            "E8",
+            "E10",
+            "E11",
+            "E14",
+            "E15",
+            "E16"
+          ]
+        },
+        {
+          "phase": "战损重构",
+          "description": "部分传感器、通信、供电或C2节点失效；蓝方需要在地形和电磁约束下快速恢复低空态势感知，避免因单点损伤形成可重复利用的低空通道。",
+          "blue_tasks": [
+            "启用机动补盲节点、备用电源、离线地图和本地边缘处理。",
+            "将固定节点覆盖转为临时网格化覆盖，重点保护关键通道和高价值区域。",
+            "以最小网络依赖维持本地告警和跨单位简报。",
+            "记录敌方利用的盲区和触发条件，纳入下一轮部署优化。"
+          ],
+          "triggers": [
+            "关键传感器掉线或误差显著升高",
+            "回传链路拥塞/中断",
+            "多源空情无法融合或重复目标严重",
+            "敌方利用相同盲区重复进入"
+          ],
+          "termination_conditions": [
+            "恢复最低可接受覆盖和本地处置能力",
+            "完成备用节点部署和盲区重新评估",
+            "威胁降低或转入新一轮持续作战"
+          ],
+          "evidence_or_assumption_links": [
+            "E1",
+            "E3",
+            "E4",
+            "E6",
+            "A2",
+            "A4"
+          ]
+        }
+      ],
+      "victory_criteria": {
+        "blue_success": [
+          "低空关键通道首警时间满足识别和安全处置需要",
+          "多传感器融合后虚警可控、漏警下降",
+          "在网络降级和部分节点损伤下仍可本地告警与分级响应",
+          "拦截/处置成本与来袭成本差距缩小",
+          "敌方无法通过少量试探稳定复现低空通道"
+        ],
+        "red_success_abstract": [
+          "蓝方在多个关键地形区块出现持续盲区",
+          "虚警和诱饵迫使蓝方高成本响应",
+          "集中式确认流程导致处置窗口丧失",
+          "蓝方传感器/通信/值班体系出现疲劳或降级"
+        ]
+      }
+    },
+    "enemy_coa": [
+      {
+        "coa_name": "COA-1 最可能方案：低强度持续侦察试探与盲区测绘",
+        "intent": "以低成本、低风险平台持续观察蓝方反应、传感器覆盖和出动规律，逐步识别低空盲区和误警触发点。",
+        "conceptual_actions_non_executable": [
+          "在民用空域背景、城市边缘和山地遮蔽附近制造间歇低空活动。",
+          "混用可见RF发射目标、弱发射目标和合法/疑似合法活动以测试蓝方识别规则。",
+          "反复观察蓝方从首警到确认、授权和处置的时间。"
+        ],
+        "observable_indicators": [
+          "同一区域短时RF信号或无人机目击重复出现但未深入防区",
+          "雷达低置信航迹在山脊/建筑边缘消失再出现",
+          "民用无人机活动量与敏感时段、演训或重要保障活动异常相关",
+          "社交媒体、公开影像或人员观察活动增多"
+        ],
+        "key_nodes": [
+          {
+            "node": "基线污染",
+            "effect_on_blue": "使蓝方难以区分正常民用活动与威胁准备。",
+            "evidence_or_assumption_links": [
+              "E7",
+              "E16",
+              "A1"
+            ]
+          },
+          {
+            "node": "盲区确认",
+            "effect_on_blue": "暴露地形遮蔽、传感器死角和C2延迟。",
+            "evidence_or_assumption_links": [
+              "E5",
+              "E6",
+              "E1"
+            ]
+          }
+        ],
+        "risk_to_red": [
+          "低空链路受地形影响可能失联",
+          "频繁试探会暴露模式并给蓝方建立基线",
+          "民用环境中平台被识别后可能触发执法和空域管制"
+        ],
+        "blue_pressure_points": [
+          "身份判别",
+          "民用无人机去冲突",
+          "值班疲劳",
+          "低空盲区建模",
+          "跨部门信息共享"
+        ]
+      },
+      {
+        "coa_name": "COA-2 最危险方案：多轴饱和、诱饵混杂与电磁/网络压迫",
+        "intent": "以多批次、多方向、低成本无人机和诱饵目标迫使蓝方同时处理大量低置信告警，消耗拦截资源并压缩处置窗口。",
+        "conceptual_actions_non_executable": [
+          "将诱饵、侦察和真实威胁目标混杂，制造优先级排序困难。",
+          "利用地形、城市遮挡和水面/车辆/鸟群杂波增加虚警。",
+          "通过电磁拥塞、GNSS异常或网络压力降低蓝方传感器和C2融合质量。",
+          "在蓝方响应后改变频段、时段、航迹和平台类型，延长消耗战。"
+        ],
+        "observable_indicators": [
+          "同一时间多方向低空航迹增加",
+          "RF噪声底、GNSS异常、通信延迟与无人机告警同步出现",
+          "EO/IR被热背景、遮挡或诱饵牵引，确认时间延长",
+          "拦截弹药、值班人员和传感器维护负担快速上升"
+        ],
+        "key_nodes": [
+          {
+            "node": "态势过载",
+            "effect_on_blue": "传感器融合和人工确认产生队列积压，威胁排序错误概率上升。",
+            "evidence_or_assumption_links": [
+              "E4",
+              "E13",
+              "E14"
+            ]
+          },
+          {
+            "node": "成本交换施压",
+            "effect_on_blue": "诱使蓝方使用昂贵拦截手段对付低成本目标，削弱持续作战能力。",
+            "evidence_or_assumption_links": [
+              "E13",
+              "E14",
+              "E15"
+            ]
+          },
+          {
+            "node": "电磁/网络降级",
+            "effect_on_blue": "RF探测、GNSS时间/位置、视频回传和共同作战图出现不一致。",
+            "evidence_or_assumption_links": [
+              "E1",
+              "E6",
+              "E11",
+              "E15"
+            ]
+          }
+        ],
+        "risk_to_red": [
+          "大规模活动更易被多源发现",
+          "诱饵比例过高会降低实际效果",
+          "持续发射对后勤、组装和操作者训练提出要求"
+        ],
+        "blue_pressure_points": [
+          "多目标跟踪容量",
+          "威胁优先级排序",
+          "边缘授权",
+          "低成本处置",
+          "EW与己方通信去冲突",
+          "持续补给与人员轮换"
+        ]
+      },
+      {
+        "coa_name": "COA-3 替代方案：RF静默/半自主低空渗透与合法流量伪装",
+        "intent": "减少可被RF探测和压制的暴露特征，依赖预编程、惯导/视觉辅助或间歇链路，通过合法无人机/鸟群/车辆/港口机械背景降低识别置信度。",
+        "conceptual_actions_non_executable": [
+          "减少连续控制链路暴露，采用间歇通信或预编程任务。",
+          "选择蓝方RF强噪声区、城市遮挡区或复杂热背景区使探测结果不一致。",
+          "利用民用无人机密集时段或合法空域活动提高蓝方误判成本。"
+        ],
+        "observable_indicators": [
+          "雷达/EO有弱迹象但RF无对应链路",
+          "目标航迹规律性强但身份信息缺失",
+          "Remote ID或白名单数据与物理航迹不一致",
+          "蓝方RF压制后目标仍保持部分任务行为"
+        ],
+        "key_nodes": [
+          {
+            "node": "RF探测旁路",
+            "effect_on_blue": "RF依赖型预警和操作者定位能力下降。",
+            "evidence_or_assumption_links": [
+              "E6",
+              "E10",
+              "E11",
+              "E15"
+            ]
+          },
+          {
+            "node": "识别规则混淆",
+            "effect_on_blue": "合法/非法、威胁/非威胁分类时间增加。",
+            "evidence_or_assumption_links": [
+              "E7",
+              "E16",
+              "A3"
+            ]
+          }
+        ],
+        "risk_to_red": [
+          "小型平台自主能力受算力、重量、电源和成本约束",
+          "静默减少实时操控能力并提高任务不确定性",
+          "雷达、EO/IR和声学融合仍可能发现其物理存在"
+        ],
+        "blue_pressure_points": [
+          "非RF目标探测",
+          "多模态融合",
+          "白名单/Remote ID可信校验",
+          "本地AI分类",
+          "被动防护"
+        ]
+      }
+    ],
+    "critical_timeline": [
+      {
+        "time_window": "T-30至T-7天：危机前模式建立",
+        "red_activity_abstract": "低强度观察、民用流量混入、短时RF活动和公开信息收集。",
+        "blue_decision": "是否把弱异常纳入预警并开展盲区复核。",
+        "traditional_gap": "现役体系常等待明确空情告警，缺少把地形、RF基线和民用活动融合为异常模式的机制。",
+        "upgrade_need": "建立三维视域、RF传播、常态航迹和异常模式数据库；把民用/执法/频谱信息接入低空态势。",
+        "observable_indicators": [
+          "重复短时RF信号",
+          "固定区域目击报告",
+          "不寻常民用无人机集中",
+          "公开影像收集活动"
+        ],
+        "evidence_or_assumption_links": [
+          "E1",
+          "E6",
+          "E7",
+          "A1"
+        ]
+      },
+      {
+        "time_window": "T-72至T-24小时：传感器与响应摸底加剧",
+        "red_activity_abstract": "围绕防区边缘进行多点低空试探，观察蓝方响应节奏。",
+        "blue_decision": "是否调整机动传感器、值班等级和被动防护。",
+        "traditional_gap": "固定传感器对山体、建筑和水面杂波导致的低空盲区反应慢。",
+        "upgrade_need": "机动补盲雷达/被动RF/EO点位预案，临时升高传感器、边缘融合和地形补盲部署。",
+        "observable_indicators": [
+          "航迹在盲区边缘反复中断",
+          "不同传感器对同一事件判断不一致",
+          "低空噪声和视觉观测先于雷达确认"
+        ],
+        "evidence_or_assumption_links": [
+          "E5",
+          "E6",
+          "E16",
+          "A4"
+        ]
+      },
+      {
+        "time_window": "T-60至T-10分钟：初始接触与分级告警",
+        "red_activity_abstract": "小批次低空目标进入外围探测范围，可能伴随诱饵或RF噪声。",
+        "blue_decision": "是否升级为无人机威胁事件并启动空域/设施防护。",
+        "traditional_gap": "单传感器置信度不足导致等待人工确认，压缩后续处置时间。",
+        "upgrade_need": "多模态置信评分、自动关联、EO/IR slew-to-cue、声学/哨兵补充和快速分级告警。",
+        "observable_indicators": [
+          "低RCS低速航迹",
+          "间歇RF发射",
+          "EO/IR受到背景干扰",
+          "GNSS或网络异常同步出现"
+        ],
+        "evidence_or_assumption_links": [
+          "E1",
+          "E4",
+          "E6",
+          "E16"
+        ]
+      },
+      {
+        "time_window": "T-10分钟至T+30分钟：体系对抗窗口",
+        "red_activity_abstract": "多方向、多批次、诱饵/真实目标混合，叠加电磁和网络压力。",
+        "blue_decision": "如何在有限时间内排序目标、分配低成本与高端处置手段、维持共同作战图。",
+        "traditional_gap": "集中式C2、人工确认和高成本拦截难以应对饱和和秒级/分钟级窗口。",
+        "upgrade_need": "边缘授权、降级运行、威胁优先级算法、低成本拦截层、被动防护和网络断续下的本地态势。",
+        "observable_indicators": [
+          "多传感器目标重复或冲突",
+          "航迹数量超过人工处理能力",
+          "回传视频延迟",
+          "拦截资源快速消耗"
+        ],
+        "evidence_or_assumption_links": [
+          "E3",
+          "E4",
+          "E13",
+          "E14",
+          "E15"
+        ]
+      },
+      {
+        "time_window": "T+30分钟至T+72小时：持续消耗与快速迭代",
+        "red_activity_abstract": "根据蓝方响应改变平台、频段、时段、诱饵比例和接近方向。",
+        "blue_decision": "如何维持成本交换、人员轮换、传感器维护和特征库更新。",
+        "traditional_gap": "装备采购与软件/特征库更新周期慢，基层训练和备件不足。",
+        "upgrade_need": "开放式架构、快速软件更新、特征库共享、消耗品储备、训练闭环和跨单位经验回灌。",
+        "observable_indicators": [
+          "新频段或静默目标增加",
+          "诱饵比例变化",
+          "夜间/恶劣天气活动增加",
+          "传感器误警模式变化"
+        ],
+        "evidence_or_assumption_links": [
+          "E8",；{
+  "findings": [
+    "复杂地形下的传统低空无人机预警缺口主要不是单一雷达灵敏度不足，而是低空视距、地形遮蔽、建筑/林地杂波、多路径、电磁噪声和短预警时间叠加造成的体系性缺口。",
+    "现役成熟体系以美国LIDS家族为代表：FS-LIDS用于固定点防护，M-LIDS用于机动防护，核心由KuRFS/相关雷达、EO/IR、电子战、Coyote拦截器和FAAD C2组成；公开资料显示其目标对象主要为Group 1-3小型无人机及其他低飞威胁。",
+    "GAO与CRS资料显示，FS-LIDS、M-LIDS、Coyote、Ku-band雷达族和手持/下车系统已进入美陆军正式采办组合并在2024财年进入全速生产；但成本、测试逼真度、人员训练、跨军种C2和工业扩产仍是约束。",
+    "公开参数显示，若在开阔或合理布站条件下，专用小无人机雷达可提供数公里级发现：Saab Giraffe 1X宣称可在4 km发现很小UAV；Robin IRIS标准模式为5 km仪器化距离、长距模式可至12 km；Hensoldt SPEXER 2000 Coastal对0.2 m² RCS UAV公开探测距离为9 km。复杂地形中这些距离不应直接外推。",
+    "被动RF/协议解析、声学、EO/IR和多传感器融合可补足有源雷达暴露和遮蔽问题，但对自主航线、低发射控制、跳频、光纤控制、复杂电磁环境和恶劣天气均存在边界。",
+    "在研升级方向集中于低成本、低SWaP、模块化、被动/分布式传感器，车载/下车/系留或小型UAS搭载传感器，多源融合C2，以及低成本硬杀伤、非动能、定向能和高功率微波等多层反制。",
+    "对手优势在于小型无人机低成本、低雷达/声/热/RF特征、可低空贴地或利用地形遮蔽、可饱和攻击和快速迭代；其依赖包括导航、数据链、发射/回收点、能源、操作者和后勤补给，且森林、复杂地形和电磁干扰同样会限制无人机操控与传感链路。",
+    "场景适配度判断：固定基地和关键基础设施适合FS-LIDS/多传感器塔台化布设；机动分队适合M-LIDS、轻量雷达、被动RF和便携告警；山地、森林、城市峡谷和海岸/港口需要分布式多高度布站、被动探测和本地化低时延C2，而不能依赖单点远程雷达。",
+    "防御性升级需求应优先解决“发现—识别—告警—交接”链条：分布式传感器覆盖低空死角、融合算法降低鸟类/车辆/旋翼杂波误警、C2兼容FAAD/IBCS/TAK类接口、弹药/能源补给与低成本交战策略，以及常态化红蓝对抗测试。"
+  ],
+  "confidence": 0.82,
+  "open_questions": [
+    "各型雷达在山地、森林、城市峡谷等复杂地形中的有效发现距离、虚警率和跟踪连续性缺乏统一公开测试数据；公开厂商参数多基于开阔或理想布设条件。",
+    "KuRFS、XBAEU、AN/TPQ-50改型、SPEXER 2000 3D MkIII等具体批次间的探测距离、抗干扰能力和软件版本差异公开资料有限。",
+    "Coyote Block 2/Block 3NK、BLADE、DE M-SHORAD、IFPC-HEL/HPM和下一代C-UAS导弹的单位成本、弹药库存、可靠性和作战可用率缺少可交叉核验的公开数据。",
+    "FAAD C2与IBCS、JADC2、TAK、北约接口之间的具体数据模型、认证状态和网络抗毁性公开信息不足。",
+    "反制光纤控制FPV、自主终端识别、无RF发射航线飞行和大规模蜂群的体系效果仍需更多公开实测。"
+  ],
+  "handoff_summary": "本轮仅基于公开资料形成传统能力缺口研究包。结论是：现役低空无人机探测预警体系已具备成熟的点防护和机动C-UAS能力，但在复杂地形下仍受低空视距、地形遮蔽、杂波、虚警、C2交接、成本和饱和压力制约。建议下游围绕“多源分布式低空探测、低SWaP被动/主动融合、开放C2、低成本多层拦截、训练与后勤韧性”开展战法与制胜机理分析。",
+  "search_plan": [
+    {
+      "track": "现役型号与部署规模",
+      "queries": [
+        "site:army.mil counter small UAS low altitude detection radar complex terrain LIDS KuRFS 2025",
+        "LIDS Low Slow Small Unmanned Aircraft Integrated Defeat System KuRFS Coyote M-LIDS Army 2025 official",
+        "Leonardo DRS M-LIDS counter UAS system deployed Stryker 2025 official",
+        "DSCA UAE FS-LIDS 2026 Coyote KuRFS $2.10 billion official"
+      ]
+    },
+    {
+      "track": "在研项目与预算采购",
+      "queries": [
+        "FY 2026 budget counter-UAS Army LIDS M-LIDS FS-LIDS Coyote procurement 3.1 billion official",
+        "site:asafm.army.mil FY 2026 counter small UAS Coyote LIDS budget justification",
+        "Army SBIR low altitude passive detection system terrain curvature obstacles sUAS 2025",
+        "Next Generation Counter UAS Missile Army FY 2027 common launcher"
+      ]
+    },
+    {
+      "track": "关键参数和任务载荷",
+      "queries": [
+        "KuRFS radar specifications range 360 coverage counter UAS official",
+        "SAAB Giraffe 1X drone detection radar range official counter UAS",
+        "Robin Radar IRIS drone detection radar range official 2025",
+        "HENSOLDT SPEXER 2000 UAV 0.2 m2 RCS 9 km official"
+      ]
+    },
+    {
+      "track": "体系接口与联合作战能力",
+      "queries": [
+        "FAAD C2 counter UAS LIDS interface command and control official 2025",
+        "Northrop Grumman FAAD C2 counter UAS Forward Area Air Defense command control 2025 official",
+        "Army FAADC2 LIDS M-LIDS FS-LIDS command and control integration counter UAS 2025",
+        "IBCS FAAD C2 counter UAS integration LIDS 2025"
+      ]
+    },
+    {
+      "track": "技术成熟度工业基础与保障约束",
+      "queries": [
+        "GAO-25-107491 counter UAS FS-LIDS M-LIDS full rate production 2024",
+        "CRS Department of Defense Counter-UAS Background Issues Congress LIDS Coyote cost technical maturity 2025",
+        "RUSI Protecting the Force from Uncrewed Aerial Systems layered counter UAS 2024",
+        "NATO counter UAS fiber optic drone EW ineffective detection 2025"
+      ]
+    }
+  ],
+  "contradictions": [
+    "冲突/边界1：厂商公开参数显示专用雷达在开阔条件下具备数公里级小UAV发现能力，但陆军SBIR明确指出现有系统受地形、地球曲率和障碍物影响，低空sUAS预警窗口有限。因此“雷达能力强”与“复杂地形预警不足”并不矛盾，关键在布站和场景。",
+    "冲突/边界2：CRS记录Coyote已有实战拦截成功和大规模采购需求，但同一报告也指出其不一定适合廉价无人机的成本交换。因此成熟度高不等于成本可持续。",
+    "冲突/边界3：定向能和高功率微波常被描述为低单发成本方案，但CRS指出其M-SHORAD方向曾有延期和用户评价一般，同时规模化装备的前期成本可能抵消单发成本优势。",
+    "冲突/边界4：被动RF/协议解析系统可降低暴露并提供识别，但NATO相关资料显示光纤控制无人机使传统EW类反制失效或效果下降；自主/预编程航线也会削弱RF探测的可用性。",
+    "冲突/边界5：复杂地形既削弱防御方探测，也限制无人机操控、通信、导航和传感器视场；不能简单假设攻击方在山地/森林/城市峡谷中总是占优。",
+    "冲突/边界6：固定点C-UAS可通过多传感器冗余补足死角，但机动分队受车辆空间、电源、天线高度、人员训练和弹药补给限制，难以复制固定基地级覆盖。"
+  ],
+  "confidence_basis": "证据覆盖政府/军方、国会研究、GAO、厂商资料、智库和北约公开资料，来源家族超过3类；多数关键证据在2024年7月以后发布或仍为当前厂商页面，满足近两年新鲜度要求。LIDS、Coyote、KuRFS、FAAD、Giraffe 1X、IRIS等至少由政府/CRS/GAO与厂商资料交叉支撑。剩余不确定性主要来自：厂商参数通常不是复杂地形实测；关键系统真实作战距离、虚警率、库存和软件接口公开不足；在研定向能、HPM和下一代拦截器成熟度仍在变化。",
+  "source_claims": [
+    {
+      "url": "https://www.defense.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/",
+      "claim": "美国国防部2024年发布反无人系统战略，强调无人系统威胁快速演进，并将JCO、Warfighter Senior Integration Group和Replicator 2等作为主要举措。"
+    },
+    {
+      "url": "https://www.gao.gov/assets/gao-25-107491.pdf",
+      "claim": "GAO-25-107491显示，美陆军C-sUAS组合中FS-LIDS、M-LIDS、Coyote、Ku-band雷达族和手持/下车系统等进入正式采办；其中五项在2024财年进入全速生产。"
+    },
+    {
+      "url": "https://www.congress.gov/crs_external_products/R/PDF/R48477/R48477.2.pdf",
+      "claim": "CRS R48477说明LIDS由FS-LIDS和M-LIDS组成，面向Group 1-3无人机和其他低飞威胁；M-LIDS Increment 2.1从双M-ATV配置迁移为单Stryker配置。"
+    },
+    {
+      "url": "https://www.congress.gov/crs_external_products/R/PDF/R48477/R48477.2.pdf",
+      "claim": "CRS记录FS-LIDS使用KuRFS雷达、EO/IR、电子战和Coyote拦截器，FS-LIDS与M-LIDS均使用FAAD C2；FY2025陆军申请2.801亿美元采购FS-LIDS、M-LIDS及若干下车系统，并另申请1.174亿美元采购Coyote。"
+    },
+    {
+      "url": "https://www.congress.gov/crs_external_products/R/PDF/R48477/R48477.2.pdf",
+      "claim": "CRS记录Coyote是LIDS家族的反UAS拦截器，有动能和非动能版本；截至2024年公开报道已有170次成功拦截，但陆军官员也称其对廉价无人机未必成本有效。"
+    },
+    {
+      "url": "https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2026/Discretionary%20Budget/rdte/RDTE%20-%20Vol%204%20-%20Budget%20Activity%209.pdf",
+      "claim": "美陆军PB2026 RDT&E材料列出Counter Unmanned Aerial Systems Agile Development项目，FY2026项目经费合计约1.43618亿美元，并显示C-sUAS相关采购线I24000 FY2026合计约3.06568亿美元。"
+    },
+    {
+      "url": "https://www.defense.gov/News/Transcripts/Transcript/Article/4228828/background-briefing-on-fy-2026-defense-budget/",
+      "claim": "美国国防部FY2026预算吹风会称，跨军种counter-UAS总请求约31亿美元。"
+    },
+    {
+      "url": "https://armysbir.army.mil/announcement/launch-2m-funding-opportunity-low-altitude-suas-detection/",
+      "claim": "美陆军SBIR/STTR 2025年低空被动探测机会指出，现有系统偏向较大、更高空目标，受地形、地球曲率和障碍物影响，难以发现多架低空sUAS，且大型固定系统限制部署灵活性。"
+    },
+    {
+      "url": "https://armysbir.army.mil/topics/low-altitude-passive-detection-system/",
+      "claim": "陆军低空被动探测题目要求低成本、低SWaP、模块化能力，并希望可兼容Group 1 sUAS或系留UAS载荷接口，用于增加地面部队对0至6000英尺AGL低空威胁的预警时间。"
+    },
+    {
+      "url": "https://www.rtx.com/raytheon/what-we-do/integrated-air-and-missile-defense/kurfs",
+      "claim": "Raytheon公开称KuRFS是360度雷达，可持续探测、识别和跟踪从火箭/炮弹/迫击炮到各类无人机的空中威胁，并作为美陆军LIDS组成部分。"
+    },
+    {
+      "url": "https://www.rtx.com/raytheon/what-we-do/integrated-air-and-missile-defense/coyote",
+      "claim": "Raytheon公开称Coyote与KuRFS配合提供从单机到蜂群的探测与击败能力；Coyote Block 3NK可使用非动能载荷、可徘徊、击败蜂群并可召回再部署。"
+    },
+    {
+      "url": "https://www.northropgrumman.com/what-we-do/mission-solutions/forward-area-air-defense-faad",
+      "claim": "Northrop Grumman公开称FAAD将SHORAD、C-RAM和C-UAS任务集成到单一界面，提供实时空域监视、威胁识别和安全拦截所需跟踪数据，并为美国国防部选择的C-UAS C2系统。"
+    },
+    {
+      "url": "https://www.saab.com/products/giraffe-1x",
+      "claim": "Saab公开称Giraffe 1X可作为VSHORAD主传感器、GBAD补盲雷达或C-UAS解决方案；系统总重低于150 kg，可探测距离雷达4 km处小于牛奶盒重量的UAV。"
+    },
+    {
+      "url": "https://www.robinradar.com/products/iris-radar",
+      "claim": "Robin Radar公开称IRIS为3D无人机雷达，提供360度视场、60度俯仰覆盖、5 km仪器化距离和约78 km²覆盖面积。"
+    },
+    {
+      "url": "https://www.robinradar.com/news-events/robin-radar-deploys-off-the-shelf-cuas-radar-with-12km-range",
+      "claim": "Robin Radar 2025年发布称IRIS Long-Range Mode可在5 km和12 km仪器化距离间切换，体现软件/模式升级带来的探测距离提升。"
+    },
+    {
+      "url": "https://www.hensoldt.net/fileadmin/HENSOLDT_2019/Products/Radar_IFF_Datalink/0812_17_Spexer2000_Coastal_E_intranet.pdf",
+      "claim": "Hensoldt SPEXER 2000 Coastal资料列出对0.2 m² RCS UAV的探测距离为9 km。"
+    },
+    {
+      "url": "https://www.rheinmetall.com/Rheinmetall%20Group/brochure-download/Air-Defence/D994e0222-Oerlikon-Skyranger-30.pdf",
+      "claim": "Rheinmetall Skyranger 30资料显示其采用3D AESA搜索雷达、30 mm×173炮、1200发/分射速和自动目标探测/捕获/跟踪，代表炮基低空反无人机/SHORAD方向。"
+    },
+    {
+      "url": "https://www.rusi.org/explore-our-research/publications/occasional-papers/protecting-force-uncrewed-aerial-systems",
+      "claim": "RUSI 2024报告强调反UAS必须是分层且高效的能力，软件、检测分类识别、电子战和多层效果器与硬件同等重要。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare",
+      "claim": "CSIS关于乌克兰自主化战争的研究指出，EW干扰推动无人机与反无人机体系转向替代探测、传感和自主能力；雷达、声学等方法也各自存在性能边界。"
+    },
+    {
+      "url": "https://www.act.nato.int/wp-content/uploads/2025/05/rfip025048.pdf",
+      "claim": "NATO ACT 2025资料提到自2024年底以来俄方引入光纤控制无人机，传统EW counter-UAS对这类无人机无效或效果受限，且其机动、抗干扰和低特征增加探测难度。"
+    },
+    {
+      "url": "https://www.droneshield.com/products-software",
+      "claim": "DroneShield公开称DroneSentry-C2提供统一实时反无人机态势图，可与自有传感器和第三方系统互操作，并融合RF、雷达和光学传感器。"
+    },
+    {
+      "url": "https://sentrycs.com/news/sentrycs-unveils-version-6-0-of-its-counter-drone-software-delivering-unmatched-coverage-and-efficiency/",
+      "claim": "Sentrycs 2025年发布称其V6.0采用协议操纵/Cyber over RF方法，从无人机与操作者通信的数据层提取信息，不同于仅依赖雷达、EO和RF扫描的多层探测。"
+    }
+  ],
+  "analysis_sections": {
+    "current_parameters": {
+      "scope_note": "参数均为公开资料；复杂地形下不得将开阔场或厂商标称距离直接视为作战保证距离。置信度按公开来源直接性、交叉核验和参数完整性评估。",
+      "parameter_records": [
+        {
+          "system": "LIDS family: FS-LIDS / M-LIDS",
+          "status": "现役/正式采办；GAO称相关项目2024财年进入全速生产",
+          "mission_scope": "防御Group 1-3无人机及其他低飞威胁",
+          "configuration_batch": "FS-LIDS固定点；M-LIDS Increment 2.1单Stryker配置，早期M-LIDS为双M-ATV配置",
+          "sensors_payloads": "KuRFS/相关Ku波段雷达、EO/IR、电子战、Coyote拦截器、FAAD C2；M-LIDS另含RIwP/30 mm等武器站配置",
+          "public_quantity_budget": "FY2025陆军申请约2.801亿美元用于FS-LIDS、M-LIDS及下车系统；其中公开提及5套Stryker M-LIDS和6套FS-LIDS；另约1.174亿美元用于Coyote采购",
+          "units": "美元；套；无人机Group分类",
+          "confidence": "高"
+        },
+        {
+          "system": "Raytheon KuRFS",
+          "status": "现役/已部署于LIDS体系",
+          "configuration_batch": "Ku-band Radio Frequency Sensor；公开页面未给出标准探测距离",
+          "key_parameters": {
+            "coverage": "360度",
+            "functions": "持续探测、识别、跟踪空中威胁",
+            "target_set": "火箭、炮弹、迫击炮、各类无人机",
+            "notable_claim": "可识别/分辨极小目标，厂商称可看到和识别来袭9 mm子弹"
+          },
+          "units": "角度；目标类别",
+          "confidence": "中高；功能由厂商和CRS交叉支撑，具体距离未知"
+        },
+        {
+          "system": "Raytheon Coyote",
+          "status": "现役/采购扩大",
+          "configuration_batch": "Block 2动能；Block 3NK非动能；固定/机动发射",
+          "key_parameters": {
+            "launch": "rail-launched；boost rocket motor and turbine engine",
+            "payload": "动能和非动能",
+            "public_performance": "CRS记录截至2024年报道有170次成功拦截",
+            "planned_production_need": "CRS记录陆军估算FY2025-FY2029需6000枚动能Coyote及数百枚非动能拦截器"
+          },
+          "units": "枚；财年；拦截次数",
+          "confidence": "高；成本有效性为中等置信度，因为单位成本公开数据不一致"
+        },
+        {
+          "system": "FAAD C2",
+          "status": "现役C2/美DOD选定C-UAS C2",
+          "configuration_batch": "Forward Area Air Defense Command and Control",
+          "key_parameters": {
+            "missions": "SHORAD、C-RAM、C-UAS",
+            "interface_role": "将探测、识别、跟踪、交战授权/火控态势集成到单一界面",
+            "operational_relevance": "LIDS家族使用FAAD C2"
+          },
+          "units": "任务类型；C2功能",
+          "confidence": "高"
+        },
+        {
+          "system": "Saab Giraffe 1X",
+          "status": "现役/出口与北约国家采购中；C-UAS/VSHORAD补盲传感器",
+          "configuration_batch": "Giraffe 1X 3D多功能雷达",
+          "key_parameters": {
+            "system_weight": "<150 kg",
+            "topside_weight": "100 kg",
+            "small_uav_detection": "厂商称可在4 km探测小于牛奶盒重量的UAV",
+            "integration": "可集成到机动或固定安装"
+          },
+          "units": "kg；km",
+          "confidence": "高；复杂地形有效距离需实测"
+        },
+        {
+          "system": "Robin Radar IRIS",
+          "status": "商用/军警与机场类C-UAS应用，2025年推出长距模式",
+          "configuration_batch": "IRIS标准模式；IRIS Long-Range Mode",
+          "key_parameters": {
+            "azimuth_coverage": "360度",
+            "elevation_coverage": "60度",
+            "instrumented_range_standard": "5 km",
+            "coverage_area_standard": "78 km²",
+            "instrumented_range_long_range_mode": "12 km"
+          },
+          "units": "度；km；km²",
+          "confidence": "高；性能为厂商标称"
+        },
+        {
+          "system": "Hensoldt SPEXER 2000 Coastal / SPEXER短程雷达族",
+          "status": "现役雷达族；SPEXER 2000 3D MkIII另见乌克兰相关采购报道",
+          "configuration_batch": "SPEXER 2000 Coastal公开参数；不等同于所有MkIII批次",
+          "key_parameters": {
+            "uav_rcs_reference": "0.2 m² RCS",
+            "uav_detection_range": "9 km"
+          },
+          "units": "m² RCS；km",
+          "confidence": "中；型号批次存在差异，MkIII参数需单独核验"
+        },
+        {
+          "system": "Rheinmetall Skyranger 30",
+          "status": "在采购/验证与系列化交付阶段，属炮基SHORAD/C-UAS方向",
+          "configuration_batch": "Skyranger 30炮塔/系统",
+          "key_parameters": {
+            "search_radar": "3D AESA，S-band或X-band配置",
+            "gun": "30 mm×173",
+            "rate_of_fire": "1200 rounds/min",
+            "functions": "自动目标探测、捕获与跟踪"
+          },
+          "units": "mm；发/分；雷达波段",
+          "confidence": "中高；不同国家底盘和传感器配置可能不同"
+        },
+        {
+          "system": "DroneShield DroneSentry-C2 / Sentrycs Cyber over RF类系统",
+          "status": "现役商用/政府客户；软件快速迭代",
+          "configuration_batch": "DroneSentry-C2；Sentrycs V6.0",
+          "key_parameters": {
+            "sensor_fusion": "RF、雷达、光学及第三方系统融合",
+            "protocol_analytics": "从无人机与操作者通信协议层提取识别信息",
+            "limitation": "对无RF发射、自主航线或光纤控制目标能力受限"
+          },
+          "units": "传感器类型；协议/数据层",
+          "confidence": "中；厂商能力公开但缺少统一第三方性能测试"
+        }
+      ]
+    },
+    "development_models": [
+      {
+        "model_or_program": "Low-Altitude Passive Detection System, Army SBIR/STTR",
+        "type": "低成本、低SWaP、模块化、被动探测传感器",
+        "upgrade_need_addressed": "补足现有系统对低空、多速度sUAS的预警不足，缓解地形、地球曲率、障碍物和大型固定系统限制",
+        "maturity": "早期研发/小企业创新课题，估计TRL 3-5",
+        "confidence": "高"
+      },
+      {
+        "model_or_program": "Coyote Block 3NK",
+        "type": "非动能、可徘徊/可召回反无人机拦截器",
+        "upgrade_need_addressed": "降低附带损害并提升对蜂群/多目标反复交战能力",
+        "maturity": "厂商公开称已演示并属Coyote家族；估计TRL 6-8",
+        "confidence": "中高"
+      },
+      {
+        "model_or_program": "DE M-SHORAD / IFPC-HEL / IFPC-HPM",
+        "type": "定向能/高功率微波",
+        "upgrade_need_addressed": "降低单次交战成本、提高弹药深度、应对饱和无人机",
+        "maturity": "测试/开发阶段；公开资料显示仍有延期、用户评价和规模化成本不确定性，估计TRL 5-7",
+        "confidence": "中"
+      },
+      {
+        "model_or_program": "BLADE / 30 mm炮基近程反无人机",
+        "type": "车载炮基低空无人机拦截",
+        "upgrade_need_addressed": "为机动部队提供近程快速反应和相对低成本硬杀伤层",
+        "maturity": "演示/试验与训练验证，估计TRL 6-7",
+        "confidence": "中"
+      },
+      {
+        "model_or_program": "下一代C-UAS导弹与通用发射器",
+        "type": "低成本/新一代动能拦截器和发射架通用化",
+        "upgrade_need_addressed": "降低Coyote等现有拦截器成本压力，提升库存与平台适配",
+        "maturity": "概念/工程研制公开信息有限，；{
+  "findings": [
+    "现役低空无人机探测预警体系的传统缺口不是单项传感器缺失，而是“低空小目标—复杂地形—高虚警环境—短处置窗口”共同造成的体系性不连续：山体、建筑、树木、港区设施、风机、水面和电磁噪声会同时压缩雷达视距、RF截获、EO/IR确认和声学验证的有效范围。证据链：E3、E4、E5、E6、E14。",
+    "公开战例显示，低成本无人机和诱饵的主要作战效应常在于持续消耗和态势过载，而非单架平台高成功率。俄乌Shahed/FPV、纳卡无人机打击、红海反无人机作战均支持“分层防御有效但成本、库存和值班压力显著上升”的判断。证据链：E8、E9、E10、E11、E13、E16。",
+    "传统固定式、中心化低空预警体系在复杂地形中的主要缺口包括：低空盲区不可视、单传感器误警/漏警、RF依赖对静默或半自主目标脆弱、C2确认链过长、基层单位缺少有机补盲和近程告警能力、战损后覆盖重构慢。证据链：E2、E4、E5、E7、E10、E12、E14。",
+    "升级需求应从“采购更强单一雷达”转为“地形感知的分布式多模态预警体系”：固定与机动雷达、被动RF/频谱监测、EO/IR验证、声学/人工观测、边缘AI融合、低带宽降级运行、共同作战图、低成本处置和被动防护共同形成决策级置信度。证据链：E1、E2、E3、E4、E6、E7、E12、E14。",
+    "作战运用上，复杂地形防御的关键不是在末端才“看见并打掉”，而是在危机前建立常态低空/RF/民用活动基线，在初始弱告警时完成多源关联，并在网络或上级C2降级时保持本地分级告警能力。证据链：E1、E3、E4、E6、E7、E12。",
+    "反证与修正：电子战、传统雷达和传统防空并未失效；乌克兰的声学网、机动防空、电子战和共同作战图，以及红海分层防御经验，都显示传统能力经体系化整合后仍有显著价值。问题在于单一、固定、中心化和高成本模式难以长期承受复杂地形、饱和、诱饵和快速迭代。证据链：E8、E10、E11、E13、E16。",
+    "对装备功能的优先要求应转化为可测指标：三维地形覆盖率、关键低空通道首警时间、多传感器关联延迟、虚警/漏警率、RF静默目标发现概率、网络降级下本地态势保持、机动补盲部署时间、战损后最低覆盖恢复时间、单位目标处置成本。"
+  ],
+  "confidence": 0.84,
+  "open_questions": [
+    "不同型号现役雷达、RF、EO/IR、声学节点在山谷、城市峡谷、港区水面、高原低温和强电磁背景中的实测Pd、FAR、首警时间和连续跟踪能力仍需本级试验数据确认。",
+    "公开资料可证明低空无人机威胁趋势和体系缺口，但无法充分量化特定国家、特定部队和特定装备编成的真实覆盖盲区、库存消耗率和操作员疲劳阈值。",
+    "RF静默、光纤控制、视觉/惯导辅助、蜂窝/卫星/中继链路和AI导航的扩散速度存在不确定性；短期仍受成本、重量、算力和训练约束，中期可能显著削弱RF依赖型防御。",
+    "民用空域、隐私、频谱许可、机场运行、误伤风险和执法授权在本土/城市场景中可能比战区环境更强地约束探测和处置方式，需要单独形成规则矩阵。",
+    "上游缺少weapon_equipment与international_situation正式交接，因此本文对具体装备性能和政治/法律约束只作公开资料层面的通用化判断。"
+  ],
+  "handoff_summary": "本交接面向winning_mechanism：复杂地形下低空无人机探测预警的传统能力缺口，本质是低空物理视距、单传感器不可靠、集中式C2延迟、成本交换不利和持续保障脆弱共同造成的体系失配。公开战例支持三条可迁移经验：一是分层、多模态、机动和被动防护结合优于单点高端装备；二是C2必须从中心化确认转向共同作战图、边缘融合和降级运行；三是装备升级必须服务于可持续作战，包括低成本处置、快速软件/特征库更新、机动补盲和战损恢复。建议下游以“时间窗口、成本交换、覆盖韧性、快速迭代和跨域协同”作为胜利机制建模变量。",
+  "search_plan": [
+    {
+      "track": "公开战例与复盘",
+      "queries": [
+        "Nagorno Karabakh 2020 drones air defense lessons CSIS full spectrum air defense mobile SHORAD passive defenses",
+        "Red Sea counter UAS drones Houthi lessons layered defense cost exchange CNAS 2025 PDF",
+        "CSIS Drone Saturation Russia's Shahed Campaign acoustic sensors common operating picture electronic warfare 2025",
+        "Ukraine drone warfare electronic warfare C-UAS lessons 2025 report"
+      ]
+    },
+    {
+      "track": "联合和多域作战概念",
+      "queries": [
+        "DoD Strategy for Countering Unmanned Systems 2024 detection active passive defense PDF",
+        "Joint Counter Small UAS Office counter drone swarm demonstration 2024 layered system of systems",
+        "NATO uncrewed warfare report 2025 counter drone lessons Ukraine electronic warfare resilience",
+        "Small Unmanned Aircraft System Airspace Management and Control Handbook Army Leaders 2025 air ground littoral"
+      ]
+    },
+    {
+      "track": "有人无人协同",
+      "queries": [
+        "manned unmanned teaming counter UAS air defense sensor fusion command control 2025 Army",
+        "small unmanned aircraft system airspace management and control handbook Army leaders 2025 manned unmanned fired systems",
+        "UAS airspace management dynamic airspace planning manned unmanned fired systems air ground littoral 2025 handbook",
+        "Ukraine AI enabled autonomous warfare CSIS FPV drones electronic warfare human oversight 2025"
+      ]
+    },
+    {
+      "track": "指挥控制与保障韧性",
+      "queries": [
+        "counter UAS command and control resilience edge processing network degraded operations report 2024",
+        "Department of Defense Counter UAS Background and Issues for Congress FAADC2 MEDUSA command and control 2025 PDF",
+        "Army Project Flytrap counter drone command and control architecture 2025",
+        "FAA UAS Detection Technical Considerations radar RF EO acoustic false alarms site specific spectrum licensing PDF"
+      ]
+    },
+    {
+      "track": "持续作战和战损恢复",
+      "queries": [
+        "Innovating Under Fire Ukraine frontline drone workshops maintenance repair lessons 2025",
+        "Russia Ukraine FPV drones lightweight counter UAV electronic warfare company level lessons 2025 Army University Press",
+        "Mapping the MilTech War eight lessons Ukraine battlefield drone electronic warfare 2026 Ifri",
+        "NATO Innovation Range counter drone technology testing Latvia 2026 TEVV electronic warfare solutions"
+      ]
+    }
+  ],
+  "contradictions": [
+    "反证1：低成本无人机并非天然高成功率。CSIS前线访谈显示多数低成本FPV任务成功率很低，电子战、操作员技能、天气和复杂目标运动都会降低效果；但低成本、大量和快速迭代仍足以形成消耗与过载。因此不能把威胁建模为“每架必中”，应建模为“持续试探和少量突防仍有作战价值”。证据链：E12、E13。",
+    "反证2：电子战既是有效反无人机手段，也是脆弱依赖。俄乌资料显示EW可大量干扰FPV和GNSS/控制链，但光纤无人机、视觉/惯导、频率捷变和替代链路正在削弱单纯RF压制的可靠性。因此EW应作为分层体系一环，而非唯一防线。证据链：E12、E13、E16。",
+    "反证3：传统雷达仍不可替代。雷达能全天候发现物理目标，特别是RF静默或预编程目标；但FAA和RAND均指出低空、山体遮蔽、地物反射、小RCS、低速/悬停和虚警会显著影响效果。因此结论不是“雷达失效”，而是“雷达必要但不充分”。证据链：E3、E5、E14。",
+    "反证4：复杂地形并非只帮助攻击方。山地、城市和植被既遮蔽蓝方传感器，也会缩短敌方无人机通信视距、增加导航误差、降低续航可靠性。若蓝方提前完成三维视域、RF传播和机动补盲规划，可把部分地形转化为防御优势。证据链：E3、E5、E12。",
+    "反证5：分布式体系提升韧性但增加管理复杂度。多传感器、多节点和边缘C2可降低单点失效，但会带来时间同步、目标去重、频谱冲突、蓝军无人机去冲突、数据标准和训练负担。因此升级必须同步解决接口、规则和保障，而不是只增加节点数量。证据链：E2、E6、E7、E15。"
+  ],
+  "confidence_basis": "证据覆盖政府/军方公开文件、FAA民航技术资料、国会研究服务、NATO/盟国材料、智库报告、军种专业刊物和学术/研究机构报告，来源族群超过3类，且包含2024、2025、2026年的新近资料。关于低空雷达限制、传感器互补、C2集成、分层防御和成本交换的证据直接性较高；关于俄乌、纳卡和红海战例的资料可相互印证无人机饱和、电子战、机动防空和快速迭代趋势。主要不确定性在于特定装备性能、特定地域覆盖率、真实库存消耗、敌方最新链路/自主能力和本土法律授权通常不公开，因此结论以结构化能力缺口和升级需求表达，不给出可执行攻击指令或特定目标方案。",
+  "source_claims": [
+    {
+      "url": "https://www.defense.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/",
+      "claim": "[E1] DoD 2024年反无人系统战略发布说明强调，无人系统威胁紧迫且持久，相关工作建立在JCO、Warfighter Senior Integration Group和Replicator 2等跨部门/跨军种举措之上。"
+    },
+    {
+      "url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+      "claim": "[E2] DoD战略事实清单提出提升探测、跟踪、表征能力，改进主动/被动防御，简化和下放必要授权，采用开放、模块化、快速测试和规模化方案，并降低无人系统与反制措施之间的成本失衡。"
+    },
+    {
+      "url": "https://www.faa.gov/sites/faa.gov/files/uas/resources/policy_library/Attachment-3-UAS-Detection-Technical-Considerations.pdf",
+      "claim": "[E3] FAA UAS探测技术考虑文件指出，雷达、RF、EO/IR等探测技术受场地许可、背景杂波、虚警、特征库更新、EO/IR视场和验证能力等因素影响，EO/IR通常更适合作为验证/辅助传感器。"
+    },
+    {
+      "url": "https://www.faa.gov/airports/new_entrants/uas_detection_mitigation_response",
+      "claim": "[E4] FAA机场UAS探测页面说明，雷达、RF、EO和声学可单独或组合用于主探测和二次验证，部署还需考虑机场运行、法律授权、频谱和安全影响。"
+    },
+    {
+      "url": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_5.html",
+      "claim": "[E5] FAA AIM雷达章节指出，雷达波会被山体、地面障碍物、降水等反射/衰减或被高地屏蔽；低空目标可能因山体遮蔽或低于雷达波束/地球曲率而不可见，小反射面目标也更难由一次雷达发现。"
+    },
+    {
+      "url": "https://www.army.mil/article-amp/278404/joint_counter_small_uas_office_conducts_successful_counter_drone_swarm_demonstration",
+      "claim": "[E6] 美陆军JCO 2024年蜂群反制演示每轮发射40多个UAS目标，测试9套C-UAS系统；公开结论是单一能力难以应对多方向、多速度、多尺寸的大规模目标剖面，需要系统-of-systems和分层方法。"
+    },
+    {
+      "url": "https://www.army.mil/article-amp/288375/small_unmanned_aircraft_system_airspace_management_and_control",
+      "claim": "[E7] 美陆军CALL 2025年小型UAS空域管理手册说明，现代战场需要整合有人、无人和火力系统，实施动态空域规划并主导air-ground littoral。"
+    },
+    {
+      "url": "https://www.congress.gov/crs_external_products/R/PDF/R48477/R48477.2.pdf",
+      "claim": "[E8] CRS《Department of Defense Counter-UAS》报告说明，现有美军C-UAS任务指挥系统包括FAADC2、MEDUSA和ADSI等，2025年陆军/DIU关注替代或改进C2以适应机动C-UAS，且高端拦截器成本可显著高于低成本无人机。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/air-and-missile-war-nagorno-karabakh-lessons-future-strike-and-defense",
+      "claim": "[E9] CSIS纳卡研究认为，2020年纳卡空中战的主要教训是全谱系防空重要性；有限的SHORAD和不足的被动防护使地面重装备易受无人机与巡飞弹威胁。"
+    },
+    {
+      "url": "https://www.cnas.org/publications/reports/countering-the-swarm",
+      "claim": "[E10] CNAS红海反无人机研究显示，分层、多域防御可取得战术成功，但面对大量低成本无人机时，成本交换、交战节奏、库存和舰艇/空中力量持续值班会形成严重压力。"
+    },
+    {
+      "url": "https://www.nato-pa.int/document/2025-uncrewed-warfare-report-clement-023-stctts",
+      "claim": "[E11] NATO PA 2025年无人作战报告强调，乌克兰等冲突中的无人系统战术会被盟友和对手模仿，并建议发展定向能等低成本反无人技术以应对拦截成本不对称。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare",
+      "claim": "[E12] CSIS 2025年乌克兰AI自主作战研究基于访谈指出，低成本FPV任务成功率受电子战、天气、操作员和通信限制显著影响；AI导航、ATR和本地处理可提高效率，但现代无人系统尚未实现端到端全自主，仍需人类监督。"
+    },
+    {
+      "url": "https://csis-website-prod.s3.amazonaws.com/s3fs-public/2025-05/250501_Slusher_Ukraine_Conflict.pdf?VersionId=01UUwSkCxsWGAU5vOtwYQHmtq3F1.XKM",
+      "claim": "[E13] CSIS乌克兰冲突经验报告认为，乌克兰战争凸显自主系统、电子战、信息整合、受扰物流和防空演变；GPS干扰、通信干扰、频率捷变、卫星通信、网状网络和电子战韧性成为关键变量。"
+    },
+    {
+      "url": "https://www.rand.org/content/dam/rand/pubs/research_reports/RR3000/RR3023/RAND_RR3023.pdf",
+      "claim": "[E14] RAND关于小型UAS对抗能力的研究指出，sUAS因小尺寸、低速和环境背景导致探测、分类、识别、跟踪困难，通常需要多传感器协同；虚警会使操作员脱敏，雷达RCS随角度变化，EO/IR视场小，ELINT/RF易受自动化或静默目标规避。"
+    },
+    {
+      "url": "https://defensescoop.com/2025/07/09/army-counter-drone-command-and-control-project-flytrap-exercise/",
+      "claim": "[E15] Project Flytrap公开报道显示，美陆军C5ISR中心在欧洲测试反无人机C2架构，目标是把传感器数据从单兵到联合伙伴贯通，通过ATAK等终端共享，降低士兵认知负荷并把固定系统转向可机动运用。"
+    },
+    {
+      "url": "https://www.armyupress.army.mil/Portals/7/military-review/Archives/English/so25/Lessons-from-Ukraine/Lessons-from-Ukraine-ua.pdf",
+      "claim": "[E16] Army University Press 2025年俄军乌克兰经验文章指出，FPV无人机和轻量化C-UAV EW快速扩散；双方大量FPV受RF/GNSS干扰影响，同时光纤、车载/便携干扰器、探测器和基层C-UAV装备推动攻防快速迭代。"
+    },
+    {
+      "url": "https://mwi.westpoint.edu/innovating-under-fire-lessons-from-ukraines-frontline-drone-workshops/",
+      "claim": "[E17] Modern War Institute对乌克兰前线无人机维修/创新工作坊的研究显示，前沿维修、3D打印、软件更新、快速改频、移动维修车和操作者—工程师反馈闭环可将修复与适配周期压缩到小时级，从而支撑持续作战。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/drone-saturation-russias-shahed-campaign",
+      "claim": "[E18] CSIS关于俄罗斯Shahed饱和战役的研究指出，自2024年9月后Shahed发射量显著上升；乌克兰通过声学传感器、综合防空网络、机动防空和电子战等低成本组合来维持防御，但饱和压力仍然增加。"
+    },
+    {
+      "url": "https://www.nato.int/en/news-and-events/articles/news/2026/03/18/new-nato-innovation-range-starts-counter-drone-technology-testing-in-latvia",
+      "claim": "[E19] NATO 2026年拉脱维亚创新靶场信息显示，盟国和乌克兰用户正在通过TEVV活动测试UAS/C-UAS、拦截飞行和电子战方案，体现快速试验、验证和采纳的制度化趋势。"
+    }
+  ],
+  "analysis_sections": {
+    "operational_constraints": {
+      "mission_definition": "防御方任务是在复杂地形和民用空域约束下，对低慢小无人机形成早期发现、连续跟踪、身份判别、威胁评估、分级告警和安全处置支撑；本分析仅用于防御性能力评估，不提供攻击路径、目标选择或可执行伤害指令。",
+      "terrain_environment_constraints": [
+        {
+          "constraint": "山地/丘陵遮蔽",
+          "effect": "山体与地形起伏造成雷达、EO/IR、RF和通信链路视距中断，低空目标可能在关键通道外才被发现，首警时间被压缩。",
+          "evidence_links": [
+            "E5",
+            "E14"
+          ],
+          "operational_implication": "必须预先进行三维视域和RF传播建模，重点标注山谷、背坡、低空通道和传感器盲扇区。"
+        },
+        {
+          "constraint": "城市峡谷和设施密集区",
+          "effect": "高层建筑、钢结构、车辆、鸟群、风机和电磁反射造成多径、遮挡、杂波和虚警；EO/IR可能被热背景和遮挡牵引。",
+          "evidence_links": [
+            "E3",
+            "E4",
+            "E14"
+          ],
+          "operational_implication": "单传感器告警不应直接等同威胁，应采用时间同步、多源关联和白名单/合法流量去冲突。"
+        },
+        {
+          "constraint": "海岸/港区/水面背景",
+          "effect": "水面反射、船舶/港机热源、海风噪声和港区RF环境会影响雷达、声学、EO/IR与RF识别置信度。",
+          "evidence_links": [
+            "E3",
+            "E10",
+            "E14"
+          ],
+          "operational_implication": "港区应采用固定高点、机动补盲、被动传感和人工/哨兵报告结合，避免单一雷达阈值造成大量虚警。"
+        },
+        {
+          "constraint": "天气、夜间和季节变化",
+          "effect": "雨雾雪、低云、热背景变化和风噪影响EO/IR、声学和高频雷达表现；同一部署方案在不同季节的Pd/FAR会变化。",
+          "evidence_links": [
+            "E3",
+            "E12",
+            "E14"
+          ],
+          "operational_implication": "部署原则应包含季节性校准、传感器权重动态调整、夜间/恶劣天气补盲预案。"
+        },
+        {
+          "constraint": "电磁频谱拥挤与受扰",
+          "effect": "RF探测和干扰受民用通信、己方无人机、敌方跳频/静默/替代链路、GNSS干扰和频谱许可限制影响。",
+          "evidence_links": [
+            "E2",
+            "E3",
+            "E12",
+            "E13",
+            "E16"
+          ],
+          "operational_implication": "RF不能作为唯一首警源；干扰措施必须与民用通信、己方C2、友军无人机和空域安全去冲突。"
+        },
+        {
+          "constraint": "法律、民航和授权",
+          "effect": "本土、机场、城市和关键基础设施场景中，探测与处置系统部署涉及频谱许可、EMI、安全风险、隐私和执法授权。",
+          "evidence_links": [
+            "E3",
+            "E4"
+          ],
+          "operational_implication": "体系设计必须预置规则矩阵：谁可看、谁可判、谁可告警、谁可授权、何时可转入处置。"
+        },
+        {
+          "constraint": "持续作战和补给",
+          "effect": "大量低成本目标可通过诱饵、重复试探和饱和压迫消耗人员、传感器维护、弹药/拦截器和C2带宽。",
+          "evidence_links": [
+            "E8",
+            "E10",
+            "E11",
+            "E18"
+          ],
+          "operational_implication": "预警体系指标必须纳入成本交换、库存、备件、电源、网络和操作员轮换，而非只看单次拦截率。"
+        }
+      ],
+      "traditional_gap_to_upgrade_mapping": [
+        {
+          "traditional_gap": "固定雷达低空盲区",
+          "upgrade_need": "地形感知部署、机动补盲雷达、被动传感节点、临时升高平台、覆盖热力图。",
+          "metrics": [
+            "关键低空通道覆盖率",
+            "首警距离/时间",
+            "盲区重构时间"
+          ],
+          "evidence_links": [
+            "E5",
+            "E14"
+          ]
+        },
+        {
+          "traditional_gap": "单传感器误警/漏警",
+          "upgrade_need": "雷达+RF+EO/IR+声学+人工观测的多模态融合，目标去重和置信评分。",
+          "metrics": [
+            "融合后FAR",
+            "多源关联延迟",
+            "目标分类置信度"
+          ],
+          "evidence_links": [
+            "E3",
+            "E4",
+            "E6",
+            "E14"
+          ]
+        },
+        {
+          "traditional_gap": "RF依赖",
+          "upgrade_need": "可发现RF静默/预编程/半自主目标的雷达、EO/IR、声学和行为异常检测；RF仅作为被动首警和识别维度之一。",
+          "metrics": [
+            "RF静默目标发现概率",
+            "RF与非RF告警一致率",
+            "干扰后态势保持时间"
+          ],
+          "evidence_links": [
+            "E12",
+            "E13",
+            "E14",
+            "E16"
+          ]
+        },
+        {
+          "traditional_gap": "中心化C2延迟",
+          "upgrade_need": "共同作战图、边缘融合、分级授权、低带宽告警、断链本地处置支持。",
+          "metrics": [
+            "传感器到告警时间",
+            "告警到授权时间",
+            "网络降级下本地空情保持率"
+          ],
+          "evidence_links": [
+            "E2",
+            "E7",
+            "E8",
+            "E15"
+          ]
+        },
+        {
+          "traditional_gap": "高成本末端处置",
+          "upgrade_need": "低成本拦截、电子/非动能、被动防护、诱饵和任务影响评估结合，高端拦截器保留给高危目标。",
+          "metrics": [
+            "单位威胁处置成本",
+            "高端拦截器消耗率",
+            "关键资产任务中断时间"
+          ],
+          "evidence_links": [
+            "E2",
+            "E8",
+            "E10",
+            "E11",
+            "E18"
+          ]
+        },
+        {
+          "traditional_gap": "战损恢复慢",
+          "upgrade_need": "模块化节点、预案化机动补位、备用电源、离线地图、可快速更新特征库、前沿维修和备件包。",
+          "metrics": [
+            "最低覆盖恢复时间",
+            "节点替换时间",
+            "软件/特征库更新周期"
+          ],
+          "evidence_links": [
+            "E17",
+            "E19"
+          ]
+        }
+      ],
+      "measures_of_effectiveness": [
+        "首警时间是否足以完成识别、授权和安全处置。",
+        "复杂地形关键通道是否存在可被反复利用的稳定盲区。",
+        "融合后虚警是否低到操作员可持续处理。",
+        "网络降级和部分节点损伤后是否仍能保持本地分级告警。",
+        "每轮威胁处置成本是否低于可持续阈值。",
+        "敌方改变频段、时段、平台和诱饵比例后，体系是否可快速更新。"
+      ]
+    },
+    "force_coordination": {
+      "coordination_concept": "采用“区域低空态势单元+机动补盲分队+基层有机观察/处置单元+上级联合空情/C2+民航/公安/频谱联络”的分层协同。核心是把传感器、指挥、效应器、被动防护和保障纳入同一任务链，而不是让各装备孤立值守。",
+      "force_package": [
+        {
+          "element": "固定低空监视与既有防空预警节点",
+          "role": "提供连续背景空情、较远距离首警和与上级防空网络衔接。",
+          "limits": "低空盲区、地形遮蔽、小RCS和地物杂波显著影响可靠性。",
+          "evidence_links": [
+            "E5",
+            "E14"
+          ]
+        },
+        {
+          "element": "机动补盲雷达/便携传感节点",
+          "role": "在山谷、城市边缘、港区和战损空隙中快速补位，缩短低空关键通道发现距离缺口。",
+          "limits": "需要预设点位、电源、网络、频谱许可和安全防护；点位暴露后自身可能成为高价值节点。",
+          "evidence_links": [
+            "E6",
+            "E15"
+          ]
+        },
+        {
+          "element": "被动RF/频谱监测",
+          "role": "发现控制链、视频链、遥测和异常频谱活动，辅助定位操作者或链路方向，适合低可见度和低成本持续值守。",
+          "limits": "对RF静默、预编程、光纤、蜂窝/卫星/中继或强加密跳频目标适应不足。",
+          "evidence_links": [
+            "E3",
+            "E12",
+            "E14",
+            "E16"
+          ]
+        },
+        {
+          "element": "EO/IR与热像验证",
+          "role": "对雷达/RF/声学告警进行可视化确认、分类和证据留存。",
+          "limits": "视场较窄，受遮挡、天气、夜间热背景、诱饵和假目标影响；通常需由其他传感器cueing。",
+          "evidence_links": [
+            "E3",
+            "E14"
+          ]
+        },
+        {
+          "element": "声学/人工观测/群众或哨兵报告",
+          "role": "在低空慢速、夜间、雷达盲区和大型一向攻击无人机场景中提供低成本补充首警。",
+          "limits": "受环境噪声、风雨、车辆、港机和误报影响；必须与其他传感器关联后使用。",
+          "evidence_links": [
+            "E4",
+            "E18"
+          ]
+        },
+        {
+          "element": "C2与共同作战图",
+          "role": "整合多源告警、目标去重、威胁排序、授权流转、效应器分配和跨单位通报。",
+          "limits": "若高度中心化或接口不统一，会在饱和窗口中形成延迟和重复交战。",
+          "evidence_links": [
+            "E7",
+            "E8",
+            "E15"
+          ]
+        },
+        {
+          "element": "低成本处置与被动防护",
+          "role": "在合法授权下采用低成本、分层、按威胁优先级的防御措施，并通过分散、伪装、遮蔽、诱饵和关键功能冗余降低突防后果。",
+          "limits": "处置手段受民用环境、误伤、频谱和规则约束；必须避免把高端弹药消耗在低价值诱饵上。",
+          "evidence_links": [
+            "E2",
+            "E9",
+            "E10",
+            "E11"
+          ]
+        },
+        {
+          "element": "保障与快速适配单元",
+          "role": "负责传感器校准、软件/特征库更新、备件、电池、电源、网络、前沿维修和经验回灌。",
+          "limits": "若保障集中且距离前沿过远，难以跟上无人机技术和战术迭代速度。",
+          "evidence_links": [
+            "E17",
+            "E19"
+          ]
+        }
+      ],
+      "coordination_interfaces": [
+        {
+          "interface": "传感器到C2",
+          "requirements": [
+            "统一时间戳和坐标基准",
+            "目标ID去重",
+            "置信度评分",
+            "低带宽告警格式",
+            "原始数据留存以便复盘"
+          ],
+          "failure_if_missing": "多源重复目标、误关联、告警风暴和人工确认队列积压。",
+          "evidence_links": [
+            "E8",
+            "E15"
+          ]
+        },
+        {
+          "interface": "C2到基层单位",
+          "requirements": [
+            "分级告警",
+            "本地可执行防护动作清单",
+            "断链时的本地授权边界",
+            "友军无人机/有人机空域去冲突"
+          ],
+          "failure_if_missing": "上级确认延迟超过末端处置窗口，基层只能被动承受或过度反应。",
+          "evidence_links": [
+            "E2",
+            "E7"
+          ]
+        },
+        {
+          "interface": "军方到民航/公安/频谱/设施业主",
+          "requirements": [
+            "合法无人机白名单",
+            "Remote ID/许可信息校验",
+            "频谱使用和干扰限制",
+            "机场/城市安全通报机制",
+            "误报澄清流程"
+          ],
+          "failure_if_missing": "民用流量与敌对活动混杂，导致虚警上升、授权迟滞或违法干扰。",
+          "evidence_links": [
+            "E3",
+            "E4"
+          ]
+        },
+        {
+          "interface": "传感器到效应器",
+          "requirements": [
+            "按威胁等级分配低成本与高端处置资源",
+            "避免重复交战",
+            "确保民用安全扇区",
+            "记录交战与未交战原因"
+          ],
+          "failure_if_missing": "高端资源被诱饵消耗，真实高危目标获得窗口。",
+          "evidence_links": [
+            "E6",
+            "E8",
+            "E10"
+          ]
+        },
+        {
+          "interface": "有人—无人—火力系统空域管理",
+          "requirements": [
+            "动态空域控制",
+            "己方UAS任务计划共享",
+            "禁飞/限飞临时区域",
+            "安全高度层和时间窗",
+            "任务变更快速通报"
+          ],
+          "failure_if_missing": "友军无人机、有人航空器、防空火力和干扰措施相互冲突。",
+          "evidence_links": [
+            "E7"
+          ]
+        }
+      ],
+      "battle_rhythm": [
+        "常态：更新低空活动、RF背景、民用无人机、鸟群/车辆/港机/风机等基线；每班复核传感器健康和覆盖热力图。",
+        "预警：出现重复弱告警或异常RF/目视报告时，机动补盲节点前出，EO/IR和声学权重上调，设施被动防护升级。",
+        "接触：按多源置信度而非单点告警触发分级响应，优先保护关键通道和高价值节点。",
+        "饱和：C2转入目标优先级管理，边缘节点保留本地告警和安全处置建议，上级保留资源统筹和跨区协调。",
+        "复盘：每次事件后更新虚警样本、漏警路径、干扰影响、授权延迟、处置成本和补给消耗。"
+      ],
+      "degraded_mode": [
+        "网络降级时保留本地传感器融合、短报文告警和离线地图。",
+        "上级C2不可用时按预先批准的分级规则执行告警、疏散、遮蔽、停飞、设备关停/分散等防护动作。",
+        "固定节点损伤时启动机动补盲网格，优先恢复关键通道、指挥节点、弹药/燃料/电力/通信设施周边最低覆盖。",
+        "RF环境恶化时降低对RF首警权重，提高雷达、EO/IR、声学、人工观测和行为异常关联权重。",
+        "虚警过载时使用地理围栏、白名单、时间窗和多源阈值动态调节，避免操作员脱敏。"
+      ],
+      "support_requirements": [
+        "三维地形/建筑/植被/水面数据库和视域分析工具。",
+        "传感器点位预案、备用三脚架/桅杆、便携电源、加固网络和频谱授权包。",
+        "多传感器数据标准、时间同步、目标ID规则和C2接口。",
+        "操作员轮换、跨部门联络员、低空空域管制脚本和民用流量去冲突清单。",
+        "备件、电池、软件更新、特征库、校准工具和前沿维修能力。",
+        "战损后恢复演练和红队式盲区复核。"
+      ]
+    },
+    "coa": [
+      {
+        "name": "COA-1 基线方案：固定节点为主、中心化确认、有限机动补盲",
+        "concept": "沿用现役固定低空监视雷达、少量RF和EO/IR验证节点，由上级空情/C2集中确认并向基层发布告警；机动补盲只在明确事件后临时展开。",
+        "suitable_conditions": [
+          "地形相对开阔、民用无人机活动低、威胁为低频单机/小批量。",
+          "有充分处置时间，且上级C2链路稳定。",
+          "主要任务是常态监视、证据留存和低强度警戒。"
+        ],
+        "strengths": [
+          "组织改动小，训练和维护成本低。",
+          "便于统一授权、统一空情和降低误处置风险。",
+          "适合预算短期不足或威胁等级较低阶段。"
+        ],
+        "risks": [
+          "复杂地形盲区难以及时补齐。",
+          "单传感器虚警/漏警导致等待人工确认，压缩处置窗口。",
+          "遇到多方向、多批次和诱饵时C2与操作员易过载。",
+          "战损后恢复依赖固定节点，覆盖重构慢。"
+        ],
+        "infeasible_boundaries": [
+          "山地—城市—港区复合地形中存在多个稳定低空通道。",
+          "威胁进入持续饱和或电磁压迫阶段。",
+          "要求基层在断链或分钟级窗口内自主告警和防护。",
+          "民用流量密集且白名单/去冲突数据不完整。"
+        ],
+        "equipment_constraints": [
+          "固定雷达受地形遮蔽和小RCS影响。",
+          "EO/IR需要其他传感器cueing。",
+          "RF对静默/半自主目标不足。",
+          "传统C2接口可能难以快速接入新型传感器。"
+        ],
+        "evidence_links": [
+          "E3",
+          "E4",
+          "E5",
+          "E8",
+          "E14"
+        ],
+        "minimum_upgrade_if_selected": [
+          "完成三维覆盖审计和盲区清单。",
+          "建立民用无人机白名单和RF/空情基线。",
+          "为关键盲区预置机动补盲点位和供电/网络包。",
+          "设定弱告警触发的分级响应流程。"
+        ]
+      },
+      {
+        "name": "COA-2 弹性分布方案：多模态分布式传感、边缘融合、机动补盲与低成本分层处置",
+        "concept": "以固定节点为骨干，在山地通道、城市边缘、港区和关键设施周边部署可机动、可重构的雷达/RF/EO/IR/声学节点；通过共同作战图和边缘AI融合形成分级置信度，并把低成本处置、被动防护和战损重构纳入同一防御循环。",
+        "suitable_conditions": [
+          "复杂地形、多方向低空威胁和持续试探并存。",
+          "需要在网络受扰、节点损伤和上级C2延迟时保持本地预警。",
+          "关键设施价值高，且可投入一定传感器、C2、训练和保障资源。",
+          "需要长期应对低成本无人机消耗战。"
+        ],
+        "strengths": [
+          "低空覆盖韧性高，单点失效不致形成稳定通道。",
+          "多传感器融合降低单点虚警/漏警。",
+          "机动补盲可把地形缺口转化为预案化防御。",
+          "边缘融合和分级授权缩短告警到行动时间。",
+          "低成本处置和被动防护改善成本交换。"
+        ],
+        "risks": [
+          "部署和训练复杂度高。",
+          "多源数据标准、目标去重、时间同步和网络安全要求高。",
+          "节点增多带来电源、频谱、维护和暴露风险。",
+          "若缺少规则矩阵，边缘授权可能造成误处置或空域冲突。"
+        ],
+        "infeasible_boundaries": [
+          "没有统一C2接口和最低数据标准。",
+          "无法获得频谱、场地、供电或民用协同授权。",
+          "训练和保障无法支撑24/7分布式值守。",
+          "预算只能维持单点装备采购而不能支撑系统集成与软件更新。"
+        ],
+        "equipment_constraints": [
+          "需要开放式接口、边缘计算、低带宽数据链和传感器健康监测。",
+          "节点必须可快速部署、校准和替换。",
+          "EO/IR、声学、RF权重需要随天气和电磁环境动态调整。",
+          "效应器必须按威胁等级与民用安全限制联动。"
+        ],
+        "evidence_links": [
+          "E1",
+          "E2",
+          "E6",
+          "E7",
+          "E8",
+          "E10",
+          "E15",
+          "E18",
+          "E19"
+        ],
+        "priority_actions": [
+          "建立区域低空三维数字底图和传感器覆盖热力图。",
+          "将固定雷达、机动雷达、RF、EO/IR、声学和人工报告接入共同作战图。",
+          "为山谷、城市峡谷、港区水面和关键设施设置传感器组合模板。",
+          "定义本地分级告警和断链授权边界。",
+          "把低成本处置、被动防护、维修和软件更新纳入日常战备。"
+        ]
+      },
+      {
+        "name": "COA-3 资源受限方案：关键点防护、低成本补盲、被动防护和人工/民用协同",
+        "concept": "在装备和预算不足时，不追求全域连续覆盖，而是围绕关键资产、关键通道和高风险时段建立低成本、可移动、可降级的预警网；以被动防护、分散、伪装、遮蔽、临时空域管控和低成本传感为主，高端处置只保留给高置信高危目标。",
+        "suitable_conditions": [
+          "预算、传感器数量、人员或频谱授权不足。",
+          "防护对象明确，关键通道和关键时段可识别。",
+          "威胁主要为试探、侦察、小规模袭扰或诱饵消耗。",
+          "可接受非关键区域存在短时低置信盲区。"
+        ],
+        "strengths": [
+          "部署快，成本低，适合基层先行形成最低预警能力。",
+          "通过被动防护降低突防后果，减少高端资源消耗。",
+          "人工、声学、RF和廉价EO可补充传统雷达盲区。",
+          "便于逐步扩展为弹性分布方案。"
+        ],
+        "risks": [
+          "覆盖不连续，难以应对多方向饱和。",
+          "人工报告和低成本传感器虚警较高。",
+          "缺少自动融合时，告警质量依赖训练和流程。",
+          "若敌方快速迭代或采用静默/半自主目标，RF和人工体系效果下降。"
+        ],
+        "infeasible_boundaries": [
+          "任务要求对大范围复杂地形提供连续、实时、高置信预警。",
+          "同时面对多批次、多轴、诱饵和电磁压迫。",
+          "关键资产无法分散、遮蔽或降低特征。",
+          "没有民用/设施业主协同，无法管控合法无人机背景。"
+        ],
+        "equipment_constraints": [
+          "低成本传感器需严格校准并限定适用场景。",
+          "人工报告必须配套身份核验、地理标注和误报复核。",
+          "被动防护措施需要提前工程化，不能等接触后临时实施。",
+          "低成本方案仍需最小C2和数据记录能力，否则难以复盘改进。"
+        ],
+        "evidence_links": [
+          "E3",
+          "E4",
+          "E9",
+          "E11",
+          "E14",
+          "E17",
+          "E18"
+        ],
+        "priority_actions": [
+          "按关键资产价值和无人机可达性划分防护优先级。",
+          "建立低空观察哨、声学/目视/RF简易告警点和事件上报模板。",
+          "预置遮蔽、分散、诱饵、灯光/热源/电磁特征管理措施。",
+          "把高端处置资源保留给高置信、高危、接近关键保护圈的目标。",
+          "用事件复盘逐步识别最值得升级为固定或机动传感节点的位置。"
+        ]
+      }
+    ],
+    "lessons": {
+      "public_case_lessons": [
+        {
+          "case": "纳卡2020",
+          "lesson": "传统SHORAD数量、质量和体系化不足时，地面重装备与固定防空节点易受无人机和巡飞弹压迫；全谱系防空、机动SHORAD和被动防护应前置到战术层级。",
+          "transfer_to_complex_terrain": "复杂地形下固定节点更容易形成可识别盲区，战术单位必须具备有机告警、分散和被动防护能力。",
+          "evidence_links": [
+            "E9"
+          ]
+        },
+        {
+          "case": "俄乌持续无人机战",
+          "lesson": "无人机、电子战、AI/自主、频率调整、光纤/替代链路和基层C-UAV装备形成快速迭代循环；固定采购周期难以跟上战场软件和战术变化。",
+          "transfer_to_complex_terrain": "预警体系应采用开放式架构、可更新特征库、前沿维修和操作员—工程师反馈闭环。",
+          "evidence_links": [
+            "E12",
+            "E13",
+            "E16",
+            "E17"
+          ]
+        },
+        {
+          "case": "俄罗斯Shahed饱和战役",
+          "lesson": "大量低成本一向攻击无人机可通过持续发射消耗防空资源；乌克兰以声学网、共同作战图、EW、机动防空和低成本手段减轻成本压力。",
+          "transfer_to_complex_terrain": "对复杂地形低空预警，应把声学/人工观测作为补盲层，但必须与共同作战图和传感器融合结合，避免误报泛滥。",
+          "evidence_links": [
+            "E18"
+          ]
+        },
+        {
+          "case": "红海反无人机作战",
+          "lesson": "分层、多域防御可以在高威胁环境中有效击落大量无人机，但成本交换、库存、节奏和人员/平台持续值班压力难以长期忽视。",
+          "transfer_to_complex_terrain": "陆上复杂地形防御也不能只追求单次拦截率，必须以低成本处置、弹药管理和被动防护控制长期消耗。",
+          "evidence_links": [
+            "E10"
+          ]
+        },
+        {
+          "case": "JCO蜂群反制演示",
+          "lesson": "面对多方向、多速度、多尺寸目标，没有单一传感器或效应器能解决全部问题；需要系统-of-systems、分层探测、威胁排序和C2融合。",
+          "transfer_to_complex_terrain": "复杂地形中的“多弱告警”场景更需要目标去重、优先级排序和自动cueing，否则人工值守会被虚警和重复目标淹没。",
+          "evidence_links": [
+            "E6"
+          ]
+        }
+      ],
+      "deployment_principles": [
+        {
+          "principle": "地形先于装备",
+          "description": "先做三维视域、RF传播、民用流量、气象和关键通道分析，再决定雷达、RF、EO/IR、声学和机动点位。",
+          "evidence_links": [
+            "E3",
+            "E5",
+            "E14"
+          ]
+        },
+        {
+          "principle": "多模态互补而非单传感器最优",
+          "description": "低分辨率广域传感用于首警，高分辨率窄视场传感用于确认；RF、雷达、EO/IR、声学和人工报告按环境动态加权。",
+          "evidence_links": [
+            "E3",
+            "E4",
+            "E14"
+          ]
+        },
+        {
+          "principle": "固定骨干+机动补盲+基层有机告警",
+          "description": "固定节点提供连续背景，机动节点填补地形/战损空隙，基层单元保留最低本地告警和防护能力。",
+          "evidence_links": [
+            "E6",
+            "E15",
+            "E17"
+          ]
+        },
+        {
+          "principle": "C2降级可运行",
+          "description": "共同作战图重要，但不能成为单点依赖；断链时仍需本地分级告警、离线地图和预授权防护动作。",
+          "evidence_links": [
+            "E2",
+            "E7",
+            "E8",
+            "E15"
+          ]
+        },
+        {
+          "principle": "低成本优先，高端保留",
+          "description": "对低价值、低置信或诱饵目标优先采用监视、遮蔽、驱离、电子/非动能和低成本措施，高端拦截用于高置信高危目标。",
+          "evidence_links
+- 能力画像：提升现有产品的复杂环境识别、抗干扰通信、跨平台协同、软件定义任务重构和持续保障功能；证据驱动重点：{
+  "findings": [
+    "传统能力缺口的核心不是“有没有雷达”，而是现役低空预警体系多按高空、快速、较大雷达截面积目标设计；在山地、城市、海岸等复杂地形中，小型低慢小无人机可被地形、建筑、植被、水面杂波和电磁噪声共同遮蔽，导致发现距离、识别置信度和可处置时间同步压缩。",
+    "公开战例显示，低成本无人机并非总能高成功率突防；但其数量、低成本、快速迭代和可消耗特征足以通过持续试探、诱饵、饱和和跨域协同消耗防空弹药、传感器值班能力和指挥决策带宽。",
+    "现役体系的传统缺口集中在六类：一是低空盲区和地形遮蔽；二是单传感器误警与漏警；三是RF依赖型探测/压制对静默、自主、跳频或替代链路目标适应不足；四是集中式C2在短处置窗口内延迟过大；五是末端防护成本交换不利；六是基层单位缺少有机化、可机动、可重构的探测预警与被动防护能力。",
+    "升级需求应从单点装备采购转为体系架构升级：地形建模与视域规划、分布式补盲雷达、被动RF/频谱监测、EO/IR与声学验证、边缘AI融合、低带宽降级运行、蓝白名单与民航/民用无人机去冲突、低成本拦截与被动欺骗共同构成“决策级置信度”。",
+    "复杂地形场景下，关键时间窗口不是拦截瞬间，而是从危机前异常模式建立到初始接触的数分钟至数十秒：若传感器只在目标临近防区后才给出低置信告警，后续识别、授权、处置和安全评估会被压缩到不可用。",
+    "反证与修正：电子战和传统防空并未失效，乌克兰、红海等案例显示分层防御、电子战、机动火力和共同作战图可显著降低无人机命中率；因此问题不是“传统能力完全无用”，而是其在复杂地形、饱和、低成本消耗和快速技术迭代下需要体系化补强。",
+    "面向下游装备与运用研究，应优先评估：复杂地形三维覆盖率、低空目标首警时间、虚警/漏警率、RF静默目标发现概率、网络降级下本地处置能力、低成本连续作战能力、以及不同地形下传感器—效应器—指挥授权链条的闭环时间。"
+  ],
+  "confidence": 0.82,
+  "open_questions": [
+    "不同现役雷达、被动RF、EO/IR和声学节点在山谷、城市峡谷、海岸水面和高原低温环境中的实测Pd/FAR、首警时间和连续跟踪能力仍需本级试验数据确认。",
+    "公开资料可证明无人机威胁趋势和能力缺口，但无法充分量化特定国家、特定部队、特定装备编制下的真实覆盖盲区和库存消耗速率。",
+    "AI自主、抗干扰链路、星链/蜂窝/中继式替代链路的发展速度存在不确定性；短期内受算力、重量、成本限制，但中期可能显著削弱RF依赖型防御。",
+    "复杂地形下低成本拦截器、定向能、电子战和被动防护之间的最佳成本交换组合，需要结合任务目标、授权规则和民用环境约束进一步建模。",
+    "国内/本土防御场景中，法律授权、民航安全、频谱管理和隐私限制可能比战区环境更强地约束探测与处置方式，需单独形成规则矩阵。"
+  ],
+  "handoff_summary": "本轮研究将“复杂地形条件下现役低空无人机探测预警体系的传统能力缺口”转化为一个多域、动态对抗场景：敌方以低慢小、低成本、可消耗无人机为核心，通过危机前试探、初始低空接触、体系饱和与电磁/网络压迫、持续迭代和战损后再渗透，压缩蓝方首警与处置窗口。蓝方传统缺口主要在低空盲区、单传感器不可靠、RF依赖、集中式C2延迟、基层缺少有机C-UAS能力和成本交换不利。建议下游weapon_equipment重点研究分布式多模态融合、地形感知部署、低成本拦截与边缘处理；operational_employment重点研究分层值班、降级网络、民用空域去冲突和基层有机防护；winning_mechanism重点研究以成本交换、时间窗口、体系韧性和快速迭代压制无人机威胁的机制。",
+  "search_plan": [
+    {
+      "track": "近年公开战例",
+      "queries": [
+        "Russia Ukraine war low altitude drones detection air defense lessons terrain urban 2024 report",
+        "Nagorno-Karabakh 2020 drones air defense lessons small UAV radar electronic warfare report",
+        "Houthi Red Sea drones air defense saturation lessons counter UAS low cost 2024 report",
+        "Drone Saturation Russia Shahed Campaign Ukraine air defense acoustic sensors electronic warfare"
+      ]
+    },
+    {
+      "track": "现代演训与作战概念",
+      "queries": [
+        "Joint Counter Small UAS Office counter drone swarm demonstration 2024 layered approach",
+        "DoD Strategy for Countering Unmanned Systems detection active passive defenses 2024",
+        "counter small unmanned aircraft systems strategy DOTMLPF-P layered active passive defense",
+        "Small Drones Big Problems First Principles Countering UAS 2026"
+      ]
+    },
+    {
+      "track": "无人和智能系统运用",
+      "queries": [
+        "Ukraine FPV drones AI autonomous navigation anti jamming CSIS 2025",
+        "sUAS infiltration Ukraine electronic warfare GNSS spoofing attritable tactics",
+        "low slow small UAS air littoral contested space drone warfare lessons",
+        "counter UAS sensor fusion radar RF EO acoustic review"
+      ]
+    },
+    {
+      "track": "电磁网络与太空约束",
+      "queries": [
+        "Russia Ukraine electronic warfare drones GPS jamming UAV losses RUSI",
+        "contested electromagnetic spectrum UAS PNT jamming spoofing Ukraine report",
+        "counter UAS RF detection limitations multipath interference line of sight FAA technical considerations",
+        "GPS jamming satellite communications drone countermeasure Ukraine report"
+      ]
+    },
+    {
+      "track": "城市海岸高原等环境变化",
+      "queries": [
+        "urban counter UAS detection line of sight multipath clutter acoustic radar RF EO IR report PDF",
+        "low altitude air surveillance radar terrain masking line of sight mountains official report",
+        "counter UAS coastal environment sea clutter weather rain wind acoustic false alarms report",
+        "complex terrain low altitude drone detection radar clutter acoustic RF challenges mountainous"
+      ]
+    }
+  ],
+  "contradictions": [
+    "电子战既是有效反无人机手段，也是体系脆弱点。IAMD COE和CSIS均显示EW能大规模压制无人机，但CSIS和2026年ISIS报告也显示抗干扰、CRPA、替代链路、摄像头/中继/网状链路正在削弱单纯RF压制的可靠性。",
+    "Shahed等大型一向攻击无人机整体命中率并不高，ISIS数据表明大量无人机被拦截、迷航或受EW影响；但CSIS和ISIS同时指出持续大规模发射可消耗防空资源并在恶劣天气和基础设施累积损伤下形成战略效果。",
+    "雷达仍是全天候、可探测静默/自主目标的关键传感器；但FAA、DoD和学术综述均指出，低空小目标在地形遮蔽、地物反射、MTI盲速、杂波和小RCS条件下会显著降低雷达可靠性，因此“雷达必要”不等于“雷达充分”。",
+    "复杂地形既帮助攻击方利用山脊、建筑、树木和水面杂波接近，也会缩短无人机自身通信链路、导航和续航可靠性；蓝方若能提前做视域、RF传播和网络路径建模，可把地形从缺口转化为防御条件。",
+    "AI自主被广泛视为未来威胁放大器；但IAMD COE报告提醒，小型商用无人机在短期内仍受机载算力、重量、功耗和成本限制，不能假设所有低空目标都已具备高可靠自主突防能力。"
+  ],
+  "confidence_basis": "证据覆盖政府/军方文件、国会研究、军种专业期刊、智库报告、学术综述和公开战例，来源族群超过3类且包含2024、2025、2026年资料。关于复杂地形物理约束、传感器局限和多模态融合的证据直接性较高；关于俄乌、纳卡、红海战例的证据可相互印证无人机饱和、低成本消耗和分层防御趋势。主要不确定性在于具体装备性能、特定地域覆盖率、实际库存消耗和敌方最新链路/自主能力通常不公开，因此场景参数采用公开资料支撑的区间化、假设化表达。",
+  "source_claims": [
+    {
+      "url": "https://media.defense.gov/2026/Jul/08/2003958884/-1/-1/1/SMALL-DRONES-BIG-PROBLEMS-A-FIRST-PRINCIPLES-APPROACH-TO-Counter-UAS.PDF",
+      "claim": "[E1] 该DoD/联合跨机构材料指出无人机防护没有单一银弹，需雷达、光电/红外、声学、RF等互补传感器形成决策级置信度；山地、城市、植被、天气、RF噪声和网络路径会共同影响探测与处置。"
+    },
+    {
+      "url": "https://www.war.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/",
+      "claim": "[E2] DoD 2024年发布反无人系统战略，称无人系统对人员、设施和资产构成紧迫且持久威胁，并强调需统一理解和跨部门方法应对快速演化的无人系统。"
+    },
+    {
+      "url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+      "claim": "[E3] DoD战略事实清单强调无人系统正在改变冲突特征，短期重点包括提升探测、主动防御和被动防御，并面向更大数量、更高自主化和网络化威胁做中长期准备。"
+    },
+    {
+      "url": "https://www.army.mil/article-amp/278404/joint_counter_small_uas_office_conducts_successful_counter_drone_swarm_demonstration",
+      "claim": "[E4] 美陆军JCO 2024年蜂群反制演示中，每轮发射40多个UAS目标并评估多套系统；结论是单一能力无法应对多方向、多速度、多尺寸的大规模无人机剖面，需要系统-of-systems和分层方法。"
+    },
+    {
+      "url": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_5.html",
+      "claim": "[E5] FAA雷达说明指出，低空航空器若被山体遮蔽或低于雷达波束/受地球曲率影响可能看不见；较小反射面目标也比大型飞机更难由一次雷达发现。"
+    },
+    {
+      "url": "https://www.faa.gov/sites/faa.gov/files/airports/airport_safety/Attachment-3-UAS-Detection-Technical-Considerations.pdf",
+      "claim": "[E6] FAA UAS探测技术考虑文件指出，雷达和RF常作为主探测源，EO和声学通常是验证/辅助传感器；树木、建筑、地形、RF干扰、多径、天气、悬停/垂直运动和虚警都会影响系统效能。"
+    },
+    {
+      "url": "https://www.faa.gov/airports/new_entrants/uas_detection_mitigation_response",
+      "claim": "[E7] FAA机场UAS探测页面指出，雷达、RF、EO和声学可单独或组合用于探测验证，但探测系统不能自行判断UAS意图或威胁等级，且部署需考虑法律、EMI和空域运行影响。"
+    },
+    {
+      "url": "https://www.armyupress.army.mil/Journals/Military-Review/Online-Exclusive/2024-OLE/Grenade-Dropping-Quadcopters-II/",
+      "claim": "[E8] Army University Press关于俄乌无人机战的文章指出，1-3类小型UAS提供持久且难探测的RISTA能力；高空易观测UAS在成熟战区被EW和防空显著压制，而基层仍缺少足够有机C-sUAS能力。"
+    },
+    {
+      "url": "https://www.armyupress.army.mil/Journals/Military-Review/English-Edition-Archives/Nov-Dec-2024/Cunning-Tools-of-War/",
+      "claim": "[E9] Army University Press文章将低空空域称为被争夺的air littoral，并指出乌克兰小型UAS可采用消耗性渗透，即便少量存活也能通过不同路线和频率寻找电子战防线弱点。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare",
+      "claim": "[E10] CSIS基于前线访谈指出多数低成本FPV任务成功率约10%至15%，熟练操作者可达30%至50%；同时EW对控制链和GPS构成持续威胁，而AI导航和抗干扰能力正在被探索。"
+    },
+    {
+      "url": "https://iamd-coe.org/wp-content/uploads/2024/02/The-Evolving-UAS-Threat-Lessons-from-the-Russian-Ukrainian-War-Since-2022-on-Future-Air-Defence-Challenges-and-Requirements.pdf",
+      "claim": "[E11] IAMD COE报告指出俄乌冲突中电磁频谱高度拥挤和受争夺，俄军约每10公里部署一套主要EW系统并造成乌军约每月1万架UAV损失；但AI/自主、抗EW和卫星通信发展使攻防平衡保持不稳定。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/air-and-missile-war-nagorno-karabakh-lessons-future-strike-and-defense",
+      "claim": "[E12] CSIS纳卡空中与导弹战研究指出，S-300等大型防空系统并非为反UAV任务设计且早期遭打击；核心教训是需要全谱系防空、机动SHORAD和被动防护。"
+    },
+    {
+      "url": "https://s3.us-east-1.amazonaws.com/files.cnas.org/documents/Report_CUAS_Defense_Sep-2025_final.pdf",
+      "claim": "[E13] CNAS红海研究称2023年11月至2025年1月美海空力量击落约480架胡塞无人机，成功依赖分层、多域一体防御和快速学习，但成本与高节奏不可持续，部分交战窗口仅为秒级。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/drone-saturation-russias-shahed-campaign",
+      "claim": "[E14] CSIS关于Shahed饱和攻击的研究指出，俄方自2024年9月起将Shahed发射从每周约200架提升到2025年3月超过1000架；乌方依靠声学传感器、共同作战系统、EW和机动防空降低成本交换，但饱和压力仍上升。"
+    },
+    {
+      "url": "https://isis-online.org/uploads/isis-reports/documents/January-2026-Updated-Analysis-of-Russian-Shahed-type-UAVs-Deployment-Against-Ukraine_Feb-10_2026.pdf",
+      "claim": "[E15] ISIS 2026年2月报告指出，2026年1月Shahed型UAV继续承担直接打击基础设施与消耗防空资源的双重任务，并出现CRPA、尝试Starlink连接、中继无人机网状链路、在线摄像头和实时航路调整等技术改进。"
+    },
+    {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10780901/",
+      "claim": "[E16] 学术综述总结雷达、RF、声学和视觉探测均有环境干扰因素：鸟类/野生动物、频率重叠/干扰、风雨噪声、夜间/雾雨雪、遮挡和复杂背景会增加漏警或虚警；多传感器融合可提升鲁棒性。"
+    }
+  ],
+  "analysis_sections": {
+    "scenario_framework": {
+      "scenario_name": "复杂地形低空无人机探测预警体系压力场景",
+      "purpose": "检验现役低空无人机探测预警体系在山地—城市—海岸复合环境中的传统能力缺口，并推导升级需求；场景仅用于防御性能力研判，不提供攻击执行步骤。",
+      "background": {
+        "operational_setting": "蓝方防区位于山地边缘城市与近海/河口交通节点交汇区，存在山脊、谷地、高层建筑、仓储园区、港口水面、通信基站、民用无人机活动和复杂电磁背景。",
+        "blue_mission": "在不干扰民航和民用通信的前提下，对低空无人机活动形成早期发现、连续跟踪、身份判别、威胁评估、告警分发和安全处置支持。",
+        "red_objective": "通过低成本、可消耗、低空、分散和多样化无人机活动压缩蓝方发现—识别—决策—处置窗口，消耗传感器值班与防空资源，并寻找体系盲区。",
+        "key_assumptions": [
+          "[A1] 敌方不需要每架无人机成功，只需通过持续试探和少量突防制造态势压力。",
+          "[A2] 蓝方现役体系以固定雷达、少量RF探测、EO/IR验证、人工值守和上级集中确认流程为主，基层有机C-UAS能力不足。",
+          "[A3] 民用环境中蓝方不能无限制使用干扰、激光或动能处置，必须先完成识别、授权和安全评估。",
+          "[A4] 复杂地形对攻防双方同时施加约束：既遮蔽无人机，也影响其链路、导航和续航。"
+        ],
+        "evidence_or_assumption_links": [
+          "E1",
+          "E3",
+          "E4",
+          "E5",
+          "E6",
+          "E7",
+          "E16",
+          "A1",
+          "A2",
+          "A3",
+          "A4"
+        ]
+      },
+      "forces_and_systems": {
+        "blue_force": [
+          "固定低空监视雷达与既有防空预警节点",
+          "若干机动补盲雷达/便携式雷达",
+          "被动RF侦测与频谱监测节点",
+          "EO/IR云台、热像仪、可见光摄像头",
+          "声学传感器或群众/哨兵观测渠道",
+          "本地指挥所、上级空情/防空C2、民航/公安/频谱管理联络机制",
+          "有限电子压制、低成本拦截、被动伪装/遮蔽/分散措施"
+        ],
+        "red_force_abstract": [
+          "低慢小四旋翼/多旋翼侦察无人机",
+          "FPV或一次性小型无人机",
+          "固定翼一向攻击或诱饵无人机",
+          "RF发射较弱、间歇通信或预编程航线无人机",
+          "用于制造虚警和资源消耗的非致命/诱饵平台",
+          "电磁侦察、网络压力和信息欺骗支援能力"
+        ]
+      },
+      "scenario_horizons": [
+        {
+          "phase": "危机前预警",
+          "description": "防区周边出现异常民用无人机活动、短时RF信号、夜间低空噪声、社交媒体/公开影像收集、山脊和楼顶附近可疑活动。敌方可能进行传感器覆盖摸底和蓝方响应时间观察。",
+          "blue_tasks": [
+            "建立基线：常态RF、民用无人机航迹、鸟群/船舶/车辆/风机/港口机械背景。",
+            "基于三维地形、建筑物和植被生成雷达/EO/RF/声学视域图。",
+            "把异常模式纳入预警而非等待明确入侵。",
+            "建立民航、公安、频谱和设施业主联动流程。"
+          ],
+          "triggers": [
+            "同一区域重复出现短时无人机信号或视觉观测",
+            "防区盲区边缘出现疑似测绘/观察活动",
+            "夜间或恶劣天气中出现多源弱告警"
+          ],
+          "termination_conditions": [
+            "完成盲区复核与传感器补位",
+            "未发现持续威胁且异常恢复常态",
+            "进入初始接触阶段"
+          ],
+          "evidence_or_assumption_links": [
+            "E1",
+            "E6",
+            "E7",
+            "E16",
+            "A1"
+          ]
+        },
+        {
+          "phase": "初始接触",
+          "description": "低空目标利用山脊、建筑群、树线或水面背景进入外围；雷达出现低置信小目标或间歇航迹，RF节点可能捕捉到短脉冲或完全静默，EO/IR受到天气、背景热源和遮挡影响。",
+          "blue_tasks": [
+            "多源交叉验证：雷达给出方位/速度，RF判别链路特征，EO/IR确认外形，声学和哨兵观测补充。",
+            "按威胁等级而非单点告警触发响应。",
+            "在不危及民用空域条件下发布分级告警和临时空域/设施防护动作。"
+          ],
+          "triggers": [
+            "多个传感器在相近时间/空间内出现弱相关",
+            "同一航迹在盲区边界反复消失再出现",
+            "RF噪声或GNSS异常与低空告警同时发生"
+          ],
+          "termination_conditions": [
+            "目标被识别为合法/无威胁并解除警戒",
+            "目标退出防区且无后续批次",
+            "出现多批次、多方向或电磁压迫迹象，进入体系对抗"
+          ],
+          "evidence_or_assumption_links": [
+            "E5",
+            "E6",
+            "E16",
+            "E1",
+            "A3"
+          ]
+        },
+        {
+          "phase": "体系对抗",
+          "description": "敌方由单机试探转为多批次、多方向、诱饵与真实目标混合；同时出现RF拥塞、GNSS干扰/欺骗、链路间歇、网络回传延迟和虚警增多。蓝方从单目标处置转为态势管理和资源分配。",
+          "blue_tasks": [
+            "维持共同作战图，但允许边缘节点在上级链路降级时本地生成威胁优先级。",
+            "将拦截资源优先用于穿越关键防护圈、具有高置信敌意或高危载荷迹象的目标。",
+            "采取被动防护：关键装备分散、遮蔽、诱饵、灯火/热源/电磁特征管理。",
+            "评估电子压制与民用通信、己方无人机和传感器之间的电磁互扰。"
+          ],
+          "triggers": [
+            "同一时间出现多方向航迹或诱饵/真实目标混杂",
+            "雷达/RF/EO传感器输出互相矛盾",
+            "上级链路延迟导致确认时间超过末端处置窗口",
+            "蓝方高价值节点被持续侦察或反复虚警牵制"
+          ],
+          "termination_conditions": [
+            "攻击批次停止且态势恢复稳定",
+            "蓝方资源消耗达到预设阈值并转入持续作战节奏",
+            "若出现传感器/通信节点损伤，则进入战损重构"
+          ],
+          "evidence_or_assumption_links": [
+            "E3",
+            "E4",
+            "E9",
+            "E11",
+            "E13",
+            "E14",
+            "E15",
+            "A2"
+          ]
+        },
+        {
+          "phase": "持续作战",
+          "description": "无人机威胁进入日常化、高频化和迭代化；敌方根据蓝方反应调整飞行高度、时间、链路、诱饵比例和目标类型。蓝方重点由单次成功拦截转为成本、人员、传感器维护和弹药库存的长期承受能力。",
+          "blue_tasks": [
+            "统计每类传感器虚警、漏警和维护负担，按地形区块调整部署。",
+            "低成本优先：对低价值目标采用监视、驱离、遮蔽和电子/非动能手段，对高价值威胁保留高端拦截。",
+            "更新RF/雷达/声学/视觉特征库，训练操作员识别新型诱饵和民用混杂目标。",
+            "形成24/7值守轮换、备件和电源/网络冗余。"
+          ],
+          "triggers": [
+            "连续多日多批次无人机活动",
+            "蓝方拦截成本明显高于来袭平台成本",
+            "传感器误警导致疲劳或响应迟滞",
+            "敌方出现新频段、新外形或新抗干扰特征"
+          ],
+          "termination_conditions": [
+            "威胁活动降至基线水平",
+            "完成战术/技术升级并恢复成本交换优势",
+            "发生关键节点损伤并转入战损重构"
+          ],
+          "evidence_or_assumption_links": [
+            "E8",
+            "E10",
+            "E11",
+            "E14",
+            "E15",
+            "E16"
+          ]
+        },
+        {
+          "phase": "战损重构",
+          "description": "部分传感器、通信、供电或C2节点失效；蓝方需要在地形和电磁约束下快速恢复低空态势感知，避免因单点损伤形成可重复利用的低空通道。",
+          "blue_tasks": [
+            "启用机动补盲节点、备用电源、离线地图和本地边缘处理。",
+            "将固定节点覆盖转为临时网格化覆盖，重点保护关键通道和高价值区域。",
+            "以最小网络依赖维持本地告警和跨单位简报。",
+            "记录敌方利用的盲区和触发条件，纳入下一轮部署优化。"
+          ],
+          "triggers": [
+            "关键传感器掉线或误差显著升高",
+            "回传链路拥塞/中断",
+            "多源空情无法融合或重复目标严重",
+            "敌方利用相同盲区重复进入"
+          ],
+          "termination_conditions": [
+            "恢复最低可接受覆盖和本地处置能力",
+            "完成备用节点部署和盲区重新评估",
+            "威胁降低或转入新一轮持续作战"
+          ],
+          "evidence_or_assumption_links": [
+            "E1",
+            "E3",
+            "E4",
+            "E6",
+            "A2",
+            "A4"
+          ]
+        }
+      ],
+      "victory_criteria": {
+        "blue_success": [
+          "低空关键通道首警时间满足识别和安全处置需要",
+          "多传感器融合后虚警可控、漏警下降",
+          "在网络降级和部分节点损伤下仍可本地告警与分级响应",
+          "拦截/处置成本与来袭成本差距缩小",
+          "敌方无法通过少量试探稳定复现低空通道"
+        ],
+        "red_success_abstract": [
+          "蓝方在多个关键地形区块出现持续盲区",
+          "虚警和诱饵迫使蓝方高成本响应",
+          "集中式确认流程导致处置窗口丧失",
+          "蓝方传感器/通信/值班体系出现疲劳或降级"
+        ]
+      }
+    },
+    "enemy_coa": [
+      {
+        "coa_name": "COA-1 最可能方案：低强度持续侦察试探与盲区测绘",
+        "intent": "以低成本、低风险平台持续观察蓝方反应、传感器覆盖和出动规律，逐步识别低空盲区和误警触发点。",
+        "conceptual_actions_non_executable": [
+          "在民用空域背景、城市边缘和山地遮蔽附近制造间歇低空活动。",
+          "混用可见RF发射目标、弱发射目标和合法/疑似合法活动以测试蓝方识别规则。",
+          "反复观察蓝方从首警到确认、授权和处置的时间。"
+        ],
+        "observable_indicators": [
+          "同一区域短时RF信号或无人机目击重复出现但未深入防区",
+          "雷达低置信航迹在山脊/建筑边缘消失再出现",
+          "民用无人机活动量与敏感时段、演训或重要保障活动异常相关",
+          "社交媒体、公开影像或人员观察活动增多"
+        ],
+        "key_nodes": [
+          {
+            "node": "基线污染",
+            "effect_on_blue": "使蓝方难以区分正常民用活动与威胁准备。",
+            "evidence_or_assumption_links": [
+              "E7",
+              "E16",
+              "A1"
+            ]
+          },
+          {
+            "node": "盲区确认",
+            "effect_on_blue": "暴露地形遮蔽、传感器死角和C2延迟。",
+            "evidence_or_assumption_links": [
+              "E5",
+              "E6",
+              "E1"
+            ]
+          }
+        ],
+        "risk_to_red": [
+          "低空链路受地形影响可能失联",
+          "频繁试探会暴露模式并给蓝方建立基线",
+          "民用环境中平台被识别后可能触发执法和空域管制"
+        ],
+        "blue_pressure_points": [
+          "身份判别",
+          "民用无人机去冲突",
+          "值班疲劳",
+          "低空盲区建模",
+          "跨部门信息共享"
+        ]
+      },
+      {
+        "coa_name": "COA-2 最危险方案：多轴饱和、诱饵混杂与电磁/网络压迫",
+        "intent": "以多批次、多方向、低成本无人机和诱饵目标迫使蓝方同时处理大量低置信告警，消耗拦截资源并压缩处置窗口。",
+        "conceptual_actions_non_executable": [
+          "将诱饵、侦察和真实威胁目标混杂，制造优先级排序困难。",
+          "利用地形、城市遮挡和水面/车辆/鸟群杂波增加虚警。",
+          "通过电磁拥塞、GNSS异常或网络压力降低蓝方传感器和C2融合质量。",
+          "在蓝方响应后改变频段、时段、航迹和平台类型，延长消耗战。"
+        ],
+        "observable_indicators": [
+          "同一时间多方向低空航迹增加",
+          "RF噪声底、GNSS异常、通信延迟与无人机告警同步出现",
+          "EO/IR被热背景、遮挡或诱饵牵引，确认时间延长",
+          "拦截弹药、值班人员和传感器维护负担快速上升"
+        ],
+        "key_nodes": [
+          {
+            "node": "态势过载",
+            "effect_on_blue": "传感器融合和人工确认产生队列积压，威胁排序错误概率上升。",
+            "evidence_or_assumption_links": [
+              "E4",
+              "E13",
+              "E14"
+            ]
+          },
+          {
+            "node": "成本交换施压",
+            "effect_on_blue": "诱使蓝方使用昂贵拦截手段对付低成本目标，削弱持续作战能力。",
+            "evidence_or_assumption_links": [
+              "E13",
+              "E14",
+              "E15"
+            ]
+          },
+          {
+            "node": "电磁/网络降级",
+            "effect_on_blue": "RF探测、GNSS时间/位置、视频回传和共同作战图出现不一致。",
+            "evidence_or_assumption_links": [
+              "E1",
+              "E6",
+              "E11",
+              "E15"
+            ]
+          }
+        ],
+        "risk_to_red": [
+          "大规模活动更易被多源发现",
+          "诱饵比例过高会降低实际效果",
+          "持续发射对后勤、组装和操作者训练提出要求"
+        ],
+        "blue_pressure_points": [
+          "多目标跟踪容量",
+          "威胁优先级排序",
+          "边缘授权",
+          "低成本处置",
+          "EW与己方通信去冲突",
+          "持续补给与人员轮换"
+        ]
+      },
+      {
+        "coa_name": "COA-3 替代方案：RF静默/半自主低空渗透与合法流量伪装",
+        "intent": "减少可被RF探测和压制的暴露特征，依赖预编程、惯导/视觉辅助或间歇链路，通过合法无人机/鸟群/车辆/港口机械背景降低识别置信度。",
+        "conceptual_actions_non_executable": [
+          "减少连续控制链路暴露，采用间歇通信或预编程任务。",
+          "选择蓝方RF强噪声区、城市遮挡区或复杂热背景区使探测结果不一致。",
+          "利用民用无人机密集时段或合法空域活动提高蓝方误判成本。"
+        ],
+        "observable_indicators": [
+          "雷达/EO有弱迹象但RF无对应链路",
+          "目标航迹规律性强但身份信息缺失",
+          "Remote ID或白名单数据与物理航迹不一致",
+          "蓝方RF压制后目标仍保持部分任务行为"
+        ],
+        "key_nodes": [
+          {
+            "node": "RF探测旁路",
+            "effect_on_blue": "RF依赖型预警和操作者定位能力下降。",
+            "evidence_or_assumption_links": [
+              "E6",
+              "E10",
+              "E11",
+              "E15"
+            ]
+          },
+          {
+            "node": "识别规则混淆",
+            "effect_on_blue": "合法/非法、威胁/非威胁分类时间增加。",
+            "evidence_or_assumption_links": [
+              "E7",
+              "E16",
+              "A3"
+            ]
+          }
+        ],
+        "risk_to_red": [
+          "小型平台自主能力受算力、重量、电源和成本约束",
+          "静默减少实时操控能力并提高任务不确定性",
+          "雷达、EO/IR和声学融合仍可能发现其物理存在"
+        ],
+        "blue_pressure_points": [
+          "非RF目标探测",
+          "多模态融合",
+          "白名单/Remote ID可信校验",
+          "本地AI分类",
+          "被动防护"
+        ]
+      }
+    ],
+    "critical_timeline": [
+      {
+        "time_window": "T-30至T-7天：危机前模式建立",
+        "red_activity_abstract": "低强度观察、民用流量混入、短时RF活动和公开信息收集。",
+        "blue_decision": "是否把弱异常纳入预警并开展盲区复核。",
+        "traditional_gap": "现役体系常等待明确空情告警，缺少把地形、RF基线和民用活动融合为异常模式的机制。",
+        "upgrade_need": "建立三维视域、RF传播、常态航迹和异常模式数据库；把民用/执法/频谱信息接入低空态势。",
+        "observable_indicators": [
+          "重复短时RF信号",
+          "固定区域目击报告",
+          "不寻常民用无人机集中",
+          "公开影像收集活动"
+        ],
+        "evidence_or_assumption_links": [
+          "E1",
+          "E6",
+          "E7",
+          "A1"
+        ]
+      },
+      {
+        "time_window": "T-72至T-24小时：传感器与响应摸底加剧",
+        "red_activity_abstract": "围绕防区边缘进行多点低空试探，观察蓝方响应节奏。",
+        "blue_decision": "是否调整机动传感器、值班等级和被动防护。",
+        "traditional_gap": "固定传感器对山体、建筑和水面杂波导致的低空盲区反应慢。",
+        "upgrade_need": "机动补盲雷达/被动RF/EO点位预案，临时升高传感器、边缘融合和地形补盲部署。",
+        "observable_indicators": [
+          "航迹在盲区边缘反复中断",
+          "不同传感器对同一事件判断不一致",
+          "低空噪声和视觉观测先于雷达确认"
+        ],
+        "evidence_or_assumption_links": [
+          "E5",
+          "E6",
+          "E16",
+          "A4"
+        ]
+      },
+      {
+        "time_window": "T-60至T-10分钟：初始接触与分级告警",
+        "red_activity_abstract": "小批次低空目标进入外围探测范围，可能伴随诱饵或RF噪声。",
+        "blue_decision": "是否升级为无人机威胁事件并启动空域/设施防护。",
+        "traditional_gap": "单传感器置信度不足导致等待人工确认，压缩后续处置时间。",
+        "upgrade_need": "多模态置信评分、自动关联、EO/IR slew-to-cue、声学/哨兵补充和快速分级告警。",
+        "observable_indicators": [
+          "低RCS低速航迹",
+          "间歇RF发射",
+          "EO/IR受到背景干扰",
+          "GNSS或网络异常同步出现"
+        ],
+        "evidence_or_assumption_links": [
+          "E1",
+          "E4",
+          "E6",
+          "E16"
+        ]
+      },
+      {
+        "time_window": "T-10分钟至T+30分钟：体系对抗窗口",
+        "red_activity_abstract": "多方向、多批次、诱饵/真实目标混合，叠加电磁和网络压力。",
+        "blue_decision": "如何在有限时间内排序目标、分配低成本与高端处置手段、维持共同作战图。",
+        "traditional_gap": "集中式C2、人工确认和高成本拦截难以应对饱和和秒级/分钟级窗口。",
+        "upgrade_need": "边缘授权、降级运行、威胁优先级算法、低成本拦截层、被动防护和网络断续下的本地态势。",
+        "observable_indicators": [
+          "多传感器目标重复或冲突",
+          "航迹数量超过人工处理能力",
+          "回传视频延迟",
+          "拦截资源快速消耗"
+        ],
+        "evidence_or_assumption_links": [
+          "E3",
+          "E4",
+          "E13",
+          "E14",
+          "E15"
+        ]
+      },
+      {
+        "time_window": "T+30分钟至T+72小时：持续消耗与快速迭代",
+        "red_activity_abstract": "根据蓝方响应改变平台、频段、时段、诱饵比例和接近方向。",
+        "blue_decision": "如何维持成本交换、人员轮换、传感器维护和特征库更新。",
+        "traditional_gap": "装备采购与软件/特征库更新周期慢，基层训练和备件不足。",
+        "upgrade_need": "开放式架构、快速软件更新、特征库共享、消耗品储备、训练闭环和跨单位经验回灌。",
+        "observable_indicators": [
+          "新频段或静默目标增加",
+          "诱饵比例变化",
+          "夜间/恶劣天气活动增加",
+          "传感器误警模式变化"
+        ],
+        "evidence_or_assumption_links": [
+          "E8",；{
+  "findings": [
+    "复杂地形下的传统低空无人机预警缺口主要不是单一雷达灵敏度不足，而是低空视距、地形遮蔽、建筑/林地杂波、多路径、电磁噪声和短预警时间叠加造成的体系性缺口。",
+    "现役成熟体系以美国LIDS家族为代表：FS-LIDS用于固定点防护，M-LIDS用于机动防护，核心由KuRFS/相关雷达、EO/IR、电子战、Coyote拦截器和FAAD C2组成；公开资料显示其目标对象主要为Group 1-3小型无人机及其他低飞威胁。",
+    "GAO与CRS资料显示，FS-LIDS、M-LIDS、Coyote、Ku-band雷达族和手持/下车系统已进入美陆军正式采办组合并在2024财年进入全速生产；但成本、测试逼真度、人员训练、跨军种C2和工业扩产仍是约束。",
+    "公开参数显示，若在开阔或合理布站条件下，专用小无人机雷达可提供数公里级发现：Saab Giraffe 1X宣称可在4 km发现很小UAV；Robin IRIS标准模式为5 km仪器化距离、长距模式可至12 km；Hensoldt SPEXER 2000 Coastal对0.2 m² RCS UAV公开探测距离为9 km。复杂地形中这些距离不应直接外推。",
+    "被动RF/协议解析、声学、EO/IR和多传感器融合可补足有源雷达暴露和遮蔽问题，但对自主航线、低发射控制、跳频、光纤控制、复杂电磁环境和恶劣天气均存在边界。",
+    "在研升级方向集中于低成本、低SWaP、模块化、被动/分布式传感器，车载/下车/系留或小型UAS搭载传感器，多源融合C2，以及低成本硬杀伤、非动能、定向能和高功率微波等多层反制。",
+    "对手优势在于小型无人机低成本、低雷达/声/热/RF特征、可低空贴地或利用地形遮蔽、可饱和攻击和快速迭代；其依赖包括导航、数据链、发射/回收点、能源、操作者和后勤补给，且森林、复杂地形和电磁干扰同样会限制无人机操控与传感链路。",
+    "场景适配度判断：固定基地和关键基础设施适合FS-LIDS/多传感器塔台化布设；机动分队适合M-LIDS、轻量雷达、被动RF和便携告警；山地、森林、城市峡谷和海岸/港口需要分布式多高度布站、被动探测和本地化低时延C2，而不能依赖单点远程雷达。",
+    "防御性升级需求应优先解决“发现—识别—告警—交接”链条：分布式传感器覆盖低空死角、融合算法降低鸟类/车辆/旋翼杂波误警、C2兼容FAAD/IBCS/TAK类接口、弹药/能源补给与低成本交战策略，以及常态化红蓝对抗测试。"
+  ],
+  "confidence": 0.82,
+  "open_questions": [
+    "各型雷达在山地、森林、城市峡谷等复杂地形中的有效发现距离、虚警率和跟踪连续性缺乏统一公开测试数据；公开厂商参数多基于开阔或理想布设条件。",
+    "KuRFS、XBAEU、AN/TPQ-50改型、SPEXER 2000 3D MkIII等具体批次间的探测距离、抗干扰能力和软件版本差异公开资料有限。",
+    "Coyote Block 2/Block 3NK、BLADE、DE M-SHORAD、IFPC-HEL/HPM和下一代C-UAS导弹的单位成本、弹药库存、可靠性和作战可用率缺少可交叉核验的公开数据。",
+    "FAAD C2与IBCS、JADC2、TAK、北约接口之间的具体数据模型、认证状态和网络抗毁性公开信息不足。",
+    "反制光纤控制FPV、自主终端识别、无RF发射航线飞行和大规模蜂群的体系效果仍需更多公开实测。"
+  ],
+  "handoff_summary": "本轮仅基于公开资料形成传统能力缺口研究包。结论是：现役低空无人机探测预警体系已具备成熟的点防护和机动C-UAS能力，但在复杂地形下仍受低空视距、地形遮蔽、杂波、虚警、C2交接、成本和饱和压力制约。建议下游围绕“多源分布式低空探测、低SWaP被动/主动融合、开放C2、低成本多层拦截、训练与后勤韧性”开展战法与制胜机理分析。",
+  "search_plan": [
+    {
+      "track": "现役型号与部署规模",
+      "queries": [
+        "site:army.mil counter small UAS low altitude detection radar complex terrain LIDS KuRFS 2025",
+        "LIDS Low Slow Small Unmanned Aircraft Integrated Defeat System KuRFS Coyote M-LIDS Army 2025 official",
+        "Leonardo DRS M-LIDS counter UAS system deployed Stryker 2025 official",
+        "DSCA UAE FS-LIDS 2026 Coyote KuRFS $2.10 billion official"
+      ]
+    },
+    {
+      "track": "在研项目与预算采购",
+      "queries": [
+        "FY 2026 budget counter-UAS Army LIDS M-LIDS FS-LIDS Coyote procurement 3.1 billion official",
+        "site:asafm.army.mil FY 2026 counter small UAS Coyote LIDS budget justification",
+        "Army SBIR low altitude passive detection system terrain curvature obstacles sUAS 2025",
+        "Next Generation Counter UAS Missile Army FY 2027 common launcher"
+      ]
+    },
+    {
+      "track": "关键参数和任务载荷",
+      "queries": [
+        "KuRFS radar specifications range 360 coverage counter UAS official",
+        "SAAB Giraffe 1X drone detection radar range official counter UAS",
+        "Robin Radar IRIS drone detection radar range official 2025",
+        "HENSOLDT SPEXER 2000 UAV 0.2 m2 RCS 9 km official"
+      ]
+    },
+    {
+      "track": "体系接口与联合作战能力",
+      "queries": [
+        "FAAD C2 counter UAS LIDS interface command and control official 2025",
+        "Northrop Grumman FAAD C2 counter UAS Forward Area Air Defense command control 2025 official",
+        "Army FAADC2 LIDS M-LIDS FS-LIDS command and control integration counter UAS 2025",
+        "IBCS FAAD C2 counter UAS integration LIDS 2025"
+      ]
+    },
+    {
+      "track": "技术成熟度工业基础与保障约束",
+      "queries": [
+        "GAO-25-107491 counter UAS FS-LIDS M-LIDS full rate production 2024",
+        "CRS Department of Defense Counter-UAS Background Issues Congress LIDS Coyote cost technical maturity 2025",
+        "RUSI Protecting the Force from Uncrewed Aerial Systems layered counter UAS 2024",
+        "NATO counter UAS fiber optic drone EW ineffective detection 2025"
+      ]
+    }
+  ],
+  "contradictions": [
+    "冲突/边界1：厂商公开参数显示专用雷达在开阔条件下具备数公里级小UAV发现能力，但陆军SBIR明确指出现有系统受地形、地球曲率和障碍物影响，低空sUAS预警窗口有限。因此“雷达能力强”与“复杂地形预警不足”并不矛盾，关键在布站和场景。",
+    "冲突/边界2：CRS记录Coyote已有实战拦截成功和大规模采购需求，但同一报告也指出其不一定适合廉价无人机的成本交换。因此成熟度高不等于成本可持续。",
+    "冲突/边界3：定向能和高功率微波常被描述为低单发成本方案，但CRS指出其M-SHORAD方向曾有延期和用户评价一般，同时规模化装备的前期成本可能抵消单发成本优势。",
+    "冲突/边界4：被动RF/协议解析系统可降低暴露并提供识别，但NATO相关资料显示光纤控制无人机使传统EW类反制失效或效果下降；自主/预编程航线也会削弱RF探测的可用性。",
+    "冲突/边界5：复杂地形既削弱防御方探测，也限制无人机操控、通信、导航和传感器视场；不能简单假设攻击方在山地/森林/城市峡谷中总是占优。",
+    "冲突/边界6：固定点C-UAS可通过多传感器冗余补足死角，但机动分队受车辆空间、电源、天线高度、人员训练和弹药补给限制，难以复制固定基地级覆盖。"
+  ],
+  "confidence_basis": "证据覆盖政府/军方、国会研究、GAO、厂商资料、智库和北约公开资料，来源家族超过3类；多数关键证据在2024年7月以后发布或仍为当前厂商页面，满足近两年新鲜度要求。LIDS、Coyote、KuRFS、FAAD、Giraffe 1X、IRIS等至少由政府/CRS/GAO与厂商资料交叉支撑。剩余不确定性主要来自：厂商参数通常不是复杂地形实测；关键系统真实作战距离、虚警率、库存和软件接口公开不足；在研定向能、HPM和下一代拦截器成熟度仍在变化。",
+  "source_claims": [
+    {
+      "url": "https://www.defense.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/",
+      "claim": "美国国防部2024年发布反无人系统战略，强调无人系统威胁快速演进，并将JCO、Warfighter Senior Integration Group和Replicator 2等作为主要举措。"
+    },
+    {
+      "url": "https://www.gao.gov/assets/gao-25-107491.pdf",
+      "claim": "GAO-25-107491显示，美陆军C-sUAS组合中FS-LIDS、M-LIDS、Coyote、Ku-band雷达族和手持/下车系统等进入正式采办；其中五项在2024财年进入全速生产。"
+    },
+    {
+      "url": "https://www.congress.gov/crs_external_products/R/PDF/R48477/R48477.2.pdf",
+      "claim": "CRS R48477说明LIDS由FS-LIDS和M-LIDS组成，面向Group 1-3无人机和其他低飞威胁；M-LIDS Increment 2.1从双M-ATV配置迁移为单Stryker配置。"
+    },
+    {
+      "url": "https://www.congress.gov/crs_external_products/R/PDF/R48477/R48477.2.pdf",
+      "claim": "CRS记录FS-LIDS使用KuRFS雷达、EO/IR、电子战和Coyote拦截器，FS-LIDS与M-LIDS均使用FAAD C2；FY2025陆军申请2.801亿美元采购FS-LIDS、M-LIDS及若干下车系统，并另申请1.174亿美元采购Coyote。"
+    },
+    {
+      "url": "https://www.congress.gov/crs_external_products/R/PDF/R48477/R48477.2.pdf",
+      "claim": "CRS记录Coyote是LIDS家族的反UAS拦截器，有动能和非动能版本；截至2024年公开报道已有170次成功拦截，但陆军官员也称其对廉价无人机未必成本有效。"
+    },
+    {
+      "url": "https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2026/Discretionary%20Budget/rdte/RDTE%20-%20Vol%204%20-%20Budget%20Activity%209.pdf",
+      "claim": "美陆军PB2026 RDT&E材料列出Counter Unmanned Aerial Systems Agile Development项目，FY2026项目经费合计约1.43618亿美元，并显示C-sUAS相关采购线I24000 FY2026合计约3.06568亿美元。"
+    },
+    {
+      "url": "https://www.defense.gov/News/Transcripts/Transcript/Article/4228828/background-briefing-on-fy-2026-defense-budget/",
+      "claim": "美国国防部FY2026预算吹风会称，跨军种counter-UAS总请求约31亿美元。"
+    },
+    {
+      "url": "https://armysbir.army.mil/announcement/launch-2m-funding-opportunity-low-altitude-suas-detection/",
+      "claim": "美陆军SBIR/STTR 2025年低空被动探测机会指出，现有系统偏向较大、更高空目标，受地形、地球曲率和障碍物影响，难以发现多架低空sUAS，且大型固定系统限制部署灵活性。"
+    },
+    {
+      "url": "https://armysbir.army.mil/topics/low-altitude-passive-detection-system/",
+      "claim": "陆军低空被动探测题目要求低成本、低SWaP、模块化能力，并希望可兼容Group 1 sUAS或系留UAS载荷接口，用于增加地面部队对0至6000英尺AGL低空威胁的预警时间。"
+    },
+    {
+      "url": "https://www.rtx.com/raytheon/what-we-do/integrated-air-and-missile-defense/kurfs",
+      "claim": "Raytheon公开称KuRFS是360度雷达，可持续探测、识别和跟踪从火箭/炮弹/迫击炮到各类无人机的空中威胁，并作为美陆军LIDS组成部分。"
+    },
+    {
+      "url": "https://www.rtx.com/raytheon/what-we-do/integrated-air-and-missile-defense/coyote",
+      "claim": "Raytheon公开称Coyote与KuRFS配合提供从单机到蜂群的探测与击败能力；Coyote Block 3NK可使用非动能载荷、可徘徊、击败蜂群并可召回再部署。"
+    },
+    {
+      "url": "https://www.northropgrumman.com/what-we-do/mission-solutions/forward-area-air-defense-faad",
+      "claim": "Northrop Grumman公开称FAAD将SHORAD、C-RAM和C-UAS任务集成到单一界面，提供实时空域监视、威胁识别和安全拦截所需跟踪数据，并为美国国防部选择的C-UAS C2系统。"
+    },
+    {
+      "url": "https://www.saab.com/products/giraffe-1x",
+      "claim": "Saab公开称Giraffe 1X可作为VSHORAD主传感器、GBAD补盲雷达或C-UAS解决方案；系统总重低于150 kg，可探测距离雷达4 km处小于牛奶盒重量的UAV。"
+    },
+    {
+      "url": "https://www.robinradar.com/products/iris-radar",
+      "claim": "Robin Radar公开称IRIS为3D无人机雷达，提供360度视场、60度俯仰覆盖、5 km仪器化距离和约78 km²覆盖面积。"
+    },
+    {
+      "url": "https://www.robinradar.com/news-events/robin-radar-deploys-off-the-shelf-cuas-radar-with-12km-range",
+      "claim": "Robin Radar 2025年发布称IRIS Long-Range Mode可在5 km和12 km仪器化距离间切换，体现软件/模式升级带来的探测距离提升。"
+    },
+    {
+      "url": "https://www.hensoldt.net/fileadmin/HENSOLDT_2019/Products/Radar_IFF_Datalink/0812_17_Spexer2000_Coastal_E_intranet.pdf",
+      "claim": "Hensoldt SPEXER 2000 Coastal资料列出对0.2 m² RCS UAV的探测距离为9 km。"
+    },
+    {
+      "url": "https://www.rheinmetall.com/Rheinmetall%20Group/brochure-download/Air-Defence/D994e0222-Oerlikon-Skyranger-30.pdf",
+      "claim": "Rheinmetall Skyranger 30资料显示其采用3D AESA搜索雷达、30 mm×173炮、1200发/分射速和自动目标探测/捕获/跟踪，代表炮基低空反无人机/SHORAD方向。"
+    },
+    {
+      "url": "https://www.rusi.org/explore-our-research/publications/occasional-papers/protecting-force-uncrewed-aerial-systems",
+      "claim": "RUSI 2024报告强调反UAS必须是分层且高效的能力，软件、检测分类识别、电子战和多层效果器与硬件同等重要。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare",
+      "claim": "CSIS关于乌克兰自主化战争的研究指出，EW干扰推动无人机与反无人机体系转向替代探测、传感和自主能力；雷达、声学等方法也各自存在性能边界。"
+    },
+    {
+      "url": "https://www.act.nato.int/wp-content/uploads/2025/05/rfip025048.pdf",
+      "claim": "NATO ACT 2025资料提到自2024年底以来俄方引入光纤控制无人机，传统EW counter-UAS对这类无人机无效或效果受限，且其机动、抗干扰和低特征增加探测难度。"
+    },
+    {
+      "url": "https://www.droneshield.com/products-software",
+      "claim": "DroneShield公开称DroneSentry-C2提供统一实时反无人机态势图，可与自有传感器和第三方系统互操作，并融合RF、雷达和光学传感器。"
+    },
+    {
+      "url": "https://sentrycs.com/news/sentrycs-unveils-version-6-0-of-its-counter-drone-software-delivering-unmatched-coverage-and-efficiency/",
+      "claim": "Sentrycs 2025年发布称其V6.0采用协议操纵/Cyber over RF方法，从无人机与操作者通信的数据层提取信息，不同于仅依赖雷达、EO和RF扫描的多层探测。"
+    }
+  ],
+  "analysis_sections": {
+    "current_parameters": {
+      "scope_note": "参数均为公开资料；复杂地形下不得将开阔场或厂商标称距离直接视为作战保证距离。置信度按公开来源直接性、交叉核验和参数完整性评估。",
+      "parameter_records": [
+        {
+          "system": "LIDS family: FS-LIDS / M-LIDS",
+          "status": "现役/正式采办；GAO称相关项目2024财年进入全速生产",
+          "mission_scope": "防御Group 1-3无人机及其他低飞威胁",
+          "configuration_batch": "FS-LIDS固定点；M-LIDS Increment 2.1单Stryker配置，早期M-LIDS为双M-ATV配置",
+          "sensors_payloads": "KuRFS/相关Ku波段雷达、EO/IR、电子战、Coyote拦截器、FAAD C2；M-LIDS另含RIwP/30 mm等武器站配置",
+          "public_quantity_budget": "FY2025陆军申请约2.801亿美元用于FS-LIDS、M-LIDS及下车系统；其中公开提及5套Stryker M-LIDS和6套FS-LIDS；另约1.174亿美元用于Coyote采购",
+          "units": "美元；套；无人机Group分类",
+          "confidence": "高"
+        },
+        {
+          "system": "Raytheon KuRFS",
+          "status": "现役/已部署于LIDS体系",
+          "configuration_batch": "Ku-band Radio Frequency Sensor；公开页面未给出标准探测距离",
+          "key_parameters": {
+            "coverage": "360度",
+            "functions": "持续探测、识别、跟踪空中威胁",
+            "target_set": "火箭、炮弹、迫击炮、各类无人机",
+            "notable_claim": "可识别/分辨极小目标，厂商称可看到和识别来袭9 mm子弹"
+          },
+          "units": "角度；目标类别",
+          "confidence": "中高；功能由厂商和CRS交叉支撑，具体距离未知"
+        },
+        {
+          "system": "Raytheon Coyote",
+          "status": "现役/采购扩大",
+          "configuration_batch": "Block 2动能；Block 3NK非动能；固定/机动发射",
+          "key_parameters": {
+            "launch": "rail-launched；boost rocket motor and turbine engine",
+            "payload": "动能和非动能",
+            "public_performance": "CRS记录截至2024年报道有170次成功拦截",
+            "planned_production_need": "CRS记录陆军估算FY2025-FY2029需6000枚动能Coyote及数百枚非动能拦截器"
+          },
+          "units": "枚；财年；拦截次数",
+          "confidence": "高；成本有效性为中等置信度，因为单位成本公开数据不一致"
+        },
+        {
+          "system": "FAAD C2",
+          "status": "现役C2/美DOD选定C-UAS C2",
+          "configuration_batch": "Forward Area Air Defense Command and Control",
+          "key_parameters": {
+            "missions": "SHORAD、C-RAM、C-UAS",
+            "interface_role": "将探测、识别、跟踪、交战授权/火控态势集成到单一界面",
+            "operational_relevance": "LIDS家族使用FAAD C2"
+          },
+          "units": "任务类型；C2功能",
+          "confidence": "高"
+        },
+        {
+          "system": "Saab Giraffe 1X",
+          "status": "现役/出口与北约国家采购中；C-UAS/VSHORAD补盲传感器",
+          "configuration_batch": "Giraffe 1X 3D多功能雷达",
+          "key_parameters": {
+            "system_weight": "<150 kg",
+            "topside_weight": "100 kg",
+            "small_uav_detection": "厂商称可在4 km探测小于牛奶盒重量的UAV",
+            "integration": "可集成到机动或固定安装"
+          },
+          "units": "kg；km",
+          "confidence": "高；复杂地形有效距离需实测"
+        },
+        {
+          "system": "Robin Radar IRIS",
+          "status": "商用/军警与机场类C-UAS应用，2025年推出长距模式",
+          "configuration_batch": "IRIS标准模式；IRIS Long-Range Mode",
+          "key_parameters": {
+            "azimuth_coverage": "360度",
+            "elevation_coverage": "60度",
+            "instrumented_range_standard": "5 km",
+            "coverage_area_standard": "78 km²",
+            "instrumented_range_long_range_mode": "12 km"
+          },
+          "units": "度；km；km²",
+          "confidence": "高；性能为厂商标称"
+        },
+        {
+          "system": "Hensoldt SPEXER 2000 Coastal / SPEXER短程雷达族",
+          "status": "现役雷达族；SPEXER 2000 3D MkIII另见乌克兰相关采购报道",
+          "configuration_batch": "SPEXER 2000 Coastal公开参数；不等同于所有MkIII批次",
+          "key_parameters": {
+            "uav_rcs_reference": "0.2 m² RCS",
+            "uav_detection_range": "9 km"
+          },
+          "units": "m² RCS；km",
+          "confidence": "中；型号批次存在差异，MkIII参数需单独核验"
+        },
+        {
+          "system": "Rheinmetall Skyranger 30",
+          "status": "在采购/验证与系列化交付阶段，属炮基SHORAD/C-UAS方向",
+          "configuration_batch": "Skyranger 30炮塔/系统",
+          "key_parameters": {
+            "search_radar": "3D AESA，S-band或X-band配置",
+            "gun": "30 mm×173",
+            "rate_of_fire": "1200 rounds/min",
+            "functions": "自动目标探测、捕获与跟踪"
+          },
+          "units": "mm；发/分；雷达波段",
+          "confidence": "中高；不同国家底盘和传感器配置可能不同"
+        },
+        {
+          "system": "DroneShield DroneSentry-C2 / Sentrycs Cyber over RF类系统",
+          "status": "现役商用/政府客户；软件快速迭代",
+          "configuration_batch": "DroneSentry-C2；Sentrycs V6.0",
+          "key_parameters": {
+            "sensor_fusion": "RF、雷达、光学及第三方系统融合",
+            "protocol_analytics": "从无人机与操作者通信协议层提取识别信息",
+            "limitation": "对无RF发射、自主航线或光纤控制目标能力受限"
+          },
+          "units": "传感器类型；协议/数据层",
+          "confidence": "中；厂商能力公开但缺少统一第三方性能测试"
+        }
+      ]
+    },
+    "development_models": [
+      {
+        "model_or_program": "Low-Altitude Passive Detection System, Army SBIR/STTR",
+        "type": "低成本、低SWaP、模块化、被动探测传感器",
+        "upgrade_need_addressed": "补足现有系统对低空、多速度sUAS的预警不足，缓解地形、地球曲率、障碍物和大型固定系统限制",
+        "maturity": "早期研发/小企业创新课题，估计TRL 3-5",
+        "confidence": "高"
+      },
+      {
+        "model_or_program": "Coyote Block 3NK",
+        "type": "非动能、可徘徊/可召回反无人机拦截器",
+        "upgrade_need_addressed": "降低附带损害并提升对蜂群/多目标反复交战能力",
+        "maturity": "厂商公开称已演示并属Coyote家族；估计TRL 6-8",
+        "confidence": "中高"
+      },
+      {
+        "model_or_program": "DE M-SHORAD / IFPC-HEL / IFPC-HPM",
+        "type": "定向能/高功率微波",
+        "upgrade_need_addressed": "降低单次交战成本、提高弹药深度、应对饱和无人机",
+        "maturity": "测试/开发阶段；公开资料显示仍有延期、用户评价和规模化成本不确定性，估计TRL 5-7",
+        "confidence": "中"
+      },
+      {
+        "model_or_program": "BLADE / 30 mm炮基近程反无人机",
+        "type": "车载炮基低空无人机拦截",
+        "upgrade_need_addressed": "为机动部队提供近程快速反应和相对低成本硬杀伤层",
+        "maturity": "演示/试验与训练验证，估计TRL 6-7",
+        "confidence": "中"
+      },
+      {
+        "model_or_program": "下一代C-UAS导弹与通用发射器",
+        "type": "低成本/新一代动能拦截器和发射架通用化",
+        "upgrade_need_addressed": "降低Coyote等现有拦截器成本压力，提升库存与平台适配",
+        "maturity": "概念/工程研制公开信息有限，；{
+  "findings": [
+    "现役低空无人机探测预警体系的传统缺口不是单项传感器缺失，而是“低空小目标—复杂地形—高虚警环境—短处置窗口”共同造成的体系性不连续：山体、建筑、树木、港区设施、风机、水面和电磁噪声会同时压缩雷达视距、RF截获、EO/IR确认和声学验证的有效范围。证据链：E3、E4、E5、E6、E14。",
+    "公开战例显示，低成本无人机和诱饵的主要作战效应常在于持续消耗和态势过载，而非单架平台高成功率。俄乌Shahed/FPV、纳卡无人机打击、红海反无人机作战均支持“分层防御有效但成本、库存和值班压力显著上升”的判断。证据链：E8、E9、E10、E11、E13、E16。",
+    "传统固定式、中心化低空预警体系在复杂地形中的主要缺口包括：低空盲区不可视、单传感器误警/漏警、RF依赖对静默或半自主目标脆弱、C2确认链过长、基层单位缺少有机补盲和近程告警能力、战损后覆盖重构慢。证据链：E2、E4、E5、E7、E10、E12、E14。",
+    "升级需求应从“采购更强单一雷达”转为“地形感知的分布式多模态预警体系”：固定与机动雷达、被动RF/频谱监测、EO/IR验证、声学/人工观测、边缘AI融合、低带宽降级运行、共同作战图、低成本处置和被动防护共同形成决策级置信度。证据链：E1、E2、E3、E4、E6、E7、E12、E14。",
+    "作战运用上，复杂地形防御的关键不是在末端才“看见并打掉”，而是在危机前建立常态低空/RF/民用活动基线，在初始弱告警时完成多源关联，并在网络或上级C2降级时保持本地分级告警能力。证据链：E1、E3、E4、E6、E7、E12。",
+    "反证与修正：电子战、传统雷达和传统防空并未失效；乌克兰的声学网、机动防空、电子战和共同作战图，以及红海分层防御经验，都显示传统能力经体系化整合后仍有显著价值。问题在于单一、固定、中心化和高成本模式难以长期承受复杂地形、饱和、诱饵和快速迭代。证据链：E8、E10、E11、E13、E16。",
+    "对装备功能的优先要求应转化为可测指标：三维地形覆盖率、关键低空通道首警时间、多传感器关联延迟、虚警/漏警率、RF静默目标发现概率、网络降级下本地态势保持、机动补盲部署时间、战损后最低覆盖恢复时间、单位目标处置成本。"
+  ],
+  "confidence": 0.84,
+  "open_questions": [
+    "不同型号现役雷达、RF、EO/IR、声学节点在山谷、城市峡谷、港区水面、高原低温和强电磁背景中的实测Pd、FAR、首警时间和连续跟踪能力仍需本级试验数据确认。",
+    "公开资料可证明低空无人机威胁趋势和体系缺口，但无法充分量化特定国家、特定部队和特定装备编成的真实覆盖盲区、库存消耗率和操作员疲劳阈值。",
+    "RF静默、光纤控制、视觉/惯导辅助、蜂窝/卫星/中继链路和AI导航的扩散速度存在不确定性；短期仍受成本、重量、算力和训练约束，中期可能显著削弱RF依赖型防御。",
+    "民用空域、隐私、频谱许可、机场运行、误伤风险和执法授权在本土/城市场景中可能比战区环境更强地约束探测和处置方式，需要单独形成规则矩阵。",
+    "上游缺少weapon_equipment与international_situation正式交接，因此本文对具体装备性能和政治/法律约束只作公开资料层面的通用化判断。"
+  ],
+  "handoff_summary": "本交接面向winning_mechanism：复杂地形下低空无人机探测预警的传统能力缺口，本质是低空物理视距、单传感器不可靠、集中式C2延迟、成本交换不利和持续保障脆弱共同造成的体系失配。公开战例支持三条可迁移经验：一是分层、多模态、机动和被动防护结合优于单点高端装备；二是C2必须从中心化确认转向共同作战图、边缘融合和降级运行；三是装备升级必须服务于可持续作战，包括低成本处置、快速软件/特征库更新、机动补盲和战损恢复。建议下游以“时间窗口、成本交换、覆盖韧性、快速迭代和跨域协同”作为胜利机制建模变量。",
+  "search_plan": [
+    {
+      "track": "公开战例与复盘",
+      "queries": [
+        "Nagorno Karabakh 2020 drones air defense lessons CSIS full spectrum air defense mobile SHORAD passive defenses",
+        "Red Sea counter UAS drones Houthi lessons layered defense cost exchange CNAS 2025 PDF",
+        "CSIS Drone Saturation Russia's Shahed Campaign acoustic sensors common operating picture electronic warfare 2025",
+        "Ukraine drone warfare electronic warfare C-UAS lessons 2025 report"
+      ]
+    },
+    {
+      "track": "联合和多域作战概念",
+      "queries": [
+        "DoD Strategy for Countering Unmanned Systems 2024 detection active passive defense PDF",
+        "Joint Counter Small UAS Office counter drone swarm demonstration 2024 layered system of systems",
+        "NATO uncrewed warfare report 2025 counter drone lessons Ukraine electronic warfare resilience",
+        "Small Unmanned Aircraft System Airspace Management and Control Handbook Army Leaders 2025 air ground littoral"
+      ]
+    },
+    {
+      "track": "有人无人协同",
+      "queries": [
+        "manned unmanned teaming counter UAS air defense sensor fusion command control 2025 Army",
+        "small unmanned aircraft system airspace management and control handbook Army leaders 2025 manned unmanned fired systems",
+        "UAS airspace management dynamic airspace planning manned unmanned fired systems air ground littoral 2025 handbook",
+        "Ukraine AI enabled autonomous warfare CSIS FPV drones electronic warfare human oversight 2025"
+      ]
+    },
+    {
+      "track": "指挥控制与保障韧性",
+      "queries": [
+        "counter UAS command and control resilience edge processing network degraded operations report 2024",
+        "Department of Defense Counter UAS Background and Issues for Congress FAADC2 MEDUSA command and control 2025 PDF",
+        "Army Project Flytrap counter drone command and control architecture 2025",
+        "FAA UAS Detection Technical Considerations radar RF EO acoustic false alarms site specific spectrum licensing PDF"
+      ]
+    },
+    {
+      "track": "持续作战和战损恢复",
+      "queries": [
+        "Innovating Under Fire Ukraine frontline drone workshops maintenance repair lessons 2025",
+        "Russia Ukraine FPV drones lightweight counter UAV electronic warfare company level lessons 2025 Army University Press",
+        "Mapping the MilTech War eight lessons Ukraine battlefield drone electronic warfare 2026 Ifri",
+        "NATO Innovation Range counter drone technology testing Latvia 2026 TEVV electronic warfare solutions"
+      ]
+    }
+  ],
+  "contradictions": [
+    "反证1：低成本无人机并非天然高成功率。CSIS前线访谈显示多数低成本FPV任务成功率很低，电子战、操作员技能、天气和复杂目标运动都会降低效果；但低成本、大量和快速迭代仍足以形成消耗与过载。因此不能把威胁建模为“每架必中”，应建模为“持续试探和少量突防仍有作战价值”。证据链：E12、E13。",
+    "反证2：电子战既是有效反无人机手段，也是脆弱依赖。俄乌资料显示EW可大量干扰FPV和GNSS/控制链，但光纤无人机、视觉/惯导、频率捷变和替代链路正在削弱单纯RF压制的可靠性。因此EW应作为分层体系一环，而非唯一防线。证据链：E12、E13、E16。",
+    "反证3：传统雷达仍不可替代。雷达能全天候发现物理目标，特别是RF静默或预编程目标；但FAA和RAND均指出低空、山体遮蔽、地物反射、小RCS、低速/悬停和虚警会显著影响效果。因此结论不是“雷达失效”，而是“雷达必要但不充分”。证据链：E3、E5、E14。",
+    "反证4：复杂地形并非只帮助攻击方。山地、城市和植被既遮蔽蓝方传感器，也会缩短敌方无人机通信视距、增加导航误差、降低续航可靠性。若蓝方提前完成三维视域、RF传播和机动补盲规划，可把部分地形转化为防御优势。证据链：E3、E5、E12。",
+    "反证5：分布式体系提升韧性但增加管理复杂度。多传感器、多节点和边缘C2可降低单点失效，但会带来时间同步、目标去重、频谱冲突、蓝军无人机去冲突、数据标准和训练负担。因此升级必须同步解决接口、规则和保障，而不是只增加节点数量。证据链：E2、E6、E7、E15。"
+  ],
+  "confidence_basis": "证据覆盖政府/军方公开文件、FAA民航技术资料、国会研究服务、NATO/盟国材料、智库报告、军种专业刊物和学术/研究机构报告，来源族群超过3类，且包含2024、2025、2026年的新近资料。关于低空雷达限制、传感器互补、C2集成、分层防御和成本交换的证据直接性较高；关于俄乌、纳卡和红海战例的资料可相互印证无人机饱和、电子战、机动防空和快速迭代趋势。主要不确定性在于特定装备性能、特定地域覆盖率、真实库存消耗、敌方最新链路/自主能力和本土法律授权通常不公开，因此结论以结构化能力缺口和升级需求表达，不给出可执行攻击指令或特定目标方案。",
+  "source_claims": [
+    {
+      "url": "https://www.defense.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/",
+      "claim": "[E1] DoD 2024年反无人系统战略发布说明强调，无人系统威胁紧迫且持久，相关工作建立在JCO、Warfighter Senior Integration Group和Replicator 2等跨部门/跨军种举措之上。"
+    },
+    {
+      "url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+      "claim": "[E2] DoD战略事实清单提出提升探测、跟踪、表征能力，改进主动/被动防御，简化和下放必要授权，采用开放、模块化、快速测试和规模化方案，并降低无人系统与反制措施之间的成本失衡。"
+    },
+    {
+      "url": "https://www.faa.gov/sites/faa.gov/files/uas/resources/policy_library/Attachment-3-UAS-Detection-Technical-Considerations.pdf",
+      "claim": "[E3] FAA UAS探测技术考虑文件指出，雷达、RF、EO/IR等探测技术受场地许可、背景杂波、虚警、特征库更新、EO/IR视场和验证能力等因素影响，EO/IR通常更适合作为验证/辅助传感器。"
+    },
+    {
+      "url": "https://www.faa.gov/airports/new_entrants/uas_detection_mitigation_response",
+      "claim": "[E4] FAA机场UAS探测页面说明，雷达、RF、EO和声学可单独或组合用于主探测和二次验证，部署还需考虑机场运行、法律授权、频谱和安全影响。"
+    },
+    {
+      "url": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_5.html",
+      "claim": "[E5] FAA AIM雷达章节指出，雷达波会被山体、地面障碍物、降水等反射/衰减或被高地屏蔽；低空目标可能因山体遮蔽或低于雷达波束/地球曲率而不可见，小反射面目标也更难由一次雷达发现。"
+    },
+    {
+      "url": "https://www.army.mil/article-amp/278404/joint_counter_small_uas_office_conducts_successful_counter_drone_swarm_demonstration",
+      "claim": "[E6] 美陆军JCO 2024年蜂群反制演示每轮发射40多个UAS目标，测试9套C-UAS系统；公开结论是单一能力难以应对多方向、多速度、多尺寸的大规模目标剖面，需要系统-of-systems和分层方法。"
+    },
+    {
+      "url": "https://www.army.mil/article-amp/288375/small_unmanned_aircraft_system_airspace_management_and_control",
+      "claim": "[E7] 美陆军CALL 2025年小型UAS空域管理手册说明，现代战场需要整合有人、无人和火力系统，实施动态空域规划并主导air-ground littoral。"
+    },
+    {
+      "url": "https://www.congress.gov/crs_external_products/R/PDF/R48477/R48477.2.pdf",
+      "claim": "[E8] CRS《Department of Defense Counter-UAS》报告说明，现有美军C-UAS任务指挥系统包括FAADC2、MEDUSA和ADSI等，2025年陆军/DIU关注替代或改进C2以适应机动C-UAS，且高端拦截器成本可显著高于低成本无人机。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/air-and-missile-war-nagorno-karabakh-lessons-future-strike-and-defense",
+      "claim": "[E9] CSIS纳卡研究认为，2020年纳卡空中战的主要教训是全谱系防空重要性；有限的SHORAD和不足的被动防护使地面重装备易受无人机与巡飞弹威胁。"
+    },
+    {
+      "url": "https://www.cnas.org/publications/reports/countering-the-swarm",
+      "claim": "[E10] CNAS红海反无人机研究显示，分层、多域防御可取得战术成功，但面对大量低成本无人机时，成本交换、交战节奏、库存和舰艇/空中力量持续值班会形成严重压力。"
+    },
+    {
+      "url": "https://www.nato-pa.int/document/2025-uncrewed-warfare-report-clement-023-stctts",
+      "claim": "[E11] NATO PA 2025年无人作战报告强调，乌克兰等冲突中的无人系统战术会被盟友和对手模仿，并建议发展定向能等低成本反无人技术以应对拦截成本不对称。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare",
+      "claim": "[E12] CSIS 2025年乌克兰AI自主作战研究基于访谈指出，低成本FPV任务成功率受电子战、天气、操作员和通信限制显著影响；AI导航、ATR和本地处理可提高效率，但现代无人系统尚未实现端到端全自主，仍需人类监督。"
+    },
+    {
+      "url": "https://csis-website-prod.s3.amazonaws.com/s3fs-public/2025-05/250501_Slusher_Ukraine_Conflict.pdf?VersionId=01UUwSkCxsWGAU5vOtwYQHmtq3F1.XKM",
+      "claim": "[E13] CSIS乌克兰冲突经验报告认为，乌克兰战争凸显自主系统、电子战、信息整合、受扰物流和防空演变；GPS干扰、通信干扰、频率捷变、卫星通信、网状网络和电子战韧性成为关键变量。"
+    },
+    {
+      "url": "https://www.rand.org/content/dam/rand/pubs/research_reports/RR3000/RR3023/RAND_RR3023.pdf",
+      "claim": "[E14] RAND关于小型UAS对抗能力的研究指出，sUAS因小尺寸、低速和环境背景导致探测、分类、识别、跟踪困难，通常需要多传感器协同；虚警会使操作员脱敏，雷达RCS随角度变化，EO/IR视场小，ELINT/RF易受自动化或静默目标规避。"
+    },
+    {
+      "url": "https://defensescoop.com/2025/07/09/army-counter-drone-command-and-control-project-flytrap-exercise/",
+      "claim": "[E15] Project Flytrap公开报道显示，美陆军C5ISR中心在欧洲测试反无人机C2架构，目标是把传感器数据从单兵到联合伙伴贯通，通过ATAK等终端共享，降低士兵认知负荷并把固定系统转向可机动运用。"
+    },
+    {
+      "url": "https://www.armyupress.army.mil/Portals/7/military-review/Archives/English/so25/Lessons-from-Ukraine/Lessons-from-Ukraine-ua.pdf",
+      "claim": "[E16] Army University Press 2025年俄军乌克兰经验文章指出，FPV无人机和轻量化C-UAV EW快速扩散；双方大量FPV受RF/GNSS干扰影响，同时光纤、车载/便携干扰器、探测器和基层C-UAV装备推动攻防快速迭代。"
+    },
+    {
+      "url": "https://mwi.westpoint.edu/innovating-under-fire-lessons-from-ukraines-frontline-drone-workshops/",
+      "claim": "[E17] Modern War Institute对乌克兰前线无人机维修/创新工作坊的研究显示，前沿维修、3D打印、软件更新、快速改频、移动维修车和操作者—工程师反馈闭环可将修复与适配周期压缩到小时级，从而支撑持续作战。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/drone-saturation-russias-shahed-campaign",
+      "claim": "[E18] CSIS关于俄罗斯Shahed饱和战役的研究指出，自2024年9月后Shahed发射量显著上升；乌克兰通过声学传感器、综合防空网络、机动防空和电子战等低成本组合来维持防御，但饱和压力仍然增加。"
+    },
+    {
+      "url": "https://www.nato.int/en/news-and-events/articles/news/2026/03/18/new-nato-innovation-range-starts-counter-drone-technology-testing-in-latvia",
+      "claim": "[E19] NATO 2026年拉脱维亚创新靶场信息显示，盟国和乌克兰用户正在通过TEVV活动测试UAS/C-UAS、拦截飞行和电子战方案，体现快速试验、验证和采纳的制度化趋势。"
+    }
+  ],
+  "analysis_sections": {
+    "operational_constraints": {
+      "mission_definition": "防御方任务是在复杂地形和民用空域约束下，对低慢小无人机形成早期发现、连续跟踪、身份判别、威胁评估、分级告警和安全处置支撑；本分析仅用于防御性能力评估，不提供攻击路径、目标选择或可执行伤害指令。",
+      "terrain_environment_constraints": [
+        {
+          "constraint": "山地/丘陵遮蔽",
+          "effect": "山体与地形起伏造成雷达、EO/IR、RF和通信链路视距中断，低空目标可能在关键通道外才被发现，首警时间被压缩。",
+          "evidence_links": [
+            "E5",
+            "E14"
+          ],
+          "operational_implication": "必须预先进行三维视域和RF传播建模，重点标注山谷、背坡、低空通道和传感器盲扇区。"
+        },
+        {
+          "constraint": "城市峡谷和设施密集区",
+          "effect": "高层建筑、钢结构、车辆、鸟群、风机和电磁反射造成多径、遮挡、杂波和虚警；EO/IR可能被热背景和遮挡牵引。",
+          "evidence_links": [
+            "E3",
+            "E4",
+            "E14"
+          ],
+          "operational_implication": "单传感器告警不应直接等同威胁，应采用时间同步、多源关联和白名单/合法流量去冲突。"
+        },
+        {
+          "constraint": "海岸/港区/水面背景",
+          "effect": "水面反射、船舶/港机热源、海风噪声和港区RF环境会影响雷达、声学、EO/IR与RF识别置信度。",
+          "evidence_links": [
+            "E3",
+            "E10",
+            "E14"
+          ],
+          "operational_implication": "港区应采用固定高点、机动补盲、被动传感和人工/哨兵报告结合，避免单一雷达阈值造成大量虚警。"
+        },
+        {
+          "constraint": "天气、夜间和季节变化",
+          "effect": "雨雾雪、低云、热背景变化和风噪影响EO/IR、声学和高频雷达表现；同一部署方案在不同季节的Pd/FAR会变化。",
+          "evidence_links": [
+            "E3",
+            "E12",
+            "E14"
+          ],
+          "operational_implication": "部署原则应包含季节性校准、传感器权重动态调整、夜间/恶劣天气补盲预案。"
+        },
+        {
+          "constraint": "电磁频谱拥挤与受扰",
+          "effect": "RF探测和干扰受民用通信、己方无人机、敌方跳频/静默/替代链路、GNSS干扰和频谱许可限制影响。",
+          "evidence_links": [
+            "E2",
+            "E3",
+            "E12",
+            "E13",
+            "E16"
+          ],
+          "operational_implication": "RF不能作为唯一首警源；干扰措施必须与民用通信、己方C2、友军无人机和空域安全去冲突。"
+        },
+        {
+          "constraint": "法律、民航和授权",
+          "effect": "本土、机场、城市和关键基础设施场景中，探测与处置系统部署涉及频谱许可、EMI、安全风险、隐私和执法授权。",
+          "evidence_links": [
+            "E3",
+            "E4"
+          ],
+          "operational_implication": "体系设计必须预置规则矩阵：谁可看、谁可判、谁可告警、谁可授权、何时可转入处置。"
+        },
+        {
+          "constraint": "持续作战和补给",
+          "effect": "大量低成本目标可通过诱饵、重复试探和饱和压迫消耗人员、传感器维护、弹药/拦截器和C2带宽。",
+          "evidence_links": [
+            "E8",
+            "E10",
+            "E11",
+            "E18"
+          ],
+          "operational_implication": "预警体系指标必须纳入成本交换、库存、备件、电源、网络和操作员轮换，而非只看单次拦截率。"
+        }
+      ],
+      "traditional_gap_to_upgrade_mapping": [
+        {
+          "traditional_gap": "固定雷达低空盲区",
+          "upgrade_need": "地形感知部署、机动补盲雷达、被动传感节点、临时升高平台、覆盖热力图。",
+          "metrics": [
+            "关键低空通道覆盖率",
+            "首警距离/时间",
+            "盲区重构时间"
+          ],
+          "evidence_links": [
+            "E5",
+            "E14"
+          ]
+        },
+        {
+          "traditional_gap": "单传感器误警/漏警",
+          "upgrade_need": "雷达+RF+EO/IR+声学+人工观测的多模态融合，目标去重和置信评分。",
+          "metrics": [
+            "融合后FAR",
+            "多源关联延迟",
+            "目标分类置信度"
+          ],
+          "evidence_links": [
+            "E3",
+            "E4",
+            "E6",
+            "E14"
+          ]
+        },
+        {
+          "traditional_gap": "RF依赖",
+          "upgrade_need": "可发现RF静默/预编程/半自主目标的雷达、EO/IR、声学和行为异常检测；RF仅作为被动首警和识别维度之一。",
+          "metrics": [
+            "RF静默目标发现概率",
+            "RF与非RF告警一致率",
+            "干扰后态势保持时间"
+          ],
+          "evidence_links": [
+            "E12",
+            "E13",
+            "E14",
+            "E16"
+          ]
+        },
+        {
+          "traditional_gap": "中心化C2延迟",
+          "upgrade_need": "共同作战图、边缘融合、分级授权、低带宽告警、断链本地处置支持。",
+          "metrics": [
+            "传感器到告警时间",
+            "告警到授权时间",
+            "网络降级下本地空情保持率"
+          ],
+          "evidence_links": [
+            "E2",
+            "E7",
+            "E8",
+            "E15"
+          ]
+        },
+        {
+          "traditional_gap": "高成本末端处置",
+          "upgrade_need": "低成本拦截、电子/非动能、被动防护、诱饵和任务影响评估结合，高端拦截器保留给高危目标。",
+          "metrics": [
+            "单位威胁处置成本",
+            "高端拦截器消耗率",
+            "关键资产任务中断时间"
+          ],
+          "evidence_links": [
+            "E2",
+            "E8",
+            "E10",
+            "E11",
+            "E18"
+          ]
+        },
+        {
+          "traditional_gap": "战损恢复慢",
+          "upgrade_need": "模块化节点、预案化机动补位、备用电源、离线地图、可快速更新特征库、前沿维修和备件包。",
+          "metrics": [
+            "最低覆盖恢复时间",
+            "节点替换时间",
+            "软件/特征库更新周期"
+          ],
+          "evidence_links": [
+            "E17",
+            "E19"
+          ]
+        }
+      ],
+      "measures_of_effectiveness": [
+        "首警时间是否足以完成识别、授权和安全处置。",
+        "复杂地形关键通道是否存在可被反复利用的稳定盲区。",
+        "融合后虚警是否低到操作员可持续处理。",
+        "网络降级和部分节点损伤后是否仍能保持本地分级告警。",
+        "每轮威胁处置成本是否低于可持续阈值。",
+        "敌方改变频段、时段、平台和诱饵比例后，体系是否可快速更新。"
+      ]
+    },
+    "force_coordination": {
+      "coordination_concept": "采用“区域低空态势单元+机动补盲分队+基层有机观察/处置单元+上级联合空情/C2+民航/公安/频谱联络”的分层协同。核心是把传感器、指挥、效应器、被动防护和保障纳入同一任务链，而不是让各装备孤立值守。",
+      "force_package": [
+        {
+          "element": "固定低空监视与既有防空预警节点",
+          "role": "提供连续背景空情、较远距离首警和与上级防空网络衔接。",
+          "limits": "低空盲区、地形遮蔽、小RCS和地物杂波显著影响可靠性。",
+          "evidence_links": [
+            "E5",
+            "E14"
+          ]
+        },
+        {
+          "element": "机动补盲雷达/便携传感节点",
+          "role": "在山谷、城市边缘、港区和战损空隙中快速补位，缩短低空关键通道发现距离缺口。",
+          "limits": "需要预设点位、电源、网络、频谱许可和安全防护；点位暴露后自身可能成为高价值节点。",
+          "evidence_links": [
+            "E6",
+            "E15"
+          ]
+        },
+        {
+          "element": "被动RF/频谱监测",
+          "role": "发现控制链、视频链、遥测和异常频谱活动，辅助定位操作者或链路方向，适合低可见度和低成本持续值守。",
+          "limits": "对RF静默、预编程、光纤、蜂窝/卫星/中继或强加密跳频目标适应不足。",
+          "evidence_links": [
+            "E3",
+            "E12",
+            "E14",
+            "E16"
+          ]
+        },
+        {
+          "element": "EO/IR与热像验证",
+          "role": "对雷达/RF/声学告警进行可视化确认、分类和证据留存。",
+          "limits": "视场较窄，受遮挡、天气、夜间热背景、诱饵和假目标影响；通常需由其他传感器cueing。",
+          "evidence_links": [
+            "E3",
+            "E14"
+          ]
+        },
+        {
+          "element": "声学/人工观测/群众或哨兵报告",
+          "role": "在低空慢速、夜间、雷达盲区和大型一向攻击无人机场景中提供低成本补充首警。",
+          "limits": "受环境噪声、风雨、车辆、港机和误报影响；必须与其他传感器关联后使用。",
+          "evidence_links": [
+            "E4",
+            "E18"
+          ]
+        },
+        {
+          "element": "C2与共同作战图",
+          "role": "整合多源告警、目标去重、威胁排序、授权流转、效应器分配和跨单位通报。",
+          "limits": "若高度中心化或接口不统一，会在饱和窗口中形成延迟和重复交战。",
+          "evidence_links": [
+            "E7",
+            "E8",
+            "E15"
+          ]
+        },
+        {
+          "element": "低成本处置与被动防护",
+          "role": "在合法授权下采用低成本、分层、按威胁优先级的防御措施，并通过分散、伪装、遮蔽、诱饵和关键功能冗余降低突防后果。",
+          "limits": "处置手段受民用环境、误伤、频谱和规则约束；必须避免把高端弹药消耗在低价值诱饵上。",
+          "evidence_links": [
+            "E2",
+            "E9",
+            "E10",
+            "E11"
+          ]
+        },
+        {
+          "element": "保障与快速适配单元",
+          "role": "负责传感器校准、软件/特征库更新、备件、电池、电源、网络、前沿维修和经验回灌。",
+          "limits": "若保障集中且距离前沿过远，难以跟上无人机技术和战术迭代速度。",
+          "evidence_links": [
+            "E17",
+            "E19"
+          ]
+        }
+      ],
+      "coordination_interfaces": [
+        {
+          "interface": "传感器到C2",
+          "requirements": [
+            "统一时间戳和坐标基准",
+            "目标ID去重",
+            "置信度评分",
+            "低带宽告警格式",
+            "原始数据留存以便复盘"
+          ],
+          "failure_if_missing": "多源重复目标、误关联、告警风暴和人工确认队列积压。",
+          "evidence_links": [
+            "E8",
+            "E15"
+          ]
+        },
+        {
+          "interface": "C2到基层单位",
+          "requirements": [
+            "分级告警",
+            "本地可执行防护动作清单",
+            "断链时的本地授权边界",
+            "友军无人机/有人机空域去冲突"
+          ],
+          "failure_if_missing": "上级确认延迟超过末端处置窗口，基层只能被动承受或过度反应。",
+          "evidence_links": [
+            "E2",
+            "E7"
+          ]
+        },
+        {
+          "interface": "军方到民航/公安/频谱/设施业主",
+          "requirements": [
+            "合法无人机白名单",
+            "Remote ID/许可信息校验",
+            "频谱使用和干扰限制",
+            "机场/城市安全通报机制",
+            "误报澄清流程"
+          ],
+          "failure_if_missing": "民用流量与敌对活动混杂，导致虚警上升、授权迟滞或违法干扰。",
+          "evidence_links": [
+            "E3",
+            "E4"
+          ]
+        },
+        {
+          "interface": "传感器到效应器",
+          "requirements": [
+            "按威胁等级分配低成本与高端处置资源",
+            "避免重复交战",
+            "确保民用安全扇区",
+            "记录交战与未交战原因"
+          ],
+          "failure_if_missing": "高端资源被诱饵消耗，真实高危目标获得窗口。",
+          "evidence_links": [
+            "E6",
+            "E8",
+            "E10"
+          ]
+        },
+        {
+          "interface": "有人—无人—火力系统空域管理",
+          "requirements": [
+            "动态空域控制",
+            "己方UAS任务计划共享",
+            "禁飞/限飞临时区域",
+            "安全高度层和时间窗",
+            "任务变更快速通报"
+          ],
+          "failure_if_missing": "友军无人机、有人航空器、防空火力和干扰措施相互冲突。",
+          "evidence_links": [
+            "E7"
+          ]
+        }
+      ],
+      "battle_rhythm": [
+        "常态：更新低空活动、RF背景、民用无人机、鸟群/车辆/港机/风机等基线；每班复核传感器健康和覆盖热力图。",
+        "预警：出现重复弱告警或异常RF/目视报告时，机动补盲节点前出，EO/IR和声学权重上调，设施被动防护升级。",
+        "接触：按多源置信度而非单点告警触发分级响应，优先保护关键通道和高价值节点。",
+        "饱和：C2转入目标优先级管理，边缘节点保留本地告警和安全处置建议，上级保留资源统筹和跨区协调。",
+        "复盘：每次事件后更新虚警样本、漏警路径、干扰影响、授权延迟、处置成本和补给消耗。"
+      ],
+      "degraded_mode": [
+        "网络降级时保留本地传感器融合、短报文告警和离线地图。",
+        "上级C2不可用时按预先批准的分级规则执行告警、疏散、遮蔽、停飞、设备关停/分散等防护动作。",
+        "固定节点损伤时启动机动补盲网格，优先恢复关键通道、指挥节点、弹药/燃料/电力/通信设施周边最低覆盖。",
+        "RF环境恶化时降低对RF首警权重，提高雷达、EO/IR、声学、人工观测和行为异常关联权重。",
+        "虚警过载时使用地理围栏、白名单、时间窗和多源阈值动态调节，避免操作员脱敏。"
+      ],
+      "support_requirements": [
+        "三维地形/建筑/植被/水面数据库和视域分析工具。",
+        "传感器点位预案、备用三脚架/桅杆、便携电源、加固网络和频谱授权包。",
+        "多传感器数据标准、时间同步、目标ID规则和C2接口。",
+        "操作员轮换、跨部门联络员、低空空域管制脚本和民用流量去冲突清单。",
+        "备件、电池、软件更新、特征库、校准工具和前沿维修能力。",
+        "战损后恢复演练和红队式盲区复核。"
+      ]
+    },
+    "coa": [
+      {
+        "name": "COA-1 基线方案：固定节点为主、中心化确认、有限机动补盲",
+        "concept": "沿用现役固定低空监视雷达、少量RF和EO/IR验证节点，由上级空情/C2集中确认并向基层发布告警；机动补盲只在明确事件后临时展开。",
+        "suitable_conditions": [
+          "地形相对开阔、民用无人机活动低、威胁为低频单机/小批量。",
+          "有充分处置时间，且上级C2链路稳定。",
+          "主要任务是常态监视、证据留存和低强度警戒。"
+        ],
+        "strengths": [
+          "组织改动小，训练和维护成本低。",
+          "便于统一授权、统一空情和降低误处置风险。",
+          "适合预算短期不足或威胁等级较低阶段。"
+        ],
+        "risks": [
+          "复杂地形盲区难以及时补齐。",
+          "单传感器虚警/漏警导致等待人工确认，压缩处置窗口。",
+          "遇到多方向、多批次和诱饵时C2与操作员易过载。",
+          "战损后恢复依赖固定节点，覆盖重构慢。"
+        ],
+        "infeasible_boundaries": [
+          "山地—城市—港区复合地形中存在多个稳定低空通道。",
+          "威胁进入持续饱和或电磁压迫阶段。",
+          "要求基层在断链或分钟级窗口内自主告警和防护。",
+          "民用流量密集且白名单/去冲突数据不完整。"
+        ],
+        "equipment_constraints": [
+          "固定雷达受地形遮蔽和小RCS影响。",
+          "EO/IR需要其他传感器cueing。",
+          "RF对静默/半自主目标不足。",
+          "传统C2接口可能难以快速接入新型传感器。"
+        ],
+        "evidence_links": [
+          "E3",
+          "E4",
+          "E5",
+          "E8",
+          "E14"
+        ],
+        "minimum_upgrade_if_selected": [
+          "完成三维覆盖审计和盲区清单。",
+          "建立民用无人机白名单和RF/空情基线。",
+          "为关键盲区预置机动补盲点位和供电/网络包。",
+          "设定弱告警触发的分级响应流程。"
+        ]
+      },
+      {
+        "name": "COA-2 弹性分布方案：多模态分布式传感、边缘融合、机动补盲与低成本分层处置",
+        "concept": "以固定节点为骨干，在山地通道、城市边缘、港区和关键设施周边部署可机动、可重构的雷达/RF/EO/IR/声学节点；通过共同作战图和边缘AI融合形成分级置信度，并把低成本处置、被动防护和战损重构纳入同一防御循环。",
+        "suitable_conditions": [
+          "复杂地形、多方向低空威胁和持续试探并存。",
+          "需要在网络受扰、节点损伤和上级C2延迟时保持本地预警。",
+          "关键设施价值高，且可投入一定传感器、C2、训练和保障资源。",
+          "需要长期应对低成本无人机消耗战。"
+        ],
+        "strengths": [
+          "低空覆盖韧性高，单点失效不致形成稳定通道。",
+          "多传感器融合降低单点虚警/漏警。",
+          "机动补盲可把地形缺口转化为预案化防御。",
+          "边缘融合和分级授权缩短告警到行动时间。",
+          "低成本处置和被动防护改善成本交换。"
+        ],
+        "risks": [
+          "部署和训练复杂度高。",
+          "多源数据标准、目标去重、时间同步和网络安全要求高。",
+          "节点增多带来电源、频谱、维护和暴露风险。",
+          "若缺少规则矩阵，边缘授权可能造成误处置或空域冲突。"
+        ],
+        "infeasible_boundaries": [
+          "没有统一C2接口和最低数据标准。",
+          "无法获得频谱、场地、供电或民用协同授权。",
+          "训练和保障无法支撑24/7分布式值守。",
+          "预算只能维持单点装备采购而不能支撑系统集成与软件更新。"
+        ],
+        "equipment_constraints": [
+          "需要开放式接口、边缘计算、低带宽数据链和传感器健康监测。",
+          "节点必须可快速部署、校准和替换。",
+          "EO/IR、声学、RF权重需要随天气和电磁环境动态调整。",
+          "效应器必须按威胁等级与民用安全限制联动。"
+        ],
+        "evidence_links": [
+          "E1",
+          "E2",
+          "E6",
+          "E7",
+          "E8",
+          "E10",
+          "E15",
+          "E18",
+          "E19"
+        ],
+        "priority_actions": [
+          "建立区域低空三维数字底图和传感器覆盖热力图。",
+          "将固定雷达、机动雷达、RF、EO/IR、声学和人工报告接入共同作战图。",
+          "为山谷、城市峡谷、港区水面和关键设施设置传感器组合模板。",
+          "定义本地分级告警和断链授权边界。",
+          "把低成本处置、被动防护、维修和软件更新纳入日常战备。"
+        ]
+      },
+      {
+        "name": "COA-3 资源受限方案：关键点防护、低成本补盲、被动防护和人工/民用协同",
+        "concept": "在装备和预算不足时，不追求全域连续覆盖，而是围绕关键资产、关键通道和高风险时段建立低成本、可移动、可降级的预警网；以被动防护、分散、伪装、遮蔽、临时空域管控和低成本传感为主，高端处置只保留给高置信高危目标。",
+        "suitable_conditions": [
+          "预算、传感器数量、人员或频谱授权不足。",
+          "防护对象明确，关键通道和关键时段可识别。",
+          "威胁主要为试探、侦察、小规模袭扰或诱饵消耗。",
+          "可接受非关键区域存在短时低置信盲区。"
+        ],
+        "strengths": [
+          "部署快，成本低，适合基层先行形成最低预警能力。",
+          "通过被动防护降低突防后果，减少高端资源消耗。",
+          "人工、声学、RF和廉价EO可补充传统雷达盲区。",
+          "便于逐步扩展为弹性分布方案。"
+        ],
+        "risks": [
+          "覆盖不连续，难以应对多方向饱和。",
+          "人工报告和低成本传感器虚警较高。",
+          "缺少自动融合时，告警质量依赖训练和流程。",
+          "若敌方快速迭代或采用静默/半自主目标，RF和人工体系效果下降。"
+        ],
+        "infeasible_boundaries": [
+          "任务要求对大范围复杂地形提供连续、实时、高置信预警。",
+          "同时面对多批次、多轴、诱饵和电磁压迫。",
+          "关键资产无法分散、遮蔽或降低特征。",
+          "没有民用/设施业主协同，无法管控合法无人机背景。"
+        ],
+        "equipment_constraints": [
+          "低成本传感器需严格校准并限定适用场景。",
+          "人工报告必须配套身份核验、地理标注和误报复核。",
+          "被动防护措施需要提前工程化，不能等接触后临时实施。",
+          "低成本方案仍需最小C2和数据记录能力，否则难以复盘改进。"
+        ],
+        "evidence_links": [
+          "E3",
+          "E4",
+          "E9",
+          "E11",
+          "E14",
+          "E17",
+          "E18"
+        ],
+        "priority_actions": [
+          "按关键资产价值和无人机可达性划分防护优先级。",
+          "建立低空观察哨、声学/目视/RF简易告警点和事件上报模板。",
+          "预置遮蔽、分散、诱饵、灯光/热源/电磁特征管理措施。",
+          "把高端处置资源保留给高置信、高危、接近关键保护圈的目标。",
+          "用事件复盘逐步识别最值得升级为固定或机动传感节点的位置。"
+        ]
+      }
+    ],
+    "lessons": {
+      "public_case_lessons": [
+        {
+          "case": "纳卡2020",
+          "lesson": "传统SHORAD数量、质量和体系化不足时，地面重装备与固定防空节点易受无人机和巡飞弹压迫；全谱系防空、机动SHORAD和被动防护应前置到战术层级。",
+          "transfer_to_complex_terrain": "复杂地形下固定节点更容易形成可识别盲区，战术单位必须具备有机告警、分散和被动防护能力。",
+          "evidence_links": [
+            "E9"
+          ]
+        },
+        {
+          "case": "俄乌持续无人机战",
+          "lesson": "无人机、电子战、AI/自主、频率调整、光纤/替代链路和基层C-UAV装备形成快速迭代循环；固定采购周期难以跟上战场软件和战术变化。",
+          "transfer_to_complex_terrain": "预警体系应采用开放式架构、可更新特征库、前沿维修和操作员—工程师反馈闭环。",
+          "evidence_links": [
+            "E12",
+            "E13",
+            "E16",
+            "E17"
+          ]
+        },
+        {
+          "case": "俄罗斯Shahed饱和战役",
+          "lesson": "大量低成本一向攻击无人机可通过持续发射消耗防空资源；乌克兰以声学网、共同作战图、EW、机动防空和低成本手段减轻成本压力。",
+          "transfer_to_complex_terrain": "对复杂地形低空预警，应把声学/人工观测作为补盲层，但必须与共同作战图和传感器融合结合，避免误报泛滥。",
+          "evidence_links": [
+            "E18"
+          ]
+        },
+        {
+          "case": "红海反无人机作战",
+          "lesson": "分层、多域防御可以在高威胁环境中有效击落大量无人机，但成本交换、库存、节奏和人员/平台持续值班压力难以长期忽视。",
+          "transfer_to_complex_terrain": "陆上复杂地形防御也不能只追求单次拦截率，必须以低成本处置、弹药管理和被动防护控制长期消耗。",
+          "evidence_links": [
+            "E10"
+          ]
+        },
+        {
+          "case": "JCO蜂群反制演示",
+          "lesson": "面对多方向、多速度、多尺寸目标，没有单一传感器或效应器能解决全部问题；需要系统-of-systems、分层探测、威胁排序和C2融合。",
+          "transfer_to_complex_terrain": "复杂地形中的“多弱告警”场景更需要目标去重、优先级排序和自动cueing，否则人工值守会被虚警和重复目标淹没。",
+          "evidence_links": [
+            "E6"
+          ]
+        }
+      ],
+      "deployment_principles": [
+        {
+          "principle": "地形先于装备",
+          "description": "先做三维视域、RF传播、民用流量、气象和关键通道分析，再决定雷达、RF、EO/IR、声学和机动点位。",
+          "evidence_links": [
+            "E3",
+            "E5",
+            "E14"
+          ]
+        },
+        {
+          "principle": "多模态互补而非单传感器最优",
+          "description": "低分辨率广域传感用于首警，高分辨率窄视场传感用于确认；RF、雷达、EO/IR、声学和人工报告按环境动态加权。",
+          "evidence_links": [
+            "E3",
+            "E4",
+            "E14"
+          ]
+        },
+        {
+          "principle": "固定骨干+机动补盲+基层有机告警",
+          "description": "固定节点提供连续背景，机动节点填补地形/战损空隙，基层单元保留最低本地告警和防护能力。",
+          "evidence_links": [
+            "E6",
+            "E15",
+            "E17"
+          ]
+        },
+        {
+          "principle": "C2降级可运行",
+          "description": "共同作战图重要，但不能成为单点依赖；断链时仍需本地分级告警、离线地图和预授权防护动作。",
+          "evidence_links": [
+            "E2",
+            "E7",
+            "E8",
+            "E15"
+          ]
+        },
+        {
+          "principle": "低成本优先，高端保留",
+          "description": "对低价值、低置信或诱饵目标优先采用监视、遮蔽、驱离、电子/非动能和低成本措施，高端拦截用于高置信高危目标。",
+          "evidence_links
+
+## 最终回答：需要发展什么功能的产品
+
+- 传统战法能力空白补位能力：发展具备缺口场景专用探测、快速接入既有指挥链、模块化任务载荷和低成本补位能力的产品；证据驱动重点：{
+  "findings": [
+    "传统能力缺口的核心不是“有没有雷达”，而是现役低空预警体系多按高空、快速、较大雷达截面积目标设计；在山地、城市、海岸等复杂地形中，小型低慢小无人机可被地形、建筑、植被、水面杂波和电磁噪声共同遮蔽，导致发现距离、识别置信度和可处置时间同步压缩。",
+    "公开战例显示，低成本无人机并非总能高成功率突防；但其数量、低成本、快速迭代和可消耗特征足以通过持续试探、诱饵、饱和和跨域协同消耗防空弹药、传感器值班能力和指挥决策带宽。",
+    "现役体系的传统缺口集中在六类：一是低空盲区和地形遮蔽；二是单传感器误警与漏警；三是RF依赖型探测/压制对静默、自主、跳频或替代链路目标适应不足；四是集中式C2在短处置窗口内延迟过大；五是末端防护成本交换不利；六是基层单位缺少有机化、可机动、可重构的探测预警与被动防护能力。",
+    "升级需求应从单点装备采购转为体系架构升级：地形建模与视域规划、分布式补盲雷达、被动RF/频谱监测、EO/IR与声学验证、边缘AI融合、低带宽降级运行、蓝白名单与民航/民用无人机去冲突、低成本拦截与被动欺骗共同构成“决策级置信度”。",
+    "复杂地形场景下，关键时间窗口不是拦截瞬间，而是从危机前异常模式建立到初始接触的数分钟至数十秒：若传感器只在目标临近防区后才给出低置信告警，后续识别、授权、处置和安全评估会被压缩到不可用。",
+    "反证与修正：电子战和传统防空并未失效，乌克兰、红海等案例显示分层防御、电子战、机动火力和共同作战图可显著降低无人机命中率；因此问题不是“传统能力完全无用”，而是其在复杂地形、饱和、低成本消耗和快速技术迭代下需要体系化补强。",
+    "面向下游装备与运用研究，应优先评估：复杂地形三维覆盖率、低空目标首警时间、虚警/漏警率、RF静默目标发现概率、网络降级下本地处置能力、低成本连续作战能力、以及不同地形下传感器—效应器—指挥授权链条的闭环时间。"
+  ],
+  "confidence": 0.82,
+  "open_questions": [
+    "不同现役雷达、被动RF、EO/IR和声学节点在山谷、城市峡谷、海岸水面和高原低温环境中的实测Pd/FAR、首警时间和连续跟踪能力仍需本级试验数据确认。",
+    "公开资料可证明无人机威胁趋势和能力缺口，但无法充分量化特定国家、特定部队、特定装备编制下的真实覆盖盲区和库存消耗速率。",
+    "AI自主、抗干扰链路、星链/蜂窝/中继式替代链路的发展速度存在不确定性；短期内受算力、重量、成本限制，但中期可能显著削弱RF依赖型防御。",
+    "复杂地形下低成本拦截器、定向能、电子战和被动防护之间的最佳成本交换组合，需要结合任务目标、授权规则和民用环境约束进一步建模。",
+    "国内/本土防御场景中，法律授权、民航安全、频谱管理和隐私限制可能比战区环境更强地约束探测与处置方式，需单独形成规则矩阵。"
+  ],
+  "handoff_summary": "本轮研究将“复杂地形条件下现役低空无人机探测预警体系的传统能力缺口”转化为一个多域、动态对抗场景：敌方以低慢小、低成本、可消耗无人机为核心，通过危机前试探、初始低空接触、体系饱和与电磁/网络压迫、持续迭代和战损后再渗透，压缩蓝方首警与处置窗口。蓝方传统缺口主要在低空盲区、单传感器不可靠、RF依赖、集中式C2延迟、基层缺少有机C-UAS能力和成本交换不利。建议下游weapon_equipment重点研究分布式多模态融合、地形感知部署、低成本拦截与边缘处理；operational_employment重点研究分层值班、降级网络、民用空域去冲突和基层有机防护；winning_mechanism重点研究以成本交换、时间窗口、体系韧性和快速迭代压制无人机威胁的机制。",
+  "search_plan": [
+    {
+      "track": "近年公开战例",
+      "queries": [
+        "Russia Ukraine war low altitude drones detection air defense lessons terrain urban 2024 report",
+        "Nagorno-Karabakh 2020 drones air defense lessons small UAV radar electronic warfare report",
+        "Houthi Red Sea drones air defense saturation lessons counter UAS low cost 2024 report",
+        "Drone Saturation Russia Shahed Campaign Ukraine air defense acoustic sensors electronic warfare"
+      ]
+    },
+    {
+      "track": "现代演训与作战概念",
+      "queries": [
+        "Joint Counter Small UAS Office counter drone swarm demonstration 2024 layered approach",
+        "DoD Strategy for Countering Unmanned Systems detection active passive defenses 2024",
+        "counter small unmanned aircraft systems strategy DOTMLPF-P layered active passive defense",
+        "Small Drones Big Problems First Principles Countering UAS 2026"
+      ]
+    },
+    {
+      "track": "无人和智能系统运用",
+      "queries": [
+        "Ukraine FPV drones AI autonomous navigation anti jamming CSIS 2025",
+        "sUAS infiltration Ukraine electronic warfare GNSS spoofing attritable tactics",
+        "low slow small UAS air littoral contested space drone warfare lessons",
+        "counter UAS sensor fusion radar RF EO acoustic review"
+      ]
+    },
+    {
+      "track": "电磁网络与太空约束",
+      "queries": [
+        "Russia Ukraine electronic warfare drones GPS jamming UAV losses RUSI",
+        "contested electromagnetic spectrum UAS PNT jamming spoofing Ukraine report",
+        "counter UAS RF detection limitations multipath interference line of sight FAA technical considerations",
+        "GPS jamming satellite communications drone countermeasure Ukraine report"
+      ]
+    },
+    {
+      "track": "城市海岸高原等环境变化",
+      "queries": [
+        "urban counter UAS detection line of sight multipath clutter acoustic radar RF EO IR report PDF",
+        "low altitude air surveillance radar terrain masking line of sight mountains official report",
+        "counter UAS coastal environment sea clutter weather rain wind acoustic false alarms report",
+        "complex terrain low altitude drone detection radar clutter acoustic RF challenges mountainous"
+      ]
+    }
+  ],
+  "contradictions": [
+    "电子战既是有效反无人机手段，也是体系脆弱点。IAMD COE和CSIS均显示EW能大规模压制无人机，但CSIS和2026年ISIS报告也显示抗干扰、CRPA、替代链路、摄像头/中继/网状链路正在削弱单纯RF压制的可靠性。",
+    "Shahed等大型一向攻击无人机整体命中率并不高，ISIS数据表明大量无人机被拦截、迷航或受EW影响；但CSIS和ISIS同时指出持续大规模发射可消耗防空资源并在恶劣天气和基础设施累积损伤下形成战略效果。",
+    "雷达仍是全天候、可探测静默/自主目标的关键传感器；但FAA、DoD和学术综述均指出，低空小目标在地形遮蔽、地物反射、MTI盲速、杂波和小RCS条件下会显著降低雷达可靠性，因此“雷达必要”不等于“雷达充分”。",
+    "复杂地形既帮助攻击方利用山脊、建筑、树木和水面杂波接近，也会缩短无人机自身通信链路、导航和续航可靠性；蓝方若能提前做视域、RF传播和网络路径建模，可把地形从缺口转化为防御条件。",
+    "AI自主被广泛视为未来威胁放大器；但IAMD COE报告提醒，小型商用无人机在短期内仍受机载算力、重量、功耗和成本限制，不能假设所有低空目标都已具备高可靠自主突防能力。"
+  ],
+  "confidence_basis": "证据覆盖政府/军方文件、国会研究、军种专业期刊、智库报告、学术综述和公开战例，来源族群超过3类且包含2024、2025、2026年资料。关于复杂地形物理约束、传感器局限和多模态融合的证据直接性较高；关于俄乌、纳卡、红海战例的证据可相互印证无人机饱和、低成本消耗和分层防御趋势。主要不确定性在于具体装备性能、特定地域覆盖率、实际库存消耗和敌方最新链路/自主能力通常不公开，因此场景参数采用公开资料支撑的区间化、假设化表达。",
+  "source_claims": [
+    {
+      "url": "https://media.defense.gov/2026/Jul/08/2003958884/-1/-1/1/SMALL-DRONES-BIG-PROBLEMS-A-FIRST-PRINCIPLES-APPROACH-TO-Counter-UAS.PDF",
+      "claim": "[E1] 该DoD/联合跨机构材料指出无人机防护没有单一银弹，需雷达、光电/红外、声学、RF等互补传感器形成决策级置信度；山地、城市、植被、天气、RF噪声和网络路径会共同影响探测与处置。"
+    },
+    {
+      "url": "https://www.war.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/",
+      "claim": "[E2] DoD 2024年发布反无人系统战略，称无人系统对人员、设施和资产构成紧迫且持久威胁，并强调需统一理解和跨部门方法应对快速演化的无人系统。"
+    },
+    {
+      "url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+      "claim": "[E3] DoD战略事实清单强调无人系统正在改变冲突特征，短期重点包括提升探测、主动防御和被动防御，并面向更大数量、更高自主化和网络化威胁做中长期准备。"
+    },
+    {
+      "url": "https://www.army.mil/article-amp/278404/joint_counter_small_uas_office_conducts_successful_counter_drone_swarm_demonstration",
+      "claim": "[E4] 美陆军JCO 2024年蜂群反制演示中，每轮发射40多个UAS目标并评估多套系统；结论是单一能力无法应对多方向、多速度、多尺寸的大规模无人机剖面，需要系统-of-systems和分层方法。"
+    },
+    {
+      "url": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_5.html",
+      "claim": "[E5] FAA雷达说明指出，低空航空器若被山体遮蔽或低于雷达波束/受地球曲率影响可能看不见；较小反射面目标也比大型飞机更难由一次雷达发现。"
+    },
+    {
+      "url": "https://www.faa.gov/sites/faa.gov/files/airports/airport_safety/Attachment-3-UAS-Detection-Technical-Considerations.pdf",
+      "claim": "[E6] FAA UAS探测技术考虑文件指出，雷达和RF常作为主探测源，EO和声学通常是验证/辅助传感器；树木、建筑、地形、RF干扰、多径、天气、悬停/垂直运动和虚警都会影响系统效能。"
+    },
+    {
+      "url": "https://www.faa.gov/airports/new_entrants/uas_detection_mitigation_response",
+      "claim": "[E7] FAA机场UAS探测页面指出，雷达、RF、EO和声学可单独或组合用于探测验证，但探测系统不能自行判断UAS意图或威胁等级，且部署需考虑法律、EMI和空域运行影响。"
+    },
+    {
+      "url": "https://www.armyupress.army.mil/Journals/Military-Review/Online-Exclusive/2024-OLE/Grenade-Dropping-Quadcopters-II/",
+      "claim": "[E8] Army University Press关于俄乌无人机战的文章指出，1-3类小型UAS提供持久且难探测的RISTA能力；高空易观测UAS在成熟战区被EW和防空显著压制，而基层仍缺少足够有机C-sUAS能力。"
+    },
+    {
+      "url": "https://www.armyupress.army.mil/Journals/Military-Review/English-Edition-Archives/Nov-Dec-2024/Cunning-Tools-of-War/",
+      "claim": "[E9] Army University Press文章将低空空域称为被争夺的air littoral，并指出乌克兰小型UAS可采用消耗性渗透，即便少量存活也能通过不同路线和频率寻找电子战防线弱点。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare",
+      "claim": "[E10] CSIS基于前线访谈指出多数低成本FPV任务成功率约10%至15%，熟练操作者可达30%至50%；同时EW对控制链和GPS构成持续威胁，而AI导航和抗干扰能力正在被探索。"
+    },
+    {
+      "url": "https://iamd-coe.org/wp-content/uploads/2024/02/The-Evolving-UAS-Threat-Lessons-from-the-Russian-Ukrainian-War-Since-2022-on-Future-Air-Defence-Challenges-and-Requirements.pdf",
+      "claim": "[E11] IAMD COE报告指出俄乌冲突中电磁频谱高度拥挤和受争夺，俄军约每10公里部署一套主要EW系统并造成乌军约每月1万架UAV损失；但AI/自主、抗EW和卫星通信发展使攻防平衡保持不稳定。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/air-and-missile-war-nagorno-karabakh-lessons-future-strike-and-defense",
+      "claim": "[E12] CSIS纳卡空中与导弹战研究指出，S-300等大型防空系统并非为反UAV任务设计且早期遭打击；核心教训是需要全谱系防空、机动SHORAD和被动防护。"
+    },
+    {
+      "url": "https://s3.us-east-1.amazonaws.com/files.cnas.org/documents/Report_CUAS_Defense_Sep-2025_final.pdf",
+      "claim": "[E13] CNAS红海研究称2023年11月至2025年1月美海空力量击落约480架胡塞无人机，成功依赖分层、多域一体防御和快速学习，但成本与高节奏不可持续，部分交战窗口仅为秒级。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/drone-saturation-russias-shahed-campaign",
+      "claim": "[E14] CSIS关于Shahed饱和攻击的研究指出，俄方自2024年9月起将Shahed发射从每周约200架提升到2025年3月超过1000架；乌方依靠声学传感器、共同作战系统、EW和机动防空降低成本交换，但饱和压力仍上升。"
+    },
+    {
+      "url": "https://isis-online.org/uploads/isis-reports/documents/January-2026-Updated-Analysis-of-Russian-Shahed-type-UAVs-Deployment-Against-Ukraine_Feb-10_2026.pdf",
+      "claim": "[E15] ISIS 2026年2月报告指出，2026年1月Shahed型UAV继续承担直接打击基础设施与消耗防空资源的双重任务，并出现CRPA、尝试Starlink连接、中继无人机网状链路、在线摄像头和实时航路调整等技术改进。"
+    },
+    {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10780901/",
+      "claim": "[E16] 学术综述总结雷达、RF、声学和视觉探测均有环境干扰因素：鸟类/野生动物、频率重叠/干扰、风雨噪声、夜间/雾雨雪、遮挡和复杂背景会增加漏警或虚警；多传感器融合可提升鲁棒性。"
+    }
+  ],
+  "analysis_sections": {
+    "scenario_framework": {
+      "scenario_name": "复杂地形低空无人机探测预警体系压力场景",
+      "purpose": "检验现役低空无人机探测预警体系在山地—城市—海岸复合环境中的传统能力缺口，并推导升级需求；场景仅用于防御性能力研判，不提供攻击执行步骤。",
+      "background": {
+        "operational_setting": "蓝方防区位于山地边缘城市与近海/河口交通节点交汇区，存在山脊、谷地、高层建筑、仓储园区、港口水面、通信基站、民用无人机活动和复杂电磁背景。",
+        "blue_mission": "在不干扰民航和民用通信的前提下，对低空无人机活动形成早期发现、连续跟踪、身份判别、威胁评估、告警分发和安全处置支持。",
+        "red_objective": "通过低成本、可消耗、低空、分散和多样化无人机活动压缩蓝方发现—识别—决策—处置窗口，消耗传感器值班与防空资源，并寻找体系盲区。",
+        "key_assumptions": [
+          "[A1] 敌方不需要每架无人机成功，只需通过持续试探和少量突防制造态势压力。",
+          "[A2] 蓝方现役体系以固定雷达、少量RF探测、EO/IR验证、人工值守和上级集中确认流程为主，基层有机C-UAS能力不足。",
+          "[A3] 民用环境中蓝方不能无限制使用干扰、激光或动能处置，必须先完成识别、授权和安全评估。",
+          "[A4] 复杂地形对攻防双方同时施加约束：既遮蔽无人机，也影响其链路、导航和续航。"
+        ],
+        "evidence_or_assumption_links": [
+          "E1",
+          "E3",
+          "E4",
+          "E5",
+          "E6",
+          "E7",
+          "E16",
+          "A1",
+          "A2",
+          "A3",
+          "A4"
+        ]
+      },
+      "forces_and_systems": {
+        "blue_force": [
+          "固定低空监视雷达与既有防空预警节点",
+          "若干机动补盲雷达/便携式雷达",
+          "被动RF侦测与频谱监测节点",
+          "EO/IR云台、热像仪、可见光摄像头",
+          "声学传感器或群众/哨兵观测渠道",
+          "本地指挥所、上级空情/防空C2、民航/公安/频谱管理联络机制",
+          "有限电子压制、低成本拦截、被动伪装/遮蔽/分散措施"
+        ],
+        "red_force_abstract": [
+          "低慢小四旋翼/多旋翼侦察无人机",
+          "FPV或一次性小型无人机",
+          "固定翼一向攻击或诱饵无人机",
+          "RF发射较弱、间歇通信或预编程航线无人机",
+          "用于制造虚警和资源消耗的非致命/诱饵平台",
+          "电磁侦察、网络压力和信息欺骗支援能力"
+        ]
+      },
+      "scenario_horizons": [
+        {
+          "phase": "危机前预警",
+          "description": "防区周边出现异常民用无人机活动、短时RF信号、夜间低空噪声、社交媒体/公开影像收集、山脊和楼顶附近可疑活动。敌方可能进行传感器覆盖摸底和蓝方响应时间观察。",
+          "blue_tasks": [
+            "建立基线：常态RF、民用无人机航迹、鸟群/船舶/车辆/风机/港口机械背景。",
+            "基于三维地形、建筑物和植被生成雷达/EO/RF/声学视域图。",
+            "把异常模式纳入预警而非等待明确入侵。",
+            "建立民航、公安、频谱和设施业主联动流程。"
+          ],
+          "triggers": [
+            "同一区域重复出现短时无人机信号或视觉观测",
+            "防区盲区边缘出现疑似测绘/观察活动",
+            "夜间或恶劣天气中出现多源弱告警"
+          ],
+          "termination_conditions": [
+            "完成盲区复核与传感器补位",
+            "未发现持续威胁且异常恢复常态",
+            "进入初始接触阶段"
+          ],
+          "evidence_or_assumption_links": [
+            "E1",
+            "E6",
+            "E7",
+            "E16",
+            "A1"
+          ]
+        },
+        {
+          "phase": "初始接触",
+          "description": "低空目标利用山脊、建筑群、树线或水面背景进入外围；雷达出现低置信小目标或间歇航迹，RF节点可能捕捉到短脉冲或完全静默，EO/IR受到天气、背景热源和遮挡影响。",
+          "blue_tasks": [
+            "多源交叉验证：雷达给出方位/速度，RF判别链路特征，EO/IR确认外形，声学和哨兵观测补充。",
+            "按威胁等级而非单点告警触发响应。",
+            "在不危及民用空域条件下发布分级告警和临时空域/设施防护动作。"
+          ],
+          "triggers": [
+            "多个传感器在相近时间/空间内出现弱相关",
+            "同一航迹在盲区边界反复消失再出现",
+            "RF噪声或GNSS异常与低空告警同时发生"
+          ],
+          "termination_conditions": [
+            "目标被识别为合法/无威胁并解除警戒",
+            "目标退出防区且无后续批次",
+            "出现多批次、多方向或电磁压迫迹象，进入体系对抗"
+          ],
+          "evidence_or_assumption_links": [
+            "E5",
+            "E6",
+            "E16",
+            "E1",
+            "A3"
+          ]
+        },
+        {
+          "phase": "体系对抗",
+          "description": "敌方由单机试探转为多批次、多方向、诱饵与真实目标混合；同时出现RF拥塞、GNSS干扰/欺骗、链路间歇、网络回传延迟和虚警增多。蓝方从单目标处置转为态势管理和资源分配。",
+          "blue_tasks": [
+            "维持共同作战图，但允许边缘节点在上级链路降级时本地生成威胁优先级。",
+            "将拦截资源优先用于穿越关键防护圈、具有高置信敌意或高危载荷迹象的目标。",
+            "采取被动防护：关键装备分散、遮蔽、诱饵、灯火/热源/电磁特征管理。",
+            "评估电子压制与民用通信、己方无人机和传感器之间的电磁互扰。"
+          ],
+          "triggers": [
+            "同一时间出现多方向航迹或诱饵/真实目标混杂",
+            "雷达/RF/EO传感器输出互相矛盾",
+            "上级链路延迟导致确认时间超过末端处置窗口",
+            "蓝方高价值节点被持续侦察或反复虚警牵制"
+          ],
+          "termination_conditions": [
+            "攻击批次停止且态势恢复稳定",
+            "蓝方资源消耗达到预设阈值并转入持续作战节奏",
+            "若出现传感器/通信节点损伤，则进入战损重构"
+          ],
+          "evidence_or_assumption_links": [
+            "E3",
+            "E4",
+            "E9",
+            "E11",
+            "E13",
+            "E14",
+            "E15",
+            "A2"
+          ]
+        },
+        {
+          "phase": "持续作战",
+          "description": "无人机威胁进入日常化、高频化和迭代化；敌方根据蓝方反应调整飞行高度、时间、链路、诱饵比例和目标类型。蓝方重点由单次成功拦截转为成本、人员、传感器维护和弹药库存的长期承受能力。",
+          "blue_tasks": [
+            "统计每类传感器虚警、漏警和维护负担，按地形区块调整部署。",
+            "低成本优先：对低价值目标采用监视、驱离、遮蔽和电子/非动能手段，对高价值威胁保留高端拦截。",
+            "更新RF/雷达/声学/视觉特征库，训练操作员识别新型诱饵和民用混杂目标。",
+            "形成24/7值守轮换、备件和电源/网络冗余。"
+          ],
+          "triggers": [
+            "连续多日多批次无人机活动",
+            "蓝方拦截成本明显高于来袭平台成本",
+            "传感器误警导致疲劳或响应迟滞",
+            "敌方出现新频段、新外形或新抗干扰特征"
+          ],
+          "termination_conditions": [
+            "威胁活动降至基线水平",
+            "完成战术/技术升级并恢复成本交换优势",
+            "发生关键节点损伤并转入战损重构"
+          ],
+          "evidence_or_assumption_links": [
+            "E8",
+            "E10",
+            "E11",
+            "E14",
+            "E15",
+            "E16"
+          ]
+        },
+        {
+          "phase": "战损重构",
+          "description": "部分传感器、通信、供电或C2节点失效；蓝方需要在地形和电磁约束下快速恢复低空态势感知，避免因单点损伤形成可重复利用的低空通道。",
+          "blue_tasks": [
+            "启用机动补盲节点、备用电源、离线地图和本地边缘处理。",
+            "将固定节点覆盖转为临时网格化覆盖，重点保护关键通道和高价值区域。",
+            "以最小网络依赖维持本地告警和跨单位简报。",
+            "记录敌方利用的盲区和触发条件，纳入下一轮部署优化。"
+          ],
+          "triggers": [
+            "关键传感器掉线或误差显著升高",
+            "回传链路拥塞/中断",
+            "多源空情无法融合或重复目标严重",
+            "敌方利用相同盲区重复进入"
+          ],
+          "termination_conditions": [
+            "恢复最低可接受覆盖和本地处置能力",
+            "完成备用节点部署和盲区重新评估",
+            "威胁降低或转入新一轮持续作战"
+          ],
+          "evidence_or_assumption_links": [
+            "E1",
+            "E3",
+            "E4",
+            "E6",
+            "A2",
+            "A4"
+          ]
+        }
+      ],
+      "victory_criteria": {
+        "blue_success": [
+          "低空关键通道首警时间满足识别和安全处置需要",
+          "多传感器融合后虚警可控、漏警下降",
+          "在网络降级和部分节点损伤下仍可本地告警与分级响应",
+          "拦截/处置成本与来袭成本差距缩小",
+          "敌方无法通过少量试探稳定复现低空通道"
+        ],
+        "red_success_abstract": [
+          "蓝方在多个关键地形区块出现持续盲区",
+          "虚警和诱饵迫使蓝方高成本响应",
+          "集中式确认流程导致处置窗口丧失",
+          "蓝方传感器/通信/值班体系出现疲劳或降级"
+        ]
+      }
+    },
+    "enemy_coa": [
+      {
+        "coa_name": "COA-1 最可能方案：低强度持续侦察试探与盲区测绘",
+        "intent": "以低成本、低风险平台持续观察蓝方反应、传感器覆盖和出动规律，逐步识别低空盲区和误警触发点。",
+        "conceptual_actions_non_executable": [
+          "在民用空域背景、城市边缘和山地遮蔽附近制造间歇低空活动。",
+          "混用可见RF发射目标、弱发射目标和合法/疑似合法活动以测试蓝方识别规则。",
+          "反复观察蓝方从首警到确认、授权和处置的时间。"
+        ],
+        "observable_indicators": [
+          "同一区域短时RF信号或无人机目击重复出现但未深入防区",
+          "雷达低置信航迹在山脊/建筑边缘消失再出现",
+          "民用无人机活动量与敏感时段、演训或重要保障活动异常相关",
+          "社交媒体、公开影像或人员观察活动增多"
+        ],
+        "key_nodes": [
+          {
+            "node": "基线污染",
+            "effect_on_blue": "使蓝方难以区分正常民用活动与威胁准备。",
+            "evidence_or_assumption_links": [
+              "E7",
+              "E16",
+              "A1"
+            ]
+          },
+          {
+            "node": "盲区确认",
+            "effect_on_blue": "暴露地形遮蔽、传感器死角和C2延迟。",
+            "evidence_or_assumption_links": [
+              "E5",
+              "E6",
+              "E1"
+            ]
+          }
+        ],
+        "risk_to_red": [
+          "低空链路受地形影响可能失联",
+          "频繁试探会暴露模式并给蓝方建立基线",
+          "民用环境中平台被识别后可能触发执法和空域管制"
+        ],
+        "blue_pressure_points": [
+          "身份判别",
+          "民用无人机去冲突",
+          "值班疲劳",
+          "低空盲区建模",
+          "跨部门信息共享"
+        ]
+      },
+      {
+        "coa_name": "COA-2 最危险方案：多轴饱和、诱饵混杂与电磁/网络压迫",
+        "intent": "以多批次、多方向、低成本无人机和诱饵目标迫使蓝方同时处理大量低置信告警，消耗拦截资源并压缩处置窗口。",
+        "conceptual_actions_non_executable": [
+          "将诱饵、侦察和真实威胁目标混杂，制造优先级排序困难。",
+          "利用地形、城市遮挡和水面/车辆/鸟群杂波增加虚警。",
+          "通过电磁拥塞、GNSS异常或网络压力降低蓝方传感器和C2融合质量。",
+          "在蓝方响应后改变频段、时段、航迹和平台类型，延长消耗战。"
+        ],
+        "observable_indicators": [
+          "同一时间多方向低空航迹增加",
+          "RF噪声底、GNSS异常、通信延迟与无人机告警同步出现",
+          "EO/IR被热背景、遮挡或诱饵牵引，确认时间延长",
+          "拦截弹药、值班人员和传感器维护负担快速上升"
+        ],
+        "key_nodes": [
+          {
+            "node": "态势过载",
+            "effect_on_blue": "传感器融合和人工确认产生队列积压，威胁排序错误概率上升。",
+            "evidence_or_assumption_links": [
+              "E4",
+              "E13",
+              "E14"
+            ]
+          },
+          {
+            "node": "成本交换施压",
+            "effect_on_blue": "诱使蓝方使用昂贵拦截手段对付低成本目标，削弱持续作战能力。",
+            "evidence_or_assumption_links": [
+              "E13",
+              "E14",
+              "E15"
+            ]
+          },
+          {
+            "node": "电磁/网络降级",
+            "effect_on_blue": "RF探测、GNSS时间/位置、视频回传和共同作战图出现不一致。",
+            "evidence_or_assumption_links": [
+              "E1",
+              "E6",
+              "E11",
+              "E15"
+            ]
+          }
+        ],
+        "risk_to_red": [
+          "大规模活动更易被多源发现",
+          "诱饵比例过高会降低实际效果",
+          "持续发射对后勤、组装和操作者训练提出要求"
+        ],
+        "blue_pressure_points": [
+          "多目标跟踪容量",
+          "威胁优先级排序",
+          "边缘授权",
+          "低成本处置",
+          "EW与己方通信去冲突",
+          "持续补给与人员轮换"
+        ]
+      },
+      {
+        "coa_name": "COA-3 替代方案：RF静默/半自主低空渗透与合法流量伪装",
+        "intent": "减少可被RF探测和压制的暴露特征，依赖预编程、惯导/视觉辅助或间歇链路，通过合法无人机/鸟群/车辆/港口机械背景降低识别置信度。",
+        "conceptual_actions_non_executable": [
+          "减少连续控制链路暴露，采用间歇通信或预编程任务。",
+          "选择蓝方RF强噪声区、城市遮挡区或复杂热背景区使探测结果不一致。",
+          "利用民用无人机密集时段或合法空域活动提高蓝方误判成本。"
+        ],
+        "observable_indicators": [
+          "雷达/EO有弱迹象但RF无对应链路",
+          "目标航迹规律性强但身份信息缺失",
+          "Remote ID或白名单数据与物理航迹不一致",
+          "蓝方RF压制后目标仍保持部分任务行为"
+        ],
+        "key_nodes": [
+          {
+            "node": "RF探测旁路",
+            "effect_on_blue": "RF依赖型预警和操作者定位能力下降。",
+            "evidence_or_assumption_links": [
+              "E6",
+              "E10",
+              "E11",
+              "E15"
+            ]
+          },
+          {
+            "node": "识别规则混淆",
+            "effect_on_blue": "合法/非法、威胁/非威胁分类时间增加。",
+            "evidence_or_assumption_links": [
+              "E7",
+              "E16",
+              "A3"
+            ]
+          }
+        ],
+        "risk_to_red": [
+          "小型平台自主能力受算力、重量、电源和成本约束",
+          "静默减少实时操控能力并提高任务不确定性",
+          "雷达、EO/IR和声学融合仍可能发现其物理存在"
+        ],
+        "blue_pressure_points": [
+          "非RF目标探测",
+          "多模态融合",
+          "白名单/Remote ID可信校验",
+          "本地AI分类",
+          "被动防护"
+        ]
+      }
+    ],
+    "critical_timeline": [
+      {
+        "time_window": "T-30至T-7天：危机前模式建立",
+        "red_activity_abstract": "低强度观察、民用流量混入、短时RF活动和公开信息收集。",
+        "blue_decision": "是否把弱异常纳入预警并开展盲区复核。",
+        "traditional_gap": "现役体系常等待明确空情告警，缺少把地形、RF基线和民用活动融合为异常模式的机制。",
+        "upgrade_need": "建立三维视域、RF传播、常态航迹和异常模式数据库；把民用/执法/频谱信息接入低空态势。",
+        "observable_indicators": [
+          "重复短时RF信号",
+          "固定区域目击报告",
+          "不寻常民用无人机集中",
+          "公开影像收集活动"
+        ],
+        "evidence_or_assumption_links": [
+          "E1",
+          "E6",
+          "E7",
+          "A1"
+        ]
+      },
+      {
+        "time_window": "T-72至T-24小时：传感器与响应摸底加剧",
+        "red_activity_abstract": "围绕防区边缘进行多点低空试探，观察蓝方响应节奏。",
+        "blue_decision": "是否调整机动传感器、值班等级和被动防护。",
+        "traditional_gap": "固定传感器对山体、建筑和水面杂波导致的低空盲区反应慢。",
+        "upgrade_need": "机动补盲雷达/被动RF/EO点位预案，临时升高传感器、边缘融合和地形补盲部署。",
+        "observable_indicators": [
+          "航迹在盲区边缘反复中断",
+          "不同传感器对同一事件判断不一致",
+          "低空噪声和视觉观测先于雷达确认"
+        ],
+        "evidence_or_assumption_links": [
+          "E5",
+          "E6",
+          "E16",
+          "A4"
+        ]
+      },
+      {
+        "time_window": "T-60至T-10分钟：初始接触与分级告警",
+        "red_activity_abstract": "小批次低空目标进入外围探测范围，可能伴随诱饵或RF噪声。",
+        "blue_decision": "是否升级为无人机威胁事件并启动空域/设施防护。",
+        "traditional_gap": "单传感器置信度不足导致等待人工确认，压缩后续处置时间。",
+        "upgrade_need": "多模态置信评分、自动关联、EO/IR slew-to-cue、声学/哨兵补充和快速分级告警。",
+        "observable_indicators": [
+          "低RCS低速航迹",
+          "间歇RF发射",
+          "EO/IR受到背景干扰",
+          "GNSS或网络异常同步出现"
+        ],
+        "evidence_or_assumption_links": [
+          "E1",
+          "E4",
+          "E6",
+          "E16"
+        ]
+      },
+      {
+        "time_window": "T-10分钟至T+30分钟：体系对抗窗口",
+        "red_activity_abstract": "多方向、多批次、诱饵/真实目标混合，叠加电磁和网络压力。",
+        "blue_decision": "如何在有限时间内排序目标、分配低成本与高端处置手段、维持共同作战图。",
+        "traditional_gap": "集中式C2、人工确认和高成本拦截难以应对饱和和秒级/分钟级窗口。",
+        "upgrade_need": "边缘授权、降级运行、威胁优先级算法、低成本拦截层、被动防护和网络断续下的本地态势。",
+        "observable_indicators": [
+          "多传感器目标重复或冲突",
+          "航迹数量超过人工处理能力",
+          "回传视频延迟",
+          "拦截资源快速消耗"
+        ],
+        "evidence_or_assumption_links": [
+          "E3",
+          "E4",
+          "E13",
+          "E14",
+          "E15"
+        ]
+      },
+      {
+        "time_window": "T+30分钟至T+72小时：持续消耗与快速迭代",
+        "red_activity_abstract": "根据蓝方响应改变平台、频段、时段、诱饵比例和接近方向。",
+        "blue_decision": "如何维持成本交换、人员轮换、传感器维护和特征库更新。",
+        "traditional_gap": "装备采购与软件/特征库更新周期慢，基层训练和备件不足。",
+        "upgrade_need": "开放式架构、快速软件更新、特征库共享、消耗品储备、训练闭环和跨单位经验回灌。",
+        "observable_indicators": [
+          "新频段或静默目标增加",
+          "诱饵比例变化",
+          "夜间/恶劣天气活动增加",
+          "传感器误警模式变化"
+        ],
+        "evidence_or_assumption_links": [
+          "E8",；{
+  "findings": [
+    "复杂地形下的传统低空无人机预警缺口主要不是单一雷达灵敏度不足，而是低空视距、地形遮蔽、建筑/林地杂波、多路径、电磁噪声和短预警时间叠加造成的体系性缺口。",
+    "现役成熟体系以美国LIDS家族为代表：FS-LIDS用于固定点防护，M-LIDS用于机动防护，核心由KuRFS/相关雷达、EO/IR、电子战、Coyote拦截器和FAAD C2组成；公开资料显示其目标对象主要为Group 1-3小型无人机及其他低飞威胁。",
+    "GAO与CRS资料显示，FS-LIDS、M-LIDS、Coyote、Ku-band雷达族和手持/下车系统已进入美陆军正式采办组合并在2024财年进入全速生产；但成本、测试逼真度、人员训练、跨军种C2和工业扩产仍是约束。",
+    "公开参数显示，若在开阔或合理布站条件下，专用小无人机雷达可提供数公里级发现：Saab Giraffe 1X宣称可在4 km发现很小UAV；Robin IRIS标准模式为5 km仪器化距离、长距模式可至12 km；Hensoldt SPEXER 2000 Coastal对0.2 m² RCS UAV公开探测距离为9 km。复杂地形中这些距离不应直接外推。",
+    "被动RF/协议解析、声学、EO/IR和多传感器融合可补足有源雷达暴露和遮蔽问题，但对自主航线、低发射控制、跳频、光纤控制、复杂电磁环境和恶劣天气均存在边界。",
+    "在研升级方向集中于低成本、低SWaP、模块化、被动/分布式传感器，车载/下车/系留或小型UAS搭载传感器，多源融合C2，以及低成本硬杀伤、非动能、定向能和高功率微波等多层反制。",
+    "对手优势在于小型无人机低成本、低雷达/声/热/RF特征、可低空贴地或利用地形遮蔽、可饱和攻击和快速迭代；其依赖包括导航、数据链、发射/回收点、能源、操作者和后勤补给，且森林、复杂地形和电磁干扰同样会限制无人机操控与传感链路。",
+    "场景适配度判断：固定基地和关键基础设施适合FS-LIDS/多传感器塔台化布设；机动分队适合M-LIDS、轻量雷达、被动RF和便携告警；山地、森林、城市峡谷和海岸/港口需要分布式多高度布站、被动探测和本地化低时延C2，而不能依赖单点远程雷达。",
+    "防御性升级需求应优先解决“发现—识别—告警—交接”链条：分布式传感器覆盖低空死角、融合算法降低鸟类/车辆/旋翼杂波误警、C2兼容FAAD/IBCS/TAK类接口、弹药/能源补给与低成本交战策略，以及常态化红蓝对抗测试。"
+  ],
+  "confidence": 0.82,
+  "open_questions": [
+    "各型雷达在山地、森林、城市峡谷等复杂地形中的有效发现距离、虚警率和跟踪连续性缺乏统一公开测试数据；公开厂商参数多基于开阔或理想布设条件。",
+    "KuRFS、XBAEU、AN/TPQ-50改型、SPEXER 2000 3D MkIII等具体批次间的探测距离、抗干扰能力和软件版本差异公开资料有限。",
+    "Coyote Block 2/Block 3NK、BLADE、DE M-SHORAD、IFPC-HEL/HPM和下一代C-UAS导弹的单位成本、弹药库存、可靠性和作战可用率缺少可交叉核验的公开数据。",
+    "FAAD C2与IBCS、JADC2、TAK、北约接口之间的具体数据模型、认证状态和网络抗毁性公开信息不足。",
+    "反制光纤控制FPV、自主终端识别、无RF发射航线飞行和大规模蜂群的体系效果仍需更多公开实测。"
+  ],
+  "handoff_summary": "本轮仅基于公开资料形成传统能力缺口研究包。结论是：现役低空无人机探测预警体系已具备成熟的点防护和机动C-UAS能力，但在复杂地形下仍受低空视距、地形遮蔽、杂波、虚警、C2交接、成本和饱和压力制约。建议下游围绕“多源分布式低空探测、低SWaP被动/主动融合、开放C2、低成本多层拦截、训练与后勤韧性”开展战法与制胜机理分析。",
+  "search_plan": [
+    {
+      "track": "现役型号与部署规模",
+      "queries": [
+        "site:army.mil counter small UAS low altitude detection radar complex terrain LIDS KuRFS 2025",
+        "LIDS Low Slow Small Unmanned Aircraft Integrated Defeat System KuRFS Coyote M-LIDS Army 2025 official",
+        "Leonardo DRS M-LIDS counter UAS system deployed Stryker 2025 official",
+        "DSCA UAE FS-LIDS 2026 Coyote KuRFS $2.10 billion official"
+      ]
+    },
+    {
+      "track": "在研项目与预算采购",
+      "queries": [
+        "FY 2026 budget counter-UAS Army LIDS M-LIDS FS-LIDS Coyote procurement 3.1 billion official",
+        "site:asafm.army.mil FY 2026 counter small UAS Coyote LIDS budget justification",
+        "Army SBIR low altitude passive detection system terrain curvature obstacles sUAS 2025",
+        "Next Generation Counter UAS Missile Army FY 2027 common launcher"
+      ]
+    },
+    {
+      "track": "关键参数和任务载荷",
+      "queries": [
+        "KuRFS radar specifications range 360 coverage counter UAS official",
+        "SAAB Giraffe 1X drone detection radar range official counter UAS",
+        "Robin Radar IRIS drone detection radar range official 2025",
+        "HENSOLDT SPEXER 2000 UAV 0.2 m2 RCS 9 km official"
+      ]
+    },
+    {
+      "track": "体系接口与联合作战能力",
+      "queries": [
+        "FAAD C2 counter UAS LIDS interface command and control official 2025",
+        "Northrop Grumman FAAD C2 counter UAS Forward Area Air Defense command control 2025 official",
+        "Army FAADC2 LIDS M-LIDS FS-LIDS command and control integration counter UAS 2025",
+        "IBCS FAAD C2 counter UAS integration LIDS 2025"
+      ]
+    },
+    {
+      "track": "技术成熟度工业基础与保障约束",
+      "queries": [
+        "GAO-25-107491 counter UAS FS-LIDS M-LIDS full rate production 2024",
+        "CRS Department of Defense Counter-UAS Background Issues Congress LIDS Coyote cost technical maturity 2025",
+        "RUSI Protecting the Force from Uncrewed Aerial Systems layered counter UAS 2024",
+        "NATO counter UAS fiber optic drone EW ineffective detection 2025"
+      ]
+    }
+  ],
+  "contradictions": [
+    "冲突/边界1：厂商公开参数显示专用雷达在开阔条件下具备数公里级小UAV发现能力，但陆军SBIR明确指出现有系统受地形、地球曲率和障碍物影响，低空sUAS预警窗口有限。因此“雷达能力强”与“复杂地形预警不足”并不矛盾，关键在布站和场景。",
+    "冲突/边界2：CRS记录Coyote已有实战拦截成功和大规模采购需求，但同一报告也指出其不一定适合廉价无人机的成本交换。因此成熟度高不等于成本可持续。",
+    "冲突/边界3：定向能和高功率微波常被描述为低单发成本方案，但CRS指出其M-SHORAD方向曾有延期和用户评价一般，同时规模化装备的前期成本可能抵消单发成本优势。",
+    "冲突/边界4：被动RF/协议解析系统可降低暴露并提供识别，但NATO相关资料显示光纤控制无人机使传统EW类反制失效或效果下降；自主/预编程航线也会削弱RF探测的可用性。",
+    "冲突/边界5：复杂地形既削弱防御方探测，也限制无人机操控、通信、导航和传感器视场；不能简单假设攻击方在山地/森林/城市峡谷中总是占优。",
+    "冲突/边界6：固定点C-UAS可通过多传感器冗余补足死角，但机动分队受车辆空间、电源、天线高度、人员训练和弹药补给限制，难以复制固定基地级覆盖。"
+  ],
+  "confidence_basis": "证据覆盖政府/军方、国会研究、GAO、厂商资料、智库和北约公开资料，来源家族超过3类；多数关键证据在2024年7月以后发布或仍为当前厂商页面，满足近两年新鲜度要求。LIDS、Coyote、KuRFS、FAAD、Giraffe 1X、IRIS等至少由政府/CRS/GAO与厂商资料交叉支撑。剩余不确定性主要来自：厂商参数通常不是复杂地形实测；关键系统真实作战距离、虚警率、库存和软件接口公开不足；在研定向能、HPM和下一代拦截器成熟度仍在变化。",
+  "source_claims": [
+    {
+      "url": "https://www.defense.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/",
+      "claim": "美国国防部2024年发布反无人系统战略，强调无人系统威胁快速演进，并将JCO、Warfighter Senior Integration Group和Replicator 2等作为主要举措。"
+    },
+    {
+      "url": "https://www.gao.gov/assets/gao-25-107491.pdf",
+      "claim": "GAO-25-107491显示，美陆军C-sUAS组合中FS-LIDS、M-LIDS、Coyote、Ku-band雷达族和手持/下车系统等进入正式采办；其中五项在2024财年进入全速生产。"
+    },
+    {
+      "url": "https://www.congress.gov/crs_external_products/R/PDF/R48477/R48477.2.pdf",
+      "claim": "CRS R48477说明LIDS由FS-LIDS和M-LIDS组成，面向Group 1-3无人机和其他低飞威胁；M-LIDS Increment 2.1从双M-ATV配置迁移为单Stryker配置。"
+    },
+    {
+      "url": "https://www.congress.gov/crs_external_products/R/PDF/R48477/R48477.2.pdf",
+      "claim": "CRS记录FS-LIDS使用KuRFS雷达、EO/IR、电子战和Coyote拦截器，FS-LIDS与M-LIDS均使用FAAD C2；FY2025陆军申请2.801亿美元采购FS-LIDS、M-LIDS及若干下车系统，并另申请1.174亿美元采购Coyote。"
+    },
+    {
+      "url": "https://www.congress.gov/crs_external_products/R/PDF/R48477/R48477.2.pdf",
+      "claim": "CRS记录Coyote是LIDS家族的反UAS拦截器，有动能和非动能版本；截至2024年公开报道已有170次成功拦截，但陆军官员也称其对廉价无人机未必成本有效。"
+    },
+    {
+      "url": "https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2026/Discretionary%20Budget/rdte/RDTE%20-%20Vol%204%20-%20Budget%20Activity%209.pdf",
+      "claim": "美陆军PB2026 RDT&E材料列出Counter Unmanned Aerial Systems Agile Development项目，FY2026项目经费合计约1.43618亿美元，并显示C-sUAS相关采购线I24000 FY2026合计约3.06568亿美元。"
+    },
+    {
+      "url": "https://www.defense.gov/News/Transcripts/Transcript/Article/4228828/background-briefing-on-fy-2026-defense-budget/",
+      "claim": "美国国防部FY2026预算吹风会称，跨军种counter-UAS总请求约31亿美元。"
+    },
+    {
+      "url": "https://armysbir.army.mil/announcement/launch-2m-funding-opportunity-low-altitude-suas-detection/",
+      "claim": "美陆军SBIR/STTR 2025年低空被动探测机会指出，现有系统偏向较大、更高空目标，受地形、地球曲率和障碍物影响，难以发现多架低空sUAS，且大型固定系统限制部署灵活性。"
+    },
+    {
+      "url": "https://armysbir.army.mil/topics/low-altitude-passive-detection-system/",
+      "claim": "陆军低空被动探测题目要求低成本、低SWaP、模块化能力，并希望可兼容Group 1 sUAS或系留UAS载荷接口，用于增加地面部队对0至6000英尺AGL低空威胁的预警时间。"
+    },
+    {
+      "url": "https://www.rtx.com/raytheon/what-we-do/integrated-air-and-missile-defense/kurfs",
+      "claim": "Raytheon公开称KuRFS是360度雷达，可持续探测、识别和跟踪从火箭/炮弹/迫击炮到各类无人机的空中威胁，并作为美陆军LIDS组成部分。"
+    },
+    {
+      "url": "https://www.rtx.com/raytheon/what-we-do/integrated-air-and-missile-defense/coyote",
+      "claim": "Raytheon公开称Coyote与KuRFS配合提供从单机到蜂群的探测与击败能力；Coyote Block 3NK可使用非动能载荷、可徘徊、击败蜂群并可召回再部署。"
+    },
+    {
+      "url": "https://www.northropgrumman.com/what-we-do/mission-solutions/forward-area-air-defense-faad",
+      "claim": "Northrop Grumman公开称FAAD将SHORAD、C-RAM和C-UAS任务集成到单一界面，提供实时空域监视、威胁识别和安全拦截所需跟踪数据，并为美国国防部选择的C-UAS C2系统。"
+    },
+    {
+      "url": "https://www.saab.com/products/giraffe-1x",
+      "claim": "Saab公开称Giraffe 1X可作为VSHORAD主传感器、GBAD补盲雷达或C-UAS解决方案；系统总重低于150 kg，可探测距离雷达4 km处小于牛奶盒重量的UAV。"
+    },
+    {
+      "url": "https://www.robinradar.com/products/iris-radar",
+      "claim": "Robin Radar公开称IRIS为3D无人机雷达，提供360度视场、60度俯仰覆盖、5 km仪器化距离和约78 km²覆盖面积。"
+    },
+    {
+      "url": "https://www.robinradar.com/news-events/robin-radar-deploys-off-the-shelf-cuas-radar-with-12km-range",
+      "claim": "Robin Radar 2025年发布称IRIS Long-Range Mode可在5 km和12 km仪器化距离间切换，体现软件/模式升级带来的探测距离提升。"
+    },
+    {
+      "url": "https://www.hensoldt.net/fileadmin/HENSOLDT_2019/Products/Radar_IFF_Datalink/0812_17_Spexer2000_Coastal_E_intranet.pdf",
+      "claim": "Hensoldt SPEXER 2000 Coastal资料列出对0.2 m² RCS UAV的探测距离为9 km。"
+    },
+    {
+      "url": "https://www.rheinmetall.com/Rheinmetall%20Group/brochure-download/Air-Defence/D994e0222-Oerlikon-Skyranger-30.pdf",
+      "claim": "Rheinmetall Skyranger 30资料显示其采用3D AESA搜索雷达、30 mm×173炮、1200发/分射速和自动目标探测/捕获/跟踪，代表炮基低空反无人机/SHORAD方向。"
+    },
+    {
+      "url": "https://www.rusi.org/explore-our-research/publications/occasional-papers/protecting-force-uncrewed-aerial-systems",
+      "claim": "RUSI 2024报告强调反UAS必须是分层且高效的能力，软件、检测分类识别、电子战和多层效果器与硬件同等重要。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare",
+      "claim": "CSIS关于乌克兰自主化战争的研究指出，EW干扰推动无人机与反无人机体系转向替代探测、传感和自主能力；雷达、声学等方法也各自存在性能边界。"
+    },
+    {
+      "url": "https://www.act.nato.int/wp-content/uploads/2025/05/rfip025048.pdf",
+      "claim": "NATO ACT 2025资料提到自2024年底以来俄方引入光纤控制无人机，传统EW counter-UAS对这类无人机无效或效果受限，且其机动、抗干扰和低特征增加探测难度。"
+    },
+    {
+      "url": "https://www.droneshield.com/products-software",
+      "claim": "DroneShield公开称DroneSentry-C2提供统一实时反无人机态势图，可与自有传感器和第三方系统互操作，并融合RF、雷达和光学传感器。"
+    },
+    {
+      "url": "https://sentrycs.com/news/sentrycs-unveils-version-6-0-of-its-counter-drone-software-delivering-unmatched-coverage-and-efficiency/",
+      "claim": "Sentrycs 2025年发布称其V6.0采用协议操纵/Cyber over RF方法，从无人机与操作者通信的数据层提取信息，不同于仅依赖雷达、EO和RF扫描的多层探测。"
+    }
+  ],
+  "analysis_sections": {
+    "current_parameters": {
+      "scope_note": "参数均为公开资料；复杂地形下不得将开阔场或厂商标称距离直接视为作战保证距离。置信度按公开来源直接性、交叉核验和参数完整性评估。",
+      "parameter_records": [
+        {
+          "system": "LIDS family: FS-LIDS / M-LIDS",
+          "status": "现役/正式采办；GAO称相关项目2024财年进入全速生产",
+          "mission_scope": "防御Group 1-3无人机及其他低飞威胁",
+          "configuration_batch": "FS-LIDS固定点；M-LIDS Increment 2.1单Stryker配置，早期M-LIDS为双M-ATV配置",
+          "sensors_payloads": "KuRFS/相关Ku波段雷达、EO/IR、电子战、Coyote拦截器、FAAD C2；M-LIDS另含RIwP/30 mm等武器站配置",
+          "public_quantity_budget": "FY2025陆军申请约2.801亿美元用于FS-LIDS、M-LIDS及下车系统；其中公开提及5套Stryker M-LIDS和6套FS-LIDS；另约1.174亿美元用于Coyote采购",
+          "units": "美元；套；无人机Group分类",
+          "confidence": "高"
+        },
+        {
+          "system": "Raytheon KuRFS",
+          "status": "现役/已部署于LIDS体系",
+          "configuration_batch": "Ku-band Radio Frequency Sensor；公开页面未给出标准探测距离",
+          "key_parameters": {
+            "coverage": "360度",
+            "functions": "持续探测、识别、跟踪空中威胁",
+            "target_set": "火箭、炮弹、迫击炮、各类无人机",
+            "notable_claim": "可识别/分辨极小目标，厂商称可看到和识别来袭9 mm子弹"
+          },
+          "units": "角度；目标类别",
+          "confidence": "中高；功能由厂商和CRS交叉支撑，具体距离未知"
+        },
+        {
+          "system": "Raytheon Coyote",
+          "status": "现役/采购扩大",
+          "configuration_batch": "Block 2动能；Block 3NK非动能；固定/机动发射",
+          "key_parameters": {
+            "launch": "rail-launched；boost rocket motor and turbine engine",
+            "payload": "动能和非动能",
+            "public_performance": "CRS记录截至2024年报道有170次成功拦截",
+            "planned_production_need": "CRS记录陆军估算FY2025-FY2029需6000枚动能Coyote及数百枚非动能拦截器"
+          },
+          "units": "枚；财年；拦截次数",
+          "confidence": "高；成本有效性为中等置信度，因为单位成本公开数据不一致"
+        },
+        {
+          "system": "FAAD C2",
+          "status": "现役C2/美DOD选定C-UAS C2",
+          "configuration_batch": "Forward Area Air Defense Command and Control",
+          "key_parameters": {
+            "missions": "SHORAD、C-RAM、C-UAS",
+            "interface_role": "将探测、识别、跟踪、交战授权/火控态势集成到单一界面",
+            "operational_relevance": "LIDS家族使用FAAD C2"
+          },
+          "units": "任务类型；C2功能",
+          "confidence": "高"
+        },
+        {
+          "system": "Saab Giraffe 1X",
+          "status": "现役/出口与北约国家采购中；C-UAS/VSHORAD补盲传感器",
+          "configuration_batch": "Giraffe 1X 3D多功能雷达",
+          "key_parameters": {
+            "system_weight": "<150 kg",
+            "topside_weight": "100 kg",
+            "small_uav_detection": "厂商称可在4 km探测小于牛奶盒重量的UAV",
+            "integration": "可集成到机动或固定安装"
+          },
+          "units": "kg；km",
+          "confidence": "高；复杂地形有效距离需实测"
+        },
+        {
+          "system": "Robin Radar IRIS",
+          "status": "商用/军警与机场类C-UAS应用，2025年推出长距模式",
+          "configuration_batch": "IRIS标准模式；IRIS Long-Range Mode",
+          "key_parameters": {
+            "azimuth_coverage": "360度",
+            "elevation_coverage": "60度",
+            "instrumented_range_standard": "5 km",
+            "coverage_area_standard": "78 km²",
+            "instrumented_range_long_range_mode": "12 km"
+          },
+          "units": "度；km；km²",
+          "confidence": "高；性能为厂商标称"
+        },
+        {
+          "system": "Hensoldt SPEXER 2000 Coastal / SPEXER短程雷达族",
+          "status": "现役雷达族；SPEXER 2000 3D MkIII另见乌克兰相关采购报道",
+          "configuration_batch": "SPEXER 2000 Coastal公开参数；不等同于所有MkIII批次",
+          "key_parameters": {
+            "uav_rcs_reference": "0.2 m² RCS",
+            "uav_detection_range": "9 km"
+          },
+          "units": "m² RCS；km",
+          "confidence": "中；型号批次存在差异，MkIII参数需单独核验"
+        },
+        {
+          "system": "Rheinmetall Skyranger 30",
+          "status": "在采购/验证与系列化交付阶段，属炮基SHORAD/C-UAS方向",
+          "configuration_batch": "Skyranger 30炮塔/系统",
+          "key_parameters": {
+            "search_radar": "3D AESA，S-band或X-band配置",
+            "gun": "30 mm×173",
+            "rate_of_fire": "1200 rounds/min",
+            "functions": "自动目标探测、捕获与跟踪"
+          },
+          "units": "mm；发/分；雷达波段",
+          "confidence": "中高；不同国家底盘和传感器配置可能不同"
+        },
+        {
+          "system": "DroneShield DroneSentry-C2 / Sentrycs Cyber over RF类系统",
+          "status": "现役商用/政府客户；软件快速迭代",
+          "configuration_batch": "DroneSentry-C2；Sentrycs V6.0",
+          "key_parameters": {
+            "sensor_fusion": "RF、雷达、光学及第三方系统融合",
+            "protocol_analytics": "从无人机与操作者通信协议层提取识别信息",
+            "limitation": "对无RF发射、自主航线或光纤控制目标能力受限"
+          },
+          "units": "传感器类型；协议/数据层",
+          "confidence": "中；厂商能力公开但缺少统一第三方性能测试"
+        }
+      ]
+    },
+    "development_models": [
+      {
+        "model_or_program": "Low-Altitude Passive Detection System, Army SBIR/STTR",
+        "type": "低成本、低SWaP、模块化、被动探测传感器",
+        "upgrade_need_addressed": "补足现有系统对低空、多速度sUAS的预警不足，缓解地形、地球曲率、障碍物和大型固定系统限制",
+        "maturity": "早期研发/小企业创新课题，估计TRL 3-5",
+        "confidence": "高"
+      },
+      {
+        "model_or_program": "Coyote Block 3NK",
+        "type": "非动能、可徘徊/可召回反无人机拦截器",
+        "upgrade_need_addressed": "降低附带损害并提升对蜂群/多目标反复交战能力",
+        "maturity": "厂商公开称已演示并属Coyote家族；估计TRL 6-8",
+        "confidence": "中高"
+      },
+      {
+        "model_or_program": "DE M-SHORAD / IFPC-HEL / IFPC-HPM",
+        "type": "定向能/高功率微波",
+        "upgrade_need_addressed": "降低单次交战成本、提高弹药深度、应对饱和无人机",
+        "maturity": "测试/开发阶段；公开资料显示仍有延期、用户评价和规模化成本不确定性，估计TRL 5-7",
+        "confidence": "中"
+      },
+      {
+        "model_or_program": "BLADE / 30 mm炮基近程反无人机",
+        "type": "车载炮基低空无人机拦截",
+        "upgrade_need_addressed": "为机动部队提供近程快速反应和相对低成本硬杀伤层",
+        "maturity": "演示/试验与训练验证，估计TRL 6-7",
+        "confidence": "中"
+      },
+      {
+        "model_or_program": "下一代C-UAS导弹与通用发射器",
+        "type": "低成本/新一代动能拦截器和发射架通用化",
+        "upgrade_need_addressed": "降低Coyote等现有拦截器成本压力，提升库存与平台适配",
+        "maturity": "概念/工程研制公开信息有限，；{
+  "findings": [
+    "现役低空无人机探测预警体系的传统缺口不是单项传感器缺失，而是“低空小目标—复杂地形—高虚警环境—短处置窗口”共同造成的体系性不连续：山体、建筑、树木、港区设施、风机、水面和电磁噪声会同时压缩雷达视距、RF截获、EO/IR确认和声学验证的有效范围。证据链：E3、E4、E5、E6、E14。",
+    "公开战例显示，低成本无人机和诱饵的主要作战效应常在于持续消耗和态势过载，而非单架平台高成功率。俄乌Shahed/FPV、纳卡无人机打击、红海反无人机作战均支持“分层防御有效但成本、库存和值班压力显著上升”的判断。证据链：E8、E9、E10、E11、E13、E16。",
+    "传统固定式、中心化低空预警体系在复杂地形中的主要缺口包括：低空盲区不可视、单传感器误警/漏警、RF依赖对静默或半自主目标脆弱、C2确认链过长、基层单位缺少有机补盲和近程告警能力、战损后覆盖重构慢。证据链：E2、E4、E5、E7、E10、E12、E14。",
+    "升级需求应从“采购更强单一雷达”转为“地形感知的分布式多模态预警体系”：固定与机动雷达、被动RF/频谱监测、EO/IR验证、声学/人工观测、边缘AI融合、低带宽降级运行、共同作战图、低成本处置和被动防护共同形成决策级置信度。证据链：E1、E2、E3、E4、E6、E7、E12、E14。",
+    "作战运用上，复杂地形防御的关键不是在末端才“看见并打掉”，而是在危机前建立常态低空/RF/民用活动基线，在初始弱告警时完成多源关联，并在网络或上级C2降级时保持本地分级告警能力。证据链：E1、E3、E4、E6、E7、E12。",
+    "反证与修正：电子战、传统雷达和传统防空并未失效；乌克兰的声学网、机动防空、电子战和共同作战图，以及红海分层防御经验，都显示传统能力经体系化整合后仍有显著价值。问题在于单一、固定、中心化和高成本模式难以长期承受复杂地形、饱和、诱饵和快速迭代。证据链：E8、E10、E11、E13、E16。",
+    "对装备功能的优先要求应转化为可测指标：三维地形覆盖率、关键低空通道首警时间、多传感器关联延迟、虚警/漏警率、RF静默目标发现概率、网络降级下本地态势保持、机动补盲部署时间、战损后最低覆盖恢复时间、单位目标处置成本。"
+  ],
+  "confidence": 0.84,
+  "open_questions": [
+    "不同型号现役雷达、RF、EO/IR、声学节点在山谷、城市峡谷、港区水面、高原低温和强电磁背景中的实测Pd、FAR、首警时间和连续跟踪能力仍需本级试验数据确认。",
+    "公开资料可证明低空无人机威胁趋势和体系缺口，但无法充分量化特定国家、特定部队和特定装备编成的真实覆盖盲区、库存消耗率和操作员疲劳阈值。",
+    "RF静默、光纤控制、视觉/惯导辅助、蜂窝/卫星/中继链路和AI导航的扩散速度存在不确定性；短期仍受成本、重量、算力和训练约束，中期可能显著削弱RF依赖型防御。",
+    "民用空域、隐私、频谱许可、机场运行、误伤风险和执法授权在本土/城市场景中可能比战区环境更强地约束探测和处置方式，需要单独形成规则矩阵。",
+    "上游缺少weapon_equipment与international_situation正式交接，因此本文对具体装备性能和政治/法律约束只作公开资料层面的通用化判断。"
+  ],
+  "handoff_summary": "本交接面向winning_mechanism：复杂地形下低空无人机探测预警的传统能力缺口，本质是低空物理视距、单传感器不可靠、集中式C2延迟、成本交换不利和持续保障脆弱共同造成的体系失配。公开战例支持三条可迁移经验：一是分层、多模态、机动和被动防护结合优于单点高端装备；二是C2必须从中心化确认转向共同作战图、边缘融合和降级运行；三是装备升级必须服务于可持续作战，包括低成本处置、快速软件/特征库更新、机动补盲和战损恢复。建议下游以“时间窗口、成本交换、覆盖韧性、快速迭代和跨域协同”作为胜利机制建模变量。",
+  "search_plan": [
+    {
+      "track": "公开战例与复盘",
+      "queries": [
+        "Nagorno Karabakh 2020 drones air defense lessons CSIS full spectrum air defense mobile SHORAD passive defenses",
+        "Red Sea counter UAS drones Houthi lessons layered defense cost exchange CNAS 2025 PDF",
+        "CSIS Drone Saturation Russia's Shahed Campaign acoustic sensors common operating picture electronic warfare 2025",
+        "Ukraine drone warfare electronic warfare C-UAS lessons 2025 report"
+      ]
+    },
+    {
+      "track": "联合和多域作战概念",
+      "queries": [
+        "DoD Strategy for Countering Unmanned Systems 2024 detection active passive defense PDF",
+        "Joint Counter Small UAS Office counter drone swarm demonstration 2024 layered system of systems",
+        "NATO uncrewed warfare report 2025 counter drone lessons Ukraine electronic warfare resilience",
+        "Small Unmanned Aircraft System Airspace Management and Control Handbook Army Leaders 2025 air ground littoral"
+      ]
+    },
+    {
+      "track": "有人无人协同",
+      "queries": [
+        "manned unmanned teaming counter UAS air defense sensor fusion command control 2025 Army",
+        "small unmanned aircraft system airspace management and control handbook Army leaders 2025 manned unmanned fired systems",
+        "UAS airspace management dynamic airspace planning manned unmanned fired systems air ground littoral 2025 handbook",
+        "Ukraine AI enabled autonomous warfare CSIS FPV drones electronic warfare human oversight 2025"
+      ]
+    },
+    {
+      "track": "指挥控制与保障韧性",
+      "queries": [
+        "counter UAS command and control resilience edge processing network degraded operations report 2024",
+        "Department of Defense Counter UAS Background and Issues for Congress FAADC2 MEDUSA command and control 2025 PDF",
+        "Army Project Flytrap counter drone command and control architecture 2025",
+        "FAA UAS Detection Technical Considerations radar RF EO acoustic false alarms site specific spectrum licensing PDF"
+      ]
+    },
+    {
+      "track": "持续作战和战损恢复",
+      "queries": [
+        "Innovating Under Fire Ukraine frontline drone workshops maintenance repair lessons 2025",
+        "Russia Ukraine FPV drones lightweight counter UAV electronic warfare company level lessons 2025 Army University Press",
+        "Mapping the MilTech War eight lessons Ukraine battlefield drone electronic warfare 2026 Ifri",
+        "NATO Innovation Range counter drone technology testing Latvia 2026 TEVV electronic warfare solutions"
+      ]
+    }
+  ],
+  "contradictions": [
+    "反证1：低成本无人机并非天然高成功率。CSIS前线访谈显示多数低成本FPV任务成功率很低，电子战、操作员技能、天气和复杂目标运动都会降低效果；但低成本、大量和快速迭代仍足以形成消耗与过载。因此不能把威胁建模为“每架必中”，应建模为“持续试探和少量突防仍有作战价值”。证据链：E12、E13。",
+    "反证2：电子战既是有效反无人机手段，也是脆弱依赖。俄乌资料显示EW可大量干扰FPV和GNSS/控制链，但光纤无人机、视觉/惯导、频率捷变和替代链路正在削弱单纯RF压制的可靠性。因此EW应作为分层体系一环，而非唯一防线。证据链：E12、E13、E16。",
+    "反证3：传统雷达仍不可替代。雷达能全天候发现物理目标，特别是RF静默或预编程目标；但FAA和RAND均指出低空、山体遮蔽、地物反射、小RCS、低速/悬停和虚警会显著影响效果。因此结论不是“雷达失效”，而是“雷达必要但不充分”。证据链：E3、E5、E14。",
+    "反证4：复杂地形并非只帮助攻击方。山地、城市和植被既遮蔽蓝方传感器，也会缩短敌方无人机通信视距、增加导航误差、降低续航可靠性。若蓝方提前完成三维视域、RF传播和机动补盲规划，可把部分地形转化为防御优势。证据链：E3、E5、E12。",
+    "反证5：分布式体系提升韧性但增加管理复杂度。多传感器、多节点和边缘C2可降低单点失效，但会带来时间同步、目标去重、频谱冲突、蓝军无人机去冲突、数据标准和训练负担。因此升级必须同步解决接口、规则和保障，而不是只增加节点数量。证据链：E2、E6、E7、E15。"
+  ],
+  "confidence_basis": "证据覆盖政府/军方公开文件、FAA民航技术资料、国会研究服务、NATO/盟国材料、智库报告、军种专业刊物和学术/研究机构报告，来源族群超过3类，且包含2024、2025、2026年的新近资料。关于低空雷达限制、传感器互补、C2集成、分层防御和成本交换的证据直接性较高；关于俄乌、纳卡和红海战例的资料可相互印证无人机饱和、电子战、机动防空和快速迭代趋势。主要不确定性在于特定装备性能、特定地域覆盖率、真实库存消耗、敌方最新链路/自主能力和本土法律授权通常不公开，因此结论以结构化能力缺口和升级需求表达，不给出可执行攻击指令或特定目标方案。",
+  "source_claims": [
+    {
+      "url": "https://www.defense.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/",
+      "claim": "[E1] DoD 2024年反无人系统战略发布说明强调，无人系统威胁紧迫且持久，相关工作建立在JCO、Warfighter Senior Integration Group和Replicator 2等跨部门/跨军种举措之上。"
+    },
+    {
+      "url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+      "claim": "[E2] DoD战略事实清单提出提升探测、跟踪、表征能力，改进主动/被动防御，简化和下放必要授权，采用开放、模块化、快速测试和规模化方案，并降低无人系统与反制措施之间的成本失衡。"
+    },
+    {
+      "url": "https://www.faa.gov/sites/faa.gov/files/uas/resources/policy_library/Attachment-3-UAS-Detection-Technical-Considerations.pdf",
+      "claim": "[E3] FAA UAS探测技术考虑文件指出，雷达、RF、EO/IR等探测技术受场地许可、背景杂波、虚警、特征库更新、EO/IR视场和验证能力等因素影响，EO/IR通常更适合作为验证/辅助传感器。"
+    },
+    {
+      "url": "https://www.faa.gov/airports/new_entrants/uas_detection_mitigation_response",
+      "claim": "[E4] FAA机场UAS探测页面说明，雷达、RF、EO和声学可单独或组合用于主探测和二次验证，部署还需考虑机场运行、法律授权、频谱和安全影响。"
+    },
+    {
+      "url": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_5.html",
+      "claim": "[E5] FAA AIM雷达章节指出，雷达波会被山体、地面障碍物、降水等反射/衰减或被高地屏蔽；低空目标可能因山体遮蔽或低于雷达波束/地球曲率而不可见，小反射面目标也更难由一次雷达发现。"
+    },
+    {
+      "url": "https://www.army.mil/article-amp/278404/joint_counter_small_uas_office_conducts_successful_counter_drone_swarm_demonstration",
+      "claim": "[E6] 美陆军JCO 2024年蜂群反制演示每轮发射40多个UAS目标，测试9套C-UAS系统；公开结论是单一能力难以应对多方向、多速度、多尺寸的大规模目标剖面，需要系统-of-systems和分层方法。"
+    },
+    {
+      "url": "https://www.army.mil/article-amp/288375/small_unmanned_aircraft_system_airspace_management_and_control",
+      "claim": "[E7] 美陆军CALL 2025年小型UAS空域管理手册说明，现代战场需要整合有人、无人和火力系统，实施动态空域规划并主导air-ground littoral。"
+    },
+    {
+      "url": "https://www.congress.gov/crs_external_products/R/PDF/R48477/R48477.2.pdf",
+      "claim": "[E8] CRS《Department of Defense Counter-UAS》报告说明，现有美军C-UAS任务指挥系统包括FAADC2、MEDUSA和ADSI等，2025年陆军/DIU关注替代或改进C2以适应机动C-UAS，且高端拦截器成本可显著高于低成本无人机。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/air-and-missile-war-nagorno-karabakh-lessons-future-strike-and-defense",
+      "claim": "[E9] CSIS纳卡研究认为，2020年纳卡空中战的主要教训是全谱系防空重要性；有限的SHORAD和不足的被动防护使地面重装备易受无人机与巡飞弹威胁。"
+    },
+    {
+      "url": "https://www.cnas.org/publications/reports/countering-the-swarm",
+      "claim": "[E10] CNAS红海反无人机研究显示，分层、多域防御可取得战术成功，但面对大量低成本无人机时，成本交换、交战节奏、库存和舰艇/空中力量持续值班会形成严重压力。"
+    },
+    {
+      "url": "https://www.nato-pa.int/document/2025-uncrewed-warfare-report-clement-023-stctts",
+      "claim": "[E11] NATO PA 2025年无人作战报告强调，乌克兰等冲突中的无人系统战术会被盟友和对手模仿，并建议发展定向能等低成本反无人技术以应对拦截成本不对称。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare",
+      "claim": "[E12] CSIS 2025年乌克兰AI自主作战研究基于访谈指出，低成本FPV任务成功率受电子战、天气、操作员和通信限制显著影响；AI导航、ATR和本地处理可提高效率，但现代无人系统尚未实现端到端全自主，仍需人类监督。"
+    },
+    {
+      "url": "https://csis-website-prod.s3.amazonaws.com/s3fs-public/2025-05/250501_Slusher_Ukraine_Conflict.pdf?VersionId=01UUwSkCxsWGAU5vOtwYQHmtq3F1.XKM",
+      "claim": "[E13] CSIS乌克兰冲突经验报告认为，乌克兰战争凸显自主系统、电子战、信息整合、受扰物流和防空演变；GPS干扰、通信干扰、频率捷变、卫星通信、网状网络和电子战韧性成为关键变量。"
+    },
+    {
+      "url": "https://www.rand.org/content/dam/rand/pubs/research_reports/RR3000/RR3023/RAND_RR3023.pdf",
+      "claim": "[E14] RAND关于小型UAS对抗能力的研究指出，sUAS因小尺寸、低速和环境背景导致探测、分类、识别、跟踪困难，通常需要多传感器协同；虚警会使操作员脱敏，雷达RCS随角度变化，EO/IR视场小，ELINT/RF易受自动化或静默目标规避。"
+    },
+    {
+      "url": "https://defensescoop.com/2025/07/09/army-counter-drone-command-and-control-project-flytrap-exercise/",
+      "claim": "[E15] Project Flytrap公开报道显示，美陆军C5ISR中心在欧洲测试反无人机C2架构，目标是把传感器数据从单兵到联合伙伴贯通，通过ATAK等终端共享，降低士兵认知负荷并把固定系统转向可机动运用。"
+    },
+    {
+      "url": "https://www.armyupress.army.mil/Portals/7/military-review/Archives/English/so25/Lessons-from-Ukraine/Lessons-from-Ukraine-ua.pdf",
+      "claim": "[E16] Army University Press 2025年俄军乌克兰经验文章指出，FPV无人机和轻量化C-UAV EW快速扩散；双方大量FPV受RF/GNSS干扰影响，同时光纤、车载/便携干扰器、探测器和基层C-UAV装备推动攻防快速迭代。"
+    },
+    {
+      "url": "https://mwi.westpoint.edu/innovating-under-fire-lessons-from-ukraines-frontline-drone-workshops/",
+      "claim": "[E17] Modern War Institute对乌克兰前线无人机维修/创新工作坊的研究显示，前沿维修、3D打印、软件更新、快速改频、移动维修车和操作者—工程师反馈闭环可将修复与适配周期压缩到小时级，从而支撑持续作战。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/drone-saturation-russias-shahed-campaign",
+      "claim": "[E18] CSIS关于俄罗斯Shahed饱和战役的研究指出，自2024年9月后Shahed发射量显著上升；乌克兰通过声学传感器、综合防空网络、机动防空和电子战等低成本组合来维持防御，但饱和压力仍然增加。"
+    },
+    {
+      "url": "https://www.nato.int/en/news-and-events/articles/news/2026/03/18/new-nato-innovation-range-starts-counter-drone-technology-testing-in-latvia",
+      "claim": "[E19] NATO 2026年拉脱维亚创新靶场信息显示，盟国和乌克兰用户正在通过TEVV活动测试UAS/C-UAS、拦截飞行和电子战方案，体现快速试验、验证和采纳的制度化趋势。"
+    }
+  ],
+  "analysis_sections": {
+    "operational_constraints": {
+      "mission_definition": "防御方任务是在复杂地形和民用空域约束下，对低慢小无人机形成早期发现、连续跟踪、身份判别、威胁评估、分级告警和安全处置支撑；本分析仅用于防御性能力评估，不提供攻击路径、目标选择或可执行伤害指令。",
+      "terrain_environment_constraints": [
+        {
+          "constraint": "山地/丘陵遮蔽",
+          "effect": "山体与地形起伏造成雷达、EO/IR、RF和通信链路视距中断，低空目标可能在关键通道外才被发现，首警时间被压缩。",
+          "evidence_links": [
+            "E5",
+            "E14"
+          ],
+          "operational_implication": "必须预先进行三维视域和RF传播建模，重点标注山谷、背坡、低空通道和传感器盲扇区。"
+        },
+        {
+          "constraint": "城市峡谷和设施密集区",
+          "effect": "高层建筑、钢结构、车辆、鸟群、风机和电磁反射造成多径、遮挡、杂波和虚警；EO/IR可能被热背景和遮挡牵引。",
+          "evidence_links": [
+            "E3",
+            "E4",
+            "E14"
+          ],
+          "operational_implication": "单传感器告警不应直接等同威胁，应采用时间同步、多源关联和白名单/合法流量去冲突。"
+        },
+        {
+          "constraint": "海岸/港区/水面背景",
+          "effect": "水面反射、船舶/港机热源、海风噪声和港区RF环境会影响雷达、声学、EO/IR与RF识别置信度。",
+          "evidence_links": [
+            "E3",
+            "E10",
+            "E14"
+          ],
+          "operational_implication": "港区应采用固定高点、机动补盲、被动传感和人工/哨兵报告结合，避免单一雷达阈值造成大量虚警。"
+        },
+        {
+          "constraint": "天气、夜间和季节变化",
+          "effect": "雨雾雪、低云、热背景变化和风噪影响EO/IR、声学和高频雷达表现；同一部署方案在不同季节的Pd/FAR会变化。",
+          "evidence_links": [
+            "E3",
+            "E12",
+            "E14"
+          ],
+          "operational_implication": "部署原则应包含季节性校准、传感器权重动态调整、夜间/恶劣天气补盲预案。"
+        },
+        {
+          "constraint": "电磁频谱拥挤与受扰",
+          "effect": "RF探测和干扰受民用通信、己方无人机、敌方跳频/静默/替代链路、GNSS干扰和频谱许可限制影响。",
+          "evidence_links": [
+            "E2",
+            "E3",
+            "E12",
+            "E13",
+            "E16"
+          ],
+          "operational_implication": "RF不能作为唯一首警源；干扰措施必须与民用通信、己方C2、友军无人机和空域安全去冲突。"
+        },
+        {
+          "constraint": "法律、民航和授权",
+          "effect": "本土、机场、城市和关键基础设施场景中，探测与处置系统部署涉及频谱许可、EMI、安全风险、隐私和执法授权。",
+          "evidence_links": [
+            "E3",
+            "E4"
+          ],
+          "operational_implication": "体系设计必须预置规则矩阵：谁可看、谁可判、谁可告警、谁可授权、何时可转入处置。"
+        },
+        {
+          "constraint": "持续作战和补给",
+          "effect": "大量低成本目标可通过诱饵、重复试探和饱和压迫消耗人员、传感器维护、弹药/拦截器和C2带宽。",
+          "evidence_links": [
+            "E8",
+            "E10",
+            "E11",
+            "E18"
+          ],
+          "operational_implication": "预警体系指标必须纳入成本交换、库存、备件、电源、网络和操作员轮换，而非只看单次拦截率。"
+        }
+      ],
+      "traditional_gap_to_upgrade_mapping": [
+        {
+          "traditional_gap": "固定雷达低空盲区",
+          "upgrade_need": "地形感知部署、机动补盲雷达、被动传感节点、临时升高平台、覆盖热力图。",
+          "metrics": [
+            "关键低空通道覆盖率",
+            "首警距离/时间",
+            "盲区重构时间"
+          ],
+          "evidence_links": [
+            "E5",
+            "E14"
+          ]
+        },
+        {
+          "traditional_gap": "单传感器误警/漏警",
+          "upgrade_need": "雷达+RF+EO/IR+声学+人工观测的多模态融合，目标去重和置信评分。",
+          "metrics": [
+            "融合后FAR",
+            "多源关联延迟",
+            "目标分类置信度"
+          ],
+          "evidence_links": [
+            "E3",
+            "E4",
+            "E6",
+            "E14"
+          ]
+        },
+        {
+          "traditional_gap": "RF依赖",
+          "upgrade_need": "可发现RF静默/预编程/半自主目标的雷达、EO/IR、声学和行为异常检测；RF仅作为被动首警和识别维度之一。",
+          "metrics": [
+            "RF静默目标发现概率",
+            "RF与非RF告警一致率",
+            "干扰后态势保持时间"
+          ],
+          "evidence_links": [
+            "E12",
+            "E13",
+            "E14",
+            "E16"
+          ]
+        },
+        {
+          "traditional_gap": "中心化C2延迟",
+          "upgrade_need": "共同作战图、边缘融合、分级授权、低带宽告警、断链本地处置支持。",
+          "metrics": [
+            "传感器到告警时间",
+            "告警到授权时间",
+            "网络降级下本地空情保持率"
+          ],
+          "evidence_links": [
+            "E2",
+            "E7",
+            "E8",
+            "E15"
+          ]
+        },
+        {
+          "traditional_gap": "高成本末端处置",
+          "upgrade_need": "低成本拦截、电子/非动能、被动防护、诱饵和任务影响评估结合，高端拦截器保留给高危目标。",
+          "metrics": [
+            "单位威胁处置成本",
+            "高端拦截器消耗率",
+            "关键资产任务中断时间"
+          ],
+          "evidence_links": [
+            "E2",
+            "E8",
+            "E10",
+            "E11",
+            "E18"
+          ]
+        },
+        {
+          "traditional_gap": "战损恢复慢",
+          "upgrade_need": "模块化节点、预案化机动补位、备用电源、离线地图、可快速更新特征库、前沿维修和备件包。",
+          "metrics": [
+            "最低覆盖恢复时间",
+            "节点替换时间",
+            "软件/特征库更新周期"
+          ],
+          "evidence_links": [
+            "E17",
+            "E19"
+          ]
+        }
+      ],
+      "measures_of_effectiveness": [
+        "首警时间是否足以完成识别、授权和安全处置。",
+        "复杂地形关键通道是否存在可被反复利用的稳定盲区。",
+        "融合后虚警是否低到操作员可持续处理。",
+        "网络降级和部分节点损伤后是否仍能保持本地分级告警。",
+        "每轮威胁处置成本是否低于可持续阈值。",
+        "敌方改变频段、时段、平台和诱饵比例后，体系是否可快速更新。"
+      ]
+    },
+    "force_coordination": {
+      "coordination_concept": "采用“区域低空态势单元+机动补盲分队+基层有机观察/处置单元+上级联合空情/C2+民航/公安/频谱联络”的分层协同。核心是把传感器、指挥、效应器、被动防护和保障纳入同一任务链，而不是让各装备孤立值守。",
+      "force_package": [
+        {
+          "element": "固定低空监视与既有防空预警节点",
+          "role": "提供连续背景空情、较远距离首警和与上级防空网络衔接。",
+          "limits": "低空盲区、地形遮蔽、小RCS和地物杂波显著影响可靠性。",
+          "evidence_links": [
+            "E5",
+            "E14"
+          ]
+        },
+        {
+          "element": "机动补盲雷达/便携传感节点",
+          "role": "在山谷、城市边缘、港区和战损空隙中快速补位，缩短低空关键通道发现距离缺口。",
+          "limits": "需要预设点位、电源、网络、频谱许可和安全防护；点位暴露后自身可能成为高价值节点。",
+          "evidence_links": [
+            "E6",
+            "E15"
+          ]
+        },
+        {
+          "element": "被动RF/频谱监测",
+          "role": "发现控制链、视频链、遥测和异常频谱活动，辅助定位操作者或链路方向，适合低可见度和低成本持续值守。",
+          "limits": "对RF静默、预编程、光纤、蜂窝/卫星/中继或强加密跳频目标适应不足。",
+          "evidence_links": [
+            "E3",
+            "E12",
+            "E14",
+            "E16"
+          ]
+        },
+        {
+          "element": "EO/IR与热像验证",
+          "role": "对雷达/RF/声学告警进行可视化确认、分类和证据留存。",
+          "limits": "视场较窄，受遮挡、天气、夜间热背景、诱饵和假目标影响；通常需由其他传感器cueing。",
+          "evidence_links": [
+            "E3",
+            "E14"
+          ]
+        },
+        {
+          "element": "声学/人工观测/群众或哨兵报告",
+          "role": "在低空慢速、夜间、雷达盲区和大型一向攻击无人机场景中提供低成本补充首警。",
+          "limits": "受环境噪声、风雨、车辆、港机和误报影响；必须与其他传感器关联后使用。",
+          "evidence_links": [
+            "E4",
+            "E18"
+          ]
+        },
+        {
+          "element": "C2与共同作战图",
+          "role": "整合多源告警、目标去重、威胁排序、授权流转、效应器分配和跨单位通报。",
+          "limits": "若高度中心化或接口不统一，会在饱和窗口中形成延迟和重复交战。",
+          "evidence_links": [
+            "E7",
+            "E8",
+            "E15"
+          ]
+        },
+        {
+          "element": "低成本处置与被动防护",
+          "role": "在合法授权下采用低成本、分层、按威胁优先级的防御措施，并通过分散、伪装、遮蔽、诱饵和关键功能冗余降低突防后果。",
+          "limits": "处置手段受民用环境、误伤、频谱和规则约束；必须避免把高端弹药消耗在低价值诱饵上。",
+          "evidence_links": [
+            "E2",
+            "E9",
+            "E10",
+            "E11"
+          ]
+        },
+        {
+          "element": "保障与快速适配单元",
+          "role": "负责传感器校准、软件/特征库更新、备件、电池、电源、网络、前沿维修和经验回灌。",
+          "limits": "若保障集中且距离前沿过远，难以跟上无人机技术和战术迭代速度。",
+          "evidence_links": [
+            "E17",
+            "E19"
+          ]
+        }
+      ],
+      "coordination_interfaces": [
+        {
+          "interface": "传感器到C2",
+          "requirements": [
+            "统一时间戳和坐标基准",
+            "目标ID去重",
+            "置信度评分",
+            "低带宽告警格式",
+            "原始数据留存以便复盘"
+          ],
+          "failure_if_missing": "多源重复目标、误关联、告警风暴和人工确认队列积压。",
+          "evidence_links": [
+            "E8",
+            "E15"
+          ]
+        },
+        {
+          "interface": "C2到基层单位",
+          "requirements": [
+            "分级告警",
+            "本地可执行防护动作清单",
+            "断链时的本地授权边界",
+            "友军无人机/有人机空域去冲突"
+          ],
+          "failure_if_missing": "上级确认延迟超过末端处置窗口，基层只能被动承受或过度反应。",
+          "evidence_links": [
+            "E2",
+            "E7"
+          ]
+        },
+        {
+          "interface": "军方到民航/公安/频谱/设施业主",
+          "requirements": [
+            "合法无人机白名单",
+            "Remote ID/许可信息校验",
+            "频谱使用和干扰限制",
+            "机场/城市安全通报机制",
+            "误报澄清流程"
+          ],
+          "failure_if_missing": "民用流量与敌对活动混杂，导致虚警上升、授权迟滞或违法干扰。",
+          "evidence_links": [
+            "E3",
+            "E4"
+          ]
+        },
+        {
+          "interface": "传感器到效应器",
+          "requirements": [
+            "按威胁等级分配低成本与高端处置资源",
+            "避免重复交战",
+            "确保民用安全扇区",
+            "记录交战与未交战原因"
+          ],
+          "failure_if_missing": "高端资源被诱饵消耗，真实高危目标获得窗口。",
+          "evidence_links": [
+            "E6",
+            "E8",
+            "E10"
+          ]
+        },
+        {
+          "interface": "有人—无人—火力系统空域管理",
+          "requirements": [
+            "动态空域控制",
+            "己方UAS任务计划共享",
+            "禁飞/限飞临时区域",
+            "安全高度层和时间窗",
+            "任务变更快速通报"
+          ],
+          "failure_if_missing": "友军无人机、有人航空器、防空火力和干扰措施相互冲突。",
+          "evidence_links": [
+            "E7"
+          ]
+        }
+      ],
+      "battle_rhythm": [
+        "常态：更新低空活动、RF背景、民用无人机、鸟群/车辆/港机/风机等基线；每班复核传感器健康和覆盖热力图。",
+        "预警：出现重复弱告警或异常RF/目视报告时，机动补盲节点前出，EO/IR和声学权重上调，设施被动防护升级。",
+        "接触：按多源置信度而非单点告警触发分级响应，优先保护关键通道和高价值节点。",
+        "饱和：C2转入目标优先级管理，边缘节点保留本地告警和安全处置建议，上级保留资源统筹和跨区协调。",
+        "复盘：每次事件后更新虚警样本、漏警路径、干扰影响、授权延迟、处置成本和补给消耗。"
+      ],
+      "degraded_mode": [
+        "网络降级时保留本地传感器融合、短报文告警和离线地图。",
+        "上级C2不可用时按预先批准的分级规则执行告警、疏散、遮蔽、停飞、设备关停/分散等防护动作。",
+        "固定节点损伤时启动机动补盲网格，优先恢复关键通道、指挥节点、弹药/燃料/电力/通信设施周边最低覆盖。",
+        "RF环境恶化时降低对RF首警权重，提高雷达、EO/IR、声学、人工观测和行为异常关联权重。",
+        "虚警过载时使用地理围栏、白名单、时间窗和多源阈值动态调节，避免操作员脱敏。"
+      ],
+      "support_requirements": [
+        "三维地形/建筑/植被/水面数据库和视域分析工具。",
+        "传感器点位预案、备用三脚架/桅杆、便携电源、加固网络和频谱授权包。",
+        "多传感器数据标准、时间同步、目标ID规则和C2接口。",
+        "操作员轮换、跨部门联络员、低空空域管制脚本和民用流量去冲突清单。",
+        "备件、电池、软件更新、特征库、校准工具和前沿维修能力。",
+        "战损后恢复演练和红队式盲区复核。"
+      ]
+    },
+    "coa": [
+      {
+        "name": "COA-1 基线方案：固定节点为主、中心化确认、有限机动补盲",
+        "concept": "沿用现役固定低空监视雷达、少量RF和EO/IR验证节点，由上级空情/C2集中确认并向基层发布告警；机动补盲只在明确事件后临时展开。",
+        "suitable_conditions": [
+          "地形相对开阔、民用无人机活动低、威胁为低频单机/小批量。",
+          "有充分处置时间，且上级C2链路稳定。",
+          "主要任务是常态监视、证据留存和低强度警戒。"
+        ],
+        "strengths": [
+          "组织改动小，训练和维护成本低。",
+          "便于统一授权、统一空情和降低误处置风险。",
+          "适合预算短期不足或威胁等级较低阶段。"
+        ],
+        "risks": [
+          "复杂地形盲区难以及时补齐。",
+          "单传感器虚警/漏警导致等待人工确认，压缩处置窗口。",
+          "遇到多方向、多批次和诱饵时C2与操作员易过载。",
+          "战损后恢复依赖固定节点，覆盖重构慢。"
+        ],
+        "infeasible_boundaries": [
+          "山地—城市—港区复合地形中存在多个稳定低空通道。",
+          "威胁进入持续饱和或电磁压迫阶段。",
+          "要求基层在断链或分钟级窗口内自主告警和防护。",
+          "民用流量密集且白名单/去冲突数据不完整。"
+        ],
+        "equipment_constraints": [
+          "固定雷达受地形遮蔽和小RCS影响。",
+          "EO/IR需要其他传感器cueing。",
+          "RF对静默/半自主目标不足。",
+          "传统C2接口可能难以快速接入新型传感器。"
+        ],
+        "evidence_links": [
+          "E3",
+          "E4",
+          "E5",
+          "E8",
+          "E14"
+        ],
+        "minimum_upgrade_if_selected": [
+          "完成三维覆盖审计和盲区清单。",
+          "建立民用无人机白名单和RF/空情基线。",
+          "为关键盲区预置机动补盲点位和供电/网络包。",
+          "设定弱告警触发的分级响应流程。"
+        ]
+      },
+      {
+        "name": "COA-2 弹性分布方案：多模态分布式传感、边缘融合、机动补盲与低成本分层处置",
+        "concept": "以固定节点为骨干，在山地通道、城市边缘、港区和关键设施周边部署可机动、可重构的雷达/RF/EO/IR/声学节点；通过共同作战图和边缘AI融合形成分级置信度，并把低成本处置、被动防护和战损重构纳入同一防御循环。",
+        "suitable_conditions": [
+          "复杂地形、多方向低空威胁和持续试探并存。",
+          "需要在网络受扰、节点损伤和上级C2延迟时保持本地预警。",
+          "关键设施价值高，且可投入一定传感器、C2、训练和保障资源。",
+          "需要长期应对低成本无人机消耗战。"
+        ],
+        "strengths": [
+          "低空覆盖韧性高，单点失效不致形成稳定通道。",
+          "多传感器融合降低单点虚警/漏警。",
+          "机动补盲可把地形缺口转化为预案化防御。",
+          "边缘融合和分级授权缩短告警到行动时间。",
+          "低成本处置和被动防护改善成本交换。"
+        ],
+        "risks": [
+          "部署和训练复杂度高。",
+          "多源数据标准、目标去重、时间同步和网络安全要求高。",
+          "节点增多带来电源、频谱、维护和暴露风险。",
+          "若缺少规则矩阵，边缘授权可能造成误处置或空域冲突。"
+        ],
+        "infeasible_boundaries": [
+          "没有统一C2接口和最低数据标准。",
+          "无法获得频谱、场地、供电或民用协同授权。",
+          "训练和保障无法支撑24/7分布式值守。",
+          "预算只能维持单点装备采购而不能支撑系统集成与软件更新。"
+        ],
+        "equipment_constraints": [
+          "需要开放式接口、边缘计算、低带宽数据链和传感器健康监测。",
+          "节点必须可快速部署、校准和替换。",
+          "EO/IR、声学、RF权重需要随天气和电磁环境动态调整。",
+          "效应器必须按威胁等级与民用安全限制联动。"
+        ],
+        "evidence_links": [
+          "E1",
+          "E2",
+          "E6",
+          "E7",
+          "E8",
+          "E10",
+          "E15",
+          "E18",
+          "E19"
+        ],
+        "priority_actions": [
+          "建立区域低空三维数字底图和传感器覆盖热力图。",
+          "将固定雷达、机动雷达、RF、EO/IR、声学和人工报告接入共同作战图。",
+          "为山谷、城市峡谷、港区水面和关键设施设置传感器组合模板。",
+          "定义本地分级告警和断链授权边界。",
+          "把低成本处置、被动防护、维修和软件更新纳入日常战备。"
+        ]
+      },
+      {
+        "name": "COA-3 资源受限方案：关键点防护、低成本补盲、被动防护和人工/民用协同",
+        "concept": "在装备和预算不足时，不追求全域连续覆盖，而是围绕关键资产、关键通道和高风险时段建立低成本、可移动、可降级的预警网；以被动防护、分散、伪装、遮蔽、临时空域管控和低成本传感为主，高端处置只保留给高置信高危目标。",
+        "suitable_conditions": [
+          "预算、传感器数量、人员或频谱授权不足。",
+          "防护对象明确，关键通道和关键时段可识别。",
+          "威胁主要为试探、侦察、小规模袭扰或诱饵消耗。",
+          "可接受非关键区域存在短时低置信盲区。"
+        ],
+        "strengths": [
+          "部署快，成本低，适合基层先行形成最低预警能力。",
+          "通过被动防护降低突防后果，减少高端资源消耗。",
+          "人工、声学、RF和廉价EO可补充传统雷达盲区。",
+          "便于逐步扩展为弹性分布方案。"
+        ],
+        "risks": [
+          "覆盖不连续，难以应对多方向饱和。",
+          "人工报告和低成本传感器虚警较高。",
+          "缺少自动融合时，告警质量依赖训练和流程。",
+          "若敌方快速迭代或采用静默/半自主目标，RF和人工体系效果下降。"
+        ],
+        "infeasible_boundaries": [
+          "任务要求对大范围复杂地形提供连续、实时、高置信预警。",
+          "同时面对多批次、多轴、诱饵和电磁压迫。",
+          "关键资产无法分散、遮蔽或降低特征。",
+          "没有民用/设施业主协同，无法管控合法无人机背景。"
+        ],
+        "equipment_constraints": [
+          "低成本传感器需严格校准并限定适用场景。",
+          "人工报告必须配套身份核验、地理标注和误报复核。",
+          "被动防护措施需要提前工程化，不能等接触后临时实施。",
+          "低成本方案仍需最小C2和数据记录能力，否则难以复盘改进。"
+        ],
+        "evidence_links": [
+          "E3",
+          "E4",
+          "E9",
+          "E11",
+          "E14",
+          "E17",
+          "E18"
+        ],
+        "priority_actions": [
+          "按关键资产价值和无人机可达性划分防护优先级。",
+          "建立低空观察哨、声学/目视/RF简易告警点和事件上报模板。",
+          "预置遮蔽、分散、诱饵、灯光/热源/电磁特征管理措施。",
+          "把高端处置资源保留给高置信、高危、接近关键保护圈的目标。",
+          "用事件复盘逐步识别最值得升级为固定或机动传感节点的位置。"
+        ]
+      }
+    ],
+    "lessons": {
+      "public_case_lessons": [
+        {
+          "case": "纳卡2020",
+          "lesson": "传统SHORAD数量、质量和体系化不足时，地面重装备与固定防空节点易受无人机和巡飞弹压迫；全谱系防空、机动SHORAD和被动防护应前置到战术层级。",
+          "transfer_to_complex_terrain": "复杂地形下固定节点更容易形成可识别盲区，战术单位必须具备有机告警、分散和被动防护能力。",
+          "evidence_links": [
+            "E9"
+          ]
+        },
+        {
+          "case": "俄乌持续无人机战",
+          "lesson": "无人机、电子战、AI/自主、频率调整、光纤/替代链路和基层C-UAV装备形成快速迭代循环；固定采购周期难以跟上战场软件和战术变化。",
+          "transfer_to_complex_terrain": "预警体系应采用开放式架构、可更新特征库、前沿维修和操作员—工程师反馈闭环。",
+          "evidence_links": [
+            "E12",
+            "E13",
+            "E16",
+            "E17"
+          ]
+        },
+        {
+          "case": "俄罗斯Shahed饱和战役",
+          "lesson": "大量低成本一向攻击无人机可通过持续发射消耗防空资源；乌克兰以声学网、共同作战图、EW、机动防空和低成本手段减轻成本压力。",
+          "transfer_to_complex_terrain": "对复杂地形低空预警，应把声学/人工观测作为补盲层，但必须与共同作战图和传感器融合结合，避免误报泛滥。",
+          "evidence_links": [
+            "E18"
+          ]
+        },
+        {
+          "case": "红海反无人机作战",
+          "lesson": "分层、多域防御可以在高威胁环境中有效击落大量无人机，但成本交换、库存、节奏和人员/平台持续值班压力难以长期忽视。",
+          "transfer_to_complex_terrain": "陆上复杂地形防御也不能只追求单次拦截率，必须以低成本处置、弹药管理和被动防护控制长期消耗。",
+          "evidence_links": [
+            "E10"
+          ]
+        },
+        {
+          "case": "JCO蜂群反制演示",
+          "lesson": "面对多方向、多速度、多尺寸目标，没有单一传感器或效应器能解决全部问题；需要系统-of-systems、分层探测、威胁排序和C2融合。",
+          "transfer_to_complex_terrain": "复杂地形中的“多弱告警”场景更需要目标去重、优先级排序和自动cueing，否则人工值守会被虚警和重复目标淹没。",
+          "evidence_links": [
+            "E6"
+          ]
+        }
+      ],
+      "deployment_principles": [
+        {
+          "principle": "地形先于装备",
+          "description": "先做三维视域、RF传播、民用流量、气象和关键通道分析，再决定雷达、RF、EO/IR、声学和机动点位。",
+          "evidence_links": [
+            "E3",
+            "E5",
+            "E14"
+          ]
+        },
+        {
+          "principle": "多模态互补而非单传感器最优",
+          "description": "低分辨率广域传感用于首警，高分辨率窄视场传感用于确认；RF、雷达、EO/IR、声学和人工报告按环境动态加权。",
+          "evidence_links": [
+            "E3",
+            "E4",
+            "E14"
+          ]
+        },
+        {
+          "principle": "固定骨干+机动补盲+基层有机告警",
+          "description": "固定节点提供连续背景，机动节点填补地形/战损空隙，基层单元保留最低本地告警和防护能力。",
+          "evidence_links": [
+            "E6",
+            "E15",
+            "E17"
+          ]
+        },
+        {
+          "principle": "C2降级可运行",
+          "description": "共同作战图重要，但不能成为单点依赖；断链时仍需本地分级告警、离线地图和预授权防护动作。",
+          "evidence_links": [
+            "E2",
+            "E7",
+            "E8",
+            "E15"
+          ]
+        },
+        {
+          "principle": "低成本优先，高端保留",
+          "description": "对低价值、低置信或诱饵目标优先采用监视、遮蔽、驱离、电子/非动能和低成本措施，高端拦截用于高置信高危目标。",
+          "evidence_links
+- 现有装备传统场景能力提升：提升现有产品的复杂环境识别、抗干扰通信、跨平台协同、软件定义任务重构和持续保障功能；证据驱动重点：{
+  "findings": [
+    "传统能力缺口的核心不是“有没有雷达”，而是现役低空预警体系多按高空、快速、较大雷达截面积目标设计；在山地、城市、海岸等复杂地形中，小型低慢小无人机可被地形、建筑、植被、水面杂波和电磁噪声共同遮蔽，导致发现距离、识别置信度和可处置时间同步压缩。",
+    "公开战例显示，低成本无人机并非总能高成功率突防；但其数量、低成本、快速迭代和可消耗特征足以通过持续试探、诱饵、饱和和跨域协同消耗防空弹药、传感器值班能力和指挥决策带宽。",
+    "现役体系的传统缺口集中在六类：一是低空盲区和地形遮蔽；二是单传感器误警与漏警；三是RF依赖型探测/压制对静默、自主、跳频或替代链路目标适应不足；四是集中式C2在短处置窗口内延迟过大；五是末端防护成本交换不利；六是基层单位缺少有机化、可机动、可重构的探测预警与被动防护能力。",
+    "升级需求应从单点装备采购转为体系架构升级：地形建模与视域规划、分布式补盲雷达、被动RF/频谱监测、EO/IR与声学验证、边缘AI融合、低带宽降级运行、蓝白名单与民航/民用无人机去冲突、低成本拦截与被动欺骗共同构成“决策级置信度”。",
+    "复杂地形场景下，关键时间窗口不是拦截瞬间，而是从危机前异常模式建立到初始接触的数分钟至数十秒：若传感器只在目标临近防区后才给出低置信告警，后续识别、授权、处置和安全评估会被压缩到不可用。",
+    "反证与修正：电子战和传统防空并未失效，乌克兰、红海等案例显示分层防御、电子战、机动火力和共同作战图可显著降低无人机命中率；因此问题不是“传统能力完全无用”，而是其在复杂地形、饱和、低成本消耗和快速技术迭代下需要体系化补强。",
+    "面向下游装备与运用研究，应优先评估：复杂地形三维覆盖率、低空目标首警时间、虚警/漏警率、RF静默目标发现概率、网络降级下本地处置能力、低成本连续作战能力、以及不同地形下传感器—效应器—指挥授权链条的闭环时间。"
+  ],
+  "confidence": 0.82,
+  "open_questions": [
+    "不同现役雷达、被动RF、EO/IR和声学节点在山谷、城市峡谷、海岸水面和高原低温环境中的实测Pd/FAR、首警时间和连续跟踪能力仍需本级试验数据确认。",
+    "公开资料可证明无人机威胁趋势和能力缺口，但无法充分量化特定国家、特定部队、特定装备编制下的真实覆盖盲区和库存消耗速率。",
+    "AI自主、抗干扰链路、星链/蜂窝/中继式替代链路的发展速度存在不确定性；短期内受算力、重量、成本限制，但中期可能显著削弱RF依赖型防御。",
+    "复杂地形下低成本拦截器、定向能、电子战和被动防护之间的最佳成本交换组合，需要结合任务目标、授权规则和民用环境约束进一步建模。",
+    "国内/本土防御场景中，法律授权、民航安全、频谱管理和隐私限制可能比战区环境更强地约束探测与处置方式，需单独形成规则矩阵。"
+  ],
+  "handoff_summary": "本轮研究将“复杂地形条件下现役低空无人机探测预警体系的传统能力缺口”转化为一个多域、动态对抗场景：敌方以低慢小、低成本、可消耗无人机为核心，通过危机前试探、初始低空接触、体系饱和与电磁/网络压迫、持续迭代和战损后再渗透，压缩蓝方首警与处置窗口。蓝方传统缺口主要在低空盲区、单传感器不可靠、RF依赖、集中式C2延迟、基层缺少有机C-UAS能力和成本交换不利。建议下游weapon_equipment重点研究分布式多模态融合、地形感知部署、低成本拦截与边缘处理；operational_employment重点研究分层值班、降级网络、民用空域去冲突和基层有机防护；winning_mechanism重点研究以成本交换、时间窗口、体系韧性和快速迭代压制无人机威胁的机制。",
+  "search_plan": [
+    {
+      "track": "近年公开战例",
+      "queries": [
+        "Russia Ukraine war low altitude drones detection air defense lessons terrain urban 2024 report",
+        "Nagorno-Karabakh 2020 drones air defense lessons small UAV radar electronic warfare report",
+        "Houthi Red Sea drones air defense saturation lessons counter UAS low cost 2024 report",
+        "Drone Saturation Russia Shahed Campaign Ukraine air defense acoustic sensors electronic warfare"
+      ]
+    },
+    {
+      "track": "现代演训与作战概念",
+      "queries": [
+        "Joint Counter Small UAS Office counter drone swarm demonstration 2024 layered approach",
+        "DoD Strategy for Countering Unmanned Systems detection active passive defenses 2024",
+        "counter small unmanned aircraft systems strategy DOTMLPF-P layered active passive defense",
+        "Small Drones Big Problems First Principles Countering UAS 2026"
+      ]
+    },
+    {
+      "track": "无人和智能系统运用",
+      "queries": [
+        "Ukraine FPV drones AI autonomous navigation anti jamming CSIS 2025",
+        "sUAS infiltration Ukraine electronic warfare GNSS spoofing attritable tactics",
+        "low slow small UAS air littoral contested space drone warfare lessons",
+        "counter UAS sensor fusion radar RF EO acoustic review"
+      ]
+    },
+    {
+      "track": "电磁网络与太空约束",
+      "queries": [
+        "Russia Ukraine electronic warfare drones GPS jamming UAV losses RUSI",
+        "contested electromagnetic spectrum UAS PNT jamming spoofing Ukraine report",
+        "counter UAS RF detection limitations multipath interference line of sight FAA technical considerations",
+        "GPS jamming satellite communications drone countermeasure Ukraine report"
+      ]
+    },
+    {
+      "track": "城市海岸高原等环境变化",
+      "queries": [
+        "urban counter UAS detection line of sight multipath clutter acoustic radar RF EO IR report PDF",
+        "low altitude air surveillance radar terrain masking line of sight mountains official report",
+        "counter UAS coastal environment sea clutter weather rain wind acoustic false alarms report",
+        "complex terrain low altitude drone detection radar clutter acoustic RF challenges mountainous"
+      ]
+    }
+  ],
+  "contradictions": [
+    "电子战既是有效反无人机手段，也是体系脆弱点。IAMD COE和CSIS均显示EW能大规模压制无人机，但CSIS和2026年ISIS报告也显示抗干扰、CRPA、替代链路、摄像头/中继/网状链路正在削弱单纯RF压制的可靠性。",
+    "Shahed等大型一向攻击无人机整体命中率并不高，ISIS数据表明大量无人机被拦截、迷航或受EW影响；但CSIS和ISIS同时指出持续大规模发射可消耗防空资源并在恶劣天气和基础设施累积损伤下形成战略效果。",
+    "雷达仍是全天候、可探测静默/自主目标的关键传感器；但FAA、DoD和学术综述均指出，低空小目标在地形遮蔽、地物反射、MTI盲速、杂波和小RCS条件下会显著降低雷达可靠性，因此“雷达必要”不等于“雷达充分”。",
+    "复杂地形既帮助攻击方利用山脊、建筑、树木和水面杂波接近，也会缩短无人机自身通信链路、导航和续航可靠性；蓝方若能提前做视域、RF传播和网络路径建模，可把地形从缺口转化为防御条件。",
+    "AI自主被广泛视为未来威胁放大器；但IAMD COE报告提醒，小型商用无人机在短期内仍受机载算力、重量、功耗和成本限制，不能假设所有低空目标都已具备高可靠自主突防能力。"
+  ],
+  "confidence_basis": "证据覆盖政府/军方文件、国会研究、军种专业期刊、智库报告、学术综述和公开战例，来源族群超过3类且包含2024、2025、2026年资料。关于复杂地形物理约束、传感器局限和多模态融合的证据直接性较高；关于俄乌、纳卡、红海战例的证据可相互印证无人机饱和、低成本消耗和分层防御趋势。主要不确定性在于具体装备性能、特定地域覆盖率、实际库存消耗和敌方最新链路/自主能力通常不公开，因此场景参数采用公开资料支撑的区间化、假设化表达。",
+  "source_claims": [
+    {
+      "url": "https://media.defense.gov/2026/Jul/08/2003958884/-1/-1/1/SMALL-DRONES-BIG-PROBLEMS-A-FIRST-PRINCIPLES-APPROACH-TO-Counter-UAS.PDF",
+      "claim": "[E1] 该DoD/联合跨机构材料指出无人机防护没有单一银弹，需雷达、光电/红外、声学、RF等互补传感器形成决策级置信度；山地、城市、植被、天气、RF噪声和网络路径会共同影响探测与处置。"
+    },
+    {
+      "url": "https://www.war.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/",
+      "claim": "[E2] DoD 2024年发布反无人系统战略，称无人系统对人员、设施和资产构成紧迫且持久威胁，并强调需统一理解和跨部门方法应对快速演化的无人系统。"
+    },
+    {
+      "url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+      "claim": "[E3] DoD战略事实清单强调无人系统正在改变冲突特征，短期重点包括提升探测、主动防御和被动防御，并面向更大数量、更高自主化和网络化威胁做中长期准备。"
+    },
+    {
+      "url": "https://www.army.mil/article-amp/278404/joint_counter_small_uas_office_conducts_successful_counter_drone_swarm_demonstration",
+      "claim": "[E4] 美陆军JCO 2024年蜂群反制演示中，每轮发射40多个UAS目标并评估多套系统；结论是单一能力无法应对多方向、多速度、多尺寸的大规模无人机剖面，需要系统-of-systems和分层方法。"
+    },
+    {
+      "url": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_5.html",
+      "claim": "[E5] FAA雷达说明指出，低空航空器若被山体遮蔽或低于雷达波束/受地球曲率影响可能看不见；较小反射面目标也比大型飞机更难由一次雷达发现。"
+    },
+    {
+      "url": "https://www.faa.gov/sites/faa.gov/files/airports/airport_safety/Attachment-3-UAS-Detection-Technical-Considerations.pdf",
+      "claim": "[E6] FAA UAS探测技术考虑文件指出，雷达和RF常作为主探测源，EO和声学通常是验证/辅助传感器；树木、建筑、地形、RF干扰、多径、天气、悬停/垂直运动和虚警都会影响系统效能。"
+    },
+    {
+      "url": "https://www.faa.gov/airports/new_entrants/uas_detection_mitigation_response",
+      "claim": "[E7] FAA机场UAS探测页面指出，雷达、RF、EO和声学可单独或组合用于探测验证，但探测系统不能自行判断UAS意图或威胁等级，且部署需考虑法律、EMI和空域运行影响。"
+    },
+    {
+      "url": "https://www.armyupress.army.mil/Journals/Military-Review/Online-Exclusive/2024-OLE/Grenade-Dropping-Quadcopters-II/",
+      "claim": "[E8] Army University Press关于俄乌无人机战的文章指出，1-3类小型UAS提供持久且难探测的RISTA能力；高空易观测UAS在成熟战区被EW和防空显著压制，而基层仍缺少足够有机C-sUAS能力。"
+    },
+    {
+      "url": "https://www.armyupress.army.mil/Journals/Military-Review/English-Edition-Archives/Nov-Dec-2024/Cunning-Tools-of-War/",
+      "claim": "[E9] Army University Press文章将低空空域称为被争夺的air littoral，并指出乌克兰小型UAS可采用消耗性渗透，即便少量存活也能通过不同路线和频率寻找电子战防线弱点。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare",
+      "claim": "[E10] CSIS基于前线访谈指出多数低成本FPV任务成功率约10%至15%，熟练操作者可达30%至50%；同时EW对控制链和GPS构成持续威胁，而AI导航和抗干扰能力正在被探索。"
+    },
+    {
+      "url": "https://iamd-coe.org/wp-content/uploads/2024/02/The-Evolving-UAS-Threat-Lessons-from-the-Russian-Ukrainian-War-Since-2022-on-Future-Air-Defence-Challenges-and-Requirements.pdf",
+      "claim": "[E11] IAMD COE报告指出俄乌冲突中电磁频谱高度拥挤和受争夺，俄军约每10公里部署一套主要EW系统并造成乌军约每月1万架UAV损失；但AI/自主、抗EW和卫星通信发展使攻防平衡保持不稳定。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/air-and-missile-war-nagorno-karabakh-lessons-future-strike-and-defense",
+      "claim": "[E12] CSIS纳卡空中与导弹战研究指出，S-300等大型防空系统并非为反UAV任务设计且早期遭打击；核心教训是需要全谱系防空、机动SHORAD和被动防护。"
+    },
+    {
+      "url": "https://s3.us-east-1.amazonaws.com/files.cnas.org/documents/Report_CUAS_Defense_Sep-2025_final.pdf",
+      "claim": "[E13] CNAS红海研究称2023年11月至2025年1月美海空力量击落约480架胡塞无人机，成功依赖分层、多域一体防御和快速学习，但成本与高节奏不可持续，部分交战窗口仅为秒级。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/drone-saturation-russias-shahed-campaign",
+      "claim": "[E14] CSIS关于Shahed饱和攻击的研究指出，俄方自2024年9月起将Shahed发射从每周约200架提升到2025年3月超过1000架；乌方依靠声学传感器、共同作战系统、EW和机动防空降低成本交换，但饱和压力仍上升。"
+    },
+    {
+      "url": "https://isis-online.org/uploads/isis-reports/documents/January-2026-Updated-Analysis-of-Russian-Shahed-type-UAVs-Deployment-Against-Ukraine_Feb-10_2026.pdf",
+      "claim": "[E15] ISIS 2026年2月报告指出，2026年1月Shahed型UAV继续承担直接打击基础设施与消耗防空资源的双重任务，并出现CRPA、尝试Starlink连接、中继无人机网状链路、在线摄像头和实时航路调整等技术改进。"
+    },
+    {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10780901/",
+      "claim": "[E16] 学术综述总结雷达、RF、声学和视觉探测均有环境干扰因素：鸟类/野生动物、频率重叠/干扰、风雨噪声、夜间/雾雨雪、遮挡和复杂背景会增加漏警或虚警；多传感器融合可提升鲁棒性。"
+    }
+  ],
+  "analysis_sections": {
+    "scenario_framework": {
+      "scenario_name": "复杂地形低空无人机探测预警体系压力场景",
+      "purpose": "检验现役低空无人机探测预警体系在山地—城市—海岸复合环境中的传统能力缺口，并推导升级需求；场景仅用于防御性能力研判，不提供攻击执行步骤。",
+      "background": {
+        "operational_setting": "蓝方防区位于山地边缘城市与近海/河口交通节点交汇区，存在山脊、谷地、高层建筑、仓储园区、港口水面、通信基站、民用无人机活动和复杂电磁背景。",
+        "blue_mission": "在不干扰民航和民用通信的前提下，对低空无人机活动形成早期发现、连续跟踪、身份判别、威胁评估、告警分发和安全处置支持。",
+        "red_objective": "通过低成本、可消耗、低空、分散和多样化无人机活动压缩蓝方发现—识别—决策—处置窗口，消耗传感器值班与防空资源，并寻找体系盲区。",
+        "key_assumptions": [
+          "[A1] 敌方不需要每架无人机成功，只需通过持续试探和少量突防制造态势压力。",
+          "[A2] 蓝方现役体系以固定雷达、少量RF探测、EO/IR验证、人工值守和上级集中确认流程为主，基层有机C-UAS能力不足。",
+          "[A3] 民用环境中蓝方不能无限制使用干扰、激光或动能处置，必须先完成识别、授权和安全评估。",
+          "[A4] 复杂地形对攻防双方同时施加约束：既遮蔽无人机，也影响其链路、导航和续航。"
+        ],
+        "evidence_or_assumption_links": [
+          "E1",
+          "E3",
+          "E4",
+          "E5",
+          "E6",
+          "E7",
+          "E16",
+          "A1",
+          "A2",
+          "A3",
+          "A4"
+        ]
+      },
+      "forces_and_systems": {
+        "blue_force": [
+          "固定低空监视雷达与既有防空预警节点",
+          "若干机动补盲雷达/便携式雷达",
+          "被动RF侦测与频谱监测节点",
+          "EO/IR云台、热像仪、可见光摄像头",
+          "声学传感器或群众/哨兵观测渠道",
+          "本地指挥所、上级空情/防空C2、民航/公安/频谱管理联络机制",
+          "有限电子压制、低成本拦截、被动伪装/遮蔽/分散措施"
+        ],
+        "red_force_abstract": [
+          "低慢小四旋翼/多旋翼侦察无人机",
+          "FPV或一次性小型无人机",
+          "固定翼一向攻击或诱饵无人机",
+          "RF发射较弱、间歇通信或预编程航线无人机",
+          "用于制造虚警和资源消耗的非致命/诱饵平台",
+          "电磁侦察、网络压力和信息欺骗支援能力"
+        ]
+      },
+      "scenario_horizons": [
+        {
+          "phase": "危机前预警",
+          "description": "防区周边出现异常民用无人机活动、短时RF信号、夜间低空噪声、社交媒体/公开影像收集、山脊和楼顶附近可疑活动。敌方可能进行传感器覆盖摸底和蓝方响应时间观察。",
+          "blue_tasks": [
+            "建立基线：常态RF、民用无人机航迹、鸟群/船舶/车辆/风机/港口机械背景。",
+            "基于三维地形、建筑物和植被生成雷达/EO/RF/声学视域图。",
+            "把异常模式纳入预警而非等待明确入侵。",
+            "建立民航、公安、频谱和设施业主联动流程。"
+          ],
+          "triggers": [
+            "同一区域重复出现短时无人机信号或视觉观测",
+            "防区盲区边缘出现疑似测绘/观察活动",
+            "夜间或恶劣天气中出现多源弱告警"
+          ],
+          "termination_conditions": [
+            "完成盲区复核与传感器补位",
+            "未发现持续威胁且异常恢复常态",
+            "进入初始接触阶段"
+          ],
+          "evidence_or_assumption_links": [
+            "E1",
+            "E6",
+            "E7",
+            "E16",
+            "A1"
+          ]
+        },
+        {
+          "phase": "初始接触",
+          "description": "低空目标利用山脊、建筑群、树线或水面背景进入外围；雷达出现低置信小目标或间歇航迹，RF节点可能捕捉到短脉冲或完全静默，EO/IR受到天气、背景热源和遮挡影响。",
+          "blue_tasks": [
+            "多源交叉验证：雷达给出方位/速度，RF判别链路特征，EO/IR确认外形，声学和哨兵观测补充。",
+            "按威胁等级而非单点告警触发响应。",
+            "在不危及民用空域条件下发布分级告警和临时空域/设施防护动作。"
+          ],
+          "triggers": [
+            "多个传感器在相近时间/空间内出现弱相关",
+            "同一航迹在盲区边界反复消失再出现",
+            "RF噪声或GNSS异常与低空告警同时发生"
+          ],
+          "termination_conditions": [
+            "目标被识别为合法/无威胁并解除警戒",
+            "目标退出防区且无后续批次",
+            "出现多批次、多方向或电磁压迫迹象，进入体系对抗"
+          ],
+          "evidence_or_assumption_links": [
+            "E5",
+            "E6",
+            "E16",
+            "E1",
+            "A3"
+          ]
+        },
+        {
+          "phase": "体系对抗",
+          "description": "敌方由单机试探转为多批次、多方向、诱饵与真实目标混合；同时出现RF拥塞、GNSS干扰/欺骗、链路间歇、网络回传延迟和虚警增多。蓝方从单目标处置转为态势管理和资源分配。",
+          "blue_tasks": [
+            "维持共同作战图，但允许边缘节点在上级链路降级时本地生成威胁优先级。",
+            "将拦截资源优先用于穿越关键防护圈、具有高置信敌意或高危载荷迹象的目标。",
+            "采取被动防护：关键装备分散、遮蔽、诱饵、灯火/热源/电磁特征管理。",
+            "评估电子压制与民用通信、己方无人机和传感器之间的电磁互扰。"
+          ],
+          "triggers": [
+            "同一时间出现多方向航迹或诱饵/真实目标混杂",
+            "雷达/RF/EO传感器输出互相矛盾",
+            "上级链路延迟导致确认时间超过末端处置窗口",
+            "蓝方高价值节点被持续侦察或反复虚警牵制"
+          ],
+          "termination_conditions": [
+            "攻击批次停止且态势恢复稳定",
+            "蓝方资源消耗达到预设阈值并转入持续作战节奏",
+            "若出现传感器/通信节点损伤，则进入战损重构"
+          ],
+          "evidence_or_assumption_links": [
+            "E3",
+            "E4",
+            "E9",
+            "E11",
+            "E13",
+            "E14",
+            "E15",
+            "A2"
+          ]
+        },
+        {
+          "phase": "持续作战",
+          "description": "无人机威胁进入日常化、高频化和迭代化；敌方根据蓝方反应调整飞行高度、时间、链路、诱饵比例和目标类型。蓝方重点由单次成功拦截转为成本、人员、传感器维护和弹药库存的长期承受能力。",
+          "blue_tasks": [
+            "统计每类传感器虚警、漏警和维护负担，按地形区块调整部署。",
+            "低成本优先：对低价值目标采用监视、驱离、遮蔽和电子/非动能手段，对高价值威胁保留高端拦截。",
+            "更新RF/雷达/声学/视觉特征库，训练操作员识别新型诱饵和民用混杂目标。",
+            "形成24/7值守轮换、备件和电源/网络冗余。"
+          ],
+          "triggers": [
+            "连续多日多批次无人机活动",
+            "蓝方拦截成本明显高于来袭平台成本",
+            "传感器误警导致疲劳或响应迟滞",
+            "敌方出现新频段、新外形或新抗干扰特征"
+          ],
+          "termination_conditions": [
+            "威胁活动降至基线水平",
+            "完成战术/技术升级并恢复成本交换优势",
+            "发生关键节点损伤并转入战损重构"
+          ],
+          "evidence_or_assumption_links": [
+            "E8",
+            "E10",
+            "E11",
+            "E14",
+            "E15",
+            "E16"
+          ]
+        },
+        {
+          "phase": "战损重构",
+          "description": "部分传感器、通信、供电或C2节点失效；蓝方需要在地形和电磁约束下快速恢复低空态势感知，避免因单点损伤形成可重复利用的低空通道。",
+          "blue_tasks": [
+            "启用机动补盲节点、备用电源、离线地图和本地边缘处理。",
+            "将固定节点覆盖转为临时网格化覆盖，重点保护关键通道和高价值区域。",
+            "以最小网络依赖维持本地告警和跨单位简报。",
+            "记录敌方利用的盲区和触发条件，纳入下一轮部署优化。"
+          ],
+          "triggers": [
+            "关键传感器掉线或误差显著升高",
+            "回传链路拥塞/中断",
+            "多源空情无法融合或重复目标严重",
+            "敌方利用相同盲区重复进入"
+          ],
+          "termination_conditions": [
+            "恢复最低可接受覆盖和本地处置能力",
+            "完成备用节点部署和盲区重新评估",
+            "威胁降低或转入新一轮持续作战"
+          ],
+          "evidence_or_assumption_links": [
+            "E1",
+            "E3",
+            "E4",
+            "E6",
+            "A2",
+            "A4"
+          ]
+        }
+      ],
+      "victory_criteria": {
+        "blue_success": [
+          "低空关键通道首警时间满足识别和安全处置需要",
+          "多传感器融合后虚警可控、漏警下降",
+          "在网络降级和部分节点损伤下仍可本地告警与分级响应",
+          "拦截/处置成本与来袭成本差距缩小",
+          "敌方无法通过少量试探稳定复现低空通道"
+        ],
+        "red_success_abstract": [
+          "蓝方在多个关键地形区块出现持续盲区",
+          "虚警和诱饵迫使蓝方高成本响应",
+          "集中式确认流程导致处置窗口丧失",
+          "蓝方传感器/通信/值班体系出现疲劳或降级"
+        ]
+      }
+    },
+    "enemy_coa": [
+      {
+        "coa_name": "COA-1 最可能方案：低强度持续侦察试探与盲区测绘",
+        "intent": "以低成本、低风险平台持续观察蓝方反应、传感器覆盖和出动规律，逐步识别低空盲区和误警触发点。",
+        "conceptual_actions_non_executable": [
+          "在民用空域背景、城市边缘和山地遮蔽附近制造间歇低空活动。",
+          "混用可见RF发射目标、弱发射目标和合法/疑似合法活动以测试蓝方识别规则。",
+          "反复观察蓝方从首警到确认、授权和处置的时间。"
+        ],
+        "observable_indicators": [
+          "同一区域短时RF信号或无人机目击重复出现但未深入防区",
+          "雷达低置信航迹在山脊/建筑边缘消失再出现",
+          "民用无人机活动量与敏感时段、演训或重要保障活动异常相关",
+          "社交媒体、公开影像或人员观察活动增多"
+        ],
+        "key_nodes": [
+          {
+            "node": "基线污染",
+            "effect_on_blue": "使蓝方难以区分正常民用活动与威胁准备。",
+            "evidence_or_assumption_links": [
+              "E7",
+              "E16",
+              "A1"
+            ]
+          },
+          {
+            "node": "盲区确认",
+            "effect_on_blue": "暴露地形遮蔽、传感器死角和C2延迟。",
+            "evidence_or_assumption_links": [
+              "E5",
+              "E6",
+              "E1"
+            ]
+          }
+        ],
+        "risk_to_red": [
+          "低空链路受地形影响可能失联",
+          "频繁试探会暴露模式并给蓝方建立基线",
+          "民用环境中平台被识别后可能触发执法和空域管制"
+        ],
+        "blue_pressure_points": [
+          "身份判别",
+          "民用无人机去冲突",
+          "值班疲劳",
+          "低空盲区建模",
+          "跨部门信息共享"
+        ]
+      },
+      {
+        "coa_name": "COA-2 最危险方案：多轴饱和、诱饵混杂与电磁/网络压迫",
+        "intent": "以多批次、多方向、低成本无人机和诱饵目标迫使蓝方同时处理大量低置信告警，消耗拦截资源并压缩处置窗口。",
+        "conceptual_actions_non_executable": [
+          "将诱饵、侦察和真实威胁目标混杂，制造优先级排序困难。",
+          "利用地形、城市遮挡和水面/车辆/鸟群杂波增加虚警。",
+          "通过电磁拥塞、GNSS异常或网络压力降低蓝方传感器和C2融合质量。",
+          "在蓝方响应后改变频段、时段、航迹和平台类型，延长消耗战。"
+        ],
+        "observable_indicators": [
+          "同一时间多方向低空航迹增加",
+          "RF噪声底、GNSS异常、通信延迟与无人机告警同步出现",
+          "EO/IR被热背景、遮挡或诱饵牵引，确认时间延长",
+          "拦截弹药、值班人员和传感器维护负担快速上升"
+        ],
+        "key_nodes": [
+          {
+            "node": "态势过载",
+            "effect_on_blue": "传感器融合和人工确认产生队列积压，威胁排序错误概率上升。",
+            "evidence_or_assumption_links": [
+              "E4",
+              "E13",
+              "E14"
+            ]
+          },
+          {
+            "node": "成本交换施压",
+            "effect_on_blue": "诱使蓝方使用昂贵拦截手段对付低成本目标，削弱持续作战能力。",
+            "evidence_or_assumption_links": [
+              "E13",
+              "E14",
+              "E15"
+            ]
+          },
+          {
+            "node": "电磁/网络降级",
+            "effect_on_blue": "RF探测、GNSS时间/位置、视频回传和共同作战图出现不一致。",
+            "evidence_or_assumption_links": [
+              "E1",
+              "E6",
+              "E11",
+              "E15"
+            ]
+          }
+        ],
+        "risk_to_red": [
+          "大规模活动更易被多源发现",
+          "诱饵比例过高会降低实际效果",
+          "持续发射对后勤、组装和操作者训练提出要求"
+        ],
+        "blue_pressure_points": [
+          "多目标跟踪容量",
+          "威胁优先级排序",
+          "边缘授权",
+          "低成本处置",
+          "EW与己方通信去冲突",
+          "持续补给与人员轮换"
+        ]
+      },
+      {
+        "coa_name": "COA-3 替代方案：RF静默/半自主低空渗透与合法流量伪装",
+        "intent": "减少可被RF探测和压制的暴露特征，依赖预编程、惯导/视觉辅助或间歇链路，通过合法无人机/鸟群/车辆/港口机械背景降低识别置信度。",
+        "conceptual_actions_non_executable": [
+          "减少连续控制链路暴露，采用间歇通信或预编程任务。",
+          "选择蓝方RF强噪声区、城市遮挡区或复杂热背景区使探测结果不一致。",
+          "利用民用无人机密集时段或合法空域活动提高蓝方误判成本。"
+        ],
+        "observable_indicators": [
+          "雷达/EO有弱迹象但RF无对应链路",
+          "目标航迹规律性强但身份信息缺失",
+          "Remote ID或白名单数据与物理航迹不一致",
+          "蓝方RF压制后目标仍保持部分任务行为"
+        ],
+        "key_nodes": [
+          {
+            "node": "RF探测旁路",
+            "effect_on_blue": "RF依赖型预警和操作者定位能力下降。",
+            "evidence_or_assumption_links": [
+              "E6",
+              "E10",
+              "E11",
+              "E15"
+            ]
+          },
+          {
+            "node": "识别规则混淆",
+            "effect_on_blue": "合法/非法、威胁/非威胁分类时间增加。",
+            "evidence_or_assumption_links": [
+              "E7",
+              "E16",
+              "A3"
+            ]
+          }
+        ],
+        "risk_to_red": [
+          "小型平台自主能力受算力、重量、电源和成本约束",
+          "静默减少实时操控能力并提高任务不确定性",
+          "雷达、EO/IR和声学融合仍可能发现其物理存在"
+        ],
+        "blue_pressure_points": [
+          "非RF目标探测",
+          "多模态融合",
+          "白名单/Remote ID可信校验",
+          "本地AI分类",
+          "被动防护"
+        ]
+      }
+    ],
+    "critical_timeline": [
+      {
+        "time_window": "T-30至T-7天：危机前模式建立",
+        "red_activity_abstract": "低强度观察、民用流量混入、短时RF活动和公开信息收集。",
+        "blue_decision": "是否把弱异常纳入预警并开展盲区复核。",
+        "traditional_gap": "现役体系常等待明确空情告警，缺少把地形、RF基线和民用活动融合为异常模式的机制。",
+        "upgrade_need": "建立三维视域、RF传播、常态航迹和异常模式数据库；把民用/执法/频谱信息接入低空态势。",
+        "observable_indicators": [
+          "重复短时RF信号",
+          "固定区域目击报告",
+          "不寻常民用无人机集中",
+          "公开影像收集活动"
+        ],
+        "evidence_or_assumption_links": [
+          "E1",
+          "E6",
+          "E7",
+          "A1"
+        ]
+      },
+      {
+        "time_window": "T-72至T-24小时：传感器与响应摸底加剧",
+        "red_activity_abstract": "围绕防区边缘进行多点低空试探，观察蓝方响应节奏。",
+        "blue_decision": "是否调整机动传感器、值班等级和被动防护。",
+        "traditional_gap": "固定传感器对山体、建筑和水面杂波导致的低空盲区反应慢。",
+        "upgrade_need": "机动补盲雷达/被动RF/EO点位预案，临时升高传感器、边缘融合和地形补盲部署。",
+        "observable_indicators": [
+          "航迹在盲区边缘反复中断",
+          "不同传感器对同一事件判断不一致",
+          "低空噪声和视觉观测先于雷达确认"
+        ],
+        "evidence_or_assumption_links": [
+          "E5",
+          "E6",
+          "E16",
+          "A4"
+        ]
+      },
+      {
+        "time_window": "T-60至T-10分钟：初始接触与分级告警",
+        "red_activity_abstract": "小批次低空目标进入外围探测范围，可能伴随诱饵或RF噪声。",
+        "blue_decision": "是否升级为无人机威胁事件并启动空域/设施防护。",
+        "traditional_gap": "单传感器置信度不足导致等待人工确认，压缩后续处置时间。",
+        "upgrade_need": "多模态置信评分、自动关联、EO/IR slew-to-cue、声学/哨兵补充和快速分级告警。",
+        "observable_indicators": [
+          "低RCS低速航迹",
+          "间歇RF发射",
+          "EO/IR受到背景干扰",
+          "GNSS或网络异常同步出现"
+        ],
+        "evidence_or_assumption_links": [
+          "E1",
+          "E4",
+          "E6",
+          "E16"
+        ]
+      },
+      {
+        "time_window": "T-10分钟至T+30分钟：体系对抗窗口",
+        "red_activity_abstract": "多方向、多批次、诱饵/真实目标混合，叠加电磁和网络压力。",
+        "blue_decision": "如何在有限时间内排序目标、分配低成本与高端处置手段、维持共同作战图。",
+        "traditional_gap": "集中式C2、人工确认和高成本拦截难以应对饱和和秒级/分钟级窗口。",
+        "upgrade_need": "边缘授权、降级运行、威胁优先级算法、低成本拦截层、被动防护和网络断续下的本地态势。",
+        "observable_indicators": [
+          "多传感器目标重复或冲突",
+          "航迹数量超过人工处理能力",
+          "回传视频延迟",
+          "拦截资源快速消耗"
+        ],
+        "evidence_or_assumption_links": [
+          "E3",
+          "E4",
+          "E13",
+          "E14",
+          "E15"
+        ]
+      },
+      {
+        "time_window": "T+30分钟至T+72小时：持续消耗与快速迭代",
+        "red_activity_abstract": "根据蓝方响应改变平台、频段、时段、诱饵比例和接近方向。",
+        "blue_decision": "如何维持成本交换、人员轮换、传感器维护和特征库更新。",
+        "traditional_gap": "装备采购与软件/特征库更新周期慢，基层训练和备件不足。",
+        "upgrade_need": "开放式架构、快速软件更新、特征库共享、消耗品储备、训练闭环和跨单位经验回灌。",
+        "observable_indicators": [
+          "新频段或静默目标增加",
+          "诱饵比例变化",
+          "夜间/恶劣天气活动增加",
+          "传感器误警模式变化"
+        ],
+        "evidence_or_assumption_links": [
+          "E8",；{
+  "findings": [
+    "复杂地形下的传统低空无人机预警缺口主要不是单一雷达灵敏度不足，而是低空视距、地形遮蔽、建筑/林地杂波、多路径、电磁噪声和短预警时间叠加造成的体系性缺口。",
+    "现役成熟体系以美国LIDS家族为代表：FS-LIDS用于固定点防护，M-LIDS用于机动防护，核心由KuRFS/相关雷达、EO/IR、电子战、Coyote拦截器和FAAD C2组成；公开资料显示其目标对象主要为Group 1-3小型无人机及其他低飞威胁。",
+    "GAO与CRS资料显示，FS-LIDS、M-LIDS、Coyote、Ku-band雷达族和手持/下车系统已进入美陆军正式采办组合并在2024财年进入全速生产；但成本、测试逼真度、人员训练、跨军种C2和工业扩产仍是约束。",
+    "公开参数显示，若在开阔或合理布站条件下，专用小无人机雷达可提供数公里级发现：Saab Giraffe 1X宣称可在4 km发现很小UAV；Robin IRIS标准模式为5 km仪器化距离、长距模式可至12 km；Hensoldt SPEXER 2000 Coastal对0.2 m² RCS UAV公开探测距离为9 km。复杂地形中这些距离不应直接外推。",
+    "被动RF/协议解析、声学、EO/IR和多传感器融合可补足有源雷达暴露和遮蔽问题，但对自主航线、低发射控制、跳频、光纤控制、复杂电磁环境和恶劣天气均存在边界。",
+    "在研升级方向集中于低成本、低SWaP、模块化、被动/分布式传感器，车载/下车/系留或小型UAS搭载传感器，多源融合C2，以及低成本硬杀伤、非动能、定向能和高功率微波等多层反制。",
+    "对手优势在于小型无人机低成本、低雷达/声/热/RF特征、可低空贴地或利用地形遮蔽、可饱和攻击和快速迭代；其依赖包括导航、数据链、发射/回收点、能源、操作者和后勤补给，且森林、复杂地形和电磁干扰同样会限制无人机操控与传感链路。",
+    "场景适配度判断：固定基地和关键基础设施适合FS-LIDS/多传感器塔台化布设；机动分队适合M-LIDS、轻量雷达、被动RF和便携告警；山地、森林、城市峡谷和海岸/港口需要分布式多高度布站、被动探测和本地化低时延C2，而不能依赖单点远程雷达。",
+    "防御性升级需求应优先解决“发现—识别—告警—交接”链条：分布式传感器覆盖低空死角、融合算法降低鸟类/车辆/旋翼杂波误警、C2兼容FAAD/IBCS/TAK类接口、弹药/能源补给与低成本交战策略，以及常态化红蓝对抗测试。"
+  ],
+  "confidence": 0.82,
+  "open_questions": [
+    "各型雷达在山地、森林、城市峡谷等复杂地形中的有效发现距离、虚警率和跟踪连续性缺乏统一公开测试数据；公开厂商参数多基于开阔或理想布设条件。",
+    "KuRFS、XBAEU、AN/TPQ-50改型、SPEXER 2000 3D MkIII等具体批次间的探测距离、抗干扰能力和软件版本差异公开资料有限。",
+    "Coyote Block 2/Block 3NK、BLADE、DE M-SHORAD、IFPC-HEL/HPM和下一代C-UAS导弹的单位成本、弹药库存、可靠性和作战可用率缺少可交叉核验的公开数据。",
+    "FAAD C2与IBCS、JADC2、TAK、北约接口之间的具体数据模型、认证状态和网络抗毁性公开信息不足。",
+    "反制光纤控制FPV、自主终端识别、无RF发射航线飞行和大规模蜂群的体系效果仍需更多公开实测。"
+  ],
+  "handoff_summary": "本轮仅基于公开资料形成传统能力缺口研究包。结论是：现役低空无人机探测预警体系已具备成熟的点防护和机动C-UAS能力，但在复杂地形下仍受低空视距、地形遮蔽、杂波、虚警、C2交接、成本和饱和压力制约。建议下游围绕“多源分布式低空探测、低SWaP被动/主动融合、开放C2、低成本多层拦截、训练与后勤韧性”开展战法与制胜机理分析。",
+  "search_plan": [
+    {
+      "track": "现役型号与部署规模",
+      "queries": [
+        "site:army.mil counter small UAS low altitude detection radar complex terrain LIDS KuRFS 2025",
+        "LIDS Low Slow Small Unmanned Aircraft Integrated Defeat System KuRFS Coyote M-LIDS Army 2025 official",
+        "Leonardo DRS M-LIDS counter UAS system deployed Stryker 2025 official",
+        "DSCA UAE FS-LIDS 2026 Coyote KuRFS $2.10 billion official"
+      ]
+    },
+    {
+      "track": "在研项目与预算采购",
+      "queries": [
+        "FY 2026 budget counter-UAS Army LIDS M-LIDS FS-LIDS Coyote procurement 3.1 billion official",
+        "site:asafm.army.mil FY 2026 counter small UAS Coyote LIDS budget justification",
+        "Army SBIR low altitude passive detection system terrain curvature obstacles sUAS 2025",
+        "Next Generation Counter UAS Missile Army FY 2027 common launcher"
+      ]
+    },
+    {
+      "track": "关键参数和任务载荷",
+      "queries": [
+        "KuRFS radar specifications range 360 coverage counter UAS official",
+        "SAAB Giraffe 1X drone detection radar range official counter UAS",
+        "Robin Radar IRIS drone detection radar range official 2025",
+        "HENSOLDT SPEXER 2000 UAV 0.2 m2 RCS 9 km official"
+      ]
+    },
+    {
+      "track": "体系接口与联合作战能力",
+      "queries": [
+        "FAAD C2 counter UAS LIDS interface command and control official 2025",
+        "Northrop Grumman FAAD C2 counter UAS Forward Area Air Defense command control 2025 official",
+        "Army FAADC2 LIDS M-LIDS FS-LIDS command and control integration counter UAS 2025",
+        "IBCS FAAD C2 counter UAS integration LIDS 2025"
+      ]
+    },
+    {
+      "track": "技术成熟度工业基础与保障约束",
+      "queries": [
+        "GAO-25-107491 counter UAS FS-LIDS M-LIDS full rate production 2024",
+        "CRS Department of Defense Counter-UAS Background Issues Congress LIDS Coyote cost technical maturity 2025",
+        "RUSI Protecting the Force from Uncrewed Aerial Systems layered counter UAS 2024",
+        "NATO counter UAS fiber optic drone EW ineffective detection 2025"
+      ]
+    }
+  ],
+  "contradictions": [
+    "冲突/边界1：厂商公开参数显示专用雷达在开阔条件下具备数公里级小UAV发现能力，但陆军SBIR明确指出现有系统受地形、地球曲率和障碍物影响，低空sUAS预警窗口有限。因此“雷达能力强”与“复杂地形预警不足”并不矛盾，关键在布站和场景。",
+    "冲突/边界2：CRS记录Coyote已有实战拦截成功和大规模采购需求，但同一报告也指出其不一定适合廉价无人机的成本交换。因此成熟度高不等于成本可持续。",
+    "冲突/边界3：定向能和高功率微波常被描述为低单发成本方案，但CRS指出其M-SHORAD方向曾有延期和用户评价一般，同时规模化装备的前期成本可能抵消单发成本优势。",
+    "冲突/边界4：被动RF/协议解析系统可降低暴露并提供识别，但NATO相关资料显示光纤控制无人机使传统EW类反制失效或效果下降；自主/预编程航线也会削弱RF探测的可用性。",
+    "冲突/边界5：复杂地形既削弱防御方探测，也限制无人机操控、通信、导航和传感器视场；不能简单假设攻击方在山地/森林/城市峡谷中总是占优。",
+    "冲突/边界6：固定点C-UAS可通过多传感器冗余补足死角，但机动分队受车辆空间、电源、天线高度、人员训练和弹药补给限制，难以复制固定基地级覆盖。"
+  ],
+  "confidence_basis": "证据覆盖政府/军方、国会研究、GAO、厂商资料、智库和北约公开资料，来源家族超过3类；多数关键证据在2024年7月以后发布或仍为当前厂商页面，满足近两年新鲜度要求。LIDS、Coyote、KuRFS、FAAD、Giraffe 1X、IRIS等至少由政府/CRS/GAO与厂商资料交叉支撑。剩余不确定性主要来自：厂商参数通常不是复杂地形实测；关键系统真实作战距离、虚警率、库存和软件接口公开不足；在研定向能、HPM和下一代拦截器成熟度仍在变化。",
+  "source_claims": [
+    {
+      "url": "https://www.defense.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/",
+      "claim": "美国国防部2024年发布反无人系统战略，强调无人系统威胁快速演进，并将JCO、Warfighter Senior Integration Group和Replicator 2等作为主要举措。"
+    },
+    {
+      "url": "https://www.gao.gov/assets/gao-25-107491.pdf",
+      "claim": "GAO-25-107491显示，美陆军C-sUAS组合中FS-LIDS、M-LIDS、Coyote、Ku-band雷达族和手持/下车系统等进入正式采办；其中五项在2024财年进入全速生产。"
+    },
+    {
+      "url": "https://www.congress.gov/crs_external_products/R/PDF/R48477/R48477.2.pdf",
+      "claim": "CRS R48477说明LIDS由FS-LIDS和M-LIDS组成，面向Group 1-3无人机和其他低飞威胁；M-LIDS Increment 2.1从双M-ATV配置迁移为单Stryker配置。"
+    },
+    {
+      "url": "https://www.congress.gov/crs_external_products/R/PDF/R48477/R48477.2.pdf",
+      "claim": "CRS记录FS-LIDS使用KuRFS雷达、EO/IR、电子战和Coyote拦截器，FS-LIDS与M-LIDS均使用FAAD C2；FY2025陆军申请2.801亿美元采购FS-LIDS、M-LIDS及若干下车系统，并另申请1.174亿美元采购Coyote。"
+    },
+    {
+      "url": "https://www.congress.gov/crs_external_products/R/PDF/R48477/R48477.2.pdf",
+      "claim": "CRS记录Coyote是LIDS家族的反UAS拦截器，有动能和非动能版本；截至2024年公开报道已有170次成功拦截，但陆军官员也称其对廉价无人机未必成本有效。"
+    },
+    {
+      "url": "https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2026/Discretionary%20Budget/rdte/RDTE%20-%20Vol%204%20-%20Budget%20Activity%209.pdf",
+      "claim": "美陆军PB2026 RDT&E材料列出Counter Unmanned Aerial Systems Agile Development项目，FY2026项目经费合计约1.43618亿美元，并显示C-sUAS相关采购线I24000 FY2026合计约3.06568亿美元。"
+    },
+    {
+      "url": "https://www.defense.gov/News/Transcripts/Transcript/Article/4228828/background-briefing-on-fy-2026-defense-budget/",
+      "claim": "美国国防部FY2026预算吹风会称，跨军种counter-UAS总请求约31亿美元。"
+    },
+    {
+      "url": "https://armysbir.army.mil/announcement/launch-2m-funding-opportunity-low-altitude-suas-detection/",
+      "claim": "美陆军SBIR/STTR 2025年低空被动探测机会指出，现有系统偏向较大、更高空目标，受地形、地球曲率和障碍物影响，难以发现多架低空sUAS，且大型固定系统限制部署灵活性。"
+    },
+    {
+      "url": "https://armysbir.army.mil/topics/low-altitude-passive-detection-system/",
+      "claim": "陆军低空被动探测题目要求低成本、低SWaP、模块化能力，并希望可兼容Group 1 sUAS或系留UAS载荷接口，用于增加地面部队对0至6000英尺AGL低空威胁的预警时间。"
+    },
+    {
+      "url": "https://www.rtx.com/raytheon/what-we-do/integrated-air-and-missile-defense/kurfs",
+      "claim": "Raytheon公开称KuRFS是360度雷达，可持续探测、识别和跟踪从火箭/炮弹/迫击炮到各类无人机的空中威胁，并作为美陆军LIDS组成部分。"
+    },
+    {
+      "url": "https://www.rtx.com/raytheon/what-we-do/integrated-air-and-missile-defense/coyote",
+      "claim": "Raytheon公开称Coyote与KuRFS配合提供从单机到蜂群的探测与击败能力；Coyote Block 3NK可使用非动能载荷、可徘徊、击败蜂群并可召回再部署。"
+    },
+    {
+      "url": "https://www.northropgrumman.com/what-we-do/mission-solutions/forward-area-air-defense-faad",
+      "claim": "Northrop Grumman公开称FAAD将SHORAD、C-RAM和C-UAS任务集成到单一界面，提供实时空域监视、威胁识别和安全拦截所需跟踪数据，并为美国国防部选择的C-UAS C2系统。"
+    },
+    {
+      "url": "https://www.saab.com/products/giraffe-1x",
+      "claim": "Saab公开称Giraffe 1X可作为VSHORAD主传感器、GBAD补盲雷达或C-UAS解决方案；系统总重低于150 kg，可探测距离雷达4 km处小于牛奶盒重量的UAV。"
+    },
+    {
+      "url": "https://www.robinradar.com/products/iris-radar",
+      "claim": "Robin Radar公开称IRIS为3D无人机雷达，提供360度视场、60度俯仰覆盖、5 km仪器化距离和约78 km²覆盖面积。"
+    },
+    {
+      "url": "https://www.robinradar.com/news-events/robin-radar-deploys-off-the-shelf-cuas-radar-with-12km-range",
+      "claim": "Robin Radar 2025年发布称IRIS Long-Range Mode可在5 km和12 km仪器化距离间切换，体现软件/模式升级带来的探测距离提升。"
+    },
+    {
+      "url": "https://www.hensoldt.net/fileadmin/HENSOLDT_2019/Products/Radar_IFF_Datalink/0812_17_Spexer2000_Coastal_E_intranet.pdf",
+      "claim": "Hensoldt SPEXER 2000 Coastal资料列出对0.2 m² RCS UAV的探测距离为9 km。"
+    },
+    {
+      "url": "https://www.rheinmetall.com/Rheinmetall%20Group/brochure-download/Air-Defence/D994e0222-Oerlikon-Skyranger-30.pdf",
+      "claim": "Rheinmetall Skyranger 30资料显示其采用3D AESA搜索雷达、30 mm×173炮、1200发/分射速和自动目标探测/捕获/跟踪，代表炮基低空反无人机/SHORAD方向。"
+    },
+    {
+      "url": "https://www.rusi.org/explore-our-research/publications/occasional-papers/protecting-force-uncrewed-aerial-systems",
+      "claim": "RUSI 2024报告强调反UAS必须是分层且高效的能力，软件、检测分类识别、电子战和多层效果器与硬件同等重要。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare",
+      "claim": "CSIS关于乌克兰自主化战争的研究指出，EW干扰推动无人机与反无人机体系转向替代探测、传感和自主能力；雷达、声学等方法也各自存在性能边界。"
+    },
+    {
+      "url": "https://www.act.nato.int/wp-content/uploads/2025/05/rfip025048.pdf",
+      "claim": "NATO ACT 2025资料提到自2024年底以来俄方引入光纤控制无人机，传统EW counter-UAS对这类无人机无效或效果受限，且其机动、抗干扰和低特征增加探测难度。"
+    },
+    {
+      "url": "https://www.droneshield.com/products-software",
+      "claim": "DroneShield公开称DroneSentry-C2提供统一实时反无人机态势图，可与自有传感器和第三方系统互操作，并融合RF、雷达和光学传感器。"
+    },
+    {
+      "url": "https://sentrycs.com/news/sentrycs-unveils-version-6-0-of-its-counter-drone-software-delivering-unmatched-coverage-and-efficiency/",
+      "claim": "Sentrycs 2025年发布称其V6.0采用协议操纵/Cyber over RF方法，从无人机与操作者通信的数据层提取信息，不同于仅依赖雷达、EO和RF扫描的多层探测。"
+    }
+  ],
+  "analysis_sections": {
+    "current_parameters": {
+      "scope_note": "参数均为公开资料；复杂地形下不得将开阔场或厂商标称距离直接视为作战保证距离。置信度按公开来源直接性、交叉核验和参数完整性评估。",
+      "parameter_records": [
+        {
+          "system": "LIDS family: FS-LIDS / M-LIDS",
+          "status": "现役/正式采办；GAO称相关项目2024财年进入全速生产",
+          "mission_scope": "防御Group 1-3无人机及其他低飞威胁",
+          "configuration_batch": "FS-LIDS固定点；M-LIDS Increment 2.1单Stryker配置，早期M-LIDS为双M-ATV配置",
+          "sensors_payloads": "KuRFS/相关Ku波段雷达、EO/IR、电子战、Coyote拦截器、FAAD C2；M-LIDS另含RIwP/30 mm等武器站配置",
+          "public_quantity_budget": "FY2025陆军申请约2.801亿美元用于FS-LIDS、M-LIDS及下车系统；其中公开提及5套Stryker M-LIDS和6套FS-LIDS；另约1.174亿美元用于Coyote采购",
+          "units": "美元；套；无人机Group分类",
+          "confidence": "高"
+        },
+        {
+          "system": "Raytheon KuRFS",
+          "status": "现役/已部署于LIDS体系",
+          "configuration_batch": "Ku-band Radio Frequency Sensor；公开页面未给出标准探测距离",
+          "key_parameters": {
+            "coverage": "360度",
+            "functions": "持续探测、识别、跟踪空中威胁",
+            "target_set": "火箭、炮弹、迫击炮、各类无人机",
+            "notable_claim": "可识别/分辨极小目标，厂商称可看到和识别来袭9 mm子弹"
+          },
+          "units": "角度；目标类别",
+          "confidence": "中高；功能由厂商和CRS交叉支撑，具体距离未知"
+        },
+        {
+          "system": "Raytheon Coyote",
+          "status": "现役/采购扩大",
+          "configuration_batch": "Block 2动能；Block 3NK非动能；固定/机动发射",
+          "key_parameters": {
+            "launch": "rail-launched；boost rocket motor and turbine engine",
+            "payload": "动能和非动能",
+            "public_performance": "CRS记录截至2024年报道有170次成功拦截",
+            "planned_production_need": "CRS记录陆军估算FY2025-FY2029需6000枚动能Coyote及数百枚非动能拦截器"
+          },
+          "units": "枚；财年；拦截次数",
+          "confidence": "高；成本有效性为中等置信度，因为单位成本公开数据不一致"
+        },
+        {
+          "system": "FAAD C2",
+          "status": "现役C2/美DOD选定C-UAS C2",
+          "configuration_batch": "Forward Area Air Defense Command and Control",
+          "key_parameters": {
+            "missions": "SHORAD、C-RAM、C-UAS",
+            "interface_role": "将探测、识别、跟踪、交战授权/火控态势集成到单一界面",
+            "operational_relevance": "LIDS家族使用FAAD C2"
+          },
+          "units": "任务类型；C2功能",
+          "confidence": "高"
+        },
+        {
+          "system": "Saab Giraffe 1X",
+          "status": "现役/出口与北约国家采购中；C-UAS/VSHORAD补盲传感器",
+          "configuration_batch": "Giraffe 1X 3D多功能雷达",
+          "key_parameters": {
+            "system_weight": "<150 kg",
+            "topside_weight": "100 kg",
+            "small_uav_detection": "厂商称可在4 km探测小于牛奶盒重量的UAV",
+            "integration": "可集成到机动或固定安装"
+          },
+          "units": "kg；km",
+          "confidence": "高；复杂地形有效距离需实测"
+        },
+        {
+          "system": "Robin Radar IRIS",
+          "status": "商用/军警与机场类C-UAS应用，2025年推出长距模式",
+          "configuration_batch": "IRIS标准模式；IRIS Long-Range Mode",
+          "key_parameters": {
+            "azimuth_coverage": "360度",
+            "elevation_coverage": "60度",
+            "instrumented_range_standard": "5 km",
+            "coverage_area_standard": "78 km²",
+            "instrumented_range_long_range_mode": "12 km"
+          },
+          "units": "度；km；km²",
+          "confidence": "高；性能为厂商标称"
+        },
+        {
+          "system": "Hensoldt SPEXER 2000 Coastal / SPEXER短程雷达族",
+          "status": "现役雷达族；SPEXER 2000 3D MkIII另见乌克兰相关采购报道",
+          "configuration_batch": "SPEXER 2000 Coastal公开参数；不等同于所有MkIII批次",
+          "key_parameters": {
+            "uav_rcs_reference": "0.2 m² RCS",
+            "uav_detection_range": "9 km"
+          },
+          "units": "m² RCS；km",
+          "confidence": "中；型号批次存在差异，MkIII参数需单独核验"
+        },
+        {
+          "system": "Rheinmetall Skyranger 30",
+          "status": "在采购/验证与系列化交付阶段，属炮基SHORAD/C-UAS方向",
+          "configuration_batch": "Skyranger 30炮塔/系统",
+          "key_parameters": {
+            "search_radar": "3D AESA，S-band或X-band配置",
+            "gun": "30 mm×173",
+            "rate_of_fire": "1200 rounds/min",
+            "functions": "自动目标探测、捕获与跟踪"
+          },
+          "units": "mm；发/分；雷达波段",
+          "confidence": "中高；不同国家底盘和传感器配置可能不同"
+        },
+        {
+          "system": "DroneShield DroneSentry-C2 / Sentrycs Cyber over RF类系统",
+          "status": "现役商用/政府客户；软件快速迭代",
+          "configuration_batch": "DroneSentry-C2；Sentrycs V6.0",
+          "key_parameters": {
+            "sensor_fusion": "RF、雷达、光学及第三方系统融合",
+            "protocol_analytics": "从无人机与操作者通信协议层提取识别信息",
+            "limitation": "对无RF发射、自主航线或光纤控制目标能力受限"
+          },
+          "units": "传感器类型；协议/数据层",
+          "confidence": "中；厂商能力公开但缺少统一第三方性能测试"
+        }
+      ]
+    },
+    "development_models": [
+      {
+        "model_or_program": "Low-Altitude Passive Detection System, Army SBIR/STTR",
+        "type": "低成本、低SWaP、模块化、被动探测传感器",
+        "upgrade_need_addressed": "补足现有系统对低空、多速度sUAS的预警不足，缓解地形、地球曲率、障碍物和大型固定系统限制",
+        "maturity": "早期研发/小企业创新课题，估计TRL 3-5",
+        "confidence": "高"
+      },
+      {
+        "model_or_program": "Coyote Block 3NK",
+        "type": "非动能、可徘徊/可召回反无人机拦截器",
+        "upgrade_need_addressed": "降低附带损害并提升对蜂群/多目标反复交战能力",
+        "maturity": "厂商公开称已演示并属Coyote家族；估计TRL 6-8",
+        "confidence": "中高"
+      },
+      {
+        "model_or_program": "DE M-SHORAD / IFPC-HEL / IFPC-HPM",
+        "type": "定向能/高功率微波",
+        "upgrade_need_addressed": "降低单次交战成本、提高弹药深度、应对饱和无人机",
+        "maturity": "测试/开发阶段；公开资料显示仍有延期、用户评价和规模化成本不确定性，估计TRL 5-7",
+        "confidence": "中"
+      },
+      {
+        "model_or_program": "BLADE / 30 mm炮基近程反无人机",
+        "type": "车载炮基低空无人机拦截",
+        "upgrade_need_addressed": "为机动部队提供近程快速反应和相对低成本硬杀伤层",
+        "maturity": "演示/试验与训练验证，估计TRL 6-7",
+        "confidence": "中"
+      },
+      {
+        "model_or_program": "下一代C-UAS导弹与通用发射器",
+        "type": "低成本/新一代动能拦截器和发射架通用化",
+        "upgrade_need_addressed": "降低Coyote等现有拦截器成本压力，提升库存与平台适配",
+        "maturity": "概念/工程研制公开信息有限，；{
+  "findings": [
+    "现役低空无人机探测预警体系的传统缺口不是单项传感器缺失，而是“低空小目标—复杂地形—高虚警环境—短处置窗口”共同造成的体系性不连续：山体、建筑、树木、港区设施、风机、水面和电磁噪声会同时压缩雷达视距、RF截获、EO/IR确认和声学验证的有效范围。证据链：E3、E4、E5、E6、E14。",
+    "公开战例显示，低成本无人机和诱饵的主要作战效应常在于持续消耗和态势过载，而非单架平台高成功率。俄乌Shahed/FPV、纳卡无人机打击、红海反无人机作战均支持“分层防御有效但成本、库存和值班压力显著上升”的判断。证据链：E8、E9、E10、E11、E13、E16。",
+    "传统固定式、中心化低空预警体系在复杂地形中的主要缺口包括：低空盲区不可视、单传感器误警/漏警、RF依赖对静默或半自主目标脆弱、C2确认链过长、基层单位缺少有机补盲和近程告警能力、战损后覆盖重构慢。证据链：E2、E4、E5、E7、E10、E12、E14。",
+    "升级需求应从“采购更强单一雷达”转为“地形感知的分布式多模态预警体系”：固定与机动雷达、被动RF/频谱监测、EO/IR验证、声学/人工观测、边缘AI融合、低带宽降级运行、共同作战图、低成本处置和被动防护共同形成决策级置信度。证据链：E1、E2、E3、E4、E6、E7、E12、E14。",
+    "作战运用上，复杂地形防御的关键不是在末端才“看见并打掉”，而是在危机前建立常态低空/RF/民用活动基线，在初始弱告警时完成多源关联，并在网络或上级C2降级时保持本地分级告警能力。证据链：E1、E3、E4、E6、E7、E12。",
+    "反证与修正：电子战、传统雷达和传统防空并未失效；乌克兰的声学网、机动防空、电子战和共同作战图，以及红海分层防御经验，都显示传统能力经体系化整合后仍有显著价值。问题在于单一、固定、中心化和高成本模式难以长期承受复杂地形、饱和、诱饵和快速迭代。证据链：E8、E10、E11、E13、E16。",
+    "对装备功能的优先要求应转化为可测指标：三维地形覆盖率、关键低空通道首警时间、多传感器关联延迟、虚警/漏警率、RF静默目标发现概率、网络降级下本地态势保持、机动补盲部署时间、战损后最低覆盖恢复时间、单位目标处置成本。"
+  ],
+  "confidence": 0.84,
+  "open_questions": [
+    "不同型号现役雷达、RF、EO/IR、声学节点在山谷、城市峡谷、港区水面、高原低温和强电磁背景中的实测Pd、FAR、首警时间和连续跟踪能力仍需本级试验数据确认。",
+    "公开资料可证明低空无人机威胁趋势和体系缺口，但无法充分量化特定国家、特定部队和特定装备编成的真实覆盖盲区、库存消耗率和操作员疲劳阈值。",
+    "RF静默、光纤控制、视觉/惯导辅助、蜂窝/卫星/中继链路和AI导航的扩散速度存在不确定性；短期仍受成本、重量、算力和训练约束，中期可能显著削弱RF依赖型防御。",
+    "民用空域、隐私、频谱许可、机场运行、误伤风险和执法授权在本土/城市场景中可能比战区环境更强地约束探测和处置方式，需要单独形成规则矩阵。",
+    "上游缺少weapon_equipment与international_situation正式交接，因此本文对具体装备性能和政治/法律约束只作公开资料层面的通用化判断。"
+  ],
+  "handoff_summary": "本交接面向winning_mechanism：复杂地形下低空无人机探测预警的传统能力缺口，本质是低空物理视距、单传感器不可靠、集中式C2延迟、成本交换不利和持续保障脆弱共同造成的体系失配。公开战例支持三条可迁移经验：一是分层、多模态、机动和被动防护结合优于单点高端装备；二是C2必须从中心化确认转向共同作战图、边缘融合和降级运行；三是装备升级必须服务于可持续作战，包括低成本处置、快速软件/特征库更新、机动补盲和战损恢复。建议下游以“时间窗口、成本交换、覆盖韧性、快速迭代和跨域协同”作为胜利机制建模变量。",
+  "search_plan": [
+    {
+      "track": "公开战例与复盘",
+      "queries": [
+        "Nagorno Karabakh 2020 drones air defense lessons CSIS full spectrum air defense mobile SHORAD passive defenses",
+        "Red Sea counter UAS drones Houthi lessons layered defense cost exchange CNAS 2025 PDF",
+        "CSIS Drone Saturation Russia's Shahed Campaign acoustic sensors common operating picture electronic warfare 2025",
+        "Ukraine drone warfare electronic warfare C-UAS lessons 2025 report"
+      ]
+    },
+    {
+      "track": "联合和多域作战概念",
+      "queries": [
+        "DoD Strategy for Countering Unmanned Systems 2024 detection active passive defense PDF",
+        "Joint Counter Small UAS Office counter drone swarm demonstration 2024 layered system of systems",
+        "NATO uncrewed warfare report 2025 counter drone lessons Ukraine electronic warfare resilience",
+        "Small Unmanned Aircraft System Airspace Management and Control Handbook Army Leaders 2025 air ground littoral"
+      ]
+    },
+    {
+      "track": "有人无人协同",
+      "queries": [
+        "manned unmanned teaming counter UAS air defense sensor fusion command control 2025 Army",
+        "small unmanned aircraft system airspace management and control handbook Army leaders 2025 manned unmanned fired systems",
+        "UAS airspace management dynamic airspace planning manned unmanned fired systems air ground littoral 2025 handbook",
+        "Ukraine AI enabled autonomous warfare CSIS FPV drones electronic warfare human oversight 2025"
+      ]
+    },
+    {
+      "track": "指挥控制与保障韧性",
+      "queries": [
+        "counter UAS command and control resilience edge processing network degraded operations report 2024",
+        "Department of Defense Counter UAS Background and Issues for Congress FAADC2 MEDUSA command and control 2025 PDF",
+        "Army Project Flytrap counter drone command and control architecture 2025",
+        "FAA UAS Detection Technical Considerations radar RF EO acoustic false alarms site specific spectrum licensing PDF"
+      ]
+    },
+    {
+      "track": "持续作战和战损恢复",
+      "queries": [
+        "Innovating Under Fire Ukraine frontline drone workshops maintenance repair lessons 2025",
+        "Russia Ukraine FPV drones lightweight counter UAV electronic warfare company level lessons 2025 Army University Press",
+        "Mapping the MilTech War eight lessons Ukraine battlefield drone electronic warfare 2026 Ifri",
+        "NATO Innovation Range counter drone technology testing Latvia 2026 TEVV electronic warfare solutions"
+      ]
+    }
+  ],
+  "contradictions": [
+    "反证1：低成本无人机并非天然高成功率。CSIS前线访谈显示多数低成本FPV任务成功率很低，电子战、操作员技能、天气和复杂目标运动都会降低效果；但低成本、大量和快速迭代仍足以形成消耗与过载。因此不能把威胁建模为“每架必中”，应建模为“持续试探和少量突防仍有作战价值”。证据链：E12、E13。",
+    "反证2：电子战既是有效反无人机手段，也是脆弱依赖。俄乌资料显示EW可大量干扰FPV和GNSS/控制链，但光纤无人机、视觉/惯导、频率捷变和替代链路正在削弱单纯RF压制的可靠性。因此EW应作为分层体系一环，而非唯一防线。证据链：E12、E13、E16。",
+    "反证3：传统雷达仍不可替代。雷达能全天候发现物理目标，特别是RF静默或预编程目标；但FAA和RAND均指出低空、山体遮蔽、地物反射、小RCS、低速/悬停和虚警会显著影响效果。因此结论不是“雷达失效”，而是“雷达必要但不充分”。证据链：E3、E5、E14。",
+    "反证4：复杂地形并非只帮助攻击方。山地、城市和植被既遮蔽蓝方传感器，也会缩短敌方无人机通信视距、增加导航误差、降低续航可靠性。若蓝方提前完成三维视域、RF传播和机动补盲规划，可把部分地形转化为防御优势。证据链：E3、E5、E12。",
+    "反证5：分布式体系提升韧性但增加管理复杂度。多传感器、多节点和边缘C2可降低单点失效，但会带来时间同步、目标去重、频谱冲突、蓝军无人机去冲突、数据标准和训练负担。因此升级必须同步解决接口、规则和保障，而不是只增加节点数量。证据链：E2、E6、E7、E15。"
+  ],
+  "confidence_basis": "证据覆盖政府/军方公开文件、FAA民航技术资料、国会研究服务、NATO/盟国材料、智库报告、军种专业刊物和学术/研究机构报告，来源族群超过3类，且包含2024、2025、2026年的新近资料。关于低空雷达限制、传感器互补、C2集成、分层防御和成本交换的证据直接性较高；关于俄乌、纳卡和红海战例的资料可相互印证无人机饱和、电子战、机动防空和快速迭代趋势。主要不确定性在于特定装备性能、特定地域覆盖率、真实库存消耗、敌方最新链路/自主能力和本土法律授权通常不公开，因此结论以结构化能力缺口和升级需求表达，不给出可执行攻击指令或特定目标方案。",
+  "source_claims": [
+    {
+      "url": "https://www.defense.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/",
+      "claim": "[E1] DoD 2024年反无人系统战略发布说明强调，无人系统威胁紧迫且持久，相关工作建立在JCO、Warfighter Senior Integration Group和Replicator 2等跨部门/跨军种举措之上。"
+    },
+    {
+      "url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+      "claim": "[E2] DoD战略事实清单提出提升探测、跟踪、表征能力，改进主动/被动防御，简化和下放必要授权，采用开放、模块化、快速测试和规模化方案，并降低无人系统与反制措施之间的成本失衡。"
+    },
+    {
+      "url": "https://www.faa.gov/sites/faa.gov/files/uas/resources/policy_library/Attachment-3-UAS-Detection-Technical-Considerations.pdf",
+      "claim": "[E3] FAA UAS探测技术考虑文件指出，雷达、RF、EO/IR等探测技术受场地许可、背景杂波、虚警、特征库更新、EO/IR视场和验证能力等因素影响，EO/IR通常更适合作为验证/辅助传感器。"
+    },
+    {
+      "url": "https://www.faa.gov/airports/new_entrants/uas_detection_mitigation_response",
+      "claim": "[E4] FAA机场UAS探测页面说明，雷达、RF、EO和声学可单独或组合用于主探测和二次验证，部署还需考虑机场运行、法律授权、频谱和安全影响。"
+    },
+    {
+      "url": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_5.html",
+      "claim": "[E5] FAA AIM雷达章节指出，雷达波会被山体、地面障碍物、降水等反射/衰减或被高地屏蔽；低空目标可能因山体遮蔽或低于雷达波束/地球曲率而不可见，小反射面目标也更难由一次雷达发现。"
+    },
+    {
+      "url": "https://www.army.mil/article-amp/278404/joint_counter_small_uas_office_conducts_successful_counter_drone_swarm_demonstration",
+      "claim": "[E6] 美陆军JCO 2024年蜂群反制演示每轮发射40多个UAS目标，测试9套C-UAS系统；公开结论是单一能力难以应对多方向、多速度、多尺寸的大规模目标剖面，需要系统-of-systems和分层方法。"
+    },
+    {
+      "url": "https://www.army.mil/article-amp/288375/small_unmanned_aircraft_system_airspace_management_and_control",
+      "claim": "[E7] 美陆军CALL 2025年小型UAS空域管理手册说明，现代战场需要整合有人、无人和火力系统，实施动态空域规划并主导air-ground littoral。"
+    },
+    {
+      "url": "https://www.congress.gov/crs_external_products/R/PDF/R48477/R48477.2.pdf",
+      "claim": "[E8] CRS《Department of Defense Counter-UAS》报告说明，现有美军C-UAS任务指挥系统包括FAADC2、MEDUSA和ADSI等，2025年陆军/DIU关注替代或改进C2以适应机动C-UAS，且高端拦截器成本可显著高于低成本无人机。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/air-and-missile-war-nagorno-karabakh-lessons-future-strike-and-defense",
+      "claim": "[E9] CSIS纳卡研究认为，2020年纳卡空中战的主要教训是全谱系防空重要性；有限的SHORAD和不足的被动防护使地面重装备易受无人机与巡飞弹威胁。"
+    },
+    {
+      "url": "https://www.cnas.org/publications/reports/countering-the-swarm",
+      "claim": "[E10] CNAS红海反无人机研究显示，分层、多域防御可取得战术成功，但面对大量低成本无人机时，成本交换、交战节奏、库存和舰艇/空中力量持续值班会形成严重压力。"
+    },
+    {
+      "url": "https://www.nato-pa.int/document/2025-uncrewed-warfare-report-clement-023-stctts",
+      "claim": "[E11] NATO PA 2025年无人作战报告强调，乌克兰等冲突中的无人系统战术会被盟友和对手模仿，并建议发展定向能等低成本反无人技术以应对拦截成本不对称。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare",
+      "claim": "[E12] CSIS 2025年乌克兰AI自主作战研究基于访谈指出，低成本FPV任务成功率受电子战、天气、操作员和通信限制显著影响；AI导航、ATR和本地处理可提高效率，但现代无人系统尚未实现端到端全自主，仍需人类监督。"
+    },
+    {
+      "url": "https://csis-website-prod.s3.amazonaws.com/s3fs-public/2025-05/250501_Slusher_Ukraine_Conflict.pdf?VersionId=01UUwSkCxsWGAU5vOtwYQHmtq3F1.XKM",
+      "claim": "[E13] CSIS乌克兰冲突经验报告认为，乌克兰战争凸显自主系统、电子战、信息整合、受扰物流和防空演变；GPS干扰、通信干扰、频率捷变、卫星通信、网状网络和电子战韧性成为关键变量。"
+    },
+    {
+      "url": "https://www.rand.org/content/dam/rand/pubs/research_reports/RR3000/RR3023/RAND_RR3023.pdf",
+      "claim": "[E14] RAND关于小型UAS对抗能力的研究指出，sUAS因小尺寸、低速和环境背景导致探测、分类、识别、跟踪困难，通常需要多传感器协同；虚警会使操作员脱敏，雷达RCS随角度变化，EO/IR视场小，ELINT/RF易受自动化或静默目标规避。"
+    },
+    {
+      "url": "https://defensescoop.com/2025/07/09/army-counter-drone-command-and-control-project-flytrap-exercise/",
+      "claim": "[E15] Project Flytrap公开报道显示，美陆军C5ISR中心在欧洲测试反无人机C2架构，目标是把传感器数据从单兵到联合伙伴贯通，通过ATAK等终端共享，降低士兵认知负荷并把固定系统转向可机动运用。"
+    },
+    {
+      "url": "https://www.armyupress.army.mil/Portals/7/military-review/Archives/English/so25/Lessons-from-Ukraine/Lessons-from-Ukraine-ua.pdf",
+      "claim": "[E16] Army University Press 2025年俄军乌克兰经验文章指出，FPV无人机和轻量化C-UAV EW快速扩散；双方大量FPV受RF/GNSS干扰影响，同时光纤、车载/便携干扰器、探测器和基层C-UAV装备推动攻防快速迭代。"
+    },
+    {
+      "url": "https://mwi.westpoint.edu/innovating-under-fire-lessons-from-ukraines-frontline-drone-workshops/",
+      "claim": "[E17] Modern War Institute对乌克兰前线无人机维修/创新工作坊的研究显示，前沿维修、3D打印、软件更新、快速改频、移动维修车和操作者—工程师反馈闭环可将修复与适配周期压缩到小时级，从而支撑持续作战。"
+    },
+    {
+      "url": "https://www.csis.org/analysis/drone-saturation-russias-shahed-campaign",
+      "claim": "[E18] CSIS关于俄罗斯Shahed饱和战役的研究指出，自2024年9月后Shahed发射量显著上升；乌克兰通过声学传感器、综合防空网络、机动防空和电子战等低成本组合来维持防御，但饱和压力仍然增加。"
+    },
+    {
+      "url": "https://www.nato.int/en/news-and-events/articles/news/2026/03/18/new-nato-innovation-range-starts-counter-drone-technology-testing-in-latvia",
+      "claim": "[E19] NATO 2026年拉脱维亚创新靶场信息显示，盟国和乌克兰用户正在通过TEVV活动测试UAS/C-UAS、拦截飞行和电子战方案，体现快速试验、验证和采纳的制度化趋势。"
+    }
+  ],
+  "analysis_sections": {
+    "operational_constraints": {
+      "mission_definition": "防御方任务是在复杂地形和民用空域约束下，对低慢小无人机形成早期发现、连续跟踪、身份判别、威胁评估、分级告警和安全处置支撑；本分析仅用于防御性能力评估，不提供攻击路径、目标选择或可执行伤害指令。",
+      "terrain_environment_constraints": [
+        {
+          "constraint": "山地/丘陵遮蔽",
+          "effect": "山体与地形起伏造成雷达、EO/IR、RF和通信链路视距中断，低空目标可能在关键通道外才被发现，首警时间被压缩。",
+          "evidence_links": [
+            "E5",
+            "E14"
+          ],
+          "operational_implication": "必须预先进行三维视域和RF传播建模，重点标注山谷、背坡、低空通道和传感器盲扇区。"
+        },
+        {
+          "constraint": "城市峡谷和设施密集区",
+          "effect": "高层建筑、钢结构、车辆、鸟群、风机和电磁反射造成多径、遮挡、杂波和虚警；EO/IR可能被热背景和遮挡牵引。",
+          "evidence_links": [
+            "E3",
+            "E4",
+            "E14"
+          ],
+          "operational_implication": "单传感器告警不应直接等同威胁，应采用时间同步、多源关联和白名单/合法流量去冲突。"
+        },
+        {
+          "constraint": "海岸/港区/水面背景",
+          "effect": "水面反射、船舶/港机热源、海风噪声和港区RF环境会影响雷达、声学、EO/IR与RF识别置信度。",
+          "evidence_links": [
+            "E3",
+            "E10",
+            "E14"
+          ],
+          "operational_implication": "港区应采用固定高点、机动补盲、被动传感和人工/哨兵报告结合，避免单一雷达阈值造成大量虚警。"
+        },
+        {
+          "constraint": "天气、夜间和季节变化",
+          "effect": "雨雾雪、低云、热背景变化和风噪影响EO/IR、声学和高频雷达表现；同一部署方案在不同季节的Pd/FAR会变化。",
+          "evidence_links": [
+            "E3",
+            "E12",
+            "E14"
+          ],
+          "operational_implication": "部署原则应包含季节性校准、传感器权重动态调整、夜间/恶劣天气补盲预案。"
+        },
+        {
+          "constraint": "电磁频谱拥挤与受扰",
+          "effect": "RF探测和干扰受民用通信、己方无人机、敌方跳频/静默/替代链路、GNSS干扰和频谱许可限制影响。",
+          "evidence_links": [
+            "E2",
+            "E3",
+            "E12",
+            "E13",
+            "E16"
+          ],
+          "operational_implication": "RF不能作为唯一首警源；干扰措施必须与民用通信、己方C2、友军无人机和空域安全去冲突。"
+        },
+        {
+          "constraint": "法律、民航和授权",
+          "effect": "本土、机场、城市和关键基础设施场景中，探测与处置系统部署涉及频谱许可、EMI、安全风险、隐私和执法授权。",
+          "evidence_links": [
+            "E3",
+            "E4"
+          ],
+          "operational_implication": "体系设计必须预置规则矩阵：谁可看、谁可判、谁可告警、谁可授权、何时可转入处置。"
+        },
+        {
+          "constraint": "持续作战和补给",
+          "effect": "大量低成本目标可通过诱饵、重复试探和饱和压迫消耗人员、传感器维护、弹药/拦截器和C2带宽。",
+          "evidence_links": [
+            "E8",
+            "E10",
+            "E11",
+            "E18"
+          ],
+          "operational_implication": "预警体系指标必须纳入成本交换、库存、备件、电源、网络和操作员轮换，而非只看单次拦截率。"
+        }
+      ],
+      "traditional_gap_to_upgrade_mapping": [
+        {
+          "traditional_gap": "固定雷达低空盲区",
+          "upgrade_need": "地形感知部署、机动补盲雷达、被动传感节点、临时升高平台、覆盖热力图。",
+          "metrics": [
+            "关键低空通道覆盖率",
+            "首警距离/时间",
+            "盲区重构时间"
+          ],
+          "evidence_links": [
+            "E5",
+            "E14"
+          ]
+        },
+        {
+          "traditional_gap": "单传感器误警/漏警",
+          "upgrade_need": "雷达+RF+EO/IR+声学+人工观测的多模态融合，目标去重和置信评分。",
+          "metrics": [
+            "融合后FAR",
+            "多源关联延迟",
+            "目标分类置信度"
+          ],
+          "evidence_links": [
+            "E3",
+            "E4",
+            "E6",
+            "E14"
+          ]
+        },
+        {
+          "traditional_gap": "RF依赖",
+          "upgrade_need": "可发现RF静默/预编程/半自主目标的雷达、EO/IR、声学和行为异常检测；RF仅作为被动首警和识别维度之一。",
+          "metrics": [
+            "RF静默目标发现概率",
+            "RF与非RF告警一致率",
+            "干扰后态势保持时间"
+          ],
+          "evidence_links": [
+            "E12",
+            "E13",
+            "E14",
+            "E16"
+          ]
+        },
+        {
+          "traditional_gap": "中心化C2延迟",
+          "upgrade_need": "共同作战图、边缘融合、分级授权、低带宽告警、断链本地处置支持。",
+          "metrics": [
+            "传感器到告警时间",
+            "告警到授权时间",
+            "网络降级下本地空情保持率"
+          ],
+          "evidence_links": [
+            "E2",
+            "E7",
+            "E8",
+            "E15"
+          ]
+        },
+        {
+          "traditional_gap": "高成本末端处置",
+          "upgrade_need": "低成本拦截、电子/非动能、被动防护、诱饵和任务影响评估结合，高端拦截器保留给高危目标。",
+          "metrics": [
+            "单位威胁处置成本",
+            "高端拦截器消耗率",
+            "关键资产任务中断时间"
+          ],
+          "evidence_links": [
+            "E2",
+            "E8",
+            "E10",
+            "E11",
+            "E18"
+          ]
+        },
+        {
+          "traditional_gap": "战损恢复慢",
+          "upgrade_need": "模块化节点、预案化机动补位、备用电源、离线地图、可快速更新特征库、前沿维修和备件包。",
+          "metrics": [
+            "最低覆盖恢复时间",
+            "节点替换时间",
+            "软件/特征库更新周期"
+          ],
+          "evidence_links": [
+            "E17",
+            "E19"
+          ]
+        }
+      ],
+      "measures_of_effectiveness": [
+        "首警时间是否足以完成识别、授权和安全处置。",
+        "复杂地形关键通道是否存在可被反复利用的稳定盲区。",
+        "融合后虚警是否低到操作员可持续处理。",
+        "网络降级和部分节点损伤后是否仍能保持本地分级告警。",
+        "每轮威胁处置成本是否低于可持续阈值。",
+        "敌方改变频段、时段、平台和诱饵比例后，体系是否可快速更新。"
+      ]
+    },
+    "force_coordination": {
+      "coordination_concept": "采用“区域低空态势单元+机动补盲分队+基层有机观察/处置单元+上级联合空情/C2+民航/公安/频谱联络”的分层协同。核心是把传感器、指挥、效应器、被动防护和保障纳入同一任务链，而不是让各装备孤立值守。",
+      "force_package": [
+        {
+          "element": "固定低空监视与既有防空预警节点",
+          "role": "提供连续背景空情、较远距离首警和与上级防空网络衔接。",
+          "limits": "低空盲区、地形遮蔽、小RCS和地物杂波显著影响可靠性。",
+          "evidence_links": [
+            "E5",
+            "E14"
+          ]
+        },
+        {
+          "element": "机动补盲雷达/便携传感节点",
+          "role": "在山谷、城市边缘、港区和战损空隙中快速补位，缩短低空关键通道发现距离缺口。",
+          "limits": "需要预设点位、电源、网络、频谱许可和安全防护；点位暴露后自身可能成为高价值节点。",
+          "evidence_links": [
+            "E6",
+            "E15"
+          ]
+        },
+        {
+          "element": "被动RF/频谱监测",
+          "role": "发现控制链、视频链、遥测和异常频谱活动，辅助定位操作者或链路方向，适合低可见度和低成本持续值守。",
+          "limits": "对RF静默、预编程、光纤、蜂窝/卫星/中继或强加密跳频目标适应不足。",
+          "evidence_links": [
+            "E3",
+            "E12",
+            "E14",
+            "E16"
+          ]
+        },
+        {
+          "element": "EO/IR与热像验证",
+          "role": "对雷达/RF/声学告警进行可视化确认、分类和证据留存。",
+          "limits": "视场较窄，受遮挡、天气、夜间热背景、诱饵和假目标影响；通常需由其他传感器cueing。",
+          "evidence_links": [
+            "E3",
+            "E14"
+          ]
+        },
+        {
+          "element": "声学/人工观测/群众或哨兵报告",
+          "role": "在低空慢速、夜间、雷达盲区和大型一向攻击无人机场景中提供低成本补充首警。",
+          "limits": "受环境噪声、风雨、车辆、港机和误报影响；必须与其他传感器关联后使用。",
+          "evidence_links": [
+            "E4",
+            "E18"
+          ]
+        },
+        {
+          "element": "C2与共同作战图",
+          "role": "整合多源告警、目标去重、威胁排序、授权流转、效应器分配和跨单位通报。",
+          "limits": "若高度中心化或接口不统一，会在饱和窗口中形成延迟和重复交战。",
+          "evidence_links": [
+            "E7",
+            "E8",
+            "E15"
+          ]
+        },
+        {
+          "element": "低成本处置与被动防护",
+          "role": "在合法授权下采用低成本、分层、按威胁优先级的防御措施，并通过分散、伪装、遮蔽、诱饵和关键功能冗余降低突防后果。",
+          "limits": "处置手段受民用环境、误伤、频谱和规则约束；必须避免把高端弹药消耗在低价值诱饵上。",
+          "evidence_links": [
+            "E2",
+            "E9",
+            "E10",
+            "E11"
+          ]
+        },
+        {
+          "element": "保障与快速适配单元",
+          "role": "负责传感器校准、软件/特征库更新、备件、电池、电源、网络、前沿维修和经验回灌。",
+          "limits": "若保障集中且距离前沿过远，难以跟上无人机技术和战术迭代速度。",
+          "evidence_links": [
+            "E17",
+            "E19"
+          ]
+        }
+      ],
+      "coordination_interfaces": [
+        {
+          "interface": "传感器到C2",
+          "requirements": [
+            "统一时间戳和坐标基准",
+            "目标ID去重",
+            "置信度评分",
+            "低带宽告警格式",
+            "原始数据留存以便复盘"
+          ],
+          "failure_if_missing": "多源重复目标、误关联、告警风暴和人工确认队列积压。",
+          "evidence_links": [
+            "E8",
+            "E15"
+          ]
+        },
+        {
+          "interface": "C2到基层单位",
+          "requirements": [
+            "分级告警",
+            "本地可执行防护动作清单",
+            "断链时的本地授权边界",
+            "友军无人机/有人机空域去冲突"
+          ],
+          "failure_if_missing": "上级确认延迟超过末端处置窗口，基层只能被动承受或过度反应。",
+          "evidence_links": [
+            "E2",
+            "E7"
+          ]
+        },
+        {
+          "interface": "军方到民航/公安/频谱/设施业主",
+          "requirements": [
+            "合法无人机白名单",
+            "Remote ID/许可信息校验",
+            "频谱使用和干扰限制",
+            "机场/城市安全通报机制",
+            "误报澄清流程"
+          ],
+          "failure_if_missing": "民用流量与敌对活动混杂，导致虚警上升、授权迟滞或违法干扰。",
+          "evidence_links": [
+            "E3",
+            "E4"
+          ]
+        },
+        {
+          "interface": "传感器到效应器",
+          "requirements": [
+            "按威胁等级分配低成本与高端处置资源",
+            "避免重复交战",
+            "确保民用安全扇区",
+            "记录交战与未交战原因"
+          ],
+          "failure_if_missing": "高端资源被诱饵消耗，真实高危目标获得窗口。",
+          "evidence_links": [
+            "E6",
+            "E8",
+            "E10"
+          ]
+        },
+        {
+          "interface": "有人—无人—火力系统空域管理",
+          "requirements": [
+            "动态空域控制",
+            "己方UAS任务计划共享",
+            "禁飞/限飞临时区域",
+            "安全高度层和时间窗",
+            "任务变更快速通报"
+          ],
+          "failure_if_missing": "友军无人机、有人航空器、防空火力和干扰措施相互冲突。",
+          "evidence_links": [
+            "E7"
+          ]
+        }
+      ],
+      "battle_rhythm": [
+        "常态：更新低空活动、RF背景、民用无人机、鸟群/车辆/港机/风机等基线；每班复核传感器健康和覆盖热力图。",
+        "预警：出现重复弱告警或异常RF/目视报告时，机动补盲节点前出，EO/IR和声学权重上调，设施被动防护升级。",
+        "接触：按多源置信度而非单点告警触发分级响应，优先保护关键通道和高价值节点。",
+        "饱和：C2转入目标优先级管理，边缘节点保留本地告警和安全处置建议，上级保留资源统筹和跨区协调。",
+        "复盘：每次事件后更新虚警样本、漏警路径、干扰影响、授权延迟、处置成本和补给消耗。"
+      ],
+      "degraded_mode": [
+        "网络降级时保留本地传感器融合、短报文告警和离线地图。",
+        "上级C2不可用时按预先批准的分级规则执行告警、疏散、遮蔽、停飞、设备关停/分散等防护动作。",
+        "固定节点损伤时启动机动补盲网格，优先恢复关键通道、指挥节点、弹药/燃料/电力/通信设施周边最低覆盖。",
+        "RF环境恶化时降低对RF首警权重，提高雷达、EO/IR、声学、人工观测和行为异常关联权重。",
+        "虚警过载时使用地理围栏、白名单、时间窗和多源阈值动态调节，避免操作员脱敏。"
+      ],
+      "support_requirements": [
+        "三维地形/建筑/植被/水面数据库和视域分析工具。",
+        "传感器点位预案、备用三脚架/桅杆、便携电源、加固网络和频谱授权包。",
+        "多传感器数据标准、时间同步、目标ID规则和C2接口。",
+        "操作员轮换、跨部门联络员、低空空域管制脚本和民用流量去冲突清单。",
+        "备件、电池、软件更新、特征库、校准工具和前沿维修能力。",
+        "战损后恢复演练和红队式盲区复核。"
+      ]
+    },
+    "coa": [
+      {
+        "name": "COA-1 基线方案：固定节点为主、中心化确认、有限机动补盲",
+        "concept": "沿用现役固定低空监视雷达、少量RF和EO/IR验证节点，由上级空情/C2集中确认并向基层发布告警；机动补盲只在明确事件后临时展开。",
+        "suitable_conditions": [
+          "地形相对开阔、民用无人机活动低、威胁为低频单机/小批量。",
+          "有充分处置时间，且上级C2链路稳定。",
+          "主要任务是常态监视、证据留存和低强度警戒。"
+        ],
+        "strengths": [
+          "组织改动小，训练和维护成本低。",
+          "便于统一授权、统一空情和降低误处置风险。",
+          "适合预算短期不足或威胁等级较低阶段。"
+        ],
+        "risks": [
+          "复杂地形盲区难以及时补齐。",
+          "单传感器虚警/漏警导致等待人工确认，压缩处置窗口。",
+          "遇到多方向、多批次和诱饵时C2与操作员易过载。",
+          "战损后恢复依赖固定节点，覆盖重构慢。"
+        ],
+        "infeasible_boundaries": [
+          "山地—城市—港区复合地形中存在多个稳定低空通道。",
+          "威胁进入持续饱和或电磁压迫阶段。",
+          "要求基层在断链或分钟级窗口内自主告警和防护。",
+          "民用流量密集且白名单/去冲突数据不完整。"
+        ],
+        "equipment_constraints": [
+          "固定雷达受地形遮蔽和小RCS影响。",
+          "EO/IR需要其他传感器cueing。",
+          "RF对静默/半自主目标不足。",
+          "传统C2接口可能难以快速接入新型传感器。"
+        ],
+        "evidence_links": [
+          "E3",
+          "E4",
+          "E5",
+          "E8",
+          "E14"
+        ],
+        "minimum_upgrade_if_selected": [
+          "完成三维覆盖审计和盲区清单。",
+          "建立民用无人机白名单和RF/空情基线。",
+          "为关键盲区预置机动补盲点位和供电/网络包。",
+          "设定弱告警触发的分级响应流程。"
+        ]
+      },
+      {
+        "name": "COA-2 弹性分布方案：多模态分布式传感、边缘融合、机动补盲与低成本分层处置",
+        "concept": "以固定节点为骨干，在山地通道、城市边缘、港区和关键设施周边部署可机动、可重构的雷达/RF/EO/IR/声学节点；通过共同作战图和边缘AI融合形成分级置信度，并把低成本处置、被动防护和战损重构纳入同一防御循环。",
+        "suitable_conditions": [
+          "复杂地形、多方向低空威胁和持续试探并存。",
+          "需要在网络受扰、节点损伤和上级C2延迟时保持本地预警。",
+          "关键设施价值高，且可投入一定传感器、C2、训练和保障资源。",
+          "需要长期应对低成本无人机消耗战。"
+        ],
+        "strengths": [
+          "低空覆盖韧性高，单点失效不致形成稳定通道。",
+          "多传感器融合降低单点虚警/漏警。",
+          "机动补盲可把地形缺口转化为预案化防御。",
+          "边缘融合和分级授权缩短告警到行动时间。",
+          "低成本处置和被动防护改善成本交换。"
+        ],
+        "risks": [
+          "部署和训练复杂度高。",
+          "多源数据标准、目标去重、时间同步和网络安全要求高。",
+          "节点增多带来电源、频谱、维护和暴露风险。",
+          "若缺少规则矩阵，边缘授权可能造成误处置或空域冲突。"
+        ],
+        "infeasible_boundaries": [
+          "没有统一C2接口和最低数据标准。",
+          "无法获得频谱、场地、供电或民用协同授权。",
+          "训练和保障无法支撑24/7分布式值守。",
+          "预算只能维持单点装备采购而不能支撑系统集成与软件更新。"
+        ],
+        "equipment_constraints": [
+          "需要开放式接口、边缘计算、低带宽数据链和传感器健康监测。",
+          "节点必须可快速部署、校准和替换。",
+          "EO/IR、声学、RF权重需要随天气和电磁环境动态调整。",
+          "效应器必须按威胁等级与民用安全限制联动。"
+        ],
+        "evidence_links": [
+          "E1",
+          "E2",
+          "E6",
+          "E7",
+          "E8",
+          "E10",
+          "E15",
+          "E18",
+          "E19"
+        ],
+        "priority_actions": [
+          "建立区域低空三维数字底图和传感器覆盖热力图。",
+          "将固定雷达、机动雷达、RF、EO/IR、声学和人工报告接入共同作战图。",
+          "为山谷、城市峡谷、港区水面和关键设施设置传感器组合模板。",
+          "定义本地分级告警和断链授权边界。",
+          "把低成本处置、被动防护、维修和软件更新纳入日常战备。"
+        ]
+      },
+      {
+        "name": "COA-3 资源受限方案：关键点防护、低成本补盲、被动防护和人工/民用协同",
+        "concept": "在装备和预算不足时，不追求全域连续覆盖，而是围绕关键资产、关键通道和高风险时段建立低成本、可移动、可降级的预警网；以被动防护、分散、伪装、遮蔽、临时空域管控和低成本传感为主，高端处置只保留给高置信高危目标。",
+        "suitable_conditions": [
+          "预算、传感器数量、人员或频谱授权不足。",
+          "防护对象明确，关键通道和关键时段可识别。",
+          "威胁主要为试探、侦察、小规模袭扰或诱饵消耗。",
+          "可接受非关键区域存在短时低置信盲区。"
+        ],
+        "strengths": [
+          "部署快，成本低，适合基层先行形成最低预警能力。",
+          "通过被动防护降低突防后果，减少高端资源消耗。",
+          "人工、声学、RF和廉价EO可补充传统雷达盲区。",
+          "便于逐步扩展为弹性分布方案。"
+        ],
+        "risks": [
+          "覆盖不连续，难以应对多方向饱和。",
+          "人工报告和低成本传感器虚警较高。",
+          "缺少自动融合时，告警质量依赖训练和流程。",
+          "若敌方快速迭代或采用静默/半自主目标，RF和人工体系效果下降。"
+        ],
+        "infeasible_boundaries": [
+          "任务要求对大范围复杂地形提供连续、实时、高置信预警。",
+          "同时面对多批次、多轴、诱饵和电磁压迫。",
+          "关键资产无法分散、遮蔽或降低特征。",
+          "没有民用/设施业主协同，无法管控合法无人机背景。"
+        ],
+        "equipment_constraints": [
+          "低成本传感器需严格校准并限定适用场景。",
+          "人工报告必须配套身份核验、地理标注和误报复核。",
+          "被动防护措施需要提前工程化，不能等接触后临时实施。",
+          "低成本方案仍需最小C2和数据记录能力，否则难以复盘改进。"
+        ],
+        "evidence_links": [
+          "E3",
+          "E4",
+          "E9",
+          "E11",
+          "E14",
+          "E17",
+          "E18"
+        ],
+        "priority_actions": [
+          "按关键资产价值和无人机可达性划分防护优先级。",
+          "建立低空观察哨、声学/目视/RF简易告警点和事件上报模板。",
+          "预置遮蔽、分散、诱饵、灯光/热源/电磁特征管理措施。",
+          "把高端处置资源保留给高置信、高危、接近关键保护圈的目标。",
+          "用事件复盘逐步识别最值得升级为固定或机动传感节点的位置。"
+        ]
+      }
+    ],
+    "lessons": {
+      "public_case_lessons": [
+        {
+          "case": "纳卡2020",
+          "lesson": "传统SHORAD数量、质量和体系化不足时，地面重装备与固定防空节点易受无人机和巡飞弹压迫；全谱系防空、机动SHORAD和被动防护应前置到战术层级。",
+          "transfer_to_complex_terrain": "复杂地形下固定节点更容易形成可识别盲区，战术单位必须具备有机告警、分散和被动防护能力。",
+          "evidence_links": [
+            "E9"
+          ]
+        },
+        {
+          "case": "俄乌持续无人机战",
+          "lesson": "无人机、电子战、AI/自主、频率调整、光纤/替代链路和基层C-UAV装备形成快速迭代循环；固定采购周期难以跟上战场软件和战术变化。",
+          "transfer_to_complex_terrain": "预警体系应采用开放式架构、可更新特征库、前沿维修和操作员—工程师反馈闭环。",
+          "evidence_links": [
+            "E12",
+            "E13",
+            "E16",
+            "E17"
+          ]
+        },
+        {
+          "case": "俄罗斯Shahed饱和战役",
+          "lesson": "大量低成本一向攻击无人机可通过持续发射消耗防空资源；乌克兰以声学网、共同作战图、EW、机动防空和低成本手段减轻成本压力。",
+          "transfer_to_complex_terrain": "对复杂地形低空预警，应把声学/人工观测作为补盲层，但必须与共同作战图和传感器融合结合，避免误报泛滥。",
+          "evidence_links": [
+            "E18"
+          ]
+        },
+        {
+          "case": "红海反无人机作战",
+          "lesson": "分层、多域防御可以在高威胁环境中有效击落大量无人机，但成本交换、库存、节奏和人员/平台持续值班压力难以长期忽视。",
+          "transfer_to_complex_terrain": "陆上复杂地形防御也不能只追求单次拦截率，必须以低成本处置、弹药管理和被动防护控制长期消耗。",
+          "evidence_links": [
+            "E10"
+          ]
+        },
+        {
+          "case": "JCO蜂群反制演示",
+          "lesson": "面对多方向、多速度、多尺寸目标，没有单一传感器或效应器能解决全部问题；需要系统-of-systems、分层探测、威胁排序和C2融合。",
+          "transfer_to_complex_terrain": "复杂地形中的“多弱告警”场景更需要目标去重、优先级排序和自动cueing，否则人工值守会被虚警和重复目标淹没。",
+          "evidence_links": [
+            "E6"
+          ]
+        }
+      ],
+      "deployment_principles": [
+        {
+          "principle": "地形先于装备",
+          "description": "先做三维视域、RF传播、民用流量、气象和关键通道分析，再决定雷达、RF、EO/IR、声学和机动点位。",
+          "evidence_links": [
+            "E3",
+            "E5",
+            "E14"
+          ]
+        },
+        {
+          "principle": "多模态互补而非单传感器最优",
+          "description": "低分辨率广域传感用于首警，高分辨率窄视场传感用于确认；RF、雷达、EO/IR、声学和人工报告按环境动态加权。",
+          "evidence_links": [
+            "E3",
+            "E4",
+            "E14"
+          ]
+        },
+        {
+          "principle": "固定骨干+机动补盲+基层有机告警",
+          "description": "固定节点提供连续背景，机动节点填补地形/战损空隙，基层单元保留最低本地告警和防护能力。",
+          "evidence_links": [
+            "E6",
+            "E15",
+            "E17"
+          ]
+        },
+        {
+          "principle": "C2降级可运行",
+          "description": "共同作战图重要，但不能成为单点依赖；断链时仍需本地分级告警、离线地图和预授权防护动作。",
+          "evidence_links": [
+            "E2",
+            "E7",
+            "E8",
+            "E15"
+          ]
+        },
+        {
+          "principle": "低成本优先，高端保留",
+          "description": "对低价值、低置信或诱饵目标优先采用监视、遮蔽、驱离、电子/非动能和低成本措施，高端拦截用于高置信高危目标。",
+          "evidence_links
+## 证据索引
+
+
+## 限制与后续补证
+
+- 阶段最低置信度低于70%，仅可作为受限初稿。

@@ -1,0 +1,844 @@
+{
+  "checkpoint": {
+    "budget_remaining": {
+      "baseline_tasks": 0,
+      "finalize_tasks": 1,
+      "rounds": 5
+    },
+    "checkpoint_id": "run-checkpoint-run-ef59c312-8b97-41ea-b5ba-016717b30dd4",
+    "completed_task_ids": [
+      "baseline:international_situation",
+      "baseline:combat_scenario",
+      "baseline:weapon_equipment",
+      "baseline:operational_employment"
+    ],
+    "config_fingerprint": "sha256:aa2e4c08e7bdb109fb0f46edfba48c7d41c40849ada6820bee78df06a2c9efb5",
+    "created_at": "2026-07-14T05:44:49.444973+00:00",
+    "mode": "real",
+    "pending_task_ids": [],
+    "research_route": "new_winning_mechanism",
+    "resolved_route": "new_winning_mechanism",
+    "resume_count": 0,
+    "round_index": 1,
+    "run_id": "run-ef59c312-8b97-41ea-b5ba-016717b30dd4",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "international_situation",
+      "combat_scenario",
+      "weapon_equipment",
+      "operational_employment"
+    ],
+    "source_materials": [
+      {
+        "artifact_refs": [
+          "text:bce31075ed541966"
+        ],
+        "error": "HTTPStatusError: HTTP 403: Forbidden",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-international_situation-web-dc55e947df2e",
+          "normalized_url": "https://www.defense.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems",
+          "reasons": [],
+          "score": 0.71
+        },
+        "evidence_id": "ev-international_situation-web-dc55e947df2e",
+        "formal_evidence_allowed": false,
+        "status": "fetch_failed",
+        "url": "https://www.defense.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/"
+      },
+      {
+        "artifact_refs": [
+          "text:e90f6d774de0b147"
+        ],
+        "error": "HTTPStatusError: HTTP 403: Forbidden",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-international_situation-web-62dd1226d7e0",
+          "normalized_url": "https://www.act.nato.int/article/lci-x-builds-approach-fast-moving-threat",
+          "reasons": [],
+          "score": 0.71
+        },
+        "evidence_id": "ev-international_situation-web-62dd1226d7e0",
+        "formal_evidence_allowed": false,
+        "status": "fetch_failed",
+        "url": "https://www.act.nato.int/article/lci-x-builds-approach-fast-moving-threat/"
+      },
+      {
+        "artifact_refs": [
+          "text:01f5b09f8771e457"
+        ],
+        "error": "HTTPStatusError: HTTP 403: Forbidden",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-international_situation-web-fb3960202dd3",
+          "normalized_url": "https://www.act.nato.int/article/lci-x-crucible-2",
+          "reasons": [],
+          "score": 0.71
+        },
+        "evidence_id": "ev-international_situation-web-fb3960202dd3",
+        "formal_evidence_allowed": false,
+        "status": "fetch_failed",
+        "url": "https://www.act.nato.int/article/lci-x-crucible-2/"
+      },
+      {
+        "artifact_refs": [
+          "html:17f33d1197a66522"
+        ],
+        "content_type": "text/html;charset=utf-8",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-international_situation-web-906fb4b16de0",
+          "normalized_url": "https://nato.int/en/work-with-us/business-and-project-opportunities/demand-signal",
+          "reasons": [],
+          "score": 0.873
+        },
+        "evidence_id": "ev-international_situation-web-906fb4b16de0",
+        "final_url": "https://nato.int/en/work-with-us/business-and-project-opportunities/demand-signal",
+        "formal_evidence_allowed": true,
+        "paragraph_locations": [
+          "text:e571f57286791407#p1",
+          "text:e571f57286791407#p2",
+          "text:e571f57286791407#p3"
+        ],
+        "simplified_artifact_ref": "text:e571f57286791407",
+        "status": "fetched",
+        "url": "https://nato.int/en/work-with-us/business-and-project-opportunities/demand-signal"
+      },
+      {
+        "artifact_refs": [
+          "html:4fb1109f349734d2"
+        ],
+        "content_type": "text/html;charset=utf-8",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-international_situation-web-49f2eb1a8e44",
+          "normalized_url": "https://www.nato.int/en/multimedia/multimedia/videos/2025/12/09/nato-and-the-us-army-demonstrate-low-cost-counter-uas-system-to-protect-nato-airspace",
+          "reasons": [],
+          "score": 0.873
+        },
+        "evidence_id": "ev-international_situation-web-49f2eb1a8e44",
+        "final_url": "https://www.nato.int/en/multimedia/multimedia/videos/2025/12/09/nato-and-the-us-army-demonstrate-low-cost-counter-uas-system-to-protect-nato-airspace",
+        "formal_evidence_allowed": true,
+        "paragraph_locations": [
+          "text:e571f57286791407#p1",
+          "text:e571f57286791407#p2",
+          "text:e571f57286791407#p3"
+        ],
+        "simplified_artifact_ref": "text:e571f57286791407",
+        "status": "fetched",
+        "url": "https://www.nato.int/en/multimedia/multimedia/videos/2025/12/09/nato-and-the-us-army-demonstrate-low-cost-counter-uas-system-to-protect-nato-airspace"
+      },
+      {
+        "artifact_refs": [
+          "raw:d4e3d5f4497334de"
+        ],
+        "content_type": "application/pdf",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-international_situation-web-2d1ba4398caa",
+          "normalized_url": "https://www.nato.int/content/dam/nato/webready/documents/sps/grants/sps-special-call-for-proposals-2026-2.pdf",
+          "reasons": [],
+          "score": 0.71
+        },
+        "evidence_id": "ev-international_situation-web-2d1ba4398caa",
+        "final_url": "https://www.nato.int/content/dam/nato/webready/documents/sps/grants/sps-special-call-for-proposals-2026-2.pdf",
+        "formal_evidence_allowed": true,
+        "paragraph_locations": [],
+        "simplified_artifact_ref": "",
+        "status": "fetched",
+        "url": "https://www.nato.int/content/dam/nato/webready/documents/sps/grants/sps-special-call-for-proposals-2026-2.pdf"
+      },
+      {
+        "artifact_refs": [
+          "html:63ab442a468734e7"
+        ],
+        "content_type": "text/html",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-international_situation-web-ce3f3e70cc3f",
+          "normalized_url": "https://www.darpa.mil/news/2025/roqs-launches-first-phase",
+          "reasons": [],
+          "score": 0.873
+        },
+        "evidence_id": "ev-international_situation-web-ce3f3e70cc3f",
+        "final_url": "https://www.darpa.mil/news/2025/roqs-launches-first-phase",
+        "formal_evidence_allowed": true,
+        "paragraph_locations": [
+          "text:7b487a3d9f796501#p1",
+          "text:7b487a3d9f796501#p2",
+          "text:7b487a3d9f796501#p3",
+          "text:7b487a3d9f796501#p4",
+          "text:7b487a3d9f796501#p5",
+          "text:7b487a3d9f796501#p6",
+          "text:7b487a3d9f796501#p7",
+          "text:7b487a3d9f796501#p8",
+          "text:7b487a3d9f796501#p9",
+          "text:7b487a3d9f796501#p10"
+        ],
+        "simplified_artifact_ref": "text:7b487a3d9f796501",
+        "status": "fetched",
+        "url": "https://www.darpa.mil/news/2025/roqs-launches-first-phase"
+      },
+      {
+        "artifact_refs": [
+          "text:c1611cf45c26bc93"
+        ],
+        "error": "HTTPStatusError: HTTP 403: Forbidden",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-international_situation-web-bbe3c1156418",
+          "normalized_url": "https://media.defense.gov/2026/Mar/09/2003896718/-1/-1/1/GUIDE-FOR-THE-SCIENCE-OF-COUNTER-UAS-OPERATIONS-SAFEGUARDING-FREEDOMS-AND-PRESERVING-PRIVACY.PDF",
+          "reasons": [],
+          "score": 0.71
+        },
+        "evidence_id": "ev-international_situation-web-bbe3c1156418",
+        "formal_evidence_allowed": false,
+        "status": "fetch_failed",
+        "url": "https://media.defense.gov/2026/Mar/09/2003896718/-1/-1/1/GUIDE-FOR-THE-SCIENCE-OF-COUNTER-UAS-OPERATIONS-SAFEGUARDING-FREEDOMS-AND-PRESERVING-PRIVACY.PDF"
+      },
+      {
+        "artifact_refs": [
+          "html:d189f3b1dfba3bbc"
+        ],
+        "content_type": "text/html; charset=utf-8",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-international_situation-web-c36d9569d02b",
+          "normalized_url": "https://www.gov.uk/government/speeches/russias-intensified-aerial-attacks-against-ukraine-and-irresponsible-threats-uk-statement-to-the-osce",
+          "reasons": [],
+          "score": 0.873
+        },
+        "evidence_id": "ev-international_situation-web-c36d9569d02b",
+        "final_url": "https://www.gov.uk/government/speeches/russias-intensified-aerial-attacks-against-ukraine-and-irresponsible-threats-uk-statement-to-the-osce",
+        "formal_evidence_allowed": true,
+        "paragraph_locations": [
+          "text:7052d9d361218985#p1",
+          "text:7052d9d361218985#p2",
+          "text:7052d9d361218985#p3",
+          "text:7052d9d361218985#p4",
+          "text:7052d9d361218985#p5",
+          "text:7052d9d361218985#p6",
+          "text:7052d9d361218985#p7",
+          "text:7052d9d361218985#p8",
+          "text:7052d9d361218985#p9",
+          "text:7052d9d361218985#p10",
+          "text:7052d9d361218985#p11",
+          "text:7052d9d361218985#p12",
+          "text:7052d9d361218985#p13",
+          "text:7052d9d361218985#p14",
+          "text:7052d9d361218985#p15",
+          "text:7052d9d361218985#p16"
+        ],
+        "simplified_artifact_ref": "text:7052d9d361218985",
+        "status": "fetched",
+        "url": "https://www.gov.uk/government/speeches/russias-intensified-aerial-attacks-against-ukraine-and-irresponsible-threats-uk-statement-to-the-osce"
+      },
+      {
+        "artifact_refs": [
+          "text:af3583554e3741d1"
+        ],
+        "error": "HTTPStatusError: HTTP 403: Forbidden",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-6bf29ef9d3ed",
+          "normalized_url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF?utm_source=openai",
+          "reasons": [],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-6bf29ef9d3ed",
+        "formal_evidence_allowed": false,
+        "status": "fetch_failed",
+        "url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF?utm_source=openai"
+      },
+      {
+        "artifact_refs": [
+          "text:016e10929bef9b7d"
+        ],
+        "error": "SSLEOFError: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-94ad9cd5d782",
+          "normalized_url": "https://comptroller.defense.gov/Portals/45/Documents/defbudget/FY2026/FY2026_Budget_Request_Overview_Book.pdf?utm_source=openai",
+          "reasons": [],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-94ad9cd5d782",
+        "formal_evidence_allowed": false,
+        "status": "fetch_failed",
+        "url": "https://comptroller.defense.gov/Portals/45/Documents/defbudget/FY2026/FY2026_Budget_Request_Overview_Book.pdf?utm_source=openai"
+      },
+      {
+        "artifact_refs": [
+          "text:f0bbafd51710c22a"
+        ],
+        "error": "TimeoutError: _ssl.c:1015: The handshake operation timed out",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-20e071bd7bc7",
+          "normalized_url": "https://rdl.train.army.mil/catalog-ws/view/100.ATSC/B6A1625F-6975-4367-82C8-E67E901218C7-1753193840461/ATP3_01x81.pdf?utm_source=openai",
+          "reasons": [],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-20e071bd7bc7",
+        "formal_evidence_allowed": false,
+        "status": "fetch_failed",
+        "url": "https://rdl.train.army.mil/catalog-ws/view/100.ATSC/B6A1625F-6975-4367-82C8-E67E901218C7-1753193840461/ATP3_01x81.pdf?utm_source=openai"
+      },
+      {
+        "artifact_refs": [
+          "text:dc8b4592825a9504"
+        ],
+        "error": "TimeoutError: _ssl.c:1015: The handshake operation timed out",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-016c30464e74",
+          "normalized_url": "https://rdl.train.army.mil/catalog-ws/view/100.ATSC/C01CC9C1-DA1C-4D5E-A6EB-5FCFAE218DCD-1398170439966/FM_3_01wc1.pdf?utm_source=openai",
+          "reasons": [],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-016c30464e74",
+        "formal_evidence_allowed": false,
+        "status": "fetch_failed",
+        "url": "https://rdl.train.army.mil/catalog-ws/view/100.ATSC/C01CC9C1-DA1C-4D5E-A6EB-5FCFAE218DCD-1398170439966/FM_3_01wc1.pdf?utm_source=openai"
+      },
+      {
+        "artifact_refs": [
+          "text:7cf6027bc8a4c26c"
+        ],
+        "error": "SSLEOFError: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-b3f46c6960bc",
+          "normalized_url": "https://armysbir.army.mil/topics/asymmetric-collaborative-counter-swarm?utm_source=openai",
+          "reasons": [],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-b3f46c6960bc",
+        "formal_evidence_allowed": false,
+        "status": "fetch_failed",
+        "url": "https://armysbir.army.mil/topics/asymmetric-collaborative-counter-swarm/?utm_source=openai"
+      },
+      {
+        "artifact_refs": [
+          "text:cd8270b212c7f19e"
+        ],
+        "error": "SSLEOFError: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-71945fbf6f68",
+          "normalized_url": "https://www.army.mil/article/292099/listening_to_the_sky_acoustic_drone_detection_systems_ukraine_emerging_technologies?utm_source=openai",
+          "reasons": [],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-71945fbf6f68",
+        "formal_evidence_allowed": false,
+        "status": "fetch_failed",
+        "url": "https://www.army.mil/article/292099/listening_to_the_sky_acoustic_drone_detection_systems_ukraine_emerging_technologies?utm_source=openai"
+      },
+      {
+        "artifact_refs": [
+          "html:d6c7968152eb54b8"
+        ],
+        "content_type": "text/html;charset=utf-8",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-d40decce698d",
+          "normalized_url": "https://www.nato.int/en/multimedia/multimedia/videos/2025/10/03/drones-lessons-from-ukraine?utm_source=openai",
+          "reasons": [],
+          "score": 0.861
+        },
+        "evidence_id": "ev-combat_scenario-web-d40decce698d",
+        "final_url": "https://www.nato.int/en/multimedia/multimedia/videos/2025/10/03/drones-lessons-from-ukraine?utm_source=openai",
+        "formal_evidence_allowed": true,
+        "paragraph_locations": [
+          "text:e571f57286791407#p1",
+          "text:e571f57286791407#p2",
+          "text:e571f57286791407#p3"
+        ],
+        "simplified_artifact_ref": "text:e571f57286791407",
+        "status": "fetched",
+        "url": "https://www.nato.int/en/multimedia/multimedia/videos/2025/10/03/drones-lessons-from-ukraine?utm_source=openai"
+      },
+      {
+        "artifact_refs": [
+          "text:616893356dbfacfa"
+        ],
+        "error": "HTTPStatusError: HTTP 403: Forbidden",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-8b9fef4d0c7c",
+          "normalized_url": "https://www.defense.gov/News/News-Stories/Article/article/4260215/armys-project-flytrap-advances-defense-secretarys-drone-dominance-agenda?utm_source=openai",
+          "reasons": [],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-8b9fef4d0c7c",
+        "formal_evidence_allowed": false,
+        "status": "fetch_failed",
+        "url": "https://www.defense.gov/News/News-Stories/Article/article/4260215/armys-project-flytrap-advances-defense-secretarys-drone-dominance-agenda/?utm_source=openai"
+      },
+      {
+        "artifact_refs": [
+          "text:36b427920af4f5dc"
+        ],
+        "error": "TimeoutError: _ssl.c:1015: The handshake operation timed out",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-72f51d1c29d5",
+          "normalized_url": "https://www.army.mil/article-amp/273510/lessons_learned_from_the_ukrainian_territorial_defense_forces_command_post_survivability?utm_source=openai",
+          "reasons": [],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-72f51d1c29d5",
+        "formal_evidence_allowed": false,
+        "status": "fetch_failed",
+        "url": "https://www.army.mil/article-amp/273510/lessons_learned_from_the_ukrainian_territorial_defense_forces_command_post_survivability?utm_source=openai"
+      },
+      {
+        "artifact_refs": [
+          "text:6e8a91333c63dfe3"
+        ],
+        "error": "HTTPStatusError: HTTP 403: Forbidden",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-e3330ca1d5ab",
+          "normalized_url": "https://www.ncia.nato.int/newsroom/news/allies-and-industry-test-the-latest-counterdrone-technology-during-nato-exercise?utm_source=openai",
+          "reasons": [],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-e3330ca1d5ab",
+        "formal_evidence_allowed": false,
+        "status": "fetch_failed",
+        "url": "https://www.ncia.nato.int/newsroom/news/allies-and-industry-test-the-latest-counterdrone-technology-during-nato-exercise?utm_source=openai"
+      },
+      {
+        "artifact_refs": [
+          "raw:9b180313125896da"
+        ],
+        "content_type": "application/pdf",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-7b8e214d9931",
+          "normalized_url": "https://xtech.army.mil/wp-content/uploads/2025/09/xTechDisrupt-RFI.pdf?utm_source=openai",
+          "reasons": [],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-7b8e214d9931",
+        "final_url": "https://xtech.army.mil/wp-content/uploads/2025/09/xTechDisrupt-RFI.pdf?utm_source=openai",
+        "formal_evidence_allowed": true,
+        "paragraph_locations": [],
+        "simplified_artifact_ref": "",
+        "status": "fetched",
+        "url": "https://xtech.army.mil/wp-content/uploads/2025/09/xTechDisrupt-RFI.pdf?utm_source=openai"
+      },
+      {
+        "artifact_refs": [
+          "text:7025ea4bb377c6bc"
+        ],
+        "error": "SSLEOFError: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-27af88f8ada0",
+          "normalized_url": "https://media.defense.gov/2026/Jul/08/2003958884/-1/-1/1/SMALL-DRONES-BIG-PROBLEMS-A-FIRST-PRINCIPLES-APPROACH-TO-COUNTER-UAS.PDF?utm_source=openai",
+          "reasons": [],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-27af88f8ada0",
+        "formal_evidence_allowed": false,
+        "status": "fetch_failed",
+        "url": "https://media.defense.gov/2026/Jul/08/2003958884/-1/-1/1/SMALL-DRONES-BIG-PROBLEMS-A-FIRST-PRINCIPLES-APPROACH-TO-COUNTER-UAS.PDF?utm_source=openai"
+      },
+      {
+        "artifact_refs": [
+          "text:5ad1e44ecd8959d3"
+        ],
+        "error": "SSLEOFError: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-793d357fd961",
+          "normalized_url": "https://www.armyupress.army.mil/Journals/Military-Review/English-Edition-Archives/September-October-2025/Lessons-from-Ukraine?utm_source=openai",
+          "reasons": [],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-793d357fd961",
+        "formal_evidence_allowed": false,
+        "status": "fetch_failed",
+        "url": "https://www.armyupress.army.mil/Journals/Military-Review/English-Edition-Archives/September-October-2025/Lessons-from-Ukraine/?utm_source=openai"
+      },
+      {
+        "artifact_refs": [
+          "text:33517640dcb5a462"
+        ],
+        "error": "TimeoutError: _ssl.c:1015: The handshake operation timed out",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-99350144ccb8",
+          "normalized_url": "https://asc.army.mil/web/news-innovation-draws-international-interest?utm_source=openai",
+          "reasons": [],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-99350144ccb8",
+        "formal_evidence_allowed": false,
+        "status": "fetch_failed",
+        "url": "https://asc.army.mil/web/news-innovation-draws-international-interest/?utm_source=openai"
+      },
+      {
+        "artifact_refs": [
+          "text:38f77aef9c47ce1d"
+        ],
+        "error": "SSLEOFError: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-4eb092bc25f4",
+          "normalized_url": "https://www.darpa.mil/research/programs/frosty?utm_source=openai",
+          "reasons": [],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-4eb092bc25f4",
+        "formal_evidence_allowed": false,
+        "status": "fetch_failed",
+        "url": "https://www.darpa.mil/research/programs/frosty?utm_source=openai"
+      },
+      {
+        "artifact_refs": [
+          "html:2e75fc119c479916"
+        ],
+        "content_type": "text/html",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-3b7612d514fb",
+          "normalized_url": "https://www.doncio.navy.mil/mobile/ContentView.aspx?ID=15733&TypeID=21&utm_source=openai",
+          "reasons": [],
+          "score": 0.852
+        },
+        "evidence_id": "ev-weapon_equipment-web-3b7612d514fb",
+        "final_url": "https://www.doncio.navy.mil/mobile/ContentView.aspx?ID=15733&TypeID=21&utm_source=openai",
+        "formal_evidence_allowed": true,
+        "paragraph_locations": [
+          "text:7df3cf70c3bd45a8#p1"
+        ],
+        "simplified_artifact_ref": "text:7df3cf70c3bd45a8",
+        "status": "fetched",
+        "url": "https://www.doncio.navy.mil/mobile/ContentView.aspx?ID=15733&TypeID=21&utm_source=openai"
+      },
+      {
+        "artifact_refs": [
+          "text:11a3e45b0de7bb4e"
+        ],
+        "error": "TimeoutError: _ssl.c:1015: The handshake operation timed out",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-91525232bb14",
+          "normalized_url": "https://www.armyupress.army.mil/Journals/Military-Review/Online-Exclusive/2024-OLE/C-UAS-Operations?utm_source=openai",
+          "reasons": [],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-91525232bb14",
+        "formal_evidence_allowed": false,
+        "status": "fetch_failed",
+        "url": "https://www.armyupress.army.mil/Journals/Military-Review/Online-Exclusive/2024-OLE/C-UAS-Operations/?utm_source=openai"
+      },
+      {
+        "artifact_refs": [
+          "html:2ca7a4c7c2fbf6d6"
+        ],
+        "content_type": "text/html;charset=utf-8",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-15c4d1e616fe",
+          "normalized_url": "https://www.nato.int/en/about-us/official-texts-and-resources/official-texts/2025/02/13/nato-integrated-air-and-missile-defence-policy",
+          "reasons": [],
+          "score": 0.858
+        },
+        "evidence_id": "ev-operational_employment-web-15c4d1e616fe",
+        "final_url": "https://www.nato.int/en/about-us/official-texts-and-resources/official-texts/2025/02/13/nato-integrated-air-and-missile-defence-policy",
+        "formal_evidence_allowed": true,
+        "paragraph_locations": [
+          "text:e571f57286791407#p1",
+          "text:e571f57286791407#p2",
+          "text:e571f57286791407#p3"
+        ],
+        "simplified_artifact_ref": "text:e571f57286791407",
+        "status": "fetched",
+        "url": "https://www.nato.int/en/about-us/official-texts-and-resources/official-texts/2025/02/13/nato-integrated-air-and-missile-defence-policy"
+      },
+      {
+        "artifact_refs": [
+          "text:e90f6d774de0b147"
+        ],
+        "error": "HTTPStatusError: HTTP 403: Forbidden",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-62dd1226d7e0",
+          "normalized_url": "https://www.act.nato.int/article/lci-x-builds-approach-fast-moving-threat",
+          "reasons": [],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-62dd1226d7e0",
+        "formal_evidence_allowed": false,
+        "status": "fetch_failed",
+        "url": "https://www.act.nato.int/article/lci-x-builds-approach-fast-moving-threat/"
+      },
+      {
+        "artifact_refs": [
+          "text:01f5b09f8771e457"
+        ],
+        "error": "HTTPStatusError: HTTP 403: Forbidden",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-fb3960202dd3",
+          "normalized_url": "https://www.act.nato.int/article/lci-x-crucible-2",
+          "reasons": [],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-fb3960202dd3",
+        "formal_evidence_allowed": false,
+        "status": "fetch_failed",
+        "url": "https://www.act.nato.int/article/lci-x-crucible-2/"
+      },
+      {
+        "artifact_refs": [
+          "text:884a62e2be5a0228"
+        ],
+        "error": "HTTPStatusError: HTTP 403: Forbidden",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-74e0f9c1f2ad",
+          "normalized_url": "https://www.defense.gov/News/News-Stories/Article/Article/3986843/austin-signs-new-strategy-for-countering-effects-of-unmanned-systems",
+          "reasons": [],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-74e0f9c1f2ad",
+        "formal_evidence_allowed": false,
+        "status": "fetch_failed",
+        "url": "https://www.defense.gov/News/News-Stories/Article/Article/3986843/austin-signs-new-strategy-for-countering-effects-of-unmanned-systems/"
+      },
+      {
+        "artifact_refs": [
+          "text:23a424ef9e1c527b"
+        ],
+        "error": "HTTPStatusError: HTTP 403: Forbidden",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-ba7af247bc5e",
+          "normalized_url": "https://www.defense.gov/News/Releases/Release/Article/2397850/electromagnetic-spectrum-superiority-strategy-released",
+          "reasons": [],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-ba7af247bc5e",
+        "formal_evidence_allowed": false,
+        "status": "fetch_failed",
+        "url": "https://www.defense.gov/News/Releases/Release/Article/2397850/electromagnetic-spectrum-superiority-strategy-released/"
+      },
+      {
+        "artifact_refs": [
+          "text:c7e8994d742bb4e1"
+        ],
+        "error": "HTTPStatusError: HTTP 403: Forbidden",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-1772ab5f8282",
+          "normalized_url": "https://www.army.mil/article/293486/the_dispersed_screen_integrating_suas_for_resilient_reconnaissance",
+          "reasons": [],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-1772ab5f8282",
+        "formal_evidence_allowed": false,
+        "status": "fetch_failed",
+        "url": "https://www.army.mil/article/293486/the_dispersed_screen_integrating_suas_for_resilient_reconnaissance"
+      },
+      {
+        "artifact_refs": [
+          "text:a9052629485c0852"
+        ],
+        "error": "HTTPStatusError: HTTP 403: Forbidden",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-75f7dbadbda3",
+          "normalized_url": "https://www.af.mil/News/Article-Display/Article/4241485/air-force-battle-lab-advances-the-kill-chain-with-ai-c2-innovation",
+          "reasons": [],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-75f7dbadbda3",
+        "formal_evidence_allowed": false,
+        "status": "fetch_failed",
+        "url": "https://www.af.mil/News/Article-Display/Article/4241485/air-force-battle-lab-advances-the-kill-chain-with-ai-c2-innovation/"
+      },
+      {
+        "artifact_refs": [
+          "html:d2e5be183c4c302b"
+        ],
+        "content_type": "text/html; charset=utf-8",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-38b628ca4782",
+          "normalized_url": "https://www.gov.uk/government/news/british-soldiers-take-down-drone-swarm-in-groundbreaking-use-of-radio-wave-weapon",
+          "reasons": [],
+          "score": 0.858
+        },
+        "evidence_id": "ev-operational_employment-web-38b628ca4782",
+        "final_url": "https://www.gov.uk/government/news/british-soldiers-take-down-drone-swarm-in-groundbreaking-use-of-radio-wave-weapon",
+        "formal_evidence_allowed": true,
+        "paragraph_locations": [
+          "text:aea4fe3e4db5324b#p1",
+          "text:aea4fe3e4db5324b#p2",
+          "text:aea4fe3e4db5324b#p3",
+          "text:aea4fe3e4db5324b#p4",
+          "text:aea4fe3e4db5324b#p5",
+          "text:aea4fe3e4db5324b#p6",
+          "text:aea4fe3e4db5324b#p7",
+          "text:aea4fe3e4db5324b#p8",
+          "text:aea4fe3e4db5324b#p9",
+          "text:aea4fe3e4db5324b#p10",
+          "text:aea4fe3e4db5324b#p11",
+          "text:aea4fe3e4db5324b#p12",
+          "text:aea4fe3e4db5324b#p13",
+          "text:aea4fe3e4db5324b#p14",
+          "text:aea4fe3e4db5324b#p15",
+          "text:aea4fe3e4db5324b#p16",
+          "text:aea4fe3e4db5324b#p17",
+          "text:aea4fe3e4db5324b#p18",
+          "text:aea4fe3e4db5324b#p19",
+          "text:aea4fe3e4db5324b#p20",
+          "text:aea4fe3e4db5324b#p21",
+          "text:aea4fe3e4db5324b#p22",
+          "text:aea4fe3e4db5324b#p23",
+          "text:aea4fe3e4db5324b#p24",
+          "text:aea4fe3e4db5324b#p25",
+          "text:aea4fe3e4db5324b#p26",
+          "text:aea4fe3e4db5324b#p27",
+          "text:aea4fe3e4db5324b#p28",
+          "text:aea4fe3e4db5324b#p29"
+        ],
+        "simplified_artifact_ref": "text:aea4fe3e4db5324b",
+        "status": "fetched",
+        "url": "https://www.gov.uk/government/news/british-soldiers-take-down-drone-swarm-in-groundbreaking-use-of-radio-wave-weapon"
+      },
+      {
+        "artifact_refs": [
+          "text:0c48f99337fb836c"
+        ],
+        "error": "HTTPStatusError: HTTP 403: Forbidden",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-0e7193bd8f78",
+          "normalized_url": "https://nllp.jallc.nato.int/iks/sharing%20public/20240801_cui_24-901_surviving_the%20_swarm_c-uas_ttps_at_bde_and_below.pdf",
+          "reasons": [],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-0e7193bd8f78",
+        "formal_evidence_allowed": false,
+        "status": "fetch_failed",
+        "url": "https://nllp.jallc.nato.int/iks/sharing%20public/20240801_cui_24-901_surviving_the%20_swarm_c-uas_ttps_at_bde_and_below.pdf"
+      }
+    ],
+    "status": "running",
+    "task_statuses": {
+      "baseline:combat_scenario": "completed",
+      "baseline:international_situation": "completed",
+      "baseline:operational_employment": "completed",
+      "baseline:weapon_equipment": "completed",
+      "finalize:winning-report": "running"
+    },
+    "topic": "面向强电磁干扰与低空蜂群威胁的新型分布式探测预警制胜机理与装备能力需求",
+    "worker_reports": [
+      {
+        "agent_id": "international_situation",
+        "created_at": "2026-07-14T05:47:50.611939+00:00",
+        "error": "",
+        "handoff_summary": "国际公开信号显示：美军与北约已把低空无人威胁视为体系级问题，重点转向可在强电磁干扰下运行的分布式探测预警网络，并以低成本效应器和深弹药池支撑抗饱和。对装备论证的直接牵引是：优先建设多源分布式探测节点、边缘融合与本地自治、抗干扰通信/授时、开放接口和可快速接入更大C2网络的体系，而将高端新型传感器视为中远期增量项。近期威胁更像大规模混合袭扰而非完全成熟的自主蜂群，故需求优先级应放在‘抗饱和+抗拒止+低成本连续作战’。",
+        "new_evidence_ids": [
+          "ev-international_situation-web-2d1ba4398caa",
+          "ev-international_situation-web-49f2eb1a8e44",
+          "ev-international_situation-web-906fb4b16de0",
+          "ev-international_situation-web-c36d9569d02b",
+          "ev-international_situation-web-ce3f3e70cc3f"
+        ],
+        "packet_id": "packet-international_situation",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment deep research/outputs/real-acceptance-v11/runs/run-ef59c312-8b97-41ea-b5ba-016717b30dd4/agent_sessions/international_situation.jsonl",
+        "status": "completed",
+        "worker_report_id": "worker-report-72f779c0-0a49-4689-bdbb-fcd193983b85"
+      },
+      {
+        "agent_id": "combat_scenario",
+        "created_at": "2026-07-14T05:51:20.779461+00:00",
+        "error": "",
+        "handoff_summary": "面向强电磁干扰与低空蜂群威胁的作战场景应按“低空饱和+电磁降级+节点损耗”的体系对抗设计，而非单装性能对比。装备需求应优先支持多源分布式节点、边缘融合、本地自治、抗干扰通信/授时、开放接口、快速补网和复杂环境低误警；近期基线威胁是大规模混合袭扰，中远期分支是RF静默、抗干扰和更高自主协同无人系统。",
+        "new_evidence_ids": [
+          "ev-combat_scenario-web-d40decce698d"
+        ],
+        "packet_id": "packet-combat_scenario",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment deep research/outputs/real-acceptance-v11/runs/run-ef59c312-8b97-41ea-b5ba-016717b30dd4/agent_sessions/combat_scenario.jsonl",
+        "status": "completed",
+        "worker_report_id": "worker-report-568ea5e2-f9ca-4285-8446-4f1944721bfa"
+      },
+      {
+        "agent_id": "weapon_equipment",
+        "created_at": "2026-07-14T05:51:31.250330+00:00",
+        "error": "",
+        "handoff_summary": "装备侧结论是：国外可验证的近端优势并非某一“抗干扰神奇传感器”，而是将现役雷达、EO/IR、被动RF/测向、电子战、硬杀伤和C2以模块化接口组合，并向分布式边缘自治演进。面向低空蜂群与强电磁干扰，应把装备需求排序为：多模态分布感知与本地融合、断链降级指挥和韧性授时通信、开放C2/射手接口、软硬杀伤分层及低成本可持续保障。对在研分布式AI反蜂群和协同无人平台宜作为中期增量，不应假设其已经替代现役LIDS类体系。",
+        "new_evidence_ids": [
+          "ev-weapon_equipment-web-3b7612d514fb",
+          "ev-weapon_equipment-web-7b8e214d9931"
+        ],
+        "packet_id": "packet-weapon_equipment",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment deep research/outputs/real-acceptance-v11/runs/run-ef59c312-8b97-41ea-b5ba-016717b30dd4/agent_sessions/weapon_equipment.jsonl",
+        "status": "completed",
+        "worker_report_id": "worker-report-35abf3c9-8d33-4ff4-9bd8-805ec525be21"
+      },
+      {
+        "agent_id": "operational_employment",
+        "created_at": "2026-07-14T05:54:43.390898+00:00",
+        "error": "",
+        "handoff_summary": "综合上游局势、场景与装备材料，并用北约/美英公开来源交叉校核后，可形成的作战运用结论是：面向强电磁干扰与低空蜂群化袭扰，制胜机理应从“单站发现—集中判决—点状拦截”转为“异构分布式节点—边缘融合—本地自治—断续联网协同—低成本分层处置”。近期基线威胁更接近大规模混合低空袭扰叠加电子战，而非已被充分证实的成熟高自治蜂群，因此装备需求优先级应放在抗饱和、抗拒止、低误警和持续作战；真正高自治蜂群应作为高影响分支纳入冗余设计，而不宜替代近期基线。",
+        "new_evidence_ids": [
+          "ev-operational_employment-web-15c4d1e616fe",
+          "ev-operational_employment-web-38b628ca4782"
+        ],
+        "packet_id": "packet-operational_employment",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment deep research/outputs/real-acceptance-v11/runs/run-ef59c312-8b97-41ea-b5ba-016717b30dd4/agent_sessions/operational_employment.jsonl",
+        "status": "completed",
+        "worker_report_id": "worker-report-306bc203-33e0-4e09-aacf-25fac7eddde2"
+      }
+    ]
+  },
+  "savepoint_id": "checkpoint-e9b809ed9f07236409d5dcad"
+}

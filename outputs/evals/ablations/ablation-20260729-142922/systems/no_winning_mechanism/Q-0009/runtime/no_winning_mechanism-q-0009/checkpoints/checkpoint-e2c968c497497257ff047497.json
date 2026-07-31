@@ -1,0 +1,438 @@
+{
+  "checkpoint": {
+    "budget_remaining": {
+      "baseline_tasks": 0,
+      "finalize_tasks": 1,
+      "rounds": 1
+    },
+    "checkpoint_id": "run-checkpoint-no_winning_mechanism-q-0009",
+    "completed_task_ids": [
+      "baseline:combat_scenario",
+      "baseline:operational_employment",
+      "baseline:weapon_equipment"
+    ],
+    "config_fingerprint": "sha256:c9857d02deee71ecae1729512cebb7b4c927f988dc0c689b32fc096d83d4cfd4",
+    "created_at": "2026-07-29T08:24:15.787407+00:00",
+    "mode": "real",
+    "pending_task_ids": [],
+    "research_route": "auto",
+    "resolved_route": "traditional_gap",
+    "resume_count": 0,
+    "round_index": 1,
+    "run_id": "no_winning_mechanism-q-0009",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "combat_scenario",
+      "operational_employment",
+      "weapon_equipment"
+    ],
+    "source_materials": [
+      {
+        "artifact_refs": [
+          "text:f7f5f4d06db40c48"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-5824f31b34e3",
+          "normalized_url": "https://www.marines.mil/Force-Design",
+          "reasons": [],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-5824f31b34e3",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.marines.mil/Force-Design/"
+      },
+      {
+        "artifact_refs": [
+          "text:4dd360362c78b598"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-ef0773041e8d",
+          "normalized_url": "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2025-E-Edition/Project-Convergence",
+          "reasons": [],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-ef0773041e8d",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2025-E-Edition/Project-Convergence/"
+      },
+      {
+        "artifact_refs": [
+          "html:ac54eb49d73d8319"
+        ],
+        "content_type": "text/html; charset=UTF-8",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-06d26c44006f",
+          "normalized_url": "https://www.sda.mil/home/about-us/faq",
+          "reasons": [],
+          "score": 0.861
+        },
+        "evidence_id": "ev-combat_scenario-web-06d26c44006f",
+        "fetch_cache_hit": false,
+        "final_url": "https://www.sda.mil/home/about-us/faq/",
+        "formal_evidence_allowed": true,
+        "paragraph_locations": [
+          "text:e98434cc5c4d7597#p1",
+          "text:e98434cc5c4d7597#p2",
+          "text:e98434cc5c4d7597#p3",
+          "text:e98434cc5c4d7597#p4",
+          "text:e98434cc5c4d7597#p5",
+          "text:e98434cc5c4d7597#p6",
+          "text:e98434cc5c4d7597#p7",
+          "text:e98434cc5c4d7597#p8",
+          "text:e98434cc5c4d7597#p9",
+          "text:e98434cc5c4d7597#p10",
+          "text:e98434cc5c4d7597#p11",
+          "text:e98434cc5c4d7597#p12",
+          "text:e98434cc5c4d7597#p13",
+          "text:e98434cc5c4d7597#p14",
+          "text:e98434cc5c4d7597#p15",
+          "text:e98434cc5c4d7597#p16",
+          "text:e98434cc5c4d7597#p17",
+          "text:e98434cc5c4d7597#p18",
+          "text:e98434cc5c4d7597#p19",
+          "text:e98434cc5c4d7597#p20",
+          "text:e98434cc5c4d7597#p21",
+          "text:e98434cc5c4d7597#p22",
+          "text:e98434cc5c4d7597#p23",
+          "text:e98434cc5c4d7597#p24",
+          "text:e98434cc5c4d7597#p25",
+          "text:e98434cc5c4d7597#p26",
+          "text:e98434cc5c4d7597#p27",
+          "text:e98434cc5c4d7597#p28",
+          "text:e98434cc5c4d7597#p29",
+          "text:e98434cc5c4d7597#p30",
+          "text:e98434cc5c4d7597#p31",
+          "text:e98434cc5c4d7597#p32",
+          "text:e98434cc5c4d7597#p33",
+          "text:e98434cc5c4d7597#p34",
+          "text:e98434cc5c4d7597#p35",
+          "text:e98434cc5c4d7597#p36",
+          "text:e98434cc5c4d7597#p37",
+          "text:e98434cc5c4d7597#p38",
+          "text:e98434cc5c4d7597#p39",
+          "text:e98434cc5c4d7597#p40",
+          "text:e98434cc5c4d7597#p41",
+          "text:e98434cc5c4d7597#p42",
+          "text:e98434cc5c4d7597#p43"
+        ],
+        "simplified_artifact_ref": "text:e98434cc5c4d7597",
+        "status": "fetched",
+        "url": "https://www.sda.mil/home/about-us/faq/"
+      },
+      {
+        "artifact_refs": [
+          "text:d358c1a546b74c01"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-44832bb470cd",
+          "normalized_url": "https://www.usarpac.army.mil/Our-Story/Our-News/Article-Display/Article/4487093/army-advances-multi-domain-command-pacific-following-successful-operational-exp",
+          "reasons": [],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-44832bb470cd",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.usarpac.army.mil/Our-Story/Our-News/Article-Display/Article/4487093/army-advances-multi-domain-command-pacific-following-successful-operational-exp/"
+      },
+      {
+        "artifact_refs": [
+          "text:6400a94415f15f6b"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-9cc3ff778062",
+          "normalized_url": "https://www.jcs.mil/Portals/36/Documents/Doctrine/training/jts/jt_partners_course31jan20.pdf?ver=ODSIVx1liGdd9-0zXKom9Q%3D%3D",
+          "reasons": [],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-9cc3ff778062",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.jcs.mil/Portals/36/Documents/Doctrine/training/jts/jt_partners_course31jan20.pdf?ver=ODSIVx1liGdd9-0zXKom9Q%3D%3D"
+      },
+      {
+        "artifact_refs": [
+          "text:567d5c3b855b5134"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "duplicate",
+          "evidence_id": "ev-operational_employment-web-5824f31b34e3",
+          "normalized_url": "https://www.marines.mil/Force-Design",
+          "reasons": [
+            "与 ev-combat_scenario-web-5824f31b34e3 URL 重复"
+          ],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-5824f31b34e3",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.marines.mil/Force-Design/"
+      },
+      {
+        "artifact_refs": [
+          "text:d13ce75818fb5051"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-ddc144a8f0f1",
+          "normalized_url": "https://www.ai.mil/Initiatives/CJADC2",
+          "reasons": [],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-ddc144a8f0f1",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.ai.mil/Initiatives/CJADC2/"
+      },
+      {
+        "artifact_refs": [
+          "text:ffa952d2b8b2af9c"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-6c1c84a0e24e",
+          "normalized_url": "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all",
+          "reasons": [],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-6c1c84a0e24e",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+      },
+      {
+        "artifact_refs": [
+          "text:51486e4b2aa44455"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-8952c3805d5a",
+          "normalized_url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "reasons": [],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-8952c3805d5a",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+      },
+      {
+        "artifact_refs": [
+          "text:dc3c8da607824e91"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-8d5f2f1c9a5b",
+          "normalized_url": "https://www.army.mil/article/284406/army_awards_precision_strike_missile_early_operational_capability_contract",
+          "reasons": [],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-8d5f2f1c9a5b",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.army.mil/article/284406/army_awards_precision_strike_missile_early_operational_capability_contract"
+      },
+      {
+        "artifact_refs": [
+          "html:90cb89e2c8a6ca37"
+        ],
+        "content_type": "text/html; charset=UTF-8",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-dc97a67f7a09",
+          "normalized_url": "https://www.avinc.com/solution/switchblade-600",
+          "reasons": [],
+          "score": 0.852
+        },
+        "evidence_id": "ev-weapon_equipment-web-dc97a67f7a09",
+        "fetch_cache_hit": true,
+        "final_url": "https://www.avinc.com/solution/switchblade-600/",
+        "formal_evidence_allowed": true,
+        "paragraph_locations": [
+          "text:b36d650ca73b0427#p1",
+          "text:b36d650ca73b0427#p2",
+          "text:b36d650ca73b0427#p3"
+        ],
+        "simplified_artifact_ref": "text:b36d650ca73b0427",
+        "status": "fetched",
+        "url": "https://www.avinc.com/solution/switchblade-600/"
+      },
+      {
+        "artifact_refs": [
+          "text:789a4c4031fb5e85"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "duplicate",
+          "evidence_id": "ev-weapon_equipment-web-6c1c84a0e24e",
+          "normalized_url": "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all",
+          "reasons": [
+            "与 ev-operational_employment-web-6c1c84a0e24e URL 重复"
+          ],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-6c1c84a0e24e",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+      },
+      {
+        "artifact_refs": [
+          "text:44eb6bf010a4dfdb"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-693a5c53438f",
+          "normalized_url": "https://www.afmc.af.mil/News/Article-Display/Article/4475375/air-force-advances-dragon-cart-palletized-effects-program",
+          "reasons": [],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-693a5c53438f",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.afmc.af.mil/News/Article-Display/Article/4475375/air-force-advances-dragon-cart-palletized-effects-program/"
+      },
+      {
+        "artifact_refs": [
+          "text:f284885346a2d38f"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-43915f10ae4b",
+          "normalized_url": "https://www.army.mil/article/286878/precision_strike_missile_increment_1_achieves_milestone_c_approval",
+          "reasons": [],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-43915f10ae4b",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.army.mil/article/286878/precision_strike_missile_increment_1_achieves_milestone_c_approval"
+      }
+    ],
+    "status": "running",
+    "task_statuses": {
+      "baseline:combat_scenario": "completed",
+      "baseline:operational_employment": "completed",
+      "baseline:weapon_equipment": "completed",
+      "finalize:winning-report": "running"
+    },
+    "topic": "动态时敏目标快速感知—决策—打击一体化研究",
+    "worker_reports": [
+      {
+        "active_skill_ids": [
+          "scenario_engineering",
+          "modern_battlespace_analysis",
+          "adversary_coa_analysis"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "create_evidence_card",
+          "stress_test_scenario"
+        ],
+        "agent_id": "combat_scenario",
+        "created_at": "2026-07-29T08:28:42.129653+00:00",
+        "domain_object_id": "scenario-packet-combat_scenario",
+        "domain_object_type": "ScenarioModel",
+        "error": "",
+        "handoff_summary": "已将任务建模为6个场景分支：濒海前沿拒止、前沿战损自治、城市边缘压制、反无人饱和维持、恶劣气象远域追踪、补给受扰多日再组织。共同压力点是目标质量数据、抗扰PACE通信、可消耗ISR/打击无人平台、快速BDA、前沿维修能源保障和授权规则适配。下一步应将需求卡片与五档能力差距绑定，优先验证边缘多源融合节点、抗扰任务数据网、可消耗无人平台族、快速BDA系统和低成本反无人/频谱管理组件。",
+        "harness_profile": "scenario_research_v1",
+        "new_evidence_ids": [
+          "ev-combat_scenario-web-06d26c44006f",
+          "ev-combat_scenario-web-44832bb470cd",
+          "ev-combat_scenario-web-5824f31b34e3",
+          "ev-combat_scenario-web-ef0773041e8d"
+        ],
+        "packet_id": "packet-combat_scenario",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment research/outputs/evals/ablations/ablation-20260729-142922/systems/no_winning_mechanism/Q-0009/runtime/no_winning_mechanism-q-0009/agent_sessions/combat_scenario.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-47026710-3102-4333-a813-2bb66b5595e3"
+      },
+      {
+        "active_skill_ids": [
+          "operational_synthesis",
+          "coa_comparison",
+          "joint_force_coordination",
+          "lessons_transfer"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "create_evidence_card",
+          "compare_coa"
+        ],
+        "agent_id": "operational_employment",
+        "created_at": "2026-07-29T08:28:44.128384+00:00",
+        "domain_object_id": "operational-packet-operational_employment",
+        "domain_object_type": "OperationalSynthesis",
+        "error": "",
+        "handoff_summary": "作战运用结论：动态时敏目标快速感知-决策-打击一体化应按任务闭环和战损续接建设。推荐COA为前沿分布式局部闭环抓短窗口，可消耗无人系统扩展搜索/中继/BDA韧性，联合杀伤网处理高价值复杂目标。装备需求应优先指向边缘多源融合终端、韧性C2状态同步节点、可消耗ISR/中继/BDA无人系统包、前沿有机精确打击系统、前沿C-UAS防护包和分布式保障维修包。",
+        "harness_profile": "operational_synthesis_v1",
+        "new_evidence_ids": [
+          "ev-operational_employment-web-6c1c84a0e24e",
+          "ev-operational_employment-web-8952c3805d5a",
+          "ev-operational_employment-web-9cc3ff778062",
+          "ev-operational_employment-web-ddc144a8f0f1"
+        ],
+        "packet_id": "packet-operational_employment",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment research/outputs/evals/ablations/ablation-20260729-142922/systems/no_winning_mechanism/Q-0009/runtime/no_winning_mechanism-q-0009/agent_sessions/operational_employment.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-a7478fa5-a7a3-4f22-9470-d8f48c358996"
+      },
+      {
+        "active_skill_ids": [
+          "equipment_osint",
+          "capability_comparison",
+          "technology_readiness_analysis",
+          "defensive_countermeasure_analysis"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "create_evidence_card",
+          "compare_equipment_capability"
+        ],
+        "agent_id": "weapon_equipment",
+        "created_at": "2026-07-29T08:29:17.829504+00:00",
+        "domain_object_id": "equipment-packet-weapon_equipment",
+        "domain_object_type": "EquipmentObservation",
+        "error": "",
+        "handoff_summary": "按装备基线、体系依赖、能力差距、现役升级/新研和验证闭环判断，国外能力建设已从单一远程导弹转向“远程精确火力+可消耗无人持续感知+远域压制”组合。对动态时敏目标的真正增益来自缩短发现至毁伤链路、提高目标保持与火力协同、在干扰和损耗下维持可再攻击能力。",
+        "harness_profile": "equipment_research_v1",
+        "new_evidence_ids": [
+          "ev-weapon_equipment-web-43915f10ae4b",
+          "ev-weapon_equipment-web-693a5c53438f",
+          "ev-weapon_equipment-web-8d5f2f1c9a5b",
+          "ev-weapon_equipment-web-dc97a67f7a09"
+        ],
+        "packet_id": "packet-weapon_equipment",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment research/outputs/evals/ablations/ablation-20260729-142922/systems/no_winning_mechanism/Q-0009/runtime/no_winning_mechanism-q-0009/agent_sessions/weapon_equipment.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-53630d17-8b60-4223-895d-2d70fb75cc80"
+      }
+    ]
+  },
+  "savepoint_id": "checkpoint-e2c968c497497257ff047497"
+}

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" data-pptx-page-role="cover">
+  <rect id="background" data-pptx-role="background" x="0" y="0" width="1280" height="720" fill="#FFFFFF" />
+  <rect id="cover-accent" data-pptx-role="decoration" x="0" y="0" width="18" height="720" fill="#173B5E" />
+  <g id="cover-title" data-pptx-bounds="74 104 810 280">
+    <text x="74" y="160" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" font-weight="bold" fill="#2F6FAE">阶段评审 · 2026.07</text>
+    <text fill="#173B5E" font-size="42" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-weight="bold" x="74" y="232">市场需求发散要求落实</text><text fill="#173B5E" font-size="42" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-weight="bold" x="74" y="292">与评测汇报</text><rect x="74" y="326" width="132" height="5" fill="#2F6FAE" />
+    <text x="74" y="366" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#6B7785">项目落实 · Benchmark · 消融实验</text>
+  </g>
+  <g id="cover-claim" data-pptx-bounds="74 444 1136 182">
+    <line x1="74" y1="444" x2="1210" y2="444" stroke="#D8E1EA" stroke-width="2" />
+    <text x="74" y="504" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="66" font-weight="bold" fill="#2E8B66">01</text>
+    <text x="166" y="484" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" font-weight="bold" fill="#1D2733">三层九项已落地</text>
+    <text x="166" y="520" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#6B7785">需求合同与工程闭环具备运行验收证据</text>
+    <text x="484" y="504" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="66" font-weight="bold" fill="#2F6FAE">02</text>
+    <text x="576" y="484" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" font-weight="bold" fill="#1D2733">Benchmark 初步领先</text>
+    <text x="576" y="520" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#6B7785">对最强通用 Agent 得分率 82.5%</text>
+    <text x="846" y="504" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="66" font-weight="bold" fill="#C97A32">03</text>
+    <text x="938" y="484" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="24" font-weight="bold" fill="#1D2733">补证据与效率</text>
+    <text x="938" y="520" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#6B7785">扩大样本并降低平均时延</text>
+  </g>
+  <g id="cover-footer" data-pptx-bounds="74 646 1136 28">
+    <text x="74" y="668" font-family="PingFang SC, Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#6B7785">装备能力图像 · 市场需求挖掘项目</text>
+    <text x="1210" y="668" text-anchor="end" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" fill="#6B7785">01</text>
+  </g>
+</svg>

@@ -1,0 +1,4 @@
+{"pair_id": "P-524e936e4ae4", "query_id": "Q-0001", "reversed": false, "system_a": "full_method", "system_b": "no_winning_mechanism"}
+{"pair_id": "P-a373b183c200", "query_id": "Q-0001", "reversed": true, "system_a": "no_winning_mechanism", "system_b": "full_method"}
+{"pair_id": "P-7db80e18417e", "query_id": "Q-0002", "reversed": false, "system_a": "full_method", "system_b": "no_winning_mechanism"}
+{"pair_id": "P-f704e73ad7d6", "query_id": "Q-0002", "reversed": true, "system_a": "no_winning_mechanism", "system_b": "full_method"}

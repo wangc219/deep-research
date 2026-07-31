@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:3b6ea28b0e58588d",
+  "content_path": "text-3b6ea28b0e58588d.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: cached_origin_failure:HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-99f4c3fcfe4d",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "3b6ea28b0e58588d204265aaa8060ff1a3a33bdbf147b373fb75595dbfadec60",
+  "url": "https://comptroller.defense.gov/Portals/45/Documents/defbudget/FY2026/FY2026_Budget_Request_Overview_Book.pdf"
+}

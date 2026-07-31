@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=afmc.af.mil · air force advances dragon cart palletized effects program
+source_url=https://www.afmc.af.mil/News/Article-Display/Article/4475375/air-force-advances-dragon-cart-palletized-effects-program/
+claim=Dragon Cart/Rapid Dragon转为美国空军正式项目并强调C-130/C-17、BMS和托盘化效应器，证明空基弹药投送弹性和政府拥有接口是发展方向。
+excerpt=
+retrieval=Hosted web search citation metadata

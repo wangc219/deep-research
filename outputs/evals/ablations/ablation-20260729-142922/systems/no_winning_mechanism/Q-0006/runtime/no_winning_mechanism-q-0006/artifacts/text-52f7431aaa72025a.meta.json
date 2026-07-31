@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:52f7431aaa72025a",
+  "content_path": "text-52f7431aaa72025a.txt",
+  "content_type": "text/plain",
+  "direct_error": "TimeoutError: _ssl.c:1015: The handshake operation timed out",
+  "encoding": "utf-8",
+  "evidence_id": "ev-combat_scenario-web-f42ad4ad8ea8",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "52f7431aaa72025a5360e065889ccf1797544263b3f8f7e9a708b22bcf2fd388",
+  "url": "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/"
+}

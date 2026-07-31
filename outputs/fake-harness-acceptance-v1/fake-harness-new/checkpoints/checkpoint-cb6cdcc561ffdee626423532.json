@@ -1,0 +1,45 @@
+{
+  "checkpoint": {
+    "budget_remaining": {
+      "baseline_tasks": 4,
+      "finalize_tasks": 1,
+      "rounds": 5
+    },
+    "checkpoint_id": "run-checkpoint-fake-harness-new",
+    "completed_task_ids": [],
+    "config_fingerprint": "sha256:e3aab4e8e3119feddd082586d888a99457ba5d61e1a72999b9029ce15d3da013",
+    "created_at": "2026-07-14T11:52:24.824042+00:00",
+    "mode": "fake",
+    "pending_task_ids": [
+      "baseline:international_situation",
+      "baseline:combat_scenario",
+      "baseline:weapon_equipment",
+      "baseline:operational_employment",
+      "finalize:winning-report"
+    ],
+    "research_route": "new_winning_mechanism",
+    "resolved_route": "new_winning_mechanism",
+    "resume_count": 0,
+    "round_index": 1,
+    "run_id": "fake-harness-new",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "international_situation",
+      "combat_scenario",
+      "weapon_equipment",
+      "operational_employment"
+    ],
+    "source_materials": [],
+    "status": "running",
+    "task_statuses": {
+      "baseline:combat_scenario": "pending",
+      "baseline:international_situation": "pending",
+      "baseline:operational_employment": "pending",
+      "baseline:weapon_equipment": "pending",
+      "finalize:winning-report": "pending"
+    },
+    "topic": "面向强干扰低空蜂群威胁的分布式预警制胜机理",
+    "worker_reports": []
+  },
+  "savepoint_id": "checkpoint-cb6cdcc561ffdee626423532"
+}

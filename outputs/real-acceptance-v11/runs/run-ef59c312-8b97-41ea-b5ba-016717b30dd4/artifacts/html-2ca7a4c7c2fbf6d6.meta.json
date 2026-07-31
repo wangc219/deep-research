@@ -1,0 +1,14 @@
+{
+  "artifact_ref": "html:2ca7a4c7c2fbf6d6",
+  "connect_ip": "198.18.1.175",
+  "content_path": "html-2ca7a4c7c2fbf6d6.html",
+  "content_type": "text/html;charset=utf-8",
+  "encoding": null,
+  "evidence_id": "ev-operational_employment-web-15c4d1e616fe",
+  "final_url": "https://www.nato.int/en/about-us/official-texts-and-resources/official-texts/2025/02/13/nato-integrated-air-and-missile-defence-policy",
+  "kind": "html",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "2ca7a4c7c2fbf6d60f3ad232e031438d5de21f36f27cf301fb7ab13bf5666044",
+  "url": "https://www.nato.int/en/about-us/official-texts-and-resources/official-texts/2025/02/13/nato-integrated-air-and-missile-defence-policy"
+}

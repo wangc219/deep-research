@@ -1,0 +1,448 @@
+[
+  {
+    "bundle_id": "claims-978ac9dc8329",
+    "claims": [
+      {
+        "claim_id": "claim-c37a43b699d5",
+        "claim_type": "fact",
+        "confidence": 0.79,
+        "counter_evidence": [
+          "低轨星座公开规划强调低时延传输、目标指示和韧性，但GAO指出相关能力存在技术成熟度、系统集成和交付透明度风险，因此不能把规划能力等同于稳定可用火控链。",
+          "高价值远程精打具备单次毁伤和威慑优势，但在目标分散、诱饵密集、机动频繁和识别置信度不足时，费效比会低于分布式压制和低成本消耗。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-06d26c44006f",
+          "ev-operational_employment-web-d5c9ff7e764e",
+          "ev-operational_employment-web-a1c5b9c47d21",
+          "ev-operational_employment-web-f42ad4ad8ea8"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.sda.mil/home/about-us/faq/",
+          "https://www.defense.gov/News/News-Stories/Article/Article/3722921/proliferation-remains-best-deterrence-against-threats-to-us-space-access/",
+          "https://files.gao.gov/reports/GAO-26-107085/index.html",
+          "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/"
+        ],
+        "text": "决定性信息1（贡献：任务链/装备功能需求）：低轨巨型星座的核心作战价值在于把广域发现、低时延传输、跨域火控、效果评估和再打击压缩为持续杀伤闭环；但公开证据只能支撑体系设计目标，不能直接证明实战火控级时延、精度和链路可用率。"
+      },
+      {
+        "claim_id": "claim-6dfe9ad7f930",
+        "claim_type": "fact",
+        "confidence": 0.79,
+        "counter_evidence": [
+          "低轨星座公开规划强调低时延传输、目标指示和韧性，但GAO指出相关能力存在技术成熟度、系统集成和交付透明度风险，因此不能把规划能力等同于稳定可用火控链。",
+          "高价值远程精打具备单次毁伤和威慑优势，但在目标分散、诱饵密集、机动频繁和识别置信度不足时，费效比会低于分布式压制和低成本消耗。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-06d26c44006f",
+          "ev-operational_employment-web-d5c9ff7e764e",
+          "ev-operational_employment-web-a1c5b9c47d21",
+          "ev-operational_employment-web-f42ad4ad8ea8"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.sda.mil/home/about-us/faq/",
+          "https://www.defense.gov/News/News-Stories/Article/Article/3722921/proliferation-remains-best-deterrence-against-threats-to-us-space-access/",
+          "https://files.gao.gov/reports/GAO-26-107085/index.html",
+          "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/"
+        ],
+        "text": "决定性信息2（贡献：COA/协同依赖）：分布式前沿杀伤网应作为主方案，高价值远程精打用于关键节点毁伤，低成本规模消耗用于开窗、诱导、压制和战损续接，三者组合优于单纯依赖少量昂贵精确弹药。"
+      },
+      {
+        "claim_id": "claim-01b17d6b4e02",
+        "claim_type": "fact",
+        "confidence": 0.79,
+        "counter_evidence": [
+          "低轨星座公开规划强调低时延传输、目标指示和韧性，但GAO指出相关能力存在技术成熟度、系统集成和交付透明度风险，因此不能把规划能力等同于稳定可用火控链。",
+          "高价值远程精打具备单次毁伤和威慑优势，但在目标分散、诱饵密集、机动频繁和识别置信度不足时，费效比会低于分布式压制和低成本消耗。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-06d26c44006f",
+          "ev-operational_employment-web-d5c9ff7e764e",
+          "ev-operational_employment-web-a1c5b9c47d21",
+          "ev-operational_employment-web-f42ad4ad8ea8"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.sda.mil/home/about-us/faq/",
+          "https://www.defense.gov/News/News-Stories/Article/Article/3722921/proliferation-remains-best-deterrence-against-threats-to-us-space-access/",
+          "https://files.gao.gov/reports/GAO-26-107085/index.html",
+          "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/"
+        ],
+        "text": "决定性信息3（贡献：保障韧性/失败模式）：前沿低特征节点既是传感、通信、发射和再打击承接点，也是敌方电子侦察、远程火力和补给压制的优先目标；分布式保障、终端冗余、能源弹药小批量多点恢复决定持续作战能力。"
+      },
+      {
+        "claim_id": "claim-32dfbbe191b3",
+        "claim_type": "fact",
+        "confidence": 0.79,
+        "counter_evidence": [
+          "低轨星座公开规划强调低时延传输、目标指示和韧性，但GAO指出相关能力存在技术成熟度、系统集成和交付透明度风险，因此不能把规划能力等同于稳定可用火控链。",
+          "高价值远程精打具备单次毁伤和威慑优势，但在目标分散、诱饵密集、机动频繁和识别置信度不足时，费效比会低于分布式压制和低成本消耗。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-06d26c44006f",
+          "ev-operational_employment-web-d5c9ff7e764e",
+          "ev-operational_employment-web-a1c5b9c47d21",
+          "ev-operational_employment-web-f42ad4ad8ea8"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.sda.mil/home/about-us/faq/",
+          "https://www.defense.gov/News/News-Stories/Article/Article/3722921/proliferation-remains-best-deterrence-against-threats-to-us-space-access/",
+          "https://files.gao.gov/reports/GAO-26-107085/index.html",
+          "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/"
+        ],
+        "text": "决定性信息4（贡献：反证判断/装备缺口）：GAO关于低轨导弹预警/跟踪体系的技术成熟度、系统集成、需求透明度和成本风险，是限制“星座即火控体系”判断的主要反证，装备发展必须优先补足火控级融合验证、体系调度和降级使用能力。"
+      }
+    ],
+    "packet_id": "packet-operational_employment",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-39ff1148f328",
+    "claims": [
+      {
+        "claim_id": "claim-db5edd90b733",
+        "claim_type": "fact",
+        "confidence": 0.75,
+        "counter_evidence": [
+          "低轨巨型星座具有多星冗余和渐进退化优势，但单星对固定区域可视窗口短，连续服务仍依赖复杂调度、地面接入和终端保障。",
+          "多源融合可提高目标确认质量，但若多源实际依赖同一商业服务、同一网关或同一受污染数据链，表面冗余会高估可信度。",
+          "商业星座可增强应急通信和恢复协调，但其战时服务策略、法律政治约束、终端供应和网络拥塞会转化为军事不确定性。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-5c9e697b99e1",
+          "ev-combat_scenario-web-9cfe769e94db",
+          "ev-combat_scenario-web-02b459c858ed",
+          "ev-combat_scenario-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.cbo.gov/publication/59175",
+          "https://www.sda.mil/wp-content/uploads/2024/08/Transport-Layer-Fact-Sheet_V6.9-distro-A.pdf",
+          "https://www.spaceforce.mil/Portals/2/Documents/SAF_2026/OFD_2040_Baseline_Final.pdf",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "判断：低轨巨型星座支撑精打的主矛盾不是“能否接入卫星”，而是首轮压制后发现-决策-协同-打击-评估-再组织链条能否在降级条件下继续闭合。军事任务价值：把分布式火力、无人ISR/BDA和前沿C2从高带宽依赖转入低带宽任务包、边缘缓存、机会性同步和替代PNT支撑的最低闭环。证据边界：公开资料能证明低轨传输、跟踪、战场管理、替代PNT和分布式C2方向存在，但不能证明体系级战损后闭环已成熟。失效条件：战区入口站、终端、电源、密钥、PNT与前沿指挥节点同时受损时，空间段冗余无法转化为战术可用性。"
+      },
+      {
+        "claim_id": "claim-9593d884f4b9",
+        "claim_type": "fact",
+        "confidence": 0.75,
+        "counter_evidence": [
+          "低轨巨型星座具有多星冗余和渐进退化优势，但单星对固定区域可视窗口短，连续服务仍依赖复杂调度、地面接入和终端保障。",
+          "多源融合可提高目标确认质量，但若多源实际依赖同一商业服务、同一网关或同一受污染数据链，表面冗余会高估可信度。",
+          "商业星座可增强应急通信和恢复协调，但其战时服务策略、法律政治约束、终端供应和网络拥塞会转化为军事不确定性。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-5c9e697b99e1",
+          "ev-combat_scenario-web-9cfe769e94db",
+          "ev-combat_scenario-web-02b459c858ed",
+          "ev-combat_scenario-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.cbo.gov/publication/59175",
+          "https://www.sda.mil/wp-content/uploads/2024/08/Transport-Layer-Fact-Sheet_V6.9-distro-A.pdf",
+          "https://www.spaceforce.mil/Portals/2/Documents/SAF_2026/OFD_2040_Baseline_Final.pdf",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "判断：时间敏感目标精打的关键窗口集中在交火前数十分钟至首轮压制后第一个任务周期，目标包时效、授权节奏和链路切换速度共同决定打击价值。军事任务价值：在目标机动前完成可控精打，并在链路不稳定时通过任务中止、复核或降级避免过期坐标打击。证据边界：SDA和Space Force公开文件支持低时延传输、战场管理、时间敏感杀伤链和受争夺环境C2需求，但未给出实战闭环率。失效条件：人在回路授权慢于目标暴露窗口，或PNT/目标坐标误差超过交战门槛时，精打应转为监视、遮断或等待再确认。"
+      },
+      {
+        "claim_id": "claim-71d1acf9ffde",
+        "claim_type": "fact",
+        "confidence": 0.75,
+        "counter_evidence": [
+          "低轨巨型星座具有多星冗余和渐进退化优势，但单星对固定区域可视窗口短，连续服务仍依赖复杂调度、地面接入和终端保障。",
+          "多源融合可提高目标确认质量，但若多源实际依赖同一商业服务、同一网关或同一受污染数据链，表面冗余会高估可信度。",
+          "商业星座可增强应急通信和恢复协调，但其战时服务策略、法律政治约束、终端供应和网络拥塞会转化为军事不确定性。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-5c9e697b99e1",
+          "ev-combat_scenario-web-9cfe769e94db",
+          "ev-combat_scenario-web-02b459c858ed",
+          "ev-combat_scenario-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.cbo.gov/publication/59175",
+          "https://www.sda.mil/wp-content/uploads/2024/08/Transport-Layer-Fact-Sheet_V6.9-distro-A.pdf",
+          "https://www.spaceforce.mil/Portals/2/Documents/SAF_2026/OFD_2040_Baseline_Final.pdf",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "判断：对手最危险COA是保持我方通信表面可用，同时通过假目标、伪装、数据污染和BDA压制降低目标可信度，使精确火力转化为误击、重复打击和弹药消耗。军事任务价值：将“连得上”升级为“打得准、评得清、能再组织”，要求目标包必须附带可信度、时效、冲突标记和BDA状态。证据边界：公开证据支持无人系统扩散、低成本精确打击和多源融合压力，但对数据投毒检测、可信评分算法和误击规避效果缺少公开量化验证。失效条件：多源数据实际同源受污、BDA长期缺失或人工复核超时，可信打击链会停滞或错误闭合。"
+      },
+      {
+        "claim_id": "claim-a0dabaf782e9",
+        "claim_type": "fact",
+        "confidence": 0.75,
+        "counter_evidence": [
+          "低轨巨型星座具有多星冗余和渐进退化优势，但单星对固定区域可视窗口短，连续服务仍依赖复杂调度、地面接入和终端保障。",
+          "多源融合可提高目标确认质量，但若多源实际依赖同一商业服务、同一网关或同一受污染数据链，表面冗余会高估可信度。",
+          "商业星座可增强应急通信和恢复协调，但其战时服务策略、法律政治约束、终端供应和网络拥塞会转化为军事不确定性。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-5c9e697b99e1",
+          "ev-combat_scenario-web-9cfe769e94db",
+          "ev-combat_scenario-web-02b459c858ed",
+          "ev-combat_scenario-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.cbo.gov/publication/59175",
+          "https://www.sda.mil/wp-content/uploads/2024/08/Transport-Layer-Fact-Sheet_V6.9-distro-A.pdf",
+          "https://www.spaceforce.mil/Portals/2/Documents/SAF_2026/OFD_2040_Baseline_Final.pdf",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "判断：持续72小时后，精打体系的决定性约束从星座能力转向终端、电源、无人平台、备件、弹药、拦截弹和人员疲劳。军事任务价值：远征能源、分布式库存、移动维修和可消耗无人ISR/BDA补充决定下一轮发现-评估-再打击能力。证据边界：Force Design、EABO和乌克兰基础设施恢复案例支持分布式保障、应急通信和前沿制造价值，但不能直接外推到所有战区和高强度反空间环境。失效条件：补给维修活动被周期性再侦察再打击，或商业星座服务、终端供应和网络拥塞不可控时，长期精打节奏会断裂。"
+      },
+      {
+        "claim_id": "claim-9a99f981850f",
+        "claim_type": "hypothesis",
+        "confidence": 0.75,
+        "counter_evidence": [
+          "低轨巨型星座具有多星冗余和渐进退化优势，但单星对固定区域可视窗口短，连续服务仍依赖复杂调度、地面接入和终端保障。",
+          "多源融合可提高目标确认质量，但若多源实际依赖同一商业服务、同一网关或同一受污染数据链，表面冗余会高估可信度。",
+          "商业星座可增强应急通信和恢复协调，但其战时服务策略、法律政治约束、终端供应和网络拥塞会转化为军事不确定性。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-5c9e697b99e1",
+          "ev-combat_scenario-web-9cfe769e94db",
+          "ev-combat_scenario-web-02b459c858ed",
+          "ev-combat_scenario-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.cbo.gov/publication/59175",
+          "https://www.sda.mil/wp-content/uploads/2024/08/Transport-Layer-Fact-Sheet_V6.9-distro-A.pdf",
+          "https://www.spaceforce.mil/Portals/2/Documents/SAF_2026/OFD_2040_Baseline_Final.pdf",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "判断：能力建设应按L0单点依赖、L1局部备份、L2分布式接入、L3战区杀伤网、L4韧性再组织、L5受控自治杀伤网五档评估；公开可见能力更接近L2/L3向L4演进，L5只能作为探索目标。军事任务价值：用五档差距把装备需求从卫星链路扩展到抗压终端、边缘融合、替代PNT、无人ISR/BDA、远征能源制造和安全降级控制。证据边界：公开来源能支撑能力方向和部分装备基线，不能证明受控自治杀伤网在大规模战区实战可用。失效条件：若缺少任务级演训指标验证，装备清单会形成堆砌，无法证明杀伤链闭合率、战损再组织率和误击规避率。"
+      }
+    ],
+    "packet_id": "packet-combat_scenario",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-42e2d45402c3",
+    "claims": [
+      {
+        "claim_id": "claim-d9b176670838",
+        "claim_type": "inference",
+        "confidence": 0.76,
+        "counter_evidence": [
+          "预算采购或合同授予只能证明能力建设方向和数量口径，不能直接等同于战区可用库存、成熟火控闭环或实战命中率。",
+          "制造商平台介绍可证明SeaGuardian载荷和任务角色，但不能证明其在强防空、反卫星和电子压制环境中的生存性。",
+          "Replicator公开表述强调低成本和规模部署，但具体型号、载荷、航程、抗扰和全寿命成本不足，不能直接判定其已具备成熟远程毁伤能力。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-a0c56c58b8a2",
+          "ev-weapon_equipment-web-8d5f2f1c9a5b",
+          "ev-weapon_equipment-web-55b1bc8f02e7",
+          "ev-weapon_equipment-web-6c1c84a0e24e"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.sda.mil/wp-content/uploads/2025/09/PWSA-Tranche-1-Factsheet-UPDATE_09.05.2025.pdf",
+          "https://www.army.mil/article/284406/army_awards_precision_strike_missile_early_operational_capability_contract",
+          "https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2027/Discretionary%20Budget/Procurement/Missile%20Procurement%20Army.pdf",
+          "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+        ],
+        "text": "低轨巨型星座对精打对抗的装备侧贡献主要是压缩发现、分发、目标保持和毁伤评估时间，不是替代导弹、无人机或压制弹药；因此装备优先级应从单一射程转向链路抗扰、目标数据更新、库存补充和跨域火控接口。贡献项：体系依赖、能力差距、验证计划。"
+      },
+      {
+        "claim_id": "claim-6a3db543e312",
+        "claim_type": "fact",
+        "confidence": 0.76,
+        "counter_evidence": [
+          "预算采购或合同授予只能证明能力建设方向和数量口径，不能直接等同于战区可用库存、成熟火控闭环或实战命中率。",
+          "制造商平台介绍可证明SeaGuardian载荷和任务角色，但不能证明其在强防空、反卫星和电子压制环境中的生存性。",
+          "Replicator公开表述强调低成本和规模部署，但具体型号、载荷、航程、抗扰和全寿命成本不足，不能直接判定其已具备成熟远程毁伤能力。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-a0c56c58b8a2",
+          "ev-weapon_equipment-web-8d5f2f1c9a5b",
+          "ev-weapon_equipment-web-55b1bc8f02e7",
+          "ev-weapon_equipment-web-6c1c84a0e24e"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.sda.mil/wp-content/uploads/2025/09/PWSA-Tranche-1-Factsheet-UPDATE_09.05.2025.pdf",
+          "https://www.army.mil/article/284406/army_awards_precision_strike_missile_early_operational_capability_contract",
+          "https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2027/Discretionary%20Budget/Procurement/Missile%20Procurement%20Army.pdf",
+          "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+        ],
+        "text": "PrSM Increment 1、MRC/Tomahawk/SM-6等远打精打导弹已形成国外现役或准现役纵深火力基线，但公开证据更能证明采购和任务定位，不能证明对高动态机动目标的成熟闭环打击能力。贡献项：装备基线、能力边界、现役升级需求。"
+      },
+      {
+        "claim_id": "claim-fd1276088ccd",
+        "claim_type": "fact",
+        "confidence": 0.76,
+        "counter_evidence": [
+          "预算采购或合同授予只能证明能力建设方向和数量口径，不能直接等同于战区可用库存、成熟火控闭环或实战命中率。",
+          "制造商平台介绍可证明SeaGuardian载荷和任务角色，但不能证明其在强防空、反卫星和电子压制环境中的生存性。",
+          "Replicator公开表述强调低成本和规模部署，但具体型号、载荷、航程、抗扰和全寿命成本不足，不能直接判定其已具备成熟远程毁伤能力。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-a0c56c58b8a2",
+          "ev-weapon_equipment-web-8d5f2f1c9a5b",
+          "ev-weapon_equipment-web-55b1bc8f02e7",
+          "ev-weapon_equipment-web-6c1c84a0e24e"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.sda.mil/wp-content/uploads/2025/09/PWSA-Tranche-1-Factsheet-UPDATE_09.05.2025.pdf",
+          "https://www.army.mil/article/284406/army_awards_precision_strike_missile_early_operational_capability_contract",
+          "https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2027/Discretionary%20Budget/Procurement/Missile%20Procurement%20Army.pdf",
+          "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+        ],
+        "text": "MQ-9B SeaGuardian与Replicator/ETV/低成本远程打击形成两类无人装备路线：高价值长航时ISR节点负责目标保持、指示、通信中继和战损评估，低成本可消耗无人族负责规模诱骗、消耗、压制和补充打击；两者互补而非替代。贡献项：国外装备全景、新研拓新、体系依赖。"
+      },
+      {
+        "claim_id": "claim-a3ab10011efc",
+        "claim_type": "fact",
+        "confidence": 0.76,
+        "counter_evidence": [
+          "预算采购或合同授予只能证明能力建设方向和数量口径，不能直接等同于战区可用库存、成熟火控闭环或实战命中率。",
+          "制造商平台介绍可证明SeaGuardian载荷和任务角色，但不能证明其在强防空、反卫星和电子压制环境中的生存性。",
+          "Replicator公开表述强调低成本和规模部署，但具体型号、载荷、航程、抗扰和全寿命成本不足，不能直接判定其已具备成熟远程毁伤能力。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-a0c56c58b8a2",
+          "ev-weapon_equipment-web-8d5f2f1c9a5b",
+          "ev-weapon_equipment-web-55b1bc8f02e7",
+          "ev-weapon_equipment-web-6c1c84a0e24e"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.sda.mil/wp-content/uploads/2025/09/PWSA-Tranche-1-Factsheet-UPDATE_09.05.2025.pdf",
+          "https://www.army.mil/article/284406/army_awards_precision_strike_missile_early_operational_capability_contract",
+          "https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2027/Discretionary%20Budget/Procurement/Missile%20Procurement%20Army.pdf",
+          "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+        ],
+        "text": "AARGM/AARGM-ER、EA-18G+NGJ-MB和MALD/Coyote类效应器的核心价值是制造精确打击窗口，压制或诱骗对方防空、传感器和无人威胁；其失效边界在于对手关机、诱饵、频谱机动、分布式低截获传感器和高消耗率。贡献项：远域压制、反制抗扰、区域拒止。"
+      }
+    ],
+    "packet_id": "packet-weapon_equipment",
+    "schema_version": "1.0"
+  }
+]

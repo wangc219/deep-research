@@ -1,0 +1,10 @@
+{
+  "artifact_ref": "text:499b546bdd99ab14",
+  "content_hash": "806905330b6817f73b446620095e1767efcf6d544b5aee0db464e0c5e5eb3083",
+  "content_path": "text-499b546bdd99ab14.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "kind": "text",
+  "materialization_status": "simplified",
+  "sha256": "499b546bdd99ab146b0c525916e694b490685f4d082c78c00c05a6f1f6e2edbf"
+}

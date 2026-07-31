@@ -1,0 +1,15 @@
+{
+  "artifact_ref": "html:e3b0c44298fc1c14",
+  "connect_ip": "198.18.2.187",
+  "content_path": "html-e3b0c44298fc1c14.html",
+  "content_type": "text/html; charset=UTF-8",
+  "encoding": null,
+  "evidence_id": "ev-operational_employment-web-04daa1ccebf5",
+  "fetch_cache_hit": true,
+  "final_url": "https://irp.fas.org/doddir/army/fm3-0.pdf",
+  "kind": "html",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "url": "https://irp.fas.org/doddir/army/fm3-0.pdf"
+}

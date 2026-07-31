@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=dodcio.defense.gov · 2020DoD EMS SuperiorityStrategy.pdf
+source_url=https://dodcio.defense.gov/Portals/0/Documents/Spectrum/2020DoD-EMS-SuperiorityStrategy.pdf
+claim=DoD EMS优势战略表明，部队跨域行动高度依赖电磁频谱，而现代EMS环境拥挤、受争夺、受约束；这支撑将精打武器能力定义为受扰任务系统闭环。
+excerpt=
+retrieval=Hosted web search citation metadata

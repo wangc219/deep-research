@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" data-pptx-page-role="ending">
+  <rect id="background" data-pptx-role="background" x="0" y="0" width="1280" height="720" fill="#123B63"/>
+  <image id="closing-echo" data-pptx-role="decoration" href="../images/cover_multi_agent_closed_loop.png" x="0" y="0" width="1280" height="720" preserveAspectRatio="xMidYMid slice" opacity="0.08"/>
+  <rect id="closing-wash" data-pptx-role="decoration" x="0" y="0" width="1280" height="720" fill="#123B63" fill-opacity="0.86"/>
+  <circle id="closing-orb" data-pptx-role="decoration" cx="1170" cy="18" r="220" fill="#2A7F9E" fill-opacity="0.20"/>
+
+  <g id="closing-title" data-pptx-bounds="48 34 1184 112">
+    <text x="56" y="78" font-family="Georgia, 'Noto Serif CJK SC', 'Songti SC', serif" font-size="36" font-weight="700" fill="#FFFFFF">下一阶段重点：智能体编排、业务流程与 Benchmark</text>
+    <text x="58" y="119" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="20" fill="#DDEAF2">在现有功能闭环基础上，集中做好三项持续优化，不扩散新的建设主题。</text>
+  </g>
+
+  <g id="priority-agent" data-pptx-bounds="56 170 360 386">
+    <rect x="56" y="170" width="360" height="386" rx="26" fill="#FFFFFF" fill-opacity="0.97"/>
+    <rect x="56" y="170" width="360" height="9" fill="#D59A24"/>
+    <circle cx="104" cy="222" r="26" fill="#D59A24"/>
+    <text x="104" y="230" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#FFFFFF">01</text>
+    <use data-icon="tabler-outline/robot" x="344" y="198" width="40" height="40" fill="#D59A24" stroke-width="2"/>
+    <text x="88" y="278" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="24" font-weight="700" fill="#123B63">智能体设计与编排</text>
+    <text x="88" y="316" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="16" fill="#5B6B7C">优化 Agent 职责、协作关系与动态调度</text>
+    <line x1="88" y1="340" x2="384" y2="340" stroke="#D7E0EA" stroke-width="1"/>
+    <text x="88" y="382" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="18" fill="#17212B">• 细化主控、专用与业务 Agent 边界<tspan x="88" dy="42">• 优化分支选择、并行协同与动态路由</tspan><tspan x="88" dy="42">• 完善回溯再调和输入输出契约</tspan></text>
+  </g>
+
+  <g id="priority-process" data-pptx-bounds="460 170 360 386">
+    <rect x="460" y="170" width="360" height="386" rx="26" fill="#FFFFFF" fill-opacity="0.97"/>
+    <rect x="460" y="170" width="360" height="9" fill="#2A7F9E"/>
+    <circle cx="508" cy="222" r="26" fill="#2A7F9E"/>
+    <text x="508" y="230" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#FFFFFF">02</text>
+    <use data-icon="tabler-outline/route-2" x="748" y="198" width="40" height="40" fill="#2A7F9E" stroke-width="2"/>
+    <text x="492" y="278" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="24" font-weight="700" fill="#123B63">业务执行流程完善</text>
+    <text x="492" y="316" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="16" fill="#5B6B7C">让前端展示、后台执行与业务规则一致</text>
+    <line x1="492" y1="340" x2="788" y2="340" stroke="#D7E0EA" stroke-width="1"/>
+    <text x="492" y="382" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="18" fill="#17212B">• 梳理任务入口到成果交付的全流程<tspan x="492" dy="42">• 补齐异常处理、人工介入与结果复核</tspan><tspan x="492" dy="42">• 完善状态回放与关键节点可追溯性</tspan></text>
+  </g>
+
+  <g id="priority-benchmark" data-pptx-bounds="864 170 360 386">
+    <rect x="864" y="170" width="360" height="386" rx="26" fill="#FFFFFF" fill-opacity="0.97"/>
+    <rect x="864" y="170" width="360" height="9" fill="#2E8B6D"/>
+    <circle cx="912" cy="222" r="26" fill="#2E8B6D"/>
+    <text x="912" y="230" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#FFFFFF">03</text>
+    <use data-icon="tabler-outline/chart-bar" x="1152" y="198" width="40" height="40" fill="#2E8B6D" stroke-width="2"/>
+    <text x="896" y="278" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="24" font-weight="700" fill="#123B63">Benchmark 与消融实验</text>
+    <text x="896" y="316" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="16" fill="#5B6B7C">用对比实验量化各模块的真实贡献</text>
+    <line x1="896" y1="340" x2="1192" y2="340" stroke="#D7E0EA" stroke-width="1"/>
+    <text x="896" y="382" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="18" fill="#17212B">• 扩充专家标注 Deep Research Query<tspan x="896" dy="42">• 完善 Pairwise 盲评与人工仲裁机制</tspan><tspan x="896" dy="42">• 增加 Agent、门控、Recall 等消融实验</tspan></text>
+  </g>
+
+  <g id="closing-outcome" data-pptx-bounds="56 588 1168 82">
+    <rect x="56" y="588" width="1168" height="82" rx="26" fill="#FFFFFF" fill-opacity="0.13" stroke="#FFFFFF" stroke-opacity="0.26"/>
+    <text x="640" y="623" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="16" font-weight="700" fill="#D59A24">下一阶段目标</text>
+    <text x="640" y="654" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="24" font-weight="700" fill="#FFFFFF">可配置智能体编排 · 可复核业务流程 · 可量化评测体系</text>
+  </g>
+
+  <text id="page-number" data-pptx-role="page-number" x="1226" y="700" text-anchor="end" font-family="Arial, sans-serif" font-size="14" fill="#DDEAF2">17</text>
+</svg>

@@ -1,0 +1,4 @@
+fetch_failed
+url=https://rdl.train.army.mil/catalog-ws/view/100.ATSC/C01CC9C1-DA1C-4D5E-A6EB-5FCFAE218DCD-1398170439966/FM_3_01wc1.pdf?utm_source=openai
+error=TimeoutError: _ssl.c:1015: The handshake operation timed out
+该诊断用于保留真实联网smoke边界；正式结论不应仅依赖失败材料。

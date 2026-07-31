@@ -1,0 +1,10 @@
+No,Filename,Width,Height,AspectRatio,PixelAspectRatio,RatioSource,UsageCount,DisplayRatioVariants,AssetKind,SvgRenderable,PptxNativeSupported,SizeKB,Category,ImageArea_SxS,TextArea_SxS
+1,frontend_ablation_merged_result.png,1265,712,1.78,1.78,pixel,1,,bitmap,True,True,248.9,Wide landscape,812x457,328x600
+2,frontend_ablation_overview.png,1265,712,1.78,1.78,pixel,1,,bitmap,True,True,363.1,Wide landscape,812x457,328x600
+3,frontend_ablation_result.png,1265,712,1.78,1.78,pixel,1,,bitmap,True,True,243.3,Wide landscape,812x457,328x600
+4,frontend_baseline_merged_result.png,1265,712,1.78,1.78,pixel,1,,bitmap,True,True,404.2,Wide landscape,812x457,328x600
+5,frontend_benchmark_overview.png,1265,712,1.78,1.78,pixel,1,,bitmap,True,True,361.4,Wide landscape,812x457,328x600
+6,frontend_benchmark_result.png,1265,712,1.78,1.78,pixel,1,,bitmap,True,True,394.6,Wide landscape,812x457,328x600
+7,frontend_capability_profile.png,1265,712,1.78,1.78,pixel,1,,bitmap,True,True,416.4,Wide landscape,812x457,328x600
+8,frontend_interaction_process.png,1265,712,1.78,1.78,pixel,1,,bitmap,True,True,435.0,Wide landscape,812x457,328x600
+9,frontend_research_report.png,1265,712,1.78,1.78,pixel,1,,bitmap,True,True,467.3,Wide landscape,812x457,328x600

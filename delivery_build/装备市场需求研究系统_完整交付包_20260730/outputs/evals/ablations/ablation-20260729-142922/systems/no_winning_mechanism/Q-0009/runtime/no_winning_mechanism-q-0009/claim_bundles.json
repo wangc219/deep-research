@@ -1,0 +1,485 @@
+[
+  {
+    "bundle_id": "claims-39ff1148f328",
+    "claims": [
+      {
+        "claim_id": "claim-63417d2cbfb8",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "公开概念强调AI/JADC2/联合杀伤网可压缩目标流程，但俄乌公开经验显示电子战、诱饵和消耗会持续拉长确认、授权和BDA周期，两者在高强度拒止环境中的实际闭合稳定性存在张力。",
+          "可消耗无人平台可补盲并降低单平台损失影响，但高无人密度会带来空域、频谱、敌我识别和前沿维修压力，规模本身可能成为闭环负担。",
+          "分散前沿节点可提升抗毁和海上拒止韧性，但分散也增加补给、能源、同步和数据治理难度，战损后可能出现多个低质量局部目标库。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-5824f31b34e3",
+          "ev-combat_scenario-web-ef0773041e8d",
+          "ev-combat_scenario-web-06d26c44006f",
+          "ev-combat_scenario-web-44832bb470cd"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2025-E-Edition/Project-Convergence/",
+          "https://www.sda.mil/home/about-us/faq/",
+          "https://www.usarpac.army.mil/Our-Story/Our-News/Article-Display/Article/4487093/army-advances-multi-domain-command-pacific-following-successful-operational-exp/"
+        ],
+        "text": "动态时敏目标一体化的核心缺口不是单一传感器距离，而是目标质量数据、授权、链路、BDA和再组织能否在暴露窗口内连续闭合；军事任务价值在于把机动火力、防空、电子战、无人蜂群母节点等短停目标从“发现后失效”转为可压制、可拒止、可再打击；证据边界来自公开美军联合杀伤网、Project Convergence、SDA低轨网络和俄乌战场自主/电子战经验，不能推出具体打击参数；失效条件是目标停留时间短于确认授权流程，或诱饵污染目标库导致快速闭环转化为误判闭环。"
+      },
+      {
+        "claim_id": "claim-221b1bb535f0",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "公开概念强调AI/JADC2/联合杀伤网可压缩目标流程，但俄乌公开经验显示电子战、诱饵和消耗会持续拉长确认、授权和BDA周期，两者在高强度拒止环境中的实际闭合稳定性存在张力。",
+          "可消耗无人平台可补盲并降低单平台损失影响，但高无人密度会带来空域、频谱、敌我识别和前沿维修压力，规模本身可能成为闭环负担。",
+          "分散前沿节点可提升抗毁和海上拒止韧性，但分散也增加补给、能源、同步和数据治理难度，战损后可能出现多个低质量局部目标库。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-5824f31b34e3",
+          "ev-combat_scenario-web-ef0773041e8d",
+          "ev-combat_scenario-web-06d26c44006f",
+          "ev-combat_scenario-web-44832bb470cd"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2025-E-Edition/Project-Convergence/",
+          "https://www.sda.mil/home/about-us/faq/",
+          "https://www.usarpac.army.mil/Our-Story/Our-News/Article-Display/Article/4487093/army-advances-multi-domain-command-pacific-following-successful-operational-exp/"
+        ],
+        "text": "濒海/岛礁前沿场景中，分散低特征节点必须具备本地融合、低功率断续通信和战损后自治，否则首轮压制后杀伤链会退化为孤立观察点；军事任务价值在于支撑海上拒止、前沿预警和联合火力协同；证据边界主要来自陆战队Force Design/EABO与SDA韧性网络公开概念，尚不足以证明高强度战损下的持续出动率；失效条件是空间/空中中继受压、能源弹药补给中断、前沿节点发射暴露后被反定位压制。"
+      },
+      {
+        "claim_id": "claim-d019d9ea1459",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "公开概念强调AI/JADC2/联合杀伤网可压缩目标流程，但俄乌公开经验显示电子战、诱饵和消耗会持续拉长确认、授权和BDA周期，两者在高强度拒止环境中的实际闭合稳定性存在张力。",
+          "可消耗无人平台可补盲并降低单平台损失影响，但高无人密度会带来空域、频谱、敌我识别和前沿维修压力，规模本身可能成为闭环负担。",
+          "分散前沿节点可提升抗毁和海上拒止韧性，但分散也增加补给、能源、同步和数据治理难度，战损后可能出现多个低质量局部目标库。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-5824f31b34e3",
+          "ev-combat_scenario-web-ef0773041e8d",
+          "ev-combat_scenario-web-06d26c44006f",
+          "ev-combat_scenario-web-44832bb470cd"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2025-E-Edition/Project-Convergence/",
+          "https://www.sda.mil/home/about-us/faq/",
+          "https://www.usarpac.army.mil/Our-Story/Our-News/Article-Display/Article/4487093/army-advances-multi-domain-command-pacific-following-successful-operational-exp/"
+        ],
+        "text": "城市边缘和陆上纵深场景中，速度与可信度存在硬冲突：AI辅助排序可压缩发现到决策时间，但民用信号、遮蔽、诱饵和GPS干扰会放大误报风险；军事任务价值在于快速压制机动火力、电子战和防空节点，保护己方ISR与机动部队；证据边界来自Project Convergence、多域指挥实验和俄乌公开经验，不能证明算法在复杂混杂环境中的稳定识别率；失效条件是单源识别、不可追溯AI判断、授权规则不适配目标停留窗口。"
+      },
+      {
+        "claim_id": "claim-3026ae6db67d",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "公开概念强调AI/JADC2/联合杀伤网可压缩目标流程，但俄乌公开经验显示电子战、诱饵和消耗会持续拉长确认、授权和BDA周期，两者在高强度拒止环境中的实际闭合稳定性存在张力。",
+          "可消耗无人平台可补盲并降低单平台损失影响，但高无人密度会带来空域、频谱、敌我识别和前沿维修压力，规模本身可能成为闭环负担。",
+          "分散前沿节点可提升抗毁和海上拒止韧性，但分散也增加补给、能源、同步和数据治理难度，战损后可能出现多个低质量局部目标库。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-5824f31b34e3",
+          "ev-combat_scenario-web-ef0773041e8d",
+          "ev-combat_scenario-web-06d26c44006f",
+          "ev-combat_scenario-web-44832bb470cd"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2025-E-Edition/Project-Convergence/",
+          "https://www.sda.mil/home/about-us/faq/",
+          "https://www.usarpac.army.mil/Our-Story/Our-News/Article-Display/Article/4487093/army-advances-multi-domain-command-pacific-following-successful-operational-exp/"
+        ],
+        "text": "反无人饱和与电磁压迫会把一体化链条从“速度竞赛”转化为“成本交换和恢复竞赛”；军事任务价值在于保护侦察预警、通信中继和BDA平台，维持最低可用杀伤链；证据边界来自Replicator可消耗自主系统和俄乌无人/电子战公开研究，缺少具体消耗模型；失效条件是反无人资源被诱饵耗尽、己方频谱管理反向压制ISR、无人平台替换和前沿维修速度低于损耗速度。"
+      },
+      {
+        "claim_id": "claim-6c845052a6c3",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "公开概念强调AI/JADC2/联合杀伤网可压缩目标流程，但俄乌公开经验显示电子战、诱饵和消耗会持续拉长确认、授权和BDA周期，两者在高强度拒止环境中的实际闭合稳定性存在张力。",
+          "可消耗无人平台可补盲并降低单平台损失影响，但高无人密度会带来空域、频谱、敌我识别和前沿维修压力，规模本身可能成为闭环负担。",
+          "分散前沿节点可提升抗毁和海上拒止韧性，但分散也增加补给、能源、同步和数据治理难度，战损后可能出现多个低质量局部目标库。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-5824f31b34e3",
+          "ev-combat_scenario-web-ef0773041e8d",
+          "ev-combat_scenario-web-06d26c44006f",
+          "ev-combat_scenario-web-44832bb470cd"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2025-E-Edition/Project-Convergence/",
+          "https://www.sda.mil/home/about-us/faq/",
+          "https://www.usarpac.army.mil/Our-Story/Our-News/Article-Display/Article/4487093/army-advances-multi-domain-command-pacific-following-successful-operational-exp/"
+        ],
+        "text": "远域/恶劣气象和补给受扰场景中，闭环能力取决于多层传感重访、断续链路容忍、延迟BDA可信度和保障恢复，而非首轮打击能力；军事任务价值在于维持周期性发现、拒止存在和战损后再组织；证据边界来自SDA扩散低轨、Force Design前沿制造和公开战场韧性经验，不能替代具体地域气象、轨道覆盖和后勤测算；失效条件是低空平台停飞且空间/高空重访不足，或能源、备件、弹药、通信件消耗超过补充速度。"
+      }
+    ],
+    "packet_id": "packet-combat_scenario",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-978ac9dc8329",
+    "claims": [
+      {
+        "claim_id": "claim-17993597ba9d",
+        "claim_type": "fact",
+        "confidence": 0.74,
+        "counter_evidence": [
+          "集中式CJADC2有利于高质量识别和跨域火力统筹，但与短窗口目标所需的前沿快速授权存在天然张力。",
+          "可消耗无人系统可提升搜索与BDA韧性，但其高消耗特征会反向放大电池、备件、操作员和频谱管理压力。",
+          "前沿分布式节点可降低单点毁伤影响，但节点数量增加也扩大了被敌ISR、电子侦察和小型无人系统发现的暴露面。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-9cc3ff778062",
+          "ev-operational_employment-web-ddc144a8f0f1",
+          "ev-operational_employment-web-6c1c84a0e24e",
+          "ev-operational_employment-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.jcs.mil/Portals/36/Documents/Doctrine/training/jts/jt_partners_course31jan20.pdf?ver=ODSIVx1liGdd9-0zXKom9Q%3D%3D",
+          "https://www.ai.mil/Initiatives/CJADC2/",
+          "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "判断1：动态时敏目标能力缺口的主矛盾是“闭环时间小于目标暴露窗口”，不是单一传感器或单一火力不足。军事任务价值在于把发现、识别、跟踪、授权、打击、BDA压缩为可重复任务链，使短窗口目标从只能驱离/压制转为可歼灭或功能瘫痪。证据边界：F2T2EA、Force Design、CJADC2公开资料能支撑任务链方向，但不公开真实秒级/分钟级闭环指标。失效条件：目标低特征、诱饵密集、通信/PNT严重退化或授权链过长时，闭环优势会坍缩。"
+      },
+      {
+        "claim_id": "claim-48d4f0a0e198",
+        "claim_type": "fact",
+        "confidence": 0.74,
+        "counter_evidence": [
+          "集中式CJADC2有利于高质量识别和跨域火力统筹，但与短窗口目标所需的前沿快速授权存在天然张力。",
+          "可消耗无人系统可提升搜索与BDA韧性，但其高消耗特征会反向放大电池、备件、操作员和频谱管理压力。",
+          "前沿分布式节点可降低单点毁伤影响，但节点数量增加也扩大了被敌ISR、电子侦察和小型无人系统发现的暴露面。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-9cc3ff778062",
+          "ev-operational_employment-web-ddc144a8f0f1",
+          "ev-operational_employment-web-6c1c84a0e24e",
+          "ev-operational_employment-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.jcs.mil/Portals/36/Documents/Doctrine/training/jts/jt_partners_course31jan20.pdf?ver=ODSIVx1liGdd9-0zXKom9Q%3D%3D",
+          "https://www.ai.mil/Initiatives/CJADC2/",
+          "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "判断2：最优作战运用不是集中式杀伤网、前沿分布式单元、无人系统饱和三者择一，而是“COA-2前沿局部闭环为底座，COA-3可消耗无人系统扩展搜索/BDA韧性，COA-1联合杀伤网处理高价值复杂目标”。军事任务价值在于同时兼顾短窗口捕获、高价值目标歼灭、节点战损续接和持续作战。证据边界：EABO、Force Design、Replicator、CJADC2均支持该组合方向，但公开资料不足以量化不同COA在强对抗环境中的成功率。失效条件：前沿节点补给断链、无人系统被低成本C-UAS大规模压制、联合数据权限不通时，组合COA会退化为局部临机作战。"
+      },
+      {
+        "claim_id": "claim-efe035029618",
+        "claim_type": "fact",
+        "confidence": 0.74,
+        "counter_evidence": [
+          "集中式CJADC2有利于高质量识别和跨域火力统筹，但与短窗口目标所需的前沿快速授权存在天然张力。",
+          "可消耗无人系统可提升搜索与BDA韧性，但其高消耗特征会反向放大电池、备件、操作员和频谱管理压力。",
+          "前沿分布式节点可降低单点毁伤影响，但节点数量增加也扩大了被敌ISR、电子侦察和小型无人系统发现的暴露面。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-9cc3ff778062",
+          "ev-operational_employment-web-ddc144a8f0f1",
+          "ev-operational_employment-web-6c1c84a0e24e",
+          "ev-operational_employment-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.jcs.mil/Portals/36/Documents/Doctrine/training/jts/jt_partners_course31jan20.pdf?ver=ODSIVx1liGdd9-0zXKom9Q%3D%3D",
+          "https://www.ai.mil/Initiatives/CJADC2/",
+          "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "判断3：前沿分布式感知-打击单元是短窗口TST的关键底座。军事任务价值在于将目标线索、边缘识别、局部授权和近程精确火力放在同一作战单元内，减少上报等待并降低单点C2损失影响。证据边界：EABO强调低特征、机动、分布式前沿力量，Force Design显示MLR/MEU向传感器、C2、精确火力和无人系统整合发展；但公开资料不能证明其在所有电磁压制场景下稳定闭环。失效条件：前沿节点被持续定位、射手暴露、弹药/电池/备件不足或目标必须上收授权时，该COA会失去速度优势。"
+      },
+      {
+        "claim_id": "claim-328060817ff8",
+        "claim_type": "fact",
+        "confidence": 0.74,
+        "counter_evidence": [
+          "集中式CJADC2有利于高质量识别和跨域火力统筹，但与短窗口目标所需的前沿快速授权存在天然张力。",
+          "可消耗无人系统可提升搜索与BDA韧性，但其高消耗特征会反向放大电池、备件、操作员和频谱管理压力。",
+          "前沿分布式节点可降低单点毁伤影响，但节点数量增加也扩大了被敌ISR、电子侦察和小型无人系统发现的暴露面。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-9cc3ff778062",
+          "ev-operational_employment-web-ddc144a8f0f1",
+          "ev-operational_employment-web-6c1c84a0e24e",
+          "ev-operational_employment-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.jcs.mil/Portals/36/Documents/Doctrine/training/jts/jt_partners_course31jan20.pdf?ver=ODSIVx1liGdd9-0zXKom9Q%3D%3D",
+          "https://www.ai.mil/Initiatives/CJADC2/",
+          "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "判断4：有人-无人协同的核心价值不是单纯低成本打击，而是提高接触概率、保持连续跟踪、诱导目标暴露、充当通信中继并完成BDA复核。军事任务价值在于用可消耗系统承担高风险链路段，让有人平台保留复杂识别、授权和高价值火力控制。证据边界：Replicator和乌克兰经验材料能支撑“规模化可消耗自主系统+电子战/后勤韧性”的趋势判断，但不支持推导具体编组、频谱参数或损耗率。失效条件：敌C-UAS体系形成低成本饱和拦截、频谱拥塞、操作员训练和供应链跟不上消耗时，无人系统将从韧性增益转为保障负担。"
+      },
+      {
+        "claim_id": "claim-2b63b87e5d61",
+        "claim_type": "fact",
+        "confidence": 0.74,
+        "counter_evidence": [
+          "集中式CJADC2有利于高质量识别和跨域火力统筹，但与短窗口目标所需的前沿快速授权存在天然张力。",
+          "可消耗无人系统可提升搜索与BDA韧性，但其高消耗特征会反向放大电池、备件、操作员和频谱管理压力。",
+          "前沿分布式节点可降低单点毁伤影响，但节点数量增加也扩大了被敌ISR、电子侦察和小型无人系统发现的暴露面。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-9cc3ff778062",
+          "ev-operational_employment-web-ddc144a8f0f1",
+          "ev-operational_employment-web-6c1c84a0e24e",
+          "ev-operational_employment-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.jcs.mil/Portals/36/Documents/Doctrine/training/jts/jt_partners_course31jan20.pdf?ver=ODSIVx1liGdd9-0zXKom9Q%3D%3D",
+          "https://www.ai.mil/Initiatives/CJADC2/",
+          "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "判断5：装备建设优先级应从平台清单转为“任务状态可续接”的系统构型。军事任务价值在于即使传感器、C2、射手或保障点战损，邻近节点仍能接管目标状态、火力任务和BDA，维持连续压制/再打击。证据边界：CJADC2、EABO、Force Design和DoD C-UAS资料共同支持互联、分布式、低特征和防无人系统要求；但公开来源不足以验证跨军种/盟友系统真实互操作水平。失效条件：数据标准不统一、网络安全失陷、蓝军位置不清、补给和维修节奏低于消耗速度时，任务链无法持续。"
+      }
+    ],
+    "packet_id": "packet-operational_employment",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-42e2d45402c3",
+    "claims": [
+      {
+        "claim_id": "claim-d866d93df05a",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "PrSM Inc.1公开射程和采购状态较明确，但其移动目标闭环能力不能由PrSM总体项目宣传外推。",
+          "Dragon Cart/Rapid Dragon能提升空基弹药投送弹性，但运输机平台生存性和空域安全限制使其不等同于高威胁空域突防打击能力。",
+          "AARGM/AARGM-ER面向SEAD/DEAD，但DOT&E对AARGM-ER的作战效能评估不足，说明远域压制能力仍需实装验证。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-8d5f2f1c9a5b",
+          "ev-weapon_equipment-web-dc97a67f7a09",
+          "ev-weapon_equipment-web-693a5c53438f",
+          "ev-weapon_equipment-web-43915f10ae4b"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.army.mil/article/284406/army_awards_precision_strike_missile_early_operational_capability_contract",
+          "https://www.avinc.com/solution/switchblade-600/",
+          "https://www.afmc.af.mil/News/Article-Display/Article/4475375/air-force-advances-dragon-cart-palletized-effects-program/",
+          "https://www.army.mil/article/286878/precision_strike_missile_increment_1_achieves_milestone_c_approval"
+        ],
+        "text": "国外动态时敏目标装备基线已形成三线并行：PrSM/Dragon Cart负责战役纵深快速火力压迫，Switchblade 600/Replicator相关无人系统负责前沿持续感知与末端确认，AARGM/AARGM-ER/SiAW负责远域防空与电子节点压制。三者共同改变S4装备选择与能力全景边界。"
+      },
+      {
+        "claim_id": "claim-e27011fb6d75",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "PrSM Inc.1公开射程和采购状态较明确，但其移动目标闭环能力不能由PrSM总体项目宣传外推。",
+          "Dragon Cart/Rapid Dragon能提升空基弹药投送弹性，但运输机平台生存性和空域安全限制使其不等同于高威胁空域突防打击能力。",
+          "AARGM/AARGM-ER面向SEAD/DEAD，但DOT&E对AARGM-ER的作战效能评估不足，说明远域压制能力仍需实装验证。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-8d5f2f1c9a5b",
+          "ev-weapon_equipment-web-dc97a67f7a09",
+          "ev-weapon_equipment-web-693a5c53438f",
+          "ev-weapon_equipment-web-43915f10ae4b"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.army.mil/article/284406/army_awards_precision_strike_missile_early_operational_capability_contract",
+          "https://www.avinc.com/solution/switchblade-600/",
+          "https://www.afmc.af.mil/News/Article-Display/Article/4475375/air-force-advances-dragon-cart-palletized-effects-program/",
+          "https://www.army.mil/article/286878/precision_strike_missile_increment_1_achieves_milestone_c_approval"
+        ],
+        "text": "主要矛盾不是最大射程，而是目标发现后的保持、授权、目标更新、末端识别、战损评估与再攻击闭环；公开资料显示PrSM Inc.1更适合固定/半固定目标，动态目标需依赖Inc.2 seeker、无人末端确认和跨域火控。该判断直接贡献S5能力差距。"
+      },
+      {
+        "claim_id": "claim-38f0f03d8c6f",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "PrSM Inc.1公开射程和采购状态较明确，但其移动目标闭环能力不能由PrSM总体项目宣传外推。",
+          "Dragon Cart/Rapid Dragon能提升空基弹药投送弹性，但运输机平台生存性和空域安全限制使其不等同于高威胁空域突防打击能力。",
+          "AARGM/AARGM-ER面向SEAD/DEAD，但DOT&E对AARGM-ER的作战效能评估不足，说明远域压制能力仍需实装验证。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-8d5f2f1c9a5b",
+          "ev-weapon_equipment-web-dc97a67f7a09",
+          "ev-weapon_equipment-web-693a5c53438f",
+          "ev-weapon_equipment-web-43915f10ae4b"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.army.mil/article/284406/army_awards_precision_strike_missile_early_operational_capability_contract",
+          "https://www.avinc.com/solution/switchblade-600/",
+          "https://www.afmc.af.mil/News/Article-Display/Article/4475375/air-force-advances-dragon-cart-palletized-effects-program/",
+          "https://www.army.mil/article/286878/precision_strike_missile_increment_1_achieves_milestone_c_approval"
+        ],
+        "text": "低成本可消耗无人装备族的决定性价值在于密度、分布式感知、诱骗暴露和损耗承受，而非单平台性能；Replicator纳入Altius-600、Ghost-X、C-100、Switchblade 600等对象，说明国外正在用规模和软件协同缓解高端弹药库存与被压制环境问题。该判断贡献S6新研拓新需求。"
+      },
+      {
+        "claim_id": "claim-7ec2c21f9f3f",
+        "claim_type": "fact",
+        "confidence": 0.78,
+        "counter_evidence": [
+          "PrSM Inc.1公开射程和采购状态较明确，但其移动目标闭环能力不能由PrSM总体项目宣传外推。",
+          "Dragon Cart/Rapid Dragon能提升空基弹药投送弹性，但运输机平台生存性和空域安全限制使其不等同于高威胁空域突防打击能力。",
+          "AARGM/AARGM-ER面向SEAD/DEAD，但DOT&E对AARGM-ER的作战效能评估不足，说明远域压制能力仍需实装验证。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-8d5f2f1c9a5b",
+          "ev-weapon_equipment-web-dc97a67f7a09",
+          "ev-weapon_equipment-web-693a5c53438f",
+          "ev-weapon_equipment-web-43915f10ae4b"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.army.mil/article/284406/army_awards_precision_strike_missile_early_operational_capability_contract",
+          "https://www.avinc.com/solution/switchblade-600/",
+          "https://www.afmc.af.mil/News/Article-Display/Article/4475375/air-force-advances-dragon-cart-palletized-effects-program/",
+          "https://www.army.mil/article/286878/precision_strike_missile_increment_1_achieves_milestone_c_approval"
+        ],
+        "text": "AARGM-ER虽是远域压制核心方向，但DOT&E FY2024公开评估显示其效能、适用性、生存力和杀伤力仍存在不足，不能把在研型号等同成熟闭环能力；这构成对“远域压制可稳定打开打击通道”的关键反证。该判断贡献S5/S6验证与成熟度边界。"
+      }
+    ],
+    "packet_id": "packet-weapon_equipment",
+    "schema_version": "1.0"
+  }
+]

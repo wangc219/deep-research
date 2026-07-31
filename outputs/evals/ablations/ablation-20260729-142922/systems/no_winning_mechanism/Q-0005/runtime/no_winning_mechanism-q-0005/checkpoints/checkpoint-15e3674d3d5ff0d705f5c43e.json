@@ -1,0 +1,389 @@
+{
+  "checkpoint": {
+    "budget_remaining": {
+      "baseline_tasks": 0,
+      "finalize_tasks": 1,
+      "rounds": 1
+    },
+    "checkpoint_id": "run-checkpoint-no_winning_mechanism-q-0005",
+    "completed_task_ids": [
+      "baseline:combat_scenario",
+      "baseline:operational_employment",
+      "baseline:weapon_equipment"
+    ],
+    "config_fingerprint": "sha256:c9857d02deee71ecae1729512cebb7b4c927f988dc0c689b32fc096d83d4cfd4",
+    "created_at": "2026-07-29T07:59:47.992039+00:00",
+    "mode": "real",
+    "pending_task_ids": [
+      "finalize:winning-report"
+    ],
+    "research_route": "auto",
+    "resolved_route": "traditional_gap",
+    "resume_count": 0,
+    "round_index": 1,
+    "run_id": "no_winning_mechanism-q-0005",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "combat_scenario",
+      "operational_employment",
+      "weapon_equipment"
+    ],
+    "source_materials": [
+      {
+        "artifact_refs": [
+          "text:8287749f29d59711"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-5824f31b34e3",
+          "normalized_url": "https://www.marines.mil/Force-Design",
+          "reasons": [],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-5824f31b34e3",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.marines.mil/Force-Design/"
+      },
+      {
+        "artifact_refs": [
+          "text:634de8e681d4bdfd"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-6c1c84a0e24e",
+          "normalized_url": "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all",
+          "reasons": [],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-6c1c84a0e24e",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+      },
+      {
+        "artifact_refs": [
+          "html:eb038f42d4531c0f"
+        ],
+        "content_type": "text/html; charset=UTF-8",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-bc1c2e8c3176",
+          "normalized_url": "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "reasons": [],
+          "score": 0.858
+        },
+        "evidence_id": "ev-operational_employment-web-bc1c2e8c3176",
+        "fetch_cache_hit": true,
+        "final_url": "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+        "formal_evidence_allowed": true,
+        "paragraph_locations": [
+          "text:ee03938bb7a95449#p1"
+        ],
+        "simplified_artifact_ref": "text:ee03938bb7a95449",
+        "status": "fetched",
+        "url": "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience"
+      },
+      {
+        "artifact_refs": [
+          "text:7cfce7cc5ac1f7bb"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-5fae80c02f40",
+          "normalized_url": "https://www.gao.gov/products/gao-25-106454",
+          "reasons": [],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-5fae80c02f40",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.gao.gov/products/gao-25-106454"
+      },
+      {
+        "artifact_refs": [
+          "text:31b29e5eb6e69f53"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "duplicate",
+          "evidence_id": "ev-combat_scenario-web-5824f31b34e3",
+          "normalized_url": "https://www.marines.mil/Force-Design",
+          "reasons": [
+            "与 ev-operational_employment-web-5824f31b34e3 URL 重复"
+          ],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-5824f31b34e3",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.marines.mil/Force-Design/"
+      },
+      {
+        "artifact_refs": [
+          "text:3ae5fd552add1f8d"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-dfd350108fde",
+          "normalized_url": "https://www.lineofdeparture.army.mil/Portals/144/PDF/Journals/Field-Artillery/FA-E-Edition-2025/Project-Convergence-UA.pdf",
+          "reasons": [],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-dfd350108fde",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.lineofdeparture.army.mil/Portals/144/PDF/Journals/Field-Artillery/FA-E-Edition-2025/Project-Convergence-UA.pdf"
+      },
+      {
+        "artifact_refs": [
+          "html:6e4cc7e91002b441"
+        ],
+        "content_type": "text/html;charset=utf-8",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-2d2daa3dc2aa",
+          "normalized_url": "https://www.nato.int/en/about-us/official-texts-and-resources/official-texts/2025/05/05/data-strategy-for-the-alliance",
+          "reasons": [],
+          "score": 0.861
+        },
+        "evidence_id": "ev-combat_scenario-web-2d2daa3dc2aa",
+        "fetch_cache_hit": true,
+        "final_url": "https://www.nato.int/en/about-us/official-texts-and-resources/official-texts/2025/05/05/data-strategy-for-the-alliance",
+        "formal_evidence_allowed": true,
+        "paragraph_locations": [
+          "text:e571f57286791407#p1",
+          "text:e571f57286791407#p2",
+          "text:e571f57286791407#p3"
+        ],
+        "simplified_artifact_ref": "text:e571f57286791407",
+        "status": "fetched",
+        "url": "https://www.nato.int/en/about-us/official-texts-and-resources/official-texts/2025/05/05/data-strategy-for-the-alliance"
+      },
+      {
+        "artifact_refs": [
+          "html:73e5f5bad431f2e7"
+        ],
+        "content_type": "text/html; charset=UTF-8",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-742b75e39cf4",
+          "normalized_url": "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare",
+          "reasons": [],
+          "score": 0.861
+        },
+        "evidence_id": "ev-combat_scenario-web-742b75e39cf4",
+        "fetch_cache_hit": true,
+        "final_url": "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare",
+        "formal_evidence_allowed": true,
+        "paragraph_locations": [
+          "text:ee03938bb7a95449#p1"
+        ],
+        "simplified_artifact_ref": "text:ee03938bb7a95449",
+        "status": "fetched",
+        "url": "https://www.csis.org/analysis/ukraines-future-vision-and-current-capabilities-waging-ai-enabled-autonomous-warfare"
+      },
+      {
+        "artifact_refs": [
+          "text:c8f0013020103072"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "duplicate",
+          "evidence_id": "ev-combat_scenario-web-6c1c84a0e24e",
+          "normalized_url": "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all",
+          "reasons": [
+            "与 ev-operational_employment-web-6c1c84a0e24e URL 重复"
+          ],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-6c1c84a0e24e",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+      },
+      {
+        "artifact_refs": [
+          "text:237a5e71865f4f90"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-ea43c417a791",
+          "normalized_url": "https://www.gao.gov/products/gao-25-107263",
+          "reasons": [],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-ea43c417a791",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.gao.gov/products/gao-25-107263"
+      },
+      {
+        "artifact_refs": [
+          "text:cd4ca9786e19986c"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-43915f10ae4b",
+          "normalized_url": "https://www.army.mil/article/286878/precision_strike_missile_increment_1_achieves_milestone_c_approval",
+          "reasons": [],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-43915f10ae4b",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.army.mil/article/286878/precision_strike_missile_increment_1_achieves_milestone_c_approval"
+      },
+      {
+        "artifact_refs": [
+          "text:dbd34c35970214fe"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-09baa8584e45",
+          "normalized_url": "https://www.af.mil/Portals/1/documents/Secretariat%20of%20the%20AF/SAF-FM/Budget%20-%202027/Budget%20docs/FY27%20Air%20Force%20Aircraft%20%20Missile%20Procurement.pdf?ver=6zKfXa_IITL18fK0xVVdIA%3D%3D",
+          "reasons": [],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-09baa8584e45",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.af.mil/Portals/1/documents/Secretariat%20of%20the%20AF/SAF-FM/Budget%20-%202027/Budget%20docs/FY27%20Air%20Force%20Aircraft%20%20Missile%20Procurement.pdf?ver=6zKfXa_IITL18fK0xVVdIA%3D%3D"
+      },
+      {
+        "artifact_refs": [
+          "text:d46fd5c4708091c4"
+        ],
+        "evidence_assessment": {
+          "conflict_group": "conflict-1b24d9fcd8",
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-ef58d44e5694",
+          "normalized_url": "https://www.defense.gov/News/Releases/Release/Article/3765644/deputy-secretary-of-defense-hicks-announces-first-tranche-of-replicator-capabil",
+          "reasons": [
+            "保留为冲突/反证材料"
+          ],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-ef58d44e5694",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.defense.gov/News/Releases/Release/Article/3765644/deputy-secretary-of-defense-hicks-announces-first-tranche-of-replicator-capabil/"
+      }
+    ],
+    "status": "running",
+    "task_statuses": {
+      "baseline:combat_scenario": "completed",
+      "baseline:operational_employment": "completed",
+      "baseline:weapon_equipment": "completed",
+      "finalize:winning-report": "pending"
+    },
+    "topic": "多源异构战场信息融合精确打击研究",
+    "worker_reports": [
+      {
+        "active_skill_ids": [
+          "scenario_engineering",
+          "modern_battlespace_analysis",
+          "adversary_coa_analysis"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "create_evidence_card",
+          "stress_test_scenario"
+        ],
+        "agent_id": "combat_scenario",
+        "created_at": "2026-07-29T08:03:32.506688+00:00",
+        "domain_object_id": "scenario-packet-combat_scenario",
+        "domain_object_type": "ScenarioModel",
+        "error": "",
+        "handoff_summary": "多源异构战场信息融合精确打击应以“杀伤链能否在拒止、战损、欺骗、反无人饱和和联盟数据受限条件下持续闭合”为主轴建模。六个场景显示，装备缺口集中在边缘可信融合、低带宽协同与任务重构、可消耗无人侦察/BDA节点、反无人容量防护、解释型火力资源分配和远征维修补充。下一步应把每项装备需求绑定T0-T6、T6-T24、D1-D7、D7以后四个时间窗，开展红队数据污染、链路降级、节点战损和补给中断压力测试。",
+        "harness_profile": "scenario_research_v1",
+        "new_evidence_ids": [
+          "ev-combat_scenario-web-2d2daa3dc2aa",
+          "ev-combat_scenario-web-742b75e39cf4",
+          "ev-combat_scenario-web-dfd350108fde"
+        ],
+        "packet_id": "packet-combat_scenario",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment research/outputs/evals/ablations/ablation-20260729-142922/systems/no_winning_mechanism/Q-0005/runtime/no_winning_mechanism-q-0005/agent_sessions/combat_scenario.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-018ae8cf-3d82-4ff1-8a13-c1f51eb59fcb"
+      },
+      {
+        "active_skill_ids": [
+          "operational_synthesis",
+          "coa_comparison",
+          "joint_force_coordination",
+          "lessons_transfer"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "create_evidence_card",
+          "compare_coa"
+        ],
+        "agent_id": "operational_employment",
+        "created_at": "2026-07-29T08:03:08.709577+00:00",
+        "domain_object_id": "operational-packet-operational_employment",
+        "domain_object_type": "OperationalSynthesis",
+        "error": "",
+        "handoff_summary": "作战运用结论：以分布式杀伤网为主COA，将多源感知、任务级融合C2、火力分配、毁伤评估和保障续接纳入同一任务闭环；高端平台负责高价值硬目标毁伤，前沿低特征节点负责局部发现、指示、防护和续接，低成本无人/可消耗系统负责侦察饱和、诱饵、软目标压制和评估。下一步应把闭环时延、抗干扰降级、库存消耗率、毁伤评估可靠性、节点战损续接时间作为验证指标。",
+        "harness_profile": "operational_synthesis_v1",
+        "new_evidence_ids": [
+          "ev-operational_employment-web-5824f31b34e3",
+          "ev-operational_employment-web-5fae80c02f40",
+          "ev-operational_employment-web-6c1c84a0e24e",
+          "ev-operational_employment-web-bc1c2e8c3176"
+        ],
+        "packet_id": "packet-operational_employment",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment research/outputs/evals/ablations/ablation-20260729-142922/systems/no_winning_mechanism/Q-0005/runtime/no_winning_mechanism-q-0005/agent_sessions/operational_employment.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-c2bbd488-3b5a-444e-971f-cb167e010f54"
+      },
+      {
+        "active_skill_ids": [
+          "equipment_osint",
+          "capability_comparison",
+          "technology_readiness_analysis",
+          "defensive_countermeasure_analysis"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "create_evidence_card",
+          "compare_equipment_capability"
+        ],
+        "agent_id": "weapon_equipment",
+        "created_at": "2026-07-29T08:04:23.584922+00:00",
+        "domain_object_id": "equipment-packet-weapon_equipment",
+        "domain_object_type": "EquipmentObservation",
+        "error": "",
+        "handoff_summary": "装备研究结论应围绕“多源异构信息融合能否稳定支撑精确打击闭环”展开：以国外现役和在研装备为基线，优先补齐跨域目标融合、抗扰链路、动态目标更新、可消耗无人侦打、远域压制协同和低成本持续补充能力。",
+        "harness_profile": "equipment_research_v1",
+        "new_evidence_ids": [
+          "ev-weapon_equipment-web-09baa8584e45",
+          "ev-weapon_equipment-web-43915f10ae4b",
+          "ev-weapon_equipment-web-ea43c417a791",
+          "ev-weapon_equipment-web-ef58d44e5694"
+        ],
+        "packet_id": "packet-weapon_equipment",
+        "schema_version": "1.0",
+        "session_path": "/Users/wangchen/equipment research/outputs/evals/ablations/ablation-20260729-142922/systems/no_winning_mechanism/Q-0005/runtime/no_winning_mechanism-q-0005/agent_sessions/weapon_equipment.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-45cc2f74-171e-4a24-aca0-ec2a7478e24b"
+      }
+    ]
+  },
+  "savepoint_id": "checkpoint-15e3674d3d5ff0d705f5c43e"
+}

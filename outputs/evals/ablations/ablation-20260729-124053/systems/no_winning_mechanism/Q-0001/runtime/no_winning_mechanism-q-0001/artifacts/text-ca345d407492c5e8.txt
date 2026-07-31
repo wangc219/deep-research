@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · Force Design
+source_url=https://www.marines.mil/Force-Design/
+claim=海军陆战队Force Design公开材料支撑分布式部队、小型无人系统、有机精确火力和争夺环境下后勤持续能力的重要性。
+excerpt=
+retrieval=Hosted web search citation metadata

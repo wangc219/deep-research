@@ -1,0 +1,29 @@
+{
+  "artifact_refs": [
+    "/Users/wangchen/equipment research/outputs/runs/run-d2622010-005d-4734-b7dd-4a42b36585f5/report.md",
+    "/Users/wangchen/equipment research/outputs/runs/run-d2622010-005d-4734-b7dd-4a42b36585f5/round_summary.json"
+  ],
+  "citations": [
+    "https://www.marines.mil/Force-Design/",
+    "https://comptroller.defense.gov/Portals/45/Documents/defbudget/FY2026/FY2026_Pacific_Deterrence_Initiative.pdf",
+    "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+    "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/",
+    "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+    "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+    "https://www.gao.gov/products/gao-25-106454",
+    "https://www.army.mil/article/262271/project_convergence_22_connecting_sensor_to_shooter_to_sustainer",
+    "https://www.darpa.mil/research/programs/adapting-cross-domain-kill-webs",
+    "https://www.nato.int/cps/en/natohq/news_234941.htm?selectedLocale=en",
+    "https://files.gao.gov/reports/GAO-25-107263/index.html",
+    "https://www.gao.gov/assets/gao-26-108457.pdf",
+    "https://www.defense.gov/News/Transcripts/Transcript/Article/3704566/army-officials-hold-a-press-briefing-on-president-bidens-fiscal-2025-army-budget/",
+    "https://www.af.mil/Portals/1/documents/Secretariat%20of%20the%20AF/SAF-FM/Budget%20-%202027/Budget%20docs/FY27%20Air%20Force%20Aircraft%20%20Missile%20Procurement.pdf?ver=6zKfXa_IITL18fK0xVVdIA%3D%3D"
+  ],
+  "duration_seconds": 1711.203,
+  "error": "",
+  "estimated_cost": 0.0,
+  "query_id": "Q-0005",
+  "status": "completed",
+  "system_id": "full_method",
+  "usage": {}
+}

@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · expeditionary advanced base operations eabo
+source_url=https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/
+claim=EABO公开页面将海上控制、海上拒止、海洋态势感知、前沿C4ISR、目标指示/反目标指示和前沿保障列为相关任务。
+excerpt=
+retrieval=Hosted web search citation metadata

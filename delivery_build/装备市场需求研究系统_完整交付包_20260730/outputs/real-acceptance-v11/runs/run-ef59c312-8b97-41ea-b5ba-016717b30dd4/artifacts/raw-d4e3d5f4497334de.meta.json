@@ -1,0 +1,14 @@
+{
+  "artifact_ref": "raw:d4e3d5f4497334de",
+  "connect_ip": "198.18.1.175",
+  "content_path": "raw-d4e3d5f4497334de.bin",
+  "content_type": "application/pdf",
+  "encoding": null,
+  "evidence_id": "ev-international_situation-web-2d1ba4398caa",
+  "final_url": "https://www.nato.int/content/dam/nato/webready/documents/sps/grants/sps-special-call-for-proposals-2026-2.pdf",
+  "kind": "raw",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "d4e3d5f4497334de1fb4a6e09913c25b51abc30b96f14cddd402a5d59129f4bd",
+  "url": "https://www.nato.int/content/dam/nato/webready/documents/sps/grants/sps-special-call-for-proposals-2026-2.pdf"
+}

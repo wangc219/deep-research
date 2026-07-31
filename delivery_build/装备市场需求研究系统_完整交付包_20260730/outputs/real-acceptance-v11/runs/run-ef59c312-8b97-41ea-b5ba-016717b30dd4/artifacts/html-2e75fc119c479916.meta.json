@@ -1,0 +1,14 @@
+{
+  "artifact_ref": "html:2e75fc119c479916",
+  "connect_ip": "198.18.2.212",
+  "content_path": "html-2e75fc119c479916.html",
+  "content_type": "text/html",
+  "encoding": null,
+  "evidence_id": "ev-weapon_equipment-web-3b7612d514fb",
+  "final_url": "https://www.doncio.navy.mil/mobile/ContentView.aspx?ID=15733&TypeID=21&utm_source=openai",
+  "kind": "html",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "2e75fc119c479916ad2b3b81c839608ca030a1a6f03539565d59170638139c7f",
+  "url": "https://www.doncio.navy.mil/mobile/ContentView.aspx?ID=15733&TypeID=21&utm_source=openai"
+}

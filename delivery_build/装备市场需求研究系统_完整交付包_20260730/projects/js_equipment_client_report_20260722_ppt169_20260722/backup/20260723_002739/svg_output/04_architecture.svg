@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" data-pptx-page-role="content">
+  <rect id="background" data-pptx-role="background" x="0" y="0" width="1280" height="720" fill="#F7F9FC" />
+  <g id="header" data-pptx-bounds="48 32 1180 90">
+    <text x="54" y="82" font-family="Georgia, 'Noto Serif CJK SC', 'Songti SC', serif" font-size="34" font-weight="700" fill="#123B63">项目适配架构贯通业务流程、Agent 协作、证据治理与成果交付</text>
+    <text x="56" y="114" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="18" fill="#5B6B7C">从任务解析、路线编排和专业推理，到质量门控、企业运行与审计交付，形成完整可追溯闭环。</text>
+  </g>
+  <g id="architecture-source" data-pptx-bounds="48 150 616 500">
+    <rect x="54" y="150" width="610" height="500" rx="22" fill="#FFFFFF" stroke="#D59A24" stroke-width="3" />
+    <image href="../images/project_architecture_generated.png" x="70" y="166" width="578" height="468" preserveAspectRatio="xMidYMid meet" id="_edit_3" data-edit-target="true" data-edit-annotation="希望利用生图功能，生成一个适配我们项目的架构图；&#10;需要适配项目功能和业务流程，最后标明各层以及Agent，体现项目设计与功能" />
+    <rect x="78" y="594" width="254" height="28" rx="14" fill="#EAF0F7" />
+    <text x="205" y="614" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="14" fill="#5B6B7C">API 生图生成 · 按本项目功能与业务流程适配</text>
+  </g>
+  <g id="layer-business" data-pptx-bounds="706 150 518 106">
+    <rect x="706" y="150" width="518" height="106" rx="22" fill="#123B63" />
+    <use data-icon="tabler-outline/route-2" x="732" y="178" width="44" height="44" fill="#FFFFFF" />
+    <text x="794" y="190" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="24" font-weight="700" fill="#FFFFFF">业务流程与编排层</text>
+    <text x="794" y="226" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="16" fill="#DDEAF2">任务解析 → 三路线 / A–H → 研究蓝图</text>
+  </g>
+  <g id="layer-harness" data-pptx-bounds="706 274 518 106">
+    <rect x="706" y="274" width="518" height="106" rx="22" fill="#DFF0F3" stroke="#2A7F9E" />
+    <use data-icon="tabler-outline/robot" x="732" y="302" width="44" height="44" fill="#2A7F9E" />
+    <text x="794" y="314" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="23" font-weight="700" fill="#123B63">Agent 协作与专业推理层</text>
+    <text x="794" y="350" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="15" fill="#5B6B7C">主控 Agent · 路线 Agent · S1–S6 专业 Agent</text>
+  </g>
+  <g id="layer-evidence" data-pptx-bounds="706 398 518 106">
+    <rect x="706" y="398" width="518" height="106" rx="22" fill="#FFF3D8" stroke="#D59A24" />
+    <use data-icon="tabler-outline/shield-check" x="732" y="426" width="44" height="44" fill="#A87312" />
+    <text x="794" y="438" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="24" font-weight="700" fill="#8A5D10">证据与质量治理层</text>
+    <text x="794" y="474" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="16" fill="#6E5A34">检索 · 材料化 · 评分 · L1–L4 · 审计</text>
+  </g>
+  <g id="layer-enterprise" data-pptx-bounds="706 522 518 128">
+    <rect x="706" y="522" width="518" height="128" rx="22" fill="#FFFFFF" stroke="#D7E0EA" />
+    <use data-icon="tabler-outline/layers-linked" x="732" y="558" width="44" height="44" fill="#123B63" />
+    <text x="794" y="564" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="23" font-weight="700" fill="#123B63">企业运行与成果交付层</text>
+    <text x="794" y="600" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="16" fill="#5B6B7C">API · Queue · Worker · React 工作台<tspan x="794" dy="28">报告 · 成果矩阵 · Trace · Manifest / SHA-256</tspan></text>
+  </g>
+  <text id="page-number" data-pptx-role="page-number" x="1222" y="688" text-anchor="end" font-family="Arial, sans-serif" font-size="14" fill="#5B6B7C">04</text>
+</svg>

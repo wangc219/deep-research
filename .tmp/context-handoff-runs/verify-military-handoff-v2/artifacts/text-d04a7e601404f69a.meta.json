@@ -1,0 +1,11 @@
+{
+  "artifact_ref": "text:d04a7e601404f69a",
+  "content_path": "text-d04a7e601404f69a.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-operational_employment-1",
+  "kind": "text",
+  "materialization_status": "fixture_materialized",
+  "sha256": "d04a7e601404f69a56615018cccad8cf378149d6486c40687a2143190624f111",
+  "url": "https://fixture.local/operational_employment"
+}

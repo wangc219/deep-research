@@ -1,0 +1,242 @@
+{
+  "schema": "ppt-master.pptx-postflight-report.v1",
+  "status": "passed-with-warnings",
+  "output": {
+    "path": "/Users/wangchen/equipment research/projects/js_equipment_client_report_20260722_ppt169_20260722/exports/js_equipment_client_report_20260722_20260723_170520.pptx",
+    "bytes": 1006364
+  },
+  "source": {
+    "svg_slide_count": 17,
+    "layout_definition_count": 0,
+    "fingerprint": {
+      "algorithm": "sha256",
+      "digest": "bb01268b0c4d2c04e7c57bd5511515fcc44e227f6d77264465566d69923199d6",
+      "file_count": 17,
+      "files": [
+        {
+          "file": "01_cover.svg",
+          "sha256": "7994a01346fc4ccfb8884288599ca3a513c5cf304dfa74bb0e0ef7b16399ee0e"
+        },
+        {
+          "file": "02_executive_summary.svg",
+          "sha256": "8bc108b68679f0b6f9b58f2c7fe3c29f9375cf910ff32c65f96ec9eae1cc207b"
+        },
+        {
+          "file": "03_business_loop.svg",
+          "sha256": "14b4f56e43d4224eb500eeee0217307cfbe5fe247142840308759bd5165d7a95"
+        },
+        {
+          "file": "04_architecture.svg",
+          "sha256": "09fcc70647e1950beabcd389d5f0e90c51b72644216bc95d67b20014ee762946"
+        },
+        {
+          "file": "05_routes_branches.svg",
+          "sha256": "c834959f63ae656b01a165b8fcc1cb7f0ee3a24a9fb608922e9296ddbd6d2457"
+        },
+        {
+          "file": "06_agent_harness.svg",
+          "sha256": "a5cbd78ad3821a69ea240eb387f878b9c75d3da35ba5e9620f1d85f65ca09c98"
+        },
+        {
+          "file": "07_s1_s6_chain.svg",
+          "sha256": "38f0fa3748a4cc183b6b118cbd0d60f65b9cf1d43a9a7668ec7b3106a17364cd"
+        },
+        {
+          "file": "08_quality_loops.svg",
+          "sha256": "e00b526b9c84b46586f674a930fb2500332e88f5029e14db2a2108b500d27e4e"
+        },
+        {
+          "file": "09_evidence_governance.svg",
+          "sha256": "af33f92738f60561ccc0182a0486a7ac01467305c7ac5a06cb251063be9fcf31"
+        },
+        {
+          "file": "10_workbench.svg",
+          "sha256": "73237884c12ee4458af2575842504f87e007c7398235cfead7acbf715bbe18e1"
+        },
+        {
+          "file": "11_interaction_audit.svg",
+          "sha256": "068f512b4a1a683029896f55b70a1ffe13e7d670654abf12fddd0ab8c6d9baa2"
+        },
+        {
+          "file": "12_winning_ui.svg",
+          "sha256": "a21f1dd1f9f7494bac556b40de92fd59e63b872b12c4bba648cfcc9e36ceda80"
+        },
+        {
+          "file": "13_capability_delivery.svg",
+          "sha256": "99491afe0c31b711c5babd68e77387f1b84f018609acfa7a230a48640fccd2d4"
+        },
+        {
+          "file": "14_acceptance.svg",
+          "sha256": "b03ac873e6be4b0baa02165662286a651ddba4e42d4c57be50e8cc1d9959dbe3"
+        },
+        {
+          "file": "15_benchmark_asset.svg",
+          "sha256": "577527dd6ccd9ca94c0e1ef8166b2878a21fd2231d1ec168937182aa9f9db107"
+        },
+        {
+          "file": "16_pairwise_benchmark.svg",
+          "sha256": "c0f57fd831b8597be825780a1b11fdd92effd69b32bf37e05796f020d3e33ac2"
+        },
+        {
+          "file": "17_next_stage.svg",
+          "sha256": "2bf9545979c6d64432855822b49b341457e1a61d6f36169af8fcb01c5ee752c5"
+        }
+      ]
+    }
+  },
+  "package": {
+    "zip_integrity": "passed",
+    "corrupt_member": null,
+    "slides": 17,
+    "notes": 17,
+    "masters": 1,
+    "layouts": 1
+  },
+  "checks": {
+    "zip_integrity": "passed",
+    "slide_count": "passed",
+    "internal_relationships": "enforced-at-build",
+    "structured_package": "not-applicable",
+    "transitions": "enforced-at-build",
+    "animations": "enforced-at-build",
+    "quality_gate": "passed",
+    "quality_warnings": "warning",
+    "template_tokens": "passed",
+    "external_images": "passed",
+    "font_portability": "passed"
+  },
+  "quality": {
+    "status": "loaded",
+    "path": "projects/js_equipment_client_report_20260722_ppt169_20260722/validation/svg_quality_report.json",
+    "schema": "ppt-master.svg-quality-report.v1",
+    "stage": "final",
+    "source_match": "passed",
+    "source_fingerprint": {
+      "algorithm": "sha256",
+      "digest": "bb01268b0c4d2c04e7c57bd5511515fcc44e227f6d77264465566d69923199d6",
+      "file_count": 17,
+      "files": [
+        {
+          "file": "01_cover.svg",
+          "sha256": "7994a01346fc4ccfb8884288599ca3a513c5cf304dfa74bb0e0ef7b16399ee0e"
+        },
+        {
+          "file": "02_executive_summary.svg",
+          "sha256": "8bc108b68679f0b6f9b58f2c7fe3c29f9375cf910ff32c65f96ec9eae1cc207b"
+        },
+        {
+          "file": "03_business_loop.svg",
+          "sha256": "14b4f56e43d4224eb500eeee0217307cfbe5fe247142840308759bd5165d7a95"
+        },
+        {
+          "file": "04_architecture.svg",
+          "sha256": "09fcc70647e1950beabcd389d5f0e90c51b72644216bc95d67b20014ee762946"
+        },
+        {
+          "file": "05_routes_branches.svg",
+          "sha256": "c834959f63ae656b01a165b8fcc1cb7f0ee3a24a9fb608922e9296ddbd6d2457"
+        },
+        {
+          "file": "06_agent_harness.svg",
+          "sha256": "a5cbd78ad3821a69ea240eb387f878b9c75d3da35ba5e9620f1d85f65ca09c98"
+        },
+        {
+          "file": "07_s1_s6_chain.svg",
+          "sha256": "38f0fa3748a4cc183b6b118cbd0d60f65b9cf1d43a9a7668ec7b3106a17364cd"
+        },
+        {
+          "file": "08_quality_loops.svg",
+          "sha256": "e00b526b9c84b46586f674a930fb2500332e88f5029e14db2a2108b500d27e4e"
+        },
+        {
+          "file": "09_evidence_governance.svg",
+          "sha256": "af33f92738f60561ccc0182a0486a7ac01467305c7ac5a06cb251063be9fcf31"
+        },
+        {
+          "file": "10_workbench.svg",
+          "sha256": "73237884c12ee4458af2575842504f87e007c7398235cfead7acbf715bbe18e1"
+        },
+        {
+          "file": "11_interaction_audit.svg",
+          "sha256": "068f512b4a1a683029896f55b70a1ffe13e7d670654abf12fddd0ab8c6d9baa2"
+        },
+        {
+          "file": "12_winning_ui.svg",
+          "sha256": "a21f1dd1f9f7494bac556b40de92fd59e63b872b12c4bba648cfcc9e36ceda80"
+        },
+        {
+          "file": "13_capability_delivery.svg",
+          "sha256": "99491afe0c31b711c5babd68e77387f1b84f018609acfa7a230a48640fccd2d4"
+        },
+        {
+          "file": "14_acceptance.svg",
+          "sha256": "b03ac873e6be4b0baa02165662286a651ddba4e42d4c57be50e8cc1d9959dbe3"
+        },
+        {
+          "file": "15_benchmark_asset.svg",
+          "sha256": "577527dd6ccd9ca94c0e1ef8166b2878a21fd2231d1ec168937182aa9f9db107"
+        },
+        {
+          "file": "16_pairwise_benchmark.svg",
+          "sha256": "c0f57fd831b8597be825780a1b11fdd92effd69b32bf37e05796f020d3e33ac2"
+        },
+        {
+          "file": "17_next_stage.svg",
+          "sha256": "2bf9545979c6d64432855822b49b341457e1a61d6f36169af8fcb01c5ee752c5"
+        }
+      ]
+    },
+    "summary": {
+      "total": 17,
+      "passed": 16,
+      "warnings": 1,
+      "errors": 0
+    },
+    "categories": {
+      "blocking": {
+        "count": 0,
+        "issues": []
+      },
+      "introduced": {
+        "count": 1,
+        "issues": [
+          {
+            "file": "02_executive_summary.svg",
+            "message": "<text> exceeds <g id=\"header\"> data-pptx-bounds on the horizontal axis: content (54.0, 51.4)-(1239.4, 94.6), container (48.0, 34.0)-(1228.0, 120.0), overflow horizontal 1.0%, vertical 0.0%; reflow the text or revise the root module bounds"
+          }
+        ]
+      },
+      "inherited": {
+        "count": 0,
+        "issues": []
+      },
+      "source-import": {
+        "count": 0,
+        "summary": {
+          "warning_count": 0,
+          "by_code": {}
+        }
+      }
+    }
+  },
+  "resources": {
+    "unresolved_template_tokens": [],
+    "fonts": {
+      "stacks": [
+        "Arial, 'Microsoft YaHei', 'PingFang SC', sans-serif",
+        "Arial, 'Microsoft YaHei', sans-serif",
+        "Arial, sans-serif",
+        "Georgia, 'Noto Serif CJK SC', 'Songti SC', serif"
+      ],
+      "generic_only_stacks": []
+    },
+    "images": {
+      "data_uri": 0,
+      "local": 9,
+      "external": 0,
+      "external_references": []
+    }
+  },
+  "backup_path": "/Users/wangchen/equipment research/projects/js_equipment_client_report_20260722_ppt169_20260722/backup/20260723_170520/svg_output",
+  "conversion_trace_path": null
+}

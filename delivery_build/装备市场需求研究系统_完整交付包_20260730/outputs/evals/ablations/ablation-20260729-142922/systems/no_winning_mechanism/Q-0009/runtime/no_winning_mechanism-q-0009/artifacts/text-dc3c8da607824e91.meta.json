@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:dc3c8da607824e91",
+  "content_path": "text-dc3c8da607824e91.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: cached_origin_failure:HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-8d5f2f1c9a5b",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "dc3c8da607824e91054ce387f094a308d5802e6879a05c6023ddb959103f3a6d",
+  "url": "https://www.army.mil/article/284406/army_awards_precision_strike_missile_early_operational_capability_contract"
+}

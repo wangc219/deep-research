@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:634de8e681d4bdfd",
+  "content_path": "text-634de8e681d4bdfd.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: cached_origin_failure:HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-operational_employment-web-6c1c84a0e24e",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "634de8e681d4bdfd0d9377bae796265ee334563845c2a1642684137185b34e79",
+  "url": "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+}

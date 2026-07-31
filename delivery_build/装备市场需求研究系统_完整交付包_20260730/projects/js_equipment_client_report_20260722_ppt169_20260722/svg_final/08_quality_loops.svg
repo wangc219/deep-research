@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" data-pptx-page-role="content">
+  <rect id="background" data-pptx-role="background" x="0" y="0" width="1280" height="720" fill="#F7F9FC"/>
+  <g id="header" data-pptx-bounds="48 32 1180 90"><text x="54" y="82" font-family="Georgia, 'Noto Serif CJK SC', 'Songti SC', serif" font-size="35" font-weight="700" fill="#123B63">L1–L4 把补证、回溯和强度调整限制在可审计边界内</text><text x="56" y="114" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="18" fill="#5B6B7C">系统不是无限自我反思，而是按缺口触发分层、定向、有上限的纠偏。</text></g>
+  <g id="loop-map" data-pptx-bounds="54 146 590 478">
+    <circle cx="320" cy="385" r="218" fill="#FFFFFF" stroke="#D59A24" stroke-width="30" stroke-dasharray="1180 190" transform="rotate(-78 320 385)"/>
+    <circle cx="320" cy="385" r="166" fill="#FFFFFF" stroke="#2A7F9E" stroke-width="28" stroke-dasharray="880 164" transform="rotate(-54 320 385)"/>
+    <circle cx="320" cy="385" r="116" fill="#FFFFFF" stroke="#7AA2B5" stroke-width="26" stroke-dasharray="580 148" transform="rotate(-30 320 385)"/>
+    <circle cx="320" cy="385" r="67" fill="#123B63"/>
+    <text x="320" y="376" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#FFFFFF">L1</text><text x="320" y="406" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="17" fill="#DDEAF2">节点自检</text>
+    <rect x="370" y="295" width="92" height="42" rx="21" fill="#EAF0F7"/><text x="416" y="323" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="18" font-weight="700" fill="#123B63">L2 回溯</text>
+    <rect x="182" y="204" width="116" height="42" rx="21" fill="#DFF0F3"/><text x="240" y="232" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="18" font-weight="700" fill="#2A7F9E">L3 外循环</text>
+    <rect x="383" y="552" width="122" height="42" rx="21" fill="#FFF3D8"/><text x="444" y="580" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="18" font-weight="700" fill="#8A5D10">L4 元循环</text>
+    <text x="90" y="596" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="16" fill="#5B6B7C">由内到外：补证 → 回溯 → 跨阶段门控 → 收敛后复核</text>
+  </g>
+  <g id="loop-details" data-pptx-bounds="680 150 544 434">
+    <rect x="680" y="150" width="544" height="434" rx="24" fill="#FFFFFF" stroke="#D7E0EA"/>
+    <g><circle cx="724" cy="208" r="26" fill="#123B63"/><text x="724" y="216" text-anchor="middle" font-family="Arial, sans-serif" font-size="17" font-weight="700" fill="#FFFFFF">L1</text><text x="770" y="198" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="22" font-weight="700" fill="#123B63">单节点自检与补证</text><text x="770" y="229" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="17" fill="#5B6B7C">触发：证据不足 / 输出缺项　动作：当前节点定向补齐</text></g>
+    <line x1="716" y1="258" x2="1190" y2="258" stroke="#D7E0EA"/>
+    <g><circle cx="724" cy="312" r="26" fill="#7AA2B5"/><text x="724" y="320" text-anchor="middle" font-family="Arial, sans-serif" font-size="17" font-weight="700" fill="#FFFFFF">L2</text><text x="770" y="302" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="22" font-weight="700" fill="#123B63">相邻阶段回溯</text><text x="770" y="333" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="17" fill="#5B6B7C">触发：上下游矛盾　动作：回到相关阶段修正交接</text></g>
+    <line x1="716" y1="362" x2="1190" y2="362" stroke="#D7E0EA"/>
+    <g><circle cx="724" cy="416" r="26" fill="#2A7F9E"/><text x="724" y="424" text-anchor="middle" font-family="Arial, sans-serif" font-size="17" font-weight="700" fill="#FFFFFF">L3</text><text x="770" y="406" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="22" font-weight="700" fill="#123B63">跨阶段质量门控</text><text x="770" y="437" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="17" fill="#5B6B7C">触发：关键质量门失败　动作：跨阶段定向再调</text></g>
+    <line x1="716" y1="466" x2="1190" y2="466" stroke="#D7E0EA"/>
+    <g><circle cx="724" cy="520" r="26" fill="#D59A24"/><text x="724" y="528" text-anchor="middle" font-family="Arial, sans-serif" font-size="17" font-weight="700" fill="#FFFFFF">L4</text><text x="770" y="510" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="22" font-weight="700" fill="#8A5D10">收敛后有界复核</text><text x="770" y="541" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="17" fill="#6E5A34">最多调整 2 个 A–H 次分支与 S1–S6 执行强度</text></g>
+  </g>
+  <g id="boundary-rule" data-pptx-bounds="110 610 1060 52"><rect x="110" y="610" width="1060" height="52" rx="26" fill="#FFF0F0"/><!-- icon: tabler-outline/shield-check -->
+  <g transform="translate(136, 622) scale(1.25)" fill="none" stroke="#B94747" stroke-width="2">
+    <path d="M11.46 20.846a12 12 0 0 1 -7.96 -14.846a12 12 0 0 0 8.5 -3a12 12 0 0 0 8.5 3a12 12 0 0 1 -.09 7.06" />
+    <path d="M15 19l2 2l4 -4" />
+  </g><text x="186" y="643" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="21" font-weight="700" fill="#8C3232">非法调整由 Harness 拒绝并保留原蓝图；所有回路均记录触发、动作与边界</text></g>
+  <text id="page-number" data-pptx-role="page-number" x="1222" y="688" text-anchor="end" font-family="Arial, sans-serif" font-size="14" fill="#5B6B7C">08</text>
+</svg>

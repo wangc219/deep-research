@@ -1,0 +1,14 @@
+{
+  "artifact_ref": "text:621b72ff09e19b4c",
+  "content_path": "text-621b72ff09e19b4c.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-0a53be72c08b",
+  "kind": "text",
+  "materialization_status": "network_safety_rejected",
+  "mode": "real",
+  "reason": "host_resolution_failed",
+  "rejected_url": "https://www.army.mil/article/250595/army_announces_contract_award_for_indirect_fire_protection_capability_increment_2?utm_source=openai",
+  "sha256": "621b72ff09e19b4c15fd948f9c2631fb7849e8f5c7eb6f3c770a409801fa3940",
+  "url": "https://www.army.mil/article/250595/army_announces_contract_award_for_indirect_fire_protection_capability_increment_2?utm_source=openai"
+}

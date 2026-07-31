@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:66724ab5ae659a49",
+  "content_path": "text-66724ab5ae659a49.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-operational_employment-web-b9ecc54bb9f4",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "66724ab5ae659a498c41b3e15c88058ef01ef749204567d61c29230329e800b7",
+  "url": "https://www.armyupress.army.mil/Portals/7/military-review/Archives/English/JA-24/C-UAS%20Operations/C-UAS-Operations-UA.pdf"
+}

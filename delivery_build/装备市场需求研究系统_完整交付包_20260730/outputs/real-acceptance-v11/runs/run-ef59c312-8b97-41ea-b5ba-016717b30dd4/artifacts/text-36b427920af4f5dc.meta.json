@@ -1,0 +1,12 @@
+{
+  "artifact_ref": "text:36b427920af4f5dc",
+  "content_path": "text-36b427920af4f5dc.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-combat_scenario-web-72f51d1c29d5",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "sha256": "36b427920af4f5dc6d16c327cd32fff07b346d8157af5daa970a295cdab9e2f3",
+  "url": "https://www.army.mil/article-amp/273510/lessons_learned_from_the_ukrainian_territorial_defense_forces_command_post_survivability?utm_source=openai"
+}

@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:fe4d0d37e6696cf7",
+  "content_path": "text-fe4d0d37e6696cf7.txt",
+  "content_type": "text/plain",
+  "direct_error": "TimeoutError: _ssl.c:1015: The handshake operation timed out",
+  "encoding": "utf-8",
+  "evidence_id": "ev-operational_employment-web-c68cf1b2ba99",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "fe4d0d37e6696cf7c3d21b361e71b4f4a4d7960fcacc3d907987b38513442bca",
+  "url": "https://stib.cto.mil/wp-content/uploads/2024/07/DSB_PNT-Control_ExecutiveSummary_5-1-24.pdf"
+}
