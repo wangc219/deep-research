@@ -7,11 +7,19 @@ import sqlite3
 import pytest
 
 from equipment_deep_research.agents.provider import FakeAgentProvider, ResponsesAgentProvider
+from equipment_deep_research.domain.models import TraceEvent
+from equipment_deep_research.domain.store import TraceStore
 from equipment_deep_research.domain.workspace import RunWorkspace
 from equipment_deep_research.delivery.exporter import DeliveryExporter
 from equipment_deep_research.orchestration.runner import (
     DeepResearchRunner,
+    _clean_report_brief_text,
+    _clean_report_capability_portrait,
+    _codex_loops_recorded,
+    _compact_winning_blueprint,
+    _normalize_delivery_report_structure,
     _persisted_agent_model_call_count,
+    _report_delivery_limit_payload,
 )
 from equipment_deep_research.providers.base import ProviderFinalTurn, ProviderStreamEvent
 from equipment_deep_research.providers.fake import ScriptedFakeProvider
@@ -19,6 +27,259 @@ from equipment_deep_research.providers.fake import ScriptedFakeProvider
 
 ROOT = Path(__file__).parents[3]
 CONFIG = ROOT / "configs/equipment_deep_research"
+
+
+def test_compact_winning_blueprint_keeps_enabled_swarm_policy() -> None:
+    compact = _compact_winning_blueprint(
+        {
+            "primary_branch": "B",
+            "execution_profile_id": "swarm_quality_v1",
+            "winning_swarm_policy": {
+                "policy_id": "winning_swarm_quality_v1",
+                "enabled": True,
+                "max_dynamic_instances": 12,
+            },
+            "unrelated_large_catalog": {"ignored": True},
+        }
+    )
+
+    assert compact["winning_swarm_policy"]["enabled"] is True
+    assert compact["winning_swarm_policy"]["max_dynamic_instances"] == 12
+    assert "unrelated_large_catalog" not in compact
+
+
+def test_dynamic_swarm_expert_sessions_satisfy_profile_equivalent_loop_audit() -> None:
+    assert _codex_loops_recorded(
+        mode="real",
+        execution_profile_id="winning_swarm_dynamic_v2",
+        event_types=set(),
+        persisted_loop_kinds=set(),
+        session_agents={
+            "winning-agent-123",
+            "winning-quality-judge-456",
+        },
+    )
+    assert not _codex_loops_recorded(
+        mode="real",
+        execution_profile_id="swarm_quality_v1",
+        event_types=set(),
+        persisted_loop_kinds=set(),
+        session_agents={
+            "winning-agent-123",
+            "winning-quality-judge-456",
+        },
+    )
+
+
+def test_report_delivery_limit_payload_preserves_quality_project_contract() -> None:
+    brief = {"branch": "B", "hard_max_chars": 12000}
+
+    payload = _report_delivery_limit_payload(
+        discovery_blueprint={"execution_profile_id": "swarm_quality_v1"},
+        report_template_mode="project_argument_v1",
+        branch_writer_brief=brief,
+    )
+
+    assert payload == {
+        "execution_profile_id": "swarm_quality_v1",
+        "report_template_mode": "project_argument_v1",
+        "branch_writer_brief": brief,
+    }
+
+
+def test_performance_summary_counts_completed_dynamic_swarm_instances() -> None:
+    trace = TraceStore()
+    for index in range(3):
+        trace.append(
+            TraceEvent(
+                event_id=f"swarm-{index}",
+                event_type="winning_subagent_completed",
+                actor=f"winning-agent-{index}",
+                summary="completed",
+                payload={
+                    "event_type": "winning_agent_session_completed",
+                    "elapsed_seconds": 1.0,
+                },
+            )
+        )
+
+    summary = DeepResearchRunner._performance_summary(
+        trace=trace,
+        selected_agent_ids=["weapon_equipment"],
+        discovery_blueprint={"baseline_agent_plan": []},
+    )
+
+    assert summary["dynamic_agent_count"] == 3
+
+
+def test_performance_summary_includes_reporter_model_calls() -> None:
+    trace = TraceStore()
+    for event_id, event_type, elapsed_seconds in (
+        ("baseline", "agent_model_call_completed", 10.0),
+        ("winning", "winning_model_call_completed", 20.0),
+        ("reporter", "report_model_call_completed", 30.0),
+    ):
+        trace.append(
+            TraceEvent(
+                event_id=event_id,
+                event_type=event_type,
+                actor=event_id,
+                summary="completed",
+                payload={
+                    "elapsed_seconds": elapsed_seconds,
+                    "queue_wait_seconds": 0.0,
+                },
+            )
+        )
+
+    summary = DeepResearchRunner._performance_summary(
+        trace=trace,
+        selected_agent_ids=["weapon_equipment"],
+        discovery_blueprint={"baseline_agent_plan": []},
+    )
+
+    assert summary["model_call_count"] == 3
+    assert summary["model_elapsed_seconds_sum"] == 60.0
+    assert summary["max_model_call_seconds"] == 30.0
+
+
+def test_dynamic_swarm_progress_preserves_event_type_and_friendly_summary(
+    tmp_path: Path,
+) -> None:
+    workspace = RunWorkspace.create(tmp_path / "runs", "dynamic-events")
+    trace = TraceStore()
+    try:
+        DeepResearchRunner._record_winning_progress_row(
+            workspace,
+            trace,
+            {
+                "event_type": "winning_agent_session_completed",
+                "agent_id": "winning-agent-1",
+                "mission_node": "S5",
+                "elapsed_seconds": 12.5,
+            },
+            attempt=1,
+            event_suffix="1",
+        )
+    finally:
+        workspace.close()
+
+    event = trace.snapshot()[0]
+    assert event.event_type == "winning_agent_session_completed"
+    assert event.actor == "winning-agent-1"
+    assert "动态蜂群 Agent 独立模型会话已完成" in event.summary
+    assert event.payload["mission_node"] == "S5"
+
+
+@pytest.mark.parametrize(
+    ("event_type", "summary_fragment"),
+    [
+        (
+            "winning_specialized_seed_recovered",
+            "恢复专用候选",
+        ),
+        (
+            "winning_specialized_seed_empty",
+            "未恢复额外种子",
+        ),
+        (
+            "winning_contribution_hypothesis_remapped",
+            "重映射到规范候选",
+        ),
+    ],
+)
+def test_dynamic_swarm_recovery_events_do_not_fall_back_to_snone(
+    tmp_path: Path,
+    event_type: str,
+    summary_fragment: str,
+) -> None:
+    workspace = RunWorkspace.create(tmp_path / "runs", event_type)
+    trace = TraceStore()
+    try:
+        DeepResearchRunner._record_winning_progress_row(
+            workspace,
+            trace,
+            {
+                "event_type": event_type,
+                "agent_id": "winning-agent-recovery",
+                "mission_node": "S3",
+            },
+            attempt=1,
+            event_suffix="1",
+        )
+    finally:
+        workspace.close()
+
+    event = trace.snapshot()[0]
+    assert event.event_type == event_type
+    assert summary_fragment in event.summary
+    assert "SNone" not in event.summary
+
+
+def test_delivery_report_structure_repair_preserves_h1_and_restores_parent() -> None:
+    report = "\n".join(
+        (
+            "# 项目研究报告",
+            "## 二、项目画像",
+            "### （四）主要战技指标",
+            "指标正文。",
+            "### （一）总体架构",
+            "总体架构正文。",
+            "### （二）子系统方案",
+            "子系统正文。",
+            "## 四、关键技术",
+        )
+    )
+
+    normalized = _normalize_delivery_report_structure(report)
+
+    assert normalized.startswith("# 项目研究报告\n\n")
+    assert "## 三、总体方案" in normalized
+    assert normalized.index("## 三、总体方案") < normalized.index(
+        "### （一）总体架构"
+    )
+
+
+def test_delivery_report_structure_does_not_map_h1_topic_to_capability_section() -> None:
+    report = "\n".join(
+        (
+            "# 无人远程火力装备能力画像研究报告",
+            "## 第一层：需求挖掘层——场景·战法/技术·装备能力特征",
+            "### ① 典型作战场景",
+            "场景正文。",
+            "## 第三层：能力图像与效能贡献层",
+            "### ⑦ 装备能力图像",
+            "画像正文。",
+        )
+    )
+
+    normalized = _normalize_delivery_report_structure(report)
+
+    assert normalized.startswith("# 无人远程火力装备能力画像研究报告\n\n")
+    assert normalized.count("### ⑦ 装备能力图像") == 1
+    assert normalized.index("## 第三层：能力图像与效能贡献层") < normalized.index(
+        "### ⑦ 装备能力图像"
+    )
+
+
+def test_report_brief_cleaner_preserves_evidence_in_equipment_name() -> None:
+    name = "低空可消耗察打一体无人突击平台续接目标证据链"
+    assert _clean_report_brief_text(name, max_chars=100) == name
+
+
+def test_report_capability_portrait_cleaner_preserves_governed_bullets() -> None:
+    portrait = "\n".join(
+        (
+            "概述：形成可验证的装备能力画像。",
+            "- 装备与技术实现：箱式发射平台与多模载荷。",
+            "* 关键作战流程：1.任务装订；2.平台进入；3.受控交战；4.毁伤评估。",
+        )
+    )
+
+    cleaned = _clean_report_capability_portrait(portrait)
+
+    assert "- 装备与技术实现：" in cleaned
+    assert "* 关键作战流程：" in cleaned
 
 
 def test_persisted_agent_model_calls_survive_resume_trace_loss(
@@ -170,6 +431,43 @@ class _SwarmProgressProbeProvider(_WinningHarnessProbeProvider):
                 }
             )
         return super().analyze_winning_mechanism(payload)
+
+
+class _FailedSwarmGateProbeProvider(_SwarmProgressProbeProvider):
+    def __init__(self) -> None:
+        super().__init__()
+        self.draft_report_calls = 0
+
+    def analyze_winning_mechanism(self, payload: dict) -> dict:
+        if self._winning_progress_callback is not None:
+            self._winning_progress_callback(
+                {
+                    "event_type": "swarm_gate_evaluated",
+                    "agent_id": "winning_swarm_controller",
+                    "swarm_summary": {
+                        "policy_id": "winning_swarm_dynamic_v2",
+                        "candidate_count": 2,
+                        "finalists": [],
+                        "portfolio_quality_gate": {
+                            "passed": False,
+                            "direction_count": 2,
+                            "direct_combat_equipment_count": 2,
+                            "distinct_direct_equipment_family_count": 2,
+                            "preferred_distinct_direct_equipment": 5,
+                            "issues": [
+                                "only 2 distinct direct equipment families"
+                            ],
+                        },
+                    },
+                }
+            )
+        return _WinningHarnessProbeProvider.analyze_winning_mechanism(
+            self, payload
+        )
+
+    def draft_report(self, payload: dict) -> str:
+        self.draft_report_calls += 1
+        return super().draft_report(payload)
 
 
 class _CodexMetaReplanProbeProvider(_WinningHarnessProbeProvider):
@@ -717,6 +1015,65 @@ def test_swarm_progress_events_are_persisted_into_round_summary(
         ).read_text(encoding="utf-8").splitlines()
     ]
     assert any(row["event_type"] == "swarm_gate_evaluated" for row in session_rows)
+
+
+def test_failed_dynamic_swarm_gate_stops_before_reporter_model_call(
+    tmp_path: Path,
+) -> None:
+    output_root = tmp_path / "runs"
+    run_id = "dynamic-swarm-gate-blocks-reporter"
+    provider = _FailedSwarmGateProbeProvider()
+
+    with pytest.raises(RuntimeError, match="禁止确定性降级报告"):
+        DeepResearchRunner(
+            project_root=ROOT,
+            output_root=output_root,
+            agent_config_path=CONFIG / "agents.yaml",
+            preset_config_path=CONFIG / "presets.yaml",
+            provider=provider,
+        ).run(
+            mode="real",
+            topic="动态制胜组合门失败时不得启动报告模型",
+            research_route="new_winning_mechanism",
+            run_id=run_id,
+            agent_ids=[
+                "international_situation",
+                "combat_scenario",
+                "weapon_equipment",
+                "operational_employment",
+            ],
+            analyst_confirmed=True,
+            max_rounds=1,
+            execution_profile_id="winning_swarm_dynamic_v2",
+        )
+
+    assert provider.draft_report_calls == 0
+    run_dir = output_root / run_id
+    failure = json.loads(
+        (run_dir / "report_failure.json").read_text(encoding="utf-8")
+    )
+    assert failure["portfolio_quality_gate"]["passed"] is False
+    assert failure["portfolio_quality_gate"][
+        "distinct_direct_equipment_family_count"
+    ] == 2
+    with sqlite3.connect(run_dir / "run.db") as connection:
+        trace = [
+            {
+                "event_type": str(row[0]),
+                "actor": str(row[1]),
+                "payload": json.loads(str(row[2]) or "{}"),
+            }
+            for row in connection.execute(
+                "SELECT event_type, actor, payload_json FROM trace_events"
+            )
+        ]
+    assert not any(
+        item["event_type"] == "tool_call"
+        and item["actor"] == "reporter"
+        and item.get("payload", {}).get("tool_name") == "draft_report"
+        for item in trace
+    )
+    assert any(item["event_type"] == "report_model_failed" for item in trace)
 
 
 def test_runner_materializes_responses_web_sources_before_formal_packet_linking(

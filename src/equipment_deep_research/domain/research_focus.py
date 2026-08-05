@@ -149,11 +149,16 @@ BASELINE_AGENT_EXPANSION_LENSES: dict[str, tuple[str, ...]] = {
 # Compact disruptive-equipment seeds.  They are hypotheses for divergence,
 # never evidence or pre-approved requirements.  Only the few cards selected by
 # the deterministic matcher enter a Codex task.
+DISRUPTIVE_EQUIPMENT_SEED_LIBRARY_VERSION = "v2"
+
+
 DISRUPTIVE_EQUIPMENT_SEEDS: tuple[dict[str, Any], ...] = (
     {
         "id": "A1",
         "dimension": "成本",
         "title": "成本强加",
+        "original_paradigm": "拦截经济学反转",
+        "research_relation": "单件性能竞争→体系交换比竞争",
         "shift": "高性能少量精打→低成本规模精确效应与持续成本强加",
         "equipment_pull": "低成本远程弹药族、规模任务规划、分布式补充保障",
         "checks": "全寿命成本、产能、对手廉价反制及我方抗规模打击",
@@ -176,6 +181,8 @@ DISRUPTIVE_EQUIPMENT_SEEDS: tuple[dict[str, Any], ...] = (
         "id": "A2",
         "dimension": "成本",
         "title": "制造即战力",
+        "original_paradigm": "前线弹药工厂",
+        "research_relation": "后方库存→分布式按需制造",
         "shift": "后方集中交付→前沿分布式按需制造与快速改型",
         "equipment_pull": "模块化弹药、开放架构、数字设计及制造检测保障单元",
         "checks": "质量一致性、安全认证、材料供应和设计权管控",
@@ -185,6 +192,8 @@ DISRUPTIVE_EQUIPMENT_SEEDS: tuple[dict[str, Any], ...] = (
         "id": "B1",
         "dimension": "平台",
         "title": "持续火力场",
+        "original_paradigm": "徘徊火力云",
+        "research_relation": "临时发射→战区持续存在",
         "shift": "临战发射→无人/巡飞节点长期驻留、任务出现即响应",
         "equipment_pull": "长航时低特征平台、能源补给、自主待机接替与集群管理",
         "checks": "暴露累积、误识别、弱网协同、回收维护和安全终止",
@@ -205,6 +214,8 @@ DISRUPTIVE_EQUIPMENT_SEEDS: tuple[dict[str, Any], ...] = (
         "id": "B2",
         "dimension": "平台",
         "title": "预置任务节点",
+        "original_paradigm": "和平预置、战时激活",
+        "research_relation": "战时部署→预先部署和可信激活",
         "shift": "战时部署→平时预置、危机时可信激活",
         "equipment_pull": "深海/地下/轨道预置无人节点、长期能源、自检与授权控制",
         "checks": "可探测性、跨年可靠性、法律升级风险和防误激活",
@@ -214,6 +225,8 @@ DISRUPTIVE_EQUIPMENT_SEEDS: tuple[dict[str, Any], ...] = (
         "id": "C1",
         "dimension": "时间",
         "title": "决策节奏对抗",
+        "original_paradigm": "毁平台转向毁节奏",
+        "research_relation": "物理摧毁→压缩或扰乱决策周期",
         "shift": "只追求己方更快→削弱对手感知、判断和资源调度节奏",
         "equipment_pull": "时敏感知、节奏建模、任务编排与效果评估系统",
         "checks": "误判、升级外溢、对手自动化适应和效果可测性",
@@ -232,6 +245,8 @@ DISRUPTIVE_EQUIPMENT_SEEDS: tuple[dict[str, Any], ...] = (
         "id": "C2",
         "dimension": "时间",
         "title": "战役内学习",
+        "original_paradigm": "越打越聪明",
+        "research_relation": "固定策略→批次间快速学习",
         "shift": "固定任务策略→批次数据回灌并快速更新后续无人/弹药策略",
         "equipment_pull": "安全数据回灌、模型更新、仿真验证、边缘学习与版本回退",
         "checks": "样本投毒、过拟合、可解释性、人在回路和更新失效",
@@ -241,6 +256,8 @@ DISRUPTIVE_EQUIPMENT_SEEDS: tuple[dict[str, Any], ...] = (
         "id": "D1",
         "dimension": "效应",
         "title": "功能压制",
+        "original_paradigm": "非动能点穴瘫痪",
+        "research_relation": "结构毁伤→关键功能失效",
         "shift": "单一爆炸毁伤→可控非动能、可逆或低附带效应",
         "equipment_pull": "电磁/电子压制等非动能效应器及效果识别评估载荷",
         "checks": "效果可测性、环境影响、对手屏蔽恢复和法律边界",
@@ -260,6 +277,8 @@ DISRUPTIVE_EQUIPMENT_SEEDS: tuple[dict[str, Any], ...] = (
         "id": "D2",
         "dimension": "效应",
         "title": "战略信号",
+        "original_paradigm": "打击作为战略信号",
+        "research_relation": "单纯毁伤→打击与认知效应结合",
         "shift": "行动仅追求物理结果→兼具威慑沟通和升级管理功能",
         "equipment_pull": "可控效应、行动可验证、战果评估与授权审计系统",
         "checks": "信号误读、文化差异、升级失控和责任边界",
@@ -269,6 +288,8 @@ DISRUPTIVE_EQUIPMENT_SEEDS: tuple[dict[str, Any], ...] = (
         "id": "E1",
         "dimension": "体系",
         "title": "火力即服务",
+        "original_paradigm": "任意传感器匹配最优射手",
+        "research_relation": "平台绑定→传感器与射手解耦",
         "shift": "传感器与射手平台绑定→跨域感知、指挥和效应器动态匹配",
         "equipment_pull": "开放任务接口、可信融合、火力资源池和分布式任务分配",
         "checks": "数据污染、权限冲突、链路中断和单点算法依赖",
@@ -287,6 +308,8 @@ DISRUPTIVE_EQUIPMENT_SEEDS: tuple[dict[str, Any], ...] = (
         "id": "E2",
         "dimension": "体系",
         "title": "集群对抗生态",
+        "original_paradigm": "蜂群对蜂群",
+        "research_relation": "单平台对抗→算法和种群对抗",
         "shift": "单群单任务→异构无人种群与反集群体系持续适应",
         "equipment_pull": "异构集群、反集群节点、群体态势、资源调度和快速补充",
         "checks": "失控涌现、敌我识别、频谱拥塞和成本交换反转",
@@ -304,6 +327,8 @@ DISRUPTIVE_EQUIPMENT_SEEDS: tuple[dict[str, Any], ...] = (
         "id": "F1",
         "dimension": "博弈可控",
         "title": "可验证自主",
+        "original_paradigm": "算法威慑、选择性透明",
+        "research_relation": "黑箱自主→可约束、可验证自主",
         "shift": "自主规则全透明/全黑箱→选择性披露、可审计约束和可信接管",
         "equipment_pull": "规则验证、行为日志、权限分层、人工接管与安全停机系统",
         "checks": "被预测利用、威慑误判、责任归属和网络安全",
@@ -313,6 +338,8 @@ DISRUPTIVE_EQUIPMENT_SEEDS: tuple[dict[str, Any], ...] = (
         "id": "F2",
         "dimension": "博弈可控",
         "title": "拒止环境自主",
+        "original_paradigm": "越降级越自主",
+        "research_relation": "网络依赖→断链条件下任务自治",
         "shift": "依赖卫星/链路/单一导航→受限时分级自治、任务重构和安全降级",
         "equipment_pull": "多源导航、离线规划、低带宽协同、失联安全与替代链",
         "checks": "自主边界、态势过期、误伤风险和任务中止条件",
@@ -328,51 +355,6 @@ DISRUPTIVE_EQUIPMENT_SEEDS: tuple[dict[str, Any], ...] = (
             "断链",
         ),
     },
-)
-
-
-# The disruptive lenses are useful only for weapon/effect queries.  This
-# deterministic topic gate prevents branch priors from injecting the framework
-# into unrelated research such as personnel, generic logistics or governance.
-_DISRUPTIVE_EQUIPMENT_DOMAIN_SIGNALS: tuple[str, ...] = (
-    "无人",
-    "低空",
-    "远程",
-    "远域",
-    "精打",
-    "精确打击",
-    "精确制导",
-    "导弹",
-    "弹药",
-    "火力",
-    "巡飞",
-    "拦截",
-    "防空",
-    "反导",
-    "反舰",
-    "蜂群",
-    "集群",
-    "杀伤链",
-    "歼灭",
-    "毁伤",
-    "压制",
-    "拒止",
-    "新质效应",
-    "自主交战",
-    "反介入",
-    "区域拒止",
-    "岛链",
-    "a2/ad",
-    "a2ad",
-)
-
-
-_BROAD_A2AD_THEME_SIGNALS: tuple[str, ...] = (
-    "反介入",
-    "区域拒止",
-    "岛链",
-    "a2/ad",
-    "a2ad",
 )
 
 
@@ -469,48 +451,6 @@ def disruptive_relationship_groups(text: Any) -> tuple[str, ...]:
     )
 
 
-_BRANCH_SEED_PRIORS: dict[str, tuple[str, ...]] = {
-    "A": ("B1", "C1", "E1", "E2", "F1"),
-    "B": ("A1", "A2", "F2", "E1"),
-    "C": ("A1", "C2", "E2", "F2"),
-    "D": ("A2", "C2", "D1", "E1", "F1", "F2"),
-    "E": ("A1", "B1", "E2", "F1", "F2"),
-    "F": ("A1", "C1", "E1", "E2", "F2"),
-    "G": ("B1", "B2", "D1", "E1", "F2"),
-    "H": ("D2", "F1", "F2", "E2"),
-}
-
-
-_AGENT_SEED_PRIORS: dict[str, tuple[str, ...]] = {
-    "combat_scenario": ("B1", "B2", "C1", "F2"),
-    "weapon_equipment": tuple(item["id"] for item in DISRUPTIVE_EQUIPMENT_SEEDS),
-    "operational_employment": ("A1", "B1", "C1", "E1", "E2"),
-    "technology_radar": ("A2", "C2", "D1", "E1", "F1", "F2"),
-    "system_confrontation": ("A1", "C1", "E1", "E2", "F2"),
-    "cross_domain_fusion": ("B1", "B2", "D1", "E1", "F2"),
-    "scenario_divergence": tuple(item["id"] for item in DISRUPTIVE_EQUIPMENT_SEEDS),
-    "winning_s3_breakthrough": tuple(item["id"] for item in DISRUPTIVE_EQUIPMENT_SEEDS),
-    "winning_s4_capability": tuple(item["id"] for item in DISRUPTIVE_EQUIPMENT_SEEDS),
-    "winning_s5_gap": ("A1", "A2", "C2", "F2"),
-    "winning_s6_image": tuple(item["id"] for item in DISRUPTIVE_EQUIPMENT_SEEDS),
-}
-
-
-_AGENT_SEED_LIMITS: dict[str, int] = {
-    "combat_scenario": 2,
-    "weapon_equipment": 3,
-    "operational_employment": 2,
-    "technology_radar": 3,
-    "system_confrontation": 3,
-    "cross_domain_fusion": 3,
-    "scenario_divergence": 2,
-    "winning_s3_breakthrough": 4,
-    "winning_s4_capability": 3,
-    "winning_s5_gap": 2,
-    "winning_s6_image": 3,
-}
-
-
 REFERENCE_DEDUP_RULES: tuple[str, ...] = (
     "E只研究对手部署与能力形成，F只研究体系制胜机理和反制。",
     "D合并技术跃迁与新质效应，共用成熟度、风险和验证框架。",
@@ -543,63 +483,36 @@ def select_disruptive_equipment_seeds(
     branch: str,
     agent_id: str,
 ) -> list[dict[str, str]]:
-    """Select a small, diverse seed set without an additional model call."""
+    """Recall only Query-linked reference lenses.
 
-    limit = _AGENT_SEED_LIMITS.get(str(agent_id), 0)
-    allowed = set(_AGENT_SEED_PRIORS.get(str(agent_id), ()))
-    if limit <= 0 or not allowed:
-        return []
+    Branch and role priors used to inject cards even when the Query did not
+    name the underlying problem.  Codex now performs the open-ended expansion;
+    this local function is deliberately a cheap, conservative fallback that
+    returns direct semantic hits only.  ``branch`` and ``agent_id`` remain in
+    the signature for persisted callers, but no longer constrain exploration.
+    """
+
+    del branch, agent_id
+    limit = 3
     normalized_query = str(query).lower()
-    broad_a2ad_theme = any(
-        signal in normalized_query for signal in _BROAD_A2AD_THEME_SIGNALS
-    )
-    if not any(
-        signal in normalized_query
-        for signal in _DISRUPTIVE_EQUIPMENT_DOMAIN_SIGNALS
-    ):
+    if not normalized_query.strip():
         return []
-    branch_priors = _BRANCH_SEED_PRIORS.get(str(branch), ())
-    agent_priors = _AGENT_SEED_PRIORS.get(str(agent_id), ())
-    directly_matched: list[tuple[int, int, int, int, dict[str, Any]]] = []
-    exploration_candidates: list[tuple[int, int, int, dict[str, Any]]] = []
+    directly_matched: list[tuple[int, int, dict[str, Any]]] = []
     for position, item in enumerate(DISRUPTIVE_EQUIPMENT_SEEDS):
-        seed_id = str(item["id"])
-        if seed_id not in allowed:
-            continue
         matched_signals = [
             str(signal)
             for signal in item["signals"]
             if str(signal).lower() in normalized_query
         ]
-        branch_rank = (
-            len(branch_priors) - branch_priors.index(seed_id)
-            if seed_id in branch_priors
-            else 0
-        )
-        agent_rank = (
-            len(agent_priors) - agent_priors.index(seed_id)
-            if seed_id in agent_priors
-            else 0
-        )
         if matched_signals:
-            # Priors only break ties between query-matched cards; they can no
-            # longer make an unrelated card enter the primary selection.
             directly_matched.append(
-                (len(matched_signals), branch_rank, agent_rank, -position, item)
+                (sum(len(value) for value in matched_signals), -position, item)
             )
-        else:
-            exploration_candidates.append((branch_rank, agent_rank, -position, item))
-    directly_matched.sort(
-        key=lambda row: (-row[0], -row[1], -row[2], -row[3])
-    )
+    directly_matched.sort(key=lambda row: (-row[0], -row[1]))
 
     selected: list[dict[str, str]] = []
     used_dimensions: set[str] = set()
-    # First retain the strongest query-matched card from each distinct lens.
-    # Do not immediately consume the small context budget with two variants of
-    # the same lens: a broad weapon query needs at least one bounded challenge
-    # from another dimension to escape the incremental "capability fill" frame.
-    for _, _, _, _, item in directly_matched:
+    for _, _, item in directly_matched:
         if len(selected) >= limit:
             break
         dimension = str(item["dimension"])
@@ -607,60 +520,12 @@ def select_disruptive_equipment_seeds(
             continue
         selected.append(_public_seed_card(item, selection_basis="query_signal"))
         used_dimensions.add(dimension)
-
-    # When the Query only exposes one explicit disruptive lens, add exactly one
-    # clearly marked, branch-relevant challenge card.  This gives S3/S4/S6 a
-    # genuine two-lens comparison without flooding every Agent with the full
-    # framework or pretending that the second lens is evidence.
-    if selected and len(used_dimensions) == 1 and len(selected) < limit:
-        exploration_candidates.sort(
-            key=lambda row: (-row[0], -row[1], -row[2])
-        )
-        for _, _, _, item in exploration_candidates:
-            dimension = str(item["dimension"])
-            if dimension in used_dimensions:
-                continue
-            selected.append(
-                _public_seed_card(
-                    item,
-                    selection_basis="bounded_exploration",
-                )
-            )
-            used_dimensions.add(dimension)
-            break
-
-    # Fill any residual slots only with direct Query matches.  Priors never
-    # create a third speculative card.
-    for _, _, _, _, item in directly_matched:
+    for _, _, item in directly_matched:
         if len(selected) >= limit:
             break
         if any(row["id"] == item["id"] for row in selected):
             continue
         selected.append(_public_seed_card(item, selection_basis="query_signal"))
-
-    # A broad A2/AD or island-chain equipment query names a battlespace rather
-    # than a disruptive mechanism. Give it two branch-relevant, dimensionally
-    # distinct challenge cards so the reasoning can compare real alternatives,
-    # while still avoiding the full framework. Other broad weapon queries keep
-    # the previous single-card bound.
-    if not selected and exploration_candidates and limit > 0:
-        exploration_candidates.sort(
-            key=lambda row: (-row[0], -row[1], -row[2])
-        )
-        exploration_limit = min(limit, 2 if broad_a2ad_theme else 1)
-        for _, _, _, item in exploration_candidates:
-            dimension = str(item["dimension"])
-            if dimension in used_dimensions:
-                continue
-            selected.append(
-                _public_seed_card(
-                    item,
-                    selection_basis="bounded_exploration",
-                )
-            )
-            used_dimensions.add(dimension)
-            if len(selected) >= exploration_limit:
-                break
     return selected[:limit]
 
 
@@ -680,12 +545,14 @@ def disruptive_seed_context(
     if not cards:
         return {}
     context: dict[str, Any] = {
+        "library_version": DISRUPTIVE_EQUIPMENT_SEED_LIBRARY_VERSION,
         "cards": cards,
         "rule": (
-            "种子仅是按Query筛选的内部反事实镜头，不是事实、指标或必选目录；优先比较2至3类，"
-            "证据不足不补齐，bounded_exploration最多挑战一个既有前提。实战门：必须贯通"
+            "颠覆范式种子库v2仅是Query直接召回的内部参考镜头，不是事实、指标、目录或配额；"
+            "Codex应从完整Query自行发散，可忽略全部种子并提出OTHER方向。不得复制种子标题作为装备名。"
+            "实战门：必须贯通"
             "对手/场景—任务链断点—具体装备—打击/歼灭/压制/拦截/毁伤/拒止效果—可量化验证，"
-            "并说明对手反制、失效边界与人在回路；不满足即淘汰。允许提出OTHER新方向。"
+            "并说明对手反制、失效边界与人在回路；不满足即淘汰。"
         ),
     }
     return context
@@ -700,6 +567,8 @@ def _public_seed_card(
         "id": str(item["id"]),
         "dimension": str(item["dimension"]),
         "title": str(item["title"]),
+        "original_paradigm": str(item["original_paradigm"]),
+        "research_relation": str(item["research_relation"]),
         "shift": str(item["shift"]),
         "equipment_pull": str(item["equipment_pull"]),
         "checks": str(item["checks"]),

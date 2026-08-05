@@ -16,6 +16,7 @@ class CreateRunCommand:
     interaction_mode: str = "expert"
     discovery_branch: str = "auto"
     execution_profile_id: str = ""
+    report_template_mode: str = "three_layer_nine_item"
     supplemental_information: str = ""
 
 
@@ -30,6 +31,7 @@ class UpdateRunCommand:
     interaction_mode: str = "expert"
     discovery_branch: str = "auto"
     execution_profile_id: str = ""
+    report_template_mode: str = ""
     supplemental_information: str | None = None
 
 
@@ -49,5 +51,6 @@ class RunView:
     interaction_mode: str = "expert"
     discovery_branch: str = "auto"
     execution_profile_id: str = ""
+    report_template_mode: str = "three_layer_nine_item"
     updated_at: str = field(default_factory=now_iso)
     supplemental_information: str = ""

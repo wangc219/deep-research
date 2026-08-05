@@ -346,6 +346,20 @@ class EvidenceMaterializer:
                 },
             )
         except _NetworkSafetyError as exc:
+            # A hosted-search citation has already been fetched by the model
+            # gateway. Local DNS can still be unavailable in an otherwise
+            # healthy real run; in that narrow case reuse the existing
+            # auditable citation artifact without making another network
+            # request. Private, literal, malformed and redirect safety
+            # denials remain hard rejections.
+            if exc.reason == "host_resolution_failed":
+                hosted_result = self._materialize_hosted_search_citation(
+                    evidence=evidence,
+                    mode=mode,
+                    direct_error=exc,
+                )
+                if hosted_result is not None:
+                    return hosted_result
             return self._reject_network_safety(
                 evidence=evidence,
                 mode=mode,
@@ -781,6 +795,9 @@ def _is_usable_evidence_excerpt(text: str) -> bool:
         "your page could not be served",
         "page not found",
         "404 not found",
+        "the page you are looking for cannot be found",
+        "might have been removed, had its name changed",
+        "might have been removed, had it's name changed",
         "access denied",
         "service unavailable",
         "enable javascript to continue",

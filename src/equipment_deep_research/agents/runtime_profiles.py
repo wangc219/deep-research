@@ -330,7 +330,7 @@ CODEX_AGENT_RUNTIME_PROFILES: dict[str, dict[str, Any]] = {
         output_focus=["场景框架", "敌方COA", "关键时间窗", "环境约束", "能力压力点"],
     ),
     "weapon_equipment": _profile(
-        "国外现役、在研和替代装备深度研究及防御性反制/研发需求形成",
+        "国外与中国国内装备现状、案例、技术路线对比及研发需求形成",
         skills=[
             "equipment_osint",
             "capability_comparison",
@@ -350,7 +350,8 @@ CODEX_AGENT_RUNTIME_PROFILES: dict[str, dict[str, Any]] = {
             "formulate_equipment_requirement",
         ],
         methodology=[
-            "建立国外装备谱系",
+            "分别建立国外与中国国内装备谱系",
+            "按问题难点解决与核心技术路线两条主线整理案例",
             "核验型号批次与参数条件",
             "分析体系接口和能力边界",
             "映射主题场景压力",
@@ -361,12 +362,15 @@ CODEX_AGENT_RUNTIME_PROFILES: dict[str, dict[str, Any]] = {
         quality_gates=[
             "关键型号双源核验",
             "冲突参数不覆盖",
-            "反制与研发需求可追溯到国外能力和证据",
+            "国内外案例、技术路线和指标均可追溯到公开证据",
             "种子只作假设且经过对手反制、降级和成熟度校核",
             "不凭空给出精确指标",
         ],
         output_focus=[
             "国外装备全景",
+            "中国国内装备现状",
+            "国内外具体案例",
+            "问题解决与核心技术对比",
             "重点型号档案",
             "体系依赖",
             "能力边界",

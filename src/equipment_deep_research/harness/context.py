@@ -14,120 +14,19 @@ from equipment_deep_research.domain.store import DomainStore
 from equipment_deep_research.harness.compaction import ContextCompactor
 
 
-UPSTREAM_PAYLOAD_PROJECTIONS: dict[str, dict[str, tuple[str, ...]]] = {
-    "combat_scenario": {
-        "international_situation": (
-            "alternative_hypotheses",
-            "scenario_drivers",
-            "warning_indicators",
-            "threat_assessment",
-        ),
-        "opponent_monitoring": (
-            "observed_moves",
-            "formation_timeline",
-            "warning_indicators",
-            "threat_effects",
-        ),
-    },
-    "weapon_equipment": {
-        "international_situation": (
-            "threat_assessment",
-            "opponent_moves",
-            "scenario_drivers",
-        ),
-        "combat_scenario": (
-            "scenario_framework",
-            "environment_constraints",
-            "capability_pressure_points",
-            "assumptions",
-        ),
-        "opponent_monitoring": (
-            "observed_moves",
-            "formation_timeline",
-            "system_dependencies",
-            "counter_requirements",
-        ),
-    },
-    "system_confrontation": {
-        "combat_scenario": (
-            "scenario_framework",
-            "critical_timeline",
-            "environment_constraints",
-            "capability_pressure_points",
-        ),
-        "weapon_equipment": (
-            "equipment_profiles",
-            "system_dependencies",
-            "capability_constraints",
-            "capability_gaps",
-        ),
-    },
-    "operational_employment": {
-        "international_situation": (
-            "threat_assessment",
-            "scenario_drivers",
-        ),
-        "combat_scenario": (
-            "scenario_framework",
-            "critical_timeline",
-            "environment_constraints",
-            "capability_pressure_points",
-        ),
-        "weapon_equipment": (
-            "equipment_profiles",
-            "system_dependencies",
-            "capability_constraints",
-            "capability_gaps",
-        ),
-        "system_confrontation": (
-            "dependency_graph",
-            "cascading_failures",
-            "critical_vulnerabilities",
-            "reinforcement_directions",
-        ),
-        "opponent_monitoring": (
-            "observed_moves",
-            "formation_timeline",
-            "threat_effects",
-            "system_dependencies",
-            "warning_indicators",
-        ),
-    },
-}
-
-
-WINNING_PAYLOAD_PROJECTIONS: dict[str, tuple[str, ...]] = {
-    "international_situation": (
-        "alternative_hypotheses",
-        "threat_assessment",
-        "scenario_drivers",
-    ),
-    "combat_scenario": (
-        "scenario_framework",
-        "scenario_branches",
-        "capability_pressure_points",
-        "environment_constraints",
-    ),
-    "operational_employment": (
-        "mission_chain",
-        "coa",
-        "failure_modes",
-        "equipment_function_requirements",
-    ),
-    "weapon_equipment": (
-        "equipment_profiles",
-        "capability_gaps",
-        "system_dependencies",
-        "upgrade_requirements",
-        "new_equipment_requirements",
-    ),
-    "case_research": (
-        "case_patterns",
-        "future_scenarios",
-        "emerging_equipment_categories",
-        "migration_boundaries",
-    ),
-}
+_HANDOFF_FIELD_HINTS = (
+    "finding",
+    "assessment",
+    "effect",
+    "gap",
+    "constraint",
+    "requirement",
+    "risk",
+    "assumption",
+    "timeline",
+    "dependency",
+    "scenario",
+)
 
 
 @dataclass(frozen=True)
@@ -241,6 +140,7 @@ class ContextPackBuilder:
                 packet,
                 target_agent_id=agent.agent_id,
                 minimal=minimal_handoff,
+                query=topic,
             )
             for packet in store.baseline_packet_snapshot()
             if packet.agent_id in allowed_upstream
@@ -312,23 +212,22 @@ def _project_upstream_payload(
     source_agent_id: str,
     payload: Any,
 ) -> Any:
+    del target_agent_id, source_agent_id
     if not isinstance(payload, dict):
         return payload
-    fields = UPSTREAM_PAYLOAD_PROJECTIONS.get(target_agent_id, {}).get(source_agent_id)
-    if not fields:
-        projected: dict[str, Any] = {}
-        for key, value in payload.items():
-            if value in (None, "", [], {}):
-                continue
-            projected[key] = value
-            if len(projected) >= 6:
-                break
-        return projected
-    return {
-        field: payload[field]
-        for field in fields
-        if payload.get(field) not in (None, "", [], {})
-    }
+    order = {key: index for index, key in enumerate(payload)}
+    candidates = [
+        (key, value)
+        for key, value in payload.items()
+        if value not in (None, "", [], {})
+    ]
+    candidates.sort(
+        key=lambda item: (
+            -sum(hint in str(item[0]).lower() for hint in _HANDOFF_FIELD_HINTS),
+            order[item[0]],
+        )
+    )
+    return dict(candidates[:5])
 
 
 def compact_packet_handoff(
@@ -352,13 +251,11 @@ def compact_packet_handoff(
     string_limit = 1200 if full_case_packet else (220 if minimal else 420)
     list_limit = 14 if full_case_packet else (3 if minimal else 6)
     if minimal and isinstance(payload, dict):
-        selected_fields = WINNING_PAYLOAD_PROJECTIONS.get(agent_id, ())
-        if selected_fields:
-            payload = {
-                key: payload[key]
-                for key in selected_fields
-                if payload.get(key) not in (None, "", [], {})
-            }
+        payload = _project_upstream_payload(
+            target_agent_id="winning_mechanism",
+            source_agent_id=agent_id,
+            payload=payload,
+        )
     return {
         "packet_id": str(getattr(packet, "packet_id", "")),
         "agent_id": agent_id,
@@ -410,6 +307,7 @@ def _dependency_handoff(
     *,
     target_agent_id: str,
     minimal: bool,
+    query: str = "",
 ) -> dict[str, Any]:
     payload = _project_upstream_payload(
         target_agent_id=target_agent_id,
@@ -447,7 +345,13 @@ def _dependency_handoff(
             ],
         }
     finding_limit = 3
+    open_questions = list(getattr(packet, "open_questions", []))
+    uncertainties = [
+        *list(getattr(packet, "limitations", []))[:2],
+        *open_questions[:1],
+    ]
     return {
+        "handoff_version": "2.0",
         "agent_id": str(getattr(packet, "agent_id", "")),
         "packet_id": str(getattr(packet, "packet_id", "")),
         # Keep the legacy alias for readers of older persisted checkpoints,
@@ -461,28 +365,25 @@ def _dependency_handoff(
             _compact_text(item, 260)
             for item in list(getattr(packet, "findings", []))[:finding_limit]
         ],
-        "business_payload": compact_handoff_value(
+        "context_delta": compact_handoff_value(
             payload,
             max_string_chars=280,
             max_list_items=4,
-            max_mapping_items=6,
+            max_mapping_items=5,
         ),
-        "evidence_ids": list(getattr(packet, "evidence_ids", []))[
+        "evidence_refs": list(getattr(packet, "evidence_ids", []))[
             :8
         ],
         "confidence": getattr(packet, "confidence", None),
-        "limits": [
+        "uncertainties": [
             _compact_text(item, 180)
-            for item in list(getattr(packet, "limitations", []))[
-                :2
-            ]
+            for item in uncertainties
         ],
-        "next_questions": [
-            _compact_text(item, 160)
-            for item in list(getattr(packet, "open_questions", []))[
-                :1
-            ]
-        ],
+        "requested_next_action": (
+            _compact_text(open_questions[0], 160)
+            if open_questions
+            else f"仅消费与当前Query“{_compact_text(query, 80)}”直接相关的增量。"
+        ),
     }
 
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass
 from contextlib import contextmanager
+import os
 from pathlib import Path
 from threading import Event, Thread
 from typing import Any, Callable
@@ -31,6 +32,7 @@ class ResearchWorker:
     ) -> None:
         self.service, self.execute, self.worker_id = service, execute, worker_id
         self.heartbeat_interval_seconds = max(0.01, heartbeat_interval_seconds)
+        self._transient_resume_attempts: dict[str, int] = {}
 
     def _ack(self, run_id: str) -> None:
         ack = getattr(self.service.queue, "ack", None)
@@ -119,11 +121,56 @@ class ResearchWorker:
                 self._ack(run_id)
                 self.service.touch_worker(self.worker_id, status="idle")
                 return WorkerOutcome(run_id, "completed")
+            transient_resume_limit = _configured_transient_resume_limit()
+            transient_resume_count = self._transient_resume_count(run_id)
+            if (
+                transient_resume_count < transient_resume_limit
+                and _is_transient_checkpoint_failure(error)
+            ):
+                attempt = transient_resume_count + 1
+                self._transient_resume_attempts[run_id] = attempt
+                self.service.publish_runtime_event(
+                    run_id,
+                    "run_transient_resume_scheduled",
+                    {
+                        "attempt": attempt,
+                        "maximum_attempts": transient_resume_limit,
+                        "reason": "retryable_provider_or_network_failure",
+                        "error": error,
+                        "resume_mode": "checkpoint_pending_tasks_only",
+                    },
+                )
+                self.service.set_status(run_id, "queued")
+                self._ack(run_id)
+                retry = getattr(self.service.queue, "retry", None)
+                if callable(retry):
+                    retry(run_id)
+                else:
+                    self.service.queue.enqueue(run_id)
+                self.service.touch_worker(self.worker_id, status="idle")
+                return WorkerOutcome(run_id, "queued", error)
             self.service.set_error(run_id, error)
             self.service.set_status(run_id, "failed")
             self._ack(run_id)
             self.service.touch_worker(self.worker_id, status="idle")
             return WorkerOutcome(run_id, "failed", error)
+
+    def _transient_resume_count(self, run_id: str) -> int:
+        durable_count = 0
+        repository = getattr(self.service, "repository", None)
+        events_after = getattr(repository, "events_after", None)
+        if callable(events_after):
+            try:
+                durable_count = sum(
+                    row.get("event_type") == "run_transient_resume_scheduled"
+                    for row in events_after(run_id, 0)
+                )
+            except Exception:
+                durable_count = 0
+        return max(
+            durable_count,
+            self._transient_resume_attempts.get(run_id, 0),
+        )
 
     @contextmanager
     def _heartbeat_during(self, run_id: str):
@@ -149,3 +196,37 @@ class ResearchWorker:
         finally:
             stopped.set()
             thread.join(timeout=1.0)
+
+
+def _configured_transient_resume_limit() -> int:
+    raw_value = os.environ.get("EQUIPMENT_DR_TRANSIENT_RESUME_ATTEMPTS", "1")
+    try:
+        value = int(raw_value)
+    except (TypeError, ValueError):
+        value = 1
+    return min(3, max(0, value))
+
+
+def _is_transient_checkpoint_failure(error: str) -> bool:
+    normalized = str(error or "").lower()
+    return any(
+        signal in normalized
+        for signal in (
+            "429",
+            "500",
+            "502",
+            "503",
+            "504",
+            "connection",
+            "network",
+            "temporarily unavailable",
+            "timed out",
+            "request timeout",
+            "read timeout",
+            "connect timeout",
+            "stream disconnected",
+            "upstream",
+            "internal server error",
+            "response failed",
+        )
+    )

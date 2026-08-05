@@ -33,10 +33,12 @@ def test_generic_border_direction_is_rewritten_as_direct_combat_capability() -> 
     assert "低空雷达" in rewritten["equipment_form"]
     assert "压制" in rewritten["mission_effect"]
     assert "反无人效应器" in rewritten["strike_countermeasure_value"]
-    assert "若只能改善信息连通" in rewritten["deep_capability_portrait"]
-    assert "武器装备发展落点" in rewritten["deep_capability_portrait"]
+    assert "关键作战流程" in rewritten["deep_capability_portrait"]
+    assert "制胜逻辑机理" in rewritten["deep_capability_portrait"]
+    assert rewritten["target_scenario"] == "边境村镇态势感知条件下影响分析"
+    assert rewritten["operational_process"]
     assert "无人作战平台、导弹/弹药" in rewritten["development_path"]
-    assert rewritten["deep_capability_portrait"].endswith("失效注入校准。")
+    assert rewritten["capability_image"] == rewritten["deep_capability_portrait"]
     assert rewritten["evidence_ids"] == ["ev-1"]
     assert rewritten["confidence"] == 0.78
     assert rewritten["priority"] == "高"

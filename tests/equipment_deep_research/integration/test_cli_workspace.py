@@ -1053,11 +1053,14 @@ def test_cli_passes_new_configuration_and_run_flags(
             "fake",
             "--topic",
             "CLI test",
+            "--supplemental-information",
+            "Operational constraints and concrete equipment deliverables.",
             "--provider-config",
             str(provider_config),
             "--evidence-config",
             str(evidence_config),
             "--resume",
+            "--allow-resume-config-mismatch",
             "--analyst-confirmed",
         ]
     )
@@ -1066,6 +1069,10 @@ def test_cli_passes_new_configuration_and_run_flags(
     assert calls["init"]["provider_config_path"] == provider_config
     assert calls["init"]["evidence_config_path"] == evidence_config
     assert calls["run"]["resume"] is True
+    assert calls["run"]["supplemental_information"] == (
+        "Operational constraints and concrete equipment deliverables."
+    )
+    assert calls["run"]["allow_resume_config_mismatch"] is True
     assert calls["run"]["analyst_confirmed"] is True
 
 
@@ -1077,5 +1084,7 @@ def test_cli_exposes_provider_and_evidence_controls_without_domain_gate() -> Non
     assert "--source-whitelist" not in parser_text
     assert "--provider-config" in parser_text
     assert "--evidence-config" in parser_text
+    assert "--supplemental-information" in parser_text
     assert "--resume" in parser_text
+    assert "--allow-resume-config-mismatch" in parser_text
     assert "--analyst-confirmed" in parser_text

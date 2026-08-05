@@ -112,7 +112,7 @@ EQUIPMENT_DR_CODEX_API_KEY=你的服务端密钥
 
 Codex CLI 会在项目隔离的 `CODEX_HOME` 中使用 API Key 认证，不需要设备登录。前端不展示或提交执行配置；API 在创建和编辑草稿时直接投影 `.env.codex` 中的服务端默认值，任务只保存必要的执行快照，不保存密钥值。
 
-脚本同时启动 API、持久化队列 worker 和 Web。工作台会检查 worker 心跳；worker 未在线时会阻止任务进入无人消费的队列。
+脚本同时启动 API、持久化研究队列 Worker、Query 生成 Worker 和 Web。工作台会检查研究 Worker 心跳；研究 Worker 未在线时会阻止任务进入无人消费的队列。研究任务首页可直接输入或选择推荐 Query，并通过“需求研究问题库”卡片进入独立的联网生成、草稿审核和来源追溯界面；已发布 Query 可一键带回研究任务。
 
 也可以分别启动：
 
@@ -150,3 +150,5 @@ docker compose config
 完整测试包含 API 创建、持久化队列、独立 worker 消费、制胜机理、能力画像、报告、交互审计和重启后产物读取。详细方案、验收边界和部署说明见 `docs/TECHNICAL_SCHEME.md`、`docs/ACCEPTANCE.md`、`docs/DELIVERY.md`。
 
 企业交付成熟度、投产前必做项和长期演进建议见 `docs/ENTERPRISE_DELIVERY_AUDIT.md`。
+
+独立的需求挖掘 Query 自动生成、草稿审核、来源追溯和 Query 库使用方式见 `docs/QUERY_LIBRARY.md`。

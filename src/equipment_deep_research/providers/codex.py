@@ -66,7 +66,7 @@ class CodexCliProvider:
         inherit_user_config: bool = True,
         api_key: str | None = None,
         base_url: str | None = None,
-        timeout_seconds: int = 21600,
+        timeout_seconds: int = 900,
         sandbox_mode: str = "read-only",
         extra_args: Sequence[str] = (),
         search_extra_args: Sequence[str] = (),
@@ -342,6 +342,30 @@ class CodexCliProvider:
         self._perf_monitor.record('prompt_render', monotonic() - prompt_start)
 
         schema_path = self._write_output_schema(options.get("output_schema"))
+        requested_timeout_seconds = max(
+            30,
+            int(options.get("_provider_timeout_seconds", self.timeout_seconds)),
+        )
+        extended_timeout_allowed = bool(
+            options.get("_allow_extended_provider_timeout", False)
+        )
+        timeout_ceiling_seconds = self.timeout_seconds
+        if extended_timeout_allowed:
+            timeout_ceiling_seconds = max(
+                self.timeout_seconds,
+                _configured_positive_int(
+                    "EQUIPMENT_DR_CODEX_MAX_TIMEOUT_SECONDS",
+                    3600,
+                ),
+            )
+        execution_timeout_seconds = min(
+            requested_timeout_seconds,
+            timeout_ceiling_seconds,
+        )
+        retry_attempts = min(
+            self.retry_attempts,
+            max(1, int(options.get("_provider_retry_attempts", self.retry_attempts))),
+        )
 
         try:
             # 优化：使用缓存的命令构建
@@ -356,7 +380,7 @@ class CodexCliProvider:
             failure_detail = ""
             attempts_used = 0
 
-            for attempt in range(self.retry_attempts):
+            for attempt in range(retry_attempts):
                 attempts_used = attempt + 1
 
                 # 优化：使用预热的环境变量
@@ -367,13 +391,17 @@ class CodexCliProvider:
                     # asyncio subprocess.
                     result = await asyncio.to_thread(self._execute, command, prompt)
                 else:
-                    result = await self._execute_async(command, prompt)
+                    result = await self._execute_async(
+                        command,
+                        prompt,
+                        timeout_seconds=execution_timeout_seconds,
+                    )
                 self._perf_monitor.record('process_execute', monotonic() - exec_start)
 
                 if result.returncode == 0:
                     break
                 failure_detail = _codex_failure_detail(result.stdout, result.stderr)
-                if attempt + 1 >= self.retry_attempts or not _is_retryable_failure(
+                if attempt + 1 >= retry_attempts or not _is_retryable_failure(
                     failure_detail
                 ):
                     break
@@ -412,6 +440,8 @@ class CodexCliProvider:
                     "sandbox_mode": self.sandbox_mode,
                     "elapsed_seconds": round(elapsed_seconds, 3),
                     "attempts": attempts_used,
+                    "provider_timeout_seconds": execution_timeout_seconds,
+                    "extended_provider_timeout": extended_timeout_allowed,
                     "prompt_chars": len(prompt),
                     "output_chars": len(text),
                 },
@@ -560,6 +590,8 @@ class CodexCliProvider:
         self,
         command: Sequence[str],
         prompt: str,
+        *,
+        timeout_seconds: int | None = None,
     ) -> subprocess.CompletedProcess[str]:
         """Launch a cancellable Codex child and terminate its process group."""
         env = {
@@ -584,9 +616,10 @@ class CodexCliProvider:
         except OSError as exc:
             raise ProviderRequestError(f"Codex CLI could not start: {exc}") from exc
         try:
+            effective_timeout = int(timeout_seconds or self.timeout_seconds)
             stdout, stderr = await asyncio.wait_for(
                 process.communicate(prompt.encode("utf-8")),
-                timeout=self.timeout_seconds,
+                timeout=effective_timeout,
             )
         except asyncio.CancelledError:
             await _terminate_process_group(process)
@@ -594,7 +627,7 @@ class CodexCliProvider:
         except TimeoutError as exc:
             await _terminate_process_group(process)
             raise ProviderRequestError(
-                f"Codex CLI timed out after {self.timeout_seconds} seconds"
+                f"Codex CLI timed out after {effective_timeout} seconds"
             ) from exc
         return subprocess.CompletedProcess(
             args=list(command),
@@ -607,22 +640,52 @@ class CodexCliProvider:
 async def _terminate_process_group(
     process: asyncio.subprocess.Process,
 ) -> None:
-    if process.returncode is not None:
-        return
+    process_group_id = process.pid
     try:
-        os.killpg(process.pid, signal.SIGTERM)
+        os.killpg(process_group_id, signal.SIGTERM)
     except (ProcessLookupError, PermissionError):
-        process.terminate()
+        if process.returncode is None:
+            try:
+                process.terminate()
+            except ProcessLookupError:
+                pass
+
+    deadline = monotonic() + 3.0
+    while monotonic() < deadline:
+        if not _process_group_exists(process_group_id):
+            if process.returncode is None:
+                await process.wait()
+            return
+        await asyncio.sleep(0.05)
+
     try:
-        await asyncio.wait_for(process.wait(), timeout=3.0)
-        return
-    except TimeoutError:
-        pass
-    try:
-        os.killpg(process.pid, signal.SIGKILL)
+        os.killpg(process_group_id, signal.SIGKILL)
     except (ProcessLookupError, PermissionError):
-        process.kill()
-    await process.wait()
+        if process.returncode is None:
+            try:
+                process.kill()
+            except ProcessLookupError:
+                pass
+    if process.returncode is None:
+        await process.wait()
+
+
+def _process_group_exists(process_group_id: int) -> bool:
+    try:
+        os.killpg(process_group_id, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _configured_positive_int(name: str, default: int) -> int:
+    try:
+        value = int(os.environ.get(name, str(default)))
+    except (TypeError, ValueError):
+        value = default
+    return max(1, value)
 
 
 def _render_prompt(

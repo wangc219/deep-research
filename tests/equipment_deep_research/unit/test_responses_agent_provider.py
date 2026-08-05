@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 from types import SimpleNamespace
 
 import pytest
@@ -12,17 +13,31 @@ from equipment_deep_research.agents.provider import (
     _apply_codex_performance_options,
     _build_limited_report,
     _capability_direction_quality_issues,
+    _capability_portrait_alignment_issues,
     _capability_synthesis_handoff,
+    _clean_winning_hypothesis_title,
+    _clip_complete_report_phrase,
+    _dedupe_capability_title,
+    _enforce_report_hard_max,
+    _is_remote_precision_portfolio_direction,
     _recover_invalid_s6_result,
     _s6_can_use_lightweight_card_repair,
     _s6_repair_targets,
     _latest_inner_loop_failures,
     _report_draft_quality_issues,
+    _report_fragment_quality_issues,
+    _report_hard_max_chars,
     _report_issues_require_fallback,
+    _report_markdown_structure_issues,
+    _report_seed_copy_issues,
+    _remove_empty_report_clauses,
     _normalize_branch_report_labels,
     _normalize_report_structure_deterministically,
+    _normalize_s6_deterministic_format,
     _report_writer_system_prompt,
     _reporter_generation_payload,
+    _ensure_specialized_winning_seed_lanes,
+    _recover_specialized_winning_seed_hypotheses,
     _sanitize_reporter_output,
     _stabilize_report_delivery_contract,
     _typed_packet_payload,
@@ -40,7 +55,11 @@ from equipment_deep_research.providers.base import (
 )
 from equipment_deep_research.providers.fake import ScriptedFakeProvider
 from equipment_deep_research.providers.responses import ProviderRequestError
-from equipment_deep_research.orchestration.runner import DeepResearchRunner
+from equipment_deep_research.orchestration.runner import (
+    DeepResearchRunner,
+    _report_coupling_risk,
+    _report_indicator_portrait,
+)
 from equipment_deep_research.orchestration.deliverables import branch_writer_brief
 from equipment_deep_research.orchestration.capability_fallback import (
     build_deadline_weapon_directions,
@@ -49,6 +68,171 @@ from equipment_deep_research.orchestration.winning_swarm import (
     SWARM_SPECIALIST_ARCHETYPES,
 )
 from pathlib import Path
+
+
+@pytest.mark.parametrize(
+    ("name", "equipment_form", "overview"),
+    [
+        (
+            "航路伏击自主突击无人艇",
+            "低特征自主无人艇",
+            "概述：面向远海反舰阶段，针对库存不足，以低特征自主无人艇为主装备，"
+            "利用规模补充原理，采用冻结构型技术，通过多轴多波次突防，形成巡航效应器"
+            "纵深打击能力，实现对固定节点的毁伤。",
+        ),
+        (
+            "共架可消耗多任务弹药",
+            "共同推进、飞控、能源与发射接口的可消耗飞行弹体",
+            "概述：面向防空压制阶段，针对现役反辐射弹药难以跨越关机窗口，以多任务弹药"
+            "为主装备，利用失辐射等待原理，采用末段复核技术，通过关机目标再捕获，形成"
+            "节点压制能力，实现突防开窗。",
+        ),
+        (
+            "协同去重远程反舰巡航弹药",
+            "多模导引自主再捕获远程反舰巡航弹药",
+            "概述：面向防空压制阶段，针对现役反辐射弹药难以跨越关机窗口，以反舰巡航弹药"
+            "为主装备，利用失辐射等待原理，采用射频复核技术，通过猎杀辐射源，形成节点"
+            "压制能力，实现突防开窗。",
+        ),
+        (
+            "长航时可消耗多模反舰巡飞猎歼弹药",
+            "长航时反舰巡飞猎歼弹药",
+            "概述：面向远海反舰阶段，针对防空火控链完整，以反舰巡飞猎歼弹药为主装备，"
+            "利用特征模拟原理，采用可消耗诱饵和电子压制技术，通过诱导雷达开机并为主攻"
+            "波次开窗，形成压制能力，实现突防增益。",
+        ),
+        (
+            "岛链外长航时无人载弹母机",
+            "长航时低特征无人作战飞机，挂载防区外精确打击弹药",
+            "概述：面向机场受毁后的补击阶段，针对补射链中断，以无人载弹母机为主装备，"
+            "利用低空在位搜索原理，采用箱式任务载荷，通过箱式分批释放、多路径低空进入、"
+            "本地搜索和局部BDA，形成目标邻近空域补击能力，实现近区漏毁目标清除。",
+        ),
+    ],
+)
+def test_capability_alignment_gate_rejects_cross_card_semantics(
+    name: str,
+    equipment_form: str,
+    overview: str,
+) -> None:
+    issues = _capability_portrait_alignment_issues(
+        1,
+        {
+            "name": name,
+            "equipment_form": equipment_form,
+            "capability_portrait": overview,
+        },
+    )
+
+    assert issues
+    assert any("语义不一致" in issue or "串入其他装备族" in issue for issue in issues)
+
+
+def test_s6_normalization_rebuilds_evidence_framed_disconnected_cruise_card() -> None:
+    direction = {
+        "type": "upgrade",
+        "name": "断链复核低成本巡航弹",
+        "equipment_form": (
+            "地面或舰载箱式发射的低成本巡航弹，内置组合导航、"
+            "末端多模传感器和任务包安全控制器"
+        ),
+        "target_scenario": "前沿机场停摆、敌方防空和强电磁压制并存时",
+        "capability_gap": (
+            "公开基线强调低成本生产，未充分证明强干扰、断续授权和末端自主复核下的战役级补射能力"
+        ),
+        "scientific_principle": "以任务分工和工业补充速度改变高价拦截成本交换",
+        "enabling_technologies": ["抗干扰组合导航", "多模末制导复核", "任务包安全控制"],
+        "operational_concept": "后方地面或舰载箱式发射、抗扰进入、末端复核和补射",
+        "operational_process": ["目标包装订", "机动分批发射", "抗扰进入", "末端复核与补射"],
+        "capability_outcome": "形成弱网环境下可持续补射的远程消耗弹药层",
+        "military_value": "承担次高价值目标补射并维持机场受毁后的火力密度",
+        "winning_mechanism": "以低成本多波次补射消耗高价拦截库存",
+        "baseline_system": "Barracuda-500M类地面发射低成本巡航弹基线",
+        "strike_chain_contribution": "承担高端弹药后的补射和消耗层",
+        "query_relevance": "前沿机场受毁与强电磁压制下的跨岛链持续补射",
+        "capability_portrait": (
+            "概述：面向前沿机场停摆，针对公开基线未证明断链补射，以低成本巡航弹为主装备，"
+            "利用规模交换原理，采用抗扰导航，通过箱式发射与末端复核，形成补射能力，实现纵深毁伤。\n"
+            "- 装备与技术实现：集成组合导航与多模末制导。\n"
+            "- 关键作战流程：完成装订、发射、进入、复核和补射。\n"
+            "- 形成能力与作战效果：形成弱网补射能力。\n"
+            "- 制胜逻辑机理与对抗边界：以低成本弹药消耗高价拦截弹。"
+        ),
+    }
+
+    normalized = _normalize_s6_deterministic_format(
+        {"concept_directions": [direction], "confidence": 0.72},
+        topic="前沿机场受毁与强电磁压制下跨岛链无人远程火力持续释能装备研究",
+    )["concept_directions"][0]
+
+    assert normalized["name"] == "断链复核低成本巡航弹补击"
+    assert "针对公开基线" not in normalized["capability_portrait"].splitlines()[0]
+    assert _capability_portrait_alignment_issues(1, normalized) == []
+
+
+def test_s6_normalization_recovers_semisubmersible_launcher_as_primary_equipment() -> None:
+    direction = {
+        "type": "new_capability",
+        "name": "远程反舰导弹",
+        "equipment_form": (
+            "低特征无人半潜平台，内置封装式远程反舰或对陆打击弹药、"
+            "被动导航载荷、任务包控制器和安全终止模块"
+        ),
+        "target_scenario": "西太岛链外缘敌海上编队压近并实施强电磁压制",
+        "capability_gap": "现有公开远火缺少可低特征预置、弱网授权和无人释能的海上弹药库存",
+        "scientific_principle": "分布式海上预置和异步发射替代受毁机场与固定阵地",
+        "enabling_technologies": ["半潜低特征艇体", "被动导航", "低截获授权"],
+        "operational_concept": "海上低特征待机、受控释放远程反舰弹药和射后转移",
+        "operational_process": ["分散布放", "海上待机", "授权复核", "发射反舰弹药", "转移补击"],
+        "capability_outcome": "形成机场受毁后的海上远程反舰火力接管能力",
+        "military_value": "对海上编队和补给节点实施齐射与补击",
+        "winning_mechanism": "迫使对手扩大搜潜、搜海和拦截范围",
+        "function": "无人半潜节点按授权窗口对海上编队和补给节点实施齐射与补击",
+        "query_relevance": "机场受毁后的跨岛链海上远程火力续接",
+        "capability_portrait": "概述：旧画像误把载荷当作主装备。",
+    }
+
+    normalized = _normalize_s6_deterministic_format(
+        {"concept_directions": [direction], "confidence": 0.72},
+        topic="前沿机场受毁与强电磁压制下跨岛链无人远程火力持续释能装备研究",
+    )["concept_directions"][0]
+
+    assert normalized["name"] == "半潜预置反舰导弹火力舱"
+    assert "反舰或对陆" not in normalized["equipment_form"]
+    assert "受控释放巡航弹" in normalized["capability_portrait"]
+    assert _capability_portrait_alignment_issues(1, normalized) == []
+
+
+def test_s6_normalization_recovers_transport_mother_munition_family() -> None:
+    direction = {
+        "type": "new_capability",
+        "name": "小型打击巡飞弹目标发现",
+        "equipment_form": (
+            "远程运输母弹，内置可消耗诱骗子弹、电子压制子弹、"
+            "侦察确认子弹和小型打击巡飞弹"
+        ),
+        "target_scenario": "岛链外海敌防空和舰队护航体系严密且前沿机场不可用",
+        "capability_gap": "现有公开弹药缺少跨岛链母弹携带异构子弹并在弱网下分层释能",
+        "scientific_principle": "远程母载运输和分时释放把一次起射转换为多效应连续动作",
+        "enabling_technologies": ["模块化子舱", "安全分离", "分时释放状态机", "窗口通报"],
+        "operational_concept": "后方起射、先遣诱饵侦察、授权压制毁伤释放和窗口通报",
+        "operational_process": ["后方起射", "诱饵侦察释放", "响应复核", "压制毁伤释放", "窗口通报"],
+        "capability_outcome": "形成一次起射下的异构分层释能能力",
+        "military_value": "诱出或压低敌防空火控并为后续精打通报窗口",
+        "winning_mechanism": "用异构子效应器改变单功能弹药多次独立起射逻辑",
+        "query_relevance": "机场受毁后的跨岛链多效应火力入口",
+        "capability_portrait": "概述：旧画像误把末端小型巡飞弹当作主装备。",
+    }
+
+    normalized = _normalize_s6_deterministic_format(
+        {"concept_directions": [direction], "confidence": 0.72},
+        topic="前沿机场受毁与强电磁压制下跨岛链无人远程火力持续释能装备研究",
+    )["concept_directions"][0]
+
+    assert normalized["name"] == "异构子效应器巡航母弹"
+    overview = normalized["capability_portrait"].splitlines()[0]
+    assert all(marker in overview for marker in ("巡航母弹", "子效应器", "分时释放", "窗口通报"))
+    assert _capability_portrait_alignment_issues(1, normalized) == []
 
 
 def _three_layer_report(
@@ -303,11 +487,19 @@ def test_swarm_and_quality_judge_have_separate_reserved_call_budgets() -> None:
         provider._reserve_model_call(priority="quality_gate")
 
 
-def test_dynamic_v2_reporter_generates_three_layers_in_parallel(monkeypatch) -> None:
+@pytest.mark.parametrize(
+    "execution_profile_id",
+    ["swarm_quality_v1", "winning_swarm_dynamic_v2"],
+)
+def test_quality_reporter_generates_three_layers_in_parallel(
+    monkeypatch,
+    execution_profile_id: str,
+) -> None:
     provider = ResponsesAgentProvider(ScriptedFakeProvider([]))
     running = 0
     maximum_running = 0
     phases: list[str] = []
+    contracts: list[dict] = []
 
     async def fake_reporter(
         system,
@@ -326,6 +518,7 @@ def test_dynamic_v2_reporter_generates_three_layers_in_parallel(monkeypatch) -> 
         await asyncio.sleep(0.02)
         running -= 1
         contract = payload["parallel_section_contract"]
+        contracts.append(contract)
         return "\n".join(
             [f"## {contract['required_h2']}"]
             + [f"### {item}\n完整研究判断。" for item in contract["required_h3"]]
@@ -345,12 +538,13 @@ def test_dynamic_v2_reporter_generates_three_layers_in_parallel(monkeypatch) -> 
         {
             "run_id": "parallel-reporter",
             "topic": "动态集群装备研究",
-            "execution_profile_id": "winning_swarm_dynamic_v2",
+            "execution_profile_id": execution_profile_id,
             "branch": "A",
         }
     )
 
     assert maximum_running == 3
+    assert all(contract["hard_max_chars"] == 0 for contract in contracts)
     assert set(phases) == {
         "report_generation_layer_1_demand",
         "report_generation_layer_2_technology",
@@ -358,6 +552,286 @@ def test_dynamic_v2_reporter_generates_three_layers_in_parallel(monkeypatch) -> 
     }
     assert "## 第一层：需求挖掘层" in result
     assert "## 第三层：能力图像与效能贡献层" in result
+
+
+@pytest.mark.parametrize(
+    "execution_profile_id",
+    ["swarm_quality_v1", "winning_swarm_dynamic_v2"],
+)
+def test_project_quality_reporter_fits_four_call_delivery_budget(
+    monkeypatch,
+    execution_profile_id: str,
+) -> None:
+    provider = ResponsesAgentProvider(ScriptedFakeProvider([]))
+    running = 0
+    maximum_running = 0
+    phases: list[str] = []
+    contracts: list[dict] = []
+    layer_payloads: dict[str, dict] = {}
+    token_budgets: list[int] = []
+    efforts: list[str] = []
+
+    async def fake_reporter(
+        system,
+        payload,
+        max_output_tokens,
+        *,
+        phase,
+        run_id="",
+        isolation_id="",
+    ):
+        nonlocal running, maximum_running
+        del run_id, isolation_id
+        running += 1
+        maximum_running = max(maximum_running, running)
+        phases.append(phase)
+        layer_payloads[phase] = payload
+        token_budgets.append(max_output_tokens)
+        efforts.append(system)
+        contract = payload["parallel_section_contract"]
+        contracts.append(contract)
+        await asyncio.sleep(0.02)
+        running -= 1
+        parts: list[str] = []
+        for h2, h3s in contract["h2_h3_map"].items():
+            parts.append(f"## {h2}")
+            parts.extend(f"### {h3}\n完整研究判断。" for h3 in h3s)
+        return "\n".join(parts)
+
+    provider._run_reporter_text = fake_reporter  # type: ignore[method-assign]
+    monkeypatch.setattr(
+        "equipment_deep_research.agents.provider._report_draft_quality_issues",
+        lambda report, payload: [],
+    )
+    monkeypatch.setattr(
+        "equipment_deep_research.agents.provider._minimum_viable_model_report",
+        lambda report, payload: True,
+    )
+
+    result = provider.draft_report(
+        {
+            "run_id": "project-parallel-reporter",
+            "topic": "强电磁压制下精确打击任务续接装备研究",
+            "execution_profile_id": execution_profile_id,
+            "report_template_mode": "project_argument_v1",
+            "branch": "G",
+            "synthesis_seed": {
+                "decisive_anchors": ["断链后目标证据快速过期"],
+                "comparative_status": {
+                    "foreign_cases": ["公开远程反舰弹药基线"]
+                },
+                "capability_cues": [
+                    {
+                        "direction": "有限区搜索远程反舰巡航弹药",
+                        "capability_gap": "目标航迹过期后缺少安全再捕获闭环",
+                        "mission_effect": "断链后直接反舰毁伤",
+                        "public_equipment_baseline": "LRASM公开基线",
+                        "equipment_hint": "多模远程反舰巡航弹药",
+                        "scientific_principle": "有限区搜索与身份复核",
+                        "operational_process": ["任务装订", "有限区搜索", "直接攻击"],
+                        "indicator_portrait": "搜索区覆盖率与剩余能量裕度",
+                        "coupling_risk": "导航、能源和复核串联耦合",
+                    }
+                ],
+            },
+        }
+    )
+
+    assert maximum_running == 4
+    assert token_budgets == [2800, 1800, 1800, 2600]
+    assert all("能用更短篇幅闭合时立即收束" in item for item in efforts)
+    assert all("禁止连续照录其中的长句" in item for item in efforts)
+    assert all("不得通过删除事实、来源、反证或验证要求" in item for item in efforts)
+    assert all(contract["hard_max_chars"] == 0 for contract in contracts)
+    assert set(phases) == {
+        "report_generation_chapter_1_demand",
+        "report_generation_chapter_2_portrait",
+        "report_generation_chapter_3_solution",
+        "report_generation_chapter_4_technology_foundation",
+    }
+    demand_handoff = layer_payloads[
+        "report_generation_chapter_1_demand"
+    ]["research_handoff"]
+    portrait_handoff = layer_payloads[
+        "report_generation_chapter_2_portrait"
+    ]["research_handoff"]
+    solution_handoff = layer_payloads[
+        "report_generation_chapter_3_solution"
+    ]["research_handoff"]
+    technology_handoff = layer_payloads[
+        "report_generation_chapter_4_technology_foundation"
+    ]["research_handoff"]
+    assert "comparative_status" in demand_handoff
+    assert "comparative_status" not in portrait_handoff
+    assert "decisive_anchors" not in solution_handoff
+    assert "comparative_status" in technology_handoff
+    demand_cue = demand_handoff["capability_cues"][0]
+    portrait_cue = portrait_handoff["capability_cues"][0]
+    solution_cue = solution_handoff["capability_cues"][0]
+    technology_cue = technology_handoff["capability_cues"][0]
+    assert "capability_gap" in demand_cue
+    assert "operational_process" not in demand_cue
+    assert "operational_process" in portrait_cue
+    assert "indicator_portrait" in portrait_cue
+    assert "operational_process" in solution_cue
+    assert "mission_effect" not in solution_cue
+    assert "coupling_risk" in technology_cue
+    assert "operational_process" not in technology_cue
+    final_contract = next(
+        item
+        for item in contracts
+        if item["layer_id"] == "chapter_4_technology_foundation"
+    )
+    assert final_contract["h2_h3_map"] == {
+        "四、关键技术": ["（一）关键技术清单与攻关途径"],
+        "五、研制基础": ["（一）参与单位", "（二）技术基础"],
+    }
+    assert "## 五、研制基础" in result
+
+
+def test_dynamic_reporter_stops_before_model_when_portfolio_gate_failed(
+    monkeypatch,
+) -> None:
+    provider = ResponsesAgentProvider(ScriptedFakeProvider([]))
+    started = False
+
+    def fail_parallel(*args, **kwargs):
+        nonlocal started
+        del args, kwargs
+        started = True
+        raise AssertionError("Reporter must not start for an invalid portfolio")
+
+    monkeypatch.setattr(provider, "_draft_parallel_report", fail_parallel)
+
+    with pytest.raises(ValueError, match="before Reporter"):
+        provider.draft_report(
+            {
+                "topic": "无人远程火力打击装备研究",
+                "execution_profile_id": "winning_swarm_dynamic_v2",
+                "portfolio_quality_gate": {
+                    "passed": False,
+                    "direction_count": 2,
+                    "direct_combat_equipment_count": 2,
+                    "distinct_direct_equipment_family_count": 2,
+                    "preferred_distinct_direct_equipment": 5,
+                },
+            }
+        )
+
+    assert started is False
+
+
+def test_specialized_seed_lanes_preserve_query_model_rows_over_fixed_calibrated_seeds() -> None:
+    evidence = [
+        {
+            "evidence_id": "ev-weapon_equipment-web-harop",
+            "source_title": "IAI Harop loitering munition",
+            "claim": "Harop searches, identifies and attacks high-value targets.",
+        },
+        {
+            "evidence_id": "ev-weapon_equipment-web-aargm",
+            "source_title": "Navy AARGM-ER enters production",
+            "claim": "AARGM-ER anti-radiation missile production decision.",
+        },
+        {
+            "evidence_id": "ev-weapon_equipment-web-jassm",
+            "source_title": "JASSM AGM-158 standoff missile",
+            "claim": "Low-observable standoff precision strike missile.",
+        },
+        {
+            "evidence_id": "ev-weapon_equipment-web-prsm-army",
+            "source_title": "Army announces first Precision Strike Missile delivery",
+            "claim": "The Army received its first PrSM missiles.",
+        },
+        {
+            "evidence_id": "ev-weapon_equipment-web-prsm-gao",
+            "source_title": "GAO long-range modernization assessment",
+            "claim": "PrSM iterative development and test risks.",
+        },
+    ]
+    direct = _recover_specialized_winning_seed_hypotheses(
+        evidence,
+        archetype="direct_combat_equipment_generator",
+    )
+    assert [item["equipment_forms"][0] for item in direct] == [
+        "固定构型长航时巡飞猎歼弹药",
+        "固定构型远域反辐射精确制导弹药",
+    ]
+
+    remote, recovered_count = _ensure_specialized_winning_seed_lanes(
+        [
+            {
+                "title": "PrSM多功能母弹释放与持续联网复合构型",
+                "nearest_public_baseline": "PrSM",
+                "changed_confrontation_variable": "堆叠多种未经锚定能力",
+                "equipment_forms": ["地面发射远程精确制导导弹"],
+                "evidence_ids": ["ev-weapon_equipment-web-prsm-gao"],
+            },
+            {
+                "title": "JASSM持续联网末段复核复合构型",
+                "nearest_public_baseline": "JASSM",
+                "changed_confrontation_variable": "堆叠多种未经锚定能力",
+                "equipment_forms": ["空射防区外巡航导弹"],
+                "evidence_ids": ["ev-weapon_equipment-web-jassm"],
+            },
+        ],
+        evidence,
+        archetype="remote_precision_munition_generator",
+    )
+
+    assert recovered_count == 0
+    assert {item["title"] for item in remote} == {
+        "PrSM多功能母弹释放与持续联网复合构型",
+        "JASSM持续联网末段复核复合构型",
+    }
+    prsm = next(item for item in remote if item["title"].startswith("PrSM"))
+    assert prsm["evidence_ids"] == ["ev-weapon_equipment-web-prsm-gao"]
+
+
+def test_project_parallel_reporter_runs_with_real_four_call_budget(monkeypatch) -> None:
+    backend = ScriptedFakeProvider(
+        [
+            [ProviderStreamEvent.final(ProviderFinalTurn(text=f"## chapter {index}"))]
+            for index in range(1, 5)
+        ]
+    )
+    provider = ResponsesAgentProvider(backend)
+    provider.configure_run_budget(
+        {
+            "wall_clock_deadlines_enabled": False,
+            "maximum_model_calls": 20,
+            "maximum_model_calls_with_residuals": 20,
+            "maximum_swarm_model_calls": 16,
+            "maximum_quality_judge_model_calls": 2,
+            "maximum_delivery_model_calls": 4,
+            "codex_concurrency": 4,
+        }
+    )
+    monkeypatch.setattr(
+        "equipment_deep_research.agents.provider._report_draft_quality_issues",
+        lambda report, payload: [],
+    )
+    monkeypatch.setattr(
+        "equipment_deep_research.agents.provider._minimum_viable_model_report",
+        lambda report, payload: True,
+    )
+    monkeypatch.setattr(
+        provider,
+        "_limited_report_delivery",
+        lambda *args, **kwargs: pytest.fail("four-call project report must not fallback"),
+    )
+
+    result = provider.draft_report(
+        {
+            "run_id": "four-call-budget",
+            "topic": "强电磁压制下精确打击任务续接装备研究",
+            "execution_profile_id": "winning_swarm_dynamic_v2",
+            "report_template_mode": "project_argument_v1",
+        }
+    )
+
+    assert len(backend.inputs) == 4
+    assert "chapter" in result
 
 
 def test_dynamic_v2_reporter_never_falls_back_to_full_serial_report(monkeypatch) -> None:
@@ -394,7 +868,159 @@ def test_dynamic_v2_reporter_never_falls_back_to_full_serial_report(monkeypatch)
     assert full_attempted is False
 
 
-def test_parallel_reporter_layer_uses_medium_reasoning() -> None:
+def test_parallel_quality_reporter_keeps_full_report_timeout(monkeypatch) -> None:
+    provider = ResponsesAgentProvider(ScriptedFakeProvider([]))
+    captured: dict[str, float] = {}
+
+    def capture_parallel(payload, **kwargs):
+        del payload
+        captured["timeout_seconds"] = kwargs["timeout_seconds"]
+        return "完整并行报告"
+
+    monkeypatch.setenv("EQUIPMENT_DR_REPORT_TIMEOUT_SECONDS", "487")
+    monkeypatch.setattr(provider, "_draft_parallel_report", capture_parallel)
+
+    result = provider.draft_report(
+        {
+            "topic": "动态集群装备研究",
+            "execution_profile_id": "winning_swarm_dynamic_v2",
+        }
+    )
+
+    assert result == "完整并行报告"
+    assert captured["timeout_seconds"] == 487.0
+
+
+def test_limited_report_rebuilds_truncated_parallel_draft_with_all_nine_items() -> None:
+    provider = ResponsesAgentProvider(ScriptedFakeProvider([]))
+    provider._latest_report_draft = (
+        "## 第一层：需求挖掘层——场景·战法/技术·装备能力特征\n"
+        "### ① 典型作战场景\n内容。\n"
+        "### ② 新战法或新概念技术及制胜机理\n内容。\n"
+        "### ③ 装备能力特征清单\n内容。\n"
+        "## 第二层：技术攻关层——能力实现途径与核心技术\n"
+        "### ④ 能力实现途径\n内容。\n"
+        "### ⑤ 核心技术清单与攻关优先级\n内容。\n"
+        "### ⑥ 技术耦合与短板风险\n内容。\n"
+        "## 第三层：能力图像与效能贡献层\n"
+        "### ⑦ 装备能力图像\n内容。\n"
+        "### ⑧ 效能贡献评估\n被截断。"
+    )
+
+    result = provider._limited_report_delivery(
+        {
+            "topic": "无人远程火力打击装备",
+            "branch_writer_brief": {"branch": "A", "hard_max_chars": 12000},
+            "research_handoff": {"capability_cues": []},
+        },
+        failure=ValueError("parallel layer truncated"),
+    )
+
+    assert "### ⑨ 发展优先级与近期抓手" in result
+    assert len(result) <= 12000
+
+
+def test_project_limited_delivery_preserves_completed_model_chapter() -> None:
+    provider = ResponsesAgentProvider(ScriptedFakeProvider([]))
+    provider._latest_report_draft = """## 一、需求分析
+
+### （一）需求概述
+#### 1. 背景分析
+独特模型判断：强电磁压制改变的不是单条链路质量，而是目标包在暴露窗口内的有效寿命；必须用前出局部闭环续接远程火力。
+#### 2. 需求阐述
+需求从目标确认、授权、末段修正和战损评估四个断点反推，并绑定可试验的任务成功率与闭环时间口径。
+#### 3. 项目画像
+项目用可消耗低空平台与反辐射效应器构成窗口制造、近距确认、直接毁伤和战损回传的组合。
+
+### （二）国内外现状
+#### 1. 国外情况
+公开案例只作类别基线，不外推强压制条件下的任务续接能力。
+#### 2. 国内现状（中国）
+国内公开基础与项目增量分开判断，接口闭合和联合验证仍是核心增量。
+#### 3. 对比小结
+差异化在于把压制行为转化为暴露事件，并以可消耗平台补齐目标区最后一段闭环。
+
+### （三）建设必要性分析
+#### 1. 作战使用角度
+项目直接恢复受扰条件下的压制、毁伤和再攻击依据。
+#### 2. 装备能力提升角度
+能力建设同时校准响应、自主边界、成本交换和持续波次。
+#### 3. 领域占位角度
+形成可扩展平台族和统一任务接口。
+#### 4. 综合效益
+以任务收益、成本交换、工业补充和体系韧性联合验证。"""
+    payload = {
+        "topic": "强电磁压制下精确打击任务续接装备研究",
+        "execution_profile_id": "winning_swarm_dynamic_v2",
+        "report_template_mode": "project_argument_v1",
+        "synthesis_seed": {
+            "decisive_anchors": ["主链路中断后目标包快速失效。"],
+            "mission_chain_breaks": ["目标确认、授权和战损评估无法连续闭合。"],
+            "capability_cues": [
+                {
+                    "direction": "可消耗低空察打一体平台",
+                    "equipment_hint": "低空可消耗无人突击平台",
+                    "mission_effect": "续接目标确认并实施近距毁伤",
+                    "mechanism_hint": "前出待机、局部确认、受限交战和战损摘要回传",
+                }
+            ],
+        },
+    }
+
+    result = provider._limited_report_delivery(
+        payload,
+        failure=RuntimeError("one parallel chapter unavailable"),
+    )
+
+    assert "独特模型判断：强电磁压制改变的不是单条链路质量" in result
+    assert all(
+        heading in result
+        for heading in (
+            "## 一、需求分析",
+            "## 二、项目画像",
+            "## 三、总体方案",
+            "## 四、关键技术",
+            "## 五、研制基础",
+        )
+    )
+
+
+def test_project_limited_report_uses_handoff_instead_of_template_phrases() -> None:
+    result = _build_limited_report(
+        {
+            "topic": "强电磁压制下精确打击任务续接装备研究",
+            "execution_profile_id": "swarm_quality_v1",
+            "report_template_mode": "project_argument_v1",
+            "synthesis_seed": {
+                "decisive_anchors": ["强压制使远程目标包在短时暴露窗口内快速失效。"],
+                "mission_chain_breaks": ["末段确认和毁伤评估无法持续在线。"],
+                "priority_signals": ["P0验证目标区局部闭环能否恢复再攻击依据。"],
+                "capability_cues": [
+                    {
+                        "direction": "反辐射巡飞压制效应器群",
+                        "problem_statement": "持续压制源压缩精确打击窗口",
+                        "equipment_hint": "可消耗反辐射巡飞效应器",
+                        "mission_effect": "迫使压制源关机或暴露并制造突防窗口",
+                        "winning_mechanism": "把对手压制行为转化为可捕获的辐射暴露事件",
+                        "disruptive_relationship": "从被动抗扰转向主动猎杀压制收益来源",
+                    }
+                ],
+            },
+        }
+    )
+
+    assert "强压制使远程目标包在短时暴露窗口内快速失效" in result
+    assert "把对手压制行为转化为可捕获的辐射暴露事件" in result
+    assert "本限时版本只使用已接受交接" not in result
+    assert "以comparative_findings交接为准" not in result
+    assert "任务状态与授权控制层" in result
+    assert "| 子系统/装备方向 | 硬件与产品形态 |" in result
+    assert "| 技术名称 | 技术内涵 | 成熟度/现有基础 |" in result
+    assert "| 单位类型 | 主要责任 | 必须交付的接口或证据 |" in result
+    assert "逐装备承接关系如下" in result
+
+
+def test_parallel_reporter_layer_keeps_full_quality_capacity() -> None:
     backend = ScriptedFakeProvider(
         [[ProviderStreamEvent.final(ProviderFinalTurn(text="# report layer"))]]
     )
@@ -412,8 +1038,30 @@ def test_parallel_reporter_layer_uses_medium_reasoning() -> None:
 
     assert result == "# report layer"
     _, _, options = backend.inputs[0]
-    assert options["reasoning_effort"] == "medium"
-    assert options["max_output_tokens"] == 4200
+    assert options["reasoning_effort"] == "xhigh"
+    assert options["max_output_tokens"] == 12000
+
+
+def test_parallel_project_chapter_keeps_full_quality_capacity() -> None:
+    backend = ScriptedFakeProvider(
+        [[ProviderStreamEvent.final(ProviderFinalTurn(text="# report chapter"))]]
+    )
+    provider = ResponsesAgentProvider(backend)
+    provider.provider_kind = "codex_cli"
+
+    result = asyncio.run(
+        provider._run_reporter_text(
+            "write one project chapter",
+            {"query": "test", "report_template_mode": "project_argument_v1"},
+            2600,
+            phase="report_generation_chapter_4_technology_foundation",
+        )
+    )
+
+    assert result == "# report chapter"
+    _, _, options = backend.inputs[0]
+    assert options["reasoning_effort"] == "xhigh"
+    assert options["max_output_tokens"] == 12000
 
 
 def test_reporter_keeps_full_quality_after_hard_deadline(
@@ -614,6 +1262,235 @@ def test_invalid_s6_is_recovered_without_another_model_call() -> None:
     assert any("导弹" in name for name in names)
 
 
+def _direct_weapon_evidence_fixture() -> list[dict[str, str]]:
+    return [
+        {
+            "evidence_id": "ev-weapon_equipment-web-jassm",
+            "created_by": "weapon_equipment",
+            "source_title": "JASSM / Lockheed Martin",
+            "source_url": "https://example.test/jassm",
+            "claim": "JASSM-ER is an air-launched standoff cruise missile.",
+        },
+        {
+            "evidence_id": "ev-weapon_equipment-web-prsm",
+            "created_by": "weapon_equipment",
+            "source_title": "First Precision Strike Missile delivery",
+            "source_url": "https://example.test/prsm",
+            "claim": "The Army received the first PrSM delivery.",
+        },
+        {
+            "evidence_id": "ev-weapon_equipment-web-harop",
+            "created_by": "weapon_equipment",
+            "source_title": "IAI Harop",
+            "source_url": "https://example.test/harop",
+            "claim": "Harop is a loitering munition for attack missions.",
+        },
+        {
+            "evidence_id": "ev-weapon_equipment-web-barracuda",
+            "created_by": "weapon_equipment",
+            "source_title": "Surface-Launched Barracuda-500M production",
+            "source_url": "https://example.test/barracuda",
+            "claim": "Barracuda-500M is a mass-producible cruise effector.",
+        },
+        {
+            "evidence_id": "ev-weapon_equipment-web-mald",
+            "created_by": "weapon_equipment",
+            "source_title": "MALD decoy and MALD-J jammer variant",
+            "source_url": "https://example.test/mald",
+            "claim": "MALD-J is the jammer variant of the air-launched decoy.",
+        },
+        {
+            "evidence_id": "ev-weapon_equipment-web-launched-effects",
+            "created_by": "weapon_equipment",
+            "source_title": "Army Launched Effects and LASSO testing",
+            "source_url": "https://example.test/launched-effects",
+            "claim": "Launched Effects support low-altitude sensing and attack.",
+        },
+    ]
+
+
+def test_offensive_deadline_fallback_uses_specific_distinct_weapon_families() -> None:
+    rows = build_deadline_weapon_directions(
+        topic="2030年前后高密度反无人环境下无人远程火力打击装备研究",
+        evidence_index=_direct_weapon_evidence_fixture(),
+    )
+
+    names = [row["name"] for row in rows]
+    assert names == [
+        "空射隐身防区外抗扰巡航导弹补击",
+        "地射远程机动目标精确毁伤导弹",
+        "失辐射等待反辐射巡飞弹",
+        "低成本批量巡航效应器",
+        "空射可消耗电子攻击压制效应器",
+        "低空可消耗察打一体无人机",
+    ]
+    assert all("Coyote" not in name and "反无人拦截" not in name for name in names)
+    assert len({row["confidence"] for row in rows}) >= 4
+    assert all(
+        len(row["direct_evidence_refs"]) == 1
+        and row["direct_evidence_refs"][0].startswith("ev-weapon_equipment-")
+        for row in rows
+    )
+    assert len({tuple(row["direct_evidence_refs"]) for row in rows}) == 6
+
+
+def test_deadline_fallback_drops_optional_named_card_without_matching_object_evidence() -> None:
+    evidence = _direct_weapon_evidence_fixture()[:-1]
+    query = "2030年前后高密度反无人环境下无人远程火力打击装备研究"
+    rows = build_deadline_weapon_directions(
+        topic=query,
+        evidence_index=evidence,
+    )
+
+    assert len(rows) == 5
+    assert all(row["direct_evidence_refs"] for row in rows)
+    assert all("Launched Effects" not in row["name"] for row in rows)
+    assert _capability_direction_quality_issues(
+        {"concept_directions": rows},
+        handoff={"query": query, "public_evidence": evidence},
+    ) == []
+
+
+def test_deadline_fallback_uses_switchblade_identity_for_switchblade_evidence() -> None:
+    evidence = _direct_weapon_evidence_fixture()[:-1]
+    evidence.append(
+        {
+            "evidence_id": "ev-weapon_equipment-web-switchblade",
+            "created_by": "weapon_equipment",
+            "source_title": "Switchblade 600 / AeroVironment",
+            "source_url": "https://example.test/switchblade-600",
+            "claim": "Switchblade 600 is a tube-launched loitering munition.",
+        }
+    )
+    query = "2030年前后高密度反无人环境下无人远程火力打击装备研究"
+
+    rows = build_deadline_weapon_directions(
+        topic=query,
+        evidence_index=evidence,
+    )
+
+    assert len(rows) == 6
+    assert rows[-1]["name"] == "低空巡飞猎歼弹药"
+    assert rows[-1]["direct_evidence_refs"] == [
+        "ev-weapon_equipment-web-switchblade"
+    ]
+    assert "Launched Effects" not in rows[-1]["baseline_system"]
+    assert _capability_direction_quality_issues(
+        {"concept_directions": rows},
+        handoff={"query": query, "public_evidence": evidence},
+    ) == []
+
+
+def test_s6_gate_rejects_named_card_backed_only_by_unrelated_sources() -> None:
+    evidence = _direct_weapon_evidence_fixture()[:-1]
+    query = "2030年前后高密度反无人环境下无人远程火力打击装备研究"
+    rows = build_deadline_weapon_directions(topic=query)
+    rows[-1] = {
+        **rows[-1],
+        "direct_evidence_refs": [row["evidence_id"] for row in evidence],
+    }
+
+    issues = _capability_direction_quality_issues(
+        {"concept_directions": rows},
+        handoff={"query": query, "public_evidence": evidence},
+    )
+
+    assert any("具名装备方向必须引用与自身型号或装备族直接匹配" in issue for issue in issues)
+
+
+def test_s6_gate_rejects_mixed_jassm_prsm_primary_direction() -> None:
+    rows = build_deadline_weapon_directions(topic="无人远程精确火力打击装备")
+    rows[0] = {
+        **rows[0],
+        "name": "JASSM/PrSM抗骗再打击升级",
+        "equipment_form": "JASSM空射巡航导弹与PrSM地射远程导弹联合升级",
+    }
+
+    issues = _capability_direction_quality_issues(
+        {"concept_directions": rows},
+        handoff={"query": "无人远程精确火力打击装备"},
+    )
+
+    assert any("混合了多个主装备族" in issue for issue in issues)
+
+
+def test_s6_gate_rejects_multi_configuration_weapon_family_subject() -> None:
+    rows = build_deadline_weapon_directions(topic="无人远程精确火力打击装备")
+    rows[0] = {
+        **rows[0],
+        "equipment_form": (
+            "远程反舰精确导弹族，含搜索型前出弹、确认型复核弹和突击型战斗部弹"
+        ),
+    }
+
+    issues = _capability_direction_quality_issues(
+        {"concept_directions": rows},
+        handoff={"query": "无人远程精确火力打击装备"},
+    )
+
+    assert any("多构型装备族" in issue for issue in issues)
+
+
+def test_s6_gate_does_not_reject_query_relevant_defensive_cuas_by_fixed_portfolio_type() -> None:
+    offensive_rows = build_deadline_weapon_directions(
+        topic="高密度反无人环境下无人远程火力打击装备"
+    )
+    defensive_row = build_deadline_weapon_directions(topic="要地反无人低空防御")[5]
+    offensive_rows[-1] = defensive_row
+
+    issues = _capability_direction_quality_issues(
+        {"concept_directions": offensive_rows},
+        handoff={"query": "高密度反无人环境下无人远程火力打击装备"},
+    )
+
+    assert not any("禁止用纯防御C-UAS" in issue for issue in issues)
+
+
+def test_s6_gate_rejects_mechanically_identical_card_confidence() -> None:
+    rows = build_deadline_weapon_directions(topic="无人远程精确火力打击装备")
+    rows = [{**row, "confidence": 0.72} for row in rows]
+
+    issues = _capability_direction_quality_issues(
+        {"concept_directions": rows},
+        handoff={"query": "无人远程精确火力打击装备"},
+    )
+
+    assert any("confidence不得机械同值" in issue for issue in issues)
+
+
+def test_s6_handoff_prioritizes_full_direct_weapon_evidence_set() -> None:
+    direct_rows = _direct_weapon_evidence_fixture()
+    general_rows = [
+        {
+            "evidence_id": f"ev-general-{index}",
+            "created_by": "combat_scenario",
+            "source_title": f"General source {index}",
+            "source_url": f"https://example.test/general-{index}",
+            "claim": "General scenario evidence.",
+        }
+        for index in range(12)
+    ]
+    handoff = _capability_synthesis_handoff(
+        topic="无人远程精确火力打击装备",
+        branch="B",
+        prior_step_outputs={
+            "effect_chain": [
+                {
+                    "effect": "远程精确毁伤",
+                    "evidence_refs": ["ev-general-0"],
+                }
+            ]
+        },
+        evidence_index=[*general_rows, *direct_rows],
+    )
+
+    selected_ids = {
+        row["evidence_id"] for row in handoff["public_evidence"]
+    }
+    assert {row["evidence_id"] for row in direct_rows} <= selected_ids
+    assert len(handoff["public_evidence"]) == 14
+
+
 def test_s6_uses_lightweight_repair_for_a_bounded_local_card_set() -> None:
     rows = build_deadline_weapon_directions(
         topic="强干扰弱通信精确打击",
@@ -635,7 +1512,7 @@ def test_s6_uses_lightweight_repair_for_a_bounded_local_card_set() -> None:
     assert _s6_can_use_lightweight_card_repair(
         {"concept_directions": rows[:3]},
         ["S6必须形成5至7项具体、互异且高军事价值的最终武器装备方向"],
-    ) is False
+    ) is True
 
 
 def test_s6_combines_three_portfolio_issues_into_one_lightweight_repair() -> None:
@@ -658,6 +1535,20 @@ def test_s6_combines_three_portfolio_issues_into_one_lightweight_repair() -> Non
 
     targets = _s6_repair_targets(result, issues)
     assert 1 <= len(targets) <= 4
+    assert _s6_can_use_lightweight_card_repair(result, issues) is True
+
+
+def test_s6_relationship_diversity_uses_bounded_card_repair_not_full_regeneration() -> None:
+    rows = build_deadline_weapon_directions(
+        topic="强干扰弱通信精确打击",
+        evidence_ids=["ev-1"],
+    )
+    result = {"concept_directions": rows, "confidence": 0.7}
+    issues = [
+        "S6最终组合仅自然体现2类颠覆关系，至少需要3类与query因果相关且可落实到具体装备的关系"
+    ]
+
+    assert _s6_repair_targets(result, issues) == [4, 5, 6]
     assert _s6_can_use_lightweight_card_repair(result, issues) is True
 
 
@@ -783,6 +1674,8 @@ def test_report_generation_core_path_cannot_be_degraded_by_fast_profile(
         "report_generation_fast_finalize",
         "report_generation_timeout_retry",
         "report_generation_repair",
+        "report_generation_layer_1_demand",
+        "report_generation_chapter_1_demand",
     ],
 )
 def test_reporter_provider_call_is_always_xhigh_12000(
@@ -875,6 +1768,355 @@ def test_report_length_overrun_is_not_emitted_as_a_draft_issue() -> None:
         "超过交付硬上限" in issue
         for issue in _report_draft_quality_issues(text, payload)
     )
+
+
+def test_report_hard_max_compaction_preserves_canonical_structure() -> None:
+    text = _three_layer_report(detail_count=180)
+    payload = {
+        "branch_writer_brief": {
+            "branch": "A",
+            "hard_max_chars": 12000,
+        }
+    }
+
+    compacted = _enforce_report_hard_max(text, payload)
+
+    assert len(compacted) <= 12000
+    assert all(
+        heading in compacted
+        for heading in (
+            "### ① 典型作战场景",
+            "### ⑤ 核心技术清单与攻关优先级",
+            "### ⑨ 发展优先级与近期抓手",
+        )
+    )
+
+
+@pytest.mark.parametrize(
+    ("execution_profile_id", "report_template_mode"),
+    [
+        ("swarm_quality_v1", "three_layer_nine_item"),
+        ("swarm_quality_v1", "project_argument_v1"),
+        ("winning_swarm_dynamic_v2", "three_layer_nine_item"),
+        ("winning_swarm_dynamic_v2", "project_argument_v1"),
+    ],
+)
+def test_quality_report_has_no_character_hard_gate(
+    execution_profile_id: str,
+    report_template_mode: str,
+) -> None:
+    report = "## 一、需求分析\n\n" + ("完整深度论证保持原句。" * 2400)
+    payload = {
+        "report_template_mode": report_template_mode,
+        "execution_profile_id": execution_profile_id,
+        "branch_writer_brief": {"branch": "B", "hard_max_chars": 12000},
+    }
+
+    assert len(report) > 20000
+    assert _report_hard_max_chars(payload) == 0
+    assert _enforce_report_hard_max(report, payload) == report
+
+
+def test_project_quality_prompt_forbids_quality_loss_from_compression() -> None:
+    prompt = _report_writer_system_prompt(
+        {
+            "execution_profile_id": "swarm_quality_v1",
+            "report_template_mode": "project_argument_v1",
+        }
+    )
+
+    assert "最低深度参照，不是字符上限" in prompt
+    assert "绝不得为了压缩而删去具体装备事实" in prompt
+    assert "来源映射、反证、验证边界或项目落地建议" in prompt
+
+
+def test_non_quality_report_still_honors_configured_character_gate() -> None:
+    payload = {
+        "report_template_mode": "project_argument_v1",
+        "execution_profile_id": "optimized_v2",
+        "branch_writer_brief": {"branch": "B", "hard_max_chars": 12000},
+    }
+
+    assert _report_hard_max_chars(payload) == 12000
+
+
+def test_report_contract_without_explicit_ceiling_is_unbounded() -> None:
+    payload = {
+        "report_template_mode": "three_layer_nine_item",
+        "execution_profile_id": "optimized_v2",
+        "branch_writer_brief": branch_writer_brief("B"),
+    }
+
+    assert payload["branch_writer_brief"]["hard_max_chars"] == 0
+    assert _report_hard_max_chars(payload) == 0
+
+
+@pytest.mark.parametrize(
+    "direction",
+    [
+        {
+            "name": "Barracuda/FAMM固定构型低成本巡航效应器族",
+            "military_value": "持续实施战役纵深精确毁伤",
+        },
+        {
+            "name": "远域低成本巡航弹药",
+            "operational_mechanism": "防区外进入并完成精确毁伤",
+        },
+    ],
+)
+def test_remote_precision_classifier_recognizes_cruise_effectors(
+    direction: dict[str, str],
+) -> None:
+    assert _is_remote_precision_portfolio_direction(direction) is True
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        (
+            "B. Barracuda/FAMM类固定构型低成本巡航效应器族",
+            "Barracuda/FAMM类固定构型低成本巡航效应器族",
+        ),
+        ("A． 批量可消耗低空携弹无人平台族", "批量可消耗低空携弹无人平台族"),
+        ("1： 反辐射巡飞猎歼弹药", "反辐射巡飞猎歼弹药"),
+        ("B-21远程轰炸机", "B-21远程轰炸机"),
+        ("2S35自行火炮", "2S35自行火炮"),
+    ],
+)
+def test_capability_title_removes_only_leading_enumerator(
+    raw: str,
+    expected: str,
+) -> None:
+    assert _dedupe_capability_title(raw) == expected
+
+
+def test_reporter_draft_gate_rejects_punctuation_disguised_fragments() -> None:
+    text = _three_layer_report(extra="在高强度对抗中。矛盾在于。作战上。体现为。")
+    payload = {
+        "execution_profile_id": "swarm_quality_v1",
+        "branch_writer_brief": {"branch": "B", "hard_max_chars": 12000},
+    }
+
+    fragment_issues = _report_fragment_quality_issues(text)
+    issues = _report_draft_quality_issues(text, payload)
+
+    assert any("截断残句" in item for item in fragment_issues)
+    assert any("截断残句" in item for item in issues)
+
+
+def test_report_fragment_gate_accepts_complete_sentence_ending_with_target() -> None:
+    text = _three_layer_report(
+        extra="该方向不追求让弹药脱离人类授权自主选择目标。"
+    )
+
+    assert _report_fragment_quality_issues(text) == []
+
+
+def test_report_fragment_gate_accepts_equipment_list_table_cell() -> None:
+    text = _three_layer_report(
+        extra=(
+            "| 技术点 | 对应装备方向 |\n"
+            "|---|---|\n"
+            "| 抗扰PNT | JASSM-ER类、PrSM类、低空无人携弹平台 |"
+        )
+    )
+
+    assert _report_fragment_quality_issues(text) == []
+
+
+def test_report_fragment_gate_accepts_sentence_mapping_to_equipment_list() -> None:
+    text = _three_layer_report(
+        extra=(
+            "该能力重点对应Barracuda-500M/FAMM类固定构型低成本巡航效应器族"
+            "及批量可消耗低空平台。"
+        )
+    )
+
+    assert _report_fragment_quality_issues(text) == []
+
+
+@pytest.mark.parametrize(
+    "fragment",
+    [
+        "为后续无人火力持续压制关。",
+        "采用PrSM类地面机动发射远程精确制。",
+        "把低成本巡航效应器及。",
+        "形成可持续消耗任务的。",
+        "以美国陆军PrSM类导弹及其现有发为对照。",
+        "一旦失效会级联拖垮该。",
+        "作战机理延伸到任务区自主搜索…。",
+        "以末段确认降低误击风险，并以安全。",
+        "在导航受扰条件下保持边界，并以末段撤销降低攻击。",
+        "开展传感器—授权—发射闭环试验，确。",
+        "工程承接沿任务区推进。",
+        "开展工程样机和对抗试验；通过条件。",
+    ],
+)
+def test_report_fragment_gate_rejects_real_semantic_clipping_samples(fragment: str) -> None:
+    text = _three_layer_report(extra=fragment)
+
+    issues = _report_fragment_quality_issues(text)
+
+    assert any("截断残句" in item for item in issues)
+
+
+def test_complete_phrase_clipping_never_promotes_comma_to_sentence_boundary() -> None:
+    text = "任务系统完成目标更新、导航校验、末段确认，并进入后续毁伤评估。"
+
+    clipped = _clip_complete_report_phrase(text, 30)
+
+    assert clipped == text
+    assert "末段确认。" not in clipped
+
+
+def test_report_coupling_risk_keeps_conditional_and_consequence_in_one_sentence() -> None:
+    item = SimpleNamespace(
+        name="断链复核低成本巡航弹",
+        system_dependencies=[
+            "与现有指挥信息、情报侦察、保障和训练体系形成标准化接口",
+            "在通信受限、数据不完备和局部节点失效条件下支持降级运行",
+        ],
+        risk_boundaries=[
+            "失效边界：若目标机动超出任务包有效期，或末端传感器不能区分目标与诱饵，必须拒打。"
+        ],
+        operational_constraints=[],
+        project_function=(
+            "后方地面或机动发射单元在高带宽链路受阻时，发射低成本巡航弹并完成末段复核。"
+        ),
+        capability_outcome="形成弱网环境下可持续补射的远程消耗弹药层。",
+        mission_effect="维持机场受毁后的消耗战火力密度。",
+    )
+
+    risk = _report_coupling_risk(item)
+    clipped = _clip_complete_report_phrase(risk, 150)
+
+    assert "一旦触发，断链复核低成本巡航弹将不能形成弱网环境下可持续补射的远程消耗弹药层" in risk
+    assert "链路受阻时。" not in risk
+    assert "一旦触发" not in clipped or "将不能" in clipped
+
+
+def test_unmanned_arsenal_carrier_uses_inventory_release_metrics() -> None:
+    item = SimpleNamespace(
+        name="岛链外长航时无人载弹母机",
+        equipment_category="无人作战飞机",
+        equipment_form="长航时低特征无人作战飞机，挂载防区外精确打击弹药",
+        operational_mechanism="岛链外待机、授权分批释放、保留未用载荷和退出",
+        capability_gap="前沿机场受毁后缺少空基防区外弹药释放节点",
+        capability_type="new_capability",
+    )
+
+    portrait = _report_indicator_portrait(item)
+
+    assert all(
+        marker in portrait
+        for marker in ("防区外待机", "弹药库存管理", "未用载荷保留", "在位母机数")
+    )
+    assert not any(marker in portrait for marker in ("搜索、去冲突", "同时在空弹数"))
+
+
+def test_complete_phrase_clipping_preserves_unpunctuated_judgment() -> None:
+    text = "追溯研究结论并说明军事增量价值作用机理和失效边界"
+
+    clipped = _clip_complete_report_phrase(text, 18)
+
+    assert clipped == text
+    assert "…" not in clipped
+
+
+def test_empty_report_clause_is_removed_without_rewriting_prior_sentence() -> None:
+    text = "近期新研方向已经明确。3至10年演进窗口的触发条件包括。"
+
+    assert _remove_empty_report_clauses(text) == "近期新研方向已经明确。"
+
+
+@pytest.mark.parametrize(
+    "fragment",
+    [
+        "若导航欺骗识别晚于航路偏差形成。",
+        "若单弹突防率或精度过低。",
+        "固定构型低成本巡航效应器族的概念。",
+    ],
+)
+def test_empty_report_clause_removes_dangling_condition_or_nominal_stub(
+    fragment: str,
+) -> None:
+    assert _remove_empty_report_clauses(f"完整判断。{fragment}") == "完整判断。"
+
+
+def test_empty_report_clause_keeps_complete_conditional() -> None:
+    sentence = "若对手形成有效反制，则该机理在失效边界外不成立。"
+
+    assert _remove_empty_report_clauses(sentence) == sentence
+
+
+def test_report_hard_max_compacts_many_short_paragraphs() -> None:
+    headings = [
+        "## 第一层：作战需求与能力缺口",
+        "### ① 典型作战场景",
+        "### ② 任务链与关键矛盾",
+        "### ③ 能力缺口与需求优先级",
+        "## 第二层：技术体系与装备实现",
+        "### ④ 能力体系与装备映射",
+        "### ⑤ 核心技术清单与攻关优先级",
+        "### ⑥ 工程实现、成本与产能约束",
+        "## 第三层：装备组合与发展路线",
+        "### ⑦ 装备能力图像",
+        "### ⑧ 制胜效能与体系贡献",
+        "### ⑨ 发展优先级与近期抓手",
+    ]
+    paragraphs = [
+        "该段保持公开证据边界，说明装备能力、体系接口、失败条件和验证方向。"
+        for _ in range(520)
+    ]
+    text = "\n\n".join([*headings, *paragraphs])
+    payload = {
+        "branch_writer_brief": {
+            "branch": "A",
+            "hard_max_chars": 12000,
+        }
+    }
+
+    compacted = _enforce_report_hard_max(text, payload)
+
+    assert len(compacted) <= 12000
+    assert all(heading in compacted for heading in headings)
+
+
+def test_report_hard_max_normalizes_incomplete_line_endings_below_limit() -> None:
+    text = (
+        "## 第一层：作战需求与能力缺口\n\n"
+        "### ① 典型作战场景\n\n"
+        "该方向仍需公开证据校准，\n\n"
+        "- 该验证项保留失败边界；"
+    )
+    payload = {
+        "branch_writer_brief": {
+            "branch": "A",
+            "hard_max_chars": 12000,
+        }
+    }
+
+    compacted = _enforce_report_hard_max(text, payload)
+
+    assert "该方向仍需公开证据校准。" in compacted
+    assert "- 该验证项保留失败边界。" in compacted
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("S3候选一：受约束闭环型隐身远程导弹", "受约束闭环型隐身远程导弹"),
+        ("S3-A：潜伏唤醒式巡飞猎歼弹药", "潜伏唤醒式巡飞猎歼弹药"),
+        ("候选B：静默守候反辐射巡飞效应器", "静默守候反辐射巡飞效应器"),
+        ("竞争分支A：去中心化空中弹舱群", "去中心化空中弹舱群"),
+        ("A：批量可消耗低空无人携弹猎歼平台族", "批量可消耗低空无人携弹猎歼平台族"),
+    ],
+)
+def test_winning_hypothesis_title_removes_internal_candidate_labels(
+    raw: str,
+    expected: str,
+) -> None:
+    assert _clean_winning_hypothesis_title(raw) == expected
 
 
 def test_parallel_legacy_heading_structure_blocks_report_delivery() -> None:
@@ -1297,6 +2539,55 @@ def test_optimized_v2_forces_one_hybrid_discovery_lane() -> None:
     assert discovery_input["search_batch_count"] == 1
 
 
+def test_quality_profile_bounds_equipment_discovery_straggler_context() -> None:
+    backend = ScriptedFakeProvider(
+        [
+            [ProviderStreamEvent.final(ProviderFinalTurn(
+                text="bounded equipment discovery",
+                metadata={"web_sources": []},
+            ))],
+            [ProviderStreamEvent.final(ProviderFinalTurn(text=(
+                '{"findings":["形成装备需求判断"],"confidence":0.8,'
+                '"open_questions":[],"handoff_summary":"完成"}'
+            )))],
+        ]
+    )
+    agent = AgentDef(
+        "weapon_equipment",
+        "武器装备",
+        "装备公开资料研究",
+        ["equipment"],
+        [],
+        {},
+        research_policy={
+            "search_tracks": [f"track-{index}" for index in range(8)],
+            "target_source_count": 18,
+        },
+    )
+
+    ResponsesAgentProvider(backend).run_baseline_agent(
+        AgentRunRequest(
+            "run-quality-equipment",
+            agent,
+            "强电磁压制下精确打击任务续接装备研究",
+            "new_winning_mechanism",
+            {
+                "discovery_blueprint": {
+                    "execution_profile_id": "winning_swarm_dynamic_v2",
+                    "primary_branch": "D",
+                }
+            },
+        )
+    )
+
+    assert len(backend.inputs) == 2
+    discovery_messages, _, discovery_options = backend.inputs[0]
+    discovery_input = discovery_messages[1].content["task_input"]
+    assert discovery_input["target_source_count"] == 14
+    assert discovery_options["web_search"]["search_context_size"] == "medium"
+    assert discovery_options["max_output_tokens"] == 2000
+
+
 def test_optimized_v2_winning_timeout_returns_deterministic_fallback(monkeypatch) -> None:
     provider = ResponsesAgentProvider(ScriptedFakeProvider([]))
     provider.provider_kind = "codex_cli"
@@ -1695,13 +2986,17 @@ def test_reporter_call_uses_plain_isolated_context() -> None:
         "format_contract",
         "reporter_contract",
         "research_handoff",
-        "report_ready_section_map",
-        "public_sources",
-    }
+            "report_ready_section_map",
+            "public_sources",
+            "report_template_mode",
+        }
     assert "high_value_clues" not in user_payload
-    assert user_payload["target_length"] == "9000-10000字核心正文"
+    assert (
+        user_payload["target_length"]
+        == "信息闭环优先、通常7000-10000字的核心正文"
+    )
     assert "立即收尾" in user_payload["length_policy"]["stop_when"]
-    assert "12000字" in user_payload["length_policy"]["delivery_target"]
+    assert "不设统一字符硬上限" in user_payload["length_policy"]["delivery_target"]
     assert "不得触发重写" in user_payload["length_policy"]["overrun"]
     first_pass = user_payload["first_pass_quality_contract"]
     assert first_pass["goal"] == "single_pass_delivery_without_quality_repair"
@@ -1781,13 +3076,13 @@ def test_reporter_timeout_retries_once_without_quality_downshift(monkeypatch) ->
     assert "不得压缩为限时版或降低研究深度" in retry["retry_instruction"]
     assert "draft" not in retry
     assert "research_handoff" in retry
-    assert retry["target_length"] == "9000-10000字核心正文"
+    assert retry["target_length"] == "信息闭环优先、通常7000-10000字的核心正文"
     assert "立即收尾" in retry["length_policy"]["stop_when"]
-    assert "12000字" in retry["length_policy"]["delivery_target"]
+    assert "不设统一字符硬上限" in retry["length_policy"]["delivery_target"]
     assert "不得触发重写" in retry["length_policy"]["overrun"]
     assert len(retry["research_handoff"]["capability_cues"]) == 7
     assert attempts[0]["output_token_budget"] == 12000
-    assert attempts[0]["timeout_seconds"] == 600
+    assert attempts[0]["timeout_seconds"] == 3600
     assert attempts[1]["output_token_budget"] == 12000
     assert attempts[1]["timeout_seconds"] == 180
 
@@ -1962,13 +3257,215 @@ def test_report_delivery_stabilizer_projects_prechecked_indicators_and_coupling(
     assert "| 装备方向 | 能力域 | 指标画像 | 作战边界 |" not in stabilized
     assert "逐项效能、创新关系与失效边界如下" in stabilized
     assert "逐装备演示验证矩阵如下" in stabilized
+    assert "远程精确导弹的关键耦合与单点风险为" in stabilized
+    assert "低空无人突击集群的关键耦合与单点风险为" in stabilized
+    assert "逐装备详细能力画像如下" in stabilized
+    assert "概述：" in stabilized
+    assert "- 关键作战流程：" in stabilized
     assert "**远程精确导弹**（强链）" in stabilized
     assert "**低空无人突击集群**（开链）" in stabilized
+    assert "远程精确导弹的量化验证口径为射程看战役纵深" in stabilized
+    assert "低空无人突击集群的量化验证口径为覆盖看低空进入半径" in stabilized
+    assert stabilized.count("量化验证方向包括任务成功率") == 0
+    assert "。。" not in stabilized
+    assert "。；" not in stabilized
 
     stabilized_twice = _stabilize_report_delivery_contract(stabilized, payload)
     assert stabilized_twice == stabilized
     assert stabilized_twice.count("逐项效能、创新关系与失效边界如下") == 1
     assert stabilized_twice.count("逐装备演示验证矩阵如下") == 1
+    assert stabilized_twice.count("逐装备详细能力画像如下") == 1
+
+
+def test_report_delivery_stabilizer_reflows_long_prose_without_content_loss() -> None:
+    sentence = "该段用于验证报告在不删减研究内容的前提下按完整句增加段落边界。"
+    long_prose = sentence * 40
+    report = _three_layer_report().replace(
+        "对手在濒海复杂地域实施高烈度对抗，关键时间窗为首轮任务链形成前后；约束条件包括强电磁压制、低空遮蔽和补给受限。公开事实与分析推断分别标注，关键假设和反证保留。",
+        long_prose,
+    )
+
+    stabilized = _stabilize_report_delivery_contract(report, {})
+    prose_blocks = [
+        " ".join(block.split())
+        for block in re.split(r"\n\s*\n", stabilized)
+        if block.strip() and not block.lstrip().startswith(("#", "|", "- ", "* "))
+    ]
+
+    assert stabilized.count(sentence) == 40
+    assert "### ① 典型作战场景\n\n" in stabilized
+    assert all(len(block) <= 1050 for block in prose_blocks)
+    assert _stabilize_report_delivery_contract(stabilized, {}) == stabilized
+
+
+def test_report_stabilizer_does_not_repeat_same_failure_boundary_three_times() -> None:
+    name = "有限区搜索远程反舰巡航弹药"
+    boundary = (
+        "在远洋、目标密集或中立船舶众多场景中，识别与授权边界更严格，收益下降。"
+    )
+    report = _three_layer_report()
+    payload = {
+        "synthesis_seed": {
+            "capability_cues": [
+                {
+                    "direction": name,
+                    "capability_portrait": (
+                        "概述：面向受扰海上交战场景，针对外部航迹中断，利用弹上有限区搜索原理，"
+                        "采用多模末制导与抗干扰导航，通过装订、进入、复核和受控交战，形成断链后"
+                        "再捕获能力，实现对经授权水面目标的直接毁伤。\n"
+                        "- 装备与技术实现：集成弹载感知、任务计算和安全授权。\n"
+                        "- 关键作战流程：完成装订、进入、复核、交战和中止。\n"
+                        "- 形成能力与作战效果：形成直接反舰毁伤贡献。\n"
+                        "- 制胜逻辑机理与对抗边界：以有限搜索替代持续外部更新。\n"
+                        "- 发展与验证路径：开展半实物、靶场和红队验证。"
+                    ),
+                    "mission_effect": "断链后继续再捕获并直接毁伤经授权水面目标",
+                    "mechanism_hint": (
+                        "按目标误差边界装订任务→弹药进入有限搜索区→末段完成多模复核"
+                    ),
+                    "coupling_risk": f"弹载识别与安全授权串联耦合；{boundary}",
+                    "boundary": boundary,
+                }
+            ]
+        }
+    }
+
+    stabilized = _stabilize_report_delivery_contract(report, payload)
+    matrix = stabilized.split("逐装备演示验证矩阵如下", 1)[1]
+
+    assert matrix.count(boundary) == 1
+    assert "起始条件检验：按目标误差边界装订任务" in matrix
+    assert "任务动作检验：弹药进入有限搜索区" in matrix
+    assert "闭环结果检验：末段完成多模复核" in matrix
+    assert (
+        f"失败条件是上述{name}适用场景或反适应边界被触发，且直接作战贡献未达到任务基线"
+        in matrix
+    )
+    assert _stabilize_report_delivery_contract(stabilized, payload) == stabilized
+
+
+def test_project_report_stabilizer_inserts_missing_canonical_capability_table() -> None:
+    report = """## 二、项目画像
+
+### （一）装备图像概述
+
+Reporter先写了一段综合判断，但遗漏了能力方向对照表。
+
+### （二）作战运用模式
+
+#### 1. 作战运用流程
+
+流程正文。
+
+#### 2. 链路闭环分析
+
+闭环正文。
+"""
+    names = [f"具体武器装备方向{index}" for index in range(1, 6)]
+    payload = {
+        "report_template_mode": "project_argument_v1",
+        "synthesis_seed": {
+            "capability_cues": [
+                {
+                    "direction": name,
+                    "equipment_hint": f"{name}平台与载荷",
+                    "enabling_technologies": [f"{name}制导与任务接口"],
+                    "capability_outcome": f"形成{name}直接作战能力",
+                    "operational_concept": f"{name}完成部署、交战与再组织",
+                    "mission_effect": f"{name}形成直接毁伤贡献",
+                }
+                for name in names
+            ]
+        },
+    }
+
+    stabilized = _stabilize_report_delivery_contract(report, payload)
+    table_rows = [
+        line for line in stabilized.splitlines()
+        if line.startswith("| ") and line.endswith(" |")
+    ]
+
+    assert table_rows[0].startswith("| 装备系统方向 |")
+    assert [row.split("|")[1].strip() for row in table_rows[1:6]] == names
+    assert _stabilize_report_delivery_contract(stabilized, payload) == stabilized
+
+
+def test_report_stabilizer_replaces_orphaned_portrait_titles_once() -> None:
+    name = "远程精确打击武器"
+    orphaned = (
+        f"**{name}｜装备能力画像**\n\n"
+        f"**{name}｜装备能力画像**\n\n"
+        "逐装备详细能力画像如下；旧块将在本次重建。"
+    )
+    report = _three_layer_report().replace(
+        "### ⑧ 效能贡献评估",
+        f"{orphaned}\n\n### ⑧ 效能贡献评估",
+        1,
+    )
+    payload = {
+        "synthesis_seed": {
+            "capability_cues": [
+                {
+                    "direction": name,
+                    "capability_portrait": (
+                        "概述：形成直接作战能力。\n"
+                        "- 装备与技术实现：集成平台、载荷与任务系统。\n"
+                        "- 关键作战流程：完成部署、确认与交战。"
+                    ),
+                    "mission_effect": "形成直接毁伤贡献",
+                }
+            ]
+        }
+    }
+
+    stabilized = _stabilize_report_delivery_contract(report, payload)
+
+    assert stabilized.count(f"**{name}｜装备能力画像**") == 1
+    assert "- 装备与技术实现：" in stabilized
+    assert _stabilize_report_delivery_contract(stabilized, payload) == stabilized
+
+
+def test_report_stabilizer_repairs_historical_duplicate_portrait_scenario_prefix() -> None:
+    name = "远程精确制导弹药升级"
+    portrait = (
+        "概述：面向面向2030年前后强对抗环境，针对任务链断点形成直接毁伤能力。\n"
+        "- 装备与技术实现：集成平台、载荷、传感与任务系统。\n"
+        "- 关键作战流程：完成部署、确认、交战与再组织。\n"
+        "- 形成能力与作战效果：形成直接打击、压制和毁伤贡献。\n"
+        "- 制胜逻辑机理与对抗边界：改变时间与成本交换并保留失效边界。\n"
+        "- 发展与验证路径：通过样机、联试和红队对抗验证。"
+    )
+    report = _three_layer_report().replace(
+        "### ⑦ 装备能力图像\n",
+        "### ⑦ 装备能力图像\n"
+        "| 装备系统方向 | 能力域 | 指标画像 | 作战运用概念 | 谱系位置 |\n"
+        "|---|---|---|---|---|\n"
+        f"| {name} | 远程毁伤 | 待验证 | 任务装订与交战 | 现役升级 |\n",
+        1,
+    )
+    payload = {
+        "synthesis_seed": {
+            "capability_cues": [
+                {
+                    "direction": name,
+                    "capability_portrait": portrait,
+                    "mission_effect": "形成直接毁伤贡献",
+                }
+            ]
+        }
+    }
+
+    stabilized = _stabilize_report_delivery_contract(report, payload)
+
+    portrait_block = stabilized.split(f"**{name}｜装备能力画像**", 1)[1]
+    overview = next(
+        line for line in portrait_block.splitlines() if line.startswith("概述：")
+    )
+    assert all(
+        marker in overview
+        for marker in ("面向", "针对", "利用", "采用", "通过", "形成", "实现")
+    )
+    assert "面向面向" not in stabilized
 
 
 def test_report_delivery_stabilizer_can_complete_12000_char_delivery_without_model_rewrite() -> None:
@@ -1996,6 +3493,46 @@ def test_report_delivery_stabilizer_can_complete_12000_char_delivery_without_mod
     assert len(stabilized) > 12000
     assert stabilized.count("逐装备演示验证矩阵如下") == 1
     assert _stabilize_report_delivery_contract(stabilized, payload) == stabilized
+
+
+def test_report_hard_max_preserves_governed_capability_portrait_blocks() -> None:
+    cues = []
+    for index in range(1, 6):
+        name = f"远程精确打击武器{index}"
+        cues.append(
+            {
+                "direction": name,
+                "capability_portrait": (
+                    f"概述：{name}面向受扰纵深任务形成直接作战能力。\n"
+                    f"- 装备与技术实现：{name}集成平台、载荷、传感与任务系统。\n"
+                    f"- 关键作战流程：{name}完成部署、确认、交战与再组织。\n"
+                    f"- 形成能力与作战效果：{name}形成直接打击、压制和毁伤贡献。\n"
+                    f"- 制胜逻辑机理与对抗边界：{name}改变时间与成本交换并保留失效边界。\n"
+                    f"- 发展与验证路径：{name}通过样机、联试和红队对抗验证。"
+                ),
+                "mission_effect": f"{name}形成直接毁伤贡献",
+                "mechanism_hint": f"{name}完成任务闭环",
+                "indicator_portrait": f"{name}分别校准覆盖、响应、成本和生存性",
+            }
+        )
+    payload = {
+        "synthesis_seed": {"capability_cues": cues},
+        "branch_writer_brief": {"branch": "A", "hard_max_chars": 12000},
+    }
+    verbose = _three_layer_report(detail_count=180)
+    stabilized = _stabilize_report_delivery_contract(verbose, payload)
+
+    compacted = _enforce_report_hard_max(stabilized, payload)
+
+    assert len(compacted) <= 12000
+    for cue in cues:
+        name = cue["direction"]
+        assert f"**{name}｜装备能力画像**" in compacted
+        assert f"- 装备与技术实现：型号落点为{name}" in compacted
+        assert f"- 关键作战流程：以{name}" in compacted
+        assert f"- 形成能力与作战效果：形成{name}能力" in compacted
+        assert f"- 制胜逻辑机理与对抗边界：核心机理是{name}" in compacted
+        assert "- 发展与验证路径：" not in compacted
 
 
 def test_limited_report_delivery_also_applies_publication_stabilizer() -> None:
@@ -2138,7 +3675,7 @@ def test_reporter_compacts_and_sanitizes_upstream_clues() -> None:
     assert "| direction |" not in table_output
 
 
-def test_reporter_gate_preserves_all_input_directions_and_three_relationship_groups() -> None:
+def test_reporter_gate_preserves_all_input_directions_without_rejudging_relationship_count() -> None:
     names = [f"具体武器装备方向{index}" for index in range(1, 6)]
     payload = {
         "branch_writer_brief": branch_writer_brief("F"),
@@ -2176,7 +3713,7 @@ def test_reporter_gate_preserves_all_input_directions_and_three_relationship_gro
         "弱网自治", "受扰链路自治"
     ).replace("响应时间", "反应时长").replace("决策周期", "决策时长")
     shallow_issues = _report_draft_quality_issues(shallow, payload)
-    assert any("至少需要3类" in issue for issue in shallow_issues)
+    assert not any("至少需要3类" in issue for issue in shallow_issues)
 
 
 def test_reporter_gate_rejects_support_package_or_invented_section7_rows() -> None:
@@ -2259,9 +3796,216 @@ def test_optimized_reporter_treats_upstream_context_as_reasoning_seed() -> None:
     assert "避免复述" in system_prompt
     assert "核心正文达到约9000字" in system_prompt
     assert "立即结束" in system_prompt
-    assert "最终报告超过12000字" in system_prompt
+    assert "最终报告可随论证完整度自然超过核心正文目标" in system_prompt
     assert "不得为追逐字数重复论证" in system_prompt
     assert "绝对交付硬上限" not in system_prompt
+
+
+def test_report_seed_copy_gate_allows_one_exact_technical_sentence() -> None:
+    sentence = (
+        "固定被动射频提示只驱动预鉴定响应选择器，并复用既有电子攻击载荷；"
+        "接口公开不足属于工程验证风险，不证明既有闭环能力；同时必须验证收发隔离、"
+        "功耗、散热、电磁兼容和统计显著性。"
+    )
+    payload = {"synthesis_seed": {"capability_portrait": sentence}}
+
+    assert _report_seed_copy_issues(f"技术边界：{sentence}", payload) == []
+
+
+def test_report_seed_copy_gate_rejects_long_or_repeated_material_splicing() -> None:
+    long_seed = "".join(f"第{index}项研判说明任务链、装备身份、反证边界与验证计划。" for index in range(12))
+    payload = {"synthesis_seed": {"capability_portrait": long_seed}}
+
+    issues = _report_seed_copy_issues(long_seed, payload)
+
+    assert any("长段原句复用" in item for item in issues)
+
+
+def test_report_fragment_gate_accepts_complete_stage_classification_sentence() -> None:
+    sentence = "从任务阶段看，典型作战可拆成五个相互压迫的阶段。"
+
+    assert _report_fragment_quality_issues(sentence) == []
+
+
+def test_report_fragment_gate_accepts_complete_capability_definition_sentences() -> None:
+    text = (
+        "通过被动射频、光电、行为特征或景象匹配对候选目标或航路状态进行确认的能力。\n"
+        "在平台损失、节点失效和链路受扰后，体系仍能维持任务波次和闭环的能力。"
+    )
+
+    assert _report_fragment_quality_issues(text) == []
+
+
+def test_report_fragment_gate_accepts_complete_risk_and_participation_sentences() -> None:
+    text = (
+        "连续遥控不可假设，外部目标更新可能中断；若授权规则、禁击规则与平台自主边界不一致，"
+        "容易出现错失战机或越界风险。\n"
+        "远程精确毁伤方向需要空射、地面发射或兼容平台的接口单位参与。"
+    )
+
+    assert _report_fragment_quality_issues(text) == []
+
+
+def test_report_stabilizer_completes_isolated_validation_condition_label() -> None:
+    stabilized = _stabilize_report_delivery_contract(
+        "验证矩阵保留失败边界；通过条件。",
+        {},
+    )
+
+    assert "通过条件需在对应试验场景、基线与统计口径下明确。" in stabilized
+    assert _report_fragment_quality_issues(stabilized) == []
+
+
+def test_report_fragment_gate_accepts_structured_content_lead_in() -> None:
+    text = (
+        "逐装备承接关系如下。\n\n"
+        "| 装备方向 | 验证边界 |\n"
+        "|---|---|\n"
+        "| 远程精确毁伤装备 | 代表性干扰条件下验证 |"
+    )
+
+    assert _report_fragment_quality_issues(text) == []
+
+
+def test_reporter_handoff_marks_long_prose_for_rewrite_without_deleting_content() -> None:
+    portrait = (
+        "面向强电磁压制与弱通信条件，现役平台先完成黑盒基线表征并固化安全边界。"
+        "固定被动射频提示只驱动预鉴定响应选择器，复用既有电子攻击载荷。"
+        "随后验证收发隔离、功耗、散热、电磁兼容、统计显著性与任务收益。"
+    )
+
+    generation = _reporter_generation_payload(
+        {
+            "execution_profile_id": "baseline_v1",
+            "synthesis_seed": {
+                "capability_cues": [
+                    {
+                        "direction": "A. MALD-J弹上威胁感知闭环电子攻击效应器",
+                        "capability_portrait": portrait,
+                    }
+                ]
+            },
+        },
+        None,
+    )
+    marked = generation["research_handoff"]["capability_cues"][0][
+        "capability_portrait"
+    ]
+    direction = generation["research_handoff"]["capability_cues"][0]["direction"]
+
+    assert direction == "MALD-J弹上威胁感知闭环电子攻击效应器"
+    assert "〔改写断点：保留事实但不得照录〕" in marked
+    assert marked.replace("〔改写断点：保留事实但不得照录〕", "") == portrait
+    assert max(
+        len(item)
+        for item in marked.split("〔改写断点：保留事实但不得照录〕")
+    ) <= 56
+
+
+@pytest.mark.parametrize(
+    "execution_profile_id",
+    ["swarm_quality_v1", "winning_swarm_dynamic_v2"],
+)
+def test_quality_reporter_handoff_omits_governed_portrait_but_keeps_causal_cues(
+    execution_profile_id: str,
+) -> None:
+    portrait = (
+        "概述：面向强电磁压制下的反舰断链场景，针对外部航迹失效，利用弹上有限区搜索，"
+        "采用多模复核与安全授权，通过进入、搜索、复核和交战，形成自主续接能力，实现直接毁伤。\n"
+        "- 装备与技术实现：集成抗扰导航、任务计算与多模导引。\n"
+        "- 关键作战流程：完成装订、进入、搜索、复核和交战。\n"
+        "- 形成能力与作战效果：形成断链后直接反舰毁伤。\n"
+        "- 制胜逻辑机理与对抗边界：以有限搜索压缩目标脱离窗口。\n"
+        "- 发展与验证路径：完成半实物、海上靶场和红队验证。"
+    )
+    payload = {
+        "execution_profile_id": execution_profile_id,
+        "report_template_mode": "project_argument_v1",
+        "synthesis_seed": {
+            "capability_cues": [
+                {
+                    "direction": "有限区搜索远程反舰巡航弹药",
+                    "capability_portrait": portrait,
+                    "target_scenario": "GNSS拒止下远海反舰目标复获",
+                    "capability_gap": "外部航迹失效后火力链断裂",
+                    "scientific_principle": "弹上有限区搜索与多模复核",
+                    "equipment_hint": "多模导引远程反舰巡航弹药",
+                    "operational_concept": "按目标可能区装订后自主进入并受控交战",
+                    "operational_process": ["任务装订", "抗扰进入", "有限区搜索", "身份复核", "直接攻击"],
+                    "capability_outcome": "断链后直接毁伤经授权水面目标",
+                    "mission_effect": "续接侦察—决策—火力闭环",
+                    "indicator_portrait": "有限搜索区覆盖率、剩余能量裕度和误击拒打率",
+                    "coupling_risk": "导航、搜索能源和身份复核串联耦合",
+                    "boundary": "搜索区超出剩余能量时拒打",
+                    "development_path": "半实物、海上靶场和红队对抗验证",
+                }
+            ]
+        },
+    }
+
+    generation = _reporter_generation_payload(payload, None)
+    cue = generation["research_handoff"]["capability_cues"][0]
+
+    assert "capability_portrait" not in cue
+    assert cue["direction"] == "有限区搜索远程反舰巡航弹药"
+    assert cue["equipment_hint"] == "多模导引远程反舰巡航弹药"
+    assert cue["operational_process"] == [
+        "任务装订",
+        "抗扰进入",
+        "有限区搜索",
+        "身份复核",
+        "直接攻击",
+    ]
+    assert cue["indicator_portrait"].startswith("有限搜索区覆盖率")
+    assert cue["coupling_risk"].startswith("导航、搜索能源")
+    assert cue["boundary"] == "搜索区超出剩余能量时拒打"
+
+    report = """## 二、项目画像
+
+### （一）装备图像概述
+
+Reporter只保留装备差异与横向综合。
+
+### （二）作战运用模式
+
+#### 1. 作战运用流程
+
+按阶段组织装备运用。
+
+#### 2. 链路闭环分析
+
+按火力链闭环验收。
+"""
+    stabilized = _stabilize_report_delivery_contract(report, payload)
+
+    assert "**有限区搜索远程反舰巡航弹药｜装备能力画像**" in stabilized
+    overview = re.search(r"^概述[：:]\s*(.+)$", stabilized, flags=re.MULTILINE)
+    assert overview is not None
+    assert 120 <= len(overview.group(1)) <= 360
+    assert all(
+        marker in stabilized
+        for marker in (
+            "概述：面向GNSS拒止下远海反舰目标复获",
+            "- 装备与技术实现：",
+            "- 关键作战流程：",
+            "- 形成能力与作战效果：",
+            "- 制胜逻辑机理与对抗边界：",
+            "有限搜索区覆盖率",
+            "剩余能量裕度",
+        )
+    )
+    assert "- 发展与验证路径：" not in stabilized
+
+
+def test_reporter_output_sanitizer_removes_internal_rewrite_boundaries() -> None:
+    text = (
+        "| A. 批量可消耗低空无人携弹平台 | 完整事实前半句"
+        "〔改写断点：保留事实但不得照录〕完整事实后半句。 |"
+    )
+
+    assert _sanitize_reporter_output(text) == (
+        "| 批量可消耗低空无人携弹平台 | 完整事实前半句完整事实后半句。 |"
+    )
 
 
 def test_reporter_prompt_enforces_each_core_branch_writing_contract() -> None:
@@ -2346,7 +4090,7 @@ def test_reporter_prompt_enforces_adaptive_branch_mission_focus() -> None:
             assert marker in branch_requirement, (branch, marker)
 
 
-def test_reporter_quality_gate_repairs_incomplete_core_branch_draft() -> None:
+def test_reporter_quality_gate_repairs_structurally_incomplete_core_branch_draft() -> None:
     source_urls = [
         "https://example.test/source-1",
         "https://example.test/source-2",
@@ -2366,7 +4110,7 @@ def test_reporter_quality_gate_repairs_incomplete_core_branch_draft() -> None:
         ],
     }
     issues = _report_draft_quality_issues("过短且没有分支产物", payload)
-    assert any("最低门槛" in item for item in issues)
+    assert not any("最低门槛" in item for item in issues)
     assert any("缺少固定二级章节" in item for item in issues)
     assert any("缺少固定三级项" in item for item in issues)
     assert _report_draft_quality_issues(valid, payload) == []
@@ -2466,9 +4210,9 @@ def test_report_quality_gate_rejects_label_headings_and_shallow_decisions() -> N
     )
     issues = _report_draft_quality_issues(text, payload)
     assert any("独立标题" in item for item in issues)
-    assert any("军事运用价值不足" in item for item in issues)
-    assert any("因果论证不足" in item for item in issues)
-    assert any("装备决策不足" in item for item in issues)
+    assert not any("军事运用价值不足" in item for item in issues)
+    assert not any("因果论证不足" in item for item in issues)
+    assert not any("装备决策不足" in item for item in issues)
 
 
 def test_codex_reporter_ignores_registry_skill_and_harness_context() -> None:
@@ -2506,10 +4250,182 @@ def test_codex_reporter_ignores_registry_skill_and_harness_context() -> None:
     assert "tools" not in contract
     assert "harness" not in str(contract).lower()
     assert "$js-equipment-agent-runtime" not in messages[0].content
-    assert options["reasoning_effort"] == "xhigh"
     assert options["max_output_tokens"] == 12000
     assert options["reasoning_effort"] == "xhigh"
     assert options["prompt_mode"] == "standalone"
+
+
+def test_project_report_structure_allows_repeated_parenthetical_h3_labels() -> None:
+    text = "\n".join(
+        (
+            "## 一、需求分析",
+            "### （一）需求概述",
+            "#### 1. 背景分析",
+            "#### 2. 需求阐述",
+            "#### 3. 项目画像",
+            "### （二）国内外现状",
+            "#### 1. 国外情况",
+            "#### 2. 国内现状（中国）",
+            "#### 3. 对比小结",
+            "### （三）建设必要性分析",
+            "#### 1. 作战使用角度",
+            "#### 2. 装备能力提升角度",
+            "#### 3. 领域占位角度",
+            "#### 4. 综合效益",
+            "## 二、项目画像",
+            "### （一）装备图像概述",
+            "### （二）作战运用模式",
+            "#### 1. 作战运用流程",
+            "#### 2. 链路闭环分析",
+            "### （三）体系贡献率分析",
+            "### （四）主要战技指标",
+            "## 三、总体方案",
+            "### （一）总体架构",
+            "### （二）子系统方案",
+            "## 四、关键技术",
+            "### （一）关键技术清单与攻关途径",
+            "## 五、研制基础",
+            "### （一）参与单位",
+            "### （二）技术基础",
+        )
+    )
+
+    issues = _report_markdown_structure_issues(
+        text,
+        {"report_template_mode": "project_argument_v1"},
+    )
+
+    assert not any("重复" in issue for issue in issues)
+    assert not any("顺序混乱" in issue for issue in issues)
+
+
+def test_project_report_normalizer_restores_uniquely_implied_parent_heading() -> None:
+    draft = "\n".join(
+        (
+            "## 二、项目画像",
+            "### （四）主要战技指标",
+            "指标正文。",
+            "### （一）总体架构",
+            "总体架构正文。",
+            "### （二）子系统方案",
+            "子系统方案正文。",
+            "## 四、关键技术",
+            "### （一）关键技术清单与攻关途径",
+            "关键技术正文。",
+        )
+    )
+
+    normalized = _normalize_report_structure_deterministically(draft)
+
+    assert normalized.count("## 三、总体方案") == 1
+    assert normalized.index("## 三、总体方案") < normalized.index(
+        "### （一）总体架构"
+    )
+    assert "总体架构正文。" in normalized
+    assert "子系统方案正文。" in normalized
+
+
+def test_project_report_normalizer_splits_heading_stuck_to_completed_sentence() -> None:
+    draft = "## 二、项目画像\n结论不得提前承诺点值。## 三、总体方案\n### （一）总体架构\n正文。"
+
+    normalized = _normalize_report_structure_deterministically(draft)
+
+    assert "结论不得提前承诺点值。\n\n## 三、总体方案" in normalized
+    assert normalized.count("## 三、总体方案") == 1
+    assert "### （一）总体架构" in normalized
+
+
+def test_project_report_normalizer_does_not_split_plain_inline_hash_text() -> None:
+    draft = "## 二、项目画像\n正文说明版本##draft仍需复核。"
+
+    normalized = _normalize_report_structure_deterministically(draft)
+
+    assert "正文说明版本##draft仍需复核。" in normalized
+
+
+def test_project_report_normalizer_keeps_h4_labels_at_h4_depth() -> None:
+    draft = "\n".join(
+        (
+            "## 一、需求分析",
+            "### （一）需求概述",
+            "#### 1. 背景分析",
+            "背景正文。",
+            "#### 2. 需求阐述",
+            "需求正文。",
+            "#### 3. 项目画像",
+            "画像正文。",
+        )
+    )
+
+    normalized = _normalize_report_structure_deterministically(draft)
+
+    assert "#### 1. 背景分析" in normalized
+    assert "#### 2. 需求阐述" in normalized
+    assert "#### 3. 项目画像" in normalized
+    assert "### ① 典型作战场景" not in normalized
+
+
+def test_project_report_normalizer_does_not_drop_h3_containing_chapter_name() -> None:
+    draft = "\n".join(
+        (
+            "## 四、关键技术",
+            "### （一）关键技术清单与攻关途径",
+            "关键技术正文。",
+        )
+    )
+
+    normalized = _normalize_report_structure_deterministically(draft)
+
+    assert "## 四、关键技术" in normalized
+    assert "### （一）关键技术清单与攻关途径" in normalized
+    assert "关键技术正文。" in normalized
+
+
+def test_report_stabilizer_bounds_capability_table_cells_and_keeps_exact_name() -> None:
+    direction = "低空可消耗察打一体无人突击平台续接目标证据链"
+    long_text = "强干扰条件下的跨域任务续接、目标复核、精确打击与战损评估。" * 20
+    draft = """## 二、项目画像
+
+### （一）装备图像概述
+
+| 装备系统方向 | 装备平台与方案 | 核心技术 | 形成能力 | 作战概念与主要效果 |
+|---|---|---|---|---|
+| 临时方向 | 临时方案 | 临时技术 | 临时能力 | 临时概念 |
+
+### （二）作战运用模式
+"""
+    result = _stabilize_report_delivery_contract(
+        draft,
+        {
+            "report_template_mode": "project_argument_v1",
+            "research_handoff": {
+                "capability_cues": [
+                    {
+                        "direction": f"A. {direction}",
+                        "equipment_hint": (
+                            "强干扰条件下的跨域任务续接、目标复核、"
+                            "〔改写断点：保留事实但不得照录〕精确打击与战损评估。"
+                        ),
+                        "enabling_technologies": [long_text],
+                        "capability_outcome": long_text,
+                        "operational_concept": long_text,
+                        "mission_effect": long_text,
+                    }
+                ]
+            },
+        },
+    )
+
+    table_rows = [line for line in result.splitlines() if line.startswith("|")]
+    assert direction in table_rows[2]
+    assert "A. " not in result
+    assert "〔改写断点：保留事实但不得照录〕" not in result
+    assert "目标复核、精确打击" in result
+    assert all(
+        len(cell.strip()) <= 220
+        for row in table_rows
+        for cell in row.strip("|").split("|")
+    )
 
 
 def test_weapon_equipment_codex_call_batches_tracks_and_injects_equipment_runtime() -> None:

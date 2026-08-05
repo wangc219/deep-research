@@ -13,6 +13,23 @@ from equipment_deep_research.orchestration.runner import DeepResearchRunner
 from equipment_deep_research.queue.worker import ResearchWorker
 
 
+def runtime_status_for_event(event_type: str) -> str:
+    """Map durable orchestration milestones to the user-facing run phase."""
+
+    if event_type in {
+        "baseline_agents_summarized",
+        "discovery_convergence_completed",
+        "winning_model_call_started",
+        "winning_swarm_started",
+    }:
+        return "synthesizing"
+    if event_type == "audit_completed":
+        return "reviewing"
+    if event_type == "report_model_call_started":
+        return "reporting"
+    return ""
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run one queued Deep Research task.")
     parser.add_argument("--database-url", default=None)
@@ -48,6 +65,19 @@ def main(argv: list[str] | None = None) -> int:
         view = service.get_run(run_id)
         execution = dict(view.execution)
         run_dir = output_root / view.run_id
+
+        def publish_event(event_type: str, payload: dict) -> None:
+            service.publish_runtime_event(
+                run_id,
+                event_type,
+                sanitize_runtime_payload(payload),
+            )
+            next_status = runtime_status_for_event(event_type)
+            if next_status:
+                current = service.get_run(run_id)
+                if current.status != next_status:
+                    service.set_status(run_id, next_status)
+
         return DeepResearchRunner(
             project_root=root,
             output_root=output_root,
@@ -55,9 +85,7 @@ def main(argv: list[str] | None = None) -> int:
             preset_config_path=root / "configs/equipment_deep_research/presets.yaml",
             provider_config_path=root / "configs/equipment_deep_research/providers.yaml",
             evidence_config_path=root / "configs/equipment_deep_research/evidence.yaml",
-            event_sink=lambda event_type, payload: service.publish_runtime_event(
-                run_id, event_type, sanitize_runtime_payload(payload)
-            ),
+            event_sink=publish_event,
         ).run(
             mode=str(execution.get("mode") or args.mode),
             topic=view.topic,
@@ -82,6 +110,9 @@ def main(argv: list[str] | None = None) -> int:
             interaction_mode=getattr(view, "interaction_mode", "expert"),
             discovery_branch=getattr(view, "discovery_branch", "auto"),
             execution_profile_id=getattr(view, "execution_profile_id", "") or "legacy_v1",
+            report_template_mode=getattr(
+                view, "report_template_mode", "three_layer_nine_item"
+            ),
             allow_resume_config_mismatch=run_dir.exists(),
         )
 

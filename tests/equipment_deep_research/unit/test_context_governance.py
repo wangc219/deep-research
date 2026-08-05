@@ -103,3 +103,11 @@ def test_minimal_dependency_handoff_keeps_explicit_lineage_fields() -> None:
     assert handoff["agent_id"] == "combat_scenario"
     assert handoff["packet_id"] == "packet-source"
     assert handoff["source"] == "combat_scenario"
+    assert handoff["handoff_version"] == "2.0"
+    assert set(handoff) >= {
+        "decisions",
+        "context_delta",
+        "evidence_refs",
+        "uncertainties",
+        "requested_next_action",
+    }

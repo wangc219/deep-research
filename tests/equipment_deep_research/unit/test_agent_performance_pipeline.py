@@ -9,6 +9,16 @@ from urllib.parse import urlsplit
 from equipment_deep_research.agents.provider import (
     AgentRunRequest,
     ResponsesAgentProvider,
+    _direct_combat_generator_diversity_instruction,
+    _discovery_system_prompt,
+    _ensure_specialized_winning_seed_lanes,
+    _merge_required_source_anchors,
+    _prepare_portfolio_gap_completion_rows,
+    _prioritize_specialized_anchor_urls,
+    _prioritize_winning_evidence_index,
+    _recover_specialized_winning_seed_hypotheses,
+    _portfolio_gap_completion_instruction,
+    _portfolio_remaining_repair_slots,
     _weapon_specialized_evidence_channels,
 )
 from equipment_deep_research.agents.performance import AdaptiveCallGate
@@ -323,6 +333,62 @@ def test_reference_agent_uses_compact_medium_reasoning_profile() -> None:
     assert analysis_options["max_output_tokens"] <= 1800
 
 
+def test_required_weapon_equipment_uses_bounded_quality_source_target() -> None:
+    sources = [
+        {"url": f"https://weapon-{index}.example/report", "title": f"W{index}"}
+        for index in range(14)
+    ]
+    backend = ScriptedFakeProvider(
+        [
+            [
+                ProviderStreamEvent.final(
+                    ProviderFinalTurn(
+                        text="weapon discovery",
+                        metadata={"web_sources": sources},
+                    )
+                )
+            ],
+            [
+                ProviderStreamEvent.final(
+                    ProviderFinalTurn(
+                        text=(
+                            '{"findings":["装备项目证据闭环"],"confidence":0.8,'
+                            '"open_questions":[],"handoff_summary":"完成",'
+                            '"contradictions":[],"source_claims":['
+                            '{"url":"https://weapon-0.example/report",'
+                            '"claim":"装备项目证据闭环"}],'
+                            '"analysis_sections":{}}'
+                        )
+                    )
+                )
+            ],
+        ]
+    )
+    provider = ResponsesAgentProvider(backend)
+    provider.provider_kind = "codex_cli"
+
+    provider.run_baseline_agent(
+        AgentRunRequest(
+            "run-deep-weapon",
+            _agent(),
+            "无人远程火力打击装备",
+            "new_winning_mechanism",
+            {
+                "discovery_blueprint": {
+                    "execution_profile_id": "winning_swarm_dynamic_v2"
+                }
+            },
+        )
+    )
+
+    discovery_payload = backend.inputs[0][0][-1].content["task_input"]
+    discovery_options = backend.inputs[0][2]
+    assert discovery_payload["target_source_count"] == 14
+    assert len(discovery_payload["specialized_evidence_channels"]) == 7
+    assert discovery_options["max_output_tokens"] == 2000
+    assert discovery_options["web_search"]["search_context_size"] == "medium"
+
+
 def test_required_agent_keeps_high_reasoning_profile() -> None:
     backend = ScriptedFakeProvider(
         [
@@ -423,7 +489,7 @@ def test_context_projection_keeps_only_target_fields() -> None:
 
     payload = pack.sections["upstream_handoffs"][0]["payload"]
     assert payload["threat_assessment"] == "threat"
-    assert "strategic_pattern" not in payload
+    assert len(payload) <= 5
 
 
 def test_operational_projection_preserves_opponent_monitoring_delta() -> None:
@@ -442,6 +508,7 @@ def test_operational_projection_preserves_opponent_monitoring_delta() -> None:
         "observed_moves": ["deployment"],
         "formation_timeline": ["2027"],
         "warning_indicators": ["exercise tempo"],
+        "counter_requirements": ["not required by this consumer"],
     }
 
 
@@ -595,12 +662,362 @@ def test_weapon_specialized_evidence_channels_are_distinct_and_query_anchored() 
 
     assert [row["channel_id"] for row in rows] == [
         "long_range_precision_missile",
-        "long_range_unmanned_strike",
-        "standoff_suppression",
+        "low_altitude_expendable_unmanned_strike",
+        "loitering_antiradiation_suppression",
+        "expendable_decoy_electronic_attack",
+        "counter_uas_interceptor_effector",
+        "scalable_low_cost_combat_family",
+        "equipment_test_procurement_cost_capacity",
     ]
     assert all(row["query_anchor"] == "近年局部战争装备需求" for row in rows)
     assert all(row["preferred_sources"] for row in rows)
     assert all("证据" in row["name"] for row in rows)
+    assert any("jassm" in url.lower() for url in rows[0]["source_anchors"])
+    assert any("mald-decoy" in url.lower() for url in rows[3]["source_anchors"])
+    assert any("coyote" in url.lower() for url in rows[4]["source_anchors"])
+    assert any("roadrunner" in url.lower() for url in rows[4]["source_anchors"])
+    assert any("barracuda" in url.lower() for url in rows[5]["source_anchors"])
+
+
+def test_specialized_anchor_priority_covers_each_equipment_lane_before_corroboration() -> None:
+    channels = _weapon_specialized_evidence_channels("无人远程火力打击装备")
+    urls = _prioritize_specialized_anchor_urls(channels)
+
+    first_by_channel = [
+        row["source_anchors"][0]
+        for row in channels
+        if row.get("source_anchors")
+    ]
+    assert urls[: len(first_by_channel)] == first_by_channel
+    assert next(index for index, url in enumerate(urls) if "barracuda" in url.lower()) < next(
+        index
+        for index, url in enumerate(urls)
+        if "precision-strike-missile" in url.lower()
+    )
+
+
+def test_weapon_discovery_prompt_uses_query_specific_non_exhaustive_evidence_lanes() -> None:
+    prompt = _discovery_system_prompt("weapon_equipment")
+
+    assert "Codex Query语义发散简报" in prompt
+    assert "Query专属证据通道" in prompt
+    assert "不得固定套用" in prompt
+    assert "非穷尽" in prompt
+
+
+def test_winning_candidate_prompts_turn_counter_uas_evidence_into_architecture() -> None:
+    initial = _direct_combat_generator_diversity_instruction()
+    completion = _portfolio_gap_completion_instruction()
+
+    assert "Coyote或Roadrunner" in initial
+    assert "不得因其属于防御任务而把它降格为支撑系统" in initial
+    assert "已经通过，不得再用同类导弹凑数" in completion
+    assert "未通过候选是负面样本而不是装备族禁区" in completion
+    assert "超出单一基线的可独立立项装备架构变量" in completion
+    assert "可消耗末端拦截构型和可回收巡逻截击" in completion
+    assert "收缩为反无人机物理拦截任务" in completion
+    assert "只是待验证项目架构" in completion
+
+
+def test_offensive_portfolio_gap_completion_rejects_defensive_fifth_direction() -> None:
+    completion = _portfolio_gap_completion_instruction(
+        "聚焦无人远程火力打击装备，承担突防、压制、歼灭和毁伤"
+    )
+
+    assert "禁止用作第五个组合方向" in completion
+    assert "Barracuda/FAMM类固定构型低成本巡航效应器族" in completion
+    assert "MALD/MALD-J类" in completion
+    assert "弹上有限闭环响应" in completion
+    assert "直接效果是干扰或压制防空探测与火控链" in completion
+    assert "禁止在同一弹体内集成被动末制导和毁伤战斗部" in completion
+    assert "超出单一基线的当前Query" not in completion
+
+
+def test_partial_portfolio_completion_reserves_same_round_repair_slots() -> None:
+    assert _portfolio_remaining_repair_slots(
+        passed_count=3,
+        finalist_minimum=5,
+        completion_count=1,
+    ) == 1
+    assert _portfolio_remaining_repair_slots(
+        passed_count=4,
+        finalist_minimum=5,
+        completion_count=1,
+    ) == 0
+
+
+def test_required_equipment_source_anchors_reserve_discovery_slots() -> None:
+    rows = _merge_required_source_anchors(
+        [
+            {"title": "Open result", "url": "https://example.com/open"},
+            {"title": "Existing JASSM", "url": "https://example.com/jassm"},
+        ],
+        [
+            "https://example.com/jassm",
+            "https://example.com/barracuda",
+        ],
+        limit=3,
+    )
+
+    assert [row["url"] for row in rows] == [
+        "https://example.com/jassm",
+        "https://example.com/barracuda",
+        "https://example.com/open",
+    ]
+    assert rows[1]["retrieval_lane"] == "required_source_anchor"
+    assert all(row["required_source_anchor"] is True for row in rows[:2])
+
+
+def test_required_equipment_anchor_survives_domain_diversification_cutoff() -> None:
+    candidates = [
+        EvidenceCard(
+            f"ev-{index}",
+            title,
+            url,
+            "B",
+            "claim",
+            "excerpt",
+            "source#p1",
+            quality,
+            "weapon_equipment",
+        )
+        for index, (title, url, quality) in enumerate(
+            [
+                (
+                    "Roadrunner",
+                    "https://www.anduril.com/roadrunner",
+                    "codex_web_search_source; structured_source_claim; required_source_anchor",
+                ),
+                (
+                    "Barracuda production agreement",
+                    "https://www.anduril.com/news/barracuda-production",
+                    "codex_web_search_source; structured_source_claim; required_source_anchor",
+                ),
+                (
+                    "Army budget",
+                    "https://www.army.mil/budget",
+                    "codex_web_search_source; finding_fallback",
+                ),
+                (
+                    "Switchblade 600",
+                    "https://www.avinc.com/switchblade-600",
+                    "codex_web_search_source; structured_source_claim",
+                ),
+            ]
+        )
+    ]
+
+    ordered = _diversify_evidence_candidates(candidates)
+
+    assert [item.source_title for item in ordered] == [
+        "Roadrunner",
+        "Barracuda production agreement",
+        "Switchblade 600",
+        "Army budget",
+    ]
+
+
+def test_winning_evidence_index_prioritizes_direct_weapon_cards() -> None:
+    rows = _prioritize_winning_evidence_index(
+        [
+            {"evidence_id": "ev-combat_scenario-web-1", "created_by": "combat_scenario"},
+            {"evidence_id": "ev-weapon_equipment-web-2", "created_by": "weapon_equipment"},
+            {"evidence_id": "ev-system_confrontation-web-3", "created_by": "system_confrontation"},
+        ]
+    )
+
+    assert rows[0]["evidence_id"] == "ev-weapon_equipment-web-2"
+
+
+def test_winning_evidence_index_prioritizes_role_relevant_weapon_cards() -> None:
+    rows = _prioritize_winning_evidence_index(
+        [
+            {
+                "evidence_id": "ev-weapon_equipment-web-prsm",
+                "created_by": "weapon_equipment",
+                "source_title": "PrSM Increment 2 flight test",
+            },
+            {
+                "evidence_id": "ev-weapon_equipment-web-switchblade",
+                "created_by": "weapon_equipment",
+                "source_title": "Switchblade 600 loitering munition",
+            },
+        ],
+        archetype="direct_combat_equipment_generator",
+    )
+
+    assert rows[0]["evidence_id"] == "ev-weapon_equipment-web-switchblade"
+
+
+def test_specialized_seed_recovery_preserves_remote_platform_orthogonality() -> None:
+    rows = _recover_specialized_winning_seed_hypotheses(
+        [
+            {
+                "evidence_id": "ev-weapon_equipment-web-jassm",
+                "source_title": "JASSM AGM-158 procurement",
+            },
+            {
+                "evidence_id": "ev-weapon_equipment-web-prsm",
+                "source_title": "PrSM Precision Strike Missile flight test",
+            },
+        ],
+        archetype="remote_precision_munition_generator",
+    )
+
+    assert len(rows) == 2
+    assert "JASSM-ER" in rows[0]["title"]
+    assert "PrSM" in rows[1]["title"]
+    assert rows[0]["equipment_forms"] != rows[1]["equipment_forms"]
+    assert all(row["evidence_ids"] for row in rows)
+
+
+def test_specialized_seed_recovery_reads_compact_title_and_url_fields() -> None:
+    rows = _recover_specialized_winning_seed_hypotheses(
+        [
+            {
+                "evidence_id": "ev-weapon_equipment-web-jassm",
+                "title": "Air-launched standoff missile program",
+                "url": "https://example.com/agm-158-jassm",
+            },
+            {
+                "evidence_id": "ev-weapon_equipment-web-prsm",
+                "title": "Precision Strike Missile procurement",
+                "url": "https://example.com/prsm",
+            },
+        ],
+        archetype="remote_precision_munition_generator",
+    )
+
+    assert len(rows) == 2
+    assert rows[0]["evidence_ids"] == ["ev-weapon_equipment-web-jassm"]
+
+
+def test_specialized_seed_recovery_requires_matching_public_evidence() -> None:
+    rows = _recover_specialized_winning_seed_hypotheses(
+        [
+            {
+                "evidence_id": "ev-combat_scenario-web-1",
+                "source_title": "Generic contested environment",
+            }
+        ],
+        archetype="mass_scalable_combat_family_generator",
+    )
+
+    assert rows == []
+
+
+def test_offensive_gap_recovery_builds_bounded_mald_electronic_attack_effector() -> None:
+    evidence = [
+        {
+            "evidence_id": "ev-weapon_equipment-web-mald",
+            "source_title": "USAF Miniature Air Launched Decoy MALD-J fact sheet",
+            "source_url": "https://www.af.mil/miniature-air-launched-decoy/",
+        },
+        {
+            "evidence_id": "ev-weapon_equipment-web-harop",
+            "source_title": "IAI Harop loitering munition",
+        },
+    ]
+
+    rows = _recover_specialized_winning_seed_hypotheses(
+        evidence,
+        archetype="offensive_portfolio_gap_completion",
+    )
+
+    assert len(rows) == 1
+    assert rows[0]["evidence_ids"] == ["ev-weapon_equipment-web-mald"]
+    assert "被动射频提示" in rows[0]["equipment_forms"][0]
+    assert "电子攻击载荷" in rows[0]["equipment_forms"][0]
+    assert any("不新增" in item and "战斗部" in item for item in rows[0]["mechanism_chain"])
+    assert any("同等闭环" in item and "终止" in item for item in rows[0]["mechanism_chain"])
+    assert any("黑盒表征" in item for item in rows[0]["validation_plan"])
+
+
+def test_offensive_gap_recovery_does_not_treat_cross_system_claim_as_mald_identity() -> None:
+    rows = _recover_specialized_winning_seed_hypotheses(
+        [
+            {
+                "evidence_id": "ev-weapon_equipment-web-prsm",
+                "source_title": "Precision Strike Missile | Lockheed Martin",
+                "source_url": "https://www.lockheedmartin.com/prsm",
+                "claim": "对比链条提到MALD、AARGM与Barracuda。",
+            },
+            {
+                "evidence_id": "ev-weapon_equipment-web-mald",
+                "source_title": "MALD Decoy | Raytheon",
+                "source_url": "https://www.rtx.com/mald-decoy",
+                "claim": "MALD-J是可消耗电子攻击效应器。",
+            },
+        ],
+        archetype="offensive_portfolio_gap_completion",
+    )
+
+    assert rows[0]["evidence_ids"] == ["ev-weapon_equipment-web-mald"]
+
+
+def test_offensive_gap_completion_preserves_model_rows_without_fixed_mald_injection() -> None:
+    rows, added_count = _prepare_portfolio_gap_completion_rows(
+        [
+            {
+                "title": "MALD-J/Harop复合诱导猎歼弹",
+                "nearest_public_baseline": "MALD-J与Harop双基线",
+                "equipment_forms": ["电子攻击与被动末制导复合弹体"],
+            },
+            {
+                "title": "另一互异直接武器",
+                "equipment_forms": ["固定构型巡航效应器"],
+            },
+        ],
+        [
+            {
+                "evidence_id": "ev-weapon_equipment-web-mald",
+                "source_title": "ADM-160 MALD-J electronic attack decoy",
+            },
+            {
+                "evidence_id": "ev-weapon_equipment-web-harop",
+                "source_title": "Harop loitering munition",
+            },
+        ],
+        topic="聚焦无人远程火力打击装备，承担突防、压制、歼灭和毁伤",
+    )
+
+    assert added_count == 0
+    assert len(rows) == 2
+    assert rows[0]["title"] == "MALD-J/Harop复合诱导猎歼弹"
+    assert rows[1]["title"] == "另一互异直接武器"
+
+
+def test_specialized_seed_lane_enforcement_does_not_replace_query_rows_with_fixed_seed() -> None:
+    rows, added_count = _ensure_specialized_winning_seed_lanes(
+        [
+            {
+                "title": "低空无人携弹平台甲",
+                "equipment_forms": ["低空无人携弹平台"],
+            },
+            {
+                "title": "低空无人携弹平台乙",
+                "equipment_forms": ["低空无人载机"],
+            },
+        ],
+        [
+            {
+                "evidence_id": "ev-weapon_equipment-web-low-altitude",
+                "source_title": "Low altitude unmanned combat platform",
+            },
+            {
+                "evidence_id": "ev-weapon_equipment-web-barracuda",
+                "source_title": "Barracuda FAMM affordable mass production",
+            },
+        ],
+        archetype="mass_scalable_combat_family_generator",
+    )
+
+    assert len(rows) == 2
+    assert [row["title"] for row in rows] == [
+        "低空无人携弹平台甲",
+        "低空无人携弹平台乙",
+    ]
+    assert added_count == 0
 
 
 def test_winning_model_progress_uses_dedicated_event_family() -> None:
@@ -655,6 +1072,23 @@ def test_call_gate_reserves_capacity_for_critical_baseline_wave(monkeypatch) -> 
 
     for lease in (normal_one, normal_two, critical_one, critical_two):
         gate.release(0.1, success=True)
+
+
+def test_call_gate_treats_core_phase_priorities_as_critical(monkeypatch) -> None:
+    monkeypatch.setenv("EQUIPMENT_DR_CODEX_MODEL_CONCURRENCY", "4")
+    monkeypatch.setenv("EQUIPMENT_DR_CODEX_MODEL_CONCURRENCY_MIN", "4")
+    monkeypatch.setenv("EQUIPMENT_DR_CODEX_MODEL_CONCURRENCY_MAX", "4")
+    monkeypatch.setenv("EQUIPMENT_DR_CODEX_RESERVED_PRIORITY_SLOTS", "2")
+
+    for priority in ("swarm", "quality_gate", "delivery"):
+        gate = AdaptiveCallGate()
+        leases = [gate.try_acquire(priority=priority) for _ in range(4)]
+        assert all(lease is not None for lease in leases)
+        assert gate.try_acquire(priority=priority) is None
+        for lease in leases:
+            assert lease is not None
+            assert lease.priority == "critical"
+            gate.release(0.1, success=True)
 
 
 def test_successful_long_quality_calls_do_not_collapse_concurrency(monkeypatch) -> None:

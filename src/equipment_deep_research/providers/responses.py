@@ -65,7 +65,51 @@ def build_request_payload(
         payload["reasoning"] = {"effort": effort}
     if "max_output_tokens" in options:
         payload["max_output_tokens"] = options["max_output_tokens"]
+    output_schema = options.get("output_schema")
+    if isinstance(output_schema, Mapping):
+        payload["text"] = {
+            "format": {
+                "type": "json_schema",
+                "name": "equipment_research_output",
+                "strict": True,
+                "schema": _compact_contract_to_json_schema(output_schema),
+            }
+        }
     return payload
+
+
+def _compact_contract_to_json_schema(value: object) -> dict[str, Any]:
+    if isinstance(value, Mapping):
+        properties = {
+            str(key): _compact_contract_to_json_schema(item)
+            for key, item in value.items()
+        }
+        return {
+            "type": "object",
+            "properties": properties,
+            "required": list(properties),
+            "additionalProperties": False,
+        }
+    if isinstance(value, list):
+        item = value[0] if value else "string"
+        return {"type": "array", "items": _compact_contract_to_json_schema(item)}
+    descriptor = str(value).strip()
+    if descriptor == "boolean":
+        return {"type": "boolean"}
+    if descriptor in {"0..1", "0..1 number"}:
+        return {"type": "number", "minimum": 0, "maximum": 1}
+    if descriptor in {"1..5", "1..5 number"}:
+        return {"type": "integer", "minimum": 1, "maximum": 5}
+    if descriptor == "1..6":
+        return {"type": "integer", "minimum": 1, "maximum": 6}
+    if descriptor in {"1..6 or 0", "0..6"}:
+        return {"type": "integer", "minimum": 0, "maximum": 6}
+    if "|" in descriptor and all(
+        token.strip() and " " not in token.strip()
+        for token in descriptor.split("|")
+    ):
+        return {"type": "string", "enum": [item.strip() for item in descriptor.split("|")]}
+    return {"type": "string"}
 
 
 def parse_sse_event(line: str) -> tuple[str, dict[str, Any]] | None:
@@ -121,12 +165,16 @@ def parse_sse_frame(data: str) -> tuple[str, dict[str, Any]] | None:
 
 def assistant_from_events(events: Iterable[tuple[str, Mapping[str, Any]]]) -> ProviderFinalTurn:
     text: list[str] = []
+    text_delta_seen = False
     reasoning: list[str] = []
     calls: dict[str, dict[str, Any]] = {}
     final_payload: Mapping[str, Any] = {}
     for kind, event in events:
-        if kind in {"response.output_text.delta", "response.output_text.done"}:
-            text.append(str(event.get("delta", event.get("text", ""))))
+        if kind == "response.output_text.delta":
+            text_delta_seen = True
+            text.append(str(event.get("delta", "")))
+        elif kind == "response.output_text.done" and not text_delta_seen:
+            text.append(str(event.get("text", "")))
         elif kind in {"response.reasoning_summary_text.delta", "response.reasoning_text.delta"}:
             reasoning.append(str(event.get("delta", "")))
         elif kind in {"response.function_call_arguments.delta", "response.function_call_arguments.done"}:
@@ -134,7 +182,10 @@ def assistant_from_events(events: Iterable[tuple[str, Mapping[str, Any]]]) -> Pr
             current = calls.setdefault(item_id, {"name": event.get("name", ""), "arguments": ""})
             if event.get("name"):
                 current["name"] = event["name"]
-            current["arguments"] += str(event.get("delta", event.get("arguments", "")))
+            if kind == "response.function_call_arguments.delta":
+                current["arguments"] += str(event.get("delta", ""))
+            elif not current["arguments"]:
+                current["arguments"] = str(event.get("arguments", ""))
         elif kind in {"response.completed", "response.failed"}:
             final_payload = event.get("response", event)
     tool_calls: list[ProviderToolCall] = []

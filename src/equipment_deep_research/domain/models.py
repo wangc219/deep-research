@@ -82,6 +82,14 @@ class ResearchProblem:
                 "focus_questions": [],
                 "expansion_dimensions": [],
                 "constraints_and_assumptions": [],
+                "combat_problem_frame": "",
+                "enemy_target_profile": [],
+                "battle_phase_and_constraints": [],
+                "required_direct_military_effects": [],
+                "weapon_design_variables": [],
+                "query_specific_weapon_architectures": [],
+                "equipment_project_hypotheses": [],
+                "rejected_template_anchors": [],
             }
 
         clauses = [
@@ -95,23 +103,15 @@ class ResearchProblem:
         if not focus_questions:
             focus_questions = clauses[:4]
 
-        dimension_rules = (
-            ("成本交换与效费比", ("成本", "效费比", "1/", "低成本", "廉价")),
-            ("规模化生产与工业动员", ("万枚", "量产", "产能", "规模化", "工业")),
-            ("持续消耗与战役韧性", ("持续", "消耗", "补充", "韧性")),
-            ("攻防适应与体系反制", ("防空", "拦截", "对手", "强敌", "反制")),
-            ("精度、目标价值与毁伤收益", ("精确", "精打", "制导", "高价值目标")),
-            ("火力配系与弹药基数", ("火力配系", "弹药基数", "火力", "弹药")),
-            ("后勤保障与快速再生", ("后勤", "保障", "补给", "再生")),
-            ("规划打击下的生存与恢复", ("规划化打击", "打击", "生存", "恢复")),
-        )
+        # Offline fallback stays intentionally generic.  In real runs the
+        # orchestrator derives Query-specific dimensions and equipment
+        # hypotheses from the complete input instead of matching a local list.
         expansion_dimensions = [
-            label
-            for label, signals in dimension_rules
-            if any(signal.lower() in supplement.lower() for signal in signals)
-        ][:8]
-        if not expansion_dimensions:
-            expansion_dimensions = ["任务效果", "能力边界", "对手适应", "保障约束"]
+            "任务对象与直接效果",
+            "对手适应与失效边界",
+            "装备形态与工程约束",
+            "证据问题与淘汰条件",
+        ]
 
         constraints_and_assumptions = [
             item
@@ -136,6 +136,14 @@ class ResearchProblem:
             "focus_questions": focus_questions,
             "expansion_dimensions": expansion_dimensions,
             "constraints_and_assumptions": constraints_and_assumptions,
+            "combat_problem_frame": "",
+            "enemy_target_profile": [],
+            "battle_phase_and_constraints": [],
+            "required_direct_military_effects": [],
+            "weapon_design_variables": [],
+            "query_specific_weapon_architectures": [],
+            "equipment_project_hypotheses": [],
+            "rejected_template_anchors": [],
             "handoff_rule": "补充信息用于拓展分析方向；其中假设需验证，不视为既成事实。",
         }
 
@@ -506,10 +514,16 @@ BASELINE_PAYLOAD_TYPES: dict[str, tuple[str, tuple[str, ...]]] = {
 BASELINE_OPTIONAL_PAYLOAD_FIELDS: dict[str, tuple[str, ...]] = {
     "weapon_equipment": (
         "foreign_equipment_landscape",
+        "domestic_equipment_landscape",
+        "foreign_equipment_cases",
+        "domestic_equipment_cases",
+        "comparative_findings",
         "system_dependencies",
         "long_range_precision_missile_evidence",
         "long_range_unmanned_strike_evidence",
         "standoff_suppression_evidence",
+        "expendable_decoy_electronic_attack_evidence",
+        "counter_uas_interceptor_evidence",
         "defensive_countermeasure_options",
         "upgrade_requirements",
         "new_equipment_requirements",
@@ -565,10 +579,16 @@ class EquipmentObservation:
     capability_gaps: Any
     evidence_ids: list[str]
     foreign_equipment_landscape: Any = field(default_factory=list)
+    domestic_equipment_landscape: Any = field(default_factory=list)
+    foreign_equipment_cases: Any = field(default_factory=list)
+    domestic_equipment_cases: Any = field(default_factory=list)
+    comparative_findings: Any = field(default_factory=list)
     system_dependencies: Any = field(default_factory=list)
     long_range_precision_missile_evidence: Any = field(default_factory=list)
     long_range_unmanned_strike_evidence: Any = field(default_factory=list)
     standoff_suppression_evidence: Any = field(default_factory=list)
+    expendable_decoy_electronic_attack_evidence: Any = field(default_factory=list)
+    counter_uas_interceptor_evidence: Any = field(default_factory=list)
     defensive_countermeasure_options: Any = field(default_factory=list)
     upgrade_requirements: Any = field(default_factory=list)
     new_equipment_requirements: Any = field(default_factory=list)
@@ -724,6 +744,8 @@ class WinningHypothesis:
     direct_military_effects: list[str]
     equipment_forms: list[str]
     novelty_delta: str
+    project_function: str = ""
+    system_interfaces: list[str] = field(default_factory=list)
     evidence_ids: list[str] = field(default_factory=list)
     counterevidence: list[str] = field(default_factory=list)
     adversary_adaptations: list[str] = field(default_factory=list)
@@ -787,6 +809,8 @@ class SpecialistContribution:
     mechanism_chain_updates: list[str] = field(default_factory=list)
     direct_military_effects: list[str] = field(default_factory=list)
     equipment_forms: list[str] = field(default_factory=list)
+    project_function: str = ""
+    system_interfaces: list[str] = field(default_factory=list)
     novelty_delta: str = ""
     evidence_boundary: str = ""
     implementation_path: str = ""
@@ -1084,6 +1108,7 @@ class CapabilityImageItem:
     confidence: float
     created_at: str = field(default_factory=now_iso)
     schema_version: str = "1.0"
+    project_function: str = ""
     mission_effect: str = ""
     system_dependencies: list[str] = field(default_factory=list)
     risk_boundaries: list[str] = field(default_factory=list)
@@ -1104,6 +1129,15 @@ class CapabilityImageItem:
     combat_effect_uplift: str = ""
     strike_chain_contribution: str = ""
     upgrade_boundary: str = ""
+    target_scenario: str = ""
+    problem_statement: str = ""
+    scientific_principle: str = ""
+    enabling_technologies: list[str] = field(default_factory=list)
+    operational_concept: str = ""
+    operational_process: list[str] = field(default_factory=list)
+    capability_outcome: str = ""
+    winning_mechanism: str = ""
+    verification_plan: list[str] = field(default_factory=list)
 
     def validate(self) -> None:
         required = [

@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
+from equipment_deep_research.orchestration.capability_portrait import (
+    build_capability_portrait,
+)
+
 
 _DIRECT_EFFECT_TERMS = (
     "打击",
@@ -408,6 +412,28 @@ def rewrite_capability_for_military_value(
     )
     countermeasure = mechanism
     operational_mechanism = mechanism
+    target_scenario = str(result.get("target_scenario", "")).strip() or topic
+    problem_statement = str(result.get("problem_statement", "")).strip() or gap
+    scientific_principle = str(result.get("scientific_principle", "")).strip() or (
+        existing_novelty or mechanism
+    )
+    raw_technologies = result.get("enabling_technologies", [])
+    enabling_technologies = (
+        [str(item).strip() for item in raw_technologies if str(item).strip()]
+        if isinstance(raw_technologies, list)
+        else []
+    ) or [item.strip() for item in equipment_form.split("、") if item.strip()][:5] or [equipment_form]
+    operational_concept = str(result.get("operational_concept", "")).strip() or mechanism
+    raw_process = result.get("operational_process", [])
+    operational_process = (
+        [str(item).strip() for item in raw_process if str(item).strip()]
+        if isinstance(raw_process, list)
+        else []
+    ) or [item.strip() for item in mechanism.split("→") if item.strip()][:6] or [mechanism]
+    capability_outcome = str(result.get("capability_outcome", "")).strip() or mission_effect
+    winning_mechanism = str(result.get("winning_mechanism", "")).strip() or (
+        existing_novelty or mechanism
+    )
     source_logic = existing_source_logic
     if not has_direct_effect(source_logic) or any(
         marker in source_logic for marker in _GENERIC_DIRECTION_MARKERS
@@ -425,7 +451,14 @@ def rewrite_capability_for_military_value(
             "military_utility": mission_effect,
             "strike_countermeasure_value": countermeasure,
             "operational_mechanism": operational_mechanism,
-            "capability_image": f"形成{name}，以{equipment_form}为主要装备形态。{mechanism}。直接作战效果为：{effect}。",
+            "target_scenario": target_scenario,
+            "problem_statement": problem_statement,
+            "scientific_principle": scientific_principle,
+            "enabling_technologies": enabling_technologies,
+            "operational_concept": operational_concept,
+            "operational_process": operational_process,
+            "capability_outcome": capability_outcome,
+            "winning_mechanism": winning_mechanism,
             "novelty": existing_novelty
             or "把目标可信度、效应器选择、战损接替和再次攻击组织为同一任务机制，避免把支撑性通信、保障或接口单列为能力终点。",
             "foresight": existing_foresight
@@ -434,14 +467,23 @@ def rewrite_capability_for_military_value(
             or "近期完成现役武器、无人平台、传感/火控与任务载荷改装，中期形成无人作战平台、导弹/弹药或拦截效应器样机并开展体系集成，最终通过实弹、红蓝对抗和失效注入验证；未达到任务级毁伤或反制门槛时转入新型号研制。",
         }
     )
-    portrait = (
-        f"面向“{topic}”，该方向不以一般体系补位、通信连续或保障可用作为最终目标，而以{name}作为装备建设终点。"
-        f"决定性问题是：{gap.split('；本次基线：', 1)[0]}。武器装备发展落点由{equipment_form}构成，优先明确无人作战平台、导弹/弹药、拦截器或电子压制效应器的型号化路径。"
-        f"其作战机理是{mechanism}。由此可直接{effect}。"
-        "该方向应在危机升级、强扰断链、节点损失和高节奏对抗条件下验证，重点考察目标轨迹保持、火力任务送达、拦截或毁伤闭合、战损后接替和再次攻击组织；"
-        "若只能改善信息连通、保障效率或界面互操作，却不能稳定提高目标发现、火力分配、拦截毁伤、压制反制或拒止威慑效果，则不得作为独立能力方向。"
-        "公开证据只用于约束威胁趋势、装备基线和工程边界，具体性能阈值仍须通过仿真、半实物联试、红蓝对抗演训和失效注入校准。"
+    portrait = build_capability_portrait(
+        scenario=target_scenario,
+        problem=problem_statement,
+        principle=scientific_principle,
+        technologies=enabling_technologies,
+        operational_concept=operational_concept,
+        operational_steps=operational_process,
+        capability=capability_outcome,
+        effect=mission_effect or effect,
+        winning_mechanism=winning_mechanism,
+        equipment_form=equipment_form,
+        baseline=result.get("baseline_system") or equipment_form,
+        development_path=result.get("development_path"),
+        failure_boundary=result.get("risk_boundaries") or result.get("operational_constraints"),
+        verification_plan=result.get("verification") or result.get("verification_plan"),
     )
+    result["capability_image"] = portrait
     result["deep_capability_portrait"] = portrait
 
     if upgrade:

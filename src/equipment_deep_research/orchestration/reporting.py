@@ -296,7 +296,9 @@ def _strategic_judgment_lines(images: list[CapabilityImageItem]) -> list[str]:
             [
                 f"### {image.priority}　{image.name}",
                 "",
-                f"**深度能力画像。** {_compact_text(portrait, 560)}",
+                "**深度能力画像。**",
+                "",
+                portrait,
                 "",
                 (
                     f"**军事运用价值（{operational_roles}）。** "
@@ -1199,10 +1201,13 @@ def _compact_text(value: Any, limit: int) -> str:
     text = " ".join(str(value or "").split()).replace("|", "/")
     if len(text) <= limit:
         return text
-    cut = max((text.rfind(mark, 0, limit) for mark in ("。", "；", "，")), default=-1)
-    if cut < limit // 2:
-        cut = limit
-    return text[:cut].rstrip("，；。 ") + "…"
+    cut = max(
+        (text.rfind(mark, 0, limit) for mark in ("。", "！", "？", "!", "?")),
+        default=-1,
+    )
+    if cut >= max(80, limit // 2):
+        return text[: cut + 1].rstrip()
+    return text
 
 
 def _table_text(value: Any, limit: int) -> str:

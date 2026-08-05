@@ -26,18 +26,18 @@ class AdaptiveCallGate:
     def __init__(self) -> None:
         configured = max(
             1,
-            int(os.environ.get("EQUIPMENT_DR_CODEX_MODEL_CONCURRENCY", "4")),
+            int(os.environ.get("EQUIPMENT_DR_CODEX_MODEL_CONCURRENCY", "3")),
         )
         self.minimum = max(
             1,
             min(
                 configured,
-                int(os.environ.get("EQUIPMENT_DR_CODEX_MODEL_CONCURRENCY_MIN", "2")),
+                int(os.environ.get("EQUIPMENT_DR_CODEX_MODEL_CONCURRENCY_MIN", "1")),
             ),
         )
         self.maximum = max(
             configured,
-            int(os.environ.get("EQUIPMENT_DR_CODEX_MODEL_CONCURRENCY_MAX", "6")),
+            int(os.environ.get("EQUIPMENT_DR_CODEX_MODEL_CONCURRENCY_MAX", "4")),
         )
         self.limit = min(self.maximum, max(self.minimum, configured))
         self.reserved_priority_slots = max(
@@ -183,7 +183,16 @@ class AdaptiveCallGate:
 
 
 def _normalize_priority(value: str) -> str:
-    return "critical" if str(value).strip().lower() in {"critical", "priority"} else "normal"
+    # Core swarm, quality-gate, and delivery phases are intentionally named at
+    # their call sites.  Treat them as critical gate traffic so the reserved
+    # slots remain available to those phases instead of accidentally reducing
+    # a six-way winning-swarm profile to four effective calls.
+    return (
+        "critical"
+        if str(value).strip().lower()
+        in {"critical", "priority", "swarm", "quality_gate", "delivery"}
+        else "normal"
+    )
 
 
 def role_card_id(agent_id: str, phase: str, profile: Mapping[str, Any]) -> str:

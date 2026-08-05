@@ -19,7 +19,17 @@ from equipment_deep_research.orchestration.capability_military_value import (  #
     rewrite_capability_for_military_value,
 )
 from equipment_deep_research.agents.provider import (  # noqa: E402
+    _capability_direction_quality_issues,
     _normalize_s6_deterministic_format,
+    _s6_delivery_blocking_issues,
+)
+from equipment_deep_research.domain.models import to_plain  # noqa: E402
+from equipment_deep_research.domain.store import SqliteRunStore  # noqa: E402
+from equipment_deep_research.harness.recovery import (  # noqa: E402
+    _restore_domain_store,
+)
+from equipment_deep_research.orchestration.winning import (  # noqa: E402
+    WinningMechanismEngine,
 )
 
 
@@ -196,6 +206,315 @@ def _completed_runs(application_db: Path) -> list[tuple[str, str, str]]:
     return result
 
 
+def _run_context(run_dir: Path) -> tuple[str, str]:
+    sqlite_store = SqliteRunStore(run_dir / "run.db", run_id=run_dir.name)
+    try:
+        store = _restore_domain_store(sqlite_store.domain_objects())
+    finally:
+        sqlite_store.close()
+    problem = next(iter(store.problems.values()))
+    route = str(problem.research_route or "")
+    if route in {"", "auto"}:
+        summary_path = run_dir / "round_summary.json"
+        summary = (
+            json.loads(summary_path.read_text(encoding="utf-8"))
+            if summary_path.exists()
+            else {}
+        )
+        discovery = summary.get("discovery_branch", {})
+        if isinstance(discovery, dict):
+            route = str(discovery.get("primary", ""))
+        elif isinstance(discovery, str):
+            route = discovery
+    return str(problem.topic), route or "G"
+
+
+def _latest_s6_checkpoint(run_dir: Path) -> dict[str, Any]:
+    path = run_dir / "agent_sessions" / "winning_mechanism.jsonl"
+    if not path.exists():
+        raise RuntimeError(f"missing winning-mechanism checkpoint: {path}")
+    for raw_line in reversed(path.read_text(encoding="utf-8").splitlines()):
+        try:
+            row = json.loads(raw_line)
+        except json.JSONDecodeError:
+            continue
+        result = row.get("result")
+        if (
+            row.get("event_type") in {"model_checkpoint", "model_result"}
+            and isinstance(result, dict)
+            and isinstance(result.get("concept_directions"), list)
+            and result["concept_directions"]
+        ):
+            return dict(result)
+    raise RuntimeError(f"no S6 model checkpoint with concept directions in {path}")
+
+
+def _direction_family(value: dict[str, Any]) -> str:
+    text = " ".join(
+        str(value.get(key, ""))
+        for key in (
+            "name",
+            "title",
+            "equipment_form",
+            "equipment_forms",
+            "project_function",
+            "function",
+        )
+    ).lower()
+    if any(marker in text for marker in ("高功率微波", "hpm", "微波巡飞")):
+        return "high_power_microwave"
+    if any(marker in text for marker in ("反辐射", "辐射源", "射频复核")):
+        return "anti_radiation_loitering"
+    if any(marker in text for marker in ("无人水面", "无人艇", "半潜")):
+        return "unmanned_surface_launcher"
+    if any(marker in text for marker in ("发射车", "岛岸", "陆基无人巡飞火力舱")):
+        return "land_loitering_launcher"
+    if "低成本" in text and any(marker in text for marker in ("弹药", "效应器")):
+        return "low_cost_munition_family"
+    return ""
+
+
+def _concrete_direction_name(direction: dict[str, Any]) -> str:
+    family = _direction_family(direction)
+    return {
+        "unmanned_surface_launcher": "机动式无人水面巡航弹释放艇",
+        "anti_radiation_loitering": "多模复核反辐射巡飞弹",
+        "land_loitering_launcher": "无人值守岛岸巡飞弹发射车",
+        "low_cost_munition_family": "模块化低成本巡航打击弹药族",
+        "high_power_microwave": "高功率微波巡飞压制弹",
+    }.get(family, str(direction.get("name", "")).strip())
+
+
+def _hypothesis_to_direction(
+    hypothesis: dict[str, Any],
+    *,
+    topic: str,
+    priority: str,
+) -> dict[str, Any]:
+    equipment_forms = [
+        str(item).strip()
+        for item in hypothesis.get("equipment_forms", [])
+        if str(item).strip()
+    ]
+    mechanism_chain = [
+        str(item).strip()
+        for item in hypothesis.get("mechanism_chain", [])[:4]
+        if str(item).strip()
+    ]
+    direct_effects = [
+        str(item).strip()
+        for item in hypothesis.get("direct_military_effects", [])[:3]
+        if str(item).strip()
+    ]
+    adaptations = [
+        str(item).strip()
+        for item in hypothesis.get("adversary_adaptations", [])[:4]
+        if str(item).strip()
+    ]
+    boundaries = [
+        str(item).strip()
+        for item in hypothesis.get("failure_boundaries", [])[:4]
+        if str(item).strip()
+    ]
+    validation = [
+        str(item).strip()
+        for item in hypothesis.get("validation_plan", [])[:4]
+        if str(item).strip()
+    ]
+    project_function = str(hypothesis.get("project_function", "")).strip()
+    equipment_form = equipment_forms[0] if equipment_forms else str(
+        hypothesis.get("title", "")
+    ).strip()
+    problem_statement = str(
+        hypothesis.get("changed_confrontation_variable", "")
+    ).strip()
+    if _direction_family(hypothesis) == "high_power_microwave":
+        problem_statement = (
+            "敌电子压制、低空防空和反无人传感节点在末段持续干扰与拦截无人远程弹药，"
+            "现有动能压制手段难以同时制造可确认、可被后续火力利用的短时功能失效窗口"
+        )
+    direction = {
+        "name": str(hypothesis.get("title", "")).strip(),
+        "type": "new_capability",
+        "priority": priority,
+        "horizon": "mid",
+        "feasibility": 2,
+        "confidence": 0.68,
+        "hypothesis_id": str(hypothesis.get("hypothesis_id", "")).strip(),
+        "source_hypothesis_title": str(hypothesis.get("title", "")).strip(),
+        "function": project_function,
+        "project_function": project_function,
+        "equipment_form": equipment_form,
+        "equipment_forms": equipment_forms,
+        "operational_mechanism": "→".join(mechanism_chain),
+        "operational_process": mechanism_chain,
+        "military_value": "；".join(direct_effects),
+        "combat_effect_uplift": "；".join(direct_effects),
+        "strike_chain_contribution": "→".join(mechanism_chain),
+        "strike_countermeasure_value": "；".join(direct_effects),
+        "capability_outcome": "；".join(direct_effects),
+        "adversary_adaptation": "；".join(adaptations),
+        "failure_boundary": "；".join(boundaries),
+        "development_path": "；".join(validation),
+        "validation_plan": validation,
+        "verification": "；".join(validation),
+        "baseline_system": str(hypothesis.get("nearest_public_baseline", "")).strip(),
+        "capability_gap": problem_statement,
+        "problem_statement": problem_statement,
+        "query_relevance": (
+            f"面向{topic}，{project_function}"
+        ).strip("，"),
+        "target_scenario": topic,
+        "scientific_principle": str(
+            hypothesis.get("changed_confrontation_variable", "")
+        ).strip(),
+        "winning_mechanism": str(hypothesis.get("novelty_delta", "")).strip(),
+        "novelty": str(hypothesis.get("novelty_delta", "")).strip(),
+        "foresight": "；".join(
+            str(item).strip()
+            for item in hypothesis.get("cross_scenario_results", [])[:3]
+            if str(item).strip()
+        ),
+        "uncertainty_boundary": str(
+            hypothesis.get("evidence_boundary", "")
+        ).strip(),
+        "direct_evidence_refs": [
+            str(item).strip()
+            for item in hypothesis.get("evidence_ids", [])
+            if str(item).strip()
+        ],
+        "enabling_technologies": [
+            *equipment_forms[:2],
+            *[
+                str(item).strip()
+                for item in hypothesis.get("system_interfaces", [])[:3]
+                if str(item).strip()
+            ],
+        ],
+        "capability_portrait": "",
+    }
+    direction["name"] = _concrete_direction_name(direction)
+    return direction
+
+
+def _repair_dynamic_s6_portfolio(
+    checkpoint: dict[str, Any],
+    *,
+    topic: str,
+) -> dict[str, Any]:
+    """Repair vague titles and replace repeated weapon families from the ledger."""
+
+    repaired = dict(checkpoint)
+    directions = [
+        dict(item)
+        for item in checkpoint.get("concept_directions", [])
+        if isinstance(item, dict)
+    ]
+    used_families: set[str] = set()
+    duplicate_positions: list[int] = []
+    for position, direction in enumerate(directions):
+        direction["name"] = _concrete_direction_name(direction)
+        direction["capability_portrait"] = ""
+        family = _direction_family(direction)
+        if family and family in used_families:
+            duplicate_positions.append(position)
+        elif family:
+            used_families.add(family)
+
+    hypotheses = checkpoint.get("winning_swarm", {}).get("hypotheses", [])
+    candidates = sorted(
+        (item for item in hypotheses if isinstance(item, dict)),
+        key=lambda item: float(item.get("score", 0.0) or 0.0),
+        reverse=True,
+    )
+    for position in duplicate_positions:
+        replacement = next(
+            (
+                item
+                for item in candidates
+                if _direction_family(item)
+                and _direction_family(item) not in used_families
+                and str(item.get("project_function", "")).strip()
+                and item.get("equipment_forms")
+            ),
+            None,
+        )
+        if replacement is None:
+            continue
+        priority = str(directions[position].get("priority", f"P{position + 1}"))
+        directions[position] = _hypothesis_to_direction(
+            replacement,
+            topic=topic,
+            priority=priority,
+        )
+        used_families.add(_direction_family(replacement))
+    repaired["concept_directions"] = directions
+    return repaired
+
+
+def _rebuild_from_s6_checkpoint(
+    run_dir: Path,
+    *,
+    topic: str,
+    route: str,
+    repair_dynamic_portfolio: bool = False,
+) -> list[dict[str, Any]]:
+    """Reproject accepted S6 directions through the current portrait contracts."""
+
+    sqlite_store = SqliteRunStore(run_dir / "run.db", run_id=run_dir.name)
+    try:
+        store = _restore_domain_store(sqlite_store.domain_objects())
+    finally:
+        sqlite_store.close()
+    checkpoint = _latest_s6_checkpoint(run_dir)
+    normalized = _normalize_s6_deterministic_format(checkpoint, topic=topic)
+    warnings = _capability_direction_quality_issues(normalized)
+    blocking = _s6_delivery_blocking_issues(warnings)
+    if blocking and repair_dynamic_portfolio:
+        checkpoint = _repair_dynamic_s6_portfolio(checkpoint, topic=topic)
+        normalized = _normalize_s6_deterministic_format(checkpoint, topic=topic)
+        warnings = _capability_direction_quality_issues(normalized)
+        blocking = _s6_delivery_blocking_issues(warnings)
+    if blocking:
+        raise RuntimeError(
+            "S6 checkpoint still has delivery-blocking issues: "
+            + "；".join(blocking[:8])
+        )
+    normalized["s6_quality_gate_passed"] = True
+    normalized["s6_quality_gate_failed"] = False
+    normalized["s6_quality_warnings"] = warnings
+    for direction in normalized.get("concept_directions", []):
+        if isinstance(direction, dict):
+            # The checkpoint may carry a portrait produced by an older family
+            # classifier. Keep every accepted weapon field, but force the
+            # current governed portrait contract to rebuild the prose.
+            direction["capability_portrait"] = ""
+    l3 = next(
+        (stage for stage in store.stage_outputs.values() if stage.layer == "L3"),
+        None,
+    )
+    if l3 is None:
+        raise RuntimeError("completed run has no L3 capability-image stage")
+    packets = store.baseline_packet_snapshot()
+    evidence_ids = sorted(
+        {evidence_id for packet in packets for evidence_id in packet.evidence_ids}
+    )
+    images = WinningMechanismEngine(risk_based_gates=True)._capability_images(
+        topic=topic,
+        route=route,
+        l3=l3,
+        evidence_ids=evidence_ids,
+        coverage={},
+        packets=packets,
+        model_analysis=normalized,
+    )
+    if not 5 <= len(images) <= 7:
+        raise RuntimeError(
+            f"S6 checkpoint rebuilt {len(images)} capability images; expected 5 to 7"
+        )
+    return [to_plain(image) for image in images]
+
+
 def _update_domain_jsonl(
     path: Path,
     rewritten: dict[str, dict[str, Any]],
@@ -269,32 +588,61 @@ def upgrade_run(
     route: str,
     apply: bool,
     evidence_anchors: bool = False,
+    from_s6_checkpoint: bool = False,
+    repair_dynamic_portfolio: bool = False,
 ) -> dict[str, Any]:
     capability_path = run_dir / "capability_images.json"
     if not capability_path.exists():
         return {"changed": False, "directions": []}
     original = json.loads(capability_path.read_text(encoding="utf-8"))
+    checkpoint_rows = (
+        _rebuild_from_s6_checkpoint(
+            run_dir,
+            topic=topic,
+            route=route,
+            repair_dynamic_portfolio=repair_dynamic_portfolio,
+        )
+        if from_s6_checkpoint
+        else []
+    )
+    original_by_id = {
+        str(row.get("capability_id", "")): row
+        for row in original
+        if isinstance(row, dict)
+    }
     rewritten: dict[str, dict[str, Any]] = {}
     replacements: list[tuple[str, str]] = []
     directions: list[dict[str, str]] = []
     output: list[dict[str, Any]] = []
     evidence_rows = _evidence_rows(run_dir / "domain.jsonl")
-    for row in original:
-        refresh_migrated = "不以一般体系补位、通信连续或保障可用作为最终目标" in str(
-            row.get("deep_capability_portrait", "")
+    source_rows = checkpoint_rows or original
+    for source_row in source_rows:
+        row = original_by_id.get(
+            str(source_row.get("capability_id", "")),
+            source_row,
         )
-        updated = rewrite_capability_for_military_value(
-            row,
-            topic=topic,
-            route=route,
-            force=refresh_migrated,
-        )
-        normalized = _normalize_s6_deterministic_format(
-            {"concept_directions": [updated]},
-            topic=topic,
-        ).get("concept_directions", [])
-        if normalized and isinstance(normalized[0], dict):
-            updated = normalized[0]
+        if checkpoint_rows:
+            updated = dict(source_row)
+            if row.get("created_at"):
+                updated["created_at"] = row["created_at"]
+            if row.get("schema_version"):
+                updated["schema_version"] = row["schema_version"]
+        else:
+            refresh_migrated = "不以一般体系补位、通信连续或保障可用作为最终目标" in str(
+                row.get("deep_capability_portrait", "")
+            )
+            updated = rewrite_capability_for_military_value(
+                row,
+                topic=topic,
+                route=route,
+                force=refresh_migrated,
+            )
+            normalized = _normalize_s6_deterministic_format(
+                {"concept_directions": [updated]},
+                topic=topic,
+            ).get("concept_directions", [])
+            if normalized and isinstance(normalized[0], dict):
+                updated = normalized[0]
         # ``capability_portrait`` is an S6 transport field. Completed-run
         # artifacts store the dataclass field ``deep_capability_portrait``;
         # retaining the transport alias would break strict deserialization.
@@ -359,12 +707,31 @@ def main() -> int:
         action="store_true",
         help="用本运行已登记公开证据为能力画像补充型号/装备族谱锚点",
     )
+    parser.add_argument(
+        "--from-s6-checkpoint",
+        action="store_true",
+        help="从已通过组合门控的S6检查点重建能力卡，避免继承旧成品中的画像串线",
+    )
+    parser.add_argument(
+        "--repair-dynamic-portfolio",
+        action="store_true",
+        help="修复S6中的枚举式标题和重复装备族，并从候选账本补入互异装备",
+    )
     args = parser.parse_args()
 
     outputs = ROOT / "outputs"
     selected = set(args.run_id)
     scanned = changed_runs = changed_directions = 0
-    for run_id, topic, route in _completed_runs(outputs / "application.db"):
+    completed = _completed_runs(outputs / "application.db")
+    completed_ids = {run_id for run_id, _, _ in completed}
+    if selected:
+        for run_id in sorted(selected - completed_ids):
+            run_dir = outputs / "runs" / run_id
+            if not run_dir.exists():
+                continue
+            topic, route = _run_context(run_dir)
+            completed.append((run_id, topic, route))
+    for run_id, topic, route in completed:
         if selected and run_id not in selected:
             continue
         scanned += 1
@@ -374,6 +741,8 @@ def main() -> int:
             route=route,
             apply=args.apply,
             evidence_anchors=args.evidence_anchors,
+            from_s6_checkpoint=args.from_s6_checkpoint,
+            repair_dynamic_portfolio=args.repair_dynamic_portfolio,
         )
         if not result["changed"]:
             continue

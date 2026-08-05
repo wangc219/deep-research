@@ -8,6 +8,14 @@ from equipment_deep_research.interfaces import worker as worker_interface
 from equipment_deep_research.queue.worker import WorkerOutcome
 
 
+def test_runtime_progress_events_update_user_facing_run_phase() -> None:
+    assert worker_interface.runtime_status_for_event("baseline_agents_summarized") == "synthesizing"
+    assert worker_interface.runtime_status_for_event("winning_model_call_started") == "synthesizing"
+    assert worker_interface.runtime_status_for_event("audit_completed") == "reviewing"
+    assert worker_interface.runtime_status_for_event("report_model_call_started") == "reporting"
+    assert worker_interface.runtime_status_for_event("baseline_model_call_progress") == ""
+
+
 def test_worker_survives_cancelled_run_and_releases_lease(tmp_path: Path) -> None:
     touches: list[tuple[str, str]] = []
 

@@ -11,11 +11,30 @@ from equipment_deep_research.agents.provider import (
 from equipment_deep_research.agents.registry import AgentDef
 from equipment_deep_research.domain.models import BaselineFindingPacket, EvidenceCard
 from equipment_deep_research.domain.store import DomainStore, TraceStore
-from equipment_deep_research.harness.scheduler import DiscoveryScheduler
+from equipment_deep_research.harness.scheduler import (
+    DiscoveryScheduler,
+    _evidence_accept_target,
+)
 from equipment_deep_research.tools.evidence import EvidenceGovernor
 from equipment_deep_research.providers.base import ProviderFinalTurn, ProviderStreamEvent
 from equipment_deep_research.providers.fake import ScriptedFakeProvider
 from equipment_deep_research.tools.materialization import MaterializedEvidence
+
+
+def test_weapon_equipment_has_deeper_formal_evidence_target(monkeypatch) -> None:
+    monkeypatch.setenv("EQUIPMENT_DR_EVIDENCE_ACCEPT_TARGET", "4")
+    monkeypatch.setenv("EQUIPMENT_DR_WEAPON_EVIDENCE_ACCEPT_TARGET", "10")
+    agent = AgentDef(
+        "weapon_equipment",
+        "武器装备",
+        "",
+        ["equipment"],
+        [],
+        {},
+    )
+
+    assert _evidence_accept_target(agent, targeted_supplement=False) == 10
+    assert _evidence_accept_target(agent, targeted_supplement=True) == 3
 
 
 def test_scheduler_retains_low_quality_material_but_blocks_formal_evidence(tmp_path: Path) -> None:

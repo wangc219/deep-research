@@ -421,15 +421,26 @@ def build_discovery_blueprint(
         available_agent_ids=set(available_capabilities),
         specialist_agent_ids=specialists,
     )
-    baseline_agent_plan, semantic_agent_signals = _apply_topic_agent_policy(
-        baseline_agent_plan,
-        branch=code,
-        topic=problem.analysis_text(),
-        available_agent_ids=set(available_capabilities),
-        specialist_agent_ids=specialists,
-        minimum_active=3,
-        maximum_active=4,
-    )
+    if model_blueprint.get("baseline_agent_plan"):
+        # The Codex orchestrator has already reasoned over the complete Query.
+        # Do not let a deterministic keyword table silently promote callbacks
+        # or replace that decision.  Local routing is only a bounded fallback
+        # for offline/fake runs where no model blueprint exists.
+        baseline_agent_plan = _bound_model_agent_plan(
+            baseline_agent_plan,
+            maximum_active=4,
+        )
+        semantic_agent_signals: list[dict[str, Any]] = []
+    else:
+        baseline_agent_plan, semantic_agent_signals = _apply_topic_agent_policy(
+            baseline_agent_plan,
+            branch=code,
+            topic=problem.analysis_text(),
+            available_agent_ids=set(available_capabilities),
+            specialist_agent_ids=specialists,
+            minimum_active=3,
+            maximum_active=4,
+        )
     confidence = _bounded_confidence(
         model_blueprint.get("confidence"),
         fallback=float(resolved.get("confidence", 0.55)),
@@ -539,6 +550,43 @@ def _normalize_structured_query_brief(
         or base.get("constraints_and_assumptions", []),
         limit=6,
     )
+    combat_problem_frame = str(
+        raw.get("combat_problem_frame") or base.get("combat_problem_frame", "")
+    )[:900]
+    enemy_target_profile = _bounded_text_list(
+        raw.get("enemy_target_profile") or base.get("enemy_target_profile", []),
+        limit=6,
+    )
+    battle_phase_and_constraints = _bounded_text_list(
+        raw.get("battle_phase_and_constraints")
+        or base.get("battle_phase_and_constraints", []),
+        limit=8,
+    )
+    required_direct_military_effects = _bounded_text_list(
+        raw.get("required_direct_military_effects")
+        or base.get("required_direct_military_effects", []),
+        limit=6,
+    )
+    weapon_design_variables = _bounded_text_list(
+        raw.get("weapon_design_variables")
+        or base.get("weapon_design_variables", []),
+        limit=8,
+    )
+    query_specific_weapon_architectures = _bounded_text_list(
+        raw.get("query_specific_weapon_architectures")
+        or base.get("query_specific_weapon_architectures", []),
+        limit=6,
+    )
+    equipment_project_hypotheses = _normalize_equipment_project_hypotheses(
+        raw.get("equipment_project_hypotheses")
+        or base.get("equipment_project_hypotheses", []),
+        limit=6,
+    )
+    rejected_template_anchors = _bounded_text_list(
+        raw.get("rejected_template_anchors")
+        or base.get("rejected_template_anchors", []),
+        limit=6,
+    )
     return {
         "core_query": core_query,
         "supplement_present": bool(
@@ -548,6 +596,14 @@ def _normalize_structured_query_brief(
         "focus_questions": focus_questions,
         "expansion_dimensions": expansion_dimensions,
         "constraints_and_assumptions": constraints_and_assumptions,
+        "combat_problem_frame": combat_problem_frame,
+        "enemy_target_profile": enemy_target_profile,
+        "battle_phase_and_constraints": battle_phase_and_constraints,
+        "required_direct_military_effects": required_direct_military_effects,
+        "weapon_design_variables": weapon_design_variables,
+        "query_specific_weapon_architectures": query_specific_weapon_architectures,
+        "equipment_project_hypotheses": equipment_project_hypotheses,
+        "rejected_template_anchors": rejected_template_anchors,
         "handoff_rule": str(
             raw.get("handoff_rule")
             or base.get(
@@ -556,6 +612,40 @@ def _normalize_structured_query_brief(
             )
         )[:300],
     }
+
+
+def _normalize_equipment_project_hypotheses(
+    value: Any,
+    *,
+    limit: int,
+) -> list[dict[str, Any]]:
+    if not isinstance(value, list):
+        return []
+    rows: list[dict[str, Any]] = []
+    for item in value[:limit]:
+        if not isinstance(item, Mapping):
+            continue
+        row = {
+            "project_name": str(item.get("project_name", "")).strip()[:180],
+            "equipment_form": str(item.get("equipment_form", "")).strip()[:260],
+            "project_function": str(item.get("project_function", "")).strip()[:420],
+            "query_causal_link": str(item.get("query_causal_link", "")).strip()[:420],
+            "target_and_phase": str(item.get("target_and_phase", "")).strip()[:360],
+            "direct_military_effect": str(item.get("direct_military_effect", "")).strip()[:360],
+            "design_variables": _bounded_text_list(
+                item.get("design_variables", []), limit=8
+            ),
+            "innovation_logic": _bounded_text_list(
+                item.get("innovation_logic", []), limit=6
+            ),
+            "evidence_questions": _bounded_text_list(
+                item.get("evidence_questions", []), limit=6
+            ),
+            "rejection_condition": str(item.get("rejection_condition", "")).strip()[:360],
+        }
+        if row["project_name"] and row["equipment_form"] and row["project_function"]:
+            rows.append(row)
+    return rows
 
 
 def _normalize_baseline_agent_plan(
@@ -618,6 +708,29 @@ def _normalize_baseline_agent_plan(
         )
         seen.add(agent_id)
     return result[:6]
+
+
+def _bound_model_agent_plan(
+    plan: list[dict[str, str]],
+    *,
+    maximum_active: int,
+) -> list[dict[str, str]]:
+    """Keep a model-authored plan small without reinterpreting its semantics."""
+
+    active_count = 0
+    result: list[dict[str, str]] = []
+    for item in plan:
+        row = dict(item)
+        if row["mode"] in {"required", "reference"}:
+            active_count += 1
+            if active_count > maximum_active:
+                row["mode"] = "callback"
+                row["reason"] = (
+                    f"{row.get('reason', '')}；超过首轮{maximum_active}个Agent上限，"
+                    "转为缺口触发回调。"
+                ).strip("；")
+        result.append(row)
+    return result
 
 
 def _apply_topic_agent_policy(

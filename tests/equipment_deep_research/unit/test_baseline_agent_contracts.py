@@ -21,6 +21,8 @@ def test_default_agent_output_contracts_are_differentiated() -> None:
             "development_models",
             "technology_readiness",
             "capability_constraints",
+            "expendable_decoy_electronic_attack_evidence",
+            "counter_uas_interceptor_evidence",
             "defensive_countermeasure_options",
             "upgrade_requirements",
             "new_equipment_requirements",
@@ -44,6 +46,32 @@ def test_prompt_only_contains_local_context_and_contract() -> None:
     assert "defensive_countermeasure_analysis" in {
         skill["name"] for skill in prompt["skills"]
     }
+
+
+def test_weapon_equipment_policy_is_query_led_and_theme_examples_are_optional() -> None:
+    agent = AgentRegistry.load(ROOT / "configs/equipment_deep_research/agents.yaml").get(
+        "weapon_equipment"
+    )
+    policy = agent.research_policy
+    theme_policy = policy["theme_policy"]
+
+    assert "当前query始终优先" in theme_policy["query_precedence"]
+    assert theme_policy["examples_non_exhaustive"] is True
+    assert theme_policy["no_mandatory_coverage"] is True
+    assert "先做Query大方向" in theme_policy["divergence_mode"]
+    assert "项目功能" in theme_policy["project_function_rule"]
+    assert "概念性工作名" in theme_policy["illustrative_name_rule"]
+    assert "不能独立占用最终武器方向" in theme_policy["support_only_exclusion"]
+    tracks = set(policy["search_tracks"])
+    assert any(
+        "Query优先的具体战斗打击型武器主题发散与舍弃" in track
+        and "均为可选" in track
+        for track in tracks
+    )
+    assert "五类非穷尽主题适用性筛选与舍弃理由" in policy[
+        "required_outputs"
+    ]
+    assert "每个候选的项目功能与Query因果链" in policy["required_outputs"]
 
 
 def test_situation_and_scenario_prompts_have_dedicated_business_guidance() -> None:

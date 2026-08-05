@@ -19,12 +19,14 @@ from equipment_deep_research.orchestration.deliverables import (
     branch_report_lines,
     branch_writer_brief,
     build_delivery_artifacts,
+    _weapon_equipment_card_name,
 )
 from equipment_deep_research.orchestration.reporting import (
     render_formal_evidence_reference,
     render_report,
 )
 from equipment_deep_research.orchestration.runner import (
+    _clean_report_capability_portrait,
     _compact_report_branch_output,
     _report_decision_brief,
     _report_synthesis_seed,
@@ -116,6 +118,29 @@ def _store() -> DomainStore:
     return store
 
 
+def test_dynamic_g_branch_projects_accepted_capability_images_into_delivery_slots() -> None:
+    store = _store()
+    store.stage_outputs.clear()
+
+    output = build_delivery_artifacts(
+        topic="强干扰下无人装备跨域任务续接",
+        branch="G",
+        blueprint={"required_outputs": []},
+        store=store,
+    )["branch_deliverables"]
+
+    assert output["delivery_status"] == "complete"
+    assert all(row["met"] for row in output["completion"].values())
+    assert output["products"]["cross_domain_gaps"] == [
+        "现有平台跨型接口和自主重组不足"
+    ]
+    assert output["products"]["tactic_combinations"]
+    assert output["products"]["capability_indicators"]
+    assert output["products"]["equipment_forms"] == [
+        "低特征无人机、巡飞弹与边缘任务控制终端"
+    ]
+
+
 def _three_layer_model_body(extra: str = "") -> str:
     body = """## 第一层：需求挖掘层——场景·战法/技术·装备能力特征
 
@@ -190,6 +215,67 @@ def test_a_branch_artifacts_enforce_architecture_counts_and_deep_content() -> No
     }
 
 
+def test_a_branch_projects_complete_dynamic_portfolio_without_legacy_products() -> None:
+    source = _store().capability_images["cap-1"]
+    store = DomainStore()
+    rows = [
+        (
+            "cap-a",
+            "双模反辐射巡飞猎歼弹药",
+            "远程巡飞、辐射活动记忆、末段光电复核和直接毁伤",
+        ),
+        (
+            "cap-b",
+            "可消耗低空察打一体无人突击平台",
+            "低空任务区驻留、断链自主、猎歼短时目标和安全中止",
+        ),
+        (
+            "cap-c",
+            "地面发射战役纵深精确制导导弹",
+            "分布式发射、受扰导航、远程纵深覆盖和再打击",
+        ),
+        (
+            "cap-d",
+            "固定构型低成本巡航效应器族",
+            "低成本批产、供应链替代、多轴规模齐射和库存补库",
+        ),
+        (
+            "cap-e",
+            "短窗事件触发高速猎歼弹药",
+            "时间敏感目标压制、多联装并发和战斗部毁伤评估",
+        ),
+    ]
+    for capability_id, name, mechanism in rows:
+        store.add_capability_image(
+            replace(
+                source,
+                capability_id=capability_id,
+                name=name,
+                equipment_category=name,
+                source_winning_logic=f"以{mechanism}改变目标暴露与火力到达关系",
+                operational_mechanism=mechanism,
+                strike_chain_contribution=f"{mechanism}形成补链或强链贡献",
+                evidence_ids=["ev-1"],
+            )
+        )
+
+    artifacts = build_delivery_artifacts(
+        topic="无人远程火力打击装备",
+        branch="A",
+        blueprint={"required_outputs": []},
+        store=store,
+    )
+
+    output = artifacts["branch_deliverables"]
+    assert output["delivery_status"] == "complete"
+    assert output["completion"] == {
+        "tactic_concepts": {"target": 3, "actual": 3, "met": True},
+        "tactic_combinations": {"target": 5, "actual": 5, "met": True},
+        "capability_domains": {"target": 8, "actual": 8, "met": True},
+        "capability_indicators": {"target": 30, "actual": 30, "met": True},
+    }
+
+
 def test_all_branches_define_substantive_final_sections() -> None:
     assert list(BRANCH_DELIVERABLE_PROFILES) == list("ABCDEFGH")
     assert all(profile["required_sections"] for profile in BRANCH_DELIVERABLE_PROFILES.values())
@@ -239,7 +325,7 @@ def test_core_branch_writer_briefs_enforce_requested_outputs() -> None:
     assert branch_f["branch_name"] == "体系对抗博弈发现"
     assert "体系脆弱性规律与级联失效场景" in branch_f["required_sections"]
     assert any("动态重构" in item for item in branch_f["mandatory_content"])
-    assert branch_writer_brief("A")["hard_max_chars"] == 12000
+    assert branch_writer_brief("A")["hard_max_chars"] == 0
 
 
 def test_adaptive_branch_writer_briefs_have_distinct_mission_focus() -> None:
@@ -255,7 +341,7 @@ def test_adaptive_branch_writer_briefs_have_distinct_mission_focus() -> None:
         assert any(section_marker in item for item in brief["required_sections"])
         assert any(content_marker in item for item in brief["mandatory_content"])
         assert brief["target_chars"] == "4200-6500"
-        assert brief["hard_max_chars"] == 12000
+        assert brief["hard_max_chars"] == 0
 
 
 def test_a_branch_completion_counts_declared_products_not_panorama_union() -> None:
@@ -417,11 +503,67 @@ def test_report_decision_brief_is_bounded_public_and_preserves_core_counts() -> 
             "url": "https://example.test/joint-mission-network",
         }
     ]
+    decision = brief["capability_decisions"][0]
+    assert decision["operational_process"] == []
+    assert len(decision["verification_plan"]) == 3
+    assert "未改装" in decision["verification_plan"][1]
+    assert "关键作战流程" in decision["capability_portrait"]
+    synchronized_image = next(iter(store.capability_images.values()))
+    assert synchronized_image.capability_image == (
+        synchronized_image.deep_capability_portrait
+    )
+    assert _clean_report_capability_portrait(
+        synchronized_image.capability_image
+    ) == decision["capability_portrait"]
     products = brief["branch_products"]
     assert len(products["tactic_concepts"]) == 3
     assert len(products["tactic_combinations"]) == 5
     assert len(products["capability_domains"]) == 8
     assert len(products["capability_indicators"]) == 30
+
+
+def test_report_decision_brief_rebuilds_portrait_from_final_subtype_name() -> None:
+    store = _store()
+    original = next(iter(store.capability_images.values()))
+    store.capability_images[original.capability_id] = replace(
+        original,
+        name="射频复核反舰巡飞猎歼弹药",
+        equipment_category="反舰巡飞猎歼弹药",
+        equipment_form="长航时可消耗多模反舰巡飞猎歼弹药",
+        target_scenario="强电磁压制下远海反舰火力链断裂后的目标复获阶段",
+        problem_statement="外部航迹失效后难以发现并确认机动水面舰艇",
+        scientific_principle="被动射频候选发现与成像交叉复核",
+        enabling_technologies=["被动射频", "成像识别", "安全拒打"],
+        operational_concept="控制传感器暴露并完成跨模态复核后受控攻击",
+        operational_process=[
+            "被动射频候选发现",
+            "成像传感器短时开启",
+            "跨模态交叉确认",
+            "直接攻击或拒打",
+        ],
+        capability_outcome="断链后确认并直接攻击经授权水面舰艇",
+        mission_effect="形成断链后的直接反舰毁伤",
+        winning_mechanism="以跨模态互证压缩诱饵误导收益",
+    )
+    artifacts = build_delivery_artifacts(
+        topic="强电磁压制下远海反舰续接",
+        branch="A",
+        blueprint={"required_outputs": []},
+        store=store,
+    )
+
+    _report_decision_brief(
+        store=store,
+        branch_output=artifacts["branch_deliverables"],
+        convergence={},
+    )
+
+    synchronized = store.capability_images[original.capability_id]
+    overview = synchronized.capability_image.split("\n", 1)[0]
+    assert all(
+        marker in overview
+        for marker in ("被动射频", "成像", "交叉确认", "直接攻击")
+    )
 
 
 def test_report_synthesis_seed_keeps_only_high_value_editorial_anchors() -> None:
@@ -544,6 +686,32 @@ def test_similar_branches_deliver_structured_demand_cards() -> None:
             "目标分配闭合率",
         ]
         assert "capability_domain" not in cards[0]
+
+
+def test_demand_card_prefers_valid_project_name_over_configuration_component() -> None:
+    original = next(iter(_store().capability_images.values()))
+    cases = (
+        (
+            "多模复核反辐射巡飞猎歼弹",
+            "中程巡飞弹体、被动射频导引头、光电复核载荷组成",
+        ),
+        (
+            "短距起降低特征无人火力母机",
+            "短距起降低特征无人机体、模块化载架、诱饵与巡飞弹挂载组成",
+        ),
+        (
+            "节点护卫反无人机拦截车",
+            "机动防护车、搜索雷达、Coyote类可消耗拦截弹和本地火控组成",
+        ),
+        (
+            "半潜预置远程导弹火力舱",
+            "低特征半潜无人艇体、密封化弹药舱和条件授权火控组成",
+        ),
+    )
+
+    for name, equipment_form in cases:
+        image = replace(original, name=name, equipment_form=equipment_form)
+        assert _weapon_equipment_card_name(image) == name
 
 
 def test_branch_b_validator_rejects_abstract_capability_domain_as_card_subject() -> None:

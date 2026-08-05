@@ -74,7 +74,7 @@ def test_winning_reasoning_is_layered_for_enterprise_latency(monkeypatch) -> Non
             "winning_s6_image_deep",
             "high",
         )
-        == "high"
+        == "medium"
     )
     assert (
         _phase_reasoning_effort(

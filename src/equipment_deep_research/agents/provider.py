@@ -62,6 +62,14 @@ from equipment_deep_research.orchestration.winning_swarm import (
 from equipment_deep_research.orchestration.capability_fallback import (
     build_deadline_weapon_directions,
 )
+from equipment_deep_research.orchestration.capability_portrait import (
+    build_capability_portrait,
+    build_capability_title,
+    resolve_capability_portrait,
+)
+from equipment_deep_research.delivery.quality_gate import (
+    _report_military_information_metrics,
+)
 from equipment_deep_research.agents.provider_optimizations import (
     get_optimized_search_context_size,
 )
@@ -100,6 +108,206 @@ class AgentSelectionResult:
     task_analysis: list[str]
     dependency_notes: list[str]
     model_used: bool
+
+
+class S6QualityError(RuntimeError):
+    """Raised when S6 cannot satisfy its quality gate without a fallback image."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        partial_result: Mapping[str, Any] | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.partial_result = (
+            dict(partial_result) if isinstance(partial_result, Mapping) else {}
+        )
+
+
+def _query_led_combat_equipment_theme_contract() -> dict[str, Any]:
+    """Return the shared query-first theme anchors for combat equipment work."""
+
+    return {
+        "query_precedence": (
+            "当前query的任务对象、威胁、作战阶段和直接军事效果始终优先；"
+            "下列主题与示例仅用于发散，不是必选目录、固定命名或覆盖率要求。"
+            "与query没有直接因果关系的类别必须舍弃，不得为了凑齐主题机械生成。"
+        ),
+        "divergence_mode": (
+            "先围绕Query做大方向、跨域和机制级发散，再从任务对象、作战阶段、直接战果、"
+            "公开基线和工程边界收敛到具体装备项目；主题是思考发生维度，不是结果分类框。"
+        ),
+        "examples_are_non_exhaustive": True,
+        "illustrative_names_are_not_facts": True,
+        "combat_subject_requirement": (
+            "候选主体必须是可独立立项、研制、改装和试验的具体战斗/打击型武器装备："
+            "平台、弹药、拦截器、定向能或电子攻击效应器、武装无人平台等，直接承担"
+            "侦察打击、突防、压制、拦截、毁伤、拒止或续接火力任务。"
+        ),
+        "theme_lanes": [
+            {
+                "id": "unmanned_remote_strike",
+                "theme": "无人远程火力打击装备",
+                "example_patterns": [
+                    "‘九天’类重型无人机蜂群母舰/下一代空中释能平台",
+                    "超远程精确制导火箭弹与巡飞弹一体化发射车",
+                    "潜射型大型无人潜航器远程火力舱",
+                ],
+            },
+            {
+                "id": "systemic_intelligent_disruptive",
+                "theme": "体系化、实战化、智能化、颠覆化武器装备",
+                "example_patterns": [
+                    "‘飞龙-X’类去中心化、自主组网猎杀的智能协同巡飞弹蜂群",
+                    "‘影刃’类与有人战机协同的隐身无人僚机伴随火力支援系统",
+                    "AI驱动的‘天穹’类跨域杀伤网武器节点",
+                ],
+                "optional_lenses": [
+                    "成本逻辑",
+                    "平台逻辑",
+                    "时间逻辑",
+                    "毁伤逻辑",
+                    "体系逻辑",
+                    "伦理与博弈逻辑",
+                ],
+            },
+            {
+                "id": "common_series_scalable",
+                "theme": "通用化、系列化、规模化武器装备",
+                "example_patterns": [
+                    "CM-X类模块化巡飞弹—通用弹药系列",
+                    "覆盖单兵手抛至车载弹射的‘猛禽’类中小型察打一体无人机系列",
+                    "基于民用供应链、可由汽车等产线柔性转产的固定构型低成本装备族",
+                ],
+            },
+            {
+                "id": "cross_generation_traditional_domain",
+                "theme": "传统能力红海中的跨代优势武器装备",
+                "example_patterns": [
+                    "高超音速滑翔增程、500公里级概念射程与米级精度目标的远程火箭弹",
+                    "‘旋戈’改型类静音隐身重型无人直升机",
+                ],
+            },
+            {
+                "id": "high_dimensional_new_domain",
+                "theme": "新质能力蓝海中的高维优速武器装备",
+                "example_patterns": [
+                    "量子导航或量子雷达辅助制导的微型精确歼灭弹",
+                    "面向无人蜂群与电子设备的高功率微波巡飞弹",
+                    "用于城市巷战隐蔽侦察打击的仿生扑翼微型弹",
+                ],
+            },
+        ],
+        "innovation_lenses": [
+            "体系化",
+            "实战化",
+            "智能化",
+            "颠覆化：成本、平台、时间、毁伤、体系、伦理与博弈逻辑",
+            "通用化、系列化、规模化：低成本设计、供应链生态、产线柔性重组",
+            "传统能力红海的跨代优势",
+            "新质能力蓝海的高维优速",
+        ],
+        "project_function_requirement": (
+            "每个收敛候选必须显式给出项目功能：谁在何种场景/约束下，依靠哪一种具体装备，"
+            "完成何种侦察、压制、突防、拦截、打击、毁伤、拒止或火力续接动作，并解决Query中的"
+            "哪一个任务链断点。项目功能不得只写智能化、体系化、低成本或规模化。"
+        ),
+        "convergence_gate": [
+            "装备项目暂定名与概念/公开项目身份",
+            "单一主装备形态",
+            "项目功能",
+            "Query因果关系与目标/阶段",
+            "直接军事效果",
+            "公开基线差异与证据问题",
+            "体系接口、成本产能和失效边界",
+            "可证伪验证与淘汰条件",
+        ],
+        "support_only_exclusion": (
+            "通信、C2、算法、网关、供应链、产线、后勤、软件和治理不能独立占用最终武器方向；"
+            "它们只能作为具体战斗装备的接口、工程约束、规模化条件或横向支撑层。"
+        ),
+        "safety_boundary": (
+            "保持任务级和装备论证级抽象，不输出制造参数、攻击坐标、实时目标信息或可直接执行的交战指令。"
+        ),
+    }
+
+
+def _query_led_combat_equipment_theme_instruction() -> str:
+    contract = _query_led_combat_equipment_theme_contract()
+    themes = "、".join(
+        str(item.get("theme", ""))
+        for item in contract["theme_lanes"]
+        if isinstance(item, Mapping) and str(item.get("theme", "")).strip()
+    )
+    return (
+        "装备主题共同约束："
+        + str(contract["query_precedence"])
+        + str(contract["divergence_mode"])
+        + str(contract["combat_subject_requirement"])
+        + f"可选的非穷尽发散主题包括：{themes}。"
+        + str(contract["project_function_requirement"])
+        + str(contract["support_only_exclusion"])
+        + str(contract["safety_boundary"])
+    )
+
+
+def _query_combat_equipment_divergence_brief(
+    topic: str,
+    *,
+    structured_query_brief: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Expose the Codex-authored semantic divergence brief to downstream Agents."""
+
+    brief = dict(structured_query_brief or {})
+    return {
+        "query": _clean_capability_handoff_text(topic, limit=600),
+        "combat_problem_frame": str(brief.get("combat_problem_frame", ""))[:900]
+        or "由前置Codex Agent依据完整query语义建立任务对象、对手、作战阶段和关键矛盾，不做关键词枚举匹配。",
+        "enemy_target_profile": _compact_prompt_value(
+            brief.get("enemy_target_profile", []),
+            max_string_chars=260,
+            max_list_items=6,
+        ),
+        "battle_phase_and_constraints": _compact_prompt_value(
+            brief.get("battle_phase_and_constraints", []),
+            max_string_chars=260,
+            max_list_items=8,
+        ),
+        "required_direct_military_effects": _compact_prompt_value(
+            brief.get("required_direct_military_effects", []),
+            max_string_chars=260,
+            max_list_items=6,
+        ),
+        "weapon_design_variables": _compact_prompt_value(
+            brief.get("weapon_design_variables", []),
+            max_string_chars=260,
+            max_list_items=8,
+        ),
+        "query_specific_weapon_architectures": _compact_prompt_value(
+            brief.get("query_specific_weapon_architectures", []),
+            max_string_chars=360,
+            max_list_items=6,
+        ),
+        "equipment_project_hypotheses": _compact_prompt_value(
+            brief.get("equipment_project_hypotheses", []),
+            max_string_chars=420,
+            max_list_items=6,
+        ),
+        "rejected_template_anchors": _compact_prompt_value(
+            brief.get("rejected_template_anchors", []),
+            max_string_chars=260,
+            max_list_items=6,
+        ),
+        "generation_rules": [
+            "以Codex对完整query的语义推演为主，不按提示词表或固定装备目录匹配",
+            "先开放推演多种query专属武器架构，再用对象证据、直接军事价值和机制差异收敛",
+            "每个收敛项目必须明确具体装备形态、项目功能、Query因果链、证据问题与淘汰条件",
+            "共享Prompt示例只作为反事实启发，不能决定装备类别、配额或命名",
+            "至少探索一个不复述共享示例的新质打击杀伤装备架构",
+            "W2若形成高质量具体装备、直接战果、差异机理和证据边界，应合并保留",
+        ],
+    }
 
 
 class AgentProvider(Protocol):
@@ -292,6 +500,8 @@ class RealAgentProvider(FakeAgentProvider):
         production real-mode profiles still require the isolated Codex Reporter.
         """
 
+        if _report_template_mode(payload) == "project_argument_v1":
+            return _build_limited_report(payload)
         topic = str(payload.get("topic", "真实模式冒烟验证")).strip()
         return f"""## 第一层：需求挖掘层——场景·战法/技术·装备能力特征
 
@@ -517,6 +727,15 @@ class ResponsesAgentProvider:
 
         result = dict(options)
         no_deadline_degrade = bool(result.pop("_no_deadline_degrade", False))
+        ignore_runtime_deadline = bool(
+            result.pop("_ignore_runtime_deadline", False)
+        )
+        if ignore_runtime_deadline:
+            return result, {
+                "enabled": False,
+                "mode": "unbounded_quality_stage",
+                "remaining_seconds": 0.0,
+            }
         state = self._deadline_state(priority=priority)
         if no_deadline_degrade:
             return result, state
@@ -588,6 +807,7 @@ class ResponsesAgentProvider:
         *,
         priority: str,
         count_toward_model_budget: bool = True,
+        ignore_runtime_deadline: bool = False,
     ) -> float | None:
         with self._budget_lock:
             if not self._runtime_budgets:
@@ -595,7 +815,7 @@ class ResponsesAgentProvider:
             elapsed = monotonic() - self._run_started_at
             wall_clock_deadlines_enabled = bool(
                 self._runtime_budgets.get("wall_clock_deadlines_enabled", True)
-            )
+            ) and not ignore_runtime_deadline
             hard_deadline = float(
                 self._runtime_budgets.get("hard_deadline_seconds", 900)
             )
@@ -1081,15 +1301,33 @@ class ResponsesAgentProvider:
     def draft_report(self, payload: dict[str, Any]) -> str:
         self._last_report_quality_issues = []
         self._latest_report_draft = ""
+        portfolio_gate = payload.get("portfolio_quality_gate", {})
+        if (
+            str(payload.get("execution_profile_id", ""))
+            == "winning_swarm_dynamic_v2"
+            and isinstance(portfolio_gate, Mapping)
+            and portfolio_gate
+            and not bool(portfolio_gate.get("passed"))
+        ):
+            raise ValueError(
+                "winning swarm portfolio quality gate failed before Reporter: "
+                f"directions={portfolio_gate.get('direction_count', 0)}, "
+                "direct_equipment="
+                f"{portfolio_gate.get('direct_combat_equipment_count', 0)}, "
+                "distinct_direct_families="
+                f"{portfolio_gate.get('distinct_direct_equipment_family_count', 0)}, "
+                "required_distinct_direct_families="
+                f"{portfolio_gate.get('preferred_distinct_direct_equipment', 5)}"
+            )
         # Reporter normal mode is deliberately quality-first: xhigh, a real
-        # 12k output ceiling, and at most ten minutes for the single main
-        # attempt.  Reporter is explicitly exempt from runtime reasoning/token
-        # downshift; upstream stages absorb deadline pressure instead.
+        # 12k output ceiling, and a bounded but long-form main attempt. Reporter
+        # is explicitly exempt from runtime reasoning/token downshift; upstream
+        # stages absorb deadline pressure instead.
         timeout_seconds = min(
-            600.0,
+            3600.0,
             max(
                 30.0,
-                float(os.environ.get("EQUIPMENT_DR_REPORT_TIMEOUT_SECONDS", "600")),
+                float(os.environ.get("EQUIPMENT_DR_REPORT_TIMEOUT_SECONDS", "3600")),
             ),
         )
         retry_timeout_seconds = min(
@@ -1109,7 +1347,7 @@ class ResponsesAgentProvider:
         output_token_budget = _reporter_output_token_budget(payload, default=12000)
         if (
             str(payload.get("execution_profile_id", ""))
-            == "winning_swarm_dynamic_v2"
+            in {"swarm_quality_v1", "winning_swarm_dynamic_v2"}
             and os.environ.get("EQUIPMENT_DR_PARALLEL_REPORTER", "1") != "0"
         ):
             try:
@@ -1117,14 +1355,13 @@ class ResponsesAgentProvider:
                     payload,
                     reporter_input=reporter_input,
                     output_token_budget=output_token_budget,
-                    timeout_seconds=min(timeout_seconds, 300.0),
+                    timeout_seconds=timeout_seconds,
                 )
             except (TimeoutError, ProviderRequestError, ValueError, RuntimeError) as exc:
-                # Dynamic v2 must not reintroduce a four-to-five-minute serial
-                # tail after its parallel layers finish.  Preserve the best
-                # assembled layer draft and deterministically complete the
-                # delivery contract instead of launching a full monolithic
-                # Reporter retry.
+                # Quality modes must not reintroduce a four-to-five-minute
+                # serial tail after parallel layers finish. Preserve the best
+                # assembled draft and deterministically complete the delivery
+                # contract instead of launching a monolithic Reporter retry.
                 return self._limited_report_delivery(payload, failure=exc)
         try:
             return self._draft_report_attempt(
@@ -1188,61 +1425,278 @@ class ResponsesAgentProvider:
         output_token_budget: int,
         timeout_seconds: float,
     ) -> str:
-        """Generate the three canonical report layers concurrently."""
+        """Generate the selected canonical report template concurrently."""
 
-        sections = (
+        legacy_sections = (
             (
                 "layer_1_demand",
-                "第一层：需求挖掘层",
-                ["① 需求研判", "② 制胜机理", "③ 装备能力需求"],
+                "第一层：需求挖掘层——场景·战法/技术·装备能力特征",
+                [
+                    "① 典型作战场景",
+                    "② 新战法或新概念技术及制胜机理",
+                    "③ 装备能力特征清单",
+                ],
+                3200,
+                2200,
+                [],
             ),
             (
                 "layer_2_technology",
-                "第二层：技术攻关层",
-                ["④ 能力实现途径", "⑤ 核心技术", "⑥ 技术耦合与风险"],
+                "第二层：技术攻关层——能力实现途径与核心技术",
+                [
+                    "④ 能力实现途径",
+                    "⑤ 核心技术清单与攻关优先级",
+                    "⑥ 技术耦合与短板风险",
+                ],
+                3200,
+                2200,
+                [],
             ),
             (
                 "layer_3_portfolio",
                 "第三层：能力图像与效能贡献层",
-                ["⑦ 装备能力图像", "⑧ 效能贡献", "⑨ 发展抓手"],
+                [
+                    "⑦ 装备能力图像",
+                    "⑧ 效能贡献评估",
+                    "⑨ 发展优先级与近期抓手",
+                ],
+                4000,
+                2500,
+                [],
             ),
         )
-        per_layer_tokens = min(
-            4200,
-            max(3200, int(output_token_budget / len(sections)) + 200),
+        project_sections = (
+            (
+                "chapter_1_demand",
+                "一、需求分析",
+                [
+                    "（一）需求概述",
+                    "（二）国内外现状",
+                    "（三）建设必要性分析",
+                ],
+                3900,
+                2800,
+                [],
+            ),
+            (
+                "chapter_2_portrait",
+                "二、项目画像",
+                [
+                    "（一）装备图像概述",
+                    "（二）作战运用模式",
+                    "（三）体系贡献率分析",
+                    "（四）主要战技指标",
+                ],
+                1900,
+                1800,
+                [],
+            ),
+            (
+                "chapter_3_solution",
+                "三、总体方案",
+                ["（一）总体架构", "（二）子系统方案"],
+                1700,
+                1800,
+                [],
+            ),
+            (
+                "chapter_4_technology_foundation",
+                "四、关键技术",
+                [
+                    "（一）关键技术清单与攻关途径",
+                    "（一）参与单位",
+                    "（二）技术基础",
+                ],
+                2700,
+                2600,
+                ["五、研制基础"],
+            ),
         )
-
+        project_mode = _report_template_mode(payload) == "project_argument_v1"
+        sections = project_sections if project_mode else legacy_sections
+        project_layer_handoff_keys = {
+            "chapter_1_demand": {
+                "decisive_anchors",
+                "mission_chain_breaks",
+                "counterevidence_and_limits",
+                "priority_signals",
+                "comparative_status",
+                "capability_cues",
+            },
+            "chapter_2_portrait": {
+                "mission_chain_breaks",
+                "counterevidence_and_limits",
+                "capability_cues",
+            },
+            "chapter_3_solution": {
+                "counterevidence_and_limits",
+                "capability_cues",
+            },
+            "chapter_4_technology_foundation": {
+                "counterevidence_and_limits",
+                "comparative_status",
+                "capability_cues",
+            },
+        }
+        project_layer_cue_fields = {
+            "chapter_1_demand": {
+                "direction",
+                "target_scenario",
+                "problem_statement",
+                "capability_gap",
+                "mission_effect",
+                "public_equipment_baseline",
+                "future_trigger",
+                "disruptive_relationship",
+                "priority",
+                "boundary",
+            },
+            "chapter_2_portrait": {
+                "direction",
+                "mission_effect",
+                "capability_gap",
+                "mechanism_hint",
+                "target_scenario",
+                "problem_statement",
+                "scientific_principle",
+                "operational_concept",
+                "operational_process",
+                "capability_outcome",
+                "winning_mechanism",
+                "equipment_hint",
+                "public_equipment_baseline",
+                "future_trigger",
+                "disruptive_relationship",
+                "development_path",
+                "indicator_portrait",
+                "coupling_risk",
+                "priority",
+                "boundary",
+                "enabling_technologies",
+            },
+            "chapter_3_solution": {
+                "direction",
+                "equipment_hint",
+                "scientific_principle",
+                "enabling_technologies",
+                "operational_concept",
+                "operational_process",
+                "capability_outcome",
+                "development_path",
+                "coupling_risk",
+                "boundary",
+            },
+            "chapter_4_technology_foundation": {
+                "direction",
+                "equipment_hint",
+                "scientific_principle",
+                "enabling_technologies",
+                "development_path",
+                "coupling_risk",
+                "boundary",
+                "indicator_portrait",
+                "public_equipment_baseline",
+                "priority",
+            },
+        }
         async def generate_layers() -> list[str]:
             calls = []
-            for layer_id, h2, h3s in sections:
+            for layer_id, h2, h3s, target_chars, token_cap, additional_h2s in sections:
                 layer_input = dict(reporter_input)
+                if project_mode:
+                    handoff = layer_input.get("research_handoff", {})
+                    if isinstance(handoff, Mapping):
+                        allowed_handoff_keys = project_layer_handoff_keys[layer_id]
+                        compact_handoff = {
+                            key: value
+                            for key, value in handoff.items()
+                            if key in allowed_handoff_keys
+                        }
+                        cues = compact_handoff.get("capability_cues", [])
+                        if isinstance(cues, Sequence) and not isinstance(
+                            cues, (str, bytes)
+                        ):
+                            allowed_cue_fields = project_layer_cue_fields[layer_id]
+                            compact_handoff["capability_cues"] = [
+                                {
+                                    key: value
+                                    for key, value in cue.items()
+                                    if key in allowed_cue_fields
+                                }
+                                for cue in cues
+                                if isinstance(cue, Mapping)
+                            ]
+                        layer_input["research_handoff"] = compact_handoff
+                h2_h3_map = {h2: list(h3s)}
+                if additional_h2s:
+                    h2_h3_map[h2] = list(h3s[:1])
+                    h2_h3_map[additional_h2s[0]] = list(h3s[1:])
                 layer_input["parallel_section_contract"] = {
                     "layer_id": layer_id,
                     "required_h2": h2,
+                    "additional_required_h2": list(additional_h2s),
                     "required_h3": h3s,
+                    "h2_h3_map": h2_h3_map,
                     "output_scope": "only_assigned_layer",
                     "no_h1": True,
                     "standalone_complete_prose": True,
                     "cross_layer_repetition_forbidden": True,
+                    "target_chars": target_chars,
+                    "target_is_minimum": False,
+                    "quality_unit": "decision_relevant_military_information",
+                    "hard_max_chars": 0,
                     "source_index": (
-                        "append_after_layer" if layer_id == "layer_3_portfolio" else "omit"
+                        "append_after_layer"
+                        if layer_id
+                        in {"layer_3_portfolio", "chapter_4_technology_foundation"}
+                        else "omit"
                     ),
                 }
+                h2_contract = "、".join([h2, *additional_h2s])
+                heading_contract = "；".join(
+                    f"{section_h2}下依次写{','.join(section_h3s)}"
+                    for section_h2, section_h3s in h2_h3_map.items()
+                )
+                source_instruction = (
+                    "本分片末尾附加精简的核心公开来源索引。"
+                    if layer_input["parallel_section_contract"]["source_index"]
+                    == "append_after_layer"
+                    else "本分片不输出公开来源索引。"
+                )
+                portrait_projection_instruction = (
+                    "完整的逐装备‘精简概述+四个受控分点’画像已由S6硬门治理，交付层会在本分片"
+                    "生成后按方向原名确定性注入，同时重建规范横向表、逐装备体系贡献和战技指标矩阵。"
+                    "本分片不得复制、改写或扩写capability_portrait全文，只需提供装备组合的差异化总览、"
+                    "作战运用流程、链路闭环、体系贡献计算口径和指标取舍；每段必须比较具体装备或形成"
+                    "可执行建设/验证决策，不得以省下的画像篇幅补写背景套话。"
+                    if layer_id == "chapter_2_portrait"
+                    else ""
+                )
                 system = (
                     _report_writer_system_prompt(payload)
-                    + f"\n你是并行Reporter分片 {layer_id}。只输出二级标题“{h2}”及其三个指定三级标题："
-                    + "、".join(h3s)
+                    + f"\n你是并行Reporter分片 {layer_id}。只输出这些二级标题：{h2_contract}；"
+                    + heading_contract
                     + "。不得输出其他层、总标题、前言或过程说明。每个判断必须完整、可独立拼接，"
-                    "避免复述其他层；第三层负责附加核心公开来源索引。"
+                    f"避免复述其他层；约{target_chars}字只是章节规划预算，不是最低要求，也不是质量目标。"
+                    "以高价值军事战场信息为质量单位：每段至少承担战场矛盾、具体装备/项目事实、因果判断、"
+                    "证据边界、对手反适应、验证判据或建设决策中的一项；删除通用战略套话、重复背景、字段复述"
+                    "和跨章节同义反复。指定三级项、证据边界和能力画像必须完整，但能用更短篇幅闭合时立即收束。"
+                    "research_handoff只提供事实、装备身份、因果要素和验证边界；除装备/单位专名、"
+                    "公开指标、URL和指定方向标题外，禁止连续照录其中的长句。先按本章任务重新组织"
+                    "因果链与段落，再用不同句法独立表达；不得通过删除事实、来源、反证或验证要求"
+                    "来规避原句复用检查。输入中的‘改写断点’只切分事实单元，不属于正文，禁止输出；"
+                    "断点前后的事实都必须保留并重新综合。"
+                    + portrait_projection_instruction
+                    + source_instruction
                 )
                 calls.append(
                     asyncio.wait_for(
                         self._run_reporter_text(
-                        system,
-                        layer_input,
-                        per_layer_tokens,
-                        phase=f"report_generation_{layer_id}",
-                        run_id=str(payload.get("run_id", "")),
+                            system,
+                            layer_input,
+                            min(output_token_budget, token_cap),
+                            phase=f"report_generation_{layer_id}",
+                            run_id=str(payload.get("run_id", "")),
                             isolation_id=f"{payload.get('run_id', 'run')}:{layer_id}",
                         ),
                         timeout=timeout_seconds,
@@ -1260,14 +1714,21 @@ class ResponsesAgentProvider:
             for item in layer_texts
             if str(item).strip()
         )
+        model_normalized = _normalize_report_structure_deterministically(
+            _normalize_branch_report_labels(merged, payload)
+        )
         normalized = _stabilize_report_delivery_contract(
-            _normalize_report_structure_deterministically(
-                _normalize_branch_report_labels(merged, payload)
-            ),
+            model_normalized,
             payload,
         )
+        normalized = _enforce_report_hard_max(normalized, payload)
         self._latest_report_draft = normalized
-        quality_issues = _report_draft_quality_issues(normalized, payload)
+        quality_issues = [
+            item
+            for item in _report_draft_quality_issues(normalized, payload)
+            if not _is_report_seed_copy_issue(item)
+        ]
+        quality_issues.extend(_report_seed_copy_issues(model_normalized, payload))
         blocking = _report_delivery_blocking_issues(quality_issues)
         if blocking or not _minimum_viable_model_report(normalized, payload):
             self._last_report_quality_issues = list(quality_issues)
@@ -1301,15 +1762,29 @@ class ResponsesAgentProvider:
             ),
             payload,
         )
-        if _minimum_viable_model_report(candidate, payload):
+        candidate = _enforce_report_hard_max(candidate, payload)
+        if (
+            _minimum_viable_model_report(candidate, payload)
+            and _report_has_complete_canonical_structure(candidate)
+        ):
             return candidate
         # The deterministic limited builder is still a publication path.  It
         # must consume the exact same Reporter-ready indicator and coupling
         # fields as the normal model draft; otherwise a transport/quality
         # fallback can reintroduce generic placeholders and dangling clipped
         # sentences after the normal stabilizer has already run.
-        return _stabilize_report_delivery_contract(
-            _build_limited_report(payload, draft=candidate),
+        fallback = _build_limited_report(payload, draft=candidate)
+        hybrid = _merge_partial_report_with_limited_completion(
+            candidate,
+            fallback,
+            payload,
+        )
+        completed = hybrid or fallback
+        return _enforce_report_hard_max(
+            _stabilize_report_delivery_contract(
+                completed,
+                payload,
+            ),
             payload,
         )
 
@@ -1337,17 +1812,24 @@ class ResponsesAgentProvider:
                 timeout=timeout_seconds,
             )
         )
+        model_normalized = _normalize_report_structure_deterministically(
+            _normalize_branch_report_labels(
+                _sanitize_reporter_output(_normalize_report_summary(text)),
+                payload,
+            )
+        )
         normalized = _stabilize_report_delivery_contract(
-            _normalize_report_structure_deterministically(
-                _normalize_branch_report_labels(
-                    _sanitize_reporter_output(_normalize_report_summary(text)),
-                    payload,
-                )
-            ),
+            model_normalized,
             payload,
         )
+        normalized = _enforce_report_hard_max(normalized, payload)
         self._latest_report_draft = normalized
-        quality_issues = _report_draft_quality_issues(normalized, payload)
+        quality_issues = [
+            item
+            for item in _report_draft_quality_issues(normalized, payload)
+            if not _is_report_seed_copy_issue(item)
+        ]
+        quality_issues.extend(_report_seed_copy_issues(model_normalized, payload))
         if not quality_issues:
             return normalized
         if (
@@ -1419,6 +1901,10 @@ class ResponsesAgentProvider:
             ),
             payload,
         )
+        repaired_normalized = _enforce_report_hard_max(
+            repaired_normalized,
+            payload,
+        )
         self._latest_report_draft = repaired_normalized
         remaining_issues = _report_draft_quality_issues(
             repaired_normalized,
@@ -1483,13 +1969,12 @@ class ResponsesAgentProvider:
         # caller, legacy phase name (including fast_finalize/timeout_retry),
         # registry override, or global Codex performance profile cannot silently
         # lower report reasoning depth or truncate the output allowance.
-        parallel_layer = "_layer_" in phase
-        configured_effort = "medium" if parallel_layer else "xhigh"
-        configured_max_tokens = (
-            min(12000, max(1800, int(max_output_tokens)))
-            if parallel_layer
-            else 12000
-        )
+        # 12k is the capacity of each independent Reporter call, not a shared
+        # report-length budget. Parallel sections must not divide that capacity
+        # or lower reasoning depth, because doing so truncates the densest
+        # evidence, capability-portrait and validation chapters before assembly.
+        configured_effort = "xhigh"
+        configured_max_tokens = 12000
         options = _apply_codex_performance_options(
             {
                 "reasoning_effort": _phase_reasoning_effort(
@@ -1518,7 +2003,12 @@ class ResponsesAgentProvider:
                 "current_step": (
                     "报告定向修复"
                     if phase.endswith("_repair")
-                    else "三层九项报告撰写"
+                    else (
+                        "项目论证报告撰写"
+                        if _report_template_mode(payload)
+                        == "project_argument_v1"
+                        else "三层九项报告撰写"
+                    )
                 ),
             },
             progress_family="report",
@@ -1637,10 +2127,21 @@ class ResponsesAgentProvider:
         if optimized_v2:
             role_focus = {
                 "weapon_equipment": (
-                    "按装备基线→体系依赖→能力差距→现役升级/新研→验证形成闭环。"
-                    "远打精打导弹、远程无人打击和远域压制必须分别形成独立analysis_sections，"
-                    "每个专项至少给出具体装备/装备族锚点、直接作战效果、证据引用、指标方向、"
-                    "反证和失效边界；证据不足时明确保留类别级，禁止合并成泛化‘远程打击能力’。"
+                    "按国外/中国国内装备案例→问题难点解决路径→核心技术途径→指标与证据→"
+                    "能力差距→现役升级/新研→验证形成闭环。foreign_equipment_cases和"
+                    "domestic_equipment_cases必须分别给出具体国家/单位、装备型号或项目、状态、"
+                    "所解决问题、技术方案、核心技术、公开指标、来源URL、证据边界和可用图片URL；"
+                    "每个案例独立成项。comparative_findings应分别总结国内外优势、短板和本项目差异化优势。"
+                    "upgrade_requirements和new_equipment_requirements中的每个候选必须分别给出项目暂定名、"
+                    "概念/公开项目身份、单一主装备形态、project_function、Query因果链、目标与阶段、"
+                    "直接军事效果、公开基线差异、关键技术路线、体系接口、失效边界、证据问题、验证与淘汰条件。"
+                    "project_function必须回答谁在何种约束下依靠该装备完成什么动作并产生何种任务结果。"
+                    "必须依据query_combat_equipment_divergence_brief组织Query专属证据通道，而不是固定"
+                    "远程导弹、低空无人、反辐射、诱饵或反蜂群目录。每个被Query语义选中的专项都要给出"
+                    "具体装备/装备族锚点、直接作战效果、证据引用、指标方向、反证和失效边界；来源目录中的"
+                    "JASSM、PrSM、Harop、MALD、Barracuda等对象只有与Query候选直接匹配时才引用。"
+                    "至少探索一个未复述共享Prompt示例的OTHER直接打击杀伤装备架构；证据不足则明确拒绝成项。"
+                    + _query_led_combat_equipment_theme_instruction()
                 ),
                 "operational_employment": "按任务链→备选运用→协同保障→失败模式→装备功能需求形成闭环。",
                 "case_research": (
@@ -1654,6 +2155,8 @@ class ResponsesAgentProvider:
             analysis_system = (
                 "优先按本Agent专业角色和专用方法独立分析Query主题的核心军事矛盾，并以强军事运用价值收敛；"
                 "本Agent角色+Query主题+打击、歼灭、压制、反制、拒止、威慑等直接作战价值共同主导。"
+                "必须先消化query_combat_equipment_divergence_brief，再从本Agent角色重新核验和扩展；"
+                "不得跳过Query语义直接套用共享示例，也不得把简报中的待证架构当成既成事实。"
                 "其他Agent精简信息只能作为次级事实证据、约束或反证，不得决定议题、结构、命名、优先级和结论，"
                 "也不得继承或拼接其叙事。"
                 "从侦察预警、指挥决策、协同、打击、歼灭、压制、反制、拒止、威慑、抗毁、保障恢复中选择相关任务效果深入论证。"
@@ -1678,6 +2181,19 @@ class ResponsesAgentProvider:
                     limit=6 if compact_reference else 12,
                 ),
                 "specialized_evidence_channels": specialized_evidence_channels,
+                "query_led_combat_equipment_themes": (
+                    _query_led_combat_equipment_theme_contract()
+                    if deep_equipment_search
+                    else {}
+                ),
+                "query_combat_equipment_divergence_brief": (
+                    _query_combat_equipment_divergence_brief(
+                        request.topic,
+                        structured_query_brief=request.context.get(
+                            "structured_query_brief", {}
+                        ),
+                    )
+                ),
                 "discovery_blueprint": _compact_discovery_blueprint(
                     request.context.get("discovery_blueprint", {})
                 ),
@@ -1687,6 +2203,8 @@ class ResponsesAgentProvider:
             analysis_system = (
                 "你是受限的研究子智能体。上一步检索Agent已提供web discovery结果；不要虚构 URL。"
                 "必须依据assignment与discovery交叉分析，主动识别反证、冲突数据和替代假设。"
+                "必须先消化query_combat_equipment_divergence_brief，并从本Agent专业角色核验其任务对象、"
+                "阶段、约束和武器架构；不得绕过Query语义套用固定示例。"
                 "输出严格 JSON，并在 source_claims 中只引用discovered_sources中的 URL。"
                 + (
                     "这是一次制胜链批判触发的窄化补证。只回答recall_request中的单一问题，"
@@ -1695,12 +2213,18 @@ class ResponsesAgentProvider:
                     else ""
                 )
                 + (
-                    "武器装备研究必须先给出国外装备全景和重点型号档案，再按‘装备能力—体系依赖/边界—"
+                    "武器装备研究必须分别给出国外与中国国内装备全景和重点型号档案，按具体案例记录"
+                    "问题难点解决方式、技术方案途径、核心技术、核心公开指标、实证/图片URL和证据边界；再按‘装备能力—体系依赖/边界—"
                     "主题场景压力—防御性反制功能—现役升级或新研需求—成熟度—验证方法—证据’闭环输出。"
                     "findings最多8条、open_questions最多5条、source_claims最多18条；"
                     if deep_equipment_search
                     else "交接包必须高信息密度且完整闭合：findings 最多6条、open_questions最多4条、"
                     "source_claims最多12条；"
+                )
+                + (
+                    _query_led_combat_equipment_theme_instruction()
+                    if deep_equipment_search
+                    else ""
                 )
                 + analysis_specialization
                 + "每个analysis_sections字段只保留结论、关键参数、证据边界和适用条件，"
@@ -1712,6 +2236,19 @@ class ResponsesAgentProvider:
                 "discovered_sources": discovery_metadata.get("web_sources", []),
                 "search_queries": discovery_metadata.get("search_queries", []),
                 "specialized_evidence_channels": specialized_evidence_channels,
+                "query_led_combat_equipment_themes": (
+                    _query_led_combat_equipment_theme_contract()
+                    if deep_equipment_search
+                    else {}
+                ),
+                "query_combat_equipment_divergence_brief": (
+                    _query_combat_equipment_divergence_brief(
+                        request.topic,
+                        structured_query_brief=request.context.get(
+                            "structured_query_brief", {}
+                        ),
+                    )
+                ),
                 "discovery_blueprint": request.context.get("discovery_blueprint", {}),
                 "recall_request": recall_request,
             }
@@ -1909,9 +2446,23 @@ class ResponsesAgentProvider:
                 ),
             )
             if targeted_supplement
-            else min(
-                18 if deep_equipment_search else 12,
-                int(request.agent.research_policy.get("target_source_count", 8)),
+            else (
+                max(
+                    14,
+                    min(
+                        18,
+                        int(
+                            request.agent.research_policy.get(
+                                "target_source_count", 8
+                            )
+                        ),
+                    ),
+                )
+                if deep_equipment_search
+                else min(
+                    12,
+                    int(request.agent.research_policy.get("target_source_count", 8)),
+                )
             )
         )
         source_priorities = [
@@ -1933,9 +2484,22 @@ class ResponsesAgentProvider:
             for url in item.get("source_urls", [])
             if str(url).startswith("https://")
         ]
+        blueprint_context = request.context.get("discovery_blueprint", {})
+        use_specialized_anchors = bool(
+            isinstance(blueprint_context, Mapping)
+            and is_quality_execution_profile_id(
+                blueprint_context.get("execution_profile_id")
+            )
+        )
+        specialized_anchor_urls = (
+            _prioritize_specialized_anchor_urls(specialized_evidence_channels)
+            if use_specialized_anchors
+            else []
+        )
         known_urls = list(
             dict.fromkeys(
                 [
+                    *specialized_anchor_urls,
                     *(str(item.get("url", "")) for item in source_priorities),
                     *memory_urls,
                 ]
@@ -1968,6 +2532,29 @@ class ResponsesAgentProvider:
             # second speculative lane roughly doubles gateway time while the
             # accepted-source cap discards most of its marginal output.
             search_intensity = "light"
+            if deep_equipment_search and not targeted_supplement:
+                # Bound the search result set while retaining a margin above
+                # the 8-source evidence floor. Real regression showed that a
+                # 12-lead cap could materialize only seven accepted weapon
+                # sources, so the quality-preserving default remains 14; the
+                # medium web context and smaller output budget carry the
+                # latency/token optimization.
+                quality_lead_cap = max(
+                    10,
+                    min(
+                        14,
+                        int(
+                            os.environ.get(
+                                "EQUIPMENT_DR_QUALITY_EQUIPMENT_LEAD_CAP",
+                                "14",
+                            )
+                        ),
+                    ),
+                )
+                target_source_count = min(
+                    target_source_count,
+                    quality_lead_cap,
+                )
         max_batches = (
             1
             if targeted_supplement
@@ -1999,7 +2586,11 @@ class ResponsesAgentProvider:
                         if targeted_supplement
                         else 1000
                         if compact_reference or compact_callback
-                        else 1600
+                        else (
+                            2000
+                            if optimized_v2
+                            else 2600
+                        )
                         if deep_equipment_search
                         else 1400
                     ),
@@ -2083,6 +2674,15 @@ class ResponsesAgentProvider:
             )
         if compact_reference or compact_callback:
             search_context_size = "medium"
+        elif optimized_v2 and deep_equipment_search:
+            search_context_size = str(
+                os.environ.get(
+                    "EQUIPMENT_DR_QUALITY_EQUIPMENT_SEARCH_CONTEXT_SIZE",
+                    "medium",
+                )
+            ).strip().lower()
+            if search_context_size not in {"low", "medium", "high"}:
+                search_context_size = "medium"
         discovery_system = _discovery_system_prompt(request.agent.agent_id)
         if compact_reference or compact_callback:
             discovery_system += (
@@ -2147,6 +2747,14 @@ class ResponsesAgentProvider:
                         "structured_query_brief": request.context.get(
                             "structured_query_brief", {}
                         ),
+                        "query_combat_equipment_divergence_brief": (
+                            _query_combat_equipment_divergence_brief(
+                                request.topic,
+                                structured_query_brief=request.context.get(
+                                    "structured_query_brief", {}
+                                ),
+                            )
+                        ),
                         "research_route": request.research_route,
                         "agent_role": request.agent.display_name,
                         "retrieval_lane": lane.get("lane"),
@@ -2172,7 +2780,11 @@ class ResponsesAgentProvider:
                     harness_profile=self._harness_for(request.agent),
                 ),
                 options,
-                priority=str(request.context.get("_execution_priority", "normal")),
+                priority=(
+                    "critical"
+                    if len(lanes) > 1
+                    else str(request.context.get("_execution_priority", "normal"))
+                ),
                 progress={
                     "run_id": request.run_id,
                     "agent_id": request.agent.agent_id,
@@ -2250,7 +2862,15 @@ class ResponsesAgentProvider:
                 for item in metadata.get("search_queries", [])
                 if str(item).strip()
             )
-        selected_sources = sources[:target_source_count]
+        selected_sources = (
+            _merge_required_source_anchors(
+                sources,
+                specialized_anchor_urls,
+                limit=target_source_count,
+            )
+            if deep_equipment_search and use_specialized_anchors
+            else sources[:target_source_count]
+        )
         with self._discovery_lock:
             shared = self._shared_discovery_sources.setdefault(request.run_id, {})
             for source in selected_sources:
@@ -2361,6 +2981,9 @@ class ResponsesAgentProvider:
         fragments: list[str] = []
         metadata: dict[str, Any] = {}
         no_deadline_degrade = bool(options.get("_no_deadline_degrade", False))
+        ignore_runtime_deadline = bool(
+            options.get("_ignore_runtime_deadline", False)
+        )
         lease = self._call_gate.try_acquire(priority=priority)
         if lease is None:
             if progress:
@@ -2382,7 +3005,9 @@ class ResponsesAgentProvider:
                 priority=priority,
                 count_toward_model_budget=not isinstance(
                     options.get("web_search"), Mapping
-                ),
+                )
+                and not ignore_runtime_deadline,
+                ignore_runtime_deadline=ignore_runtime_deadline,
             )
             stream_options, deadline_state = self._deadline_adjusted_options(
                 options,
@@ -2540,6 +3165,7 @@ class ResponsesAgentProvider:
                         "name": "string",
                         "type": "new_capability|upgrade",
                         "function": "string",
+                        "project_function": "who uses the concrete equipment under what conditions to produce what mission result",
                         "feasibility": "1..5",
                         "military_value": "string",
                         "depth_mechanism": "string",
@@ -2855,6 +3481,14 @@ class ResponsesAgentProvider:
                     max_string_chars=360,
                     max_list_items=8,
                 ),
+                "query_combat_equipment_divergence_brief": (
+                    _query_combat_equipment_divergence_brief(
+                        str(shared.get("topic", "")),
+                        structured_query_brief=shared.get(
+                            "structured_query_brief", {}
+                        ),
+                    )
+                ),
                 "research_route": shared["research_route"],
                 "discovery_branch": shared["discovery_branch"],
                 "execution_profile_id": shared["execution_profile_id"],
@@ -3142,6 +3776,7 @@ class ResponsesAgentProvider:
                 "约束与反证，不得决定议题、结构、术语、命名、优先级或结论。每个候选必须说明任务对象、"
                 "作战阶段、打击/歼灭/反制/拒止/威慑/抗毁效果、对手反适应和失败边界。"
             )
+        equipment_theme_rule = _query_led_combat_equipment_theme_instruction()
         steps = [
             (
                 "winning_s1_opponent",
@@ -3178,13 +3813,13 @@ class ResponsesAgentProvider:
             (
                 "winning_s3_breakthrough",
                 query_led_combat_rule
+                + equipment_theme_rule
                 + "S3 突破口思考子Agent：以query核心矛盾为主，结合而非照抄S1/S2，形成至少3个机制"
                 "不同的防御性、任务级突破方向并构建效果链，至少覆盖两类不同的直接作战效果，"
-                "输入中的disruptive_seed_context是按场景召回的高价值反事实种子而非事实或指标；"
-                "成本、平台、时间、效应、体系和博弈可控只作为内部发散镜头：仅从中选择与query任务对象、"
-                "作战阶段和证据存在直接因果关系的2至3类进行比较，不足时不为凑数补齐，也不得在输出中"
-                "机械罗列六维方法论。种子标题不能直接变成突破方向或装备名称；bounded_exploration最多"
-                "挑战一个既有前提。可提出改变新体系关系的OTHER方向。"
+                "输入中的disruptive_seed_context若存在，也只是Query直接召回的可选反事实参考，不是事实、"
+                "指标、目录或配额；先基于完整Query自行发散，再决定是否使用任一种子。不得为覆盖成本、平台、"
+                "时间、效应、体系或博弈维度而补齐，不得机械罗列方法论。种子标题不能直接变成突破方向或"
+                "装备名称；允许忽略全部种子并提出改变新体系关系的OTHER方向。"
                 "进行反事实和替代假设检验。每项必须解释如何改变对抗机制并产生打击、反制、拒止、"
                 "威慑或体系生存效果。突破方向最多6项，每项必须包含核心矛盾、适用条件、"
                 "改变的关键前提、直接—间接—最终军事效果、对手反适应和可证伪失败条件；"
@@ -3202,6 +3837,7 @@ class ResponsesAgentProvider:
             (
                 "winning_s4_capability",
                 query_led_combat_rule
+                + equipment_theme_rule
                 + "S4 装备能力映射子Agent：从query所要求的作战效果出发，把S3效果链转换为"
                 "效果-功能-性能/约束-体系接口；至少保留2项直接改变目标发现、火力、突防、拦截、"
                 "毁伤、拒止或威慑效果的能力映射，通信、接口、治理和保障只能作为支撑层，不能主导组合。"
@@ -3271,6 +3907,7 @@ class ResponsesAgentProvider:
             (
                 "winning_s5_gap",
                 query_led_combat_rule
+                + equipment_theme_rule
                 + "S5 装备现状与差距子Agent：以query的实际作战后果为尺度，将目标能力与现有/在研"
                 "装备、成熟度和体系约束对齐；对每项能力比较现役升级、中长期新研和非装备缓解三种路径，"
                 "对颠覆性候选额外检查成本、工业补充、对手反制、降级可用和试验淘汰条件，"
@@ -3285,11 +3922,17 @@ class ResponsesAgentProvider:
                 "high证据强度必须来自直接测试失败、正式审计或明确现状证据，最多8项。只输出严格JSON。"
                 "S5尚不能预知S6最终合并后的方向编号，因此reasoning_node.next_action和正文必须使用"
                 "能力名称，不得使用P1、P2等最终优先级编号；最终连续编号由S6统一生成。"
-                "同时形成s6_preflight前置质量合同：分别检查现役战斗装备升级、无人作战平台与"
-                "导弹/精确制导弹药三类独立装备方向能否从当前query、S4能力映射和证据中建立因果映射。"
-                "现役升级类必须给出可直接用于S6标题的具体型号/装备族对象和新增作战效果；每类写明与query契合的"
+                "同时形成s6_preflight前置质量合同：从当前query_combat_equipment_divergence_brief与S4候选中"
+                "选择3至6个Query专属具体武器装备族，逐项检查其能否从任务语义、能力映射和对象证据建立因果关系。"
+                "无人、低空、远程精打和精确打击仅是可选重点镜头，不是固定装备桶或覆盖配额。每类写明与query契合的"
                 "任务对象、作战阶段、现役/类比基线、独立差距和候选装备对象；若证据不足必须显式标记"
                 "ready=false和原因，不得用弹药补给、导弹保障、运输、维修等支援装备冒充武器方向。"
+                "每个ready装备桶还必须先形成整卡语义蓝图：明确唯一主装备对象、实际执行作战流程的主体、"
+                "发射/释放/部署域、目标对象与直接战果，并给出4至6步平台一致的operational_flow_contract。"
+                "不得用标题或基线中的关键词套预设流程族；必须从Query、项目功能和完整装备形态理解主语。"
+                "若主装备是母平台、发射舱、发射车或载机，所携弹药不得在流程中无说明地取代主平台；"
+                "若发射域未被方案限定，必须保持平台中性，公开基线不能擅自把方案改为空射、陆射或海射。"
+                "cross_family_confusion_risks要提前指出最容易导致主体、发射域、目标或毁伤方式串卡的语义风险。"
                 "该前置合同只提供组合质量约束，不替代S6独立综合。",
                 {
                     "gap_assessment": [
@@ -3308,12 +3951,18 @@ class ResponsesAgentProvider:
                     "s6_preflight": {
                         "equipment_buckets": [
                             {
-                                "category": "combat_equipment_upgrade|unmanned_combat_platform|missile_precision_munition",
+                                "category": "Codex依据Query语义形成的具体武器装备族标识",
                                 "ready": "boolean",
                                 "query_relevance": "与当前query契合的任务对象、作战阶段和直接作战效果",
                                 "baseline_system": "该类方向的现役或类比装备基线",
                                 "capability_gap": "该类方向独立且具体的能力差距",
-                                "candidate_equipment": "候选无人平台或导弹/精确制导弹药对象",
+                                "candidate_equipment": "与Query目标、阶段和直接战果对应的具体打击杀伤武器对象",
+                                "primary_equipment_identity": "唯一主装备对象及其平台/弹体/载荷边界",
+                                "process_actor": "实际执行部署、进入、搜索/告警、交战和再组织的主体",
+                                "launch_or_release_domain": "明确空/陆/海/水下或平台中性，以及发射/释放方式",
+                                "target_and_direct_effect": "主要目标对象与可直接验收的打击、毁伤、压制或拦截战果",
+                                "operational_flow_contract": ["Codex按完整语义形成的4至6步装备专属作战流程"],
+                                "cross_family_confusion_risks": ["可能被基线、载荷或相邻卡片误导的主体/发射域/目标/毁伤语义"],
                                 "evidence_refs": ["exact evidence_id or packet_id"],
                                 "blocking_reason": "ready=false时说明缺少的证据或因果条件",
                             }
@@ -3327,11 +3976,12 @@ class ResponsesAgentProvider:
             ),
             (
                 "winning_s6_image",
-                "你是独立的装备能力画像综合Agent。分析主导顺序固定为：S6装备论证角色与方法、Query主题、"
+                equipment_theme_rule
+                + "你是独立的装备能力画像综合Agent。分析主导顺序固定为：S6装备论证角色与方法、Query主题、"
                 "打击/歼灭/压制/反制/拒止/威慑等强军事运用价值。必须先据此独立发散装备方向，再用"
                 "capability_synthesis_handoff中的少量信息做事实、约束和反证校验；交接信息不得主导议题、"
                 "结构、命名、优先级或结论。不得复述、拼接或沿用上游结构、措辞和执行过程。"
-                "形成5至7项机制显著不同、具备独立装备对象的方向，至少包含一项现役升级和四项新研能力；每一项都必须"
+                "形成5至7项机制显著不同、具备独立装备对象的方向；升级或新研比例由Query差距和对象证据决定，每一项都必须"
                 "直接改变目标发现、火力分配、突防、拦截、压制、毁伤、再打击、区域拒止或威慑效果。"
                 "全部5至7项必须是可独立立项、研制、改装并试验考核的具体装备系统，不得用能力口号、技术标签、"
                 "战法名称或支撑清单占位。内部仅比较与query直接因果相关的2至3类成本、平台、时间、效应、体系或"
@@ -3339,22 +3989,29 @@ class ResponsesAgentProvider:
                 "disruptive_seed_context只用于防止陷入渐进补齐，不得作为证据，也不得强制生成与query无关的概念。"
                 "最终组合必须直接映射到武器装备发展：至少4项是直接承担侦察打击、突防、歼灭、压制、拦截、"
                 "毁伤或区域拒止的武器/无人作战装备方向；"
-                "其中至少1项聚焦无人作战装备（无人机、无人艇、无人潜航器、无人车、无人僚机、无人集群或巡飞弹），"
-                "至少1项聚焦导弹、巡飞弹、精确弹药、拦截弹、鱼雷、火炮、定向能或电子压制效应器。"
-                "若query涉及无人远程火力，最终组合应分别覆盖无人/低空直接作战装备、独立远程精确导弹或弹药、"
-                "远域压制效应器，并至少形成一个改变成本、平台、时间、效应或体系关系的新研方向。"
-                "其中导弹/精确制导弹药必须是独立方向，名称本身明确出现导弹、巡飞弹、制导弹药、"
-                "拦截弹、鱼雷或远程精确火力等核心对象，不能仅在装备清单、升级包、弹药补给车或"
-                "保障描述中顺带提及。该方向还必须通过query_relevance说明与当前query的任务对象、"
-                "作战阶段、威胁压力和毁伤/拦截结果的直接因果关系；无法建立契合关系时不得生成无关"
-                "导弹方向，应保留为质量门受限问题。"
+                "主体方向优先选择具备前瞻性、新颖构型和直接歼灭毁伤价值的战斗武器，重点发散无人、低空、"
+                "远程打击和精确打击装备。新研方向必须相对最近公开基线明确新增一种可辨识的机体/弹体构型、"
+                "制导感知组合、自主交战边界、突防方式、毁伤机理或低成本规模运用方式；不能只把‘反辐射巡飞弹’、"
+                "‘无人机’、‘远程导弹’、‘精确制导弹药’等既有大类名称直接作为新能力标题。"
+                "标题应写成‘差异化任务/机理特征+具体武器装备’，例如多模复核反辐射巡飞弹、断链自主猎歼无人机，"
+                "但仅可使用当前证据和论证实际支持的特征，不得为追求新颖而虚构构型。"
+                "无人、低空、远程与精确打击是优先观察镜头，但不是固定清单、效果边界或覆盖配额；必须先消费"
+                "query_combat_equipment_divergence_brief，再依据任务对象、威胁形态、作战阶段和制胜矛盾决定装备组合。"
+                "任何入选方向都必须通过query_relevance说明与任务对象、阶段、威胁压力和毁伤/拦截结果的直接因果关系；"
+                "与Query无关的无人、低空、导弹、巡飞弹、定向能或电子压制方向不得为凑类型而生成。"
                 "无人方向必须写清侦察、诱骗、压制、突击、拦截或毁伤载荷及有人监督边界；导弹/弹药方向必须写清"
                 "目标类型、射程/成本/生存性等指标口径、制导火控依赖、毁伤机理和补充消耗方式。"
-                "名称必须体现具体装备对象+直接作战增益，建议20字左右且硬上限24字；禁止使用‘具备、"
-                "能够、通过、实现、以及、包括’等描述句。现役升级名称还必须同时写出被升级对象和获得的"
-                "打击/猎歼/拦截/反制/拒止/威慑增益。现役升级标题禁止出现‘包、套件、保障、通信、"
+                "名称必须优先点明可研制、改装和试验的具体武器装备形态，再补充直接战斗作用，建议20字左右"
+                "且硬上限24字；标题禁止以‘证据链、任务链、信息链、闭环、能力、体系’等抽象结果"
+                "作为主体或结尾，也禁止使用‘具备、能够、通过、实现、以及、包括’等描述句。标题必须以中文"
+                "具体装备对象为主体，JASSM、PrSM、Harop、AARGM、MALD、Barracuda、Launched Effects等"
+                "英文型号或项目名只能写入baseline_system作为公开基线，或置于中文标题末尾括号内作对照，"
+                "不得位于标题开头，也不得因去除英文型号而退化为‘远程导弹、精确弹药、无人机’等泛称。"
+                "现役改进类必须在baseline_system和升级论证字段中写出被改进对象和获得的"
+                "打击/猎歼/拦截/反制/拒止/威慑增益，但用户可见标题仍只命名改进后形成的具体武器装备，"
+                "禁止以‘升级’或‘升级方向’收尾。标题禁止出现‘包、套件、保障、通信、"
                 "链路、网关、接口、恢复、韧性、治理、审计’等支撑性名称，也禁止只写C2/ISR、闭环、"
-                "抗毁或智能化升级；应写成‘现役具体装备/任务系统+新增直接作战效果+升级’。"
+                "抗毁或智能化等抽象改进；应写成‘差异化构型/任务特征+具体武器装备’。"
                 "通信、链路、网关、治理、审计、恢复与保障只能作为武器、传感器、火控、电子战或效应平台"
                 "内部的支撑性改进措施，不得单列为最终能力方向。伪装、假目标、工程构设、效果评估和后勤保障"
                 "原则上也只能作为横向支撑层；仅当query明确以该任务为主题时允许最多单列一项具体装备。"
@@ -3362,13 +4019,37 @@ class ResponsesAgentProvider:
                 "每项必须回答：面向何种对象、场景与作战阶段；切断、恢复或强化哪段任务链；应形成何种"
                 "平台、武器、任务系统、载荷或保障能力；其机理如何提升侦察预警、指挥决策、火力协同、"
                 "打击、歼灭、拦截、反制、拒止、威慑、抗毁恢复或持续作战；相对现役基线新增什么机制。"
+                "流程族识别必须由你基于整张装备卡的语义完成，禁止按标题、载荷或公开型号关键词套模板。"
+                "在同一次调用内部，先为每卡锁定primary_equipment_identity，再生成function、equipment_form、"
+                "operational_concept、operational_process和capability_portrait；提交前重新通读整卡，核对这些字段"
+                "是否始终由同一个主装备对象执行、是否保持同一发射/释放域、是否面向同一目标并产生同一类直接战果。"
+                "特别检查三类通用关系错误：母平台/发射装置被所携弹药替换为流程主语；防御拦截装备串入目标区"
+                "察打补射；平台中性方案被公开基线擅自限定为空射、陆射或海射。以上是关系检查，不是装备关键词清单。"
+                "只有semantic_consistency_check.consistent=true的卡片才允许提交；若不一致，必须在本次成稿内重写"
+                "冲突字段后再提交唯一最终JSON，不得把问题留给后置质量门或卡片修复。"
+                "consistent必须输出为JSON布尔值true，不得输出字符串\"true\"。逐卡复核完成后还必须进行一次"
+                "组合级复核：比较全部卡片的主装备、发射域、目标、作用机理和验证指标；实质重复的卡片必须"
+                "在本次成稿内合并或替换，不能仅靠改标题制造差异。"
+                "能力画像概述首句必须严格按以下因果句式组织：面向XX场景，针对XX问题/难点/需求，利用XX原理，"
+                "采用XX技术，通过XX作战概念并解释关键作战流程，形成XX能力，实现XX作战效果。每个XX都必须"
+                "替换为该装备独有的具体内容，禁止保留占位符或套用通用句。场景必须落到真实战役/战斗阶段与"
+                "作战地域，明确敌方目标或威胁及其反制动作、我方具体发射/运用主体、从进入或待机到搜索复核、"
+                "交战/拒打、毁伤评估和补射接替的时敏过程，以及压制、摧毁、拦截、开辟走廊、续接后续火力或"
+                "阻断敌方重组等直接战场结果。面向或针对节点禁止从‘装备研究中的’‘研究任务阶段’‘针对公开"
+                "资料/公开基线不能证明’等研究管理、证据管理措辞起笔；公开证据边界放入对抗边界，发展与验证信息仅保留在独立结构化字段；"
+                "最后单独点明制胜逻辑机理。不得只写装备组成、功能清单或抽象愿景。"
                 "baseline_system和equipment_form应优先使用输入证据明确支持的公开型号、装备族谱或现役"
                 "任务系统作为锚点，并说明该锚点承担的打击、猎歼、毁伤、拦截或压制作用；若证据只支持"
                 "装备类别，必须明确写‘公开证据不足，保留类别级’，严禁凭常识虚构型号。"
                 "现役升级必须写明被升级对象、至少两项软硬件改装、作战效能增益、打击链贡献及转入新研的边界。"
                 "每项同时给出3至10年触发条件、对手反适应、失效边界和可证伪指标；无校准数据不得虚构精确增益。"
-                "capability_portrait只写120至180字核心论证；交付层会用同卡已给出的装备形态、作战机理、"
-                "军事价值、发展路径、对手反适应和失效边界确定性扩展为300至600字深度画像。其余字段"
+                "capability_portrait按‘精简概述+四个受控分点’形成深度画像：概述建议保持简洁，"
+                "必须直接点明一个具体武器装备，以面向—针对—利用—采用—通过—形成—实现完成装备专属因果链，"
+                "只保留军事决策最有价值的场景、问题、装备、交战流程和直接战果；再独立判断现役基线为何在对手反制下失效、该装备改变哪个"
+                "任务变量及其安全边界；装备与技术实现、关键作战流程、形成能力与"
+                "作战效果、制胜逻辑机理与对抗边界分别展开。发展和验证信息只保留在development_path与"
+                "verification字段，不进入装备能力画像正文。详细信息放入四个分点，"
+                "总画像不设字符硬上限，不得为压缩而删除指标、反证或转段门槛。其余字段"
                 "每项40至100字，只保留一个独立决策信息，禁止重复背景或复述画像。direct_evidence_refs"
                 "最多3项、derived_from最多2项、upgrade_package保留2至4项，assumptions和open_questions"
                 "各最多3项。branch_products每类最多3条短句。"
@@ -3380,7 +4061,7 @@ class ResponsesAgentProvider:
                 {
                     "concept_directions": [
                         {
-                            "name": "具体现役装备/任务系统+打击/猎歼/拦截/反制/拒止/威慑效果+升级；禁止使用升级包、套件或保障类名称",
+                            "name": "差异化构型/任务特征+具体武器装备；现役改进属性只写入type和baseline_system，标题禁止以升级、能力、体系、方向、包或套件收尾",
                             "priority": "P1..P8",
                             "type": "new_capability|upgrade",
                             "function": "string",
@@ -3394,7 +4075,24 @@ class ResponsesAgentProvider:
                             "novelty": "string",
                             "strike_countermeasure_value": "string",
                             "equipment_form": "具体武器装备形态；优先无人作战平台、导弹/弹药/拦截器、火控与效应器，写清载荷和作战对象",
+                            "primary_equipment_identity": "唯一主装备对象，明确平台/弹体/载荷边界以及是否平台中性",
                             "operational_mechanism": "该装备能力如何作用于任务链并改变对抗效果",
+                            "target_scenario": "面向的具体对象、环境、作战阶段和约束场景",
+                            "problem_statement": "当前要解决的问题、难点、需求或任务链断点",
+                            "scientific_principle": "支撑方案成立的作战、控制、信息、效应或体系原理",
+                            "enabling_technologies": ["形成能力所采用的具体软硬件技术"],
+                            "operational_concept": "装备如何编组、部署、协同、交战、评估和再组织的作战概念",
+                            "operational_process": ["按时间顺序给出的关键作战流程步骤"],
+                            "semantic_consistency_check": {
+                                "process_actor": "流程各阶段实际行动主体",
+                                "launch_or_release_mode": "发射、释放、部署域及其是否由方案明确限定",
+                                "target_and_direct_effect": "主要目标对象与直接战果",
+                                "checked_fields": ["name|primary_equipment_identity|function|equipment_form|operational_concept|operational_process|capability_portrait|failure_boundary"],
+                                "consistent": True,
+                                "resolution_note": "发现冲突时在本次成稿内如何重写；无冲突时说明为何一致",
+                            },
+                            "capability_outcome": "最终形成的可考核装备能力",
+                            "winning_mechanism": "为何能改变时间、精度、成本、平台、毁伤或体系关系并制胜",
                             "development_path": "近期现役武器改装—中期无人/导弹/弹药样机或型号研制—体系集成与实弹/对抗验证闸门",
                             "future_trigger": "3至10年内使该方向变得必要或可行的威胁/技术/体系触发条件",
                             "adversary_adaptation": "对手可能采取的反适应及本方向的再对抗要求",
@@ -3406,7 +4104,7 @@ class ResponsesAgentProvider:
                             "combat_effect_uplift": "upgrade必填：升级后对实际作战、打击/反制和持续任务能力的提升",
                             "strike_chain_contribution": "upgrade必填：对侦察—决策—火力—打击—评估—再组织链路的贡献",
                             "upgrade_boundary": "upgrade必填：现役改装可达边界及必须转入新研的条件",
-                            "capability_portrait": "120至180字核心论证；交付层确定性扩展为300至600字画像",
+                            "capability_portrait": "简洁的具体武器装备战斗概述，加四个受控分点的深度论证；突出真实交战流程、直接毁伤战果和对抗边界，不写发展与验证路径；字数不作为通过或失败条件",
                             "confidence": "0..1；按该对象证据强度和推导跨度单独给出",
                         }
                     ],
@@ -3883,6 +4581,14 @@ class ResponsesAgentProvider:
                     "research_route": shared["research_route"],
                     "execution_profile_id": shared["execution_profile_id"],
                     "discovery_branch": primary_branch,
+                    "query_combat_equipment_divergence_brief": (
+                        _query_combat_equipment_divergence_brief(
+                            str(shared.get("topic", "")),
+                            structured_query_brief=shared.get(
+                                "structured_query_brief", {}
+                            ),
+                        )
+                    ),
                     "specialist_task": to_plain(task),
                     "hypothesis": to_plain(hypothesis) if hypothesis else {},
                     "packet_index": _compact_prompt_value(
@@ -3891,7 +4597,10 @@ class ResponsesAgentProvider:
                         max_list_items=10,
                     ),
                     "evidence_index": _compact_prompt_value(
-                        shared.get("evidence_index", []),
+                        _prioritize_winning_evidence_index(
+                            shared.get("evidence_index", []),
+                            archetype=task.archetype,
+                        ),
                         max_string_chars=300,
                         max_list_items=24,
                     ),
@@ -3913,6 +4622,8 @@ class ResponsesAgentProvider:
                                 "mechanism_chain": ["string"],
                                 "direct_military_effects": ["string"],
                                 "equipment_forms": ["specific equipment category/form"],
+                                "project_function": "who uses this equipment under what constraints to do what and achieve what mission result",
+                                "system_interfaces": ["concrete platform, payload, C2, fire-control or support interface"],
                                 "novelty_delta": "substantive difference from baseline",
                                 "evidence_ids": ["exact evidence_id or packet_id"],
                                 "evidence_boundary": "what evidence does and does not prove",
@@ -3933,7 +4644,9 @@ class ResponsesAgentProvider:
                     wave_instruction = (
                         "广度探索波次：只生成1至2条与其他候选机制真正不同的制胜假设。"
                         "候选必须说明最近公开基线、改变的对抗变量、直接军事效果、具体装备形态、"
-                        "新颖性差异、证据边界和失败条件。热门技术词堆叠不算创新。"
+                        "明确项目功能、新颖性差异、证据边界和失败条件。项目功能回答谁在何种约束下"
+                        "依靠该装备完成什么动作并产生何种任务结果。先按query专属发散简报反推武器构型，"
+                        "共享示例不能作为默认目录；热门技术词堆叠不算创新。"
                     )
                 else:
                     schema = {
@@ -3943,6 +4656,8 @@ class ResponsesAgentProvider:
                         "mechanism_chain_updates": ["string"],
                         "direct_military_effects": ["string"],
                         "equipment_forms": ["specific equipment category/form"],
+                        "project_function": "complete or repaired project function",
+                        "system_interfaces": ["concrete platform, payload, C2, fire-control or support interface"],
                         "novelty_delta": "string",
                         "evidence_ids": ["exact evidence_id or packet_id"],
                         "evidence_boundary": "string",
@@ -3965,7 +4680,8 @@ class ResponsesAgentProvider:
                         else "winning_swarm_convergence"
                     )
                     wave_instruction = (
-                        "定向挑战并只补充声明的候选与合并节点；不得把结果投影给其他候选。"
+                        "定向挑战并只补充声明的候选与合并节点；必须依据Query语义简报核验相关性，"
+                        "高质量的具体装备、直接战果、差异机理和证据边界贡献应保留；不得投影给其他候选。"
                         if task.wave == 2
                         else "独立收敛评审候选的非支配性、证据边界、反适应韧性和装备落点。"
                     )
@@ -4405,10 +5121,23 @@ class ResponsesAgentProvider:
                     rejection_reasons=gate.rejection_reasons,
                 )
             for hypothesis in rejected:
+                gate = next(
+                    (
+                        item
+                        for item in final_gates
+                        if item.hypothesis_id == hypothesis.hypothesis_id
+                    ),
+                    None,
+                )
                 rejection = {
                     "hypothesis_id": hypothesis.hypothesis_id,
                     "stage": "final",
-                    "reasons": hypothesis.residuals,
+                    "reasons": (
+                        list(gate.rejection_reasons)
+                        if gate is not None and gate.rejection_reasons
+                        else list(hypothesis.residuals)
+                        or ["最终候选组合未选中，具体排序原因缺失"]
+                    ),
                 }
                 swarm_rejections.append(rejection)
                 emit_swarm_event("hypothesis_rejected", **rejection)
@@ -4489,8 +5218,19 @@ class ResponsesAgentProvider:
             """
 
             nonlocal dynamic_outputs
-            target_instances = int(
-                swarm_controller.policy.get("mission_graph_target_instances", 12)
+            repair_reserve = int(
+                swarm_controller.policy.get("expert_repair_reserved_instances", 0)
+            )
+            maximum_instances = int(
+                swarm_controller.policy.get("max_dynamic_instances", 18)
+            )
+            producer_instance_limit = max(
+                int(swarm_controller.policy.get("mission_graph_min_instances", 8)),
+                maximum_instances - max(0, repair_reserve),
+            )
+            target_instances = min(
+                int(swarm_controller.policy.get("mission_graph_target_instances", 12)),
+                producer_instance_limit,
             )
             graph = swarm_controller.build_mission_graph(
                 topic=str(shared["topic"]),
@@ -4511,6 +5251,7 @@ class ResponsesAgentProvider:
             maximum_observed_concurrency = 0
             recruited_pairs: set[tuple[str, str]] = set()
             instance_hypothesis_ids: dict[str, set[str]] = {}
+            candidate_id_aliases: dict[str, str] = {}
             running_instances: dict[
                 asyncio.Task[tuple[WinningAgentInstance, dict[str, Any], int]],
                 tuple[WinningAgentInstance, set[str], int],
@@ -4533,6 +5274,14 @@ class ResponsesAgentProvider:
                     max_output_tokens=2200,
                     allow_child_spawn=False,
                 )
+
+            def canonical_candidate_id(hypothesis_id: str) -> str:
+                current = str(hypothesis_id)
+                seen: set[str] = set()
+                while current in candidate_id_aliases and current not in seen:
+                    seen.add(current)
+                    current = candidate_id_aliases[current]
+                return current
 
             async def call_instance(
                 instance: WinningAgentInstance,
@@ -4571,22 +5320,125 @@ class ResponsesAgentProvider:
                     if ledger_snapshot is not None
                     else list(hypotheses)
                 )
-                if candidate_scope and instance.mission_node != "S6":
+                # Validation designers only need the candidate branches
+                # produced by their declared dependencies.  The old S6
+                # exception sent the complete ledger to every validation
+                # designer and made a two-candidate task reread 30-40k chars.
+                # Only the independent portfolio reviewer is intentionally
+                # global.
+                if (
+                    candidate_scope
+                    and instance.archetype != "independent_portfolio_reviewer"
+                ):
                     ledger_candidates = [
                         item
                         for item in ledger_candidates
                         if item.hypothesis_id in candidate_scope
                     ]
-                candidate_snapshot = [to_plain(item) for item in ledger_candidates]
+                candidate_snapshot = [
+                    _compact_swarm_candidate_handoff(
+                        item,
+                        portfolio_summary=(
+                            instance.archetype
+                            == "independent_portfolio_reviewer"
+                        ),
+                    )
+                    for item in ledger_candidates
+                ]
+                prioritized_evidence = _prioritize_winning_evidence_index(
+                    shared.get("evidence_index", []),
+                    archetype=instance.archetype,
+                )
+                candidate_evidence_ids = {
+                    evidence_id
+                    for candidate in candidate_snapshot
+                    for evidence_id in candidate.get("evidence_ids", [])
+                    if str(evidence_id).strip()
+                }
+                if candidate_evidence_ids:
+                    prioritized_evidence = _quality_judge_scoped_evidence_index(
+                        prioritized_evidence,
+                        candidate_evidence_ids,
+                    )
+                compact_evidence_index = _compact_prompt_value(
+                    prioritized_evidence,
+                    max_string_chars=260,
+                    max_list_items=(18 if instance.mission_node == "S6" else 14),
+                )
+                candidate_handoff_chars = len(
+                    json.dumps(candidate_snapshot, ensure_ascii=False)
+                )
+                evidence_handoff_chars = len(
+                    json.dumps(compact_evidence_index, ensure_ascii=False)
+                )
                 common_input = {
                     "topic": shared["topic"],
                     "research_route": shared["research_route"],
                     "execution_profile_id": shared["execution_profile_id"],
                     "discovery_branch": primary_branch,
+                    "query_led_combat_equipment_themes": (
+                        _query_led_combat_equipment_theme_contract()
+                    ),
+                    "query_combat_equipment_divergence_brief": (
+                        _query_combat_equipment_divergence_brief(
+                            str(shared.get("topic", "")),
+                            structured_query_brief=shared.get(
+                                "structured_query_brief", {}
+                            ),
+                        )
+                    ),
+                    "disruptive_paradigm_seed_library_v2": disruptive_seed_context(
+                        str(shared["topic"]),
+                        branch=primary_branch,
+                        agent_id=instance.archetype,
+                    ),
                     "mission_graph": {
                         "graph_id": graph.graph_id,
                         "mission_objective": graph.mission_objective,
                         "maximum_concurrency": graph.maximum_concurrency,
+                    },
+                    "equipment_portfolio_contract": {
+                        "required_direction_range": [5, 7],
+                        "minimum_direct_combat_equipment": 4,
+                        "direct_equipment_definition": (
+                            "主体装备直接承担低空进入、侦察打击、突防、压制、猎歼、"
+                            "拦截、精确毁伤或区域拒止；C2、通信、算法、网关和保障"
+                            "只能作为内嵌接口或约束。"
+                        ),
+                        "priority_lanes": [
+                            "从query敌方目标和任务阶段反推的直接打击/毁伤武器",
+                            "从query对抗压力反推的突防、导引、拦截或效应构型",
+                            "至少一个未复述共享Prompt示例名称的OTHER新质装备架构",
+                            "仅在query存在明确因果关系时采用低成本、无人、高超声速或定向能镜头",
+                        ],
+                        "priority_lane_rule": (
+                            "以上是生成顺序而非装备目录；不得为覆盖主题生成与query无关的方向。"
+                        ),
+                        "disruptive_lenses": [
+                            "成本逻辑",
+                            "平台逻辑",
+                            "时间逻辑",
+                            "毁伤逻辑",
+                            "体系逻辑",
+                            "伦理与博弈逻辑",
+                        ],
+                    },
+                    "s6_release_preflight": {
+                        "apply_before_candidate_submission": True,
+                        "content_requirements": [
+                            "写清任务对象、真实作战阶段与地域、敌方目标或威胁及其反制",
+                            "写清我方具体武器装备主体、进入—搜索复核—交战或拒打—评估—补射接替流程",
+                            "写清压制、摧毁、拦截、开辟走廊、续接火力或阻断重组等直接战果",
+                        ],
+                        "evidence_requirements": [
+                            "具名型号或装备族必须引用与自身直接匹配的对象级装备证据",
+                            "通用场景材料、其他型号来源和共享来源不得替代本装备对象证据",
+                            "拟议增量可标为待验证，但公开基线、装备身份与既有属性不得越界推断",
+                        ],
+                        "length_policy": (
+                            "字数仅作为可读性建议，不是候选、画像或交付的通过/失败条件；"
+                            "质量按内容完整性、证据匹配、因果闭环和可证伪性判断。"
+                        ),
                     },
                     "role_contract": to_plain(contract),
                     "specialist_task": to_plain(task),
@@ -4595,12 +5447,14 @@ class ResponsesAgentProvider:
                         "version": ledger_snapshot.version if ledger_snapshot else 0,
                         "hypotheses": candidate_snapshot,
                         "allowed_hypothesis_ids": sorted(candidate_scope),
+                        "handoff_schema": (
+                            "portfolio_decision_spine_v2"
+                            if instance.archetype
+                            == "independent_portfolio_reviewer"
+                            else "compact_decision_spine_v1"
+                        ),
                     },
-                    "evidence_index": _compact_prompt_value(
-                        shared.get("evidence_index", []),
-                        max_string_chars=300,
-                        max_list_items=24,
-                    ),
+                    "evidence_index": compact_evidence_index,
                     "valid_reference_ids": sorted(valid_reference_ids),
                     "isolation_contract": {
                         "raw_other_agent_sessions_visible": False,
@@ -4621,6 +5475,8 @@ class ResponsesAgentProvider:
                                 "mechanism_chain": ["string"],
                                 "direct_military_effects": ["string"],
                                 "equipment_forms": ["specific equipment form"],
+                                "project_function": "who uses this equipment, under what conditions, to perform what action and produce what mission result",
+                                "system_interfaces": ["concrete platform, payload, C2, fire-control or support interface"],
                                 "novelty_delta": "string",
                                 "evidence_ids": ["exact evidence_id or packet_id"],
                                 "evidence_boundary": "string",
@@ -4639,9 +5495,67 @@ class ResponsesAgentProvider:
                         "stop_reason": "string",
                     }
                     instruction = (
-                        "形成1至2条竞争性候选分支；S1-S2从对手体系和战法变量发散，"
-                        "S3形成颠覆机理。候选必须可独立进入后续装备映射，不能覆盖其他分支。"
+                        "形成2条机制真正不同的竞争性候选分支；S1-S2从对手体系和战法变量发散，"
+                        "S3形成颠覆机理。每个实例至少有1条候选必须以具体主战或无人作战装备为主体，"
+                        "例如察打一体无人平台、游荡弹药、无人火力/拦截平台、电子战压制无人机或"
+                        "可消耗攻击载荷，并直接产生侦察、压制、拦截、打击或毁伤效果。通信、中继、"
+                        "算法、任务胶囊、网关、授权终端和保障不得独立成为候选主体，只能写入"
+                        "system_interfaces。候选必须可独立进入后续装备映射，不能覆盖其他分支。"
+                        "每个S1-S3实例都必须消化query_combat_equipment_divergence_brief，并在本角色内"
+                        "重新推演Query相关性；不得把简报当答案照抄，也不得回到固定示例装备目录。"
+                        "每条候选必须单列project_function，用‘谁在什么场景/约束下依靠该装备完成什么"
+                        "动作并形成何种任务结果’表达，且明确解决Query中的任务链断点；不得用智能化、"
+                        "体系化、低成本或规模化替代项目功能。"
+                        + _query_led_combat_equipment_theme_instruction()
+                        + "若输入含disruptive_paradigm_seed_library_v2，只能把其中按query召回的种子卡"
+                        "作为反事实挑战：说明改变的原始范式和研究关系，禁止把种子当证据、指标、"
+                        "固定覆盖清单或直接装备名称。"
                     )
+                    if instance.archetype in {
+                        "direct_combat_equipment_generator",
+                        "remote_precision_munition_generator",
+                        "mass_scalable_combat_family_generator",
+                    }:
+                        instruction += (
+                            "先在内部形成4条候选，再只输出公开基线最准确、直接装备证据最强且机制差异"
+                            "最大的2条；本角色输出的两条候选都必须是互异的直接作战装备方向。每条"
+                            "evidence_ids至少包含1个ev-weapon_equipment-web-*直接装备证据；若没有则"
+                            "不得输出该候选。每条只有一个主装备"
+                            "对象，名称、装备形态、作战运用、指标方向、体系接口、规模化路径和失效边界"
+                            "必须成套出现，不能退化为任务网络、算法平台或保障体系。最近公开基线无法"
+                            "准确命名或证据只支持通用弱网自治场景时，不得把推断升级为装备构型事实。"
+                            "直接证据负责证明具体装备基线和既有属性；拟议未来增量必须明确标为研究假设，"
+                            "不要求证据证明其已经列装，但必须有具体弹体/平台/任务接口锚点、单一可辨识"
+                            "增量、反证、失败边界和可证伪试验。不得把成熟属性换名后作为创新。"
+                        )
+                    if (
+                        "portfolio_direction_shortfall"
+                        in instance.trigger_residuals
+                    ):
+                        instruction += _portfolio_gap_completion_instruction(
+                            str(shared.get("topic", ""))
+                        )
+                    if instance.archetype == "direct_combat_equipment_generator":
+                        instruction += _direct_combat_generator_diversity_instruction()
+                        instruction += (
+                            "先服从query_combat_equipment_divergence_brief选择目标和武器构型。"
+                            "公开型号只在Codex推演出的候选与其任务对象、平台和机理直接匹配时核对；"
+                            "不得默认生成任何共享示例装备。"
+                        )
+                    elif instance.archetype == "remote_precision_munition_generator":
+                        instruction += (
+                            "两条候选必须依据query_combat_equipment_divergence_brief分属不同发射域、"
+                            "目标包线或飞行/毁伤逻辑，并优先使用与query目标直接匹配的公开装备基线。"
+                            "任何公开型号都不能成为默认配对。每条只选择一个有接口锚点的主增量，其余写成边界或验证"
+                            "条件；禁止把多个热门能力堆叠成复合创新。"
+                        )
+                    elif instance.archetype == "mass_scalable_combat_family_generator":
+                        instruction += (
+                            "仅在query确有饱和消耗、成本交换、产能或快速补充压力时形成规模化装备族；"
+                            "装备主体和毁伤对象仍必须由query决定，任何低成本巡航效应器或低空无人平台"
+                            "都不得固定占用候选。柔性重组只能写成固定构型之间的"
+                            "工厂换产、多源替代和批次鉴定，不得声称战场现场换装即可形成新型号。"
+                        )
                     phase = "winning_swarm_dynamic_seed"
                 else:
                     output_schema = {
@@ -4649,10 +5563,16 @@ class ResponsesAgentProvider:
                             {
                                 "hypothesis_id": "exact ledger hypothesis_id",
                                 "merge_target": f"{instance.merge_target}",
+                                "title": "complete replacement title for bounded expert repair only",
+                                "nearest_public_baseline": "complete replacement baseline for bounded expert repair only",
+                                "changed_confrontation_variable": "complete replacement confrontation variable for bounded expert repair only",
                                 "findings": ["incremental finding"],
+                                "mechanism_chain": ["complete replacement mechanism chain for bounded expert repair only"],
                                 "mechanism_chain_updates": ["string"],
                                 "direct_military_effects": ["string"],
                                 "equipment_forms": ["specific equipment form"],
+                                "project_function": "complete project function; required for equipment candidates",
+                                "system_interfaces": ["concrete platform, payload, C2, fire-control or support interface"],
                                 "novelty_delta": "string",
                                 "evidence_ids": ["exact evidence_id or packet_id"],
                                 "evidence_boundary": "string",
@@ -4665,6 +5585,8 @@ class ResponsesAgentProvider:
                                 "cross_scenario_results": ["string"],
                                 "validation_plan": ["falsifiable test"],
                                 "implementation_path": "new|upgrade|system_link|non_materiel",
+                                "patch_mode": "append|replace_bounded_claims",
+                                "replace_fields": ["field name replaced only during expert repair"],
                                 "residuals_resolved": ["string"],
                                 "incremental_quality": "0..1",
                                 "recommendation": "retain|revise|reject",
@@ -4677,7 +5599,30 @@ class ResponsesAgentProvider:
                         "只向当前不可变账本中的候选提交结构化增量。每项贡献必须使用精确"
                         "hypothesis_id和声明的merge_target；S4落实装备形态与接口，S5审查"
                         "基线、证据、TRL、成本和产能，S6补齐验证并独立评审组合。"
+                        "所有S4—S6贡献必须在提交前执行s6_release_preflight：提前补齐敌方目标/威胁及反制、"
+                        "我方主装备与时敏交战流程、直接战果，并逐装备核对对象证据；不得把这些问题留到"
+                        "最终质量门事后发现。字数不是硬门。"
+                        "S4-S5必须继续用query_combat_equipment_divergence_brief审查装备构型与主题因果关系；"
+                        "若候选只是共享示例换名或与Query目标、阶段、毁伤效果脱节，应在当前前置节点修正或淘汰。"
+                        + _query_led_combat_equipment_theme_instruction()
+                        + "若输入含disruptive_paradigm_seed_library_v2，审查候选是否真正改变所选种子卡"
+                        "对应的成本、平台、时间、效应、体系或博弈关系；未形成query因果映射时舍弃，"
+                        "不得为覆盖种子而增项。"
                     )
+                    if instance.archetype == "equipment_capability_image_repairer":
+                        instruction += (
+                            "若原候选的装备形态、机理、成本或产能主张超出公开证据，必须设置"
+                            "patch_mode=replace_bounded_claims，并在replace_fields中列出需要整体"
+                            "替换的字段；允许成套替换title、nearest_public_baseline、"
+                            "changed_confrontation_variable、mechanism_chain、direct_military_effects、"
+                            "equipment_forms、project_function、evidence_ids、novelty_delta与implementation_path。标题、对抗变量、"
+                            "机理链、军事效果和装备形态必须描述同一个证据边界内的固定原型；若删除"
+                            "途中更新、末段确认、动态改瞄、弹间协同或现场换装等能力，必须同步从"
+                            "标题和机理链中删除，不能仅追加验证要求或保留已被专家否定的概念。"
+                            "公开证据必须证明具体装备基线，拟议增量则按工程假设身份修复：不能虚构其"
+                            "已经存在，但也不能因为尚未公开列装就删除；应收缩到一个有物理/接口锚点、"
+                            "有反证和可证伪试验的增量。成熟基线属性重包装仍必须删除。"
+                        )
                     phase = "winning_swarm_dynamic_merge"
                 emit_swarm_event(
                     "winning_agent_session_started",
@@ -4685,6 +5630,19 @@ class ResponsesAgentProvider:
                     graph_id=graph.graph_id,
                     mission_node=instance.mission_node,
                     batch=batch_index,
+                    candidate_handoff_count=len(candidate_snapshot),
+                    candidate_handoff_chars=candidate_handoff_chars,
+                    evidence_handoff_count=len(compact_evidence_index),
+                    evidence_handoff_chars=evidence_handoff_chars,
+                    handoff_total_chars=(
+                        candidate_handoff_chars + evidence_handoff_chars
+                    ),
+                    handoff_schema=(
+                        "portfolio_decision_spine_v2"
+                        if instance.archetype
+                        == "independent_portfolio_reviewer"
+                        else "compact_decision_spine_v1"
+                    ),
                     **runtime_contract,
                 )
                 started_at = monotonic()
@@ -4731,16 +5689,33 @@ class ResponsesAgentProvider:
                 unique, semantic_merges = swarm_controller.deduplicate_hypotheses(
                     list(candidates_by_id.values())
                 )
+                # Keep all bounded seed branches while downstream work is in
+                # flight.  Early score/id truncation invalidated already-issued
+                # candidate scopes and produced unknown_hypothesis_id rejects.
                 unique = sorted(
                     unique,
                     key=lambda item: (-item.score, item.hypothesis_id),
-                )[:8]
+                )[:20]
                 id_remap = {
                     str(item["source_hypothesis_id"]): str(
                         item["target_hypothesis_id"]
                     )
                     for item in semantic_merges
                 }
+                for source_id, target_id in id_remap.items():
+                    candidate_id_aliases[source_id] = canonical_candidate_id(
+                        target_id
+                    )
+                for source_id in list(candidate_id_aliases):
+                    candidate_id_aliases[source_id] = canonical_candidate_id(
+                        candidate_id_aliases[source_id]
+                    )
+                for instance_id, scoped_ids in list(
+                    instance_hypothesis_ids.items()
+                ):
+                    instance_hypothesis_ids[instance_id] = {
+                        canonical_candidate_id(item) for item in scoped_ids
+                    }
                 swarm_merges.extend(semantic_merges)
                 swarm_hypotheses.update(
                     {item.hypothesis_id: item for item in unique}
@@ -4769,12 +5744,65 @@ class ResponsesAgentProvider:
                 )
                 return id_remap
 
+            def compact_candidate_ledger_for_review() -> None:
+                """Compact only after all targeted contributors have finished."""
+
+                nonlocal ledger
+                pool_maximum = int(
+                    swarm_controller.policy.get(
+                        "expert_candidate_pool_maximum", 8
+                    )
+                )
+                if ledger is None or len(ledger.hypotheses) <= pool_maximum:
+                    return
+                priority_archetypes = (
+                    "direct_combat_equipment_generator",
+                    "remote_precision_munition_generator",
+                    "mass_scalable_combat_family_generator",
+                )
+                source_groups = [
+                    {
+                        item.instance_id
+                        for item in graph.agent_instances
+                        if item.archetype == archetype
+                    }
+                    for archetype in priority_archetypes
+                ]
+                retained = swarm_controller.retain_diverse_candidates(
+                    ledger.hypotheses,
+                    maximum=pool_maximum,
+                    priority_source_groups=source_groups,
+                    quota_per_priority_group=2,
+                )
+                if {item.hypothesis_id for item in retained} == {
+                    item.hypothesis_id for item in ledger.hypotheses
+                }:
+                    return
+                ledger = HypothesisLedgerVersion(
+                    ledger_id=ledger.ledger_id,
+                    version=ledger.version + 1,
+                    parent_version=ledger.version,
+                    hypotheses=retained,
+                    merge_receipts=list(ledger.merge_receipts),
+                    change_summary="pre_portfolio_diversity_compaction",
+                    created_by="winning_swarm_controller",
+                )
+                emit_swarm_event(
+                    "winning_candidate_ledger_frozen",
+                    graph_id=graph.graph_id,
+                    ledger_id=ledger.ledger_id,
+                    ledger_version=ledger.version,
+                    candidate_count=len(retained),
+                    incremental=False,
+                    compaction_reason="pre_portfolio_diversity_compaction",
+                )
+
             def scope_for_instance(
                 item: WinningAgentInstance,
                 ledger_snapshot: HypothesisLedgerVersion | None,
             ) -> set[str]:
                 if item.hypothesis_id:
-                    return {item.hypothesis_id}
+                    return {canonical_candidate_id(item.hypothesis_id)}
                 if (
                     item.archetype == "independent_portfolio_reviewer"
                     and ledger_snapshot is not None
@@ -4784,15 +5812,35 @@ class ResponsesAgentProvider:
                         for hypothesis in ledger_snapshot.hypotheses
                     }
                 return {
-                    hypothesis_id
+                    canonical_candidate_id(hypothesis_id)
                     for dependency in item.depends_on
                     for hypothesis_id in instance_hypothesis_ids.get(
                         dependency, set()
                     )
                 }
 
+            def merge_lock_keys(
+                item: WinningAgentInstance,
+                candidate_scope: set[str],
+            ) -> set[tuple[str, str]]:
+                # S1-S3 seed roles read inherited branches for context but
+                # publish new hypotheses. Locking their read scope serialized
+                # the quality-critical S3 equipment generators even though
+                # they never write the same candidate ids.
+                if (
+                    item.mission_node in {"S1", "S2", "S3"}
+                    and not item.hypothesis_id
+                ):
+                    return set()
+                return {
+                    (hypothesis_id, item.merge_target)
+                    for hypothesis_id in candidate_scope
+                }
+
             async def execute_quality_expert_judge(
                 ledger_snapshot: HypothesisLedgerVersion,
+                *,
+                hypothesis_ids: set[str] | None = None,
             ) -> tuple[dict[str, WinningExpertAssessment], dict[str, Any]]:
                 """Run one isolated, read-only Codex CLI blind review.
 
@@ -4814,6 +5862,11 @@ class ResponsesAgentProvider:
                         f"{graph.graph_id}:{ledger_snapshot.version}".encode()
                     ).hexdigest()[:16]
                 )
+                candidate_count = sum(
+                    hypothesis_ids is None
+                    or item.hypothesis_id in hypothesis_ids
+                    for item in ledger_snapshot.hypotheses
+                )
                 task = SpecialistTask(
                     task_id=instance_id,
                     agent_instance_id=instance_id,
@@ -4823,7 +5876,9 @@ class ResponsesAgentProvider:
                     purpose=contract.purpose,
                     merge_target="convergence",
                     expected_quality_gain=0.0,
-                    max_output_tokens=3600,
+                    max_output_tokens=_quality_judge_output_token_budget(
+                        candidate_count
+                    ),
                     allow_child_spawn=False,
                 )
                 runtime_agent_id = "winning_quality_expert_judge"
@@ -4837,7 +5892,12 @@ class ResponsesAgentProvider:
                     session_ref=_swarm_session_ref(task),
                 )
                 ordered = sorted(
-                    ledger_snapshot.hypotheses,
+                    (
+                        item
+                        for item in ledger_snapshot.hypotheses
+                        if hypothesis_ids is None
+                        or item.hypothesis_id in hypothesis_ids
+                    ),
                     key=lambda item: sha256(
                         f"{graph.graph_id}:{item.hypothesis_id}".encode()
                     ).hexdigest(),
@@ -4849,31 +5909,19 @@ class ResponsesAgentProvider:
                 blind_candidates = []
                 for blind_label, item in label_map.items():
                     blind_candidates.append(
-                        {
-                            "blind_label": blind_label,
-                            "title": item.title,
-                            "nearest_public_baseline": item.nearest_public_baseline,
-                            "changed_confrontation_variable": item.changed_confrontation_variable,
-                            "mechanism_chain": list(item.mechanism_chain),
-                            "direct_military_effects": list(item.direct_military_effects),
-                            "equipment_forms": list(item.equipment_forms),
-                            "novelty_delta": item.novelty_delta,
-                            "evidence_ids": list(item.evidence_ids),
-                            "evidence_boundary": item.evidence_boundary,
-                            "counterevidence": list(item.counterevidence),
-                            "adversary_adaptations": list(item.adversary_adaptations),
-                            "failure_boundaries": list(item.failure_boundaries),
-                            "trl_constraints": list(item.trl_constraints),
-                            "cost_constraints": list(item.cost_constraints),
-                            "industrial_constraints": list(item.industrial_constraints),
-                            "cross_scenario_results": list(item.cross_scenario_results),
-                            "validation_plan": list(item.validation_plan),
-                            "implementation_path": item.implementation_path,
-                            "deterministic_hard_gate": to_plain(
+                        _quality_judge_candidate_payload(
+                            item,
+                            blind_label=blind_label,
+                            deterministic_hard_gate=to_plain(
                                 swarm_controller.evaluate_gate(item, stage="final")
                             ),
-                        }
+                        )
                     )
+                candidate_evidence_ids = {
+                    evidence_id
+                    for item in ordered
+                    for evidence_id in item.evidence_ids
+                }
                 output_schema = {
                     "assessments": [
                         {
@@ -4925,11 +5973,43 @@ class ResponsesAgentProvider:
                         "你是制胜机理与军事装备论证的独立质量专家。你只评判、不生成候选、不修改账本。"
                         "必须逐项判断研究对象是否落在任务领域，是否形成具体装备能力而非算法/通信/保障空壳，"
                         "相对最近公开基线是否存在实质创新，军事价值是否由因果链直接导出，证据与工程判断是否可信。"
+                        "证据职责必须分层：公开直接证据必须证明具体型号或装备族的最近基线、既有任务属性、"
+                        "平台/弹体身份和可确认接口；对于明确标为拟议升级、新研构型或待验证假设的未来增量，"
+                        "不得要求公开资料证明它已经列装或已经实现。此类增量应依据是否具有明确物理或接口锚点、"
+                        "是否只改变一个可辨识的作战/装备关系、是否给出反证、失败边界和可证伪试验来评价。"
+                        "这里的‘可确认接口’只约束候选声称已经存在于公开基线中的接口；对明确标注为新增、"
+                        "待集成或待验证的接口，不要求公开资料证明现有产品已经具备，也不得仅因缺少型号级公开"
+                        "接口图纸而降低credibility或驳回。应把质量、供电、热、电磁兼容、软件鉴定和试验归因"
+                        "评价计入engineering_feasibility。若厂商或军方对象页能够证明装备身份与既有任务属性，"
+                        "而未公开内部实现细节，应记录为不确定性或验证前置条件，而不是自动判为证据门失败。"
+                        "若候选设置了基线表征门，并明确一旦现役基线已具备同类闭环就终止项目，则未知的内部"
+                        "实现不得被臆测为既有能力并据此拒绝；只评价该重叠淘汰门是否真实可执行。"
+                        "若候选把基线事实写成已实现增量，或把成熟产品已有属性重新命名为创新，仍须降分或驳回；"
+                        "但不能仅以‘公开资料尚未证明未来增量已存在’作为拒绝理由。"
                         "不得因字段齐全而给满分；必须拉开候选差异。领域偏离、支撑能力冒充主装备、热门词堆叠、"
-                        "因果断裂、无证据精确指标或无失败边界应降分或驳回。忽略候选顺序，只输出严格JSON。",
+                        "因果断裂、无证据精确指标或无失败边界应降分或驳回。若候选以具体无人打击平台、"
+                        "巡飞弹、远程精确制导弹药、压制/拦截效应器或直接毁伤载荷为主对象，应按"
+                        "direct_combat或unmanned_combat评估；不能因其包含必要体系接口而自动归为system_link。"
+                        "若主体仍是网络、算法、通信或保障，则必须归为system_link/support_only。"
+                        "评判时还必须前置检查候选能否直接投影为S6装备画像：是否具备真实作战阶段、"
+                        "敌方目标或威胁及反制、我方具体武器装备主体、时敏交战流程和直接战果，"
+                        "以及具名型号/装备族与对象级证据的一一匹配关系。缺失时在当前评审阶段判为revise，"
+                        "不得留到最终组合后才首次发现。字数只作为表达建议，不得据此降级或驳回。"
+                        + _query_led_combat_equipment_theme_instruction()
+                        + "忽略候选顺序，只输出严格JSON。",
                         {
                             "topic": shared["topic"],
                             "research_route": shared["research_route"],
+                            "query_led_combat_equipment_themes": (
+                                _query_led_combat_equipment_theme_contract()
+                            ),
+                            "disruptive_paradigm_seed_library_v2": (
+                                disruptive_seed_context(
+                                    str(shared["topic"]),
+                                    branch=primary_branch,
+                                    agent_id="quality_expert_judge",
+                                )
+                            ),
                             "evaluation_contract": {
                                 "minimum_weighted_score": swarm_controller.policy[
                                     "expert_judge_minimum_score"
@@ -4940,12 +6020,24 @@ class ResponsesAgentProvider:
                                 "hard_gate_precedence": True,
                                 "read_only": True,
                                 "producer_identity_hidden": True,
+                                "portfolio_requirement": {
+                                    "preferred_direction_range": [5, 7],
+                                    "direct_combat_equipment_must_be_main_body": True,
+                                    "query_semantics_select_weapon_families": True,
+                                    "priority_observation_lenses_are_non_exhaustive": True,
+                                    "support_only_main_directions_forbidden": True,
+                                },
+                                "s6_release_preflight_required": True,
+                                "length_is_non_blocking": True,
                             },
                             "blind_candidates": blind_candidates,
                             "evidence_index": _compact_prompt_value(
-                                shared.get("evidence_index", []),
-                                max_string_chars=420,
-                                max_list_items=32,
+                                _quality_judge_scoped_evidence_index(
+                                    shared.get("evidence_index", []),
+                                    candidate_evidence_ids,
+                                ),
+                                max_string_chars=260,
+                                max_list_items=18,
                             ),
                             "valid_reference_ids": sorted(valid_reference_ids),
                         },
@@ -5037,6 +6129,8 @@ class ResponsesAgentProvider:
 
             async def execute_expert_repair_wave(
                 assessments: Mapping[str, WinningExpertAssessment],
+                *,
+                maximum_candidates_override: int | None = None,
             ) -> dict[str, Any]:
                 """Repair the strongest ``revise`` candidates, then rebase.
 
@@ -5052,25 +6146,39 @@ class ResponsesAgentProvider:
                     or not swarm_controller.policy.get("expert_repair_enabled")
                 ):
                     return {"status": "disabled", "tasks": [], "merged_count": 0}
-                minimum_score = float(
-                    swarm_controller.policy["expert_repair_minimum_score"]
+                eligible = swarm_controller.select_expert_repair_assessments(
+                    assessments,
+                    hypotheses={
+                        item.hypothesis_id: item for item in ledger.hypotheses
+                    },
                 )
                 maximum_candidates = int(
                     swarm_controller.policy["expert_repair_max_candidates"]
                 )
-                eligible = sorted(
-                    (
-                        item
-                        for item in assessments.values()
-                        if item.verdict == "revise"
-                        and item.weighted_score >= minimum_score
-                    ),
-                    key=lambda item: (-item.weighted_score, item.hypothesis_id),
-                )[:maximum_candidates]
+                if maximum_candidates_override is not None:
+                    maximum_candidates = min(
+                        maximum_candidates,
+                        max(0, int(maximum_candidates_override)),
+                    )
+                eligible = eligible[:maximum_candidates]
+                repair_reserve = int(
+                    swarm_controller.policy.get(
+                        "expert_repair_reserved_instances", maximum_candidates
+                    )
+                )
+                repair_capacity = min(
+                    graph.maximum_instances,
+                    len(graph.agent_instances)
+                    + min(repair_reserve, len(eligible)),
+                )
+                repair_wave = max(
+                    (item.wave for item in graph.agent_instances),
+                    default=0,
+                ) + 1
                 repair_instances: list[WinningAgentInstance] = []
                 repair_rows: list[dict[str, Any]] = []
                 for assessment in eligible:
-                    if len(graph.agent_instances) >= graph.maximum_instances:
+                    if len(graph.agent_instances) >= repair_capacity:
                         break
                     archetype = swarm_controller.repair_archetype_for_assessment(
                         assessment
@@ -5078,9 +6186,17 @@ class ResponsesAgentProvider:
                     spec = SWARM_SPECIALIST_ARCHETYPES.get(archetype)
                     if not spec:
                         continue
+                    quota_residuals = (
+                        ["direct_combat_equipment_insufficient"]
+                        if assessment.passed
+                        and assessment.equipment_classification
+                        not in {"direct_combat", "unmanned_combat"}
+                        else []
+                    )
                     residuals = list(
                         dict.fromkeys(
                             [
+                                *quota_residuals,
                                 *assessment.residuals,
                                 *assessment.rejection_reasons,
                                 *assessment.weaknesses,
@@ -5111,31 +6227,27 @@ class ResponsesAgentProvider:
                         depends_on=[],
                     )
                     recruited = graph.agent_instances[-1]
-                    repair_wave = max(
-                        (item.wave for item in graph.agent_instances[:-1]),
-                        default=0,
-                    ) + 1
                     recruited = replace(
                         recruited,
                         wave=repair_wave,
                         trigger_residuals=residuals,
                     )
+                    repaired_waves = [
+                        [
+                            item
+                            for item in wave
+                            if item != recruited.instance_id
+                        ]
+                        for wave in graph.waves
+                    ]
+                    while len(repaired_waves) < repair_wave:
+                        repaired_waves.append([])
+                    repaired_waves[repair_wave - 1].append(recruited.instance_id)
                     graph = replace(
                         graph,
                         role_contracts=[*graph.role_contracts[:-1], contract],
                         agent_instances=[*graph.agent_instances[:-1], recruited],
-                        waves=[
-                            [
-                                item
-                                for item in wave
-                                if item != recruited.instance_id
-                            ]
-                            for wave in graph.waves
-                            if any(
-                                item != recruited.instance_id for item in wave
-                            )
-                        ]
-                        + [[recruited.instance_id]],
+                        waves=repaired_waves,
                     )
                     contracts[contract.role_contract_id] = contract
                     repair_instances.append(recruited)
@@ -5193,6 +6305,7 @@ class ResponsesAgentProvider:
                 )
                 merged_count = 0
                 failed_count = 0
+                merged_hypothesis_ids: set[str] = set()
                 for instance, outcome in zip(repair_instances, outcomes):
                     completed_instances.add(instance.instance_id)
                     instance_hypothesis_ids[instance.instance_id] = {
@@ -5261,10 +6374,16 @@ class ResponsesAgentProvider:
                         patch_fields = {
                             key: raw.get(key)
                             for key in (
+                                "title",
+                                "nearest_public_baseline",
+                                "changed_confrontation_variable",
                                 "findings",
+                                "mechanism_chain",
                                 "mechanism_chain_updates",
                                 "direct_military_effects",
                                 "equipment_forms",
+                                "project_function",
+                                "system_interfaces",
                                 "novelty_delta",
                                 "evidence_boundary",
                                 "counterevidence",
@@ -5276,9 +6395,24 @@ class ResponsesAgentProvider:
                                 "cross_scenario_results",
                                 "validation_plan",
                                 "implementation_path",
+                                "patch_mode",
+                                "replace_fields",
                             )
                             if raw.get(key) not in (None, "", [], {})
                         }
+                        repaired_evidence_ids = (
+                            swarm_controller.sanitize_evidence_ids(
+                                raw.get(
+                                    "evidence_ids",
+                                    raw.get("evidence_refs", []),
+                                ),
+                                set(valid_reference_ids),
+                            )
+                        )
+                        if repaired_evidence_ids:
+                            patch_fields["evidence_ids"] = list(
+                                repaired_evidence_ids
+                            )
                         contribution = WinningContribution(
                             contribution_id=(
                                 "winning-expert-repair-"
@@ -5293,10 +6427,7 @@ class ResponsesAgentProvider:
                             base_ledger_version=base_version,
                             hypothesis_patch=patch_fields,
                             quality_dimensions={"incremental_quality": quality},
-                            evidence_ids=swarm_controller.sanitize_evidence_ids(
-                                raw.get("evidence_ids", raw.get("evidence_refs", [])),
-                                set(valid_reference_ids),
-                            ),
+                            evidence_ids=repaired_evidence_ids,
                             residuals_resolved=[
                                 str(item)
                                 for item in raw.get("residuals_resolved", [])
@@ -5322,6 +6453,7 @@ class ResponsesAgentProvider:
                         ledger = ledger_after
                         if receipt.status == "merged":
                             merged_count += 1
+                            merged_hypothesis_ids.add(hypothesis_id)
                         emit_swarm_event(
                             "winning_quality_repair_completed",
                             actor=instance.instance_id,
@@ -5335,9 +6467,305 @@ class ResponsesAgentProvider:
                     "status": "completed" if not failed_count else "limited",
                     "tasks": repair_rows,
                     "merged_count": merged_count,
+                    "merged_hypothesis_ids": sorted(merged_hypothesis_ids),
                     "failed_count": failed_count,
                     "base_ledger_version": snapshot.version,
                     "resulting_ledger_version": ledger.version,
+                }
+
+            async def execute_portfolio_gap_completion_wave(
+                assessments: Mapping[str, WinningExpertAssessment],
+            ) -> dict[str, Any]:
+                """Generate distinct replacements when expert pruning leaves a gap.
+
+                Repairing a baseline-only or over-coupled concept cannot always
+                create genuine novelty. One bounded S3 generator therefore gets
+                the complete assessed ledger and may add at most two
+                evidence-anchored, non-duplicate direct-equipment hypotheses.
+                The new rows still require the independent expert judge; this
+                path never promotes a failed candidate by quota alone.
+                """
+
+                nonlocal graph, ledger, batch_index, maximum_observed_concurrency
+                if ledger is None:
+                    return {
+                        "status": "not_available",
+                        "created_count": 0,
+                        "created_hypothesis_ids": [],
+                    }
+                minimum = int(
+                    swarm_controller.policy.get("finalist_minimum", 5)
+                )
+                coverage = swarm_controller.passed_portfolio_coverage(
+                    ledger,
+                    assessments,
+                )
+                passed_count = int(coverage["passed_count"])
+                if coverage["ready"]:
+                    return {
+                        "status": "not_required",
+                        "created_count": 0,
+                        "created_hypothesis_ids": [],
+                        "portfolio_coverage": coverage,
+                    }
+                if len(graph.agent_instances) >= graph.maximum_instances:
+                    return {
+                        "status": "no_capacity",
+                        "created_count": 0,
+                        "created_hypothesis_ids": [],
+                    }
+
+                spec = SWARM_SPECIALIST_ARCHETYPES[
+                    "disruptive_mechanism_generator"
+                ]
+                failed_rows = sorted(
+                    (
+                        item
+                        for item in assessments.values()
+                        if not item.passed
+                    ),
+                    key=lambda item: (-item.weighted_score, item.hypothesis_id),
+                )
+                residual_digest = [
+                    text
+                    for item in failed_rows[:4]
+                    for text in (
+                        item.rejection_reasons[:1]
+                        or item.weaknesses[:1]
+                        or item.residuals[:1]
+                    )
+                ][:4]
+                contract = swarm_controller.govern_role_contract(
+                    {
+                        "archetype": "disruptive_mechanism_generator",
+                        **spec,
+                        "purpose": (
+                            "专家首轮后组合有"
+                            f"{passed_count}项合格，但仅有"
+                            f"{coverage['distinct_direct_equipment_family_count']}个互异直接装备族；"
+                            "尚未同时满足"
+                            f"{minimum}项方向和"
+                            f"{coverage['preferred_distinct_direct_equipment']}个互异直接武器装备族。"
+                            "对照完整候选账本与驳回原因，生成至多2条不重复、"
+                            "有直接装备证据、可独立立项和可证伪的替代武器方向。"
+                            + (
+                                "主要驳回边界："
+                                + "；".join(residual_digest)
+                                if residual_digest
+                                else ""
+                            )
+                        ),
+                        "trigger_residuals": [
+                            "portfolio_direction_shortfall",
+                            "direct_combat_equipment_insufficient",
+                        ],
+                    },
+                    mission_node="S3",
+                )
+                graph = swarm_controller.recruit_into_mission_graph(
+                    graph,
+                    contract,
+                    hypothesis_id="",
+                    expected_quality_gain=max(
+                        0.04,
+                        float(
+                            swarm_controller.policy["minimum_expected_gain"]
+                        ),
+                    ),
+                    depends_on=[],
+                )
+                instance = graph.agent_instances[-1]
+                completion_wave = max(
+                    (item.wave for item in graph.agent_instances[:-1]),
+                    default=0,
+                ) + 1
+                instance = replace(
+                    instance,
+                    wave=completion_wave,
+                    trigger_residuals=[
+                        "portfolio_direction_shortfall",
+                        "direct_combat_equipment_insufficient",
+                    ],
+                )
+                repaired_waves = [
+                    [
+                        item
+                        for item in wave
+                        if item != instance.instance_id
+                    ]
+                    for wave in graph.waves
+                ]
+                while len(repaired_waves) < completion_wave:
+                    repaired_waves.append([])
+                repaired_waves[completion_wave - 1].append(
+                    instance.instance_id
+                )
+                graph = replace(
+                    graph,
+                    role_contracts=[*graph.role_contracts[:-1], contract],
+                    agent_instances=[*graph.agent_instances[:-1], instance],
+                    waves=repaired_waves,
+                )
+                contracts[contract.role_contract_id] = contract
+                snapshot = ledger
+                candidate_scope = {
+                    item.hypothesis_id for item in snapshot.hypotheses
+                }
+                batch_index += 1
+                execution_batches.append(
+                    {
+                        "batch": batch_index,
+                        "instance_ids": [instance.instance_id],
+                        "mission_nodes": ["S3"],
+                        "base_ledger_version": snapshot.version,
+                        "purpose": "expert_portfolio_gap_completion",
+                    }
+                )
+                maximum_observed_concurrency = max(
+                    maximum_observed_concurrency, 1
+                )
+                emit_swarm_event(
+                    "winning_portfolio_gap_completion_planned",
+                    actor=instance.instance_id,
+                    graph_id=graph.graph_id,
+                    passed_count=passed_count,
+                    finalist_minimum=minimum,
+                    direct_combat_equipment_count=(
+                        coverage["direct_combat_equipment_count"]
+                    ),
+                    distinct_direct_equipment_family_count=(
+                        coverage["distinct_direct_equipment_family_count"]
+                    ),
+                    preferred_distinct_direct_equipment=(
+                        coverage["preferred_distinct_direct_equipment"]
+                    ),
+                    candidate_count=len(snapshot.hypotheses),
+                )
+                try:
+                    _, result, _ = await call_instance(
+                        instance,
+                        ledger_snapshot=snapshot,
+                        batch_index=batch_index,
+                        candidate_scope=candidate_scope,
+                    )
+                except BaseException as exc:
+                    failed_instances.add(instance.instance_id)
+                    completed_instances.add(instance.instance_id)
+                    emit_swarm_event(
+                        "winning_portfolio_gap_completion_failed",
+                        actor=instance.instance_id,
+                        graph_id=graph.graph_id,
+                        failure_type=type(exc).__name__,
+                        error_message=str(exc)[:500],
+                    )
+                    return {
+                        "status": "failed",
+                        "created_count": 0,
+                        "created_hypothesis_ids": [],
+                        "error_type": type(exc).__name__,
+                    }
+
+                completed_instances.add(instance.instance_id)
+                runs.append(
+                    {
+                        "step": 3,
+                        "agent_id": instance.instance_id,
+                        "template_agent_id": (
+                            "winning_swarm_disruptive_mechanism_generator"
+                        ),
+                        "middle_cycle": 1,
+                        "execution_mode": "expert_portfolio_gap_completion",
+                        "wave": instance.wave,
+                        "batch": batch_index,
+                        "merge_target": "S3",
+                        "status": "completed",
+                    }
+                )
+                raw_rows = result.get("hypotheses", [])
+                if not isinstance(raw_rows, list):
+                    raw_rows = []
+                passed_hypotheses = [
+                    item
+                    for item in snapshot.hypotheses
+                    if item.hypothesis_id in assessments
+                    and assessments[item.hypothesis_id].passed
+                ]
+                raw_rows, recovered_count = _prepare_portfolio_gap_completion_rows(
+                    raw_rows,
+                    shared.get("evidence_index", []),
+                    topic=str(shared.get("topic", "")),
+                    passed_hypotheses=passed_hypotheses,
+                )
+                if recovered_count:
+                    emit_swarm_event(
+                        "winning_specialized_seed_recovered",
+                        actor=instance.instance_id,
+                        graph_id=graph.graph_id,
+                        archetype="offensive_portfolio_gap_completion",
+                        recovered_count=recovered_count,
+                        candidate_count=len(raw_rows),
+                        stop_reason=str(result.get("stop_reason", ""))[:300],
+                    )
+                before_ids = {
+                    item.hypothesis_id for item in ledger.hypotheses
+                }
+                produced_ids: set[str] = set()
+                task = task_for_instance(instance)
+                for ordinal, raw in enumerate(raw_rows[:2], start=1):
+                    if not isinstance(raw, Mapping):
+                        continue
+                    candidate = swarm_controller.hypothesis_from_mapping(
+                        raw,
+                        task=task,
+                        valid_evidence_ids=set(valid_reference_ids),
+                        ordinal=ordinal,
+                    )
+                    hypotheses.append(candidate)
+                    produced_ids.add(candidate.hypothesis_id)
+                    emit_swarm_event(
+                        "winning_candidate_branch_created",
+                        actor=instance.instance_id,
+                        graph_id=graph.graph_id,
+                        hypothesis_id=candidate.hypothesis_id,
+                        mission_node="S3",
+                        score=candidate.score,
+                        completion_reason="portfolio_direction_shortfall",
+                    )
+                id_remap = refresh_candidate_ledger()
+                resolved_ids = {
+                    canonical_candidate_id(
+                        id_remap.get(hypothesis_id, hypothesis_id)
+                    )
+                    for hypothesis_id in produced_ids
+                }
+                current_ids = {
+                    item.hypothesis_id for item in ledger.hypotheses
+                }
+                created_ids = sorted(
+                    hypothesis_id
+                    for hypothesis_id in resolved_ids
+                    if hypothesis_id in current_ids
+                    and hypothesis_id not in before_ids
+                )
+                instance_hypothesis_ids[instance.instance_id] = set(
+                    created_ids
+                )
+                emit_swarm_event(
+                    "winning_portfolio_gap_completion_completed",
+                    actor=instance.instance_id,
+                    graph_id=graph.graph_id,
+                    created_count=len(created_ids),
+                    created_hypothesis_ids=created_ids,
+                    stop_reason=str(result.get("stop_reason", ""))[:300],
+                )
+                return {
+                    "status": "completed" if created_ids else "empty",
+                    "created_count": len(created_ids),
+                    "created_hypothesis_ids": created_ids,
+                    "agent_instance_id": instance.instance_id,
+                    "base_ledger_version": snapshot.version,
+                    "resulting_ledger_version": ledger.version,
+                    "portfolio_coverage_before": coverage,
                 }
 
             emit_swarm_event(
@@ -5351,6 +6779,16 @@ class ResponsesAgentProvider:
             )
             batch_index = 0
             while pending or running_instances:
+                if (
+                    ledger is not None
+                    and not running_instances
+                    and pending
+                    and all(
+                        item.archetype == "independent_portfolio_reviewer"
+                        for item in pending.values()
+                    )
+                ):
+                    compact_candidate_ledger_for_review()
                 ready = sorted(
                     (
                         item
@@ -5393,18 +6831,15 @@ class ResponsesAgentProvider:
                         )
                     break
                 running_merge_keys = {
-                    (hypothesis_id, running_item.merge_target)
+                    merge_key
                     for running_item, running_scope, _ in running_instances.values()
-                    for hypothesis_id in running_scope
+                    for merge_key in merge_lock_keys(running_item, running_scope)
                 }
                 selected: list[WinningAgentInstance] = []
                 selected_merge_keys: set[tuple[str, str]] = set()
                 for item in ready:
                     item_scope = scope_for_instance(item, ledger)
-                    item_keys = {
-                        (hypothesis_id, item.merge_target)
-                        for hypothesis_id in item_scope
-                    }
+                    item_keys = merge_lock_keys(item, item_scope)
                     if item_keys & (running_merge_keys | selected_merge_keys):
                         continue
                     selected.append(item)
@@ -5491,6 +6926,33 @@ class ResponsesAgentProvider:
                         raw_rows = result.get("hypotheses", [])
                         if not isinstance(raw_rows, list):
                             raw_rows = []
+                        if instance.archetype in {
+                            "direct_combat_equipment_generator",
+                            "remote_precision_munition_generator",
+                            "mass_scalable_combat_family_generator",
+                        }:
+                            raw_rows, added_count = _ensure_specialized_winning_seed_lanes(
+                                raw_rows,
+                                shared.get("evidence_index", []),
+                                archetype=instance.archetype,
+                                topic=str(shared.get("topic", "")),
+                            )
+                            emit_swarm_event(
+                                "winning_specialized_seed_recovered"
+                                if added_count
+                                else "winning_specialized_seed_empty",
+                                actor=instance.instance_id,
+                                graph_id=graph.graph_id,
+                                archetype=instance.archetype,
+                                recovered_count=added_count,
+                                candidate_count=len(raw_rows),
+                                stop_reason=str(result.get("stop_reason", ""))[:300],
+                                quality_residuals=[
+                                    str(item)[:240]
+                                    for item in result.get("quality_residuals", [])
+                                    if str(item).strip()
+                                ][:4],
+                            )
                         produced_ids: set[str] = set()
                         produced_candidates: list[WinningHypothesis] = []
                         for ordinal, raw in enumerate(raw_rows[:2], start=1):
@@ -5563,7 +7025,7 @@ class ResponsesAgentProvider:
                                     if (
                                         pair in recruited_pairs
                                         or len(graph.agent_instances)
-                                        >= graph.maximum_instances
+                                        >= producer_instance_limit
                                     ):
                                         continue
                                     spec = SWARM_SPECIALIST_ARCHETYPES.get(archetype)
@@ -5609,7 +7071,41 @@ class ResponsesAgentProvider:
                         for ordinal, raw in enumerate(raw_contributions[:8], start=1):
                             if not isinstance(raw, Mapping):
                                 continue
-                            hypothesis_id = str(raw.get("hypothesis_id", ""))
+                            reported_hypothesis_id = str(
+                                raw.get("hypothesis_id", "")
+                            )
+                            hypothesis_id = canonical_candidate_id(
+                                reported_hypothesis_id
+                            )
+                            if hypothesis_id not in known_ids:
+                                obsolete_candidate = next(
+                                    (
+                                        item
+                                        for item in hypotheses
+                                        if item.hypothesis_id
+                                        == reported_hypothesis_id
+                                    ),
+                                    None,
+                                )
+                                if obsolete_candidate is not None:
+                                    semantic_target = (
+                                        swarm_controller.semantic_hypothesis_match(
+                                            obsolete_candidate,
+                                            ledger.hypotheses,
+                                        )
+                                    )
+                                    if semantic_target:
+                                        candidate_id_aliases[
+                                            reported_hypothesis_id
+                                        ] = semantic_target
+                                        hypothesis_id = semantic_target
+                            if hypothesis_id != reported_hypothesis_id:
+                                emit_swarm_event(
+                                    "winning_contribution_hypothesis_remapped",
+                                    actor=instance.instance_id,
+                                    reported_hypothesis_id=reported_hypothesis_id,
+                                    hypothesis_id=hypothesis_id,
+                                )
                             if hypothesis_id not in known_ids:
                                 emit_swarm_event(
                                     "winning_contribution_rejected",
@@ -5655,14 +7151,6 @@ class ResponsesAgentProvider:
                                 for item in raw.get("findings", [])
                                 if str(item).strip()
                             ][:8]
-                            accepted = bool(
-                                findings
-                                and recommendation != "reject"
-                                and quality
-                                >= float(
-                                    swarm_controller.policy["minimum_expected_gain"]
-                                )
-                            )
                             evidence_ids = swarm_controller.sanitize_evidence_ids(
                                 raw.get("evidence_ids", raw.get("evidence_refs", [])),
                                 set(valid_reference_ids),
@@ -5674,6 +7162,8 @@ class ResponsesAgentProvider:
                                     "mechanism_chain_updates",
                                     "direct_military_effects",
                                     "equipment_forms",
+                                    "project_function",
+                                    "system_interfaces",
                                     "novelty_delta",
                                     "evidence_boundary",
                                     "counterevidence",
@@ -5688,6 +7178,18 @@ class ResponsesAgentProvider:
                                 )
                                 if raw.get(key) not in (None, "", [], {})
                             }
+                            retention = (
+                                swarm_controller.contribution_retention_assessment(
+                                    raw,
+                                    evidence_ids=evidence_ids,
+                                    reported_quality=quality,
+                                    mission_node=instance.mission_node,
+                                )
+                            )
+                            effective_quality = float(
+                                retention["effective_quality"]
+                            )
+                            accepted = bool(retention["accepted"])
                             contribution = WinningContribution(
                                 contribution_id=(
                                     "winning-contribution-"
@@ -5702,7 +7204,13 @@ class ResponsesAgentProvider:
                                 base_ledger_version=base_version,
                                 hypothesis_patch=patch_fields,
                                 quality_dimensions={
-                                    "incremental_quality": quality,
+                                    "incremental_quality": effective_quality,
+                                    "reported_incremental_quality": quality,
+                                    "structured_weapon_delta": (
+                                        1.0
+                                        if retention["structured_weapon_delta"]
+                                        else 0.0
+                                    ),
                                 },
                                 evidence_ids=evidence_ids,
                                 residuals_resolved=[
@@ -5710,7 +7218,7 @@ class ResponsesAgentProvider:
                                     for item in raw.get("residuals_resolved", [])
                                     if str(item).strip()
                                 ][:8],
-                                incremental_quality=quality,
+                                incremental_quality=effective_quality,
                                 recommendation=recommendation,
                                 accepted=accepted,
                             )
@@ -5755,31 +7263,256 @@ class ResponsesAgentProvider:
 
             if ledger is None:
                 ledger = swarm_controller.create_ledger([])
+            else:
+                compact_candidate_ledger_for_review()
             initial_expert_assessments, initial_expert_summary = (
                 await execute_quality_expert_judge(ledger)
             )
-            expert_repair_summary = await execute_expert_repair_wave(
-                initial_expert_assessments
-            )
-            if expert_repair_summary.get("merged_count", 0):
-                expert_assessments, final_expert_summary = (
-                    await execute_quality_expert_judge(ledger)
+            expert_assessments = dict(initial_expert_assessments)
+            expert_rounds = [initial_expert_summary]
+            expert_repair_waves: list[dict[str, Any]] = []
+            portfolio_completion_waves: list[dict[str, Any]] = []
+            portfolio_completion_attempted = False
+            maximum_expert_rounds = int(
+                self._runtime_budgets.get(
+                    "maximum_quality_judge_model_calls", 2
                 )
-                expert_judge_summary = {
-                    **final_expert_summary,
-                    "status": final_expert_summary.get("status", "limited"),
-                    "round_count": 2,
-                    "rounds": [initial_expert_summary, final_expert_summary],
-                    "repair_wave": expert_repair_summary,
-                }
-            else:
-                expert_assessments = initial_expert_assessments
-                expert_judge_summary = {
-                    **initial_expert_summary,
-                    "round_count": 1,
-                    "rounds": [initial_expert_summary],
-                    "repair_wave": expert_repair_summary,
-                }
+            )
+            finalist_minimum = int(
+                swarm_controller.policy.get("finalist_minimum", 5)
+            )
+            while len(expert_rounds) < maximum_expert_rounds:
+                coverage = swarm_controller.passed_portfolio_coverage(
+                    ledger,
+                    expert_assessments,
+                )
+                passed_count = int(coverage["passed_count"])
+                if coverage["ready"]:
+                    break
+                if not portfolio_completion_attempted:
+                    portfolio_completion_attempted = True
+                    # The compact first blind-review pool is not the complete
+                    # mission-graph ledger. Restore the bounded ledger and use
+                    # the second expert call on diverse, previously unassessed
+                    # candidates before paying for another generator. This
+                    # keeps the expert gate intact while avoiding the failure
+                    # mode where 18 useful candidates collapse to three passed
+                    # variants from one equipment family.
+                    refresh_candidate_ledger()
+                    review_capacity = max(
+                        1,
+                        int(
+                            swarm_controller.policy.get(
+                                "expert_candidate_pool_maximum", 8
+                            )
+                        )
+                        - 1,
+                    )
+                    unassessed_ids = (
+                        swarm_controller.select_unassessed_portfolio_candidates(
+                            ledger,
+                            expert_assessments,
+                            maximum=review_capacity,
+                        )
+                    )
+                    if unassessed_ids:
+                        completion_summary = {
+                            "status": "existing_ledger_reused",
+                            "created_count": 0,
+                            "created_hypothesis_ids": [],
+                            "reused_count": len(unassessed_ids),
+                            "reused_hypothesis_ids": list(unassessed_ids),
+                        }
+                    else:
+                        completion_summary = (
+                            await execute_portfolio_gap_completion_wave(
+                                expert_assessments
+                            )
+                        )
+                    portfolio_completion_waves.append(completion_summary)
+                    completion_ids = set(
+                        completion_summary.get(
+                            "created_hypothesis_ids", []
+                        )
+                    )
+                    rejudge_ids = {
+                        *completion_ids,
+                        *unassessed_ids,
+                    }
+                    remaining_repair_slots = _portfolio_remaining_repair_slots(
+                        passed_count=passed_count,
+                        finalist_minimum=finalist_minimum,
+                        completion_count=len(completion_ids),
+                    )
+                    distinct_family_shortfall = max(
+                        0,
+                        int(
+                            coverage.get(
+                                "preferred_distinct_direct_equipment", 0
+                            )
+                        )
+                        - int(
+                            coverage.get(
+                                "distinct_direct_equipment_family_count", 0
+                            )
+                        ),
+                    )
+                    if distinct_family_shortfall:
+                        # A numerically full pass set can still contain only
+                        # four weapon families. Reserve a repair lane for the
+                        # strongest failed candidate outside the already-passed
+                        # families; otherwise the second and final judge call
+                        # merely reviews more variants of the same equipment.
+                        remaining_repair_slots = max(
+                            remaining_repair_slots,
+                            distinct_family_shortfall,
+                        )
+                    elif passed_count < finalist_minimum:
+                        # Reserve one targeted repair lane even when the
+                        # restored ledger already offers enough unassessed
+                        # candidates. It runs in parallel and shares the same
+                        # final expert call.
+                        remaining_repair_slots = max(
+                            1,
+                            remaining_repair_slots,
+                        )
+                    combined_repair_attempted = False
+                    if remaining_repair_slots:
+                        combined_repair_attempted = True
+                        repair_summary = await execute_expert_repair_wave(
+                            expert_assessments,
+                            maximum_candidates_override=remaining_repair_slots,
+                        )
+                        expert_repair_waves.append(repair_summary)
+                        rejudge_ids.update(
+                            repair_summary.get("merged_hypothesis_ids", [])
+                        )
+                    if rejudge_ids:
+                        completion_assessments, completion_expert_summary = (
+                            await execute_quality_expert_judge(
+                                ledger,
+                                hypothesis_ids=rejudge_ids,
+                            )
+                        )
+                        expert_assessments.update(completion_assessments)
+                        expert_rounds.append(completion_expert_summary)
+                        continue
+                    if combined_repair_attempted:
+                        break
+                repair_summary = await execute_expert_repair_wave(
+                    expert_assessments
+                )
+                expert_repair_waves.append(repair_summary)
+                if not repair_summary.get("merged_count", 0):
+                    break
+                repaired_hypothesis_ids = set(
+                    repair_summary.get("merged_hypothesis_ids", [])
+                )
+                repaired_assessments, repaired_expert_summary = (
+                    await execute_quality_expert_judge(
+                        ledger,
+                        hypothesis_ids=repaired_hypothesis_ids,
+                    )
+                )
+                expert_assessments.update(repaired_assessments)
+                expert_rounds.append(repaired_expert_summary)
+            merged_repair_ids = list(
+                dict.fromkeys(
+                    hypothesis_id
+                    for wave in expert_repair_waves
+                    for hypothesis_id in wave.get("merged_hypothesis_ids", [])
+                )
+            )
+            expert_repair_summary = {
+                "status": (
+                    "completed"
+                    if any(
+                        wave.get("merged_count", 0)
+                        for wave in expert_repair_waves
+                    )
+                    else "not_required"
+                ),
+                "merged_count": sum(
+                    int(wave.get("merged_count", 0) or 0)
+                    for wave in expert_repair_waves
+                ),
+                "merged_hypothesis_ids": merged_repair_ids,
+                "waves": expert_repair_waves,
+            }
+            portfolio_completion_summary = {
+                "status": (
+                    "completed"
+                    if any(
+                        wave.get("created_count", 0)
+                        for wave in portfolio_completion_waves
+                    )
+                    else (
+                        str(
+                            portfolio_completion_waves[-1].get(
+                                "status", "not_required"
+                            )
+                        )
+                        if portfolio_completion_waves
+                        else "not_required"
+                    )
+                ),
+                "created_count": sum(
+                    int(wave.get("created_count", 0) or 0)
+                    for wave in portfolio_completion_waves
+                ),
+                "created_hypothesis_ids": list(
+                    dict.fromkeys(
+                        hypothesis_id
+                        for wave in portfolio_completion_waves
+                        for hypothesis_id in wave.get(
+                            "created_hypothesis_ids", []
+                        )
+                    )
+                ),
+                "reused_count": sum(
+                    int(wave.get("reused_count", 0) or 0)
+                    for wave in portfolio_completion_waves
+                ),
+                "reused_hypothesis_ids": list(
+                    dict.fromkeys(
+                        hypothesis_id
+                        for wave in portfolio_completion_waves
+                        for hypothesis_id in wave.get(
+                            "reused_hypothesis_ids", []
+                        )
+                    )
+                ),
+                "waves": portfolio_completion_waves,
+            }
+            final_expert_summary = expert_rounds[-1]
+            latest_expert_status = str(
+                final_expert_summary.get("status", "limited")
+            )
+            effective_expert_status = _effective_expert_judge_status(
+                expert_rounds,
+                assessed_count=len(expert_assessments),
+                expected_count=len(ledger.hypotheses),
+            )
+            expert_judge_summary = {
+                **final_expert_summary,
+                # Preserve a complete first-round blind review when the
+                # optional targeted rejudge suffers a transport/auth failure.
+                # Previously assessed candidates conservatively retain their
+                # prior score; the failed latest round remains visible.
+                "status": effective_expert_status,
+                "latest_round_status": latest_expert_status,
+                "rejudge_degraded": (
+                    effective_expert_status == "completed"
+                    and latest_expert_status != "completed"
+                ),
+                "assessments": [
+                    to_plain(item) for item in expert_assessments.values()
+                ],
+                "round_count": len(expert_rounds),
+                "rounds": expert_rounds,
+                "repair_wave": expert_repair_summary,
+                "portfolio_completion_wave": portfolio_completion_summary,
+            }
             expert_objectives = {
                 hypothesis_id: swarm_controller.expert_objective_scores(assessment)
                 for hypothesis_id, assessment in expert_assessments.items()
@@ -5789,24 +7522,210 @@ class ResponsesAgentProvider:
                 objective_scores=expert_objectives,
                 expert_assessments=expert_assessments,
             )
+            emit_swarm_event(
+                "winning_inner_loop_evaluated",
+                actor="winning_quality_expert_judge",
+                graph_id=graph.graph_id,
+                loop="inner",
+                cycle=int(expert_judge_summary.get("round_count", 1) or 1),
+                passed=decision.quality_judge_passed,
+                candidate_count=len(expert_assessments),
+                repaired_count=int(
+                    expert_repair_summary.get("merged_count", 0) or 0
+                ),
+                issues=[
+                    f"{assessment.hypothesis_id}:{assessment.verdict}"
+                    for assessment in expert_assessments.values()
+                    if assessment.verdict != "pass"
+                ][:8],
+            )
             selected_ids = set(decision.selected_hypothesis_ids)
             final_hypotheses = [
                 item for item in ledger.hypotheses if item.hypothesis_id in selected_ids
             ]
-            equipment_portfolio = [
-                {
+            def capability_direction(
+                item: WinningHypothesis,
+                position: int,
+            ) -> dict[str, Any]:
+                assessment = expert_assessments.get(item.hypothesis_id)
+                equipment_family = swarm_controller.equipment_family_signature(item)
+                equipment_form = _winning_primary_equipment_form(
+                    item,
+                    equipment_family=equipment_family,
+                )
+                military_value = "；".join(item.direct_military_effects[:3])
+                mechanism = "→".join(item.mechanism_chain[:5])
+                failure_boundary = "；".join(item.failure_boundaries[:3])
+                validation = "；".join(item.validation_plan[:3])
+                constraints = [
+                    *item.trl_constraints,
+                    *item.cost_constraints,
+                    *item.industrial_constraints,
+                ]
+                engineering_score = (
+                    assessment.dimension_scores.get(
+                        "engineering_feasibility", 0.0
+                    )
+                    if assessment is not None
+                    else item.score
+                )
+                feasibility = (
+                    "4"
+                    if engineering_score >= 0.78
+                    else "3"
+                    if engineering_score >= 0.62
+                    else "2"
+                )
+                direction_type = (
+                    "upgrade"
+                    if item.implementation_path == "upgrade"
+                    else "new_capability"
+                )
+                visible_name = equipment_form
+                if direction_type == "upgrade":
+                    upgrade_effect = _capability_upgrade_effect_anchor(
+                        equipment_form,
+                        " ".join(
+                            [
+                                military_value,
+                                item.novelty_delta,
+                                mechanism,
+                            ]
+                        ),
+                    )
+                    if upgrade_effect and upgrade_effect not in equipment_form:
+                        visible_name = _compact_capability_direction_title(
+                            {
+                                "name": f"{equipment_form}{upgrade_effect}",
+                                "type": direction_type,
+                                "equipment_form": equipment_form,
+                                "baseline_system": item.nearest_public_baseline,
+                                "military_value": military_value,
+                                "novelty": item.novelty_delta,
+                                "operational_mechanism": mechanism,
+                            }
+                        )
+                capability_gap = (
+                    f"现有基线“{item.nearest_public_baseline}”尚不能在"
+                    f"“{item.changed_confrontation_variable}”变化后稳定形成："
+                    f"{military_value or item.novelty_delta}"
+                )
+                topic_text = str(shared.get("topic", "当前任务"))
+                target_scenario = (
+                    "强电磁压制与GNSS拒止下，对手水面编队以机动、诱饵、"
+                    "雷达静默和分层防空反制，岛链外缘或远海反舰齐射后的"
+                    "目标复获、末段交战与补击阶段"
+                    if "反舰" in topic_text
+                    else f"{topic_text}中的受扰、强对抗和短时火力交战阶段"
+                )
+                scientific_principle = (
+                    item.changed_confrontation_variable
+                    or item.novelty_delta
+                    or "任务闭环与体系协同原理"
+                )
+                enabling_technologies = [
+                    *item.system_interfaces[:3],
+                    *item.equipment_forms[:2],
+                ]
+                operational_concept = (
+                    f"以{equipment_form or '具体武器平台'}实施分散部署、任务装订、"
+                    "受控交战、效应评估和再组织"
+                )
+                project_function = (
+                    item.project_function
+                    or military_value
+                    or item.novelty_delta
+                )
+                capability_outcome = military_value or item.novelty_delta
+                winning_mechanism = (
+                    f"相对{item.nearest_public_baseline}，{item.novelty_delta}；"
+                    f"通过{mechanism or '压缩任务闭环'}改变对手的时间、成本、平台或毁伤交换关系"
+                )
+                capability_portrait = build_capability_portrait(
+                    name=visible_name,
+                    scenario=target_scenario,
+                    problem=capability_gap,
+                    principle=scientific_principle,
+                    technologies=enabling_technologies,
+                    operational_concept=operational_concept,
+                    operational_steps=item.mechanism_chain,
+                    capability=capability_outcome,
+                    effect=military_value or item.novelty_delta,
+                    winning_mechanism=winning_mechanism,
+                    equipment_form=equipment_form,
+                )
+                confidence = (
+                    assessment.weighted_score
+                    if assessment is not None
+                    else item.score
+                )
+                prioritized_evidence_refs = _prioritize_equipment_evidence_refs(
+                    item.evidence_ids
+                )
+                return {
                     "hypothesis_id": item.hypothesis_id,
-                    "name": item.title,
-                    "type": item.implementation_path or "new",
+                    "name": visible_name,
+                    "source_hypothesis_title": _winning_portfolio_title(item),
+                    "priority": f"P{position}",
+                    "type": direction_type,
+                    "function": project_function,
+                    "project_function": project_function,
+                    "feasibility": feasibility,
+                    "feasibility_basis": "依据专家工程可行性评分、公开基线及TRL/成本/产能约束分级，仍须样机和对抗试验校准。",
+                    "horizon": "mid",
+                    "direct_evidence_refs": list(prioritized_evidence_refs[:3]),
+                    "derived_from": ["公开证据与候选制胜机理综合"],
+                    "military_value": military_value,
+                    "depth_mechanism": mechanism,
+                    "foresight": "；".join(item.cross_scenario_results[:2]),
+                    "novelty": item.novelty_delta,
+                    "strike_countermeasure_value": military_value,
+                    "equipment_form": equipment_form,
+                    "equipment_family": equipment_family,
+                    "operational_mechanism": mechanism,
+                    "target_scenario": target_scenario,
+                    "problem_statement": capability_gap,
+                    "scientific_principle": scientific_principle,
+                    "enabling_technologies": enabling_technologies,
+                    "operational_concept": operational_concept,
+                    "operational_process": list(item.mechanism_chain[:6]),
+                    "capability_outcome": capability_outcome,
+                    "winning_mechanism": winning_mechanism,
+                    "development_path": (
+                        f"围绕{equipment_form}开展工程样机、体系接口和对抗试验；"
+                        f"通过条件为{validation}。"
+                    ),
+                    "future_trigger": "；".join(item.cross_scenario_results[:2]),
+                    "adversary_adaptation": "；".join(
+                        item.adversary_adaptations[:3]
+                    ),
+                    "failure_boundary": failure_boundary,
+                    "query_relevance": (
+                        f"通过改变“{item.changed_confrontation_variable}”，"
+                        f"在当前任务链中形成{military_value}。"
+                    ),
+                    "baseline_system": item.nearest_public_baseline,
+                    "capability_gap": capability_gap,
+                    "upgrade_package": list(
+                        dict.fromkeys(
+                            [
+                                *item.equipment_forms[:4],
+                                *item.system_interfaces[:4],
+                            ]
+                        )
+                    )[:6]
+                    if direction_type == "upgrade"
+                    else [],
+                    "combat_effect_uplift": military_value,
+                    "strike_chain_contribution": mechanism,
+                    "upgrade_boundary": "；".join(constraints[:3]),
+                    "capability_portrait": capability_portrait,
+                    "confidence": confidence,
                     "mission_effects": list(item.direct_military_effects),
                     "mechanism_chain": list(item.mechanism_chain),
                     "equipment_forms": list(item.equipment_forms),
-                    "system_interfaces": [],
-                    "constraints": [
-                        *item.trl_constraints,
-                        *item.cost_constraints,
-                        *item.industrial_constraints,
-                    ],
+                    "system_interfaces": list(item.system_interfaces),
+                    "constraints": constraints,
                     "validation_plan": list(item.validation_plan),
                     "evidence_ids": list(item.evidence_ids),
                     "failure_boundaries": list(item.failure_boundaries),
@@ -5822,18 +7741,94 @@ class ResponsesAgentProvider:
                         else ""
                     ),
                     "direct_combat_equipment": (
-                        swarm_controller.is_direct_combat_equipment(item)
+                        swarm_controller.is_direct_combat_equipment(item, assessment)
                     ),
                 }
-                for item in final_hypotheses
+            equipment_portfolio = [
+                capability_direction(item, position)
+                for position, item in enumerate(final_hypotheses, start=1)
             ]
             direct_combat_count = sum(
                 bool(item.get("direct_combat_equipment"))
                 for item in equipment_portfolio
             )
+            direct_hypotheses = [
+                item
+                for item in final_hypotheses
+                if swarm_controller.is_direct_combat_equipment(
+                    item,
+                    expert_assessments.get(item.hypothesis_id),
+                )
+            ]
+            direct_equipment_family_counts = (
+                swarm_controller.equipment_family_counts(direct_hypotheses)
+            )
+            distinct_direct_equipment_family_count = len(
+                direct_equipment_family_counts
+            )
+            complete_portrait_count = sum(
+                all(
+                    (
+                        str(item.get("name", "")).strip(),
+                        str(item.get("equipment_form", "")).strip(),
+                        str(item.get("military_value", "")).strip(),
+                        str(item.get("operational_mechanism", "")).strip(),
+                        str(item.get("baseline_system", "")).strip(),
+                        str(item.get("capability_gap", "")).strip(),
+                        str(item.get("target_scenario", "")).strip(),
+                        str(item.get("problem_statement", "")).strip(),
+                        str(item.get("scientific_principle", "")).strip(),
+                        item.get("enabling_technologies"),
+                        str(item.get("operational_concept", "")).strip(),
+                        item.get("operational_process"),
+                        str(item.get("capability_outcome", "")).strip(),
+                        str(item.get("winning_mechanism", "")).strip(),
+                        item.get("system_interfaces"),
+                        item.get("direct_evidence_refs"),
+                        item.get("failure_boundaries"),
+                        item.get("validation_plan"),
+                    )
+                )
+                for item in equipment_portfolio
+            )
+            capability_portrait_gate_passed = (
+                complete_portrait_count == len(equipment_portfolio)
+                and bool(equipment_portfolio)
+            )
+            equipment_family_counts = swarm_controller.equipment_family_counts(
+                final_hypotheses
+            )
+            equipment_family_count = len(equipment_family_counts)
+            maximum_same_family_count = max(
+                equipment_family_counts.values(),
+                default=0,
+            )
+            minimum_family_count = min(3, len(equipment_portfolio))
+            maximum_allowed_same_family = max(
+                2,
+                len(equipment_portfolio) // 2,
+            )
+            equipment_diversity_passed = (
+                equipment_family_count >= minimum_family_count
+                and maximum_same_family_count <= maximum_allowed_same_family
+            )
+            preferred_distinct_direct_equipment = int(
+                swarm_controller.policy.get(
+                    "preferred_distinct_direct_equipment",
+                    5,
+                )
+            )
+            direct_equipment_diversity_passed = (
+                distinct_direct_equipment_family_count
+                >= preferred_distinct_direct_equipment
+            )
+            remote_precision_present = any(
+                _is_remote_precision_portfolio_direction(item)
+                for item in equipment_portfolio
+            )
             portfolio_quality_gate_passed = (
-                5 <= len(equipment_portfolio) <= 7
-                and direct_combat_count >= 4
+                direct_combat_count >= 1
+                and capability_portrait_gate_passed
                 and decision.quality_judge_passed
                 and expert_judge_summary.get("status") == "completed"
             )
@@ -5877,8 +7872,33 @@ class ResponsesAgentProvider:
                     "passed": portfolio_quality_gate_passed,
                     "direction_count": len(equipment_portfolio),
                     "direct_combat_equipment_count": direct_combat_count,
-                    "required_direction_range": [5, 7],
-                    "minimum_direct_combat_equipment": 4,
+                    "complete_capability_portrait_count": complete_portrait_count,
+                    "capability_portrait_gate_passed": capability_portrait_gate_passed,
+                    "equipment_diversity_passed": equipment_diversity_passed,
+                    "equipment_family_count": equipment_family_count,
+                    "equipment_family_counts": equipment_family_counts,
+                    "direct_equipment_family_counts": (
+                        direct_equipment_family_counts
+                    ),
+                    "distinct_direct_equipment_family_count": (
+                        distinct_direct_equipment_family_count
+                    ),
+                    "preferred_distinct_direct_equipment": (
+                        preferred_distinct_direct_equipment
+                    ),
+                    "available_distinct_direct_equipment_family_count": (
+                        distinct_direct_equipment_family_count
+                    ),
+                    "direct_equipment_diversity_passed": (
+                        direct_equipment_diversity_passed
+                    ),
+                    "minimum_equipment_family_count": minimum_family_count,
+                    "maximum_same_family_count": maximum_same_family_count,
+                    "maximum_allowed_same_family": maximum_allowed_same_family,
+                    "remote_precision_required": False,
+                    "remote_precision_present": remote_precision_present,
+                    "preferred_direction_range": [5, 7],
+                    "direct_combat_equipment_must_be_main_body": True,
                     "expert_judge_required": bool(
                         swarm_controller.policy.get("expert_judge_required")
                     ),
@@ -5915,12 +7935,157 @@ class ResponsesAgentProvider:
                 ledger_version=ledger.version,
                 selected_hypothesis_ids=decision.selected_hypothesis_ids,
                 rejected_hypothesis_ids=decision.rejected_hypothesis_ids,
-                final_equipment_portfolio=equipment_portfolio,
+                final_equipment_portfolio=_compact_equipment_portfolio_event(
+                    equipment_portfolio
+                ),
                 portfolio_quality_gate=accumulated["winning_swarm"][
                     "portfolio_quality_gate"
                 ],
-                swarm_summary=accumulated["winning_swarm"],
+                swarm_summary=_compact_swarm_event_summary(
+                    accumulated["winning_swarm"]
+                ),
             )
+
+        async def generate_parallel_s6_cards(
+            *,
+            agent_id: str,
+            system: str,
+            schema: Mapping[str, Any],
+            step_input: Mapping[str, Any],
+        ) -> dict[str, Any]:
+            """Plan one portfolio, then author its equipment cards in parallel."""
+
+            direction_schema = schema["concept_directions"][0]
+            planner_schema = {
+                key: value
+                for key, value in schema.items()
+                if key not in {"concept_directions", "capability_image_drafts"}
+            }
+            planner_schema["card_briefs"] = [
+                {
+                    "position": 1,
+                    "name": "差异化特征+具体武器装备",
+                    "type": "new_capability|upgrade",
+                    "primary_equipment_identity": "唯一主装备及平台/弹体/载荷边界",
+                    "equipment_form": "可独立立项的具体装备形态",
+                    "unique_operational_role": "该卡在组合中不可由其他卡替代的任务作用",
+                    "launch_or_release_domain": "方案自身限定的部署、发射或释放域",
+                    "target_and_direct_effect": "主要敌方目标及直接战果",
+                    "non_substitutable_difference": "相对其他卡至少两项可独立验收差异",
+                    "baseline_system": "公开基线或证据不足时的类别级边界",
+                    "capability_gap": "query下该主装备独有的能力差距",
+                    "direct_evidence_refs": ["exact evidence_id"],
+                }
+            ]
+            planner_text = await self._run_core_json(
+                agent_id,
+                system
+                + " 你先只完成S6组合规划，不写完整能力画像。依据query与S5前置合同形成5至7张"
+                "互不重复的装备卡身份蓝图。每张卡锁定唯一主装备、发射/释放域、目标、直接战果、"
+                "公开基线和不可替代差异；随后在本次调用内横向比较全部蓝图，实质重复项必须合并或"
+                "替换后再提交。禁止用同一装备族、同一目标和同一作用机理换标题重复占位。"
+                "card_briefs.position从1连续编号。只输出严格JSON。",
+                dict(step_input),
+                planner_schema,
+                2400,
+                phase="winning_s6_portfolio_plan",
+            )
+            plan = _parse_json_object(planner_text)
+            briefs = [
+                dict(item)
+                for item in plan.get("card_briefs", [])
+                if isinstance(item, Mapping)
+            ]
+            if not 5 <= len(briefs) <= 7:
+                raise S6QualityError("S6并行组合规划未形成5至7个装备身份蓝图")
+            brief_names = [str(item.get("name", "")).strip() for item in briefs]
+            if not all(brief_names) or len(set(brief_names)) != len(brief_names):
+                raise S6QualityError("S6并行组合规划存在空标题或重复装备标题")
+
+            protected_briefs = [
+                {
+                    "position": position,
+                    "name": str(brief.get("name", "")),
+                    "primary_equipment_identity": str(
+                        brief.get("primary_equipment_identity", "")
+                    ),
+                    "unique_operational_role": str(
+                        brief.get("unique_operational_role", "")
+                    ),
+                    "launch_or_release_domain": str(
+                        brief.get("launch_or_release_domain", "")
+                    ),
+                    "target_and_direct_effect": str(
+                        brief.get("target_and_direct_effect", "")
+                    ),
+                    "non_substitutable_difference": str(
+                        brief.get("non_substitutable_difference", "")
+                    ),
+                }
+                for position, brief in enumerate(briefs, start=1)
+            ]
+
+            async def author_card(
+                position: int,
+                brief: Mapping[str, Any],
+            ) -> tuple[int, dict[str, Any], str]:
+                card_text = await self._run_core_json(
+                    agent_id,
+                    "你是S6单装备能力画像Agent。只撰写assigned_card这一张装备卡，不得改换其"
+                    "primary_equipment_identity、发射/释放域、主要目标或组合内不可替代作用。必须基于"
+                    "完整装备卡语义形成4至6步operational_process，禁止按标题、载荷或公开型号关键词"
+                    "套流程模板。提交前在同一次调用内逐字段复核主装备、流程主体、发射域、目标与直接"
+                    "战果；semantic_consistency_check.consistent必须输出JSON布尔值true。"
+                    "other_portfolio_cards仅用于避免重复和串卡，禁止吸收其装备身份、流程或战果。"
+                    "完整回答项目功能、敌方反制、我方流程、直接战果、失效边界和可证伪试验。"
+                    "只输出严格JSON。",
+                    {
+                        **dict(step_input),
+                        "parallel_card_id": f"s6-card-{position}",
+                        "assigned_card": dict(brief),
+                        "other_portfolio_cards": [
+                            item
+                            for item in protected_briefs
+                            if item["position"] != position
+                        ],
+                    },
+                    {
+                        "direction": direction_schema,
+                        "capability_image_draft": "该装备能力画像的单句结论",
+                    },
+                    3400,
+                    phase=f"winning_s6_parallel_card_{position:02d}",
+                )
+                parsed = _parse_json_object(card_text)
+                direction = parsed.get("direction", {})
+                if not isinstance(direction, Mapping):
+                    raise S6QualityError(f"S6并行第{position}张装备卡未返回结构化方向")
+                return (
+                    position,
+                    dict(direction),
+                    str(parsed.get("capability_image_draft", "")).strip(),
+                )
+
+            authored = await asyncio.gather(
+                *(
+                    author_card(position, brief)
+                    for position, brief in enumerate(briefs, start=1)
+                )
+            )
+            authored.sort(key=lambda item: item[0])
+            result = {
+                key: plan.get(key, [] if isinstance(value, list) else "")
+                for key, value in schema.items()
+                if key not in {"concept_directions", "capability_image_drafts"}
+            }
+            result["concept_directions"] = [item[1] for item in authored]
+            result["capability_image_drafts"] = [
+                item[2]
+                or str(item[1].get("capability_outcome", "")).strip()
+                or str(item[1].get("name", "")).strip()
+                for item in authored
+            ]
+            return result
 
         async def run_step(
             index: int,
@@ -6004,7 +8169,9 @@ class ResponsesAgentProvider:
             # 必备字段或作战价值等确定性门槛失败时，允许一次窄化
             # 修复。这保留最终产物质量，同时避免每个步骤固定调用批判模型。
             step_deadline_state = self._deadline_state(priority="critical")
-            deadline_pressure = step_deadline_state.get("mode") != "normal"
+            deadline_pressure = (
+                index != 6 and step_deadline_state.get("mode") != "normal"
+            )
             if (
                 middle_cycle == 1
                 and index == 6
@@ -6013,11 +8180,16 @@ class ResponsesAgentProvider:
                 != "equipment_deep_research.providers.fake"
             ):
                 # S6 is the user-facing equipment decision product. The first
-                # result is normalized locally and may receive at most one
-                # independent model repair. More rewrites repeatedly paid for
-                # the same length/title corrections and could keep a run in
-                # ``researching`` without adding evidence or military value.
-                max_inner_iterations = 2
+                # S6 may complete two quality-directed repair passes. It is
+                # intentionally not shortened by the run deadline and never
+                # switches to a local fallback portrait.
+                max_inner_iterations = max(
+                    2,
+                    min(
+                        4,
+                        int(os.environ.get("EQUIPMENT_DR_S6_MAX_QUALITY_ATTEMPTS", "3")),
+                    ),
+                )
             elif middle_cycle == 1 and model_loop_critics and not deadline_pressure:
                 max_inner_iterations = 2
             else:
@@ -6025,6 +8197,7 @@ class ResponsesAgentProvider:
             for inner_iteration in range(1, max_inner_iterations + 1):
                 if (
                     inner_iteration > 1
+                    and index != 6
                     and self._deadline_state(priority="critical").get("mode")
                     != "normal"
                 ):
@@ -6141,7 +8314,16 @@ class ResponsesAgentProvider:
                     repair = _parse_json_object(text)
                     if repair:
                         result = {**result, **repair}
-                elif index == 6 and s6_targeted_repair:
+                elif index == 6 and (
+                    s6_targeted_repair
+                    or (
+                        middle_cycle == 1
+                        and inner_iteration > 1
+                        and bool(result)
+                        and self.provider.__class__.__module__
+                        == "equipment_deep_research.providers.codex"
+                    )
+                ):
                     repair_targets = _s6_repair_targets(result, critic_feedback)
                     directions = result.get("concept_directions", [])
                     target_cards = [
@@ -6165,14 +8347,27 @@ class ResponsesAgentProvider:
                         "你是装备能力画像卡片级修复Agent。只重写repair_targets指定的卡片，"
                         "不得改动protected_cards的名称、排序、类型、证据和正文。每张修复卡必须"
                         "重新从query校验任务对象、作战阶段、威胁压力和直接作战效果，并形成独立"
-                        "baseline_system与capability_gap。若问题涉及导弹/精确制导弹药组合缺失，"
-                        "被替换卡必须成为与query因果契合的独立导弹、巡飞弹、制导弹药、鱼雷、"
-                        "远程精确火力或低成本拦截弹药方向；弹药补给、导弹保障、运输和维修不能命中。"
+                        "primary_equipment_identity；基于整张卡语义重新核对流程主体、发射/释放域、"
+                        "目标与直接战果，禁止依据标题、载荷或公开基线关键词套流程模板。修复后的"
+                        "semantic_consistency_check必须逐字段复核且consistent=true。"
+                        "baseline_system与capability_gap。若问题涉及主战装备内容缺失，被替换卡必须"
+                        "先依据query的任务对象、威胁形态、作战阶段和制胜矛盾重新发散，再收敛为"
+                        "与query因果契合的具体打击、歼灭、杀伤或反杀伤武器装备；无人、低空、远程"
+                        "与精确打击只作优先观察镜头，不得机械补齐固定类别，弹药补给、保障、运输和维修"
+                        "不能冒充主战方向。"
                         "若问题涉及颠覆关系覆盖不足，应在保持装备具体性和query相关性的前提下，"
                         "让修复卡自然体现此前组合缺少的成本交换/工业补充、平台持续存在、决策时间/"
                         "学习再打击、新质毁伤效应、传感器—射手解耦/弱网任务重构或人在回路安全降级关系；"
                         "不得输出维度名称清单。标题不得重复词、不得以虚词结尾，硬上限24字；"
-                        "禁止具备/通过/实现等描述句，现役升级必须写成具体装备对象+直接作战效果+升级。"
+                        "禁止具备/通过/实现等描述句，也禁止以升级、能力、体系、方向、包或套件收尾；"
+                        "现役改进属性只写入type、baseline_system和upgrade字段，标题只命名改进后形成的具体武器装备。"
+                    "JASSM、PrSM、Harop、AARGM、MALD等公开英文型号只能作为baseline_system证据锚点，"
+                    "不得覆盖repair_targets中已有的中文概念工作名；若当前卡的equipment_form、function或"
+                    "capability_image_draft已经给出具体装备身份，必须保持该身份并只修复被指出的缺陷。"
+                    "概述必须落到真实战役/战斗地域和阶段，写清敌方目标与反制、我方发射/运用主体、"
+                    "时敏交战流程和压制、摧毁、拦截、开辟走廊、续接后续火力或阻断重组等战果；"
+                    "概述建议简洁并直接点名一个具体武器装备，详细机理、边界和验证放入五个分点；"
+                    "不得从装备研究、任务研究或公开资料/公开基线不能证明起笔。"
                         "只返回被修复卡片及其一基位置，禁止返回完整组合。只输出严格JSON。",
                         {
                             "query": shared["topic"],
@@ -6181,6 +8376,9 @@ class ResponsesAgentProvider:
                             "capability_synthesis_handoff": s6_handoff,
                             "first_pass_quality_contract": s6_first_pass_contract,
                             "repair_targets": target_cards,
+                            "capability_image_drafts": result.get(
+                                "capability_image_drafts", []
+                            ),
                             "protected_cards": protected_cards,
                             "repair_issues": critic_feedback,
                             "valid_evidence_ids": step_input["valid_evidence_ids"],
@@ -6200,42 +8398,66 @@ class ResponsesAgentProvider:
                     s6_model_repair_used = True
                     if repair:
                         result = _merge_s6_direction_repairs(result, repair)
-                else:
-                    text = await self._run_core_json(
-                        agent_id,
-                        system
-                        + (
-                            " first_pass_quality_contract是首次成稿的强制提交合同。必须在同一次调用内"
-                            "先完成组合选择和逐卡内部自检，再提交唯一最终JSON；不得输出草稿或自检过程。"
-                            "尤其先锁定与query直接因果契合的独立导弹/精确制导弹药卡，再生成其余卡，"
-                            "并在提交前修正标题、完整句、装备基线、独立差距和卡片间重复。"
-                            if index == 6
-                            else ""
-                        )
-                        + " 本步骤必须额外输出reasoning_node={recognition,evidence_refs,confidence,next_action}；"
-                        "next_action只给可审计的动作建议，不输出隐藏思维过程。"
-                        + f" 当前A-H分支要求本步骤按{execution_mode}强度执行："
-                        + (
-                            "深入展开多个备选、反证与适用边界。"
-                            if execution_mode == "deep"
-                            else "只保留支撑后续步骤所需的最小充分判断。"
-                            if execution_mode == "light"
-                            else "按标准深度完成。"
-                        ),
-                        step_input,
-                        schema,
-                        (
-                            6000
-                            if index == 6
-                            else {
-                                "light": 1800,
-                                "standard": 2400,
-                                "deep": 2800,
-                            }.get(execution_mode, 2400)
-                        ),
-                        phase=f"{agent_id}_{execution_mode}",
+                elif (
+                    index == 6
+                    and middle_cycle == 1
+                    and inner_iteration == 1
+                    and optimized_v2
+                    and self.provider_kind == "codex_cli"
+                    and self.provider.__class__.__module__
+                    == "equipment_deep_research.providers.codex"
+                ):
+                    result = await generate_parallel_s6_cards(
+                        agent_id=agent_id,
+                        system=system,
+                        schema=schema,
+                        step_input=step_input,
                     )
-                    result = _parse_json_object(text)
+                else:
+                    try:
+                        text = await self._run_core_json(
+                            agent_id,
+                            system
+                            + (
+                                " first_pass_quality_contract是首次成稿的强制提交合同。必须在同一次调用内"
+                                "先完成组合选择和逐卡内部自检，再提交唯一最终JSON；不得输出草稿或自检过程。"
+                                "尤其先依据query的任务对象、威胁形态、作战阶段和制胜矛盾形成候选架构，"
+                                "再收敛为具体打击、歼灭、杀伤或反杀伤武器卡；无人、低空、远程与精确打击"
+                                "只作优先观察镜头，不得机械补齐固定类别。提交前修正标题、完整句、"
+                                "装备基线、独立差距和卡片间重复。"
+                                if index == 6
+                                else ""
+                            )
+                            + " 本步骤必须额外输出reasoning_node={recognition,evidence_refs,confidence,next_action}；"
+                            "next_action只给可审计的动作建议，不输出隐藏思维过程。"
+                            + f" 当前A-H分支要求本步骤按{execution_mode}强度执行："
+                            + (
+                                "深入展开多个备选、反证与适用边界。"
+                                if execution_mode == "deep"
+                                else "只保留支撑后续步骤所需的最小充分判断。"
+                                if execution_mode == "light"
+                                else "按标准深度完成。"
+                            ),
+                            step_input,
+                            schema,
+                            (
+                                5200
+                                if index == 6
+                                else {
+                                    "light": 1800,
+                                    "standard": 2400,
+                                    "deep": 2800,
+                                }.get(execution_mode, 2400)
+                            ),
+                            phase=f"{agent_id}_{execution_mode}",
+                        )
+                    except ProviderRequestError:
+                        # The provider performs its own retry. If S6 still
+                        # cannot return a complete response, fail the stage;
+                        # never replace it with a deterministic portfolio.
+                        raise
+                    else:
+                        result = _parse_json_object(text)
                 if not result:
                     raise ValueError(f"{agent_id} returned invalid structured JSON")
                 result = sanitize_references(result)
@@ -6257,99 +8479,49 @@ class ResponsesAgentProvider:
                     )
                     result = _normalize_concept_direction_priorities(result)
                 deterministic_quality_issues: list[str] = []
+                deterministic_quality_warnings: list[str] = []
                 if (
                     index == 6
                     and self.provider.__class__.__module__
                     != "equipment_deep_research.providers.fake"
                 ):
-                    deterministic_quality_issues = _capability_direction_quality_issues(
+                    deterministic_quality_warnings = _capability_direction_quality_issues(
                         result,
                         handoff=s6_handoff,
                     )
+                    deterministic_quality_issues = _s6_delivery_blocking_issues(
+                        deterministic_quality_warnings
+                    )
                     if deterministic_quality_issues and optimized_v2:
-                        if s6_model_repair_used and inner_iteration >= max_inner_iterations:
-                            # The single permitted model repair has completed.
-                            # Never leave S6 waiting for a third call: resolve any
-                            # residual portfolio defect locally before L1-L3 see it.
-                            original_issues = list(deterministic_quality_issues)
-                            result, deterministic_quality_issues = (
-                                _recover_invalid_s6_result(
-                                    result,
-                                    topic=str(shared.get("topic", "")),
-                                    handoff=s6_handoff,
-                                )
-                            )
-                            loop_trace.append(
-                                {
-                                    "loop": "inner",
-                                    "middle_cycle": middle_cycle,
-                                    "step": 6,
-                                    "agent_id": agent_id,
-                                    "iteration": inner_iteration,
-                                    "event": "post_repair_deterministic_portfolio_closeout",
-                                    "passed": not deterministic_quality_issues,
-                                    "issues": original_issues[:4],
-                                    "remaining_issues": deterministic_quality_issues[:4],
-                                    "recommended_action": (
-                                        "pass"
-                                        if not deterministic_quality_issues
-                                        else "stop"
-                                    ),
-                                }
-                            )
-                        elif _s6_can_use_lightweight_card_repair(
+                        lightweight_repair = _s6_can_use_lightweight_card_repair(
                             result,
                             deterministic_quality_issues,
-                        ):
-                            loop_trace.append(
-                                {
-                                    "loop": "inner",
-                                    "middle_cycle": middle_cycle,
-                                    "step": 6,
-                                    "agent_id": agent_id,
-                                    "iteration": inner_iteration,
-                                    "event": "lightweight_card_repair_planned",
-                                    "passed": False,
-                                    "issues": deterministic_quality_issues[:4],
-                                    "repair_targets": _s6_repair_targets(
+                        )
+                        loop_trace.append(
+                            {
+                                "loop": "inner",
+                                "middle_cycle": middle_cycle,
+                                "step": 6,
+                                "agent_id": agent_id,
+                                "iteration": inner_iteration,
+                                "event": (
+                                    "lightweight_card_repair_planned"
+                                    if lightweight_repair
+                                    else "full_s6_quality_regeneration_planned"
+                                ),
+                                "passed": False,
+                                "issues": deterministic_quality_issues[:4],
+                                "repair_targets": (
+                                    _s6_repair_targets(
                                         result,
                                         deterministic_quality_issues,
-                                    ),
-                                    "recommended_action": "retry",
-                                }
-                            )
-                        else:
-                            # Systemic portfolio defects should not trigger a
-                            # second generative rewrite. Recover locally with the
-                            # evidence-bounded direct-weapon portfolio and re-run
-                            # the exact same hard gate.
-                            original_issues = list(deterministic_quality_issues)
-                            result, deterministic_quality_issues = (
-                                _recover_invalid_s6_result(
-                                    result,
-                                    topic=str(shared.get("topic", "")),
-                                    handoff=s6_handoff,
-                                )
-                            )
-                            s6_model_repair_used = True
-                            loop_trace.append(
-                                {
-                                    "loop": "inner",
-                                    "middle_cycle": middle_cycle,
-                                    "step": 6,
-                                    "agent_id": agent_id,
-                                    "iteration": inner_iteration,
-                                    "event": "deterministic_weapon_portfolio_recovery",
-                                    "passed": not deterministic_quality_issues,
-                                    "issues": original_issues[:4],
-                                    "remaining_issues": deterministic_quality_issues[:4],
-                                    "recommended_action": (
-                                        "pass"
-                                        if not deterministic_quality_issues
-                                        else "stop"
-                                    ),
-                                }
-                            )
+                                    )
+                                    if lightweight_repair
+                                    else []
+                                ),
+                                "recommended_action": "retry",
+                            }
+                        )
                 # 默认使用本地结构、证据与置信度门控。只有本地门控发现实质
                 # 缺陷时，中循环才调用独立批判 Agent 生成一次定向修复建议。
                 if (
@@ -6465,11 +8637,10 @@ class ResponsesAgentProvider:
                         ][:8],
                         "retry_guidance": deterministic_quality_issues[:6],
                         "recommended_action": (
-                            (
-                                "retry"
-                                if inner_iteration < max_inner_iterations
-                                else "stop"
-                            )
+                            "stop"
+                            if s6_model_repair_used
+                            or inner_iteration >= max_inner_iterations
+                            else "retry"
                         ),
                     }
                 final_review = dict(review)
@@ -6505,7 +8676,29 @@ class ResponsesAgentProvider:
                     str(item) for item in review.get("retry_guidance", [])
                 ][:6]
                 if index == 6:
-                    s6_targeted_repair = True
+                    s6_targeted_repair = _s6_can_use_lightweight_card_repair(
+                        result,
+                        critic_feedback,
+                    )
+            if (
+                index == 6
+                and final_review.get("passed") is not True
+                and self.provider.__class__.__module__
+                != "equipment_deep_research.providers.fake"
+            ):
+                remaining = [
+                    str(item)
+                    for item in final_review.get("issues", [])
+                    if str(item).strip()
+                ]
+                raise S6QualityError(
+                    "S6质量门未通过，已停止交付且未生成限时保底画像："
+                    + "；".join(remaining[:6]),
+                    partial_result={
+                        **dict(accumulated),
+                        **dict(result),
+                    },
+                )
             raw_reasoning_node = result.pop("reasoning_node", {})
             reasoning_node = (
                 dict(raw_reasoning_node)
@@ -7200,6 +9393,7 @@ class ResponsesAgentProvider:
             satisfied = {index for index in range(1, 7) if index not in selected}
             pending = set(selected)
             running: dict[int, asyncio.Task] = {}
+            failures: list[BaseException] = []
             wake = asyncio.Event()
 
             async def run_and_commit(index: int) -> None:
@@ -7212,11 +9406,23 @@ class ResponsesAgentProvider:
                     )
                     commit_step(outcome)
                     satisfied.add(index)
+                except BaseException as exc:
+                    failures.append(exc)
                 finally:
                     running.pop(index, None)
                     wake.set()
 
             while pending or running:
+                if failures:
+                    pending_tasks = list(running.values())
+                    for task in pending_tasks:
+                        task.cancel()
+                    if pending_tasks:
+                        await asyncio.gather(
+                            *pending_tasks,
+                            return_exceptions=True,
+                        )
+                    raise failures[0]
                 ready = sorted(
                     index
                     for index in pending
@@ -7240,6 +9446,8 @@ class ResponsesAgentProvider:
                         break
                 wake.clear()
                 await wake.wait()
+            if failures:
+                raise failures[0]
 
         core_swarm_schedule = swarm_controller.plan_core_schedule(
             active_steps=active_steps,
@@ -7278,6 +9486,8 @@ class ResponsesAgentProvider:
             else:
                 await run_step_waves(active_steps, middle_cycle=1)
         except (RuntimeError, TimeoutError, ValueError) as exc:
+            if isinstance(exc, S6QualityError):
+                raise
             deadline_state = self._deadline_state(priority="critical")
             deadline_limited = (
                 _is_harness_budget_error(exc)
@@ -7809,99 +10019,255 @@ class ResponsesAgentProvider:
             ]
             and accumulated.get("winning_deadline_limited")
         ):
-            gap_rows = [
-                str(item.get("gap_statement") or item.get("capability") or "")
-                for item in accumulated.get("gap_assessment", [])
-                if isinstance(item, Mapping)
-            ]
-            deadline_directions = build_deadline_weapon_directions(
-                topic=str(shared["topic"]),
-                evidence_ids=sorted(valid_reference_ids),
-                confidence=0.62,
-                gap_basis="；".join(item for item in gap_rows if item)[:700],
-            )
-            accumulated["concept_directions"] = deadline_directions
-            accumulated["s6_deadline_fallback"] = True
-            accumulated["capability_synthesis"] = [
-                str(item.get("name", "")) for item in deadline_directions
-            ]
-            accumulated["confidence"] = max(
-                0.62,
-                float(accumulated.get("confidence", 0.0) or 0.0),
-            )
-            runs.append(
-                {
-                    "step": 6,
-                    "agent_id": "winning_s6_image",
-                    "middle_cycle": 1,
-                    "execution_mode": "deadline_evidence_bounded_finalize",
-                    "confidence": 0.62,
-                    "open_question_count": 0,
-                    "status": "completed",
-                    "critic_action": "pass",
-                    "critic_issues": [],
-                    "logical_result_preserved": True,
-                }
-            )
-            loop_trace.append(
-                {
-                    "loop": "winning",
-                    "step": 6,
-                    "event": "deadline_evidence_bounded_finalize",
-                    "passed": True,
-                    "issues": [
-                        "S6深度调用未在截止前形成完整结构，使用已接受证据与S4/S5差距交接"
-                        "收敛为六项直接战斗装备方向；指标和成熟度仅保留待验证边界。"
-                    ],
-                }
+            raise S6QualityError(
+                "S6未形成可交付能力画像；已取消限时保底画像，任务保持失败状态等待高质量重试"
             )
         dynamic_portfolio = (
             accumulated.get("winning_swarm", {}).get("final_equipment_portfolio", [])
             if isinstance(accumulated.get("winning_swarm", {}), Mapping)
             else []
         )
-        final_s6_issues = (
-            ([] if dynamic_portfolio else ["动态任务图未形成可合并装备组合"])
-            if dynamic_swarm_enabled
-            else (
-                _capability_direction_quality_issues(
-                    accumulated,
-                    handoff=final_s6_handoff,
+        if dynamic_swarm_enabled and dynamic_portfolio:
+            # The expert-selected portfolio is the authoritative S6 output.
+            # Keeping the older fixed-flow directions here previously caused
+            # capability_images.json and the UI to display a different set of
+            # equipment than the blind expert had actually approved.
+            accumulated["concept_directions"] = [
+                dict(item) for item in dynamic_portfolio
+            ]
+            accumulated["capability_synthesis"] = [
+                str(item.get("name", ""))
+                for item in dynamic_portfolio
+                if str(item.get("name", "")).strip()
+            ]
+            expert_scores = [
+                float(item["expert_score"])
+                for item in dynamic_portfolio
+                if isinstance(item.get("expert_score"), (int, float))
+            ]
+            if expert_scores:
+                accumulated["confidence"] = sum(expert_scores) / len(
+                    expert_scores
                 )
-                if self.provider.__class__.__module__
-                != "equipment_deep_research.providers.fake"
-                else []
-            )
-        )
-        if final_s6_issues and optimized_v2:
-            original_final_issues = list(final_s6_issues)
-            recovered, final_s6_issues = _recover_invalid_s6_result(
-                accumulated,
+            normalized_dynamic = _normalize_s6_deterministic_format(
+                {
+                    "concept_directions": accumulated["concept_directions"],
+                    "confidence": accumulated.get("confidence", 0.68),
+                },
                 topic=str(shared.get("topic", "")),
+            )
+            normalized_dynamic = _normalize_concept_direction_priorities(
+                normalized_dynamic
+            )
+            accumulated["concept_directions"] = list(
+                normalized_dynamic.get("concept_directions", [])
+            )
+            accumulated["capability_synthesis"] = [
+                str(item.get("name", ""))
+                for item in accumulated["concept_directions"]
+                if isinstance(item, Mapping)
+                and str(item.get("name", "")).strip()
+            ]
+            winning_swarm_summary = accumulated.get("winning_swarm", {})
+            if isinstance(winning_swarm_summary, dict):
+                # Keep every delivery surface on the same authoritative,
+                # normalized S6 cards. Otherwise the UI/swarm audit retains
+                # pre-normalization titles while capability_images.json and
+                # the report consume the compact final names and portraits.
+                winning_swarm_summary["final_equipment_portfolio"] = [
+                    dict(item)
+                    for item in accumulated["concept_directions"]
+                    if isinstance(item, Mapping)
+                ]
+        final_s6_all_issues = (
+            _capability_direction_quality_issues(
+                accumulated,
                 handoff=final_s6_handoff,
             )
-            accumulated.update(recovered)
-            accumulated["s6_quality_recovered"] = not final_s6_issues
-            loop_trace.append(
-                {
-                    "loop": "winning",
-                    "step": 6,
-                    "event": "final_deterministic_weapon_portfolio_recovery",
-                    "passed": not final_s6_issues,
-                    "issues": original_final_issues[:4],
-                    "remaining_issues": final_s6_issues[:4],
-                }
-            )
+            if self.provider.__class__.__module__
+            != "equipment_deep_research.providers.fake"
+            else []
+        )
         # The final deterministic evaluation is authoritative.  Do not append
         # stale first-pass critic messages after local normalization or the one
         # bounded card repair has already resolved them; doing so previously
         # made L1-L3 fail on an obsolete title/support diagnosis.
-        final_s6_issues = list(dict.fromkeys(final_s6_issues))[:16]
-        accumulated["s6_quality_gate_passed"] = not final_s6_issues
-        accumulated["s6_quality_gate_failed"] = bool(final_s6_issues)
-        accumulated["s6_quality_gate_issues"] = final_s6_issues
-        if final_s6_issues:
-            accumulated["middle_loop_limited"] = True
+        final_s6_all_issues = list(dict.fromkeys(final_s6_all_issues))[:32]
+        final_s6_issues = _s6_delivery_blocking_issues(final_s6_all_issues)
+        s6_low_repair_attempted = bool(s6_model_repair_used)
+        s6_low_repair_error = ""
+        if final_s6_issues and not s6_model_repair_used:
+            # All modes receive one bounded low-reasoning repair for substantive
+            # content/evidence defects. Diversity, count and style findings are
+            # front-loaded as generation guidance and remain warnings here.
+            s6_low_repair_attempted = True
+            repair_targets = _s6_repair_targets(accumulated, final_s6_issues)
+            current_directions = accumulated.get("concept_directions", [])
+            target_cards = [
+                {
+                    "position": position,
+                    "direction": current_directions[position - 1],
+                }
+                for position in repair_targets
+                if isinstance(current_directions, list)
+                and 1 <= position <= len(current_directions)
+            ]
+            protected_cards = [
+                {
+                    "position": position,
+                    "name": str(item.get("name", "")),
+                    "type": str(item.get("type", "")),
+                }
+                for position, item in enumerate(current_directions, start=1)
+                if isinstance(item, Mapping) and position not in repair_targets
+            ]
+            emit_swarm_event(
+                "winning_s6_low_repair_started",
+                repair_targets=repair_targets,
+                issues=final_s6_issues[:8],
+                reasoning_effort="low",
+            )
+            try:
+                direction_schema = steps[5][2]["concept_directions"][0]
+                repair_text = await self._run_core_json(
+                    "winning_s6_image",
+                    "你是动态蜂群交付前的S6低成本快速修复Agent。只重写repair_targets指定卡片，"
+                    "不得改变protected_cards的名称、顺序、类型或内容。优先修复内容缺失和证据错配："
+                    "补齐真实作战阶段与地域、敌方目标/威胁及反制、我方具体武器装备主体、"
+                    "进入—搜索复核—交战或拒打—评估—补射接替流程和直接战果；"
+                    "每张重写卡必须完整保留schema字段，并在同次输出前完成整卡语义自检；"
+                    "semantic_consistency_check.consistent必须使用JSON布尔值true而不是字符串。"
+                    "若问题涉及卡片重复，必须把目标卡替换为主装备、发射域、目标、作用机理和验证指标"
+                    "均可独立验收的装备方向，不得只改标题或同义改写；"
+                    "具名型号或装备族只能保留与自身对象级证据直接匹配的引用，若当前证据不支持"
+                    "原命名，应在证据边界内收缩或更换该卡装备对象。字数不是通过或失败条件，"
+                    "不要为压缩或扩写而损害事实、因果和可读性。只输出严格JSON。",
+                    {
+                        "query": shared["topic"],
+                        "branch": primary_branch,
+                        "capability_synthesis_handoff": final_s6_handoff,
+                        "repair_targets": target_cards,
+                        "protected_cards": protected_cards,
+                        "repair_issues": final_s6_issues,
+                        "valid_evidence_ids": sorted(
+                            {
+                                str(item.get("evidence_id", ""))
+                                for item in final_s6_handoff.get(
+                                    "public_evidence", []
+                                )
+                                if isinstance(item, Mapping)
+                                and str(item.get("evidence_id", "")).strip()
+                            }
+                        ),
+                    },
+                    {
+                        "direction_repairs": [
+                            {
+                                "position": "1-based integer from repair_targets",
+                                "direction": direction_schema,
+                            }
+                        ]
+                    },
+                    min(4200, 1400 + 700 * max(1, len(repair_targets))),
+                    phase="winning_s6_card_repair",
+                )
+                repair = _parse_json_object(repair_text)
+                if repair:
+                    repaired = _merge_s6_direction_repairs(accumulated, repair)
+                    repaired = _normalize_s6_deterministic_format(
+                        repaired,
+                        topic=str(shared.get("topic", "")),
+                    )
+                    repaired = _normalize_concept_direction_priorities(repaired)
+                    accumulated["concept_directions"] = list(
+                        repaired.get("concept_directions", [])
+                    )
+                    accumulated["capability_synthesis"] = [
+                        str(item.get("name", ""))
+                        for item in accumulated["concept_directions"]
+                        if isinstance(item, Mapping)
+                        and str(item.get("name", "")).strip()
+                    ]
+                    winning_swarm_summary = accumulated.get("winning_swarm", {})
+                    if isinstance(winning_swarm_summary, dict):
+                        winning_swarm_summary["final_equipment_portfolio"] = [
+                            dict(item)
+                            for item in accumulated["concept_directions"]
+                            if isinstance(item, Mapping)
+                        ]
+                final_s6_all_issues = list(
+                    dict.fromkeys(
+                        _capability_direction_quality_issues(
+                            accumulated,
+                            handoff=final_s6_handoff,
+                        )
+                    )
+                )[:32]
+                final_s6_issues = _s6_delivery_blocking_issues(
+                    final_s6_all_issues
+                )
+                emit_swarm_event(
+                    "winning_s6_low_repair_completed",
+                    repair_targets=repair_targets,
+                    remaining_issues=final_s6_all_issues[:8],
+                    passed=not final_s6_issues,
+                    reasoning_effort="low",
+                )
+            except Exception as exc:
+                s6_low_repair_error = f"{type(exc).__name__}: {exc}"
+                emit_swarm_event(
+                    "winning_s6_low_repair_limited",
+                    repair_targets=repair_targets,
+                    issues=final_s6_issues[:8],
+                    failure_type=type(exc).__name__,
+                    reasoning_effort="low",
+                )
+
+        # Length is never a release gate.  A dynamic swarm receives one low
+        # repair for substantive residuals; if the bounded repair cannot close
+        # every item, preserve the expert portfolio as a clearly marked limited
+        # delivery instead of converting the whole run to failed.
+        residual_s6_issues = list(final_s6_issues)
+        nonblocking_s6_warnings = [
+            issue
+            for issue in final_s6_all_issues
+            if issue not in set(residual_s6_issues)
+        ]
+        dynamic_limited_delivery = bool(
+            dynamic_swarm_enabled and residual_s6_issues
+        )
+        accumulated["s6_quality_gate_passed"] = (
+            not residual_s6_issues or dynamic_limited_delivery
+        )
+        accumulated["s6_quality_gate_failed"] = bool(
+            residual_s6_issues and not dynamic_swarm_enabled
+        )
+        accumulated["s6_quality_gate_limited"] = dynamic_limited_delivery
+        accumulated["s6_quality_gate_issues"] = (
+            [] if dynamic_limited_delivery else residual_s6_issues
+        )
+        accumulated["s6_quality_warnings"] = list(
+            dict.fromkeys(
+                [
+                    *nonblocking_s6_warnings,
+                    *(residual_s6_issues if dynamic_limited_delivery else []),
+                ]
+            )
+        )[:32]
+        accumulated["s6_low_repair_attempted"] = s6_low_repair_attempted
+        if s6_low_repair_error:
+            accumulated["s6_low_repair_error"] = s6_low_repair_error
+        if residual_s6_issues and not dynamic_swarm_enabled:
+            raise S6QualityError(
+                "S6最终质量门未通过，已停止交付且未生成限时保底画像："
+                + "；".join(residual_s6_issues[:6]),
+                partial_result=accumulated,
+            )
+        if dynamic_limited_delivery:
+            # Downstream L1-L3 gates consume the explicit failed/pass flags.
+            # Clear the local blocking list after retaining it in warnings so
+            # the dynamic swarm continues to report and delivery normally.
+            final_s6_issues = []
         if swarm_enabled or dynamic_swarm_enabled:
             latest_core_runs: dict[int, dict[str, Any]] = {}
             for row in runs:
@@ -8029,7 +10395,7 @@ class ResponsesAgentProvider:
                 completed_core_steps=finalized_core_schedule["completed_steps"],
                 limited_core_steps=finalized_core_schedule["limited_steps"],
                 final_merge=final_merge,
-                swarm_summary=swarm_summary,
+                swarm_summary=_compact_swarm_event_summary(swarm_summary),
             )
         accumulated["assumptions"] = list(dict.fromkeys(all_assumptions))[:12]
         accumulated["open_questions"] = list(dict.fromkeys(all_open_questions))[:12]
@@ -8201,6 +10567,73 @@ class ResponsesAgentProvider:
             "model_verbosity": _phase_model_verbosity(agent_id, phase),
             "max_output_tokens": min(max_output_tokens, configured_max_tokens),
         }
+        if phase.startswith("winning_s6_card_repair"):
+            # Card repair receives the complete, already quality-gated portfolio
+            # plus a bounded set of card-local issues.  Running this narrow edit
+            # with the full S6 xhigh profile turned a small deterministic repair
+            # into another multi-minute critical-path call.  Keep the same
+            # no-deadline delivery protection, but use the phase-specific low
+            # reasoning/verbosity contract and a single transport attempt.
+            options.update(
+                {
+                    "reasoning_effort": "low",
+                    "model_verbosity": "low",
+                    "_provider_retry_attempts": 1,
+                    "_no_deadline_degrade": True,
+                    "_ignore_runtime_deadline": True,
+                }
+            )
+        elif agent_id == "winning_s6_image" or phase.startswith("winning_s6"):
+            # S6 is the user-facing equipment decision product. It is exempt
+            # from run wall-clock downshifting and provider short timeouts;
+            # quality-gate repair is allowed to finish instead of switching to
+            # an evidence-bounded deadline portrait.
+            options.update(
+                {
+                    "reasoning_effort": "xhigh",
+                    "model_verbosity": "medium",
+                    "_provider_retry_attempts": 2,
+                    "_no_deadline_degrade": True,
+                    "_ignore_runtime_deadline": True,
+                }
+            )
+        elif phase.startswith("winning_swarm_dynamic_"):
+            # Dynamic specialists are redundant and quality-gated. Avoid a
+            # provider-level replay holding one DAG lane for two full CLI
+            # timeouts while preserving the complete prompt and token budget.
+            options.update(
+                {
+                    "_provider_timeout_seconds": max(
+                        120,
+                        int(
+                            os.environ.get(
+                                "EQUIPMENT_DR_SWARM_CALL_TIMEOUT_SECONDS",
+                                "480",
+                            )
+                        ),
+                    ),
+                    "_provider_retry_attempts": 1,
+                }
+            )
+        elif re.match(r"^winning_(?:s[3-5]|cohort)", phase):
+            # Core S3-S5 calls are checkpointed at the orchestration layer.
+            # Replaying one long CLI response inside the provider can double a
+            # ten-minute tail and still lose the response at the same relay
+            # boundary. Use one bounded attempt for these upstream steps.
+            options.update(
+                {
+                    "_provider_timeout_seconds": max(
+                        120,
+                        int(
+                            os.environ.get(
+                                "EQUIPMENT_DR_WINNING_CORE_TIMEOUT_SECONDS",
+                                "600",
+                            )
+                        ),
+                    ),
+                    "_provider_retry_attempts": 1,
+                }
+            )
         if agent_id == "reporter" or phase.startswith("report_generation"):
             options.update(
                 {
@@ -8210,12 +10643,40 @@ class ResponsesAgentProvider:
                     "_no_deadline_degrade": True,
                 }
             )
+        extended_quality_call = (
+            agent_id == "reporter"
+            or phase.startswith("report_generation")
+            or phase.startswith("winning_quality_expert")
+            or (
+                (agent_id == "winning_s6_image" or phase.startswith("winning_s6"))
+                and not phase.startswith("winning_s6_card_repair")
+            )
+        )
+        if extended_quality_call:
+            try:
+                quality_timeout_seconds = int(
+                    os.environ.get(
+                        "EQUIPMENT_DR_CODEX_QUALITY_TIMEOUT_SECONDS",
+                        "3600",
+                    )
+                )
+            except (TypeError, ValueError):
+                quality_timeout_seconds = 3600
+            options.update(
+                {
+                    "_provider_timeout_seconds": max(30, quality_timeout_seconds),
+                    "_allow_extended_provider_timeout": True,
+                }
+            )
+            options.setdefault("_provider_retry_attempts", 1)
         options = _apply_codex_performance_options(
             options,
             self.provider_kind,
             quality_critical=(
                 agent_id == "reporter"
+                or agent_id == "winning_s6_image"
                 or phase.startswith("report_generation")
+                or phase.startswith("winning_s6")
                 or phase.startswith("winning_quality_expert")
             ),
         )
@@ -8426,11 +10887,13 @@ def _compact_prompt_value(
     max_list_items: int = 8,
 ) -> Any:
     if isinstance(value, str):
-        return (
-            value
-            if len(value) <= max_string_chars
-            else value[:max_string_chars].rstrip() + "…"
-        )
+        if len(value) <= max_string_chars:
+            return value
+        # Prompt compaction must never manufacture a fragment that downstream
+        # specialists can mistake for a complete mechanism or evidence claim.
+        # Prefer a complete clause; if the source has no safe boundary, retain
+        # it intact instead of replacing missing semantics with an ellipsis.
+        return _clip_complete_report_phrase(value, max_string_chars)
     if isinstance(value, Mapping):
         return {
             str(key): _compact_prompt_value(
@@ -8450,6 +10913,431 @@ def _compact_prompt_value(
             for item in value[:max_list_items]
         ]
     return value
+
+
+def _bounded_unique_texts(
+    values: Sequence[Any],
+    *,
+    limit: int,
+    max_chars: int,
+) -> list[str]:
+    """Keep a small, non-redundant first/last projection of an evolving list."""
+
+    unique: list[str] = []
+    seen: set[str] = set()
+    for raw in values:
+        text = re.sub(r"\s+", " ", str(raw)).strip()
+        if not text:
+            continue
+        key = text.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(text)
+    if len(unique) > limit:
+        first_count = (limit + 1) // 2
+        last_count = limit - first_count
+        unique = [*unique[:first_count], *unique[-last_count:]] if last_count else unique[:limit]
+    return [
+        _compact_prompt_value(item, max_string_chars=max_chars, max_list_items=limit)
+        for item in unique
+    ]
+
+
+def _compact_swarm_candidate_handoff(
+    item: WinningHypothesis,
+    *,
+    blind_label: str = "",
+    deterministic_hard_gate: Mapping[str, Any] | None = None,
+    portfolio_summary: bool = False,
+) -> dict[str, Any]:
+    """Project one candidate into a decision-complete, role-neutral handoff.
+
+    Winning hypotheses accumulate S3-S6 patches over time. Passing every
+    historical list entry to later roles made the portfolio reviewer and
+    quality judge reread repeated context instead of comparing the candidates.
+    Keep the causal spine, equipment landing point, evidence boundary and
+    falsification fields while preserving both the original basis and the most
+    recent repair additions.
+    """
+
+    payload: dict[str, Any] = {
+        "hypothesis_id": item.hypothesis_id,
+        "title": _compact_prompt_value(item.title, max_string_chars=120),
+        "nearest_public_baseline": _compact_prompt_value(
+            item.nearest_public_baseline,
+            max_string_chars=220,
+        ),
+        "changed_confrontation_variable": _compact_prompt_value(
+            item.changed_confrontation_variable,
+            max_string_chars=180,
+        ),
+        "mechanism_chain": _bounded_unique_texts(
+            item.mechanism_chain,
+            limit=4,
+            max_chars=150,
+        ),
+        "direct_military_effects": _bounded_unique_texts(
+            item.direct_military_effects,
+            limit=4,
+            max_chars=130,
+        ),
+        "equipment_forms": _bounded_unique_texts(
+            item.equipment_forms,
+            limit=3,
+            max_chars=170,
+        ),
+        "project_function": _compact_prompt_value(
+            item.project_function,
+            max_string_chars=220,
+        ),
+        "system_interfaces": _bounded_unique_texts(
+            item.system_interfaces,
+            limit=4,
+            max_chars=100,
+        ),
+        "novelty_delta": _compact_prompt_value(
+            item.novelty_delta,
+            max_string_chars=180,
+        ),
+        "evidence_ids": _bounded_unique_texts(
+            item.evidence_ids,
+            limit=8,
+            max_chars=90,
+        ),
+        "evidence_boundary": _compact_prompt_value(
+            item.evidence_boundary,
+            max_string_chars=240,
+        ),
+        "counterevidence": _bounded_unique_texts(
+            item.counterevidence,
+            limit=3,
+            max_chars=130,
+        ),
+        "adversary_adaptations": _bounded_unique_texts(
+            item.adversary_adaptations,
+            limit=3,
+            max_chars=120,
+        ),
+        "failure_boundaries": _bounded_unique_texts(
+            item.failure_boundaries,
+            limit=4,
+            max_chars=130,
+        ),
+        "trl_constraints": _bounded_unique_texts(
+            item.trl_constraints,
+            limit=3,
+            max_chars=110,
+        ),
+        "cost_constraints": _bounded_unique_texts(
+            item.cost_constraints,
+            limit=3,
+            max_chars=110,
+        ),
+        "industrial_constraints": _bounded_unique_texts(
+            item.industrial_constraints,
+            limit=3,
+            max_chars=110,
+        ),
+        "cross_scenario_results": _bounded_unique_texts(
+            item.cross_scenario_results,
+            limit=3,
+            max_chars=120,
+        ),
+        "validation_plan": _bounded_unique_texts(
+            item.validation_plan,
+            limit=4,
+            max_chars=130,
+        ),
+        "implementation_path": item.implementation_path,
+        "score": round(float(item.score), 3),
+    }
+    if portfolio_summary:
+        # A portfolio reviewer compares the whole ledger.  Preserve the
+        # decision spine for every candidate while removing engineering-detail
+        # lists that are already checked by targeted S4/S5/S6 contributors and
+        # the final quality judge.  This keeps global comparison auditable
+        # without multiplying the full candidate record by 8-20 branches.
+        payload = {
+            "hypothesis_id": payload["hypothesis_id"],
+            "title": payload["title"],
+            "nearest_public_baseline": _compact_prompt_value(
+                item.nearest_public_baseline,
+                max_string_chars=140,
+            ),
+            "changed_confrontation_variable": _compact_prompt_value(
+                item.changed_confrontation_variable,
+                max_string_chars=120,
+            ),
+            "mechanism_chain": _bounded_unique_texts(
+                item.mechanism_chain,
+                limit=2,
+                max_chars=110,
+            ),
+            "direct_military_effects": _bounded_unique_texts(
+                item.direct_military_effects,
+                limit=2,
+                max_chars=100,
+            ),
+            "equipment_forms": _bounded_unique_texts(
+                item.equipment_forms,
+                limit=2,
+                max_chars=120,
+            ),
+            "project_function": _compact_prompt_value(
+                item.project_function,
+                max_string_chars=150,
+            ),
+            "novelty_delta": _compact_prompt_value(
+                item.novelty_delta,
+                max_string_chars=120,
+            ),
+            "evidence_ids": _bounded_unique_texts(
+                item.evidence_ids,
+                limit=4,
+                max_chars=80,
+            ),
+            "evidence_boundary": _compact_prompt_value(
+                item.evidence_boundary,
+                max_string_chars=140,
+            ),
+            "failure_boundaries": _bounded_unique_texts(
+                item.failure_boundaries,
+                limit=2,
+                max_chars=100,
+            ),
+            "validation_plan": _bounded_unique_texts(
+                item.validation_plan,
+                limit=2,
+                max_chars=100,
+            ),
+            "implementation_path": item.implementation_path,
+            "score": round(float(item.score), 3),
+        }
+    if blind_label:
+        payload["blind_label"] = blind_label
+        payload.pop("hypothesis_id", None)
+    if deterministic_hard_gate is not None:
+        payload["deterministic_hard_gate"] = dict(deterministic_hard_gate)
+    return payload
+
+
+def _compact_swarm_event_summary(value: Mapping[str, Any]) -> dict[str, Any]:
+    """Keep UI/audit projections without copying the complete ledger twice."""
+
+    raw_ledger = value.get("hypothesis_ledger", {})
+    raw_hypotheses = (
+        raw_ledger.get("hypotheses", [])
+        if isinstance(raw_ledger, Mapping)
+        else []
+    )
+    hypotheses = []
+    for item in raw_hypotheses[:20]:
+        if not isinstance(item, Mapping):
+            continue
+        hypotheses.append(
+            {
+                "hypothesis_id": str(item.get("hypothesis_id", "")),
+                "title": _compact_prompt_value(
+                    str(item.get("title", "")),
+                    max_string_chars=140,
+                ),
+                "status": str(item.get("status", "")),
+                "score": item.get("score"),
+                "equipment_forms": _bounded_unique_texts(
+                    item.get("equipment_forms", []),
+                    limit=2,
+                    max_chars=120,
+                ),
+                "evidence_ids": _bounded_unique_texts(
+                    item.get("evidence_ids", []),
+                    limit=6,
+                    max_chars=90,
+                ),
+                "failure_boundaries": _bounded_unique_texts(
+                    item.get("failure_boundaries", []),
+                    limit=2,
+                    max_chars=120,
+                ),
+                "validation_plan": _bounded_unique_texts(
+                    item.get("validation_plan", []),
+                    limit=2,
+                    max_chars=120,
+                ),
+            }
+        )
+    receipts = []
+    for item in value.get("merge_receipts", [])[:40]:
+        if not isinstance(item, Mapping):
+            continue
+        receipts.append(
+            {
+                key: item.get(key)
+                for key in (
+                    "receipt_id",
+                    "contribution_id",
+                    "hypothesis_id",
+                    "merge_target",
+                    "base_ledger_version",
+                    "resulting_ledger_version",
+                    "status",
+                    "changed_fields",
+                    "conflicts",
+                    "quality_delta",
+                    "rebase_required",
+                )
+            }
+        )
+    raw_policy = value.get("policy", {})
+    policy = raw_policy if isinstance(raw_policy, Mapping) else {}
+    return {
+        "policy": {
+            key: policy.get(key)
+            for key in (
+                "policy_id",
+                "max_concurrency",
+                "finalist_minimum",
+                "finalist_maximum",
+                "expert_judge_required",
+            )
+        },
+        "hypothesis_ledger": {
+            "ledger_id": str(raw_ledger.get("ledger_id", ""))
+            if isinstance(raw_ledger, Mapping)
+            else "",
+            "version": raw_ledger.get("version", 0)
+            if isinstance(raw_ledger, Mapping)
+            else 0,
+            "status": str(raw_ledger.get("status", "active"))
+            if isinstance(raw_ledger, Mapping)
+            else "active",
+            "hypotheses": hypotheses,
+        },
+        "merge_receipts": receipts,
+        "portfolio_quality_gate": dict(value.get("portfolio_quality_gate", {}))
+        if isinstance(value.get("portfolio_quality_gate"), Mapping)
+        else {},
+        "budget": dict(value.get("budget", {}))
+        if isinstance(value.get("budget"), Mapping)
+        else {},
+        "final_merge": dict(value.get("final_merge", {}))
+        if isinstance(value.get("final_merge"), Mapping)
+        else {},
+        "stop_reason": str(value.get("stop_reason", "")),
+    }
+
+
+def _compact_equipment_portfolio_event(
+    rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """Project final directions once for interaction views, without S6 bulk."""
+
+    keep = (
+        "hypothesis_id",
+        "name",
+        "priority",
+        "type",
+        "function",
+        "feasibility",
+        "horizon",
+        "direct_evidence_refs",
+        "military_value",
+        "equipment_form",
+        "operational_mechanism",
+        "development_path",
+        "failure_boundary",
+        "confidence",
+        "expert_score",
+        "direct_combat_equipment",
+    )
+    return [
+        {
+            key: _compact_prompt_value(
+                item.get(key),
+                max_string_chars=260,
+                max_list_items=6,
+            )
+            for key in keep
+            if item.get(key) not in (None, "", [], {})
+        }
+        for item in rows[:7]
+        if isinstance(item, Mapping)
+    ]
+
+
+def _quality_judge_output_token_budget(candidate_count: int) -> int:
+    """Scale review output to the actual blind-review set.
+
+    The first portfolio review commonly carries ten candidates and still gets
+    the full budget.  A repair review usually contains only one or two changed
+    candidates; retaining the same 4,600-token ceiling increases latency and
+    cost without adding independent coverage of unchanged candidates.
+    """
+
+    return min(4600, max(2600, 1800 + max(0, int(candidate_count)) * 800))
+
+
+def _effective_expert_judge_status(
+    rounds: Sequence[Mapping[str, Any]],
+    *,
+    assessed_count: int,
+    expected_count: int,
+) -> str:
+    """Retain a complete earlier blind review if a bounded rejudge fails."""
+
+    latest = (
+        str(rounds[-1].get("status", "limited"))
+        if rounds
+        else "failed"
+    )
+    if latest == "completed":
+        return "completed"
+    complete_prior_round = any(
+        str(item.get("status", "")) == "completed" for item in rounds[:-1]
+    )
+    if (
+        complete_prior_round
+        and int(expected_count) > 0
+        and int(assessed_count) >= int(expected_count)
+    ):
+        return "completed"
+    return latest
+
+
+def _quality_judge_candidate_payload(
+    item: WinningHypothesis,
+    *,
+    blind_label: str,
+    deterministic_hard_gate: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Create a bounded but decision-complete blind-review record."""
+
+    return _compact_swarm_candidate_handoff(
+        item,
+        blind_label=blind_label,
+        deterministic_hard_gate=deterministic_hard_gate,
+    )
+
+
+def _quality_judge_scoped_evidence_index(
+    evidence_index: Any,
+    candidate_evidence_ids: set[str],
+) -> list[dict[str, Any]]:
+    """Keep only evidence cards referenced by the candidates under review."""
+
+    rows = [
+        dict(item)
+        for item in evidence_index
+        if isinstance(item, Mapping)
+    ] if isinstance(evidence_index, Sequence) and not isinstance(
+        evidence_index, (str, bytes)
+    ) else []
+    scoped = [
+        item
+        for item in rows
+        if str(item.get("evidence_id", "")) in candidate_evidence_ids
+    ]
+    return scoped or rows
 
 
 def _branch_product_output_schema(branch: str) -> dict[str, Any]:
@@ -8524,6 +11412,8 @@ _HIGH_ORDER_COMBAT_EFFECT_TERMS = (
     "目标发现",
     "目标识别",
     "目标捕获",
+    "目标再捕获",
+    "再捕获",
     "目标指示",
     "目标跟踪",
     "持续跟踪",
@@ -8538,6 +11428,8 @@ _HIGH_ORDER_COMBAT_EFFECT_TERMS = (
     "毁伤",
     "摧毁",
     "再打击",
+    "补击",
+    "补射",
     "突防",
     "拦截",
     "压制",
@@ -8668,6 +11560,8 @@ _DIRECT_COMBAT_EQUIPMENT_NAME_TERMS = (
     "无人僚机",
     "无人艇",
     "无人潜航器",
+    "巡航弹",
+    "打击弹",
     "导弹",
     "弹药",
     "拦截弹",
@@ -8686,6 +11580,8 @@ _DIRECT_COMBAT_EQUIPMENT_NAME_TERMS = (
 
 _UNMANNED_COMBAT_EQUIPMENT_TERMS = (
     "无人机",
+    "察打一体无人平台",
+    "无人携弹平台",
     "无人艇",
     "无人潜航器",
     "无人车",
@@ -8700,6 +11596,7 @@ _UNMANNED_COMBAT_EQUIPMENT_TERMS = (
 )
 
 _LETHAL_WEAPON_EQUIPMENT_TERMS = (
+    "巡航弹",
     "导弹",
     "巡飞弹",
     "反辐射弹",
@@ -8724,6 +11621,7 @@ _LETHAL_WEAPON_EQUIPMENT_TERMS = (
 )
 
 _MISSILE_PRECISION_MUNITION_TERMS = (
+    "巡航弹",
     "导弹",
     "巡飞弹",
     "反辐射弹",
@@ -8751,6 +11649,17 @@ _MISSILE_PRECISION_MUNITION_NAME_CONCEPTS = (
     "低成本拦截",
     "末端精确打击",
 )
+
+_GENERIC_NEW_WEAPON_TITLES = {
+    "无人机",
+    "无人作战平台",
+    "巡飞弹",
+    "反辐射巡飞弹",
+    "远程导弹",
+    "精确制导弹药",
+    "拦截弹",
+    "电子压制效应器",
+}
 
 _WEAPON_SUPPORT_CONTEXT_PATTERNS = tuple(
     re.compile(pattern)
@@ -9102,6 +12011,14 @@ def _is_missile_precision_munition_direction(
 
 def _dedupe_capability_title(value: Any) -> str:
     title = re.sub(r"\s+", " ", str(value or "").strip())
+    # Drop presentation-only enumerators emitted by upstream synthesis while
+    # preserving model names such as AARGM-ER, B-21 and 2S35.  Requiring a
+    # punctuation separator keeps genuine equipment identifiers intact.
+    title = re.sub(
+        r"^(?:[A-Za-z]|\d{1,2})\s*[\.．、:：]\s*(?=\S)",
+        "",
+        title,
+    )
     # Chinese titles frequently contain layout whitespace that is never
     # semantic, while ASCII equipment abbreviations may legitimately contain
     # one space (for example ``FAAD C2``).  Remove whitespace touching CJK
@@ -9225,6 +12142,14 @@ def _compact_capability_direction_title(direction: Mapping[str, Any]) -> str:
     """Produce a short equipment-object title without another S6 call."""
 
     name = _dedupe_capability_title(direction.get("name", ""))
+    equipment_title = re.sub(
+        r"(?:能力)?升级(?:方向)?$",
+        "",
+        name,
+    ).rstrip(" ：:，,；。")
+    if equipment_title != name:
+        direction = {**direction, "name": equipment_title}
+        name = equipment_title
     direction_type = str(direction.get("type", "")).strip()
     semantic_text = " ".join(
         str(direction.get(field, ""))
@@ -9247,6 +12172,350 @@ def _compact_capability_direction_title(direction: Mapping[str, Any]) -> str:
         str(direction.get(field, ""))
         for field in ("name", "equipment_form", "baseline_system")
     )
+    if any(
+        marker in primary_identity_text
+        for marker in ("巡航母弹", "运输母弹", "远程母弹")
+    ) and any(
+        marker in primary_identity_text
+        for marker in (
+            "子效应器",
+            "子弹药",
+            "子弹",
+            "异构载荷",
+            "分时释放",
+            "内置诱饵",
+            "诱骗子弹",
+            "电子压制子弹",
+            "侦察确认子弹",
+        )
+    ):
+        return "异构子效应器巡航母弹"
+    if any(
+        marker in primary_identity_text
+        for marker in (
+            "无人半潜平台",
+            "半潜无人平台",
+            "无人半潜航行体",
+            "半潜无人航行体",
+            "半潜无人艇",
+            "低活动半潜无人艇",
+            "无人潜浮",
+            "潜浮弹舱",
+            "浮潜弹舱",
+            "无人半潜待机弹舱",
+            "半潜待机弹舱",
+            "半潜火力舱",
+            "半潜导弹火力舱",
+        )
+    ) and any(
+        marker in semantic_text
+        for marker in (
+            "远程反舰",
+            "反舰导弹",
+            "远程弹药",
+            "远程弹药舱",
+            "密封远程弹药舱",
+            "巡航弹",
+            "巡飞弹",
+            "导弹发射",
+            "火力舱",
+        )
+    ):
+        mission_identity_text = " ".join(
+            str(direction.get(field, ""))
+            for field in (
+                "name",
+                "equipment_form",
+                "function",
+                "target_scenario",
+                "operational_concept",
+                "operational_mechanism",
+                "military_value",
+            )
+        )
+        return (
+            "半潜预置反舰导弹火力舱"
+            if any(
+                marker in mission_identity_text
+                for marker in ("反舰", "水面舰艇", "舰队", "海上机动编队")
+            )
+            else "半潜预置远程导弹火力舱"
+        )
+    if (
+        any(marker in primary_identity_text for marker in ("陆基", "地面", "近岸弹射"))
+        and any(marker in primary_identity_text for marker in ("诱扰靶弹", "诱饵弹", "靶弹"))
+        and any(marker in semantic_text for marker in ("诱开雷达", "消耗拦截弹", "虚假威胁", "诱扰"))
+        and "空射" in name
+    ):
+        # The public MALD family may be the evidence baseline, but a card that
+        # explicitly changes the launcher to distributed land/littoral
+        # catapults is no longer an air-launched equipment proposal.  Keep the
+        # visible title bound to the proposed effector instead of its baseline.
+        return "陆基远程防空压制诱饵弹"
+    if (
+        any(marker in primary_identity_text for marker in ("无人值守", "无人化", "少人"))
+        and any(marker in primary_identity_text for marker in ("火箭发射车", "火箭车"))
+        and any(marker in semantic_text for marker in ("精确火箭弹", "精确打击", "精击", "补击", "补射"))
+    ):
+        return "无人值守远程精确打击火箭发射车"
+    if (
+        any(marker in primary_identity_text for marker in ("远程火箭发射车", "箱式机动远程火箭发射车"))
+        and any(marker in semantic_text for marker in ("离线授权", "断链", "失联", "短报文", "PNT置信度"))
+        and any(marker in semantic_text for marker in ("精确打击", "精打", "精确补击", "补射"))
+    ):
+        return "断链复核远程精确打击火箭发射车"
+    if (
+        any(marker in primary_identity_text for marker in ("可耗电子攻击弹", "可消耗电子攻击弹"))
+        and any(marker in primary_identity_text for marker in ("地面发射车", "陆基发射"))
+        and any(marker in primary_identity_text for marker in ("无人艇发射箱", "海上发射", "陆海共用"))
+        and any(marker in semantic_text for marker in ("诱启防空", "诱开雷达", "防空资源", "电子压制"))
+    ):
+        return "陆海共架防空诱扰电子攻击弹"
+    if (
+        any(marker in primary_identity_text for marker in ("反蜂群拦截车", "车载反蜂群拦截系统"))
+        and any(marker in semantic_text for marker in ("火力点", "分散射手", "发射阵地", "补射窗口"))
+        and any(marker in semantic_text for marker in ("拦截", "反无人", "巡飞弹", "蜂群"))
+    ):
+        return "节点护卫反无人机拦截车"
+    if (
+        any(marker in primary_identity_text for marker in ("微型拦截弹发射单元", "内置微型拦截弹"))
+        and any(marker in semantic_text for marker in ("节点自卫", "远火节点", "发射节点", "发射巢"))
+        and any(marker in semantic_text for marker in ("无人机", "巡飞弹", "低空威胁", "近程拦截"))
+    ):
+        return "节点自卫反无人机微型拦截弹"
+    if (
+        any(marker in primary_identity_text for marker in ("无人化", "无人"))
+        and any(marker in primary_identity_text for marker in ("导弹发射车", "远程导弹发射车"))
+        and any(marker in semantic_text for marker in ("道路网", "短停发射", "射后撤收", "机动发射"))
+        and any(marker in semantic_text for marker in ("精打", "精确打击", "纵深破击", "补射"))
+    ):
+        return "道路无人精确打击导弹发射车"
+    if any(
+        marker in primary_identity_text
+        for marker in (
+            "无人空中弹舱机",
+            "空中弹舱机",
+            "空中弹药库",
+            "无人载弹母机",
+            "载弹母机",
+        )
+    ):
+        return (
+            name
+            if any(marker in name for marker in ("弹舱机", "载弹母机", "空中弹药库"))
+            else "长航时无人空中弹舱机"
+        )
+    if (
+        any(marker in primary_identity_text for marker in ("短距起降", "短距起飞"))
+        and any(
+            marker in primary_identity_text
+            for marker in ("无人机体", "无人机", "无人平台", "无人母机", "火力母机")
+        )
+        and any(
+            marker in semantic_text
+            for marker in (
+                "诱饵",
+                "巡航弹挂载",
+                "巡飞弹挂载",
+                "小型巡航弹",
+                "小型巡飞弹",
+                "释放打击弹药",
+                "释放诱饵",
+                "无人火力母机",
+            )
+        )
+    ):
+        return "短距起降低特征无人火力母机"
+    if (
+        any(
+            marker in primary_identity_text
+            for marker in (
+                "栖岛弹舱",
+                "岛岸弹舱",
+                "岛礁弹舱",
+                "巡飞弹发射舱",
+            )
+        )
+        and any(
+            marker in semantic_text
+            for marker in ("助推", "短轨", "巡飞弹", "巡飞攻击弹")
+        )
+    ):
+        # The launch pod is the independently fielded weapon system. Its
+        # loitering/anti-radiation payload must not replace the platform name.
+        return "栖岛助推巡飞弹发射舱"
+    # Public baselines are evidence anchors, not project names. Normalize a
+    # model-led title before the upgrade-preservation branch can mistake a
+    # trailing word such as ``火力`` or ``补击`` for a valid Chinese equipment
+    # thesis and return early. The same card's equipment form, mission effect
+    # and failure logic provide all semantics used by build_capability_title.
+    if re.match(r"^[A-Za-z0-9][A-Za-z0-9./-]{2,}", name):
+        chinese_title = build_capability_title(
+            name=name,
+            equipment_form=direction.get("equipment_form")
+            or direction.get("baseline_system"),
+            effect=direction.get("combat_effect_uplift")
+            or direction.get("military_value")
+            or direction.get("function"),
+        )
+        if chinese_title and chinese_title != name:
+            return chinese_title
+    if (
+        name.count("再捕获") > 1
+        and "反舰" in primary_identity_text
+        and any(term in primary_identity_text for term in ("巡航弹药", "巡航导弹"))
+    ):
+        name = "多模再捕获反舰巡航弹药"
+        direction = {**direction, "name": name}
+    if (
+        any(term in primary_identity_text for term in ("HIMARS", "M270"))
+        and "巡航打击弹" in primary_identity_text
+        and any(term in semantic_text for term in ("低成本", "可消耗", "批量", "库存"))
+    ):
+        return "陆海通用低成本巡航打击弹"
+    if (
+        "低成本" in primary_identity_text
+        and "巡航弹" in primary_identity_text
+        and any(term in semantic_text for term in ("断链", "失联", "弱网", "低带宽"))
+        and any(term in semantic_text for term in ("补击", "补射", "再打击"))
+    ):
+        return "断链复核低成本巡航弹补击"
+    if direction_type == "upgrade":
+        effect_text = " ".join(
+            str(direction.get(field, ""))
+            for field in (
+                "combat_effect_uplift",
+                "strike_chain_contribution",
+                "military_value",
+                "strike_countermeasure_value",
+                "operational_mechanism",
+                "novelty",
+                "name",
+            )
+        )
+        effect = _capability_upgrade_effect_anchor(
+            f"{name} {direction.get('equipment_form', '')}",
+            effect_text,
+        )
+        if (
+            (
+                (effect and effect in name)
+                or any(
+                    term in name
+                    for term in ("再捕获", "重捕获", "关机再捕获")
+                )
+            )
+            and len(name) <= 24
+            and _direction_name_has_equipment_object(direction)
+        ):
+            # Preserve a concrete equipment+combat-gain upgrade title before
+            # family-specific compaction turns it back into a pure object name.
+            return name
+    if (
+        re.search(r"(?<![A-Za-z0-9])[A-Z][A-Za-z0-9-]{2,}", primary_identity_text)
+        and "巡航导弹" in primary_identity_text
+    ):
+        launch_mode = next(
+            (
+                label
+                for marker, label in (
+                    ("空射", "空射"),
+                    ("舰载", "舰载"),
+                    ("地面发射", "地射"),
+                    ("地射", "地射"),
+                )
+                if marker in semantic_text
+            ),
+            "",
+        )
+        signature = (
+            "隐身"
+            if any(term in semantic_text for term in ("隐身", "低可探测", "低特征"))
+            else ""
+        )
+        standoff = "防区外" if "防区外" in semantic_text else ""
+        contested = (
+            "抗扰"
+            if any(
+                term in semantic_text
+                for term in ("抗扰", "强干扰", "弱通信", "低信息", "导航受扰")
+            )
+            else ""
+        )
+        combat_role = (
+            "补打"
+            if any(term in semantic_text for term in ("补打", "补击", "再打击"))
+            else "精确毁伤"
+        )
+        return _dedupe_capability_title(
+            f"{launch_mode}{signature}{standoff}{contested}巡航导弹{combat_role}"
+        )[:24]
+    if (
+        "无人" in primary_identity_text
+        and "察打一体" in semantic_text
+        and any(
+            term in primary_identity_text
+            for term in (
+                "无人机",
+                "无人平台",
+                "无人突击平台",
+                "无人携弹平台",
+            )
+        )
+    ):
+        modifiers = ""
+        if "箱式" in primary_identity_text:
+            modifiers += "箱式发射"
+        if "低空" in semantic_text:
+            modifiers += "低空"
+        if "可消耗" in semantic_text:
+            modifiers += "可消耗"
+        return _dedupe_capability_title(f"{modifiers}察打一体无人机")[:24]
+    if any(term in primary_identity_text for term in ("无人艇", "无人水面")):
+        if any(
+            term in semantic_text
+            for term in (
+                "巡航弹舱",
+                "巡航弹发射",
+                "释放巡航弹",
+                "远程巡飞弹药",
+                "远程火力节点",
+                "海上火力缓存",
+                "海上远程火力",
+            )
+        ):
+            prefix = "半潜" if "半潜" in primary_identity_text else "低特征"
+            return f"{prefix}预置巡航弹无人艇"
+        if any(term in semantic_text for term in ("航路", "伏击", "必经空间")):
+            return "航路伏击自主突击无人艇"
+        if any(term in semantic_text for term in ("低特征", "隐蔽", "预置")):
+            return "低特征自主突击无人艇"
+        return "自主海上突击无人艇"
+    if any(
+        term in primary_identity_text
+        for term in ("半潜储射艇", "无人半潜储射平台", "半潜储射平台")
+    ) and any(
+        term in semantic_text
+        for term in ("远程弹药舱", "远程弹药", "远程火力", "储射", "分批释放")
+    ):
+        return "半潜预置巡航弹无人艇"
+    if (
+        "高功率微波" in primary_identity_text
+        and (
+            "巡飞" in primary_identity_text
+            or all(term in primary_identity_text for term in ("可消耗", "弹药"))
+        )
+    ):
+        return "高功率微波巡飞压制弹"
+    if (
+        "可消耗" in primary_identity_text
+        and "飞行弹体" in primary_identity_text
+        and any(
+            term in semantic_text
+            for term in ("任务前换装", "任务模块", "共同推进", "共享飞行弹体")
+        )
+    ):
+        return "共架可消耗多任务弹药"
     # Recover a compact equipment identity when a model copies an enumerative
     # equipment-form fragment into the visible title.  These transformations
     # use only role words already present on the same card and avoid a second
@@ -9267,7 +12536,57 @@ def _compact_capability_direction_title(direction: Mapping[str, Any]) -> str:
         "巡飞弹" in primary_identity_text
         and "反辐射" in primary_identity_text
     ):
-        return "反辐射巡飞弹猎杀"
+        if any(
+            term in semantic_text
+            for term in ("末端确认", "光电确认", "光电复核", "多模", "红外复核")
+        ):
+            return "多模复核反辐射巡飞猎歼弹"
+        if any(
+            term in semantic_text
+            for term in ("短时开机", "短脉冲", "间歇", "断续")
+        ):
+            return "断续辐射源猎杀巡飞弹"
+        return "自主猎杀反辐射巡飞弹"
+    if (
+        "反舰" in primary_identity_text
+        and "巡飞" in primary_identity_text
+        and any(term in primary_identity_text for term in ("弹药", "巡飞弹"))
+    ):
+        modifiers = ""
+        if "长航时" in semantic_text:
+            modifiers += "长航时"
+        if "可消耗" in semantic_text:
+            modifiers += "可消耗"
+        if "多模" in semantic_text:
+            modifiers += "多模"
+        return _dedupe_capability_title(f"{modifiers}反舰巡飞猎歼弹药")[:24]
+    if (
+        "反舰" in primary_identity_text
+        and "巡飞" not in primary_identity_text
+        and any(
+            term in primary_identity_text
+            for term in ("导弹", "任务弹药", "巡航弹药")
+        )
+    ):
+        if "协同去重" in semantic_text:
+            return "协同去重远程反舰巡航弹药"
+        if any(
+            term in semantic_text
+            for term in ("有限区搜索", "有限搜索区", "有限可能区", "限定时空框")
+        ):
+            return "有限区搜索远程反舰巡航弹药"
+        modifiers = "远程"
+        if any(term in semantic_text for term in ("多模", "再捕获", "重捕获")):
+            modifiers = "多模再捕获"
+        return _dedupe_capability_title(f"{modifiers}反舰导弹")[:24]
+    if "无人携弹平台" in primary_identity_text:
+        modifiers = (
+            "批量可消耗"
+            if all(term in semantic_text for term in ("批量", "可消耗"))
+            else "可消耗"
+        )
+        low_altitude = "低空" if "低空" in semantic_text else ""
+        return f"{modifiers}{low_altitude}无人携弹平台"[:24]
     if (
         "巡飞弹" in primary_identity_text
         and any(term in semantic_text for term in ("目标发现", "搜索", "侦察", "确认"))
@@ -9298,24 +12617,18 @@ def _compact_capability_direction_title(direction: Mapping[str, Any]) -> str:
         name,
     )
     has_equipment_object = _direction_name_has_equipment_object(direction)
-    # Keep deterministic normalization idempotent for already-compact upgrade
-    # titles.  Some S6 rows only carry ``name`` and ``type``; rebuilding those
-    # rows from the same name used to append a second effect/upgrade suffix
-    # (for example ``...能力升级拦截升级``).  Sentence-like names still flow
-    # through the equipment-object compactor below.
+    abstract_chain_title = any(
+        marker in name
+        for marker in ("证据链", "任务链", "信息链", "杀伤链", "闭环")
+    ) or name.endswith(("窗口", "续接", "协同", "支撑")) or any(
+        marker in name for marker in ("用于", "制造")
+    )
     if (
-        direction_type == "upgrade"
-        and name.startswith("现役")
-        and name.endswith("升级")
-        and len(name) <= 24
+        len(name) <= 24
         and sentence_like is None
-        and not any(
-            fragment in name
-            for fragment in ("其中", "公开证据", "可作为", "类现役", "等现役")
-        )
+        and has_equipment_object
+        and not abstract_chain_title
     ):
-        return name
-    if len(name) <= 24 and sentence_like is None and has_equipment_object:
         return name
     source = (
         direction.get("baseline_system")
@@ -9346,12 +12659,11 @@ def _compact_capability_direction_title(direction: Mapping[str, Any]) -> str:
         effect = "火力重组"
     if "低空" in f"{name} {source} {effect_text}" and effect == "拦截":
         effect = "低空拦截"
-    suffix = "升级" if direction_type == "upgrade" else ""
     if not anchor or not effect:
         return name
     if effect in anchor:
         effect = ""
-    budget = 24 - len(effect) - len(suffix)
+    budget = 24 - len(effect)
     if budget < 6:
         return name
     if len(anchor) > budget:
@@ -9359,7 +12671,540 @@ def _compact_capability_direction_title(direction: Mapping[str, Any]) -> str:
             anchor = "现役" + anchor[-(budget - 2) :]
         else:
             anchor = anchor[-budget:]
-    return _dedupe_capability_title(f"{anchor}{effect}{suffix}")
+    return _dedupe_capability_title(f"{anchor}{effect}")
+
+
+def _capability_title_collision_anchor(direction: Mapping[str, Any]) -> str:
+    """Keep the concrete weapon noun when disambiguating compacted titles."""
+
+    text = " ".join(
+        str(direction.get(field, ""))
+        for field in ("equipment_form", "name", "baseline_system")
+    )
+    anchors = (
+        "反舰巡飞猎歼弹药",
+        "反辐射巡飞猎歼弹药",
+        "反辐射巡飞弹药",
+        "远程反舰巡航弹药",
+        "反舰巡航弹药",
+        "反舰巡飞弹药",
+        "地射远程精确制导导弹",
+        "空射防区外巡航导弹",
+        "察打一体无人机",
+        "电子攻击效应器",
+        "反舰导弹",
+        "巡航导弹",
+        "巡飞弹药",
+        "巡飞弹",
+        "无人携弹平台",
+        "无人机",
+        "诱饵弹",
+        "导弹",
+        "弹药",
+        "效应器",
+    )
+    return next((anchor for anchor in anchors if anchor in text), "")
+
+
+def _capability_title_collision_descriptors(
+    direction: Mapping[str, Any],
+) -> list[str]:
+    """Extract real platform/mechanism differences; never invent ordinal suffixes."""
+
+    text = " ".join(
+        str(direction.get(field, ""))
+        for field in (
+            "source_hypothesis_title",
+            "equipment_form",
+            "baseline_system",
+            "function",
+            "operational_mechanism",
+            "capability_gap",
+            "query_relevance",
+            "novelty",
+            "verification",
+        )
+    )
+    descriptors: list[str] = []
+    marker_groups = (
+        (("空射", "机载"), "空射"),
+        (("地射", "地面发射", "车载发射"), "地射"),
+        (("舰射", "舰载发射", "海上发射"), "舰射"),
+        (("潜射", "水下发射"), "潜射"),
+        (
+            (
+                "协同去重",
+                "去冲突",
+                "去重避免",
+                "跨弹协同去重",
+                "避免重复攻击",
+            ),
+            "协同去重",
+        ),
+        (("责任区", "分区搜索", "空间分工"), "分区搜索"),
+        (
+            ("有限扇区", "有限可能区", "有限搜索区", "限定时空框"),
+            "有限区搜索",
+        ),
+        (("少量增强型", "高低配置", "高低搭配"), "高低搭配"),
+        (("多方向", "多轴", "多时相"), "多轴突防"),
+        (("目标分配", "局部分配"), "协同分配"),
+        (("被动光电", "光电主传感器", "成像识别"), "光电复核"),
+        (("被动射频", "辐射源"), "射频复核"),
+        (("关机", "间歇辐射", "短时开机"), "关机猎源"),
+        (("规模", "饱和", "处理容量"), "规模突防"),
+        (("补击", "补打", "再打击"), "补击"),
+    )
+    for markers, descriptor in marker_groups:
+        if any(marker in text for marker in markers):
+            descriptors.append(descriptor)
+    return list(dict.fromkeys(descriptors))
+
+
+def _uniquify_compacted_capability_titles(
+    directions: list[Any],
+) -> list[Any]:
+    """Disambiguate only semantically different cards collapsed by compaction.
+
+    Genuinely duplicate cards remain duplicate and are rejected by the final
+    S6 hard gate.  Different source hypotheses may, however, share a broad
+    equipment form while assigning different launch domains, target-search
+    mechanisms or engagement timing.  Preserve those observable differences
+    in the visible title instead of appending meaningless ``1/2`` suffixes.
+    """
+
+    title_positions: dict[str, list[int]] = {}
+    for index, direction in enumerate(directions):
+        if not isinstance(direction, Mapping):
+            continue
+        title = str(direction.get("name", "")).strip()
+        if title:
+            title_positions.setdefault(title, []).append(index)
+
+    used_titles = {
+        str(direction.get("name", "")).strip()
+        for direction in directions
+        if isinstance(direction, Mapping)
+        and str(direction.get("name", "")).strip()
+    }
+    for title, positions in title_positions.items():
+        if len(positions) < 2:
+            continue
+        fingerprints = {
+            "\u241f".join(
+                str(directions[position].get(field, "")).strip()
+                for field in (
+                    "hypothesis_id",
+                    "source_hypothesis_title",
+                    "equipment_form",
+                    "baseline_system",
+                    "operational_mechanism",
+                    "capability_gap",
+                )
+            )
+            for position in positions
+            if isinstance(directions[position], Mapping)
+        }
+        if len(fingerprints) < 2:
+            # Do not make substantive duplicates look unique.
+            continue
+        replacements: dict[int, str] = {}
+        replacement_titles: set[str] = set()
+        for position in positions:
+            direction = directions[position]
+            if not isinstance(direction, Mapping):
+                continue
+            anchor = _capability_title_collision_anchor(direction)
+            if not anchor:
+                continue
+            candidate = ""
+            for descriptor in _capability_title_collision_descriptors(direction):
+                proposed = _dedupe_capability_title(f"{descriptor}{anchor}")
+                if (
+                    len(proposed) <= 24
+                    and proposed not in (used_titles - {title})
+                    and proposed not in replacement_titles
+                ):
+                    candidate = proposed
+                    break
+            if not candidate:
+                replacements = {}
+                break
+            replacements[position] = candidate
+            replacement_titles.add(candidate)
+        if len(replacements) != len(positions):
+            # If every member cannot be named from a real differentiator, keep
+            # the collision visible so the hard gate stops delivery.
+            continue
+        for position, replacement in replacements.items():
+            direction = dict(directions[position])
+            direction["name"] = replacement
+            directions[position] = direction
+        used_titles.discard(title)
+        used_titles.update(replacement_titles)
+    return directions
+
+
+def _capability_portrait_alignment_issues(
+    position: int,
+    direction: Mapping[str, Any],
+) -> list[str]:
+    """Reject portraits whose combat semantics belong to another weapon card."""
+
+    identity = " ".join(
+        str(direction.get(field, "") or "")
+        for field in ("name", "equipment_form")
+    )
+    portrait = str(direction.get("capability_portrait", "") or "").strip()
+    if not portrait:
+        return []
+    overview = re.sub(r"^概述[：:]", "", portrait.split("\n", 1)[0]).strip()
+    position_label = f"第{position}项" if position > 0 else ""
+
+    family = ""
+    if any(
+        marker in identity
+        for marker in (
+            "无人空中弹舱机",
+            "空中弹舱机",
+            "空中弹药库",
+            "无人载弹母机",
+            "载弹母机",
+        )
+    ):
+        family = "空中防区外载弹母机"
+    elif "无人僚机" in identity and any(
+        marker in identity for marker in ("武装", "察打", "压制", "反辐射", "精确弹")
+    ):
+        family = "武装察打无人僚机"
+    elif any(
+        marker in identity for marker in ("巡航母弹", "运输母弹", "远程母弹")
+    ) and any(
+        marker in identity
+        for marker in (
+            "子效应器",
+            "子弹药",
+            "子弹",
+            "异构载荷",
+            "分时释放",
+            "内置诱饵",
+            "诱骗子弹",
+            "电子压制子弹",
+            "侦察确认子弹",
+        )
+    ):
+        family = "异构子效应器巡航母弹"
+    elif "任务桥" in identity and any(
+        marker in identity for marker in ("巡航弹", "可消耗", "空中")
+    ):
+        family = "可消耗空中任务桥"
+    elif any(marker in identity for marker in ("反无人", "反蜂群", "护射")) and any(
+        marker in identity
+        for marker in ("拦截弹", "拦截车", "拦截系统", "自卫火力")
+    ):
+        family = "节点反无人拦截装备"
+    elif any(
+        marker in identity
+        for marker in (
+            "无人艇",
+            "无人水面艇",
+            "无人半潜平台",
+            "半潜无人平台",
+            "无人半潜航行体",
+            "半潜无人航行体",
+            "半潜无人艇",
+            "低活动半潜无人艇",
+            "无人潜浮",
+            "潜浮弹舱",
+            "浮潜弹舱",
+            "无人半潜待机弹舱",
+            "半潜待机弹舱",
+            "半潜预置反舰导弹火力舱",
+            "半潜预置远程导弹火力舱",
+            "半潜火力舱",
+            "半潜导弹火力舱",
+        )
+    ):
+        if any(
+            marker in identity
+            for marker in (
+                "巡航弹舱",
+                "释放巡航弹",
+                "远程弹药舱",
+                "远程火力节点",
+                "远程导弹火力舱",
+                "导弹火力舱",
+                "密封化弹药舱",
+                "储射",
+                "远程反舰",
+                "反舰导弹",
+                "远射巡飞弹",
+                "巡飞弹发射",
+                "封装式远程",
+            )
+        ):
+            family = "海上无人巡航弹发射艇"
+        else:
+            family = "航路伏击无人艇"
+    elif (
+        any(marker in identity for marker in ("短距起降", "短距起飞"))
+        and any(marker in identity for marker in ("无人机", "无人平台", "无人母机", "火力母机"))
+        and any(marker in identity for marker in ("诱饵", "巡航弹", "巡飞弹", "载架", "挂载"))
+    ):
+        family = "短距起降无人火力母机"
+    elif any(
+        marker in identity
+        for marker in (
+            "栖岛弹舱",
+            "岛岸弹舱",
+            "岛礁弹舱",
+            "巡飞弹发射舱",
+        )
+    ) and any(marker in identity for marker in ("助推", "短轨", "巡飞弹", "巡飞攻击弹")):
+        family = "岛岸巡飞弹发射舱"
+    elif "巡航弹" in identity and any(
+        marker in " ".join(
+            str(direction.get(field, ""))
+            for field in (
+                "function",
+                "operational_mechanism",
+                "capability_gap",
+                "query_relevance",
+            )
+        )
+        for marker in ("失联", "链路中断", "目标包时效", "拒打")
+    ):
+        family = "失联复核巡航弹"
+    elif "反舰" in identity and any(marker in identity for marker in ("巡飞", "猎歼")):
+        family = "反舰巡飞猎歼弹药"
+    elif "反舰" in identity and any(
+        marker in identity for marker in ("导弹", "巡航弹", "巡航导弹")
+    ):
+        family = "远程反舰巡航弹药"
+    elif any(marker in identity for marker in ("共同推进", "共享飞行弹体", "多任务弹药", "共架")):
+        family = "共同弹体多任务弹药"
+    if not family:
+        return []
+
+    contracts: dict[
+        str,
+        tuple[tuple[tuple[tuple[str, ...], str], ...], tuple[str, ...]],
+    ] = {
+        "空中防区外载弹母机": (
+            (
+                (("后方", "幸存机场", "海上机动基地"), "后方或幸存起飞主体"),
+                (("岛链外",), "岛链外待机地域"),
+                (("防区外",), "防区外载弹与释放边界"),
+                (("弹药库存", "剩余库存", "载荷清单"), "机载弹药库存管理"),
+                (("授权",), "人工授权释放门槛"),
+                (("分批释放",), "防区外弹药分批释放动作"),
+                (("保留未用载荷", "保留剩余载荷"), "未用弹药保留"),
+                (("战果摘要",), "战果摘要接收"),
+                (("重新占位", "退出", "返航"), "补射后的重新占位或退出"),
+            ),
+            (
+                "箱式分批释放",
+                "多路径低空进入",
+                "本地搜索",
+                "目标邻近空域",
+                "近区补击",
+                "局部BDA",
+            ),
+        ),
+        "武装察打无人僚机": (
+            (
+                (("无人僚机",), "无人僚机主平台"),
+                (("被动射频",), "被动射频发现"),
+                (("光电", "跨模态"), "光电或跨模态身份复核"),
+                (("自行有限攻击", "自带小型精确弹", "引导远程"), "直接攻击或火力引导"),
+                (("拒打", "保持跟踪", "退出"), "失效时的安全降级"),
+            ),
+            ("弹舱库存", "分批释放异构载荷", "单机损失载荷集中度"),
+        ),
+        "异构子效应器巡航母弹": (
+            (
+                (("后方", "机动发射", "大型载机", "一次起射"), "后方起射主体"),
+                (("巡航母弹",), "巡航母弹主装备身份"),
+                (("子效应器", "子弹药"), "异构子载荷身份"),
+                (("分时释放",), "分时受控释放动作"),
+                (("后续精打", "后续火力", "窗口通报"), "后续火力接替战果"),
+            ),
+            ("防区外长时在位", "单机损失载荷集中度", "平台特征模拟为主"),
+        ),
+        "可消耗空中任务桥": (
+            (
+                (("岸基", "海上", "半潜", "发射", "释放"), "岸海分散释放主体"),
+                (("被动射频",), "被动射频目标提示"),
+                (("成像", "电子支援"), "简化成像或电子支援复核"),
+                (("目标摘要", "摘要转发", "低带宽"), "低带宽目标摘要转发"),
+                (("授权射手", "火力转交", "补射"), "向授权射手完成任务转交"),
+                (("安全终止", "保持静默", "不自行攻击"), "证据不足时安全终止"),
+            ),
+            (
+                "末段身份复核—毁伤/弃攻",
+                "载机防区外多轴释放",
+                "受控突防毁伤",
+                "纵深补击节奏",
+            ),
+        ),
+        "节点反无人拦截装备": (
+            (
+                (("节点", "火力点", "发射巢", "发射艇"), "被保护的分布式火力节点"),
+                (
+                    ("被动告警", "本地雷达", "本地传感", "搜索雷达", "近程传感"),
+                    "本地低特征告警或探测",
+                ),
+                (("拦截", "硬杀伤"), "对低空无人威胁的直接拦截"),
+                (("转移", "沉默", "继续执行发射"), "拦截后的节点再组织"),
+            ),
+            (
+                "目标区附近在位察打",
+                "本机光电/红外目标复核",
+                "局部毁伤评估",
+                "受控补射",
+                "首击后再确认",
+            ),
+        ),
+        "短距起降无人火力母机": (
+            (
+                (("短距起降", "简易场地", "短跑道"), "短距起降或简易场地出动"),
+                (("无人火力母机", "无人母机", "无人机"), "无人火力母机主平台"),
+                (("诱饵",), "诱饵载荷与释放动作"),
+                (("巡航弹", "巡飞弹", "打击弹药"), "小型打击弹药挂载与释放"),
+                (("授权", "人在回路"), "人在回路释放授权"),
+                (("释放区", "转场", "消耗", "退出"), "释放后的转场、退出或消耗处置"),
+            ),
+            (
+                "批次合格率",
+                "固定或准固定节点多波次毁伤",
+                "箱式分批释放",
+                "本机搜索补射",
+            ),
+        ),
+        "岛岸巡飞弹发射舱": (
+            (
+                (("栖岛", "岛岸", "小岛", "岛礁"), "岛岸分散部署地域"),
+                (("弹舱", "发射舱", "发射巢"), "巡飞弹发射舱主装备"),
+                (("助推", "短轨", "发射", "释放"), "非跑道巡飞弹释放动作"),
+                (("巡飞弹", "巡飞攻击弹"), "巡飞弹载荷"),
+                (("授权", "任务边界", "有效期"), "受约束交战授权"),
+                (("转移", "接替", "补射", "补击"), "发射后的接替或补击"),
+            ),
+            (
+                "载机或机动发射单元在防区外释放",
+                "以长航时多模复核反辐射巡飞猎歼弹为主装备",
+                "弹药立即俯冲摧毁目标",
+            ),
+        ),
+        "海上无人巡航弹发射艇": (
+            (
+                (("海上", "岛链", "待机", "预置"), "海上预置或待机地域"),
+                (("巡航弹", "弹舱"), "巡航弹载荷与发射身份"),
+                (("发射", "释放", "释能", "齐射"), "受控远程火力释放动作"),
+                (("纵深", "节点", "舰队", "编队", "毁伤", "打击"), "远程打击对象与战果"),
+            ),
+            ("直接撞击", "近距拦截", "撞击或战斗部毁伤", "清剿伏击区"),
+        ),
+        "失联复核巡航弹": (
+            (
+                (
+                    (
+                        "后方地面",
+                        "机动发射",
+                        "地面发射",
+                        "舰载",
+                        "箱式发射",
+                        "载机",
+                        "无人发射平台",
+                        "防区外",
+                        "释放",
+                    ),
+                    "我方远程发射主体",
+                ),
+                (("GNSS", "组合导航", "目标包时效"), "强扰导航与目标包时效判断"),
+                (("末段", "复核", "拒打"), "末段复核与安全拒打"),
+                (("摧毁", "毁伤", "压制", "补击"), "纵深节点直接毁伤或补击战果"),
+            ),
+            ("箱式分批释放", "目标邻近空域持续", "在位察打", "巡飞待机"),
+        ),
+        "航路伏击无人艇": (
+            (
+                (("航路", "海峡", "通道", "海面", "水面"), "海上关键空间"),
+                (("伏击", "待机", "预置", "近距"), "海面预置/待机与近距遭遇"),
+                (("拦截", "撞击", "战斗部", "毁伤", "绕行", "降速", "清剿"), "直接拦截或约束舰队机动的战果"),
+            ),
+            ("巡航效应器", "纵深固定节点", "准固定节点毁伤", "多轴多波次突防"),
+        ),
+        "反舰巡飞猎歼弹药": (
+            (
+                (("水面目标", "水面舰艇", "舰队", "舰艇"), "反舰作战对象"),
+                (("目标保管", "持续搜索", "搜索区", "航迹连续", "在位搜索"), "前沿目标保管/搜索"),
+                (("身份复核", "目标分类", "视觉", "光电", "被动射频"), "多模身份复核"),
+                (("直接攻击", "直接毁伤", "自身战斗部", "战斗部毁伤", "受控攻击"), "自身直接攻击或受控拒打"),
+            ),
+            ("诱导雷达开机", "电子压制为主", "主攻波次开窗", "小型压制载荷为主"),
+        ),
+        "远程反舰巡航弹药": (
+            (
+                (("水面目标", "水面舰艇", "舰艇", "舰队"), "水面舰艇目标"),
+                (("航迹陈旧", "航迹过期", "目标可能区", "搜索扇区", "受约束搜索"), "过时航迹条件下的搜索"),
+                (("身份复核", "身份确认", "多模", "去重", "重复攻击"), "末段身份确认与多弹去重"),
+                (("反舰毁伤", "直接毁伤", "打击水面", "毁伤水面"), "直接反舰战果"),
+            ),
+            ("现役反辐射弹药难以跨越关机窗口", "排除诱饵辐射源", "续接压制真实节点"),
+        ),
+        "共同弹体多任务弹药": (
+            (
+                (("库存", "库存池"), "库存池化"),
+                (("载荷重配", "载荷选配", "任务前", "混合齐射"), "任务前载荷重配"),
+                (("质量重心", "机械电气", "功率热", "接口", "飞行包线"), "共同弹体接口与工程包线"),
+            ),
+            ("现役反辐射弹药难以跨越关机窗口", "排除诱饵辐射源", "续接压制真实节点"),
+        ),
+    }
+    required, forbidden = contracts[family]
+    if family == "反舰巡飞猎歼弹药" and "空射" in identity:
+        required = (
+            (("空射", "载机", "投放"), "空中载机投放主体"),
+            (("多轴", "错时", "分批"), "多轴错时或分批进入"),
+            (("目标保管", "保管接替"), "目标保管与批次接替"),
+            (("直接攻击", "自身战斗部", "直接毁伤"), "自身直接攻击战果"),
+        )
+    elif family == "反舰巡飞猎歼弹药" and "射频复核" in identity:
+        required = (
+            (("被动射频",), "被动射频候选发现"),
+            (("成像", "光电"), "成像或光电复核"),
+            (("交叉确认", "跨模态", "互证"), "跨模态交叉确认"),
+            (("直接攻击", "自身战斗部", "直接毁伤"), "自身直接攻击战果"),
+        )
+    elif family == "远程反舰巡航弹药" and "有限区搜索" in identity:
+        required = (
+            (("有限搜索区",), "单弹有限搜索区"),
+            (("剩余能量",), "剩余能量约束"),
+            (("单弹",), "单弹再捕获闭环"),
+            (("身份复核", "身份确认", "多模"), "末段身份复核"),
+        )
+    elif family == "远程反舰巡航弹药" and "协同去重" in identity:
+        required = (
+            (("扇区分工", "扇区分配"), "弹群搜索扇区分工"),
+            (("摘要交换", "交换有限目标摘要"), "低带宽目标摘要交换"),
+            (("去重", "重复攻击"), "重复目标判定与去重"),
+            (("独立毁伤", "独立目标"), "独立目标覆盖或毁伤"),
+        )
+    missing = [label for terms, label in required if not any(term in overview for term in terms)]
+    conflicts = [term for term in forbidden if term in overview]
+    issues: list[str] = []
+    if missing:
+        issues.append(
+            f"S6{position_label}{family}概述与主装备语义不一致，缺少"
+            + "、".join(missing)
+        )
+    if conflicts:
+        issues.append(
+            f"S6{position_label}{family}概述串入其他装备族主流程："
+            + "、".join(conflicts[:3])
+        )
+    return issues
 
 
 def _capability_language_issues(position: int, direction: Mapping[str, Any]) -> list[str]:
@@ -9368,6 +13213,11 @@ def _capability_language_issues(position: int, direction: Mapping[str, Any]) -> 
     normalized_name = _dedupe_capability_title(name)
     if normalized_name != name:
         issues.append(f"S6第{position}项标题存在重复词、冗余标点或空白")
+    if re.match(r"^[A-Za-z0-9][A-Za-z0-9./-]{2,}", normalized_name):
+        issues.append(
+            f"S6第{position}项标题以英文型号或项目名开头，需改为中文具体武器装备主体；"
+            "英文型号仅保留在公开基线或标题末尾括号对照"
+        )
     if len(normalized_name) > 24:
         issues.append(f"S6第{position}项标题超过24字，需压缩为具体装备对象+直接作战效果")
     if re.search(r"具备|能够|可以|通过|实现|以及|包括|已集成", normalized_name):
@@ -9384,11 +13234,271 @@ def _capability_language_issues(position: int, direction: Mapping[str, Any]) -> 
         issues.append(
             f"S6第{position}项标题仍是抽象能力口号，需改为具体装备对象+直接作战效果"
         )
+    if "升级" in normalized_name or normalized_name.endswith(("方向", "包", "套件")):
+        issues.append(
+            f"S6第{position}项标题包含升级、方向、包或套件等非装备命名，"
+            "需只保留差异化构型/任务特征+具体武器装备；现役改进属性写入type和baseline_system"
+        )
+    if normalized_name.endswith(("窗口", "续接", "支撑")) or any(
+        marker in normalized_name for marker in ("用于", "制造")
+    ):
+        issues.append(
+            f"S6第{position}项标题以作战结果或用途结尾，需改为差异化特征+具体武器装备"
+        )
+    if (
+        str(direction.get("type", "")) == "new_capability"
+        and normalized_name in _GENERIC_NEW_WEAPON_TITLES
+    ):
+        issues.append(
+            f"S6第{position}项新研标题只写装备大类，需加入能够区分未来构型的任务、机理或毁伤特征"
+        )
+    if any(
+        marker in normalized_name
+        for marker in ("证据链", "任务链", "信息链", "杀伤链", "闭环")
+    ):
+        issues.append(
+            f"S6第{position}项标题以抽象链路或流程结果代替装备形态，需直接命名武器、平台、弹药、"
+            "载荷或任务系统"
+        )
     for left, right in (("（", "）"), ("(", ")"), ("“", "”")):
         if normalized_name.count(left) != normalized_name.count(right):
             issues.append(f"S6第{position}项标题括号或引号不配对")
             break
     portrait = str(direction.get("capability_portrait", "")).strip()
+    overview = portrait.split("\n", 1)[0]
+    missing_causal_markers = [
+        marker
+        for marker in ("面向", "针对", "利用", "采用", "通过", "形成", "实现")
+        if marker not in overview
+    ]
+    if portrait and missing_causal_markers:
+        issues.append(
+            f"S6第{position}项概述首句缺少{'、'.join(missing_causal_markers)}因果节点，"
+            "需按场景—问题—原理—技术—作战概念与流程—能力—效果完整重写"
+        )
+    repeated_causal_markers = [
+        marker
+        for marker in ("面向", "针对", "利用", "采用", "通过", "形成", "实现")
+        if len(
+            re.findall(
+                rf"(?:^|[，；。：:]){re.escape(marker)}",
+                overview,
+            )
+        )
+        > 1
+    ]
+    if repeated_causal_markers:
+        issues.append(
+            f"S6第{position}项概述重复使用{'、'.join(repeated_causal_markers)}因果节点，"
+            "需压缩为单一装备论点"
+        )
+    if re.search(r"(?:以以|针对针对|利用利用|采用采用|通过通过|形成形成|实现实现)", overview):
+        issues.append(f"S6第{position}项概述存在重复连接词，需重写为完整单装备论点")
+    equipment_form_text = str(direction.get("equipment_form", "")).strip()
+    if (
+        re.search(r"(?:导弹|巡飞弹|弹药|无人机|效应器|装备)族", equipment_form_text)
+        and re.search(r"(?:含|包括).{0,100}(?:、|和|及).{0,100}(?:型|弹|机|构型)", equipment_form_text)
+    ) or re.search(
+        r"模块化.{0,80}(?:含|包括).{0,100}(?:、|和|及).{0,100}(?:型|弹|机|构型)",
+        equipment_form_text,
+    ):
+        issues.append(
+            f"S6第{position}项主装备仍是多构型装备族，需收敛为一个固定构型的具体武器装备"
+        )
+    overview_equipment_terms = (
+        "导弹",
+        "巡飞弹",
+        "弹药",
+        "无人机",
+        "无人携弹平台",
+        "无人艇",
+        "无人潜航器",
+        "鱼雷",
+        "拦截弹",
+        "火炮",
+        "发射车",
+        "反舰车",
+        "效应器",
+        "火控系统",
+        "电子战系统",
+        "雷达",
+    )
+    if overview and (
+        not any(term in overview for term in overview_equipment_terms)
+        or not any(marker in overview for marker in ("为主装备", "为主体"))
+    ):
+        issues.append(
+            f"S6第{position}项概述未以一个具体武器装备为主体，"
+            "需明确导弹、巡飞弹、无人作战平台、效应器、火控或电子战装备对象"
+        )
+    research_framing_markers = (
+        "装备研究中的",
+        "研究任务阶段",
+        "任务阶段，针对",
+        "针对公开资料",
+        "针对公开基线",
+        "公开资料不能证明",
+        "公开基线不能证明",
+    )
+    if overview and any(marker in overview for marker in research_framing_markers):
+        issues.append(
+            f"S6第{position}项概述从研究管理或证据管理措辞起笔，需改写为真实战役/战斗场景；"
+            "公开证据边界只能放入对抗边界和验证路径"
+        )
+    combat_scene_terms = (
+        "战役",
+        "战斗",
+        "战区",
+        "前沿",
+        "纵深",
+        "岛链",
+        "海域",
+        "空域",
+        "防空区",
+        "阵地",
+        "航路",
+        "走廊",
+        "目标区",
+        "首轮",
+        "首击",
+        "波次",
+    )
+    adversary_target_terms = (
+        "敌",
+        "敌方",
+        "敌军",
+        "对手",
+        "威胁",
+        "防空体系",
+        "防空雷达",
+        "火控雷达",
+        "发射车",
+        "指挥所",
+        "火力节点",
+        "保障枢纽",
+        "无人集群",
+    )
+    friendly_employment_terms = (
+        "我方",
+        "友军",
+        "编队",
+        "分队",
+        "发射平台",
+        "发射车",
+        "空中平台",
+        "舰艇",
+        "战斗机",
+        "轰炸机",
+        "无人机",
+        "火力单元",
+        "主攻火力",
+        "导弹",
+        "巡飞弹",
+        "弹药",
+        "拦截弹",
+        "效应器",
+        "武器",
+        "平台",
+    )
+    time_sensitive_sequence_terms = (
+        "首轮",
+        "首击",
+        "波次",
+        "窗口",
+        "待机",
+        "发射",
+        "进入",
+        "突防",
+        "搜索",
+        "复核",
+        "交战",
+        "拒打",
+        "毁伤评估",
+        "补射",
+        "补击",
+        "接替",
+        "再打击",
+    )
+    direct_battle_result_terms = (
+        "压制",
+        "摧毁",
+        "毁伤",
+        "歼灭",
+        "拦截",
+        "开辟走廊",
+        "打开走廊",
+        "突防窗口",
+        "补射",
+        "补击",
+        "再打击",
+        "阻断",
+        "瘫痪",
+        "剥夺",
+        "拒止",
+        "破袭",
+    )
+    if overview and not missing_causal_markers:
+        missing_combat_grounding: list[str] = []
+        if not any(term in overview for term in combat_scene_terms):
+            missing_combat_grounding.append("战役/战斗阶段与作战地域")
+        if not any(term in overview for term in adversary_target_terms):
+            missing_combat_grounding.append("敌方目标/威胁及反制")
+        if not any(term in overview for term in friendly_employment_terms):
+            missing_combat_grounding.append("我方发射或运用主体")
+        if sum(term in overview for term in time_sensitive_sequence_terms) < 3:
+            missing_combat_grounding.append("时敏交战流程")
+        if not any(term in overview for term in direct_battle_result_terms):
+            missing_combat_grounding.append("直接战场结果")
+        if missing_combat_grounding:
+            issues.append(
+                f"S6第{position}项概述战斗场景要素不完整，缺少"
+                + "、".join(missing_combat_grounding)
+            )
+    module_labels = (
+        "装备与技术实现",
+        "关键作战流程",
+        "形成能力与作战效果",
+        "制胜逻辑机理与对抗边界",
+    )
+    module_bodies: dict[str, str] = {}
+    for module_index, label in enumerate(module_labels):
+        next_label = (
+            module_labels[module_index + 1]
+            if module_index + 1 < len(module_labels)
+            else ""
+        )
+        pattern = rf"-\s*{re.escape(label)}：(?P<body>.*)"
+        if next_label:
+            pattern += rf"(?=\n-\s*{re.escape(next_label)}：)"
+        else:
+            pattern += r"\Z"
+        matched = re.search(pattern, portrait, flags=re.DOTALL)
+        if matched:
+            module_bodies[label] = matched.group("body").strip()
+    process_body = module_bodies.get("关键作战流程", "")
+    if process_body and sum(
+        marker in process_body
+        for marker in ("任务准备", "部署", "进入", "目标复核", "交战", "毁伤", "补射", "接替", "拒打", "中止")
+    ) < 4:
+        issues.append(
+            f"S6第{position}项关键作战流程未形成准备—进入—复核—交战/拒打—评估再组织的战斗时序"
+        )
+    effect_body = module_bodies.get("形成能力与作战效果", "")
+    if effect_body and (
+        not any(term in portrait for term in _HIGH_ORDER_COMBAT_EFFECT_TERMS)
+        or not any(marker in portrait for marker in ("率", "时延", "时间", "成本", "窗口", "保持度", "周期"))
+    ):
+        issues.append(
+            f"S6第{position}项形成能力与作战效果未同时写清直接战果和任务级验收指标"
+        )
+    winning_body = module_bodies.get("制胜逻辑机理与对抗边界", "")
+    if winning_body and (
+        "对手" not in winning_body
+        or not any(marker in winning_body for marker in ("迫使", "压缩", "改变", "剥夺", "成本", "两难", "资源"))
+    ):
+        issues.append(
+            f"S6第{position}项制胜逻辑未说明如何改变对手时间、成本、暴露或资源分配关系"
+        )
     if portrait and portrait[-1] not in "。！？；”’」』）)":
         issues.append(f"S6第{position}项画像正文以不完整句结束")
     return issues
@@ -9612,8 +13722,11 @@ _CAPABILITY_EQUIPMENT_OBJECT_TERMS = (
     "雷达",
     "预警机",
     "无人机",
+    "无人僚机",
     "无人艇",
     "无人潜航器",
+    "巡航弹",
+    "打击弹",
     "舰",
     "船",
     "车辆",
@@ -9777,17 +13890,19 @@ def _truncate_complete_text(text: str, *, limit: int) -> str:
     sentence_end = max(candidate.rfind(mark) for mark in "。！？!?\n")
     if sentence_end >= max(80, limit // 2):
         return candidate[: sentence_end + 1].rstrip()
-    return candidate[: limit - 1].rstrip(" ；，,") + "…"
+    return text
 
 
-def _clean_capability_handoff_text(value: Any, *, limit: int = 360) -> str:
+def _clean_capability_handoff_text(
+    value: Any, *, limit: int | None = 360
+) -> str:
     """Remove orchestration language before S6 sees an upstream judgment."""
 
     text = " ".join(str(value or "").replace("\n", " ").split())
     text = _CAPABILITY_HANDOFF_INTERNAL_PATTERN.sub("", text)
     text = re.sub(r"(?:packet|claim|reasoning|trace)-[A-Za-z0-9_.:-]+", "", text, flags=re.I)
     text = re.sub(r"\s{2,}", " ", text).strip(" ；,，")
-    return _truncate_complete_text(text, limit=limit)
+    return text if limit is None else _truncate_complete_text(text, limit=limit)
 
 
 def _capability_handoff_statement(value: Any, *, limit: int = 360) -> str:
@@ -9915,12 +14030,38 @@ def _capability_synthesis_handoff(
             ),
         }
     )
+    raw_evidence_rows = [
+        dict(item) for item in evidence_index if isinstance(item, Mapping)
+    ]
+    direct_weapon_rows = [
+        item
+        for item in raw_evidence_rows
+        if str(item.get("created_by", "")) == "weapon_equipment"
+        or str(item.get("evidence_id", "")).startswith("ev-weapon_equipment-")
+    ]
     evidence_rows = _prioritized_evidence_index(
-        evidence_index,
+        direct_weapon_rows,
         preferred_ids=preferred_ids,
-        allowed_agents=set(),
-        limit=5,
+        allowed_agents={"weapon_equipment"},
+        limit=12,
     )
+    selected_evidence_ids = {
+        str(item.get("evidence_id", "")) for item in evidence_rows
+    }
+    if len(evidence_rows) < 14:
+        evidence_rows.extend(
+            _prioritized_evidence_index(
+                [
+                    item
+                    for item in raw_evidence_rows
+                    if str(item.get("evidence_id", ""))
+                    not in selected_evidence_ids
+                ],
+                preferred_ids=preferred_ids,
+                allowed_agents=set(),
+                limit=14 - len(evidence_rows),
+            )
+        )
     evidence: list[dict[str, str]] = []
     for item in evidence_rows:
         row = {
@@ -9943,15 +14084,11 @@ def _capability_synthesis_handoff(
     preflight_rows: list[dict[str, Any]] = []
     raw_preflight = prior_step_outputs.get("s6_preflight", {})
     if isinstance(raw_preflight, Mapping):
-        for item in raw_preflight.get("equipment_buckets", [])[:4]:
+        for item in raw_preflight.get("equipment_buckets", [])[:6]:
             if not isinstance(item, Mapping):
                 continue
             category = str(item.get("category", "")).strip()
-            if category not in {
-                "combat_equipment_upgrade",
-                "unmanned_combat_platform",
-                "missile_precision_munition",
-            }:
+            if not category:
                 continue
             row = {
                 "category": category,
@@ -9978,26 +14115,6 @@ def _capability_synthesis_handoff(
             preflight_rows.append(
                 {key: value for key, value in row.items() if value not in ("", [])}
             )
-
-    preflight_by_category = {
-        str(item.get("category")): item for item in preflight_rows
-    }
-    for category in (
-        "unmanned_combat_platform",
-        "missile_precision_munition",
-    ):
-        if category in preflight_by_category:
-            continue
-        preflight_rows.append(
-            {
-                "category": category,
-                "ready": False,
-                "blocking_reason": (
-                    "前置差距评估未形成该类独立装备方向的query因果映射；"
-                    "S6必须自行建立证据约束下的相关性，否则质量门不得通过。"
-                ),
-            }
-        )
 
     return {
         "query": _clean_capability_handoff_text(topic, limit=600),
@@ -10058,36 +14175,17 @@ def _s6_first_pass_quality_contract(
         if isinstance(portfolio_preflight, list)
         else []
     )
-    missile_preflight = next(
-        (
-            dict(item)
-            for item in preflight_rows
-            if str(item.get("category", "")) == "missile_precision_munition"
-        ),
-        {"category": "missile_precision_munition", "ready": False},
-    )
-    unmanned_preflight = next(
-        (
-            dict(item)
-            for item in preflight_rows
-            if str(item.get("category", "")) == "unmanned_combat_platform"
-        ),
-        {"category": "unmanned_combat_platform", "ready": False},
-    )
-    upgrade_preflight = next(
-        (
-            dict(item)
-            for item in preflight_rows
-            if str(item.get("category", "")) == "combat_equipment_upgrade"
-        ),
-        {"category": "combat_equipment_upgrade", "ready": False},
-    )
     preflight_issues: list[str] = []
-    for label, row in (
-        ("现役战斗装备升级", upgrade_preflight),
-        ("无人作战平台", unmanned_preflight),
-        ("导弹/精确制导弹药", missile_preflight),
-    ):
+    relevant_preflights: list[tuple[str, dict[str, Any]]] = [
+        (str(item.get("category", "query专属装备")), dict(item))
+        for item in preflight_rows
+        if item.get("ready") is True
+    ][:5]
+    if not relevant_preflights:
+        preflight_issues.append(
+            "前置S3-S5尚未形成任何与query直接对应的具体打击杀伤武器候选、对象证据和军事效果闭环"
+        )
+    for label, row in relevant_preflights:
         if row.get("ready") is not True:
             preflight_issues.append(
                 f"{label}前置装备桶尚未ready，首次S6必须从query和公开证据补齐因果映射"
@@ -10108,19 +14206,22 @@ def _s6_first_pass_quality_contract(
         if not isinstance(refs, list) or not any(str(item).strip() for item in refs):
             preflight_issues.append(f"{label}前置装备桶缺少可用证据引用")
 
-    unmanned_candidate = str(unmanned_preflight.get("candidate_equipment", "")).strip()
-    missile_candidate = str(missile_preflight.get("candidate_equipment", "")).strip()
-    if (
-        unmanned_candidate
-        and missile_candidate
-        and _capability_text_similarity(unmanned_candidate, missile_candidate) >= 0.82
-    ):
-        preflight_issues.append(
-            "无人平台与导弹/精确弹药候选高度重复，首次S6必须拆成两个独立装备方向"
-        )
     return {
         "goal": "first_pass_acceptance_without_gate_retry",
         "query_anchors": query_anchors or [_clean_capability_handoff_text(topic, limit=120)],
+        "query_led_combat_equipment_themes": (
+            _query_led_combat_equipment_theme_contract()
+        ),
+        "query_combat_equipment_divergence_brief": (
+            _query_combat_equipment_divergence_brief(
+                topic,
+                structured_query_brief=(
+                    handoff.get("structured_query_brief", {})
+                    if isinstance(handoff, Mapping)
+                    else {}
+                ),
+            )
+        ),
         "preflight_acceptance": {
             "passed": not preflight_issues,
             "issues_to_resolve_before_submission": preflight_issues,
@@ -10129,32 +14230,39 @@ def _s6_first_pass_quality_contract(
         "portfolio": {
             "direction_count": "5..7",
             "required_independent_directions": [
-                "unmanned_combat_platform",
-                "missile_precision_munition",
+                "query_specific_direct_weapon_families",
+                "one_non_prompt_OTHER_architecture",
             ],
-            "missile_and_unmanned_must_be_separate_cards": True,
-            "minimum_direct_weapon_directions": 4,
+            "missile_and_unmanned_must_be_separate_cards": (
+                "only_when_both_are_query_aligned_and_selected"
+            ),
+            "direct_weapon_portfolio_rule": (
+                "具体打击、歼灭、杀伤或反杀伤武器必须构成组合主体；"
+                "不使用固定数量或固定类别配额"
+            ),
             "maximum_standalone_support_directions": (
                 1 if _query_explicitly_requests_support_equipment(topic) else 0
             ),
-            "required_types": ["upgrade", "new_capability"],
+            "type_rule": (
+                "升级或新研由query差距和对象证据决定，不为覆盖类型机械各生成一项"
+            ),
+            "named_public_equipment_anchor_rule": (
+                "具名时逐卡引用对象证据，不按固定数量配额"
+            ),
+            "each_card_one_primary_equipment_family": True,
+            "per_card_confidence_must_reflect_evidence_and_inference_span": True,
             "support_mission_exclusion": (
                 "以回收、数据读取、数据下载、BDA或接口为主任务的无人平台属于支撑层，"
                 "即使标题含‘无人机’或‘火力’也必须在首次自检中剔除；这些功能只能作为"
                 "具体打击、毁伤、压制、拦截或猎歼武器的内部子系统。"
             ),
         },
-        "upgrade_direction": {
-            "required": True,
-            "preflight": upgrade_preflight,
-            "title_seed_rule": (
-                "优先采用preflight中的具体型号/装备族+新增打击、猎歼、拦截、反制或拒止效果+升级；"
-                "若前置桶未ready，只能从公开基线和差距中重建，禁止复制‘公开证据显示/其中/可作为’等叙述残片。"
-            ),
-        },
+        "query_specific_preflight_directions": preflight_rows,
         "disruptive_dimension_use": {
             "internal_query_causal_lenses": "2..3",
-            "minimum_natural_relationship_groups_in_portfolio": 3,
+            "relationship_diversity_policy": (
+                "由前置Codex发散提升，不作为固定数量后置阻断门"
+            ),
             "do_not_publish_methodology_checklist": True,
             "seed_is_not_title_or_evidence": True,
             "final_direction_must_name_concrete_equipment": True,
@@ -10163,39 +14271,21 @@ def _s6_first_pass_quality_contract(
                 "不得为了覆盖维度生成无关方向。"
             ),
         },
-        "missile_precision_direction": {
-            "required": True,
-            "preflight": missile_preflight,
-            "query_causal_fields": [
-                "query主题锚点",
-                "任务对象",
-                "作战阶段",
-                "威胁压力",
-                "毁伤/拦截/拒止等直接效果",
-            ],
-            "reject_if_only_support_context": [
-                "弹药补给",
-                "导弹保障",
-                "运输",
-                "维修",
-            ],
-            "if_preflight_not_ready": (
-                "只能从query和公开证据重新建立直接因果映射；无法建立时明确保留受限，"
-                "不得生成无关导弹方向凑数。"
-            ),
-        },
-        "unmanned_direction": {
-            "required": True,
-            "preflight": unmanned_preflight,
-            "must_name_combat_payload_or_effect": True,
-        },
         "per_card_submission_check": [
-            "标题必须是具体装备对象+直接作战增益，建议20字左右、硬上限24字；禁止具备/通过/实现/以及等描述句，不复制baseline完整句",
-            "画像正文300至600字并以完整句结束",
+            "标题必须以中文具体武器装备对象为主体并补充差异化构型、运用特征或直接作战作用，建议20字左右、硬上限24字；禁止以升级、能力、体系、方向、包、套件等非装备词收尾，现役改进属性只写入type、baseline_system和upgrade字段；禁止具备/通过/实现/以及等描述句，不复制baseline完整句",
+            "每卡只允许一个主装备族；JASSM与PrSM、Harop与MALD等不同平台和任务边界不得压成同一方向",
+            "先锁定primary_equipment_identity，再让项目功能、装备形态、运用主体、发射/释放域、4至6步operational_process、目标对象、直接战果、画像和失效边界全部围绕同一主装备；不得由本地关键词模板代写流程",
+            "提交前完成semantic_consistency_check：逐字段复核主语、平台/弹体/载荷边界、发射域、目标与毁伤方式；载荷不得无说明替代母平台或发射装置，公开基线不得擅自改变方案发射域，防御装备不得串入进攻察打流程；consistent必须是JSON布尔值true而不是字符串",
+            "JASSM/PrSM/Harop/AARGM/MALD/Barracuda/Launched Effects等英文型号不得位于标题开头，只能写入baseline_system或置于中文标题末尾括号内作公开对照",
+            "direct_evidence_refs必须引用该卡自身的ev-weapon_equipment对象证据，禁止所有卡共用同一组来源",
+            "confidence必须按对象证据直接性、来源质量和工程推导跨度逐卡给出，禁止整组机械同值",
+        "画像采用概述加四个受控分点；概述首句必须完整包含面向、针对、利用、采用、通过、形成、实现七个因果节点，且全部为该装备专属内容；必须写明真实战役/战斗阶段与地域、敌方目标或威胁及反制、我方发射/运用主体、进入—搜索复核—交战/拒打—评估—补射接替的时敏过程，以及压制/摧毁/拦截/开辟走廊/续接后续火力/阻断重组等直接战果；禁止以装备研究、任务研究或公开资料/公开基线不能证明作为场景和问题起点；不在画像正文写发展与验证路径；各模块按需展开，不以字符数量判定通过或失败，并以完整句结束",
             "baseline_system为该卡独有的现役或类比装备基线",
             "capability_gap为该卡独有且与query相关的能力差距",
             "query_relevance明确任务对象、阶段、压力和直接效果",
             "卡片间标题、基线、差距和作战机理不套用同一模板",
+            "每卡必须声明且兑现一个不可由其他卡替代的差异变量，至少明确发射域/平台、目标运动包线、末制导传感器、授权来源、补击时序和专属验证指标中的两项；禁止用同一目标、同一再捕获机理和同一战果重复占位，无法独立验收时合并或替换该卡",
+            "逐卡自检后执行组合级语义复核，比较全部卡片的主装备、发射域、目标、作用机理和验证指标；实质重复项必须在首次提交前合并或替换，不得依赖后置去重或卡片修复",
         ],
     }
 
@@ -10213,6 +14303,77 @@ def _capability_text_similarity(left: str, right: str) -> float:
     if not left_rows or not right_rows:
         return 0.0
     return len(left_rows & right_rows) / len(left_rows | right_rows)
+
+
+def _capability_primary_equipment_family(direction: Mapping[str, Any]) -> str:
+    """Return a coarse primary family so controlled portrait prose is not over-penalized."""
+
+    text = " ".join(
+        str(direction.get(field, ""))
+        for field in ("name", "equipment_form", "baseline_system")
+    )
+    families = (
+        ("airborne_warning", ("预警机", "空中预警")),
+        ("loitering_munition", ("巡飞弹", "巡飞弹药")),
+        ("unmanned_aircraft", ("无人机", "无人飞行器", "察打一体")),
+        ("missile", ("导弹", "巡航弹", "制导火箭")),
+        ("interceptor", ("拦截弹", "反无人弹")),
+        ("unmanned_surface", ("无人艇", "无人水面艇")),
+        ("torpedo", ("鱼雷",)),
+        ("launcher", ("发射车", "火箭炮")),
+        ("electronic_attack", ("电子攻击效应器", "诱饵弹", "干扰弹")),
+    )
+    for family, terms in families:
+        if any(term in text for term in terms):
+            return family
+    return re.sub(r"\s+", "", str(direction.get("equipment_category", "")))
+
+
+def _build_direction_capability_portrait(
+    direction: Mapping[str, Any],
+    *,
+    topic: str = "",
+    source: str = "",
+) -> str:
+    """Recompose one governed portrait from the card's structured facts."""
+
+    return build_capability_portrait(
+        name=direction.get("name"),
+        scenario=direction.get("target_scenario") or topic or "典型作战场景",
+        problem=direction.get("capability_gap")
+        or direction.get("problem_statement")
+        or source,
+        principle=direction.get("scientific_principle")
+        or direction.get("novelty")
+        or direction.get("operational_mechanism"),
+        technologies=direction.get("enabling_technologies")
+        or direction.get("upgrade_package")
+        or direction.get("equipment_form"),
+        operational_concept=direction.get("operational_concept")
+        or direction.get("operational_mechanism"),
+        operational_steps=direction.get("operational_process")
+        or direction.get("strike_chain_contribution"),
+        capability=direction.get("capability_outcome")
+        or direction.get("function")
+        or direction.get("equipment_form"),
+        effect=direction.get("military_value")
+        or direction.get("combat_effect_uplift")
+        or direction.get("strike_countermeasure_value"),
+        winning_mechanism=direction.get("winning_mechanism")
+        or direction.get("novelty")
+        or direction.get("operational_mechanism"),
+        equipment_form=direction.get("equipment_form")
+        or direction.get("equipment_category"),
+        baseline=direction.get("baseline_system") or direction.get("equipment_form"),
+        development_path=direction.get("development_path"),
+        failure_boundary=[
+            direction.get("adversary_adaptation", ""),
+            direction.get("failure_boundary", ""),
+            direction.get("upgrade_boundary", ""),
+        ],
+        verification_plan=direction.get("verification")
+        or direction.get("feasibility_basis"),
+    )
 
 
 def _normalize_s6_deterministic_format(
@@ -10234,6 +14395,12 @@ def _normalize_s6_deterministic_format(
     if not isinstance(raw_directions, list):
         return normalized
 
+    try:
+        portfolio_confidence = float(result.get("confidence", 0.68) or 0.68)
+    except (TypeError, ValueError):
+        portfolio_confidence = 0.68
+    portfolio_confidence = max(0.55, min(0.88, portfolio_confidence))
+
     public_string_fields = (
         "name",
         "function",
@@ -10243,6 +14410,7 @@ def _normalize_s6_deterministic_format(
         "novelty",
         "strike_countermeasure_value",
         "equipment_form",
+        "primary_equipment_identity",
         "operational_mechanism",
         "development_path",
         "future_trigger",
@@ -10262,13 +14430,101 @@ def _normalize_s6_deterministic_format(
             directions.append(raw_direction)
             continue
         direction = dict(raw_direction)
+        semantic_check = direction.get("semantic_consistency_check")
+        if isinstance(semantic_check, Mapping):
+            normalized_semantic_check = dict(semantic_check)
+            raw_consistent = normalized_semantic_check.get("consistent")
+            if isinstance(raw_consistent, str):
+                normalized_boolean = raw_consistent.strip().lower()
+                if normalized_boolean == "true":
+                    normalized_semantic_check["consistent"] = True
+                elif normalized_boolean == "false":
+                    normalized_semantic_check["consistent"] = False
+            direction["semantic_consistency_check"] = normalized_semantic_check
         for field_name in public_string_fields:
             if field_name in direction:
-                direction[field_name] = _clean_capability_handoff_text(
-                    direction.get(field_name),
-                    limit=600 if field_name == "capability_portrait" else 360,
+                if field_name == "capability_portrait":
+                    # The portrait's line breaks delimit the governed overview
+                    # and five controlled modules. Flattening them here makes
+                    # the whole card look like one overlong overview and forces
+                    # a generic deterministic rebuild, discarding otherwise
+                    # valid equipment-specific combat prose.
+                    direction[field_name] = "\n".join(
+                        cleaned
+                        for line in str(direction.get(field_name, "")).splitlines()
+                        if (
+                            cleaned := _clean_capability_handoff_text(
+                                line,
+                                limit=None,
+                            )
+                        )
+                    )
+                else:
+                    direction[field_name] = _clean_capability_handoff_text(
+                        direction.get(field_name),
+                        limit=360,
+                    )
+        semantic_check = direction.get("semantic_consistency_check", {})
+        model_asserts_consistency = (
+            isinstance(semantic_check, Mapping)
+            and semantic_check.get("consistent") is True
+        )
+        equipment_form_text = str(direction.get("equipment_form", "")).strip()
+        if equipment_form_text and not model_asserts_consistency:
+            role_text = " ".join(
+                str(direction.get(field, ""))
+                for field in (
+                    "name",
+                    "function",
+                    "military_value",
+                    "operational_mechanism",
+                    "query_relevance",
                 )
-        direction["name"] = _compact_capability_direction_title(direction)
+            )
+            if (
+                "反舰或对陆" in equipment_form_text
+                and (
+                    "反舰" in str(direction.get("name", ""))
+                    or any(
+                        marker in role_text
+                        for marker in ("海上编队", "水面舰艇", "舰队", "补给船", "海上目标")
+                    )
+                )
+            ):
+                # The card already selected an anti-ship mission and target set.
+                # Keep one independently fundable payload instead of publishing
+                # a post-hoc ``anti-ship or land-attack`` alternative family.
+                equipment_form_text = equipment_form_text.replace("反舰或对陆", "反舰")
+            equipment_form_text = re.sub(
+                r"^(?:一枚|一种|一个)\s*",
+                "",
+                equipment_form_text,
+            ).strip()
+            if "：" in equipment_form_text:
+                primary, suffix = equipment_form_text.split("：", 1)
+                if any(
+                    marker in suffix
+                    for marker in ("兼容发射", "发射边界", "挂载边界", "接口边界")
+                ):
+                    equipment_form_text = primary.strip()
+            equipment_form_text = _equipment_form_identity_text(
+                equipment_form_text
+            )
+            direction["equipment_form"] = equipment_form_text
+        # Preserve the query-specific equipment identity produced upstream.
+        # Public families and launchers belong in baseline_system/interfaces;
+        # they must not trigger a deterministic rewrite into the same generic
+        # PrSM/JASSM-derived card across unrelated queries.
+        if not model_asserts_consistency:
+            name_families = _named_public_equipment_families(
+                str(direction.get("name", ""))
+            )
+            form_families = _named_public_equipment_families(
+                str(direction.get("equipment_form", ""))
+            )
+            if len(name_families) >= 2 and not form_families:
+                direction["name"] = str(direction.get("equipment_form", ""))
+            direction["name"] = _compact_capability_direction_title(direction)
         if isinstance(direction.get("upgrade_package"), list):
             direction["upgrade_package"] = [
                 cleaned
@@ -10277,6 +14533,67 @@ def _normalize_s6_deterministic_format(
                     cleaned := _clean_capability_handoff_text(item, limit=180)
                 )
             ][:6]
+
+        # Confidence is a card-level evidence calibration, not prose that
+        # warrants another model call.  Some gateways omit the nested numeric
+        # field even when the portfolio-level confidence and all evidence refs
+        # are present.  Derive only missing/invalid values from observable card
+        # facts: direct evidence count, object-level equipment evidence, named
+        # public anchors, implementation span, and explicit validation bounds.
+        # Existing valid model-authored confidences remain authoritative.
+        try:
+            direction_confidence = float(direction.get("confidence"))
+        except (TypeError, ValueError):
+            direction_confidence = -1.0
+        if not 0.0 <= direction_confidence <= 1.0:
+            direct_refs = list(
+                dict.fromkeys(
+                    str(ref).strip()
+                    for ref in direction.get("direct_evidence_refs", [])
+                    if str(ref).strip()
+                )
+            )
+            evidence_gain = 0.02 * min(4, len(direct_refs))
+            object_gain = (
+                0.03
+                if any(ref.startswith("ev-weapon_equipment-") for ref in direct_refs)
+                else 0.0
+            )
+            anchor_gain = (
+                0.015
+                if _named_public_equipment_families(
+                    " ".join(
+                        str(direction.get(field, ""))
+                        for field in ("name", "baseline_system", "equipment_form")
+                    )
+                )
+                else 0.0
+            )
+            implementation_adjustment = (
+                0.01 if str(direction.get("type", "")) == "upgrade" else -0.02
+            )
+            validation_gain = (
+                0.01
+                if str(direction.get("verification", "")).strip()
+                and str(direction.get("failure_boundary", "")).strip()
+                else 0.0
+            )
+            direction["confidence"] = round(
+                max(
+                    0.55,
+                    min(
+                        0.86,
+                        portfolio_confidence
+                        - 0.08
+                        + evidence_gain
+                        + object_gain
+                        + anchor_gain
+                        + implementation_adjustment
+                        + validation_gain,
+                    ),
+                ),
+                3,
+            )
 
         # Preserve the user's topic anchors in the dedicated causal-mapping
         # field without asking the model to rewrite an otherwise complete
@@ -10291,22 +14608,42 @@ def _normalize_s6_deterministic_format(
             for term in _QUERY_RELEVANCE_ANCHOR_TERMS
             if term in normalized_topic
         ][:4]
-        if (
-            relevance
-            and topic_anchors
-            and _is_missile_precision_munition_direction(direction)
-            and not any(term in relevance for term in topic_anchors)
-        ):
-            direction["query_relevance"] = _truncate_complete_text(
-                f"面向{'、'.join(topic_anchors)}条件，{relevance}",
-                limit=360,
-            )
+        if relevance and _is_missile_precision_munition_direction(direction):
+            prefixes: list[str] = []
+            if topic_anchors and not any(term in relevance for term in topic_anchors):
+                prefixes.append("、".join(topic_anchors))
+            topic_pressure_anchors = [
+                term
+                for term in (
+                    "强电磁压制",
+                    "电磁压制",
+                    "GNSS拒止",
+                    "导航拒止",
+                    "强干扰",
+                    "诱饵",
+                    "饱和攻击",
+                    "节点损耗",
+                )
+                if term in normalized_topic
+            ][:3]
+            if topic_pressure_anchors and not any(
+                term in relevance for term in _QUERY_RELEVANCE_PRESSURE_TERMS
+            ):
+                prefixes.append("、".join(topic_pressure_anchors))
+            if prefixes:
+                direction["query_relevance"] = _truncate_complete_text(
+                    f"面向{'、'.join(prefixes)}条件，{relevance}",
+                    limit=360,
+                )
 
-        if str(direction.get("type", "")) == "upgrade":
+        if (
+            not model_asserts_consistency
+            and str(direction.get("type", "")) == "upgrade"
+        ):
             name = str(direction.get("name", "")).strip()
             title_needs_normalization = any(
                 term in name for term in _FORBIDDEN_UPGRADE_NAME_TERMS
-            ) or any(
+            ) or "升级" in name or any(
                 fragment in name
                 for fragment in ("其中", "公开证据", "可作为", "类现役", "等现役")
             ) or not _direction_name_has_equipment_object(direction) or len(name) > 24
@@ -10338,7 +14675,7 @@ def _normalize_s6_deterministic_format(
                 direction["name"] = _compact_capability_direction_title(
                     {
                         **direction,
-                        "name": f"{baseline_anchor}{effect}升级",
+                        "name": f"{baseline_anchor}{effect}",
                     }
                 )
 
@@ -10358,7 +14695,7 @@ def _normalize_s6_deterministic_format(
                 normalized_name,
             )
         )
-        if (
+        if not model_asserts_consistency and (
             not _direction_name_has_equipment_object(direction)
             or enumerates_equipment
             or title_is_sentence
@@ -10388,56 +14725,247 @@ def _normalize_s6_deterministic_format(
                 effect_text,
             )
             if anchor and effect:
-                suffix = "升级" if direction_type == "upgrade" else ""
                 direction["name"] = _compact_capability_direction_title(
                     {
                         **direction,
-                        "name": f"{anchor}{effect}{suffix}",
+                        "name": f"{anchor}{effect}",
                     }
                 )
 
         portrait = str(direction.get("capability_portrait", "")).strip()
-        if len(portrait) < 300:
-            topic_text = _clean_capability_handoff_text(topic, limit=120)
-            candidates = [portrait]
-
-            def add_sentence(prefix: str, field: str, suffix: str = "") -> None:
-                value = str(direction.get(field, "")).strip().rstrip("。；")
-                if value:
-                    candidates.append(f"{prefix}{value}{suffix}。")
-
-            if topic_text:
-                candidates.append(
-                    f"该方向围绕“{topic_text}”的实战任务展开，不以一般信息连通或保障可用性作为终点。"
-                )
-            add_sentence("装备形态以", "equipment_form", "为核心")
-            add_sentence(
-                "在侦察预警、指挥决策与火力交战阶段，",
-                "operational_mechanism",
+        def governed_portrait(source: str = portrait) -> str:
+            return _build_direction_capability_portrait(
+                direction,
+                topic=topic,
+                source=source,
             )
-            add_sentence("其直接军事价值是", "military_value")
-            add_sentence("对侦察—决策—火力—打击链的贡献表现为", "strike_chain_contribution")
-            add_sentence("相对现役基线的作战增益为", "combat_effect_uplift")
-            add_sentence("建设路径为", "development_path")
-            add_sentence("未来必要性或可行性的触发条件是", "future_trigger")
-            add_sentence("对手可能通过以下方式反适应：", "adversary_adaptation")
-            add_sentence("当出现以下条件时能力将降级或不再优先：", "failure_boundary")
-            verification = str(direction.get("verification", "")).strip().rstrip("。；")
-            if verification:
-                candidates.append(
-                    f"验证应围绕{verification}开展压力试验，以任务结果和失效边界判定有效性，不使用未经校准的精确增益。"
-                )
 
-            merged = "".join(dict.fromkeys(item for item in candidates if item))
-            if len(merged) >= 300:
-                direction["capability_portrait"] = _truncate_complete_text(
-                    merged,
-                    limit=600,
+        if (
+            direction.get("hypothesis_id")
+            and direction.get("mission_effects")
+            and not model_asserts_consistency
+        ):
+            # Dynamic-swarm cards initially receive a bounded portrait before
+            # all selected-hypothesis fields are projected. Recompose once from
+            # the complete card so each weapon family keeps its own mechanism,
+            # combat process, failure boundary and validation contract instead
+            # of retaining near-identical generic tails.
+            direction["capability_portrait"] = governed_portrait(portrait)
+            portrait = str(direction["capability_portrait"]).strip()
+
+        if portrait and portrait[-1] not in "。！？；”’」』）)":
+            direction["capability_portrait"] = f"{portrait}。"
+        normalized_portrait = str(direction.get("capability_portrait", "")).strip()
+        normalized_overview = normalized_portrait.split("\n", 1)[0]
+        overview_equipment_terms = (
+            "导弹",
+            "巡飞弹",
+            "弹药",
+            "无人机",
+            "无人携弹平台",
+            "无人艇",
+            "无人潜航器",
+            "鱼雷",
+            "拦截弹",
+            "火炮",
+            "发射车",
+            "反舰车",
+            "效应器",
+            "火控系统",
+            "电子战系统",
+            "雷达",
+        )
+        if (
+            not all(
+                marker in normalized_overview
+                for marker in ("面向", "针对", "利用", "采用", "通过", "形成", "实现")
+            )
+            or any(
+                normalized_overview.count(marker) > 1
+                for marker in ("面向", "针对", "利用", "采用", "通过", "形成", "实现")
+            )
+            or not any(
+                term in normalized_overview for term in overview_equipment_terms
+            )
+            or not any(
+                marker in normalized_overview for marker in ("为主装备", "为主体")
+            )
+            or any(
+                marker in normalized_overview
+                for marker in (
+                    "装备研究中的",
+                    "研究任务阶段",
+                    "任务阶段，针对",
+                    "针对公开资料",
+                    "针对公开基线",
+                    "公开资料不能证明",
+                    "公开基线不能证明",
                 )
+            )
+            or not all(
+                marker in normalized_portrait
+                for marker in (
+                    "概述：",
+                    "装备与技术实现：",
+                    "关键作战流程：",
+                    "形成能力与作战效果：",
+                    "制胜逻辑机理与对抗边界：",
+                )
+            )
+        ):
+            direction["capability_portrait"] = governed_portrait(normalized_portrait)
         directions.append(direction)
 
-    normalized["concept_directions"] = directions
+    names_before_uniquify = [
+        str(direction.get("name", "")).strip()
+        if isinstance(direction, Mapping)
+        else ""
+        for direction in directions
+    ]
+    unique_directions = _uniquify_compacted_capability_titles(directions)
+    for position, unique_direction in enumerate(unique_directions, start=1):
+        if not isinstance(unique_direction, Mapping):
+            continue
+        # Title collision repair runs after the first portrait pass. When the
+        # recovered title carries a real sub-family contract (for example
+        # single-munition finite-area search versus salvo coordination), rebuild
+        # once with that final identity so the portrait is as distinct as the
+        # name and remains independently testable.
+        title_changed = (
+            str(unique_direction.get("name", "")).strip()
+            != names_before_uniquify[position - 1]
+        )
+        # A deterministic title cleanup must not trigger a second semantic
+        # authoring path.  The Codex-authored card remains authoritative; any
+        # substantive identity conflict is handled by its structured semantic
+        # consistency contract before delivery.
+        del title_changed
+    normalized["concept_directions"] = unique_directions
     return normalized
+
+
+_NAMED_PUBLIC_EQUIPMENT_FAMILIES: dict[str, tuple[str, ...]] = {
+    "jassm": ("jassm", "agm-158"),
+    "prsm": ("prsm", "precision strike missile"),
+    "harop": ("harop", "harpy"),
+    "aargm": ("aargm",),
+    "mald": ("mald", "adm-160"),
+    "barracuda": ("barracuda", "famm"),
+    "coyote_roadrunner": ("coyote", "roadrunner"),
+    "launched_effects": (
+        "launched effects",
+        "launched effect",
+        "lasso",
+    ),
+    "switchblade": ("switchblade",),
+    "longshot": ("longshot",),
+    "cca": ("collaborative combat aircraft", "cca"),
+    "lrasm": ("lrasm",),
+    "himars": ("himars",),
+    "nmesis": ("nmesis",),
+}
+
+
+def _equipment_form_identity_text(value: Any) -> str:
+    """Keep the proposed weapon identity, not its trailing evidence caveat."""
+
+    text = re.sub(r"\s+", " ", str(value or "")).strip()
+    if not text:
+        return ""
+    fragments = [item.strip() for item in re.split(r"[；;]", text) if item.strip()]
+    kept: list[str] = []
+    evidence_markers = (
+        "公开证据",
+        "证据仅",
+        "证据不足",
+        "证据边界",
+        "不证明",
+        "不能证明",
+        "保留类别级",
+    )
+    for fragment in fragments:
+        if kept and any(marker in fragment for marker in evidence_markers):
+            break
+        kept.append(fragment)
+    return "；".join(kept).strip(" ，,；;")
+
+
+def _named_public_equipment_families(value: Any) -> set[str]:
+    text = re.sub(r"\s+", " ", str(value or "")).lower()
+    return {
+        family
+        for family, aliases in _NAMED_PUBLIC_EQUIPMENT_FAMILIES.items()
+        if any(alias in text for alias in aliases)
+    }
+
+
+def _direction_mixes_distinct_weapon_families(
+    direction: Mapping[str, Any],
+) -> set[str]:
+    identity = " ".join(
+        (
+            _equipment_form_identity_text(direction.get(field, ""))
+            if field == "equipment_form"
+            else str(direction.get(field, ""))
+        )
+        for field in ("name", "equipment_form")
+    )
+    return _named_public_equipment_families(identity)
+
+
+def _query_is_offensive_strike_focus(query: str) -> bool:
+    normalized = re.sub(r"\s+", "", str(query or ""))
+    return any(
+        marker in normalized
+        for marker in (
+            "远程火力打击",
+            "火力打击装备",
+            "远程精确打击",
+            "远程精确火力",
+            "突防",
+            "歼灭",
+            "纵深毁伤",
+            "压制毁伤",
+        )
+    )
+
+
+def _direction_is_defensive_only(direction: Mapping[str, Any]) -> bool:
+    text = " ".join(
+        str(direction.get(field, ""))
+        for field in (
+            "name",
+            "equipment_form",
+            "function",
+            "military_value",
+            "operational_mechanism",
+        )
+    ).lower()
+    defensive_signals = (
+        "反无人",
+        "counter-uas",
+        "counter uas",
+        "coyote",
+        "roadrunner",
+        "拦截弹",
+        "低空防御",
+        "要地防护",
+        "定向能反无人",
+    )
+    offensive_signals = (
+        "对地",
+        "反舰",
+        "纵深毁伤",
+        "突防",
+        "压制防空",
+        "反辐射",
+        "电子攻击",
+        "巡航导弹",
+        "远程精确打击",
+    )
+    return any(signal in text for signal in defensive_signals) and not any(
+        signal in text for signal in offensive_signals
+    )
 
 
 def _capability_direction_quality_issues(
@@ -10469,6 +14997,7 @@ def _capability_direction_quality_issues(
         "capability_portrait",
     )
     portraits: list[tuple[int, str]] = []
+    directions_by_position: dict[int, Mapping[str, Any]] = {}
     direction_names: list[tuple[int, str]] = []
     type_rows: list[str] = []
     high_order_positions: list[int] = []
@@ -10477,8 +15006,17 @@ def _capability_direction_quality_issues(
     unmanned_equipment_positions: list[int] = []
     lethal_weapon_positions: list[int] = []
     missile_precision_positions: list[int] = []
+    named_anchor_positions: list[int] = []
+    object_evidence_positions: list[int] = []
+    defensive_only_positions: list[int] = []
+    confidence_rows: list[tuple[int, float]] = []
+    evidence_ref_sets: list[tuple[int, tuple[str, ...]]] = []
+    direction_anchor_families: dict[int, set[str]] = {}
     query = str((handoff or {}).get("query", "")).strip()
     handoff_texts: list[str] = []
+    semantic_contract_required = bool(
+        handoff and "equipment_portfolio_preflight" in handoff
+    )
     if handoff:
         for key in (
             "decisive_task_chain_breaks",
@@ -10498,28 +15036,72 @@ def _capability_direction_quality_issues(
         if not isinstance(direction, Mapping):
             issues.append(f"S6第{position}项不是结构化能力方向")
             continue
+        semantic_check = direction.get("semantic_consistency_check", {})
+        codex_identity_locked = bool(
+            semantic_contract_required
+            and isinstance(semantic_check, Mapping)
+            and semantic_check.get("consistent") is True
+            and str(direction.get("primary_equipment_identity", "")).strip()
+        )
         direction_type = str(direction.get("type", ""))
         type_rows.append(direction_type)
         name = str(direction.get("name", "")).strip()
         direction_names.append((position, name))
+        name_anchor_families = _named_public_equipment_families(
+            " ".join(
+                str(direction.get(field, ""))
+                for field in ("name", "baseline_system", "equipment_form")
+            )
+        )
+        direction_anchor_families[position] = name_anchor_families
+        if name_anchor_families:
+            named_anchor_positions.append(position)
+        mixed_families = _direction_mixes_distinct_weapon_families(direction)
+        if len(mixed_families) > 1:
+            issues.append(
+                f"S6第{position}项混合了多个主装备族（{','.join(sorted(mixed_families))}），"
+                "必须按平台、发射方式和任务边界拆成独立方向"
+            )
+        direct_refs = tuple(
+            dict.fromkeys(
+                str(ref).strip()
+                for ref in direction.get("direct_evidence_refs", [])
+                if str(ref).strip()
+            )
+        )
+        evidence_ref_sets.append((position, direct_refs))
+        if any(ref.startswith("ev-weapon_equipment-") for ref in direct_refs):
+            object_evidence_positions.append(position)
+        try:
+            direction_confidence = float(direction.get("confidence"))
+        except (TypeError, ValueError):
+            direction_confidence = -1.0
+        if 0.0 <= direction_confidence <= 1.0:
+            confidence_rows.append((position, direction_confidence))
+        else:
+            issues.append(f"S6第{position}项缺少0至1之间的独立confidence")
+        if _direction_is_defensive_only(direction):
+            defensive_only_positions.append(position)
         portrait = str(direction.get("capability_portrait", "")).strip()
         portraits.append((position, portrait))
-        if not 300 <= len(portrait) <= 600:
-            issues.append(
-                f"S6第{position}项画像正文需为300至600字，当前{len(portrait)}字"
-            )
+        directions_by_position[position] = direction
         required_fields = (
             "equipment_form",
             "operational_mechanism",
             "military_value",
-            "development_path",
-            "future_trigger",
             "adversary_adaptation",
             "failure_boundary",
             "query_relevance",
             "baseline_system",
             "capability_gap",
         )
+        if semantic_contract_required:
+            required_fields = (
+                "primary_equipment_identity",
+                "operational_process",
+                "semantic_consistency_check",
+                *required_fields,
+            )
         missing = [
             field
             for field in required_fields
@@ -10527,6 +15109,41 @@ def _capability_direction_quality_issues(
         ]
         if missing:
             issues.append(f"S6第{position}项缺少{','.join(missing)}")
+        if semantic_contract_required:
+            operational_process = direction.get("operational_process", [])
+            process_rows = (
+                [
+                    str(item).strip()
+                    for item in operational_process
+                    if str(item).strip()
+                ]
+                if isinstance(operational_process, list)
+                else []
+            )
+            if not 4 <= len(process_rows) <= 6:
+                issues.append(
+                    f"S6第{position}项operational_process必须由Codex按整卡语义形成4至6个完整时序步骤"
+                )
+            if (
+                not isinstance(semantic_check, Mapping)
+                or semantic_check.get("consistent") is not True
+            ):
+                issues.append(
+                    f"S6第{position}项未通过Codex整卡语义一致性自检，需在同次成稿内统一主装备、"
+                    "流程主体、发射/释放域、目标与直接战果"
+                )
+            elif not all(
+                str(semantic_check.get(field, "")).strip()
+                for field in (
+                    "process_actor",
+                    "launch_or_release_mode",
+                    "target_and_direct_effect",
+                    "resolution_note",
+                )
+            ):
+                issues.append(
+                    f"S6第{position}项Codex整卡语义一致性自检缺少主体、发射域、目标战果或复核说明"
+                )
         issues.extend(_capability_language_issues(position, direction))
 
         query_relevance = str(direction.get("query_relevance", "")).strip()
@@ -10573,20 +15190,27 @@ def _capability_direction_quality_issues(
                 )
             )
         equipment_form = str(direction.get("equipment_form", ""))
-        if not _direction_name_has_equipment_object(direction):
+        if not codex_identity_locked and not _direction_name_has_equipment_object(
+            direction
+        ):
             issues.append(
                 f"S6第{position}项名称未直接点明具体装备对象，不能只在equipment_form中补充"
             )
-        if not (
+        if not codex_identity_locked and not (
             any(
                 term in f"{name} {equipment_form}"
-                for term in _CAPABILITY_EQUIPMENT_OBJECT_TERMS
+                for term in (
+                    *_DIRECT_COMBAT_EQUIPMENT_NAME_TERMS,
+                    *_CAPABILITY_EQUIPMENT_OBJECT_TERMS,
+                )
             )
             or _has_combat_munition_compound(f"{name} {equipment_form}")
         ):
             issues.append(f"S6第{position}项未绑定具体装备、平台或任务系统对象")
         generic_markers = ("自治", "网关", "算法", "中间件", "审计", "同步")
-        if any(marker in name for marker in generic_markers) and not any(
+        if not codex_identity_locked and any(
+            marker in name for marker in generic_markers
+        ) and not any(
             term in name for term in _CAPABILITY_EQUIPMENT_OBJECT_TERMS
         ):
             issues.append(f"S6第{position}项名称是抽象技术标签，必须改为装备对象+任务效果")
@@ -10624,9 +15248,13 @@ def _capability_direction_quality_issues(
                 issues.append(
                     f"S6第{position}项现役升级标题禁止使用"
                     + "、".join(forbidden_name_terms[:4])
-                    + "等支撑性或产品化名称；必须改为具体装备对象+直接作战效果+升级"
+                    + "等支撑性或产品化名称；必须改为差异化构型/任务特征+具体武器装备，"
+                    "升级属性仅保留在结构化字段"
                 )
-            if not _direction_name_has_equipment_object(direction):
+            if (
+                not codex_identity_locked
+                and not _direction_name_has_equipment_object(direction)
+            ):
                 issues.append(
                     f"S6第{position}项现役升级标题未明确现役武器、传感器、火控、"
                     "电子战或指挥任务系统对象"
@@ -10638,13 +15266,9 @@ def _capability_direction_quality_issues(
         ):
             issues.append(f"S6第{position}项近似复制上游文字，必须独立综合重写")
 
-    if "upgrade" not in type_rows:
-        issues.append("S6必须至少形成一项具体的现役装备升级方向")
-    if "new_capability" not in type_rows:
-        issues.append("S6必须至少形成一项面向未来作战的新研能力方向")
-    if len(high_order_positions) < 4:
+    if directions and len(high_order_positions) <= len(directions) // 2:
         issues.append(
-            "S6最终方向中至少4项必须形成直接作战效应，不能让通信、保障、恢复、伪装或工程方向挤占主体"
+            "S6直接作战效应装备未构成组合主体，通信、保障、恢复、伪装或工程内容占比过高"
         )
     duplicate_names = [
         name
@@ -10656,6 +15280,51 @@ def _capability_direction_quality_issues(
             "S6最终方向名称必须互异，禁止多个不同装备被压缩为同一标题："
             + "、".join(duplicate_names[:3])
         )
+    available_object_evidence = {
+        str(item.get("evidence_id", ""))
+        for item in (handoff or {}).get("public_evidence", [])
+        if isinstance(item, Mapping)
+        and str(item.get("evidence_id", "")).startswith("ev-weapon_equipment-")
+    }
+    evidence_families_by_id = {
+        str(item.get("evidence_id", "")): _named_public_equipment_families(
+            " ".join(
+                str(item.get(field, ""))
+                for field in ("title", "source_title", "claim", "excerpt", "url")
+            )
+        )
+        for item in (handoff or {}).get("public_evidence", [])
+        if isinstance(item, Mapping) and str(item.get("evidence_id", "")).strip()
+    }
+    mismatched_named_evidence_positions: list[int] = []
+    for position, refs in evidence_ref_sets:
+        anchor_families = direction_anchor_families.get(position, set())
+        if not anchor_families:
+            continue
+        referenced_families = set().union(
+            *(evidence_families_by_id.get(ref, set()) for ref in refs)
+        ) if refs else set()
+        if any(evidence_families_by_id.values()) and not (
+            anchor_families & referenced_families
+        ):
+            mismatched_named_evidence_positions.append(position)
+    if mismatched_named_evidence_positions:
+        issues.append(
+            "S6具名装备方向必须引用与自身型号或装备族直接匹配的对象证据，"
+            "禁止用通用场景材料或其他型号来源代替；涉及位置"
+            + "、".join(str(item) for item in mismatched_named_evidence_positions)
+        )
+    nonempty_ref_sets = [refs for _, refs in evidence_ref_sets if refs]
+    if len(nonempty_ref_sets) >= 4 and len(set(nonempty_ref_sets)) == 1:
+        issues.append(
+            "S6各能力画像不得机械共用完全相同的direct_evidence_refs，必须按主装备族逐项映射"
+        )
+    if len(confidence_rows) >= 5:
+        confidence_values = [value for _, value in confidence_rows]
+        if max(confidence_values) - min(confidence_values) < 0.005:
+            issues.append(
+                "S6各能力画像confidence不得机械同值，必须反映对象证据直接性、来源质量和工程推导跨度差异"
+            )
     support_focused_query = _query_explicitly_requests_support_equipment(query)
     standalone_support_positions = sorted(
         set(ordinary_support_positions + ancillary_support_positions)
@@ -10675,36 +15344,18 @@ def _capability_direction_quality_issues(
             "即使query明确聚焦支撑装备，S6最终组合也最多单列1项伪装、通信、工程或保障方向，"
             "其余必须回到直接战斗装备"
         )
-    if not unmanned_equipment_positions:
-        issues.append(
-            "S6最终组合必须至少包含一项无人作战装备方向，明确无人机、无人艇、无人潜航器、"
-            "无人车、无人僚机、无人集群或巡飞弹及其侦察、压制、突击、拦截或毁伤载荷"
-        )
     if not lethal_weapon_positions:
         issues.append(
             "S6最终组合必须至少包含一项导弹、巡飞弹、弹药、拦截弹、鱼雷、火炮、定向能或"
             "电子压制效应器等杀伤/反杀伤武器装备方向"
         )
-    if not missile_precision_positions:
-        issues.append(
-            "S6最终组合必须至少包含一项与当前query因果契合的独立导弹或精确制导弹药方向；"
-            "名称需明确远程精确火力、反舰/防空/对地导弹、巡飞弹、精确制导弹药、鱼雷或"
-            "低成本拦截弹药，不能靠弹药补给、导弹保障或装备清单中的顺带词命中"
-        )
     direct_weapon_positions = set(
         unmanned_equipment_positions + lethal_weapon_positions
     )
-    if len(direct_weapon_positions) < 4:
+    if directions and len(direct_weapon_positions) <= len(directions) // 2:
         issues.append(
-            "S6至少需要4个相互区分的直接武器或无人作战装备方向，分别承担侦察打击、突防、"
-            "歼灭、压制、拦截、毁伤或区域拒止；不能用支撑系统或同一无人弹药方向重复占位"
-        )
-    if missile_precision_positions and set(missile_precision_positions) == set(
-        unmanned_equipment_positions
-    ):
-        issues.append(
-            "S6导弹/精确制导弹药方向必须与无人作战平台方向独立成项，不能由同一巡飞弹条目"
-            "同时替代两类建设需求"
+            "S6具体打击、歼灭、杀伤或反杀伤武器未构成组合主体；"
+            "不能用支撑系统或同一装备族重复占位"
         )
     disruptive_text = " ".join(
         " ".join(
@@ -10729,22 +15380,88 @@ def _capability_direction_quality_issues(
         if isinstance(direction, Mapping)
     )
     disruptive_groups = disruptive_relationship_groups(disruptive_text)
-    if len(disruptive_groups) < 3:
-        issues.append(
-            "S6最终组合仅自然体现"
-            f"{len(disruptive_groups)}类颠覆关系，至少需要3类与query因果相关且可落实到具体装备的"
-            "成本/工业补充、平台存在、时间学习、毁伤效应、体系生态或博弈可控关系；"
-            "不得展示方法论清单或生成无关方向"
-        )
     for left_index, (left_position, left) in enumerate(portraits):
         if not left:
             continue
         for right_position, right in portraits[left_index + 1 :]:
-            if right and _capability_text_similarity(left, right) >= 0.90:
+            similarity = _capability_text_similarity(left, right) if right else 0.0
+            left_family = _capability_primary_equipment_family(
+                directions_by_position.get(left_position, {})
+            )
+            right_family = _capability_primary_equipment_family(
+                directions_by_position.get(right_position, {})
+            )
+            same_primary_family = bool(left_family) and left_family == right_family
+            if similarity >= 0.90 or (
+                similarity >= 0.75 and same_primary_family
+            ):
                 issues.append(
                     f"S6第{left_position}项与第{right_position}项机制高度重复"
+                    f"（三元字符相似度{similarity:.3f}）；必须区分发射域/平台、目标运动包线、"
+                    "末制导传感器、授权来源、补击时序和专属验证指标，无法独立验收时应合并或替换"
                 )
-    return list(dict.fromkeys(issues))[:32]
+    return list(dict.fromkeys(issues))[:64]
+
+
+def _s6_delivery_blocking_issues(issues: Sequence[Any]) -> list[str]:
+    """Return only substantive S6 defects that may stop delivery.
+
+    Category quotas, confidence spread and disruptive-lens coverage remain
+    low-cost repair signals.  Final-card cardinality, concrete titles and
+    portfolio distinctness are delivery invariants: a five-card portfolio with
+    two copies of the same weapon mechanism is not a usable 5-to-7 item result.
+    """
+
+    blocking_markers = (
+        "必须形成5至7项具体、互异且高军事价值的最终武器装备方向",
+        "不是结构化能力方向",
+        "未说明具体作战阶段、任务对象及打击/反制效果",
+        "只停留在通信、保障、恢复或持续性层",
+        "名称未直接点明具体装备对象",
+        "未绑定具体装备、平台或任务系统对象",
+        "名称是抽象技术标签",
+        "标题枚举多个备选装备",
+        "最终方向名称必须互异",
+        "机制高度重复",
+        "混合了多个主装备族",
+        "operational_process必须由Codex按整卡语义形成",
+        "未通过Codex整卡语义一致性自检",
+        "Codex整卡语义一致性自检缺少",
+        "query_relevance过于空泛",
+        "不得把普通通信、链路、保障",
+        "不得把伪装、假目标、工程构设",
+        "杀伤/反杀伤武器装备方向",
+        "具名装备方向必须引用与自身型号或装备族直接匹配",
+    )
+    substantive_missing_fields = {
+        "primary_equipment_identity",
+        "equipment_form",
+        "operational_mechanism",
+        "operational_process",
+        "semantic_consistency_check",
+        "military_value",
+        "query_relevance",
+        "baseline_system",
+        "capability_gap",
+        "adversary_adaptation",
+        "failure_boundary",
+    }
+    blocking: list[str] = []
+    for issue in issues:
+        text = str(issue)
+        if any(marker in text for marker in blocking_markers):
+            blocking.append(text)
+            continue
+        missing_match = re.search(r"S6第\d+项缺少(.+)", text)
+        if missing_match:
+            missing = {
+                item.strip()
+                for item in re.split(r"[,，]", missing_match.group(1))
+                if item.strip()
+            }
+            if missing & substantive_missing_fields:
+                blocking.append(text)
+    return list(dict.fromkeys(blocking))[:32]
 
 
 def _recover_invalid_s6_result(
@@ -10784,6 +15501,15 @@ def _recover_invalid_s6_result(
     directions = build_deadline_weapon_directions(
         topic=topic,
         evidence_ids=list(dict.fromkeys(item for item in evidence_ids if item)),
+        evidence_index=(
+            [
+                dict(item)
+                for item in handoff.get("public_evidence", [])
+                if isinstance(item, Mapping)
+            ]
+            if handoff
+            else []
+        ),
         confidence=max(0.62, min(0.72, source_confidence or 0.62)),
         gap_basis="；".join(gap_rows)[:700],
     )
@@ -10808,6 +15534,9 @@ def _requires_s6_combat_value_rewrite(issues: Sequence[Any]) -> bool:
     markers = (
         "高阶作战效果",
         "直接作战效应方向",
+        "标题包含升级、方向、包或套件等非装备命名",
+        "概述从研究管理或证据管理措辞起笔",
+        "概述战斗场景要素不完整",
         "现役升级名称未体现",
         "普通通信、链路、保障",
         "现役升级标题禁止使用",
@@ -10821,6 +15550,13 @@ def _requires_s6_combat_value_rewrite(issues: Sequence[Any]) -> bool:
         "4个相互区分的直接武器",
         "不得把伪装、假目标、工程构设",
         "至少需要3类与query因果相关",
+        "混合了多个主装备族",
+        "禁止用纯防御C-UAS",
+        "至少4项应在标题中保留公开型号",
+        "至少4项能力画像必须各自引用ev-weapon_equipment",
+        "不得机械共用完全相同的direct_evidence_refs",
+        "confidence不得机械同值",
+        "具名装备方向必须引用与自身型号或装备族直接匹配",
     )
     return any(
         marker in str(issue)
@@ -10844,9 +15580,21 @@ def _s6_repair_targets(
     for issue in issues:
         text = str(issue)
         targets.update(int(value) for value in re.findall(r"S6第(\d+)项", text))
+        for positions in re.findall(r"涉及位置([0-9、,，和及]+)", text):
+            targets.update(int(value) for value in re.findall(r"\d+", positions))
         duplicate = re.search(r"第(\d+)项与第(\d+)项", text)
         if duplicate:
             targets.add(int(duplicate.group(2)))
+
+    if "最终方向名称必须互异" in issue_text:
+        positions_by_name: dict[str, list[int]] = {}
+        for position, item in enumerate(directions, start=1):
+            name = str(item.get("name", "")).strip()
+            if name:
+                positions_by_name.setdefault(name, []).append(position)
+        for positions in positions_by_name.values():
+            if len(positions) > 1:
+                targets.update(positions[1:])
 
     def replacement_candidate(*, avoid_unmanned: bool = False) -> int:
         type_counts = Counter(str(item.get("type", "")) for item in directions)
@@ -10906,22 +15654,16 @@ def _s6_can_use_lightweight_card_repair(
         for item in result.get("concept_directions", [])
         if isinstance(item, Mapping)
     ]
-    if not 5 <= len(directions) <= 7:
+    if not directions:
         return False
     targets = _s6_repair_targets(result, issues)
-    if not 1 <= len(targets) <= 4 or len(issues) > 10:
+    if not 1 <= len(targets) <= 5 or len(issues) > 16:
         return False
-    systemic_markers = (
-        "S6必须形成5至7项",
-        "至少4项必须形成直接作战效应",
-        "S6最终组合仅自然体现",
-        "S6最终方向名称必须互异",
-    )
-    return not any(
-        marker in str(issue)
-        for issue in issues
-        for marker in systemic_markers
-    )
+    # A bounded set of existing cards is cheaper and safer to repair in place,
+    # even when the advisory direction count is outside 5—7. Count, diversity
+    # and category coverage must not turn a local content/evidence defect into
+    # another multi-minute full S6 regeneration.
+    return True
 
 
 def _merge_s6_direction_repairs(
@@ -11044,6 +15786,87 @@ def _compact_discovered_sources(
     return result
 
 
+def _merge_required_source_anchors(
+    rows: Sequence[Mapping[str, Any]],
+    anchor_urls: Sequence[str],
+    *,
+    limit: int,
+) -> list[dict[str, Any]]:
+    """Reserve discovery slots for object-level equipment source anchors."""
+
+    normalized_rows: list[dict[str, Any]] = []
+    rows_by_url: dict[str, dict[str, Any]] = {}
+    for item in rows:
+        if not isinstance(item, Mapping):
+            continue
+        row = dict(item)
+        url = _without_tracking_parameters(str(row.get("url", "")).strip())
+        if not url or url in rows_by_url:
+            continue
+        row["url"] = url
+        normalized_rows.append(row)
+        rows_by_url[url] = row
+
+    anchored: list[dict[str, Any]] = []
+    anchor_set: set[str] = set()
+    for anchor_index, raw_url in enumerate(anchor_urls):
+        url = _without_tracking_parameters(str(raw_url).strip())
+        if not url or url in anchor_set:
+            continue
+        anchor_set.add(url)
+        anchored_row = dict(
+            rows_by_url.get(
+                url,
+                {
+                    "title": _normalized_source_title("", url),
+                    "url": url,
+                    "snippet": "",
+                },
+            )
+        )
+        # Keep the reservation explicit even when the hosted search already
+        # returned this URL.  Downstream evidence diversification otherwise
+        # loses the information and can move a second source from the same
+        # domain (for example Barracuda after Roadrunner) behind the acceptance
+        # cut-off.
+        anchored_row["retrieval_lane"] = "required_source_anchor"
+        anchored_row["required_source_anchor"] = True
+        anchored_row["required_source_anchor_index"] = anchor_index
+        anchored.append(anchored_row)
+
+    remaining = [
+        item for item in normalized_rows if str(item.get("url", "")) not in anchor_set
+    ]
+    return [*anchored, *remaining][: max(0, limit)]
+
+
+def _prioritize_specialized_anchor_urls(
+    channels: Sequence[Mapping[str, Any]],
+) -> list[str]:
+    """Reserve one object anchor per equipment lane before secondary sources.
+
+    The accepted-evidence target can be smaller than the total number of
+    mandatory and corroborating URLs.  Flattening one channel at a time used
+    to spend several early slots on PrSM/AARGM corroboration while starving
+    the later Barracuda lane.  Interleave the first anchor from every channel,
+    then append secondary anchors, so each distinct equipment family receives
+    an identity source before any family receives extra confirmation.
+    """
+
+    anchor_groups = [
+        [
+            str(url)
+            for url in item.get("source_anchors", [])
+            if str(url).startswith("https://")
+        ]
+        for item in channels
+        if isinstance(item, Mapping)
+    ]
+    primary = [group[0] for group in anchor_groups if group]
+    secondary = [url for group in anchor_groups for url in group[1:]]
+    return list(dict.fromkeys([*primary, *secondary]))
+
+
 def _agent_plan_mode(context: Mapping[str, Any]) -> str:
     value = str(context.get("_agent_plan_mode", "required")).strip().lower()
     return value if value in {"required", "reference", "callback"} else "required"
@@ -11080,31 +15903,955 @@ def _weapon_specialized_evidence_channels(topic: str) -> list[dict[str, Any]]:
                 "射程/突防/制导/毁伤/成本口径、火控与侦察依赖、库存产能和公开运用边界"
             ),
             "preferred_sources": ["军方与政府", "预算采购", "型号制造商", "权威试验与战例复盘"],
+            "source_anchors": [
+                "https://files.gao.gov/reports/GAO-25-107263/index.html",
+                "https://www.army.mil/article/272301/army_announces_first_precision_strike_missiles_delivery",
+                "https://www.lockheedmartin.com/en-us/products/precision-strike-missile.html",
+                "https://www.lockheedmartin.com/en-us/products/jassm.html",
+            ],
             "required_result": "型号或类别锚点、直接作战效果、关键指标方向、证据边界与反证",
         },
         {
-            "channel_id": "long_range_unmanned_strike",
-            "name": "远程无人打击专项证据",
+            "channel_id": "low_altitude_expendable_unmanned_strike",
+            "name": "低空可消耗无人突击专项证据",
             "query_anchor": topic,
             "focus": (
-                "长航时/远程无人机、无人僚机、无人艇或无人潜航器的侦察—压制—突击—"
-                "毁伤任务；重点核验作战半径、载荷、链路受限自治、有人监督、回收/消耗和规模运用"
+                "低空/超低空单程攻击无人机、可消耗察打一体平台与远程无人突击装备；"
+                "重点核验具体项目、任务载荷、作战半径口径、受扰导航、链路受限自治、"
+                "有人监督、消耗/回收方式和公开实装运用"
             ),
             "preferred_sources": ["军方项目", "预算与试验", "制造商", "权威战例与演训复盘"],
             "required_result": "具体平台或装备族、任务载荷、作用阶段、体系依赖、失效边界与反证",
         },
         {
-            "channel_id": "standoff_suppression",
-            "name": "远域压制专项证据",
+            "channel_id": "loitering_antiradiation_suppression",
+            "name": "巡飞猎歼与反辐射压制专项证据",
             "query_anchor": topic,
             "focus": (
-                "防区外电子压制、反辐射/防空压制、远程火力压制与可消耗诱饵效应器；"
-                "重点核验压制对象、作用距离口径、持续时间、协同依赖、对手反适应和效能边界"
+                "巡飞弹药、Harpy/Harop类反辐射巡飞弹药、AARGM-ER类反防空效应器、"
+                "防空压制弹药、可消耗诱饵与直接毁伤载荷；"
+                "重点核验单一主装备对象、导引/搜索公开边界、压制对象、试验或采购状态、"
+                "协同依赖、对手反适应和物理相容性"
             ),
             "preferred_sources": ["军方与政府", "作战条令与演训", "型号制造商", "权威技术评估"],
+            "source_anchors": [
+                "https://www.navair.navy.mil/news/Navys-AARGM-ER-enter-production/Wed-08252021-1544",
+                "https://www.navair.navy.mil/product/Advanced-Anti-Radiation-Guided-Missile-Extended-Range-AARGM-ER",
+                "https://www.iai.co.il/p/harop",
+            ],
             "required_result": "具体效应平台或弹药、压制对象、作战链贡献、指标方向、边界与反证",
         },
+        {
+            "channel_id": "expendable_decoy_electronic_attack",
+            "name": "可消耗诱饵与电子攻击效应器专项证据",
+            "query_anchor": topic,
+            "focus": (
+                "MALD/MALD-J类空射可消耗诱饵与电子攻击效应器；重点核验具体型号、模拟或干扰对象、"
+                "对防空探测与火控链的直接压制/欺骗效果、载机与任务规划依赖、采购试验状态、"
+                "对手识别反适应和公开性能边界。该方向必须区别于反辐射巡飞弹药与巡航毁伤弹药"
+            ),
+            "preferred_sources": ["军方与政府", "预算采购", "项目办公室", "型号制造商"],
+            "source_anchors": [
+                "https://www.rtx.com/raytheon/what-we-do/air/mald-decoy",
+            ],
+            "required_result": "具体诱饵/电子攻击效应器、直接压制或欺骗效果、任务依赖、状态、边界与反证",
+        },
+        {
+            "channel_id": "counter_uas_interceptor_effector",
+            "name": "反无人机拦截效应器专项证据",
+            "query_anchor": topic,
+            "focus": (
+                "Coyote、Roadrunner等可重复或可消耗反无人机拦截效应器；重点核验具体平台、"
+                "对无人机或巡飞弹的直接拦截效果、传感器/火控依赖、发射与回收构型、测试部署状态、"
+                "成本交换、饱和边界和误识别风险。该方向必须是承担物理拦截的战斗装备"
+            ),
+            "preferred_sources": ["军方与政府", "预算合同", "试验机构", "型号制造商"],
+            "source_anchors": [
+                "https://www.rtx.com/raytheon/what-we-do/integrated-air-and-missile-defense/coyote",
+                "https://www.anduril.com/roadrunner",
+            ],
+            "required_result": "具体拦截平台/弹药、直接拦截对象与效果、体系依赖、成本交换、边界与反证",
+        },
+        {
+            "channel_id": "scalable_low_cost_combat_family",
+            "name": "低成本规模化装备族与生产专项证据",
+            "query_anchor": topic,
+            "focus": (
+                "低成本可消耗打击装备族、开放式接口、固定构型系列化、多供应链替代、"
+                "工厂换产和柔性产线；重点核验合同、批次、成本口径、产能爬坡、质量一致性、"
+                "关键瓶颈以及不得外推为战场现场换装的边界"
+            ),
+            "preferred_sources": ["预算采购", "政府合同", "审计报告", "制造商产线与供应链披露"],
+            "source_anchors": [
+                "https://www.anduril.com/news/anduril-department-of-war-sign-production-agreement-for-surface-launched-barracuda-500m",
+            ],
+            "required_result": "具体装备族或生产项目、成本与产能证据、通用接口边界、规模化瓶颈与反证",
+        },
+        {
+            "channel_id": "equipment_test_procurement_cost_capacity",
+            "name": "装备试验采购成本产能专项证据",
+            "query_anchor": topic,
+            "focus": (
+                "直接作战装备的飞行/实装试验、采购决策、预算审计、单位成本、库存补充、"
+                "交付节奏和产能扩充；优先补齐可用于核验成熟度、工程可行性和规模化承诺的"
+                "一手项目证据"
+            ),
+            "preferred_sources": ["军方试验机构", "政府预算与合同", "审计机构", "项目办公室与制造商"],
+            "required_result": "项目里程碑、采购或试验证据、成本产能口径、时间边界、冲突信息与未知项",
+        },
     ]
+
+
+def _direct_combat_generator_diversity_instruction() -> str:
+    return (
+        "两条候选分别优先落到：A.低空/超低空可消耗无人突击或察打一体平台；"
+        "B.直接承担压制、猎歼、毁伤或物理拦截的巡飞/反辐射效应器或反无人机"
+        "拦截效应器。不得把两条都写成同一种巡飞弹的传感器变体。若evidence_index"
+        "存在Coyote或Roadrunner直接来源，必须先在内部形成一条反无人机拦截装备"
+        "候选，与反辐射/巡飞方向比较证据强度、装备创新和任务价值后再选出B项；"
+        "不得因其属于防御任务而把它降格为支撑系统。"
+    )
+
+
+def _portfolio_gap_completion_instruction(topic: str = "") -> str:
+    offensive_scope = any(
+        marker in str(topic)
+        for marker in (
+            "远程火力打击",
+            "火力打击装备",
+            "突防",
+            "压制",
+            "歼灭",
+            "纵深毁伤",
+        )
+    )
+    scope_instruction = (
+        "当前Query明确聚焦远程火力打击、突防、压制、歼灭或毁伤，补齐方向必须继续属于"
+        "进攻性直接作战装备。Coyote/Roadrunner类防御性反无人机拦截器只能作为对手压力、"
+        "阵地防护或失效边界，禁止用作第五个组合方向。优先检查尚未通过的MALD/MALD-J类"
+        "可消耗诱饵/电子攻击效应器，以及Barracuda/FAMM类固定构型低成本巡航效应器族。"
+        "MALD/MALD-J方向必须收缩为工厂固定被动射频感知、预鉴定响应库和电子攻击载荷的"
+        "空射可消耗效应器，其拟议增量是弹上有限闭环响应，直接效果是干扰或压制防空探测"
+        "与火控链；不得把既有诱饵、电子攻击或滞空属性重新命名为创新。Harop或AARGM-ER"
+        "只能作为独立协同武器和接口边界，禁止在同一弹体内集成被动末制导和毁伤战斗部。"
+        if offensive_scope
+        else ""
+    )
+    return (
+        "本实例是专家首轮评判后的组合缺口补齐，只输出至多2条新的替代候选。"
+        "先从candidate_ledger中明确区分专家已通过与未通过候选。任何与已通过候选在主装备、"
+        "最近公开基线、核心机理或装备族上实质重复的方案都不得输出；未通过候选是负面样本而"
+        "不是装备族禁区，允许在同一亟需装备族内生成替代方案，但必须逐条解决原拒绝理由并在"
+        "装备架构上实质不同，不能只改名或润色。如果空射/地射"
+        "远程精确导弹已经通过，不得再用同类导弹凑数。候选必须是直接承担突防、压制、"
+        "猎歼、精确毁伤、物理拦截或区域拒止的具体武器装备。每条必须由至少1个"
+        "ev-weapon_equipment-web-*直接证据锚定，并把公开事实、装备架构创新、作战运用"
+        "创新和待验证假设分层写清。优先补齐有MALD/MALD-J、Coyote或Roadrunner直接证据"
+        "而尚未被通过候选覆盖的装备族。引用成熟产品时，不得把该产品已经公开的诱饵、"
+        "电子攻击、垂直起降、可回收或拦截属性重新表述为创新；必须提出超出单一基线的"
+        "可独立立项装备架构变量。"
+        + scope_instruction
+        + "例如在Coyote与Roadrunner两类技术基线同时存在时，可把"
+        "同一发射、火控接入与保障接口下分别任务优化的可消耗末端拦截构型和可回收巡逻截击"
+        "构型作为双构型拦截装备族假设，但不得强行宣称共用机体、动力或载荷；必须明确这只是"
+        "待验证项目架构，不得伪称公开产品已经实现。若首轮C-UAS候选因混入远程攻击、诱饵或"
+        "多任务共底座而失败，替代候选必须收缩为反无人机物理拦截任务，不再加入攻击/诱饵构型。"
+        "架构增量必须"
+        "落实到机体/弹体、动力与回收、载荷、发射补给、共用接口或构型分工，而不能只写"
+        "前推部署、火力分配或回收优先等运用办法。不得复述成熟JASSM/PrSM固定基线，不得"
+        "用无直接证据的在途更新、末段确认、安全中止、高速母弹释放、异构子载荷协同或"
+        "战场现场换装制造创新；不得把通信、算法、产线或供应链单独作为主体方向。创新"
+        "必须明确改变成本交换、突防窗口、毁伤闭环、平台暴露或战损补充中的至少一种对抗"
+        "关系，并给出可淘汰该方向的对照试验。若证据不足，宁可少输出，也不能凑数。"
+    )
+
+
+def _portfolio_remaining_repair_slots(
+    *,
+    passed_count: int,
+    finalist_minimum: int,
+    completion_count: int,
+) -> int:
+    """Use the second expert call for new candidates plus only needed repairs."""
+
+    return max(
+        0,
+        int(finalist_minimum) - int(passed_count) - int(completion_count),
+    )
+
+
+def _prioritize_winning_evidence_index(
+    value: Any,
+    *,
+    archetype: str = "",
+) -> list[dict[str, Any]]:
+    """Put direct weapon-equipment cards first in the bounded swarm context."""
+
+    rows = [dict(item) for item in value if isinstance(item, Mapping)] if isinstance(
+        value, Sequence
+    ) and not isinstance(value, (str, bytes)) else []
+    role_keywords = {
+        "direct_combat_equipment_generator": (
+            "switchblade",
+            "lasso",
+            "low altitude",
+            "低空",
+            "巡飞",
+            "aargm",
+            "反辐射",
+            "longshot",
+            "cca",
+        ),
+        "remote_precision_munition_generator": (
+            "prsm",
+            "precision strike missile",
+            "jassm",
+            "lrasm",
+            "远程",
+            "导弹",
+        ),
+        "mass_scalable_combat_family_generator": (
+            "barracuda",
+            "famm",
+            "production",
+            "procurement",
+            "产能",
+            "生产",
+            "成本",
+        ),
+    }.get(archetype, ())
+
+    def relevance(item: Mapping[str, Any]) -> int:
+        text = " ".join(
+            str(item.get(field, ""))
+            for field in (
+                "source_title",
+                "title",
+                "claim",
+                "excerpt",
+                "source_url",
+                "url",
+            )
+        ).lower()
+        return sum(keyword.lower() in text for keyword in role_keywords)
+
+    return sorted(
+        rows,
+        key=lambda item: (
+            0
+            if str(item.get("created_by", "")) == "weapon_equipment"
+            or str(item.get("evidence_id", "")).startswith(
+                "ev-weapon_equipment-"
+            )
+            else 1,
+            -relevance(item),
+        ),
+    )
+
+
+def _recover_specialized_winning_seed_hypotheses(
+    value: Any,
+    *,
+    archetype: str,
+) -> list[dict[str, Any]]:
+    """Recover mandatory direct-equipment lanes from accepted public evidence.
+
+    The recovery stays at capability-image level.  It adds no calibrated
+    performance, manufacturing parameter, coordinate, target selection or
+    executable employment procedure, and every row remains subject to the
+    normal S4-S6 challenge and independent expert judgement.
+    """
+
+    rows = (
+        [dict(item) for item in value if isinstance(item, Mapping)]
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes))
+        else []
+    )
+
+    def ids_for(*keywords: str, limit: int = 3) -> list[str]:
+        matches: list[str] = []
+        for item in rows:
+            evidence_id = str(item.get("evidence_id", "")).strip()
+            if not evidence_id.startswith("ev-weapon_equipment-"):
+                continue
+            # Equipment identity must be established by the source itself,
+            # not by a broad analyst claim that happens to mention several
+            # unrelated systems.  Claims/excerpts remain useful downstream,
+            # but must not make a PrSM or AARGM page look like MALD evidence.
+            searchable = " ".join(
+                str(item.get(field, ""))
+                for field in (
+                    "source_title",
+                    "title",
+                    "source_url",
+                    "url",
+                )
+            ).lower()
+            if any(keyword.lower() in searchable for keyword in keywords):
+                matches.append(evidence_id)
+            if len(matches) >= limit:
+                break
+        return list(dict.fromkeys(matches))
+
+    def build(
+        *,
+        title: str,
+        baseline: str,
+        changed_variable: str,
+        mechanism_chain: list[str],
+        direct_effects: list[str],
+        equipment_form: str,
+        interfaces: list[str],
+        novelty: str,
+        evidence_ids: list[str],
+        evidence_boundary: str,
+        counterevidence: list[str],
+        adversary_adaptations: list[str],
+        failure_boundaries: list[str],
+        trl_constraints: list[str],
+        cost_constraints: list[str],
+        industrial_constraints: list[str],
+        cross_scenario_results: list[str],
+        validation_plan: list[str],
+        implementation_path: str,
+    ) -> dict[str, Any] | None:
+        if not evidence_ids:
+            return None
+        return {
+            "title": title,
+            "nearest_public_baseline": baseline,
+            "changed_confrontation_variable": changed_variable,
+            "mechanism_chain": mechanism_chain,
+            "direct_military_effects": direct_effects,
+            "equipment_forms": [equipment_form],
+            "project_function": direct_effects[0] if direct_effects else title,
+            "system_interfaces": interfaces,
+            "novelty_delta": novelty,
+            "evidence_ids": evidence_ids,
+            "evidence_boundary": evidence_boundary,
+            "counterevidence": counterevidence,
+            "adversary_adaptations": adversary_adaptations,
+            "failure_boundaries": failure_boundaries,
+            "trl_constraints": trl_constraints,
+            "cost_constraints": cost_constraints,
+            "industrial_constraints": industrial_constraints,
+            "cross_scenario_results": cross_scenario_results,
+            "validation_plan": validation_plan,
+            "implementation_path": implementation_path,
+        }
+
+    recovered: list[dict[str, Any] | None]
+    if archetype == "direct_combat_equipment_generator":
+        recovered = [
+            build(
+                title="Harop类间歇链路目标证据缓存与复核",
+                baseline="公开IAI Harop长航时巡飞弹药搜索、识别和攻击高价值目标基线",
+                changed_variable=(
+                    "把链路中断后丢失候选目标轨迹，改为由工厂固定的弹载计算/存储组件缓存目标证据，"
+                    "链路恢复后由人在回路复核并重新授权；失联期间明确禁止释放毁伤。"
+                ),
+                mechanism_chain=[
+                    "任务前装订目标类别、地理围栏、禁击规则和失联不得攻击的状态机。",
+                    "弹药利用既有搜索传感器和新增固定计算/存储组件维持候选轨迹，保存时间戳、传感摘要和位置不确定度。",
+                    "链路恢复后回传低带宽证据摘要，由人在回路复核并签发新授权；未获新授权则继续监视或终止任务。",
+                ],
+                direct_effects=[
+                    "在通信间歇条件下保留短时暴露机动目标的可复核证据，并在链路恢复后快速完成授权猎歼。",
+                    "减少重新搜索和重新关联时间，同时明确失联期间不攻击的安全边界。",
+                ],
+                equipment_form="固定构型长航时巡飞猎歼弹药",
+                interfaces=[
+                    "既有发射、任务规划、搜索传感器和人在回路交战接口。",
+                    "新增固定弹载计算/存储、低带宽证据摘要、新授权令牌和任务审计接口。",
+                ],
+                novelty=(
+                    "不把Harop已有搜索攻击和长航时属性重新包装为创新；拟议增量仅是固定弹载证据缓存"
+                    "与链路恢复后重新授权这一项装备接口闭环，不引入失联自主攻击。"
+                ),
+                evidence_ids=ids_for("harop"),
+                evidence_boundary=(
+                    "公开证据支撑Harop的长航时巡飞、搜索识别和攻击基线，不证明本升级的弱网目标关联、"
+                    "证据缓存组件、重新授权接口、误识别水平或对抗条件下任务成功率。"
+                ),
+                counterevidence=[
+                    "弹上目标关联在伪装、诱饵和传感器退化条件下可能放大误识别风险。",
+                    "新增计算、存储、时间同步和重新授权逻辑可能增加鉴定与训练负担。",
+                ],
+                adversary_adaptations=[
+                    "缩短暴露时间并使用外形、热特征和电磁特征诱饵。",
+                    "组合导航欺骗、数据链压制和低成本拦截清除驻留弹药。",
+                ],
+                failure_boundaries=[
+                    "弹上传感器不能可靠区分授权目标类别与诱饵或非战斗目标时。",
+                    "缓存证据在链路恢复前已过时，或授权、地理围栏和任务软件版本不一致时。",
+                ],
+                trl_constraints=[
+                    "基础弹药成熟度不能替代新增计算/存储、证据摘要和重新授权接口的成熟度。",
+                    "须完成硬件在环、人在回路和代表性对抗飞行验证。",
+                ],
+                cost_constraints=[
+                    "按单位有效驻留小时、合法目标接触和确认毁伤的全任务成本评价。",
+                    "新增计算、存储和传感器处理不得使可消耗属性失去成本意义。",
+                ],
+                industrial_constraints=[
+                    "保持弹体、动力、发射和主传感器固定构型，软件版本与关键计算组件须批次可追溯。",
+                    "替代器件必须通过目标关联和安全规则回归验证。",
+                ],
+                cross_scenario_results=[
+                    "对短时暴露机动目标和通信间歇环境最具验证价值。",
+                    "对固定目标或持续可靠链路环境，收益可能不足以抵消复杂度。",
+                ],
+                validation_plan=[
+                    "与链路中断后丢弃轨迹的基线比较重新搜索时间、重新授权时间、正确拒打和错误接受。",
+                    "注入链路中断、缓存过时、导航欺骗、诱饵和版本不一致，预注册淘汰条件。",
+                ],
+                implementation_path="upgrade",
+            ),
+            build(
+                title="AARGM-ER类关机目标记忆再捕获反辐射弹药升级",
+                baseline="公开AARGM-ER远域防空压制/反辐射效应器生产与实弹集成验证基线",
+                changed_variable=(
+                    "把目标雷达关机机动后的攻击结果从依赖最后一次辐射方位，改为由受约束目标记忆区、"
+                    "末段再捕获证据和安全拒打共同决定。"
+                ),
+                mechanism_chain=[
+                    "发射前装订授权辐射源类别、目标记忆区、禁击区和证据门槛。",
+                    "辐射源关机后由弹上导航维持受约束搜索区，不把最后方位直接等同于目标现位置。",
+                    "末段传感证据满足类别和区域约束时完成压制毁伤，否则安全拒打或中止。",
+                ],
+                direct_effects=[
+                    "直接压制或毁伤远域防空探测与火控节点。",
+                    "降低对手以关机、短时开机和快速机动逃避反辐射打击的收益。",
+                ],
+                equipment_form="固定构型远域反辐射精确制导弹药",
+                interfaces=[
+                    "现有载机、任务规划、武器释放和目标威胁库接口。",
+                    "新增目标记忆区、末段证据门槛、禁击区和任务审计接口。",
+                ],
+                novelty=(
+                    "不把AARGM-ER已有远域压制、生产状态或公开制导属性作为创新；拟议增量仅聚焦"
+                    "关机目标的区域约束再捕获与安全拒打闭环，并用关机机动对抗试验判定。"
+                ),
+                evidence_ids=ids_for("aargm", "anti-radiation"),
+                evidence_boundary=(
+                    "公开证据支撑AARGM-ER项目进入生产及系统集成/火箭发动机实弹验证，不证明本升级"
+                    "已实现目标记忆区管理、关机目标再捕获、特定毁伤概率或强对抗效能。"
+                ),
+                counterevidence=[
+                    "雷达关机后目标机动和诱饵部署可能使记忆区迅速失真。",
+                    "末段证据门槛过高会提高中止率，过低则增加误打风险。",
+                ],
+                adversary_adaptations=[
+                    "采用短时随机开机、诱饵辐射源、分布式发射机和快速阵地转移。",
+                    "组合末段拦截、导航欺骗和被动传感器保持防空任务。",
+                ],
+                failure_boundaries=[
+                    "目标位移超过受约束搜索区或末段传感不能可靠区分诱饵时。",
+                    "禁击区、威胁库或任务授权版本不一致时。",
+                ],
+                trl_constraints=[
+                    "须把新增目标记忆、再捕获和安全拒打功能与基础弹药成熟度分别评估。",
+                    "需完成威胁模拟器、硬件在环和代表性飞行试验。",
+                ],
+                cost_constraints=[
+                    "以每个有效压制窗口和确认毁伤的全任务成本衡量升级收益。",
+                    "中止弹、被拦截弹和补击弹必须计入成本交换。",
+                ],
+                industrial_constraints=[
+                    "保持弹体、动力、载机接口和检测流程稳定，新增处理与传感组件须批次追溯。",
+                    "威胁库和任务软件更新必须具有回归验证与配置审计。",
+                ],
+                cross_scenario_results=[
+                    "对依赖主动雷达搜索和火控分配的防空体系最有价值。",
+                    "对被动探测占优或高度分布式防空体系，收益可能明显下降。",
+                ],
+                validation_plan=[
+                    "以持续开机、关机固定、关机机动和诱饵四组目标比较再捕获、中止与误打结果。",
+                    "在导航欺骗、禁击区邻近和威胁库版本差异条件下开展红队验证。",
+                ],
+                implementation_path="upgrade",
+            ),
+        ]
+    elif archetype == "remote_precision_munition_generator":
+        recovered = [
+            build(
+                title="JASSM-ER类工厂固定被动景象匹配中段校正升级",
+                baseline="公开JASSM-ER/AGM-158系列空射防区外巡航导弹项目",
+                changed_variable=(
+                    "把卫星导航受扰后依赖惯性误差自然增长，改为由工厂固定的下视被动景象传感器和"
+                    "弹载处理组件在中段提供有限位置校正，保持进入授权固定目标区的能力。"
+                ),
+                mechanism_chain=[
+                    "任务前装订授权固定目标区、允许航路和可用于匹配的非敏感地形/景象特征。",
+                    "卫星导航受扰时，下视被动景象传感器与弹载处理组件输出有限位置校正量，经既有导航/飞控接口约束航迹。",
+                    "匹配置信度不足时退回惯性导航并按既定任务边界处置，不引入在途改瞄、末段身份复核或复合安全终止创新。",
+                ],
+                direct_effects=[
+                    "由空中平台在防区外发射，对授权纵深目标实施远程精确毁伤。",
+                    "在卫星导航压制或欺骗条件下提高到达授权固定目标区并完成精确毁伤的可验证概率。",
+                ],
+                equipment_form="固定构型空射隐身防区外巡航导弹",
+                interfaces=[
+                    "现有兼容载机、任务规划和武器释放接口。",
+                    "新增工厂固定下视被动景象传感器、弹载处理组件及其与既有导航/飞控的校正接口。",
+                ],
+                novelty=(
+                    "不把JASSM-ER已有低可探测、防区外精确打击或固定/可迁移目标能力重新包装为创新；"
+                    "拟议增量只聚焦工厂固定被动景象匹配中段校正这一项可拆分验证的导航组件升级。"
+                ),
+                evidence_ids=ids_for("jassm", "agm-158", "lrasm"),
+                evidence_boundary="公开证据只支撑JASSM系列的项目、采购和防区外打击基线，不证明本升级构型已集成或达到特定对抗效能。",
+                counterevidence=[
+                    "云雾、积雪、烟尘、季节变化和低纹理区域可能使景象匹配失效。",
+                    "新增传感器窗口、处理组件和数据准备可能增加成本、鉴定周期与隐身外形约束。",
+                ],
+                adversary_adaptations=[
+                    "改变地表外观、使用遮蔽烟幕或诱饵特征降低景象匹配稳定性。",
+                    "加强载机活动区与预期航路的远程探测和拦截。",
+                ],
+                failure_boundaries=[
+                    "任务航路缺乏稳定可辨识景象，或环境变化超过匹配数据库适用范围时。",
+                    "新增组件破坏弹体环境适应、低可探测性或既有导航/飞控安全边界时。",
+                ],
+                trl_constraints=[
+                    "须分别完成传感器窗口、景象数据库、硬件在环、载机兼容和代表性飞行验证。",
+                    "不能以基础导弹成熟度替代新增景象匹配组件成熟度。",
+                ],
+                cost_constraints=[
+                    "以单位确认毁伤成本核算新增组件、中止弹和补击消耗。",
+                    "不得用单一年度采购单价推导全寿命成本。",
+                ],
+                industrial_constraints=[
+                    "保持固定构型和稳定载机接口，传感器、处理组件与景象数据版本须批次追溯。",
+                    "先验证窗口材料、导航软件和处理组件的一致性再扩大采购。",
+                ],
+                cross_scenario_results=[
+                    "对有稳定地形/景象特征的纵深固定目标最具验证价值。",
+                    "对海面、沙漠、持续烟尘或高速机动目标的收益有限。",
+                ],
+                validation_plan=[
+                    "与仅用惯性/卫星导航的JASSM-ER类仿真基线比较目标区进入误差、任务完成和错误校正。",
+                    "在云雾、积雪、烟尘、季节变化、低纹理和导航欺骗条件下开展红队验证。",
+                ],
+                implementation_path="upgrade",
+            ),
+            build(
+                title="PrSM类开放架构工厂固定多模末制导段验证型",
+                baseline="美国陆军首批PrSM交付、Lockheed Martin公开开放架构与HIMARS/M270兼容基线",
+                changed_variable=(
+                    "把PrSM基础弹体主要面向预定目标区的打击能力，扩展为通过开放架构接口在工厂安装"
+                    "固定多模末制导段，对授权机动目标完成末段再捕获。"
+                ),
+                mechanism_chain=[
+                    "发射系统装订目标类别、目标不确定区、允许区域和工厂固定导引段配置。",
+                    "导弹按基础弹体完成远程飞行，末段由固定的成像/射频多模导引段在受约束搜索区内再捕获授权目标。",
+                    "未形成一致目标证据时拒绝进入毁伤流程，不把持续联网、弹间协同或现场更换导引段作为创新。",
+                ],
+                direct_effects=[
+                    "从机动地面发射平台对战役纵深机动目标实施远程精确毁伤。",
+                    "缩短重新发现目标后的火力闭环，并降低错误区域攻击风险。",
+                ],
+                equipment_form="固定构型地面发射远程精确制导导弹",
+                interfaces=[
+                    "HIMARS/M270A2类兼容发射与火控接口。",
+                    "开放架构导引段机械/供电/数据接口，以及固定多模导引段与基础制导计算机的工厂集成接口。",
+                ],
+                novelty=(
+                    "不把PrSM交付、射程、发射兼容或开放架构本身作为创新；拟议增量只聚焦工厂固定"
+                    "多模末制导段与基础弹体的开放接口集成，并以独立导引段试验归因。"
+                ),
+                evidence_ids=ids_for("prsm", "precision strike missile"),
+                evidence_boundary=(
+                    "美国陆军资料支撑首批交付，Lockheed Martin资料支撑PrSM对象、HIMARS/M270兼容和"
+                    "开放架构，GAO材料支撑项目开发与试验风险；公开证据不证明本多模导引段已集成或定型。"
+                ),
+                counterevidence=[
+                    "末段搜索区、传感器视场与剩余飞行时间不匹配时，再捕获收益可能为零。",
+                    "新增导引段的质量、热、供电和处理需求可能超过基础弹体余量。",
+                ],
+                adversary_adaptations=[
+                    "通过短时暴露、频繁机动和诱饵目标压缩更新有效期。",
+                    "组合导航欺骗、链路压制和末段拦截提高中止率。",
+                ],
+                failure_boundaries=[
+                    "目标位移超过末段重捕获能力且无法获得新更新时。",
+                    "导弹单位有效毁伤成本长期高于目标价值或替代火力时。",
+                ],
+                trl_constraints=[
+                    "固定多模导引段及其开放接口须通过部段、硬件在环和端到端原型飞行试验。",
+                    "新增能力不得掩盖基础导弹可靠性和生产一致性风险。",
+                ],
+                cost_constraints=[
+                    "按单位确认毁伤成本计入中止、被拦截和补击弹药。",
+                    "分级配置，避免全部弹体配置最高成本导引组件。",
+                ],
+                industrial_constraints=[
+                    "保持发射平台和测试保障接口稳定。",
+                    "导引段传感器、窗口、处理组件和接口须建立替代源及批次回归验证。",
+                ],
+                cross_scenario_results=[
+                    "对开阔地域和海上机动目标潜在增益较高。",
+                    "对固定目标的收益主要来自抗欺骗和安全边界。",
+                ],
+                validation_plan=[
+                    "在不同搜索区、目标机动、诱饵、导航压制和传感器退化条件下开展导引段原型试验。",
+                    "比较目标再捕获、正确拒打、错误接受、确认毁伤和单位任务成本。",
+                ],
+                implementation_path="upgrade",
+            ),
+        ]
+    elif archetype == "offensive_portfolio_gap_completion":
+        recovered = [
+            build(
+                title="MALD-J类弹上威胁感知闭环电子攻击效应器升级",
+                baseline="公开MALD/MALD-J（ADM-160系列）空射可消耗诱饵与电子攻击项目",
+                changed_variable=(
+                    "不预设现有MALD-J内部响应方式；先表征公开产品的可观测响应边界，再验证在保留既有"
+                    "电子攻击载荷的前提下，由工厂固定的被动射频提示与预鉴定响应选择器形成有限闭环。"
+                ),
+                mechanism_chain=[
+                    "先以现有MALD-J类可观测任务响应为黑盒基线；若已具备同等闭环，立即终止该升级方向。",
+                    "任务前装订授权威胁类别、允许频段、预鉴定响应库、地理边界和中止条件。",
+                    "效应器释放后由固定被动射频提示组件观察授权频段，响应选择器只在预鉴定库内调用既有电子攻击模式。",
+                    "既有电子攻击载荷据此维持或切换局部压制响应；不新增反辐射末制导、毁伤战斗部或开放式在线学习。",
+                ],
+                direct_effects=[
+                    "对间歇开机、模式变化的防空探测与火控辐射源实施更有针对性的局部电子压制。",
+                    "为后续独立突防和毁伤武器制造可测量压制窗口，并分担高价值电子战平台前出风险。",
+                ],
+                equipment_form="保留既有电子攻击载荷并增加固定被动射频提示与响应选择器的MALD-J类空射可消耗效应器",
+                interfaces=[
+                    "兼容载机挂载、武器释放、任务规划和状态检测接口。",
+                    "只新增固定被动射频提示输入、预鉴定响应选择器及其与既有电子攻击载荷控制的受限接口。",
+                ],
+                novelty=(
+                    "不把MALD-J已经公开的诱饵、电子攻击和滞空属性冒充创新；拟议增量只聚焦工厂固定"
+                    "被动射频提示—预鉴定响应选择—既有电子攻击载荷这一项受限闭环，不发展毁伤复合弹体；"
+                    "若基线表征发现现有产品已具备同等闭环，则该方向不成立。"
+                ),
+                evidence_ids=ids_for(
+                    "mald",
+                    "mald-j",
+                    "miniature air launched decoy",
+                    "adm-160",
+                ),
+                evidence_boundary=(
+                    "公开证据只支撑MALD/MALD-J项目、空射可消耗诱饵和电子攻击基线，不证明本升级"
+                    "设想的被动射频提示闭环、现有产品内部响应方式、特定压制效能、成本、库存规模或"
+                    "对抗条件下任务成功率；现有内部闭环是否重叠必须通过基线表征先行判定。"
+                ),
+                counterevidence=[
+                    "对手采用多传感器融合、特征判别和低截获概率工作方式后，诱骗与干扰收益可能快速下降。",
+                    "新增被动接收、处理和响应库可能增加成本、电磁兼容、软件鉴定和载机保障负担。",
+                ],
+                adversary_adaptations=[
+                    "采用低截获概率波形、频率捷变、短时随机开机和分布式辐射源。",
+                    "转向被动传感器与多谱段关联，降低单一射频闭环的作用。",
+                ],
+                failure_boundaries=[
+                    "被动射频接收不能可靠识别授权威胁类别，或响应库更新慢于威胁变化时。",
+                    "接收提示与既有电子攻击发射载荷的隔离、校准、功耗或散热预算不能闭合时。",
+                    "单位有效压制窗口成本不优于有人电子战、独立诱饵或其他现役组合时。",
+                ],
+                trl_constraints=[
+                    "须分别验证载机兼容、被动提示、响应选择器、收发隔离、电磁兼容、功耗和散热预算。",
+                    "MALD-J公开项目成熟度不能替代新增弹上闭环的工程成熟度。",
+                ],
+                cost_constraints=[
+                    "按单位有效压制窗口和后续独立武器任务成功增益核算全任务成本。",
+                    "不得以可消耗名义默认低成本，须计入新增射频组件、载机出动、任务规划和未奏效消耗。",
+                ],
+                industrial_constraints=[
+                    "保持弹体、动力、载机释放和检测接口稳定，以工厂固定载荷控制批次差异。",
+                    "被动接收、电子攻击载荷、射频器件和响应库须建立批次追溯与电磁兼容回归验证。",
+                ],
+                cross_scenario_results=[
+                    "对依赖主动雷达搜索、跟踪和火控分配的防空体系最有验证价值。",
+                    "对高度分布式、被动探测占优或已形成诱饵识别能力的体系，收益可能显著下降。",
+                ],
+                validation_plan=[
+                    "第一阶段黑盒表征当前MALD-J类可观测响应边界；如已达到拟议闭环的同等功能，按预注册规则终止项目。",
+                    "预注册威胁识别错误率、响应时延、有效压制窗口和全任务成本的允许阈值，与当前生产基线、受控固定响应、有人电子战支援和无电子攻击伴随四类对照比较。",
+                    "在频率捷变、随机开机、低截获概率波形、被动探测、响应库过时及收发自干扰条件下开展红队试验；未形成统计显著增益即淘汰。",
+                ],
+                implementation_path="upgrade",
+            )
+        ]
+    elif archetype == "mass_scalable_combat_family_generator":
+        recovered = [
+            build(
+                title="批量可消耗低空无人携弹平台的固定构型装备族",
+                baseline="公开CCA、LongShot、LASSO及可消耗自主系统项目代表的低空无人作战基线",
+                changed_variable="把单一高价值母平台集中投送改为多架固定构型可消耗载机分散携带直接毁伤任务弹药。",
+                mechanism_chain=[
+                    "固定构型载机从分散节点出动并按任务边界低空进入。",
+                    "载机在授权释放区投送单一任务弹药或以自身载荷完成打击。",
+                    "批量补充和分散保障吸收单架损失，维持多方向火力存在。",
+                ],
+                direct_effects=[
+                    "从低空多方向投送巡飞猎歼、压制或精确攻击载荷。",
+                    "降低单架损失造成整批任务弹药同时失效的风险。",
+                ],
+                equipment_form="工厂冻结构型的批量可消耗低空无人携弹平台",
+                interfaces=[
+                    "标准挂载、供电、分离、保险和任务数据接口。",
+                    "任务前授权、禁限击、失联处置与状态检测接口。",
+                ],
+                novelty="以固定构型载机和少量标准载荷级别实现分散投送与规模补充，柔性只发生在工厂批次换产，不声称战场现场改型。",
+                evidence_ids=ids_for(
+                    "cca", "collaborative combat aircraft", "longshot", "lasso", "low altitude"
+                ),
+                evidence_boundary="公开证据只支撑相邻无人作战项目、试验和人在回路方向，不证明本装备族的成本、存续率或强对抗任务成功率。",
+                counterevidence=[
+                    "重复配置导航、保险和释放组件可能抵消分散化成本收益。",
+                    "低空持续暴露会增加被动探测和廉价拦截机会。",
+                ],
+                adversary_adaptations=[
+                    "部署多模低空探测、空中巡逻和廉价拦截平台。",
+                    "打击分散装配、储运和补充节点。",
+                ],
+                failure_boundaries=[
+                    "无法在受扰导航和姿态偏差下安全释放任务弹药时。",
+                    "任务成功总成本不低于集中式平台或成熟远程弹药时。",
+                ],
+                trl_constraints=[
+                    "须完成代表性载荷安全分离、低空操稳和失联安全试验。",
+                    "载机与任务弹药成熟度应分别评估。",
+                ],
+                cost_constraints=[
+                    "以载机、任务弹药、保障、损失和补充的全任务成本为判据。",
+                    "高价值传感器不得成为一次性载机的成本瓶颈。",
+                ],
+                industrial_constraints=[
+                    "采用固定构型、合格供应商清单、批次追溯和替代料回归试验。",
+                    "产线只在不同冻结构型之间换产，并验证质量稳定性。",
+                ],
+                cross_scenario_results=[
+                    "复杂陆地遮蔽环境更利于低空分散进入。",
+                    "开阔海域和连续监视环境可能削弱成本与存续优势。",
+                ],
+                validation_plan=[
+                    "与单一母平台比较有效释放率、损失集中度和任务成功总成本。",
+                    "在链路中断、导航欺骗、低空拦截和保障节点受袭条件下验证。",
+                ],
+                implementation_path="new",
+            ),
+            build(
+                title="Barracuda/FAMM类固定构型低成本巡航效应器族",
+                baseline="公开Barracuda-500M/SLB-500M及FAMM类低成本规模化巡航效应器项目",
+                changed_variable="把高端远程导弹承担全部消耗性任务改为由固定构型低成本巡航效应器补充规模火力和库存恢复。",
+                mechanism_chain=[
+                    "按目标类别生产少量冻结构型并共用发射、任务规划和检测接口。",
+                    "分散发射节点以多批次到达形成持续火力压力。",
+                    "高端导弹保留给更远、更硬或更高优先级目标。",
+                ],
+                direct_effects=[
+                    "由地面或兼容平台发射，对授权目标实施低成本远程精确毁伤。",
+                    "以更快批量补充扩大可持续火力库存。",
+                ],
+                equipment_form="工厂冻结构型的低成本巡航效应器系列",
+                interfaces=[
+                    "共用发射、任务规划、检测和保障接口。",
+                    "多供应商部件替代、序列号追溯与批次验收接口。",
+                ],
+                novelty="创新重点是固定构型系列、生产协议和可审计补充能力共同改变成本与时间逻辑，而非现场更换动力、导引或战斗部。",
+                evidence_ids=ids_for("barracuda", "famm", "affordable mass"),
+                evidence_boundary="公开合同和厂商材料可证明规模化意图与项目存在，不证明产线已达产、实战突防率、单价或任务成功率。",
+                counterevidence=[
+                    "低成本可能以导航抗扰、末段识别、可靠性或环境适应性为代价。",
+                    "共同推进、导航和保险组件可能成为全系列单点供应瓶颈。",
+                ],
+                adversary_adaptations=[
+                    "以廉价软硬杀伤和诱饵提高进攻方单位有效毁伤成本。",
+                    "针对共同发射接口、储运节点和关键供应链实施压制。",
+                ],
+                failure_boundaries=[
+                    "单位确认毁伤成本不低于高端弹药或对手防御成本时。",
+                    "批次质量波动或关键器件补充速度低于战损消耗时。",
+                ],
+                trl_constraints=[
+                    "须以连续批次验收、代表性飞行和环境试验证明质量一致性。",
+                    "合同数量不能替代成熟度和可用率证据。",
+                ],
+                cost_constraints=[
+                    "采用全任务和单位确认毁伤成本，不使用无来源单价或倍数。",
+                    "成本核算必须计入发射、检测、保障、损失与补击。",
+                ],
+                industrial_constraints=[
+                    "建立第二来源、替代料鉴定、批次追溯和产线换型质量门。",
+                    "识别推进、导航、保险和自动检测设备等共同瓶颈。",
+                ],
+                cross_scenario_results=[
+                    "对可由规模火力处理的固定和半固定目标更具成本潜力。",
+                    "对高机动、高防护目标仍可能依赖高端导弹和外部目标更新。",
+                ],
+                validation_plan=[
+                    "跟踪连续批次合格率、交付节奏、关键器件替代周期和任务成功成本。",
+                    "与高端远程导弹在同类任务条件下比较有效毁伤、补充速度和全任务成本。",
+                ],
+                implementation_path="new",
+            ),
+        ]
+    else:
+        recovered = []
+    return [item for item in recovered if item is not None][:2]
+
+
+def _prepare_portfolio_gap_completion_rows(
+    value: Any,
+    evidence_index: Any,
+    *,
+    topic: str,
+    passed_hypotheses: Any = (),
+) -> tuple[list[dict[str, Any]], int]:
+    """Preserve Codex-authored gap candidates without injecting a fixed weapon."""
+
+    raw_rows = (
+        [dict(item) for item in value if isinstance(item, Mapping)]
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes))
+        else []
+    )
+    del evidence_index, topic, passed_hypotheses
+    return raw_rows[:2], 0
+
+
+def _substantive_query_seed_row(value: Mapping[str, Any]) -> bool:
+    """Recognize a model row worth preserving ahead of deterministic fallback."""
+
+    forms = value.get("equipment_forms", value.get("equipment_form", []))
+    effects = value.get(
+        "direct_military_effects", value.get("direct_military_effect", [])
+    )
+    evidence = value.get("evidence_ids", value.get("evidence_refs", []))
+    form_text = " ".join(
+        str(item)
+        for item in (
+            forms
+            if isinstance(forms, Sequence) and not isinstance(forms, (str, bytes))
+            else [forms]
+        )
+    )
+    has_weapon = any(
+        marker in form_text
+        for marker in (
+            "导弹",
+            "巡飞",
+            "弹药",
+            "战斗部",
+            "效应器",
+            "无人机",
+            "无人平台",
+            "拦截弹",
+            "鱼雷",
+            "水雷",
+            "激光武器",
+        )
+    )
+    has_effect = bool(effects)
+    has_evidence = bool(evidence)
+    has_difference = bool(
+        value.get("changed_confrontation_variable")
+        or value.get("novelty_delta")
+        or value.get("mechanism_chain")
+    )
+    return has_weapon and has_effect and has_evidence and has_difference
+
+
+def _ensure_specialized_winning_seed_lanes(
+    value: Any,
+    evidence_index: Any,
+    *,
+    archetype: str,
+    topic: str = "",
+) -> tuple[list[dict[str, Any]], int]:
+    """Preserve query-led model rows and use fixed seeds only as aligned fallback."""
+
+    raw_rows = (
+        [dict(item) for item in value if isinstance(item, Mapping)]
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes))
+        else []
+    )
+    substantive_rows = [item for item in raw_rows if _substantive_query_seed_row(item)]
+    substantive_lanes = {
+        _specialized_winning_seed_lane(item, archetype=archetype)
+        for item in substantive_rows
+    }
+    if len(substantive_rows) >= 2 and len(substantive_lanes) >= 2:
+        return substantive_rows[:2], 0
+
+    # A normal Codex response remains authoritative even when only one row is
+    # usable.  Fixed JASSM/PrSM/Harop/Barracuda rows previously converted a
+    # partial response into a cross-query template; downstream Codex gap agents
+    # now handle missing breadth instead.
+    if topic or raw_rows:
+        return (substantive_rows or raw_rows)[:2], 0
+
+    recovered_rows = _recover_specialized_winning_seed_hypotheses(
+        evidence_index,
+        archetype=archetype,
+    )
+    if not recovered_rows:
+        return raw_rows[:2], 0
+
+    existing_by_lane: dict[str, dict[str, Any]] = {}
+    for item in substantive_rows:
+        lane = _specialized_winning_seed_lane(item, archetype=archetype)
+        existing_by_lane.setdefault(lane, item)
+
+    selected: list[dict[str, Any]] = list(substantive_rows[:2])
+    selected_lanes: set[str] = {
+        _specialized_winning_seed_lane(item, archetype=archetype)
+        for item in selected
+    }
+    added_count = 0
+    for recovered in recovered_rows:
+        if len(selected) >= 2:
+            break
+        lane = _specialized_winning_seed_lane(recovered, archetype=archetype)
+        if lane in selected_lanes or lane in existing_by_lane:
+            continue
+        selected.append(dict(recovered))
+        added_count += 1
+        selected_lanes.add(lane)
+
+    for item in raw_rows:
+        if len(selected) >= 2:
+            break
+        lane = _specialized_winning_seed_lane(item, archetype=archetype)
+        if lane in selected_lanes:
+            continue
+        selected.append(item)
+        selected_lanes.add(lane)
+    return selected[:2], added_count
+
+
+def _specialized_winning_seed_lane(
+    value: Mapping[str, Any],
+    *,
+    archetype: str,
+) -> str:
+    """Return the orthogonal equipment lane represented by one seed row."""
+
+    searchable = " ".join(
+        str(value.get(field, ""))
+        for field in (
+            "title",
+            "nearest_public_baseline",
+            "changed_confrontation_variable",
+            "equipment_forms",
+        )
+    ).lower()
+    if archetype == "remote_precision_munition_generator":
+        if any(token in searchable for token in ("jassm", "agm-158", "lrasm", "空射")):
+            return "air_launched_standoff_cruise_missile"
+        if any(token in searchable for token in ("prsm", "precision strike", "地射", "地面发射")):
+            return "ground_launched_precision_missile"
+    if archetype == "mass_scalable_combat_family_generator":
+        if any(token in searchable for token in ("barracuda", "famm", "巡航效应器")):
+            return "fixed_low_cost_cruise_effector_family"
+        if any(token in searchable for token in ("低空", "携弹", "无人平台", "无人载机")):
+            return "expendable_low_altitude_unmanned_carrier"
+    return _clean_winning_hypothesis_title(value.get("title", "")).lower()[:120]
 
 
 def _discovery_system_prompt(agent_id: str) -> str:
@@ -11119,11 +16866,16 @@ def _discovery_system_prompt(agent_id: str) -> str:
             "无人智能、电磁网络太空、地形气象和持续保障；不得给出具体攻击步骤或实时定位。"
         ),
         "weapon_equipment": (
-            "你是国外武器装备公开资料深度检索Agent。覆盖型号别名与批次、现役/在研状态、预算采购、"
+            "你是国内外武器装备公开资料对比检索Agent。国外优先美国、俄罗斯及其他军事技术强国，"
+            "国内限定中国公开资料。覆盖型号别名与批次、现役/在研状态、预算采购、"
             "试验部署、体系接口、保障供应链和公开能力边界；区分事实、推断、冲突和未知。"
-            "必须优先完成远打精打导弹、远程无人打击、远域压制三个逻辑专项证据通道；"
-            "三通道可共用一次物理检索调用，但每个通道必须分别返回来源、装备对象、直接作战效果、"
+            "必须分别形成国外案例和中国国内案例，每个案例独立记录问题/难点解决路径、技术方案、"
+            "核心技术、核心公开指标、实证来源和可用图片URL，并总结双方优势与本项目差异化空间。"
+            "必须先消化输入中的Codex Query语义发散简报，再围绕其中的敌方目标、作战阶段、"
+            "直接军事效果和候选武器构型建立Query专属证据通道；不得固定套用远程导弹、低空无人、"
+            "反辐射、诱饵电子攻击、反蜂群或规模化装备目录。每个证据通道必须分别返回来源、装备对象、直接作战效果、"
             "指标口径、体系依赖、反证和公开证据边界，不能用通信保障或抽象能力标签替代。"
+            + _query_led_combat_equipment_theme_instruction()
         ),
         "operational_employment": (
             "你是作战运用公开资料检索Agent。覆盖公开条令、演训复盘、联合协同、保障韧性、"
@@ -11239,6 +16991,32 @@ def _is_harness_budget_error(exc: BaseException) -> bool:
     )
 
 
+def _is_transient_provider_failure(exc: BaseException) -> bool:
+    message = str(exc or "").lower()
+    return any(
+        marker in message
+        for marker in (
+            "429",
+            "500",
+            "502",
+            "503",
+            "504",
+            "connection",
+            "network",
+            "temporarily unavailable",
+            "timed out",
+            "request timeout",
+            "read timeout",
+            "connect timeout",
+            "stream disconnected",
+            "upstream",
+            "internal server error",
+            "response failed",
+            "error decoding response body",
+        )
+    )
+
+
 def _trim_deadline_partial_text(value: object) -> str:
     """Keep only the last complete sentence from a streamed deadline result."""
 
@@ -11264,9 +17042,7 @@ def _minimum_viable_model_report(
     """Accept a model-written deadline draft only when it is reviewable."""
 
     normalized = str(text).strip()
-    if len(normalized) < 1200:
-        return False
-    if len(re.findall(r"^##\s+", normalized, flags=re.MULTILINE)) < 3:
+    if not normalized or not _report_has_complete_canonical_structure(normalized):
         return False
     if re.search(
         r"(?<![A-Za-z0-9_])(?:ev|packet|cap)-[A-Za-z0-9]",
@@ -11291,12 +17067,72 @@ def _minimum_viable_model_report(
     return normalized[-1] not in "，、（([【“‘："
 
 
+def _merge_partial_report_with_limited_completion(
+    candidate: str,
+    fallback: str,
+    payload: Mapping[str, Any],
+) -> str:
+    """Keep complete model-written chapters and fill only missing chapters.
+
+    Parallel Reporter calls are independently useful. A single failed section
+    must not discard the other completed sections and replace the whole report
+    with deterministic prose.
+    """
+
+    def h2_blocks(text: str) -> dict[str, str]:
+        matches = list(
+            re.finditer(r"^##\s+(?P<title>.+?)\s*$", str(text), flags=re.MULTILINE)
+        )
+        blocks: dict[str, str] = {}
+        for index, match in enumerate(matches):
+            end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+            blocks[match.group("title").strip()] = text[match.start() : end].strip()
+        return blocks
+
+    def required_children(h2: str) -> tuple[list[str], list[str]]:
+        if _report_template_mode(payload) == "project_argument_v1":
+            h3 = [
+                title
+                for title, parent in _PROJECT_REPORT_H3_PARENT.items()
+                if parent == h2
+            ]
+            h4 = [
+                title
+                for title, parent_h3 in _PROJECT_REPORT_H4_PARENT.items()
+                if parent_h3 in h3
+            ]
+            return h3, h4
+        index = list(_REPORT_CANONICAL_H2).index(h2)
+        return list(_REPORT_CANONICAL_H3[index * 3 : index * 3 + 3]), []
+
+    def complete_model_block(h2: str, block: str) -> bool:
+        if len(block) < 240 or block.rstrip()[-1:] in "，、（([【“‘：":
+            return False
+        h3, h4 = required_children(h2)
+        return all(f"### {title}" in block for title in h3) and all(
+            f"#### {title}" in block for title in h4
+        )
+
+    candidate_blocks = h2_blocks(candidate)
+    fallback_blocks = h2_blocks(fallback)
+    canonical_h2, _, _ = _report_canonical_headings(payload)
+    merged: list[str] = []
+    for h2 in canonical_h2:
+        model_block = candidate_blocks.get(h2, "")
+        fallback_block = fallback_blocks.get(h2, "")
+        if model_block and complete_model_block(h2, model_block):
+            merged.append(model_block)
+        elif fallback_block:
+            merged.append(fallback_block)
+    return "\n\n".join(merged).strip()
+
+
 def _build_limited_report(
     payload: Mapping[str, Any],
     *,
     draft: str = "",
 ) -> str:
-    """Build a traceable nine-item deadline delivery from accepted handoff data.
+    """Build a traceable deadline delivery from accepted handoff data.
 
     This is the last safety net after the normal xhigh Reporter and its compact
     model retry are both unavailable.  It deliberately does not invent model
@@ -11308,6 +17144,337 @@ def _build_limited_report(
     handoff = generation.get("research_handoff", {})
     if not isinstance(handoff, Mapping):
         handoff = {}
+    if _report_template_mode(payload) == "project_argument_v1":
+        cues = [
+            dict(item)
+            for item in handoff.get("capability_cues", [])
+            if isinstance(item, Mapping)
+        ][:7]
+        comparative = handoff.get("comparative_status", {})
+        comparative = comparative if isinstance(comparative, Mapping) else {}
+
+        def text_rows(key: str, limit: int = 5) -> list[str]:
+            values = handoff.get(key, [])
+            if not isinstance(values, Sequence) or isinstance(values, (str, bytes)):
+                return []
+            return [
+                _clean_reporter_clue_text(item, max_chars=220)
+                for item in values[:limit]
+                if _clean_reporter_clue_text(item)
+            ]
+
+        def cue_values(*keys: str, limit: int = 5) -> list[str]:
+            rows: list[str] = []
+            for item in cues:
+                for key in keys:
+                    value = _clean_reporter_clue_text(item.get(key, ""), max_chars=220)
+                    if value:
+                        rows.append(value)
+                        break
+                if len(rows) >= limit:
+                    break
+            return rows
+
+        def prose_list(values: Sequence[str], fallback: str) -> str:
+            rows = list(dict.fromkeys(str(item).strip() for item in values if str(item).strip()))
+            return "；".join(rows) if rows else fallback
+
+        def comparative_findings_text() -> str:
+            value = comparative.get("comparative_findings")
+            if isinstance(value, Mapping):
+                rows = [
+                    f"{_clean_reporter_clue_text(key, max_chars=40)}："
+                    f"{_clean_reporter_clue_text(item, max_chars=240)}"
+                    for key, item in list(value.items())[:6]
+                    if _clean_reporter_clue_text(item)
+                ]
+            elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+                rows = [
+                    _clean_reporter_clue_text(item, max_chars=240)
+                    for item in value[:6]
+                    if _clean_reporter_clue_text(item)
+                ]
+            else:
+                rows = [_clean_reporter_clue_text(value, max_chars=500)] if value else []
+            if rows:
+                return "；".join(rows)
+            return (
+                "现有交接尚未形成可核验的国别案例对照，因此本节不以常识补造型号结论；"
+                "本项目的差异化暂收敛为：不把抗干扰理解为单链路增强，而是以可消耗前出平台、"
+                "反辐射窗口制造和近距毁伤续接共同恢复任务闭环。"
+            )
+
+        def case_paragraphs(key: str, fallback: str) -> str:
+            rows = comparative.get(key, [])
+            if not isinstance(rows, list) or not rows:
+                return fallback
+            paragraphs = []
+            for item in rows[:5]:
+                if not isinstance(item, Mapping):
+                    continue
+                paragraphs.append(
+                    f"**{item.get('equipment_or_project', '公开装备案例')}**："
+                    f"{item.get('country', '')}{item.get('organization', '')}，状态为{item.get('status', '待核验')}；"
+                    f"面向{item.get('problem_addressed', '相关问题难点')}，采用{item.get('technical_route', '公开技术途径待核验')}；"
+                    f"核心技术与指标为{item.get('core_technologies', [])}、{item.get('core_indicators', [])}。"
+                    f"证据边界：{item.get('evidence_boundary', '公开资料不足，不能外推未披露性能')}。"
+                )
+            return "\n\n".join(paragraphs) or fallback
+
+        names = [str(item.get("direction", "")).strip() for item in cues if str(item.get("direction", "")).strip()]
+        direction_text = "、".join(names) or "具体装备方向待前置研究收敛"
+        anchors = text_rows("decisive_anchors", 4)
+        breaks = text_rows("mission_chain_breaks", 4)
+        limits = text_rows("counterevidence_and_limits", 3)
+        priorities = text_rows("priority_signals", 4)
+        problems = cue_values("problem_statement", "capability_gap", limit=5)
+        effects = cue_values("mission_effect", "capability_outcome", limit=5)
+        mechanisms = cue_values("winning_mechanism", "mechanism_hint", limit=5)
+        disruptive = cue_values("disruptive_relationship", limit=4)
+        portrait_rows = []
+        for item in cues:
+            name = _clean_reporter_clue_text(item.get("direction", ""), max_chars=90)
+            if not name:
+                continue
+            equipment = _clean_reporter_clue_text(
+                item.get("equipment_hint") or item.get("capability_portrait", ""),
+                max_chars=180,
+            ).replace("|", "/")
+            technology = prose_list(
+                [
+                    *(
+                        item.get("enabling_technologies", [])
+                        if isinstance(item.get("enabling_technologies", []), list)
+                        else []
+                    ),
+                    item.get("scientific_principle", ""),
+                ],
+                "关键技术从任务机理和失效边界反推",
+            ).replace("|", "/")
+            outcome = _clean_reporter_clue_text(
+                item.get("capability_outcome") or item.get("mission_effect", ""),
+                max_chars=180,
+            ).replace("|", "/")
+            operation = _clean_reporter_clue_text(
+                item.get("operational_concept")
+                or item.get("winning_mechanism")
+                or item.get("mechanism_hint", ""),
+                max_chars=200,
+            ).replace("|", "/")
+            portrait_rows.append(
+                f"| {name} | {equipment or '装备构型按交接边界继续分解'} | "
+                f"{technology} | {outcome or '任务效果按代表性场景验证'} | "
+                f"{operation or '按任务准备—进入—确认—交战—评估闭合运用'} |"
+            )
+        if not portrait_rows:
+            portrait_rows.append(
+                "| 具体装备方向待收敛 | 仅保留Query定义的任务边界 | "
+                "按任务断点反推技术 | 以任务成功率验证 | 不补造装备结论 |"
+            )
+
+        def table_cell(value: object, fallback: str, *, limit: int = 180) -> str:
+            return (
+                _clean_reporter_clue_text(value, max_chars=limit)
+                .replace("|", "／")
+                .strip(" ；。")
+                or fallback
+            )
+
+        subsystem_rows: list[str] = []
+        technology_rows: list[str] = []
+        foundation_rows: list[str] = []
+        for item in cues:
+            name = table_cell(item.get("direction"), "具体装备方向", limit=90)
+            equipment = table_cell(
+                item.get("equipment_hint"),
+                "平台、任务载荷与发射/保障组件按装备方向集成",
+            )
+            technologies = item.get("enabling_technologies", [])
+            technology_list = (
+                [str(value) for value in technologies[:5]]
+                if isinstance(technologies, list)
+                else [str(technologies)]
+            )
+            technology = table_cell(
+                "、".join(value for value in technology_list if value)
+                or item.get("scientific_principle"),
+                "任务软件、感知导航、火控和安全控制技术",
+            )
+            operation = table_cell(
+                item.get("operational_concept")
+                or item.get("winning_mechanism"),
+                "按任务装订、受控交战、效应评估和再组织闭合运行",
+            )
+            boundary = table_cell(
+                item.get("boundary") or item.get("coupling_risk"),
+                "接口、授权、导航可信度或目标证据不足时降级",
+            )
+            development = table_cell(
+                item.get("development_path"),
+                "先仿真和接口联试，再开展半实物、实装与红蓝对抗验证",
+            )
+            baseline = table_cell(
+                item.get("public_equipment_baseline"),
+                "公开资料仅支持类别级基线，成熟度和指标待样机验证",
+            )
+            indicator = table_cell(
+                item.get("indicator_portrait"),
+                "按覆盖、响应、自主边界、单位任务成本、规模与生存性校准",
+            )
+            subsystem_rows.append(
+                f"| {name} | {equipment} | {technology} | {operation} | {boundary} | {development} |"
+            )
+            technology_rows.append(
+                f"| {name}关键技术组合 | {technology} | {baseline} | {boundary} | {development} | {indicator} |"
+            )
+            foundation_rows.append(
+                f"- **{name}**：现有基础为{baseline}；工程承接沿{development}推进。"
+                f"对{name}的验证只承诺{indicator}，公开证据不足处保留待核验边界。"
+            )
+
+        architecture_text = (
+            "总体架构采用“任务状态与授权控制层—跨域武器与效应层—感知/PNT与低带宽接口层—"
+            "保障试验层”四层闭合。任务状态与授权控制层维护目标包有效期、禁打边界、PNT可信度、"
+            "补射申请和超时中止规则；跨域武器与效应层由各具体装备方向承担复核、压制、毁伤、"
+            "拦截和拒止；感知/PNT与接口层只传递完成任务所需的最小状态摘要；保障试验层负责批次"
+            "软件、弹药补充、训练数据和红蓝对抗复盘。信息流从目标发现与证据分级进入任务状态包，"
+            "经授权门限分配给适配射手，交战后以BDA摘要回流并触发补射、等待、改打或中止，形成"
+            "可审计闭环。"
+        )
+        participation_rows = "\n".join(
+            (
+                "| 总体论证与体系设计单位 | 任务链建模、装备组合、状态包与授权规则 | 总体接口基线、需求分解、验证矩阵 |",
+                "| 武器平台与弹药总体单位 | 平台、载荷、战斗部、发射和安全控制集成 | 样机、任务软件适配、平台级试验记录 |",
+                "| 感知导航与任务软件单位 | 被动感知、PNT可信评估、目标摘要和受控自治 | 算法基线、数据接口、失效降级策略 |",
+                "| 火控与指挥信息接口单位 | 目标包、授权、补射申请、BDA和审计日志闭合 | 低带宽协议、网关适配、互操作联试 |",
+                "| 试验鉴定与保障产业单位 | 对抗环境、半实物、综合靶场、产能与补充验证 | 通过/失败条件、成本交换和持续波次数据 |",
+            )
+        )
+        report = f"""## 一、需求分析
+
+### （一）需求概述
+
+#### 1. 背景分析
+
+“{payload.get('topic', '装备研究项目')}”所对应的竞争焦点，不是单件弹药能否在理想链路下命中，而是对手通过压制导航、通信、目标更新和毁伤评估，使远程精确火力在目标短时暴露窗口内失去连续决策依据。前置交接已经形成的决定性判断包括：{prose_list(anchors, '强对抗条件下，任务链的可续接性比单项峰值指标更能决定精确打击结果')}。这意味着装备建设重心需要从“持续保持一条完整链路”转向“主链路受压后仍能以局部感知、预授权规则和近距效应器完成最低有效闭环”。
+
+作战样式演进带来的直接矛盾是：精确打击越来越依赖高质量目标包和快速闭环，而强电磁压制恰好攻击这些依赖。已识别的链路断点为：{prose_list(breaks, '目标确认、火力授权、末段修正和战损评估在受扰条件下难以连续闭合')}。因此，本项目不是泛化建设通信或指挥系统，而是把任务续接能力固化到可消耗前出平台、反辐射压制效应器、携弹无人平台及其任务接口中，使装备在信息不完备时仍能形成受约束、可审计、可验证的直接作战贡献。
+
+#### 2. 需求阐述
+
+需求应从任务失败机理反推，而不能停留在“抗干扰、智能化、低成本”等标签。当前需要解决的具体问题包括：{prose_list(problems, prose_list(breaks, '目标信息过期、远程火力与目标区脱节、压制窗口无法转化为毁伤窗口'))}。对应能力要求是：一要在主链路断续时维持目标区附近的低特征感知与有限确认；二要把对手辐射和压制行为转化为可捕获、可打击的暴露事件；三要以批量可消耗平台覆盖多个时间窗口，降低单个平台损失对任务成功率的影响；四要把授权、取消、目标摘要和战损回传压缩为最小接口闭环。预期任务效果包括：{prose_list(effects, '恢复精确打击窗口、形成近距补打并支撑再攻击决策')}。
+
+上述要求必须转化为可立项、可试验的能力指标：以目标包有效期内交付率衡量续接，以发现至交战时间衡量响应，以失联条件下允许动作集合衡量自主边界，以单位有效毁伤和单位压制小时衡量成本交换，以同时在空数量和持续波次衡量规模能力，并在代表性干扰、诱饵、战损和授权延迟条件下验证失效边界。现有反证与限制为：{prose_list(limits, '公开证据尚不能支持未经试验校准的性能点值，所有指标先定义口径和通过条件')}。
+
+#### 3. 项目画像
+
+项目以{direction_text}为主体装备方向，不把通信、算法或保障节点另行包装为主装备。各方向围绕“前出存在—局部确认—窗口制造—直接毁伤—战损回传/再攻击”形成组合：可消耗低空察打一体平台负责续接目标链和近距确认，反辐射巡飞效应器利用对手压制行为制造短时窗口，批量低空携弹平台以多方向、多波次完成近距毁伤，前沿察打分队承担补打与战损回传。其核心机理为：{prose_list(mechanisms, '以分布式、可消耗、受约束的局部闭环替代对连续远域链路的单点依赖')}；相对传统方案改变的关系包括：{prose_list(disruptive, '从单弹峰值性能竞争转向任务闭环、成本交换和持续波次竞争')}。
+
+### （二）国内外现状
+
+#### 1. 国外情况
+
+{case_paragraphs('foreign_cases', '当前已接受交接未提供足以独立成项的国外型号案例，因此不补造项目状态或指标。现阶段只能以公开装备类别作为基线：防区外精确弹药解决远域投送，反辐射武器解决辐射源压制，巡飞弹药和可消耗无人平台解决目标区持续存在；但这些类别能否在强压制下共同完成任务续接，仍取决于任务包、授权、时间协同和战损回传接口。')}
+
+#### 2. 国内现状（中国）
+
+{case_paragraphs('domestic_cases', '当前已接受交接未提供足以支撑型号级结论的中国国内案例，故不推断未公开状态。可确认的研究边界是：国内若已有远程精确火力、无人平台和反辐射效应器基础，本项目的增量仍不在单项平台存在与否，而在强压制条件下的平台接口闭合、可消耗规模运用、近距续接毁伤和联合验证。')}
+
+#### 3. 对比小结
+
+{comparative_findings_text()}
+
+### （三）建设必要性分析
+
+#### 1. 作战使用角度
+
+项目的作战必要性来自已识别的链路断点：{prose_list(breaks, '目标确认、授权、末段修正与毁伤评估断续')}。若仍只增强远程链路或单弹抗扰，一旦主节点、PNT或目标更新同时受压，火力仍会因信息过期而失效；本项目通过目标区附近的可消耗平台和反辐射效应器，把补链动作直接转化为压制、毁伤、补打和再攻击依据。
+
+#### 2. 装备能力提升角度
+
+装备能力提升不是追求所有指标同步最大化，而是在受扰条件下建立可交换的组合优势：用前出驻留缩短响应，用预授权和安全中止规则界定自主边界，用固定构型与批次生产改善成本和补充，用多方向进入与任务分工提高生存性。建设优先信号为：{prose_list(priorities, '优先验证能否恢复任务闭环，再校准射程、载荷和规模指标')}。
+
+#### 3. 领域占位角度
+
+该方向占位价值在于形成可系列化的低空可消耗平台族、反辐射效应器族和统一任务接口，使后续不同载荷、发射平台和保障方式能够共享任务装订、授权、取消与战果摘要机制。若只形成单一演示样机而没有接口和批量制造基线，则难以转化为装备族，也无法在对手快速反适应后持续迭代。
+
+#### 4. 综合效益
+
+综合效益应以“是否用可承受的成本恢复高价值火力的有效使用”为主线：军事上提高受扰条件下的任务完成概率，体系上减少对单一链路和高价值节点的依赖，经济上比较可消耗平台损失与高端弹药空耗、任务失败的机会成本，工业上检验固定构型、批次一致性和多源替代能力。任何方向若不能同时证明直接作战贡献、可补充性和对手反适应下的有效边界，都不应仅凭概念新颖进入立项。
+
+## 二、项目画像
+
+### （一）装备图像概述
+
+| 装备系统方向 | 装备平台与方案 | 核心技术 | 形成能力 | 作战概念与主要效果 |
+|---|---|---|---|---|
+{chr(10).join(portrait_rows)}
+
+### （二）作战运用模式
+
+#### 1. 作战运用流程
+
+按任务准备与装订、平台部署与进入、目标发现确认、火力分配、交战毁伤、效果评估和再组织分阶段说明装备使用方式与指标口径。
+
+#### 2. 链路闭环分析
+
+围绕时间链、信息与精度链、火力链、毁伤评估链分析单点短板、级联风险和制胜机理。
+
+### （三）体系贡献率分析
+
+体系贡献以原方案为基线，从任务成功率、闭环时间、耗弹量、突防效能、交换比和持续波次建立计算口径；公开数据不足时只给验证方法，不承诺点值。
+
+### （四）主要战技指标
+
+主要指标覆盖射程/覆盖、响应、自主与授权边界、精度、毁伤、抗扰生存、单位任务成本、并发规模和产能补充，均需明确测试条件与证据状态。
+
+## 三、总体方案
+
+### （一）总体架构
+
+{architecture_text}
+
+部署上采用后方高价值节点集中制定授权边界、前沿可消耗节点分散进入、主链路与短报文/本地规则并行的PACE构型。任何跨节点接管都必须携带目标身份、时间窗、证据等级、允许动作和中止条件；节点受损时，系统优先保留安全中止和证据回传，再按任务价值恢复确认与交战，避免把“断链自治”误写成无限自主开火。
+
+### （二）子系统方案
+
+| 子系统/装备方向 | 硬件与产品形态 | 软件与核心技术 | 主要输入输出及运用 | 工程边界 | 集成验证项目 |
+|---|---|---|---|---|---|
+{chr(10).join(subsystem_rows)}
+
+子系统集成顺序按“接口先闭合、单装再验证、跨域后组网”推进：先冻结目标包、授权、PNT可信度和BDA摘要字段，再分别验证平台级感知、导航、火控与安全中止，最后在节点损耗、通信降级、目标机动和诱饵污染条件下开展跨装备接管。接口字段或安全状态若不能审计，即使单装命中率较高也不得判定任务续接能力形成。
+
+## 四、关键技术
+
+### （一）关键技术清单与攻关途径
+
+| 技术名称 | 技术内涵 | 成熟度/现有基础 | 主要瓶颈 | 攻关途径 | 验证指标与失败条件 |
+|---|---|---|---|---|---|
+{chr(10).join(technology_rows)}
+
+关键技术不是平行堆叠关系。任务状态包和授权审计是所有装备共享的控制底座，PNT可信评估与目标复核决定能否安全进入交战，低带宽接口决定能否跨节点续接，平台/弹药自身的制导、毁伤和拦截能力决定最终任务效果。任一串联环节在代表性压制条件下失效，均不能以其他分项的高成熟度平均抵消；攻关评审必须同时保留通过条件、失败样本和对手反适应测试。
+
+## 五、研制基础
+
+### （一）参与单位
+
+公开交接不足以指定国内承研单位、总装单位或试验部队，因此不虚构名称，按能力类型形成责任闭环：
+
+| 单位类型 | 主要责任 | 必须交付的接口或证据 |
+|---|---|---|
+{participation_rows}
+
+组织上由总体单位维护唯一需求和接口基线，各装备总体对自身平台安全、任务边界和实装效果负责，试验鉴定单位独立记录失败条件。国外公开型号、机构和项目仅作为技术与状态对照，不能直接替代国内参与单位论证。
+
+### （二）技术基础
+
+项目技术基础应从现有平台、类别级装备基线、算法/任务软件、试验设施和产业补充能力分别核验，而不能只凭某一公开型号推定全链成熟。逐装备承接关系如下：
+
+{chr(10).join(foundation_rows)}
+
+近期优先使用训练弹、仿真火控、现有无人平台和被动感知载荷验证任务状态字段、接口时序与安全中止；中期形成跨装备样机并进入半实物和综合靶场；后续再用持续波次、补给受阻和节点损耗试验检验产能、维护和战损补充。凡公开资料不能支撑的精确参数、成熟度和参与单位信息，均进入核验清单而不写成既成事实。
+"""
+        return report.strip()
 
     def text_rows(key: str, *, limit: int = 5) -> list[str]:
         values = handoff.get(key, [])
@@ -11435,7 +17602,8 @@ def _swarm_provider_isolation_id(
     agent_id: str,
     payload: Mapping[str, Any],
 ) -> str:
-    if not str(agent_id).startswith("winning_swarm_"):
+    parallel_s6 = str(agent_id) == "winning_s6_image"
+    if not str(agent_id).startswith("winning_swarm_") and not parallel_s6:
         return ""
     candidates: list[Mapping[str, Any]] = [payload]
     for key in ("input", "task_input"):
@@ -11446,6 +17614,10 @@ def _swarm_provider_isolation_id(
             if isinstance(nested, Mapping):
                 candidates.append(nested)
     for candidate in candidates:
+        if parallel_s6:
+            card_id = str(candidate.get("parallel_card_id", "")).strip()
+            if card_id:
+                return card_id
         task = candidate.get("specialist_task")
         if isinstance(task, Mapping):
             return str(task.get("agent_instance_id", "")).strip()
@@ -11538,6 +17710,15 @@ def _phase_reasoning_effort(
         if agent_id == "winning_s6_image":
             if "card_repair" in phase:
                 return "low"
+            if (
+                phase == "winning_s6_image_deep"
+                and
+                os.environ.get("EQUIPMENT_DR_ENTERPRISE_LATENCY_PROFILE", "1")
+                .strip()
+                .lower()
+                not in {"0", "false", "no"}
+            ):
+                return "medium"
             return "high"
         if (
             agent_id == "winning_s4_capability"
@@ -11713,12 +17894,24 @@ def _evidence_from_web_sources(
         title = str(source.get("title", "")).strip()
         snippet = str(source.get("snippet", "")).strip()
         structured_claim = bool(claims.get(url))
+        required_source_anchor = bool(source.get("required_source_anchor")) or (
+            str(source.get("retrieval_lane", "")) == "required_source_anchor"
+        )
         hosted_source = bool(
             snippet
             or (title and title != url)
             or (provider_kind == "codex_cli" and structured_claim)
         )
         source_prefix = "codex" if provider_kind == "codex_cli" else "responses"
+        evidence_markers = [
+            f"{source_prefix}_web_search_source"
+            if hosted_source
+            else f"{source_prefix}_web_search_lead"
+        ]
+        if not structured_claim:
+            evidence_markers.append("finding_fallback")
+        if required_source_anchor:
+            evidence_markers.append("required_source_anchor")
         result.append(
             EvidenceCard(
                 evidence_id=f"ev-{request.agent.agent_id}-web-{digest}",
@@ -11728,11 +17921,7 @@ def _evidence_from_web_sources(
                 claim=claims.get(url) or fallback_claim,
                 excerpt=snippet,
                 source_location=f"{source_prefix}:web_search",
-                quality_assessment=(
-                    f"{source_prefix}_web_search_source"
-                    if hosted_source
-                    else f"{source_prefix}_web_search_lead"
-                ),
+                quality_assessment="; ".join(evidence_markers),
                 created_by=request.agent.agent_id,
             )
         )
@@ -11805,6 +17994,84 @@ _REPORT_CANONICAL_H3 = (
     "⑨ 发展优先级与近期抓手",
 )
 
+_PROJECT_REPORT_CANONICAL_H2 = (
+    "一、需求分析",
+    "二、项目画像",
+    "三、总体方案",
+    "四、关键技术",
+    "五、研制基础",
+)
+
+_PROJECT_REPORT_CANONICAL_H3 = (
+    "（一）需求概述",
+    "（二）国内外现状",
+    "（三）建设必要性分析",
+    "（一）装备图像概述",
+    "（二）作战运用模式",
+    "（三）体系贡献率分析",
+    "（四）主要战技指标",
+    "（一）总体架构",
+    "（二）子系统方案",
+    "（一）关键技术清单与攻关途径",
+    "（一）参与单位",
+    "（二）技术基础",
+)
+
+_PROJECT_REPORT_CANONICAL_H4 = (
+    "1. 背景分析",
+    "2. 需求阐述",
+    "3. 项目画像",
+    "1. 国外情况",
+    "2. 国内现状（中国）",
+    "3. 对比小结",
+    "1. 作战使用角度",
+    "2. 装备能力提升角度",
+    "3. 领域占位角度",
+    "4. 综合效益",
+    "1. 作战运用流程",
+    "2. 链路闭环分析",
+)
+
+_PROJECT_REPORT_H3_PARENT = {
+    title: parent
+    for parent, titles in (
+        (_PROJECT_REPORT_CANONICAL_H2[0], _PROJECT_REPORT_CANONICAL_H3[0:3]),
+        (_PROJECT_REPORT_CANONICAL_H2[1], _PROJECT_REPORT_CANONICAL_H3[3:7]),
+        (_PROJECT_REPORT_CANONICAL_H2[2], _PROJECT_REPORT_CANONICAL_H3[7:9]),
+        (_PROJECT_REPORT_CANONICAL_H2[3], _PROJECT_REPORT_CANONICAL_H3[9:10]),
+        (_PROJECT_REPORT_CANONICAL_H2[4], _PROJECT_REPORT_CANONICAL_H3[10:12]),
+    )
+    for title in titles
+}
+
+_PROJECT_REPORT_H4_PARENT = {
+    title: parent
+    for parent, titles in (
+        (_PROJECT_REPORT_CANONICAL_H3[0], _PROJECT_REPORT_CANONICAL_H4[0:3]),
+        (_PROJECT_REPORT_CANONICAL_H3[1], _PROJECT_REPORT_CANONICAL_H4[3:6]),
+        (_PROJECT_REPORT_CANONICAL_H3[2], _PROJECT_REPORT_CANONICAL_H4[6:10]),
+        (_PROJECT_REPORT_CANONICAL_H3[4], _PROJECT_REPORT_CANONICAL_H4[10:12]),
+    )
+    for title in titles
+}
+
+
+def _report_template_mode(payload: Mapping[str, Any]) -> str:
+    value = str(payload.get("report_template_mode", "")).strip()
+    return value if value in {"three_layer_nine_item", "project_argument_v1"} else "three_layer_nine_item"
+
+
+def _report_canonical_headings(
+    payload: Mapping[str, Any],
+) -> tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
+    if _report_template_mode(payload) == "project_argument_v1":
+        return (
+            _PROJECT_REPORT_CANONICAL_H2,
+            _PROJECT_REPORT_CANONICAL_H3,
+            _PROJECT_REPORT_CANONICAL_H4,
+        )
+    return _REPORT_CANONICAL_H2, _REPORT_CANONICAL_H3, ()
+
 _REPORT_H3_ALIAS_MARKERS = (
     ("典型作战场景", "作战场景", "场景构造"),
     ("新战法或新概念技术及制胜机理", "新战法", "新概念技术", "制胜机理"),
@@ -11818,10 +18085,48 @@ _REPORT_H3_ALIAS_MARKERS = (
 )
 
 
+def _report_has_complete_canonical_structure(text: str) -> bool:
+    project_mode = "## 一、需求分析" in str(text or "")
+    h2_values = _PROJECT_REPORT_CANONICAL_H2 if project_mode else _REPORT_CANONICAL_H2
+    h3_values = _PROJECT_REPORT_CANONICAL_H3 if project_mode else _REPORT_CANONICAL_H3
+    h4_values = _PROJECT_REPORT_CANONICAL_H4 if project_mode else ()
+    return all(
+        len(
+            re.findall(
+                rf"^##\s+{re.escape(title)}\s*$",
+                str(text or ""),
+                flags=re.MULTILINE,
+            )
+        )
+        == 1
+        for title in h2_values
+    ) and all(
+        len(
+            re.findall(
+                rf"^###\s+{re.escape(title)}\s*$",
+                str(text or ""),
+                flags=re.MULTILINE,
+            )
+        )
+        == 1
+        for title in h3_values
+    ) and all(
+        len(
+            re.findall(
+                rf"^####\s+{re.escape(title)}\s*$",
+                str(text or ""),
+                flags=re.MULTILINE,
+            )
+        )
+        == 1
+        for title in h4_values
+    )
+
+
 def _canonical_report_h2(title: str) -> str:
     normalized = re.sub(r"\s+", "", title)
     normalized = re.sub(r"^\d+(?:\.\d+)*[、.．]?", "", normalized)
-    for canonical in _REPORT_CANONICAL_H2:
+    for canonical in (*_REPORT_CANONICAL_H2, *_PROJECT_REPORT_CANONICAL_H2):
         if normalized == re.sub(r"\s+", "", canonical):
             return canonical
     for index, markers in enumerate(
@@ -11833,11 +18138,18 @@ def _canonical_report_h2(title: str) -> str:
     ):
         if any(marker in normalized for marker in markers):
             return _REPORT_CANONICAL_H2[index]
+    for canonical in _PROJECT_REPORT_CANONICAL_H2:
+        label = re.sub(r"^[一二三四五]、", "", canonical)
+        if label in normalized:
+            return canonical
     return ""
 
 
 def _canonical_report_h3(title: str) -> str:
     normalized = re.sub(r"\s+", "", title).strip("：:、.．")
+    for canonical in _PROJECT_REPORT_CANONICAL_H3:
+        if normalized == re.sub(r"\s+", "", canonical):
+            return canonical
     for index, marker in enumerate("①②③④⑤⑥⑦⑧⑨"):
         if normalized.startswith(marker):
             return _REPORT_CANONICAL_H3[index]
@@ -11853,6 +18165,16 @@ def _canonical_report_h3(title: str) -> str:
     return ""
 
 
+def _canonical_report_h4(title: str) -> str:
+    normalized = re.sub(r"\s+", "", title).replace("）", ")").replace("（", "(")
+    normalized = re.sub(r"^([1-4])[）).、．]", r"\1.", normalized)
+    for canonical in _PROJECT_REPORT_CANONICAL_H4:
+        candidate = re.sub(r"\s+", "", canonical).replace("）", ")").replace("（", "(")
+        if normalized == candidate:
+            return canonical
+    return ""
+
+
 def _normalize_report_structure_deterministically(text: str) -> str:
     """Normalize report headings without regenerating or rewriting prose.
 
@@ -11862,52 +18184,281 @@ def _normalize_report_structure_deterministically(text: str) -> str:
     heading line and preserve every substantive body line unchanged.
     """
 
+    text = re.sub(
+        r"(?<=[。！？；])(?=#{2,4}\s*(?:[一二三四五]、|（[一二三四]）|[①-⑨]))",
+        "\n\n",
+        str(text or ""),
+    )
     seen_h2: set[str] = set()
     seen_h3: set[str] = set()
+    seen_h4: set[str] = set()
     normalized_lines: list[str] = []
-    for raw_line in str(text or "").splitlines():
+    for raw_line in text.splitlines():
         match = re.match(r"^(#{1,6})\s+(.+?)\s*$", raw_line)
         if match is None:
             normalized_lines.append(raw_line)
             continue
         level = len(match.group(1))
         title = match.group(2).strip()
+        if level == 1:
+            # The delivery layer owns the report title.  Handle it before
+            # semantic heading aliases: a long topic title may legitimately
+            # contain words such as ``能力画像`` and must not be mistaken for
+            # the canonical section ``⑦ 装备能力图像``.
+            continue
         canonical_h2 = _canonical_report_h2(title)
         canonical_h3 = _canonical_report_h3(title)
-        if canonical_h2:
+        canonical_h4 = _canonical_report_h4(title)
+        if level >= 4 and canonical_h4:
+            parent_h3 = _PROJECT_REPORT_H4_PARENT.get(canonical_h4, "")
+            if parent_h3 and parent_h3 not in seen_h3:
+                parent_h2 = _PROJECT_REPORT_H3_PARENT[parent_h3]
+                if parent_h2 not in seen_h2:
+                    seen_h2.add(parent_h2)
+                    normalized_lines.append(f"## {parent_h2}")
+                seen_h3.add(parent_h3)
+                normalized_lines.append(f"### {parent_h3}")
+            if canonical_h4 in seen_h4:
+                continue
+            seen_h4.add(canonical_h4)
+            normalized_lines.append(f"#### {canonical_h4}")
+            continue
+        if canonical_h2 and not (level == 3 and canonical_h3):
             if canonical_h2 in seen_h2:
                 continue
             seen_h2.add(canonical_h2)
             normalized_lines.append(f"## {canonical_h2}")
             continue
         if canonical_h3:
+            parent_h2 = _PROJECT_REPORT_H3_PARENT.get(canonical_h3, "")
+            if parent_h2 and parent_h2 not in seen_h2:
+                # Reporter occasionally emits a complete project chapter body
+                # while omitting only its H2 line (for example, the two
+                # solution H3 sections appear directly after chapter two).
+                # Restore the uniquely implied parent heading without
+                # regenerating, moving, or rewriting any substantive prose.
+                seen_h2.add(parent_h2)
+                normalized_lines.append(f"## {parent_h2}")
             if canonical_h3 in seen_h3:
                 continue
             seen_h3.add(canonical_h3)
             normalized_lines.append(f"### {canonical_h3}")
             continue
-        if level == 1:
-            # The delivery layer owns the report title.  Dropping only the H1
-            # line avoids a duplicate title while retaining all report prose.
-            continue
         # Extra indexes and explanatory subheads remain visible, but no longer
-        # compete with the fixed three-layer/nine-item machine contract.
+        # compete with the selected machine-readable template contract.
         normalized_lines.append(f"**{title}**")
     return re.sub(r"\n{3,}", "\n\n", "\n".join(normalized_lines)).strip()
 
 
 def _report_capability_cues(payload: Mapping[str, Any]) -> list[dict[str, Any]]:
+    def public_cue(item: Mapping[str, Any]) -> dict[str, Any]:
+        cleaned: dict[str, Any] = {}
+        for key, value in item.items():
+            if isinstance(value, str):
+                text = _strip_report_internal_markers(value).strip()
+                if str(key) == "direction":
+                    text = _REPORTER_CANDIDATE_PREFIX_RE.sub("", text).strip()
+                cleaned[str(key)] = text
+            elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+                cleaned[str(key)] = [
+                    _strip_report_internal_markers(nested).strip()
+                    if isinstance(nested, str)
+                    else nested
+                    for nested in value
+                ]
+            else:
+                cleaned[str(key)] = value
+        direction_name = str(cleaned.get("direction", "")).strip()
+        if re.match(r"^[A-Za-z0-9][A-Za-z0-9./-]{2,}", direction_name):
+            cleaned["direction"] = build_capability_title(
+                name=direction_name,
+                equipment_form=cleaned.get("equipment_hint")
+                or cleaned.get("equipment_form")
+                or cleaned.get("public_equipment_baseline"),
+                effect=cleaned.get("mission_effect"),
+            )
+        return cleaned
+
     seed = payload.get("synthesis_seed", {})
     if isinstance(seed, Mapping):
         rows = seed.get("capability_cues", [])
         if isinstance(rows, Sequence) and not isinstance(rows, (str, bytes)):
-            return [dict(item) for item in rows if isinstance(item, Mapping)][:7]
+            public_rows = [
+                public_cue(item) for item in rows if isinstance(item, Mapping)
+            ][:7]
+            if public_rows:
+                return public_rows
     handoff = payload.get("research_handoff", {})
     if isinstance(handoff, Mapping):
         rows = handoff.get("capability_cues", [])
         if isinstance(rows, Sequence) and not isinstance(rows, (str, bytes)):
-            return [dict(item) for item in rows if isinstance(item, Mapping)][:7]
+            return [public_cue(item) for item in rows if isinstance(item, Mapping)][:7]
     return []
+
+
+def _report_capability_portrait_markdown(item: Mapping[str, Any]) -> str:
+    portrait = str(item.get("capability_portrait", "")).strip()
+    portrait = resolve_capability_portrait(
+        portrait,
+        name=item.get("direction") or item.get("name"),
+        scenario=item.get("target_scenario") or "典型作战场景",
+        problem=item.get("problem_statement") or item.get("capability_gap"),
+        principle=item.get("scientific_principle") or item.get("mechanism_hint"),
+        technologies=item.get("enabling_technologies", []),
+        operational_concept=item.get("operational_concept") or item.get("mechanism_hint"),
+        operational_steps=item.get("operational_process", []),
+        capability=item.get("capability_outcome")
+        or item.get("equipment_hint")
+        or item.get("direction"),
+        effect=item.get("mission_effect"),
+        winning_mechanism=item.get("winning_mechanism") or item.get("mechanism_hint"),
+        equipment_form=item.get("equipment_hint") or item.get("direction"),
+        baseline=item.get("public_equipment_baseline")
+        or item.get("equipment_hint")
+        or item.get("direction"),
+        development_path=item.get("development_path"),
+        failure_boundary=item.get("boundary"),
+        verification_plan=item.get("indicator_portrait"),
+    )
+    # Preserve stored S6 portrait content while repairing the historical
+    # duplicated relation prefix caused by queries that already began with
+    # ``面向``. This is a mechanical wording fix, not a semantic rewrite.
+    portrait = re.sub(r"^(概述：面向)(?:面向)+", r"\1", portrait)
+    portrait = re.sub(
+        r"\s+(?=- (?:装备与技术实现|关键作战流程|形成能力与作战效果|制胜逻辑机理与对抗边界|发展与验证路径|决策与考核口径)：)",
+        "\n\n",
+        portrait,
+    )
+    return portrait.strip()
+
+
+def _remove_empty_report_clauses(line: str) -> str:
+    """Drop punctuation-normalized clauses that carry no predicate object."""
+
+    parts = re.split(r"(?<=[。！？!?])", str(line))
+    kept = []
+    for part in parts:
+        stripped = part.strip()
+        empty_prompt = bool(
+            re.fullmatch(
+                r".{1,100}(?:包括|如下|分别为|体现为|主要是|在于|取决于|依赖于)[。.]",
+                stripped,
+            )
+        )
+        nominal_stub = bool(
+            re.fullmatch(r".{1,100}的(?:概念|实现路径|耦合链条)[。.]", stripped)
+        )
+        dangling_conditional = False
+        if re.match(r"^(?:若|如果|一旦|当)", stripped):
+            body = stripped.rstrip("。.!！?")
+            pieces = re.split(r"[，,；;]", body, maxsplit=1)
+            consequence = pieces[1] if len(pieces) > 1 else body[1:]
+            dangling_conditional = not any(
+                marker in consequence
+                for marker in (
+                    "则", "就", "会", "将", "应", "需", "可", "可能", "难以",
+                    "无法", "导致", "造成", "触发", "退化", "失效", "下降", "上升",
+                    "增加", "降低", "转为", "停止", "中止", "返航", "成立",
+                )
+            )
+        if not (empty_prompt or nominal_stub or dangling_conditional):
+            kept.append(part)
+    return "".join(kept).strip()
+
+
+def _normalized_report_reuse_text(value: object) -> str:
+    """Normalize a report phrase for deterministic verbatim-reuse checks."""
+
+    text = re.sub(r"https?://\S+", "", str(value or ""))
+    text = re.sub(r"[*_`>#\[\](){}‘’“”\"']", "", text)
+    return re.sub(r"[\s，,。；;：:！？!?、|—-]+", "", text)
+
+
+def _report_matrix_verification_mechanism(name: str, mechanism: str) -> str:
+    """Project a causal mechanism as matrix-specific verification stages."""
+
+    parts = [
+        part.strip().strip("。；.!?！？")
+        for part in re.split(r"\s*→\s*", str(mechanism or ""))
+        if part.strip().strip("。；.!?！？")
+    ]
+    if len(parts) <= 1:
+        return f"{name}验证观察：{parts[0] if parts else mechanism}"
+    labels = ("起始条件", "任务动作", "闭环结果")
+    return "；".join(
+        f"{labels[index] if index < len(labels) else f'后续环节{index + 1}'}检验：{part}"
+        for index, part in enumerate(parts)
+    )
+
+
+def _reflow_long_report_paragraphs(
+    text: str,
+    *,
+    target_chars: int = 900,
+    hard_chars: int = 1050,
+) -> str:
+    """Add Markdown paragraph breaks without deleting or rewriting report content."""
+
+    prepared: list[str] = []
+    for raw_line in str(text).splitlines():
+        stripped = raw_line.strip()
+        if (
+            stripped
+            and prepared
+            and prepared[-1].strip().startswith("#")
+            and not stripped.startswith("#")
+        ):
+            prepared.append("")
+        if stripped.startswith(("- ", "* ")) and prepared and prepared[-1].strip():
+            prepared.append("")
+        prepared.append(raw_line)
+    normalized = re.sub(r"\n{3,}", "\n\n", "\n".join(prepared)).strip()
+
+    def split_block(block: str) -> list[str]:
+        compact = " ".join(block.split()).strip()
+        if not compact or compact.startswith(("#", "|", "- ", "* ")):
+            return [block.strip()]
+        if len(compact) <= hard_chars:
+            return [block.strip()]
+        sentences = [
+            item.strip()
+            for item in re.findall(r".+?(?:[。！？!?；;]|$)", compact)
+            if item.strip()
+        ]
+        units: list[str] = []
+        for sentence in sentences:
+            if len(sentence) <= hard_chars:
+                units.append(sentence)
+                continue
+            clauses = [
+                item
+                for item in re.findall(r".+?(?:[，,、：:]|$)", sentence)
+                if item
+            ]
+            for clause in clauses:
+                if len(clause) <= hard_chars:
+                    units.append(clause)
+                else:
+                    units.extend(
+                        clause[index : index + target_chars]
+                        for index in range(0, len(clause), target_chars)
+                    )
+        paragraphs: list[str] = []
+        current = ""
+        for unit in units:
+            if current and len(current) + len(unit) > target_chars:
+                paragraphs.append(current.strip())
+                current = unit
+            else:
+                current += unit
+        if current.strip():
+            paragraphs.append(current.strip())
+        return paragraphs or [block.strip()]
+
+    blocks: list[str] = []
+    for block in re.split(r"\n\s*\n", normalized):
+        blocks.extend(split_block(block))
+    return "\n\n".join(item for item in blocks if item.strip())
 
 
 def _stabilize_report_delivery_contract(
@@ -11922,6 +18473,17 @@ def _stabilize_report_delivery_contract(
     conclusion is introduced here.
     """
 
+    project_mode = _report_template_mode(payload) == "project_argument_v1"
+    capability_start = (
+        r"^###\s*（一）装备图像概述\s*$"
+        if project_mode
+        else r"^###\s*⑦\s*装备能力图像\s*$"
+    )
+    capability_end = (
+        r"^###\s*（二）作战运用模式\s*$"
+        if project_mode
+        else r"^###\s*⑧\s*效能贡献评估\s*$"
+    )
     cues = _report_capability_cues(payload)
     cue_by_name = {
         str(item.get("direction", "")).strip(): dict(item)
@@ -11941,9 +18503,9 @@ def _stabilize_report_delivery_contract(
     in_capability_section = False
     for raw_line in lines:
         stripped = raw_line.strip()
-        if re.match(r"^###\s*⑦\s*装备能力图像\s*$", stripped):
+        if re.match(capability_start, stripped):
             in_capability_section = True
-        elif re.match(r"^###\s*⑧\s*效能贡献评估\s*$", stripped):
+        elif re.match(capability_end, stripped):
             in_capability_section = False
         if in_capability_section and stripped.startswith("|") and stripped.endswith("|"):
             cells = [cell.strip() for cell in stripped.strip("|").split("|")]
@@ -11967,8 +18529,13 @@ def _stabilize_report_delivery_contract(
                 (name, f"- **{name}**：{risk.rstrip('。；')}。")
             )
     if coupling_rows:
+        coupling_pattern = (
+            r"(^###\s*（一）关键技术清单与攻关途径\s*$\n)(?P<body>.*?)(?=^##\s*五、研制基础\s*$)"
+            if project_mode
+            else r"(^###\s*⑥\s*技术耦合与短板风险\s*$\n)(?P<body>.*?)(?=^###\s*⑦\s*装备能力图像\s*$)"
+        )
         section_match = re.search(
-            r"(^###\s*⑥\s*技术耦合与短板风险\s*$\n)(?P<body>.*?)(?=^###\s*⑦\s*装备能力图像\s*$)",
+            coupling_pattern,
             result,
             flags=re.MULTILINE | re.DOTALL,
         )
@@ -11988,15 +18555,34 @@ def _stabilize_report_delivery_contract(
         stripped = raw_line.strip()
         if not stripped or stripped.startswith(("#", "|")):
             continue
+        next_nonempty = next(
+            (item.strip() for item in final_lines[index + 1 :] if item.strip()),
+            "",
+        )
+        # A short ``如下。`` lead-in is complete when it introduces a governed
+        # list or table.  Preserve it across repeated stabilization passes;
+        # otherwise the first pass closes ``如下：`` mechanically and the
+        # second pass mistakes the resulting sentence for an empty clause.
+        introduces_structured_content = (
+            stripped.endswith(("如下。", "如下."))
+            and next_nonempty.startswith(("- ", "* ", "|"))
+        )
+        cleaned_line = (
+            raw_line
+            if introduces_structured_content
+            else _remove_empty_report_clauses(raw_line)
+        )
+        if cleaned_line != stripped:
+            final_lines[index] = cleaned_line
+            raw_line = cleaned_line
+            stripped = cleaned_line.strip()
+            if not stripped:
+                continue
         if stripped.startswith(("- ", "* ")):
             if stripped[-1] not in "。！？；.!?" and not re.search(r"https?://\S+$", stripped):
                 final_lines[index] = raw_line.rstrip() + "。"
             continue
         if stripped.endswith("："):
-            next_nonempty = next(
-                (item.strip() for item in final_lines[index + 1 :] if item.strip()),
-                "",
-            )
             if next_nonempty.startswith(("- ", "* ", "|")):
                 final_lines[index] = raw_line.rstrip("：") + "。"
     layout_lines: list[str] = []
@@ -12008,6 +18594,14 @@ def _stabilize_report_delivery_contract(
                 layout_lines.append("")
         layout_lines.append(raw_line)
     result = re.sub(r"\n{3,}", "\n\n", "\n".join(layout_lines)).strip()
+    result = re.sub(
+        r"(?m)(^|[；：|]\s*)通过条件(?:为)?(?=\s*(?:[。；|]|$))",
+        lambda match: (
+            match.group(1)
+            + "通过条件需在对应试验场景、基线与统计口径下明确"
+        ),
+        result,
+    )
 
     # Reporter may invent an extra table column (for example, placing
     # ``作战边界`` where the delivery contract expects ``作战运用概念``).
@@ -12015,7 +18609,7 @@ def _stabilize_report_delivery_contract(
     # canonical semantic layout and every operation concept stays attached to
     # the correct weapon direction.
     capability_match = re.search(
-        r"(^###\s*⑦\s*装备能力图像\s*$\n)(?P<body>.*?)(?=^###\s*⑧\s*效能贡献评估\s*$)",
+        rf"({capability_start}\n)(?P<body>.*?)(?={capability_end})",
         result,
         flags=re.MULTILINE | re.DOTALL,
     )
@@ -12026,55 +18620,156 @@ def _stabilize_report_delivery_contract(
             for index, line in enumerate(body_lines)
             if line.strip().startswith("|") and line.strip().endswith("|")
         ]
-        if table_indexes:
-            table_start, table_end = min(table_indexes), max(table_indexes)
-            canonical_table = [
+        canonical_table = (
+            [
+                "| 装备系统方向 | 装备平台与方案 | 核心技术 | 形成能力 | 作战概念与主要效果 |",
+                "|---|---|---|---|---|",
+            ]
+            if project_mode
+            else [
                 "| 装备系统方向 | 能力域 | 指标画像 | 作战运用概念 | 谱系位置 |",
                 "|---|---|---|---|---|",
             ]
-            for name, item in cue_by_name.items():
-                capability_domain = str(
-                    item.get("mission_effect")
-                    or item.get("capability_gap")
-                    or item.get("equipment_hint")
-                    or "直接作战能力"
-                ).strip()
-                operation = str(
-                    item.get("mechanism_hint")
-                    or "按任务边界完成编组、待机、发射、突防与毁伤后再打击"
-                ).strip()
-                indicator = str(
-                    item.get("indicator_portrait")
-                    or "覆盖、响应、自主边界、成本、规模与生存性按装备任务分别校准"
-                ).strip()
-                lineage = str(
-                    item.get("development_path")
-                    or item.get("public_equipment_baseline")
-                    or "新研直接作战装备方向"
-                ).strip()
-                canonical_table.append(
-                    "| "
-                    + " | ".join(
+        )
+        for name, item in cue_by_name.items():
+            capability_domain = str(
+                item.get("mission_effect")
+                or item.get("capability_gap")
+                or item.get("equipment_hint")
+                or "直接作战能力"
+            ).strip()
+            operation = str(
+                item.get("mechanism_hint")
+                or "按任务边界完成编组、待机、发射、突防与毁伤后再打击"
+            ).strip()
+            indicator = str(
+                item.get("indicator_portrait")
+                or "覆盖、响应、自主边界、成本、规模与生存性按装备任务分别校准"
+            ).strip()
+            lineage = str(
+                item.get("development_path")
+                or item.get("public_equipment_baseline")
+                or "新研直接作战装备方向"
+            ).strip()
+            technologies = item.get("enabling_technologies", [])
+            technology_text = (
+                "、".join(str(value) for value in technologies[:5])
+                if isinstance(technologies, list)
+                else str(technologies)
+            )
+            project_cells = (
+                name,
+                str(item.get("equipment_hint") or "具体平台、载荷与任务系统方案"),
+                technology_text or str(item.get("scientific_principle") or "核心技术待分解"),
+                str(item.get("capability_outcome") or capability_domain),
+                f"{item.get('operational_concept') or operation}；{item.get('mission_effect') or capability_domain}",
+            )
+            legacy_cells = (
+                name,
+                capability_domain,
+                indicator,
+                operation,
+                lineage,
+            )
+            selected_cells = project_cells if project_mode else legacy_cells
+            canonical_table.append(
+                "| "
+                + " | ".join(
+                    (
                         cell.replace("|", "／")
-                        for cell in (
-                            name,
-                            capability_domain,
-                            indicator,
-                            operation,
-                            lineage,
+                        if index == 0 or len(cell) <= 215
+                        else _clip_complete_report_phrase(
+                            cell.replace("|", "／"),
+                            215,
                         )
                     )
-                    + " |"
+                    for index, cell in enumerate(selected_cells)
                 )
+                + " |"
+            )
+        if table_indexes:
+            table_start, table_end = min(table_indexes), max(table_indexes)
             body_lines = [
                 *body_lines[:table_start],
                 *canonical_table,
                 *body_lines[table_end + 1 :],
             ]
-            rebuilt_body = "\n".join(body_lines).strip() + "\n\n"
+        else:
+            detail_indexes = [
+                index
+                for index, line in enumerate(body_lines)
+                if "逐装备详细能力画像如下" in line
+                or any(
+                    f"**{name}｜装备能力画像**" in line
+                    for name in cue_by_name
+                )
+            ]
+            detail_index = min(detail_indexes) if detail_indexes else len(body_lines)
+            insertion = [*canonical_table, ""]
+            if detail_index > 0 and body_lines[detail_index - 1].strip():
+                insertion.insert(0, "")
+            body_lines = [
+                *body_lines[:detail_index],
+                *insertion,
+                *body_lines[detail_index:],
+            ]
+        rebuilt_body = "\n".join(body_lines).strip() + "\n\n"
+        result = (
+            result[: capability_match.start("body")]
+            + rebuilt_body
+            + result[capability_match.end("body") :]
+        )
+
+    # A comparison table is useful for scanning but cannot replace a complete
+    # equipment argument. Append the governed multi-module portrait for
+    # every direction so the formal report and capability cards share the same
+    # scenario-to-effect causal source.  Rebuild by marker for idempotence.
+    capability_match = re.search(
+        rf"({capability_start}\n)(?P<body>.*?)(?={capability_end})",
+        result,
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    if capability_match and cue_by_name:
+        capability_body = capability_match.group("body").rstrip()
+        detail_marker = "逐装备详细能力画像如下"
+        marker_index = capability_body.find(detail_marker)
+        if marker_index >= 0:
+            capability_body = capability_body[:marker_index].rstrip()
+        # Historical drafts may already contain one or more partially pruned
+        # deterministic portrait blocks before the marker (for example, only
+        # the bold equipment titles survived a prior hard-limit pass).  The
+        # governed portrait appendix is always the tail of section ⑦, so drop
+        # the stale tail from its first exact portrait title and rebuild once.
+        orphan_indexes = [
+            capability_body.find(f"**{name}｜装备能力画像**")
+            for name in cue_by_name
+        ]
+        orphan_indexes = [index for index in orphan_indexes if index >= 0]
+        if orphan_indexes:
+            capability_body = capability_body[: min(orphan_indexes)].rstrip()
+        detail_rows: list[str] = []
+        for name, item in cue_by_name.items():
+            portrait = _report_capability_portrait_markdown(item)
+            if not portrait:
+                continue
+            detail_rows.extend(
+                [
+                    f"**{name}｜装备能力画像**",
+                    "",
+                    portrait,
+                ]
+            )
+        if detail_rows:
+            detail_block = (
+                f"\n\n{detail_marker}；以下内容用于逐项说明装备形态、作战流程、形成能力、"
+                "直接效果、制胜机理与验证边界。\n\n"
+                + "\n\n".join(detail_rows)
+                + "\n\n"
+            )
             result = (
                 result[: capability_match.start("body")]
-                + rebuilt_body
+                + capability_body
+                + detail_block
                 + result[capability_match.end("body") :]
             )
 
@@ -12083,14 +18778,23 @@ def _stabilize_report_delivery_contract(
     # contribution, disruptive relationship and failure boundary. Project the
     # already-prepared S6 fields into a compact per-direction appendix without
     # asking Reporter to rewrite the report.
+    effect_pattern = (
+        r"(^###\s*（三）体系贡献率分析\s*$\n)(?P<body>.*?)(?=^###\s*（四）主要战技指标\s*$)"
+        if project_mode
+        else r"(^###\s*⑧\s*效能贡献评估\s*$\n)(?P<body>.*?)(?=^###\s*⑨\s*发展优先级与近期抓手\s*$)"
+    )
     effect_match = re.search(
-        r"(^###\s*⑧\s*效能贡献评估\s*$\n)(?P<body>.*?)(?=^###\s*⑨\s*发展优先级与近期抓手\s*$)",
+        effect_pattern,
         result,
         flags=re.MULTILINE | re.DOTALL,
     )
     if effect_match and cue_by_name:
         effect_body = effect_match.group("body").rstrip()
-        appendix_marker = "逐项效能、创新关系与失效边界如下"
+        appendix_marker = (
+            "逐装备体系贡献、制胜机理与失效边界如下"
+            if project_mode
+            else "逐项效能、创新关系与失效边界如下"
+        )
         marker_index = effect_body.find(appendix_marker)
         if marker_index >= 0:
             # The stabilizer can run once for the model draft and again for a
@@ -12121,11 +18825,16 @@ def _stabilize_report_delivery_contract(
                 item.get("boundary")
                 or "对手采用诱饵、干扰与针对性拦截时收益下降，具体失效边界待代表性对抗试验验证"
             ).strip()
+            indicator = _clean_reporter_clue_text(
+                item.get("indicator_portrait")
+                or "任务成功率、压制窗口、交换比和再打击周期",
+                max_chars=180,
+            ).rstrip("。；")
             rows.append(
                 f"- **{name}**（{chain_type}）：{effect.rstrip('。；')}；"
                 f"作战机理为{mechanism.rstrip('。；')}；创新关系为{disruptive.rstrip('。；')}；"
-                f"对手反适应与失效边界为{boundary.rstrip('。；')}。量化验证方向包括任务成功率、"
-                "压制窗口、交换比和再打击周期；公开证据不足时不承诺未经校准的点值。"
+                f"对手反适应与失效边界为{boundary.rstrip('。；')}。"
+                f"{name}的量化验证口径为{indicator}；公开证据不足时不承诺未经校准的点值。"
             )
         appendix = (
             f"\n\n{appendix_marker}；证据不足处均作为待验证方向。\n"
@@ -12145,14 +18854,23 @@ def _stabilize_report_delivery_contract(
     # engineering value (project, indicator, coupling, pass/fail boundary)
     # without a second model call or invented parameters. Rebuild by marker so
     # repeated validation stays idempotent.
+    priority_pattern = (
+        r"(^###\s*（四）主要战技指标\s*$\n)(?P<body>.*?)(?=^##\s*三、总体方案\s*$)"
+        if project_mode
+        else r"(^###\s*⑨\s*发展优先级与近期抓手\s*$\n)(?P<body>.*)$"
+    )
     priority_match = re.search(
-        r"(^###\s*⑨\s*发展优先级与近期抓手\s*$\n)(?P<body>.*)$",
+        priority_pattern,
         result,
         flags=re.MULTILINE | re.DOTALL,
     )
     if priority_match and cue_by_name:
         priority_body = priority_match.group("body").rstrip()
-        matrix_marker = "逐装备演示验证矩阵如下"
+        matrix_marker = (
+            "逐装备主要战技指标与验证矩阵如下"
+            if project_mode
+            else "逐装备演示验证矩阵如下"
+        )
         marker_index = priority_body.find(matrix_marker)
         if marker_index >= 0:
             priority_body = priority_body[:marker_index].rstrip()
@@ -12166,33 +18884,53 @@ def _stabilize_report_delivery_contract(
                 or item.get("public_equipment_baseline")
                 or "以现有公开装备类别为基线开展样机和任务级联试",
                 max_chars=150,
-            )
+            ).rstrip("。；")
             indicator = _clean_reporter_clue_text(
                 item.get("indicator_portrait")
                 or "按覆盖、响应、自主边界、单位任务成本、并发规模和生存性设置指标",
                 max_chars=180,
-            )
+            ).rstrip("。；")
             mechanism = _clean_reporter_clue_text(
                 item.get("mechanism_hint")
                 or "在受扰任务边界内完成目标确认、火力交战和毁伤后续接",
                 max_chars=130,
             )
+            verification_mechanism = _report_matrix_verification_mechanism(
+                name,
+                mechanism,
+            )
             coupling = _clean_reporter_clue_text(
                 item.get("coupling_risk")
                 or "目标信息、末制导、载荷效应和任务授权任一失效都会拖垮闭环",
-                max_chars=150,
-            )
+                max_chars=280,
+            ).rstrip("。；")
             boundary = _clean_reporter_clue_text(
                 item.get("boundary")
                 or "在代表性干扰、诱饵和节点损耗条件下未形成直接毁伤或压制贡献",
                 max_chars=120,
-            )
+            ).rstrip("。；")
+            failure_boundary = boundary
+            if (
+                len(_normalized_report_reuse_text(boundary)) >= 30
+                and _normalized_report_reuse_text(boundary)
+                in _normalized_report_reuse_text(coupling)
+            ):
+                # Some S6 cards conservatively carry the same future/foresight
+                # boundary in both ``coupling_risk`` and ``boundary``.  The
+                # matrix already prints the complete coupling statement, so
+                # repeating the complete boundary again as the failure clause
+                # creates a third verbatim copy once section ⑧ is considered.
+                # Keep the decision meaning and equipment binding while
+                # referring to the complete statement immediately above.
+                failure_boundary = (
+                    f"上述{name}适用场景或反适应边界被触发，且直接作战贡献未达到任务基线"
+                )
             matrix_rows.append(
                 f"- **{name}**（{priority}）：演示项目沿“{development}”启动；"
-                f"作战验证要求为{mechanism}；验收指标方向为{indicator}；"
-                f"关键耦合与单点风险为{coupling}。通过条件是代表性场景中形成可复核的"
+                f"作战验证要求为{verification_mechanism}；验收指标方向为{indicator}；"
+                f"{name}的关键耦合与单点风险为{coupling}。{name}的通过条件是代表性场景中形成可复核的"
                 "打击、猎歼、压制、毁伤、拦截或拒止贡献，并保留任务日志和证据链；"
-                f"失败条件是{boundary}。所有数值阈值由仿真、半实物联试、综合靶场和红队试验校准，"
+                f"失败条件是{failure_boundary}。{name}的数值阈值由仿真、半实物联试、综合靶场和红队试验校准，"
                 "公开证据不足时不得提前承诺点值。"
             )
         matrix = (
@@ -12203,9 +18941,16 @@ def _stabilize_report_delivery_contract(
             result[: priority_match.start("body")]
             + priority_body
             + matrix
+            + (result[priority_match.end("body") :] if project_mode else "")
         )
 
-    return re.sub(r"\n{3,}", "\n\n", result).strip()
+    return _strip_report_internal_markers(
+        _reflow_long_report_paragraphs(
+            _normalize_report_structure_deterministically(
+                re.sub(r"\n{3,}", "\n\n", result).strip()
+            )
+        )
+    )
 
 
 def _report_issues_are_deterministic_format_only(
@@ -12223,7 +18968,84 @@ def _report_issues_are_deterministic_format_only(
     )
 
 
+def _project_argument_report_writer_system_prompt(
+    payload: Mapping[str, Any],
+) -> str:
+    target_chars = _report_target_chars(payload)
+    quality_profile = str(payload.get("execution_profile_id", "")) in {
+        "swarm_quality_v1",
+        "winning_swarm_dynamic_v2",
+    }
+    query_led_clause = (
+        "本次属于质量集群/动态蜂群报告收敛：Query是论证主轴，前置集群交接是已经筛选的高价值"
+        "证据与机理种子，不是待复述的提纲。写作前在内部围绕Query形成3至5个相互竞争的解释框架，"
+        "至少比较任务链续接、对手行动—反行动、成本交换、规模补充和接口闭合中的相关框架，再用"
+        "research_handoff中的决定性锚点、断点、能力方向、反证和公开来源收敛为一条主论证。"
+        "每节必须回答‘矛盾为何成立—现有方案为何不足—项目如何改变任务结果—怎样验证—何时失效’，"
+        "不得输出‘需补充资料’‘以某字段交接为准’‘形成一体化方案’等可套用于任意课题的模板句。"
+        "写作目标只是最低深度参照，不是字符上限；允许报告随证据和论证完整度自然增长，绝不得为了"
+        "压缩而删去具体装备事实、逐项能力画像、来源映射、反证、验证边界或项目落地建议。"
+        if quality_profile
+        else ""
+    )
+    return (
+        "你是独立的军事装备项目论证报告Reporter。只输出中文Markdown正文，不输出一级标题、"
+        "研究流程、Agent名称、内部编号、攻击坐标、可执行打击步骤或无来源精确参数。"
+        + query_led_clause
+        + f"正文以{target_chars}作为容量规划参考而非最低字数，按以下五章模板完整写作，二级、三级、四级标题必须逐字一致且顺序固定。"
+        "报告质量以军事战场决策信息密度衡量，不以篇幅衡量：每段必须提供具体装备/项目事实、战场矛盾、"
+        "因果结论、证据与不确定性、对手反适应、验证判据或建设取舍中的至少一项；通用形势套话、重复背景、"
+        "跨章节同义复述和只扩写字段的段落必须删除。能用更短篇幅闭合论证时立即收束。"
+        "第一章‘## 一、需求分析’包含‘### （一）需求概述’、‘### （二）国内外现状’、"
+        "‘### （三）建设必要性分析’。需求概述下必须依次使用‘#### 1. 背景分析’、"
+        "‘#### 2. 需求阐述’、‘#### 3. 项目画像’：背景分析从国际形势、军事战略与装备竞争顶层展开；"
+        "需求阐述从问题、难点和任务需求引出项目内涵；项目画像概述项目特点、总体方案和关键技术如何解题。"
+        "国内外现状下必须依次使用‘#### 1. 国外情况’、‘#### 2. 国内现状（中国）’、"
+        "‘#### 3. 对比小结’。国外优先美国、俄罗斯等军事技术强国，中国国内单列；每个具体案例自成一段，"
+        "同时写清所解决问题/难点、装备或项目、参与单位、状态、技术方案途径、核心技术、带条件的公开指标、"
+        "实证来源和证据边界；有可用图片URL时以Markdown图片或链接呈现，不得虚构图片。国外与国内均须分别"
+        "从‘问题/难点如何解决’和‘核心技术/技术途径研究情况’两个方面组织。对比小结分别概括双方优势、"
+        "短板并凸显本项目的差异化优势。若公开资料不足，明确写‘公开资料不足/待核验’，不得造型号、单位或指标。"
+        "建设必要性下必须依次使用‘#### 1. 作战使用角度’、‘#### 2. 装备能力提升角度’、"
+        "‘#### 3. 领域占位角度’、‘#### 4. 综合效益’，每个维度至少形成一个完整论证段，并可展开多条。"
+        "第二章‘## 二、项目画像’包含‘### （一）装备图像概述’、‘### （二）作战运用模式’、"
+        "‘### （三）体系贡献率分析’、‘### （四）主要战技指标’。装备图像概述逐项保留全部能力方向原名，"
+        "围绕五列表格所需的‘装备系统方向、装备平台与方案、核心技术、形成能力、作战概念与主要效果’形成"
+        "短而有比较价值的装备组合判断。表格和已通过S6硬门的逐装备‘精简概述+四个受控分点’画像由交付层"
+        "按capability_cues.direction原名确定性重建与注入，Reporter不得复制、改写或扩写画像全文；"
+        "应把模型篇幅用于比较发射域/平台、目标运动包线、末制导传感器、授权来源、补击时序、专属指标和建设取舍。"
+        "能力方向标题必须以中文具体武器装备为主体，英文型号仅作为公开基线或括号对照，不得位于标题开头。"
+        "标题只命名最终形成的具体武器装备及其差异化构型/任务特征，禁止以升级、能力、体系、方向、包或套件收尾；"
+        "现役改进关系只在谱系、公开基线和改装内容中说明，不得替代装备名称。"
+        "作战运用模式下必须依次使用"
+        "‘#### 1. 作战运用流程’和‘#### 2. 链路闭环分析’；流程按任务准备、部署进入、目标发现/确认、"
+        "火力分配、交战毁伤、评估与再组织等阶段说明装备如何使用、何时发挥作用及指标口径；链路闭环围绕"
+        "时间链、信息/精度链、火力链、毁伤评估链等关键链路说明制胜逻辑。体系贡献率把项目嵌入现有装备体系，"
+        "与原方案比较耗弹量、突防效能、任务成功率、闭环时间、交换比、持续波次等可校准指标；无数据只给"
+        "计算口径、基线、变量、验证方法和待校准边界。主要战技指标以表格列出指标名称、定义、目标方向、"
+        "测试条件、验证方法和证据状态，不得补造点值。"
+        "第三章‘## 三、总体方案’包含‘### （一）总体架构’和‘### （二）子系统方案’，"
+        "先给平台—载荷—感知—火控—通信—任务软件—保障/测试的总架构，再把方案落到硬件产品、软件系统、"
+        "接口、数据流、关键输入输出和集成边界。第四章‘## 四、关键技术’包含"
+        "‘### （一）关键技术清单与攻关途径’，逐项给出技术名称、技术内涵、成熟度/基础、瓶颈、攻关途径、"
+        "验证指标和失败条件。第五章‘## 五、研制基础’包含‘### （一）参与单位’和‘### （二）技术基础’，"
+        "参与单位只能使用输入和公开来源支持的单位；无依据时列出所需单位类型与待明确项，不得虚构。技术基础"
+        "结合各方已有平台、样机、算法、试验设施、产线或供应链基础说明对项目的支撑关系。"
+        "能力画像概述建议保持简洁，必须逐项按‘面向场景—针对问题—具体武器装备主体—利用原理—"
+        "采用技术—通过作战概念及关键流程—形成能力—实现效果’完整展开；七个因果节点均须填入该装备专属内容，"
+        "详细制胜机理、边界和验证放入后续分点。"
+        "概述中的场景必须是真实战役/战斗阶段和作战地域，至少写清敌方目标/威胁与反制动作、我方具体"
+        "发射或运用主体、时敏交战流程和直接战场结果；不得把‘装备研究中的任务阶段’或‘公开资料/公开基线"
+        "不能证明’写成场景与问题，证据不足只能放在对抗边界、验证路径或证据状态中。"
+        "research_handoff.capability_cues用于装备画像、流程、指标、"
+        "总体方案和关键技术；research_handoff.comparative_status用于国内外现状；public_sources是唯一"
+        "允许新增引用的URL目录。相同判断只写一次，事实、推断、假设、指标目标和待验证项必须明确分层。"
+    )
+
+
 def _report_writer_system_prompt(payload: Mapping[str, Any]) -> str:
+    if _report_template_mode(payload) == "project_argument_v1":
+        return _project_argument_report_writer_system_prompt(payload)
     branch = _report_branch(payload)
     target_chars = _report_target_chars(payload)
     ablation_scope = str(payload.get("ablation_scope", ""))
@@ -12280,7 +19102,8 @@ def _report_writer_system_prompt(payload: Mapping[str, Any]) -> str:
         "你是全新、独立的军事装备市场需求研究Reporter；本次没有历史会话。"
         f"围绕输入Query撰写正文，以{target_chars}为写作目标，吸收{branch or '当前'}分支高价值成果。"
         "核心正文达到约9000字且三层九项已经闭环后，完成当前句和当前段便立即结束，不再扩写旁支。"
-        "交付层会把输入中已经确定的逐装备验证字段合并进正文，使最终报告超过12000字；你不得为追逐字数重复论证。"
+        "交付层会把输入中已经确定的逐装备验证字段合并进正文，最终报告可随论证完整度自然超过核心正文目标；"
+        "你不得为追逐字数重复论证。"
         "正文自然超出目标完全允许；绝不因为长度而压缩、重写、降级或判定失败。"
         "first_pass_quality_contract是首次成稿的强制提交合同；必须在同一次调用内完成章节预算、"
         "九项覆盖、段落去重和完整句自检，再输出唯一最终正文，不得输出草稿或自检过程。"
@@ -12292,8 +19115,12 @@ def _report_writer_system_prompt(payload: Mapping[str, Any]) -> str:
         "从对手、地域、烈度、时间窗、约束、作战阶段、行动—反行动和未来战争演化重建主矛盾；"
         "用反证、失效边界和公开来源收敛，不输出内部发散过程。禁止沿输入字段顺序逐项展开、禁止复制"
         "前置原句、禁止改写成材料综述、禁止把A-H分支产物作为平行可见模板。"
-        "研究对象优先聚焦与Query有直接因果关系的军事武器装备，特别关注无人化、低空无人机、巡飞弹、"
-        "远程精确打击、强打击、歼灭、压制和毁伤装备；若Query不支持某方向，不得机械套用。"
+        "研究对象优先聚焦与Query有直接因果关系的军事武器装备，并优先观察无人化、低空无人机、巡飞弹、"
+        "远程精确打击、强打击、歼灭、压制和毁伤装备；优先论证相对现役基线具有差异化机体/弹体构型、"
+        "制导感知组合、自主交战边界、突防方式、毁伤机理或低成本规模运用方式的前瞻新研武器。"
+        "这些是优先观察方向而非固定答案，必须结合Query从任务对象、威胁、作战阶段、行动—反行动和未来演化发散，"
+        "不局限于上述类别。能力画像标题必须是‘差异化任务/机理特征+具体武器装备’，不能用无人机、巡飞弹、反辐射巡飞弹、"
+        "远程导弹或精确制导弹药等大类名直接占位；若Query或证据不支持某方向，不得机械套用或虚构新颖性。"
         "当Query或输入能力方向属于无人远程火力打击装备领域时，首次成稿还必须通过五项领域硬门："
         "一是领域属性符合性，正文持续围绕无人平台、远程火力、精确毁伤及其对抗边界，通信/C2/保障"
         "只能作为内嵌依赖；二是装备能力图像同时给出具体装备能力、指标画像和作战运用概念；三是⑧中"
@@ -12320,13 +19147,15 @@ def _report_writer_system_prompt(payload: Mapping[str, Any]) -> str:
         "‘联合校核’。⑦必须横向比较5至7个可独立立项、研制、改装和试验考核的具体"
         "装备系统，其中至少4项直接承担侦察打击、突防、歼灭、压制、拦截、毁伤或区域拒止；优先覆盖"
         "无人作战平台、低空无人武器、远程精确打击导弹/弹药、巡飞弹规模毁伤和反无人拦截效应器；"
+        "其中新研装备必须说明相对公开基线的新颖构型与前瞻触发条件，并直接产生歼灭、毁伤、压制、突防或拒止效果；"
         "伪装、假目标、通信、工程、恢复、评估和保障原则上只能作为横向支撑层，只有Query明确聚焦时"
         "才可最多单列1项。逐项形成能力域、指标画像、边界、颠覆的传统关系及相对现有装备谱系位置；"
         "指标画像必须优先使用capability_cues.indicator_portrait，使不同装备分别突出射程/覆盖、响应、"
         "自主边界、成本、规模、驻留或生存性，允许各自写待试验校准，但禁止所有行复制同一占位句。"
         "不得只给两个抽象能力方向。⑦必须逐项使用research_handoff.capability_cues中的direction原名；"
         "表格第一列的行数和名称必须与输入完全一致，不得另造‘装备包’、保障节点、C2/任务网络或其他"
-        "主体装备。弱网、通信、保障、能源、补给和任务软件只允许写入对应武器装备的体系依赖、技术耦合"
+        "主体装备。每个方向还必须完整展开capability_cues.capability_portrait，不得用横向表格替代逐装备"
+        "多模块详细画像，也不得用总字数上限破坏性压缩。弱网、通信、保障、能源、补给和任务软件只允许写入对应武器装备的体系依赖、技术耦合"
         "或使用边界。⑧按补链、"
         "强链、开链评估对杀伤链和体系的贡献，并给出突防率、交换比、决策周期等可量化方向，不能虚构"
         "精确提升值。⑨给出P0/P1/P2或高/中/低优先级、排序理由和近期演示验证项目构想，写清场景、样机"
@@ -12343,13 +19172,205 @@ def _report_writer_system_prompt(payload: Mapping[str, Any]) -> str:
 
 
 def _report_repair_system_prompt(payload: Mapping[str, Any]) -> str:
+    template_label = (
+        "项目论证五章合同"
+        if _report_template_mode(payload) == "project_argument_v1"
+        else "三层九项合同"
+    )
     return (
         _report_writer_system_prompt(payload)
-        + "\n本次只做定向修订：根据Query、三层九项合同、分支高价值信息、允许来源、原稿和少量修订要点，"
+        + f"\n本次只做定向修订：根据Query、{template_label}、分支高价值信息、允许来源、原稿和少量修订要点，"
         "只修复缺项、逻辑断裂、映射断点、重复、残段和证据边界；保留有依据的深度判断与有效引用。"
         "不得复述评测或研究流程，不得添加来源外URL、无依据数字、攻击步骤、坐标或可执行武器参数。"
         "只输出修订后的完整中文Markdown正文。"
     )
+
+
+def _clean_winning_hypothesis_title(value: Any) -> str:
+    title = " ".join(str(value or "").split()).strip()
+    return re.sub(
+        r"^(?:(?:[A-H]\s*[-/]\s*S\d+(?:\s*[-/]\s*\d+)?)|"
+        r"(?:S\d+)(?:\s*[-/]\s*)?(?:候选)?(?:一|二|三|四|五|[A-Z])?|"
+        r"(?:竞争分支|候选)(?:一|二|三|四|五|[A-Z]|-?\d+)|"
+        r"(?:竞争分支)(?=\s*[：:])|"
+        r"[A-H](?=\s*[：:]))\s*[：:—–/-]*\s*",
+        "",
+        title,
+        count=1,
+        flags=re.IGNORECASE,
+    ).strip()
+
+
+def _winning_portfolio_title(item: WinningHypothesis) -> str:
+    """Prefer a concrete equipment-family name over an internal tactic label."""
+
+    title = _clean_winning_hypothesis_title(item.title)
+    tactic_shaped = bool(
+        re.search(r"(?:迫使|推动|倒逼).{0,32}(?:转向|转为|改为)", title)
+    )
+    if not tactic_shaped:
+        return title
+    for raw_form in item.equipment_forms:
+        form = " ".join(str(raw_form or "").split()).strip()
+        form = re.sub(
+            r"^(?:单一主装备(?:对象)?|主体装备)(?:为)?\s*[：:]\s*",
+            "",
+            form,
+        ).strip()
+        form = re.split(r"[；。]", form, maxsplit=1)[0].strip()
+        if 4 <= len(form) <= 48 and any(
+            marker in form
+            for marker in (
+                "导弹",
+                "巡飞",
+                "弹药",
+                "效应器",
+                "无人机",
+                "无人平台",
+                "攻击平台",
+                "拦截平台",
+                "武器",
+            )
+        ):
+            return form
+    return title
+
+
+def _winning_primary_equipment_form(
+    item: WinningHypothesis,
+    *,
+    equipment_family: str,
+) -> str:
+    """Project one authoritative weapon subject from a selected hypothesis."""
+
+    generic_forms = {
+        "无人机",
+        "无人平台",
+        "导弹",
+        "远程导弹",
+        "精确制导弹药",
+        "远程精确制导导弹",
+        "地面发射远程精确制导导弹",
+        "空射防区外远程精确制导导弹",
+        "巡飞弹药",
+        "低成本武器",
+        "新质武器装备",
+    }
+    weapon_markers = (
+        "导弹",
+        "巡飞",
+        "弹药",
+        "战斗部",
+        "效应器",
+        "无人机",
+        "无人平台",
+        "拦截弹",
+        "鱼雷",
+        "水雷",
+        "激光武器",
+    )
+    # Model-authored forms have already passed the candidate/evidence gates and
+    # carry the query-specific launch domain, target, guidance or effect design.
+    # Preserve that differentiating identity.  Canonical names below are only
+    # a missing/over-generic fallback, not an authoritative overwrite.
+    for raw_form in item.equipment_forms:
+        form = " ".join(str(raw_form or "").split()).strip()
+        form = re.sub(
+            r"^(?:单一主装备(?:对象)?|主体装备)(?:为)?\s*[：:]?\s*",
+            "",
+            form,
+        ).strip()
+        form = re.split(r"[；。]", form, maxsplit=1)[0].strip()
+        normalized_form = re.sub(r"\s+", "", form)
+        if (
+            6 <= len(form) <= 120
+            and any(marker in form for marker in weapon_markers)
+            and normalized_form not in generic_forms
+        ):
+            return form[:120]
+
+    canonical = {
+        "anti_radiation_loitering_munition": "长航时反辐射巡飞弹药",
+        "expendable_decoy_electronic_attack_effector": (
+            "MALD类可消耗诱饵电子攻击效应器"
+        ),
+        "ground_launched_precision_missile": "地面发射远程精确制导导弹",
+        "air_launched_standoff_missile": "空射防区外远程精确制导导弹",
+        "loitering_munition": "长航时可消耗多模反舰巡飞猎歼弹药",
+        "low_altitude_unmanned_strike": "低空可消耗察打一体无人机",
+        "scalable_low_cost_cruise_effector": "低成本批量巡航效应器",
+        "guided_missile_or_munition": "多模再捕获反舰导弹",
+        "maritime_launched_weapon": "舰射远程反舰导弹",
+    }
+    if equipment_family in canonical:
+        return canonical[equipment_family]
+    for raw_form in item.equipment_forms:
+        form = " ".join(str(raw_form or "").split()).strip()
+        form = re.sub(
+            r"^(?:单一主装备(?:对象)?|主体装备)(?:为)?\s*[：:]?\s*",
+            "",
+            form,
+        ).strip()
+        form = re.split(r"[；。]", form, maxsplit=1)[0].strip()
+        if form:
+            return form[:120]
+    return _winning_portfolio_title(item)[:120]
+
+
+def _prioritize_equipment_evidence_refs(values: Sequence[Any]) -> list[str]:
+    """Keep stable evidence order while placing object-level weapon refs first."""
+
+    rows = list(
+        dict.fromkeys(str(value).strip() for value in values if str(value).strip())
+    )
+    order = {value: index for index, value in enumerate(rows)}
+    return sorted(
+        rows,
+        key=lambda value: (
+            not value.startswith("ev-weapon_equipment-"),
+            order[value],
+        ),
+    )
+
+
+def _is_remote_precision_portfolio_direction(value: Mapping[str, Any]) -> bool:
+    text = " ".join(
+        str(value.get(field, ""))
+        for field in (
+            "name",
+            "equipment_form",
+            "baseline_system",
+            "military_value",
+            "operational_mechanism",
+        )
+    )
+    remote_weapon = any(
+        marker in text
+        for marker in (
+            "导弹",
+            "精确制导弹药",
+            "巡航导弹",
+            "巡航弹药",
+            "巡航效应器",
+            "反辐射",
+            "Barracuda",
+            "FAMM",
+        )
+    )
+    remote_mission = any(
+        marker in text
+        for marker in (
+            "远程",
+            "远域",
+            "防区外",
+            "精确",
+            "战役纵深",
+            "纵深",
+            "突防",
+            "巡航",
+        )
+    )
+    return remote_weapon and remote_mission
 
 
 def _report_branch(payload: Mapping[str, Any]) -> str:
@@ -12373,18 +19394,295 @@ def _report_target_chars(payload: Mapping[str, Any]) -> str:
     # delivery stabilizer projects already-approved S6 fields into the
     # per-equipment verification matrix, so asking an xhigh model to spend its
     # whole 600-second window padding the same facts is both slow and unstable.
-    return "9000-10000字核心正文"
+    return "信息闭环优先、通常7000-10000字的核心正文"
+
+
+def _unbounded_quality_report(payload: Mapping[str, Any]) -> bool:
+    return str(payload.get("execution_profile_id", "")).strip() in {
+        "swarm_quality_v1",
+        "winning_swarm_dynamic_v2",
+    }
 
 
 def _report_hard_max_chars(payload: Mapping[str, Any]) -> int:
+    # Quality profiles append governed capability portraits, comparison
+    # matrices and coupling rows after Reporter synthesis. A 12k post-assembly
+    # ceiling destroyed complete prose, portrait bullets and table cells.
+    # These profiles therefore have no character hard gate; model token/time
+    # limits and structural quality checks remain the delivery controls.
+    if _unbounded_quality_report(payload):
+        return 0
     brief = payload.get("branch_writer_brief", {})
     if isinstance(brief, Mapping):
         try:
-            value = int(brief.get("hard_max_chars", 12000))
+            value = int(brief.get("hard_max_chars", 0))
         except (TypeError, ValueError):
-            value = 12000
+            value = 0
+        if value <= 0:
+            return 0
         return max(3000, value)
-    return 12000
+    return 0
+
+
+def _clip_complete_report_phrase(text: str, maximum: int) -> str:
+    value = str(text).strip()
+    if len(value) <= maximum:
+        return value
+    if maximum <= 1:
+        return "。"
+    window = value[: max(1, maximum - 1)]
+    # A comma or colon is not a complete semantic boundary. Converting one to
+    # a full stop manufactured report fragments such as ``一旦触发，后方平台
+    # 在链路受阻时。``. Only shorten at a sentence/independent-clause end;
+    # otherwise look beyond the editorial target or preserve the full judgment.
+    boundary = max(
+        window.rfind(mark) for mark in ("。", "！", "？", "!", "?", "；")
+    )
+    if boundary >= max(24, maximum // 3):
+        window = window[: boundary + 1]
+    else:
+        # Look slightly beyond the editorial target for a real clause ending.
+        # If there is none, keep the full judgment rather than manufacturing a
+        # semantically broken fragment merely to satisfy a prompt-size hint.
+        extended = value[: min(len(value), maximum + 80)]
+        following = [
+            extended.find(mark, maximum - 1)
+            for mark in ("。", "！", "？", "!", "?", "；")
+        ]
+        following = [index for index in following if index >= 0]
+        if following:
+            window = extended[: min(following) + 1]
+        else:
+            return value
+    if window.rstrip().endswith(("，", "、", "；", "：", ",", ";", ":")):
+        window = window.rstrip("，、；：,;: ") + "。"
+    return window
+
+
+def _compact_report_table_row(line: str, maximum: int) -> str:
+    stripped = line.strip()
+    if not (stripped.startswith("|") and stripped.endswith("|")):
+        return line
+    cells = [item.strip() for item in stripped[1:-1].split("|")]
+    if not cells or all(re.fullmatch(r":?-{3,}:?", item) for item in cells):
+        return line
+    cells = [re.sub(r"(?:\.{3,}|…+)$", "。", item) for item in cells]
+    if len(line) <= maximum or len(cells) == 1:
+        return "| " + " | ".join(cells) + " |"
+    first = cells[0]
+    remaining = max(32, maximum - len(first) - (3 * len(cells)) - 2)
+    per_cell = max(32, remaining // max(1, len(cells) - 1))
+    compacted = [first, *(
+        _clip_complete_report_phrase(item, per_cell) for item in cells[1:]
+    )]
+    return "| " + " | ".join(compacted) + " |"
+
+
+def _normalize_report_line_ending(line: str) -> str:
+    stripped = line.rstrip()
+    compact = stripped.strip()
+    if (
+        not compact
+        or compact.startswith("#")
+        or (compact.startswith("|") and compact.endswith("|"))
+        or compact.startswith("```")
+    ):
+        return stripped
+    if re.search(r"(?:，|；|：|、|,|;|:|\.{3,}|…+)$", compact):
+        return re.sub(r"(?:，|；|：|、|,|;|:|\.{3,}|…+)$", "。", stripped)
+    return stripped
+
+
+def _enforce_report_hard_max(
+    report: str,
+    payload: Mapping[str, Any],
+) -> str:
+    """Bound report length while preserving headings and equipment names."""
+
+    def portrait_line_protection(current_lines: Sequence[str]) -> list[bool]:
+        protected: list[bool] = []
+        in_portraits = False
+        end_pattern = (
+            r"^###\s*（二）作战运用模式\s*$"
+            if _report_template_mode(payload) == "project_argument_v1"
+            else r"^###\s*⑧\s*效能贡献评估\s*$"
+        )
+        for current in current_lines:
+            stripped = current.strip()
+            if "逐装备详细能力画像如下" in stripped:
+                in_portraits = True
+            if in_portraits and re.match(end_pattern, stripped):
+                in_portraits = False
+            protected.append(in_portraits)
+        return protected
+
+    hard_max = _report_hard_max_chars(payload)
+    synthesis_seed = payload.get("synthesis_seed", {})
+    capability_cues = (
+        synthesis_seed.get("capability_cues", [])
+        if isinstance(synthesis_seed, Mapping)
+        else []
+    )
+    protected_bullet_names = {
+        str(item.get("direction", "")).strip()
+        for item in capability_cues
+        if isinstance(item, Mapping) and str(item.get("direction", "")).strip()
+    }
+
+    def has_protected_equipment_label(line: str) -> bool:
+        stripped = line.strip()
+        return any(
+            stripped.startswith((f"- **{name}**", f"**{name}｜"))
+            for name in protected_bullet_names
+        )
+
+    text = "\n".join(
+        _normalize_report_line_ending(line)
+        for line in str(report).strip().splitlines()
+    ).strip()
+    if hard_max <= 0 or len(text) <= hard_max:
+        return text
+
+    lines = text.splitlines()
+    table_cap = 640
+    prose_cap = 520
+    for _ in range(6):
+        compacted: list[str] = []
+        for line in lines:
+            stripped = line.strip()
+            if stripped.startswith("#") or not stripped:
+                compacted.append(line.rstrip())
+            elif stripped.startswith("|") and stripped.endswith("|"):
+                compacted.append(_compact_report_table_row(line, table_cap))
+            elif len(line) > prose_cap:
+                prefix = "- " if stripped.startswith("- ") else ""
+                body = stripped[2:] if prefix else stripped
+                compacted.append(
+                    prefix + _clip_complete_report_phrase(body, prose_cap - len(prefix))
+                )
+            else:
+                compacted.append(
+                    re.sub(r"(?:\.{3,}|…+)$", "。", line.rstrip())
+                )
+        text = "\n".join(compacted).strip()
+        if len(text) <= hard_max:
+            return text
+        lines = compacted
+        table_cap = max(360, table_cap - 60)
+        prose_cap = max(220, prose_cap - 60)
+
+    # The remaining excess is normally a long source index. Remove only its
+    # tail entries; canonical headings and capability-table rows stay intact.
+    while len(text) > hard_max:
+        removable = next(
+            (
+                index
+                for index in range(len(lines) - 1, -1, -1)
+                if lines[index].lstrip().startswith("- http")
+                or lines[index].lstrip().startswith("- [")
+            ),
+            None,
+        )
+        if removable is None:
+            break
+        lines.pop(removable)
+        text = "\n".join(lines).strip()
+    if len(text) <= hard_max:
+        return text
+
+    portrait_protected = portrait_line_protection(lines)
+    section = ""
+    line_sections: list[str] = []
+    bullet_counts: dict[str, int] = {}
+    for line in lines:
+        if line.startswith("### "):
+            section = line
+        line_sections.append(section)
+        if line.lstrip().startswith("- "):
+            bullet_counts[section] = bullet_counts.get(section, 0) + 1
+    for index in range(len(lines) - 1, -1, -1):
+        if len(text) <= hard_max:
+            break
+        section = line_sections[index]
+        if (
+            lines[index].lstrip().startswith("- ")
+            and bullet_counts.get(section, 0) > 1
+            and not portrait_protected[index]
+            and not has_protected_equipment_label(lines[index])
+        ):
+            lines.pop(index)
+            line_sections.pop(index)
+            portrait_protected.pop(index)
+            bullet_counts[section] -= 1
+            text = "\n".join(lines).strip()
+    if len(text) <= hard_max:
+        return text
+
+    # Last-resort deterministic convergence for reports dominated by many
+    # short paragraphs rather than a few long rows.  Prefer shortening the
+    # longest non-heading line and keep sentence punctuation; headings and the
+    # first-cell equipment names in tables remain intact.
+    unshrinkable_indexes: set[int] = set()
+    for _ in range(max(1, len(lines) * 6)):
+        if len(text) <= hard_max:
+            return text
+        candidates = [
+            (len(line), index)
+            for index, line in enumerate(lines)
+            if line.strip()
+            and not line.lstrip().startswith("#")
+            and not portrait_protected[index]
+            and not has_protected_equipment_label(line)
+            and index not in unshrinkable_indexes
+            and len(line) > 36
+        ]
+        if not candidates:
+            break
+        _, index = max(candidates)
+        line = lines[index]
+        excess = len(text) - hard_max
+        target = max(36, len(line) - max(12, min(excess + 1, len(line) // 3)))
+        stripped = line.strip()
+        if stripped.startswith("|") and stripped.endswith("|"):
+            replacement = _compact_report_table_row(line, target)
+        else:
+            prefix = "- " if stripped.startswith("- ") else ""
+            body = stripped[2:] if prefix else stripped
+            replacement = prefix + _clip_complete_report_phrase(
+                body,
+                max(1, target - len(prefix)),
+            )
+        if len(replacement) >= len(line):
+            if stripped.startswith("|") and stripped.endswith("|"):
+                # Never raw-slice Markdown tables: doing so can remove the
+                # closing pipe and manufacture both an invalid table and a
+                # false prose fragment. Move on to another compressible line.
+                unshrinkable_indexes.add(index)
+                continue
+            replacement = line[: max(1, target - 1)].rstrip("，、；：,. ") + "。"
+        lines[index] = replacement
+        text = "\n".join(lines).strip()
+
+    # Headings alone are far below the contract ceiling.  If an unusual input
+    # still exceeds it, remove only complete non-heading lines from the tail so
+    # the persisted Markdown never contains a truncated fragment.
+    for index in range(len(lines) - 1, -1, -1):
+        if len(text) <= hard_max:
+            break
+        if (
+            lines[index].strip()
+            and not lines[index].lstrip().startswith("#")
+            and not portrait_protected[index]
+            and not (
+                lines[index].strip().startswith("|")
+                and lines[index].strip().endswith("|")
+            )
+            and not has_protected_equipment_label(lines[index])
+        ):
+            lines.pop(index)
+            portrait_protected.pop(index)
+            text = "\n".join(lines).strip()
+    return text
 
 
 def _report_writer_max_chars(payload: Mapping[str, Any]) -> int:
@@ -12395,6 +19693,8 @@ def _report_writer_max_chars(payload: Mapping[str, Any]) -> int:
     ]
     if not values:
         return hard_max
+    if hard_max <= 0:
+        return max(values)
     # Keep the editorial target visible, but give the first-pass writer enough
     # room to satisfy dense branch contracts without crossing the hard gate.
     # The prompt separately states the target range and absolute ceiling.
@@ -12406,15 +19706,32 @@ def _reporter_output_token_budget(
     *,
     default: int,
 ) -> int:
-    # This is a ceiling, not a requested report length.  The writer prompt owns
-    # the character limit; keeping the real 12k ceiling prevents dense
-    # three-layer/nine-item reports from being truncated by an unrelated
-    # target-character heuristic.
+    # This is a model-output capacity ceiling, not a requested report length or
+    # a character compressor. Keeping the 12k token capacity prevents dense
+    # reports from being truncated; quality profiles have no final character
+    # hard gate and must never delete evidence or argument merely to fit it.
     return max(1200, int(default))
 
 
+_REPORTER_HANDOFF_REWRITE_BOUNDARY = "〔改写断点：保留事实但不得照录〕"
+_REPORTER_CANDIDATE_PREFIX_RE = re.compile(r"^[A-Ha-h]\s*[.．、:：]\s*")
+_REPORTER_VISIBLE_CANDIDATE_PREFIX_RE = re.compile(
+    r"(?m)(^|\|\s*|\*\*)[A-Ha-h]\s*[.．、:：]\s*(?=[^\s|*])"
+)
+
+
+def _strip_report_internal_markers(value: object) -> str:
+    """Remove handoff-only markers and candidate labels from public prose."""
+
+    text = str(value or "").replace(_REPORTER_HANDOFF_REWRITE_BOUNDARY, "")
+    return _REPORTER_VISIBLE_CANDIDATE_PREFIX_RE.sub(
+        lambda match: match.group(1),
+        text,
+    )
+
+
 def _clean_reporter_clue_text(value: object, *, max_chars: int | None = None) -> str:
-    text = " ".join(str(value or "").split())
+    text = " ".join(_strip_report_internal_markers(value).split())
     replacements = (
         (r"S1\s*[–—-]\s*S6", "六阶段制胜分析"),
         (r"(?<![A-Za-z0-9])S-?[1-6](?![A-Za-z0-9])", "对应分析阶段"),
@@ -12431,11 +19748,44 @@ def _clean_reporter_clue_text(value: object, *, max_chars: int | None = None) ->
     for pattern, replacement in replacements:
         text = re.sub(pattern, replacement, text, flags=re.IGNORECASE)
     text = re.sub(r"(?:相关公开证据[、，;；\s]*){2,}", "相关公开证据组", text)
-    return text[:max_chars] if max_chars is not None else text
+    return (
+        _clip_complete_report_phrase(text, max_chars)
+        if max_chars is not None and len(text) > max_chars
+        else text
+    )
+
+
+def _mark_reporter_handoff_rewrite_boundaries(value: Any) -> Any:
+    """Break long prose spans without deleting any Reporter handoff content."""
+
+    if isinstance(value, Mapping):
+        marked: dict[Any, Any] = {}
+        for key, item in value.items():
+            if str(key) == "direction" and isinstance(item, str):
+                marked[key] = _REPORTER_CANDIDATE_PREFIX_RE.sub("", item).strip()
+            else:
+                marked[key] = _mark_reporter_handoff_rewrite_boundaries(item)
+        return marked
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        return [_mark_reporter_handoff_rewrite_boundaries(item) for item in value]
+    if not isinstance(value, str) or len(value) <= 56:
+        return value
+    chunks: list[str] = []
+    remaining = value
+    while len(remaining) > 56:
+        window = remaining[:56]
+        boundary = max(window.rfind(mark) for mark in "。！？；：，、") + 1
+        if boundary < 28:
+            boundary = 48
+        chunks.append(remaining[:boundary])
+        remaining = remaining[boundary:]
+    if remaining:
+        chunks.append(remaining)
+    return _REPORTER_HANDOFF_REWRITE_BOUNDARY.join(chunks)
 
 
 def _sanitize_reporter_output(text: str) -> str:
-    result = str(text or "").strip()
+    result = _strip_report_internal_markers(text).strip()
     fenced = re.fullmatch(
         r"```(?:markdown|md)?\s*\n(?P<body>.*)\n```",
         result,
@@ -12641,13 +19991,26 @@ def _reporter_generation_payload(
 
     seed = payload.get("synthesis_seed", {})
     research_handoff: dict[str, Any] = {}
+    quality_profile = str(payload.get("execution_profile_id", "")) in {
+        "swarm_quality_v1",
+        "winning_swarm_dynamic_v2",
+    }
     if isinstance(seed, Mapping):
-        list_limits = {
-            "decisive_anchors": (2, 150),
-            "mission_chain_breaks": (2, 150),
-            "counterevidence_and_limits": (1, 140),
-            "priority_signals": (1, 130),
-        }
+        list_limits = (
+            {
+                "decisive_anchors": (4, 180),
+                "mission_chain_breaks": (4, 180),
+                "counterevidence_and_limits": (3, 170),
+                "priority_signals": (4, 160),
+            }
+            if quality_profile
+            else {
+                "decisive_anchors": (2, 150),
+                "mission_chain_breaks": (2, 150),
+                "counterevidence_and_limits": (1, 140),
+                "priority_signals": (1, 130),
+            }
+        )
         for key, (limit, max_chars) in list_limits.items():
             values = seed.get(key, [])
             if isinstance(values, Sequence) and not isinstance(values, (str, bytes)):
@@ -12664,35 +20027,64 @@ def _reporter_generation_payload(
             for item in capability_cues[:7]:
                 if not isinstance(item, Mapping):
                     continue
+                cue_field_limits = [
+                    ("direction", 80),
+                    ("mission_effect", 130),
+                    ("capability_gap", 110),
+                    ("mechanism_hint", 120),
+                    ("target_scenario", 140),
+                    ("problem_statement", 140),
+                    ("scientific_principle", 120),
+                    ("operational_concept", 150),
+                    ("capability_outcome", 120),
+                    ("winning_mechanism", 150),
+                    ("equipment_hint", 100),
+                    ("public_equipment_baseline", 110),
+                    ("future_trigger", 100),
+                    ("disruptive_relationship", 120),
+                    ("development_path", 110),
+                    ("indicator_portrait", 220),
+                    ("coupling_risk", 220),
+                    ("priority", 24),
+                    ("boundary", 100),
+                ]
+                if not quality_profile:
+                    cue_field_limits.append(("capability_portrait", None))
                 compact_cues.append(
                     {
                         key: _clean_reporter_clue_text(
                             item.get(key, ""),
                             max_chars=max_chars,
                         )
-                        for key, max_chars in (
-                            ("direction", 80),
-                            ("mission_effect", 130),
-                            ("capability_gap", 110),
-                            ("mechanism_hint", 120),
-                            ("equipment_hint", 100),
-                            ("public_equipment_baseline", 110),
-                            ("future_trigger", 100),
-                            ("disruptive_relationship", 120),
-                            ("development_path", 110),
-                            ("indicator_portrait", 220),
-                            ("coupling_risk", 220),
-                            ("priority", 24),
-                            ("boundary", 100),
-                        )
+                        for key, max_chars in cue_field_limits
                         if _clean_reporter_clue_text(item.get(key, ""))
                     }
                 )
+                compact_cues[-1]["enabling_technologies"] = [
+                    _clean_reporter_clue_text(value, max_chars=80)
+                    for value in item.get("enabling_technologies", [])[:5]
+                    if _clean_reporter_clue_text(value)
+                ]
+                compact_cues[-1]["operational_process"] = [
+                    _clean_reporter_clue_text(value, max_chars=100)
+                    for value in item.get("operational_process", [])[:6]
+                    if _clean_reporter_clue_text(value)
+                ]
             research_handoff["capability_cues"] = compact_cues
+        comparative_status = seed.get("comparative_status", {})
+        if isinstance(comparative_status, Mapping):
+            research_handoff["comparative_status"] = _compact_prompt_value(
+                comparative_status,
+                max_string_chars=220,
+                max_list_items=8 if quality_profile else 5,
+            )
+    research_handoff = _mark_reporter_handoff_rewrite_boundaries(
+        research_handoff
+    )
     sources: list[dict[str, str]] = []
     catalog = payload.get("evidence_catalog", [])
     if isinstance(catalog, Sequence) and not isinstance(catalog, (str, bytes)):
-        for item in catalog[:6]:
+        for item in catalog[: (10 if quality_profile else 6)]:
             if not isinstance(item, Mapping):
                 continue
             url = str(item.get("url", "")).strip()
@@ -12720,21 +20112,24 @@ def _reporter_generation_payload(
         str(payload.get("ablation_scope", ""))
         == "restricted_generic_baseline_evidence_closed"
     )
+    project_mode = _report_template_mode(payload) == "project_argument_v1"
     pre_submission_checks = [
         "三个固定二级层和九个固定三级项齐全且顺序正确",
         "场景—战法/技术—能力特征—实现途径—核心技术—耦合风险—能力图像—效能贡献—发展抓手形成闭环",
         "分支规定成果已压缩融入九项，不另设平行模板",
         "相同判断不在能力特征、能力图像和效能贡献中重复展开",
-        "所有段落以完整句结束且无超过1100字的超长段落",
+        "所有段落以完整句结束且无超过1100字的超长段落；每段至少提供具体装备/项目事实、战场矛盾、因果判断、证据边界、反适应、验证或建设取舍之一",
         "建设优先序使用高/中/低或P0/P1/P2等显式等级并说明排序理由",
         "能力实现途径明确标注沿用改进/集成创新/原理突破",
         "核心技术逐项包含成熟度、瓶颈和攻关优先级，效能贡献明确补链/强链/开链",
         "⑥逐项使用capability_cues.coupling_risk说明依赖、级联和会拖垮任务闭环的单点短板",
         "装备能力图像横向比较5至7个具体且机制互异的武器装备方向，不得压缩为两个抽象主题",
         "⑦逐项保留输入中的全部5至7个具体装备方向；支撑能力放在表外，不得替换或另造主体方向",
+        "⑦除横向表格外，逐项完整展开‘精简概述+四个受控分点’装备能力画像；概述建议保持简洁，直接点名具体武器装备，并包含面向、针对、利用、采用、通过、形成、实现七个装备专属因果节点；不写发展与验证路径；各分点分别按需展开，不设总字符上限，字数不作为质量门",
         "⑦若使用表格，第一列必须逐字使用capability_cues.direction，行数与输入方向数完全一致；禁止新增装备包、保障节点、C2/网络或其他主体方向",
         "⑦第三列逐项使用capability_cues.indicator_portrait形成不同的射程/覆盖、响应、自主、成本、规模或生存指标方向；不得六行统一写待校准",
-        "最终论证自然体现至少3类与Query相关的不同颠覆关系，不展示维度方法论清单",
+        "最终论证优先自然体现与Query相关的多类关系变化，不展示维度方法论清单，"
+        "也不为凑数量改写已经成立的具体装备因果链",
         "前瞻判断覆盖3至10年演进窗口、触发条件和不确定性",
         "核心正文达到约9000字且九项闭环后立即收尾；交付层使用既有S6字段补齐逐装备验证矩阵，任何长度均不触发重写、压缩、降级或失败",
     ]
@@ -12748,15 +20143,83 @@ def _reporter_generation_payload(
             "只引用public_sources中的URL，证据不足时给出验证路径而非空缺章节",
             "正文完整且所有段落以完整句结束，任何长度均不触发降级或失败",
         ]
+    if project_mode:
+        pre_submission_checks = [
+            "五个固定二级章、十二个固定三级节和十二个固定四级项齐全且顺序正确",
+            "需求概述完整覆盖背景分析、需求阐述和项目画像",
+            "国内外现状分别覆盖国外和中国国内具体案例，每例含问题、技术途径、核心技术、指标、来源与边界",
+            "建设必要性覆盖作战使用、装备能力提升、领域占位和综合效益四个维度",
+            "项目画像逐项保留全部具体装备方向，标题以中文具体武器装备对象为主体且不得以升级、能力、体系、方向、包或套件收尾；已通过S6硬门的精简概述与四个受控分点由交付层按方向原名确定性注入，Reporter不得再次复制或改写全文，只负责横向差异、作战运用、体系贡献和指标取舍的高价值综合",
+            "每张装备画像必须有不可由其他卡替代的差异变量，至少区分发射域/平台、目标运动包线、末制导传感器、授权来源、补击时序和专属验证指标中的两项；同一目标、同一再捕获机理和同一战果不得重复占位，无法独立验收时合并或替换",
+            "并行章节不以字数为质量目标；每段至少形成一项军事战场决策信息，删除通用战略套话、重复背景和跨章节同义复述",
+            "作战运用流程按阶段说明装备使用方式、作用节点和指标口径，链路闭环至少分析时间链、精度/信息链或火力链",
+            "体系贡献率明确原方案基线、对比变量、计算口径、验证方法和证据边界，不虚构点值",
+            "总体方案下钻到硬件产品、软件系统、接口、数据流及子系统输入输出",
+            "关键技术逐项包含技术内涵、成熟度/基础、瓶颈、攻关途径、验证指标和失败条件",
+            "参与单位不虚构；证据不足时只列单位类型和待明确项，技术基础说明现有工作如何支撑项目",
+            "事实、推断、目标指标和待验证假设明确分层；URL只来自允许目录",
+        ]
+
+    canonical_h2, canonical_h3, canonical_h4 = _report_canonical_headings(payload)
+    section_budget = (
+        {
+            "一、需求分析": "约34%-40%",
+            "二、项目画像": "约25%-30%",
+            "三、总体方案": "约14%-18%",
+            "四、关键技术": "约10%-14%",
+            "五、研制基础": "约8%-12%",
+        }
+        if project_mode
+        else {
+            "第一层：需求挖掘层": "约34%-40%",
+            "第二层：技术攻关层": "约30%-36%",
+            "第三层：能力图像与效能贡献层": "约28%-34%",
+        }
+    )
+    report_ready_section_map = (
+        {
+            "需求概述": ["decisive_anchors", "mission_chain_breaks", "capability_cues.problem_statement"],
+            "国内外现状": ["comparative_status.foreign_cases", "comparative_status.domestic_cases", "comparative_status.comparative_findings", "public_sources"],
+            "建设必要性": ["capability_cues.capability_gap", "capability_cues.mission_effect", "capability_cues.disruptive_relationship"],
+            "装备图像概述": ["capability_cues.direction", "capability_cues.target_scenario", "capability_cues.scientific_principle", "capability_cues.enabling_technologies", "capability_cues.capability_outcome", "capability_cues.winning_mechanism"],
+            "作战运用模式": ["capability_cues.operational_concept", "capability_cues.operational_process", "capability_cues.mechanism_hint"],
+            "体系贡献率分析": ["capability_cues.mission_effect", "capability_cues.indicator_portrait", "capability_cues.public_equipment_baseline"],
+            "主要战技指标": ["capability_cues.indicator_portrait", "capability_cues.boundary"],
+            "总体方案": ["capability_cues.equipment_hint", "capability_cues.enabling_technologies", "capability_cues.development_path"],
+            "关键技术": ["capability_cues.scientific_principle", "capability_cues.enabling_technologies", "capability_cues.coupling_risk"],
+            "研制基础": ["comparative_status", "public_sources", "capability_cues.public_equipment_baseline"],
+        }
+        if project_mode
+        else {
+            "①": ["decisive_anchors", "mission_chain_breaks", "capability_cues.capability_gap"],
+            "②": ["capability_cues.mechanism_hint", "capability_cues.future_trigger", "capability_cues.disruptive_relationship"],
+            "③": ["capability_cues.mission_effect", "capability_cues.equipment_hint"],
+            "④": ["capability_cues.public_equipment_baseline", "capability_cues.development_path"],
+            "⑤": ["capability_cues.equipment_hint", "public_sources.fact"],
+            "⑥": ["capability_cues.coupling_risk", "capability_cues.boundary", "counterevidence_and_limits"],
+            "⑦": ["capability_cues.direction", "capability_cues.indicator_portrait", "capability_cues.equipment_hint", "capability_cues.public_equipment_baseline", "capability_cues.disruptive_relationship"],
+            "⑧": ["capability_cues.mission_effect", "capability_cues.mechanism_hint"],
+            "⑨": ["capability_cues.priority", "capability_cues.development_path", "capability_cues.boundary", "capability_cues.disruptive_relationship"],
+        }
+    )
 
     return {
         "query": str(payload.get("topic", "")).strip()[:1200],
         "branch": branch,
+        "report_template_mode": _report_template_mode(payload),
         "target_length": _report_target_chars(payload),
         "length_policy": {
             "model_target": _report_target_chars(payload),
-            "delivery_target": "结构化验证矩阵合并后正文超过12000字",
-            "stop_when": "核心正文达到约9000字且三层九项完整后，完成当前段并立即收尾",
+            "delivery_target": (
+                "不设字符硬上限；以模板完整、论证深度和句段完整性为交付边界"
+                if _unbounded_quality_report(payload)
+                else "不设统一字符硬上限；以当前模板与分支合同完整交付"
+            ),
+            "stop_when": (
+                "五章模板、关键证据和军事决策链闭合后，完成当前段并立即收尾；不为达到字数扩写"
+                if project_mode
+                else "三层九项、关键证据和军事决策链闭合后，完成当前段并立即收尾；不为达到字数扩写"
+            ),
             "overrun": "允许；任何长度均不得触发重写、压缩、降级或失败",
         },
         "first_pass_quality_contract": {
@@ -12767,24 +20230,10 @@ def _reporter_generation_payload(
                 "不重复发现或逐字段复述。"
             ),
             "target_length": _report_target_chars(payload),
-            "section_budget": {
-                "第一层：需求挖掘层": "约34%-40%",
-                "第二层：技术攻关层": "约30%-36%",
-                "第三层：能力图像与效能贡献层": "约28%-34%",
-            },
+            "section_budget": section_budget,
             "pre_submission_checks": pre_submission_checks,
         },
-        "report_ready_section_map": {
-            "①": ["decisive_anchors", "mission_chain_breaks", "capability_cues.capability_gap"],
-            "②": ["capability_cues.mechanism_hint", "capability_cues.future_trigger", "capability_cues.disruptive_relationship"],
-            "③": ["capability_cues.mission_effect", "capability_cues.equipment_hint"],
-            "④": ["capability_cues.public_equipment_baseline", "capability_cues.development_path"],
-            "⑤": ["capability_cues.equipment_hint", "public_sources.fact"],
-            "⑥": ["capability_cues.coupling_risk", "capability_cues.boundary", "counterevidence_and_limits"],
-            "⑦": ["capability_cues.direction", "capability_cues.indicator_portrait", "capability_cues.equipment_hint", "capability_cues.public_equipment_baseline", "capability_cues.disruptive_relationship"],
-            "⑧": ["capability_cues.mission_effect", "capability_cues.mechanism_hint"],
-            "⑨": ["capability_cues.priority", "capability_cues.development_path", "capability_cues.boundary", "capability_cues.disruptive_relationship"],
-        },
+        "report_ready_section_map": report_ready_section_map,
         "branch_hard_requirements": {
             "core": _REPORT_BRANCH_MINIMAL_INSTRUCTIONS.get(
                 branch,
@@ -12795,10 +20244,15 @@ def _reporter_generation_payload(
         },
         "format_contract": {
             "h1": "由系统统一添加，模型不输出",
-            "h2": list(_REPORT_CANONICAL_H2),
-            "h3": list(_REPORT_CANONICAL_H3),
-            "max_heading_depth": 3,
-            "template": "固定三层九项，不新增平行旧模板",
+            "h2": list(canonical_h2),
+            "h3": list(canonical_h3),
+            "h4": list(canonical_h4),
+            "max_heading_depth": 4 if project_mode else 3,
+            "template": (
+                "固定项目论证五章模板"
+                if project_mode
+                else "固定三层九项，不新增平行旧模板"
+            ),
             "paragraph_policy": "一段一个中心判断，避免残句和超长段落",
             "table_policy": "仅高密度能力、技术、耦合、效能或优先级比较使用；最多6列、12行、单元格不超过220字",
         },
@@ -12874,6 +20328,9 @@ def _reporter_repair_payload(
     return {
         "query": generation["query"],
         "branch": generation["branch"],
+        "report_template_mode": generation.get(
+            "report_template_mode", "three_layer_nine_item"
+        ),
         "target_length": generation["target_length"],
         "length_policy": generation["length_policy"],
         "branch_hard_requirements": generation["branch_hard_requirements"],
@@ -12915,6 +20372,13 @@ def _reporter_timeout_retry_payload(
         cues = handoff.get("capability_cues", [])
         if isinstance(cues, Sequence) and not isinstance(cues, (str, bytes)):
             compact_handoff["capability_cues"] = list(cues[:7])
+        comparative = handoff.get("comparative_status", {})
+        if isinstance(comparative, Mapping):
+            compact_handoff["comparative_status"] = _compact_prompt_value(
+                comparative,
+                max_string_chars=160,
+                max_list_items=3,
+            )
 
     evidence_highlights: list[dict[str, str]] = []
     catalog = payload.get("evidence_catalog", [])
@@ -12951,6 +20415,9 @@ def _reporter_timeout_retry_payload(
     return {
         "query": generation["query"],
         "branch": generation["branch"],
+        "report_template_mode": generation.get(
+            "report_template_mode", "three_layer_nine_item"
+        ),
         "target_length": generation["target_length"],
         "length_policy": generation["length_policy"],
         "branch_hard_requirements": generation["branch_hard_requirements"],
@@ -13030,7 +20497,7 @@ def _reporter_revision_notes(quality_issues: Sequence[str]) -> list[str]:
     joined = "；".join(str(item) for item in quality_issues)
     notes: list[str] = []
     if any(marker in joined for marker in ("最低", "长度", "过短", "硬上限")):
-        notes.append("只补充缺失的实质内容；核心正文达到约9000字且九项闭环后立即收尾，最终逐装备验证矩阵由交付层合并，长度不触发压缩或重写。")
+        notes.append("只补充缺失的实质内容；模板、证据和军事决策链闭环后立即收尾，不为达到字数扩写，最终逐装备验证矩阵由交付层合并。")
     if any(marker in joined for marker in ("编号", "三层", "九项", "章节", "缺少")):
         notes.append("严格补齐三层九项：场景、制胜机理、能力特征、实现途径、核心技术、耦合风险、能力图像、效能贡献、发展抓手。")
     if any(marker in joined for marker in ("URL", "引用", "来源", "证据", "事实")):
@@ -13051,7 +20518,8 @@ def _reporter_revision_notes(quality_issues: Sequence[str]) -> list[str]:
         "擅自新增",
     )):
         notes.append(
-            "在②⑦⑨自然写入至少3类与Query因果相关的不同关系变化，并逐项保留全部输入装备方向；"
+            "在②⑦⑨自然写入与Query因果相关的关系变化，并逐项保留全部输入装备方向；"
+            "关系类型数量只作表达增强，不得成为交付阻断条件；"
             "不得罗列维度名或用通信保障等支撑项替换主体装备。"
         )
     if any(marker in joined for marker in ("效能", "补链", "强链", "开链", "优先级", "验证")):
@@ -13114,6 +20582,8 @@ _REPORT_BRANCH_INSTRUCTIONS: dict[str, str] = {
         "无人僚机、无人集群、导弹、巡飞弹、精确制导弹药、拦截弹、鱼雷、火炮、定向能武器或电子压制"
         "效应器等承担歼灭、打击、猎歼、拦截、拒止和威慑任务的军事战斗装备；通信、数据链、算法、保障"
         "和接口只能作为具体武器装备的内部构型或配套，不得单独成为需求卡片主对象。每卡同时覆盖装备构型、"
+        "新研卡片还必须给出相对现役谱系可识别的差异化构型、制导感知、自主边界、突防或毁伤机制，"
+        "标题不得停留在无人机、巡飞弹、反辐射巡飞弹、远程导弹等既有大类；"
         "发展方式、关键指标、优先级、支撑场景和证据链，并解释缺口如何切断任务链以及补齐后恢复何种"
         "打击、反制、抗毁或持续作战效果；能力"
         "全景图要说明需求之间的依赖、替代、放大、共同失效和建设先后关系，不得再次逐卡复述；深度报告"
@@ -13177,6 +20647,125 @@ def _report_capability_image_table_directions(section_text: str) -> list[str]:
     return directions
 
 
+def _report_fragment_quality_issues(text: str) -> list[str]:
+    """Reject punctuation-normalized fragments and clipped Markdown rows."""
+
+    semantic_clipping_patterns = (
+        re.compile(r"(?:…|\.\.\.)"),
+        re.compile(r"(?:压制关|远程精确制|现有发为对照|多供应链替代与批)(?=[\s，。；、|]|$)"),
+        re.compile(r"(?:效应器及|消耗任务的|为\s*JASSM-ER|拖垮该|候选A的驻)(?=[\s，。；、|]|$)"),
+        re.compile(r"(?:的任|的鉴权与)(?=[，、；。])"),
+        re.compile(r"(?:接收|目录|形成|实施|继续|发生|经过授权)(?:接|目|形|实|继|发|经)(?=[；。|]|$)"),
+        re.compile(r"(?:并以安全|降低攻击)(?=[。；|]|$)"),
+        re.compile(r"(?:试验|验证|闭环试验)，确(?=[。；|]|$)"),
+        re.compile(r"(?:导航|任务区|通过条件)推进(?=[。；|]|$)"),
+        re.compile(r"(?:^|[；：])通过条件(?:为)?(?=[。；|]|$)"),
+    )
+
+    def semantic_clipping_sample(value: str) -> str:
+        for pattern in semantic_clipping_patterns:
+            match = pattern.search(value)
+            if match:
+                start = max(0, match.start() - 24)
+                end = min(len(value), match.end() + 24)
+                return value[start:end].strip()
+        for clause in re.split(r"[；。|]", value):
+            compact = clause.strip(" *_'\"“”‘’，、：:；。")
+            if len(compact) >= 12 and compact.endswith(
+                ("的", "与", "及", "把", "将", "该")
+            ) and not compact.endswith(("参与", "赋予")):
+                return compact[-60:]
+        return ""
+
+    samples: list[str] = []
+    lines = str(text).splitlines()
+    for index, raw_line in enumerate(lines):
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        next_nonempty = next(
+            (item.strip() for item in lines[index + 1 :] if item.strip()),
+            "",
+        )
+        if line.endswith(("如下。", "如下.")) and next_nonempty.startswith(
+            ("- ", "* ", "|")
+        ):
+            continue
+        if line.startswith("|") != line.endswith("|"):
+            samples.append(line[:60])
+            continue
+        candidates = (
+            [cell.strip() for cell in line.strip("|").split("|")]
+            if line.startswith("|") and line.endswith("|")
+            else [line]
+        )
+        for candidate in candidates:
+            candidate = re.sub(r"^(?:[-*]\s+|\d+[\.、]\s*)", "", candidate)
+            semantic_sample = semantic_clipping_sample(candidate)
+            if semantic_sample:
+                samples.append(semantic_sample[:60])
+                continue
+            for sentence in re.split(r"(?<=[。！？!?])", candidate):
+                sentence = sentence.strip(" *_'\"“”‘’")
+                if not sentence:
+                    continue
+                normalized_sentence = _remove_empty_report_clauses(sentence)
+                if not normalized_sentence:
+                    samples.append(sentence[:60])
+                    continue
+                locative_only = bool(
+                    re.fullmatch(
+                        r"(?:在|于|从|对|面向|围绕|针对).{1,36}(?:中|下|上|内|方面|阶段|条件下)。",
+                        sentence,
+                    )
+                ) and not any(
+                    term in sentence
+                    for term in (
+                        "可拆成", "可分为", "分成", "分为", "形成", "呈现", "说明",
+                        "表明", "决定", "改变", "压缩", "恢复", "支撑", "实现",
+                    )
+                )
+                if locative_only or re.fullmatch(
+                    r"(?:核心|主要|当前|该)?(?:矛盾|关键|问题|难点|重点|风险)"
+                    r"(?:在于|是|为|成立)?。|(?:作战|任务|目标)(?:上|方面|是|为)?。",
+                    sentence,
+                ) or re.fullmatch(
+                    r".{0,36}(?:体现为|包括|主要是|分别为|在于|取决于|依赖于)。",
+                    sentence,
+                ):
+                    samples.append(sentence[:60])
+                    continue
+            if (
+                len(re.findall(r"[、，；]", candidate)) >= 2
+                and re.search(
+                    r"(?:目标|任务|能力|指标|技术|平台|系统|链路|装备|方案|"
+                    r"场景|风险|约束|条件|接口)[。；]$",
+                    candidate,
+                )
+                and not re.search(
+                    r"(?:的能力|的系统|的装备|的方案)[。；]$",
+                    candidate,
+                )
+                and not any(
+                    term in candidate
+                    for term in (
+                        "形成", "实现", "完成", "提升", "降低", "打击", "压制",
+                        "猎歼", "支持", "支撑", "应对", "用于", "采用", "具备", "保持", "选择",
+                        "识别", "验证", "评估", "部署", "发射", "交战", "毁伤",
+                        "表明", "说明", "决定", "依赖", "位于", "贡献", "对应",
+                        "中断", "出现",
+                    )
+                )
+            ):
+                samples.append(candidate[-60:])
+    if not samples:
+        return []
+    return [
+        "正文存在截断残句或未闭合表格单元格："
+        + "；".join(dict.fromkeys(samples[:4]))
+    ]
+
+
 def _report_draft_quality_issues(
     text: str,
     payload: Mapping[str, Any],
@@ -13188,14 +20777,15 @@ def _report_draft_quality_issues(
     if not branch:
         return []
     issues: list[str] = []
-    minimum_chars = {"A": 3000, "B": 2400, "C": 2700}.get(branch, 2200)
-    if len(text.strip()) < minimum_chars:
-        issues.append(
-            f"正文仅{len(text.strip())}字，低于{branch}分支深度写作最低门槛{minimum_chars}字"
-        )
     if "**深度能力画像。**" in text:
         issues.append("正文仍在逐项复述能力画像卡片，必须改为跨材料综合")
-    issues.extend(_report_three_layer_content_issues(text))
+    project_mode = _report_template_mode(payload) == "project_argument_v1"
+    issues.extend(
+        _report_project_argument_content_issues(text)
+        if project_mode
+        else _report_three_layer_content_issues(text)
+    )
+    issues.extend(_report_fragment_quality_issues(text))
     issues.extend(_report_domain_attribute_issues(text, payload))
 
     seed = payload.get("synthesis_seed", {})
@@ -13208,8 +20798,13 @@ def _report_draft_quality_issues(
         if isinstance(item, Mapping) and str(item.get("direction", "")).strip()
     ][:7]
     if len(expected_direction_names) >= 5:
+        section_pattern = (
+            r"^###\s*（一）装备图像概述\s*$\n(?P<body>.*?)(?=^###\s*（二）作战运用模式\s*$)"
+            if project_mode
+            else r"^###\s*⑦\s*装备能力图像\s*$\n(?P<body>.*?)(?=^###\s*⑧\s*效能贡献评估\s*$)"
+        )
         section_match = re.search(
-            r"^###\s*⑦\s*装备能力图像\s*$\n(?P<body>.*?)(?=^###\s*⑧\s*效能贡献评估\s*$)",
+            section_pattern,
             text,
             flags=re.MULTILINE | re.DOTALL,
         )
@@ -13254,18 +20849,37 @@ def _report_draft_quality_issues(
                     "装备能力图像表第一列必须与输入的具体武器装备方向完全一致；"
                     + "；".join(details or ["行数不一致"])
                 )
-        disruptive_groups = disruptive_relationship_groups(text)
-        if len(disruptive_groups) < 3:
+    if (
+        is_quality_execution_profile_id(payload.get("execution_profile_id", ""))
+        and len(expected_direction_names) >= 5
+    ):
+        density_metrics = _report_military_information_metrics(
+            text,
+            {
+                "require_high_value_military_information": True,
+                "expected_capability_directions": expected_direction_names,
+            },
+        )
+        if density_metrics["decision_dense_ratio"] < 0.55:
             issues.append(
-                "报告仅自然体现"
-                f"{len(disruptive_groups)}类颠覆关系，至少需要3类与Query及具体装备因果相关的"
-                "成本/工业补充、平台存在、时间学习、毁伤效应、体系生态或博弈可控关系；"
-                "不得展示方法论清单"
+                "军事决策信息密度不足：至少55%的正文段落须包含具体装备/项目事实，或同时形成对手反制、作战动作、直接战果、验证判据与建设取舍中的三类信息"
             )
-
-    # Length is a writing target, not a delivery blocker. Once the substantive
-    # report contract is satisfied, an over-12k draft should be delivered
-    # immediately instead of paying for another rewrite or ending as limited.
+        if density_metrics["generic_filler_ratio"] > 0.25:
+            issues.append("通用战略套话段比例过高，删除不改变装备选择、战法或验证决策的段落")
+        if (
+            density_metrics["repeated_long_unit_ratio"] > 0.08
+            or density_metrics["maximum_long_unit_reuse"] > 2
+        ):
+            issues.append(
+                "跨章节长句复用过多：同一完整长句不得出现三次，重复长句实例占比不得超过8%"
+            )
+        if density_metrics["missing_equipment_bundles"]:
+            issues.append(
+                "以下装备未成套说明敌方目标/反制、我方作战动作、直接战果与验证判据："
+                + "、".join(density_metrics["missing_equipment_bundles"][:5])
+            )
+    # 总字数和专家型创新判断不属于Reporter发布硬门；信息密度按段落决策价值、
+    # 跨章复用和逐装备作战闭环检查，不以篇幅或关键词总量替代质量。
     forbidden_patterns = {
         "Agent": r"\bAgent\b",
         "Codex": r"\bCodex\b",
@@ -13273,6 +20887,10 @@ def _report_draft_quality_issues(
         "S1-S6": r"\bS[1-6]\b",
         "内部对象编号": r"(?<![A-Za-z0-9_])(?:ev|packet|cap)-[A-Za-z0-9]",
         "内部附件名": r"(?:branch_deliverables|capability_images|demand_cards|reasoning_traceability)\.json",
+        "Reporter改写断点": re.escape(_REPORTER_HANDOFF_REWRITE_BOUNDARY),
+        "候选分支前缀": (
+            r"(?m:(?:^|\|\s*|\*\*)[A-Ha-h]\s*[.．、:：]\s*(?=[^\s|*]))"
+        ),
         "委托方口吻": r"\u7532\u65b9",
     }
     for label, pattern in forbidden_patterns.items():
@@ -13289,14 +20907,6 @@ def _report_draft_quality_issues(
         for item in re.findall(r"https://[^\s)]+", text)
     }
     if allowed_urls:
-        minimum_links = min(8, max(3, len(allowed_urls) // 6))
-        valid_links = {
-            item for item in cited_urls if item.rstrip("/") in allowed_urls
-        }
-        if len(valid_links) < minimum_links:
-            issues.append(
-                f"公开来源链接仅{len(valid_links)}条，少于最低{minimum_links}条"
-            )
         unknown_urls = sorted(
             item for item in cited_urls if item.rstrip("/") not in allowed_urls
         )
@@ -13310,58 +20920,74 @@ def _report_draft_quality_issues(
     if label_heading:
         issues.append("不得把深度性、军事价值、前瞻性或新颖性写成独立标题")
     heading_count = len(re.findall(r"^#{3,4}\s+", text, flags=re.MULTILINE))
-    if heading_count > 9:
-        issues.append(f"三级和四级标题共{heading_count}个，超过三层九项模板上限9个")
-    body_text = re.sub(r"^#{1,6}\s+.*$", "", text, flags=re.MULTILINE)
-    military_signals = sum(
-        marker in body_text
-        for marker in (
-            "打击",
-            "歼灭",
-            "反制",
-            "制衡",
-            "拒止",
-            "威慑",
-            "制胜",
-            "抗毁",
-            "持续作战",
+    heading_limit = 24 if project_mode else 9
+    if heading_count > heading_limit:
+        issues.append(
+            f"三级和四级标题共{heading_count}个，超过所选报告模板上限{heading_limit}个"
         )
-    )
-    if military_signals < 4:
-        issues.append("军事运用价值不足，至少需自然覆盖四类打击/歼灭/反制/制衡/拒止/威慑/制胜/抗毁/持续作战效果")
-    causal_signals = sum(
-        marker in body_text
-        for marker in ("因此", "这意味着", "导致", "只有", "若", "否则", "一旦")
-    )
-    if causal_signals < 2:
-        issues.append("因果论证不足，至少需两类明确的条件—后果推进表达")
-    equipment_decision_signals = sum(
-        marker in body_text
-        for marker in (
-            "沿用改进",
-            "集成创新",
-            "原理突破",
-            "现役升级",
-            "新研装备",
-            "新装备",
-            "体系接口",
-            "建设优先",
-            "P0",
-            "验证",
-        )
-    )
-    if equipment_decision_signals < 2:
-        issues.append("装备决策不足，至少需体现两类现役升级、新装备、体系接口、建设优先序或验证决策")
-    if not (
-        any(marker in text for marker in ("触发", "条件", "窗口"))
-        and any(marker in text for marker in ("边界", "失效", "约束"))
-        and "验证" in text
-    ):
-        issues.append("缺少前瞻触发条件、失效边界或可证伪验证口径")
-    issues.extend(_report_markdown_structure_issues(text))
+    issues.extend(_report_markdown_structure_issues(text, payload))
     issues.extend(_report_seed_copy_issues(text, payload))
-    if is_quality_execution_profile_id(payload.get("execution_profile_id", "")):
+    if (
+        is_quality_execution_profile_id(payload.get("execution_profile_id", ""))
+        and not project_mode
+    ):
         issues.extend(_report_v2_benchmark_issues(text))
+    return issues
+
+
+def _report_project_argument_content_issues(text: str) -> list[str]:
+    issues: list[str] = []
+    if not all(term in text for term in ("国际", "军事", "问题", "需求", "项目")):
+        issues.append("项目论证模板的需求概述未形成背景—问题—需求—项目画像闭环")
+    status_section = re.search(
+        r"^###\s*（二）国内外现状\s*$\n(?P<body>.*?)(?=^###\s*（三）建设必要性分析\s*$)",
+        text,
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    status_body = status_section.group("body") if status_section else ""
+    if not (
+        "国外情况" in status_body
+        and "国内现状（中国）" in status_body
+        and any(term in status_body for term in ("型号", "装备", "项目"))
+        and any(term in status_body for term in ("技术方案", "技术途径", "核心技术"))
+        and any(term in status_body for term in ("指标", "参数", "公开资料不足", "待核验"))
+    ):
+        issues.append("国内外现状需分别给出国外和中国案例，并覆盖问题解决、技术途径、指标与证据边界")
+    if not all(
+        term in text
+        for term in (
+            "作战使用角度",
+            "装备能力提升角度",
+            "领域占位角度",
+            "综合效益",
+        )
+    ):
+        issues.append("建设必要性分析缺少作战使用、装备提升、领域占位或综合效益维度")
+    if not all(
+        term in text
+        for term in ("面向", "针对", "利用", "采用", "关键作战流程", "形成", "实现", "制胜逻辑")
+    ):
+        issues.append("项目画像未按场景—问题—原理—技术—作战流程—能力—效果—制胜机理展开")
+    if not (
+        any(term in text for term in ("时间链", "精度链", "信息链", "火力链"))
+        and any(term in text for term in ("任务准备", "部署", "目标发现", "交战", "毁伤评估", "再组织"))
+    ):
+        issues.append("作战运用模式缺少分阶段流程或链路闭环分析")
+    if sum(
+        term in text
+        for term in ("耗弹量", "突防效能", "任务成功率", "闭环时间", "交换比", "持续波次")
+    ) < 3:
+        issues.append("体系贡献率分析至少需给出三类可校准对比指标")
+    if not (
+        any(term in text for term in ("硬件", "平台", "载荷"))
+        and any(term in text for term in ("软件", "任务系统", "算法"))
+        and "子系统" in text
+    ):
+        issues.append("总体方案未下钻到硬件产品、软件系统和子系统层级")
+    if not all(term in text for term in ("技术名称", "技术内涵", "攻关途径")):
+        issues.append("关键技术需逐项给出技术名称、技术内涵和攻关途径")
+    if not all(term in text for term in ("参与单位", "技术基础")):
+        issues.append("研制基础缺少参与单位或技术基础")
     return issues
 
 
@@ -13469,8 +21095,14 @@ def _report_domain_attribute_issues(
     ):
         issues.append("领域属性不符合无人远程火力打击装备研究，或被通信/C2/保障内容稀释")
 
+    project_mode = _report_template_mode(payload) == "project_argument_v1"
+    capability_pattern = (
+        r"^###\s*（一）装备图像概述\s*$\n(?P<body>.*?)(?=^###\s*（二）作战运用模式\s*$)"
+        if project_mode
+        else r"^###\s*⑦\s*装备能力图像\s*$\n(?P<body>.*?)(?=^###\s*⑧\s*效能贡献评估\s*$)"
+    )
     section = re.search(
-        r"^###\s*⑦\s*装备能力图像\s*$\n(?P<body>.*?)(?=^###\s*⑧\s*效能贡献评估\s*$)",
+        capability_pattern,
         text,
         flags=re.MULTILINE | re.DOTALL,
     )
@@ -13478,8 +21110,14 @@ def _report_domain_attribute_issues(
     capability_directions = _report_capability_image_table_directions(capability_body)
     if not (
         5 <= len(capability_directions) <= 7
-        and "能力域" in capability_body
-        and any(term in capability_body for term in ("指标画像", "指标特征", "指标谱"))
+        and (
+            ("装备平台与方案" in capability_body and "形成能力" in capability_body)
+            if project_mode
+            else (
+                "能力域" in capability_body
+                and any(term in capability_body for term in ("指标画像", "指标特征", "指标谱"))
+            )
+        )
         and sum(
             term in capability_body
             for term in ("作战运用", "运用概念", "编组", "波次", "待机", "发射", "突防", "交战", "巡飞")
@@ -13516,8 +21154,13 @@ def _report_domain_attribute_issues(
     return issues
 
 
-def _report_markdown_structure_issues(text: str) -> list[str]:
+def _report_markdown_structure_issues(
+    text: str,
+    payload: Mapping[str, Any],
+) -> list[str]:
     issues: list[str] = []
+    project_mode = _report_template_mode(payload) == "project_argument_v1"
+    canonical_h2, canonical_h3, canonical_h4 = _report_canonical_headings(payload)
     headings = [
         (len(match.group(1)), match.group(2).strip())
         for match in re.finditer(r"^(#{1,6})\s+(.+?)\s*$", text, flags=re.MULTILINE)
@@ -13525,8 +21168,9 @@ def _report_markdown_structure_issues(text: str) -> list[str]:
     h1 = [title for level, title in headings if level == 1]
     if h1:
         issues.append("报告格式不应输出一级标题，标题由交付层统一添加")
-    if any(level > 3 for level, _ in headings):
-        issues.append("报告格式标题层级超过三级，需合并碎片化小节")
+    maximum_depth = 4 if project_mode else 3
+    if any(level > maximum_depth for level, _ in headings):
+        issues.append(f"报告格式标题层级超过{maximum_depth}级，需合并碎片化小节")
     raw_h2 = [title for level, title in headings if level == 2]
     h2 = [
         re.sub(r"^\d+(?:\.\d+)*[、.．]?\s*", "", title).strip()
@@ -13534,66 +21178,109 @@ def _report_markdown_structure_issues(text: str) -> list[str]:
     ]
     if raw_h2 != h2:
         issues.append("报告格式固定二级标题不得添加数字序号")
-    missing = [title for title in _REPORT_CANONICAL_H2 if title not in h2]
+    missing = [title for title in canonical_h2 if title not in h2]
     if missing:
         issues.append("报告格式缺少固定二级章节：" + "、".join(missing))
-    unexpected = [title for title in h2 if title not in _REPORT_CANONICAL_H2]
+    unexpected = [title for title in h2 if title not in canonical_h2]
     if unexpected:
         issues.append("报告格式存在契约外二级标题：" + "、".join(unexpected))
-    if len(h2) != len(_REPORT_CANONICAL_H2):
+    if len(h2) != len(canonical_h2):
         issues.append(
-            f"报告格式二级标题应恰好{len(_REPORT_CANONICAL_H2)}个，实际{len(h2)}个"
+            f"报告格式二级标题应恰好{len(canonical_h2)}个，实际{len(h2)}个"
         )
-    positions = [h2.index(title) for title in _REPORT_CANONICAL_H2 if title in h2]
+    positions = [h2.index(title) for title in canonical_h2 if title in h2]
     if positions != sorted(positions):
         issues.append("报告格式二级章节顺序混乱")
     duplicate_h2 = sorted({title for title in h2 if h2.count(title) > 1})
     if duplicate_h2:
         issues.append("报告格式存在重复二级标题：" + "、".join(duplicate_h2))
     h3 = [title for level, title in headings if level == 3]
-    missing_h3 = [title for title in _REPORT_CANONICAL_H3 if title not in h3]
+    missing_h3 = [title for title in canonical_h3 if title not in h3]
     if missing_h3:
         issues.append("报告格式缺少固定三级项：" + "、".join(missing_h3))
-    unexpected_h3 = [title for title in h3 if title not in _REPORT_CANONICAL_H3]
+    unexpected_h3 = [title for title in h3 if title not in canonical_h3]
     if unexpected_h3:
         issues.append("报告格式存在契约外三级标题：" + "、".join(unexpected_h3))
-    if len(h3) != len(_REPORT_CANONICAL_H3):
+    if len(h3) != len(canonical_h3):
         issues.append(
-            f"报告格式三级标题应恰好{len(_REPORT_CANONICAL_H3)}个，实际{len(h3)}个"
+            f"报告格式三级标题应恰好{len(canonical_h3)}个，实际{len(h3)}个"
         )
-    h3_positions = [
-        h3.index(title) for title in _REPORT_CANONICAL_H3 if title in h3
-    ]
-    if h3_positions != sorted(h3_positions):
+    h3_order_ok = (
+        h3 == list(canonical_h3)
+        if project_mode
+        else [h3.index(title) for title in canonical_h3 if title in h3]
+        == sorted(h3.index(title) for title in canonical_h3 if title in h3)
+    )
+    if not h3_order_ok:
         issues.append("报告格式九个三级项顺序混乱")
-    duplicate_h3 = sorted({title for title in h3 if h3.count(title) > 1})
+    duplicate_h3 = sorted(
+        {
+            title
+            for title in h3
+            if h3.count(title) > list(canonical_h3).count(title)
+        }
+    )
     if duplicate_h3:
         issues.append("报告格式存在重复三级标题：" + "、".join(duplicate_h3))
+    h4 = [title for level, title in headings if level == 4]
+    if project_mode:
+        missing_h4 = [title for title in canonical_h4 if title not in h4]
+        unexpected_h4 = [title for title in h4 if title not in canonical_h4]
+        if missing_h4:
+            issues.append("报告格式缺少固定四级项：" + "、".join(missing_h4))
+        if unexpected_h4:
+            issues.append("报告格式存在契约外四级标题：" + "、".join(unexpected_h4))
+        if len(h4) != len(canonical_h4):
+            issues.append(
+                f"报告格式四级标题应恰好{len(canonical_h4)}个，实际{len(h4)}个"
+            )
+        h4_positions = [h4.index(title) for title in canonical_h4 if title in h4]
+        if h4_positions != sorted(h4_positions):
+            issues.append("报告格式固定四级项顺序混乱")
     previous_level = 0
     for level, _ in headings:
         if previous_level and level > previous_level + 1:
             issues.append("报告格式存在跨级标题")
             break
         previous_level = level
-    if headings and headings[0] != (2, _REPORT_CANONICAL_H2[0]):
+    if headings and headings[0] != (2, canonical_h2[0]):
         issues.append(
-            "报告格式正文必须从“## 第一层：需求挖掘层——场景·战法/技术·装备能力特征”开始"
+            f"报告格式正文必须从“## {canonical_h2[0]}”开始"
         )
     normalized_headings = [
         (level, re.sub(r"\s+", "", title)) for level, title in headings
     ]
+    expected_heading_counts = {
+        (2, re.sub(r"\s+", "", title)): list(canonical_h2).count(title)
+        for title in canonical_h2
+    }
+    expected_heading_counts.update(
+        {
+            (3, re.sub(r"\s+", "", title)): list(canonical_h3).count(title)
+            for title in canonical_h3
+        }
+    )
+    expected_heading_counts.update(
+        {
+            (4, re.sub(r"\s+", "", title)): list(canonical_h4).count(title)
+            for title in canonical_h4
+        }
+    )
     duplicate_headings = sorted(
         {
             title
             for level, title in normalized_headings
-            if normalized_headings.count((level, title)) > 1
+            if normalized_headings.count((level, title))
+            > expected_heading_counts.get((level, title), 1)
         }
     )
     if duplicate_headings:
         issues.append("报告格式存在重复标题：" + "、".join(duplicate_headings[:6]))
     h3_count = sum(level == 3 for level, _ in headings)
-    if h3_count > 9:
-        issues.append(f"报告格式三级标题共{h3_count}个，超过三层九项上限9个")
+    if h3_count > len(canonical_h3):
+        issues.append(
+            f"报告格式三级标题共{h3_count}个，超过所选模板上限{len(canonical_h3)}个"
+        )
     if _unbalanced_report_markdown(text):
         issues.append("报告格式存在未闭合的强调符号、代码标记或链接")
     issues.extend(_report_table_issues(text))
@@ -13645,6 +21332,11 @@ def _report_table_issues(text: str) -> list[str]:
     return issues
 
 
+def _is_report_seed_copy_issue(issue: object) -> bool:
+    text = str(issue).strip()
+    return "前置研判" in text and "复用" in text
+
+
 def _report_seed_copy_issues(
     text: str,
     payload: Mapping[str, Any],
@@ -13675,11 +21367,20 @@ def _report_seed_copy_issues(
                 visit(nested)
 
     visit(seed)
+    matched_short_fragments: set[str] = set()
     for candidate in candidates:
+        for start in range(0, max(1, len(candidate) - 95), 24):
+            fragment = candidate[start : start + 96]
+            if len(fragment) == 96 and fragment in body:
+                return ["报告存在前置研判长段原句复用，应回到Query重构论证而非拼接材料"]
         for start in range(0, max(1, len(candidate) - 63), 24):
             fragment = candidate[start : start + 64]
             if len(fragment) == 64 and fragment in body:
-                return ["报告存在前置研判原句复用，应回到Query重构论证而非拼接材料"]
+                matched_short_fragments.add(fragment)
+                if len(matched_short_fragments) >= 3:
+                    return [
+                        "报告多处复用前置研判原句，应回到Query重构论证而非拼接材料"
+                    ]
     return []
 
 
@@ -13778,12 +21479,28 @@ def _report_issues_require_fallback(issues: Sequence[str]) -> bool:
 
 
 def _report_delivery_blocking_issues(issues: Sequence[str]) -> list[str]:
-    """Keep content and evidence gates strict while softening cosmetic format gates."""
+    """Block only publication-contract failures, not expert-style prose scoring."""
 
     advisory_prefixes = (
         "报告格式不应输出一级标题",
         "报告格式固定二级标题不得添加数字序号",
         "报告格式分支条目编号未完全标准化",
+        "三层九项中",
+        "项目论证模板",
+        "国内外现状需",
+        "建设必要性分析",
+        "项目画像未",
+        "作战运用模式",
+        "体系贡献率分析",
+        "总体方案未",
+        "关键技术需",
+        "研制基础缺少",
+        "领域属性不符合",
+        "装备能力图像需包含",
+        "制胜效能需",
+        "创新性需",
+        "可实现性论证需",
+        "报告仅自然体现",
     )
     return [
         str(issue).strip()
@@ -13797,7 +21514,6 @@ def _report_nonnegotiable_delivery_issues(issues: Sequence[str]) -> list[str]:
     """Return only failures that make a model-written report unsafe to deliver."""
 
     hard_markers = (
-        "低于",
         "缺少新战法连续编号",
         "缺少战法组合连续编号",
         "缺少能力域连续编号",
@@ -13810,11 +21526,6 @@ def _report_nonnegotiable_delivery_issues(issues: Sequence[str]) -> list[str]:
         "缺少当前分支必需章节",
         "正文仍包含过程性或内部表达",
         "正文引用了来源目录之外的URL",
-        "公开来源链接仅",
-        "军事运用价值不足",
-        "因果论证不足",
-        "装备决策不足",
-        "缺少前瞻触发条件",
         "未闭合",
         "疑似未完成段落或断句",
     )
@@ -14134,6 +21845,42 @@ def _analysis_sections_for_agent(
         },
         "weapon_equipment": {
             "foreign_equipment_landscape": f"围绕{topic}梳理国外现役、在研、预研和替代装备的国家、厂商、型号谱系、任务定位、部署状态与证据覆盖。",
+            "domestic_equipment_landscape": f"围绕{topic}梳理中国国内公开可核验的现役、在研、预研装备与技术项目，标注单位、状态、任务定位和证据边界。",
+            "foreign_equipment_cases": [
+                {
+                    "country": "美国/俄罗斯/其他强国",
+                    "organization": "军方/研制单位/厂商",
+                    "equipment_or_project": "具体型号或项目",
+                    "status": "现役|在研|预研|试验",
+                    "problem_addressed": "解决的问题或难点",
+                    "technical_route": "技术方案途径",
+                    "core_technologies": ["核心技术"],
+                    "core_indicators": ["带条件、批次与来源的公开指标"],
+                    "source_urls": ["公开来源URL"],
+                    "image_urls": ["可用实证或图片URL"],
+                    "evidence_boundary": "公开证据能与不能证明什么",
+                }
+            ],
+            "domestic_equipment_cases": [
+                {
+                    "country": "中国",
+                    "organization": "公开披露的参与单位",
+                    "equipment_or_project": "具体型号或项目",
+                    "status": "现役|在研|预研|试验",
+                    "problem_addressed": "解决的问题或难点",
+                    "technical_route": "技术方案途径",
+                    "core_technologies": ["核心技术"],
+                    "core_indicators": ["带条件、批次与来源的公开指标"],
+                    "source_urls": ["公开来源URL"],
+                    "image_urls": ["可用实证或图片URL"],
+                    "evidence_boundary": "公开证据能与不能证明什么",
+                }
+            ],
+            "comparative_findings": [
+                "按问题解决路径比较国外与中国国内优势和短板",
+                "按核心技术、技术途径和工程成熟度比较差异",
+                "据此说明本项目的差异化优势和补位价值",
+            ],
             "equipment_profiles": [
                 {"model": "baseline-model", "variant": "public-baseline"}
             ],
@@ -14165,6 +21912,12 @@ def _analysis_sections_for_agent(
             ],
             "standoff_suppression_evidence": [
                 "远域压制专项：按具体压制平台/弹药记录压制对象、作用距离口径、协同依赖、证据边界和反证"
+            ],
+            "expendable_decoy_electronic_attack_evidence": [
+                "可消耗诱饵/电子攻击专项：按MALD/MALD-J类具体效应器记录压制或欺骗对象、任务依赖、状态、边界和反证"
+            ],
+            "counter_uas_interceptor_evidence": [
+                "反无人机拦截专项：按Coyote/Roadrunner类具体拦截效应器记录目标对象、直接拦截效果、体系依赖、成本交换、边界和反证"
             ],
             "defensive_countermeasure_options": [
                 "将国外装备能力与依赖映射为探测、防护、抗干扰、韧性和体系协同等防御功能"

@@ -8,6 +8,7 @@ governed session.
 
 from __future__ import annotations
 
+from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import replace
 from hashlib import sha256
@@ -47,7 +48,11 @@ CORE_STEP_DEPENDENCIES: dict[int, tuple[int, ...]] = {
 SWARM_SPECIALIST_ARCHETYPES: dict[str, dict[str, Any]] = {
     "frontier_equipment_miner": {
         "display_name": "前沿装备矿工",
-        "purpose": "从公开项目、试验和装备族中寻找可改变任务链关系的具体装备形态。",
+        "purpose": (
+            "以query为先，从公开项目、试验和装备族中寻找可改变任务链关系的具体战斗/"
+            "打击装备形态；无人远程火力、颠覆逻辑、规模化装备族、传统域跨代优势和"
+            "新质域高维优速仅是非穷尽发散主题，不强制覆盖无关类别。"
+        ),
         "merge_target": "S4",
         "residuals": ["equipment_not_concrete", "novelty_insufficient"],
     },
@@ -62,6 +67,52 @@ SWARM_SPECIALIST_ARCHETYPES: dict[str, dict[str, Any]] = {
         "purpose": "构造机制真正不同的竞争假设，说明改变的对抗变量、军事效果和失败条件。",
         "merge_target": "S3",
         "residuals": ["causal_chain_broken", "novelty_insufficient"],
+    },
+    "direct_combat_equipment_generator": {
+        "display_name": "Query直接杀伤装备机理生成",
+        "purpose": (
+            "从直接军事效果反推可独立立项的主战或无人作战装备候选；候选主体必须是"
+            "具备侦察、压制、拦截、打击或毁伤效应的具体平台、弹药或任务载荷，"
+            "通信、算法、任务胶囊、网关和保障只能作为其体系接口。始终按query筛选，"
+            "必须从Query的任务对象、威胁形态、作战阶段和制胜矛盾开放推演；无人、低空、"
+            "远程与精确打击只作为优先观察镜头，不得机械套用或框定最终装备。"
+        ),
+        "merge_target": "S3",
+        "residuals": [
+            "direct_combat_equipment_insufficient",
+            "equipment_not_concrete",
+            "novelty_insufficient",
+        ],
+    },
+    "remote_precision_munition_generator": {
+        "display_name": "Query主效武器架构生成",
+        "purpose": (
+            "依据Query语义形成可独立立项的主效打击、歼灭或反杀伤武器架构，开放比较发射域、"
+            "平台、目标包线、感知导引、突防/拦截方式和毁伤机理；候选必须是与Query直接相关的"
+            "具体武器装备。远程精打、巡飞弹、无人平台或模块化弹药仅是非穷尽观察镜头；"
+            "不输出制造参数、目标坐标或可执行攻击步骤。"
+        ),
+        "merge_target": "S3",
+        "residuals": [
+            "direct_combat_equipment_insufficient",
+            "equipment_not_concrete",
+            "military_effect_missing",
+        ],
+    },
+    "mass_scalable_combat_family_generator": {
+        "display_name": "Query非对称新质装备机理生成",
+        "purpose": (
+            "从Query的制胜矛盾探索改变成本、平台、时间、毁伤、体系或博弈关系的新质武器，"
+            "并落实为具体直接作战装备。低成本、系列化、规模化、柔性生产和战损补充仅在"
+            "Query因果需要时进入构型，不是强制主题；不能为覆盖镜头强造无关类别，也不能把"
+            "供应链或软件平台单列为主体装备。"
+        ),
+        "merge_target": "S3",
+        "residuals": [
+            "direct_combat_equipment_insufficient",
+            "engineering_feasibility_insufficient",
+            "novelty_insufficient",
+        ],
     },
     "baseline_delta_analyst": {
         "display_name": "现有方案差异比较",
@@ -84,10 +135,10 @@ SWARM_SPECIALIST_ARCHETYPES: dict[str, dict[str, Any]] = {
     "equipment_capability_image_repairer": {
         "display_name": "装备能力画像定向修复",
         "purpose": (
-            "依据专家残差重写单一候选的装备能力闭环，必须贯通任务效果、作战运用、"
-            "功能、性能与约束、体系接口、具体武器或无人作战装备形态、公开基线差异、"
-            "失效边界和可证伪验证指标；通信、算法、网关与治理只能嵌入具体战斗装备，"
-            "不得独立包装为主要装备方向。"
+            "依据专家残差重写单一候选的装备能力闭环，贯通任务效果、作战运用、功能约束、"
+            "体系接口、具体装备、公开基线、失效边界和验证指标；通信、算法、网关和治理"
+            "只能作为接口。若证据不足，必须删除或收窄无法证明的构型、效能、成本与产能"
+            "主张，改为证据边界内的固定构型和阶段目标，不能只追加验证要求。"
         ),
         "merge_target": "S4",
         "residuals": [
@@ -137,11 +188,37 @@ SWARM_SPECIALIST_ARCHETYPES: dict[str, dict[str, Any]] = {
 MISSION_GRAPH_SEED_ARCHETYPES: dict[str, tuple[str, ...]] = {
     "S1": ("opponent_system_modeler", "adversary_adaptation_analyst", "weak_signal_scout"),
     "S2": ("operational_baseline_analyst", "competitive_coa_designer", "baseline_delta_analyst"),
-    "S3": ("disruptive_mechanism_generator", "adversary_counter_adaptation_red_team", "cross_scenario_stress_tester"),
+    "S3": (
+        "disruptive_mechanism_generator",
+        "adversary_counter_adaptation_red_team",
+        "direct_combat_equipment_generator",
+        "remote_precision_munition_generator",
+        "mass_scalable_combat_family_generator",
+        "cross_scenario_stress_tester",
+    ),
     "S4": ("frontier_equipment_miner", "equipment_realization_architect"),
     "S5": ("evidence_verifier", "trl_cost_industrial_auditor"),
     "S6": ("validation_experiment_designer", "independent_portfolio_reviewer"),
 }
+
+DYNAMIC_V2_MISSION_GRAPH_SEQUENCE: tuple[tuple[str, str], ...] = (
+    ("S1", "opponent_system_modeler"),
+    ("S2", "operational_baseline_analyst"),
+    ("S1", "adversary_adaptation_analyst"),
+    ("S2", "competitive_coa_designer"),
+    ("S3", "disruptive_mechanism_generator"),
+    ("S4", "frontier_equipment_miner"),
+    ("S5", "evidence_verifier"),
+    ("S6", "validation_experiment_designer"),
+    ("S3", "adversary_counter_adaptation_red_team"),
+    ("S3", "direct_combat_equipment_generator"),
+    ("S3", "remote_precision_munition_generator"),
+    ("S3", "mass_scalable_combat_family_generator"),
+    ("S4", "equipment_realization_architect"),
+    ("S5", "trl_cost_industrial_auditor"),
+    ("S6", "independent_portfolio_reviewer"),
+    ("S3", "cross_scenario_stress_tester"),
+)
 
 MISSION_GRAPH_CORE_ARCHETYPES: dict[str, dict[str, Any]] = {
     "opponent_system_modeler": {
@@ -174,27 +251,30 @@ def default_winning_swarm_policy(
     return {
         "policy_id": policy_id,
         "enabled": enabled,
-        "max_dynamic_instances": 16 if dynamic_v2 else 12,
+        "max_dynamic_instances": 18 if dynamic_v2 else 12,
         "max_concurrency": 6,
         "max_waves": 3,
         "mission_graph_min_instances": 8 if dynamic_v2 else 4,
         "mission_graph_target_instances": 12 if dynamic_v2 else 4,
-        "mission_graph_max_instances": 16 if dynamic_v2 else 12,
+        "mission_graph_max_instances": 18 if dynamic_v2 else 12,
         "minimum_expected_gain": 0.03,
         "breadth_hypothesis_minimum": 4,
         "breadth_hypothesis_maximum": 8,
         "finalist_minimum": 5 if dynamic_v2 else 2,
         "finalist_maximum": 7 if dynamic_v2 else 4,
+        "minimum_direct_combat_equipment": 4 if dynamic_v2 else 0,
+        "preferred_distinct_direct_equipment": 5 if dynamic_v2 else 0,
         "recursive_recruitment_allowed": False,
         "raw_session_sharing_allowed": False,
         "expert_judge_enabled": dynamic_v2,
         "expert_judge_required": dynamic_v2,
+        "expert_candidate_pool_maximum": 10 if dynamic_v2 else 8,
         "expert_judge_minimum_score": 0.72,
         "expert_judge_critical_dimension_minimum": 0.60,
         "expert_repair_enabled": dynamic_v2,
-        "expert_repair_max_candidates": 3,
+        "expert_repair_max_candidates": 6 if dynamic_v2 else 4,
         "expert_repair_minimum_score": 0.70,
-        "expert_repair_reserved_instances": 3,
+        "expert_repair_reserved_instances": 6 if dynamic_v2 else 4,
         "promotion": {
             "minimum_eligible_runs": 10,
             "minimum_positive_increment_rate": 0.70,
@@ -219,7 +299,7 @@ def normalize_winning_swarm_policy(
         enabled=bool(raw.get("enabled", False) if enabled is None else enabled),
         policy_id=policy_id,
     )
-    maximum_instances = 16 if dynamic_v2 else 12
+    maximum_instances = 18 if dynamic_v2 else 12
     maximum_concurrency = 6
     minimum_instances = 8 if dynamic_v2 else 1
     base.update(
@@ -264,6 +344,18 @@ def normalize_winning_swarm_policy(
                 raw.get("finalist_maximum"), 1, 7,
                 7 if dynamic_v2 else 4,
             ),
+            "minimum_direct_combat_equipment": _bounded_int(
+                raw.get("minimum_direct_combat_equipment"),
+                0,
+                7,
+                4 if dynamic_v2 else 0,
+            ),
+            "preferred_distinct_direct_equipment": _bounded_int(
+                raw.get("preferred_distinct_direct_equipment"),
+                0,
+                7,
+                5 if dynamic_v2 else 0,
+            ),
             "recursive_recruitment_allowed": False,
             "raw_session_sharing_allowed": False,
             "expert_judge_enabled": bool(
@@ -271,6 +363,12 @@ def normalize_winning_swarm_policy(
             ),
             "expert_judge_required": bool(
                 raw.get("expert_judge_required", dynamic_v2)
+            ),
+            "expert_candidate_pool_maximum": _bounded_int(
+                raw.get("expert_candidate_pool_maximum"),
+                5,
+                12,
+                10 if dynamic_v2 else 8,
             ),
             "expert_judge_minimum_score": _bounded_float(
                 raw.get("expert_judge_minimum_score"), 0.0, 1.0, 0.72
@@ -285,13 +383,15 @@ def normalize_winning_swarm_policy(
                 raw.get("expert_repair_enabled", dynamic_v2)
             ),
             "expert_repair_max_candidates": _bounded_int(
-                raw.get("expert_repair_max_candidates"), 0, 4, 3
+                raw.get("expert_repair_max_candidates"), 0, 6,
+                6 if dynamic_v2 else 4,
             ),
             "expert_repair_minimum_score": _bounded_float(
                 raw.get("expert_repair_minimum_score"), 0.0, 1.0, 0.70
             ),
             "expert_repair_reserved_instances": _bounded_int(
-                raw.get("expert_repair_reserved_instances"), 0, 4, 3
+                raw.get("expert_repair_reserved_instances"), 0, 6,
+                6 if dynamic_v2 else 4,
             ),
         }
     )
@@ -299,6 +399,17 @@ def normalize_winning_swarm_policy(
         base["breadth_hypothesis_minimum"] = base["breadth_hypothesis_maximum"]
     if base["finalist_minimum"] > base["finalist_maximum"]:
         base["finalist_minimum"] = base["finalist_maximum"]
+    base["minimum_direct_combat_equipment"] = min(
+        int(base["finalist_maximum"]),
+        int(base["minimum_direct_combat_equipment"]),
+    )
+    base["preferred_distinct_direct_equipment"] = min(
+        int(base["finalist_maximum"]),
+        max(
+            int(base["minimum_direct_combat_equipment"]),
+            int(base["preferred_distinct_direct_equipment"]),
+        ),
+    )
     if base["mission_graph_min_instances"] > base["mission_graph_max_instances"]:
         base["mission_graph_min_instances"] = base["mission_graph_max_instances"]
     base["mission_graph_target_instances"] = max(
@@ -466,29 +577,35 @@ class WinningSwarmController:
         execution_profile_id: str = "winning_swarm_dynamic_v2",
         target_instances: int | None = None,
     ) -> WinningMissionGraph:
-        """Build an 8-16 instance S1-S6 seed graph with safe parallel waves."""
+        """Build an 8-18 instance S1-S6 graph with reserved repair capacity."""
 
         minimum = 8
-        maximum = min(16, max(minimum, int(self.policy.get("mission_graph_max_instances", 16))))
+        maximum = min(
+            18,
+            max(minimum, int(self.policy.get("mission_graph_max_instances", 18))),
+        )
         target = _bounded_int(
             target_instances if target_instances is not None else self.policy.get("mission_graph_target_instances"),
             minimum,
             maximum,
             min(12, maximum),
         )
-        selected: list[tuple[str, str]] = []
-        for node in MISSION_GRAPH_SEED_ARCHETYPES:
-            selected.append((node, MISSION_GRAPH_SEED_ARCHETYPES[node][0]))
-        depth = 1
-        while len(selected) < target:
-            added = False
-            for node, archetypes in MISSION_GRAPH_SEED_ARCHETYPES.items():
-                if depth < len(archetypes) and len(selected) < target:
-                    selected.append((node, archetypes[depth]))
-                    added = True
-            if not added:
-                break
-            depth += 1
+        if self.policy.get("policy_id") == "winning_swarm_dynamic_v2":
+            selected = list(DYNAMIC_V2_MISSION_GRAPH_SEQUENCE[:target])
+        else:
+            selected = []
+            for node in MISSION_GRAPH_SEED_ARCHETYPES:
+                selected.append((node, MISSION_GRAPH_SEED_ARCHETYPES[node][0]))
+            depth = 1
+            while len(selected) < target:
+                added = False
+                for node, archetypes in MISSION_GRAPH_SEED_ARCHETYPES.items():
+                    if depth < len(archetypes) and len(selected) < target:
+                        selected.append((node, archetypes[depth]))
+                        added = True
+                if not added:
+                    break
+                depth += 1
 
         contracts: list[WinningRoleContract] = []
         instances: list[WinningAgentInstance] = []
@@ -700,10 +817,17 @@ class WinningSwarmController:
             (item for item in ledger.hypotheses if item.hypothesis_id == contribution.hypothesis_id),
             None,
         )
-        if hypothesis is None or contribution.merge_target not in MERGE_TARGETS or not contribution.accepted:
+        conflicts: list[str] = []
+        if hypothesis is None:
+            conflicts.append("missing_hypothesis")
+        if contribution.merge_target not in MERGE_TARGETS:
+            conflicts.append("invalid_merge_target")
+        if not contribution.accepted:
+            conflicts.append("contribution_not_accepted")
+        if conflicts:
             return ledger, MergeReceipt(
                 **receipt_base, resulting_ledger_version=ledger.version,
-                status="rejected", conflicts=["invalid_merge_scope_or_contribution"],
+                status="rejected", conflicts=conflicts,
             )
         patch = contribution.hypothesis_patch
         specialist = SpecialistContribution(
@@ -716,6 +840,8 @@ class WinningSwarmController:
             mechanism_chain_updates=_text_list(patch.get("mechanism_chain_updates", []), limit=8),
             direct_military_effects=_text_list(patch.get("direct_military_effects", []), limit=6),
             equipment_forms=_text_list(patch.get("equipment_forms", []), limit=6),
+            project_function=str(patch.get("project_function", "")).strip()[:700],
+            system_interfaces=_text_list(patch.get("system_interfaces", []), limit=8),
             novelty_delta=str(patch.get("novelty_delta", ""))[:900],
             evidence_boundary=str(patch.get("evidence_boundary", ""))[:800],
             implementation_path=str(patch.get("implementation_path", ""))[:800],
@@ -734,6 +860,54 @@ class WinningSwarmController:
             accepted=True,
         )
         updated = self.apply_contribution(hypothesis, specialist)
+        # Expert repair must be able to *remove* an unsupported claim.  The
+        # normal specialist path is intentionally additive, but an additive
+        # evidence-verification pass cannot repair a candidate whose original
+        # equipment form or mechanism is itself too speculative.  Keep the
+        # replacement surface narrow, explicit and exclusive to governed
+        # expert-repair contributions.
+        if (
+            contribution.contribution_id.startswith("winning-expert-repair-")
+            and str(patch.get("patch_mode", "")) == "replace_bounded_claims"
+        ):
+            requested = set(_text_list(patch.get("replace_fields", []), limit=16))
+            list_limits = {
+                "mechanism_chain": 10,
+                "direct_military_effects": 8,
+                "equipment_forms": 8,
+                "system_interfaces": 10,
+                "counterevidence": 12,
+                "adversary_adaptations": 12,
+                "failure_boundaries": 12,
+                "trl_constraints": 10,
+                "cost_constraints": 10,
+                "industrial_constraints": 10,
+                "cross_scenario_results": 12,
+                "validation_plan": 12,
+                "evidence_ids": 24,
+            }
+            string_limits = {
+                "title": 240,
+                "nearest_public_baseline": 1200,
+                "changed_confrontation_variable": 1000,
+                "project_function": 700,
+                "novelty_delta": 900,
+                "evidence_boundary": 800,
+                "implementation_path": 800,
+            }
+            replacement_fields: dict[str, Any] = {}
+            for name, limit in list_limits.items():
+                if name in requested and name in patch:
+                    replacement_fields[name] = _text_list(
+                        patch.get(name, []), limit=limit
+                    )
+            for name, limit in string_limits.items():
+                if name in requested and name in patch:
+                    replacement_fields[name] = str(patch.get(name, "")).strip()[:limit]
+            if replacement_fields:
+                updated = replace(updated, **replacement_fields)
+                gate = self.evaluate_gate(updated, stage="targeted")
+                updated = replace(updated, residuals=gate.residuals, score=gate.score)
         next_version = ledger.version + 1
         receipt = MergeReceipt(
             **receipt_base,
@@ -787,6 +961,9 @@ class WinningSwarmController:
                 "feasibility": 1.0 if hypothesis.trl_constraints and hypothesis.cost_constraints and hypothesis.industrial_constraints else 0.0,
             }
         hypothesis_ids = [item.hypothesis_id for item in ledger.hypotheses]
+        hypothesis_by_id = {
+            item.hypothesis_id: item for item in ledger.hypotheses
+        }
         candidate_ids = [
             item.hypothesis_id
             for item in ledger.hypotheses
@@ -800,6 +977,17 @@ class WinningSwarmController:
                 )
             )
         ]
+        portfolio_family_by_id = {
+            item: (
+                "expert:"
+                + (expert_assessments or {})[item].equipment_classification.strip().lower()
+                if item in (expert_assessments or {})
+                and (expert_assessments or {})[item].equipment_classification.strip().lower()
+                in {"system_link", "support", "support_only", "non_equipment"}
+                else _equipment_family_signature(hypothesis_by_id[item])
+            )
+            for item in candidate_ids
+        }
 
         def dominates(left: str, right: str) -> bool:
             dimensions = set(scores[left]) | set(scores[right])
@@ -815,7 +1003,12 @@ class WinningSwarmController:
                 for other in candidate_ids
             )
         ]
-        front.sort(key=lambda item: (-sum(scores[item].values()), item))
+        front = _diverse_portfolio_order(
+            front,
+            hypothesis_by_id=hypothesis_by_id,
+            scores=scores,
+            family_by_id=portfolio_family_by_id,
+        )
         maximum = int(self.policy.get("finalist_maximum", 4))
         minimum = min(
             maximum,
@@ -828,26 +1021,103 @@ class WinningSwarmController:
         # next-best Pareto layers while preserving the first-front ordering and
         # recording dominance reasons for audit.
         if len(selected) < minimum:
-            ranked_remainder = sorted(
-                (item for item in candidate_ids if item not in selected),
-                key=lambda item: (-sum(scores[item].values()), item),
+            ranked_remainder = _diverse_portfolio_order(
+                [item for item in candidate_ids if item not in selected],
+                hypothesis_by_id=hypothesis_by_id,
+                scores=scores,
+                prior_ids=selected,
+                family_by_id=portfolio_family_by_id,
             )
             selected.extend(ranked_remainder[: minimum - len(selected)])
-        hypothesis_by_id = {
-            item.hypothesis_id: item for item in ledger.hypotheses
-        }
-        direct_pool = sorted(
-            (
+        # Pareto selection can still fill the portfolio with two wording or
+        # operating-concept variants of the same concrete equipment family.
+        # Keep the strongest selected member per family, then backfill from
+        # already-passed candidates in other families. Only reuse a family
+        # when the passing pool lacks enough distinct equipment directions.
+        selected_target = len(selected)
+        distinct_selected: list[str] = []
+        selected_families: set[str] = set()
+        for item in selected:
+            family = portfolio_family_by_id[item]
+            if family in selected_families:
+                continue
+            distinct_selected.append(item)
+            selected_families.add(family)
+        ranked_replacements = _diverse_portfolio_order(
+            [item for item in candidate_ids if item not in distinct_selected],
+            hypothesis_by_id=hypothesis_by_id,
+            scores=scores,
+            prior_ids=distinct_selected,
+            family_by_id=portfolio_family_by_id,
+        )
+        for item in ranked_replacements:
+            family = portfolio_family_by_id[item]
+            if family in selected_families:
+                continue
+            distinct_selected.append(item)
+            selected_families.add(family)
+            if len(distinct_selected) >= selected_target:
+                break
+        if len(distinct_selected) < selected_target:
+            distinct_selected.extend(
+                item
+                for item in ranked_replacements
+                if item not in distinct_selected
+            )
+        selected = distinct_selected[:selected_target]
+        direct_pool = _diverse_portfolio_order(
+            [
                 item
                 for item in candidate_ids
-                if _is_direct_combat_equipment(hypothesis_by_id[item])
-            ),
-            key=lambda item: (-sum(scores[item].values()), item),
+                if _is_direct_combat_equipment(
+                    hypothesis_by_id[item],
+                    (expert_assessments or {}).get(item),
+                )
+            ],
+            hypothesis_by_id=hypothesis_by_id,
+            scores=scores,
+            family_by_id=portfolio_family_by_id,
         )
-        if len(direct_pool) >= 4 and sum(
-            item in direct_pool for item in selected
-        ) < 4:
-            required_direct = direct_pool[:4]
+        distinct_direct_pool: list[str] = []
+        distinct_direct_families: set[str] = set()
+        for item in direct_pool:
+            family = portfolio_family_by_id[item]
+            if family in distinct_direct_families:
+                continue
+            distinct_direct_pool.append(item)
+            distinct_direct_families.add(family)
+        minimum_direct = min(
+            maximum,
+            int(self.policy.get("minimum_direct_combat_equipment", 4)),
+        )
+        preferred_distinct_direct = min(
+            maximum,
+            int(
+                self.policy.get(
+                    "preferred_distinct_direct_equipment",
+                    minimum_direct,
+                )
+            ),
+        )
+        direct_target = (
+            preferred_distinct_direct
+            if len(distinct_direct_pool) >= preferred_distinct_direct
+            else minimum_direct
+        )
+        selected_direct_families = {
+            portfolio_family_by_id[item]
+            for item in selected
+            if item in direct_pool
+        }
+        if (
+            len(direct_pool) >= direct_target
+            and len(selected_direct_families) < direct_target
+        ):
+            required_direct = (
+                distinct_direct_pool[:direct_target]
+                if len(distinct_direct_pool) >= direct_target
+                else direct_pool[:direct_target]
+            )
             ranked_all = sorted(
                 candidate_ids,
                 key=lambda item: (-sum(scores[item].values()), item),
@@ -857,6 +1127,36 @@ class WinningSwarmController:
                 *selected,
                 *ranked_all,
             ]))[:maximum]
+        selected = _diverse_portfolio_order(
+            selected,
+            hypothesis_by_id=hypothesis_by_id,
+            scores=scores,
+            family_by_id=portfolio_family_by_id,
+        )[:maximum]
+        if selected and not any(
+            hypothesis_by_id[item].implementation_path == "upgrade"
+            for item in selected
+        ):
+            upgrade_pool = _diverse_portfolio_order(
+                [
+                    item
+                    for item in candidate_ids
+                    if item not in selected
+                    and hypothesis_by_id[item].implementation_path == "upgrade"
+                ],
+                hypothesis_by_id=hypothesis_by_id,
+                scores=scores,
+                prior_ids=selected,
+                family_by_id=portfolio_family_by_id,
+            )
+            if upgrade_pool:
+                selected[-1] = upgrade_pool[0]
+                selected = _diverse_portfolio_order(
+                    list(dict.fromkeys(selected)),
+                    hypothesis_by_id=hypothesis_by_id,
+                    scores=scores,
+                    family_by_id=portfolio_family_by_id,
+                )[:maximum]
         rejected = [item for item in hypothesis_ids if item not in selected]
         reasons = {
             item: [other for other in hypothesis_ids if other != item and dominates(other, item)]
@@ -886,6 +1186,197 @@ class WinningSwarmController:
                 )
             ),
         )
+
+    @staticmethod
+    def equipment_family_signature(hypothesis: WinningHypothesis) -> str:
+        return _equipment_family_signature(hypothesis)
+
+    @staticmethod
+    def equipment_family_counts(
+        hypotheses: Sequence[WinningHypothesis],
+    ) -> dict[str, int]:
+        return dict(
+            Counter(_equipment_family_signature(item) for item in hypotheses)
+        )
+
+    def passed_portfolio_coverage(
+        self,
+        ledger: HypothesisLedgerVersion,
+        expert_assessments: Mapping[str, WinningExpertAssessment],
+    ) -> dict[str, Any]:
+        """Describe whether passed candidates can form the intended portfolio.
+
+        Counting expert passes alone is insufficient: several accepted wording
+        variants may still represent the same weapon family, while a system
+        link can occupy the fifth slot without adding a concrete weapon.  The
+        dynamic quality profile therefore keeps the bounded completion lane
+        open until both the direction count and direct-family breadth are met.
+        """
+
+        passed = [
+            item
+            for item in ledger.hypotheses
+            if item.hypothesis_id in expert_assessments
+            and expert_assessments[item.hypothesis_id].passed
+        ]
+        direct = [
+            item
+            for item in passed
+            if _is_direct_combat_equipment(
+                item,
+                expert_assessments.get(item.hypothesis_id),
+            )
+        ]
+        direct_family_counts = self.equipment_family_counts(direct)
+        finalist_minimum = int(self.policy.get("finalist_minimum", 2))
+        minimum_direct = min(
+            finalist_minimum,
+            int(self.policy.get("minimum_direct_combat_equipment", 0)),
+        )
+        preferred_distinct_direct = min(
+            finalist_minimum,
+            int(
+                self.policy.get(
+                    "preferred_distinct_direct_equipment",
+                    minimum_direct,
+                )
+            ),
+        )
+        passed_count = len(passed)
+        direct_count = len(direct)
+        distinct_direct_family_count = len(direct_family_counts)
+        return {
+            "ready": (
+                passed_count >= finalist_minimum
+                and direct_count >= minimum_direct
+                and distinct_direct_family_count >= preferred_distinct_direct
+            ),
+            "passed_count": passed_count,
+            "direct_combat_equipment_count": direct_count,
+            "distinct_direct_equipment_family_count": (
+                distinct_direct_family_count
+            ),
+            "direct_equipment_family_counts": direct_family_counts,
+            "finalist_minimum": finalist_minimum,
+            "minimum_direct_combat_equipment": minimum_direct,
+            "preferred_distinct_direct_equipment": (
+                preferred_distinct_direct
+            ),
+        }
+
+    def select_unassessed_portfolio_candidates(
+        self,
+        ledger: HypothesisLedgerVersion,
+        expert_assessments: Mapping[str, WinningExpertAssessment],
+        *,
+        maximum: int | None = None,
+    ) -> list[str]:
+        """Select diverse, gate-passing ledger rows for the bounded re-review.
+
+        The first blind review intentionally receives a compact candidate pool.
+        When that pool yields too few finalists, the second review should first
+        use strong candidates already produced by the mission graph instead of
+        spending another generator call on replacement prose.  The expert gate
+        remains authoritative: this method only chooses what to review and
+        never promotes an unassessed or failed candidate.
+        """
+
+        limit = max(
+            0,
+            int(
+                maximum
+                if maximum is not None
+                else self.policy.get("expert_candidate_pool_maximum", 8)
+            ),
+        )
+        if not limit:
+            return []
+        assessed_ids = set(expert_assessments)
+        hypotheses_by_id = {
+            item.hypothesis_id: item for item in ledger.hypotheses
+        }
+        gate_by_id = {
+            item.hypothesis_id: self.evaluate_gate(item, stage="final")
+            for item in ledger.hypotheses
+            if item.hypothesis_id not in assessed_ids
+        }
+        candidate_ids = [
+            item.hypothesis_id
+            for item in ledger.hypotheses
+            if item.hypothesis_id not in assessed_ids
+            and gate_by_id[item.hypothesis_id].passed
+        ]
+        if not candidate_ids:
+            return []
+        scores = {
+            hypothesis_id: {
+                "quality": gate_by_id[hypothesis_id].score,
+                "evidence": min(
+                    1.0,
+                    len(hypotheses_by_id[hypothesis_id].evidence_ids) / 3,
+                ),
+                "robustness": min(
+                    1.0,
+                    (
+                        len(
+                            hypotheses_by_id[
+                                hypothesis_id
+                            ].adversary_adaptations
+                        )
+                        + len(
+                            hypotheses_by_id[
+                                hypothesis_id
+                            ].cross_scenario_results
+                        )
+                    )
+                    / 4,
+                ),
+            }
+            for hypothesis_id in candidate_ids
+        }
+        family_by_id = {
+            hypothesis_id: _equipment_family_signature(
+                hypotheses_by_id[hypothesis_id]
+            )
+            for hypothesis_id in candidate_ids
+        }
+        passed_ids = [
+            item.hypothesis_id
+            for item in ledger.hypotheses
+            if item.hypothesis_id in expert_assessments
+            and expert_assessments[item.hypothesis_id].passed
+        ]
+        ordered = _diverse_portfolio_order(
+            candidate_ids,
+            hypothesis_by_id=hypotheses_by_id,
+            scores=scores,
+            prior_ids=passed_ids,
+            family_by_id=family_by_id,
+        )
+        selected: list[str] = []
+        passed_has_upgrade = any(
+            hypotheses_by_id[item].implementation_path == "upgrade"
+            for item in passed_ids
+            if item in hypotheses_by_id
+        )
+        if not passed_has_upgrade:
+            upgrade = next(
+                (
+                    item
+                    for item in ordered
+                    if hypotheses_by_id[item].implementation_path == "upgrade"
+                ),
+                None,
+            )
+            if upgrade is not None:
+                selected.append(upgrade)
+        selected.extend(
+            item
+            for item in ordered
+            if _is_direct_combat_equipment(hypotheses_by_id[item])
+        )
+        selected.extend(ordered)
+        return list(dict.fromkeys(selected))[:limit]
 
     def expert_assessment_from_mapping(
         self,
@@ -1007,6 +1498,30 @@ class WinningSwarmController:
             in {"system_link", "support", "non_materiel"}
         ):
             return "equipment_capability_image_repairer"
+        evidence_hardening_terms = (
+            "公开证据",
+            "缺少直接证据",
+            "未经证明",
+            "实弹",
+            "鉴定",
+            "全寿命成本",
+            "产线",
+            "良率",
+        )
+        residual_text = " ".join(
+            [
+                *assessment.residuals,
+                *assessment.rejection_reasons,
+                *assessment.weaknesses,
+            ]
+        )
+        if (
+            assessment.equipment_classification
+            in {"direct_combat", "unmanned_combat", "upgrade"}
+            and scores.get("credibility", 0.0) < 0.70
+            and any(term in residual_text for term in evidence_hardening_terms)
+        ):
+            return "equipment_capability_image_repairer"
         if scores.get("credibility", 0.0) < 0.70:
             return "evidence_verifier"
         if scores.get("engineering_feasibility", 0.0) < 0.68:
@@ -1019,6 +1534,55 @@ class WinningSwarmController:
         if scores.get("robustness", 0.0) < 0.72:
             return "adversary_counter_adaptation_red_team"
         return "baseline_delta_analyst"
+
+    @staticmethod
+    def retain_diverse_candidates(
+        hypotheses: Sequence[WinningHypothesis],
+        *,
+        maximum: int = 8,
+        priority_source_groups: Sequence[set[str]] = (),
+        quota_per_priority_group: int = 2,
+    ) -> list[WinningHypothesis]:
+        """Retain bounded candidates without starving specialist equipment lanes.
+
+        Dynamic branches often have identical deterministic gate scores.  A
+        plain score/id slice can therefore discard both outputs of a dedicated
+        remote-munition or scalable-equipment role while retaining generic S1
+        and S2 branches.  Reserve a small quota for each declared specialist
+        source group, then fill the remaining slots by score.
+        """
+
+        limit = max(0, int(maximum))
+        if not limit:
+            return []
+        ranked = sorted(
+            hypotheses,
+            key=lambda item: (-item.score, item.hypothesis_id),
+        )
+        selected: list[WinningHypothesis] = []
+        selected_ids: set[str] = set()
+        for source_group in priority_source_groups:
+            if len(selected) >= limit:
+                break
+            group_rows = [
+                item
+                for item in ranked
+                if item.hypothesis_id not in selected_ids
+                and set(item.source_task_ids) & set(source_group)
+            ]
+            for item in group_rows[: max(0, int(quota_per_priority_group))]:
+                selected.append(item)
+                selected_ids.add(item.hypothesis_id)
+                if len(selected) >= limit:
+                    break
+        for item in ranked:
+            if len(selected) >= limit:
+                break
+            if item.hypothesis_id in selected_ids:
+                continue
+            selected.append(item)
+            selected_ids.add(item.hypothesis_id)
+        return selected
 
     def core_execution_waves(
         self,
@@ -1299,6 +1863,7 @@ class WinningSwarmController:
             "causal_chain_broken": "adversary_counter_adaptation_red_team",
             "military_effect_missing": "disruptive_mechanism_generator",
             "equipment_not_concrete": "equipment_realization_architect",
+            "system_interfaces_missing": "equipment_realization_architect",
             "engineering_feasibility_insufficient": "trl_cost_industrial_auditor",
             "counter_adaptation_unresolved": "adversary_counter_adaptation_red_team",
             "cross_scenario_unstable": "cross_scenario_stress_tester",
@@ -1355,6 +1920,9 @@ class WinningSwarmController:
             value.get("equipment_forms", value.get("equipment_form", [])),
             limit=6,
         )
+        project_function = str(value.get("project_function", "")).strip()[:700]
+        if not project_function and direct_effects:
+            project_function = direct_effects[0][:700]
         hypothesis_id = _stable_id(
             "hypothesis",
             title,
@@ -1376,7 +1944,9 @@ class WinningSwarmController:
             mechanism_chain=mechanism_chain,
             direct_military_effects=direct_effects,
             equipment_forms=equipment_forms,
+            project_function=project_function,
             novelty_delta=str(value.get("novelty_delta") or value.get("novelty") or "").strip()[:900],
+            system_interfaces=_text_list(value.get("system_interfaces", []), limit=8),
             evidence_ids=evidence_ids,
             counterevidence=_text_list(value.get("counterevidence", []), limit=8),
             adversary_adaptations=_text_list(value.get("adversary_adaptations", []), limit=8),
@@ -1417,11 +1987,18 @@ class WinningSwarmController:
             value.get("incremental_quality", value.get("quality_delta")), 0.0, 1.0, 0.0
         )
         recommendation = str(value.get("recommendation", "retain"))[:80]
-        accepted = (
-            quality >= float(self.policy["minimum_expected_gain"])
-            and bool(_text_list(value.get("findings", []), limit=8))
-            and recommendation != "reject"
+        retention = self.contribution_retention_assessment(
+            value,
+            evidence_ids=evidence_ids,
+            reported_quality=quality,
+            mission_node=task.merge_target,
         )
+        quality = float(retention["effective_quality"])
+        accepted = bool(retention["accepted"])
+        direct_effects = _text_list(value.get("direct_military_effects", []), limit=6)
+        project_function = str(value.get("project_function", "")).strip()[:700]
+        if not project_function and direct_effects:
+            project_function = direct_effects[0][:700]
         return SpecialistContribution(
             contribution_id=_stable_id("contribution", task.task_id, task.hypothesis_id),
             task_id=task.task_id,
@@ -1430,8 +2007,10 @@ class WinningSwarmController:
             merge_target=task.merge_target,
             findings=_text_list(value.get("findings", []), limit=8),
             mechanism_chain_updates=_text_list(value.get("mechanism_chain_updates", []), limit=8),
-            direct_military_effects=_text_list(value.get("direct_military_effects", []), limit=6),
+            direct_military_effects=direct_effects,
             equipment_forms=_text_list(value.get("equipment_forms", []), limit=6),
+            project_function=project_function,
+            system_interfaces=_text_list(value.get("system_interfaces", []), limit=8),
             novelty_delta=str(value.get("novelty_delta", "")).strip()[:900],
             evidence_boundary=str(value.get("evidence_boundary", "")).strip()[:800],
             implementation_path=str(value.get("implementation_path", "")).strip()[:800],
@@ -1449,6 +2028,115 @@ class WinningSwarmController:
             recommendation=recommendation,
             accepted=accepted,
         )
+
+    def contribution_retention_assessment(
+        self,
+        value: Mapping[str, Any],
+        *,
+        evidence_ids: Sequence[str],
+        reported_quality: float,
+        mission_node: str = "",
+    ) -> dict[str, Any]:
+        """Retain structured W2/S3-S5 value even when self-rating is conservative.
+
+        Specialists sometimes leave ``findings`` empty because their useful
+        delta is represented in structured equipment, effect, mechanism and
+        evidence fields.  Treat that complete combination as high-quality
+        contribution instead of discarding it on formatting or self-scoring.
+        """
+
+        minimum = float(self.policy["minimum_expected_gain"])
+        recommendation = str(value.get("recommendation", "retain"))[:80]
+        findings = _text_list(value.get("findings", []), limit=8)
+        equipment_forms = _text_list(value.get("equipment_forms", []), limit=6)
+        direct_effects = _text_list(
+            value.get("direct_military_effects", []), limit=6
+        )
+        project_function = str(value.get("project_function", "")).strip()
+        if not project_function and direct_effects:
+            project_function = direct_effects[0]
+        mechanism_updates = _text_list(
+            value.get("mechanism_chain_updates", value.get("mechanism_chain", [])),
+            limit=8,
+        )
+        novelty = str(value.get("novelty_delta", "")).strip()
+        evidence_boundary = str(value.get("evidence_boundary", "")).strip()
+        failure_boundaries = _text_list(
+            value.get("failure_boundaries", []), limit=8
+        )
+        validation_plan = _text_list(value.get("validation_plan", []), limit=8)
+        cross_scenario = _text_list(
+            value.get("cross_scenario_results", []), limit=8
+        )
+        weapon_markers = (
+            "导弹",
+            "巡飞",
+            "弹药",
+            "战斗部",
+            "效应器",
+            "无人机",
+            "无人平台",
+            "拦截弹",
+            "鱼雷",
+            "水雷",
+            "激光武器",
+        )
+        concrete_equipment = any(
+            any(marker in form for marker in weapon_markers)
+            and len(form.strip()) >= 6
+            for form in equipment_forms
+        )
+        mechanism_difference = bool(mechanism_updates or novelty)
+        evidence_bounded = bool(evidence_ids) and bool(
+            evidence_boundary or failure_boundaries
+        )
+        structured_weapon_delta = bool(
+            concrete_equipment
+            and direct_effects
+            and project_function
+            and mechanism_difference
+            and evidence_bounded
+        )
+        generic_substantive = bool(
+            findings
+            or validation_plan
+            or failure_boundaries
+            or cross_scenario
+            or evidence_boundary
+        )
+        s6_validation_delta = mission_node == "S6" and bool(
+            validation_plan and (failure_boundaries or evidence_boundary)
+        )
+        accepted = bool(
+            recommendation != "reject"
+            and generic_substantive
+            and (
+                reported_quality >= minimum
+                or structured_weapon_delta
+                or s6_validation_delta
+            )
+        )
+        effective_quality = (
+            max(reported_quality, minimum)
+            if accepted and (structured_weapon_delta or s6_validation_delta)
+            else reported_quality
+        )
+        return {
+            "accepted": accepted,
+            "effective_quality": effective_quality,
+            "reported_quality": reported_quality,
+            "structured_weapon_delta": structured_weapon_delta,
+            "s6_validation_delta": s6_validation_delta,
+            "retention_reason": (
+                "structured_query_weapon_delta"
+                if structured_weapon_delta
+                else "s6_validation_delta"
+                if s6_validation_delta
+                else "reported_incremental_gain"
+                if accepted
+                else "insufficient_substantive_gain"
+            ),
+        }
 
     def apply_contribution(
         self,
@@ -1480,6 +2168,13 @@ class WinningSwarmController:
                 *hypothesis.equipment_forms,
                 *contribution.equipment_forms,
             ], 8),
+            project_function=(
+                contribution.project_function or hypothesis.project_function
+            ),
+            system_interfaces=_dedupe([
+                *hypothesis.system_interfaces,
+                *contribution.system_interfaces,
+            ], 10),
             novelty_delta=contribution.novelty_delta or hypothesis.novelty_delta,
             evidence_boundary=contribution.evidence_boundary or hypothesis.evidence_boundary,
             implementation_path=contribution.implementation_path or hypothesis.implementation_path,
@@ -1513,6 +2208,28 @@ class WinningSwarmController:
             residuals.append("novelty_insufficient")
         if not hypothesis.equipment_forms:
             residuals.append("equipment_not_concrete")
+        if not hypothesis.project_function.strip():
+            residuals.append("project_function_missing")
+        if (
+            self.policy.get("policy_id") == "winning_swarm_dynamic_v2"
+            and not hypothesis.system_interfaces
+        ):
+            residuals.append("system_interfaces_missing")
+        if self.policy.get("policy_id") == "winning_swarm_dynamic_v2":
+            if _mixed_named_equipment_families(hypothesis):
+                residuals.append("mixed_primary_equipment_families")
+            if (
+                _is_direct_combat_equipment(hypothesis)
+                and any(
+                    "-web-" in str(evidence_id)
+                    for evidence_id in hypothesis.evidence_ids
+                )
+                and not any(
+                    str(evidence_id).startswith("ev-weapon_equipment-")
+                    for evidence_id in hypothesis.evidence_ids
+                )
+            ):
+                residuals.append("equipment_object_evidence_missing")
         if not hypothesis.evidence_ids or not hypothesis.evidence_boundary.strip():
             residuals.append("evidence_insufficient")
         if not hypothesis.adversary_adaptations or not hypothesis.failure_boundaries:
@@ -1536,7 +2253,11 @@ class WinningSwarmController:
             "causal_chain_broken": 0.16,
             "military_effect_missing": 0.14,
             "novelty_insufficient": 0.10,
-            "equipment_not_concrete": 0.12,
+            "equipment_not_concrete": 0.08,
+            "project_function_missing": 0.08,
+            "system_interfaces_missing": 0.04,
+            "mixed_primary_equipment_families": 0.12,
+            "equipment_object_evidence_missing": 0.12,
             "evidence_insufficient": 0.14,
             "counter_adaptation_unresolved": 0.08,
             "engineering_feasibility_insufficient": 0.06,
@@ -1620,6 +2341,26 @@ class WinningSwarmController:
             )
         return kept, merged
 
+    @staticmethod
+    def semantic_hypothesis_match(
+        candidate: WinningHypothesis,
+        governed_candidates: Sequence[WinningHypothesis],
+        *,
+        minimum_similarity: float = 0.72,
+    ) -> str:
+        """Resolve an obsolete candidate id to its governed semantic peer."""
+
+        ranked = sorted(
+            (
+                (_hypothesis_similarity(candidate, governed), governed)
+                for governed in governed_candidates
+            ),
+            key=lambda row: (-row[0], -row[1].score, row[1].hypothesis_id),
+        )
+        if not ranked or ranked[0][0] < minimum_similarity:
+            return ""
+        return ranked[0][1].hypothesis_id
+
     def select_finalists(
         self,
         hypotheses: Sequence[WinningHypothesis],
@@ -1657,6 +2398,46 @@ class WinningSwarmController:
             )
             selected = selected[: min(maximum, max(minimum, len(selected)))]
         selected_ids = {item.hypothesis_id for item in selected}
+        selection_reasons: dict[str, list[str]] = {}
+        for candidate in ranked:
+            if candidate.hypothesis_id in selected_ids:
+                continue
+            gate = gate_by_id[candidate.hypothesis_id]
+            if not gate.passed:
+                selection_reasons[candidate.hypothesis_id] = (
+                    list(gate.rejection_reasons)
+                    or list(gate.residuals)
+                    or ["最终业务质量门未通过"]
+                )
+                continue
+            dominators = [
+                other.hypothesis_id
+                for other in passing
+                if other.hypothesis_id != candidate.hypothesis_id
+                and _dominates(other, candidate, gate_by_id)
+            ]
+            if dominators:
+                selection_reasons[candidate.hypothesis_id] = [
+                    "已通过单项质量门，但被更强候选在质量得分、证据覆盖、"
+                    "反适应/跨场景稳健性或工程约束完整性上支配："
+                    + "、".join(dominators[:3])
+                ]
+            else:
+                selection_reasons[candidate.hypothesis_id] = [
+                    "已通过单项质量门，但受候选组合容量上限"
+                    f"（finalist_maximum={maximum}）约束，按质量得分、证据覆盖和稳定性排序未入选"
+                ]
+        gates = [
+            replace(
+                gate,
+                rejection_reasons=selection_reasons.get(
+                    gate.hypothesis_id,
+                    gate.rejection_reasons,
+                ),
+            )
+            for gate in gates
+        ]
+        gate_by_id = {item.hypothesis_id: item for item in gates}
         finalists = [
             replace(
                 item,
@@ -1691,8 +2472,123 @@ class WinningSwarmController:
         ]
 
     @staticmethod
-    def is_direct_combat_equipment(hypothesis: WinningHypothesis) -> bool:
-        return _is_direct_combat_equipment(hypothesis)
+    def is_direct_combat_equipment(
+        hypothesis: WinningHypothesis,
+        assessment: WinningExpertAssessment | None = None,
+    ) -> bool:
+        return _is_direct_combat_equipment(hypothesis, assessment)
+
+    def select_expert_repair_assessments(
+        self,
+        assessments: Mapping[str, WinningExpertAssessment],
+        *,
+        hypotheses: Mapping[str, WinningHypothesis] | None = None,
+    ) -> list[WinningExpertAssessment]:
+        """Prioritize failed direct-equipment images before quota conversions.
+
+        Passing system-link candidates are useful for portfolio breadth but
+        rewriting them can turn a pass into a reject. Repair already-direct
+        ``revise`` candidates first so the 4-of-5 combat quota can be met
+        without sacrificing an otherwise valid fifth direction. Dynamic v2
+        reserves six parallel repair slots because four slots cannot reliably
+        satisfy a five-direction minimum after blind review.
+        """
+
+        maximum_candidates = int(self.policy["expert_repair_max_candidates"])
+        minimum_score = float(self.policy["expert_repair_minimum_score"])
+        direct_categories = {"direct_combat", "unmanned_combat"}
+        concrete_gap = sorted(
+            (
+                item
+                for item in assessments.values()
+                if item.passed
+                and item.equipment_classification not in direct_categories
+                and item.weighted_score >= minimum_score
+            ),
+            key=lambda item: (-item.weighted_score, item.hypothesis_id),
+        )
+        revisions = sorted(
+            (
+                item
+                for item in assessments.values()
+                if item.verdict == "revise"
+                and item.weighted_score >= minimum_score
+            ),
+            key=lambda item: (-item.weighted_score, item.hypothesis_id),
+        )
+        direct_revisions = [
+            item
+            for item in revisions
+            if item.equipment_classification in direct_categories
+        ]
+        other_revisions = [
+            item
+            for item in revisions
+            if item.equipment_classification not in direct_categories
+        ]
+        if hypotheses:
+            passed_direct_families = {
+                _equipment_family_signature(hypotheses[item.hypothesis_id])
+                for item in assessments.values()
+                if item.passed
+                and item.hypothesis_id in hypotheses
+                and _is_direct_combat_equipment(
+                    hypotheses[item.hypothesis_id],
+                    item,
+                )
+            }
+
+            def family_for(item: WinningExpertAssessment) -> str:
+                hypothesis = hypotheses.get(item.hypothesis_id)
+                return (
+                    _equipment_family_signature(hypothesis)
+                    if hypothesis is not None
+                    else ""
+                )
+
+            def missing_family_diverse(
+                rows: Sequence[WinningExpertAssessment],
+            ) -> list[WinningExpertAssessment]:
+                missing = sorted(
+                    (
+                        item
+                        for item in rows
+                        if family_for(item)
+                        and family_for(item) not in passed_direct_families
+                    ),
+                    key=lambda item: (-item.weighted_score, item.hypothesis_id),
+                )
+                first_per_family: list[WinningExpertAssessment] = []
+                seen_families: set[str] = set()
+                for item in missing:
+                    family = family_for(item)
+                    if family in seen_families:
+                        continue
+                    first_per_family.append(item)
+                    seen_families.add(family)
+                return [
+                    *first_per_family,
+                    *(item for item in missing if item not in first_per_family),
+                    *(
+                        item
+                        for item in rows
+                        if item not in missing
+                    ),
+                ]
+
+            direct_revisions = missing_family_diverse(direct_revisions)
+            other_revisions = missing_family_diverse(other_revisions)
+
+        selected: list[WinningExpertAssessment] = []
+        seen: set[str] = set()
+        for item in [*direct_revisions, *concrete_gap, *other_revisions]:
+            if item.hypothesis_id in seen:
+                continue
+            selected.append(item)
+            seen.add(item.hypothesis_id)
+            if len(selected) >= maximum_candidates:
+                break
+        return selected
 
     @staticmethod
     def contribution_projection(
@@ -1778,24 +2674,175 @@ def _hypothesis_similarity(left: WinningHypothesis, right: WinningHypothesis) ->
     return len(left_tokens & right_tokens) / len(left_tokens | right_tokens)
 
 
-def _is_direct_combat_equipment(hypothesis: WinningHypothesis) -> bool:
-    """Reject support-only cards from satisfying the combat-equipment quota."""
+def _equipment_family_signature(hypothesis: WinningHypothesis) -> str:
+    """Return a broad equipment family for portfolio-level diversity control.
+
+    The family is intentionally coarser than a candidate title. It prevents a
+    five-item portfolio from being filled by wording variants of the same
+    low-altitude unmanned platform or anti-radiation loitering munition while
+    still allowing a second variant when the candidate pool lacks breadth.
+    """
+
+    primary_text = " ".join(
+        [hypothesis.title, *hypothesis.equipment_forms[:1]]
+    ).lower()
+    full_text = " ".join(
+        [hypothesis.title, *hypothesis.equipment_forms]
+    ).lower()
+
+    def classify(text: str) -> str:
+        if any(term in text for term in ("barracuda", "famm")):
+            return "scalable_low_cost_cruise_effector"
+        if any(
+            term in text
+            for term in ("mald", "adm-160", "诱饵/电子攻击效应器")
+        ):
+            return "expendable_decoy_electronic_attack_effector"
+        if any(term in text for term in ("harop", "harpy", "巡飞猎歼")):
+            return "loitering_munition"
+        if any(term in text for term in ("prsm", "precision strike missile")):
+            return "ground_launched_precision_missile"
+        if any(term in text for term in ("反辐射", "抗辐射")):
+            return "anti_radiation_loitering_munition"
+        if any(term in text for term in ("高功率微波", "定向能", "激光武器")):
+            return "directed_energy_weapon"
+        if any(term in text for term in ("反无人机", "反无人系统", "无人机拦截")):
+            return "counter_unmanned_weapon"
+        if any(term in text for term in ("低空", "超低空")) and any(
+            term in text for term in ("无人", "察打", "携弹", "巡飞")
+        ):
+            return "low_altitude_unmanned_strike"
+        if any(term in text for term in ("空射", "机载")) and any(
+            term in text for term in ("导弹", "巡航弹", "防区外")
+        ):
+            return "air_launched_standoff_missile"
+        if any(term in text for term in ("地射", "地面发射", "车载发射")) and any(
+            term in text for term in ("导弹", "火箭弹", "精确制导")
+        ):
+            return "ground_launched_precision_missile"
+        if any(term in text for term in ("舰射", "潜射", "海上发射")) and any(
+            term in text for term in ("导弹", "巡航弹", "鱼雷")
+        ):
+            return "maritime_launched_weapon"
+        if "巡航" in text and any(
+            term in text for term in ("导弹", "弹药", "效应器")
+        ):
+            return "cruise_munition"
+        if "巡飞" in text and any(
+            term in text for term in ("弹", "弹药", "效应器")
+        ):
+            return "loitering_munition"
+        if any(
+            term in text for term in ("无人艇", "无人潜航", "无人车", "无人僚机")
+        ):
+            return "unmanned_combat_platform"
+        if any(term in text for term in ("导弹", "火箭弹", "拦截弹", "鱼雷")):
+            return "guided_missile_or_munition"
+        return ""
+
+    # Classify the visible subject and first authoritative equipment form
+    # before scanning subordinate interfaces or companion weapons. Otherwise
+    # “反舰导弹与反辐射弹药成组使用” is mislabeled as an anti-radiation card.
+    family = classify(primary_text) or classify(full_text)
+    if family:
+        return family
+    normalized = re.sub(r"[^a-z0-9\u3400-\u9fff]+", "", hypothesis.title.lower())
+    fallback = normalized or hypothesis.hypothesis_id
+    return "specific:" + sha256(fallback.encode("utf-8")).hexdigest()[:12]
+
+
+def _mixed_named_equipment_families(
+    hypothesis: WinningHypothesis,
+) -> tuple[str, ...]:
+    """Detect one card that combines multiple public weapon-family anchors."""
 
     text = " ".join([hypothesis.title, *hypothesis.equipment_forms]).lower()
-    direct_terms = (
-        "无人",
-        "平台",
-        "飞行器",
+    families = {
+        family
+        for family, anchors in {
+            "mald": ("mald", "adm-160"),
+            "aargm": ("aargm",),
+            "harop": ("harop", "harpy"),
+            "prsm": ("prsm", "precision strike missile"),
+            "jassm": ("jassm", "agm-158", "lrasm"),
+            "barracuda": ("barracuda", "famm"),
+        }.items()
+        if any(anchor in text for anchor in anchors)
+    }
+    return tuple(sorted(families)) if len(families) > 1 else ()
+
+
+def _diverse_portfolio_order(
+    candidate_ids: Sequence[str],
+    *,
+    hypothesis_by_id: Mapping[str, WinningHypothesis],
+    scores: Mapping[str, Mapping[str, float]],
+    prior_ids: Sequence[str] = (),
+    family_by_id: Mapping[str, str] | None = None,
+) -> list[str]:
+    """Rank by objective score while selecting broad families round-robin."""
+
+    def family(item: str) -> str:
+        return str((family_by_id or {}).get(item) or _equipment_family_signature(
+            hypothesis_by_id[item]
+        ))
+
+    remaining = list(dict.fromkeys(candidate_ids))
+    family_counts = Counter(
+        family(item)
+        for item in prior_ids
+        if item in hypothesis_by_id
+    )
+    ordered: list[str] = []
+    while remaining:
+        minimum_family_count = min(
+            family_counts[family(item)]
+            for item in remaining
+        )
+        eligible = [
+            item
+            for item in remaining
+            if family_counts[family(item)] == minimum_family_count
+        ]
+        chosen = min(
+            eligible,
+            key=lambda item: (-sum(scores[item].values()), item),
+        )
+        ordered.append(chosen)
+        remaining.remove(chosen)
+        family_counts[family(chosen)] += 1
+    return ordered
+
+
+def _is_direct_combat_equipment(
+    hypothesis: WinningHypothesis,
+    assessment: WinningExpertAssessment | None = None,
+) -> bool:
+    """Reject support-only cards from satisfying the combat-equipment quota."""
+
+    classification = (
+        assessment.equipment_classification.strip().lower()
+        if assessment is not None
+        else ""
+    )
+    if classification in {"direct_combat", "unmanned_combat"}:
+        return True
+    if classification in {"system_link", "support", "support_only", "non_equipment"}:
+        return False
+
+    text = " ".join([hypothesis.title, *hypothesis.equipment_forms]).lower()
+    direct_weapon_terms = (
         "导弹",
         "弹药",
         "拦截",
         "武器",
         "战斗",
-        "载具",
-        "机器人",
+        "电子攻击效应器",
+        "电子压制器",
+        "打击载荷",
+        "火力节点",
         "舰",
         "艇",
-        "车辆",
         "火力",
         "counter-uas",
         "munition",
@@ -1803,7 +2850,9 @@ def _is_direct_combat_equipment(hypothesis: WinningHypothesis) -> bool:
         "combat vehicle",
         "weapon",
     )
-    return any(term in text for term in direct_terms)
+    if classification == "upgrade":
+        return any(term in text for term in direct_weapon_terms)
+    return any(term in text for term in direct_weapon_terms)
 
 
 def _dominates(

@@ -141,9 +141,9 @@ def test_provider_and_tool_configuration_are_structured() -> None:
         "type": "codex_cli",
         "command": "codex",
         "model": "",
-        "timeout_seconds": 21600,
+        "timeout_seconds": 900,
         "sandbox_mode": "read-only",
-        "retry_attempts": 2,
+        "retry_attempts": 1,
         "extra_args": [
             "--ignore-user-config",
             "--ignore-rules",

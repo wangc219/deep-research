@@ -24,6 +24,14 @@ from equipment_deep_research.orchestration.capability_military_value import (
 from equipment_deep_research.orchestration.capability_fallback import (
     build_deadline_weapon_directions,
 )
+from equipment_deep_research.orchestration.capability_portrait import (
+    build_capability_portrait,
+    build_capability_title,
+    normalize_capability_problem,
+    normalize_operational_process,
+    normalize_verification_plan,
+    resolve_capability_portrait,
+)
 from equipment_deep_research.orchestration.winning_reasoning import (
     SixStepReasoner,
     WinningResourceProjector,
@@ -1243,7 +1251,30 @@ class WinningMechanismEngine:
         images: list[CapabilityImageItem] = []
         seen_names: set[str] = set()
         for direction in directions:
-            name = str(direction.get("name", "")).strip()
+            name = _normalize_direction_name(direction.get("name", ""))
+            name_identity = " ".join(
+                str(direction.get(field, ""))
+                for field in ("name", "equipment_form", "function", "military_value")
+            )
+            if any(marker in name_identity for marker in ("无人艇", "无人水面")) and any(
+                marker in name_identity
+                for marker in (
+                    "巡航弹舱",
+                    "巡航弹发射",
+                    "远程弹药发射",
+                    "远火发射",
+                    "海上分布弹舱",
+                    "海上远程火力",
+                )
+            ):
+                name = build_capability_title(
+                    name=name,
+                    equipment_form=direction.get("equipment_form", ""),
+                    effect=(
+                        direction.get("function", "")
+                        or direction.get("military_value", "")
+                    ),
+                )
             capability_type = str(direction.get("type", ""))
             if not name or name in seen_names or capability_type not in counters:
                 continue
@@ -1267,6 +1298,10 @@ class WinningMechanismEngine:
                 for item in direction.get("direct_evidence_refs", [])
                 if str(item) in allowed_evidence
             ]
+            has_explicit_direct_evidence = "direct_evidence_refs" in direction
+            capability_evidence_ids = (
+                direct_evidence if has_explicit_direct_evidence else evidence_ids
+            )
             military_value = str(direction.get("military_value", "")).strip()
             depth_mechanism = str(direction.get("depth_mechanism", "")).strip()
             foresight = str(direction.get("foresight", "")).strip()
@@ -1278,7 +1313,70 @@ class WinningMechanismEngine:
             operational_mechanism = str(
                 direction.get("operational_mechanism", "")
             ).strip()
+            target_scenario = str(
+                direction.get("target_scenario", "") or topic
+            ).strip()
+            raw_problem_statement = str(
+                direction.get("problem_statement", "")
+                or direction.get("capability_gap", "")
+            ).strip()
+            scientific_principle = str(
+                direction.get("scientific_principle", "")
+                or direction.get("depth_mechanism", "")
+                or direction.get("novelty", "")
+            ).strip()
+            enabling_technologies = _dedupe_text(
+                [
+                    str(item)
+                    for item in direction.get("enabling_technologies", [])
+                    if str(item).strip()
+                ]
+            )
+            operational_concept = str(
+                direction.get("operational_concept", "")
+                or direction.get("operational_mechanism", "")
+            ).strip()
+            equipment_identity = "；".join(
+                item
+                for item in (
+                    str(direction.get("primary_equipment_identity", "")).strip(),
+                    name,
+                    equipment_form,
+                    function,
+                    military_value,
+                )
+                if item
+            )
+            problem_statement = normalize_capability_problem(
+                raw_problem_statement,
+                fallback=(
+                    f"{name}对应的关键任务链仍存在目标、授权、交战或毁伤评估断点"
+                ),
+            )
+            operational_process = normalize_operational_process(
+                direction.get("operational_process", []),
+                equipment_identity=equipment_identity,
+            )
+            capability_outcome = str(
+                direction.get("capability_outcome", "")
+                or direction.get("function", "")
+                or direction.get("military_value", "")
+            ).strip()
+            winning_mechanism = str(
+                direction.get("winning_mechanism", "")
+                or direction.get("depth_mechanism", "")
+                or direction.get("novelty", "")
+            ).strip()
             development_path = str(direction.get("development_path", "")).strip()
+            raw_verification_plan = direction.get("validation_plan", [])
+            baseline_operational_constraints = _capability_evidence_basis(packets)
+            verification_inputs = (
+                list(raw_verification_plan)
+                if isinstance(raw_verification_plan, (list, tuple))
+                else [raw_verification_plan]
+                if raw_verification_plan not in (None, "")
+                else []
+            )
             strike_countermeasure_value = str(
                 direction.get("strike_countermeasure_value", "")
             ).strip()
@@ -1308,6 +1406,11 @@ class WinningMechanismEngine:
                 direction.get("uncertainty_boundary", "")
             ).strip()
             feasibility_basis = str(direction.get("feasibility_basis", "")).strip()
+            verification_plan = normalize_verification_plan(
+                [baseline_operational_constraints, *verification_inputs],
+                equipment_identity=equipment_identity,
+                failure_boundary=failure_boundary or uncertainty_boundary,
+            )
             derived_from = _dedupe_text(
                 [str(item) for item in direction.get("derived_from", []) if str(item).strip()]
             )
@@ -1337,10 +1440,16 @@ class WinningMechanismEngine:
                 ]
             )
             agent_contributions = _agent_contributions(
-                packets, direct_evidence or evidence_ids
+                packets, capability_evidence_ids
             )
             structured_evidence_basis = _structured_evidence_basis(
-                packets, direct_evidence or evidence_ids
+                packets, capability_evidence_ids
+            )
+            portrait_verification_plan = _dedupe_text(
+                [
+                    *verification_plan,
+                    *([feasibility_basis] if feasibility_basis else []),
+                ]
             )
             source_logic = _model_source_winning_logic(
                 direction=direction,
@@ -1356,7 +1465,7 @@ class WinningMechanismEngine:
                 or depth_mechanism
                 or detail["strike_countermeasure_value"]
             )
-            deep_portrait = capability_portrait or _compose_deep_capability_portrait(
+            deep_portrait = _compose_deep_capability_portrait(
                 topic=topic,
                 name=name,
                 function=function,
@@ -1367,7 +1476,40 @@ class WinningMechanismEngine:
                 novelty=novelty,
                 foresight=foresight,
                 development_path=development_path,
+                target_scenario=target_scenario,
+                problem_statement=problem_statement,
+                scientific_principle=scientific_principle,
+                enabling_technologies=enabling_technologies,
+                operational_concept=operational_concept,
+                operational_process=operational_process,
+                capability_outcome=capability_outcome,
+                winning_mechanism=winning_mechanism,
+                supplied_portrait=capability_portrait,
+                baseline=baseline_system or gap_basis,
+                failure_boundary=[
+                    *([failure_boundary] if failure_boundary else []),
+                    *([uncertainty_boundary] if uncertainty_boundary else []),
+                    *(
+                        [baseline_operational_constraints]
+                        if not failure_boundary and not uncertainty_boundary
+                        else []
+                    ),
+                    *detail["risk_boundaries"],
+                ],
+                verification_plan=portrait_verification_plan,
                 expand_deterministic=False,
+                # When S6 has completed its explicit whole-card Codex semantic
+                # review, keep the accepted portrait and process together.
+                # Local rendering remains a structural fallback for historical
+                # cards that predate that contract; it must not choose a weapon
+                # flow from title/baseline keywords.
+                preserve_supplied=(
+                    isinstance(
+                        direction.get("semantic_consistency_check"), Mapping
+                    )
+                    and direction["semantic_consistency_check"].get("consistent")
+                    is True
+                ),
             )
             images.append(
                 CapabilityImageItem(
@@ -1386,8 +1528,9 @@ class WinningMechanismEngine:
                         f"{capability_gap}；该方向装备基线：{baseline_gap}"
                     ),
                     capability_image=deep_portrait,
-                    evidence_ids=direct_evidence or evidence_ids,
+                    evidence_ids=capability_evidence_ids,
                     confidence=direction_confidence,
+                    project_function=function,
                     mission_effect=military_value or detail["mission_effect"],
                     system_dependencies=detail["system_dependencies"],
                     risk_boundaries=[
@@ -1437,6 +1580,15 @@ class WinningMechanismEngine:
                     combat_effect_uplift=combat_effect_uplift,
                     strike_chain_contribution=strike_chain_contribution,
                     upgrade_boundary=upgrade_boundary,
+                    target_scenario=target_scenario,
+                    problem_statement=problem_statement,
+                    scientific_principle=scientific_principle,
+                    enabling_technologies=enabling_technologies,
+                    operational_concept=operational_concept,
+                    operational_process=operational_process,
+                    capability_outcome=capability_outcome,
+                    winning_mechanism=winning_mechanism,
+                    verification_plan=verification_plan,
                 )
             )
         if preserve_direction_identity:
@@ -1628,21 +1780,28 @@ def _fallback_specific_weapon_directions(
         first["operational_mechanism"] = (
             f"{route_method}；{first.get('operational_mechanism', '')}"
         ).strip("；")
-        first["capability_portrait"] = _bounded_capability_portrait(
-            f"{route_method}。{first.get('capability_portrait', '')}"
+        first["operational_concept"] = first["operational_mechanism"]
+        first["winning_mechanism"] = (
+            f"{route_method}；{first.get('winning_mechanism', '')}"
+        ).strip("；")
+        first["capability_portrait"] = build_capability_portrait(
+            scenario=first.get("target_scenario", topic),
+            problem=first.get("problem_statement", first.get("capability_gap", "")),
+            principle=first.get("scientific_principle", route_method),
+            technologies=first.get("enabling_technologies", []),
+            operational_concept=first.get("operational_concept", route_method),
+            operational_steps=first.get("operational_process", []),
+            capability=first.get("capability_outcome", first.get("function", "")),
+            effect=first.get("military_value", first.get("combat_effect_uplift", "")),
+            winning_mechanism=first.get("winning_mechanism", route_method),
+            equipment_form=first.get("equipment_form")
+            or first.get("equipment_category", ""),
+            baseline=first.get("baseline_system", ""),
+            development_path=first.get("development_path", ""),
+            failure_boundary=first.get("failure_boundary", ""),
+            verification_plan=first.get("verification", ""),
         )
     return directions
-
-
-def _bounded_capability_portrait(value: str, *, limit: int = 600) -> str:
-    text = str(value).strip()
-    if len(text) <= limit:
-        return text
-    for marker in ("。", "；", "！", "？"):
-        boundary = text.rfind(marker, 300, limit + 1)
-        if boundary >= 300:
-            return text[: boundary + 1]
-    return text[: limit - 1].rstrip("，、；： ") + "。"
 
 
 def _model_source_winning_logic(
@@ -1662,6 +1821,14 @@ def _model_source_winning_logic(
     return fallback
 
 
+def _normalize_direction_name(value: object) -> str:
+    """Remove internal candidate labels without changing the approved identity."""
+
+    text = re.sub(r"\s+", " ", str(value or "")).strip()
+    text = re.sub(r"^(?:候选\s*)?[A-Ha-h]\s*[：:、.．)）-]\s*", "", text)
+    return text.strip(" ，,；;。:：")
+
+
 def _compose_deep_capability_portrait(
     *,
     topic: str,
@@ -1674,42 +1841,43 @@ def _compose_deep_capability_portrait(
     novelty: str,
     foresight: str,
     development_path: str,
+    target_scenario: str = "",
+    problem_statement: str = "",
+    scientific_principle: str = "",
+    enabling_technologies: list[str] | None = None,
+    operational_concept: str = "",
+    operational_process: list[str] | None = None,
+    capability_outcome: str = "",
+    winning_mechanism: str = "",
+    supplied_portrait: str = "",
+    baseline: str = "",
+    failure_boundary: list[str] | str = "",
+    verification_plan: str = "",
     expand_deterministic: bool = True,
+    preserve_supplied: bool = False,
 ) -> str:
-    opening = (
-        f"面向“{topic}”中的关键任务链断点，{name}不应被理解为单项参数升级，"
-        f"而应形成{equipment_form or '可组合、可降级的装备与体系能力组合'}：{function}。"
-    )
     mechanism = operational_mechanism or countermeasure_value
-    effect = (
-        f"其核心机理是{mechanism}，从而{military_value}。"
-        if mechanism and military_value
-        else f"其任务价值在于{military_value}。"
-        if military_value
-        else f"其核心机理是{mechanism}。"
-        if mechanism
-        else ""
+    technologies = enabling_technologies or [equipment_form]
+    steps = operational_process or [mechanism]
+    portrait = resolve_capability_portrait(
+        supplied_portrait if preserve_supplied else "",
+        name=name,
+        scenario=target_scenario or f"“{topic}”中的关键任务阶段",
+        problem=problem_statement or f"{name}对应的任务链断点与现役能力差距",
+        principle=scientific_principle or mechanism or novelty,
+        technologies=technologies,
+        operational_concept=operational_concept or mechanism,
+        operational_steps=steps,
+        capability=capability_outcome or function or equipment_form,
+        effect=military_value or function,
+        winning_mechanism=winning_mechanism or novelty or mechanism,
+        equipment_form=equipment_form,
+        baseline=baseline or equipment_form,
+        development_path=development_path,
+        failure_boundary=failure_boundary,
+        verification_plan=verification_plan,
     )
-    evolution = "".join(
-        part
-        for part in (
-            f"区别于既有方案，该方向{novelty}。" if novelty else "",
-            f"面向未来演化，{foresight}。" if foresight else "",
-            f"建设上，{development_path}" if development_path else "",
-        )
-    )
-    portrait = f"{opening}{effect}{evolution}".strip()
-    if expand_deterministic and len(portrait) < 400:
-        portrait += (
-            "军事运用上，应以任务链连续性而非单装峰值参数衡量收益：在链路受扰、节点受损或保障节奏"
-            "下降时，能力组合仍应维持最低任务闭环，并能在条件恢复后快速重构。相对现有基线，新增机制"
-            "应体现在跨节点功能组合、降级运行和可替换接口，而不是简单叠加传感器、算力或载荷。"
-            "现役升级与新研边界需由接口兼容性、平台余量和体系联试结果决定；能够通过软件、模块和开放"
-            "网关实现的优先纳入近期升级，涉及新型载体、能源或任务架构重构的进入中期新研。"
-            "该判断仍受公开资料完备度、未来对抗样式和工程成熟度约束，必须以任务级仿真、半实物联试、"
-            "强约束演训和失效注入进行证伪；若任务效果增益不能跨场景复现，或体系依赖成本超过可承受"
-            "范围，应降低优先级并回到上游效果链重新校准。"
-        )
+    del foresight, expand_deterministic
     return portrait
 
 

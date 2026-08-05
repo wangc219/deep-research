@@ -162,7 +162,10 @@ def test_baseline_only_report_gate_requires_known_markers_and_urls() -> None:
 
 def test_baseline_only_reporter_keeps_full_budget_and_paragraph_citations() -> None:
     payload = {"ablation_scope": "baseline_only_no_winning_no_loops"}
-    assert _report_target_chars(payload) == "9000-10000字核心正文"
+    assert (
+        _report_target_chars(payload)
+        == "信息闭环优先、通常7000-10000字的核心正文"
+    )
     assert _reporter_output_token_budget(payload, default=12000) == 12000
     prompt = _report_writer_system_prompt(payload)
     assert "正常完成完整的三层九项研究报告" in prompt

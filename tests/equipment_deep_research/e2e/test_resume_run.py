@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import sqlite3
+from types import SimpleNamespace
 from typing import Any, Callable
 
 import pytest
@@ -13,6 +14,7 @@ from equipment_deep_research.agents.provider import (
     AgentRunRequest,
     AgentRunResult,
     FakeAgentProvider,
+    RealAgentProvider,
 )
 from equipment_deep_research.domain.store import SqliteRunStore
 from equipment_deep_research.domain.workspace import RunWorkspace
@@ -20,7 +22,10 @@ from equipment_deep_research.domain.messages import RunCheckpoint
 from equipment_deep_research.harness.recovery import RecoveryError, RecoveryManager
 from equipment_deep_research.harness import recovery as recovery_module
 from equipment_deep_research.harness.session import JsonlSessionStore
-from equipment_deep_research.orchestration.runner import DeepResearchRunner
+from equipment_deep_research.orchestration.runner import (
+    DeepResearchRunner,
+    _winning_analysis_reusable_for_profile,
+)
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -37,6 +42,128 @@ class InjectedCrash(RuntimeError):
     pass
 
 
+def test_dynamic_resume_rejects_stale_core_result_without_authoritative_portfolio() -> None:
+    stale = {
+        "concept_directions": [{"name": "抽象协同能力"}],
+        "winning_swarm": {},
+    }
+    current = {
+        "concept_directions": [{"name": f"具体武器装备{index}"} for index in range(5)],
+        "winning_swarm": {
+            "final_equipment_portfolio": [
+                {"name": f"具体武器装备{index}"} for index in range(5)
+            ],
+            "portfolio_quality_gate": {"passed": True},
+        },
+    }
+
+    assert not _winning_analysis_reusable_for_profile(
+        stale,
+        execution_profile_id="winning_swarm_dynamic_v2",
+    )
+    assert _winning_analysis_reusable_for_profile(
+        current,
+        execution_profile_id="winning_swarm_dynamic_v2",
+    )
+    assert _winning_analysis_reusable_for_profile(
+        stale,
+        execution_profile_id="swarm_quality_v1",
+    )
+
+
+def test_resume_loads_passed_dynamic_model_checkpoint(tmp_path: Path) -> None:
+    sessions = tmp_path / "agent_sessions"
+    sessions.mkdir()
+    directions = [{"name": f"装备-{index}"} for index in range(5)]
+    checkpoint = {
+        "concept_directions": directions,
+        "winning_swarm": {
+            "final_equipment_portfolio": directions,
+            "portfolio_quality_gate": {"passed": True},
+        }
+    }
+    (sessions / "winning_mechanism.jsonl").write_text(
+        json.dumps(
+            {"event_type": "model_checkpoint", "result": checkpoint},
+            ensure_ascii=False,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    loaded = DeepResearchRunner._load_latest_core_agent_result(
+        SimpleNamespace(sessions_dir=sessions),
+        "winning_mechanism",
+    )
+    assert loaded["winning_swarm"]["portfolio_quality_gate"]["passed"] is True
+    assert len(loaded["concept_directions"]) == 5
+
+
+def test_resume_recovers_quality_swarm_audit_for_legacy_s6_checkpoint(
+    tmp_path: Path,
+) -> None:
+    sessions = tmp_path / "agent_sessions"
+    sessions.mkdir()
+    checkpoint = {
+        "concept_directions": [
+            {
+                "name": f"失联复核远程巡航弹-{index}",
+                "equipment_form": "远程抗扰巡航弹",
+                "operational_mechanism": (
+                    "由防区外载机释放，按目标包有效期与组合导航可信度突防，"
+                    "末段复核纵深火力与保障节点后受控毁伤或拒打"
+                ),
+                "military_value": "在机场受毁与强扰条件下续接纵深补击并直接毁伤指定节点",
+                "adversary_adaptation": "敌方以纵深防空、导航欺骗、诱饵和快速转移压缩补击窗口",
+                "failure_boundary": "目标包过期且末段身份不能复核时停止攻击并进入安全弃攻航路",
+                "query_relevance": (
+                    "用于首轮突击后前沿机场受毁阶段，在敌纵深防空、GNSS欺骗和机动转移压力下，"
+                    "跨岛链毁伤远程火力阵地、指挥所与保障枢纽并维持持续补击"
+                ),
+                "baseline_system": "JASSM/JASSM-ER类公开空射防区外巡航弹只作为能力基线",
+                "capability_gap": "固定发射阵地与前沿机场受毁后缺少可在强扰下安全补击的远程弹药",
+            }
+            for index in range(5)
+        ]
+    }
+    (sessions / "winning_mechanism.jsonl").write_text(
+        json.dumps(
+            {"event_type": "model_checkpoint", "result": checkpoint},
+            ensure_ascii=False,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (sessions / "winning_swarm_controller.jsonl").write_text(
+        json.dumps(
+            {
+                "event_type": "swarm_gate_evaluated",
+                "stage": "portfolio",
+                "swarm_summary": {
+                    "policy": {"policy_id": "winning_swarm_quality_v1"},
+                    "finalists": [{"hypothesis_id": "h-1"}],
+                    "hypotheses": [{"hypothesis_id": "h-1"}],
+                },
+            },
+            ensure_ascii=False,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    loaded = DeepResearchRunner._load_latest_core_agent_result(
+        SimpleNamespace(sessions_dir=sessions),
+        "winning_mechanism",
+    )
+
+    gate = loaded["winning_swarm"]["portfolio_quality_gate"]
+    assert gate["passed"] is True
+    assert gate["recovered_from_controller_audit"] is True
+    assert len(loaded["concept_directions"]) == 5
+    assert loaded["s6_quality_gate_passed"] is True
+    assert loaded["s6_quality_gate_failed"] is False
+
+
 class RecordingProvider:
     def __init__(self, *, crash_on_call: int | None = None) -> None:
         self.delegate = FakeAgentProvider()
@@ -48,6 +175,26 @@ class RecordingProvider:
         if self.crash_on_call == len(self.calls):
             raise InjectedCrash(f"crash on {request.agent.agent_id}")
         return self.delegate.run_baseline_agent(request)
+
+
+class PrefetchRoundRecordingProvider:
+    provider_kind = "codex_cli"
+
+    def __init__(self) -> None:
+        self.delegate = FakeAgentProvider()
+        self.prefetched: list[tuple[str, int]] = []
+        self.executed: list[tuple[str, int]] = []
+
+    def prefetch_baseline_agent(self, request: AgentRunRequest) -> dict[str, Any]:
+        self.prefetched.append((request.agent.agent_id, request.round_index))
+        return {"agent_id": request.agent.agent_id, "source_count": 0}
+
+    def run_baseline_agent(self, request: AgentRunRequest) -> AgentRunResult:
+        self.executed.append((request.agent.agent_id, request.round_index))
+        return self.delegate.run_baseline_agent(request)
+
+    def draft_report(self, payload: dict[str, Any]) -> str:
+        return RealAgentProvider().draft_report(payload)
 
 
 class RejectingProvider:
@@ -289,6 +436,25 @@ def test_resume_continues_after_last_committed_agent_savepoint(tmp_path: Path) -
     assert [row["agent_id"] for row in summary["worker_reports"]] == AGENTS
 
 
+def test_resume_prefetch_uses_same_round_as_pending_agent(tmp_path: Path) -> None:
+    crashing = RecordingProvider(crash_on_call=2)
+    with pytest.raises(InjectedCrash):
+        build_runner(tmp_path, provider=crashing).run(
+            **run_args(mode="real")
+        )
+
+    completing = PrefetchRoundRecordingProvider()
+    result = build_runner(tmp_path, provider=completing).run(
+        **run_args(mode="real", resume=True)
+    )
+
+    assert result["status"] == "completed"
+    assert completing.prefetched
+    assert completing.executed
+    assert sorted(completing.prefetched) == sorted(completing.executed)
+    assert {round_index for _, round_index in completing.prefetched} == {2}
+
+
 @pytest.mark.parametrize(
     ("overrides", "message"),
     [
@@ -452,6 +618,41 @@ def test_completed_resume_is_idempotent_and_does_not_run_provider(tmp_path: Path
     assert {
         agent_id: session_bytes(run_dir, agent_id) for agent_id in AGENTS
     } == session_prefixes
+
+
+def test_completed_resume_with_allowed_config_change_revalidates_finalize(
+    tmp_path: Path,
+) -> None:
+    first = build_runner(tmp_path, provider=RecordingProvider()).run(**run_args())
+    run_dir = Path(first["run_dir"])
+    first_checkpoint = json.loads(
+        (run_dir / "checkpoints" / "latest.json").read_text(encoding="utf-8")
+    )["checkpoint"]
+    session_prefixes = {
+        agent_id: session_bytes(run_dir, agent_id) for agent_id in AGENTS
+    }
+    hooks: list[str] = []
+
+    resumed = build_runner(
+        tmp_path,
+        provider=RecordingProvider(),
+        run_hook=lambda event, _workspace: hooks.append(event),
+    ).run(
+        **run_args(resume=True, max_rounds=2),
+        allow_resume_config_mismatch=True,
+    )
+
+    assert resumed["status"] == "completed"
+    assert "after_finalize_engine" in hooks
+    assert {
+        agent_id: session_bytes(run_dir, agent_id) for agent_id in AGENTS
+    } == session_prefixes
+    checkpoint = json.loads(
+        (run_dir / "checkpoints" / "latest.json").read_text(encoding="utf-8")
+    )["checkpoint"]
+    assert checkpoint["status"] == "completed"
+    assert checkpoint["resume_count"] == 1
+    assert checkpoint["config_fingerprint"] != first_checkpoint["config_fingerprint"]
 
 
 def test_completed_resume_rewrites_stable_outputs_from_sqlite(tmp_path: Path) -> None:

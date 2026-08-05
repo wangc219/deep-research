@@ -54,6 +54,85 @@ def test_failed_worker_run_is_persisted_and_removed_from_pending_queue(tmp_path:
     assert service.queue.pending_run_ids() == []
 
 
+def test_worker_automatically_resumes_one_transient_failure_from_checkpoint(
+    tmp_path: Path,
+) -> None:
+    engine = create_database_engine(f"sqlite:///{tmp_path / 'transient-resume.db'}")
+    repository = SqlRunRepository(engine)
+    service = ResearchApplicationService(
+        repository=repository,
+        queue=SqlRunQueue(engine),
+    )
+    run = service.create_run(CreateRunCommand("topic", "auto", [], 5, "analyst"))
+    service.start_run(run.run_id, actor="analyst", idempotency_key="start")
+    calls = 0
+
+    def transient_then_complete(_: str) -> dict:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise RuntimeError("upstream stream disconnected before completion")
+        return {}
+
+    worker = ResearchWorker(service=service, execute=transient_then_complete)
+
+    first = worker.run_once()
+
+    assert first == WorkerOutcome(
+        run.run_id,
+        "queued",
+        "upstream stream disconnected before completion",
+    )
+    assert service.get_run(run.run_id).status == "queued"
+    assert service.get_run(run.run_id).error == ""
+    assert service.queue.pending_run_ids() == [run.run_id]
+    retry_events = [
+        event
+        for event in repository.events_after(run.run_id, 0)
+        if event["event_type"] == "run_transient_resume_scheduled"
+    ]
+    assert len(retry_events) == 1
+    assert retry_events[0]["payload"]["attempt"] == 1
+
+    second = worker.run_once()
+
+    assert second == WorkerOutcome(run.run_id, "completed")
+    assert calls == 2
+
+
+def test_worker_transient_resume_is_bounded(tmp_path: Path) -> None:
+    engine = create_database_engine(f"sqlite:///{tmp_path / 'bounded-resume.db'}")
+    repository = SqlRunRepository(engine)
+    service = ResearchApplicationService(
+        repository=repository,
+        queue=SqlRunQueue(engine),
+    )
+    run = service.create_run(CreateRunCommand("topic", "auto", [], 5, "analyst"))
+    service.start_run(run.run_id, actor="analyst", idempotency_key="start")
+
+    def fail(_: str) -> dict:
+        raise RuntimeError("upstream stream disconnected before completion")
+
+    worker = ResearchWorker(service=service, execute=fail)
+
+    assert worker.run_once().status == "queued"
+    second = worker.run_once()
+
+    assert second == WorkerOutcome(
+        run.run_id,
+        "failed",
+        "upstream stream disconnected before completion",
+    )
+    assert service.get_run(run.run_id).status == "failed"
+    assert service.queue.pending_run_ids() == []
+    retry_events = [
+        event
+        for event in repository.events_after(run.run_id, 0)
+        if event["event_type"] == "run_transient_resume_scheduled"
+    ]
+    assert len(retry_events) == 1
+
+
 def test_worker_persists_exception_type_when_message_is_empty() -> None:
     service = ResearchApplicationService()
     run = service.create_run(CreateRunCommand("topic", "auto", [], 2, "analyst"))
@@ -215,6 +294,46 @@ def test_sql_queue_claim_is_atomic_across_worker_connections(tmp_path: Path) -> 
     assert first.pending_run_ids() == []
 
 
+def test_same_topic_runs_enqueue_concurrently_without_blocking(tmp_path: Path) -> None:
+    url = f"sqlite:///{tmp_path / 'duplicate-topic-enqueue.db'}"
+    services = [
+        ResearchApplicationService(
+            repository=SqlRunRepository(create_database_engine(url)),
+            queue=SqlRunQueue(create_database_engine(url)),
+        )
+        for _ in range(2)
+    ]
+    runs = [
+        service.create_run(
+            CreateRunCommand(
+                "强电磁压制下精确打击任务续接装备研究",
+                "auto",
+                [],
+                2,
+                "analyst",
+            )
+        )
+        for service in services
+    ]
+    ready = Barrier(2)
+
+    def start(index: int) -> str:
+        ready.wait(timeout=5)
+        return services[index].start_run(
+            runs[index].run_id,
+            actor="analyst",
+            idempotency_key=f"start-{index}",
+        ).run_id
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        started = list(pool.map(start, (0, 1)))
+
+    pending = SqlRunQueue(create_database_engine(url)).pending_run_ids()
+    assert set(started) == {run.run_id for run in runs}
+    assert set(pending) == {run.run_id for run in runs}
+    assert len(pending) == 2
+
+
 def test_two_workers_execute_distinct_runs_concurrently(tmp_path: Path) -> None:
     url = f"sqlite:///{tmp_path / 'parallel-workers.db'}"
     api_service = ResearchApplicationService(
@@ -222,9 +341,19 @@ def test_two_workers_execute_distinct_runs_concurrently(tmp_path: Path) -> None:
         queue=SqlRunQueue(create_database_engine(url)),
     )
     runs = [
-        api_service.create_run(CreateRunCommand(f"parallel topic {index}", "auto", [], 2, "analyst"))
-        for index in (1, 2)
+        api_service.create_run(
+            CreateRunCommand(
+                "强电磁压制下精确打击任务续接装备研究",
+                "auto",
+                [],
+                2,
+                "analyst",
+            )
+        )
+        for _ in (1, 2)
     ]
+    assert runs[0].topic == runs[1].topic
+    assert runs[0].run_id != runs[1].run_id
     for index, run in enumerate(runs, start=1):
         api_service.start_run(run.run_id, actor="analyst", idempotency_key=f"start-{index}")
 

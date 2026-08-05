@@ -167,6 +167,16 @@ class DomainStore:
         with self._lock:
             self.capability_images[item.capability_id] = item
 
+    def retain_capability_images(self, capability_ids: set[str]) -> None:
+        """Drop superseded images after a resumed S6 produces a new portfolio."""
+
+        with self._lock:
+            self.capability_images = {
+                capability_id: item
+                for capability_id, item in self.capability_images.items()
+                if capability_id in capability_ids
+            }
+
     def add_audit(self, item: AuditResult) -> None:
         with self._lock:
             self.audits[item.audit_id] = item
@@ -853,6 +863,43 @@ class SqliteRunStore:
                 }
                 for row in rows
             ]
+        finally:
+            connection.close()
+
+    def prune_domain_objects(
+        self,
+        *,
+        object_type: str,
+        keep_object_ids: set[str],
+    ) -> None:
+        """Remove superseded objects of one type after successful regeneration."""
+
+        connection = self._connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            if keep_object_ids:
+                placeholders = ",".join("?" for _ in keep_object_ids)
+                connection.execute(
+                    f"""
+                    DELETE FROM domain_objects
+                    WHERE run_id = ? AND object_type = ?
+                      AND object_id NOT IN ({placeholders})
+                    """,
+                    [self.run_id, object_type, *sorted(keep_object_ids)],
+                )
+            else:
+                connection.execute(
+                    """
+                    DELETE FROM domain_objects
+                    WHERE run_id = ? AND object_type = ?
+                    """,
+                    (self.run_id, object_type),
+                )
+            connection.commit()
+        except BaseException:
+            if connection.in_transaction:
+                connection.rollback()
+            raise
         finally:
             connection.close()
 

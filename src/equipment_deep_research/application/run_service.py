@@ -44,7 +44,7 @@ class InProcessRunQueue:
 
 
 def _configured_worker_concurrency() -> int:
-    raw_value = os.environ.get("EQUIPMENT_DR_RESEARCH_WORKER_CONCURRENCY", "4")
+    raw_value = os.environ.get("EQUIPMENT_DR_RESEARCH_WORKER_CONCURRENCY", "2")
     try:
         value = int(raw_value)
     except (TypeError, ValueError):
@@ -83,6 +83,7 @@ class ResearchApplicationService:
             interaction_mode=command.interaction_mode,
             discovery_branch=command.discovery_branch,
             execution_profile_id=command.execution_profile_id,
+            report_template_mode=command.report_template_mode,
             supplemental_information=command.supplemental_information.strip(),
         )
         self._runs[view.run_id] = view
@@ -127,6 +128,9 @@ class ResearchApplicationService:
             interaction_mode=command.interaction_mode,
             discovery_branch=command.discovery_branch,
             execution_profile_id=command.execution_profile_id,
+            report_template_mode=(
+                command.report_template_mode or current.report_template_mode
+            ),
             supplemental_information=(
                 current.supplemental_information
                 if command.supplemental_information is None
@@ -153,6 +157,7 @@ class ResearchApplicationService:
                 "interaction_mode": updated.interaction_mode,
                 "discovery_branch": updated.discovery_branch,
                 "execution_profile_id": updated.execution_profile_id,
+                "report_template_mode": updated.report_template_mode,
                 "supplemental_information_present": bool(
                     updated.supplemental_information
                 ),

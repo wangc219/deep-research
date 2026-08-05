@@ -181,32 +181,55 @@ class SqlRunQueue:
         metadata.create_all(engine)
 
     def enqueue(self, run_id: str) -> None:
-        with self._lock, self.engine.begin() as connection:
-            existing = connection.execute(
-                select(queue_items.c.status, queue_items.c.ordinal).where(
-                    queue_items.c.run_id == run_id
-                )
-            ).mappings().one_or_none()
-            if existing is None:
-                next_ordinal = (connection.execute(select(queue_items.c.ordinal).order_by(queue_items.c.ordinal.desc()).limit(1)).scalar_one_or_none() or 0) + 1
-                connection.execute(queue_items.insert().values(run_id=run_id, status="pending", ordinal=next_ordinal))
-            elif existing["status"] != "pending":
-                # A failed/completed attempt leaves an acked row for audit and
-                # idempotency.  Resuming the same run must make that row
-                # claimable again and place it behind already-pending work.
-                next_ordinal = (
-                    connection.execute(
-                        select(queue_items.c.ordinal)
-                        .order_by(queue_items.c.ordinal.desc())
-                        .limit(1)
-                    ).scalar_one_or_none()
-                    or 0
-                ) + 1
-                connection.execute(
-                    update(queue_items)
-                    .where(queue_items.c.run_id == run_id)
-                    .values(status="pending", ordinal=next_ordinal)
-                )
+        for attempt in range(8):
+            try:
+                with self._lock, self.engine.begin() as connection:
+                    existing = connection.execute(
+                        select(queue_items.c.status, queue_items.c.ordinal).where(
+                            queue_items.c.run_id == run_id
+                        )
+                    ).mappings().one_or_none()
+                    if existing is None:
+                        next_ordinal = (
+                            connection.execute(
+                                select(queue_items.c.ordinal)
+                                .order_by(queue_items.c.ordinal.desc())
+                                .limit(1)
+                            ).scalar_one_or_none()
+                            or 0
+                        ) + 1
+                        connection.execute(
+                            queue_items.insert().values(
+                                run_id=run_id,
+                                status="pending",
+                                ordinal=next_ordinal,
+                            )
+                        )
+                    elif existing["status"] != "pending":
+                        # A failed/completed attempt leaves an acked row for audit and
+                        # idempotency.  Resuming the same run must make that row
+                        # claimable again and place it behind already-pending work.
+                        next_ordinal = (
+                            connection.execute(
+                                select(queue_items.c.ordinal)
+                                .order_by(queue_items.c.ordinal.desc())
+                                .limit(1)
+                            ).scalar_one_or_none()
+                            or 0
+                        ) + 1
+                        connection.execute(
+                            update(queue_items)
+                            .where(queue_items.c.run_id == run_id)
+                            .values(status="pending", ordinal=next_ordinal)
+                        )
+                return
+            except IntegrityError:
+                # Queue instances live in separate API/Worker processes, so
+                # two starters may both observe the same maximum ordinal.
+                # Re-read the durable queue after a short bounded backoff.
+                if attempt == 7:
+                    raise
+                time.sleep(0.005 * (attempt + 1))
 
     def claim(self) -> str | None:
         candidate = (

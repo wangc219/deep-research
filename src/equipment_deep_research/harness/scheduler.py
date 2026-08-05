@@ -129,6 +129,52 @@ class _HarnessStoreProxy:
         return new_stable_id("harness-checkpoint")
 
 
+def _evidence_accept_target(
+    agent: AgentDef,
+    *,
+    targeted_supplement: bool,
+) -> int:
+    if targeted_supplement:
+        return max(
+            2,
+            min(
+                3,
+                int(
+                    os.environ.get(
+                        "EQUIPMENT_DR_TARGETED_EVIDENCE_ACCEPT_TARGET", "3"
+                    )
+                ),
+            ),
+        )
+
+    general_target = max(
+        1,
+        min(
+            int(os.environ.get("EQUIPMENT_DR_EVIDENCE_ACCEPT_TARGET", "6")),
+            int(
+                agent.research_policy.get(
+                    "evidence_accept_target",
+                    os.environ.get("EQUIPMENT_DR_EVIDENCE_ACCEPT_TARGET", "6"),
+                )
+            ),
+        ),
+    )
+    if agent.agent_id != "weapon_equipment":
+        return general_target
+    weapon_target = max(
+        6,
+        min(
+            12,
+            int(
+                os.environ.get(
+                    "EQUIPMENT_DR_WEAPON_EVIDENCE_ACCEPT_TARGET", "10"
+                )
+            ),
+        ),
+    )
+    return max(general_target, weapon_target)
+
+
 class DiscoveryScheduler:
     def __init__(
         self,
@@ -689,33 +735,9 @@ class DiscoveryScheduler:
                 isinstance(recall_request, dict)
                 and recall_request.get("targeted_supplement")
             )
-            accepted_target = (
-                max(
-                    2,
-                    min(
-                        3,
-                        int(
-                            os.environ.get(
-                                "EQUIPMENT_DR_TARGETED_EVIDENCE_ACCEPT_TARGET", "3"
-                            )
-                        ),
-                    ),
-                )
-                if targeted_supplement
-                else max(
-                    1,
-                    min(
-                        int(
-                            os.environ.get("EQUIPMENT_DR_EVIDENCE_ACCEPT_TARGET", "6")
-                        ),
-                        int(
-                            agent.research_policy.get(
-                                "evidence_accept_target",
-                                os.environ.get("EQUIPMENT_DR_EVIDENCE_ACCEPT_TARGET", "6"),
-                            )
-                        ),
-                    ),
-                )
+            accepted_target = _evidence_accept_target(
+                agent,
+                targeted_supplement=targeted_supplement,
             )
             minimum_accepted = max(
                 1,
@@ -1440,24 +1462,49 @@ def _evidence_metrics(agent: AgentDef, evidence: Any) -> dict[str, float]:
 
 
 def _diversify_evidence_candidates(candidates: Sequence[Any]) -> list[Any]:
-    """Interleave source domains so the first batch can satisfy diversity gates."""
-    groups: dict[str, deque[Any]] = defaultdict(deque)
-    domain_order: list[str] = []
-    for candidate in candidates:
-        try:
-            domain = (urlsplit(str(candidate.source_url)).hostname or "").lower()
-        except ValueError:
-            domain = ""
-        key = domain or f"unknown:{len(domain_order)}"
-        if key not in groups:
-            domain_order.append(key)
-        groups[key].append(candidate)
-    diversified: list[Any] = []
-    while any(groups[key] for key in domain_order):
-        for key in domain_order:
-            if groups[key]:
-                diversified.append(groups[key].popleft())
-    return diversified
+    """Reserve object anchors, then interleave ordinary sources by domain.
+
+    Required object-level equipment anchors must survive the accepted-evidence
+    cut-off. Structured source claims are also attempted before cards carrying
+    only a generic finding fallback, so a generic card cannot displace a more
+    directly attributable equipment source.
+    """
+
+    required_anchors = [
+        candidate
+        for candidate in candidates
+        if "required_source_anchor"
+        in str(getattr(candidate, "quality_assessment", ""))
+    ]
+    ordinary = [candidate for candidate in candidates if candidate not in required_anchors]
+    structured = [
+        candidate
+        for candidate in ordinary
+        if "finding_fallback"
+        not in str(getattr(candidate, "quality_assessment", ""))
+    ]
+    fallback = [candidate for candidate in ordinary if candidate not in structured]
+
+    def diversify(rows: Sequence[Any]) -> list[Any]:
+        groups: dict[str, deque[Any]] = defaultdict(deque)
+        domain_order: list[str] = []
+        for candidate in rows:
+            try:
+                domain = (urlsplit(str(candidate.source_url)).hostname or "").lower()
+            except ValueError:
+                domain = ""
+            key = domain or f"unknown:{len(domain_order)}"
+            if key not in groups:
+                domain_order.append(key)
+            groups[key].append(candidate)
+        diversified: list[Any] = []
+        while any(groups[key] for key in domain_order):
+            for key in domain_order:
+                if groups[key]:
+                    diversified.append(groups[key].popleft())
+        return diversified
+
+    return [*required_anchors, *diversify(structured), *diversify(fallback)]
 
 
 def _evidence_only_stop_reasons(reasons: Sequence[Any]) -> bool:

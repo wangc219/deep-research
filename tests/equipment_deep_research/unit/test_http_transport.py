@@ -339,6 +339,43 @@ def test_reader_skips_navigation_boilerplate_and_uses_article_paragraph(
     assert "Available add-ons" not in result.evidence.excerpt
 
 
+def test_public_reader_rejects_friendly_404_shell_as_formal_evidence(
+    tmp_path: Path,
+) -> None:
+    class _FriendlyNotFoundReaderTransport:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def get(self, **kwargs: Any) -> _Response:
+            del kwargs
+            self.calls += 1
+            if self.calls == 1:
+                raise OSError("HTTP 404: Not Found")
+            return _Response(
+                content=(
+                    b"Oops! The page you are looking for cannot be found, might have "
+                    b"been removed, had it's name changed, or is temporarily unavailable. "
+                    b"Feel free to contact us if the problem persists or if you definitely "
+                    b"cannot find what you are looking for."
+                )
+            )
+
+    def resolver(host: str, port: int, **kwargs: Any) -> list[tuple[Any, ...]]:
+        del host, kwargs
+        return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", port))]
+
+    result = EvidenceMaterializer(
+        tmp_path,
+        resolver=resolver,
+        transport=_FriendlyNotFoundReaderTransport(),
+        public_reader_base_url="https://reader.example/http://",
+    ).materialize(_evidence("https://blocked.example/missing"), mode="real")
+
+    assert result.material["status"] == "fetch_failed"
+    assert result.material["formal_evidence_allowed"] is False
+    assert "reader_body_failed_quality_gate" in result.material["reader_error"]
+
+
 def test_http_200_error_shell_falls_back_to_hosted_search_citation(
     tmp_path: Path,
 ) -> None:
@@ -436,6 +473,45 @@ def test_hosted_search_citation_is_materialized_when_origin_and_reader_fail(
     assert result.material["formal_evidence_allowed"] is True
     assert result.evidence.source_url == "https://blocked.example/report"
     assert result.evidence.source_location.endswith("#citation")
+
+
+def test_hosted_search_citation_survives_local_dns_resolution_failure(
+    tmp_path: Path,
+) -> None:
+    def resolver(host: str, port: int, **kwargs: Any) -> list[tuple[Any, ...]]:
+        raise socket.gaierror("temporary resolver failure")
+
+    evidence = EvidenceCard(
+        **{
+            **_evidence("https://official.example/report").__dict__,
+            "source_title": "Official hosted-search report",
+            "quality_assessment": "codex_web_search_source",
+        }
+    )
+    result = EvidenceMaterializer(
+        tmp_path,
+        resolver=resolver,
+        transport=_RecordingTransport(),
+    ).materialize(evidence, mode="real")
+
+    assert result.material["status"] == "hosted_search_citation"
+    assert result.material["formal_evidence_allowed"] is True
+
+
+def test_non_hosted_source_remains_rejected_on_dns_resolution_failure(
+    tmp_path: Path,
+) -> None:
+    def resolver(host: str, port: int, **kwargs: Any) -> list[tuple[Any, ...]]:
+        raise socket.gaierror("temporary resolver failure")
+
+    result = EvidenceMaterializer(
+        tmp_path,
+        resolver=resolver,
+        transport=_RecordingTransport(),
+    ).materialize(_evidence("https://official.example/report"), mode="real")
+
+    assert result.material["status"] == "network_safety_rejected"
+    assert result.material["reason"] == "host_resolution_failed"
 
 
 def test_hosted_codex_citation_allows_gateway_url_as_missing_title(

@@ -225,9 +225,55 @@ def test_supplement_is_compressed_and_influences_blueprint_semantics() -> None:
     brief = blueprint["structured_query_brief"]
 
     assert brief["supplement_present"] is True
-    assert "规模化生产与工业动员" in brief["expansion_dimensions"]
-    assert "火力配系与弹药基数" in brief["expansion_dimensions"]
+    assert brief["expansion_dimensions"] == [
+        "任务对象与直接效果",
+        "对手适应与失效边界",
+        "装备形态与工程约束",
+        "证据问题与淘汰条件",
+    ]
     assert "international_situation" in blueprint["initial_baseline_agent_ids"]
+
+
+def test_model_query_brief_preserves_bounded_combat_weapon_divergence_fields() -> None:
+    blueprint = build_discovery_blueprint(
+        ResearchProblem("强电磁压制下精确打击任务续接装备研究"),
+        model_blueprint={
+            "structured_query_brief": {
+                "combat_problem_frame": "在敌防空节点短时开机与导航拒止并存时续接纵深火力。",
+                "enemy_target_profile": [f"目标{i}" for i in range(10)],
+                "battle_phase_and_constraints": [f"阶段{i}" for i in range(12)],
+                "required_direct_military_effects": [f"战果{i}" for i in range(9)],
+                "weapon_design_variables": [f"变量{i}" for i in range(12)],
+                "query_specific_weapon_architectures": [
+                    f"Query专属武器架构{i}" for i in range(9)
+                ],
+                "equipment_project_hypotheses": [
+                    {
+                        "project_name": f"项目{i}",
+                        "equipment_form": f"具体装备形态{i}",
+                        "project_function": f"作战单元在约束{i}下完成任务动作并形成直接战果",
+                        "query_causal_link": f"因果链{i}",
+                        "design_variables": [f"变量{i}-{j}" for j in range(10)],
+                    }
+                    for i in range(9)
+                ],
+                "rejected_template_anchors": [f"拒绝模板{i}" for i in range(9)],
+            }
+        },
+    )
+
+    brief = blueprint["structured_query_brief"]
+    assert brief["combat_problem_frame"].startswith("在敌防空节点")
+    assert len(brief["enemy_target_profile"]) == 6
+    assert len(brief["battle_phase_and_constraints"]) == 8
+    assert len(brief["required_direct_military_effects"]) == 6
+    assert len(brief["weapon_design_variables"]) == 8
+    assert len(brief["query_specific_weapon_architectures"]) == 6
+    assert brief["query_specific_weapon_architectures"][0] == "Query专属武器架构0"
+    assert len(brief["equipment_project_hypotheses"]) == 6
+    assert brief["equipment_project_hypotheses"][0]["project_name"] == "项目0"
+    assert len(brief["equipment_project_hypotheses"][0]["design_variables"]) == 8
+    assert len(brief["rejected_template_anchors"]) == 6
 
 
 @pytest.mark.parametrize(
@@ -281,9 +327,9 @@ def test_model_blueprint_controls_required_reference_and_callback_agents() -> No
     assert blueprint["initial_baseline_agent_ids"] == [
         "operational_employment",
         "combat_scenario",
-        "international_situation",
     ]
-    assert blueprint["callback_agent_ids"] == []
+    assert blueprint["callback_agent_ids"] == ["international_situation"]
+    assert blueprint["semantic_agent_signals"] == []
 
 
 def test_b_branch_preserves_background_scenario_chain_and_defers_overlapping_agents() -> None:

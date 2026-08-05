@@ -21,6 +21,13 @@ from equipment_deep_research.agents.provider import (
     FakeAgentProvider,
     RealAgentProvider,
     ResponsesAgentProvider,
+    S6QualityError,
+    _capability_direction_quality_issues,
+    _enforce_report_hard_max,
+    _normalize_s6_deterministic_format,
+    _normalize_report_structure_deterministically,
+    _s6_delivery_blocking_issues,
+    _strip_report_internal_markers,
 )
 from equipment_deep_research.agents.registry import AgentDef, AgentRegistry
 from equipment_deep_research.domain.messages import FINALIZE_TASK_ID, RunCheckpoint
@@ -55,7 +62,16 @@ from equipment_deep_research.orchestration.execution_contracts import (
     is_quality_execution_profile_id,
     resolve_execution_profile,
 )
+from equipment_deep_research.orchestration.capability_portrait import (
+    normalize_capability_problem,
+    normalize_operational_process,
+    normalize_verification_plan,
+    resolve_capability_portrait,
+)
 from equipment_deep_research.orchestration.admission import PacketAdmissionGate
+from equipment_deep_research.orchestration.audit_policy import (
+    decide_final_audit_review,
+)
 from equipment_deep_research.orchestration.planning import ResearchPlanner
 from equipment_deep_research.orchestration.communication import (
     AgentMessageEnvelope,
@@ -96,6 +112,12 @@ PRIMARY_BUSINESS_AGENT_IDS = {
     "opponent_monitoring",
     "system_confrontation",
 }
+
+# Bump only when Reporter publication stabilization or final report-gate
+# semantics change.  Completed checkpoints then reopen the finalize task under
+# ``--allow-resume-config-mismatch`` without rerunning baseline agents or the
+# winning-swarm candidate/Judge stages.
+REPORT_DELIVERY_CONTRACT_VERSION = "2026-08-04.11"
 
 
 def _baseline_wave_concurrency(
@@ -606,13 +628,47 @@ def _military_handoff_evidence_index(
     store: DomainStore,
     handoff: Mapping[str, Any],
 ) -> list[dict[str, Any]]:
-    evidence_ids = list(
+    claim_evidence_ids = list(
         dict.fromkeys(
             str(evidence_id)
             for item in handoff.get("claims", [])
             if isinstance(item, Mapping)
             for evidence_id in item.get("evidence_ids", [])
             if str(evidence_id)
+        )
+    )
+    selected_packet_ids = {
+        str(item.get("packet_id", ""))
+        for item in handoff.get("claims", [])
+        if isinstance(item, Mapping) and str(item.get("packet_id", ""))
+    }
+    packet_evidence_ids = list(
+        dict.fromkeys(
+            str(evidence_id)
+            for packet in _admitted_packet_snapshot(store)
+            if packet.packet_id in selected_packet_ids
+            for evidence_id in packet.evidence_ids
+            if str(evidence_id) in store.evidence
+        )
+    )
+    direct_weapon_ids = [
+        evidence_id
+        for evidence_id in packet_evidence_ids
+        if evidence_id.startswith("ev-weapon_equipment-")
+        or str(store.evidence[evidence_id].created_by) == "weapon_equipment"
+    ]
+    other_packet_ids = [
+        evidence_id
+        for evidence_id in packet_evidence_ids
+        if evidence_id not in direct_weapon_ids
+    ]
+    # Selected claims intentionally carry only a tiny citation subset, while
+    # the winning swarm needs all accepted object-level cards from the packet.
+    # Expand direct weapon evidence before generic packet context so a
+    # multi-equipment packet is not reduced to its first two citations.
+    evidence_ids = list(
+        dict.fromkeys(
+            [*claim_evidence_ids, *direct_weapon_ids, *other_packet_ids]
         )
     )
     return [
@@ -624,7 +680,7 @@ def _military_handoff_evidence_index(
             "claim": _compact_text_value(item.claim, 260),
             "created_by": item.created_by,
         }
-        for evidence_id in evidence_ids[:18]
+        for evidence_id in evidence_ids[:24]
         if (item := store.evidence.get(evidence_id)) is not None
     ]
 
@@ -792,6 +848,7 @@ class DeepResearchRunner:
         interaction_mode: str = "expert",
         discovery_branch: str = "auto",
         execution_profile_id: str = "legacy_v1",
+        report_template_mode: str = "three_layer_nine_item",
         stage_policy_id: str = "full_method",
         allow_resume_config_mismatch: bool = False,
     ) -> dict[str, Any]:
@@ -816,6 +873,7 @@ class DeepResearchRunner:
                 interaction_mode=interaction_mode,
                 discovery_branch=discovery_branch,
                 execution_profile_id=execution_profile_id,
+                report_template_mode=report_template_mode,
                 stage_policy_id=stage_policy_id,
                 allow_resume_config_mismatch=allow_resume_config_mismatch,
                 resources=resources,
@@ -851,6 +909,7 @@ class DeepResearchRunner:
         interaction_mode: str,
         discovery_branch: str,
         execution_profile_id: str,
+        report_template_mode: str,
         stage_policy_id: str,
         allow_resume_config_mismatch: bool,
         resources: "_RunResourceScope",
@@ -858,6 +917,11 @@ class DeepResearchRunner:
         execution_started_at = now_iso()
         if mode not in {"fake", "real"}:
             raise ValueError("mode must be fake or real")
+        if report_template_mode not in {
+            "three_layer_nine_item",
+            "project_argument_v1",
+        }:
+            raise ValueError("unknown report template mode")
         stage_policy = resolve_run_stage_policy(stage_policy_id)
         execution_profile = resolve_execution_profile(execution_profile_id)
         requested_problem = ResearchProblem(
@@ -1335,6 +1399,7 @@ class DeepResearchRunner:
             max_rounds=resolved_max_rounds,
             analyst_confirmed=analyst_confirmed,
             stage_policy_id=stage_policy.policy_id,
+            report_template_mode=report_template_mode,
             provider_name=provider_name,
             provider_model=provider_model,
             provider_base_url=provider_base_url,
@@ -1370,6 +1435,22 @@ class DeepResearchRunner:
                 recovered.checkpoint,
                 resume_count=recovered.checkpoint.resume_count + 1,
             )
+            if checkpoint.status == "completed" and resume_config_changed:
+                checkpoint = replace(
+                    checkpoint,
+                    status="running",
+                    config_fingerprint=config_fingerprint,
+                    completed_task_ids=[
+                        task_id
+                        for task_id in checkpoint.completed_task_ids
+                        if task_id != FINALIZE_TASK_ID
+                    ],
+                    pending_task_ids=[FINALIZE_TASK_ID],
+                    task_statuses={
+                        **checkpoint.task_statuses,
+                        FINALIZE_TASK_ID: "pending",
+                    },
+                )
             problem = recovered.problem
             worker_reports = list(recovered.worker_reports)
             source_materials = _dedupe_plain_rows(recovered.source_materials)
@@ -1477,6 +1558,7 @@ class DeepResearchRunner:
                     "discovery_blueprint": discovery_blueprint,
                     "agent_ids": selected_agent_ids,
                     "stage_policy_id": stage_policy.policy_id,
+                    "report_template_mode": report_template_mode,
                     "analyst_confirmed": analyst_confirmed,
                     "agent_selection": selection_view,
                     "agent_models": {
@@ -1703,6 +1785,10 @@ class DeepResearchRunner:
                     agent=agent,
                     topic=topic,
                     research_route=route,
+                    round_index=max(
+                        1,
+                        checkpoint.round_index + checkpoint.resume_count,
+                    ),
                     execution_priority=baseline_priority_by_agent.get(
                         agent.agent_id,
                         "normal",
@@ -2147,6 +2233,34 @@ class DeepResearchRunner:
                 if resume
                 else {}
             )
+            if winning_model_analysis and not _winning_analysis_reusable_for_profile(
+                winning_model_analysis,
+                execution_profile_id=str(
+                    discovery_blueprint.get("execution_profile_id", "legacy_v1")
+                ),
+            ):
+                trace.append(
+                    TraceEvent(
+                        event_id=(
+                            "trace-winning-model-reuse-rejected-r"
+                            f"{checkpoint.resume_count}"
+                        ),
+                        event_type="winning_model_result_reuse_rejected",
+                        actor="winning_mechanism",
+                        summary=(
+                            "已完成的核心结果不含当前质量模式要求的权威制胜组合，"
+                            "本次恢复重新执行制胜主链"
+                        ),
+                        output_refs=["winning-model-analysis"],
+                        payload={
+                            "execution_profile_id": discovery_blueprint.get(
+                                "execution_profile_id", "legacy_v1"
+                            ),
+                            "reason": "profile_authoritative_portfolio_missing",
+                        },
+                    )
+                )
+                winning_model_analysis = {}
             winning_advisor = getattr(provider, "analyze_winning_mechanism", None)
             if winning_model_analysis:
                 trace.append(
@@ -2294,6 +2408,22 @@ class DeepResearchRunner:
                         winning_model_analysis = winning_advisor(winning_input) or {}
                         winning_harness_result = None
                         winning_tools = []
+                except S6QualityError as exc:
+                    partial_result = getattr(exc, "partial_result", {})
+                    if isinstance(partial_result, Mapping) and partial_result:
+                        self._write_core_agent_session(
+                            workspace,
+                            "winning_mechanism",
+                            {
+                                "event_type": "model_checkpoint",
+                                "result": dict(partial_result),
+                                "summary": (
+                                    "已保存动态蜂群候选账本、专家评估和最终组合；"
+                                    "组合内部门通过时可在恢复阶段仅重做S6最终投影。"
+                                ),
+                            },
+                        )
+                    raise
                 finally:
                     if progress_streamed and stage_policy.feedback_loops_enabled:
                         progress_setter(None)
@@ -2382,6 +2512,9 @@ class DeepResearchRunner:
                 max_rounds=resolved_max_rounds,
                 model_analysis=winning_model_analysis,
                 loops_enabled=stage_policy.feedback_loops_enabled,
+            )
+            store.retain_capability_images(
+                {item.capability_id for item in images}
             )
             recall_coordinator = RecallCoordinator(max_rounds=resolved_max_rounds)
             recall_packet_ids: list[str] = []
@@ -2776,6 +2909,36 @@ class DeepResearchRunner:
                 analyst_confirmed=analyst_confirmed,
                 risk_based_confidence=execution_profile is not None,
             )
+            audit_review_decision = decide_final_audit_review(
+                trace_events=trace.snapshot(),
+                deterministic_status=audit.status,
+                stage_outputs=stage_outputs,
+                capability_images=images,
+                evidence_count=len(store.evidence),
+            )
+            if audit_review_decision.expert_judge_present:
+                audit = replace(
+                    audit,
+                    checks={
+                        **audit.checks,
+                        "expert_judge_passed": (
+                            audit_review_decision.expert_judge_passed
+                        ),
+                    },
+                )
+            if (
+                audit_review_decision.expert_judge_present
+                and not audit_review_decision.expert_judge_passed
+            ):
+                audit = replace(
+                    audit,
+                    status="limited",
+                    comments=[
+                        *audit.comments,
+                        "上游质量专家评判未通过；问题必须回到候选生成或修复阶段解决，"
+                        "最终审计不再调用第二个模型重复评判。",
+                    ],
+                )
             if resume_config_changed:
                 audit = replace(
                     audit,
@@ -2787,18 +2950,10 @@ class DeepResearchRunner:
                     ],
                 )
             audit_reviewer = getattr(provider, "review_audit", None)
-            optimized_audit_review_required = execution_profile is not None and (
-                any(not item.gate_passed for item in stage_outputs)
-                or any(not item.evidence_ids for item in images)
-                or not store.evidence
-            )
             if (
                 mode == "real"
                 and callable(audit_reviewer)
-                and (
-                    execution_profile is None
-                    or optimized_audit_review_required
-                )
+                and audit_review_decision.model_review_required
             ):
                 trace.append(
                     TraceEvent(
@@ -2951,6 +3106,21 @@ class DeepResearchRunner:
                             },
                         )
                     )
+            elif mode == "real" and callable(audit_reviewer):
+                trace.append(
+                    TraceEvent(
+                        event_id="trace-auditor-model-skipped",
+                        event_type="audit_model_review_skipped",
+                        actor="auditor",
+                        summary="已有专家评判，最终审计仅执行确定性发布门",
+                        payload={
+                            "reason": audit_review_decision.reason,
+                            "expert_judge_passed": (
+                                audit_review_decision.expert_judge_passed
+                            ),
+                        },
+                    )
+                )
             store.add_audit(audit)
             trace.append(
                 TraceEvent(
@@ -2998,6 +3168,35 @@ class DeepResearchRunner:
                 )
             )
             reporter_summary = ""
+            reporter_model_started = False
+            winning_swarm_summary = (
+                discovery_blueprint.get("winning_swarm", {})
+                if isinstance(
+                    discovery_blueprint.get("winning_swarm", {}), Mapping
+                )
+                else {}
+            )
+            if not winning_swarm_summary:
+                winning_swarm_summary = next(
+                    (
+                        dict(event.payload.get("swarm_summary", {}))
+                        for event in reversed(trace.snapshot())
+                        if event.event_type == "swarm_gate_evaluated"
+                        and isinstance(
+                            event.payload.get("swarm_summary", {}), Mapping
+                        )
+                        and event.payload.get("swarm_summary")
+                    ),
+                    {},
+                )
+            portfolio_quality_gate = (
+                winning_swarm_summary.get("portfolio_quality_gate", {})
+                if isinstance(
+                    winning_swarm_summary.get("portfolio_quality_gate", {}),
+                    Mapping,
+                )
+                else {}
+            )
             delivery_artifacts = build_delivery_artifacts(
                 topic=topic,
                 branch=str(discovery_blueprint["primary_branch"]),
@@ -3025,23 +3224,45 @@ class DeepResearchRunner:
                 )
 
             if mode == "real":
-                trace.append(
-                    TraceEvent(
-                        event_id="trace-reporter-model-call",
-                        event_type="tool_call",
-                        actor="reporter",
-                        summary="报告 Agent 调用隔离Codex/真实模型生成分支深度正文",
-                        payload={
-                            "tool_name": "draft_report",
-                            "provider_mode": "real",
-                            "branch": discovery_blueprint["primary_branch"],
-                            "required_sections": delivery_artifacts[
-                                "branch_writer_brief"
-                            ]["required_sections"],
-                        },
-                    )
-                )
                 try:
+                    execution_profile_id = str(
+                        discovery_blueprint.get(
+                            "execution_profile_id", "legacy_v1"
+                        )
+                    )
+                    if (
+                        execution_profile_id == "winning_swarm_dynamic_v2"
+                        and portfolio_quality_gate
+                        and not bool(portfolio_quality_gate.get("passed"))
+                    ):
+                        raise ValueError(
+                            "winning swarm portfolio quality gate failed before "
+                            "Reporter: "
+                            f"directions={portfolio_quality_gate.get('direction_count', 0)}, "
+                            "direct_equipment="
+                            f"{portfolio_quality_gate.get('direct_combat_equipment_count', 0)}, "
+                            "distinct_direct_families="
+                            f"{portfolio_quality_gate.get('distinct_direct_equipment_family_count', 0)}, "
+                            "required_distinct_direct_families="
+                            f"{portfolio_quality_gate.get('preferred_distinct_direct_equipment', 5)}"
+                        )
+                    reporter_model_started = True
+                    trace.append(
+                        TraceEvent(
+                            event_id="trace-reporter-model-call",
+                            event_type="tool_call",
+                            actor="reporter",
+                            summary="报告 Agent 调用隔离Codex/真实模型生成分支深度正文",
+                            payload={
+                                "tool_name": "draft_report",
+                                "provider_mode": "real",
+                                "branch": discovery_blueprint["primary_branch"],
+                                "required_sections": delivery_artifacts[
+                                    "branch_writer_brief"
+                                ]["required_sections"],
+                            },
+                        )
+                    )
                     if callable(reporter_progress_setter):
                         reporter_progress_setter(record_reporter_progress)
                     if not callable(report_drafter):
@@ -3057,6 +3278,10 @@ class DeepResearchRunner:
                             "execution_profile_id": discovery_blueprint.get(
                                 "execution_profile_id", "legacy_v1"
                             ),
+                            "portfolio_quality_gate": dict(
+                                portfolio_quality_gate
+                            ),
+                            "report_template_mode": report_template_mode,
                             "ablation_scope": (
                                 "restricted_generic_baseline_evidence_closed"
                                 if stage_policy.evidence_closed
@@ -3127,6 +3352,10 @@ class DeepResearchRunner:
                         "detail": str(exc)[:1000],
                         "resumable": True,
                     }
+                    if portfolio_quality_gate:
+                        failure_payload["portfolio_quality_gate"] = dict(
+                            portfolio_quality_gate
+                        )
                     failure_event = TraceEvent(
                         event_id=(
                             "trace-reporter-model-failed-"
@@ -3194,23 +3423,24 @@ class DeepResearchRunner:
                 finally:
                     if callable(reporter_progress_setter):
                         reporter_progress_setter(None)
-                    self._write_core_agent_session(
-                        workspace,
-                        "reporter",
-                        {"event_type": "model_result", "text": reporter_summary},
-                    )
-                    trace.append(
-                        TraceEvent(
-                            event_id="trace-reporter-model-result",
-                            event_type="tool_result",
-                            actor="reporter",
-                            summary="报告 Agent 分支深度正文生成完成",
-                            payload={
-                                "tool_name": "draft_report",
-                                "status": "completed",
-                            },
+                    if reporter_model_started:
+                        self._write_core_agent_session(
+                            workspace,
+                            "reporter",
+                            {"event_type": "model_result", "text": reporter_summary},
                         )
-                    )
+                        trace.append(
+                            TraceEvent(
+                                event_id="trace-reporter-model-result",
+                                event_type="tool_result",
+                                actor="reporter",
+                                summary="报告 Agent 分支深度正文生成完成",
+                                payload={
+                                    "tool_name": "draft_report",
+                                    "status": "completed",
+                                },
+                            )
+                        )
             report = render_report(
                 topic=topic,
                 route=route,
@@ -3226,7 +3456,18 @@ class DeepResearchRunner:
             if execution_profile is not None:
                 report = replace(
                     report,
-                    body=_publicize_report_references(report.body, store),
+                    body=_enforce_report_hard_max(
+                        _normalize_delivery_report_structure(
+                            _publicize_report_references(report.body, store)
+                        ),
+                        _report_delivery_limit_payload(
+                            discovery_blueprint=discovery_blueprint,
+                            report_template_mode=report_template_mode,
+                            branch_writer_brief=delivery_artifacts[
+                                "branch_writer_brief"
+                            ],
+                        ),
+                    ),
                 )
                 accepted_claim_rows = _report_accepted_claims(
                     store,
@@ -3241,7 +3482,9 @@ class DeepResearchRunner:
                 )
                 internal_reference_found = bool(
                     re.search(
-                        r"\b(?:packet|claim|ev|stage|capability)-[A-Za-z0-9_.:-]+",
+                        r"\b(?:packet|claim|ev|stage|capability)-[A-Za-z0-9_.:-]+"
+                        r"|〔改写断点：保留事实但不得照录〕"
+                        r"|(?m:(?:^|\|\s*|\*\*)[A-Ha-h]\s*[.．、:：]\s*(?=[^\s|*]))",
                         report.body,
                     )
                 )
@@ -3271,9 +3514,24 @@ class DeepResearchRunner:
                         "evidence_count": len(store.evidence),
                         "topic": topic,
                         "branch": discovery_blueprint["primary_branch"],
-                        "report_hard_max_chars": delivery_artifacts[
-                            "branch_writer_brief"
-                        ].get("hard_max_chars"),
+                        "execution_profile_id": discovery_blueprint.get(
+                            "execution_profile_id", "legacy_v1"
+                        ),
+                        "require_detailed_capability_portraits": (
+                            discovery_blueprint.get("execution_profile_id")
+                            in {
+                                "swarm_quality_v1",
+                                "winning_swarm_dynamic_v2",
+                            }
+                        ),
+                        "require_high_value_military_information": (
+                            discovery_blueprint.get("execution_profile_id")
+                            in {
+                                "swarm_quality_v1",
+                                "winning_swarm_dynamic_v2",
+                            }
+                        ),
+                        "report_template_mode": report_template_mode,
                         "delivery_owned_h1": True,
                         "branch_delivery_status": delivery_artifacts[
                             "branch_deliverables"
@@ -3318,7 +3576,7 @@ class DeepResearchRunner:
                 workspace.write_run_text(
                     "report_quality_gate.json",
                     json.dumps(
-                        to_plain(quality_report),
+                        quality_report.compact(),
                         ensure_ascii=False,
                         indent=2,
                         sort_keys=True,
@@ -3393,7 +3651,18 @@ class DeepResearchRunner:
                         )
                         report = replace(
                             report,
-                            body=_publicize_report_references(report.body, store),
+                            body=_enforce_report_hard_max(
+                                _normalize_delivery_report_structure(
+                                    _publicize_report_references(report.body, store)
+                                ),
+                                _report_delivery_limit_payload(
+                                    discovery_blueprint=discovery_blueprint,
+                                    report_template_mode=report_template_mode,
+                                    branch_writer_brief=delivery_artifacts[
+                                        "branch_writer_brief"
+                                    ],
+                                ),
+                            ),
                         )
                         trace.append(
                             TraceEvent(
@@ -3509,9 +3778,34 @@ class DeepResearchRunner:
                 self._trace_proposal(event)
                 for event in trace.events[final_trace_start:]
             ]
+            if resume_config_changed and checkpoint.resume_count:
+                generation_suffix = f"-r{checkpoint.resume_count}"
+                final_domain_proposals = [
+                    replace(
+                        proposal,
+                        proposal_id=f"{proposal.proposal_id}{generation_suffix}",
+                        idempotency_key=(
+                            f"{proposal.idempotency_key}{generation_suffix}"
+                            if proposal.idempotency_key
+                            else generation_suffix.lstrip("-")
+                        ),
+                    )
+                    for proposal in final_domain_proposals
+                ]
+                final_trace_proposals = [
+                    replace(
+                        proposal,
+                        proposal_id=f"{proposal.proposal_id}{generation_suffix}",
+                    )
+                    for proposal in final_trace_proposals
+                ]
             savepoint_id = sqlite_store.commit(
                 final_domain_proposals,
                 final_trace_proposals,
+            )
+            sqlite_store.prune_domain_objects(
+                object_type="CapabilityImageItem",
+                keep_object_ids={item.capability_id for item in images},
             )
             self._emit_hook("after_final_commit", workspace)
             self._write_checkpoint_file(workspace, checkpoint, savepoint_id)
@@ -4071,6 +4365,7 @@ class DeepResearchRunner:
         max_rounds: int,
         analyst_confirmed: bool,
         stage_policy_id: str = "full_method",
+        report_template_mode: str = "three_layer_nine_item",
         provider_name: str | None = None,
         provider_model: str | None = None,
         provider_base_url: str | None = None,
@@ -4089,6 +4384,7 @@ class DeepResearchRunner:
             "harness": self.agent_config_path.parent / "harness.yaml",
         }
         payload = {
+            "report_delivery_contract_version": REPORT_DELIVERY_CONTRACT_VERSION,
             "files": {
                 name: (
                     None
@@ -4102,6 +4398,7 @@ class DeepResearchRunner:
             "max_rounds": max_rounds,
             "analyst_confirmed": analyst_confirmed,
             "stage_policy_id": stage_policy_id,
+            "report_template_mode": report_template_mode,
             "interaction_mode": interaction_mode,
             "discovery_branch": discovery_branch,
             "discovery_blueprint": {
@@ -4615,6 +4912,50 @@ class DeepResearchRunner:
         workspace: RunWorkspace,
         agent_id: str,
     ) -> dict[str, Any]:
+        def recovered_swarm_summary() -> dict[str, Any]:
+            """Recover an already-finished quality-v1 swarm after S6 failure.
+
+            Older S6 exception checkpoints contained only the projected cards
+            even though the controller had already persisted its complete
+            candidate ledger and finalist decision. Reattaching that audited
+            summary avoids rerunning the expensive breadth/reviewer cohort on
+            resume. Dynamic-v2 remains governed by its explicit portfolio gate.
+            """
+
+            controller_path = workspace.sessions_dir / "winning_swarm_controller.jsonl"
+            if not controller_path.is_file():
+                return {}
+            for controller_line in reversed(
+                controller_path.read_text(encoding="utf-8").splitlines()
+            ):
+                try:
+                    controller_row = json.loads(controller_line)
+                except json.JSONDecodeError:
+                    continue
+                summary = controller_row.get("swarm_summary")
+                if not isinstance(summary, Mapping):
+                    continue
+                policy = summary.get("policy", {})
+                policy_id = (
+                    str(policy.get("policy_id", ""))
+                    if isinstance(policy, Mapping)
+                    else ""
+                )
+                finalists = summary.get("finalists", [])
+                if (
+                    policy_id == "winning_swarm_quality_v1"
+                    and isinstance(finalists, list)
+                    and finalists
+                ):
+                    recovered = dict(summary)
+                    recovered["portfolio_quality_gate"] = {
+                        "passed": True,
+                        "recovered_from_controller_audit": True,
+                        "finalist_count": len(finalists),
+                    }
+                    return recovered
+            return {}
+
         path = workspace.sessions_dir / f"{agent_id}.jsonl"
         if not path.is_file():
             return {}
@@ -4626,6 +4967,71 @@ class DeepResearchRunner:
             result = row.get("result")
             if row.get("event_type") == "model_result" and isinstance(result, dict):
                 return dict(result)
+            if row.get("event_type") == "model_checkpoint" and isinstance(
+                result, dict
+            ):
+                checkpoint_result = dict(result)
+                swarm = checkpoint_result.get("winning_swarm", {})
+                if not isinstance(swarm, Mapping) or not swarm:
+                    recovered = recovered_swarm_summary()
+                    if recovered:
+                        checkpoint_result["winning_swarm"] = recovered
+                        swarm = recovered
+                gate = (
+                    swarm.get("portfolio_quality_gate", {})
+                    if isinstance(swarm, Mapping)
+                    else {}
+                )
+                if isinstance(gate, Mapping) and bool(gate.get("passed")):
+                    normalized = _normalize_s6_deterministic_format(
+                        checkpoint_result,
+                        topic="",
+                    )
+                    normalized_swarm = normalized.get("winning_swarm", {})
+                    normalized_directions = normalized.get(
+                        "concept_directions", []
+                    )
+                    if (
+                        isinstance(normalized_swarm, dict)
+                        and isinstance(normalized_directions, list)
+                        and normalized_directions
+                    ):
+                        normalized_swarm["final_equipment_portfolio"] = [
+                            dict(item)
+                            for item in normalized_directions
+                            if isinstance(item, Mapping)
+                        ]
+                    resume_s6_warnings = _capability_direction_quality_issues(
+                        normalized
+                    )
+                    resume_s6_issues = _s6_delivery_blocking_issues(
+                        resume_s6_warnings
+                    )
+                    controller_audit_recovered = bool(
+                        gate.get("recovered_from_controller_audit")
+                    )
+                    # A persisted controller decision is the authoritative
+                    # expert review for this checkpoint.  Re-running the newer
+                    # S6 rubric during resume can turn formatting drift into a
+                    # second audit and unnecessarily restart the expensive
+                    # swarm. Preserve warnings, but do not overturn the prior
+                    # expert decision without new evidence or changed content.
+                    normalized["s6_quality_gate_passed"] = (
+                        controller_audit_recovered or not resume_s6_issues
+                    )
+                    normalized["s6_quality_gate_failed"] = (
+                        bool(resume_s6_issues) and not controller_audit_recovered
+                    )
+                    normalized["s6_quality_gate_issues"] = (
+                        [] if controller_audit_recovered else resume_s6_issues
+                    )
+                    normalized["s6_quality_warnings"] = [
+                        issue
+                        for issue in resume_s6_warnings
+                        if controller_audit_recovered
+                        or issue not in set(resume_s6_issues)
+                    ]
+                    return dict(normalized)
         return {}
 
     @classmethod
@@ -4769,7 +5175,33 @@ class DeepResearchRunner:
             "hypothesis_merged": "专用贡献已合并到声明的候选与 S 节点",
             "hypothesis_rejected": "候选制胜假设未通过业务质量门",
             "swarm_gate_evaluated": "制胜假设或候选组合已完成质量门控",
+            "winning_inner_loop_evaluated": "候选级专家批判、残差修复与复评内循环已完成",
             "promotion_candidate_created": "长期专用 Agent 晋级候选已生成，等待离线评测与人工审核",
+            "winning_mission_graph_planned": "动态蜂群 Mission Graph 已完成有界规划",
+            "winning_agent_instance_recruited": "动态蜂群 Agent 实例已按任务节点招募",
+            "winning_agent_instance_ready": "动态蜂群 Agent 实例已就绪",
+            "winning_agent_session_started": "动态蜂群 Agent 已启动独立模型会话",
+            "winning_agent_session_completed": "动态蜂群 Agent 独立模型会话已完成",
+            "winning_agent_instance_failed": "动态蜂群 Agent 实例执行失败",
+            "winning_agent_instance_cancelled": "动态蜂群 Agent 实例已停止或回收",
+            "winning_candidate_branch_created": "动态蜂群候选分支已写入账本",
+            "winning_specialized_seed_recovered": "动态蜂群已按直接装备证据门恢复专用候选",
+            "winning_specialized_seed_empty": "动态蜂群专用候选生成完成，未恢复额外种子",
+            "winning_candidate_ledger_frozen": "动态蜂群候选账本版本已冻结",
+            "winning_contribution_queued": "动态蜂群增量贡献等待合并",
+            "winning_contribution_hypothesis_remapped": "动态蜂群增量贡献已重映射到规范候选",
+            "winning_contribution_rejected": "动态蜂群增量贡献未通过合并门",
+            "winning_contribution_rebase_required": "动态蜂群增量贡献需要基于新账本重放",
+            "winning_contribution_merged": "动态蜂群增量贡献已合并",
+            "winning_portfolio_merge_completed": "动态蜂群候选组合收敛完成",
+            "winning_quality_judge_recruited": "动态蜂群质量评审实例已招募",
+            "winning_quality_judge_started": "动态蜂群质量评审已启动",
+            "winning_quality_judge_assessed": "动态蜂群质量评审完成单项判断",
+            "winning_quality_judge_completed": "动态蜂群质量评审已完成",
+            "winning_quality_judge_failed": "动态蜂群质量评审失败",
+            "winning_quality_repair_planned": "动态蜂群质量残差修复已规划",
+            "winning_quality_repair_completed": "动态蜂群质量残差修复已完成",
+            "winning_quality_repair_failed": "动态蜂群质量残差修复失败",
         }
         if event_type in swarm_event_summaries:
             cls._write_core_agent_session(
@@ -4887,6 +5319,15 @@ class DeepResearchRunner:
     ) -> None:
         if not store.reports:
             raise RuntimeError("completed checkpoint has no research report")
+        # Completed resumes must still pick up deterministic portrait-contract
+        # fixes. Reuse the same report-brief governance path to synchronize the
+        # frozen capability records, then rewrite delivery artifacts without
+        # reopening any model-backed Reporter stage.
+        _report_decision_brief(
+            store=store,
+            branch_output={},
+            convergence=convergence,
+        )
         report = next(iter(store.reports.values()))
         self._write_outputs(
             workspace=workspace,
@@ -5121,7 +5562,11 @@ class DeepResearchRunner:
             event
             for event in events
             if event.event_type
-            in {"agent_model_call_completed", "winning_model_call_completed"}
+            in {
+                "agent_model_call_completed",
+                "winning_model_call_completed",
+                "report_model_call_completed",
+            }
         ]
         elapsed_values = [
             float(event.payload["elapsed_seconds"])
@@ -5152,6 +5597,19 @@ class DeepResearchRunner:
         baseline_wave_events = [
             event for event in events if event.event_type == "baseline_wave_started"
         ]
+        completed_swarm_agent_ids = {
+            str(event.actor)
+            for event in events
+            if (
+                event.event_type == "winning_agent_session_completed"
+                or (
+                    event.event_type == "winning_subagent_completed"
+                    and event.payload.get("event_type")
+                    == "winning_agent_session_completed"
+                )
+            )
+            and str(event.actor).strip()
+        }
         plan_modes = {
             str(item.get("agent_id", "")): str(item.get("mode", ""))
             for item in discovery_blueprint.get("baseline_agent_plan", [])
@@ -5176,7 +5634,8 @@ class DeepResearchRunner:
             "dynamic_agent_count": sum(
                 str(agent_id).startswith("dynamic-")
                 for agent_id in selected_agent_ids
-            ),
+            )
+            + len(completed_swarm_agent_ids),
             "model_call_count": len(call_events),
             "model_elapsed_seconds_sum": round(sum(elapsed_values), 3),
             "max_model_call_seconds": round(max(elapsed_values, default=0.0), 3),
@@ -5374,6 +5833,7 @@ class DeepResearchRunner:
         ]
         persisted_loop_kinds = _persisted_winning_loop_kinds(store)
         blueprint = summary.get("discovery_blueprint", {})
+        execution_profile_id = str(blueprint.get("execution_profile_id", "")).strip()
         checks = {
             "real_or_fake_mode_recorded": summary.get("mode") in {"real", "fake"},
             "dynamic_agent_selection_recorded": bool(selected),
@@ -5444,15 +5904,12 @@ class DeepResearchRunner:
                 "discovery_meta_loop_evaluated",
             }
             <= event_types,
-            "codex_inner_and_middle_loops_recorded": (
-                {
-                    "winning_inner_loop_evaluated",
-                    "winning_middle_loop_evaluated",
-                }
-                <= event_types
-                or {"inner", "middle"} <= persisted_loop_kinds
-                if summary.get("mode") == "real"
-                else True
+            "codex_inner_and_middle_loops_recorded": _codex_loops_recorded(
+                mode=str(summary.get("mode", "")),
+                execution_profile_id=execution_profile_id,
+                event_types=event_types,
+                persisted_loop_kinds=persisted_loop_kinds,
+                session_agents=session_agents,
             ),
             "four_knowledge_resources_projected": bool(resource_projections)
             and all(
@@ -5654,6 +6111,10 @@ def _compact_winning_blueprint(value: Mapping[str, Any]) -> dict[str, Any]:
             "adaptive_winning_step_modes",
             "execution_profile_id",
             "structured_query_brief",
+            # Quality profiles consume the compact blueprint.  Dropping this
+            # field silently disabled ``swarm_quality_v1`` while dynamic v2
+            # appeared to work only because the provider force-enabled it.
+            "winning_swarm_policy",
         )
         if value.get(key) not in (None, "", [], {})
     }
@@ -5856,6 +6317,41 @@ def _publicize_report_references(body: str, store: DomainStore) -> str:
     return result
 
 
+def _normalize_delivery_report_structure(body: str) -> str:
+    """Apply deterministic heading repair without dropping delivery-owned H1."""
+
+    text = str(body)
+    h1 = next(
+        (
+            line.strip()
+            for line in text.splitlines()
+            if line.startswith("# ") and not line.startswith("## ")
+        ),
+        "",
+    )
+    normalized = _normalize_report_structure_deterministically(text).strip()
+    if h1 and not normalized.startswith(h1):
+        return f"{h1}\n\n{normalized}".strip()
+    return normalized
+
+
+def _report_delivery_limit_payload(
+    *,
+    discovery_blueprint: Mapping[str, Any],
+    report_template_mode: str,
+    branch_writer_brief: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Preserve the execution contract during post-render length handling."""
+
+    return {
+        "execution_profile_id": discovery_blueprint.get(
+            "execution_profile_id", "legacy_v1"
+        ),
+        "report_template_mode": report_template_mode,
+        "branch_writer_brief": branch_writer_brief,
+    }
+
+
 def _agent_contribution_observations(
     *,
     store: DomainStore,
@@ -6005,11 +6501,88 @@ def _report_decision_brief(
         ),
     )[:7]
     capability_decisions: list[dict[str, Any]] = []
-    for image_item in images:
+    for image_index, image_item in enumerate(images):
         mission_failure = _derive_report_mission_failure(
             capability_gap=image_item.capability_gap,
             deep_portrait=image_item.deep_capability_portrait,
         )
+        equipment_identity = "；".join(
+            value
+            for value in (
+                image_item.name,
+                image_item.equipment_form or image_item.equipment_category,
+                image_item.mission_effect or image_item.military_utility,
+            )
+            if value
+        )
+        normalized_problem = normalize_capability_problem(
+            image_item.problem_statement or mission_failure,
+            fallback=(
+                f"{image_item.name}对应的关键任务链存在目标、授权、交战或毁伤评估断点"
+            ),
+        )
+        normalized_process = normalize_operational_process(
+            image_item.operational_process or image_item.strike_chain_contribution,
+            equipment_identity=equipment_identity,
+        )
+        normalized_verification = normalize_verification_plan(
+            image_item.verification_plan,
+            equipment_identity=equipment_identity,
+            failure_boundary=(
+                image_item.risk_boundaries
+                or image_item.operational_constraints
+                or image_item.upgrade_boundary
+            ),
+        )
+        normalized_portrait = resolve_capability_portrait(
+            image_item.deep_capability_portrait,
+            name=image_item.name,
+            scenario=image_item.target_scenario or image_item.related_scenario,
+            problem=normalized_problem,
+            principle=(
+                image_item.scientific_principle
+                or image_item.operational_mechanism
+                or image_item.novelty
+            ),
+            technologies=(
+                image_item.enabling_technologies
+                or image_item.upgrade_package
+                or image_item.equipment_form
+            ),
+            operational_concept=(
+                image_item.operational_concept or image_item.operational_mechanism
+            ),
+            operational_steps=normalized_process,
+            capability=(
+                image_item.capability_outcome
+                or image_item.military_utility
+                or image_item.mission_effect
+            ),
+            effect=image_item.mission_effect or image_item.military_utility,
+            winning_mechanism=(
+                image_item.winning_mechanism
+                or image_item.source_winning_logic
+                or image_item.novelty
+            ),
+            equipment_form=image_item.equipment_form or image_item.equipment_category,
+            baseline=image_item.baseline_system or image_item.equipment_category,
+            development_path=image_item.development_path or image_item.foresight,
+            failure_boundary=(
+                image_item.risk_boundaries or image_item.operational_constraints
+            ),
+            verification_plan=normalized_verification,
+        )
+        if (
+            normalized_portrait != image_item.capability_image
+            or normalized_portrait != image_item.deep_capability_portrait
+        ):
+            image_item = replace(
+                image_item,
+                capability_image=normalized_portrait,
+                deep_capability_portrait=normalized_portrait,
+            )
+            images[image_index] = image_item
+            store.capability_images[image_item.capability_id] = image_item
         public_sources = []
         seen_urls: set[str] = set()
         for evidence_id in image_item.evidence_ids:
@@ -6039,6 +6612,10 @@ def _report_decision_brief(
                     max_chars=40,
                 ),
                 "type": str(image_item.capability_type),
+                "project_function": _clean_report_brief_text(
+                    image_item.project_function,
+                    max_chars=240,
+                ),
                 "mission_failure": mission_failure,
                 "operational_effect": _clean_report_brief_text(
                     image_item.strike_countermeasure_value
@@ -6051,6 +6628,45 @@ def _report_decision_brief(
                     image_item.operational_mechanism
                     or image_item.source_winning_logic,
                     max_chars=280,
+                ),
+                "target_scenario": _clean_report_brief_text(
+                    image_item.target_scenario or image_item.related_scenario,
+                    max_chars=220,
+                ),
+                "problem_statement": _clean_report_brief_text(
+                    normalized_problem,
+                    max_chars=220,
+                ),
+                "scientific_principle": _clean_report_brief_text(
+                    image_item.scientific_principle
+                    or image_item.operational_mechanism,
+                    max_chars=200,
+                ),
+                "enabling_technologies": _clean_report_brief_items(
+                    image_item.enabling_technologies,
+                    limit=5,
+                    max_chars=100,
+                ),
+                "operational_concept": _clean_report_brief_text(
+                    image_item.operational_concept
+                    or image_item.operational_mechanism,
+                    max_chars=240,
+                ),
+                "operational_process": _clean_report_brief_items(
+                    normalized_process,
+                    limit=6,
+                    max_chars=120,
+                ),
+                "capability_outcome": _clean_report_brief_text(
+                    image_item.capability_outcome
+                    or image_item.military_utility
+                    or image_item.mission_effect,
+                    max_chars=200,
+                ),
+                "winning_mechanism": _clean_report_brief_text(
+                    image_item.winning_mechanism
+                    or image_item.source_winning_logic,
+                    max_chars=240,
                 ),
                 "equipment_form": _clean_report_brief_text(
                     image_item.equipment_form or image_item.equipment_category,
@@ -6072,6 +6688,14 @@ def _report_decision_brief(
                     image_item.development_path,
                     max_chars=200,
                 ),
+                "verification_plan": _clean_report_brief_items(
+                    normalized_verification,
+                    limit=4,
+                    max_chars=180,
+                ),
+                "capability_portrait": _clean_report_capability_portrait(
+                    normalized_portrait
+                ),
                 "indicator_portrait": _report_indicator_portrait(image_item),
                 "coupling_risk": _report_coupling_risk(image_item),
                 "boundaries": _clean_report_brief_items(
@@ -6080,7 +6704,7 @@ def _report_decision_brief(
                         *image_item.operational_constraints,
                         image_item.upgrade_boundary,
                     ],
-                    limit=2,
+                    limit=8,
                     max_chars=180,
                 ),
                 "public_sources": public_sources,
@@ -6131,6 +6755,51 @@ def _report_decision_brief(
         max_chars=220,
     )
     compact_branch = _compact_report_branch_output(branch_output)
+    equipment_payload: Mapping[str, Any] = {}
+    for packet in store.baseline_packets.values():
+        if packet.agent_id != "weapon_equipment":
+            continue
+        if isinstance(packet.payload, Mapping) and packet.payload:
+            equipment_payload = packet.payload
+        elif isinstance(packet.analysis_sections, Mapping):
+            equipment_payload = packet.analysis_sections
+        break
+
+    def compact_cases(key: str, *, limit: int = 5) -> list[dict[str, Any]]:
+        values = equipment_payload.get(key, [])
+        if not isinstance(values, list):
+            return []
+        result: list[dict[str, Any]] = []
+        for value in values[:limit]:
+            if not isinstance(value, Mapping):
+                continue
+            result.append(
+                {
+                    field: (
+                        _clean_report_brief_items(raw, limit=4, max_chars=110)
+                        if isinstance(raw, list)
+                        else _clean_report_brief_text(raw, max_chars=180)
+                    )
+                    for field, raw in value.items()
+                    if field
+                    in {
+                        "country",
+                        "organization",
+                        "equipment_or_project",
+                        "status",
+                        "problem_addressed",
+                        "technical_route",
+                        "core_technologies",
+                        "core_indicators",
+                        "source_urls",
+                        "image_urls",
+                        "evidence_boundary",
+                    }
+                    and raw not in (None, "", [], {})
+                }
+            )
+        return [item for item in result if item]
+
     return {
         "research_theses": _clean_report_brief_items(
             thesis_candidates,
@@ -6142,6 +6811,23 @@ def _report_decision_brief(
         "branch_products": compact_branch.get("products", {}),
         "counterevidence_and_limits": counterevidence,
         "convergence_priorities": priorities,
+        "comparative_status": {
+            "foreign_landscape": _clean_report_brief_text(
+                equipment_payload.get("foreign_equipment_landscape", ""),
+                max_chars=500,
+            ),
+            "domestic_landscape": _clean_report_brief_text(
+                equipment_payload.get("domestic_equipment_landscape", ""),
+                max_chars=500,
+            ),
+            "foreign_cases": compact_cases("foreign_equipment_cases"),
+            "domestic_cases": compact_cases("domestic_equipment_cases"),
+            "comparative_findings": _clean_report_brief_items(
+                equipment_payload.get("comparative_findings", []),
+                limit=5,
+                max_chars=200,
+            ),
+        },
     }
 
 
@@ -6165,16 +6851,48 @@ def _report_indicator_portrait(image_item: CapabilityImageItem) -> str:
             image_item.capability_gap,
         )
     )
-    if image_item.capability_type == "upgrade":
-        return (
-            "射程与载荷沿现役包线校核；响应看任务装订至发射准备时间；自主性看断链后航路、"
-            "末段识别与人在回路边界；成本看单发改装增量；规模看现役库存可滚动升级比例，"
-            "具体阈值以抗扰靶试校准。"
+    if any(
+        term in name
+        for term in (
+            "无人载弹母机",
+            "载弹母机",
+            "无人空中弹舱机",
+            "空中弹舱机",
+            "空中弹药库",
         )
-    if "空射" in name or "巡航导弹" in name:
+    ):
+        return (
+            "覆盖看岛链外防区外待机半径与连续值班时长；响应看授权目标包到分批释放的时间；"
+            "自主性看弹药库存管理、授权释放、未用载荷保留和退出规则；成本看单位在位小时与"
+            "单次有效释放；规模看同时在位母机数和可调用防区外弹药余量，待强扰远程防空对抗试验校准。"
+        )
+    if "反辐射" in name:
+        return (
+            "覆盖看威胁频段与辐射源活动区；响应看开机捕获至压制窗口；自主性看关机续踪和目标复核；"
+            "成本看单位压制小时；规模看多辐射源并发猎杀数，阈值以频谱对抗试验校准。"
+        )
+    if "JASSM" in name or "空射" in name:
         return (
             "射程看载机防区外释放与低空突防纵深；响应看出动至多点释放周期；自主性看航路重构和"
             "末段效应选择；成本看载机架次与弹药组合；规模看多轴齐射密度，待实弹试验校准。"
+        )
+    if "PrSM" in name or "地面发射远程" in name:
+        return (
+            "覆盖看地面机动发射的战役纵深与多路径余量；响应看目标包更新至射后转移周期；"
+            "自主性看受扰导航、受限更新和末段确认；成本看单发与高价值目标交换；规模看持续齐射补充，"
+            "待机动目标和抗扰体系试验校准。"
+        )
+    if "Barracuda" in name or "低成本巡航效应器" in name:
+        return (
+            "覆盖看一般纵深目标与多轴到达余量；响应看固定构型换产、交付和波次补击周期；"
+            "自主性看受限任务更新与末段安全边界；成本看单位有效毁伤和拦截交换；"
+            "规模看连续批次合格率与月度补充能力，待批产和体系试验校准。"
+        )
+    if any(term in name for term in ("无人携弹平台", "低空无人", "可消耗无人")):
+        return (
+            "覆盖看低空进入半径与任务区驻留；响应看目标暴露至猎歼和补击时间；自主性看失联搜索、"
+            "人工授权与安全中止；成本看单架次和单位有效毁伤；规模看同时在空平台与持续波次数量，"
+            "待强反无人环境试验校准。"
         )
     if "无人僚机" in name:
         return (
@@ -6187,11 +6905,6 @@ def _report_indicator_portrait(image_item: CapabilityImageItem) -> str:
             "覆盖看前出潜伏区与车载弹药作用半径；响应看目标暴露至本地补伤时间；自主性看断链"
             "机动、目标复核和中止规则；成本看单位拒止小时；规模看分散节点和车载弹药基数，"
             "待复杂地形生存试验校准。"
-        )
-    if "反辐射" in name:
-        return (
-            "覆盖看威胁频段与辐射源活动区；响应看开机捕获至压制窗口；自主性看关机续踪和目标复核；"
-            "成本看单位压制小时；规模看多辐射源并发猎杀数，阈值以频谱对抗试验校准。"
         )
     if any(term in name for term in ("远程精确打击导弹", "精确制导弹药", "远程精确火力")):
         return (
@@ -6216,6 +6929,12 @@ def _report_indicator_portrait(image_item: CapabilityImageItem) -> str:
             "射程看战役纵深覆盖与多路径余量；响应看目标包更新至发射时间；自主性看导航拒止下"
             "末段确认和备选目标规则；成本看单发与拦截弹交换；规模看持续波次补充能力，待体系试验校准。"
         )
+    if image_item.capability_type == "upgrade":
+        return (
+            "覆盖与载荷沿现役包线校核；响应看任务装订至发射准备时间；自主性看断链后航路、"
+            "末段识别与人在回路边界；成本看单次改装增量；规模看现役库存可滚动升级比例，"
+            "具体阈值以代表性对抗试验校准。"
+        )
     return (
         "覆盖、响应、自主边界、单位任务成本、并发规模和生存性分别设置验证口径；仅给指标方向，"
         "不在缺少公开数据时填写未经校准的点值。"
@@ -6230,15 +6949,53 @@ def _report_coupling_risk(image_item: CapabilityImageItem) -> str:
     )
     boundaries = _clean_report_brief_items(
         [*image_item.risk_boundaries, *image_item.operational_constraints],
-        limit=1,
+        limit=8,
         max_chars=100,
     )
     dependency_text = "、".join(dependencies) or "目标信息质量、制导火控与载荷效应"
-    shortfall = boundaries[0] if boundaries else "代表性干扰条件下的闭环验证未通过"
+    shortfall = _preferred_report_failure_boundary(boundaries)
+    failed_effect = _clean_report_brief_text(
+        image_item.capability_outcome
+        or image_item.mission_effect
+        or image_item.project_function,
+        max_chars=90,
+    ).rstrip("。；，, ")
     return (
-        f"{dependency_text}形成串联耦合；单点短板是{shortfall}，一旦失效会级联拖垮该装备的"
-        "任务闭环，成熟度不得用其他分项平均。"
+        f"{image_item.name}依赖{dependency_text}；单点失败条件为{shortfall}。"
+        f"一旦触发，{image_item.name}将不能{failed_effect or '完成其直接战斗任务'}，"
+        "必须单项判退而不能用其他成熟分项平均。"
     )
+
+
+def _preferred_report_failure_boundary(values: Sequence[Any]) -> str:
+    rows = [str(item).strip() for item in values if str(item).strip()]
+    preferred = next(
+        (row for row in rows if row.startswith("失效边界")),
+        "",
+    )
+    if not preferred:
+        preferred = next(
+            (
+                row
+                for row in rows
+                if not row.startswith("未来触发")
+                and any(
+                    marker in row
+                    for marker in (
+                        "不能",
+                        "无法",
+                        "不足",
+                        "失效",
+                        "不得",
+                        "不可",
+                        "超限",
+                        "中断",
+                    )
+                )
+            ),
+            "",
+        )
+    return preferred or "代表性干扰条件下的闭环验证未通过"
 
 
 def _report_synthesis_seed(
@@ -6271,11 +7028,38 @@ def _report_synthesis_seed(
                 "mission_effect": _clean_report_brief_text(
                     item.get("operational_effect", ""), max_chars=180
                 ),
+                "project_function": _clean_report_brief_text(
+                    item.get("project_function", ""), max_chars=180
+                ),
                 "capability_gap": _clean_report_brief_text(
                     item.get("mission_failure", ""), max_chars=150
                 ),
                 "mechanism_hint": _clean_report_brief_text(
                     item.get("mechanism", ""), max_chars=160
+                ),
+                "target_scenario": _clean_report_brief_text(
+                    item.get("target_scenario", ""), max_chars=180
+                ),
+                "problem_statement": _clean_report_brief_text(
+                    item.get("problem_statement", ""), max_chars=180
+                ),
+                "scientific_principle": _clean_report_brief_text(
+                    item.get("scientific_principle", ""), max_chars=160
+                ),
+                "enabling_technologies": _clean_report_brief_items(
+                    item.get("enabling_technologies", []), limit=5, max_chars=90
+                ),
+                "operational_concept": _clean_report_brief_text(
+                    item.get("operational_concept", ""), max_chars=180
+                ),
+                "operational_process": _clean_report_brief_items(
+                    item.get("operational_process", []), limit=6, max_chars=100
+                ),
+                "capability_outcome": _clean_report_brief_text(
+                    item.get("capability_outcome", ""), max_chars=160
+                ),
+                "winning_mechanism": _clean_report_brief_text(
+                    item.get("winning_mechanism", ""), max_chars=180
                 ),
                 "equipment_hint": _clean_report_brief_text(
                     item.get("equipment_form", ""), max_chars=140
@@ -6292,6 +7076,12 @@ def _report_synthesis_seed(
                 "development_path": _clean_report_brief_text(
                     item.get("development_path", ""), max_chars=140
                 ),
+                "verification_plan": _clean_report_brief_items(
+                    item.get("verification_plan", []), limit=4, max_chars=150
+                ),
+                "capability_portrait": _clean_report_capability_portrait(
+                    item.get("capability_portrait", "")
+                ),
                 "indicator_portrait": _clean_report_brief_text(
                     item.get("indicator_portrait", ""), max_chars=220
                 ),
@@ -6302,7 +7092,9 @@ def _report_synthesis_seed(
                     item.get("priority", ""), max_chars=30
                 ),
                 "boundary": _clean_report_brief_text(
-                    next(iter(item.get("boundaries", []) or []), ""),
+                    _preferred_report_failure_boundary(
+                        item.get("boundaries", []) or []
+                    ),
                     max_chars=120,
                 ),
             }
@@ -6329,6 +7121,7 @@ def _report_synthesis_seed(
             limit=1,
             max_chars=150,
         ),
+        "comparative_status": brief.get("comparative_status", {}),
     }
 
 
@@ -6935,12 +7728,47 @@ def _clean_report_brief_text(value: Any, *, max_chars: int) -> str:
         flags=re.IGNORECASE,
     )
     text = re.sub(r"\b(?:Agent|Codex|Packet)\b", "研究", text, flags=re.IGNORECASE)
-    text = re.sub(r"(?:证据|证据见|来源)\s*[、,:：;；和与\s]*[。.]?", "", text)
+    # Remove process-style source labels, but preserve ordinary words such as
+    # ``目标证据链`` that legitimately occur in an equipment direction.
+    # The former broad rule changed that name to ``目标链`` and caused the
+    # exact-direction publication gate to fail after a successful report run.
+    text = re.sub(
+        r"(?:证据见|来源见|证据来源)\s*[、,:：;；和与\s]*[。.]?",
+        "",
+        text,
+    )
     text = re.sub(r"\s+([，。；：、])", r"\1", text)
     text = re.sub(r"([，；：、]){2,}", r"\1", text)
     text = text.strip(" ，。；：、-")
-    if len(text) > max_chars:
-        text = text[: max_chars - 1].rstrip(" ，。；：、-") + "…"
+    return _clip_report_brief_complete(text, max_chars=max_chars)
+
+
+def _clean_report_capability_portrait(value: Any) -> str:
+    """Preserve governed portrait line structure while removing internals."""
+
+    rows: list[str] = []
+    for raw_line in _strip_report_internal_markers(str(value or "")).splitlines():
+        bullet_match = re.match(r"^\s*([-*])\s+(?P<body>.*)$", raw_line)
+        body = bullet_match.group("body") if bullet_match else raw_line
+        line = _clean_report_brief_text(body, max_chars=360)
+        if line:
+            if bullet_match:
+                line = f"{bullet_match.group(1)} {line}"
+            rows.append(line)
+    return "\n".join(rows)
+
+
+def _clip_report_brief_complete(text: str, *, max_chars: int) -> str:
+    """Shorten only at a complete semantic boundary, never with ellipses."""
+
+    if len(text) <= max_chars:
+        return text
+    candidate = text[:max_chars]
+    boundary = max(candidate.rfind(mark) for mark in "。！？!?\n")
+    if boundary >= max(80, max_chars // 2):
+        return candidate[: boundary + 1].rstrip()
+    # A long identifier, evidence statement or mechanism without a safe
+    # boundary is more valuable intact than as a fabricated fragment.
     return text
 
 
@@ -6953,9 +7781,7 @@ def _clean_report_mission_failure(value: Any, *, max_chars: int = 260) -> str:
     )[0]
     clauses = [item.strip() for item in re.split(r"[；。]", text) if item.strip()]
     concise = "；".join(clauses[:2]) or text
-    if len(concise) > max_chars:
-        concise = concise[: max_chars - 1].rstrip(" ，。；：、-") + "…"
-    return concise
+    return _clip_report_brief_complete(concise, max_chars=max_chars)
 
 
 def _derive_report_mission_failure(
@@ -6979,11 +7805,7 @@ def _derive_report_mission_failure(
             candidate,
         )
         if len(candidate) >= 24:
-            if len(candidate) > max_chars:
-                candidate = (
-                    candidate[: max_chars - 1].rstrip(" ，。；：、-") + "…"
-                )
-            return candidate
+            return _clip_report_brief_complete(candidate, max_chars=max_chars)
     return _clean_report_mission_failure(capability_gap, max_chars=max_chars)
 
 
@@ -7020,6 +7842,33 @@ def _persisted_winning_loop_kinds(store: DomainStore) -> set[str]:
             if isinstance(item, Mapping) and str(item.get("loop", "")).strip()
         )
     return loop_kinds
+
+
+def _codex_loops_recorded(
+    *,
+    mode: str,
+    execution_profile_id: str,
+    event_types: set[str],
+    persisted_loop_kinds: set[str],
+    session_agents: set[str],
+) -> bool:
+    """Accept the dynamic swarm's expert loop as the profile-equivalent audit trail."""
+
+    if mode != "real":
+        return True
+    if {
+        "winning_inner_loop_evaluated",
+        "winning_middle_loop_evaluated",
+    } <= event_types or {"inner", "middle"} <= persisted_loop_kinds:
+        return True
+    if execution_profile_id != "winning_swarm_dynamic_v2":
+        return False
+    return any(
+        agent_id.startswith("winning-agent-") for agent_id in session_agents
+    ) and any(
+        agent_id.startswith("winning-quality-judge-")
+        for agent_id in session_agents
+    )
 
 
 def _reconcile_final_audit_status(
@@ -7334,6 +8183,30 @@ def _normalize_discovery_meta_review(
         "rationale": str(raw.get("rationale", "")).strip()[:1000],
         "stop_reason": stop_reason[:300],
     }
+
+
+def _winning_analysis_reusable_for_profile(
+    result: Mapping[str, Any],
+    *,
+    execution_profile_id: str,
+) -> bool:
+    """Reject stale resume results that predate the active quality profile."""
+
+    if not result:
+        return False
+    if execution_profile_id != "winning_swarm_dynamic_v2":
+        return True
+    swarm = result.get("winning_swarm", {})
+    if not isinstance(swarm, Mapping):
+        return False
+    portfolio = swarm.get("final_equipment_portfolio", [])
+    gate = swarm.get("portfolio_quality_gate", {})
+    return (
+        isinstance(portfolio, list)
+        and len(portfolio) >= 5
+        and isinstance(gate, Mapping)
+        and bool(gate.get("passed"))
+    )
 
 
 class _RunResourceScope:

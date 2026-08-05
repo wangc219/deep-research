@@ -8,6 +8,7 @@ from equipment_deep_research.agents.runtime_profiles import (
 from equipment_deep_research.domain.models import ResearchProblem
 from equipment_deep_research.domain.research_focus import (
     BRANCH_REFERENCE_FOCUS,
+    DISRUPTIVE_EQUIPMENT_SEED_LIBRARY_VERSION,
     DISRUPTIVE_EQUIPMENT_SEEDS,
     REFERENCE_REQUIREMENT_OWNERS,
     disruptive_seed_context,
@@ -23,6 +24,45 @@ def test_reference_requirements_have_one_primary_owner() -> None:
     assert REFERENCE_REQUIREMENT_OWNERS[2] == "international_situation"
     assert REFERENCE_REQUIREMENT_OWNERS[3] == "F"
     assert REFERENCE_REQUIREMENT_OWNERS[12] == "D"
+
+
+def test_disruptive_paradigm_seed_library_v2_matches_twelve_seed_cards() -> None:
+    assert DISRUPTIVE_EQUIPMENT_SEED_LIBRARY_VERSION == "v2"
+    assert {
+        item["id"]: (
+            item["original_paradigm"],
+            item["title"],
+            item["research_relation"],
+        )
+        for item in DISRUPTIVE_EQUIPMENT_SEEDS
+    } == {
+        "A1": ("拦截经济学反转", "成本强加", "单件性能竞争→体系交换比竞争"),
+        "A2": ("前线弹药工厂", "制造即战力", "后方库存→分布式按需制造"),
+        "B1": ("徘徊火力云", "持续火力场", "临时发射→战区持续存在"),
+        "B2": ("和平预置、战时激活", "预置任务节点", "战时部署→预先部署和可信激活"),
+        "C1": ("毁平台转向毁节奏", "决策节奏对抗", "物理摧毁→压缩或扰乱决策周期"),
+        "C2": ("越打越聪明", "战役内学习", "固定策略→批次间快速学习"),
+        "D1": ("非动能点穴瘫痪", "功能压制", "结构毁伤→关键功能失效"),
+        "D2": ("打击作为战略信号", "战略信号", "单纯毁伤→打击与认知效应结合"),
+        "E1": ("任意传感器匹配最优射手", "火力即服务", "平台绑定→传感器与射手解耦"),
+        "E2": ("蜂群对蜂群", "集群对抗生态", "单平台对抗→算法和种群对抗"),
+        "F1": ("算法威慑、选择性透明", "可验证自主", "黑箱自主→可约束、可验证自主"),
+        "F2": ("越降级越自主", "拒止环境自主", "网络依赖→断链条件下任务自治"),
+    }
+
+
+def test_dynamic_swarm_equipment_specialists_receive_v2_seed_cards() -> None:
+    context = disruptive_seed_context(
+        "强电磁压制下低成本无人蜂群精确打击",
+        branch="D",
+        agent_id="direct_combat_equipment_generator",
+    )
+
+    assert context["library_version"] == "v2"
+    assert 1 <= len(context["cards"]) <= 3
+    assert all("original_paradigm" in item for item in context["cards"])
+    assert all("research_relation" in item for item in context["cards"])
+    assert "不得复制种子标题作为装备名" in context["rule"]
 
 
 def test_each_branch_exposes_one_compact_reference_kernel() -> None:
@@ -124,18 +164,17 @@ def test_disruptive_seed_selector_does_not_inject_priors_into_unrelated_query() 
     assert cards == []
 
 
-def test_disruptive_seed_selector_allows_only_one_marked_exploration_card() -> None:
+def test_disruptive_seed_selector_does_not_invent_an_unmatched_exploration_card() -> None:
     cards = select_disruptive_equipment_seeds(
         "远域作战装备需求研究",
         branch="F",
         agent_id="winning_s3_breakthrough",
     )
 
-    assert len(cards) == 1
-    assert cards[0]["selection_basis"] == "bounded_exploration"
+    assert cards == []
 
 
-def test_broad_weapon_query_receives_one_diverse_challenge_lens() -> None:
+def test_broad_weapon_query_receives_only_its_direct_reference_lens() -> None:
     cards = select_disruptive_equipment_seeds(
         "无人远程火力打击范式装备需求研究",
         branch="A",
@@ -144,14 +183,10 @@ def test_broad_weapon_query_receives_one_diverse_challenge_lens() -> None:
 
     assert cards[0]["id"] == "B1"
     assert cards[0]["selection_basis"] == "query_signal"
-    assert len(cards) == 2
-    assert len({item["dimension"] for item in cards}) == 2
-    assert sum(
-        item["selection_basis"] == "bounded_exploration" for item in cards
-    ) == 1
+    assert len(cards) == 1
 
 
-def test_single_cost_lens_is_challenged_without_filling_all_dimensions() -> None:
+def test_single_cost_lens_does_not_trigger_prior_based_seed_filling() -> None:
     cards = select_disruptive_equipment_seeds(
         "西太高强度对抗中的低成本远程精打弹药",
         branch="A",
@@ -159,11 +194,7 @@ def test_single_cost_lens_is_challenged_without_filling_all_dimensions() -> None
     )
 
     assert cards[0]["id"] == "A1"
-    assert len(cards) == 2
-    assert len({item["dimension"] for item in cards}) == 2
-    assert sum(
-        item["selection_basis"] == "bounded_exploration" for item in cards
-    ) == 1
+    assert len(cards) == 1
 
 
 def test_disruptive_seed_runtime_context_is_bounded_and_marks_seeds_as_hypotheses() -> None:
@@ -176,25 +207,21 @@ def test_disruptive_seed_runtime_context_is_bounded_and_marks_seeds_as_hypothese
     assert len(context["cards"]) <= 4
     assert "dimension_index" not in context
     assert "不是事实" in context["rule"]
-    assert "2至3类" in context["rule"]
+    assert "Codex应从完整Query自行发散" in context["rule"]
     assert "实战门" in context["rule"]
     assert "任务链断点" in context["rule"]
     assert "OTHER" in context["rule"]
     assert len(json.dumps(context, ensure_ascii=False)) < 1000
 
 
-def test_broad_a2ad_query_gets_two_distinct_bounded_exploration_lenses() -> None:
+def test_broad_a2ad_query_is_left_to_codex_when_no_seed_directly_matches() -> None:
     context = disruptive_seed_context(
         "挖掘在西太反介入体系下的装备能力缺口",
         branch="F",
         agent_id="weapon_equipment",
     )
 
-    cards = context["cards"]
-    assert len(cards) == 2
-    assert len({item["dimension"] for item in cards}) == 2
-    assert all(item["selection_basis"] == "bounded_exploration" for item in cards)
-    assert len(json.dumps(context, ensure_ascii=False)) < 1200
+    assert context == {}
 
 
 def test_optimized_winning_runtime_keeps_selected_disruptive_seeds() -> None:

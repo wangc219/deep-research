@@ -2,8 +2,14 @@ from __future__ import annotations
 
 import asyncio
 import json
+from types import SimpleNamespace
 
-from equipment_deep_research.agents.provider import ResponsesAgentProvider
+import pytest
+
+from equipment_deep_research.agents.provider import (
+    ResponsesAgentProvider,
+    S6QualityError,
+)
 from equipment_deep_research.agents.registry import AgentDef
 from equipment_deep_research.domain.models import BaselineFindingPacket, EvidenceCard, ResearchProblem
 from equipment_deep_research.domain.store import DomainStore
@@ -23,6 +29,8 @@ from equipment_deep_research.providers.fake import ScriptedFakeProvider
 from equipment_deep_research.orchestration.runner import (
     _build_military_value_handoff,
     _merge_blueprint_and_analyst_agent_ids,
+    _military_handoff_evidence_index,
+    _report_indicator_portrait,
 )
 
 
@@ -66,7 +74,7 @@ def test_abc_v2_contracts_encode_required_counts_and_cohorts() -> None:
     assert a.delivery_grace_seconds == 0
     assert a.absolute_deadline_seconds == 0
     assert a.maximum_delivery_model_calls == 4
-    assert a.maximum_swarm_model_calls == 16
+    assert a.maximum_swarm_model_calls == 20
     assert a.maximum_quality_judge_model_calls == 2
     assert b.physical_cohorts == ((1, 2, 3), (4, 5))
     assert b.step_intensity[4] == b.step_intensity[5] == "deep"
@@ -96,7 +104,7 @@ def test_v2_blueprint_reserves_reporter_delivery_lane() -> None:
         "delivery_grace_seconds": 0,
         "absolute_deadline_seconds": 0,
         "maximum_delivery_model_calls": 4,
-        "maximum_swarm_model_calls": 16,
+        "maximum_swarm_model_calls": 20,
         "maximum_quality_judge_model_calls": 2,
         "deadline_downshift_window_seconds": 240,
         "critical_fast_finalize_seconds": 0,
@@ -264,6 +272,97 @@ def test_military_value_handoff_filters_rejected_and_generic_baseline_text() -> 
     assert claim["source_urls"] == ["https://example.com/military"]
     assert "Harness" not in str(handoff)
     assert handoff["statistics"]["selected_claim_count"] == 1
+
+
+def test_military_handoff_evidence_index_expands_selected_equipment_packet() -> None:
+    store = DomainStore()
+    for evidence_id, title in (
+        ("ev-weapon_equipment-web-prsm", "PrSM budget"),
+        ("ev-weapon_equipment-web-jassm", "JASSM AGM-158 program"),
+        ("ev-weapon_equipment-web-barracuda", "Barracuda production"),
+    ):
+        store.add_evidence(
+            EvidenceCard(
+                evidence_id,
+                title,
+                f"https://example.com/{evidence_id}",
+                "A",
+                title,
+                "公开材料摘要",
+                "p1",
+                "accepted",
+                "weapon_equipment",
+            )
+        )
+    store.add_baseline_packet(
+        BaselineFindingPacket(
+            packet_id="packet-weapon-equipment",
+            agent_id="weapon_equipment",
+            capability_tags=["equipment"],
+            topic_focus="远程精确打击",
+            findings=["多层远程火力形成互补毁伤链。"],
+            evidence_ids=[
+                "ev-weapon_equipment-web-prsm",
+                "ev-weapon_equipment-web-jassm",
+                "ev-weapon_equipment-web-barracuda",
+            ],
+            confidence=0.82,
+            coverage_notes=[],
+            open_questions=[],
+            handoff_summary="装备证据包",
+            checkpoint="done",
+            admission_status="accepted",
+        )
+    )
+
+    rows = _military_handoff_evidence_index(
+        store,
+        {
+            "claims": [
+                {
+                    "packet_id": "packet-weapon-equipment",
+                    "evidence_ids": ["ev-weapon_equipment-web-prsm"],
+                }
+            ]
+        },
+    )
+
+    assert [row["evidence_id"] for row in rows] == [
+        "ev-weapon_equipment-web-prsm",
+        "ev-weapon_equipment-web-jassm",
+        "ev-weapon_equipment-web-barracuda",
+    ]
+
+
+def test_report_indicator_portraits_differentiate_core_weapon_lanes() -> None:
+    names = [
+        "多模末制导反辐射防空压制导弹",
+        "JASSM-ER类空射隐身防区外巡航导弹",
+        "PrSM类地面发射远程精确制导导弹",
+        "Barracuda-500M固定构型低成本巡航效应器",
+        "批量可消耗低空无人携弹平台族",
+    ]
+
+    portraits = [
+        _report_indicator_portrait(
+            SimpleNamespace(
+                name=name,
+                equipment_category=name,
+                equipment_form=name,
+                operational_mechanism="受扰条件下形成直接毁伤闭环",
+                capability_gap="需分别校准任务指标",
+                capability_type="upgrade" if index != 4 else "new_capability",
+            )
+        )
+        for index, name in enumerate(names)
+    ]
+
+    assert len(set(portraits)) == len(names)
+    assert "频谱" in portraits[0]
+    assert "载机" in portraits[1]
+    assert "射后转移" in portraits[2]
+    assert "批次合格率" in portraits[3]
+    assert "同时在空平台" in portraits[4]
 
 
 def test_optimized_v2_executes_s1_s2_as_one_physical_call() -> None:
@@ -471,7 +570,7 @@ def test_optional_round_critic_budget_skip_does_not_fail_s_chain() -> None:
     )
 
 
-def test_deadline_approach_keeps_first_s6_result_without_starting_repair(
+def test_deadline_approach_does_not_skip_s6_quality_repair_or_generate_fallback(
     monkeypatch,
 ) -> None:
     class RealLikeProvider(ScriptedFakeProvider):
@@ -535,28 +634,31 @@ def test_deadline_approach_keeps_first_s6_result_without_starting_repair(
     provider._run_core_json = fake_run_core_json  # type: ignore[method-assign]
     monkeypatch.setattr(
         "equipment_deep_research.agents.provider._capability_direction_quality_issues",
-        lambda result, *, handoff=None: ["S6方向仍需补强"],
+        lambda result, *, handoff=None: [
+            "S6第1项未说明具体作战阶段、任务对象及打击/反制效果"
+        ],
     )
 
-    result = asyncio.run(
-        provider._analyze_winning_subagents(
-            {
-                "topic": "test",
-                "research_route": "cross_domain_fusion",
-                "discovery_blueprint": {"primary_branch": "G"},
-                "packets": [],
-                "evidence_index": [],
-                "resume_steps": [6],
-                "execution_profile_id": "optimized_v2",
-                "execution_contract": OPTIMIZED_V2_CONTRACTS["G"].to_dict(),
-            }
+    with pytest.raises(S6QualityError, match="未生成限时保底画像"):
+        asyncio.run(
+            provider._analyze_winning_subagents(
+                {
+                    "topic": "test",
+                    "research_route": "cross_domain_fusion",
+                    "discovery_blueprint": {"primary_branch": "G"},
+                    "packets": [],
+                    "evidence_index": [],
+                    "resume_steps": [6],
+                    "execution_profile_id": "optimized_v2",
+                    "execution_contract": OPTIMIZED_V2_CONTRACTS["G"].to_dict(),
+                }
+            )
         )
-    )
 
-    assert phases == ["winning_s6_image_deep"]
-    assert result["round_critic_budget_skipped"] is True
-    assert result["middle_loop_limited"] is True
-    assert result["s6_quality_gate_failed"] is True
+    assert len(phases) >= 2
+    assert all(phase.startswith("winning_s6_image") for phase in phases)
+    assert "deadline_evidence_bounded_finalize" not in phases
+    assert "transport_bounded_portfolio_closeout" not in phases
 
 
 def test_optional_round_rereview_budget_skip_preserves_residual_outputs() -> None:

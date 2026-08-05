@@ -28,7 +28,21 @@ from equipment_deep_research.orchestration.blueprints import (
 )
 from equipment_deep_research.domain.models import ResearchProblem
 from equipment_deep_research.orchestration.coverage import load_preset_policy
+from equipment_deep_research.orchestration.capability_portrait import (
+    build_capability_title,
+    normalize_capability_problem,
+    normalize_operational_process,
+    normalize_verification_plan,
+    resolve_capability_portrait,
+)
 from equipment_deep_research.harness.event_bus import sanitize_runtime_payload
+from equipment_deep_research.query_library.api import create_router as create_query_library_router
+from equipment_deep_research.query_library.factory import (
+    build_service as build_query_library_service,
+    default_seed_manifest,
+)
+from equipment_deep_research.query_library.models import QueryLibraryError
+from equipment_deep_research.query_library.service import QueryLibraryService
 
 
 _KEY_INTERACTION_EVENT_TYPES = frozenset(
@@ -78,6 +92,8 @@ _KEY_INTERACTION_EVENT_TYPES = frozenset(
         "winning_agent_instance_failed",
         "winning_agent_instance_cancelled",
         "winning_candidate_branch_created",
+        "winning_specialized_seed_recovered",
+        "winning_specialized_seed_empty",
         "winning_candidate_ledger_frozen",
         "winning_contribution_queued",
         "winning_contribution_rejected",
@@ -122,7 +138,7 @@ _KEY_INTERACTION_EVENT_TYPES = frozenset(
 
 
 class CreateRunBody(BaseModel):
-    topic: str = Field(min_length=1, max_length=500)
+    topic: str = Field(min_length=1, max_length=4000)
     supplemental_information: str = Field(default="", max_length=8000)
     research_route: str = "auto"
     selected_agent_ids: list[str] = Field(default_factory=list)
@@ -132,10 +148,13 @@ class CreateRunBody(BaseModel):
     interaction_mode: str = "expert"
     discovery_branch: str = "auto"
     execution_profile_id: str = "legacy_v1"
+    report_template_mode: str = "project_argument_v1"
+    source_query_id: str = Field(default="", max_length=128)
+    source_query_version: int | None = Field(default=None, ge=1)
 
 
 class UpdateRunBody(BaseModel):
-    topic: str = Field(min_length=1, max_length=500)
+    topic: str = Field(min_length=1, max_length=4000)
     supplemental_information: str | None = Field(default=None, max_length=8000)
     research_route: str
     selected_agent_ids: list[str]
@@ -145,6 +164,7 @@ class UpdateRunBody(BaseModel):
     interaction_mode: str = "expert"
     discovery_branch: str = "auto"
     execution_profile_id: str = ""
+    report_template_mode: str = ""
 
 
 class DeleteRunsBody(BaseModel):
@@ -152,7 +172,7 @@ class DeleteRunsBody(BaseModel):
 
 
 class AgentSelectionPreviewBody(BaseModel):
-    topic: str = Field(min_length=1, max_length=500)
+    topic: str = Field(min_length=1, max_length=4000)
     supplemental_information: str = Field(default="", max_length=8000)
     research_route: str = "auto"
     interaction_mode: str = "expert"
@@ -165,11 +185,16 @@ def create_app(
     *,
     agent_config_path: str | Path | None = None,
     preset_config_path: str | Path | None = None,
+    query_library_service: QueryLibraryService | None = None,
 ) -> FastAPI:
     service = service or build_application_service()
     if event_repository is None:
         event_repository = getattr(service, "repository", None)
     app = FastAPI(title="Equipment Deep Research API", version="0.1.0")
+    if query_library_service is None:
+        query_library_service = build_query_library_service()
+        query_library_service.import_seed_manifest(default_seed_manifest())
+    app.include_router(create_query_library_router(query_library_service))
     project_root = Path(os.environ.get("EQUIPMENT_DR_PROJECT_ROOT", Path(__file__).resolve().parents[3]))
     output_root = Path(os.environ.get("EQUIPMENT_DR_OUTPUT_ROOT", project_root / "outputs/runs"))
     agent_path = Path(agent_config_path or project_root / "configs/equipment_deep_research/agents.yaml")
@@ -184,8 +209,10 @@ def create_app(
             if view.status != "completed":
                 continue
             run_dir = Path(str(view.result.get("run_dir", ""))).expanduser()
-            report_path = run_dir / "report.md"
-            if not run_dir.is_dir() or run_dir.is_symlink() or not report_path.is_file():
+            if not run_dir.is_dir() or run_dir.is_symlink():
+                continue
+            report_path = _preferred_report_path(run_dir.resolve())
+            if report_path is None:
                 continue
             rows.append(
                 {
@@ -207,9 +234,9 @@ def create_app(
         run_dir = Path(str(view.result.get("run_dir", ""))).resolve()
         if not run_dir.is_dir() or run_dir.is_symlink():
             raise FileNotFoundError("研究任务输出目录不存在")
-        report_path = (run_dir / "report.md").resolve()
-        if run_dir not in report_path.parents or not report_path.is_file():
-            raise FileNotFoundError("report.md 不存在")
+        report_path = _preferred_report_path(run_dir)
+        if report_path is None:
+            raise FileNotFoundError("研究报告不存在")
         citations: list[str] = []
         sources: list[str] = []
         evidence_context: list[dict] = []
@@ -463,12 +490,45 @@ def create_app(
             "winning_swarm_dynamic_v2",
         }:
             raise HTTPException(status_code=422, detail="unknown execution profile")
+        if body.report_template_mode not in {
+            "three_layer_nine_item",
+            "project_argument_v1",
+        }:
+            raise HTTPException(status_code=422, detail="unknown report template mode")
         if unknown_agents:
             raise HTTPException(status_code=422, detail=f"unknown agent ids: {unknown_agents}")
         try:
             execution = _validated_execution(body.execution, catalog_payload["provider"])
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
+        if body.source_query_id:
+            try:
+                source_query = query_library_service.get_query(
+                    body.source_query_id, include_revisions=False
+                )
+            except QueryLibraryError as exc:
+                raise HTTPException(status_code=422, detail=str(exc)) from exc
+            if source_query["status"] != "published":
+                raise HTTPException(
+                    status_code=409,
+                    detail="source Query must be published before creating a research task",
+                )
+            if (
+                body.source_query_version is not None
+                and source_query["version"] != body.source_query_version
+            ):
+                raise HTTPException(
+                    status_code=409,
+                    detail=(
+                        "source Query version changed; review the latest revision before "
+                        "creating a research task"
+                    ),
+                )
+            execution["query_library"] = {
+                "query_id": source_query["query_id"],
+                "version": source_query["version"],
+                "source_type": source_query["source_type"],
+            }
         return service.create_run(
             CreateRunCommand(
                 topic=body.topic.strip(),
@@ -481,6 +541,7 @@ def create_app(
                 interaction_mode=body.interaction_mode,
                 discovery_branch=body.discovery_branch,
                 execution_profile_id=body.execution_profile_id,
+                report_template_mode=body.report_template_mode,
                 supplemental_information=body.supplemental_information.strip(),
             )
         ).__dict__
@@ -557,6 +618,12 @@ def create_app(
             "winning_swarm_dynamic_v2",
         }:
             raise HTTPException(status_code=422, detail="unknown execution profile")
+        if body.report_template_mode not in {
+            "",
+            "three_layer_nine_item",
+            "project_argument_v1",
+        }:
+            raise HTTPException(status_code=422, detail="unknown report template mode")
         if unknown_agents:
             raise HTTPException(status_code=422, detail=f"unknown agent ids: {unknown_agents}")
         try:
@@ -564,6 +631,10 @@ def create_app(
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
         try:
+            current = service.get_run(run_id)
+            query_reference = current.execution.get("query_library")
+            if isinstance(query_reference, dict):
+                execution["query_library"] = dict(query_reference)
             return service.update_run(
                 run_id,
                 UpdateRunCommand(
@@ -576,6 +647,7 @@ def create_app(
                     interaction_mode=body.interaction_mode,
                     discovery_branch=body.discovery_branch,
                     execution_profile_id=body.execution_profile_id,
+                    report_template_mode=body.report_template_mode,
                     supplemental_information=(
                         None
                         if body.supplemental_information is None
@@ -789,7 +861,10 @@ def create_app(
     @app.get("/api/v1/runs/{run_id}/report", response_class=PlainTextResponse)
     def get_report(run_id: str, x_role: str = Header(default="reviewer", alias="X-Role")) -> str:
         _require_role(x_role, {"reviewer", "auditor", "admin"})
-        return _run_file(service, run_id, "report.md").read_text(encoding="utf-8")
+        report_path = _preferred_report_path(_run_root(service, run_id))
+        if report_path is None:
+            raise HTTPException(status_code=404, detail="run output not found")
+        return report_path.read_text(encoding="utf-8")
 
     @app.get("/api/v1/runs/{run_id}/deliverables")
     def get_deliverables(
@@ -1608,6 +1683,41 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
                     "receipt_ids",
                     receipt_id,
                 )
+            selected_id_set = set(selected_ids)
+            rejected_id_set = set(rejected_ids)
+            for member_id, member in dynamic_agents_by_id.items():
+                hypothesis_id = str(member.get("hypothesis_id", "")).strip()
+                if not hypothesis_id:
+                    continue
+                current_status = str(member.get("status", "planned")).lower()
+                if (
+                    hypothesis_id in selected_id_set
+                    and current_status not in {"failed", "pruned", "skipped"}
+                ):
+                    update_dynamic_agent(
+                        member_id,
+                        {
+                            "status": "merged",
+                            "merge_status": "accepted",
+                            "portfolio_status": "selected",
+                            "last_event_type": event_type,
+                            "last_sequence": row.get("sequence", 0),
+                        },
+                    )
+                elif hypothesis_id in rejected_id_set:
+                    update_dynamic_agent(
+                        member_id,
+                        {
+                            "status": (
+                                "completed"
+                                if current_status == "merged"
+                                else current_status
+                            ),
+                            "portfolio_status": "rejected",
+                            "last_event_type": event_type,
+                            "last_sequence": row.get("sequence", 0),
+                        },
+                    )
             continue
         if event_type in {
             "winning_model_queue_started",
@@ -1829,6 +1939,50 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
                 ),
             }
         )
+    # Project live Dynamic-v2 Mission Graph activity back onto the canonical
+    # S1-S6 cards.  Dynamic runs can intentionally skip the legacy sequential
+    # S-Agent calls, so relying only on winning_subagent_completed leaves the
+    # UI at 0/6 while multiple mission-node specialists are actively running.
+    dynamic_terminal_statuses = {"completed", "merged", "pruned", "failed", "skipped"}
+    dynamic_active_statuses = {"recruiting", "queued", "running"}
+    for step in range(1, 7):
+        if not mission_graph_projection:
+            break
+        mission_node = f"S{step}"
+        members = [
+            item
+            for item in dynamic_agents_by_id.values()
+            if str(item.get("mission_node") or item.get("merge_target"))
+            == mission_node
+            and item.get("archetype") != "quality_expert_judge"
+        ]
+        if not members:
+            continue
+        statuses = {str(item.get("status", "planned")).lower() for item in members}
+        successful_count = sum(
+            str(item.get("status", "")).lower() in {"completed", "merged"}
+            for item in members
+        )
+        active_count = sum(
+            str(item.get("status", "")).lower() in dynamic_active_statuses
+            for item in members
+        )
+        latest_steps[step]["execution_mode"] = "dynamic"
+        latest_steps[step]["dynamic_instance_count"] = len(members)
+        latest_steps[step]["dynamic_completed_count"] = successful_count
+        latest_steps[step]["result_summary"] = (
+            f"动态蜂群 {successful_count} / {len(members)} 个实例完成"
+        )
+        if active_count:
+            latest_steps[step]["status"] = "running"
+        elif statuses and statuses <= dynamic_terminal_statuses:
+            if successful_count:
+                latest_steps[step]["status"] = "completed"
+            elif "failed" in statuses:
+                latest_steps[step]["status"] = "failed"
+            else:
+                latest_steps[step]["status"] = "skipped"
+
     for row in rows:
         backtrack_step = _workflow_backtrack_step(row)
         if backtrack_step in latest_steps:
@@ -1839,7 +1993,15 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
             and str(row.get("event_type", "")) in {"task_received", "tool_call"}
         )
         or str(row.get("event_type", ""))
-        in {"winning_subagent_completed", "winning_reasoning_step_completed"}
+        in {
+            "winning_subagent_completed",
+            "winning_reasoning_step_completed",
+            "winning_mission_graph_planned",
+            "winning_agent_instance_recruited",
+            "winning_agent_instance_ready",
+            "winning_agent_session_started",
+            "winning_agent_session_completed",
+        }
         for row in rows
     )
     winning_stage_finished = any(
@@ -1881,6 +2043,16 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
     swarm_members = [
         item for item in dynamic_agents if item.get("agent_id") in swarm_member_ids
     ]
+    supervisor_members = [
+        item
+        for item in swarm_members
+        if item.get("archetype") == "quality_expert_judge"
+    ]
+    mission_members = [
+        item
+        for item in swarm_members
+        if item.get("archetype") != "quality_expert_judge"
+    ]
     provider_types = sorted(
         {
             str(item.get("provider_type", ""))
@@ -1906,11 +2078,11 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
         {
             "mission_node": node,
             "count": sum(
-                item.get("mission_node") == node for item in swarm_members
+                item.get("mission_node") == node for item in mission_members
             ),
             "member_ids": [
                 str(item.get("agent_id", ""))
-                for item in swarm_members
+                for item in mission_members
                 if item.get("mission_node") == node
             ],
         }
@@ -1942,10 +2114,11 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
             else ""
         ),
         "members": swarm_members,
+        "supervisors": supervisor_members,
         "mission_graph": mission_graph_projection,
         "role_pools": role_pools,
         "dynamic_specialists": [
-            item for item in swarm_members if item.get("recruitment_planned")
+            item for item in mission_members if item.get("recruitment_planned")
         ],
         "candidate_lineage": sorted(
             candidate_lineage_by_id.values(),
@@ -1976,34 +2149,37 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
                 }.get(wave, f"波次 {wave}"),
                 "member_ids": [
                     str(item.get("agent_id", ""))
-                    for item in swarm_members
+                    for item in mission_members
                     if _positive_int(item.get("wave")) == wave
                 ],
             }
             for wave in wave_numbers
         ],
         "counts": {
-            "total": len(swarm_members),
+            # Read-only quality judges supervise convergence but do not consume
+            # Mission Graph instance capacity and must not make the UI appear
+            # to exceed maximum_instances.
+            "total": len(mission_members),
             "planned": sum(
-                bool(item.get("recruitment_planned")) for item in swarm_members
+                bool(item.get("recruitment_planned")) for item in mission_members
             ),
             "recruiting": sum(
-                item.get("status") == "recruiting" for item in swarm_members
+                item.get("status") == "recruiting" for item in mission_members
             ),
             "running": sum(
-                item.get("status") == "running" for item in swarm_members
+                item.get("status") == "running" for item in mission_members
             ),
             "completed": sum(
-                item.get("status") == "completed" for item in swarm_members
+                item.get("status") == "completed" for item in mission_members
             ),
             "merged": sum(
-                item.get("status") == "merged" for item in swarm_members
+                item.get("status") == "merged" for item in mission_members
             ),
             "pruned": sum(
-                item.get("status") == "pruned" for item in swarm_members
+                item.get("status") == "pruned" for item in mission_members
             ),
             "failed": sum(
-                item.get("status") == "failed" for item in swarm_members
+                item.get("status") == "failed" for item in mission_members
             ),
         },
     }
@@ -2290,6 +2466,9 @@ def _interaction_workflow_phases(
         "planning",
         "researching",
         "recalling",
+        "synthesizing",
+        "reviewing",
+        "reporting",
     }
     baseline_completed = bool(
         event_type_set
@@ -2341,6 +2520,7 @@ def _interaction_workflow_phases(
             "winning_middle_loop_evaluated",
             "winning_stage_completed",
             "winning_stage_reused",
+            "winning_portfolio_merge_completed",
             "capability_image_created",
             "audit_completed",
             "report_completed",
@@ -2364,6 +2544,12 @@ def _interaction_workflow_phases(
             "winning_inner_loop_evaluated",
             "winning_middle_loop_evaluated",
             "winning_outer_loop_evaluated",
+            "winning_mission_graph_planned",
+            "winning_agent_instance_recruited",
+            "winning_agent_instance_ready",
+            "winning_agent_session_started",
+            "winning_agent_session_completed",
+            "winning_portfolio_merge_completed",
         }
     ) or has_actor_activity("winning_mechanism")
     audit_completed = bool(event_type_set & {"audit_completed", "report_completed"})
@@ -2520,6 +2706,12 @@ def _interaction_workflow_phases(
                 "winning_inner_loop_evaluated",
                 "winning_middle_loop_evaluated",
                 "winning_outer_loop_evaluated",
+                "winning_mission_graph_planned",
+                "winning_agent_instance_recruited",
+                "winning_agent_instance_ready",
+                "winning_agent_session_started",
+                "winning_agent_session_completed",
+                "winning_portfolio_merge_completed",
             },
         ),
         phase(
@@ -2615,6 +2807,36 @@ def _run_file(service: ResearchApplicationService, run_id: str, relative: str) -
     if root not in path.parents or not path.is_file():
         raise HTTPException(status_code=404, detail="run output not found")
     return path
+
+
+def _preferred_report_path(run_root: Path) -> Path | None:
+    """Return the approved postfix report when present, otherwise the original.
+
+    Postfix regeneration intentionally preserves ``report.md`` for auditability.
+    The review and benchmark read paths should expose the repaired artifact only
+    when its companion quality gate explicitly passed.
+    """
+
+    root = run_root.resolve()
+    postfix_path = (root / "report-postfix.md").resolve()
+    postfix_gate_path = (root / "report-quality-gate-postfix.json").resolve()
+    if (
+        root in postfix_path.parents
+        and root in postfix_gate_path.parents
+        and postfix_path.is_file()
+        and postfix_gate_path.is_file()
+    ):
+        try:
+            gate = json.loads(postfix_gate_path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            gate = {}
+        if gate.get("passed") is True:
+            return postfix_path
+
+    report_path = (root / "report.md").resolve()
+    if root in report_path.parents and report_path.is_file():
+        return report_path
+    return None
 
 
 def _run_root(service: ResearchApplicationService, run_id: str) -> Path:
@@ -2714,8 +2936,6 @@ def _capability_api_view(row: dict) -> dict:
     )
     upgrade = result.get("capability_type") == "upgrade"
     image = str(result.get("capability_image", ""))
-    if not result.get("deep_capability_portrait"):
-        result["deep_capability_portrait"] = _legacy_capability_portrait(image)
     if not result.get("equipment_form"):
         result["equipment_form"] = str(result.get("equipment_category", ""))
     if not result.get("operational_mechanism"):
@@ -2735,6 +2955,85 @@ def _capability_api_view(row: dict) -> dict:
         result["system_dependencies"] = ["与现有指挥信息、情报侦察和保障体系形成标准化接口", "支持通信受限和局部节点失效条件下的降级运行"]
     if not result.get("risk_boundaries"):
         result["risk_boundaries"] = ["公开证据不足的参数保留区间与置信度，不转化为确定阈值", "不以单一平台性能替代体系任务效果，不假设持续高带宽连接"]
+    source_name = str(result.get("name", "")).strip()
+    display_name = build_capability_title(
+        name=source_name,
+        equipment_form=result.get("equipment_form") or result.get("equipment_category"),
+        effect="；".join(
+            str(value)
+            for value in (
+                result.get("strike_countermeasure_value")
+                or result.get("military_utility")
+                or result.get("mission_effect"),
+                result.get("operational_mechanism"),
+                result.get("enabling_technologies"),
+            )
+            if str(value).strip()
+        ),
+    )
+    if source_name and display_name != source_name:
+        result["source_name"] = source_name
+    result["name"] = display_name
+    equipment_identity = "；".join(
+        str(value)
+        for value in (
+            display_name,
+            result.get("equipment_form") or result.get("equipment_category"),
+            result.get("mission_effect") or result.get("military_utility"),
+        )
+        if str(value).strip()
+    )
+    result["problem_statement"] = normalize_capability_problem(
+        result.get("problem_statement") or result.get("capability_gap"),
+        fallback=f"{display_name}对应的关键任务链存在目标、授权、交战或毁伤评估断点",
+    )
+    result["operational_process"] = normalize_operational_process(
+        result.get("operational_process") or result.get("strike_chain_contribution"),
+        equipment_identity=equipment_identity,
+    )
+    result["verification_plan"] = normalize_verification_plan(
+        result.get("verification_plan") or result.get("verification"),
+        equipment_identity=equipment_identity,
+        failure_boundary=(
+            result.get("risk_boundaries")
+            or result.get("operational_constraints")
+            or result.get("upgrade_boundary")
+        ),
+    )
+    legacy_portrait = _legacy_capability_portrait(image)
+    result["deep_capability_portrait"] = resolve_capability_portrait(
+        result.get("deep_capability_portrait") or result.get("capability_image"),
+        scenario=result.get("target_scenario") or result.get("related_scenario"),
+        problem=result.get("capability_gap")
+        or result.get("problem_statement")
+        or legacy_portrait,
+        principle=result.get("scientific_principle")
+        or result.get("operational_mechanism")
+        or result.get("novelty"),
+        technologies=result.get("enabling_technologies")
+        or result.get("upgrade_package")
+        or result.get("equipment_form"),
+        operational_concept=result.get("operational_concept")
+        or result.get("operational_mechanism"),
+        operational_steps=result.get("operational_process")
+        or result.get("strike_chain_contribution"),
+        capability=result.get("capability_outcome")
+        or result.get("military_utility")
+        or result.get("equipment_form"),
+        effect=result.get("mission_effect")
+        or result.get("military_utility")
+        or legacy_portrait,
+        winning_mechanism=result.get("winning_mechanism")
+        or result.get("source_winning_logic")
+        or result.get("novelty"),
+        equipment_form=result.get("equipment_form") or result.get("equipment_category"),
+        baseline=result.get("baseline_system") or result.get("equipment_form"),
+        development_path=result.get("development_path") or result.get("foresight"),
+        failure_boundary=result.get("risk_boundaries")
+        or result.get("operational_constraints"),
+        verification_plan=result.get("verification")
+        or result.get("verification_plan"),
+    )
     return result
 
 
@@ -2799,31 +3098,61 @@ def _catalog_payload(agent_path: Path, preset_path: Path) -> dict:
         "war_case_learning": "局部战争案例",
     }
     return {
-        "execution_profiles": [
+        "report_templates": [
             {
-                "id": "legacy_v1",
-                "name": "Legacy v1（兼容回滚）",
-                "description": "保持现有生产编排行为，用于回滚和对照。",
+                "id": "project_argument_v1",
+                "name": "项目论证五章模板（推荐）",
+                "description": "需求分析、项目画像、总体方案、关键技术、研制基础；强化国内外案例对比、作战流程和体系贡献。",
                 "default": True,
             },
             {
-                "id": "optimized_v2",
-                "name": "Optimized v2（推荐）",
-                "description": "3–4个Query主导业务Agent以独立Codex会话并行，随后进入S步骤Cohort与风险门控；临近30分钟自动降档，达到主链硬截止后转入低推理快速收敛交付，并保留5分钟交付宽限。",
+                "id": "three_layer_nine_item",
+                "name": "三层九项模板（兼容）",
+                "description": "保留需求挖掘、技术攻关、能力图像与效能贡献三层九项结构。",
                 "default": False,
+            },
+        ],
+        "execution_profiles": [
+            {
+                "id": "legacy_v1",
+                "name": "传统固定编排",
+                "short_name": "传统模式",
+                "description": "采用传统固定流程执行，适合兼容回滚、稳定复现和对照研究。",
+                "default": True,
+                "recommended": False,
+                "selectable": True,
+                "badge": "兼容",
+            },
+            {
+                "id": "optimized_v2",
+                "name": "协同优化编排",
+                "short_name": "协同模式",
+                "description": "3–4 个业务 Agent 并行研判，随后进入 S1–S6 Cohort 与风险门控，适合普通研究任务。",
+                "default": False,
+                "recommended": True,
+                "selectable": True,
+                "badge": "推荐",
             },
             {
                 "id": "swarm_quality_v1",
-                "name": "Swarm Quality v1（评测挑战者）",
-                "description": "S1–S6保持逻辑骨架，按质量残差孵化最多12个一次性专用Agent，执行三波候选探索、定向挑战和独立收敛；不替换生产冠军。",
+                "name": "质量残差蜂群",
+                "short_name": "质量集群",
+                "description": "保留 S1–S6 骨架，按质量残差弹性孵化最多 12 个专用 Agent，强化探索、挑战与独立收敛。",
                 "default": False,
+                "recommended": False,
+                "selectable": True,
+                "badge": "高质量",
                 "evaluation_only": True,
             },
             {
                 "id": "winning_swarm_dynamic_v2",
-                "name": "Winning Swarm Dynamic v2（评测挑战者）",
-                "description": "S1–S6多实例种子池与受治理专用角色按依赖事件并行执行，使用版本化候选账本、定向Merge和Pareto组合，实例边界8–16、并发上限6；不替换生产冠军。",
+                "name": "Mission Graph 动态蜂群",
+                "short_name": "动态蜂群",
+                "description": "依据 Mission Graph 动态孵化 8–16 个实例，按依赖事件并行执行，适合复杂任务与最高并发研究。",
                 "default": False,
+                "recommended": False,
+                "selectable": True,
+                "badge": "最高并发",
                 "evaluation_only": True,
             },
         ],
@@ -3302,6 +3631,8 @@ def _interaction_title(event_type: str, fallback: str) -> str:
         "specialist_session_completed": "独立 Codex CLI 会话结束",
         "specialist_completed": "专用 Agent 业务任务完成",
         "specialist_pruned": "专用 Agent 淘汰回收",
+        "winning_specialized_seed_recovered": "动态蜂群专用候选恢复",
+        "winning_specialized_seed_empty": "动态蜂群专用候选生成完成",
         "hypothesis_created": "候选制胜假设进入账本",
         "hypothesis_merged": "候选贡献定向合并",
         "hypothesis_rejected": "候选制胜假设淘汰",

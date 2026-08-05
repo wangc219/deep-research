@@ -1,14 +1,15 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import {Activity, Archive, BarChart3, Bot, BrainCircuit, CheckCircle2, ChevronDown, CircleAlert, ClipboardCheck, Clock3, Database, Eye, FileCheck2, FileSpreadsheet, FlaskConical, Gauge, GitCompare, History, Layers3, ListFilter, Pencil, Play, Plus, Radar, RefreshCw, Save, Search, ShieldAlert, ShieldCheck, Sparkles, Trash2, Upload, Wrench, X, Zap} from 'lucide-react';
+import {Activity, Archive, BarChart3, BookOpenCheck, Bot, BrainCircuit, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, CircleAlert, ClipboardCheck, Clock3, Database, Eye, FileCheck2, FileSpreadsheet, FlaskConical, Gauge, GitCompare, History, Layers3, Lightbulb, ListFilter, Pencil, Play, Plus, Radar, RefreshCw, Save, Search, ShieldAlert, ShieldCheck, Sparkles, Trash2, Upload, Wrench, X, Zap} from 'lucide-react';
 import './styles.css';
 import './responsive-nav.css';
 import './live.css';
 import './blueprint.css';
 import './benchmark.css';
 import './agent-selection.css';
+import './research-launch.css';
 
 const api = (import.meta.env.VITE_API_BASE_URL || '/api/v1').replace(/\/$/, '');
 const extensionModules = import.meta.glob('./features/*/index.jsx', {eager: true});
@@ -18,7 +19,10 @@ const workbenchExtensions = Object.values(extensionModules)
 const SHOW_BENCHMARK_EVOLUTION = false;
 const SELECTABLE_BUSINESS_AGENT_IDS = new Set(['combat_scenario', 'international_situation', 'operational_employment', 'opponent_monitoring', 'system_confrontation', 'weapon_equipment']);
 const DISCOVERY_AGENT_IDS = new Set([...SELECTABLE_BUSINESS_AGENT_IDS, 'case_research', 'technology_radar', 'cross_domain_fusion', 'nontraditional_security']);
+const ACTIVE_RUN_STATUSES = new Set(['queued', 'planning', 'researching', 'recalling', 'synthesizing', 'reviewing', 'reporting', 'pause_requested', 'cancel_requested']);
 const businessAgents = catalog => (catalog?.agents || []).filter(agent => SELECTABLE_BUSINESS_AGENT_IDS.has(agent.agent_id));
+const runtimeHandlesRun = (run, runtime = {}) => (runtime.active_run_ids || []).includes(run.run_id) || (runtime.workers || []).some(worker => worker.online && worker.current_run_id === run.run_id);
+const isRunActive = (run, runtime = {}) => ACTIVE_RUN_STATUSES.has(run?.status) || runtimeHandlesRun(run || {}, runtime);
 const S_AGENT_ARCHITECTURE = [
   {step: 1, agent_id: 'winning_s1_opponent', name: '对手分析 Agent', task: '深度挖掘对手体系薄弱环节、关键依赖与替代假设。', skills: ['defense_decomposition', 'ooda_vulnerability_analysis'], harness: 'winning_step_v1', semantics: ['可与 S2 并行', '可跳步', '可回溯']},
   {step: 2, agent_id: 'winning_s2_operations', name: '作战运用审查 Agent', task: '审视我方现有战法、任务链、协同关系与失败模式。', skills: ['winning_path_analysis', 'doctrine_operational_review'], harness: 'winning_step_v1', semantics: ['可与 S1 并行', '可跳步', '可回溯']},
@@ -46,12 +50,19 @@ const LLM_PRESETS = {
   zhipu: {label: '智谱 GLM', api_protocol: 'chat_completions', base_url: 'https://yunwu.ai/v1', model: 'glm-5.2'},
   custom: {label: '自定义中转站', api_protocol: 'chat_completions', base_url: '', model: ''},
 };
-
+const shuffleRecommendations = items => {
+  const rows = [...items];
+  for (let index = rows.length - 1; index > 0; index -= 1) {
+    const target = Math.floor(Math.random() * (index + 1));
+    [rows[index], rows[target]] = [rows[target], rows[index]];
+  }
+  return rows;
+};
 function App() {
   const [view, setView] = useState('runs');
   const [runs, setRuns] = useState([]);
-  const [catalog, setCatalog] = useState({routes: [], agents: [], interaction_modes: [], discovery_branches: [], execution_profiles: [], provider: {}});
-  const [creating, setCreating] = useState(false);
+  const [catalog, setCatalog] = useState({routes: [], agents: [], interaction_modes: [], discovery_branches: [], execution_profiles: [], report_templates: [], provider: {}});
+  const [pendingQuery, setPendingQuery] = useState(null);
   const [selected, setSelected] = useState(null);
   const [activeRun, setActiveRun] = useState(null);
   const [healthy, setHealthy] = useState(false);
@@ -59,7 +70,7 @@ function App() {
   const [runtime, setRuntime] = useState({worker_online: false, pending_count: 0, workers: [], worker_capacity: 0, configured_worker_capacity: 1, active_count: 0, available_slots: 0, active_run_ids: []});
   const load = async () => {
     const [runRows, config, health, runtimeHealth] = await Promise.all([
-      request('/runs', []), request('/catalog', {routes: [], agents: [], interaction_modes: [], discovery_branches: [], execution_profiles: [], provider: {}}), request('/health', null), request('/runtime-health', {worker_online: false, pending_count: 0, workers: [], worker_capacity: 0, configured_worker_capacity: 1, active_count: 0, available_slots: 0, active_run_ids: []}),
+      request('/runs', []), request('/catalog', {routes: [], agents: [], interaction_modes: [], discovery_branches: [], execution_profiles: [], report_templates: [], provider: {}}), request('/health', null), request('/runtime-health', {worker_online: false, pending_count: 0, workers: [], worker_capacity: 0, configured_worker_capacity: 1, active_count: 0, available_slots: 0, active_run_ids: []}),
     ]);
     setRuns(runRows); setCatalog(config); setHealthy(health?.status === 'ok'); setRuntime(runtimeHealth);
     setActiveRun(current => current ? runRows.find(item => item.run_id === current.run_id) || current : current);
@@ -82,7 +93,7 @@ function App() {
     })).then(ids => { if (!cancelled) setEnabledExtensionIds(ids.filter(Boolean)); });
     return () => { cancelled = true; };
   }, []);
-  const visibleNav = nav.filter(([id]) => !workbenchExtensions.some(extension => extension.id === id) || enabledExtensionIds.includes(id));
+  const visibleNav = nav.filter(([id]) => id !== 'query-library' && (!workbenchExtensions.some(extension => extension.id === id) || enabledExtensionIds.includes(id)));
   const openRun = run => { setActiveRun(run); setSelected(run); };
   return <div className="app-shell">
     <header className="topbar">
@@ -92,22 +103,46 @@ function App() {
     </header>
     <aside className="sidebar"><div className="sidebar-label">研究工作台</div>{visibleNav.map(([id, label, Icon]) => <button key={id} className={view === id ? 'active' : ''} onClick={() => setView(id)}><Icon size={18}/><span>{label}</span></button>)}<div className="sidebar-note"><ShieldCheck size={15}/><span>最小权限 · 审计留痕</span></div></aside>
     <nav className="mobile-nav" aria-label="研究工作台导航">{visibleNav.map(([id, label, Icon]) => <button key={id} className={view === id ? 'active' : ''} aria-current={view === id ? 'page' : undefined} onClick={() => setView(id)}><Icon size={16}/><span>{label}</span></button>)}</nav>
-    <main>{view === 'runs' ? <RunPage runs={runs} catalog={catalog} runtime={runtime} refresh={load} creating={creating} setCreating={setCreating} open={openRun} watch={run => { setActiveRun(run); setSelected(null); setView('interactions'); }}/> : view === 'benchmark' ? <BenchmarkPage/> : workbenchExtensions.some(extension => extension.id === view) ? React.createElement(workbenchExtensions.find(extension => extension.id === view).Component, {apiBase: api}) : <WorkspacePage view={view} run={activeRun} runs={runs} catalog={catalog} selectRun={run => { setActiveRun(run); setSelected(null); }}/>}</main>
+    <main>{view === 'runs' ? <RunPage runs={runs} catalog={catalog} runtime={runtime} refresh={load} initialQuery={pendingQuery} clearInitialQuery={() => setPendingQuery(null)} openQueryLibrary={() => { setView('query-library'); window.scrollTo({top: 0}); }} open={openRun} watch={run => { setActiveRun(run); setSelected(null); setView('interactions'); }}/> : view === 'benchmark' ? <BenchmarkPage/> : workbenchExtensions.some(extension => extension.id === view) ? React.createElement(workbenchExtensions.find(extension => extension.id === view).Component, {apiBase: api, onUseQuery: queryItem => { setPendingQuery(queryItem); setView('runs'); }, onDirectResearch: queryItem => { setPendingQuery(queryItem); setView('runs'); }, onBack: () => setView('runs')}) : <WorkspacePage view={view} run={activeRun} runs={runs} catalog={catalog} runtime={runtime} selectRun={run => { setActiveRun(run); setSelected(null); }}/>}</main>
     {selected && (
       <RunDrawer run={selected} catalog={catalog} close={() => setSelected(null)} inspect={target => { setView(target); setSelected(null); }} changed={updated => { setSelected(updated); setActiveRun(current => current?.run_id === updated.run_id ? updated : current); void load(); }}/>
     )}
   </div>;
 }
 
-function RunPage({runs, catalog, runtime, refresh, creating, setCreating, open, watch}) {
+function RunPage({runs, catalog, runtime, refresh, initialQuery, clearInitialQuery, openQueryLibrary, open, watch}) {
   const [query, setQuery] = useState(''); const [status, setStatus] = useState('all');
-  const [page, setPage] = useState(1); const pageSize = 12;
+  const pageSize = 12; const [visibleLimit, setVisibleLimit] = useState(pageSize);
+  const runScrollRef = useRef(null); const loadMoreRef = useRef(null);
   const [selectedIds, setSelectedIds] = useState([]); const [deleting, setDeleting] = useState(false); const [deleteError, setDeleteError] = useState('');
-  const visible = runs.filter(run => (!query || `${run.topic} ${run.supplemental_information || ''} ${run.run_id}`.toLowerCase().includes(query.toLowerCase())) && (status === 'all' ? run.status !== 'archived' : run.status === status));
-  const pageCount = Math.max(1, Math.ceil(visible.length / pageSize));
-  const pageRows = visible.slice((page - 1) * pageSize, page * pageSize);
-  useEffect(() => { setPage(1); }, [query, status]);
-  useEffect(() => { if (page > pageCount) setPage(pageCount); }, [page, pageCount]);
+  const [runSummaries, setRunSummaries] = useState({});
+  const matchesStatus = run => status === 'all' ? run.status !== 'archived' : status === 'active' ? isRunActive(run, runtime) : run.status === status;
+  const visible = runs.filter(run => (!query || `${run.topic} ${run.supplemental_information || ''} ${run.run_id}`.toLowerCase().includes(query.toLowerCase())) && matchesStatus(run));
+  const pageRows = visible.slice(0, visibleLimit);
+  const hasMoreRuns = pageRows.length < visible.length;
+  useEffect(() => {
+    setVisibleLimit(pageSize);
+    if (runScrollRef.current) runScrollRef.current.scrollTop = 0;
+  }, [query, status]);
+  useEffect(() => {
+    const root = runScrollRef.current; const target = loadMoreRef.current;
+    if (!root || !target || !hasMoreRuns) return undefined;
+    const observer = new IntersectionObserver(entries => {
+      if (entries.some(entry => entry.isIntersecting)) {
+        setVisibleLimit(value => Math.min(visible.length, value + pageSize));
+      }
+    }, {root, rootMargin: '0px 0px 220px 0px', threshold: 0.01});
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [hasMoreRuns, visible.length, visibleLimit]);
+  useEffect(() => {
+    const pending = pageRows.filter(run => run.status === 'completed' && runSummaries[run.run_id] === undefined);
+    if (!pending.length) return undefined;
+    let cancelled = false;
+    Promise.all(pending.map(async run => [run.run_id, await request(`/runs/${run.run_id}/summary`, null)]))
+      .then(rows => { if (!cancelled) setRunSummaries(current => ({...current, ...Object.fromEntries(rows)})); });
+    return () => { cancelled = true; };
+  }, [pageRows.map(run => `${run.run_id}:${run.status}`).join('|')]);
   const workerForRun = run => (runtime.workers || []).find(worker => worker.online && worker.current_run_id === run.run_id);
   const isActivelyHandled = run => Boolean(workerForRun(run));
   const queuePosition = run => (runtime.pending_run_ids || []).indexOf(run.run_id) + 1;
@@ -116,6 +151,7 @@ function RunPage({runs, catalog, runtime, refresh, creating, setCreating, open, 
   const selectedDeletable = selectedIds.filter(id => deletable.some(run => run.run_id === id));
   const currentCount = runs.filter(run => run.status !== 'archived').length;
   const completed = runs.filter(run => run.status === 'completed').length;
+  const activeCount = runs.filter(run => isRunActive(run, runtime)).length;
   const toggleSelected = id => setSelectedIds(rows => rows.includes(id) ? rows.filter(item => item !== id) : [...rows, id]);
   const deleteRuns = async ids => {
     if (!ids.length || !window.confirm(`确定永久删除 ${ids.length} 个任务及其全部运行数据吗？此操作不可恢复。`)) return;
@@ -127,21 +163,44 @@ function RunPage({runs, catalog, runtime, refresh, creating, setCreating, open, 
     if (result.rejected?.length) setDeleteError(result.rejected.map(item => `${item.run_id}：${item.reason}`).join('；'));
     void refresh();
   };
+  const renderInlineBuilder = (queryItem, executionProfileId, onExecutionProfileChange, startRequestId) => <CreateRun inline catalog={catalog} runtime={runtime} initialQuery={queryItem} executionProfileId={executionProfileId} onExecutionProfileChange={onExecutionProfileChange} startRequestId={startRequestId} openQueryLibrary={openQueryLibrary} done={(run, started) => { clearInitialQuery(); void refresh(); started ? watch(run) : open(run); }}/>;
   return <>
-    <PageTitle eyebrow="研究指挥台" title="装备能力研究任务" subtitle="配置研究路线与智能体组合，形成可追溯的能力画像结论.">
-      <button className="icon-button" title="刷新任务" onClick={refresh}><RefreshCw size={17}/></button><button className="primary" onClick={() => setCreating(!creating)}><Plus size={17}/>新建研究</button>
+    <ResearchQueryEntry catalog={catalog} runtime={runtime} openQueryLibrary={openQueryLibrary} initialQuery={initialQuery} renderInlineBuilder={renderInlineBuilder}/>
+    <PageTitle eyebrow="RESEARCH WORKSPACE" title="研究任务与运行记录" subtitle="Query 审核后可直接带入研究任务；运行过程、证据、能力画像和报告持续留痕。">
+      <button className="icon-button" title="刷新任务" onClick={refresh}><RefreshCw size={17}/></button>
     </PageTitle>
     <section className="metric-strip parallel-metrics"><Metric label="当前任务" value={currentCount} icon={Archive}/><Metric label="已完成" value={completed} icon={CheckCircle2}/><Metric label="并行执行" value={`${runtime.active_count || 0} / ${runtime.worker_capacity || 0}`} icon={Layers3}/><Metric label="队列等待" value={runtime.pending_count || 0} icon={Clock3}/><Metric label="默认模型" value={catalog.provider.model || 'gpt-5.5'} icon={Sparkles}/></section>
     {!runtime.worker_online && <section className="worker-warning"><CircleAlert size={18}/><div><b>研究 Worker 未在线</b><span>任务无法执行。请运行 <code>./scripts/start-local.sh</code> 或启动 Compose 服务。</span></div></section>}
     {runtime.worker_online && <ParallelRuntimePanel runtime={runtime} runs={runs}/>}
-    {creating && (
-      <CreateRun catalog={catalog} runtime={runtime} done={(run, started) => { setCreating(false); void refresh(); started ? watch(run) : open(run); }}/>
-    )}
     {deleteError && <p className="form-error"><CircleAlert size={15}/>{deleteError}</p>}
-    <section className="list-panel">
-      <div className="list-toolbar"><div className="searchbox"><Search size={16}/><input value={query} onChange={event => setQuery(event.target.value)} placeholder="搜索主题或运行 ID"/></div><label className="filter-select"><ListFilter size={15}/><select value={status} onChange={event => setStatus(event.target.value)}><option value="all">当前任务</option><option value="draft">草稿</option><option value="queued">已排队</option><option value="researching">研究中</option><option value="recalling">再调中</option><option value="completed">已完成</option><option value="failed">失败</option><option value="archived">已归档</option></select></label>{selectedDeletable.length > 0 && <button className="danger" disabled={deleting} onClick={() => deleteRuns(selectedDeletable)}><Trash2 size={15}/>{deleting ? '删除中' : `永久删除 (${selectedDeletable.length})`}</button>}<span>{visible.length} 项结果</span></div>
-      <div className="run-table"><div className="run-head"><input type="checkbox" aria-label="选择当前页可删除任务" checked={pageDeletable.length > 0 && pageDeletable.every(run => selectedIds.includes(run.run_id))} onChange={event => setSelectedIds(event.target.checked ? [...new Set([...selectedIds, ...pageDeletable.map(run => run.run_id)])] : selectedIds.filter(id => !pageDeletable.some(run => run.run_id === id)))}/><span>研究主题</span><span>路线</span><span>执行后端</span><span>状态 / 槽位</span><span>实际调用</span><span>管理</span></div>{visible.length === 0 ? <Empty text="暂无匹配的研究任务"/> : pageRows.map(run => { const assignedWorker = workerForRun(run); const position = queuePosition(run); const orphanedActive = ['planning', 'researching', 'recalling'].includes(run.status) && !assignedWorker; const displayStatus = orphanedActive && position > 0 ? 'queued' : run.status; const canDelete = !assignedWorker; return <article className="run-row" key={run.run_id}><input type="checkbox" aria-label={`选择 ${run.topic}`} disabled={!canDelete} checked={selectedIds.includes(run.run_id)} onChange={() => toggleSelected(run.run_id)}/><div><b>{run.topic}</b><small>{run.run_id}</small></div><span title={run.interaction_mode === 'autonomous' ? `系统实际命中：${routeLabel(run.research_route)}` : undefined}>{runRouteSelectionLabel(run)}</span><span><ExecutionBadge execution={run.execution}/></span><div className="run-state-stack"><Status value={displayStatus}/>{assignedWorker ? <small>并行槽位 #{assignedWorker.slot_index || '?'} · {assignedWorker.worker_id}</small> : position > 0 ? <small>队列第 {position} 位</small> : orphanedActive ? <small>等待 Worker 自动恢复</small> : null}</div><span title={runActualAgentTitle(run)}>{runAgentSelectionLabel(run)}</span><div className="row-actions"><button className="icon-button" title="打开研究详情" onClick={() => open(run)}><Eye size={17}/></button><button className="icon-button row-delete" disabled={!canDelete || deleting} title={canDelete ? '永久删除任务及后端数据' : '在线 Worker 正在处理，暂不能永久删除'} onClick={() => deleteRuns([run.run_id])}><Trash2 size={16}/></button></div></article>; })}</div>
-      {visible.length > pageSize && <div className="list-pager"><span>第 {page} / {pageCount} 页 · 当前显示 {pageRows.length} 项</span><button disabled={page === 1} onClick={() => setPage(value => Math.max(1, value - 1))}>上一页</button><button disabled={page === pageCount} onClick={() => setPage(value => Math.min(pageCount, value + 1))}>下一页</button></div>}
+    <section className="research-run-center">
+      <div className="research-run-toolbar">
+        <div className="run-status-tabs" aria-label="研究任务状态筛选">
+          <button className={status === 'all' ? 'active' : ''} onClick={() => setStatus('all')}><Archive size={15}/>全部 <em>{currentCount}</em></button>
+          <button className={status === 'active' ? 'active' : ''} onClick={() => setStatus('active')}><Clock3 size={15}/>进行中 <em>{activeCount}</em></button>
+          <button className={status === 'completed' ? 'active' : ''} onClick={() => setStatus('completed')}><CheckCircle2 size={15}/>已完成 <em>{completed}</em></button>
+        </div>
+        <button className="run-refresh-button" onClick={refresh}><RefreshCw size={15}/>刷新</button>
+      </div>
+      <div className="run-live-note"><Zap size={15}/><b>实时</b><span>多智能体编排器每次运行都会沉淀报告、证据与可追溯的执行轨迹。</span></div>
+      <div className="run-search-row">
+        <div className="searchbox"><Search size={16}/><input value={query} onChange={event => setQuery(event.target.value)} placeholder="搜索研究主题或运行 ID"/></div>
+        <label className="filter-select"><ListFilter size={15}/><select value={status} onChange={event => setStatus(event.target.value)}><option value="all">全部当前任务</option><option value="active">全部进行中</option><option value="draft">草稿</option><option value="queued">已排队</option><option value="researching">研究中</option><option value="recalling">再调中</option><option value="synthesizing">S1–S6 / 综合中</option><option value="reviewing">审计中</option><option value="reporting">报告生成中</option><option value="completed">已完成</option><option value="failed">失败</option><option value="archived">已归档</option></select></label>
+        <label className="run-select-page"><input type="checkbox" aria-label="选择已加载的可删除任务" checked={pageDeletable.length > 0 && pageDeletable.every(run => selectedIds.includes(run.run_id))} onChange={event => setSelectedIds(event.target.checked ? [...new Set([...selectedIds, ...pageDeletable.map(run => run.run_id)])] : selectedIds.filter(id => !pageDeletable.some(run => run.run_id === id)))}/><span>选择已加载</span></label>
+        {selectedDeletable.length > 0 && <button className="danger" disabled={deleting} onClick={() => deleteRuns(selectedDeletable)}><Trash2 size={15}/>{deleting ? '删除中' : `永久删除 (${selectedDeletable.length})`}</button>}
+        <span>{visible.length} 项结果</span>
+      </div>
+      {visible.length === 0 ? <Empty text="暂无匹配的研究任务"/> : <div className="research-run-scroll" ref={runScrollRef} aria-label="研究任务连续滚动列表"><div className="research-run-grid">{pageRows.map(run => {
+        const assignedWorker = workerForRun(run); const position = queuePosition(run); const orphanedActive = isRunActive(run, runtime) && !assignedWorker && !['queued', 'pause_requested', 'cancel_requested'].includes(run.status); const displayStatus = orphanedActive && position > 0 ? 'queued' : run.status; const canDelete = !assignedWorker;
+        const summary = runSummaries[run.run_id] || {}; const store = summary.store_summary || {}; const sourceCount = Number(summary.source_materials?.length || store.baseline_packet_count || 0); const evidenceCount = Number(store.materialized_evidence_count || store.evidence_count || summary.evidence_assessments?.length || 0); const candidateCount = Number(store.capability_image_count || run.result?.capability_count || 0); const reportCount = Number(store.report_count || (run.result?.report_path ? 1 : 0));
+        const runtimeText = assignedWorker ? `槽位 #${assignedWorker.slot_index || '?'} · ${assignedWorker.worker_id}` : position > 0 ? `队列第 ${position} 位` : orphanedActive ? '等待 Worker 自动恢复' : run.status === 'draft' ? '等待启动' : formatRunUpdatedAt(run.updated_at);
+        return <article className={`research-run-card ${displayStatus}`} key={run.run_id}>
+          <div className="run-card-heading"><label className="run-card-select" title={canDelete ? '选择任务' : '在线 Worker 正在处理'}><input type="checkbox" aria-label={`选择 ${run.topic}`} disabled={!canDelete} checked={selectedIds.includes(run.run_id)} onChange={() => toggleSelected(run.run_id)}/></label><button className="run-card-title" onClick={() => open(run)}><b>{run.topic}</b><small>{run.supplemental_information || run.run_id}</small></button><Status value={displayStatus}/></div>
+          <div className="run-card-counts"><span><b>{sourceCount}</b> 信源</span><span><b>{evidenceCount}</b> 证据</span><span><b>{candidateCount}</b> 候选</span><span><b>{reportCount}</b> 报告</span></div>
+          <div className="run-card-meta"><span title={run.interaction_mode === 'autonomous' ? `系统实际命中：${routeLabel(run.research_route)}` : undefined}>{runRouteSelectionLabel(run)}路线 · {runAgentSelectionLabel(run)}</span><span title={runActualAgentTitle(run)}>{runtimeText}</span></div>
+          <div className="run-card-footer"><span className={`run-mode-label ${run.execution?.mode === 'real' ? 'real' : 'fake'}`}><i/>{run.execution?.mode === 'real' ? '真实运行' : '离线模拟'}</span><span>{run.execution?.mode === 'real' ? `${providerDisplayLabel(run.execution?.provider)} · ` : ''}{run.execution?.model || catalog.provider.model || 'gpt-5.5'}</span><div><button className="icon-button" title="打开研究详情" onClick={() => open(run)}><Eye size={16}/></button><button className="icon-button row-delete" disabled={!canDelete || deleting} title={canDelete ? '永久删除任务及后端数据' : '在线 Worker 正在处理，暂不能永久删除'} onClick={() => deleteRuns([run.run_id])}><Trash2 size={15}/></button></div></div>
+        </article>;
+      })}</div><div className={`run-scroll-loader ${hasMoreRuns ? '' : 'complete'}`} ref={loadMoreRef}><span>{hasMoreRuns ? `继续下滑加载 · 已显示 ${pageRows.length} / ${visible.length}` : `已显示全部 ${visible.length} 项`}</span>{hasMoreRuns && <button onClick={() => setVisibleLimit(value => Math.min(visible.length, value + pageSize))}>加载更多</button>}</div></div>}
     </section>
   </>;
 }
@@ -160,16 +219,217 @@ function runRouteSelectionLabel(run) {
   return run.interaction_mode === 'autonomous' ? '自动' : routeLabel(run.research_route);
 }
 
+function formatRunUpdatedAt(value) {
+  if (!value) return '尚无运行记录';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '已更新';
+  return `更新于 ${date.toLocaleDateString('zh-CN', {month:'2-digit', day:'2-digit'})} ${date.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', hour12:false})}`;
+}
+
+function ResearchQueryEntry({catalog, runtime, openQueryLibrary, initialQuery, renderInlineBuilder}) {
+  const [query, setQuery] = useState('');
+  const [supplement, setSupplement] = useState('');
+  const [selectedRecommendation, setSelectedRecommendation] = useState(null);
+  const [recommendations, setRecommendations] = useState([]);
+  const [recommendationIndex, setRecommendationIndex] = useState(0);
+  const [recommendationPaused, setRecommendationPaused] = useState(false);
+  const [recommendationLoading, setRecommendationLoading] = useState(true);
+  const [recommendationError, setRecommendationError] = useState('');
+  const [executionProfileId, setExecutionProfileId] = useState('optimized_v2');
+  const [runConfigOpen, setRunConfigOpen] = useState(false);
+  const [startRequestId, setStartRequestId] = useState(0);
+  const [manualPickerOpen, setManualPickerOpen] = useState(false);
+  const refreshRecommendations = async () => {
+    setRecommendationLoading(true);
+    const pageSize = 200;
+    const firstPage = await request(`/query-library/queries?limit=${pageSize}&offset=0`, null);
+    if (!firstPage) {
+      setRecommendationError('问题库暂时无法连接');
+      setRecommendationLoading(false);
+      return;
+    }
+    const remainingOffsets = Array.from({length:Math.max(0, Math.ceil((firstPage.total || 0) / pageSize) - 1)}, (_, index) => (index + 1) * pageSize);
+    const remainingPages = await Promise.all(remainingOffsets.map(offset => request(`/query-library/queries?limit=${pageSize}&offset=${offset}`, {items:[]})));
+    const candidates = [firstPage, ...remainingPages].flatMap(page => page.items || []).filter(item => item.status !== 'archived' && item.query);
+    setRecommendations(shuffleRecommendations(candidates));
+    setRecommendationIndex(0);
+    setRecommendationError(candidates.length ? '' : '问题库中暂无可推荐 Query');
+    setRecommendationLoading(false);
+  };
+  useEffect(() => { void refreshRecommendations(); }, []);
+  useEffect(() => {
+    if (!initialQuery?.query) return;
+    setSelectedRecommendation(initialQuery);
+    setQuery(initialQuery.query);
+    setSupplement(initialQuery.supplemental_information || '');
+  }, [initialQuery?.query_id, initialQuery?.version, initialQuery?.query]);
+  useEffect(() => {
+    if (recommendationPaused || recommendations.length < 2) return undefined;
+    const timer = setInterval(() => setRecommendationIndex(index => (index + 1) % recommendations.length), 3400);
+    return () => clearInterval(timer);
+  }, [recommendationPaused, recommendations.length]);
+  const moveRecommendation = direction => setRecommendationIndex(index => (index + direction + recommendations.length) % recommendations.length);
+  const chooseRecommendation = (item, index) => { setRecommendationIndex(index); setSelectedRecommendation(item); setQuery(item.query); setSupplement(item.supplemental_information || ''); };
+  const openSupplement = () => { setRunConfigOpen(true); window.requestAnimationFrame(() => document.getElementById('research-query-supplement')?.focus()); };
+  const activeQuery = selectedRecommendation ? {...selectedRecommendation, query:query.trim(), supplemental_information:supplement.trim()} : {query:query.trim(), supplemental_information:supplement.trim(), generation_rationale:'用户在研究首页直接输入 Query。', source_references:[], status:'published', source_type:'manual'};
+  return <section className="research-query-home">
+    <div className="research-query-hero">
+      <span>DEEP RESEARCH QUERY</span>
+      <h1>你的研究，从一个好 Query 开始</h1>
+      <p>直接输入需要 Deep Research 的完整问题，或点击推荐 Query 自动回填。</p>
+      <div className={`research-query-composer ${runConfigOpen ? 'config-open' : ''}`}>
+        <textarea id="research-query-input" value={query} onChange={event => { setQuery(event.target.value); setSelectedRecommendation(null); }} placeholder="输入需要进行 Deep Research 的 Query，例如：研究低空无人装备在强对抗环境中的体系能力缺口" maxLength={4000}/>
+        <footer><div className="research-query-footer-left"><button onClick={openSupplement}><Plus size={14}/>补充背景与约束</button><ResearchModePicker profiles={catalog.execution_profiles || []} value={executionProfileId} onChange={setExecutionProfileId}/></div><div className="research-query-footer-right"><button className="manual-query-picker-trigger" onClick={() => setManualPickerOpen(true)}><ListFilter size={15}/>人工选取 Query</button><button onClick={openQueryLibrary}><Sparkles size={15}/>AI 生成 Query</button><button className={`research-config-trigger ${runConfigOpen ? 'active' : ''}`} onClick={() => setRunConfigOpen(value => !value)}><Wrench size={14}/>{runConfigOpen ? '收起运行配置' : '研究运行配置'}<ChevronDown size={13}/></button><button className="primary research-start-trigger" disabled={!query.trim() || !runtime.worker_online} title={!runtime.worker_online ? '研究 Worker 未在线' : '按当前模式和配置直接启动研究'} onClick={() => setStartRequestId(value => value + 1)}><Play size={14}/>启动研究</button></div></footer>
+        <div className="research-query-inline-config-shell" hidden={!runConfigOpen} aria-hidden={!runConfigOpen}>
+          <textarea id="research-query-supplement" className="research-query-supplement" value={supplement} onChange={event => setSupplement(event.target.value)} placeholder="可选：补充作战场景、时间范围、约束、前提假设或希望覆盖的技术/装备类型。" maxLength={8000}/>
+          {renderInlineBuilder(activeQuery, executionProfileId, setExecutionProfileId, startRequestId)}
+        </div>
+      </div>
+      <div className="research-query-suggestions" onMouseEnter={() => setRecommendationPaused(true)} onMouseLeave={() => setRecommendationPaused(false)}>
+        <div className="research-query-suggestion-heading"><span><small>问题库灵感推荐</small><em><i/>全库 {recommendations.length || 0} 条 · 自动轮播 · 点击即可带入研究</em></span><button className="suggestion-refresh" disabled={recommendationLoading} onClick={refreshRecommendations}><RefreshCw className={recommendationLoading ? 'spin' : ''} size={12}/>{recommendationLoading ? '读取中' : '重新排序'}</button></div>
+        {recommendations.length > 0 && <div className="recommendation-carousel">
+          <button className="recommendation-arrow previous" aria-label="上一条推荐 Query" onClick={() => moveRecommendation(-1)}><ChevronLeft size={20}/></button>
+          <div className="recommendation-stage">{recommendations.map((item, index) => {
+            const forwardOffset = (index - recommendationIndex + recommendations.length) % recommendations.length;
+            const offset = forwardOffset > recommendations.length / 2 ? forwardOffset - recommendations.length : forwardOffset;
+            if (Math.abs(offset) > 2) return null;
+            const positionClass = offset === 0 ? 'current' : offset === -1 ? 'previous' : offset === 1 ? 'next' : offset < 0 ? 'far-previous' : 'far-next';
+            return <button title={item.query} data-carousel-offset={offset} className={`recommendation-card ${positionClass} ${query === item.query ? 'selected' : ''}`} key={item.query_id} onClick={() => chooseRecommendation(item, index)}><span>{item.source_type === 'agent' ? 'AGENT DISCOVERY' : item.source_type === 'import' ? 'CURATED INSIGHT' : 'RESEARCH IDEA'}{query === item.query && <CheckCircle2 size={14}/>}</span><b>{item.query}</b><p>{item.supplemental_information || item.generation_rationale || '点击将此 Query 带入研究任务。'}</p></button>;
+          })}</div>
+          <button className="recommendation-arrow next" aria-label="下一条推荐 Query" onClick={() => moveRecommendation(1)}><ChevronRight size={20}/></button>
+        </div>}
+        {recommendations.length > 1 && <div className="recommendation-progress"><div><i style={{width:`${((recommendationIndex + 1) / recommendations.length) * 100}%`}}/></div><span>{recommendationIndex + 1} / {recommendations.length}</span></div>}
+        {recommendationError && <em className="recommendation-error">{recommendationError}</em>}
+      </div>
+    </div>
+    <ManualQueryPicker open={manualPickerOpen} close={() => setManualPickerOpen(false)} choose={item => { setSelectedRecommendation(item); setQuery(item.query); setSupplement(item.supplemental_information || ''); setManualPickerOpen(false); void refreshRecommendations(); }}/>
+  </section>;
+}
+
+function ManualQueryPicker({open, close, choose}) {
+  const [tab, setTab] = useState('library');
+  const [queryCategory, setQueryCategory] = useState('all');
+  const [queries, setQueries] = useState([]);
+  const [search, setSearch] = useState('');
+  const [selectedId, setSelectedId] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [error, setError] = useState('');
+  const [summary, setSummary] = useState(null);
+  const [file, setFile] = useState(null);
+  const [longText, setLongText] = useState('');
+  const [sourceName, setSourceName] = useState('市场需求深度挖掘长 Query');
+  const loadQueries = async preferredId => {
+    setLoading(true); setError('');
+    const first = await requestResult('/query-library/queries?status=published&limit=200&offset=0');
+    if (!first.ok) { setLoading(false); setError(first.detail || 'Query 库读取失败'); return; }
+    const total = Number(first.data.total || 0);
+    const offsets = Array.from({length: Math.max(0, Math.ceil(total / 200) - 1)}, (_, index) => (index + 1) * 200);
+    const pages = await Promise.all(offsets.map(offset => requestResult(`/query-library/queries?status=published&limit=200&offset=${offset}`)));
+    const rows = [first.data, ...pages.filter(item => item.ok).map(item => item.data)].flatMap(page => page.items || []);
+    setQueries(rows);
+    if (preferredId || (!selectedId && rows.length)) setSelectedId(preferredId || rows[0].query_id);
+    setLoading(false);
+  };
+  useEffect(() => { if (open) void loadQueries(); }, [open]);
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKeyDown = event => { if (event.key === 'Escape') close(); };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [open, close]);
+  if (!open) return null;
+  const isLongQuery = item => String(item.generation_rationale || '').includes('长 Query');
+  const longQueryCount = queries.filter(isLongQuery).length;
+  const standardQueryCount = queries.length - longQueryCount;
+  const categoryQueries = queryCategory === 'long' ? queries.filter(isLongQuery) : queryCategory === 'standard' ? queries.filter(item => !isLongQuery(item)) : queries;
+  const keyword = search.trim().toLowerCase();
+  const visible = keyword ? categoryQueries.filter(item => `${item.query} ${item.supplemental_information || ''} ${item.generation_rationale || ''}`.toLowerCase().includes(keyword)) : categoryQueries;
+  const selected = queries.find(item => item.query_id === selectedId);
+  const finishImport = async (result, targetCategory = 'all') => {
+    setImporting(false);
+    if (!result.ok) { setError(result.detail || '导入失败'); return; }
+    setSummary(result.data);
+    setTab('library');
+    setQueryCategory(targetCategory);
+    await loadQueries(result.data.items?.[0]?.query_id || '');
+  };
+  const importFile = async () => {
+    if (!file) { setError('请先选择 .xlsx 或 .csv 文件。'); return; }
+    setImporting(true); setError(''); setSummary(null);
+    try {
+      const contentBase64 = await fileToBase64(file);
+      await finishImport(await requestResult('/query-library/imports/file', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({filename:file.name, content_base64:contentBase64, status:'published'})}));
+    } catch (reason) { setImporting(false); setError(reason.message || '文件读取失败'); }
+  };
+  const importText = async () => {
+    if (!longText.trim()) { setError('请粘贴编号 Query 列表。'); return; }
+    setImporting(true); setError(''); setSummary(null);
+    await finishImport(await requestResult('/query-library/imports/text', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({content:longText, source_name:sourceName.trim() || '人工导入长 Query', status:'published'})}), 'long');
+  };
+  return <div className="manual-query-modal-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) close(); }}>
+    <section className="manual-query-modal" role="dialog" aria-modal="true" aria-label="人工选取或导入 Query">
+      <header><div><Database size={20}/><span><b>人工选取 Query</b><small>从统一 Query Library 选取，或导入 Excel、CSV 与长问题列表</small></span></div><button className="icon-button" onClick={close} aria-label="关闭"><X size={18}/></button></header>
+      <nav><button className={tab === 'library' ? 'active' : ''} onClick={() => setTab('library')}><BookOpenCheck size={15}/>选取 Query</button><button className={tab === 'file' ? 'active' : ''} onClick={() => setTab('file')}><FileSpreadsheet size={15}/>导入表格</button><button className={tab === 'text' ? 'active' : ''} onClick={() => setTab('text')}><Pencil size={15}/>导入长 Query</button></nav>
+      {summary && <div className="manual-query-import-summary"><CheckCircle2 size={16}/><span><b>导入完成：新增 {summary.imported_count || 0} 条 · 发布已有草稿 {summary.promoted_count || 0} 条</b><small>跳过已发布重复项 {summary.skipped_count || 0} 条 · 无效 {summary.invalid_count || 0} 条</small></span></div>}
+      {error && <p className="manual-query-error"><CircleAlert size={15}/>{error}</p>}
+      {tab === 'library' && <div className="manual-query-library-pane"><div className="manual-query-category-filter"><button className={queryCategory === 'all' ? 'active' : ''} onClick={() => setQueryCategory('all')}>全部 <em>{queries.length}</em></button><button className={queryCategory === 'standard' ? 'active' : ''} onClick={() => setQueryCategory('standard')}>常规 Query <em>{standardQueryCount}</em></button><button className={queryCategory === 'long' ? 'active' : ''} onClick={() => setQueryCategory('long')}>长 Query <em>{longQueryCount}</em></button></div><label><Search size={16}/><input autoFocus value={search} onChange={event => setSearch(event.target.value)} placeholder="搜索研究方向、场景、技术或制胜机理"/><em>{visible.length} / {categoryQueries.length}</em></label>{loading ? <div className="manual-query-loading"><RefreshCw className="spin" size={16}/>正在读取 Query Library…</div> : <div className="manual-query-select-list">{visible.length ? visible.map(item => <button className={`${selectedId === item.query_id ? 'selected' : ''} ${isLongQuery(item) ? 'long-query' : ''}`} key={item.query_id} onClick={() => setSelectedId(item.query_id)}><span><em>{isLongQuery(item) ? '长 Query' : item.source_type === 'import' ? '资料导入' : item.source_type === 'agent' ? 'AI 生成' : '人工录入'}</em><small>v{item.version}</small></span><b>{item.query}</b><p>{item.supplemental_information || item.generation_rationale || '无补充说明'}</p>{selectedId === item.query_id && <CheckCircle2 size={17}/>}</button>) : <div className="manual-query-loading">没有匹配的 Query</div>}</div>}</div>}
+      {tab === 'file' && <div className="manual-query-import-pane"><div className="manual-query-import-guide"><Upload size={25}/><span><b>导入 Query 列表</b><small>支持 .xlsx / .csv；自动识别“研究方向、核心研究重点、一级领域、重点层级”等列，导入后立即发布到统一问题库。</small></span></div><label className="manual-query-file"><input type="file" accept=".xlsx,.csv" onChange={event => setFile(event.target.files?.[0] || null)}/><span>{file ? file.name : '选择 Excel 或 CSV 文件'}</span></label><button className="primary" disabled={!file || importing} onClick={importFile}>{importing ? '正在导入…' : '导入并加入 Query Library'}</button></div>}
+      {tab === 'text' && <div className="manual-query-import-pane long-text"><label><span>来源名称</span><input value={sourceName} maxLength={300} onChange={event => setSourceName(event.target.value)} placeholder="例如：市场需求深度挖掘分类提问"/></label><label><span>编号 Query 列表</span><textarea value={longText} maxLength={100000} onChange={event => setLongText(event.target.value)} placeholder={'1、深度研究……\n2、【需求扫描】面向未来5—15年……\n\n四、分类提问\n1、【局部战争启示】深度研究……'}/><small>按“1、/ 2、”自动拆分；“四、……”等章节标题不会被误导入。每条 Query 最长 4000 字，保留完整原文。</small></label><button className="primary" disabled={!longText.trim() || importing} onClick={importText}>{importing ? '正在解析并导入…' : '解析并导入长 Query'}</button></div>}
+      <footer><span>{selected ? `已选择：${selected.query}` : '请选择一条 Query'}</span><div><button onClick={close}>取消</button><button className="primary" disabled={!selected || tab !== 'library'} onClick={() => choose(selected)}>带入研究问题</button></div></footer>
+    </section>
+  </div>;
+}
+
+function ResearchModePicker({profiles, value, onChange}) {
+  const fallbackProfiles = [
+    {id:'legacy_v1', name:'传统固定编排', short_name:'传统模式', description:'固定流程执行，适合兼容回滚与对照。', default:true, badge:'兼容'},
+    {id:'optimized_v2', name:'协同优化编排', short_name:'协同模式', description:'3–4 个业务 Agent 并行，并进入 S1–S6 Cohort。', recommended:true, badge:'推荐'},
+    {id:'swarm_quality_v1', name:'质量残差蜂群', short_name:'质量集群', description:'按质量残差弹性孵化，最多 12 个 Agent。', evaluation_only:true, badge:'高质量'},
+    {id:'winning_swarm_dynamic_v2', name:'Mission Graph 动态蜂群', short_name:'动态蜂群', description:'8–16 个实例动态孵化，提供最高并发能力。', evaluation_only:true, badge:'最高并发'},
+  ];
+  const items = profiles.length ? profiles.filter(item => item.selectable !== false) : fallbackProfiles;
+  const selected = items.find(item => item.id === value) || items.find(item => item.recommended) || items.find(item => item.default) || fallbackProfiles[1];
+  const selectProfile = (event, profileId) => {
+    onChange(profileId);
+    event.currentTarget.closest('details')?.removeAttribute('open');
+  };
+  return <details className="research-mode-picker">
+    <summary><Layers3 size={15}/><span><small>研究模式</small><b>{selected.short_name || selected.name}</b></span><ChevronDown size={14}/></summary>
+    <div className="research-mode-menu">
+      <header><span><b>选择研究模式</b><small>模式将直接控制后端 Agent 编排与并发策略</small></span><em>{items.length} 种</em></header>
+      <div>{items.map(item => <button type="button" className={item.id === selected.id ? 'selected' : ''} key={item.id} onClick={event => selectProfile(event, item.id)}><span className="mode-icon"><Layers3 size={16}/></span><span><b>{item.short_name || item.name}<em>{item.badge || (item.recommended ? '推荐' : item.default ? '兼容' : item.evaluation_only ? '挑战者' : '')}</em></b><small>{item.description}</small><code>{item.id}</code></span>{item.id === selected.id && <CheckCircle2 size={17}/>}</button>)}</div>
+      <div className="research-mode-menu-note"><ShieldCheck size={13}/>所选模式随研究任务保存，可在草稿阶段修改并由 Worker 原样执行。</div>
+    </div>
+  </details>;
+}
+
+function ReportTemplatePicker({templates, value, onChange}) {
+  const fallbackTemplates = [
+    {id:'project_argument_v1', name:'项目论证五章模板', short_name:'项目论证五章', description:'需求分析、项目画像、总体方案、关键技术与研制基础。', default:true},
+    {id:'three_layer_nine_item', name:'三层九项模板', short_name:'三层九项', description:'需求挖掘、技术攻关、能力图像与效能贡献结构。', default:false},
+  ];
+  const items = templates.length ? templates : fallbackTemplates;
+  const selected = items.find(item => item.id === value) || items.find(item => item.default) || fallbackTemplates[0];
+  return <section className="report-template-picker" aria-label="报告撰写模板">
+    <header><span><b>报告模板</b><small>任务启动后固定结构</small></span><em>{selected.short_name || selected.name}</em></header>
+    <div>{items.map(item => <button type="button" aria-pressed={item.id === selected.id} className={item.id === selected.id ? 'selected' : ''} key={item.id} onClick={() => onChange(item.id)}><span><FileSpreadsheet size={15}/><b>{item.short_name || item.name.replace('模板', '')}</b>{item.default && <em>推荐</em>}</span><small>{item.description}</small>{item.id === selected.id && <CheckCircle2 size={16}/>}</button>)}</div>
+  </section>;
+}
+
 function ParallelRuntimePanel({runtime, runs}) {
   const runById = new Map((runs || []).map(run => [run.run_id, run]));
   const workers = (runtime.workers || []).filter(worker => worker.online).sort((a, b) => (a.slot_index || 0) - (b.slot_index || 0));
   return <section className="parallel-runtime" aria-label="研究任务并行执行状态"><header><div><Activity size={17}/><span><b>{runtime.parallel_enabled ? '多任务并行执行已启用' : '单任务执行模式'}</b><small>每个槽位使用独立 Runner、Provider 预算、输出目录与异常生命周期</small></span></div><em>{runtime.available_slots || 0} 个可用槽位</em></header><div className="parallel-worker-grid">{workers.map(worker => { const run = runById.get(worker.current_run_id); const busy = worker.status === 'working' && worker.current_run_id; return <article className={busy ? 'busy' : 'idle'} key={worker.worker_id}><span>槽位 #{worker.slot_index || '?'}</span><b>{busy ? run?.topic || worker.current_run_id : '等待研究任务'}</b><small>{busy ? worker.current_run_id : worker.worker_id}</small></article>; })}</div>{runtime.pending_count > 0 && <footer><Clock3 size={14}/>当前有 {runtime.pending_count} 个任务排队；任一槽位释放后按创建顺序自动执行。</footer>}</section>;
 }
 
-function CreateRun({catalog, done, runtime}) {
+function CreateRun({catalog, done, runtime, initialQuery, openQueryLibrary, inline = false, executionProfileId: controlledExecutionProfileId = '', onExecutionProfileChange, startRequestId = 0}) {
   const workerOnline = runtime.worker_online;
-  const [topic, setTopic] = useState(''); const [supplementalInformation, setSupplementalInformation] = useState(''); const [route, setRoute] = useState('auto'); const [interactionMode, setInteractionMode] = useState('expert'); const [branch, setBranch] = useState('auto'); const [executionProfileId, setExecutionProfileId] = useState('legacy_v1'); const [agents, setAgents] = useState([]); const [rounds, setRounds] = useState(2); const [submitting, setSubmitting] = useState(false); const [error, setError] = useState(''); const [agentPreview, setAgentPreview] = useState(null);
-  const [localDatasets, setLocalDatasets] = useState([]); const [localDatasetId, setLocalDatasetId] = useState(''); const [localQueries, setLocalQueries] = useState([]); const [localQuerySearch, setLocalQuerySearch] = useState(''); const [localQueryLoading, setLocalQueryLoading] = useState(true); const [selectedLocalQueryId, setSelectedLocalQueryId] = useState(''); const [localQueryError, setLocalQueryError] = useState('');
+  const [topic, setTopic] = useState(initialQuery?.query || ''); const [supplementalInformation, setSupplementalInformation] = useState(initialQuery?.supplemental_information || ''); const [route, setRoute] = useState('auto'); const [interactionMode, setInteractionMode] = useState('expert'); const [branch, setBranch] = useState('auto'); const [localExecutionProfileId, setLocalExecutionProfileId] = useState('legacy_v1'); const [reportTemplateMode, setReportTemplateMode] = useState('project_argument_v1'); const [agents, setAgents] = useState([]); const [rounds, setRounds] = useState(2); const [submitting, setSubmitting] = useState(false); const [error, setError] = useState(''); const [agentPreview, setAgentPreview] = useState(null);
+  const executionProfileId = controlledExecutionProfileId || localExecutionProfileId;
+  const setExecutionProfileId = value => { setLocalExecutionProfileId(value); onExecutionProfileChange?.(value); };
+  const [libraryQueries, setLibraryQueries] = useState([]); const [librarySearch, setLibrarySearch] = useState(''); const [libraryLoading, setLibraryLoading] = useState(true); const [selectedQueryId, setSelectedQueryId] = useState(initialQuery?.query_id || ''); const [libraryError, setLibraryError] = useState('');
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const availableAgents = useMemo(() => businessAgents(catalog), [catalog.agents]);
   const routeDef = catalog.routes.find(item => item.id === route) || {required_tags: []};
   const branchDef = catalog.discovery_branches?.find(item => item.id === branch);
@@ -179,35 +439,33 @@ function CreateRun({catalog, done, runtime}) {
   const effectiveAgentIds = useMemo(() => [...new Set([...defaultAgentIds, ...manualAgentIds])], [defaultAgentIds, manualAgentIds]);
   const provided = useMemo(() => new Set(availableAgents.filter(agent => effectiveAgentIds.includes(agent.agent_id)).flatMap(agent => agent.capability_tags)), [effectiveAgentIds, availableAgents]);
   const previewPlan = useMemo(() => new Map((agentPreview?.plan || []).map(item => [item.agent_id, item])), [agentPreview]);
-  const visibleLocalQueries = useMemo(() => {
-    const keyword = localQuerySearch.trim().toLowerCase();
-    if (!keyword) return localQueries;
-    return localQueries.filter(item => `${item.query_id} ${item.query} ${item.region || ''} ${item.domain || ''}`.toLowerCase().includes(keyword));
-  }, [localQueries, localQuerySearch]);
-  const selectedLocalQuery = localQueries.find(item => item.query_id === selectedLocalQueryId);
+  const visibleLibraryQueries = useMemo(() => {
+    const keyword = librarySearch.trim().toLowerCase();
+    if (!keyword) return libraryQueries;
+    return libraryQueries.filter(item => `${item.query} ${item.generation_rationale || ''} ${item.supplemental_information || ''}`.toLowerCase().includes(keyword));
+  }, [libraryQueries, librarySearch]);
+  const selectedLibraryQuery = libraryQueries.find(item => item.query_id === selectedQueryId) || (initialQuery?.query_id === selectedQueryId ? initialQuery : null);
   useEffect(() => {
+    if (inline) { setLibraryLoading(false); return undefined; }
     let cancelled = false;
-    request('/benchmarks/overview', null, {headers: {'X-Role': 'analyst'}}).then(value => {
+    setLibraryLoading(true); setLibraryError('');
+    request('/query-library/queries?status=published&limit=200', null, {headers: {'X-Role': 'analyst'}}).then(value => {
       if (cancelled) return;
-      const datasets = value?.datasets || [];
-      setLocalDatasets(datasets);
-      const preferred = datasets.find(item => item.dataset_id === 'expert-local-v1') || datasets.find(item => item.query_count > 1) || datasets[0];
-      if (preferred) setLocalDatasetId(preferred.dataset_id);
-      else { setLocalQueryLoading(false); setLocalQueryError('暂无可用的本地 Query 数据集，可在测试 Benchmark 中先导入。'); }
-    });
+      if (!value) setLibraryError('Query 库读取失败，仍可直接输入研究问题。');
+      setLibraryQueries(value?.items || []);
+    }).finally(() => { if (!cancelled) setLibraryLoading(false); });
     return () => { cancelled = true; };
-  }, []);
+  }, [inline]);
   useEffect(() => {
-    let cancelled = false;
-    if (!localDatasetId) return undefined;
-    setLocalQueryLoading(true); setLocalQueryError(''); setLocalQueries([]); setSelectedLocalQueryId(''); setLocalQuerySearch('');
-    request(`/benchmarks/datasets/${encodeURIComponent(localDatasetId)}/queries`, null, {headers: {'X-Role': 'analyst'}}).then(value => {
-      if (cancelled) return;
-      if (!value) setLocalQueryError('本地 Query 读取失败，请确认 Benchmark API 可用。');
-      setLocalQueries(value?.queries || []);
-    }).finally(() => { if (!cancelled) setLocalQueryLoading(false); });
-    return () => { cancelled = true; };
-  }, [localDatasetId]);
+    setSelectedQueryId(initialQuery.query_id || '');
+    setTopic(initialQuery.query || '');
+    setSupplementalInformation(initialQuery.supplemental_information || '');
+  }, [initialQuery?.query_id, initialQuery?.version, initialQuery?.query, initialQuery?.supplemental_information]);
+  useEffect(() => {
+    const templates = catalog.report_templates || [];
+    if (!templates.length || templates.some(item => item.id === reportTemplateMode)) return;
+    setReportTemplateMode(templates.find(item => item.default)?.id || templates[0].id);
+  }, [catalog.report_templates, reportTemplateMode]);
   useEffect(() => {
     let cancelled = false;
     if (!topic.trim()) { setAgentPreview(null); return undefined; }
@@ -218,39 +476,47 @@ function CreateRun({catalog, done, runtime}) {
   }, [topic, supplementalInformation, route, interactionMode, branch]);
   const toggle = id => setAgents(rows => rows.includes(id) ? rows.filter(item => item !== id) : [...rows, id]);
   const submit = async (startImmediately = true) => {
+    if (submitting) return;
     if (startImmediately && !workerOnline) { setError('研究 Worker 未在线，已阻止任务进入无人消费的队列；你仍可先保存为草稿。'); return; }
     if (startImmediately && catalog.provider.default_mode === 'real' && catalog.provider.codex_available === false) { setError('后端未检测到 Agent 运行组件；可先保存草稿，配置运行环境后再启动。'); return; }
     const analystConfirmed = startImmediately ? window.confirm('请确认：研究主题、边界和关键假设已经分析师审核，可进入正式五判据审计。\n\n选择“取消”仍会运行，但报告将标记为待审稿。') : false;
     setSubmitting(true); setError('');
-    const created = await request('/runs', null, {method: 'POST', headers: {'Content-Type': 'application/json', 'X-Role': 'analyst'}, body: JSON.stringify({topic, supplemental_information: supplementalInformation, research_route: route, interaction_mode: interactionMode, discovery_branch: branch, execution_profile_id: executionProfileId, selected_agent_ids: effectiveAgentIds, max_rounds: rounds, analyst_confirmed: analystConfirmed})});
+    const created = await request('/runs', null, {method: 'POST', headers: {'Content-Type': 'application/json', 'X-Role': 'analyst'}, body: JSON.stringify({topic, supplemental_information: supplementalInformation, research_route: route, interaction_mode: interactionMode, discovery_branch: branch, execution_profile_id: executionProfileId, report_template_mode: reportTemplateMode, selected_agent_ids: effectiveAgentIds, max_rounds: rounds, analyst_confirmed: analystConfirmed, source_query_id: selectedLibraryQuery?.query_id || '', source_query_version: selectedLibraryQuery?.version || null})});
     if (!created) { setSubmitting(false); setError('任务创建失败。请检查配置和 API 服务。'); return; }
     if (!startImmediately) { setSubmitting(false); done(created, false); return; }
     const started = await requestResult(`/runs/${created.run_id}/start`, {method: 'POST', headers: {'Idempotency-Key': crypto.randomUUID(), 'X-Role': 'analyst'}});
     setSubmitting(false);
     if (started.ok) done(started.data, true); else setError(`任务已保存为草稿，但启动失败：${started.detail || '请检查 Agent、API Key 和 Worker 环境。'}`);
   };
+  useEffect(() => { if (startRequestId > 0) void submit(true); }, [startRequestId]);
   const disabled = submitting || !topic.trim();
   const startDisabled = disabled || (catalog.provider.default_mode === 'real' && catalog.provider.codex_available === false);
-  return <section className="create-panel">
-    <div className="panel-kicker"><Sparkles size={16}/>新建装备能力研究</div>
-    <section className="create-query-source">
-      <header><div><FileSpreadsheet size={17}/><span><b>从本地 Query 选择</b><small>选中后自动填入研究主题，仍可继续编辑</small></span></div>{selectedLocalQuery && <button type="button" onClick={() => setSelectedLocalQueryId('')}><X size={14}/>取消选择</button>}</header>
-      <div className="create-query-toolbar"><Field label="本地数据集"><select value={localDatasetId} onChange={event => setLocalDatasetId(event.target.value)} disabled={!localDatasets.length}>{localDatasets.length ? localDatasets.map(item => <option value={item.dataset_id} key={item.dataset_id}>{item.dataset_name || item.dataset_id} · {item.query_count} 条</option>) : <option value="">暂无数据集</option>}</select></Field><Field label="搜索 Query"><div className="create-query-search"><Search size={15}/><input value={localQuerySearch} onChange={event => setLocalQuerySearch(event.target.value)} placeholder="输入题目、区域或领域" disabled={!localQueries.length}/></div></Field></div>
-      {localQueryError ? <p className="create-query-message"><CircleAlert size={14}/>{localQueryError}</p> : localQueryLoading ? <p className="create-query-message"><RefreshCw className="spin" size={14}/>正在读取本地 Query…</p> : <div className="create-query-list" role="listbox" aria-label="本地 Query 列表">{visibleLocalQueries.length ? visibleLocalQueries.map(item => <button type="button" role="option" aria-selected={selectedLocalQueryId === item.query_id} className={selectedLocalQueryId === item.query_id ? 'selected' : ''} key={item.query_id} onClick={() => { setSelectedLocalQueryId(item.query_id); setTopic(item.query); setSupplementalInformation(item.supplemental_information || item.additional_context || ''); }}><span><b>{item.query_id}</b><em>{item.region || '未分类'} · {item.domain || '通用'} · {difficultyLabel(item.difficulty)} · {item.split === 'pilot' ? 'Pilot' : 'Test'}</em></span><p>{item.query}</p>{selectedLocalQueryId === item.query_id && <CheckCircle2 size={16}/>}</button>) : <p className="create-query-message">没有匹配的 Query</p>}</div>}
-    </section>
-    <Field label="补充信息（可选）"><textarea className="supplement-input" value={supplementalInformation} maxLength={8000} onChange={event => setSupplementalInformation(event.target.value)} placeholder="可补充思考问题、发散维度、前提假设或约束。主控 Agent 会压缩为结构化简报后传递给后续 Agent。"/><small className="field-hint">{supplementalInformation.length}/8000 · 原文留存审计，下游默认只接收精简结构化简报</small></Field>
-    <div className="form-grid"><Field label="研究主题"><input value={topic} onChange={event => setTopic(event.target.value)} placeholder="例如：低空无人作战体系能力缺口"/></Field><Field label="交互模式"><select value={interactionMode} onChange={event => setInteractionMode(event.target.value)}>{(catalog.interaction_modes || []).map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="A–H 发现分支"><select value={branch} onChange={event => setBranch(event.target.value)}><option value="auto">Agent 自动选择</option>{(catalog.discovery_branches || []).map(item => <option key={item.id} value={item.id}>{item.id} · {item.name}</option>)}</select></Field><Field label="Harness 执行画像"><select value={executionProfileId} onChange={event => { const value = event.target.value; setExecutionProfileId(value); if (value !== 'legacy_v1' && rounds > 3) setRounds(3); }}>{(catalog.execution_profiles || [{id:'legacy_v1',name:'Legacy v1'}]).filter(item => !item.evaluation_only).map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="研究路线"><select value={route} onChange={event => setRoute(event.target.value)}><option value="auto">按发现分支自动映射</option>{catalog.routes.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="最大研究轮次"><select value={rounds} onChange={event => setRounds(Number(event.target.value))}>{[1, 2, 3, ...(executionProfileId === 'legacy_v1' ? [4, 5] : [])].map(value => <option key={value} value={value}>{value === 2 ? '2 轮（推荐）' : `${value} 轮`}</option>)}</select></Field></div>
+  return <section className={`create-panel ${inline ? 'inline-research-config' : ''}`} id="research-task-builder">
+    {inline ? <header className="inline-research-config-heading"><div><Wrench size={17}/><span><b>研究运行配置</b><small>{initialQuery?.query_id ? `${initialQuery.source_type === 'agent' ? 'Agent 生成' : initialQuery.source_type === 'import' ? '资料导入' : '人工录入'} · ${initialQuery.query_id}` : '当前为用户输入 Query'}</small></span></div><button onClick={openQueryLibrary}><Search size={14}/>更换 Query</button></header> : <div className="panel-kicker"><Sparkles size={16}/>确认研究问题并启动</div>}
+    {!inline && (initialQuery ? <section className="selected-research-query"><header><div><CheckCircle2 size={18}/><span><b>Query 已带入研究任务</b><small>{initialQuery.query_id ? `${initialQuery.source_type === 'agent' ? 'Agent 生成' : initialQuery.source_type === 'import' ? '资料导入' : '人工输入'} · ${initialQuery.query_id} · v${initialQuery.version}` : '用户直接输入'}</small></span></div><button onClick={openQueryLibrary}><Search size={14}/>重新选择</button></header>{initialQuery.generation_rationale && <p><Lightbulb size={14}/>{initialQuery.generation_rationale}</p>}</section> : <section className="create-query-source">
+      <header><div><Database size={17}/><span><b>从已发布 Query 库选择</b><small>选中后自动带入研究问题、补充角度与来源版本</small></span></div><div className="create-query-header-actions"><button type="button" onClick={openQueryLibrary}><Sparkles size={14}/>生成或审核 Query</button>{selectedLibraryQuery && <button type="button" onClick={() => setSelectedQueryId('')}><X size={14}/>改为人工输入</button>}</div></header>
+      <div className="create-query-toolbar"><Field label="搜索已发布 Query"><div className="create-query-search"><Search size={15}/><input value={librarySearch} onChange={event => setLibrarySearch(event.target.value)} placeholder="输入研究方向、生成理由或分析维度" disabled={!libraryQueries.length}/></div></Field><div className="create-query-library-summary"><BookOpenCheck size={16}/><span><b>{libraryQueries.length} 条可用 Query</b><small>草稿需先在需求 Query 工作区审核发布</small></span></div></div>
+      {libraryError ? <p className="create-query-message"><CircleAlert size={14}/>{libraryError}</p> : libraryLoading ? <p className="create-query-message"><RefreshCw className="spin" size={14}/>正在读取 Query 库…</p> : <div className="create-query-list" role="listbox" aria-label="已发布 Query 列表">{visibleLibraryQueries.length ? visibleLibraryQueries.map(item => <button type="button" role="option" aria-selected={selectedQueryId === item.query_id} className={selectedQueryId === item.query_id ? 'selected' : ''} key={item.query_id} onClick={() => { setSelectedQueryId(item.query_id); setTopic(item.query); setSupplementalInformation(item.supplemental_information || ''); }}><span><b>{item.source_type === 'agent' ? 'Agent 生成' : item.source_type === 'manual' ? '人工录入' : '资料导入'}</b><em>v{item.version} · {item.source_references?.length || 0} 个来源</em></span><p>{item.query}</p>{selectedQueryId === item.query_id && <CheckCircle2 size={16}/>}</button>) : <p className="create-query-message">没有匹配的已发布 Query，可前往工作区生成或审核</p>}</div>}
+      {selectedLibraryQuery && <section className="selected-query-context"><div><Lightbulb size={15}/><span><b>选题理由</b><p>{selectedLibraryQuery.generation_rationale || '未填写生成理由，建议在启动前确认研究价值与边界。'}</p></span></div><div><FileSpreadsheet size={15}/><span><b>来源线索</b><p>{selectedLibraryQuery.source_references?.length ? selectedLibraryQuery.source_references.slice(0, 3).map(item => item.title).join('、') : '暂无直接来源，研究阶段需独立采集正式证据。'}</p></span></div></section>}
+    </section>)}
+    {!inline && <Field label="最终研究问题"><textarea className="research-topic-input" value={topic} maxLength={4000} onChange={event => setTopic(event.target.value)} placeholder="输入可直接提交 Deep Research 的完整研究问题"/><small className="field-hint">{topic.length}/4000 · 支持长 Query，并保留来源版本</small></Field>}
+    <ReportTemplatePicker templates={catalog.report_templates || []} value={reportTemplateMode} onChange={setReportTemplateMode}/>
+    {!inline && <Field label="补充信息（可选）"><textarea className="supplement-input" value={supplementalInformation} maxLength={8000} onChange={event => setSupplementalInformation(event.target.value)} placeholder="可补充思考问题、发散维度、前提假设或约束。主控 Agent 会压缩为结构化简报后传递给后续 Agent。"/><small className="field-hint">{supplementalInformation.length}/8000 · 原文留存审计，下游默认只接收精简结构化简报</small></Field>}
+    <button type="button" className={`research-advanced-toggle ${advancedOpen ? 'open' : ''}`} onClick={() => setAdvancedOpen(value => !value)}><Wrench size={15}/><span><b>{advancedOpen ? '收起高级编排选项' : '高级编排选项'}</b><small>当前：专家模式 · 自动分支 · 2 轮 · 系统自动选择 Agent</small></span><ChevronDown size={16}/></button>
+    {advancedOpen && <>
+    <div className="form-grid">{!inline && <Field label="研究主题"><input value={topic} onChange={event => setTopic(event.target.value)} placeholder="例如：低空无人作战体系能力缺口"/></Field>}<Field label="交互模式"><select value={interactionMode} onChange={event => setInteractionMode(event.target.value)}>{(catalog.interaction_modes || []).map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="A–H 发现分支"><select value={branch} onChange={event => setBranch(event.target.value)}><option value="auto">Agent 自动选择</option>{(catalog.discovery_branches || []).map(item => <option key={item.id} value={item.id}>{item.id} · {item.name}</option>)}</select></Field><Field label="运行模式"><select value={executionProfileId} onChange={event => { const value = event.target.value; setExecutionProfileId(value); if (value !== 'legacy_v1' && rounds > 3) setRounds(3); }}>{(catalog.execution_profiles || [{id:'legacy_v1',name:'Legacy v1'}]).filter(item => item.selectable !== false).map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="研究路线"><select value={route} onChange={event => setRoute(event.target.value)}><option value="auto">按发现分支自动映射</option>{catalog.routes.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="最大研究轮次"><select value={rounds} onChange={event => setRounds(Number(event.target.value))}>{[1, 2, 3, ...(executionProfileId === 'legacy_v1' ? [4, 5] : [])].map(value => <option key={value} value={value}>{value === 2 ? '2 轮（推荐）' : `${value} 轮`}</option>)}</select></Field></div>
     {agentPreview?.structured_query_brief?.supplement_present && <section className="supplement-brief"><header><BrainCircuit size={16}/><span><b>主控 Agent 结构化简报</b><small>下游 Agent 将接收以下精简信息</small></span></header><p>{agentPreview.structured_query_brief.supplement_summary}</p><div>{(agentPreview.structured_query_brief.expansion_dimensions || []).map(item => <em key={item}>{item}</em>)}</div></section>}
     <div className="blueprint-note"><Gauge size={18}/><span><b>{(catalog.execution_profiles || []).find(item => item.id === executionProfileId)?.name || executionProfileId}</b>{(catalog.execution_profiles || []).find(item => item.id === executionProfileId)?.description || '使用受控分支编排、风险门控与可恢复审计。'}</span></div>
     <div className="blueprint-note"><BrainCircuit size={18}/><span><b>{interactionMode === 'autonomous' ? '智能元编排' : '专家约束编排'}</b>{branchDef ? `${branchDef.id} · ${branchDef.name}；系统将自动调度 ${branchDef.specialist_agent_ids.length ? branchDef.specialist_agent_ids.join('、') : '通用基线'} Agent。` : '编排器将从 A–H 中选择主分支和最多两个次分支，并生成执行波次。'}</span></div>
     {branchDef?.step_modes?.length > 0 && <div className="branch-step-preview"><span>本分支 S1–S6 强度</span>{branchDef.step_modes.map(item => <b className={item.execution_mode} key={item.step}>S{item.step}<em>{stepModeLabel(item.execution_mode)}</em></b>)}</div>}
     <div className="agent-section"><div className="section-heading"><div><b>业务 Agent</b><span>{executionProfileId !== 'legacy_v1' ? '质量型挑战者保留系统默认选择；可继续勾选其他角色作为人工追加，不会覆盖默认编排。' : 'Legacy v1 使用人工显式选择；未选择时由旧版覆盖策略补足。'}</span></div><span className="selection-count">{executionProfileId !== 'legacy_v1' && agentPreview ? `默认 ${defaultAgentIds.length} + 追加 ${manualAgentIds.length} = ${effectiveAgentIds.length}` : manualAgentIds.length ? `人工选择 ${manualAgentIds.length}` : agentPreview ? `预计 ${agentPreview.selected_agent_ids.length} 个` : '智能分析中'}</span></div><div className="agent-selector">{availableAgents.map(agent => { const preview = previewPlan.get(agent.agent_id); const defaultSelected = defaultAgentIdSet.has(agent.agent_id); const manualSelected = manualAgentIds.includes(agent.agent_id); return <label className={`agent-choice ${defaultSelected || manualSelected ? 'selected' : ''} ${defaultSelected ? 'recommended default-selected' : ''} ${manualSelected ? 'manual-added' : ''}`} key={agent.agent_id}><input type="checkbox" checked={defaultSelected || manualSelected} disabled={defaultSelected} aria-label={`${agent.display_name}${defaultSelected ? '（系统默认）' : '（可人工追加）'}`} onChange={() => { if (!defaultSelected) toggle(agent.agent_id); }}/><Bot size={18}/><span><b>{agent.display_name}{defaultSelected && <i>{preview?.mode === 'required' ? '默认·必需' : '默认·参考'}</i>}{manualSelected && <i className="manual">{executionProfileId !== 'legacy_v1' ? '人工追加' : '人工选择'}</i>}</b><small>{agent.description}</small><em>{agent.capability_tags.join(' · ')}</em>{preview && <strong>{preview.reason}</strong>}</span></label>; })}</div>{agentPreview ? <><div className="agent-selection-preview"><header><BrainCircuit size={16}/><span><b>{agentPreview.primary_branch} · {agentPreview.branch_name}</b><small>{agentPreview.policy}</small></span></header><div>{agentPreview.plan.map(item => <span key={item.agent_id}><b>{item.display_name}</b><em>{item.mode === 'required' ? '默认必需' : '默认参考'}</em><small>{item.reason}</small></span>)}</div><footer>{executionProfileId !== 'legacy_v1' ? manualAgentIds.length ? `人工追加：${manualAgentIds.map(agentModelLabel).join('、')}；执行时与默认 Agent 合并。` : '可在上方勾选未入选角色，作为人工追加项。' : manualAgentIds.length ? `人工选择：${manualAgentIds.map(agentModelLabel).join('、')}。` : '可在上方人工选择业务 Agent。'}{agentPreview.callback_agent_ids?.length > 0 ? ` 缺口触发回调：${agentPreview.callback_agent_ids.map(agentModelLabel).join('、')}` : ''}</footer></div><div className="coverage-box"><span>{executionProfileId !== 'legacy_v1' ? '最终执行覆盖（默认 + 人工追加）' : '人工选择覆盖'}</span>{routeDef.required_tags.map(tag => <b className={provided.has(tag) ? 'covered' : 'missing'} key={tag}>{tag}</b>)}</div></> : <div className="coverage-box"><span>输入研究主题后，将即时预览默认 Agent；此前人工勾选项会作为追加项保留。</span></div>}</div>
-    <div className="create-actions"><span>{runtime.available_slots > 0 ? `当前有 ${runtime.available_slots} 个并行槽位可立即执行。` : `当前槽位已满，启动后将进入队列（前方 ${runtime.pending_count || 0} 项）。`}</span><div className="create-buttons"><button disabled={disabled} onClick={() => submit(false)}><Save size={15}/>保存草稿</button><button className="primary" disabled={startDisabled} onClick={() => submit(true)}>{submitting ? '正在处理' : '创建并启动研究'}<ChevronDown size={16}/></button></div></div>
+    </>}
+    <div className="create-actions"><span>{runtime.available_slots > 0 ? `当前有 ${runtime.available_slots} 个并行槽位可立即执行。` : `当前槽位已满，启动后将进入队列（前方 ${runtime.pending_count || 0} 项）。`}</span><div className="create-buttons"><button disabled={disabled} onClick={() => submit(false)}><Save size={15}/>保存草稿</button>{!inline && <button className="primary" disabled={startDisabled} onClick={() => submit(true)}>{submitting ? '正在处理' : '创建并启动研究'}<ChevronDown size={16}/></button>}</div></div>
     {error && <p className="form-error"><CircleAlert size={15}/>{error}</p>}
   </section>;
 }
 
-function WorkspacePage({view, run, runs, catalog, selectRun}) {
+function WorkspacePage({view, run, runs, catalog, runtime, selectRun}) {
   const [payload, setPayload] = useState(null); const [loading, setLoading] = useState(false);
   const [taskQuery, setTaskQuery] = useState(''); const [taskStatus, setTaskStatus] = useState('all');
   const [resumingReport, setResumingReport] = useState(false); const [reportResumeError, setReportResumeError] = useState('');
@@ -259,7 +525,7 @@ function WorkspacePage({view, run, runs, catalog, selectRun}) {
   useEffect(() => { setResumingReport(false); setReportResumeError(''); }, [run?.run_id]);
   useEffect(() => { let cancelled = false; setPayload(null); if (view === 'interactions') return undefined; if (!run) return undefined; const routes = {evidence: '/domain/EvidenceCard', winning: '/winning-mechanism', capabilities: '/capabilities', reports: '/report'}; setLoading(true); request(`/runs/${run.run_id}${routes[view]}`, null, {headers: {'X-Role': view === 'reports' ? 'reviewer' : 'analyst'}}).then(value => { if (!cancelled) setPayload(value); }).finally(() => { if (!cancelled) setLoading(false); }); return () => { cancelled = true; }; }, [view, run?.run_id, run?.status]);
   const item = nav.find(row => row[0] === view); const current = view === 'interactions' ? live.data : payload; const busy = view === 'interactions' ? live.loading : view === 'reports' ? loading || (live.loading && !live.data) : loading;
-  const hasTaskNavigator = ['interactions', 'evidence', 'winning', 'capabilities', 'reports'].includes(view); const availableRuns = (runs || []).filter(itemRun => itemRun.status !== 'archived'); const visibleRuns = availableRuns.filter(itemRun => (!taskQuery.trim() || `${itemRun.topic} ${itemRun.supplemental_information || ''} ${itemRun.run_id}`.toLowerCase().includes(taskQuery.trim().toLowerCase())) && (taskStatus === 'all' || taskStatus === 'active' && ['queued', 'planning', 'researching', 'recalling', 'paused'].includes(itemRun.status) || taskStatus === itemRun.status)); const contextLabel = {interactions:'当前交互任务',evidence:'当前证据任务',winning:'当前 S1–S6 任务',capabilities:'当前能力画像任务',reports:'当前评审任务'}[view] || '当前研究任务';
+  const hasTaskNavigator = ['interactions', 'evidence', 'winning', 'capabilities', 'reports'].includes(view); const availableRuns = (runs || []).filter(itemRun => itemRun.status !== 'archived'); const visibleRuns = availableRuns.filter(itemRun => (!taskQuery.trim() || `${itemRun.topic} ${itemRun.supplemental_information || ''} ${itemRun.run_id}`.toLowerCase().includes(taskQuery.trim().toLowerCase())) && (taskStatus === 'all' || taskStatus === 'active' && isRunActive(itemRun, runtime) || taskStatus === itemRun.status)); const contextLabel = {interactions:'当前交互任务',evidence:'当前证据任务',winning:'当前 S1–S6 任务',capabilities:'当前能力画像任务',reports:'当前评审任务'}[view] || '当前研究任务';
   const reportPhase = (live.data?.workflow?.phases || []).find(phase => phase.id === 'report');
   const reportPhaseStatus = reportPhase?.status || latestReporterPhaseStatus(live.data?.events || [], run?.status === 'completed', run?.status === 'failed');
   const reportFailureEvent = [...(live.data?.events || [])].reverse().find(event => event.event_type === 'report_model_failed');
@@ -550,14 +816,19 @@ function DynamicSwarmInteractionPanel({cluster, members, live}) {
     <div className="dynamic-swarm-counts"><span><small>实例总数</small><b>{counts.total ?? rows.length}</b></span><span><small>创建/执行中</small><b>{Number(counts.recruiting || 0) + Number(counts.running || 0)}</b></span><span><small>完成</small><b>{completed}</b></span><span><small>账本版本</small><b>v{ledger.version || 0}</b></span><span><small>最终装备方向</small><b>{portfolio.length}</b></span></div>
     <div className="swarm-role-pools">{rolePools.map(pool => <div key={pool.mission_node}><b>{pool.mission_node}<i>×{pool.count || 0}</i></b><span>{swarmNodeLabel(pool.mission_node)}</span></div>)}<div className="specialists"><b>专用<i>×{specialists.length}</i></b><span>残差触发招聘</span></div></div>
     {graph.graph_id && <div className="swarm-graph-contract"><span>Mission Graph <code>{graph.graph_id}</code></span><span>并发上限 <b>{graph.maximum_concurrency || 6}</b></span><span>实例边界 <b>{graph.minimum_instances || 8}–{graph.maximum_instances || 16}</b></span><span>{graph.merge_strategy || '版本化账本 Merge'}</span></div>}
-    <div className="dynamic-swarm-waves">{waves.map(wave => <section key={wave.wave} className={`dynamic-swarm-wave wave-${wave.wave}`}><header><i>W{wave.wave}</i><span><b>{wave.label}</b><small>{wave.members.length} 个实例</small></span></header><div>{wave.members.length ? wave.members.map((member, index) => <article className={`dynamic-swarm-member status-${member.status || 'planned'}`} key={member.agent_instance_id || member.agent_id || `${wave.wave}-${index}`}><header><i>{member.mission_node || index + 1}</i><div><b>{member.display_name || '动态专用 Agent'}</b><small>{member.archetype || member.runtime_profile_id || '按需角色'}</small></div><span className={`swarm-member-status ${member.status || 'planned'}`}>{swarmMemberStatusLabel(member.status)}</span></header><p>{member.role_purpose || '围绕当前质量残差执行定向补强。'}</p><div className="dynamic-swarm-routing"><span>候选 <code>{shortIdentifier(member.hypothesis_id || '广度新建')}</code></span><span>Merge <b>{member.merge_target || '待门控'}</b></span></div>{member.depends_on?.length > 0 && <div className="swarm-dependencies"><small>依赖</small>{member.depends_on.slice(0, 3).map(item => <code key={item}>{shortIdentifier(item)}</code>)}</div>}{member.trigger_residuals?.length > 0 && <div className="dynamic-swarm-residuals">{member.trigger_residuals.slice(0, 3).map(item => <span key={item}>{item}</span>)}</div>}{member.prune_reason && <div className="dynamic-swarm-decision rejected"><CircleAlert size={13}/><span>回收原因：{agentFacingText(member.prune_reason)}</span></div>}{member.status === 'merged' && <div className="dynamic-swarm-decision accepted"><CheckCircle2 size={13}/><span>贡献已定向合并</span></div>}<details><summary>角色合同与独立会话</summary><dl><dt>脱敏会话引用</dt><dd><code>{member.session_ref || member.agent_instance_id || '待启动'}</code></dd><dt>执行后端</dt><dd>{member.execution_backend === 'independent_codex_cli' ? '独立 Codex CLI' : member.execution_backend || member.provider_type || '受控模型会话'}</dd><dt>上下文隔离</dt><dd>{member.context_isolation || 'ephemeral'}</dd><dt>Skill</dt><dd>{(member.skill_ids || []).join(' · ') || '受治理共享 Skill'}</dd><dt>递归招聘</dt><dd>{member.allow_child_spawn === true ? '允许' : '禁止'}</dd></dl></details></article>) : <div className="dynamic-swarm-empty"><RefreshCw size={14}/><span>等待依赖满足或质量残差触发</span></div>}</div></section>)}</div>
+    <div className="dynamic-swarm-waves">{waves.map(wave => <section key={wave.wave} className={`dynamic-swarm-wave wave-${wave.wave}`}><header><i>W{wave.wave}</i><span><b>{wave.label}</b><small>{wave.members.length} 个实例</small></span></header><div>{wave.members.length ? wave.members.map((member, index) => <article className={`dynamic-swarm-member status-${member.status || 'planned'}`} key={member.agent_instance_id || member.agent_id || `${wave.wave}-${index}`}><header><i>{member.mission_node || index + 1}</i><div><b>{member.display_name || '动态专用 Agent'}</b><small>{member.archetype || member.runtime_profile_id || '按需角色'}</small></div><span className={`swarm-member-status ${member.status || 'planned'}`}>{swarmMemberStatusLabel(member)}</span></header><p>{member.role_purpose || '围绕当前质量残差执行定向补强。'}</p><div className="dynamic-swarm-routing"><span>候选 <code>{shortIdentifier(member.hypothesis_id || '广度新建')}</code></span><span>Merge <b>{member.merge_target || '未声明'}</b></span></div>{member.depends_on?.length > 0 && <div className="swarm-dependencies"><small>依赖</small>{member.depends_on.slice(0, 3).map(item => <code key={item}>{shortIdentifier(item)}</code>)}</div>}{member.trigger_residuals?.length > 0 && <div className="dynamic-swarm-residuals">{member.trigger_residuals.slice(0, 3).map(item => <span key={item}>{item}</span>)}</div>}{member.prune_reason && <div className="dynamic-swarm-decision rejected"><CircleAlert size={13}/><span>回收原因：{agentFacingText(member.prune_reason)}</span></div>}{member.portfolio_status === 'selected' && <div className="dynamic-swarm-decision accepted"><CheckCircle2 size={13}/><span>贡献已纳入最终组合</span></div>}{member.portfolio_status === 'rejected' && <div className="dynamic-swarm-decision not-selected"><CircleAlert size={13}/><span>执行已完成，本轮组合未入选</span></div>}{member.status === 'merged' && !member.portfolio_status && <div className="dynamic-swarm-decision accepted"><CheckCircle2 size={13}/><span>贡献已定向合并</span></div>}<details><summary>角色合同与独立会话</summary><dl><dt>脱敏会话引用</dt><dd><code>{member.session_ref || member.agent_instance_id || '待启动'}</code></dd><dt>执行后端</dt><dd>{member.execution_backend === 'independent_codex_cli' ? '独立 Codex CLI' : member.execution_backend || member.provider_type || '受控模型会话'}</dd><dt>上下文隔离</dt><dd>{member.context_isolation || 'ephemeral'}</dd><dt>Skill</dt><dd>{(member.skill_ids || []).join(' · ') || '受治理共享 Skill'}</dd><dt>递归招聘</dt><dd>{member.allow_child_spawn === true ? '允许' : '禁止'}</dd></dl></details></article>) : <div className="dynamic-swarm-empty"><RefreshCw size={14}/><span>等待依赖满足或质量残差触发</span></div>}</div></section>)}</div>
     {candidates.length > 0 && <section className="swarm-candidate-board"><header><div><b>候选制胜机理谱系</b><small>候选隔离 · 版本校验 · Pareto 组合</small></div><em>{candidates.length} 条</em></header><div>{candidates.slice(0, 8).map(candidate => <article key={candidate.hypothesis_id} className={`candidate-${candidate.status || 'created'}`}><header><b>{candidate.title || shortIdentifier(candidate.hypothesis_id)}</b><span>{swarmCandidateStatusLabel(candidate.status)}</span></header><div className="candidate-score"><i style={{width: `${Math.max(0, Math.min(100, Number(candidate.score || 0) * 100))}%`}}/><em>{Math.round(Number(candidate.score || 0) * 100)}</em></div><p>{(candidate.equipment_forms || []).slice(0, 2).join(' · ') || '等待 S4 装备映射'}</p><footer><span>Merge {(candidate.merge_targets || []).join('/') || '待贡献'}</span><span>证据 {(candidate.evidence_ids || []).length}</span><span>Receipt {(candidate.receipt_ids || []).length}</span></footer></article>)}</div></section>}
     {receipts.length > 0 && <details className="swarm-merge-receipts"><summary>Merge Receipt 与版本重基（{receipts.length}）</summary><div>{receipts.slice(-12).map(receipt => <div key={receipt.receipt_id}><code>{shortIdentifier(receipt.contribution_id)}</code><span>{shortIdentifier(receipt.hypothesis_id)} → {receipt.merge_target}</span><b className={receipt.status}>{receipt.rebase_required ? '需重基' : receipt.status}</b><em>v{receipt.base_ledger_version ?? '?'}→v{receipt.resulting_ledger_version ?? '?'}</em></div>)}</div></details>}
     {portfolio.length > 0 && <section className="swarm-equipment-portfolio"><header><div><b>最终前瞻军事装备组合</b><small>通过证据、因果、装备具体性、失效边界与独立组合评审</small></div><em>{portfolio.length} 条{portfolioGate.direct_combat_equipment_count != null ? ` · 直接战斗装备 ${portfolioGate.direct_combat_equipment_count}` : ''}{portfolioGate.passed === false ? ' · 硬门未通过' : ''}</em></header><div>{portfolio.map((item, index) => <article key={item.hypothesis_id || `${item.name}-${index}`}><i>{index + 1}</i><div><b>{item.name || '前瞻装备方向'}</b><small>{(item.equipment_forms || []).join(' · ') || item.type || '具体装备形态'}</small><p>{(item.mission_effects || []).slice(0, 2).join('；') || '直接军事效果待展示'}</p><footer><span>{item.type || 'new'}</span><span>{item.direct_combat_equipment ? '直接战斗装备' : '体系补链'}</span><span>验证 {(item.validation_plan || []).length}</span><span>边界 {(item.failure_boundaries || []).length}</span></footer></div></article>)}</div></section>}
   </section>;
 }
 
-function swarmMemberStatusLabel(value) { return {planned:'待招聘',recruiting:'创建会话',running:'执行中',completed:'完成待门控',merged:'已合并',pruned:'已淘汰',skipped:'已回收',failed:'会话失败'}[value] || '待招聘'; }
+function swarmMemberStatusLabel(member = {}) {
+  const status = String(member.status || 'planned');
+  if (member.portfolio_status === 'selected' || member.merge_status === 'accepted') return '贡献已纳入';
+  if (member.portfolio_status === 'rejected') return '执行完成·未入选';
+  return {planned:'待调度',recruiting:'会话创建中',queued:'等待执行',running:'执行中',completed:'执行完成',merged:'贡献已合并',pruned:'已回收',skipped:'已回收',failed:'执行失败'}[status] || '待调度';
+}
 function swarmCandidateStatusLabel(value) { return {created:'已创建',contribution_queued:'贡献排队',rebase_required:'版本重基',merged:'已合并',selected:'Pareto 入选',rejected:'已淘汰',contribution_rejected:'贡献拒绝'}[value] || value || '演化中'; }
 function swarmNodeLabel(value) { return {S1:'对手体系',S2:'竞争战法',S3:'颠覆机理',S4:'装备映射',S5:'基线审查',S6:'组合评审'}[value] || '专用角色'; }
 function shortIdentifier(value) { const text = String(value || ''); return text.length > 24 ? `${text.slice(0, 10)}…${text.slice(-8)}` : text; }
@@ -604,9 +875,18 @@ function WorkflowOverview({events, workflow, agents, live, completed}) {
   const stepCards = S_AGENT_ARCHITECTURE.map(meta => {
     const plan = planByStep.get(meta.step) || {};
     const agent = agentMap[plan.agent_id] || agentMap[meta.agent_id] || {};
-    const executionMode = plan.execution_mode || plan.mode || 'standard';
+    const nodeMembers = dynamicAgents.filter(item => normalizeMergeTarget(item) === `S${meta.step}`);
+    const executionMode = nodeMembers.length ? 'dynamic' : plan.execution_mode || plan.mode || 'standard';
     const completedEvent = fallbackSteps.some(item => Number(item.step) === meta.step && item.execution_mode !== 'skip' && item.status !== 'skipped_by_branch_blueprint');
-    const status = normalizeSAgentStatus(plan.status, executionMode, completedEvent);
+    let status = normalizeSAgentStatus(plan.status, executionMode, completedEvent);
+    const memberStatuses = nodeMembers.map(item => String(item.status || 'planned').toLowerCase());
+    const dynamicCompleted = memberStatuses.filter(item => ['completed', 'merged'].includes(item)).length;
+    const dynamicActive = memberStatuses.some(item => ['recruiting', 'queued', 'running'].includes(item));
+    const dynamicTerminal = memberStatuses.length > 0 && memberStatuses.every(item => ['completed', 'merged', 'pruned', 'failed', 'skipped'].includes(item));
+    if (dynamicActive) status = 'running';
+    else if (dynamicTerminal && dynamicCompleted > 0) status = 'completed';
+    else if (dynamicTerminal && memberStatuses.includes('failed')) status = 'failed';
+    else if (nodeMembers.length) status = 'pending';
     const projectedCycle = Number(plan.middle_cycle || 0);
     const middleCycle = Number.isFinite(projectedCycle) ? Math.max(0, projectedCycle) : 0;
     const skills = stringList(plan.skill_ids || plan.skills || agent.skill_ids || agent.skills || meta.skills);
@@ -616,10 +896,10 @@ function WorkflowOverview({events, workflow, agents, live, completed}) {
       ...(stringList(plan.depends_on).length ? [`依赖 ${stringList(plan.depends_on).map(value => normalizeStepRef(value)).join('/')}`] : []),
       ...meta.semantics,
     ])].slice(0, 4);
-    const mergedAgents = dynamicAgents.filter(item => normalizeMergeTarget(item) === `S${meta.step}`);
+    const mergedAgents = nodeMembers;
     const backtrackCount = Number(plan.backtrack_count ?? events.filter(event => eventTargetsStep(event, meta.step, plan.agent_id || meta.agent_id)).length);
     const projectedName = plan.name || plan.label?.replace(/^S\d+\s*/, '') || agent.display_name?.replace(/^S\d+\s*/, '') || meta.name;
-    return {...meta, ...plan, agent_id: plan.agent_id || meta.agent_id, name: ensureAgentSuffix(projectedName), task: plan.task || plan.description || agent.description || meta.task, executionMode, status, middleCycle, skills, harness, semantics, mergedAgents, backtrackCount: Number.isFinite(backtrackCount) ? Math.max(0, backtrackCount) : 0};
+    return {...meta, ...plan, agent_id: plan.agent_id || meta.agent_id, name: ensureAgentSuffix(projectedName), task: plan.task || plan.description || agent.description || meta.task, executionMode, status, middleCycle, skills, harness, semantics, mergedAgents, result_summary: plan.result_summary || (nodeMembers.length ? `动态蜂群 ${dynamicCompleted} / ${nodeMembers.length} 个实例完成` : ''), dynamicCompleted, dynamicTotal: nodeMembers.length, backtrackCount: Number.isFinite(backtrackCount) ? Math.max(0, backtrackCount) : 0};
   });
   const otherDynamicAgents = dynamicAgents.filter(item => !/^S[1-6]$/.test(normalizeMergeTarget(item)));
   const completedSteps = stepCards.filter(item => item.status === 'completed').length;
@@ -658,7 +938,7 @@ function WorkflowOverview({events, workflow, agents, live, completed}) {
       <p>{agent.task}</p>
       {agent.status === 'running' && agent.current_step && <div className="s-agent-result-preview"><small>当前步骤</small><span>{agent.current_step}{Number(agent.elapsed_seconds || 0) > 0 ? ` · 已耗时 ${Math.round(agent.elapsed_seconds)} 秒` : ''}</span></div>}
       {agent.result_summary && <div className="s-agent-result-preview"><small>本轮结果</small><span>{agentFacingText(agent.result_summary)}</span></div>}
-      <div className="s-agent-runtime"><span className={`step-mode ${agent.executionMode}`}>{stepModeLabel(agent.executionMode)}</span><span>{agent.middleCycle > 0 ? `L2 第 ${agent.middleCycle} 轮` : 'L2 未进入'}</span><span>回溯 {agent.backtrackCount} 次</span></div>
+      <div className="s-agent-runtime"><span className={`step-mode ${agent.executionMode}`}>{stepModeLabel(agent.executionMode)}</span><span>{agent.dynamicTotal > 0 ? `蜂群 ${agent.dynamicCompleted}/${agent.dynamicTotal}` : agent.middleCycle > 0 ? `L2 第 ${agent.middleCycle} 轮` : 'L2 未进入'}</span><span>回溯 {agent.backtrackCount} 次</span></div>
       {agent.status === 'skipped' && <small className="s-agent-skip-reason">由 {discovery.primary_branch || '当前'} 分支蓝图按业务路径跳过</small>}
       <details className="s-agent-tech"><summary>Skill、Harness 与编排说明</summary><div><code>{agent.agent_id}</code><div className="s-agent-skills"><small>核心 Skill</small><p>{agent.skills.slice(0, 3).map(skill => <em key={skill}>{skill}</em>)}</p></div><div className="s-agent-harness"><span>Harness</span><code>{agent.harness}</code></div><div className="s-agent-semantics">{agent.semantics.map(item => <span key={item}>{item}</span>)}</div></div></details>
       {agent.mergedAgents.length > 0 && <div className="s-agent-dynamic">{agent.mergedAgents.map((item, index) => <span key={item.agent_id || item.id || index}><Bot size={12}/><b>{item.display_name || item.name || '动态专用 Agent'}</b><small>合并到 S{agent.step}</small></span>)}</div>}
@@ -671,7 +951,18 @@ function WorkflowOverview({events, workflow, agents, live, completed}) {
 function InteractionEvent({event, agent}) { const tool = event.details?.tool_name; const swarmLifecycle = ['specialist_recruitment_planned','specialist_spawned','specialist_session_started','specialist_session_completed','specialist_completed','specialist_pruned'].includes(event.event_type); const detailKeys = event.event_type === 'discovery_meta_loop_evaluated' ? ['cycle','primary_branch','added_secondary_branches','step_mode_overrides','dynamic_subagents','stop_reason'] : swarmLifecycle ? ['wave','batch','archetype','role_purpose','hypothesis_id','merge_target','execution_backend','context_isolation','session_ref','status','reason'] : ['wave','archetype','hypothesis_id','merge_target','score','residuals','reasons','rejection_reasons','step','steps','current_step','elapsed_seconds','phase','execution_mode','status','passed']; const detailRows = detailKeys.filter(key => event.details?.[key] !== undefined).slice(0, 10).map(key => [key, event.details[key]]); return <article className={`event-card ${event.category}`}><div className="event-dot">{event.category === 'tool' ? <Wrench size={15}/> : event.actor === 'orchestrator' ? <Layers3 size={15}/> : <Bot size={15}/>}</div><div className="event-content"><div className="event-top"><b>{agentFacingText(agent?.display_name || event.details?.display_name || event.actor)}</b><span>{eventLabel(event.event_type)}</span></div><h3>{agentFacingText(tool || event.title)}</h3><p>{agentFacingText(event.summary)}</p>{(event.input_refs?.length > 0 || event.output_refs?.length > 0 || detailRows.length > 0) && <details><summary>关键详情</summary><div className="event-detail-grid">{event.input_refs?.length > 0 && <Detail label="输入引用" value={agentFacingText(event.input_refs.slice(0, 4).join(' · '))}/>} {event.output_refs?.length > 0 && <Detail label="输出引用" value={agentFacingText(event.output_refs.slice(0, 4).join(' · '))}/>} {detailRows.map(([key, value]) => <Detail key={key} label={fieldLabel(key)} value={formatValue(value)}/>)}</div></details>}</div></article>; }
 
 function ObjectGrid({view, rows}) { const list = Array.isArray(rows) ? rows : []; if (!list.length) return <Empty text="本次运行没有可展示对象"/>; if (view === 'capabilities') return <CapabilityImageView rows={list}/>; return <section className="object-grid">{list.map((row, index) => <article className="object-card" key={row.evidence_id || row.stage_id || row.capability_id || index}><div className="object-card-head"><b>{objectTitle(view, row, index)}</b><span>{row.layer || row.priority || row.source_tier || `#${index + 1}`}</span></div>{Object.entries(row).filter(([key, value]) => !['created_at', 'schema_version'].includes(key) && value !== '' && value != null).slice(0, 10).map(([key, value]) => <Detail key={key} label={fieldLabel(key)} value={formatValue(value)}/>)}</article>)}</section>; }
-function CapabilityImageView({rows}) { return <section className="capability-view"><div className="capability-summary"><div><span>能力方向</span><b>{rows.length}</b></div><div><span>高优先级</span><b>{rows.filter(row => String(row.priority).startsWith('高') || String(row.priority).startsWith('P1')).length}</b></div><div><span>平均置信度</span><b>{Math.round(rows.reduce((sum, row) => sum + (row.confidence || 0), 0) / rows.length * 100)}%</b></div></div>{rows.map((row, index) => { const gap = completeCapabilityText(row.capability_gap); const image = completeCapabilityText(row.capability_image); const portrait = completeCapabilityText(row.deep_capability_portrait || image); const structured = row.analysis_provenance_status !== 'legacy_derived'; return <article className="capability-sheet" key={`${row.capability_id || row.name || 'capability'}-${index}`}><header><div><span>{row.capability_type === 'new_capability' ? '新能力方向' : '现役升级方向'}</span><h2>{row.name}</h2><p>{row.equipment_form || row.equipment_category}</p></div><div className="capability-score"><b>{Math.round((row.confidence || 0) * 100)}%</b><small>结论置信度</small></div></header>{!structured && <div className="capability-legacy-note">该历史任务采用兼容画像；重新运行后将由独立装备能力综合模型生成深度画像。</div>}<div className="capability-meta"><span><b>编号</b>{row.capability_id}</span><span><b>优先级</b>{row.priority}</span><span><b>任务场景</b>{row.related_scenario}</span></div><section className="capability-portrait"><small>装备能力画像</small><p>{portrait}</p></section><section className="capability-thesis-grid"><CapabilityInsight title="武器装备发展落点" value={row.equipment_form || row.equipment_category}/><CapabilityInsight title="核心作战机理" value={row.operational_mechanism || row.strike_countermeasure_value}/><CapabilityInsight title="型号发展与演化路径" value={row.development_path || row.foresight}/></section><section className="capability-logic compact"><div><small>需要解决的核心差距</small><p>{gap}</p></div><div><small>预期任务效果</small><p>{row.mission_effect || row.military_utility || image}</p></div></section><details className="capability-trace"><summary>查看 S1–S6 论证依据与证据追溯</summary><div><section className="capability-logic"><div><small>来源制胜逻辑</small><p>{row.source_winning_logic}</p></div><div><small>作战运用约束</small><p>{(row.operational_constraints?.length ? row.operational_constraints : row.risk_boundaries || []).join('；')}</p></div></section>{structured && <section className="capability-insight-grid"><CapabilityInsight title="军事运用价值" value={row.military_utility || row.mission_effect}/><CapabilityInsight title="打击 / 反制价值" value={row.strike_countermeasure_value}/><CapabilityInsight title="新颖性" value={row.novelty}/><CapabilityInsight title="前瞻性" value={row.foresight}/></section>}{structured && <div className="capability-columns provenance"><CapabilitySection title="专业 Agent 贡献" rows={(row.agent_contributions || []).map(agentFacingText)}/><CapabilitySection title="证据依据" rows={(row.evidence_basis || []).map(agentFacingText)}/></div>}{structured && <CapabilitySection title="S1–S6 推理引用" rows={row.reasoning_refs || []}/>}</div></details><footer><span>关联证据 {row.evidence_ids?.length || 0} 项</span><code>{(row.evidence_ids || []).slice(0, 5).join(' · ')}</code></footer></article>; })}</section>; }
+function parseCapabilityPortrait(value) {
+  const normalized = completeCapabilityText(value).replace(/\s+(?=- (?:装备与技术实现|关键作战流程|形成能力与作战效果|制胜逻辑机理与对抗边界|发展与验证路径|决策与考核口径)：)/g, '\n');
+  const lines = normalized.split('\n').map(item => item.trim()).filter(Boolean);
+  const overview = (lines.find(item => !item.startsWith('- ')) || '').replace(/^概述：/, '');
+  const points = lines.filter(item => item.startsWith('- ') && !/^- 发展与验证路径[：:]/.test(item)).map(item => {
+    const match = item.slice(2).match(/^([^：]+)：(.*)$/);
+    return match ? {label:match[1].trim(), text:match[2].trim()} : {label:'论证要点', text:item.slice(2)};
+  });
+  return {overview, points};
+}
+function CapabilityPortrait({value}) { const {overview, points} = parseCapabilityPortrait(value); return <section className="capability-portrait"><small>装备能力画像 · 五模块作战论证</small>{overview && <p className="capability-portrait-overview"><b>概述</b>{overview}</p>}{points.length > 0 ? <ul>{points.map((item, index) => <li key={`${item.label}-${index}`}><b>{item.label}</b><span>{item.text}</span></li>)}</ul> : <p>{value}</p>}</section>; }
+function CapabilityImageView({rows}) { return <section className="capability-view"><div className="capability-summary"><div><span>能力方向</span><b>{rows.length}</b></div><div><span>高优先级</span><b>{rows.filter(row => String(row.priority).startsWith('高') || String(row.priority).startsWith('P1')).length}</b></div><div><span>平均置信度</span><b>{Math.round(rows.reduce((sum, row) => sum + (row.confidence || 0), 0) / rows.length * 100)}%</b></div></div>{rows.map((row, index) => { const image = completeCapabilityText(row.capability_image); const portrait = completeCapabilityText(row.deep_capability_portrait || image); const structured = row.analysis_provenance_status !== 'legacy_derived'; return <article className="capability-sheet" key={`${row.capability_id || row.name || 'capability'}-${index}`}><header><div><span>{row.capability_type === 'new_capability' ? '新能力方向' : '具体装备方向'}</span><h2>{row.name}</h2><p>{row.equipment_form || row.equipment_category}</p></div><div className="capability-score"><b>{Math.round((row.confidence || 0) * 100)}%</b><small>结论置信度</small></div></header>{!structured && <div className="capability-legacy-note">该历史任务采用兼容画像；页面已按现有字段重建精细画像，重新运行可获得更完整的独立综合结论。</div>}<div className="capability-meta"><span><b>编号</b>{row.capability_id}</span><span><b>优先级</b>{row.priority}</span><span><b>任务场景</b>{row.related_scenario}</span></div><CapabilityPortrait value={portrait}/><details className="capability-trace"><summary>查看 S1–S6 论证依据与证据追溯</summary><div><section className="capability-logic"><div><small>来源制胜逻辑</small><p>{row.source_winning_logic}</p></div><div><small>作战运用约束</small><p>{(row.operational_constraints?.length ? row.operational_constraints : row.risk_boundaries || []).join('；')}</p></div></section>{structured && <section className="capability-insight-grid"><CapabilityInsight title="军事运用价值" value={row.military_utility || row.mission_effect}/><CapabilityInsight title="打击 / 反制价值" value={row.strike_countermeasure_value}/><CapabilityInsight title="新颖性" value={row.novelty}/><CapabilityInsight title="前瞻性" value={row.foresight}/></section>}{structured && <div className="capability-columns provenance"><CapabilitySection title="专业 Agent 贡献" rows={(row.agent_contributions || []).map(agentFacingText)}/><CapabilitySection title="证据依据" rows={(row.evidence_basis || []).map(agentFacingText)}/></div>}{structured && <CapabilitySection title="S1–S6 推理引用" rows={row.reasoning_refs || []}/>}</div></details><footer><span>关联证据 {row.evidence_ids?.length || 0} 项</span><code>{(row.evidence_ids || []).slice(0, 5).join(' · ')}</code></footer></article>; })}</section>; }
 function CapabilityInsight({title, value}) { if (!value) return null; return <div><small>{title}</small><p>{value}</p></div>; }
 function CapabilitySection({title, rows}) { if (!rows?.length) return null; return <section className="capability-section"><h3>{title}</h3><ul>{rows.map((row, index) => <li key={`${title}-${index}`}><i>{String(index + 1).padStart(2, '0')}</i><span>{row}</span></li>)}</ul></section>; }
 function completeCapabilityText(value) { return String(value || '').trim(); }
@@ -783,16 +1074,16 @@ function RunDrawer({run, catalog, close, inspect, changed}) {
   useEffect(() => { setForm(runForm(run, catalog)); setEditing(false); setArchiveConfirm(false); setError(''); void loadHistory(); }, [run.run_id]);
   const set = (key, value) => setForm(current => ({...current, [key]: value}));
   const toggleAgent = id => set('selected_agent_ids', form.selected_agent_ids.includes(id) ? form.selected_agent_ids.filter(item => item !== id) : [...form.selected_agent_ids, id]);
-  const save = async () => { setSaving(true); setError(''); const updated = await request(`/runs/${run.run_id}`, null, {method: 'PATCH', headers: {'Content-Type': 'application/json', 'X-Role': 'analyst'}, body: JSON.stringify({topic: form.topic, supplemental_information: form.supplemental_information, research_route: form.research_route, interaction_mode: form.interaction_mode, discovery_branch: form.discovery_branch, execution_profile_id: form.execution_profile_id, selected_agent_ids: form.selected_agent_ids, max_rounds: Number(form.max_rounds), analyst_confirmed: run.analyst_confirmed || false})}); setSaving(false); if (updated) { changed(updated); setEditing(false); void loadHistory(); } else setError('保存失败。仅草稿任务可编辑。'); };
+  const save = async () => { setSaving(true); setError(''); const updated = await request(`/runs/${run.run_id}`, null, {method: 'PATCH', headers: {'Content-Type': 'application/json', 'X-Role': 'analyst'}, body: JSON.stringify({topic: form.topic, supplemental_information: form.supplemental_information, research_route: form.research_route, interaction_mode: form.interaction_mode, discovery_branch: form.discovery_branch, execution_profile_id: form.execution_profile_id, report_template_mode: form.report_template_mode, selected_agent_ids: form.selected_agent_ids, max_rounds: Number(form.max_rounds), analyst_confirmed: run.analyst_confirmed || false})}); setSaving(false); if (updated) { changed(updated); setEditing(false); void loadHistory(); } else setError('保存失败。仅草稿任务可编辑。'); };
   const archive = async () => { setSaving(true); const updated = await request(`/runs/${run.run_id}`, null, {method: 'DELETE', headers: {'X-Role': 'analyst'}}); setSaving(false); if (updated) { changed(updated); close(); } else setError('归档失败。运行中的任务不能归档。'); };
   const resume = async () => { setSaving(true); setError(''); const result = await requestResult(`/runs/${run.run_id}/resume`, {method: 'POST', headers: {'Idempotency-Key': crypto.randomUUID(), 'X-Role': 'analyst'}}); setSaving(false); if (result.ok) { changed(result.data); void loadHistory(); } else setError(result.detail || '断点恢复失败，请检查 Worker 与模型配置。'); };
   const harnessLabel = run.execution_profile_id === 'winning_swarm_dynamic_v2' ? 'Winning Swarm Dynamic v2 Challenger' : run.execution_profile_id === 'swarm_quality_v1' ? 'Swarm Quality v1 Challenger' : run.execution_profile_id === 'optimized_v2' ? 'Optimized v2 Challenger' : 'Legacy v1';
-  return <div className="drawer-backdrop" onClick={close}><aside className="run-drawer" onClick={event => event.stopPropagation()}><button className="drawer-close icon-button" title="关闭" onClick={close}><X size={16}/></button><span className="drawer-eyebrow">研究任务 · {run.run_id}</span>{editing ? <section className="drawer-editor"><Field label="研究主题"><input value={form.topic} onChange={event => set('topic', event.target.value)}/></Field><Field label="补充信息（可选）"><textarea className="supplement-input" value={form.supplemental_information} maxLength={8000} onChange={event => set('supplemental_information', event.target.value)}/></Field><div className="drawer-edit-grid"><Field label="研究路线"><select value={form.research_route} onChange={event => set('research_route', event.target.value)}><option value="auto">按发现分支自动映射</option>{catalog.routes.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="交互模式"><select value={form.interaction_mode} onChange={event => set('interaction_mode', event.target.value)}>{(catalog.interaction_modes || []).map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="A–H 发现分支"><select value={form.discovery_branch} onChange={event => set('discovery_branch', event.target.value)}><option value="auto">Agent 自动选择</option>{(catalog.discovery_branches || []).map(item => <option key={item.id} value={item.id}>{item.id} · {item.name}</option>)}</select></Field><Field label="Harness 执行画像"><select value={form.execution_profile_id} onChange={event => set('execution_profile_id', event.target.value)}>{(catalog.execution_profiles || [{id:'legacy_v1',name:'Legacy v1'}]).filter(item => !item.evaluation_only || item.id === form.execution_profile_id).map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="最大轮次"><select value={form.max_rounds} onChange={event => set('max_rounds', Number(event.target.value))}>{[1,2,3,...(form.execution_profile_id === 'legacy_v1' ? [4,5] : [])].map(item => <option key={item} value={item}>{item} 轮</option>)}</select></Field></div><div className="drawer-agent-list">{businessAgents(catalog).map(agent => <label key={agent.agent_id} className={form.selected_agent_ids.includes(agent.agent_id) ? 'selected' : ''}><input type="checkbox" checked={form.selected_agent_ids.includes(agent.agent_id)} onChange={() => toggleAgent(agent.agent_id)}/><span>{agent.display_name}</span></label>)}</div><div className="drawer-editor-actions"><button onClick={() => setEditing(false)}><X size={15}/>取消</button><button className="primary" disabled={saving || !form.topic.trim()} onClick={save}><Save size={15}/>{saving ? '保存中' : '保存草稿'}</button></div></section> : <><h2>{run.topic}</h2><Status value={run.status}/>{run.supplemental_information && <section className="drawer-supplement"><b>用户补充信息</b><p>{run.supplemental_information}</p><small>执行时由主控 Agent 压缩并结构化传递</small></section>}<dl><dt>研究路线</dt><dd>{routeLabel(run.research_route)}</dd><dt>交互模式</dt><dd>{run.interaction_mode === 'autonomous' ? '智能元编排' : '专家约束编排'}</dd><dt>A–H 分支</dt><dd>{run.discovery_branch === 'auto' ? 'Agent 自动选择' : run.discovery_branch}</dd><dt>Harness</dt><dd>{harnessLabel}</dd><dt>执行方式</dt><dd><ExecutionBadge execution={run.execution}/></dd><dt>业务 Agent</dt><dd>{run.selected_agent_ids.length ? run.selected_agent_ids.map(agentModelLabel).join('、') : '由编排 Agent 智能选择'}</dd><dt>最大轮次</dt><dd>{run.max_rounds}</dd></dl><div className="drawer-steps">{['问题解析与任务委派', '基线 Agent 研判', 'S1–S6 轻量门控与按需回溯', '五判据审计', '研究报告输出'].map((item, index) => { const failed = reportStageFailed && index === 4; return <div key={item}><i className={failed ? 'failed' : index < stageIndex ? 'done' : index === stageIndex ? 'active' : ''}/><span>{item}</span>{failed && <Status value="failed"/>}</div>; })}</div>{(done || ['queued', 'planning', 'researching', 'recalling', 'failed'].includes(run.status)) && <div className="drawer-actions"><button onClick={() => inspect('interactions')}><History size={15}/>交互过程</button>{run.status === 'failed' && <button className="primary" disabled={saving} onClick={resume}>{saving ? '恢复中' : '从断点继续'}</button>}{done && <><button onClick={() => inspect('evidence')}>证据中心</button><button onClick={() => inspect('winning')}>S1–S6 Agent</button><button className="primary" onClick={() => inspect('capabilities')}>能力画像</button></>}</div>}{canEdit && <button className="drawer-manage" onClick={() => setEditing(true)}><Pencil size={15}/>编辑草稿</button>}{canArchive && <div className="archive-action">{archiveConfirm ? <><span>归档后任务从当前列表隐藏，审计产物仍保留。</span><button onClick={() => setArchiveConfirm(false)}>取消</button><button className="danger" disabled={saving} onClick={archive}><Trash2 size={14}/>确认归档</button></> : <button onClick={() => setArchiveConfirm(true)}><Archive size={15}/>归档任务</button>}</div>}</>}{error && <p className="form-error"><CircleAlert size={15}/>{error}</p>}<section className="run-history"><div><History size={16}/><b>执行历史</b><span>{historyRows.length} 个事件</span></div>{historyRows.length ? historyRows.slice(-24).reverse().map(row => <article key={row.sequence}><i/><span><b>{eventLabel(row.event_type)}</b><small>#{row.sequence} · {historySummary(row, run.result?.audit_status)}</small></span></article>) : <p>尚无历史事件</p>}</section></aside></div>;
+  return <div className="drawer-backdrop" onClick={close}><aside className="run-drawer" onClick={event => event.stopPropagation()}><button className="drawer-close icon-button" title="关闭" onClick={close}><X size={16}/></button><span className="drawer-eyebrow">研究任务 · {run.run_id}</span>{editing ? <section className="drawer-editor"><Field label="研究主题"><input value={form.topic} onChange={event => set('topic', event.target.value)}/></Field><Field label="补充信息（可选）"><textarea className="supplement-input" value={form.supplemental_information} maxLength={8000} onChange={event => set('supplemental_information', event.target.value)}/></Field><div className="drawer-edit-grid"><Field label="研究路线"><select value={form.research_route} onChange={event => set('research_route', event.target.value)}><option value="auto">按发现分支自动映射</option>{catalog.routes.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="交互模式"><select value={form.interaction_mode} onChange={event => set('interaction_mode', event.target.value)}>{(catalog.interaction_modes || []).map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="A–H 发现分支"><select value={form.discovery_branch} onChange={event => set('discovery_branch', event.target.value)}><option value="auto">Agent 自动选择</option>{(catalog.discovery_branches || []).map(item => <option key={item.id} value={item.id}>{item.id} · {item.name}</option>)}</select></Field><Field label="运行模式"><select value={form.execution_profile_id} onChange={event => set('execution_profile_id', event.target.value)}>{(catalog.execution_profiles || [{id:'legacy_v1',name:'Legacy v1'}]).filter(item => item.selectable !== false).map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="最大轮次"><select value={form.max_rounds} onChange={event => set('max_rounds', Number(event.target.value))}>{[1,2,3,...(form.execution_profile_id === 'legacy_v1' ? [4,5] : [])].map(item => <option key={item} value={item}>{item} 轮</option>)}</select></Field></div><div className="drawer-agent-list">{businessAgents(catalog).map(agent => <label key={agent.agent_id} className={form.selected_agent_ids.includes(agent.agent_id) ? 'selected' : ''}><input type="checkbox" checked={form.selected_agent_ids.includes(agent.agent_id)} onChange={() => toggleAgent(agent.agent_id)}/><span>{agent.display_name}</span></label>)}</div><div className="drawer-editor-actions"><button onClick={() => setEditing(false)}><X size={15}/>取消</button><button className="primary" disabled={saving || !form.topic.trim()} onClick={save}><Save size={15}/>{saving ? '保存中' : '保存草稿'}</button></div></section> : <><h2>{run.topic}</h2><Status value={run.status}/>{run.supplemental_information && <section className="drawer-supplement"><b>用户补充信息</b><p>{run.supplemental_information}</p><small>执行时由主控 Agent 压缩并结构化传递</small></section>}<dl><dt>研究路线</dt><dd>{routeLabel(run.research_route)}</dd><dt>交互模式</dt><dd>{run.interaction_mode === 'autonomous' ? '智能元编排' : '专家约束编排'}</dd><dt>A–H 分支</dt><dd>{run.discovery_branch === 'auto' ? 'Agent 自动选择' : run.discovery_branch}</dd><dt>Harness</dt><dd>{harnessLabel}</dd><dt>执行方式</dt><dd><ExecutionBadge execution={run.execution}/></dd><dt>业务 Agent</dt><dd>{run.selected_agent_ids.length ? run.selected_agent_ids.map(agentModelLabel).join('、') : '由编排 Agent 智能选择'}</dd><dt>最大轮次</dt><dd>{run.max_rounds}</dd></dl><div className="drawer-steps">{['问题解析与任务委派', '基线 Agent 研判', 'S1–S6 轻量门控与按需回溯', '五判据审计', '研究报告输出'].map((item, index) => { const failed = reportStageFailed && index === 4; return <div key={item}><i className={failed ? 'failed' : index < stageIndex ? 'done' : index === stageIndex ? 'active' : ''}/><span>{item}</span>{failed && <Status value="failed"/>}</div>; })}</div>{(done || ['queued', 'planning', 'researching', 'recalling', 'failed'].includes(run.status)) && <div className="drawer-actions"><button onClick={() => inspect('interactions')}><History size={15}/>交互过程</button>{run.status === 'failed' && <button className="primary" disabled={saving} onClick={resume}>{saving ? '恢复中' : '从断点继续'}</button>}{done && <><button onClick={() => inspect('evidence')}>证据中心</button><button onClick={() => inspect('winning')}>S1–S6 Agent</button><button className="primary" onClick={() => inspect('capabilities')}>能力画像</button></>}</div>}{canEdit && <button className="drawer-manage" onClick={() => setEditing(true)}><Pencil size={15}/>编辑草稿</button>}{canArchive && <div className="archive-action">{archiveConfirm ? <><span>归档后任务从当前列表隐藏，审计产物仍保留。</span><button onClick={() => setArchiveConfirm(false)}>取消</button><button className="danger" disabled={saving} onClick={archive}><Trash2 size={14}/>确认归档</button></> : <button onClick={() => setArchiveConfirm(true)}><Archive size={15}/>归档任务</button>}</div>}</>}{error && <p className="form-error"><CircleAlert size={15}/>{error}</p>}<section className="run-history"><div><History size={16}/><b>执行历史</b><span>{historyRows.length} 个事件</span></div>{historyRows.length ? historyRows.slice(-24).reverse().map(row => <article key={row.sequence}><i/><span><b>{eventLabel(row.event_type)}</b><small>#{row.sequence} · {historySummary(row, run.result?.audit_status)}</small></span></article>) : <p>尚无历史事件</p>}</section></aside></div>;
 }
 
 function providerDisplayLabel() { return 'Agent'; }
 function agentFacingText(value) { return String(value ?? '').replace(/\u7532\u65b9可读能力画像报告/g, '能力画像研究报告').replace(/\u7532\u65b9能力画像报告/g, '能力画像研究报告').replace(/\u7532\u65b9报告/g, '研究报告').replace(/\u7532\u65b9/g, '项目').replace(/codex\s*子\s*agent/gi, '专用 Agent').replace(/codex[\s_-]*cli/gi, 'Agent').replace(/codex\s*专用\s*agent/gi, '专用 Agent').replace(/自定义\s*agent/gi, 'Agent').replace(/codex/gi, 'Agent'); }
-function runForm(run) { return {topic: run.topic, supplemental_information: run.supplemental_information || '', research_route: run.research_route, interaction_mode: run.interaction_mode || 'expert', discovery_branch: run.discovery_branch || 'auto', execution_profile_id: run.execution_profile_id || 'legacy_v1', selected_agent_ids: [...run.selected_agent_ids], max_rounds: run.max_rounds}; }
+function runForm(run) { return {topic: run.topic, supplemental_information: run.supplemental_information || '', research_route: run.research_route, interaction_mode: run.interaction_mode || 'expert', discovery_branch: run.discovery_branch || 'auto', execution_profile_id: run.execution_profile_id || 'legacy_v1', report_template_mode: run.report_template_mode || 'three_layer_nine_item', selected_agent_ids: [...run.selected_agent_ids], max_rounds: run.max_rounds}; }
 function agentModelLabel(id) { return {orchestrator:'编排器',scenario_divergence:'场景发散',case_research:'案例研究',technology_radar:'技术雷达',opponent_monitoring:'对手监测',system_confrontation:'体系对抗',cross_domain_fusion:'跨域融合',nontraditional_security:'非传统安全',international_situation:'国际形势',combat_scenario:'作战场景',weapon_equipment:'武器装备',operational_employment:'作战运用',convergence_fusion:'收敛融合',winning_mechanism:'S Agent 编排器',winning_dynamic_specialist:'动态专用 Agent 模板',winning_s1_opponent:'S1 对手分析',winning_s2_operations:'S2 作战运用审查',winning_s3_breakthrough:'S3 突破口思考',winning_s4_capability:'S4 装备能力映射',winning_s5_gap:'S5 装备现状差距',winning_s6_image:'S6 能力图像综合',winning_step_critic:'步骤批判',winning_round_critic:'中循环批判',auditor:'审计',reporter:'报告'}[id] || id; }
 function stringList(value) { if (value == null || value === '') return []; const rows = Array.isArray(value) ? value : [value]; return rows.map(item => typeof item === 'object' && item !== null ? item.skill_id || item.id || item.name || '' : String(item)).filter(Boolean); }
 function ensureAgentSuffix(value) { const text = agentFacingText(value || '专用 Agent').trim(); return /agent$/i.test(text) ? text : `${text} Agent`; }

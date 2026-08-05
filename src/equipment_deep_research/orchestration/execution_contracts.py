@@ -46,14 +46,13 @@ class BranchExecutionContract:
     codex_concurrency: int = 5
     wall_clock_deadlines_enabled: bool = False
     soft_deadline_seconds: int = 0
-    # There is no intermediate wall-clock hard stop.  Work may continue until
-    # the single 40-minute absolute deadline; call budgets and the soft budget
-    # still prevent unbounded optional expansion.
+    # Real completeness runs have no wall-clock soft, hard, or absolute stop.
+    # Model-call budgets and bounded concurrency still prevent unbounded work.
     hard_deadline_seconds: int = 0
     delivery_grace_seconds: int = 0
     absolute_deadline_seconds: int = 0
     maximum_delivery_model_calls: int = 4
-    maximum_swarm_model_calls: int = 16
+    maximum_swarm_model_calls: int = 20
     maximum_quality_judge_model_calls: int = 2
     deadline_downshift_window_seconds: int = 240
     critical_fast_finalize_seconds: int = 0
@@ -430,7 +429,10 @@ def winning_swarm_dynamic_v2_profile() -> ExecutionProfile:
         },
         budgets={
             **dict(optimized_v2_profile().budgets),
-            "max_dynamic_instances": 16,
+            # Keep the provider gate aligned with the mission graph's explicit
+            # six-instance concurrency contract.
+            "codex_concurrency": 6,
+            "max_dynamic_instances": 18,
             "min_mission_graph_instances": 8,
             "target_mission_graph_instances": 12,
             "max_swarm_concurrency": 6,
@@ -466,9 +468,13 @@ def apply_execution_profile_to_blueprint(
         return result
     branch = str(result.get("primary_branch", "A"))
     contract = profile.branch_contracts[branch]
+    runtime_codex_concurrency = int(
+        profile.budgets.get("codex_concurrency", contract.codex_concurrency)
+    )
     result["execution_profile_id"] = profile.profile_id
     result["execution_profile_hash"] = profile.config_hash()
     result["execution_contract"] = contract.to_dict()
+    result["execution_contract"]["codex_concurrency"] = runtime_codex_concurrency
     result["baseline_execution_mode"] = "query_dominant_isolated_parallel"
     result["minimum_business_agents"] = 3
     result["maximum_business_agents"] = 4
@@ -491,19 +497,27 @@ def apply_execution_profile_to_blueprint(
         swarm_policy.update(
             {
                 "policy_id": "winning_swarm_dynamic_v2",
-                "max_dynamic_instances": 16,
+                "max_dynamic_instances": 18,
                 "max_concurrency": 6,
                 "mission_graph_min_instances": 8,
-                "mission_graph_target_instances": 12,
-                "mission_graph_max_instances": 16,
+            # Keep four of the sixteen governed producer slots available for
+            # post-judge residual repair.  The previous target of fifteen was
+            # immediately filled by opportunistic recruitment, after which
+            # repair expanded the graph beyond its advertised hard cap.
+            "mission_graph_target_instances": 12,
+                "mission_graph_max_instances": 18,
                 "finalist_minimum": 5,
                 "finalist_maximum": 7,
+                "minimum_direct_combat_equipment": 4,
+                "preferred_distinct_direct_equipment": 5,
+                "expert_candidate_pool_maximum": 10,
                 "expert_judge_enabled": True,
                 "expert_judge_required": True,
                 "expert_judge_minimum_score": 0.72,
                 "expert_judge_critical_dimension_minimum": 0.60,
                 "expert_repair_enabled": True,
-                "expert_repair_max_candidates": 3,
+            "expert_repair_max_candidates": 6,
+            "expert_repair_reserved_instances": 6,
                 "expert_repair_minimum_score": 0.70,
             }
         )
@@ -515,7 +529,7 @@ def apply_execution_profile_to_blueprint(
         "maximum_model_calls": contract.maximum_model_calls,
         "maximum_model_calls_with_residuals": contract.maximum_model_calls_with_residuals,
         "maximum_searches": contract.maximum_searches,
-        "codex_concurrency": contract.codex_concurrency,
+        "codex_concurrency": runtime_codex_concurrency,
         "wall_clock_deadlines_enabled": contract.wall_clock_deadlines_enabled,
         "soft_deadline_seconds": contract.soft_deadline_seconds,
         "hard_deadline_seconds": contract.hard_deadline_seconds,
@@ -529,6 +543,16 @@ def apply_execution_profile_to_blueprint(
         "delivery_retry_reserve_seconds": contract.delivery_retry_reserve_seconds,
         "fast_finalize_output_token_cap": contract.fast_finalize_output_token_cap,
     }
+    if profile.profile_id == "winning_swarm_dynamic_v2":
+        # Keep one final residual review available when the second review has
+        # enough passing cards but still misses the five-family hard gate. The
+        # extra review is fed only bounded repair deltas, not the full ledger.
+        result["runtime_budgets"].update(
+            {
+                "maximum_swarm_model_calls": 20,
+                "maximum_quality_judge_model_calls": 3,
+            }
+        )
     return result
 
 

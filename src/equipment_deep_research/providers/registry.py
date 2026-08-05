@@ -61,6 +61,7 @@ class ProviderRegistry:
         model: str | None = None,
         base_url: str | None = None,
         api_key_env: str | None = None,
+        api_key: str | None = None,
         workspace_path: str | Path | None = None,
         isolation_key: str | None = None,
         include_default_skills: bool = True,
@@ -81,12 +82,12 @@ class ProviderRegistry:
             codex_key_env = (
                 api_key_env or os.environ.get("EQUIPMENT_DR_CODEX_API_KEY_ENV", "")
             ).strip()
-            if not _valid_environment_name(codex_key_env):
+            if not api_key and not _valid_environment_name(codex_key_env):
                 raise ProviderConfigurationError(
                     "Codex requires a custom API key environment variable; "
                     "local ChatGPT/Codex login inheritance is disabled"
                 )
-            codex_api_key = os.environ.get(codex_key_env, "").strip()
+            codex_api_key = str(api_key or os.environ.get(codex_key_env, "")).strip()
             if not codex_api_key:
                 raise ProviderConfigurationError(
                     f"missing required Codex credential: {codex_key_env}"
@@ -137,7 +138,7 @@ class ProviderRegistry:
                 timeout_seconds=int(
                     os.environ.get(
                         "EQUIPMENT_DR_CODEX_TIMEOUT_SECONDS",
-                        profile.get("timeout_seconds", 21600),
+                        profile.get("timeout_seconds", 900),
                     )
                 ),
                 sandbox_mode=str(profile.get("sandbox_mode", "read-only")),
@@ -149,7 +150,7 @@ class ProviderRegistry:
                 retry_attempts=int(
                     os.environ.get(
                         "EQUIPMENT_DR_CODEX_RETRY_ATTEMPTS",
-                        profile.get("retry_attempts", 2),
+                        profile.get("retry_attempts", 1),
                     )
                 ),
                 isolation_id=str(isolation_key or "shared"),
@@ -158,12 +159,12 @@ class ProviderRegistry:
         if kind != "responses_http":
             raise ProviderConfigurationError(f"unsupported provider type: {kind}")
         key_env = api_key_env or str(profile.get("api_key_env", ""))
-        if not _valid_environment_name(key_env):
+        if not api_key and not _valid_environment_name(key_env):
             raise ProviderConfigurationError(
                 "API key environment variable name is invalid"
             )
-        api_key = os.environ.get(key_env)
-        if not api_key:
+        resolved_api_key = str(api_key or os.environ.get(key_env, "")).strip()
+        if not resolved_api_key:
             raise ProviderConfigurationError(
                 f"missing required provider credential: {key_env}"
             )
@@ -177,11 +178,13 @@ class ProviderRegistry:
         return ResponsesProvider(
             model=model or str(profile.get("model", "gpt-5.5")),
             base_url=resolved_base_url,
-            api_key=api_key,
+            api_key=resolved_api_key,
             timeout_seconds=int(profile.get("timeout_seconds", 120)),
         )
 
-    def profile_snapshot(self, profile_name: str | None = None) -> dict[str, str]:
+    def profile_snapshot(
+        self, profile_name: str | None = None, *, model: str | None = None
+    ) -> dict[str, str]:
         name = profile_name or self.default_provider
         try:
             profile = self._profiles[name]
@@ -191,7 +194,7 @@ class ProviderRegistry:
             ) from exc
         kind = str(profile.get("type", ""))
         if kind == "fake":
-            return {"type": "fake", "model": "fake", "base_url_host": ""}
+            return {"type": "fake", "model": model or "fake", "base_url_host": ""}
         if kind == "codex_cli":
             base_url = os.environ.get(
                 "EQUIPMENT_DR_CODEX_BASE_URL",
@@ -199,7 +202,7 @@ class ProviderRegistry:
             )
             return {
                 "type": "codex_cli",
-                "model": str(profile.get("model", "")) or "(cli default)",
+                "model": model or str(profile.get("model", "")) or "(cli default)",
                 "base_url_host": urlsplit(base_url).hostname or "",
                 "command": str(profile.get("command", "codex")),
                 "sandbox_mode": str(profile.get("sandbox_mode", "read-only")),
@@ -210,8 +213,28 @@ class ProviderRegistry:
         )
         return {
             "type": "responses",
-            "model": str(profile.get("model", "gpt-5.5")),
+            "model": model or str(profile.get("model", "gpt-5.5")),
             "base_url_host": urlsplit(base_url).hostname or "",
+        }
+
+    def public_options(self) -> dict[str, Any]:
+        profiles = []
+        for name, profile in self._profiles.items():
+            if name == "fake":
+                continue
+            kind = str(profile.get("type", ""))
+            profiles.append(
+                {
+                    "id": name,
+                    "label": "Codex Agent" if kind == "codex_cli" else "Responses API",
+                    "type": kind,
+                    "default_model": str(profile.get("model", "")),
+                }
+            )
+        return {
+            "default_provider": self.default_provider,
+            "providers": profiles,
+            "reasoning_efforts": ["low", "medium", "high", "xhigh"],
         }
 
 

@@ -88,6 +88,17 @@ PHASE_INSTRUCTIONS = {
 本阶段只完成需求语义解析、驱动源识别和初始蓝图建议。
 若输入包含 supplemental_information，先压缩为 structured_query_brief：保留核心问题、最多6个焦点问题、
 最多8个发散维度以及最多6个约束/假设；删除重复措辞，不得把用户假设写成已证实事实。
+无论是否有补充信息，都必须利用Codex对完整Query做一次开放式装备语义推演，并写入structured_query_brief：
+建立combat_problem_frame、enemy_target_profile、battle_phase_and_constraints、required_direct_military_effects；
+再从发射域、平台、目标运动/防护包线、感知导引、突防/拦截方式、毁伤机理、成本与规模运用等维度，
+形成weapon_design_variables和3至6个query_specific_weapon_architectures。架构必须聚焦具体打击、毁伤、
+压制或拦截武器，至少2个不得复述系统Prompt中的示例装备。该过程是语义推演，不得使用关键词穷举、
+固定装备目录或为覆盖示例机械配额；与Query缺少直接因果关系的常见模板写入rejected_template_anchors。
+在大方向发散后，进一步形成3至6个equipment_project_hypotheses；每项必须给出可独立论证的装备项目暂定名、
+具体装备形态、项目功能、Query因果关系、目标/威胁、适用阶段、直接军事效果、关键设计变量、创新逻辑、
+证据问题和淘汰条件。项目功能必须用“谁在什么条件下，依靠该装备完成什么动作并产生何种任务结果”表达，
+不得退化为“提升智能化/体系化能力”等抽象标签。示例型号只能作为思考发生维度；若并非公开在研项目，
+必须标为概念性工作名，不得写成已存在事实。
 后续Agent只消费该结构化简报，不直接继承长篇用户补充原文。
 对补充信息逐项确定唯一主归属；同一内容不得同时成为主分支、次分支和基线Agent的平行任务。
 无法自然归入A-H但可由现有基线Agent覆盖的内容，写入该Agent的短发散角度，不创建伪分支。
@@ -135,6 +146,27 @@ BLUEPRINT_OUTPUT_SCHEMA: dict[str, Any] = {
         "focus_questions": ["最多6个可委派、可验证的问题"],
         "expansion_dimensions": ["最多8个建议发散维度"],
         "constraints_and_assumptions": ["最多6个约束或待验证假设"],
+        "combat_problem_frame": "基于完整Query语义推演的任务对象、对手、阶段和核心作战矛盾",
+        "enemy_target_profile": ["敌方目标/威胁、行为、防护和反制特征"],
+        "battle_phase_and_constraints": ["真实作战阶段、地域/距离、链路/环境和交战约束"],
+        "required_direct_military_effects": ["摧毁、歼灭、压制、拦截、封控等直接战果"],
+        "weapon_design_variables": ["由Query反推的发射域、平台、目标包线、导引、突防、毁伤、成本变量"],
+        "query_specific_weapon_architectures": ["3至6个Query专属具体打击杀伤武器架构，至少2个非Prompt示例"],
+        "equipment_project_hypotheses": [
+            {
+                "project_name": "装备项目暂定名；概念名不得伪装成公开项目",
+                "equipment_form": "可独立研制、改装和试验的具体装备形态",
+                "project_function": "谁在什么条件下依靠该装备完成什么动作并产生何种任务结果",
+                "query_causal_link": "为什么由当前Query而不是示例目录导出",
+                "target_and_phase": "目标/威胁、作战阶段和主要约束",
+                "direct_military_effect": "直接打击、毁伤、压制、拦截、拒止或续接火力效果",
+                "design_variables": ["平台、发射域、导引、突防/拦截、毁伤、成本规模等变量"],
+                "innovation_logic": ["成本|平台|时间|毁伤|体系|伦理与博弈|传统域跨代|新质域高维优速"],
+                "evidence_questions": ["deep research必须核验的公开证据问题"],
+                "rejection_condition": "何种证据、边界或比较结果出现时不得立项",
+            }
+        ],
+        "rejected_template_anchors": ["与当前Query无直接因果关系、不得默认生成的常见装备模板"],
         "handoff_rule": "说明假设需验证且不得视为事实",
     },
     "meta_triggers": ["触发L4复核的可观察条件"],

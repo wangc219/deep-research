@@ -331,7 +331,7 @@ def test_risk_based_gate_keeps_calibration_request_as_validation_backlog() -> No
         ],
     }
 
-    stages, _, _ = WinningMechanismEngine(risk_based_gates=True).run(
+    stages, images, _ = WinningMechanismEngine(risk_based_gates=True).run(
         topic="topic",
         route="traditional_gap",
         store=store,
@@ -384,7 +384,7 @@ def test_risk_based_targeted_evidence_stays_blocking_without_direct_evidence() -
     store.add_baseline_packet(packet)
     store.add_evidence(evidence)
 
-    stages, _, _ = WinningMechanismEngine(risk_based_gates=True).run(
+    stages, images, _ = WinningMechanismEngine(risk_based_gates=True).run(
         topic="topic",
         route="traditional_gap",
         store=store,
@@ -430,6 +430,7 @@ def test_risk_based_targeted_evidence_stays_blocking_without_direct_evidence() -
     assert stages[-1].gate_passed is False
     assert stages[-1].recall_requests
     assert any("缺少有效直接证据" in reason for reason in stages[-1].gate_reasons)
+    assert images[0].evidence_ids == []
 
 
 def test_three_routes_generate_distinct_product_function_images() -> None:
@@ -589,8 +590,9 @@ def test_model_directions_are_all_preserved_as_capability_images() -> None:
     assert "效应器选择" in upgrade.strike_countermeasure_value
     assert "软件定义" in upgrade.novelty
     assert "智能化干扰" in upgrade.foresight
-    assert upgrade.capability_image != upgrade.deep_capability_portrait
-    assert "不得作为独立能力方向" in upgrade.deep_capability_portrait
+    assert upgrade.capability_image == upgrade.deep_capability_portrait
+    assert "关键作战流程" in upgrade.deep_capability_portrait
+    assert "制胜逻辑机理" in upgrade.deep_capability_portrait
     assert "指挥火控" in upgrade.equipment_category
     assert "效应器选择" in upgrade.operational_mechanism
     assert upgrade.development_path.startswith("近期完成")
@@ -661,6 +663,9 @@ def test_s6_final_weapon_set_cannot_be_replaced_by_upstream_abstract_direction()
                     "military_value": "直接形成远程打击、猎歼、压制或毁伤效果",
                     "equipment_form": name,
                     "operational_mechanism": "在受扰条件下完成目标确认与直接火力交战",
+                    "capability_portrait": (
+                        "概述：面向错误场景，针对无关任务，以同一错误装备画像描述全部候选。"
+                    ),
                 }
                 for index, name in enumerate(final_names)
             ],
@@ -671,6 +676,11 @@ def test_s6_final_weapon_set_cannot_be_replaced_by_upstream_abstract_direction()
     assert [item.name for item in images] == final_names
     assert [item.name for item in store.capability_images.values()] == final_names
     assert not any("分布式目标指示与连续火力协同能力" in item.name for item in images)
+    assert len({item.deep_capability_portrait for item in images}) == len(final_names)
+    assert all(
+        item.name in item.deep_capability_portrait and "错误场景" not in item.deep_capability_portrait
+        for item in images
+    )
 
 
 def test_capability_image_summarizes_structured_baseline_without_debug_repr() -> None:
@@ -725,7 +735,8 @@ def test_capability_image_summarizes_structured_baseline_without_debug_repr() ->
 
     assert "系统可用度：需按演训基线测量" in images[0].capability_gap
     assert "{'parameter'" not in images[0].capability_gap
-    assert "弱网环境：跨平台协同能力下降" in images[0].capability_image
+    assert "弱网环境：跨平台协同能力下降" in images[0].verification_plan
+    assert "发展与验证路径" not in images[0].capability_image
 
 
 def test_report_uses_normative_capability_image_sections() -> None:
@@ -1264,6 +1275,29 @@ def test_final_report_reconciliation_preserves_real_quality_failure() -> None:
 
     assert reconciled.status == "limited"
     assert reconciled.checks["coverage"] is False
+
+
+def test_final_report_reconciliation_preserves_failed_expert_judgement() -> None:
+    audit = AuditResult(
+        audit_id="audit-001",
+        status="limited",
+        checks={
+            "consistency": True,
+            "stage_gates_passed": True,
+            "confidence_ge_70": True,
+            "coverage": True,
+            "user_confirmation": True,
+            "round_limit": True,
+            "source_materialization": True,
+            "expert_judge_passed": False,
+        },
+        comments=["质量专家评判未通过。"],
+    )
+
+    reconciled = _reconcile_final_audit_status(audit, optimized_v2=True)
+
+    assert reconciled.status == "limited"
+    assert reconciled.checks["expert_judge_passed"] is False
 
 
 def test_audit_accepts_reader_materialized_source() -> None:

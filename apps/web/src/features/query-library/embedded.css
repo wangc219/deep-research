@@ -1,0 +1,14 @@
+.query-direct-button {
+  height: 38px !important;
+  border-color: #dadff0 !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  color: #5967b8 !important;
+  font-weight: 700;
+}
+
+.query-library-page.embedded {
+  margin-bottom: 30px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid #e2e6f1;
+}

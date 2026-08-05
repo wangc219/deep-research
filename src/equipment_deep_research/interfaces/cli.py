@@ -32,6 +32,14 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--topic", required=True)
     parser.add_argument(
+        "--supplemental-information",
+        default="",
+        help=(
+            "Detailed research boundaries, operational conditions, and required "
+            "deliverables that complement the concise topic."
+        ),
+    )
+    parser.add_argument(
         "--research-route",
         choices=["auto", "new_winning_mechanism", "traditional_gap", "war_case_learning"],
         default="auto",
@@ -57,6 +65,14 @@ def main(argv: list[str] | None = None) -> int:
         default=str(project_root / "configs" / "equipment_deep_research" / "evidence.yaml"),
     )
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument(
+        "--allow-resume-config-mismatch",
+        action="store_true",
+        help=(
+            "Explicitly revalidate and resume a checkpoint after an intentional "
+            "configuration or code-contract change. Default resume remains strict."
+        ),
+    )
     parser.add_argument("--analyst-confirmed", action="store_true")
     parser.add_argument("--as-of-date", default="", help="Research evidence cutoff date (YYYY-MM-DD).")
     parser.add_argument("--interaction-mode", choices=["expert", "autonomous"], default="expert")
@@ -73,6 +89,12 @@ def main(argv: list[str] | None = None) -> int:
         default="full_method",
         help="Evaluation-only stage policy. Ordinary runs must keep full_method.",
     )
+    parser.add_argument(
+        "--report-template-mode",
+        choices=["three_layer_nine_item", "project_argument_v1"],
+        default="three_layer_nine_item",
+        help="Select the report writing template.",
+    )
     args = parser.parse_args(argv)
     agent_ids = [item.strip() for item in args.agents.split(",") if item.strip()]
     runner = DeepResearchRunner(
@@ -86,17 +108,20 @@ def main(argv: list[str] | None = None) -> int:
     result = runner.run(
         mode=args.mode,
         topic=args.topic,
+        supplemental_information=args.supplemental_information,
         research_route=args.research_route,
         run_id=args.run_id,
         agent_ids=agent_ids or None,
         max_rounds=args.max_rounds or None,
         provider_name=args.provider,
         resume=args.resume,
+        allow_resume_config_mismatch=args.allow_resume_config_mismatch,
         analyst_confirmed=args.analyst_confirmed,
         as_of_date=args.as_of_date,
         interaction_mode=args.interaction_mode,
         discovery_branch=args.discovery_branch,
         execution_profile_id=args.execution_profile_id,
+        report_template_mode=args.report_template_mode,
         stage_policy_id=args.stage_policy_id,
     )
     print(f"Run dir: {result['run_dir']}")

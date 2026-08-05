@@ -435,10 +435,12 @@ button.danger {
 .capability-portrait { margin: 18px 20px; padding: 22px; border: 1px solid #cbd8f6; border-left: 4px solid #536bd2; border-radius: 9px; background: linear-gradient(145deg,#f8faff,#f2f5ff); }
 .capability-portrait small { color: #4d64c7; font-size: 11px; font-weight: 750; letter-spacing: .4px; }
 .capability-portrait p { margin: 10px 0 0; color: #33425d; font-size: 14px; line-height: 1.95; white-space: pre-wrap; }
-.capability-thesis-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; padding: 0 20px 18px; }
-.capability-thesis-grid > div { padding: 14px; border: 1px solid #e0e6f0; border-radius: 7px; background: #fafbfd; }
-.capability-thesis-grid small { color: #6577c8; font-size: 10px; font-weight: 700; }
-.capability-thesis-grid p { margin: 7px 0 0; color: #4b586e; font-size: 11px; line-height: 1.65; }
+.capability-portrait-overview { padding: 14px 16px; border-radius: 8px; background: rgba(255,255,255,.72); box-shadow: inset 0 0 0 1px rgba(83,107,210,.12); }
+.capability-portrait-overview b { display: inline-flex; margin-right: 9px; padding: 2px 8px; border-radius: 999px; background: #536bd2; color: #fff; font-size: 10px; letter-spacing: .2px; vertical-align: 2px; }
+.capability-portrait ul { display: grid; gap: 9px; margin: 12px 0 0; padding: 0; list-style: none; }
+.capability-portrait li { display: grid; grid-template-columns: 150px minmax(0,1fr); gap: 14px; align-items: start; padding: 12px 14px; border-top: 1px solid rgba(83,107,210,.14); color: #3d4b64; font-size: 12px; line-height: 1.8; }
+.capability-portrait li b { color: #5268c8; font-size: 11px; }
+.capability-portrait li span { min-width: 0; overflow-wrap: anywhere; }
 .capability-logic.compact { grid-template-columns: repeat(2,1fr); }
 .capability-trace { margin: 0 20px 18px; border: 1px solid #e1e7f0; border-radius: 7px; background: #fafbfd; }
 .capability-trace > summary { padding: 12px 14px; color: #596dc2; font-size: 11px; font-weight: 650; cursor: pointer; }
@@ -462,22 +464,19 @@ button.danger {
 .capability-meta span,
 .capability-logic > div,
 .capability-portrait,
-.capability-thesis-grid > div,
 .capability-insight-grid > div,
 .capability-section li span { min-width: 0; }
 .capability-sheet header p,
 .capability-meta span,
 .capability-logic p,
 .capability-portrait p,
-.capability-thesis-grid p,
 .capability-insight-grid p,
 .capability-section li span { overflow-wrap: anywhere; word-break: break-word; }
 .capability-logic p,
-.capability-thesis-grid p,
 .capability-insight-grid p,
 .capability-section li span { white-space: pre-wrap; }
 
-@media(max-width:900px){.capability-summary{grid-template-columns:repeat(3,1fr)}.capability-summary p{grid-column:1/-1}.capability-meta,.capability-logic,.capability-columns,.capability-insight-grid,.capability-thesis-grid{grid-template-columns:1fr}.capability-logic .mission{grid-column:auto}.capability-section ul{grid-template-columns:1fr}}
+@media(max-width:900px){.capability-summary{grid-template-columns:repeat(3,1fr)}.capability-summary p{grid-column:1/-1}.capability-meta,.capability-logic,.capability-columns,.capability-insight-grid{grid-template-columns:1fr}.capability-logic .mission{grid-column:auto}.capability-section ul{grid-template-columns:1fr}.capability-portrait li{grid-template-columns:1fr;gap:4px}}
 .row-delete { color:#b94a55; }
 .row-delete:hover:not(:disabled) { border-color:#d8a4aa; background:#fff5f6; }
 .list-toolbar button.danger { margin-left:4px; }
@@ -686,6 +685,7 @@ button.danger {
 .dynamic-swarm-decision { display:flex; align-items:flex-start; gap:5px; margin-top:7px; padding:6px 7px; border-radius:5px; font-size:8px; line-height:1.45; }
 .dynamic-swarm-decision.accepted { background:#eaf6ef; color:#347657; }
 .dynamic-swarm-decision.rejected { background:#fbeaec; color:#a24c56; }
+.dynamic-swarm-decision.not-selected { background:#eef1f5; color:#667184; }
 .dynamic-swarm-decision.warning { background:#faf2e2; color:#8c6932; }
 .dynamic-swarm-member details { margin-top:8px; }
 .dynamic-swarm-member summary { color:#5b6fc3; font-size:8px; cursor:pointer; }

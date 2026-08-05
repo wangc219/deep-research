@@ -8,6 +8,7 @@ from equipment_deep_research.api.app import (
     _capability_api_view,
     _interaction_workflow_phases,
     _interaction_workflow_summary,
+    _preferred_report_path,
     _public_trace_interaction,
     create_app,
 )
@@ -21,8 +22,27 @@ def test_api_creates_and_queues_run() -> None:
     client = TestClient(create_app())
     created = client.post("/api/v1/runs", json={"topic": "test", "research_route": "auto", "selected_agent_ids": [], "max_rounds": 5})
     assert created.status_code == 201
+    assert created.json()["report_template_mode"] == "project_argument_v1"
     started = client.post(f"/api/v1/runs/{created.json()['run_id']}/start", headers={"Idempotency-Key": "start-1"})
     assert started.json()["status"] == "queued"
+
+
+def test_api_allows_duplicate_topics_without_reusing_run_identity() -> None:
+    client = TestClient(create_app())
+    payload = {
+        "topic": "强电磁压制下精确打击任务续接装备研究",
+        "research_route": "auto",
+        "selected_agent_ids": [],
+        "max_rounds": 2,
+    }
+
+    first = client.post("/api/v1/runs", json=payload)
+    second = client.post("/api/v1/runs", json=payload)
+
+    assert first.status_code == 201
+    assert second.status_code == 201
+    assert first.json()["topic"] == second.json()["topic"]
+    assert first.json()["run_id"] != second.json()["run_id"]
 
 
 def test_api_preserves_optional_supplemental_information() -> None:
@@ -38,6 +58,83 @@ def test_api_preserves_optional_supplemental_information() -> None:
     assert created.json()["supplemental_information"] == supplement
     loaded = client.get(f"/api/v1/runs/{created.json()['run_id']}")
     assert loaded.json()["supplemental_information"] == supplement
+
+
+def test_preferred_report_path_requires_a_passing_postfix_gate(tmp_path: Path) -> None:
+    original = tmp_path / "report.md"
+    postfix = tmp_path / "report-postfix.md"
+    gate = tmp_path / "report-quality-gate-postfix.json"
+    original.write_text("original", encoding="utf-8")
+    postfix.write_text("postfix", encoding="utf-8")
+
+    gate.write_text(json.dumps({"passed": False}), encoding="utf-8")
+    assert _preferred_report_path(tmp_path) == original
+
+    gate.write_text(json.dumps({"passed": True}), encoding="utf-8")
+    assert _preferred_report_path(tmp_path) == postfix
+
+    gate.write_text("not-json", encoding="utf-8")
+    assert _preferred_report_path(tmp_path) == original
+
+
+def test_report_api_prefers_approved_postfix_without_overwriting_original(
+    tmp_path: Path,
+) -> None:
+    engine = create_database_engine(f"sqlite:///{tmp_path / 'postfix-report.db'}")
+    repository = SqlRunRepository(engine)
+    service = ResearchApplicationService(
+        repository=repository,
+        queue=SqlRunQueue(engine),
+    )
+    run = service.create_run(CreateRunCommand("postfix report", "auto", [], 2, "analyst"))
+    run_dir = tmp_path / run.run_id
+    run_dir.mkdir()
+    original = run_dir / "report.md"
+    original.write_text("original with internal marker", encoding="utf-8")
+    (run_dir / "report-postfix.md").write_text("approved postfix", encoding="utf-8")
+    (run_dir / "report-quality-gate-postfix.json").write_text(
+        json.dumps({"passed": True}),
+        encoding="utf-8",
+    )
+    service.set_result(run.run_id, {"run_dir": str(run_dir)})
+    service.set_status(run.run_id, "completed")
+
+    response = TestClient(create_app(service)).get(
+        f"/api/v1/runs/{run.run_id}/report",
+        headers={"X-Role": "reviewer"},
+    )
+
+    assert response.status_code == 200
+    assert response.text == "approved postfix"
+    assert original.read_text(encoding="utf-8") == "original with internal marker"
+
+
+def test_capability_api_view_projects_complete_process_and_verification() -> None:
+    row = {
+        "capability_id": "cap-upgrade-001",
+        "name": "JASSM-ER空射巡航导弹抗扰突防升级",
+        "capability_type": "upgrade",
+        "equipment_category": "JASSM-ER空射低可探测防区外巡航导弹",
+        "equipment_form": "JASSM-ER空射低可探测防区外巡航导弹",
+        "source_winning_logic": "降低持续外部更新依赖",
+        "related_scenario": "强电磁压制下精确打击任务续接",
+        "priority": "P1",
+        "capability_gap": "现役弹药不能证明强欺骗条件下的任务闭合质量；其他装备方向差距并",
+        "capability_image": "旧画像",
+        "evidence_ids": ["ev-1"],
+        "confidence": 0.8,
+        "operational_process": ["保留防区外投送", "验证导航可信度"],
+        "verification_plan": ["开展接口联试"],
+    }
+
+    projected = _capability_api_view(row)
+
+    assert len(projected["operational_process"]) == 4
+    assert "防区外多轴释放" in projected["operational_process"][1]
+    assert len(projected["verification_plan"]) == 3
+    assert "未改装" in projected["verification_plan"][1]
+    assert projected["problem_statement"].endswith("任务闭合质量")
+    assert "关键作战流程" in projected["deep_capability_portrait"]
 
 
 def test_api_list_reports_actual_baseline_agent_calls(tmp_path: Path) -> None:
@@ -495,8 +592,25 @@ def test_catalog_is_loaded_from_registry_and_invalid_selection_is_rejected() -> 
         "expert",
         "autonomous",
     ]
+    assert [item["id"] for item in catalog["report_templates"]] == [
+        "project_argument_v1",
+        "three_layer_nine_item",
+    ]
+    assert [
+        item["id"] for item in catalog["report_templates"] if item["default"]
+    ] == ["project_argument_v1"]
     defaults = [item["id"] for item in catalog["execution_profiles"] if item["default"]]
     assert defaults == ["legacy_v1"]
+    assert [item["id"] for item in catalog["execution_profiles"]] == [
+        "legacy_v1",
+        "optimized_v2",
+        "swarm_quality_v1",
+        "winning_swarm_dynamic_v2",
+    ]
+    assert [
+        item["id"] for item in catalog["execution_profiles"] if item["recommended"]
+    ] == ["optimized_v2"]
+    assert all(item["selectable"] for item in catalog["execution_profiles"])
     assert [item["id"] for item in catalog["discovery_branches"]] == list(
         "ABCDEFGH"
     )
@@ -1434,8 +1548,159 @@ def test_dynamic_v2_workbench_projects_graph_lineage_merge_and_portfolio() -> No
     assert cluster["candidate_lineage"][0]["status"] == "selected"
     assert cluster["hypothesis_ledger"]["version"] == 2
     assert any(item["status"] == "merged" for item in cluster["merge_receipts"])
+    selected_members = [
+        item
+        for item in cluster["members"]
+        if item.get("hypothesis_id") == "hypothesis-1"
+    ]
+    assert selected_members
+    assert all(item["status"] == "merged" for item in selected_members)
+    assert all(item["portfolio_status"] == "selected" for item in selected_members)
+    assert all(item["merge_status"] == "accepted" for item in selected_members)
     assert cluster["final_equipment_portfolio"] == [equipment]
     assert "must-not-project" not in json.dumps(cluster, ensure_ascii=False)
+
+
+def test_dynamic_v2_projects_live_mission_members_onto_s1_s6_progress() -> None:
+    def row(sequence: int, event_type: str, actor: str, details: dict) -> dict:
+        return {
+            "sequence": sequence,
+            "event_id": f"event-{sequence}",
+            "event_type": event_type,
+            "actor": actor,
+            "details": details,
+        }
+
+    instances = [
+        {
+            "instance_id": "agent-s1-a",
+            "display_name": "S1 对手体系 A",
+            "mission_node": "S1",
+            "merge_target": "S1",
+            "wave": 1,
+        },
+        {
+            "instance_id": "agent-s1-b",
+            "display_name": "S1 对手体系 B",
+            "mission_node": "S1",
+            "merge_target": "S1",
+            "wave": 1,
+        },
+        {
+            "instance_id": "agent-s2-a",
+            "display_name": "S2 战法生成 A",
+            "mission_node": "S2",
+            "merge_target": "S2",
+            "wave": 1,
+        },
+    ]
+    rows = [
+        row(
+            1,
+            "winning_mission_graph_planned",
+            "winning_swarm_controller",
+            {
+                "graph_id": "graph-live-progress",
+                "graph": {
+                    "graph_id": "graph-live-progress",
+                    "execution_profile_id": "winning_swarm_dynamic_v2",
+                    "agent_instances": instances,
+                },
+            },
+        ),
+        row(
+            2,
+            "winning_agent_session_completed",
+            "agent-s1-a",
+            {"agent_instance_id": "agent-s1-a", "mission_node": "S1"},
+        ),
+        row(
+            3,
+            "winning_agent_session_started",
+            "agent-s1-b",
+            {"agent_instance_id": "agent-s1-b", "mission_node": "S1"},
+        ),
+        row(
+            4,
+            "winning_agent_session_completed",
+            "agent-s2-a",
+            {"agent_instance_id": "agent-s2-a", "mission_node": "S2"},
+        ),
+    ]
+    view = SimpleNamespace(
+        status="researching",
+        research_route="new_winning_mechanism",
+        discovery_branch="D",
+        selected_agent_ids=[],
+        execution={"mode": "real", "provider": "codex", "model": "gpt-test"},
+    )
+
+    workflow = _interaction_workflow_summary(rows, view)
+    steps = {item["step"]: item for item in workflow["step_plan"]}
+    phases = {item["id"]: item for item in workflow["phases"]}
+
+    assert steps[1]["execution_mode"] == "dynamic"
+    assert steps[1]["status"] == "running"
+    assert steps[1]["dynamic_completed_count"] == 1
+    assert steps[1]["dynamic_instance_count"] == 2
+    assert steps[2]["status"] == "completed"
+    assert steps[2]["dynamic_completed_count"] == 1
+    assert steps[2]["dynamic_instance_count"] == 1
+    assert phases["s_agents"]["status"] == "running"
+
+    rows.append(
+        row(
+            5,
+            "winning_agent_session_completed",
+            "agent-s1-b",
+            {"agent_instance_id": "agent-s1-b", "mission_node": "S1"},
+        )
+    )
+    completed_workflow = _interaction_workflow_summary(rows, view)
+    completed_steps = {
+        item["step"]: item for item in completed_workflow["step_plan"]
+    }
+    assert completed_steps[1]["status"] == "completed"
+    assert completed_steps[1]["dynamic_completed_count"] == 2
+
+
+def test_swarm_instance_counts_exclude_read_only_quality_judge() -> None:
+    rows = [
+        {
+            "sequence": 1,
+            "event_id": "event-1",
+            "event_type": "winning_agent_session_completed",
+            "actor": "agent-s4-1",
+            "details": {
+                "agent_instance_id": "agent-s4-1",
+                "archetype": "capability_mapper",
+                "mission_node": "S4",
+                "wave": 2,
+            },
+        },
+        {
+            "sequence": 2,
+            "event_id": "event-2",
+            "event_type": "winning_quality_judge_completed",
+            "actor": "winning-quality-judge-1",
+            "details": {"candidate_count": 5, "assessed_count": 5},
+        },
+    ]
+    view = SimpleNamespace(
+        status="researching",
+        research_route="new_winning_mechanism",
+        discovery_branch="D",
+        selected_agent_ids=[],
+        execution={"mode": "real", "provider": "codex", "model": "gpt-test"},
+    )
+
+    cluster = _interaction_workflow_summary(rows, view)["swarm_cluster"]
+
+    assert len(cluster["members"]) == 2
+    assert len(cluster["supervisors"]) == 1
+    assert cluster["supervisors"][0]["archetype"] == "quality_expert_judge"
+    assert cluster["counts"]["total"] == 1
+    assert cluster["counts"]["completed"] == 1
 
 
 def test_auto_branch_is_pending_before_orchestrator_returns_blueprint() -> None:
@@ -1641,13 +1906,77 @@ def test_capability_api_turns_legacy_labeled_sections_into_primary_portrait() ->
         }
     )
 
-    assert payload["deep_capability_portrait"].startswith("形成低带宽可降级任务网络")
-    assert "核心不是孤立增加单项性能" in payload["deep_capability_portrait"]
+    assert payload["deep_capability_portrait"].startswith("概述：")
+    assert len(payload["deep_capability_portrait"]) >= 500
+    assert "- 关键作战流程：" in payload["deep_capability_portrait"]
+    assert "- 制胜逻辑机理与对抗边界：" in payload["deep_capability_portrait"]
     assert "边缘缓存和多路径重构" in payload["operational_mechanism"]
     assert payload["equipment_form"] == "现役任务系统"
     assert "key_functions" not in payload
     assert "performance_indicators" not in payload
     assert "verification_methods" not in payload
+
+
+def test_capability_api_focuses_abstract_name_on_concrete_weapon_form() -> None:
+    payload = _capability_api_view(
+        {
+            "name": "低空可消耗察打一体无人突击平台续接目标证据链",
+            "capability_type": "new_capability",
+            "equipment_category": "低空无人作战平台",
+            "equipment_form": "车载箱式、舰载箱式或空投式发射的固定翼小型无人平台",
+            "mission_effect": "对时敏目标实施侦察确认和精确打击",
+        }
+    )
+
+    assert payload["name"] == "箱式发射低空可消耗察打一体无人机"
+    assert payload["source_name"].endswith("续接目标证据链")
+
+
+def test_capability_api_rebuilds_anti_radiation_portrait_as_combat_weapon() -> None:
+    payload = _capability_api_view(
+        {
+            "name": "长航时反辐射巡飞弹药再捕获",
+            "capability_type": "upgrade",
+            "equipment_form": "长航时反辐射巡飞弹药",
+            "target_scenario": "强电磁压制下精确打击任务续接装备研究中的受扰交战阶段",
+            "problem_statement": "现役反辐射弹药难以跨越关机窗口、排除诱饵辐射源并续接压制真实节点",
+            "scientific_principle": "用关机前目标记忆与末端独立复核跨越失辐射窗口",
+            "enabling_technologies": [
+                "宽带被动射频侦测",
+                "目标记忆区",
+                "末端光电/红外多模复核",
+            ],
+            "operational_concept": "实施分散部署、任务装订、受控交战和效应评估",
+            "operational_process": [
+                "发射前装订授权辐射源类别和目标记忆区",
+                "进入威胁区后被动搜索并保持关机前方位",
+                "末段复核满足门槛时交战，否则拒打",
+                "形成压制与毁伤摘要并组织补射",
+            ],
+            "capability_outcome": "对间歇辐射和关机转移的防空雷达持续猎歼压制",
+            "strike_countermeasure_value": "直接摧毁敌预警雷达、火控雷达和电子战车辆，制造防空盲区",
+            "winning_mechanism": "迫使对手在开机暴露与关机失去探测火控之间选择",
+            "baseline_system": "AARGM-ER类反辐射导弹",
+            "risk_boundaries": ["目标位移超过搜索区或无法区分诱饵时失效"],
+            "development_path": "开展样机、联试和对抗验证",
+            "deep_capability_portrait": (
+                "概述：旧画像。\n"
+                "- 装备与技术实现：旧技术说明。\n"
+                "- 关键作战流程：旧流程说明。\n"
+                "- 形成能力与作战效果：旧效果说明。\n"
+                "- 制胜逻辑机理与对抗边界：旧边界说明。\n"
+                "- 发展与验证路径：旧验证说明。"
+            ),
+        }
+    )
+
+    portrait = payload["deep_capability_portrait"]
+    assert payload["name"] == "长航时多模复核反辐射巡飞猎歼弹"
+    assert "联合空中突击群" in portrait
+    assert "防空压制分队" in portrait
+    assert "弹药立即俯冲摧毁目标" in portrait
+    assert "歼灭指挥所、导弹阵地与保障枢纽" in portrait
+    assert "发展与验证路径" not in portrait
 
 
 def test_api_rejects_edit_and_archive_after_start() -> None:

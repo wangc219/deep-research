@@ -8,25 +8,21 @@ that an unverified concept is already operational.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import Any
 
-
-def _complete_text(value: str, limit: int = 600) -> str:
-    text = " ".join(str(value).split())
-    if len(text) <= limit:
-        return text
-    clipped = text[:limit]
-    boundary = max(clipped.rfind(mark) for mark in ("。", "！", "？", ";", "；"))
-    if boundary >= 300:
-        return clipped[: boundary + 1]
-    return clipped.rstrip("，、：: ") + "。"
+from equipment_deep_research.orchestration.capability_portrait import (
+    build_capability_portrait,
+    normalize_operational_process,
+    normalize_verification_plan,
+)
 
 
 def build_deadline_weapon_directions(
     *,
     topic: str,
     evidence_ids: Sequence[str] = (),
+    evidence_index: Sequence[Mapping[str, Any]] = (),
     confidence: float = 0.62,
     gap_basis: str = "",
 ) -> list[dict[str, Any]]:
@@ -34,8 +30,89 @@ def build_deadline_weapon_directions(
 
     query = " ".join(str(topic or "").split())
     evidence = list(dict.fromkeys(str(item) for item in evidence_ids if str(item)))
-    defensive_focus = any(
+    evidence_rows = [dict(item) for item in evidence_index if isinstance(item, Mapping)]
+    offensive_focus = any(
+        term in query
+        for term in (
+            "远程火力打击",
+            "火力打击装备",
+            "远程精确打击",
+            "远程精确火力",
+            "突防",
+            "歼灭",
+            "纵深毁伤",
+            "压制毁伤",
+        )
+    )
+    defensive_focus = not offensive_focus and any(
         term in query for term in ("防空", "反无人", "拦截", "要地防护", "低空防御")
+    )
+
+    def ids_for(*keywords: str, limit: int = 3) -> list[str]:
+        """Bind a fallback card only to evidence about its own equipment family."""
+
+        matches: list[str] = []
+        lowered = tuple(keyword.lower() for keyword in keywords if keyword)
+        for item in evidence_rows:
+            evidence_id = str(item.get("evidence_id", "")).strip()
+            if not evidence_id:
+                continue
+            searchable = " ".join(
+                str(item.get(field, ""))
+                for field in (
+                    "source_title",
+                    "title",
+                    "claim",
+                    "excerpt",
+                    "source_url",
+                    "url",
+                )
+            ).lower()
+            if any(keyword in searchable for keyword in lowered):
+                matches.append(evidence_id)
+            if len(matches) >= limit:
+                break
+        if matches:
+            return list(dict.fromkeys(matches))
+        # Existing unit and legacy call sites may only supply accepted ids.
+        # Preserve that compatibility, but do not cross-bind unrelated cards
+        # when a searchable evidence index was explicitly supplied.
+        return [] if evidence_rows else evidence[:limit]
+
+    def has_object_evidence(*keywords: str) -> bool:
+        """Return whether the accepted evidence names the requested family."""
+
+        lowered = tuple(keyword.lower() for keyword in keywords if keyword)
+        return any(
+            any(
+                keyword
+                in " ".join(
+                    str(item.get(field, ""))
+                    for field in (
+                        "source_title",
+                        "title",
+                        "claim",
+                        "excerpt",
+                        "source_url",
+                        "url",
+                    )
+                ).lower()
+                for keyword in lowered
+            )
+            for item in evidence_rows
+        )
+
+    launched_effects_evidence = has_object_evidence(
+        "launched effects",
+        "launched effect",
+        "lasso",
+        "low altitude stalking",
+    )
+    switchblade_evidence = has_object_evidence("switchblade")
+    offensive_low_altitude_family = (
+        "launched_effects"
+        if launched_effects_evidence or not switchblade_evidence
+        else "switchblade"
     )
     common_boundary = (
         "公开资料不能证明代表性强干扰条件下的联合性能；若目标识别、末制导、平台载荷余量"
@@ -51,136 +128,176 @@ def build_deadline_weapon_directions(
 
     specs: list[dict[str, Any]] = [
         {
-            "name": "现役远程精确制导导弹抗扰再打击升级",
+            "name": "空射隐身防区外抗扰巡航导弹补击",
             "type": "upgrade",
-            "equipment_form": "现役远程对陆/反舰精确制导导弹、弹上多模导航末制导组件和任务规划装置",
-            "baseline_system": "现役依赖预规划目标、外部导航校正和任务链持续更新的远程精确制导导弹",
-            "function": "在导航拒止、链路间歇和毁伤评估迟滞时保持对固定或准固定高价值目标的精确毁伤与再打击能力",
-            "capability_gap": "现役弹药在强干扰、欺骗和目标信息过期条件下的精度保底、目标复核和再打击任务闭合不足",
-            "operational_mechanism": "在任务准备阶段装订目标特征、禁打边界和备选航路，飞行阶段由惯导、地形/景象匹配和多模末制导交叉校验，打击后以低带宽摘要触发补打或中止",
-            "military_value": "强链战役纵深精确毁伤和再打击闭环，使通信受限时仍能压制关键火力、电子战或保障节点",
-            "strike_countermeasure_value": "降低对持续外部喂数的刚性依赖，缩短目标再次暴露后的火力重组周期",
-            "novelty": "从单次命中参数升级转向断链条件下可保持、可复核、可再打击的任务闭环",
-            "development_path": "近期完成现役弹上任务软件、多模导航和末制导接口改装，中期在欺骗、干扰和迟滞毁伤评估条件下开展体系级实弹验证",
+            "equipment_form": "JASSM-ER类空射低可探测防区外巡航导弹及其任务规划、导航与末制导升级组件",
+            "baseline_system": "公开产品资料所示JASSM/JASSM-ER空射防区外精确打击巡航导弹",
+            "function": "在防空拦截和导航欺骗压力下维持对战役纵深固定及准固定高价值节点的突防毁伤与补击能力",
+            "capability_gap": "公开基线能够证明远程空射精确打击对象存在，但不能证明强欺骗、链路间歇和目标信息过期条件下的任务闭合质量",
+            "operational_mechanism": "保留空射防区外投送和低可探测突防基线，重点验证多源导航可信评估、任务边界保持、末段目标复核和毁伤摘要驱动的后续补击",
+            "military_value": "强链战役纵深精确毁伤与再打击闭环，为后续无人火力和地射火力持续压制关键节点创造窗口",
+            "strike_countermeasure_value": "降低空射远程火力对持续外部更新的刚性依赖，并提高复杂防空环境下的突防任务韧性",
+            "novelty": "不把JASSM-ER与地射导弹混成一类，而是在既有空射巡航导弹边界内验证抗骗突防和补击闭环升级",
+            "development_path": "近期完成任务软件、导航可信评估和末制导接口的地面与半实物验证，中期开展代表性干扰和多层拦截条件下的任务级试验",
             "upgrade_package": ["多模PNT与抗欺骗末制导", "任务边界装订与安全中止", "毁伤摘要回灌与再打击规划"],
-            "combat_effect_uplift": "恢复断链条件下的远程精确毁伤与补打组织能力，效能增量须由对抗试验校准",
-            "strike_chain_contribution": "强链发现—授权—发射—末端确认—毁伤评估—再打击链条",
+            "combat_effect_uplift": "增强空射防区外巡航导弹在受扰条件下的突防毁伤和补击组织能力，增量须由对抗试验校准",
+            "strike_chain_contribution": "强链空中投送—防区外发射—突防—末端确认—毁伤评估—补击链条",
             "upgrade_boundary": "若现役弹体计算、能源、导引头或任务接口余量不足，则停止增量改装并转入新弹研制",
+            "evidence_keywords": ("jassm", "agm-158"),
+            "confidence_delta": 0.07,
             "feasibility": 4,
             "horizon": "near",
         },
         {
-            "name": "可消耗低空无人突击集群压制毁伤系统",
+            "name": "地射远程机动目标精确毁伤导弹",
+            "type": "upgrade",
+            "equipment_form": "PrSM类地面机动发射远程精确制导导弹及其目标更新、任务规划和火力单元接口升级",
+            "baseline_system": "美国陆军公开交付信息所示Precision Strike Missile地射远程精确打击项目",
+            "function": "由分散地面火力单元对战役纵深固定、准固定和有限机动目标实施快速火力分配、精确毁伤与后续补击",
+            "capability_gap": "公开资料可证明PrSM项目交付和地射远程火力属性，但不能证明强电磁对抗下对有限机动目标的目标更新与毁伤闭合水平",
+            "operational_mechanism": "以地面机动发射和现役火力体系接入为基线，分别验证目标信息时效约束、火力单元任务重规划、受扰导航降级和补击授权闭环",
+            "military_value": "强链地面远程火力对纵深火力、防空和保障节点的持续毁伤，降低单一空中投送通道受限对战役节奏的影响",
+            "strike_countermeasure_value": "以分散机动地射火力扩大对手防区压力，并通过快速补击缩短高价值目标重新暴露后的响应周期",
+            "novelty": "把PrSM作为独立地射导弹对象论证，不与JASSM-ER的空射平台、飞行任务和升级边界混写",
+            "development_path": "近期完成目标信息时效、任务规划和发射单元接口联试，中期在机动目标、导航受扰和战损接替条件下开展任务级验证",
+            "upgrade_package": ["目标信息时效与任务更新", "受扰导航与任务降级", "火力单元补击授权接口"],
+            "combat_effect_uplift": "提升地射远程导弹对纵深目标的快速分配、持续毁伤和补击能力，实际增益须由对抗数据校准",
+            "strike_chain_contribution": "强链地面发现移交—火力分配—机动发射—纵深毁伤—毁伤评估—补击链条",
+            "upgrade_boundary": "若目标更新链、发射单元接口或弹上处理余量不能满足任务时效，则不得把软件设想表述为已具备能力",
+            "evidence_keywords": ("prsm", "precision strike missile"),
+            "confidence_delta": 0.05,
+            "feasibility": 4,
+            "horizon": "near",
+        },
+        {
+            "name": "失辐射等待反辐射巡飞弹",
             "type": "new_capability",
-            "equipment_form": "低特征低空无人机、诱骗/电子压制载荷、轻型精确毁伤载荷和分布式机动发射单元",
-            "baseline_system": "现役中小型无人机、巡飞弹、电子战载荷和战术火力单元",
-            "function": "以可消耗异构无人机分担侦察、诱骗、压制和突击任务，在局部断链后按预设边界继续完成目标复核和毁伤",
-            "capability_gap": "单平台难以同时承受低空突防、高损耗、诱饵识别和规模火力组织，且昂贵弹药交换比易被对手廉价拦截反转",
-            "operational_mechanism": "多批次低空进入迫使对手防空和电子战节点开机暴露，蜂群按剩余载荷与目标可信度重分配诱骗、压制和毁伤角色",
-            "military_value": "开链形成低成本规模压制和近纵深毁伤能力，持续消耗对手探测、拦截与值班资源",
-            "strike_countermeasure_value": "通过成本交换反转和多点到达提高重点目标压制持续性，而不是依赖单架高价值平台",
-            "novelty": "由性能制胜转向可消耗规模、任务重构和工业补充共同决定的经济学制胜",
-            "development_path": "近期完成百架级数字编组和小规模实装联试，中期验证强扰、高损耗与快速补充条件下的任务完成率",
+            "equipment_form": "Harop类长航时反辐射巡飞弹药、被动射频搜索组件、目标复核传感器和机动发射单元",
+            "baseline_system": "IAI公开产品资料所示Harop长航时巡飞弹药及其猎歼和压制用途",
+            "function": "在雷达间歇开机、关机转移和诱饵辐射条件下持续搜索并压制防空、电子战与远程探测节点",
+            "capability_gap": "公开基线不能证明复杂诱饵、频率捷变和长时间静默条件下的目标真实性复核、失辐射等待与任务安全边界",
+            "operational_mechanism": "被动搜索形成候选辐射源，目标失辐射后保持受限等待而不强行攻击，再以独立复核和授权边界决定继续监视、压制或中止",
+            "military_value": "以持续反辐射猎歼削弱对手防空探测和火控链，为远程导弹及低空无人火力开辟进入窗口",
+            "strike_countermeasure_value": "把一次性反辐射突击转化为跨越雷达关机窗口的时间学习和持续成本强加",
+            "novelty": "围绕Harop类巡飞弹的失辐射等待与目标复核形成独立装备方向，不与AARGM或MALD功能强行复合",
+            "development_path": "近期验证被动搜索、失辐射等待和安全中止，中期开展频率捷变、诱饵辐射与关机转移条件下的红蓝对抗试验",
+            "evidence_keywords": ("harop", "harpy"),
+            "confidence_delta": 0.04,
             "feasibility": 3,
             "horizon": "mid",
         },
         {
-            "name": "长航时巡飞弹蜂群搜索猎歼武器系统",
+            "name": "低成本批量巡航效应器",
             "type": "new_capability",
-            "equipment_form": "长航时巡飞弹、被动/光电复合导引头、蜂群任务分配模块和机动发射补充单元",
-            "baseline_system": "现役单发巡飞弹、战术无人侦察平台和发现后召唤火力模式",
-            "function": "在任务空域持续待机，对短时暴露的机动火力、防空和电子战节点实施搜索、确认、压制与连续猎歼",
-            "capability_gap": "传统发射—飞行—命中的线性链路响应慢，目标在外部火力到达前可能转移或重新隐蔽",
-            "operational_mechanism": "让弹药先于目标存在，蜂群在低带宽条件下共享局部目标摘要，并由人在回路的预设交战边界约束搜索、认领、攻击或中止",
-            "military_value": "压缩目标出现到毁伤的决策周期，形成持续拒止和时间敏感目标猎歼能力",
-            "strike_countermeasure_value": "以长航时持续存在替代远距离临机召唤，降低目标信息保鲜和连续链路依赖",
-            "novelty": "从平台发射逻辑转向持续存在的徘徊火力场，并把时间窗口转化为装备能力",
-            "development_path": "近期验证长航时待机、目标类别过滤和安全中止，中期开展诱饵、静默机动和蜂群损耗条件下的任务压力试验",
+            "equipment_form": "Barracuda-500M类固定构型、面向规模生产的低成本巡航效应器及地面发射接口",
+            "baseline_system": "Anduril公开生产协议信息所示Surface-Launched Barracuda-500M巡航效应器",
+            "function": "以可规模补充的巡航效应器对战役纵深固定和准固定节点实施多波次压制与毁伤",
+            "capability_gap": "公开资料能够证明项目和生产方向，但不能证明单位有效毁伤成本、批产一致性、强扰突防质量和持续补充节奏",
+            "operational_mechanism": "保持固定构型和明确任务边界，以共用发射与任务接口组织多波次投送，并用任务完成率、补充周期和单位有效毁伤成本约束规模化价值",
+            "military_value": "开链低成本规模化纵深压制火力，减少高端远程弹药承担常规节点消耗任务的库存压力",
+            "strike_countermeasure_value": "以工业补充速度和多波次到达改变对手昂贵拦截资源与我方巡航效应器之间的成本交换关系",
+            "novelty": "从追求单弹全能转向固定构型、任务分工和可规模生产共同决定的经济学制胜",
+            "development_path": "近期验证固定构型任务边界、发射接口和制造一致性，中期以代表性拦截与强扰环境评估单位有效毁伤成本和补充节奏",
+            "evidence_keywords": ("barracuda", "famm"),
+            "confidence_delta": 0.02,
             "feasibility": 3,
             "horizon": "mid",
         },
         {
-            "name": "远程精确打击导弹多路径突防武器族",
+            "name": "空射可消耗电子攻击压制效应器",
             "type": "new_capability",
-            "equipment_form": "模块化远程对陆/反舰导弹、多点机动发射单元、多模末制导组件和异构弹药任务规划系统",
-            "baseline_system": "现役单一弹型、固定突防航路和集中式任务规划的远程导弹体系",
-            "function": "围绕高价值固定、准固定和有限机动目标形成多点发射、多路径突防、异构效应组合和打击后再攻击",
-            "capability_gap": "对手防空反导、诱饵和电子战适应后，单一弹型与单轴突防易被预测，远程火力难以持续形成有效毁伤",
-            "operational_mechanism": "由目标可信度和拦截压力驱动不同射程、末段特征与效应载荷的多波次组合，分散拦截资源并依据毁伤摘要重规划后续波次",
-            "military_value": "形成传统远程精打赛道的跨代突防与战役纵深毁伤优势，提高高价值目标压制和区域拒止韧性",
-            "strike_countermeasure_value": "强链多点发射—多路径突防—末端确认—再打击闭环，迫使对手扩大昂贵拦截弹消耗",
-            "novelty": "从单弹性能竞争转向导弹武器族、发射节点和多波次任务重规划的体系竞争",
-            "development_path": "近期完成多弹型任务规划与半实物闭环，中期在复杂电磁和对抗拦截条件下开展体系级实弹验证",
-            "feasibility": 3,
-            "horizon": "mid",
-        },
-        {
-            "name": "反辐射巡飞弹自主搜捕压制武器系统",
-            "type": "new_capability",
-            "equipment_form": "反辐射巡飞弹、宽带被动侦收导引头、光电复核组件和机动多联装发射单元",
-            "baseline_system": "现役反辐射导弹、电子支援侦察平台和单次压制防空任务编组",
-            "function": "在敌雷达间歇开机、频率捷变和诱饵辐射条件下持续搜索并压制防空、电子战与远程探测节点",
-            "capability_gap": "现役反辐射武器对短时开机、关机转移和假辐射源的持续猎杀与目标复核能力不足",
-            "operational_mechanism": "被动侦收先形成候选辐射源轨迹，巡飞待机跨越关机窗口，再由多谱段复核和人工授权边界决定压制、攻击或继续监视",
-            "military_value": "以电子压制和节点毁伤开辟远域火力通道，持续削弱对手防空杀伤链和决策节奏",
-            "strike_countermeasure_value": "把一次性反辐射突击转化为对雷达开关机节奏的持续猎歼和成本强加",
-            "novelty": "将反辐射效应、长航时待机和目标复核融合为时间学习型压制武器",
-            "development_path": "近期验证宽带被动测向、假辐射源识别和安全交战边界，中期开展关机转移与多诱饵红蓝对抗试验",
+            "equipment_form": "MALD-J类固定构型空射可消耗诱饵与电子攻击效应器及载机任务接口",
+            "baseline_system": "RTX公开产品资料所示MALD空射诱饵和MALD-J干扰变型",
+            "function": "在主攻武器进入前欺骗、干扰或压制防空探测与火控链，制造可被后续导弹和无人火力利用的突防窗口",
+            "capability_gap": "公开资料可证明MALD-J干扰变型存在，但不能证明代表性防空体系下的压制范围、持续时间、任务协同增益和战损交换",
+            "operational_mechanism": "由载机在防区外释放固定构型可消耗电子攻击效应器，按预装订任务边界实施诱骗和干扰，并与独立毁伤武器在接口层协同",
+            "military_value": "以直接电子攻击压制削弱对手防空发现和火控质量，为JASSM-ER、PrSM及巡飞火力创造进入和补击窗口",
+            "strike_countermeasure_value": "用可消耗电子攻击效应器迫使防空节点暴露、重配或消耗资源，降低高价值攻击平台的前出暴露",
+            "novelty": "保持MALD-J诱饵与电子攻击的固定构型边界，不在同一弹体强行叠加反辐射末制导和毁伤战斗部",
+            "development_path": "近期验证载机接口、任务边界和受控频谱效应，中期在代表性探测与火控链条件下评估压制窗口和后续武器增益",
+            "evidence_keywords": ("mald", "adm-160", "decoy"),
+            "confidence_delta": 0.03,
             "feasibility": 3,
             "horizon": "mid",
         },
         {
             "name": (
-                "低成本拦截弹与定向能反无人猎歼系统"
+                "低成本反无人拦截弹"
                 if defensive_focus
-                else "空射低空隐身巡航导弹远域压制武器系统"
+                else (
+                    "低空巡飞猎歼弹药"
+                    if offensive_low_altitude_family == "switchblade"
+                    else "低空可消耗察打一体无人机"
+                )
             ),
             "type": "new_capability",
             "equipment_form": (
-                "低成本拦截弹、高能激光/高功率微波效应器、反无人火控雷达和机动武器站"
+                "Coyote类低成本动能拦截弹、反无人火控接口和机动发射单元"
                 if defensive_focus
-                else "空射低空隐身巡航导弹、可更换任务载荷、多模末制导组件和有人/无人载机挂载接口"
+                else (
+                    "Switchblade 600类筒式发射低空巡飞猎歼弹药、EO/IR任务载荷和地面任务控制单元"
+                    if offensive_low_altitude_family == "switchblade"
+                    else "Launched Effects类可由空中或地面平台释放的低空可消耗察打一体无人机"
+                )
             ),
             "baseline_system": (
-                "现役近程防空、电子战反无人和弹炮结合要地防护系统"
+                "公开产品资料所示Coyote类反无人机物理拦截装备"
                 if defensive_focus
-                else "现役空射巡航导弹、防区外打击平台和固定任务载荷体系"
+                else (
+                    "AeroVironment公开产品资料所示Switchblade 600筒式发射巡飞弹药"
+                    if offensive_low_altitude_family == "switchblade"
+                    else "美国陆军公开预算和试验信息中的Launched Effects与低空察打无人装备方向"
+                )
             ),
             "function": (
-                "按目标价值、来袭密度和单次拦截成本分配软杀伤、定向能和低成本动能拦截"
+                "对低慢小无人机和多方向来袭目标实施低成本物理拦截"
                 if defensive_focus
-                else "由有人或无人载机在防区外释放，依托低空低特征航路和模块化压制/毁伤载荷打击远域关键节点"
+                else "前出搜索、确认并打击短时暴露的低空和近纵深目标，在通信受限时按任务边界继续完成察打闭环"
             ),
             "capability_gap": (
                 "面对低慢小蜂群和多方向饱和来袭时，现役体系存在成本失配、持续射击和战损接替不足"
                 if defensive_focus
-                else "现役远域打击对高价值发射平台、持续链路和单一战斗部依赖较强，难以兼顾压制开窗与后续毁伤"
+                else "公开方向不能证明强干扰、低空遮蔽和高损耗条件下的目标复核、任务续接、载荷效应和快速补充质量"
             ),
             "operational_mechanism": (
-                "分布式探测保持航迹，先以软杀伤和定向能分流降效，再由低成本拦截弹猎歼漏网目标并动态重分配射界"
+                "由分布式探测保持航迹，再由低成本拦截弹对确认目标实施物理拦截并按剩余弹量重分配射界"
                 if defensive_focus
-                else "载机分布式接近并多点释放，弹上按预装订边界保持低空突防，在末段以多模识别选择电子压制或精确毁伤效应"
+                else "释放平台在威胁区外投送低空可消耗无人机，无人机以本地目标摘要和任务边界完成搜索、复核、交战或中止，并回传最小任务结果"
             ),
             "military_value": (
                 "保护机场、港口、指挥所和远程火力阵地，改善反无人交换比并维持关键节点持续作战"
                 if defensive_focus
-                else "开辟防区外无人/有人协同的远域压制新赛道，为后续导弹和无人火力创造突防窗口"
+                else "开链前出低空察打和近纵深猎歼能力，缩短短时目标从发现到毁伤的闭环并减少高价值平台暴露"
             ),
             "strike_countermeasure_value": (
-                "补链低空发现—识别—分层拦截并反转昂贵拦截弹对廉价无人机的成本劣势"
+                "补链低空发现—识别—物理拦截，并改善昂贵防空弹对廉价无人机的成本失配"
                 if defensive_focus
-                else "以多点空射、低空突防和新质压制载荷削弱对手预警、电子战与防空节点"
+                else "以前出分布式低空存在压缩目标逃逸时间，并以可消耗平台吸收局部战损和反无人拦截消耗"
             ),
             "novelty": (
-                "由单一拦截弹消耗转向成本感知的软硬杀伤协同"
+                "把反无人装备收缩为低成本物理拦截单一任务，不与进攻型无人火力混写"
                 if defensive_focus
-                else "从平台绑定的单一弹药转向可由有人/无人载机分布投送的模块化远域效应器"
+                else (
+                    "在Switchblade 600公开筒射巡飞弹药边界内验证受扰低空猎歼、目标复核和安全中止，不外推为Launched Effects项目能力"
+                    if offensive_low_altitude_family == "switchblade"
+                    else "从后方发现后召唤火力转向由释放平台前送的可消耗低空察打节点，并以任务边界约束受限自主"
+                )
             ),
             "development_path": (
-                "近期完成多效应器火控接口联试，中期开展多方向饱和来袭和持续交战验证"
+                "近期完成火控与发射接口联试，中期开展多方向饱和来袭和持续交战验证"
                 if defensive_focus
-                else "近期完成载荷模块、挂载接口和低空航路半实物验证，中期开展强扰与多层拦截条件下的体系级试验"
+                else "近期完成释放接口、低空导航、目标复核和安全中止验证，中期开展强扰、高损耗和多层反无人拦截条件下的任务级试验"
             ),
+            "evidence_keywords": (
+                ("coyote", "roadrunner", "counter-uas")
+                if defensive_focus
+                else (
+                    ("switchblade",)
+                    if offensive_low_altitude_family == "switchblade"
+                    else ("launched effects", "lasso", "low altitude stalking")
+                )
+            ),
+            "confidence_delta": 0.01 if defensive_focus else 0.0,
             "feasibility": 3,
             "horizon": "mid",
         },
@@ -190,10 +307,22 @@ def build_deadline_weapon_directions(
     bounded_confidence = max(0.0, min(1.0, float(confidence)))
     for position, spec in enumerate(specs, start=1):
         row = dict(spec)
+        keywords = tuple(str(item) for item in row.pop("evidence_keywords", ()))
+        confidence_delta = float(row.pop("confidence_delta", 0.0) or 0.0)
+        direct_evidence_refs = ids_for(*keywords)
+        direction_confidence = max(
+            0.0,
+            min(
+                0.86,
+                bounded_confidence
+                + confidence_delta
+                + min(0.02, 0.01 * len(direct_evidence_refs)),
+            ),
+        )
         row.update(
             {
                 "priority": f"P{position}",
-                "direct_evidence_refs": list(evidence),
+                "direct_evidence_refs": direct_evidence_refs,
                 "derived_from": ["accepted-baseline-and-s4-s5-handoff"],
                 "future_trigger": common_trigger,
                 "adversary_adaptation": "机动分散、诱饵欺骗、电磁压制、频谱静默、低成本饱和和针对性拦截",
@@ -206,21 +335,72 @@ def build_deadline_weapon_directions(
                     f"面向“{query}”的高烈度强干扰任务窗口，在目标信息稀疏、链路不稳定或导航受扰阶段，"
                     f"直接承担{row['military_value']}，不是一般通信、保障或工程建设方向"
                 ),
-                "confidence": bounded_confidence,
+                "confidence": round(direction_confidence, 4),
             }
         )
         if gap_basis:
             row["capability_gap"] = (
                 f"{row['capability_gap']}；现有公开基线仅支持类别级判断：{gap_basis[:220]}"
             )
-        portrait = (
-            f"{row['name']}以{row['equipment_form']}为主要装备形态，面向“{query}”中的目标信息稀疏、"
-            f"链路间歇和导航受扰阶段，直接承担{row['military_value']}。其作战运用概念是："
-            f"{row['operational_mechanism']}。相对{row['baseline_system']}，重点补齐{row['capability_gap']}。"
-            f"创新关系表现为{row['novelty']}；成熟度判断仅为{row['feasibility_basis']}。"
-            f"对手可通过{row['adversary_adaptation']}反适应；{row['failure_boundary']}。"
-            f"近期按{row['development_path']}推进，并以{common_verification}，未经校准不得承诺精确效能增量。"
+        target_scenario = f"“{query}”中的目标信息稀疏、链路间歇和导航受扰任务阶段"
+        enabling_technologies = [
+            item.strip()
+            for item in str(row["equipment_form"]).replace("和", "、").split("、")
+            if item.strip()
+        ][:5]
+        operational_process = [
+            item.strip()
+            for item in str(row["operational_mechanism"]).replace("，", "；").split("；")
+            if item.strip()
+        ][:6]
+        operational_process = normalize_operational_process(
+            operational_process,
+            equipment_identity=row["equipment_form"],
         )
-        row["capability_portrait"] = _complete_text(portrait, 600)
+        verification_plan = normalize_verification_plan(
+            row["verification"],
+            equipment_identity=row["equipment_form"],
+            failure_boundary=row["failure_boundary"],
+        )
+        winning_mechanism = (
+            f"{row['novelty']}；相对{row['baseline_system']}，通过{row['strike_countermeasure_value']}"
+            "改变时间、成本、平台、毁伤或体系交换关系"
+        )
+        portrait = build_capability_portrait(
+            scenario=target_scenario,
+            problem=row["capability_gap"],
+            principle=row["novelty"],
+            technologies=enabling_technologies,
+            operational_concept=row["operational_mechanism"],
+            operational_steps=operational_process,
+            capability=row["function"],
+            effect=row["military_value"],
+            winning_mechanism=winning_mechanism,
+            equipment_form=row["equipment_form"],
+            baseline=row["baseline_system"],
+            development_path=row["development_path"],
+            failure_boundary=row["failure_boundary"],
+            verification_plan=verification_plan,
+        )
+        row.update(
+            {
+                "target_scenario": target_scenario,
+                "problem_statement": row["capability_gap"],
+                "scientific_principle": row["novelty"],
+                "enabling_technologies": enabling_technologies,
+                "operational_concept": row["operational_mechanism"],
+                "operational_process": operational_process,
+                "capability_outcome": row["function"],
+                "winning_mechanism": winning_mechanism,
+                "verification_plan": verification_plan,
+            }
+        )
+        row["capability_portrait"] = portrait
         directions.append(row)
+    if evidence_rows:
+        anchored = [item for item in directions if item["direct_evidence_refs"]]
+        if len(anchored) >= 5:
+            directions = anchored[:7]
+            for position, item in enumerate(directions, start=1):
+                item["priority"] = f"P{position}"
     return directions

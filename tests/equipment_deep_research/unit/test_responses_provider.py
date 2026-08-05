@@ -142,6 +142,41 @@ def test_responses_payload_enables_hosted_web_search_and_source_export() -> None
     assert payload["tool_choice"] == {"type": "web_search"}
 
 
+def test_responses_payload_enforces_compact_output_schema() -> None:
+    payload = build_request_payload(
+        model="gpt-5.5",
+        messages=[ModelMessage("user", "研究主题")],
+        tools=[],
+        options={
+            "output_schema": {
+                "summary": "string",
+                "sources": [{"title": "string", "url": "https URL"}],
+            }
+        },
+    )
+
+    output_format = payload["text"]["format"]
+    assert output_format["type"] == "json_schema"
+    assert output_format["strict"] is True
+    assert output_format["schema"]["additionalProperties"] is False
+    assert output_format["schema"]["properties"]["sources"]["items"][
+        "required"
+    ] == ["title", "url"]
+
+
+def test_output_text_done_does_not_duplicate_streamed_deltas() -> None:
+    turn = assistant_from_events(
+        [
+            ("response.output_text.delta", {"delta": '{"ok":'}),
+            ("response.output_text.delta", {"delta": "true}"}),
+            ("response.output_text.done", {"text": '{"ok":true}'}),
+            ("response.completed", {"response": {"status": "completed"}}),
+        ]
+    )
+
+    assert turn.text == '{"ok":true}'
+
+
 def test_sse_parser_reconstructs_text_and_tool_arguments() -> None:
     lines = [
         'data: {"type":"response.output_text.delta","delta":"检索完成。"}',
