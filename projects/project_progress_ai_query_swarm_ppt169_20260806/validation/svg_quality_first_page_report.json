@@ -1,0 +1,103 @@
+{
+  "schema": "ppt-master.svg-quality-report.v1",
+  "stage": "first-page",
+  "target": "/Users/wangchen/equipment research/projects/project_progress_ai_query_swarm_ppt169_20260806",
+  "source_fingerprint": {
+    "algorithm": "sha256",
+    "digest": "b2d84f4e3fe8f81e07ebc362319d3158453b8e4f986a3daa1c34548838edef66",
+    "file_count": 1,
+    "files": [
+      {
+        "file": "01_cover.svg",
+        "sha256": "6349cb0c10c2d63635c5dd7dcf159b89535fb89fde4058bf1390417601740b80"
+      }
+    ]
+  },
+  "summary": {
+    "total": 1,
+    "passed": 1,
+    "warnings": 0,
+    "errors": 0
+  },
+  "issue_types": {},
+  "categories": {
+    "blocking": {
+      "count": 0,
+      "issues": []
+    },
+    "introduced": {
+      "count": 0,
+      "issues": []
+    },
+    "inherited": {
+      "count": 0,
+      "issues": []
+    },
+    "source-import": {
+      "count": 0,
+      "summary": {
+        "warning_count": 0,
+        "by_code": {}
+      }
+    }
+  },
+  "drift": {
+    "colors": {
+      "#52606D": [
+        "01_cover.svg"
+      ],
+      "#FFFFFF": [
+        "01_cover.svg"
+      ]
+    },
+    "fonts": {
+      "Arial, sans-serif": [
+        "01_cover.svg"
+      ]
+    },
+    "sizes": {
+      "58": [
+        "01_cover.svg"
+      ]
+    }
+  },
+  "project_issues": {
+    "template": [],
+    "animation": [],
+    "illustration": [],
+    "communication_trace": [],
+    "pptx_structure": []
+  },
+  "files": [
+    {
+      "file": "01_cover.svg",
+      "path": "projects/project_progress_ai_query_swarm_ppt169_20260806/svg_output/01_cover.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [],
+      "info": {
+        "viewbox": "0 0 1280 720",
+        "fonts": [
+          "Arial, sans-serif",
+          "Microsoft YaHei, Arial, sans-serif"
+        ],
+        "text_elements": 18,
+        "tspan_elements": 1,
+        "contextual_values": {
+          "colors": [
+            "#52606D",
+            "#FFFFFF"
+          ],
+          "font_families": [
+            "Arial, sans-serif"
+          ]
+        },
+        "sparse_typography_sizes": {
+          "58": 1
+        }
+      },
+      "passed": true,
+      "source_sha256": "6349cb0c10c2d63635c5dd7dcf159b89535fb89fde4058bf1390417601740b80"
+    }
+  ]
+}

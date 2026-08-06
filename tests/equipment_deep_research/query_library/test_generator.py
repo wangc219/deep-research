@@ -84,7 +84,8 @@ def test_generator_returns_all_twelve_coverage_slots_with_sources() -> None:
     assert all(item.source_references for item in result.candidates)
     assert all(14 <= len(item.query) <= 30 for item in result.candidates)
     assert provider.remaining_steps == 0
-    assert provider.inputs[0][2]["require_web_search"] is True
+    assert provider.inputs[0][2]["require_web_search"] is False
+    assert provider.inputs[0][2]["_provider_retry_attempts"] == 3
     grounding_request = json.loads(provider.inputs[0][0][1].content)
     assert grounding_request["reference_urls"] == [
         "https://example.test/manual-reference"
@@ -95,6 +96,43 @@ def test_generator_returns_all_twelve_coverage_slots_with_sources() -> None:
     assert "coverage_slot只是思考发生维度" in requirements
     assert "具体装备项目" in requirements
     assert "项目功能" in requirements
+
+
+def test_generator_falls_back_to_auditable_semantic_source_without_web_results() -> None:
+    grounding = {
+        "summary": "未获得外部网页来源，按用户母题进行语义发散。",
+        "search_queries": [],
+        "signals": ["任务牵引", "装备能力需求"],
+        "sources": [],
+    }
+    row = {
+        "coverage_slot": coverage_plan(1)[0],
+        "query": "未来无人精确打击装备任务需求研究",
+        "supplemental_information": "面向复杂对抗任务，分析作战场景、威胁约束、装备能力缺口、失效边界和可验证的发展方向。",
+        "generation_rationale": "将输入母题中的任务牵引转化为可独立论证的装备能力研究问题。",
+        "sources": [],
+    }
+    provider = ScriptedFakeProvider(
+        [
+            [ProviderStreamEvent.final(ProviderFinalTurn(text=json.dumps(grounding, ensure_ascii=False)))],
+            [ProviderStreamEvent.final(ProviderFinalTurn(text=json.dumps({"queries": [row]}, ensure_ascii=False)))],
+        ]
+    )
+
+    result = asyncio.run(
+        ModelQueryGenerator(provider).generate(
+            topic="未来无人精确打击装备",
+            supplemental_information="不提供参考 URL 也应能够完成生成。",
+            count=1,
+            existing_queries=[],
+        )
+    )
+
+    assert len(result.candidates) == 1
+    assert result.source_references[0].source_kind == "document"
+    assert result.source_references[0].url == ""
+    assert "未获得可核验的公开 HTTPS 来源" in result.source_references[0].relevance_note
+    assert result.candidates[0].source_references == result.source_references
 
 
 def test_source_sanitizer_removes_sensitive_query_parameters() -> None:

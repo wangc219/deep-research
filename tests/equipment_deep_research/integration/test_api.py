@@ -23,8 +23,40 @@ def test_api_creates_and_queues_run() -> None:
     created = client.post("/api/v1/runs", json={"topic": "test", "research_route": "auto", "selected_agent_ids": [], "max_rounds": 5})
     assert created.status_code == 201
     assert created.json()["report_template_mode"] == "project_argument_v1"
+    assert created.json()["execution_profile_id"] == "winning_swarm_dynamic_v2"
     started = client.post(f"/api/v1/runs/{created.json()['run_id']}/start", headers={"Idempotency-Key": "start-1"})
     assert started.json()["status"] == "queued"
+
+
+def test_runtime_capacity_api_persists_capacity_and_updates_health(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("EQUIPMENT_DR_WORKER_POOL_CONFIG", str(tmp_path / "pool.json"))
+    client = TestClient(create_app())
+
+    updated = client.put(
+        "/api/v1/runtime-capacity",
+        headers={"X-Role": "analyst"},
+        json={"capacity": 4},
+    )
+
+    assert updated.status_code == 200
+    assert updated.json()["desired_capacity"] == 4
+    health = client.get("/api/v1/runtime-health").json()
+    assert health["configured_worker_capacity"] == 4
+    assert health["capacity_limit"] == 8
+
+
+def test_runtime_capacity_api_validates_range_and_role(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("EQUIPMENT_DR_WORKER_POOL_CONFIG", str(tmp_path / "pool.json"))
+    client = TestClient(create_app())
+
+    assert client.put("/api/v1/runtime-capacity", json={"capacity": 0}).status_code == 422
+    assert client.put("/api/v1/runtime-capacity", json={"capacity": 9}).status_code == 422
+    denied = client.put(
+        "/api/v1/runtime-capacity",
+        headers={"X-Role": "reviewer"},
+        json={"capacity": 3},
+    )
+    assert denied.status_code == 403
 
 
 def test_api_allows_duplicate_topics_without_reusing_run_identity() -> None:
@@ -129,10 +161,11 @@ def test_capability_api_view_projects_complete_process_and_verification() -> Non
 
     projected = _capability_api_view(row)
 
-    assert len(projected["operational_process"]) == 4
-    assert "防区外多轴释放" in projected["operational_process"][1]
-    assert len(projected["verification_plan"]) == 3
-    assert "未改装" in projected["verification_plan"][1]
+    assert projected["operational_process"] == [
+        "保留防区外投送",
+        "验证导航可信度",
+    ]
+    assert projected["verification_plan"] == ["开展接口联试"]
     assert projected["problem_statement"].endswith("任务闭合质量")
     assert "关键作战流程" in projected["deep_capability_portrait"]
 
@@ -600,7 +633,7 @@ def test_catalog_is_loaded_from_registry_and_invalid_selection_is_rejected() -> 
         item["id"] for item in catalog["report_templates"] if item["default"]
     ] == ["project_argument_v1"]
     defaults = [item["id"] for item in catalog["execution_profiles"] if item["default"]]
-    assert defaults == ["legacy_v1"]
+    assert defaults == ["winning_swarm_dynamic_v2"]
     assert [item["id"] for item in catalog["execution_profiles"]] == [
         "legacy_v1",
         "optimized_v2",
@@ -1907,7 +1940,7 @@ def test_capability_api_turns_legacy_labeled_sections_into_primary_portrait() ->
     )
 
     assert payload["deep_capability_portrait"].startswith("概述：")
-    assert len(payload["deep_capability_portrait"]) >= 500
+    assert "任务场景尚未由Agent明确" in payload["deep_capability_portrait"]
     assert "- 关键作战流程：" in payload["deep_capability_portrait"]
     assert "- 制胜逻辑机理与对抗边界：" in payload["deep_capability_portrait"]
     assert "边缘缓存和多路径重构" in payload["operational_mechanism"]
@@ -1917,7 +1950,7 @@ def test_capability_api_turns_legacy_labeled_sections_into_primary_portrait() ->
     assert "verification_methods" not in payload
 
 
-def test_capability_api_focuses_abstract_name_on_concrete_weapon_form() -> None:
+def test_capability_api_preserves_agent_authored_weapon_name() -> None:
     payload = _capability_api_view(
         {
             "name": "低空可消耗察打一体无人突击平台续接目标证据链",
@@ -1928,11 +1961,25 @@ def test_capability_api_focuses_abstract_name_on_concrete_weapon_form() -> None:
         }
     )
 
-    assert payload["name"] == "箱式发射低空可消耗察打一体无人机"
-    assert payload["source_name"].endswith("续接目标证据链")
+    assert payload["name"] == "低空可消耗察打一体无人突击平台续接目标证据链"
+    assert "source_name" not in payload
 
 
-def test_capability_api_rebuilds_anti_radiation_portrait_as_combat_weapon() -> None:
+def test_capability_api_promotes_complete_form_over_launch_mode_label() -> None:
+    payload = _capability_api_view(
+        {
+            "name": "地射无人机",
+            "capability_type": "new_capability",
+            "equipment_form": "车载发射舱近程拦截无人机·接口形态：车载任务规划接口",
+            "mission_effect": "对低空突防目标实施近程拦截与毁伤",
+        }
+    )
+
+    assert payload["name"] == "车载发射舱近程拦截无人机"
+    assert payload["source_name"] == "地射无人机"
+
+
+def test_capability_api_does_not_replace_agent_anti_radiation_identity() -> None:
     payload = _capability_api_view(
         {
             "name": "长航时反辐射巡飞弹药再捕获",
@@ -1971,12 +2018,32 @@ def test_capability_api_rebuilds_anti_radiation_portrait_as_combat_weapon() -> N
     )
 
     portrait = payload["deep_capability_portrait"]
-    assert payload["name"] == "长航时多模复核反辐射巡飞猎歼弹"
-    assert "联合空中突击群" in portrait
-    assert "防空压制分队" in portrait
-    assert "弹药立即俯冲摧毁目标" in portrait
-    assert "歼灭指挥所、导弹阵地与保障枢纽" in portrait
+    assert payload["name"] == "长航时反辐射巡飞弹药再捕获"
+    assert "发射前装订授权辐射源类别和目标记忆区" in portrait
+    assert "末段复核满足门槛时交战，否则拒打" in portrait
+    assert "直接摧毁敌预警雷达、火控雷达和电子战车辆" in portrait
     assert "发展与验证路径" not in portrait
+
+
+def test_capability_api_does_not_use_research_query_as_portrait_scene() -> None:
+    raw_query = "深度研究、理解并长期记忆复杂电磁环境和强对抗条件的突防抗扰设计不足和发展需求"
+    payload = _capability_api_view(
+        {
+            "name": "可消耗空射/地面助推无人僚机弹药",
+            "capability_type": "new_capability",
+            "equipment_form": "可消耗空射/地面助推无人僚机弹药",
+            "target_scenario": raw_query,
+            "problem_statement": "敌方机动防空节点利用电磁压制和诱饵压缩突防交战窗口",
+            "deep_capability_portrait": (
+                f"概述：面向{raw_query}，针对敌方机动防空节点，"
+                "以可消耗空射/地面助推无人僚机弹药为主装备。"
+            ),
+        }
+    )
+
+    assert payload["name"] == "可消耗空射/地面助推无人僚机弹药"
+    assert raw_query not in payload["deep_capability_portrait"].split("\n", 1)[0]
+    assert "聚焦任务相关作战阶段" in payload["deep_capability_portrait"]
 
 
 def test_api_rejects_edit_and_archive_after_start() -> None:

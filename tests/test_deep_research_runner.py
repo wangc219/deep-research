@@ -92,13 +92,22 @@ def test_fake_default_full_loop_outputs_files(tmp_path: Path) -> None:
     assert (run_dir / "trace.jsonl").exists()
     assert (run_dir / "artifacts").exists()
     images = json.loads((run_dir / "capability_images.json").read_text(encoding="utf-8"))
-    assert {item["capability_type"] for item in images} == {"new_capability", "upgrade"}
+    # The generic fake provider does not author S1-S6 equipment candidates.
+    # The runtime must remain fail-closed instead of filling a fixed six-card
+    # weapon catalog from local keywords.
+    assert images == []
     report = (run_dir / "report.md").read_text(encoding="utf-8")
     assert "综合研判与军事运用价值" in report
     assert "完整证据索引与推理回溯" in report
     assert len(report) < 14_000
     assert "装备能力画像与建设优先序" in report
     assert result["stage_count"] == 3
+    assert result["runtime_cleanup"] == {
+        "status": "released",
+        "task_scoped_resources_released": True,
+        "provider_process_groups_released": True,
+        "parallel_executors_released": True,
+    }
     summary = json.loads((run_dir / "round_summary.json").read_text(encoding="utf-8"))
     assert summary["store_summary"]["materialized_evidence_count"] >= 3
     assert len(summary["source_materials"]) >= 3
@@ -133,6 +142,7 @@ def test_fake_default_full_loop_outputs_files(tmp_path: Path) -> None:
         "ScenarioModel",
         "EquipmentObservation",
         "OperationalSynthesis",
+        "CapabilityImageItem",
     }
     assert required_types <= {row["type"] for row in domain_rows}
     for row in domain_rows:
@@ -177,7 +187,7 @@ def test_three_research_routes_have_e2e(tmp_path: Path) -> None:
         )
         summary = json.loads(Path(result["summary_path"]).read_text(encoding="utf-8"))
         assert summary["resolved_route"] == route
-        assert result["capability_count"] == 6
+        assert result["capability_count"] == 0
 
 
 def test_real_smoke_materializes_public_source_diagnostics(tmp_path: Path) -> None:

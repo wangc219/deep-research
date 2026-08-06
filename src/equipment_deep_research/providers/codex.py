@@ -19,7 +19,8 @@ import shutil
 import signal
 import subprocess
 import tempfile
-from time import monotonic
+from threading import RLock
+from time import monotonic, sleep
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -161,6 +162,30 @@ class CodexCliProvider:
         self._command_cache = CommandCache()
         self._perf_monitor = get_perf_monitor()
         self._base_command = self._build_base_command()
+        self._active_process_groups: set[int] = set()
+        self._active_process_groups_lock = RLock()
+
+    def close(self) -> None:
+        """Terminate any task-scoped Codex process groups still alive.
+
+        Normal model turns remove themselves from this registry.  The explicit
+        close hook is a final run-boundary safeguard for cancellation, provider
+        errors, or a descendant process that outlives its Codex CLI leader.
+        """
+
+        with self._active_process_groups_lock:
+            process_group_ids = tuple(self._active_process_groups)
+            self._active_process_groups.clear()
+        for process_group_id in process_group_ids:
+            _terminate_process_group_sync(process_group_id)
+
+    def _register_process_group(self, process_group_id: int) -> None:
+        with self._active_process_groups_lock:
+            self._active_process_groups.add(process_group_id)
+
+    def _release_process_group(self, process_group_id: int) -> None:
+        with self._active_process_groups_lock:
+            self._active_process_groups.discard(process_group_id)
 
     def _build_base_command(self) -> list[str]:
         """构建不变的基础命令部分"""
@@ -615,6 +640,8 @@ class CodexCliProvider:
             )
         except OSError as exc:
             raise ProviderRequestError(f"Codex CLI could not start: {exc}") from exc
+        process_group_id = process.pid
+        self._register_process_group(process_group_id)
         try:
             effective_timeout = int(timeout_seconds or self.timeout_seconds)
             stdout, stderr = await asyncio.wait_for(
@@ -629,6 +656,13 @@ class CodexCliProvider:
             raise ProviderRequestError(
                 f"Codex CLI timed out after {effective_timeout} seconds"
             ) from exc
+        finally:
+            # ``codex exec`` may launch helpers.  A successful leader exit must
+            # not allow a detached helper in the same task process group to
+            # survive after the model turn, and especially not after the run.
+            if _process_group_exists(process_group_id):
+                await _terminate_process_group(process)
+            self._release_process_group(process_group_id)
         return subprocess.CompletedProcess(
             args=list(command),
             returncode=int(process.returncode or 0),
@@ -678,6 +712,24 @@ def _process_group_exists(process_group_id: int) -> bool:
     except PermissionError:
         return True
     return True
+
+
+def _terminate_process_group_sync(process_group_id: int) -> None:
+    """Best-effort synchronous fallback used by the run resource scope."""
+
+    try:
+        os.killpg(process_group_id, signal.SIGTERM)
+    except (ProcessLookupError, PermissionError):
+        return
+    deadline = monotonic() + 3.0
+    while monotonic() < deadline:
+        if not _process_group_exists(process_group_id):
+            return
+        sleep(0.05)
+    try:
+        os.killpg(process_group_id, signal.SIGKILL)
+    except (ProcessLookupError, PermissionError):
+        pass
 
 
 def _configured_positive_int(name: str, default: int) -> int:

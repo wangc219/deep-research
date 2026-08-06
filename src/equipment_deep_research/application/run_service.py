@@ -8,6 +8,7 @@ import os
 from threading import Lock
 
 from equipment_deep_research.application.dto import CreateRunCommand, RunView, UpdateRunCommand
+from equipment_deep_research.application.worker_pool_config import read_worker_capacity
 from equipment_deep_research.domain.models import new_stable_id, now_iso
 
 
@@ -44,12 +45,7 @@ class InProcessRunQueue:
 
 
 def _configured_worker_concurrency() -> int:
-    raw_value = os.environ.get("EQUIPMENT_DR_RESEARCH_WORKER_CONCURRENCY", "2")
-    try:
-        value = int(raw_value)
-    except (TypeError, ValueError):
-        value = 1
-    return min(8, max(1, value))
+    return read_worker_capacity()
 
 
 def _configured_worker_stale_after_seconds() -> int:
@@ -357,7 +353,11 @@ class ResearchApplicationService:
                 age = max(0.0, (now - datetime.fromisoformat(row["updated_at"])).total_seconds())
             except (KeyError, TypeError, ValueError):
                 age = float("inf")
-            active.append({**row, "age_seconds": round(age, 1), "online": age <= stale_after_seconds})
+            active.append({
+                **row,
+                "age_seconds": round(age, 1),
+                "online": age <= stale_after_seconds and row.get("status") != "stopped",
+            })
         online_workers = [item for item in active if item["online"]]
         online_workers.sort(key=lambda item: str(item.get("worker_id", "")))
         for slot_index, worker in enumerate(online_workers, start=1):
@@ -369,12 +369,21 @@ class ResearchApplicationService:
         ]
         configured_capacity = _configured_worker_concurrency()
         worker_capacity = len(online_workers)
+        capacity_transition = (
+            "scaling_up"
+            if worker_capacity < configured_capacity
+            else "scaling_down"
+            if worker_capacity > configured_capacity
+            else "stable"
+        )
         pending = self.queue.pending_run_ids()
         return {
             "status": "ready" if online_workers else "degraded",
             "worker_online": bool(online_workers),
             "workers": active,
             "configured_worker_capacity": configured_capacity,
+            "capacity_transition": capacity_transition,
+            "capacity_limit": 8,
             "worker_capacity": worker_capacity,
             "online_worker_count": len(online_workers),
             "active_count": len(active_workers),

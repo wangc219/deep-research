@@ -163,8 +163,9 @@ def test_recently_claimed_run_is_not_recovered_by_another_starting_worker() -> N
     assert service.queue.pending_run_ids() == []
 
 
-def test_runtime_health_tolerates_invalid_worker_concurrency(monkeypatch) -> None:
+def test_runtime_health_tolerates_invalid_worker_concurrency(tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("EQUIPMENT_DR_RESEARCH_WORKER_CONCURRENCY", "invalid")
+    monkeypatch.setenv("EQUIPMENT_DR_WORKER_POOL_CONFIG", str(tmp_path / "worker-pool.json"))
 
     health = ResearchApplicationService().runtime_health()
 
@@ -173,8 +174,9 @@ def test_runtime_health_tolerates_invalid_worker_concurrency(monkeypatch) -> Non
     assert health["available_slots"] == 0
 
 
-def test_runtime_health_caps_configured_worker_concurrency_at_eight(monkeypatch) -> None:
+def test_runtime_health_caps_configured_worker_concurrency_at_eight(tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("EQUIPMENT_DR_RESEARCH_WORKER_CONCURRENCY", "99")
+    monkeypatch.setenv("EQUIPMENT_DR_WORKER_POOL_CONFIG", str(tmp_path / "worker-pool.json"))
 
     health = ResearchApplicationService().runtime_health()
 

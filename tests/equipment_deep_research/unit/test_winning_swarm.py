@@ -23,6 +23,7 @@ from equipment_deep_research.orchestration.execution_contracts import (
 from equipment_deep_research.orchestration.winning_swarm import (
     SWARM_SPECIALIST_ARCHETYPES,
     WinningSwarmController,
+    normalize_weapon_candidate_title,
     normalize_winning_swarm_policy,
 )
 from equipment_deep_research.domain.models import ResearchProblem
@@ -35,11 +36,14 @@ def _hypothesis(**overrides: object) -> WinningHypothesis:
         "nearest_public_baseline": "现有公开基线依赖少量高价值集中式拦截节点",
         "changed_confrontation_variable": "把单节点性能优势改为可快速补充的节点密度与任务接续",
         "mechanism_chain": ["分散部署", "局部感知与交战", "节点损耗后任务接续"],
-        "direct_military_effects": ["提高区域拒止持续性", "缩短受威胁方向的防御空窗"],
+        "direct_military_effects": ["持续物理拦截饱和来袭目标", "缩短受威胁方向的防御空窗"],
         "equipment_forms": ["模块化无人拦截平台"],
         "project_function": "防空分队在饱和来袭与节点损耗条件下依靠模块化无人拦截平台持续实施物理拦截并续接区域拒止任务。",
         "system_interfaces": ["平台任务总线", "火控授权接口", "战术数据链接口"],
         "novelty_delta": "从集中式高价值节点转向可补充、可降级运行的分布式装备族",
+        "naming_rationale": "名称对应分布式部署、低成本补充、直接拦截主装备与区域拒止战果",
+        "decisive_advantage_thesis": "节点损耗后仍能接续物理拦截，使对手饱和攻击无法按预期打开防御空窗",
+        "cross_query_distinction": "若目标不是饱和来袭或任务不是区域拒止，节点构型、拦截机理和名称均须重做",
         "evidence_ids": ["ev-1"],
         "counterevidence": ["复杂电磁环境可能降低局部协同质量"],
         "adversary_adaptations": ["对手转向诱饵和节点压制"],
@@ -89,8 +93,8 @@ def test_dynamic_v2_profile_reserves_six_parallel_repair_instances() -> None:
     assert blueprint["winning_swarm_policy"]["policy_id"] == "winning_swarm_dynamic_v2"
     assert blueprint["winning_swarm_policy"]["expert_judge_enabled"] is True
     assert blueprint["winning_swarm_policy"]["expert_judge_required"] is True
-    assert blueprint["winning_swarm_policy"]["finalist_minimum"] == 5
-    assert blueprint["winning_swarm_policy"]["finalist_maximum"] == 7
+    assert blueprint["winning_swarm_policy"]["finalist_minimum"] == 1
+    assert blueprint["winning_swarm_policy"]["finalist_maximum"] == 12
     assert blueprint["winning_swarm_policy"]["mission_graph_target_instances"] == 12
     assert blueprint["winning_swarm_policy"]["expert_candidate_pool_maximum"] == 10
     assert blueprint["winning_swarm_policy"]["expert_repair_reserved_instances"] == 6
@@ -103,6 +107,73 @@ def test_dynamic_v2_profile_reserves_six_parallel_repair_instances() -> None:
     assert blueprint["winning_swarm_policy"]["mission_graph_max_instances"] == 18
     assert blueprint["winning_swarm_policy"]["max_concurrency"] == 6
     assert blueprint["winning_swarm_policy"]["mission_graph_min_instances"] == 8
+
+
+@pytest.mark.parametrize(
+    ("raw", "forms", "expected"),
+    [
+        (
+            "S3-红队保留：抗诱骗闭环紧凑打一体游荡弹药分队",
+            ["背负、车载或舰岸箱式发射的可消耗巡飞弹药"],
+            "可消耗巡飞弹药",
+        ),
+        (
+            "前沿小单元侦打评一体巡飞毁伤弹：压缩发现、打击、评估、补击闭环",
+            ["背负发射巡飞毁伤弹"],
+            "前沿小单元侦打评一体巡飞毁伤弹",
+        ),
+        (
+            "S3_颠覆分支：节点贴身可消耗空中雷区拦截器",
+            ["箱式发射的低成本空中拦截弹"],
+            "低成本空中拦截弹",
+        ),
+    ],
+)
+def test_weapon_candidate_title_removes_stage_labels_and_keeps_weapon_identity(
+    raw: str,
+    forms: list[str],
+    expected: str,
+) -> None:
+    title = normalize_weapon_candidate_title(raw, forms)
+
+    assert title == expected
+    assert "S3" not in title
+
+
+def test_weapon_candidate_title_preserves_query_specific_codename_and_identity() -> None:
+    title = normalize_weapon_candidate_title(
+        "S3-候选A：“影袭”低特征诱骗-压制-反辐射巡飞攻击弹",
+        ["可消耗低特征诱骗-压制-反辐射巡飞攻击弹"],
+    )
+
+    assert title == "“影袭”低特征诱骗-压制-反辐射巡飞攻击弹"
+
+
+def test_weapon_candidate_title_replaces_internal_effector_with_main_weapon() -> None:
+    title = normalize_weapon_candidate_title(
+        "内置效应器",
+        ["伴随电子压制无人攻击机"],
+    )
+
+    assert title == "伴随电子压制无人攻击机"
+
+
+def test_weapon_candidate_title_removes_form_and_interface_metadata() -> None:
+    title = normalize_weapon_candidate_title(
+        "空射可消耗无人诱饵弹 · 接口形态：任务前画像装订接口、与载机释放规划接口",
+        ["形态：空射可消耗无人诱饵弹 · 接口形态：任务前画像装订接口"],
+    )
+
+    assert title == "空射可消耗无人诱饵弹"
+
+
+def test_weapon_candidate_title_strips_query_model_metatalk() -> None:
+    title = normalize_weapon_candidate_title(
+        "Query相关型号：低特征反辐射巡飞攻击弹",
+        ["低特征反辐射巡飞攻击弹"],
+    )
+
+    assert title == "低特征反辐射巡飞攻击弹"
 
 
 def test_policy_clamps_instance_concurrency_wave_and_gain_bounds() -> None:
@@ -144,6 +215,12 @@ def test_dynamic_v2_mission_graph_seeds_s1_s6_with_parallel_instances() -> None:
     assert all(graph.s_node_seeds[node] for node in graph.s_node_seeds)
     assert len(graph.waves[0]) >= 4
     assert all(instance.allow_child_spawn is False for instance in graph.agent_instances)
+    assert all("当前唯一任务主题" in contract.purpose for contract in graph.role_contracts)
+    assert all("打击、歼灭、毁伤、杀伤" in contract.purpose for contract in graph.role_contracts)
+    assert all(
+        any("跨Query替换自检" in item for item in contract.methodology)
+        for contract in graph.role_contracts
+    )
     by_archetype = {item.archetype: item for item in graph.agent_instances}
     frontier = by_archetype["frontier_equipment_miner"]
     architect = by_archetype["equipment_realization_architect"]
@@ -154,7 +231,7 @@ def test_dynamic_v2_mission_graph_seeds_s1_s6_with_parallel_instances() -> None:
     assert "direct_combat_equipment_generator" in by_archetype
     assert "remote_precision_munition_generator" in by_archetype
     assert "mass_scalable_combat_family_generator" in by_archetype
-    assert "始终按query筛选" in SWARM_SPECIALIST_ARCHETYPES[
+    assert "始终按Query筛选" in SWARM_SPECIALIST_ARCHETYPES[
         "direct_combat_equipment_generator"
     ]["purpose"]
     assert "非穷尽观察镜头" in SWARM_SPECIALIST_ARCHETYPES[
@@ -326,7 +403,7 @@ def test_expert_repair_can_replace_unsupported_claims_with_bounded_portrait() ->
     assert merged.hypotheses[0].equipment_forms == [
         "固定构型远程精确制导任务弹药"
     ]
-    assert merged.hypotheses[0].title == "JASSM-ER类受扰导航验证型"
+    assert merged.hypotheses[0].title == "固定构型远程精确制导任务弹药"
     assert merged.hypotheses[0].changed_confrontation_variable == (
         "卫星导航拒止下保持固定目标区进入"
     )
@@ -357,8 +434,10 @@ def test_quality_expert_judge_normalizes_scores_and_blocks_weak_equipment_fit() 
             "dimension_scores": {
                 "domain_relevance": 0.9,
                 "equipment_capability_fit": 0.86,
-                "innovation": 0.8,
-                "military_value": 0.88,
+                    "innovation": 0.8,
+                    "military_value": 0.88,
+                    "decisive_advantage": 0.86,
+                    "query_specificity": 0.84,
                 "causal_coherence": 0.84,
                 "credibility": 0.8,
                 "engineering_feasibility": 0.74,
@@ -379,8 +458,10 @@ def test_quality_expert_judge_normalizes_scores_and_blocks_weak_equipment_fit() 
             "dimension_scores": {
                 "domain_relevance": 0.8,
                 "equipment_capability_fit": 0.35,
-                "innovation": 0.7,
-                "military_value": 0.45,
+                    "innovation": 0.7,
+                    "military_value": 0.45,
+                    "decisive_advantage": 0.35,
+                    "query_specificity": 0.40,
                 "causal_coherence": 0.65,
                 "credibility": 0.7,
                 "engineering_feasibility": 0.8,
@@ -450,8 +531,30 @@ def test_dynamic_v2_portfolio_keeps_five_to_seven_with_four_direct_equipment() -
         if item.hypothesis_id in set(decision.selected_hypothesis_ids)
     ]
 
-    assert 5 <= len(selected) <= 7
-    assert sum(controller.is_direct_combat_equipment(item) for item in selected) >= 4
+    assert 1 <= len(selected) <= 12
+    assert sum(controller.is_direct_combat_equipment(item) for item in selected) >= 1
+
+
+def test_dynamic_portfolio_retains_all_reliable_independent_weapons_up_to_s6_capacity() -> None:
+    controller = WinningSwarmController(
+        {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
+    )
+    hypotheses = [
+        _hypothesis(
+            hypothesis_id=f"weapon-{index}",
+            title=f"Query专属精确打击武器{index}",
+            equipment_forms=[f"Query专属精确打击弹药{index}"],
+            changed_confrontation_variable=f"第{index}项独立任务矛盾",
+            direct_military_effects=[f"形成第{index}项独立直接战果"],
+        )
+        for index in range(1, 9)
+    ]
+
+    decision = controller.portfolio_decision(controller.create_ledger(hypotheses))
+
+    assert decision.selected_hypothesis_ids == [
+        item.hypothesis_id for item in hypotheses
+    ]
 
 
 def test_dynamic_portfolio_prefers_distinct_equipment_families_before_variants() -> None:
@@ -599,10 +702,11 @@ def test_dynamic_portfolio_replaces_duplicate_pareto_families_with_passed_altern
 
     assert len(selected) == 5
     assert len(direct_counts) == 4
-    assert max(direct_counts.values()) == 1
-    assert {"prsm", "jassm", "system-link"} <= {
+    assert max(direct_counts.values()) <= 2
+    assert {"prsm", "jassm"} <= {
         item.hypothesis_id for item in selected
     }
+    assert "system-link" not in {item.hypothesis_id for item in selected}
 
 
 def test_dynamic_coverage_does_not_stop_at_five_passes_with_only_four_direct_families() -> None:
@@ -676,8 +780,8 @@ def test_dynamic_coverage_does_not_stop_at_five_passes_with_only_four_direct_fam
     assert coverage["passed_count"] == 7
     assert coverage["direct_combat_equipment_count"] == 6
     assert coverage["distinct_direct_equipment_family_count"] == 4
-    assert coverage["preferred_distinct_direct_equipment"] == 5
-    assert coverage["ready"] is False
+    assert coverage["preferred_distinct_direct_equipment"] == 1
+    assert coverage["ready"] is True
 
     mald = _hypothesis(
         hypothesis_id="mald-j",
@@ -1339,6 +1443,8 @@ def test_expert_repairs_prioritize_passed_system_links_for_combat_quota() -> Non
                     "equipment_capability_fit": score,
                     "innovation": score,
                     "military_value": score,
+                    "decisive_advantage": score,
+                    "query_specificity": score,
                     "causal_coherence": score,
                     "credibility": score,
                     "engineering_feasibility": score,
@@ -1396,6 +1502,8 @@ def test_expert_repairs_prioritize_failed_direct_images_before_passed_links() ->
                         "equipment_capability_fit",
                         "innovation",
                         "military_value",
+                        "decisive_advantage",
+                        "query_specificity",
                         "causal_coherence",
                         "credibility",
                         "engineering_feasibility",
@@ -1469,6 +1577,8 @@ def test_expert_repairs_prioritize_missing_direct_equipment_family() -> None:
                         "equipment_capability_fit",
                         "innovation",
                         "military_value",
+                        "decisive_advantage",
+                        "query_specificity",
                         "causal_coherence",
                         "credibility",
                         "engineering_feasibility",

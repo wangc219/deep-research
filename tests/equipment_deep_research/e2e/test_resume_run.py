@@ -687,7 +687,9 @@ def test_completed_resume_rewrites_stable_outputs_from_sqlite(tmp_path: Path) ->
     assert len(summary["winning_mechanism"]["inputs"]) == 1
     assert len(summary["winning_mechanism"]["resource_projections"]) == 1
     assert len(summary["winning_mechanism"]["reasoning_nodes"]) == 6
-    assert json.loads((run_dir / "capability_images.json").read_text(encoding="utf-8"))
+    assert json.loads(
+        (run_dir / "capability_images.json").read_text(encoding="utf-8")
+    ) == []
     assert jsonl_rows(run_dir / "domain.jsonl")
     assert (run_dir / "report.md").read_text(encoding="utf-8") != "stale\n"
 
@@ -965,7 +967,7 @@ def test_finalize_running_is_retried_after_engine_crash_before_commit(
 
     assert resumed["status"] == "completed"
     assert store.count("WinningMechanismStageOutput") == 3
-    assert store.count("CapabilityImageItem") == 6
+    assert store.count("CapabilityImageItem") == 0
     assert store.count("ResearchReport") == 1
     proposal_ids = [event["proposal_id"] for event in store.trace_events()]
     assert len(proposal_ids) == len(set(proposal_ids))

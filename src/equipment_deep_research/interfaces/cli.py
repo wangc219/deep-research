@@ -80,8 +80,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--execution-profile-id",
         choices=["legacy_v1", "optimized_v2", "swarm_quality_v1", "winning_swarm_dynamic_v2"],
-        default="legacy_v1",
-        help="Select the harness implementation. Legacy v1 remains the production champion; quality profiles are evaluation challengers.",
+        default="winning_swarm_dynamic_v2",
+        help="Select the harness implementation. Dynamic swarm v2 is the default; legacy v1 remains available for compatibility and controlled comparisons.",
     )
     parser.add_argument(
         "--stage-policy-id",

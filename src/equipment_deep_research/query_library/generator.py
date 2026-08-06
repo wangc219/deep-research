@@ -80,9 +80,13 @@ class ModelQueryGenerator:
         )
         sources = _grounding_sources(grounding, grounding_metadata)
         if not sources:
-            raise GenerationValidationError(
-                "lightweight web validation returned no usable HTTPS sources"
-            )
+            # Web grounding improves freshness but must not make the Query
+            # generator unusable.  A Codex CLI session may be deliberately
+            # offline, or its configured gateway may not expose hosted web
+            # search.  Keep that limitation auditable as a document-style
+            # source rather than fabricating an HTTPS citation or rejecting a
+            # perfectly valid semantic-generation request.
+            sources = (_semantic_generation_source(topic, supplemental_information),)
 
         accepted: list[GeneratedCandidate] = []
         remaining_slots = list(slots)
@@ -165,9 +169,9 @@ class ModelQueryGenerator:
             "supplemental_information": supplemental_information,
             "reference_urls": list(reference_urls),
             "task": (
-                "围绕无人、低空、远程火力和精确打击装备进行轻量联网校验。"
-                "若提供reference_urls，优先访问这些网页并提取与母题相关的公开线索；无法访问时不要编造内容。"
-                "执行3至5个公开资料检索，只提取近期术语、规划、能力动向、作战概念和待验证信号。"
+                "围绕无人、低空、远程火力和精确打击装备进行轻量公开线索校验。"
+                "若联网检索可用，优先访问reference_urls并补充公开资料；无法访问、没有参考URL或未返回来源时，"
+                "如实返回空sources并继续基于用户母题梳理语义信号，绝不编造内容或URL。"
                 "最多返回8个实际访问过的HTTPS来源。搜索摘要只是生成线索，不是正式证据。"
             ),
         }
@@ -190,7 +194,11 @@ class ModelQueryGenerator:
                 "max_output_tokens": 2600,
                 "web_search": {"search_context_size": "medium"},
                 "include_web_sources": True,
-                "require_web_search": True,
+                # Search is opportunistic: Codex CLI can use it when its
+                # authenticated provider exposes hosted search, but offline
+                # and custom-gateway sessions must still complete the task.
+                "require_web_search": False,
+                "_provider_retry_attempts": 3,
                 "output_schema": GROUNDING_SCHEMA,
             },
         )
@@ -233,7 +241,9 @@ class ModelQueryGenerator:
                 "supplemental_information必须要求deep research先广泛发散、再收敛到可独立论证的具体装备项目，并逐项明确项目功能、Query因果链、直接军事效果、公开基线、失效边界和可证伪验证；项目功能回答谁在何种条件下依靠该装备完成什么动作并产生何种任务结果。",
                 "综合体系化、实战化、智能化、颠覆化、通用化、系列化和规模化。",
                 "整批兼顾传统能力红海跨代优势与新质能力蓝海高维优速。",
-                "source URL只能从allowed_sources中选择，不得编造URL。",
+                "若allowed_sources含HTTPS网页，source URL只能从其中选择，不得编造URL。"
+                "若allowed_sources只有本地语义生成说明（source_kind=document），sources可留空；"
+                "系统会保留该说明，绝不能伪造HTTPS URL。",
                 "避免具体目标选择、攻击步骤、武器制造参数等可操作伤害指导。",
                 "只输出严格JSON。",
             ],
@@ -257,6 +267,7 @@ class ModelQueryGenerator:
                 **self.model_options,
                 "reasoning_effort": self.model_options.get("reasoning_effort", "high"),
                 "max_output_tokens": max(3000, len(remaining_slots) * 900),
+                "_provider_retry_attempts": 3,
                 "output_schema": GENERATION_SCHEMA,
             },
         )
@@ -347,6 +358,24 @@ def _grounding_sources(
         except GenerationValidationError:
             continue
     return dedupe_sources(valid, limit=8)
+
+
+def _semantic_generation_source(
+    topic: str,
+    supplemental_information: str,
+) -> SourceReference:
+    """Record a no-network generation path without pretending it is web evidence."""
+
+    topic_text = " ".join(str(topic or "").split())[:180] or "用户输入母题"
+    context_text = " ".join(str(supplemental_information or "").split())[:280]
+    note = "未获得可核验的公开 HTTPS 来源；基于用户母题进行语义发散。"
+    if context_text:
+        note = f"{note} 已纳入补充约束：{context_text}"
+    return SourceReference(
+        title=f"本地语义生成：{topic_text}",
+        relevance_note=note,
+        source_kind="document",
+    )
 
 
 def _candidate_from_payload(

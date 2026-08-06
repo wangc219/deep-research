@@ -389,6 +389,7 @@ def test_two_workers_execute_distinct_runs_concurrently(tmp_path: Path) -> None:
 
 def test_runtime_health_reports_parallel_slots_and_active_runs(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("EQUIPMENT_DR_RESEARCH_WORKER_CONCURRENCY", "2")
+    monkeypatch.setenv("EQUIPMENT_DR_WORKER_POOL_CONFIG", str(tmp_path / "worker-pool.json"))
     engine = create_database_engine(f"sqlite:///{tmp_path / 'runtime-health.db'}")
     service = ResearchApplicationService(
         repository=SqlRunRepository(engine),
@@ -494,7 +495,9 @@ def test_api_queue_worker_outputs_survive_process_boundaries(tmp_path: Path) -> 
     assert runtime_health["active_count"] == 0
     assert runtime_health["available_slots"] == 1
     assert runtime_health["active_run_ids"] == []
-    assert client.get(f"/api/v1/runs/{created['run_id']}/capabilities").json()
+    assert client.get(
+        f"/api/v1/runs/{created['run_id']}/capabilities"
+    ).json() == []
     winning = client.get(
         f"/api/v1/runs/{created['run_id']}/winning-mechanism"
     ).json()
@@ -528,7 +531,8 @@ def test_api_queue_worker_outputs_survive_process_boundaries(tmp_path: Path) -> 
         for event in interactions["events"]
         if event["event_type"] == "tool_call"
     }
-    assert {"write_stage_output", "create_capability_image", "write_audit", "write_report"} <= called_tools
+    assert {"write_stage_output", "write_audit", "write_report"} <= called_tools
+    assert "create_capability_image" not in called_tools
     assert "raw_message" not in json.dumps(interactions, ensure_ascii=False)
     packet = client.get(
         f"/api/v1/runs/{created['run_id']}/domain/BaselineFindingPacket"
@@ -540,7 +544,9 @@ def test_api_queue_worker_outputs_survive_process_boundaries(tmp_path: Path) -> 
     assert run["status"] == "completed"
     assert run["result"]["manifest_file_count"] >= 5
     assert restarted.get(f"/api/v1/runs/{created['run_id']}/summary").json()["resolved_route"] == "traditional_gap"
-    assert restarted.get(f"/api/v1/runs/{created['run_id']}/capabilities").json()
+    assert restarted.get(
+        f"/api/v1/runs/{created['run_id']}/capabilities"
+    ).json() == []
     assert restarted.get(f"/api/v1/runs/{created['run_id']}/domain/EvidenceCard").json()
     assert len(restarted.get(f"/api/v1/runs/{created['run_id']}/domain/WinningMechanismStageOutput").json()) == 3
     assert restarted.get(f"/api/v1/runs/{created['run_id']}/report", headers={"X-Role": "reviewer"}).status_code == 200

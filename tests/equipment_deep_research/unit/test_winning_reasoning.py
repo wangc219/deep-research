@@ -157,7 +157,7 @@ def test_winning_engine_records_six_steps_in_trace_and_stage_refs() -> None:
     assert all(node.claim_ids == [] for node in store.reasoning_nodes.values())
 
 
-def test_deadline_fallback_still_emits_multiple_specific_weapon_images() -> None:
+def test_deadline_fallback_does_not_emit_fixed_weapon_images() -> None:
     packet = BaselineFindingPacket(
         "packet-fallback",
         "weapon_equipment",
@@ -195,13 +195,7 @@ def test_deadline_fallback_still_emits_multiple_specific_weapon_images() -> None
         model_analysis={},
     )
 
-    names = [item.name for item in images]
-    assert len(images) == 6
-    assert any("无人" in name for name in names)
-    assert any("导弹" in name or "远程精确" in name for name in names)
-    assert any("巡飞弹" in name for name in names)
-    assert any("反辐射" in name or "远域压制" in name for name in names)
-    assert {item.capability_type for item in images} == {"new_capability", "upgrade"}
+    assert images == []
 
 
 def test_winning_engine_turns_critic_evidence_gap_into_bounded_targeted_recall() -> None:
@@ -433,13 +427,12 @@ def test_risk_based_targeted_evidence_stays_blocking_without_direct_evidence() -
     assert images[0].evidence_ids == []
 
 
-def test_three_routes_generate_distinct_product_function_images() -> None:
-    expected = {
-        "new_winning_mechanism": "分布式决策",
-        "traditional_gap": "模块化任务载荷",
-        "war_case_learning": "战损后重构",
-    }
-    for route, phrase in expected.items():
+def test_three_routes_do_not_generate_local_fallback_images() -> None:
+    for route in (
+        "new_winning_mechanism",
+        "traditional_gap",
+        "war_case_learning",
+    ):
         packet = BaselineFindingPacket(
             f"p-{route}",
             "a",
@@ -474,10 +467,7 @@ def test_three_routes_generate_distinct_product_function_images() -> None:
             trace=trace,
             coverage={"missing_required_tags": [], "coverage_passed": True},
         )
-        assert phrase in images[0].capability_image
-        assert images[0].mission_effect
-        assert images[0].system_dependencies
-        assert images[0].risk_boundaries
+        assert images == []
 
 
 def test_model_directions_are_all_preserved_as_capability_images() -> None:
@@ -683,7 +673,7 @@ def test_s6_final_weapon_set_cannot_be_replaced_by_upstream_abstract_direction()
     )
 
 
-def test_capability_image_summarizes_structured_baseline_without_debug_repr() -> None:
+def test_structured_baseline_does_not_trigger_local_capability_image_generation() -> None:
     packet = BaselineFindingPacket(
         "p",
         "weapon_equipment",
@@ -733,10 +723,7 @@ def test_capability_image_summarizes_structured_baseline_without_debug_repr() ->
         coverage={"missing_required_tags": [], "coverage_passed": True},
     )
 
-    assert "系统可用度：需按演训基线测量" in images[0].capability_gap
-    assert "{'parameter'" not in images[0].capability_gap
-    assert "弱网环境：跨平台协同能力下降" in images[0].verification_plan
-    assert "发展与验证路径" not in images[0].capability_image
+    assert images == []
 
 
 def test_report_uses_normative_capability_image_sections() -> None:

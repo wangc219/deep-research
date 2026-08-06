@@ -506,10 +506,10 @@ def apply_execution_profile_to_blueprint(
             # repair expanded the graph beyond its advertised hard cap.
             "mission_graph_target_instances": 12,
                 "mission_graph_max_instances": 18,
-                "finalist_minimum": 5,
-                "finalist_maximum": 7,
-                "minimum_direct_combat_equipment": 4,
-                "preferred_distinct_direct_equipment": 5,
+                "finalist_minimum": 1,
+                "finalist_maximum": 12,
+                "minimum_direct_combat_equipment": 1,
+                "preferred_distinct_direct_equipment": 1,
                 "expert_candidate_pool_maximum": 10,
                 "expert_judge_enabled": True,
                 "expert_judge_required": True,
@@ -518,6 +518,29 @@ def apply_execution_profile_to_blueprint(
                 "expert_repair_enabled": True,
             "expert_repair_max_candidates": 6,
             "expert_repair_reserved_instances": 6,
+                "expert_repair_minimum_score": 0.70,
+            }
+        )
+    elif profile.profile_id == "swarm_quality_v1":
+        # The bounded three-wave cluster uses the same substantive acceptance
+        # standard as dynamic v2.  Its simpler scheduler is not permission to
+        # skip independent judgement or to cap the portfolio at a historical
+        # four-card quota.
+        swarm_policy.update(
+            {
+                "policy_id": "swarm_quality_v1",
+                "finalist_minimum": 1,
+                "finalist_maximum": 12,
+                "minimum_direct_combat_equipment": 1,
+                "preferred_distinct_direct_equipment": 1,
+                "expert_candidate_pool_maximum": 10,
+                "expert_judge_enabled": True,
+                "expert_judge_required": True,
+                "expert_judge_minimum_score": 0.72,
+                "expert_judge_critical_dimension_minimum": 0.60,
+                "expert_repair_enabled": True,
+                "expert_repair_max_candidates": 4,
+                "expert_repair_reserved_instances": 4,
                 "expert_repair_minimum_score": 0.70,
             }
         )

@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" data-pptx-page-role="content">
+  <rect id="bg" data-pptx-role="background" x="0" y="0" width="1280" height="720" fill="#F8FAFC"/>
+  <g id="header" data-pptx-bounds="56 42 1168 136">
+    <text x="56" y="70" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#2B78B8">02 / 真实前端工作台</text>
+    <text x="56" y="114" font-family="Microsoft YaHei, Arial" font-size="34" font-weight="700" fill="#0D2B55">一次生成任务，经历联网校验、结构化生成与草稿审核，<tspan x="56" dy="40">而非页面阻塞等待</tspan></text>
+  </g>
+
+  <g id="async-chain" data-pptx-bounds="56 192 438 424">
+    <rect x="56" y="192" width="438" height="424" fill="#0D2B55"/>
+    <text x="82" y="224" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#E89A22">页面只创建任务，Query Worker 独立执行</text>
+    <line x1="84" y1="250" x2="84" y2="570" stroke="#E89A22" stroke-width="3"/>
+    <g id="chain-1"><circle cx="84" cy="266" r="10" fill="#E89A22"/><text x="108" y="272" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#FFFFFF">提交生成任务</text><text x="108" y="296" font-family="Arial" font-size="14" fill="#EAF0F7">POST /generations</text></g>
+    <g id="chain-2"><circle cx="84" cy="326" r="10" fill="#E89A22"/><text x="108" y="332" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#FFFFFF">前端可见状态</text><text x="108" y="356" font-family="Microsoft YaHei, Arial" font-size="14" fill="#EAF0F7">排队 / 联网校验 / 生成 / 保存 / 完成或失败</text></g>
+    <g id="chain-3"><circle cx="84" cy="386" r="10" fill="#E89A22"/><text x="108" y="392" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#FFFFFF">轻量联网校验</text><text x="108" y="416" font-family="Microsoft YaHei, Arial" font-size="14" fill="#EAF0F7">3—5 个公开检索；最多 8 个 HTTPS 来源</text></g>
+    <g id="chain-4"><circle cx="84" cy="446" r="10" fill="#E89A22"/><text x="108" y="452" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#FFFFFF">按覆盖槽位生成</text><text x="108" y="476" font-family="Microsoft YaHei, Arial" font-size="14" fill="#EAF0F7">20 个槽位，支持 4 / 6 / 8 / 12 / 16 / 20 条</text></g>
+    <g id="chain-5"><circle cx="84" cy="506" r="10" fill="#E89A22"/><text x="108" y="512" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#FFFFFF">整批校验后原子入库</text><text x="108" y="536" font-family="Microsoft YaHei, Arial" font-size="14" fill="#EAF0F7">质量、去重、来源校验全部通过才写草稿</text></g>
+    <g id="chain-6"><circle cx="84" cy="566" r="10" fill="#E89A22"/><text x="108" y="572" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#FFFFFF">人工审核发布 → Deep Research</text></g>
+  </g>
+
+  <g id="workbench-shot" data-pptx-bounds="530 192 694 394">
+    <rect x="530" y="192" width="694" height="394" fill="#FFFFFF" stroke="#0D2B55" stroke-width="3"/>
+    <rect x="530" y="192" width="694" height="26" fill="#EAF0F7"/>
+    <circle cx="548" cy="205" r="4" fill="#E89A22"/><circle cx="563" cy="205" r="4" fill="#2B78B8"/><circle cx="578" cy="205" r="4" fill="#9CB6CE"/>
+    <text x="1202" y="211" text-anchor="end" font-family="Microsoft YaHei, Arial" font-size="13" font-weight="700" fill="#52606D">真实 Query 生成工作台</text>
+    <image href="../images/frontend_query_generation_live.jpg" x="540" y="226" width="674" height="340" preserveAspectRatio="xMidYMid meet"/>
+  </g>
+
+  <g id="result-contract" data-pptx-bounds="530 602 694 50">
+    <rect x="530" y="602" width="694" height="50" fill="#EAF0F7"/>
+    <text x="548" y="624" font-family="Microsoft YaHei, Arial" font-size="15" font-weight="700" fill="#0D2B55">每条草稿不是只有标题：</text>
+    <text x="548" y="645" font-family="Arial" font-size="13" fill="#18212F">query + coverage_slot + supplemental_information + rationale + source_references</text>
+    <text x="1205" y="635" text-anchor="end" font-family="Microsoft YaHei, Arial" font-size="14" font-weight="700" fill="#2B78B8">失败可重试</text>
+  </g>
+
+  <g id="footer" data-pptx-bounds="56 664 1168 28">
+    <text x="56" y="686" font-family="Microsoft YaHei, Arial" font-size="16" fill="#52606D">来源口径：联网来源只服务选题形成；研究边界、失效条件和预期装备输出写入补充信息，正式证据由 Deep Research 核验</text>
+    <text x="1194" y="686" font-family="Arial" font-size="16" font-weight="700" fill="#0D2B55">03</text>
+  </g>
+</svg>

@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" data-pptx-page-role="content">
+  <rect id="bg" data-pptx-role="background" x="0" y="0" width="1280" height="720" fill="#F8FAFC" />
+  <g id="header" data-pptx-bounds="56 38 1168 136">
+    <text x="56" y="66" font-family="Microsoft YaHei, Arial, sans-serif" font-size="18" font-weight="700" fill="#2B78B8">01 / 需求 QUERY：选题发现服务</text>
+    <text fill="#0D2B55" font-size="38" font-weight="700" font-family="Microsoft YaHei, Arial, sans-serif" x="56" y="110">“需求 Query”不是标题生成器，</text><text fill="#0D2B55" font-size="38" font-weight="700" font-family="Microsoft YaHei, Arial, sans-serif" x="56" y="152">而是异步运行的选题发现服务</text></g>
+
+  <g id="topic-mode" data-pptx-bounds="56 190 548 250">
+    <rect x="56" y="190" width="548" height="250" rx="2" fill="#EAF0F7" stroke="#2B78B8" stroke-width="3" />
+    <rect x="82" y="214" width="142" height="32" rx="16" fill="#2B78B8" />
+    <text x="153" y="236" text-anchor="middle" font-family="Microsoft YaHei, Arial" font-size="16" font-weight="700" fill="#FFFFFF">用户定义边界</text>
+    <text x="82" y="282" font-family="Microsoft YaHei, Arial" font-size="28" font-weight="700" fill="#0D2B55">围绕母题发散</text>
+    <text x="82" y="314" font-family="Microsoft YaHei, Arial" font-size="18" fill="#52606D">已有明确课题时，把一个大问题拆成不同研究入口</text>
+    <line x1="82" y1="334" x2="578" y2="334" stroke="#B8C9DA" stroke-width="2" />
+    <text x="82" y="366" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#18212F">输入</text>
+    <text x="130" y="366" font-family="Microsoft YaHei, Arial" font-size="18" fill="#18212F">必填母题；可补预期角度、需求牵引、技术驱动</text>
+    <text x="82" y="402" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#18212F">产出</text>
+    <text x="130" y="402" font-family="Microsoft YaHei, Arial" font-size="18" fill="#18212F">需求、技术、体系、颠覆、规模建设等互异子题</text>
+  </g>
+
+  <g id="situation-mode" data-pptx-bounds="628 190 596 250">
+    <rect x="628" y="190" width="596" height="250" rx="2" fill="#0D2B55" />
+    <rect x="654" y="214" width="170" height="32" rx="16" fill="#E89A22" />
+    <text x="739" y="236" text-anchor="middle" font-family="Microsoft YaHei, Arial" font-size="16" font-weight="700" fill="#0D2B55">系统定义领域边界</text>
+    <text x="654" y="282" font-family="Microsoft YaHei, Arial" font-size="28" font-weight="700" fill="#FFFFFF">自动态势发散</text>
+    <text x="654" y="314" font-family="Microsoft YaHei, Arial" font-size="18" fill="#EAF0F7">前期机会扫描时，从公开态势与技术信号中寻找题目</text>
+    <line x1="654" y1="334" x2="1198" y2="334" stroke="#47698E" stroke-width="2" />
+    <text x="654" y="366" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#E89A22">输入</text>
+    <text x="702" y="366" font-family="Microsoft YaHei, Arial" font-size="18" fill="#FFFFFF">可选关注领域、区域、技术或时间偏好；无需母题</text>
+    <text x="654" y="402" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#E89A22">发现</text>
+    <text x="702" y="402" font-family="Microsoft YaHei, Arial" font-size="18" fill="#FFFFFF">能力缺口、技术机会、韧性、成本交换与工业化问题</text>
+  </g>
+
+  <g id="shared-chain" data-pptx-bounds="56 474 1204 154">
+    <text x="56" y="496" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#2B78B8">两种前端模式，进入同一条受治理的异步服务链</text>
+    <line x1="116" y1="548" x2="1170" y2="548" stroke="#9CB6CE" stroke-width="3" />
+    <g id="step-1"><circle cx="116" cy="548" r="25" fill="#0D2B55" /><text x="116" y="555" text-anchor="middle" font-family="Arial" font-size="18" font-weight="700" fill="#FFFFFF">1</text><text x="116" y="590" text-anchor="middle" font-family="Microsoft YaHei, Arial" font-size="16" font-weight="700" fill="#0D2B55">异步提交</text></g>
+    <g id="step-2"><circle cx="324" cy="548" r="25" fill="#0D2B55" /><text x="324" y="555" text-anchor="middle" font-family="Arial" font-size="18" font-weight="700" fill="#FFFFFF">2</text><text x="324" y="590" text-anchor="middle" font-family="Microsoft YaHei, Arial" font-size="16" font-weight="700" fill="#0D2B55">联网校验</text></g>
+    <g id="step-3"><circle cx="532" cy="548" r="25" fill="#0D2B55" /><text x="532" y="555" text-anchor="middle" font-family="Arial" font-size="18" font-weight="700" fill="#FFFFFF">3</text><text x="532" y="586" text-anchor="middle" font-family="Microsoft YaHei, Arial" font-size="16" font-weight="700" fill="#0D2B55">20 个覆盖槽位</text><text x="532" y="606" text-anchor="middle" font-family="Microsoft YaHei, Arial" font-size="14" fill="#52606D">结构化生成</text></g>
+    <g id="step-4"><circle cx="740" cy="548" r="25" fill="#0D2B55" /><text x="740" y="555" text-anchor="middle" font-family="Arial" font-size="18" font-weight="700" fill="#FFFFFF">4</text><text x="740" y="586" text-anchor="middle" font-family="Microsoft YaHei, Arial" font-size="16" font-weight="700" fill="#0D2B55">质量 / 去重</text><text x="740" y="606" text-anchor="middle" font-family="Microsoft YaHei, Arial" font-size="14" fill="#52606D">来源校验</text></g>
+    <g id="step-5"><circle cx="948" cy="548" r="25" fill="#0D2B55" /><text x="948" y="555" text-anchor="middle" font-family="Arial" font-size="18" font-weight="700" fill="#FFFFFF">5</text><text x="948" y="586" text-anchor="middle" font-family="Microsoft YaHei, Arial" font-size="16" font-weight="700" fill="#0D2B55">原子写入草稿库</text><text x="948" y="606" text-anchor="middle" font-family="Microsoft YaHei, Arial" font-size="14" fill="#52606D">人工审核发布</text></g>
+    <g id="step-6"><circle cx="1170" cy="548" r="25" fill="#E89A22" /><text x="1170" y="555" text-anchor="middle" font-family="Arial" font-size="18" font-weight="700" fill="#0D2B55">6</text><text x="1170" y="590" text-anchor="middle" font-family="Microsoft YaHei, Arial" font-size="16" font-weight="700" fill="#0D2B55">进入 Deep Research</text></g>
+  </g>
+  <g id="footer" data-pptx-bounds="56 658 1168 34">
+    <text x="56" y="684" font-family="Microsoft YaHei, Arial" font-size="16" fill="#52606D">边界：联网来源只用于形成选题线索；正式报告证据仍由后续 Deep Research 采集、核验与审计</text>
+    <text x="1194" y="684" font-family="Arial" font-size="16" font-weight="700" fill="#0D2B55">02</text>
+  </g>
+</svg>

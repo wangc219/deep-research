@@ -112,6 +112,19 @@ class ResearchProblem:
             "装备形态与工程约束",
             "证据问题与淘汰条件",
         ]
+        # Keep the offline handoff useful before a model has designed a
+        # query-specific blueprint.  These are transparent lexical signals in
+        # the user's own supplement, not conclusions about the topic.
+        if any(
+            signal in supplement
+            for signal in ("成本", "效费", "交换比", "单发", "拦截弹")
+        ):
+            expansion_dimensions.append("成本交换与效费比")
+        if any(
+            signal in supplement
+            for signal in ("量产", "万枚", "规模化", "弹药基数", "产能", "后勤")
+        ):
+            expansion_dimensions.append("规模化生产与工业动员")
 
         constraints_and_assumptions = [
             item
@@ -745,6 +758,9 @@ class WinningHypothesis:
     equipment_forms: list[str]
     novelty_delta: str
     project_function: str = ""
+    naming_rationale: str = ""
+    decisive_advantage_thesis: str = ""
+    cross_query_distinction: str = ""
     system_interfaces: list[str] = field(default_factory=list)
     evidence_ids: list[str] = field(default_factory=list)
     counterevidence: list[str] = field(default_factory=list)
@@ -812,6 +828,9 @@ class SpecialistContribution:
     project_function: str = ""
     system_interfaces: list[str] = field(default_factory=list)
     novelty_delta: str = ""
+    naming_rationale: str = ""
+    decisive_advantage_thesis: str = ""
+    cross_query_distinction: str = ""
     evidence_boundary: str = ""
     implementation_path: str = ""
     evidence_ids: list[str] = field(default_factory=list)
@@ -1138,6 +1157,7 @@ class CapabilityImageItem:
     capability_outcome: str = ""
     winning_mechanism: str = ""
     verification_plan: list[str] = field(default_factory=list)
+    indicator_portrait: str = ""
 
     def validate(self) -> None:
         required = [

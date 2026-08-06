@@ -19,6 +19,7 @@ from equipment_deep_research.agents.provider import (
     _recover_specialized_winning_seed_hypotheses,
     _portfolio_gap_completion_instruction,
     _portfolio_remaining_repair_slots,
+    _query_specific_weapon_evidence_channels,
     _weapon_specialized_evidence_channels,
 )
 from equipment_deep_research.agents.performance import AdaptiveCallGate
@@ -384,7 +385,14 @@ def test_required_weapon_equipment_uses_bounded_quality_source_target() -> None:
     discovery_payload = backend.inputs[0][0][-1].content["task_input"]
     discovery_options = backend.inputs[0][2]
     assert discovery_payload["target_source_count"] == 14
-    assert len(discovery_payload["specialized_evidence_channels"]) == 7
+    channel_ids = {
+        channel["channel_id"]
+        for channel in discovery_payload["specialized_evidence_channels"]
+    }
+    assert "query_target_threat_combat_effect" in channel_ids
+    assert "long_range_precision_missile" in channel_ids
+    assert "low_altitude_expendable_unmanned_strike" in channel_ids
+    assert "counter_uas_interceptor_effector" not in channel_ids
     assert discovery_options["max_output_tokens"] == 2000
     assert discovery_options["web_search"]["search_context_size"] == "medium"
 
@@ -661,26 +669,38 @@ def test_weapon_specialized_evidence_channels_are_distinct_and_query_anchored() 
     rows = _weapon_specialized_evidence_channels("近年局部战争装备需求")
 
     assert [row["channel_id"] for row in rows] == [
-        "long_range_precision_missile",
-        "low_altitude_expendable_unmanned_strike",
-        "loitering_antiradiation_suppression",
-        "expendable_decoy_electronic_attack",
-        "counter_uas_interceptor_effector",
-        "scalable_low_cost_combat_family",
-        "equipment_test_procurement_cost_capacity",
+        "query_target_threat_combat_effect",
+        "query_specific_weapon_architecture_baseline",
+        "query_countermeasure_failure_boundary",
+        "query_weapon_engineering_acquisition",
     ]
     assert all(row["query_anchor"] == "近年局部战争装备需求" for row in rows)
     assert all(row["preferred_sources"] for row in rows)
     assert all("证据" in row["name"] for row in rows)
-    assert any("jassm" in url.lower() for url in rows[0]["source_anchors"])
-    assert any("mald-decoy" in url.lower() for url in rows[3]["source_anchors"])
-    assert any("coyote" in url.lower() for url in rows[4]["source_anchors"])
-    assert any("roadrunner" in url.lower() for url in rows[4]["source_anchors"])
-    assert any("barracuda" in url.lower() for url in rows[5]["source_anchors"])
+    assert not any(row.get("source_anchors") for row in rows)
+
+
+def test_weapon_specialized_evidence_channels_activate_only_query_lenses() -> None:
+    rows = _weapon_specialized_evidence_channels(
+        "无人远程精确打击与反辐射压制",
+        structured_query_brief={
+            "enemy_target_profile": ["机动防空雷达"],
+            "battle_phase_and_constraints": ["远域进入", "强电磁压制"],
+        },
+    )
+    ids = [row["channel_id"] for row in rows]
+
+    assert "long_range_precision_missile" in ids
+    assert "low_altitude_expendable_unmanned_strike" in ids
+    assert "loitering_antiradiation_suppression" in ids
+    assert "expendable_decoy_electronic_attack" not in ids
+    assert "counter_uas_interceptor_effector" not in ids
 
 
 def test_specialized_anchor_priority_covers_each_equipment_lane_before_corroboration() -> None:
-    channels = _weapon_specialized_evidence_channels("无人远程火力打击装备")
+    channels = _weapon_specialized_evidence_channels(
+        "无人远程精确打击、反辐射诱骗、反蜂群拦截与低成本规模化装备"
+    )
     urls = _prioritize_specialized_anchor_urls(channels)
 
     first_by_channel = [
@@ -705,32 +725,47 @@ def test_weapon_discovery_prompt_uses_query_specific_non_exhaustive_evidence_lan
     assert "非穷尽" in prompt
 
 
-def test_winning_candidate_prompts_turn_counter_uas_evidence_into_architecture() -> None:
+def test_winning_candidate_prompts_are_query_led_direct_weapon_architectures() -> None:
     initial = _direct_combat_generator_diversity_instruction()
     completion = _portfolio_gap_completion_instruction()
 
-    assert "Coyote或Roadrunner" in initial
-    assert "不得因其属于防御任务而把它降格为支撑系统" in initial
-    assert "已经通过，不得再用同类导弹凑数" in completion
+    assert "Query专属武器架构" in initial
+    assert "不得预设无人机" in initial
+    assert "Coyote" not in initial
     assert "未通过候选是负面样本而不是装备族禁区" in completion
-    assert "超出单一基线的可独立立项装备架构变量" in completion
-    assert "可消耗末端拦截构型和可回收巡逻截击" in completion
-    assert "收缩为反无人机物理拦截任务" in completion
-    assert "只是待验证项目架构" in completion
+    assert "打击、歼灭、毁伤、杀伤" in completion
+    assert "跨Query替换自检" in completion
+    assert "MALD" not in completion
 
 
-def test_offensive_portfolio_gap_completion_rejects_defensive_fifth_direction() -> None:
+def test_portfolio_gap_completion_does_not_use_topic_keyword_catalog() -> None:
     completion = _portfolio_gap_completion_instruction(
         "聚焦无人远程火力打击装备，承担突防、压制、歼灭和毁伤"
     )
 
-    assert "禁止用作第五个组合方向" in completion
-    assert "Barracuda/FAMM类固定构型低成本巡航效应器族" in completion
-    assert "MALD/MALD-J类" in completion
-    assert "弹上有限闭环响应" in completion
-    assert "直接效果是干扰或压制防空探测与火控链" in completion
-    assert "禁止在同一弹体内集成被动末制导和毁伤战斗部" in completion
-    assert "超出单一基线的当前Query" not in completion
+    assert "重新消费Query语义简报" in completion
+    assert "不能因为证据库存在某型号就强制生成" in completion
+    assert "Barracuda" not in completion
+    assert "第五个组合方向" not in completion
+
+
+def test_query_specific_weapon_evidence_channels_do_not_seed_fixed_models() -> None:
+    rows = _query_specific_weapon_evidence_channels(
+        "远海高速机动水面编队火力续接",
+        structured_query_brief={
+            "enemy_target_profile": ["高速机动水面舰艇与编队防空"],
+            "battle_phase_and_constraints": ["首轮突防后坐标快速过期"],
+            "required_direct_military_effects": ["重创或击沉高价值水面舰艇"],
+            "query_specific_weapon_architectures": ["潜射低特征多模反舰巡航弹药"],
+        },
+    )
+
+    serialized = json.dumps(rows, ensure_ascii=False)
+    assert len(rows) == 4
+    assert all(row["query_anchor"] == "远海高速机动水面编队火力续接" for row in rows)
+    assert "潜射低特征" in serialized
+    assert all(row["source_anchors"] == [] for row in rows)
+    assert all(name not in serialized for name in ("Coyote", "Roadrunner", "JASSM", "MALD"))
 
 
 def test_partial_portfolio_completion_reserves_same_round_repair_slots() -> None:
@@ -829,7 +864,7 @@ def test_winning_evidence_index_prioritizes_direct_weapon_cards() -> None:
     assert rows[0]["evidence_id"] == "ev-weapon_equipment-web-2"
 
 
-def test_winning_evidence_index_prioritizes_role_relevant_weapon_cards() -> None:
+def test_winning_evidence_index_does_not_use_fixed_weapon_role_keywords() -> None:
     rows = _prioritize_winning_evidence_index(
         [
             {
@@ -846,10 +881,13 @@ def test_winning_evidence_index_prioritizes_role_relevant_weapon_cards() -> None
         archetype="direct_combat_equipment_generator",
     )
 
-    assert rows[0]["evidence_id"] == "ev-weapon_equipment-web-switchblade"
+    assert [row["evidence_id"] for row in rows] == [
+        "ev-weapon_equipment-web-prsm",
+        "ev-weapon_equipment-web-switchblade",
+    ]
 
 
-def test_specialized_seed_recovery_preserves_remote_platform_orthogonality() -> None:
+def test_specialized_seed_recovery_does_not_invent_remote_platform_rows() -> None:
     rows = _recover_specialized_winning_seed_hypotheses(
         [
             {
@@ -864,14 +902,10 @@ def test_specialized_seed_recovery_preserves_remote_platform_orthogonality() -> 
         archetype="remote_precision_munition_generator",
     )
 
-    assert len(rows) == 2
-    assert "JASSM-ER" in rows[0]["title"]
-    assert "PrSM" in rows[1]["title"]
-    assert rows[0]["equipment_forms"] != rows[1]["equipment_forms"]
-    assert all(row["evidence_ids"] for row in rows)
+    assert rows == []
 
 
-def test_specialized_seed_recovery_reads_compact_title_and_url_fields() -> None:
+def test_specialized_seed_recovery_ignores_compact_fields_instead_of_naming_weapons() -> None:
     rows = _recover_specialized_winning_seed_hypotheses(
         [
             {
@@ -888,8 +922,7 @@ def test_specialized_seed_recovery_reads_compact_title_and_url_fields() -> None:
         archetype="remote_precision_munition_generator",
     )
 
-    assert len(rows) == 2
-    assert rows[0]["evidence_ids"] == ["ev-weapon_equipment-web-jassm"]
+    assert rows == []
 
 
 def test_specialized_seed_recovery_requires_matching_public_evidence() -> None:
@@ -906,7 +939,7 @@ def test_specialized_seed_recovery_requires_matching_public_evidence() -> None:
     assert rows == []
 
 
-def test_offensive_gap_recovery_builds_bounded_mald_electronic_attack_effector() -> None:
+def test_offensive_gap_recovery_does_not_build_fixed_mald_effector() -> None:
     evidence = [
         {
             "evidence_id": "ev-weapon_equipment-web-mald",
@@ -924,16 +957,10 @@ def test_offensive_gap_recovery_builds_bounded_mald_electronic_attack_effector()
         archetype="offensive_portfolio_gap_completion",
     )
 
-    assert len(rows) == 1
-    assert rows[0]["evidence_ids"] == ["ev-weapon_equipment-web-mald"]
-    assert "被动射频提示" in rows[0]["equipment_forms"][0]
-    assert "电子攻击载荷" in rows[0]["equipment_forms"][0]
-    assert any("不新增" in item and "战斗部" in item for item in rows[0]["mechanism_chain"])
-    assert any("同等闭环" in item and "终止" in item for item in rows[0]["mechanism_chain"])
-    assert any("黑盒表征" in item for item in rows[0]["validation_plan"])
+    assert rows == []
 
 
-def test_offensive_gap_recovery_does_not_treat_cross_system_claim_as_mald_identity() -> None:
+def test_offensive_gap_recovery_does_not_parse_mald_identity_from_evidence() -> None:
     rows = _recover_specialized_winning_seed_hypotheses(
         [
             {
@@ -952,7 +979,7 @@ def test_offensive_gap_recovery_does_not_treat_cross_system_claim_as_mald_identi
         archetype="offensive_portfolio_gap_completion",
     )
 
-    assert rows[0]["evidence_ids"] == ["ev-weapon_equipment-web-mald"]
+    assert rows == []
 
 
 def test_offensive_gap_completion_preserves_model_rows_without_fixed_mald_injection() -> None:

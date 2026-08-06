@@ -535,7 +535,13 @@ def disruptive_seed_context(
     branch: str,
     agent_id: str,
 ) -> dict[str, Any]:
-    """Build the bounded runtime context for disruptive equipment reasoning."""
+    """Build Query-activated seeds for a Codex semantic digestion pass.
+
+    Keyword matching is retained as a cheap recall mechanism.  It only decides
+    which evidence/search priors deserve attention; it never decides which
+    equipment direction survives.  The receiving Codex session must reinterpret
+    every seed against the complete Query and may rewrite or discard all cards.
+    """
 
     cards = select_disruptive_equipment_seeds(
         query,
@@ -548,8 +554,10 @@ def disruptive_seed_context(
         "library_version": DISRUPTIVE_EQUIPMENT_SEED_LIBRARY_VERSION,
         "cards": cards,
         "rule": (
-            "颠覆范式种子库v2仅是Query直接召回的内部参考镜头，不是事实、指标、目录或配额；"
-            "Codex应从完整Query自行发散，可忽略全部种子并提出OTHER方向。不得复制种子标题作为装备名。"
+            "种子由Query信号激活，只是检索和反事实思考的起点，不是事实、指标、目录、命名模板或配额。"
+            "Codex应从完整Query自行发散竞争解释或OTHER替代方向，逐卡说明因果关系，并可改写或"
+            "丢弃全部种子；不得复制种子标题作为装备名，也不得复制equipment_pull或公开型号作为最终装备名。"
+            "若把当前Query替换为另一任务后结论仍基本不变，视为未完成语义消化，必须重新发散。"
             "实战门：必须贯通"
             "对手/场景—任务链断点—具体装备—打击/歼灭/压制/拦截/毁伤/拒止效果—可量化验证，"
             "并说明对手反制、失效边界与人在回路；不满足即淘汰。"

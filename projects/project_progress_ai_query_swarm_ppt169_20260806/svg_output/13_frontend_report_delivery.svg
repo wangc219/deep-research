@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" data-pptx-page-role="content">
+  <rect id="bg" data-pptx-role="background" x="0" y="0" width="1280" height="720" fill="#F8FAFC"/>
+  <g id="header" data-pptx-bounds="56 38 1168 132">
+    <text x="56" y="68" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#2B78B8">12 / 前端闭环：报告交付</text>
+    <text x="56" y="112" font-family="Microsoft YaHei, Arial" font-size="40" font-weight="700" fill="#0D2B55">研究完成后，报告评审也在工作台中承接：</text>
+    <text x="56" y="152" font-family="Microsoft YaHei, Arial" font-size="40" font-weight="700" fill="#0D2B55">从任务到交付不断线</text>
+  </g>
+  <g id="report-shot" data-pptx-bounds="56 174 770 452">
+    <text x="56" y="184" font-family="Microsoft YaHei, Arial" font-size="16" font-weight="700" fill="#52606D">真实报告评审页｜已完成任务与研究报告在同一工作台中承接</text>
+    <rect x="56" y="190" width="770" height="433" fill="#FFFFFF" stroke="#0D2B55" stroke-width="2"/>
+    <image href="../images/frontend_report_review_live.jpg" x="56" y="190" width="770" height="433" preserveAspectRatio="xMidYMid meet"/>
+  </g>
+  <g id="delivery-guide" data-pptx-bounds="860 190 364 433">
+    <rect x="860" y="190" width="364" height="433" fill="#0D2B55"/>
+    <text x="888" y="230" font-family="Microsoft YaHei, Arial" font-size="26" font-weight="700" fill="#E89A22">交付闭环三步</text>
+    <line x1="888" y1="252" x2="1196" y2="252" stroke="#E89A22" stroke-width="3"/>
+    <text x="888" y="306" font-family="Microsoft YaHei, Arial" font-size="20" font-weight="700" fill="#FFFFFF">01　选择已完成任务</text>
+    <text x="888" y="334" font-family="Microsoft YaHei, Arial" font-size="17" fill="#EAF0F7">任务状态与运行记录仍在左侧保留</text>
+    <line x1="888" y1="362" x2="1196" y2="362" stroke="#47698E" stroke-width="2"/>
+    <text x="888" y="416" font-family="Microsoft YaHei, Arial" font-size="20" font-weight="700" fill="#FFFFFF">02　直接阅读研究报告</text>
+    <text x="888" y="444" font-family="Microsoft YaHei, Arial" font-size="17" fill="#EAF0F7">研究结果在前端形成可沟通的交付入口</text>
+    <line x1="888" y1="472" x2="1196" y2="472" stroke="#47698E" stroke-width="2"/>
+    <text x="888" y="526" font-family="Microsoft YaHei, Arial" font-size="20" font-weight="700" fill="#FFFFFF">03　按需回看过程</text>
+    <text x="888" y="548" font-family="Microsoft YaHei, Arial" font-size="17" fill="#EAF0F7">交互、证据与能力画像等<tspan x="888" dy="22">均可继续下钻</tspan></text>
+    <text x="888" y="596" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#E89A22">可读报告 + 可回看过程</text>
+  </g>
+  <g id="footer" data-pptx-bounds="56 662 1168 34">
+    <text x="56" y="686" font-family="Microsoft YaHei, Arial" font-size="16" fill="#52606D">交付不再是脱离生成过程的一次性文档，而是可以回到机制与证据的任务级成果</text>
+    <text x="1194" y="686" font-family="Arial" font-size="16" font-weight="700" fill="#0D2B55">13</text>
+  </g>
+</svg>

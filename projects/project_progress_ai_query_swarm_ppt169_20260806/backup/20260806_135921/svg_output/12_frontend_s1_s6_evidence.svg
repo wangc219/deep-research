@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" data-pptx-page-role="content">
+  <rect id="bg" data-pptx-role="background" x="0" y="0" width="1280" height="720" fill="#F8FAFC"/>
+  <g id="header" data-pptx-bounds="56 38 1168 132">
+    <text x="56" y="68" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#2B78B8">11 / 前端闭环：推演与证据</text>
+    <text x="56" y="112" font-family="Microsoft YaHei, Arial" font-size="40" font-weight="700" fill="#0D2B55">从 S1–S6 推演到证据中心，研究过程在前端可逐层下钻</text>
+    <text x="56" y="150" font-family="Microsoft YaHei, Arial" font-size="18" fill="#52606D">同一真实任务保持上下文：先看机制如何推演，再核验每项结论由什么证据支撑</text>
+  </g>
+  <g id="s1-s6-shot" data-pptx-bounds="56 160 540 352">
+    <text x="56" y="184" font-family="Microsoft YaHei, Arial" font-size="16" font-weight="700" fill="#0D2B55">01　S1–S6 Agent：输入包、共享资源与结果节点</text>
+    <rect x="56" y="196" width="540" height="304" fill="#FFFFFF" stroke="#0D2B55" stroke-width="2"/>
+    <image href="../images/frontend_s1_s6_live.jpg" x="56" y="196" width="540" height="304" preserveAspectRatio="xMidYMid meet"/>
+  </g>
+  <g id="evidence-shot" data-pptx-bounds="628 160 540 352">
+    <text x="628" y="184" font-family="Microsoft YaHei, Arial" font-size="16" font-weight="700" fill="#0D2B55">02　证据中心：主张、来源、Agent 与质量记录</text>
+    <rect x="628" y="196" width="540" height="304" fill="#FFFFFF" stroke="#2B78B8" stroke-width="2"/>
+    <image href="../images/frontend_evidence_center_live.jpg" x="628" y="196" width="540" height="304" preserveAspectRatio="xMidYMid meet"/>
+  </g>
+  <g id="downstream" data-pptx-bounds="56 542 1168 94">
+    <line x1="56" y1="558" x2="1224" y2="558" stroke="#9CB6CE" stroke-width="2"/>
+    <text x="56" y="596" font-family="Microsoft YaHei, Arial" font-size="26" font-weight="700" fill="#0D2B55">不是“Agent 在后台跑完了”，而是可从机制推演一路查到每条证据。</text>
+    <text x="56" y="626" font-family="Microsoft YaHei, Arial" font-size="18" fill="#52606D">任务、输入 Packet、证据索引、结果节点、来源位置与质量评估都保留在对应视图中。</text>
+  </g>
+  <g id="footer" data-pptx-bounds="56 662 1168 34">
+    <text x="56" y="686" font-family="Microsoft YaHei, Arial" font-size="16" fill="#52606D">截图来自本地真实工作台同一已完成任务；用于展示机制推演与证据核验的连续入口</text>
+    <text x="1194" y="686" font-family="Arial" font-size="16" font-weight="700" fill="#0D2B55">12</text>
+  </g>
+</svg>

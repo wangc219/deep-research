@@ -190,7 +190,7 @@ def test_restricted_generic_reporter_is_evidence_closed_but_complete() -> None:
     )
     assert "必须正常完成完整的三层九项报告" in prompt
     assert "Query只定义范围，不是事实来源" in prompt
-    assert "不得为了满足5至7项" in prompt
+    assert "不得为了满足预设数量" in prompt
 
 
 def test_baseline_only_grounded_fallback_is_provenance_closed() -> None:

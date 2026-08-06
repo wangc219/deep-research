@@ -717,7 +717,10 @@ class ReportQualityGate:
         if not indicators['has_capability_gap']:
             suggestions.append("量化能力差距和弥补方案")
         if not indicators['has_unmanned_remote_fire_domain_alignment']:
-            suggestions.append("报告必须持续符合无人远程火力打击装备领域，不能退化为通信、C2或保障研究")
+            suggestions.append(
+                "当前Query明确涉及无人远程火力打击，报告应保持该领域锚点，"
+                "不能退化为通信、C2或保障研究；其他Query不得套用本要求"
+            )
         if not indicators['has_capability_and_operational_concept']:
             suggestions.append("装备能力图像需同时给出具体装备能力、指标画像和作战运用概念")
         if not indicators['has_three_track_winning_effect']:

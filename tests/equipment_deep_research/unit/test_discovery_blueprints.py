@@ -230,6 +230,8 @@ def test_supplement_is_compressed_and_influences_blueprint_semantics() -> None:
         "对手适应与失效边界",
         "装备形态与工程约束",
         "证据问题与淘汰条件",
+        "成本交换与效费比",
+        "规模化生产与工业动员",
     ]
     assert "international_situation" in blueprint["initial_baseline_agent_ids"]
 

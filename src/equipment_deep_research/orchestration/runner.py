@@ -880,10 +880,25 @@ class DeepResearchRunner:
             )
             delivery_root = resources.prepare_delivery_path()
             manifest = DeliveryExporter().build_manifest(delivery_root)
+            cleanup = {
+                "status": "released",
+                "task_scoped_resources_released": True,
+                "provider_process_groups_released": True,
+                "parallel_executors_released": True,
+            }
+            if self.event_sink is not None:
+                try:
+                    self.event_sink("run_resources_released", cleanup)
+                except Exception:
+                    # Cleanup has already succeeded.  A transient application
+                    # event write must not turn a finished research run into a
+                    # failed run or cause its workload to be retried.
+                    pass
             return {
                 **result,
                 "manifest_path": str(delivery_root / "delivery-manifest.json"),
                 "manifest_file_count": manifest["file_count"],
+                "runtime_cleanup": cleanup,
             }
         finally:
             resources.close()
@@ -966,6 +981,7 @@ class DeepResearchRunner:
             agent_model_profiles=effective_agent_model_profiles,
             agent_registry=registry,
         )
+        resources.bind_provider(provider)
         stored_blueprint = (
             self._load_discovery_blueprint(run_id)
             if (
@@ -3244,7 +3260,7 @@ class DeepResearchRunner:
                             "distinct_direct_families="
                             f"{portfolio_quality_gate.get('distinct_direct_equipment_family_count', 0)}, "
                             "required_distinct_direct_families="
-                            f"{portfolio_quality_gate.get('preferred_distinct_direct_equipment', 5)}"
+                            f"{portfolio_quality_gate.get('preferred_distinct_direct_equipment', 1)}"
                         )
                     reporter_model_started = True
                     trace.append(
@@ -6832,112 +6848,22 @@ def _report_decision_brief(
 
 
 def _report_indicator_portrait(image_item: CapabilityImageItem) -> str:
-    """Create a differentiated, evidence-safe indicator direction for Reporter.
+    """Forward the S6 Agent's equipment-specific indicator thesis.
 
-    The handoff deliberately avoids fabricated point estimates.  It tells the
-    writer which measurement axes distinguish each weapon and where validation
-    is still required, preventing every row from collapsing into the same
-    generic "all indicators pending calibration" sentence.
+    Indicator selection is part of the weapon concept and its falsification
+    logic.  The Reporter must not infer a JASSM/PrSM/Harop/unmanned family
+    from the title and then attach a stock range-response-cost paragraph.
     """
 
-    name = str(image_item.name)
-    text = " ".join(
-        str(value)
-        for value in (
-            image_item.name,
-            image_item.equipment_category,
-            image_item.equipment_form,
-            image_item.operational_mechanism,
-            image_item.capability_gap,
-        )
+    authored = _clean_report_brief_text(
+        getattr(image_item, "indicator_portrait", ""),
+        max_chars=320,
     )
-    if any(
-        term in name
-        for term in (
-            "无人载弹母机",
-            "载弹母机",
-            "无人空中弹舱机",
-            "空中弹舱机",
-            "空中弹药库",
-        )
-    ):
-        return (
-            "覆盖看岛链外防区外待机半径与连续值班时长；响应看授权目标包到分批释放的时间；"
-            "自主性看弹药库存管理、授权释放、未用载荷保留和退出规则；成本看单位在位小时与"
-            "单次有效释放；规模看同时在位母机数和可调用防区外弹药余量，待强扰远程防空对抗试验校准。"
-        )
-    if "反辐射" in name:
-        return (
-            "覆盖看威胁频段与辐射源活动区；响应看开机捕获至压制窗口；自主性看关机续踪和目标复核；"
-            "成本看单位压制小时；规模看多辐射源并发猎杀数，阈值以频谱对抗试验校准。"
-        )
-    if "JASSM" in name or "空射" in name:
-        return (
-            "射程看载机防区外释放与低空突防纵深；响应看出动至多点释放周期；自主性看航路重构和"
-            "末段效应选择；成本看载机架次与弹药组合；规模看多轴齐射密度，待实弹试验校准。"
-        )
-    if "PrSM" in name or "地面发射远程" in name:
-        return (
-            "覆盖看地面机动发射的战役纵深与多路径余量；响应看目标包更新至射后转移周期；"
-            "自主性看受扰导航、受限更新和末段确认；成本看单发与高价值目标交换；规模看持续齐射补充，"
-            "待机动目标和抗扰体系试验校准。"
-        )
-    if "Barracuda" in name or "低成本巡航效应器" in name:
-        return (
-            "覆盖看一般纵深目标与多轴到达余量；响应看固定构型换产、交付和波次补击周期；"
-            "自主性看受限任务更新与末段安全边界；成本看单位有效毁伤和拦截交换；"
-            "规模看连续批次合格率与月度补充能力，待批产和体系试验校准。"
-        )
-    if any(term in name for term in ("无人携弹平台", "低空无人", "可消耗无人")):
-        return (
-            "覆盖看低空进入半径与任务区驻留；响应看目标暴露至猎歼和补击时间；自主性看失联搜索、"
-            "人工授权与安全中止；成本看单架次和单位有效毁伤；规模看同时在空平台与持续波次数量，"
-            "待强反无人环境试验校准。"
-        )
-    if "无人僚机" in name:
-        return (
-            "航程看母机防区外投送与前出压制纵深；响应看任务下达至诱骗/压制窗口；自主性看断链"
-            "编队、载荷释放与人在回路边界；成本看单架次和可消耗载荷交换；规模看多轴并发僚机数，"
-            "待有人—无人对抗试验校准。"
-        )
-    if any(term in name for term in ("无人战车", "无人地面", "地面无人")):
-        return (
-            "覆盖看前出潜伏区与车载弹药作用半径；响应看目标暴露至本地补伤时间；自主性看断链"
-            "机动、目标复核和中止规则；成本看单位拒止小时；规模看分散节点和车载弹药基数，"
-            "待复杂地形生存试验校准。"
-        )
-    if any(term in name for term in ("远程精确打击导弹", "精确制导弹药", "远程精确火力")):
-        return (
-            "射程看战役纵深覆盖与多路径余量；响应看目标包更新至发射时间；自主性看导航拒止下"
-            "末段确认和备选目标规则；成本看单发与拦截弹交换；规模看持续波次补充能力，待体系试验校准。"
-        )
-    if "长航时" in name or (
-        "巡飞弹" in name
-        and any(term in name for term in ("搜索", "猎歼", "侦打", "补伤"))
-    ):
-        return (
-            "覆盖看任务区驻留半径与连续值班时长；响应看发现至认领窗口；自主性看搜索、去冲突和"
-            "中止规则；成本看单位驻留小时；规模看同时在空弹数，阈值以弱网搜索猎歼试验校准。"
-        )
-    if any(term in name for term in ("集群", "蜂群")):
-        return (
-            "覆盖看低空进入半径与多方向到达能力；响应看批次生成和角色重分配时间；自主性看"
-            "协同与人工授权边界；成本看单机与单目标交换；规模看单波和持续波次数量，均待对抗试验校准。"
-        )
-    if any(term in text for term in ("导弹", "精确制导弹药", "远程精确火力")):
-        return (
-            "射程看战役纵深覆盖与多路径余量；响应看目标包更新至发射时间；自主性看导航拒止下"
-            "末段确认和备选目标规则；成本看单发与拦截弹交换；规模看持续波次补充能力，待体系试验校准。"
-        )
-    if image_item.capability_type == "upgrade":
-        return (
-            "覆盖与载荷沿现役包线校核；响应看任务装订至发射准备时间；自主性看断链后航路、"
-            "末段识别与人在回路边界；成本看单次改装增量；规模看现役库存可滚动升级比例，"
-            "具体阈值以代表性对抗试验校准。"
-        )
+    if authored:
+        return authored
     return (
-        "覆盖、响应、自主边界、单位任务成本、并发规模和生存性分别设置验证口径；仅给指标方向，"
-        "不在缺少公开数据时填写未经校准的点值。"
+        "指标画像尚未由S6 Codex Agent形成：须回到前置质量门，依据该装备的直接战果、"
+        "制胜变量、对照基线和失效边界给出差异化测量轴与判退条件。"
     )
 
 
@@ -8215,6 +8141,7 @@ class _RunResourceScope:
         self.sqlite_store: SqliteRunStore | None = None
         self.scheduler: DiscoveryScheduler | None = None
         self.prefetch_executor: ThreadPoolExecutor | None = None
+        self.provider: Any | None = None
 
     def bind_workspace(self, workspace: RunWorkspace) -> None:
         self.workspace = workspace
@@ -8227,6 +8154,9 @@ class _RunResourceScope:
 
     def bind_prefetch_executor(self, executor: ThreadPoolExecutor) -> None:
         self.prefetch_executor = executor
+
+    def bind_provider(self, provider: Any) -> None:
+        self.provider = provider
 
     def release_prefetch_executor(self) -> None:
         self.prefetch_executor = None
@@ -8241,15 +8171,7 @@ class _RunResourceScope:
 
     def prepare_delivery_path(self) -> Path:
         """Close mutable runtime resources, retaining the anchored workspace."""
-        prefetch_executor, self.prefetch_executor = self.prefetch_executor, None
-        scheduler, self.scheduler = self.scheduler, None
-        sqlite_store, self.sqlite_store = self.sqlite_store, None
-        if prefetch_executor is not None:
-            prefetch_executor.shutdown(wait=True, cancel_futures=True)
-        if scheduler is not None:
-            scheduler.close()
-        if sqlite_store is not None:
-            sqlite_store.close()
+        self._close_bound_resources(close_workspace=False)
         if self.workspace is None:
             raise RuntimeError("run workspace is not bound")
         run_fd = self.workspace.dup_run_fd()
@@ -8259,19 +8181,37 @@ class _RunResourceScope:
             os.close(run_fd)
 
     def close(self) -> None:
+        self._close_bound_resources(close_workspace=True)
+
+    def _close_bound_resources(self, *, close_workspace: bool) -> None:
         prefetch_executor, self.prefetch_executor = self.prefetch_executor, None
         scheduler, self.scheduler = self.scheduler, None
+        provider, self.provider = self.provider, None
         sqlite_store, self.sqlite_store = self.sqlite_store, None
-        workspace, self.workspace = self.workspace, None
-        try:
-            if prefetch_executor is not None:
-                prefetch_executor.shutdown(wait=True, cancel_futures=True)
-            if scheduler is not None:
-                scheduler.close()
-        finally:
+        workspace = None
+        if close_workspace:
+            workspace, self.workspace = self.workspace, None
+        closers = []
+        if prefetch_executor is not None:
+            closers.append(
+                lambda: prefetch_executor.shutdown(wait=True, cancel_futures=True)
+            )
+        if scheduler is not None:
+            closers.append(scheduler.close)
+        provider_close = getattr(provider, "close", None)
+        if callable(provider_close):
+            closers.append(provider_close)
+        if sqlite_store is not None:
+            closers.append(sqlite_store.close)
+        if workspace is not None:
+            closers.append(workspace.close)
+
+        first_error: BaseException | None = None
+        for close in closers:
             try:
-                if sqlite_store is not None:
-                    sqlite_store.close()
-            finally:
-                if workspace is not None:
-                    workspace.close()
+                close()
+            except BaseException as exc:
+                if first_error is None:
+                    first_error = exc
+        if first_error is not None:
+            raise first_error

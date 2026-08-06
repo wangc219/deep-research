@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" data-pptx-page-role="content">
+<rect id="bg" data-pptx-role="background" x="0" y="0" width="1280" height="720" fill="#F8FAFC"/>
+<g id="header" data-pptx-bounds="56 42 1168 132"><text x="56" y="74" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#2B78B8">04 / 质量集群策略</text><text x="56" y="118" font-family="Microsoft YaHei, Arial" font-size="40" font-weight="700" fill="#0D2B55">swarm_quality_v1：固定角色池和有界波次，<tspan x="56" dy="44">快速形成稳定的装备方向初稿</tspan></text></g>
+<g id="path" data-pptx-bounds="56 204 1168 300">
+  <line x1="106" y1="330" x2="760" y2="330" stroke="#2B78B8" stroke-width="4"/>
+  <circle cx="106" cy="330" r="35" fill="#0D2B55"/><circle cx="236" cy="330" r="35" fill="#0D2B55"/><circle cx="366" cy="330" r="35" fill="#0D2B55"/><circle cx="496" cy="330" r="35" fill="#0D2B55"/><circle cx="626" cy="330" r="35" fill="#0D2B55"/><circle cx="760" cy="330" r="35" fill="#E89A22"/>
+  <text x="106" y="337" text-anchor="middle" font-family="Arial" font-size="20" font-weight="700" fill="#FFFFFF">1</text><text x="236" y="337" text-anchor="middle" font-family="Arial" font-size="20" font-weight="700" fill="#FFFFFF">2</text><text x="366" y="337" text-anchor="middle" font-family="Arial" font-size="20" font-weight="700" fill="#FFFFFF">3</text><text x="496" y="337" text-anchor="middle" font-family="Arial" font-size="20" font-weight="700" fill="#FFFFFF">4</text><text x="626" y="337" text-anchor="middle" font-family="Arial" font-size="20" font-weight="700" fill="#FFFFFF">5</text><text x="760" y="337" text-anchor="middle" font-family="Arial" font-size="20" font-weight="700" fill="#FFFFFF">6</text>
+  <text x="106" y="398" text-anchor="middle" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#0D2B55">基线研究</text><text x="236" y="398" text-anchor="middle" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#0D2B55">候选假设</text><text x="366" y="398" text-anchor="middle" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#0D2B55">分波补强</text><text x="496" y="398" text-anchor="middle" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#0D2B55">质量门</text><text x="626" y="398" text-anchor="middle" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#0D2B55">非支配候选</text><text x="760" y="398" text-anchor="middle" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#0D2B55">S6 能力画像</text>
+  <text x="56" y="474" font-family="Microsoft YaHei, Arial" font-size="20" font-weight="700" fill="#0D2B55">补强角色：检索 · 弱信号 · 红队 · 实现架构 · 证据核验 · TRL / 成本 · 验证试验</text>
+</g>
+<g id="controls" data-pptx-bounds="870 204 354 340">
+  <rect x="870" y="204" width="354" height="340" fill="#0D2B55"/>
+  <text x="898" y="250" font-family="Microsoft YaHei, Arial" font-size="24" font-weight="700" fill="#E89A22">有界、可恢复、可审计</text>
+  <text x="898" y="306" font-family="Microsoft YaHei, Arial" font-size="24" font-weight="700" fill="#FFFFFF">最多 12 个实例</text>
+  <text x="898" y="346" font-family="Microsoft YaHei, Arial" font-size="24" font-weight="700" fill="#FFFFFF">最多 3 波 / 并发 6</text>
+  <text x="898" y="386" font-family="Microsoft YaHei, Arial" font-size="20" fill="#EAF0F7">质量增益 &lt; 0.03 即停止扩张</text>
+  <text x="898" y="436" font-family="Microsoft YaHei, Arial" font-size="16" fill="#EAF0F7">会话隔离；交接证据包 / ID / 合并目标</text>
+  <text x="898" y="482" font-family="Microsoft YaHei, Arial" font-size="16" fill="#EAF0F7">检查点保存；从最早未完成波次恢复</text>
+  <text x="898" y="522" font-family="Microsoft YaHei, Arial" font-size="18" fill="#EAF0F7">通常保留 2–4 条非支配候选</text>
+</g>
+<g id="footer" data-pptx-bounds="56 662 1160 34"><text x="56" y="686" font-family="Microsoft YaHei, Arial" font-size="16" fill="#52606D">适用：快速探索、批量初筛、低预算任务；正式结论仍需要更强人工复核或切换动态蜂群路径</text><text x="1194" y="686" font-family="Arial" font-size="16" font-weight="700" fill="#0D2B55">05</text></g>
+</svg>

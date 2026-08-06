@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" data-pptx-page-role="content">
+<rect id="bg" data-pptx-role="background" x="0" y="0" width="1280" height="720" fill="#F8FAFC"/>
+<g id="header" data-pptx-bounds="56 42 1168 112">
+  <text x="56" y="74" font-family="Microsoft YaHei, Arial, sans-serif" font-size="18" font-weight="700" fill="#2B78B8">01 / AI QUERY 双模式</text>
+  <text x="56" y="120" font-family="Microsoft YaHei, Arial, sans-serif" font-size="42" font-weight="700" fill="#0D2B55">AI Query 自动生成不是单一按钮，<tspan x="56" dy="46">而是两种可治理的任务发散模式</tspan></text>
+</g>
+<g id="topic-mode" data-pptx-bounds="56 190 528 272">
+  <rect x="56" y="190" width="528" height="272" fill="#EAF0F7" stroke="#2B78B8" stroke-width="3"/>
+  <text x="84" y="238" font-family="Microsoft YaHei, Arial" font-size="28" font-weight="700" fill="#0D2B55">主题发散</text>
+  <text x="84" y="276" font-family="Microsoft YaHei, Arial" font-size="20" fill="#52606D">从一个明确主题，系统展开多角度结构化问题</text>
+  <line x1="84" y1="306" x2="552" y2="306" stroke="#2B78B8" stroke-width="3"/>
+  <text x="84" y="348" font-family="Microsoft YaHei, Arial" font-size="22" font-weight="700" fill="#18212F">主题 + 研究边界</text>
+  <text x="284" y="348" font-family="Arial" font-size="22" font-weight="700" fill="#E89A22">→</text>
+  <text x="326" y="348" font-family="Microsoft YaHei, Arial" font-size="20" font-weight="700" fill="#18212F">Worker 生成候选 Query</text>
+  <text x="84" y="402" font-family="Microsoft YaHei, Arial" font-size="20" fill="#18212F">适合：已知研究方向的系统展开与人工选择收敛</text>
+</g>
+<g id="auto-mode" data-pptx-bounds="640 190 584 272">
+  <rect x="640" y="190" width="584" height="272" fill="#0D2B55"/>
+  <text x="668" y="238" font-family="Microsoft YaHei, Arial" font-size="28" font-weight="700" fill="#E89A22">自动发散</text>
+  <text x="668" y="276" font-family="Microsoft YaHei, Arial" font-size="20" fill="#EAF0F7">按已有任务上下文、推荐 Query 或研究缺口补齐问题</text>
+  <line x1="668" y1="306" x2="1196" y2="306" stroke="#E89A22" stroke-width="3"/>
+  <text x="668" y="348" font-family="Microsoft YaHei, Arial" font-size="22" font-weight="700" fill="#FFFFFF">任务上下文 / 残差</text>
+  <text x="898" y="348" font-family="Arial" font-size="22" font-weight="700" fill="#E89A22">→</text>
+  <text x="940" y="348" font-family="Microsoft YaHei, Arial" font-size="22" font-weight="700" fill="#FFFFFF">补充 Query</text>
+  <text x="668" y="402" font-family="Microsoft YaHei, Arial" font-size="20" fill="#FFFFFF">适合：发现缺口后补齐研究路径，避免问题定义过早固化</text>
+</g>
+<g id="governance-flow" data-pptx-bounds="56 510 1168 112">
+  <line x1="150" y1="560" x2="1126" y2="560" stroke="#2B78B8" stroke-width="4"/>
+  <circle cx="150" cy="560" r="30" fill="#0D2B55"/><circle cx="446" cy="560" r="30" fill="#0D2B55"/><circle cx="758" cy="560" r="30" fill="#0D2B55"/><circle cx="1126" cy="560" r="30" fill="#E89A22"/>
+  <text x="150" y="567" text-anchor="middle" font-family="Arial" font-size="20" font-weight="700" fill="#FFFFFF">1</text><text x="446" y="567" text-anchor="middle" font-family="Arial" font-size="20" font-weight="700" fill="#FFFFFF">2</text><text x="758" y="567" text-anchor="middle" font-family="Arial" font-size="20" font-weight="700" fill="#FFFFFF">3</text><text x="1126" y="567" text-anchor="middle" font-family="Arial" font-size="20" font-weight="700" fill="#FFFFFF">4</text>
+  <text x="150" y="616" text-anchor="middle" font-family="Microsoft YaHei, Arial" font-size="19" font-weight="700" fill="#0D2B55">结构化草稿</text><text x="446" y="616" text-anchor="middle" font-family="Microsoft YaHei, Arial" font-size="19" font-weight="700" fill="#0D2B55">审核 / 发布 / 归档</text><text x="758" y="616" text-anchor="middle" font-family="Arial" font-size="19" font-weight="700" fill="#0D2B55">/api/v1/query-library</text><text x="1126" y="616" text-anchor="middle" font-family="Microsoft YaHei, Arial" font-size="19" font-weight="700" fill="#0D2B55">回填任务 + 版本留痕</text>
+</g>
+<g id="footer" data-pptx-bounds="56 662 1160 34"><text x="56" y="686" font-family="Microsoft YaHei, Arial" font-size="16" fill="#52606D">边界：生成阶段只形成选题线索；正式证据仍由后续 Deep Research 采集、核验与审计</text><text x="1194" y="686" font-family="Arial" font-size="16" font-weight="700" fill="#0D2B55">02</text></g>
+</svg>

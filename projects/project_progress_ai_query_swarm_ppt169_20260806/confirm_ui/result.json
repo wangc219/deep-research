@@ -1,0 +1,61 @@
+{
+  "canvas": "ppt169",
+  "audience": "项目方管理层、业务与技术负责人；重点关注阶段成果是否可验证、能否形成可演示闭环。",
+  "communication_intent": "简明汇报阶段工作进展：先说明 AI Query 自动生成、质量集群与动态蜂群（结合Kimi K3集群技术）三项能力如何形成闭环，再用真实测试结果说明质量—效率权衡，最后对齐后续优化与项目方关注点。",
+  "audience_outcome": "项目方清楚了解已交付能力、前端可演示成果和已验证边界，并认可下一阶段聚焦证据可信度与运行效率的推进方向。",
+  "core_message": "项目已从功能搭建进入“可演示、可评测、可审计”的阶段：AI Query 自动生成打通任务入口，质量集群与动态蜂群提供不同的质量—效率策略，并已通过真实运行验证。",
+  "delivery_context": "项目方阶段汇报，建议 10—15 分钟主讲并现场展示前端工作台关键页面；会后作为进展留档材料。",
+  "artifact_afterlife": "用于项目阶段验收、技术沟通、后续优化任务对齐与演示留档。",
+  "content_divergence": "",
+  "delivery_purpose": "balanced",
+  "page_count": "8",
+  "mode": "custom",
+  "mode_behavior": "以已交付闭环为开场，按“入口能力—集群策略—真实验证—下一步”推进；每页先给结论，再给最少量可核查证据，结尾明确需要项目方对齐的方向。（可以带点故事意味，体现我们动态蜂群模式借鉴Kimi K3集群模式结合项目衍生而来）",
+  "visual_style": "swiss-minimal",
+  "color": {
+    "name": "专业蓝金",
+    "palette": {
+      "background": "#F8FAFC",
+      "secondary_bg": "#EAF0F7",
+      "primary": "#0D2B55",
+      "accent": "#E89A22",
+      "secondary_accent": "#2B78B8",
+      "body_text": "#18212F"
+    }
+  },
+  "icons": "tabler-outline",
+  "typography": {
+    "name": "清晰无衬线",
+    "heading": {
+      "cjk": "Microsoft YaHei",
+      "css": "Microsoft YaHei, Arial, sans-serif",
+      "latin": "Arial",
+      "sample_cjk": "",
+      "sample_latin": ""
+    },
+    "body": {
+      "cjk": "Microsoft YaHei",
+      "css": "Microsoft YaHei, Arial, sans-serif",
+      "latin": "Arial",
+      "sample_cjk": "",
+      "sample_latin": ""
+    },
+    "body_size": 24,
+    "sizes": {
+      "annotation": 18,
+      "subtitle": 32,
+      "title": 42
+    },
+    "body_size_unit": "px"
+  },
+  "image_usage": [
+    "provided"
+  ],
+  "image_notes": "使用仓库中已验证的前端工作台截图，重点放在 Query Library、任务交互、能力画像与动态蜂群运行结果页面；所有截图保持完整可读，不裁剪关键数据。其余机制图以原生 SVG 绘制，避免使用与项目无关的装饰图片。",
+  "formula_policy": "text-only",
+  "generation_mode": "continuous",
+  "refine_spec": false,
+  "stage": "final",
+  "status": "confirmed",
+  "confirmed_at": "2026-08-06T01:18:03"
+}

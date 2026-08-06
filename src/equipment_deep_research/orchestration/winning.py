@@ -25,6 +25,7 @@ from equipment_deep_research.orchestration.capability_fallback import (
     build_deadline_weapon_directions,
 )
 from equipment_deep_research.orchestration.capability_portrait import (
+    build_agent_led_capability_portrait,
     build_capability_portrait,
     build_capability_title,
     normalize_capability_problem,
@@ -1589,6 +1590,9 @@ class WinningMechanismEngine:
                     capability_outcome=capability_outcome,
                     winning_mechanism=winning_mechanism,
                     verification_plan=verification_plan,
+                    indicator_portrait=str(
+                        direction.get("indicator_portrait", "")
+                    ).strip(),
                 )
             )
         if preserve_direction_identity:
@@ -1784,7 +1788,7 @@ def _fallback_specific_weapon_directions(
         first["winning_mechanism"] = (
             f"{route_method}；{first.get('winning_mechanism', '')}"
         ).strip("；")
-        first["capability_portrait"] = build_capability_portrait(
+        first["capability_portrait"] = build_agent_led_capability_portrait(
             scenario=first.get("target_scenario", topic),
             problem=first.get("problem_statement", first.get("capability_gap", "")),
             principle=first.get("scientific_principle", route_method),

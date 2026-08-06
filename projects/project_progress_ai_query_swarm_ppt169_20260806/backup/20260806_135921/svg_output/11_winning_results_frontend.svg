@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" data-pptx-page-role="content">
+  <rect id="bg" data-pptx-role="background" x="0" y="0" width="1280" height="720" fill="#F8FAFC"/>
+  <g id="header" data-pptx-bounds="56 38 1168 132">
+    <text x="56" y="68" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#2B78B8">10 / 前端成果：结果与评审</text>
+    <text x="56" y="112" font-family="Microsoft YaHei, Arial" font-size="40" font-weight="700" fill="#0D2B55">不把结论藏在后台：<tspan x="56" dy="40">制胜机理、结果与门控状态都进入工作台</tspan></text>
+  </g>
+  <g id="winning-shot" data-pptx-bounds="56 160 810 486">
+    <text x="56" y="182" font-family="Microsoft YaHei, Arial" font-size="16" font-weight="700" fill="#52606D">真实结果视图｜从结果总览回看研究过程</text>
+    <rect x="56" y="190" width="810" height="456" fill="#FFFFFF" stroke="#0D2B55" stroke-width="2"/>
+    <image href="../images/winning_view_clean.png" x="56" y="190" width="810" height="456" preserveAspectRatio="xMidYMid meet"/>
+  </g>
+  <g id="review-guide" data-pptx-bounds="908 190 316 456">
+    <rect x="908" y="190" width="316" height="456" fill="#0D2B55"/>
+    <text x="934" y="230" font-family="Microsoft YaHei, Arial" font-size="26" font-weight="700" fill="#E89A22">现场看三件事</text>
+    <line x1="934" y1="252" x2="1196" y2="252" stroke="#E89A22" stroke-width="3"/>
+    <text x="934" y="302" font-family="Microsoft YaHei, Arial" font-size="20" font-weight="700" fill="#FFFFFF">01　先看结果总览</text>
+    <text x="934" y="330" font-family="Microsoft YaHei, Arial" font-size="17" fill="#EAF0F7">理解形成的装备方向与结果结构</text>
+    <line x1="934" y1="356" x2="1196" y2="356" stroke="#47698E" stroke-width="2"/>
+    <text x="934" y="404" font-family="Microsoft YaHei, Arial" font-size="20" font-weight="700" fill="#FFFFFF">02　再看制胜机理</text>
+    <text x="934" y="432" font-family="Microsoft YaHei, Arial" font-size="17" fill="#EAF0F7">回看对应 S 节点与形成逻辑</text>
+    <line x1="934" y1="458" x2="1196" y2="458" stroke="#47698E" stroke-width="2"/>
+    <text x="934" y="506" font-family="Microsoft YaHei, Arial" font-size="20" font-weight="700" fill="#FFFFFF">03　最后看门控状态</text>
+    <text x="934" y="534" font-family="Microsoft YaHei, Arial" font-size="17" fill="#EAF0F7">支持评审沟通与后续下钻复核</text>
+    <text x="934" y="600" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#E89A22">让结论有可视化入口</text>
+  </g>
+  <g id="footer" data-pptx-bounds="56 662 1168 34">
+    <text x="56" y="686" font-family="Microsoft YaHei, Arial" font-size="16" fill="#52606D">前端交付的不是一张静态卡片，而是从结论回到机制、从机制回到过程的审阅入口</text>
+    <text x="1194" y="686" font-family="Arial" font-size="16" font-weight="700" fill="#0D2B55">11</text>
+  </g>
+</svg>

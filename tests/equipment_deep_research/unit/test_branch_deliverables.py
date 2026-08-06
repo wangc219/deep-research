@@ -505,8 +505,7 @@ def test_report_decision_brief_is_bounded_public_and_preserves_core_counts() -> 
     ]
     decision = brief["capability_decisions"][0]
     assert decision["operational_process"] == []
-    assert len(decision["verification_plan"]) == 3
-    assert "未改装" in decision["verification_plan"][1]
+    assert decision["verification_plan"] == []
     assert "关键作战流程" in decision["capability_portrait"]
     synchronized_image = next(iter(store.capability_images.values()))
     assert synchronized_image.capability_image == (
@@ -559,9 +558,9 @@ def test_report_decision_brief_rebuilds_portrait_from_final_subtype_name() -> No
     )
 
     synchronized = store.capability_images[original.capability_id]
-    overview = synchronized.capability_image.split("\n", 1)[0]
+    portrait = synchronized.capability_image
     assert all(
-        marker in overview
+        marker in portrait
         for marker in ("被动射频", "成像", "交叉确认", "直接攻击")
     )
 

@@ -326,10 +326,16 @@ class DynamicWinningScheduler:
 
             # Wait for at least one task to complete
             completion_event.clear()
-            await asyncio.wait(
-                [*running_tasks.values(), asyncio.create_task(completion_event.wait())],
-                return_when=asyncio.FIRST_COMPLETED,
-            )
+            completion_waiter = asyncio.create_task(completion_event.wait())
+            try:
+                await asyncio.wait(
+                    [*running_tasks.values(), completion_waiter],
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
+            finally:
+                if not completion_waiter.done():
+                    completion_waiter.cancel()
+                    await asyncio.gather(completion_waiter, return_exceptions=True)
 
         # Wait for all remaining tasks to complete
         if running_tasks:

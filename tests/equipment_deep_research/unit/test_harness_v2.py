@@ -334,7 +334,7 @@ def test_military_handoff_evidence_index_expands_selected_equipment_packet() -> 
     ]
 
 
-def test_report_indicator_portraits_differentiate_core_weapon_lanes() -> None:
+def test_report_indicator_portraits_preserve_s6_agent_differentiation() -> None:
     names = [
         "多模末制导反辐射防空压制导弹",
         "JASSM-ER类空射隐身防区外巡航导弹",
@@ -343,6 +343,13 @@ def test_report_indicator_portraits_differentiate_core_weapon_lanes() -> None:
         "批量可消耗低空无人携弹平台族",
     ]
 
+    authored = [
+        "以辐射源再捕获概率和压制窗口保持时间为轴，对照单模导引基线，诱饵下失配即判退。",
+        "以防区外有效到达率和载机暴露时间为轴，对照现役空射基线，无法降低载机风险即判退。",
+        "以射后转移完成时间和纵深毁伤闭环率为轴，对照现役地射基线，转移窗口失效即判退。",
+        "以批次合格率和单位有效毁伤成本为轴，对照传统巡航弹基线，规模化优势不成立即判退。",
+        "以同时在空平台数和授权后首轮释放时延为轴，对照有人平台基线，火力密度不足即判退。",
+    ]
     portraits = [
         _report_indicator_portrait(
             SimpleNamespace(
@@ -352,13 +359,14 @@ def test_report_indicator_portraits_differentiate_core_weapon_lanes() -> None:
                 operational_mechanism="受扰条件下形成直接毁伤闭环",
                 capability_gap="需分别校准任务指标",
                 capability_type="upgrade" if index != 4 else "new_capability",
+                indicator_portrait=authored[index],
             )
         )
         for index, name in enumerate(names)
     ]
 
     assert len(set(portraits)) == len(names)
-    assert "频谱" in portraits[0]
+    assert "辐射源再捕获概率" in portraits[0]
     assert "载机" in portraits[1]
     assert "射后转移" in portraits[2]
     assert "批次合格率" in portraits[3]

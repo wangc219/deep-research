@@ -36,6 +36,25 @@ from equipment_deep_research.domain.models import (
 
 MERGE_TARGETS = frozenset({"S1", "S2", "S3", "S4", "S5", "S6", "convergence"})
 
+# Proposal names are communication aids, never claims that a named programme
+# exists.  Keeping this rule next to swarm planning makes it available before
+# S6, where names otherwise arrive already template-shaped.
+QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION = (
+    "命名先由独立Codex会话基于完整Query与已确定的主装备构型作语义判断：逐一核对主装备本体、"
+    "投送/发射方式、目标、直接作战作用与关键机理，再自然命名；不得按词表、正则、共享示例或"
+    "固定代号模板拼接名称。新研候选可在确有表达价值时采用‘可辨识的中文代号（可选）+Query专属"
+    "构型/任务特征+单一具体武器对象’；没有自然且可解释的代号时，直接使用准确的装备描述名称。"
+    "代号必须从本Query的任务对象、交战环境、关键机理或直接战果中原创推导；其语义必须能对应说明"
+    "该武器的主要作战作用、目标或制胜机理，不能只是无关的修辞。不得复用共享示例、真实项目名"
+    "或把代号当作已列装事实。"
+    "名称中不得出现‘Query相关型号’、‘Query专属型号’、‘相关型号’等研究元话语，也不得从"
+    "Query反推出虚构型号；公开型号只能作为证据基线，不是新研候选名称。"
+    "代号后必须保留完整的弹、机、车、艇、发射舱、拦截器或效应器等主装备身份，不能只写代号、"
+    "‘系统’、‘火力’、‘平台’、‘弹药’、‘弹群’或泛化武器类别；必须收敛为巡飞弹、导弹、"
+    "无人僚机/攻击无人机、拦截器、鱼雷、发射车、发射舱或定向能效应器等可单独研制和试验的"
+    "具体武器装备。现役升级项不强制添加代号。"
+)
+
 CORE_STEP_DEPENDENCIES: dict[int, tuple[int, ...]] = {
     1: (),
     2: (),
@@ -49,9 +68,9 @@ SWARM_SPECIALIST_ARCHETYPES: dict[str, dict[str, Any]] = {
     "frontier_equipment_miner": {
         "display_name": "前沿装备矿工",
         "purpose": (
-            "以query为先，从公开项目、试验和装备族中寻找可改变任务链关系的具体战斗/"
-            "打击装备形态；无人远程火力、颠覆逻辑、规模化装备族、传统域跨代优势和"
-            "新质域高维优速仅是非穷尽发散主题，不强制覆盖无关类别。"
+            "以Query为先，从与任务对象、威胁形态、作战阶段、地域约束和制胜矛盾直接匹配的"
+            "公开项目、试验和装备族中寻找具体战斗武器；无人、远程、低空、精确打击等方向"
+            "只有被Query语义触发时才进入观察，不得作为跨Query默认目录。"
         ),
         "merge_target": "S4",
         "residuals": ["equipment_not_concrete", "novelty_insufficient"],
@@ -73,7 +92,7 @@ SWARM_SPECIALIST_ARCHETYPES: dict[str, dict[str, Any]] = {
         "purpose": (
             "从直接军事效果反推可独立立项的主战或无人作战装备候选；候选主体必须是"
             "具备侦察、压制、拦截、打击或毁伤效应的具体平台、弹药或任务载荷，"
-            "通信、算法、任务胶囊、网关和保障只能作为其体系接口。始终按query筛选，"
+            "通信、算法、任务胶囊、网关和保障只能作为其体系接口。始终按Query筛选，"
             "必须从Query的任务对象、威胁形态、作战阶段和制胜矛盾开放推演；无人、低空、"
             "远程与精确打击只作为优先观察镜头，不得机械套用或框定最终装备。"
         ),
@@ -128,7 +147,11 @@ SWARM_SPECIALIST_ARCHETYPES: dict[str, dict[str, Any]] = {
     },
     "equipment_realization_architect": {
         "display_name": "装备实现架构",
-        "purpose": "贯通任务效果、功能、性能约束、体系接口、装备形态和实现路径。",
+        "purpose": (
+            "贯通任务效果、功能、性能约束、体系接口、装备形态和实现路径；对命名不完整的"
+            "候选，先按主装备本体、投送方式、目标、直接作用与机理重新作语义命名判断，"
+            "不得用词表拼接或以内部载荷、火力、平台、弹药代替主装备。"
+        ),
         "merge_target": "S4",
         "residuals": ["equipment_not_concrete", "engineering_feasibility_insufficient"],
     },
@@ -248,6 +271,11 @@ def default_winning_swarm_policy(
     *, enabled: bool = False, policy_id: str = "winning_swarm_quality_v1"
 ) -> dict[str, Any]:
     dynamic_v2 = policy_id == "winning_swarm_dynamic_v2"
+    quality_cluster = policy_id in {
+        "winning_swarm_dynamic_v2",
+        "swarm_quality_v1",
+        "winning_swarm_quality_v1",
+    }
     return {
         "policy_id": policy_id,
         "enabled": enabled,
@@ -258,20 +286,24 @@ def default_winning_swarm_policy(
         "mission_graph_target_instances": 12 if dynamic_v2 else 4,
         "mission_graph_max_instances": 18 if dynamic_v2 else 12,
         "minimum_expected_gain": 0.03,
-        "breadth_hypothesis_minimum": 4,
-        "breadth_hypothesis_maximum": 8,
-        "finalist_minimum": 5 if dynamic_v2 else 2,
-        "finalist_maximum": 7 if dynamic_v2 else 4,
-        "minimum_direct_combat_equipment": 4 if dynamic_v2 else 0,
-        "preferred_distinct_direct_equipment": 5 if dynamic_v2 else 0,
+        "breadth_hypothesis_minimum": 1,
+        "breadth_hypothesis_maximum": 12,
+        # Direction count is an output of evidence and independent combat
+        # utility, not a five-card production quota.  Dynamic v2 can retain
+        # every separately evidenced weapon direction up to a bounded review
+        # capacity; the lower bound only prevents an empty deliverable.
+        "finalist_minimum": 1 if quality_cluster else 2,
+        "finalist_maximum": 12 if quality_cluster else 4,
+        "minimum_direct_combat_equipment": 1 if quality_cluster else 0,
+        "preferred_distinct_direct_equipment": 1 if quality_cluster else 0,
         "recursive_recruitment_allowed": False,
         "raw_session_sharing_allowed": False,
-        "expert_judge_enabled": dynamic_v2,
-        "expert_judge_required": dynamic_v2,
-        "expert_candidate_pool_maximum": 10 if dynamic_v2 else 8,
+        "expert_judge_enabled": quality_cluster,
+        "expert_judge_required": quality_cluster,
+        "expert_candidate_pool_maximum": 10 if quality_cluster else 8,
         "expert_judge_minimum_score": 0.72,
         "expert_judge_critical_dimension_minimum": 0.60,
-        "expert_repair_enabled": dynamic_v2,
+        "expert_repair_enabled": quality_cluster,
         "expert_repair_max_candidates": 6 if dynamic_v2 else 4,
         "expert_repair_minimum_score": 0.70,
         "expert_repair_reserved_instances": 6 if dynamic_v2 else 4,
@@ -295,6 +327,11 @@ def normalize_winning_swarm_policy(
     raw = dict(value or {})
     policy_id = str(raw.get("policy_id") or "winning_swarm_quality_v1")[:120]
     dynamic_v2 = policy_id == "winning_swarm_dynamic_v2"
+    quality_cluster = policy_id in {
+        "winning_swarm_dynamic_v2",
+        "swarm_quality_v1",
+        "winning_swarm_quality_v1",
+    }
     base = default_winning_swarm_policy(
         enabled=bool(raw.get("enabled", False) if enabled is None else enabled),
         policy_id=policy_id,
@@ -331,44 +368,44 @@ def normalize_winning_swarm_policy(
                 raw.get("minimum_expected_gain"), 0.0, 1.0, 0.03
             ),
             "breadth_hypothesis_minimum": _bounded_int(
-                raw.get("breadth_hypothesis_minimum"), 1, 8, 4
+                raw.get("breadth_hypothesis_minimum"), 1, 12, 1
             ),
             "breadth_hypothesis_maximum": _bounded_int(
-                raw.get("breadth_hypothesis_maximum"), 1, 8, 8
+                raw.get("breadth_hypothesis_maximum"), 1, 12, 12
             ),
             "finalist_minimum": _bounded_int(
-                raw.get("finalist_minimum"), 1, 7,
-                5 if dynamic_v2 else 2,
+                raw.get("finalist_minimum"), 1, 12 if quality_cluster else 7,
+                1 if quality_cluster else 2,
             ),
             "finalist_maximum": _bounded_int(
-                raw.get("finalist_maximum"), 1, 7,
-                7 if dynamic_v2 else 4,
+                raw.get("finalist_maximum"), 1, 12 if quality_cluster else 7,
+                12 if quality_cluster else 4,
             ),
             "minimum_direct_combat_equipment": _bounded_int(
                 raw.get("minimum_direct_combat_equipment"),
                 0,
-                7,
-                4 if dynamic_v2 else 0,
+                12 if quality_cluster else 7,
+                1 if quality_cluster else 0,
             ),
             "preferred_distinct_direct_equipment": _bounded_int(
                 raw.get("preferred_distinct_direct_equipment"),
                 0,
-                7,
-                5 if dynamic_v2 else 0,
+                12 if quality_cluster else 7,
+                1 if quality_cluster else 0,
             ),
             "recursive_recruitment_allowed": False,
             "raw_session_sharing_allowed": False,
             "expert_judge_enabled": bool(
-                raw.get("expert_judge_enabled", dynamic_v2)
+                raw.get("expert_judge_enabled", quality_cluster)
             ),
             "expert_judge_required": bool(
-                raw.get("expert_judge_required", dynamic_v2)
+                raw.get("expert_judge_required", quality_cluster)
             ),
             "expert_candidate_pool_maximum": _bounded_int(
                 raw.get("expert_candidate_pool_maximum"),
                 5,
                 12,
-                10 if dynamic_v2 else 8,
+                10 if quality_cluster else 8,
             ),
             "expert_judge_minimum_score": _bounded_float(
                 raw.get("expert_judge_minimum_score"), 0.0, 1.0, 0.72
@@ -380,7 +417,7 @@ def normalize_winning_swarm_policy(
                 0.60,
             ),
             "expert_repair_enabled": bool(
-                raw.get("expert_repair_enabled", dynamic_v2)
+                raw.get("expert_repair_enabled", quality_cluster)
             ),
             "expert_repair_max_candidates": _bounded_int(
                 raw.get("expert_repair_max_candidates"), 0, 6,
@@ -612,8 +649,33 @@ class WinningSwarmController:
         node_instances: dict[str, list[str]] = {f"S{step}": [] for step in range(1, 7)}
         for ordinal, (node, archetype) in enumerate(selected, start=1):
             spec = _all_role_archetypes()[archetype]
+            query_first_clause = (
+                f"当前唯一任务主题为“{topic}”。先从完整Query提取任务对象、威胁形态、作战阶段、"
+                "地域环境、敌方反制和制胜矛盾，再执行本角色工作；不得先选择固定武器类别、公开"
+                "型号或共享示例后反向拼接Query。产出的候选若替换成其他Query仍基本成立，必须判为"
+                "模板化并重新发散。最终收敛对象必须是自身直接承担打击、歼灭、毁伤、杀伤、压制、"
+                "突防、物理拦截或拒止任务的具体新质军事战斗武器；通信、算法、网络与保障只能作为"
+                f"内部接口或约束。{QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION}"
+            )
             contract = self.govern_role_contract(
-                {"archetype": archetype, **spec}, mission_node=node
+                {
+                    "archetype": archetype,
+                    **spec,
+                    "purpose": f"{spec.get('purpose', '')}{query_first_clause}",
+                    "methodology": [
+                        "先形成Query任务对象—威胁—阶段—制胜矛盾语义图",
+                        "从Query语义开放发散候选，不从装备目录或公开型号起步",
+                        "只处理声明的质量残差并写入声明节点",
+                        "执行跨Query替换自检，淘汰换题后仍成立的模板候选",
+                    ],
+                    "quality_gates": [
+                        "候选主装备、目标、发射域、毁伤机理与Query形成直接因果闭环",
+                        "事实、推断与拟议假设分离，证据边界和失效条件明确",
+                        "不得复用共享示例名称或以固定装备族覆盖主题",
+                        "新研候选名称遵循Query专属代号（可选）+具体主装备身份；代号语义须对应武器作用、目标或制胜机理，且不把拟议代号写成事实",
+                    ],
+                },
+                mission_node=node,
             )
             contracts.append(contract)
             instance_id = _stable_id(
@@ -843,6 +905,13 @@ class WinningSwarmController:
             project_function=str(patch.get("project_function", "")).strip()[:700],
             system_interfaces=_text_list(patch.get("system_interfaces", []), limit=8),
             novelty_delta=str(patch.get("novelty_delta", ""))[:900],
+            naming_rationale=str(patch.get("naming_rationale", ""))[:900],
+            decisive_advantage_thesis=str(
+                patch.get("decisive_advantage_thesis", "")
+            )[:900],
+            cross_query_distinction=str(
+                patch.get("cross_query_distinction", "")
+            )[:900],
             evidence_boundary=str(patch.get("evidence_boundary", ""))[:800],
             implementation_path=str(patch.get("implementation_path", ""))[:800],
             evidence_ids=list(contribution.evidence_ids),
@@ -892,6 +961,9 @@ class WinningSwarmController:
                 "changed_confrontation_variable": 1000,
                 "project_function": 700,
                 "novelty_delta": 900,
+                "naming_rationale": 900,
+                "decisive_advantage_thesis": 900,
+                "cross_query_distinction": 900,
                 "evidence_boundary": 800,
                 "implementation_path": 800,
             }
@@ -904,6 +976,11 @@ class WinningSwarmController:
             for name, limit in string_limits.items():
                 if name in requested and name in patch:
                     replacement_fields[name] = str(patch.get(name, "")).strip()[:limit]
+            if "title" in replacement_fields:
+                replacement_fields["title"] = normalize_weapon_candidate_title(
+                    replacement_fields["title"],
+                    replacement_fields.get("equipment_forms", updated.equipment_forms),
+                )
             if replacement_fields:
                 updated = replace(updated, **replacement_fields)
                 gate = self.evaluate_gate(updated, stage="targeted")
@@ -1015,11 +1092,17 @@ class WinningSwarmController:
             int(self.policy.get("finalist_minimum", 2)),
             len(candidate_ids),
         )
-        selected = front[:maximum]
-        # A sparse first Pareto front must not collapse the dynamic-v2
-        # deliverable below its 5-direction business contract.  Fill from the
-        # next-best Pareto layers while preserving the first-front ordering and
-        # recording dominance reasons for audit.
+        # Pareto ranking is a prioritisation signal, not a licence to discard
+        # a separately evidenced and independently useful weapon direction.
+        # Retain the complete passing pool (within the audited S6 capacity),
+        # then use the front to order it.  This is what allows a query with
+        # seven or more reliable new weapon concepts to reach S6 intact.
+        selected = _diverse_portfolio_order(
+            [*front, *[item for item in candidate_ids if item not in front]],
+            hypothesis_by_id=hypothesis_by_id,
+            scores=scores,
+            family_by_id=portfolio_family_by_id,
+        )[:maximum]
         if len(selected) < minimum:
             ranked_remainder = _diverse_portfolio_order(
                 [item for item in candidate_ids if item not in selected],
@@ -1086,6 +1169,14 @@ class WinningSwarmController:
                 continue
             distinct_direct_pool.append(item)
             distinct_direct_families.add(family)
+        # When the assessed pool already contains enough direct combat
+        # weapons to fill the available S6 card capacity, keep the portfolio
+        # focused on those effects instead of letting a high-scoring support
+        # link displace a weapon card. Support still remains in the ledger as
+        # a cross-card constraint and can be selected when the query calls for
+        # it or the direct pool is smaller than capacity.
+        if len(direct_pool) >= maximum:
+            selected = list(direct_pool[:maximum])
         minimum_direct = min(
             maximum,
             int(self.policy.get("minimum_direct_combat_equipment", 4)),
@@ -1394,6 +1485,8 @@ class WinningSwarmController:
             "equipment_capability_fit",
             "innovation",
             "military_value",
+            "decisive_advantage",
+            "query_specificity",
             "causal_coherence",
             "credibility",
             "engineering_feasibility",
@@ -1409,14 +1502,16 @@ class WinningSwarmController:
                 score = 0.0
             scores[name] = round(max(0.0, min(1.0, score)), 4)
         weights = {
-            "domain_relevance": 0.10,
-            "equipment_capability_fit": 0.17,
+            "domain_relevance": 0.08,
+            "equipment_capability_fit": 0.14,
             "innovation": 0.15,
-            "military_value": 0.17,
-            "causal_coherence": 0.12,
-            "credibility": 0.14,
-            "engineering_feasibility": 0.08,
-            "robustness": 0.07,
+            "military_value": 0.16,
+            "decisive_advantage": 0.13,
+            "query_specificity": 0.10,
+            "causal_coherence": 0.09,
+            "credibility": 0.08,
+            "engineering_feasibility": 0.04,
+            "robustness": 0.03,
         }
         weighted_score = round(
             sum(scores[name] * weights[name] for name in dimension_names), 4
@@ -1431,6 +1526,8 @@ class WinningSwarmController:
             "domain_relevance",
             "equipment_capability_fit",
             "military_value",
+            "decisive_advantage",
+            "query_specificity",
             "credibility",
         )
         passed = (
@@ -1802,7 +1899,7 @@ class WinningSwarmController:
         if remaining == 0 or int(self.policy["max_waves"]) < 3:
             return []
         tasks: list[SpecialistTask] = []
-        for hypothesis in finalists[: min(2, remaining)]:
+        for hypothesis in finalists[:remaining]:
             tasks.append(
                 self._task(
                     "independent_portfolio_reviewer",
@@ -1863,6 +1960,7 @@ class WinningSwarmController:
             "causal_chain_broken": "adversary_counter_adaptation_red_team",
             "military_effect_missing": "disruptive_mechanism_generator",
             "equipment_not_concrete": "equipment_realization_architect",
+            "weapon_name_not_concrete": "equipment_realization_architect",
             "system_interfaces_missing": "equipment_realization_architect",
             "engineering_feasibility_insufficient": "trl_cost_industrial_auditor",
             "counter_adaptation_unresolved": "adversary_counter_adaptation_red_team",
@@ -1902,7 +2000,6 @@ class WinningSwarmController:
             value.get("evidence_ids", value.get("evidence_refs", [])),
             valid_evidence_ids,
         )
-        title = str(value.get("title") or value.get("name") or "候选制胜假设").strip()[:180]
         changed_variable = str(
             value.get("changed_confrontation_variable")
             or value.get("changed_variable")
@@ -1919,6 +2016,14 @@ class WinningSwarmController:
         equipment_forms = _text_list(
             value.get("equipment_forms", value.get("equipment_form", [])),
             limit=6,
+        )
+        # Candidate titles are a delivery surface, not an internal reasoning
+        # label. Normalize them before they enter the ledger so the same
+        # concrete weapon identity flows to reference cards, portfolio review
+        # and S6 instead of leaking S3/S4 labels or a mechanism sentence.
+        title = normalize_weapon_candidate_title(
+            value.get("title") or value.get("name"),
+            equipment_forms,
         )
         project_function = str(value.get("project_function", "")).strip()[:700]
         if not project_function and direct_effects:
@@ -1946,6 +2051,13 @@ class WinningSwarmController:
             equipment_forms=equipment_forms,
             project_function=project_function,
             novelty_delta=str(value.get("novelty_delta") or value.get("novelty") or "").strip()[:900],
+            naming_rationale=str(value.get("naming_rationale", "")).strip()[:900],
+            decisive_advantage_thesis=str(
+                value.get("decisive_advantage_thesis", "")
+            ).strip()[:900],
+            cross_query_distinction=str(
+                value.get("cross_query_distinction", "")
+            ).strip()[:900],
             system_interfaces=_text_list(value.get("system_interfaces", []), limit=8),
             evidence_ids=evidence_ids,
             counterevidence=_text_list(value.get("counterevidence", []), limit=8),
@@ -1962,7 +2074,17 @@ class WinningSwarmController:
             source_task_ids=[task.task_id],
         )
         gate = self.evaluate_gate(hypothesis, stage="breadth")
-        return replace(hypothesis, residuals=gate.residuals, score=gate.score)
+        preflight_residuals = list(gate.residuals)
+        if _weapon_title_needs_concretization(title):
+            # The final portrait writer must not be the routine naming
+            # repairer.  Resolve an ambiguous carrier name in the swarm's
+            # equipment-realization wave while target/effect facts are fresh.
+            preflight_residuals.append("weapon_name_not_concrete")
+        return replace(
+            hypothesis,
+            residuals=_dedupe(preflight_residuals, 24),
+            score=gate.score,
+        )
 
     def contribution_from_mapping(
         self,
@@ -2012,6 +2134,13 @@ class WinningSwarmController:
             project_function=project_function,
             system_interfaces=_text_list(value.get("system_interfaces", []), limit=8),
             novelty_delta=str(value.get("novelty_delta", "")).strip()[:900],
+            naming_rationale=str(value.get("naming_rationale", "")).strip()[:900],
+            decisive_advantage_thesis=str(
+                value.get("decisive_advantage_thesis", "")
+            ).strip()[:900],
+            cross_query_distinction=str(
+                value.get("cross_query_distinction", "")
+            ).strip()[:900],
             evidence_boundary=str(value.get("evidence_boundary", "")).strip()[:800],
             implementation_path=str(value.get("implementation_path", "")).strip()[:800],
             evidence_ids=evidence_ids,
@@ -2176,6 +2305,17 @@ class WinningSwarmController:
                 *contribution.system_interfaces,
             ], 10),
             novelty_delta=contribution.novelty_delta or hypothesis.novelty_delta,
+            naming_rationale=(
+                contribution.naming_rationale or hypothesis.naming_rationale
+            ),
+            decisive_advantage_thesis=(
+                contribution.decisive_advantage_thesis
+                or hypothesis.decisive_advantage_thesis
+            ),
+            cross_query_distinction=(
+                contribution.cross_query_distinction
+                or hypothesis.cross_query_distinction
+            ),
             evidence_boundary=contribution.evidence_boundary or hypothesis.evidence_boundary,
             implementation_path=contribution.implementation_path or hypothesis.implementation_path,
             evidence_ids=_dedupe([*hypothesis.evidence_ids, *contribution.evidence_ids], 24),
@@ -2198,24 +2338,57 @@ class WinningSwarmController:
     def evaluate_gate(self, hypothesis: WinningHypothesis, *, stage: str) -> SwarmGateResult:
         residuals: list[str] = []
         rejection_reasons: list[str] = []
+        frontloaded_quality = self.policy.get("policy_id") in {
+            "winning_swarm_dynamic_v2",
+            "swarm_quality_v1",
+            "winning_swarm_quality_v1",
+        }
         if not hypothesis.nearest_public_baseline.strip():
             residuals.append("baseline_missing")
         if not hypothesis.changed_confrontation_variable.strip() or not hypothesis.mechanism_chain:
             residuals.append("causal_chain_broken")
         if not hypothesis.direct_military_effects:
             residuals.append("military_effect_missing")
+        if frontloaded_quality:
+            combat_effect_text = " ".join(
+                [hypothesis.project_function, *hypothesis.direct_military_effects]
+            )
+            if not any(
+                marker in combat_effect_text
+                for marker in (
+                    "打击",
+                    "歼灭",
+                    "毁伤",
+                    "摧毁",
+                    "杀伤",
+                    "猎歼",
+                    "拦截",
+                    "压制",
+                    "瘫痪",
+                    "破障",
+                    "拒止",
+                )
+            ):
+                residuals.append("direct_combat_effect_unproven")
         if not hypothesis.novelty_delta.strip():
             residuals.append("novelty_insufficient")
+        if frontloaded_quality:
+            if not hypothesis.decisive_advantage_thesis.strip():
+                residuals.append("decisive_advantage_missing")
+            if not hypothesis.naming_rationale.strip():
+                residuals.append("weapon_naming_unjustified")
+            if not hypothesis.cross_query_distinction.strip():
+                residuals.append("template_substitution_unresolved")
         if not hypothesis.equipment_forms:
             residuals.append("equipment_not_concrete")
         if not hypothesis.project_function.strip():
             residuals.append("project_function_missing")
         if (
-            self.policy.get("policy_id") == "winning_swarm_dynamic_v2"
+            frontloaded_quality
             and not hypothesis.system_interfaces
         ):
             residuals.append("system_interfaces_missing")
-        if self.policy.get("policy_id") == "winning_swarm_dynamic_v2":
+        if frontloaded_quality:
             if _mixed_named_equipment_families(hypothesis):
                 residuals.append("mixed_primary_equipment_families")
             if (
@@ -2252,7 +2425,11 @@ class WinningSwarmController:
             "baseline_missing": 0.10,
             "causal_chain_broken": 0.16,
             "military_effect_missing": 0.14,
+            "direct_combat_effect_unproven": 0.14,
             "novelty_insufficient": 0.10,
+            "decisive_advantage_missing": 0.14,
+            "weapon_naming_unjustified": 0.05,
+            "template_substitution_unresolved": 0.10,
             "equipment_not_concrete": 0.08,
             "project_function_missing": 0.08,
             "system_interfaces_missing": 0.04,
@@ -2271,6 +2448,15 @@ class WinningSwarmController:
             score -= 0.20
         score = round(max(0.0, min(1.0, score)), 4)
         critical = {"baseline_missing", "causal_chain_broken", "military_effect_missing"}
+        if frontloaded_quality:
+            critical.update(
+                {
+                    "decisive_advantage_missing",
+                    "weapon_naming_unjustified",
+                    "template_substitution_unresolved",
+                    "direct_combat_effect_unproven",
+                }
+            )
         if stage == "breadth":
             passed = score >= 0.45 and not critical.intersection(residuals)
         elif stage == "targeted":
@@ -2488,10 +2674,10 @@ class WinningSwarmController:
 
         Passing system-link candidates are useful for portfolio breadth but
         rewriting them can turn a pass into a reject. Repair already-direct
-        ``revise`` candidates first so the 4-of-5 combat quota can be met
-        without sacrificing an otherwise valid fifth direction. Dynamic v2
-        reserves six parallel repair slots because four slots cannot reliably
-        satisfy a five-direction minimum after blind review.
+        ``revise`` candidates first so scarce repair capacity improves actual
+        combat equipment rather than converting support concepts merely to
+        satisfy a portfolio count. Repair capacity is a runtime bound, not a
+        required number of equipment directions.
         """
 
         maximum_candidates = int(self.policy["expert_repair_max_candidates"])
@@ -2671,7 +2857,35 @@ def _hypothesis_similarity(left: WinningHypothesis, right: WinningHypothesis) ->
     )
     if not left_tokens or not right_tokens:
         return 0.0
-    return len(left_tokens & right_tokens) / len(left_tokens | right_tokens)
+
+    def jaccard(left_values: set[str], right_values: set[str]) -> float:
+        if not left_values or not right_values:
+            return 0.0
+        return len(left_values & right_values) / len(left_values | right_values)
+
+    semantic_overlap = jaccard(left_tokens, right_tokens)
+    form_overlap = jaccard(
+        _tokens(" ".join(left.equipment_forms)),
+        _tokens(" ".join(right.equipment_forms)),
+    )
+    baseline_overlap = jaccard(
+        _tokens(left.nearest_public_baseline),
+        _tokens(right.nearest_public_baseline),
+    )
+    same_family = (
+        _equipment_family_signature(left) == _equipment_family_signature(right)
+    )
+    # This is a conservative ledger guard after the Codex semantic pass.  It
+    # catches wording variants of the same equipment thesis without using a
+    # title-only match: main form, public baseline and complete mechanism/effect
+    # semantics must agree.  Independent Codex judgement remains authoritative.
+    weighted = (
+        0.40 * semantic_overlap
+        + 0.25 * form_overlap
+        + 0.15 * baseline_overlap
+        + (0.20 if same_family else 0.0)
+    )
+    return max(semantic_overlap, weighted)
 
 
 def _equipment_family_signature(hypothesis: WinningHypothesis) -> str:
@@ -2909,6 +3123,133 @@ def _text_list(value: Any, *, limit: int) -> list[str]:
     return _dedupe([str(item).strip()[:1200] for item in rows if str(item).strip()], limit)
 
 
+_WEAPON_CANDIDATE_MARKERS = (
+    "导弹", "巡飞", "弹药", "毁伤弹", "拦截弹", "无人机", "攻击无人机", "无人攻击机", "无人僚机", "无人艇",
+    "无人潜航器", "无人平台", "效应器", "火力舱", "发射车", "武器站",
+    "火炮", "鱼雷", "水雷", "激光武器", "微波武器",
+)
+_ABSTRACT_CANDIDATE_MARKERS = (
+    "证据链", "任务链", "信息链", "杀伤链", "闭环", "能力", "体系", "方向",
+    "红队保留", "竞争分支", "颠覆分支", "候选", "作战模式",
+)
+
+_GENERIC_CANDIDATE_WEAPON_TITLES = frozenset(
+    {
+        "内置效应器",
+        "效应器",
+        "内置载荷",
+        "任务载荷",
+        "攻击载荷",
+        "火力",
+        "平台",
+        "弹药",
+        "弹群",
+    }
+)
+
+
+def _clean_weapon_candidate_text(value: Any) -> str:
+    """Strip swarm-stage labels and explanation prose from a visible title."""
+
+    title = " ".join(str(value or "").replace("_", " ").split()).strip()
+    title = re.sub(
+        r"^(?:(?:[A-H]\s*[-/]?\s*)?S[1-6](?:\s*[-/]?\s*(?:候选)?[A-Z一二三四五六\d]+)?|"
+        r"(?:竞争分支|候选)(?:[A-Z一二三四五六\d-]+)?|[A-H])\s*[：:—–/-]*\s*",
+        "",
+        title,
+        count=1,
+        flags=re.IGNORECASE,
+    )
+    title = re.sub(r"\bS[1-6]\b\s*[-_/：:]*", "", title, flags=re.IGNORECASE)
+    title = re.sub(r"^(?:红队保留|红队|保留参考|参考武器)\s*[：:—–/-]*\s*", "", title)
+    # A candidate ledger title must never absorb a following form/interface
+    # field.  This is metadata cleanup, not a rule-based weapon renaming.
+    title = re.split(
+        r"\s*(?:·|\||；|;)\s*(?:主装备)?(?:装备)?(?:形态|接口形态|接口|任务接口)\s*[：:]",
+        title,
+        maxsplit=1,
+    )[0]
+    title = re.sub(
+        r"^(?:(?:主装备)?(?:装备)?形态|接口形态|接口|任务接口|(?:[Qq]uery)(?:相关|专属)?(?:型号|装备)?|相关型号)\s*[：:]\s*",
+        "",
+        title,
+    )
+    # Proposal codenames conventionally use paired Chinese quotation marks;
+    # stripping only the opening mark corrupts the visible equipment name.
+    return title.strip(" ：:—–/-\"'")
+
+
+def _is_concrete_weapon_candidate_title(value: str) -> bool:
+    text = str(value or "").strip()
+    generic_label = text in _GENERIC_CANDIDATE_WEAPON_TITLES or bool(
+        re.match(r"^(?:内置效应器|内置载荷|任务载荷|攻击载荷)\s*[：:]", text)
+    )
+    return (
+        bool(text)
+        and not generic_label
+        and any(marker in text for marker in _WEAPON_CANDIDATE_MARKERS)
+        and not any(marker in text for marker in _ABSTRACT_CANDIDATE_MARKERS)
+    )
+
+
+def _preflight_query_weapon_title(value: str) -> str:
+    """Preserve the model's semantic name; only remove presentation noise.
+
+    Candidate naming belongs to the query-aware Codex reasoning pass, not a
+    catalogue of string substitutions.  Structural validation may still send
+    an obviously non-weapon label to an early specialist for a fresh decision.
+    """
+
+    return str(value or "").strip()
+
+
+def _weapon_title_needs_concretization(value: str) -> bool:
+    """Flag a generic carrier before it is admitted to the swarm ledger."""
+
+    return str(value or "").strip().endswith(("火力", "平台", "弹药", "弹群"))
+
+
+def normalize_weapon_candidate_title(
+    value: Any,
+    equipment_forms: Sequence[Any] = (),
+) -> str:
+    """Return a concise, user-facing concrete weapon name for a candidate.
+
+    The dynamic swarm can reason with S-node labels and explanatory titles,
+    but those are never a valid equipment identity. Prefer a concise weapon
+    noun in the candidate title; otherwise anchor it to the declared equipment
+    form. This occurs before the hypothesis enters the ledger and S6.
+    """
+
+    cleaned = _clean_weapon_candidate_text(value)
+    head = re.split(r"[：:；;。]", cleaned, maxsplit=1)[0].strip()
+    if _is_concrete_weapon_candidate_title(head):
+        # A selected candidate is already a concrete weapon identity.  Do not
+        # turn it into a generic family merely to satisfy a display budget;
+        # S6 may only make non-semantic cleanup to this name.
+        return _preflight_query_weapon_title(head)
+    if _is_concrete_weapon_candidate_title(cleaned):
+        return _preflight_query_weapon_title(cleaned)
+    for raw_form in equipment_forms:
+        form = _clean_weapon_candidate_text(raw_form)
+        form = re.sub(
+            r"^(?:单一主装备(?:对象)?|主体装备|主装备对象|装备形态)\s*(?:为)?\s*[：:]?\s*",
+            "",
+            form,
+        )
+        form = re.sub(
+            r"^(?:背负、车载或舰岸箱式发射的|背负、车载、舰岸箱式发射的|"
+            r"背负发射的|箱式发射的|车载发射的|舰载发射的|空射的|地射的)",
+            "",
+            form,
+        )
+        form = re.split(r"[；;。]", form, maxsplit=1)[0].strip()
+        if _is_concrete_weapon_candidate_title(form):
+            return _preflight_query_weapon_title(form)
+    # A malformed model output must never expose an orchestration stage.
+    return _preflight_query_weapon_title(head or cleaned or "待复核具体武器装备")
+
+
 def _dedupe(values: Sequence[str], limit: int) -> list[str]:
     return list(dict.fromkeys(str(item) for item in values if str(item).strip()))[:limit]
 
@@ -2937,5 +3278,6 @@ __all__ = [
     "SWARM_SPECIALIST_ARCHETYPES",
     "WinningSwarmController",
     "default_winning_swarm_policy",
+    "normalize_weapon_candidate_title",
     "normalize_winning_swarm_policy",
 ]

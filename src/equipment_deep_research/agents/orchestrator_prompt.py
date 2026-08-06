@@ -91,10 +91,10 @@ PHASE_INSTRUCTIONS = {
 无论是否有补充信息，都必须利用Codex对完整Query做一次开放式装备语义推演，并写入structured_query_brief：
 建立combat_problem_frame、enemy_target_profile、battle_phase_and_constraints、required_direct_military_effects；
 再从发射域、平台、目标运动/防护包线、感知导引、突防/拦截方式、毁伤机理、成本与规模运用等维度，
-形成weapon_design_variables和3至6个query_specific_weapon_architectures。架构必须聚焦具体打击、毁伤、
-压制或拦截武器，至少2个不得复述系统Prompt中的示例装备。该过程是语义推演，不得使用关键词穷举、
+形成weapon_design_variables和证据/因果所需数量的query_specific_weapon_architectures。架构必须聚焦具体打击、毁伤、
+压制或拦截武器，并包含不复述系统Prompt示例的原创替代方向。该过程是语义推演，不得使用关键词穷举、
 固定装备目录或为覆盖示例机械配额；与Query缺少直接因果关系的常见模板写入rejected_template_anchors。
-在大方向发散后，进一步形成3至6个equipment_project_hypotheses；每项必须给出可独立论证的装备项目暂定名、
+在大方向发散后，进一步形成能够独立论证的equipment_project_hypotheses；不设固定数量，每项必须给出装备项目暂定名、
 具体装备形态、项目功能、Query因果关系、目标/威胁、适用阶段、直接军事效果、关键设计变量、创新逻辑、
 证据问题和淘汰条件。项目功能必须用“谁在什么条件下，依靠该装备完成什么动作并产生何种任务结果”表达，
 不得退化为“提升智能化/体系化能力”等抽象标签。示例型号只能作为思考发生维度；若并非公开在研项目，
@@ -151,7 +151,7 @@ BLUEPRINT_OUTPUT_SCHEMA: dict[str, Any] = {
         "battle_phase_and_constraints": ["真实作战阶段、地域/距离、链路/环境和交战约束"],
         "required_direct_military_effects": ["摧毁、歼灭、压制、拦截、封控等直接战果"],
         "weapon_design_variables": ["由Query反推的发射域、平台、目标包线、导引、突防、毁伤、成本变量"],
-        "query_specific_weapon_architectures": ["3至6个Query专属具体打击杀伤武器架构，至少2个非Prompt示例"],
+        "query_specific_weapon_architectures": ["由Query因果和证据决定数量的具体打击杀伤武器架构，包含原创替代方向"],
         "equipment_project_hypotheses": [
             {
                 "project_name": "装备项目暂定名；概念名不得伪装成公开项目",

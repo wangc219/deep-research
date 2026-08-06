@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import re
 import shutil
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -19,6 +20,7 @@ from equipment_deep_research.application.run_service import (
     ResearchApplicationService,
 )
 from equipment_deep_research.application.factory import build_application_service
+from equipment_deep_research.application.worker_pool_config import write_worker_capacity
 from equipment_deep_research.agents.registry import AgentRegistry
 from equipment_deep_research.orchestration.blueprints import (
     BRANCH_BLUEPRINTS,
@@ -30,9 +32,12 @@ from equipment_deep_research.domain.models import ResearchProblem
 from equipment_deep_research.orchestration.coverage import load_preset_policy
 from equipment_deep_research.orchestration.capability_portrait import (
     build_capability_title,
+    complete_operational_process,
+    is_launch_mode_generic_weapon_title,
     normalize_capability_problem,
     normalize_operational_process,
     normalize_verification_plan,
+    primary_equipment_form_title,
     resolve_capability_portrait,
 )
 from equipment_deep_research.harness.event_bus import sanitize_runtime_payload
@@ -147,7 +152,7 @@ class CreateRunBody(BaseModel):
     analyst_confirmed: bool = False
     interaction_mode: str = "expert"
     discovery_branch: str = "auto"
-    execution_profile_id: str = "legacy_v1"
+    execution_profile_id: str = "winning_swarm_dynamic_v2"
     report_template_mode: str = "project_argument_v1"
     source_query_id: str = Field(default="", max_length=128)
     source_query_version: int | None = Field(default=None, ge=1)
@@ -169,6 +174,10 @@ class UpdateRunBody(BaseModel):
 
 class DeleteRunsBody(BaseModel):
     run_ids: list[str] = Field(min_length=1, max_length=100)
+
+
+class UpdateRuntimeCapacityBody(BaseModel):
+    capacity: int = Field(ge=1, le=8)
 
 
 class AgentSelectionPreviewBody(BaseModel):
@@ -391,6 +400,18 @@ def create_app(
     def runtime_health(x_role: str = Header(default="analyst", alias="X-Role")) -> dict:
         _require_role(x_role, {"analyst", "reviewer", "auditor", "admin"})
         return service.runtime_health()
+
+    @app.put("/api/v1/runtime-capacity")
+    def update_runtime_capacity(
+        body: UpdateRuntimeCapacityBody,
+        x_role: str = Header(default="analyst", alias="X-Role"),
+    ) -> dict:
+        _require_role(x_role, {"analyst", "admin"})
+        config = write_worker_capacity(body.capacity, updated_by=x_role)
+        return {
+            "desired_capacity": config["desired_capacity"],
+            "runtime": service.runtime_health(),
+        }
 
     @app.get("/api/v1/runs")
     def list_runs(x_role: str = Header(default="analyst", alias="X-Role")) -> list[dict]:
@@ -1640,6 +1661,12 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
                                 "selected"
                                 if hypothesis_id in selected_ids
                                 else "rejected"
+                            ),
+                            "selection_reason": (
+                                "通过单项质量门，并在对象证据、Query因果、直接作战属性、"
+                                "机制独立性与组合价值排序中进入本轮 S6 容量。"
+                                if hypothesis_id in selected_ids
+                                else "未进入本轮 S6 容量，保留为可展开查看的参考武器。"
                             ),
                             "score": raw_candidate.get("score"),
                             "equipment_forms": safe_string_list(
@@ -2946,31 +2973,57 @@ def _capability_api_view(row: dict) -> dict:
     if not result.get("development_path"):
         result["development_path"] = str(result.get("foresight", ""))
     if not result.get("mission_effect"):
-        result["mission_effect"] = (
-            "以较短工程周期提升现役装备在复杂环境中的体系贡献度、任务适配性和持续保障能力。"
-            if upgrade else
-            "形成可组合、可扩展、可降级的新型任务能力，缩短从发现问题到产生任务效果的闭环。"
+        result["mission_effect"] = str(
+            result.get("strike_countermeasure_value")
+            or result.get("military_utility")
+            or (
+                "以较短工程周期提升现役装备在复杂环境中的体系贡献度、任务适配性和持续保障能力。"
+                if upgrade
+                else "形成可组合、可扩展、可降级的新型任务能力，缩短从发现问题到产生任务效果的闭环。"
+            )
         )
     if not result.get("system_dependencies"):
         result["system_dependencies"] = ["与现有指挥信息、情报侦察和保障体系形成标准化接口", "支持通信受限和局部节点失效条件下的降级运行"]
     if not result.get("risk_boundaries"):
         result["risk_boundaries"] = ["公开证据不足的参数保留区间与置信度，不转化为确定阈值", "不以单一平台性能替代体系任务效果，不假设持续高带宽连接"]
     source_name = str(result.get("name", "")).strip()
-    display_name = build_capability_title(
-        name=source_name,
-        equipment_form=result.get("equipment_form") or result.get("equipment_category"),
-        effect="；".join(
-            str(value)
-            for value in (
-                result.get("strike_countermeasure_value")
-                or result.get("military_utility")
-                or result.get("mission_effect"),
-                result.get("operational_mechanism"),
-                result.get("enabling_technologies"),
-            )
-            if str(value).strip()
-        ),
-    )
+    equipment_form = str(
+        result.get("equipment_form") or result.get("equipment_category") or ""
+    ).strip()
+    generic_weapon_titles = {
+        "无人机", "无人作战平台", "巡飞弹", "反辐射巡飞弹", "远程导弹",
+        "精确制导弹药", "拦截弹", "电子压制效应器", "空射导弹", "空射弹",
+        "地射导弹", "导弹", "弹药", "武器",
+    }
+    if (
+        source_name in generic_weapon_titles
+        or is_launch_mode_generic_weapon_title(source_name)
+    ) and equipment_form:
+        # The dynamic swarm already supplied a concrete weapon identity.  For
+        # a generic heading, promote that identity verbatim instead of asking
+        # the legacy short-title helper to shrink it further.
+        display_name = primary_equipment_form_title(equipment_form)
+    elif not _api_capability_title_requires_repair(source_name):
+        # A selected swarm weapon name is already its independently reviewed
+        # combat identity.  Keep its query-specific wording intact; title
+        # length is deliberately not a UI repair trigger.
+        display_name = source_name
+    else:
+        display_name = build_capability_title(
+            name=source_name,
+            equipment_form=equipment_form,
+            effect="；".join(
+                str(value)
+                for value in (
+                    result.get("strike_countermeasure_value")
+                    or result.get("military_utility")
+                    or result.get("mission_effect"),
+                    result.get("operational_mechanism"),
+                    result.get("enabling_technologies"),
+                )
+                if str(value).strip()
+            ),
+        )
     if source_name and display_name != source_name:
         result["source_name"] = source_name
     result["name"] = display_name
@@ -2987,7 +3040,7 @@ def _capability_api_view(row: dict) -> dict:
         result.get("problem_statement") or result.get("capability_gap"),
         fallback=f"{display_name}对应的关键任务链存在目标、授权、交战或毁伤评估断点",
     )
-    result["operational_process"] = normalize_operational_process(
+    result["operational_process"] = complete_operational_process(
         result.get("operational_process") or result.get("strike_chain_contribution"),
         equipment_identity=equipment_identity,
     )
@@ -3001,9 +3054,11 @@ def _capability_api_view(row: dict) -> dict:
         ),
     )
     legacy_portrait = _legacy_capability_portrait(image)
-    result["deep_capability_portrait"] = resolve_capability_portrait(
+    portrait_scenario = result.get("target_scenario") or result.get("related_scenario")
+    result["deep_capability_portrait"] = _remove_raw_query_from_portrait_lede(
+        resolve_capability_portrait(
         result.get("deep_capability_portrait") or result.get("capability_image"),
-        scenario=result.get("target_scenario") or result.get("related_scenario"),
+        scenario=portrait_scenario,
         problem=result.get("capability_gap")
         or result.get("problem_statement")
         or legacy_portrait,
@@ -3033,8 +3088,67 @@ def _capability_api_view(row: dict) -> dict:
         or result.get("operational_constraints"),
         verification_plan=result.get("verification")
         or result.get("verification_plan"),
+        ),
+        scenario=portrait_scenario,
     )
     return result
+
+
+def _remove_raw_query_from_portrait_lede(value: object, *, scenario: object = "") -> str:
+    """Keep a combat-scene lede, never echo a research Query as that scene."""
+
+    portrait = str(value or "").strip()
+    if not portrait:
+        return portrait
+    raw_scenario = str(scenario or "").strip()
+    scenario_is_research_instruction = bool(
+        raw_scenario
+        and any(
+            marker in raw_scenario
+            for marker in (
+                "深度研究",
+                "研究任务",
+                "长期记忆",
+                "装备研究",
+                "发展需求",
+            )
+        )
+    )
+    if scenario_is_research_instruction:
+        portrait = portrait.replace(raw_scenario, "任务相关作战阶段")
+    if raw_scenario and raw_scenario in portrait:
+        portrait = portrait.replace(
+            f"面向{raw_scenario}，针对",
+            "在任务相关作战阶段，针对",
+            1,
+        )
+    # Legacy fallback cards sometimes use the full research instruction as the
+    # value after “面向”. It is not a military scene and should not leak into
+    # the user-visible capability overview.
+    portrait = re.sub(
+        r"(概述：?)面向(?:深度研究|理解|长期记忆|研究任务|装备研究)[^，。]{0,360}，针对",
+        r"\1在任务相关作战阶段，针对",
+        portrait,
+        count=1,
+    )
+    return portrait
+
+
+def _api_capability_title_requires_repair(value: str) -> bool:
+    """Recognize labels and descriptions that need legacy title recovery."""
+
+    title = re.sub(r"\s+", "", str(value or "")).strip("，,；;。:：")
+    if not title:
+        return True
+    if re.match(r"^[A-Za-z][A-Za-z0-9./-]{2,}", title):
+        return True
+    if re.search(r"具备|能够|可以|通过|实现|以及|包括|已集成", title):
+        return True
+    if title.startswith(("含", "由", "采用")):
+        return True
+    if any(marker in title for marker in ("证据链", "任务链", "信息链", "杀伤链", "闭环")):
+        return True
+    return title.endswith(("窗口", "续接", "支撑", "协同", "再捕获", "补击", "补射", "目标发现", "火力"))
 
 
 def _capability_labeled_value(text: str, label: str) -> str:
@@ -3118,7 +3232,7 @@ def _catalog_payload(agent_path: Path, preset_path: Path) -> dict:
                 "name": "传统固定编排",
                 "short_name": "传统模式",
                 "description": "采用传统固定流程执行，适合兼容回滚、稳定复现和对照研究。",
-                "default": True,
+                "default": False,
                 "recommended": False,
                 "selectable": True,
                 "badge": "兼容",
@@ -3149,7 +3263,7 @@ def _catalog_payload(agent_path: Path, preset_path: Path) -> dict:
                 "name": "Mission Graph 动态蜂群",
                 "short_name": "动态蜂群",
                 "description": "依据 Mission Graph 动态孵化 8–16 个实例，按依赖事件并行执行，适合复杂任务与最高并发研究。",
-                "default": False,
+                "default": True,
                 "recommended": False,
                 "selectable": True,
                 "badge": "最高并发",

@@ -80,6 +80,7 @@ if (( EQUIPMENT_DR_RESEARCH_WORKER_CONCURRENCY > 1 )); then
 fi
 
 RUNTIME_DIR="${EQUIPMENT_DR_RUNTIME_DIR:-$ROOT/outputs/runtime}"
+export EQUIPMENT_DR_WORKER_POOL_CONFIG="${EQUIPMENT_DR_WORKER_POOL_CONFIG:-$RUNTIME_DIR/research-worker-pool.json}"
 LOCK_DIR="$RUNTIME_DIR/start-local.lock"
 mkdir -p "$RUNTIME_DIR"
 if ! mkdir "$LOCK_DIR" 2>/dev/null; then
@@ -174,26 +175,13 @@ if [[ "$api_ready" != "1" ]]; then
   exit 1
 fi
 
-for ((slot = 1; slot <= EQUIPMENT_DR_RESEARCH_WORKER_CONCURRENCY; slot++)); do
-  if (( slot == 1 )); then
-    "$PYTHON_BIN" -m equipment_deep_research.interfaces.worker \
-      --project-root "$ROOT" \
-      --output-root "$ROOT/outputs/runs" \
-      --worker-id "research-worker-$slot" \
-      --poll-interval 1 \
-      --max-idle-poll-interval 5 &
-  else
-    "$PYTHON_BIN" -m equipment_deep_research.interfaces.worker \
-      --project-root "$ROOT" \
-      --output-root "$ROOT/outputs/runs" \
-      --worker-id "research-worker-$slot" \
-      --poll-interval 1 \
-      --max-idle-poll-interval 5 \
-      --disable-orphan-recovery &
-  fi
-  pids+=("$!")
-  process_names+=("research-worker-$slot")
-done
+"$PYTHON_BIN" -m equipment_deep_research.interfaces.worker_pool \
+  --project-root "$ROOT" \
+  --output-root "$ROOT/outputs/runs" \
+  --initial-capacity "$EQUIPMENT_DR_RESEARCH_WORKER_CONCURRENCY" \
+  --poll-interval 0.5 &
+pids+=("$!")
+process_names+=("research-worker-pool")
 "$PYTHON_BIN" -m equipment_deep_research.query_library worker \
   --poll-interval 1 \
   --max-idle-poll-interval "${EQUIPMENT_DR_QUERY_MAX_IDLE_POLL_INTERVAL:-10}" &
@@ -218,7 +206,7 @@ done
 
 echo "API: http://127.0.0.1:${EQUIPMENT_DR_API_PORT:-8000}"
 echo "Web: http://127.0.0.1:${EQUIPMENT_DR_WEB_PORT:-5173}"
-echo "API、${EQUIPMENT_DR_RESEARCH_WORKER_CONCURRENCY} 个研究 Worker、Query 生成 Worker 与 Web 已统一启动；按 Ctrl+C 停止。"
+echo "API、可动态伸缩的研究 Worker 池、Query 生成 Worker 与 Web 已统一启动；按 Ctrl+C 停止。"
 
 # Bash 3.2 on macOS has no `wait -n`. Poll the small fixed child set so any
 # component that exits later tears down the whole local stack instead of

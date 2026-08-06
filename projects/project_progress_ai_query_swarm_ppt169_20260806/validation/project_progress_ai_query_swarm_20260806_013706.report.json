@@ -1,0 +1,174 @@
+{
+  "schema": "ppt-master.pptx-postflight-report.v1",
+  "status": "passed-with-warnings",
+  "output": {
+    "path": "/Users/wangchen/equipment research/projects/project_progress_ai_query_swarm_ppt169_20260806/exports/project_progress_ai_query_swarm_20260806_013706.pptx",
+    "bytes": 251871
+  },
+  "source": {
+    "svg_slide_count": 8,
+    "layout_definition_count": 0,
+    "fingerprint": {
+      "algorithm": "sha256",
+      "digest": "bd185cfe2def4d5ca8997aa66e85cfceb53caf0e68b12e8c593c34652d961329",
+      "file_count": 8,
+      "files": [
+        {
+          "file": "01_cover.svg",
+          "sha256": "6349cb0c10c2d63635c5dd7dcf159b89535fb89fde4058bf1390417601740b80"
+        },
+        {
+          "file": "02_query_flow.svg",
+          "sha256": "a109e87ee6e98ac14715ce435cc6725d6d34648b8f9349203761473c9334eaf7"
+        },
+        {
+          "file": "03_query_workbench.svg",
+          "sha256": "197df3cc457e3b1b51a858513afa07925369d2918419d5cae9aa9c761308461e"
+        },
+        {
+          "file": "04_dynamic_swarm.svg",
+          "sha256": "570c1e6c92bb0f015efa497190d8da630882e7495a0d25b84b913cf7b56be9b8"
+        },
+        {
+          "file": "05_strategy_comparison.svg",
+          "sha256": "2e720d9363105a94979be3453f878454981569293b0e407c414e2fd8e8e175df"
+        },
+        {
+          "file": "06_quality_gates.svg",
+          "sha256": "9b2b6e9a0051ce7dcff3271adf68f8c4f60908b54294f33246052dbc2bf1eb4e"
+        },
+        {
+          "file": "07_frontend_results.svg",
+          "sha256": "9fb22605c2e8e28544c9865c8a6fb9a5672d0db884f4a3bb757fb262168b5267"
+        },
+        {
+          "file": "08_next_steps.svg",
+          "sha256": "8cdb464acfdbbda30c1cf6c2e824c180c0866c95cfcfd253150ec45527aa68da"
+        }
+      ]
+    }
+  },
+  "package": {
+    "zip_integrity": "passed",
+    "corrupt_member": null,
+    "slides": 8,
+    "notes": 8,
+    "masters": 1,
+    "layouts": 1
+  },
+  "checks": {
+    "zip_integrity": "passed",
+    "slide_count": "passed",
+    "internal_relationships": "enforced-at-build",
+    "structured_package": "not-applicable",
+    "transitions": "enforced-at-build",
+    "animations": "enforced-at-build",
+    "quality_gate": "passed",
+    "quality_warnings": "warning",
+    "template_tokens": "passed",
+    "external_images": "passed",
+    "font_portability": "passed"
+  },
+  "quality": {
+    "status": "loaded",
+    "path": "projects/project_progress_ai_query_swarm_ppt169_20260806/validation/svg_quality_report.json",
+    "schema": "ppt-master.svg-quality-report.v1",
+    "stage": "final",
+    "source_match": "passed",
+    "source_fingerprint": {
+      "algorithm": "sha256",
+      "digest": "bd185cfe2def4d5ca8997aa66e85cfceb53caf0e68b12e8c593c34652d961329",
+      "file_count": 8,
+      "files": [
+        {
+          "file": "01_cover.svg",
+          "sha256": "6349cb0c10c2d63635c5dd7dcf159b89535fb89fde4058bf1390417601740b80"
+        },
+        {
+          "file": "02_query_flow.svg",
+          "sha256": "a109e87ee6e98ac14715ce435cc6725d6d34648b8f9349203761473c9334eaf7"
+        },
+        {
+          "file": "03_query_workbench.svg",
+          "sha256": "197df3cc457e3b1b51a858513afa07925369d2918419d5cae9aa9c761308461e"
+        },
+        {
+          "file": "04_dynamic_swarm.svg",
+          "sha256": "570c1e6c92bb0f015efa497190d8da630882e7495a0d25b84b913cf7b56be9b8"
+        },
+        {
+          "file": "05_strategy_comparison.svg",
+          "sha256": "2e720d9363105a94979be3453f878454981569293b0e407c414e2fd8e8e175df"
+        },
+        {
+          "file": "06_quality_gates.svg",
+          "sha256": "9b2b6e9a0051ce7dcff3271adf68f8c4f60908b54294f33246052dbc2bf1eb4e"
+        },
+        {
+          "file": "07_frontend_results.svg",
+          "sha256": "9fb22605c2e8e28544c9865c8a6fb9a5672d0db884f4a3bb757fb262168b5267"
+        },
+        {
+          "file": "08_next_steps.svg",
+          "sha256": "8cdb464acfdbbda30c1cf6c2e824c180c0866c95cfcfd253150ec45527aa68da"
+        }
+      ]
+    },
+    "summary": {
+      "total": 8,
+      "passed": 6,
+      "warnings": 2,
+      "errors": 0
+    },
+    "categories": {
+      "blocking": {
+        "count": 0,
+        "issues": []
+      },
+      "introduced": {
+        "count": 2,
+        "issues": [
+          {
+            "file": "05_strategy_comparison.svg",
+            "message": "Detected 2 paragraph-like line run(s) split across sibling <text> elements (<g id=\"quality-col\"> x=84.0, y=324.0..450.0, 4 lines; <g id=\"dynamic-col\"> x=752.0, y=324.0..450.0, 4 lines). If each run is one prose paragraph, combine it into one <text>: keep its first line as direct text and use direct <tspan> children with the parent x and positive relative dy values for later lines. An all-<tspan> form may start with dy=\"0\". Keep semantically independent text frames separate."
+          },
+          {
+            "file": "08_next_steps.svg",
+            "message": "Detected 2 paragraph-like line run(s) split across sibling <text> elements (<g id=\"trust-track\"> x=100.0, y=336.0..428.0, 3 lines; <g id=\"speed-track\"> x=670.0, y=336.0..428.0, 3 lines). If each run is one prose paragraph, combine it into one <text>: keep its first line as direct text and use direct <tspan> children with the parent x and positive relative dy values for later lines. An all-<tspan> form may start with dy=\"0\". Keep semantically independent text frames separate."
+          }
+        ]
+      },
+      "inherited": {
+        "count": 0,
+        "issues": []
+      },
+      "source-import": {
+        "count": 0,
+        "summary": {
+          "warning_count": 0,
+          "by_code": {}
+        }
+      }
+    }
+  },
+  "resources": {
+    "unresolved_template_tokens": [],
+    "fonts": {
+      "stacks": [
+        "Arial",
+        "Arial, sans-serif",
+        "Microsoft YaHei, Arial",
+        "Microsoft YaHei, Arial, sans-serif"
+      ],
+      "generic_only_stacks": []
+    },
+    "images": {
+      "data_uri": 0,
+      "local": 4,
+      "external": 0,
+      "external_references": []
+    }
+  },
+  "backup_path": "/Users/wangchen/equipment research/projects/project_progress_ai_query_swarm_ppt169_20260806/backup/20260806_013706/svg_output",
+  "conversion_trace_path": null
+}

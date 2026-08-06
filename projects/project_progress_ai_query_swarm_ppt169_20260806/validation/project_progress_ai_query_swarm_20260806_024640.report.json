@@ -1,0 +1,230 @@
+{
+  "schema": "ppt-master.pptx-postflight-report.v1",
+  "status": "passed-with-warnings",
+  "output": {
+    "path": "/Users/wangchen/equipment research/projects/project_progress_ai_query_swarm_ppt169_20260806/exports/project_progress_ai_query_swarm_20260806_024640.pptx",
+    "bytes": 272629
+  },
+  "source": {
+    "svg_slide_count": 12,
+    "layout_definition_count": 0,
+    "fingerprint": {
+      "algorithm": "sha256",
+      "digest": "04c7f67039d048c20a9a958922820ebc34bf55f77543c685b8c9cb7478c53550",
+      "file_count": 12,
+      "files": [
+        {
+          "file": "01_cover.svg",
+          "sha256": "6349cb0c10c2d63635c5dd7dcf159b89535fb89fde4058bf1390417601740b80"
+        },
+        {
+          "file": "02_query_flow.svg",
+          "sha256": "ec5dc282c37a6d6a9c2918149a29273ceac2d62a7f87220eeb3e59b0769cb19a"
+        },
+        {
+          "file": "03_query_workbench.svg",
+          "sha256": "197df3cc457e3b1b51a858513afa07925369d2918419d5cae9aa9c761308461e"
+        },
+        {
+          "file": "04_shared_s1_s6_chain.svg",
+          "sha256": "7b5e98179ac094ee595810cb25852c2fcc5d68a580f536d10f4370846b14e20d"
+        },
+        {
+          "file": "05_quality_cluster.svg",
+          "sha256": "18a20a785a34470d64328944c0886fb934eac36da1f5c93c22f63da5955af214"
+        },
+        {
+          "file": "06_dynamic_swarm.svg",
+          "sha256": "0b2f55ce0ad2dcc0d70461df828e8d9e72ab223bb0e03be9c683241f4208a942"
+        },
+        {
+          "file": "07_kimi_dynamic_incubation.svg",
+          "sha256": "0e6eb89582fa6c3324800fad2c918558b27d6ed1a2e591345c17769f4a09d771"
+        },
+        {
+          "file": "08_strategy_comparison.svg",
+          "sha256": "cf6a17eb3c46d2781abc639f8870c22fea640853c27dd502f9803cc0a639735f"
+        },
+        {
+          "file": "09_quality_expert.svg",
+          "sha256": "f0098a3b1b9505198434d259e6ab05e90bc40e24280184ebf4e1ba0ca86821cb"
+        },
+        {
+          "file": "10_frontend_results.svg",
+          "sha256": "f31a3f8d4016b038ce18da485c93773087802547f3187f3e19d9842727e1a93d"
+        },
+        {
+          "file": "11_modes_templates.svg",
+          "sha256": "346d0823467ddf9546e3d4bc9cadedd76dcbb6eaf00b8c4463c6d8c5c865b875"
+        },
+        {
+          "file": "12_next_steps.svg",
+          "sha256": "5d8856d44b782a7341adadbdd4a36a20a4e87a0091cafded1d488e8f9867dd74"
+        }
+      ]
+    }
+  },
+  "package": {
+    "zip_integrity": "passed",
+    "corrupt_member": null,
+    "slides": 12,
+    "notes": 12,
+    "masters": 1,
+    "layouts": 1
+  },
+  "checks": {
+    "zip_integrity": "passed",
+    "slide_count": "passed",
+    "internal_relationships": "enforced-at-build",
+    "structured_package": "not-applicable",
+    "transitions": "enforced-at-build",
+    "animations": "enforced-at-build",
+    "quality_gate": "passed",
+    "quality_warnings": "warning",
+    "template_tokens": "passed",
+    "external_images": "passed",
+    "font_portability": "passed"
+  },
+  "quality": {
+    "status": "loaded",
+    "path": "projects/project_progress_ai_query_swarm_ppt169_20260806/validation/svg_quality_report.json",
+    "schema": "ppt-master.svg-quality-report.v1",
+    "stage": "final",
+    "source_match": "passed",
+    "source_fingerprint": {
+      "algorithm": "sha256",
+      "digest": "04c7f67039d048c20a9a958922820ebc34bf55f77543c685b8c9cb7478c53550",
+      "file_count": 12,
+      "files": [
+        {
+          "file": "01_cover.svg",
+          "sha256": "6349cb0c10c2d63635c5dd7dcf159b89535fb89fde4058bf1390417601740b80"
+        },
+        {
+          "file": "02_query_flow.svg",
+          "sha256": "ec5dc282c37a6d6a9c2918149a29273ceac2d62a7f87220eeb3e59b0769cb19a"
+        },
+        {
+          "file": "03_query_workbench.svg",
+          "sha256": "197df3cc457e3b1b51a858513afa07925369d2918419d5cae9aa9c761308461e"
+        },
+        {
+          "file": "04_shared_s1_s6_chain.svg",
+          "sha256": "7b5e98179ac094ee595810cb25852c2fcc5d68a580f536d10f4370846b14e20d"
+        },
+        {
+          "file": "05_quality_cluster.svg",
+          "sha256": "18a20a785a34470d64328944c0886fb934eac36da1f5c93c22f63da5955af214"
+        },
+        {
+          "file": "06_dynamic_swarm.svg",
+          "sha256": "0b2f55ce0ad2dcc0d70461df828e8d9e72ab223bb0e03be9c683241f4208a942"
+        },
+        {
+          "file": "07_kimi_dynamic_incubation.svg",
+          "sha256": "0e6eb89582fa6c3324800fad2c918558b27d6ed1a2e591345c17769f4a09d771"
+        },
+        {
+          "file": "08_strategy_comparison.svg",
+          "sha256": "cf6a17eb3c46d2781abc639f8870c22fea640853c27dd502f9803cc0a639735f"
+        },
+        {
+          "file": "09_quality_expert.svg",
+          "sha256": "f0098a3b1b9505198434d259e6ab05e90bc40e24280184ebf4e1ba0ca86821cb"
+        },
+        {
+          "file": "10_frontend_results.svg",
+          "sha256": "f31a3f8d4016b038ce18da485c93773087802547f3187f3e19d9842727e1a93d"
+        },
+        {
+          "file": "11_modes_templates.svg",
+          "sha256": "346d0823467ddf9546e3d4bc9cadedd76dcbb6eaf00b8c4463c6d8c5c865b875"
+        },
+        {
+          "file": "12_next_steps.svg",
+          "sha256": "5d8856d44b782a7341adadbdd4a36a20a4e87a0091cafded1d488e8f9867dd74"
+        }
+      ]
+    },
+    "summary": {
+      "total": 12,
+      "passed": 6,
+      "warnings": 6,
+      "errors": 0
+    },
+    "categories": {
+      "blocking": {
+        "count": 0,
+        "issues": []
+      },
+      "introduced": {
+        "count": 8,
+        "issues": [
+          {
+            "file": "05_quality_cluster.svg",
+            "message": "Detected 1 paragraph-like line run(s) split across sibling <text> elements (<g id=\"controls\"> x=898.0, y=306.0..346.0, 2 lines). If each run is one prose paragraph, combine it into one <text>: keep its first line as direct text and use direct <tspan> children with the parent x and positive relative dy values for later lines. An all-<tspan> form may start with dy=\"0\". Keep semantically independent text frames separate."
+          },
+          {
+            "file": "06_dynamic_swarm.svg",
+            "message": "Detected 3 paragraph-like line run(s) split across sibling <text> elements (<g id=\"seed-layer\"> x=82.0, y=300.0..480.0, 6 lines; <g id=\"ledger\"> x=870.0, y=342.0..422.0, 3 lines; <g id=\"ledger\"> x=870.0, y=490.0..518.0, 2 lines). If each run is one prose paragraph, combine it into one <text>: keep its first line as direct text and use direct <tspan> children with the parent x and positive relative dy values for later lines. An all-<tspan> form may start with dy=\"0\". Keep semantically independent text frames separate."
+          },
+          {
+            "file": "07_kimi_dynamic_incubation.svg",
+            "message": "<text> exceeds <g id=\"mapping\"> data-pptx-bounds on the horizontal axis: content (846.0, 291.9)-(1227.3, 314.6), container (624.0, 206.0)-(1224.0, 552.0), overflow horizontal 0.6%, vertical 0.0%; reflow the text or revise the root module bounds"
+          },
+          {
+            "file": "07_kimi_dynamic_incubation.svg",
+            "message": "Detected 1 paragraph-like line run(s) split across sibling <text> elements (<g id=\"principles\"> x=84.0, y=300.0..468.0, 5 lines). If each run is one prose paragraph, combine it into one <text>: keep its first line as direct text and use direct <tspan> children with the parent x and positive relative dy values for later lines. An all-<tspan> form may start with dy=\"0\". Keep semantically independent text frames separate."
+          },
+          {
+            "file": "08_strategy_comparison.svg",
+            "message": "<text> exceeds <g id=\"comparison-rows\"> data-pptx-bounds on the horizontal axis: content (796.0, 443.0)-(1253.9, 467.0), container (56.0, 228.0)-(1224.0, 546.0), overflow horizontal 2.6%, vertical 0.0%; reflow the text or revise the root module bounds"
+          },
+          {
+            "file": "08_strategy_comparison.svg",
+            "message": "<text> exceeds <g id=\"comparison-rows\"> data-pptx-bounds on the horizontal axis: content (796.0, 507.0)-(1230.4, 531.0), container (56.0, 228.0)-(1224.0, 546.0), overflow horizontal 0.5%, vertical 0.0%; reflow the text or revise the root module bounds"
+          },
+          {
+            "file": "09_quality_expert.svg",
+            "message": "Detected 2 paragraph-like line run(s) split across sibling <text> elements (<g id=\"judge\"> x=84.0, y=488.0..522.0, 2 lines; <g id=\"thresholds\"> x=678.0, y=490.0..524.0, 2 lines). If each run is one prose paragraph, combine it into one <text>: keep its first line as direct text and use direct <tspan> children with the parent x and positive relative dy values for later lines. An all-<tspan> form may start with dy=\"0\". Keep semantically independent text frames separate."
+          },
+          {
+            "file": "12_next_steps.svg",
+            "message": "Detected 2 paragraph-like line run(s) split across sibling <text> elements (<g id=\"trust-track\"> x=100.0, y=336.0..428.0, 3 lines; <g id=\"speed-track\"> x=670.0, y=336.0..428.0, 3 lines). If each run is one prose paragraph, combine it into one <text>: keep its first line as direct text and use direct <tspan> children with the parent x and positive relative dy values for later lines. An all-<tspan> form may start with dy=\"0\". Keep semantically independent text frames separate."
+          }
+        ]
+      },
+      "inherited": {
+        "count": 0,
+        "issues": []
+      },
+      "source-import": {
+        "count": 0,
+        "summary": {
+          "warning_count": 0,
+          "by_code": {}
+        }
+      }
+    }
+  },
+  "resources": {
+    "unresolved_template_tokens": [],
+    "fonts": {
+      "stacks": [
+        "Arial",
+        "Arial, sans-serif",
+        "Microsoft YaHei, Arial",
+        "Microsoft YaHei, Arial, sans-serif"
+      ],
+      "generic_only_stacks": []
+    },
+    "images": {
+      "data_uri": 0,
+      "local": 4,
+      "external": 0,
+      "external_references": []
+    }
+  },
+  "backup_path": "/Users/wangchen/equipment research/projects/project_progress_ai_query_swarm_ppt169_20260806/backup/20260806_024640/svg_output",
+  "conversion_trace_path": null
+}

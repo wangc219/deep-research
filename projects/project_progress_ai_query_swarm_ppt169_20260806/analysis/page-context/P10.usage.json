@@ -1,0 +1,74 @@
+{
+  "schema": "ppt-master.page-context-usage.v2",
+  "page": "P10",
+  "output_mode": "compact",
+  "route": {
+    "mode": "flat"
+  },
+  "encoding": "o200k_base",
+  "token_status": "unavailable",
+  "image_selection": "explicit",
+  "inputs": [
+    {
+      "scope": "project",
+      "path": "spec_lock.md",
+      "exists": true,
+      "sha256": "143ba3d1d43c4fbc28d187045b160c17825fa30a51ca6b152e06f8431ac078ad"
+    },
+    {
+      "scope": "project",
+      "path": "design_spec.md",
+      "exists": true,
+      "sha256": "92b9b1f2ccf04feb41f9ee78f7a151ab05bac1276736fe9c088f5c379312a523"
+    }
+  ],
+  "references": [
+    {
+      "kind": "design-spec",
+      "scope": "project",
+      "path": "design_spec.md",
+      "sha256": "92b9b1f2ccf04feb41f9ee78f7a151ab05bac1276736fe9c088f5c379312a523",
+      "load_policy": "once-per-execution-context",
+      "same_context_edit_policy": "targeted-readback-and-rebind"
+    }
+  ],
+  "documents": [
+    {
+      "kind": "page-context",
+      "scope": "page",
+      "path": "stdout:page-context",
+      "sha256": "f13869969584fa391eb5ab81e4b84a1c96d46c5bea05b3091891485282e92372",
+      "utf8_bytes": 4031,
+      "characters": 2741,
+      "tokens": null
+    },
+    {
+      "kind": "lock-projection",
+      "scope": "component",
+      "path": "stdout:global",
+      "sha256": "2679c0f0d29c55911296d49cb01b8f4b4fe78032ac8ecabe86e1c6709188ac32",
+      "utf8_bytes": 2063,
+      "characters": 1329,
+      "tokens": null
+    }
+  ],
+  "controlled_output": {
+    "sha256": "f13869969584fa391eb5ab81e4b84a1c96d46c5bea05b3091891485282e92372",
+    "utf8_bytes": 4031,
+    "characters": 2741,
+    "tokens": null
+  },
+  "totals": {
+    "page_context": null,
+    "lock_projection": null
+  },
+  "targets": {
+    "page_context_max_tokens": 2000,
+    "lock_projection_max_tokens": 1000
+  },
+  "untracked": [
+    "source-material reads",
+    "once-per-execution-context reference payloads",
+    "other session-level prompt references"
+  ]
+}

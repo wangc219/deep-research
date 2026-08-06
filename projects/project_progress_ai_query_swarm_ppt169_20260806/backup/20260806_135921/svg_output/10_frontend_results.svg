@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" data-pptx-page-role="content">
+  <rect id="bg" data-pptx-role="background" x="0" y="0" width="1280" height="720" fill="#F8FAFC"/>
+  <g id="header" data-pptx-bounds="56 38 1168 132">
+    <text x="56" y="68" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#2B78B8">09 / 前端成果：过程与能力</text>
+    <text x="56" y="116" font-family="Microsoft YaHei, Arial" font-size="40" font-weight="700" fill="#0D2B55">前端不只展示结果，也让研究过程和能力画像可被直接看见</text>
+    <text x="56" y="150" font-family="Microsoft YaHei, Arial" font-size="18" fill="#52606D">同一任务入口：左边回答“研究怎么推进”，右边回答“研究得到了什么”</text>
+  </g>
+  <g id="interaction-shot" data-pptx-bounds="56 186 458 464">
+    <rect x="56" y="186" width="458" height="464" fill="#FFFFFF" stroke="#0D2B55" stroke-width="2"/>
+    <rect x="56" y="186" width="458" height="30" fill="#0D2B55"/>
+    <text x="74" y="207" font-family="Microsoft YaHei, Arial" font-size="16" font-weight="700" fill="#FFFFFF">01　实时交互与事件｜过程可感知</text>
+    <image href="../images/interaction_view_clean.png" x="56" y="218" width="458" height="432" preserveAspectRatio="xMidYMid meet"/>
+  </g>
+  <g id="capability-shot" data-pptx-bounds="720 186 458 464">
+    <rect x="720" y="186" width="458" height="464" fill="#FFFFFF" stroke="#0D2B55" stroke-width="2"/>
+    <rect x="720" y="186" width="458" height="30" fill="#2B78B8"/>
+    <text x="738" y="207" font-family="Microsoft YaHei, Arial" font-size="16" font-weight="700" fill="#FFFFFF">02　能力画像与卡片｜结果可解释</text>
+    <image href="../images/capability_view_clean.png" x="720" y="218" width="458" height="432" preserveAspectRatio="xMidYMid meet"/>
+  </g>
+  <g id="footer" data-pptx-bounds="56 662 1168 34">
+    <text x="56" y="686" font-family="Microsoft YaHei, Arial" font-size="16" fill="#52606D">现场演示建议：进入一个真实任务后，先看实时事件，再查看能力画像与结构化卡片</text>
+    <text x="1194" y="686" font-family="Arial" font-size="16" font-weight="700" fill="#0D2B55">10</text>
+  </g>
+</svg>

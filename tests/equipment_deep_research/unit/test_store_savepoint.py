@@ -991,3 +991,35 @@ def test_resource_scopes_close_workspace_after_store_close_failure() -> None:
     with pytest.raises(RuntimeError, match="injected close failure"):
         state.close()
     assert events == ["store", "workspace"]
+
+
+def test_run_resource_scope_closes_provider_and_all_resources_after_failure() -> None:
+    events: list[str] = []
+
+    class Scheduler:
+        def close(self) -> None:
+            events.append("scheduler")
+            raise RuntimeError("scheduler close failed")
+
+    class Provider:
+        def close(self) -> None:
+            events.append("provider")
+
+    class Store:
+        def close(self) -> None:
+            events.append("store")
+
+    class Workspace:
+        def close(self) -> None:
+            events.append("workspace")
+
+    scope = _RunResourceScope()
+    scope.scheduler = Scheduler()  # type: ignore[assignment]
+    scope.provider = Provider()
+    scope.sqlite_store = Store()  # type: ignore[assignment]
+    scope.workspace = Workspace()  # type: ignore[assignment]
+
+    with pytest.raises(RuntimeError, match="scheduler close failed"):
+        scope.close()
+
+    assert events == ["scheduler", "provider", "store", "workspace"]
