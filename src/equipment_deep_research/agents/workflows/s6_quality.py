@@ -23,278 +23,124 @@ def _normalized_source_title(title: str, url: str) -> str:
 def _without_tracking_parameters(url: str) -> str:
     return _legacy._without_tracking_parameters(url)
 
-def _has_combat_effect_signal(direction: Mapping[str, Any]) -> bool:
-    text = " ".join(
-        str(direction.get(field, ""))
-        for field in (
-            "combat_effect_uplift",
-            "strike_countermeasure_value",
-            "operational_mechanism",
-            "capability_portrait",
+
+_S6_EQUIPMENT_CLASSIFICATIONS = {
+    "direct_combat",
+    "unmanned_combat",
+    "upgrade",
+    "system_link",
+    "support_only",
+    "non_equipment",
+}
+
+
+def _equipment_semantic_assessment(
+    direction: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Return the model-authored equipment judgement without text inference.
+
+    S3-S5 and the independent expert own semantic classification.  S6 may
+    validate and consume that structured decision, but it must never recreate
+    it from a title, a model designator, an equipment noun or a combat-effect
+    vocabulary.  The scalar fallbacks below are older structured model fields,
+    retained only so persisted runs remain readable.
+    """
+
+    raw = direction.get("equipment_semantic_assessment", {})
+    assessment = dict(raw) if isinstance(raw, Mapping) else {}
+    classification = str(
+        assessment.get("classification")
+        or direction.get("equipment_classification")
+        or ""
+    ).strip().lower()
+    if classification in _S6_EQUIPMENT_CLASSIFICATIONS:
+        assessment["classification"] = classification
+    else:
+        assessment.pop("classification", None)
+
+    if "direct_combat_effect" not in assessment and isinstance(
+        direction.get("direct_combat_equipment"), bool
+    ):
+        assessment["direct_combat_effect"] = direction[
+            "direct_combat_equipment"
+        ]
+    if classification:
+        assessment.setdefault(
+            "support_only",
+            classification in {"system_link", "support_only", "non_equipment"},
         )
-    )
-    return any(term in text for term in _COMBAT_EFFECT_TERMS)
+        assessment.setdefault(
+            "unmanned_combat", classification == "unmanned_combat"
+        )
+        assessment.setdefault(
+            "direct_combat_effect",
+            classification in {"direct_combat", "unmanned_combat"},
+        )
+        assessment.setdefault(
+            "concrete_equipment", classification != "non_equipment"
+        )
+    return assessment
+
+
+def _has_combat_effect_signal(direction: Mapping[str, Any]) -> bool:
+    """Read the Agent's direct-effect judgement; never scan prose."""
+
+    return _equipment_semantic_assessment(direction).get(
+        "direct_combat_effect"
+    ) is True
 
 
 def _has_high_order_combat_value(direction: Mapping[str, Any]) -> bool:
-    """Require a concrete combat-chain effect, not generic continuity language."""
+    """Compatibility alias for the structured direct-effect decision."""
 
-    text = " ".join(
-        str(direction.get(field, ""))
-        for field in (
-            "name",
-            "function",
-            "military_value",
-            "strike_countermeasure_value",
-            "operational_mechanism",
-            "combat_effect_uplift",
-            "strike_chain_contribution",
-        )
-    )
-    return any(term in text for term in _HIGH_ORDER_COMBAT_EFFECT_TERMS)
+    return _has_combat_effect_signal(direction)
 
 
 def _is_ordinary_support_direction(direction: Mapping[str, Any]) -> bool:
-    name = str(direction.get("name", ""))
-    if any(term.lower() in name.lower() for term in _PRIMARY_SUPPORT_MISSION_TERMS):
-        return True
-    name_has_support_identity = any(
-        term in name for term in _ORDINARY_SUPPORT_LAYER_TERMS
-    )
-    name_has_direct_effect = any(
-        term in name for term in _STRONG_DIRECT_COMBAT_EFFECT_TERMS
-    ) or any(term in name for term in ("命中", "开窗", "制胜窗口"))
-    name_has_combat_equipment = any(
-        term.lower() in name.lower()
-        for term in (
-            *_DIRECT_COMBAT_EQUIPMENT_NAME_TERMS,
-            *_UNMANNED_COMBAT_EQUIPMENT_TERMS,
-            *_MISSILE_PRECISION_MUNITION_TERMS,
-        )
-    )
-    if name_has_support_identity:
-        return not (name_has_direct_effect and name_has_combat_equipment)
-
-    # A direct weapon direction may legitimately contain an internal data link,
-    # resupply vehicle or maintenance element. Those subordinate components do
-    # not change the semantic identity of the card into a support-only direction.
-    public_effect_text = " ".join(
-        str(direction.get(field, ""))
-        for field in (
-            "function",
-            "military_value",
-            "operational_mechanism",
-            "combat_effect_uplift",
-            "strike_chain_contribution",
-        )
-    )
-    return (
-        not name_has_combat_equipment
-        and not name_has_direct_effect
-        and any(term in public_effect_text for term in _ORDINARY_SUPPORT_LAYER_TERMS)
-        and not any(term in public_effect_text for term in _HIGH_ORDER_COMBAT_EFFECT_TERMS)
-    )
-
-
-def _has_combat_munition_compound(value: Any) -> bool:
-    """Recognize bounded combat-munition compounds without enumerating names.
-
-    The rule captures semantic families such as electronic-decoy, jamming,
-    anti-radiation, guided and loitering munitions while logistics compounds
-    remain excluded by ``_strip_weapon_support_context``.
-    """
-
-    text = _strip_weapon_support_context(str(value or ""))
-    return bool(_COMBAT_MUNITION_COMPOUND_PATTERN.search(text))
-
-
-def _has_specific_model_designator(value: Any) -> bool:
-    """Recognize a concrete public equipment model/family in a short title."""
-
-    text = str(value or "")
-    return bool(
-        re.search(
-            r"(?<![A-Za-z0-9])[A-Z][A-Z0-9-]{2,}"
-            r"(?:/[A-Z][A-Z0-9-]{2,})*(?![A-Za-z0-9])",
-            text,
-        )
-        or re.search(
-            r"(?<![A-Za-z0-9])[A-Z][A-Za-z0-9-]{3,}"
-            r"\s+Block\s+[IVX0-9A-Za-z-]+(?![A-Za-z0-9])",
-            text,
-        )
-        or re.search(
-            r"(?<![A-Za-z0-9])[A-Z][A-Za-z0-9-]{2,}"
-            r"\s+Increment\s+[0-9]+(?:/[0-9]+)*(?![A-Za-z0-9])",
-            text,
-        )
-    )
+    return _equipment_semantic_assessment(direction).get("support_only") is True
 
 
 def _direction_name_has_equipment_object(direction: Mapping[str, Any]) -> bool:
-    """Return whether a direction is bound to one concrete equipment object.
+    """Validate the model-owned concrete-equipment identity contract."""
 
-    The title lexicons below are deliberately only *hints*.  New-build cards
-    are authored from a structured S5/S6 identity contract, so names such as
-    ``分布式效应滑翔打击舱`` must not fail merely because ``打击舱`` is not in
-    a continuously growing keyword table.  The hard decision is based on the
-    card's declared identity, form, mechanism and direct military effect;
-    lexicon/model matches remain a backwards-compatible fast path.
-    """
-
-    name = str(direction.get("name", ""))
+    name = str(direction.get("name", "") or "").strip()
     semantic_check = direction.get("semantic_consistency_check")
     primary_identity = str(
         direction.get("primary_equipment_identity", "") or ""
     ).strip()
-    if (
-        name.rstrip("。；，, ").endswith(
-            ("能力", "体系", "方案", "接口", "链路", "机制")
-        )
-        and not (
-            isinstance(semantic_check, Mapping)
-            and semantic_check.get("consistent") is True
-            and primary_identity
-        )
-    ):
-        return False
-    if any(
-        term.lower() in name.lower()
-        for term in (
-            *_DIRECT_COMBAT_EQUIPMENT_NAME_TERMS,
-            *_CAPABILITY_EQUIPMENT_OBJECT_TERMS,
-        )
-    ):
-        return True
-    if _has_combat_munition_compound(name):
-        return True
-    # Accept concise compound equipment titles whose platform noun is split by
-    # a mission modifier.  Examples from real S6 runs include
-    # ``可消耗低空无人侦打诱骗机`` and ``远域反辐射压制无人僚机``;
-    # requiring the contiguous token ``无人机`` caused the deterministic
-    # compactor to replace these already-good titles with long equipment-form
-    # fragments.  Keep the pattern bounded so abstract ``无人作战能力`` titles
-    # are still rejected.
-    if re.search(
-        r"无人[\u3400-\u9fffA-Za-z0-9/-]{0,10}(?:机|平台|集群|蜂群)$",
-        name,
-    ):
-        return True
-
-    # Structured identity contract: accept novel equipment nouns without
-    # enumerating every possible suffix (舱、匣、节点、载体、效应单元……).
-    # Require the visible name and the declared primary/form identity to refer
-    # to the same object, plus enough mission semantics to distinguish an
-    # actual weapon from an abstract capability label.
-    primary = str(direction.get("primary_equipment_identity", "") or "").strip()
-    equipment_form = str(direction.get("equipment_form", "") or "").strip()
-    identity = primary or equipment_form
-    if identity and name:
-        compact_name = re.sub(r"[\s、，,：:；;（）()\[\]{}\"'“”‘’]", "", name)
-        compact_identity = re.sub(
-            r"[\s、，,：:；;（）()\[\]{}\"'“”‘’]", "", identity
-        )
-        # Identity matching is structural rather than lexical: a governed
-        # card may use any physical form, but its visible title and declared
-        # identity must be the same object (or one may add a short descriptor
-        # around the other).  Character-set overlap is intentionally avoided;
-        # it caused unrelated Chinese names to look like a match.
-        same_object = bool(
-            compact_name
-            and compact_identity
-            and (
-                compact_name == compact_identity
-                or compact_name in compact_identity
-                or compact_identity in compact_name
-            )
-        )
-        abstract_markers = (
-            "能力", "体系", "机制", "方法", "方案", "逻辑", "链路",
-            "算法", "接口", "治理", "架构", "服务", "流程",
-        )
-        direct_semantics = " ".join(
-            str(direction.get(field, "") or "")
-            for field in (
-                "function", "operational_mechanism", "operational_process",
-                "military_value", "capability_outcome", "combat_effect_uplift",
-                "strike_countermeasure_value",
-            )
-        )
-        has_direct_semantics = bool(
-            direct_semantics.strip()
-            and (
-                _has_combat_effect_signal(direction)
-                or any(
-                    marker in direct_semantics
-                    for marker in _HIGH_ORDER_COMBAT_EFFECT_TERMS
-                )
-            )
-        )
-        contract_locked = bool(
-            isinstance(semantic_check, Mapping)
-            and semantic_check.get("consistent") is True
-            and primary
-        )
-        if same_object and (
-            contract_locked
-            or (
-                primary
-                and has_direct_semantics
-                and not any(
-                    compact_name.endswith(marker)
-                    for marker in abstract_markers
-                )
-            )
-        ):
-            return True
-    if not _has_specific_model_designator(name):
-        return False
-    supporting_identity = " ".join(
-        str(direction.get(field, ""))
-        for field in ("baseline_system", "equipment_form")
-    )
-    return any(
-        term.lower() in supporting_identity.lower()
-        for term in _DIRECT_COMBAT_EQUIPMENT_NAME_TERMS
+    assessment = _equipment_semantic_assessment(direction)
+    return bool(
+        name
+        and primary_identity
+        and isinstance(semantic_check, Mapping)
+        and semantic_check.get("consistent") is True
+        and assessment.get("concrete_equipment") is True
     )
 
 
 def _is_ancillary_support_equipment_direction(
     direction: Mapping[str, Any],
 ) -> bool:
-    """Identify concrete but non-combat support cards such as camouflage sites."""
+    assessment = _equipment_semantic_assessment(direction)
+    return bool(
+        assessment.get("support_only") is True
+        and assessment.get("ancillary_support") is True
+    )
 
-    if _equipment_direction_categories(direction):
+
+def _query_explicitly_requests_support_equipment(value: Any) -> bool:
+    """Read the structured Query brief instead of classifying Query text."""
+
+    if not isinstance(value, Mapping):
         return False
-    name = str(direction.get("name", ""))
-    name_is_support = any(
-        term in name for term in _ANCILLARY_SUPPORT_EQUIPMENT_TERMS
-    )
-    name_has_combat_equipment = _direction_name_has_equipment_object(direction)
-    name_has_direct_effect = any(
-        term in name for term in _HIGH_ORDER_COMBAT_EFFECT_TERMS
-    )
-    if name_is_support:
-        return not (name_has_combat_equipment and name_has_direct_effect)
-
-    # A fire-control vehicle, weapon system or unmanned effector may contain a
-    # camouflage, resupply or maintenance submodule.  That subordinate module
-    # must not reclassify the entire combat card as a support-only direction.
-    identity = " ".join(
-        str(direction.get(field, ""))
-        for field in ("name", "equipment_form", "function", "military_value")
-    )
-    return (
-        not name_has_combat_equipment
-        and not name_has_direct_effect
-        and any(term in identity for term in _ANCILLARY_SUPPORT_EQUIPMENT_TERMS)
-    )
-
-
-def _query_explicitly_requests_support_equipment(query: str) -> bool:
-    normalized = re.sub(r"\s+", "", str(query or ""))
-    return bool(normalized) and any(
-        term in normalized for term in _SUPPORT_FOCUSED_QUERY_TERMS
+    brief = value.get("structured_query_brief", value)
+    if not isinstance(brief, Mapping):
+        return False
+    return bool(
+        brief.get("support_equipment_requested") is True
+        or brief.get("allow_standalone_support_equipment") is True
+        or str(brief.get("primary_equipment_focus", "")).strip().lower()
+        == "support_equipment"
     )
 
 
@@ -315,123 +161,20 @@ def _weapon_equipment_identity(direction: Mapping[str, Any]) -> str:
     )
 
 
-def _strip_weapon_support_context(value: str) -> str:
-    """Remove logistics-only mentions before classifying weapon identity.
-
-    A support platform such as an ammunition resupply vehicle must not satisfy
-    a missile/munition portfolio gate merely because its name contains
-    ``弹药``.  The remaining text is still available to other equipment-class
-    checks; this helper only removes support compounds from weapon semantics.
-    """
-
-    cleaned = str(value)
-    for pattern in _WEAPON_SUPPORT_CONTEXT_PATTERNS:
-        cleaned = pattern.sub("支援装备", cleaned)
-    return cleaned
-
-
 def _equipment_direction_categories(direction: Mapping[str, Any]) -> set[str]:
-    """Classify the primary equipment role using name-led semantics.
+    """Project the model-authored assessment into compatibility categories."""
 
-    Portfolio gates intentionally lead with the user-facing direction name and
-    verify it against the concrete equipment form.  A term buried only in an
-    upgrade package or support baseline is not considered an independent
-    weapon-development direction.
-    """
-
-    name = _strip_weapon_support_context(str(direction.get("name", "")))
-    equipment_form = _strip_weapon_support_context(
-        str(direction.get("equipment_form", ""))
-    )
-    identity = f"{name} {equipment_form}".lower()
+    assessment = _equipment_semantic_assessment(direction)
     categories: set[str] = set()
-    if any(term.lower() in identity for term in _UNMANNED_COMBAT_EQUIPMENT_TERMS):
+    classification = str(assessment.get("classification", ""))
+    if assessment.get("unmanned_combat") is True:
         categories.add("unmanned_combat_platform")
-
-    name_has_munition = any(
-        term.lower() in name.lower() for term in _MISSILE_PRECISION_MUNITION_TERMS
-    ) or _has_combat_munition_compound(name)
-    name_has_precision_concept = any(
-        term in name for term in _MISSILE_PRECISION_MUNITION_NAME_CONCEPTS
-    )
-    form_has_munition = any(
-        term.lower() in equipment_form.lower()
-        for term in _MISSILE_PRECISION_MUNITION_TERMS
-    ) or _has_combat_munition_compound(equipment_form)
-    if name_has_munition or (name_has_precision_concept and form_has_munition):
+    if assessment.get("precision_munition") is True:
         categories.add("missile_precision_munition")
-
-    if any(
-        term in identity
-        for term in (
-            "火炮",
-            "舰炮",
-            "武器站",
-            "定向能",
-            "激光武器",
-            "高能激光",
-            "激光器",
-            "高功率微波",
-            "拦截器",
-            "截击器",
-            "电子攻击",
-            "电子压制器",
-            "反无人效应器",
-        )
-    ):
-        categories.add("direct_weapon_effector")
-    elif "效应器" in identity and _has_high_order_combat_value(direction):
-        categories.add("direct_weapon_effector")
-
-    # Mobile launchers and precision-fire vehicles are direct combat equipment,
-    # not support nodes.  Keep this name-led and effect-gated so an ammunition
-    # truck or generic C2 vehicle cannot satisfy the portfolio requirement just
-    # because its equipment list mentions a launcher.
-    direct_fire_platform_terms = (
-        "发射车",
-        "火力车",
-        "炮车",
-        "拦截车",
-        "压制车",
-        "截击器车",
-        "发射单元",
-        "武器站",
-        "自行火炮",
-        "舰炮",
-        "火炮",
-    )
-    name_has_direct_fire_platform = any(term in name for term in direct_fire_platform_terms)
-    model_led_direct_fire_platform = (
-        _has_specific_model_designator(name)
-        and any(term in equipment_form for term in direct_fire_platform_terms)
-        and any(term in name for term in _HIGH_ORDER_COMBAT_EFFECT_TERMS)
-    )
-    if (
-        name_has_direct_fire_platform or model_led_direct_fire_platform
-    ) and _has_high_order_combat_value(direction):
-        categories.add("direct_fire_platform")
-    # New-build effectors may use a novel physical form (for example a
-    # distributed glide strike pod) that is intentionally absent from the
-    # legacy noun tables.  Once the structured identity contract is coherent
-    # and the card states a high-order combat effect, classify it as a direct
-    # effector without guessing a family from its spelling.
-    if (
-        _direction_name_has_equipment_object(direction)
-        and _has_high_order_combat_value(direction)
-        and bool(
-            str(direction.get("primary_equipment_identity", "") or "").strip()
-            or (
-                str(direction.get("name", "")).strip()
-                and str(direction.get("name", "")).strip()
-                == str(direction.get("equipment_form", "")).strip()
-            )
-        )
-        and not any(
-            marker in str(direction.get("name", ""))
-            for marker in _PRIMARY_SUPPORT_MISSION_TERMS
-        )
-    ):
+    if assessment.get("direct_combat_effect") is True:
         categories.add("structured_direct_effector")
+    if classification:
+        categories.add(classification)
     return categories
 
 
@@ -440,15 +183,9 @@ def _is_unmanned_combat_equipment_direction(direction: Mapping[str, Any]) -> boo
 
 
 def _is_lethal_weapon_equipment_direction(direction: Mapping[str, Any]) -> bool:
-    return bool(
-        _equipment_direction_categories(direction)
-        & {
-            "missile_precision_munition",
-            "direct_weapon_effector",
-            "direct_fire_platform",
-            "structured_direct_effector",
-        }
-    )
+    return _equipment_semantic_assessment(direction).get(
+        "direct_combat_effect"
+    ) is True
 
 
 def _is_missile_precision_munition_direction(
@@ -474,10 +211,6 @@ def _dedupe_capability_title(value: Any) -> str:
     title = re.sub(r"(?<=[\u3400-\u9fff]) +| +(?=[\u3400-\u9fff])", "", title)
     title = re.sub(r" *([。；，、：]) *", r"\1", title)
     title = re.sub(r"[。；，、:：]+$", "", title)
-    for term in _CAPABILITY_TITLE_REPEAT_TERMS:
-        repeated = term + term
-        while repeated in title:
-            title = title.replace(repeated, term)
     return title
 
 
@@ -485,152 +218,18 @@ def _s6_title_requires_structural_repair(
     direction: Mapping[str, Any],
     title: str,
 ) -> bool:
-    """Tell a complete weapon identity from a label or a malformed title.
-
-    Dynamic-swarm candidates are allowed to carry a long, query-specific
-    equipment name straight into S6.  This predicate is intentionally about
-    *structure*, never length: it preserves a valid specific name while still
-    sending labels, public baseline names and platform/payload mix-ups through
-    the established deterministic title resolver.
-    """
+    """Require a non-empty title and a passed structured identity contract."""
 
     normalized = _dedupe_capability_title(title)
-    if not normalized:
-        return True
-    if re.match(r"^[A-Za-z][A-Za-z0-9./ -]{2,}", normalized):
-        return True
-    if re.search(r"具备|能够|可以|通过|实现|以及|包括|已集成", normalized):
-        return True
-    if normalized.startswith(("含", "由", "采用")):
-        return True
-    if "或" in normalized and sum(
-        term in normalized for term in _CAPABILITY_EQUIPMENT_OBJECT_TERMS
-    ) >= 2:
-        return True
-    if any(marker in normalized for marker in ("证据链", "任务链", "信息链", "杀伤链", "闭环")):
-        return True
-    if normalized.endswith(
-        (
-            "窗口", "续接", "支撑", "协同", "再捕获", "补击", "补射", "目标发现",
-            "火力", "平台", "弹药", "弹群",
-        )
-    ):
-        return True
-    if not _direction_name_has_equipment_object({**direction, "name": normalized}):
-        return True
-
-    # Where the equipment form explicitly establishes a launcher, carrier or
-    # mother-round as the main combat object, do not retain a payload-only or
-    # ramming-platform title merely because it happens to name an equipment.
-    form = str(direction.get("equipment_form", ""))
-    primary_form_markers = (
-        "栖岛弹舱", "岛岸弹舱", "岛礁弹舱", "巡飞弹发射舱",
-        "短距起降", "短距起飞", "巡航母弹", "运输母弹", "远程母弹",
+    return not normalized or not _direction_name_has_equipment_object(
+        {**direction, "name": normalized}
     )
-    if any(marker in form for marker in primary_form_markers) and not any(
-        marker in normalized for marker in primary_form_markers
-    ):
-        return True
-    if (
-        any(
-            marker in form
-            for marker in ("半潜无人艇", "半潜无人平台", "无人半潜平台", "巡航弹舱")
-        )
-        and any(marker in form for marker in ("巡航弹", "远程弹药", "远程反舰", "火力舱"))
-        and not any(marker in normalized for marker in ("弹舱", "火力舱", "巡航弹无人艇"))
-    ):
-        return True
-    return False
 
 
 def _capability_title_equipment_anchor(value: Any) -> str:
-    """Extract a concise equipment object instead of copying a baseline sentence."""
+    """Compatibility helper that preserves the Agent-authored identity."""
 
-    text = _clean_capability_handoff_text(value, limit=180)
-    text = re.sub(
-        r"^(?:该卡独有)?(?:现役或类比)?(?:装备)?基线(?:为|是)|^被升级对象为|^升级",
-        "",
-        text,
-    ).strip(" ：:，,；。")
-    text = re.split(
-        r"具备|能够|可以|通过|依托|用于|实现|形成|获得|提升|增强|已集成|主要依赖",
-        text,
-        maxsplit=1,
-    )[0].strip(" ：:，,；。")
-
-    model_match = re.search(
-        r"(?<![A-Za-z0-9])([A-Z][A-Z0-9-]{2,}(?:/[A-Z][A-Z0-9-]{2,})+)(?![A-Za-z0-9])",
-        text,
-    )
-    if model_match and any(
-        term.lower() in text.lower()
-        for term in (
-            *_DIRECT_COMBAT_EQUIPMENT_NAME_TERMS,
-            "防空",
-            "反无人",
-            "武器",
-            "作战系统",
-            "任务系统",
-        )
-    ):
-        model_parts = model_match.group(1).split("/")
-        # Public baselines often enumerate several adjacent systems in one
-        # sentence (MADIS/L-MADIS/O-CSUAS/MRIC).  A capability title needs the
-        # primary family, not a truncated tail of the whole catalogue.
-        anchor = "/".join(model_parts[:2])
-        return f"{'现役' if '现役' in text else ''}{anchor}"
-
-    candidates = [
-        re.sub(
-            r"^(?:公开证据(?:显示|表明)?|其中|该方向|本方向|该能力|升级)",
-            "",
-            item,
-        ).strip(" ：:，,；。")
-        for item in re.split(r"[、，,；。]|以及|并包括|包括|和|与|及", text)
-    ]
-    candidates = [item for item in candidates if item]
-    equipment_terms = tuple(
-        dict.fromkeys(
-            (*_DIRECT_COMBAT_EQUIPMENT_NAME_TERMS, *_CAPABILITY_EQUIPMENT_OBJECT_TERMS)
-        )
-    )
-
-    def score(item: str, position: int) -> tuple[int, int, int]:
-        specific = sum(
-            marker in item
-            for marker in (
-                "弹炮结合",
-                "弹炮合一",
-                "巡飞弹",
-                "无人",
-                "导弹",
-                "拦截弹",
-                "火控",
-                "电子战",
-                "破障",
-                "扫雷",
-            )
-        )
-        has_object = any(term.lower() in item.lower() for term in equipment_terms)
-        return (int(has_object) * 10 + specific * 3, min(len(item), 18), -position)
-
-    anchored = [
-        (item, position)
-        for position, item in enumerate(candidates)
-        if any(term.lower() in item.lower() for term in equipment_terms)
-    ]
-    anchor = (
-        max(anchored, key=lambda row: score(row[0], row[1]))[0]
-        if anchored
-        else (candidates[0] if candidates else text)
-    )
-    if "现役" in text and not anchor.startswith("现役"):
-        anchor = "现役" + anchor
-    anchor = re.sub(r"(?:相关|综合|一体化)+$", "", anchor).strip()
-    if len(anchor) > 18:
-        compact = re.sub(r"有人驾驶|公开基线|类比装备|综合|一体化", "", anchor)
-        anchor = compact if len(compact) <= 18 else compact[:18]
-    return anchor.rstrip("的与和及、，；")
+    return _clean_capability_handoff_text(value, limit=180).strip(" ：:，,；。")
 
 
 def _capability_upgrade_effect_anchor(identity: str, effect_text: str) -> str:
@@ -934,174 +533,14 @@ _CAPABILITY_HANDOFF_INTERNAL_PATTERN = re.compile(
 
 
 def _evidence_boundary_is_public_semantic(value: Any) -> bool:
-    """Accept only user-facing epistemic limits, never workflow commentary.
+    """Accept public prose while rejecting orchestration leakage.
 
-    ``evidence_boundary`` describes what public material supports and what
-    remains an inference or hypothesis.  It is not an orchestration note.  A
-    boundary containing stage/agent language must be removed before S6 rather
-    than copied into a card and discovered by the final delivery gate.
+    Whether the prose is a sound epistemic boundary is judged by the Agent;
+    local code only enforces the public/internal data boundary.
     """
 
     text = " ".join(str(value or "").split()).strip()
-    if not text or _CAPABILITY_HANDOFF_INTERNAL_PATTERN.search(text):
-        return False
-    has_evidence_subject = any(
-        marker in text
-        for marker in (
-            "公开证据",
-            "公开资料",
-            "公开材料",
-            "现有证据",
-            "现有资料",
-            "对象证据",
-            "证据",
-            "相邻项目",
-            "组成技术",
-            "类比装备",
-        )
-    )
-    has_epistemic_limit = any(
-        marker in text
-        for marker in (
-            "不证明",
-            "不能证明",
-            "不足以证明",
-            "不能外推",
-            "不得外推",
-            "仅支持",
-            "只支持",
-            "尚无",
-            "未证明",
-            "待验证",
-            "属于研究假设",
-        )
-    )
-    return has_evidence_subject and has_epistemic_limit
-
-_CAPABILITY_EQUIPMENT_OBJECT_TERMS = (
-    "平台",
-    "系统",
-    "雷达",
-    "预警机",
-    "无人机",
-    "无人僚机",
-    "无人艇",
-    "无人潜航器",
-    "巡航弹",
-    "打击弹",
-    "舰",
-    "船",
-    "车辆",
-    "炮车",
-    "拦截车",
-    "压制车",
-    "截击器车",
-    "卫星",
-    "星座",
-    "导弹",
-    "巡飞弹",
-    "反辐射弹",
-    "电子压制弹",
-    "诱饵弹",
-    "无人弹",
-    "弹药",
-    "拦截弹",
-    "拦截器",
-    "截击器",
-    "发射单元",
-    "武器站",
-    "指挥所",
-    "终端",
-    "任务载荷",
-    "传感器",
-    "通信节点",
-    "数据链",
-    "电子战",
-    "效应器",
-    "保障节点",
-    "维修",
-    "补给",
-    "母舰",
-)
-
-_CAPABILITY_STAGE_TERMS = (
-    "侦察",
-    "预警",
-    "识别",
-    "跟踪",
-    "指挥",
-    "决策",
-    "机动",
-    "突防",
-    "交战",
-    "火力",
-    "拦截",
-    "打击",
-    "毁伤",
-    "评估",
-    "重组",
-    "保障",
-    "恢复",
-    "持续作战",
-)
-
-_QUERY_RELEVANCE_ANCHOR_TERMS = (
-    "西太",
-    "台海",
-    "近海",
-    "远海",
-    "海上",
-    "陆上",
-    "空中",
-    "太空",
-    "城市战",
-    "岛礁",
-    "局部战争",
-    "高强度对抗",
-    "反介入",
-    "区域拒止",
-    "强干扰",
-    "电磁干扰",
-    "弱通信",
-    "通信受限",
-    "链路不稳定",
-    "低信息依赖",
-    "导航拒止",
-    "饱和突防",
-    "饱和攻击",
-    "无人集群",
-    "无人作战",
-    "远程精确火力",
-    "反舰",
-    "防空",
-    "反导",
-    "反无人",
-    "制海",
-    "制空",
-    "人工智能",
-    "自主协同",
-    "精确制导",
-)
-
-_QUERY_RELEVANCE_PRESSURE_TERMS = (
-    "威胁",
-    "对手",
-    "受压",
-    "强干扰",
-    "压制",
-    "诱饵",
-    "突防",
-    "饱和",
-    "蜂群",
-    "集群",
-    "低成本",
-    "高强度",
-    "节点损耗",
-    "生存压力",
-    "反介入",
-    "区域拒止",
-)
-
+    return bool(text) and not _CAPABILITY_HANDOFF_INTERNAL_PATTERN.search(text)
 
 def _query_relevance_issues(
     position: int,
@@ -1109,44 +548,19 @@ def _query_relevance_issues(
     *,
     query: str,
 ) -> list[str]:
-    """Validate that a missile card explains a query-led causal mapping.
+    """Validate only the Agent-owned Query relevance contract shape."""
 
-    This deliberately inspects the dedicated ``query_relevance`` field rather
-    than accepting topical words scattered across the rest of the card.  It is
-    a bounded semantic contract, not a general similarity score: the statement
-    must retain a topic anchor from the user's query and connect a pressured
-    mission stage to a direct combat effect.
-    """
-
-    relevance = str(direction.get("query_relevance", "")).strip()
+    del query
+    relevance = str(direction.get("query_relevance", "") or "").strip()
     if not relevance:
-        return []  # The general required-field check reports this separately.
-
-    issues: list[str] = []
-    normalized_query = re.sub(r"\s+", "", str(query or ""))
-    normalized_relevance = re.sub(r"\s+", "", relevance)
-    anchors = [
-        term for term in _QUERY_RELEVANCE_ANCHOR_TERMS if term in normalized_query
-    ]
-    if anchors and not any(term in normalized_relevance for term in anchors):
-        issues.append(
-            f"S6第{position}项导弹/精确制导弹药方向未保留当前query的主题锚点"
-            f"（至少应明确{ '、'.join(anchors[:4]) }之一），不能用通用导弹需求凑数"
-        )
-    if not any(term in relevance for term in _CAPABILITY_STAGE_TERMS):
-        issues.append(
-            f"S6第{position}项导弹/精确制导弹药方向的query_relevance未明确作用的作战阶段"
-        )
-    if not any(term in relevance for term in _QUERY_RELEVANCE_PRESSURE_TERMS):
-        issues.append(
-            f"S6第{position}项导弹/精确制导弹药方向的query_relevance未明确威胁压力"
-        )
-    if not any(term in relevance for term in _HIGH_ORDER_COMBAT_EFFECT_TERMS):
-        issues.append(
-            f"S6第{position}项导弹/精确制导弹药方向的query_relevance未说明毁伤、"
-            "拦截、拒止或其他直接作战效果"
-        )
-    return issues
+        return []
+    assessment = _equipment_semantic_assessment(direction)
+    if assessment.get("query_alignment_confirmed") is False:
+        return [f"S6第{position}项结构化Query关联合同未通过"]
+    semantic_check = direction.get("semantic_consistency_check", {})
+    if isinstance(semantic_check, Mapping) and semantic_check.get("consistent") is False:
+        return [f"S6第{position}项结构化语义一致性合同未通过"]
+    return []
 
 
 def _truncate_complete_text(text: str, *, limit: int) -> str:
@@ -1236,31 +650,48 @@ def _capability_synthesis_handoff(
         return rows
 
     def high_value_effects(*keys: str, limit: int) -> list[str]:
+        """Carry model-selected effects without re-ranking their wording."""
+
         rows: list[str] = []
 
         def visit(value: Any) -> None:
             if len(rows) >= limit:
                 return
             if isinstance(value, Mapping):
-                text = _capability_handoff_statement(value, limit=300)
-                if (
-                    text
-                    and any(term in text for term in _HIGH_ORDER_COMBAT_EFFECT_TERMS)
-                    and text not in rows
-                ):
+                # S6 needs the military decision spine, not upstream working
+                # titles or solution labels that could anchor/overwrite the
+                # S5-frozen candidate identity.
+                text = _capability_handoff_statement(
+                    {
+                        field: value.get(field)
+                        for field in (
+                            "capability",
+                            "task",
+                            "scenario",
+                            "gap_statement",
+                            "conclusion",
+                            "function",
+                            "mechanism",
+                            "effect",
+                            "military_value",
+                            "strike_countermeasure_value",
+                            "combat_effect_uplift",
+                            "strike_chain_contribution",
+                            "operational_mechanism",
+                            "basis",
+                        )
+                        if value.get(field) not in (None, "", [], {})
+                    },
+                    limit=300,
+                )
+                if text and text not in rows:
                     rows.append(text)
-                for item in value.values():
-                    visit(item)
             elif isinstance(value, list):
                 for item in value:
                     visit(item)
             else:
                 text = _clean_capability_handoff_text(value, limit=300)
-                if (
-                    text
-                    and any(term in text for term in _HIGH_ORDER_COMBAT_EFFECT_TERMS)
-                    and text not in rows
-                ):
+                if text and text not in rows:
                     rows.append(text)
 
         for key in keys:
@@ -1420,7 +851,8 @@ def _capability_synthesis_handoff(
                     "baseline_system", "capability_gap", "direct_evidence_refs",
                     "evidence_ids", "failure_boundaries", "failure_boundary",
                     "validation_plan", "indicator_portrait", "query_relevance",
-                    "capability_classification",
+                    "capability_classification", "equipment_classification",
+                    "equipment_semantic_assessment",
                     "concise_winning_summary",
                     "unique_operational_role", "launch_or_release_domain",
                     "target_and_direct_effect", "non_substitutable_difference",
@@ -1493,6 +925,13 @@ def _capability_synthesis_handoff(
             selected_portfolio.append(projected)
     return {
         "query": _clean_capability_handoff_text(topic, limit=600),
+        "structured_query_brief": (
+            dict(prior_step_outputs.get("structured_query_brief", {}))
+            if isinstance(
+                prior_step_outputs.get("structured_query_brief", {}), Mapping
+            )
+            else {}
+        ),
         "branch": str(branch),
         "decisive_task_chain_breaks": statements(
             "effect_chain", "winning_paths", limit=2
@@ -1563,13 +1002,6 @@ def _s6_card_is_reusable(direction: Mapping[str, Any]) -> bool:
     return bool(
         str(direction.get("name", "")).strip()
         and direction.get("s6_authoring_status") != "limited_provider_failure"
-        and isinstance(direction.get("capability_classification"), Mapping)
-        and str(
-            direction.get("capability_classification", {}).get(
-                "primary_dimension", ""
-            )
-        ).strip()
-        and "能力分类：" in portrait
         and len(parse_capability_portrait_modules(portrait))
         == len(CAPABILITY_PORTRAIT_MODULES)
         and isinstance(process, list)
@@ -1586,15 +1018,10 @@ def _s6_first_pass_quality_contract(
     """Front-load S6 acceptance criteria without adding a model call.
 
     S5 already emits its equipment portfolio preflight in the same response as
-    the gap assessment.  This projection turns that material plus deterministic
-    query anchors into a compact first-draft contract, so the normal path is a
-    single accepted S6 call and the quality gate remains an exception handler.
+    the gap assessment.  This projection carries that model-authored contract
+    into S6 without locally extracting Query keywords or equipment categories.
     """
 
-    normalized_topic = re.sub(r"\s+", "", str(topic or ""))
-    query_anchors = [
-        term for term in _QUERY_RELEVANCE_ANCHOR_TERMS if term in normalized_topic
-    ][:8]
     portfolio_preflight = handoff.get("equipment_portfolio_preflight", [])
     preflight_rows = (
         [item for item in portfolio_preflight if isinstance(item, Mapping)]
@@ -1634,7 +1061,12 @@ def _s6_first_pass_quality_contract(
 
     return {
         "goal": "first_pass_acceptance_without_gate_retry",
-        "query_anchors": query_anchors or [_clean_capability_handoff_text(topic, limit=120)],
+        "query": _clean_capability_handoff_text(topic, limit=240),
+        "structured_query_brief": (
+            dict(handoff.get("structured_query_brief", {}))
+            if isinstance(handoff.get("structured_query_brief", {}), Mapping)
+            else {}
+        ),
         "query_led_combat_equipment_themes": (
             _query_led_combat_equipment_theme_contract()
         ),
@@ -1676,7 +1108,7 @@ def _s6_first_pass_quality_contract(
                 "不使用固定数量或固定类别配额"
             ),
             "maximum_standalone_support_directions": (
-                1 if _query_explicitly_requests_support_equipment(topic) else 0
+                "由S5模型依据结构化Query语义决定，不由本地Query字符串分类"
             ),
             "type_rule": (
                 "升级或新研由query差距和对象证据决定，不为覆盖类型机械各生成一项"
@@ -1948,53 +1380,11 @@ def _normalize_s6_deterministic_format(
             )
             if inherited_gap:
                 direction["capability_gap"] = inherited_gap
-        semantic_check = direction.get("semantic_consistency_check", {})
-        model_asserts_consistency = (
-            isinstance(semantic_check, Mapping)
-            and semantic_check.get("consistent") is True
-        )
         equipment_form_text = str(direction.get("equipment_form", "")).strip()
-        if equipment_form_text and not model_asserts_consistency:
-            role_text = " ".join(
-                str(direction.get(field, ""))
-                for field in (
-                    "name",
-                    "function",
-                    "military_value",
-                    "operational_mechanism",
-                    "query_relevance",
-                )
-            )
-            if (
-                "反舰或对陆" in equipment_form_text
-                and (
-                    "反舰" in str(direction.get("name", ""))
-                    or any(
-                        marker in role_text
-                        for marker in ("海上编队", "水面舰艇", "舰队", "补给船", "海上目标")
-                    )
-                )
-            ):
-                # The card already selected an anti-ship mission and target set.
-                # Keep one independently fundable payload instead of publishing
-                # a post-hoc ``anti-ship or land-attack`` alternative family.
-                equipment_form_text = equipment_form_text.replace("反舰或对陆", "反舰")
-            equipment_form_text = re.sub(
-                r"^(?:一枚|一种|一个)\s*",
-                "",
-                equipment_form_text,
-            ).strip()
-            if "：" in equipment_form_text:
-                primary, suffix = equipment_form_text.split("：", 1)
-                if any(
-                    marker in suffix
-                    for marker in ("兼容发射", "发射边界", "挂载边界", "接口边界")
-                ):
-                    equipment_form_text = primary.strip()
-            equipment_form_text = _equipment_form_identity_text(
+        if equipment_form_text:
+            direction["equipment_form"] = _equipment_form_identity_text(
                 equipment_form_text
             )
-            direction["equipment_form"] = equipment_form_text
         # Equipment naming is owned by the query-aware S3/S5 Codex Agents.
         # Normalization preserves their semantic decision and performs only
         # whitespace/repetition cleanup; it never promotes equipment_form,
@@ -2059,47 +1449,6 @@ def _normalize_s6_deterministic_format(
                 3,
             )
 
-        # Preserve the user's topic anchors in the dedicated causal-mapping
-        # field without asking the model to rewrite an otherwise complete
-        # weapon card.  This is a deterministic projection of the query, not a
-        # new capability claim.  Stage, pressure and combat-effect semantics
-        # must still be present in the model-authored relevance statement and
-        # remain subject to the normal quality gate.
-        relevance = str(direction.get("query_relevance", "")).strip()
-        normalized_topic = re.sub(r"\s+", "", str(topic or ""))
-        topic_anchors = [
-            term
-            for term in _QUERY_RELEVANCE_ANCHOR_TERMS
-            if term in normalized_topic
-        ][:4]
-        if relevance and _is_missile_precision_munition_direction(direction):
-            prefixes: list[str] = []
-            if topic_anchors and not any(term in relevance for term in topic_anchors):
-                prefixes.append("、".join(topic_anchors))
-            topic_pressure_anchors = [
-                term
-                for term in (
-                    "强电磁压制",
-                    "电磁压制",
-                    "GNSS拒止",
-                    "导航拒止",
-                    "强干扰",
-                    "诱饵",
-                    "饱和攻击",
-                    "节点损耗",
-                )
-                if term in normalized_topic
-            ][:3]
-            if topic_pressure_anchors and not any(
-                term in relevance for term in _QUERY_RELEVANCE_PRESSURE_TERMS
-            ):
-                prefixes.append("、".join(topic_pressure_anchors))
-            if prefixes:
-                direction["query_relevance"] = _truncate_complete_text(
-                    f"面向{'、'.join(prefixes)}条件，{relevance}",
-                    limit=360,
-                )
-
         portrait = str(direction.get("capability_portrait", "")).strip()
         if portrait and portrait[-1] not in "。！？；”’」』）)":
             direction["capability_portrait"] = f"{portrait}。"
@@ -2134,27 +1483,10 @@ def _normalize_s6_deterministic_format(
 
 
 def _equipment_form_identity_text(value: Any) -> str:
-    """Keep the proposed weapon identity, not its trailing evidence caveat."""
+    """Normalize layout without interpreting equipment-form semantics."""
 
     text = re.sub(r"\s+", " ", str(value or "")).strip()
-    if not text:
-        return ""
-    fragments = [item.strip() for item in re.split(r"[；;]", text) if item.strip()]
-    kept: list[str] = []
-    evidence_markers = (
-        "公开证据",
-        "证据仅",
-        "证据不足",
-        "证据边界",
-        "不证明",
-        "不能证明",
-        "保留类别级",
-    )
-    for fragment in fragments:
-        if kept and any(marker in fragment for marker in evidence_markers):
-            break
-        kept.append(fragment)
-    return "；".join(kept).strip(" ，,；;")
+    return text.strip(" ，,；;")
 
 
 def _direction_is_defensive_only(direction: Mapping[str, Any]) -> bool:
@@ -2181,69 +1513,15 @@ def _s6_frontier_evidence_allowance(direction: Mapping[str, Any]) -> bool:
 
 
 def _indicator_portrait_is_specific(value: object) -> bool:
-    """Whether an indicator portrait closes axis, baseline and falsification."""
+    """Check presence only; semantic specificity is an Agent judgement."""
 
-    text = str(value or "").strip()
-    return bool(
-        len(text) >= 30
-        and not any(
-            marker in text
-            for marker in (
-                "尚未由研究",
-                "须回到前置质量门",
-                "待形成",
-                "待补充",
-                "待校准",
-                "尚未形成",
-            )
-        )
-        and any(
-            marker in text
-            for marker in (
-                "覆盖",
-                "射程",
-                "响应",
-                "毁伤",
-                "压制",
-                "拦截",
-                "生存",
-                "成本",
-                "规模",
-                "授权",
-            )
-        )
-        and any(
-            marker in text
-            for marker in ("对照", "基线", "门槛", "判退", "停止", "淘汰")
-        )
-    )
+    return bool(str(value or "").strip())
 
 
 def _query_relevance_is_specific(value: object) -> bool:
-    """Whether Query relevance names task, stage, pressure and battle effect."""
+    """Check presence only; Query alignment is declared by the Agent contract."""
 
-    text = str(value or "").strip()
-    return bool(
-        len(text) >= 30
-        and any(marker in text for marker in ("任务", "作战", "战斗"))
-        and any(marker in text for marker in ("阶段", "场景", "窗口", "地域", "海域", "空域", "发射域", "释放域"))
-        and any(marker in text for marker in ("威胁", "压力", "对手", "敌", "断点", "差距", "变量", "受限"))
-        and any(
-            marker in text
-            for marker in (
-                "打击",
-                "毁伤",
-                "压制",
-                "拦截",
-                "歼灭",
-                "拒止",
-                "瘫痪",
-                "破障",
-                "直接军事效果",
-                "战场结果",
-            )
-        )
-    )
+    return bool(str(value or "").strip())
 
 
 def _prepare_pre_s6_card_contract(
@@ -2253,12 +1531,10 @@ def _prepare_pre_s6_card_contract(
 ) -> dict[str, Any]:
     """Close S5-owned card fields before parallel S6 authoring begins.
 
-    S6 owns prose synthesis only.  Indicator axes, comparison baseline,
-    falsification condition and query-task relevance are deterministic
-    projections of the selected S3-S5 candidate ledger and are locked before
-    card writers run.  This prevents every parallel writer from independently
-    rediscovering the same missing contract and entering an expensive repair
-    loop.
+    S6 owns prose synthesis only.  This helper may carry forward existing S5
+    fields and sanitize an evidence boundary, but it must not author missing
+    indicator or Query semantics locally.  Missing semantic fields remain
+    visible so the model-owned handoff can be diagnosed or retried.
     """
 
     card = dict(value)
@@ -2320,67 +1596,35 @@ def _prepare_pre_s6_card_contract(
         card["capability_gap"] = changed_variable
     if not str(card.get("baseline_system", "") or "").strip():
         card["baseline_system"] = baseline
-    direct_effect = first_text(
-        "target_and_direct_effect",
-        "military_value",
-        "capability_outcome",
-        "combat_effect_uplift",
-        "unique_operational_role",
-        fallback="形成可验证的直接军事效果",
-    )
-    validation_focus = first_text(
-        "validation_plan",
-        "verification_plan",
-        fallback=direct_effect,
-    )
-    failure_boundary = first_text(
-        "failure_boundary",
-        "failure_boundaries",
-        "upgrade_boundary",
-        fallback=f"{direct_effect}无法稳定形成",
-    )
-
-    indicator = str(card.get("indicator_portrait", "") or "").strip()
-    if not _indicator_portrait_is_specific(indicator):
-        card["indicator_portrait"] = (
-            f"测量轴：围绕“{changed_variable}”变化，重点评估{direct_effect}的任务响应、"
-            f"作用保持和关键授权边界，并以“{validation_focus}”作为观测重点。"
-            f"对照基线：以“{baseline}”在相同场景、约束和对抗压力下的任务表现为对照。"
-            f"判退条件：若上述测量轴未达到任务门槛，或触及“{failure_boundary}”，"
-            "则停止转段并判退；不虚构尚无公开依据的精确数值。"
-        )
-
-    query_relevance = str(card.get("query_relevance", "") or "").strip()
-    if not _query_relevance_is_specific(query_relevance):
-        launch_domain = first_text(
-            "launch_or_release_domain",
-            "target_scenario",
-            fallback="Query指定的作战阶段与运用域",
-        )
-        task_role = first_text(
-            "unique_operational_role",
-            "project_function",
-            "function",
-            fallback="当前核心作战任务",
-        )
-        query_anchor = str(query or "").strip()
-        query_anchor = re.split(r"[。；;\n]", query_anchor, maxsplit=1)[0].strip()
-        query_prefix = f"围绕“{query_anchor}”，" if query_anchor else "围绕当前Query，"
-        card["query_relevance"] = (
-            f"{query_prefix}{name}在{launch_domain}承担{task_role}，"
-            f"针对{changed_variable}形成{direct_effect}，直接回应任务对象、作战阶段、"
-            "威胁压力和预期战场结果。"
-        )
+    del query, name
 
     identity_contract = card.get("portfolio_identity_contract", {})
     identity_contract = (
         dict(identity_contract) if isinstance(identity_contract, Mapping) else {}
     )
+    existing_quality_contract = identity_contract.get("pre_s6_quality_contract", {})
+    existing_quality_contract = (
+        dict(existing_quality_contract)
+        if isinstance(existing_quality_contract, Mapping)
+        else {}
+    )
+    capability_classification = card.get("capability_classification", {})
+    capability_classification = (
+        dict(capability_classification)
+        if isinstance(capability_classification, Mapping)
+        else {}
+    )
     identity_contract["pre_s6_quality_contract"] = {
-        "indicator_portrait": card["indicator_portrait"],
-        "query_relevance": card["query_relevance"],
+        "indicator_portrait": str(card.get("indicator_portrait", "") or "").strip(),
+        "query_relevance": str(card.get("query_relevance", "") or "").strip(),
+        "capability_classification": capability_classification,
+        "equipment_semantic_assessment": dict(
+            card.get("equipment_semantic_assessment", {})
+        )
+        if isinstance(card.get("equipment_semantic_assessment", {}), Mapping)
+        else {},
         "evidence_boundary_status": evidence_boundary_status,
-        "owner": "S5_handoff",
+        "owner": str(existing_quality_contract.get("owner") or "S5_handoff"),
         "s6_mutation_allowed": False,
     }
     card["portfolio_identity_contract"] = identity_contract
@@ -2392,259 +1636,124 @@ def _capability_direction_quality_issues(
     *,
     handoff: Mapping[str, Any] | None = None,
 ) -> list[str]:
-    """Collect non-blocking authoring diagnostics for real S6 output.
+    """Validate S6 structure while leaving military semantics to the Agents.
 
-    These checks intentionally retain their detailed messages for audit and
-    prompt evaluation, but none of them is allowed to decide delivery,
-    trigger a repair call, delete a card or fail a run.  Military semantic
-    admission belongs to the Codex-led S3-S5 candidate process; S6 is a
-    presentation pass over that frozen portfolio.
+    The independent expert and S5 handoff decide equipment identity, role,
+    Query relevance and direct combat value.  S6 checks that those decisions
+    are present and internally acknowledged; it does not classify prose,
+    titles, model names or Query words.
     """
 
     issues: list[str] = []
     directions = result.get("concept_directions", [])
     if not isinstance(directions, list):
-        return ["S6必须形成至少一项具体、互异且高军事价值的最终武器装备方向"]
+        return ["S6 concept_directions必须为结构化列表"]
     if not directions:
-        issues.append("S6必须形成至少一项具体、互异且高军事价值的最终武器装备方向")
+        return ["S6必须形成至少一项结构化装备方向"]
 
     semantic_contract_required = bool(
         handoff and "equipment_portfolio_preflight" in handoff
     )
-    if semantic_contract_required:
-        # Dynamic S6 consumes identities already selected by independent
-        # Codex clustering, expert review and the S5 handoff contract.  At
-        # this point local code validates only the contract shape; vocabulary
-        # scans, known-model catalogues and text-similarity thresholds must not
-        # re-open the semantic decision.
-        hypothesis_ids: list[str] = []
-        for position, direction in enumerate(directions, start=1):
-            if not isinstance(direction, Mapping):
-                issues.append(f"S6第{position}项不是结构化能力方向")
-                continue
-            required = (
-                "hypothesis_id",
-                "name",
-                "primary_equipment_identity",
-                "equipment_form",
-                "target_and_direct_effect",
-                "query_relevance",
-                "indicator_portrait",
-            )
-            missing = [
-                field
-                for field in required
-                if not str(direction.get(field, "")).strip()
-            ]
-            if missing:
-                issues.append(f"S6第{position}项缺少{','.join(missing)}")
-            classification = direction.get("capability_classification", {})
-            if not isinstance(classification, Mapping) or not str(
-                classification.get("primary_dimension", "")
-            ).strip():
-                issues.append(f"S6第{position}项缺少Query驱动的主要能力分类维度")
-            portrait = str(direction.get("capability_portrait", ""))
-            if "能力分类：" not in portrait:
-                issues.append(f"S6第{position}项能力画像未显示能力分类维度")
-            hypothesis_id = str(direction.get("hypothesis_id", "")).strip()
-            if hypothesis_id:
-                hypothesis_ids.append(hypothesis_id)
-            process = direction.get("operational_process", [])
-            if not isinstance(process, list) or not any(
-                str(item).strip() for item in process
-            ):
-                issues.append(f"S6第{position}项operational_process缺失")
-            semantic_check = direction.get("semantic_consistency_check", {})
-            if not isinstance(semantic_check, Mapping) or (
-                semantic_check.get("consistent") is not True
-            ):
-                issues.append(f"S6第{position}项语义一致性合同未通过")
-            try:
-                confidence = float(direction.get("confidence"))
-            except (TypeError, ValueError):
-                confidence = -1.0
-            if not 0.0 <= confidence <= 1.0:
-                issues.append(f"S6第{position}项缺少0至1之间的独立confidence")
-            issues.extend(
-                _capability_language_issues(
-                    position,
-                    direction,
-                    semantic_contract_required=True,
-                )
-            )
-        if len(hypothesis_ids) != len(set(hypothesis_ids)):
-            issues.append("S6存在重复hypothesis_id")
-        return list(dict.fromkeys(issues))[:64]
-
-    public_fields = (
-        "name",
-        "function",
-        "equipment_form",
-        "operational_mechanism",
-        "target_scenario",
-        "operational_process",
-        "military_value",
-        "combat_effect_uplift",
-        "strike_chain_contribution",
-        "development_path",
-        "query_relevance",
-        "baseline_system",
-        "capability_gap",
-        "capability_portrait",
-        "indicator_portrait",
-        "evidence_boundary",
-    )
-    portraits: list[tuple[int, str]] = []
-    directions_by_position: dict[int, Mapping[str, Any]] = {}
-    direction_names: list[tuple[int, str]] = []
-    type_rows: list[str] = []
-    high_order_positions: list[int] = []
-    ordinary_support_positions: list[int] = []
-    ancillary_support_positions: list[int] = []
-    unmanned_equipment_positions: list[int] = []
-    lethal_weapon_positions: list[int] = []
-    missile_precision_positions: list[int] = []
-    confidence_rows: list[tuple[int, float]] = []
-    evidence_ref_sets: list[tuple[int, tuple[str, ...]]] = []
-    operational_processes: list[tuple[int, str]] = []
-    query = str((handoff or {}).get("query", "")).strip()
-    handoff_texts: list[str] = []
-    if handoff:
-        for key in (
-            "decisive_task_chain_breaks",
-            "opponent_adaptation_and_failure_pressure",
-        ):
-            for item in handoff.get(key, []):
-                text = str(item)
-                if len(text) >= 80:
-                    handoff_texts.append(text)
-        for item in handoff.get("high_value_capability_gaps", []):
-            if isinstance(item, Mapping):
-                text = " ".join(str(value) for value in item.values())
-                if len(text) >= 80:
-                    handoff_texts.append(text)
-
+    hypothesis_ids: list[str] = []
+    direction_names: list[str] = []
     for position, direction in enumerate(directions, start=1):
         if not isinstance(direction, Mapping):
             issues.append(f"S6第{position}项不是结构化能力方向")
             continue
-        issues.extend(_capability_portrait_alignment_issues(position, direction))
-        semantic_check = direction.get("semantic_consistency_check", {})
-        codex_identity_locked = bool(
-            semantic_contract_required
-            and isinstance(semantic_check, Mapping)
-            and semantic_check.get("consistent") is True
-            and str(direction.get("primary_equipment_identity", "")).strip()
-        )
-        direction_type = str(direction.get("type", ""))
-        frontier_evidence_allowance = _s6_frontier_evidence_allowance(direction)
-        type_rows.append(direction_type)
-        name = str(direction.get("name", "")).strip()
-        direction_names.append((position, name))
-        direct_refs = tuple(
-            dict.fromkeys(
-                str(ref).strip()
-                for ref in direction.get("direct_evidence_refs", [])
-                if str(ref).strip()
-            )
-        )
-        evidence_ref_sets.append((position, direct_refs))
-        # Evidence references and evidence_boundary are recommended context.
-        # They must not block a foresight direction whose public evidence is
-        # sparse; only explicit false claims or contradictory evidence remain
-        # substantive gate failures.
-        try:
-            direction_confidence = float(direction.get("confidence"))
-        except (TypeError, ValueError):
-            direction_confidence = -1.0
-        if 0.0 <= direction_confidence <= 1.0:
-            confidence_rows.append((position, direction_confidence))
-        else:
-            issues.append(f"S6第{position}项缺少0至1之间的独立confidence")
-        portrait = str(direction.get("capability_portrait", "")).strip()
-        portraits.append((position, portrait))
-        directions_by_position[position] = direction
-        required_fields = (
+
+        required = [
+            "name",
+            "primary_equipment_identity",
             "equipment_form",
-            "operational_mechanism",
-            "military_value",
-            "adversary_adaptation",
-            "failure_boundary",
             "query_relevance",
-            "baseline_system",
-            "capability_gap",
-        )
-        if frontier_evidence_allowance:
-            required_fields = tuple(
-                field
-                for field in required_fields
-                if field not in {"adversary_adaptation", "failure_boundary"}
-            )
+            "indicator_portrait",
+        ]
         if semantic_contract_required:
-            required_fields = (
-                "primary_equipment_identity",
-                "operational_process",
-                "semantic_consistency_check",
-                "indicator_portrait",
-                "capability_classification",
-                *required_fields,
-            )
+            required.extend(("hypothesis_id", "target_and_direct_effect"))
         missing = [
             field
-            for field in required_fields
-            if direction.get(field) in (None, "", [])
-            or not str(direction.get(field, "")).strip()
+            for field in required
+            if not str(direction.get(field, "") or "").strip()
         ]
         if missing:
             issues.append(f"S6第{position}项缺少{','.join(missing)}")
+
+        hypothesis_id = str(direction.get("hypothesis_id", "") or "").strip()
+        if hypothesis_id:
+            hypothesis_ids.append(hypothesis_id)
+        name = str(direction.get("name", "") or "").strip()
+        if name:
+            direction_names.append(name)
+
+        process = direction.get("operational_process", [])
+        if not isinstance(process, list) or not any(
+            str(item).strip() for item in process
+        ):
+            issues.append(f"S6第{position}项operational_process缺失")
+
+        classification = direction.get("capability_classification", {})
+        if not isinstance(classification, Mapping) or not str(
+            classification.get("primary_dimension", "") or ""
+        ).strip():
+            issues.append(f"S6第{position}项缺少Query驱动的主要能力分类维度")
+
+        assessment = _equipment_semantic_assessment(direction)
+        if semantic_contract_required and not assessment.get("classification"):
+            issues.append(f"S6第{position}项缺少模型装备语义分类")
+        required_assessment_flags = (
+            "direct_combat_effect",
+            "support_only",
+            "unmanned_combat",
+            "precision_munition",
+            "concrete_equipment",
+            "query_alignment_confirmed",
+        )
         if semantic_contract_required:
-            operational_process = direction.get("operational_process", [])
-            process_rows = (
-                [
-                    str(item).strip()
-                    for item in operational_process
-                    if str(item).strip()
-                ]
-                if isinstance(operational_process, list)
-                else []
-            )
-            if not process_rows:
+            missing_flags = [
+                field
+                for field in required_assessment_flags
+                if not isinstance(assessment.get(field), bool)
+            ]
+            if missing_flags:
                 issues.append(
-                    f"S6第{position}项operational_process必须由Codex按整卡语义形成完整时序，"
-                    "不得留空或由本地模板补写"
+                    f"S6第{position}项模型装备语义合同缺少"
+                    + ",".join(missing_flags)
                 )
-            if process_rows:
-                operational_processes.append((position, "；".join(process_rows)))
-            if (
-                not isinstance(semantic_check, Mapping)
-                or semantic_check.get("consistent") is not True
-            ):
-                issues.append(
-                    f"S6第{position}项未通过Codex整卡语义一致性自检，需在同次成稿内统一主装备、"
-                    "流程主体、发射/释放域、目标与直接战果"
-                )
-            elif not all(
-                str(semantic_check.get(field, "")).strip()
+        if assessment.get("query_alignment_confirmed") is False:
+            issues.append(f"S6第{position}项模型判定与当前Query不一致")
+        if assessment.get("concrete_equipment") is False:
+            issues.append(f"S6第{position}项模型判定不是具体装备对象")
+
+        semantic_check = direction.get("semantic_consistency_check", {})
+        if not isinstance(semantic_check, Mapping) or (
+            semantic_check.get("consistent") is not True
+        ):
+            issues.append(f"S6第{position}项语义一致性合同未通过")
+        elif semantic_contract_required:
+            missing_semantic_fields = [
+                field
                 for field in (
                     "process_actor",
                     "launch_or_release_mode",
                     "target_and_direct_effect",
                     "resolution_note",
                 )
-            ):
+                if not str(semantic_check.get(field, "") or "").strip()
+            ]
+            if missing_semantic_fields:
                 issues.append(
-                    f"S6第{position}项Codex整卡语义一致性自检缺少主体、发射域、目标战果或复核说明"
+                    f"S6第{position}项语义一致性合同缺少"
+                    + ",".join(missing_semantic_fields)
                 )
-            indicator_portrait = str(
-                direction.get("indicator_portrait", "")
-            ).strip()
-            if indicator_portrait and not _indicator_portrait_is_specific(
-                indicator_portrait
-            ):
-                issues.append(
-                    f"S6第{position}项indicator_portrait未形成由本装备机理推导的差异化测量轴、"
-                    "对照基线与判退条件"
-                )
+
+        try:
+            confidence = float(direction.get("confidence"))
+        except (TypeError, ValueError):
+            confidence = -1.0
+        if not 0.0 <= confidence <= 1.0:
+            issues.append(f"S6第{position}项缺少0至1之间的独立confidence")
+
+        issues.extend(_capability_portrait_alignment_issues(position, direction))
         issues.extend(
             _capability_language_issues(
                 position,
@@ -2653,104 +1762,32 @@ def _capability_direction_quality_issues(
             )
         )
 
-        query_relevance = str(direction.get("query_relevance", "")).strip()
-        query_relevance_invalid = bool(
-            query_relevance
-            and (
-                not _query_relevance_is_specific(query_relevance)
-                if semantic_contract_required
-                else (
-                    len(query_relevance) < 30
-                    or query_relevance
-                    in {"符合query", "满足query需求", "与query相关"}
-                )
-            )
+        public_fields = (
+            "name",
+            "function",
+            "equipment_form",
+            "operational_mechanism",
+            "target_scenario",
+            "operational_process",
+            "military_value",
+            "development_path",
+            "query_relevance",
+            "capability_portrait",
+            "indicator_portrait",
         )
-        if query_relevance_invalid:
-            issues.append(
-                f"S6第{position}项query_relevance过于空泛，需写明任务对象、作战阶段、"
-                "威胁压力和直接作战效果"
-            )
-
-        public_values = {
-            field: str(direction.get(field, "")) for field in public_fields
-        }
-        public_text = " ".join(public_values.values())
-        internal_leak_fields = [
+        leaked = [
             field
-            for field, value in public_values.items()
-            if _CAPABILITY_HANDOFF_INTERNAL_PATTERN.search(value)
+            for field in public_fields
+            if _CAPABILITY_HANDOFF_INTERNAL_PATTERN.search(
+                str(direction.get(field, "") or "")
+            )
         ]
-        blocking_internal_leak_fields = [
-            field for field in internal_leak_fields if field != "evidence_boundary"
-        ]
-        if blocking_internal_leak_fields:
+        if leaked:
             issues.append(
-                f"S6第{position}项{','.join(blocking_internal_leak_fields[:4])}"
-                "混入执行流程或内部角色语言"
-            )
-        if "evidence_boundary" in internal_leak_fields:
-            issues.append(
-                f"S6第{position}项evidence_boundary为内部审计备注，交付时忽略该可选字段"
-            )
-        if not _has_combat_effect_signal(direction) or not any(
-            term in public_text for term in _CAPABILITY_STAGE_TERMS
-        ):
-            issues.append(
-                f"S6第{position}项未说明具体作战阶段、任务对象及打击/反制效果"
-            )
-        if _has_high_order_combat_value(direction):
-            high_order_positions.append(position)
-        else:
-            issues.append(
-                f"S6第{position}项只停留在通信、保障、恢复或持续性层，未形成目标发现、"
-                "火力分配、突防、拦截、毁伤、再打击、拒止或威慑等高阶作战效果"
-            )
-        if _is_ordinary_support_direction(direction):
-            ordinary_support_positions.append(position)
-        if _is_ancillary_support_equipment_direction(direction):
-            ancillary_support_positions.append(position)
-        if _is_unmanned_combat_equipment_direction(direction):
-            unmanned_equipment_positions.append(position)
-        if _is_lethal_weapon_equipment_direction(direction):
-            lethal_weapon_positions.append(position)
-        if _is_missile_precision_munition_direction(direction):
-            missile_precision_positions.append(position)
-            issues.extend(
-                _query_relevance_issues(
-                    position,
-                    direction,
-                    query=query,
-                )
-            )
-        equipment_form = str(direction.get("equipment_form", ""))
-        if not codex_identity_locked and not _direction_name_has_equipment_object(
-            direction
-        ):
-            issues.append(
-                f"S6第{position}项名称未直接点明具体装备对象，不能只在equipment_form中补充"
-            )
-        if not codex_identity_locked and not _direction_name_has_equipment_object(
-            direction
-        ):
-            issues.append(f"S6第{position}项未绑定具体装备、平台或任务系统对象")
-        if _s6_primary_equipment_identity_mismatch(direction):
-            issues.append(
-                f"S6第{position}项名称与equipment_form不是同一主装备对象，"
-                "必须统一为该卡Query专属的单一平台、弹体或载荷身份"
-            )
-        generic_markers = ("自治", "网关", "算法", "中间件", "审计", "同步")
-        if not codex_identity_locked and any(
-            marker in name for marker in generic_markers
-        ) and not any(
-            term in name for term in _CAPABILITY_EQUIPMENT_OBJECT_TERMS
-        ):
-            issues.append(
-                f"S6第{position}项名称是抽象技术标签，应退回前置Codex按完整整装语义自然命名，"
-                "不能用字段短语拼接补救"
+                f"S6第{position}项{','.join(leaked[:4])}混入内部执行语言"
             )
 
-        if direction_type == "upgrade":
+        if str(direction.get("type", "") or "") == "upgrade":
             upgrade_required = (
                 "baseline_system",
                 "combat_effect_uplift",
@@ -2760,7 +1797,7 @@ def _capability_direction_quality_issues(
             upgrade_missing = [
                 field
                 for field in upgrade_required
-                if not str(direction.get(field, "")).strip()
+                if not str(direction.get(field, "") or "").strip()
             ]
             package = direction.get("upgrade_package", [])
             if not isinstance(package, list) or len(
@@ -2769,153 +1806,22 @@ def _capability_direction_quality_issues(
                 upgrade_missing.append("upgrade_package>=2")
             if upgrade_missing:
                 issues.append(
-                    f"S6第{position}项现役升级论证缺少{','.join(upgrade_missing)}"
-                )
-            if not any(term in name for term in _HIGH_ORDER_COMBAT_EFFECT_TERMS):
-                issues.append(
-                    f"S6第{position}项现役升级名称未体现升级对象获得的直接打击、猎歼、"
-                    "拦截、反制、拒止或威慑增益"
-                )
-            forbidden_name_terms = [
-                term for term in _FORBIDDEN_UPGRADE_NAME_TERMS if term in name
-            ]
-            if forbidden_name_terms:
-                issues.append(
-                    f"S6第{position}项现役升级标题禁止使用"
-                    + "、".join(forbidden_name_terms[:4])
-                    + "等支撑性或产品化名称；应退回前置Codex按完整整装语义自然命名，"
-                    "升级属性仅保留在结构化字段，复杂作用写入名称下方说明"
-                )
-            if (
-                not codex_identity_locked
-                and not _direction_name_has_equipment_object(direction)
-            ):
-                issues.append(
-                    f"S6第{position}项现役升级标题未明确现役武器、传感器、火控、"
-                    "电子战或指挥任务系统对象"
+                    f"S6第{position}项现役升级论证缺少"
+                    + ",".join(upgrade_missing)
                 )
 
-        if any(
-            _capability_text_similarity(portrait, upstream) >= 0.82
-            for upstream in handoff_texts
-        ):
-            issues.append(f"S6第{position}项近似复制上游文字，必须独立综合重写")
-
-    if directions and len(high_order_positions) <= len(directions) // 2:
-        issues.append(
-            "S6直接作战效应装备未构成组合主体，通信、保障、恢复、伪装或工程内容占比过高"
-        )
+    if len(hypothesis_ids) != len(set(hypothesis_ids)):
+        issues.append("S6存在重复hypothesis_id")
     duplicate_names = [
         name
-        for name, count in Counter(name for _, name in direction_names if name).items()
+        for name, count in Counter(direction_names).items()
         if count > 1
     ]
     if duplicate_names:
         issues.append(
-            "S6最终方向名称必须互异，禁止多个不同装备被压缩为同一标题："
+            "S6最终方向名称必须互异："
             + "、".join(duplicate_names[:3])
         )
-    # Evidence for a foresight/new-build direction is optional context. The
-    # gate no longer blocks missing references or boundaries; it only retains
-    # checks for explicit false claims and genuine cross-card contradictions.
-    nonempty_ref_sets = [refs for _, refs in evidence_ref_sets if refs]
-    if len(nonempty_ref_sets) >= 4 and len(set(nonempty_ref_sets)) == 1:
-        issues.append(
-            "S6各能力画像不得机械共用完全相同的direct_evidence_refs，必须按主装备族逐项映射"
-        )
-    if len(confidence_rows) >= 5:
-        confidence_values = [value for _, value in confidence_rows]
-        if max(confidence_values) - min(confidence_values) < 0.005:
-            issues.append(
-                "S6各能力画像confidence不得机械同值，必须反映对象证据直接性、来源质量和工程推导跨度差异"
-            )
-    support_focused_query = _query_explicitly_requests_support_equipment(query)
-    standalone_support_positions = sorted(
-        set(ordinary_support_positions + ancillary_support_positions)
-    )
-    if ordinary_support_positions and not support_focused_query:
-        issues.append(
-            "S6不得把普通通信、链路、保障、恢复、接口或治理单列为最终能力方向；"
-            "只能把它们作为具体武器、传感器、火控、电子战或效应平台的内部改进措施"
-        )
-    if ancillary_support_positions and not support_focused_query:
-        issues.append(
-            "S6不得把伪装、假目标、工程构设、效果评估或后勤保障单列为最终能力方向；"
-            "除非当前query明确以该类装备为主题，否则只能作为具体战斗装备的横向支撑层"
-        )
-    if support_focused_query and len(standalone_support_positions) > 1:
-        issues.append(
-            "即使query明确聚焦支撑装备，S6最终组合也最多单列1项伪装、通信、工程或保障方向，"
-            "其余必须回到直接战斗装备"
-        )
-    if not lethal_weapon_positions:
-        issues.append(
-            "S6最终组合必须至少包含一项导弹、巡飞弹、弹药、拦截弹、鱼雷、火炮、定向能或"
-            "电子压制效应器等杀伤/反杀伤武器装备方向"
-        )
-    direct_weapon_positions = set(
-        unmanned_equipment_positions + lethal_weapon_positions
-    )
-    if directions and len(direct_weapon_positions) <= len(directions) // 2:
-        issues.append(
-            "S6具体打击、歼灭、杀伤或反杀伤武器未构成组合主体；"
-            "不能用支撑系统或同一装备族重复占位"
-        )
-    disruptive_text = " ".join(
-        " ".join(
-            str(direction.get(field, ""))
-            for field in (
-                "name",
-                "function",
-                "equipment_form",
-                "operational_mechanism",
-                "military_value",
-                "combat_effect_uplift",
-                "strike_chain_contribution",
-                "development_path",
-                "novelty",
-                "foresight",
-                "future_trigger",
-                "capability_gap",
-                "capability_portrait",
-            )
-        )
-        for direction in directions
-        if isinstance(direction, Mapping)
-    )
-    disruptive_groups = disruptive_relationship_groups(disruptive_text)
-    for left_index, (left_position, left) in enumerate(portraits):
-        if not left:
-            continue
-        for right_position, right in portraits[left_index + 1 :]:
-            similarity = _capability_text_similarity(left, right) if right else 0.0
-            left_family = _capability_primary_equipment_family(
-                directions_by_position.get(left_position, {})
-            )
-            right_family = _capability_primary_equipment_family(
-                directions_by_position.get(right_position, {})
-            )
-            same_primary_family = bool(left_family) and left_family == right_family
-            if similarity >= 0.90 or (
-                similarity >= 0.75 and same_primary_family
-            ):
-                issues.append(
-                    f"S6第{left_position}项与第{right_position}项机制文本完全相同；"
-                    "必须由Codex复核其发射域/平台、目标运动包线、"
-                    "末制导传感器、授权来源、补击时序和专属验证指标，无法独立验收时应合并或替换"
-                )
-    for left_index, (left_position, left_process) in enumerate(operational_processes):
-        for right_position, right_process in operational_processes[left_index + 1 :]:
-            process_similarity = _capability_text_similarity(
-                left_process,
-                right_process,
-            )
-            if process_similarity >= 0.72:
-                issues.append(
-                    f"S6第{left_position}项与第{right_position}项作战流程文本完全相同；"
-                    "必须由Codex依据各自主装备、"
-                    "发射/释放域、目标、效应触发和结束状态重新形成装备专属流程，禁止只替换名词"
-                )
     return list(dict.fromkeys(issues))[:64]
 
 
@@ -3044,27 +1950,10 @@ def _recover_invalid_s6_result(
 
 
 def _requires_s6_combat_value_rewrite(issues: Sequence[Any]) -> bool:
-    markers = (
-        "高阶作战效果",
-        "直接作战效应方向",
-        "标题包含升级、方向、包或套件等非装备命名",
-        "现役升级名称未体现",
-        "普通通信、链路、保障",
-        "现役升级标题禁止使用",
-        "现役升级标题未明确",
-        "不得把普通通信",
-        "杀伤/反杀伤武器装备方向",
-        "不得把伪装、假目标、工程构设",
-        "不得机械共用完全相同的direct_evidence_refs",
-        "indicator_portrait未形成由本装备机理推导的差异化测量轴",
-        "水下/反潜Query场景错误投影",
-        "confidence不得机械同值",
-    )
-    return any(
-        marker in str(issue)
-        for issue in issues
-        for marker in markers
-    )
+    """Semantic rewrite routing belongs to the S6 critic Agent."""
+
+    del issues
+    return False
 
 
 def _s6_repair_targets(
@@ -3098,27 +1987,6 @@ def _s6_repair_targets(
             if len(positions) > 1:
                 targets.update(positions[1:])
 
-    def replacement_candidate(*, avoid_unmanned: bool = False) -> int:
-        type_counts = Counter(str(item.get("type", "")) for item in directions)
-        for position in range(len(directions), 0, -1):
-            item = directions[position - 1]
-            item_type = str(item.get("type", ""))
-            if type_counts[item_type] <= 1:
-                continue
-            if avoid_unmanned and _is_unmanned_combat_equipment_direction(item):
-                continue
-            return position
-        return max(1, len(directions))
-
-    if "独立导弹或精确制导弹药方向" in issue_text:
-        targets.add(replacement_candidate(avoid_unmanned=True))
-    if "无人作战装备方向" in issue_text and not any(
-        _is_unmanned_combat_equipment_direction(item) for item in directions
-    ):
-        targets.add(replacement_candidate())
-    if "至少需要3类与query因果相关" in issue_text:
-        for position in range(len(directions), max(0, len(directions) - 3), -1):
-            targets.add(position)
     if not targets and issues:
         targets.add(max(1, len(directions)))
     return sorted(position for position in targets if 1 <= position <= len(directions))[:8]
@@ -3363,22 +2231,10 @@ _S6_AUTHORED_EXPOSITION_FIELDS = (
 
 
 def _s6_weapon_title_is_descriptive_sentence(value: object) -> bool:
-    """Detect a platform-plus-loadout sentence masquerading as one weapon name."""
+    """Title semantics are frozen upstream and are not inferred locally."""
 
-    title = str(value or "").strip()
-    return bool(
-        re.search(
-            r"[，,]\s*(?:并)?(?:集成|搭载|配置|装有|携带|配备)",
-            title,
-        )
-        or (
-            "、" in title
-            and any(
-                term in title
-                for term in ("集成", "搭载", "配置", "装有", "携带")
-            )
-        )
-    )
+    del value
+    return False
 
 
 def _merge_dynamic_portfolio_with_s6_authored_cards(
@@ -3428,4 +2284,4 @@ def _merge_dynamic_portfolio_with_s6_authored_cards(
         merged_rows.append(merged)
     return merged_rows
 
-__all__ = ['_has_combat_effect_signal', '_has_high_order_combat_value', '_is_ordinary_support_direction', '_has_combat_munition_compound', '_has_specific_model_designator', '_direction_name_has_equipment_object', '_is_ancillary_support_equipment_direction', '_query_explicitly_requests_support_equipment', '_weapon_equipment_identity', '_strip_weapon_support_context', '_equipment_direction_categories', '_is_unmanned_combat_equipment_direction', '_is_lethal_weapon_equipment_direction', '_is_missile_precision_munition_direction', '_dedupe_capability_title', '_s6_title_requires_structural_repair', '_capability_title_equipment_anchor', '_capability_upgrade_effect_anchor', '_compact_capability_direction_title', '_uniquify_compacted_capability_titles', '_capability_portrait_alignment_issues', '_capability_language_issues', '_collect_reference_ids', '_normalize_effect_chain_references', '_normalize_concept_direction_priorities', '_normalize_priority_references', '_prioritized_evidence_index', '_compact_s6_prior_outputs', '_evidence_boundary_is_public_semantic', '_query_relevance_issues', '_truncate_complete_text', '_clean_capability_handoff_text', '_capability_handoff_statement', '_capability_synthesis_handoff', '_s6_card_is_reusable', '_s6_first_pass_quality_contract', '_capability_text_similarity', '_capability_primary_equipment_family', '_s6_primary_equipment_object_kind', '_s6_primary_equipment_identity_mismatch', '_build_direction_capability_portrait', '_normalize_s6_deterministic_format', '_equipment_form_identity_text', '_direction_is_defensive_only', '_s6_frontier_evidence_allowance', '_indicator_portrait_is_specific', '_query_relevance_is_specific', '_prepare_pre_s6_card_contract', '_capability_direction_quality_issues', '_s6_delivery_blocking_issues', '_s6_portrait_repair_issues', '_s6_release_gate_state', '_recover_invalid_s6_result', '_requires_s6_combat_value_rewrite', '_s6_repair_targets', '_s6_portrait_module_repair_targets', '_s6_can_use_lightweight_card_repair', '_merge_s6_direction_repairs', '_merge_s6_portrait_module_repairs', '_s6_portfolio_confidence', '_s6_weapon_title_is_descriptive_sentence', '_merge_dynamic_portfolio_with_s6_authored_cards']
+__all__ = ['_equipment_semantic_assessment', '_has_combat_effect_signal', '_has_high_order_combat_value', '_is_ordinary_support_direction', '_direction_name_has_equipment_object', '_is_ancillary_support_equipment_direction', '_query_explicitly_requests_support_equipment', '_weapon_equipment_identity', '_equipment_direction_categories', '_is_unmanned_combat_equipment_direction', '_is_lethal_weapon_equipment_direction', '_is_missile_precision_munition_direction', '_dedupe_capability_title', '_s6_title_requires_structural_repair', '_capability_title_equipment_anchor', '_capability_upgrade_effect_anchor', '_compact_capability_direction_title', '_uniquify_compacted_capability_titles', '_capability_portrait_alignment_issues', '_capability_language_issues', '_collect_reference_ids', '_normalize_effect_chain_references', '_normalize_concept_direction_priorities', '_normalize_priority_references', '_prioritized_evidence_index', '_compact_s6_prior_outputs', '_evidence_boundary_is_public_semantic', '_query_relevance_issues', '_truncate_complete_text', '_clean_capability_handoff_text', '_capability_handoff_statement', '_capability_synthesis_handoff', '_s6_card_is_reusable', '_s6_first_pass_quality_contract', '_capability_text_similarity', '_capability_primary_equipment_family', '_s6_primary_equipment_object_kind', '_s6_primary_equipment_identity_mismatch', '_build_direction_capability_portrait', '_normalize_s6_deterministic_format', '_equipment_form_identity_text', '_direction_is_defensive_only', '_s6_frontier_evidence_allowance', '_indicator_portrait_is_specific', '_query_relevance_is_specific', '_prepare_pre_s6_card_contract', '_capability_direction_quality_issues', '_s6_delivery_blocking_issues', '_s6_portrait_repair_issues', '_s6_release_gate_state', '_recover_invalid_s6_result', '_requires_s6_combat_value_rewrite', '_s6_repair_targets', '_s6_portrait_module_repair_targets', '_s6_can_use_lightweight_card_repair', '_merge_s6_direction_repairs', '_merge_s6_portrait_module_repairs', '_s6_portfolio_confidence', '_s6_weapon_title_is_descriptive_sentence', '_merge_dynamic_portfolio_with_s6_authored_cards']

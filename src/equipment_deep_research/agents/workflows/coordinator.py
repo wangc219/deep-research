@@ -1941,16 +1941,14 @@ _CAPABILITY_TITLE_REPEAT_TERMS = tuple(
 
 
 from equipment_deep_research.agents.workflows.s6_quality import (
+    _equipment_semantic_assessment,
     _has_combat_effect_signal,
     _has_high_order_combat_value,
     _is_ordinary_support_direction,
-    _has_combat_munition_compound,
-    _has_specific_model_designator,
     _direction_name_has_equipment_object,
     _is_ancillary_support_equipment_direction,
     _query_explicitly_requests_support_equipment,
     _weapon_equipment_identity,
-    _strip_weapon_support_context,
     _equipment_direction_categories,
     _is_unmanned_combat_equipment_direction,
     _is_lethal_weapon_equipment_direction,

@@ -106,32 +106,26 @@ def _open_s3_theme_instruction() -> str:
 
 
 def _creative_s3_candidate_instruction() -> str:
-    """Guide S3 Codex to generate genuinely novel weapon concepts.
+    """Give S3 a compact creative contract without a local rule catalogue."""
 
-    Focus on battlefield mechanism discovery first, then equipment naming.
-    Avoid forcing schema fields into pseudo-innovation descriptions.
-    """
     return (
         "你负责从当前Query创造少量真正值得立项的新质武器候选。"
-        "完整发挥Codex的军事推演、技术想象和编辑判断。先独立理解Query并形成候选空间，再用上游观察反证。"
-        "concept_arena至少比较一个最强常规基线或可信替代解释；其余方案与立场由Query决定，不强制套用"
-        "常规、前沿、流程三类固定位置。只有新原理、物理构型、运动/接敌方式、效应媒介、平台关系或"
-        "制造运用架构真正改变装备、毁伤或交换关系且不能被常规升级吸收，才进入hypotheses；热门技术标签不算。"
-        "候选须闭合为能直接产生战果的明确装备并给出失败条件；通信、算法和保障仅作约束。"
-        "候选还要能够支撑后续深画像：从军事需求场景说明主要能力提升、新技术怎样改变装备实现方式、"
-        "可能开发的新作战场景、决定成败的作战流程节点和技术可实现性主链。能力分类由候选的主要战场"
-        "结果自然形成，可是毁伤、突防或Query驱动的其他维度，不按分类配额生成候选。"
-        "query_equipment_blueprint、combat_dimension_assignment与reserved_other_angles都只有soft_challenge权限，"
-        "不是答案或配额。可accept、reframe或replace；替换时提出OTHER标签并说明独立性，"
-        "不因原命题失败而机械空返回。concept_arena只写简洁结论。"
-        "现役升级必须写明被升级对象、至少两项软硬件改装；禁止把自治、网关、算法、中间件、审计等通用技术"
-        "独立包装成武器。公开证据不足，保留类别级边界，不虚构公开型号、装备族谱或现役状态。"
+        "完整发挥Codex的军事推演、技术想象和编辑判断，不按装备目录、创新类别、字段关键词或固定句式拼接答案。"
+        "先理解战场矛盾，必须先确定frontier_principle、technology_discontinuity、disruptive_shift，"
+        "再闭合为能够直接产生战果、具有失败条件的单一具体装备。"
+        "concept_arena比较最强常规基线或可信替代解释与真正改变装备本体、接敌方式、效应或交换关系的前沿方案，"
+        "不强制套用常规、前沿、流程三类固定位置；成熟部件拼装和纯流程优化不能包装成新装备。"
+        "winning_angle_assignment、query_equipment_blueprint和reserved_other_angles只有soft_challenge权限，"
+        "可accept、reframe或replace；替换时使用self-proposed标识并说明独立价值。"
+        "通信、算法、数据链、保障和生产能力只能作为约束，不得成为候选主体。"
+        "公开资料只证明已有基础；拟议创新属于待验证假设，不得虚构型号、列装状态或性能数字。"
         + QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
-        + "仍在本次Codex会话内把title与reference_overview作为整体完成。reference_overview直接说明"
-        "特殊战场条件、被突破的传统优势和直接作战结果，不复述标题、不解释命名，也不以‘该装备是一种’"
-        "开头。装备名称与下方说明共同传达创新，但标题不替说明承担字段摘要。"
-        "winning_angle_id可沿用软挑战assignment_id，也可写self-proposed:<简短id>。"
-        "只输出schema规定的严格JSON。"
+        + "title与reference_overview作为整体创作。title不是技术摘要，只自然识别具体装备和最有辨识度的创新主线；"
+        "reference_overview再说明特殊战场条件、被突破的传统优势和直接战果。"
+        "命名方向可在内部比较构型意象型、原理突破型和装备专名型，但只输出最终名称。"
+        "临时去掉引号或代号后仍是机械底名的候选，不能靠加意象挽救。"
+        "不建立意象词库、后缀表、字符串评分或本地命名硬门；不输出备选名、逐词解释或检查过程。"
+        "只输出schema规定的严格JSON，不输出推理过程。"
     )
 
 
@@ -159,7 +153,9 @@ async def analyze_winning_subagents(
         "knowledge_pack_catalog": payload.get("knowledge_pack_catalog", []),
         "resume_from": payload.get("resume_from", "L1"),
         "attempt": payload.get("attempt", 1),
-        "selected_business_agent_ids": payload.get("selected_business_agent_ids", []),
+        "selected_business_agent_ids": payload.get(
+            "selected_business_agent_ids", []
+        ),
         "prior_winning_analysis": payload.get("prior_winning_analysis", {}),
         "resume_steps": payload.get("resume_steps", []),
         "execution_profile_id": payload.get("execution_profile_id", "legacy_v1"),
@@ -1102,6 +1098,16 @@ async def analyze_winning_subagents(
                             "primary_dimension": "主要能力维度，如毁伤维度、突防维度或Query驱动的其他自然维度",
                             "secondary_dimensions": ["最多两个确有独立价值的辅助维度"],
                             "classification_basis": "用通俗军语说明主要战果、关键流程节点和制胜关系为何支持该分类",
+                        },
+                        "equipment_semantic_assessment": {
+                            "classification": "direct_combat|unmanned_combat|upgrade|system_link|support_only|non_equipment",
+                            "direct_combat_effect": "boolean",
+                            "support_only": "boolean",
+                            "unmanned_combat": "boolean",
+                            "precision_munition": "boolean",
+                            "concrete_equipment": "boolean",
+                            "query_alignment_confirmed": "boolean",
+                            "rationale": "S5模型基于完整候选语义形成的判断理由",
                         },
                         "target_scenario": "面向的具体对象、环境、作战阶段和约束场景",
                         "problem_statement": "当前要解决的问题、难点、需求或任务链断点",
@@ -4042,110 +4048,6 @@ async def analyze_winning_subagents(
                     "quality_residuals": ["string"],
                     "stop_reason": "string",
                 }
-                instruction = (
-                    "严格按以下模型生成顺序工作，并在同一次Codex CLI调用内完成，不增加第二次整理调用。"
-                    "第一步只读取完整Query、战场问题边界和winning_angle_assignment所划定的互斥探索问题；"
-                    "蓝图中的query_specific_weapon_architectures、frontier_technology_hypotheses、"
-                    "equipment_project_hypotheses及其短语不得作为首轮候选、技术路线或命名种子。"
-                    "第二步先建立concept_arena，自主发散若干机制基础、装备架构和制胜关系真正不同的竞争方案；"
-                    "创新空间完全由当前Query决定，不按技术类别、装备族或创新赛道逐类覆盖。"
-                    "不同方案不能只是把热门技术与熟悉弹型相接。concept_arena必须显式比较当前Query下的"
-                    "最强常规实现、至少一个真正迫使装备本体或交战关系跃迁的前沿竞争方案，以及纯流程优化/"
-                    "成熟部件拼装解释；这三者是语义对照位置，不是固定技术目录。先完成比较，才允许生成hypotheses。"
-                    "第三步由模型综合Query因果、颠覆跨度、直接战果、对手反应和可证伪边界，自主选出真正改变"
-                    "制胜关系的方案；没有成立方案就空返回。第四步才把入选方案闭合为单一具体武器装备，"
-                    "完成全部hypotheses字段。第五步最后命名：由Codex切换到装备论证与军语编辑视角，把"
-                    "title与reference_overview作为一对共同完成。title只负责让人自然识别并记住这件具体"
-                    "武器及其最有辨识度的创新主线，不承担摘要职责；reference_overview再用一句话说明场景、"
-                    "颠覆制胜关系和直接战果。禁止把蓝图或字段中的裁决、判据、授权、时窗、校核、改变变量"
-                    "等抽象任务词截短后依次拼进标题，也禁止为了显示字段完整而发明内部术语。"
-                    "命名前先在会话内部形成至少三个不同取向的工作名：准确描述型、突出独特构型型、"
-                    "以及仅在确有记忆价值时采用的专名/代号型；逐一自然朗读并检查是否像流程标签、"
-                    "技术清单或修辞口号，只输出最贴合整件装备军事语义的一项，不输出比选过程。"
-                    "concept_arena只需给出可比较的方案摘要和取舍，不输出冗长思维过程。"
-                    "winning_angle_assignment只提供战场探索问题、排他边界和作战约束，不提供可继承的装备名称或答案；"
-                    "即使上游其他字段残留概念性工作名，也必须忽略其代号、缩写和系列后缀，由本S3 Codex会话"
-                    "根据主装备身份、创新构型、核心机理与直接战果重新自然命名。"
-                    "不得把reserved_other_angles中已经占用的原始范式、对抗变量和直接战果换一个弹型或名称后重复提交。"
-                    "同属巡飞弹、导弹或无人平台并不自动重复；在同一分配命题下先开放推演多种装备实现，"
-                    "存在1至3个具有独立可验收制胜逻辑的候选时可自然同时提交，这只是探索机会而非配额。"
-                    "独立性可来自不同物理架构，也可来自实质不同的接敌链、授权时机、效应触发、对手被迫"
-                    "反应、直接军事战果或判退试验；"
-                    "若差异只在射程、载荷、发射域、接口或修饰词，而任务链断点、改变变量、核心机理和直接战果相同，"
-                    "应在本会话内合并为一个候选。若分配命题不成立或只能落成成熟部件集成、一般性能提升、"
-                    "多效战斗部重组、普通饱和齐射、GPS拒止弹药模板或既有战法换名，必须主动返回空hypotheses，"
-                    "让编排器换入生成前已审定的备用命题；不得在当前会话临时提出OTHER装备补位。"
-                    "每个提交候选必须回填winning_angle_id、original_paradigm、disruptive_shift和independence_thesis；"
-                    "winning_angle_id使用本会话assignment_id。候选只有在相对reserved_other_angles带来新的任务链断点、"
-                    "对抗变量、核心机理或直接战果时才有边际增益；没有新增制胜关系时立即停止，不为数量补卡。"
-                    "消费upstream_reasoning_seeds，但重新回到完整Query形成机制真正不同的竞争性候选；"
-                    "候选数量由独立制胜价值和证据决定：只有一个成立就提交一个，没有成立就空返回，"
-                    "不得为了凑足1至3个而改名、拆词或堆功能。候选必须以具体主战或"
-                    "无人作战装备为主体，并直接产生侦察、压制、拦截、打击或毁伤效果。通信、中继、"
-                    "算法、任务胶囊、网关、授权终端和保障不得独立成为候选主体，只能写入"
-                    "system_interfaces。候选必须可独立进入后续装备映射，不能覆盖其他分支。"
-                    "每个S1-S3实例都必须消化query_combat_equipment_divergence_brief，并在本角色内"
-                    "重新推演Query相关性；不得把简报当答案照抄，也不得回到固定示例装备目录。"
-                    "每条候选必须单列project_function，用‘谁在什么场景/约束下依靠该装备完成什么"
-                    "动作并形成何种任务结果’表达，且明确解决Query中的任务链断点；不得用智能化、"
-                    "体系化、低成本或规模化替代项目功能。"
-                    "每条候选还必须由当前S3 Codex会话同步撰写reference_overview，作为界面上紧贴装备名"
-                    "显示的一句精简制胜说明。通常以35—80个中文字符为编辑目标，但字数不是质量门；自然、"
-                    "高密度地写出该装备最独特的战场条件、颠覆交战关系与直接压制、摧毁、歼灭、拦截或"
-                    "拒止战果，不复述名称，不解释命名，不罗列技术组件。这些只是选材角度，不规定语序。"
-                    "每个候选依据自身最独特的制胜价值自然选择起笔和重心，不得统一使用‘面向—针对—通过—"
-                    "实现’、括号说明、相同开头或同一段落骨架；不写公开基线、证据、验证计划和内部阶段标签。"
-                    + QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
-                    + "每条输出同时给出naming_rationale，但只需从整件装备的自然识别、记忆性和军事语义"
-                    "说明为何选择该名称；不得逐字拆解标题、不得声称每个词分别对应一个输入字段。若名称"
-                    "朗读起来像流程标签、字段缩写、评审结论或抽象功能串，就放弃该工作名并重新自由命名。"
-                    "每条还必须在进入账本前给出decisive_advantage_thesis，说明为何该装备能在具体"
-                    "交战窗口形成压倒、拒止、突防、毁伤、拦截或持续火力上的制胜增量，而不是只改进"
-                    "一个一般指标；并给出cross_query_distinction，明确换成其他目标、阶段或威胁后"
-                    "哪些构型、机理和名称必须改变。缺少任一项时不得提交候选。"
-                    "同一次S3首稿必须完成生成与语义自准入，不再依赖首稿后的第二个Codex逐项复审。"
-                    "逐候选先找出最强的最近常规实现，再写清它无法吸收的单一技术不连续性；该不连续性"
-                    "必须由Query因果牵引，并由Codex整体语义判断是否实质改变装备、接敌或制胜关系，"
-                    "不使用预置技术维度或类别清单。若只剩成熟部件组合、一般性能提升、流程口号或热门技术堆叠，"
-                    "应在本会话内判空；若成立，则每个提交候选都必须具体回填frontier_principle、"
-                    "technology_discontinuity、technology_horizon和engineering_bottleneck，并与名称共同"
-                    "显出其高科技性、前瞻性和新质制胜增量。字段由Codex依据完整军事语义撰写，不使用本地"
-                    "关键词、字符串或技术词表判定；无可信跃迁时空返回并使用生成前备用命题，而不是包装成候选。"
-                    "名称只需自然呈现最值得识别的创新主线和清楚的主装备身份，不要求把技术不连续性与"
-                    "制胜关系全部压进标题；其余信息交给reference_overview。不能把技术组件逐项塞入标题，"
-                    "也不能只加‘智能’‘未来’等空泛修饰词制造科技感。"
-                    "输入中的post_divergence_innovation_naming_reference只用于理解创新跨度和自然命名"
-                    "的信息密度，不是装备目录、技术套餐或格式模板；可借鉴其思考方式、重构或全部舍弃，"
-                    "不得复制示例名称、目标、数值、装备族、句式，也不得为了对应示例而补齐候选。"
-                    "提交前执行制胜关系删除测试：删除disruptive_shift后，若接敌链、授权时机、效应触发、"
-                    "对手被迫反应、直接战果和判退试验仍可由常规方案原样完成，说明创新只是改名或一般增量，"
-                    "本分支必须空返回；若其中至少一项发生可独立验收且改变立项判断的实质变化，即使仍属于"
-                    "巡飞弹、导弹、诱饵弹、子母弹或无人平台家族，也不应仅因家族相同而删除。"
-                    "删除固定装备目录不代表降低产出质量：必须充分发挥Codex对完整Query的推演能力，"
-                    "优先形成自身携带或控制战斗部、拦截载荷、定向能/电子压制效应并能直接完成打击、"
-                    "歼灭、毁伤、摧毁、拦截或压制的新质前瞻武器装备。单纯通信、感知、算法、保障或"
-                    "概念平台不能以‘体系赋能’冒充制胜装备。只有在对象证据与工程边界确实不足时才可"
-                    "空输出，并必须说明缺口，由编排器重新招募推演；不得用熟悉型号或词库拼名补位。"
-                    "S3与S4都是新候选及其新颖装备名称的创建阶段：名称必须与当前Query的具体目标、作战阶段、"
-                    "威胁压力、主装备构型、关键机理和直接战果共同生成，并体现相对传统能力的跨代或"
-                    "颠覆制胜差异。S3/S4不承担物化、接口收敛或验证；S5负责评审、合并、证据边界、"
-                    "判退并冻结最终候选身份。S6不得重新命名。"
-                    "每个候选在S3首次提交时就必须完成单一主装备语义闭合：结合完整Query与候选的"
-                    "project_function、mechanism_chain和direct_military_effects，明确究竟由哪个平台、弹体或"
-                    "武器系统执行接敌并产生直接战果。标题自然命名该主装备，不得列出‘A或B’备选效应器，"
-                    "也不得以内部载荷、模块、节点或接口清单代替整装；此判断依靠Codex军事语义，不使用"
-                    "固定武器词表、后缀枚举或字符串拼接。"
-                    + _open_s3_theme_instruction()
-                    + "若输入含post_divergence_seed_angle_provocations，说明自由制胜角度组合已经先行完成，"
-                    "这些种子关系是随后由独立Codex语义映射的可选挑战源。本S3可将其作为新的制胜角度，"
-                    "也可改写、跨种子重构、只用于反证或全部舍弃；不得按种子维度逐项覆盖，不得复制"
-                    "seed title、equipment_pull、示例装备或种子措辞作为候选名称。采用种子时仍须回到"
-                    "完整Query自由形成技术机理、具体武器构型和直接战果，种子本身不构成答案。"
-                    "若输入含post_divergence_frontier_angle_provocations，它们是在自由制胜角度形成后、"
-                    "任何候选生成前由隔离Codex提出的常规上限与前沿机会挑战。必须在concept_arena中逐项"
-                    "重新论证，可交叉重构或全部舍弃；禁止照抄enabling_principle、natural_naming_cue或"
-                    "示例表达拼成装备。最终技术、构型、军事制胜关系和自然名称仍由本S3会话自主决定。"
-                )
                 # The schema and governed inputs retain all audit constraints.
                 # Use a compact creative brief for the actual Codex call so the
                 # model reasons about the weapon instead of imitating a rule list.
@@ -6747,6 +6649,15 @@ async def analyze_winning_subagents(
             direction_type = (
                 "upgrade" if item.implementation_path == "upgrade" else "new_capability"
             )
+            equipment_classification = (
+                str(assessment.equipment_classification).strip().lower()
+                if assessment is not None
+                else ""
+            )
+            direct_combat_equipment = swarm_controller.is_direct_combat_equipment(
+                item,
+                assessment,
+            )
             candidate_title = _winning_portfolio_title(item)
             visible_name = candidate_title
             capability_gap = (
@@ -6847,6 +6758,25 @@ async def analyze_winning_subagents(
                 "strike_countermeasure_value": military_value,
                 "equipment_form": equipment_form,
                 "equipment_semantic_identity": semantic_identity,
+                "equipment_classification": equipment_classification,
+                "equipment_semantic_assessment": {
+                    "classification": equipment_classification,
+                    "direct_combat_effect": direct_combat_equipment,
+                    "support_only": equipment_classification
+                    in {"system_link", "support_only", "non_equipment"},
+                    "unmanned_combat": equipment_classification
+                    == "unmanned_combat",
+                    "concrete_equipment": equipment_classification
+                    != "non_equipment",
+                    "query_alignment_confirmed": bool(
+                        assessment is not None and assessment.passed
+                    ),
+                    "rationale": "；".join(
+                        assessment.strengths[:2]
+                        if assessment is not None
+                        else []
+                    ),
+                },
                 "primary_equipment_identity": equipment_form,
                 "unique_operational_role": project_function,
                 "launch_or_release_domain": "由该装备任务构型限定的部署、发射或释放域",
@@ -6953,7 +6883,7 @@ async def analyze_winning_subagents(
                     else ""
                 ),
                 "direct_combat_equipment": (
-                    swarm_controller.is_direct_combat_equipment(item, assessment)
+                    direct_combat_equipment
                 ),
             }
 
@@ -6995,6 +6925,11 @@ async def analyze_winning_subagents(
                     "或撰写能力画像。随后形成四项简洁、可证伪、可交接的合同。"
                     "capability_classification按本装备在当前Query中的主要可验收战场结果确定主维度，"
                     "可使用毁伤、突防或其他更贴切的自然维度；辅维度最多两个，不按示例补齐。"
+                    "同时输出equipment_semantic_assessment：必须基于完整候选、Query和作战因果"
+                    "进行语义判断，不得依据标题关键词、型号格式或装备名词后缀分类。classification"
+                    "使用direct_combat、unmanned_combat、upgrade、system_link、support_only或"
+                    "non_equipment；并分别给出是否产生直接战斗效果、是否仅属支援、是否无人作战、"
+                    "是否精确弹药、是否为具体装备对象以及是否与Query一致的JSON布尔值和简要理由。"
                     "indicator_portrait要从本装备独有机理推导少量关键测量轴，说明与哪类现有"
                     "任务链或同类装备在相同对抗条件下比较，以及出现什么结果时应判退或停止转段；"
                     "不得虚构精确数值，也不得用所有装备通用的射程、成本、精度清单代替机理推导。"
@@ -7039,6 +6974,16 @@ async def analyze_winning_subagents(
                             "primary_dimension": "主要能力维度",
                             "secondary_dimensions": ["最多两个辅助能力维度"],
                             "classification_basis": "主要战果、关键流程节点和制胜关系为何支持该分类",
+                        },
+                        "equipment_semantic_assessment": {
+                            "classification": "direct_combat|unmanned_combat|upgrade|system_link|support_only|non_equipment",
+                            "direct_combat_effect": "boolean",
+                            "support_only": "boolean",
+                            "unmanned_combat": "boolean",
+                            "precision_munition": "boolean",
+                            "concrete_equipment": "boolean",
+                            "query_alignment_confirmed": "boolean",
+                            "rationale": "基于完整军事语义的判断理由，不得引用关键词规则",
                         },
                         "indicator_portrait": (
                             "本装备机理专属的测量轴、同条件对照基线、可证伪判退或停止条件"
@@ -7110,6 +7055,37 @@ async def analyze_winning_subagents(
                             "secondary_dimensions": secondary_dimensions,
                             "classification_basis": classification_basis,
                         }
+                raw_assessment = contract.get("equipment_semantic_assessment", {})
+                if isinstance(raw_assessment, Mapping):
+                    assessment_classification = str(
+                        raw_assessment.get("classification", "")
+                    ).strip().lower()
+                    boolean_fields = (
+                        "direct_combat_effect",
+                        "support_only",
+                        "unmanned_combat",
+                        "precision_munition",
+                        "concrete_equipment",
+                        "query_alignment_confirmed",
+                    )
+                    if assessment_classification and all(
+                        isinstance(raw_assessment.get(field), bool)
+                        for field in boolean_fields
+                    ):
+                        authored["equipment_classification"] = (
+                            assessment_classification
+                        )
+                        authored["equipment_semantic_assessment"] = {
+                            "classification": assessment_classification,
+                            **{
+                                field: raw_assessment[field]
+                                for field in boolean_fields
+                            },
+                            "rationale": _clean_capability_handoff_text(
+                                raw_assessment.get("rationale", ""),
+                                limit=None,
+                            ),
+                        }
                 concise_winning_summary = _clean_capability_handoff_text(
                     contract.get("concise_winning_summary", ""),
                     limit=180,
@@ -7147,6 +7123,23 @@ async def analyze_winning_subagents(
                 handoff_warnings.append("Query关联合同未闭合")
             if not isinstance(authored.get("capability_classification"), Mapping):
                 handoff_warnings.append("能力分类合同未闭合")
+            authored_assessment = authored.get(
+                "equipment_semantic_assessment", {}
+            )
+            if not isinstance(authored_assessment, Mapping) or not str(
+                authored_assessment.get("classification", "")
+            ).strip() or not all(
+                isinstance(authored_assessment.get(field), bool)
+                for field in (
+                    "direct_combat_effect",
+                    "support_only",
+                    "unmanned_combat",
+                    "precision_munition",
+                    "concrete_equipment",
+                    "query_alignment_confirmed",
+                )
+            ):
+                handoff_warnings.append("装备语义合同未闭合")
             if failure_reason:
                 handoff_warnings.insert(0, failure_reason)
 
@@ -7161,6 +7154,9 @@ async def analyze_winning_subagents(
                 "query_relevance": authored.get("query_relevance", ""),
                 "capability_classification": authored.get(
                     "capability_classification", {}
+                ),
+                "equipment_semantic_assessment": authored.get(
+                    "equipment_semantic_assessment", {}
                 ),
                 "owner": "S5_handoff_agent",
                 "s6_mutation_allowed": False,
@@ -7597,6 +7593,7 @@ async def analyze_winning_subagents(
                 "primary_equipment_identity",
                 "operational_mechanism",
                 "capability_classification",
+                "equipment_semantic_assessment",
                 "target_scenario",
                 "problem_statement",
                 "scientific_principle",
@@ -8119,6 +8116,8 @@ async def analyze_winning_subagents(
                     "S6不得重新生成、修改或补洞。assigned_card.concise_winning_summary仅作为语境参考。"
                     "若assigned_card已有capability_classification，逐项继承；若为空，依据本卡主要战场结果"
                     "和制胜关系自然形成，不得为了覆盖毁伤、突防等示例而凑类。该分类必须显示在画像开头。"
+                    "assigned_card.equipment_semantic_assessment是S5模型基于完整军事语义形成的冻结合同，"
+                    "必须逐字段继承，不得根据标题、型号、装备名词或画像措辞重新分类。"
 
                     "提交前检查主装备、流程主体、作用域、目标和直接战果一致，"
                     "semantic_consistency_check.consistent必须输出JSON布尔值true。"
@@ -8152,24 +8151,12 @@ async def analyze_winning_subagents(
             authored_modules = direction.get("capability_portrait_modules", {})
             if isinstance(authored_modules, Mapping):
                 authored_modules = dict(authored_modules)
-                classification = direction.get("capability_classification", {})
-                if classification:
-                    authored_modules["capability_classification"] = classification
-            assembled_portrait = assemble_capability_portrait_modules(authored_modules)
-            if assembled_portrait:
-                direction["capability_portrait"] = assembled_portrait
-            elif not str(direction.get("capability_portrait", "")).strip():
-                raise S6QualityError(
-                    f"S6并行第{position}张装备卡未完整返回五个能力画像模块"
-                )
             else:
                 # Compatibility for persisted runs and scripted test providers.
                 # Live Codex calls are schema-bound to the five module fields.
-                recovered_modules = parse_capability_portrait_modules(
+                authored_modules = parse_capability_portrait_modules(
                     direction.get("capability_portrait", "")
                 )
-                if len(recovered_modules) == 5:
-                    direction["capability_portrait_modules"] = recovered_modules
             source_name = str(brief.get("name", "")).strip()
             # A card must retain the direct-combat weapon selected by the
             # swarm. If the S6 writer accidentally swaps the visible
@@ -8203,6 +8190,7 @@ async def analyze_winning_subagents(
                 "indicator_portrait",
                 "query_relevance",
                 "capability_classification",
+                "equipment_semantic_assessment",
                 "concise_winning_summary",
                 "expert_score",
                 "expert_assessment_id",
@@ -8211,6 +8199,18 @@ async def analyze_winning_subagents(
                 protected_value = brief.get(protected_field)
                 if protected_value not in (None, "", []):
                     direction[protected_field] = protected_value
+            classification = direction.get("capability_classification", {})
+            if isinstance(authored_modules, Mapping) and classification:
+                authored_modules = dict(authored_modules)
+                authored_modules["capability_classification"] = classification
+            assembled_portrait = assemble_capability_portrait_modules(authored_modules)
+            if assembled_portrait:
+                direction["capability_portrait_modules"] = authored_modules
+                direction["capability_portrait"] = assembled_portrait
+            elif not str(direction.get("capability_portrait", "")).strip():
+                raise S6QualityError(
+                    f"S6并行第{position}张装备卡未完整返回五个能力画像模块"
+                )
             authored_boundary = str(
                 direction.get("evidence_boundary", "") or ""
             ).strip()

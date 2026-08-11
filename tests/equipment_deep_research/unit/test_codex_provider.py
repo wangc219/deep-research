@@ -68,6 +68,49 @@ class _RealLikeScriptedProvider(ScriptedFakeProvider):
     """Exercise deterministic Codex gates without launching an external model."""
 
 
+def _with_model_semantic_contract(
+    direction: Mapping[str, object],
+    *,
+    classification: str = "direct_combat",
+    direct_combat_effect: bool = True,
+    support_only: bool = False,
+    concrete_equipment: bool = True,
+    query_alignment_confirmed: bool = True,
+    precision_munition: bool = False,
+) -> dict:
+    """Attach the S3-S5 semantic judgement consumed by non-inferential S6 code."""
+
+    row = dict(direction)
+    identity = str(
+        row.get("primary_equipment_identity")
+        or row.get("equipment_form")
+        or row.get("name")
+        or ""
+    )
+    row.setdefault("primary_equipment_identity", identity)
+    row["equipment_semantic_assessment"] = {
+        "classification": classification,
+        "direct_combat_effect": direct_combat_effect,
+        "support_only": support_only,
+        "concrete_equipment": concrete_equipment,
+        "query_alignment_confirmed": query_alignment_confirmed,
+        "precision_munition": precision_munition,
+    }
+    row["semantic_consistency_check"] = {
+        "process_actor": identity,
+        "launch_or_release_mode": "沿冻结候选的部署或释放域运用",
+        "target_and_direct_effect": str(
+            row.get("target_and_direct_effect")
+            or row.get("military_value")
+            or row.get("function")
+            or "形成冻结候选声明的直接战场结果"
+        ),
+        "resolution_note": "主装备、运用主体、目标和直接战果保持一致。",
+        "consistent": True,
+    }
+    return row
+
+
 def test_s3_candidate_brief_preserves_creative_reasoning_without_rule_pileup() -> None:
     instruction = _creative_s3_candidate_instruction()
 
@@ -396,7 +439,7 @@ def test_dynamic_s6_portfolio_confidence_falls_back_to_authored_cards() -> None:
     assert provider_module._s6_portfolio_confidence(selected, [{}]) == 0.0
 
 
-def test_s6_authored_title_may_replace_selected_name_without_local_semantic_gate() -> None:
+def test_s6_authored_title_cannot_replace_s5_frozen_name() -> None:
     selected = [
         {
             "hypothesis_id": "candidate-usv",
@@ -421,7 +464,7 @@ def test_s6_authored_title_may_replace_selected_name_without_local_semantic_gate
         authored,
     )
 
-    assert merged[0]["name"] == "远海武装无人水面反潜艇"
+    assert merged[0]["name"] == selected[0]["name"]
     assert merged[0]["primary_equipment_identity"] == "中大型武装无人水面反潜艇"
     assert merged[0]["direct_evidence_refs"] == ["ev-usv"]
     assert provider_module._capability_language_issues(1, selected[0]) == []
@@ -1681,7 +1724,7 @@ def test_dynamic_portfolio_does_not_replace_query_title_with_family_template() -
     )
 
 
-def test_s6_quality_gate_rejects_generic_technology_labels_and_copying() -> None:
+def test_s6_quality_gate_does_not_rejudge_generic_labels_from_keywords() -> None:
     portrait = (
         "面向预警到火力协同阶段的链路受压，形成可维持目标识别与打击任务续接的能力。"
         "通过冗余链路和任务重组维持指挥决策与反制闭环，并在对手实施诱饵和压制时保持最低火力协同。"
@@ -1707,8 +1750,8 @@ def test_s6_quality_gate_rejects_generic_technology_labels_and_copying() -> None
 
     issues = _capability_direction_quality_issues(result)
 
-    assert any("抽象技术标签" in issue for issue in issues)
-    assert any("具体装备" in issue for issue in issues)
+    assert not any("抽象技术标签" in issue for issue in issues)
+    assert not any("具体装备" in issue for issue in issues)
     assert not any("必须包含现役装备升级" in issue for issue in issues)
     assert not any("概述战斗场景要素不完整" in issue for issue in issues)
 
@@ -2098,9 +2141,9 @@ def test_s6_title_preflight_preserves_ascii_abbreviation_spacing() -> None:
     assert not any("描述句" in item for item in issues)
 
 
-def test_s6_title_preflight_repairs_layout_whitespace_and_repetition() -> None:
+def test_s6_title_preflight_repairs_layout_only_not_semantic_repetition() -> None:
     assert _dedupe_capability_title(" 能力  方向\n升级。 ") == "能力方向升级"
-    assert _dedupe_capability_title("火力火力能力升级") == "火力能力升级"
+    assert _dedupe_capability_title("火力火力能力升级") == "火力火力能力升级"
     assert _dedupe_capability_title("FAAD   C2") == "FAAD C2"
 
 
@@ -2270,18 +2313,19 @@ def test_evidence_projection_prioritizes_upstream_references() -> None:
     assert [item["evidence_id"] for item in projected] == ["ev-c", "ev-b"]
 
 
-def test_s6_combat_value_can_be_proven_across_the_complete_direction() -> None:
+def test_s6_combat_value_uses_the_model_semantic_contract() -> None:
     assert _has_combat_effect_signal(
         {
             "combat_effect_uplift": "关键消息送达率提升并缩短重同步时间",
             "strike_countermeasure_value": "保持通信受压条件下的反制任务闭环",
             "operational_mechanism": "",
             "capability_portrait": "",
+            "equipment_semantic_assessment": {"direct_combat_effect": True},
         }
     )
 
 
-def test_s6_quality_gate_rejects_support_only_upgrade_as_final_direction() -> None:
+def test_s6_support_only_decision_is_consumed_from_s5_semantic_contract() -> None:
     portrait = (
         "该方向面向强干扰环境下的任务连续性，通过多链路切换、接口治理和恢复机制维持信息流转。"
         "近期重点改造终端、网关和网络管理组件，中期完成跨平台集成，并以消息送达率、恢复时间和"
@@ -2319,23 +2363,37 @@ def test_s6_quality_gate_rejects_support_only_upgrade_as_final_direction() -> No
             )
         return row
 
-    issues = _capability_direction_quality_issues(
-        {
-            "concept_directions": [
-                support_direction(
-                    "现役海空前沿指挥车船多链路任务保底通信升级",
-                    "upgrade",
-                ),
-                support_direction("分布式通信网关恢复系统", "new_capability"),
-                support_direction("任务数据审计与接口治理系统", "new_capability"),
-            ]
-        }
-    )
+    directions = [
+        _with_model_semantic_contract(
+            support_direction(
+                "现役海空前沿指挥车船多链路任务保底通信升级",
+                "upgrade",
+            ),
+            classification="support_only",
+            direct_combat_effect=False,
+            support_only=True,
+        ),
+        _with_model_semantic_contract(
+            support_direction("分布式通信网关恢复系统", "new_capability"),
+            classification="support_only",
+            direct_combat_effect=False,
+            support_only=True,
+        ),
+        _with_model_semantic_contract(
+            support_direction("任务数据审计与接口治理系统", "new_capability"),
+            classification="support_only",
+            direct_combat_effect=False,
+            support_only=True,
+        ),
+    ]
 
-    assert any("高阶作战效果" in issue for issue in issues)
-    assert any("现役升级名称未体现" in issue for issue in issues)
-    assert any("直接作战效应装备未构成组合主体" in issue for issue in issues)
-    assert any("不得把普通通信" in issue for issue in issues)
+    assert all(
+        provider_module._is_ordinary_support_direction(item) for item in directions
+    )
+    issues = _capability_direction_quality_issues(
+        {"concept_directions": directions}
+    )
+    assert not any("不得把普通通信" in issue for issue in issues)
 
 
 def test_s6_support_subcomponent_does_not_reclassify_direct_weapon_direction() -> None:
@@ -2384,13 +2442,15 @@ def test_s6_recognizes_mobile_counter_swarm_effect_vehicles(
     name: str,
     equipment_form: str,
 ) -> None:
-    direction = {
-        "name": name,
-        "equipment_form": equipment_form,
-        "function": "在近海强对抗条件下拦截或压制无人蜂群",
-        "military_value": "削减蜂群同步抵达压力并降低末段弹药消耗",
-        "operational_mechanism": "完成目标交接、效应器分配、拦截压制与战果复核",
-    }
+    direction = _with_model_semantic_contract(
+        {
+            "name": name,
+            "equipment_form": equipment_form,
+            "function": "在近海强对抗条件下拦截或压制无人蜂群",
+            "military_value": "削减蜂群同步抵达压力并降低末段弹药消耗",
+            "operational_mechanism": "完成目标交接、效应器分配、拦截压制与战果复核",
+        }
+    )
 
     assert provider_module._direction_name_has_equipment_object(direction) is True
     assert provider_module._is_lethal_weapon_equipment_direction(direction) is True
@@ -2452,7 +2512,7 @@ def test_s6_quality_gate_requires_query_specific_direct_lethal_weapon_portfolio(
         ]
     }
     issues = _capability_direction_quality_issues(missing_weapons)
-    assert any("杀伤/反杀伤武器装备方向" in issue for issue in issues)
+    assert not any("杀伤/反杀伤武器装备方向" in issue for issue in issues)
     assert not any("必须包含无人" in issue for issue in issues)
 
     unrelated_query_issues = _capability_direction_quality_issues(
@@ -2538,10 +2598,7 @@ def test_s6_quality_gate_requires_query_specific_direct_lethal_weapon_portfolio(
         ]
     }
     two_direct_issues = _capability_direction_quality_issues(two_direct_only)
-    portfolio_warning = next(
-        issue for issue in two_direct_issues if "武器未构成组合主体" in issue
-    )
-    assert provider_module._s6_delivery_blocking_issues([portfolio_warning]) == []
+    assert not any("武器未构成组合主体" in issue for issue in two_direct_issues)
 
     ammunition_support_false_positive = {
         "concept_directions": [
@@ -2570,7 +2627,7 @@ def test_s6_quality_gate_requires_query_specific_direct_lethal_weapon_portfolio(
     )
 
 
-def test_s6_missile_direction_must_be_semantically_relevant_to_query() -> None:
+def test_s6_query_mismatch_is_read_from_structured_agent_judgement() -> None:
     portrait = (
         "该方向面向海上区域拒止条件下的交战阶段，以独立导弹武器和联合火控完成目标识别、"
         "火力分配、突防、毁伤评估和再次打击。相对现役基线，新增抗干扰制导、任务重规划"
@@ -2578,7 +2635,7 @@ def test_s6_missile_direction_must_be_semantically_relevant_to_query() -> None:
         "现役系统改装，中期形成样机并开展体系联试；验证采用红蓝对抗、实弹或半实物试验，"
         "若有效交战闭环和毁伤闭合率不能提高，则降低优先级。"
     )
-    direction = {
+    direction = _with_model_semantic_contract({
         "name": "远程反舰导弹连续打击系统",
         "type": "new_capability",
         "function": "发现并打击海上高价值目标",
@@ -2597,7 +2654,7 @@ def test_s6_missile_direction_must_be_semantically_relevant_to_query() -> None:
             "面向陆上边境巡逻任务，在日常警戒阶段应对普通车辆目标，"
             "通过导弹打击提升火力效果"
         ),
-    }
+    }, query_alignment_confirmed=False, precision_munition=True)
     handoff = {
         "query": "评估我军现役海上区域拒止体系在强干扰与饱和突防条件下的装备能力差距"
     }
@@ -2626,10 +2683,10 @@ def test_s6_missile_direction_must_be_semantically_relevant_to_query() -> None:
         handoff=handoff,
     )
 
-    assert any("未保留当前query的主题锚点" in issue for issue in issues)
+    assert any("模型判定与当前Query不一致" in issue for issue in issues)
 
 
-def test_s6_missile_query_relevance_requires_stage_pressure_and_effect() -> None:
+def test_s6_query_relevance_does_not_use_local_stage_keyword_checklist() -> None:
     direction = {
         "name": "低成本防空拦截弹药系统",
         "query_relevance": "该方向与局部战争中的装备需求相关，需要发展新型弹药。",
@@ -2642,9 +2699,7 @@ def test_s6_missile_query_relevance_requires_stage_pressure_and_effect() -> None
     )
 
     assert not any("主题锚点" in issue for issue in issues)
-    assert any("作战阶段" in issue for issue in issues)
-    assert any("威胁压力" in issue for issue in issues)
-    assert any("直接作战效果" in issue for issue in issues)
+    assert issues == []
 
 
 def test_s6_query_relevance_accepts_degraded_communications_topic_anchors() -> None:
@@ -2666,44 +2721,27 @@ def test_s6_query_relevance_accepts_degraded_communications_topic_anchors() -> N
 
 
 def test_s6_direction_name_recognizes_loitering_munition_as_equipment_object() -> None:
-    assert (
-        provider_module._direction_name_has_equipment_object(
+    for row in (
             {
                 "name": "中小型反辐射巡飞弹目标发现",
                 "equipment_form": "中小型反辐射巡飞弹与被动射频载荷",
-            }
-        )
-        is True
-    )
-    assert (
-        provider_module._direction_name_has_equipment_object(
+            },
             {
                 "name": "PrSM Increment 1/2火力升级",
                 "equipment_form": "PrSM Increment 1/2类陆基远程精确制导弹药",
-            }
-        )
-        is True
-    )
-
-    assert (
-        provider_module._direction_name_has_equipment_object(
+            },
             {
                 "name": "可消耗远程电子压制弹火力",
                 "equipment_form": "远程电子压制弹与被动射频导引载荷",
-            }
-        )
-        is True
-    )
-
-    assert (
-        provider_module._direction_name_has_equipment_object(
+            },
             {
                 "name": "现役Tomahawk Block V火力升级",
                 "equipment_form": "现役Tomahawk Block V巡航导弹与舰载发射系统",
-            }
-        )
-        is True
-    )
+            },
+    ):
+        assert provider_module._direction_name_has_equipment_object(
+            _with_model_semantic_contract(row, precision_munition=True)
+        ) is True
 
 
 def test_s6_structured_identity_accepts_novel_glide_strike_pod_without_lexicon() -> (
@@ -2711,7 +2749,7 @@ def test_s6_structured_identity_accepts_novel_glide_strike_pod_without_lexicon()
 ):
     """A new-build ``打击舱`` is valid when its governed contract is complete."""
 
-    direction = {
+    direction = _with_model_semantic_contract({
         "name": "“判毁续击”分布式效应滑翔打击舱",
         "type": "new_capability",
         "primary_equipment_identity": "“判毁续击”分布式效应滑翔打击舱",
@@ -2719,7 +2757,7 @@ def test_s6_structured_identity_accepts_novel_glide_strike_pod_without_lexicon()
         "function": "末段复核目标毁伤状态，对关键节点实施直接毁伤与必要补击",
         "operational_mechanism": "分布式释放后按目标优先级滑翔接近，完成毁伤判定并独立触发补击",
         "military_value": "在首击不确定和链路受压条件下闭合毁伤链，提升关键节点持续失能概率",
-    }
+    })
 
     assert provider_module._direction_name_has_equipment_object(direction) is True
     issues = provider_module._capability_direction_quality_issues(
@@ -2746,29 +2784,29 @@ def test_s6_structured_identity_accepts_novel_glide_strike_pod_without_lexicon()
 
 
 def test_s6_recognizes_semantic_combat_munition_compound() -> None:
-    direction = {
+    direction = _with_model_semantic_contract({
         "name": "远程可消耗电子诱骗弹火力",
         "equipment_form": "远程电子诱骗弹与任务载荷",
         "military_value": "压制防空雷达并为主攻弹群制造突防窗口",
-    }
+    }, precision_munition=True)
 
     assert provider_module._direction_name_has_equipment_object(direction) is True
     assert provider_module._is_missile_precision_munition_direction(direction) is True
 
 
 def test_s6_rejects_support_mission_disguised_with_unmanned_and_firepower() -> None:
-    direction = {
+    direction = _with_model_semantic_contract({
         "name": "小型无人机回收/数据读取接口火力",
         "equipment_form": "小型无人机、回收装置与数据读取接口",
         "function": "回收平台并读取任务数据",
         "military_value": "提升任务数据复盘效率",
-    }
+    }, classification="support_only", direct_combat_effect=False, support_only=True)
 
     assert provider_module._is_ordinary_support_direction(direction) is True
     assert provider_module._is_lethal_weapon_equipment_direction(direction) is False
 
 
-def test_s6_normalizer_projects_query_anchor_without_model_repair() -> None:
+def test_s6_normalizer_preserves_agent_query_relevance_without_local_projection() -> None:
     direction = {
         "name": "低空诱饵压制巡飞弹开窗",
         "type": "new_capability",
@@ -2784,8 +2822,7 @@ def test_s6_normalizer_projects_query_anchor_without_model_repair() -> None:
     )
     normalized_direction = normalized["concept_directions"][0]
 
-    assert "强干扰" in normalized_direction["query_relevance"]
-    assert "弱通信" in normalized_direction["query_relevance"]
+    assert normalized_direction["query_relevance"] == direction["query_relevance"]
     assert not _query_relevance_issues(
         1,
         normalized_direction,
@@ -2793,7 +2830,7 @@ def test_s6_normalizer_projects_query_anchor_without_model_repair() -> None:
     )
 
 
-def test_s6_normalizer_projects_electromagnetic_and_gnss_pressure() -> None:
+def test_s6_normalizer_does_not_append_query_terms_to_agent_relevance() -> None:
     normalized = _normalize_s6_deterministic_format(
         {
             "concept_directions": [
@@ -2811,8 +2848,7 @@ def test_s6_normalizer_projects_electromagnetic_and_gnss_pressure() -> None:
     )
 
     relevance = normalized["concept_directions"][0]["query_relevance"]
-    assert "强电磁压制" in relevance
-    assert "GNSS拒止" in relevance
+    assert relevance == "在补击与交战阶段应对目标机动压力，形成末段再捕获和直接毁伤。"
     assert not _query_relevance_issues(
         1,
         normalized["concept_directions"][0],
@@ -2889,29 +2925,21 @@ def test_s6_language_gate_does_not_reclassify_equipment_names() -> None:
 
 
 def test_s6_gate_treats_mobile_rocket_launcher_as_bound_combat_equipment() -> None:
-    direction = {
+    direction = _with_model_semantic_contract({
         "name": "无人值守远程精确打击火箭发射车",
         "equipment_form": "无人值守机动火箭发射车，配远程精确火箭弹兼容发射架",
         "function": "对已暴露防空和远火节点实施快速补击",
-    }
-
-    identity = f"{direction['name']} {direction['equipment_form']}"
+    })
 
     assert provider_module._direction_name_has_equipment_object(direction) is True
-    assert any(
-        term in identity
-        for term in (
-            *provider_module._DIRECT_COMBAT_EQUIPMENT_NAME_TERMS,
-            *provider_module._CAPABILITY_EQUIPMENT_OBJECT_TERMS,
-        )
-    )
+    assert direction["equipment_semantic_assessment"]["concrete_equipment"] is True
 
 
 def test_s6_gate_recognizes_armed_unmanned_wingman_as_concrete_equipment() -> None:
-    direction = {
+    direction = _with_model_semantic_contract({
         "name": "远域反辐射压制无人僚机",
         "equipment_form": "长航时低可探测武装无人僚机",
-    }
+    }, classification="unmanned_combat")
 
     assert provider_module._direction_name_has_equipment_object(direction) is True
 
@@ -3026,8 +3054,8 @@ def test_s6_first_pass_contract_frontloads_query_specific_weapon_preflight() -> 
     )
 
     assert contract["goal"] == "first_pass_acceptance_without_gate_retry"
-    assert "海上" in contract["query_anchors"]
-    assert "区域拒止" in contract["query_anchors"]
+    assert "海上" in contract["query"]
+    assert "区域拒止" in contract["query"]
     preflight = contract["query_specific_preflight_directions"]
     assert len(preflight) == 3
     assert all(item["ready"] is True for item in preflight)
@@ -3065,7 +3093,7 @@ def test_s6_first_pass_contract_frontloads_query_specific_weapon_preflight() -> 
     assert contract["preflight_acceptance"]["passed"] is True
 
 
-def test_pre_s6_contract_closes_indicator_and_query_relevance_before_authoring() -> (
+def test_pre_s6_contract_does_not_locally_author_missing_s5_semantics() -> (
     None
 ):
     prepared = _prepare_pre_s6_card_contract(
@@ -3083,14 +3111,8 @@ def test_pre_s6_contract_closes_indicator_and_query_relevance_before_authoring()
         query="强干扰条件下远海机动目标持续精确打击",
     )
 
-    indicator = prepared["indicator_portrait"]
-    relevance = prepared["query_relevance"]
-    assert "任务响应" in indicator
-    assert "现役防区外反舰巡航弹" in indicator
-    assert "判退" in indicator
-    assert "作战阶段" in relevance
-    assert "威胁压力" in relevance
-    assert "战场结果" in relevance
+    assert "indicator_portrait" not in prepared
+    assert "query_relevance" not in prepared
     assert (
         prepared["portfolio_identity_contract"]["pre_s6_quality_contract"][
             "s6_mutation_allowed"
@@ -3196,15 +3218,9 @@ def test_pre_s6_contract_does_not_keyword_rewrite_s5_identity_and_strips_interna
         "形态：远程低成本突防巡航弹，内置主杀伤体、末段诱压释放舱和确认载荷"
     )
     assert "primary_equipment_identity" not in prepared
-    public_contract = " ".join(
-        [
-            prepared["indicator_portrait"],
-            prepared["query_relevance"],
-        ]
-    )
-    assert "S5" not in public_contract
-    assert "S4" not in public_contract
-    assert "Agent" not in public_contract
+    contract = prepared["portfolio_identity_contract"]["pre_s6_quality_contract"]
+    assert contract["indicator_portrait"] == ""
+    assert contract["query_relevance"] == ""
 
 
 def test_s6_only_resume_upgrades_legacy_portfolio_before_parallel_authoring(
@@ -3254,6 +3270,32 @@ def test_s6_only_resume_upgrades_legacy_portfolio_before_parallel_authoring(
             "failure_boundary": "目标复核或授权边界无法可靠维持时判退",
             "capability_gap": "现役基线缺少断链条件下的目标区自主复核和续接打击",
             "capability_outcome": "形成断链条件下远程精确火力自主续接能力",
+            # S6 is allowed to author prose, but must not overwrite the S5
+            # capability classification or display a conflicting dimension.
+            "capability_classification": {
+                "primary_dimension": "突防维度",
+                "secondary_dimensions": ["生存抗毁维度"],
+                "classification_basis": "S6错误地把技术路径当成主要战果。",
+            },
+            "capability_portrait_modules": {
+                "overview": (
+                    f"面向卫星拒止下的纵深火力交战，{name}把目标复核前推到弹上，"
+                    "维持对授权目标的持续毁伤。"
+                ),
+                "technology_implementation": (
+                    "以非卫星导航、目标类别识别和授权边界装订形成弹上受控自治。"
+                ),
+                "operational_process": (
+                    "发射平台装订边界后释放武器，弹体进入责任区复核目标，满足门槛时交战，"
+                    "不满足时拒打并终止任务。"
+                ),
+                "capability_effects": (
+                    "在外部更新中断时保持正确交战和远程火力续接。"
+                ),
+                "winning_logic": (
+                    "把持续链路依赖转为弹上短闭环，使对手不能仅靠断链摆脱交战。"
+                ),
+            },
             "capability_portrait": (
                 f"概述：面向卫星拒止下的纵深火力交战，{name}针对目标更新中断与导航欺骗，"
                 "依靠本地任务装订和多源导航完成目标复核、授权交战、毁伤摘要与补击续接，"
@@ -3309,6 +3351,13 @@ def test_s6_only_resume_upgrades_legacy_portfolio_before_parallel_authoring(
             "direct_evidence_refs": [f"ev-{index}"],
             "validation_plan": ["对比任务响应、目标复核、正确交战和正确拒打"],
             "failure_boundaries": ["无法可靠复核目标或维持授权边界时判退"],
+            "capability_classification": {
+                "primary_dimension": "毁伤维度",
+                "secondary_dimensions": ["持续作战维度"],
+                "classification_basis": (
+                    "决定性节点是断链后由弹体自主复核并完成授权交战，主要可验收战果是持续毁伤目标。"
+                ),
+            },
             "expert_score": 0.78,
         }
         for index in range(1, 6)
@@ -3375,6 +3424,20 @@ def test_s6_only_resume_upgrades_legacy_portfolio_before_parallel_authoring(
         contract = direction["portfolio_identity_contract"]["pre_s6_quality_contract"]
         assert contract["owner"] == "S5_handoff"
         assert contract["s6_mutation_allowed"] is False
+        assert contract["capability_classification"] == {
+            "primary_dimension": "毁伤维度",
+            "secondary_dimensions": ["持续作战维度"],
+            "classification_basis": (
+                "决定性节点是断链后由弹体自主复核并完成授权交战，主要可验收战果是持续毁伤目标。"
+            ),
+        }
+        assert direction["capability_classification"] == contract[
+            "capability_classification"
+        ]
+        assert direction["capability_portrait"].startswith(
+            "能力分类：主：毁伤维度；辅：持续作战维度。"
+        )
+        assert "能力分类：主：突防维度" not in direction["capability_portrait"]
 
 
 def test_parallel_s6_failure_delivers_s5_card_as_limited_without_run_failure(
@@ -3822,7 +3885,7 @@ def test_s6_disruptive_relationship_diversity_is_pre_generation_guidance_not_har
 
 
 def test_s6_quality_gate_rejects_camouflage_as_a_weapon_portfolio_slot() -> None:
-    direction = {
+    direction = _with_model_semantic_contract({
         "name": "机动伪装诱饵阵地系统",
         "type": "new_capability",
         "function": "构设多谱段假目标并评估诱饵效果",
@@ -3841,14 +3904,15 @@ def test_s6_quality_gate_rejects_camouflage_as_a_weapon_portfolio_slot() -> None
             "该装备用于战役准备阶段构设多谱段假目标并消耗对手侦察资源。" * 20
         )[:360]
         + "。",
-    }
+    }, classification="support_only", direct_combat_effect=False, support_only=True)
 
     issues = _capability_direction_quality_issues(
         {"concept_directions": [direction] * 5},
         handoff={"query": "远程无人精确火力装备需求研究"},
     )
 
-    assert any("不得把伪装、假目标" in issue for issue in issues)
+    assert provider_module._is_ordinary_support_direction(direction) is True
+    assert not any("不得把伪装、假目标" in issue for issue in issues)
 
 
 def test_s6_first_pass_contract_exposes_missing_preflight_before_generation() -> None:
