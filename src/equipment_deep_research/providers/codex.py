@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import AsyncIterator, Mapping, Sequence
+from datetime import datetime, timezone
+import hashlib
 import json
 import logging
 import os
@@ -23,6 +25,7 @@ from threading import RLock
 from time import monotonic, sleep
 from typing import Any
 from urllib.parse import urlsplit
+from uuid import uuid4
 
 from equipment_deep_research.domain.proposals import thaw_plain
 from equipment_deep_research.providers.base import (
@@ -31,6 +34,10 @@ from equipment_deep_research.providers.base import (
     ProviderStreamEvent,
 )
 from equipment_deep_research.providers.responses import ProviderRequestError
+from equipment_deep_research.runtime_process_registry import (
+    register_process_group as register_run_process_group,
+    release_process_group as release_run_process_group,
+)
 from equipment_deep_research.tools.definitions import ToolDefinition
 from equipment_deep_research.providers.codex_optimizations import (
     render_prompt_optimized,
@@ -49,6 +56,143 @@ _PARENT_CODEX_RUNTIME_ENV_VARS = {
 
 _RUNTIME_API_KEY_ENV = "EQUIPMENT_DR_CODEX_RUNTIME_API_KEY"
 _RUNTIME_PROVIDER_ID = "equipment_research_gateway"
+
+
+def _safe_audit_component(value: object, fallback: str) -> str:
+    safe = "".join(
+        character if character.isalnum() or character in {"-", "_", "."} else "-"
+        for character in str(value or "").strip()
+    ).strip("-.")
+    return safe[:120] or fallback
+
+
+def _redacted_command(command: Sequence[str]) -> list[str]:
+    """Return diagnostic command metadata without gateway or credential values."""
+
+    result: list[str] = []
+    for index, item in enumerate(command):
+        token = str(item)
+        if index == 0:
+            result.append(Path(token).name)
+        elif "base_url" in token.lower():
+            result.append("<redacted-base-url-config>")
+        else:
+            result.append(token)
+    return result
+
+
+def _atomic_private_text(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        path.parent.chmod(0o700)
+    except OSError:
+        pass
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        encoding="utf-8",
+        prefix=f".{path.name}.",
+        dir=path.parent,
+        delete=False,
+    ) as handle:
+        handle.write(content)
+        temporary = Path(handle.name)
+    try:
+        temporary.chmod(0o600)
+        os.replace(temporary, path)
+        path.chmod(0o600)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def _archive_codex_attempt(
+    *,
+    workspace_path: Path,
+    model: str,
+    isolation_id: str,
+    options: Mapping[str, Any],
+    call_id: str,
+    attempt: int,
+    started_at: str,
+    command: Sequence[str],
+    prompt: str,
+    result: subprocess.CompletedProcess[str] | None = None,
+    error: BaseException | None = None,
+) -> str:
+    """Persist one exact CLI exchange; diagnostics must never affect delivery."""
+
+    run_id = str(options.get("_audit_run_id", "")).strip()
+    if not run_id:
+        return ""
+    safe_run_id = _safe_audit_component(run_id, "unattributed-run")
+    agent_id = _safe_audit_component(
+        options.get("_audit_agent_id", isolation_id), "unattributed-agent"
+    )
+    phase = _safe_audit_component(options.get("_audit_phase", "model-turn"), "model-turn")
+    call_dir = (
+        workspace_path
+        / "outputs"
+        / "runs"
+        / safe_run_id
+        / "codex_cli_transcripts"
+        / f"{call_id}__{agent_id}__{phase}"
+        / f"attempt-{attempt:02d}"
+    )
+    stdout = str(result.stdout if result is not None else "")
+    stderr = str(result.stderr if result is not None else "")
+    final_text, parsed_metadata, usage = _parse_codex_jsonl(stdout)
+    completed_at = datetime.now(timezone.utc).isoformat()
+    metadata = {
+        "schema_version": "1.0",
+        "run_id": run_id,
+        "agent_id": str(options.get("_audit_agent_id", isolation_id) or isolation_id),
+        "phase": str(options.get("_audit_phase", "model-turn") or "model-turn"),
+        "call_purpose": str(options.get("_audit_call_purpose", "") or ""),
+        "call_id": call_id,
+        "attempt": attempt,
+        "started_at": started_at,
+        "completed_at": completed_at,
+        "provider": "codex_cli",
+        "model": model or "(cli default)",
+        "reasoning_effort": str(options.get("reasoning_effort", "")),
+        "model_verbosity": str(options.get("model_verbosity", "")),
+        "isolation_id": isolation_id,
+        "command": _redacted_command(command),
+        "returncode": int(result.returncode) if result is not None else None,
+        "exception_type": type(error).__name__ if error is not None else "",
+        "exception_message": str(error) if error is not None else "",
+        "codex_thread_id": str(parsed_metadata.get("codex_thread_id", "")),
+        "usage": usage,
+        "prompt_chars": len(prompt),
+        "stdout_chars": len(stdout),
+        "stderr_chars": len(stderr),
+        "final_chars": len(final_text),
+        "prompt_sha256": hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
+        "stdout_sha256": hashlib.sha256(stdout.encode("utf-8")).hexdigest(),
+    }
+    try:
+        _atomic_private_text(call_dir / "prompt.txt", prompt)
+        _atomic_private_text(call_dir / "stdout.jsonl", stdout)
+        _atomic_private_text(call_dir / "stderr.txt", stderr)
+        _atomic_private_text(call_dir / "final.txt", final_text)
+        output_schema = options.get("output_schema")
+        if isinstance(output_schema, Mapping):
+            _atomic_private_text(
+                call_dir / "output_schema.json",
+                json.dumps(output_schema, ensure_ascii=False, indent=2),
+            )
+        _atomic_private_text(
+            call_dir / "metadata.json",
+            json.dumps(metadata, ensure_ascii=False, indent=2),
+        )
+    except (OSError, TypeError, ValueError) as archive_error:
+        logger.warning(
+            "Codex transcript archive failed for %s attempt %s: %s",
+            call_id,
+            attempt,
+            archive_error,
+        )
+        return ""
+    return str(call_dir.relative_to(workspace_path))
 
 
 class CodexCliProvider:
@@ -177,15 +321,23 @@ class CodexCliProvider:
             process_group_ids = tuple(self._active_process_groups)
             self._active_process_groups.clear()
         for process_group_id in process_group_ids:
-            _terminate_process_group_sync(process_group_id)
+            try:
+                _terminate_process_group_sync(process_group_id)
+            finally:
+                release_run_process_group(process_group_id)
 
     def _register_process_group(self, process_group_id: int) -> None:
         with self._active_process_groups_lock:
             self._active_process_groups.add(process_group_id)
+        register_run_process_group(
+            process_group_id,
+            command_hint=Path(self.command).name,
+        )
 
     def _release_process_group(self, process_group_id: int) -> None:
         with self._active_process_groups_lock:
             self._active_process_groups.discard(process_group_id)
+        release_run_process_group(process_group_id)
 
     def _build_base_command(self) -> list[str]:
         """构建不变的基础命令部分"""
@@ -366,7 +518,17 @@ class CodexCliProvider:
         prompt = render_prompt_optimized(messages, options)
         self._perf_monitor.record('prompt_render', monotonic() - prompt_start)
 
+        audit_call_id = (
+            datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
+            + "__"
+            + uuid4().hex
+        )
+        transcript_paths: list[str] = []
+
         schema_path = self._write_output_schema(options.get("output_schema"))
+        provider_timeout_disabled = bool(
+            options.get("_disable_provider_timeout", False)
+        )
         requested_timeout_seconds = max(
             30,
             int(options.get("_provider_timeout_seconds", self.timeout_seconds)),
@@ -383,9 +545,10 @@ class CodexCliProvider:
                     3600,
                 ),
             )
-        execution_timeout_seconds = min(
-            requested_timeout_seconds,
-            timeout_ceiling_seconds,
+        execution_timeout_seconds = (
+            0
+            if provider_timeout_disabled
+            else min(requested_timeout_seconds, timeout_ceiling_seconds)
         )
         retry_attempts = min(
             self.retry_attempts,
@@ -407,21 +570,54 @@ class CodexCliProvider:
 
             for attempt in range(retry_attempts):
                 attempts_used = attempt + 1
+                attempt_started_at = datetime.now(timezone.utc).isoformat()
 
                 # 优化：使用预热的环境变量
                 exec_start = monotonic()
-                if "_execute" in self.__dict__:
-                    # Keep the injectable synchronous seam used by tests and
-                    # custom embedders. Production instances use a cancellable
-                    # asyncio subprocess.
-                    result = await asyncio.to_thread(self._execute, command, prompt)
-                else:
-                    result = await self._execute_async(
-                        command,
-                        prompt,
-                        timeout_seconds=execution_timeout_seconds,
+                try:
+                    if "_execute" in self.__dict__:
+                        # Keep the injectable synchronous seam used by tests and
+                        # custom embedders. Production instances use a cancellable
+                        # asyncio subprocess.
+                        result = await asyncio.to_thread(self._execute, command, prompt)
+                    else:
+                        result = await self._execute_async(
+                            command,
+                            prompt,
+                            timeout_seconds=execution_timeout_seconds,
+                        )
+                except BaseException as exc:
+                    archive_path = _archive_codex_attempt(
+                        workspace_path=self.workspace_path,
+                        model=self.model,
+                        isolation_id=self.isolation_id,
+                        options=options,
+                        call_id=audit_call_id,
+                        attempt=attempts_used,
+                        started_at=attempt_started_at,
+                        command=command,
+                        prompt=prompt,
+                        error=exc,
                     )
+                    if archive_path:
+                        transcript_paths.append(archive_path)
+                    raise
                 self._perf_monitor.record('process_execute', monotonic() - exec_start)
+
+                archive_path = _archive_codex_attempt(
+                    workspace_path=self.workspace_path,
+                    model=self.model,
+                    isolation_id=self.isolation_id,
+                    options=options,
+                    call_id=audit_call_id,
+                    attempt=attempts_used,
+                    started_at=attempt_started_at,
+                    command=command,
+                    prompt=prompt,
+                    result=result,
+                )
+                if archive_path:
+                    transcript_paths.append(archive_path)
 
                 if result.returncode == 0:
                     break
@@ -465,10 +661,16 @@ class CodexCliProvider:
                     "sandbox_mode": self.sandbox_mode,
                     "elapsed_seconds": round(elapsed_seconds, 3),
                     "attempts": attempts_used,
-                    "provider_timeout_seconds": execution_timeout_seconds,
+                    "provider_timeout_seconds": (
+                        None
+                        if provider_timeout_disabled
+                        else execution_timeout_seconds
+                    ),
+                    "provider_timeout_disabled": provider_timeout_disabled,
                     "extended_provider_timeout": extended_timeout_allowed,
                     "prompt_chars": len(prompt),
                     "output_chars": len(text),
+                    "codex_transcript_paths": transcript_paths,
                 },
             )
         )
@@ -576,6 +778,11 @@ class CodexCliProvider:
     def _execute(
         self, command: Sequence[str], prompt: str
     ) -> subprocess.CompletedProcess[str]:
+        # Runtime homes are shared by repeated role calls and may be touched by
+        # an older provider instance or Codex CLI migration between turns.
+        # Reassert the task-scoped credential immediately before launch so a
+        # stale auth.json cannot turn a healthy checkpoint resume into a 401.
+        self._prepare_codex_home()
         env = {
             str(key): str(value)
             for key, value in os.environ.items()
@@ -619,6 +826,7 @@ class CodexCliProvider:
         timeout_seconds: int | None = None,
     ) -> subprocess.CompletedProcess[str]:
         """Launch a cancellable Codex child and terminate its process group."""
+        self._prepare_codex_home()
         env = {
             str(key): str(value)
             for key, value in os.environ.items()
@@ -643,11 +851,19 @@ class CodexCliProvider:
         process_group_id = process.pid
         self._register_process_group(process_group_id)
         try:
-            effective_timeout = int(timeout_seconds or self.timeout_seconds)
-            stdout, stderr = await asyncio.wait_for(
-                process.communicate(prompt.encode("utf-8")),
-                timeout=effective_timeout,
+            configured_timeout = (
+                self.timeout_seconds
+                if timeout_seconds is None
+                else int(timeout_seconds)
             )
+            effective_timeout = configured_timeout if configured_timeout > 0 else None
+            if effective_timeout is None:
+                stdout, stderr = await process.communicate(prompt.encode("utf-8"))
+            else:
+                stdout, stderr = await asyncio.wait_for(
+                    process.communicate(prompt.encode("utf-8")),
+                    timeout=effective_timeout,
+                )
         except asyncio.CancelledError:
             await _terminate_process_group(process)
             raise
@@ -759,7 +975,13 @@ def _render_prompt(
     if effort:
         rows.append(f"Requested reasoning effort: {effort}.")
     if max_tokens is not None:
-        rows.append(f"Requested maximum output tokens: {max_tokens}.")
+        if bool(options.get("_soft_output_token_budget", False)):
+            rows.append(
+                f"Planning output token budget: {max_tokens}. This is a soft planning "
+                "guide, not a cutoff: complete the assigned contract before stopping."
+            )
+        else:
+            rows.append(f"Requested maximum output tokens: {max_tokens}.")
     rows.append("\nConversation:")
     for message in messages:
         content = thaw_plain(message.content)

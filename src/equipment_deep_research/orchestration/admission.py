@@ -112,6 +112,35 @@ class PacketAdmissionGate:
         accepted_claim_texts: Sequence[str] = (),
         upstream_required: bool = False,
     ) -> PacketAdmissionDecision:
+        if (
+            packet.payload_type == "baseline_availability_boundary_v1"
+            and packet.payload.get("availability") == "unavailable"
+            and not packet.findings
+            and not packet.evidence_ids
+        ):
+            # An unavailable packet is not a claim packet.  Preserve it as a
+            # limited downstream boundary so S1-S3 can continue and S4/S5 can
+            # see the explicit candidate-level verification obligation.  Do
+            # not fabricate accepted claims or evidence to make it pass the
+            # ordinary admission score.
+            return PacketAdmissionDecision(
+                packet_id=packet.packet_id,
+                status="limited",
+                scores={
+                    "task_relevance": 0.0,
+                    "source_quality": 0.0,
+                    "claim_evidence_match": 0.0,
+                    "upstream_acceptance": 0.0,
+                    "incremental_value": 0.0,
+                },
+                reasons=(
+                    "baseline_agent_unavailable",
+                    "candidate_level_verification_required",
+                ),
+                accepted_claim_ids=(),
+                rejected_claim_ids=(),
+                incremental_value=0.0,
+            )
         normalized_topic = packet.topic_focus.lower()
         relevant_terms = [str(item).lower() for item in task_terms if str(item).strip()]
         relevance = (

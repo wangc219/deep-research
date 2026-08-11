@@ -1,3 +1,5 @@
+import pytest
+
 from equipment_deep_research.delivery.quality_gate import (
     CANONICAL_REPORT_H3,
     ReportQualityGate,
@@ -8,12 +10,12 @@ from equipment_deep_research.delivery.quality_gate import (
 def _governed_capability_portrait(name: str) -> str:
     body = "\n".join(
         [
-            "概述：面向岛链外缘强对抗、通信受限和导航受扰的远程火力交战阶段，针对敌方机动目标短时暴露且外部航迹易中断的问题，以箱式发射远程精确制导巡飞弹药为主装备，利用弹上有限搜索与证据门控原理，采用组合导航和末段复核技术，通过分散发射、目标复核与受控交战，形成断链条件下直接打击能力，实现压缩敌方转移与重组时间的作战效果。",
-            "- 装备与技术实现：型号落点为具体武器平台，采用任务载荷、组合导航、末段复核与安全中止软件，明确发射、火控和保障接口。",
+            f"概述：面向岛链外缘强对抗、通信受限和导航受扰的远程火力交战阶段，针对敌方机动目标短时暴露且外部航迹易中断的问题，{name}采用箱式发射远程精确制导巡飞弹药构型，利用弹上有限搜索与证据门控原理，配置组合导航和末段复核技术，通过分散发射、目标复核与受控交战，形成断链条件下直接打击能力，实现压缩敌方转移与重组时间的作战效果。",
+            "- 装备与技术实现：型号落点为具体武器平台，采用任务载荷、组合导航、末段复核与安全中止软件，明确发射、火控和保障接口；公开基线对照为现役箱式发射巡飞弹药。",
             "- 关键作战流程：1.任务准备：装订目标与规则；2.平台进入：分散部署并更新目标；3.交战处置：完成发射、突防与受控交战；4.持续续接：实施毁伤评估、补击或中止，并在弱网条件下降级运行。",
             "- 形成能力与作战效果：形成远程精确毁伤、持续压制和战损续接能力，直接压缩发现至交战闭环时间并改善单位有效毁伤成本；以任务完成率、闭环时间、正确拒打率和单位成本验收。",
-            "- 制胜逻辑机理与对抗边界：通过分散并发和低信息依赖迫使对手分层拦截过载；若诱饵识别、授权边界或受扰导航失效，则任务转为拒打或安全中止。",
-            "- 发展与验证路径：先开展数字仿真和半实物闭环，再围绕强干扰、目标欺骗和节点损耗开展对抗验证，以授权成功率、异常拒打率、闭环时间和单位成本作为转段门槛。",
+            "- 制胜逻辑机理：传统远程火力依赖持续目标更新并在发现后集中发射，该装备以分散预置、低信息依赖和受控自治改写交战节奏，迫使对手在持续隐蔽与暴露节点功能之间选择，并使其分层拦截资源过载。",
+            "- 发展与验证路径：先开展数字仿真和半实物闭环，再围绕强干扰、目标欺骗和节点损耗开展对抗验证，以授权成功率、异常拒打率、闭环时间和单位成本作为转段门槛；失效边界独立记录。",
         ]
     )
     if len(body) < 500:
@@ -33,6 +35,14 @@ def test_complete_target_seeker_term_is_not_a_dangling_fragment() -> None:
         "| 诱压事件捕获 | 诱饵弹记录敌雷达开机、拦截、机动和电子战反应的能力。 |"
     )
     assert _has_dangling_report_fragment("该方向仍缺少可公开验证的。")
+
+
+def test_current_prefix_is_not_misread_as_a_dangling_conditional() -> None:
+    assert not _has_dangling_report_fragment(
+        "当前置微波和电子压制装备完成首轮拦截后，"
+        "激光复合防空车转入漏网目标精确毁伤。"
+    )
+    assert _has_dangling_report_fragment("当导航欺骗识别晚于航路偏差形成。")
 
 
 def _content_contract_report(names: list[str], portraits: str = "") -> str:
@@ -116,6 +126,70 @@ def test_domain_fitness_recognizes_unmanned_weapon_platform_wording() -> None:
     result = ReportQualityGate()._check_domain_fitness("无人远程火力", metadata)
 
     assert result.indicators["has_unmanned_combat_equipment"] is True
+
+
+def test_direct_weapon_focus_recognizes_undersea_interceptors_and_motherships() -> None:
+    records = [
+        {
+            "name": "封装释放式反UUV近程硬杀拦截器",
+            "equipment_form": "水下拦截器",
+            "mission_effect": "近程拦截并直接毁伤敌UUV",
+        },
+        {
+            "name": "水下无人母艇-效应器再投送艇",
+            "equipment_form": "水下无人母平台与水下效应器",
+            "mission_effect": "再投送效应器完成猎歼与拒止",
+        },
+        {
+            "name": "低成本反UUV自主拦截鱼雷",
+            "equipment_form": "自主鱼雷",
+            "mission_effect": "拦截并杀伤敌UUV",
+        },
+        {
+            "name": "坐底封装反潜拒止武器",
+            "equipment_form": "UUV投送水下武器",
+            "mission_effect": "对潜艇实施拒止和毁伤",
+        },
+    ]
+    result = ReportQualityGate()._check_domain_fitness(
+        "真实远海反潜交战场景",
+        {
+            "topic": "远海反潜武器装备",
+            "expected_capability_records": records,
+            "require_direct_combat_weapon_focus": True,
+        },
+    )
+
+    assert result.indicators["has_at_least_4_direct_combat_weapons"] is True
+    assert result.indicators["direct_combat_weapons_are_portfolio_majority"] is True
+    assert result.passed is True
+
+
+def test_scenario_first_content_gate_accepts_editorial_equipment_names() -> None:
+    source_names = [f"前置画像装备{index}" for index in range(4)]
+    editorial_names = [f"战场化命名武器{index}" for index in range(4)]
+    report = _content_contract_report(editorial_names)
+    result = ReportQualityGate()._check_report_content_contract(
+        report,
+        {
+            "report_template_mode": "project_argument_v1",
+            "military_scenario_first_gate": True,
+            "require_detailed_capability_portraits": True,
+            "require_high_value_military_information": True,
+            "expected_capability_directions": source_names,
+            "expected_capability_records": [
+                {
+                    "name": name,
+                    "equipment_form": "直接杀伤无人武器平台",
+                    "mission_effect": "拦截并毁伤敌方目标",
+                }
+                for name in source_names
+            ],
+        },
+    )
+
+    assert result.indicators["capability_projection_complete"] is True
+    assert result.passed is True
 
 
 def test_domain_fitness_recognizes_intervening_unmanned_platform_wording() -> None:
@@ -477,6 +551,34 @@ def test_quality_content_gate_requires_all_full_governed_portraits_when_enabled(
         metadata,
     )
 
+    assert check.indicators["detailed_capability_portraits_complete"] is True
+    assert check.passed is True
+
+
+@pytest.mark.parametrize("direction_count", [4, 8])
+def test_quality_content_gate_projects_exact_selected_portfolio_size(
+    direction_count: int,
+) -> None:
+    names = [
+        f"前瞻无人远程打击装备{index}"
+        for index in range(1, direction_count + 1)
+    ]
+    portraits = "\n\n".join(
+        _governed_capability_portrait(name) for name in names
+    )
+    metadata = {
+        "report_template_mode": "project_argument_v1",
+        "expected_capability_directions": names,
+        "expected_capability_records": [{"name": name} for name in names],
+        "require_detailed_capability_portraits": True,
+    }
+
+    check = ReportQualityGate()._check_report_content_contract(
+        _content_contract_report(names, portraits),
+        metadata,
+    )
+
+    assert check.indicators["capability_projection_complete"] is True
     assert check.indicators["detailed_capability_portraits_complete"] is True
     assert check.passed is True
 

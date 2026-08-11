@@ -667,6 +667,19 @@ class AgentHarness:
                     "checkpoint_id": checkpoint_id,
                     "output_refs": output_refs,
                     "evidence_ids": evidence_ids,
+                    "completion_scope": str(
+                        getattr(self.provider, "completion_scope", "business_task")
+                    ),
+                    "domain_commit_expected": bool(
+                        getattr(self.provider, "domain_commit_expected", True)
+                    ),
+                    "business_result_authoritative": bool(
+                        getattr(
+                            self.provider,
+                            "business_result_authoritative",
+                            True,
+                        )
+                    ),
                 },
             )
             terminal_recorded = True

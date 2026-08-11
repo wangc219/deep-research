@@ -12,6 +12,7 @@ from equipment_deep_research.domain.research_focus import (
     DISRUPTIVE_EQUIPMENT_SEEDS,
     REFERENCE_REQUIREMENT_OWNERS,
     disruptive_seed_context,
+    disruptive_seed_pool_context,
     select_disruptive_equipment_seeds,
 )
 from equipment_deep_research.orchestration.blueprints import (
@@ -97,7 +98,7 @@ def test_optimized_codex_runtime_keeps_short_branch_and_agent_lenses() -> None:
     assert profile["branch_focus"]["reference_focus"]["source_items"] == [4, 12]
 
 
-def test_updated_reference_topics_resolve_without_future_war_case_misroute() -> None:
+def test_updated_reference_topics_are_routed_by_model_blueprint() -> None:
     cases = {
         "俄乌局部战争无人远程火力经验": "C",
         "量子信息与新质毁伤装备": "D",
@@ -109,7 +110,12 @@ def test_updated_reference_topics_resolve_without_future_war_case_misroute() -> 
     }
     for topic, expected in cases.items():
         problem = ResearchProblem(topic)
-        assert problem.resolved_discovery_branch()["primary"] == expected
+        assert problem.resolved_discovery_branch()["primary"] == "A"
+        blueprint = build_discovery_blueprint(
+            problem,
+            model_blueprint={"primary_branch": expected, "confidence": 0.9},
+        )
+        assert blueprint["primary_branch"] == expected
 
     assert (
         ResearchProblem(
@@ -214,6 +220,18 @@ def test_disruptive_seed_runtime_context_is_bounded_and_marks_seeds_as_hypothese
     assert len(json.dumps(context, ensure_ascii=False)) < 1000
 
 
+def test_complete_seed_pool_is_reserved_for_post_divergence_model_review() -> None:
+    context = disruptive_seed_pool_context()
+
+    assert len(context["cards"]) == len(DISRUPTIVE_EQUIPMENT_SEEDS)
+    assert all(
+        item["selection_basis"] == "post_divergence_model_review"
+        for item in context["cards"]
+    )
+    assert "采用、重写、跨种子重构" in context["rule"]
+    assert "不得按维度逐项覆盖" in context["rule"]
+
+
 def test_broad_a2ad_query_is_left_to_codex_when_no_seed_directly_matches() -> None:
     context = disruptive_seed_context(
         "挖掘在西太反介入体系下的装备能力缺口",
@@ -224,7 +242,7 @@ def test_broad_a2ad_query_is_left_to_codex_when_no_seed_directly_matches() -> No
     assert context == {}
 
 
-def test_optimized_winning_runtime_keeps_selected_disruptive_seeds() -> None:
+def test_optimized_winning_runtime_does_not_seed_first_s3_divergence() -> None:
     blueprint = build_discovery_blueprint(
         ResearchProblem("拒止环境下无人远程精打", discovery_branch="F")
     )
@@ -239,9 +257,7 @@ def test_optimized_winning_runtime_keeps_selected_disruptive_seeds() -> None:
         compact=True,
     )
 
-    seed_context = profile["disruptive_seed_context"]
-    assert 1 <= len(seed_context["cards"]) <= 4
-    assert any(item["id"] == "F2" for item in seed_context["cards"])
+    assert "disruptive_seed_context" not in profile
 
 
 def test_runtime_does_not_duplicate_seed_context_already_in_task_input() -> None:

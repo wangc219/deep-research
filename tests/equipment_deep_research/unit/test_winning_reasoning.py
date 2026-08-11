@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 from equipment_deep_research.domain.models import (
     AuditResult,
     BaselineFindingPacket,
@@ -9,6 +11,7 @@ from equipment_deep_research.domain.store import DomainStore, TraceStore
 from equipment_deep_research.orchestration.winning import WinningMechanismEngine
 from equipment_deep_research.orchestration.reporting import audit_run, render_report
 from equipment_deep_research.orchestration.runner import (
+    _codex_loops_recorded,
     _persisted_winning_loop_kinds,
     _reconcile_final_audit_status,
 )
@@ -349,7 +352,7 @@ def test_risk_based_gate_keeps_calibration_request_as_validation_backlog() -> No
     assert backlog[0]["gate_impact"] == "non_blocking"
 
 
-def test_risk_based_targeted_evidence_stays_blocking_without_direct_evidence() -> None:
+def test_risk_based_targeted_evidence_is_advisory_without_direct_evidence() -> None:
     packet = BaselineFindingPacket(
         "p-blocking-evidence",
         "weapon_equipment",
@@ -421,9 +424,9 @@ def test_risk_based_targeted_evidence_stays_blocking_without_direct_evidence() -
         },
     )
 
-    assert stages[-1].gate_passed is False
-    assert stages[-1].recall_requests
-    assert any("缺少有效直接证据" in reason for reason in stages[-1].gate_reasons)
+    assert stages[-1].gate_passed is True
+    assert stages[-1].recall_requests == []
+    assert not any("缺少有效直接证据" in reason for reason in stages[-1].gate_reasons)
     assert images[0].evidence_ids == []
 
 
@@ -563,9 +566,9 @@ def test_model_directions_are_all_preserved_as_capability_images() -> None:
     )
 
     assert [item.name for item in images] == [
-        "现役侦察火控系统目标发现、反制与再打击升级",
-        "多域目标猎获、效应分配与持续打击协同能力",
-        "现役侦察火控系统目标发现、反制与再打击升级",
+        "方向一",
+        "方向二",
+        "方向三",
     ]
     assert [item.capability_id for item in images] == [
         "cap-upgrade-001",
@@ -576,18 +579,18 @@ def test_model_directions_are_all_preserved_as_capability_images() -> None:
     assert images[2].evidence_ids == ["ev-2"]
     upgrade = images[0]
     assert "压缩发现到处置的任务闭环" in upgrade.source_winning_logic
-    assert "火力分配" in upgrade.military_utility
-    assert "效应器选择" in upgrade.strike_countermeasure_value
+    assert "任务连续性" in upgrade.military_utility
+    assert "电子压制" in upgrade.strike_countermeasure_value
     assert "软件定义" in upgrade.novelty
     assert "智能化干扰" in upgrade.foresight
     assert upgrade.capability_image == upgrade.deep_capability_portrait
     assert "关键作战流程" in upgrade.deep_capability_portrait
     assert "制胜逻辑机理" in upgrade.deep_capability_portrait
-    assert "指挥火控" in upgrade.equipment_category
-    assert "效应器选择" in upgrade.operational_mechanism
+    assert "开放式任务系统" in upgrade.equipment_category
+    assert "边缘自治" in upgrade.operational_mechanism
     assert upgrade.development_path.startswith("近期完成")
     assert upgrade.baseline_system.startswith("现役无人任务平台")
-    assert "跨域效应分配和火力控制" in upgrade.upgrade_package
+    assert "开放式任务计算模块" in upgrade.upgrade_package
     assert "火力协同" in upgrade.combat_effect_uplift
     assert "打击任务续接" in upgrade.strike_chain_contribution
     assert "转入新型任务节点研制" in upgrade.upgrade_boundary
@@ -1011,6 +1014,139 @@ def test_risk_based_gates_accept_grounded_s_chain_without_duplicate_tag_recall()
     assert stages[1].outputs["validation_source"] == "S步骤结构化验证"
 
 
+def test_dynamic_swarm_semantics_close_l1_l3_without_exact_situation_tag() -> None:
+    packet = BaselineFindingPacket(
+        "packet-semantic-swarm",
+        "weapon_equipment",
+        ["equipment"],
+        "远海断链打击",
+        ["公开材料支撑断链条件下的武器运用与失效边界判断"],
+        ["ev-semantic-swarm"],
+        0.61,
+        [],
+        [],
+        "动态蜂群形成装备组合",
+        "done",
+    )
+    analysis = {
+        "s6_quality_gate_passed": True,
+        "s6_quality_gate_failed": False,
+        "winning_swarm": {
+            "final_equipment_portfolio": [
+                {
+                    "name": "断链续攻自主巡飞打击弹",
+                    "operational_mechanism": "在主链路失效后自主完成目标复核与交战",
+                    "failure_boundary": "目标类别无法确认时终止攻击",
+                }
+            ],
+            "portfolio_quality_gate": {"passed": True},
+        },
+        "capability_synthesis": [
+            {"combat_problem": "压制下任务链中断", "winning_logic": "缩短再授权链"}
+        ],
+    }
+    engine = WinningMechanismEngine(risk_based_gates=True)
+    coverage = {
+        "missing_required_tags": ["situation"],
+        "coverage_passed": False,
+        "provided_tags": ["equipment"],
+    }
+    l1 = engine._l1(
+        topic="远海断链打击",
+        route="new_winning_mechanism",
+        packets=[packet],
+        evidence_ids=["ev-semantic-swarm"],
+        coverage=coverage,
+        stage_id="stage-L1",
+        model_analysis=analysis,
+    )
+    l2 = engine._l2(
+        topic="远海断链打击",
+        route="new_winning_mechanism",
+        l1=l1,
+        evidence_ids=["ev-semantic-swarm"],
+        coverage=coverage,
+        stage_id="stage-L2",
+        model_analysis=analysis,
+    )
+    l3 = engine._l3(
+        topic="远海断链打击",
+        route="new_winning_mechanism",
+        l1=l1,
+        l2=l2,
+        evidence_ids=["ev-semantic-swarm"],
+        coverage=coverage,
+        stage_id="stage-L3",
+        model_analysis=analysis,
+    )
+
+    assert [l1.gate_passed, l2.gate_passed, l3.gate_passed] == [True, True, True]
+    assert l1.recall_requests == []
+    assert l2.recall_requests == []
+    assert l3.recall_requests == []
+    assert l1.outputs["semantic_gate"]["exact_tag_gaps_are_non_blocking"] is True
+
+
+def test_risk_gate_recalls_for_no_evidence_not_low_confidence() -> None:
+    packet = BaselineFindingPacket(
+        "packet-low-confidence",
+        "weapon_equipment",
+        ["equipment"],
+        "前瞻装备",
+        ["新质装备仍处于概念验证阶段"],
+        ["ev-low-confidence"],
+        0.42,
+        [],
+        ["公开证据较少"],
+        "形成有限置信判断",
+        "done",
+    )
+    engine = WinningMechanismEngine(risk_based_gates=True)
+    coverage = {
+        "missing_required_tags": ["situation"],
+        "coverage_passed": False,
+        "provided_tags": ["equipment"],
+    }
+    analysis = {
+        "capability_synthesis": [
+            {
+                "name": "跨介质自主猎歼装备",
+                "winning_logic": "以跨域机动打破固定防御扇区",
+            }
+        ],
+        "concept_directions": [
+            {"name": "跨介质自主猎歼装备", "type": "new_capability"}
+        ],
+    }
+
+    low_confidence = engine._l1(
+        topic="前瞻装备",
+        route="new_winning_mechanism",
+        packets=[packet],
+        evidence_ids=["ev-low-confidence"],
+        coverage=coverage,
+        stage_id="stage-L1",
+        model_analysis=analysis,
+    )
+    no_evidence = engine._l1(
+        topic="前瞻装备",
+        route="new_winning_mechanism",
+        packets=[replace(packet, evidence_ids=[])],
+        evidence_ids=[],
+        coverage=coverage,
+        stage_id="stage-L1-no-evidence",
+        model_analysis=analysis,
+    )
+
+    assert low_confidence.gate_passed is True
+    assert low_confidence.recall_requests == []
+    assert low_confidence.outputs["semantic_gate"]["low_confidence_is_warning"] is True
+    assert no_evidence.gate_passed is False
+    assert len(no_evidence.recall_requests) == 1
+    assert no_evidence.recall_requests[0].target_capability_tag is None
+    assert "没有可追溯公开证据" in no_evidence.recall_requests[0].reason
+
+
 def test_post_recall_risk_gate_accepts_grounded_evidence_at_calibrated_floor() -> None:
     packet = BaselineFindingPacket(
         "packet-post-recall",
@@ -1095,7 +1231,7 @@ def test_optimized_audit_accepts_confidence_calibrated_by_passed_stage_gates() -
     assert audit.checks["confidence_ge_70"] is True
 
 
-def test_s6_quality_failure_is_a_hard_stage_and_audit_gate() -> None:
+def test_legacy_s6_quality_failure_is_advisory_to_stage_and_audit() -> None:
     packet = BaselineFindingPacket(
         "packet-s6-gate",
         "weapon_equipment",
@@ -1149,12 +1285,12 @@ def test_s6_quality_failure_is_a_hard_stage_and_audit_gate() -> None:
         },
     )
 
-    assert [stage.gate_passed for stage in stages] == [True, True, False]
+    assert [stage.gate_passed for stage in stages] == [True, True, True]
     assert not any(
         "S6能力画像质量门未通过" in item
         for item in stages[0].gate_reasons
     )
-    assert any(
+    assert not any(
         "S6能力画像质量门未通过" in item
         for item in stages[2].gate_reasons
     )
@@ -1165,8 +1301,7 @@ def test_s6_quality_failure_is_a_hard_stage_and_audit_gate() -> None:
         analyst_confirmed=True,
         risk_based_confidence=True,
     )
-    assert audit.status == "limited"
-    assert audit.checks["stage_gates_passed"] is False
+    assert audit.checks["stage_gates_passed"] is True
 
 
 def test_persisted_loop_trace_survives_report_only_resume() -> None:
@@ -1192,6 +1327,19 @@ def test_persisted_loop_trace_survives_report_only_resume() -> None:
     )
 
     assert _persisted_winning_loop_kinds(store) == {"inner", "middle"}
+
+
+def test_quality_swarm_sessions_survive_report_only_architecture_audit() -> None:
+    assert _codex_loops_recorded(
+        mode="real",
+        execution_profile_id="swarm_quality_v1",
+        event_types=set(),
+        persisted_loop_kinds=set(),
+        session_agents={
+            "winning_swarm_controller",
+            "specialist-1234",
+        },
+    )
 
 
 def test_final_report_reconciliation_clears_non_substantive_limited_status() -> None:

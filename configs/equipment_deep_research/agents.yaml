@@ -399,7 +399,7 @@ agents:
     harness_profile: winning_step_v1
     skill_ids: [defense_decomposition, ooda_vulnerability_analysis]
     display_name: S1 对手分析
-    description: 以Query为锚发散竞争性对手体系与反适应假设，解构关键依赖、薄弱环节、替代链和证据边界。
+    description: 以Query为锚解释对手现行制胜范式的成功逻辑、锁定依赖与适应均衡，再发散竞争性反适应假设和范式失效条件。
     capability_tags: [opponent_analysis, defense_decomposition]
     tools: [prepare_winning_input, project_winning_resources, analyze_ooda_vulnerability, write_reasoning_node, write_stage_output, create_recall_request]
     context_policy: {visible_sections: [task, baseline_summaries, evidence_index, coverage], hide_other_agent_raw_sessions: true}
@@ -412,7 +412,7 @@ agents:
     harness_profile: winning_step_v1
     skill_ids: [winning_path_analysis, doctrine_operational_review]
     display_name: S2 作战运用审查
-    description: 以Query为锚发散机制不同的战法与运用路径，审查任务链、协同、保障、失败模式和军事效果。
+    description: 以Query为锚发散机制不同的战法与运用路径，以非装备调整和普通升级为对照，识别真正改变决策权、时序、暴露与效应关系的路径。
     capability_tags: [operational_review, winning_path]
     tools: [write_reasoning_node, write_stage_output, create_recall_request]
     context_policy: {visible_sections: [task, baseline_summaries, evidence_index, coverage], hide_other_agent_raw_sessions: true}
@@ -425,7 +425,7 @@ agents:
     harness_profile: winning_step_v1
     skill_ids: [effect_chain_analysis, counterfactual_triz_innovation]
     display_name: S3 突破口思考
-    description: 围绕Query核心矛盾，通过反事实与替代假设，在成本、平台、时间、效应、体系、可控性及OTHER维度发散竞争性突破方向并构建可追溯军事效果链。
+    description: 围绕Query核心矛盾，通过反事实比较最强常规方案、非连续跃迁方案和流程解释，只保留无法被常规升级吸收且能改变制胜关系的可追溯装备方向。
     capability_tags: [breakthrough, effect_chain]
     tools: [generate_counterfactual_option, apply_triz_contradiction, write_reasoning_node, write_stage_output, create_recall_request]
     context_policy: {visible_sections: [task, baseline_summaries, evidence_index, coverage], hide_other_agent_raw_sessions: true}
@@ -438,7 +438,7 @@ agents:
     harness_profile: winning_step_v1
     skill_ids: [capability_mapping, dotmlpf_capability_mapping]
     display_name: S4 装备能力映射
-    description: 从Query要求的直接作战效果反推装备功能、做优接口、拓新装备族、性能约束和体系接口，避免支撑能力主导组合。
+    description: 从Query要求的直接作战效果反推能物化关系跃迁的最小可行装备构型、性能约束和体系接口，并用构型删除测试排除创新包装。
     capability_tags: [capability_mapping, equipment_requirement]
     tools: [map_dotmlpf_requirement, write_reasoning_node, write_stage_output, create_recall_request]
     context_policy: {visible_sections: [task, baseline_summaries, evidence_index, coverage], hide_other_agent_raw_sessions: true}
@@ -451,7 +451,7 @@ agents:
     harness_profile: winning_step_v1
     skill_ids: [gap_quantification, equipment_system_gap_assessment]
     display_name: S5 装备现状与差距
-    description: 以Query的作战后果对齐现役、在研装备和体系约束，比较升级、新研与非装备缓解并形成五档差距。
+    description: 以Query的作战后果对齐现役、在研装备和体系约束，用最强常规升级与非装备路径复做吸收测试，裁决新研、升级或判退并形成五档差距。
     capability_tags: [equipment_baseline, gap_quantification]
     tools: [write_reasoning_node, write_stage_output, create_recall_request]
     context_policy: {visible_sections: [task, baseline_summaries, evidence_index, coverage], hide_other_agent_raw_sessions: true}

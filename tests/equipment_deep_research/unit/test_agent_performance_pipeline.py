@@ -328,7 +328,7 @@ def test_reference_agent_uses_compact_medium_reasoning_profile() -> None:
     discovery_payload = backend.inputs[0][0][-1].content
     discovery_options = backend.inputs[0][2]
     analysis_options = backend.inputs[1][2]
-    assert discovery_payload["task_input"]["target_source_count"] == 4
+    assert discovery_payload["task_input"]["target_source_count"] == 3
     assert discovery_options["max_output_tokens"] <= 1000
     assert analysis_options["reasoning_effort"] == "medium"
     assert analysis_options["max_output_tokens"] <= 1800
@@ -344,14 +344,6 @@ def test_required_weapon_equipment_uses_bounded_quality_source_target() -> None:
             [
                 ProviderStreamEvent.final(
                     ProviderFinalTurn(
-                        text="weapon discovery",
-                        metadata={"web_sources": sources},
-                    )
-                )
-            ],
-            [
-                ProviderStreamEvent.final(
-                    ProviderFinalTurn(
                         text=(
                             '{"findings":["装备项目证据闭环"],"confidence":0.8,'
                             '"open_questions":[],"handoff_summary":"完成",'
@@ -359,7 +351,8 @@ def test_required_weapon_equipment_uses_bounded_quality_source_target() -> None:
                             '{"url":"https://weapon-0.example/report",'
                             '"claim":"装备项目证据闭环"}],'
                             '"analysis_sections":{}}'
-                        )
+                        ),
+                        metadata={"web_sources": sources},
                     )
                 )
             ],
@@ -384,17 +377,28 @@ def test_required_weapon_equipment_uses_bounded_quality_source_target() -> None:
 
     discovery_payload = backend.inputs[0][0][-1].content["task_input"]
     discovery_options = backend.inputs[0][2]
-    assert discovery_payload["target_source_count"] == 14
+    assert discovery_payload["target_source_count"] == 4
     channel_ids = {
         channel["channel_id"]
         for channel in discovery_payload["specialized_evidence_channels"]
     }
     assert "query_target_threat_combat_effect" in channel_ids
-    assert "long_range_precision_missile" in channel_ids
-    assert "low_altitude_expendable_unmanned_strike" in channel_ids
-    assert "counter_uas_interceptor_effector" not in channel_ids
-    assert discovery_options["max_output_tokens"] == 2000
+    assert channel_ids == {
+        "query_target_threat_combat_effect",
+        "query_specific_weapon_architecture_baseline",
+        "query_countermeasure_failure_boundary",
+        "query_weapon_engineering_acquisition",
+    }
+    assert discovery_options["max_output_tokens"] == 1400
+    assert discovery_options["reasoning_effort"] == "low"
+    assert discovery_options["_disable_provider_timeout"] is True
+    assert "_provider_timeout_seconds" not in discovery_options
     assert discovery_options["web_search"]["search_context_size"] == "medium"
+    assert "output_schema" in discovery_options
+    snapshot_prompt = repr([message.content for message in backend.inputs[0][0]])
+    assert "公开现役/在研能力边界" in snapshot_prompt
+    assert "不得提出或命名前瞻候选" in snapshot_prompt
+    assert len(backend.inputs) == 1
 
 
 def test_required_agent_keeps_high_reasoning_profile() -> None:
@@ -449,7 +453,7 @@ def test_required_agent_keeps_high_reasoning_profile() -> None:
 
     analysis_options = backend.inputs[1][2]
     assert analysis_options["reasoning_effort"] == "high"
-    assert analysis_options["max_output_tokens"] == 2600
+    assert analysis_options["max_output_tokens"] == 1800
 
 
 def test_context_projection_keeps_only_target_fields() -> None:
@@ -680,7 +684,7 @@ def test_weapon_specialized_evidence_channels_are_distinct_and_query_anchored() 
     assert not any(row.get("source_anchors") for row in rows)
 
 
-def test_weapon_specialized_evidence_channels_activate_only_query_lenses() -> None:
+def test_weapon_specialized_evidence_channels_do_not_preselect_weapon_families() -> None:
     rows = _weapon_specialized_evidence_channels(
         "无人远程精确打击与反辐射压制",
         structured_query_brief={
@@ -690,39 +694,34 @@ def test_weapon_specialized_evidence_channels_activate_only_query_lenses() -> No
     )
     ids = [row["channel_id"] for row in rows]
 
-    assert "long_range_precision_missile" in ids
-    assert "low_altitude_expendable_unmanned_strike" in ids
-    assert "loitering_antiradiation_suppression" in ids
-    assert "expendable_decoy_electronic_attack" not in ids
-    assert "counter_uas_interceptor_effector" not in ids
+    assert ids == [
+        "query_target_threat_combat_effect",
+        "query_specific_weapon_architecture_baseline",
+        "query_countermeasure_failure_boundary",
+        "query_weapon_engineering_acquisition",
+    ]
 
 
-def test_specialized_anchor_priority_covers_each_equipment_lane_before_corroboration() -> None:
+def test_query_semantic_channels_have_no_fixed_equipment_family_anchors() -> None:
     channels = _weapon_specialized_evidence_channels(
         "无人远程精确打击、反辐射诱骗、反蜂群拦截与低成本规模化装备"
     )
     urls = _prioritize_specialized_anchor_urls(channels)
 
-    first_by_channel = [
-        row["source_anchors"][0]
-        for row in channels
-        if row.get("source_anchors")
-    ]
-    assert urls[: len(first_by_channel)] == first_by_channel
-    assert next(index for index, url in enumerate(urls) if "barracuda" in url.lower()) < next(
-        index
-        for index, url in enumerate(urls)
-        if "precision-strike-missile" in url.lower()
-    )
+    assert urls == []
+    assert all(not row.get("source_anchors") for row in channels)
 
 
-def test_weapon_discovery_prompt_uses_query_specific_non_exhaustive_evidence_lanes() -> None:
+def test_weapon_discovery_prompt_uses_query_semantics_without_fixed_catalogue() -> None:
     prompt = _discovery_system_prompt("weapon_equipment")
 
     assert "Codex Query语义发散简报" in prompt
     assert "Query专属证据通道" in prompt
     assert "不得固定套用" in prompt
-    assert "非穷尽" in prompt
+    assert "敌方目标、作战阶段" in prompt
+    assert "候选武器构型" in prompt
+    assert "Barracuda" not in prompt
+    assert "PrSM" not in prompt
 
 
 def test_winning_candidate_prompts_are_query_led_direct_weapon_architectures() -> None:
@@ -1211,3 +1210,74 @@ def test_known_and_open_discovery_lanes_run_in_parallel_and_merge_sources(
 
     assert backend.started_lanes == {"known_sources", "open_web"}
     assert result["source_count"] == 2
+
+
+def test_discovery_lane_timeout_is_bounded_and_baseline_analysis_continues(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("EQUIPMENT_DR_DISCOVERY_MAX_BATCHES", "1")
+    monkeypatch.setenv("EQUIPMENT_DR_WEB_DISCOVERY_TIMEOUT_SECONDS", "90")
+
+    class LimitedDiscoveryProvider:
+        def __init__(self) -> None:
+            self.inputs: list[dict] = []
+
+        def snapshot(self):
+            return {"type": "codex_cli", "model": "fake"}
+
+        async def stream(self, messages, tools, options):
+            del messages, tools
+            self.inputs.append(dict(options))
+            if options.get("web_search"):
+                raise TimeoutError("simulated hosted-search tail")
+            yield ProviderStreamEvent.final(
+                ProviderFinalTurn(
+                    text=json.dumps(
+                        {
+                            "findings": ["使用共享边界继续形成低置信度研判"],
+                            "confidence": 0.5,
+                            "open_questions": ["检索通道待后续独立补证"],
+                            "handoff_summary": "检索受限但未阻塞基线交接",
+                            "contradictions": ["缺少本轮新增公开来源"],
+                            "source_claims": [],
+                            "analysis_sections": {},
+                        },
+                        ensure_ascii=False,
+                    )
+                )
+            )
+
+    backend = LimitedDiscoveryProvider()
+    provider = ResponsesAgentProvider(backend)
+    progress_rows: list[dict] = []
+    provider.set_baseline_progress_callback(progress_rows.append)
+    result = provider.run_baseline_agent(
+        AgentRunRequest(
+            "run-limited-discovery",
+            _agent("generic_equipment"),
+            "topic",
+            "new_winning_mechanism",
+            {
+                "discovery_blueprint": {
+                    "execution_profile_id": "winning_swarm_dynamic_v2"
+                },
+                "source_priorities": [
+                    {"url": "https://shared.example/program", "title": "shared"}
+                ],
+            },
+        )
+    )
+
+    assert result.packet.handoff_summary == "检索受限但未阻塞基线交接"
+    # The generic contract may invoke one bounded missing-field repair after
+    # analysis; the failed discovery lane itself is never retried.
+    assert len(backend.inputs) in {2, 3}
+    discovery_options = backend.inputs[0]
+    assert discovery_options["_provider_timeout_seconds"] == 90
+    assert discovery_options["_provider_retry_attempts"] == 1
+    assert discovery_options["_disable_provider_timeout"] is False
+    assert any(
+        row.get("event_type") == "baseline_discovery_lane_limited"
+        and row.get("fallback") == "reuse_shared_sources_and_explicit_anchors"
+        for row in progress_rows
+    )

@@ -7,6 +7,9 @@ from hashlib import sha256
 import re
 from typing import Any, Mapping, Sequence
 
+from equipment_deep_research.agents.orchestrator_prompt import (
+    ORCHESTRATOR_PROMPT_VERSION,
+)
 from equipment_deep_research.agents.registry import AgentDef
 from equipment_deep_research.domain.models import ResearchProblem
 from equipment_deep_research.orchestration.winning_swarm import (
@@ -29,7 +32,11 @@ class BranchBlueprint:
 
 BRANCH_BLUEPRINTS: dict[str, BranchBlueprint] = {
     "A": BranchBlueprint(
-        "A", "新战法发现", "new_winning_mechanism", ("S2", "S3", "S4"), (),
+        "A",
+        "新战法发现",
+        "new_winning_mechanism",
+        ("S2", "S3", "S4"),
+        (),
         ("equipment", "operation"),
         (
             "现有战法基线",
@@ -38,10 +45,18 @@ BRANCH_BLUEPRINTS: dict[str, BranchBlueprint] = {
             "关联装备形态建议",
             "效果链与验证路径",
         ),
-        (("international_situation",), ("combat_scenario", "weapon_equipment"), ("operational_employment",)),
+        (
+            ("international_situation",),
+            ("combat_scenario", "weapon_equipment"),
+            ("operational_employment",),
+        ),
     ),
     "B": BranchBlueprint(
-        "B", "传统能力缺口发现", "traditional_gap", ("S4", "S5", "S6"), (),
+        "B",
+        "传统能力缺口发现",
+        "traditional_gap",
+        ("S4", "S5", "S6"),
+        (),
         ("equipment", "capability_gap"),
         (
             "装备基线与五档差距",
@@ -52,7 +67,10 @@ BRANCH_BLUEPRINTS: dict[str, BranchBlueprint] = {
         (("international_situation",), ("combat_scenario", "weapon_equipment")),
     ),
     "C": BranchBlueprint(
-        "C", "局部战争案例经验", "war_case_learning", ("案例链", "S3", "S4", "S5", "S6"),
+        "C",
+        "局部战争案例经验",
+        "war_case_learning",
+        ("案例链", "S3", "S4", "S5", "S6"),
         ("case_research",),
         ("case_reconstruction", "lessons", "equipment"),
         (
@@ -63,42 +81,116 @@ BRANCH_BLUEPRINTS: dict[str, BranchBlueprint] = {
             "装备需求图像（4大新兴装备类别）",
             "迁移边界",
         ),
-        (("case_research",), ("combat_scenario", "weapon_equipment"), ("operational_employment",)),
+        (
+            ("case_research",),
+            ("combat_scenario", "weapon_equipment"),
+            ("operational_employment",),
+        ),
     ),
     "D": BranchBlueprint(
-        "D", "技术驱动发现", "new_winning_mechanism", ("技术雷达", "S3", "S4", "S6"),
+        "D",
+        "技术驱动发现",
+        "new_winning_mechanism",
+        ("技术雷达", "S3", "S4", "S6"),
         ("technology_radar",),
         ("technology_radar", "technology_readiness", "equipment"),
-        ("技术扫描", "成熟度", "能力潜力", "颠覆场景", "阶段验证", "装备能力需求图像（需求卡片）"),
-        (("technology_radar",), ("combat_scenario", "weapon_equipment"), ("operational_employment",)),
+        (
+            "技术扫描",
+            "成熟度",
+            "能力潜力",
+            "颠覆场景",
+            "阶段验证",
+            "装备能力需求图像（需求卡片）",
+        ),
+        (
+            ("technology_radar",),
+            ("combat_scenario", "weapon_equipment"),
+            ("operational_employment",),
+        ),
     ),
     "E": BranchBlueprint(
-        "E", "对手动向牵引发现", "new_winning_mechanism", ("对手监测", "S1", "S3", "S4", "S5"),
+        "E",
+        "对手动向牵引发现",
+        "new_winning_mechanism",
+        ("对手监测", "S1", "S3", "S4", "S5"),
         ("opponent_monitoring",),
         ("opponent_monitoring", "threat", "equipment"),
-        ("变化基线", "能力形成节奏", "威胁效应", "体系依赖", "对冲能力", "装备能力需求图像（需求卡片）"),
-        (("opponent_monitoring", "international_situation"), ("combat_scenario", "weapon_equipment"), ("operational_employment",)),
+        (
+            "变化基线",
+            "能力形成节奏",
+            "威胁效应",
+            "体系依赖",
+            "对冲能力",
+            "装备能力需求图像（需求卡片）",
+        ),
+        (
+            ("opponent_monitoring", "international_situation"),
+            ("combat_scenario", "weapon_equipment"),
+            ("operational_employment",),
+        ),
     ),
     "F": BranchBlueprint(
-        "F", "体系对抗博弈发现", "traditional_gap", ("体系仿真", "S3", "S4", "S5", "S6"),
+        "F",
+        "体系对抗博弈发现",
+        "traditional_gap",
+        ("体系仿真", "S3", "S4", "S5", "S6"),
         ("system_confrontation",),
         ("system_modeling", "equipment", "coordination"),
-        ("体系边界", "任务依赖图", "脆弱点", "替代方案", "补链强链", "装备能力需求图像（需求卡片）"),
-        (("combat_scenario", "weapon_equipment"), ("system_confrontation",), ("operational_employment",)),
+        (
+            "体系边界",
+            "任务依赖图",
+            "脆弱点",
+            "替代方案",
+            "补链强链",
+            "装备能力需求图像（需求卡片）",
+        ),
+        (
+            ("combat_scenario", "weapon_equipment"),
+            ("system_confrontation",),
+            ("operational_employment",),
+        ),
     ),
     "G": BranchBlueprint(
-        "G", "跨域融合发现", "new_winning_mechanism", ("跨域矩阵", "S3", "S4", "S6"),
+        "G",
+        "跨域融合发现",
+        "new_winning_mechanism",
+        ("跨域矩阵", "S3", "S4", "S6"),
         ("cross_domain_fusion",),
         ("cross_domain", "equipment", "coordination"),
-        ("跨域边界", "域间接口", "协同缝隙", "跨域效果链", "融合能力", "装备能力需求图像（需求卡片）"),
-        (("cross_domain_fusion",), ("combat_scenario", "weapon_equipment"), ("operational_employment",)),
+        (
+            "跨域边界",
+            "域间接口",
+            "协同缝隙",
+            "跨域效果链",
+            "融合能力",
+            "装备能力需求图像（需求卡片）",
+        ),
+        (
+            ("cross_domain_fusion",),
+            ("combat_scenario", "weapon_equipment"),
+            ("operational_employment",),
+        ),
     ),
     "H": BranchBlueprint(
-        "H", "非传统安全牵引", "new_winning_mechanism", ("新场景", "S1", "S3", "S4", "S6"),
+        "H",
+        "非传统安全牵引",
+        "new_winning_mechanism",
+        ("新场景", "S1", "S3", "S4", "S6"),
         ("nontraditional_security",),
         ("nontraditional_security", "scenario", "equipment"),
-        ("新型威胁画像", "触发条件", "跨部门边界", "非致命与韧性能力", "法律伦理限制", "装备能力需求图像（需求卡片）"),
-        (("nontraditional_security", "international_situation"), ("combat_scenario", "weapon_equipment"), ("operational_employment",)),
+        (
+            "新型威胁画像",
+            "触发条件",
+            "跨部门边界",
+            "非致命与韧性能力",
+            "法律伦理限制",
+            "装备能力需求图像（需求卡片）",
+        ),
+        (
+            ("nontraditional_security", "international_situation"),
+            ("combat_scenario", "weapon_equipment"),
+            ("operational_employment",),
+        ),
     ),
 }
 
@@ -170,12 +262,45 @@ TOPIC_AGENT_SIGNALS: dict[str, dict[str, Any]] = {
         "priority": 140,
         "mode": "required",
         "signals": (
-            "国际", "国外", "外军", "境外", "全球", "地区安全", "区域安全",
-            "西太", "亚太", "印太", "台海", "南海", "东海", "中东", "欧洲",
-            "印度洋", "东北亚", "东南亚", "南亚", "朝鲜半岛", "日本", "西南岛链",
-            "第一岛链", "第二岛链", "边境涉外", "海外基地", "海外通道",
-            "一带一路", "美西方", "印度", "朝鲜", "北约", "联盟", "盟友",
-            "美军", "俄军", "日军", "对外", "地缘",
+            "国际",
+            "国外",
+            "外军",
+            "境外",
+            "全球",
+            "地区安全",
+            "区域安全",
+            "西太",
+            "亚太",
+            "印太",
+            "台海",
+            "南海",
+            "东海",
+            "中东",
+            "欧洲",
+            "印度洋",
+            "东北亚",
+            "东南亚",
+            "南亚",
+            "朝鲜半岛",
+            "日本",
+            "西南岛链",
+            "第一岛链",
+            "第二岛链",
+            "边境涉外",
+            "海外基地",
+            "海外通道",
+            "一带一路",
+            "美西方",
+            "印度",
+            "朝鲜",
+            "北约",
+            "联盟",
+            "盟友",
+            "美军",
+            "俄军",
+            "日军",
+            "对外",
+            "地缘",
         ),
         "reason": "任务涉及外部地区、国外力量或国际安全环境，需要建立战略态势与对手能力建设基线。",
     },
@@ -183,19 +308,53 @@ TOPIC_AGENT_SIGNALS: dict[str, dict[str, Any]] = {
         "priority": 98,
         "mode": "required",
         "signals": (
-            "体系对抗", "体系博弈", "反介入", "区域拒止", "a2/ad", "a2ad",
-            "杀伤链", "杀伤网", "ooda", "体系脆弱", "体系韧性", "体系依赖",
-            "穿透性制空", "马赛克战", "决策中心战", "分布式杀伤",
+            "体系对抗",
+            "体系博弈",
+            "反介入",
+            "区域拒止",
+            "a2/ad",
+            "a2ad",
+            "杀伤链",
+            "杀伤网",
+            "ooda",
+            "体系脆弱",
+            "体系韧性",
+            "体系依赖",
+            "穿透性制空",
+            "马赛克战",
+            "决策中心战",
+            "分布式杀伤",
         ),
         "reason": "任务明确涉及体系级对抗、依赖链或反介入/区域拒止，需要体系建模与补链强链分析。",
     },
     "weapon_equipment": {
         "priority": 92,
-        "mode": "required",
+        # The public equipment baseline constrains and verifies concrete
+        # candidates, but it must not become the prerequisite that anchors or
+        # blocks first-round S1-S3 innovation.  It still runs in the bounded
+        # first wave when the Query asks for equipment evidence, as a reference
+        # boundary snapshot; S4/S5 own candidate-level verification.
+        "mode": "reference",
         "signals": (
-            "装备", "武器", "平台", "型号", "载荷", "参数", "现役", "在研",
-            "升级", "改进", "能力缺口", "能力差距", "技术成熟度", "研发需求",
-            "无人系统", "远程火力", "远程精打", "新质毁伤", "装备能力图像",
+            "装备",
+            "武器",
+            "平台",
+            "型号",
+            "载荷",
+            "参数",
+            "现役",
+            "在研",
+            "升级",
+            "改进",
+            "能力缺口",
+            "能力差距",
+            "技术成熟度",
+            "研发需求",
+            "无人系统",
+            "远程火力",
+            "远程精打",
+            "新质毁伤",
+            "装备能力图像",
         ),
         "reason": "任务要求装备现状、能力差距、升级或新研判断，需要装备证据与成熟度分析。",
     },
@@ -203,8 +362,19 @@ TOPIC_AGENT_SIGNALS: dict[str, dict[str, Any]] = {
         "priority": 88,
         "mode": "required",
         "signals": (
-            "作战", "战法", "运用", "任务链", "行动方案", "力量协同", "联合作战",
-            "部署原则", "打击", "反制", "防御", "保障", "持续作战",
+            "作战",
+            "战法",
+            "运用",
+            "任务链",
+            "行动方案",
+            "力量协同",
+            "联合作战",
+            "部署原则",
+            "打击",
+            "反制",
+            "防御",
+            "保障",
+            "持续作战",
         ),
         "reason": "任务涉及作战运用、任务链或力量协同，需要把场景和装备结论转化为可评估的运用约束。",
     },
@@ -212,9 +382,23 @@ TOPIC_AGENT_SIGNALS: dict[str, dict[str, Any]] = {
         "priority": 82,
         "mode": "reference",
         "signals": (
-            "作战场景", "战场环境", "任务场景", "阶段演化", "时间窗口", "危机阶段",
-            "战区", "海域", "空域", "电磁环境", "复杂环境", "场景推演",
-            "远海前出", "远程快打", "全球到达", "全球达到", "岛链",
+            "作战场景",
+            "战场环境",
+            "任务场景",
+            "阶段演化",
+            "时间窗口",
+            "危机阶段",
+            "战区",
+            "海域",
+            "空域",
+            "电磁环境",
+            "复杂环境",
+            "场景推演",
+            "远海前出",
+            "远程快打",
+            "全球到达",
+            "全球达到",
+            "岛链",
         ),
         "reason": "任务包含具体战场环境、阶段或时间窗口，需要构造可验证的场景压力与边界条件。",
     },
@@ -222,9 +406,21 @@ TOPIC_AGENT_SIGNALS: dict[str, dict[str, Any]] = {
         "priority": 84,
         "mode": "required",
         "signals": (
-            "对手动向", "兵力部署", "部署变化", "采购变化", "演训变化", "力量建设",
-            "对手装备", "列装节奏", "扩军", "军费变化", "全球部署",
-            "金穹", "多层防御", "预警拦截", "下一代拦截器",
+            "对手动向",
+            "兵力部署",
+            "部署变化",
+            "采购变化",
+            "演训变化",
+            "力量建设",
+            "对手装备",
+            "列装节奏",
+            "扩军",
+            "军费变化",
+            "全球部署",
+            "金穹",
+            "多层防御",
+            "预警拦截",
+            "下一代拦截器",
         ),
         "reason": "任务关注对手力量建设、部署、采购或演训变化，需要持续动向监测。",
     },
@@ -363,7 +559,11 @@ def build_discovery_blueprint(
         if problem.discovery_branch != "auto"
         else str(model_blueprint.get("primary_branch") or resolved["primary"])
     )
-    code = requested_code if requested_code in BRANCH_BLUEPRINTS else str(resolved["primary"])
+    code = (
+        requested_code
+        if requested_code in BRANCH_BLUEPRINTS
+        else str(resolved["primary"])
+    )
     spec = BRANCH_BLUEPRINTS[code]
     secondary_source = (
         []
@@ -395,7 +595,11 @@ def build_discovery_blueprint(
     # Secondary branches guide L4 review and S-step emphasis. They are not hard
     # requirements that automatically expand every baseline run; the selector
     # may still choose their agents when the task actually needs them.
-    specialists.extend(custom_blueprint["preferred_agent_ids"])
+    # ``preferred_agent_ids`` are already represented by the model-authored
+    # baseline plan.  Treating them as architecture specialists as well used
+    # to append the same capability a second time after the plan had been
+    # bounded, so a nominal four-Agent blueprint started five real Codex
+    # sessions.  Only the selected A-H branch owns mandatory specialists.
     extra_tags.extend(custom_blueprint["required_capability_tags"])
     specialists = list(dict.fromkeys(specialists))
     waves = (
@@ -428,7 +632,7 @@ def build_discovery_blueprint(
         # for offline/fake runs where no model blueprint exists.
         baseline_agent_plan = _bound_model_agent_plan(
             baseline_agent_plan,
-            maximum_active=4,
+            maximum_active=3,
         )
         semantic_agent_signals: list[dict[str, Any]] = []
     else:
@@ -493,19 +697,27 @@ def build_discovery_blueprint(
             "outer_max_rounds": min(problem.max_rounds_hint, 2),
             "meta_max_cycles": 1,
         },
-        "meta_triggers": list(dict.fromkeys([
-            "出现跨分支高价值线索",
-            "当前分支无法覆盖关键能力标签",
-            "案例/技术/对手变化反向触发其他发现路径",
-            *(
-                ["A-H运行基座无法解释OTHER驱动源，需动态组合蓝图"]
-                if unmatched_driver
-                else []
-            ),
-            *_bounded_text_list(model_blueprint.get("meta_triggers", []), limit=8),
-        ])),
-        "generated_by": "codex_orchestrator" if model_blueprint else "deterministic_architecture_policy",
-        "prompt_version": "2.5",
+        "meta_triggers": list(
+            dict.fromkeys(
+                [
+                    "出现跨分支高价值线索",
+                    "当前分支无法覆盖关键能力标签",
+                    "案例/技术/对手变化反向触发其他发现路径",
+                    *(
+                        ["A-H运行基座无法解释OTHER驱动源，需动态组合蓝图"]
+                        if unmatched_driver
+                        else []
+                    ),
+                    *_bounded_text_list(
+                        model_blueprint.get("meta_triggers", []), limit=8
+                    ),
+                ]
+            )
+        ),
+        "generated_by": "codex_orchestrator"
+        if model_blueprint
+        else "deterministic_architecture_policy",
+        "prompt_version": ORCHESTRATOR_PROMPT_VERSION,
         "blueprint_mode": (
             "meta_composed"
             if unmatched_driver and custom_blueprint["preferred_agent_ids"]
@@ -517,12 +729,20 @@ def build_discovery_blueprint(
         "unmatched_driver": unmatched_driver,
         "structured_query_brief": structured_query_brief,
         "reference_focus": branch_reference_focus(code),
-        "focus_questions": _bounded_text_list(model_blueprint.get("focus_questions", []), limit=8),
-        "assumptions": _bounded_text_list(model_blueprint.get("assumptions", []), limit=8),
-        "hard_constraints": _bounded_text_list(model_blueprint.get("hard_constraints", []), limit=8),
+        "focus_questions": _bounded_text_list(
+            model_blueprint.get("focus_questions", []), limit=8
+        ),
+        "assumptions": _bounded_text_list(
+            model_blueprint.get("assumptions", []), limit=8
+        ),
+        "hard_constraints": _bounded_text_list(
+            model_blueprint.get("hard_constraints", []), limit=8
+        ),
         "adaptive_winning_step_modes": custom_blueprint["s1_s6_modes"],
         "confidence": confidence,
-        "rationale": str(model_blueprint.get("rationale") or resolved.get("rationale", ""))[:1500],
+        "rationale": str(
+            model_blueprint.get("rationale") or resolved.get("rationale", "")
+        )[:1500],
     }
 
 
@@ -567,14 +787,27 @@ def _normalize_structured_query_brief(
         or base.get("required_direct_military_effects", []),
         limit=6,
     )
+    equipment_semantic_boundary = str(
+        raw.get("equipment_semantic_boundary")
+        or base.get("equipment_semantic_boundary", "")
+    ).strip()[:700]
+    winning_problem_propositions = _normalize_winning_problem_propositions(
+        raw.get("winning_problem_propositions")
+        or base.get("winning_problem_propositions", []),
+        limit=6,
+    )
     weapon_design_variables = _bounded_text_list(
-        raw.get("weapon_design_variables")
-        or base.get("weapon_design_variables", []),
+        raw.get("weapon_design_variables") or base.get("weapon_design_variables", []),
         limit=8,
     )
     query_specific_weapon_architectures = _bounded_text_list(
         raw.get("query_specific_weapon_architectures")
         or base.get("query_specific_weapon_architectures", []),
+        limit=6,
+    )
+    frontier_technology_hypotheses = _normalize_frontier_technology_hypotheses(
+        raw.get("frontier_technology_hypotheses")
+        or base.get("frontier_technology_hypotheses", []),
         limit=6,
     )
     equipment_project_hypotheses = _normalize_equipment_project_hypotheses(
@@ -600,8 +833,11 @@ def _normalize_structured_query_brief(
         "enemy_target_profile": enemy_target_profile,
         "battle_phase_and_constraints": battle_phase_and_constraints,
         "required_direct_military_effects": required_direct_military_effects,
+        "equipment_semantic_boundary": equipment_semantic_boundary,
+        "winning_problem_propositions": winning_problem_propositions,
         "weapon_design_variables": weapon_design_variables,
         "query_specific_weapon_architectures": query_specific_weapon_architectures,
+        "frontier_technology_hypotheses": frontier_technology_hypotheses,
         "equipment_project_hypotheses": equipment_project_hypotheses,
         "rejected_template_anchors": rejected_template_anchors,
         "handoff_rule": str(
@@ -612,6 +848,83 @@ def _normalize_structured_query_brief(
             )
         )[:300],
     }
+
+
+def _normalize_winning_problem_propositions(
+    value: Any,
+    *,
+    limit: int,
+) -> list[dict[str, str]]:
+    """Keep the blueprint as an open problem map, not an equipment catalogue."""
+
+    if not isinstance(value, list):
+        return []
+    rows: list[dict[str, str]] = []
+    for item in value[:limit]:
+        if not isinstance(item, Mapping):
+            continue
+        row = {
+            key: str(item.get(key, "")).strip()[:360]
+            for key in (
+                "target_and_phase",
+                "task_breakpoint",
+                "conventional_assumption",
+                "changeable_variable",
+                "mechanism_search_question",
+                "direct_military_result",
+                "exclusion_and_falsification_boundary",
+            )
+        }
+        if (
+            row["task_breakpoint"]
+            and row["changeable_variable"]
+            and row["direct_military_result"]
+        ):
+            rows.append(row)
+    return rows
+
+
+def _normalize_frontier_technology_hypotheses(
+    value: Any,
+    *,
+    limit: int,
+) -> list[dict[str, str]]:
+    if not isinstance(value, list):
+        return []
+    rows: list[dict[str, str]] = []
+    for item in value[:limit]:
+        if not isinstance(item, Mapping):
+            continue
+        row = {
+            "enabling_principle": str(item.get("enabling_principle", "")).strip()[:320],
+            "innovation_mode": str(item.get("innovation_mode", "")).strip()[:120],
+            "equipment_implication": str(item.get("equipment_implication", "")).strip()[
+                :360
+            ],
+            "query_causal_link": str(item.get("query_causal_link", "")).strip()[:420],
+            "direct_military_effect": str(
+                item.get("direct_military_effect", "")
+            ).strip()[:360],
+            "disruptive_delta": str(item.get("disruptive_delta", "")).strip()[:420],
+            "conventional_absorption_limit": str(
+                item.get("conventional_absorption_limit", "")
+            ).strip()[:420],
+            "technology_horizon": str(item.get("technology_horizon", "")).strip()[:120],
+            "engineering_bottleneck": str(
+                item.get("engineering_bottleneck", "")
+            ).strip()[:360],
+            "disconfirming_condition": str(
+                item.get("disconfirming_condition", "")
+            ).strip()[:360],
+        }
+        if (
+            row["enabling_principle"]
+            and row["equipment_implication"]
+            and row["query_causal_link"]
+            and row["direct_military_effect"]
+        ):
+            rows.append(row)
+    return rows
 
 
 def _normalize_equipment_project_hypotheses(
@@ -631,7 +944,9 @@ def _normalize_equipment_project_hypotheses(
             "project_function": str(item.get("project_function", "")).strip()[:420],
             "query_causal_link": str(item.get("query_causal_link", "")).strip()[:420],
             "target_and_phase": str(item.get("target_and_phase", "")).strip()[:360],
-            "direct_military_effect": str(item.get("direct_military_effect", "")).strip()[:360],
+            "direct_military_effect": str(
+                item.get("direct_military_effect", "")
+            ).strip()[:360],
             "design_variables": _bounded_text_list(
                 item.get("design_variables", []), limit=8
             ),
@@ -641,7 +956,9 @@ def _normalize_equipment_project_hypotheses(
             "evidence_questions": _bounded_text_list(
                 item.get("evidence_questions", []), limit=6
             ),
-            "rejection_condition": str(item.get("rejection_condition", "")).strip()[:360],
+            "rejection_condition": str(item.get("rejection_condition", "")).strip()[
+                :360
+            ],
         }
         if row["project_name"] and row["equipment_form"] and row["project_function"]:
             rows.append(row)
@@ -885,9 +1202,11 @@ def _normalize_dynamic_subagents(
         purpose = str(item.get("purpose", "")).strip()[:800]
         trigger_gap = str(item.get("trigger_gap", "")).strip()[:500]
         merge_target = str(item.get("merge_target", ""))
-        if not purpose or not trigger_gap or merge_target not in {
-            "S1", "S2", "S3", "S4", "S5", "S6", "convergence"
-        }:
+        if (
+            not purpose
+            or not trigger_gap
+            or merge_target not in {"S1", "S2", "S3", "S4", "S5", "S6", "convergence"}
+        ):
             continue
         skill_ids = list(
             dict.fromkeys(
@@ -931,8 +1250,7 @@ def _normalize_dynamic_subagents(
             {
                 "agent_instance_id": f"dynamic-{slug or 'specialist'}-{digest}",
                 "hypothesis_id": str(
-                    item.get("hypothesis_id")
-                    or f"hypothesis-dynamic-{digest}"
+                    item.get("hypothesis_id") or f"hypothesis-dynamic-{digest}"
                 )[:160],
                 "display_name": display_name,
                 "purpose": purpose,
@@ -944,8 +1262,12 @@ def _normalize_dynamic_subagents(
                 "knowledge_pack_ids": pack_ids,
                 "allowed_tools": allowed_tools,
                 "methodology": _bounded_text_list(item.get("methodology", []), limit=8),
-                "quality_gates": _bounded_text_list(item.get("quality_gates", []), limit=8),
-                "output_fields": _bounded_text_list(item.get("output_fields", []), limit=12),
+                "quality_gates": _bounded_text_list(
+                    item.get("quality_gates", []), limit=8
+                ),
+                "output_fields": _bounded_text_list(
+                    item.get("output_fields", []), limit=12
+                ),
                 "merge_target": merge_target,
                 "contribution_to_steps": [
                     int(step)
@@ -953,9 +1275,14 @@ def _normalize_dynamic_subagents(
                     if str(step).isdigit() and 1 <= int(step) <= 6
                 ][:6],
                 "allow_child_spawn": False,
-                "stop_conditions": _bounded_text_list(item.get("stop_conditions", []), limit=8),
+                "stop_conditions": _bounded_text_list(
+                    item.get("stop_conditions", []), limit=8
+                ),
                 "max_output_tokens": _bounded_int(
-                    item.get("max_output_tokens"), minimum=800, maximum=3200, fallback=1800
+                    item.get("max_output_tokens"),
+                    minimum=800,
+                    maximum=3200,
+                    fallback=1800,
                 ),
                 "generated_by": "codex_orchestrator",
             }
@@ -1022,7 +1349,7 @@ def _normalize_driver_scores(value: Any) -> list[dict[str, Any]]:
                 "exclusion_reason": str(item.get("exclusion_reason", ""))[:500],
             }
         )
-    return sorted(result, key=lambda item: (-item["score"], item["branch"]))
+    return sorted(result, key=lambda item: (-item["score"], item["branch"]))[:3]
 
 
 def _normalize_custom_blueprint(
@@ -1038,11 +1365,7 @@ def _normalize_custom_blueprint(
         if str(item) in available_ids
     ]
     preferred = list(dict.fromkeys(preferred))
-    valid_tags = {
-        str(tag)
-        for tags in available_capabilities.values()
-        for tag in tags
-    }
+    valid_tags = {str(tag) for tags in available_capabilities.values() for tag in tags}
     required_tags = [
         str(item)
         for item in raw.get("required_capability_tags", [])
@@ -1096,7 +1419,9 @@ def _normalize_custom_blueprint(
         "dependencies": dependencies,
         "dependency_cycle_rejected": dependency_cycle_rejected,
         "s1_s6_modes": modes,
-        "required_outputs": _bounded_text_list(raw.get("required_outputs", []), limit=12),
+        "required_outputs": _bounded_text_list(
+            raw.get("required_outputs", []), limit=12
+        ),
         "stop_conditions": _bounded_text_list(raw.get("stop_conditions", []), limit=8),
         "rationale": str(raw.get("rationale", ""))[:1000],
     }
@@ -1205,15 +1530,14 @@ def execution_waves_from_blueprint(
             if not (
                 (
                     set(
-                    agent.handoff_policy.get(
-                        "wait_for",
-                        agent.handoff_policy.get("accept_from", []),
-                    )
+                        agent.handoff_policy.get(
+                            "wait_for",
+                            agent.handoff_policy.get("accept_from", []),
+                        )
                     )
                     | hard_dependencies.get(agent.agent_id, set())
                 )
-                & selected_ids
-                - completed
+                & selected_ids - completed
             )
         ]
         if not ready:

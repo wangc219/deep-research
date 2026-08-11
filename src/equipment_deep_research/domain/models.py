@@ -168,20 +168,6 @@ class ResearchProblem:
             return "traditional_gap"
         if branch == "C":
             return "war_case_learning"
-        topic = self.analysis_text()
-        if any(
-            word in topic
-            for word in [
-                "战例",
-                "战争案例",
-                "局部战争",
-                "冲突复盘",
-                "经验教训",
-            ]
-        ):
-            return "war_case_learning"
-        if any(word in topic for word in ["传统", "现有", "升级", "缺口", "不足"]):
-            return "traditional_gap"
         return "new_winning_mechanism"
 
     def resolved_discovery_branch(self) -> dict[str, Any]:
@@ -191,176 +177,23 @@ class ResearchProblem:
         three executable research routes, while audit and reporting consumers can
         inspect the finer target-architecture classification.
         """
-        topic = self.analysis_text().lower()
-        rules = [
-            (
-                "C",
-                "局部战争案例经验",
-                (
-                    "战例",
-                    "战争案例",
-                    "局部战争",
-                    "一个案例",
-                    "单一案例",
-                    "冲突复盘",
-                    "经验教训",
-                    "时间线",
-                    "俄乌",
-                    "美伊",
-                    "中东冲突",
-                ),
-            ),
-            (
-                "D",
-                "技术驱动发现",
-                (
-                    "技术驱动",
-                    "技术雷达",
-                    "量子",
-                    "新材料",
-                    "生物技术",
-                    "边缘智能",
-                    "人工智能",
-                    "智能算法",
-                    "量子信息",
-                    "颠覆性技术",
-                    "太空技术",
-                    "电磁技术",
-                    "新质毁伤",
-                    "新质效应",
-                    "trl",
-                    "技术成熟度",
-                ),
-            ),
-            (
-                "E",
-                "对手动向牵引发现",
-                (
-                    "对手动向",
-                    "采购变化",
-                    "演训变化",
-                    "条令变化",
-                    "力量建设",
-                    "部署变化",
-                    "全球部署",
-                    "威慑投送",
-                    "军事合作",
-                    "金穹",
-                    "多层防御",
-                    "预警拦截",
-                ),
-            ),
-            (
-                "F",
-                "体系对抗博弈发现",
-                (
-                    "体系对抗",
-                    "体系仿真",
-                    "补链强链",
-                    "体系脆弱",
-                    "级联失效",
-                    "a2/ad",
-                    "反介入",
-                    "区域拒止",
-                    "穿透性制空",
-                    "马赛克战",
-                    "决策中心战",
-                    "分布式杀伤",
-                ),
-            ),
-            (
-                "G",
-                "跨域融合发现",
-                (
-                    "跨域",
-                    "域间",
-                    "陆海空天",
-                    "多域融合",
-                    "协同缝隙",
-                    "空天一体",
-                    "深海作战",
-                    "无人潜航器",
-                    "电磁频谱",
-                    "联合电磁频谱",
-                    "网电融合",
-                    "网络作战",
-                ),
-            ),
-            (
-                "H",
-                "非传统安全牵引",
-                (
-                    "非传统安全",
-                    "灰色地带",
-                    "认知影响",
-                    "认知空间",
-                    "认知域",
-                    "太空态势",
-                    "深海安全",
-                    "复合灾害",
-                ),
-            ),
-            (
-                "B",
-                "传统能力缺口发现",
-                (
-                    "传统能力缺口",
-                    "现役升级",
-                    "能力缺口",
-                    "能力不足",
-                    "能力空白",
-                    "周边控制",
-                    "远海前出",
-                    "远程快打",
-                    "全球到达",
-                    "全球达到",
-                    "第一岛链",
-                    "第二岛链",
-                    "第三岛链",
-                ),
-            ),
-            (
-                "A",
-                "新战法发现",
-                (
-                    "新战法",
-                    "新作战概念",
-                    "作战运用创新",
-                    "新制胜机制",
-                    "智能化大规模全域联合作战",
-                    "未来战争形态",
-                ),
-            ),
-        ]
+        labels = {
+            "A": "新战法发现",
+            "B": "传统能力缺口发现",
+            "C": "局部战争案例经验",
+            "D": "技术驱动发现",
+            "E": "对手动向牵引发现",
+            "F": "体系对抗博弈发现",
+            "G": "跨域融合发现",
+            "H": "非传统安全牵引",
+        }
         if self.discovery_branch != "auto":
-            label = next(
-                label for code, label, _ in rules if code == self.discovery_branch
-            )
+            label = labels[self.discovery_branch]
             return {
                 "primary": self.discovery_branch,
                 "secondary": [],
                 "confidence": 1.0,
                 "rationale": f"专家显式指定{label}分支。",
-                "label": label,
-            }
-        candidates: list[tuple[str, str, list[str]]] = []
-        for code, label, keywords in rules:
-            matches = [keyword for keyword in keywords if keyword in topic]
-            if matches:
-                candidates.append((code, label, matches))
-        if candidates:
-            candidates.sort(
-                key=lambda item: (
-                    -len(item[2]),
-                    [row[0] for row in rules].index(item[0]),
-                )
-            )
-            code, label, matches = candidates[0]
-            return {
-                "primary": code,
-                "secondary": [item[0] for item in candidates[1:3]],
-                "confidence": min(0.95, 0.72 + 0.06 * len(matches)),
-                "rationale": f"任务文本命中{label}特征：{', '.join(matches[:4])}",
                 "label": label,
             }
         route_fallbacks = {
@@ -374,15 +207,15 @@ class ResearchProblem:
                 "primary": code,
                 "secondary": [],
                 "confidence": 0.9,
-                "rationale": f"任务未命中更细分关键词，继承专家指定的{self.research_route}研究路线。",
+                "rationale": f"继承专家显式指定的{self.research_route}研究路线。",
                 "label": label,
             }
         return {
-            "primary": "B",
+            "primary": "A",
             "secondary": [],
-            "confidence": 0.55,
-            "rationale": "未命中明确的新战法、案例、技术或专项驱动词，按通用装备能力缺口发现处理。",
-            "label": "传统能力缺口发现",
+            "confidence": 0.35,
+            "rationale": "自动模式不从Query字符串猜测分支；等待智能体discovery blueprint完成语义判定，A仅作为离线运行基座。",
+            "label": "新战法发现",
         }
 
 
@@ -757,7 +590,18 @@ class WinningHypothesis:
     direct_military_effects: list[str]
     equipment_forms: list[str]
     novelty_delta: str
+    frontier_principle: str = ""
+    technology_discontinuity: str = ""
+    technology_horizon: str = ""
+    engineering_bottleneck: str = ""
+    winning_angle_id: str = ""
+    combat_dimension: str = ""
+    dimension_winning_logic: str = ""
+    original_paradigm: str = ""
+    disruptive_shift: str = ""
+    independence_thesis: str = ""
     project_function: str = ""
+    reference_overview: str = ""
     naming_rationale: str = ""
     decisive_advantage_thesis: str = ""
     cross_query_distinction: str = ""
@@ -822,12 +666,20 @@ class SpecialistContribution:
     hypothesis_id: str
     merge_target: str
     findings: list[str]
+    replacement_title: str = ""
     mechanism_chain_updates: list[str] = field(default_factory=list)
     direct_military_effects: list[str] = field(default_factory=list)
     equipment_forms: list[str] = field(default_factory=list)
     project_function: str = ""
     system_interfaces: list[str] = field(default_factory=list)
     novelty_delta: str = ""
+    frontier_principle: str = ""
+    technology_discontinuity: str = ""
+    technology_horizon: str = ""
+    engineering_bottleneck: str = ""
+    original_paradigm: str = ""
+    disruptive_shift: str = ""
+    independence_thesis: str = ""
     naming_rationale: str = ""
     decisive_advantage_thesis: str = ""
     cross_query_distinction: str = ""

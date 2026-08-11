@@ -4,6 +4,7 @@ from pathlib import Path
 
 from equipment_deep_research.orchestration.query_planning import QueryPlanner
 from equipment_deep_research.domain.models import ResearchProblem
+from equipment_deep_research.orchestration.blueprints import build_discovery_blueprint
 from equipment_deep_research.orchestration.routes import RouteRegistry
 
 
@@ -24,10 +25,17 @@ def test_round_two_queries_are_driven_by_evidence_gap_without_duplicates() -> No
     assert all(query.query != "低空探测装备 参数" for query in queries)
 
 
-def test_local_war_single_case_query_routes_to_case_learning() -> None:
+def test_auto_route_does_not_infer_case_learning_from_query_keywords() -> None:
     problem = ResearchProblem(
         topic="完整利用一个案例，从近年局部战争中挖掘我军装备发展需求"
     )
 
-    assert problem.resolved_discovery_branch()["primary"] == "C"
-    assert problem.resolved_route() == "war_case_learning"
+    assert problem.resolved_discovery_branch()["primary"] == "A"
+    assert problem.resolved_route() == "new_winning_mechanism"
+
+    blueprint = build_discovery_blueprint(
+        problem,
+        model_blueprint={"primary_branch": "C", "confidence": 0.91},
+    )
+    assert blueprint["primary_branch"] == "C"
+    assert blueprint["runtime_route"] == "war_case_learning"

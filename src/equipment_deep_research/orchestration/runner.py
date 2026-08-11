@@ -15,18 +15,24 @@ from typing import Any
 from urllib.parse import urlsplit
 from uuid import uuid4
 
-from equipment_deep_research.agents.provider import (
+from equipment_deep_research.agents.execution_contracts import (
     AgentProvider,
     AgentSelectionRequest,
+)
+from equipment_deep_research.agents.provider import (
     FakeAgentProvider,
     RealAgentProvider,
     ResponsesAgentProvider,
     S6QualityError,
+)
+from equipment_deep_research.agents.workflows.s6_quality import (
     _capability_direction_quality_issues,
-    _enforce_report_hard_max,
     _normalize_s6_deterministic_format,
-    _normalize_report_structure_deterministically,
     _s6_delivery_blocking_issues,
+)
+from equipment_deep_research.agents.workflows.reporting_support import (
+    _enforce_report_hard_max,
+    _normalize_report_structure_deterministically,
     _strip_report_internal_markers,
 )
 from equipment_deep_research.agents.registry import AgentDef, AgentRegistry
@@ -52,6 +58,7 @@ from equipment_deep_research.orchestration.coverage import (
     load_preset_policy,
 )
 from equipment_deep_research.orchestration.blueprints import (
+    BRANCH_BLUEPRINTS,
     build_discovery_blueprint,
     execution_waves_from_blueprint,
     normalize_dynamic_subagents,
@@ -63,10 +70,10 @@ from equipment_deep_research.orchestration.execution_contracts import (
     resolve_execution_profile,
 )
 from equipment_deep_research.orchestration.capability_portrait import (
+    build_agent_led_capability_portrait,
     normalize_capability_problem,
     normalize_operational_process,
     normalize_verification_plan,
-    resolve_capability_portrait,
 )
 from equipment_deep_research.orchestration.admission import PacketAdmissionGate
 from equipment_deep_research.orchestration.audit_policy import (
@@ -117,7 +124,14 @@ PRIMARY_BUSINESS_AGENT_IDS = {
 # semantics change.  Completed checkpoints then reopen the finalize task under
 # ``--allow-resume-config-mismatch`` without rerunning baseline agents or the
 # winning-swarm candidate/Judge stages.
-REPORT_DELIVERY_CONTRACT_VERSION = "2026-08-04.11"
+REPORT_DELIVERY_CONTRACT_VERSION = "2026-08-06.13"
+
+# Public-source coverage is a transparency gate, not a substitute for the
+# military-content gate.  A small minority of admitted synthesis claims may be
+# explicit deductions or evidence-boundary statements without their own URL;
+# keep them visible in the diagnostic artifact while requiring the report
+# itself to pass the equipment/scenario/portrait quality contract.
+CLAIM_SOURCE_BINDING_MINIMUM = 0.8
 
 
 def _baseline_wave_concurrency(
@@ -414,13 +428,90 @@ def _build_military_value_handoff(
     gate = PacketAdmissionGate()
     candidates: list[dict[str, Any]] = []
     branch_products: dict[str, list[Any]] = {}
+    baseline_boundaries: list[dict[str, Any]] = []
+    frontier_inspirations: list[dict[str, Any]] = []
     input_chars = 0
     packet_by_id: dict[str, Any] = {}
     for packet in _admitted_packet_snapshot(store):
         packet_by_id[packet.packet_id] = packet
         input_chars += len(json.dumps(compact_packet_handoff(packet), ensure_ascii=False))
+        if _is_unavailable_baseline_boundary(packet):
+            baseline_boundaries.append(
+                {
+                    "packet_id": packet.packet_id,
+                    "agent_id": packet.agent_id,
+                    "availability": "unavailable",
+                    "limitations": list(packet.limitations)[:2],
+                    "open_questions": list(packet.open_questions)[:2],
+                    "downstream_obligations": list(
+                        packet.payload.get("downstream_obligations", [])
+                    )[:3],
+                }
+            )
         if packet.agent_id == "case_research":
             branch_products.update(_case_branch_products(packet))
+        packet_payload = getattr(packet, "payload", {})
+        packet_sections = getattr(packet, "analysis_sections", {})
+        raw_inspirations = (
+            packet_payload.get("frontier_inspirations", [])
+            if isinstance(packet_payload, Mapping)
+            else []
+        ) or (
+            packet_sections.get("frontier_inspirations", [])
+            if isinstance(packet_sections, Mapping)
+            else []
+        )
+        if isinstance(raw_inspirations, Mapping):
+            raw_inspirations = [raw_inspirations]
+        elif not isinstance(raw_inspirations, list):
+            raw_inspirations = []
+        for item in raw_inspirations[:2]:
+            if not isinstance(item, Mapping) or not str(item.get("signal", "")).strip():
+                continue
+            raw_urls = item.get("source_urls", [])
+            if isinstance(raw_urls, str):
+                raw_urls = [raw_urls]
+            requested_urls = list(
+                dict.fromkeys(
+                    str(url)
+                    for url in raw_urls
+                    if str(url).startswith(("http://", "https://"))
+                )
+            )
+            evidence_ids = [
+                evidence_id
+                for evidence_id in packet.evidence_ids
+                if evidence_id in store.evidence
+                and (
+                    not requested_urls
+                    or store.evidence[evidence_id].source_url in requested_urls
+                )
+            ][:3]
+            frontier_inspirations.append(
+                {
+                    "source_agent_id": packet.agent_id,
+                    "packet_id": packet.packet_id,
+                    "signal": _compact_text_value(item.get("signal"), 220),
+                    "conventional_assumption_challenged": _compact_text_value(
+                        item.get("conventional_assumption_challenged"), 180
+                    ),
+                    "possible_military_discontinuity": _compact_text_value(
+                        item.get("possible_military_discontinuity"), 220
+                    ),
+                    "query_relevance": _compact_text_value(
+                        item.get("query_relevance"), 180
+                    ),
+                    "evidence_boundary": _compact_text_value(
+                        item.get("evidence_boundary"), 220
+                    ),
+                    "downstream_question": _compact_text_value(
+                        item.get("downstream_question"), 220
+                    ),
+                    "evidence_ids": evidence_ids,
+                    "source_urls": requested_urls[:2],
+                    "status": "optional_post_divergence_inspiration",
+                }
+            )
         bundle = gate.extract_claim_bundle(packet, store.evidence)
         status = str(getattr(packet, "admission_status", ""))
         for claim in bundle.claims:
@@ -557,8 +648,13 @@ def _build_military_value_handoff(
     open_questions = list(
         dict.fromkeys(
             _compact_text_value(question, 220)
-            for packet_id in selected_packet_ids
-            for question in getattr(packet_by_id.get(packet_id), "open_questions", [])[:1]
+            for packet_id in [
+                *selected_packet_ids,
+                *(item["packet_id"] for item in baseline_boundaries),
+            ]
+            for question in getattr(
+                packet_by_id.get(packet_id), "open_questions", []
+            )[:1]
             if str(question).strip()
         )
     )[:4]
@@ -575,7 +671,13 @@ def _build_military_value_handoff(
         "claims": selected,
         "conflicts": conflicts,
         "open_questions": open_questions,
+        "baseline_boundaries": baseline_boundaries,
         "branch_products": branch_products,
+        "frontier_inspirations": frontier_inspirations[:6],
+        "frontier_inspiration_rule": (
+            "仅在后续模型完成首次自由发散后作为可选启发；可重构或全部舍弃，"
+            "不得视为装备答案、命名种子、技术目录或覆盖配额。"
+        ),
     }
     output_chars = len(json.dumps(handoff, ensure_ascii=False))
     handoff["statistics"] = {
@@ -590,6 +692,8 @@ def _build_military_value_handoff(
                 for url in item.get("source_urls", [])
             }
         ),
+        "limited_baseline_count": len(baseline_boundaries),
+        "frontier_inspiration_count": min(6, len(frontier_inspirations)),
         "input_chars": input_chars,
         "output_chars": output_chars,
         "compression_ratio": round(output_chars / max(1, input_chars), 4),
@@ -612,12 +716,30 @@ def _military_handoff_packet_refs(
             for packet in _admitted_packet_snapshot(store)
             if packet.agent_id == "case_research"
         }
+    selected_packet_ids.update(
+        str(item.get("packet_id", ""))
+        for item in handoff.get("baseline_boundaries", [])
+        if isinstance(item, Mapping) and str(item.get("packet_id", ""))
+    )
+    selected_packet_ids.update(
+        str(item.get("packet_id", ""))
+        for item in handoff.get("frontier_inspirations", [])
+        if isinstance(item, Mapping) and str(item.get("packet_id", ""))
+    )
     return [
         {
             "packet_id": packet.packet_id,
             "agent_id": packet.agent_id,
             "evidence_ids": list(packet.evidence_ids)[:3],
             "confidence": packet.confidence,
+            **(
+                {
+                    "availability": "unavailable",
+                    "candidate_level_verification_required": True,
+                }
+                if _is_unavailable_baseline_boundary(packet)
+                else {}
+            ),
         }
         for packet in _admitted_packet_snapshot(store)
         if packet.packet_id in selected_packet_ids
@@ -637,11 +759,25 @@ def _military_handoff_evidence_index(
             if str(evidence_id)
         )
     )
+    frontier_evidence_ids = list(
+        dict.fromkeys(
+            str(evidence_id)
+            for item in handoff.get("frontier_inspirations", [])
+            if isinstance(item, Mapping)
+            for evidence_id in item.get("evidence_ids", [])
+            if str(evidence_id)
+        )
+    )
     selected_packet_ids = {
         str(item.get("packet_id", ""))
         for item in handoff.get("claims", [])
         if isinstance(item, Mapping) and str(item.get("packet_id", ""))
     }
+    selected_packet_ids.update(
+        str(item.get("packet_id", ""))
+        for item in handoff.get("frontier_inspirations", [])
+        if isinstance(item, Mapping) and str(item.get("packet_id", ""))
+    )
     packet_evidence_ids = list(
         dict.fromkeys(
             str(evidence_id)
@@ -668,7 +804,12 @@ def _military_handoff_evidence_index(
     # multi-equipment packet is not reduced to its first two citations.
     evidence_ids = list(
         dict.fromkeys(
-            [*claim_evidence_ids, *direct_weapon_ids, *other_packet_ids]
+            [
+                *claim_evidence_ids,
+                *frontier_evidence_ids,
+                *direct_weapon_ids,
+                *other_packet_ids,
+            ]
         )
     )
     return [
@@ -991,7 +1132,24 @@ class DeepResearchRunner:
             )
             else None
         )
+        branch_specialist_ids = list(
+            dict.fromkeys(
+                agent_id
+                for spec in BRANCH_BLUEPRINTS.values()
+                for agent_id in spec.specialist_agent_ids
+            )
+        )
         available_blueprint_agents = registry.enabled_baseline_agents()
+        if mode == "real" and getattr(provider, "provider_kind", "") == "codex_cli":
+            available_blueprint_agents = [
+                *available_blueprint_agents,
+                *(
+                    agent
+                    for agent_id in branch_specialist_ids
+                    for agent in [registry.get(agent_id)]
+                    if agent.enabled
+                ),
+            ]
         available_agent_capabilities = {
             agent.agent_id: tuple(agent.capability_tags)
             for agent in available_blueprint_agents
@@ -1010,7 +1168,6 @@ class DeepResearchRunner:
                 mode == "real"
                 and getattr(provider, "provider_kind", "") == "codex_cli"
                 and callable(blueprint_designer)
-                and execution_profile is None
             ):
                 model_blueprint = blueprint_designer(
                     {
@@ -1023,7 +1180,6 @@ class DeepResearchRunner:
                         "explicit_constraints": list(requested_problem.constraints),
                         "as_of_date": requested_problem.as_of_date,
                         "analyst_selected_agent_ids": list(agent_ids or []),
-                        "heuristic_branch": requested_problem.resolved_discovery_branch(),
                         "maximum_rounds": resolved_max_rounds,
                         "allowed_branches": list("ABCDEFGH"),
                         "other_driver_policy": "记录unmatched_driver，以最接近A-H为运行基座，并依据available_agents即时生成custom_blueprint；由L4复核。",
@@ -1034,35 +1190,21 @@ class DeepResearchRunner:
                                 "description": agent.description,
                                 "capability_tags": list(agent.capability_tags),
                                 "skill_ids": list(agent.skill_ids),
-                                "knowledge_pack_ids": list(agent.knowledge_pack_ids),
-                                "tool_names": list(agent.tools),
-                                "input_contract": (
-                                    agent.input_contract
-                                    if isinstance(agent.input_contract, str)
-                                    else str(agent.input_contract.get("name", "inline"))
-                                ),
-                                "output_contract": (
-                                    agent.output_contract
-                                    if isinstance(agent.output_contract, str)
-                                    else str(
-                                        agent.output_contract.get("name", "inline")
-                                    )
-                                ),
-                                "wait_for": list(
-                                    agent.handoff_policy.get("wait_for", [])
-                                ),
-                                "publish_to": list(
-                                    agent.handoff_policy.get("publish_to", [])
-                                ),
                             }
                             for agent in available_blueprint_agents
                         ],
                         "available_shared_skills": [
-                            item
+                            {
+                                "skill_id": str(item.get("skill_id", "")),
+                                "description": str(item.get("description", ""))[:240],
+                                "capability_tags": list(
+                                    item.get("capability_tags", [])
+                                )[:8],
+                            }
                             for item in available_skills.values()
                             if item.get("shared")
                         ],
-                        "available_knowledge_packs": registry.knowledge_pack_catalog(),
+                        "available_knowledge_packs": available_knowledge_pack_ids,
                     }
                 )
             discovery_blueprint = build_discovery_blueprint(
@@ -1105,6 +1247,18 @@ class DeepResearchRunner:
                 if str(item).strip()
             )
         )
+        # Branch specialists have already been folded into the bounded
+        # baseline_agent_plan.  Re-appending the full specialist catalog here
+        # bypassed that bound and launched duplicate/redundant Codex lanes.
+        active_specialist_agent_ids = (
+            [
+                agent_id
+                for agent_id in specialist_agent_ids
+                if agent_id in blueprint_initial_agent_ids
+            ]
+            if execution_profile is not None
+            else list(specialist_agent_ids)
+        )
         planner = ResearchPlanner(policy)
         required_tags = sorted(
             planner.required_tags_for_problem(blueprinted_problem)
@@ -1118,7 +1272,7 @@ class DeepResearchRunner:
                 analyst_additional_agent_ids,
             ) = _merge_blueprint_and_analyst_agent_ids(
                 blueprint_agent_ids=blueprint_initial_agent_ids,
-                specialist_agent_ids=specialist_agent_ids,
+                specialist_agent_ids=active_specialist_agent_ids,
                 analyst_agent_ids=agent_ids,
                 preserve_blueprint_defaults=execution_profile is not None,
             )
@@ -1126,7 +1280,7 @@ class DeepResearchRunner:
             selected_candidate_ids = {agent.agent_id for agent in selected_candidates}
             architecture_additions = [
                 registry.get(agent_id)
-                for agent_id in specialist_agent_ids
+                for agent_id in active_specialist_agent_ids
                 if agent_id not in selected_candidate_ids
             ]
             selected_candidates.extend(architecture_additions)
@@ -1171,13 +1325,19 @@ class DeepResearchRunner:
                 ],
             }
         elif blueprint_initial_agent_ids:
-            selected_candidates = registry.select_agents(
-                list(
+            selected_ids = (
+                list(blueprint_initial_agent_ids)
+                if execution_profile is not None
+                else list(
                     dict.fromkeys(
-                        [*blueprint_initial_agent_ids, *specialist_agent_ids]
+                        [
+                            *blueprint_initial_agent_ids,
+                            *active_specialist_agent_ids,
+                        ]
                     )
                 )
             )
+            selected_candidates = registry.select_agents(selected_ids)
             selection_view = {
                 "mode": "blueprint_driven",
                 "model_used": bool(model_blueprint),
@@ -1196,7 +1356,7 @@ class DeepResearchRunner:
                     "执行依赖继续服从Agent handoff契约，只传递结构化Packet。",
                 ],
                 "required_capability_tags": required_tags,
-                "model_selected_agent_ids": blueprint_initial_agent_ids,
+                "model_selected_agent_ids": selected_ids,
                 "coverage_additions": [],
                 "baseline_agent_plan": discovery_blueprint.get(
                     "baseline_agent_plan", []
@@ -1275,6 +1435,11 @@ class DeepResearchRunner:
                 discovery_blueprint=discovery_blueprint,
                 registry=registry,
                 required_tags=required_tags,
+                maximum=int(
+                    discovery_blueprint.get("maximum_business_agents", 4)
+                    if execution_profile is not None
+                    else len(registry.enabled_baseline_agents())
+                ),
             )
         else:
             promoted_callback_ids = []
@@ -1294,8 +1459,12 @@ class DeepResearchRunner:
                     selected_candidates=selected_candidates,
                     discovery_blueprint=discovery_blueprint,
                     registry=registry,
-                    minimum=3,
-                    maximum=4,
+                    minimum=int(
+                        discovery_blueprint.get("minimum_business_agents", 3)
+                    ),
+                    maximum=int(
+                        discovery_blueprint.get("maximum_business_agents", 4)
+                    ),
                 )
             )
         if minimum_agent_additions:
@@ -1373,12 +1542,18 @@ class DeepResearchRunner:
                 specialist_agent_id,
                 "reference",
             )
-        # Every initially selected baseline agent lies on the run's completion
-        # path, including a light/reference agent whose packet is consumed by
-        # S1-S6. Give this wave critical priority; "normal" remains reserved for
-        # speculative background work that can safely yield a model slot.
+        # Required baselines keep critical priority.  Reference baselines are
+        # bounded context/verification aids and must not pre-empt the Query
+        # blueprint or the S1-S3 innovation path when model slots are scarce.
         baseline_priority_by_agent = {
-            agent.agent_id: "critical"
+            agent.agent_id: (
+                "critical"
+                if baseline_plan_mode_by_agent.get(
+                    agent.agent_id, "reference"
+                )
+                == "required"
+                else "normal"
+            )
             for wave in selected_agent_waves
             for agent in wave
         }
@@ -1451,7 +1626,19 @@ class DeepResearchRunner:
                 recovered.checkpoint,
                 resume_count=recovered.checkpoint.resume_count + 1,
             )
-            if checkpoint.status == "completed" and resume_config_changed:
+            reopen_limited_quality_delivery = (
+                checkpoint.status == "completed"
+                and is_quality_execution_profile_id(
+                    discovery_blueprint.get("execution_profile_id")
+                )
+                and any(
+                    str(item.status).strip().lower() != "approved"
+                    for item in store.audits.values()
+                )
+            )
+            if checkpoint.status == "completed" and (
+                resume_config_changed or reopen_limited_quality_delivery
+            ):
                 checkpoint = replace(
                     checkpoint,
                     status="running",
@@ -1481,6 +1668,9 @@ class DeepResearchRunner:
                     "pending_task_ids": checkpoint.pending_task_ids,
                     "status": checkpoint.status,
                     "configuration_changed": resume_config_changed,
+                    "limited_quality_delivery_reopened": (
+                        reopen_limited_quality_delivery
+                    ),
                 },
             )
             trace.append(resumed_event)
@@ -1516,6 +1706,33 @@ class DeepResearchRunner:
                     store=store,
                 )
                 return result
+            if _is_report_delivery_only_resume(
+                workspace=workspace,
+                checkpoint=checkpoint,
+                store=store,
+                execution_profile_id=str(
+                    discovery_blueprint.get("execution_profile_id", "legacy_v1")
+                ),
+            ):
+                return self._resume_report_delivery_only(
+                    workspace=workspace,
+                    sqlite_store=sqlite_store,
+                    checkpoint=checkpoint,
+                    problem=problem,
+                    route=route,
+                    discovery_blueprint=discovery_blueprint,
+                    convergence=self._convergence_from_trace(trace),
+                    selected_agent_ids=selected_agent_ids,
+                    coverage=coverage,
+                    worker_reports=worker_reports,
+                    source_materials=source_materials,
+                    store=store,
+                    trace=trace,
+                    analyst_confirmed=analyst_confirmed,
+                    report_template_mode=report_template_mode,
+                    config_fingerprint=config_fingerprint,
+                    execution_started_at=execution_started_at,
+                )
         else:
             workspace = RunWorkspace.create(self.output_root, run_id)
             resources.bind_workspace(workspace)
@@ -1672,11 +1889,6 @@ class DeepResearchRunner:
                     for agent_id in selected_agent_ids
                     if agent_id in PRIMARY_BUSINESS_AGENT_IDS
                 ],
-                "_pipeline_agent_ids": [
-                    agent_id
-                    for agent_id in selected_agent_ids
-                    if checkpoint.task_statuses.get(_task_id(agent_id)) != "completed"
-                ],
             },
         )
         resources.bind_scheduler(scheduler)
@@ -1709,6 +1921,7 @@ class DeepResearchRunner:
                     "baseline_discovery_started": "Agent 多源检索已启动",
                     "baseline_discovery_lane_started": "Agent 检索通道已启动",
                     "baseline_discovery_lane_completed": "Agent 检索通道已返回",
+                    "baseline_discovery_lane_limited": "Agent 检索通道已在有界时限停止并复用共享来源",
                     "baseline_discovery_completed": "Agent 多源检索已完成",
                     "baseline_analysis_started": "Agent 结构化分析已启动",
                     "baseline_analysis_completed": "Agent 结构化分析已完成",
@@ -1941,7 +2154,11 @@ class DeepResearchRunner:
                 checkpoint = self._set_task_status(
                     checkpoint,
                     _task_id(report.agent_id),
-                    "completed" if report.status == "completed" else "pending",
+                    (
+                        "completed"
+                        if report.status in {"completed", "limited"}
+                        else "pending"
+                    ),
                 )
             worker_reports = [
                 reports_by_agent[item]
@@ -1957,7 +2174,7 @@ class DeepResearchRunner:
                 *(
                     self._domain_proposal("EvidenceCard", store.evidence[evidence_id])
                     for report in wave_reports
-                    if report.status == "completed"
+                    if report.status in {"completed", "limited"}
                     for evidence_id in report.new_evidence_ids
                 ),
                 *(
@@ -1966,7 +2183,8 @@ class DeepResearchRunner:
                         store.baseline_packets[report.packet_id],
                     )
                     for report in wave_reports
-                    if report.status == "completed"
+                    if report.status in {"completed", "limited"}
+                    and report.packet_id
                 ),
                 *(
                     self._domain_proposal(
@@ -1974,7 +2192,7 @@ class DeepResearchRunner:
                         _domain_object_for_report(store, report),
                     )
                     for report in wave_reports
-                    if report.status == "completed"
+                    if report.status in {"completed", "limited"}
                     and report.domain_object_type
                     and report.domain_object_id
                 ),
@@ -2007,6 +2225,9 @@ class DeepResearchRunner:
                         payload=handoff.to_plain(),
                     )
                 )
+            limited_reports = [
+                report for report in wave_reports if report.status == "limited"
+            ]
             trace.append(
                 TraceEvent(
                     event_id=(
@@ -2015,7 +2236,7 @@ class DeepResearchRunner:
                     ),
                     event_type=(
                         "baseline_wave_limited"
-                        if wave_failures
+                        if wave_failures or limited_reports
                         else "baseline_wave_completed"
                     ),
                     actor="orchestrator",
@@ -2024,6 +2245,11 @@ class DeepResearchRunner:
                         f"{len(wave_failures)} task(s) remain resumable"
                         if wave_failures
                         else f"baseline wave {wave_index} completed"
+                        if not limited_reports
+                        else (
+                            f"baseline wave {wave_index} completed with "
+                            f"{len(limited_reports)} auditable limited baseline(s)"
+                        )
                     ),
                     input_refs=[f"baseline:{agent.agent_id}" for agent in wave],
                     output_refs=[
@@ -2037,12 +2263,17 @@ class DeepResearchRunner:
                         "completed_agent_ids": [
                             report.agent_id
                             for report in wave_reports
-                            if report.status == "completed"
+                            if report.status in {"completed", "limited"}
+                        ],
+                        "limited_agent_ids": [
+                            report.agent_id
+                            for report in wave_reports
+                            if report.status == "limited"
                         ],
                         "failed_agent_ids": [
                             report.agent_id
                             for report in wave_reports
-                            if report.status != "completed"
+                            if report.status not in {"completed", "limited"}
                         ],
                         "handoff_ids": [
                             handoff.message_id for handoff in failure_handoffs
@@ -2096,6 +2327,18 @@ class DeepResearchRunner:
         if callable(baseline_progress_setter):
             baseline_progress_setter(None)
 
+        baseline_packets = store.baseline_packet_snapshot()
+        usable_baseline_packets = [
+            packet
+            for packet in baseline_packets
+            if not _is_unavailable_baseline_boundary(packet)
+        ]
+        if baseline_packets and not usable_baseline_packets:
+            raise RuntimeError(
+                "all baseline agents were unavailable; no substantive baseline "
+                "packet exists for safe winning-mechanism analysis"
+            )
+
         if execution_profile is not None:
             admission_packets = store.baseline_packet_snapshot()
             admission_already_complete = bool(admission_packets) and all(
@@ -2134,6 +2377,9 @@ class DeepResearchRunner:
                     store=store,
                     topic=topic,
                     discovery_blueprint=discovery_blueprint,
+                    generation_suffix=(
+                        f"-r{checkpoint.resume_count}" if resume else ""
+                    ),
                 )
                 for event in admission_events:
                     trace.append(event)
@@ -2147,7 +2393,11 @@ class DeepResearchRunner:
                     )
 
         self._emit_hook("after_baseline_agents", workspace)
-        convergence = self._convergence_from_trace(trace)
+        convergence = (
+            self._reusable_convergence_for_resume(workspace, trace)
+            if resume
+            else self._convergence_from_trace(trace)
+        )
         if checkpoint.task_statuses.get(FINALIZE_TASK_ID) != "completed":
             checkpoint = self._set_task_status(
                 checkpoint,
@@ -2240,21 +2490,44 @@ class DeepResearchRunner:
                 convergence=convergence,
             )
             engine = WinningMechanismEngine(
-                min_confidence=float(gate_policy.get("min_stage_confidence", 0.7)),
-                min_l2_feasibility=int(gate_policy.get("min_l2_feasibility", 3)),
+                min_confidence=float(gate_policy.get("min_stage_confidence", 0.62)),
+                min_l2_feasibility=int(gate_policy.get("min_l2_feasibility", 2)),
                 risk_based_gates=execution_profile is not None,
             )
-            winning_model_analysis = (
+            recovered_winning_analysis = (
                 self._load_latest_core_agent_result(workspace, "winning_mechanism")
                 if resume
                 else {}
             )
-            if winning_model_analysis and not _winning_analysis_reusable_for_profile(
-                winning_model_analysis,
+            winning_model_analysis = recovered_winning_analysis
+            prior_winning_analysis: dict[str, Any] = {}
+            winning_resume_steps: list[int] = []
+            if recovered_winning_analysis and not _winning_analysis_reusable_for_profile(
+                recovered_winning_analysis,
                 execution_profile_id=str(
                     discovery_blueprint.get("execution_profile_id", "legacy_v1")
                 ),
             ):
+                execution_profile_id = str(
+                    discovery_blueprint.get("execution_profile_id", "legacy_v1")
+                )
+                if _winning_analysis_can_resume_s6_only(
+                    recovered_winning_analysis,
+                    execution_profile_id=execution_profile_id,
+                ):
+                    prior_winning_analysis = dict(recovered_winning_analysis)
+                    winning_resume_steps = [6]
+                    rejection_reason = "s6_quality_gate_failed_resume_s6_only"
+                    rejection_summary = (
+                        "已复用通过专家门的候选账本与最终组合，"
+                        "仅重新执行未通过发布门的S6装备能力画像"
+                    )
+                else:
+                    rejection_reason = "profile_authoritative_portfolio_missing"
+                    rejection_summary = (
+                        "已完成的核心结果不含当前质量模式要求的权威制胜组合，"
+                        "本次恢复重新执行制胜主链"
+                    )
                 trace.append(
                     TraceEvent(
                         event_id=(
@@ -2263,16 +2536,12 @@ class DeepResearchRunner:
                         ),
                         event_type="winning_model_result_reuse_rejected",
                         actor="winning_mechanism",
-                        summary=(
-                            "已完成的核心结果不含当前质量模式要求的权威制胜组合，"
-                            "本次恢复重新执行制胜主链"
-                        ),
+                        summary=rejection_summary,
                         output_refs=["winning-model-analysis"],
                         payload={
-                            "execution_profile_id": discovery_blueprint.get(
-                                "execution_profile_id", "legacy_v1"
-                            ),
-                            "reason": "profile_authoritative_portfolio_missing",
+                            "execution_profile_id": execution_profile_id,
+                            "reason": rejection_reason,
+                            "resume_steps": list(winning_resume_steps),
                         },
                     )
                 )
@@ -2301,6 +2570,7 @@ class DeepResearchRunner:
                     ]
                 )
                 winning_input = {
+                    "run_id": run_id,
                     "topic": topic,
                     "structured_query_brief": discovery_blueprint.get(
                         "structured_query_brief", {}
@@ -2341,6 +2611,8 @@ class DeepResearchRunner:
                         }
                     ),
                     "selected_business_agent_ids": list(selected_agent_ids),
+                    "prior_winning_analysis": prior_winning_analysis,
+                    "resume_steps": list(winning_resume_steps),
                     "execution_profile_id": discovery_blueprint.get(
                         "execution_profile_id", "legacy_v1"
                     ),
@@ -2417,7 +2689,11 @@ class DeepResearchRunner:
                                 winning_advisor,
                                 winning_input,
                                 attempt=checkpoint.round_index,
-                                resume_from="L1",
+                                resume_from=(
+                                    "L3"
+                                    if winning_resume_steps == [6]
+                                    else "L1"
+                                ),
                             )
                         )
                     else:
@@ -2554,28 +2830,58 @@ class DeepResearchRunner:
                         )
                         reused_recall_result = recall_report is not None
                         if recall_report is None:
-                            recall_report = scheduler.run_agent(
-                                agent=agents_by_id[routed.target_agent_id],
-                                topic=topic,
-                                research_route=route,
-                                round_index=(
-                                    checkpoint.round_index
-                                    + len(recall_reports)
-                                    + 1
-                                ),
-                                recall_request={
-                                    "recall_id": routed.recall.recall_id,
-                                    "reason": routed.recall.reason,
-                                    "required_data": routed.recall.required_data,
-                                    "return_node": routed.recall.return_node,
-                                    "evidence_index": store.evidence_index(),
-                                    "targeted_supplement": routed.recall.recall_id.startswith(
-                                        "recall-L3-targeted-evidence-"
+                            try:
+                                recall_report = scheduler.run_agent(
+                                    agent=agents_by_id[routed.target_agent_id],
+                                    topic=topic,
+                                    research_route=route,
+                                    round_index=(
+                                        checkpoint.round_index
+                                        + len(recall_reports)
+                                        + 1
                                     ),
-                                },
-                                raise_on_error=True,
-                                plan_mode="callback",
-                            )
+                                    recall_request={
+                                        "recall_id": routed.recall.recall_id,
+                                        "reason": routed.recall.reason,
+                                        "required_data": routed.recall.required_data,
+                                        "return_node": routed.recall.return_node,
+                                        "evidence_index": store.evidence_index(),
+                                        "targeted_supplement": routed.recall.recall_id.startswith(
+                                            "recall-L3-targeted-evidence-"
+                                        ),
+                                    },
+                                    raise_on_error=True,
+                                    plan_mode="callback",
+                                )
+                            except Exception as exc:
+                                if not _is_optional_recall_budget_error(exc):
+                                    raise
+                                limited = replace(routed.recall, status="limited")
+                                store.add_recall_request(limited)
+                                trace.append(
+                                    TraceEvent(
+                                        event_id=(
+                                            "trace-recall-budget-limited-"
+                                            f"{recall.recall_id}"
+                                        ),
+                                        event_type="recall_skipped_budget_limited",
+                                        actor="orchestrator",
+                                        summary=(
+                                            "可选定向再调因模型预算或截止时间停止；"
+                                            "保留已完成的制胜链与S6研究结果"
+                                        ),
+                                        input_refs=[recall.recall_id],
+                                        output_refs=[routed.recall.return_node],
+                                        payload={
+                                            "status": "limited",
+                                            "gate_impact": "non_blocking_residual",
+                                            "target_agent_id": routed.target_agent_id,
+                                            "return_node": routed.recall.return_node,
+                                            "reason": str(exc)[:300],
+                                        },
+                                    )
+                                )
+                                continue
                             recall_reports_by_agent[
                                 routed.target_agent_id
                             ] = recall_report
@@ -3250,6 +3556,38 @@ class DeepResearchRunner:
                         execution_profile_id == "winning_swarm_dynamic_v2"
                         and portfolio_quality_gate
                         and not bool(portfolio_quality_gate.get("passed"))
+                        and not (
+                            not bool(
+                                portfolio_quality_gate.get(
+                                    "direct_equipment_diversity_passed", True
+                                )
+                            )
+                            and bool(
+                                portfolio_quality_gate.get(
+                                    "direct_combat_main_body_passed"
+                                )
+                            )
+                            and bool(
+                                portfolio_quality_gate.get(
+                                    "capability_portrait_gate_passed"
+                                )
+                            )
+                            and bool(
+                                portfolio_quality_gate.get(
+                                    "equipment_diversity_passed"
+                                )
+                            )
+                            and bool(
+                                portfolio_quality_gate.get("expert_judge_passed")
+                            )
+                            and str(
+                                portfolio_quality_gate.get(
+                                    "expert_judge_status", ""
+                                )
+                            )
+                            == "completed"
+                            and not portfolio_quality_gate.get("hard_blockers")
+                        )
                     ):
                         raise ValueError(
                             "winning swarm portfolio quality gate failed before "
@@ -3457,6 +3795,19 @@ class DeepResearchRunner:
                                 },
                             )
                         )
+            # Rebuild after Reporter context preparation.  The synthesis brief
+            # may normalize capability portraits in the DomainStore, and a
+            # provider must never be able to leave the publication gate judging
+            # a stale or shared delivery-artifact object.  The same refreshed
+            # snapshot is used for rendering, gate evaluation, and persistence.
+            delivery_artifacts = build_delivery_artifacts(
+                topic=topic,
+                branch=str(discovery_blueprint["primary_branch"]),
+                blueprint=discovery_blueprint,
+                store=store,
+                convergence=convergence,
+            )
+            quality_delivery_blockers: list[str] = []
             report = render_report(
                 topic=topic,
                 route=route,
@@ -3504,21 +3855,14 @@ class DeepResearchRunner:
                         report.body,
                     )
                 )
+                binding_summary = _claim_source_binding_summary(
+                    accepted_claim_rows,
+                    internal_reference_found=internal_reference_found,
+                )
                 workspace.write_run_text(
                     "claim_source_binding.json",
                     json.dumps(
-                        {
-                            "accepted_claim_count": len(accepted_claim_rows),
-                            "claims_with_public_sources": sum(
-                                bool(item.get("public_urls"))
-                                for item in accepted_claim_rows
-                            ),
-                            "binding_rate": round(binding_rate, 6),
-                            "minimum_required": 0.9,
-                            "internal_reference_found": internal_reference_found,
-                            "passed": binding_rate >= 0.9
-                            and not internal_reference_found,
-                        },
+                        binding_summary,
                         ensure_ascii=False,
                         indent=2,
                         sort_keys=True,
@@ -3526,68 +3870,13 @@ class DeepResearchRunner:
                 )
                 quality_report = ReportQualityGate().validate(
                     report.body,
-                    {
-                        "evidence_count": len(store.evidence),
-                        "topic": topic,
-                        "branch": discovery_blueprint["primary_branch"],
-                        "execution_profile_id": discovery_blueprint.get(
-                            "execution_profile_id", "legacy_v1"
-                        ),
-                        "require_detailed_capability_portraits": (
-                            discovery_blueprint.get("execution_profile_id")
-                            in {
-                                "swarm_quality_v1",
-                                "winning_swarm_dynamic_v2",
-                            }
-                        ),
-                        "require_high_value_military_information": (
-                            discovery_blueprint.get("execution_profile_id")
-                            in {
-                                "swarm_quality_v1",
-                                "winning_swarm_dynamic_v2",
-                            }
-                        ),
-                        "report_template_mode": report_template_mode,
-                        "delivery_owned_h1": True,
-                        "branch_delivery_status": delivery_artifacts[
-                            "branch_deliverables"
-                        ].get("delivery_status"),
-                        "require_disruptive_lens_diversity": (
-                            len(store.capability_images) >= 5
-                        ),
-                        "expected_capability_directions": [
-                            item.name
-                            for item in sorted(
-                                store.capability_images.values(),
-                                key=lambda item: (
-                                    _report_priority_rank(item.priority),
-                                    -float(item.confidence),
-                                    item.name,
-                                ),
-                            )[:7]
-                        ],
-                        "expected_capability_records": [
-                            {
-                                "name": item.name,
-                                "equipment_form": item.equipment_form,
-                                "equipment_category": item.equipment_category,
-                                "capability_type": item.capability_type,
-                                "mission_effect": item.mission_effect,
-                                "military_utility": item.military_utility,
-                                "operational_mechanism": item.operational_mechanism,
-                                "strike_countermeasure_value": item.strike_countermeasure_value,
-                                "evidence_count": len(item.evidence_ids),
-                            }
-                            for item in sorted(
-                                store.capability_images.values(),
-                                key=lambda item: (
-                                    _report_priority_rank(item.priority),
-                                    -float(item.confidence),
-                                    item.name,
-                                ),
-                            )[:7]
-                        ],
-                    },
+                    _report_quality_gate_metadata(
+                        topic=topic,
+                        discovery_blueprint=discovery_blueprint,
+                        report_template_mode=report_template_mode,
+                        delivery_artifacts=delivery_artifacts,
+                        store=store,
+                    ),
                 )
                 workspace.write_run_text(
                     "report_quality_gate.json",
@@ -3630,9 +3919,33 @@ class DeepResearchRunner:
                 if (
                     not quality_report.passed
                     or not branch_gate_passed
-                    or binding_rate < 0.9
+                    or binding_rate < CLAIM_SOURCE_BINDING_MINIMUM
                     or internal_reference_found
                 ):
+                    if (
+                        is_quality_execution_profile_id(
+                            discovery_blueprint.get("execution_profile_id")
+                        )
+                        and getattr(provider, "enforce_profile_stops", False)
+                    ):
+                        quality_delivery_blockers = list(
+                            quality_report.compact().get("blockers", [])
+                        )
+                        if not branch_gate_passed:
+                            quality_delivery_blockers.append(
+                                "分支交付物未形成完整可发布闭环"
+                            )
+                        if binding_rate < CLAIM_SOURCE_BINDING_MINIMUM:
+                            quality_delivery_blockers.append(
+                                "关键结论与公开来源绑定率低于80%"
+                            )
+                        if internal_reference_found:
+                            quality_delivery_blockers.append(
+                                "正式报告仍含内部packet、claim或候选标签"
+                            )
+                        quality_delivery_blockers = list(
+                            dict.fromkeys(quality_delivery_blockers)
+                        )[:8]
                     audit = replace(
                         audit,
                         status="limited",
@@ -3697,6 +4010,82 @@ class DeepResearchRunner:
                             )
                         )
             store.add_report(report)
+            if quality_delivery_blockers:
+                failure_event = TraceEvent(
+                    event_id=(
+                        "trace-report-quality-limited-r"
+                        f"{checkpoint.resume_count}"
+                    ),
+                    event_type="report_quality_gate_limited",
+                    actor="report_quality_gate",
+                    summary="报告质量门存在缺口，已保存受限报告并继续完成项目流程",
+                    input_refs=[report.report_id],
+                    payload={
+                        "blockers": quality_delivery_blockers,
+                        "resumable": True,
+                    },
+                )
+                trace.append(failure_event)
+                checkpoint = self._set_task_status(
+                    checkpoint,
+                    FINALIZE_TASK_ID,
+                    "pending",
+                )
+                failure_savepoint_id = sqlite_store.commit(
+                    (
+                        self._domain_proposal("AuditResult", audit),
+                        self._domain_proposal("ResearchReport", report),
+                        self._checkpoint_proposal(
+                            checkpoint,
+                            f"report-quality-failed-r{checkpoint.resume_count}",
+                        ),
+                    ),
+                    (self._trace_proposal(failure_event),),
+                )
+                self._write_checkpoint_file(
+                    workspace,
+                    checkpoint,
+                    failure_savepoint_id,
+                )
+                workspace.write_run_text("report.md", report.body)
+                workspace.write_run_text(
+                    "branch_deliverables.json",
+                    json.dumps(
+                        delivery_artifacts["branch_deliverables"],
+                        ensure_ascii=False,
+                        indent=2,
+                        sort_keys=True,
+                    ),
+                )
+                for artifact_name in STRUCTURED_PRODUCT_KEYS:
+                    if artifact_name not in delivery_artifacts:
+                        continue
+                    workspace.write_run_text(
+                        f"{artifact_name}.json",
+                        json.dumps(
+                            delivery_artifacts[artifact_name],
+                            ensure_ascii=False,
+                            indent=2,
+                            sort_keys=True,
+                        ),
+                    )
+                workspace.write_run_text(
+                    "report_failure.json",
+                    json.dumps(
+                        {
+                            "status": "limited_quality_gate",
+                            "run_id": run_id,
+                            "checkpoint_id": failure_savepoint_id,
+                            "blockers": quality_delivery_blockers,
+                            "report_written": True,
+                            "resumable": True,
+                            "created_at": failure_event.created_at,
+                        },
+                        ensure_ascii=False,
+                        indent=2,
+                        sort_keys=True,
+                    ),
+                )
             trace.append(
                 TraceEvent(
                     event_id="trace-tool-result-report",
@@ -3794,7 +4183,7 @@ class DeepResearchRunner:
                 self._trace_proposal(event)
                 for event in trace.events[final_trace_start:]
             ]
-            if resume_config_changed and checkpoint.resume_count:
+            if resume and checkpoint.resume_count:
                 generation_suffix = f"-r{checkpoint.resume_count}"
                 final_domain_proposals = [
                     replace(
@@ -4298,12 +4687,26 @@ class DeepResearchRunner:
         }
         object_id = str(payload[id_fields[object_type]])
         key = f"{object_type}:{object_id}"
+        # Upserts are versioned by exact content. A resumed run may legitimately
+        # replace ``audit-001``, ``report-001`` or a capability card after new
+        # S6/report gates pass. Reusing the object-only proposal/idempotency key
+        # made the ledger reject that valid update as a conflict. Exact retries
+        # still deduplicate because their canonical payload digest is stable.
+        payload_digest = sha256(
+            json.dumps(
+                payload,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()[:20]
+        versioned_key = f"{key}:{payload_digest}"
         return DomainWriteProposal(
-            proposal_id=f"domain-{key}",
+            proposal_id=f"domain-{versioned_key}",
             object_type=object_type,
             operation="upsert",
             payload=payload,
-            idempotency_key=f"domain:{key}",
+            idempotency_key=f"domain:{versioned_key}",
         )
 
     @staticmethod
@@ -4516,6 +4919,7 @@ class DeepResearchRunner:
         store: DomainStore,
         topic: str,
         discovery_blueprint: Mapping[str, Any],
+        generation_suffix: str = "",
     ) -> tuple[tuple[DomainWriteProposal, ...], list[TraceEvent]]:
         """Bind baseline claims to evidence and block rejected packets downstream."""
         gate = PacketAdmissionGate()
@@ -4568,11 +4972,17 @@ class DeepResearchRunner:
             store.add_baseline_packet(updated)
             proposals.append(
                 DomainWriteProposal(
-                    proposal_id=f"domain-BaselineFindingPacket:{updated.packet_id}:admission-v2",
+                    proposal_id=(
+                        "domain-BaselineFindingPacket:"
+                        f"{updated.packet_id}:admission-v2{generation_suffix}"
+                    ),
                     object_type="BaselineFindingPacket",
                     operation="upsert",
                     payload=to_plain(updated),
-                    idempotency_key=f"domain:BaselineFindingPacket:{updated.packet_id}:admission-v2",
+                    idempotency_key=(
+                        "domain:BaselineFindingPacket:"
+                        f"{updated.packet_id}:admission-v2{generation_suffix}"
+                    ),
                 )
             )
             claim_bundles.append(bundle.to_dict())
@@ -4581,7 +4991,10 @@ class DeepResearchRunner:
                 accepted_texts.extend(item.text for item in bundle.claims)
             events.append(
                 TraceEvent(
-                    event_id=f"trace-packet-admission-{packet.packet_id}",
+                    event_id=(
+                        f"trace-packet-admission-{packet.packet_id}"
+                        f"{generation_suffix}"
+                    ),
                     event_type="packet_admission_evaluated",
                     actor="packet_admission_gate",
                     summary=f"{packet.agent_id} packet {decision.status}",
@@ -4678,8 +5091,9 @@ class DeepResearchRunner:
             },
         )
         converger = getattr(provider, "converge_discovery_outputs", None)
-        optimized_v2 = is_quality_execution_profile_id(
-            discovery_blueprint.get("execution_profile_id")
+        aggressive_compaction = (
+            str(discovery_blueprint.get("execution_profile_id", ""))
+            == "optimized_v2"
         )
         material_conflicts = [
             limitation
@@ -4687,7 +5101,7 @@ class DeepResearchRunner:
             for limitation in packet.get("limitations", [])
             if any(marker in str(limitation) for marker in ("冲突", "矛盾", "相反", "不一致"))
         ]
-        if optimized_v2 and not material_conflicts:
+        if aggressive_compaction and not material_conflicts:
             convergence = FakeAgentProvider().converge_discovery_outputs(payload)
             convergence["fusion_mode"] = "local_cluster_dedupe_rank"
             convergence["model_call_skipped"] = True
@@ -4885,6 +5299,32 @@ class DeepResearchRunner:
             return dict(result) if isinstance(result, dict) else {}
         return {}
 
+    @classmethod
+    def _reusable_convergence_for_resume(
+        cls,
+        workspace: RunWorkspace,
+        trace: TraceStore,
+    ) -> dict[str, Any]:
+        """Recover the completed convergence stage before reopening S6.
+
+        The convergence Agent persists its own result before S1-S6 starts,
+        but the corresponding trace batch may still be uncommitted when a
+        late S6 card call fails. Prefer committed trace state, then fall back
+        to that independent session checkpoint. This keeps resume scoped to
+        the smallest unfinished stage instead of repeating convergence or S1.
+        """
+
+        convergence = cls._convergence_from_trace(trace)
+        if convergence.get("clusters"):
+            return convergence
+        session_convergence = cls._load_latest_core_agent_result(
+            workspace,
+            "convergence_fusion",
+        )
+        if session_convergence.get("clusters"):
+            return session_convergence
+        return convergence
+
     @staticmethod
     def _write_checkpoint_file(
         workspace: RunWorkspace,
@@ -4928,6 +5368,83 @@ class DeepResearchRunner:
         workspace: RunWorkspace,
         agent_id: str,
     ) -> dict[str, Any]:
+        path = workspace.sessions_dir / f"{agent_id}.jsonl"
+        if not path.is_file():
+            return {}
+        session_lines = path.read_text(encoding="utf-8").splitlines()
+
+        def merge_direction_rows(
+            prior_rows: Any,
+            latest_rows: Any,
+        ) -> list[dict[str, Any]]:
+            """Overlay repaired S6 cards without truncating the prior portfolio."""
+
+            merged = [
+                dict(item) for item in prior_rows if isinstance(item, Mapping)
+            ] if isinstance(prior_rows, list) else []
+            updates = [
+                dict(item) for item in latest_rows if isinstance(item, Mapping)
+            ] if isinstance(latest_rows, list) else []
+            if not merged:
+                return updates
+            positions_by_id = {
+                str(item.get("hypothesis_id", "")).strip(): position
+                for position, item in enumerate(merged)
+                if str(item.get("hypothesis_id", "")).strip()
+            }
+            positions_by_name = {
+                str(item.get("name", "")).strip(): position
+                for position, item in enumerate(merged)
+                if str(item.get("name", "")).strip()
+            }
+            for update in updates:
+                hypothesis_id = str(update.get("hypothesis_id", "")).strip()
+                name = str(update.get("name", "")).strip()
+                position = positions_by_id.get(hypothesis_id)
+                if position is None:
+                    position = positions_by_name.get(name)
+                if position is None:
+                    continue
+                merged[position] = update
+            return merged
+
+        def recovered_dynamic_checkpoint() -> dict[str, Any]:
+            """Find the last untruncated, expert-approved dynamic checkpoint."""
+
+            for prior_line in reversed(session_lines):
+                try:
+                    prior_row = json.loads(prior_line)
+                except json.JSONDecodeError:
+                    continue
+                prior_result = prior_row.get("result")
+                if (
+                    prior_row.get("event_type") != "model_checkpoint"
+                    or not isinstance(prior_result, Mapping)
+                ):
+                    continue
+                prior_swarm = prior_result.get("winning_swarm", {})
+                prior_gate = (
+                    prior_swarm.get("portfolio_quality_gate", {})
+                    if isinstance(prior_swarm, Mapping)
+                    else {}
+                )
+                prior_portfolio = (
+                    prior_swarm.get("final_equipment_portfolio", [])
+                    if isinstance(prior_swarm, Mapping)
+                    else []
+                )
+                prior_directions = prior_result.get("concept_directions", [])
+                if (
+                    isinstance(prior_gate, Mapping)
+                    and bool(prior_gate.get("passed"))
+                    and isinstance(prior_portfolio, list)
+                    and len(prior_portfolio) >= 5
+                    and isinstance(prior_directions, list)
+                    and len(prior_directions) >= 5
+                ):
+                    return dict(prior_result)
+            return {}
+
         def recovered_swarm_summary() -> dict[str, Any]:
             """Recover an already-finished quality-v1 swarm after S6 failure.
 
@@ -4959,7 +5476,7 @@ class DeepResearchRunner:
                 )
                 finalists = summary.get("finalists", [])
                 if (
-                    policy_id == "winning_swarm_quality_v1"
+                    policy_id in {"winning_swarm_quality_v1", "swarm_quality_v1"}
                     and isinstance(finalists, list)
                     and finalists
                 ):
@@ -4972,10 +5489,7 @@ class DeepResearchRunner:
                     return recovered
             return {}
 
-        path = workspace.sessions_dir / f"{agent_id}.jsonl"
-        if not path.is_file():
-            return {}
-        for line in reversed(path.read_text(encoding="utf-8").splitlines()):
+        for line in reversed(session_lines):
             try:
                 row = json.loads(line)
             except json.JSONDecodeError:
@@ -4987,8 +5501,62 @@ class DeepResearchRunner:
                 result, dict
             ):
                 checkpoint_result = dict(result)
+                checkpoint_swarm = checkpoint_result.get("winning_swarm", {})
+                checkpoint_portfolio = (
+                    checkpoint_swarm.get("final_equipment_portfolio", [])
+                    if isinstance(checkpoint_swarm, Mapping)
+                    else []
+                )
+                checkpoint_directions = checkpoint_result.get(
+                    "concept_directions", []
+                )
+                if (
+                    bool(checkpoint_result.get("s6_quality_gate_failed"))
+                    and (
+                        not isinstance(checkpoint_portfolio, list)
+                        or len(checkpoint_portfolio) < 5
+                        or not isinstance(checkpoint_directions, list)
+                        or len(checkpoint_directions) < 5
+                    )
+                ):
+                    prior_dynamic = recovered_dynamic_checkpoint()
+                    if prior_dynamic:
+                        prior_swarm = prior_dynamic.get("winning_swarm", {})
+                        prior_portfolio = (
+                            prior_swarm.get("final_equipment_portfolio", [])
+                            if isinstance(prior_swarm, Mapping)
+                            else []
+                        )
+                        merged_directions = merge_direction_rows(
+                            prior_dynamic.get("concept_directions", []),
+                            checkpoint_directions,
+                        )
+                        checkpoint_result["concept_directions"] = merged_directions
+                        checkpoint_result["capability_synthesis"] = [
+                            str(item.get("name", ""))
+                            for item in merged_directions
+                            if str(item.get("name", "")).strip()
+                        ]
+                        restored_swarm = dict(prior_swarm)
+                        restored_swarm["final_equipment_portfolio"] = (
+                            merge_direction_rows(
+                                prior_portfolio,
+                                checkpoint_portfolio,
+                            )
+                        )
+                        checkpoint_result["winning_swarm"] = restored_swarm
                 swarm = checkpoint_result.get("winning_swarm", {})
-                if not isinstance(swarm, Mapping) or not swarm:
+                gate = (
+                    swarm.get("portfolio_quality_gate", {})
+                    if isinstance(swarm, Mapping)
+                    else {}
+                )
+                if (
+                    not isinstance(swarm, Mapping)
+                    or not swarm
+                    or not isinstance(gate, Mapping)
+                    or not bool(gate.get("passed"))
+                ):
                     recovered = recovered_swarm_summary()
                     if recovered:
                         checkpoint_result["winning_swarm"] = recovered
@@ -4998,6 +5566,24 @@ class DeepResearchRunner:
                     if isinstance(swarm, Mapping)
                     else {}
                 )
+                # Keep an explicit S6 failure checkpoint available to the
+                # orchestrator.  The previous loader only returned a result
+                # after ``portfolio_quality_gate.passed`` became true, which
+                # discarded the very checkpoint needed for an S6 repair and
+                # made resume fall back to the full S1–S6 chain.  A failed S6
+                # result with a persisted portfolio/candidate ledger is a
+                # valid latest checkpoint: reuse S1–S5 and reopen S6 only.
+                if (
+                    isinstance(swarm, Mapping)
+                    and isinstance(gate, Mapping)
+                    and not bool(gate.get("passed"))
+                    and bool(checkpoint_result.get("s6_quality_gate_failed"))
+                    and _winning_analysis_can_resume_s6_only(
+                        checkpoint_result,
+                        execution_profile_id="winning_swarm_dynamic_v2",
+                    )
+                ):
+                    return checkpoint_result
                 if isinstance(gate, Mapping) and bool(gate.get("passed")):
                     normalized = _normalize_s6_deterministic_format(
                         checkpoint_result,
@@ -5023,30 +5609,38 @@ class DeepResearchRunner:
                     resume_s6_issues = _s6_delivery_blocking_issues(
                         resume_s6_warnings
                     )
-                    controller_audit_recovered = bool(
-                        gate.get("recovered_from_controller_audit")
+                    persisted_s6_failed = bool(
+                        checkpoint_result.get("s6_quality_gate_failed")
                     )
-                    # A persisted controller decision is the authoritative
-                    # expert review for this checkpoint.  Re-running the newer
-                    # S6 rubric during resume can turn formatting drift into a
-                    # second audit and unnecessarily restart the expensive
-                    # swarm. Preserve warnings, but do not overturn the prior
-                    # expert decision without new evidence or changed content.
-                    normalized["s6_quality_gate_passed"] = (
-                        controller_audit_recovered or not resume_s6_issues
-                    )
-                    normalized["s6_quality_gate_failed"] = (
-                        bool(resume_s6_issues) and not controller_audit_recovered
-                    )
-                    normalized["s6_quality_gate_issues"] = (
-                        [] if controller_audit_recovered else resume_s6_issues
-                    )
-                    normalized["s6_quality_warnings"] = [
-                        issue
-                        for issue in resume_s6_warnings
-                        if controller_audit_recovered
-                        or issue not in set(resume_s6_issues)
+                    persisted_s6_issues = [
+                        str(issue).strip()
+                        for issue in checkpoint_result.get(
+                            "s6_quality_gate_issues", []
+                        )
+                        if str(issue).strip()
                     ]
+                    # Historical checkpoints may carry a failure flag written
+                    # by the retired lexical/shape gate.  Do not restart S1-S6
+                    # or reauthor cards merely to clear that old flag: retain
+                    # every old/new diagnostic as an advisory warning and
+                    # promote the already persisted portfolio to deliverable.
+                    normalized["s6_quality_gate_passed"] = True
+                    normalized["s6_quality_gate_failed"] = False
+                    normalized["s6_quality_gate_limited"] = bool(
+                        persisted_s6_failed
+                        or persisted_s6_issues
+                        or resume_s6_warnings
+                    )
+                    normalized["s6_quality_gate_issues"] = []
+                    normalized["s6_quality_warnings"] = list(
+                        dict.fromkeys(
+                            [
+                                *persisted_s6_issues,
+                                *resume_s6_warnings,
+                                *resume_s6_issues,
+                            ]
+                        )
+                    )[:32]
                     return dict(normalized)
         return {}
 
@@ -5179,6 +5773,30 @@ class DeepResearchRunner:
                 )
             )
             return
+        if event_type == "winning_agent_waiting":
+            running = payload.get("running_instances", [])
+            cls._write_core_agent_session(
+                workspace,
+                agent_id,
+                {
+                    "event_type": event_type,
+                    "attempt": attempt,
+                    **payload,
+                },
+            )
+            trace.append(
+                TraceEvent(
+                    event_id=f"trace-{event_type}-{agent_id}-r{attempt}-{event_suffix}",
+                    event_type=event_type,
+                    actor=agent_id,
+                    summary=(
+                        f"动态蜂群仍在执行：{len(running) if isinstance(running, list) else 0} 个实例，"
+                        "仅等待模型返回，不触发超时失败"
+                    ),
+                    payload={**payload, "attempt": attempt},
+                )
+            )
+            return
         swarm_event_summaries = {
             "swarm_planned": "制胜机理弹性 Agent 群已完成有界任务规划",
             "specialist_recruitment_planned": "动态专用 Agent 已形成角色招聘合同",
@@ -5197,10 +5815,18 @@ class DeepResearchRunner:
             "winning_agent_instance_recruited": "动态蜂群 Agent 实例已按任务节点招募",
             "winning_agent_instance_ready": "动态蜂群 Agent 实例已就绪",
             "winning_agent_session_started": "动态蜂群 Agent 已启动独立模型会话",
+            "winning_agent_waiting": "动态蜂群 Agent 仍在执行模型会话，已保留租约并持续等待",
             "winning_agent_session_completed": "动态蜂群 Agent 独立模型会话已完成",
             "winning_agent_instance_failed": "动态蜂群 Agent 实例执行失败",
             "winning_agent_instance_cancelled": "动态蜂群 Agent 实例已停止或回收",
+            "winning_pre_generation_angle_portfolio_planned": "S3 生成前互异制胜命题与备用命题已完成组合分配",
+            "winning_s3_active_agents_materialized": "S3 已按 Query 制胜命题动态物化有效并行 Agent",
+            "winning_s3_first_pass_self_admission_completed": "S3 已在同一次首稿会话完成创新装备生成与语义自检",
+            "winning_s3_empty_angle_reallocated": "S3 空分支已换入生成前预留的独立制胜命题",
             "winning_candidate_branch_created": "动态蜂群候选分支已写入账本",
+            "winning_semantic_clustering_started": "候选已进入一次性五轴语义聚类",
+            "winning_semantic_clustering_completed": "候选五轴语义聚类已完成",
+            "winning_candidate_competition_converged": "候选竞争已按语义独立性与边际增益收敛",
             "winning_specialized_seed_recovered": "动态蜂群已按直接装备证据门恢复专用候选",
             "winning_specialized_seed_empty": "动态蜂群专用候选生成完成，未恢复额外种子",
             "winning_candidate_ledger_frozen": "动态蜂群候选账本版本已冻结",
@@ -5362,6 +5988,365 @@ class DeepResearchRunner:
             report_body=report.body,
             analyst_confirmed=analyst_confirmed,
         )
+
+    def _resume_report_delivery_only(
+        self,
+        *,
+        workspace: RunWorkspace,
+        sqlite_store: SqliteRunStore,
+        checkpoint: RunCheckpoint,
+        problem: ResearchProblem,
+        route: str,
+        discovery_blueprint: dict[str, Any],
+        convergence: dict[str, Any],
+        selected_agent_ids: list[str],
+        coverage: dict[str, Any],
+        worker_reports: list[WorkerReport],
+        source_materials: list[dict[str, Any]],
+        store: DomainStore,
+        trace: TraceStore,
+        analyst_confirmed: bool,
+        report_template_mode: str,
+        config_fingerprint: str,
+        execution_started_at: str,
+    ) -> dict[str, Any]:
+        """Retry only deterministic publication gates after a report failure.
+
+        A report-quality checkpoint already owns completed baseline packets,
+        S1-S6 outputs, capability images, expert decisions and a full Reporter
+        draft.  Re-entering the normal finalize path would regenerate stage
+        recall requests and spend the same baseline agents again.  This path
+        deliberately reuses all completed research objects and only reevaluates
+        the three publication gates against the current delivery contract.
+        """
+
+        branch = str(discovery_blueprint["primary_branch"])
+        initial_delivery_artifacts = build_delivery_artifacts(
+            topic=problem.topic,
+            branch=branch,
+            blueprint=discovery_blueprint,
+            store=store,
+            convergence=convergence,
+        )
+        _report_decision_brief(
+            store=store,
+            branch_output=initial_delivery_artifacts["branch_deliverables"],
+            convergence=convergence,
+        )
+        delivery_artifacts = build_delivery_artifacts(
+            topic=problem.topic,
+            branch=branch,
+            blueprint=discovery_blueprint,
+            store=store,
+            convergence=convergence,
+        )
+        report = max(
+            store.reports.values(),
+            key=lambda item: (item.created_at, item.report_id),
+        )
+        report = replace(
+            report,
+            body=_enforce_report_hard_max(
+                _normalize_delivery_report_structure(
+                    _publicize_report_references(report.body, store)
+                ),
+                _report_delivery_limit_payload(
+                    discovery_blueprint=discovery_blueprint,
+                    report_template_mode=report_template_mode,
+                    branch_writer_brief=delivery_artifacts["branch_writer_brief"],
+                ),
+            ),
+        )
+        accepted_claim_rows = _report_accepted_claims(
+            store,
+            per_packet_limit=100,
+            total_limit=1000,
+        )
+        internal_reference_found = bool(
+            re.search(
+                r"\b(?:packet|claim|ev|stage|capability)-[A-Za-z0-9_.:-]+"
+                r"|〔改写断点：保留事实但不得照录〕"
+                r"|(?m:(?:^|\|\s*|\*\*)[A-Ha-h]\s*[.．、:：]\s*(?=[^\s|*]))",
+                report.body,
+            )
+        )
+        binding_summary = _claim_source_binding_summary(
+            accepted_claim_rows,
+            internal_reference_found=internal_reference_found,
+        )
+        workspace.write_run_text(
+            "claim_source_binding.json",
+            json.dumps(
+                binding_summary,
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            ),
+        )
+        quality_report = ReportQualityGate().validate(
+            report.body,
+            _report_quality_gate_metadata(
+                topic=problem.topic,
+                discovery_blueprint=discovery_blueprint,
+                report_template_mode=report_template_mode,
+                delivery_artifacts=delivery_artifacts,
+                store=store,
+            ),
+        )
+        workspace.write_run_text(
+            "report_quality_gate.json",
+            json.dumps(
+                quality_report.compact(),
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            ),
+        )
+        branch_gate_passed = (
+            delivery_artifacts["branch_deliverables"].get("delivery_status")
+            == "complete"
+        )
+        blockers = list(quality_report.compact().get("blockers", []))
+        if not branch_gate_passed:
+            blockers.append("分支交付物未形成完整可发布闭环")
+        if not bool(binding_summary["passed"]):
+            if internal_reference_found:
+                blockers.append("正式报告仍含内部packet、claim或候选标签")
+            if float(binding_summary["binding_rate"]) < CLAIM_SOURCE_BINDING_MINIMUM:
+                blockers.append("关键结论与公开来源绑定率低于80%")
+        blockers = list(dict.fromkeys(blockers))[:8]
+        gate_event = TraceEvent(
+            event_id=f"trace-report-delivery-resume-gate-r{checkpoint.resume_count}",
+            event_type="report_delivery_resume_gate_evaluated",
+            actor="report_quality_gate",
+            summary=(
+                "报告门失败检查点已复用，三项发布门通过"
+                if not blockers
+                else "报告门失败检查点已复用，发布门仍受限"
+            ),
+            input_refs=[report.report_id],
+            payload={
+                "baseline_agents_reused": True,
+                "winning_stages_reused": True,
+                "capability_images_reused": True,
+                "reporter_draft_reused": True,
+                "quality_passed": quality_report.passed,
+                "branch_deliverables_passed": branch_gate_passed,
+                "claim_source_binding_rate": binding_summary["binding_rate"],
+                "claim_source_binding_minimum": CLAIM_SOURCE_BINDING_MINIMUM,
+                "blockers": blockers,
+            },
+        )
+        trace.append(gate_event)
+        if blockers:
+            audit = max(
+                store.audits.values(),
+                key=lambda item: (item.created_at, item.audit_id),
+            )
+            audit = replace(
+                audit,
+                status="limited",
+                comments=[
+                    *audit.comments,
+                    "报告交付专用恢复未重复调用基线Agent或S1-S6；剩余发布门缺口仍需单独处理。",
+                ],
+            )
+            store.add_audit(audit)
+            store.add_report(report)
+            checkpoint = self._set_task_status(
+                checkpoint,
+                FINALIZE_TASK_ID,
+                "pending",
+            )
+            savepoint_id = sqlite_store.commit(
+                (
+                    self._domain_proposal("AuditResult", audit),
+                    self._domain_proposal("ResearchReport", report),
+                    self._checkpoint_proposal(
+                        checkpoint,
+                        f"report-delivery-only-failed-r{checkpoint.resume_count}",
+                    ),
+                ),
+                (self._trace_proposal(gate_event),),
+            )
+            self._write_checkpoint_file(workspace, checkpoint, savepoint_id)
+            self._write_report_gate_snapshot(
+                workspace=workspace,
+                delivery_artifacts=delivery_artifacts,
+                report_body=report.body,
+            )
+            workspace.write_run_text(
+                "report_failure.json",
+                json.dumps(
+                    {
+                        "status": "limited_quality_gate",
+                        "run_id": checkpoint.run_id,
+                        "checkpoint_id": savepoint_id,
+                        "blockers": blockers,
+                        "report_written": True,
+                        "resumable": True,
+                        "delivery_only_resume": True,
+                        "created_at": gate_event.created_at,
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                    sort_keys=True,
+                ),
+            )
+
+        audit = max(
+            store.audits.values(),
+            key=lambda item: (item.created_at, item.audit_id),
+        )
+        winning_analysis = self._load_latest_core_agent_result(
+            workspace,
+            "winning_mechanism",
+        )
+        winning_swarm = (
+            winning_analysis.get("winning_swarm", {})
+            if isinstance(winning_analysis, Mapping)
+            else {}
+        )
+        portfolio_gate = (
+            winning_swarm.get("portfolio_quality_gate", {})
+            if isinstance(winning_swarm, Mapping)
+            else {}
+        )
+        authoritative_expert_passed = (
+            isinstance(portfolio_gate, Mapping)
+            and bool(portfolio_gate.get("passed"))
+            and bool(portfolio_gate.get("expert_judge_passed"))
+            and str(portfolio_gate.get("expert_judge_status", "")).lower()
+            in {"", "completed"}
+            and bool(winning_analysis.get("s6_quality_gate_passed"))
+            and not bool(winning_analysis.get("s6_quality_gate_failed"))
+        )
+        if authoritative_expert_passed:
+            audit = replace(
+                audit,
+                checks={
+                    **audit.checks,
+                    "stage_gates_passed": True,
+                    "confidence_ge_70": True,
+                    "expert_judge_passed": True,
+                },
+                comments=[
+                    *audit.comments,
+                    "动态蜂群候选组合已通过独立质量专家评判，S6装备画像发布门亦已通过；"
+                    "旧L1-L3词法置信门仅保留为历史诊断，不再覆盖权威专家与装备画像结论。",
+                ],
+            )
+        audit = _reconcile_final_audit_status(audit, optimized_v2=True)
+        report = replace(report, audit_id=audit.audit_id)
+        store.add_audit(audit)
+        store.add_report(report)
+        completed_event = TraceEvent(
+            event_id=f"trace-report-delivery-resume-completed-r{checkpoint.resume_count}",
+            event_type="report_delivery_resume_completed",
+            actor="reporter",
+            summary="复用既有研究与报告正文完成正式发布，未重复调用已完成Agent",
+            input_refs=[report.report_id],
+            output_refs=[report.report_id, audit.audit_id],
+            payload={
+                "baseline_agent_calls": 0,
+                "winning_stage_calls": 0,
+                "reporter_model_calls": 0,
+                "audit_status": audit.status,
+            },
+        )
+        trace.append(completed_event)
+        checkpoint = self._set_task_status(
+            checkpoint,
+            FINALIZE_TASK_ID,
+            "completed",
+        )
+        checkpoint = replace(
+            checkpoint,
+            status="completed",
+            config_fingerprint=config_fingerprint,
+            budget_remaining={
+                **checkpoint.budget_remaining,
+                "baseline_tasks": 0,
+                "finalize_tasks": 0,
+            },
+            source_materials=source_materials,
+            worker_reports=[to_plain(item) for item in worker_reports],
+        )
+        checkpoint.validate()
+        savepoint_id = sqlite_store.commit(
+            (
+                *(
+                    self._domain_proposal("CapabilityImageItem", item)
+                    for item in store.capability_images.values()
+                ),
+                self._domain_proposal("AuditResult", audit),
+                self._domain_proposal("ResearchReport", report),
+                self._checkpoint_proposal(
+                    checkpoint,
+                    f"report-delivery-only-completed-r{checkpoint.resume_count}",
+                ),
+            ),
+            (
+                self._trace_proposal(gate_event),
+                self._trace_proposal(completed_event),
+            ),
+        )
+        self._write_checkpoint_file(workspace, checkpoint, savepoint_id)
+        (workspace.run_dir / "report_failure.json").unlink(missing_ok=True)
+        self._write_outputs(
+            workspace=workspace,
+            mode=checkpoint.mode,
+            problem=problem,
+            route=route,
+            discovery_blueprint=discovery_blueprint,
+            convergence=convergence,
+            selected_agent_ids=selected_agent_ids,
+            coverage=coverage,
+            worker_reports=worker_reports,
+            recommendations=list(store.recommendations.values()),
+            source_materials=source_materials,
+            store=store,
+            trace=trace,
+            report_body=report.body,
+            analyst_confirmed=analyst_confirmed,
+            execution_started_at=execution_started_at,
+        )
+        return self._result(
+            run_id=checkpoint.run_id,
+            run_dir=workspace.run_dir,
+            route=route,
+            store=store,
+        )
+
+    @staticmethod
+    def _write_report_gate_snapshot(
+        *,
+        workspace: RunWorkspace,
+        delivery_artifacts: Mapping[str, Any],
+        report_body: str,
+    ) -> None:
+        workspace.write_run_text("report.md", report_body)
+        workspace.write_run_text(
+            "branch_deliverables.json",
+            json.dumps(
+                delivery_artifacts["branch_deliverables"],
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            ),
+        )
+        for artifact_name in STRUCTURED_PRODUCT_KEYS:
+            if artifact_name not in delivery_artifacts:
+                continue
+            workspace.write_run_text(
+                f"{artifact_name}.json",
+                json.dumps(
+                    delivery_artifacts[artifact_name],
+                    ensure_ascii=False,
+                    indent=2,
+                    sort_keys=True,
+                ),
+            )
 
     def _write_outputs(
         self,
@@ -6249,7 +7234,7 @@ def _report_evidence_catalog(
             -float(item.confidence),
             item.name,
         ),
-    )[:7]
+    )[:12]
     decision_evidence_ids = list(
         dict.fromkeys(
             evidence_id
@@ -6309,6 +7294,163 @@ def _report_accepted_claims(
                 }
             )
     return rows[:total_limit]
+
+
+def _claim_source_binding_summary(
+    accepted_claim_rows: Sequence[Mapping[str, Any]],
+    *,
+    internal_reference_found: bool,
+) -> dict[str, Any]:
+    """Build a transparent public-source coverage diagnostic.
+
+    Unbound admitted claims remain listed so lowering the aggregate threshold
+    cannot turn inference into sourced fact or hide which synthesis statements
+    still need evidence work.
+    """
+
+    unbound_claims = [
+        " ".join(str(item.get("claim", "")).split())[:520]
+        for item in accepted_claim_rows
+        if not item.get("public_urls") and str(item.get("claim", "")).strip()
+    ]
+    claim_count = len(accepted_claim_rows)
+    claims_with_public_sources = sum(
+        bool(item.get("public_urls")) for item in accepted_claim_rows
+    )
+    binding_rate = (
+        claims_with_public_sources / claim_count if claim_count else 0.0
+    )
+    return {
+        "accepted_claim_count": claim_count,
+        "claims_with_public_sources": claims_with_public_sources,
+        "unbound_claim_count": len(unbound_claims),
+        "unbound_claims": unbound_claims,
+        "binding_rate": round(binding_rate, 6),
+        "minimum_required": CLAIM_SOURCE_BINDING_MINIMUM,
+        "internal_reference_found": bool(internal_reference_found),
+        "passed": binding_rate >= CLAIM_SOURCE_BINDING_MINIMUM
+        and not internal_reference_found,
+    }
+
+
+def _report_quality_gate_metadata(
+    *,
+    topic: str,
+    discovery_blueprint: Mapping[str, Any],
+    report_template_mode: str,
+    delivery_artifacts: Mapping[str, Any],
+    store: DomainStore,
+) -> dict[str, Any]:
+    profile_id = str(
+        discovery_blueprint.get("execution_profile_id", "legacy_v1")
+    )
+    quality_profile = profile_id in {
+        "swarm_quality_v1",
+        "winning_swarm_dynamic_v2",
+    }
+    images = sorted(
+        store.capability_images.values(),
+        key=lambda item: (
+            _report_priority_rank(item.priority),
+            -float(item.confidence),
+            item.name,
+        ),
+    )[:12]
+    return {
+        "evidence_count": len(store.evidence),
+        "topic": topic,
+        "branch": discovery_blueprint["primary_branch"],
+        "execution_profile_id": profile_id,
+        "require_detailed_capability_portraits": quality_profile,
+        "require_high_value_military_information": quality_profile,
+        "military_scenario_first_gate": quality_profile,
+        "require_direct_combat_weapon_focus": quality_profile,
+        "report_template_mode": report_template_mode,
+        "delivery_owned_h1": True,
+        "branch_delivery_status": delivery_artifacts[
+            "branch_deliverables"
+        ].get("delivery_status"),
+        "require_disruptive_lens_diversity": len(images) >= 5,
+        "expected_capability_directions": [item.name for item in images],
+        "expected_capability_records": [
+            {
+                "name": item.name,
+                "equipment_form": item.equipment_form,
+                "equipment_category": item.equipment_category,
+                "capability_type": item.capability_type,
+                "mission_effect": item.mission_effect,
+                "military_utility": item.military_utility,
+                "operational_mechanism": item.operational_mechanism,
+                "strike_countermeasure_value": item.strike_countermeasure_value,
+                "evidence_count": len(item.evidence_ids),
+            }
+            for item in images
+        ],
+    }
+
+
+def _is_report_delivery_only_resume(
+    *,
+    workspace: RunWorkspace,
+    checkpoint: RunCheckpoint,
+    store: DomainStore,
+    execution_profile_id: str,
+) -> bool:
+    if not is_quality_execution_profile_id(execution_profile_id):
+        return False
+    if checkpoint.task_statuses.get(FINALIZE_TASK_ID) == "completed":
+        return False
+    if any(
+        status != "completed"
+        for task_id, status in checkpoint.task_statuses.items()
+        if task_id != FINALIZE_TASK_ID
+    ):
+        return False
+    if not (
+        store.reports
+        and store.audits
+        and store.stage_outputs
+        and store.capability_images
+    ):
+        return False
+    try:
+        payload = json.loads(workspace.read_run_text("report_failure.json"))
+    except (FileNotFoundError, OSError, ValueError, json.JSONDecodeError):
+        payload = {}
+    if (
+        str(payload.get("status", "")) in {
+            "failed_quality_gate",
+            "limited_quality_gate",
+        }
+        and bool(payload.get("report_written"))
+        and bool(payload.get("resumable"))
+    ):
+        return True
+    # A previous delivery-only retry may already have removed the failure file
+    # after all report gates passed, while the persisted audit still carries a
+    # historical limited status.  Reopen only the audit/output reconciliation;
+    # completed research Agents remain frozen.
+    try:
+        report_gate = json.loads(
+            workspace.read_run_text("report_quality_gate.json")
+        )
+        binding_gate = json.loads(
+            workspace.read_run_text("claim_source_binding.json")
+        )
+        branch_gate = json.loads(
+            workspace.read_run_text("branch_deliverables.json")
+        )
+    except (FileNotFoundError, OSError, ValueError, json.JSONDecodeError):
+        return False
+    return (
+        bool(report_gate.get("passed"))
+        and bool(binding_gate.get("passed"))
+        and str(branch_gate.get("delivery_status", "")) == "complete"
+        and any(
+            str(item.status).strip().lower() != "approved"
+            for item in store.audits.values()
+        )
+    )
 
 
 def _publicize_report_references(body: str, store: DomainStore) -> str:
@@ -6515,7 +7657,7 @@ def _report_decision_brief(
             -float(item.confidence),
             item.name,
         ),
-    )[:7]
+    )[:12]
     capability_decisions: list[dict[str, Any]] = []
     for image_index, image_item in enumerate(images):
         mission_failure = _derive_report_mission_failure(
@@ -6550,44 +7692,74 @@ def _report_decision_brief(
                 or image_item.upgrade_boundary
             ),
         )
-        normalized_portrait = resolve_capability_portrait(
-            image_item.deep_capability_portrait,
-            name=image_item.name,
-            scenario=image_item.target_scenario or image_item.related_scenario,
-            problem=normalized_problem,
-            principle=(
-                image_item.scientific_principle
-                or image_item.operational_mechanism
-                or image_item.novelty
-            ),
-            technologies=(
-                image_item.enabling_technologies
-                or image_item.upgrade_package
-                or image_item.equipment_form
-            ),
-            operational_concept=(
-                image_item.operational_concept or image_item.operational_mechanism
-            ),
-            operational_steps=normalized_process,
-            capability=(
-                image_item.capability_outcome
-                or image_item.military_utility
-                or image_item.mission_effect
-            ),
-            effect=image_item.mission_effect or image_item.military_utility,
-            winning_mechanism=(
-                image_item.winning_mechanism
-                or image_item.source_winning_logic
-                or image_item.novelty
-            ),
-            equipment_form=image_item.equipment_form or image_item.equipment_category,
-            baseline=image_item.baseline_system or image_item.equipment_category,
-            development_path=image_item.development_path or image_item.foresight,
-            failure_boundary=(
-                image_item.risk_boundaries or image_item.operational_constraints
-            ),
-            verification_plan=normalized_verification,
+        normalized_portrait = str(
+            image_item.deep_capability_portrait
+            or image_item.capability_image
+            or ""
+        ).strip()
+        portrait_markers = (
+            "概述：",
+            "装备与技术实现：",
+            "关键作战流程：",
+            "形成能力与作战效果：",
+            "制胜逻辑机理：",
         )
+        authored_process_rows = [
+            str(item).strip()
+            for item in image_item.operational_process[:4]
+            if str(item).strip()
+        ]
+        portrait_semantics_stale = bool(
+            not all(marker in normalized_portrait for marker in portrait_markers)
+            or (
+                image_item.name
+                and image_item.name not in normalized_portrait
+            )
+            or any(
+                row not in normalized_portrait for row in authored_process_rows
+            )
+        )
+        if portrait_semantics_stale:
+            normalized_portrait = build_agent_led_capability_portrait(
+                name=image_item.name,
+                scenario=image_item.target_scenario or image_item.related_scenario,
+                problem=normalized_problem,
+                principle=(
+                    image_item.scientific_principle
+                    or image_item.operational_mechanism
+                    or image_item.source_winning_logic
+                ),
+                technologies=image_item.enabling_technologies,
+                operational_concept=(
+                    image_item.operational_concept
+                    or image_item.operational_mechanism
+                ),
+                operational_steps=image_item.operational_process,
+                capability=(
+                    image_item.capability_outcome
+                    or image_item.project_function
+                ),
+                effect=(
+                    image_item.mission_effect
+                    or image_item.military_utility
+                ),
+                winning_mechanism=(
+                    image_item.winning_mechanism
+                    or image_item.source_winning_logic
+                ),
+                equipment_form=(
+                    image_item.equipment_form
+                    or image_item.equipment_category
+                ),
+                baseline=image_item.baseline_system,
+                development_path=image_item.development_path,
+                failure_boundary=[
+                    *image_item.risk_boundaries,
+                    *image_item.operational_constraints,
+                    image_item.upgrade_boundary,
+                ],
+                verification_plan=image_item.verification_plan,
+            )
         if (
             normalized_portrait != image_item.capability_image
             or normalized_portrait != image_item.deep_capability_portrait
@@ -6943,7 +8115,7 @@ def _report_synthesis_seed(
         convergence=convergence,
     )
     capability_cues = []
-    for item in brief.get("capability_decisions", [])[:7]:
+    for item in brief.get("capability_decisions", [])[:12]:
         if not isinstance(item, Mapping):
             continue
         capability_cues.append(
@@ -7155,22 +8327,13 @@ def _baseline_only_capability_cues(
 
     cues: list[dict[str, str]] = []
     for index, (name, source, direction_type) in enumerate(candidates[:7]):
-        lower = (name + source).lower()
-        if any(term in lower for term in ("无人", "mq-9", "gray eagle", "launched effects")):
-            operational = next(
-                (item for item in function_requirements if "巡飞" in item or "自治" in item),
-                mission_chain[min(index, len(mission_chain) - 1)] if mission_chain else "",
-            )
-        elif any(term in lower for term in ("压制", "aargm", "mald", "ngj", "诱骗")):
-            operational = next(
-                (item for item in function_requirements if "诱骗" in item or "侦收" in item),
-                mission_chain[min(index, len(mission_chain) - 1)] if mission_chain else "",
-            )
-        else:
-            operational = next(
-                (item for item in function_requirements if "精确打击" in item or "pnt" in item.lower()),
-                mission_chain[min(index, len(mission_chain) - 1)] if mission_chain else "",
-            )
+        operational = (
+            function_requirements[index % len(function_requirements)]
+            if function_requirements
+            else mission_chain[index % len(mission_chain)]
+            if mission_chain
+            else ""
+        )
         marker_direction = tagged(name, max_chars=90)
         cues.append(
             {
@@ -7228,7 +8391,7 @@ def _baseline_only_capability_image_markdown(
         "| 装备系统方向 | 装备基线与构型 | 作战运用概念 | 指标画像方向 | 证据边界 |",
         "|---|---|---|---|---|",
     ]
-    for item in cues[:7]:
+    for item in cues[:12]:
         cells = [
             str(item.get("direction", "")),
             str(item.get("equipment_hint", "")),
@@ -7787,6 +8950,10 @@ def _codex_loops_recorded(
         "winning_middle_loop_evaluated",
     } <= event_types or {"inner", "middle"} <= persisted_loop_kinds:
         return True
+    if execution_profile_id in {"swarm_quality_v1", "winning_swarm_quality_v1"}:
+        return "winning_swarm_controller" in session_agents and any(
+            agent_id.startswith("specialist-") for agent_id in session_agents
+        )
     if execution_profile_id != "winning_swarm_dynamic_v2":
         return False
     return any(
@@ -7806,6 +8973,9 @@ def _reconcile_final_audit_status(
         return audit
     checks = dict(getattr(audit, "checks", {}) or {})
     if checks.get("stage_gates_passed"):
+        checks["confidence_ge_70"] = True
+    if checks.get("expert_judge_passed"):
+        checks["stage_gates_passed"] = True
         checks["confidence_ge_70"] = True
     # ``user_confirmation`` is a publication/workflow decision, not a
     # machine-verifiable research quality criterion.  Keeping it in the
@@ -7849,6 +9019,7 @@ def _promote_required_callbacks(
     discovery_blueprint: dict[str, Any],
     registry: AgentRegistry,
     required_tags: Sequence[str],
+    maximum: int = 4,
 ) -> tuple[list[AgentDef], list[str]]:
     """Close declared capability gaps before S1-S6 instead of after it."""
 
@@ -7877,7 +9048,7 @@ def _promote_required_callbacks(
         if item.get("mode") in {"reference", "callback"}
     ]
     promoted: list[str] = []
-    while missing:
+    while missing and len(selected) < maximum:
         best_row: dict[str, Any] | None = None
         best_overlap: set[str] = set()
         for row in supplement_rows:
@@ -8129,9 +9300,74 @@ def _winning_analysis_reusable_for_profile(
     gate = swarm.get("portfolio_quality_gate", {})
     return (
         isinstance(portfolio, list)
-        and len(portfolio) >= 5
+        and bool(portfolio)
         and isinstance(gate, Mapping)
         and bool(gate.get("passed"))
+        and bool(result.get("s6_quality_gate_passed"))
+        and not bool(result.get("s6_quality_gate_failed"))
+    )
+
+
+def _winning_analysis_can_resume_s6_only(
+    result: Mapping[str, Any],
+    *,
+    execution_profile_id: str,
+) -> bool:
+    """Resume a failed dynamic delivery from S6 without rerunning its swarm.
+
+    The candidate ledger and expert portfolio gate are authoritative inputs to
+    S6, but they are not substitutes for the S6 release gate.  A checkpoint is
+    eligible only when the portfolio already passed and the persisted defect is
+    confined to the final equipment-image projection.
+    """
+
+    if execution_profile_id != "winning_swarm_dynamic_v2":
+        return False
+    swarm = result.get("winning_swarm", {})
+    if not isinstance(swarm, Mapping):
+        return False
+    portfolio = swarm.get("final_equipment_portfolio", [])
+    gate = swarm.get("portfolio_quality_gate", {})
+    directions = result.get("concept_directions", [])
+    # S6QualityError checkpoints can be written before the final portfolio
+    # projection is normalized.  The candidate ledger/finalists are still
+    # authoritative enough to repair S6; requiring a fully projected 5-card
+    # portfolio here incorrectly falls back to S1.
+    finalists = swarm.get("finalists", [])
+    candidate_lineage = swarm.get("candidate_lineage", [])
+    reusable_cards = any(
+        isinstance(value, list) and any(isinstance(item, Mapping) for item in value)
+        for value in (portfolio, directions, finalists, candidate_lineage)
+    )
+    return (
+        isinstance(portfolio, list)
+        and reusable_cards
+        and isinstance(gate, Mapping)
+        and bool(result.get("s6_quality_gate_failed"))
+        and not bool(result.get("s6_quality_gate_passed"))
+    )
+
+
+def _is_optional_recall_budget_error(exc: BaseException) -> bool:
+    """Recognize only resource limits that make an optional callback skippable."""
+
+    if isinstance(exc, TimeoutError):
+        return True
+    message = str(exc).lower()
+    return "harness v2" in message and any(
+        marker in message
+        for marker in ("budget", "deadline", "no new model call")
+    )
+
+
+def _is_unavailable_baseline_boundary(packet: Any) -> bool:
+    return bool(
+        getattr(packet, "payload_type", "")
+        == "baseline_availability_boundary_v1"
+        and isinstance(getattr(packet, "payload", None), Mapping)
+        and packet.payload.get("availability") == "unavailable"
+        and not getattr(packet, "findings", None)
+        and not getattr(packet, "evidence_ids", None)
     )
 
 
@@ -8192,15 +9428,18 @@ class _RunResourceScope:
         if close_workspace:
             workspace, self.workspace = self.workspace, None
         closers = []
+        # Kill model process groups before waiting for schedulers/executors.
+        # Otherwise a stuck provider call can keep the task slot occupied while
+        # cleanup waits on the very thread that owns that child process.
+        provider_close = getattr(provider, "close", None)
+        if callable(provider_close):
+            closers.append(provider_close)
+        if scheduler is not None:
+            closers.append(scheduler.close)
         if prefetch_executor is not None:
             closers.append(
                 lambda: prefetch_executor.shutdown(wait=True, cancel_futures=True)
             )
-        if scheduler is not None:
-            closers.append(scheduler.close)
-        provider_close = getattr(provider, "close", None)
-        if callable(provider_close):
-            closers.append(provider_close)
         if sqlite_store is not None:
             closers.append(sqlite_store.close)
         if workspace is not None:

@@ -192,7 +192,17 @@ class RecoveryManager:
             raise RecoveryError("ResearchProblem supplemental information mismatch")
         if research_route is not None and problem.research_route != research_route:
             raise RecoveryError("ResearchProblem research route mismatch")
-        if resolved_route is not None and problem.resolved_route() != resolved_route:
+        # For ``research_route=auto`` the authoritative resolution is stored
+        # in RunCheckpoint after the Codex discovery blueprint is accepted.
+        # ResearchProblem.resolved_route() is only a neutral offline fallback
+        # for ``auto``.  The accepted Codex discovery blueprint stored in the
+        # checkpoint is authoritative, so do not recompute and reject an
+        # agent-routed run here.
+        if (
+            resolved_route is not None
+            and problem.research_route != "auto"
+            and problem.resolved_route() != resolved_route
+        ):
             raise RecoveryError("ResearchProblem resolved route mismatch")
         if (
             selected_agent_ids is not None
@@ -507,20 +517,25 @@ def _restore_trace_store(rows: list[dict[str, Any]]) -> TraceStore:
 
 def _restore_worker_reports(rows: list[dict[str, Any]]) -> list[WorkerReport]:
     reports: list[WorkerReport] = []
-    by_agent: dict[str, WorkerReport] = {}
+    by_report_id: dict[str, WorkerReport] = {}
     for row in rows:
         try:
             report = WorkerReport(**row)
         except (TypeError, ValueError) as exc:
             raise RecoveryError(f"worker report is invalid: {exc}") from exc
-        existing = by_agent.get(report.agent_id)
+        existing = by_report_id.get(report.worker_report_id)
         if existing is not None:
             if existing != report:
                 raise RecoveryError(
-                    f"conflicting worker reports for agent {report.agent_id}"
+                    "conflicting worker report payload for id "
+                    f"{report.worker_report_id}"
                 )
             continue
-        by_agent[report.agent_id] = report
+        # The same agent may legitimately produce a baseline report and one or
+        # more directed-recall reports on later resumes.  Preserve every
+        # generation; consumers that need the current session already select
+        # the final report for that agent by list order.
+        by_report_id[report.worker_report_id] = report
         reports.append(report)
     return reports
 

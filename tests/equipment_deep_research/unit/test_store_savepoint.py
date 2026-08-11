@@ -1022,4 +1022,4 @@ def test_run_resource_scope_closes_provider_and_all_resources_after_failure() ->
     with pytest.raises(RuntimeError, match="scheduler close failed"):
         scope.close()
 
-    assert events == ["scheduler", "provider", "store", "workspace"]
+    assert events == ["provider", "scheduler", "store", "workspace"]

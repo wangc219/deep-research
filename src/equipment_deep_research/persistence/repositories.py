@@ -10,6 +10,11 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.exc import IntegrityError
 
 from equipment_deep_research.application.dto import RunView
+from equipment_deep_research.runtime_identity import (
+    RUNTIME_BUILD_HASH,
+    claimed_queue_status,
+    pending_queue_status,
+)
 
 
 metadata = MetaData()
@@ -175,12 +180,15 @@ class SqlRunRepository:
 
 
 class SqlRunQueue:
-    def __init__(self, engine: Engine) -> None:
+    def __init__(self, engine: Engine, *, generation: str = RUNTIME_BUILD_HASH) -> None:
         self.engine = engine
         self._lock = Lock()
+        self.generation = str(generation)
+        self._pending_status = pending_queue_status(self.generation)
+        self._claimed_status = claimed_queue_status(self.generation)
         metadata.create_all(engine)
 
-    def enqueue(self, run_id: str) -> None:
+    def enqueue(self, run_id: str, *, allow_claimed: bool = False) -> None:
         for attempt in range(8):
             try:
                 with self._lock, self.engine.begin() as connection:
@@ -201,11 +209,33 @@ class SqlRunQueue:
                         connection.execute(
                             queue_items.insert().values(
                                 run_id=run_id,
-                                status="pending",
+                                status=self._pending_status,
                                 ordinal=next_ordinal,
                             )
                         )
-                    elif existing["status"] != "pending":
+                    elif str(existing["status"]).startswith("claimed"):
+                        if not allow_claimed:
+                            # A claimed row represents a live Worker lease.
+                            # Never turn it back into pending merely because a
+                            # second resume request arrived: doing so lets
+                            # another Worker execute the same run concurrently.
+                            return
+                        # The service has already verified that no live Worker
+                        # owns this run; a stale claim can be reopened.
+                        next_ordinal = (
+                            connection.execute(
+                                select(queue_items.c.ordinal)
+                                .order_by(queue_items.c.ordinal.desc())
+                                .limit(1)
+                            ).scalar_one_or_none()
+                            or 0
+                        ) + 1
+                        connection.execute(
+                            update(queue_items)
+                            .where(queue_items.c.run_id == run_id)
+                            .values(status=self._pending_status, ordinal=next_ordinal)
+                        )
+                    elif existing["status"] != self._pending_status:
                         # A failed/completed attempt leaves an acked row for audit and
                         # idempotency.  Resuming the same run must make that row
                         # claimable again and place it behind already-pending work.
@@ -220,7 +250,7 @@ class SqlRunQueue:
                         connection.execute(
                             update(queue_items)
                             .where(queue_items.c.run_id == run_id)
-                            .values(status="pending", ordinal=next_ordinal)
+                            .values(status=self._pending_status, ordinal=next_ordinal)
                         )
                 return
             except IntegrityError:
@@ -231,10 +261,12 @@ class SqlRunQueue:
                     raise
                 time.sleep(0.005 * (attempt + 1))
 
-    def claim(self) -> str | None:
+    def claim(self, *, generation: str | None = None) -> str | None:
+        if str(generation or self.generation) != self.generation:
+            return None
         candidate = (
             select(queue_items.c.run_id)
-            .where(queue_items.c.status == "pending")
+            .where(queue_items.c.status == self._pending_status)
             .order_by(queue_items.c.ordinal)
             .limit(1)
             .scalar_subquery()
@@ -243,9 +275,9 @@ class SqlRunQueue:
             update(queue_items)
             .where(
                 queue_items.c.run_id == candidate,
-                queue_items.c.status == "pending",
+                queue_items.c.status == self._pending_status,
             )
-            .values(status="claimed")
+            .values(status=self._claimed_status)
             .returning(queue_items.c.run_id)
         )
         with self.engine.begin() as connection:
@@ -258,7 +290,7 @@ class SqlRunQueue:
 
     def retry(self, run_id: str) -> None:
         with self.engine.begin() as connection:
-            connection.execute(update(queue_items).where(queue_items.c.run_id == run_id).values(status="pending"))
+            connection.execute(update(queue_items).where(queue_items.c.run_id == run_id).values(status=self._pending_status))
 
     def remove(self, run_id: str) -> None:
         with self.engine.begin() as connection:
@@ -266,4 +298,4 @@ class SqlRunQueue:
 
     def pending_run_ids(self) -> list[str]:
         with self.engine.connect() as connection:
-            return [str(item) for item in connection.execute(select(queue_items.c.run_id).where(queue_items.c.status == "pending").order_by(queue_items.c.ordinal)).scalars().all()]
+            return [str(item) for item in connection.execute(select(queue_items.c.run_id).where(queue_items.c.status == self._pending_status).order_by(queue_items.c.ordinal)).scalars().all()]

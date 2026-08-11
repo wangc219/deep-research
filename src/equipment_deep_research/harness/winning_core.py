@@ -52,8 +52,11 @@ class WinningCoreHarness:
         resume_from: str,
     ) -> tuple[dict[str, Any], AgentExecutionResult, list[str]]:
         profile = self.catalog.profiles[self.agent.harness_profile]
-        optimized_v2 = is_quality_execution_profile_id(
+        quality_profile = is_quality_execution_profile_id(
             payload.get("execution_profile_id")
+        )
+        aggressive_compaction = (
+            str(payload.get("execution_profile_id", "")) == "optimized_v2"
         )
         skills = [self.catalog.skills[item] for item in self.agent.skill_ids]
         active_tools = list(
@@ -64,7 +67,7 @@ class WinningCoreHarness:
                 phase_allowlist=profile.phase_tools.get("winning", self.agent.tools),
             )
         )
-        if optimized_v2:
+        if aggressive_compaction:
             # The wrapper only delegates one structured advisor call.  S1-S6
             # tool semantics are enforced inside the provider's logical roles,
             # so replaying the full six-skill/tool catalog here adds no quality.
@@ -79,12 +82,12 @@ class WinningCoreHarness:
             ]
         active_skill_ids = (
             list(self.agent.skill_ids[:1])
-            if optimized_v2
+            if aggressive_compaction
             else list(self.agent.skill_ids)
         )
         task_budget = _winning_task_budget(
             profile.task_budget(),
-            optimized_v2=optimized_v2,
+            optimized_v2=quality_profile,
         )
         provider = _WinningAdvisorProvider(advisor, payload)
         harness = AgentHarness(

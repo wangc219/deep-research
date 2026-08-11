@@ -39,6 +39,72 @@ def test_failed_run_can_resume_from_checkpoint_and_clears_error() -> None:
     assert service.queue.pending_run_ids() == [run.run_id]
 
 
+def test_resume_can_refresh_server_managed_execution_configuration() -> None:
+    service = ResearchApplicationService()
+    run = service.create_run(CreateRunCommand(
+        "topic",
+        "auto",
+        [],
+        3,
+        "analyst",
+        {
+            "mode": "real",
+            "provider": "codex",
+            "model": "old-model",
+            "base_url": "https://old.example.test/v1",
+            "api_key_env": "OLD_KEY",
+        },
+    ))
+    service.set_status(run.run_id, "researching")
+    service.set_status(run.run_id, "failed")
+
+    refreshed = {
+        **run.execution,
+        "model": "new-model",
+        "base_url": "https://new.example.test/v1",
+        "api_key_env": "NEW_KEY",
+    }
+    resumed = service.resume_run(
+        run.run_id,
+        actor="analyst",
+        idempotency_key="resume-with-current-config",
+        execution=refreshed,
+    )
+
+    assert resumed.execution == refreshed
+    assert service.get_run(run.run_id).execution == refreshed
+
+
+def test_limited_completed_delivery_can_resume_for_release_repair() -> None:
+    service = ResearchApplicationService()
+    run = service.create_run(CreateRunCommand("topic", "auto", [], 3, "analyst"))
+    service.set_result(run.run_id, {"audit_status": "limited"})
+    service.set_status(run.run_id, "completed")
+
+    resumed = service.resume_run(
+        run.run_id,
+        actor="analyst",
+        idempotency_key="resume-limited-delivery",
+    )
+
+    assert resumed.status == "queued"
+    assert service.queue.pending_run_ids() == [run.run_id]
+
+
+def test_approved_completed_delivery_cannot_resume() -> None:
+    service = ResearchApplicationService()
+    run = service.create_run(CreateRunCommand("topic", "auto", [], 3, "analyst"))
+    service.set_result(run.run_id, {"audit_status": "approved"})
+    service.set_status(run.run_id, "completed")
+
+    with pytest.raises(InvalidRunTransition, match="completed.*queued"):
+        service.resume_run(
+            run.run_id,
+            actor="analyst",
+            idempotency_key="resume-approved-delivery",
+        )
+
+
 def test_execution_configuration_is_preserved_on_a_run() -> None:
     service = ResearchApplicationService()
     run = service.create_run(
@@ -139,7 +205,7 @@ def test_queued_run_can_be_permanently_deleted_but_active_run_cannot() -> None:
         service.delete_run(active.run_id)
 
 
-def test_orphaned_active_run_is_requeued_after_worker_restart() -> None:
+def test_orphaned_active_run_requires_manual_resume_after_worker_restart() -> None:
     service = ResearchApplicationService()
     run = service.create_run(CreateRunCommand("topic", "auto", [], 2, "analyst"))
     service.set_status(run.run_id, "researching")
@@ -147,8 +213,23 @@ def test_orphaned_active_run_is_requeued_after_worker_restart() -> None:
     recovered = service.recover_orphaned_runs(stale_after_seconds=0)
 
     assert recovered == [run.run_id]
-    assert service.get_run(run.run_id).status == "queued"
-    assert service.queue.pending_run_ids() == [run.run_id]
+    assert service.get_run(run.run_id).status == "failed"
+    assert "人工点击" in service.get_run(run.run_id).error
+    assert service.queue.pending_run_ids() == []
+
+
+@pytest.mark.parametrize("status", ["synthesizing", "reviewing", "reporting"])
+def test_orphaned_late_phase_run_requires_manual_resume_after_worker_restart(status: str) -> None:
+    service = ResearchApplicationService()
+    run = service.create_run(CreateRunCommand("topic", "auto", [], 2, "analyst"))
+    service.set_status(run.run_id, status)
+
+    recovered = service.recover_orphaned_runs(stale_after_seconds=0)
+
+    assert recovered == [run.run_id]
+    assert service.get_run(run.run_id).status == "failed"
+    assert "人工点击" in service.get_run(run.run_id).error
+    assert service.queue.pending_run_ids() == []
 
 
 def test_recently_claimed_run_is_not_recovered_by_another_starting_worker() -> None:

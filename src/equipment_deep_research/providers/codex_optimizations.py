@@ -84,7 +84,13 @@ def render_prompt_optimized(
 
     max_tokens = options.get("max_output_tokens")
     if max_tokens is not None:
-        parts.append(f"Requested maximum output tokens: {max_tokens}.")
+        if bool(options.get("_soft_output_token_budget", False)):
+            parts.append(
+                f"Planning output token budget: {max_tokens}. This is a soft planning "
+                "guide, not a cutoff: complete the assigned contract before stopping."
+            )
+        else:
+            parts.append(f"Requested maximum output tokens: {max_tokens}.")
 
     # 对话部分
     parts.append(_PROMPT_CONVERSATION_HEADER)
@@ -121,11 +127,21 @@ class CommandCache:
     def get_cache_key(self, options: Mapping[str, Any], has_schema: bool) -> str:
         """构建缓存键"""
         # 提取影响命令的关键参数
+        search_options = options.get("web_search")
+        if isinstance(search_options, Mapping):
+            search_context_size = str(
+                search_options.get("search_context_size", "high")
+            ).strip().lower()
+            if search_context_size not in {"low", "medium", "high"}:
+                search_context_size = "high"
+            search_key = f"search:{search_context_size}"
+        else:
+            search_key = ""
         key_parts = [
             str(has_schema),
             str(options.get("reasoning_effort", "")),
             str(options.get("model_verbosity", "")),
-            "search" if options.get("web_search") else "",
+            search_key,
         ]
         return "|".join(key_parts)
 

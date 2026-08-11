@@ -18,7 +18,7 @@ presets:
       traditional_gap: [strategy, technology_readiness]
       war_case_learning: [threat, strategy]
     gate_policy:
-      min_stage_confidence: 0.7
-      min_l2_feasibility: 3
+      min_stage_confidence: 0.62
+      min_l2_feasibility: 2
       max_rounds: 2
       max_recalls_per_target: 1

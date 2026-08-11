@@ -51,7 +51,7 @@ class BranchExecutionContract:
     hard_deadline_seconds: int = 0
     delivery_grace_seconds: int = 0
     absolute_deadline_seconds: int = 0
-    maximum_delivery_model_calls: int = 4
+    maximum_delivery_model_calls: int = 8
     maximum_swarm_model_calls: int = 20
     maximum_quality_judge_model_calls: int = 2
     deadline_downshift_window_seconds: int = 240
@@ -80,9 +80,9 @@ class BranchExecutionContract:
             > self.absolute_deadline_seconds
         ):
             raise ValueError("hard deadline plus delivery grace exceeds absolute deadline")
-        if not 1 <= self.maximum_delivery_model_calls <= 4:
+        if not 1 <= self.maximum_delivery_model_calls <= 8:
             raise ValueError(
-                "delivery lane allows an initial draft/repair and one fresh retry/repair"
+                "delivery lane must cover the selected template's parallel sections"
             )
         if not 30 <= self.deadline_downshift_window_seconds <= 600:
             raise ValueError("deadline downshift window must be between 30 and 600 seconds")
@@ -357,12 +357,15 @@ def optimized_v2_profile() -> ExecutionProfile:
             "residual_model_calls": 14,
             "searches": 12,
             "codex_concurrency": 5,
+            # Internal S6 card calls share this one run; they do not consume
+            # additional research Worker slots.
+            "s6_codex_concurrency": 6,
             "wall_clock_deadlines_enabled": False,
             "soft_deadline_seconds": 0,
             "hard_deadline_seconds": 0,
             "delivery_grace_seconds": 0,
             "absolute_deadline_seconds": 0,
-            "maximum_delivery_model_calls": 4,
+            "maximum_delivery_model_calls": 8,
             "deadline_downshift_window_seconds": 240,
             "critical_fast_finalize_seconds": 0,
             "delivery_retry_reserve_seconds": 45,
@@ -432,7 +435,7 @@ def winning_swarm_dynamic_v2_profile() -> ExecutionProfile:
             # Keep the provider gate aligned with the mission graph's explicit
             # six-instance concurrency contract.
             "codex_concurrency": 6,
-            "max_dynamic_instances": 18,
+            "max_dynamic_instances": 21,
             "min_mission_graph_instances": 8,
             "target_mission_graph_instances": 12,
             "max_swarm_concurrency": 6,
@@ -476,8 +479,16 @@ def apply_execution_profile_to_blueprint(
     result["execution_contract"] = contract.to_dict()
     result["execution_contract"]["codex_concurrency"] = runtime_codex_concurrency
     result["baseline_execution_mode"] = "query_dominant_isolated_parallel"
-    result["minimum_business_agents"] = 3
-    result["maximum_business_agents"] = 4
+    if profile.profile_id == "winning_swarm_dynamic_v2":
+        # Baseline Agents only establish public boundaries for the dynamic
+        # S1-S6 swarm.  Two or three complementary lanes fit the common
+        # provider pool without making a fourth/fifth evidence lane the
+        # critical path before creative reasoning can start.
+        result["minimum_business_agents"] = 2
+        result["maximum_business_agents"] = 3
+    else:
+        result["minimum_business_agents"] = 3
+        result["maximum_business_agents"] = 4
     result["adaptive_winning_step_modes"] = {
         str(step): mode for step, mode in contract.step_intensity.items()
     }
@@ -497,28 +508,37 @@ def apply_execution_profile_to_blueprint(
         swarm_policy.update(
             {
                 "policy_id": "winning_swarm_dynamic_v2",
-                "max_dynamic_instances": 18,
+                "max_dynamic_instances": 21,
                 "max_concurrency": 6,
                 "mission_graph_min_instances": 8,
-            # Keep four of the sixteen governed producer slots available for
-            # post-judge residual repair.  The previous target of fifteen was
-            # immediately filled by opportunistic recruitment, after which
-            # repair expanded the graph beyond its advertised hard cap.
-            "mission_graph_target_instances": 12,
-                "mission_graph_max_instances": 18,
-                "finalist_minimum": 1,
-                "finalist_maximum": 12,
-                "minimum_direct_combat_equipment": 1,
-                "preferred_distinct_direct_equipment": 1,
-                "expert_candidate_pool_maximum": 10,
+                # Eight S3 slots are only semantic capacity.  The independent
+                # Query selector activates the number of genuinely distinct
+                # winning theses it finds; unused slots never start Codex.
+                "mission_graph_target_instances": 15,
+                "mission_graph_max_instances": 21,
+                "s3_winning_thesis_capacity": 8,
+                "s3_empty_reallocation_max": 2,
+                "finalist_minimum": 2,
+                "finalist_maximum": 7,
+                "minimum_direct_combat_equipment": 2,
+                "preferred_distinct_direct_equipment": 3,
+                "expert_candidate_pool_maximum": 12,
                 "expert_judge_enabled": True,
                 "expert_judge_required": True,
-                "expert_judge_minimum_score": 0.72,
-                "expert_judge_critical_dimension_minimum": 0.60,
+                "foresight_first_enabled": True,
+                "frontier_evidence_relaxation": True,
+                "frontier_final_gate_minimum_score": 0.62,
+                "frontier_expert_judge_minimum_score": 0.66,
+                "frontier_critical_dimension_minimum": 0.50,
+                "expert_judge_minimum_score": 0.68,
+                "expert_judge_critical_dimension_minimum": 0.52,
+                "pending_verification_backfill_enabled": True,
+                "pending_verification_minimum_score": 0.54,
+                "pending_verification_critical_dimension_minimum": 0.42,
                 "expert_repair_enabled": True,
-            "expert_repair_max_candidates": 6,
-            "expert_repair_reserved_instances": 6,
-                "expert_repair_minimum_score": 0.70,
+                "expert_repair_max_candidates": 3,
+                "expert_repair_reserved_instances": 3,
+                "expert_repair_minimum_score": 0.64,
             }
         )
     elif profile.profile_id == "swarm_quality_v1":
@@ -529,19 +549,27 @@ def apply_execution_profile_to_blueprint(
         swarm_policy.update(
             {
                 "policy_id": "swarm_quality_v1",
-                "finalist_minimum": 1,
-                "finalist_maximum": 12,
-                "minimum_direct_combat_equipment": 1,
-                "preferred_distinct_direct_equipment": 1,
-                "expert_candidate_pool_maximum": 10,
+                "finalist_minimum": 5,
+                "finalist_maximum": 7,
+                "minimum_direct_combat_equipment": 3,
+                "preferred_distinct_direct_equipment": 5,
+                "expert_candidate_pool_maximum": 12,
                 "expert_judge_enabled": True,
                 "expert_judge_required": True,
-                "expert_judge_minimum_score": 0.72,
-                "expert_judge_critical_dimension_minimum": 0.60,
+                "foresight_first_enabled": True,
+                "frontier_evidence_relaxation": True,
+                "frontier_final_gate_minimum_score": 0.62,
+                "frontier_expert_judge_minimum_score": 0.66,
+                "frontier_critical_dimension_minimum": 0.50,
+                "expert_judge_minimum_score": 0.68,
+                "expert_judge_critical_dimension_minimum": 0.52,
+                "pending_verification_backfill_enabled": True,
+                "pending_verification_minimum_score": 0.54,
+                "pending_verification_critical_dimension_minimum": 0.42,
                 "expert_repair_enabled": True,
                 "expert_repair_max_candidates": 4,
                 "expert_repair_reserved_instances": 4,
-                "expert_repair_minimum_score": 0.70,
+                "expert_repair_minimum_score": 0.64,
             }
         )
     result["winning_swarm_policy"] = normalize_winning_swarm_policy(
@@ -553,6 +581,9 @@ def apply_execution_profile_to_blueprint(
         "maximum_model_calls_with_residuals": contract.maximum_model_calls_with_residuals,
         "maximum_searches": contract.maximum_searches,
         "codex_concurrency": runtime_codex_concurrency,
+        "s6_codex_concurrency": int(
+            profile.budgets.get("s6_codex_concurrency", 6)
+        ),
         "wall_clock_deadlines_enabled": contract.wall_clock_deadlines_enabled,
         "soft_deadline_seconds": contract.soft_deadline_seconds,
         "hard_deadline_seconds": contract.hard_deadline_seconds,
@@ -572,7 +603,7 @@ def apply_execution_profile_to_blueprint(
         # extra review is fed only bounded repair deltas, not the full ledger.
         result["runtime_budgets"].update(
             {
-                "maximum_swarm_model_calls": 20,
+                "maximum_swarm_model_calls": 36,
                 "maximum_quality_judge_model_calls": 3,
             }
         )

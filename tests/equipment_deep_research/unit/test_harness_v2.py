@@ -11,9 +11,16 @@ from equipment_deep_research.agents.provider import (
     S6QualityError,
 )
 from equipment_deep_research.agents.registry import AgentDef
+from equipment_deep_research.agents.workflows.baseline_execution import (
+    _baseline_frontier_inspiration_instruction,
+    _baseline_output_schema,
+)
+from equipment_deep_research.agents.workflows.coordinator import _typed_packet_payload
 from equipment_deep_research.domain.models import BaselineFindingPacket, EvidenceCard, ResearchProblem
 from equipment_deep_research.domain.store import DomainStore
 from equipment_deep_research.harness.context import compact_packet_handoff
+from equipment_deep_research.harness.recovery import _restore_worker_reports
+from equipment_deep_research.harness.scheduler import WorkerReport
 from equipment_deep_research.harness.winning_core import _winning_task_budget
 from equipment_deep_research.orchestration.admission import PacketAdmissionGate
 from equipment_deep_research.orchestration.blueprints import (
@@ -28,10 +35,43 @@ from equipment_deep_research.orchestration.execution_contracts import (
 from equipment_deep_research.providers.fake import ScriptedFakeProvider
 from equipment_deep_research.orchestration.runner import (
     _build_military_value_handoff,
+    _is_unavailable_baseline_boundary,
     _merge_blueprint_and_analyst_agent_ids,
     _military_handoff_evidence_index,
     _report_indicator_portrait,
 )
+
+
+def test_recovery_preserves_baseline_and_recall_reports_from_same_agent() -> None:
+    baseline = WorkerReport(
+        agent_id="combat_scenario",
+        status="completed",
+        new_evidence_ids=["ev-1"],
+        packet_id="packet-combat_scenario",
+        handoff_summary="baseline",
+        session_path="combat_scenario.jsonl",
+        worker_report_id="worker-report-baseline",
+        created_at="2026-08-06T18:00:00+00:00",
+    )
+    recall = WorkerReport(
+        agent_id="combat_scenario",
+        status="completed",
+        new_evidence_ids=["ev-2"],
+        packet_id="packet-combat_scenario-r2",
+        handoff_summary="recall",
+        session_path="combat_scenario.jsonl",
+        worker_report_id="worker-report-recall",
+        created_at="2026-08-06T19:00:00+00:00",
+    )
+
+    restored = _restore_worker_reports(
+        [baseline.__dict__, recall.__dict__, recall.__dict__]
+    )
+
+    assert [item.packet_id for item in restored] == [
+        "packet-combat_scenario",
+        "packet-combat_scenario-r2",
+    ]
 
 
 def test_optimized_v2_manual_agents_are_added_without_replacing_defaults() -> None:
@@ -73,7 +113,7 @@ def test_abc_v2_contracts_encode_required_counts_and_cohorts() -> None:
     assert a.hard_deadline_seconds == 0
     assert a.delivery_grace_seconds == 0
     assert a.absolute_deadline_seconds == 0
-    assert a.maximum_delivery_model_calls == 4
+    assert a.maximum_delivery_model_calls == 8
     assert a.maximum_swarm_model_calls == 20
     assert a.maximum_quality_judge_model_calls == 2
     assert b.physical_cohorts == ((1, 2, 3), (4, 5))
@@ -98,12 +138,13 @@ def test_v2_blueprint_reserves_reporter_delivery_lane() -> None:
         "maximum_model_calls_with_residuals": 14,
         "maximum_searches": 12,
         "codex_concurrency": 5,
+        "s6_codex_concurrency": 6,
         "wall_clock_deadlines_enabled": False,
         "soft_deadline_seconds": 0,
         "hard_deadline_seconds": 0,
         "delivery_grace_seconds": 0,
         "absolute_deadline_seconds": 0,
-        "maximum_delivery_model_calls": 4,
+        "maximum_delivery_model_calls": 8,
         "maximum_swarm_model_calls": 20,
         "maximum_quality_judge_model_calls": 2,
         "deadline_downshift_window_seconds": 240,
@@ -180,6 +221,141 @@ def test_packet_admission_binds_claims_and_rejects_unverified_packet() -> None:
     assert accepted.status == "accepted"
     assert bundle.claims[0].source_urls == ("https://example.com/a",)
     assert rejected.status == "rejected"
+
+
+def test_unavailable_baseline_is_preserved_as_obligation_not_fake_claim() -> None:
+    store = DomainStore()
+    boundary = BaselineFindingPacket(
+        packet_id="packet-weapon-equipment",
+        agent_id="weapon_equipment",
+        capability_tags=["equipment", "capability_gap"],
+        topic_focus="不完备信息条件下精确打击",
+        findings=[],
+        evidence_ids=[],
+        confidence=0.0,
+        coverage_notes=["未形成可验证领域结论"],
+        open_questions=["S4/S5按具体候选补充最近公开基线"],
+        handoff_summary="装备基线受限",
+        checkpoint="limited",
+        limitations=["Codex CLI timeout"],
+        payload_type="baseline_availability_boundary_v1",
+        payload={
+            "availability": "unavailable",
+            "downstream_obligations": ["S4候选级核验", "S5汇总未决证据"],
+        },
+        admission_status="limited",
+    )
+    store.add_baseline_packet(boundary)
+
+    handoff = _build_military_value_handoff(store, topic=boundary.topic_focus)
+
+    assert _is_unavailable_baseline_boundary(boundary) is True
+    assert handoff["claims"] == []
+    assert handoff["baseline_boundaries"] == [
+        {
+            "packet_id": "packet-weapon-equipment",
+            "agent_id": "weapon_equipment",
+            "availability": "unavailable",
+            "limitations": ["Codex CLI timeout"],
+            "open_questions": ["S4/S5按具体候选补充最近公开基线"],
+            "downstream_obligations": ["S4候选级核验", "S5汇总未决证据"],
+        }
+    ]
+    assert handoff["statistics"]["limited_baseline_count"] == 1
+
+
+def test_baseline_frontier_inspiration_is_model_authored_and_preserved() -> None:
+    instruction = _baseline_frontier_inspiration_instruction()
+    schema = _baseline_output_schema(SimpleNamespace(output_contract={}))
+    inspiration = {
+        "signal": "分布式低成本效应器正在改变高端拦截弹的交换关系",
+        "conventional_assumption_challenged": "高性能平台必须由同等级高性能武器对抗",
+        "possible_military_discontinuity": "把单件性能竞争改为可持续规模交换",
+        "query_relevance": "影响不确定目标条件下精确火力的可承受试探成本",
+        "evidence_boundary": "公开资料只证明趋势，是否形成制胜不连续性仍待验证",
+        "source_urls": ["https://example.com/frontier"],
+        "downstream_question": "什么装备架构能把规模优势转为直接且可控的军事效应",
+    }
+    _, payload, version = _typed_packet_payload(
+        "combat_scenario",
+        {
+            "scenario_framework": "场景",
+            "enemy_coa": "对手行动",
+            "critical_timeline": "时间窗",
+            "environment_constraints": "环境",
+            "scenario_branches": ["分支"],
+            "capability_pressure_points": ["压力点"],
+            "assumptions": ["假设"],
+            "frontier_inspirations": [inspiration],
+        },
+    )
+
+    assert "frontier_inspirations" in schema
+    assert "开放旁视" in instruction
+    assert "没有成立信号就返回空数组" in instruction
+    assert "技术类别、装备族、创新维度或数量配额" in instruction
+    assert "不得提前给出成品方案" in instruction
+    assert version == "2.0"
+    assert payload["frontier_inspirations"] == [inspiration]
+
+
+def test_military_handoff_carries_compact_frontier_inspiration_after_baseline() -> None:
+    store = DomainStore()
+    evidence = EvidenceCard(
+        "ev-frontier",
+        "公开前沿研究",
+        "https://example.com/frontier",
+        "A",
+        "分布式效应器改变精确火力交换关系",
+        "公开材料摘要",
+        "p1",
+        "accepted",
+        "combat_scenario",
+    )
+    store.add_evidence(evidence)
+    store.add_baseline_packet(
+        BaselineFindingPacket(
+            packet_id="packet-scenario-frontier",
+            agent_id="combat_scenario",
+            capability_tags=["scenario"],
+            topic_focus="不确定条件下精确打击",
+            findings=["公开资料形成一条基线观察。"],
+            evidence_ids=["ev-frontier"],
+            confidence=0.78,
+            coverage_notes=[],
+            open_questions=[],
+            handoff_summary="场景基线",
+            checkpoint="done",
+            payload={
+                "frontier_inspirations": [
+                    {
+                        "signal": "分布式低成本效应器正在改变高端精确火力的交换关系",
+                        "conventional_assumption_challenged": "精确效果依赖高成本单发武器",
+                        "possible_military_discontinuity": "从单发命中竞争转为可承受的持续效果竞争",
+                        "query_relevance": "影响不确定目标条件下的试探与补击成本",
+                        "evidence_boundary": "公开资料支持趋势，不证明具体装备方案成立",
+                        "source_urls": ["https://example.com/frontier"],
+                        "downstream_question": "何种直接作战装备能形成可控持续效果",
+                    }
+                ]
+            },
+            admission_status="accepted",
+        )
+    )
+
+    handoff = _build_military_value_handoff(
+        store, topic="不确定条件下精确打击"
+    )
+
+    assert handoff["statistics"]["frontier_inspiration_count"] == 1
+    item = handoff["frontier_inspirations"][0]
+    assert item["packet_id"] == "packet-scenario-frontier"
+    assert item["evidence_ids"] == ["ev-frontier"]
+    assert item["status"] == "optional_post_divergence_inspiration"
+    assert "首次自由发散后" in handoff["frontier_inspiration_rule"]
+    assert handoff["claims"] == []
+    downstream_evidence = _military_handoff_evidence_index(store, handoff)
+    assert [item["evidence_id"] for item in downstream_evidence] == ["ev-frontier"]
 
 
 def test_case_packet_handoff_preserves_full_branch_packet() -> None:
@@ -578,7 +754,7 @@ def test_optional_round_critic_budget_skip_does_not_fail_s_chain() -> None:
     )
 
 
-def test_deadline_approach_does_not_skip_s6_quality_repair_or_generate_fallback(
+def test_deadline_approach_keeps_s6_diagnostics_nonblocking_without_fallback(
     monkeypatch,
 ) -> None:
     class RealLikeProvider(ScriptedFakeProvider):
@@ -647,29 +823,31 @@ def test_deadline_approach_does_not_skip_s6_quality_repair_or_generate_fallback(
         ],
     )
 
-    with pytest.raises(S6QualityError, match="未生成限时保底画像"):
-        asyncio.run(
-            provider._analyze_winning_subagents(
-                {
-                    "topic": "test",
-                    "research_route": "cross_domain_fusion",
-                    "discovery_blueprint": {"primary_branch": "G"},
-                    "packets": [],
-                    "evidence_index": [],
-                    "resume_steps": [6],
-                    "execution_profile_id": "optimized_v2",
-                    "execution_contract": OPTIMIZED_V2_CONTRACTS["G"].to_dict(),
-                }
-            )
+    result = asyncio.run(
+        provider._analyze_winning_subagents(
+            {
+                "topic": "test",
+                "research_route": "cross_domain_fusion",
+                "discovery_blueprint": {"primary_branch": "G"},
+                "packets": [],
+                "evidence_index": [],
+                "resume_steps": [6],
+                "execution_profile_id": "optimized_v2",
+                "execution_contract": OPTIMIZED_V2_CONTRACTS["G"].to_dict(),
+            }
         )
+    )
 
-    assert len(phases) >= 2
+    assert len(phases) == 1
     assert all(phase.startswith("winning_s6_image") for phase in phases)
+    assert result["s6_quality_gate_passed"] is True
+    assert result["s6_quality_gate_failed"] is False
+    assert result["s6_quality_gate_limited"] is True
     assert "deadline_evidence_bounded_finalize" not in phases
     assert "transport_bounded_portfolio_closeout" not in phases
 
 
-def test_optional_round_rereview_budget_skip_preserves_residual_outputs() -> None:
+def test_s6_only_local_diagnostics_do_not_start_optional_round_rereview() -> None:
     backend = ScriptedFakeProvider([])
     backend.snapshot = lambda: {"type": "codex_cli"}  # type: ignore[attr-defined]
     provider = ResponsesAgentProvider(backend)
@@ -744,11 +922,11 @@ def test_optional_round_rereview_budget_skip_preserves_residual_outputs() -> Non
         )
     )
 
-    assert result["round_rereview_budget_skipped"] is True
+    assert "round_rereview_budget_skipped" not in result
     assert "concept_directions" in result
-    assert result["middle_loop_limited"] is True
-    assert any(
+    assert result.get("middle_loop_limited", False) is False
+    assert result["s6_quality_gate_passed"] is True
+    assert not any(
         row.get("event") == "deterministic_rereview"
-        and row.get("cycle") == 2
         for row in result["loop_trace"]
     )

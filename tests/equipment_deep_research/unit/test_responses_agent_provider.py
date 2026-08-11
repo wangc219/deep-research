@@ -13,16 +13,12 @@ from equipment_deep_research.agents.provider import (
     _apply_codex_performance_options,
     _build_limited_report,
     _capability_direction_quality_issues,
-    _capability_portrait_alignment_issues,
     _capability_synthesis_handoff,
     _clean_winning_hypothesis_title,
     _clip_complete_report_phrase,
     _dedupe_capability_title,
     _enforce_report_hard_max,
     _is_remote_precision_portfolio_direction,
-    _recover_invalid_s6_result,
-    _s6_can_use_lightweight_card_repair,
-    _s6_repair_targets,
     _latest_inner_loop_failures,
     _report_draft_quality_issues,
     _report_fragment_quality_issues,
@@ -61,16 +57,13 @@ from equipment_deep_research.orchestration.runner import (
     _report_indicator_portrait,
 )
 from equipment_deep_research.orchestration.deliverables import branch_writer_brief
-from equipment_deep_research.orchestration.capability_fallback import (
-    build_deadline_weapon_directions,
-)
 from equipment_deep_research.orchestration.winning_swarm import (
     SWARM_SPECIALIST_ARCHETYPES,
 )
 from pathlib import Path
 
 
-def test_s6_normalization_rebuilds_evidence_framed_disconnected_cruise_card() -> None:
+def test_s6_normalization_preserves_codex_portrait_for_quality_review() -> None:
     direction = {
         "type": "upgrade",
         "name": "断链复核低成本巡航弹",
@@ -110,8 +103,8 @@ def test_s6_normalization_rebuilds_evidence_framed_disconnected_cruise_card() ->
     # A concrete swarm/S6 weapon identity is retained verbatim; the combat
     # action belongs in the portrait rather than being appended to its name.
     assert normalized["name"] == "断链复核低成本巡航弹"
-    assert "针对公开基线" not in normalized["capability_portrait"].splitlines()[0]
-    assert _capability_portrait_alignment_issues(1, normalized) == []
+    assert "针对公开基线" in normalized["capability_portrait"].splitlines()[0]
+    assert normalized["capability_portrait"] == direction["capability_portrait"]
 
 
 def _three_layer_report(
@@ -437,7 +430,7 @@ def test_quality_reporter_generates_three_layers_in_parallel(
     "execution_profile_id",
     ["swarm_quality_v1", "winning_swarm_dynamic_v2"],
 )
-def test_project_quality_reporter_fits_four_call_delivery_budget(
+def test_project_quality_reporter_uses_actual_five_chapter_concurrency(
     monkeypatch,
     execution_profile_id: str,
 ) -> None:
@@ -516,8 +509,8 @@ def test_project_quality_reporter_fits_four_call_delivery_budget(
         }
     )
 
-    assert maximum_running == 4
-    assert token_budgets == [2800, 1800, 1800, 2600]
+    assert maximum_running == 5
+    assert token_budgets == [4000, 8000, 4000, 4000, 4000]
     assert all("能用更短篇幅闭合时立即收束" in item for item in efforts)
     assert all("禁止连续照录其中的长句" in item for item in efforts)
     assert all("不得通过删除事实、来源、反证或验证要求" in item for item in efforts)
@@ -526,7 +519,8 @@ def test_project_quality_reporter_fits_four_call_delivery_budget(
         "report_generation_chapter_1_demand",
         "report_generation_chapter_2_portrait",
         "report_generation_chapter_3_solution",
-        "report_generation_chapter_4_technology_foundation",
+        "report_generation_chapter_4_technology",
+        "report_generation_chapter_5_foundation",
     }
     demand_handoff = layer_payloads[
         "report_generation_chapter_1_demand"
@@ -538,12 +532,16 @@ def test_project_quality_reporter_fits_four_call_delivery_budget(
         "report_generation_chapter_3_solution"
     ]["research_handoff"]
     technology_handoff = layer_payloads[
-        "report_generation_chapter_4_technology_foundation"
+        "report_generation_chapter_4_technology"
+    ]["research_handoff"]
+    foundation_handoff = layer_payloads[
+        "report_generation_chapter_5_foundation"
     ]["research_handoff"]
     assert "comparative_status" in demand_handoff
     assert "comparative_status" not in portrait_handoff
     assert "decisive_anchors" not in solution_handoff
-    assert "comparative_status" in technology_handoff
+    assert "comparative_status" not in technology_handoff
+    assert "comparative_status" in foundation_handoff
     demand_cue = demand_handoff["capability_cues"][0]
     portrait_cue = portrait_handoff["capability_cues"][0]
     solution_cue = solution_handoff["capability_cues"][0]
@@ -559,10 +557,9 @@ def test_project_quality_reporter_fits_four_call_delivery_budget(
     final_contract = next(
         item
         for item in contracts
-        if item["layer_id"] == "chapter_4_technology_foundation"
+        if item["layer_id"] == "chapter_5_foundation"
     )
     assert final_contract["h2_h3_map"] == {
-        "四、关键技术": ["（一）关键技术清单与攻关途径"],
         "五、研制基础": ["（一）参与单位", "（二）技术基础"],
     }
     assert "## 五、研制基础" in result
@@ -664,11 +661,11 @@ def test_specialized_seed_lanes_preserve_codex_rows_without_fixed_seed_recovery(
     assert prsm["evidence_ids"] == ["ev-weapon_equipment-web-prsm-gao"]
 
 
-def test_project_parallel_reporter_runs_with_real_four_call_budget(monkeypatch) -> None:
+def test_project_parallel_reporter_runs_with_actual_five_chapter_budget(monkeypatch) -> None:
     backend = ScriptedFakeProvider(
         [
             [ProviderStreamEvent.final(ProviderFinalTurn(text=f"## chapter {index}"))]
-            for index in range(1, 5)
+            for index in range(1, 6)
         ]
     )
     provider = ResponsesAgentProvider(backend)
@@ -679,8 +676,8 @@ def test_project_parallel_reporter_runs_with_real_four_call_budget(monkeypatch) 
             "maximum_model_calls_with_residuals": 20,
             "maximum_swarm_model_calls": 16,
             "maximum_quality_judge_model_calls": 2,
-            "maximum_delivery_model_calls": 4,
-            "codex_concurrency": 4,
+            "maximum_delivery_model_calls": 5,
+            "codex_concurrency": 5,
         }
     )
     monkeypatch.setattr(
@@ -694,19 +691,19 @@ def test_project_parallel_reporter_runs_with_real_four_call_budget(monkeypatch) 
     monkeypatch.setattr(
         provider,
         "_limited_report_delivery",
-        lambda *args, **kwargs: pytest.fail("four-call project report must not fallback"),
+        lambda *args, **kwargs: pytest.fail("five-chapter project report must not fallback"),
     )
 
     result = provider.draft_report(
         {
-            "run_id": "four-call-budget",
+            "run_id": "five-chapter-budget",
             "topic": "强电磁压制下精确打击任务续接装备研究",
             "execution_profile_id": "winning_swarm_dynamic_v2",
             "report_template_mode": "project_argument_v1",
         }
     )
 
-    assert len(backend.inputs) == 4
+    assert len(backend.inputs) == 5
     assert "chapter" in result
 
 
@@ -744,13 +741,15 @@ def test_dynamic_v2_reporter_never_falls_back_to_full_serial_report(monkeypatch)
     assert full_attempted is False
 
 
-def test_parallel_quality_reporter_keeps_full_report_timeout(monkeypatch) -> None:
+def test_parallel_quality_reporter_does_not_apply_a_section_timeout(
+    monkeypatch,
+) -> None:
     provider = ResponsesAgentProvider(ScriptedFakeProvider([]))
-    captured: dict[str, float] = {}
+    captured: dict[str, object] = {}
 
     def capture_parallel(payload, **kwargs):
         del payload
-        captured["timeout_seconds"] = kwargs["timeout_seconds"]
+        captured.update(kwargs)
         return "完整并行报告"
 
     monkeypatch.setenv("EQUIPMENT_DR_REPORT_TIMEOUT_SECONDS", "487")
@@ -764,7 +763,7 @@ def test_parallel_quality_reporter_keeps_full_report_timeout(monkeypatch) -> Non
     )
 
     assert result == "完整并行报告"
-    assert captured["timeout_seconds"] == 487.0
+    assert "timeout_seconds" not in captured
 
 
 def test_limited_report_rebuilds_truncated_parallel_draft_with_all_nine_items() -> None:
@@ -918,7 +917,7 @@ def test_parallel_reporter_layer_keeps_full_quality_capacity() -> None:
     assert options["max_output_tokens"] == 12000
 
 
-def test_parallel_project_chapter_keeps_full_quality_capacity() -> None:
+def test_parallel_project_chapter_uses_high_reasoning_and_section_token_cap() -> None:
     backend = ScriptedFakeProvider(
         [[ProviderStreamEvent.final(ProviderFinalTurn(text="# report chapter"))]]
     )
@@ -930,14 +929,17 @@ def test_parallel_project_chapter_keeps_full_quality_capacity() -> None:
             "write one project chapter",
             {"query": "test", "report_template_mode": "project_argument_v1"},
             2600,
-            phase="report_generation_chapter_4_technology_foundation",
+            phase="report_generation_chapter_4_technology",
+            isolation_id="report:chapter-4",
         )
     )
 
     assert result == "# report chapter"
     _, _, options = backend.inputs[0]
-    assert options["reasoning_effort"] == "xhigh"
-    assert options["max_output_tokens"] == 12000
+    assert options["reasoning_effort"] == "high"
+    assert options["max_output_tokens"] == 2600
+    assert options["_soft_output_token_budget"] is True
+    assert options["_disable_provider_timeout"] is True
 
 
 def test_reporter_keeps_full_quality_after_hard_deadline(
@@ -1492,14 +1494,16 @@ def test_report_contract_without_explicit_ceiling_is_unbounded() -> None:
         {
             "name": "Barracuda/FAMM固定构型低成本巡航效应器族",
             "military_value": "持续实施战役纵深精确毁伤",
+            "portfolio_role": "remote_precision_strike",
         },
         {
             "name": "远域低成本巡航弹药",
             "operational_mechanism": "防区外进入并完成精确毁伤",
+            "mission_classification": "remote_precision_strike",
         },
     ],
 )
-def test_remote_precision_classifier_recognizes_cruise_effectors(
+def test_remote_precision_classifier_uses_structured_model_role(
     direction: dict[str, str],
 ) -> None:
     assert _is_remote_precision_portfolio_direction(direction) is True
@@ -2179,13 +2183,12 @@ def test_quality_profile_bounds_equipment_discovery_straggler_context() -> None:
     backend = ScriptedFakeProvider(
         [
             [ProviderStreamEvent.final(ProviderFinalTurn(
-                text="bounded equipment discovery",
+                text=(
+                    '{"findings":["形成装备需求判断"],"confidence":0.8,'
+                    '"open_questions":[],"handoff_summary":"完成"}'
+                ),
                 metadata={"web_sources": []},
             ))],
-            [ProviderStreamEvent.final(ProviderFinalTurn(text=(
-                '{"findings":["形成装备需求判断"],"confidence":0.8,'
-                '"open_questions":[],"handoff_summary":"完成"}'
-            )))],
         ]
     )
     agent = AgentDef(
@@ -2216,12 +2219,13 @@ def test_quality_profile_bounds_equipment_discovery_straggler_context() -> None:
         )
     )
 
-    assert len(backend.inputs) == 2
+    assert len(backend.inputs) == 1
     discovery_messages, _, discovery_options = backend.inputs[0]
     discovery_input = discovery_messages[1].content["task_input"]
-    assert discovery_input["target_source_count"] == 14
+    assert 4 <= discovery_input["target_source_count"] <= 6
     assert discovery_options["web_search"]["search_context_size"] == "medium"
-    assert discovery_options["max_output_tokens"] == 2000
+    assert discovery_options["max_output_tokens"] == 1400
+    assert discovery_options["_disable_provider_timeout"] is True
 
 
 def test_optimized_v2_winning_timeout_returns_deterministic_fallback(monkeypatch) -> None:
@@ -2236,6 +2240,28 @@ def test_optimized_v2_winning_timeout_returns_deterministic_fallback(monkeypatch
     assert provider.analyze_winning_mechanism(
         {"discovery_blueprint": {"execution_profile_id": "optimized_v2"}}
     ) == {}
+
+
+@pytest.mark.parametrize(
+    "execution_profile_id",
+    ["swarm_quality_v1", "winning_swarm_dynamic_v2"],
+)
+def test_quality_winning_timeout_does_not_replace_s1_s6_with_local_fallback(
+    monkeypatch,
+    execution_profile_id: str,
+) -> None:
+    provider = ResponsesAgentProvider(ScriptedFakeProvider([]))
+    provider.provider_kind = "codex_cli"
+
+    async def timeout(_payload):
+        raise TimeoutError("quality S1-S6 timed out")
+
+    monkeypatch.setattr(provider, "_analyze_winning_subagents", timeout)
+
+    with pytest.raises(TimeoutError, match="quality S1-S6 timed out"):
+        provider.analyze_winning_mechanism(
+            {"discovery_blueprint": {"execution_profile_id": execution_profile_id}}
+        )
 
 
 def test_equipment_typed_payload_normalizes_missing_parameter_context() -> None:
@@ -2558,13 +2584,51 @@ def test_optimized_v2_runtime_is_minimal_and_role_specific() -> None:
             "system_confrontation",
             "cross_domain_fusion",
             "nontraditional_security",
+            "winning_s1_opponent",
+            "winning_s2_operations",
+            "winning_s3_breakthrough",
+            "winning_s4_capability",
+            "winning_s5_gap",
         }:
             assert runtime["analysis_anchor"] == "query_dominant_military_divergence"
             assert "本Agent专业角色与方法第一" in runtime["query_dominance_rule"]
             assert "不得决定议题" in runtime["query_dominance_rule"]
 
 
-def test_optimized_v2_winning_call_uses_short_military_runtime() -> None:
+def test_swarm_quality_runtime_keeps_full_role_methods_and_skills() -> None:
+    spec = SWARM_SPECIALIST_ARCHETYPES["evidence_verifier"]
+    runtime = build_codex_runtime_profile(
+        "winning_swarm_evidence_verifier",
+        payload={
+            "execution_profile_id": "swarm_quality_v1",
+            "input": {
+                "execution_profile_id": "swarm_quality_v1",
+                "specialist_task": {
+                    "agent_instance_id": "quality-evidence-1",
+                    "archetype": "evidence_verifier",
+                    "display_name": spec["display_name"],
+                    "purpose": spec["purpose"],
+                    "merge_target": "S5",
+                    "trigger_residuals": list(spec["residuals"]),
+                    "allow_child_spawn": False,
+                },
+            },
+        },
+        phase="winning_swarm_dynamic_portfolio_review_fast",
+        compact=True,
+    )
+
+    assert "skills" in runtime and "skill" not in runtime
+    assert len(runtime["skills"]) >= 2
+    assert len(runtime["methodology"]) >= 4
+    assert len(runtime["quality_gates"]) >= 5
+    assert runtime["active_dynamic_skill_ids"] == [
+        "js-equipment-agent-runtime",
+        "js-winning-shared-layer",
+    ]
+
+
+def test_optimized_v2_winning_call_activates_codex_runtime_skills() -> None:
     backend = ScriptedFakeProvider([])
     backend.snapshot = lambda: {"type": "codex_cli"}  # type: ignore[attr-defined]
     provider = ResponsesAgentProvider(backend)
@@ -2583,12 +2647,32 @@ def test_optimized_v2_winning_call_uses_short_military_runtime() -> None:
 
     system_prompt = str(messages[0].content)
     runtime = messages[1].content["agent_runtime"]
-    assert "$js-equipment-agent-runtime" not in system_prompt
-    assert "$js-winning-shared-layer" not in system_prompt
+    assert "$js-equipment-agent-runtime" in system_prompt
+    assert "$js-winning-shared-layer" in system_prompt
     assert "agent_runtime.military_mission_lens" in system_prompt
     assert "打击/歼灭闭环" in runtime["military_mission_lens"]
     assert "skill" in runtime and "skills" not in runtime
     assert len(runtime["tools"]) <= 2
+
+
+def test_non_codex_provider_does_not_receive_codex_skill_directives() -> None:
+    provider = ResponsesAgentProvider(ScriptedFakeProvider([]))
+    messages = provider._runtime_messages(
+        "winning_s2_operations",
+        "只输出严格JSON。",
+        {
+            "execution_profile_id": "swarm_quality_v1",
+            "discovery_blueprint": {
+                "execution_profile_id": "swarm_quality_v1",
+                "primary_branch": "A",
+            },
+        },
+        phase="winning_s2_operations",
+    )
+
+    system_prompt = str(messages[0].content)
+    assert "$js-equipment-agent-runtime" not in system_prompt
+    assert "$js-winning-shared-layer" not in system_prompt
 
 
 def test_reporter_call_uses_plain_isolated_context() -> None:
@@ -2857,8 +2941,9 @@ def test_report_delivery_stabilizer_projects_prechecked_indicators_and_coupling(
     payload = {
         "synthesis_seed": {
             "capability_cues": [
-                {
-                    "direction": "远程精确导弹",
+                    {
+                        "direction": "远程精确导弹",
+                        "chain_type": "强链",
                     "mission_effect": "对战役纵深节点实施多路径精确毁伤",
                     "mechanism_hint": "分散发射后按预装订任务完成突防、末段确认和再打击",
                     "development_path": "远程导弹体系化武器族",
@@ -2867,8 +2952,9 @@ def test_report_delivery_stabilizer_projects_prechecked_indicators_and_coupling(
                     "indicator_portrait": "射程看战役纵深，响应看目标包更新，自主性看末段确认，成本看拦截交换，规模看持续波次。",
                     "coupling_risk": "目标信息与末制导串联耦合；目标包老化是单点短板，一旦失效会级联拖垮再打击闭环。",
                 },
-                {
-                    "direction": "低空无人突击集群",
+                    {
+                        "direction": "低空无人突击集群",
+                        "chain_type": "开链",
                     "mission_effect": "以多方向低空进入实施诱骗、压制和毁伤",
                     "mechanism_hint": "多批次编组进入后重分配诱骗、突防和毁伤角色",
                     "development_path": "可消耗低空直接作战装备",
@@ -2895,13 +2981,11 @@ def test_report_delivery_stabilizer_projects_prechecked_indicators_and_coupling(
     assert "逐装备演示验证矩阵如下" in stabilized
     assert "远程精确导弹的关键耦合与单点风险为" in stabilized
     assert "低空无人突击集群的关键耦合与单点风险为" in stabilized
-    assert "逐装备详细能力画像如下" in stabilized
-    assert "概述：" in stabilized
-    assert "- 关键作战流程：" in stabilized
+    assert "逐装备详细能力画像如下" not in stabilized
     assert "**远程精确导弹**（强链）" in stabilized
     assert "**低空无人突击集群**（开链）" in stabilized
-    assert "远程精确导弹的量化验证口径为射程看战役纵深" in stabilized
-    assert "低空无人突击集群的量化验证口径为覆盖看低空进入半径" in stabilized
+    assert "远程精确导弹的量化验证口径采用射程看战役纵深" in stabilized
+    assert "低空无人突击集群的量化验证口径采用覆盖看低空进入半径" in stabilized
     assert stabilized.count("量化验证方向包括任务成功率") == 0
     assert "。。" not in stabilized
     assert "。；" not in stabilized
@@ -2910,7 +2994,7 @@ def test_report_delivery_stabilizer_projects_prechecked_indicators_and_coupling(
     assert stabilized_twice == stabilized
     assert stabilized_twice.count("逐项效能、创新关系与失效边界如下") == 1
     assert stabilized_twice.count("逐装备演示验证矩阵如下") == 1
-    assert stabilized_twice.count("逐装备详细能力画像如下") == 1
+    assert stabilized_twice.count("逐装备详细能力画像如下") == 0
 
 
 def test_report_delivery_stabilizer_reflows_long_prose_without_content_loss() -> None:

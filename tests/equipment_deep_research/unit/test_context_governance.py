@@ -1,6 +1,11 @@
 from __future__ import annotations
 
+from pathlib import Path
+from types import SimpleNamespace
+
 from equipment_deep_research.agents.registry import AgentDef
+from equipment_deep_research.agents.prompts import BaselinePromptBuilder
+from equipment_deep_research.agents.workflows.runtime import runtime_messages
 from equipment_deep_research.domain.messages import TaskEnvelope
 from equipment_deep_research.domain.models import BaselineFindingPacket, WorkingCheckpoint
 from equipment_deep_research.domain.store import DomainStore
@@ -12,6 +17,11 @@ from equipment_deep_research.harness.context import (
     _dependency_handoff,
     compact_packet_handoff,
 )
+from equipment_deep_research.harness.optimizations import apply_quick_optimizations
+from equipment_deep_research.harness.scheduler import DiscoveryScheduler
+from equipment_deep_research.agents.provider import FakeAgentProvider
+from equipment_deep_research.domain.store import TraceStore
+from equipment_deep_research.tools.permissions import ToolAuthorizationPolicy
 
 
 def _task() -> TaskEnvelope:
@@ -111,3 +121,116 @@ def test_minimal_dependency_handoff_keeps_explicit_lineage_fields() -> None:
         "uncertainties",
         "requested_next_action",
     }
+
+
+def test_scheduler_rejects_undeclared_shared_and_incremental_context(
+    tmp_path: Path,
+) -> None:
+    agent = AgentDef(
+        "isolated",
+        "Isolated",
+        "test",
+        ["equipment"],
+        [],
+        {"visible_sections": [], "token_budget": 2000},
+    )
+    scheduler = DiscoveryScheduler(
+        run_id="run",
+        run_dir=tmp_path / "run",
+        provider=FakeAgentProvider(),
+        store=DomainStore(),
+        trace=TraceStore(),
+        shared_context={
+            "discovery_blueprint": {"primary_branch": "B"},
+            "structured_query_brief": {"mission": "bounded"},
+            "raw_sessions": ["must-not-leak"],
+            "_pipeline_agent_ids": ["other-agent"],
+        },
+    )
+    scheduler.source_index.recommend = lambda *_: []
+    scheduler.source_index.recommend_shared = lambda *_: []
+    scheduler.knowledge_index.recommend = lambda *_: [
+        {"summary": "must-not-leak-without-policy"}
+    ]
+    try:
+        context, _, _ = scheduler._build_agent_context(
+            agent=agent,
+            topic="topic",
+            research_route="traditional_gap",
+            recall_request=None,
+        )
+    finally:
+        scheduler.close()
+
+    assert context.sections["discovery_blueprint"]["primary_branch"] == "B"
+    assert context.sections["structured_query_brief"]["mission"] == "bounded"
+    assert "raw_sessions" not in context.sections
+    assert "_pipeline_agent_ids" not in context.sections
+    assert "incremental_knowledge" not in context.sections
+
+
+def test_compact_assignment_drops_framework_and_unknown_context() -> None:
+    agent = AgentDef(
+        "isolated",
+        "Isolated",
+        "test",
+        ["equipment"],
+        ["search_sources"],
+        {"visible_sections": []},
+        research_policy={"internal_rule": "must-not-repeat"},
+    )
+
+    prompt = BaselinePromptBuilder().build(
+        agent=agent,
+        route="traditional_gap",
+        task={"topic": "topic"},
+        context={
+            "task": {"topic": "topic"},
+            "structured_query_brief": {"mission": "bounded"},
+            "raw_sessions": ["must-not-leak"],
+            "_execution_priority": "critical",
+        },
+        compact_runtime=True,
+    )
+
+    assert prompt["context"] == {
+        "task": {"topic": "topic"},
+        "structured_query_brief": {"mission": "bounded"},
+    }
+    assert "research_policy" not in prompt
+    assert "allowed_tools" not in prompt
+
+
+def test_non_codex_runtime_has_no_codex_skill_instruction() -> None:
+    messages = runtime_messages(
+        SimpleNamespace(provider_kind="responses"),
+        "isolated",
+        "只输出严格JSON。",
+        {"topic": "topic"},
+        phase="analysis",
+    )
+
+    assert "$js-" not in str(messages[0].content)
+    assert "没有可继承的其他Agent会话" in str(messages[0].content)
+    assert set(messages[1].content) == {"agent_runtime", "task_input"}
+
+
+def test_runtime_defaults_are_idempotent_and_do_not_patch_authorization(
+    monkeypatch,
+) -> None:
+    for key in (
+        "EQUIPMENT_DR_MAXIMIZE_AGENT_PARALLELISM",
+        "EQUIPMENT_DR_EVIDENCE_MATERIALIZE_CONCURRENCY",
+        "EQUIPMENT_DR_EVIDENCE_PREWARM_CONCURRENCY",
+        "EQUIPMENT_DR_BASELINE_PREFETCH_WORKERS",
+    ):
+        monkeypatch.delenv(key, raising=False)
+    authorize = ToolAuthorizationPolicy.authorize
+
+    first = apply_quick_optimizations(verbose=False)
+    second = apply_quick_optimizations(verbose=False)
+
+    assert first["applied_defaults"]
+    assert second["applied_defaults"] == []
+    assert first["authorization_cache"] is False
+    assert ToolAuthorizationPolicy.authorize is authorize

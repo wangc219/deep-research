@@ -21,7 +21,7 @@ from equipment_deep_research.orchestration.execution_contracts import (
     winning_swarm_dynamic_v2_profile,
 )
 from equipment_deep_research.orchestration.winning_swarm import (
-    SWARM_SPECIALIST_ARCHETYPES,
+    QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION,
     WinningSwarmController,
     normalize_weapon_candidate_title,
     normalize_winning_swarm_policy,
@@ -36,11 +36,21 @@ def _hypothesis(**overrides: object) -> WinningHypothesis:
         "nearest_public_baseline": "现有公开基线依赖少量高价值集中式拦截节点",
         "changed_confrontation_variable": "把单节点性能优势改为可快速补充的节点密度与任务接续",
         "mechanism_chain": ["分散部署", "局部感知与交战", "节点损耗后任务接续"],
-        "direct_military_effects": ["持续物理拦截饱和来袭目标", "缩短受威胁方向的防御空窗"],
+        "direct_military_effects": [
+            "持续物理拦截饱和来袭目标",
+            "缩短受威胁方向的防御空窗",
+        ],
         "equipment_forms": ["模块化无人拦截平台"],
         "project_function": "防空分队在饱和来袭与节点损耗条件下依靠模块化无人拦截平台持续实施物理拦截并续接区域拒止任务。",
         "system_interfaces": ["平台任务总线", "火控授权接口", "战术数据链接口"],
         "novelty_delta": "从集中式高价值节点转向可补充、可降级运行的分布式装备族",
+        "frontier_principle": "自主分布式任务接续与可消耗节点协同",
+        "technology_discontinuity": "集中式节点的常规扩容无法在节点损耗后重建分布式交战权",
+        "technology_horizon": "5-10年",
+        "engineering_bottleneck": "弱网条件下的局部授权一致性与误击控制",
+        "original_paradigm": "依靠少量高价值集中式节点维持区域拦截",
+        "disruptive_shift": "把拦截权和任务接续能力分散到可损耗、可补充的自治节点",
+        "independence_thesis": "改变交战权与战损接续关系，而非增加现役拦截节点数量",
         "naming_rationale": "名称对应分布式部署、低成本补充、直接拦截主装备与区域拒止战果",
         "decisive_advantage_thesis": "节点损耗后仍能接续物理拦截，使对手饱和攻击无法按预期打开防御空窗",
         "cross_query_distinction": "若目标不是饱和来袭或任务不是区域拒止，节点构型、拦截机理和名称均须重做",
@@ -78,10 +88,16 @@ def test_swarm_profile_is_bounded_challenger_and_enables_blueprint_policy() -> N
     assert blueprint["winning_swarm_policy"]["enabled"] is True
     assert blueprint["winning_swarm_policy"]["max_dynamic_instances"] == 12
     assert blueprint["winning_swarm_policy"]["max_concurrency"] == 6
+    assert blueprint["winning_swarm_policy"]["foresight_first_enabled"] is True
+    assert blueprint["winning_swarm_policy"]["frontier_evidence_relaxation"] is True
+    assert blueprint["winning_swarm_policy"]["expert_judge_minimum_score"] == 0.68
+    assert (
+        blueprint["winning_swarm_policy"]["frontier_final_gate_minimum_score"] == 0.62
+    )
     assert resolve_execution_profile("swarm_quality_v1") == profile
 
 
-def test_dynamic_v2_profile_reserves_six_parallel_repair_instances() -> None:
+def test_dynamic_v2_profile_prioritizes_frontloaded_s3_capacity() -> None:
     profile = winning_swarm_dynamic_v2_profile()
     blueprint = apply_execution_profile_to_blueprint(
         build_discovery_blueprint(ResearchProblem("dynamic graph")), profile
@@ -93,20 +109,125 @@ def test_dynamic_v2_profile_reserves_six_parallel_repair_instances() -> None:
     assert blueprint["winning_swarm_policy"]["policy_id"] == "winning_swarm_dynamic_v2"
     assert blueprint["winning_swarm_policy"]["expert_judge_enabled"] is True
     assert blueprint["winning_swarm_policy"]["expert_judge_required"] is True
-    assert blueprint["winning_swarm_policy"]["finalist_minimum"] == 1
-    assert blueprint["winning_swarm_policy"]["finalist_maximum"] == 12
-    assert blueprint["winning_swarm_policy"]["mission_graph_target_instances"] == 12
-    assert blueprint["winning_swarm_policy"]["expert_candidate_pool_maximum"] == 10
-    assert blueprint["winning_swarm_policy"]["expert_repair_reserved_instances"] == 6
-    assert blueprint["winning_swarm_policy"]["expert_repair_max_candidates"] == 6
+    assert blueprint["winning_swarm_policy"]["finalist_minimum"] == 2
+    assert blueprint["winning_swarm_policy"]["finalist_maximum"] == 7
+    assert blueprint["winning_swarm_policy"]["mission_graph_target_instances"] == 15
+    assert blueprint["winning_swarm_policy"]["s3_winning_thesis_capacity"] == 8
+    assert blueprint["winning_swarm_policy"]["expert_candidate_pool_maximum"] == 12
+    assert blueprint["winning_swarm_policy"]["expert_repair_reserved_instances"] == 3
+    assert blueprint["winning_swarm_policy"]["expert_repair_max_candidates"] == 3
+    assert blueprint["winning_swarm_policy"]["s3_empty_reallocation_max"] == 2
     assert blueprint["runtime_budgets"]["maximum_quality_judge_model_calls"] == 3
-    assert blueprint["runtime_budgets"]["maximum_swarm_model_calls"] == 20
+    assert blueprint["runtime_budgets"]["maximum_swarm_model_calls"] == 36
     assert blueprint["runtime_budgets"]["codex_concurrency"] == 6
+    assert blueprint["runtime_budgets"]["s6_codex_concurrency"] == 6
     assert blueprint["execution_contract"]["codex_concurrency"] == 6
-    assert blueprint["winning_swarm_policy"]["max_dynamic_instances"] == 18
-    assert blueprint["winning_swarm_policy"]["mission_graph_max_instances"] == 18
+    assert blueprint["minimum_business_agents"] == 2
+    assert blueprint["maximum_business_agents"] == 3
+    assert blueprint["winning_swarm_policy"]["max_dynamic_instances"] == 21
+    assert blueprint["winning_swarm_policy"]["mission_graph_max_instances"] == 21
     assert blueprint["winning_swarm_policy"]["max_concurrency"] == 6
     assert blueprint["winning_swarm_policy"]["mission_graph_min_instances"] == 8
+    assert blueprint["winning_swarm_policy"]["foresight_first_enabled"] is True
+    assert blueprint["winning_swarm_policy"]["frontier_evidence_relaxation"] is True
+    assert (
+        blueprint["winning_swarm_policy"]["frontier_expert_judge_minimum_score"] == 0.66
+    )
+    assert (
+        blueprint["winning_swarm_policy"]["same_family_minimum_independent_axes"] == 2
+    )
+
+
+def test_frontier_candidate_metadata_survives_in_auditable_fields() -> None:
+    controller = WinningSwarmController(
+        {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
+    )
+    task = SpecialistTask(
+        task_id="frontier-task",
+        agent_instance_id="frontier-agent",
+        archetype="weak_signal_scout",
+        display_name="前沿补全",
+        wave=1,
+        purpose="形成前沿候选",
+        merge_target="S3",
+    )
+    candidate = controller.hypothesis_from_mapping(
+        {
+            "title": "非常规测量末制导微型歼灭弹",
+            "nearest_public_baseline": "常规射频或光电制导微型弹药",
+            "changed_confrontation_variable": "从依赖常规可观测特征转为利用新的目标物理响应",
+            "mechanism_chain": ["获取非常规物理响应", "末段辨真", "精确毁伤"],
+            "direct_military_effects": ["在欺骗遮蔽下完成真目标精确毁伤"],
+            "equipment_forms": ["非常规测量制导微型精确毁伤弹"],
+            "project_function": "打击单元在常规探测受骗时依靠该弹完成末段辨真与精确毁伤。",
+            "novelty_delta": "把目标可观测性从常规频段扩展到新的物理响应",
+            "frontier_principle": "非常规目标物理响应测量",
+            "technology_discontinuity": "常规算法升级无法恢复不存在的可观测信息",
+            "technology_horizon": "5-10年",
+            "engineering_bottleneck": "弹载尺度下的信噪比和环境鲁棒性",
+            "naming_rationale": "名称对应测量原理、末制导用途与微型精确毁伤主体",
+            "decisive_advantage_thesis": "在常规感知链被欺骗时保留独立末段毁伤能力",
+            "cross_query_distinction": "目标物理响应变化后传感构型与名称均需重做",
+            "system_interfaces": ["弹载传感器", "末制导控制接口"],
+            "adversary_adaptations": ["目标采用物理特征屏蔽"],
+            "failure_boundaries": ["信噪比不足时判退"],
+            "trl_constraints": ["需完成对抗环境样机试验"],
+            "cost_constraints": ["单发成本需与常规微型弹药比较"],
+            "industrial_constraints": ["关键传感器需可批量一致制造"],
+            "cross_scenario_results": ["仅在对应目标物理响应存在时成立"],
+            "validation_plan": ["与常规末制导方案进行盲测对照"],
+            "implementation_path": "new",
+        },
+        task=task,
+        valid_evidence_ids=set(),
+        ordinal=1,
+    )
+
+    assert "前沿原理：非常规目标物理响应测量" in candidate.novelty_delta
+    assert "不可由常规升级吸收" in candidate.novelty_delta
+    assert (
+        candidate.trl_constraints[0] == "关键工程瓶颈：弹载尺度下的信噪比和环境鲁棒性"
+    )
+    assert "前瞻窗口：5-10年" in candidate.trl_constraints
+
+
+def test_frontloaded_diagnostics_record_missing_paradigm_without_rejecting() -> None:
+    controller = WinningSwarmController(
+        {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
+    )
+
+    gate = controller.evaluate_gate(
+        replace(
+            _hypothesis(),
+            original_paradigm="",
+            disruptive_shift="",
+            independence_thesis="",
+        ),
+        stage="final",
+    )
+
+    assert gate.passed is True
+    assert "paradigm_shift_unproven" in gate.residuals
+
+
+def test_frontloaded_diagnostics_record_discontinuity_gap_without_rejecting() -> None:
+    controller = WinningSwarmController(
+        {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
+    )
+
+    gate = controller.evaluate_gate(
+        replace(
+            _hypothesis(),
+            frontier_principle="",
+            technology_discontinuity="",
+            technology_horizon="",
+            engineering_bottleneck="",
+        ),
+        stage="final",
+    )
+
+    assert gate.passed is True
+    assert "frontier_discontinuity_unproven" in gate.residuals
 
 
 @pytest.mark.parametrize(
@@ -115,7 +236,7 @@ def test_dynamic_v2_profile_reserves_six_parallel_repair_instances() -> None:
         (
             "S3-红队保留：抗诱骗闭环紧凑打一体游荡弹药分队",
             ["背负、车载或舰岸箱式发射的可消耗巡飞弹药"],
-            "可消耗巡飞弹药",
+            "抗诱骗闭环紧凑打一体游荡弹药分队",
         ),
         (
             "前沿小单元侦打评一体巡飞毁伤弹：压缩发现、打击、评估、补击闭环",
@@ -125,7 +246,7 @@ def test_dynamic_v2_profile_reserves_six_parallel_repair_instances() -> None:
         (
             "S3_颠覆分支：节点贴身可消耗空中雷区拦截器",
             ["箱式发射的低成本空中拦截弹"],
-            "低成本空中拦截弹",
+            "节点贴身可消耗空中雷区拦截器",
         ),
     ],
 )
@@ -140,7 +261,9 @@ def test_weapon_candidate_title_removes_stage_labels_and_keeps_weapon_identity(
     assert "S3" not in title
 
 
-def test_weapon_candidate_title_preserves_query_specific_codename_and_identity() -> None:
+def test_weapon_candidate_title_preserves_query_specific_codename_and_identity() -> (
+    None
+):
     title = normalize_weapon_candidate_title(
         "S3-候选A：“影袭”低特征诱骗-压制-反辐射巡飞攻击弹",
         ["可消耗低特征诱骗-压制-反辐射巡飞攻击弹"],
@@ -149,13 +272,15 @@ def test_weapon_candidate_title_preserves_query_specific_codename_and_identity()
     assert title == "“影袭”低特征诱骗-压制-反辐射巡飞攻击弹"
 
 
-def test_weapon_candidate_title_replaces_internal_effector_with_main_weapon() -> None:
+def test_weapon_candidate_title_does_not_replace_agent_name_from_equipment_form() -> (
+    None
+):
     title = normalize_weapon_candidate_title(
         "内置效应器",
         ["伴随电子压制无人攻击机"],
     )
 
-    assert title == "伴随电子压制无人攻击机"
+    assert title == "内置效应器"
 
 
 def test_weapon_candidate_title_removes_form_and_interface_metadata() -> None:
@@ -174,6 +299,19 @@ def test_weapon_candidate_title_strips_query_model_metatalk() -> None:
     )
 
     assert title == "低特征反辐射巡飞攻击弹"
+
+
+@pytest.mark.parametrize(
+    "title",
+    [
+        "低空巡航对陆精打武器 · 内嵌INS、地形相关纠偏、末段景象匹配和源冲突拒绝逻辑的一体化巡航弹",
+        "现役远程火箭弹加改型 · 配套地面装订、标定和健康检查设备作为保障接口，不构成候选主体",
+    ],
+)
+def test_descriptive_component_inventory_is_preserved_without_local_gate(
+    title: str,
+) -> None:
+    assert normalize_weapon_candidate_title(title, []) == title
 
 
 def test_policy_clamps_instance_concurrency_wave_and_gain_bounds() -> None:
@@ -199,7 +337,7 @@ def test_policy_clamps_instance_concurrency_wave_and_gain_bounds() -> None:
     assert policy["promotion"]["minimum_positive_increment_rate"] == 0.70
 
 
-def test_dynamic_v2_mission_graph_seeds_s1_s6_with_parallel_instances() -> None:
+def test_dynamic_v2_mission_graph_frontloads_quality_into_s5_before_s6_cards() -> None:
     controller = WinningSwarmController(
         {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
     )
@@ -208,50 +346,77 @@ def test_dynamic_v2_mission_graph_seeds_s1_s6_with_parallel_instances() -> None:
         target_instances=15,
     )
 
-    assert 8 <= len(graph.agent_instances) <= 16
-    assert len(graph.agent_instances) == 15
+    assert len(graph.agent_instances) == 14
     assert graph.maximum_concurrency == 6
     assert set(graph.s_node_seeds) == {"S1", "S2", "S3", "S4", "S5", "S6"}
-    assert all(graph.s_node_seeds[node] for node in graph.s_node_seeds)
+    assert all(graph.s_node_seeds[node] for node in ("S1", "S2", "S3", "S4", "S5"))
+    assert graph.s_node_seeds["S6"] == []
     assert len(graph.waves[0]) >= 4
-    assert all(instance.allow_child_spawn is False for instance in graph.agent_instances)
-    assert all("当前唯一任务主题" in contract.purpose for contract in graph.role_contracts)
-    assert all("打击、歼灭、毁伤、杀伤" in contract.purpose for contract in graph.role_contracts)
+    assert all(
+        instance.allow_child_spawn is False for instance in graph.agent_instances
+    )
+    assert all(
+        "当前唯一任务主题" in contract.purpose for contract in graph.role_contracts
+    )
+    assert all(
+        "打击、歼灭、毁伤、杀伤" in contract.purpose
+        for contract in graph.role_contracts
+    )
     assert all(
         any("跨Query替换自检" in item for item in contract.methodology)
         for contract in graph.role_contracts
     )
-    by_archetype = {item.archetype: item for item in graph.agent_instances}
-    frontier = by_archetype["frontier_equipment_miner"]
-    architect = by_archetype["equipment_realization_architect"]
-    evidence = by_archetype["evidence_verifier"]
-    trl = by_archetype["trl_cost_industrial_auditor"]
-    validation = by_archetype["validation_experiment_designer"]
-    reviewer = by_archetype["independent_portfolio_reviewer"]
-    assert "direct_combat_equipment_generator" in by_archetype
-    assert "remote_precision_munition_generator" in by_archetype
-    assert "mass_scalable_combat_family_generator" in by_archetype
-    assert "始终按Query筛选" in SWARM_SPECIALIST_ARCHETYPES[
-        "direct_combat_equipment_generator"
-    ]["purpose"]
-    assert "非穷尽观察镜头" in SWARM_SPECIALIST_ARCHETYPES[
-        "remote_precision_munition_generator"
-    ]["purpose"]
-    assert "不是强制主题" in SWARM_SPECIALIST_ARCHETYPES[
-        "mass_scalable_combat_family_generator"
-    ]["purpose"]
-    assert sum(item.mission_node == "S3" for item in graph.agent_instances) >= 5
-    node_by_id = {
-        item.instance_id: item.mission_node for item in graph.agent_instances
+    contracts_by_node = {
+        node: [item for item in graph.role_contracts if item.mission_node == node]
+        for node in ("S1", "S2", "S3", "S4", "S5", "S6")
     }
-    assert {node_by_id[item] for item in frontier.depends_on} == {"S1", "S2"}
-    assert {node_by_id[item] for item in architect.depends_on} == {"S3"}
-    assert {node_by_id[item] for item in evidence.depends_on} == {"S3"}
-    assert {node_by_id[item] for item in trl.depends_on} == {"S4"}
-    assert {node_by_id[item] for item in validation.depends_on} == {"S3", "S4"}
-    assert validation.instance_id in reviewer.depends_on
-    assert frontier.wave == by_archetype["disruptive_mechanism_generator"].wave
-    assert evidence.wave == architect.wave
+    assert all(
+        any("不创建最终装备卡" in item for item in contract.methodology)
+        for node in ("S1", "S2")
+        for contract in contracts_by_node[node]
+    )
+    assert all(
+        any("创建入口" in item for item in contract.methodology)
+        for node in ("S3", "S4")
+        for contract in contracts_by_node[node]
+    )
+    assert all(
+        any("不承担装备物化" in item for item in contract.methodology)
+        for node in ("S3", "S4")
+        for contract in contracts_by_node[node]
+    )
+    assert all(
+        any("语义准入" in item for item in contract.methodology)
+        for contract in contracts_by_node["S5"]
+    )
+    assert not contracts_by_node["S6"]
+    assert all(
+        not any("至少两项" in item or "最低分" in item for item in contract.quality_gates)
+        for contract in graph.role_contracts
+    )
+    by_archetype = {item.archetype: item for item in graph.agent_instances}
+    contract_by_archetype = {item.archetype: item for item in graph.role_contracts}
+    evidence = by_archetype["evidence_verifier"]
+    reviewer = by_archetype["independent_portfolio_reviewer"]
+    assert "equipment_realization_architect" not in by_archetype
+    assert "direct_combat_equipment_generator" not in by_archetype
+    assert "remote_precision_munition_generator" not in by_archetype
+    assert "mass_scalable_combat_family_generator" not in by_archetype
+    assert "validation_experiment_designer" not in by_archetype
+    assert "trl_cost_industrial_auditor" not in by_archetype
+    integrated_audit_purpose = contract_by_archetype["evidence_verifier"].purpose
+    assert "TRL" in integrated_audit_purpose
+    assert "成本" in integrated_audit_purpose
+    assert "判退条件" in integrated_audit_purpose
+    assert sum(item.mission_node == "S3" for item in graph.agent_instances) == 4
+    assert sum(item.mission_node == "S4" for item in graph.agent_instances) == 4
+    assert sum(item.mission_node == "S5" for item in graph.agent_instances) == 2
+    node_by_id = {item.instance_id: item.mission_node for item in graph.agent_instances}
+    assert {node_by_id[item] for item in evidence.depends_on} == {"S3", "S4"}
+    assert evidence.instance_id in reviewer.depends_on
+    assert evidence.wave > max(
+        item.wave for item in graph.agent_instances if item.mission_node in {"S3", "S4"}
+    )
     assert graph.merge_strategy.startswith("artifact_ready_speculative_parallel")
 
     with pytest.raises(ValueError, match="may not recruit"):
@@ -263,6 +428,132 @@ def test_dynamic_v2_mission_graph_seeds_s1_s6_with_parallel_instances() -> None:
             },
             mission_node="S4",
         )
+
+
+def test_dynamic_v2_target_instances_controls_creator_capacity() -> None:
+    controller = WinningSwarmController(
+        {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
+    )
+
+    small = controller.build_mission_graph(topic="focused query", target_instances=8)
+    medium = controller.build_mission_graph(topic="broader query", target_instances=12)
+    large = controller.build_mission_graph(topic="complex query", target_instances=15)
+
+    assert len(small.agent_instances) == 8
+    assert len(medium.agent_instances) == 12
+    # The dynamic graph has a quality-preserving 14-role ceiling even when
+    # target capacity is larger; later semantic activation may use fewer.
+    assert len(large.agent_instances) == 14
+    assert sum(item.mission_node in {"S3", "S4"} for item in small.agent_instances) == 2
+    assert sum(item.mission_node in {"S3", "S4"} for item in medium.agent_instances) == 6
+    assert sum(item.mission_node in {"S3", "S4"} for item in large.agent_instances) == 8
+
+
+def test_dynamic_v2_keeps_s3_s4_role_contracts_open_before_dimension_selection() -> None:
+    controller = WinningSwarmController(
+        {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
+    )
+    graph = controller.build_mission_graph(
+        topic="海峡拒止",
+        query_theses=[
+            {
+                "project_name": "静默坐底拒止器",
+                "equipment_form": "坐底封装释放武器",
+                "project_function": "在海峡出口预置并触发拒止",
+                "query_causal_link": "把持续追踪改为要道触发",
+                "target_and_phase": "敌潜航器穿越阶段",
+                "direct_military_effect": "迫使绕行或中止穿越",
+            },
+            {
+                "project_name": "尾流反捕获拦截弹",
+                "equipment_form": "尾流寻的自主拦截弹",
+                "project_function": "在失去声学接触后沿尾流再捕获",
+                "query_causal_link": "把接触中断改为物理痕迹续接",
+                "target_and_phase": "高速脱离阶段",
+                "direct_military_effect": "恢复拦截窗口并实施毁伤",
+            },
+        ],
+    )
+
+    creative_instances = [
+        item for item in graph.agent_instances if item.mission_node in {"S3", "S4"}
+    ]
+    creative_contracts = [
+        item for item in graph.role_contracts if item.mission_node in {"S3", "S4"}
+    ]
+    s3_instances = [item for item in creative_instances if item.mission_node == "S3"]
+    s4_instances = [item for item in creative_instances if item.mission_node == "S4"]
+    assert len(s3_instances) == 4
+    assert len(s4_instances) == 4
+    assert all(
+        item.archetype == "disruptive_mechanism_generator" for item in s3_instances
+    )
+    assert all(
+        item.archetype == "innovative_equipment_dimension_generator"
+        for item in s4_instances
+    )
+    assert all("静默坐底拒止器" not in item.purpose for item in creative_contracts)
+    assert all("尾流反捕获拦截弹" not in item.purpose for item in creative_contracts)
+    assert all(
+        "独立检验Query蓝图制胜命题" not in item.purpose
+        for item in creative_contracts
+    )
+    assert all(
+        any("不承担装备物化" in step for step in item.methodology)
+        for item in creative_contracts
+    )
+
+
+def test_dynamic_v2_does_not_frontload_blueprint_equipment_names_into_s3() -> None:
+    controller = WinningSwarmController(
+        {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
+    )
+    theses = [
+        {
+            "project_name": f"query-angle-{index}",
+            "equipment_form": f"specific-weapon-{index}",
+            "project_function": f"independent-breakpoint-{index}",
+            "query_causal_link": f"changed-variable-{index}",
+            "target_and_phase": f"target-phase-{index}",
+            "direct_military_effect": f"direct-result-{index}",
+        }
+        for index in range(1, 8)
+    ]
+
+    graph = controller.build_mission_graph(
+        topic="query-led multi-angle mission",
+        target_instances=15,
+        query_theses=theses,
+    )
+
+    creative_contracts = [
+        item for item in graph.role_contracts if item.mission_node in {"S3", "S4"}
+    ]
+    assert len(creative_contracts) == 8
+    assert all(
+        all(f"query-angle-{index}" not in contract.purpose for index in range(1, 8))
+        for contract in creative_contracts
+    )
+    assert all(
+        any(step.startswith("从Query语义开放发散候选") for step in item.methodology)
+        for item in creative_contracts
+    )
+    assert "不默认两字代号" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    assert "名称不是候选摘要" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    assert "而不是字段拼装任务" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    assert "统一系列标记" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    assert "未来装备体系中真实存在" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    assert "构型意象型" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    assert "原理突破型" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    assert "装备专名型" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    assert "核心物理意象＋装备身份" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    assert "自然现象或生物意象＋新型装备" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    assert "代号＋装备类别" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    assert "原理突破＋装备身份" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    assert "不是模板、配额或分类覆盖任务" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    assert "功能/动作短语＋装备类别尾词" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    assert "不建立意象词库、后缀表、字符串评分或本地命名硬门" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    assert "frontier_principle" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
 
 
 def test_versioned_ledger_requires_rebase_and_builds_pareto_decision() -> None:
@@ -385,12 +676,18 @@ def test_expert_repair_can_replace_unsupported_claims_with_bounded_portrait() ->
                 "mechanism_chain",
                 "equipment_forms",
                 "novelty_delta",
+                "original_paradigm",
+                "disruptive_shift",
+                "independence_thesis",
             ],
             "title": "JASSM-ER类受扰导航验证型",
             "changed_confrontation_variable": "卫星导航拒止下保持固定目标区进入",
             "mechanism_chain": ["防区外发射", "受扰导航保持", "固定目标区进入"],
             "equipment_forms": ["固定构型远程精确制导任务弹药"],
             "novelty_delta": "仅主张工厂级构型换产与任务软件更新",
+            "original_paradigm": "依赖卫星导航持续可用",
+            "disruptive_shift": "固定目标区进入不再以卫星导航连续可用为前提",
+            "independence_thesis": "改变导航依赖关系而非增加射程或战斗部",
         },
         incremental_quality=0.05,
         recommendation="revise",
@@ -400,10 +697,8 @@ def test_expert_repair_can_replace_unsupported_claims_with_bounded_portrait() ->
     merged, receipt = controller.merge_contribution(ledger, repair)
 
     assert receipt.status == "merged"
-    assert merged.hypotheses[0].equipment_forms == [
-        "固定构型远程精确制导任务弹药"
-    ]
-    assert merged.hypotheses[0].title == "固定构型远程精确制导任务弹药"
+    assert merged.hypotheses[0].equipment_forms == ["固定构型远程精确制导任务弹药"]
+    assert merged.hypotheses[0].title == "JASSM-ER类受扰导航验证型"
     assert merged.hypotheses[0].changed_confrontation_variable == (
         "卫星导航拒止下保持固定目标区进入"
     )
@@ -412,12 +707,14 @@ def test_expert_repair_can_replace_unsupported_claims_with_bounded_portrait() ->
         "受扰导航保持",
         "固定目标区进入",
     ]
-    assert merged.hypotheses[0].novelty_delta == (
-        "仅主张工厂级构型换产与任务软件更新"
+    assert merged.hypotheses[0].novelty_delta == ("仅主张工厂级构型换产与任务软件更新")
+    assert merged.hypotheses[0].original_paradigm == "依赖卫星导航持续可用"
+    assert merged.hypotheses[0].disruptive_shift == (
+        "固定目标区进入不再以卫星导航连续可用为前提"
     )
 
 
-def test_quality_expert_judge_normalizes_scores_and_blocks_weak_equipment_fit() -> None:
+def test_quality_expert_judge_normalizes_scores_and_respects_codex_verdict() -> None:
     controller = WinningSwarmController(
         {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
     )
@@ -434,10 +731,10 @@ def test_quality_expert_judge_normalizes_scores_and_blocks_weak_equipment_fit() 
             "dimension_scores": {
                 "domain_relevance": 0.9,
                 "equipment_capability_fit": 0.86,
-                    "innovation": 0.8,
-                    "military_value": 0.88,
-                    "decisive_advantage": 0.86,
-                    "query_specificity": 0.84,
+                "innovation": 0.8,
+                "military_value": 0.88,
+                "decisive_advantage": 0.86,
+                "query_specificity": 0.84,
                 "causal_coherence": 0.84,
                 "credibility": 0.8,
                 "engineering_feasibility": 0.74,
@@ -454,14 +751,14 @@ def test_quality_expert_judge_normalizes_scores_and_blocks_weak_equipment_fit() 
     )
     weak_assessment = controller.expert_assessment_from_mapping(
         {
-            "verdict": "pass",
+            "verdict": "revise",
             "dimension_scores": {
                 "domain_relevance": 0.8,
                 "equipment_capability_fit": 0.35,
-                    "innovation": 0.7,
-                    "military_value": 0.45,
-                    "decisive_advantage": 0.35,
-                    "query_specificity": 0.40,
+                "innovation": 0.7,
+                "military_value": 0.45,
+                "decisive_advantage": 0.35,
+                "query_specificity": 0.40,
                 "causal_coherence": 0.65,
                 "credibility": 0.7,
                 "engineering_feasibility": 0.8,
@@ -480,8 +777,8 @@ def test_quality_expert_judge_normalizes_scores_and_blocks_weak_equipment_fit() 
     assert strong_assessment.evidence_ids == ["ev-1"]
     assert weak_assessment.passed is False
     assert strong_assessment.weighted_score != weak_assessment.weighted_score
-    assert controller.policy["expert_repair_reserved_instances"] == 6
-    assert controller.policy["expert_candidate_pool_maximum"] == 10
+    assert controller.policy["expert_repair_reserved_instances"] == 3
+    assert controller.policy["expert_candidate_pool_maximum"] == 12
     assert (
         controller.repair_archetype_for_assessment(weak_assessment)
         == "equipment_capability_image_repairer"
@@ -496,23 +793,64 @@ def test_quality_expert_judge_normalizes_scores_and_blocks_weak_equipment_fit() 
         },
         expert_assessments=assessments,
     )
-    assert decision.selected_hypothesis_ids == ["strong"]
-    assert decision.rejected_hypothesis_ids == ["weak"]
+    assert decision.selected_hypothesis_ids == ["strong", "weak"]
+    assert decision.rejected_hypothesis_ids == []
     assert decision.quality_judge_passed is True
 
 
-def test_dynamic_v2_portfolio_keeps_five_to_seven_with_four_direct_equipment() -> None:
+def test_quality_expert_can_retain_payload_title_with_diagnostic_residual() -> None:
+    controller = WinningSwarmController(
+        {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
+    )
+    hypothesis = _hypothesis(
+        hypothesis_id="payload-title",
+        title="形态：远程低成本突防巡航弹，内置主杀伤体、末段诱压释放舱和有限末段确认载荷",
+        equipment_forms=["远程母子攻击弹"],
+    )
+
+    assessment = controller.expert_assessment_from_mapping(
+        {
+            "verdict": "pass",
+            "dimension_scores": {
+                dimension: 0.9
+                for dimension in (
+                    "domain_relevance",
+                    "equipment_capability_fit",
+                    "innovation",
+                    "military_value",
+                    "decisive_advantage",
+                    "query_specificity",
+                    "causal_coherence",
+                    "credibility",
+                    "engineering_feasibility",
+                    "robustness",
+                )
+            },
+            "equipment_classification": "direct_combat",
+            "evidence_ids": ["ev-1"],
+        },
+        hypothesis=hypothesis,
+        blind_label="候选-01",
+        valid_evidence_ids={"ev-1"},
+        session_ref="session-title-gate",
+    )
+
+    assert assessment.passed is True
+    assert assessment.verdict == "pass"
+    assert "equipment_not_concrete" not in assessment.residuals
+    assert assessment.rejection_reasons == []
+
+
+def test_dynamic_v2_does_not_claim_direct_equipment_without_expert_classification() -> (
+    None
+):
     controller = WinningSwarmController(
         {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
     )
     hypotheses = [
         _hypothesis(
             hypothesis_id=f"h{index}",
-            title=(
-                f"自主无人战斗平台{index}"
-                if index <= 4
-                else f"支撑体系{index}"
-            ),
+            title=(f"自主无人战斗平台{index}" if index <= 4 else f"支撑体系{index}"),
             equipment_forms=(
                 [f"模块化无人拦截平台{index}"]
                 if index <= 4
@@ -532,10 +870,12 @@ def test_dynamic_v2_portfolio_keeps_five_to_seven_with_four_direct_equipment() -
     ]
 
     assert 1 <= len(selected) <= 12
-    assert sum(controller.is_direct_combat_equipment(item) for item in selected) >= 1
+    assert sum(controller.is_direct_combat_equipment(item) for item in selected) == 0
 
 
-def test_dynamic_portfolio_retains_all_reliable_independent_weapons_up_to_s6_capacity() -> None:
+def test_dynamic_portfolio_retains_all_reliable_independent_weapons_up_to_s6_capacity() -> (
+    None
+):
     controller = WinningSwarmController(
         {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
     )
@@ -552,18 +892,80 @@ def test_dynamic_portfolio_retains_all_reliable_independent_weapons_up_to_s6_cap
 
     decision = controller.portfolio_decision(controller.create_ledger(hypotheses))
 
+    assert len(decision.selected_hypothesis_ids) == 7
     assert decision.selected_hypothesis_ids == [
-        item.hypothesis_id for item in hypotheses
+        item.hypothesis_id for item in hypotheses[:7]
     ]
 
 
-def test_dynamic_portfolio_prefers_distinct_equipment_families_before_variants() -> None:
+def test_dynamic_portfolio_backfills_promising_revise_weapons_as_pending() -> None:
     controller = WinningSwarmController(
         {
             "enabled": True,
             "policy_id": "winning_swarm_dynamic_v2",
             "finalist_minimum": 5,
             "finalist_maximum": 5,
+        }
+    )
+    hypotheses = [
+        _hypothesis(
+            hypothesis_id=f"weapon-{index}",
+            title=f"前瞻窗口精确打击武器{index}",
+            equipment_forms=[f"前瞻窗口精确打击导弹{index}"],
+        )
+        for index in range(1, 6)
+    ]
+    dimensions = {
+        name: 0.74
+        for name in (
+            "domain_relevance",
+            "equipment_capability_fit",
+            "innovation",
+            "military_value",
+            "decisive_advantage",
+            "query_specificity",
+            "causal_coherence",
+            "credibility",
+            "engineering_feasibility",
+            "robustness",
+        )
+    }
+    assessments = {
+        item.hypothesis_id: WinningExpertAssessment(
+            assessment_id=f"assessment-{item.hypothesis_id}",
+            hypothesis_id=item.hypothesis_id,
+            blind_label=item.hypothesis_id,
+            verdict="pass" if index == 1 else "revise",
+            passed=index == 1,
+            weighted_score=0.74,
+            dimension_scores=dimensions,
+            equipment_classification="direct_combat",
+        )
+        for index, item in enumerate(hypotheses, start=1)
+    }
+
+    decision = controller.portfolio_decision(
+        controller.create_ledger(hypotheses),
+        expert_assessments=assessments,
+    )
+
+    assert len(decision.selected_hypothesis_ids) == 5
+    assert decision.quality_judge_passed is True
+    assert set(decision.selected_hypothesis_ids) == {
+        item.hypothesis_id for item in hypotheses
+    }
+
+
+def test_dynamic_portfolio_does_not_drop_same_family_candidates_by_lexical_family() -> (
+    None
+):
+    controller = WinningSwarmController(
+        {
+            "enabled": True,
+            "policy_id": "winning_swarm_dynamic_v2",
+            "finalist_minimum": 5,
+            "finalist_maximum": 5,
+            "preferred_distinct_direct_equipment": 5,
         }
     )
     hypotheses = [
@@ -603,27 +1005,24 @@ def test_dynamic_portfolio_prefers_distinct_equipment_families_before_variants()
             equipment_forms=["低成本巡航弹药"],
         ),
     ]
-    decision = controller.portfolio_decision(
-        controller.create_ledger(hypotheses)
-    )
+    decision = controller.portfolio_decision(controller.create_ledger(hypotheses))
     selected = [
-        item for item in hypotheses
+        item
+        for item in hypotheses
         if item.hypothesis_id in decision.selected_hypothesis_ids
     ]
-    counts = controller.equipment_family_counts(selected)
-
     assert len(selected) >= 5
-    assert len(counts) >= 5
-    assert max(counts.values()) == 1
+    assert {"anti-rad-1", "anti-rad-2"} <= {item.hypothesis_id for item in selected}
 
 
-def test_dynamic_portfolio_replaces_duplicate_pareto_families_with_passed_alternatives() -> None:
+def test_dynamic_portfolio_uses_expert_objectives_without_family_replacement() -> None:
     controller = WinningSwarmController(
         {
             "enabled": True,
             "policy_id": "winning_swarm_dynamic_v2",
             "finalist_minimum": 5,
             "finalist_maximum": 5,
+            "preferred_distinct_direct_equipment": 5,
         }
     )
     hypotheses = [
@@ -694,28 +1093,25 @@ def test_dynamic_portfolio_replaces_duplicate_pareto_families_with_passed_altern
         },
     )
     selected = [
-        item for item in hypotheses if item.hypothesis_id in decision.selected_hypothesis_ids
+        item
+        for item in hypotheses
+        if item.hypothesis_id in decision.selected_hypothesis_ids
     ]
-    direct_counts = controller.equipment_family_counts(
-        [item for item in selected if item.hypothesis_id != "system-link"]
-    )
-
     assert len(selected) == 5
-    assert len(direct_counts) == 4
-    assert max(direct_counts.values()) <= 2
-    assert {"prsm", "jassm"} <= {
+    assert {"harop-a", "harop-b", "barracuda-a", "barracuda-b"} <= {
         item.hypothesis_id for item in selected
     }
     assert "system-link" not in {item.hypothesis_id for item in selected}
 
 
-def test_dynamic_coverage_does_not_stop_at_five_passes_with_only_four_direct_families() -> None:
+def test_dynamic_coverage_defers_independence_to_semantic_codex_clustering() -> None:
     controller = WinningSwarmController(
         {
             "enabled": True,
             "policy_id": "winning_swarm_dynamic_v2",
             "finalist_minimum": 5,
             "finalist_maximum": 5,
+            "preferred_distinct_direct_equipment": 5,
         }
     )
     hypotheses = [
@@ -771,16 +1167,19 @@ def test_dynamic_coverage_does_not_stop_at_five_passes_with_only_four_direct_fam
             ),
         )
 
-    assessments = {
-        item.hypothesis_id: assessment(item) for item in hypotheses
-    }
+    assessments = {item.hypothesis_id: assessment(item) for item in hypotheses}
     ledger = controller.create_ledger(hypotheses)
     coverage = controller.passed_portfolio_coverage(ledger, assessments)
 
     assert coverage["passed_count"] == 7
     assert coverage["direct_combat_equipment_count"] == 6
-    assert coverage["distinct_direct_equipment_family_count"] == 4
-    assert coverage["preferred_distinct_direct_equipment"] == 1
+    assert coverage["distinct_direct_equipment_family_count"] == 6
+    assert coverage["preferred_distinct_direct_equipment"] == 0
+    assert coverage["family_breadth_is_preference"] is False
+    assert coverage["same_family_independence_conflicts"] == []
+    assert coverage["semantic_independence_authority"] == (
+        "independent_codex_five_axis_clustering"
+    )
     assert coverage["ready"] is True
 
     mald = _hypothesis(
@@ -795,11 +1194,12 @@ def test_dynamic_coverage_does_not_stop_at_five_passes_with_only_four_direct_fam
         assessments,
     )
 
-    assert coverage["distinct_direct_equipment_family_count"] == 5
+    assert coverage["distinct_direct_equipment_family_count"] == 7
+    assert coverage["same_family_independence_conflicts"] == []
     assert coverage["ready"] is True
 
 
-def test_harop_and_generic_loitering_munition_share_one_broad_family() -> None:
+def test_local_code_does_not_infer_broad_equipment_families() -> None:
     controller = WinningSwarmController(
         {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
     )
@@ -823,12 +1223,14 @@ def test_harop_and_generic_loitering_munition_share_one_broad_family() -> None:
 
     counts = controller.equipment_family_counts(hypotheses)
 
-    assert counts["loitering_munition"] == 2
-    assert counts["low_altitude_unmanned_strike"] == 1
-    assert len(counts) == 2
+    assert len(counts) == 3
+    assert set(counts.values()) == {1}
+    assert all(key.startswith("semantic:") for key in counts)
 
 
-def test_dynamic_portfolio_prefers_five_distinct_direct_weapons_over_system_link() -> None:
+def test_dynamic_portfolio_prefers_five_distinct_direct_weapons_over_system_link() -> (
+    None
+):
     controller = WinningSwarmController(
         {
             "enabled": True,
@@ -909,7 +1311,7 @@ def test_dynamic_portfolio_prefers_five_distinct_direct_weapons_over_system_link
     assert "system-link" not in decision.selected_hypothesis_ids
 
 
-def test_dynamic_re_review_reuses_unassessed_ledger_breadth_and_upgrade() -> None:
+def test_dynamic_re_review_reuses_unassessed_ledger_without_upgrade_quota() -> None:
     controller = WinningSwarmController(
         {
             "enabled": True,
@@ -973,11 +1375,16 @@ def test_dynamic_re_review_reuses_unassessed_ledger_breadth_and_upgrade() -> Non
     )
 
     assert len(selected) == 5
-    assert selected[0] == "ground-upgrade"
-    assert {"air-missile", "mald", "low-alt", "maritime"} <= set(selected)
+    assert set(selected) == {
+        "air-missile",
+        "ground-upgrade",
+        "low-alt",
+        "mald",
+        "maritime",
+    }
 
 
-def test_dynamic_portfolio_keeps_one_passed_upgrade_when_available() -> None:
+def test_dynamic_portfolio_does_not_force_lower_scored_upgrade_into_capacity() -> None:
     controller = WinningSwarmController(
         {
             "enabled": True,
@@ -1029,7 +1436,7 @@ def test_dynamic_portfolio_keeps_one_passed_upgrade_when_available() -> None:
     )
 
     assert len(decision.selected_hypothesis_ids) == 5
-    assert "upgrade" in decision.selected_hypothesis_ids
+    assert "upgrade" not in decision.selected_hypothesis_ids
     assert decision.quality_judge_passed is True
 
 
@@ -1104,8 +1511,7 @@ def test_specialist_batches_enforce_candidate_merge_conflict_and_concurrency() -
     assert all(len(batch) <= 2 for batch in batches)
     assert any({item.task_id for item in batch} == {"t1", "t3"} for batch in batches)
     assert not any(
-        {"t1", "t2"} <= {item.task_id for item in batch}
-        for batch in batches
+        {"t1", "t2"} <= {item.task_id for item in batch} for batch in batches
     )
 
 
@@ -1131,13 +1537,22 @@ def test_dynamic_specialist_contract_accepts_twelve_and_binds_hypothesis() -> No
     assert all(item["allow_child_spawn"] is False for item in normalized)
 
 
-def test_initial_plan_is_non_recursive_and_targeted_plan_respects_remaining_budget() -> None:
+def test_initial_plan_is_non_recursive_and_targeted_plan_respects_remaining_budget() -> (
+    None
+):
     controller = WinningSwarmController({"enabled": True})
-    plan = controller.plan_initial(topic="test", execution_profile_id="swarm_quality_v1")
+    plan = controller.plan_initial(
+        topic="test", execution_profile_id="swarm_quality_v1"
+    )
 
-    assert len(plan.tasks) == 4
+    assert len(plan.tasks) == 3
     assert {task.wave for task in plan.tasks} == {1}
     assert all(task.allow_child_spawn is False for task in plan.tasks)
+    assert not {
+        "direct_combat_equipment_generator",
+        "remote_precision_munition_generator",
+        "mass_scalable_combat_family_generator",
+    } & {task.archetype for task in plan.tasks}
 
     hypothesis = _hypothesis(
         residuals=["evidence_insufficient", "counter_adaptation_unresolved"]
@@ -1156,6 +1571,67 @@ def test_initial_plan_is_non_recursive_and_targeted_plan_respects_remaining_budg
     assert len(targeted) == 1
     assert targeted[0].wave == 2
     assert targeted[0].allow_child_spawn is False
+
+
+def test_narrative_quality_note_does_not_recruit_a_repair_archetype() -> None:
+    controller = WinningSwarmController(
+        {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
+    )
+
+    assert controller.archetype_for_residual("causal_chain_broken") == (
+        "adversary_counter_adaptation_red_team"
+    )
+    assert controller.archetype_for_residual("causal_chain_broken已补强") == ""
+    assert controller.archetype_for_residual("该问题已在S3闭合") == ""
+
+
+@pytest.mark.parametrize(
+    "title",
+    [
+        "内置数枚非常轻型鱼雷、反UUV水下弹药或声学标记器",
+        "2至数枚轻型鱼雷、反UUV小型拦截器",
+        "反UUV水下弹药或可抛投声学标记器火力",
+        "短程反UUV效应器或标记载荷",
+        "弹药化声学浮标/水下短期节点",
+        "小型反UUV效应器舱与环境采样载荷",
+        "轻型鱼雷/反UUV拦截弹药模块",
+    ],
+)
+def test_frontloaded_local_gate_does_not_classify_payload_wording(
+    title: str,
+) -> None:
+    controller = WinningSwarmController(
+        {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
+    )
+    hypothesis = _hypothesis(
+        title=title,
+        equipment_forms=[title],
+    )
+
+    gate = controller.evaluate_gate(hypothesis, stage="final")
+
+    assert gate.passed is True
+    assert "equipment_not_concrete" not in gate.residuals
+
+
+@pytest.mark.parametrize(
+    "title",
+    [
+        "“沉界”大排量武装猎潜无人潜航器",
+        "“断缆”百吨级远海无人水面反潜截击艇",
+        "雷达与高功率微波复合反无人效应车",
+    ],
+)
+def test_frontloaded_gate_keeps_single_compound_weapon_identity(title: str) -> None:
+    controller = WinningSwarmController(
+        {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
+    )
+    gate = controller.evaluate_gate(
+        _hypothesis(title=title, equipment_forms=[title]),
+        stage="final",
+    )
+
+    assert "equipment_not_concrete" not in gate.residuals
 
 
 def test_dependency_scheduler_prunes_recursive_or_failed_dependency_tasks() -> None:
@@ -1186,14 +1662,14 @@ def test_dependency_scheduler_prunes_recursive_or_failed_dependency_tasks() -> N
     assert pruned == [task]
 
     recursive = replace(task, allow_child_spawn=True, depends_on=[])
-    ready, pruned = controller.ready_tasks(
-        [recursive], completed_task_ids=set()
-    )
+    ready, pruned = controller.ready_tasks([recursive], completed_task_ids=set())
     assert ready == []
     assert pruned == [recursive]
 
 
-def test_contribution_requires_exact_hypothesis_and_merge_target_and_cleans_evidence() -> None:
+def test_contribution_requires_exact_hypothesis_and_merge_target_and_cleans_evidence() -> (
+    None
+):
     controller = WinningSwarmController({"enabled": True})
     hypothesis = _hypothesis(residuals=["evidence_insufficient"])
     task = controller.plan_targeted(
@@ -1227,16 +1703,22 @@ def test_contribution_requires_exact_hypothesis_and_merge_target_and_cleans_evid
     updated = controller.apply_contribution(hypothesis, contribution)
     assert task.task_id in updated.source_task_ids
     assert task.merge_target in updated.merge_targets
-    assert controller.contribution_projection(
-        contribution,
-        hypothesis_id=task.hypothesis_id,
-        merge_target=task.merge_target,
-    ) is not None
-    assert controller.contribution_projection(
-        contribution,
-        hypothesis_id=task.hypothesis_id,
-        merge_target="S6",
-    ) is None
+    assert (
+        controller.contribution_projection(
+            contribution,
+            hypothesis_id=task.hypothesis_id,
+            merge_target=task.merge_target,
+        )
+        is not None
+    )
+    assert (
+        controller.contribution_projection(
+            contribution,
+            hypothesis_id=task.hypothesis_id,
+            merge_target="S6",
+        )
+        is None
+    )
 
     with pytest.raises(ValueError, match="merge boundary"):
         controller.contribution_from_mapping(
@@ -1284,12 +1766,68 @@ def test_w2_retains_structured_query_weapon_delta_without_generic_findings() -> 
     )
 
     assert contribution.accepted is True
-    assert contribution.incremental_quality == 0.05
+    assert contribution.incremental_quality == 0.01
     assert contribution.findings == []
     assert contribution.equipment_forms == ["潜射低特征多模反舰巡航弹药"]
 
 
-def test_candidate_dedup_final_gate_and_unsupported_precision_rejection() -> None:
+def test_internal_workflow_commentary_never_enters_user_facing_candidate_fields() -> (
+    None
+):
+    controller = WinningSwarmController(
+        {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
+    )
+    task = SpecialistTask(
+        task_id="s5-clean-handoff",
+        agent_instance_id="s5-agent",
+        archetype="evidence_verifier",
+        display_name="证据核验",
+        wave=3,
+        purpose="verify one candidate",
+        merge_target="S5",
+        hypothesis_id="h-clean",
+        expected_quality_gain=0.05,
+    )
+
+    contribution = controller.contribution_from_mapping(
+        {
+            "hypothesis_id": "h-clean",
+            "merge_target": "S5",
+            "findings": ["S5建议收窄验收轴；该审计意见保留在内部记录"],
+            "mechanism_chain_updates": [
+                "S5建议把核心可验收轴改为机动包线收缩",
+                "武器先压缩目标机动包线，再由末段自主寻的实施毁伤",
+            ],
+            "validation_plan": [
+                "以对照试验测量目标机动包线与有效毁伤率变化",
+                "以每次有效毁伤成本作为S6判退指标",
+            ],
+            "direct_military_effects": ["迫使目标减速并暴露关键部位"],
+            "evidence_boundary": "S5 Agent要求回到S4补写对象证据",
+            "failure_boundaries": [
+                "S5质量门认为仍需补写",
+                "末段目标确认不足时放弃攻击",
+            ],
+            "evidence_ids": ["ev-1"],
+            "incremental_quality": 0.06,
+            "recommendation": "retain",
+        },
+        task=task,
+        valid_evidence_ids={"ev-1"},
+    )
+
+    assert contribution.findings == ["S5建议收窄验收轴；该审计意见保留在内部记录"]
+    assert contribution.mechanism_chain_updates == [
+        "武器先压缩目标机动包线，再由末段自主寻的实施毁伤"
+    ]
+    assert contribution.validation_plan == [
+        "以对照试验测量目标机动包线与有效毁伤率变化"
+    ]
+    assert contribution.evidence_boundary == ""
+    assert contribution.failure_boundaries == ["末段目标确认不足时放弃攻击"]
+
+
+def test_candidate_dedup_and_unsupported_precision_diagnostic() -> None:
     controller = WinningSwarmController({"enabled": True})
     first = _hypothesis(hypothesis_id="h1", score=0.9)
     duplicate = _hypothesis(hypothesis_id="h2", score=0.8)
@@ -1309,18 +1847,80 @@ def test_candidate_dedup_final_gate_and_unsupported_precision_rejection() -> Non
         mechanism_chain=["公开材料未支撑但声称效能提升35%"],
     )
     gate = controller.evaluate_gate(unsupported, stage="final")
-    assert gate.passed is False
+    assert gate.passed is True
     assert "unsupported_precision" in gate.residuals
+
+
+def test_same_family_candidates_are_not_blocked_by_local_operational_axes() -> None:
+    controller = WinningSwarmController(
+        {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
+    )
+    first = _hypothesis(
+        hypothesis_id="uuv-1",
+        title="前置猎潜无人潜航器",
+        equipment_forms=["大排量武装无人潜航器"],
+    )
+    wording_variant = replace(
+        first,
+        hypothesis_id="uuv-2",
+        title="外缘接触保管无人潜航器",
+        score=0.8,
+    )
+
+    assert controller.operational_independence_axes(first, wording_variant) == []
+    conflicts = controller.same_family_independence_conflicts([first, wording_variant])
+    assert conflicts == []
+    unique, merges = controller.deduplicate_hypotheses([wording_variant, first])
+    assert len(unique) == 1
+    assert merges
+
+    independent_variant = replace(
+        first,
+        hypothesis_id="uuv-3",
+        title="坐底封装反潜拒止无人潜航器",
+        equipment_forms=["坐底封装释放式无人潜航拒止器"],
+        project_function="布设分队在海峡出口预置坐底武器，对穿越目标实施限域拒止。",
+        changed_confrontation_variable="把持续追踪转化为要道预置和触发式拒止",
+        mechanism_chain=["母平台投送", "坐底静默值班", "目标触发后释放效应器"],
+        direct_military_effects=["封锁要道并迫使敌方潜航器绕行"],
+        validation_plan=["验证坐底留置时间、触发边界和安全回收"],
+        failure_boundaries=["海床条件不支持稳定留置时判退"],
+    )
+    axes = controller.operational_independence_axes(first, independent_variant)
+    assert len(axes) >= 2
+    assert (
+        controller.same_family_independence_conflicts([first, independent_variant])
+        == []
+    )
+    unique, _ = controller.deduplicate_hypotheses([first, independent_variant])
+    assert {item.hypothesis_id for item in unique} == {"uuv-1", "uuv-3"}
+
+    assessments = {
+        item.hypothesis_id: WinningExpertAssessment(
+            assessment_id=f"assessment-{item.hypothesis_id}",
+            hypothesis_id=item.hypothesis_id,
+            blind_label=item.hypothesis_id,
+            verdict="pass",
+            passed=True,
+            weighted_score=0.82,
+            equipment_classification="direct_combat",
+        )
+        for item in (first, independent_variant)
+    }
+    coverage = controller.passed_portfolio_coverage(
+        controller.create_ledger([first, independent_variant]),
+        assessments,
+    )
+    assert coverage["distinct_direct_equipment_family_count"] == 2
+    assert coverage["same_family_independence_conflicts"] == []
+    assert coverage["ready"] is True
 
 
 def test_finalist_capacity_rejection_has_auditable_reason() -> None:
     controller = WinningSwarmController(
         {"enabled": True, "finalist_maximum": 4, "finalist_minimum": 2}
     )
-    candidates = [
-        _hypothesis(hypothesis_id=f"h{index}")
-        for index in range(1, 6)
-    ]
+    candidates = [_hypothesis(hypothesis_id=f"h{index}") for index in range(1, 6)]
 
     finalists, rejected, gates = controller.select_finalists(candidates)
     gate_by_id = {item.hypothesis_id: item for item in gates}
@@ -1348,13 +1948,16 @@ def test_semantic_hypothesis_match_recovers_obsolete_candidate_id() -> None:
         equipment_forms=["保障信息系统"],
     )
 
-    assert controller.semantic_hypothesis_match(
-        obsolete,
-        [unrelated, canonical],
-    ) == "canonical"
+    assert (
+        controller.semantic_hypothesis_match(
+            obsolete,
+            [unrelated, canonical],
+        )
+        == "canonical"
+    )
 
 
-def test_final_gate_requires_structured_system_interfaces() -> None:
+def test_final_diagnostics_record_missing_structured_system_interfaces() -> None:
     controller = WinningSwarmController(
         {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
     )
@@ -1363,11 +1966,11 @@ def test_final_gate_requires_structured_system_interfaces() -> None:
         stage="final",
     )
 
-    assert gate.passed is False
+    assert gate.passed is True
     assert "system_interfaces_missing" in gate.residuals
 
 
-def test_dynamic_final_gate_requires_explicit_project_function() -> None:
+def test_dynamic_final_diagnostics_record_missing_project_function() -> None:
     controller = WinningSwarmController(
         {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
     )
@@ -1376,11 +1979,11 @@ def test_dynamic_final_gate_requires_explicit_project_function() -> None:
         stage="final",
     )
 
-    assert gate.passed is False
+    assert gate.passed is True
     assert "project_function_missing" in gate.residuals
 
 
-def test_dynamic_final_gate_rejects_mixed_public_weapon_families() -> None:
+def test_dynamic_final_gate_defers_mixed_public_family_semantics_to_codex() -> None:
     controller = WinningSwarmController(
         {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
     )
@@ -1388,16 +1991,13 @@ def test_dynamic_final_gate_rejects_mixed_public_weapon_families() -> None:
         replace(
             _hypothesis(),
             title="批量可消耗低空无人携弹压制平台族",
-            equipment_forms=[
-                "MALD类诱骗压制型；AARGM-ER反辐射型；Harop巡飞猎歼型"
-            ],
+            equipment_forms=["MALD类诱骗压制型；AARGM-ER反辐射型；Harop巡飞猎歼型"],
             evidence_ids=["ev-weapon_equipment-web-mald"],
         ),
         stage="final",
     )
 
-    assert gate.passed is False
-    assert "mixed_primary_equipment_families" in gate.residuals
+    assert "mixed_primary_equipment_families" not in gate.residuals
 
 
 def test_dynamic_final_gate_requires_weapon_object_evidence_for_direct_weapon() -> None:
@@ -1410,12 +2010,64 @@ def test_dynamic_final_gate_requires_weapon_object_evidence_for_direct_weapon() 
             title="长航时反舰巡飞弹药",
             equipment_forms=["长航时反舰巡飞弹药"],
             evidence_ids=["ev-operational_employment-web-generic"],
+            implementation_path="upgrade",
         ),
         stage="final",
     )
 
-    assert gate.passed is False
+    assert gate.passed is True
     assert "equipment_object_evidence_missing" in gate.residuals
+
+
+def test_frontier_new_weapon_can_pass_with_analogous_evidence_and_low_priority_gaps() -> (
+    None
+):
+    controller = WinningSwarmController(
+        {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
+    )
+    gate = controller.evaluate_gate(
+        replace(
+            _hypothesis(),
+            title="前沿多模反辐射巡飞导弹",
+            equipment_forms=["前沿多模反辐射巡飞导弹"],
+            evidence_ids=["ev-operational_employment-web-analogous"],
+            counterevidence=[],
+            adversary_adaptations=[],
+            failure_boundaries=[],
+            trl_constraints=[],
+            cost_constraints=[],
+            industrial_constraints=[],
+            cross_scenario_results=[],
+            validation_plan=[],
+            implementation_path="new",
+        ),
+        stage="final",
+    )
+
+    assert gate.passed is True
+    assert "equipment_object_evidence_missing" not in gate.residuals
+    assert "counter_adaptation_unresolved" in gate.residuals
+    assert "validation_route_missing" in gate.residuals
+
+
+def test_frontier_allowance_keeps_zero_evidence_or_missing_boundary_nonblocking() -> (
+    None
+):
+    controller = WinningSwarmController(
+        {"enabled": True, "policy_id": "swarm_quality_v1"}
+    )
+
+    no_evidence = controller.evaluate_gate(
+        replace(_hypothesis(), evidence_ids=[]), stage="final"
+    )
+    no_boundary = controller.evaluate_gate(
+        replace(_hypothesis(), evidence_boundary=""), stage="final"
+    )
+
+    assert no_evidence.passed is True
+    assert "evidence_insufficient" in no_evidence.residuals
+    assert no_boundary.passed is True
+    assert "evidence_insufficient" in no_boundary.residuals
 
 
 def test_expert_repairs_prioritize_passed_system_links_for_combat_quota() -> None:
@@ -1462,10 +2114,18 @@ def test_expert_repairs_prioritize_passed_system_links_for_combat_quota() -> Non
     rows = {
         item.hypothesis_id: item
         for item in [
-            assessment("system-1", verdict="pass", classification="system_link", score=0.86),
-            assessment("system-2", verdict="pass", classification="system_link", score=0.84),
-            assessment("system-3", verdict="pass", classification="support_only", score=0.82),
-            assessment("revise-1", verdict="revise", classification="upgrade", score=0.80),
+            assessment(
+                "system-1", verdict="pass", classification="system_link", score=0.86
+            ),
+            assessment(
+                "system-2", verdict="pass", classification="system_link", score=0.84
+            ),
+            assessment(
+                "system-3", verdict="pass", classification="support_only", score=0.82
+            ),
+            assessment(
+                "revise-1", verdict="revise", classification="upgrade", score=0.80
+            ),
         ]
     }
 
@@ -1476,9 +2136,9 @@ def test_expert_repairs_prioritize_passed_system_links_for_combat_quota() -> Non
         "system-2",
         "system-3",
     ]
-    assert controller.is_direct_combat_equipment(
-        _hypothesis(), rows["system-1"]
-    ) is False
+    assert (
+        controller.is_direct_combat_equipment(_hypothesis(), rows["system-1"]) is False
+    )
 
 
 def test_expert_repairs_prioritize_failed_direct_images_before_passed_links() -> None:
@@ -1537,7 +2197,7 @@ def test_expert_repairs_prioritize_failed_direct_images_before_passed_links() ->
     ]
 
 
-def test_expert_repairs_prioritize_missing_direct_equipment_family() -> None:
+def test_expert_repairs_follow_expert_score_not_local_equipment_family() -> None:
     controller = WinningSwarmController(
         {
             "enabled": True,
@@ -1599,21 +2259,64 @@ def test_expert_repairs_prioritize_missing_direct_equipment_family() -> None:
         "duplicate-loitering": row(duplicate, verdict="revise", score=0.82),
         "missing-air-missile": row(missing, verdict="revise", score=0.77),
     }
-    hypotheses = {
-        item.hypothesis_id: item for item in (passed, duplicate, missing)
-    }
+    hypotheses = {item.hypothesis_id: item for item in (passed, duplicate, missing)}
 
     selected = controller.select_expert_repair_assessments(
         assessments,
         hypotheses=hypotheses,
     )
 
-    assert [item.hypothesis_id for item in selected] == [
-        "missing-air-missile"
-    ]
+    assert [item.hypothesis_id for item in selected] == ["duplicate-loitering"]
 
 
-def test_equipment_family_uses_primary_weapon_before_companion_weapon() -> None:
+def test_semantic_duplicate_is_not_selected_for_expert_repair() -> None:
+    controller = WinningSwarmController(
+        {
+            "enabled": True,
+            "policy_id": "winning_swarm_dynamic_v2",
+            "expert_repair_max_candidates": 2,
+        }
+    )
+    hypothesis = _hypothesis(hypothesis_id="duplicate-candidate")
+    assessment = controller.expert_assessment_from_mapping(
+        {
+            "verdict": "revise",
+            "dimension_scores": {
+                dimension: 0.82
+                for dimension in (
+                    "domain_relevance",
+                    "equipment_capability_fit",
+                    "innovation",
+                    "military_value",
+                    "decisive_advantage",
+                    "query_specificity",
+                    "causal_coherence",
+                    "credibility",
+                    "engineering_feasibility",
+                    "robustness",
+                )
+            },
+            "equipment_classification": "direct_combat",
+            "rejection_reasons": ["semantic_duplicate: 与候选A属于同一制胜命题"],
+            "residuals": ["semantic_duplicate"],
+            "evidence_ids": ["ev-1"],
+        },
+        hypothesis=hypothesis,
+        blind_label="duplicate-candidate",
+        valid_evidence_ids={"ev-1"},
+        session_ref="session",
+    )
+
+    assert (
+        controller.select_expert_repair_assessments(
+            {hypothesis.hypothesis_id: assessment},
+            hypotheses={hypothesis.hypothesis_id: hypothesis},
+        )
+        == []
+    )
+
+
+def test_equipment_family_signature_is_opaque_semantic_identity() -> None:
     controller = WinningSwarmController(
         {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
     )
@@ -1625,36 +2328,41 @@ def test_equipment_family_uses_primary_weapon_before_companion_weapon() -> None:
         ],
     )
 
-    assert controller.equipment_family_signature(anti_ship) == (
-        "guided_missile_or_munition"
-    )
+    anti_ship_signature = controller.equipment_family_signature(anti_ship)
+    assert anti_ship_signature.startswith("semantic:")
 
     prsm = _hypothesis(
         title="PrSM Increment 2多模末制导验证型",
         equipment_forms=["HIMARS兼容的PrSM陆基远程反舰试验弹"],
     )
-    assert controller.equipment_family_signature(prsm) == (
-        "ground_launched_precision_missile"
-    )
+    prsm_signature = controller.equipment_family_signature(prsm)
+    assert prsm_signature.startswith("semantic:")
+    assert prsm_signature != anti_ship_signature
 
 
 def test_promotion_requires_ten_runs_seventy_percent_and_no_hard_failures() -> None:
     controller = WinningSwarmController({"enabled": True})
 
-    assert controller.promotion_candidate(
-        archetype="evidence_verifier",
-        eligible_runs=9,
-        positive_increment_runs=9,
-        evidence_hard_failures=0,
-        permission_hard_failures=0,
-    ) is None
-    assert controller.promotion_candidate(
-        archetype="evidence_verifier",
-        eligible_runs=10,
-        positive_increment_runs=7,
-        evidence_hard_failures=1,
-        permission_hard_failures=0,
-    ) is None
+    assert (
+        controller.promotion_candidate(
+            archetype="evidence_verifier",
+            eligible_runs=9,
+            positive_increment_runs=9,
+            evidence_hard_failures=0,
+            permission_hard_failures=0,
+        )
+        is None
+    )
+    assert (
+        controller.promotion_candidate(
+            archetype="evidence_verifier",
+            eligible_runs=10,
+            positive_increment_runs=7,
+            evidence_hard_failures=1,
+            permission_hard_failures=0,
+        )
+        is None
+    )
 
     record = controller.promotion_candidate(
         archetype="evidence_verifier",

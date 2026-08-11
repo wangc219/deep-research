@@ -217,22 +217,40 @@ class AgentLoop:
 
         try:
             for turn_index in range(1, config.max_turns + 1):
+                turn_options = dict(config.options)
+                turn_options.update(
+                    {
+                        "_audit_run_id": config.run_id,
+                        "_audit_agent_id": config.agent_id,
+                        "_audit_phase": f"agent_loop_turn_{turn_index}",
+                        "_audit_call_purpose": "governed_agent_loop",
+                    }
+                )
                 snapshot = TurnSnapshotInput(
                     turn_index=turn_index,
                     messages=working_messages,
                     tools=base_tools,
-                    options=config.options,
+                    options=turn_options,
                 )
                 if config.prepare_turn is not None:
                     prepared = await _maybe_await(config.prepare_turn(snapshot))
                     if prepared is not None:
                         if not isinstance(prepared, TurnSnapshotInput):
                             raise TypeError("prepare_turn must return TurnSnapshotInput or None")
+                        prepared_options = dict(prepared.options)
+                        prepared_options.update(
+                            {
+                                "_audit_run_id": config.run_id,
+                                "_audit_agent_id": config.agent_id,
+                                "_audit_phase": f"agent_loop_turn_{turn_index}",
+                                "_audit_call_purpose": "governed_agent_loop",
+                            }
+                        )
                         snapshot = TurnSnapshotInput(
                             turn_index=turn_index,
                             messages=prepared.messages,
                             tools=prepared.tools,
-                            options=prepared.options,
+                            options=prepared_options,
                         )
                 reserved_call_ids.update(_call_ids_from_messages(snapshot.messages))
 

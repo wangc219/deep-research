@@ -12,7 +12,10 @@ from threading import RLock
 from typing import Any, Callable
 from urllib.parse import urlsplit
 
-from equipment_deep_research.agents.provider import AgentProvider, AgentRunRequest
+from equipment_deep_research.agents.execution_contracts import (
+    AgentProvider,
+    AgentRunRequest,
+)
 from equipment_deep_research.agents.registry import AgentDef
 from equipment_deep_research.harness.agent_harness import AgentHarness
 from equipment_deep_research.harness.profiles import HarnessCatalog
@@ -21,6 +24,7 @@ from equipment_deep_research.domain.identifiers import (
     validate_internal_identifier,
 )
 from equipment_deep_research.domain.models import (
+    BaselineFindingPacket,
     EquipmentObservation,
     OperationalSynthesis,
     ScenarioModel,
@@ -61,6 +65,14 @@ from equipment_deep_research.tools.domain_tools import build_domain_tool_definit
 from equipment_deep_research.tools.permissions import effective_tool_names
 
 
+_SHARED_MODEL_CONTEXT_KEYS = frozenset(
+    {
+        "discovery_blueprint",
+        "structured_query_brief",
+    }
+)
+
+
 @dataclass(frozen=True)
 class WorkerReport:
     agent_id: str
@@ -91,6 +103,9 @@ class _BaselineHarnessProvider:
         self.request = request
         self.result: Any | None = None
         self.error: BaseException | None = None
+        self.completion_scope = "isolated_model_turn"
+        self.domain_commit_expected = False
+        self.business_result_authoritative = False
 
     async def stream(
         self,
@@ -133,6 +148,8 @@ def _evidence_accept_target(
     agent: AgentDef,
     *,
     targeted_supplement: bool,
+    quality_profile: bool = False,
+    compact_agent: bool = False,
 ) -> int:
     if targeted_supplement:
         return max(
@@ -150,29 +167,67 @@ def _evidence_accept_target(
     general_target = max(
         1,
         min(
-            int(os.environ.get("EQUIPMENT_DR_EVIDENCE_ACCEPT_TARGET", "6")),
+            int(os.environ.get("EQUIPMENT_DR_EVIDENCE_ACCEPT_TARGET", "4")),
             int(
                 agent.research_policy.get(
                     "evidence_accept_target",
-                    os.environ.get("EQUIPMENT_DR_EVIDENCE_ACCEPT_TARGET", "6"),
+                    os.environ.get("EQUIPMENT_DR_EVIDENCE_ACCEPT_TARGET", "4"),
                 )
             ),
         ),
     )
+    if quality_profile:
+        # Quality profiles use evidence for decision support rather than
+        # exhaustive collection.  Two strong, independent sources normally
+        # establish the baseline; a third is retained for counterevidence or
+        # a material domain gap.  Reference/callback agents are deliberately
+        # narrower because their output cannot independently admit a weapon.
+        return min(general_target, 2 if compact_agent else 3)
     if agent.agent_id != "weapon_equipment":
         return general_target
     weapon_target = max(
-        6,
+        3,
         min(
             12,
             int(
                 os.environ.get(
-                    "EQUIPMENT_DR_WEAPON_EVIDENCE_ACCEPT_TARGET", "10"
+                    "EQUIPMENT_DR_WEAPON_EVIDENCE_ACCEPT_TARGET", "4"
                 )
             ),
         ),
     )
     return max(general_target, weapon_target)
+
+
+def _evidence_saturation_target(
+    agent: AgentDef,
+    *,
+    accepted_target: int,
+    targeted_supplement: bool,
+    quality_profile: bool = False,
+) -> int:
+    """Return the evidence count where additional sources have low marginal gain.
+
+    This is an early-stop threshold, not a fixed sufficiency gate.  Materialization
+    may continue up to ``accepted_target`` when source-domain diversity,
+    counterevidence, or the minimum formal-evidence gate is still unresolved.
+    """
+
+    if targeted_supplement:
+        configured = int(
+            os.environ.get("EQUIPMENT_DR_TARGETED_EVIDENCE_SATURATION_TARGET", "2")
+        )
+    elif agent.agent_id == "weapon_equipment":
+        configured = int(
+            os.environ.get("EQUIPMENT_DR_WEAPON_EVIDENCE_SATURATION_TARGET", "3")
+        )
+    else:
+        configured = int(
+            os.environ.get("EQUIPMENT_DR_EVIDENCE_SATURATION_TARGET", "3")
+        )
+    if quality_profile:
+        configured = min(configured, 2)
+    return max(1, min(accepted_target, configured))
 
 
 class DiscoveryScheduler:
@@ -346,12 +401,18 @@ class DiscoveryScheduler:
         plan_mode: str = "required",
     ) -> tuple[ContextPack, list[dict[str, Any]], list[dict[str, Any]]]:
         blueprint = self.shared_context.get("discovery_blueprint", {})
+        execution_profile_id = (
+            str(blueprint.get("execution_profile_id", ""))
+            if isinstance(blueprint, Mapping)
+            else ""
+        )
         optimized_v2 = (
             isinstance(blueprint, Mapping)
             and is_quality_execution_profile_id(
                 blueprint.get("execution_profile_id")
             )
         )
+        aggressive_compaction = execution_profile_id == "optimized_v2"
         with self._state_lock:
             context = self.context_builder.build_for_baseline_agent(
                 agent=agent,
@@ -370,6 +431,7 @@ class DiscoveryScheduler:
             topic,
         )
         incremental_knowledge = self.knowledge_index.recommend(agent.agent_id, topic)
+        visible_sections = set(agent.context_policy.get("visible_sections", ()))
         shared_projection = {
             key: compact_handoff_value(
                 _minimal_shared_context_value(key, value)
@@ -380,7 +442,7 @@ class DiscoveryScheduler:
                 max_mapping_items=7 if optimized_v2 else 10,
             )
             for key, value in self.shared_context.items()
-            if key != "selected_business_agent_ids"
+            if key in _SHARED_MODEL_CONTEXT_KEYS
         }
         sections = {
             **context.sections,
@@ -391,9 +453,6 @@ class DiscoveryScheduler:
             "shared_source_priorities": shared_source_priorities[:4]
             if optimized_v2
             else shared_source_priorities,
-            "incremental_knowledge": incremental_knowledge[:3]
-            if optimized_v2
-            else incremental_knowledge,
             "_execution_priority": execution_priority,
             "_search_intensity": search_intensity,
             "_agent_plan_mode": (
@@ -402,8 +461,14 @@ class DiscoveryScheduler:
                 else "required"
             ),
         }
+        if "incremental_knowledge" in visible_sections:
+            sections["incremental_knowledge"] = (
+                incremental_knowledge[:3]
+                if optimized_v2
+                else incremental_knowledge
+            )
         token_budget = int(agent.context_policy.get("token_budget", 5000))
-        if optimized_v2:
+        if aggressive_compaction:
             token_budget = min(token_budget, 2400)
         bounded_context = self.context_builder.projector.compactor.compact(
             ContextPack(agent.agent_id, sections),
@@ -442,6 +507,7 @@ class DiscoveryScheduler:
                 field_name="agent_id",
             )
         session = self._open_session_store(session_path.name)
+        execution_phase = "setup"
         try:
             context, source_priorities, incremental_knowledge = (
                 self._build_agent_context(
@@ -566,8 +632,15 @@ class DiscoveryScheduler:
                     blueprint.get("execution_profile_id")
                 )
             )
-            active_skill_ids = list(agent.skill_ids[:1] if optimized_v2 else agent.skill_ids)
+            aggressive_compaction = (
+                isinstance(blueprint, Mapping)
+                and str(blueprint.get("execution_profile_id", "")) == "optimized_v2"
+            )
+            active_skill_ids = list(
+                agent.skill_ids[:1] if aggressive_compaction else agent.skill_ids
+            )
             stop_reason = "legacy_provider_completed"
+            execution_phase = "model_execution"
             if self.harness_store is not None and agent.harness_profile:
                 profile = self.harness_catalog.profiles[agent.harness_profile]
                 skill_definitions = [
@@ -586,7 +659,7 @@ class DiscoveryScheduler:
                         ),
                     )
                 )
-                if optimized_v2:
+                if aggressive_compaction:
                     active_tool_names = _minimal_agent_tools(
                         agent.agent_id,
                         active_tool_names,
@@ -648,6 +721,46 @@ class DiscoveryScheduler:
                         or f"AgentHarness stopped with status={harness_result.status}"
                     )
                 result = adapter.result
+                packet_findings = [
+                    str(item).strip()
+                    for item in result.packet.findings
+                    if str(item).strip()
+                ]
+                if not packet_findings or (
+                    len(packet_findings) == 1
+                    and "未返回可采纳的结构化发现" in packet_findings[0]
+                ):
+                    raise RuntimeError(
+                        f"{agent.agent_id} model turn completed but outer baseline result validation found no substantive findings"
+                    )
+                self._append_session(
+                    session,
+                    {
+                        "event_type": "baseline_outer_result_validated",
+                        "created_at": now_iso(),
+                        "agent_id": agent.agent_id,
+                        "finding_count": len(packet_findings),
+                        "evidence_candidate_count": len(result.evidence),
+                        "packet_id": result.packet.packet_id,
+                        "business_result_authoritative": True,
+                    },
+                )
+                self.trace.append(
+                    TraceEvent(
+                        event_id=(
+                            f"trace-baseline-outer-result-validated-"
+                            f"{agent.agent_id}-r{round_index}"
+                        ),
+                        event_type="baseline_outer_result_validated",
+                        actor=agent.agent_id,
+                        summary="外层基线结果已通过结构化产出验收",
+                        payload={
+                            "finding_count": len(packet_findings),
+                            "evidence_candidate_count": len(result.evidence),
+                            "packet_id": result.packet.packet_id,
+                        },
+                    )
+                )
                 stop_reason = harness_result.status
                 self._append_session(
                     session,
@@ -682,6 +795,7 @@ class DiscoveryScheduler:
                 )
             else:
                 result = self.provider.run_baseline_agent(request)
+            execution_phase = "result_validation"
             for call_index, metric in enumerate(result.model_calls, start=1):
                 self._append_session(
                     session,
@@ -707,6 +821,7 @@ class DiscoveryScheduler:
                         payload=dict(metric),
                     )
                 )
+            execution_phase = "evidence_processing"
             if self.mode == "real" and getattr(
                 self.provider, "uses_hosted_web_search", False
             ):
@@ -735,9 +850,26 @@ class DiscoveryScheduler:
                 isinstance(recall_request, dict)
                 and recall_request.get("targeted_supplement")
             )
+            blueprint_context = self.shared_context.get("discovery_blueprint", {})
+            quality_profile = bool(
+                isinstance(blueprint_context, Mapping)
+                and is_quality_execution_profile_id(
+                    blueprint_context.get("execution_profile_id")
+                )
+            )
+            plan_mode = str(request.context.get("_agent_plan_mode", "required"))
+            compact_agent = plan_mode in {"reference", "callback"}
             accepted_target = _evidence_accept_target(
                 agent,
                 targeted_supplement=targeted_supplement,
+                quality_profile=quality_profile,
+                compact_agent=compact_agent,
+            )
+            saturation_target = _evidence_saturation_target(
+                agent,
+                accepted_target=accepted_target,
+                targeted_supplement=targeted_supplement,
+                quality_profile=quality_profile,
             )
             minimum_accepted = max(
                 1,
@@ -747,17 +879,22 @@ class DiscoveryScheduler:
                         2
                         if targeted_supplement
                         else min(
-                            int(os.environ.get("EQUIPMENT_DR_EVIDENCE_MIN_COUNT", "3")),
+                            int(os.environ.get("EQUIPMENT_DR_EVIDENCE_MIN_COUNT", "2")),
                             int(
                                 agent.research_policy.get(
                                     "evidence_min_count",
-                                    os.environ.get("EQUIPMENT_DR_EVIDENCE_MIN_COUNT", "3"),
+                                    os.environ.get("EQUIPMENT_DR_EVIDENCE_MIN_COUNT", "2"),
                                 )
                             ),
                         )
                     ),
                 ),
             )
+            if quality_profile:
+                minimum_accepted = min(
+                    minimum_accepted,
+                    1 if compact_agent else 2,
+                )
             minimum_domains = max(
                 1,
                 min(
@@ -770,6 +907,11 @@ class DiscoveryScheduler:
                     ),
                 ),
             )
+            if quality_profile:
+                minimum_domains = min(
+                    minimum_domains,
+                    1 if compact_agent else 2,
+                )
             materialize_attempts = (
                 min(len(result.evidence), max(accepted_target, 4))
                 if targeted_supplement
@@ -794,6 +936,11 @@ class DiscoveryScheduler:
                     ),
                 )
             )
+            if quality_profile and not targeted_supplement:
+                materialize_attempts = min(
+                    materialize_attempts,
+                    accepted_target + 1,
+                )
             evidence_candidates = _diversify_evidence_candidates(
                 result.evidence[:materialize_attempts]
             )
@@ -834,6 +981,7 @@ class DiscoveryScheduler:
                     max(1, materialize_workers),
                     len(evidence_candidates) - candidate_offset,
                     maximum_accepted - len(accepted_evidence_ids),
+                    max(1, saturation_target - len(accepted_evidence_ids)),
                 )
                 batch = evidence_candidates[
                     candidate_offset : candidate_offset + batch_size
@@ -1002,13 +1150,17 @@ class DiscoveryScheduler:
                     for item in materialized_rows
                 )
                 threshold_met = evidence_sufficiency.allowed
+                saturation_met = bool(
+                    threshold_met
+                    and len(accepted_evidence_ids) >= saturation_target
+                )
                 quality_target_met = bool(
                     threshold_met
                     and len(accepted_evidence_ids) >= accepted_target
                 )
                 continued_after_threshold = bool(
                     threshold_met
-                    and not quality_target_met
+                    and not saturation_met
                     and candidate_offset < len(evidence_candidates)
                 )
                 self.trace.append(
@@ -1024,8 +1176,10 @@ class DiscoveryScheduler:
                             f"（本批 {len(batch)} 路并行，缓存复用 {batch_cache_hits}），"
                             f"正式接纳 {len(accepted_evidence_ids)}/{accepted_target}"
                             + (
-                                "；已达最低门槛，继续补足质量目标"
+                                "；已达最低门槛，继续补足质量饱和目标"
                                 if continued_after_threshold
+                                else "；已达质量饱和点，停止低边际增益扩证"
+                                if saturation_met and not quality_target_met
                                 else "；已达质量目标，停止扩证"
                                 if quality_target_met
                                 else "；多源候选已完成"
@@ -1042,9 +1196,11 @@ class DiscoveryScheduler:
                             "accepted_count": len(accepted_evidence_ids),
                             "minimum_count": minimum_accepted,
                             "target_count": accepted_target,
+                            "saturation_target": saturation_target,
                             "parallel_batch_size": len(batch),
                             "cache_hit_count": batch_cache_hits,
                             "quality_threshold_met": threshold_met,
+                            "quality_saturation_met": saturation_met,
                             "quality_target_met": quality_target_met,
                             "continued_after_threshold": continued_after_threshold,
                             "remaining_candidate_count": (
@@ -1056,6 +1212,8 @@ class DiscoveryScheduler:
                         },
                     )
                 )
+                if saturation_met:
+                    break
             packet = result.packet
             upstream_handoffs = [
                 item
@@ -1138,6 +1296,7 @@ class DiscoveryScheduler:
                             "distinct_domains": evidence_sufficiency.distinct_domains,
                             "minimum_count": minimum_accepted,
                             "target_count": accepted_target,
+                            "saturation_target": saturation_target,
                         },
                     },
                 )
@@ -1181,6 +1340,7 @@ class DiscoveryScheduler:
                 stop_reason = "quality_gates_limited"
             else:
                 stop_reason = "quality_gates_passed"
+            execution_phase = "persistence"
             self.store.add_baseline_packet(packet)
             self.knowledge_index.record(
                 packet=packet,
@@ -1259,6 +1419,88 @@ class DiscoveryScheduler:
                 stop_reason=stop_reason,
             )
         except Exception as exc:
+            recoverable_baseline_limited = bool(
+                execution_phase in {"model_execution", "result_validation"}
+                and _is_recoverable_baseline_failure(exc)
+            )
+            optional_callback_limited = (
+                plan_mode == "callback" and _is_callback_resource_limit(exc)
+            )
+            if recoverable_baseline_limited:
+                packet = _limited_baseline_boundary_packet(
+                    agent=agent,
+                    topic=topic,
+                    round_index=round_index,
+                    failure=exc,
+                    failure_stage=execution_phase,
+                )
+                # This write is intentionally outside the recoverable failure
+                # classification.  If persistence itself fails, it must still
+                # escape and fail the run instead of being mislabeled as a
+                # harmless model outage.
+                self.store.add_baseline_packet(packet)
+                self._append_session(
+                    session,
+                    {
+                        "event_type": "baseline_result",
+                        "created_at": now_iso(),
+                        "agent_id": agent.agent_id,
+                        "context_sections": (
+                            sorted(context.sections)
+                            if "context" in locals()
+                            else []
+                        ),
+                        "raw_message": "",
+                        "packet_id": packet.packet_id,
+                        "evidence_ids": [],
+                        "materialized_artifact_refs": [],
+                        "status": "limited",
+                        "failure_stage": execution_phase,
+                        "failure_type": type(exc).__name__,
+                    },
+                )
+                self.trace.append(
+                    TraceEvent(
+                        event_id=(
+                            f"trace-{agent.agent_id}-limited"
+                            if round_index == 1
+                            else f"trace-{agent.agent_id}-limited-r{round_index}"
+                        ),
+                        event_type="baseline_agent_limited",
+                        actor=agent.agent_id,
+                        summary=packet.handoff_summary,
+                        output_refs=[packet.packet_id],
+                        payload={
+                            "plan_mode": plan_mode,
+                            "gate_impact": "non_blocking_degraded_baseline",
+                            "failure_stage": execution_phase,
+                            "failure_type": type(exc).__name__,
+                            "recoverable": True,
+                            "evidence_count": 0,
+                            "downstream_obligation": (
+                                "S4/S5 must verify public equipment baselines "
+                                "for each surviving concrete candidate"
+                            ),
+                        },
+                    )
+                )
+                return WorkerReport(
+                    agent_id=agent.agent_id,
+                    status="limited",
+                    new_evidence_ids=[],
+                    packet_id=packet.packet_id,
+                    handoff_summary=packet.handoff_summary,
+                    session_path=str(session_path),
+                    error=str(exc),
+                    harness_profile=agent.harness_profile,
+                    active_skill_ids=list(agent.skill_ids),
+                    active_tool_names=(
+                        list(active_tool_names)
+                        if "active_tool_names" in locals()
+                        else list(agent.tools)
+                    ),
+                    stop_reason="recoverable_baseline_unavailable",
+                )
             self.trace.append(
                 TraceEvent(
                     event_id=(
@@ -1266,9 +1508,21 @@ class DiscoveryScheduler:
                         if round_index == 1
                         else f"trace-{agent.agent_id}-failed-r{round_index}"
                     ),
-                    event_type="baseline_agent_failed",
+                    event_type=(
+                        "baseline_agent_limited"
+                        if optional_callback_limited
+                        else "baseline_agent_failed"
+                    ),
                     actor=agent.agent_id,
                     summary=str(exc),
+                    payload={
+                        "plan_mode": plan_mode,
+                        "gate_impact": (
+                            "non_blocking_residual"
+                            if optional_callback_limited
+                            else "blocking"
+                        ),
+                    },
                 )
             )
             report = WorkerReport(
@@ -1519,6 +1773,108 @@ def _evidence_only_stop_reasons(reasons: Sequence[Any]) -> bool:
     return bool(rows) and all(
         any(row.startswith(marker) for marker in evidence_markers)
         for row in rows
+    )
+
+
+def _is_callback_resource_limit(exc: BaseException) -> bool:
+    if isinstance(exc, TimeoutError):
+        return True
+    message = str(exc).lower()
+    return "harness v2" in message and any(
+        marker in message
+        for marker in ("budget", "deadline", "no new model call")
+    )
+
+
+def _is_recoverable_baseline_failure(exc: BaseException) -> bool:
+    """Return whether a model-side baseline failure may become a boundary packet.
+
+    The caller additionally restricts this policy to model execution/result
+    validation.  Persistence, schema-store and task-graph failures therefore
+    remain hard failures even if their exception text happens to mention a
+    timeout.
+    """
+
+    if isinstance(exc, TimeoutError):
+        return True
+    message = str(exc).strip().lower()
+    recoverable_markers = (
+        "timed out",
+        "timeout",
+        "temporarily unavailable",
+        "temporary unavailable",
+        "connection reset",
+        "connection aborted",
+        "connection closed",
+        "remote disconnected",
+        "remote end closed",
+        "network error",
+        "service unavailable",
+        "bad gateway",
+        "gateway timeout",
+        "rate limit",
+        "too many requests",
+        "no substantive findings",
+        "empty model response",
+        "empty response",
+        "no model output",
+        "wall-clock budget expired",
+    )
+    return any(marker in message for marker in recoverable_markers)
+
+
+def _limited_baseline_boundary_packet(
+    *,
+    agent: AgentDef,
+    topic: str,
+    round_index: int,
+    failure: BaseException,
+    failure_stage: str,
+) -> BaselineFindingPacket:
+    """Create an evidence-free, auditable absence boundary without claims."""
+
+    packet_id = (
+        f"packet-{agent.agent_id}"
+        if round_index == 1
+        else f"packet-{agent.agent_id}-r{round_index}"
+    )
+    reason = str(failure).strip()[:500] or type(failure).__name__
+    return BaselineFindingPacket(
+        packet_id=packet_id,
+        agent_id=agent.agent_id,
+        capability_tags=list(agent.capability_tags),
+        topic_focus=topic,
+        findings=[],
+        evidence_ids=[],
+        confidence=0.0,
+        coverage_notes=[
+            "本轮基线模型调用未形成可验证领域结论；系统仅记录缺失边界，不生成替代事实、型号或证据。",
+            "该缺失不得压缩S1–S3的Query语义推演与创新候选空间。",
+        ],
+        open_questions=[
+            "S4/S5须针对保留的具体候选逐项核验公开装备基线、现役/在研边界、反证、成熟度与差距。"
+        ],
+        handoff_summary=(
+            f"{agent.display_name}公开基线本轮受限；S1–S3继续独立推演，"
+            "S4/S5在候选级按需补证。"
+        ),
+        checkpoint=f"{agent.agent_id}: limited at {failure_stage}",
+        limitations=[f"基线不可用原因：{type(failure).__name__}: {reason}"],
+        payload_type="baseline_availability_boundary_v1",
+        payload={
+            "availability": "unavailable",
+            "failure_stage": failure_stage,
+            "failure_type": type(failure).__name__,
+            "failure_reason": reason,
+            "evidence_assertion": "none",
+            "downstream_obligations": [
+                "S3不得把基线缺失解释为候选不可行或收缩创新空间",
+                "S4按保留候选核验最近公开装备基线与直接反证",
+                "S5汇总候选级成熟度、成本产能、现役差距与未决证据",
+            ],
+        },
+        admission_status="limited",
+        schema_version="1.0",
     )
 
 

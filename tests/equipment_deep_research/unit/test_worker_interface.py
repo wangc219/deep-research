@@ -123,7 +123,8 @@ def test_worker_resumes_when_run_directory_already_exists(
             return {}
 
     class OneShotWorker:
-        def __init__(self, *, service, execute, worker_id) -> None:
+        def __init__(self, *, service, execute, worker_id, runtime_generation) -> None:
+            del service, worker_id, runtime_generation
             self.execute = execute
 
         def run_once(self):
@@ -156,3 +157,45 @@ def test_worker_resumes_when_run_directory_already_exists(
         "base_url": "https://custom.example.test/v1/responses",
         "api_key_env": "CUSTOM_AGENT_KEY",
     }
+
+
+def test_worker_refuses_to_overwrite_an_online_duplicate_identity(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    class FakeService:
+        def runtime_health(self):
+            return {
+                "workers": [
+                    {
+                        "worker_id": worker_interface.versioned_worker_id(
+                            "research-worker-1"
+                        ),
+                        "status": "working",
+                        "current_run_id": "run-active",
+                        "online": True,
+                    }
+                ]
+            }
+
+    monkeypatch.setattr(
+        worker_interface,
+        "build_application_service",
+        lambda _url: FakeService(),
+    )
+
+    exit_code = worker_interface.main(
+        [
+            "--project-root",
+            str(tmp_path),
+            "--output-root",
+            str(tmp_path / "runs"),
+            "--worker-id",
+            "research-worker-1",
+            "--once",
+        ]
+    )
+
+    assert exit_code == 2
+    assert "拒绝重复启动" in capsys.readouterr().err

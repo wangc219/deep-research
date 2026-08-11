@@ -5,11 +5,12 @@ import json
 import os
 import re
 import shutil
+from collections.abc import Mapping
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from fastapi import FastAPI, Header, HTTPException
-from fastapi.responses import FileResponse, PlainTextResponse, StreamingResponse
+from fastapi import FastAPI, Header, HTTPException, Request
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.exc import NoResultFound
 
@@ -18,6 +19,7 @@ from equipment_deep_research.application.run_service import (
     InvalidRunTransition,
     PERMANENTLY_DELETABLE_STATUSES,
     ResearchApplicationService,
+    RunNotFoundError,
 )
 from equipment_deep_research.application.factory import build_application_service
 from equipment_deep_research.application.worker_pool_config import write_worker_capacity
@@ -31,14 +33,11 @@ from equipment_deep_research.orchestration.blueprints import (
 from equipment_deep_research.domain.models import ResearchProblem
 from equipment_deep_research.orchestration.coverage import load_preset_policy
 from equipment_deep_research.orchestration.capability_portrait import (
-    build_capability_title,
     complete_operational_process,
-    is_launch_mode_generic_weapon_title,
     normalize_capability_problem,
-    normalize_operational_process,
     normalize_verification_plan,
     primary_equipment_form_title,
-    resolve_capability_portrait,
+    strip_schema_placeholders,
 )
 from equipment_deep_research.harness.event_bus import sanitize_runtime_payload
 from equipment_deep_research.query_library.api import create_router as create_query_library_router
@@ -60,6 +59,7 @@ _KEY_INTERACTION_EVENT_TYPES = frozenset(
         "baseline_discovery_started",
         "baseline_discovery_lane_started",
         "baseline_discovery_lane_completed",
+        "baseline_discovery_lane_limited",
         "baseline_discovery_completed",
         "baseline_model_queue_started",
         "baseline_model_call_started",
@@ -93,10 +93,18 @@ _KEY_INTERACTION_EVENT_TYPES = frozenset(
         "winning_agent_instance_recruited",
         "winning_agent_instance_ready",
         "winning_agent_session_started",
+        "winning_agent_waiting",
         "winning_agent_session_completed",
         "winning_agent_instance_failed",
         "winning_agent_instance_cancelled",
+        "winning_pre_generation_angle_portfolio_planned",
+        "winning_s3_active_agents_materialized",
+        "winning_s3_first_pass_self_admission_completed",
+        "winning_s3_empty_angle_reallocated",
         "winning_candidate_branch_created",
+        "winning_semantic_clustering_started",
+        "winning_semantic_clustering_completed",
+        "winning_candidate_competition_converged",
         "winning_specialized_seed_recovered",
         "winning_specialized_seed_empty",
         "winning_candidate_ledger_frozen",
@@ -200,6 +208,14 @@ def create_app(
     if event_repository is None:
         event_repository = getattr(service, "repository", None)
     app = FastAPI(title="Equipment Deep Research API", version="0.1.0")
+
+    @app.exception_handler(RunNotFoundError)
+    async def run_not_found_handler(
+        _request: Request,
+        _exc: RunNotFoundError,
+    ) -> JSONResponse:
+        return JSONResponse(status_code=404, content={"detail": "run not found"})
+
     if query_library_service is None:
         query_library_service = build_query_library_service()
         query_library_service.import_seed_manifest(default_seed_manifest())
@@ -217,8 +233,8 @@ def create_app(
         for view in service.list_runs():
             if view.status != "completed":
                 continue
-            run_dir = Path(str(view.result.get("run_dir", ""))).expanduser()
-            if not run_dir.is_dir() or run_dir.is_symlink():
+            run_dir = _resolve_run_root(output_root, view.run_id, view.result)
+            if run_dir is None:
                 continue
             report_path = _preferred_report_path(run_dir.resolve())
             if report_path is None:
@@ -240,8 +256,8 @@ def create_app(
         view = service.get_run(run_id)
         if view.status != "completed":
             raise ValueError("研究任务尚未完成")
-        run_dir = Path(str(view.result.get("run_dir", ""))).resolve()
-        if not run_dir.is_dir() or run_dir.is_symlink():
+        run_dir = _resolve_run_root(output_root, run_id, view.result)
+        if run_dir is None:
             raise FileNotFoundError("研究任务输出目录不存在")
         report_path = _preferred_report_path(run_dir)
         if report_path is None:
@@ -298,7 +314,10 @@ def create_app(
                 "execution_profile_id": getattr(view, "execution_profile_id", "")
                 or "legacy_v1",
             },
-            "artifact_refs": [str(report_path), str(summary_path)],
+            "artifact_refs": [
+                f"/api/v1/runs/{run_id}/report",
+                f"/api/v1/runs/{run_id}/summary",
+            ],
         }
     try:
         from evals.web_api import create_benchmark_router
@@ -353,17 +372,37 @@ def create_app(
 
     def interaction_rows(run_id: str, view: object) -> list[dict]:
         rows: list[dict] = []
+        rows_by_key: dict[str, dict] = {}
+
+        def append_row(row: dict, *, runtime_sequence: int = 0) -> None:
+            event_id = str(row.get("event_id", "")).strip()
+            key = event_id or "|".join(
+                str(row.get(field, ""))
+                for field in ("event_type", "actor", "created_at", "summary")
+            )
+            existing = rows_by_key.get(key)
+            if existing is not None:
+                # File-backed trace rows are loaded first, while the runtime
+                # repository carries the authoritative monotonic sequence.
+                # Preserve the richer row but attach its runtime order when
+                # the duplicate repository event is encountered.
+                if runtime_sequence and not existing.get("_runtime_sequence"):
+                    existing["_runtime_sequence"] = runtime_sequence
+                return
+            row["_runtime_sequence"] = runtime_sequence
+            rows_by_key[key] = row
+            rows.append(row)
+
         result = getattr(view, "result", {})
         result = result if isinstance(result, dict) else {}
-        run_dir = str(result.get("run_dir", ""))
-        root = Path(run_dir) if run_dir else None
-        if root is not None and root.is_dir():
+        root = _resolve_run_root(output_root, run_id, result)
+        if root is not None:
             trace_path = root / "trace.jsonl"
             if trace_path.is_file():
                 for row in _jsonl_path(trace_path):
                     if row.get("type") != "TraceEvent":
                         continue
-                    rows.append(_public_trace_interaction(row.get("payload", {})))
+                    append_row(_public_trace_interaction(row.get("payload", {})))
             sessions_dir = root / "agent_sessions"
             if sessions_dir.is_dir() and not sessions_dir.is_symlink():
                 for path in sorted(sessions_dir.glob("*.jsonl")):
@@ -371,8 +410,8 @@ def create_app(
                         for event in _jsonl_path(path):
                             public = _public_session_interaction(event)
                             if public is not None:
-                                rows.append(public)
-        elif event_repository is not None:
+                                append_row(public)
+        if event_repository is not None:
             for runtime_event in event_repository.events_after(run_id, 0):
                 payload = runtime_event.get("payload", {})
                 source = payload.get("source") if isinstance(payload, dict) else None
@@ -385,9 +424,47 @@ def create_app(
                     else None
                 )
                 if public is not None:
-                    public["sequence"] = runtime_event["sequence"]
-                    rows.append(public)
-        rows.sort(key=lambda item: (item.get("created_at", ""), item.get("event_id", "")))
+                    append_row(public, runtime_sequence=int(runtime_event["sequence"]))
+                    continue
+                # Runtime terminal events are not represented by TraceEvent files.
+                # Keep them in the replay so a failed run cannot appear as merely stalled.
+                if runtime_event.get("event_type") in {"run_failed", "run_recovered"}:
+                    details = payload if isinstance(payload, dict) else {}
+                    append_row(
+                        {
+                            "event_id": f"runtime-{runtime_event['sequence']}",
+                            "event_type": str(runtime_event["event_type"]),
+                            "actor": "orchestrator",
+                            "title": "任务失败" if runtime_event["event_type"] == "run_failed" else "任务恢复",
+                            "summary": str(details.get("error") or details.get("reason") or runtime_event["event_type"]),
+                            "created_at": str(getattr(view, "updated_at", "")),
+                            "input_refs": [],
+                            "output_refs": [],
+                            "details": details,
+                        },
+                        runtime_sequence=int(runtime_event["sequence"]),
+                    )
+        if event_repository is not None:
+            # Repository-backed events are the live, authoritative timeline.
+            # File-only session details remain available, but cannot push an
+            # older terminal event behind a newer recovery/progress event.
+            rows.sort(
+                key=lambda item: (
+                    0 if not item.get("_runtime_sequence", 0) else 1,
+                    item.get("_runtime_sequence", 0),
+                    item.get("created_at", ""),
+                    item.get("event_id", ""),
+                )
+            )
+        else:
+            rows.sort(
+                key=lambda item: (
+                    item.get("created_at", ""),
+                    item.get("event_id", ""),
+                )
+            )
+        for row in rows:
+            row.pop("_runtime_sequence", None)
         for sequence, row in enumerate(rows, start=1):
             row.setdefault("sequence", sequence)
         return rows
@@ -434,7 +511,7 @@ def create_app(
             }
         return [
             {
-                **item.__dict__,
+                **_public_run_view(item, output_root),
                 "actual_agent_ids": actual_by_run.get(item.run_id, []),
                 "actual_agent_count": len(actual_by_run.get(item.run_id, [])),
             }
@@ -445,7 +522,7 @@ def create_app(
     def get_run(run_id: str, x_role: str = Header(default="analyst", alias="X-Role")) -> dict:
         _require_role(x_role, {"analyst", "reviewer", "auditor", "admin"})
         try:
-            return service.get_run(run_id).__dict__
+            return _public_run_view(service.get_run(run_id), output_root)
         except (KeyError, NoResultFound) as exc:
             raise HTTPException(status_code=404, detail="run not found") from exc
 
@@ -597,7 +674,19 @@ def create_app(
             run = service.get_run(run_id)
         except (KeyError, NoResultFound) as exc:
             raise HTTPException(status_code=404, detail="run not found") from exc
-        missing_credentials = _missing_execution_credentials(run.execution)
+        resume_execution = dict(run.execution)
+        if resume_execution.get("mode") == "real":
+            try:
+                resume_execution = _validated_execution(
+                    {
+                        "mode": "real",
+                        "provider": resume_execution.get("provider", "codex"),
+                    },
+                    catalog_payload["provider"],
+                )
+            except ValueError as exc:
+                raise HTTPException(status_code=422, detail=str(exc)) from exc
+        missing_credentials = _missing_execution_credentials(resume_execution)
         if missing_credentials:
             raise HTTPException(
                 status_code=422,
@@ -611,6 +700,7 @@ def create_app(
                 run_id,
                 actor="api-user",
                 idempotency_key=idempotency_key,
+                execution=resume_execution,
             ).__dict__
         except InvalidRunTransition as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
@@ -780,18 +870,51 @@ def create_app(
     @app.get("/api/v1/runs/{run_id}/summary")
     def get_summary(run_id: str, x_role: str = Header(default="analyst", alias="X-Role")) -> dict:
         _require_role(x_role, {"analyst", "reviewer", "auditor", "admin"})
-        return _read_json(service, run_id, "round_summary.json")
+        view = service.get_run(run_id)
+        if _is_historical_snapshot(view):
+            return {
+                "run_id": run_id,
+                "topic": view.topic,
+                "historical_snapshot": True,
+                "message": "原始任务产物未随恢复快照保存，未伪造摘要。",
+            }
+        return _read_json(service, output_root, run_id, "round_summary.json")
 
     @app.get("/api/v1/runs/{run_id}/capabilities")
     def get_capabilities(run_id: str, x_role: str = Header(default="analyst", alias="X-Role")) -> list[dict]:
         _require_role(x_role, {"analyst", "reviewer", "auditor", "admin"})
-        payload = _read_json(service, run_id, "capability_images.json")
-        rows = payload if isinstance(payload, list) else payload.get("capability_images", [])
+        view = service.get_run(run_id)
+        if _is_historical_snapshot(view):
+            return []
+        # While a run is active, expose the latest frozen S6 portfolio. Once
+        # delivery completes, capability_images.json is authoritative because
+        # it contains the accepted parallel S6 prose and any identity restored
+        # from the pre-S6 hypothesis ledger. Returning the earlier portfolio
+        # event after completion would surface stale titles and omit portraits.
+        workflow = _interaction_workflow_summary(interaction_rows(run_id, view), view)
+        portfolio = workflow.get("swarm_cluster", {}).get(
+            "final_equipment_portfolio", []
+        )
+        provisional_rows = _provisional_s6_capability_rows(portfolio)
+        if view.status != "completed" and provisional_rows:
+            return [_capability_api_view(row) for row in provisional_rows]
+        try:
+            payload = _read_json(service, output_root, run_id, "capability_images.json")
+        except HTTPException as exc:
+            if exc.status_code != 404:
+                raise
+            if provisional_rows:
+                return [_capability_api_view(row) for row in provisional_rows]
+            raise
+        else:
+            rows = payload if isinstance(payload, list) else payload.get("capability_images", [])
         return [_capability_api_view(row) for row in rows if isinstance(row, dict)]
 
     @app.get("/api/v1/runs/{run_id}/domain/{object_type}")
     def get_domain_objects(run_id: str, object_type: str, x_role: str = Header(default="analyst", alias="X-Role")) -> list[dict]:
         _require_role(x_role, {"analyst", "reviewer", "auditor", "admin"})
+        if _is_historical_snapshot(service.get_run(run_id)):
+            return []
         allowed = {
             "EvidenceCard",
             "BaselineFindingPacket",
@@ -804,12 +927,23 @@ def create_app(
         }
         if object_type not in allowed:
             raise HTTPException(status_code=404, detail="domain object type not exposed")
-        return [row["payload"] for row in _read_jsonl(service, run_id, "domain.jsonl") if row.get("type") == object_type]
+        return [row["payload"] for row in _read_jsonl(service, output_root, run_id, "domain.jsonl") if row.get("type") == object_type]
 
     @app.get("/api/v1/runs/{run_id}/winning-mechanism")
     def get_winning_mechanism(run_id: str, x_role: str = Header(default="analyst", alias="X-Role")) -> dict:
         _require_role(x_role, {"analyst", "reviewer", "auditor", "admin"})
         view = service.get_run(run_id)
+        if _is_historical_snapshot(view):
+            return {
+                "inputs": [],
+                "resources": [],
+                "reasoning_nodes": [],
+                "stages": [],
+                "recalls": [],
+                "workflow": _interaction_workflow_summary(interaction_rows(run_id, view), view),
+                "historical_snapshot": True,
+                "message": "原始制胜机理产物未随恢复快照保存。",
+            }
         grouped = {
             "inputs": [],
             "resources": [],
@@ -824,7 +958,7 @@ def create_app(
             "WinningMechanismStageOutput": "stages",
             "RecallRequest": "recalls",
         }
-        for row in _read_jsonl(service, run_id, "domain.jsonl"):
+        for row in _read_jsonl(service, output_root, run_id, "domain.jsonl"):
             target = mapping.get(row.get("type"))
             if target:
                 grouped[target].append(row.get("payload", {}))
@@ -834,7 +968,7 @@ def create_app(
             view,
         )
         try:
-            summary = _read_json(service, run_id, "round_summary.json")
+            summary = _read_json(service, output_root, run_id, "round_summary.json")
         except (FileNotFoundError, ValueError, json.JSONDecodeError):
             summary = {}
         grouped["swarm"] = (
@@ -848,7 +982,9 @@ def create_app(
     @app.get("/api/v1/runs/{run_id}/trace")
     def get_trace(run_id: str, x_role: str = Header(default="auditor", alias="X-Role")) -> list[dict]:
         _require_role(x_role, {"auditor", "admin"})
-        return _read_jsonl(service, run_id, "trace.jsonl")
+        if _is_historical_snapshot(service.get_run(run_id)):
+            return []
+        return _read_jsonl(service, output_root, run_id, "trace.jsonl")
 
     @app.get("/api/v1/runs/{run_id}/interactions")
     def get_interactions(
@@ -882,7 +1018,10 @@ def create_app(
     @app.get("/api/v1/runs/{run_id}/report", response_class=PlainTextResponse)
     def get_report(run_id: str, x_role: str = Header(default="reviewer", alias="X-Role")) -> str:
         _require_role(x_role, {"reviewer", "auditor", "admin"})
-        report_path = _preferred_report_path(_run_root(service, run_id))
+        view = service.get_run(run_id)
+        if _is_historical_snapshot(view):
+            return _historical_snapshot_report(view)
+        report_path = _preferred_report_path(_run_root(service, output_root, run_id))
         if report_path is None:
             raise HTTPException(status_code=404, detail="run output not found")
         return report_path.read_text(encoding="utf-8")
@@ -893,17 +1032,17 @@ def create_app(
         x_role: str = Header(default="reviewer", alias="X-Role"),
     ) -> dict:
         _require_role(x_role, {"reviewer", "auditor", "admin"})
-        branch_deliverables = _read_json(service, run_id, "branch_deliverables.json")
+        branch_deliverables = _read_json(service, output_root, run_id, "branch_deliverables.json")
         payload = {"branch_deliverables": branch_deliverables}
         if str(branch_deliverables.get("branch", "")) == "B":
             payload.update(
                 {
-                    "demand_cards": _read_json(service, run_id, "demand_cards.json"),
+                    "demand_cards": _read_json(service, output_root, run_id, "demand_cards.json"),
                     "capability_panorama": _read_json(
-                        service, run_id, "capability_panorama.json"
+                        service, output_root, run_id, "capability_panorama.json"
                     ),
                     "reasoning_traceability": _read_json(
-                        service, run_id, "reasoning_traceability.json"
+                        service, output_root, run_id, "reasoning_traceability.json"
                     ),
                 }
             )
@@ -912,14 +1051,14 @@ def create_app(
     @app.get("/api/v1/runs/{run_id}/manifest")
     def get_manifest(run_id: str, x_role: str = Header(default="auditor", alias="X-Role")) -> dict:
         _require_role(x_role, {"auditor", "admin"})
-        return _read_json(service, run_id, "delivery-manifest.json")
+        return _read_json(service, output_root, run_id, "delivery-manifest.json")
 
     @app.get("/api/v1/runs/{run_id}/artifacts/{artifact_name}")
     def get_artifact(run_id: str, artifact_name: str, x_role: str = Header(default="reviewer", alias="X-Role")) -> FileResponse:
         _require_role(x_role, {"reviewer", "auditor", "admin"})
         if Path(artifact_name).name != artifact_name:
             raise HTTPException(status_code=400, detail="invalid artifact name")
-        path = _run_file(service, run_id, f"artifacts/{artifact_name}")
+        path = _run_file(service, output_root, run_id, f"artifacts/{artifact_name}")
         return FileResponse(path)
     return app
 
@@ -1001,17 +1140,40 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
         ),
         l4_overrides=l4_step_overrides,
     )
+    execution_profile_id = str(
+        getattr(view, "execution_profile_id", "") or "legacy_v1"
+    )
+    # A terminal completed/approved run is authoritative.  Older or duplicate
+    # workers may append a late ``run_failed``/``report_model_failed`` event
+    # after the Reporter has already persisted its report; that stale event
+    # must not make the replay banner claim that delivery failed.
+    view_result = getattr(view, "result", {})
+    view_result = view_result if isinstance(view_result, dict) else {}
+    run_has_complete_report = (
+        str(getattr(view, "status", "")).lower() == "completed"
+        and (
+            str(view_result.get("audit_status", "")).lower() in {"approved", "passed"}
+            or bool(view_result.get("report_available"))
+        )
+    )
+    is_dynamic_profile = execution_profile_id == "winning_swarm_dynamic_v2"
     latest_steps: dict[int, dict] = {
         int(definition["step"]): {
             "step": int(definition["step"]),
             "agent_id": str(definition["agent_id"]),
             "label": str(definition["label"]),
-            "execution_mode": resolved_modes[int(definition["step"])],
-            "status": (
+            "planned_execution_mode": resolved_modes[int(definition["step"])],
+            "execution_mode": (
+                "dynamic"
+                if is_dynamic_profile
+                else resolved_modes[int(definition["step"])]
+            ),
+            "status": "pending" if is_dynamic_profile else (
                 "skipped"
                 if resolved_modes[int(definition["step"])] == "skip"
                 else "pending"
             ),
+            "decision_finalized": False,
             "middle_cycle": 0,
             "result_summary": "",
             "backtrack_count": 0,
@@ -1238,6 +1400,34 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
                         },
                     )
             continue
+        if event_type == "winning_s3_active_agents_materialized":
+            swarm_event_seen = True
+            active_ids = {
+                str(value).strip()
+                for value in details.get("active_instance_ids", [])
+                if str(value).strip()
+            }
+            for instance_id, member in dynamic_agents_by_id.items():
+                if (
+                    str(member.get("mission_node", "")) == "S3"
+                    and not str(member.get("hypothesis_id", ""))
+                    and instance_id not in active_ids
+                ):
+                    swarm_member_ids.discard(instance_id)
+                    update_dynamic_agent(
+                        instance_id,
+                        {
+                            "status": "skipped",
+                            "inactive_capacity": True,
+                            "last_event_type": event_type,
+                            "last_sequence": row.get("sequence", 0),
+                        },
+                    )
+            mission_graph_projection["active_s3_instances"] = len(active_ids)
+            mission_graph_projection["unused_s3_capacity"] = details.get(
+                "unused_capacity_count", 0
+            )
+            continue
         if event_type == "winning_agent_instance_recruited":
             swarm_event_seen = True
             raw_contract = details.get("role_contract", {})
@@ -1315,6 +1505,31 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
                     },
                 )
             continue
+        if event_type == "winning_agent_waiting":
+            # Controller-level heartbeat: refresh the already-known members
+            # without creating a fake "winning_swarm_controller" Agent card.
+            swarm_event_seen = True
+            for waiting in details.get("running_instances", []) if isinstance(details.get("running_instances", []), list) else []:
+                if not isinstance(waiting, Mapping):
+                    continue
+                waiting_id = str(waiting.get("agent_instance_id", "")).strip()
+                if not waiting_id:
+                    continue
+                swarm_member_ids.add(waiting_id)
+                update_dynamic_agent(
+                    waiting_id,
+                    {
+                        "agent_instance_id": waiting_id,
+                        "mission_node": str(waiting.get("mission_node", "")),
+                        "archetype": str(waiting.get("archetype", "")),
+                        "batch": waiting.get("batch"),
+                        "elapsed_seconds": waiting.get("elapsed_seconds"),
+                        "status": "running",
+                        "last_event_type": event_type,
+                        "last_sequence": row.get("sequence", 0),
+                    },
+                )
+            continue
         if event_type in {
             "winning_agent_instance_ready",
             "winning_agent_session_started",
@@ -1365,6 +1580,8 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
                         "expected_quality_gain",
                         "session_ref",
                         "elapsed_seconds",
+                        "running_instances",
+                        "note",
                     )
                 }
                 safe_fields.update(
@@ -1635,6 +1852,11 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
                 ),
                 "status": "completed",
             }
+            portfolio_by_id = {
+                str(item.get("hypothesis_id", "")): item
+                for item in portfolio_projection["final_equipment_portfolio"]
+                if str(item.get("hypothesis_id", "")).strip()
+            }
             summary = details.get("swarm_summary", {})
             summary = summary if isinstance(summary, dict) else {}
             raw_ledger = summary.get("hypothesis_ledger", {})
@@ -1658,13 +1880,39 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
                         {
                             "title": str(raw_candidate.get("title", ""))[:300],
                             "status": (
-                                "selected"
+                                "selected_pending_verification"
+                                if hypothesis_id in selected_ids
+                                and str(
+                                    portfolio_by_id.get(hypothesis_id, {}).get(
+                                        "verification_status", ""
+                                    )
+                                ) == "pending"
+                                else "selected"
                                 if hypothesis_id in selected_ids
                                 else "rejected"
                             ),
+                            "s6_eligible": hypothesis_id in selected_ids,
+                            "verification_status": str(
+                                portfolio_by_id.get(hypothesis_id, {}).get(
+                                    "verification_status", "assessed"
+                                )
+                            ),
+                            "confidence_limited": bool(
+                                portfolio_by_id.get(hypothesis_id, {}).get(
+                                    "confidence_limited", False
+                                )
+                            ),
                             "selection_reason": (
-                                "通过单项质量门，并在对象证据、Query因果、直接作战属性、"
-                                "机制独立性与组合价值排序中进入本轮 S6 容量。"
+                                "直接作战装备身份和Query因果成立；因对象证据、成熟度或对抗边界仍需核验，"
+                                "按新质性与制胜价值补入S6，画像标记为待核验。"
+                                if hypothesis_id in selected_ids
+                                and str(
+                                    portfolio_by_id.get(hypothesis_id, {}).get(
+                                        "verification_status", ""
+                                    )
+                                ) == "pending"
+                                else "经独立Codex按对象证据、Query因果、直接作战属性、"
+                                "机制独立性与组合价值完成语义评审，进入本轮 S6 容量。"
                                 if hypothesis_id in selected_ids
                                 else "未进入本轮 S6 容量，保留为可展开查看的参考武器。"
                             ),
@@ -1672,6 +1920,27 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
                             "equipment_forms": safe_string_list(
                                 raw_candidate.get("equipment_forms", []), limit=8
                             ),
+                            "changed_confrontation_variable": str(
+                                raw_candidate.get("changed_confrontation_variable", "")
+                            )[:300],
+                            "mechanism_chain": safe_string_list(
+                                raw_candidate.get("mechanism_chain", []), limit=6
+                            ),
+                            "direct_military_effects": safe_string_list(
+                                raw_candidate.get("direct_military_effects", []), limit=6
+                            ),
+                            "project_function": str(
+                                raw_candidate.get("project_function", "")
+                            )[:300],
+                            "reference_overview": str(
+                                raw_candidate.get("reference_overview", "")
+                            )[:1800],
+                            "novelty_delta": str(
+                                raw_candidate.get("novelty_delta", "")
+                            )[:300],
+                            "decisive_advantage_thesis": str(
+                                raw_candidate.get("decisive_advantage_thesis", "")
+                            )[:300],
                             "evidence_ids": safe_string_list(
                                 raw_candidate.get("evidence_ids", []), limit=16
                             ),
@@ -1942,20 +2211,26 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
             latest_steps[step].get("middle_cycle")
         )
         projected_middle_cycle = _positive_int(details.get("middle_cycle"))
+        event_status = _workflow_step_status(details)
+        event_execution_mode = str(details.get("execution_mode", "")).strip()
         preserve_skipped_projection = (
-            resolved_modes[step] == "skip"
+            latest_steps[step].get("status") == "skipped"
             and event_type == "winning_reasoning_step_completed"
         )
+        if preserve_skipped_projection:
+            event_status = "skipped"
+            event_execution_mode = "skip"
         latest_steps[step].update(
             {
                 "agent_id": actor or latest_steps[step]["agent_id"],
-                "status": (
-                    "skipped"
-                    if resolved_modes[step] == "skip"
-                    else "completed"
-                    if event_type == "winning_reasoning_step_completed"
-                    else _workflow_step_status(details)
+                "execution_mode": (
+                    "skip"
+                    if event_status == "skipped"
+                    else event_execution_mode
+                    or ("dynamic" if is_dynamic_profile else resolved_modes[step])
                 ),
+                "status": event_status,
+                "decision_finalized": True,
                 "middle_cycle": (
                     projected_middle_cycle or previous_middle_cycle
                 ),
@@ -1982,6 +2257,7 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
             if str(item.get("mission_node") or item.get("merge_target"))
             == mission_node
             and item.get("archetype") != "quality_expert_judge"
+            and not bool(item.get("inactive_capacity"))
         ]
         if not members:
             continue
@@ -1995,6 +2271,7 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
             for item in members
         )
         latest_steps[step]["execution_mode"] = "dynamic"
+        latest_steps[step]["decision_finalized"] = True
         latest_steps[step]["dynamic_instance_count"] = len(members)
         latest_steps[step]["dynamic_completed_count"] = successful_count
         latest_steps[step]["result_summary"] = (
@@ -2009,6 +2286,26 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
                 latest_steps[step]["status"] = "failed"
             else:
                 latest_steps[step]["status"] = "skipped"
+
+    # Canonical S1-S6 progress is monotonic. A late residual challenger may
+    # still contribute to an earlier merge node, but once a downstream node
+    # has started it is misleading to make the stage card appear to return to
+    # S3/S4/S5. The dynamic-agent ledger continues to expose that extra work.
+    furthest_started_step = max(
+        (
+            int(node[1:])
+            for item in dynamic_agents_by_id.values()
+            if (node := str(item.get("mission_node") or item.get("merge_target")))
+            in {f"S{step}" for step in range(1, 7)}
+            and not bool(item.get("inactive_capacity"))
+            and str(item.get("status", "planned")).lower() != "planned"
+        ),
+        default=0,
+    )
+    if furthest_started_step >= 3:
+        for step in range(1, furthest_started_step):
+            if latest_steps[step]["status"] not in {"failed", "skipped"}:
+                latest_steps[step]["status"] = "completed"
 
     for row in rows:
         backtrack_step = _workflow_backtrack_step(row)
@@ -2041,7 +2338,7 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
         }
         for row in rows
     )
-    if winning_stage_started and not winning_stage_finished:
+    if winning_stage_started and not winning_stage_finished and not is_dynamic_profile:
         step_dependencies: dict[int, tuple[int, ...]] = {
             1: (),
             2: (),
@@ -2253,6 +2550,35 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
         step_plan=step_plan,
         dynamic_agents=dynamic_agents,
     )
+    terminal_failure = next(
+        (
+            row
+            for row in reversed(rows)
+            if row.get("event_type") == "run_failed"
+        ),
+        {},
+    )
+    terminal_failure_details = terminal_failure.get("details", {})
+    terminal_failure_details = (
+        terminal_failure_details
+        if isinstance(terminal_failure_details, dict)
+        else {}
+    )
+    failure_detail = str(
+        terminal_failure_details.get("error")
+        or getattr(view, "error", "")
+        or ""
+    ).strip()
+    failed_phase = next(
+        (item["id"] for item in phases if item.get("status") == "failed"),
+        "",
+    )
+    run_is_failed = str(getattr(view, "status", "")).lower() == "failed"
+    if not run_is_failed:
+        # Historical failures remain in the audit timeline, but an active
+        # resume must not present them as the current workflow failure.
+        failed_phase = ""
+        failure_detail = ""
     raw_step_mode_changes = meta_details.get("step_mode_changes", [])
     step_mode_changes = (
         [dict(item) for item in raw_step_mode_changes if isinstance(item, dict)]
@@ -2309,6 +2635,7 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
     return {
         "status": str(getattr(view, "status", "")),
         "execution": {
+            "profile_id": execution_profile_id,
             "mode": str(started_details.get("mode") or execution.get("mode") or ""),
             "provider": str(
                 started_details.get("provider")
@@ -2358,6 +2685,10 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
         "swarm_cluster": swarm_cluster,
         "stage_gates": stage_gates,
         "phases": phases,
+        "failure": {
+            "phase": "" if run_has_complete_report else failed_phase,
+            "detail": "" if run_has_complete_report else failure_detail,
+        },
         "loops": {
             "inner": sum(
                 row.get("event_type") == "winning_inner_loop_evaluated"
@@ -2483,7 +2814,27 @@ def _interaction_workflow_phases(
             "event_count": sum(item in relevant_types for item in event_types),
         }
 
-    blueprint_completed = "discovery_meta_loop_evaluated" in event_type_set
+    baseline_result_agents = {
+        str(row.get("actor", ""))
+        for row in rows
+        if row.get("event_type") == "baseline_result"
+        and str(row.get("actor", "")).strip()
+    }
+    selected_baseline_agents = {
+        str(agent_id)
+        for agent_id in getattr(view, "selected_agent_ids", [])
+        if str(agent_id).strip()
+    }
+    # A savepoint-bearing baseline result is durable work even when the worker
+    # stops before it emits the later batch-summary event.
+    baseline_results_complete = bool(baseline_result_agents) and (
+        not selected_baseline_agents
+        or selected_baseline_agents.issubset(baseline_result_agents)
+    )
+    blueprint_completed = (
+        "discovery_meta_loop_evaluated" in event_type_set
+        or baseline_results_complete
+    )
     # The worker marks the run as researching before the orchestrator model has
     # returned the discovery blueprint. During that first model call there is
     # intentionally no run_started trace yet, but the UI must still show real
@@ -2506,7 +2857,7 @@ def _interaction_workflow_phases(
             "audit_completed",
             "report_completed",
         }
-    )
+    ) or baseline_results_complete
     baseline_started = bool(
         event_type_set
         & {
@@ -2521,8 +2872,9 @@ def _interaction_workflow_phases(
             "baseline_wave_started",
             "baseline_wave_completed",
             "baseline_agent_completed",
+            "baseline_result",
         }
-    )
+    ) or bool(baseline_result_agents)
     convergence_completed = bool(
         event_type_set
         & {
@@ -2579,6 +2931,11 @@ def _interaction_workflow_phases(
             "winning_portfolio_merge_completed",
         }
     ) or has_actor_activity("winning_mechanism")
+    if s_agents_started:
+        # S1–S6 only starts after baseline material has converged. Older runs
+        # can miss the explicit convergence event when an exception interrupts
+        # checkpoint persistence, so preserve the causal progression in replay.
+        convergence_completed = True
     audit_completed = bool(event_type_set & {"audit_completed", "report_completed"})
     audit_started = has_actor_activity("auditor")
     report_status = "pending"
@@ -2620,8 +2977,24 @@ def _interaction_workflow_phases(
     # activity but before the explicit report_model_failed trace is persisted.
     # Project those terminal failures as failed instead of leaving the phase
     # looking permanently active.
-    if run_status == "failed" and report_started and report_status != "completed":
+    # A persisted report and an approved/completed run are authoritative even
+    # when a late worker writes a stale report_model_failed event or failure
+    # marker. Never show a successful delivery as failed.
+    run_view = view
+    run_result = getattr(run_view, "result", {})
+    run_result = run_result if isinstance(run_result, dict) else {}
+    run_has_complete_report = (
+        str(getattr(run_view, "status", "")).lower() == "completed"
+        and (
+            str(run_result.get("audit_status", "")).lower() in {"approved", "passed"}
+            or bool(run_result.get("report_available"))
+        )
+    )
+    if run_status == "failed" and report_started and report_status != "completed" and not run_has_complete_report:
         report_status = "failed"
+    if run_has_complete_report:
+        report_status = "completed"
+        report_failure_detail = ""
     baseline_agents = [
         str(agent_id)
         for row in rows
@@ -2681,7 +3054,7 @@ def _interaction_workflow_phases(
         if elapsed_seconds > 0:
             report_progress_detail += f" · 已耗时 {round(elapsed_seconds)} 秒"
 
-    return [
+    phases = [
         phase(
             "blueprint",
             "任务理解与发现蓝图",
@@ -2771,6 +3144,33 @@ def _interaction_workflow_phases(
             "error": report_failure_detail,
         },
     ]
+    if run_status in {"failed", "cancelled"} and not run_has_complete_report:
+        phase_order = ["blueprint", "baseline", "convergence", "s_agents", "audit", "report"]
+        started = {
+            "blueprint": blueprint_started,
+            "baseline": baseline_started,
+            "convergence": convergence_started or convergence_completed,
+            "s_agents": s_agents_started,
+            "audit": audit_started,
+            "report": report_started,
+        }
+        active_phase = next(
+            (phase_id for phase_id in reversed(phase_order) if started[phase_id]),
+            "blueprint",
+        )
+        for phase_row in phases:
+            if phase_row["id"] == active_phase:
+                phase_row["status"] = "failed" if run_status == "failed" else "cancelled"
+                if active_phase != "report":
+                    phase_row["detail"] = "运行在此阶段停止；已保留可恢复检查点"
+            elif phase_row["id"] in {"blueprint", "baseline", "convergence", "s_agents", "audit", "report"}:
+                phase_row["status"] = (
+                    "completed"
+                    if phase_order.index(phase_row["id"])
+                    < phase_order.index(active_phase)
+                    else "pending"
+                )
+    return phases
 
 
 def _interaction_agents_with_runtime(
@@ -2828,12 +3228,37 @@ def _require_role(role: str, allowed: set[str]) -> None:
         raise HTTPException(status_code=403, detail="insufficient role")
 
 
-def _run_file(service: ResearchApplicationService, run_id: str, relative: str) -> Path:
-    root = _run_root(service, run_id)
+def _run_file(service: ResearchApplicationService, output_root: Path, run_id: str, relative: str) -> Path:
+    root = _run_root(service, output_root, run_id)
     path = (root / relative).resolve()
     if root not in path.parents or not path.is_file():
         raise HTTPException(status_code=404, detail="run output not found")
     return path
+
+
+def _is_historical_snapshot(view: object) -> bool:
+    """True when metadata was restored without the original run artifacts."""
+    result = getattr(view, "result", {})
+    result = result if isinstance(result, dict) else {}
+    recovery = result.get("recovery", {})
+    return (
+        isinstance(recovery, dict)
+        and recovery.get("run_artifacts_present") is False
+    )
+
+
+def _historical_snapshot_report(view: object) -> str:
+    topic = str(getattr(view, "topic", "本次研究任务"))
+    recovery = getattr(view, "result", {}) or {}
+    recovery = recovery.get("recovery", {}) if isinstance(recovery, dict) else {}
+    source = str(recovery.get("source", "历史任务快照")) if isinstance(recovery, dict) else "历史任务快照"
+    return (
+        f"# {topic}\n\n"
+        "> 这是可审计的历史任务快照。原始研究产物目录未随快照保存，系统未伪造报告正文、证据或能力画像。\n\n"
+        f"- 快照来源：{source}\n"
+        "- 当前可用：任务主题、运行状态、审计元数据与历史交互索引\n"
+        "- 详细报告、证据卡和能力画像：原始产物恢复后自动可读；也可重新运行任务生成完整产物。"
+    )
 
 
 def _preferred_report_path(run_root: Path) -> Path | None:
@@ -2866,26 +3291,87 @@ def _preferred_report_path(run_root: Path) -> Path | None:
     return None
 
 
-def _run_root(service: ResearchApplicationService, run_id: str) -> Path:
+def _run_root(service: ResearchApplicationService, output_root: Path, run_id: str) -> Path:
     try:
         view = service.get_run(run_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="run not found") from exc
-    run_dir_value = view.result.get("run_dir")
-    if not run_dir_value:
+    root = _resolve_run_root(output_root, run_id, view.result)
+    if root is None:
+        run_dir_value = str(view.result.get("run_dir", "")).strip()
+        if run_dir_value:
+            raise HTTPException(status_code=404, detail="run output not found")
         raise HTTPException(status_code=409, detail="run outputs are not ready")
-    root = Path(run_dir_value).resolve()
     if not root.is_dir() or root.is_symlink():
         raise HTTPException(status_code=404, detail="run output not found")
     return root
 
 
-def _read_json(service: ResearchApplicationService, run_id: str, relative: str):
-    return json.loads(_run_file(service, run_id, relative).read_text(encoding="utf-8"))
+def _read_json(service: ResearchApplicationService, output_root: Path, run_id: str, relative: str):
+    return json.loads(_run_file(service, output_root, run_id, relative).read_text(encoding="utf-8"))
 
 
-def _read_jsonl(service: ResearchApplicationService, run_id: str, relative: str) -> list[dict]:
-    return _jsonl_path(_run_file(service, run_id, relative))
+def _read_jsonl(service: ResearchApplicationService, output_root: Path, run_id: str, relative: str) -> list[dict]:
+    return _jsonl_path(_run_file(service, output_root, run_id, relative))
+
+
+def _is_safe_run_id(run_id: str) -> bool:
+    return bool(run_id) and "/" not in run_id and "\\" not in run_id and ".." not in run_id
+
+
+def _resolve_run_root(
+    output_root: Path,
+    run_id: str,
+    result: dict | None = None,
+) -> Path | None:
+    if not _is_safe_run_id(run_id):
+        raise HTTPException(status_code=400, detail="invalid run id")
+    primary = (output_root.resolve() / run_id)
+    candidates = [primary]
+    if isinstance(result, dict):
+        legacy_value = str(result.get("run_dir", "")).strip()
+        if legacy_value:
+            candidates.append(Path(legacy_value).expanduser())
+    for candidate in candidates:
+        try:
+            if not candidate.is_dir() or candidate.is_symlink():
+                continue
+            return candidate.resolve()
+        except OSError:
+            continue
+    return None
+
+
+def _public_run_result(result: object, output_root: Path, run_id: str) -> dict:
+    data = dict(result) if isinstance(result, dict) else {}
+    root = _resolve_run_root(output_root, run_id, data)
+    public = {
+        key: value
+        for key, value in data.items()
+        if key not in {
+            "run_dir",
+            "report_path",
+            "summary_path",
+            "capability_images_path",
+            "manifest_path",
+            "branch_deliverables_path",
+        }
+    }
+    public["report_available"] = bool(
+        root is not None and _preferred_report_path(root) is not None
+    )
+    public["historical_snapshot"] = bool(
+        isinstance(data.get("recovery"), dict)
+        and data["recovery"].get("run_artifacts_present") is False
+    )
+    return public
+
+
+def _public_run_view(view: object, output_root: Path) -> dict:
+    data = dict(view.__dict__) if hasattr(view, "__dict__") else dict(view)
+    run_id = str(data.get("run_id", ""))
+    data["result"] = _public_run_result(data.get("result"), output_root, run_id)
+    return data
 
 
 def _jsonl_path(path: Path) -> list[dict]:
@@ -2940,6 +3426,9 @@ def _verify_run_deleted(
 def _capability_api_view(row: dict) -> dict:
     """Enrich v1 capability images for the normative UI without mutating artifacts."""
     result = dict(row)
+    for prose_field in ("capability_image", "deep_capability_portrait"):
+        if prose_field in result:
+            result[prose_field] = strip_schema_placeholders(result[prose_field])
     for removed_field in (
         "key_functions",
         "performance_indicators",
@@ -2990,40 +3479,7 @@ def _capability_api_view(row: dict) -> dict:
     equipment_form = str(
         result.get("equipment_form") or result.get("equipment_category") or ""
     ).strip()
-    generic_weapon_titles = {
-        "无人机", "无人作战平台", "巡飞弹", "反辐射巡飞弹", "远程导弹",
-        "精确制导弹药", "拦截弹", "电子压制效应器", "空射导弹", "空射弹",
-        "地射导弹", "导弹", "弹药", "武器",
-    }
-    if (
-        source_name in generic_weapon_titles
-        or is_launch_mode_generic_weapon_title(source_name)
-    ) and equipment_form:
-        # The dynamic swarm already supplied a concrete weapon identity.  For
-        # a generic heading, promote that identity verbatim instead of asking
-        # the legacy short-title helper to shrink it further.
-        display_name = primary_equipment_form_title(equipment_form)
-    elif not _api_capability_title_requires_repair(source_name):
-        # A selected swarm weapon name is already its independently reviewed
-        # combat identity.  Keep its query-specific wording intact; title
-        # length is deliberately not a UI repair trigger.
-        display_name = source_name
-    else:
-        display_name = build_capability_title(
-            name=source_name,
-            equipment_form=equipment_form,
-            effect="；".join(
-                str(value)
-                for value in (
-                    result.get("strike_countermeasure_value")
-                    or result.get("military_utility")
-                    or result.get("mission_effect"),
-                    result.get("operational_mechanism"),
-                    result.get("enabling_technologies"),
-                )
-                if str(value).strip()
-            ),
-        )
+    display_name = source_name or primary_equipment_form_title(equipment_form)
     if source_name and display_name != source_name:
         result["source_name"] = source_name
     result["name"] = display_name
@@ -3037,7 +3493,7 @@ def _capability_api_view(row: dict) -> dict:
         if str(value).strip()
     )
     result["problem_statement"] = normalize_capability_problem(
-        result.get("problem_statement") or result.get("capability_gap"),
+        result.get("capability_gap") or result.get("problem_statement"),
         fallback=f"{display_name}对应的关键任务链存在目标、授权、交战或毁伤评估断点",
     )
     result["operational_process"] = complete_operational_process(
@@ -3053,45 +3509,95 @@ def _capability_api_view(row: dict) -> dict:
             or result.get("upgrade_boundary")
         ),
     )
-    legacy_portrait = _legacy_capability_portrait(image)
     portrait_scenario = result.get("target_scenario") or result.get("related_scenario")
+    authored_portrait = str(
+        result.get("deep_capability_portrait")
+        or result.get("capability_image")
+        or ""
+    ).strip()
     result["deep_capability_portrait"] = _remove_raw_query_from_portrait_lede(
-        resolve_capability_portrait(
-        result.get("deep_capability_portrait") or result.get("capability_image"),
-        scenario=portrait_scenario,
-        problem=result.get("capability_gap")
-        or result.get("problem_statement")
-        or legacy_portrait,
-        principle=result.get("scientific_principle")
-        or result.get("operational_mechanism")
-        or result.get("novelty"),
-        technologies=result.get("enabling_technologies")
-        or result.get("upgrade_package")
-        or result.get("equipment_form"),
-        operational_concept=result.get("operational_concept")
-        or result.get("operational_mechanism"),
-        operational_steps=result.get("operational_process")
-        or result.get("strike_chain_contribution"),
-        capability=result.get("capability_outcome")
-        or result.get("military_utility")
-        or result.get("equipment_form"),
-        effect=result.get("mission_effect")
-        or result.get("military_utility")
-        or legacy_portrait,
-        winning_mechanism=result.get("winning_mechanism")
-        or result.get("source_winning_logic")
-        or result.get("novelty"),
-        equipment_form=result.get("equipment_form") or result.get("equipment_category"),
-        baseline=result.get("baseline_system") or result.get("equipment_form"),
-        development_path=result.get("development_path") or result.get("foresight"),
-        failure_boundary=result.get("risk_boundaries")
-        or result.get("operational_constraints"),
-        verification_plan=result.get("verification")
-        or result.get("verification_plan"),
-        ),
+        authored_portrait,
         scenario=portrait_scenario,
     )
     return result
+
+
+def _provisional_s6_capability_rows(portfolio: object) -> list[dict]:
+    """Expose completed S6 selections while the final delivery file is pending.
+
+    S6 freezes the selected equipment portfolio before the reporter writes
+    ``capability_images.json``.  The portfolio already contains the reviewed
+    mechanism, evidence references, failure boundaries and validation path, so
+    hiding it until report delivery incorrectly makes completed S6 work appear
+    as a reference-only candidate list.
+    """
+
+    if not isinstance(portfolio, list):
+        return []
+    rows: list[dict] = []
+    for index, item in enumerate(portfolio, start=1):
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("name", "")).strip()
+        equipment_form = str(item.get("equipment_form", "")).strip()
+        function = str(item.get("function", "")).strip()
+        mechanism = str(item.get("operational_mechanism", "")).strip()
+        military_value = str(item.get("military_value", "")).strip()
+        development_path = str(item.get("development_path", "")).strip()
+        failure_boundary = str(item.get("failure_boundary", "")).strip()
+        if not name or not equipment_form:
+            continue
+        hypothesis_id = str(item.get("hypothesis_id", "")).strip()
+        raw_evidence_ids = item.get("direct_evidence_refs", [])
+        evidence_ids = (
+            [str(value).strip() for value in raw_evidence_ids if str(value).strip()][:12]
+            if isinstance(raw_evidence_ids, list)
+            else []
+        )
+        capability_id = (
+            f"s6-{hypothesis_id}" if hypothesis_id else f"s6-portfolio-{index:02d}"
+        )
+        portrait = str(
+            item.get("deep_capability_portrait")
+            or item.get("capability_portrait")
+            or item.get("capability_image")
+            or ""
+        ).strip()
+        rows.append(
+            {
+                "capability_id": capability_id,
+                "name": name,
+                "equipment_category": equipment_form,
+                "equipment_form": equipment_form,
+                "capability_type": str(item.get("type", "new_capability")),
+                "source_winning_logic": mechanism or military_value,
+                "related_scenario": function,
+                "priority": str(item.get("priority", "待定")),
+                "capability_gap": function,
+                "capability_image": portrait,
+                "deep_capability_portrait": portrait,
+                "project_function": function,
+                "mission_effect": military_value,
+                "military_utility": military_value,
+                "strike_countermeasure_value": mechanism,
+                "novelty": mechanism,
+                "foresight": development_path,
+                "operational_mechanism": mechanism,
+                "development_path": development_path,
+                "risk_boundaries": [failure_boundary] if failure_boundary else [],
+                "operational_constraints": [failure_boundary] if failure_boundary else [],
+                "evidence_ids": evidence_ids,
+                "evidence_basis": [f"直接证据：{value}" for value in evidence_ids],
+                "agent_contributions": ["S1–S5 完成机理、对抗、工程与证据补强", "S6 完成组合评审与装备画像综合"],
+                "reasoning_refs": [f"S6 / {hypothesis_id or capability_id}"],
+                "confidence": float(item.get("confidence") or item.get("expert_score") or 0),
+                "verification_status": str(item.get("verification_status", "assessed")),
+                "confidence_limited": bool(item.get("confidence_limited", False)),
+                "selection_quality_status": str(item.get("selection_quality_status", "expert_assessed")),
+                "provenance_status": "s6_provisional",
+            }
+        )
+    return rows
 
 
 def _remove_raw_query_from_portrait_lede(value: object, *, scenario: object = "") -> str:
@@ -3134,23 +3640,6 @@ def _remove_raw_query_from_portrait_lede(value: object, *, scenario: object = ""
     return portrait
 
 
-def _api_capability_title_requires_repair(value: str) -> bool:
-    """Recognize labels and descriptions that need legacy title recovery."""
-
-    title = re.sub(r"\s+", "", str(value or "")).strip("，,；;。:：")
-    if not title:
-        return True
-    if re.match(r"^[A-Za-z][A-Za-z0-9./-]{2,}", title):
-        return True
-    if re.search(r"具备|能够|可以|通过|实现|以及|包括|已集成", title):
-        return True
-    if title.startswith(("含", "由", "采用")):
-        return True
-    if any(marker in title for marker in ("证据链", "任务链", "信息链", "杀伤链", "闭环")):
-        return True
-    return title.endswith(("窗口", "续接", "支撑", "协同", "再捕获", "补击", "补射", "目标发现", "火力"))
-
-
 def _capability_labeled_value(text: str, label: str) -> str:
     marker = f"{label}："
     if marker not in text:
@@ -3163,31 +3652,6 @@ def _capability_labeled_value(text: str, label: str) -> str:
     ]
     end = min(boundaries) if boundaries else len(tail)
     return tail[:end].strip("。； ")
-
-
-def _legacy_capability_portrait(text: str) -> str:
-    if not text:
-        return ""
-    first_markers = [
-        text.find(f"。{label}：")
-        for label in ("军事价值", "深度机制", "前瞻判断", "新颖性", "证据约束")
-        if f"。{label}：" in text
-    ]
-    function = text[: min(first_markers) if first_markers else len(text)].strip("。； ")
-    military = _capability_labeled_value(text, "军事价值")
-    mechanism = _capability_labeled_value(text, "深度机制")
-    foresight = _capability_labeled_value(text, "前瞻判断")
-    novelty = _capability_labeled_value(text, "新颖性")
-    paragraphs = [function]
-    if mechanism:
-        paragraphs.append(f"其核心不是孤立增加单项性能，而是{mechanism}")
-    if military:
-        paragraphs.append(f"由此可在任务链层面实现：{military}")
-    if novelty:
-        paragraphs.append(f"相较传统建设方式，该方向{novelty}")
-    if foresight:
-        paragraphs.append(f"面向未来演化，{foresight}")
-    return "。".join(item.rstrip("。") for item in paragraphs if item) + "。"
 
 
 def _catalog_payload(agent_path: Path, preset_path: Path) -> dict:

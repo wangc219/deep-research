@@ -50,9 +50,9 @@ class HarnessProfile:
             if isinstance(value, bool) or not isinstance(value, (int, float)) or value < 0:
                 raise ValueError(f"profile {self.profile_id} budget {key} must be non-negative")
         bounded_limits = {
-            "max_dynamic_instances": 18,
-            "min_mission_graph_instances": 18,
-            "target_mission_graph_instances": 18,
+            "max_dynamic_instances": 21,
+            "min_mission_graph_instances": 21,
+            "target_mission_graph_instances": 21,
             "max_concurrency": 6,
             "max_waves": 3,
             "minimum_expected_gain": 1.0,

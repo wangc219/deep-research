@@ -9,15 +9,12 @@ from equipment_deep_research.harness.optimizations import (
     print_performance_report,
 )
 from equipment_deep_research.providers.codex_optimizations import (
-    apply_codex_optimizations,
     print_codex_performance_report,
 )
 
 
 def main(argv: list[str] | None = None) -> int:
-    # 应用所有性能优化
-    apply_quick_optimizations()
-    apply_codex_optimizations()
+    apply_quick_optimizations(verbose=False)
     project_root = Path(__file__).resolve().parents[3]
     parser = argparse.ArgumentParser(description="Run equipment capability image Deep Research.")
     parser.add_argument("--mode", choices=["fake", "real"], default="fake")

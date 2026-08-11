@@ -26,18 +26,18 @@ class AdaptiveCallGate:
     def __init__(self) -> None:
         configured = max(
             1,
-            int(os.environ.get("EQUIPMENT_DR_CODEX_MODEL_CONCURRENCY", "3")),
+            int(os.environ.get("EQUIPMENT_DR_CODEX_MODEL_CONCURRENCY", "6")),
         )
         self.minimum = max(
             1,
             min(
                 configured,
-                int(os.environ.get("EQUIPMENT_DR_CODEX_MODEL_CONCURRENCY_MIN", "1")),
+                int(os.environ.get("EQUIPMENT_DR_CODEX_MODEL_CONCURRENCY_MIN", "4")),
             ),
         )
         self.maximum = max(
             configured,
-            int(os.environ.get("EQUIPMENT_DR_CODEX_MODEL_CONCURRENCY_MAX", "4")),
+            int(os.environ.get("EQUIPMENT_DR_CODEX_MODEL_CONCURRENCY_MAX", "6")),
         )
         self.limit = min(self.maximum, max(self.minimum, configured))
         self.reserved_priority_slots = max(

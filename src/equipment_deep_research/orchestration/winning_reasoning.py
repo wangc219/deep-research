@@ -36,8 +36,18 @@ class WinningResourceProjector:
         evidence: list[EvidenceCard],
     ) -> WinningKnowledgeProjection:
         evidence_ids = [item.evidence_id for item in evidence]
-        case_ids = [item.evidence_id for item in evidence if any(key in (item.claim + item.excerpt) for key in ("战例", "战争", "案例", "经验", "教训"))]
-        frontier_ids = [item.evidence_id for item in evidence if any(key in (item.claim + item.excerpt) for key in ("新型", "前沿", "趋势", "技术", "自主", "智能", "无人"))]
+        # Route resources by their explicit producer role.  Claim vocabulary
+        # is evidence content for the model, not a local semantic classifier.
+        case_ids = [
+            item.evidence_id
+            for item in evidence
+            if item.created_by in {"case_research", "operational_employment"}
+        ]
+        frontier_ids = [
+            item.evidence_id
+            for item in evidence
+            if item.created_by in {"technology_radar", "weapon_equipment"}
+        ]
         if input_pack.research_route == "war_case_learning" and not case_ids:
             case_ids = evidence_ids
         if input_pack.research_route == "new_winning_mechanism" and not frontier_ids:

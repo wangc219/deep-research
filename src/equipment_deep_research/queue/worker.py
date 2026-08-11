@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass
 from contextlib import contextmanager
-import os
 from pathlib import Path
 from threading import Event, Thread
 from typing import Any, Callable
@@ -12,6 +11,12 @@ from sqlalchemy.exc import NoResultFound
 
 from equipment_deep_research.application.run_service import ResearchApplicationService
 from equipment_deep_research.delivery.exporter import DeliveryExporter
+from equipment_deep_research.runtime_identity import RUNTIME_BUILD_HASH
+from equipment_deep_research.runtime_process_registry import (
+    RunProcessCleanup,
+    task_process_scope,
+    terminate_run_process_groups,
+)
 
 
 @dataclass(frozen=True)
@@ -28,11 +33,12 @@ class ResearchWorker:
         service: ResearchApplicationService,
         execute: Callable[[str], dict[str, Any] | None],
         worker_id: str = "research-worker",
+        runtime_generation: str = RUNTIME_BUILD_HASH,
         heartbeat_interval_seconds: float = 5.0,
     ) -> None:
         self.service, self.execute, self.worker_id = service, execute, worker_id
+        self.runtime_generation = str(runtime_generation)
         self.heartbeat_interval_seconds = max(0.01, heartbeat_interval_seconds)
-        self._transient_resume_attempts: dict[str, int] = {}
 
     def _ack(self, run_id: str) -> None:
         ack = getattr(self.service.queue, "ack", None)
@@ -49,13 +55,25 @@ class ResearchWorker:
 
     def run_once(self) -> WorkerOutcome | None:
         self.service.touch_worker(self.worker_id, status="idle")
-        run_id = self.service.queue.claim()
+        claim = self.service.queue.claim
+        try:
+            run_id = claim(generation=self.runtime_generation)
+        except TypeError:
+            # Lightweight custom queues may still implement the legacy
+            # no-argument protocol. Durable SQL queues always enforce the
+            # build-generation fence.
+            run_id = claim()
         if run_id is None:
             return None
         try:
             get_run = getattr(self.service, "get_run", None)
             current = get_run(run_id) if callable(get_run) else None
             if current is not None and self._has_complete_delivery(current):
+                self._publish_process_cleanup(
+                    run_id,
+                    terminate_run_process_groups(run_id),
+                    terminal_status="completed",
+                )
                 prior_status = current.status
                 self.service.set_result(run_id, current.result)
                 self.service.set_status(run_id, "completed")
@@ -68,6 +86,11 @@ class ResearchWorker:
                 self.service.touch_worker(self.worker_id, status="idle")
                 return WorkerOutcome(run_id, "completed")
             if current is not None and current.status in {"completed", "cancelled", "archived"}:
+                self._publish_process_cleanup(
+                    run_id,
+                    terminate_run_process_groups(run_id),
+                    terminal_status=current.status,
+                )
                 self._ack(run_id)
                 self.service.touch_worker(self.worker_id, status="idle")
                 return WorkerOutcome(run_id, current.status)
@@ -92,8 +115,18 @@ class ResearchWorker:
             return WorkerOutcome(run_id, "deleted")
         try:
             self.service.set_status(run_id, "researching")
-            with self._heartbeat_during(run_id):
+            # The task process scope is a Worker-level backstop above every
+            # Runner and isolated Provider. It terminates any still-registered
+            # Codex process group before completed/failed is persisted.
+            with self._heartbeat_during(run_id), task_process_scope(
+                run_id
+            ) as process_scope:
                 result = self.execute(run_id) or {}
+            self._publish_process_cleanup(
+                run_id,
+                process_scope.cleanup,
+                terminal_status="completed",
+            )
             run_dir = result.get("run_dir")
             if run_dir:
                 manifest = DeliveryExporter().build_manifest(run_dir)
@@ -109,6 +142,16 @@ class ResearchWorker:
             return WorkerOutcome(run_id, "completed")
         except (Exception, asyncio.CancelledError) as exc:
             error = str(exc).strip() or type(exc).__name__
+            cleanup = (
+                process_scope.cleanup
+                if "process_scope" in locals()
+                else terminate_run_process_groups(run_id)
+            )
+            self._publish_process_cleanup(
+                run_id,
+                cleanup,
+                terminal_status="failed",
+            )
             current = self.service.get_run(run_id)
             if self._has_complete_delivery(current):
                 self.service.set_result(run_id, current.result)
@@ -121,56 +164,51 @@ class ResearchWorker:
                 self._ack(run_id)
                 self.service.touch_worker(self.worker_id, status="idle")
                 return WorkerOutcome(run_id, "completed")
-            transient_resume_limit = _configured_transient_resume_limit()
-            transient_resume_count = self._transient_resume_count(run_id)
-            if (
-                transient_resume_count < transient_resume_limit
-                and _is_transient_checkpoint_failure(error)
-            ):
-                attempt = transient_resume_count + 1
-                self._transient_resume_attempts[run_id] = attempt
+            if _is_transient_checkpoint_failure(error):
                 self.service.publish_runtime_event(
                     run_id,
-                    "run_transient_resume_scheduled",
+                    "run_manual_resume_required",
                     {
-                        "attempt": attempt,
-                        "maximum_attempts": transient_resume_limit,
-                        "reason": "retryable_provider_or_network_failure",
+                        "reason": "retryable_provider_or_network_failure_checkpointed",
                         "error": error,
-                        "resume_mode": "checkpoint_pending_tasks_only",
+                        "resume_mode": "manual_checkpoint_resume_only",
                     },
                 )
-                self.service.set_status(run_id, "queued")
-                self._ack(run_id)
-                retry = getattr(self.service.queue, "retry", None)
-                if callable(retry):
-                    retry(run_id)
-                else:
-                    self.service.queue.enqueue(run_id)
-                self.service.touch_worker(self.worker_id, status="idle")
-                return WorkerOutcome(run_id, "queued", error)
             self.service.set_error(run_id, error)
             self.service.set_status(run_id, "failed")
             self._ack(run_id)
             self.service.touch_worker(self.worker_id, status="idle")
             return WorkerOutcome(run_id, "failed", error)
 
-    def _transient_resume_count(self, run_id: str) -> int:
-        durable_count = 0
-        repository = getattr(self.service, "repository", None)
-        events_after = getattr(repository, "events_after", None)
-        if callable(events_after):
-            try:
-                durable_count = sum(
-                    row.get("event_type") == "run_transient_resume_scheduled"
-                    for row in events_after(run_id, 0)
-                )
-            except Exception:
-                durable_count = 0
-        return max(
-            durable_count,
-            self._transient_resume_attempts.get(run_id, 0),
-        )
+    def _publish_process_cleanup(
+        self,
+        run_id: str,
+        cleanup: RunProcessCleanup | None,
+        *,
+        terminal_status: str,
+    ) -> None:
+        if cleanup is None:
+            return
+        publish = getattr(self.service, "publish_runtime_event", None)
+        if not callable(publish):
+            return
+        try:
+            publish(
+                run_id,
+                "run_orphan_process_cleanup",
+                {
+                    "terminal_status": terminal_status,
+                    "registered_process_groups": cleanup.registered_count,
+                    "orphan_process_groups": cleanup.orphan_count,
+                    "terminated_process_groups": cleanup.terminated_count,
+                    "forced_process_groups": cleanup.forced_count,
+                    "status": "released",
+                },
+            )
+        except Exception:
+            # Cleanup already completed. Telemetry must not change the
+            # terminal outcome or requeue the task.
+            pass
 
     @contextmanager
     def _heartbeat_during(self, run_id: str):
@@ -196,15 +234,6 @@ class ResearchWorker:
         finally:
             stopped.set()
             thread.join(timeout=1.0)
-
-
-def _configured_transient_resume_limit() -> int:
-    raw_value = os.environ.get("EQUIPMENT_DR_TRANSIENT_RESUME_ATTEMPTS", "1")
-    try:
-        value = int(raw_value)
-    except (TypeError, ValueError):
-        value = 1
-    return min(3, max(0, value))
 
 
 def _is_transient_checkpoint_failure(error: str) -> bool:

@@ -258,6 +258,12 @@ class AgentRegistry:
             )
             agent.validate()
             agents[agent.agent_id] = agent
+        # Agent configuration and executable role design must evolve together.
+        # The import is local to keep registry datatypes independent from the
+        # design package during module initialization.
+        from equipment_deep_research.agents.designs import AgentDesignRegistry
+
+        AgentDesignRegistry.load_default().validate_agent_ids(agents)
         return cls(
             agents=agents,
             default_model=str(data.get("default_model", "gpt-5.5")),

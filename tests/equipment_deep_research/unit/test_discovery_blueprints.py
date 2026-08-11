@@ -170,14 +170,18 @@ def test_each_architecture_branch_builds_an_executable_blueprint(
         ("高消耗战场边缘智能影响响应研究", "D"),
     ],
 )
-def test_concise_benchmark_queries_do_not_fall_into_new_tactics_by_default(
+def test_concise_benchmark_queries_use_model_branch_decision(
     topic: str,
     branch: str,
 ) -> None:
     problem = ResearchProblem(topic)
 
-    assert problem.resolved_discovery_branch()["primary"] == branch
-    assert build_discovery_blueprint(problem)["primary_branch"] == branch
+    assert problem.resolved_discovery_branch()["primary"] == "A"
+    blueprint = build_discovery_blueprint(
+        problem,
+        model_blueprint={"primary_branch": branch, "confidence": 0.88},
+    )
+    assert blueprint["primary_branch"] == branch
 
 
 @pytest.mark.parametrize(
@@ -192,10 +196,7 @@ def test_external_region_queries_lock_in_international_situation_agent(
     topic: str,
 ) -> None:
     blueprint = build_discovery_blueprint(ResearchProblem(topic))
-    plan = {
-        item["agent_id"]: item["mode"]
-        for item in blueprint["baseline_agent_plan"]
-    }
+    plan = {item["agent_id"]: item["mode"] for item in blueprint["baseline_agent_plan"]}
 
     assert plan["international_situation"] == "required"
     assert "international_situation" in blueprint["initial_baseline_agent_ids"]
@@ -203,10 +204,7 @@ def test_external_region_queries_lock_in_international_situation_agent(
 
 def test_narrow_domestic_equipment_query_does_not_force_situation_agent() -> None:
     blueprint = build_discovery_blueprint(ResearchProblem("某型现役雷达升级"))
-    plan = {
-        item["agent_id"]: item["mode"]
-        for item in blueprint["baseline_agent_plan"]
-    }
+    plan = {item["agent_id"]: item["mode"] for item in blueprint["baseline_agent_plan"]}
 
     assert plan["international_situation"] == "callback"
     assert "international_situation" not in blueprint["initial_baseline_agent_ids"]
@@ -249,6 +247,19 @@ def test_model_query_brief_preserves_bounded_combat_weapon_divergence_fields() -
                 "query_specific_weapon_architectures": [
                     f"Query专属武器架构{i}" for i in range(9)
                 ],
+                "frontier_technology_hypotheses": [
+                    {
+                        "enabling_principle": f"前沿原理{i}",
+                        "equipment_implication": f"前沿装备构型{i}",
+                        "query_causal_link": f"前沿因果链{i}",
+                        "direct_military_effect": f"前沿直接战果{i}",
+                        "conventional_absorption_limit": f"常规方案不可吸收{i}",
+                        "technology_horizon": "5-10年",
+                        "engineering_bottleneck": f"工程瓶颈{i}",
+                        "disconfirming_condition": f"淘汰条件{i}",
+                    }
+                    for i in range(9)
+                ],
                 "equipment_project_hypotheses": [
                     {
                         "project_name": f"项目{i}",
@@ -272,10 +283,84 @@ def test_model_query_brief_preserves_bounded_combat_weapon_divergence_fields() -
     assert len(brief["weapon_design_variables"]) == 8
     assert len(brief["query_specific_weapon_architectures"]) == 6
     assert brief["query_specific_weapon_architectures"][0] == "Query专属武器架构0"
+    assert len(brief["frontier_technology_hypotheses"]) == 6
+    assert (
+        brief["frontier_technology_hypotheses"][0]["enabling_principle"] == "前沿原理0"
+    )
     assert len(brief["equipment_project_hypotheses"]) == 6
     assert brief["equipment_project_hypotheses"][0]["project_name"] == "项目0"
     assert len(brief["equipment_project_hypotheses"][0]["design_variables"]) == 8
     assert len(brief["rejected_template_anchors"]) == 6
+
+
+def test_model_query_brief_preserves_compact_open_winning_problem_graph() -> None:
+    blueprint = build_discovery_blueprint(
+        ResearchProblem("强对抗条件下的时敏精确打击研究"),
+        model_blueprint={
+            "structured_query_brief": {
+                "equipment_semantic_boundary": (
+                    "具体战斗装备必须直接承担接敌和效应，链路与软件只作为接口。"
+                ),
+                "winning_problem_propositions": [
+                    {
+                        "target_and_phase": f"目标与阶段{i}",
+                        "task_breakpoint": f"任务断点{i}",
+                        "conventional_assumption": f"传统假设{i}",
+                        "changeable_variable": f"改变变量{i}",
+                        "mechanism_search_question": f"开放机理问题{i}",
+                        "direct_military_result": f"直接战果{i}",
+                        "exclusion_and_falsification_boundary": f"排他边界{i}",
+                    }
+                    for i in range(9)
+                ],
+            }
+        },
+    )
+
+    brief = blueprint["structured_query_brief"]
+    assert brief["equipment_semantic_boundary"].startswith("具体战斗装备")
+    assert len(brief["winning_problem_propositions"]) == 6
+    assert brief["winning_problem_propositions"][0] == {
+        "target_and_phase": "目标与阶段0",
+        "task_breakpoint": "任务断点0",
+        "conventional_assumption": "传统假设0",
+        "changeable_variable": "改变变量0",
+        "mechanism_search_question": "开放机理问题0",
+        "direct_military_result": "直接战果0",
+        "exclusion_and_falsification_boundary": "排他边界0",
+    }
+
+
+def test_model_blueprint_counts_primary_specialist_inside_three_agent_limit() -> None:
+    blueprint = build_discovery_blueprint(
+        ResearchProblem("跨域时敏目标打击闭环研究"),
+        model_blueprint={
+            "primary_branch": "G",
+            "baseline_agent_plan": [
+                {"agent_id": "combat_scenario", "mode": "required", "reason": "场景"},
+                {"agent_id": "system_confrontation", "mode": "required", "reason": "体系"},
+                {"agent_id": "weapon_equipment", "mode": "reference", "reason": "装备边界"},
+                {"agent_id": "operational_employment", "mode": "reference", "reason": "运用"},
+            ],
+        },
+        available_agent_capabilities={
+            "cross_domain_fusion": ["cross_domain"],
+            "combat_scenario": ["scenario"],
+            "system_confrontation": ["system_modeling"],
+            "weapon_equipment": ["equipment"],
+            "operational_employment": ["operation"],
+        },
+    )
+
+    assert blueprint["initial_baseline_agent_ids"] == [
+        "cross_domain_fusion",
+        "combat_scenario",
+        "system_confrontation",
+    ]
+    assert blueprint["callback_agent_ids"] == [
+        "weapon_equipment",
+        "operational_employment",
+    ]
 
 
 @pytest.mark.parametrize(
@@ -290,9 +375,12 @@ def test_explicit_research_route_remains_authoritative_without_branch_keywords(
     route: str,
     branch: str,
 ) -> None:
-    assert ResearchProblem("通用研究题目", research_route=route).resolved_discovery_branch()[
-        "primary"
-    ] == branch
+    assert (
+        ResearchProblem(
+            "通用研究题目", research_route=route
+        ).resolved_discovery_branch()["primary"]
+        == branch
+    )
 
 
 def test_model_blueprint_controls_required_reference_and_callback_agents() -> None:
@@ -334,7 +422,9 @@ def test_model_blueprint_controls_required_reference_and_callback_agents() -> No
     assert blueprint["semantic_agent_signals"] == []
 
 
-def test_b_branch_preserves_background_scenario_chain_and_defers_overlapping_agents() -> None:
+def test_b_branch_preserves_background_scenario_chain_and_defers_overlapping_agents() -> (
+    None
+):
     blueprint = build_discovery_blueprint(
         ResearchProblem(
             "西太反介入体系下现役装备作战运用与升级方向",
@@ -353,16 +443,14 @@ def test_b_branch_preserves_background_scenario_chain_and_defers_overlapping_age
     assert blueprint["initial_baseline_agent_ids"] == [
         "international_situation",
         "combat_scenario",
-        "weapon_equipment",
         "operational_employment",
+        "weapon_equipment",
     ]
     assert set(blueprint["callback_agent_ids"]) >= {
         "system_confrontation",
     }
     assert len(blueprint["initial_baseline_agent_ids"]) == 4
-    assert {
-        item["agent_id"] for item in blueprint["semantic_agent_signals"]
-    } >= {
+    assert {item["agent_id"] for item in blueprint["semantic_agent_signals"]} >= {
         "international_situation",
         "system_confrontation",
         "weapon_equipment",
@@ -387,9 +475,11 @@ def test_topic_policy_does_not_expand_narrow_equipment_task_to_all_agents() -> N
         "weapon_equipment",
         "operational_employment",
     ]
-    assert {"international_situation"} <= set(
-        blueprint["callback_agent_ids"]
-    )
+    assert {"international_situation"} <= set(blueprint["callback_agent_ids"])
+    modes = {
+        item["agent_id"]: item["mode"] for item in blueprint["baseline_agent_plan"]
+    }
+    assert modes["weapon_equipment"] == "reference"
 
 
 def test_autonomous_mode_prepends_scenario_divergence_and_meta_loop() -> None:
@@ -434,9 +524,9 @@ def test_blueprint_catalog_covers_exactly_a_through_h() -> None:
 
 def test_first_three_branches_carry_architecture_final_output_contracts() -> None:
     outputs = {
-        code: build_discovery_blueprint(
-            ResearchProblem("test", discovery_branch=code)
-        )["required_outputs"]
+        code: build_discovery_blueprint(ResearchProblem("test", discovery_branch=code))[
+            "required_outputs"
+        ]
         for code in "ABC"
     }
 
@@ -446,7 +536,9 @@ def test_first_three_branches_carry_architecture_final_output_contracts() -> Non
     assert any("能力全景图" in item for item in outputs["B"])
     assert any("6条核心规律" in item for item in outputs["C"])
     assert any("3类高置信场景" in item for item in outputs["C"])
-    assert all(any("深度研究主报告" in item for item in rows) for rows in outputs.values())
+    assert all(
+        any("深度研究主报告" in item for item in rows) for rows in outputs.values()
+    )
 
 
 def test_other_driver_uses_nearest_branch_as_dynamic_runtime_base() -> None:
@@ -576,7 +668,9 @@ def test_blueprint_normalizes_bounded_dynamic_codex_subagent_contract() -> None:
     assert dynamic["max_output_tokens"] == 3200
 
 
-def test_unmatched_driver_without_valid_dynamic_contract_does_not_invent_agent() -> None:
+def test_unmatched_driver_without_valid_dynamic_contract_does_not_invent_agent() -> (
+    None
+):
     blueprint = build_discovery_blueprint(
         ResearchProblem("现有业务Agent可以覆盖的复合任务"),
         model_blueprint={

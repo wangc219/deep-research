@@ -4,6 +4,7 @@ import argparse
 import os
 from pathlib import Path
 import socket
+import sys
 from threading import Event, Thread
 import time
 
@@ -11,6 +12,10 @@ from equipment_deep_research.application.factory import build_application_servic
 from equipment_deep_research.harness.event_bus import sanitize_runtime_payload
 from equipment_deep_research.orchestration.runner import DeepResearchRunner
 from equipment_deep_research.queue.worker import ResearchWorker
+from equipment_deep_research.runtime_identity import (
+    RUNTIME_BUILD_HASH,
+    versioned_worker_id,
+)
 
 
 def runtime_status_for_event(event_type: str) -> str:
@@ -46,6 +51,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--poll-interval", type=float, default=2.0)
     parser.add_argument(
+        "--runtime-generation",
+        default=os.environ.get("EQUIPMENT_DR_BUILD_HASH", RUNTIME_BUILD_HASH),
+    )
+    parser.add_argument(
         "--max-idle-poll-interval",
         type=float,
         default=float(os.environ.get("EQUIPMENT_DR_MAX_IDLE_POLL_INTERVAL", "5")),
@@ -57,9 +66,45 @@ def main(argv: list[str] | None = None) -> int:
         help="Leave stale-run recovery to another Worker in the same pool.",
     )
     args = parser.parse_args(argv)
+    args.worker_id = versioned_worker_id(args.worker_id, args.runtime_generation)
     root = Path(args.project_root)
+    # CLI defaults are relative to the project, not to the process cwd.  The
+    # worker may be launched by a supervisor from another directory; resolving
+    # here keeps the workspace existence check and Runner pointed at the same
+    # durable run directory.  A cwd-relative check was the last source of
+    # ``RunWorkspace.create(...): [Errno 17] File exists`` on resume.
     output_root = Path(args.output_root)
+    if not output_root.is_absolute():
+        output_root = (root / output_root).resolve()
+    # Codex process-group ownership is persisted outside individual run
+    # directories so a replacement Worker can terminate leftovers from a
+    # crashed predecessor before marking the run failed.
+    os.environ.setdefault(
+        "EQUIPMENT_DR_PROCESS_REGISTRY_ROOT",
+        str(output_root.parent / "runtime" / "run-process-groups"),
+    )
     service = build_application_service(args.database_url)
+
+    runtime_health = getattr(service, "runtime_health", None)
+    if callable(runtime_health):
+        existing_worker = next(
+            (
+                item
+                for item in runtime_health().get("workers", [])
+                if item.get("worker_id") == args.worker_id
+                and item.get("online")
+                and item.get("status") != "stopped"
+            ),
+            None,
+        )
+        if existing_worker is not None:
+            current_run_id = str(existing_worker.get("current_run_id", ""))
+            detail = f"，当前任务 {current_run_id}" if current_run_id else ""
+            print(
+                f"Worker 身份 {args.worker_id} 已由在线进程占用{detail}；拒绝重复启动。",
+                file=sys.stderr,
+            )
+            return 2
 
     def execute(run_id: str) -> dict:
         view = service.get_run(run_id)
@@ -105,7 +150,14 @@ def main(argv: list[str] | None = None) -> int:
                 if isinstance(execution.get("agent_models", {}), dict)
                 else None
             ),
-            resume=run_dir.exists(),
+            # The queue claim transitions the run from ``queued`` to
+            # ``planning`` before calling ``execute``.  Therefore checking the
+            # current status here would erase the explicit resume intent and
+            # make the runner try to create a second workspace for a failed
+            # run (``[Errno 17] File exists``).  A workspace is only present
+            # for a previously started run, while a new queued run has no
+            # directory yet; use that durable distinction after the claim.
+            resume=bool(run_dir.exists()),
             analyst_confirmed=view.analyst_confirmed,
             interaction_mode=getattr(view, "interaction_mode", "expert"),
             discovery_branch=getattr(view, "discovery_branch", "auto"),
@@ -116,9 +168,14 @@ def main(argv: list[str] | None = None) -> int:
             allow_resume_config_mismatch=run_dir.exists(),
         )
 
-    worker = ResearchWorker(service=service, execute=execute, worker_id=args.worker_id)
-    # Replace a stale heartbeat from a previous process before deciding whether
-    # an active run has become orphaned, then resume it from its checkpoint.
+    worker = ResearchWorker(
+        service=service,
+        execute=execute,
+        worker_id=args.worker_id,
+        runtime_generation=args.runtime_generation,
+    )
+    # Replace a stale heartbeat from a previous process before marking an
+    # orphaned run failed. Recovery remains an explicit analyst action.
     touch_worker = getattr(service, "touch_worker", None)
     if callable(touch_worker):
         touch_worker(args.worker_id, status="idle")

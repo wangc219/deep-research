@@ -21,7 +21,7 @@ def _row(name: str, capability_type: str = "new_capability") -> dict:
     }
 
 
-def test_generic_border_direction_is_rewritten_as_direct_combat_capability() -> None:
+def test_generic_direction_is_not_reclassified_from_topic_keywords() -> None:
     original = _row("传统战法能力空白补位能力")
     rewritten = rewrite_capability_for_military_value(
         original,
@@ -29,35 +29,48 @@ def test_generic_border_direction_is_rewritten_as_direct_combat_capability() -> 
         route="traditional_gap",
     )
 
-    assert rewritten["name"] == "边境低空渗透目标多源猎获与反无人压制引导能力"
-    assert "低空雷达" in rewritten["equipment_form"]
-    assert "压制" in rewritten["mission_effect"]
-    assert "反无人效应器" in rewritten["strike_countermeasure_value"]
-    assert "关键作战流程" in rewritten["deep_capability_portrait"]
-    assert "制胜逻辑机理" in rewritten["deep_capability_portrait"]
-    assert rewritten["target_scenario"] == "边境村镇态势感知条件下影响分析"
-    assert rewritten["operational_process"]
-    assert "无人作战平台、导弹/弹药" in rewritten["development_path"]
-    assert rewritten["capability_image"] == rewritten["deep_capability_portrait"]
-    assert rewritten["evidence_ids"] == ["ev-1"]
-    assert rewritten["confidence"] == 0.78
-    assert rewritten["priority"] == "高"
-    assert rewritten["agent_contributions"] == ["agent-a"]
-    assert rewritten["capability_gap"].endswith("本次基线：公开基线有限")
+    assert not needs_military_capability_rewrite(original)
+    assert rewritten == original
 
 
-def test_generic_upgrade_names_specific_existing_equipment_and_effect() -> None:
+def test_missing_title_gets_object_neutral_structural_fallback() -> None:
+    original = _row("", "upgrade")
     rewritten = rewrite_capability_for_military_value(
-        _row("现有装备传统场景能力提升", "upgrade"),
+        original,
         topic="边境接触带丛林通信影响能力研究",
         route="traditional_gap",
     )
 
-    assert rewritten["name"] == "现役边防雷达/光电节点低空目标猎获与反制火控升级"
-    assert "现役边防雷达" in rewritten["baseline_system"]
+    assert needs_military_capability_rewrite(original)
+    assert rewritten["name"] == "待模型复核的现役装备升级方向"
+    assert "边防雷达" not in rewritten["equipment_form"]
+    assert "反无人" not in rewritten["mission_effect"]
+    assert rewritten["target_scenario"] == "边境接触带丛林通信影响能力研究"
+    assert "关键作战流程" in rewritten["deep_capability_portrait"]
     assert rewritten["upgrade_package"]
-    assert "压制" in rewritten["combat_effect_uplift"]
-    assert "反无人效应器" in rewritten["strike_chain_contribution"]
+    assert rewritten["evidence_ids"] == ["ev-1"]
+
+
+def test_forced_enrichment_preserves_model_identity_across_topics() -> None:
+    row = _row("模型生成的装备方向")
+    row["equipment_form"] = "模型生成的主装备对象"
+    row["mission_effect"] = "模型生成的直接军事效果"
+
+    border = rewrite_capability_for_military_value(
+        row,
+        topic="边境低空研究",
+        force=True,
+    )
+    maritime = rewrite_capability_for_military_value(
+        row,
+        topic="远海护航研究",
+        force=True,
+    )
+
+    for rewritten in (border, maritime):
+        assert rewritten["name"] == row["name"]
+        assert rewritten["equipment_form"] == row["equipment_form"]
+        assert rewritten["mission_effect"] == row["mission_effect"]
 
 
 def test_already_specific_high_value_direction_is_preserved() -> None:

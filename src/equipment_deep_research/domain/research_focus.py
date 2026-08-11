@@ -566,6 +566,30 @@ def disruptive_seed_context(
     return context
 
 
+def disruptive_seed_pool_context() -> dict[str, Any]:
+    """Expose the complete seed pool for a post-divergence Codex challenge.
+
+    Unlike ``disruptive_seed_context``, this function performs no keyword or
+    branch matching.  It is intentionally used only after a model has already
+    formed a free Query-specific angle portfolio, so a second semantic model
+    pass can adopt, rewrite, combine or discard seed relations without local
+    code deciding which disruptive logic applies.
+    """
+
+    return {
+        "library_version": DISRUPTIVE_EQUIPMENT_SEED_LIBRARY_VERSION,
+        "cards": [
+            _public_seed_card(item, selection_basis="post_divergence_model_review")
+            for item in DISRUPTIVE_EQUIPMENT_SEEDS
+        ],
+        "rule": (
+            "完整种子池只在自由制胜角度形成后交给独立Codex作反事实挑战。"
+            "模型可采用、重写、跨种子重构、形成遗漏角度或全部舍弃；"
+            "不得按维度逐项覆盖，不得复制种子标题、equipment_pull或示例装备作为候选名称。"
+        ),
+    }
+
+
 def _public_seed_card(
     item: dict[str, Any],
     *,

@@ -10,7 +10,7 @@ from equipment_deep_research.domain.research_focus import (
 )
 
 
-ORCHESTRATOR_PROMPT_VERSION = "2.5"
+ORCHESTRATOR_PROMPT_VERSION = "2.8"
 
 
 BRANCH_CATALOG = """
@@ -33,9 +33,7 @@ REFERENCE_FOCUS_CATALOG = "\n".join(
     for code, item in BRANCH_REFERENCE_FOCUS.items()
 )
 
-REFERENCE_DEDUP_POLICY = "\n".join(
-    f"- {rule}" for rule in REFERENCE_DEDUP_RULES
-)
+REFERENCE_DEDUP_POLICY = "\n".join(f"- {rule}" for rule in REFERENCE_DEDUP_RULES)
 
 
 ORCHESTRATOR_BASE_PROMPT = f"""
@@ -44,7 +42,7 @@ ORCHESTRATOR_BASE_PROMPT = f"""
 
 必须按以下顺序决策：
 1. 需求语义解析：识别专家/智能模式、目标、交付物、禁止边界、战略/战役/战术粒度、军兵种与陆海空天电网智认知深海等域、时间尺度、显式假设、未知项和需要澄清但不阻塞的事项。
-2. 驱动源识别：对 A-H 分支逐项给出匹配信号与排除理由；选择一个主分支、最多两个次分支。若属于 OTHER，显式记录未覆盖驱动源并进入动态元编排。
+2. 驱动源识别：比较 A-H 后只保留最多三个高信息量候选分支及必要排除理由；选择一个主分支、最多两个次分支。若属于 OTHER，显式记录未覆盖驱动源并进入动态元编排。
 3. 蓝图生成：按业务逻辑组合而非机械串联 S1-S6，说明 skip/light/standard/deep 的侧重、必需输出、关键假设、进入条件、失败条件和回溯点。OTHER 必须根据可用 Agent 能力即时生成 custom_blueprint，不能只写说明。
 4. Agent 与 DAG 编排：只选择最小但充分的 Agent 集合；先做 capability coverage，再决定并发波次、结构化交接、关键路径和资源预算。若现有Agent不能覆盖一个可独立、可合并且预算允许的专业缺口，才生成动态专用子Agent；普通蓝图最多3个，启用winning_swarm_policy时由群控按质量残差分三波扩展且全任务最多12个。动态Agent只能绑定目录中存在的共享Skill、知识包和受治理Tool，不得递归招募。不得把“常见顺序”当成硬依赖。
 5. 循环控制：内循环修复当前节点，中循环从最早断链节点恢复，外循环 L1-L3 定向补证/可行性/画像，元循环 L4 仅在跨分支高价值线索、重大矛盾、覆盖变化或重复修复失败时重规划。
@@ -79,34 +77,34 @@ A-H/OTHER 驱动源目录：
 - G：跨域融合分析为必需，装备、运用和场景按域间接口问题组合。
 - H：非传统安全扫描为必需，形势、场景与装备按新型威胁类型组合。
 baseline_agent_plan 对每个候选标记 required、reference 或 callback；首轮通常运行 required+reference，callback只在L3/L4发现缺口时启用。
-主题语义还必须执行以下校准：涉及西太、印太、台海、南海、国外/外军、联盟或地区安全时，国际形势 Agent 原则上进入首轮；涉及作战、战法、任务链、力量协同时选择作战运用 Agent；涉及具体战场环境、阶段和时间窗口时选择作战场景 Agent；涉及装备现状、参数、升级或新研时选择武器装备 Agent；涉及反介入/区域拒止、体系依赖或杀伤链时选择体系对抗仿真 Agent。一般首轮 2 至 4 个，不得机械运行全部业务 Agent；超过 4 个时保留对核心结论不可替代的角色，其余转为 callback。
+主题语义还必须执行以下校准：涉及西太、印太、台海、南海、国外/外军、联盟或地区安全时，国际形势 Agent 原则上进入首轮；涉及作战、战法、任务链、力量协同时选择作战运用 Agent；涉及具体战场环境、阶段和时间窗口时选择作战场景 Agent；涉及装备现状、参数、升级或新研时选择武器装备 Agent；涉及反介入/区域拒止、体系依赖或杀伤链时选择体系对抗仿真 Agent。一般首轮 2 至 3 个，不得机械运行全部业务 Agent；更多角色只有在用户显式指定或核心交付确实无法被前三个覆盖时才进入，其余转为 callback。
 """.strip()
 
 
 PHASE_INSTRUCTIONS = {
     "blueprint_design": """
-本阶段只完成需求语义解析、驱动源识别和初始蓝图建议。
-若输入包含 supplemental_information，先压缩为 structured_query_brief：保留核心问题、最多6个焦点问题、
-最多8个发散维度以及最多6个约束/假设；删除重复措辞，不得把用户假设写成已证实事实。
-无论是否有补充信息，都必须利用Codex对完整Query做一次开放式装备语义推演，并写入structured_query_brief：
-建立combat_problem_frame、enemy_target_profile、battle_phase_and_constraints、required_direct_military_effects；
-再从发射域、平台、目标运动/防护包线、感知导引、突防/拦截方式、毁伤机理、成本与规模运用等维度，
-形成weapon_design_variables和证据/因果所需数量的query_specific_weapon_architectures。架构必须聚焦具体打击、毁伤、
-压制或拦截武器，并包含不复述系统Prompt示例的原创替代方向。该过程是语义推演，不得使用关键词穷举、
-固定装备目录或为覆盖示例机械配额；与Query缺少直接因果关系的常见模板写入rejected_template_anchors。
-在大方向发散后，进一步形成能够独立论证的equipment_project_hypotheses；不设固定数量，每项必须给出装备项目暂定名、
-具体装备形态、项目功能、Query因果关系、目标/威胁、适用阶段、直接军事效果、关键设计变量、创新逻辑、
-证据问题和淘汰条件。项目功能必须用“谁在什么条件下，依靠该装备完成什么动作并产生何种任务结果”表达，
-不得退化为“提升智能化/体系化能力”等抽象标签。示例型号只能作为思考发生维度；若并非公开在研项目，
-必须标为概念性工作名，不得写成已存在事实。
-后续Agent只消费该结构化简报，不直接继承长篇用户补充原文。
-对补充信息逐项确定唯一主归属；同一内容不得同时成为主分支、次分支和基线Agent的平行任务。
-无法自然归入A-H但可由现有基线Agent覆盖的内容，写入该Agent的短发散角度，不创建伪分支。
-对每个候选分支记录 score(0..1)、signals 和 exclusion_reason；低置信或不匹配任务用 unmatched_driver 表达。
-专家显式指定 A-H 时不得覆盖主分支；最多建议两个次分支。focus_questions 必须可交给专业 Agent 执行。
-若 unmatched_driver 非空，必须从 available_agents 中选择实际存在且能力匹配的 Agent，生成 custom_blueprint；
-不得引用注册表之外的 Agent，不得让两个波次形成循环依赖。
-若确有现有Agent无法覆盖的可分离缺口，可在dynamic_subagents中生成有界专用角色；每个角色必须说明触发缺口、绑定Skill/知识包、合并节点、预算和停止条件。已有Agent足以完成时不得生成动态角色。
+本阶段只完成一次紧凑的任务理解、发现路径与制胜问题编排；不得提前代替S1-S3生成装备答案。
+先把完整Query和supplemental_information压缩为structured_query_brief，删除重复措辞并区分用户假设与事实。
+核心不是罗列主题名词，而是建立当前任务独有的因果边界：作战对象与阶段、真正导致任务失败的断点、传统方案默认
+成立但可能被推翻的假设、值得改变的对抗变量，以及必须直接形成的战场结果。
+
+在winning_problem_propositions中提出少量彼此有实质排他边界的开放制胜问题。每项只规定“目标与阶段—任务断点—
+传统假设—待改变变量—机理搜索问题—期望直接战果—排他/证伪边界”，不得给出装备名称、装备家族、技术路线、
+载荷组合或近似成品方案。前瞻性、创新性和颠覆性体现在是否值得重新定义装备本体、接敌关系、效应方式或交换关系，
+而不是是否出现热门技术词。命题数量由Query中真实独立的制胜关系决定，不设配额；相邻问题可合并，不为并行凑数。
+equipment_semantic_boundary只说明后续什么必须由具体战斗装备本体承担、什么只能作为接口或保障，防止S1-S6产出
+抽象体系能力、软件或流程口号。固定颠覆种子、共享示例、公开型号和常见装备目录不得进入蓝图首轮上下文。
+
+蓝图阶段不生成query_specific_weapon_architectures、frontier_technology_hypotheses或
+equipment_project_hypotheses；这些答案由S1/S2自由推演后的独立S3 Codex会话形成。蓝图只保留问题图和证据问题，
+从源头避免机械拼装并显著缩短首轮输出。
+
+A-H只需输出最相关的主分支、最多两个次分支和最多三个高信息量driver_scores，不逐项写满八个分支。
+unmatched_driver只用于A-H与现有Agent确实无法解释的剩余驱动；“跨多个已有分支”不是OTHER，也不得因此生成
+custom_blueprint。baseline_agent_plan必须是最小充分集合：真实运行首轮通常2至3个，包含主分支不可替代的专用
+Agent，其他全部设为callback；不得让custom_blueprint或secondary_branches重复追加同一能力。首轮Agent应并行，
+只有存在真实数据依赖才串行。focus_questions应可直接委派，meta_triggers只保留会改变路径的可观察条件。
+若确有现有Agent无法覆盖的可分离缺口，才生成一个有界dynamic_subagent；已有Agent可覆盖时返回空数组。
 """.strip(),
     "agent_selection": """
 本阶段只完成最小充分 Agent 选择和依赖建议。
@@ -143,30 +141,31 @@ BLUEPRINT_OUTPUT_SCHEMA: dict[str, Any] = {
         "core_query": "保持用户Query原意的单句核心任务",
         "supplement_present": "boolean",
         "supplement_summary": "去重压缩后的补充信息摘要",
-        "focus_questions": ["最多6个可委派、可验证的问题"],
-        "expansion_dimensions": ["最多8个建议发散维度"],
-        "constraints_and_assumptions": ["最多6个约束或待验证假设"],
+        "focus_questions": ["最多5个可委派、可验证的问题"],
+        "constraints_and_assumptions": ["最多5个约束或待验证假设"],
         "combat_problem_frame": "基于完整Query语义推演的任务对象、对手、阶段和核心作战矛盾",
         "enemy_target_profile": ["敌方目标/威胁、行为、防护和反制特征"],
-        "battle_phase_and_constraints": ["真实作战阶段、地域/距离、链路/环境和交战约束"],
-        "required_direct_military_effects": ["摧毁、歼灭、压制、拦截、封控等直接战果"],
-        "weapon_design_variables": ["由Query反推的发射域、平台、目标包线、导引、突防、毁伤、成本变量"],
-        "query_specific_weapon_architectures": ["由Query因果和证据决定数量的具体打击杀伤武器架构，包含原创替代方向"],
-        "equipment_project_hypotheses": [
+        "battle_phase_and_constraints": [
+            "真实作战阶段、地域/距离、链路/环境和交战约束"
+        ],
+        "required_direct_military_effects": [
+            "由当前Query推导的直接战场效果；不得受系统Prompt中的效果词限制"
+        ],
+        "equipment_semantic_boundary": "后续哪些效果必须由具体战斗装备本体承担，哪些能力只能作为接口、保障或证据边界",
+        "winning_problem_propositions": [
             {
-                "project_name": "装备项目暂定名；概念名不得伪装成公开项目",
-                "equipment_form": "可独立研制、改装和试验的具体装备形态",
-                "project_function": "谁在什么条件下依靠该装备完成什么动作并产生何种任务结果",
-                "query_causal_link": "为什么由当前Query而不是示例目录导出",
-                "target_and_phase": "目标/威胁、作战阶段和主要约束",
-                "direct_military_effect": "直接打击、毁伤、压制、拦截、拒止或续接火力效果",
-                "design_variables": ["平台、发射域、导引、突防/拦截、毁伤、成本规模等变量"],
-                "innovation_logic": ["成本|平台|时间|毁伤|体系|伦理与博弈|传统域跨代|新质域高维优速"],
-                "evidence_questions": ["deep research必须核验的公开证据问题"],
-                "rejection_condition": "何种证据、边界或比较结果出现时不得立项",
+                "target_and_phase": "当前Query特有的对象、阶段与约束",
+                "task_breakpoint": "传统任务链真正失效的位置",
+                "conventional_assumption": "可能被推翻的常规能力假设",
+                "changeable_variable": "值得改变的对抗关系或交换变量",
+                "mechanism_search_question": "留给S1-S3开放探索的机理问题，不给技术答案",
+                "direct_military_result": "成立时必须产生的直接战场结果",
+                "exclusion_and_falsification_boundary": "与相邻命题的排他边界及何时不成立",
             }
         ],
-        "rejected_template_anchors": ["与当前Query无直接因果关系、不得默认生成的常见装备模板"],
+        "rejected_template_anchors": [
+            "与当前Query无直接因果关系、不得默认生成的常见装备模板"
+        ],
         "handoff_rule": "说明假设需验证且不得视为事实",
     },
     "meta_triggers": ["触发L4复核的可观察条件"],

@@ -661,85 +661,14 @@ def _demand_card(image: CapabilityImageItem) -> dict[str, Any]:
     }
 
 
-_WEAPON_EQUIPMENT_PRIORITY_TERMS = (
-    (
-        "导弹",
-        "巡飞弹",
-        "猎歼弹",
-        "拦截弹",
-        "拦截器",
-        "制导弹药",
-        "弹药",
-        "鱼雷",
-        "火炮",
-    ),
-    (
-        "无人作战",
-        "无人火力母机",
-        "火力母机",
-        "无人载弹平台",
-        "无人僚机",
-        "无人集群",
-        "无人艇",
-        "无人潜航器",
-        "无人车",
-        "无人机",
-    ),
-    ("电子压制", "效应器", "定向能", "高功率微波", "激光武器", "武器站"),
-    (
-        "防空",
-        "雷达",
-        "火控",
-        "拦截车",
-        "发射车",
-        "发射巢",
-        "发射单元",
-        "火力舱",
-        "弹舱机",
-        "作战平台",
-    ),
-)
-
-
-def _specific_weapon_equipment_score(value: str) -> int:
-    text = str(value).strip()
-    for score, terms in zip(
-        range(len(_WEAPON_EQUIPMENT_PRIORITY_TERMS), 0, -1),
-        _WEAPON_EQUIPMENT_PRIORITY_TERMS,
-        strict=True,
-    ):
-        if any(term in text for term in terms):
-            return score
-    if re.search(r"(?<!反)无人机", text):
-        return len(_WEAPON_EQUIPMENT_PRIORITY_TERMS) - 1
-    return 0
-
-
 def _weapon_equipment_card_name(image: CapabilityImageItem) -> str:
-    """Make the demand-card subject a concrete weapon, not a capability domain."""
+    """Use the accepted model identity without locally reclassifying it."""
 
     name = str(image.name).strip()
-    if _specific_weapon_equipment_score(name):
+    if name:
         return name
     configuration = image.equipment_form or image.equipment_category
-    candidates = [
-        item.strip(" 的与和及、，；。")
-        for item in re.split(r"[、，,；。/]", configuration)
-        if item.strip(" 的与和及、，；。")
-    ]
-    ranked = sorted(
-        candidates,
-        key=lambda item: (_specific_weapon_equipment_score(item), -len(item)),
-        reverse=True,
-    )
-    specific = next(
-        (item for item in ranked if _specific_weapon_equipment_score(item)),
-        "",
-    )
-    if specific:
-        specific = re.sub(r"(?:接入)?模块$", "", specific).strip()
-        return specific[:80]
-    return name
+    return str(configuration).strip()[:80]
 
 
 def _demand_card_indicators(image: CapabilityImageItem) -> list[str]:
