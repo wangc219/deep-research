@@ -2467,9 +2467,9 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
             {
                 "wave": wave,
                 "label": {
-                    1: "广度探索",
-                    2: "定向挑战",
-                    3: "收敛决策",
+                    1: "问题发散",
+                    2: "开放创作",
+                    3: "组合决策",
                 }.get(wave, f"波次 {wave}"),
                 "member_ids": [
                     str(item.get("agent_id", ""))
