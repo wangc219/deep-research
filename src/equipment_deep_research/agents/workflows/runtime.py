@@ -837,8 +837,8 @@ async def run_core_text(
         # completed in the persisted checkpoint are rehydrated above.
         options.update(
             {
-                "reasoning_effort": "medium",
-                "model_verbosity": "low",
+                "reasoning_effort": "high",
+                "model_verbosity": "medium",
                 "_provider_timeout_seconds": max(120, int(os.environ.get("EQUIPMENT_DR_S6_RESUME_CARD_TIMEOUT_SECONDS", "240"))),
                 "_disable_provider_timeout": False,
                 "_provider_retry_attempts": 1,
@@ -863,15 +863,15 @@ async def run_core_text(
             }
         )
     elif phase.startswith("winning_s6_parallel_card"):
-        # S3-S5 already froze the weapon identity, operational axes,
-        # evidence boundary and validation contract. S6 is a bounded
-        # natural-writing task, so medium reasoning is sufficient and
-        # materially reduces the single-card long tail observed in real
-        # runs while retaining the full structured portrait schema.
+        # S3-S5 freeze identity, but S6 still owns scenario reconstruction,
+        # the engineering-realization argument, decisive combat nodes and the
+        # cross-module edit.  Those are substantive military judgments rather
+        # than a bounded copy-edit, so preserve high reasoning while keeping
+        # the existing 3200-token/card budget and one-call parallel topology.
         options.update(
             {
-                "reasoning_effort": "medium",
-                "model_verbosity": "low",
+                "reasoning_effort": "high",
+                "model_verbosity": "medium",
                 "_provider_timeout_seconds": max(180, int(os.environ.get("EQUIPMENT_DR_S6_CARD_TIMEOUT_SECONDS", "240"))),
                 "_disable_provider_timeout": False,
                 "_provider_retry_attempts": 1,
@@ -1197,6 +1197,7 @@ def runtime_messages(
     )
     quality_profile = is_optimized_v2_payload(payload)
     aggressive_compaction = is_aggressive_optimized_v2_payload(payload)
+    dynamic_winning = is_dynamic_winning_payload(payload)
     codex_skill_rule = ""
     if host.provider_kind == "codex_cli":
         codex_skill_rule = "使用 $js-equipment-agent-runtime。"
@@ -1206,7 +1207,16 @@ def runtime_messages(
         "只完成当前隔离角色的业务判断；本回合没有可继承的其他Agent会话，"
         "agent_runtime与task_input是唯一上下文。"
     )
-    if aggressive_compaction:
+    if dynamic_winning:
+        system_message = (
+            codex_skill_rule
+            + isolated_preamble
+            + system
+            + " task_input已经给出当前S节点的全部业务边界；agent_runtime只说明身份与安全边界，"
+            "不得据此补做证据审计、TRL、成本产能、验证、反适应、失败边界或额外质量评审。"
+            "充分使用本会话进行独立军事判断和创造；要求JSON时只输出严格JSON。"
+        )
+    elif aggressive_compaction:
         system_message = (
             codex_skill_rule
             + isolated_preamble

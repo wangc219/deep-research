@@ -97,34 +97,98 @@ def _open_s3_theme_instruction() -> str:
 
 
 def _creative_s3_candidate_instruction() -> str:
-    """Give S3 a compact creative contract without a local rule catalogue."""
+    """Give S3/S4 a genuinely light creative contract."""
 
     return (
-        "你负责从当前Query创造少量真正值得立项的新质武器候选。"
-        "完整发挥Codex的军事推演、技术想象和编辑判断，不按装备目录、创新类别、字段关键词或固定句式拼接答案。"
-        "先理解战场矛盾，必须先确定frontier_principle、technology_discontinuity、disruptive_shift，"
-        "再闭合为能够直接产生战果、具有失败条件的单一具体装备。"
-        "concept_arena比较最强常规基线或可信替代解释与真正改变装备本体、接敌方式、效应或交换关系的前沿方案，"
-        "不强制套用常规、前沿、流程三类固定位置；成熟部件拼装和纯流程优化不能包装成新装备。"
-        "winning_angle_assignment、query_equipment_blueprint和reserved_other_angles只有soft_challenge权限，"
-        "可accept、reframe或replace；替换时使用self-proposed标识并说明独立价值。"
-        "通信、算法、数据链、保障和生产能力只能作为约束，不得成为候选主体。"
-        "公开资料只证明已有基础；拟议创新属于待验证假设，不得虚构型号、列装状态或性能数字。"
+        "从Query战场矛盾出发，自主创造少量能直接接敌并形成战果的单一武器装备。"
+        "输入中的制胜维度和开放挑战只用于打开不同思路，可接受、重构或舍弃；不得按字段、目录、"
+        "热门技术或固定句式拼装答案。先在内部比较不同物理原理、战场存在方式和交换关系，"
+        "再一次性闭合装备身份、自然名称、关键机理和直接战果。通信、算法、数据链与保障只能作为"
+        "装备内部条件，不能成为候选主体。不要讨论证据、成熟度、成本产能、验证计划或敌方反适应；"
+        "这些不属于轻型创造会话。"
         + QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
-        + "title与reference_overview作为一体完成最终编辑。"
-        "title不是技术摘要，而应像未来装备体系中真实存在、"
-        "作战人员能够自然称呼的具体装备名称；名称应抓住整件装备最有辨识度的一条创新主线，"
-        "而不是压缩拼接任务对象、技术组件、作战效果或字段关键词。"
-        "命名之前在内部先判断：这件装备未来以什么新的方式存在；改变的是武器本体、运动方式、"
-        "接敌方式、效应关系还是交换关系；如果未来人员首次接触该装备，会如何自然称呼。"
-        "参考构型意象型、原理突破型和装备专名型三类命名方向："
-        "构型意象型突出独特物理形态、生物启发、材料特征或运动方式,例如：仿生扑翼微型侦察打击弹、潮汐滑翔远程效应器;"
-        "原理突破型突出改变装备存在方式的新原理或新效应机制,例如：超材料隐身巡弋器、相变热源诱导弹、等离子流控飞行器;"
-        "装备专名型采用自然代号或意象名称结合具体装备身份。类似真实装备体系中的自然名称，由代号/意象+装备身份组成。"
-        "例如：“玄鸟”远域感知打击器、“逐浪”跨介质无人作战艇、“苍穹织网”智能效应系统"
-        "最终只输出最符合整件装备创新主线的一种创新新质名称。"
+        + "名称应来自整装语义，只抓最有辨识度的创新主线，不用维度词机械拼名。"
         "只输出schema规定的严格JSON，不输出推理过程。"
     )
+
+
+def _minimal_s6_card_handoff(brief: Mapping[str, Any]) -> dict[str, Any]:
+    """Project one frozen S5 decision spine into a small, per-card S6 handoff."""
+
+    def compact(value: Any, limit: int = 360) -> Any:
+        if isinstance(value, str):
+            text = " ".join(value.split()).strip()
+            if len(text) <= limit:
+                return text
+            candidate = text[:limit]
+            boundary = max(candidate.rfind(mark) for mark in "。！？；")
+            return candidate[: boundary + 1] if boundary >= limit // 2 else candidate
+        if isinstance(value, Mapping):
+            return {str(k): compact(v, 180) for k, v in list(value.items())[:8] if v not in (None, "", [], {})}
+        if isinstance(value, (list, tuple)):
+            return [compact(v, 180) for v in list(value)[:4] if v not in (None, "", [], {})]
+        return value
+
+    fields = (
+        "hypothesis_id", "name", "primary_equipment_identity", "equipment_form",
+        "unique_operational_role", "target_and_direct_effect",
+        "non_substitutable_difference", "query_relevance", "indicator_portrait",
+        "failure_boundary", "concise_winning_summary",
+    )
+    result = {key: compact(brief[key]) for key in fields if brief.get(key) not in (None, "", [], {})}
+    result["handoff_contract"] = "S5冻结决策脊柱；S6只写本卡画像，不改身份、分类、指标或Query关联。"
+    return result
+
+
+def _minimal_portfolio_candidate_handoff(item: Any) -> dict[str, Any]:
+    """Expose only the military identity axes needed by incremental S5."""
+
+    return {
+        "hypothesis_id": str(item.hypothesis_id),
+        "title": str(item.title),
+        "equipment_form": list(item.equipment_forms[:2]),
+        "target_and_direct_effect": (
+            str(item.project_function)
+            or "；".join(str(value) for value in item.direct_military_effects[:2])
+        ),
+        "changed_confrontation_variable": str(
+            item.changed_confrontation_variable
+        ),
+        "core_mechanism": list(item.mechanism_chain[:4]),
+        "direct_military_results": list(item.direct_military_effects[:3]),
+        "unique_operational_role": str(item.independence_thesis),
+        "disruptive_shift": str(item.disruptive_shift),
+    }
+
+
+def _compact_s6_authored_card_event(direction: Mapping[str, Any]) -> dict[str, Any]:
+    """Publish one bounded but complete S6 card for live API projection."""
+
+    keep = (
+        "hypothesis_id", "name", "source_hypothesis_title", "type",
+        "primary_equipment_identity", "equipment_form", "equipment_family",
+        "unique_operational_role", "launch_or_release_domain",
+        "target_and_direct_effect", "non_substitutable_difference",
+        "baseline_system", "capability_gap", "target_scenario", "function",
+        "operational_mechanism", "operational_process", "capability_outcome",
+        "military_value", "winning_mechanism", "capability_portrait",
+        "capability_portrait_modules", "semantic_consistency_check",
+        "s6_authoring_status", "indicator_portrait", "query_relevance",
+        "direct_evidence_refs", "evidence_boundary", "validation_plan",
+        "failure_boundary", "adversary_adaptation", "priority", "confidence",
+        "expert_score", "verification_status", "confidence_limited",
+        "selection_quality_status", "capability_classification",
+        "direct_combat_equipment",
+    )
+    return {
+        key: _compact_prompt_value(
+            direction.get(key),
+            max_string_chars=1800 if key == "capability_portrait" else 520,
+            max_list_items=12,
+        )
+        for key in keep
+        if direction.get(key) not in (None, "", [], {})
+    }
 
 
 def _quality_cluster_candidate_instruction() -> str:
@@ -150,30 +214,18 @@ def _parallel_s6_card_instruction() -> str:
 
     return (
         "你是S6单装备能力画像作者，在独立Codex CLI会话中只完成assigned_card这一张卡。"
-        "名称、主装备身份、发射或释放域、目标与直接战果、能力分类、装备语义判断、指标画像、"
-        "Query关联和组合成员关系均由S5冻结，必须逐项继承；不得改名、换装、重新分类、补造候选，"
-        "不得推测或吸收其他组合卡的身份、流程或战果。"
-        "你拥有本卡场景推演、技术论证、作战流程和文字编辑权。先整体理解Query与装备的制胜矛盾，"
-        "再直接写成决策短卡，不复述研究过程、证据过程或上游字段。"
-        "能力画像必须输出capability_portrait_modules的五栏，每栏约120至150个中文字作为软编辑目标；"
-        "完整性优先，允许因装备机理自然略短或略长，不逐栏计数，不因篇幅偏差失败、重试或截断。"
-        "overview只讲传统能力为何失效、本装备改变的核心关系和直接战果。"
-        "technology_implementation深入说明可复用底座、决定性瓶颈、核心原理怎样落实到装备本体、"
-        "必须打通的接口/能源/材料/控制/制造约束，以及样机、半实物或对抗试验和判退结果；"
-        "不得用成熟度标签、热门技术或组件清单代替可实现性论证。"
-        "operational_process只写决定成败的装备专属节点；每个节点自然交代行动主体、进入条件、关键动作、"
-        "任务状态变化和转入下一节点的条件，重点展开授权或效应窗口、战果确认和再组织逻辑，"
-        "禁止套用发现—决策—打击—评估等通用流程。"
-        "capability_effects只写相对基线新增的能力、可验证战场结果以及由此开发的新任务或新场景。"
-        "winning_logic说明敌方原有优势、传统方案为何不能维持、本装备改变的成本/时间/暴露/毁伤/"
-        "攻防消耗等主要交换关系，以及迫使对手新增的防御或组织成本。"
-        "创新必须落到真实军事需求和敌我关系，不能停留在智能化、无人化、网络化、隐身化等常识标签。"
-        "能力分类必须显示在画像开头；已有分类逐项继承，仅在为空时按主要可验收战果自然形成，"
-        "不得为覆盖毁伤、突防等示例凑类。"
-        "成稿前在本次会话内静默编辑：删除跨栏重复、背景复述、字段拼接、生僻造词、无解释缩写、"
-        "同义句和不改变军事判断的修饰语；使用一线设计人员能直接理解的通俗准确中文。"
-        "检查主装备、流程主体、作用域、目标和直接战果始终一致，semantic_consistency_check.consistent"
-        "必须为JSON布尔值true。最终只输出schema规定的严格JSON。"
+        "名称、主装备、目标与直接战果由S5冻结，不得换装、改名或吸收其他卡。"
+        "你拥有本卡场景推演、技术论证、作战流程和文字编辑权。先独立理解它为何能改变Query中的战场关系，"
+        "再推演其专属作战链与可实现的装备本体，再直接写成决策短卡：概述、技术实现、作战流程、"
+        "能力效果、制胜逻辑。每栏约120至150个中文字作为软编辑目标，不因篇幅偏差失败、重试或截断；"
+        "五栏各自回答不同问题，正文合计约450至1400字，删除重复背景和空泛"
+        "智能化标签；技术栏讲清决定性瓶颈、核心原理怎样落实到装备本体及接口/能源/材料/控制/制造约束；"
+        "必要时说明样机、半实物或对抗试验和判退结果，不用成熟度标签、热门技术或组件清单代替判断；"
+        "流程栏只写该装备独有的交战节点，交代行动主体、进入条件、关键动作、任务状态变化和转入下一节点的条件；"
+        "不要套用发现—决策—打击—评估的通用骨架；效果栏写"
+        "新增战果及由此形成的新任务或新场景，能力分类必须显示在画像开头；制胜栏写被改写的敌我交换关系。使用一线设计人员能直接理解的通俗准确中文。成稿前静默删除跨栏重复、生僻造词、无解释缩写，"
+        "核对主装备、行动主体、目标和战果一致，并令semantic_consistency_check.consistent为JSON"
+        "布尔true。只输出schema规定的严格JSON。"
     )
 
 
@@ -186,14 +238,14 @@ def _dynamic_role_contract_handoff(contract: Any, task: Any) -> dict[str, Any]:
         "S2": "自主比较任务组织、力量运用和非装备对照；不预定装备答案。",
         "S3": "自主定义问题并创造具体武器候选，可接受、重构或替换多样性建议。",
         "S4": "与S3同权创造具体武器候选，不承担后置物化或机械补全。",
-        "S5": "拥有组合语义准入、合并、判退、证据边界和工程可行性审查权。",
+        "S5": "只拥有组合语义准入、合并和判退权，不补写或审查候选内容。",
         "S6": "只对S5冻结装备撰写画像，不改变身份、分类、指标或Query关联。",
     }.get(node, "在声明节点内自主完成军事判断。")
     handoff = {
-        "S1": "只交接制胜问题、竞争解释、反适应和失败边界。",
-        "S2": "只交接任务关系、非装备对照、制胜问题和失败边界。",
-        "S3": "交接装备身份、制胜机理、直接战果、证据边界和可证伪条件。",
-        "S4": "交接装备身份、制胜机理、直接战果、证据边界和可证伪条件。",
+        "S1": "只交接对手优势、战场矛盾、可改变关系和期望战果。",
+        "S2": "只交接任务关系、效应窗口、可改变关系和期望战果。",
+        "S3": "只交接最小装备身份、制胜机理和直接战果。",
+        "S4": "只交接最小装备身份、制胜机理和直接战果。",
         "S5": "冻结入选装备的军事决策脊柱供S6逐项继承。",
         "S6": "交付单卡画像和语义一致性结论。",
     }.get(node, "只交接声明节点的结构化结论。")
@@ -1458,10 +1510,14 @@ async def analyze_winning_subagents(
     reasoning_nodes: dict[str, dict[str, Any]] = {}
     s6_model_repair_used = False
     s6_parallel_authoring_only = bool(
-        optimized_v2
+        (
+            shared.get("execution_profile_id") == "winning_swarm_dynamic_v2"
+            or optimized_v2
+        )
         and host.provider_kind == "codex_cli"
         and getattr(host.provider, "provider_type", "") == "codex_cli"
     )
+    dynamic_s6_authoring = shared.get("execution_profile_id") == "winning_swarm_dynamic_v2"
 
     blueprint = shared.get("discovery_blueprint", {})
     swarm_policy = (
@@ -1695,6 +1751,7 @@ async def analyze_winning_subagents(
         candidates: Sequence[WinningHypothesis],
         *,
         scope_id: str,
+        changed_hypothesis_ids: set[str] | None = None,
     ) -> tuple[list[WinningHypothesis], list[dict[str, str]]]:
         """Use an isolated Codex session for five-axis semantic clustering."""
 
@@ -1744,7 +1801,12 @@ async def analyze_winning_subagents(
             [left.hypothesis_id, right.hypothesis_id]
             for index, left in enumerate(exact_unique)
             for right in exact_unique[index + 1 :]
+            if not changed_hypothesis_ids
+            or left.hypothesis_id in changed_hypothesis_ids
+            or right.hypothesis_id in changed_hypothesis_ids
         ]
+        if not pair_ids:
+            return exact_unique, exact_merges
         output_schema = {
             "pairwise_comparisons": [
                 {
@@ -2637,9 +2699,8 @@ async def analyze_winning_subagents(
         """
 
         nonlocal dynamic_outputs
-        repair_reserve = int(
-            swarm_controller.policy.get("expert_repair_reserved_instances", 0)
-        )
+        # Dynamic-v2 has no reserved legacy repair or quality-judge capacity.
+        repair_reserve = 0
         maximum_instances = int(
             swarm_controller.policy.get("max_dynamic_instances", 18)
         )
@@ -2676,20 +2737,22 @@ async def analyze_winning_subagents(
         contribution_rows: list[WinningContribution] = []
         execution_batches: list[dict[str, Any]] = []
         maximum_observed_concurrency = 0
-        recruited_pairs: set[tuple[str, str]] = set()
         instance_hypothesis_ids: dict[str, set[str]] = {}
         reasoning_seeds_by_instance: dict[str, list[dict[str, Any]]] = {}
         winning_angle_assignments: dict[str, dict[str, Any]] = {}
         query_equipment_blueprint: dict[str, Any] = {}
         winning_angle_refresh_task: asyncio.Task[None] | None = None
         candidate_id_aliases: dict[str, str] = {}
+        portfolio_rejected_ids: set[str] = set()
+        reviewed_candidate_ids: set[str] = set()
+        pending_incremental_review_ids: set[str] = set()
+        review_targets_by_instance: dict[str, set[str]] = {}
+        incremental_review_sequence = 0
         semantic_clustered_ledger_version = -1
         candidate_competition_converged = False
         s3_active_instances_materialized = False
-        s4_candidate_fanout_materialized = False
         initial_expert_review_scope: set[str] | None = None
         dynamic_instance_retry_counts: dict[str, int] = {}
-        portfolio_innovation_audits_by_instance: dict[str, dict[str, Any]] = {}
         running_instances: dict[
             asyncio.Task[tuple[WinningAgentInstance, dict[str, Any], int]],
             tuple[WinningAgentInstance, set[str], int],
@@ -3748,10 +3811,7 @@ async def analyze_winning_subagents(
             # designer and made a two-candidate task reread 30-40k chars.
             # Only the independent portfolio reviewer is intentionally
             # global.
-            if (
-                candidate_scope
-                and instance.archetype != "independent_portfolio_reviewer"
-            ):
+            if candidate_scope:
                 ledger_candidates = [
                     item
                     for item in ledger_candidates
@@ -3766,52 +3826,17 @@ async def analyze_winning_subagents(
                 )
                 for item in ledger_candidates
             ]
-            prioritized_evidence = _prioritize_winning_evidence_index(
-                shared.get("evidence_index", []),
-                archetype=instance.archetype,
-            )
-            if (
-                instance.mission_node in {"S3", "S4"}
-                and not instance.hypothesis_id
-                and not dynamic_instance_retry_counts.get(instance.instance_id, 0)
-            ):
-                # Public equipment catalogues define the later comparison
-                # boundary; they must not anchor the first innovation turn to
-                # familiar model families.
-                prioritized_evidence = [
-                    item
-                    for item in prioritized_evidence
-                    if str(item.get("created_by", "")) != "weapon_equipment"
-                    and not str(item.get("evidence_id", "")).startswith(
-                        "ev-weapon_equipment-"
-                    )
+            compact_evidence_index: list[Any] = []
+            if instance.mission_node in {"S1", "S2", "S3", "S4"}:
+                # Creative turns are intentionally evidence-free. Evidence,
+                # maturity and validation fields anchor independent creators
+                # to familiar solutions and belong outside this session.
+                candidate_snapshot = []
+            elif instance.archetype == "independent_portfolio_reviewer":
+                candidate_snapshot = [
+                    _minimal_portfolio_candidate_handoff(item)
+                    for item in ledger_candidates
                 ]
-            candidate_evidence_ids = {
-                evidence_id
-                for candidate in candidate_snapshot
-                for evidence_id in candidate.get("evidence_ids", [])
-                if str(evidence_id).strip()
-            }
-            if candidate_evidence_ids:
-                prioritized_evidence = _quality_judge_scoped_evidence_index(
-                    prioritized_evidence,
-                    candidate_evidence_ids,
-                )
-            compact_evidence_index = _compact_prompt_value(
-                prioritized_evidence,
-                max_string_chars=(
-                    140
-                    if instance.archetype == "independent_portfolio_reviewer"
-                    else 260
-                ),
-                max_list_items=(
-                    6
-                    if instance.archetype == "independent_portfolio_reviewer"
-                    else 18
-                    if instance.mission_node == "S6"
-                    else 14
-                ),
-            )
             candidate_handoff_chars = len(
                 json.dumps(candidate_snapshot, ensure_ascii=False)
             )
@@ -3941,6 +3966,82 @@ async def analyze_winning_subagents(
                 ],
             }
             if instance.mission_node in {"S1", "S2", "S3", "S4"}:
+                open_brief = _open_s3_exploration_brief(
+                    str(shared.get("topic", "")),
+                    shared.get("structured_query_brief", {}),
+                )
+                upstream_seeds = [
+                    {
+                        key: seed.get(key, "")
+                        for key in (
+                            "combat_problem",
+                            "enemy_advantage",
+                            "breakpoint",
+                            "changed_variable",
+                            "direct_effect",
+                        )
+                        if seed.get(key) not in (None, "", [], {})
+                    }
+                    for dependency in instance.depends_on
+                    for seed in reasoning_seeds_by_instance.get(dependency, [])
+                    if isinstance(seed, Mapping)
+                ][:4]
+                common_input = {
+                    "run_id": shared.get("run_id", ""),
+                    "agent_instance_id": instance.instance_id,
+                    "mission_node": instance.mission_node,
+                    "specialist_task": to_plain(task),
+                    "role_contract": _dynamic_role_contract_handoff(contract, task),
+                    "query": str(shared.get("topic", "")),
+                    "battlefield_contradiction": {
+                        key: open_brief.get(key, "")
+                        for key in (
+                            "combat_problem_frame",
+                            "enemy_target_profile",
+                            "battle_phase_and_constraints",
+                            "required_direct_military_effects",
+                        )
+                    },
+                    "upstream_reasoning_seeds": upstream_seeds,
+                    "open_challenge": (
+                        "提出一种会改变交战关系、且不能被普通流程优化替代的直接作战装备；"
+                        "若建议维度不成立，请自行换一个更强方向。"
+                    ),
+                    "isolation_contract": {
+                        "raw_other_agent_sessions_visible": False,
+                        "may_recruit_child_agent": False,
+                    },
+                }
+            elif instance.archetype == "independent_portfolio_reviewer":
+                common_input = {
+                    "run_id": shared.get("run_id", ""),
+                    "agent_instance_id": instance.instance_id,
+                    "mission_node": "S5",
+                    "specialist_task": to_plain(task),
+                    "query": str(shared.get("topic", "")),
+                    "candidate_ledger": {
+                        "ledger_id": ledger_snapshot.ledger_id if ledger_snapshot else "",
+                        "version": ledger_snapshot.version if ledger_snapshot else 0,
+                        "hypotheses": candidate_snapshot,
+                        "allowed_hypothesis_ids": sorted(candidate_scope),
+                        "handoff_schema": "incremental_portfolio_identity_v1",
+                    },
+                    "review_contract": (
+                        "只判定组合成员的独立性、互补性和直接装备属性；不生成、改写、"
+                        "补证、验证、估算成熟度或重新命名候选。"
+                    ),
+                    "existing_portfolio": [
+                        _minimal_portfolio_candidate_handoff(item)
+                        for item in (ledger_snapshot.hypotheses if ledger_snapshot else [])
+                        if item.hypothesis_id not in candidate_scope
+                        and item.hypothesis_id in reviewed_candidate_ids
+                    ][:8],
+                    "isolation_contract": {
+                        "raw_other_agent_sessions_visible": False,
+                        "may_recruit_child_agent": False,
+                    },
+                }
+            if instance.mission_node in {"S1", "S2", "S3", "S4"}:
                 common_input["equipment_portfolio_contract"] = {
                     "selection_rule": (
                         "候选由本次Codex语义推演产生；数量、装备族、技术方向、创新类别和名称格式均不预设"
@@ -3952,7 +4053,7 @@ async def analyze_winning_subagents(
                     "free_divergence_first": True,
                     "counterfactual_examples_available_after_divergence_only": True,
                 }
-            if instance.mission_node in {"S5", "S6"}:
+            if instance.mission_node == "S6":
                 common_input["s6_release_preflight"] = {
                     "identity_and_scene": (
                         "保持主装备、目标、作用域、直接战果和装备专属流程一致"
@@ -3962,7 +4063,7 @@ async def analyze_winning_subagents(
                     ),
                     "quality_basis": "军事因果、技术可实现性、证据边界和可证伪性",
                 }
-            if instance.mission_node in {"S5", "S6"} and baseline_boundaries:
+            if instance.mission_node == "S6" and baseline_boundaries:
                 common_input["baseline_availability_boundaries"] = list(
                     baseline_boundaries
                 )
@@ -3976,143 +4077,71 @@ async def analyze_winning_subagents(
                 dimension_assignment = dict(
                     winning_angle_assignments.get(instance.instance_id, {})
                 )
-                common_input["query_equipment_blueprint"] = dict(
-                    query_equipment_blueprint
+                common_input["winning_dimensions"] = [
+                    value
+                    for value in (
+                        str(dimension_assignment.get("combat_dimension", "")).strip(),
+                        str(dimension_assignment.get("changed_confrontation_variable", "")).strip(),
+                        str(dimension_assignment.get("direct_military_result", "")).strip(),
+                    )
+                    if value
+                ][:3]
+                common_input["open_challenge"] = (
+                    str(dimension_assignment.get("novelty_search_question", "")).strip()
+                    or common_input["open_challenge"]
                 )
                 common_input["combat_dimension_assignment"] = {
                     key: dimension_assignment.get(key, "")
                     for key in (
                         "assignment_id",
-                        "active",
-                        "source",
-                        "authority",
-                        "allowed_response_modes",
-                        "self_proposed_id_pattern",
                         "combat_dimension",
-                        "dimension_winning_logic",
-                        "target_and_phase",
-                        "mechanism_thesis",
                         "changed_confrontation_variable",
                         "direct_military_result",
-                        "novelty_search_question",
-                        "exclusion_boundary",
-                        "competing_explanation",
-                        "adversary_adaptation",
-                        "failure_boundary",
-                        "reserved_other_angles",
-                        "rule",
                     )
                 }
-            if instance.archetype == "independent_portfolio_reviewer":
-                common_input["disruptive_paradigm_seed_library_v2"] = (
-                    disruptive_seed_context(
-                        str(shared["topic"]),
-                        branch=primary_branch,
-                        agent_id=instance.archetype,
-                    )
-                )
-            if instance.instance_id in portfolio_innovation_audits_by_instance:
-                common_input["portfolio_innovation_audit"] = dict(
-                    portfolio_innovation_audits_by_instance[instance.instance_id]
-                )
             if instance.mission_node in {"S1", "S2"} and not instance.hypothesis_id:
                 output_schema = {
                     "reasoning_seeds": [
                         {
-                            "mechanism_thesis": "query-specific opponent or operational mechanism, not an equipment title",
-                            "incumbent_success_logic": "why the current opponent or operational paradigm remains effective",
-                            "lock_in_dependency": "the dependency, incentive or timing relationship that keeps the incumbent paradigm stable",
-                            "paradigm_break_condition": "a concrete future condition under which that success logic stops holding",
-                            "changed_confrontation_variable": "the relationship that could be changed",
-                            "direct_military_result": "decisive battlefield result if the thesis holds",
-                            "equipment_implications": [
-                                "open-ended implications for S3; not preselected candidates"
-                            ],
-                            "competing_explanation": "a materially different explanation or route",
-                            "non_equipment_control": "the strongest doctrine, process or ordinary upgrade explanation that must be ruled out before new equipment is justified",
-                            "adversary_adaptation": "how the opponent could neutralize the thesis",
-                            "failure_boundary": "falsifiable condition",
-                            "evidence_ids": ["exact evidence_id or packet_id"],
+                            "combat_problem": "the decisive battlefield contradiction",
+                            "enemy_advantage": "why the opponent currently controls it",
+                            "breakpoint": "the exploitable task-chain breakpoint",
+                            "changed_variable": "the relationship worth changing",
+                            "direct_effect": "the desired direct battlefield result",
                         }
                     ],
-                    "quality_residuals": ["string"],
                     "stop_reason": "string",
                 }
                 instruction = (
-                    "本节点只形成制胜机理问题与竞争解释，不直接批量命名装备候选，也不向候选账本写卡。"
-                    "前置winning_problem_propositions只是Codex对Query形成的开放问题图，不是答案；"
-                    "本会话可改写、合并或全部舍弃，不得继承其中的固定措辞形成装备名称或技术路线。"
-                    "S1聚焦对手体系依赖、适应路径和可利用窗口；S2聚焦任务组织、决策权、力量运用和"
-                    "效应递进关系。先写清现行范式的成功逻辑和锁定依赖，再提出使其失效的具体条件；"
-                    "禁止把现役短板、一般性能不足或热门技术趋势直接改写成颠覆机会。每条reasoning_seed"
-                    "必须由完整Query和证据产生，写清改变的对抗变量、"
-                    "直接军事结果、竞争解释、对手反适应与失败边界。equipment_implications只是交给S3"
-                    "继续发散的问题提示，禁止写成固定装备目录、最终名称或每类一项的配额。"
-                    "在确有独立边际价值时优先保留2至4条彼此不同的reasoning_seed，差异必须落在"
-                    "任务链断点、对抗变量、核心机理或直接战果，而不是换平台、换弹型或换措辞；"
-                    "不足两条时如实少产出，不为数量拼凑。未进入首轮S3分配的高价值seed将作为"
-                    "空分支的预计算备用命题，因而也必须具备完整的反适应和失败边界。"
-                    "每条还要给出non_equipment_control：若调整条令、流程、编组或对现役装备普通升级即可"
-                    "取得同一直接战果，就把它保留为对照解释，不得冒充新质装备牵引。"
-                    "被关键词激活的证据通道和种子卡必须经过本Codex会话消化，可全部舍弃。"
-                    + _open_s3_theme_instruction()
+                    "这是轻型创造前置会话，只从Query提炼2至4个彼此不同、能打开新武器思路的"
+                    "战场矛盾。每条只写战场问题、对手或现行范式为何占优、可改变的关系、期望直接"
+                    "战果和一句开放挑战；不要命名装备，不要写证据、TRL、成本、验证、反适应、失败"
+                    "边界或审计字段。"
+                    + (
+                        "S1重点从对手体系的依赖、感知/决策/火力闭环和其最难被剥夺的优势反推破局关系，"
+                        "避免把解决方案写成装备。"
+                        if instance.mission_node == "S1"
+                        else "S2重点从我方任务组织、时序、效应窗口和资源交换关系中找出传统流程无法解决的矛盾，"
+                        "避免复述S1的对手底图。"
+                    )
                 )
                 phase = "winning_swarm_dynamic_reasoning_seed"
             elif instance.mission_node in {"S3", "S4"} and not instance.hypothesis_id:
                 output_schema: dict[str, Any] = {
-                    "concept_arena": [
-                        {
-                            "concept_id": "short local id",
-                            "comparison_position": "strongest_conventional|frontier_discontinuity|workflow_or_mature_assembly",
-                            "technical_or_operational_leap": "the distinct non-incremental opportunity explored",
-                            "weapon_architecture": "the concrete direct-combat weapon form implied by that opportunity",
-                            "decisive_effect": "the direct battlefield result and changed exchange relationship",
-                            "conventional_absorption_test": "why an ordinary upgrade can or cannot absorb it",
-                            "frontier_credibility_test": "whether the enabling principle can plausibly alter the weapon body and what would falsify it",
-                            "disposition": "selected|reserve|rejected",
-                        }
-                    ],
                     "hypotheses": [
                         {
                             "title": "string",
-                            "winning_angle_id": "combat_dimension_assignment.assignment_id when accepted/reframed, or self-proposed:<short-id> when replaced",
-                            "combat_dimension": "exact assigned combat dimension",
-                            "dimension_winning_logic": "how the candidate wins from this dimension under the Query blueprint",
-                            "original_paradigm": "the conventional relationship or assumption this candidate overturns",
-                            "disruptive_shift": "the new winning relationship created by this weapon",
-                            "independence_thesis": "why this is not a renamed variant of any reserved_other_angle",
-                            "naming_rationale": "holistic editorial reason this is a natural, memorable name for the complete weapon; do not decompose or justify every word",
-                            "decisive_advantage_thesis": "why this specific weapon can change the outcome in the query's engagement window rather than merely improve a generic metric",
-                            "cross_query_distinction": "which configuration, mechanism and naming elements must change under another target, phase or threat",
-                            "nearest_public_baseline": "string",
-                            "changed_confrontation_variable": "string",
+                            "equipment_form": "具体主装备形态",
+                            "primary_equipment_identity": "唯一主装备及平台/弹体边界",
+                            "target_and_direct_effect": "目标、阶段与直接战果",
+                            "unique_operational_role": "不可被其他候选替代的作战角色",
+                            "changed_confrontation_variable": "改变的战场关系",
+                            "frontier_principle": "装备本体采用的关键新原理",
+                            "disruptive_shift": "由此形成的新制胜关系",
                             "mechanism_chain": ["string"],
                             "direct_military_effects": ["string"],
-                            "equipment_forms": ["specific equipment form"],
-                            "project_function": "who uses this equipment, under what conditions, to perform what action and produce what mission result",
-                            "reference_overview": "one compact winning sentence displayed directly below the weapon name, usually 35-80 Chinese characters as an editorial target rather than a gate; state the distinctive battlefield condition, disruptive relationship and direct combat result without repeating the title or using a fixed template",
-                            "system_interfaces": [
-                                "concrete platform, payload, C2, fire-control or support interface"
-                            ],
-                            "novelty_delta": "string",
-                            "frontier_principle": "required concrete enabling principle, architecture or effect actually embodied by this weapon",
-                            "technology_discontinuity": "required reason the strongest conventional upgrade or process change cannot absorb the winning increment",
-                            "technology_horizon": "required bounded horizon such as 3-5 years|5-10 years|longer exploration, without asserting unsupported readiness",
-                            "engineering_bottleneck": "required primary physics, integration, cost, safety or test question that could falsify this concept; semantic content, not a local string gate",
-                            "evidence_ids": ["exact evidence_id or packet_id"],
-                            "evidence_boundary": "string",
-                            "counterevidence": ["string"],
-                            "adversary_adaptations": ["string"],
-                            "failure_boundaries": ["string"],
-                            "trl_constraints": ["string"],
-                            "cost_constraints": ["string"],
-                            "industrial_constraints": ["string"],
-                            "cross_scenario_results": ["string"],
-                            "validation_plan": ["falsifiable test"],
-                            "implementation_path": "new|upgrade|system_link|non_materiel",
                         }
                     ],
-                    "quality_residuals": ["string"],
                     "stop_reason": "string",
                 }
                 # The schema and governed inputs retain all audit constraints.
@@ -4123,188 +4152,45 @@ async def analyze_winning_subagents(
                     "combat_dimension_assignment", {}
                 )
                 instruction += (
-                    "先依据完整Query和upstream_reasoning_seeds自主定义问题并形成候选空间，再把"
-                    "query_equipment_blueprint与combat_dimension_assignment仅作为soft_challenge。"
-                    "可accept、reframe或replace；替换时用self-proposed:<简短id>，并说明相对其他方向"
-                    "独立的任务断点、核心机理或直接战果。S3与S4同为一次性创新装备创作会话，"
-                    "不存在首轮、物化或补救分工；维度字段用于交接，不得反向拼成title。"
+                    "只输出1至2张最小候选卡。先从Query矛盾和少量制胜维度自由推演，"
+                    "再一次性完成自然命名与完整装备身份；S3与S4权限相同。每卡只写装备形态、"
+                    "目标与直接战果、独特作战角色、改变变量、前沿原理、颠覆关系和短机理链。"
+                    "禁止输出证据ID、证据边界、TRL、成本、产能、验证计划、反适应、失败边界、"
+                    "工程瓶颈、技术期限、系统接口或任何审计/交接字段；不得生成组合装备或事后改名。"
                 )
-                if isinstance(dimension_assignment, Mapping):
-                    instruction += (
-                        "在内部比较不同物理创新与战场存在方式，只输出自然成立的候选；数量不是门槛。"
-                    )
-                if instance.archetype in {
-                    "direct_combat_equipment_generator",
-                    "remote_precision_munition_generator",
-                    "mass_scalable_combat_family_generator",
-                }:
-                    instruction += (
-                        "公开资料只界定已有基线；具名现役属性须有对象证据，未来增量可用相邻技术或"
-                        "效应机理支撑并明确为待验证假设。缺少同名型号或引用不导致机械失败。"
-                        "每条保持一个主装备，装备构型、制胜机理、作战运用、接口、失败边界和可证伪试验"
-                        "必须闭合；evidence_boundary只写事实支持范围，不得混入内部流程。"
-                    )
-                if "portfolio_direction_shortfall" in instance.trigger_residuals:
-                    instruction += _portfolio_gap_completion_instruction(
-                        str(shared.get("topic", ""))
-                    )
-                if "frontier_innovation_shortfall" in instance.trigger_residuals:
-                    instruction += _portfolio_frontier_completion_instruction()
-                if instance.archetype == "direct_combat_equipment_generator":
-                    instruction += _direct_combat_generator_diversity_instruction()
-                    instruction += (
-                        "先服从query_combat_equipment_divergence_brief选择目标和武器构型。"
-                        "公开型号只在Codex推演出的候选与其任务对象、平台和机理直接匹配时核对；"
-                        "不得默认生成任何共享示例装备。"
-                    )
-                elif instance.archetype == "remote_precision_munition_generator":
-                    instruction += (
-                        "若形成多个候选，必须依据query_combat_equipment_divergence_brief分属不同发射域、"
-                        "目标包线或飞行/毁伤逻辑；候选是否成立由独立机理和对象证据决定，并优先使用与query目标直接匹配的公开装备基线。"
-                        "任何公开型号都不能成为默认配对。每条只选择一个有接口锚点的主增量，其余写成边界或验证"
-                        "条件；禁止把多个热门能力堆叠成复合创新。"
-                    )
-                elif instance.archetype == "mass_scalable_combat_family_generator":
-                    instruction += (
-                        "仅在query确有饱和消耗、成本交换、产能或快速补充压力时形成规模化装备族；"
-                        "装备主体和毁伤对象仍必须由query决定，任何低成本巡航效应器或低空无人平台"
-                        "都不得固定占用候选。柔性重组只能写成固定构型之间的"
-                        "工厂换产、多源替代和批次鉴定，不得声称战场现场换装即可形成新型号。"
-                    )
+                if instance.mission_node == "S3":
+                    instruction += "S3偏向重构制胜机理与武器本体，可提出完全不同于现役类别的存在方式。"
+                else:
+                    instruction += "S4偏向跨域、反常规或极端场景下的装备组合原理，但仍须保持单一主装备身份；不要复述S3的机理。"
                 phase = "winning_swarm_dynamic_seed"
             else:
                 output_schema = {
-                    "contributions": [
+                    "decisions": [
                         {
-                            "hypothesis_id": "exact ledger hypothesis_id",
-                            "merge_target": f"{instance.merge_target}",
-                            "title": "complete replacement title for bounded expert repair only",
-                            "replacement_title": "S4/S5 only: concise semantic rename when the current title fails the shared naming contract; otherwise empty",
-                            "nearest_public_baseline": "complete replacement baseline for bounded expert repair only",
-                            "changed_confrontation_variable": "complete replacement confrontation variable for bounded expert repair only",
-                            "findings": ["incremental finding"],
-                            "mechanism_chain": [
-                                "complete replacement mechanism chain for bounded expert repair only"
-                            ],
-                            "mechanism_chain_updates": ["string"],
-                            "direct_military_effects": ["string"],
-                            "equipment_forms": ["specific equipment form"],
-                            "project_function": "complete project function; required for equipment candidates",
-                            "system_interfaces": [
-                                "concrete platform, payload, C2, fire-control or support interface"
-                            ],
-                            "novelty_delta": "string",
-                            "frontier_principle": "preserve S3 frontier principle; only narrow unsupported scope without replacing the innovation thesis",
-                            "technology_discontinuity": "preserve the S3 discontinuity; only clarify why conventional absorption fails",
-                            "technology_horizon": "preserve or evidence-bound the S3 horizon",
-                            "engineering_bottleneck": "preserve or sharpen the falsifiable S3 engineering bottleneck",
-                            "original_paradigm": "preserve the incumbent winning relationship; fill only if missing unless governed expert repair replaces the identity bundle",
-                            "disruptive_shift": "preserve the S3 relationship inversion; do not substitute a generic novelty claim",
-                            "independence_thesis": "preserve why this candidate is not an incremental or renamed sibling",
-                            "naming_rationale": "holistic editorial reason for preserving or naturally renaming the complete weapon; never a word-by-word field mapping",
-                            "decisive_advantage_thesis": "repair the query-specific battle-winning advantage before S6",
-                            "cross_query_distinction": "repair what configuration, mechanism and naming must change under another query",
-                            "evidence_ids": ["exact evidence_id or packet_id"],
-                            "evidence_boundary": "string",
-                            "counterevidence": ["string"],
-                            "adversary_adaptations": ["string"],
-                            "failure_boundaries": ["string"],
-                            "trl_constraints": ["string"],
-                            "cost_constraints": ["string"],
-                            "industrial_constraints": ["string"],
-                            "cross_scenario_results": ["string"],
-                            "validation_plan": ["falsifiable test"],
-                            "implementation_path": "new|upgrade|system_link|non_materiel",
-                            "patch_mode": "append|replace_bounded_claims",
-                            "replace_fields": [
-                                "field name replaced only during expert repair"
-                            ],
-                            "residuals_resolved": ["string"],
-                            "incremental_quality": "0..1",
-                            "recommendation": "retain|revise|reject",
+                            "hypothesis_id": "exact candidate id",
+                            "decision": "retain|merge|reject",
+                            "merge_target_hypothesis_id": "exact id when merge, otherwise empty",
+                            "reason": "one concise semantic reason",
+                            "independent_axis": "target|breakpoint|changed_variable|core_mechanism|direct_result",
+                            "direct_equipment": "boolean",
                         }
                     ],
-                    "portfolio_review": ["string"],
+                    "portfolio_order": ["exact candidate ids"],
+                    "portfolio_summary": "one short combination summary",
                     "stop_reason": "string",
                 }
                 instruction = (
-                    "只向当前不可变账本中的候选提交结构化增量。每项贡献必须使用精确"
-                    "hypothesis_id和声明的merge_target。S3/S4已经独立生成创新装备；S5是候选"
-                    "语义准入、同义合并、证据与可行性判断的唯一责任节点，S6只撰写已入选装备画像。"
-                    "hypothesis_id只能从candidate_ledger.allowed_hypothesis_ids逐字复制，禁止"
-                    "自行创造新ID或在contributions中新增候选。若研究中发现账本外的新装备，"
-                    "只能写入portfolio_review并明确标注portfolio_direction_shortfall，交由受治理的"
-                    "S5贡献应核对敌方目标/威胁及反制、"
-                    "我方主装备与时敏交战流程、直接战果，并逐装备核对证据层级；现役升级严审对象"
-                    "证据，前瞻新研允许相邻项目/组成技术/机理证据与较低置信度，不得把这些问题留到"
-                    "最终质量门事后发现。字数不是硬门。"
-                    "跨Agent交接只允许传递装备身份、场景、机理、直接战果、证据事实、不确定性和"
-                    "可证伪边界；S1—S6、Agent、评审意见、补写要求、交接状态和执行过程只能进入"
-                    "审计事件，不得写入findings、evidence_boundary、failure_boundaries或其他候选字段。"
-                    "evidence_boundary必须是面向报告读者的证据认识边界，只写公开材料支持什么、"
-                    "不支持什么以及哪些属于待验证假设；发现污染时必须在S5合并前舍弃或自然重写，"
-                    "不得冻结后交给S6。"
-                    "S5必须继续用query_combat_equipment_divergence_brief审查装备构型与主题因果关系；"
-                    "若候选只是共享示例换名或与Query目标、阶段、毁伤效果脱节，应在当前前置节点修正或淘汰。"
-                    "S5必须消费并比较S3/S4生成的frontier_principle、technology_discontinuity、"
-                    "technology_horizon和engineering_bottleneck；只能依据证据边界收窄夸大表述、补清接口"
-                    "和可证伪条件，不得把技术构型型名称重新压缩成抽象动作词，也不得在此阶段才补造前沿原理、"
-                    "颠覆机理或新装备身份。若S3语义本身不成立，应判退或返回组合缺口，不进行事后创新包装。"
-                    "S5还必须逐项复核original_paradigm、disruptive_shift和independence_thesis，并用"
-                    "最强常规升级和非装备对照做吸收测试。"
-                    "若删去前沿构型后，常规方案仍能原样完成同一接敌链、授权时机、效应触发、直接战果和"
-                    "判退试验，则必须revise或reject，不能靠novelty_delta和新名称包装过关。"
-                    "装备名称已经由其S3/S4生成Codex按完整装备语义完成。S5不得本地拼名或事后美化；"
-                    "名称与装备机理不一致时只能recommendation=revise或reject，并明确语义原因。"
-                    + _query_led_combat_equipment_theme_instruction()
-                    + "若输入含disruptive_paradigm_seed_library_v2，审查候选是否真正改变所选种子卡"
-                    "对应的成本、平台、时间、效应、体系或博弈关系；未形成query因果映射时舍弃，"
-                    "不得为覆盖种子而增项。"
+                    "你是S5独立组合装备评审。只比较候选的目标、任务链断点、改变变量、核心机理和"
+                    "直接战果，判断retain、merge或reject；确认它是否是具体直接作战装备、是否与组合中"
+                    "其他候选独立或互补。不得生成新候选，不得改写候选正文，不得重新命名；名称不一致只能"
+                    "判reject并说明语义冲突。不要输出或补写证据、TRL、成本、产能、验证、反适应、失败"
+                    "边界、接口或画像字段。候选一旦完成即可审查，输入可能只是新增/受影响的小批候选。"
                 )
-                if instance.archetype == "equipment_capability_image_repairer":
-                    instruction += (
-                        "若原候选的装备形态、机理、成本或产能主张超出公开证据，必须设置"
-                        "patch_mode=replace_bounded_claims，并在replace_fields中列出需要整体"
-                        "替换的字段；允许成套替换title、nearest_public_baseline、"
-                        "changed_confrontation_variable、mechanism_chain、direct_military_effects、"
-                        "equipment_forms、project_function、evidence_ids、novelty_delta、naming_rationale、"
-                        "original_paradigm、disruptive_shift、independence_thesis、decisive_advantage_thesis、"
-                        "cross_query_distinction与implementation_path。标题、对抗变量、"
-                        "机理链、军事效果和装备形态必须描述同一个证据边界内的固定原型；若删除"
-                        "途中更新、末段确认、动态改瞄、弹间协同或现场换装等能力，必须同步从"
-                        "标题和机理链中删除，不能仅追加验证要求或保留已被专家否定的概念。"
-                        "公开证据必须证明具体装备基线，拟议增量则按工程假设身份修复：不能虚构其"
-                        "已经存在，但也不能因为尚未公开列装就删除；应收缩到一个有物理/接口锚点、"
-                        "有反证和可证伪试验的增量。成熟基线属性重包装仍必须删除。"
+                if instance.archetype != "independent_portfolio_reviewer":
+                    raise RuntimeError(
+                        "dynamic-v2 S5 only permits the independent portfolio reviewer"
                     )
-                if instance.archetype == "evidence_verifier":
-                    instruction += (
-                        "本节点是整合式S5审计，必须覆盖candidate_ledger中的全部候选，不按装备家族"
-                        "抽样。对每项候选同时完成四类检查：一是公开基线、证据引用、反证和不确定性；"
-                        "二是TRL、成本、产能、工业依赖与规模化补充边界；三是可证伪指标、最近对照"
-                        "方案、试验条件和明确判退阈值；四是名称、主装备、改变变量、核心机理和直接"
-                        "战果是否保持同一语义身份。可以合并证据边界、trl_constraints、cost_constraints、"
-                        "industrial_constraints、validation_plan和failure_boundaries，但不得因候选同族、"
-                        "证据数量少或缺少同名公开型号而机械删除前瞻新研方向。"
-                    )
-                if instance.archetype == "independent_portfolio_reviewer":
-                    output_schema = {
-                        "contributions": [],
-                        "portfolio_review": [
-                            "candidate id + retain|merge|reject + one-sentence five-axis reason"
-                        ],
-                        "stop_reason": "string",
-                    }
-                    instruction = (
-                        "执行快速独立组合评审，不生成、改写或补强候选。只比较目标对象、任务链断点、"
-                        "改变的对抗变量、核心制胜机理和直接军事战果；同族装备只要制胜关系可独立验收"
-                        "即可并存，换名、换发射域或接口扩写不得单独占位。逐候选给出retain、merge或"
-                        "reject及一句高信息密度理由；同时确认整合式证据审计已覆盖TRL、成本、产能、"
-                        "工业边界、可证伪试验和判退条件。证据仅用于确认边界，不重做取证，不输出长篇论证。"
-                    )
-                    phase = "winning_swarm_dynamic_portfolio_review_fast"
-                else:
-                    phase = "winning_swarm_dynamic_merge"
+                phase = "winning_swarm_dynamic_portfolio_review_fast"
             emit_swarm_event(
                 "winning_agent_session_started",
                 actor=instance.instance_id,
@@ -4380,7 +4266,12 @@ async def analyze_winning_subagents(
             """Publish newly completed seed branches without a global barrier."""
 
             nonlocal ledger
-            candidates_by_id = {item.hypothesis_id: item for item in hypotheses}
+            candidates_by_id = {
+                item.hypothesis_id: item
+                for item in hypotheses
+                if item.hypothesis_id not in portfolio_rejected_ids
+                and canonical_candidate_id(item.hypothesis_id) == item.hypothesis_id
+            }
             if ledger is not None:
                 # Preserve already merged S4-S6 fields when a slower S3
                 # branch publishes an additional candidate.
@@ -4437,15 +4328,19 @@ async def analyze_winning_subagents(
             return id_remap
 
         def compact_candidate_ledger_for_review() -> None:
-            """Plan a bounded blind-review scope without deleting candidates.
+            """Plan a bounded legacy review scope without deleting candidates.
 
-            The complete governed ledger remains visible to the candidate
-            board and downstream semantic clustering.  Review capacity limits
-            one Codex call, not the existence of an independently generated
-            weapon direction.
+            Dynamic-v2 bypasses this compatibility helper because incremental
+            S5 scope is driven by newly completed candidate ids.
             """
 
             nonlocal initial_expert_review_scope
+            if str(swarm_controller.policy.get("policy_id")) == "winning_swarm_dynamic_v2":
+                # Dynamic S5 reviews only the candidate ids delivered in each
+                # completion-driven batch; never pre-trim the ledger with an
+                # expert-pool quota.
+                initial_expert_review_scope = None
+                return
             pool_maximum = int(
                 swarm_controller.policy.get("expert_candidate_pool_maximum", 8)
             )
@@ -4470,7 +4365,11 @@ async def analyze_winning_subagents(
                 rule=("评审容量只限制本轮Codex输入，不删除完整候选账本"),
             )
 
-        async def semantic_cluster_candidate_ledger(*, scope_id: str) -> dict[str, str]:
+        async def semantic_cluster_candidate_ledger(
+            *,
+            scope_id: str,
+            changed_hypothesis_ids: set[str] | None = None,
+        ) -> dict[str, str]:
             """Publish the isolated Codex five-axis clustering decision."""
 
             nonlocal ledger, semantic_clustered_ledger_version
@@ -4482,6 +4381,7 @@ async def analyze_winning_subagents(
             ) = await cluster_hypotheses_with_independent_codex(
                 ledger.hypotheses,
                 scope_id=scope_id,
+                changed_hypothesis_ids=changed_hypothesis_ids,
             )
             id_remap = {
                 str(item["source_hypothesis_id"]): str(item["target_hypothesis_id"])
@@ -4539,145 +4439,20 @@ async def analyze_winning_subagents(
             semantic_clustered_ledger_version = ledger.version
             return id_remap
 
-        def materialize_s4_candidate_fanout() -> None:
-            """Bind one isolated S4 realization session to every retained candidate."""
-
-            nonlocal graph, s4_candidate_fanout_materialized
-            if s4_candidate_fanout_materialized or ledger is None:
-                return
-            retained_ids = [item.hypothesis_id for item in ledger.hypotheses]
-            s4_rows = [
-                item for item in graph.agent_instances if item.mission_node == "S4"
-            ]
-            templates = [item for item in s4_rows if not item.hypothesis_id]
-            bound_by_candidate = {
-                canonical_candidate_id(item.hypothesis_id): item
-                for item in s4_rows
-                if item.hypothesis_id
-            }
-            if not templates and not bound_by_candidate:
-                return
-            template = templates[0] if templates else s4_rows[0]
-            s3_dependencies = [
-                item.instance_id
-                for item in graph.agent_instances
-                if item.mission_node == "S3" and not item.hypothesis_id
-            ]
-            s3_wave = max(
-                (
-                    item.wave
-                    for item in graph.agent_instances
-                    if item.instance_id in s3_dependencies
-                ),
-                default=template.wave - 1,
-            )
-            realized: list[WinningAgentInstance] = []
-            for ordinal, hypothesis_id in enumerate(retained_ids, start=1):
-                existing = bound_by_candidate.get(hypothesis_id)
-                instance_id = (
-                    existing.instance_id
-                    if existing is not None
-                    else template.instance_id
-                    if ordinal == 1
-                    else "winning-s4-realization-"
-                    + sha256(f"{graph.graph_id}:{hypothesis_id}".encode()).hexdigest()[
-                        :16
-                    ]
-                )
-                realized.append(
-                    replace(
-                        existing or template,
-                        instance_id=instance_id,
-                        display_name=f"装备实现 Agent {ordinal}",
-                        hypothesis_id=hypothesis_id,
-                        depends_on=list(s3_dependencies),
-                        wave=s3_wave + 1,
-                        trigger_residuals=list(
-                            dict.fromkeys(
-                                [
-                                    *(existing or template).trigger_residuals,
-                                    "candidate_realization_required",
-                                ]
-                            )
-                        ),
-                    )
-                )
-
-            old_s4_ids = {item.instance_id for item in s4_rows}
-            for instance_id in old_s4_ids:
-                pending.pop(instance_id, None)
-            for item in realized:
-                pending[item.instance_id] = item
-
-            other_instances = [
-                item for item in graph.agent_instances if item.mission_node != "S4"
-            ]
-            s4_ids = [item.instance_id for item in realized]
-            evidence_ids = [
-                item.instance_id
-                for item in other_instances
-                if item.mission_node == "S5" and item.archetype == "evidence_verifier"
-            ]
-            rebound_others: list[WinningAgentInstance] = []
-            for item in other_instances:
-                if item.mission_node != "S5":
-                    rebound_others.append(item)
-                    continue
-                if item.archetype == "evidence_verifier":
-                    depends_on = [*s3_dependencies, *s4_ids]
-                elif item.archetype == "independent_portfolio_reviewer":
-                    depends_on = [*s4_ids, *evidence_ids]
-                else:
-                    depends_on = list(s4_ids)
-                rebound = replace(
-                    item,
-                    depends_on=list(dict.fromkeys(depends_on)),
-                    wave=(s3_wave + 2),
-                )
-                rebound_others.append(rebound)
-                if item.instance_id in pending:
-                    pending[item.instance_id] = rebound
-
-            all_instances = [*rebound_others, *realized]
-            dependencies = {
-                item.instance_id: list(item.depends_on) for item in all_instances
-            }
-            maximum_wave = max((item.wave for item in all_instances), default=0)
-            waves = [
-                [item.instance_id for item in all_instances if item.wave == wave]
-                for wave in range(1, maximum_wave + 1)
-            ]
-            seeds = {key: list(value) for key, value in graph.s_node_seeds.items()}
-            seeds["S4"] = s4_ids
-            graph = replace(
-                graph,
-                agent_instances=all_instances,
-                dependencies=dependencies,
-                waves=waves,
-                s_node_seeds=seeds,
-                maximum_instances=max(graph.maximum_instances, len(all_instances)),
-            )
-            s4_candidate_fanout_materialized = True
-            emit_swarm_event(
-                "winning_s4_candidate_fanout_materialized",
-                actor="winning_swarm_controller",
-                graph_id=graph.graph_id,
-                retained_candidate_count=len(retained_ids),
-                s4_instance_count=len(realized),
-                s4_instance_ids=s4_ids,
-                hypothesis_ids=retained_ids,
-                rule="one_retained_candidate_one_isolated_s4_instance",
-            )
 
         def scope_for_instance(
             item: WinningAgentInstance,
             ledger_snapshot: HypothesisLedgerVersion | None,
         ) -> set[str]:
+            if item.instance_id in review_targets_by_instance:
+                return {
+                    canonical_candidate_id(value)
+                    for value in review_targets_by_instance[item.instance_id]
+                }
             if item.hypothesis_id:
                 return {canonical_candidate_id(item.hypothesis_id)}
             if (
-                item.archetype
-                in {"evidence_verifier", "independent_portfolio_reviewer"}
+                item.archetype == "independent_portfolio_reviewer"
                 and ledger_snapshot is not None
             ):
                 return {
@@ -4689,6 +4464,79 @@ async def analyze_winning_subagents(
                 for dependency in item.depends_on
                 for hypothesis_id in instance_hypothesis_ids.get(dependency, set())
             }
+
+        def ensure_incremental_reviewer_pending() -> None:
+            """Schedule one isolated S5 batch without waiting for slow producers."""
+
+            nonlocal graph, incremental_review_sequence
+            if not pending_incremental_review_ids:
+                return
+            reviewer_pending = next(
+                (
+                    item
+                    for item in pending.values()
+                    if item.archetype == "independent_portfolio_reviewer"
+                ),
+                None,
+            )
+            if reviewer_pending is not None:
+                review_targets_by_instance.setdefault(
+                    reviewer_pending.instance_id, set()
+                ).update(pending_incremental_review_ids)
+                pending_incremental_review_ids.clear()
+                return
+            if any(
+                item.archetype == "independent_portfolio_reviewer"
+                for item, _, _ in running_instances.values()
+            ):
+                return
+            template = next(
+                (
+                    item
+                    for item in graph.agent_instances
+                    if item.archetype == "independent_portfolio_reviewer"
+                ),
+                None,
+            )
+            if template is None:
+                return
+            incremental_review_sequence += 1
+            reviewer = replace(
+                template,
+                instance_id=(
+                    f"{template.instance_id}-incremental-{incremental_review_sequence:02d}"
+                ),
+                depends_on=[],
+                wave=max(1, template.wave),
+                trigger_residuals=["incremental_candidate_available"],
+            )
+            pending[reviewer.instance_id] = reviewer
+            review_targets_by_instance[reviewer.instance_id] = set(
+                pending_incremental_review_ids
+            )
+            pending_incremental_review_ids.clear()
+            graph = replace(
+                graph,
+                agent_instances=[*graph.agent_instances, reviewer],
+                dependencies={**graph.dependencies, reviewer.instance_id: []},
+                s_node_seeds={
+                    **graph.s_node_seeds,
+                    "S5": [
+                        *graph.s_node_seeds.get("S5", []),
+                        reviewer.instance_id,
+                    ],
+                },
+                maximum_instances=max(
+                    graph.maximum_instances, len(graph.agent_instances) + 1
+                ),
+            )
+            emit_swarm_event(
+                "winning_incremental_portfolio_review_scheduled",
+                actor=reviewer.instance_id,
+                graph_id=graph.graph_id,
+                candidate_ids=sorted(review_targets_by_instance[reviewer.instance_id]),
+                rule="candidate_completion_driven_without_wave_barrier",
+            )
 
         def merge_lock_keys(
             item: WinningAgentInstance,
@@ -4704,993 +4552,6 @@ async def analyze_winning_subagents(
                 (hypothesis_id, item.merge_target) for hypothesis_id in candidate_scope
             }
 
-        async def execute_quality_expert_judge(
-            ledger_snapshot: HypothesisLedgerVersion,
-            *,
-            hypothesis_ids: set[str] | None = None,
-        ) -> tuple[dict[str, WinningExpertAssessment], dict[str, Any]]:
-            """Run S5's isolated, read-only Codex CLI semantic admission.
-
-            The judge cannot contribute to or rewrite a hypothesis.  It
-            receives no producer identity, prior score or selection status;
-            its normalized dimensions become the portfolio objectives.
-            """
-
-            if not swarm_controller.policy.get("expert_judge_enabled"):
-                return {}, {"status": "disabled", "assessments": []}
-            spec = SWARM_SPECIALIST_ARCHETYPES["quality_expert_judge"]
-            contract = swarm_controller.govern_role_contract(
-                {"archetype": "quality_expert_judge", **spec},
-                mission_node="S5",
-            )
-            instance_id = (
-                "winning-quality-judge-"
-                + sha256(
-                    f"{graph.graph_id}:{ledger_snapshot.version}".encode()
-                ).hexdigest()[:16]
-            )
-            candidate_count = sum(
-                hypothesis_ids is None or item.hypothesis_id in hypothesis_ids
-                for item in ledger_snapshot.hypotheses
-            )
-            task = SpecialistTask(
-                task_id=instance_id,
-                agent_instance_id=instance_id,
-                archetype="quality_expert_judge",
-                display_name=contract.display_name,
-                wave=max((item.wave for item in graph.agent_instances), default=0) + 1,
-                purpose=contract.purpose,
-                merge_target="S5",
-                expected_quality_gain=0.0,
-                max_output_tokens=_quality_judge_output_token_budget(candidate_count),
-                allow_child_spawn=False,
-            )
-            runtime_agent_id = "winning_s5_semantic_admission"
-            scoped_provider = host._provider_for(
-                runtime_agent_id, isolation_id=instance_id
-            )
-            runtime_contract = _swarm_runtime_audit_contract(
-                task,
-                getattr(scoped_provider, "snapshot", lambda: {})(),
-                runtime_agent_id=runtime_agent_id,
-                session_ref=_swarm_session_ref(task),
-            )
-            ordered = sorted(
-                (
-                    item
-                    for item in ledger_snapshot.hypotheses
-                    if hypothesis_ids is None or item.hypothesis_id in hypothesis_ids
-                ),
-                key=lambda item: sha256(
-                    f"{graph.graph_id}:{item.hypothesis_id}".encode()
-                ).hexdigest(),
-            )
-            label_map = {
-                f"候选-{index:02d}": item for index, item in enumerate(ordered, start=1)
-            }
-            blind_candidates = []
-            for blind_label, item in label_map.items():
-                blind_candidates.append(
-                    _quality_judge_candidate_payload(
-                        item,
-                        blind_label=blind_label,
-                    )
-                )
-            candidate_evidence_ids = {
-                evidence_id for item in ordered for evidence_id in item.evidence_ids
-            }
-            output_schema = {
-                "assessments": [
-                    {
-                        "blind_label": "exact candidate blind_label",
-                        "verdict": "pass|revise|reject",
-                        "dimension_scores": {
-                            "domain_relevance": "0..1",
-                            "equipment_capability_fit": "0..1",
-                            "innovation": "0..1",
-                            "military_value": "0..1",
-                            "decisive_advantage": "0..1",
-                            "query_specificity": "0..1",
-                            "causal_coherence": "0..1",
-                            "credibility": "0..1",
-                            "engineering_feasibility": "0..1",
-                            "robustness": "0..1",
-                        },
-                        "strengths": ["specific strength"],
-                        "weaknesses": ["specific weakness"],
-                        "rejection_reasons": ["blocking reason"],
-                        "residuals": ["quality residual"],
-                        "equipment_classification": "direct_combat|unmanned_combat|upgrade|system_link|support_only|non_equipment",
-                        "innovation_type": "mechanism|operational|equipment_architecture|integration|incremental|none",
-                        "confidence": "0..1",
-                        "evidence_ids": ["exact evidence_id used in judgement"],
-                    }
-                ],
-                "portfolio_findings": ["cross-candidate finding"],
-                "portfolio_innovation_audit": {
-                    "frontier_breadth_sufficient": "boolean",
-                    "portfolio_mode": "diverse|same_equipment_family|same_mechanism|process_only|uncertain",
-                    "homogeneity_reason": "why the portfolio is or is not overly concentrated",
-                    "completion_recommended": "boolean",
-                    "missing_frontier_opportunity": {
-                        "query_gap": "uncovered Query-specific task or confrontation gap",
-                        "enabling_principle": "optional enabling principle, architecture, effect or operational concept; not a buzzword list",
-                        "innovation_mode": "frontier|innovative|disruptive|new_quality|hybrid",
-                        "equipment_implication": "specific direct-combat weapon concept or architecture implied by the opportunity",
-                        "direct_military_effect": "direct battlefield result",
-                        "disruptive_delta": "what traditional capability, gap, employment concept or implementation style is changed",
-                        "conventional_absorption_limit": "optional reason ordinary improvement cannot fully absorb it",
-                        "engineering_bottleneck": "optional later-stage engineering question; never a completion prerequisite",
-                    },
-                    "audit_reason": "bounded reason for or against one completion pass",
-                },
-                "stop_reason": "string",
-            }
-            emit_swarm_event(
-                "winning_quality_judge_recruited",
-                actor=instance_id,
-                graph_id=graph.graph_id,
-                role_contract=to_plain(contract),
-                candidate_count=len(blind_candidates),
-                **runtime_contract,
-            )
-            emit_swarm_event(
-                "winning_quality_judge_started",
-                actor=instance_id,
-                graph_id=graph.graph_id,
-                ledger_id=ledger_snapshot.ledger_id,
-                ledger_version=ledger_snapshot.version,
-                **runtime_contract,
-            )
-            started_at = monotonic()
-            try:
-                text = await host._run_core_json(
-                    runtime_agent_id,
-                    "你是制胜机理与军事装备论证的独立质量专家。你只评判、不生成候选、不修改账本。"
-                    "必须逐项判断研究对象是否落在任务领域，是否形成具体装备能力而非算法/通信/保障空壳，"
-                    "相对最近公开基线是否存在实质创新，军事价值是否由因果链直接导出，证据与工程判断是否可信。"
-                    "decisive_advantage必须评判该装备是否能在Query指定交战窗口形成足以改变胜负的压倒、"
-                    "拒止、突防、毁伤、拦截或持续火力优势；一般性性能改善不得高分。query_specificity必须"
-                    "评判其构型、机理和名称是否由本Query独有目标、阶段和威胁共同决定；换题仍成立的模板候选"
-                    "必须revise或reject。名称新颖不等于修辞新奇，必须能解释独有主装备、直接战果和制胜机理。"
-                    "还要独立朗读候选名称：若名称像字段截词拼接、技术组件清单、流程标签、口号，或用华丽代号"
-                    "遮蔽不清楚的主装备身份，即使naming_rationale非空也必须降低query_specificity并要求改名；"
-                    "自然的描述名不因没有代号而降分，专名或代号也不因修辞醒目而加分。"
-                    "证据职责必须分层：公开直接证据必须证明具体型号或装备族的最近基线、既有任务属性、"
-                    "平台/弹体身份和可确认接口；对于明确标为拟议升级、新研构型或待验证假设的未来增量，"
-                    "不得要求公开资料证明它已经列装或已经实现。此类增量应依据是否具有明确物理或接口锚点、"
-                    "是否只改变一个可辨识的作战/装备关系、是否给出反证、失败边界和可证伪试验来评价。"
-                    "这里的‘可确认接口’只约束候选声称已经存在于公开基线中的接口；对明确标注为新增、"
-                    "待集成或待验证的接口，不要求公开资料证明现有产品已经具备，也不得仅因缺少型号级公开"
-                    "接口图纸而降低credibility或驳回。应把质量、供电、热、电磁兼容、软件鉴定和试验归因"
-                    "评价计入engineering_feasibility。若厂商或军方对象页能够证明装备身份与既有任务属性，"
-                    "而未公开内部实现细节，应记录为不确定性或验证前置条件，而不是自动判为证据门失败。"
-                    "若候选设置了基线表征门，并明确一旦现役基线已具备同类闭环就终止项目，则未知的内部"
-                    "实现不得被臆测为既有能力并据此拒绝；只评价该重叠淘汰门是否真实可执行。"
-                    "若候选把基线事实写成已实现增量，或把成熟产品已有属性重新命名为创新，仍须降分或驳回；"
-                    "但不能仅以‘公开资料尚未证明未来增量已存在’作为拒绝理由。"
-                    "不得因字段齐全而给满分；必须拉开候选差异。领域偏离、支撑能力冒充主装备、热门词堆叠、"
-                    "因果断裂、无证据精确指标或无失败边界应降分或驳回。若候选以具体无人打击平台、"
-                    "巡飞弹、远程精确制导弹药、压制/拦截效应器或直接毁伤载荷为主对象，应按"
-                    "direct_combat或unmanned_combat评估；不能因其包含必要体系接口而自动归为system_link。"
-                    "若主体仍是网络、算法、通信或保障，则必须归为system_link/support_only。"
-                    "还必须做组合内语义去重：同一装备家族不自动构成重复；若接敌链、授权时机、效应触发、"
-                    "对手被迫反应、直接战果或独立验收/判退命题至少一项发生足以改变立项决定的实质变化，"
-                    "两个候选可以同时pass。若两个候选的主装备本体、最近公开基线、改变的对抗变量、"
-                    "制胜关系、直接战果和验证命题实质相同，只是换了修饰词、代号、发射描述或流程措辞，只允许其中"
-                    "较强者pass，其余必须标记semantic_duplicate并revise/reject。不能因为名称不同或字段齐全"
-                    "就把同义变体视为多项新质装备，也不能仅因同族而合并具有不同可验收制胜逻辑的候选。"
-                    "必须读取query_combat_equipment_divergence_brief中的任务对象、威胁形态、作战阶段、"
-                    "地域约束、制胜矛盾和conditional_priority_observation_lenses。若候选落入无人、低空、"
-                    "远程、精确打击、反辐射、诱饵、反无人或规模化等熟悉类别，但当前Query未触发相应镜头，"
-                    "且候选不能用query_relevance证明该类别是由本题因果链独立推导出的，则判为"
-                    "query_domain_leakage并要求revise；不得留到S6再修。反之，Query明确触发时不得因类别"
-                    "常见而自动淘汰，应继续按对象证据、直接战果、新质增量和独立组合价值评审。"
-                    "评判时还必须前置检查候选能否直接投影为S6装备画像：是否具备真实作战阶段、"
-                    "敌方目标或威胁及反制、我方具体武器装备主体、时敏交战流程和直接战果，"
-                    "以及证据层级是否与装备声明相匹配。现役升级或声称公开型号既有能力时，具名型号/"
-                    "装备族有对象级证据应优先引用；没有时不得虚构既有属性，但不因缺证据直接淘汰。前瞻新研构型可采用相邻项目、组成技术、效应机理"
-                    "或类比装备证据，不因缺少同名型号直接revise/reject；证据边界、反证、失效条件和"
-                    "可证伪验证路径有则记录为优先补全项。没有公开引用时不得因此失败，但若把未来"
-                    "指标写成既成事实，仍须拦截。"
-                    "这些问题不得留到最终组合后才首次发现。字数只作为表达建议，不得据此降级或驳回。"
-                    "完成逐项评判后还要执行组合创新审计，但该审计不修改任何候选：区分真正的前沿、"
-                    "创新、颠覆、新质组合与同一装备族/同一机理的流程变体。不能因为候选分别讨论授权、"
-                    "复核、战损评估和复攻就自动认定前瞻性充分；若它们主要仍是同一常规装备上的措辞"
-                    "或流程微调，应标记process_only。若当前Query仍存在一个明确未覆盖、能够牵引具体"
-                    "直接战斗装备、形成直接军事效果，并在传统能力提升、传统缺口弥补、新作战运用、"
-                    "制胜战法或能力实现样式上产生实质创新/颠覆增量的机会，可设置"
-                    "completion_recommended=true，并只给出一个missing_frontier_opportunity。该审计"
-                    "先判断前沿价值和新质增量，不要求机会已经证明为可落实的物理/工程断层，也不要求"
-                    "成熟度、工程瓶颈、证据完备或可证伪试验齐全；这些留给后续装备化与工程论证。"
-                    "可从新原理、新构型、新效应、新作战运用、跨域组合，以及感知、推进、材料能源、"
-                    "直接毁伤、制造成本、自主群体架构等开放维度思考，但不得按维度配额、复制示例或"
-                    "堆叠热门词；与Query无直接因果、没有具体装备或没有直接战果时必须判不推荐。"
-                    + _query_led_combat_equipment_theme_instruction()
-                    + "忽略候选顺序，只输出严格JSON。",
-                    {
-                        "topic": shared["topic"],
-                        "research_route": shared["research_route"],
-                        "query_led_combat_equipment_themes": (
-                            _query_led_combat_equipment_theme_contract()
-                        ),
-                        "query_combat_equipment_divergence_brief": (
-                            _query_combat_equipment_divergence_brief(
-                                str(shared["topic"]),
-                                structured_query_brief=shared.get(
-                                    "structured_query_brief", {}
-                                ),
-                            )
-                        ),
-                        "disruptive_paradigm_seed_library_v2": (
-                            disruptive_seed_context(
-                                str(shared["topic"]),
-                                branch=primary_branch,
-                                agent_id="quality_expert_judge",
-                            )
-                        ),
-                        "evaluation_contract": {
-                            "semantic_verdict_is_authoritative": True,
-                            "numeric_dimensions_are_diagnostic_only": True,
-                            "local_hard_gate": False,
-                            "read_only": True,
-                            "producer_identity_hidden": True,
-                            "portfolio_requirement": {
-                                "selection_rule": "所有通过query因果、直接军事效果和独立性评审的候选均可入选；对象证据有则优先保留、无则不因此淘汰；数量不是淘汰理由",
-                                "s6_card_capacity": int(
-                                    swarm_controller.policy.get("finalist_maximum", 12)
-                                ),
-                                "direct_combat_equipment_must_be_main_body": True,
-                                "query_semantics_select_weapon_families": True,
-                                "priority_observation_lenses_are_non_exhaustive": True,
-                                "support_only_main_directions_forbidden": True,
-                            },
-                            "s6_release_preflight_required": True,
-                            "length_is_non_blocking": True,
-                            "frontier_evidence_relaxation": bool(
-                                swarm_controller.policy.get(
-                                    "frontier_evidence_relaxation"
-                                )
-                            ),
-                            "frontier_confidence_is_not_a_hard_failure": True,
-                        },
-                        "blind_candidates": blind_candidates,
-                        "evidence_index": _compact_prompt_value(
-                            _quality_judge_scoped_evidence_index(
-                                shared.get("evidence_index", []),
-                                candidate_evidence_ids,
-                            ),
-                            max_string_chars=260,
-                            max_list_items=18,
-                        ),
-                        "valid_reference_ids": sorted(valid_reference_ids),
-                    },
-                    output_schema,
-                    task.max_output_tokens,
-                    phase="winning_s5_semantic_admission",
-                )
-                result = _parse_json_object(text)
-                if not result:
-                    raise ValueError("quality expert returned invalid JSON")
-                raw_assessments = result.get("assessments", [])
-                if not isinstance(raw_assessments, list):
-                    raw_assessments = []
-                assessment_by_id: dict[str, WinningExpertAssessment] = {}
-                seen_labels: set[str] = set()
-                for raw in raw_assessments:
-                    if not isinstance(raw, Mapping):
-                        continue
-                    blind_label = str(raw.get("blind_label", "")).strip()
-                    hypothesis = label_map.get(blind_label)
-                    if hypothesis is None or blind_label in seen_labels:
-                        continue
-                    seen_labels.add(blind_label)
-                    assessment = swarm_controller.expert_assessment_from_mapping(
-                        raw,
-                        hypothesis=hypothesis,
-                        blind_label=blind_label,
-                        valid_evidence_ids=set(valid_reference_ids),
-                        session_ref=runtime_contract["session_ref"],
-                    )
-                    assessment_by_id[hypothesis.hypothesis_id] = assessment
-                    emit_swarm_event(
-                        "winning_quality_judge_assessed",
-                        actor=instance_id,
-                        graph_id=graph.graph_id,
-                        hypothesis_id=hypothesis.hypothesis_id,
-                        assessment=to_plain(assessment),
-                    )
-                missing_ids = [
-                    item.hypothesis_id
-                    for item in ordered
-                    if item.hypothesis_id not in assessment_by_id
-                ]
-                emit_swarm_event(
-                    "winning_quality_judge_completed",
-                    actor=instance_id,
-                    graph_id=graph.graph_id,
-                    assessed_count=len(assessment_by_id),
-                    missing_hypothesis_ids=missing_ids,
-                    elapsed_seconds=round(monotonic() - started_at, 3),
-                    **runtime_contract,
-                )
-                return assessment_by_id, {
-                    "status": ("completed" if not missing_ids else "limited"),
-                    "role_contract": to_plain(contract),
-                    "agent_instance_id": instance_id,
-                    "session_ref": runtime_contract["session_ref"],
-                    "assessments": [
-                        to_plain(item) for item in assessment_by_id.values()
-                    ],
-                    "portfolio_findings": [
-                        str(item)
-                        for item in result.get("portfolio_findings", [])
-                        if str(item).strip()
-                    ][:8],
-                    "portfolio_innovation_audit": (
-                        _normalize_portfolio_innovation_audit(
-                            result.get("portfolio_innovation_audit", {})
-                        )
-                    ),
-                    "missing_hypothesis_ids": missing_ids,
-                    "elapsed_seconds": round(monotonic() - started_at, 3),
-                }
-            except BaseException as exc:
-                emit_swarm_event(
-                    "winning_quality_judge_failed",
-                    actor=instance_id,
-                    graph_id=graph.graph_id,
-                    failure_type=type(exc).__name__,
-                    error_message=str(exc)[:500],
-                    **runtime_contract,
-                )
-                return {}, {
-                    "status": "failed",
-                    "role_contract": to_plain(contract),
-                    "agent_instance_id": instance_id,
-                    "session_ref": runtime_contract["session_ref"],
-                    "assessments": [],
-                    "error_type": type(exc).__name__,
-                    "error_message": str(exc)[:500],
-                }
-
-        async def execute_expert_repair_wave(
-            assessments: Mapping[str, WinningExpertAssessment],
-            *,
-            maximum_candidates_override: int | None = None,
-        ) -> dict[str, Any]:
-            """Repair the strongest ``revise`` candidates, then rebase.
-
-            The expert remains read-only.  Its residuals are routed to
-            existing governed S3/S4/S5 roles, executed in parallel against
-            one ledger snapshot, and committed through normal versioned
-            merge receipts.
-            """
-
-            nonlocal graph, ledger, batch_index, maximum_observed_concurrency
-            if ledger is None or not swarm_controller.policy.get(
-                "expert_repair_enabled"
-            ):
-                return {"status": "disabled", "tasks": [], "merged_count": 0}
-            eligible = swarm_controller.select_expert_repair_assessments(
-                assessments,
-                hypotheses={item.hypothesis_id: item for item in ledger.hypotheses},
-            )
-            maximum_candidates = int(
-                swarm_controller.policy["expert_repair_max_candidates"]
-            )
-            if maximum_candidates_override is not None:
-                maximum_candidates = min(
-                    maximum_candidates,
-                    max(0, int(maximum_candidates_override)),
-                )
-            eligible = eligible[:maximum_candidates]
-            repair_reserve = int(
-                swarm_controller.policy.get(
-                    "expert_repair_reserved_instances", maximum_candidates
-                )
-            )
-            repair_capacity = min(
-                graph.maximum_instances,
-                len(graph.agent_instances) + min(repair_reserve, len(eligible)),
-            )
-            repair_wave = (
-                max(
-                    (item.wave for item in graph.agent_instances),
-                    default=0,
-                )
-                + 1
-            )
-            repair_instances: list[WinningAgentInstance] = []
-            repair_rows: list[dict[str, Any]] = []
-            for assessment in eligible:
-                if len(graph.agent_instances) >= repair_capacity:
-                    break
-                archetype = swarm_controller.repair_archetype_for_assessment(assessment)
-                spec = SWARM_SPECIALIST_ARCHETYPES.get(archetype)
-                if not spec:
-                    continue
-                quota_residuals = (
-                    ["direct_combat_equipment_insufficient"]
-                    if assessment.passed
-                    and assessment.equipment_classification
-                    not in {"direct_combat", "unmanned_combat"}
-                    else []
-                )
-                residuals = list(
-                    dict.fromkeys(
-                        [
-                            *quota_residuals,
-                            *assessment.residuals,
-                            *assessment.rejection_reasons,
-                            *assessment.weaknesses,
-                        ]
-                    )
-                )[:8]
-                contract = swarm_controller.govern_role_contract(
-                    {
-                        "archetype": archetype,
-                        **spec,
-                        "purpose": (
-                            str(spec["purpose"])
-                            + " 本实例只修复专家首轮盲评指出的残差，"
-                            "不得扩写无关背景或覆盖其他候选。"
-                        ),
-                        "trigger_residuals": residuals,
-                    },
-                    mission_node=str(spec["merge_target"]),
-                )
-                graph = swarm_controller.recruit_into_mission_graph(
-                    graph,
-                    contract,
-                    hypothesis_id=assessment.hypothesis_id,
-                    expected_quality_gain=max(
-                        float(swarm_controller.policy["minimum_expected_gain"]),
-                        0.04,
-                    ),
-                    depends_on=[],
-                )
-                recruited = graph.agent_instances[-1]
-                recruited = replace(
-                    recruited,
-                    wave=repair_wave,
-                    trigger_residuals=residuals,
-                )
-                repaired_waves = [
-                    [item for item in wave if item != recruited.instance_id]
-                    for wave in graph.waves
-                ]
-                while len(repaired_waves) < repair_wave:
-                    repaired_waves.append([])
-                repaired_waves[repair_wave - 1].append(recruited.instance_id)
-                graph = replace(
-                    graph,
-                    role_contracts=[*graph.role_contracts[:-1], contract],
-                    agent_instances=[*graph.agent_instances[:-1], recruited],
-                    waves=repaired_waves,
-                )
-                contracts[contract.role_contract_id] = contract
-                repair_instances.append(recruited)
-                repair_rows.append(
-                    {
-                        "agent_instance_id": recruited.instance_id,
-                        "hypothesis_id": assessment.hypothesis_id,
-                        "archetype": archetype,
-                        "merge_target": recruited.merge_target,
-                        "expert_assessment_id": assessment.assessment_id,
-                        "residuals": residuals,
-                    }
-                )
-                emit_swarm_event(
-                    "winning_quality_repair_planned",
-                    actor=recruited.instance_id,
-                    graph_id=graph.graph_id,
-                    role_contract=to_plain(contract),
-                    instance=to_plain(recruited),
-                    expert_assessment_id=assessment.assessment_id,
-                    hypothesis_id=assessment.hypothesis_id,
-                    residuals=residuals,
-                )
-            if not repair_instances:
-                return {
-                    "status": "not_needed_or_no_capacity",
-                    "tasks": repair_rows,
-                    "merged_count": 0,
-                }
-            snapshot = ledger
-            batch_index += 1
-            execution_batches.append(
-                {
-                    "batch": batch_index,
-                    "instance_ids": [item.instance_id for item in repair_instances],
-                    "mission_nodes": [item.mission_node for item in repair_instances],
-                    "base_ledger_version": snapshot.version,
-                    "purpose": "expert_residual_repair",
-                }
-            )
-            maximum_observed_concurrency = max(
-                maximum_observed_concurrency, len(repair_instances)
-            )
-            outcomes = await asyncio.gather(
-                *[
-                    call_instance(
-                        item,
-                        ledger_snapshot=snapshot,
-                        batch_index=batch_index,
-                        candidate_scope={item.hypothesis_id},
-                    )
-                    for item in repair_instances
-                ],
-                return_exceptions=True,
-            )
-            merged_count = 0
-            failed_count = 0
-            merged_hypothesis_ids: set[str] = set()
-            for instance, outcome in zip(repair_instances, outcomes):
-                completed_instances.add(instance.instance_id)
-                instance_hypothesis_ids[instance.instance_id] = {instance.hypothesis_id}
-                if isinstance(outcome, BaseException):
-                    failed_instances.add(instance.instance_id)
-                    failed_count += 1
-                    emit_swarm_event(
-                        "winning_quality_repair_failed",
-                        actor=instance.instance_id,
-                        graph_id=graph.graph_id,
-                        hypothesis_id=instance.hypothesis_id,
-                        failure_type=type(outcome).__name__,
-                        error_message=str(outcome)[:500],
-                    )
-                    continue
-                _, result, base_version = outcome
-                runs.append(
-                    {
-                        "step": int(instance.mission_node[1:]),
-                        "agent_id": instance.instance_id,
-                        "template_agent_id": f"winning_swarm_{instance.archetype}",
-                        "middle_cycle": 1,
-                        "execution_mode": "expert_residual_repair",
-                        "wave": instance.wave,
-                        "batch": batch_index,
-                        "merge_target": instance.merge_target,
-                        "status": "completed",
-                    }
-                )
-                raw_rows = result.get("contributions", [])
-                if isinstance(raw_rows, Mapping):
-                    raw_rows = [raw_rows]
-                if not isinstance(raw_rows, list):
-                    raw_rows = []
-                for ordinal, raw in enumerate(raw_rows, start=1):
-                    if not isinstance(raw, Mapping):
-                        continue
-                    hypothesis_id = str(raw.get("hypothesis_id", ""))
-                    if hypothesis_id != instance.hypothesis_id:
-                        continue
-                    try:
-                        quality = max(
-                            0.0,
-                            min(1.0, float(raw.get("incremental_quality", 0.0))),
-                        )
-                    except (TypeError, ValueError):
-                        quality = 0.0
-                    recommendation = str(raw.get("recommendation", "revise"))[:80]
-                    findings = [
-                        str(item)
-                        for item in raw.get("findings", [])
-                        if str(item).strip()
-                    ][:8]
-                    accepted = bool(
-                        findings
-                        and recommendation != "reject"
-                    )
-                    patch_fields = {
-                        key: raw.get(key)
-                        for key in (
-                            "title",
-                            "nearest_public_baseline",
-                            "changed_confrontation_variable",
-                            "findings",
-                            "mechanism_chain",
-                            "mechanism_chain_updates",
-                            "direct_military_effects",
-                            "equipment_forms",
-                            "project_function",
-                            "system_interfaces",
-                            "novelty_delta",
-                            "evidence_boundary",
-                            "counterevidence",
-                            "adversary_adaptations",
-                            "failure_boundaries",
-                            "trl_constraints",
-                            "cost_constraints",
-                            "industrial_constraints",
-                            "cross_scenario_results",
-                            "validation_plan",
-                            "implementation_path",
-                            "patch_mode",
-                            "replace_fields",
-                        )
-                        if raw.get(key) not in (None, "", [], {})
-                    }
-                    repaired_evidence_ids = swarm_controller.sanitize_evidence_ids(
-                        raw.get(
-                            "evidence_ids",
-                            raw.get("evidence_refs", []),
-                        ),
-                        set(valid_reference_ids),
-                    )
-                    if repaired_evidence_ids:
-                        patch_fields["evidence_ids"] = list(repaired_evidence_ids)
-                    contribution = WinningContribution(
-                        contribution_id=(
-                            "winning-expert-repair-"
-                            + sha256(
-                                f"{instance.instance_id}:{hypothesis_id}:{ordinal}".encode()
-                            ).hexdigest()[:16]
-                        ),
-                        agent_instance_id=instance.instance_id,
-                        role_contract_id=instance.role_contract_id,
-                        hypothesis_id=hypothesis_id,
-                        merge_target=instance.merge_target,
-                        base_ledger_version=base_version,
-                        hypothesis_patch=patch_fields,
-                        quality_dimensions={"incremental_quality": quality},
-                        evidence_ids=repaired_evidence_ids,
-                        residuals_resolved=[
-                            str(item)
-                            for item in raw.get("residuals_resolved", [])
-                            if str(item).strip()
-                        ][:8],
-                        incremental_quality=quality,
-                        recommendation=recommendation,
-                        accepted=accepted,
-                    )
-                    contribution_rows.append(contribution)
-                    ledger_after, receipt = swarm_controller.merge_contribution(
-                        ledger, contribution
-                    )
-                    merge_receipts.append(receipt)
-                    if receipt.rebase_required:
-                        contribution = swarm_controller.rebase_contribution(
-                            contribution, ledger
-                        )
-                        ledger_after, receipt = swarm_controller.merge_contribution(
-                            ledger, contribution
-                        )
-                        merge_receipts.append(receipt)
-                    ledger = ledger_after
-                    if receipt.status == "merged":
-                        merged_count += 1
-                        merged_hypothesis_ids.add(hypothesis_id)
-                    emit_swarm_event(
-                        "winning_quality_repair_completed",
-                        actor=instance.instance_id,
-                        graph_id=graph.graph_id,
-                        hypothesis_id=hypothesis_id,
-                        contribution_id=contribution.contribution_id,
-                        status=receipt.status,
-                        resulting_ledger_version=receipt.resulting_ledger_version,
-                    )
-            return {
-                "status": "completed" if not failed_count else "limited",
-                "tasks": repair_rows,
-                "merged_count": merged_count,
-                "merged_hypothesis_ids": sorted(merged_hypothesis_ids),
-                "failed_count": failed_count,
-                "base_ledger_version": snapshot.version,
-                "resulting_ledger_version": ledger.version,
-            }
-
-        async def execute_portfolio_gap_completion_wave(
-            assessments: Mapping[str, WinningExpertAssessment],
-            *,
-            innovation_audit: Mapping[str, Any] | None = None,
-        ) -> dict[str, Any]:
-            """Generate distinct replacements when expert pruning leaves a gap.
-
-            Repairing a baseline-only or over-coupled concept cannot always
-            create genuine novelty. One bounded S3 generator therefore gets
-            the complete assessed ledger and may add the independently
-            evidenced, non-duplicate direct-equipment hypotheses that fit
-            the remaining governed candidate capacity.
-            The new rows still require the independent expert judge; this
-            path never promotes a failed candidate by quota alone.
-            """
-
-            nonlocal graph, ledger, batch_index, maximum_observed_concurrency
-            if ledger is None:
-                return {
-                    "status": "not_available",
-                    "created_count": 0,
-                    "created_hypothesis_ids": [],
-                }
-            minimum = int(swarm_controller.policy.get("finalist_minimum", 1))
-            coverage = swarm_controller.passed_portfolio_coverage(
-                ledger,
-                assessments,
-            )
-            normalized_innovation_audit = _normalize_portfolio_innovation_audit(
-                innovation_audit or {}
-            )
-            frontier_shortfall = _portfolio_innovation_completion_requested(
-                normalized_innovation_audit
-            )
-            passed_count = int(coverage["passed_count"])
-            if coverage["ready"] and not frontier_shortfall:
-                return {
-                    "status": "not_required",
-                    "created_count": 0,
-                    "created_hypothesis_ids": [],
-                    "portfolio_coverage": coverage,
-                }
-            if len(graph.agent_instances) >= graph.maximum_instances:
-                return {
-                    "status": "no_capacity",
-                    "created_count": 0,
-                    "created_hypothesis_ids": [],
-                }
-
-            completion_archetype = (
-                "weak_signal_scout"
-                if frontier_shortfall
-                else "disruptive_mechanism_generator"
-            )
-            spec = SWARM_SPECIALIST_ARCHETYPES[completion_archetype]
-            failed_rows = sorted(
-                (item for item in assessments.values() if not item.passed),
-                key=lambda item: (-item.weighted_score, item.hypothesis_id),
-            )
-            residual_digest = [
-                text
-                for item in failed_rows[:4]
-                for text in (
-                    item.rejection_reasons[:1]
-                    or item.weaknesses[:1]
-                    or item.residuals[:1]
-                )
-            ][:4]
-            contract = swarm_controller.govern_role_contract(
-                {
-                    "archetype": completion_archetype,
-                    **spec,
-                    "purpose": (
-                        (
-                            "专家组合创新审计确认现有候选仍存在前沿、新质或颠覆性机会缺口。"
-                            "缺口摘要："
-                            + str(
-                                normalized_innovation_audit.get(
-                                    "missing_frontier_opportunity", {}
-                                )
-                            )[:1000]
-                            + "。执行一次有界前沿补全；已有通过候选全部保留。"
-                            if frontier_shortfall
-                            else "专家首轮后组合有"
-                            f"{passed_count}项合格，尚未满足{minimum}项可直接承担作战任务、"
-                            "且已通过五轴语义独立性判断的装备方向。"
-                        )
-                        + "对照完整候选账本与驳回原因，生成数量由证据、机制独立性和剩余"
-                        "候选容量决定的不重复、可独立立项和可证伪替代武器方向；不得凑数。"
-                        + (
-                            "主要驳回边界：" + "；".join(residual_digest)
-                            if residual_digest
-                            else ""
-                        )
-                    ),
-                    "trigger_residuals": [
-                        "portfolio_direction_shortfall",
-                        "direct_combat_equipment_insufficient",
-                        *(
-                            ["frontier_innovation_shortfall"]
-                            if frontier_shortfall
-                            else []
-                        ),
-                    ],
-                },
-                mission_node="S3",
-            )
-            graph = swarm_controller.recruit_into_mission_graph(
-                graph,
-                contract,
-                hypothesis_id="",
-                expected_quality_gain=max(
-                    0.04,
-                    float(swarm_controller.policy["minimum_expected_gain"]),
-                ),
-                depends_on=[],
-            )
-            instance = graph.agent_instances[-1]
-            completion_wave = (
-                max(
-                    (item.wave for item in graph.agent_instances[:-1]),
-                    default=0,
-                )
-                + 1
-            )
-            instance = replace(
-                instance,
-                wave=completion_wave,
-                trigger_residuals=[
-                    "portfolio_direction_shortfall",
-                    "direct_combat_equipment_insufficient",
-                    *(["frontier_innovation_shortfall"] if frontier_shortfall else []),
-                ],
-            )
-            if frontier_shortfall:
-                portfolio_innovation_audits_by_instance[instance.instance_id] = dict(
-                    normalized_innovation_audit
-                )
-            repaired_waves = [
-                [item for item in wave if item != instance.instance_id]
-                for wave in graph.waves
-            ]
-            while len(repaired_waves) < completion_wave:
-                repaired_waves.append([])
-            repaired_waves[completion_wave - 1].append(instance.instance_id)
-            graph = replace(
-                graph,
-                role_contracts=[*graph.role_contracts[:-1], contract],
-                agent_instances=[*graph.agent_instances[:-1], instance],
-                waves=repaired_waves,
-            )
-            contracts[contract.role_contract_id] = contract
-            snapshot = ledger
-            candidate_scope = {item.hypothesis_id for item in snapshot.hypotheses}
-            batch_index += 1
-            execution_batches.append(
-                {
-                    "batch": batch_index,
-                    "instance_ids": [instance.instance_id],
-                    "mission_nodes": ["S3"],
-                    "base_ledger_version": snapshot.version,
-                    "purpose": "expert_portfolio_gap_completion",
-                }
-            )
-            maximum_observed_concurrency = max(maximum_observed_concurrency, 1)
-            emit_swarm_event(
-                "winning_portfolio_gap_completion_planned",
-                actor=instance.instance_id,
-                graph_id=graph.graph_id,
-                passed_count=passed_count,
-                finalist_minimum=minimum,
-                direct_combat_equipment_count=(
-                    coverage["direct_combat_equipment_count"]
-                ),
-                distinct_direct_equipment_family_count=(
-                    coverage["distinct_direct_equipment_family_count"]
-                ),
-                preferred_distinct_direct_equipment=(
-                    coverage["preferred_distinct_direct_equipment"]
-                ),
-                candidate_count=len(snapshot.hypotheses),
-                frontier_innovation_shortfall=frontier_shortfall,
-                portfolio_innovation_audit=normalized_innovation_audit,
-            )
-            try:
-                _, result, _ = await call_instance(
-                    instance,
-                    ledger_snapshot=snapshot,
-                    batch_index=batch_index,
-                    candidate_scope=candidate_scope,
-                )
-            except BaseException as exc:
-                failed_instances.add(instance.instance_id)
-                completed_instances.add(instance.instance_id)
-                emit_swarm_event(
-                    "winning_portfolio_gap_completion_failed",
-                    actor=instance.instance_id,
-                    graph_id=graph.graph_id,
-                    failure_type=type(exc).__name__,
-                    error_message=str(exc)[:500],
-                )
-                return {
-                    "status": "failed",
-                    "created_count": 0,
-                    "created_hypothesis_ids": [],
-                    "error_type": type(exc).__name__,
-                }
-
-            completed_instances.add(instance.instance_id)
-            runs.append(
-                {
-                    "step": 3,
-                    "agent_id": instance.instance_id,
-                    "template_agent_id": (f"winning_swarm_{completion_archetype}"),
-                    "middle_cycle": 1,
-                    "execution_mode": "expert_portfolio_gap_completion",
-                    "wave": instance.wave,
-                    "batch": batch_index,
-                    "merge_target": "S3",
-                    "status": "completed",
-                }
-            )
-            raw_rows = result.get("hypotheses", [])
-            if not isinstance(raw_rows, list):
-                raw_rows = []
-            passed_hypotheses = [
-                item
-                for item in snapshot.hypotheses
-                if item.hypothesis_id in assessments
-                and assessments[item.hypothesis_id].passed
-            ]
-            raw_rows, recovered_count = _prepare_portfolio_gap_completion_rows(
-                raw_rows,
-                shared.get("evidence_index", []),
-                topic=str(shared.get("topic", "")),
-                passed_hypotheses=passed_hypotheses,
-            )
-            if recovered_count:
-                emit_swarm_event(
-                    "winning_specialized_seed_recovered",
-                    actor=instance.instance_id,
-                    graph_id=graph.graph_id,
-                    archetype=(
-                        "frontier_portfolio_gap_completion"
-                        if frontier_shortfall
-                        else "offensive_portfolio_gap_completion"
-                    ),
-                    recovered_count=recovered_count,
-                    candidate_count=len(raw_rows),
-                    stop_reason=str(result.get("stop_reason", ""))[:300],
-                )
-            before_ids = {item.hypothesis_id for item in ledger.hypotheses}
-            produced_ids: set[str] = set()
-            task = task_for_instance(instance)
-            remaining_candidate_capacity = max(
-                0,
-                int(swarm_controller.policy.get("breadth_hypothesis_maximum", 12))
-                - len(snapshot.hypotheses),
-            )
-            for ordinal, raw in enumerate(
-                raw_rows[:remaining_candidate_capacity], start=1
-            ):
-                if not isinstance(raw, Mapping):
-                    continue
-                candidate = swarm_controller.hypothesis_from_mapping(
-                    raw,
-                    task=task,
-                    valid_evidence_ids=set(valid_reference_ids),
-                    ordinal=ordinal,
-                )
-                hypotheses.append(candidate)
-                produced_ids.add(candidate.hypothesis_id)
-                emit_swarm_event(
-                    "winning_candidate_branch_created",
-                    actor=instance.instance_id,
-                    graph_id=graph.graph_id,
-                    hypothesis_id=candidate.hypothesis_id,
-                    mission_node="S3",
-                    score=candidate.score,
-                    completion_reason="portfolio_direction_shortfall",
-                )
-            id_remap = refresh_candidate_ledger()
-            resolved_ids = {
-                canonical_candidate_id(id_remap.get(hypothesis_id, hypothesis_id))
-                for hypothesis_id in produced_ids
-            }
-            current_ids = {item.hypothesis_id for item in ledger.hypotheses}
-            created_ids = sorted(
-                hypothesis_id
-                for hypothesis_id in resolved_ids
-                if hypothesis_id in current_ids and hypothesis_id not in before_ids
-            )
-            instance_hypothesis_ids[instance.instance_id] = set(created_ids)
-            emit_swarm_event(
-                "winning_portfolio_gap_completion_completed",
-                actor=instance.instance_id,
-                graph_id=graph.graph_id,
-                created_count=len(created_ids),
-                created_hypothesis_ids=created_ids,
-                stop_reason=str(result.get("stop_reason", ""))[:300],
-            )
-            return {
-                "status": "completed" if created_ids else "empty",
-                "created_count": len(created_ids),
-                "created_hypothesis_ids": created_ids,
-                "agent_instance_id": instance.instance_id,
-                "base_ledger_version": snapshot.version,
-                "resulting_ledger_version": ledger.version,
-                "portfolio_coverage_before": coverage,
-            }
 
         emit_swarm_event(
             "winning_mission_graph_planned",
@@ -5717,37 +4578,9 @@ async def analyze_winning_subagents(
                 )
             ):
                 await materialize_active_s3_instances()
-            s3_s4_generation_finished = all(
-                item.instance_id in completed_instances | failed_instances
-                for item in graph.agent_instances
-                if item.mission_node in {"S3", "S4"} and not item.hypothesis_id
-            )
-            downstream_waiting = any(
-                item.mission_node in {"S5", "S6"} for item in pending.values()
-            )
-            if (
-                not candidate_competition_converged
-                and ledger is not None
-                and not running_instances
-                and s3_s4_generation_finished
-                and downstream_waiting
-            ):
-                compact_candidate_ledger_for_review()
-                if ledger is not None:
-                    semantic_clustered_ledger_version = ledger.version
-                emit_swarm_event(
-                    "winning_candidate_competition_converged",
-                    actor="winning_swarm_controller",
-                    graph_id=graph.graph_id,
-                    candidate_count=(
-                        len(ledger.hypotheses) if ledger is not None else 0
-                    ),
-                    convergence_stage="before_s5",
-                    rule=(
-                        "S3/S4按Query维度完成创新装备生成后，由S5统一执行语义准入、合并与判退"
-                    ),
-                )
-                candidate_competition_converged = True
+            # No same-wave convergence barrier: each completed S3/S4 branch
+            # is published and reviewed incrementally below. Final convergence
+            # remains a bounded close-out action after producers drain.
             if (
                 ledger is not None
                 and not running_instances
@@ -5779,28 +4612,12 @@ async def analyze_winning_subagents(
                     )
                     and (
                         item.mission_node not in {"S5", "S6"}
-                        or all(
-                            seed_instance.instance_id
-                            in completed_instances | failed_instances
-                            for seed_instance in graph.agent_instances
-                            if seed_instance.mission_node in {"S3", "S4"}
-                            and not seed_instance.hypothesis_id
-                        )
+                        or ledger is not None
+                        and bool(ledger.hypotheses)
                     )
                     and (
                         item.archetype != "independent_portfolio_reviewer"
-                        or (
-                            not any(
-                                other.instance_id != item.instance_id
-                                and other.archetype != "independent_portfolio_reviewer"
-                                for other in pending.values()
-                            )
-                            and not any(
-                                running_item.archetype
-                                != "independent_portfolio_reviewer"
-                                for running_item, _, _ in running_instances.values()
-                            )
-                        )
+                        or ledger is not None and bool(ledger.hypotheses)
                     )
                 ),
                 key=lambda item: (
@@ -6015,7 +4832,6 @@ async def analyze_winning_subagents(
                             ][:4],
                         )
                     produced_ids: set[str] = set()
-                    produced_candidates: list[WinningHypothesis] = []
                     for ordinal, raw in enumerate(raw_rows[:6], start=1):
                         if not isinstance(raw, Mapping):
                             continue
@@ -6043,7 +4859,6 @@ async def analyze_winning_subagents(
                             )
                         hypotheses.append(candidate)
                         produced_ids.add(candidate.hypothesis_id)
-                        produced_candidates.append(candidate)
                         emit_swarm_event(
                             "winning_candidate_branch_created",
                             actor=instance.instance_id,
@@ -6051,6 +4866,17 @@ async def analyze_winning_subagents(
                             hypothesis_id=candidate.hypothesis_id,
                             mission_node=instance.mission_node,
                             score=candidate.score,
+                            title=candidate.title,
+                            equipment_form=list(candidate.equipment_forms[:2]),
+                            primary_equipment_identity=(
+                                str(raw.get("primary_equipment_identity", "")).strip()
+                                or str(raw.get("equipment_form", "")).strip()
+                                or "；".join(candidate.equipment_forms[:2])
+                            ),
+                            naming_rationale=str(
+                                raw.get("naming_rationale", "")
+                            ).strip(),
+                            naming_owner="s3_s4_codex",
                         )
                     id_remap = refresh_candidate_ledger()
                     resolved_ids = {
@@ -6065,92 +4891,141 @@ async def analyze_winning_subagents(
                         for hypothesis_id in resolved_ids
                         if hypothesis_id in known_ledger_ids
                     } or set(candidate_scope)
-                    if instance.mission_node not in {"S3", "S4"}:
-                        for candidate in produced_candidates:
-                            candidate_id = id_remap.get(
-                                candidate.hypothesis_id,
-                                candidate.hypothesis_id,
+                    incremental_ids = set(
+                        instance_hypothesis_ids[instance.instance_id]
+                    )
+                    if incremental_ids:
+                        semantic_remap = await semantic_cluster_candidate_ledger(
+                            scope_id=(
+                                f"{graph.graph_id}:incremental:"
+                                f"{instance.instance_id}:{instance_batch}"
+                            ),
+                            changed_hypothesis_ids=incremental_ids,
+                        )
+                        incremental_ids = {
+                            canonical_candidate_id(
+                                semantic_remap.get(hypothesis_id, hypothesis_id)
                             )
-                            governed_candidate = next(
-                                (
-                                    item
-                                    for item in ledger.hypotheses
-                                    if item.hypothesis_id == candidate_id
-                                ),
-                                None,
-                            )
-                            if governed_candidate is None:
-                                continue
-                            gate = swarm_controller.evaluate_gate(
-                                governed_candidate, stage="targeted"
-                            )
-                            declared_residuals = [
-                                str(item)
-                                for item in result.get("quality_residuals", [])
-                                if str(item).strip()
-                            ]
-                            # Sparse public evidence is a confidence and
-                            # boundary annotation for a forward-looking
-                            # S3 concept, not a reason to materialize a new
-                            # verifier session per candidate. The shared
-                            # S5 evidence reviewer still checks any claims
-                            # that survive semantic competition.
-                            non_recruiting_residuals = {
-                                "evidence_insufficient",
-                                "equipment_object_evidence_missing",
-                            }
-                            recruitment_residuals = list(
-                                dict.fromkeys(
-                                    residual
-                                    for residual in [
-                                        *declared_residuals,
-                                        *gate.residuals,
-                                    ]
-                                    if residual not in non_recruiting_residuals
-                                )
-                            )
-                            for residual in recruitment_residuals[:2]:
-                                archetype = swarm_controller.archetype_for_residual(
-                                    residual
-                                )
-                                pair = (candidate_id, archetype)
-                                if (
-                                    pair in recruited_pairs
-                                    or len(graph.agent_instances)
-                                    >= producer_instance_limit
-                                ):
-                                    continue
-                                spec = SWARM_SPECIALIST_ARCHETYPES.get(archetype)
-                                if not spec:
-                                    continue
-                                contract = swarm_controller.govern_role_contract(
-                                    {"archetype": archetype, **spec},
-                                    mission_node=str(spec["merge_target"]),
-                                )
-                                graph = swarm_controller.recruit_into_mission_graph(
-                                    graph,
-                                    contract,
-                                    hypothesis_id=candidate_id,
-                                    expected_quality_gain=max(
-                                        0.03, instance.expected_quality_gain
-                                    ),
-                                    depends_on=[instance.instance_id],
-                                )
-                                recruited = graph.agent_instances[-1]
-                                contracts[contract.role_contract_id] = contract
-                                pending[recruited.instance_id] = recruited
-                                recruited_pairs.add(pair)
-                                emit_swarm_event(
-                                    "winning_agent_instance_recruited",
-                                    actor=recruited.instance_id,
-                                    graph_id=graph.graph_id,
-                                    role_contract=to_plain(contract),
-                                    instance=to_plain(recruited),
-                                    trigger_residual=residual,
-                                    hypothesis_id=candidate_id,
-                                )
+                            for hypothesis_id in incremental_ids
+                        }
+                        known_incremental_ids = {
+                            item.hypothesis_id for item in ledger.hypotheses
+                        }
+                        incremental_ids &= known_incremental_ids
+                        instance_hypothesis_ids[instance.instance_id] = set(
+                            incremental_ids
+                        )
+                        pending_incremental_review_ids.update(
+                            incremental_ids - reviewed_candidate_ids
+                        )
+                        ensure_incremental_reviewer_pending()
                 else:
                     if ledger is None:
+                        continue
+                    if instance.archetype == "independent_portfolio_reviewer":
+                        raw_decisions = result.get("decisions", [])
+                        if not isinstance(raw_decisions, list):
+                            raw_decisions = []
+                        known_ids = {
+                            item.hypothesis_id for item in ledger.hypotheses
+                        }
+                        retained_ids = set(known_ids)
+                        reviewed_now: set[str] = set()
+                        for raw in raw_decisions:
+                            if not isinstance(raw, Mapping):
+                                continue
+                            source_id = canonical_candidate_id(
+                                str(raw.get("hypothesis_id", ""))
+                            )
+                            if source_id not in known_ids or (
+                                candidate_scope and source_id not in candidate_scope
+                            ):
+                                continue
+                            decision = str(raw.get("decision", "")).strip().lower()
+                            target_id = canonical_candidate_id(
+                                str(raw.get("merge_target_hypothesis_id", ""))
+                            )
+                            reviewed_now.add(source_id)
+                            if decision == "merge" and (
+                                target_id in known_ids and target_id != source_id
+                            ):
+                                candidate_id_aliases[source_id] = target_id
+                                retained_ids.discard(source_id)
+                                merge_row = {
+                                    "source_hypothesis_id": source_id,
+                                    "target_hypothesis_id": target_id,
+                                    "reason": "incremental_s5_portfolio_merge",
+                                }
+                                swarm_merges.append(merge_row)
+                                emit_swarm_event("hypothesis_merged", **merge_row)
+                            elif decision == "reject":
+                                retained_ids.discard(source_id)
+                                portfolio_rejected_ids.add(source_id)
+                                swarm_rejections.append(
+                                    {
+                                        "hypothesis_id": source_id,
+                                        "reason": str(raw.get("reason", ""))[:500],
+                                        "stage": "incremental_s5_portfolio_review",
+                                    }
+                                )
+                            elif decision != "retain":
+                                continue
+                            emit_swarm_event(
+                                "winning_incremental_portfolio_decision",
+                                actor=instance.instance_id,
+                                graph_id=graph.graph_id,
+                                hypothesis_id=source_id,
+                                decision=decision,
+                                merge_target_hypothesis_id=(
+                                    target_id if decision == "merge" else ""
+                                ),
+                                reason=str(raw.get("reason", ""))[:500],
+                                independent_axis=str(
+                                    raw.get("independent_axis", "")
+                                )[:120],
+                                direct_equipment=bool(
+                                    raw.get("direct_equipment", False)
+                                ),
+                            )
+                        if retained_ids != known_ids:
+                            ledger = HypothesisLedgerVersion(
+                                ledger_id=ledger.ledger_id,
+                                version=ledger.version + 1,
+                                parent_version=ledger.version,
+                                hypotheses=[
+                                    item
+                                    for item in ledger.hypotheses
+                                    if item.hypothesis_id in retained_ids
+                                ],
+                                merge_receipts=list(ledger.merge_receipts),
+                                change_summary="incremental_s5_portfolio_decision",
+                                created_by=instance.instance_id,
+                            )
+                        # S5 changed only portfolio disposition, not candidate
+                        # semantics. Mark this version clustered so close-out
+                        # does not perform a redundant second clustering call.
+                        semantic_clustered_ledger_version = ledger.version
+                        reviewed_candidate_ids.update(reviewed_now)
+                        pending_incremental_review_ids.difference_update(reviewed_now)
+                        review_targets_by_instance.pop(instance.instance_id, None)
+                        emit_swarm_event(
+                            "winning_incremental_portfolio_review_completed",
+                            actor=instance.instance_id,
+                            graph_id=graph.graph_id,
+                            reviewed_candidate_ids=sorted(reviewed_now),
+                            remaining_candidate_ids=sorted(
+                                pending_incremental_review_ids
+                            ),
+                            portfolio_order=[
+                                str(value)
+                                for value in result.get("portfolio_order", [])
+                                if str(value).strip()
+                            ],
+                            portfolio_summary=str(
+                                result.get("portfolio_summary", "")
+                            )[:500],
+                        )
+                        ensure_incremental_reviewer_pending()
                         continue
                     raw_contributions = result.get("contributions", [])
                     if isinstance(raw_contributions, Mapping):
@@ -6355,994 +5230,136 @@ async def analyze_winning_subagents(
         else:
             if not candidate_competition_converged:
                 await semantic_cluster_candidate_ledger(
-                    scope_id=f"{graph.graph_id}:pre-expert"
+                    scope_id=f"{graph.graph_id}:pre-portfolio-finalization"
                 )
             compact_candidate_ledger_for_review()
-        (
-            initial_expert_assessments,
-            initial_expert_summary,
-        ) = await execute_quality_expert_judge(
-            ledger,
-            hypothesis_ids=initial_expert_review_scope,
-        )
-        expert_assessments = dict(initial_expert_assessments)
-        expert_rounds = [initial_expert_summary]
-        expert_repair_waves: list[dict[str, Any]] = []
-        portfolio_completion_waves: list[dict[str, Any]] = []
-        portfolio_completion_attempted = False
-        maximum_expert_rounds = int(
-            host._runtime_budgets.get("maximum_quality_judge_model_calls", 2)
-        )
-        finalist_minimum = int(swarm_controller.policy.get("finalist_minimum", 1))
-        frontloaded_dynamic = (
-            swarm_controller.policy.get("policy_id") == "winning_swarm_dynamic_v2"
-        )
-        while len(expert_rounds) < maximum_expert_rounds:
-            coverage = swarm_controller.passed_portfolio_coverage(
-                ledger,
-                expert_assessments,
-            )
-            portfolio_innovation_audit = _normalize_portfolio_innovation_audit(
-                expert_rounds[-1].get("portfolio_innovation_audit", {})
-            )
-            frontier_completion_requested = _portfolio_innovation_completion_requested(
-                portfolio_innovation_audit
-            )
-            passed_count = int(coverage["passed_count"])
-            # The first expert pass uses a compact blind pool. A ready
-            # pool must not hide other independently generated weapon
-            # candidates from the dynamic portfolio review.
-            if coverage["ready"]:
-                refresh_candidate_ledger()
-            unassessed_after_refresh = {
-                item.hypothesis_id for item in ledger.hypotheses
-            } - set(expert_assessments)
-            if (
-                coverage["ready"]
-                and not unassessed_after_refresh
-                and not frontier_completion_requested
-            ):
-                break
-            if not portfolio_completion_attempted:
-                portfolio_completion_attempted = True
-                # The compact first blind-review pool is not the complete
-                # mission-graph ledger. Restore the bounded ledger and use
-                # the second expert call on diverse, previously unassessed
-                # candidates before paying for another generator. This
-                # keeps the expert gate intact while avoiding the failure
-                # mode where 18 useful candidates collapse to three passed
-                # variants from one equipment family.
-                refresh_candidate_ledger()
-                review_capacity = max(
-                    1,
-                    int(swarm_controller.policy.get("expert_candidate_pool_maximum", 8))
-                    - 1,
-                )
-                unassessed_ids = (
-                    swarm_controller.select_unassessed_portfolio_candidates(
-                        ledger,
-                        expert_assessments,
-                        maximum=review_capacity,
-                    )
-                )
-                if unassessed_ids:
-                    completion_summary = {
-                        "status": "existing_ledger_reused",
-                        "created_count": 0,
-                        "created_hypothesis_ids": [],
-                        "reused_count": len(unassessed_ids),
-                        "reused_hypothesis_ids": list(unassessed_ids),
-                    }
-                elif frontloaded_dynamic:
-                    # Dynamic-v2 completes divergence before realization. Do
-                    # not reopen S3 after S4/S5 or an expert portfolio review;
-                    # late innovation residuals remain an auditable finding for
-                    # the next run rather than spawning a post-hoc generator.
-                    completion_summary = {
-                        "status": "frontloaded_generation_closed",
-                        "created_count": 0,
-                        "created_hypothesis_ids": [],
-                        "reused_count": 0,
-                        "reused_hypothesis_ids": [],
-                    }
-                    portfolio_completion_waves.append(completion_summary)
-                    break
-                else:
-                    completion_summary = await execute_portfolio_gap_completion_wave(
-                        expert_assessments,
-                        innovation_audit=portfolio_innovation_audit,
-                    )
-                portfolio_completion_waves.append(completion_summary)
-                completion_ids = set(
-                    completion_summary.get("created_hypothesis_ids", [])
-                )
-                rejudge_ids = {
-                    *completion_ids,
-                    *unassessed_ids,
-                }
-                remaining_repair_slots = _portfolio_remaining_repair_slots(
-                    passed_count=passed_count,
-                    finalist_minimum=finalist_minimum,
-                    completion_count=len(completion_ids),
-                )
-                if frontloaded_dynamic:
-                    remaining_repair_slots = 0
-                if passed_count < finalist_minimum:
-                    # Reserve one targeted repair lane even when the
-                    # restored ledger already offers enough unassessed
-                    # candidates. It runs in parallel and shares the same
-                    # final expert call.
-                    if not frontloaded_dynamic:
-                        remaining_repair_slots = max(
-                            1,
-                            remaining_repair_slots,
-                        )
-                combined_repair_attempted = False
-                if remaining_repair_slots:
-                    combined_repair_attempted = True
-                    repair_summary = await execute_expert_repair_wave(
-                        expert_assessments,
-                        maximum_candidates_override=remaining_repair_slots,
-                    )
-                    expert_repair_waves.append(repair_summary)
-                    rejudge_ids.update(repair_summary.get("merged_hypothesis_ids", []))
-                if rejudge_ids:
-                    cluster_remap = await semantic_cluster_candidate_ledger(
-                        scope_id=f"{graph.graph_id}:pre-expert-round-{len(expert_rounds) + 1}"
-                    )
-                    for source_id, target_id in cluster_remap.items():
-                        expert_assessments.pop(source_id, None)
-                        rejudge_ids.discard(source_id)
-                        rejudge_ids.add(canonical_candidate_id(target_id))
-                    ledger_ids = {item.hypothesis_id for item in ledger.hypotheses}
-                    rejudge_ids = {
-                        canonical_candidate_id(item)
-                        for item in rejudge_ids
-                        if canonical_candidate_id(item) in ledger_ids
-                    }
-                    (
-                        completion_assessments,
-                        completion_expert_summary,
-                    ) = await execute_quality_expert_judge(
-                        ledger,
-                        hypothesis_ids=rejudge_ids,
-                    )
-                    expert_assessments.update(completion_assessments)
-                    expert_rounds.append(completion_expert_summary)
-                    continue
-                if combined_repair_attempted:
-                    break
-            repair_summary = await execute_expert_repair_wave(expert_assessments)
-            expert_repair_waves.append(repair_summary)
-            if not repair_summary.get("merged_count", 0):
-                break
-            repaired_hypothesis_ids = set(
-                repair_summary.get("merged_hypothesis_ids", [])
-            )
-            cluster_remap = await semantic_cluster_candidate_ledger(
-                scope_id=f"{graph.graph_id}:pre-repair-expert-round-{len(expert_rounds) + 1}"
-            )
-            for source_id, target_id in cluster_remap.items():
-                expert_assessments.pop(source_id, None)
-                repaired_hypothesis_ids.discard(source_id)
-                repaired_hypothesis_ids.add(canonical_candidate_id(target_id))
-            ledger_ids = {item.hypothesis_id for item in ledger.hypotheses}
-            repaired_hypothesis_ids = {
-                canonical_candidate_id(item)
-                for item in repaired_hypothesis_ids
-                if canonical_candidate_id(item) in ledger_ids
-            }
-            (
-                repaired_assessments,
-                repaired_expert_summary,
-            ) = await execute_quality_expert_judge(
-                ledger,
-                hypothesis_ids=repaired_hypothesis_ids,
-            )
-            expert_assessments.update(repaired_assessments)
-            expert_rounds.append(repaired_expert_summary)
-        merged_repair_ids = list(
-            dict.fromkeys(
-                hypothesis_id
-                for wave in expert_repair_waves
-                for hypothesis_id in wave.get("merged_hypothesis_ids", [])
-            )
-        )
-        expert_repair_summary = {
-            "status": (
-                "completed"
-                if any(wave.get("merged_count", 0) for wave in expert_repair_waves)
-                else "not_required"
+        # The dynamic portfolio is the direct result of incremental semantic
+        # clustering plus S5 retain/merge/reject decisions. There is no second
+        # expert score, evidence/TRL audit, repair wave, or completeness ranker.
+        maximum = int(swarm_controller.policy.get("finalist_maximum", 12))
+        selected_ids_ordered = [
+            item.hypothesis_id for item in ledger.hypotheses
+        ][:maximum]
+        selected_ids = set(selected_ids_ordered)
+        decision = PortfolioDecision(
+            decision_id=(
+                "portfolio-decision-"
+                + sha256(
+                    f"{ledger.ledger_id}:{ledger.version}:{'|'.join(selected_ids_ordered)}".encode()
+                ).hexdigest()[:16]
             ),
-            "merged_count": sum(
-                int(wave.get("merged_count", 0) or 0) for wave in expert_repair_waves
-            ),
-            "merged_hypothesis_ids": merged_repair_ids,
-            "waves": expert_repair_waves,
-        }
-        portfolio_completion_summary = {
-            "status": (
-                "completed"
-                if any(
-                    wave.get("created_count", 0) for wave in portfolio_completion_waves
-                )
-                else (
-                    str(portfolio_completion_waves[-1].get("status", "not_required"))
-                    if portfolio_completion_waves
-                    else "not_required"
-                )
-            ),
-            "created_count": sum(
-                int(wave.get("created_count", 0) or 0)
-                for wave in portfolio_completion_waves
-            ),
-            "created_hypothesis_ids": list(
-                dict.fromkeys(
-                    hypothesis_id
-                    for wave in portfolio_completion_waves
-                    for hypothesis_id in wave.get("created_hypothesis_ids", [])
-                )
-            ),
-            "reused_count": sum(
-                int(wave.get("reused_count", 0) or 0)
-                for wave in portfolio_completion_waves
-            ),
-            "reused_hypothesis_ids": list(
-                dict.fromkeys(
-                    hypothesis_id
-                    for wave in portfolio_completion_waves
-                    for hypothesis_id in wave.get("reused_hypothesis_ids", [])
-                )
-            ),
-            "waves": portfolio_completion_waves,
-        }
-        final_expert_summary = expert_rounds[-1]
-        latest_expert_status = str(final_expert_summary.get("status", "limited"))
-        effective_expert_status = _effective_expert_judge_status(
-            expert_rounds,
-            assessed_count=len(expert_assessments),
-            expected_count=len(ledger.hypotheses),
-        )
-        expert_judge_summary = {
-            **final_expert_summary,
-            # Preserve a complete first-round blind review when the
-            # optional targeted rejudge suffers a transport/auth failure.
-            # Previously assessed candidates conservatively retain their
-            # prior score; the failed latest round remains visible.
-            "status": effective_expert_status,
-            "latest_round_status": latest_expert_status,
-            "rejudge_degraded": (
-                effective_expert_status == "completed"
-                and latest_expert_status != "completed"
-            ),
-            "assessments": [to_plain(item) for item in expert_assessments.values()],
-            "round_count": len(expert_rounds),
-            "rounds": expert_rounds,
-            "repair_wave": expert_repair_summary,
-            "portfolio_completion_wave": portfolio_completion_summary,
-        }
-        expert_objectives = {
-            hypothesis_id: swarm_controller.expert_objective_scores(assessment)
-            for hypothesis_id, assessment in expert_assessments.items()
-        }
-        decision: PortfolioDecision = swarm_controller.portfolio_decision(
-            ledger,
-            objective_scores=expert_objectives,
-            expert_assessments=expert_assessments,
+            ledger_id=ledger.ledger_id,
+            ledger_version=ledger.version,
+            pareto_front=list(selected_ids_ordered),
+            selected_hypothesis_ids=list(selected_ids_ordered),
+            rejected_hypothesis_ids=[],
+            objective_scores={},
+            dominance_reasons={},
+            expert_assessment_ids=[],
+            # Compatibility field on the shared decision model. In dynamic-v2
+            # this means only "S5 produced a non-empty portfolio"; no quality
+            # judge exists or is invoked.
+            quality_judge_passed=bool(selected_ids_ordered),
+            status="accepted_by_incremental_s5",
+            requires_human_review=False,
         )
         emit_swarm_event(
             "winning_inner_loop_evaluated",
-            actor="winning_s5_semantic_admission",
+            actor="winning_swarm_independent_portfolio_reviewer",
             graph_id=graph.graph_id,
             loop="inner",
-            cycle=int(expert_judge_summary.get("round_count", 1) or 1),
+            cycle=1,
             passed=decision.quality_judge_passed,
-            candidate_count=len(expert_assessments),
-            repaired_count=int(expert_repair_summary.get("merged_count", 0) or 0),
-            issues=[
-                f"{assessment.hypothesis_id}:{assessment.verdict}"
-                for assessment in expert_assessments.values()
-                if assessment.verdict != "pass"
-            ][:8],
+            candidate_count=len(ledger.hypotheses),
+            repaired_count=0,
+            issues=[],
         )
-        selected_ids = set(decision.selected_hypothesis_ids)
         final_hypotheses = [
             item for item in ledger.hypotheses if item.hypothesis_id in selected_ids
         ]
-        pending_verification_ids = {
-            item.hypothesis_id
-            for item in final_hypotheses
-            if not (
-                item.hypothesis_id in expert_assessments
-                and expert_assessments[item.hypothesis_id].passed
-            )
-            and swarm_controller.assessment_allows_pending_verification(
-                item,
-                expert_assessments.get(item.hypothesis_id),
-            )
-        }
-
         def capability_direction(
             item: WinningHypothesis,
             position: int,
         ) -> dict[str, Any]:
-            assessment = expert_assessments.get(item.hypothesis_id)
-            semantic_identity = swarm_controller.equipment_family_signature(item)
             equipment_form = _winning_primary_equipment_form(item)
             military_value = "；".join(item.direct_military_effects[:3])
             mechanism = "→".join(item.mechanism_chain[:5])
-            failure_boundary = "；".join(item.failure_boundaries[:3])
-            validation = "；".join(item.validation_plan[:3])
-            constraints = [
-                *item.trl_constraints,
-                *item.cost_constraints,
-                *item.industrial_constraints,
-            ]
-            engineering_score = (
-                assessment.dimension_scores.get("engineering_feasibility", 0.0)
-                if assessment is not None
-                else item.score
-            )
-            feasibility = (
-                "4"
-                if engineering_score >= 0.78
-                else "3"
-                if engineering_score >= 0.62
-                else "2"
-            )
-            direction_type = (
-                "upgrade" if item.implementation_path == "upgrade" else "new_capability"
-            )
-            equipment_classification = (
-                str(assessment.equipment_classification).strip().lower()
-                if assessment is not None
-                else ""
-            )
-            direct_combat_equipment = swarm_controller.is_direct_combat_equipment(
-                item,
-                assessment,
-            )
-            candidate_title = _winning_portfolio_title(item)
-            visible_name = candidate_title
-            capability_gap = (
-                f"现有基线“{item.nearest_public_baseline}”尚不能在"
-                f"“{item.changed_confrontation_variable}”变化后稳定形成："
-                f"{military_value or item.novelty_delta}"
-            )
-            topic_text = str(shared.get("topic", ""))
-            target_scenario = _winning_combat_scene(
-                topic_text,
-                equipment_form=equipment_form,
-                changed_variable=item.changed_confrontation_variable,
-            )
-            scientific_principle = (
-                item.frontier_principle
-                or item.changed_confrontation_variable
-                or item.novelty_delta
-                or "任务闭环与体系协同原理"
-            )
-            enabling_technologies = list(
-                dict.fromkeys(
-                    [
-                        item.frontier_principle,
-                        item.technology_discontinuity,
-                        *item.equipment_forms[:2],
-                        *item.system_interfaces[:3],
-                    ]
-                )
-            )
-            enabling_technologies = [
-                value for value in enabling_technologies if str(value).strip()
-            ]
-            operational_concept = (
-                f"以{equipment_form or '具体武器平台'}实施分散部署、任务装订、"
-                "受控交战、效应评估和再组织"
-            )
             project_function = (
                 item.project_function or military_value or item.novelty_delta
             )
-            capability_outcome = military_value or item.novelty_delta
-            winning_mechanism = (
-                f"相对{item.nearest_public_baseline}，{item.novelty_delta}；"
-                f"{item.technology_discontinuity + '；' if item.technology_discontinuity else ''}"
-                f"通过{mechanism or '压缩任务闭环'}改变对手的时间、成本、平台或毁伤交换关系"
-            )
-            capability_portrait = build_agent_led_capability_portrait(
-                name=visible_name,
-                scenario=target_scenario,
-                problem=capability_gap,
-                principle=scientific_principle,
-                technologies=enabling_technologies,
-                operational_concept=operational_concept,
-                operational_steps=item.mechanism_chain,
-                capability=capability_outcome,
-                effect=military_value or item.novelty_delta,
-                winning_mechanism=winning_mechanism,
-                equipment_form=equipment_form,
-            )
-            confidence = (
-                assessment.weighted_score if assessment is not None else item.score
-            )
-            pending_verification = item.hypothesis_id in pending_verification_ids
-            prioritized_evidence_refs = _prioritize_equipment_evidence_refs(
-                item.evidence_ids
-            )
-            has_direct_object_evidence = any(
-                ref.startswith("ev-weapon_equipment-")
-                for ref in prioritized_evidence_refs
-            )
-            foresight_evidence_status = (
-                "direct_object_baseline"
-                if direction_type == "upgrade" or has_direct_object_evidence
-                else "analogous_project_evidence"
-            )
-            return {
+            card = {
                 "hypothesis_id": item.hypothesis_id,
-                "name": visible_name,
+                "name": _winning_portfolio_title(item),
                 "source_hypothesis_title": _winning_portfolio_title(item),
                 "priority": f"P{position}",
-                "type": direction_type,
-                "function": project_function,
-                "project_function": project_function,
-                "feasibility": feasibility,
-                "feasibility_basis": "依据专家工程可行性评分、公开基线及TRL/成本/产能约束分级，仍须样机和对抗试验校准。",
-                "horizon": item.technology_horizon or "mid",
-                "direct_evidence_refs": list(prioritized_evidence_refs[:3]),
-                "foresight_evidence_status": foresight_evidence_status,
-                "evidence_boundary": item.evidence_boundary,
-                "derived_from": ["公开证据与候选制胜机理综合"],
-                "military_value": military_value,
-                "depth_mechanism": mechanism,
-                "foresight": "；".join(item.cross_scenario_results[:2]),
-                "novelty": item.novelty_delta,
-                "frontier_principle": item.frontier_principle,
-                "technology_discontinuity": item.technology_discontinuity,
-                "technology_horizon": item.technology_horizon,
-                "engineering_bottleneck": item.engineering_bottleneck,
-                "strike_countermeasure_value": military_value,
+                "type": "new_capability",
                 "equipment_form": equipment_form,
-                "equipment_semantic_identity": semantic_identity,
-                "equipment_classification": equipment_classification,
-                "equipment_semantic_assessment": {
-                    "classification": equipment_classification,
-                    "direct_combat_effect": direct_combat_equipment,
-                    "support_only": equipment_classification
-                    in {"system_link", "support_only", "non_equipment"},
-                    "unmanned_combat": equipment_classification
-                    == "unmanned_combat",
-                    "concrete_equipment": equipment_classification
-                    != "non_equipment",
-                    "query_alignment_confirmed": bool(
-                        assessment is not None and assessment.passed
-                    ),
-                    "rationale": "；".join(
-                        assessment.strengths[:2]
-                        if assessment is not None
-                        else []
-                    ),
-                },
                 "primary_equipment_identity": equipment_form,
                 "unique_operational_role": project_function,
-                "launch_or_release_domain": "由该装备任务构型限定的部署、发射或释放域",
                 "target_and_direct_effect": military_value,
-                "winning_summary_seed": item.reference_overview,
                 "non_substitutable_difference": item.changed_confrontation_variable,
-                "portfolio_identity_contract": {
-                    "hypothesis_id": item.hypothesis_id,
-                    "immutable_fields": [
-                        "primary_equipment_identity",
-                        "equipment_form",
-                        "launch_or_release_domain",
-                        "target_and_direct_effect",
-                        "baseline_system",
-                        "direct_evidence_refs",
-                    ],
-                    "operational_axes": {
-                        "platform_or_release_form": equipment_form,
-                        "target_and_direct_effect": military_value,
-                        "changed_confrontation_variable": (
-                            item.changed_confrontation_variable
-                        ),
-                        "mechanism_and_timing": list(item.mechanism_chain[:4]),
-                        "verification_and_failure_boundary": [
-                            *item.validation_plan[:2],
-                            *item.failure_boundaries[:2],
-                        ],
-                    },
-                    "minimum_cross_card_independent_axes": int(
-                        swarm_controller.policy.get(
-                            "same_family_minimum_independent_axes",
-                            2,
-                        )
-                    ),
-                    "downstream_mutation_scope": (
-                        "S4-S5只补全或收窄，S6只撰写已选卡；"
-                        "不得新增、删除、换装或重命名主装备"
-                    ),
-                },
-                "operational_mechanism": mechanism,
-                "target_scenario": target_scenario,
-                "problem_statement": capability_gap,
-                "scientific_principle": scientific_principle,
-                "enabling_technologies": enabling_technologies,
-                "operational_concept": operational_concept,
-                "operational_process": list(item.mechanism_chain[:6]),
-                "capability_outcome": capability_outcome,
-                "winning_mechanism": winning_mechanism,
-                "development_path": (
-                    f"围绕{equipment_form}开展工程样机、体系接口和对抗试验；"
-                    f"关键瓶颈为{item.engineering_bottleneck or '待样机试验识别'}；"
-                    f"通过条件为{validation}。"
-                ),
-                "future_trigger": "；".join(item.cross_scenario_results[:2]),
-                "adversary_adaptation": "；".join(item.adversary_adaptations[:3]),
-                "failure_boundary": failure_boundary,
                 "query_relevance": (
                     f"通过改变“{item.changed_confrontation_variable}”，"
                     f"在当前任务链中形成{military_value}。"
                 ),
-                "baseline_system": item.nearest_public_baseline,
-                "capability_gap": capability_gap,
-                "upgrade_package": list(
-                    dict.fromkeys(
-                        [
-                            *item.equipment_forms[:4],
-                            *item.system_interfaces[:4],
-                        ]
-                    )
-                )[:6]
-                if direction_type == "upgrade"
-                else [],
-                "combat_effect_uplift": military_value,
-                "strike_chain_contribution": mechanism,
-                "upgrade_boundary": "；".join(constraints[:3]),
-                "capability_portrait": capability_portrait,
-                "confidence": confidence,
-                "verification_status": (
-                    "pending" if pending_verification else "assessed"
+                "concise_winning_summary": (
+                    item.reference_overview or item.disruptive_shift or mechanism
                 ),
-                "confidence_limited": pending_verification,
-                "selection_quality_status": (
-                    "new_frontier_pending_verification"
-                    if pending_verification
-                    else "expert_assessed"
-                ),
-                "mission_effects": list(item.direct_military_effects),
-                "mechanism_chain": list(item.mechanism_chain),
-                "equipment_forms": list(item.equipment_forms),
-                "system_interfaces": list(item.system_interfaces),
-                "constraints": constraints,
-                "validation_plan": list(item.validation_plan),
-                "evidence_ids": list(item.evidence_ids),
-                "failure_boundaries": list(item.failure_boundaries),
-                "score": item.score,
-                "expert_score": (
-                    expert_assessments[item.hypothesis_id].weighted_score
-                    if item.hypothesis_id in expert_assessments
-                    else None
-                ),
-                "expert_assessment_id": (
-                    expert_assessments[item.hypothesis_id].assessment_id
-                    if item.hypothesis_id in expert_assessments
-                    else ""
-                ),
-                "direct_combat_equipment": (
-                    direct_combat_equipment
-                ),
+                "mechanism_chain": list(item.mechanism_chain[:5]),
+                "frontier_principle": item.frontier_principle,
+                "disruptive_shift": item.disruptive_shift,
+                "selection_quality_status": "accepted_by_incremental_s5",
+                "direct_combat_equipment": True,
             }
+            failure_boundary = "；".join(item.failure_boundaries[:2]).strip()
+            if failure_boundary:
+                card["failure_boundary"] = failure_boundary
+            return card
 
         raw_equipment_portfolio = [
             capability_direction(item, position)
             for position, item in enumerate(final_hypotheses, start=1)
         ]
 
-        async def close_s5_handoff_contract(
-            position: int,
-            card: Mapping[str, Any],
-        ) -> tuple[int, dict[str, Any] | None, str]:
-            """Let S5 close one finalist's falsifiable delivery contract.
 
-            S3 has frozen naming in the candidate-authoring Codex turn. This
-            turn only locks the remaining identity and decision contracts.
-            """
-
-            emit_swarm_event(
-                "winning_s5_handoff_contract_started",
-                actor="winning_swarm_independent_portfolio_reviewer",
-                graph_id=graph.graph_id,
-                card_position=position,
-                hypothesis_id=str(card.get("hypothesis_id", "")),
-                equipment_name=str(card.get("name", "")),
-                status="running",
-            )
-            authored = dict(card)
-            failure_reason = ""
-            try:
-                contract_text = await host._run_core_json(
-                    "winning_swarm_independent_portfolio_reviewer",
-                    "你是与候选生成和S6画像写作隔离的S5交接合同Agent。S3候选生成Codex会话已经在"
-                    "确定创新原理和制胜关系后完成并冻结名称；本调用不得改名。先联合理解"
-                    "name、source_hypothesis_title、equipment_form、project_function、mechanism_chain、"
-                    "target_and_direct_effect与validation_plan，判断实际执行接敌并产生直接战果的唯一"
-                    "主装备。frozen_name必须逐字复制assigned_candidate.name；不得清理标点、压缩、扩写、"
-                    "同义替换或再次命名。复杂价值由concise_winning_summary承载。不得换装、增加候选"
-                    "或撰写能力画像。随后形成四项简洁、可证伪、可交接的合同。"
-                    "capability_classification按本装备在当前Query中的主要可验收战场结果确定主维度，"
-                    "可使用毁伤、突防或其他更贴切的自然维度；辅维度最多两个，不按示例补齐。"
-                    "同时输出equipment_semantic_assessment：必须基于完整候选、Query和作战因果"
-                    "进行语义判断，不得依据标题关键词、型号格式或装备名词后缀分类。classification"
-                    "使用direct_combat、unmanned_combat、upgrade、system_link、support_only或"
-                    "non_equipment；并分别给出是否产生直接战斗效果、是否仅属支援、是否无人作战、"
-                    "是否精确弹药、是否为具体装备对象以及是否与Query一致的JSON布尔值和简要理由。"
-                    "indicator_portrait要从本装备独有机理推导少量关键测量轴，说明与哪类现有"
-                    "任务链或同类装备在相同对抗条件下比较，以及出现什么结果时应判退或停止转段；"
-                    "不得虚构精确数值，也不得用所有装备通用的射程、成本、精度清单代替机理推导。"
-                    "query_relevance要自然写清该装备对应的任务对象、作战阶段、主要威胁压力和"
-                    "直接军事战果，并说明其制胜关系为何不可由组合内其他候选替代。"
-                    "concise_winning_summary是显示在冻结装备名称下方的一句精简制胜说明：通常控制"
-                    "在25—70个中文字符，直接写最独特的战场特征或改变变量、适用场景/目标与直接战果，"
-                    "使读者不展开画像也能理解为何制胜。不要复述装备名称，不写证据、验证、内部流程、"
-                    "技术组件清单或泛化口号，不套统一句式。winning_summary_seed只供理解候选，可自然"
-                    "重写或舍弃。该字段仅作展示和S6补充语境，不参与身份判定、质量硬门或S6改名。"
-                    "other_finalists只用于避免合同语义重复，不得吸收其装备身份或机理。只输出JSON。",
-                    {
-                        "query": str(shared.get("topic", "")),
-                        "assigned_candidate": dict(card),
-                        "other_finalists": [
-                            {
-                                "name": str(item.get("name", "")),
-                                "unique_operational_role": str(
-                                    item.get("unique_operational_role", "")
-                                ),
-                                "non_substitutable_difference": str(
-                                    item.get("non_substitutable_difference", "")
-                                ),
-                                "target_and_direct_effect": str(
-                                    item.get("target_and_direct_effect", "")
-                                ),
-                            }
-                            for other_position, item in enumerate(
-                                raw_equipment_portfolio,
-                                start=1,
-                            )
-                            if other_position != position
-                        ],
-                    },
-                    {
-                        "identity_status": "resolved|not_resolvable_from_candidate",
-                        "naming_contract_passed": "boolean: frozen_name exactly copies assigned_candidate.name",
-                        "frozen_name": "逐字复制assigned_candidate.name，不得再次命名",
-                        "primary_equipment_identity": "唯一执行接敌并产生直接战果的主装备及平台/弹体边界",
-                        "identity_resolution": "说明为何这是单一可立项装备；不得引用关键词或后缀规则",
-                        "capability_classification": {
-                            "primary_dimension": "主要能力维度",
-                            "secondary_dimensions": ["最多两个辅助能力维度"],
-                            "classification_basis": "主要战果、关键流程节点和制胜关系为何支持该分类",
-                        },
-                        "equipment_semantic_assessment": {
-                            "classification": "direct_combat|unmanned_combat|upgrade|system_link|support_only|non_equipment",
-                            "direct_combat_effect": "boolean",
-                            "support_only": "boolean",
-                            "unmanned_combat": "boolean",
-                            "precision_munition": "boolean",
-                            "concrete_equipment": "boolean",
-                            "query_alignment_confirmed": "boolean",
-                            "rationale": "基于完整军事语义的判断理由，不得引用关键词规则",
-                        },
-                        "indicator_portrait": (
-                            "本装备机理专属的测量轴、同条件对照基线、可证伪判退或停止条件"
-                        ),
-                        "query_relevance": (
-                            "任务对象、作战阶段、威胁压力、直接军事战果与不可替代制胜关系"
-                        ),
-                        "concise_winning_summary": (
-                            "25-70个中文字符的一句制胜说明：独特战场特征/改变变量 + 场景或目标 + 直接战果"
-                        ),
-                    },
-                    1200,
-                    phase=f"winning_s5_handoff_contract_{position:02d}",
-                )
-                contract = _parse_json_object(contract_text)
-                identity_status = (
-                    str(contract.get("identity_status", "")).strip().lower()
-                )
-                frozen_name = _clean_capability_handoff_text(
-                    contract.get("frozen_name", ""),
-                    limit=None,
-                )
-                primary_identity = _clean_capability_handoff_text(
-                    contract.get("primary_equipment_identity", ""),
-                    limit=None,
-                )
-                naming_contract_passed = bool(
-                    contract.get("naming_contract_passed", False)
-                )
-                if (
-                    identity_status == "resolved"
-                    and naming_contract_passed
-                    and frozen_name == str(authored.get("name", ""))
-                    and primary_identity
-                ):
-                    authored["primary_equipment_identity"] = primary_identity
-                    authored["semantic_identity_resolution"] = (
-                        _clean_capability_handoff_text(
-                            contract.get("identity_resolution", ""),
-                            limit=None,
-                        )
-                    )
-                authored["indicator_portrait"] = _clean_capability_handoff_text(
-                    contract.get("indicator_portrait", ""),
-                    limit=None,
-                )
-                authored["query_relevance"] = _clean_capability_handoff_text(
-                    contract.get("query_relevance", ""),
-                    limit=None,
-                )
-                raw_classification = contract.get("capability_classification", {})
-                if isinstance(raw_classification, Mapping):
-                    primary_dimension = _clean_capability_handoff_text(
-                        raw_classification.get("primary_dimension", ""),
-                        limit=80,
-                    )
-                    secondary_dimensions = [
-                        _clean_capability_handoff_text(item, limit=80)
-                        for item in raw_classification.get("secondary_dimensions", [])
-                        if str(item).strip()
-                    ][:2]
-                    classification_basis = _clean_capability_handoff_text(
-                        raw_classification.get("classification_basis", ""),
-                        limit=None,
-                    )
-                    if primary_dimension and classification_basis:
-                        authored["capability_classification"] = {
-                            "primary_dimension": primary_dimension,
-                            "secondary_dimensions": secondary_dimensions,
-                            "classification_basis": classification_basis,
-                        }
-                raw_assessment = contract.get("equipment_semantic_assessment", {})
-                if isinstance(raw_assessment, Mapping):
-                    assessment_classification = str(
-                        raw_assessment.get("classification", "")
-                    ).strip().lower()
-                    boolean_fields = (
-                        "direct_combat_effect",
-                        "support_only",
-                        "unmanned_combat",
-                        "precision_munition",
-                        "concrete_equipment",
-                        "query_alignment_confirmed",
-                    )
-                    if assessment_classification and all(
-                        isinstance(raw_assessment.get(field), bool)
-                        for field in boolean_fields
-                    ):
-                        authored["equipment_classification"] = (
-                            assessment_classification
-                        )
-                        authored["equipment_semantic_assessment"] = {
-                            "classification": assessment_classification,
-                            **{
-                                field: raw_assessment[field]
-                                for field in boolean_fields
-                            },
-                            "rationale": _clean_capability_handoff_text(
-                                raw_assessment.get("rationale", ""),
-                                limit=None,
-                            ),
-                        }
-                concise_winning_summary = _clean_capability_handoff_text(
-                    contract.get("concise_winning_summary", ""),
-                    limit=180,
-                )
-                if concise_winning_summary:
-                    authored["concise_winning_summary"] = concise_winning_summary
-            except Exception as exc:
-                failure_reason = f"{type(exc).__name__}: {exc}"
-
-            if not all(
-                str(authored.get(field, "")).strip()
-                for field in (
-                    "primary_equipment_identity",
-                    "indicator_portrait",
-                    "query_relevance",
-                )
-            ):
-                # A transport or malformed-output failure must not discard
-                # every otherwise valid finalist.  This bounded projection
-                # is a last-resort S5 contract, never user-facing portrait
-                # prose and never a source of new candidate semantics.
-                authored = _prepare_pre_s6_card_contract(
-                    authored,
-                    query=str(shared.get("topic", "")),
-                )
-            # Only missing contract fields are diagnosed locally.  Whether a
-            # name denotes one concrete weapon and whether the indicator/query
-            # prose is semantically specific belong to the S5 Codex judgement.
-            handoff_warnings: list[str] = []
-            if not str(authored.get("primary_equipment_identity", "")).strip():
-                handoff_warnings.append("主装备身份合同缺失")
-            if not str(authored.get("indicator_portrait", "")).strip():
-                handoff_warnings.append("指标合同未闭合")
-            if not str(authored.get("query_relevance", "")).strip():
-                handoff_warnings.append("Query关联合同未闭合")
-            if not isinstance(authored.get("capability_classification"), Mapping):
-                handoff_warnings.append("能力分类合同未闭合")
-            authored_assessment = authored.get(
-                "equipment_semantic_assessment", {}
-            )
-            if not isinstance(authored_assessment, Mapping) or not str(
-                authored_assessment.get("classification", "")
-            ).strip() or not all(
-                isinstance(authored_assessment.get(field), bool)
-                for field in (
-                    "direct_combat_effect",
-                    "support_only",
-                    "unmanned_combat",
-                    "precision_munition",
-                    "concrete_equipment",
-                    "query_alignment_confirmed",
-                )
-            ):
-                handoff_warnings.append("装备语义合同未闭合")
-            if failure_reason:
-                handoff_warnings.insert(0, failure_reason)
-
-            identity_contract = authored.get("portfolio_identity_contract", {})
-            identity_contract = (
-                dict(identity_contract)
-                if isinstance(identity_contract, Mapping)
-                else {}
-            )
-            identity_contract["pre_s6_quality_contract"] = {
-                "indicator_portrait": authored.get("indicator_portrait", ""),
-                "query_relevance": authored.get("query_relevance", ""),
-                "capability_classification": authored.get(
-                    "capability_classification", {}
-                ),
-                "equipment_semantic_assessment": authored.get(
-                    "equipment_semantic_assessment", {}
-                ),
-                "owner": "S5_handoff_agent",
-                "s6_mutation_allowed": False,
-            }
-            if str(authored.get("concise_winning_summary", "")).strip():
-                identity_contract["pre_s6_supplemental_context"] = {
-                    "concise_winning_summary": authored["concise_winning_summary"],
-                    "purpose": "name_subtitle_and_s6_context_only",
-                    "quality_gate_required": False,
-                    "s6_mutation_allowed": False,
-                }
-            identity_contract["pre_s6_identity_contract"] = {
-                "status": (
-                    "resolved_by_s5_semantic_agent"
-                    if str(authored.get("semantic_identity_resolution", "")).strip()
-                    else "preserved_from_expert_selected_candidate"
-                ),
-                "name": str(authored.get("name", "")),
-                "primary_equipment_identity": str(
-                    authored.get("primary_equipment_identity", "")
-                ),
-                "method": "whole_candidate_military_semantics",
-                "s6_mutation_allowed": False,
-            }
-            authored["portfolio_identity_contract"] = identity_contract
-            if handoff_warnings:
-                authored["pre_s6_handoff_warnings"] = handoff_warnings[:8]
-            emit_swarm_event(
-                "winning_s5_handoff_contract_completed",
-                actor="winning_swarm_independent_portfolio_reviewer",
-                graph_id=graph.graph_id,
-                card_position=position,
-                hypothesis_id=str(card.get("hypothesis_id", "")),
-                equipment_name=str(card.get("name", "")),
-                warnings=handoff_warnings[:8],
-                status="limited" if handoff_warnings else "completed",
-            )
-            return position, authored, "；".join(handoff_warnings)
-
-        handoff_results = await asyncio.gather(
-            *(
-                close_s5_handoff_contract(position, card)
-                for position, card in enumerate(
-                    raw_equipment_portfolio,
-                    start=1,
-                )
-            ),
-            return_exceptions=True,
-        )
-        equipment_portfolio: list[dict[str, Any]] = []
-        limited_handoff_count = 0
-        for position, outcome in enumerate(handoff_results, start=1):
-            source_card = raw_equipment_portfolio[position - 1]
-            if isinstance(outcome, BaseException):
-                authored_card = _prepare_pre_s6_card_contract(
-                    source_card,
-                    query=str(shared.get("topic", "")),
-                )
-                authored_card["pre_s6_handoff_warnings"] = [
-                    f"{type(outcome).__name__}: {outcome}"
-                ]
-                equipment_portfolio.append(authored_card)
-                limited_handoff_count += 1
-                emit_swarm_event(
-                    "winning_s5_handoff_contract_completed",
-                    actor="winning_swarm_independent_portfolio_reviewer",
-                    graph_id=graph.graph_id,
-                    card_position=position,
-                    hypothesis_id=str(source_card.get("hypothesis_id", "")),
-                    equipment_name=str(source_card.get("name", "")),
-                    warnings=[f"{type(outcome).__name__}: {outcome}"[:400]],
-                    status="limited",
-                )
-                continue
-            _, authored_card, warning = outcome
-            if authored_card is None:
-                authored_card = _prepare_pre_s6_card_contract(
-                    source_card,
-                    query=str(shared.get("topic", "")),
-                )
-                warning = warning or "S5交接未返回结构化卡片，已保留冻结候选语义"
-            if warning:
-                limited_handoff_count += 1
-            equipment_portfolio.append(authored_card)
-        if not equipment_portfolio:
-            equipment_portfolio = [
-                _prepare_pre_s6_card_contract(
-                    card,
-                    query=str(shared.get("topic", "")),
-                )
-                for card in raw_equipment_portfolio
-            ]
-            limited_handoff_count = len(equipment_portfolio)
+        # S5 is a portfolio decision only. The previous per-card handoff
+        # contract was a second heavy authoring pass that recreated evidence,
+        # TRL, indicators and semantic classification. S6 receives the
+        # already-frozen candidate spine directly.
+        equipment_portfolio: list[dict[str, Any]] = [
+            dict(card) for card in raw_equipment_portfolio
+        ]
         emit_swarm_event(
-            "winning_s5_handoff_contracts_completed",
+            "winning_s5_portfolio_frozen",
             actor="winning_swarm_independent_portfolio_reviewer",
             graph_id=graph.graph_id,
             selected_count=len(equipment_portfolio),
             rejected_count=0,
-            limited_count=limited_handoff_count,
-            status="limited" if limited_handoff_count else "completed",
+            status="completed",
+            contract_owner="s5_incremental_portfolio_reviewer",
+            naming_mutation_allowed=False,
         )
         direct_combat_count = sum(
             bool(item.get("direct_combat_equipment")) for item in equipment_portfolio
         )
-        direct_hypotheses = [
-            item
-            for item in final_hypotheses
-            if swarm_controller.is_direct_combat_equipment(
-                item,
-                expert_assessments.get(item.hypothesis_id),
-            )
-        ]
+        direct_hypotheses = list(final_hypotheses)
         direct_equipment_family_counts = swarm_controller.equipment_family_counts(
             direct_hypotheses
         )
         distinct_direct_equipment_family_count = len(direct_equipment_family_counts)
-        complete_portrait_count = sum(
+        complete_handoff_count = sum(
             all(
                 (
                     str(item.get("name", "")).strip(),
                     str(item.get("equipment_form", "")).strip(),
-                    str(item.get("military_value", "")).strip(),
-                    str(item.get("operational_mechanism", "")).strip(),
-                    str(item.get("baseline_system", "")).strip(),
-                    str(item.get("capability_gap", "")).strip(),
-                    str(item.get("target_scenario", "")).strip(),
-                    str(item.get("problem_statement", "")).strip(),
-                    str(item.get("scientific_principle", "")).strip(),
-                    item.get("enabling_technologies"),
-                    str(item.get("operational_concept", "")).strip(),
-                    item.get("operational_process"),
-                    str(item.get("capability_outcome", "")).strip(),
-                    str(item.get("winning_mechanism", "")).strip(),
-                    item.get("system_interfaces"),
-                    item.get("failure_boundaries"),
-                    item.get("validation_plan"),
+                    str(item.get("target_and_direct_effect", "")).strip(),
+                    str(item.get("unique_operational_role", "")).strip(),
+                    item.get("mechanism_chain"),
                 )
             )
             for item in equipment_portfolio
         )
-        capability_portrait_gate_passed = complete_portrait_count == len(
+        s6_handoff_gate_passed = complete_handoff_count == len(
             equipment_portfolio
         ) and bool(equipment_portfolio)
         equipment_family_counts = swarm_controller.equipment_family_counts(
@@ -7390,10 +5407,9 @@ async def analyze_winning_subagents(
         diversity_only_warning = bool(
             direct_equipment_diversity_limited
             and direct_combat_main_body_passed
-            and capability_portrait_gate_passed
+            and s6_handoff_gate_passed
             and equipment_diversity_passed
-            and decision.quality_judge_passed
-            and expert_judge_summary.get("status") == "completed"
+            and bool(equipment_portfolio)
         )
         dynamic_outputs = [
             {
@@ -7415,80 +5431,27 @@ async def analyze_winning_subagents(
         ]
         accumulated["dynamic_subagent_outputs"] = list(dynamic_outputs)
 
-        # Make every disposition explainable to the UI.  A candidate that
-        # is not a standalone S6 card is not silently "eliminated": it
-        # either failed a substantive quality/evidence test, or remains a
-        # governed variant/constraint of a selected weapon family.
+        # Make every S5 disposition explainable to the UI without inventing a
+        # second expert judgement or evidence status.
         selected_by_id = {item.hypothesis_id: item for item in final_hypotheses}
         candidate_lineage: list[dict[str, Any]] = []
         for item in ledger.hypotheses:
             row = to_plain(item)
-            assessment = expert_assessments.get(item.hypothesis_id)
-            if assessment is not None:
-                row["expert_score"] = assessment.weighted_score
-                row["selection_dimensions"] = {
-                    "innovation": assessment.dimension_scores.get("innovation", 0.0),
-                    "military_value": assessment.dimension_scores.get(
-                        "military_value", 0.0
-                    ),
-                    "decisive_advantage": assessment.dimension_scores.get(
-                        "decisive_advantage", 0.0
-                    ),
-                    "query_specificity": assessment.dimension_scores.get(
-                        "query_specificity", 0.0
-                    ),
-                    "credibility": assessment.dimension_scores.get("credibility", 0.0),
-                }
             if item.hypothesis_id in selected_by_id:
-                is_pending = item.hypothesis_id in pending_verification_ids
                 row.update(
-                    selection_status=(
-                        "selected_pending_verification" if is_pending else "selected"
-                    ),
-                    selection_reason_code=(
-                        "frontier_pending_verification_backfill"
-                        if is_pending
-                        else "independent_evidence_closed_loop"
-                    ),
-                    selection_reason=(
-                        "直接作战装备身份和Query因果成立；因专家认为对象证据、成熟度或对抗边界仍需核验，"
-                        "按新质性与制胜价值补入S6，画像标记为待核验，不作为已列装事实。"
-                        if is_pending
-                        else "已通过Query因果、直接军事效果与独立性评审；可追溯对象证据有则保留，作为独立S6装备画像并行生成。"
-                    ),
+                    selection_status="selected",
+                    selection_reason_code="retained_by_incremental_s5",
+                    selection_reason="经增量语义聚类与S5独立组合评审保留，进入S6并行画像撰写。",
                     s6_eligible=True,
-                    verification_status="pending" if is_pending else "assessed",
-                    confidence_limited=is_pending,
-                )
-            elif assessment is not None and assessment.passed:
-                row.update(
-                    selection_status="not_selected_capacity",
-                    selection_reason_code="s6_review_capacity",
-                    selection_reason=(
-                        "经独立Codex语义评审保留，但本轮超过S6审阅容量；"
-                        "未按名称、装备家族或关键词机械合并，保留在候选账本供下一轮复核。"
-                    ),
-                    s6_eligible=False,
                 )
             else:
-                reasons = (
-                    list(assessment.rejection_reasons)
-                    if assessment is not None
-                    else list(decision.dominance_reasons.get(item.hypothesis_id, []))
-                )
                 row.update(
                     # This lineage board is a research catalogue, not the
-                    # delivery gate itself. Candidates that are unsuitable
-                    # for a full S6 card remain inspectable reference
-                    # weapons while the expert assessment retains the
-                    # underlying quality/evidence findings for audit.
+                    # delivery gate itself. Non-selected candidates remain
+                    # inspectable without a fabricated expert assessment.
                     selection_status="reference",
-                    selection_reason_code="reference_weapon_not_authored",
-                    selection_reason=(
-                        "本轮不进入S6详细画像；保留为参考武器，其对象证据、Query因果或"
-                        "直接军事效果仍需补强。"
-                        + ((" 参考依据：" + "；".join(reasons[:2])) if reasons else "")
-                    ),
+                    selection_reason_code="not_retained_by_incremental_s5",
+                    selection_reason="本轮未由S5保留为独立组合成员，不进入S6画像撰写。",
                     s6_eligible=False,
                 )
             candidate_lineage.append(row)
@@ -7503,18 +5466,14 @@ async def analyze_winning_subagents(
             "contributions": [to_plain(item) for item in contribution_rows],
             "merge_receipts": [to_plain(item) for item in merge_receipts],
             "portfolio_decision": to_plain(decision),
-            "expert_judge": expert_judge_summary,
-            "expert_assessments": [
-                to_plain(item) for item in expert_assessments.values()
-            ],
             "finalists": [to_plain(item) for item in final_hypotheses],
             "final_equipment_portfolio": equipment_portfolio,
             "portfolio_quality_gate": {
                 "passed": portfolio_quality_gate_passed,
                 "direction_count": len(equipment_portfolio),
                 "direct_combat_equipment_count": direct_combat_count,
-                "complete_capability_portrait_count": complete_portrait_count,
-                "capability_portrait_gate_passed": capability_portrait_gate_passed,
+                "complete_s6_handoff_count": complete_handoff_count,
+                "s6_handoff_gate_passed": s6_handoff_gate_passed,
                 "equipment_diversity_passed": equipment_diversity_passed,
                 "equipment_family_count": equipment_family_count,
                 "equipment_family_counts": equipment_family_counts,
@@ -7558,17 +5517,11 @@ async def analyze_winning_subagents(
                 ),
                 "remote_precision_required": False,
                 "remote_precision_present": remote_precision_present,
-                "selection_rule": "独立Codex按完整Query、因果与五轴语义作组合判断；本地字段、证据数量和家族数量只作诊断，不淘汰候选",
+                "selection_rule": "增量五轴语义聚类与S5独立组合评审决定保留、合并和判退；动态路径不运行旧重型质量评估",
                 "s6_card_capacity": int(
                     swarm_controller.policy.get("finalist_maximum", 12)
                 ),
                 "direct_combat_equipment_must_be_main_body": True,
-                "expert_judge_required": bool(
-                    swarm_controller.policy.get("expert_judge_required")
-                ),
-                "expert_judge_status": expert_judge_summary.get("status"),
-                "expert_judge_passed": decision.quality_judge_passed,
-                "expert_assessed_count": len(expert_assessments),
             },
             "execution_batches": execution_batches,
             "events_version": "winning_swarm_dynamic_v2",
@@ -7580,9 +5533,6 @@ async def analyze_winning_subagents(
                 "maximum_instances": graph.maximum_instances,
                 "maximum_concurrency": graph.maximum_concurrency,
                 "maximum_observed_concurrency": maximum_observed_concurrency,
-                "reserved_quality_judge_calls": int(
-                    host._runtime_budgets.get("maximum_quality_judge_model_calls", 1)
-                ),
             },
             "stop_reason": (
                 "mission_graph_complete_with_diversity_warning"
@@ -7914,6 +5864,22 @@ async def analyze_winning_subagents(
             """
 
             direction = dict(brief)
+            if dynamic_s6_authoring:
+                # Dynamic-v2 never fabricates prose locally. Preserve the
+                # frozen S5 decision spine and mark the card limited until an
+                # S6 provider can author its portrait.
+                direction.pop("capability_portrait", None)
+                direction.pop("capability_portrait_modules", None)
+                direction.pop("semantic_consistency_check", None)
+                direction["s6_authoring_status"] = "limited_provider_failure"
+                direction["s6_authoring_failure_type"] = type(failure).__name__
+                draft = str(
+                    direction.get("concise_winning_summary")
+                    or direction.get("target_and_direct_effect")
+                    or direction.get("name")
+                    or ""
+                ).strip()
+                return position, direction, draft
             identity_contract = direction.get("portfolio_identity_contract", {})
             identity_contract = (
                 dict(identity_contract)
@@ -8100,7 +6066,7 @@ async def analyze_winning_subagents(
                         "parallel_card_id": f"s6-card-{position}",
                         "portfolio_position": position,
                         "portfolio_card_count": len(briefs),
-                        "assigned_card": dict(brief),
+                        "assigned_card": _minimal_s6_card_handoff(brief),
                     },
                     {
                         "direction": card_direction_schema,
@@ -8184,6 +6150,12 @@ async def analyze_winning_subagents(
             authored_boundary = str(
                 direction.get("evidence_boundary", "") or ""
             ).strip()
+            semantic_check = direction.get("semantic_consistency_check", {})
+            if (
+                isinstance(semantic_check, Mapping)
+                and semantic_check.get("consistent") is True
+            ):
+                direction["s6_authoring_status"] = "authored_semantically_consistent"
             if authored_boundary and not _evidence_boundary_is_public_semantic(
                 authored_boundary
             ):
@@ -8204,6 +6176,7 @@ async def analyze_winning_subagents(
                 hypothesis_id=str(brief.get("hypothesis_id", "")),
                 equipment_name=str(direction.get("name", brief.get("name", ""))),
                 status="completed",
+                direction=_compact_s6_authored_card_event(direction),
             )
             outcome = (
                 position,
@@ -8274,6 +6247,7 @@ async def analyze_winning_subagents(
                 hypothesis_id=str(brief.get("hypothesis_id", "")),
                 equipment_name=str(cached_direction.get("name", brief.get("name", ""))),
                 status="completed",
+                direction=_compact_s6_authored_card_event(cached_direction),
             )
         card_failures: list[str] = []
         if pending_cards:
@@ -8310,6 +6284,7 @@ async def analyze_winning_subagents(
                         equipment_name=str(brief.get("name", "")),
                         failure_type=type(card_result).__name__,
                         status="limited",
+                        direction=_compact_s6_authored_card_event(limited[1]),
                     )
                     continue
                 authored.append(card_result)
@@ -8501,15 +6476,41 @@ async def analyze_winning_subagents(
                 break
             projected_prior = prior_projection(index, prior_step_outputs)
             if index == 6:
-                s6_handoff = _capability_synthesis_handoff(
-                    topic=shared["topic"],
-                    branch=primary_branch,
-                    prior_step_outputs=prior_step_outputs,
-                    evidence_index=shared.get("evidence_index", []),
-                    s6_parallelism=int(
-                        host._runtime_budgets.get("s6_codex_concurrency", 6)
-                    ),
-                )
+                if dynamic_s6_authoring:
+                    # Dynamic S5 already froze the decision spine.  Do not
+                    # rebuild the legacy portfolio/evidence contract here;
+                    # that contract was the main source of prompt bloat.
+                    dynamic_portfolio = (
+                        accumulated.get("winning_swarm", {}).get(
+                            "final_equipment_portfolio", []
+                        )
+                        if isinstance(accumulated.get("winning_swarm", {}), Mapping)
+                        else []
+                    )
+                    if not dynamic_portfolio:
+                        dynamic_portfolio = accumulated.get("concept_directions", [])
+                    s6_handoff = {
+                        "selected_equipment_portfolio": [
+                            _minimal_s6_card_handoff(item)
+                            for item in dynamic_portfolio
+                            if isinstance(item, Mapping)
+                        ],
+                        "s6_card_capacity": min(12, len(dynamic_portfolio) or 1),
+                        "s6_parallelism": int(
+                            host._runtime_budgets.get("s6_codex_concurrency", 6)
+                        ),
+                        "handoff_mode": "dynamic_s5_decision_spine",
+                    }
+                else:
+                    s6_handoff = _capability_synthesis_handoff(
+                        topic=shared["topic"],
+                        branch=primary_branch,
+                        prior_step_outputs=prior_step_outputs,
+                        evidence_index=shared.get("evidence_index", []),
+                        s6_parallelism=int(
+                            host._runtime_budgets.get("s6_codex_concurrency", 6)
+                        ),
+                    )
                 s6_valid_evidence_ids = sorted(
                     {
                         str(item.get("evidence_id", ""))
@@ -8553,13 +6554,18 @@ async def analyze_winning_subagents(
                         },
                     )
                     result["reasoning_node"] = reasoning_node
-                s6_first_pass_contract = _s6_first_pass_quality_contract(
-                    topic=str(shared["topic"]),
-                    handoff=s6_handoff,
+                s6_first_pass_contract = (
+                    {"mode": "dynamic_minimal_card", "identity_frozen_by": "S5"}
+                    if dynamic_s6_authoring
+                    else _s6_first_pass_quality_contract(
+                        topic=str(shared["topic"]),
+                        handoff=s6_handoff,
+                    )
                 )
                 step_input = {
                     "query": shared["topic"],
                     "branch": primary_branch,
+                    "execution_profile_id": shared.get("execution_profile_id", ""),
                     "analysis_priority": analysis_priority_contract,
                     "branch_deliverables": list(branch_product_schema),
                     "capability_synthesis_handoff": s6_handoff,
@@ -10448,7 +8454,11 @@ async def analyze_winning_subagents(
     # bounded card repair has already resolved them; doing so previously
     # made L1-L3 fail on an obsolete title/support diagnosis.
     final_s6_all_issues = list(dict.fromkeys(final_s6_all_issues))[:32]
-    final_s6_issues = _s6_portrait_repair_issues(final_s6_all_issues)
+    final_s6_issues = (
+        []
+        if dynamic_swarm_enabled
+        else _s6_portrait_repair_issues(final_s6_all_issues)
+    )
     s6_low_repair_attempted = bool(s6_model_repair_used)
     s6_low_repair_error = ""
     if final_s6_issues and not s6_model_repair_used:
@@ -10652,7 +8662,11 @@ async def analyze_winning_subagents(
                     )
                 )
             )[:32]
-            final_s6_issues = _s6_portrait_repair_issues(final_s6_all_issues)
+            final_s6_issues = (
+                []
+                if dynamic_swarm_enabled
+                else _s6_portrait_repair_issues(final_s6_all_issues)
+            )
             emit_swarm_event(
                 "winning_s6_low_repair_completed",
                 repair_targets=repair_targets,
@@ -10670,9 +8684,10 @@ async def analyze_winning_subagents(
                 reasoning_effort="low",
             )
 
-    # Every deterministic S6 finding is advisory. S3-S5 own equipment
-    # identity and military-semantic admission; S6 cannot delete, retry or
-    # fail a frozen candidate because of local text-shape predicates.
+    # Dynamic-v2 quality is front-loaded into the Query, frozen card and one
+    # strong S6 authoring turn. Deterministic text-shape checks remain visible
+    # as diagnostics, but they neither rewrite nor block a semantically
+    # consistent authored card.
     residual_s6_issues = list(final_s6_issues)
     nonblocking_s6_warnings = [
         issue for issue in final_s6_all_issues if issue not in set(residual_s6_issues)
@@ -10687,6 +8702,31 @@ async def analyze_winning_subagents(
     accumulated["s6_quality_gate_issues"] = s6_release_state["issues"]
     accumulated["s6_quality_warnings"] = s6_release_state["warnings"]
     accumulated["s6_low_repair_attempted"] = s6_low_repair_attempted
+    final_s6_cards = [
+        _compact_s6_authored_card_event(item)
+        for item in accumulated.get("concept_directions", [])
+        if isinstance(item, Mapping) and str(item.get("name", "")).strip()
+    ]
+    runtime_budget = (
+        accumulated.get("winning_swarm", {}).get("budget", {})
+        if isinstance(accumulated.get("winning_swarm", {}), Mapping)
+        else {}
+    )
+    runtime_budget = runtime_budget if isinstance(runtime_budget, Mapping) else {}
+    emit_swarm_event(
+        "winning_s6_release_gate_evaluated",
+        passed=s6_release_state["passed"],
+        failed=s6_release_state["failed"],
+        limited=s6_release_state["limited"],
+        issues=s6_release_state["issues"][:16],
+        warnings=s6_release_state["warnings"][:16],
+        authored_cards=final_s6_cards,
+        card_count=len(final_s6_cards),
+        maximum_concurrency=runtime_budget.get("maximum_concurrency"),
+        maximum_observed_concurrency=runtime_budget.get(
+            "maximum_observed_concurrency"
+        ),
+    )
     if s6_low_repair_error:
         accumulated["s6_low_repair_error"] = s6_low_repair_error
     if swarm_enabled or dynamic_swarm_enabled:
@@ -10775,10 +8815,13 @@ async def analyze_winning_subagents(
         diversity_only_warning = bool(
             not bool(raw_portfolio_gate.get("direct_equipment_diversity_passed", True))
             and bool(raw_portfolio_gate.get("direct_combat_main_body_passed"))
-            and bool(raw_portfolio_gate.get("capability_portrait_gate_passed"))
+            and bool(
+                raw_portfolio_gate.get(
+                    "s6_handoff_gate_passed",
+                    raw_portfolio_gate.get("capability_portrait_gate_passed"),
+                )
+            )
             and bool(raw_portfolio_gate.get("equipment_diversity_passed"))
-            and bool(raw_portfolio_gate.get("expert_judge_passed"))
-            and str(raw_portfolio_gate.get("expert_judge_status", "")) == "completed"
             and not raw_portfolio_gate.get("hard_blockers")
         )
         if diversity_only_warning:

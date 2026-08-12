@@ -63,6 +63,7 @@ from equipment_deep_research.agents.orchestrator_prompt import (
 from equipment_deep_research.agents.runtime_profiles import (
     build_codex_runtime_profile,
     is_aggressive_optimized_v2_payload,
+    is_dynamic_winning_payload,
     is_optimized_v2_payload,
 )
 from equipment_deep_research.agents.performance import AdaptiveCallGate

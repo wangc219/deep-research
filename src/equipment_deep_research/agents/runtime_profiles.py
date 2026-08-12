@@ -460,7 +460,13 @@ def build_codex_runtime_profile(
                 else item
                 for item in profile.get("skills", [])
             ]
-        if is_aggressive_optimized_v2_payload(payload or {}):
+        if is_dynamic_winning_payload(payload or {}):
+            profile = _minimal_dynamic_winning_runtime_profile(
+                profile,
+                agent_id=agent_id,
+                phase=phase,
+            )
+        elif is_aggressive_optimized_v2_payload(payload or {}):
             profile = _minimal_business_runtime_profile(
                 profile,
                 agent_id=agent_id,
@@ -468,6 +474,73 @@ def build_codex_runtime_profile(
                 blueprint=blueprint,
             )
     return profile
+
+
+def is_dynamic_winning_payload(value: Mapping[str, Any]) -> bool:
+    """Whether this is the creative dynamic winning-swarm path.
+
+    Dynamic S1-S6 turns must not inherit the generic quality-first role card:
+    that card is useful for research/audit agents but repeats evidence,
+    validation and quality-gate instructions inside creative sessions.
+    """
+    candidates: list[Mapping[str, Any]] = [value]
+    for key in (
+        "discovery_blueprint", "visible_context", "context", "input",
+        "task_input", "winning_mechanism_input", "assignment",
+    ):
+        child = value.get(key)
+        if isinstance(child, Mapping):
+            candidates.append(child)
+    return any(
+        str(candidate.get("execution_profile_id", "")).strip()
+        == "winning_swarm_dynamic_v2"
+        for candidate in candidates
+    )
+
+
+def _minimal_dynamic_winning_runtime_profile(
+    profile: Mapping[str, Any],
+    *,
+    agent_id: str,
+    phase: str,
+) -> dict[str, Any]:
+    """Keep only the context that helps a dynamic S-node think.
+
+    The business task already carries the Query and the node-specific handoff.
+    Runtime therefore supplies identity, one skill, and safety only.  In
+    particular it does not replay methodology, quality_gates, evidence policy,
+    TRL, validation or upstream role contracts.
+    """
+    node = str(profile.get("swarm_assignment", {}).get("merge_target", ""))
+    if not node:
+        phase_node = next((f"S{i}" for i in range(1, 7) if f"S{i}" in phase), "")
+        node = phase_node
+    creative = node in {"S1", "S2", "S3", "S4"}
+    role = str(profile.get("scenario") or profile.get("role") or agent_id)[:180]
+    if creative:
+        skill = {
+            "S1": "对手制胜矛盾建模",
+            "S2": "任务关系与效应窗口创造",
+            "S3": "新质武器概念创造",
+            "S4": "跨域/反常规武器概念创造",
+        }.get(node, "Query驱动创造")
+    elif node == "S5":
+        skill = "独立组合语义判断"
+    elif node == "S6":
+        skill = "单装备能力画像编辑"
+    else:
+        skill = "动态制胜判断"
+    return {
+        "agent_id": agent_id,
+        "phase": phase,
+        "role": role,
+        "skill": skill,
+        "tools": [],
+        "mission_node": node,
+        "military_mission_lens": "只围绕当前Query形成可理解的军事任务判断。",
+        "safety_boundary": "只做任务级、防御性研究，不输出可直接执行的攻击步骤或制造参数。",
+        "handoff_contract": "task_input是唯一业务上下文；只输出当前schema要求的结论。",
+    }
 
 
 def is_optimized_v2_payload(value: Mapping[str, Any]) -> bool:
@@ -882,6 +955,7 @@ __all__ = [
     "MILITARY_MISSION_LENSES",
     "build_codex_runtime_profile",
     "is_aggressive_optimized_v2_payload",
+    "is_dynamic_winning_payload",
     "is_optimized_v2_payload",
     "military_mission_lens",
 ]
