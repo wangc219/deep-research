@@ -674,6 +674,12 @@ def _weapon_equipment_card_name(image: CapabilityImageItem) -> str:
 def _demand_card_indicators(image: CapabilityImageItem) -> list[str]:
     """Extract auditable indicators without inventing weapon performance."""
 
+    # S6's indicator portrait is already reviewed upstream.  Preserve it as
+    # the authoritative branch product instead of trying to rediscover
+    # indicators from prose with a brittle regular expression.
+    if str(image.indicator_portrait).strip():
+        return [str(image.indicator_portrait).strip()]
+
     text = " ".join(
         item
         for item in (
@@ -771,7 +777,11 @@ def _supplement_specialized_branch_products(
         )
         existing_or(
             "capability_indicators",
-            (_demand_card_indicators(image) for image in images),
+            (
+                indicator
+                for image in images
+                for indicator in _demand_card_indicators(image)
+            ),
         )
     elif branch == "H":
         existing_or("emerging_threat_profiles", gaps)

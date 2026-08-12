@@ -1277,13 +1277,10 @@ class DeepResearchRunner:
                 preserve_blueprint_defaults=execution_profile is not None,
             )
             selected_candidates = registry.select_agents(effective_agent_ids)
-            selected_candidate_ids = {agent.agent_id for agent in selected_candidates}
-            architecture_additions = [
-                registry.get(agent_id)
-                for agent_id in active_specialist_agent_ids
-                if agent_id not in selected_candidate_ids
-            ]
-            selected_candidates.extend(architecture_additions)
+            # An explicit analyst selection is an execution boundary.  The
+            # discovery blueprint may still inform S1-S6, but must not silently
+            # expand baseline retrieval roles or consume extra Codex sessions.
+            architecture_additions: list[Any] = []
             selection_view = {
                 "mode": (
                     "blueprint_plus_analyst_additions"
@@ -1295,9 +1292,8 @@ class DeepResearchRunner:
                     "optimized_v2保留A-H蓝图默认Agent，并将分析师勾选的其他角色作为追加项合并执行；"
                     "人工追加不会覆盖默认编排。"
                     if execution_profile is not None
-                    else
-                    "分析师已显式锁定核心Agent；系统复用A-H蓝图结果并只补充架构必需的专项Agent，"
-                    "避免再次调用Codex重复选择。"
+                    else "分析师已显式锁定核心Agent；系统复用A-H蓝图作为推理约束，"
+                    "不扩张基线检索角色，也不再次调用Codex重复选择。"
                 ),
                 "task_analysis": [
                     f"主发现分支={discovery_blueprint['primary_branch']}（{discovery_blueprint['branch_name']}）",
@@ -1309,7 +1305,7 @@ class DeepResearchRunner:
                     (
                         "蓝图默认Agent保持不变，分析师追加角色进入同一依赖编排；系统不再进行重复模型筛选。"
                         if execution_profile is not None
-                        else "分析师锁定的Agent不再进行模型二次筛选，专项Agent仅按蓝图补齐。"
+                        else "分析师锁定的Agent不再进行模型二次筛选或隐式补招。"
                     ),
                 ],
                 "model_selected_agent_ids": effective_agent_ids,
@@ -2737,7 +2733,12 @@ class DeepResearchRunner:
                                 "runtime_profile_id": "winning_core_v1",
                                 "active_skill_ids": (
                                     registry.get("winning_mechanism").skill_ids[:1]
-                                    if execution_profile is not None
+                                    if str(
+                                        discovery_blueprint.get(
+                                            "execution_profile_id", ""
+                                        )
+                                    )
+                                    == "optimized_v2"
                                     else registry.get("winning_mechanism").skill_ids
                                 ),
                                 "active_tool_names": winning_tools,
@@ -3434,12 +3435,10 @@ class DeepResearchRunner:
                         event_id="trace-auditor-model-skipped",
                         event_type="audit_model_review_skipped",
                         actor="auditor",
-                        summary="已有专家评判，最终审计仅执行确定性发布门",
+                        summary="动态蜂群已完成S5组合评审，最终审计仅执行确定性发布门",
                         payload={
                             "reason": audit_review_decision.reason,
-                            "expert_judge_passed": (
-                                audit_review_decision.expert_judge_passed
-                            ),
+                            "dynamic_s5_passed": audit_review_decision.expert_judge_passed,
                         },
                     )
                 )
@@ -3569,7 +3568,10 @@ class DeepResearchRunner:
                             )
                             and bool(
                                 portfolio_quality_gate.get(
-                                    "capability_portrait_gate_passed"
+                                    "s6_handoff_gate_passed",
+                                    portfolio_quality_gate.get(
+                                        "capability_portrait_gate_passed"
+                                    ),
                                 )
                             )
                             and bool(
@@ -3577,15 +3579,6 @@ class DeepResearchRunner:
                                     "equipment_diversity_passed"
                                 )
                             )
-                            and bool(
-                                portfolio_quality_gate.get("expert_judge_passed")
-                            )
-                            and str(
-                                portfolio_quality_gate.get(
-                                    "expert_judge_status", ""
-                                )
-                            )
-                            == "completed"
                             and not portfolio_quality_gate.get("hard_blockers")
                         )
                     ):
@@ -3918,34 +3911,23 @@ class DeepResearchRunner:
                 )
                 if (
                     not quality_report.passed
-                    or not branch_gate_passed
                     or binding_rate < CLAIM_SOURCE_BINDING_MINIMUM
                     or internal_reference_found
                 ):
-                    if (
-                        is_quality_execution_profile_id(
-                            discovery_blueprint.get("execution_profile_id")
+                    quality_delivery_blockers = list(
+                        quality_report.compact().get("blockers", [])
+                    )
+                    if binding_rate < CLAIM_SOURCE_BINDING_MINIMUM:
+                        quality_delivery_blockers.append(
+                            "关键结论与公开来源绑定率低于80%"
                         )
-                        and getattr(provider, "enforce_profile_stops", False)
-                    ):
-                        quality_delivery_blockers = list(
-                            quality_report.compact().get("blockers", [])
+                    if internal_reference_found:
+                        quality_delivery_blockers.append(
+                            "正式报告仍含内部packet、claim或候选标签"
                         )
-                        if not branch_gate_passed:
-                            quality_delivery_blockers.append(
-                                "分支交付物未形成完整可发布闭环"
-                            )
-                        if binding_rate < CLAIM_SOURCE_BINDING_MINIMUM:
-                            quality_delivery_blockers.append(
-                                "关键结论与公开来源绑定率低于80%"
-                            )
-                        if internal_reference_found:
-                            quality_delivery_blockers.append(
-                                "正式报告仍含内部packet、claim或候选标签"
-                            )
-                        quality_delivery_blockers = list(
-                            dict.fromkeys(quality_delivery_blockers)
-                        )[:8]
+                    quality_delivery_blockers = list(
+                        dict.fromkeys(quality_delivery_blockers)
+                    )[:8]
                     audit = replace(
                         audit,
                         status="limited",
@@ -4018,7 +4000,7 @@ class DeepResearchRunner:
                     ),
                     event_type="report_quality_gate_limited",
                     actor="report_quality_gate",
-                    summary="报告质量门存在缺口，已保存受限报告并继续完成项目流程",
+                    summary="报告质量门存在缺口，已保存可恢复报告并等待修复",
                     input_refs=[report.report_id],
                     payload={
                         "blockers": quality_delivery_blockers,
@@ -4047,28 +4029,12 @@ class DeepResearchRunner:
                     checkpoint,
                     failure_savepoint_id,
                 )
-                workspace.write_run_text("report.md", report.body)
-                workspace.write_run_text(
-                    "branch_deliverables.json",
-                    json.dumps(
-                        delivery_artifacts["branch_deliverables"],
-                        ensure_ascii=False,
-                        indent=2,
-                        sort_keys=True,
-                    ),
+                self._write_report_gate_snapshot(
+                    workspace=workspace,
+                    delivery_artifacts=delivery_artifacts,
+                    report_body=report.body,
+                    store=store,
                 )
-                for artifact_name in STRUCTURED_PRODUCT_KEYS:
-                    if artifact_name not in delivery_artifacts:
-                        continue
-                    workspace.write_run_text(
-                        f"{artifact_name}.json",
-                        json.dumps(
-                            delivery_artifacts[artifact_name],
-                            ensure_ascii=False,
-                            indent=2,
-                            sort_keys=True,
-                        ),
-                    )
                 workspace.write_run_text(
                     "report_failure.json",
                     json.dumps(
@@ -4085,6 +4051,10 @@ class DeepResearchRunner:
                         indent=2,
                         sort_keys=True,
                     ),
+                )
+                raise RuntimeError(
+                    "报告质量门未通过；已保存可恢复检查点和受限报告，"
+                    "修复发布门缺口后可仅恢复交付阶段。"
                 )
             trace.append(
                 TraceEvent(
@@ -6107,8 +6077,6 @@ class DeepResearchRunner:
             == "complete"
         )
         blockers = list(quality_report.compact().get("blockers", []))
-        if not branch_gate_passed:
-            blockers.append("分支交付物未形成完整可发布闭环")
         if not bool(binding_summary["passed"]):
             if internal_reference_found:
                 blockers.append("正式报告仍含内部packet、claim或候选标签")
@@ -6174,6 +6142,7 @@ class DeepResearchRunner:
                 workspace=workspace,
                 delivery_artifacts=delivery_artifacts,
                 report_body=report.body,
+                store=store,
             )
             workspace.write_run_text(
                 "report_failure.json",
@@ -6192,6 +6161,10 @@ class DeepResearchRunner:
                     indent=2,
                     sort_keys=True,
                 ),
+            )
+            raise RuntimeError(
+                "报告交付恢复门仍未通过；已保留可恢复检查点，"
+                "不会将受限报告标记为正式完成。"
             )
 
         audit = max(
@@ -6212,28 +6185,28 @@ class DeepResearchRunner:
             if isinstance(winning_swarm, Mapping)
             else {}
         )
-        authoritative_expert_passed = (
+        authoritative_dynamic_passed = (
             isinstance(portfolio_gate, Mapping)
             and bool(portfolio_gate.get("passed"))
-            and bool(portfolio_gate.get("expert_judge_passed"))
-            and str(portfolio_gate.get("expert_judge_status", "")).lower()
-            in {"", "completed"}
+            and str(portfolio_gate.get("selection_rule", "")).startswith(
+                "增量五轴语义聚类"
+            )
             and bool(winning_analysis.get("s6_quality_gate_passed"))
             and not bool(winning_analysis.get("s6_quality_gate_failed"))
         )
-        if authoritative_expert_passed:
+        if authoritative_dynamic_passed:
             audit = replace(
                 audit,
                 checks={
                     **audit.checks,
                     "stage_gates_passed": True,
                     "confidence_ge_70": True,
-                    "expert_judge_passed": True,
+                    "dynamic_s5_passed": True,
                 },
                 comments=[
                     *audit.comments,
-                    "动态蜂群候选组合已通过独立质量专家评判，S6装备画像发布门亦已通过；"
-                    "旧L1-L3词法置信门仅保留为历史诊断，不再覆盖权威专家与装备画像结论。",
+                    "动态蜂群候选组合已通过增量语义聚类与S5组合评审，S6装备画像发布门亦已通过；"
+                    "旧重型质量评估不参与动态路径。",
                 ],
             )
         audit = _reconcile_final_audit_status(audit, optimized_v2=True)
@@ -6324,12 +6297,22 @@ class DeepResearchRunner:
         workspace: RunWorkspace,
         delivery_artifacts: Mapping[str, Any],
         report_body: str,
+        store: DomainStore,
     ) -> None:
         workspace.write_run_text("report.md", report_body)
         workspace.write_run_text(
             "branch_deliverables.json",
             json.dumps(
                 delivery_artifacts["branch_deliverables"],
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            ),
+        )
+        workspace.write_run_text(
+            "capability_images.json",
+            json.dumps(
+                [to_plain(item) for item in store.capability_images.values()],
                 ensure_ascii=False,
                 indent=2,
                 sort_keys=True,
@@ -7383,6 +7366,8 @@ def _report_quality_gate_metadata(
                 "operational_mechanism": item.operational_mechanism,
                 "strike_countermeasure_value": item.strike_countermeasure_value,
                 "evidence_count": len(item.evidence_ids),
+                "deep_capability_portrait": item.deep_capability_portrait,
+                "portrait_authoring_status": item.portrait_authoring_status,
             }
             for item in images
         ],
@@ -7719,7 +7704,11 @@ def _report_decision_brief(
                 row not in normalized_portrait for row in authored_process_rows
             )
         )
-        if portrait_semantics_stale:
+        trusted_s6_portrait = (
+            image_item.portrait_authoring_status
+            == "s6_authored_semantically_consistent"
+        )
+        if portrait_semantics_stale and not trusted_s6_portrait:
             normalized_portrait = build_agent_led_capability_portrait(
                 name=image_item.name,
                 scenario=image_item.target_scenario or image_item.related_scenario,
@@ -8956,12 +8945,7 @@ def _codex_loops_recorded(
         )
     if execution_profile_id != "winning_swarm_dynamic_v2":
         return False
-    return any(
-        agent_id.startswith("winning-agent-") for agent_id in session_agents
-    ) and any(
-        agent_id.startswith("winning-quality-judge-")
-        for agent_id in session_agents
-    )
+    return any(agent_id.startswith("winning-agent-") for agent_id in session_agents)
 
 
 def _reconcile_final_audit_status(
@@ -8974,7 +8958,7 @@ def _reconcile_final_audit_status(
     checks = dict(getattr(audit, "checks", {}) or {})
     if checks.get("stage_gates_passed"):
         checks["confidence_ge_70"] = True
-    if checks.get("expert_judge_passed"):
+    if checks.get("expert_judge_passed") or checks.get("dynamic_s5_passed"):
         checks["stage_gates_passed"] = True
         checks["confidence_ge_70"] = True
     # ``user_confirmation`` is a publication/workflow decision, not a

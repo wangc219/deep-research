@@ -6,13 +6,16 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import re
 from typing import Any
 import logging
 
 from equipment_deep_research.domain.research_focus import (
     disruptive_relationship_groups,
+)
+from equipment_deep_research.orchestration.capability_portrait import (
+    capability_portrait_quality_issues,
 )
 
 logger = logging.getLogger(__name__)
@@ -513,6 +516,7 @@ class QualityReport:
     fitness: dict[str, QualityCheck]
     passed: bool
     summary: str
+    publication_blockers: list[str] = field(default_factory=list)
 
     def compact(self) -> dict[str, Any]:
         """Return the publication-oriented gate result without verbose diagnostics."""
@@ -521,17 +525,16 @@ class QualityReport:
         # domain-fit observations such as a Query not yet covering every
         # offensive angle are useful for follow-up review but must not stop a
         # substantively publishable report.
-        advisory_prefixes = ("低优先级复核：", "建议：", "可选复核：")
         all_suggestions = [
             suggestion
             for item in (self.format_integrity, *self.fitness.values())
             if not item.passed
             for suggestion in item.suggestions
         ]
-        blockers = [
-            suggestion for suggestion in all_suggestions
-            if not str(suggestion).lstrip().startswith(advisory_prefixes)
-        ]
+        # Only structural/publication-safety failures block delivery.  S6
+        # portrait style, information density, repetition and content-shape
+        # observations remain diagnostics for upstream improvement.
+        blockers = list(self.publication_blockers)
         return {
             "passed": self.passed,
             "overall_score": round(self.overall_score, 4),
@@ -540,6 +543,10 @@ class QualityReport:
                 **{
                     name: self._compact_check(item)
                     for name, item in self.fitness.items()
+                },
+                "发布安全": {
+                    "passed": not blockers,
+                    "failed": list(blockers),
                 },
             },
             "blockers": list(dict.fromkeys(blockers))[:5],
@@ -552,7 +559,7 @@ class QualityReport:
                     dict.fromkeys(
                         suggestion
                         for suggestion in all_suggestions
-                        if str(suggestion).lstrip().startswith(advisory_prefixes)
+                        if suggestion not in blockers
                     )
                 )[:8],
             },
@@ -613,6 +620,15 @@ class ReportQualityGate:
         novelty = self._check_novelty(report, metadata)
         foresight = self._check_foresight(report, metadata)
         format_integrity = self._check_format_integrity(report, metadata)
+        publication_blockers: list[str] = []
+        if not report.strip():
+            publication_blockers.append("正式报告为空")
+        if not self._publication_markdown_intact(report):
+            publication_blockers.append("报告Markdown结构损坏或标记未闭合")
+        if _INTERNAL_REWRITE_BOUNDARY in report:
+            publication_blockers.append("正式报告仍含内部改写边界标记")
+        if _INTERNAL_CANDIDATE_PREFIX_RE.search(report):
+            publication_blockers.append("正式报告仍含内部候选分支标记")
 
         # 报告门只检查交付合同，不重复评判上游专家已经评过的装备组合、创新性
         # 和军事价值。通用四维及原细项仍保留为诊断信号；质量模式额外阻断
@@ -629,7 +645,7 @@ class ReportQualityGate:
             }
         core_checks = [format_integrity, *fitness.values()]
         overall_score = sum(item.score for item in core_checks) / len(core_checks)
-        passed = all(item.passed for item in core_checks)
+        passed = not publication_blockers
 
         # 生成摘要
         summary = self._generate_summary(
@@ -653,6 +669,7 @@ class ReportQualityGate:
             fitness=fitness,
             passed=passed,
             summary=summary,
+            publication_blockers=publication_blockers,
         )
 
     def _check_depth(self, report: str, metadata: dict | None) -> QualityCheck:
@@ -1371,6 +1388,10 @@ class ReportQualityGate:
                 else not metrics["missing_equipment_bundles"]
             ),
         }
+        if self._metadata_portrait_records_present(metadata):
+            indicators["capability_portrait_contract_passed"] = not self._metadata_portrait_issues(
+                metadata
+            )
         score = sum(indicators.values()) / len(indicators)
         suggestions: list[str] = []
         if not indicators["decision_dense_paragraphs"]:
@@ -1393,6 +1414,11 @@ class ReportQualityGate:
                 "以下装备未成套说明敌方目标/反制、我方作战动作、直接战果与验证判据："
                 + "、".join(metrics["missing_equipment_bundles"][:5])
             )
+        portrait_issues = self._metadata_portrait_issues(metadata)
+        if portrait_issues:
+            suggestions.append(
+                "装备能力画像未通过精简交付门：" + "；".join(portrait_issues[:5])
+            )
         # 装备闭环缺项进入报告修订建议，但不应阻断整份报告发布；
         # 其余信息密度约束仍是正式报告的发布门槛。
         passed = all(
@@ -1407,6 +1433,47 @@ class ReportQualityGate:
             indicators,
             suggestions,
         )
+
+    @staticmethod
+    def _metadata_portrait_records_present(metadata: dict | None) -> bool:
+        if not metadata:
+            return False
+        records = metadata.get("expected_capability_records", [])
+        return isinstance(records, list) and any(
+            isinstance(record, dict)
+            and (
+                record.get("deep_capability_portrait")
+                or record.get("capability_image")
+            )
+            for record in records
+        )
+
+    @staticmethod
+    def _metadata_portrait_issues(metadata: dict | None) -> list[str]:
+        """Validate final S6 prose rather than treating concision as a prompt hint."""
+
+        if not metadata:
+            return []
+        records = metadata.get("expected_capability_records", [])
+        if not isinstance(records, list):
+            return []
+        issues: list[str] = []
+        for record in records:
+            if not isinstance(record, dict):
+                continue
+            portrait = str(
+                record.get("deep_capability_portrait")
+                or record.get("capability_image")
+                or ""
+            ).strip()
+            if not portrait:
+                continue
+            name = str(record.get("name", "")).strip() or "未命名装备"
+            issues.extend(
+                f"{name}：{issue}"
+                for issue in capability_portrait_quality_issues(portrait)
+            )
+        return issues[:32]
 
     def _check_domain_fitness(
         self,
@@ -2055,6 +2122,37 @@ class ReportQualityGate:
         return True
 
     @staticmethod
+    def _publication_markdown_intact(report: str) -> bool:
+        """Check only objectively broken Markdown, not prose preferences."""
+
+        if report.count("```") % 2:
+            return False
+        without_fences = re.sub(r"```.*?```", "", report, flags=re.DOTALL)
+        if re.sub(r"\\\*", "", without_fences).count("**") % 2:
+            return False
+        if re.sub(r"\\`", "", without_fences).count("`") % 2:
+            return False
+
+        current_width: int | None = None
+        in_table = False
+        for raw in report.splitlines():
+            line = raw.strip()
+            starts = line.startswith("|")
+            ends = line.endswith("|")
+            if starts != ends:
+                return False
+            if starts and ends:
+                width = len(line.strip("|").split("|"))
+                if in_table and current_width != width:
+                    return False
+                current_width = width
+                in_table = True
+            else:
+                current_width = None
+                in_table = False
+        return True
+
+    @staticmethod
     def _paragraphs_are_complete(report: str) -> bool:
         without_fences = re.sub(r"```.*?```", "", report, flags=re.DOTALL)
         if _has_dangling_report_fragment(without_fences):
@@ -2507,7 +2605,7 @@ class ReportQualityGate:
         )
 
         if all_suggestions:
-            lines.append("阻断项: " + "；".join(dict.fromkeys(all_suggestions[:3])))
+            lines.append("改进提示: " + "；".join(dict.fromkeys(all_suggestions[:3])))
 
         return '\n'.join(lines)
 

@@ -1096,8 +1096,8 @@ def _report_writer_system_prompt(payload: Mapping[str, Any]) -> str:
         "自主边界、成本、规模、驻留或生存性，允许各自写待试验校准，但禁止所有行复制同一占位句。"
         "不得只给两个抽象能力方向。⑦必须逐项使用research_handoff.capability_cues中的direction原名；"
         "表格第一列的行数和名称必须与输入完全一致，不得另造‘装备包’、保障节点、C2/任务网络或其他"
-        "主体装备。每个方向还必须完整展开capability_cues.capability_portrait，不得用横向表格替代逐装备"
-        "多模块详细画像，也不得用总字数上限破坏性压缩。弱网、通信、保障、能源、补给和任务软件只允许写入对应武器装备的体系依赖、技术耦合"
+        "主体装备。已通过S6的capability_cues.capability_portrait由交付层确定性注入；Reporter不得复制、"
+        "改写、扩写或另写一套逐装备画像。弱网、通信、保障、能源、补给和任务软件只允许写入对应武器装备的体系依赖、技术耦合"
         "或使用边界。⑧按补链、"
         "强链、开链评估对杀伤链和体系的贡献，并给出突防率、交换比、决策周期等可量化方向，不能虚构"
         "精确提升值。⑨给出P0/P1/P2或高/中/低优先级、排序理由和近期演示验证项目构想，写清场景、样机"
@@ -1896,8 +1896,10 @@ def _reporter_generation_payload(
                     ("priority", 24),
                     ("boundary", 100),
                 ]
-                if not quality_profile:
-                    cue_field_limits.append(("capability_portrait", None))
+                # The S6 portrait is the authoritative, already-reviewed
+                # artifact.  Pass it through in every execution profile so
+                # Reporter cannot silently author a second, divergent image.
+                cue_field_limits.append(("capability_portrait", None))
                 compact_cues.append(
                     {
                         key: _clean_reporter_clue_text(
@@ -1973,7 +1975,7 @@ def _reporter_generation_payload(
         "⑥逐项使用capability_cues.coupling_risk说明依赖、级联和会拖垮任务闭环的单点短板",
         "装备能力图像横向比较输入中全部具体且机制互异、证据闭环的武器装备方向，不得压缩为抽象主题",
         "⑦逐项保留输入中的全部具体装备方向；支撑能力放在表外，不得替换或另造主体方向",
-        "⑦除横向表格外，逐项完整展开‘精简概述+四个受控分点’装备能力画像；概述建议保持简洁，直接点名具体武器装备，并包含面向、针对、利用、采用、通过、形成、实现七个装备专属因果节点；不写发展与验证路径；各分点分别按需展开，不设总字符上限，字数不作为质量门",
+        "⑦只写横向比较与综合判断；逐装备‘精简概述+四个受控分点’由交付层从S6权威画像确定性注入，Reporter不得复制、改写、扩写或另写",
         "⑦若使用表格，第一列必须逐字使用capability_cues.direction，行数与输入方向数完全一致；禁止新增装备包、保障节点、C2/网络或其他主体方向",
         "⑦第三列逐项使用capability_cues.indicator_portrait形成不同的射程/覆盖、响应、自主、成本、规模或生存指标方向；不得六行统一写待校准",
         "最终论证优先自然体现与Query相关的多类关系变化，不展示维度方法论清单，"

@@ -202,11 +202,12 @@ SWARM_SPECIALIST_ARCHETYPES: dict[str, dict[str, Any]] = {
         "residuals": ["equipment_not_concrete", "engineering_feasibility_insufficient"],
     },
     "innovative_equipment_dimension_generator": {
-        "display_name": "创新装备维度生成",
+        "display_name": "开放创新武器创作",
         "purpose": (
-            "依据主控形成的Query装备语义蓝图，在被激活的作战维度内开放推演多个物理原理、"
-            "战场存在方式和制胜关系真正不同的武器方向；独立完成整装身份、自然命名和一句制胜说明。"
-            "本角色只创造候选，不承担装备物化、接口收敛、证据核验或工程验证。"
+            "先独立理解完整Query，再跨侦察感知、打击、毁伤、突防、拦截、压制、拒止、生存抗毁"
+            "及Query特有维度比较多种物理原理、战场存在方式和制胜关系；维度只是可舍弃的发散镜头，"
+            "不能成为角色身份、生产配额或预定答案。独立完成具体武器身份、自然命名和一句制胜说明。"
+            "本角色只创造候选，不承担后置物化、接口补全、证据核验或工程审查。"
         ),
         "merge_target": "S4",
         "residuals": ["novelty_insufficient", "portfolio_direction_shortfall"],
@@ -917,20 +918,23 @@ class WinningSwarmController:
             # isolated S3/S4 creators may be activated.  The later semantic
             # scout may use fewer slots when expected information gain is low.
             creative_capacity = min(8, max(3, target - 5))
-            s3_capacity = (creative_capacity + 1) // 2
-            s4_capacity = creative_capacity - s3_capacity
+            # S3 and S4 are one homogeneous creative pool.  We retain the
+            # mission-node labels only for audit compatibility; neither node
+            # receives a different archetype, prompt, authority or upstream
+            # context, so the old S3-mechanism/S4-materialization split cannot
+            # leak back into the dynamic path.
+            creative_nodes = [
+                "S3" if index % 2 == 0 else "S4"
+                for index in range(creative_capacity)
+            ]
             selected = [
                 ("S1", "opponent_system_modeler"),
                 ("S2", "operational_baseline_analyst"),
                 ("S1", "adversary_adaptation_analyst"),
                 ("S2", "competitive_coa_designer"),
                 *[
-                    ("S3", "disruptive_mechanism_generator")
-                    for _ in range(s3_capacity)
-                ],
-                *[
-                    ("S4", "innovative_equipment_dimension_generator")
-                    for _ in range(s4_capacity)
+                    (node, "innovative_equipment_dimension_generator")
+                    for node in creative_nodes
                 ],
                 ("S5", "independent_portfolio_reviewer"),
             ]

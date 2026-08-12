@@ -713,6 +713,33 @@ def test_demand_card_prefers_valid_project_name_over_configuration_component() -
         assert _weapon_equipment_card_name(image) == name
 
 
+def test_g_branch_projects_authoritative_indicator_portrait() -> None:
+    store = _store()
+    image = next(iter(store.capability_images.values()))
+    store.capability_images[image.capability_id] = replace(
+        image,
+        indicator_portrait=(
+            "以断链任务完成率、重构时延和目标分配闭合率形成联合验证口径。"
+        ),
+    )
+    stage = next(iter(store.stage_outputs.values()))
+    store.stage_outputs[stage.stage_id] = replace(
+        stage,
+        outputs={"branch_products": {}},
+    )
+
+    artifacts = build_delivery_artifacts(
+        topic="强干扰条件下无人集群任务",
+        branch="G",
+        blueprint={"required_outputs": []},
+        store=store,
+    )
+
+    assert artifacts["branch_deliverables"]["products"]["capability_indicators"] == [
+        "以断链任务完成率、重构时延和目标分配闭合率形成联合验证口径。"
+    ]
+
+
 def test_branch_b_validator_rejects_abstract_capability_domain_as_card_subject() -> None:
     artifacts = build_delivery_artifacts(
         topic="测试主题",

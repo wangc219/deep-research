@@ -101,13 +101,16 @@ def _creative_s3_candidate_instruction() -> str:
 
     return (
         "从Query战场矛盾出发，自主创造少量能直接接敌并形成战果的单一武器装备。"
-        "输入中的制胜维度和开放挑战只用于打开不同思路，可接受、重构或舍弃；不得按字段、目录、"
+        "输入中的可选多样性挑战只用于打开不同思路，制胜维度和开放挑战都只是可接受、重构或舍弃的启发；不得按字段、目录、"
         "热门技术或固定句式拼装答案。先在内部比较不同物理原理、战场存在方式和交换关系，"
+        "并主动检查侦察感知、打击、毁伤、突防、拦截、压制、拒止、生存抗毁及Query特有维度之间"
+        "是否存在值得交叉的新关系；这些维度可全部舍弃，也可混合或自创，不是一会话一维度。"
         "再一次性闭合装备身份、自然名称、关键机理和直接战果。通信、算法、数据链与保障只能作为"
         "装备内部条件，不能成为候选主体。不要讨论证据、成熟度、成本产能、验证计划或敌方反适应；"
         "这些不属于轻型创造会话。"
         + QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
-        + "名称应来自整装语义，只抓最有辨识度的创新主线，不用维度词机械拼名。"
+        + "构型意象型、原理突破型、装备专名型仅是开放参考，可混合、舍弃或自创第四种命名方式。"
+        "名称应来自整装语义，只抓最有辨识度的创新主线，不用维度词机械拼名。"
         "只输出schema规定的严格JSON，不输出推理过程。"
     )
 
@@ -138,6 +141,45 @@ def _minimal_s6_card_handoff(brief: Mapping[str, Any]) -> dict[str, Any]:
     result = {key: compact(brief[key]) for key in fields if brief.get(key) not in (None, "", [], {})}
     result["handoff_contract"] = "S5冻结决策脊柱；S6只写本卡画像，不改身份、分类、指标或Query关联。"
     return result
+
+
+def _dynamic_s6_card_input(
+    brief: Mapping[str, Any],
+    *,
+    query: str,
+) -> dict[str, Any]:
+    """Build the only context a dynamic S6 writer is allowed to see.
+
+    S6 is a semantic author, not an S5 form filler.  In dynamic-v2 the model
+    receives the Query boundary, one candidate weapon identity and its winning
+    logic summary.  Indicators, classifications, evidence, validation and
+    portfolio metadata stay outside the model call and are never allowed to
+    anchor the portrait.
+    """
+
+    candidate = {
+        key: str(brief.get(key, "")).strip()
+        for key in (
+            "name",
+            "primary_equipment_identity",
+            "equipment_form",
+            "target_and_direct_effect",
+        )
+        if str(brief.get(key, "")).strip()
+    }
+    winning_logic = str(
+        brief.get("concise_winning_summary")
+        or brief.get("winning_mechanism")
+        or brief.get("non_substitutable_difference")
+        or brief.get("decisive_advantage_thesis")
+        or brief.get("disruptive_shift")
+        or ""
+    ).strip()
+    return {
+        "query_semantics": str(query or brief.get("query_relevance", "")).strip(),
+        "candidate_weapon": candidate,
+        "winning_logic_overview": winning_logic,
+    }
 
 
 def _minimal_portfolio_candidate_handoff(item: Any) -> dict[str, Any]:
@@ -213,9 +255,10 @@ def _parallel_s6_card_instruction() -> str:
     """Return the compact role contract for one isolated S6 card session."""
 
     return (
-        "你是S6单装备能力画像作者，在独立Codex CLI会话中只完成assigned_card这一张卡。"
-        "名称、主装备、目标与直接战果由S5冻结，不得换装、改名或吸收其他卡。"
-        "你拥有本卡场景推演、技术论证、作战流程和文字编辑权。先独立理解它为何能改变Query中的战场关系，"
+        "你是S6单装备能力画像作者，在独立Codex CLI会话中只完成这一张候选卡。"
+        "输入严格只有query_semantics、candidate_weapon、winning_logic_overview三项；不得要求或臆造"
+        "S5指标、分类、证据、验证、失败边界、组合位置或其他卡信息。候选武器身份是写作锚点，"
+        "不得换成另一装备，但你拥有本卡场景推演、技术论证、作战流程、能力分类和文字编辑权。先独立理解它为何能改变Query中的战场关系，"
         "再推演其专属作战链与可实现的装备本体，再直接写成决策短卡：概述、技术实现、作战流程、"
         "能力效果、制胜逻辑。每栏约120至150个中文字作为软编辑目标，不因篇幅偏差失败、重试或截断；"
         "五栏各自回答不同问题，正文合计约450至1400字，删除重复背景和空泛"
@@ -236,10 +279,10 @@ def _dynamic_role_contract_handoff(contract: Any, task: Any) -> dict[str, Any]:
     authority = {
         "S1": "自主重构对手成功逻辑、体系依赖、反适应与失效窗口；不预定装备答案。",
         "S2": "自主比较任务组织、力量运用和非装备对照；不预定装备答案。",
-        "S3": "自主定义问题并创造具体武器候选，可接受、重构或替换多样性建议。",
-        "S4": "与S3同权创造具体武器候选，不承担后置物化或机械补全。",
+        "S3": "与S4同权自主定义问题并创造具体武器候选；多维交叉判断优先于任何分配建议。",
+        "S4": "与S3同权自主定义问题并创造具体武器候选；不承担后置物化、映射或机械补全。",
         "S5": "只拥有组合语义准入、合并和判退权，不补写或审查候选内容。",
-        "S6": "只对S5冻结装备撰写画像，不改变身份、分类、指标或Query关联。",
+        "S6": "只接收Query语义、候选武器身份和对应制胜逻辑概述；自主完成分类、技术、流程和画像。",
     }.get(node, "在声明节点内自主完成军事判断。")
     handoff = {
         "S1": "只交接对手优势、战场矛盾、可改变关系和期望战果。",
@@ -2778,7 +2821,7 @@ async def analyze_winning_subagents(
             return rows
 
         async def _refresh_winning_angle_assignments_once() -> None:
-            """Build non-authoritative diversity challenges for S3/S4 creators.
+            """Build non-authoritative diversity provocations for S3/S4 creators.
 
             The scout may suppress obviously duplicate capacity, but it does
             not own the equipment answer.  Every isolated creator first forms
@@ -3008,15 +3051,15 @@ async def analyze_winning_subagents(
                         "winning_swarm_independent_portfolio_reviewer",
                         "你是候选生成前的Query多样性侦察员，不是装备语义主控，也不裁决最终答案。"
                         "此时尚未产生任何装备候选。只从完整Query提取不可违反的目标、威胁、阶段、地域、"
-                        "升级边界和反模板边界，并列出若干尚待S3/S4独立验证的开放断点；不要指定唯一物理创新、"
+                        "升级边界和反模板边界，并列出若干尚待S3/S4独立探索的开放断点；不要指定唯一物理创新、"
                         "唯一战场存在方式或唯一制胜逻辑。"
                         "combat_dimensions只是可选作战效应视角，不是固定分类、十二条生产线、数量配额或质量门。"
                         "根据Query只激活真正相关且能导向不同装备思考空间的维度；可以不使用多数维度，也可提出"
-                        "Query特有的OTHER维度。每个激活维度写入replacement_angles，只能形成soft_challenge："
-                        "后续Agent可以accept、reframe或replace。不得预先给出装备名称、装备家族、技术套餐、"
+                        "Query特有的OTHER维度。replacement_angles只是一组可选多样性提示，不与Agent一一绑定；"
+                        "后续每个Agent都可跨多个提示比较、组合、重构、全部舍弃或提出自己的方向。不得预先给出装备名称、装备家族、技术套餐、"
                         "成品构型或必须继承的答案。"
-                        "S3和S4职责相同，都是创新装备生成者。把激活维度自然分配给可用容量即可，不区分首轮、"
-                        "二轮、主线或补救线。maximum_active只是并发容量上限，不要求填满；同一维度只有在Query"
+                        "S3和S4职责相同，都是创新装备生成者。只决定开放探索提示池和合理Agent容量，不给每个会话"
+                        "指定唯一维度、答案方向或排他责任。maximum_active只是并发容量上限，不要求填满；同一维度只有在Query"
                         "存在两个不可互相吸收的制胜问题时才可重复。angle_candidates只用于理解战场问题，不能"
                         "继承其装备形态、技术路线、工作名或抽象短语。只输出JSON。",
                         {
@@ -3401,7 +3444,7 @@ async def analyze_winning_subagents(
                 assignment = {
                     "assignment_id": f"query-winning-angle-{index + 1}",
                     "active": True,
-                    "authority": "soft_challenge",
+                    "authority": "advisory_diversity_pool_only",
                     "allowed_response_modes": ["accept", "reframe", "replace"],
                     "self_proposed_id_pattern": "self-proposed:<short-id>",
                     "source": "query_blueprint_thesis"
@@ -3492,9 +3535,9 @@ async def analyze_winning_subagents(
                     ).strip(),
                     "reserved_other_angles": list(reserved),
                     "rule": (
-                        "这是可挑战的观察视角，不限定技术、构型、装备家族或名称。Agent必须先独立理解"
-                        "完整Query，然后可接受、重构或替换本提示；替换时可使用OTHER:<自然标签>并以"
-                        "self-proposed:<id>标识，只需说明相对其他软挑战的新任务链断点或制胜关系。"
+                        "这是共享的可选多样性提示池，不是本Agent的题目、角色身份或排他分工，也不限定"
+                        "技术、构型、装备家族或名称。Agent必须先独立理解完整Query，在多个维度间比较交叉关系，"
+                        "然后可接受、组合、重构、全部舍弃或提出自己的OTHER方向；"
                         "语义蓝图只含共同约束和开放问题，不构成中心答案。"
                         "名称必须来自最终装备最核心的物理创新和战场存在方式，不得把维度、任务动作、"
                         "性能指标或输入字段直接压缩成装备名。"
@@ -3690,7 +3733,7 @@ async def analyze_winning_subagents(
                     winning_angle_assignments.get(instance.instance_id, {})
                 )
                 dimension = str(assignment.get("combat_dimension", "")).strip()
-                display_name = f"{dimension or '开放'}维度创新装备 Agent {label}"
+                display_name = f"开放创新武器 Agent {label}"
                 semantic_parts = [
                     str(assignment.get("target_and_phase", "")).strip(),
                     str(assignment.get("changed_confrontation_variable", "")).strip(),
@@ -3703,11 +3746,11 @@ async def analyze_winning_subagents(
                         semantic_parts
                     )
                     purpose = (
-                        f"独立分析完整Query及{target or '关键作战阶段'}，自主发散创新武器装备。"
-                        f"多样性侦察员建议从{dimension or '开放创新'}视角挑战"
-                        f"{mechanism or changed_variable or '新的制胜关系'}并观察{result or '直接军事效果'}；"
-                        "这只是soft_challenge，不是预定答案。可接受、重构或用Query驱动的OTHER方向替换。"
-                        "比较不同物理创新、战场存在方式和装备身份，独立完成自然名称与一句制胜说明。"
+                        f"先独立分析完整Query及{target or '关键作战阶段'}，自主发散创新武器装备。"
+                        "以下只是从共享多样性池抽取的一条非权威启发，可与其他维度交叉、重构或全部舍弃："
+                        f"{dimension or '开放创新'}视角下的{mechanism or changed_variable or '新制胜关系'}，"
+                        f"观察{result or '直接军事效果'}。不要围绕该维度填题；先比较多种物理创新、"
+                        "战场存在方式和装备身份，再独立完成自然名称与一句制胜说明。"
                         "本会话只创造候选，不承担物化、接口收敛、证据核验或工程验证。"
                     )
             output_budget = (
@@ -4077,28 +4120,32 @@ async def analyze_winning_subagents(
                 dimension_assignment = dict(
                     winning_angle_assignments.get(instance.instance_id, {})
                 )
-                common_input["winning_dimensions"] = [
-                    value
-                    for value in (
-                        str(dimension_assignment.get("combat_dimension", "")).strip(),
-                        str(dimension_assignment.get("changed_confrontation_variable", "")).strip(),
-                        str(dimension_assignment.get("direct_military_result", "")).strip(),
-                    )
-                    if value
-                ][:3]
-                common_input["open_challenge"] = (
-                    str(dimension_assignment.get("novelty_search_question", "")).strip()
-                    or common_input["open_challenge"]
+                diversity_pool: list[dict[str, str]] = []
+                own_id = str(dimension_assignment.get("assignment_id", ""))
+                for item in [
+                    dimension_assignment,
+                    *[
+                        candidate
+                        for candidate in winning_angle_assignments.values()
+                        if str(candidate.get("assignment_id", "")) != own_id
+                    ],
+                ]:
+                    compact_item = {
+                        "optional_lens": str(item.get("combat_dimension", "")).strip(),
+                        "open_relationship": str(
+                            item.get("changed_confrontation_variable", "")
+                        ).strip(),
+                        "possible_result": str(
+                            item.get("direct_military_result", "")
+                        ).strip(),
+                    }
+                    if any(compact_item.values()):
+                        diversity_pool.append(compact_item)
+                common_input["optional_diversity_pool"] = diversity_pool[:6]
+                common_input["diversity_pool_authority"] = (
+                    "advisory_only；先独立理解Query，可跨项组合、重构、全部舍弃或自创方向；"
+                    "不得将任一项视为本Agent的固定维度、答案或排他分工"
                 )
-                common_input["combat_dimension_assignment"] = {
-                    key: dimension_assignment.get(key, "")
-                    for key in (
-                        "assignment_id",
-                        "combat_dimension",
-                        "changed_confrontation_variable",
-                        "direct_military_result",
-                    )
-                }
             if instance.mission_node in {"S1", "S2"} and not instance.hypothesis_id:
                 output_schema = {
                     "reasoning_seeds": [
@@ -4148,20 +4195,17 @@ async def analyze_winning_subagents(
                 # Use a compact creative brief for the actual Codex call so the
                 # model reasons about the weapon instead of imitating a rule list.
                 instruction = _creative_s3_candidate_instruction()
-                dimension_assignment = common_input.get(
-                    "combat_dimension_assignment", {}
-                )
                 instruction += (
-                    "只输出1至2张最小候选卡。先从Query矛盾和少量制胜维度自由推演，"
+                    "只输出1至2张最小候选卡。先从Query矛盾自由推演，并把optional_diversity_pool"
+                    "仅作为可全部舍弃的反事实启发，不按其中任一维度填题。"
                     "再一次性完成自然命名与完整装备身份；S3与S4权限相同。每卡只写装备形态、"
                     "目标与直接战果、独特作战角色、改变变量、前沿原理、颠覆关系和短机理链。"
                     "禁止输出证据ID、证据边界、TRL、成本、产能、验证计划、反适应、失败边界、"
                     "工程瓶颈、技术期限、系统接口或任何审计/交接字段；不得生成组合装备或事后改名。"
                 )
-                if instance.mission_node == "S3":
-                    instruction += "S3偏向重构制胜机理与武器本体，可提出完全不同于现役类别的存在方式。"
-                else:
-                    instruction += "S4偏向跨域、反常规或极端场景下的装备组合原理，但仍须保持单一主装备身份；不要复述S3的机理。"
+                instruction += (
+                    "S3和S4没有偏向差别、先后关系或物化分工；二者都是完整Query驱动的开放创新武器作者。"
+                )
                 phase = "winning_swarm_dynamic_seed"
             else:
                 output_schema = {
@@ -5790,21 +5834,27 @@ async def analyze_winning_subagents(
                 failure_type="empty_s5_handoff",
             )
             return limited_result
+        # Dynamic-v2 deliberately does not make S6 depend on S5's prose,
+        # indicators, classification or evidence contract.  Those fields are
+        # authored by the isolated S6 model from the three-item semantic
+        # input; checking them here would reintroduce the old lock-in before
+        # the model gets a chance to reason.
         pre_s6_contract_issues: list[str] = []
-        for position, brief in enumerate(briefs, start=1):
-            if not _indicator_portrait_is_specific(brief.get("indicator_portrait")):
-                pre_s6_contract_issues.append(
-                    f"S5第{position}项指标画像未闭合测量轴、对照基线与判退条件"
-                )
-            if not _query_relevance_is_specific(brief.get("query_relevance")):
-                pre_s6_contract_issues.append(
-                    f"S5第{position}项未闭合任务对象、作战阶段、威胁压力和直接战果关联"
-                )
-            boundary = str(brief.get("evidence_boundary", "") or "").strip()
-            if boundary and not _evidence_boundary_is_public_semantic(boundary):
-                pre_s6_contract_issues.append(
-                    f"S5第{position}项证据边界不是公开证据支持/不支持的语义陈述"
-                )
+        if not dynamic_s6_authoring:
+            for position, brief in enumerate(briefs, start=1):
+                if not _indicator_portrait_is_specific(brief.get("indicator_portrait")):
+                    pre_s6_contract_issues.append(
+                        f"S5第{position}项指标画像未闭合测量轴、对照基线与判退条件"
+                    )
+                if not _query_relevance_is_specific(brief.get("query_relevance")):
+                    pre_s6_contract_issues.append(
+                        f"S5第{position}项未闭合任务对象、作战阶段、威胁压力和直接战果关联"
+                    )
+                boundary = str(brief.get("evidence_boundary", "") or "").strip()
+                if boundary and not _evidence_boundary_is_public_semantic(boundary):
+                    pre_s6_contract_issues.append(
+                        f"S5第{position}项证据边界不是公开证据支持/不支持的语义陈述"
+                    )
         if pre_s6_contract_issues:
             emit_swarm_event(
                 "winning_s6_card_authoring_limited",
@@ -6014,7 +6064,7 @@ async def analyze_winning_subagents(
             if isinstance(prior_analysis, Mapping)
             else []
         )
-        if isinstance(prior_directions, list):
+        if isinstance(prior_directions, list) and not dynamic_s6_authoring:
             prior_by_identity: dict[str, Mapping[str, Any]] = {}
             for item in prior_directions:
                 if not isinstance(item, Mapping) or not _s6_card_is_reusable(item):
@@ -6057,17 +6107,25 @@ async def analyze_winning_subagents(
                 status="running",
             )
             async with card_semaphore:
-                card_text = await host._run_core_json(
-                    agent_id,
-                    _parallel_s6_card_instruction(),
-                    {
+                card_payload = (
+                    _dynamic_s6_card_input(
+                        brief,
+                        query=str(step_input.get("query", "")),
+                    )
+                    if dynamic_s6_authoring
+                    else {
                         "query": step_input.get("query", ""),
                         "branch": step_input.get("branch", ""),
                         "parallel_card_id": f"s6-card-{position}",
                         "portfolio_position": position,
                         "portfolio_card_count": len(briefs),
                         "assigned_card": _minimal_s6_card_handoff(brief),
-                    },
+                    }
+                )
+                card_text = await host._run_core_json(
+                    agent_id,
+                    _parallel_s6_card_instruction(),
+                    card_payload,
                     {
                         "direction": card_direction_schema,
                         "capability_image_draft": "该装备能力画像的单句结论",
@@ -6101,10 +6159,17 @@ async def analyze_winning_subagents(
             # one permitted card-level repair.
             if source_name:
                 direction["name"] = source_name
-            # Preserve the blind expert's selected weapon identity and
-            # object-level evidence while allowing this S6 session to own
-            # the scenario, operational process and capability portrait.
-            for protected_field in (
+            # Dynamic S6 inherits only weapon identity and target/effect. It
+            # authors classification, indicators, feasibility, process and
+            # all portrait prose from the Query and winning-logic overview.
+            protected_fields = (
+                "name",
+                "hypothesis_id",
+                "source_hypothesis_title",
+                "primary_equipment_identity",
+                "equipment_form",
+                "target_and_direct_effect",
+            ) if dynamic_s6_authoring else (
                 "name",
                 "hypothesis_id",
                 "source_hypothesis_title",
@@ -6131,7 +6196,8 @@ async def analyze_winning_subagents(
                 "expert_score",
                 "expert_assessment_id",
                 "direct_combat_equipment",
-            ):
+            )
+            for protected_field in protected_fields:
                 protected_value = brief.get(protected_field)
                 if protected_value not in (None, "", []):
                     direction[protected_field] = protected_value
@@ -6192,6 +6258,12 @@ async def analyze_winning_subagents(
         authored: list[tuple[int, dict[str, Any], str]] = []
         pending_cards: list[tuple[int, Mapping[str, Any]]] = []
         for position, brief in enumerate(briefs, start=1):
+            # A dynamic-v2 card is always authored against the current
+            # Query/candidate/winning-logic tuple. Reusing a legacy cache entry
+            # would silently restore S5 text and defeat the minimal handoff.
+            if dynamic_s6_authoring:
+                pending_cards.append((position, brief))
+                continue
             cached = host._s6_card_result_cache.get(card_cache_key(brief))
             if cached is None or not _s6_card_is_reusable(cached[0]):
                 if cached is not None:
@@ -6796,7 +6868,11 @@ async def analyze_winning_subagents(
                 index == 6
                 and middle_cycle == 1
                 and inner_iteration == 1
-                and s6_parallel_authoring_only
+                # Dynamic-v2's three-item S6 contract is a profile invariant,
+                # not a capability of one particular provider implementation.
+                # Keep the isolated per-card authoring path even when tests or
+                # deployments use a non-Codex provider.
+                and (s6_parallel_authoring_only or dynamic_s6_authoring)
             ):
                 result = await generate_parallel_s6_cards(
                     agent_id=agent_id,

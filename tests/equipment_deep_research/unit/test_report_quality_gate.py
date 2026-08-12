@@ -5,6 +5,9 @@ from equipment_deep_research.delivery.quality_gate import (
     ReportQualityGate,
     _has_dangling_report_fragment,
 )
+from equipment_deep_research.orchestration.capability_portrait import (
+    assemble_capability_portrait_modules,
+)
 
 
 def _governed_capability_portrait(name: str) -> str:
@@ -459,6 +462,53 @@ def test_information_density_gate_accepts_short_equipment_decision_bundles() -> 
         "equipment_decision_bundles_complete": True,
     }
     assert check.passed is True
+
+
+def test_information_density_gate_flags_overlong_repetitive_s6_portrait_as_advisory() -> None:
+    repeated = "该装备进入受扰空域后持续复核授权目标并在满足证据门槛时实施直接毁伤"
+    portrait = assemble_capability_portrait_modules(
+        {
+            "overview": repeated + "；" + "场景" * 160,
+            "technology_implementation": repeated + "；" + "接口" * 160,
+            "operational_process": repeated + "；" + "流程" * 160,
+            "capability_effects": repeated + "；" + "战果" * 160,
+            "winning_logic": repeated + "；" + "交换" * 160,
+        }
+    )
+
+    check = ReportQualityGate()._check_report_information_density(
+        "具体装备形成直接战果并以对照试验判退。",
+        {
+            "require_high_value_military_information": True,
+            "expected_capability_records": [
+                {"name": "测试装备", "deep_capability_portrait": portrait}
+            ],
+        },
+    )
+
+    assert check.indicators["capability_portrait_contract_passed"] is False
+    assert check.passed is False
+    assert any("精简交付门" in item for item in check.suggestions)
+
+    publication = ReportQualityGate().validate(
+        "## 可发布报告\n\n具体装备形成直接战果并以对照试验判退。",
+        {
+            "require_high_value_military_information": True,
+            "expected_capability_records": [
+                {"name": "测试装备", "deep_capability_portrait": portrait}
+            ],
+        },
+    )
+    assert publication.passed is True
+    assert publication.compact()["blockers"] == []
+    assert publication.fitness["军事决策信息密度"].passed is False
+
+
+def test_publication_gate_ignores_long_or_fragment_like_prose() -> None:
+    report = "## 报告\n\n" + ("这一段很长但仍是用户可读正文，" * 500)
+    result = ReportQualityGate().validate(report)
+    assert result.passed is True
+    assert result.publication_blockers == []
 
 
 def test_information_density_gate_allows_low_density_development_foundation() -> None:
@@ -931,7 +981,7 @@ def test_project_argument_template_structure_and_compact_gate_payload() -> None:
     )
     fragmented_result = ReportQualityGate().validate(fragmented, metadata)
     assert fragmented_result.format_integrity.indicators["has_complete_paragraphs"] is False
-    assert fragmented_result.passed is False
+    assert fragmented_result.passed is True
 
     complete_target_sentence = report.replace(
         "国际军事竞争加速无人化远程精确火力发展。",
@@ -1000,7 +1050,7 @@ def test_project_argument_template_structure_and_compact_gate_payload() -> None:
     )
     clipped_result = ReportQualityGate().validate(clipped_table, metadata)
     assert clipped_result.format_integrity.indicators["has_complete_paragraphs"] is False
-    assert clipped_result.passed is False
+    assert clipped_result.passed is True
 
     equipment_list_table = report.replace(
         "分散编组、发射、突防、交战与毁伤评估 |",

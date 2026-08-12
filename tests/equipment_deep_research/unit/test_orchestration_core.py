@@ -5,7 +5,11 @@ import json
 import pytest
 
 from equipment_deep_research.agents.registry import AgentDef, AgentRegistry
-from equipment_deep_research.domain.models import AuditResult, ResearchProblem
+from equipment_deep_research.domain.models import (
+    AuditResult,
+    CapabilityImageItem,
+    ResearchProblem,
+)
 from equipment_deep_research.domain.messages import FINALIZE_TASK_ID, RunCheckpoint
 from equipment_deep_research.domain.store import DomainStore
 from equipment_deep_research.domain.workspace import RunWorkspace
@@ -487,6 +491,42 @@ def test_report_gate_failure_resume_skips_completed_research_agents(tmp_path) ->
             store=store,
             execution_profile_id="winning_swarm_dynamic_v2",
         )
+    finally:
+        workspace.close()
+
+
+def test_report_gate_snapshot_always_writes_capability_images(tmp_path) -> None:
+    workspace = RunWorkspace.create(tmp_path / "runs", "report-gate-snapshot")
+    try:
+        store = DomainStore()
+        store.add_capability_image(
+            CapabilityImageItem(
+                capability_id="cap-001",
+                name="测试装备",
+                equipment_category="测试武器",
+                capability_type="new_capability",
+                source_winning_logic="形成可验证任务效果",
+                related_scenario="测试场景",
+                priority="高",
+                capability_gap="现有装备存在任务缺口",
+                capability_image="形成测试装备能力画像",
+                evidence_ids=["ev-001"],
+                confidence=0.8,
+                deep_capability_portrait="S6权威画像正文",
+            )
+        )
+
+        DeepResearchRunner._write_report_gate_snapshot(
+            workspace=workspace,
+            delivery_artifacts={"branch_deliverables": {"delivery_status": "limited"}},
+            report_body="# 测试报告",
+            store=store,
+        )
+
+        payload = json.loads(
+            (workspace.run_dir / "capability_images.json").read_text(encoding="utf-8")
+        )
+        assert payload[0]["deep_capability_portrait"] == "S6权威画像正文"
     finally:
         workspace.close()
 

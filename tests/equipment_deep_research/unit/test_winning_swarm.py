@@ -107,17 +107,23 @@ def test_dynamic_v2_profile_prioritizes_frontloaded_s3_capacity() -> None:
     assert profile.parent_profile_id == "swarm_quality_v1"
     assert resolve_execution_profile("winning_swarm_dynamic_v2") == profile
     assert blueprint["winning_swarm_policy"]["policy_id"] == "winning_swarm_dynamic_v2"
-    assert blueprint["winning_swarm_policy"]["expert_judge_enabled"] is True
-    assert blueprint["winning_swarm_policy"]["expert_judge_required"] is True
+    assert blueprint["winning_swarm_policy"]["expert_judge_enabled"] is False
+    assert blueprint["winning_swarm_policy"]["expert_judge_required"] is False
     assert blueprint["winning_swarm_policy"]["finalist_minimum"] == 2
     assert blueprint["winning_swarm_policy"]["finalist_maximum"] == 7
     assert blueprint["winning_swarm_policy"]["mission_graph_target_instances"] == 15
     assert blueprint["winning_swarm_policy"]["s3_winning_thesis_capacity"] == 8
-    assert blueprint["winning_swarm_policy"]["expert_candidate_pool_maximum"] == 12
-    assert blueprint["winning_swarm_policy"]["expert_repair_reserved_instances"] == 3
-    assert blueprint["winning_swarm_policy"]["expert_repair_max_candidates"] == 3
+    assert blueprint["winning_swarm_policy"]["expert_candidate_pool_maximum"] == 0
+    assert blueprint["winning_swarm_policy"]["expert_repair_reserved_instances"] == 0
+    assert blueprint["winning_swarm_policy"]["expert_repair_max_candidates"] == 0
+    assert set(blueprint["winning_swarm_policy"]["archetypes"]) == {
+        "weak_signal_scout",
+        "disruptive_mechanism_generator",
+        "innovative_equipment_dimension_generator",
+        "independent_portfolio_reviewer",
+    }
     assert blueprint["winning_swarm_policy"]["s3_empty_reallocation_max"] == 2
-    assert blueprint["runtime_budgets"]["maximum_quality_judge_model_calls"] == 3
+    assert blueprint["runtime_budgets"]["maximum_quality_judge_model_calls"] == 0
     assert blueprint["runtime_budgets"]["maximum_swarm_model_calls"] == 36
     assert blueprint["runtime_budgets"]["codex_concurrency"] == 6
     assert blueprint["runtime_budgets"]["s6_codex_concurrency"] == 6
@@ -346,7 +352,7 @@ def test_dynamic_v2_mission_graph_frontloads_quality_into_s5_before_s6_cards() -
         target_instances=15,
     )
 
-    assert len(graph.agent_instances) == 14
+    assert len(graph.agent_instances) == 13
     assert graph.maximum_concurrency == 6
     assert set(graph.s_node_seeds) == {"S1", "S2", "S3", "S4", "S5", "S6"}
     assert all(graph.s_node_seeds[node] for node in ("S1", "S2", "S3", "S4", "S5"))
@@ -381,12 +387,12 @@ def test_dynamic_v2_mission_graph_frontloads_quality_into_s5_before_s6_cards() -
         for contract in contracts_by_node[node]
     )
     assert all(
-        any("不承担装备物化" in item for item in contract.methodology)
+        any("轻型创造会话" in item for item in contract.methodology)
         for node in ("S3", "S4")
         for contract in contracts_by_node[node]
     )
     assert all(
-        any("语义准入" in item for item in contract.methodology)
+        any("retain、merge或reject" in item for item in contract.methodology)
         for contract in contracts_by_node["S5"]
     )
     assert not contracts_by_node["S6"]
@@ -395,8 +401,6 @@ def test_dynamic_v2_mission_graph_frontloads_quality_into_s5_before_s6_cards() -
         for contract in graph.role_contracts
     )
     by_archetype = {item.archetype: item for item in graph.agent_instances}
-    contract_by_archetype = {item.archetype: item for item in graph.role_contracts}
-    evidence = by_archetype["evidence_verifier"]
     reviewer = by_archetype["independent_portfolio_reviewer"]
     assert "equipment_realization_architect" not in by_archetype
     assert "direct_combat_equipment_generator" not in by_archetype
@@ -404,19 +408,12 @@ def test_dynamic_v2_mission_graph_frontloads_quality_into_s5_before_s6_cards() -
     assert "mass_scalable_combat_family_generator" not in by_archetype
     assert "validation_experiment_designer" not in by_archetype
     assert "trl_cost_industrial_auditor" not in by_archetype
-    integrated_audit_purpose = contract_by_archetype["evidence_verifier"].purpose
-    assert "TRL" in integrated_audit_purpose
-    assert "成本" in integrated_audit_purpose
-    assert "判退条件" in integrated_audit_purpose
+    assert "evidence_verifier" not in by_archetype
     assert sum(item.mission_node == "S3" for item in graph.agent_instances) == 4
     assert sum(item.mission_node == "S4" for item in graph.agent_instances) == 4
-    assert sum(item.mission_node == "S5" for item in graph.agent_instances) == 2
-    node_by_id = {item.instance_id: item.mission_node for item in graph.agent_instances}
-    assert {node_by_id[item] for item in evidence.depends_on} == {"S3", "S4"}
-    assert evidence.instance_id in reviewer.depends_on
-    assert evidence.wave > max(
-        item.wave for item in graph.agent_instances if item.mission_node in {"S3", "S4"}
-    )
+    assert sum(item.mission_node == "S5" for item in graph.agent_instances) == 1
+    assert reviewer.depends_on == []
+    assert reviewer.wave == 1
     assert graph.merge_strategy.startswith("artifact_ready_speculative_parallel")
 
     with pytest.raises(ValueError, match="may not recruit"):
@@ -441,11 +438,11 @@ def test_dynamic_v2_target_instances_controls_creator_capacity() -> None:
 
     assert len(small.agent_instances) == 8
     assert len(medium.agent_instances) == 12
-    # The dynamic graph has a quality-preserving 14-role ceiling even when
+    # The dynamic graph has a light 13-role ceiling even when
     # target capacity is larger; later semantic activation may use fewer.
-    assert len(large.agent_instances) == 14
-    assert sum(item.mission_node in {"S3", "S4"} for item in small.agent_instances) == 2
-    assert sum(item.mission_node in {"S3", "S4"} for item in medium.agent_instances) == 6
+    assert len(large.agent_instances) == 13
+    assert sum(item.mission_node in {"S3", "S4"} for item in small.agent_instances) == 3
+    assert sum(item.mission_node in {"S3", "S4"} for item in medium.agent_instances) == 7
     assert sum(item.mission_node in {"S3", "S4"} for item in large.agent_instances) == 8
 
 
@@ -486,12 +483,10 @@ def test_dynamic_v2_keeps_s3_s4_role_contracts_open_before_dimension_selection()
     assert len(s3_instances) == 4
     assert len(s4_instances) == 4
     assert all(
-        item.archetype == "disruptive_mechanism_generator" for item in s3_instances
-    )
-    assert all(
         item.archetype == "innovative_equipment_dimension_generator"
-        for item in s4_instances
+        for item in creative_instances
     )
+    assert all("开放创新武器" in item.display_name for item in creative_instances)
     assert all("静默坐底拒止器" not in item.purpose for item in creative_contracts)
     assert all("尾流反捕获拦截弹" not in item.purpose for item in creative_contracts)
     assert all(
@@ -499,7 +494,7 @@ def test_dynamic_v2_keeps_s3_s4_role_contracts_open_before_dimension_selection()
         for item in creative_contracts
     )
     assert all(
-        any("不承担装备物化" in step for step in item.methodology)
+        any("轻型创造会话" in step for step in item.methodology)
         for item in creative_contracts
     )
 
@@ -777,8 +772,8 @@ def test_quality_expert_judge_normalizes_scores_and_respects_codex_verdict() -> 
     assert strong_assessment.evidence_ids == ["ev-1"]
     assert weak_assessment.passed is False
     assert strong_assessment.weighted_score != weak_assessment.weighted_score
-    assert controller.policy["expert_repair_reserved_instances"] == 3
-    assert controller.policy["expert_candidate_pool_maximum"] == 12
+    assert controller.policy["expert_repair_reserved_instances"] == 0
+    assert controller.policy["expert_candidate_pool_maximum"] == 0
     assert (
         controller.repair_archetype_for_assessment(weak_assessment)
         == "equipment_capability_image_repairer"
@@ -2074,7 +2069,7 @@ def test_expert_repairs_prioritize_passed_system_links_for_combat_quota() -> Non
     controller = WinningSwarmController(
         {
             "enabled": True,
-            "policy_id": "winning_swarm_dynamic_v2",
+            "policy_id": "swarm_quality_v1",
             "expert_repair_max_candidates": 3,
         }
     )
@@ -2145,7 +2140,7 @@ def test_expert_repairs_prioritize_failed_direct_images_before_passed_links() ->
     controller = WinningSwarmController(
         {
             "enabled": True,
-            "policy_id": "winning_swarm_dynamic_v2",
+            "policy_id": "swarm_quality_v1",
             "expert_repair_max_candidates": 3,
         }
     )
