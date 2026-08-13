@@ -68,14 +68,34 @@ QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION = (
     "把命名交给Codex基于完整Query和已经闭合的整装语义作最后一次整体编辑，而不是字段拼装任务。"
     "名称在装备身份和制胜机理闭合后整体创作，应像未来装备体系中真实存在、作战人员会自然使用的真实装备名。"
     "命名前先闭合frontier_principle、technology_discontinuity和disruptive_shift。"
-    "命名时可在内部比较构型意象型、原理突破型和装备专名型等自然思路。"
-    "只突出一个最有辨识度的构型、原理或战场存在方式（如核心物理意象＋装备身份、自然现象或生物意象＋新型装备、代号＋装备类别、原理突破＋装备身份），同时让人看得出主装备是什么；"
-    "不默认两字代号、统一后缀或固定字符区间。"
+    "命名时遵循战场矛盾→制胜机制→技术断点→能力跃迁→颠覆逻辑→核心意象→命名风格→装备名称。"
+    "可在内部比较但不必覆盖这些开放视角：形态与物质（A构型意象型、G材料介质型、H环境融合型），"
+    "技术与原理（B原理突破型、F作战机制型），任务与能力（D使命任务型、E能力意象型、I动作行为型），"
+    "战争改变（J时空概念型、K体系节点型、M数量规模型、N经济学颠覆型），"
+    "认知表达（C装备专名型、L反传统隐喻型、O演化代际型）。"
+    "选择主导视角时先问三件事：若最值得记住的是‘它长什么样’，优先以构型、材料或环境融合形成名称，"
+    "如蜂巢式分布结构、仿生扑翼、液态金属变构、冰下潜行或海气界面滑翔；"
+    "若最值得记住的是‘它凭什么做到’，优先以超材料、相变、等离子流控、自组织、分布式或涌现机制形成名称；"
+    "若最值得记住的是‘它能干什么’，优先以断链、破障、裂域、锁穹、游猎、蛰伏等使命、能力状态或动作行为形成名称。"
+    "这些意象只解释命名范式，不是必须复用的词库；模型应从当前Query和整装构型创造同等自然的新表达。"
+    "允许跨视角自然融合，不得为了覆盖类型而强行组合。"
+    "naming_style只能记录名称形成后的主导理由，不能先选字母组再按模板造名。"
+    "只突出一个最有辨识度的构型、原理、任务能力、战争改变方式或认知意象，同时让人看得出主装备是什么；"
+    "名称可以是自然描述名、完整任务名、原理名、体系节点名、专名或跨类型表达，句法长短由整装语义决定；"
+    "当核心意象清晰时，允许并鼓励采用‘可解释代号＋具体装备类别’形成正式装备代号感；"
+    "也可直接采用能够识别核心构型、关键原理或作战机制的自然描述名。"
+    "不默认两字代号：只有核心意象足够清晰的候选才使用代号；不得让所有候选共享统一后缀或固定字符区间。"
     "不使用统一系列标记。"
     "名称不是候选摘要；以上只是开放思路，不是模板、配额或分类覆盖任务。"
+    "‘核心物理意象＋装备身份’、‘自然现象或生物意象＋新型装备’、‘代号＋装备类别’或‘原理突破＋装备身份’"
+    "都可以成为合适表达，但只能在对应装备确有该核心创新时采用，不能把示例直接复制成批量命名句法。"
     "不要把字段压缩成标题，不用功能/动作短语＋装备类别尾词，"
     "不套‘智能/增强型/下一代/多功能XX系统’模板，不复制真实项目名。"
     "临时去掉引号或代号后仍是机械底名时，不能靠加意象挽救，应回到装备形态和原理重新命名。"
+    "若名称读起来只是给同一件武器替换了两字前缀，或把Query词、维度词、动作词和‘弹/雷/器/系统’机械相接，"
+    "应回到核心装备语义重新创作；不能用增加修饰词掩盖同构。"
+    "同一Query的候选应允许采用不同核心意象、命名节奏和装备身份表达，但差异必须来自不同的装备与制胜关系，"
+    "不能为了显得多样而把同一候选换皮。"
     "自由角度形成后才允许由模型吸收外部启发。"
     "不建立意象词库、后缀表、字符串评分或本地命名硬门；不得复制共享示例。"
     "不输出备选名、逐词解释或检查过程。"
@@ -87,18 +107,18 @@ QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION = (
 # The controller may activate any subset and may add a Query-specific OTHER
 # lens when the battlefield relationship does not fit this vocabulary.
 COMBAT_EQUIPMENT_DIVERGENCE_DIMENSIONS: tuple[dict[str, str], ...] = (
-    {"dimension": "毁伤", "meaning": "直接破坏目标，或削弱目标功能与结构能力"},
-    {"dimension": "打击", "meaning": "对指定目标实施远程或近程攻击并施加效果"},
-    {"dimension": "突防", "meaning": "突破防御体系并生存进入目标作用区域"},
-    {"dimension": "拦截", "meaning": "发现、跟踪并阻断敌方目标行动"},
-    {"dimension": "压制", "meaning": "降低敌方感知、通信、火力或行动能力"},
-    {"dimension": "拒止", "meaning": "阻止敌方进入、行动或持续作战"},
-    {"dimension": "侦察感知", "meaning": "发现、识别、定位目标和环境"},
-    {"dimension": "预警", "meaning": "提前发现威胁并形成响应窗口"},
-    {"dimension": "电子对抗", "meaning": "影响敌方电子信息系统"},
-    {"dimension": "威慑", "meaning": "通过可信能力改变敌方决策"},
-    {"dimension": "生存抗毁", "meaning": "提高装备自身持续作战能力"},
-    {"dimension": "战场控制", "meaning": "改变区域、空间或时间上的作战主动权"},
+    {"code": "damage", "dimension": "毁伤", "meaning": "直接破坏目标，或削弱目标的结构、功能与作战效能"},
+    {"code": "strike", "dimension": "打击", "meaning": "对指定目标实施远程或近程攻击并施加军事效果"},
+    {"code": "penetration", "dimension": "突防", "meaning": "突破敌方防御体系并进入目标有效作用区域"},
+    {"code": "interception", "dimension": "拦截", "meaning": "发现、跟踪并阻断敌方目标行动"},
+    {"code": "suppression", "dimension": "压制", "meaning": "降低敌方感知、通信、火力或行动能力"},
+    {"code": "denial", "dimension": "拒止", "meaning": "阻止敌方进入特定区域、实施行动或持续作战"},
+    {"code": "reconnaissance", "dimension": "侦察感知", "meaning": "发现、识别、定位目标并感知作战环境"},
+    {"code": "early_warning", "dimension": "预警", "meaning": "提前发现威胁并形成有效响应窗口"},
+    {"code": "electronic_countermeasure", "dimension": "电子对抗", "meaning": "干扰、削弱或影响敌方电子信息系统"},
+    {"code": "deterrence", "dimension": "威慑", "meaning": "通过可信军事能力影响敌方判断、决策与行为"},
+    {"code": "survivability", "dimension": "生存抗毁", "meaning": "提高装备在威胁环境下的生存、恢复与持续作战能力"},
+    {"code": "battlefield_control", "dimension": "战场控制", "meaning": "改变特定区域、空间或时间维度上的作战主动权"},
 )
 
 CORE_STEP_DEPENDENCIES: dict[int, tuple[int, ...]] = {
@@ -381,11 +401,13 @@ def _frontloaded_role_governance(
         return (
             [
                 "每批新增候选完成后立即审查其与已有组合的独立性、互补性和直接装备属性",
-                "只能输出retain、merge或reject；不得生成、改写、补强、补证、估算成熟度、设计验证或重新命名候选",
+                "只能输出retain、merge或reject，并可在冻结前修复机械、同构、空泛或不能识别主装备的名称",
+                "名称修复不得改变装备身份、精简制胜逻辑、成员关系或创造新候选；不得补强、补证、估算成熟度或设计验证",
             ],
             [
                 "审查结论必须明确retain、merge或reject及其组合理由",
-                "S3/S4冻结的名称、装备身份、机理和直接战果不得被S5修改",
+                "S5是名称冻结前最后一道语义编辑门；修复名必须仍指向原候选且能够识别具体武器装备",
+                "S5冻结后，名称、装备身份、机理和直接战果不得被S6修改",
             ],
             ["decisions", "portfolio_order", "portfolio_summary", "stop_reason"],
         )
@@ -1297,8 +1319,18 @@ class WinningSwarmController:
             independence_thesis=_user_facing_text(
                 patch.get("independence_thesis", ""), limit=900
             ),
+            naming_style=_user_facing_text(patch.get("naming_style", ""), limit=120),
+            core_disruptive_difference=_user_facing_text(
+                patch.get("core_disruptive_difference", ""), limit=900
+            ),
             naming_rationale=_user_facing_text(
                 patch.get("naming_rationale", ""), limit=900
+            ),
+            concise_winning_summary=_user_facing_text(
+                patch.get("concise_winning_summary")
+                or patch.get("reference_overview")
+                or "",
+                limit=1800,
             ),
             decisive_advantage_thesis=_user_facing_text(
                 patch.get("decisive_advantage_thesis", ""), limit=900
@@ -2296,20 +2328,24 @@ class WinningSwarmController:
         # concrete weapon identity flows to reference cards, portfolio review
         # and S6 instead of leaking S3/S4 labels or a mechanism sentence.
         title = normalize_weapon_candidate_title(
-            value.get("title") or value.get("name"),
+            value.get("name") or value.get("title"),
             equipment_forms,
         )
         project_function = _user_facing_text(
             value.get("project_function")
             or value.get("target_and_direct_effect")
             or value.get("primary_equipment_identity")
+            or value.get("concise_winning_summary")
             or "",
             limit=700,
         )
         if not project_function and direct_effects:
             project_function = direct_effects[0][:700]
         reference_overview = _user_facing_text(
-            value.get("reference_overview") or value.get("weapon_overview") or "",
+            value.get("concise_winning_summary")
+            or value.get("reference_overview")
+            or value.get("weapon_overview")
+            or "",
             limit=1800,
         )
         frontier_principle = _user_facing_text(
@@ -2366,10 +2402,12 @@ class WinningSwarmController:
                 or "",
                 limit=900,
             ),
-            changed_confrontation_variable=changed_variable,
-            mechanism_chain=mechanism_chain,
-            direct_military_effects=direct_effects,
-            equipment_forms=equipment_forms,
+            changed_confrontation_variable=(
+                changed_variable or reference_overview
+            ),
+            mechanism_chain=(mechanism_chain or [reference_overview]),
+            direct_military_effects=(direct_effects or [reference_overview]),
+            equipment_forms=(equipment_forms or [title]),
             frontier_principle=frontier_principle,
             technology_discontinuity=technology_discontinuity,
             technology_horizon=technology_horizon,
@@ -2395,6 +2433,10 @@ class WinningSwarmController:
             ),
             project_function=project_function,
             reference_overview=reference_overview,
+            naming_style=_user_facing_text(value.get("naming_style", ""), limit=120),
+            core_disruptive_difference=_user_facing_text(
+                value.get("core_disruptive_difference", ""), limit=900
+            ),
             novelty_delta=novelty_delta,
             naming_rationale=_user_facing_text(
                 value.get("naming_rationale", ""), limit=900
@@ -2504,7 +2546,10 @@ class WinningSwarmController:
             merge_target=task.merge_target,
             findings=_text_list(value.get("findings", []), limit=8),
             replacement_title=normalize_weapon_candidate_title(
-                value.get("replacement_title", ""),
+                value.get("replacement_title")
+                or value.get("name")
+                or value.get("title")
+                or "",
                 value.get("equipment_forms", []),
             ),
             mechanism_chain_updates=_user_facing_text_list(
@@ -2540,8 +2585,18 @@ class WinningSwarmController:
             independence_thesis=_user_facing_text(
                 value.get("independence_thesis", ""), limit=900
             ),
+            naming_style=_user_facing_text(value.get("naming_style", ""), limit=120),
+            core_disruptive_difference=_user_facing_text(
+                value.get("core_disruptive_difference", ""), limit=900
+            ),
             naming_rationale=_user_facing_text(
                 value.get("naming_rationale", ""), limit=900
+            ),
+            concise_winning_summary=_user_facing_text(
+                value.get("concise_winning_summary")
+                or value.get("reference_overview")
+                or "",
+                limit=1800,
             ),
             decisive_advantage_thesis=_user_facing_text(
                 value.get("decisive_advantage_thesis", ""), limit=900
@@ -2750,8 +2805,17 @@ class WinningSwarmController:
             independence_thesis=(
                 hypothesis.independence_thesis or contribution.independence_thesis
             ),
+            naming_style=(hypothesis.naming_style or contribution.naming_style),
+            core_disruptive_difference=(
+                hypothesis.core_disruptive_difference
+                or contribution.core_disruptive_difference
+            ),
             naming_rationale=(
                 contribution.naming_rationale or hypothesis.naming_rationale
+            ),
+            reference_overview=(
+                contribution.concise_winning_summary
+                or hypothesis.reference_overview
             ),
             decisive_advantage_thesis=(
                 contribution.decisive_advantage_thesis

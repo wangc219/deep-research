@@ -23,8 +23,8 @@ from equipment_deep_research.orchestration.capability_portrait import (
     parse_capability_portrait_modules,
 )
 from equipment_deep_research.orchestration.winning_swarm import (
-    COMBAT_EQUIPMENT_DIVERGENCE_DIMENSIONS,
     QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION,
+    normalize_weapon_candidate_title,
 )
 
 # Loaded lazily after the coordinator has completed initialization. The
@@ -47,7 +47,8 @@ def _open_s3_exploration_brief(
     but fields that already resemble weapon architectures, enabling solutions
     or project theses strongly anchor an otherwise isolated Codex session.  The
     creative S3/S4 producers therefore receive the Query-derived combat problem
-    and controller blueprint, while S5 may inspect the full brief for review.
+    and controller blueprint. S5 receives only the Query plus each candidate's
+    routed id, name and concise winning summary.
     """
 
     full = _query_combat_equipment_divergence_brief(
@@ -97,22 +98,54 @@ def _open_s3_theme_instruction() -> str:
 
 
 def _creative_s3_candidate_instruction() -> str:
-    """Give S3/S4 a genuinely light creative contract."""
+    """Give S3/S4 a genuinely light two-field creative contract."""
 
     return (
-        "从Query战场矛盾出发，自主创造少量能直接接敌并形成战果的单一武器装备。"
-        "输入中的可选多样性挑战只用于打开不同思路，制胜维度和开放挑战都只是可接受、重构或舍弃的启发；不得按字段、目录、"
-        "热门技术或固定句式拼装答案。先在内部比较不同物理原理、战场存在方式和交换关系，"
-        "并主动检查侦察感知、打击、毁伤、突防、拦截、压制、拒止、生存抗毁及Query特有维度之间"
-        "是否存在值得交叉的新关系；这些维度可全部舍弃，也可混合或自创，不是一会话一维度。"
-        "再一次性闭合装备身份、自然名称、关键机理和直接战果。通信、算法、数据链与保障只能作为"
-        "装备内部条件，不能成为候选主体。不要讨论证据、成熟度、成本产能、验证计划或敌方反适应；"
-        "这些不属于轻型创造会话。"
-        + QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
-        + "构型意象型、原理突破型、装备专名型仅是开放参考，可混合、舍弃或自创第四种命名方式。"
-        "名称应来自整装语义，只抓最有辨识度的创新主线，不用维度词机械拼名。"
-        "只输出schema规定的严格JSON，不输出推理过程。"
+        "从Query的核心战场矛盾自由创造具体武器装备，只保留常规升级无法吸收且能直接形成战果的方向。"
+        "先在形态物质、技术原理、任务能力、战争时空与体系经济逻辑、专名隐喻中判断哪一类最能解释核心创新；"
+        "不要为覆盖类型而组合，"
+        "命名前先判断装备真正不同于传统装备之处，并用三问选择主导表达：‘它长什么样’对应A构型、G材料介质、"
+        "H环境融合；‘它凭什么做到’对应B原理突破、F作战机制；‘它能干什么’对应D使命任务、E能力意象、I动作行为。"
+        "形态类可参考蜂巢、扑翼、晶格、液态金属、冰下或海气界面等意象；原理类可参考超材料、相变、等离子、"
+        "自组织、分布式或涌现；任务类可参考断链、破障、裂域、锁穹、游猎、潜跃、蛰伏或扑袭。"
+        "这些只用于理解命名范式，不是词库；必须从当前Query的整装语义创造名称。"
+        "当核心意象清晰时，可采用‘可解释代号＋具体装备类别’形成正式装备代号感，也可直接使用构型、原理或任务描述名。"
+        "不要默认两字意象加弹/雷/器/系统，不要拼接Query词、维度词和动作词，也不要复刻统一长度与节奏。"
+        "每个候选只输出name和concise_winning_summary。name是自然完整的装备名称；"
+        "concise_winning_summary用一句话同时说清它是什么具体主装备、凭什么改变当前Query的"
+        "制胜关系、对什么对象形成什么直接战果。不要输出其他字段、备选名或推理过程。"
     )
+
+
+def _bounded_semantic_review_window(
+    candidates: Sequence[WinningHypothesis],
+    *,
+    changed_hypothesis_ids: set[str] | None = None,
+    maximum_candidates: int = 14,
+) -> tuple[list[WinningHypothesis], list[list[str]]]:
+    """Select a bounded semantic-review slice without mutating the ledger."""
+
+    if len(candidates) > maximum_candidates:
+        review_candidates = sorted(
+            candidates,
+            key=lambda item: (
+                item.hypothesis_id not in (changed_hypothesis_ids or set()),
+                -item.score,
+                -len(item.evidence_ids),
+                item.hypothesis_id,
+            ),
+        )[:maximum_candidates]
+    else:
+        review_candidates = list(candidates)
+    pair_ids = [
+        [left.hypothesis_id, right.hypothesis_id]
+        for index, left in enumerate(review_candidates)
+        for right in review_candidates[index + 1 :]
+        if not changed_hypothesis_ids
+        or left.hypothesis_id in changed_hypothesis_ids
+        or right.hypothesis_id in changed_hypothesis_ids
+    ]
+    return review_candidates, pair_ids
 
 
 def _minimal_s6_card_handoff(brief: Mapping[str, Any]) -> dict[str, Any]:
@@ -183,23 +216,12 @@ def _dynamic_s6_card_input(
 
 
 def _minimal_portfolio_candidate_handoff(item: Any) -> dict[str, Any]:
-    """Expose only the military identity axes needed by incremental S5."""
+    """Expose only the frozen-boundary fields incremental S5 may inspect."""
 
     return {
         "hypothesis_id": str(item.hypothesis_id),
-        "title": str(item.title),
-        "equipment_form": list(item.equipment_forms[:2]),
-        "target_and_direct_effect": (
-            str(item.project_function)
-            or "；".join(str(value) for value in item.direct_military_effects[:2])
-        ),
-        "changed_confrontation_variable": str(
-            item.changed_confrontation_variable
-        ),
-        "core_mechanism": list(item.mechanism_chain[:4]),
-        "direct_military_results": list(item.direct_military_effects[:3]),
-        "unique_operational_role": str(item.independence_thesis),
-        "disruptive_shift": str(item.disruptive_shift),
+        "name": str(item.title),
+        "concise_winning_summary": str(item.reference_overview),
     }
 
 
@@ -362,18 +384,8 @@ async def analyze_winning_subagents(
     raw_military_handoff = shared.get("military_value_handoff", {})
     military_value_claims = [
         {
-            "claim_id": str(item.get("claim_id", "")),
-            "claim_type": str(item.get("claim_type", "inference")),
-            "source_agent_id": str(item.get("source_agent_id", "")),
-            "packet_id": str(item.get("packet_id", "")),
             "military_effects": list(item.get("military_effects", []))[:5],
             "mechanism": str(item.get("mechanism", ""))[:460],
-            "mission_condition": str(item.get("mission_condition", ""))[:180],
-            "failure_boundary": str(item.get("failure_boundary", ""))[:220],
-            "evidence_ids": list(item.get("evidence_ids", []))[:3],
-            "source_urls": list(item.get("source_urls", []))[:2],
-            "confidence": item.get("confidence"),
-            "downstream_steps": list(item.get("downstream_steps", []))[:5],
         }
         for item in (
             raw_military_handoff.get("claims", [])
@@ -440,9 +452,15 @@ async def analyze_winning_subagents(
         rows = [
             item
             for item in military_value_claims
-            if targets.intersection(map(str, item.get("downstream_steps", [])))
+            if not item.get("downstream_steps")
+            or targets.intersection(map(str, item.get("downstream_steps", [])))
         ]
         return rows[: min(8, max(4, len(indices) * 3))]
+
+    def creative_military_value_handoff() -> dict[str, Any]:
+        """Expose only a tiny military-value hint to creative S3/S4 Agents."""
+
+        return {"claims": [dict(item) for item in military_value_claims[:2]]}
 
     def military_packet_refs_for_claims(
         claims: Sequence[Mapping[str, Any]],
@@ -452,6 +470,20 @@ async def analyze_winning_subagents(
             for item in claims
             if str(item.get("packet_id", ""))
         }
+        # The minimal military handoff intentionally omits packet routing
+        # metadata. In that mode, retain the independently supplied packet
+        # index rather than dropping all baseline context.
+        if not packet_ids:
+            return [
+                {
+                    "packet_id": item["packet_id"],
+                    "agent_id": item["agent_id"],
+                    "evidence_ids": item.get("evidence_ids", [])[:3],
+                    "confidence": item.get("confidence"),
+                }
+                for item in packet_index
+                if item.get("packet_id")
+            ]
         return [
             {
                 "packet_id": item["packet_id"],
@@ -603,16 +635,30 @@ async def analyze_winning_subagents(
         allowed_agents = packet_agents_by_step[index]
         case_projection = primary_branch_for_packets == "C" and index in {3, 4, 5, 6}
         step_claims = (
-            military_claims_for_steps([index]) if optimized_v2 and index <= 5 else []
+            list(creative_military_value_handoff()["claims"])
+            if optimized_v2 and index in {3, 4}
+            else (
+                military_claims_for_steps([index])
+                if optimized_v2 and index <= 5
+                else []
+            )
         )
         if optimized_v2:
-            evidence_rows = evidence_for_claims(
-                step_claims,
-                prior_step_outputs=prior_step_outputs,
-                limit=12 if case_projection else (10 if index in {1, 2} else 8),
+            evidence_rows = (
+                []
+                if index in {3, 4}
+                else evidence_for_claims(
+                    step_claims,
+                    prior_step_outputs=prior_step_outputs,
+                    limit=12 if case_projection else (10 if index in {1, 2} else 8),
+                )
             )
             selected_packets: list[Mapping[str, Any]] = []
-            step_packet_index = military_packet_refs_for_claims(step_claims)
+            step_packet_index = (
+                []
+                if index in {3, 4}
+                else military_packet_refs_for_claims(step_claims)
+            )
         else:
             evidence_rows = _prioritized_evidence_index(
                 shared["evidence_index"],
@@ -664,13 +710,18 @@ async def analyze_winning_subagents(
                     else (6 if index in {1, 2} else 4),
                 )
             ),
+            "military_value_handoff": (
+                {"claims": step_claims}
+                if optimized_v2 and index in {3, 4} and step_claims
+                else {}
+            ),
             "secondary_cross_agent_constraints": (
                 _compact_prompt_value(
                     step_claims,
                     max_string_chars=460,
                     max_list_items=6,
                 )
-                if optimized_v2 and index <= 5
+                if optimized_v2 and index in {1, 2, 5}
                 else []
             ),
             "branch_products": (
@@ -681,7 +732,7 @@ async def analyze_winning_subagents(
                 )
                 if optimized_v2
                 and primary_branch_for_packets == "C"
-                and index in {3, 4, 5}
+                and index == 5
                 else {}
             ),
             "evidence_index": _compact_prompt_value(
@@ -1095,6 +1146,10 @@ async def analyze_winning_subagents(
             "创新生成结果并完成必要语义收敛，须体现Query专属主装备、颠覆制胜机理或差异化作战作用；"
             "进入S6后名称、主装备身份和候选成员关系均不可修改。若名称仍空泛、重复、串卡或无法对应"
             "单一装备对象，必须在S5内合并、判退或修正，禁止把命名工作留给S6。"
+            "S5复核命名时按同一三问判断主导特征：形态与物质（A/G/H）、技术与原理（B/F）、任务与能力（D/E/I）。"
+            "名称可采用具有正式装备代号感的‘可解释代号＋具体装备类别’，也可采用自然的构型、原理或任务描述名；"
+            "不得把断链、自主、智能、协同等字段词逐项堆到弹、舱、体、器或系统之前。若同批名称只是替换两字前缀、"
+            "共享同一底名和句式，必须结合各装备真实的构型、作用原理与战果重新编辑或合并，不能冻结进入S6。"
             "无人、低空、远程精打和精确打击仅是可选重点镜头，不是固定装备桶或覆盖配额。每类写明与query契合的"
             "任务对象、作战阶段、现役/类比基线、独立差距和候选装备对象；若证据不足必须显式标记"
             "ready=false和原因，不得用弹药补给、导弹保障、运输、维修等支援装备冒充武器方向。"
@@ -1801,6 +1856,18 @@ async def analyze_winning_subagents(
         exact_unique, exact_merges = swarm_controller.deduplicate_hypotheses(candidates)
         if len(exact_unique) < 2 or host.provider_kind != "codex_cli":
             return exact_unique, exact_merges
+        # Semantic comparison is quadratic in the number of candidates and
+        # the isolated Codex CLI has a finite request window.  Keep the full
+        # ledger intact, but bound the review slice so large incremental
+        # ledgers never create a request that predictably times out.  The S5
+        # portfolio reviewer still sees the complete compact ledger later.
+        semantic_review_candidates = 14
+        semantic_review_pairs = 91  # C(14, 2)
+        review_unique, pair_ids = _bounded_semantic_review_window(
+            exact_unique,
+            changed_hypothesis_ids=changed_hypothesis_ids,
+            maximum_candidates=semantic_review_candidates,
+        )
         instance_id = (
             "winning-semantic-clusterer-"
             + sha256(f"{shared.get('run_id', '')}:{scope_id}".encode()).hexdigest()[:16]
@@ -1838,17 +1905,21 @@ async def analyze_winning_subagents(
                 "core_mechanism": list(item.mechanism_chain),
                 "direct_military_results": list(item.direct_military_effects),
             }
-            for item in exact_unique
-        ]
-        pair_ids = [
-            [left.hypothesis_id, right.hypothesis_id]
-            for index, left in enumerate(exact_unique)
-            for right in exact_unique[index + 1 :]
-            if not changed_hypothesis_ids
-            or left.hypothesis_id in changed_hypothesis_ids
-            or right.hypothesis_id in changed_hypothesis_ids
+            for item in review_unique
         ]
         if not pair_ids:
+            return exact_unique, exact_merges
+        if len(pair_ids) > semantic_review_pairs:
+            emit_swarm_event(
+                "winning_semantic_clustering_bounded",
+                actor=instance_id,
+                candidate_count=len(exact_unique),
+                review_candidate_count=len(review_unique),
+                pair_count=len(pair_ids),
+                max_pair_count=semantic_review_pairs,
+                scope_id=scope_id,
+                reason="bounded_semantic_review_window",
+            )
             return exact_unique, exact_merges
         output_schema = {
             "pairwise_comparisons": [
@@ -2141,7 +2212,14 @@ async def analyze_winning_subagents(
                 schema: dict[str, Any] = {
                     "hypotheses": [
                         {
+                            "name": "基于完整整装语义自然创作的武器装备名称；不默认两字代号加装备尾词",
                             "title": "string",
+                            "naming_style": (
+                                "A/G/H形态物质|B/F技术原理|D/E/I任务能力|"
+                                "J/K/M/N战争改变|C/L/O专名隐喻代际|cross_type；"
+                                "仅说明名称形成后的主导理由，不是模板"
+                            ),
+                            "core_disruptive_difference": "装备真正不同于传统方案的唯一核心颠覆性",
                             "naming_rationale": "holistic editorial reason this is a natural and memorable name for the complete weapon; do not justify it word by word or map it to every field",
                             "decisive_advantage_thesis": "why this equipment can create a battle-winning advantage rather than merely improve a metric",
                             "cross_query_distinction": "what must change if the query's target, phase or threat changes; proves this is not a reusable template",
@@ -2152,6 +2230,7 @@ async def analyze_winning_subagents(
                             "equipment_forms": ["specific equipment category/form"],
                             "project_function": "who uses this equipment under what constraints to do what and achieve what mission result",
                             "reference_overview": "显示在装备名下方的一句精简制胜说明；通常35-80个中文字符但不是硬门，聚焦独特战场条件、颠覆关系与直接战果，不复述标题、不套固定句式",
+                            "concise_winning_summary": "与reference_overview同义的精简制胜概述；优先输出此字段，聚焦Query专属矛盾、改变的对抗关系和直接战果",
                             "system_interfaces": [
                                 "concrete platform, payload, C2, fire-control or support interface"
                             ],
@@ -2181,6 +2260,11 @@ async def analyze_winning_subagents(
                 schema = {
                     "hypothesis_id": "exact declared hypothesis_id",
                     "merge_target": "exact declared merge_target",
+                    "name": (
+                        "可选的完整整装武器名称；若提供，须由装备核心语义自然形成，"
+                        "不得默认两字意象加装备尾词"
+                    ),
+                    "replacement_title": "与name同义的兼容字段；不得机械换前缀或拼接字段",
                     "findings": ["incremental finding"],
                     "mechanism_chain_updates": ["string"],
                     "direct_military_effects": ["string"],
@@ -2190,7 +2274,14 @@ async def analyze_winning_subagents(
                         "concrete platform, payload, C2, fire-control or support interface"
                     ],
                     "novelty_delta": "string",
+                    "naming_style": (
+                        "A/G/H形态物质|B/F技术原理|D/E/I任务能力|"
+                        "J/K/M/N战争改变|C/L/O专名隐喻代际|cross_type；"
+                        "仅说明已形成名称的主导理由，不是模板"
+                    ),
+                    "core_disruptive_difference": "string",
                     "naming_rationale": "repair the weapon naming thesis before convergence",
+                    "concise_winning_summary": "repair the one-sentence Query-specific winning summary under the frozen weapon name",
                     "decisive_advantage_thesis": "repair the query-specific battle-winning advantage",
                     "cross_query_distinction": "repair the proof that this is not a reusable cross-query template",
                     "evidence_ids": ["exact evidence_id or packet_id"],
@@ -2863,6 +2954,35 @@ async def analyze_winning_subagents(
             distinct_seeds: list[dict[str, Any]] = []
             seen_spines: set[tuple[str, str, str]] = set()
             for seed in raw_seeds:
+                # S1/S2 intentionally use a five-field lightweight schema.
+                # Keep the pre-generation transport tolerant of both that
+                # contract and the historical verbose seed names.
+                seed_mechanism = str(
+                    seed.get("mechanism_thesis")
+                    or seed.get("breakpoint")
+                    or seed.get("combat_problem", "")
+                ).strip()
+                seed_variable = str(
+                    seed.get("changed_confrontation_variable")
+                    or seed.get("changed_variable")
+                    or seed.get("enemy_advantage", "")
+                ).strip()
+                seed_result = str(
+                    seed.get("direct_military_result")
+                    or seed.get("direct_effect", "")
+                ).strip()
+                # Normalize aliases once so all similarity/fallback logic sees
+                # the same semantic spine regardless of which producer schema
+                # emitted it.
+                seed = {
+                    **seed,
+                    "mechanism_thesis": seed_mechanism,
+                    "changed_confrontation_variable": seed_variable,
+                    "direct_military_result": seed_result,
+                    "target_and_phase": str(
+                        seed.get("target_and_phase") or seed.get("combat_problem", "")
+                    ).strip(),
+                }
                 spine = tuple(
                     str(seed.get(key, "")).strip().casefold()
                     for key in (
@@ -3034,7 +3154,6 @@ async def analyze_winning_subagents(
             angle_selection_audit: dict[str, Any] = {}
             angle_capacity = min(
                 len(producers),
-                graph.maximum_concurrency,
                 int(
                     swarm_controller.policy.get(
                         "s3_winning_thesis_capacity", len(producers)
@@ -3049,130 +3168,36 @@ async def analyze_winning_subagents(
                 try:
                     selection_text = await host._run_core_json(
                         "winning_swarm_independent_portfolio_reviewer",
-                        "你是候选生成前的Query多样性侦察员，不是装备语义主控，也不裁决最终答案。"
-                        "此时尚未产生任何装备候选。只从完整Query提取不可违反的目标、威胁、阶段、地域、"
-                        "升级边界和反模板边界，并列出若干尚待S3/S4独立探索的开放断点；不要指定唯一物理创新、"
-                        "唯一战场存在方式或唯一制胜逻辑。"
-                        "combat_dimensions只是可选作战效应视角，不是固定分类、十二条生产线、数量配额或质量门。"
-                        "根据Query只激活真正相关且能导向不同装备思考空间的维度；可以不使用多数维度，也可提出"
-                        "Query特有的OTHER维度。replacement_angles只是一组可选多样性提示，不与Agent一一绑定；"
-                        "后续每个Agent都可跨多个提示比较、组合、重构、全部舍弃或提出自己的方向。不得预先给出装备名称、装备家族、技术套餐、"
-                        "成品构型或必须继承的答案。"
-                        "S3和S4职责相同，都是创新装备生成者。只决定开放探索提示池和合理Agent容量，不给每个会话"
-                        "指定唯一维度、答案方向或排他责任。maximum_active只是并发容量上限，不要求填满；同一维度只有在Query"
-                        "存在两个不可互相吸收的制胜问题时才可重复。angle_candidates只用于理解战场问题，不能"
-                        "继承其装备形态、技术路线、工作名或抽象短语。只输出JSON。",
+                        "你是候选生成前的轻量开放角度提示器。只根据Query和少量上游战场种子，"
+                        "提出可供S3/S4自由接受、重构或舍弃的开放制胜关系；不要命名装备、指定技术路线、"
+                        "分配固定维度或裁决候选。只输出少量简短提示，模型失败时控制器会自行继续生成。",
                         {
                             "query": shared.get("topic", ""),
-                            "problem_boundary": _open_s3_exploration_brief(
-                                str(shared.get("topic", "")),
-                                structured_brief,
-                            ),
-                            "angle_candidates": reviewer_observations,
-                            "combat_dimensions": list(
-                                COMBAT_EQUIPMENT_DIVERGENCE_DIMENSIONS
-                            ),
-                            "source_observation_rule": (
-                                "仅用于发现遗漏和相邻重复；不得原样选为S3命题，"
-                                "不得继承其中的装备形态、技术路线或命名语法"
-                            ),
-                            "maximum_active": angle_capacity,
-                            "maximum_reserve": 0,
+                            "open_angle_seeds": [
+                                {
+                                    "battlefield_relationship": str(
+                                        item.get("changed_confrontation_variable", "")
+                                    ).strip(),
+                                    "desired_direct_result": str(
+                                        item.get("direct_military_result", "")
+                                    ).strip(),
+                                }
+                                for item in reviewer_observations[:8]
+                            ],
                         },
                         {
-                            "query_equipment_blueprint": {
-                                "query_semantic_constraints": [
-                                    "target, threat, phase, geography or escalation constraints that all creators must respect"
-                                ],
-                                "unresolved_battlefield_conflicts": [
-                                    "open Query-specific conflict to be independently interpreted by creators"
-                                ],
-                                "plausible_breakpoints": [
-                                    "non-authoritative breakpoint worth challenging, without a weapon answer"
-                                ],
-                                "anti_template_boundary": "what would make a candidate generic or transferable to another Query",
-                                "authority": "soft_challenge_only",
-                            },
-                            "active_angle_ids": ["exact angle_id"],
-                            "reserve_angle_ids": ["exact angle_id"],
-                            "replacement_angles": [
+                            "open_hints": [
                                 {
-                                    "activation": "active",
-                                    "combat_dimension": "one Query-relevant dimension or OTHER:<natural label>",
-                                    "dimension_winning_logic": "how this dimension can overturn the opponent relationship under the Query blueprint without choosing a weapon answer",
-                                    "target_and_phase": "Query-specific object and stage",
-                                    "mechanism_thesis": "open exploration question about an independent winning relationship, not its answer",
-                                    "changed_confrontation_variable": "what relationship the S3 session may overturn",
-                                    "direct_military_result": "direct battlefield result sought",
-                                    "novelty_search_question": "what non-incremental opportunity should be explored without preselecting a technology",
-                                    "exclusion_boundary": "which adjacent exploration problems this Agent must not duplicate",
-                                    "competing_explanation": "credible alternative explanation",
-                                    "adversary_adaptation": "likely counter-adaptation",
-                                    "failure_boundary": "falsifiable boundary",
+                                    "battlefield_relationship": "open Query-specific relationship to overturn",
+                                    "desired_direct_result": "direct battlefield result sought",
                                 }
                             ],
-                            "selection_reasons": [
-                                {
-                                    "angle_id": "exact angle_id or replacement index",
-                                    "independent_axis": "materially different winning relationship",
-                                    "disruptive_leverage": "why this changes the contest",
-                                    "weapon_identity_implication": "why the thesis forces a distinct direct-combat weapon architecture",
-                                    "nearest_conventional_implementation": "the strongest ordinary implementation that could absorb this thesis",
-                                    "irreducible_delta": "the single mechanism that conventional implementation cannot absorb",
-                                }
-                            ],
-                            "rejected_angle_groups": [
-                                {
-                                    "angle_ids": ["exact angle_id"],
-                                    "reason": "duplicate, incremental, generic, or weak Query causality",
-                                }
-                            ],
-                            "technology_discontinuity_audit": {
-                                "frontier_angles_considered": [
-                                    "exact frontier-angle id"
-                                ],
-                                "selected_frontier_angles": ["exact frontier-angle id"],
-                                "rejected_frontier_reasons": [
-                                    "query causality, equipment implication or feasibility reason"
-                                ],
-                                "process_only_portfolio_avoided": "boolean",
-                            },
                             "stop_reason": "string",
                         },
-                        min(1800, 760 + len(reviewer_observations) * 55),
+                        min(900, 420 + len(reviewer_observations) * 25),
                         phase="winning_pre_generation_active_angle_selection",
                     )
                     selection = _parse_json_object(selection_text)
-                    active_selection_succeeded = True
-                    raw_blueprint = selection.get("query_equipment_blueprint", {})
-                    if isinstance(raw_blueprint, Mapping):
-                        query_equipment_blueprint = {
-                            "query_semantic_constraints": [
-                                str(value).strip()
-                                for value in raw_blueprint.get(
-                                    "query_semantic_constraints", []
-                                )
-                                if str(value).strip()
-                            ][:8],
-                            "unresolved_battlefield_conflicts": [
-                                str(value).strip()
-                                for value in raw_blueprint.get(
-                                    "unresolved_battlefield_conflicts", []
-                                )
-                                if str(value).strip()
-                            ][:8],
-                            "plausible_breakpoints": [
-                                str(value).strip()
-                                for value in raw_blueprint.get(
-                                    "plausible_breakpoints", []
-                                )
-                                if str(value).strip()
-                            ][:8],
-                            "anti_template_boundary": str(
-                                raw_blueprint.get("anti_template_boundary", "")
-                            ).strip(),
-                            "authority": "soft_challenge_only",
-                        }
                     valid_ids = {str(item["angle_id"]) for item in angle_candidates}
                     active_angle_ids = list(
                         dict.fromkeys(
@@ -3181,6 +3206,39 @@ async def analyze_winning_subagents(
                             if str(item) in valid_ids
                         )
                     )[:angle_capacity]
+                    # New lightweight selector contract returns open_hints;
+                    # retain compatibility with the historical replacement
+                    # field while normalizing both to the same internal shape.
+                    lightweight_hints = selection.get("open_hints", [])
+                    if isinstance(lightweight_hints, list):
+                        for index, item in enumerate(lightweight_hints, start=1):
+                            if not isinstance(item, Mapping):
+                                continue
+                            relationship = str(
+                                item.get("battlefield_relationship", "")
+                            ).strip()
+                            result = str(item.get("desired_direct_result", "")).strip()
+                            if not relationship and not result:
+                                continue
+                            replacement_angles.append(
+                                {
+                                    "angle_id": f"reviewer-hint-{index}",
+                                    "source": "pre_generation_reviewer_exploration_problem",
+                                    "project_name": "",
+                                    "equipment_form_hypothesis": "",
+                                    "activation": "active",
+                                    "target_and_phase": "",
+                                    "mechanism_thesis": relationship,
+                                    "changed_confrontation_variable": relationship,
+                                    "direct_military_result": result,
+                                    "novelty_search_question": "",
+                                    "exclusion_boundary": "",
+                                    "competing_explanation": "",
+                                    "adversary_adaptation": "",
+                                    "failure_boundary": "",
+                                }
+                            )
+                        replacement_angles = replacement_angles[:angle_capacity]
                     reserve_angle_ids = list(
                         dict.fromkeys(
                             str(item)
@@ -3224,16 +3282,37 @@ async def analyze_winning_subagents(
                         and str(item.get("changed_confrontation_variable", "")).strip()
                         and str(item.get("direct_military_result", "")).strip()
                     ]
-                    replacement_angles = [
+                    legacy_replacement_angles = [
                         item
                         for item in normalized_replacements
                         if item.get("activation") != "reserve"
                     ][:angle_capacity]
+                    replacement_angles.extend(legacy_replacement_angles)
+                    replacement_angles = replacement_angles[:angle_capacity]
                     replacement_reserve_angles = [
                         item
                         for item in normalized_replacements
                         if item.get("activation") == "reserve"
                     ][:reserve_target]
+                    active_selection_succeeded = bool(
+                        active_angle_ids or replacement_angles
+                    )
+                    if not active_selection_succeeded:
+                        emit_swarm_event(
+                            "winning_pre_generation_active_angle_selection_fallback",
+                            actor="winning_swarm_controller",
+                            graph_id=graph.graph_id,
+                            failure_type="EmptySelectorResult",
+                            error_message=(
+                                "lightweight selector returned no usable open hints; "
+                                "continuing from S1/S2 seeds"
+                            ),
+                            fallback_source=(
+                                "s1_s2_reasoning_seeds"
+                                if angle_candidates
+                                else "query_only"
+                            ),
+                        )
                     angle_selection_audit = {
                         "query_equipment_blueprint": query_equipment_blueprint,
                         "selection_reasons": selection.get("selection_reasons", []),
@@ -3266,6 +3345,11 @@ async def analyze_winning_subagents(
                         graph_id=graph.graph_id,
                         failure_type=type(exc).__name__,
                         error_message=str(exc)[:300],
+                        fallback_source=(
+                            "s1_s2_reasoning_seeds"
+                            if angle_candidates
+                            else "query_only"
+                        ),
                     )
 
             angle_by_id = {str(item["angle_id"]): item for item in angle_candidates}
@@ -3280,10 +3364,9 @@ async def analyze_winning_subagents(
                 if len(selected_active) >= angle_capacity:
                     break
                 selected_active.append(dict(replacement))
-            # Only transport/non-Codex fallback may fill the bounded capacity.
-            # A successful semantic reviewer is allowed to activate fewer
-            # theses; that decision must not be overwritten by local text
-            # similarity or a desire to keep every S3 slot busy.
+            # The selector only supplies optional provocations. It never owns
+            # S3/S4 capacity: fill the remaining bounded slots from distinct
+            # upstream Query seeds even when the selector succeeded.
             remaining_angles = [
                 dict(item)
                 for item in angle_candidates
@@ -3291,8 +3374,7 @@ async def analyze_winning_subagents(
                 not in {str(selected["angle_id"]) for selected in selected_active}
             ]
             while (
-                not active_selection_succeeded
-                and remaining_angles
+                remaining_angles
                 and len(selected_active) < angle_capacity
             ):
                 occupied_texts = [angle_semantic_text(item) for item in selected_active]
@@ -3311,6 +3393,28 @@ async def analyze_winning_subagents(
                 )
                 remaining_angles.remove(selected)
                 selected_active.append(selected)
+            # A missing/failed selector and empty upstream seed pool must still
+            # leave enough independent creators alive to reason from the Query.
+            # Alternate S3/S4 producer ordering means the first two slots cover
+            # both creative nodes in the standard dynamic graph.
+            minimum_query_only_slots = min(angle_capacity, 2)
+            while len(selected_active) < minimum_query_only_slots:
+                ordinal = len(selected_active) + 1
+                selected_active.append(
+                    {
+                        "angle_id": f"query-only-angle-{ordinal}",
+                        "source": "query_only_open_exploration",
+                        "project_name": "",
+                        "equipment_form_hypothesis": "",
+                        "target_and_phase": "",
+                        "mechanism_thesis": "",
+                        "changed_confrontation_variable": "",
+                        "direct_military_result": "",
+                        "competing_explanation": "",
+                        "adversary_adaptation": "",
+                        "failure_boundary": "",
+                    }
+                )
             selected_active_ids = {str(item["angle_id"]) for item in selected_active}
             selected_reserves = [
                 dict(angle_by_id[angle_id])
@@ -3646,6 +3750,23 @@ async def analyze_winning_subagents(
             }
             s3_active_instances_materialized = True
             if not inactive_ids:
+                seeds = {key: list(value) for key, value in graph.s_node_seeds.items()}
+                emit_swarm_event(
+                    "winning_s3_active_agents_materialized",
+                    actor="winning_swarm_controller",
+                    graph_id=graph.graph_id,
+                    active_instance_ids=[
+                        *seeds.get("S3", []),
+                        *seeds.get("S4", []),
+                    ],
+                    active_instance_count=(
+                        len(seeds.get("S3", [])) + len(seeds.get("S4", []))
+                    ),
+                    unused_capacity_count=0,
+                    rule=(
+                        "开放角度选择器仅提供提示；全部有界S3/S4创作容量已物化"
+                    ),
+                )
                 return
 
             for instance_id in inactive_ids:
@@ -4033,6 +4154,12 @@ async def analyze_winning_subagents(
                     "run_id": shared.get("run_id", ""),
                     "agent_instance_id": instance.instance_id,
                     "mission_node": instance.mission_node,
+                    # run_core_json adds a governed input wrapper around this
+                    # payload.  Keep the dynamic profile marker in the same
+                    # business payload as specialist_task so the runtime
+                    # contract resolver can distinguish a reassigned S3/S4
+                    # node from a static catalog boundary crossing.
+                    "execution_profile_id": shared.get("execution_profile_id", ""),
                     "specialist_task": to_plain(task),
                     "role_contract": _dynamic_role_contract_handoff(contract, task),
                     "query": str(shared.get("topic", "")),
@@ -4049,6 +4176,13 @@ async def analyze_winning_subagents(
                     "open_challenge": (
                         "提出一种会改变交战关系、且不能被普通流程优化替代的直接作战装备；"
                         "若建议维度不成立，请自行换一个更强方向。"
+                    ),
+                    "portfolio_creative_diversity_goal": (
+                        "同一Query允许产生多种真正不同的装备和自然命名风格。先由每件装备的核心颠覆性"
+                        "决定应突出形态物质、技术原理、任务能力、战争逻辑或专名隐喻；这是跨候选的"
+                        "开放多样性目标，不是类型配额，不得仅为换命名风格复制同一装备。不同候选可有"
+                        "完全不同的核心意象、名称长度、语法节奏与装备身份表达；若名称只像替换了同一"
+                        "底名的前缀，应回到主装备、作用对象和制胜关系重新创作，而不是事后换词。"
                     ),
                     "isolation_contract": {
                         "raw_other_agent_sessions_visible": False,
@@ -4070,8 +4204,10 @@ async def analyze_winning_subagents(
                         "handoff_schema": "incremental_portfolio_identity_v1",
                     },
                     "review_contract": (
-                        "只判定组合成员的独立性、互补性和直接装备属性；不生成、改写、"
-                        "补证、验证、估算成熟度或重新命名候选。"
+                        "只判定组合成员的独立性、互补性和直接装备属性；S5冻结前允许修复机械、同构、"
+                        "空泛或无法识别具体主装备的名称，但不得改变装备身份、concise_winning_summary、"
+                        "成员关系或创造新候选；不补证、验证、估算成熟度或改写其他候选字段。S5冻结后"
+                        "S6不得再修改名称。"
                     ),
                     "existing_portfolio": [
                         _minimal_portfolio_candidate_handoff(item)
@@ -4084,7 +4220,20 @@ async def analyze_winning_subagents(
                         "may_recruit_child_agent": False,
                     },
                 }
-            if instance.mission_node in {"S1", "S2", "S3", "S4"}:
+            if instance.mission_node in {"S3", "S4"}:
+                # Creative S3/S4 never consume claim-bundle audit context.
+                # This also covers reallocated/repair instances that carry a
+                # hypothesis_id and therefore do not take the fresh-creator
+                # overwrite path above.
+                common_input.pop("evidence_index", None)
+                common_input.pop("valid_reference_ids", None)
+                common_input.pop("upstream_reasoning_seeds", None)
+                creative_handoff = creative_military_value_handoff()
+                if creative_handoff["claims"]:
+                    common_input["military_value_handoff"] = creative_handoff
+                else:
+                    common_input.pop("military_value_handoff", None)
+            if instance.mission_node in {"S1", "S2"}:
                 common_input["equipment_portfolio_contract"] = {
                     "selection_rule": (
                         "候选由本次Codex语义推演产生；数量、装备族、技术方向、创新类别和名称格式均不预设"
@@ -4120,32 +4269,31 @@ async def analyze_winning_subagents(
                 dimension_assignment = dict(
                     winning_angle_assignments.get(instance.instance_id, {})
                 )
-                diversity_pool: list[dict[str, str]] = []
-                own_id = str(dimension_assignment.get("assignment_id", ""))
-                for item in [
-                    dimension_assignment,
-                    *[
-                        candidate
-                        for candidate in winning_angle_assignments.values()
-                        if str(candidate.get("assignment_id", "")) != own_id
-                    ],
-                ]:
-                    compact_item = {
-                        "optional_lens": str(item.get("combat_dimension", "")).strip(),
-                        "open_relationship": str(
-                            item.get("changed_confrontation_variable", "")
+                creative_handoff = creative_military_value_handoff()
+                common_input = {
+                    "execution_profile_id": shared.get("execution_profile_id", ""),
+                    "specialist_task": {
+                        "archetype": task.archetype,
+                        "merge_target": task.merge_target,
+                        "allow_child_spawn": False,
+                    },
+                    "query": str(shared.get("topic", "")),
+                    "open_exploration_hint": {
+                        "battlefield_relationship": str(
+                            dimension_assignment.get(
+                                "changed_confrontation_variable", ""
+                            )
                         ).strip(),
-                        "possible_result": str(
-                            item.get("direct_military_result", "")
+                        "desired_direct_result": str(
+                            dimension_assignment.get("direct_military_result", "")
                         ).strip(),
-                    }
-                    if any(compact_item.values()):
-                        diversity_pool.append(compact_item)
-                common_input["optional_diversity_pool"] = diversity_pool[:6]
-                common_input["diversity_pool_authority"] = (
-                    "advisory_only；先独立理解Query，可跨项组合、重构、全部舍弃或自创方向；"
-                    "不得将任一项视为本Agent的固定维度、答案或排他分工"
-                )
+                    },
+                    **(
+                        {"military_value_handoff": creative_handoff}
+                        if creative_handoff["claims"]
+                        else {}
+                    ),
+                }
             if instance.mission_node in {"S1", "S2"} and not instance.hypothesis_id:
                 output_schema = {
                     "reasoning_seeds": [
@@ -4177,35 +4325,15 @@ async def analyze_winning_subagents(
                 output_schema: dict[str, Any] = {
                     "hypotheses": [
                         {
-                            "title": "string",
-                            "equipment_form": "具体主装备形态",
-                            "primary_equipment_identity": "唯一主装备及平台/弹体边界",
-                            "target_and_direct_effect": "目标、阶段与直接战果",
-                            "unique_operational_role": "不可被其他候选替代的作战角色",
-                            "changed_confrontation_variable": "改变的战场关系",
-                            "frontier_principle": "装备本体采用的关键新原理",
-                            "disruptive_shift": "由此形成的新制胜关系",
-                            "mechanism_chain": ["string"],
-                            "direct_military_effects": ["string"],
+                            "name": "自然、完整、可识别主装备身份的武器装备名称",
+                            "concise_winning_summary": (
+                                "一句制胜逻辑描述：同时说清具体主装备、核心颠覆机理、作用对象"
+                                "与直接战果，不复述名称"
+                            ),
                         }
                     ],
-                    "stop_reason": "string",
                 }
-                # The schema and governed inputs retain all audit constraints.
-                # Use a compact creative brief for the actual Codex call so the
-                # model reasons about the weapon instead of imitating a rule list.
                 instruction = _creative_s3_candidate_instruction()
-                instruction += (
-                    "只输出1至2张最小候选卡。先从Query矛盾自由推演，并把optional_diversity_pool"
-                    "仅作为可全部舍弃的反事实启发，不按其中任一维度填题。"
-                    "再一次性完成自然命名与完整装备身份；S3与S4权限相同。每卡只写装备形态、"
-                    "目标与直接战果、独特作战角色、改变变量、前沿原理、颠覆关系和短机理链。"
-                    "禁止输出证据ID、证据边界、TRL、成本、产能、验证计划、反适应、失败边界、"
-                    "工程瓶颈、技术期限、系统接口或任何审计/交接字段；不得生成组合装备或事后改名。"
-                )
-                instruction += (
-                    "S3和S4没有偏向差别、先后关系或物化分工；二者都是完整Query驱动的开放创新武器作者。"
-                )
                 phase = "winning_swarm_dynamic_seed"
             else:
                 output_schema = {
@@ -4214,6 +4342,9 @@ async def analyze_winning_subagents(
                             "hypothesis_id": "exact candidate id",
                             "decision": "retain|merge|reject",
                             "merge_target_hypothesis_id": "exact id when merge, otherwise empty",
+                            "final_name": "冻结前最终名称；retain时可修复，其他决策为空",
+                            "name_changed": "boolean",
+                            "naming_style": "A/G/H|B/F|D/E/I|J/K/M/N|C/L/O|cross_type",
                             "reason": "one concise semantic reason",
                             "independent_axis": "target|breakpoint|changed_variable|core_mechanism|direct_result",
                             "direct_equipment": "boolean",
@@ -4224,11 +4355,17 @@ async def analyze_winning_subagents(
                     "stop_reason": "string",
                 }
                 instruction = (
-                    "你是S5独立组合装备评审。只比较候选的目标、任务链断点、改变变量、核心机理和"
-                    "直接战果，判断retain、merge或reject；确认它是否是具体直接作战装备、是否与组合中"
-                    "其他候选独立或互补。不得生成新候选，不得改写候选正文，不得重新命名；名称不一致只能"
-                    "判reject并说明语义冲突。不要输出或补写证据、TRL、成本、产能、验证、反适应、失败"
-                    "边界、接口或画像字段。候选一旦完成即可审查，输入可能只是新增/受影响的小批候选。"
+                    "你是S5独立组合装备评审。输入候选严格只有hypothesis_id、name和"
+                    "concise_winning_summary；只比较精简制胜逻辑与组合边界，判断retain、merge或reject，"
+                    "确认它是否仍是具体直接作战装备、是否与组合中其他候选独立或互补。S5冻结前可对retain候选"
+                    "修复机械、同构、空泛或无法识别主装备的名称：输出final_name、name_changed和命名主导类型；"
+                    "修复必须保持同一装备身份和原有concise_winning_summary，不得创造新候选、改变制胜逻辑、"
+                    "合并关系或补写任何其他字段。命名按主导创新选择：形态/材料/环境用A/G/H，原理/机制用B/F，"
+                    "使命/能力/动作用D/E/I，时间/空间/体系/数量/成本逻辑用J/K/M/N，强代号/隐喻/代际认知用C/L/O；"
+                    "允许‘可解释代号＋具体装备类别’，但不得把字母组当词库或批量模板。名称可参考‘蜂巢’分布式作战节点、"
+                    "‘玄磁’超材料隐身巡弋器、‘断链’远域压制系统、‘千节点’低耗效应集群、‘黑潮’自主效应集群的表达方式，"
+                    "示例仅解释范式，不得照抄。不要输出或补写证据、TRL、成本、产能、验证、反适应、失败边界、"
+                    "接口或画像字段。候选一旦完成即可审查，输入可能只是新增/受影响的小批候选。"
                 )
                 if instance.archetype != "independent_portfolio_reviewer":
                     raise RuntimeError(
@@ -4254,14 +4391,22 @@ async def analyze_winning_subagents(
                 **runtime_contract,
             )
             started_at = monotonic()
+            system_prompt = (
+                instruction
+                if instance.mission_node in {"S3", "S4"}
+                and not instance.hypothesis_id
+                else (
+                    "你是动态孵化制胜机理集群中的一次性受治理Agent。"
+                    + task.purpose
+                    + instruction
+                    + "输入中的role_contract只界定本节点权限、禁止事项和交接责任，不是逐条写作模板。"
+                    "请在权限内自主推演、比较并取舍；输出遵循JSON schema。不得招募子Agent、扩大权限、"
+                    "读取其他Agent原始会话或虚构精确指标。只输出严格JSON。"
+                )
+            )
             text = await host._run_core_json(
                 runtime_agent_id,
-                "你是动态孵化制胜机理集群中的一次性受治理Agent。"
-                + task.purpose
-                + instruction
-                + "输入中的role_contract只界定本节点权限、禁止事项和交接责任，不是逐条写作模板。"
-                "请在权限内自主推演、比较并取舍；输出遵循JSON schema。不得招募子Agent、扩大权限、"
-                "读取其他Agent原始会话或虚构精确指标。只输出严格JSON。",
+                system_prompt,
                 common_input,
                 output_schema,
                 task.max_output_tokens,
@@ -4920,6 +5065,13 @@ async def analyze_winning_subagents(
                             naming_rationale=str(
                                 raw.get("naming_rationale", "")
                             ).strip(),
+                            naming_style=str(raw.get("naming_style", "")).strip(),
+                            core_disruptive_difference=str(
+                                raw.get("core_disruptive_difference", "")
+                            ).strip(),
+                            concise_winning_summary=str(
+                                raw.get("concise_winning_summary", "")
+                            ).strip(),
                             naming_owner="s3_s4_codex",
                         )
                     id_remap = refresh_candidate_ledger()
@@ -4975,6 +5127,7 @@ async def analyze_winning_subagents(
                         }
                         retained_ids = set(known_ids)
                         reviewed_now: set[str] = set()
+                        repaired_names: dict[str, tuple[str, str, str]] = {}
                         for raw in raw_decisions:
                             if not isinstance(raw, Mapping):
                                 continue
@@ -5012,7 +5165,29 @@ async def analyze_winning_subagents(
                                         "stage": "incremental_s5_portfolio_review",
                                     }
                                 )
-                            elif decision != "retain":
+                            elif decision == "retain":
+                                current = next(
+                                    (
+                                        item
+                                        for item in ledger.hypotheses
+                                        if item.hypothesis_id == source_id
+                                    ),
+                                    None,
+                                )
+                                final_name = normalize_weapon_candidate_title(
+                                    raw.get("final_name", "")
+                                )
+                                if (
+                                    current is not None
+                                    and final_name
+                                    and final_name != current.title
+                                ):
+                                    repaired_names[source_id] = (
+                                        final_name,
+                                        str(raw.get("naming_style", "")).strip()[:120],
+                                        str(raw.get("reason", "")).strip()[:500],
+                                    )
+                            else:
                                 continue
                             emit_swarm_event(
                                 "winning_incremental_portfolio_decision",
@@ -5030,25 +5205,66 @@ async def analyze_winning_subagents(
                                 direct_equipment=bool(
                                     raw.get("direct_equipment", False)
                                 ),
+                                final_name=(
+                                    repaired_names[source_id][0]
+                                    if source_id in repaired_names
+                                    else ""
+                                ),
+                                name_changed=source_id in repaired_names,
+                                naming_style=str(
+                                    raw.get("naming_style", "")
+                                )[:120],
                             )
-                        if retained_ids != known_ids:
+                        if retained_ids != known_ids or repaired_names:
+                            updated_hypotheses: list[WinningHypothesis] = []
+                            for item in ledger.hypotheses:
+                                if item.hypothesis_id not in retained_ids:
+                                    continue
+                                repair = repaired_names.get(item.hypothesis_id)
+                                if repair is None:
+                                    updated_hypotheses.append(item)
+                                    continue
+                                final_name, naming_style, reason = repair
+                                updated_hypotheses.append(
+                                    replace(
+                                        item,
+                                        title=final_name,
+                                        naming_style=(
+                                            naming_style or item.naming_style
+                                        ),
+                                        naming_rationale=(
+                                            reason or item.naming_rationale
+                                        ),
+                                    )
+                                )
+                                emit_swarm_event(
+                                    "winning_s5_candidate_name_repaired",
+                                    actor=instance.instance_id,
+                                    graph_id=graph.graph_id,
+                                    hypothesis_id=item.hypothesis_id,
+                                    previous_name=item.title,
+                                    final_name=final_name,
+                                    naming_style=naming_style,
+                                    reason=reason,
+                                    concise_winning_summary_unchanged=True,
+                                )
                             ledger = HypothesisLedgerVersion(
                                 ledger_id=ledger.ledger_id,
                                 version=ledger.version + 1,
                                 parent_version=ledger.version,
-                                hypotheses=[
-                                    item
-                                    for item in ledger.hypotheses
-                                    if item.hypothesis_id in retained_ids
-                                ],
+                                hypotheses=updated_hypotheses,
                                 merge_receipts=list(ledger.merge_receipts),
-                                change_summary="incremental_s5_portfolio_decision",
+                                change_summary=(
+                                    "incremental_s5_portfolio_and_naming_decision"
+                                    if repaired_names
+                                    else "incremental_s5_portfolio_decision"
+                                ),
                                 created_by=instance.instance_id,
                             )
-                        # S5 changed only portfolio disposition, not candidate
-                        # semantics. Mark this version clustered so close-out
-                        # does not perform a redundant second clustering call.
-                        semantic_clustered_ledger_version = ledger.version
+                        # S5 changed only portfolio disposition. It does not
+                        # perform semantic clustering; leave the clustering
+                        # watermark untouched so the close-out pass compares
+                        # the complete candidate set once producers drain.
                         reviewed_candidate_ids.update(reviewed_now)
                         pending_incremental_review_ids.difference_update(reviewed_now)
                         review_targets_by_instance.pop(instance.instance_id, None)
@@ -5381,7 +5597,8 @@ async def analyze_winning_subagents(
             rejected_count=0,
             status="completed",
             contract_owner="s5_incremental_portfolio_reviewer",
-            naming_mutation_allowed=False,
+            pre_freeze_naming_repair_allowed=True,
+            post_freeze_naming_mutation_allowed=False,
         )
         direct_combat_count = sum(
             bool(item.get("direct_combat_equipment")) for item in equipment_portfolio
@@ -7275,14 +7492,27 @@ async def analyze_winning_subagents(
             *(packet_agents_by_step[index] for index in indices)
         )
         cohort_prior = prior_projection(indices[0], prior_step_outputs)
-        cohort_claims = military_claims_for_steps(indices) if optimized_v2 else []
+        creative_cohort = optimized_v2 and set(indices) <= {3, 4}
+        cohort_claims = (
+            list(creative_military_value_handoff()["claims"])
+            if creative_cohort
+            else (military_claims_for_steps(indices) if optimized_v2 else [])
+        )
         if optimized_v2:
             cohort_packets: list[Mapping[str, Any]] = []
-            cohort_packet_index = military_packet_refs_for_claims(cohort_claims)
-            cohort_evidence = evidence_for_claims(
-                cohort_claims,
-                prior_step_outputs=cohort_prior,
-                limit=12 if primary_branch_for_packets == "C" else 10,
+            cohort_packet_index = (
+                []
+                if creative_cohort
+                else military_packet_refs_for_claims(cohort_claims)
+            )
+            cohort_evidence = (
+                []
+                if creative_cohort
+                else evidence_for_claims(
+                    cohort_claims,
+                    prior_step_outputs=cohort_prior,
+                    limit=12 if primary_branch_for_packets == "C" else 10,
+                )
             )
         else:
             cohort_packets = [
@@ -7345,13 +7575,18 @@ async def analyze_winning_subagents(
                     max_list_items=(14 if primary_branch_for_packets == "C" else 8),
                 )
             ),
+            "military_value_handoff": (
+                {"claims": cohort_claims}
+                if creative_cohort and cohort_claims
+                else {}
+            ),
             "secondary_cross_agent_constraints": (
                 _compact_prompt_value(
                     cohort_claims,
                     max_string_chars=460,
                     max_list_items=8,
                 )
-                if optimized_v2
+                if optimized_v2 and not creative_cohort
                 else []
             ),
             "branch_products": (
@@ -7362,7 +7597,7 @@ async def analyze_winning_subagents(
                 )
                 if optimized_v2
                 and primary_branch_for_packets == "C"
-                and any(index in {3, 4, 5} for index in indices)
+                and 5 in indices
                 else {}
             ),
             "evidence_index": _compact_prompt_value(

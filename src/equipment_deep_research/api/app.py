@@ -7,6 +7,7 @@ import re
 import shutil
 from collections.abc import Mapping
 from pathlib import Path
+from threading import Lock
 from urllib.parse import urlsplit
 
 from fastapi import FastAPI, Header, HTTPException, Request
@@ -40,6 +41,7 @@ from equipment_deep_research.orchestration.capability_portrait import (
     strip_schema_placeholders,
 )
 from equipment_deep_research.harness.event_bus import sanitize_runtime_payload
+from equipment_deep_research.runtime_process_registry import terminate_run_process_groups
 from equipment_deep_research.query_library.api import create_router as create_query_library_router
 from equipment_deep_research.query_library.factory import (
     build_service as build_query_library_service,
@@ -112,7 +114,17 @@ _KEY_INTERACTION_EVENT_TYPES = frozenset(
         "winning_contribution_rejected",
         "winning_contribution_rebase_required",
         "winning_contribution_merged",
+        "winning_s5_portfolio_frozen",
         "winning_portfolio_merge_completed",
+        "winning_s5_handoff_quality_gate_completed",
+        "winning_s6_card_authoring_started",
+        "winning_s6_card_authoring_completed",
+        "winning_s6_card_authoring_reused",
+        "winning_s6_card_authoring_limited",
+        "winning_s6_low_repair_started",
+        "winning_s6_low_repair_completed",
+        "winning_s6_low_repair_limited",
+        "winning_s6_release_gate_evaluated",
         "winning_quality_judge_recruited",
         "winning_quality_judge_started",
         "winning_quality_judge_assessed",
@@ -145,6 +157,8 @@ _KEY_INTERACTION_EVENT_TYPES = frozenset(
         "report_model_call_completed",
         "report_model_fallback",
         "report_model_failed",
+        "report_quality_gate_limited",
+        "report_delivery_resume_gate_evaluated",
         "run_result_saved",
     }
 )
@@ -208,6 +222,8 @@ def create_app(
     if event_repository is None:
         event_repository = getattr(service, "repository", None)
     app = FastAPI(title="Equipment Deep Research API", version="0.1.0")
+    create_run_idempotency: dict[str, tuple[str, object]] = {}
+    create_run_idempotency_lock = Lock()
 
     @app.exception_handler(RunNotFoundError)
     async def run_not_found_handler(
@@ -355,18 +371,24 @@ def create_app(
 
     def permanently_remove(run_id: str) -> None:
         current = service.get_run(run_id)
-        active_worker = any(
-            worker.get("online") and worker.get("current_run_id") == run_id
-            for worker in service.runtime_health().get("workers", [])
-        )
-        if current.status not in PERMANENTLY_DELETABLE_STATUSES and active_worker:
-            raise InvalidRunTransition(
-                f"{current.status} cannot be permanently deleted while an online worker is processing it"
-            )
+        # Deletion is destructive by design: stop the run and terminate every
+        # process group registered under it before removing its records/files.
+        # This also handles a Worker that has already claimed the queue item.
+        if current.status not in PERMANENTLY_DELETABLE_STATUSES:
+            try:
+                service.cancel_run(
+                    run_id,
+                    actor="api-user",
+                    idempotency_key=f"delete:{run_id}",
+                )
+            except InvalidRunTransition:
+                pass
+            terminate_run_process_groups(run_id)
+            current = service.get_run(run_id)
         _delete_run_output(output_root, run_id)
         service.delete_run(
             run_id,
-            allow_active=current.status not in PERMANENTLY_DELETABLE_STATUSES,
+            allow_active=True,
         )
         _verify_run_deleted(service, output_root, run_id)
 
@@ -569,7 +591,11 @@ def create_app(
         }
 
     @app.post("/api/v1/runs", status_code=201)
-    def create_run(body: CreateRunBody, x_role: str = Header(default="analyst", alias="X-Role")) -> dict:
+    def create_run(
+        body: CreateRunBody,
+        x_role: str = Header(default="analyst", alias="X-Role"),
+        idempotency_key: str = Header(default="", alias="Idempotency-Key"),
+    ) -> dict:
         _require_role(x_role, {"analyst", "admin"})
         valid_routes = {item["id"] for item in catalog_payload["routes"]} | {"auto"}
         valid_agents = {item["agent_id"] for item in catalog_payload["agents"]}
@@ -627,22 +653,42 @@ def create_app(
                 "version": source_query["version"],
                 "source_type": source_query["source_type"],
             }
-        return service.create_run(
-            CreateRunCommand(
-                topic=body.topic.strip(),
-                research_route=body.research_route,
-                selected_agent_ids=body.selected_agent_ids,
-                max_rounds=body.max_rounds,
-                created_by="api-user",
-                execution=execution,
-                analyst_confirmed=body.analyst_confirmed,
-                interaction_mode=body.interaction_mode,
-                discovery_branch=body.discovery_branch,
-                execution_profile_id=body.execution_profile_id,
-                report_template_mode=body.report_template_mode,
-                supplemental_information=body.supplemental_information.strip(),
+        command = CreateRunCommand(
+            topic=body.topic.strip(),
+            research_route=body.research_route,
+            selected_agent_ids=body.selected_agent_ids,
+            max_rounds=body.max_rounds,
+            created_by="api-user",
+            execution=execution,
+            analyst_confirmed=body.analyst_confirmed,
+            interaction_mode=body.interaction_mode,
+            discovery_branch=body.discovery_branch,
+            execution_profile_id=body.execution_profile_id,
+            report_template_mode=body.report_template_mode,
+            supplemental_information=body.supplemental_information.strip(),
+        )
+        normalized_key = idempotency_key.strip()
+        if not normalized_key:
+            return service.create_run(command).__dict__
+        request_fingerprint = json.dumps(
+            body.model_dump(mode="json"), ensure_ascii=False, sort_keys=True
+        )
+        with create_run_idempotency_lock:
+            existing = create_run_idempotency.get(normalized_key)
+            if existing is not None:
+                existing_fingerprint, existing_run = existing
+                if existing_fingerprint != request_fingerprint:
+                    raise HTTPException(
+                        status_code=409,
+                        detail="idempotency key was already used with a different request",
+                    )
+                return existing_run.__dict__
+            created_run = service.create_run(command)
+            create_run_idempotency[normalized_key] = (
+                request_fingerprint,
+                created_run,
             )
-        ).__dict__
+            return created_run.__dict__
 
     @app.post("/api/v1/runs/{run_id}/start")
     def start_run(run_id: str, idempotency_key: str = Header(alias="Idempotency-Key"), x_role: str = Header(default="analyst", alias="X-Role")) -> dict:
@@ -704,6 +750,51 @@ def create_app(
             ).__dict__
         except InvalidRunTransition as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    @app.post("/api/v1/runs/{run_id}/stop")
+    def stop_run(
+        run_id: str,
+        idempotency_key: str = Header(alias="Idempotency-Key"),
+        x_role: str = Header(default="analyst", alias="X-Role"),
+    ) -> dict:
+        """Stop a queued or running task and terminate all of its child processes."""
+
+        _require_role(x_role, {"analyst", "admin"})
+        try:
+            current = service.get_run(run_id)
+        except (KeyError, NoResultFound) as exc:
+            raise HTTPException(status_code=404, detail="run not found") from exc
+        if current.status in {"cancelled", "completed", "failed", "archived"}:
+            cleanup = terminate_run_process_groups(run_id)
+            return {
+                **current.__dict__,
+                "process_cleanup": cleanup.__dict__,
+            }
+        try:
+            stopped = service.cancel_run(
+                run_id,
+                actor="api-user",
+                idempotency_key=idempotency_key,
+            )
+        except InvalidRunTransition as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        cleanup = terminate_run_process_groups(run_id)
+        stopped = service.set_status(run_id, "cancelled")
+        service.publish_runtime_event(
+            run_id,
+            "run_processes_terminated",
+            {
+                "reason": "user_stop",
+                "registered_process_groups": cleanup.registered_count,
+                "orphan_process_groups": cleanup.orphan_count,
+                "terminated_process_groups": cleanup.terminated_count,
+                "forced_process_groups": cleanup.forced_count,
+            },
+        )
+        return {
+            **stopped.__dict__,
+            "process_cleanup": cleanup.__dict__,
+        }
 
     @app.patch("/api/v1/runs/{run_id}")
     def update_run(
@@ -886,17 +977,19 @@ def create_app(
         view = service.get_run(run_id)
         if _is_historical_snapshot(view):
             return []
-        # While a run is active, expose the latest frozen S6 portfolio. Once
+        # While a run is active, expose only cards actually authored by S6.
+        # The earlier frozen portfolio is an S5 selection decision and must
+        # never be presented as an original S6 capability portrait. Once
         # delivery completes, capability_images.json is authoritative because
         # it contains the accepted parallel S6 prose and any identity restored
         # from the pre-S6 hypothesis ledger. Returning the earlier portfolio
         # event after completion would surface stale titles and omit portraits.
         workflow = _interaction_workflow_summary(interaction_rows(run_id, view), view)
-        portfolio = workflow.get("swarm_cluster", {}).get(
-            "final_equipment_portfolio", []
-        )
-        provisional_rows = _provisional_s6_capability_rows(portfolio)
-        if view.status != "completed" and provisional_rows:
+        s6_cards = workflow.get("swarm_cluster", {}).get("s6_authored_cards", [])
+        provisional_rows = _provisional_s6_capability_rows(s6_cards)
+        if view.status != "completed":
+            # A running task has no delivered capability artifact yet. Return
+            # only real S6 cards (or an empty list), never the S5 portfolio.
             return [_capability_api_view(row) for row in provisional_rows]
         try:
             payload = _read_json(service, output_root, run_id, "capability_images.json")
@@ -1190,6 +1283,15 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
     merge_receipts_by_id: dict[str, dict] = {}
     ledger_projection: dict = {}
     portfolio_projection: dict = {}
+    s6_cards_by_id: dict[str, dict] = {}
+    s6_release_gate: dict = {}
+    s6_authoring = {
+        "started": 0,
+        "completed": 0,
+        "reused": 0,
+        "limited": 0,
+        "status": "pending",
+    }
 
     def safe_string_list(value: object, *, limit: int = 24) -> list[str]:
         if not isinstance(value, (list, tuple, set)):
@@ -1399,6 +1501,79 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
                             "last_sequence": row.get("sequence", 0),
                         },
                     )
+            continue
+        if event_type == "winning_s6_card_authoring_started":
+            swarm_event_seen = True
+            s6_authoring["started"] += 1
+            s6_authoring["status"] = "authoring"
+            continue
+        if event_type in {
+            "winning_s6_card_authoring_completed",
+            "winning_s6_card_authoring_reused",
+            "winning_s6_card_authoring_limited",
+        }:
+            swarm_event_seen = True
+            counter = {
+                "winning_s6_card_authoring_completed": "completed",
+                "winning_s6_card_authoring_reused": "reused",
+                "winning_s6_card_authoring_limited": "limited",
+            }[event_type]
+            s6_authoring[counter] += 1
+            direction = details.get("direction", {})
+            if isinstance(direction, dict) and direction:
+                card_id = str(
+                    direction.get("hypothesis_id")
+                    or details.get("hypothesis_id")
+                    or direction.get("name")
+                    or f"s6-card-{details.get('card_position', len(s6_cards_by_id) + 1)}"
+                ).strip()
+                if card_id:
+                    s6_cards_by_id[card_id] = dict(direction)
+            s6_authoring["status"] = (
+                "limited" if event_type.endswith("limited") else "authoring"
+            )
+            continue
+        if event_type == "winning_s6_release_gate_evaluated":
+            swarm_event_seen = True
+            authored_cards = details.get("authored_cards", [])
+            if isinstance(authored_cards, list):
+                released_cards: dict[str, dict] = {}
+                for index, item in enumerate(authored_cards, start=1):
+                    if not isinstance(item, dict):
+                        continue
+                    card_id = str(
+                        item.get("hypothesis_id")
+                        or item.get("name")
+                        or f"s6-release-card-{index}"
+                    ).strip()
+                    if card_id:
+                        released_cards[card_id] = dict(item)
+                if released_cards:
+                    s6_cards_by_id = released_cards
+            s6_release_gate = {
+                "passed": details.get("passed") is True,
+                "failed": details.get("failed") is True,
+                "limited": details.get("limited") is True,
+                "issues": safe_string_list(details.get("issues", []), limit=16),
+                "warnings": safe_string_list(details.get("warnings", []), limit=16),
+                "card_count": details.get("card_count", len(s6_cards_by_id)),
+                "status": (
+                    "passed"
+                    if details.get("passed") is True
+                    else "limited"
+                    if details.get("limited") is True
+                    else "failed"
+                ),
+            }
+            s6_authoring["status"] = s6_release_gate["status"]
+            if details.get("maximum_concurrency") is not None:
+                mission_graph_projection["maximum_concurrency"] = details.get(
+                    "maximum_concurrency"
+                )
+            if details.get("maximum_observed_concurrency") is not None:
+                mission_graph_projection["maximum_observed_concurrency"] = details.get(
+                    "maximum_observed_concurrency"
+                )
             continue
         if event_type == "winning_s3_active_agents_materialized":
             swarm_event_seen = True
@@ -1744,6 +1919,23 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
                         "status": "created",
                         "mission_node": str(details.get("mission_node", "")),
                         "score": details.get("score"),
+                        "title": str(details.get("title", ""))[:300],
+                        "equipment_forms": safe_string_list(
+                            details.get("equipment_form", []), limit=8
+                        ),
+                        "primary_equipment_identity": str(
+                            details.get("primary_equipment_identity", "")
+                        )[:300],
+                        "reference_overview": str(
+                            details.get("concise_winning_summary", "")
+                        )[:1800],
+                        "naming_rationale": str(
+                            details.get("naming_rationale", "")
+                        )[:600],
+                        "naming_style": str(details.get("naming_style", ""))[:120],
+                        "core_disruptive_difference": str(
+                            details.get("core_disruptive_difference", "")
+                        )[:600],
                         "created_sequence": row.get("sequence", 0),
                     },
                 )
@@ -1859,6 +2051,16 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
             }
             summary = details.get("swarm_summary", {})
             summary = summary if isinstance(summary, dict) else {}
+            raw_budget = summary.get("budget", {})
+            if isinstance(raw_budget, dict):
+                if raw_budget.get("maximum_concurrency") is not None:
+                    mission_graph_projection["maximum_concurrency"] = raw_budget.get(
+                        "maximum_concurrency"
+                    )
+                if raw_budget.get("maximum_observed_concurrency") is not None:
+                    mission_graph_projection["maximum_observed_concurrency"] = (
+                        raw_budget.get("maximum_observed_concurrency")
+                    )
             raw_ledger = summary.get("hypothesis_ledger", {})
             if isinstance(raw_ledger, dict):
                 ledger_projection = {
@@ -2445,7 +2647,13 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
             item for item in mission_members if item.get("recruitment_planned")
         ],
         "candidate_lineage": sorted(
-            candidate_lineage_by_id.values(),
+            [
+                item
+                for item in candidate_lineage_by_id.values()
+                if str(item.get("title", "")).strip()
+                or safe_string_list(item.get("equipment_forms", []), limit=1)
+                or str(item.get("primary_equipment_identity", "")).strip()
+            ],
             key=lambda item: (
                 -float(item.get("score") or 0),
                 str(item.get("hypothesis_id", "")),
@@ -2462,6 +2670,27 @@ def _interaction_workflow_summary(rows: list[dict], view: object) -> dict:
         "portfolio_decision": portfolio_projection,
         "final_equipment_portfolio": list(
             portfolio_projection.get("final_equipment_portfolio", [])
+        ),
+        "s6_authored_cards": list(s6_cards_by_id.values()),
+        "s6_release_gate": s6_release_gate,
+        "s6_authoring": s6_authoring,
+        # Keep the public profile id stable for resume/API compatibility while
+        # making the actual dynamic-v2 execution semantics explicit to the UI
+        # and audit consumers.
+        "execution_engine": (
+            "winning_mission_graph"
+            if is_dynamic_profile
+            else "winning_swarm_controller"
+        ),
+        "creative_pool": (
+            "open_query_first"
+            if is_dynamic_profile
+            else "profile_governed"
+        ),
+        "s6_input_contract": (
+            "query_candidate_winning_logic_only"
+            if is_dynamic_profile
+            else "profile_compatibility_handoff"
         ),
         "waves": [
             {
@@ -3426,6 +3655,28 @@ def _verify_run_deleted(
 def _capability_api_view(row: dict) -> dict:
     """Enrich v1 capability images for the normative UI without mutating artifacts."""
     result = dict(row)
+    # Older deliveries placed the classification line at the top of the
+    # portrait. Promote it to a structured field so the display remains
+    # useful even when the artifact predates the classification schema.
+    classification = result.get("capability_classification")
+    if not isinstance(classification, dict):
+        classification = {}
+    if not classification:
+        portrait_text = str(result.get("deep_capability_portrait") or result.get("capability_image") or "")
+        match = re.search(
+            r"能力分类\s*[：:]\s*主\s*[：:]\s*(?P<primary>[^；。]+)"
+            r"(?:；\s*辅\s*[：:]\s*(?P<secondary>[^。]+))?",
+            portrait_text,
+        )
+        if match:
+            classification = {
+                "primary_dimension": match.group("primary").strip(),
+                "secondary_dimensions": [
+                    item.strip() for item in re.split(r"[、,，]", match.group("secondary") or "") if item.strip()
+                ],
+                "classification_basis": "由S6按该装备在当前任务场景中的主要战果与关键作战节点归类。",
+            }
+    result["capability_classification"] = classification
     for prose_field in ("capability_image", "deep_capability_portrait"):
         if prose_field in result:
             result[prose_field] = strip_schema_placeholders(result[prose_field])
@@ -3447,8 +3698,23 @@ def _capability_api_view(row: dict) -> dict:
             "reasoning_refs",
         )
     )
-    result["analysis_provenance_status"] = (
-        "structured" if structured else "legacy_derived"
+    portrait_authoring_status = str(
+        result.get("portrait_authoring_status")
+        or result.get("s6_authoring_status")
+        or ""
+    ).strip()
+    if portrait_authoring_status.startswith("s6_authored") or portrait_authoring_status == "authored_semantically_consistent":
+        result["analysis_provenance_status"] = "s6_authored"
+    elif portrait_authoring_status.startswith("limited"):
+        result["analysis_provenance_status"] = "limited_fallback"
+    elif portrait_authoring_status.startswith("legacy"):
+        result["analysis_provenance_status"] = "legacy_derived"
+    else:
+        result["analysis_provenance_status"] = (
+            "structured" if structured else "legacy_derived"
+        )
+    result["portrait_authoring_status"] = portrait_authoring_status or (
+        "legacy_v1" if not structured else "structured_unspecified"
     )
     upgrade = result.get("capability_type") == "upgrade"
     image = str(result.get("capability_image", ""))
@@ -3594,6 +3860,16 @@ def _provisional_s6_capability_rows(portfolio: object) -> list[dict]:
                 "verification_status": str(item.get("verification_status", "assessed")),
                 "confidence_limited": bool(item.get("confidence_limited", False)),
                 "selection_quality_status": str(item.get("selection_quality_status", "expert_assessed")),
+                "capability_classification": (
+                    dict(item.get("capability_classification", {}))
+                    if isinstance(item.get("capability_classification", {}), dict)
+                    else {}
+                ),
+                "portrait_authoring_status": str(
+                    item.get("portrait_authoring_status")
+                    or item.get("s6_authoring_status")
+                    or "legacy_v1"
+                ),
                 "provenance_status": "s6_provisional",
             }
         )
@@ -3726,7 +4002,7 @@ def _catalog_payload(agent_path: Path, preset_path: Path) -> dict:
                 "id": "winning_swarm_dynamic_v2",
                 "name": "Mission Graph 动态蜂群",
                 "short_name": "动态蜂群",
-                "description": "依据 Mission Graph 动态孵化 8–16 个实例，按依赖事件并行执行，适合复杂任务与最高并发研究。",
+                "description": "依据 Mission Graph 动态孵化 8–21 个实例，按依赖事件并行执行，适合复杂任务与最高并发研究。",
                 "default": True,
                 "recommended": False,
                 "selectable": True,

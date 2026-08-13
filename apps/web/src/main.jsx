@@ -10,8 +10,10 @@ import './blueprint.css';
 import './benchmark.css';
 import './agent-selection.css';
 import './research-launch.css';
+import {searchQueryItems} from './query-search.js';
 
-const api = (import.meta.env.VITE_API_BASE_URL || '/api/v1').replace(/\/$/, '');
+// The default API stays alongside the application, including when it is deployed below '/'.
+const api = (import.meta.env.VITE_API_BASE_URL || `${import.meta.env.BASE_URL}api/v1`).replace(/\/$/, '');
 const DEFAULT_EXECUTION_PROFILE_ID = 'winning_swarm_dynamic_v2';
 const extensionModules = import.meta.glob('./features/*/index.jsx', {eager: true});
 const workbenchExtensions = Object.values(extensionModules)
@@ -44,6 +46,15 @@ const nav = [
   ['reports', '报告评审', FileCheck2], ['benchmark', '测试 Benchmark', Gauge],
   ...workbenchExtensions.map(extension => [extension.id, extension.label, extension.icon]),
 ];
+const TASK_WORKSPACE_VIEWS = ['interactions', 'evidence', 'winning', 'capabilities', 'reports'];
+const readNavigationState = () => {
+  const params = new URLSearchParams(window.location.search);
+  const requestedView = params.get('view') || 'runs';
+  return {
+    view: nav.some(([id]) => id === requestedView) || requestedView === 'query-library' ? requestedView : 'runs',
+    runId: params.get('run') || '',
+  };
+};
 const LLM_PRESETS = {
   openai: {label: 'GPT / OpenAI', api_protocol: 'responses', base_url: 'https://api.openai.com/v1', model: 'gpt-5.5'},
   deepseek: {label: 'DeepSeek', api_protocol: 'chat_completions', base_url: 'https://api.deepseek.com', model: 'deepseek-chat'},
@@ -60,7 +71,8 @@ const shuffleRecommendations = items => {
   return rows;
 };
 function App() {
-  const [view, setView] = useState('runs');
+  const initialNavigation = useMemo(() => readNavigationState(), []);
+  const [view, setView] = useState(initialNavigation.view);
   const [runs, setRuns] = useState([]);
   const [catalog, setCatalog] = useState({routes: [], agents: [], interaction_modes: [], discovery_branches: [], execution_profiles: [], report_templates: [], provider: {}});
   const [pendingQuery, setPendingQuery] = useState(null);
@@ -69,12 +81,27 @@ function App() {
   const [healthy, setHealthy] = useState(false);
   const [enabledExtensionIds, setEnabledExtensionIds] = useState([]);
   const [runtime, setRuntime] = useState({worker_online: false, pending_count: 0, workers: [], worker_capacity: 0, configured_worker_capacity: 1, active_count: 0, available_slots: 0, active_run_ids: []});
+  const navigate = (nextView, options = {}) => {
+    const nextRun = options.run === undefined ? activeRun : options.run;
+    const params = new URLSearchParams(window.location.search);
+    if (nextView === 'runs') params.delete('view'); else params.set('view', nextView);
+    if (nextRun?.run_id && TASK_WORKSPACE_VIEWS.includes(nextView)) params.set('run', nextRun.run_id); else params.delete('run');
+    const nextUrl = `${params.size ? `?${params}` : ''}${window.location.hash}`;
+    window.history[options.replace ? 'replaceState' : 'pushState']({view:nextView, runId:nextRun?.run_id || ''}, '', nextUrl);
+    setView(nextView);
+    if (options.run !== undefined) { setActiveRun(nextRun || null); setSelected(null); }
+    if (options.scroll !== false) window.scrollTo({top:0, behavior: options.instant ? 'auto' : 'smooth'});
+  };
   const load = async () => {
     const [runRows, config, health, runtimeHealth] = await Promise.all([
       request('/runs', []), request('/catalog', {routes: [], agents: [], interaction_modes: [], discovery_branches: [], execution_profiles: [], report_templates: [], provider: {}}), request('/health', null), request('/runtime-health', {worker_online: false, pending_count: 0, workers: [], worker_capacity: 0, configured_worker_capacity: 1, active_count: 0, available_slots: 0, active_run_ids: []}),
     ]);
     setRuns(runRows); setCatalog(config); setHealthy(health?.status === 'ok'); setRuntime(runtimeHealth);
-    setActiveRun(current => current ? runRows.find(item => item.run_id === current.run_id) || current : current);
+    setActiveRun(current => {
+      const locationRunId = new URLSearchParams(window.location.search).get('run');
+      const targetId = current?.run_id || locationRunId;
+      return targetId ? runRows.find(item => item.run_id === targetId) || current : current;
+    });
     setSelected(current => current ? runRows.find(item => item.run_id === current.run_id) || current : current);
   };
   useEffect(() => {
@@ -84,6 +111,17 @@ function App() {
     document.addEventListener('visibilitychange', refreshWhenVisible);
     return () => { clearInterval(timer); document.removeEventListener('visibilitychange', refreshWhenVisible); };
   }, []);
+  useEffect(() => {
+    const onPopState = () => {
+      const next = readNavigationState();
+      setView(next.view);
+      setSelected(null);
+      setActiveRun(current => next.runId ? runs.find(item => item.run_id === next.runId) || current : current);
+      window.scrollTo({top:0});
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [runs]);
   useEffect(() => {
     let cancelled = false;
     Promise.all(workbenchExtensions.map(async extension => {
@@ -102,11 +140,11 @@ function App() {
       <div className="topbar-route">市场需求挖掘 · S1–S6 Agent · 能力画像</div>
       <div className={`service-state ${healthy && runtime.worker_online ? 'online' : 'offline'}`} title={runtime.worker_online ? `在线 Worker ${runtime.online_worker_count || 0} 个；可用槽位 ${runtime.available_slots || 0}；活动任务 ${(runtime.active_run_ids || []).join('、') || '无'}；排队 ${runtime.pending_count || 0} 项` : '请启动独立 research worker'}><i/>{!healthy ? 'API 未连接' : runtime.worker_online ? `并行槽位 ${runtime.active_count || 0}/${runtime.worker_capacity || 0} · 排队 ${runtime.pending_count || 0}` : 'Worker 未启动'}</div>
     </header>
-    <aside className="sidebar"><div className="sidebar-label">研究工作台</div>{visibleNav.map(([id, label, Icon]) => <button key={id} className={view === id ? 'active' : ''} onClick={() => setView(id)}><Icon size={18}/><span>{label}</span></button>)}<div className="sidebar-note"><ShieldCheck size={15}/><span>最小权限 · 审计留痕</span></div></aside>
-    <nav className="mobile-nav" aria-label="研究工作台导航">{visibleNav.map(([id, label, Icon]) => <button key={id} className={view === id ? 'active' : ''} aria-current={view === id ? 'page' : undefined} onClick={() => setView(id)}><Icon size={16}/><span>{label}</span></button>)}</nav>
-    <main>{view === 'runs' ? <RunPage runs={runs} catalog={catalog} runtime={runtime} refresh={load} initialQuery={pendingQuery} clearInitialQuery={() => setPendingQuery(null)} openQueryLibrary={() => { setView('query-library'); window.scrollTo({top: 0}); }} open={openRun} watch={run => { setActiveRun(run); setSelected(null); setView('interactions'); }}/> : view === 'benchmark' ? <BenchmarkPage/> : workbenchExtensions.some(extension => extension.id === view) ? React.createElement(workbenchExtensions.find(extension => extension.id === view).Component, {apiBase: api, onUseQuery: queryItem => { setPendingQuery(queryItem); setView('runs'); }, onDirectResearch: queryItem => { setPendingQuery(queryItem); setView('runs'); }, onBack: () => setView('runs')}) : <WorkspacePage view={view} run={activeRun} runs={runs} catalog={catalog} runtime={runtime} selectRun={run => { setActiveRun(run); setSelected(null); }}/>}</main>
+    <aside className="sidebar"><div className="sidebar-label">研究工作台</div>{visibleNav.map(([id, label, Icon]) => <button key={id} className={view === id ? 'active' : ''} aria-current={view === id ? 'page' : undefined} onClick={() => navigate(id)}><Icon size={18}/><span>{label}</span></button>)}<div className="sidebar-note"><ShieldCheck size={15}/><span>最小权限 · 审计留痕</span></div></aside>
+    <nav className="mobile-nav" aria-label="研究工作台导航">{visibleNav.map(([id, label, Icon]) => <button key={id} className={view === id ? 'active' : ''} aria-current={view === id ? 'page' : undefined} onClick={event => { navigate(id); event.currentTarget.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'}); }}><Icon size={16}/><span>{label}</span></button>)}</nav>
+    <main>{view === 'runs' ? <RunPage runs={runs} catalog={catalog} runtime={runtime} refresh={load} initialQuery={pendingQuery} clearInitialQuery={() => setPendingQuery(null)} openQueryLibrary={() => navigate('query-library')} open={openRun} watch={run => navigate('interactions', {run})}/> : view === 'benchmark' ? <BenchmarkPage/> : workbenchExtensions.some(extension => extension.id === view) ? React.createElement(workbenchExtensions.find(extension => extension.id === view).Component, {apiBase: api, onUseQuery: queryItem => { setPendingQuery(queryItem); navigate('runs'); }, onDirectResearch: queryItem => { setPendingQuery(queryItem); navigate('runs'); }, onBack: () => navigate('runs')}) : <WorkspacePage view={view} run={activeRun} runs={runs} catalog={catalog} runtime={runtime} navigate={navigate} selectRun={run => navigate(view, {run, scroll:false})}/>}</main>
     {selected && (
-      <RunDrawer run={selected} catalog={catalog} close={() => setSelected(null)} inspect={target => { setView(target); setSelected(null); }} changed={updated => { setSelected(updated); setActiveRun(current => current?.run_id === updated.run_id ? updated : current); void load(); }}/>
+      <RunDrawer run={selected} catalog={catalog} close={() => setSelected(null)} inspect={target => navigate(target, {run:selected})} changed={updated => { setSelected(updated); setActiveRun(current => current?.run_id === updated.run_id ? updated : current); void load(); }}/>
     )}
   </div>;
 }
@@ -115,7 +153,7 @@ function RunPage({runs, catalog, runtime, refresh, initialQuery, clearInitialQue
   const [query, setQuery] = useState(''); const [status, setStatus] = useState('all');
   const pageSize = 12; const [visibleLimit, setVisibleLimit] = useState(pageSize);
   const runScrollRef = useRef(null); const loadMoreRef = useRef(null);
-  const [selectedIds, setSelectedIds] = useState([]); const [deleting, setDeleting] = useState(false); const [deleteError, setDeleteError] = useState('');
+  const [selectedIds, setSelectedIds] = useState([]); const [deleting, setDeleting] = useState(false); const [stopping, setStopping] = useState(false); const [deleteError, setDeleteError] = useState('');
   const [runSummaries, setRunSummaries] = useState({});
   const matchesStatus = run => status === 'all' ? run.status !== 'archived' : status === 'active' ? isRunActive(run, runtime) : run.status === status;
   const visible = runs.filter(run => (!query || `${run.topic} ${run.supplemental_information || ''} ${run.run_id}`.toLowerCase().includes(query.toLowerCase())) && matchesStatus(run));
@@ -145,17 +183,16 @@ function RunPage({runs, catalog, runtime, refresh, initialQuery, clearInitialQue
     return () => { cancelled = true; };
   }, [pageRows.map(run => `${run.run_id}:${run.status}`).join('|')]);
   const workerForRun = run => (runtime.workers || []).find(worker => worker.online && worker.current_run_id === run.run_id);
-  const isActivelyHandled = run => Boolean(workerForRun(run));
   const queuePosition = run => (runtime.pending_run_ids || []).indexOf(run.run_id) + 1;
-  const deletable = visible.filter(run => !isActivelyHandled(run));
-  const pageDeletable = pageRows.filter(run => !isActivelyHandled(run));
+  const pageDeletable = pageRows;
+  const deletable = visible;
   const selectedDeletable = selectedIds.filter(id => deletable.some(run => run.run_id === id));
   const currentCount = runs.filter(run => run.status !== 'archived').length;
   const completed = runs.filter(run => run.status === 'completed').length;
   const activeCount = runs.filter(run => isRunActive(run, runtime)).length;
   const toggleSelected = id => setSelectedIds(rows => rows.includes(id) ? rows.filter(item => item !== id) : [...rows, id]);
   const deleteRuns = async ids => {
-    if (!ids.length || !window.confirm(`确定永久删除 ${ids.length} 个任务及其全部运行数据吗？此操作不可恢复。`)) return;
+    if (!ids.length || !window.confirm(`确定永久删除 ${ids.length} 个任务吗？运行中的任务将先停止并终止全部 Agent 进程；任务数据和产物不可恢复。`)) return;
     setDeleting(true); setDeleteError('');
     const result = await request('/runs/permanent-delete', null, {method: 'POST', headers: {'Content-Type': 'application/json', 'X-Role': 'analyst'}, body: JSON.stringify({run_ids: ids})});
     setDeleting(false);
@@ -164,13 +201,20 @@ function RunPage({runs, catalog, runtime, refresh, initialQuery, clearInitialQue
     if (result.rejected?.length) setDeleteError(result.rejected.map(item => `${item.run_id}：${item.reason}`).join('；'));
     void refresh();
   };
-  const renderInlineBuilder = (queryItem, executionProfileId, onExecutionProfileChange, startRequestId) => <CreateRun inline catalog={catalog} runtime={runtime} initialQuery={queryItem} executionProfileId={executionProfileId} onExecutionProfileChange={onExecutionProfileChange} startRequestId={startRequestId} openQueryLibrary={openQueryLibrary} done={(run, started) => { clearInitialQuery(); void refresh(); started ? watch(run) : open(run); }}/>;
+  const stopRun = async run => {
+    if (!run || !isRunActive(run, runtime) || !window.confirm(`确定停止研究任务“${run.topic}”吗？将终止该任务启动的所有 Agent 进程。`)) return;
+    setStopping(true); setDeleteError('');
+    const result = await requestResult(`/runs/${run.run_id}/stop`, {method: 'POST', headers: {'Idempotency-Key': `stop:${run.run_id}`, 'X-Role': 'analyst'}});
+    setStopping(false);
+    if (!result.ok) { setDeleteError(`停止任务失败：${result.detail || '请检查 Worker 状态。'}`); return; }
+    await refresh();
+  };
+  const renderInlineBuilder = (queryItem, executionProfileId, onExecutionProfileChange, startRequestId, onSubmitStateChange) => <CreateRun inline catalog={catalog} runtime={runtime} initialQuery={queryItem} executionProfileId={executionProfileId} onExecutionProfileChange={onExecutionProfileChange} startRequestId={startRequestId} onSubmitStateChange={onSubmitStateChange} openQueryLibrary={openQueryLibrary} done={(run, started) => { clearInitialQuery(); void refresh(); started ? watch(run) : open(run); }}/>;
   return <>
     <ResearchQueryEntry catalog={catalog} runtime={runtime} openQueryLibrary={openQueryLibrary} initialQuery={initialQuery} renderInlineBuilder={renderInlineBuilder}/>
     <PageTitle eyebrow="RESEARCH WORKSPACE" title="研究任务与运行记录" subtitle="Query 审核后可直接带入研究任务；运行过程、证据、能力画像和报告持续留痕。">
       <button className="icon-button" title="刷新任务" onClick={refresh}><RefreshCw size={17}/></button>
     </PageTitle>
-    <section className="metric-strip parallel-metrics"><Metric label="当前任务" value={currentCount} icon={Archive}/><Metric label="已完成" value={completed} icon={CheckCircle2}/><Metric label="并行执行" value={`${runtime.active_count || 0} / ${runtime.worker_capacity || 0}`} icon={Layers3}/><Metric label="队列等待" value={runtime.pending_count || 0} icon={Clock3}/><Metric label="默认模型" value={catalog.provider.model || 'gpt-5.5'} icon={Sparkles}/></section>
     {!runtime.worker_online && <section className="worker-warning"><CircleAlert size={18}/><div><b>研究 Worker 未在线</b><span>任务无法执行。请运行 <code>./scripts/start-local.sh</code> 或启动 Compose 服务。</span></div></section>}
     {runtime.worker_online && <ParallelRuntimePanel runtime={runtime} runs={runs} onCapacityChanged={refresh}/>}
     {deleteError && <p className="form-error"><CircleAlert size={15}/>{deleteError}</p>}
@@ -187,19 +231,19 @@ function RunPage({runs, catalog, runtime, refresh, initialQuery, clearInitialQue
       <div className="run-search-row">
         <div className="searchbox"><Search size={16}/><input value={query} onChange={event => setQuery(event.target.value)} placeholder="搜索研究主题或运行 ID"/></div>
         <label className="filter-select"><ListFilter size={15}/><select value={status} onChange={event => setStatus(event.target.value)}><option value="all">全部当前任务</option><option value="active">全部进行中</option><option value="draft">草稿</option><option value="queued">已排队</option><option value="researching">研究中</option><option value="recalling">再调中</option><option value="synthesizing">S1–S6 / 综合中</option><option value="reviewing">审计中</option><option value="reporting">报告生成中</option><option value="completed">已完成</option><option value="failed">失败</option><option value="archived">已归档</option></select></label>
-        <label className="run-select-page"><input type="checkbox" aria-label="选择已加载的可删除任务" checked={pageDeletable.length > 0 && pageDeletable.every(run => selectedIds.includes(run.run_id))} onChange={event => setSelectedIds(event.target.checked ? [...new Set([...selectedIds, ...pageDeletable.map(run => run.run_id)])] : selectedIds.filter(id => !pageDeletable.some(run => run.run_id === id)))}/><span>选择已加载</span></label>
-        {selectedDeletable.length > 0 && <button className="danger" disabled={deleting} onClick={() => deleteRuns(selectedDeletable)}><Trash2 size={15}/>{deleting ? '删除中' : `永久删除 (${selectedDeletable.length})`}</button>}
+        <label className="run-select-page"><input type="checkbox" aria-label="选择已加载的任务" checked={pageDeletable.length > 0 && pageDeletable.every(run => selectedIds.includes(run.run_id))} onChange={event => setSelectedIds(event.target.checked ? [...new Set([...selectedIds, ...pageDeletable.map(run => run.run_id)])] : selectedIds.filter(id => !pageDeletable.some(run => run.run_id === id)))}/><span>选择已加载</span></label>
+        {selectedDeletable.length > 0 && <button className="danger" disabled={deleting || stopping} onClick={() => deleteRuns(selectedDeletable)}><Trash2 size={15}/>{deleting ? '删除中' : `永久删除 (${selectedDeletable.length})`}</button>}
         <span>{visible.length} 项结果</span>
       </div>
       {visible.length === 0 ? <Empty text="暂无匹配的研究任务"/> : <div className="research-run-scroll" ref={runScrollRef} aria-label="研究任务连续滚动列表"><div className="research-run-grid">{pageRows.map(run => {
-        const assignedWorker = workerForRun(run); const position = queuePosition(run); const orphanedActive = isRunActive(run, runtime) && !assignedWorker && !['queued', 'pause_requested', 'cancel_requested'].includes(run.status); const displayStatus = orphanedActive && position > 0 ? 'queued' : run.status; const canDelete = !assignedWorker;
-        const summary = runSummaries[run.run_id] || {}; const store = summary.store_summary || {}; const sourceCount = Number(summary.source_materials?.length || store.baseline_packet_count || 0); const evidenceCount = Number(store.materialized_evidence_count || store.evidence_count || summary.evidence_assessments?.length || 0); const candidateCount = Number(store.capability_image_count || run.result?.capability_count || 0); const reportCount = Number(store.report_count || (run.result?.report_path ? 1 : 0));
-        const runtimeText = assignedWorker ? `槽位 #${assignedWorker.slot_index || '?'} · ${assignedWorker.worker_id}` : position > 0 ? `队列第 ${position} 位` : orphanedActive ? '等待 Worker 自动恢复' : run.status === 'draft' ? '等待启动' : formatRunUpdatedAt(run.updated_at);
+        const assignedWorker = workerForRun(run); const position = queuePosition(run); const orphanedActive = isRunActive(run, runtime) && !assignedWorker && !['queued', 'pause_requested', 'cancel_requested'].includes(run.status); const displayStatus = orphanedActive && position > 0 ? 'queued' : run.status;
+        const summary = runSummaries[run.run_id] || {}; const store = summary.store_summary || {}; const sourceCount = Number(summary.source_materials?.length || store.baseline_packet_count || 0); const evidenceCount = Number(store.materialized_evidence_count || store.evidence_count || summary.evidence_assessments?.length || 0); const candidateCount = Number(store.capability_image_count || run.result?.capability_count || 0); const reportCount = Number(store.report_count || (run.result?.report_available ? 1 : 0));
+        const runtimeText = assignedWorker ? `槽位 #${assignedWorker.slot_index || '?'} · ${assignedWorker.worker_id}` : position > 0 ? `队列第 ${position} 位` : orphanedActive ? '执行已中断，等待人工断点恢复' : run.status === 'draft' ? '等待启动' : formatRunUpdatedAt(run.updated_at);
         return <article className={`research-run-card ${displayStatus}`} key={run.run_id}>
-          <div className="run-card-heading"><label className="run-card-select" title={canDelete ? '选择任务' : '在线 Worker 正在处理'}><input type="checkbox" aria-label={`选择 ${run.topic}`} disabled={!canDelete} checked={selectedIds.includes(run.run_id)} onChange={() => toggleSelected(run.run_id)}/></label><button className="run-card-title" onClick={() => open(run)}><b>{run.topic}</b><small>{run.supplemental_information || run.run_id}</small></button><Status value={displayStatus}/></div>
+          <div className="run-card-heading"><label className="run-card-select" title="选择任务"><input type="checkbox" aria-label={`选择 ${run.topic}`} checked={selectedIds.includes(run.run_id)} onChange={() => toggleSelected(run.run_id)}/></label><button className="run-card-title" onClick={() => open(run)}><b>{run.topic}</b><small>{run.supplemental_information || run.run_id}</small></button><Status value={displayStatus}/></div>
           <div className="run-card-counts"><span><b>{sourceCount}</b> 信源</span><span><b>{evidenceCount}</b> 证据</span><span><b>{candidateCount}</b> 候选</span><span><b>{reportCount}</b> 报告</span></div>
           <div className="run-card-meta"><span title={run.interaction_mode === 'autonomous' ? `系统实际命中：${routeLabel(run.research_route)}` : undefined}>{runRouteSelectionLabel(run)}路线 · {runAgentSelectionLabel(run)}</span><span title={runActualAgentTitle(run)}>{runtimeText}</span></div>
-          <div className="run-card-footer"><span className={`run-mode-label ${run.execution?.mode === 'real' ? 'real' : 'fake'}`}><i/>{run.execution?.mode === 'real' ? '真实运行' : '离线模拟'}</span><span>{run.execution?.mode === 'real' ? `${providerDisplayLabel(run.execution?.provider)} · ` : ''}{run.execution?.model || catalog.provider.model || 'gpt-5.5'}</span><div><button className="icon-button" title="打开研究详情" onClick={() => open(run)}><Eye size={16}/></button><button className="icon-button row-delete" disabled={!canDelete || deleting} title={canDelete ? '永久删除任务及后端数据' : '在线 Worker 正在处理，暂不能永久删除'} onClick={() => deleteRuns([run.run_id])}><Trash2 size={15}/></button></div></div>
+          <div className="run-card-footer"><span className={`run-mode-label ${run.execution?.mode === 'real' ? 'real' : 'fake'}`}><i/>{run.execution?.mode === 'real' ? '真实运行' : '离线模拟'}</span><span>{run.execution?.mode === 'real' ? `${providerDisplayLabel(run.execution?.provider)} · ` : ''}{run.execution?.model || catalog.provider.model || 'gpt-5.5'}</span><div>{isRunActive(run, runtime) && <button className="icon-button row-stop" disabled={stopping} title="停止研究任务并终止所有 Agent 进程" onClick={() => stopRun(run)}><X size={15}/></button>}<button className="icon-button" title="打开研究详情" onClick={() => open(run)}><Eye size={16}/></button><button className="icon-button row-delete" disabled={deleting || stopping} title="永久删除任务及后端数据（会先停止任务并终止全部 Agent 进程）" onClick={() => deleteRuns([run.run_id])}><Trash2 size={15}/></button></div></div>
         </article>;
       })}</div><div className={`run-scroll-loader ${hasMoreRuns ? '' : 'complete'}`} ref={loadMoreRef}><span>{hasMoreRuns ? `继续下滑加载 · 已显示 ${pageRows.length} / ${visible.length}` : `已显示全部 ${visible.length} 项`}</span>{hasMoreRuns && <button onClick={() => setVisibleLimit(value => Math.min(visible.length, value + pageSize))}>加载更多</button>}</div></div>}
     </section>
@@ -239,6 +283,8 @@ function ResearchQueryEntry({catalog, runtime, openQueryLibrary, initialQuery, r
   const [executionProfileId, setExecutionProfileId] = useState(DEFAULT_EXECUTION_PROFILE_ID);
   const [runConfigOpen, setRunConfigOpen] = useState(false);
   const [startRequestId, setStartRequestId] = useState(0);
+  const [launching, setLaunching] = useState(false);
+  const [launchError, setLaunchError] = useState('');
   const [manualPickerOpen, setManualPickerOpen] = useState(false);
   const refreshRecommendations = async () => {
     setRecommendationLoading(true);
@@ -272,6 +318,11 @@ function ResearchQueryEntry({catalog, runtime, openQueryLibrary, initialQuery, r
   const moveRecommendation = direction => setRecommendationIndex(index => (index + direction + recommendations.length) % recommendations.length);
   const chooseRecommendation = (item, index) => { setRecommendationIndex(index); setSelectedRecommendation(item); setQuery(item.query); setSupplement(item.supplemental_information || ''); };
   const openSupplement = () => { setRunConfigOpen(true); window.requestAnimationFrame(() => document.getElementById('research-query-supplement')?.focus()); };
+  const triggerStart = () => {
+    setLaunchError('');
+    setRunConfigOpen(true);
+    setStartRequestId(value => value + 1);
+  };
   const activeQuery = selectedRecommendation ? {...selectedRecommendation, query:query.trim(), supplemental_information:supplement.trim()} : {query:query.trim(), supplemental_information:supplement.trim(), generation_rationale:'用户在研究首页直接输入 Query。', source_references:[], status:'published', source_type:'manual'};
   return <section className="research-query-home">
     <div className="research-query-hero">
@@ -279,12 +330,14 @@ function ResearchQueryEntry({catalog, runtime, openQueryLibrary, initialQuery, r
       <h1>你的研究，从一个好 Query 开始</h1>
       <p>直接输入需要 Deep Research 的完整问题，或点击推荐 Query 自动回填。</p>
       <div className={`research-query-composer ${runConfigOpen ? 'config-open' : ''}`}>
-        <textarea id="research-query-input" value={query} onChange={event => { setQuery(event.target.value); setSelectedRecommendation(null); }} placeholder="输入需要进行 Deep Research 的 Query，例如：研究低空无人装备在强对抗环境中的体系能力缺口" maxLength={4000}/>
-        <footer><div className="research-query-footer-left"><button onClick={openSupplement}><Plus size={14}/>补充背景与约束</button><ResearchModePicker profiles={catalog.execution_profiles || []} value={executionProfileId} onChange={setExecutionProfileId}/></div><div className="research-query-footer-right"><button className="manual-query-picker-trigger" onClick={() => setManualPickerOpen(true)}><ListFilter size={15}/>人工选取 Query</button><button onClick={openQueryLibrary}><Sparkles size={15}/>AI 生成 Query</button><button className={`research-config-trigger ${runConfigOpen ? 'active' : ''}`} onClick={() => setRunConfigOpen(value => !value)}><Wrench size={14}/>{runConfigOpen ? '收起运行配置' : '研究运行配置'}<ChevronDown size={13}/></button><button className="primary research-start-trigger" disabled={!query.trim() || !runtime.worker_online} title={!runtime.worker_online ? '研究 Worker 未在线' : '按当前模式和配置直接启动研究'} onClick={() => setStartRequestId(value => value + 1)}><Play size={14}/>启动研究</button></div></footer>
+        <textarea id="research-query-input" aria-label="Deep Research Query" value={query} onChange={event => { setQuery(event.target.value); setSelectedRecommendation(null); }} onKeyDown={event => { if ((event.metaKey || event.ctrlKey) && event.key === 'Enter' && query.trim() && runtime.worker_online && !launching) { event.preventDefault(); triggerStart(); } }} placeholder="输入需要进行 Deep Research 的 Query，例如：研究低空无人装备在强对抗环境中的体系能力缺口" maxLength={4000}/>
+        <div className="research-query-input-state"><span>{query.trim() ? `已输入 ${query.trim().length} 字` : '等待输入研究问题'}</span><span><kbd>⌘/Ctrl</kbd> + <kbd>Enter</kbd> 快速启动</span>{query && <button aria-label="清空 Query" onClick={() => { setQuery(''); setSupplement(''); setSelectedRecommendation(null); document.getElementById('research-query-input')?.focus(); }}><X size={12}/>清空</button>}</div>
+        <footer><div className="research-query-footer-left"><button onClick={openSupplement}><Plus size={14}/>补充背景与约束</button><ResearchModePicker profiles={catalog.execution_profiles || []} value={executionProfileId} onChange={setExecutionProfileId}/></div><div className="research-query-footer-right"><button className="manual-query-picker-trigger" onClick={() => setManualPickerOpen(true)}><ListFilter size={15}/>人工选取 Query</button><button onClick={openQueryLibrary}><Sparkles size={15}/>AI 生成 Query</button><button className={`research-config-trigger ${runConfigOpen ? 'active' : ''}`} onClick={() => setRunConfigOpen(value => !value)}><Wrench size={14}/>{runConfigOpen ? '收起运行配置' : '研究运行配置'}<ChevronDown size={13}/></button><button className="primary research-start-trigger" disabled={!query.trim() || !runtime.worker_online || launching} title={!runtime.worker_online ? '研究 Worker 未在线' : launching ? '正在创建并启动研究任务' : '按当前模式和配置直接启动研究'} onClick={triggerStart}><Play size={14}/>{launching ? '启动中…' : '启动研究'}</button></div></footer>
         <div className="research-query-inline-config-shell" hidden={!runConfigOpen} aria-hidden={!runConfigOpen}>
           <textarea id="research-query-supplement" className="research-query-supplement" value={supplement} onChange={event => setSupplement(event.target.value)} placeholder="可选：补充作战场景、时间范围、约束、前提假设或希望覆盖的技术/装备类型。" maxLength={8000}/>
-          {renderInlineBuilder(activeQuery, executionProfileId, setExecutionProfileId, startRequestId)}
+          {renderInlineBuilder(activeQuery, executionProfileId, setExecutionProfileId, startRequestId, state => { setLaunching(Boolean(state?.submitting)); if (state?.error) setLaunchError(state.error); })}
         </div>
+        {launchError && <p className="form-error research-launch-error"><CircleAlert size={15}/>{launchError}</p>}
       </div>
       <div className="research-query-suggestions" onMouseEnter={() => setRecommendationPaused(true)} onMouseLeave={() => setRecommendationPaused(false)}>
         <div className="research-query-suggestion-heading"><span><small>问题库灵感推荐</small><em><i/>全库 {recommendations.length || 0} 条 · 自动轮播 · 点击即可带入研究</em></span><button className="suggestion-refresh" disabled={recommendationLoading} onClick={refreshRecommendations}><RefreshCw className={recommendationLoading ? 'spin' : ''} size={12}/>{recommendationLoading ? '读取中' : '重新排序'}</button></div>
@@ -339,14 +392,21 @@ function ManualQueryPicker({open, close, choose}) {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [open, close]);
-  if (!open) return null;
   const isLongQuery = item => String(item.generation_rationale || '').includes('长 Query');
   const longQueryCount = queries.filter(isLongQuery).length;
   const standardQueryCount = queries.length - longQueryCount;
-  const categoryQueries = queryCategory === 'long' ? queries.filter(isLongQuery) : queryCategory === 'standard' ? queries.filter(item => !isLongQuery(item)) : queries;
-  const keyword = search.trim().toLowerCase();
-  const visible = keyword ? categoryQueries.filter(item => `${item.query} ${item.supplemental_information || ''} ${item.generation_rationale || ''}`.toLowerCase().includes(keyword)) : categoryQueries;
+  const categoryQueries = useMemo(() => queryCategory === 'long' ? queries.filter(isLongQuery) : queryCategory === 'standard' ? queries.filter(item => !isLongQuery(item)) : queries, [queries, queryCategory]);
+  const visible = useMemo(() => searchQueryItems(categoryQueries, search), [categoryQueries, search]);
+  useEffect(() => {
+    if (!open || tab !== 'library') return;
+    if (!visible.length) {
+      if (selectedId) setSelectedId('');
+      return;
+    }
+    if (!visible.some(item => item.query_id === selectedId)) setSelectedId(visible[0].query_id);
+  }, [open, tab, visible, selectedId]);
   const selected = queries.find(item => item.query_id === selectedId);
+  if (!open) return null;
   const finishImport = async (result, targetCategory = 'all') => {
     setImporting(false);
     if (!result.ok) { setError(result.detail || '导入失败'); return; }
@@ -387,7 +447,7 @@ function ResearchModePicker({profiles, value, onChange}) {
     {id:'legacy_v1', name:'传统固定编排', short_name:'传统模式', description:'固定流程执行，适合兼容回滚与对照。', default:false, badge:'兼容'},
     {id:'optimized_v2', name:'协同优化编排', short_name:'协同模式', description:'3–4 个业务 Agent 并行，并进入 S1–S6 Cohort。', recommended:true, badge:'推荐'},
     {id:'swarm_quality_v1', name:'质量残差蜂群', short_name:'质量集群', description:'按质量残差弹性孵化，最多 12 个 Agent。', evaluation_only:true, badge:'高质量'},
-    {id:'winning_swarm_dynamic_v2', name:'Mission Graph 动态蜂群', short_name:'动态蜂群', description:'8–16 个实例动态孵化，提供最高并发能力。', default:true, evaluation_only:true, badge:'最高并发'},
+    {id:'winning_swarm_dynamic_v2', name:'Mission Graph 动态蜂群', short_name:'动态蜂群', description:'8–21 个实例动态孵化，提供最高并发能力。', default:true, evaluation_only:true, badge:'最高并发'},
   ];
   const items = profiles.length ? profiles.filter(item => item.selectable !== false) : fallbackProfiles;
   const selected = items.find(item => item.id === value) || items.find(item => item.recommended) || items.find(item => item.default) || fallbackProfiles[1];
@@ -435,23 +495,31 @@ function ParallelRuntimePanel({runtime, runs, onCapacityChanged}) {
     setEditing(false);
     await onCapacityChanged?.();
   };
-  const transitionText = runtime.capacity_transition === 'scaling_up' ? `正在扩容到 ${runtime.configured_worker_capacity} 个槽位` : runtime.capacity_transition === 'scaling_down' ? `运行中任务结束后缩容到 ${runtime.configured_worker_capacity} 个槽位` : '';
+  const transitionText = runtime.capacity_transition === 'scaling_up'
+    ? `正在扩容到 ${runtime.configured_worker_capacity} 个槽位`
+    : runtime.capacity_transition === 'scaling_down'
+      ? runtime.active_count > 0
+        ? `运行中任务结束后缩容到 ${runtime.configured_worker_capacity} 个槽位`
+        : `正在缩容到 ${runtime.configured_worker_capacity} 个槽位`
+      : '';
   return <section className="parallel-runtime" aria-label="研究任务并行执行状态">
-    <header><div><Activity size={17}/><span><b>{runtime.parallel_enabled ? '多任务并行执行已启用' : '单任务执行模式'}</b><small>每个槽位使用独立 Runner、Provider 预算、输出目录与异常生命周期</small></span></div><div className="parallel-runtime-actions"><em>{runtime.available_slots || 0} 个可用槽位</em><button onClick={() => { setEditing(value => !value); setError(''); }}><Wrench size={13}/>设置槽位</button></div></header>
-    {editing && <div className="slot-capacity-editor"><span><b>研究 Worker 槽位</b><small>可创建 1–{capacityLimit} 个真实执行槽位；缩容不会中断正在运行的任务。</small></span><div><button aria-label="减少槽位" disabled={desired <= 1 || saving} onClick={() => setDesired(value => Math.max(1, value - 1))}>−</button><strong>{desired}</strong><button aria-label="增加槽位" disabled={desired >= capacityLimit || saving} onClick={() => setDesired(value => Math.min(capacityLimit, value + 1))}>＋</button><button className="primary" disabled={saving || desired === runtime.configured_worker_capacity} onClick={applyCapacity}>{saving ? '应用中' : '应用'}</button></div>{error && <p>{error}</p>}</div>}
+    <header><div><Activity size={17}/><span><b>{runtime.parallel_enabled ? '多任务并行执行已启用' : '单任务执行模式'}</b><small>每个槽位运行一个独立研究任务</small></span></div><div className="parallel-runtime-actions"><em>{runtime.available_slots || 0} 个可用槽位</em><button onClick={() => { setEditing(value => !value); setError(''); }}><Wrench size={13}/>设置槽位</button></div></header>
+    {editing && <div className="slot-capacity-editor"><span><b>并行研究任务槽位</b><small>可同时运行 1–{capacityLimit} 个研究任务；缩容不会中断正在运行的任务。</small></span><div><button aria-label="减少槽位" disabled={desired <= 1 || saving} onClick={() => setDesired(value => Math.max(1, value - 1))}>−</button><strong>{desired}</strong><button aria-label="增加槽位" disabled={desired >= capacityLimit || saving} onClick={() => setDesired(value => Math.min(capacityLimit, value + 1))}>＋</button><button className="primary" disabled={saving || desired === runtime.configured_worker_capacity} onClick={applyCapacity}>{saving ? '应用中' : '应用'}</button></div>{error && <p>{error}</p>}</div>}
     {transitionText && <div className="slot-capacity-transition"><RefreshCw className="spin" size={13}/>{transitionText}</div>}
     <div className="parallel-worker-grid">{workers.map(worker => { const run = runById.get(worker.current_run_id); const busy = worker.status === 'working' && worker.current_run_id; return <article className={busy ? 'busy' : 'idle'} key={worker.worker_id}><span>槽位 #{worker.slot_index || '?'}</span><b>{busy ? run?.topic || worker.current_run_id : '等待研究任务'}</b><small>{busy ? worker.current_run_id : worker.worker_id}</small></article>; })}</div>
     {runtime.pending_count > 0 && <footer><Clock3 size={14}/>当前有 {runtime.pending_count} 个任务排队；任一槽位释放后按创建顺序自动执行。</footer>}
   </section>;
 }
 
-function CreateRun({catalog, done, runtime, initialQuery, openQueryLibrary, inline = false, executionProfileId: controlledExecutionProfileId = '', onExecutionProfileChange, startRequestId = 0}) {
+function CreateRun({catalog, done, runtime, initialQuery, openQueryLibrary, inline = false, executionProfileId: controlledExecutionProfileId = '', onExecutionProfileChange, startRequestId = 0, onSubmitStateChange}) {
   const workerOnline = runtime.worker_online;
   const [topic, setTopic] = useState(initialQuery?.query || ''); const [supplementalInformation, setSupplementalInformation] = useState(initialQuery?.supplemental_information || ''); const [route, setRoute] = useState('auto'); const [interactionMode, setInteractionMode] = useState('expert'); const [branch, setBranch] = useState('auto'); const [localExecutionProfileId, setLocalExecutionProfileId] = useState(DEFAULT_EXECUTION_PROFILE_ID); const [reportTemplateMode, setReportTemplateMode] = useState('project_argument_v1'); const [agents, setAgents] = useState([]); const [rounds, setRounds] = useState(2); const [submitting, setSubmitting] = useState(false); const [error, setError] = useState(''); const [agentPreview, setAgentPreview] = useState(null);
   const executionProfileId = controlledExecutionProfileId || localExecutionProfileId;
   const setExecutionProfileId = value => { setLocalExecutionProfileId(value); onExecutionProfileChange?.(value); };
   const [libraryQueries, setLibraryQueries] = useState([]); const [librarySearch, setLibrarySearch] = useState(''); const [libraryLoading, setLibraryLoading] = useState(true); const [selectedQueryId, setSelectedQueryId] = useState(initialQuery?.query_id || ''); const [libraryError, setLibraryError] = useState('');
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const submitLockRef = useRef(false);
+  const pendingCreateRequestRef = useRef({key:'', fingerprint:''});
   const availableAgents = useMemo(() => businessAgents(catalog), [catalog.agents]);
   const routeDef = catalog.routes.find(item => item.id === route) || {required_tags: []};
   const branchDef = catalog.discovery_branches?.find(item => item.id === branch);
@@ -462,9 +530,7 @@ function CreateRun({catalog, done, runtime, initialQuery, openQueryLibrary, inli
   const provided = useMemo(() => new Set(availableAgents.filter(agent => effectiveAgentIds.includes(agent.agent_id)).flatMap(agent => agent.capability_tags)), [effectiveAgentIds, availableAgents]);
   const previewPlan = useMemo(() => new Map((agentPreview?.plan || []).map(item => [item.agent_id, item])), [agentPreview]);
   const visibleLibraryQueries = useMemo(() => {
-    const keyword = librarySearch.trim().toLowerCase();
-    if (!keyword) return libraryQueries;
-    return libraryQueries.filter(item => `${item.query} ${item.generation_rationale || ''} ${item.supplemental_information || ''}`.toLowerCase().includes(keyword));
+    return searchQueryItems(libraryQueries, librarySearch);
   }, [libraryQueries, librarySearch]);
   const selectedLibraryQuery = libraryQueries.find(item => item.query_id === selectedQueryId) || (initialQuery?.query_id === selectedQueryId ? initialQuery : null);
   useEffect(() => {
@@ -498,18 +564,38 @@ function CreateRun({catalog, done, runtime, initialQuery, openQueryLibrary, inli
   }, [topic, supplementalInformation, route, interactionMode, branch]);
   const toggle = id => setAgents(rows => rows.includes(id) ? rows.filter(item => item !== id) : [...rows, id]);
   const submit = async (startImmediately = true) => {
-    if (submitting) return;
+    if (submitLockRef.current) return;
     if (startImmediately && !workerOnline) { setError('研究 Worker 未在线，已阻止任务进入无人消费的队列；你仍可先保存为草稿。'); return; }
     if (startImmediately && catalog.provider.default_mode === 'real' && catalog.provider.codex_available === false) { setError('后端未检测到 Agent 运行组件；可先保存草稿，配置运行环境后再启动。'); return; }
-    const analystConfirmed = startImmediately ? window.confirm('请确认：研究主题、边界和关键假设已经分析师审核，可进入正式五判据审计。\n\n选择“取消”仍会运行，但报告将标记为待审稿。') : false;
+    // A deliberate start action is the analyst confirmation. Avoid native
+    // confirm dialogs: embedded browsers can leave them hidden while blocking
+    // the JavaScript thread, which makes the launch button appear unresponsive.
+    const analystConfirmed = startImmediately;
+    submitLockRef.current = true;
     setSubmitting(true); setError('');
-    const created = await request('/runs', null, {method: 'POST', headers: {'Content-Type': 'application/json', 'X-Role': 'analyst'}, body: JSON.stringify({topic, supplemental_information: supplementalInformation, research_route: route, interaction_mode: interactionMode, discovery_branch: branch, execution_profile_id: executionProfileId, report_template_mode: reportTemplateMode, selected_agent_ids: effectiveAgentIds, max_rounds: rounds, analyst_confirmed: analystConfirmed, source_query_id: selectedLibraryQuery?.query_id || '', source_query_version: selectedLibraryQuery?.version || null})});
-    if (!created) { setSubmitting(false); setError('任务创建失败。请检查配置和 API 服务。'); return; }
-    if (!startImmediately) { setSubmitting(false); done(created, false); return; }
-    const started = await requestResult(`/runs/${created.run_id}/start`, {method: 'POST', headers: {'Idempotency-Key': crypto.randomUUID(), 'X-Role': 'analyst'}});
+    const submittedAgentIds = executionProfileId !== 'legacy_v1' ? manualAgentIds : effectiveAgentIds;
+    const createPayload = {topic: topic.trim(), supplemental_information: supplementalInformation.trim(), research_route: route, interaction_mode: interactionMode, discovery_branch: branch, execution_profile_id: executionProfileId, report_template_mode: reportTemplateMode, selected_agent_ids: submittedAgentIds, max_rounds: rounds, analyst_confirmed: analystConfirmed, source_query_id: selectedLibraryQuery?.query_id || '', source_query_version: selectedLibraryQuery?.version || null};
+    const createFingerprint = JSON.stringify(createPayload);
+    if (pendingCreateRequestRef.current.fingerprint !== createFingerprint) pendingCreateRequestRef.current = {key:crypto.randomUUID(), fingerprint:createFingerprint};
+    const createRequestId = pendingCreateRequestRef.current.key;
+    const createdResult = await requestResult('/runs', {method: 'POST', headers: {'Content-Type': 'application/json', 'X-Role': 'analyst', 'Idempotency-Key': createRequestId}, body: createFingerprint}, {timeoutMs:15000});
+    if (!createdResult.ok || !createdResult.data?.run_id) {
+      if (createdResult.status) pendingCreateRequestRef.current = {key:'', fingerprint:''};
+      submitLockRef.current = false;
+      setSubmitting(false);
+      setError(`任务创建失败：${createdResult.detail || '请检查配置和 API 服务。'}`);
+      return;
+    }
+    const created = createdResult.data;
+    pendingCreateRequestRef.current = {key:'', fingerprint:''};
+    if (!startImmediately) { submitLockRef.current = false; setSubmitting(false); done(created, false); return; }
+    const started = await requestResult(`/runs/${created.run_id}/start`, {method: 'POST', headers: {'Idempotency-Key': `start:${createRequestId}`, 'X-Role': 'analyst'}}, {timeoutMs:15000});
+    submitLockRef.current = false;
     setSubmitting(false);
     if (started.ok) done(started.data, true); else setError(`任务已保存为草稿，但启动失败：${started.detail || '请检查 Agent、API Key 和 Worker 环境。'}`);
+    if (!started.ok) done(created, false);
   };
+  useEffect(() => { onSubmitStateChange?.({submitting, error}); }, [submitting, error]);
   useEffect(() => { if (startRequestId > 0) void submit(true); }, [startRequestId]);
   const disabled = submitting || !topic.trim();
   const startDisabled = disabled || (catalog.provider.default_mode === 'real' && catalog.provider.codex_available === false);
@@ -538,23 +624,30 @@ function CreateRun({catalog, done, runtime, initialQuery, openQueryLibrary, inli
   </section>;
 }
 
-function WorkspacePage({view, run, runs, catalog, runtime, selectRun}) {
+function WorkspacePage({view, run, runs, catalog, runtime, navigate, selectRun}) {
   const [payload, setPayload] = useState(null); const [loading, setLoading] = useState(false);
   const [taskQuery, setTaskQuery] = useState(''); const [taskStatus, setTaskStatus] = useState('all');
   const [resumingReport, setResumingReport] = useState(false); const [reportResumeError, setReportResumeError] = useState('');
+  const contentRef = useRef(null);
   const live = useLiveInteractions(run, view === 'interactions' || view === 'reports');
   useEffect(() => { setTaskQuery(''); setTaskStatus('all'); }, [view]);
   useEffect(() => { setResumingReport(false); setReportResumeError(''); }, [run?.run_id]);
-  useEffect(() => { let cancelled = false; setPayload(null); if (view === 'interactions') return undefined; if (!run) return undefined; const routes = {evidence: '/domain/EvidenceCard', winning: '/winning-mechanism', capabilities: '/capabilities', reports: '/report'}; setLoading(true); const load = view === 'capabilities' ? Promise.all([request(`/runs/${run.run_id}/capabilities`, null, {headers: {'X-Role': 'analyst'}}), request(`/runs/${run.run_id}/interactions?compact=true`, null, {headers: {'X-Role': 'analyst'}})]).then(([rows, interactions]) => ({rows: Array.isArray(rows) ? rows : [], referenceWeapons: (interactions?.workflow?.swarm_cluster?.candidate_lineage || []).filter(candidate => candidate.s6_eligible !== true)})) : request(`/runs/${run.run_id}${routes[view]}`, null, {headers: {'X-Role': view === 'reports' ? 'reviewer' : 'analyst'}}); load.then(value => { if (!cancelled) setPayload(value); }).finally(() => { if (!cancelled) setLoading(false); }); return () => { cancelled = true; }; }, [view, run?.run_id, run?.status]);
+  useEffect(() => { let cancelled = false; setPayload(null); if (view === 'interactions') return undefined; if (!run) return undefined; const routes = {evidence: '/domain/EvidenceCard', winning: '/winning-mechanism', capabilities: '/capabilities', reports: '/report'}; setLoading(true); const load = view === 'capabilities' ? Promise.all([request(`/runs/${run.run_id}/capabilities`, null, {headers: {'X-Role': 'analyst'}}), request(`/runs/${run.run_id}/interactions?compact=true`, null, {headers: {'X-Role': 'analyst'}})]).then(([rows, interactions]) => ({rows: Array.isArray(rows) ? rows : [], referenceWeapons: (interactions?.workflow?.swarm_cluster?.candidate_lineage || []).filter(candidate => candidate.s6_eligible !== true && hasWeaponCandidateIdentity(candidate))})) : request(`/runs/${run.run_id}${routes[view]}`, null, {headers: {'X-Role': view === 'reports' ? 'reviewer' : 'analyst'}}); load.then(value => { if (!cancelled) setPayload(value); }).finally(() => { if (!cancelled) setLoading(false); }); return () => { cancelled = true; }; }, [view, run?.run_id, run?.status]);
   const item = nav.find(row => row[0] === view); const current = view === 'interactions' ? live.data : payload; const busy = view === 'interactions' ? live.loading : view === 'reports' ? loading || (live.loading && !live.data) : loading;
   const hasTaskNavigator = ['interactions', 'evidence', 'winning', 'capabilities', 'reports'].includes(view); const availableRuns = (runs || []).filter(itemRun => itemRun.status !== 'archived'); const visibleRuns = availableRuns.filter(itemRun => (!taskQuery.trim() || `${itemRun.topic} ${itemRun.supplemental_information || ''} ${itemRun.run_id}`.toLowerCase().includes(taskQuery.trim().toLowerCase())) && (taskStatus === 'all' || taskStatus === 'active' && isRunActive(itemRun, runtime) || taskStatus === itemRun.status)); const contextLabel = {interactions:'当前交互任务',evidence:'当前证据任务',winning:'当前 S1–S6 任务',capabilities:'当前能力画像任务',reports:'当前评审任务'}[view] || '当前研究任务';
   const reportPhase = (live.data?.workflow?.phases || []).find(phase => phase.id === 'report');
-  const reportPhaseStatus = reportPhase?.status || latestReporterPhaseStatus(live.data?.events || [], run?.status === 'completed', run?.status === 'failed');
+  const reportPhaseStatus = run?.status === 'completed' ? 'completed' : reportPhase?.status || latestReporterPhaseStatus(live.data?.events || [], false, run?.status === 'failed');
   const reportFailureEvent = [...(live.data?.events || [])].reverse().find(event => event.event_type === 'report_model_failed');
   const reportFailureDetail = reportPhase?.error || reportFailureEvent?.details?.detail || run?.error || '';
   const resumeReport = async () => { if (!run || run.status !== 'failed') return; setResumingReport(true); setReportResumeError(''); const result = await requestResult(`/runs/${run.run_id}/resume`, {method: 'POST', headers: {'Idempotency-Key': crypto.randomUUID(), 'X-Role': 'analyst'}}); setResumingReport(false); if (result.ok) { setPayload(null); selectRun(result.data); } else setReportResumeError(result.detail || '断点恢复失败，请检查 Worker 与模型配置。'); };
-  const content = !run ? <Empty text="请从左侧选择研究任务"/> : busy && current == null ? <Empty text="正在读取任务产物"/> : view === 'reports' && reportPhaseStatus === 'failed' ? <ReportFailureView run={run} detail={reportFailureDetail} resuming={resumingReport} resume={resumeReport} error={reportResumeError}/> : current == null ? <Empty text={run.status === 'completed' ? '产物读取失败，请刷新后重试' : '任务完成后可查看本页'}/> : view === 'interactions' ? <InteractionView data={current} live={live.connected && !['completed', 'failed', 'cancelled', 'archived'].includes(run.status)} completed={run.status === 'completed'}/> : view === 'reports' ? <ReportView text={current} run={run}/> : view === 'winning' ? <WinningMechanismView data={current}/> : <ObjectGrid view={view} rows={current}/>;
-  return <><PageTitle eyebrow={hasTaskNavigator ? '交互中心' : '研究运行产物'} title={view === 'reports' ? '报告评审' : item?.[1]} subtitle={hasTaskNavigator ? '直接选择研究任务，连续查看交互、证据、S Agent、能力画像和报告产物。' : run ? `当前任务：${run.topic}` : '请在研究任务列表中选择一项运行。'}/>{hasTaskNavigator ? <div className="task-review-workspace"><section className="task-review-rail"><header><div><ListFilter size={17}/><span><b>研究任务</b><small>{visibleRuns.length} / {availableRuns.length}</small></span></div></header><div className="task-review-filters"><div className="searchbox"><Search size={15}/><input value={taskQuery} onChange={event => setTaskQuery(event.target.value)} placeholder="搜索任务或运行 ID"/></div><select value={taskStatus} onChange={event => setTaskStatus(event.target.value)}><option value="all">全部状态</option><option value="active">进行中</option><option value="completed">已完成</option><option value="failed">失败</option><option value="draft">草稿</option></select></div><div className="task-review-list">{visibleRuns.length ? visibleRuns.map(itemRun => <button className={run?.run_id === itemRun.run_id ? 'selected' : ''} key={itemRun.run_id} onClick={() => selectRun(itemRun)}><span><b>{itemRun.topic}</b><small>{itemRun.run_id}</small></span><div><Status value={itemRun.status}/><em>{routeLabel(itemRun.research_route)}</em></div></button>) : <Empty text="没有匹配的研究任务"/>}</div></section><section className={`task-review-content ${view}`}>{run && <header className="task-review-context"><div><span>{contextLabel}</span><b>{run.topic}</b><small>{run.run_id} · {routeLabel(run.research_route)} · {statusLabel(run.status)}</small></div><Status value={run.status}/></header>}{content}</section></div> : content}</>;
+  const chooseTask = itemRun => {
+    selectRun(itemRun);
+    if (window.matchMedia('(max-width: 900px)').matches) {
+      window.requestAnimationFrame(() => contentRef.current?.scrollIntoView({behavior:'smooth', block:'start'}));
+    }
+  };
+  const content = !run ? <Empty text="请从左侧选择研究任务"/> : busy && current == null ? <Empty text="正在读取任务产物"/> : view === 'reports' && reportPhaseStatus === 'failed' ? <ReportFailureView run={run} detail={reportFailureDetail} resuming={resumingReport} resume={resumeReport} error={reportResumeError}/> : current == null ? <Empty text={run?.historical_snapshot ? '历史快照未包含原始产物' : run.status === 'completed' ? '产物读取失败，请刷新后重试' : '任务完成后可查看本页'}/> : view === 'interactions' ? <InteractionView data={current} live={live.connected && !['completed', 'failed', 'cancelled', 'archived'].includes(run.status)} completed={run.status === 'completed'} terminalStatus={run.status}/> : view === 'reports' ? <ReportView text={current} run={run}/> : view === 'winning' ? <WinningMechanismView data={current}/> : <ObjectGrid view={view} rows={current}/>;
+  return <><PageTitle eyebrow={hasTaskNavigator ? '交互中心' : '研究运行产物'} title={view === 'reports' ? '报告评审' : item?.[1]} subtitle={hasTaskNavigator ? '直接选择研究任务，连续查看交互、证据、S Agent、能力画像和报告产物。' : run ? `当前任务：${run.topic}` : '请在研究任务列表中选择一项运行。'}/>{hasTaskNavigator && <nav className="workspace-stage-nav" aria-label="当前任务产物导航"><button onClick={() => navigate('runs', {run:null})}><Archive size={15}/>任务列表</button>{TASK_WORKSPACE_VIEWS.map(stage => { const stageItem = nav.find(row => row[0] === stage); const StageIcon = stageItem?.[2] || Layers3; return <button key={stage} className={view === stage ? 'active' : ''} aria-current={view === stage ? 'page' : undefined} disabled={!run} onClick={() => navigate(stage, {run})}><StageIcon size={15}/>{stageItem?.[1]}</button>; })}</nav>}{hasTaskNavigator ? <div className={`task-review-workspace ${run ? 'has-selected-task' : ''}`}><section className="task-review-rail"><header><div><ListFilter size={17}/><span><b>研究任务</b><small>{visibleRuns.length} / {availableRuns.length}</small></span></div></header><div className="task-review-filters"><div className="searchbox"><Search size={15}/><input value={taskQuery} onChange={event => setTaskQuery(event.target.value)} placeholder="搜索任务或运行 ID"/></div><select value={taskStatus} onChange={event => setTaskStatus(event.target.value)}><option value="all">全部状态</option><option value="active">进行中</option><option value="completed">已完成</option><option value="failed">失败</option><option value="draft">草稿</option></select></div><div className="task-review-list">{visibleRuns.length ? visibleRuns.map(itemRun => <button className={run?.run_id === itemRun.run_id ? 'selected' : ''} key={itemRun.run_id} onClick={() => chooseTask(itemRun)}><span><b>{itemRun.topic}</b><small>{itemRun.run_id}</small></span><div><Status value={itemRun.status}/><em>{routeLabel(itemRun.research_route)}</em></div></button>) : <Empty text="没有匹配的研究任务"/>}</div></section><section ref={contentRef} className={`task-review-content ${view}`}>{run && <header className="task-review-context"><div><span>{contextLabel}</span><b>{run.topic}</b><small>{run.run_id} · {routeLabel(run.research_route)} · {statusLabel(run.status)}</small></div><Status value={run.status}/></header>}{content}</section></div> : content}</>;
 }
 
 function BenchmarkPage() {
@@ -796,14 +889,15 @@ function useLiveInteractions(run, enabled) {
     const source = new EventSource(`${api}/runs/${run.run_id}/events`);
     source.onopen = () => { if (!cancelled) setConnected(true); };
     source.onerror = () => { if (!cancelled) setConnected(false); };
-    const eventTypes = ['run_created', 'run_status_changed', 'run_recovered', 'run_started', 'discovery_meta_loop_evaluated', 'baseline_pipeline_started', 'baseline_discovery_started', 'baseline_discovery_lane_started', 'baseline_discovery_lane_completed', 'baseline_discovery_completed', 'baseline_model_queue_started', 'baseline_model_call_started', 'baseline_model_call_progress', 'baseline_model_call_completed', 'baseline_analysis_started', 'baseline_analysis_completed', 'baseline_materialization_progress', 'baseline_wave_started', 'baseline_wave_completed', 'agent_task_delegated', 'agent_harness_completed', 'task_received', 'tool_call', 'tool_result', 'evidence_assessed', 'baseline_result', 'savepoint', 'baseline_agent_completed', 'baseline_agents_summarized', 'packet_admission_evaluated', 'packet_admission_reused', 'discovery_convergence_completed', 'discovery_convergence_reused', 'winning_input_prepared', 'winning_resources_projected', 'winning_model_result_reused', 'winning_model_queue_started', 'winning_model_call_started', 'winning_model_call_progress', 'winning_model_call_completed', 'swarm_planned', 'specialist_recruitment_planned', 'specialist_spawned', 'specialist_session_started', 'specialist_session_completed', 'specialist_completed', 'specialist_pruned', 'winning_mission_graph_planned', 'winning_agent_instance_recruited', 'winning_agent_instance_ready', 'winning_agent_session_started', 'winning_agent_session_completed', 'winning_agent_instance_failed', 'winning_agent_instance_cancelled', 'winning_candidate_branch_created', 'winning_candidate_ledger_frozen', 'winning_contribution_queued', 'winning_contribution_rejected', 'winning_contribution_rebase_required', 'winning_contribution_merged', 'winning_portfolio_merge_completed', 'hypothesis_created', 'hypothesis_merged', 'hypothesis_rejected', 'swarm_gate_evaluated', 'promotion_candidate_created', 'winning_subagent_completed', 'winning_inner_loop_evaluated', 'winning_middle_loop_evaluated', 'winning_outer_loop_evaluated', 'winning_reasoning_step_completed', 'winning_stage_completed', 'recall_requested', 'recall_task_completed', 'coverage_recomputed_after_recall', 'winning_stage_gate_reevaluated', 'capability_image_created', 'audit_model_fallback', 'audit_completed', 'report_model_queue_started', 'report_model_call_started', 'report_model_call_progress', 'report_model_call_completed', 'report_model_fallback', 'report_model_failed', 'report_completed', 'run_result_saved', 'run_failed'];
+    const eventTypes = ['run_created', 'run_status_changed', 'run_recovered', 'run_started', 'discovery_meta_loop_evaluated', 'baseline_pipeline_started', 'baseline_discovery_started', 'baseline_discovery_lane_started', 'baseline_discovery_lane_completed', 'baseline_discovery_completed', 'baseline_model_queue_started', 'baseline_model_call_started', 'baseline_model_call_progress', 'baseline_model_call_completed', 'baseline_analysis_started', 'baseline_analysis_completed', 'baseline_materialization_progress', 'baseline_wave_started', 'baseline_wave_completed', 'agent_task_delegated', 'agent_harness_completed', 'task_received', 'tool_call', 'tool_result', 'evidence_assessed', 'baseline_result', 'savepoint', 'baseline_agent_completed', 'baseline_agents_summarized', 'packet_admission_evaluated', 'packet_admission_reused', 'discovery_convergence_completed', 'discovery_convergence_reused', 'winning_input_prepared', 'winning_resources_projected', 'winning_model_result_reused', 'winning_model_queue_started', 'winning_model_call_started', 'winning_model_call_progress', 'winning_model_call_completed', 'swarm_planned', 'specialist_recruitment_planned', 'specialist_spawned', 'specialist_session_started', 'specialist_session_completed', 'specialist_completed', 'specialist_pruned', 'winning_mission_graph_planned', 'winning_s3_active_agents_materialized', 'winning_s3_first_pass_self_admission_completed', 'winning_agent_instance_recruited', 'winning_agent_instance_ready', 'winning_agent_session_started', 'winning_agent_waiting', 'winning_agent_session_completed', 'winning_agent_instance_failed', 'winning_agent_instance_cancelled', 'winning_s5_portfolio_frozen', 'winning_s5_handoff_quality_gate_completed', 'winning_s6_card_authoring_started', 'winning_s6_card_authoring_completed', 'winning_s6_card_authoring_reused', 'winning_s6_card_authoring_limited', 'winning_s6_low_repair_started', 'winning_s6_low_repair_completed', 'winning_s6_low_repair_limited', 'winning_s6_release_gate_evaluated', 'winning_candidate_branch_created', 'winning_candidate_ledger_frozen', 'winning_contribution_queued', 'winning_contribution_rejected', 'winning_contribution_rebase_required', 'winning_contribution_merged', 'winning_portfolio_merge_completed', 'hypothesis_created', 'hypothesis_merged', 'hypothesis_rejected', 'swarm_gate_evaluated', 'promotion_candidate_created', 'winning_subagent_completed', 'winning_inner_loop_evaluated', 'winning_middle_loop_evaluated', 'winning_outer_loop_evaluated', 'winning_reasoning_step_completed', 'winning_stage_completed', 'recall_requested', 'recall_task_completed', 'coverage_recomputed_after_recall', 'winning_stage_gate_reevaluated', 'capability_image_created', 'audit_model_fallback', 'audit_completed', 'report_quality_gate_limited', 'report_delivery_resume_gate_evaluated', 'report_model_queue_started', 'report_model_call_started', 'report_model_call_progress', 'report_model_call_completed', 'report_model_fallback', 'report_model_failed', 'report_completed', 'run_result_saved', 'run_failed'];
+    eventTypes.push('run_orphan_process_cleanup');
     eventTypes.forEach(type => source.addEventListener(type, scheduleRefresh));
     return () => { cancelled = true; source.close(); if (refreshTimer) clearTimeout(refreshTimer); setConnected(false); };
   }, [enabled, run?.run_id, run?.status]);
   return {data, loading, connected};
 }
 
-function InteractionView({data, live, completed}) {
+function InteractionView({data, live, completed, terminalStatus}) {
   const [filter, setFilter] = useState('all');
   const agents = data.agents || []; const events = data.events || []; const workflow = data.workflow || {};
   const cluster = workflow.swarm_cluster || {};
@@ -816,7 +910,9 @@ function InteractionView({data, live, completed}) {
   const baselinePlanMap = Object.fromEntries((workflow.discovery?.baseline_agent_plan || []).map(item => [item.agent_id, item]));
   const filterAgents = [...new Map([...activeAgents, ...swarmMembers.map((agent, index) => ({...agent, agent_id: agent.agent_instance_id || agent.agent_id || agent.id || `dynamic-${index}`, display_name: agent.display_name || '动态专用 Agent'}))].map(agent => [agent.agent_id, agent])).values()];
   const visible = (filter === 'all' ? events : events.filter(event => event.actor === filter || event.details?.target_agent_id === filter)).slice(-60);
-  return <><div className={`live-state ${live ? 'connected' : ''}`}><i/>{live ? '实时接收关键流程' : '关键流程审计回放'}</div><section className="metric-strip interaction-metrics"><Metric label="全部事件" value={data.counts?.events || 0} icon={Activity}/><Metric label="关键事件" value={data.counts?.visible_events ?? events.length} icon={Layers3}/><Metric label="业务 Agent" value={activeBusinessAgents.length} icon={Bot}/><Metric label="保存点" value={data.counts?.savepoints || 0} icon={ClipboardCheck}/></section><WorkflowOverview events={events} workflow={workflow} agents={agents} live={live} completed={completed}/><DynamicSwarmInteractionPanel cluster={cluster} members={swarmMembers} live={live}/><section className="agent-map compact-agent-map"><div className="section-heading"><div><b>本次参与的业务 Agent</b><span>由主控 Agent 结合 A–H 分支路径与当前输入选择；分支自动加入的案例、技术、跨域与非传统安全专项 Agent 也在此显示。</span></div></div><div className="agent-chip-grid">{activeBusinessAgents.map(agent => { const plan = baselinePlanMap[agent.agent_id] || {}; return <article className="agent-chip" key={agent.agent_id}><Bot size={16}/><div><b>{agent.display_name}{plan.mode && <em className={`agent-plan-mode ${plan.mode}`}>{baselineAgentModeLabel(plan.mode)}</em>}</b><small>{agent.harness_profile || '受控运行'}</small><span>{(agent.skill_ids || []).slice(0, 2).join(' · ') || '专业分析'}</span></div></article>; })}</div>{activeBusinessAgents.length === 0 && <small className="agent-overflow">主控 Agent 正在按分支路径判断本次需要的业务 Agent。</small>}</section><section className="event-filter compact-filter"><span>关键事件</span><select value={filter} onChange={event => setFilter(event.target.value)}><option value="all">全部 Agent</option>{filterAgents.map(agent => <option key={agent.agent_id} value={agent.agent_id}>{agent.display_name}</option>)}</select><em>显示 {visible.length} / {data.counts?.events || events.length}</em></section><section className="event-timeline compact-timeline">{visible.map((event, index) => <InteractionEvent key={`${event.event_id}-${index}`} event={event} agent={map[event.actor]}/>)}</section></>;
+  const failed = terminalStatus === 'failed' || workflow.status === 'failed';
+  const failure = workflow.failure || {};
+  return <><div className={`live-state ${live ? 'connected' : ''}`}><i/>{live ? '实时接收关键流程' : '关键流程审计回放'}</div>{failed && <section className="workflow-failure"><CircleAlert size={18}/><div><b>{failure.phase ? `${failure.phase === 's_agents' ? 'S1–S6 制胜机理阶段' : failure.phase} 已停止` : '任务已停止'}</b><span>{agentFacingText(failure.detail || '已保留基线证据、检查点与可恢复的执行上下文。')}</span></div></section>}<section className="metric-strip interaction-metrics"><Metric label="全部事件" value={data.counts?.events || 0} icon={Activity}/><Metric label="关键事件" value={data.counts?.visible_events ?? events.length} icon={Layers3}/><Metric label="业务 Agent" value={activeBusinessAgents.length} icon={Bot}/><Metric label="保存点" value={data.counts?.savepoints || 0} icon={ClipboardCheck}/></section><WorkflowOverview events={events} workflow={workflow} agents={agents} live={live} completed={completed}/><DynamicSwarmInteractionPanel cluster={cluster} members={swarmMembers} live={live}/><section className="agent-map compact-agent-map"><div className="section-heading"><div><b>本次参与的业务 Agent</b><span>由主控 Agent 结合 A–H 分支路径与当前输入选择；分支自动加入的案例、技术、跨域与非传统安全专项 Agent 也在此显示。</span></div></div><div className="agent-chip-grid">{activeBusinessAgents.map(agent => { const plan = baselinePlanMap[agent.agent_id] || {}; return <article className="agent-chip" key={agent.agent_id}><Bot size={16}/><div><b>{agent.display_name}{plan.mode && <em className={`agent-plan-mode ${plan.mode}`}>{baselineAgentModeLabel(plan.mode)}</em>}</b><small>{agent.harness_profile || '受控运行'}</small><span>{(agent.skill_ids || []).slice(0, 2).join(' · ') || '专业分析'}</span></div></article>; })}</div>{activeBusinessAgents.length === 0 && <small className="agent-overflow">主控 Agent 正在按分支路径判断本次需要的业务 Agent。</small>}</section><section className="event-filter compact-filter"><span>关键事件</span><select value={filter} onChange={event => setFilter(event.target.value)}><option value="all">全部 Agent</option>{filterAgents.map(agent => <option key={agent.agent_id} value={agent.agent_id}>{agent.display_name}</option>)}</select><em>显示 {visible.length} / {data.counts?.events || events.length}</em></section><section className="event-timeline compact-timeline">{visible.map((event, index) => <InteractionEvent key={`${event.event_id}-${index}`} event={event} agent={map[event.actor]}/>)}</section></>;
 }
 
 function DynamicSwarmInteractionPanel({cluster, members, live}) {
@@ -827,22 +923,34 @@ function DynamicSwarmInteractionPanel({cluster, members, live}) {
   const rolePools = cluster.role_pools || ['S1', 'S2', 'S3', 'S4', 'S5', 'S6'].map(mission_node => ({mission_node, count: rows.filter(item => item.mission_node === mission_node).length}));
   const specialists = cluster.dynamic_specialists || rows.filter(item => item.recruitment_planned);
   const candidates = cluster.candidate_lineage || [];
+  const visibleCandidates = candidates.filter(candidate => {
+    const title = cleanWeaponCandidateText(candidate.title);
+    const form = weaponCandidateForm(candidate);
+    const isSelected = candidate.s6_eligible === true || candidate.portfolio_status === 'selected' || candidate.selection_status === 'selected';
+    // Lineage-only event shells have an id but no authored equipment identity.
+    // Keep them in the audit trail, not in the user-facing weapon board.
+    return Boolean(title || form || isSelected);
+  });
   const ledger = cluster.hypothesis_ledger || {};
   const receipts = cluster.merge_receipts || [];
   const portfolio = cluster.final_equipment_portfolio || cluster.portfolio_decision?.final_equipment_portfolio || [];
+  const s6Cards = cluster.s6_authored_cards || [];
+  const s6Gate = cluster.s6_release_gate || {};
+  const s6Authoring = cluster.s6_authoring || {};
   const portfolioGate = cluster.portfolio_decision?.quality_gate || {};
   const waves = [1, 2, 3].map(wave => ({wave, label: {1: '问题发散', 2: '开放创作', 3: '组合决策'}[wave], members: rows.filter(item => Number(item.wave || 0) === wave)}));
   const completed = Number(counts.completed || 0) + Number(counts.merged || 0);
-  const memberPurpose = member => member.role_purpose || '围绕当前质量残差执行定向补强。';
+  const memberPurpose = member => userFacingSwarmMemberPurpose(member);
   return <section className="dynamic-swarm-panel">
     <header><div><Layers3 size={18}/><span><b>动态制胜 Agent 集群</b><small>S1–S6 为种子角色池，依赖满足即并行启动；质量残差可招聘额外 Codex CLI 专用 Agent，贡献只合并到声明候选。</small></span></div><em className={live && Number(counts.running || 0) > 0 ? 'live' : ''}>{live && Number(counts.running || 0) > 0 ? '实时调度' : '可审计回放'}</em></header>
     <div className="dynamic-swarm-counts"><span><small>实例总数</small><b>{counts.total ?? rows.length}</b></span><span><small>创建/执行中</small><b>{Number(counts.recruiting || 0) + Number(counts.running || 0)}</b></span><span><small>完成</small><b>{completed}</b></span><span><small>账本版本</small><b>v{ledger.version || 0}</b></span><span><small>最终装备方向</small><b>{portfolio.length}</b></span></div>
     <div className="swarm-role-pools">{rolePools.map(pool => <div key={pool.mission_node}><b>{pool.mission_node}<i>×{pool.count || 0}</i></b><span>{swarmNodeLabel(pool.mission_node)}</span></div>)}<div className="specialists"><b>专用<i>×{specialists.length}</i></b><span>残差触发招聘</span></div></div>
-    {graph.graph_id && <div className="swarm-graph-contract"><span>Mission Graph <code>{graph.graph_id}</code></span><span>并发上限 <b>{graph.maximum_concurrency || 6}</b></span><span>实例边界 <b>{graph.minimum_instances || 8}–{graph.maximum_instances || 16}</b></span><span>{graph.merge_strategy || '版本化账本 Merge'}</span></div>}
-    <div className="dynamic-swarm-waves">{waves.map(wave => <section key={wave.wave} className={`dynamic-swarm-wave wave-${wave.wave}`}><header><i>W{wave.wave}</i><span><b>{wave.label}</b><small>{wave.members.length} 个实例</small></span></header><div>{wave.members.length ? wave.members.map((member, index) => <article className={`dynamic-swarm-member status-${member.status || 'planned'}`} key={member.agent_instance_id || member.agent_id || `${wave.wave}-${index}`}><header><i>{member.mission_node || index + 1}</i><div><b>{member.display_name || '动态专用 Agent'}</b><small>{member.archetype || member.runtime_profile_id || '按需角色'}</small></div><span className={`swarm-member-status ${member.status || 'planned'}`}>{swarmMemberStatusLabel(member)}</span></header><details className="dynamic-swarm-purpose"><summary><span>{memberPurpose(member)}</span><em>展开职责</em></summary><p>{memberPurpose(member)}</p></details><div className="dynamic-swarm-routing"><span>候选 <code>{shortIdentifier(member.hypothesis_id || '广度新建')}</code></span><span>Merge <b>{member.merge_target || '未声明'}</b></span></div>{member.depends_on?.length > 0 && <div className="swarm-dependencies"><small>依赖</small>{member.depends_on.slice(0, 3).map(item => <code key={item}>{shortIdentifier(item)}</code>)}</div>}{member.trigger_residuals?.length > 0 && <div className="dynamic-swarm-residuals">{member.trigger_residuals.slice(0, 3).map(item => <span key={item}>{item}</span>)}</div>}{member.prune_reason && <div className="dynamic-swarm-decision rejected"><CircleAlert size={13}/><span>回收原因：{agentFacingText(member.prune_reason)}</span></div>}{member.portfolio_status === 'selected' && <div className="dynamic-swarm-decision accepted"><CheckCircle2 size={13}/><span>贡献已纳入独立装备卡</span></div>}{member.portfolio_status === 'rejected' && <div className="dynamic-swarm-decision not-selected"><CheckCircle2 size={13}/><span>执行结论已沉淀为候选约束或变体，不重复单列装备卡</span></div>}{member.status === 'merged' && !member.portfolio_status && <div className="dynamic-swarm-decision accepted"><CheckCircle2 size={13}/><span>贡献已定向合并</span></div>}<details className="dynamic-swarm-technical"><summary>角色合同与独立会话</summary><dl><dt>脱敏会话引用</dt><dd><code>{member.session_ref || member.agent_instance_id || '待启动'}</code></dd><dt>执行后端</dt><dd>{member.execution_backend === 'independent_codex_cli' ? '独立 Codex CLI' : member.execution_backend || member.provider_type || '受控模型会话'}</dd><dt>上下文隔离</dt><dd>{member.context_isolation || 'ephemeral'}</dd><dt>Skill</dt><dd>{(member.skill_ids || []).join(' · ') || '受治理共享 Skill'}</dd><dt>递归招聘</dt><dd>{member.allow_child_spawn === true ? '允许' : '禁止'}</dd></dl></details></article>) : <div className="dynamic-swarm-empty"><RefreshCw size={14}/><span>等待依赖满足或质量残差触发</span></div>}</div></section>)}</div>
-    {candidates.length > 0 && <section className="swarm-candidate-board"><header><div><b>候选军事装备</b><small>入选装备须通过单项质量门、对象证据与直接作战属性审查，并按独立性和组合价值进入 S6；其余作为可展开查看的参考武器保留</small></div><em>{candidates.length} 条</em></header><div>{candidates.map(candidate => { const status = candidate.selection_status || candidate.status || 'created'; const isReference = !candidate.s6_eligible && ['reference', 'rejected', 'contribution_rejected'].includes(status); const weaponName = weaponCandidateTitle(candidate); return <article key={candidate.hypothesis_id} className={`candidate-${isReference ? 'reference' : status}`}><header><b title={weaponName || candidate.hypothesis_id}>{weaponName || shortIdentifier(candidate.hypothesis_id)}</b><span>{swarmCandidateStatusLabel(status)}</span></header><div className="candidate-score" title="组合评分：综合质量、证据覆盖、新颖性、反适应稳健性与工程可行性；不是命中概率或武器效能百分比"><i style={{width: `${Math.max(0, Math.min(100, Number(candidate.score || 0) * 100))}%`}}/><em>{Math.round(Number(candidate.score || 0) * 100)}</em></div><p>{weaponCandidateForm(candidate) || '候选装备形态待复核'}</p>{candidate.s6_eligible && <small className="candidate-selection-reason">入选依据：{agentFacingText(candidate.selection_reason || '通过单项质量门，并在证据、独立性、直接作战属性与组合价值排序中进入本轮容量。')}</small>}<details className="candidate-reference-overview"><summary>{candidate.s6_eligible ? '查看候选概述' : '查看参考概述'}</summary><p>{swarmCandidateOverview(candidate)}</p>{candidate.related_hypothesis_ids?.length > 0 && <small>关联候选：{candidate.related_hypothesis_ids.map(shortIdentifier).join(' · ')}</small>}</details><footer><span>Merge {(candidate.merge_targets || []).join('/') || '待贡献'}</span><span>对象证据 {(candidate.evidence_ids || []).length}</span><span>{candidate.s6_eligible ? 'S6并行详细画像' : '参考武器'}</span></footer></article>; })}</div></section>}
+    {graph.graph_id && <div className="swarm-graph-contract"><span>Mission Graph <code>{graph.graph_id}</code></span><span>并发上限 <b>{graph.maximum_concurrency || 6}</b></span><span>实际峰值 <b>{graph.maximum_observed_concurrency ?? '—'}</b></span><span>实例边界 <b>{graph.minimum_instances || 8}–{graph.maximum_instances || 21}</b></span><span>{graph.merge_strategy || '版本化账本 Merge'}</span></div>}
+    <div className="dynamic-swarm-waves">{waves.map(wave => <section key={wave.wave} className={`dynamic-swarm-wave wave-${wave.wave}`}><header><i>W{wave.wave}</i><span><b>{wave.label}</b><small>{wave.members.length} 个实例</small></span></header><div>{wave.members.length ? wave.members.map((member, index) => <article className={`dynamic-swarm-member status-${member.status || 'planned'}`} key={member.agent_instance_id || member.agent_id || `${wave.wave}-${index}`}><header><i>{member.mission_node || index + 1}</i><div><b>{userFacingSwarmMemberName(member)}</b><small>{swarmNodeLabel(member.mission_node)}</small></div><span className={`swarm-member-status ${member.status || 'planned'}`}>{swarmMemberStatusLabel(member)}</span></header><details className="dynamic-swarm-purpose"><summary><span>{memberPurpose(member)}</span><em>展开职责</em></summary><p>{memberPurpose(member)}</p></details><div className="dynamic-swarm-routing"><span>候选 <code>{shortIdentifier(member.hypothesis_id || '开放新建')}</code></span><span>Merge <b>{member.merge_target || '未声明'}</b></span></div>{member.depends_on?.length > 0 && <div className="swarm-dependencies"><small>依赖</small>{member.depends_on.slice(0, 3).map(item => <code key={item}>{shortIdentifier(item)}</code>)}</div>}{member.trigger_residuals?.length > 0 && <div className="dynamic-swarm-residuals">{member.trigger_residuals.slice(0, 3).map(item => <span key={item}>{item}</span>)}</div>}{member.prune_reason && <div className="dynamic-swarm-decision rejected"><CircleAlert size={13}/><span>回收原因：{agentFacingText(member.prune_reason)}</span></div>}{member.portfolio_status === 'selected' && <div className="dynamic-swarm-decision accepted"><CheckCircle2 size={13}/><span>贡献已纳入独立装备卡</span></div>}{member.portfolio_status === 'rejected' && <div className="dynamic-swarm-decision not-selected"><CheckCircle2 size={13}/><span>执行结论已沉淀为候选约束或变体，不重复单列装备卡</span></div>}{member.status === 'merged' && !member.portfolio_status && <div className="dynamic-swarm-decision accepted"><CheckCircle2 size={13}/><span>贡献已定向合并</span></div>}<details className="dynamic-swarm-technical"><summary>角色合同与独立会话</summary><dl><dt>脱敏会话引用</dt><dd><code>{member.session_ref || member.agent_instance_id || '待启动'}</code></dd><dt>执行后端</dt><dd>{member.execution_backend === 'independent_codex_cli' ? '独立 Codex CLI' : member.execution_backend || member.provider_type || '受控模型会话'}</dd><dt>上下文隔离</dt><dd>{member.context_isolation || 'ephemeral'}</dd><dt>Skill</dt><dd>{(member.skill_ids || []).join(' · ') || '受治理共享 Skill'}</dd><dt>递归招聘</dt><dd>{member.allow_child_spawn === true ? '允许' : '禁止'}</dd></dl></details></article>) : <div className="dynamic-swarm-empty"><RefreshCw size={14}/><span>等待依赖满足或开放探索容量释放</span></div>}</div></section>)}</div>
+    {visibleCandidates.length > 0 && <section className="swarm-candidate-board"><header><div><b>候选军事装备</b><small>按组合价值与独立性排序</small></div><em>{visibleCandidates.length} 条</em></header><div>{visibleCandidates.map(candidate => { const status = candidate.selection_status || candidate.status || 'created'; const isReference = !candidate.s6_eligible && ['reference', 'rejected', 'contribution_rejected'].includes(status); const weaponName = weaponCandidateTitle(candidate); const overview = swarmCandidateOverview(candidate); return <article key={candidate.hypothesis_id} className={`candidate-${isReference ? 'reference' : status}`}><header><b title={weaponName || candidate.hypothesis_id}>{weaponName || shortIdentifier(candidate.hypothesis_id)}</b><span>{swarmCandidateStatusLabel(status)}</span></header>{overview && <p className="candidate-winning-summary">{overview}</p>}<div className="candidate-score" title="组合评分"><i style={{width: `${Math.max(0, Math.min(100, Number(candidate.score || 0) * 100))}%`}}/><em>{Math.round(Number(candidate.score || 0) * 100)}</em></div>{candidate.s6_eligible && <small className="candidate-selection-reason">入选依据：{agentFacingText(candidate.selection_reason || '进入本轮 S6 详细画像。')}</small>}{candidate.related_hypothesis_ids?.length > 0 && <small className="candidate-related-hypotheses">关联候选：{candidate.related_hypothesis_ids.map(shortIdentifier).join(' · ')}</small>}<footer><span>Merge {(candidate.merge_targets || []).join('/') || '待贡献'}</span><span>对象证据 {(candidate.evidence_ids || []).length}</span><span>{candidate.s6_eligible ? 'S6并行详细画像' : '待核验候选'}</span></footer></article>; })}</div></section>}
     {receipts.length > 0 && <details className="swarm-merge-receipts"><summary>Merge Receipt 与版本重基（{receipts.length}）</summary><div>{receipts.slice(-12).map(receipt => <div key={receipt.receipt_id}><code>{shortIdentifier(receipt.contribution_id)}</code><span>{shortIdentifier(receipt.hypothesis_id)} → {receipt.merge_target}</span><b className={receipt.status}>{receipt.rebase_required ? '需重基' : receipt.status}</b><em>v{receipt.base_ledger_version ?? '?'}→v{receipt.resulting_ledger_version ?? '?'}</em></div>)}</div></details>}
-    {portfolio.length > 0 && <section className="swarm-equipment-portfolio"><header><div><b>最终前瞻军事装备组合</b><small>通过证据、因果、装备具体性、失效边界与独立组合评审</small></div><em>{portfolio.length} 条{portfolioGate.direct_combat_equipment_count != null ? ` · 直接战斗装备 ${portfolioGate.direct_combat_equipment_count}` : ''}{portfolioGate.passed === false ? ' · 硬门未通过' : ''}</em></header><div>{portfolio.map((item, index) => <article key={item.hypothesis_id || `${item.name}-${index}`}><i>{index + 1}</i><div><b>{item.name || '前瞻装备方向'}</b><small>{(item.equipment_forms || []).join(' · ') || item.type || '具体装备形态'}</small><p>{(item.mission_effects || []).slice(0, 2).join('；') || '直接军事效果待展示'}</p><footer><span>{item.type || 'new'}</span><span>{item.direct_combat_equipment ? '直接战斗装备' : '体系补链'}</span><span>验证 {(item.validation_plan || []).length}</span><span>边界 {(item.failure_boundaries || []).length}</span></footer></div></article>)}</div></section>}
+    {portfolio.length > 0 && <section className="swarm-equipment-portfolio"><header><div><b>最终前瞻军事装备组合</b><small>独立 Codex 按完整 Query、制胜因果与组合独立性完成语义评审</small></div><em>{portfolio.length} 条{portfolioGate.direct_combat_equipment_count != null ? ` · 直接战斗装备 ${portfolioGate.direct_combat_equipment_count}` : ''}</em></header><div>{portfolio.map((item, index) => <article key={item.hypothesis_id || `${item.name}-${index}`}><i>{index + 1}</i><div><b>{item.name || '前瞻装备方向'}</b><p className="winning-summary">{item.concise_winning_summary || (item.mission_effects || []).slice(0, 2).join('；') || item.military_value || '制胜说明待补充'}</p><small>{(item.equipment_forms || []).join(' · ') || item.equipment_form || item.type || '具体装备形态'}</small><footer><span>{item.type || 'new'}</span><span>{item.direct_combat_equipment ? '直接战斗装备' : '体系补链'}</span><span>验证 {(item.validation_plan || []).length}</span><span>边界 {(item.failure_boundaries || []).length}</span></footer></div></article>)}</div></section>}
+    {(s6Authoring.started > 0 || s6Cards.length > 0 || s6Gate.status) && <section className="swarm-s6-gate"><header><div><b>S6 原创能力画像</b><small>单卡独立成稿；不会把 S5 入选组合冒充为 S6 画像</small></div><em className={s6Gate.passed ? 'passed' : 'limited'}>{s6Gate.passed ? '画像交付门通过' : s6Gate.status === 'failed' ? '画像交付门未通过' : '画像交付受限'}</em></header><div className="swarm-s6-stats"><span>成稿 {s6Cards.length}/{s6Authoring.started || s6Gate.card_count || s6Cards.length}</span><span>复用 {s6Authoring.reused || 0}</span><span>受限回退 {s6Authoring.limited || 0}</span><span>硬门问题 {(s6Gate.issues || []).length}</span></div>{s6Gate.issues?.length > 0 && <ul>{s6Gate.issues.slice(0, 4).map((issue, index) => <li key={`${issue}-${index}`}>{issue}</li>)}</ul>}</section>}
   </section>;
 }
 
@@ -852,7 +960,27 @@ function swarmMemberStatusLabel(member = {}) {
   if (member.portfolio_status === 'rejected') return '贡献已沉淀';
   return {planned:'待调度',recruiting:'会话创建中',queued:'等待执行',running:'执行中',completed:'执行完成',merged:'贡献已合并',pruned:'已回收',skipped:'已回收',failed:'执行失败'}[status] || '待调度';
 }
-function swarmCandidateStatusLabel(value) { return {created:'已创建',contribution_queued:'贡献排队',rebase_required:'版本重基',merged:'已合并',selected:'入选',merged_as_variant:'参考变体',not_selected_capacity:'参考武器',reference:'参考武器',rejected:'参考武器',contribution_rejected:'参考武器'}[value] || value || '演化中'; }
+const INTERNAL_SWARM_COPY_PATTERN = /独立检验Query蓝图制胜命题|制胜命题验证|概念性工作名|Query因果|当前唯一任务主题为|将候选制胜机理收敛为具体装备构型|多样性侦察员建议从/;
+function userFacingSwarmMemberName(member = {}) {
+  const raw = String(member.display_name || member.name || '').trim();
+  const legacyDimensionAgent = raw.match(/^(?:.+?)维度创新装备 Agent\s*([A-Z])$/i);
+  if (legacyDimensionAgent) return `开放创新武器 Agent ${legacyDimensionAgent[1].toUpperCase()}`;
+  if (INTERNAL_SWARM_COPY_PATTERN.test(raw)) return `${swarmNodeLabel(member.mission_node)}推演 Agent`;
+  return agentFacingText(raw || `${swarmNodeLabel(member.mission_node)} Agent`);
+}
+function userFacingSwarmMemberPurpose(member = {}) {
+  const raw = String(member.role_purpose || member.purpose || '').trim();
+  if (raw && !INTERNAL_SWARM_COPY_PATTERN.test(raw)) return agentFacingText(raw);
+  return {
+    S1: '分析对手体系、任务链断点及可能的反适应路径。',
+    S2: '比较不同作战运用路径及其直接军事效果。',
+    S3: '先理解完整 Query，跨多个能力维度自由比较并创造新质候选武器；可舍弃所有前置启发。',
+    S4: '与 S3 同权开放创作新质候选武器，不承担后置物化、装备映射或机械补全。',
+    S5: '核验装备基线、成熟度、成本、边界与可证伪条件。',
+    S6: '对入选装备进行组合评审或形成独立能力画像。',
+  }[member.mission_node] || '围绕当前质量缺口执行定向分析。';
+}
+function swarmCandidateStatusLabel(value) { return {created:'已创建',contribution_queued:'贡献排队',rebase_required:'版本重基',merged:'已合并',selected:'入选',selected_pending_verification:'新质方向·待核验',merged_as_variant:'参考变体',not_selected_capacity:'参考武器',reference:'参考武器',rejected:'参考武器',contribution_rejected:'参考武器'}[value] || value || '演化中'; }
 function cleanWeaponCandidateText(value) {
   return String(value || '').replace(/_/g, ' ')
     .replace(/^(?:(?:[A-H]\s*[-/]?\s*)?S[1-6](?:\s*[-/]?\s*(?:候选)?[A-Z一二三四五六\d]+)?|(?:竞争分支|候选)(?:[A-Z一二三四五六\d-]+)?|[A-H])\s*[：:—–/-]*\s*/i, '')
@@ -862,28 +990,67 @@ function cleanWeaponCandidateText(value) {
     .replace(/^(?:(?:主装备)?(?:装备)?形态|接口形态|接口|任务接口|(?:[Qq]uery)(?:相关|专属)?(?:型号|装备)?|相关型号)\s*[：:]\s*/, '')
     .trim();
 }
-function isConcreteWeaponCandidateText(value) {
-  const text = String(value || '').trim();
-  return /导弹|巡飞|弹药|毁伤弹|拦截弹|无人机|攻击无人机|无人攻击机|无人僚机|无人艇|无人潜航器|无人平台|效应器|火力舱|发射车|武器站|火炮|鱼雷|水雷|激光武器|微波武器/.test(text)
-    && !/^(?:内置效应器|效应器|内置载荷|任务载荷|攻击载荷|火力|平台|弹药|弹群)$/.test(text)
-    && !/^(?:内置效应器|内置载荷|任务载荷|攻击载荷)\s*[：:]/.test(text)
-    && !/证据链|任务链|信息链|杀伤链|闭环|能力|体系|方向|红队保留|竞争分支|颠覆分支|候选|作战模式/.test(text);
-}
 function weaponCandidateTitle(candidate = {}) {
   const title = cleanWeaponCandidateText(candidate.title);
   const head = title.split(/[：:；;。]/, 1)[0].trim();
-  if (isConcreteWeaponCandidateText(head)) return head;
-  if (isConcreteWeaponCandidateText(title)) return title;
-  const form = weaponCandidateForm(candidate, isConcreteWeaponCandidateText);
-  return form || head || title || '待复核具体武器装备';
+  // S3/S4/S5 already apply the Codex semantic naming contract before a
+  // candidate reaches the ledger. Do not hide that governed title behind a
+  // local vocabulary of familiar weapon suffixes: novel identities such as
+  // “无人母机” are intentionally allowed to fall outside that vocabulary.
+  if (head) return head;
+  if (title) return title;
+  return weaponCandidateForm(candidate);
 }
-function weaponCandidateForm(candidate = {}, concreteCheck = null) {
-  const concrete = concreteCheck || isConcreteWeaponCandidateText;
+function weaponCandidateForm(candidate = {}) {
   const forms = Array.isArray(candidate.equipment_forms) ? candidate.equipment_forms : [];
   const normalized = forms.map(cleanWeaponCandidateText).filter(Boolean);
-  return normalized.find(concrete)?.slice(0, 64) || normalized.slice(0, 2).join(' · ');
+  return normalized.slice(0, 2).join(' · ');
 }
-function swarmCandidateOverview(candidate = {}) { const parts = [candidate.novelty_delta, (candidate.mechanism_chain || []).slice(0, 3).join(' → '), (candidate.direct_military_effects || []).slice(0, 2).join('；')].map(value => String(value || '').trim()).filter(Boolean); return parts.join('；') || weaponCandidateForm(candidate) || '该候选作为参考武器保留，可结合后续对象证据与任务适配性继续复核。'; }
+function hasWeaponCandidateIdentity(candidate = {}) {
+  return Boolean(weaponCandidateTitle(candidate) || weaponCandidateForm(candidate));
+}
+function normalizeWeaponIdentity(value) {
+  return cleanWeaponCandidateText(value)
+    .toLowerCase()
+    .replace(/[“”"'‘’（）()、，。；：:·丨|/\\\s_-]+/g, '')
+    .trim();
+}
+function referenceWeaponDuplicatesCapability(candidate = {}, rows = []) {
+  const candidateIdentity = [weaponCandidateTitle(candidate), weaponCandidateForm(candidate)]
+    .map(normalizeWeaponIdentity)
+    .filter(value => value.length >= 6);
+  if (!candidateIdentity.length) return false;
+  return rows.some(row => {
+    const rowIdentity = [row?.name, row?.equipment_form, row?.equipment_category, row?.capability_image]
+      .map(normalizeWeaponIdentity)
+      .filter(value => value.length >= 6);
+    return candidateIdentity.some(candidateValue => rowIdentity.some(rowValue => (
+      candidateValue === rowValue
+      || candidateValue.length >= 10 && rowValue.length >= 10 && (candidateValue.includes(rowValue) || rowValue.includes(candidateValue))
+    )));
+  });
+}
+function swarmCandidateOverview(candidate = {}) {
+  const generatedOverview = String(candidate.reference_overview || '').trim();
+  const form = weaponCandidateForm(candidate);
+  const weaponName = weaponCandidateTitle(candidate);
+  const removeFormAlias = text => {
+    if (!text || !form || form === weaponName) return text;
+    const escapedForm = form.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return text
+      .replace(new RegExp(`\\s*[（(]\\s*${escapedForm}\\s*[）)]`, 'g'), '')
+      .trim();
+  };
+  if (generatedOverview) return removeFormAlias(generatedOverview);
+  const authoredFallbacks = [
+    candidate.decisive_advantage_thesis,
+    candidate.novelty_delta,
+    candidate.project_function,
+    ...(Array.isArray(candidate.direct_military_effects) ? candidate.direct_military_effects : [candidate.direct_military_effects]),
+  ].map(value => String(value || '').trim()).filter(Boolean);
+  if (authoredFallbacks.length) return removeFormAlias(authoredFallbacks[0]);
+  return '';
+}
 function swarmNodeLabel(value) { return {S1:'对手体系',S2:'竞争战法',S3:'开放创作',S4:'开放创作',S5:'组合审查',S6:'能力画像'}[value] || '专用角色'; }
 function shortIdentifier(value) { const text = String(value || ''); return text.length > 24 ? `${text.slice(0, 10)}…${text.slice(-8)}` : text; }
 
@@ -924,23 +1091,36 @@ function WorkflowOverview({events, workflow, agents, live, completed}) {
   const baselineDetail = `${completedAgents}${baselineAgentIds.size ? ` / ${baselineAgentIds.size}` : ''} 个 Agent 已完成${baselineProgress.length ? ` · ${baselineProgress.join('；')}` : runningBaselineNames.length ? ` · 正在执行 ${runningBaselineNames.join('、')}` : ''}`;
   const fallbackSteps = events.filter(event => event.event_type === 'winning_subagent_completed' && event.details?.execution_mode !== 'dynamic').map(event => ({...event.details, agent_id: event.actor}));
   const planByStep = new Map([...fallbackSteps, ...(workflow.step_plan || [])].map(item => [Number(item.step), item]));
-  const dynamicCandidates = [...(Array.isArray(metaReview.dynamic_subagents) ? metaReview.dynamic_subagents : []), ...(workflow.dynamic_agents || [])];
+  const dynamicProfile = execution.profile_id === 'winning_swarm_dynamic_v2';
+  const workflowDynamicAgents = Array.isArray(workflow.dynamic_agents) ? workflow.dynamic_agents : [];
+  const dynamicCandidates = workflowDynamicAgents.length ? workflowDynamicAgents : (Array.isArray(metaReview.dynamic_subagents) ? metaReview.dynamic_subagents : []);
   const dynamicAgents = [...new Map(dynamicCandidates.map((agent, index) => [`${agent.display_name || agent.name || agent.agent_id || agent.id || `dynamic-${index}`}|${normalizeMergeTarget(agent)}`, agent])).values()];
+  const s3Materialization = [...events].reverse().find(event => event.event_type === 'winning_s3_active_agents_materialized');
+  const activeS3InstanceIds = new Set(stringList(s3Materialization?.details?.active_instance_ids));
   const stepCards = S_AGENT_ARCHITECTURE.map(meta => {
     const plan = planByStep.get(meta.step) || {};
     const agent = agentMap[plan.agent_id] || agentMap[meta.agent_id] || {};
-    const nodeMembers = dynamicAgents.filter(item => normalizeMergeTarget(item) === `S${meta.step}`);
-    const executionMode = nodeMembers.length ? 'dynamic' : plan.execution_mode || plan.mode || 'standard';
+    const rawNodeMembers = dynamicAgents.filter(item => {
+      if (normalizeMergeTarget(item) !== `S${meta.step}` || item.inactive_capacity) return false;
+      if (normalizeWorkflowStatus(plan.status) === 'completed' && ['planned', 'recruiting', 'queued', 'running'].includes(String(item.status || 'planned').toLowerCase())) return false;
+      if (meta.step !== 3 || activeS3InstanceIds.size === 0) return true;
+      return activeS3InstanceIds.has(String(item.agent_instance_id || item.id || item.agent_id || ''));
+    });
+    const nodeMembers = [...new Map(rawNodeMembers.map((item, index) => [String(item.agent_instance_id || item.id || item.agent_id || `${normalizeMergeTarget(item)}-${index}`), item])).values()];
+    const hasActualDecision = plan.decision_finalized === true || nodeMembers.length > 0 || fallbackSteps.some(item => Number(item.step) === meta.step);
+    const provisionalDynamic = dynamicProfile && !hasActualDecision;
+    const executionMode = nodeMembers.length || provisionalDynamic ? 'dynamic' : plan.execution_mode || plan.mode || 'standard';
     const completedEvent = fallbackSteps.some(item => Number(item.step) === meta.step && item.execution_mode !== 'skip' && item.status !== 'skipped_by_branch_blueprint');
-    let status = normalizeSAgentStatus(plan.status, executionMode, completedEvent);
+    let status = provisionalDynamic ? 'pending' : normalizeSAgentStatus(plan.status, executionMode, completedEvent);
     const memberStatuses = nodeMembers.map(item => String(item.status || 'planned').toLowerCase());
     const dynamicCompleted = memberStatuses.filter(item => ['completed', 'merged'].includes(item)).length;
     const dynamicActive = memberStatuses.some(item => ['recruiting', 'queued', 'running'].includes(item));
     const dynamicTerminal = memberStatuses.length > 0 && memberStatuses.every(item => ['completed', 'merged', 'pruned', 'failed', 'skipped'].includes(item));
-    if (dynamicActive) status = 'running';
-    else if (dynamicTerminal && dynamicCompleted > 0) status = 'completed';
-    else if (dynamicTerminal && memberStatuses.includes('failed')) status = 'failed';
-    else if (nodeMembers.length) status = 'pending';
+    const canonicalTerminal = ['completed', 'skipped', 'failed'].includes(status);
+    if (!canonicalTerminal && dynamicActive) status = 'running';
+    else if (!canonicalTerminal && dynamicTerminal && dynamicCompleted > 0) status = 'completed';
+    else if (!canonicalTerminal && dynamicTerminal && memberStatuses.includes('failed')) status = 'failed';
+    else if (!canonicalTerminal && nodeMembers.length) status = 'pending';
     const projectedCycle = Number(plan.middle_cycle || 0);
     const middleCycle = Number.isFinite(projectedCycle) ? Math.max(0, projectedCycle) : 0;
     const skills = stringList(plan.skill_ids || plan.skills || agent.skill_ids || agent.skills || meta.skills);
@@ -953,10 +1133,14 @@ function WorkflowOverview({events, workflow, agents, live, completed}) {
     const mergedAgents = nodeMembers;
     const backtrackCount = Number(plan.backtrack_count ?? events.filter(event => eventTargetsStep(event, meta.step, plan.agent_id || meta.agent_id)).length);
     const projectedName = plan.name || plan.label?.replace(/^S\d+\s*/, '') || agent.display_name?.replace(/^S\d+\s*/, '') || meta.name;
-    return {...meta, ...plan, agent_id: plan.agent_id || meta.agent_id, name: ensureAgentSuffix(projectedName), task: plan.task || plan.description || agent.description || meta.task, executionMode, status, middleCycle, skills, harness, semantics, mergedAgents, result_summary: plan.result_summary || (nodeMembers.length ? `动态蜂群 ${dynamicCompleted} / ${nodeMembers.length} 个实例完成` : ''), dynamicCompleted, dynamicTotal: nodeMembers.length, backtrackCount: Number.isFinite(backtrackCount) ? Math.max(0, backtrackCount) : 0};
+    const dynamicResultSummary = nodeMembers.length ? `动态蜂群 ${dynamicCompleted} / ${nodeMembers.length} 个实例完成` : '';
+    return {...meta, ...plan, agent_id: plan.agent_id || meta.agent_id, name: ensureAgentSuffix(projectedName), task: plan.task || plan.description || agent.description || meta.task, executionMode, status, provisionalDynamic, middleCycle, skills, harness, semantics, mergedAgents, result_summary: provisionalDynamic ? '' : dynamicResultSummary || plan.result_summary || '', dynamicCompleted, dynamicTotal: nodeMembers.length, backtrackCount: Number.isFinite(backtrackCount) ? Math.max(0, backtrackCount) : 0};
   });
   const otherDynamicAgents = dynamicAgents.filter(item => !/^S[1-6]$/.test(normalizeMergeTarget(item)));
   const completedSteps = stepCards.filter(item => item.status === 'completed').length;
+  const unsettledSteps = stepCards.filter(item => !['completed', 'skipped'].includes(item.status));
+  const unsettledStepText = unsettledSteps.map(item => `S${item.step}${item.status === 'running' ? '仍在收敛' : item.status === 'failed' ? '未通过' : '待调度'}`).join('、');
+  const stepProgressDetail = `${completedSteps} / 6 个专用 Agent 已完成${unsettledStepText ? ` · ${unsettledStepText}${stepCards.find(item => item.step === 6)?.status === 'completed' ? '；S6 已完成能力图像综合' : ''}` : ''}`;
   const stageGates = Array.isArray(workflow.stage_gates) ? workflow.stage_gates : [];
   const restrictedGates = stageGates.filter(item => item.gate_passed === false);
   const branchText = discovery.primary_branch ? `${discovery.primary_branch}${discovery.branch_name ? ` · ${discovery.branch_name}` : ''}` : '需求解析与路径选择';
@@ -974,7 +1158,7 @@ function WorkflowOverview({events, workflow, agents, live, completed}) {
     {id: 'blueprint', label: 'A–H 蓝图', status: has('run_started') || has('discovery_meta_loop_evaluated') ? 'completed' : 'pending', detail: metaReview.replan_required ? `${branchText}；L4 已调整` : branchText},
     {id: 'baseline', label: '前置专业研究', status: has('baseline_agents_summarized') ? 'completed' : has('baseline_pipeline_started') || has('baseline_discovery_started') || has('baseline_wave_started') ? 'running' : 'pending', detail: baselineDetail},
     {id: 'convergence', label: '收敛融合', status: has('discovery_convergence_completed') ? 'completed' : 'pending', detail: '跨背景、场景与分支聚合'},
-    {id: 's_agents', label: 'S1–S6 Agent', status: completedSteps > 0 || latestWinningProgress || has('winning_stage_completed') || has('capability_image_created') ? (stepCards.every(item => ['completed', 'skipped'].includes(item.status)) ? 'completed' : 'running') : 'pending', detail: `${completedSteps} / 6 个专用 Agent 完成${winningRuntimeDetail}${restrictedGates.length ? ` · ${restrictedGates.map(item => item.layer).join('/')} 门控受限` : ''}`},
+    {id: 's_agents', label: 'S1–S6 Agent', status: completedSteps > 0 || latestWinningProgress || has('winning_stage_completed') || has('capability_image_created') ? (stepCards.every(item => ['completed', 'skipped'].includes(item.status)) ? 'completed' : 'running') : 'pending', detail: `${stepProgressDetail}${winningRuntimeDetail}${restrictedGates.length ? ` · ${restrictedGates.map(item => item.layer).join('/')} 门控受限` : ''}`},
     {id: 'audit', label: '风险分级审计', status: auditComplete ? 'completed' : has('audit_model_fallback') || events.some(event => event.actor === 'auditor') ? 'running' : 'pending', detail: auditComplete ? (has('audit_model_fallback') ? '确定性审计完成 · 独立模型受限降级' : '确定性审计完成；仅高风险项触发模型复核') : events.some(event => event.actor === 'auditor') ? '正在执行确定性检查或高风险模型复核（优化画像最长 30 秒）' : '等待进入审计'},
     {id: 'report', label: '报告交付', status: reportStatus, detail: reportStatus === 'completed' ? '研究报告已生成' : reportStatus === 'failed' ? '独立报告生成失败，未使用降级模板；可从检查点恢复' : reportStatus === 'running' ? reportRuntimeDetail : '等待审计通过'},
   ];
@@ -987,16 +1171,16 @@ function WorkflowOverview({events, workflow, agents, live, completed}) {
   return <section className="workflow-overview">
     <header><div><Layers3 size={18}/><span><b>架构执行总览</b><small>A–H 发现蓝图、六个专用 Agent 与四层循环</small></span></div><div className="workflow-badges">{execution.provider && <span>Agent</span>}{discovery.primary_branch && <span>主分支 {discovery.primary_branch}</span>}{discovery.secondary_branches?.length > 0 && <span>参考分支 {discovery.secondary_branches.join('/')}</span>}<em className={live ? 'live' : ''}>{live ? '运行中' : '审计回放'}</em></div></header>
     <div className="workflow-phases workflow-phases-six">{phases.map((phase, index) => <article className={`${phase.status} ${phase.status === 'completed' ? 'done' : index === firstPending && live && phase.status === 'pending' ? 'active' : ''}`} key={phase.id}><i>{phase.status === 'completed' ? <CheckCircle2 size={15}/> : index + 1}</i><div><b>{phase.label}</b><small>{phase.detail}</small></div></article>)}</div>
-    <div className="s-agent-overview"><div className="s-agent-overview-title"><div><Bot size={17}/><span><b>S1–S6 专用 Agent</b><small>当前主/参考分支通过执行强度影响每个 Agent；不是固定串联，可跳步、并行与定向回溯。</small></span></div><em>{completedSteps} / 6 完成</em></div><div className="s-agent-grid">{stepCards.map(agent => <article className={`s-agent-card mode-${agent.executionMode} status-${agent.status}`} key={agent.step}>
+    <div className="s-agent-overview"><div className="s-agent-overview-title"><div><Bot size={17}/><span><b>S1–S6 专用 Agent</b><small>{dynamicProfile ? `动态蜂群根据依赖和质量残差实时调度；${unsettledStepText ? `当前 ${unsettledStepText}，${stepCards.find(item => item.step === 6)?.status === 'completed' ? 'S6 已完成能力图像综合。' : ''}` : '六个节点均已收敛。'}` : '当前主/参考分支通过执行强度影响每个 Agent；支持并行与定向回溯。'}</small></span></div><em title={stepProgressDetail}>{completedSteps} / 6 已完成</em></div><div className="s-agent-grid">{stepCards.map(agent => <article className={`s-agent-card mode-${agent.executionMode} status-${agent.status}`} key={agent.step}>
       <header><i>S{agent.step}</i><div><b>{agent.name}</b><small>独立受控会话</small></div><span className={`s-agent-status ${agent.status}`}>{sAgentStatusLabel(agent.status)}</span></header>
       <p>{agent.task}</p>
       {agent.status === 'running' && agent.current_step && <div className="s-agent-result-preview"><small>当前步骤</small><span>{agent.current_step}{Number(agent.elapsed_seconds || 0) > 0 ? ` · 已耗时 ${Math.round(agent.elapsed_seconds)} 秒` : ''}</span></div>}
       {agent.result_summary && <div className="s-agent-result-preview"><small>本轮结果</small><span>{agentFacingText(agent.result_summary)}</span></div>}
-      <div className="s-agent-runtime"><span className={`step-mode ${agent.executionMode}`}>{stepModeLabel(agent.executionMode)}</span><span>{agent.dynamicTotal > 0 ? `蜂群 ${agent.dynamicCompleted}/${agent.dynamicTotal}` : agent.middleCycle > 0 ? `L2 第 ${agent.middleCycle} 轮` : 'L2 未进入'}</span><span>回溯 {agent.backtrackCount} 次</span></div>
+      <div className="s-agent-runtime"><span className={`step-mode ${agent.executionMode}`}>{agent.executionMode === 'dynamic' ? '动态调度' : stepModeLabel(agent.executionMode)}</span><span>{agent.provisionalDynamic ? '等待执行判定' : agent.dynamicTotal > 0 ? `蜂群 ${agent.dynamicCompleted}/${agent.dynamicTotal}` : agent.middleCycle > 0 ? `L2 第 ${agent.middleCycle} 轮` : 'L2 未进入'}</span><span>回溯 {agent.backtrackCount} 次</span></div>
       {agent.status === 'skipped' && <small className="s-agent-skip-reason">由 {discovery.primary_branch || '当前'} 分支蓝图按业务路径跳过</small>}
       <details className="s-agent-tech"><summary>Skill、Harness 与编排说明</summary><div><code>{agent.agent_id}</code><div className="s-agent-skills"><small>核心 Skill</small><p>{agent.skills.slice(0, 3).map(skill => <em key={skill}>{skill}</em>)}</p></div><div className="s-agent-harness"><span>Harness</span><code>{agent.harness}</code></div><div className="s-agent-semantics">{agent.semantics.map(item => <span key={item}>{item}</span>)}</div></div></details>
-      {agent.mergedAgents.length > 0 && <div className="s-agent-dynamic">{agent.mergedAgents.map((item, index) => <span key={item.agent_id || item.id || index}><Bot size={12}/><b>{item.display_name || item.name || '动态专用 Agent'}</b><small>合并到 S{agent.step}</small></span>)}</div>}
-    </article>)}</div>{otherDynamicAgents.length > 0 && <div className="dynamic-agent-other">{otherDynamicAgents.map((item, index) => <span key={item.agent_id || item.id || index}><Bot size={12}/><b>{item.display_name || item.name || '动态专用 Agent'}</b><small>合并到 {normalizeMergeTarget(item) || '待编排节点'}</small></span>)}</div>}</div>
+      {agent.mergedAgents.length > 0 && <div className="s-agent-dynamic">{agent.mergedAgents.map((item, index) => <span key={item.agent_id || item.id || index}><Bot size={12}/><b>{userFacingSwarmMemberName({...item, mission_node: item.mission_node || `S${agent.step}`})}</b><small>合并到 S{agent.step}</small></span>)}</div>}
+    </article>)}</div>{otherDynamicAgents.length > 0 && <div className="dynamic-agent-other">{otherDynamicAgents.map((item, index) => <span key={item.agent_id || item.id || index}><Bot size={12}/><b>{userFacingSwarmMemberName(item)}</b><small>合并到 {normalizeMergeTarget(item) || '待编排节点'}</small></span>)}</div>}</div>
     <div className="loop-overview">{LOOP_ARCHITECTURE.map(loop => { const projected = typeof loops[loop.key] === 'object' ? loops[loop.key] : {}; const count = loopCount(loops[loop.key], loop.key === 'meta' ? Number(metaReview.cycle || 0) : 0); const latest = [...events].reverse().find(event => event.event_type === loopEventTypes[loop.key]); return <article className={count > 0 ? 'used' : ''} key={loop.key}><header><i>{loop.level}</i><div><b>{loop.name}</b><span>{count} 次</span></div></header><p>{projected.description || loop.description}</p><small className="loop-latest">{latest ? `最近：${loopEventDecision(latest)}` : '最近：尚无判定'}</small></article>; })}</div>
     {metaReview.replan_required && <div className="l4-summary"><BrainCircuit size={15}/><span><b>L4 元循环调整</b>{l4Changes || metaReview.rationale || '已形成有界调整'}</span></div>}
   </section>;
@@ -1004,33 +1188,120 @@ function WorkflowOverview({events, workflow, agents, live, completed}) {
 
 function InteractionEvent({event, agent}) {
   const tool = event.details?.tool_name;
-  const summary = agentFacingText(event.summary);
+  const eventSummary = event.event_type === 'baseline_agent_completed' ? completedResearchSummary(event.summary) : event.summary;
+  const summary = agentFacingText(eventSummary);
   const longSummary = summary.length > 260 || /^\s*[\[{]/.test(summary);
-  const swarmLifecycle = ['specialist_recruitment_planned','specialist_spawned','specialist_session_started','specialist_session_completed','specialist_completed','specialist_pruned'].includes(event.event_type);
-  const detailKeys = event.event_type === 'discovery_meta_loop_evaluated' ? ['cycle','primary_branch','added_secondary_branches','step_mode_overrides','dynamic_subagents','stop_reason'] : swarmLifecycle ? ['wave','batch','archetype','role_purpose','hypothesis_id','merge_target','execution_backend','context_isolation','session_ref','status','reason'] : ['wave','archetype','hypothesis_id','merge_target','score','residuals','reasons','rejection_reasons','step','steps','current_step','elapsed_seconds','phase','execution_mode','status','passed'];
+  const swarmLifecycle = ['specialist_recruitment_planned','specialist_spawned','specialist_session_started','specialist_session_completed','specialist_completed','specialist_pruned','winning_agent_waiting'].includes(event.event_type);
+  const detailKeys = event.event_type === 'discovery_meta_loop_evaluated' ? ['cycle','primary_branch','added_secondary_branches','step_mode_overrides','dynamic_subagents','stop_reason'] : swarmLifecycle ? ['wave','batch','archetype','hypothesis_id','merge_target','mission_node','execution_backend','context_isolation','session_ref','status','reason','running_instances','note','attempt','resume_count'] : ['wave','batch','agent_id','session_ref','attempt','resume_count','archetype','hypothesis_id','merge_target','score','residuals','reasons','rejection_reasons','step','steps','current_step','elapsed_seconds','phase','execution_mode','status','passed'];
   const detailRows = detailKeys.filter(key => event.details?.[key] !== undefined).slice(0, 10).map(key => [key, event.details[key]]);
-  return <article className={`event-card ${event.category}`}><div className="event-dot">{event.category === 'tool' ? <Wrench size={15}/> : event.actor === 'orchestrator' ? <Layers3 size={15}/> : <Bot size={15}/>}</div><div className="event-content"><div className="event-top"><b>{agentFacingText(agent?.display_name || event.details?.display_name || event.actor)}</b><span>{eventLabel(event.event_type)}</span></div><h3>{agentFacingText(tool || event.title)}</h3>{longSummary ? <details className="event-summary-details"><summary><span>{summary}</span><em>展开完整内容</em></summary><p>{summary}</p></details> : <p>{summary}</p>}{(event.input_refs?.length > 0 || event.output_refs?.length > 0 || detailRows.length > 0) && <details className="event-key-details"><summary>关键详情</summary><div className="event-detail-grid">{event.input_refs?.length > 0 && <Detail label="输入引用" value={agentFacingText(event.input_refs.slice(0, 4).join(' · '))}/>} {event.output_refs?.length > 0 && <Detail label="输出引用" value={agentFacingText(event.output_refs.slice(0, 4).join(' · '))}/>} {detailRows.map(([key, value]) => <Detail key={key} label={fieldLabel(key)} value={formatValue(value)}/>)}</div></details>}</div></article>;
+  const eventAgent = {...(agent || {}), display_name: agent?.display_name || event.details?.display_name || event.actor, mission_node: agent?.mission_node || event.details?.mission_node || event.details?.merge_target};
+  return <article className={`event-card ${event.category}`}><div className="event-dot">{event.category === 'tool' ? <Wrench size={15}/> : event.actor === 'orchestrator' ? <Layers3 size={15}/> : <Bot size={15}/>}</div><div className="event-content"><div className="event-top"><b>{userFacingSwarmMemberName(eventAgent)}</b><span>{eventLabel(event.event_type)}</span></div><h3>{agentFacingText(tool || event.title)}</h3>{longSummary ? <details className="event-summary-details"><summary><span>{summary}</span><em>展开完整内容</em></summary><p>{summary}</p></details> : <p>{summary}</p>}{(event.input_refs?.length > 0 || event.output_refs?.length > 0 || detailRows.length > 0) && <details className="event-key-details"><summary>关键详情</summary><div className="event-detail-grid">{event.input_refs?.length > 0 && <Detail label="输入引用" value={agentFacingText(event.input_refs.slice(0, 4).join(' · '))}/>} {event.output_refs?.length > 0 && <Detail label="输出引用" value={agentFacingText(event.output_refs.slice(0, 4).join(' · '))}/>} {detailRows.map(([key, value]) => <Detail key={key} label={fieldLabel(key)} value={formatValue(value)}/>)}</div></details>}</div></article>;
 }
 
 function ObjectGrid({view, rows}) { const list = Array.isArray(rows) ? rows : Array.isArray(rows?.rows) ? rows.rows : []; const referenceWeapons = Array.isArray(rows?.referenceWeapons) ? rows.referenceWeapons : []; if (!list.length && !referenceWeapons.length) return <Empty text="本次运行没有可展示对象"/>; if (view === 'capabilities') return <CapabilityImageView rows={list} referenceWeapons={referenceWeapons}/>; return <section className="object-grid">{list.map((row, index) => <article className="object-card" key={row.evidence_id || row.stage_id || row.capability_id || index}><div className="object-card-head"><b>{objectTitle(view, row, index)}</b><span>{row.layer || row.priority || row.source_tier || `#${index + 1}`}</span></div>{Object.entries(row).filter(([key, value]) => !['created_at', 'schema_version'].includes(key) && value !== '' && value != null).slice(0, 10).map(([key, value]) => <Detail key={key} label={fieldLabel(key)} value={formatValue(value)}/>)}</article>)}</section>; }
+const CAPABILITY_PORTRAIT_LABELS = ['概述', '装备与技术实现', '关键作战流程', '形成能力与作战效果', '制胜逻辑机理与对抗边界', '制胜逻辑机理', '发展与验证路径', '决策与考核口径'];
+const WEAPON_DIMENSION_GUIDE = {
+  damage: ['毁伤维度', '直接破坏目标，或削弱目标的结构、功能与作战效能。'],
+  strike: ['打击维度', '对指定目标实施远程或近程攻击并施加军事效果。'],
+  penetration: ['突防维度', '突破敌方防御体系并进入目标有效作用区域。'],
+  interception: ['拦截维度', '发现、跟踪并阻断敌方目标行动。'],
+  suppression: ['压制维度', '降低敌方感知、通信、火力或行动能力。'],
+  denial: ['拒止维度', '阻止敌方进入特定区域、实施行动或持续作战。'],
+  reconnaissance: ['侦察感知维度', '发现、识别、定位目标并感知作战环境。'],
+  early_warning: ['预警维度', '提前发现威胁并形成有效响应窗口。'],
+  electronic_countermeasure: ['电子对抗维度', '干扰、削弱或影响敌方电子信息系统。'],
+  deterrence: ['威慑维度', '通过可信军事能力影响敌方判断、决策与行为。'],
+  survivability: ['生存抗毁维度', '提高装备在威胁环境下的生存、恢复与持续作战能力。'],
+  battlefield_control: ['战场控制维度', '改变特定区域、空间或时间维度上的作战主动权。'],
+};
+function normalizeWeaponDimensions(classification = {}) {
+  if (!classification || typeof classification !== 'object') return {primary: '', secondary: [], basis: ''};
+  const primary = String(classification.primary_dimension || classification.primary || '').trim();
+  const rawSecondary = classification.secondary_dimensions || classification.secondary || [];
+  const secondary = Array.isArray(rawSecondary) ? rawSecondary.map(item => String(item).trim()).filter(Boolean) : String(rawSecondary).split(/[、,，;；]/).map(item => item.trim()).filter(Boolean);
+  return {primary, secondary: secondary.slice(0, 3), basis: String(classification.classification_basis || '').trim()};
+}
+function weaponDimensionLabel(value) {
+  const key = String(value || '').trim();
+  const match = WEAPON_DIMENSION_GUIDE[key];
+  if (match) return match[0];
+  const inferred = [
+    [/毁伤|摧毁|杀伤|破坏/, 'damage'],
+    [/突防|穿透|渗透/, 'penetration'],
+    [/拦截|阻断目标/, 'interception'],
+    [/压制|抑制/, 'suppression'],
+    [/拒止|禁入|区域控制/, 'denial'],
+    [/侦察|感知|探测|识别/, 'reconnaissance'],
+    [/预警|提前发现/, 'early_warning'],
+    [/电子对抗|干扰|电磁/, 'electronic_countermeasure'],
+    [/威慑/, 'deterrence'],
+    [/生存|抗毁|恢复|韧性/, 'survivability'],
+    [/战场控制|作战主动权|时空控制/, 'battlefield_control'],
+    [/打击|弹药|巡猎|攻击|火力/, 'strike'],
+  ].find(([pattern]) => pattern.test(key));
+  if (inferred) return WEAPON_DIMENSION_GUIDE[inferred[1]][0];
+  return key;
+}
+function WeaponDimensions({classification}) {
+  const dimensions = normalizeWeaponDimensions(classification);
+  if (!dimensions.primary && !dimensions.secondary.length) return null;
+  const values = [dimensions.primary, ...dimensions.secondary.filter(item => item !== dimensions.primary)].filter(Boolean);
+  return <section className="capability-dimensions"><div className="capability-dimensions-head"><b>武器维度</b><span>按当前装备的主要战果与作战节点匹配，维度不限制 S6 继续推演新的能力关系。</span></div><div className="capability-dimension-tags">{values.map((value, index) => <span className={index === 0 ? 'primary' : ''} key={`${value}-${index}`}><i>{index === 0 ? '主' : '辅'}</i>{weaponDimensionLabel(value)}</span>)}</div>{dimensions.basis && <p>{dimensions.basis}</p>}</section>;
+}
 function parseCapabilityPortrait(value) {
-  const normalized = completeCapabilityText(value).replace(/\s+(?=- (?:装备与技术实现|关键作战流程|形成能力与作战效果|制胜逻辑机理与对抗边界|发展与验证路径|决策与考核口径)：)/g, '\n');
-  const lines = normalized.split('\n').map(item => item.trim()).filter(Boolean);
-  const overview = (lines.find(item => !item.startsWith('- ')) || '').replace(/^概述：/, '');
-  const points = lines.filter(item => item.startsWith('- ') && !/^- 发展与验证路径[：:]/.test(item)).map(item => {
-    const match = item.slice(2).match(/^([^：]+)：(.*)$/);
-    return match ? {label:match[1].trim(), text:match[2].trim()} : {label:'论证要点', text:item.slice(2)};
+  const normalized = completeCapabilityText(value).replace(/\r/g, '').replace(/\s+/g, ' ').trim();
+  if (!normalized) return {overview:'', points:[]};
+  const labelPattern = new RegExp(`(${CAPABILITY_PORTRAIT_LABELS.join('|')})\\s*[：:]`, 'g');
+  const matches = [...normalized.matchAll(labelPattern)];
+  if (!matches.length) return {overview:normalized.replace(/^[-*•]\s*/, ''), points:[]};
+  const cleanSectionText = text => text.replace(/(?:^|\s)[-*•]\s*$/, '').trim();
+  const cleanOverviewText = text => cleanSectionText(text).replace(/^[【\[]?能力分类\s*[：:][^。】\]]*[。】\]]?\s*/, '').trim();
+  let overview = cleanOverviewText(normalized.slice(0, matches[0].index));
+  const points = [];
+  matches.forEach((match, index) => {
+    const text = cleanSectionText(normalized.slice(match.index + match[0].length, matches[index + 1]?.index ?? normalized.length));
+    if (!text) return;
+    if (match[1] === '概述') {
+      if (!overview) overview = cleanOverviewText(text);
+      return;
+    }
+    const label = match[1] === '制胜逻辑机理与对抗边界' ? '制胜逻辑机理' : match[1];
+    points.push({label, text});
   });
   return {overview, points};
 }
-function CapabilityPortrait({value}) { const {overview, points} = parseCapabilityPortrait(value); return <section className="capability-portrait"><small>装备能力画像 · 五模块作战论证</small>{overview && <p className="capability-portrait-overview"><b>概述</b>{overview}</p>}{points.length > 0 ? <ul>{points.map((item, index) => <li key={`${item.label}-${index}`}><b>{item.label}</b><span>{item.text}</span></li>)}</ul> : <p>{value}</p>}</section>; }
-function CapabilityImageView({rows, referenceWeapons = []}) { const averageConfidence = rows.length ? Math.round(rows.reduce((sum, row) => sum + (row.confidence || 0), 0) / rows.length * 100) : 0; return <section className="capability-view"><div className="capability-summary"><div><span>详细能力画像</span><b>{rows.length}</b></div><div><span>高优先级</span><b>{rows.filter(row => String(row.priority).startsWith('高') || String(row.priority).startsWith('P1')).length}</b></div><div><span>平均置信度</span><b>{averageConfidence}%</b></div></div>{rows.map((row, index) => { const image = completeCapabilityText(row.capability_image); const portrait = completeCapabilityText(row.deep_capability_portrait || image); const structured = row.analysis_provenance_status !== 'legacy_derived'; return <article className="capability-sheet" key={`${row.capability_id || row.name || 'capability'}-${index}`}><header><div><span>{row.capability_type === 'new_capability' ? '新能力方向' : '具体装备方向'}</span><h2>{row.name}</h2></div><div className="capability-score"><b>{Math.round((row.confidence || 0) * 100)}%</b><small>结论置信度</small></div></header>{!structured && <div className="capability-legacy-note">该历史任务采用兼容画像；页面已按现有字段重建精细画像，重新运行可获得更完整的独立综合结论。</div>}<div className="capability-meta"><span><b>编号</b>{row.capability_id}</span><span><b>优先级</b>{row.priority}</span><span><b>任务场景</b>{row.related_scenario}</span></div><CapabilityPortrait value={portrait}/><details className="capability-trace"><summary>查看 S1–S6 论证依据与证据追溯</summary><div><section className="capability-logic"><div><small>来源制胜逻辑</small><p>{row.source_winning_logic}</p></div><div><small>作战运用约束</small><p>{(row.operational_constraints?.length ? row.operational_constraints : row.risk_boundaries || []).join('；')}</p></div></section>{structured && <section className="capability-insight-grid"><CapabilityInsight title="军事运用价值" value={row.military_utility || row.mission_effect}/><CapabilityInsight title="打击 / 反制价值" value={row.strike_countermeasure_value}/><CapabilityInsight title="新颖性" value={row.novelty}/><CapabilityInsight title="前瞻性" value={row.foresight}/></section>}{structured && <div className="capability-columns provenance"><CapabilitySection title="专业 Agent 贡献" rows={(row.agent_contributions || []).map(agentFacingText)}/><CapabilitySection title="证据依据" rows={(row.evidence_basis || []).map(agentFacingText)}/></div>}{structured && <CapabilitySection title="S1–S6 推理引用" rows={row.reasoning_refs || []}/>}</div></details><footer><span>关联证据 {row.evidence_ids?.length || 0} 项</span><code>{(row.evidence_ids || []).slice(0, 5).join(' · ')}</code></footer></article>; })}{referenceWeapons.length > 0 && <section className="capability-reference-library"><header><div><b>参考武器</b><small>未进入本轮 S6 详细画像，不计入上方画像数量；点击卡片查看简要概述</small></div><em>{referenceWeapons.length} 条</em></header><div>{referenceWeapons.map((candidate, index) => { const weaponName = weaponCandidateTitle(candidate); return <details key={candidate.hypothesis_id || `${weaponName}-${index}`}><summary><span><b>{weaponName || `参考武器 ${index + 1}`}</b><small>{weaponCandidateForm(candidate) || '候选装备形态待复核'}</small></span><em>查看概述</em></summary><div><p>{swarmCandidateOverview(candidate)}</p><footer><span>对象证据 {(candidate.evidence_ids || []).length}</span><span>候选置信度 {Math.round(Number(candidate.score || 0) * 100)}%</span><span>不进入 S6 详细撰写</span></footer></div></details>; })}</div></section>}</section>; }
+function CapabilityPortrait({value}) { const {overview, points} = parseCapabilityPortrait(value); return <section className="capability-portrait"><small>装备能力画像 · 五模块作战论证</small><div className="capability-portrait-cards">{overview && <article className="capability-portrait-card"><b>概述</b><p>{overview}</p></article>}{points.map((item, index) => <article className="capability-portrait-card" key={`${item.label}-${index}`}><b>{item.label}</b><p>{item.text}</p></article>)}</div></section>; }
+function CapabilityImageView({rows, referenceWeapons = []}) { const averageConfidence = rows.length ? Math.round(rows.reduce((sum, row) => sum + (row.confidence || 0), 0) / rows.length * 100) : 0; const visibleReferenceWeapons = referenceWeapons.filter(candidate => hasWeaponCandidateIdentity(candidate) && !referenceWeaponDuplicatesCapability(candidate, rows)); return <section className="capability-view"><div className="capability-summary"><div><span>详细能力画像</span><b>{rows.length}</b></div><div><span>高优先级</span><b>{rows.filter(row => String(row.priority).startsWith('高') || String(row.priority).startsWith('P1')).length}</b></div><div><span>平均置信度</span><b>{averageConfidence}%</b></div></div>{rows.map((row, index) => { const portrait = completeCapabilityText(row.deep_capability_portrait || row.capability_image); const structured = row.analysis_provenance_status !== 'legacy_derived'; const provenance = row.analysis_provenance_status || 'legacy_derived'; const pendingVerification = row.verification_status === 'pending' || row.confidence_limited === true; return <article className={`capability-sheet${pendingVerification ? ' pending-verification' : ''}`} key={`${row.capability_id || row.name || 'capability'}-${index}`}><header><div><h2>{row.name}</h2></div><div className="capability-score"><b>{Math.round((row.confidence || 0) * 100)}%</b><small>{pendingVerification ? '前瞻评分（待核验）' : '结论置信度'}</small></div></header>{!structured && <div className="capability-legacy-note">该历史任务采用兼容画像；页面已按现有字段重建精细画像，重新运行可获得更完整的独立综合结论。</div>}{provenance === 'limited_fallback' && <div className="capability-legacy-note">S6 提供方受限，当前仅展示受限回退卡；完成恢复后将替换为原创画像。</div>}<WeaponDimensions classification={row.capability_classification}/>{portrait ? <CapabilityPortrait value={portrait}/> : <div className="capability-legacy-note">等待 S6 单卡成稿</div>}<details className="capability-trace"><summary>查看 S1–S6 论证依据与证据追溯</summary><div><section className="capability-logic"><div><small>来源制胜逻辑</small><p>{row.source_winning_logic}</p></div><div><small>作战运用约束</small><p>{(row.operational_constraints?.length ? row.operational_constraints : row.risk_boundaries || []).join('；')}</p></div></section>{structured && <section className="capability-insight-grid"><CapabilityInsight title="军事运用价值" value={row.military_utility || row.mission_effect}/><CapabilityInsight title="打击 / 反制价值" value={row.strike_countermeasure_value}/><CapabilityInsight title="新颖性" value={row.novelty}/><CapabilityInsight title="前瞻性" value={row.foresight}/></section>}{structured && <div className="capability-columns provenance"><CapabilitySection title="专业 Agent 贡献" rows={(row.agent_contributions || []).map(agentFacingText)}/><CapabilitySection title="证据依据" rows={(row.evidence_basis || []).map(agentFacingText)}/></div>}{structured && <CapabilitySection title="S1–S6 推理引用" rows={row.reasoning_refs || []}/>}</div></details><footer><span>关联证据 {row.evidence_ids?.length || 0} 项</span><code>{(row.evidence_ids || []).slice(0, 5).join(' · ')}</code></footer></article>; })}{visibleReferenceWeapons.length > 0 && <section className="capability-reference-library"><header><div><b>参考武器</b><small>仅展示具备明确装备名称或形态、但未进入本轮 S6 详细画像的候选；已入选装备不重复展示</small></div><em>{visibleReferenceWeapons.length} 条</em></header><div>{visibleReferenceWeapons.map((candidate, index) => { const weaponName = weaponCandidateTitle(candidate); const equipmentForm = weaponCandidateForm(candidate); const overview = swarmCandidateOverview(candidate); return <details key={candidate.hypothesis_id || `${weaponName}-${index}`}><summary><span><b>{weaponName || equipmentForm}</b>{equipmentForm && equipmentForm !== weaponName && <small>{equipmentForm}</small>}</span><em>{overview ? '查看概述' : '查看信息'}</em></summary><div>{overview && <p>{overview}</p>}<footer><span>对象证据 {(candidate.evidence_ids || []).length}</span><span>候选置信度 {Math.round(Number(candidate.score || 0) * 100)}%</span><span>不进入 S6 详细撰写</span></footer></div></details>; })}</div></section>}</section>; }
 function capabilityDisplayEquipmentForm(row = {}) { const name = String(row.name || ''); const form = String(row.equipment_form || row.equipment_category || ''); const kind = value => /无人机|无人平台|无人艇|无人车|无人潜航/.test(value) ? 'platform' : /拦截弹|巡飞|导弹|弹药|鱼雷|水雷/.test(value) ? 'munition' : /激光武器|高功率微波|定向能/.test(value) ? 'directed-energy' : ''; return kind(name) && kind(form) && kind(name) !== kind(form) ? String(row.primary_equipment_identity || row.name) : form; }
 function CapabilityInsight({title, value}) { if (!value) return null; return <div><small>{title}</small><p>{value}</p></div>; }
 function CapabilitySection({title, rows}) { if (!rows?.length) return null; return <section className="capability-section"><h3>{title}</h3><ul>{rows.map((row, index) => <li key={`${title}-${index}`}><i>{String(index + 1).padStart(2, '0')}</i><span>{row}</span></li>)}</ul></section>; }
-function completeCapabilityText(value) { return String(value || '').trim(); }
+function completeCapabilityText(value) {
+  let text = String(value || '');
+  const placeholder = /(^|[；;，,\n])\s*(?:string|array|object|null|number|boolean)\s*(?=($|[；;，,。\n]))/gi;
+  let previous = '';
+  while (previous !== text) { previous = text; text = text.replace(placeholder, '$1'); }
+  return text.replace(/；；+/g, '；').replace(/;;+/g, ';').replace(/[；;]。/g, '。').trim();
+}
 function recallStatusLabel(value) { return {pending:'等待路由',routed:'执行中',completed:'已完成',limited:'受限未执行'}[value] || value || '未知'; }
-function stageGateLabel(stage, recalls) { const related = (recalls || []).filter(item => item.source_layer === stage.layer); const statuses = new Set(related.map(item => item.status)); if (stage.gate_passed) return statuses.has('completed') ? '再调后通过' : '门控通过'; if (statuses.has('routed')) return '再调执行中'; if (statuses.has('pending')) return '等待再调'; if (statuses.has('completed')) return '再调后仍受限'; if (statuses.has('limited')) return '再调受限'; return '门控未通过'; }
+function completedRecallClosure(recalls = [], workflow = {}) {
+  if (!recalls.length || recalls.some(item => item.status !== 'completed')) return false;
+  const phaseStatus = new Map((workflow.phases || []).map(item => [item.id, item.status]));
+  return workflow.status === 'completed'
+    && ['s_agents', 'audit', 'report'].every(phase => phaseStatus.get(phase) === 'completed');
+}
+function effectiveStageGatePassed(stage, recalls, workflow) {
+  return Boolean(stage.gate_passed || completedRecallClosure(recalls, workflow));
+}
+function stageGateLabel(stage, recalls, workflow) {
+  const related = (recalls || []).filter(item => item.source_layer === stage.layer);
+  const statuses = new Set(related.map(item => item.status));
+  if (effectiveStageGatePassed(stage, recalls, workflow)) return completedRecallClosure(recalls, workflow) ? '补证后通过' : statuses.has('completed') ? '再调后通过' : '门控通过';
+  if (statuses.has('routed')) return '再调执行中';
+  if (statuses.has('pending')) return '等待再调';
+  if (statuses.has('completed')) return '补证完成·待闭环';
+  if (statuses.has('limited')) return '再调受限';
+  return '门控未通过';
+}
 function WinningSwarmPanel({swarm}) {
   const tasks = swarm.task_graph || []; const finalists = swarm.finalists || []; const hypotheses = swarm.hypotheses || []; const rejections = swarm.rejections || []; const budget = swarm.budget || {}; const waves = swarm.waves || []; const core = swarm.core_schedule || {}; const coreWaves = core.logical_waves || []; const finalMerge = swarm.final_merge || {};
   return <section className="winning-swarm-panel"><div className="section-heading"><div><b>制胜机理弹性 Agent 群</b><span>三波开放探索；S1–S6 按依赖动态调度，原始会话隔离，只有绑定候选与目标节点且通过门控的贡献进入共享账本。</span></div><em>{finalists.length} 条最终候选</em></div><div className="swarm-metrics"><div><small>动态实例</small><b>{budget.completed_instances ?? tasks.length} / {budget.maximum_instances || 12}</b></div><div><small>专用波次</small><b>{waves.length} / {budget.maximum_waves || 3}</b></div><div><small>S Agent</small><b>{core.completed_steps?.length || 0} / {core.active_steps?.length || 0}</b></div><div><small>最终合并</small><b>{finalMerge.passed ? '门控通过' : swarm.stop_reason || '运行中'}</b></div></div><div className="swarm-wave-grid">{waves.map(item => <article key={item.wave}><i>W{item.wave}</i><div><b>{item.wave === 1 ? '问题发散' : item.wave === 2 ? '开放创作' : '组合决策'}</b><small>{item.task_ids?.length || 0} 个专用 Agent</small></div></article>)}</div>{coreWaves.length > 0 && <div className="core-schedule"><header><b>S1–S6 动态 DAG</b><small>{core.merge_strategy || '依赖满足后并行、拓扑顺序合并'}</small></header><div className="core-wave-grid">{coreWaves.map(item => <article key={item.wave}><i>C{item.wave}</i><div><b>{item.core_agents?.join(' + ')}</b><small>{item.parallel ? '无写入冲突，并行执行' : '依赖满足后执行'}</small></div></article>)}</div></div>}{finalists.length > 0 && <div className="swarm-finalists">{finalists.map((item, index) => <article key={item.hypothesis_id}><header><i>{index + 1}</i><div><b>{item.title}</b><small>{item.equipment_forms?.join(' · ') || '装备形态待验证'}</small></div><em>{Math.round((item.score || 0) * 100)}%</em></header><p>{item.novelty_delta || item.changed_confrontation_variable}</p><div><span>证据 {item.evidence_ids?.length || 0}</span><span>残差 {item.residuals?.length || 0}</span><span>{item.status || 'finalist'}</span></div>{item.failure_boundaries?.length > 0 && <small>失效边界：{item.failure_boundaries.slice(0, 2).join('；')}</small>}</article>)}</div>}{rejections.length > 0 && <details className="swarm-rejections"><summary>查看 {rejections.length} 条淘汰记录</summary>{rejections.slice(0, 8).map((item, index) => <p key={`${item.hypothesis_id}-${index}`}><b>{item.hypothesis_id}</b><span>{(item.reasons || []).join('；') || item.stage}</span></p>)}</details>}</section>;
@@ -1040,15 +1311,16 @@ function WinningMechanismView({data}) {
   if (!input) return <Empty text="本次运行尚未形成 S1–S6 Agent 输入包"/>;
   const nodeByStep = new Map(nodes.map(node => [Number(node.step), node]));
   const planByStep = new Map(stepPlan.map(item => [Number(item.step), item]));
+  const dynamicProfile = data.workflow?.execution?.profile_id === 'winning_swarm_dynamic_v2';
   return <div className="winning-view s-agent-results-view">
     <section className="winning-input"><div><span>S1–S6 Agent 输入包</span><h2>{input.problem_frame?.objective}</h2><p>{input.problem_frame?.route_frame}</p></div><dl><dt>研究路线</dt><dd>{routeLabel(input.research_route)}</dd><dt>输入 Packet</dt><dd>{input.packet_ids?.length || 0}</dd><dt>证据索引</dt><dd>{input.evidence_index?.length || 0}</dd><dt>当前轮次</dt><dd>{input.round_budget?.current_round} / {input.round_budget?.maximum_rounds}</dd></dl></section>
     {swarm.policy?.enabled && <WinningSwarmPanel swarm={swarm}/>}
     <section className="winning-resource-section"><div className="section-heading"><div><b>共享受控资源</b><span>各 Agent 读取投影后的理论、案例、前沿证据与问题链，不共享其他 Agent 原始会话。</span></div></div><div className="winning-resources"><ResourceBlock title="理论工具库" rows={resources?.theory_tools} label="name"/><ResourceBlock title="战例库" rows={resources?.case_resources} label="evidence_id"/><ResourceBlock title="前沿情报库" rows={resources?.frontier_resources} label="evidence_id"/><ResourceBlock title="问题链" rows={resources?.question_chain} label="question"/></div></section>
     <section className="s-agent-result-section"><div className="section-heading"><div><b>六个专用 Agent 结果</b><span>按 Agent 展示“认识—证据—置信度—下一步建议”；卡片顺序仅用于编号，不代表固定串联。</span></div><small>{nodes.length} 个结果节点</small></div><div className="s-agent-result-grid">{S_AGENT_ARCHITECTURE.map(meta => {
-      const plan = planByStep.get(meta.step) || {}; const skipped = plan.execution_mode === 'skip' || plan.status === 'skipped'; const node = skipped ? null : nodeByStep.get(meta.step); const relatedRecalls = recalls.filter(item => recallMatchesStep(item, meta.step, meta.agent_id)); const question = resources?.question_chain?.[meta.step - 1]; const nextSuggestion = formatNextAction(node?.next_action) || node?.next_step_suggestion || node?.next_step || relatedRecalls.at(-1)?.reason || question?.question || '未记录显式下一步建议；以循环门控和开放问题为准。';
+      const plan = planByStep.get(meta.step) || {}; const skipped = (plan.execution_mode === 'skip' || plan.status === 'skipped') && (!dynamicProfile || plan.decision_finalized === true); const node = skipped ? null : nodeByStep.get(meta.step); const relatedRecalls = recalls.filter(item => recallMatchesStep(item, meta.step, meta.agent_id)); const question = resources?.question_chain?.[meta.step - 1]; const nextSuggestion = formatNextAction(node?.next_action) || node?.next_step_suggestion || node?.next_step || relatedRecalls.at(-1)?.reason || question?.question || '未记录显式下一步建议；以循环门控和开放问题为准。';
       return <article className={`s-agent-result-card ${node ? 'completed' : skipped ? 'skipped' : 'pending'}`} key={meta.step}><header><i>S{meta.step}</i><div><b>{meta.name}</b><small>{meta.task}</small></div><span>{node ? `已形成 · 回溯 ${plan.backtrack_count ?? relatedRecalls.length}` : skipped ? `${stepModeLabel(plan.execution_mode)} · 蓝图跳过` : '待执行'}</span></header>{node ? <><h3>{agentFacingText(node.title)}</h3><div className="s-agent-result-quad"><section className="recognition"><small>认识</small><p>{agentFacingText(node.summary)}</p></section><section><small>证据</small><p>{node.evidence_ids?.length ? node.evidence_ids.slice(0, 4).join(' · ') : '暂无可展示证据编号'}</p></section><section><small>置信度</small><b>{Math.round((node.confidence || 0) * 100)}%</b></section><section className="next"><small>下一步建议</small><p>{agentFacingText(nextSuggestion)}</p></section></div><details><summary>输入、假设与追溯</summary><div><Detail label="输入引用" value={agentFacingText((node.input_refs || []).join(' · ') || '—')}/><Detail label="关键假设" value={agentFacingText((node.assumptions || []).join('；') || '—')}/></div></details></> : <p className="s-agent-result-empty">{skipped ? `当前 ${data.workflow?.discovery?.primary_branch || 'A–H'} 分支按业务路径跳过该 Agent，不生成虚假结果。` : '该 Agent 尚未形成结果节点。'}</p>}<footer><span>{meta.skills.slice(0, 2).join(' · ')}</span><code>{meta.harness}</code></footer></article>;
     })}</div></section>
-    {stages.length > 0 && <section className="s-agent-loop-results"><div className="section-heading"><div><b>循环门控结果</b><span>L1 内循环、L2 中循环与 L3 外循环检查六个 Agent 结果的证据、连续性和跨场景覆盖。</span></div></div><div>{stages.map(stage => <article key={stage.stage_id} className={stage.gate_passed ? 'passed' : 'limited'}><header><i>{stage.layer}</i><div><b>{stage.title}</b><small>置信度 {Math.round((stage.confidence || 0) * 100)}% · 证据 {stage.evidence_ids?.length || 0}</small></div><em>{stageGateLabel(stage, recalls)}</em></header>{stage.gate_reasons?.length > 0 && <p>{stage.gate_reasons.join('；')}</p>}<details><summary>查看本层输出</summary><div>{Object.entries(stage.outputs || {}).filter(([key]) => key !== 'reasoning_refs').map(([key, value]) => <Detail key={key} label={fieldLabel(key)} value={formatValue(value)}/>)}</div></details></article>)}</div></section>}
+    {stages.length > 0 && <section className="s-agent-loop-results"><div className="section-heading"><div><b>循环门控结果</b><span>L1 内循环、L2 中循环与 L3 外循环检查六个 Agent 结果的证据、连续性和跨场景覆盖。</span></div></div><div>{stages.map(stage => { const passed = effectiveStageGatePassed(stage, recalls, data.workflow); return <article key={stage.stage_id} className={passed ? 'passed' : 'limited'}><header><i>{stage.layer}</i><div><b>{stage.title}</b><small>置信度 {Math.round((stage.confidence || 0) * 100)}% · 证据 {stage.evidence_ids?.length || 0}</small></div><em>{stageGateLabel(stage, recalls, data.workflow)}</em></header>{passed && !stage.gate_passed ? <p className="gate-reconciled"><CheckCircle2 size={13}/>定向补证、覆盖重算及后续交付已形成完整闭环，历史门控残差不再阻止本层通过。</p> : stage.gate_reasons?.length > 0 && <p>{stage.gate_reasons.join('；')}</p>}<details><summary>{passed && !stage.gate_passed ? '查看历史门控与本层输出' : '查看本层输出'}</summary><div>{passed && !stage.gate_passed && <Detail label="历史门控残差" value={stage.gate_reasons?.join('；') || '—'}/>} {Object.entries(stage.outputs || {}).filter(([key]) => key !== 'reasoning_refs').map(([key, value]) => <Detail key={key} label={fieldLabel(key)} value={formatValue(value)}/>)}</div></details></article>; })}</div></section>}
     {recalls.length > 0 && <section className="winning-recalls s-agent-recalls"><div className="section-heading"><div><b>定向回溯与再调</b><span>按 S Agent、能力标签或返回节点补充，不把整个流程无差别重跑。</span></div></div>{recalls.map(item => <article key={item.recall_id}><b>{item.source_layer} → {normalizeStepRef(item.return_node)}</b><span>{agentModelLabel(item.target_agent_id || item.target_capability_tag)}</span><p>{item.reason}</p><small>{recallStatusLabel(item.status)}</small></article>)}</section>}
   </div>;
 }
@@ -1105,8 +1377,43 @@ function summarizeBaselineGapTable(content) {
   }
   return result.join('\n');
 }
+function decodeReportHtmlEntities(value) {
+  return String(value || '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&amp;/gi, '&');
+}
+function reportHtmlCellText(value) {
+  return decodeReportHtmlEntities(String(value || '')
+    .replace(/<br\s*\/?\s*>/gi, '；')
+    .replace(/<\/p>\s*<p\b[^>]*>/gi, '；')
+    .replace(/<[^>]+>/g, ''))
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\|/g, '\\|');
+}
+function normalizeReportHtmlTables(value) {
+  return String(value || '').replace(/<table\b[^>]*>[\s\S]*?<\/table>/gi, table => {
+    const rows = [...table.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)].map(match => (
+      [...match[1].matchAll(/<(th|td)\b[^>]*>([\s\S]*?)<\/\1>/gi)].map(cell => ({
+        header: cell[1].toLowerCase() === 'th',
+        text: reportHtmlCellText(cell[2]),
+      }))
+    )).filter(row => row.length);
+    if (!rows.length) return table;
+    const width = Math.max(...rows.map(row => row.length));
+    const normalizedRows = rows.map(row => Array.from({length: width}, (_, index) => row[index]?.text || ''));
+    const firstRowIsHeader = rows[0].some(cell => cell.header);
+    const header = firstRowIsHeader ? normalizedRows[0] : Array.from({length: width}, (_, index) => `字段 ${index + 1}`);
+    const body = firstRowIsHeader ? normalizedRows.slice(1) : normalizedRows;
+    return `\n\n| ${header.join(' | ')} |\n| ${header.map(() => '---').join(' | ')} |${body.length ? `\n${body.map(row => `| ${row.join(' | ')} |`).join('\n')}` : ''}\n\n`;
+  });
+}
 function reportMarkdown(value) {
-  const content = agentFacingText(value)
+  const content = normalizeReportBareUrls(normalizeReportHtmlTables(agentFacingText(value, {preserveLayout: true})))
     .replace(/\\\*\\\*([^\n]+?)\\\*\\\*/g, '**$1**')
     .replace(/\*\*([^*\n]+?)\s+\*\*/g, '**$1**')
     .replace(/(\*\*[^*\n]+?\*\*)(?=[\u3400-\u9fffA-Za-z0-9])/g, '$1 ');
@@ -1120,6 +1427,16 @@ function reportMarkdown(value) {
   });
   return summarizeBaselineGapTable(expanded);
 }
+function normalizeReportBareUrls(value) {
+  const source = String(value || '');
+  return source.replace(/https?:\/\/[^\s<>\u3000-\u303f\uff00-\uffef()[\]{}"']+/g, (matched, offset) => {
+    const prefix = source.slice(Math.max(0, offset - 2), offset);
+    if (prefix.endsWith('](') || source[offset - 1] === '<') return matched;
+    const trailing = matched.match(/[.,;:!?]+$/)?.[0] || '';
+    const url = trailing ? matched.slice(0, -trailing.length) : matched;
+    return `<${url}>${trailing}`;
+  });
+}
 function ReportView({text, run}) {
   const content = reportMarkdown(typeof text === 'string' ? text : formatValue(text));
   return <section className="report-view enhanced"><div><span><FileCheck2 size={18}/><b>研究报告</b></span><em>{run?.topic}</em></div><article className="report-markdown"><ReactMarkdown remarkPlugins={[remarkGfm]} components={{a: ({node: _node, children, ...props}) => <a {...props} target="_blank" rel="noreferrer">{children}</a>}}>{content}</ReactMarkdown></article></section>;
@@ -1127,25 +1444,54 @@ function ReportView({text, run}) {
 function ReportFailureView({run, detail, resuming, resume, error}) { const reason = agentFacingText(String(detail || 'Reporter 未能完成独立深度撰写。').slice(0, 600)); return <section className="report-view enhanced"><div><span><CircleAlert size={18}/><b>报告生成失败</b></span><Status value="failed"/></div><article className="empty"><CircleAlert size={22}/><section><b>未使用确定性降级模板</b><p>{reason}</p>{run?.status === 'failed' && <button className="primary" disabled={resuming} onClick={resume}><RefreshCw size={14}/>{resuming ? '正在恢复' : '从检查点继续生成'}</button>}{error && <p className="form-error">{error}</p>}</section></article></section>; }
 function RunDrawer({run, catalog, close, inspect, changed}) {
   const done = run.status === 'completed'; const canEdit = run.status === 'draft'; const canArchive = ['draft', 'completed', 'failed', 'cancelled'].includes(run.status);
+  const canStop = ACTIVE_RUN_STATUSES.has(run.status);
   const [editing, setEditing] = useState(false); const [saving, setSaving] = useState(false); const [archiveConfirm, setArchiveConfirm] = useState(false); const [error, setError] = useState(''); const [historyRows, setHistoryRows] = useState([]);
   const [form, setForm] = useState(() => runForm(run, catalog));
   const historyTypes = new Set(historyRows.map(row => row.event_type));
   const historyActors = new Set(historyRows.map(row => row.actor || row.details?.actor || row.payload?.event?.actor || row.payload?.actor));
   const reportStageFailed = run.status === 'failed' && (historyTypes.has('report_model_failed') || historyActors.has('reporter'));
   const stageIndex = done ? 5 : historyTypes.has('report_completed') || historyActors.has('reporter') ? 4 : historyTypes.has('audit_completed') || historyTypes.has('audit_model_fallback') || historyActors.has('auditor') ? 3 : historyTypes.has('winning_subagent_completed') || historyTypes.has('winning_stage_completed') || historyTypes.has('capability_image_created') ? 2 : historyTypes.has('baseline_pipeline_started') || historyTypes.has('baseline_agent_completed') ? 1 : ({queued:0, planning:0}[run.status] ?? -1);
-  const loadHistory = () => request(`/runs/${run.run_id}/history`, [], {headers: {'X-Role': 'analyst'}}).then(setHistoryRows);
+  const loadHistory = () => request(`/runs/${run.run_id}/history`, [], {headers: {'X-Role': 'analyst'}}).then(rows => setHistoryRows(compactRunHistoryRows(rows)));
   useEffect(() => { setForm(runForm(run, catalog)); setEditing(false); setArchiveConfirm(false); setError(''); void loadHistory(); }, [run.run_id]);
   const set = (key, value) => setForm(current => ({...current, [key]: value}));
   const toggleAgent = id => set('selected_agent_ids', form.selected_agent_ids.includes(id) ? form.selected_agent_ids.filter(item => item !== id) : [...form.selected_agent_ids, id]);
   const save = async () => { setSaving(true); setError(''); const updated = await request(`/runs/${run.run_id}`, null, {method: 'PATCH', headers: {'Content-Type': 'application/json', 'X-Role': 'analyst'}, body: JSON.stringify({topic: form.topic, supplemental_information: form.supplemental_information, research_route: form.research_route, interaction_mode: form.interaction_mode, discovery_branch: form.discovery_branch, execution_profile_id: form.execution_profile_id, report_template_mode: form.report_template_mode, selected_agent_ids: form.selected_agent_ids, max_rounds: Number(form.max_rounds), analyst_confirmed: run.analyst_confirmed || false})}); setSaving(false); if (updated) { changed(updated); setEditing(false); void loadHistory(); } else setError('保存失败。仅草稿任务可编辑。'); };
   const archive = async () => { setSaving(true); const updated = await request(`/runs/${run.run_id}`, null, {method: 'DELETE', headers: {'X-Role': 'analyst'}}); setSaving(false); if (updated) { changed(updated); close(); } else setError('归档失败。运行中的任务不能归档。'); };
+  const stop = async () => { if (!window.confirm(`确定停止研究任务“${run.topic}”吗？将终止该任务启动的所有 Agent 进程。`)) return; setSaving(true); setError(''); const result = await requestResult(`/runs/${run.run_id}/stop`, {method:'POST', headers:{'Idempotency-Key':`stop:${run.run_id}`, 'X-Role':'analyst'}}); setSaving(false); if (result.ok) { changed(result.data); void loadHistory(); } else setError(result.detail || '停止任务失败。'); };
   const resume = async () => { setSaving(true); setError(''); const result = await requestResult(`/runs/${run.run_id}/resume`, {method: 'POST', headers: {'Idempotency-Key': crypto.randomUUID(), 'X-Role': 'analyst'}}); setSaving(false); if (result.ok) { changed(result.data); void loadHistory(); } else setError(result.detail || '断点恢复失败，请检查 Worker 与模型配置。'); };
   const harnessLabel = run.execution_profile_id === 'winning_swarm_dynamic_v2' ? 'Winning Swarm Dynamic v2 Challenger' : run.execution_profile_id === 'swarm_quality_v1' ? 'Swarm Quality v1 Challenger' : run.execution_profile_id === 'optimized_v2' ? 'Optimized v2 Challenger' : 'Legacy v1';
-  return <div className="drawer-backdrop" onClick={close}><aside className="run-drawer" onClick={event => event.stopPropagation()}><button className="drawer-close icon-button" title="关闭" onClick={close}><X size={16}/></button><span className="drawer-eyebrow">研究任务 · {run.run_id}</span>{editing ? <section className="drawer-editor"><Field label="研究主题"><input value={form.topic} onChange={event => set('topic', event.target.value)}/></Field><Field label="补充信息（可选）"><textarea className="supplement-input" value={form.supplemental_information} maxLength={8000} onChange={event => set('supplemental_information', event.target.value)}/></Field><div className="drawer-edit-grid"><Field label="研究路线"><select value={form.research_route} onChange={event => set('research_route', event.target.value)}><option value="auto">按发现分支自动映射</option>{catalog.routes.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="交互模式"><select value={form.interaction_mode} onChange={event => set('interaction_mode', event.target.value)}>{(catalog.interaction_modes || []).map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="A–H 发现分支"><select value={form.discovery_branch} onChange={event => set('discovery_branch', event.target.value)}><option value="auto">Agent 自动选择</option>{(catalog.discovery_branches || []).map(item => <option key={item.id} value={item.id}>{item.id} · {item.name}</option>)}</select></Field><Field label="运行模式"><select value={form.execution_profile_id} onChange={event => set('execution_profile_id', event.target.value)}>{(catalog.execution_profiles || [{id:'legacy_v1',name:'Legacy v1'}]).filter(item => item.selectable !== false).map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="最大轮次"><select value={form.max_rounds} onChange={event => set('max_rounds', Number(event.target.value))}>{[1,2,3,...(form.execution_profile_id === 'legacy_v1' ? [4,5] : [])].map(item => <option key={item} value={item}>{item} 轮</option>)}</select></Field></div><div className="drawer-agent-list">{businessAgents(catalog).map(agent => <label key={agent.agent_id} className={form.selected_agent_ids.includes(agent.agent_id) ? 'selected' : ''}><input type="checkbox" checked={form.selected_agent_ids.includes(agent.agent_id)} onChange={() => toggleAgent(agent.agent_id)}/><span>{agent.display_name}</span></label>)}</div><div className="drawer-editor-actions"><button onClick={() => setEditing(false)}><X size={15}/>取消</button><button className="primary" disabled={saving || !form.topic.trim()} onClick={save}><Save size={15}/>{saving ? '保存中' : '保存草稿'}</button></div></section> : <><h2>{run.topic}</h2><Status value={run.status}/>{run.supplemental_information && <section className="drawer-supplement"><b>用户补充信息</b><p>{run.supplemental_information}</p><small>执行时由主控 Agent 压缩并结构化传递</small></section>}<dl><dt>研究路线</dt><dd>{routeLabel(run.research_route)}</dd><dt>交互模式</dt><dd>{run.interaction_mode === 'autonomous' ? '智能元编排' : '专家约束编排'}</dd><dt>A–H 分支</dt><dd>{run.discovery_branch === 'auto' ? 'Agent 自动选择' : run.discovery_branch}</dd><dt>Harness</dt><dd>{harnessLabel}</dd><dt>执行方式</dt><dd><ExecutionBadge execution={run.execution}/></dd><dt>业务 Agent</dt><dd>{run.selected_agent_ids.length ? run.selected_agent_ids.map(agentModelLabel).join('、') : '由编排 Agent 智能选择'}</dd><dt>最大轮次</dt><dd>{run.max_rounds}</dd></dl><div className="drawer-steps">{['问题解析与任务委派', '基线 Agent 研判', 'S1–S6 轻量门控与按需回溯', '五判据审计', '研究报告输出'].map((item, index) => { const failed = reportStageFailed && index === 4; return <div key={item}><i className={failed ? 'failed' : index < stageIndex ? 'done' : index === stageIndex ? 'active' : ''}/><span>{item}</span>{failed && <Status value="failed"/>}</div>; })}</div>{(done || ['queued', 'planning', 'researching', 'recalling', 'failed'].includes(run.status)) && <div className="drawer-actions"><button onClick={() => inspect('interactions')}><History size={15}/>交互过程</button>{run.status === 'failed' && <button className="primary" disabled={saving} onClick={resume}>{saving ? '恢复中' : '从断点继续'}</button>}{done && <><button onClick={() => inspect('evidence')}>证据中心</button><button onClick={() => inspect('winning')}>S1–S6 Agent</button><button className="primary" onClick={() => inspect('capabilities')}>能力画像</button></>}</div>}{canEdit && <button className="drawer-manage" onClick={() => setEditing(true)}><Pencil size={15}/>编辑草稿</button>}{canArchive && <div className="archive-action">{archiveConfirm ? <><span>归档后任务从当前列表隐藏，审计产物仍保留。</span><button onClick={() => setArchiveConfirm(false)}>取消</button><button className="danger" disabled={saving} onClick={archive}><Trash2 size={14}/>确认归档</button></> : <button onClick={() => setArchiveConfirm(true)}><Archive size={15}/>归档任务</button>}</div>}</>}{error && <p className="form-error"><CircleAlert size={15}/>{error}</p>}<section className="run-history"><div><History size={16}/><b>执行历史</b><span>{historyRows.length} 个事件</span></div>{historyRows.length ? historyRows.slice(-24).reverse().map(row => <article key={row.sequence}><i/><span><b>{eventLabel(row.event_type)}</b><small>#{row.sequence} · {historySummary(row, run.result?.audit_status)}</small></span></article>) : <p>尚无历史事件</p>}</section></aside></div>;
+  return <div className="drawer-backdrop" onClick={close}><aside className="run-drawer" onClick={event => event.stopPropagation()}><button className="drawer-close icon-button" title="关闭" onClick={close}><X size={16}/></button><span className="drawer-eyebrow">研究任务 · {run.run_id}</span>{editing ? <section className="drawer-editor"><Field label="研究主题"><input value={form.topic} onChange={event => set('topic', event.target.value)}/></Field><Field label="补充信息（可选）"><textarea className="supplement-input" value={form.supplemental_information} maxLength={8000} onChange={event => set('supplemental_information', event.target.value)}/></Field><div className="drawer-edit-grid"><Field label="研究路线"><select value={form.research_route} onChange={event => set('research_route', event.target.value)}><option value="auto">按发现分支自动映射</option>{catalog.routes.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="交互模式"><select value={form.interaction_mode} onChange={event => set('interaction_mode', event.target.value)}>{(catalog.interaction_modes || []).map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="A–H 发现分支"><select value={form.discovery_branch} onChange={event => set('discovery_branch', event.target.value)}><option value="auto">Agent 自动选择</option>{(catalog.discovery_branches || []).map(item => <option key={item.id} value={item.id}>{item.id} · {item.name}</option>)}</select></Field><Field label="运行模式"><select value={form.execution_profile_id} onChange={event => set('execution_profile_id', event.target.value)}>{(catalog.execution_profiles || [{id:'legacy_v1',name:'Legacy v1'}]).filter(item => item.selectable !== false).map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="最大轮次"><select value={form.max_rounds} onChange={event => set('max_rounds', Number(event.target.value))}>{[1,2,3,...(form.execution_profile_id === 'legacy_v1' ? [4,5] : [])].map(item => <option key={item} value={item}>{item} 轮</option>)}</select></Field></div><div className="drawer-agent-list">{businessAgents(catalog).map(agent => <label key={agent.agent_id} className={form.selected_agent_ids.includes(agent.agent_id) ? 'selected' : ''}><input type="checkbox" checked={form.selected_agent_ids.includes(agent.agent_id)} onChange={() => toggleAgent(agent.agent_id)}/><span>{agent.display_name}</span></label>)}</div><div className="drawer-editor-actions"><button onClick={() => setEditing(false)}><X size={15}/>取消</button><button className="primary" disabled={saving || !form.topic.trim()} onClick={save}><Save size={15}/>{saving ? '保存中' : '保存草稿'}</button></div></section> : <><h2>{run.topic}</h2><Status value={run.status}/>{run.supplemental_information && <section className="drawer-supplement"><b>用户补充信息</b><p>{run.supplemental_information}</p><small>执行时由主控 Agent 压缩并结构化传递</small></section>}<dl><dt>研究路线</dt><dd>{routeLabel(run.research_route)}</dd><dt>交互模式</dt><dd>{run.interaction_mode === 'autonomous' ? '智能元编排' : '专家约束编排'}</dd><dt>A–H 分支</dt><dd>{run.discovery_branch === 'auto' ? 'Agent 自动选择' : run.discovery_branch}</dd><dt>Harness</dt><dd>{harnessLabel}</dd><dt>执行方式</dt><dd><ExecutionBadge execution={run.execution}/></dd><dt>业务 Agent</dt><dd>{run.selected_agent_ids.length ? run.selected_agent_ids.map(agentModelLabel).join('、') : '由编排 Agent 智能选择'}</dd><dt>最大轮次</dt><dd>{run.max_rounds}</dd></dl><div className="drawer-steps">{['问题解析与任务委派', '基线 Agent 研判', 'S1–S6 轻量门控与按需回溯', '五判据审计', '研究报告输出'].map((item, index) => { const failed = reportStageFailed && index === 4; return <div key={item}><i className={failed ? 'failed' : index < stageIndex ? 'done' : index === stageIndex ? 'active' : ''}/><span>{item}</span>{failed && <Status value="failed"/>}</div>; })}</div>{(done || ['queued', 'planning', 'researching', 'recalling', 'synthesizing', 'reviewing', 'reporting', 'failed', 'cancel_requested'].includes(run.status)) && <div className="drawer-actions">{canStop && <button className="danger" disabled={saving} onClick={stop}><X size={15}/>{saving ? '停止中' : '停止任务'}</button>}<button onClick={() => inspect('interactions')}><History size={15}/>交互过程</button>{run.status === 'failed' && <button className="primary" disabled={saving} onClick={resume}>{saving ? '恢复中' : '从断点继续'}</button>}{done && <><button onClick={() => inspect('evidence')}>证据中心</button><button onClick={() => inspect('winning')}>S1–S6 Agent</button><button className="primary" onClick={() => inspect('capabilities')}>能力画像</button></>}</div>}{canEdit && <button className="drawer-manage" onClick={() => setEditing(true)}><Pencil size={15}/>编辑草稿</button>}{canArchive && <div className="archive-action">{archiveConfirm ? <><span>归档后任务从当前列表隐藏，审计产物仍保留。</span><button onClick={() => setArchiveConfirm(false)}>取消</button><button className="danger" disabled={saving} onClick={archive}><Trash2 size={14}/>确认归档</button></> : <button onClick={() => setArchiveConfirm(true)}><Archive size={15}/>归档任务</button>}</div>}</>}{error && <p className="form-error"><CircleAlert size={15}/>{error}</p>}<section className="run-history"><div><History size={16}/><b>执行历史</b><span>{historyRows.length} 个事件</span></div>{historyRows.length ? historyRows.slice(-24).reverse().map(row => <article key={row.sequence}><i/><span><b>{eventLabel(row.event_type)}</b><small>#{row.sequence} · {historySummary(row, run.result?.audit_status)}</small></span></article>) : <p>尚无历史事件</p>}</section></aside></div>;
 }
 
 function providerDisplayLabel() { return 'Agent'; }
-function agentFacingText(value) { return String(value ?? '').replace(/\u7532\u65b9可读能力画像报告/g, '能力画像研究报告').replace(/\u7532\u65b9能力画像报告/g, '能力画像研究报告').replace(/\u7532\u65b9报告/g, '研究报告').replace(/\u7532\u65b9/g, '项目').replace(/codex\s*子\s*agent/gi, '专用 Agent').replace(/codex[\s_-]*cli/gi, 'Agent').replace(/codex\s*专用\s*agent/gi, '专用 Agent').replace(/自定义\s*agent/gi, 'Agent').replace(/codex/gi, 'Agent'); }
+function completedResearchSummary(value) {
+  const text = String(value ?? '').replace(/\s+/g, ' ').trim();
+  if (!text) return '';
+  const prescriptive = [
+    /^(?:后续|下一步|后置(?:环节|Agent|智能体)?|后续研究|后续工作|进一步).{0,18}(?:应|应当|需要|需|必须|建议|优先|重点|继续|核验|验证|关注)/,
+    /^(?:应|应当|需要|需|必须|建议|请|务必|继续|优先|重点关注)/,
+    /(?:装备与技术|技术|装备|研究|证据|验证|核验)优先级应/,
+  ];
+  return text.split(/(?<=[。！？!?；;])/).filter(part => !prescriptive.some(pattern => pattern.test(part.trim()))).join('').trim();
+}
+function agentFacingText(value, {preserveLayout = false} = {}) {
+  const raw = String(value ?? '');
+  if (!preserveLayout && raw.includes('独立检验Query蓝图制胜命题')) return '围绕当前作战矛盾独立推演并检验制胜路径。';
+  if (!preserveLayout && /^\s*制胜命题验证\s*[：:]/.test(raw)) return '制胜命题推演';
+  const sanitized = raw
+    .replace(/(?:概念性工作名|Query因果)\s*[：:]\s*[^；。\n]*[；。]?/g, '')
+    .replace(/\u7532\u65b9可读能力画像报告/g, '能力画像研究报告')
+    .replace(/\u7532\u65b9能力画像报告/g, '能力画像研究报告')
+    .replace(/\u7532\u65b9报告/g, '研究报告')
+    .replace(/\u7532\u65b9/g, '项目')
+    .replace(/codex\s*子\s*agent/gi, '专用 Agent')
+    .replace(/codex[\s_-]*cli/gi, 'Agent')
+    .replace(/codex\s*专用\s*agent/gi, '专用 Agent')
+    .replace(/自定义\s*agent/gi, 'Agent')
+    .replace(/codex/gi, 'Agent');
+  const cleaned = (preserveLayout ? sanitized : sanitized.replace(/\s{2,}/g, ' ')).trim();
+  return cleaned || '制胜关系分析';
+}
 function runForm(run) { return {topic: run.topic, supplemental_information: run.supplemental_information || '', research_route: run.research_route, interaction_mode: run.interaction_mode || 'expert', discovery_branch: run.discovery_branch || 'auto', execution_profile_id: run.execution_profile_id || 'legacy_v1', report_template_mode: run.report_template_mode || 'three_layer_nine_item', selected_agent_ids: [...run.selected_agent_ids], max_rounds: run.max_rounds}; }
 function agentModelLabel(id) { return {orchestrator:'编排器',scenario_divergence:'场景发散',case_research:'案例研究',technology_radar:'技术雷达',opponent_monitoring:'对手监测',system_confrontation:'体系对抗',cross_domain_fusion:'跨域融合',nontraditional_security:'非传统安全',international_situation:'国际形势',combat_scenario:'作战场景',weapon_equipment:'武器装备',operational_employment:'作战运用',convergence_fusion:'收敛融合',winning_mechanism:'S Agent 编排器',winning_dynamic_specialist:'动态专用 Agent 模板',winning_s1_opponent:'S1 对手分析',winning_s2_operations:'S2 作战运用审查',winning_s3_breakthrough:'S3 突破口思考',winning_s4_capability:'S4 装备能力映射',winning_s5_gap:'S5 装备现状差距',winning_s6_image:'S6 能力图像综合',winning_step_critic:'步骤批判',winning_round_critic:'中循环批判',auditor:'审计',reporter:'报告'}[id] || id; }
 function stringList(value) { if (value == null || value === '') return []; const rows = Array.isArray(value) ? value : [value]; return rows.map(item => typeof item === 'object' && item !== null ? item.skill_id || item.id || item.name || '' : String(item)).filter(Boolean); }
@@ -1156,13 +1502,14 @@ function normalizeSAgentStatus(value, executionMode, completedEvent = false) { c
 function latestReporterPhaseStatus(events = [], runCompleted = false, runFailed = false) { let status = 'pending'; let started = false; events.forEach(event => { const details = event.details || {}; const delegated = event.event_type === 'agent_task_delegated' && details.target_agent_id === 'reporter'; const activity = event.actor === 'reporter' && (['task_received', 'tool_call', 'tool_result'].includes(event.event_type) || event.event_type.startsWith('report_model_')); if (delegated || activity) { started = true; status = 'running'; } if (event.event_type === 'report_model_failed') { started = true; status = 'failed'; } else if (event.event_type === 'report_completed') { started = true; status = 'completed'; } }); if (runCompleted) return 'completed'; if (runFailed && started && status !== 'completed') return 'failed'; return status; }
 function normalizeWorkflowStatus(value, fallback = 'pending') { if (value === true) return 'completed'; if (value === false || value == null || value === '') return fallback; const status = String(value).toLowerCase(); if (['completed', 'complete', 'done', 'success', 'succeeded'].includes(status)) return 'completed'; if (['running', 'started', 'in_progress', 'active'].includes(status)) return 'running'; if (status.includes('skip')) return 'skipped'; if (['failed', 'error', 'cancelled'].includes(status)) return 'failed'; return 'pending'; }
 function workflowStatusRank(value) { return {failed: 0, pending: 0, running: 1, skipped: 2, completed: 3}[value] ?? 0; }
-function sAgentStatusLabel(value) { return {pending:'待执行',running:'执行中',completed:'已完成',skipped:'已跳步',failed:'失败'}[value] || value; }
+function sAgentStatusLabel(value) { return {pending:'待调度',running:'执行中',completed:'已完成',skipped:'已跳步',failed:'失败'}[value] || value; }
 function loopCount(value, fallback = 0) { if (typeof value === 'object' && value !== null) value = value.count ?? value.iterations ?? value.value; const count = Number(value); return Number.isFinite(count) ? Math.max(0, count) : Math.max(0, Number(fallback) || 0); }
 function recallMatchesStep(item, step, agentId) { const text = [item.return_node, item.target_agent_id, item.target_capability_tag].filter(Boolean).join(' ').toLowerCase(); return text.includes(String(agentId).toLowerCase()) || new RegExp(`(?:^|[^0-9])s?${step}(?:[^0-9]|$)`, 'i').test(text); }
 function eventTargetsStep(event, step, agentId) { const details = event.details || {}; const realBacktrack = event.event_type === 'recall_requested' || (['winning_inner_loop_evaluated', 'winning_middle_loop_evaluated', 'winning_outer_loop_evaluated'].includes(event.event_type) && details.passed === false && (['retry', 'recall', 'backtrack'].includes(String(details.recommended_action || '').toLowerCase()) || Number(details.rerun_from_step || details.backtrack_to_step || 0) > 0 || (details.return_node != null && details.return_node !== ''))); if (!realBacktrack) return false; const text = [event.actor, details.target_agent_id, details.rerun_from_step, details.backtrack_to_step, details.return_node, details.return_nodes, details.step].flat().filter(value => value != null).join(' ').toLowerCase(); return text.includes(String(agentId).toLowerCase()) || new RegExp(`(?:^|[^0-9])s?${step}(?:[^0-9]|$)`, 'i').test(text); }
 function formatNextAction(value) { if (!value) return ''; if (typeof value === 'string') return value; if (typeof value !== 'object') return String(value); const action = {continue:'继续',parallel:'并行展开',backtrack:'回溯',recall:'定向再调',stop:'提交门控'}[value.action] || value.action || ''; const target = Number(value.target_step || 0) > 0 ? `S${value.target_step}` : ''; return [action, target, value.reason].filter(Boolean).join(' · '); }
 function loopEventDecision(event) { const details = event.details || {}; const decision = details.passed === true ? '通过' : details.passed === false ? '需回溯' : details.replan_required === true ? '触发重规划' : details.status ? formatValue(details.status) : event.summary || event.title || '已完成判定'; const target = details.rerun_from_step ?? details.return_node ?? details.target_agent_id; return agentFacingText(`${decision}${target != null && target !== '' ? ` · 目标 ${normalizeStepRef(target)}` : ''}`); }
-function historySummary(row, finalAuditStatus = '') { const payload = row.payload || {}; const event = payload.event || {}; const summary = event.summary || failureReasonText(payload.error) || payload.status || payload.prior_status || payload.research_route || row.event_type; const auditRelated = row.event_type === 'audit_completed' || event.actor === 'auditor' || event.payload?.tool_name === 'write_audit'; if (finalAuditStatus === 'approved' && auditRelated && /limited|受限/i.test(String(summary))) return '五判据初审待收敛（最终已通过）'; return agentFacingText(summary); }
+function compactRunHistoryRows(rows = []) { const seenProgress = new Set(); const completedActors = new Set(); return [...rows].reverse().filter(row => { const event = row.payload?.event || {}; const details = event.payload || {}; const actor = event.actor || details.agent_instance_id || details.agent_id || ''; if (['baseline_model_call_completed', 'winning_model_call_completed', 'report_model_call_completed', 'winning_agent_session_completed'].includes(row.event_type)) completedActors.add(actor); if (!['baseline_model_call_progress', 'winning_model_call_progress', 'report_model_call_progress', 'winning_agent_waiting'].includes(row.event_type)) return true; const key = `${row.event_type}|${actor}|${details.phase || ''}|${details.current_step || ''}`; if ((actor && completedActors.has(actor)) || seenProgress.has(key)) return false; seenProgress.add(key); return true; }).reverse().map(row => row.payload?.event?.payload?.event_type === 'winning_portfolio_gap_completion_planned' ? {...row, event_type: 'recall_requested'} : row); }
+function historySummary(row, finalAuditStatus = '') { const payload = row.payload || {}; const event = payload.event || {}; const details = event.payload || {}; if (details.event_type === 'winning_portfolio_gap_completion_planned') return `专家盲评后合格方向 ${details.passed_count || 0}/${details.finalist_minimum || 5}，仅孵化缺口角色补足互异装备族；复用既有账本，未重跑前序阶段`; if (row.event_type === 'winning_model_call_progress' && Number(details.batch || 0) >= 6) return `专家评审后定向补强 · ${details.current_step || details.mission_node || '残差修复'} · 已耗时 ${Number(details.elapsed_seconds || 0).toFixed(1)} 秒（未重跑前序阶段）`; let summary = event.summary || failureReasonText(payload.error) || payload.status || payload.prior_status || payload.research_route || row.event_type; if (row.event_type === 'baseline_agent_completed') summary = completedResearchSummary(summary); const auditRelated = row.event_type === 'audit_completed' || event.actor === 'auditor' || event.payload?.tool_name === 'write_audit'; if (finalAuditStatus === 'approved' && auditRelated && /limited|受限/i.test(String(summary))) return '五判据初审待收敛（最终已通过）'; return agentFacingText(summary); }
 function failureReasonText(value) { const reason = String(value || '').trim(); if (!reason) return ''; if (reason === 'wall-clock budget expired') return '制胜机理阶段外层 900 秒墙钟预算到期，已完成结果未被接纳'; return reason; }
 function PageTitle({eyebrow, title, subtitle, children}) { return <div className="page-title"><div><span>{eyebrow}</span><h1>{title}</h1><p>{subtitle}</p></div><div className="title-actions">{children}</div></div>; }
 function Metric({label, value, icon: Icon}) { return <article className="metric"><div><span>{label}</span><b>{value}</b></div><Icon size={20}/></article>; }
@@ -1173,7 +1520,20 @@ function Status({value}) { return <span className={`status ${value}`}><i/>{statu
 function ExecutionBadge({execution = {}}) { const real = execution.mode === 'real'; return <span className={`execution ${real ? 'real' : 'fake'}`}><i/>{real ? `${providerDisplayLabel(execution.provider)} · ${execution.model || '默认模型'}` : 'Fake · 离线'}</span>; }
 function Empty({text}) { return <div className="empty"><Activity size={23}/>{text}</div>; }
 async function request(path, fallback, options) { try { const response = await fetch(`${api}${path}`, options); if (!response.ok) return fallback; return (response.headers.get('content-type') || '').includes('application/json') ? await response.json() : await response.text(); } catch { return fallback; } }
-async function requestResult(path, options) { try { const response = await fetch(`${api}${path}`, options); const data = (response.headers.get('content-type') || '').includes('application/json') ? await response.json() : await response.text(); return response.ok ? {ok:true,data} : {ok:false,status:response.status,detail:typeof data === 'object' ? data.detail : data}; } catch { return {ok:false,detail:'无法连接 API 服务。'}; } }
+async function requestResult(path, options = {}, requestOptions = {}) {
+  const controller = new AbortController();
+  const timeoutMs = Number(requestOptions.timeoutMs || 0);
+  const timer = timeoutMs > 0 ? setTimeout(() => controller.abort(), timeoutMs) : null;
+  try {
+    const response = await fetch(`${api}${path}`, {...options, signal: options.signal || controller.signal});
+    const data = (response.headers.get('content-type') || '').includes('application/json') ? await response.json() : await response.text();
+    return response.ok ? {ok:true,data} : {ok:false,status:response.status,detail:typeof data === 'object' ? data.detail : data};
+  } catch (error) {
+    return {ok:false,detail:error?.name === 'AbortError' ? `请求超时（${Math.round(timeoutMs / 1000)} 秒），任务状态未确定，请刷新任务列表确认。` : '无法连接 API 服务。'};
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
 async function fileToBase64(file) { const bytes = new Uint8Array(await file.arrayBuffer()); let binary = ''; const chunk = 32768; for (let index = 0; index < bytes.length; index += chunk) binary += String.fromCharCode(...bytes.subarray(index, index + chunk)); return btoa(binary); }
 function datasetModeLabel(value) { return {fixture:'内置冒烟',expert_approved:'专家通过集',local_candidate_test:'本地候选测试集',local_jsonl_test:'本地 JSONL 测试集'}[value] || value || '本地数据集'; }
 function benchmarkSystemLabel(value) { return {full_method:'完整方法',generic_agent:'通用 Codex Agent',bare_llm:'纯 LLM',zhipu_llm:'智谱 GLM'}[value] || value; }
@@ -1187,11 +1547,11 @@ function fieldLabel(key) { return {claim: '支撑主张', excerpt: '证据摘录
 function stepModeLabel(value) { return {deep:'深入',standard:'标准',light:'弱化',skip:'跳过',dynamic:'动态'}[value] || value || '标准'; }
 function baselineAgentModeLabel(value) { return {required:'必需',reference:'参考',callback:'回调'}[value] || value || ''; }
 function formatValue(value) { if (Array.isArray(value)) return agentFacingText(value.map(item => typeof item === 'object' ? JSON.stringify(item) : item).join('；')); if (typeof value === 'object') return agentFacingText(JSON.stringify(value, null, 2)); if (typeof value === 'boolean') return value ? '通过' : '未通过'; return agentFacingText(value); }
-function eventLabel(value) { return {run_created: '任务创建', run_updated: '草稿更新', run_archived: '任务归档', run_status_changed: '状态变化', run_recovered: '中断恢复', run_result_saved: '交付完成', run_failed: '运行失败', run_started: '任务启动', discovery_meta_loop_evaluated: 'L4 元循环', baseline_pipeline_started: '研究流水线启动', baseline_discovery_started: '多源检索启动', baseline_discovery_lane_started: '检索通道启动', baseline_discovery_lane_completed: '检索通道完成', baseline_discovery_completed: '多源检索完成', baseline_model_queue_started: '模型调用排队', baseline_model_call_started: '模型调用启动', baseline_model_call_progress: '模型持续执行', baseline_model_call_completed: '模型调用完成', baseline_analysis_started: '结构化分析启动', baseline_analysis_completed: '结构化分析完成', baseline_materialization_progress: '证据材料化进度', baseline_wave_started: '研究波次启动', baseline_wave_completed: '研究波次完成', agent_task_delegated: 'Agent 委派', agent_harness_completed: 'Harness 完成', task_received: '任务接收', tool_call: '工具调用', tool_result: '工具结果', domain_tool_invoked: '领域工具', evidence_assessed: '证据评分', baseline_result: '阶段结果', savepoint: '保存点', baseline_agent_completed: '专业研究完成', baseline_agents_summarized: '基线汇总', packet_admission_evaluated: 'Packet 门控', packet_admission_reused: 'Packet 门控复用', discovery_convergence_completed: '收敛融合', discovery_convergence_reused: '收敛结果复用', winning_model_queue_started: 'S Agent 排队', winning_model_call_started: 'S Agent 启动', winning_model_call_progress: 'S Agent 持续执行', winning_model_call_completed: 'S Agent 模型完成', swarm_planned: 'Agent 群规划', specialist_recruitment_planned: '专用 Agent 招聘', specialist_spawned: '专用 Agent 孵化', specialist_session_started: '独立 CLI 会话启动', specialist_session_completed: '独立 CLI 会话结束', specialist_completed: '专用 Agent 完成', specialist_pruned: '专用 Agent 回收', hypothesis_created: '候选假设创建', hypothesis_merged: '候选贡献合并', hypothesis_rejected: '候选假设淘汰', swarm_gate_evaluated: 'Agent 群门控', promotion_candidate_created: 'Agent 晋级候选', winning_subagent_completed: 'S Agent 完成', winning_inner_loop_evaluated: '内循环批判', winning_middle_loop_evaluated: '中循环批判', winning_outer_loop_evaluated: '外循环复核', winning_reasoning_step_completed: 'S Agent 结果固化', winning_stage_completed: 'L1-L3 门控', recall_requested: '定向再调', recall_task_completed: '再调完成', coverage_recomputed_after_recall: '再调覆盖重算', winning_stage_gate_reevaluated: '再调门控重评', capability_image_created: '能力画像', audit_model_fallback: '审计降级', audit_completed: '审计完成', audit_release_reconciled: '最终审计通过', report_model_queue_started: 'Reporter 排队', report_model_call_started: 'Reporter 启动', report_model_call_progress: 'Reporter 持续撰写', report_model_call_completed: 'Reporter 模型完成', report_model_failed: '报告生成失败（未降级）', report_completed: '报告完成'}[value] || value; }
-const DYNAMIC_SWARM_EVENT_LABELS = {winning_mission_graph_planned:'动态任务图规划',winning_agent_instance_recruited:'残差触发招聘',winning_agent_instance_ready:'实例依赖就绪',winning_agent_session_started:'独立 CLI 会话启动',winning_agent_session_completed:'独立 CLI 会话完成',winning_agent_instance_failed:'实例失败隔离',winning_agent_instance_cancelled:'实例取消回收',winning_candidate_branch_created:'候选分支创建',winning_candidate_ledger_frozen:'候选账本更新',winning_contribution_queued:'贡献进入 Merge 队列',winning_contribution_rejected:'贡献越界拒绝',winning_contribution_rebase_required:'贡献版本重基',winning_contribution_merged:'贡献定向合并',winning_portfolio_merge_completed:'装备组合 Merge 完成'};
+function eventLabel(value) { return {run_created: '任务创建', run_updated: '草稿更新', run_archived: '任务归档', run_status_changed: '状态变化', run_recovered: '中断恢复', run_result_saved: '交付完成', run_failed: '运行失败', run_started: '任务启动', discovery_meta_loop_evaluated: 'L4 元循环', baseline_pipeline_started: '研究流水线启动', baseline_discovery_started: '多源检索启动', baseline_discovery_lane_started: '检索通道启动', baseline_discovery_lane_completed: '检索通道完成', baseline_discovery_completed: '多源检索完成', baseline_model_queue_started: '模型调用排队', baseline_model_call_started: '模型调用启动', baseline_model_call_progress: '模型持续执行', baseline_model_call_completed: '模型调用完成', baseline_analysis_started: '结构化分析启动', baseline_analysis_completed: '结构化分析完成', baseline_materialization_progress: '证据材料化进度', baseline_wave_started: '研究波次启动', baseline_wave_completed: '研究波次完成', agent_task_delegated: 'Agent 委派', agent_harness_completed: 'Harness 完成', task_received: '任务接收', tool_call: '工具调用', tool_result: '工具结果', domain_tool_invoked: '领域工具', evidence_assessed: '证据评分', baseline_result: '阶段结果', savepoint: '保存点', baseline_agent_completed: '专业研究完成', baseline_agents_summarized: '基线汇总', packet_admission_evaluated: 'Packet 门控', packet_admission_reused: 'Packet 门控复用', discovery_convergence_completed: '收敛融合', discovery_convergence_reused: '收敛结果复用', winning_model_queue_started: 'S Agent 排队', winning_model_call_started: 'S Agent 启动', winning_model_call_progress: 'S Agent 持续执行', winning_model_call_completed: 'S Agent 模型完成', swarm_planned: 'Agent 群规划', specialist_recruitment_planned: '专用 Agent 招聘', specialist_spawned: '专用 Agent 孵化', specialist_session_started: '独立 CLI 会话启动', specialist_session_completed: '独立 CLI 会话结束', specialist_completed: '专用 Agent 完成', specialist_pruned: '专用 Agent 回收', winning_mission_graph_planned: '动态任务图规划', winning_agent_instance_recruited: '残差触发招聘', winning_agent_instance_ready: '实例依赖就绪', winning_agent_session_started: '独立 CLI 会话启动', winning_agent_waiting: '动态 Agent 持续执行', winning_agent_session_completed: '动态 Agent 会话完成', winning_agent_instance_failed: '实例失败隔离', winning_agent_instance_cancelled: '实例取消回收', winning_s6_card_authoring_limited: 'S6 单卡受限交付', hypothesis_created: '候选假设创建', hypothesis_merged: '候选贡献合并', hypothesis_rejected: '候选假设淘汰', swarm_gate_evaluated: 'Agent 群门控', promotion_candidate_created: 'Agent 晋级候选', winning_subagent_completed: 'S Agent 完成', winning_inner_loop_evaluated: '内循环批判', winning_middle_loop_evaluated: '中循环批判', winning_outer_loop_evaluated: '外循环复核', winning_reasoning_step_completed: 'S Agent 结果固化', winning_stage_completed: 'L1-L3 门控', recall_requested: '定向再调', recall_task_completed: '再调完成', coverage_recomputed_after_recall: '再调覆盖重算', winning_stage_gate_reevaluated: '再调门控重评', capability_image_created: '能力画像', audit_model_fallback: '审计降级', audit_completed: '审计完成', audit_release_reconciled: '最终审计通过', report_model_queue_started: 'Reporter 排队', report_model_call_started: 'Reporter 启动', report_model_call_progress: 'Reporter 持续撰写', report_model_call_completed: 'Reporter 模型完成', report_model_failed: '报告生成失败（未降级）', report_completed: '报告完成'}[value] || value; }
+const DYNAMIC_SWARM_EVENT_LABELS = {run_manual_resume_required:'等待人工断点恢复',winning_mission_graph_planned:'动态任务图规划',winning_s3_active_agents_materialized:'S3 有效并行 Agent 已确定',winning_s3_first_pass_self_admission_completed:'S3 创新装备首稿已完成',winning_s5_portfolio_frozen:'S5 组合已冻结',winning_s5_handoff_quality_gate_completed:'S5 交接质量门完成',winning_s6_card_authoring_started:'S6 单卡画像开始',winning_s6_card_authoring_completed:'S6 原创画像完成',winning_s6_card_authoring_reused:'S6 画像复用',winning_s6_card_authoring_limited:'S6 单卡受限回退',winning_s6_low_repair_started:'S6 低成本修复开始',winning_s6_low_repair_completed:'S6 低成本修复完成',winning_s6_low_repair_limited:'S6 低成本修复受限',winning_s6_release_gate_evaluated:'S6 画像交付门评估',winning_agent_instance_recruited:'残差触发招聘',winning_agent_instance_ready:'实例依赖就绪',winning_agent_session_started:'独立 CLI 会话启动',winning_agent_waiting:'动态 Agent 持续执行',winning_agent_session_completed:'独立 CLI 会话完成',winning_agent_instance_failed:'实例失败隔离',winning_agent_instance_cancelled:'实例取消回收',winning_candidate_branch_created:'候选分支创建',winning_candidate_ledger_frozen:'候选账本更新',winning_contribution_queued:'贡献进入 Merge 队列',winning_contribution_rejected:'贡献越界拒绝',winning_contribution_rebase_required:'贡献版本重基',winning_contribution_merged:'贡献定向合并',winning_portfolio_merge_completed:'S5 入选装备组合完成',report_quality_gate_limited:'报告质量门未通过（等待修复）',report_delivery_resume_gate_evaluated:'报告门复核'};
 function displayEventLabel(value) { return DYNAMIC_SWARM_EVENT_LABELS[value] || eventLabel(value); }
 function routeLabel(value) { return {new_winning_mechanism: '新制胜机理', traditional_gap: '传统能力缺口', war_case_learning: '局部战争案例', auto: '自动'}[value] || value; }
-function statusLabel(value) { return {queued: '已排队', draft: '草稿', planning: '规划中', researching: '研究中', recalling: '再调中', pause_requested: '请求暂停', paused: '已暂停', cancel_requested: '正在停止', cancelled: '已取消', completed: '已完成', failed: '失败', archived: '已归档'}[value] || value; }
+function statusLabel(value) { return {queued: '已排队', draft: '草稿', planning: '规划中', researching: '研究中', recalling: '再调中', synthesizing: 'S1–S6 综合中', reviewing: '审计中', reporting: '报告生成中', pause_requested: '请求暂停', paused: '已暂停', cancel_requested: '正在停止', cancelled: '已取消', completed: '已完成', failed: '失败', archived: '已归档'}[value] || value; }
 const rootElement = document.getElementById('root');
 const appRoot = globalThis.__equipmentDeepResearchRoot || createRoot(rootElement);
 globalThis.__equipmentDeepResearchRoot = appRoot;

@@ -26,6 +26,10 @@ from equipment_deep_research.orchestration.winning_swarm import (
     normalize_weapon_candidate_title,
     normalize_winning_swarm_policy,
 )
+from equipment_deep_research.agents.workflows.winning import (
+    _bounded_semantic_review_window,
+    _minimal_portfolio_candidate_handoff,
+)
 from equipment_deep_research.domain.models import ResearchProblem
 
 
@@ -72,6 +76,18 @@ def _hypothesis(**overrides: object) -> WinningHypothesis:
     }
     payload.update(overrides)
     return WinningHypothesis(**payload)
+
+
+def test_s5_portfolio_handoff_is_strictly_name_and_summary_only() -> None:
+    item = _hypothesis(
+        title="机械化自主效应器",
+        reference_overview="在断链窗口自主复获目标并直接形成压制。",
+    )
+    assert _minimal_portfolio_candidate_handoff(item) == {
+        "hypothesis_id": item.hypothesis_id,
+        "name": item.title,
+        "concise_winning_summary": item.reference_overview,
+    }
 
 
 def test_swarm_profile_is_bounded_challenger_and_enables_blueprint_policy() -> None:
@@ -144,6 +160,47 @@ def test_dynamic_v2_profile_prioritizes_frontloaded_s3_capacity() -> None:
     )
 
 
+def test_semantic_clustering_bounds_large_ledger_without_dropping_candidates() -> None:
+    candidates = [
+        _hypothesis(
+            hypothesis_id=f"hypothesis-{index:02d}",
+            score=index / 100,
+            evidence_ids=[f"ev-{index}"] if index % 2 else [],
+        )
+        for index in range(38)
+    ]
+    original_ids = [item.hypothesis_id for item in candidates]
+
+    review, pair_ids = _bounded_semantic_review_window(candidates)
+
+    assert len(review) == 14
+    assert len(pair_ids) == 91
+    assert [item.hypothesis_id for item in candidates] == original_ids
+    assert len(candidates) == 38
+
+
+def test_semantic_clustering_prioritizes_changed_candidates_in_bounded_window() -> None:
+    candidates = [
+        _hypothesis(
+            hypothesis_id=f"hypothesis-{index:02d}",
+            score=index / 100,
+        )
+        for index in range(38)
+    ]
+    changed_ids = {"hypothesis-00", "hypothesis-01"}
+
+    review, pair_ids = _bounded_semantic_review_window(
+        candidates,
+        changed_hypothesis_ids=changed_ids,
+    )
+
+    review_ids = {item.hypothesis_id for item in review}
+    assert changed_ids <= review_ids
+    assert len(review) == 14
+    assert len(pair_ids) <= 91
+    assert all(changed_ids.intersection(pair) for pair in pair_ids)
+
+
 def test_frontier_candidate_metadata_survives_in_auditable_fields() -> None:
     controller = WinningSwarmController(
         {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
@@ -195,6 +252,95 @@ def test_frontier_candidate_metadata_survives_in_auditable_fields() -> None:
         candidate.trl_constraints[0] == "关键工程瓶颈：弹载尺度下的信噪比和环境鲁棒性"
     )
     assert "前瞻窗口：5-10年" in candidate.trl_constraints
+
+
+def test_dynamic_candidate_prefers_schema_name_and_preserves_concise_winning_summary() -> None:
+    controller = WinningSwarmController(
+        {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
+    )
+    task = SpecialistTask(
+        task_id="named-task",
+        agent_instance_id="named-agent",
+        archetype="innovative_equipment_dimension_generator",
+        display_name="开放创新武器",
+        wave=1,
+        purpose="形成命名闭环候选",
+        merge_target="S3",
+    )
+
+    candidate = controller.hypothesis_from_mapping(
+        {
+            "name": "“断链”远域压制系统",
+            "title": "旧兼容标题",
+            "equipment_form": "远域电子压制效应器",
+            "primary_equipment_identity": "远域电子压制效应器",
+            "target_and_direct_effect": "切断敌方关键感知与火力协同链路",
+            "changed_confrontation_variable": "从逐节点压制转为关键作战链整体失效",
+            "frontier_principle": "分布式相干电子效应",
+            "disruptive_shift": "让对手恢复链路的速度慢于压制重构速度",
+            "mechanism_chain": ["识别关键链路", "形成远域压制", "维持断链窗口"],
+            "direct_military_effects": ["降低敌方感知、通信与火力协同能力"],
+            "naming_rationale": "任务能力是核心差异，名称突出断链战果并保留压制系统身份",
+            "naming_style": "D/E/I任务能力",
+            "core_disruptive_difference": "把逐节点干扰改成关键作战链整体失效",
+            "concise_winning_summary": "把逐节点干扰转为关键作战链整体失效，直接扩大火力行动窗口。",
+        },
+        task=task,
+        valid_evidence_ids=set(),
+        ordinal=1,
+    )
+
+    assert candidate.title == "“断链”远域压制系统"
+    assert candidate.reference_overview == (
+        "把逐节点干扰转为关键作战链整体失效，直接扩大火力行动窗口。"
+    )
+    assert candidate.naming_style == "D/E/I任务能力"
+    assert candidate.core_disruptive_difference == "把逐节点干扰改成关键作战链整体失效"
+
+
+def test_s4_contribution_preserves_naming_and_concise_winning_summary() -> None:
+    controller = WinningSwarmController(
+        {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
+    )
+    hypothesis = _hypothesis(
+        hypothesis_id="h-s4-name",
+        title="旧名称",
+        naming_style="D/E/I任务能力",
+        core_disruptive_difference="旧颠覆性",
+        naming_rationale="旧命名理由",
+        reference_overview="旧概述",
+    )
+    task = SpecialistTask(
+        task_id="s4-name-task",
+        agent_instance_id="s4-name-agent",
+        archetype="innovative_equipment_dimension_generator",
+        display_name="S4开放创作",
+        wave=2,
+        purpose="完成一项Query相关的命名和制胜概述",
+        merge_target="S4",
+        hypothesis_id=hypothesis.hypothesis_id,
+    )
+    contribution = controller.contribution_from_mapping(
+        {
+            "hypothesis_id": hypothesis.hypothesis_id,
+            "merge_target": "S4",
+            "replacement_title": "潮汐折线跨域效应器",
+            "naming_style": "J/K/M/N战争改变",
+            "core_disruptive_difference": "把固定交战时刻改成可持续改变战场时间窗",
+            "naming_rationale": "名称承载时间逻辑跃迁并保留具体效应器身份",
+            "concise_winning_summary": "在目标恢复前持续改写有效交战时间窗，直接延长拒止效果。",
+            "findings": ["完成整装命名闭合"],
+            "incremental_quality": 0.08,
+            "recommendation": "retain",
+        },
+        task=task,
+        valid_evidence_ids=set(),
+    )
+    updated = controller.apply_contribution(hypothesis, contribution)
+    assert updated.title == "潮汐折线跨域效应器"
+    assert updated.naming_style == "D/E/I任务能力"
+    assert updated.core_disruptive_difference == "旧颠覆性"
+    assert updated.reference_overview == "在目标恢复前持续改写有效交战时间窗，直接延长拒止效果。"
 
 
 def test_frontloaded_diagnostics_record_missing_paradigm_without_rejecting() -> None:
@@ -549,6 +695,10 @@ def test_dynamic_v2_does_not_frontload_blueprint_equipment_names_into_s3() -> No
     assert "功能/动作短语＋装备类别尾词" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
     assert "不建立意象词库、后缀表、字符串评分或本地命名硬门" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
     assert "frontier_principle" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    assert "它长什么样" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    assert "它凭什么做到" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    assert "它能干什么" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    assert "可解释代号＋具体装备类别" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
 
 
 def test_versioned_ledger_requires_rebase_and_builds_pareto_decision() -> None:
