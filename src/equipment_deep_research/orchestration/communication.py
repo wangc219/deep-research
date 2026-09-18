@@ -61,6 +61,12 @@ class OrchestrationMessageBus:
     def __init__(self) -> None:
         self._messages: list[AgentMessageEnvelope] = []
         self._delivered: dict[str, set[str]] = defaultdict(set)
+        # ``drain_for`` is called at every agent turn.  Keep a per-agent
+        # cursor for the common case where capabilities are stable so each
+        # call only inspects messages published since the previous drain.
+        # Capability changes reset the cursor: an older message that did not
+        # match the old capability set may become relevant after a handoff.
+        self._drain_cursors: dict[str, tuple[frozenset[str], int]] = {}
 
     def publish(self, message: AgentMessageEnvelope) -> None:
         if message.message_type not in _TYPES:
@@ -73,14 +79,18 @@ class OrchestrationMessageBus:
 
     def drain_for(self, agent_id: str, capability_tags: list[str]) -> list[AgentMessageEnvelope]:
         capability_set = set(capability_tags)
+        capability_key = frozenset(capability_set)
+        previous = self._drain_cursors.get(agent_id)
+        start = previous[1] if previous and previous[0] == capability_key else 0
         result = []
-        for message in self._messages:
+        for message in self._messages[start:]:
             if message.message_id in self._delivered[agent_id]:
                 continue
             if message.recipient not in {None, agent_id} and not capability_set.intersection(message.capability_tags):
                 continue
             self._delivered[agent_id].add(message.message_id)
             result.append(message)
+        self._drain_cursors[agent_id] = (capability_key, len(self._messages))
         return result
 
     def history(self) -> tuple[AgentMessageEnvelope, ...]:

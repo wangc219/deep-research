@@ -133,6 +133,31 @@ def test_bus_rejects_raw_session_payload_and_targets_messages() -> None:
     assert envelope.to_plain()["return_node"] == "baseline-wave-2"
 
 
+def test_bus_cursor_only_scans_new_messages_and_rechecks_on_capability_change() -> None:
+    bus = OrchestrationMessageBus()
+    bus.publish(
+        AgentMessageEnvelope(
+            "old-capability", "handoff_ready", "a", "other", [], {"summary": "old"}, ["threat"]
+        )
+    )
+    assert bus.drain_for("worker", ["equipment"]) == []
+
+    # A stable capability set starts at the append cursor, while changing
+    # capabilities deliberately revisits older unmatched messages.
+    bus.publish(
+        AgentMessageEnvelope(
+            "new-capability", "handoff_ready", "a", "other", [], {"summary": "new"}, ["equipment"]
+        )
+    )
+    assert [item.message_id for item in bus.drain_for("worker", ["equipment"])] == [
+        "new-capability"
+    ]
+    assert bus.drain_for("worker", ["equipment"]) == []
+    assert [item.message_id for item in bus.drain_for("worker", ["threat"])] == [
+        "old-capability"
+    ]
+
+
 def test_subagent_requires_all_four_conditions() -> None:
     policy = SubagentPolicy()
     assert policy.evaluate(SubtaskCandidate(True, True, "BaselineFindingPacket", True)).spawn
@@ -220,11 +245,11 @@ def test_checkpoint_loader_demotes_legacy_s6_failure_to_warnings(tmp_path) -> No
     assert loaded["s6_quality_gate_limited"] is True
     assert loaded["s6_quality_gate_issues"] == []
     assert set(persisted_issues) <= set(loaded["s6_quality_warnings"])
-    assert _winning_analysis_reusable_for_profile(
+    assert not _winning_analysis_reusable_for_profile(
         loaded,
         execution_profile_id="winning_swarm_dynamic_v2",
     )
-    assert not _winning_analysis_can_resume_s6_only(
+    assert _winning_analysis_can_resume_s6_only(
         loaded,
         execution_profile_id="winning_swarm_dynamic_v2",
     )
@@ -337,7 +362,7 @@ def test_checkpoint_loader_restores_truncated_dynamic_s6_portfolio(tmp_path) -> 
     assert "步骤置信度低于0.65，需要定向复核" in loaded[
         "s6_quality_warnings"
     ]
-    assert not _winning_analysis_can_resume_s6_only(
+    assert _winning_analysis_can_resume_s6_only(
         loaded,
         execution_profile_id="winning_swarm_dynamic_v2",
     )

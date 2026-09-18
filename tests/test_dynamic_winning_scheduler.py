@@ -8,6 +8,9 @@ from equipment_deep_research.orchestration.dynamic_winning_scheduler import (
     ExecutionPlan,
     StepNode,
     ExecutionMode,
+    StepAction,
+    execute_production_step_waves,
+    reserve_parallel_capacity,
 )
 
 
@@ -15,6 +18,143 @@ from equipment_deep_research.orchestration.dynamic_winning_scheduler import (
 # The asyncio-only backend is pinned via the shared anyio_backend fixture in
 # tests/conftest.py.
 pytest_plugins = ('anyio',)
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    ("execution_profile_id", "physical_cohorts"),
+    [
+        ("standard", ()),
+        ("optimized_v2", ((1,), (2,))),
+    ],
+)
+async def test_production_wave_failure_cancels_siblings_before_commit(
+    execution_profile_id,
+    physical_cohorts,
+):
+    """A failed unit must not leave a delayed sibling mutating production state."""
+
+    sibling_cancelled = asyncio.Event()
+    committed: list[dict] = []
+
+    async def run_step(step, cycle, state, feedback):
+        if step == 1:
+            # Give the delayed sibling a chance to start before failing.
+            await asyncio.sleep(0)
+            raise RuntimeError("simulated production unit failure")
+        try:
+            await asyncio.sleep(30)
+        except asyncio.CancelledError:
+            sibling_cancelled.set()
+            raise
+        return {
+            "run": {
+                "step": step,
+                "agent_id": f"s{step}",
+                "status": "completed",
+            }
+        }
+
+    with pytest.raises(RuntimeError, match="simulated production unit failure"):
+        await execute_production_step_waves(
+            selected_steps=[1, 2],
+            execution_profile_id=execution_profile_id,
+            dependency_map={1: (), 2: ()},
+            middle_cycle=1,
+            middle_feedback=None,
+            snapshot_state_fn=lambda: {},
+            run_step_fn=run_step,
+            commit_step_fn=committed.append,
+            physical_cohorts=physical_cohorts,
+            dynamic_pipeline_enabled=False,
+        )
+
+    assert sibling_cancelled.is_set()
+    assert committed == []
+
+
+@pytest.mark.anyio
+async def test_production_pipeline_cancellation_cleans_ready_siblings():
+    """Cancelling a ready pipeline must not allow late provider commits."""
+
+    started = asyncio.Event()
+    cancelled_steps: set[int] = set()
+    committed: list[dict] = []
+    started_count = 0
+
+    async def run_step(step, cycle, state, feedback):
+        nonlocal started_count
+        started_count += 1
+        if started_count == 2:
+            started.set()
+        try:
+            await asyncio.sleep(0.05)
+        except asyncio.CancelledError:
+            cancelled_steps.add(step)
+            raise
+        return {
+            "run": {
+                "step": step,
+                "agent_id": f"s{step}",
+                "status": "completed",
+            }
+        }
+
+    execution = asyncio.create_task(
+        execute_production_step_waves(
+            selected_steps=[1, 2],
+            execution_profile_id="standard",
+            dependency_map={1: (), 2: ()},
+            middle_cycle=1,
+            middle_feedback=None,
+            snapshot_state_fn=lambda: {},
+            run_step_fn=run_step,
+            commit_step_fn=committed.append,
+            dynamic_pipeline_enabled=True,
+        )
+    )
+    await asyncio.wait_for(started.wait(), timeout=1)
+    execution.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await execution
+
+    # Give a leaked task a chance to expose the old behavior; a cleaned task
+    # records cancellation and never reaches the commit callback.
+    await asyncio.sleep(0.1)
+    assert cancelled_steps == {1, 2}
+    assert committed == []
+
+
+@pytest.mark.anyio
+async def test_production_pipeline_failure_cancels_ready_siblings():
+    cancelled = asyncio.Event()
+    committed: list[dict] = []
+
+    async def run_step(step, cycle, state, feedback):
+        if step == 1:
+            await asyncio.sleep(0)
+            raise RuntimeError("ready unit failed")
+        try:
+            await asyncio.sleep(30)
+        except asyncio.CancelledError:
+            cancelled.set()
+            raise
+        return {"run": {"step": step, "agent_id": f"s{step}"}}
+
+    with pytest.raises(RuntimeError, match="ready unit failed"):
+        await execute_production_step_waves(
+            selected_steps=[1, 2],
+            execution_profile_id="standard",
+            dependency_map={1: (), 2: ()},
+            middle_cycle=1,
+            middle_feedback=None,
+            snapshot_state_fn=lambda: {},
+            run_step_fn=run_step,
+            commit_step_fn=committed.append,
+            dynamic_pipeline_enabled=True,
+        )
+    assert cancelled.is_set()
+    assert committed == []
 
 
 @pytest.mark.anyio
@@ -427,3 +567,122 @@ def test_execution_plan_basics():
 if __name__ == "__main__":
     # Run tests with pytest
     pytest.main([__file__, "-v", "-s"])
+
+@pytest.mark.anyio
+async def test_dynamic_scheduler_respects_parallel_budget():
+    active = 0
+    peak = 0
+
+    async def run(step, cycle, state, feedback):
+        nonlocal active, peak
+        active += 1
+        peak = max(peak, active)
+        await asyncio.sleep(0.01)
+        active -= 1
+        return {"result": {}, "run": {"step": step, "agent_id": f"s{step}", "status": "completed"}}
+
+    scheduler = DynamicWinningScheduler(
+        step_definitions=[(f"s{i}", "", {}) for i in range(1, 7)],
+        step_modes={i: "standard" for i in range(1, 7)},
+        run_step_fn=run,
+        commit_step_fn=lambda outcome: None,
+        max_parallel=1,
+    )
+    await scheduler.execute_pipeline()
+    assert peak == 1
+
+
+@pytest.mark.anyio
+async def test_dynamic_scheduler_propagates_step_failure_and_cancels_siblings():
+    cancelled = asyncio.Event()
+
+    async def run(step, cycle, state, feedback):
+        if step == 1:
+            await asyncio.sleep(0)
+            raise RuntimeError("provider failed")
+        try:
+            await asyncio.sleep(30)
+        except asyncio.CancelledError:
+            cancelled.set()
+            raise
+
+    scheduler = DynamicWinningScheduler(
+        step_definitions=[(f"s{i}", "", {}) for i in range(1, 7)],
+        step_modes={i: "standard" for i in range(1, 7)},
+        run_step_fn=run,
+        commit_step_fn=lambda outcome: None,
+    )
+    with pytest.raises(RuntimeError, match="provider failed"):
+        await scheduler.execute_pipeline()
+    assert cancelled.is_set()
+
+
+def test_reserve_parallel_capacity_respects_budget_and_in_flight():
+    assert reserve_parallel_capacity(
+        in_flight=6,
+        max_parallel=8,
+        remaining_call_budget=10,
+        requested_slots=4,
+    ) == 2
+    assert reserve_parallel_capacity(
+        in_flight=8,
+        max_parallel=8,
+        remaining_call_budget=10,
+        requested_slots=3,
+    ) == 0
+    assert reserve_parallel_capacity(
+        in_flight=0,
+        max_parallel=8,
+        remaining_call_budget=0,
+        requested_slots=3,
+    ) == 0
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize('max_parallel', [1, 4])
+async def test_parallel_action_awakens_skipped_exploration_within_budget(max_parallel):
+    seen: list[int] = []
+
+    async def run(step, cycle, state, feedback):
+        seen.append(step)
+        if step == 1:
+            return {
+                "result": {},
+                "run": {
+                    "step": 1,
+                    "agent_id": "s1",
+                    "status": "completed",
+                    "next_action": {
+                        "action": StepAction.PARALLEL,
+                        "parallel_steps": [6, 6],
+                        "reason": "explore a skipped closeout path",
+                    },
+                },
+            }
+        return {"result": {}, "run": {"step": step, "agent_id": f"s{step}", "status": "completed"}}
+
+    events: list[dict] = []
+    scheduler = DynamicWinningScheduler(
+        step_definitions=[(f"s{i}", "", {}) for i in range(1, 7)],
+        step_modes={
+            1: "standard",
+            2: "standard",
+            3: "standard",
+            4: "standard",
+            5: "standard",
+            6: "skip",
+        },
+        run_step_fn=run,
+        commit_step_fn=lambda outcome: None,
+        emit_progress_fn=events.append,
+        max_parallel=max_parallel,
+        parallel_call_budget=1,
+    )
+    await scheduler.execute_pipeline()
+    assert 6 in seen
+    assert any(
+        item.get("status") == "parallel_exploration_reserved"
+        and item['granted_slots'] == 1
+        and item['parallel_steps'] == [6]
+        for item in events
+    )
