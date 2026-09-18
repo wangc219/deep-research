@@ -82,15 +82,19 @@ class OrchestrationMessageBus:
         capability_key = frozenset(capability_set)
         previous = self._drain_cursors.get(agent_id)
         start = previous[1] if previous and previous[0] == capability_key else 0
+        # Snapshot the upper bound before iterating.  If a publisher appends
+        # concurrently, the new message must remain visible to the next
+        # drain instead of being skipped by an advanced cursor.
+        end = len(self._messages)
         result = []
-        for message in self._messages[start:]:
+        for message in self._messages[start:end]:
             if message.message_id in self._delivered[agent_id]:
                 continue
             if message.recipient not in {None, agent_id} and not capability_set.intersection(message.capability_tags):
                 continue
             self._delivered[agent_id].add(message.message_id)
             result.append(message)
-        self._drain_cursors[agent_id] = (capability_key, len(self._messages))
+        self._drain_cursors[agent_id] = (capability_key, end)
         return result
 
     def history(self) -> tuple[AgentMessageEnvelope, ...]:
