@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a07623-702e-7fb1-9d86-b7a0a8d4a793"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"通信受限条件下分布式低成本精确火力与反无人装备感知协同火力评估闭环需求研究"}}
+{"type":"turn.completed","usage":{"input_tokens":9934,"cached_input_tokens":2432,"cache_write_input_tokens":0,"output_tokens":319,"reasoning_output_tokens":283}}

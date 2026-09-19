@@ -17,6 +17,7 @@ from equipment_deep_research.agents.execution_contracts import (
     AgentRunRequest,
 )
 from equipment_deep_research.agents.registry import AgentDef
+from equipment_deep_research.execution_model import configured_model
 from equipment_deep_research.harness.agent_harness import AgentHarness
 from equipment_deep_research.harness.profiles import HarnessCatalog
 from equipment_deep_research.domain.identifiers import (
@@ -60,7 +61,7 @@ from equipment_deep_research.providers.base import (
     ProviderFinalTurn,
     ProviderStreamEvent,
 )
-from equipment_deep_research.tools.definitions import ToolDefinition
+from equipment_deep_research.contracts.tools import ToolDefinition
 from equipment_deep_research.tools.domain_tools import build_domain_tool_definitions
 from equipment_deep_research.tools.permissions import effective_tool_names
 
@@ -295,6 +296,79 @@ class DiscoveryScheduler:
     def close(self) -> None:
         self.materializer.close()
 
+    def _evolution_trace_fields(self, agent_id: str) -> dict[str, Any]:
+        """Project run-level evolution identity into baseline traces.
+
+        Values are supplied by the runner and remain optional for standalone
+        scheduler users.  Only bounded identifiers/hashes are propagated.
+        """
+        evolution = self.shared_context.get("evolution", {})
+        if not isinstance(evolution, Mapping):
+            evolution = {}
+        stage = str(agent_id).upper().strip()
+        return {
+            "tenant_id": str(
+                self.shared_context.get("tenant_id")
+                or evolution.get("scope", {}).get("tenant_id", "")
+                if isinstance(evolution.get("scope", {}), Mapping)
+                else self.shared_context.get("tenant_id", "")
+            ),
+            "workspace_id": str(
+                self.shared_context.get("workspace_id")
+                or evolution.get("scope", {}).get("workspace_id", "")
+                if isinstance(evolution.get("scope", {}), Mapping)
+                else self.shared_context.get("workspace_id", "")
+            ),
+            "project_id": str(
+                self.shared_context.get("project_id")
+                or evolution.get("scope", {}).get("project_id", "")
+                if isinstance(evolution.get("scope", {}), Mapping)
+                else self.shared_context.get("project_id", "")
+            ),
+            "profile_id": str(
+                self.shared_context.get("profile_id")
+                or evolution.get("scope", {}).get("profile_id", "")
+                if isinstance(evolution.get("scope", {}), Mapping)
+                else self.shared_context.get("profile_id", "")
+            ),
+            "route": str(
+                self.shared_context.get("route")
+                or evolution.get("scope", {}).get("route", "")
+                if isinstance(evolution.get("scope", {}), Mapping)
+                else self.shared_context.get("route", "")
+            ),
+            "stage_scope": list(
+                self.shared_context.get("stage_scope")
+                or (
+                    evolution.get("scope", {}).get("stage_scope", [])
+                    if isinstance(evolution.get("scope", {}), Mapping)
+                    else []
+                )
+                or []
+            )[:6],
+            "prompt_bundle_hash": str(
+                self.shared_context.get("prompt_bundle_hash")
+                or evolution.get("prompt_bundle_hash")
+                or ""
+            ),
+            "memory_snapshot_hash": str(
+                self.shared_context.get("memory_snapshot_hash")
+                or evolution.get("memory_snapshot_hash")
+                or ""
+            ),
+            "memory_ids": list(
+                self.shared_context.get("memory_ids")
+                or evolution.get("memory_ids")
+                or []
+            )[:32],
+            "stage_id": stage,
+            "prompt_section_ids": list(
+                self.shared_context.get("prompt_section_ids")
+                or evolution.get("prompt_section_ids")
+                or [stage]
+            )[:32],
+        }
+
     def __enter__(self) -> "DiscoveryScheduler":
         return self
 
@@ -420,7 +494,11 @@ class DiscoveryScheduler:
                 research_route=research_route,
                 store=self.store,
                 recall_request=recall_request,
-                minimal_handoff=optimized_v2,
+                # Baseline/reference Agents only need a nanobot-style delta
+                # from upstream work. Full typed packets remain durable in the
+                # store and are reserved for explicit audit/replay paths; S1-S6
+                # keeps its own richer node contracts in the winning workflow.
+                minimal_handoff=(optimized_v2 or not agent.agent_id.startswith("winning_")),
             )
         source_priorities = self.source_index.recommend(agent.agent_id, topic)
         shared_source_priorities = self.source_index.recommend_shared(
@@ -432,14 +510,15 @@ class DiscoveryScheduler:
         )
         incremental_knowledge = self.knowledge_index.recommend(agent.agent_id, topic)
         visible_sections = set(agent.context_policy.get("visible_sections", ()))
+        compact_shared_context = optimized_v2 or not agent.agent_id.startswith("winning_")
         shared_projection = {
             key: compact_handoff_value(
                 _minimal_shared_context_value(key, value)
-                if optimized_v2
+                if compact_shared_context
                 else value,
-                max_string_chars=240 if optimized_v2 else 360,
-                max_list_items=4 if optimized_v2 else 6,
-                max_mapping_items=7 if optimized_v2 else 10,
+                max_string_chars=240 if compact_shared_context else 360,
+                max_list_items=4 if compact_shared_context else 6,
+                max_mapping_items=7 if compact_shared_context else 10,
             )
             for key, value in self.shared_context.items()
             if key in _SHARED_MODEL_CONTEXT_KEYS
@@ -508,6 +587,7 @@ class DiscoveryScheduler:
             )
         session = self._open_session_store(session_path.name)
         execution_phase = "setup"
+        evolution_fields = self._evolution_trace_fields(agent.agent_id)
         try:
             context, source_priorities, incremental_knowledge = (
                 self._build_agent_context(
@@ -556,6 +636,7 @@ class DiscoveryScheduler:
                     "recall_request": recall_request or {},
                     "source_priority_count": len(source_priorities),
                     "incremental_memory_count": len(incremental_knowledge),
+                    **evolution_fields,
                     "source_priority_domains": list(
                         dict.fromkeys(
                             str(item.get("domain", ""))
@@ -586,6 +667,7 @@ class DiscoveryScheduler:
                         "round_index": round_index,
                         "source_priority_count": len(source_priorities),
                         "incremental_memory_count": len(incremental_knowledge),
+                        **evolution_fields,
                     },
                 )
             )
@@ -670,7 +752,9 @@ class DiscoveryScheduler:
                     build_domain_tool_definitions(active_tool_names),
                     _HarnessStoreProxy(self.harness_store, self.run_id),
                     sessions_root=self.sessions_dir,
-                    model_name=str(agent.model_profile.get("model", "gpt-5.5")),
+                    model_name=str(
+                        agent.model_profile.get("model") or configured_model()
+                    ),
                     model_options={
                         key: value
                         for key, value in agent.model_profile.items()
@@ -795,6 +879,45 @@ class DiscoveryScheduler:
                 )
             else:
                 result = self.provider.run_baseline_agent(request)
+            source_anchor_fallback = str(
+                getattr(result, "metadata", {}).get("source_anchor_fallback", "")
+            ).strip()
+            if source_anchor_fallback:
+                anchor_count = int(
+                    getattr(result, "metadata", {}).get("source_anchor_count", 0)
+                    or 0
+                )
+                self._append_session(
+                    session,
+                    {
+                        "event_type": "provider_neutral_source_anchor_fallback",
+                        "created_at": now_iso(),
+                        "agent_id": agent.agent_id,
+                        "provider_kind": getattr(self.provider, "provider_kind", ""),
+                        "source_anchor_count": anchor_count,
+                        "materialization_required": True,
+                        "reason": "chat_completions_has_no_hosted_web_search",
+                    },
+                )
+                self.trace.append(
+                    TraceEvent(
+                        event_id=(
+                            f"trace-source-anchor-fallback-{agent.agent_id}-"
+                            f"r{round_index}"
+                        ),
+                        event_type="provider_neutral_source_anchor_fallback",
+                        actor=agent.agent_id,
+                        summary="Chat Completions 无托管搜索，转用受控来源锚点并进入材料化",
+                        payload={
+                            "provider_kind": getattr(
+                                self.provider, "provider_kind", ""
+                            ),
+                            "source_anchor_count": anchor_count,
+                            "materialization_required": True,
+                            "reason": "chat_completions_has_no_hosted_web_search",
+                        },
+                    )
+                )
             execution_phase = "result_validation"
             for call_index, metric in enumerate(result.model_calls, start=1):
                 self._append_session(
@@ -1305,16 +1428,44 @@ class DiscoveryScheduler:
                 evidence_only_limited = _evidence_only_stop_reasons(
                     stop_decision.reasons
                 )
+                # Chat Completions gateways do not expose the Responses
+                # hosted-search annotations.  Their controlled source
+                # anchors are therefore only leads until local materialization
+                # succeeds; a gateway run can legitimately have substantive
+                # model findings while ending with zero *formal* evidence.
+                # Preserve those findings as explicitly hypothesis-bound
+                # baseline input so S3/S4/S5 can continue, rather than
+                # converting a provider capability difference into a hard run
+                # failure.  Codex/Responses and fake adapters retain the
+                # stricter evidence gate below.
+                chat_completions_degraded = bool(
+                    getattr(self.provider, "provider_kind", "")
+                    == "chat_completions"
+                    and any(
+                        str(item).strip()
+                        and str(item).strip() not in {"{}", "[]", "null", "None"}
+                        for item in packet.findings
+                    )
+                    and not accepted_evidence_ids
+                )
                 allow_limited = bool(
                     self.mode == "real"
-                    and getattr(self.provider, "provider_kind", "") == "codex_cli"
+                    and bool(
+                        getattr(self.provider, "supports_agent_runtime", False)
+                        or getattr(self.provider, "provider_kind", "")
+                        in {"codex_cli", "chat_completions"}
+                    )
                     and os.environ.get(
                         "EQUIPMENT_DR_ALLOW_LIMITED_BASELINE",
                         "1",
                     )
                     == "1"
                     and packet.findings
-                    and (bool(accepted_evidence_ids) or evidence_only_limited)
+                    and (
+                        bool(accepted_evidence_ids)
+                        or evidence_only_limited
+                        or chat_completions_degraded
+                    )
                 )
                 if not allow_limited:
                     raise RuntimeError(
@@ -1664,20 +1815,46 @@ class DiscoveryScheduler:
 
 
 def _minimal_shared_context_value(key: str, value: Any) -> Any:
-    if key != "discovery_blueprint" or not isinstance(value, Mapping):
+    if not isinstance(value, Mapping):
         return value
-    return {
-        field: value.get(field)
-        for field in (
-            "primary_branch",
-            "branch_name",
-            "emphasis",
-            "required_outputs",
-            "execution_profile_id",
-            "adaptive_winning_step_modes",
+    if key == "discovery_blueprint":
+        return {
+            field: value.get(field)
+            for field in (
+                "primary_branch",
+                "branch_name",
+                "emphasis",
+                "required_outputs",
+                "execution_profile_id",
+                "adaptive_winning_step_modes",
+            )
+            if value.get(field) not in (None, "", [], {})
+        }
+    if key == "structured_query_brief":
+        # Preserve semantic routing and equipment boundaries while dropping
+        # the verbose planning prose that every baseline role would otherwise
+        # receive again. Lists are bounded here and compacted once more by the
+        # ContextCompactor at the final token budget.
+        fields = (
+            "core_query",
+            "combat_problem_frame",
+            "enemy_target_profile",
+            "battle_phase_and_constraints",
+            "required_direct_military_effects",
+            "equipment_semantic_boundary",
+            "query_equipment_mode",
+            "winning_problem_propositions",
+            "handoff_rule",
         )
-        if value.get(field) not in (None, "", [], {})
-    }
+        selected = {
+            field: value.get(field)
+            for field in fields
+            if value.get(field) not in (None, "", [], {})
+        }
+        # Preserve custom/legacy briefs that do not use the current field
+        # names; the bounded generic compactor still protects their size.
+        return selected or dict(value)
+    return value
 
 
 def _minimal_agent_tools(agent_id: str, tools: Sequence[str]) -> list[str]:

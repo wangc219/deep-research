@@ -55,13 +55,22 @@ profiles:
       winning: [prepare_winning_input, project_winning_resources, write_reasoning_node, write_stage_output, create_recall_request, create_capability_image]
   - profile_id: winning_swarm_dynamic_v2
     context_policy: {token_budget: 14000, hide_other_agent_raw_sessions: true, typed_packets_only: true, contribution_projection: hypothesis_id_and_merge_target_only, versioned_candidate_ledger: true}
-    budget: {max_turns: 3, min_mission_graph_instances: 8, target_mission_graph_instances: 12, max_dynamic_instances: 16, max_concurrency: 6, max_waves: 3, max_tokens: 14000, minimum_expected_gain: 0.03}
+    budget: {max_turns: 3, min_mission_graph_instances: 16, target_mission_graph_instances: 16, max_dynamic_instances: 21, max_concurrency: 8, max_waves: 3, max_tokens: 14000, minimum_expected_gain: 0.03}
     evidence_policy: {typed_packets_only: true, raw_sessions_forbidden: true, exact_reference_ids_only: true, unsupported_precision_rejected: true, stale_contribution_requires_rebase: true}
     checkpoint_policy: {after_each_wave: true, candidate_ledger_versioned: true, merge_receipts_durable: true, failed_candidate_isolation: true, pareto_decision_durable: true}
-    stop_conditions: [MissionGraph实例保持8至16, 动态实例不超过16, 波次不超过3, 预计质量增益低于0.03停止招聘, 最终只从非支配候选中形成组合]
+    stop_conditions: [MissionGraph实例保持16至21, 动态实例不超过21, 6个S3/S4开放创新席位每席完成至少三维比较并按质量提交最多3件、由对应S5并发评分, 波次不超过3, 预计质量增益低于0.03停止招聘, 最终合并S5五项评分选出前7项进入S6并发画像]
     recovery_policy: {resume_from: latest_ledger_version, retry_limit: 1, recursive_recruitment: forbidden, stale_write: rebase}
     phase_tools:
       winning: [prepare_winning_input, project_winning_resources, write_reasoning_node, write_stage_output, create_recall_request, create_capability_image]
+  - profile_id: deep_divergence_v1
+    context_policy: {token_budget: 6000, hide_other_agent_raw_sessions: true, typed_packets_only: true, canonical_parent_snapshot: true}
+    budget: {max_turns: 3, max_s3_slots: 3, max_s4_slots: 3, max_candidates: 6, max_searches: 6, max_concurrency: 6, max_tokens: 6000}
+    evidence_policy: {typed_packets_only: true, raw_sessions_forbidden: true, retrieval_only_on_gap: true, exact_reference_ids_only: true, frontier_evidence_recommended_not_required: true}
+    checkpoint_policy: {after_context: true, after_s3: true, after_s4: true, after_s6: true, candidate_ledger_versioned: true}
+    stop_conditions: [稳定身份与独立制胜机理成立, 直接军事效果可审核, 前瞻方向缺少直接证据时收窄事实表述并保留待验证边界而不阻断成卡]
+    recovery_policy: {resume_from: earliest_incomplete_stage, retry_limit: 1}
+    phase_tools:
+      deep_divergence: [project_winning_resources, generate_counterfactual_option, map_dotmlpf_requirement, create_evidence_card, create_capability_image]
   - profile_id: orchestration_v1
     context_policy: {token_budget: 7000, hide_other_agent_raw_sessions: true, registry_only: true}
     budget: {max_turns: 4, max_tool_calls: 16, max_tokens: 7000, max_seconds: 240}

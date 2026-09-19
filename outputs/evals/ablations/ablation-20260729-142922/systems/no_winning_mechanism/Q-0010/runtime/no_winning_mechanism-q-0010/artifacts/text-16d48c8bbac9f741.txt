@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=marines.mil · Force Design
-source_url=https://www.marines.mil/Force-Design/
-claim=该来源支持美国海军陆战队向分布式、远征、适应濒海竞争环境的力量设计转型，是COA-2前沿分布式节点的公开概念依据。
-excerpt=
-retrieval=Hosted web search citation metadata

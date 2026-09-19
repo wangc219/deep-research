@@ -95,6 +95,13 @@ Write readable, compact Chinese prose. The report should explain:
 - what remains uncertain;
 - what should be checked next.
 
+Use Chinese terms as the default. Minimize unexplained English abbreviations in
+the narrative: write the Chinese full name on first mention and use the Chinese
+short form thereafter (for example, “全球导航卫星系统” rather than repeatedly
+writing “GNSS”, and “指挥控制” rather than “C2”). Preserve an English acronym
+only when it is part of a formal source title, model name, evidence identifier,
+or URL; do not let source shorthand replace the Chinese explanation in prose.
+
 Use evidence ids, judgement ids, and audit refs where useful, but do not overexpose internal control fields. Avoid turning the visible report into a schema listing.
 
 ### 4. Use The Fixed Three-Layer, Nine-Item Template

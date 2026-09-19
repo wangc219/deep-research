@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=csis.org · lessons ukraine conflict modern warfare age autonomy information and resilience
+source_url=https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience
+claim=乌克兰冲突显示小型无人机规模化运用与电子战饱和使防御在成本交换比失衡、弹药与再组织深度不足时不可持续,战场出现快速战术/技术反适应。
+excerpt=
+retrieval=Hosted web search citation metadata

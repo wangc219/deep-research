@@ -1,0 +1,1 @@
+{"type":"object","properties":{"hypotheses":{"type":"array","items":{"type":"object","properties":{"name":{"type":"string"},"concise_winning_summary":{"type":"string"}},"required":["name","concise_winning_summary"],"additionalProperties":false}},"stop_reason":{"type":"string"}},"required":["hypotheses","stop_reason"],"additionalProperties":false}

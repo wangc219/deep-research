@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:7135f21af857c5ac",
+  "content_path": "text-7135f21af857c5ac.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-combat_scenario-web-aa0d7c99c469",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "7135f21af857c5ac989c987b33a80fcef368730bfd35733747386411bda43d7e",
+  "url": "https://www.marines.mil/Portals/1/Docs/Force_Design_Update-October_2025.pdf"
+}

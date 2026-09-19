@@ -1,0 +1,120 @@
+{
+  "agent_id": "operational_employment",
+  "phase": "evidence_analysis",
+  "output_form": "参考Agent精简研判",
+  "decisive_information": [
+    {
+      "id": "OE-D1",
+      "judgment": "任务链最先致断的环节是“评估回传—再分配”，而非末段导引断链或火力通道耗尽：判不出效果就无法组织第二轮，链条在评估段断裂后，导引与通道问题才依次显现。据此，低空无人装备族的技术优先级应由“单装峰值精度/末段自主”上移至“断链条件下的效果可判定性与跨单元再分配接口”。",
+      "why_decisive": "改写技术优先级排序，并把装备层差距焦点从命中环节移到闭环环节；同时给出淘汰条件——任何不改善效果可判定性的单装升级不改变闭环概率。",
+      "gap_framework_contribution": "对三层九项中“运用层·任务链(mission_chain)”与“装备层·装备基线与五档差距(对应 G3 火力/再分配、G5 闭环时长)”有直接贡献。",
+      "battle_effect_domain": ["打击", "拒止", "抗毁"],
+      "evidence_status": "方向性结论来自已登记来源的综合与角色内推演的重排；断点顺序本身为推导结论，非实测事实；无断链后命中率的可比第三方值。",
+      "confidence": "medium",
+      "source_claims": [
+        {"url": "https://osw.waw.pl/en/publikacje/osw-commentary/2025-10-14/game-drones-production-and-use-ukrainian-battlefield-unmanned", "claim_type": "empirical_account", "use": "战场无人机使用与效果判定/再分配节奏的经验性论述方向"},
+        {"url": "https://warontherocks.com/i-fought-in-ukraine-and-heres-why-fpv-drones-kind-of-suck/", "claim_type": "practitioner_testimony", "use": "一线运用局限与效果不确定的回忆式材料（不可作能力基线）"}
+      ]
+    },
+    {
+      "id": "OE-D2",
+      "judgment": "弹性分布方案相对集中基线的占优是条件成立的，其充要条件为两条：跨建制/跨密级目标归因与效果共享接口可机读，以及发射—保障节点可前推。任一不闭合，弹性方案的协同延迟、频谱自扰与保障线延长就会抵消其在战损续接上的收益，此时集中基线反而是更优方案。",
+      "why_decisive": "决定场景边界（何种条件下才可采用分布式）与装备选择（开放消息集、机读接口、外场可换模块属于装备功能需求而非软件附加项）。",
+      "gap_framework_contribution": "对三层九项中“运用层·行动方案比较(COA)”与“运用层·力量协同(force_coordination)”有决定性贡献，并为装备层“接口与可改性”差距项提供采纳条件。",
+      "battle_effect_domain": ["协同", "抗毁", "威慑"],
+      "evidence_status": "接口与授权时序的重要性为公开论述层面的事实候选；“超线性协同成本”“不闭合即禁止弹性分布”为推导结论；无任何接口成本指标。",
+      "confidence": "medium",
+      "source_claims": [
+        {"url": "https://www.marines.mil/Force-Design/", "claim_type": "doctrine_force_design", "use": "有人-无人协同与编成/接口设计的规范性主张（非实测）"},
+        {"url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF", "claim_type": "policy_framework", "use": "反无体系分层与软硬杀伤交战协调的政策框架"}
+      ]
+    },
+    {
+      "id": "OE-D3",
+      "judgment": "免疫（非射频/有线介质）信道与末段自主信道在低空近程装备族上是替代关系而非互补叠加：信道分派必须按接触线静态程度与轴向集中度取舍，默认“多信道并存即增强”会把重量、复杂度、保障足迹与频谱去冲突负担一次性引入而收益为零。与之绑定的是保障范式迁移——可消耗性把保障重心由维修能力转为供应链响应速度，补给中断容限为小时至天量级，故“产能与介质补给即作战持续时间”。",
+      "why_decisive": "直接改变装备构型选择（冗余信道的取舍与模块化）与优先级（配置管理、介质补给线、再出动保障进入装备要求），并限定其成立场景为静态接触线。",
+      "gap_framework_contribution": "对三层九项中“装备层·装备构型与关键指标”“运用层·保障韧性(sustainment_resilience)”有贡献，并条件化场景层的对抗机理项。",
+      "evidence_status": "信道替代关系为强推断（依赖接触线静态假设）；供应链响应作为约束有规模化生产类来源的方向性支持；全部数值（含比率、月度产量、百分比）不得进入正式结论。",
+      "confidence": "medium_low",
+      "source_claims": [
+        {"url": "https://drone-warfare.com/research/fpv-drone-warfare/", "claim_type": "conflict_monitoring", "use": "光纤/有线制导与抗干扰信道并用的战场观察"},
+        {"url": "https://osw.waw.pl/en/publikacje/osw-commentary/2025-10-14/game-drones-production-and-use-ukrainian-battlefield-unmanned", "claim_type": "empirical_account", "use": "生产规模与消耗节奏的论述（仅作方向，不作指标）"}
+      ]
+    },
+    {
+      "id": "OE-D4",
+      "judgment": "两个可执行的反证判据决定链路侧缺口是否具决定性：其一，若对手电子与反无反制的到场周期长于己方改型—反制回路周期，则信道与链路缺口不构成本体系的决定性短板（削弱“迭代即战力”一系结论）；其二，若操作员/维护手补充速率低于装备补充速率，则数量型方案的上限由训练管道而非工业产能决定，集中—弹性—受限三方案的比较基准随之改变。二者本轮均无可引用实测值。",
+      "why_decisive": "为上游待证架构与差距分级提供证伪入口，并决定受限方案与分布式方案的适用边界。",
+      "gap_framework_contribution": "对三层九项中“运用层·失败模式与经验迁移(failure_modes/lessons)”“场景层·对手适应与失效边界”有贡献，是差距分级的标定前提。",
+      "evidence_status": "两条均为待验假设（H1 类），本轮零材料化证据；不得作为能力基线、门限或需求卡片输入。",
+      "confidence": "low",
+      "source_claims": [
+        {"url": "https://files.gao.gov/reports/GAO-25-106454/index.html", "claim_type": "audit_argument", "use": "官方审计对反无能力需求/采办回路与到场延迟问题的论述方向"},
+        {"url": "https://files.gao.gov/reports/GAO-25-107263/index.html", "claim_type": "audit_argument", "use": "同类审计对小型无人机需求与训练/保障瓶颈的论述方向"}
+      ]
+    }
+  ],
+  "discarded_as_low_value": [
+    "对可消耗无人机战术价值的通案性重复论述（与 OE-D1/OE-D3 同义）",
+    "所有百分比与产能数值（31%、30→70%、月度万架级、32%、60-80%）及其衍生节奏推断",
+    "G1-G6 的既有差距等级（本回合无可引用证据支撑其分档）",
+    "“杀伤链由分钟压缩至秒级”一类未材料化来源的量化主张",
+    "远程战役火力平台与海上无人平台的类比外推（超出本 Query 适用边界）"
+  ],
+  "contradictions_for_downstream_disposition": [
+    {"ref": "C1", "requirement": "OE-D3 把免疫信道与自主信道判为替代关系，须对上游“多信道并存即增强”式架构做条件化或反驳"},
+    {"ref": "C2", "requirement": "OE-D1 的断点顺序重排（评估回传先于导引与通道耗尽致断），须对上游以末段导引为首位缺口的排序做三选一处置"}
+  ],
+  "traceability": {"evidence_ids": ["ev-combat_scenario-web-95509272d4a7", "ev-combat_scenario-web-5d7848ec33e0", "ev-combat_scenario-web-ae676e768487"], "new_sources_added": false, "source_urls_reused_only": true, "double_source_threshold": "未达（可引用域名集中于少数站点，含单域名双路径）"},
+  "frontier_inspirations": [
+    {
+      "rank": 1,
+      "signal": "效果判定与再分配在公开战例中反复成为链条断点，但其载体仍是“附带软件功能”，没有任何一类低空装备把“断链下的可验证性”作为自身存在理由。",
+      "challenged_assumption": "预算与研发现实地把感知—打击环节优先于效果判定环节，默认判效是打完之后的事。",
+      "possible_discontinuity": "若“谁能在拒止环境下维持再分配节奏”取代“谁有更深火力通道”成为决胜变量，闭环时长本身可被武器化，攻防计价单位从弹药数变为可判定交战的轮次/小时。",
+      "query_relevance": "直接指向低空无人体系缺口的位置判定，改变差距排序与需求对象。",
+      "fact_inference_boundary": "断点存在为方向性事实候选；“闭环时长成为独立计价单位”为纯推断，无试验或条令材料化支撑。",
+      "open_question_for_codex": "在回传被拒止时，什么是最小的可判定效果证据单元，其物理载体是否可能与打击体分离？"
+    },
+    {
+      "rank": 2,
+      "signal": "公开材料把“改型—反制到场周期”当作解释战场效果变化的主因，但装备体系仍按换代周期与固定配置管理来规划。",
+      "challenged_assumption": "战力由平台性能与其数量决定，迭代属于工程节奏而非作战量。",
+      "possible_discontinuity": "若迭代速率进入作战模型成为时间常数，制胜命题从性能对抗转为速率对抗：配置管理、接口开放度与外场可换能力成为可被对手直接打击的作战节点，保障目标清单与打击目标清单合流。",
+      "query_refence": null,
+      "query_relevance": "决定强对抗低空场景中“缺口”是可补齐的性能差还是不可补齐的速率差。",
+      "fact_inference_boundary": "迭代改善为公开论述层面的事实候选，因果归属未证；“保障节点成为首要打击目标”为推断，本轮无对抗双方打击选择证据。",
+      "open_question_for_codex": "是否存在可观测指标能把“改型到场周期”从叙述性主张变为可比较的装备量？"
+    },
+    {
+      "rank": 3,
+      "signal": "在电磁拒止最强的方向上出现的不是更抗扰的波形，而是回到物理介质（低速拖曳/有线类）这种被判定为过时的信道形态。",
+      "challenged_assumption": "抗干扰演进必然沿射频波形、频谱与功率方向单调前进。",
+      "possible_discontinuity": "抗扰能力可能由“频率域竞争”部分迁移到“介质域占有”，即信道性能不再由电磁优势决定而由地理与物理通路决定；这会重新赋予静态地形以电磁意义，并把“是否依赖静态接触线”变成体系级战略变量。",
+      "query_relevance": "决定低空无人装备的通信基座选型与技术路线的取舍条件。",
+      "fact_inference_boundary": "介质信道在局部方向被采用为观察层面事实候选；其份额上限、跨域可迁移性（高动态接触线即失效）均未证，OE-D3 已标注该依赖。",
+      "open_question_for_codex": "在何种电磁密度梯度与接触线运动速度组合下，介质信道相对自主接管的替代关系发生反转？"
+    }
+  ],
+  "handoff_summary": {
+    "one_line_judgment": "强对抗低空无人装备的决定性缺口位于“效果可判定性与再分配”而非单装峰值性能；弹性分布方案的可用性由跨单元机读接口与节点前推两个条件门控；免疫信道与自主信道按接触线静态程度呈替代关系；对手反制到场周期与人员补充速率是决定上述结论成立与否的两个反证变量，本轮均无可引用实测值。",
+    "consumable": [
+      "OE-D1 至 OE-D4 的判据、适用条件与淘汰条件",
+      "C1/C2 对上游架构的条件化处置要求",
+      "frontier_inspirations 三项作为旁视假设生成器（非候选装备、非命名提示、非推荐结论）"
+    ],
+    "not_consumable": [
+      "任何百分比、比率、月度产量与秒级杀伤链数值",
+      "差距等级分档与任何数值化门限",
+      "frontier_inspirations 中的推断成分作为事实输入"
+    ],
+    "true_open_questions": [
+      "断链条件下可判定效果的最低技术门限未知",
+      "跨单元机读接口的协同成本量级未知",
+      "人员管道与装备管道的相对弹性未证"
+    ],
+    "confidence": 0.5,
+    "factual_authority": "contextual_only",
+    "revalidation_required": true
+  }
+}

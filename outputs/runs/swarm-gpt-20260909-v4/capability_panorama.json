@@ -1,0 +1,141 @@
+{
+  "actual_counts": {
+    "capability_domains": 7,
+    "capability_indicators": 0,
+    "capability_items": 7
+  },
+  "branch": "B",
+  "branch_name": "传统能力缺口发现",
+  "cross_domain_indicators": [],
+  "domains": [
+    {
+      "capability_ids": [
+        "cap-new-001"
+      ],
+      "domain": "瞬域封窗拦截弹",
+      "evidence_ids": [
+        "ev-combat_scenario-web-36638e192ebe",
+        "ev-combat_scenario-web-c038f0794402",
+        "ev-international_situation-web-46cf99366197",
+        "ev-international_situation-web-aa0d7c99c469",
+        "ev-weapon_equipment-web-8952c3805d5a",
+        "ev-weapon_equipment-web-dc55e947df2e"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "面向台海方向的低空无人系统探测预警能力需求与新制胜机制研究"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-002"
+      ],
+      "domain": "潜隙跃击拦截机",
+      "evidence_ids": [
+        "ev-combat_scenario-web-36638e192ebe",
+        "ev-combat_scenario-web-c038f0794402",
+        "ev-international_situation-web-46cf99366197",
+        "ev-international_situation-web-aa0d7c99c469",
+        "ev-weapon_equipment-web-8952c3805d5a",
+        "ev-weapon_equipment-web-dc55e947df2e"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "面向台海方向的低空无人系统探测预警能力需求与新制胜机制研究"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-003"
+      ],
+      "domain": "断弦失拍干扰弹",
+      "evidence_ids": [
+        "ev-combat_scenario-web-36638e192ebe",
+        "ev-combat_scenario-web-c038f0794402",
+        "ev-international_situation-web-46cf99366197",
+        "ev-international_situation-web-aa0d7c99c469",
+        "ev-weapon_equipment-web-8952c3805d5a",
+        "ev-weapon_equipment-web-dc55e947df2e"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "面向台海方向的低空无人系统探测预警能力需求与新制胜机制研究"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-004"
+      ],
+      "domain": "电磁织网裂群弹",
+      "evidence_ids": [
+        "ev-combat_scenario-web-36638e192ebe",
+        "ev-combat_scenario-web-c038f0794402",
+        "ev-international_situation-web-46cf99366197",
+        "ev-international_situation-web-aa0d7c99c469",
+        "ev-weapon_equipment-web-8952c3805d5a",
+        "ev-weapon_equipment-web-dc55e947df2e"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "面向台海方向的低空无人系统探测预警能力需求与新制胜机制研究"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-005"
+      ],
+      "domain": "蜂幕低耗拦截雷",
+      "evidence_ids": [
+        "ev-combat_scenario-web-36638e192ebe",
+        "ev-combat_scenario-web-c038f0794402",
+        "ev-international_situation-web-46cf99366197",
+        "ev-international_situation-web-aa0d7c99c469",
+        "ev-weapon_equipment-web-8952c3805d5a",
+        "ev-weapon_equipment-web-dc55e947df2e"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "面向台海方向的低空无人系统探测预警能力需求与新制胜机制研究"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-006"
+      ],
+      "domain": "邻域自组低空截击弹",
+      "evidence_ids": [
+        "ev-combat_scenario-web-36638e192ebe",
+        "ev-combat_scenario-web-c038f0794402",
+        "ev-international_situation-web-46cf99366197",
+        "ev-international_situation-web-aa0d7c99c469",
+        "ev-weapon_equipment-web-8952c3805d5a",
+        "ev-weapon_equipment-web-dc55e947df2e"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "面向台海方向的低空无人系统探测预警能力需求与新制胜机制研究"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-007"
+      ],
+      "domain": "海天界面伏击拦截弹",
+      "evidence_ids": [
+        "ev-combat_scenario-web-36638e192ebe",
+        "ev-combat_scenario-web-c038f0794402",
+        "ev-international_situation-web-46cf99366197",
+        "ev-international_situation-web-aa0d7c99c469",
+        "ev-weapon_equipment-web-8952c3805d5a",
+        "ev-weapon_equipment-web-dc55e947df2e"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "面向台海方向的低空无人系统探测预警能力需求与新制胜机制研究"
+      ]
+    }
+  ],
+  "equipment_forms": [],
+  "target_counts": {},
+  "topic": "面向台海方向的低空无人系统探测预警能力需求与新制胜机制研究"
+}

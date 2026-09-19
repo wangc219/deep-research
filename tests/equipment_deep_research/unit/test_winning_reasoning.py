@@ -9,6 +9,9 @@ from equipment_deep_research.domain.models import (
 from equipment_deep_research.orchestration.winning_reasoning import SixStepReasoner
 from equipment_deep_research.domain.store import DomainStore, TraceStore
 from equipment_deep_research.orchestration.winning import WinningMechanismEngine
+from equipment_deep_research.orchestration.capability_portrait import (
+    assemble_capability_portrait_modules,
+)
 from equipment_deep_research.orchestration.reporting import audit_run, render_report
 from equipment_deep_research.orchestration.runner import (
     _codex_loops_recorded,
@@ -674,6 +677,74 @@ def test_s6_final_weapon_set_cannot_be_replaced_by_upstream_abstract_direction()
         item.name in item.deep_capability_portrait and "错误场景" not in item.deep_capability_portrait
         for item in images
     )
+
+
+def test_quality_limited_s6_modules_remain_authoritative_for_delivery() -> None:
+    packet = BaselineFindingPacket(
+        "packet-s6-limited",
+        "weapon_equipment",
+        ["equipment"],
+        "低空反无人",
+        ["形成具体装备能力画像"],
+        ["ev-s6-limited"],
+        0.8,
+        [],
+        [],
+        "S6画像已完成，仅保留非阻断编辑提示",
+        "cp-s6-limited",
+    )
+    evidence = EvidenceCard(
+        "ev-s6-limited",
+        "公开来源",
+        "https://example.org/s6-limited",
+        "B",
+        "公开材料支持低空反无人装备研究",
+        "公开摘要",
+        "p:1",
+        "quality",
+        "weapon_equipment",
+    )
+    modules = {
+        "overview": "测试拦截弹面向低空目标密集来袭，改变逐目标消耗关系并形成直接拦截战果。",
+        "technology_implementation": "弹载被动传感器与任务计算机完成目标发现、认领和末段制导，关键接口落在导引头、飞控与战斗部。",
+        "operational_process": "发射单元完成授权与空域装订，弹体进入拦阻区后自主认领目标，作用后复核剩余威胁并退出。",
+        "capability_effects": "形成不依赖逐目标火控通道的并行拦截能力，使后续波次无法利用再装填空窗突防。",
+        "winning_logic": "把高价单发对廉价数量的旧交换改为低成本并行拦阻，迫使对手分散编组并延长暴露时间。",
+    }
+    expected_portrait = assemble_capability_portrait_modules(modules)
+    store, trace = DomainStore(), TraceStore()
+    store.add_baseline_packet(packet)
+    store.add_evidence(evidence)
+
+    _, images, _ = WinningMechanismEngine().run(
+        topic="低空反无人装备研究",
+        route="traditional_gap",
+        store=store,
+        trace=trace,
+        coverage={"missing_required_tags": [], "coverage_passed": True},
+        model_analysis={
+            "winning_paths": ["低成本并行拦阻"],
+            "concept_directions": [
+                {
+                    "name": "测试拦截弹",
+                    "type": "new_capability",
+                    "equipment_form": "低成本自主拦截弹",
+                    "military_value": "形成低空直接拦截战果",
+                    "direct_evidence_refs": ["ev-s6-limited"],
+                    "capability_portrait": "被供应商压平的旧整卡字符串",
+                    "capability_portrait_modules": modules,
+                    "semantic_consistency_check": {"consistent": True},
+                    "s6_authoring_status": "authored_quality_limited",
+                }
+            ],
+            "s6_quality_gate_passed": True,
+        },
+    )
+
+    assert len(images) == 1
+    assert images[0].deep_capability_portrait == expected_portrait
+    assert images[0].capability_image == expected_portrait
+    assert images[0].portrait_authoring_status == "s6_authored_semantically_consistent"
 
 
 def test_structured_baseline_does_not_trigger_local_capability_image_generation() -> None:

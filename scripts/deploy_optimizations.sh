@@ -48,9 +48,6 @@ try:
     from equipment_deep_research.tools.enhanced_executor import EnhancedToolExecutor
     print("  ✅ EnhancedToolExecutor")
 
-    from equipment_deep_research.harness.smart_context import SmartContextManager
-    print("  ✅ SmartContextManager")
-
     # 已有优化模块
     from equipment_deep_research.harness.optimizations import apply_quick_optimizations
     print("  ✅ apply_quick_optimizations")

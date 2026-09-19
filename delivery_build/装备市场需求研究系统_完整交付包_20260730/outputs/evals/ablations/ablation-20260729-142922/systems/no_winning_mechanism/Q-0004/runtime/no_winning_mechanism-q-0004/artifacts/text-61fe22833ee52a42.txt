@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=navy.mil · Tomah
-source_url=https://www.navy.mil/Resources/Fact-Files/Display-FactFiles/Article/2169229/tomahawk-cruise-missile://www.navair.navy.mil/product/Tomah
-claim=Tomahawk Block IV/V资料线索支撑双向通信、飞行中重编程和Block V导航/通信升级方向，但该URL存在拼接异常，需复核原始页面。
-excerpt=
-retrieval=Hosted web search citation metadata

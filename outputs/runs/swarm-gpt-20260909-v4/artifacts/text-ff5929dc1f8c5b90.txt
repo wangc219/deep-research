@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=defense.gov · dod announces strategy for countering unmanned systems
+source_url=https://www.defense.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/
+claim=美国国防部将反无人系统视为跨域、持续演化的作战问题，并强调提升探测、跟踪、表征能力以及快速、可适应、规模化交付。
+excerpt=
+retrieval=Hosted web search citation metadata

@@ -1,0 +1,44 @@
+........................................................................ [ 20%]
+........................................................................ [ 40%]
+........................................................................ [ 60%]
+........................................................................ [ 80%]
+.............F.......................................................    [100%]
+=================================== FAILURES ===================================
+______________ test_v2_blueprint_reserves_reporter_delivery_lane _______________
+
+    def test_v2_blueprint_reserves_reporter_delivery_lane() -> None:
+        blueprint = apply_execution_profile_to_blueprint(
+            build_discovery_blueprint(ResearchProblem("test", discovery_branch="A")),
+            optimized_v2_profile(),
+        )
+    
+>       assert blueprint["runtime_budgets"] == {
+            "maximum_model_calls": 10,
+            "maximum_model_calls_with_residuals": 14,
+            "maximum_searches": 12,
+            "codex_concurrency": 8,
+            "s6_codex_concurrency": 8,
+            "wall_clock_deadlines_enabled": False,
+            "soft_deadline_seconds": 0,
+            "hard_deadline_seconds": 0,
+            "delivery_grace_seconds": 0,
+            "absolute_deadline_seconds": 0,
+            "maximum_delivery_model_calls": 8,
+            "maximum_swarm_model_calls": 20,
+            "maximum_quality_judge_model_calls": 2,
+            "deadline_downshift_window_seconds": 240,
+            "critical_fast_finalize_seconds": 0,
+            "delivery_retry_reserve_seconds": 45,
+            "fast_finalize_output_token_cap": 4200,
+        }
+E       AssertionError: assert {'maximum_mod...ency': 8, ...} == {'maximum_mod...ency': 8, ...}
+E         
+E         Omitting 17 identical items, use -vv to show
+E         Left contains 1 more item:
+E         {'maximum_reporter_model_calls': 15}
+E         Use -v to get more diff
+
+tests/equipment_deep_research/unit/test_harness_v2.py:134: AssertionError
+=========================== short test summary info ============================
+FAILED tests/equipment_deep_research/unit/test_harness_v2.py::test_v2_blueprint_reserves_reporter_delivery_lane
+1 failed, 356 passed in 2.19s

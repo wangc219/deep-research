@@ -1,4 +1,0 @@
-fetch_failed
-url=https://nllp.jallc.nato.int/iks/sharing%20public/20240801_cui_24-901_surviving_the%20_swarm_c-uas_ttps_at_bde_and_below.pdf
-error=HTTPStatusError: HTTP 403: Forbidden
-该诊断用于保留真实联网smoke边界；正式结论不应仅依赖失败材料。

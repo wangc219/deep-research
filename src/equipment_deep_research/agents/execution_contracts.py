@@ -25,6 +25,10 @@ class AgentRunResult:
     evidence: list[EvidenceCard]
     raw_message: str
     model_calls: list[dict[str, Any]] = field(default_factory=list)
+    # Provider/workflow metadata is intentionally optional and secret-safe.
+    # It carries execution facts (for example a Chat Completions source-anchor
+    # fallback) to the scheduler without changing the packet contract.
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -48,6 +52,8 @@ class AgentProvider(Protocol):
     def select_agents(self, request: AgentSelectionRequest) -> AgentSelectionResult: ...
 
     def run_baseline_agent(self, request: AgentRunRequest) -> AgentRunResult: ...
+
+    def review_audit(self, payload: dict[str, Any]) -> dict[str, Any]: ...
 
 
 __all__ = [

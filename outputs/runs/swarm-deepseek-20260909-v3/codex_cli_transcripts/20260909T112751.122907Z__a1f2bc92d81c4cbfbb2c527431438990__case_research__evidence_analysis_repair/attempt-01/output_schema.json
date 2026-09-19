@@ -1,0 +1,27 @@
+{
+  "findings": [
+    "string"
+  ],
+  "confidence": "0..1",
+  "handoff_summary": "completed findings and evidence boundary only; do not prescribe what a later agent should do",
+  "source_claims": [
+    {
+      "url": "cited public source URL",
+      "claim": "claim supported by that source"
+    }
+  ],
+  "contradictions": [
+    "conflicting evidence, alternative hypothesis, or uncertainty"
+  ],
+  "analysis_sections": {
+    "case_scope": "string | object | array",
+    "factual_timeline": "string | object | array",
+    "actors_and_equipment": "string | object | array",
+    "key_decision_points": "string | object | array",
+    "causal_chains": "string | object | array",
+    "cross_case_patterns": "string | object | array",
+    "transfer_boundaries": "string | object | array",
+    "future_scenario_mapping": "string | object | array",
+    "emerging_equipment_categories": "string | object | array"
+  }
+}

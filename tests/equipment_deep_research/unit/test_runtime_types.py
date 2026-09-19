@@ -89,6 +89,24 @@ def test_public_sanitizer_redacts_secrets_inside_strings_urls_and_pem() -> None:
     assert safe["long_error"].endswith("<truncated>")
 
 
+def test_public_sanitizer_redacts_provider_and_hidden_reasoning_fields() -> None:
+    safe = sanitize_runtime_payload(
+        {
+            "provider_metadata": {"model": "private"},
+            "raw_session": "session-private",
+            "raw_messages": ["hidden"],
+            "nested": {"chain_of_thought": "hidden reasoning"},
+            "visible": "kept",
+        }
+    )
+
+    assert safe["provider_metadata"] == "<redacted>"
+    assert safe["raw_session"] == "<redacted>"
+    assert safe["raw_messages"] == "<redacted>"
+    assert safe["nested"]["chain_of_thought"] == "<redacted>"
+    assert safe["visible"] == "kept"
+
+
 def test_event_bus_assigns_monotonic_sequences_per_run() -> None:
     bus = EventBus()
 

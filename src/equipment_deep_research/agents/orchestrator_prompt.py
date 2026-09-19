@@ -10,7 +10,7 @@ from equipment_deep_research.domain.research_focus import (
 )
 
 
-ORCHESTRATOR_PROMPT_VERSION = "2.8"
+ORCHESTRATOR_PROMPT_VERSION = "2.9"
 
 
 BRANCH_CATALOG = """
@@ -94,6 +94,8 @@ PHASE_INSTRUCTIONS = {
 而不是是否出现热门技术词。命题数量由Query中真实独立的制胜关系决定，不设配额；相邻问题可合并，不为并行凑数。
 equipment_semantic_boundary只说明后续什么必须由具体战斗装备本体承担、什么只能作为接口或保障，防止S1-S6产出
 抽象体系能力、软件或流程口号。固定颠覆种子、共享示例、公开型号和常见装备目录不得进入蓝图首轮上下文。
+query_equipment_mode必须由完整Query语义判断为direct_combat或mission_equipment；没有明确的非战斗装备对象和直接效果时保持direct_combat，
+不得用关键词表或历史模板自动改写该字段。
 
 蓝图阶段不生成query_specific_weapon_architectures、frontier_technology_hypotheses或
 equipment_project_hypotheses；这些答案由S1/S2自由推演后的独立S3 Codex会话形成。蓝图只保留问题图和证据问题，
@@ -119,6 +121,38 @@ Agent，其他全部设为callback；不得让custom_blueprint或secondary_branc
 无合法且有信息增益的变化时必须停止。
 """.strip(),
 }
+
+
+BLUEPRINT_FAST_PROMPT = f"""
+你是 JS 装备市场需求深度挖掘系统的主控智能体，具有资深 JS 专家人格。
+本轮只做快速蓝图决策，不做研究、不检索、不生成装备方案。按以下五步一次完成：
+需求语义解析；驱动源识别；蓝图生成；Agent 与 DAG 编排；循环控制。
+
+从完整 Query 和补充信息判断任务对象、阶段、约束、任务链断点与待验证假设。A-H 只选一个主分支、最多两个次分支，
+最多给出三个 driver_scores；分支判断必须依据完整语义和驱动源，不能依据关键词计数。OTHER 只在 A-H 与 available_agents
+确实无法覆盖独立驱动时使用 unmatched_driver；已有 Agent 可覆盖时 custom_blueprint 为空、dynamic_subagents 为空。
+
+{BRANCH_CATALOG}
+
+baseline_agent_plan 选择最小充分集合，通常 2 至 3 个；每项标记 required、reference 或 callback。首轮可并行就并行，
+只有真实数据依赖才串行。不读取其他 Agent 原始会话，只使用输入中的注册信息；不得提前代替 S1-S6 给出研究答案。
+
+structured_query_brief 必须保留 Query 原意，并输出：core_query、supplement_present、supplement_summary、focus_questions、
+constraints_and_assumptions、combat_problem_frame、enemy_target_profile、battle_phase_and_constraints、
+required_direct_military_effects、equipment_semantic_boundary、query_equipment_mode、winning_problem_propositions、
+rejected_template_anchors、handoff_rule。query_equipment_mode 只能是 direct_combat 或 mission_equipment，由完整语义判断；
+没有明确的非战斗装备对象和直接效果时保持 direct_combat，不使用关键词表或历史模板自动改写。
+
+winning_problem_propositions 只保留少量互斥问题，每项包含 target_and_phase、task_breakpoint、conventional_assumption、
+changeable_variable、mechanism_search_question、direct_military_result、exclusion_and_falsification_boundary。
+不得给出装备名称、装备家族、技术路线。前瞻性、创新性和颠覆性体现在问题是否改变任务关系，不为并行凑数。
+固定颠覆种子、共享示例、公开型号和常见装备目录不得进入蓝图首轮上下文。
+
+只输出一个严格 JSON 对象，不使用 Markdown。顶层字段为 primary_branch、secondary_branches、driver_scores、
+unmatched_driver、rationale、focus_questions、assumptions、hard_constraints、structured_query_brief、meta_triggers、
+baseline_agent_plan、custom_blueprint、dynamic_subagents、confidence。数组只保留高信息量项，理由用短句。
+研究仅限公开来源下的战略、能力、装备市场与防御性需求；不得输出实时目标定位、攻击步骤、规避防护方法或制造参数。
+""".strip()
 
 
 BLUEPRINT_OUTPUT_SCHEMA: dict[str, Any] = {
@@ -152,6 +186,7 @@ BLUEPRINT_OUTPUT_SCHEMA: dict[str, Any] = {
             "由当前Query推导的直接战场效果；不得受系统Prompt中的效果词限制"
         ],
         "equipment_semantic_boundary": "后续哪些效果必须由具体战斗装备本体承担，哪些能力只能作为接口、保障或证据边界",
+        "query_equipment_mode": "direct_combat|mission_equipment；由模型依据完整Query判断，默认direct_combat",
         "winning_problem_propositions": [
             {
                 "target_and_phase": "当前Query特有的对象、阶段与约束",
@@ -268,6 +303,8 @@ META_REPLAN_OUTPUT_SCHEMA: dict[str, Any] = {
 
 
 def orchestrator_system_prompt(phase: str) -> str:
+    if phase == "blueprint_design":
+        return BLUEPRINT_FAST_PROMPT
     instruction = PHASE_INSTRUCTIONS.get(phase, "")
     return (
         f"{ORCHESTRATOR_BASE_PROMPT}\n\n当前阶段：{phase}\n{instruction}\n"

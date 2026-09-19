@@ -139,6 +139,8 @@ def test_provider_and_tool_configuration_are_structured() -> None:
     assert providers["default_provider"] == "codex"
     assert providers["providers"]["codex"] == {
         "type": "codex_cli",
+        "fallback_providers": ["deepseek"],
+        "fallback_policy": "capacity_only",
         "command": "codex",
         "model": "",
         "timeout_seconds": 900,

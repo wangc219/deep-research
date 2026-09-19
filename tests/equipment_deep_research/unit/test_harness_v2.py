@@ -4,11 +4,8 @@ import asyncio
 import json
 from types import SimpleNamespace
 
-import pytest
-
 from equipment_deep_research.agents.provider import (
     ResponsesAgentProvider,
-    S6QualityError,
 )
 from equipment_deep_research.agents.registry import AgentDef
 from equipment_deep_research.agents.workflows.baseline_execution import (
@@ -38,6 +35,7 @@ from equipment_deep_research.orchestration.runner import (
     _is_unavailable_baseline_boundary,
     _merge_blueprint_and_analyst_agent_ids,
     _military_handoff_evidence_index,
+    _minimal_military_value_handoff,
     _report_indicator_portrait,
 )
 
@@ -137,14 +135,16 @@ def test_v2_blueprint_reserves_reporter_delivery_lane() -> None:
         "maximum_model_calls": 10,
         "maximum_model_calls_with_residuals": 14,
         "maximum_searches": 12,
-        "codex_concurrency": 5,
-        "s6_codex_concurrency": 6,
+        "codex_concurrency": 8,
+        "s6_codex_concurrency": 32,
+        "reporter_codex_concurrency": 12,
         "wall_clock_deadlines_enabled": False,
         "soft_deadline_seconds": 0,
         "hard_deadline_seconds": 0,
         "delivery_grace_seconds": 0,
         "absolute_deadline_seconds": 0,
         "maximum_delivery_model_calls": 8,
+        "maximum_reporter_model_calls": 36,
         "maximum_swarm_model_calls": 20,
         "maximum_quality_judge_model_calls": 2,
         "deadline_downshift_window_seconds": 240,
@@ -450,6 +450,36 @@ def test_military_value_handoff_filters_rejected_and_generic_baseline_text() -> 
     assert handoff["statistics"]["selected_claim_count"] == 1
 
 
+def test_minimal_military_value_handoff_only_projects_mechanism_and_effects() -> None:
+    projected = _minimal_military_value_handoff(
+        {
+            "schema": "military_value_handoff_v1",
+            "claims": [
+                {
+                    "claim_id": "claim-1",
+                    "mechanism": "前沿边缘节点支撑海上拒止、前沿协同和就地快速任务化。",
+                    "military_effects": ["拦截反制", "拒止制衡", "生存抗毁"],
+                    "failure_boundary": "通信受扰时失效",
+                    "evidence_ids": ["ev-1"],
+                    "source_urls": ["https://example.com"],
+                    "downstream_steps": ["S1"],
+                    "confidence": 0.9,
+                }
+            ],
+            "baseline_boundaries": [{"packet_id": "packet-1"}],
+            "statistics": {"selected_claim_count": 1},
+        }
+    )
+
+    assert set(projected) == {"claims"}
+    assert projected["claims"] == [
+        {
+            "mechanism": "前沿边缘节点支撑海上拒止、前沿协同和就地快速任务化。",
+            "military_effects": ["拦截反制", "拒止制衡", "生存抗毁"],
+        }
+    ]
+
+
 def test_military_handoff_evidence_index_expands_selected_equipment_packet() -> None:
     store = DomainStore()
     for evidence_id, title in (
@@ -672,9 +702,9 @@ def test_optimized_v2_executes_s1_s2_as_one_physical_call() -> None:
         }
     ]
     assert len(cohort_input["secondary_cross_agent_constraints"]) == 1
-    assert cohort_input["secondary_cross_agent_constraints"][0]["mechanism"].startswith(
-        "强电磁压力"
-    )
+    handoff_claim = cohort_input["secondary_cross_agent_constraints"][0]
+    assert set(handoff_claim) == {"mechanism", "military_effects"}
+    assert handoff_claim["mechanism"].startswith("强电磁压力")
     assert cohort_input["analysis_priority"]["primary"] == [
         "current_agent_specialist_role_and_method",
         "query_military_problem",

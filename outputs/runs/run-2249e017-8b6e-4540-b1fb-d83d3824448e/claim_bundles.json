@@ -1,0 +1,369 @@
+[
+  {
+    "bundle_id": "claims-42e2d45402c3",
+    "claims": [
+      {
+        "claim_id": "claim-7c405ec4a4d7",
+        "claim_type": "fact",
+        "confidence": 0.81,
+        "counter_evidence": [
+          "公开材料一方面强调更强自治与多源融合，另一方面又多次强调在高对抗环境下软件与自治必须受限、分层、可复核；这意味着‘更智能’并不自动等于‘更有效’，二者存在明显张力。",
+          "Replicator和相关材料强调规模化与快速交付，但这与高复杂度、长链路、强协同的远程精确打击任务天然冲突：越依赖精密协同，越难与可消耗、大批量、快速替换的工程逻辑兼容。",
+          "公开材料把无人系统的价值放在分布式与低签名，但远程精确打击又要求更强进入深度与更高毁伤确定性；这两个目标之间存在工程上的结构性拉扯。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-6c1c84a0e24e",
+          "ev-weapon_equipment-web-f42ad4ad8ea8"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+          "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/"
+        ],
+        "text": "1) 公开美军材料已把无人/自主系统的关键矛盾从“单平台命中”转向“可规模化、可消耗、可快速迭代的全链路作战能力”，这会直接影响无人低空远程精确打击的候选判准：任务价值不只在射程和命中精度，而在受扰环境下能否维持感知-决策-进入-发起-评估-补打闭环；失效条件是链路一旦高度依赖单一数据链、单一GNSS或固定人工流程，在强电子战与高损耗环境中就不再具备“全链条制胜”意义。"
+      },
+      {
+        "claim_id": "claim-2a31a8d12a11",
+        "claim_type": "inference",
+        "confidence": 0.81,
+        "counter_evidence": [
+          "公开材料一方面强调更强自治与多源融合，另一方面又多次强调在高对抗环境下软件与自治必须受限、分层、可复核；这意味着‘更智能’并不自动等于‘更有效’，二者存在明显张力。",
+          "Replicator和相关材料强调规模化与快速交付，但这与高复杂度、长链路、强协同的远程精确打击任务天然冲突：越依赖精密协同，越难与可消耗、大批量、快速替换的工程逻辑兼容。",
+          "公开材料把无人系统的价值放在分布式与低签名，但远程精确打击又要求更强进入深度与更高毁伤确定性；这两个目标之间存在工程上的结构性拉扯。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-6c1c84a0e24e",
+          "ev-weapon_equipment-web-f42ad4ad8ea8"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+          "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/"
+        ],
+        "text": "2) 公开资料同时表明，对抗无人系统已从末端拦截扩展到体系层面的“反无人机”战略与分层防护，这意味着无人低空远程精确打击的有效性边界不在“能飞过去”而在“能否穿透探测、压制、干扰和规模消耗形成的综合反制网”；军事任务影响是后续候选必须证明低可探测、低签名、抗干扰和任务恢复能力，否则只能算单次打击样机而非全链条装备。"
+      },
+      {
+        "claim_id": "claim-a20657006d07",
+        "claim_type": "fact",
+        "confidence": 0.81,
+        "counter_evidence": [
+          "公开材料一方面强调更强自治与多源融合，另一方面又多次强调在高对抗环境下软件与自治必须受限、分层、可复核；这意味着‘更智能’并不自动等于‘更有效’，二者存在明显张力。",
+          "Replicator和相关材料强调规模化与快速交付，但这与高复杂度、长链路、强协同的远程精确打击任务天然冲突：越依赖精密协同，越难与可消耗、大批量、快速替换的工程逻辑兼容。",
+          "公开材料把无人系统的价值放在分布式与低签名，但远程精确打击又要求更强进入深度与更高毁伤确定性；这两个目标之间存在工程上的结构性拉扯。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-6c1c84a0e24e",
+          "ev-weapon_equipment-web-f42ad4ad8ea8"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+          "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/"
+        ],
+        "text": "3) 乌克兰战争相关公开分析显示，软件、快速迭代、分布式数据融合和战场反馈闭环，比单纯平台性能更决定无人作战的持续效果；这对“智能自主、多源感知、算法驱动”构成重要但非充分条件，证据边界是目前公开材料支持“算法在边缘受限条件下能提升效率”，不支持“高自治即可在复杂战场稳定自主完成长链打击”；失效条件是感知源质量下降、训练分布外目标增多、电子压制导致模型输入退化。"
+      },
+      {
+        "claim_id": "claim-bd9dcfbbc606",
+        "claim_type": "fact",
+        "confidence": 0.81,
+        "counter_evidence": [
+          "公开材料一方面强调更强自治与多源融合，另一方面又多次强调在高对抗环境下软件与自治必须受限、分层、可复核；这意味着‘更智能’并不自动等于‘更有效’，二者存在明显张力。",
+          "Replicator和相关材料强调规模化与快速交付，但这与高复杂度、长链路、强协同的远程精确打击任务天然冲突：越依赖精密协同，越难与可消耗、大批量、快速替换的工程逻辑兼容。",
+          "公开材料把无人系统的价值放在分布式与低签名，但远程精确打击又要求更强进入深度与更高毁伤确定性；这两个目标之间存在工程上的结构性拉扯。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-6c1c84a0e24e",
+          "ev-weapon_equipment-web-f42ad4ad8ea8"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+          "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/"
+        ],
+        "text": "4) 公开的Replicator、EABO/Stand-In Forces等材料共同指向：低成本、可消耗、模块化、开放架构和快速采购/试验机制，是把无人打击能力变成可持续战力的工程前提；军事任务影响是候选装备必须同时回答“如何快速补充、如何批量一致、如何在前沿分散部署”，否则即使性能先进也难形成稳定战果；证据边界是这些材料反映的是美军需求与采购方向，不等于已证明某一具体打击构型在低空远程精确打击上必然优于传统方案。"
+      }
+    ],
+    "packet_id": "packet-weapon_equipment",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-d5cf0cba42e6",
+    "claims": [
+      {
+        "claim_id": "claim-00a535289441",
+        "claim_type": "fact",
+        "confidence": 0.89,
+        "counter_evidence": [
+          "公开材料一方面强调规模化自主、开放架构与快速交付，另一方面又要求更强的识别置信度、抗干扰和权限控制；这不是事实冲突，而是体系扩张与控制收敛之间的长期张力。",
+          "前沿低签名分散部署被描述为增强生存性的关键，但它同时增加通信、保障和再组织负担；公开证据说明方向一致，尚不足以证明哪一种代价组合最优。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-5824f31b34e3",
+          "ev-system_confrontation-web-85fc01f1f838"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://www.war.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+        ],
+        "text": "判断：无人低空远程精确打击的制胜点不在单平台命中，而在感知、识别、授权、下发、机动/发射、末段修正、战果评估与补打能否构成可持续闭环；军事任务价值在于决定打击、压制与再打击能否在受扰环境中连续发生；证据边界是公开官方战略/概念材料，缺少全链路实战量化验证；失效条件是任一环节被持续干扰后闭环断裂，平台性能优势会被快速稀释。"
+      },
+      {
+        "claim_id": "claim-17f75f187eec",
+        "claim_type": "fact",
+        "confidence": 0.89,
+        "counter_evidence": [
+          "公开材料一方面强调规模化自主、开放架构与快速交付，另一方面又要求更强的识别置信度、抗干扰和权限控制；这不是事实冲突，而是体系扩张与控制收敛之间的长期张力。",
+          "前沿低签名分散部署被描述为增强生存性的关键，但它同时增加通信、保障和再组织负担；公开证据说明方向一致，尚不足以证明哪一种代价组合最优。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-5824f31b34e3",
+          "ev-system_confrontation-web-85fc01f1f838"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://www.war.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+        ],
+        "text": "判断：目标关联与置信度管理是第一脆弱点，错误识别会把精确打击变成错配火力并暴露发射单元；军事任务价值在于这是决定歼灭效率与弹药交换比的前置门槛；证据边界来自公开材料对探测、跟踪、识别和战果评估的共同强调；失效条件是诱饵、伪装、欺骗和复杂电磁环境使识别置信度长期不足。"
+      },
+      {
+        "claim_id": "claim-f5bab9ea9b98",
+        "claim_type": "fact",
+        "confidence": 0.89,
+        "counter_evidence": [
+          "公开材料一方面强调规模化自主、开放架构与快速交付，另一方面又要求更强的识别置信度、抗干扰和权限控制；这不是事实冲突，而是体系扩张与控制收敛之间的长期张力。",
+          "前沿低签名分散部署被描述为增强生存性的关键，但它同时增加通信、保障和再组织负担；公开证据说明方向一致，尚不足以证明哪一种代价组合最优。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-5824f31b34e3",
+          "ev-system_confrontation-web-85fc01f1f838"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://www.war.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+        ],
+        "text": "判断：抗扰通信与多路径中继是体系脆弱点，通信一旦失稳，协同自治、重规划和战果回传会同步退化；军事任务价值在于它直接决定压制后续接战、拒止推进和战损后续接能力；证据边界是公开材料强调协同自治和韧性C2，但未给出战术级承压上限；失效条件是链路受压制到无法维持任务分配与补打闭环。"
+      },
+      {
+        "claim_id": "claim-aa06292ae792",
+        "claim_type": "fact",
+        "confidence": 0.89,
+        "counter_evidence": [
+          "公开材料一方面强调规模化自主、开放架构与快速交付，另一方面又要求更强的识别置信度、抗干扰和权限控制；这不是事实冲突，而是体系扩张与控制收敛之间的长期张力。",
+          "前沿低签名分散部署被描述为增强生存性的关键，但它同时增加通信、保障和再组织负担；公开证据说明方向一致，尚不足以证明哪一种代价组合最优。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-5824f31b34e3",
+          "ev-system_confrontation-web-85fc01f1f838"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://www.war.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+        ],
+        "text": "判断：前沿低签名保障与快速再部署是生存性脆弱点，固定化前沿节点会放大敌方远程火力和反无人打击的级联效应；军事任务价值在于关系到发起持续性、反复出动和战果固化；证据边界来自EABO和分布式部署类公开概念，未证明具体部署形态在强对抗下的耐受度；失效条件是补给、转移和再组织速度落后于敌方侦打一体节奏。"
+      },
+      {
+        "claim_id": "claim-74b6832284bf",
+        "claim_type": "hypothesis",
+        "confidence": 0.89,
+        "counter_evidence": [
+          "公开材料一方面强调规模化自主、开放架构与快速交付，另一方面又要求更强的识别置信度、抗干扰和权限控制；这不是事实冲突，而是体系扩张与控制收敛之间的长期张力。",
+          "前沿低签名分散部署被描述为增强生存性的关键，但它同时增加通信、保障和再组织负担；公开证据说明方向一致，尚不足以证明哪一种代价组合最优。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-5824f31b34e3",
+          "ev-system_confrontation-web-85fc01f1f838"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://www.war.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+        ],
+        "text": "判断：开放架构、模块化载荷与数据语义统一是规模化脆弱点，若软件接口和任务语义不统一，自主系统会难以从样机走向可用编组；军事任务价值在于决定能否形成可消耗、可替换、可协同的远程精确打击群；证据边界是官方材料指向软件使能和开放系统架构的重要性，但未证明单一路线可独立成立；失效条件是平台数量增加却无法共享感知、权限和任务状态。"
+      }
+    ],
+    "packet_id": "packet-system_confrontation",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-c342e5d8a7a9",
+    "claims": [
+      {
+        "claim_id": "claim-42e034150e85",
+        "claim_type": "fact",
+        "confidence": 0.83,
+        "counter_evidence": [
+          "公开材料支持的是协同自主、韧性C2、开放模块化和前出分布式运用这些分段能力，但并不能证明无人低空远程精确打击的端到端智能制胜闭环已在真实受扰对抗中成熟成立。",
+          "结论将军事价值描述为可支撑持续压制、远程打击和战果再确认，但现有证据更多来自项目、策略和编制方向，和已验证的实战效果之间存在明显断裂。",
+          "当前判断把低带宽、断续、受扰通信视为默认战场条件，并推演边缘自治可维持局部自洽，但公开材料尚不足以证明授权、识别和再攻击在断链条件下能长期保持低误判率。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-technology_radar-web-daca76be665a",
+          "ev-technology_radar-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.diu.mil/latest/defense-innovation-unit-announces-software-vendors-to-support-replicator",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "结论上，这个题目的核心不在单次命中，而在感知、识别、决策、抗扰、进入、打击、效果评估到补打的闭环能否在受扰环境中持续成立；其军事价值主要体现在持续压制、远程打击、拒止和战果再确认，而不是平台本体性能炫示。证据边界是公开材料只证明美军正在把这类闭环作为重点建设方向，不能直接外推到完整实战成熟度；失效条件是链路任一环节被电子压制、欺骗或认知误判打断。"
+      },
+      {
+        "claim_id": "claim-72ff12af402e",
+        "claim_type": "fact",
+        "confidence": 0.83,
+        "counter_evidence": [
+          "公开材料支持的是协同自主、韧性C2、开放模块化和前出分布式运用这些分段能力，但并不能证明无人低空远程精确打击的端到端智能制胜闭环已在真实受扰对抗中成熟成立。",
+          "结论将军事价值描述为可支撑持续压制、远程打击和战果再确认，但现有证据更多来自项目、策略和编制方向，和已验证的实战效果之间存在明显断裂。",
+          "当前判断把低带宽、断续、受扰通信视为默认战场条件，并推演边缘自治可维持局部自洽，但公开材料尚不足以证明授权、识别和再攻击在断链条件下能长期保持低误判率。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-technology_radar-web-daca76be665a",
+          "ev-technology_radar-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.diu.mil/latest/defense-innovation-unit-announces-software-vendors-to-support-replicator",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "公开材料显示，Replicator、DIU软件供应商和DoD反无人系统策略共同指向一个成熟度判断：智能自主正在从单机算法转向分布式系统级能力，且优先解决低带宽、断续、受扰条件下的韧性C2与协同。军事任务价值在于提升分布式打击群的协同效率和抗毁性；证据边界是这些文件更多是项目与策略宣示，不等于已验证的端到端制胜能力。"
+      },
+      {
+        "claim_id": "claim-ce2550279482",
+        "claim_type": "fact",
+        "confidence": 0.83,
+        "counter_evidence": [
+          "公开材料支持的是协同自主、韧性C2、开放模块化和前出分布式运用这些分段能力，但并不能证明无人低空远程精确打击的端到端智能制胜闭环已在真实受扰对抗中成熟成立。",
+          "结论将军事价值描述为可支撑持续压制、远程打击和战果再确认，但现有证据更多来自项目、策略和编制方向，和已验证的实战效果之间存在明显断裂。",
+          "当前判断把低带宽、断续、受扰通信视为默认战场条件，并推演边缘自治可维持局部自洽，但公开材料尚不足以证明授权、识别和再攻击在断链条件下能长期保持低误判率。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-technology_radar-web-daca76be665a",
+          "ev-technology_radar-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.diu.mil/latest/defense-innovation-unit-announces-software-vendors-to-support-replicator",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "EABO类前沿分布式前出运用说明，低空远程精确打击的成败强依赖进入、发起、补给、回收与前沿生存条件，而不只是末端杀伤载荷。军事价值在于支撑海上拒止、前沿持续施压和分布式火力投送；失效条件是前沿节点暴露、补给链被切断或发射/回收窗口被压缩。"
+      },
+      {
+        "claim_id": "claim-75cb9dbc77a3",
+        "claim_type": "hypothesis",
+        "confidence": 0.83,
+        "counter_evidence": [
+          "公开材料支持的是协同自主、韧性C2、开放模块化和前出分布式运用这些分段能力，但并不能证明无人低空远程精确打击的端到端智能制胜闭环已在真实受扰对抗中成熟成立。",
+          "结论将军事价值描述为可支撑持续压制、远程打击和战果再确认，但现有证据更多来自项目、策略和编制方向，和已验证的实战效果之间存在明显断裂。",
+          "当前判断把低带宽、断续、受扰通信视为默认战场条件，并推演边缘自治可维持局部自洽，但公开材料尚不足以证明授权、识别和再攻击在断链条件下能长期保持低误判率。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-technology_radar-web-daca76be665a",
+          "ev-technology_radar-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.diu.mil/latest/defense-innovation-unit-announces-software-vendors-to-support-replicator",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "对手适应的主线不是单纯加密或增防，而是围绕开放模块化、快速测试、预测分析和成本交换比进行快速反适应。这意味着该类装备体系只有在能低成本迭代、快速替换感知/通信/自主模块时，才可能保持优势；证据边界是公开材料反映的是方法论趋势，尚不能证明某一具体构型具备长期优势。"
+      }
+    ],
+    "packet_id": "packet-technology_radar",
+    "schema_version": "1.0"
+  }
+]

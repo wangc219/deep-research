@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=lineofdeparture.army.mil · Engineering Resilient Fire Support in
-source_url=https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/
-claim=复杂电磁环境会影响火力支援中的通信、雷达、传感器-射手链路和节点生存，要求火力链具备电磁韧性。
-excerpt=
-retrieval=Hosted web search citation metadata

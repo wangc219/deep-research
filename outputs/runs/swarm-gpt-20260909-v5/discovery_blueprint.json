@@ -1,0 +1,434 @@
+{
+  "adaptive_winning_step_modes": {
+    "1": "skip",
+    "2": "skip",
+    "3": "deep",
+    "4": "deep",
+    "5": "skip",
+    "6": "deep"
+  },
+  "assumptions": [
+    "用户未指定冲突阶段、时间窗口、目标规模、地域范围或证据截止日期，首轮按台海危机至高强度冲突的公开研究范围设计。",
+    "任务目标限定为战略、能力、装备市场与防御性需求研究，不包含实时目标定位、具体攻击步骤、规避防护方法或武器制造参数。",
+    "“新制胜机制”暂解释为能够直接改善预警、拒止、抗毁或持续作战结果的可验证机理，而非流程口号。"
+  ],
+  "baseline_agent_plan": [
+    {
+      "agent_id": "cross_domain_fusion",
+      "mode": "required",
+      "reason": "主分支G的不可替代能力，负责跨域接口、时序、降级和协同缝隙分析。"
+    },
+    {
+      "agent_id": "international_situation",
+      "mode": "required",
+      "reason": "任务明确涉及台海，需提供公开可观测威胁态势、战略环境和对手能力建设背景。"
+    },
+    {
+      "agent_id": "combat_scenario",
+      "mode": "required",
+      "reason": "任务包含具体战场方向和低空无人威胁，需界定阶段、环境约束和任务窗口。"
+    },
+    {
+      "agent_id": "system_confrontation",
+      "mode": "callback",
+      "reason": "在发现链路存在重大依赖、级联脆弱性或需要红蓝压力测试时启用。"
+    },
+    {
+      "agent_id": "operational_employment",
+      "mode": "callback",
+      "reason": "在需要把新机制转化为力量协同、部署原则或公开战例迁移时启用。"
+    },
+    {
+      "agent_id": "weapon_equipment",
+      "mode": "callback",
+      "reason": "蓝图阶段不预研具体装备；仅在S3形成稳定命题后负责装备谱系、能力差距和需求映射。"
+    }
+  ],
+  "baseline_execution_mode": "query_dominant_isolated_parallel",
+  "blueprint_id": "blueprint-g-3f1473ed",
+  "blueprint_mode": "catalog",
+  "branch_name": "跨域融合发现",
+  "callback_agent_ids": [
+    "system_confrontation",
+    "operational_employment",
+    "weapon_equipment"
+  ],
+  "confidence": 0.91,
+  "custom_blueprint": {
+    "dependencies": [],
+    "dependency_cycle_rejected": false,
+    "driver_type": "",
+    "preferred_agent_ids": [],
+    "rationale": "",
+    "required_capability_tags": [],
+    "required_outputs": [],
+    "s1_s6_modes": {},
+    "stop_conditions": [],
+    "waves": []
+  },
+  "driver_scores": [
+    {
+      "branch": "G",
+      "exclusion_reason": "",
+      "score": 0.94,
+      "signals": [
+        "主题聚焦台海低空无人系统探测预警",
+        "核心问题涉及低空目标在海空、电磁、网络、指挥与认知链路间的接口和时序",
+        "要求寻找新制胜机制而非单一型号比较"
+      ]
+    },
+    {
+      "branch": "A",
+      "exclusion_reason": "仅作为作战运用创新路径，不能独立覆盖跨域接口与探测预警体系边界。",
+      "score": 0.82,
+      "signals": [
+        "明确要求新制胜机制",
+        "需要检验低空无人威胁下任务组织、决策节奏和无人系统运用是否需要重构"
+      ]
+    },
+    {
+      "branch": "F",
+      "exclusion_reason": "体系对抗是重要分析支撑，但当前输入尚未明确要求完整红蓝对抗仿真。",
+      "score": 0.78,
+      "signals": [
+        "预警有效性取决于传感器、通信、指挥、拦截和保障依赖链",
+        "需要分析失联、欺骗、饱和和节点受损下的级联脆弱性与抗毁效果"
+      ]
+    }
+  ],
+  "dynamic_subagents": [],
+  "emphasis": [
+    "跨域矩阵",
+    "S3",
+    "S4",
+    "S6"
+  ],
+  "execution_contract": {
+    "absolute_deadline_seconds": 0,
+    "background_count": null,
+    "backtrack_map": {
+      "driver": [
+        3,
+        4,
+        6
+      ],
+      "mapping": [
+        4,
+        5,
+        6
+      ],
+      "report_section": []
+    },
+    "branch": "G",
+    "branch_products": [
+      "cross_domain_driver",
+      "interface_gap",
+      "causal_mechanism",
+      "capability_need",
+      "equipment_form",
+      "validation_route"
+    ],
+    "codex_concurrency": 8,
+    "contract_id": "branch-g-optimized-v2",
+    "critical_fast_finalize_seconds": 0,
+    "deadline_downshift_window_seconds": 240,
+    "delivery_grace_seconds": 0,
+    "delivery_retry_reserve_seconds": 45,
+    "fast_finalize_output_token_cap": 4200,
+    "hard_deadline_seconds": 0,
+    "logical_agent_dag": {
+      "S3": [
+        "driver_agent"
+      ],
+      "S4": [
+        "S3"
+      ],
+      "S6": [
+        "S4"
+      ],
+      "driver_agent": [],
+      "reporter": [
+        "S6"
+      ]
+    },
+    "maximum_delivery_model_calls": 8,
+    "maximum_model_calls": 10,
+    "maximum_model_calls_with_residuals": 14,
+    "maximum_quality_judge_model_calls": 2,
+    "maximum_rounds": 3,
+    "maximum_searches": 12,
+    "maximum_swarm_model_calls": 20,
+    "physical_cohorts": [
+      [
+        3,
+        4
+      ]
+    ],
+    "scenarios_per_background": null,
+    "schema_version": "2.0",
+    "soft_deadline_seconds": 0,
+    "step_intensity": {
+      "1": "skip",
+      "2": "skip",
+      "3": "deep",
+      "4": "deep",
+      "5": "skip",
+      "6": "deep"
+    },
+    "stop_conditions": [
+      "all_required_branch_products_present",
+      "accepted_claims_traceable_to_public_sources",
+      "no_repeated_residual_without_new_evidence",
+      "estimated_quality_gain_below_0.03"
+    ],
+    "wall_clock_deadlines_enabled": false
+  },
+  "execution_profile_hash": "66cc1cf10cfa012bc1120c33afbe000a60ba6dda63575e1aaa53263491bf7b4c",
+  "execution_profile_id": "winning_swarm_dynamic_v2",
+  "focus_questions": [
+    "台海低空无人系统在不同冲突阶段、方向和环境条件下，最可能造成预警链条失效的任务断点是什么？",
+    "传统的单域探测、集中式识别和逐目标响应假设，哪些会被低慢小、集群化、混合飞行剖面或电磁受限条件推翻？",
+    "哪些跨域变量的改变能够直接提升发现、持续跟踪、可信告警、拒止突防和防御体系抗毁效果？",
+    "在通信受扰、节点受损、目标饱和和信息不完整条件下，预警与防御任务如何保持可降级运行？"
+  ],
+  "generated_by": "codex_orchestrator",
+  "hard_constraints": [
+    "仅使用公开来源并要求事实、推断、假设、未知和冲突分离。",
+    "不得在蓝图阶段预先生成具体装备架构、技术路线或项目方案。",
+    "同一装备族后续只能有一个主需求归属，跨分支仅表达接口与验证关系。",
+    "不得输出可直接执行的伤害行动指令或实时作战信息。"
+  ],
+  "hard_dependencies": {
+    "driver_agent": []
+  },
+  "initial_baseline_agent_ids": [
+    "cross_domain_fusion",
+    "international_situation",
+    "combat_scenario"
+  ],
+  "interaction_mode": "autonomous",
+  "loop_policy": {
+    "inner_max_iterations": 1,
+    "meta_max_cycles": 1,
+    "middle_max_cycles": 1,
+    "minimum_expected_gain": 0.03,
+    "outer_max_rounds": 3,
+    "residual_only_after_first_round": true
+  },
+  "maximum_business_agents": 3,
+  "meta_review": {
+    "added_secondary_branches": [],
+    "dynamic_subagents": [],
+    "focus_questions": [],
+    "rationale": "覆盖与收敛结果未触发实质性重规划条件，保留当前蓝图。",
+    "replan_required": false,
+    "step_mode_changes": [],
+    "step_mode_overrides": [],
+    "stop_reason": "lean_meta_gate_passed"
+  },
+  "meta_triggers": [
+    "出现跨分支高价值线索",
+    "当前分支无法覆盖关键能力标签",
+    "案例/技术/对手变化反向触发其他发现路径",
+    "公开证据显示主要威胁并非低空无人系统，而是跨域复合目标或认知欺骗时，重规划主分支。",
+    "若台海场景缺乏可验证阶段或环境约束，回退至一般低空无人预警能力缺口框架。",
+    "若跨域接口分析无法形成直接军事效果，启用体系对抗仿真进行一次定向补链。",
+    "若关键结论仅依赖单一来源、过期信息或不可核验摘要，暂停收敛并进入证据治理回溯。"
+  ],
+  "minimum_business_agents": 2,
+  "primary_branch": "G",
+  "promoted_callback_agent_ids": [],
+  "prompt_version": "2.8",
+  "rationale": "该任务是台海特定方向、低空无人系统威胁牵引的跨域预警与制胜机理发现问题。主驱动应归入G，因为关键增量在于跨域探测、识别、跟踪、告警、决策和防御效应之间的接口重构；A用于检验新作战运用和决策节奏；F用于识别体系依赖、级联失效与抗毁边界。涉及台海和具体战场环境，国际形势与作战场景能力进入首轮。",
+  "reference_focus": {
+    "source_items": [
+      7,
+      8
+    ],
+    "task_kernel": "空天、深海、电磁和网络能力扩展→研究信息、指挥、效应与保障接口→交付跨域装备组合、失联降级模式和联合验证方案。"
+  },
+  "required_capability_tags": [
+    "cross_domain",
+    "equipment",
+    "coordination",
+    "autonomous_discovery"
+  ],
+  "required_outputs": [
+    "跨域边界",
+    "域间接口",
+    "协同缝隙",
+    "跨域效果链",
+    "融合能力",
+    "装备能力需求图像（需求卡片）",
+    "深度研究主报告（深度性、创新性、前瞻性、军事价值性）",
+    "分支专用收敛产物"
+  ],
+  "runtime_budgets": {
+    "absolute_deadline_seconds": 0,
+    "codex_concurrency": 8,
+    "critical_fast_finalize_seconds": 0,
+    "deadline_downshift_window_seconds": 240,
+    "delivery_grace_seconds": 0,
+    "delivery_retry_reserve_seconds": 45,
+    "fast_finalize_output_token_cap": 4200,
+    "hard_deadline_seconds": 0,
+    "maximum_delivery_model_calls": 8,
+    "maximum_model_calls": 10,
+    "maximum_model_calls_with_residuals": 14,
+    "maximum_quality_judge_model_calls": 0,
+    "maximum_reporter_model_calls": 36,
+    "maximum_searches": 12,
+    "maximum_swarm_model_calls": 48,
+    "reporter_codex_concurrency": 12,
+    "s6_codex_concurrency": 32,
+    "soft_deadline_seconds": 0,
+    "wall_clock_deadlines_enabled": false
+  },
+  "runtime_route": "new_winning_mechanism",
+  "secondary_branches": [
+    "A",
+    "F"
+  ],
+  "semantic_agent_signals": [],
+  "specialist_agent_ids": [
+    "scenario_divergence",
+    "cross_domain_fusion"
+  ],
+  "structured_query_brief": {
+    "battle_phase_and_constraints": [
+      "危机预警与持续监视阶段",
+      "局部冲突中的快速发现、分类和告警阶段",
+      "高强度对抗中的饱和、受扰、节点受损和跨域失联条件"
+    ],
+    "combat_problem_frame": "低空无人系统可能利用低可探测性、复杂背景、数量压力、通信受限和跨域协同，压缩预警到防御响应的有效时间，造成发现不及时、识别不可信、跟踪中断或防御资源错配。研究重点是找出可改变这些断点的对抗变量及其直接军事结果。",
+    "constraints_and_assumptions": [
+      "台海为研究方向；未指定具体岸段、目标、时间窗口或对手型号。",
+      "首轮只形成问题图、证据问题和执行蓝图，不形成装备成品方案。",
+      "直接军事结果须落到持续发现、可信告警、拒止突防、抗毁和持续作战能力。"
+    ],
+    "core_query": "面向台海冲突环境，研究低空无人系统探测预警链条的关键失效断点及可形成直接防御性军事效果的新制胜机制，并映射后续装备需求与验证命题。",
+    "enemy_target_profile": [
+      "低空、低慢小或复杂背景下的无人飞行目标",
+      "可能呈现多批次、集群化、混合有人/无人或诱骗特征的目标活动",
+      "在电磁受扰、通信不稳定和信息不完整条件下仍需保持威胁感知的目标体系"
+    ],
+    "equipment_project_hypotheses": [],
+    "equipment_semantic_boundary": "后续研究必须由具体战斗装备本体承担可测量的探测、识别、跟踪、告警、防护或防御效应；软件、算法、数据标准、指挥流程和组织机制只能作为装备接口、控制条件或保障能力，不得替代装备需求本体。",
+    "expansion_dimensions": [],
+    "focus_questions": [
+      "按危机、局部冲突和高强度对抗阶段，识别低空无人系统对发现、识别、跟踪、告警和防御响应的主要压力。",
+      "分析跨域信息、指挥、效应和保障接口的时序约束、降级模式与抗毁边界。",
+      "检验传统集中式、单目标、单域传感和固定响应假设的适用性。"
+    ],
+    "frontier_technology_hypotheses": [],
+    "handoff_rule": "S1/S2分别提交公开证据化的威胁、场景和失效断点Packet；S3仅基于这些Packet独立推演可验证制胜命题，再由S4-S6映射具体装备需求、成熟度与建设优先级。",
+    "query_specific_weapon_architectures": [],
+    "rejected_template_anchors": [
+      "固定无人机型号清单",
+      "预设传感器或拦截器目录",
+      "固定颠覆技术种子",
+      "未经任务断点验证的热门技术路线"
+    ],
+    "required_direct_military_effects": [
+      "缩短从目标出现到可信告警的时间",
+      "保持关键目标轨迹连续性和威胁排序可信度",
+      "在节点受损或链路受扰时维持可降级预警与防御运行",
+      "提高对低空无人威胁的拒止突防和持续作战效果"
+    ],
+    "supplement_present": false,
+    "supplement_summary": "",
+    "weapon_design_variables": [],
+    "winning_problem_propositions": [
+      {
+        "changeable_variable": "改变跨域观测的互补性、信息时序和告警可信度形成方式。",
+        "conventional_assumption": "单域传感器覆盖和集中式融合能够稳定提供足够提前量与可信识别。",
+        "direct_military_result": "提高预警提前量、目标发现率、识别可信度和防御准备效率。",
+        "exclusion_and_falsification_boundary": "不研究一般态势感知或纯算法性能；若无法证明对告警提前量、可信度或防御响应有直接改善，则排除。",
+        "mechanism_search_question": "如何在不依赖单一高价值节点的条件下，使分散观测快速形成可验证、可持续的威胁认知？",
+        "target_and_phase": "台海危机预警至局部冲突初期的低空无人目标发现与可信告警",
+        "task_breakpoint": "目标在复杂背景、低空遮蔽或多源信息不一致条件下未被及时发现，或告警无法形成可信威胁排序。"
+      },
+      {
+        "changeable_variable": "改变任务链的分布式协同、失联降级和资源调度弹性。",
+        "conventional_assumption": "稳定通信、集中决策和逐目标响应可以持续维持任务链。",
+        "direct_military_result": "提升抗毁预警、持续跟踪、拒止突防和持续作战能力。",
+        "exclusion_and_falsification_boundary": "不推演具体攻击流程或实时部署；若方案只增加信息流量而不能改善受扰条件下的任务完成率，则排除。",
+        "mechanism_search_question": "在信息不完整、链路受扰和目标数量压力下，如何保持轨迹连续、威胁排序和防御动作的可恢复性？",
+        "target_and_phase": "局部冲突至高强度对抗中的低空无人目标连续跟踪与防御资源分配",
+        "task_breakpoint": "目标轨迹因受扰、欺骗、饱和或节点损失而中断，导致防御响应迟滞或资源错配。"
+      }
+    ]
+  },
+  "unmatched_driver": "",
+  "waves": [
+    [
+      "scenario_divergence"
+    ],
+    [
+      "cross_domain_fusion"
+    ],
+    [
+      "combat_scenario",
+      "weapon_equipment"
+    ],
+    [
+      "operational_employment"
+    ]
+  ],
+  "winning_swarm_policy": {
+    "archetypes": [
+      "disruptive_mechanism_generator",
+      "independent_portfolio_reviewer",
+      "innovative_equipment_dimension_generator",
+      "weak_signal_scout"
+    ],
+    "breadth_hypothesis_maximum": 24,
+    "breadth_hypothesis_minimum": 1,
+    "enabled": true,
+    "expert_candidate_pool_maximum": 0,
+    "expert_judge_critical_dimension_minimum": 0.52,
+    "expert_judge_enabled": false,
+    "expert_judge_minimum_score": 0.68,
+    "expert_judge_required": false,
+    "expert_repair_enabled": false,
+    "expert_repair_max_candidates": 0,
+    "expert_repair_minimum_score": 0.64,
+    "expert_repair_reserved_instances": 0,
+    "finalist_maximum": 7,
+    "finalist_minimum": 6,
+    "foresight_first_enabled": true,
+    "frontier_critical_dimension_minimum": 0.5,
+    "frontier_evidence_relaxation": true,
+    "frontier_expert_judge_minimum_score": 0.66,
+    "frontier_final_gate_minimum_score": 0.62,
+    "max_concurrency": 8,
+    "max_dynamic_instances": 21,
+    "max_waves": 3,
+    "minimum_direct_combat_equipment": 2,
+    "minimum_expected_gain": 0.03,
+    "mission_graph_max_instances": 21,
+    "mission_graph_min_instances": 16,
+    "mission_graph_target_instances": 16,
+    "pending_verification_backfill_enabled": false,
+    "pending_verification_critical_dimension_minimum": 0.42,
+    "pending_verification_minimum_score": 0.54,
+    "policy_id": "winning_swarm_dynamic_v2",
+    "preferred_distinct_direct_equipment": 3,
+    "promotion": {
+      "human_approval_required": true,
+      "maximum_evidence_hard_failures": 0,
+      "maximum_permission_hard_failures": 0,
+      "minimum_eligible_runs": 10,
+      "minimum_positive_increment_rate": 0.7,
+      "offline_evaluation_required": true
+    },
+    "raw_session_sharing_allowed": false,
+    "recursive_recruitment_allowed": false,
+    "s3_empty_reallocation_max": 2,
+    "s3_s4_candidate_maximum_per_session": 4,
+    "s3_s4_candidate_pool_maximum_per_session": 4,
+    "s3_s4_creative_passes": 3,
+    "s3_winning_thesis_capacity": 6,
+    "same_family_minimum_independent_axes": 2
+  }
+}

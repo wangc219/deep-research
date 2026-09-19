@@ -1,0 +1,301 @@
+{
+  "baseline_boundaries": [],
+  "branch_products": {},
+  "claims": [
+    {
+      "claim_id": "claim-458a1b93ba30",
+      "claim_type": "fact",
+      "confidence": 0.79,
+      "downstream_steps": [
+        "S1",
+        "S2",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-weapon_equipment-web-8952c3805d5a",
+        "ev-weapon_equipment-web-6c1c84a0e24e"
+      ],
+      "failure_boundary": "公开叙事同时强调‘低成本、可规模化’与‘更高精度、更强抗干扰’，但没有公开证据证明两者在所有海空强对抗场景中可同时最优；这意味着很多方案只能在局部条件成立。",
+      "mechanism": "1) 在强干扰、弱通信条件下，低成本精确火力的公开边界更接近“分布式、可消耗、可自主/半自主协同的远程打击单元”，而不是依赖持续链路的大型高价值平台。军事影响：任务成败更取决于单件弹药/无人平台的独立发现-跟踪-命中闭环能力；失效条件：一旦需要高带宽回传、持续人工操控或高质量外部指示，体系在强电子压制下会明显退化。",
+      "military_effects": [
+        "指挥决策",
+        "打击歼灭",
+        "拦截反制",
+        "体系协同"
+      ],
+      "packet_id": "packet-weapon_equipment",
+      "source_agent_id": "weapon_equipment",
+      "source_urls": [
+        "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+      ]
+    },
+    {
+      "claim_id": "claim-584ee513aad9",
+      "claim_type": "hypothesis",
+      "confidence": 0.71,
+      "downstream_steps": [
+        "S1",
+        "S2",
+        "S3",
+        "S4"
+      ],
+      "evidence_ids": [
+        "ev-combat_scenario-web-de6b507b70c6",
+        "ev-combat_scenario-web-9287bba9dad6"
+      ],
+      "failure_boundary": "公开材料共同指向低成本、开放架构与自治协同，但对具体最优装备形态没有收敛，说明结论层级停留在需求与机制，而非定型方案。",
+      "mechanism": "判断：最有潜在改写作战关系的机制是协同自治与开放架构在断链环境下仍能维持最小必要协同。军事任务价值：让侦察、目标分配、火力调用和反无人防护在电磁压制下不断裂。证据边界：Replicator 2与相关公开文件只证明方向正确，尚未证明其在高对抗海空环境中的稳定作战边界。失效条件：若自治仅能处理静态目标、单一威胁或对单一传感器强依赖，则一旦对手混合欺骗与干扰就会失效。",
+      "military_effects": [
+        "侦察预警",
+        "打击歼灭",
+        "拦截反制",
+        "生存抗毁",
+        "体系协同"
+      ],
+      "packet_id": "packet-combat_scenario",
+      "source_agent_id": "combat_scenario",
+      "source_urls": [
+        "https://www.war.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/"
+      ]
+    },
+    {
+      "claim_id": "claim-36b6812d074f",
+      "claim_type": "fact",
+      "confidence": 0.85,
+      "downstream_steps": [
+        "S2",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-operational_employment-web-5824f31b34e3",
+        "ev-operational_employment-web-f42ad4ad8ea8"
+      ],
+      "failure_boundary": "公开材料强调分布式、自治与低成本消耗，但没有给出可直接比较的装备性能下限，因此不能把概念方向误读为具体平台优选。",
+      "mechanism": "公开材料共同指向：在强干扰、弱通信的海空对抗里，低成本精确火力和反无人能力必须下沉到前沿战斗单元本体，依赖稳定链路、高价值中枢或持续外部指示的方案会被快速降权；这对三层九项中的任务链闭环与协同保障都有直接贡献。",
+      "military_effects": [
+        "指挥决策",
+        "打击歼灭",
+        "拦截反制",
+        "保障恢复",
+        "体系协同"
+      ],
+      "packet_id": "packet-operational_employment",
+      "source_agent_id": "operational_employment",
+      "source_urls": [
+        "https://www.marines.mil/Force-Design/"
+      ]
+    },
+    {
+      "claim_id": "claim-bad57846924d",
+      "claim_type": "hypothesis",
+      "confidence": 0.71,
+      "downstream_steps": [
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-combat_scenario-web-de6b507b70c6",
+        "ev-combat_scenario-web-9287bba9dad6"
+      ],
+      "failure_boundary": "公开材料共同指向低成本、开放架构与自治协同，但对具体最优装备形态没有收敛，说明结论层级停留在需求与机制，而非定型方案。",
+      "mechanism": "判断：未来高强度海空对抗中的有效装备形态将偏向低特征、分布式、可持续、模块化节点，而不是少数高价值平台承担全部感知与打击。军事任务价值：提高生存性、分散暴露面，并让局部单元在链路受损时仍可完成局部交战。证据边界：Marine Corps公开概念最强，推断适用于海空边缘战场，但不等于已验证为唯一解。失效条件：若前沿节点无法快速补给、维护或重构载荷，分布式优势会被持续消耗抵消。",
+      "military_effects": [
+        "侦察预警",
+        "打击歼灭",
+        "生存抗毁",
+        "保障恢复"
+      ],
+      "packet_id": "packet-combat_scenario",
+      "source_agent_id": "combat_scenario",
+      "source_urls": [
+        "https://www.war.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/"
+      ]
+    },
+    {
+      "claim_id": "claim-c3c7b9ffe96f",
+      "claim_type": "inference",
+      "confidence": 0.79,
+      "downstream_steps": [
+        "S1",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-weapon_equipment-web-8952c3805d5a",
+        "ev-weapon_equipment-web-6c1c84a0e24e"
+      ],
+      "failure_boundary": "公开叙事同时强调‘低成本、可规模化’与‘更高精度、更强抗干扰’，但没有公开证据证明两者在所有海空强对抗场景中可同时最优；这意味着很多方案只能在局部条件成立。",
+      "mechanism": "3) 公开可验证的国内外案例都表明，复杂电磁环境下可工程化的现役方向主要是：低成本精确打击弹药、loitering munition、机动防空/反无人系统、以及带有有源/被动传感的近程防护装备。军事影响：真正可立项的需求应落在“本体即可完成打击/拦截”的装备，而非单纯情报或指挥系统；失效条件：如果装备必须依附脆弱通信链路才能工作，则不满足本题约束。",
+      "military_effects": [
+        "指挥决策",
+        "打击歼灭",
+        "拦截反制",
+        "生存抗毁"
+      ],
+      "packet_id": "packet-weapon_equipment",
+      "source_agent_id": "weapon_equipment",
+      "source_urls": [
+        "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+      ]
+    },
+    {
+      "claim_id": "claim-6a7ef56cfa5f",
+      "claim_type": "fact",
+      "confidence": 0.85,
+      "downstream_steps": [
+        "S2",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-operational_employment-web-5824f31b34e3",
+        "ev-operational_employment-web-f42ad4ad8ea8"
+      ],
+      "failure_boundary": "公开材料强调分布式、自治与低成本消耗，但没有给出可直接比较的装备性能下限，因此不能把概念方向误读为具体平台优选。",
+      "mechanism": "USMC Force Design / EABO 相关材料把 contested environments、precision fires、unmanned systems、resilient C2、contested logistics 绑定在一起，说明分布式、低可探测、可快速转移的火力与防护节点是当前公开概念基线；这对三层九项中的力量协同与部署原则有直接贡献。",
+      "military_effects": [
+        "侦察预警",
+        "打击歼灭",
+        "生存抗毁",
+        "体系协同"
+      ],
+      "packet_id": "packet-operational_employment",
+      "source_agent_id": "operational_employment",
+      "source_urls": [
+        "https://www.marines.mil/Force-Design/"
+      ]
+    }
+  ],
+  "conflicts": [
+    "公开材料一致支持低成本、可规模化与更高精度、强抗干扰，但没有证据证明两者在所有海空强对抗场景中可同时达到最优，存在工程取舍冲突。",
+    "一条主线要求把作战闭环下沉到装备本体，另一条公开概念仍保留部分网络化协同与外部指示，二者在断链条件下的依赖程度未完全收敛。"
+  ],
+  "frontier_inspiration_rule": "仅在后续模型完成首次自由发散后作为可选启发；可重构或全部舍弃，不得视为装备答案、命名种子、技术目录或覆盖配额。",
+  "frontier_inspirations": [
+    {
+      "conventional_assumption_challenged": "传统上把精确火力和反无人分成高价值平台火力、独立防空或单一拦截器两类",
+      "downstream_question": "在不依赖稳定链路的前提下，哪类武器本体闭环最可能在成本、批量和抗适应之间取得稳定平衡？",
+      "evidence_boundary": "公开材料证明方向存在，不证明在极端海空电磁压制下的稳定命中率或统一失效边界",
+      "evidence_ids": [
+        "ev-weapon_equipment-web-8952c3805d5a",
+        "ev-weapon_equipment-web-6c1c84a0e24e"
+      ],
+      "packet_id": "packet-weapon_equipment",
+      "possible_military_discontinuity": "武器本体+协同自治可能重构海空对抗的成本交换关系，使小单元在被强干扰时仍保持局部杀伤链闭环",
+      "query_relevance": "直接对应强干扰、弱通信条件下的低成本精确火力与反无人需求",
+      "signal": "DoD Replicator/Counter-UAS 与 Marine Corps Force Design 同时把‘低成本、可消耗、可自主协同’与‘抗干扰分层防护’绑定推进",
+      "source_agent_id": "weapon_equipment",
+      "source_urls": [
+        "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+        "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "传统假设是低成本只能对应粗放火力，高精度只能对应高成本平台",
+      "downstream_question": "哪些导引/拦截机制在低成本约束下最可能通过复杂电磁环境下的反复试验？",
+      "evidence_boundary": "公开展示与宣传不等于复杂海空对抗中的批量化可用性",
+      "evidence_ids": [],
+      "packet_id": "packet-weapon_equipment",
+      "possible_military_discontinuity": "若末段制导、复合导引和分层拦截可在成本受控条件下工程化，则低成本精确火力与反无人会出现跨代合流",
+      "query_relevance": "直接对应本题的低成本精确火力与反无人双需求",
+      "signal": "中国公开材料把‘低成本高精度打击’与‘复杂电磁环境下拦截无人机/巡航导弹’并列呈现",
+      "source_agent_id": "weapon_equipment",
+      "source_urls": [
+        "https://www.sastind.gov.cn/n10086200/n10086331/c10627687/content.html"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "低成本精确火力必须依赖少量高价值平台和稳定中心化指挥链。",
+      "downstream_question": "哪种装备形态最能把自治、消耗性与精确效应压缩到可前推部署的同一节点上？",
+      "evidence_boundary": "这是从多份公开概念文件做出的推断，不是已验证的具体装备结论。",
+      "evidence_ids": [
+        "ev-operational_employment-web-5824f31b34e3"
+      ],
+      "packet_id": "packet-operational_employment",
+      "possible_military_discontinuity": "可消耗、可批量的前沿精确效应节点可能把火力与防护从平台优势改写为规模和韧性优势。",
+      "query_relevance": "直接对应强干扰、弱通信条件下低成本精确火力与反无人装备需求。",
+      "signal": "Replicator 的 small, smart, cheap, and many 与 DMO/EABO 的分布式前沿作战在公开层面开始收敛。",
+      "source_agent_id": "operational_employment",
+      "source_urls": [
+        "https://www.defense.gov/News/Releases/Release/Article/3765644/deputy-secretary-of-defense-hicks-announces-first-tranche-of-replicator-capabil/",
+        "https://www.marines.mil/Force-Design/"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "反无人优先买更强的远程硬杀伤系统即可。",
+      "downstream_question": "在饱和无人威胁下，哪种本地处置组合能把单位拦截成本压到低于对手消耗成本？",
+      "evidence_boundary": "公开材料给出任务链框架，但没有证明最优的节点集成方式。",
+      "evidence_ids": [],
+      "packet_id": "packet-operational_employment",
+      "possible_military_discontinuity": "若本地自治感知、软杀伤与硬杀伤被打包进前沿节点，防护单元本身会从被动目标变成主动拒止器。",
+      "query_relevance": "对应弱通信和强电磁压制下的反无人装备需求。",
+      "signal": "DoD 反无人战略把问题定义成探测-识别-跟踪-压制-硬杀伤-恢复的链式任务，而不是单一拦截武器问题。",
+      "source_agent_id": "operational_employment",
+      "source_urls": [
+        "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+        "https://www.defense.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "精确火力必须依赖少量高价值平台和稳定通信链路。",
+      "downstream_question": "哪些本体闭环机制能在无稳定回传下仍保持低成本精确毁伤的判别可靠性？",
+      "evidence_boundary": "公开材料支持趋势，不证明哪种具体武器架构最优。",
+      "evidence_ids": [
+        "ev-combat_scenario-web-de6b507b70c6"
+      ],
+      "packet_id": "packet-combat_scenario",
+      "possible_military_discontinuity": "精确毁伤可能从平台稀缺能力转为边缘节点的批量化消耗能力，改变海空对抗的交换关系。",
+      "query_relevance": "直接对应低成本精确火力需求及其在强干扰、弱通信环境中的可持续性。",
+      "signal": "低成本无人系统已把精确打击能力扩散到更廉价、更普遍的平台。",
+      "source_agent_id": "combat_scenario",
+      "source_urls": [
+        "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+        "https://www.war.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "断链环境下协同必须依赖人工持续指挥或单一高带宽网络。",
+      "downstream_question": "自治逻辑需要达到什么最小任务集，才能在欺骗、干扰与饱和袭扰中仍维持有效交战？",
+      "evidence_boundary": "公开文件证明方向存在，未证明复杂海空对抗中已可稳定复用。",
+      "evidence_ids": [],
+      "packet_id": "packet-combat_scenario",
+      "possible_military_discontinuity": "前沿战术单元可能在局部自治下完成侦测、分配、交战与重组，降低对中心C2的依赖。",
+      "query_relevance": "直接影响强干扰弱通信条件下的装备需求与战法组合。",
+      "signal": "协同自治和开放架构被公开推到反无人与规模化系统整合的前台。",
+      "source_agent_id": "combat_scenario",
+      "source_urls": [
+        "https://media.defense.gov/2024/Sep/30/2003555473/-1/-1/0/REPLICATOR-2-MEMO-SD-SIGNED.PDF",
+        "https://www.marines.mil/Force-Design/"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    }
+  ],
+  "open_questions": [
+    "哪一种本体集成方式最能同时满足本地探测、断链决策、低成本消耗和分布式部署，而不把成本重新抬回高价值平台级别？",
+    "1) 在真正的海上强电磁压制、GNSS受限和弱通信窗口下，哪些低成本精确火力系统仍能维持足够的命中率与战果稳定性？公开资料对这一点的可验证数据不足。",
+    "公开证据尚不足以区分哪些低成本精确火力形态在海空边缘环境里最具成本交换优势。"
+  ],
+  "query_anchor": "未来高强度海空对抗中强干扰弱通信条件下低成本精确火力与反无人装备需求研究",
+  "schema": "military_value_handoff_v1",
+  "statistics": {
+    "candidate_claim_count": 12,
+    "compression_ratio": 0.8831,
+    "evidence_url_count": 3,
+    "frontier_inspiration_count": 6,
+    "input_chars": 10954,
+    "input_packet_count": 3,
+    "limited_baseline_count": 0,
+    "output_chars": 9674,
+    "selected_claim_count": 6,
+    "source_agent_count": 3
+  }
+}

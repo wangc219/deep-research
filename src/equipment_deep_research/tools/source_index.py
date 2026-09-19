@@ -46,17 +46,40 @@ class SourcePriorityIndex:
             return []
         seeds = self._seed_rows(agent_id)
         learned = self._learned_rows(agent_id, topic)
+        bad_urls = self._unhealthy_urls()
         rows: list[dict[str, Any]] = []
         seen: set[str] = set()
         for row in [*learned, *seeds]:
             url = str(row.get("url", "")).strip()
-            if not url or url in seen:
+            if not url or url in seen or url in bad_urls:
                 continue
             seen.add(url)
             rows.append(row)
             if len(rows) >= limit:
                 break
         return rows
+
+    def _unhealthy_urls(self) -> set[str]:
+        """URLs recently rejected by materialization/network safety."""
+
+        if self.path is None:
+            return set()
+        with _INDEX_LOCK, _index_file_lock(self.path, exclusive=False):
+            sources = self._load_index().get("sources", {})
+        if not isinstance(sources, Mapping):
+            return set()
+        bad_statuses = {
+            "fetch_failed",
+            "network_safety_rejected",
+            "reader_error",
+            "materialization_failed",
+        }
+        return {
+            str(url)
+            for url, row in sources.items()
+            if isinstance(row, Mapping)
+            and str(row.get("last_status", "")).strip().lower() in bad_statuses
+        }
 
     def recommend_shared(
         self,
@@ -186,6 +209,18 @@ class SourcePriorityIndex:
             accepted_count = int(raw.get("accepted_count", 0))
             success_count = int(raw.get("success_count", 0))
             failure_count = int(raw.get("failure_count", 0))
+            # A previously useful URL can become blocked or unavailable. Do
+            # not keep promoting a known-bad endpoint ahead of healthy
+            # sources in provider-neutral (Chat Completions) runs; seed rows
+            # and other learned domains remain available as alternatives.
+            last_status = str(raw.get("last_status", "")).strip().lower()
+            if last_status in {
+                "fetch_failed",
+                "network_safety_rejected",
+                "reader_error",
+                "materialization_failed",
+            }:
+                continue
             if accepted_count < 1 or success_count <= failure_count:
                 continue
             relevance = max(

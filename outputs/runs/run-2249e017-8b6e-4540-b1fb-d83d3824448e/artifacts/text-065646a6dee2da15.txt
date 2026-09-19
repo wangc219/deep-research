@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=defense.gov · deputy secretary of defense kathleen hicks announces additional replicator all
+source_url=https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/
+claim=DoD继续推进Replicator与可消耗自主系统规模化，强调开放架构与快速测试/交付能力。
+excerpt=
+retrieval=Hosted web search citation metadata

@@ -1,0 +1,23 @@
+{
+  "schema_version": "deep-mcp-host-v1",
+  "servers": [
+    {
+      "server_id": "host:research-search",
+      "transport": "http",
+      "url": "https://mcp.example.invalid/mcp",
+      "headers_from": {
+        "Authorization": "EQUIPMENT_DR_RESEARCH_MCP_AUTHORIZATION"
+      },
+      "allowed_tools": [
+        "search",
+        "fetch"
+      ],
+      "timeout": 20,
+      "max_concurrent_calls": 4,
+      "max_calls_per_turn": 64,
+      "max_result_bytes": 262144,
+      "max_result_depth": 16,
+      "max_result_items": 4096
+    }
+  ]
+}

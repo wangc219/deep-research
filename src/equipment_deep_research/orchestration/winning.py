@@ -24,12 +24,20 @@ from equipment_deep_research.orchestration.capability_military_value import (
 from equipment_deep_research.orchestration.capability_fallback import (
     build_deadline_weapon_directions,
 )
-from equipment_deep_research.orchestration.capability_portrait import (
+from equipment_deep_research.domain.capability_portrait import (
+    CAPABILITY_PORTRAIT_QUALITY_CONTRACT_VERSION,
+    assemble_capability_portrait_modules,
     build_agent_led_capability_portrait,
     build_capability_title,
+    capability_portrait_module_lengths,
+    normalize_capability_portrait_modules,
+    normalize_capability_portrait_text,
     normalize_capability_problem,
     normalize_operational_process,
     normalize_verification_plan,
+)
+from equipment_deep_research.orchestration.capability_confidence import (
+    calibrate_capability_confidence,
 )
 from equipment_deep_research.orchestration.winning_reasoning import (
     SixStepReasoner,
@@ -607,6 +615,161 @@ class WinningMechanismEngine:
             )
         return [l1, l2, l3], images, recommendations
 
+    def run_deep_divergence(
+        self,
+        *,
+        topic: str,
+        route: str,
+        store: DomainStore,
+        trace: TraceStore,
+        coverage: dict[str, Any],
+        model_analysis: dict[str, Any] | None = None,
+        attempt: int = 1,
+    ) -> tuple[list[WinningMechanismStageOutput], list[CapabilityImageItem], list[AgentRecommendation]]:
+        """Project a constrained deep-research result without the L1-L3 engine.
+
+        ``deep_divergence_v1`` is a continuation of an existing run.  It must
+        not manufacture a synthetic S1/S2/S5 chain (or invoke the ordinary
+        convergence/winning harness).  The provider has already performed the
+        bounded S3/S4/S6 reasoning; this method only wraps those structured
+        outputs into the legacy delivery objects consumed by reporting and the
+        capability ledger.  The runner relabels the three objects to S3/S4/S6
+        immediately after this call.
+        """
+        analysis = dict(model_analysis or {})
+        packets = store.baseline_packet_snapshot()
+        evidence_ids = sorted(
+            {
+                str(evidence_id)
+                for packet in packets
+                for evidence_id in packet.evidence_ids
+                if str(evidence_id).strip()
+            }
+        )
+        # Deep jobs receive canonical parent context and may have no baseline
+        # packets at all.  Evidence references embedded by the provider are
+        # still retained when they resolve to the run's evidence index.
+        valid_evidence = {
+            str(item.get("evidence_id", ""))
+            for item in store.evidence_index()
+            if isinstance(item, Mapping) and str(item.get("evidence_id", "")).strip()
+        }
+        for direction in analysis.get("concept_directions", []):
+            if not isinstance(direction, Mapping):
+                continue
+            for ref in direction.get("direct_evidence_refs", []):
+                # Parent-bound deep jobs carry canonical evidence references
+                # even when the isolated child does not duplicate EvidenceCard
+                # rows locally.  Preserve those IDs for version provenance;
+                # the parent ledger remains the authority for their details.
+                if str(ref).strip() and (str(ref) in valid_evidence or not valid_evidence):
+                    evidence_ids.append(str(ref))
+        evidence_ids = list(dict.fromkeys(evidence_ids))
+
+        def confidence(value: Any, fallback: float = 0.0) -> float:
+            try:
+                return max(0.0, min(1.0, float(value)))
+            except (TypeError, ValueError):
+                return fallback
+
+        overall_confidence = confidence(analysis.get("confidence"), 0.62)
+        s3_rows = analysis.get("breakthrough_directions", [])
+        if not isinstance(s3_rows, list):
+            s3_rows = []
+        s4_rows = analysis.get("capability_mapping", [])
+        if not isinstance(s4_rows, list):
+            s4_rows = []
+        directions = [
+            dict(item)
+            for item in analysis.get("concept_directions", [])
+            if isinstance(item, Mapping)
+            and str(item.get("name", "")).strip()
+            and str(item.get("type", "")) in {"new_capability", "upgrade"}
+        ][:6]
+        # A deep job is allowed to retain analysis only when the evidence gate
+        # is met.  In particular, do not generate generic fallback cards when
+        # S6 did not produce a stable equipment identity.
+        s6_gate = bool(directions) and bool(evidence_ids)
+        stage_specs = (
+            ("L1", "S3", "竞争性机制发散", {"breakthrough_directions": s3_rows}),
+            ("L2", "S4", "装备能力映射", {"capability_mapping": s4_rows}),
+            ("L3", "S6", "待核验能力画像", {"concept_directions": directions}),
+        )
+        stages: list[WinningMechanismStageOutput] = []
+        for legacy_layer, deep_stage, title, outputs in stage_specs:
+            has_output = bool(next(iter(outputs.values()), []))
+            gate = has_output and bool(evidence_ids)
+            reasons: list[str] = []
+            if not has_output:
+                reasons.append(f"{deep_stage}未形成结构化结果")
+            if not evidence_ids:
+                reasons.append(f"{deep_stage}缺少可追溯公开证据")
+            stages.append(
+                WinningMechanismStageOutput(
+                    stage_id=f"stage-{deep_stage}",
+                    layer=legacy_layer,  # relabelled by DeepResearchRunner
+                    title=title,
+                    outputs={
+                        **outputs,
+                        "deep_stage": deep_stage,
+                        "execution_profile_id": "deep_divergence_v1",
+                    },
+                    confidence=overall_confidence,
+                    evidence_ids=list(evidence_ids),
+                    gate_passed=gate,
+                    gate_reasons=reasons,
+                    recall_requests=[],
+                )
+            )
+        images: list[CapabilityImageItem] = []
+        if s6_gate:
+            # Reuse only the card materializer; unlike ``run`` this path does
+            # not construct reasoning resources, L1/L2/L3 gates, recalls or
+            # fallback weapon directions.
+            images = self._model_capability_images(
+                topic=topic,
+                route=route,
+                l3=stages[2],
+                evidence_ids=evidence_ids,
+                packets=packets,
+                directions=directions,
+                model_analysis=analysis,
+                attempt=attempt,
+                limit_suffix="",
+                preserve_direction_identity=True,
+            )
+            for image in images:
+                store.add_capability_image(image)
+                trace.append(
+                    TraceEvent(
+                        event_id=f"trace-deep-capability-{image.capability_id}",
+                        event_type="capability_image_created",
+                        actor="deep_divergence",
+                        summary=image.name,
+                        input_refs=list(image.evidence_ids),
+                        output_refs=[image.capability_id],
+                        payload={"execution_profile_id": "deep_divergence_v1", "stage": "S6"},
+                    )
+                )
+        recommendations: list[AgentRecommendation] = []
+        trace.append(
+            TraceEvent(
+                event_id=f"trace-deep-divergence-projected-r{attempt}",
+                event_type="deep_divergence_projected",
+                actor="deep_divergence",
+                summary="已按S3/S4/S6专用契约投影深研结果",
+                output_refs=[stage.stage_id for stage in stages],
+                payload={
+                    "execution_profile_id": "deep_divergence_v1",
+                    "stage_scope": ["S3", "S4", "S6"],
+                    "candidate_count": len(directions),
+                    "evidence_count": len(evidence_ids),
+                    "s6_gate_passed": s6_gate,
+                },
+            )
+        )
+        return stages, images, recommendations
+
     @staticmethod
     def _required_prior_stage(
         prior: dict[str, WinningMechanismStageOutput],
@@ -708,21 +871,10 @@ class WinningMechanismEngine:
         model_grounded = bool(semantic["grounded"])
         missing_tags = list(coverage.get("missing_required_tags", []))
         recalls: list[RecallRequest] = []
-        if not self.risk_based_gates:
-            recalls.extend(
-                RecallRequest(
-                    recall_id=f"recall-L1-{tag}{recall_suffix}",
-                    source_layer="L1",
-                    target_agent_id=None,
-                    target_capability_tag=tag,
-                    reason=f"缺少{tag}能力覆盖，影响防御解构与制胜路径判断。",
-                    required_data=[f"补充{topic}相关{tag}证据和判断"],
-                    return_node="L1",
-                    urgency="high",
-                )
-                for tag in missing_tags
-            )
-        elif not evidence_ids:
+        # Missing baseline capability tags remain visible as coverage limits,
+        # but never trigger mechanical retrieval expansion.  S1-S6 must reason
+        # from the selected evidence and request only a concrete evidence gap.
+        if self.risk_based_gates and not evidence_ids:
             target_agent_id = (
                 min(packets, key=lambda packet: packet.confidence).agent_id
                 if packets
@@ -1397,6 +1549,12 @@ class WinningMechanismEngine:
             capability_evidence_ids = (
                 direct_evidence if has_explicit_direct_evidence else evidence_ids
             )
+            if not capability_evidence_ids:
+                capability_evidence_ids = [
+                    str(item)
+                    for item in direction.get("evidence_ids", [])
+                    if str(item).strip() in allowed_evidence
+                ]
             military_value = str(direction.get("military_value", "")).strip()
             depth_mechanism = str(direction.get("depth_mechanism", "")).strip()
             foresight = str(direction.get("foresight", "")).strip()
@@ -1404,6 +1562,20 @@ class WinningMechanismEngine:
             capability_portrait = str(
                 direction.get("capability_portrait", "")
             ).strip()
+            # S6 owns five independently authored modules.  Prefer the
+            # structured module payload when it is complete, because a few
+            # providers return a flattened whole-card string with dropped
+            # newlines (which makes the technology/process labels look like
+            # short or malformed columns in downstream quality gates).  The
+            # assembly is lossless: it only restores the governed labels and
+            # preserves each authored module verbatim.
+            raw_portrait_modules = direction.get("capability_portrait_modules")
+            if isinstance(raw_portrait_modules, Mapping):
+                assembled_modules_portrait = assemble_capability_portrait_modules(
+                    raw_portrait_modules
+                )
+                if assembled_modules_portrait:
+                    capability_portrait = assembled_modules_portrait
             equipment_form = str(direction.get("equipment_form", "")).strip()
             operational_mechanism = str(
                 direction.get("operational_mechanism", "")
@@ -1497,6 +1669,22 @@ class WinningMechanismEngine:
                 direction.get("adversary_adaptation", "")
             ).strip()
             failure_boundary = str(direction.get("failure_boundary", "")).strip()
+            unique_operational_role = str(
+                direction.get("unique_operational_role", "")
+            ).strip()
+            target_and_direct_effect = str(
+                direction.get("target_and_direct_effect", "")
+            ).strip()
+            mechanism_chain = _dedupe_text(
+                [
+                    str(item)
+                    for item in direction.get("mechanism_chain", [])
+                    if str(item).strip()
+                ]
+            )
+            non_substitutable_difference = str(
+                direction.get("non_substitutable_difference", "")
+            ).strip()
             uncertainty_boundary = str(
                 direction.get("uncertainty_boundary", "")
             ).strip()
@@ -1545,6 +1733,29 @@ class WinningMechanismEngine:
                     *verification_plan,
                     *([feasibility_basis] if feasibility_basis else []),
                 ]
+            )
+            calibrated_confidence, confidence_components = (
+                calibrate_capability_confidence(
+                    {
+                        **direction,
+                        "name": name,
+                        "equipment_form": equipment_form,
+                        "target_scenario": target_scenario,
+                        "problem_statement": problem_statement,
+                        "capability_gap": direction_gap or capability_gap,
+                        "function": function,
+                        "operational_mechanism": operational_mechanism or depth_mechanism,
+                        "military_utility": military_value,
+                        "strike_countermeasure_value": strike_countermeasure_value,
+                        "evidence_ids": capability_evidence_ids,
+                        "evidence_basis": structured_evidence_basis,
+                        "verification_plan": portrait_verification_plan,
+                        "development_path": development_path,
+                        "failure_boundary": failure_boundary,
+                        "adversary_adaptation": adversary_adaptation,
+                    },
+                    prior=direction_confidence,
+                )
             )
             source_logic = _model_source_winning_logic(
                 direction=direction,
@@ -1624,7 +1835,8 @@ class WinningMechanismEngine:
                     ),
                     capability_image=deep_portrait,
                     evidence_ids=capability_evidence_ids,
-                    confidence=direction_confidence,
+                    confidence=calibrated_confidence,
+                    confidence_components=confidence_components,
                     project_function=function,
                     mission_effect=military_value or detail["mission_effect"],
                     system_dependencies=detail["system_dependencies"],
@@ -1668,7 +1880,6 @@ class WinningMechanismEngine:
                     ),
                     development_path=(
                         development_path
-                        or "通过任务级仿真、接口联试和演训验证逐步收敛。"
                     ),
                     baseline_system=baseline_system,
                     upgrade_package=upgrade_package,
@@ -1683,10 +1894,127 @@ class WinningMechanismEngine:
                     operational_process=operational_process,
                     capability_outcome=capability_outcome,
                     winning_mechanism=winning_mechanism,
+                    unique_operational_role=unique_operational_role,
+                    target_and_direct_effect=target_and_direct_effect,
+                    mechanism_chain=mechanism_chain,
+                    non_substitutable_difference=non_substitutable_difference,
+                    adversary_adaptation=adversary_adaptation,
+                    failure_boundary=failure_boundary,
                     verification_plan=verification_plan,
+                    system_contribution_thesis=str(
+                        direction.get("system_contribution_thesis", "")
+                    ).strip(),
                     indicator_portrait=str(
                         direction.get("indicator_portrait", "")
                     ).strip(),
+                    capability_portrait_modules=(
+                        normalize_capability_portrait_modules(
+                            direction.get("capability_portrait_modules", {}),
+                            allow_structured_salvage=True,
+                        )
+                        if isinstance(
+                            direction.get("capability_portrait_modules"), Mapping
+                        )
+                        else {}
+                    ),
+                    portrait_module_character_counts=(
+                        capability_portrait_module_lengths(
+                            normalize_capability_portrait_modules(
+                                direction.get("capability_portrait_modules", {}),
+                                allow_structured_salvage=True,
+                            )
+                        )
+                        if isinstance(
+                            direction.get("capability_portrait_modules"), Mapping
+                        )
+                        else {}
+                    ),
+                    portrait_quality_warnings=[
+                        str(item).strip()
+                        for item in direction.get(
+                            "s6_authoring_quality_warnings", []
+                        )
+                        if str(item).strip()
+                    ],
+                    portrait_quality_contract_version=(
+                        str(
+                            direction.get("portrait_quality_contract_version")
+                            or CAPABILITY_PORTRAIT_QUALITY_CONTRACT_VERSION
+                        )
+                        if isinstance(
+                            direction.get("capability_portrait_modules"), Mapping
+                        )
+                        else ""
+                    ),
+                    capability_classification=(
+                        dict(direction.get("capability_classification", {}))
+                        if isinstance(direction.get("capability_classification", {}), Mapping)
+                        else {}
+                    ),
+                    hypothesis_id=str(direction.get("hypothesis_id", "")).strip(),
+                    card_binding_id=str(
+                        direction.get("card_binding_id", "")
+                    ).strip(),
+                    source_hypothesis_title=str(
+                        direction.get("source_hypothesis_title", "")
+                    ).strip(),
+                    primary_equipment_identity=str(
+                        direction.get("primary_equipment_identity", "")
+                    ).strip(),
+                    semantic_consistency_check=(
+                        dict(direction.get("semantic_consistency_check", {}))
+                        if isinstance(direction.get("semantic_consistency_check"), Mapping)
+                        else {}
+                    ),
+                    verification_status=str(
+                        direction.get("verification_status", "assessed")
+                    ).strip()
+                    or "assessed",
+                    confidence_limited=bool(
+                        direction.get("confidence_limited", False)
+                    ),
+                    portrait_authoring_status=(
+                        "s6_authored_semantically_consistent"
+                        if (
+                            isinstance(
+                                direction.get("semantic_consistency_check"), Mapping
+                            )
+                            and direction["semantic_consistency_check"].get("consistent")
+                            is True
+                            and preserve_direction_identity
+                            and str(direction.get("s6_authoring_status", ""))
+                            in {
+                                "authored_semantically_consistent",
+                                # Quality-limited means a non-blocking S6
+                                # advisory (for example near-duplicate
+                                # clauses), not that the model card lost its
+                                # identity. If all five structured modules
+                                # survived, retain the authored card for the
+                                # Reporter instead of replacing it with a
+                                # generic deterministic portrait.
+                                "authored_quality_limited",
+                            }
+                            and isinstance(
+                                direction.get("capability_portrait_modules"), Mapping
+                            )
+                            and all(
+                                str(
+                                    direction["capability_portrait_modules"].get(key, "")
+                                ).strip()
+                                for key in (
+                                    "overview",
+                                    "technology_implementation",
+                                    "operational_process",
+                                    "capability_effects",
+                                    "winning_logic",
+                                )
+                            )
+                        )
+                        else str(
+                            direction.get("s6_authoring_status")
+                            or "legacy_v1"
+                        )
+                    ),
                 )
             )
         if preserve_direction_identity:
@@ -1954,7 +2282,7 @@ def _compose_deep_capability_portrait(
     expand_deterministic: bool = True,
     preserve_supplied: bool = False,
 ) -> str:
-    supplied = str(supplied_portrait or "").strip()
+    supplied = normalize_capability_portrait_text(supplied_portrait)
     if preserve_supplied and supplied:
         return supplied
     del expand_deterministic
@@ -2076,8 +2404,12 @@ def _capability_detail_profile(route: str, capability_type: str) -> dict[str, ob
     return {
         **common,
         "mission_effect": mission,
-        "strike_countermeasure_value": "通过分布式感知、弹性协同和多样化任务效应提升复杂环境下的发现、压制抵抗、反制与任务续接能力。",
-        "novelty": "把智能研判、分布式协同、模块化载荷和低成本规模运用组合为可验证的新型体系能力。",
+        # Do not manufacture a common combat-effect or novelty conclusion for
+        # every new direction.  These fields are meaningful only when an S3/S4
+        # or S6 agent has tied them to the weapon's actual target, effect
+        # medium, employment window and baseline.
+        "strike_countermeasure_value": "",
+        "novelty": "",
     }
 
 

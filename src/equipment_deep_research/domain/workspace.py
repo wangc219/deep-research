@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 import errno
 import ctypes
@@ -23,6 +24,21 @@ _DIR_FD_FUNCTIONS = (
     ("os.unlink(dir_fd)", os.unlink),
 )
 
+DeepWorkspaceFactory = Callable[..., object]
+_deep_workspace_factory: DeepWorkspaceFactory | None = None
+
+
+def register_deep_workspace_factory(factory: DeepWorkspaceFactory) -> None:
+    """Install the optional deep-runtime adapter without importing it here.
+
+    ``domain`` remains usable on its own; the runtime package registers its
+    richer workspace implementation during composition.  This one-way bridge
+    prevents the domain package from depending on a runtime implementation.
+    """
+
+    global _deep_workspace_factory
+    _deep_workspace_factory = factory
+
 
 @dataclass
 class RunWorkspace:
@@ -43,6 +59,24 @@ class RunWorkspace:
     @property
     def run_identity(self) -> tuple[int, int]:
         return _identity(os.fstat(self._require_open_fd(self._run_fd)))
+
+    def deep_workspace(self, *, identity: dict[str, object] | None = None, equipment_scoped: bool = False):
+        """Return the optional deep-runtime state space bound to this run."""
+
+        if _deep_workspace_factory is None:
+            raise RuntimeError(
+                "deep runtime adapter is not installed; import "
+                "equipment_deep_research.deep_runtime.workspace during composition"
+            )
+        return _deep_workspace_factory(
+            self,
+            identity=identity,
+            equipment_scoped=equipment_scoped,
+        )
+
+    # A descriptive alias for callers that prefer a verb over the property
+    # style used by the existing workspace helpers.
+    open_deep_workspace = deep_workspace
 
     def dup_run_fd(self) -> int:
         return os.dup(self._require_open_fd(self._run_fd))

@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · Force Design
+source_url=https://www.marines.mil/Force-Design/
+claim=公开力量设计材料强调分布式作战、跨域协同、前沿存在和在受压环境下保持行动能力，为分布式感知、射手分散与韧性指挥链的场景判断提供背景依据。
+excerpt=
+retrieval=Hosted web search citation metadata

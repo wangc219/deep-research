@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=marines.mil · expeditionary advanced base operations eabo
-source_url=https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/
-claim=USMC EABO资料支撑以机动、低特征、易维护和易保障的前沿临时节点执行海上拒止、态势感知、前沿C4ISR-T和前沿保障。
-excerpt=
-retrieval=Hosted web search citation metadata

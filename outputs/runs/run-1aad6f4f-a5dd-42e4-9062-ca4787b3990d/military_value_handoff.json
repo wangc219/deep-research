@@ -1,0 +1,143 @@
+{
+  "baseline_boundaries": [
+    {
+      "agent_id": "weapon_equipment",
+      "availability": "unavailable",
+      "downstream_obligations": [
+        "S3不得把基线缺失解释为候选不可行或收缩创新空间",
+        "S4按保留候选核验最近公开装备基线与直接反证",
+        "S5汇总候选级成熟度、成本产能、现役差距与未决证据"
+      ],
+      "limitations": [
+        "基线不可用原因：RuntimeError: weapon_equipment model turn completed but outer baseline result validation found no substantive findings"
+      ],
+      "open_questions": [
+        "S4/S5须针对保留的具体候选逐项核验公开装备基线、现役/在研边界、反证、成熟度与差距。"
+      ],
+      "packet_id": "packet-weapon_equipment"
+    }
+  ],
+  "branch_products": {},
+  "claims": [
+    {
+      "claim_id": "claim-6493195c1ef9",
+      "claim_type": "fact",
+      "confidence": 0.62,
+      "downstream_steps": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-system_confrontation-web-8952c3805d5a",
+        "ev-system_confrontation-web-36638e192ebe"
+      ],
+      "failure_boundary": "DoD战略并行主张“低成本规模对抗”与“集中联合整合治理”，而GAO指出跨域集成与治理恰是滞后环节——扩大集成范围可能反增时延。",
+      "mechanism": "判断：红方胜机是跨波次成本-时间不对称：廉价诱饵/干扰先导消耗高价拦截并诱导固定节点辐射，防区外火力随后压制探测/能源节点，载荷续进；追求多波次后体系崩溃而非单波穿透。价值：判定标准取多波次拒止连续性而非单波拦截率。证据：DoD“低成本对低成本、规模对规模”为公开方向；敌波次编排属情报缺口。失效：载荷与蜂群无时序协同则退化为单波饱和。",
+      "military_effects": [
+        "侦察预警",
+        "打击歼灭",
+        "拦截反制",
+        "拒止制衡",
+        "体系协同"
+      ],
+      "packet_id": "packet-system_confrontation",
+      "source_agent_id": "system_confrontation",
+      "source_urls": [
+        "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+      ]
+    },
+    {
+      "claim_id": "claim-3dd97da43827",
+      "claim_type": "hypothesis",
+      "confidence": 0.62,
+      "downstream_steps": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-system_confrontation-web-8952c3805d5a",
+        "ev-system_confrontation-web-36638e192ebe"
+      ],
+      "failure_boundary": "DoD战略并行主张“低成本规模对抗”与“集中联合整合治理”，而GAO指出跨域集成与治理恰是滞后环节——扩大集成范围可能反增时延。",
+      "mechanism": "判断：蜂群先击穿的是“发现→分类→授权→处置→确认→恢复”任务链的连续性而非单装通道；三类节点断点不同，共同短板在链中段（分类可信、授权时延）与末段（软杀伤不可确认、补弹恢复）。价值：命题由增通道改写为保链连续与降决策时延。证据：DoD反无人战略与GAO-25-106454仅支撑方向、无性能量化。失效：敌规模或自主性远低于假设时此优先性下降。",
+      "military_effects": [
+        "指挥决策",
+        "保障恢复",
+        "体系协同"
+      ],
+      "packet_id": "packet-system_confrontation",
+      "source_agent_id": "system_confrontation",
+      "source_urls": [
+        "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+      ]
+    }
+  ],
+  "conflicts": [
+    "DoD战略内部张力：低成本规模化对抗(Replicator 2/联合反小型无人机办公室)与集中联合整合治理并行，而GAO-25-106454显示跨域集成与治理恰为滞后环节——扩大集成范围可能反增时延，与'降决策时延'目标相斥。",
+    "低成本防御单元规模化与高置信交战、误伤控制存在内在张力；规模优先可能在强欺骗下放大误伤与暴露。",
+    "本地自治降级交战(断链保底)与强欺骗下分类库快速失效、预置自动交战放大误伤/暴露相冲突——自治深度与误伤风险的取舍未闭合。"
+  ],
+  "frontier_inspiration_rule": "仅在后续模型完成首次自由发散后作为可选启发；可重构或全部舍弃，不得视为装备答案、命名种子、技术目录或覆盖配额。",
+  "frontier_inspirations": [
+    {
+      "conventional_assumption_challenged": "反蜂群瓶颈在末端拦截通道数或探测距离。",
+      "downstream_question": "跨军种/盟伴的“轨迹信任+预置自动授权”在强欺骗与电子对抗下能否成立而不放大误伤？",
+      "evidence_boundary": "GAO仅证明治理缺口存在，未证其为性能瓶颈；五眼协议与SDA为方向性信号。",
+      "evidence_ids": [
+        "ev-system_confrontation-web-36638e192ebe"
+      ],
+      "packet_id": "packet-system_confrontation",
+      "possible_military_discontinuity": "制胜变量从火力密度转向“数据新鲜度+授权信任边界”，装备本体以边缘轨迹-授权节点而非发射装置为核心，多波次对抗由毫秒级可信武器指令决定。",
+      "query_relevance": "直接对应协同链稳定性与被瞄准置信度两大断点。",
+      "signal": "GAO把跨域C2数据融合与互操作列为滞后环节，而DoD把反蜂群答案放在规模化低成本效应器上——真正的稀缺资源可能不是弹药/传感器，而是可信共享轨迹与可下放的交战权。",
+      "source_agent_id": "system_confrontation",
+      "source_urls": [
+        "https://files.gao.gov/reports/GAO-25-106454/index.html",
+        "https://www.navwar.navy.mil/Media/Article-Display/Article/4077984/project-overmatch-achieves-historic-milestone-with-five-eyes-agreement/"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "高价值节点防护必须依托昂贵专用防空体系完成。",
+      "downstream_question": "低成本防御规模化后，如何防止己方火力纪律、库存记账与授权规则被同一经济性逻辑反噬？",
+      "evidence_boundary": "公开仅有战略方向与项目名，无单位成本、产能与再生周期数据。",
+      "evidence_ids": [
+        "ev-system_confrontation-web-8952c3805d5a"
+      ],
+      "packet_id": "packet-system_confrontation",
+      "possible_military_discontinuity": "若防御单元能以接近攻击方的成本量产与再生，交换关系被拉平，“再生速率+部署密度”成为新制胜变量，固定高价值节点借可消耗外围层获得可丢弃纵深，装备与保障/补充能力同权。",
+      "query_relevance": "提供改变成本交换的直接体系机制。",
+      "signal": "DoD把反无人系统纳入关键设施与部队集结点常态防护并启动Replicator 2规模化采购，Marines力设计沿分布式前沿展开——防御正从高端IAMD任务降格为各层级可消耗的常态化任务。",
+      "source_agent_id": "system_confrontation",
+      "source_urls": [
+        "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+        "https://www.marines.mil/Force-Design/"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    }
+  ],
+  "open_questions": [
+    "敌蜂群对地面指挥/回链的依赖度——决定“断链”杠杆是否成立，无公开证据。",
+    "S4/S5须针对保留的具体候选逐项核验公开装备基线、现役/在研边界、反证、成熟度与差距。"
+  ],
+  "query_anchor": "第一岛链无人蜂群防护反制装备研究",
+  "schema": "military_value_handoff_v1",
+  "statistics": {
+    "candidate_claim_count": 5,
+    "compression_ratio": 0.7435,
+    "evidence_url_count": 1,
+    "frontier_inspiration_count": 2,
+    "input_chars": 5782,
+    "input_packet_count": 3,
+    "limited_baseline_count": 1,
+    "output_chars": 4299,
+    "selected_claim_count": 2,
+    "source_agent_count": 1
+  }
+}

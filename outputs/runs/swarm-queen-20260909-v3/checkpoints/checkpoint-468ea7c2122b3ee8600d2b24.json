@@ -1,0 +1,195 @@
+{
+  "checkpoint": {
+    "budget_remaining": {
+      "baseline_tasks": 0,
+      "finalize_tasks": 1,
+      "rounds": 2
+    },
+    "checkpoint_id": "run-checkpoint-swarm-queen-20260909-v3",
+    "completed_task_ids": [
+      "baseline:combat_scenario",
+      "baseline:weapon_equipment",
+      "baseline:operational_employment"
+    ],
+    "config_fingerprint": "sha256:e830447ae6932b082f2760ddeedc0cb03b3912ae3dce57066c5da10ddfff8bd0",
+    "created_at": "2026-09-09T11:24:42.475724+00:00",
+    "mode": "real",
+    "pending_task_ids": [],
+    "research_route": "traditional_gap",
+    "resolved_route": "traditional_gap",
+    "resume_count": 0,
+    "round_index": 1,
+    "run_id": "swarm-queen-20260909-v3",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "combat_scenario",
+      "weapon_equipment",
+      "operational_employment"
+    ],
+    "source_materials": [
+      {
+        "artifact_refs": [
+          "text:f39194efe6932930"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-a9704512f4c0",
+          "normalized_url": "https://defense.info/re-shaping-defense-security/2026/03/from-red-sea-defense-to-epic-fury-how-the-u-s-flipped-the-drone-cost-equation",
+          "reasons": [],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-a9704512f4c0",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://defense.info/re-shaping-defense-security/2026/03/from-red-sea-defense-to-epic-fury-how-the-u-s-flipped-the-drone-cost-equation/"
+      },
+      {
+        "artifact_refs": [
+          "text:adc9f156e55f5542"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-4b1083a4d3ca",
+          "normalized_url": "https://mwi.westpoint.edu/the-indispensable-interceptor-air-defense-and-the-problem-of-cost-exchange-logic",
+          "reasons": [],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-4b1083a4d3ca",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://mwi.westpoint.edu/the-indispensable-interceptor-air-defense-and-the-problem-of-cost-exchange-logic/"
+      },
+      {
+        "artifact_refs": [
+          "text:e91799a9fbacaaa8"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-e6e73b8fbd18",
+          "normalized_url": "https://www.usni.org/magazines/proceedings/2025/april/wash-sky-clean-drones",
+          "reasons": [],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-e6e73b8fbd18",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.usni.org/magazines/proceedings/2025/april/wash-sky-clean-drones"
+      }
+    ],
+    "status": "running",
+    "task_statuses": {
+      "baseline:combat_scenario": "completed",
+      "baseline:operational_employment": "completed",
+      "baseline:weapon_equipment": "completed",
+      "finalize:winning-report": "running"
+    },
+    "topic": "传统低空防空场景下现有装备能力差距与升级功能需求",
+    "worker_reports": [
+      {
+        "active_skill_ids": [
+          "scenario_engineering",
+          "modern_battlespace_analysis",
+          "adversary_coa_analysis"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "fetch_page",
+          "create_evidence_card",
+          "build_scenario_graph",
+          "branch_scenario",
+          "map_critical_window",
+          "map_environment_constraint",
+          "stress_test_scenario"
+        ],
+        "agent_id": "combat_scenario",
+        "created_at": "2026-09-09T11:29:30.442904+00:00",
+        "domain_object_id": "scenario-packet-combat_scenario",
+        "domain_object_type": "ScenarioModel",
+        "error": "",
+        "handoff_summary": "本角色把威胁研判收敛为五个差距轴：可持续火力预算、目标域与火控通道错配、软压制效果不可验证、授权与协同时延、断链后的再组织能力。六类场景分别对应机场持续运行、港内停泊编队、城市基础设施常态化拒止、后勤枢纽抗干扰、山岳走廊补盲、指挥节点被压制后的降级作战，覆盖预警—决策—协同—打击—评估—再组织全链条，并给出各自的时间窗口、失败条件与能力压力点。证据只支持方向性判断，不支持具体型号指标与量化消耗率；成本与可用率数据缺口为真实未决问题。",
+        "harness_profile": "scenario_research_v1",
+        "new_evidence_ids": [
+          "ev-combat_scenario-web-4b1083a4d3ca",
+          "ev-combat_scenario-web-a9704512f4c0",
+          "ev-combat_scenario-web-e6e73b8fbd18"
+        ],
+        "packet_id": "packet-combat_scenario",
+        "schema_version": "1.0",
+        "session_path": "/Users/hitsz/equipment research/outputs/runs/swarm-queen-20260909-v3/agent_sessions/combat_scenario.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_limited",
+        "worker_report_id": "worker-report-7a123cd1-d159-4156-b088-faa264a51237"
+      },
+      {
+        "active_skill_ids": [
+          "equipment_osint",
+          "capability_comparison",
+          "technology_readiness_analysis",
+          "defensive_countermeasure_analysis"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "fetch_page",
+          "create_evidence_card",
+          "extract_parameter_observation",
+          "normalize_equipment_variant",
+          "reconcile_parameter_conflict",
+          "assess_technology_readiness",
+          "compare_equipment_capability",
+          "map_defensive_countermeasure",
+          "formulate_equipment_requirement"
+        ],
+        "agent_id": "weapon_equipment",
+        "created_at": "2026-09-09T11:26:01.831578+00:00",
+        "domain_object_id": "",
+        "domain_object_type": "",
+        "error": "weapon_equipment model turn completed but outer baseline result validation found no substantive findings",
+        "handoff_summary": "武器装备公开基线本轮受限；S1–S3继续独立推演，S4/S5在候选级按需补证。",
+        "harness_profile": "equipment_research_v1",
+        "new_evidence_ids": [],
+        "packet_id": "packet-weapon_equipment",
+        "schema_version": "1.0",
+        "session_path": "/Users/hitsz/equipment research/outputs/runs/swarm-queen-20260909-v3/agent_sessions/weapon_equipment.jsonl",
+        "status": "limited",
+        "stop_reason": "recoverable_baseline_unavailable",
+        "worker_report_id": "worker-report-f3f60510-f824-4f4e-9273-bafa69f9a266"
+      },
+      {
+        "active_skill_ids": [
+          "operational_synthesis",
+          "coa_comparison",
+          "joint_force_coordination",
+          "lessons_transfer"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "fetch_page",
+          "create_evidence_card",
+          "map_task_capability",
+          "build_coordination_dependency",
+          "compare_coa",
+          "assess_sustainment_resilience",
+          "transfer_case_lesson"
+        ],
+        "agent_id": "operational_employment",
+        "created_at": "2026-09-09T11:29:08.053865+00:00",
+        "domain_object_id": "",
+        "domain_object_type": "",
+        "error": "operational_employment model turn completed but outer baseline result validation found no substantive findings",
+        "handoff_summary": "作战运用公开基线本轮受限；S1–S3继续独立推演，S4/S5在候选级按需补证。",
+        "harness_profile": "operational_synthesis_v1",
+        "new_evidence_ids": [],
+        "packet_id": "packet-operational_employment",
+        "schema_version": "1.0",
+        "session_path": "/Users/hitsz/equipment research/outputs/runs/swarm-queen-20260909-v3/agent_sessions/operational_employment.jsonl",
+        "status": "limited",
+        "stop_reason": "recoverable_baseline_unavailable",
+        "worker_report_id": "worker-report-713d7229-26f9-4e18-ba89-253c76ca86c3"
+      }
+    ]
+  },
+  "savepoint_id": "checkpoint-468ea7c2122b3ee8600d2b24"
+}

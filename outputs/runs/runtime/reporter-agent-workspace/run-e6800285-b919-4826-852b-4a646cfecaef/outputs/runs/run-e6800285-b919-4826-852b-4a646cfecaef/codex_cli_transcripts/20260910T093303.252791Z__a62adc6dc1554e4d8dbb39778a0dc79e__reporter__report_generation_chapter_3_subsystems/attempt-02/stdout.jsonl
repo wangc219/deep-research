@@ -1,0 +1,5 @@
+{"type":"thread.started","thread_id":"01a08aaa-2a61-7501-b060-cc6a2bdd638b"}
+{"type":"turn.started"}
+{"type":"error","message":"Reconnecting... 1/5 (stream disconnected before completion: An error occurred while processing your request. You can retry your request, or contact us through our help center at help.openai.com if the error persists. Please include the request ID 30ca4835-d6db-47bb-9264-b0abb316c142 in your message.)"}
+{"type":"error","message":"Selected model is at capacity. Please try a different model."}
+{"type":"turn.failed","error":{"message":"Selected model is at capacity. Please try a different model."}}

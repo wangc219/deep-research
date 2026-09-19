@@ -20,9 +20,36 @@ from urllib.parse import urlsplit
 
 from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, StreamingResponse
-from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.exc import IntegrityError, NoResultFound
 from starlette.middleware.gzip import GZipMiddleware
+
+from equipment_deep_research.api import schemas as _api_schemas
+from equipment_deep_research.api.schemas import (
+    AgentSelectionPreviewBody,
+    CapabilityFeedbackBody,
+    CreateRunBody,
+    DeepBranchForkBody,
+    DeepPluginStateBody,
+    DeepSessionCreateBody,
+    DeepSessionManageBody,
+    DeepSessionMessageBody,
+    DeepSessionMergeBody,
+    DeepSteerBody,
+    DeepWorkspacePluginPackageMergeBody,
+    DeepWorkspaceResourceBody,
+    DeepWorkspaceResourceMergeBody,
+    DeepWorkspaceResourceRestoreBody,
+    DeleteRunsBody,
+    EvolutionEffectBody,
+    FavoriteCreateBody,
+    FavoriteUpdateBody,
+    PromptEvolutionBody,
+    PromptEvolutionReviewBody,
+    PromptReplayEvidenceBody,
+    ReferenceResearchBody,
+    UpdateRunBody,
+    UpdateRuntimeCapacityBody,
+)
 
 from equipment_deep_research.application.dto import CreateRunCommand, RunView, UpdateRunCommand
 from equipment_deep_research.application.run_service import (
@@ -50,7 +77,7 @@ from equipment_deep_research.domain.models import ResearchProblem, new_stable_id
 from equipment_deep_research.orchestration.coverage import load_preset_policy
 from equipment_deep_research.orchestration.reporting import _branch_report_title
 from equipment_deep_research.providers.registry import ProviderRegistry
-from equipment_deep_research.orchestration.capability_portrait import (
+from equipment_deep_research.domain.capability_portrait import (
     assemble_capability_portrait_modules,
     CAPABILITY_PORTRAIT_MODULES,
     capability_portrait_module_lengths,
@@ -111,10 +138,15 @@ from equipment_deep_research.model_profiles import (
 )
 from equipment_deep_research.deep_thinking import (
     MAX_MESSAGE_CHARS as DEEP_THINKING_MAX_MESSAGE_CHARS,
+    SINGLE_EQUIPMENT_INNOVATION_MODE,
+    _bounded_json as _bounded_deep_json,
     append_message as append_deep_message,
+    build_deep_complete_sections,
     build_reference_capability,
     create_session as create_deep_session,
+    delete_session as delete_deep_session_sidecar,
     delete_run_sidecars,
+    format_deep_complete_answer,
     get_session as get_deep_session,
     list_reference_research,
     list_research_links,
@@ -122,9 +154,43 @@ from equipment_deep_research.deep_thinking import (
     merge_capability_into_snapshot,
     save_reference_research,
     save_research_link,
+    single_equipment_innovation_context,
     synthesize_reply,
     update_session as update_deep_session,
 )
+from equipment_deep_research.domain.conversation import (
+    DEFAULT_BRANCH_ID,
+    branch_message_path,
+    branch_working_memory,
+    build_working_memory,
+    compaction_notice,
+    conversation_context_usage,
+    merge_branch_working_memory,
+    normalize_branch_id,
+    normalize_steer_mode,
+)
+from equipment_deep_research.deep_runtime.planner import preview_turn_plan
+from equipment_deep_research.deep_runtime.runner import checkpoint_visible_text
+from equipment_deep_research.deep_runtime.commands import (
+    is_card_confirmation,
+    parse_slash_command,
+)
+from equipment_deep_research.deep_runtime.workspace import WorkspaceResourceConflict
+from equipment_deep_research.deep_runtime.capabilities import (
+    load_capability_registry,
+    validate_workspace_capability_resource,
+)
+from equipment_deep_research.deep_runtime.channel import InboundMessage, dispatch_channel_call
+from equipment_deep_research.deep_runtime.gateways import (
+    ChannelPayloadRejected,
+    VerifiedChannelGateway,
+)
+from equipment_deep_research.deep_runtime.mcp_transport import (
+    HostMCPMount,
+    PersistentMCPHost,
+    ReloadingMCPHost,
+)
+from equipment_deep_research.deep_runtime.tool_registry import build_tool_registry
 from equipment_deep_research.api.auth import install_tenant_auth_middleware
 
 
@@ -289,217 +355,37 @@ _KEY_INTERACTION_EVENT_TYPES = frozenset(
 )
 
 
-class CreateRunBody(BaseModel):
-    topic: str = Field(min_length=1, max_length=4000)
-    supplemental_information: str = Field(default="", max_length=8000)
-    research_route: str = "auto"
-    selected_agent_ids: list[str] = Field(default_factory=list)
-    max_rounds: int = Field(default=2, ge=1, le=5)
-    execution: dict = Field(default_factory=dict)
-    analyst_confirmed: bool = False
-    interaction_mode: str = "expert"
-    discovery_branch: str = "auto"
-    execution_profile_id: str = Field(
-        default_factory=lambda: os.environ.get(
-            "EQUIPMENT_DR_EXECUTION_PROFILE_ID", "winning_swarm_dynamic_v2"
-        ).strip()
-        or "winning_swarm_dynamic_v2"
-    )
-    report_template_mode: str = "project_argument_v1"
-    source_query_id: str = Field(default="", max_length=128)
-    source_query_version: int | None = Field(default=None, ge=1)
-    publish_source_query_on_create: bool = False
-    model_profile_id: str = Field(default="", max_length=128)
-    # Evolution scope is persisted with the run.  In enterprise deployments
-    # the authenticated gateway should populate the matching X-* headers;
-    # body values remain a backwards-compatible local/integration interface.
-    tenant_id: str = Field(default="", max_length=160)
-    workspace_id: str = Field(default="", max_length=160)
-    project_id: str = Field(default="", max_length=160)
-    profile_id: str = Field(default="", max_length=160)
-    stage_scope: list[str] = Field(default_factory=list, max_length=6)
-
-
-class UpdateRunBody(BaseModel):
-    topic: str = Field(min_length=1, max_length=4000)
-    supplemental_information: str | None = Field(default=None, max_length=8000)
-    research_route: str
-    selected_agent_ids: list[str]
-    max_rounds: int = Field(ge=1, le=5)
-    execution: dict = Field(default_factory=dict)
-    analyst_confirmed: bool = False
-    interaction_mode: str = "expert"
-    discovery_branch: str = "auto"
-    execution_profile_id: str = ""
-    report_template_mode: str = ""
-    model_profile_id: str = Field(default="", max_length=128)
-    tenant_id: str = Field(default="", max_length=160)
-    workspace_id: str = Field(default="", max_length=160)
-    project_id: str = Field(default="", max_length=160)
-    profile_id: str = Field(default="", max_length=160)
-    stage_scope: list[str] | None = Field(default=None, max_length=6)
-
-
-class DeleteRunsBody(BaseModel):
-    run_ids: list[str] = Field(min_length=1, max_length=100)
-
-
-class FavoriteCreateBody(BaseModel):
-    """Input for creating a capability-card favorite.
-
-    The client identifies a card only; the server always reloads and
-    normalizes the authoritative S6 artifact before persisting a snapshot.
-    ``card_id`` is accepted as a compatibility alias used by early clients.
-    """
-
-    run_id: str = Field(min_length=1, max_length=256)
-    scope: str = Field(default="global", max_length=32)
-    card_key: str = Field(default="", max_length=512)
-    card_binding_id: str = Field(default="", max_length=256)
-    card_id: str = Field(default="", max_length=256)
-    capability_id: str = Field(default="", max_length=256)
-    capability_name: str = Field(default="", max_length=400)
-
-
-class FavoriteUpdateBody(BaseModel):
-    """Mutable presentation fields for an existing favorite.
-
-    The authoritative capability snapshot is intentionally not replaceable:
-    editing a favorite changes how it is organized in the workbench, not the
-    evidence-backed five-module portrait captured at creation time.
-    """
-
-    model_config = ConfigDict(extra="ignore")
-
-    display_name: str | None = Field(default=None, max_length=400)
-    # ``name``/``title`` are compatibility aliases for clients that call the
-    # editable presentation label simply “name” or “title”.
-    name: str | None = Field(default=None, max_length=400)
-    title: str | None = Field(default=None, max_length=400)
-    note: str | None = Field(default=None, max_length=4000)
-    memo: str | None = Field(default=None, max_length=4000)
-    tags: list[str] | None = Field(default=None, max_length=20)
-
-
-class UpdateRuntimeCapacityBody(BaseModel):
-    capacity: int = Field(ge=1, le=8)
-
-
-class AgentSelectionPreviewBody(BaseModel):
-    topic: str = Field(min_length=1, max_length=4000)
-    supplemental_information: str = Field(default="", max_length=8000)
-    research_route: str = "auto"
-    interaction_mode: str = "expert"
-    discovery_branch: str = "auto"
-
-
-class CapabilityFeedbackBody(BaseModel):
-    capability_id: str = Field(default="", max_length=160)
-    capability_name: str = Field(default="", max_length=300)
-    comment: str = Field(default="", max_length=4000)
-    important_information: str = Field(default="", max_length=2400)
-    verdict: str = Field(default="needs_revision", max_length=32)
-    rating: int | None = Field(default=None, ge=1, le=5)
-    dimensions: list[str] = Field(default_factory=list, max_length=8)
-    # Empty means automatic routing by the feedback-memory processor.  Older
-    # clients may still send an explicit target list and remain compatible.
-    target_agent_ids: list[str] = Field(default_factory=list, max_length=6)
-    stage_scope: list[str] = Field(default_factory=list, max_length=6)
-    reviewer_name: str = Field(default="", max_length=120)
-    reviewer_role: str = Field(default="expert", max_length=80)
-
-
-class DeepSessionCreateBody(BaseModel):
-    """Create a bounded follow-up/deep-thinking session for one run."""
-
-    kind: str = Field(default="deep-thinking", max_length=64)
-    title: str = Field(default="深度思考会话", max_length=240)
-    capability_id: str = Field(default="", max_length=256)
-    card_binding_id: str = Field(default="", max_length=256)
-    capability_name: str = Field(default="", max_length=400)
-    hypothesis_id: str = Field(default="", max_length=256)
-    question: str = Field(default="", max_length=DEEP_THINKING_MAX_MESSAGE_CHARS)
-    focus: str = Field(default="", max_length=1600)
-    context_refs: dict[str, Any] = Field(default_factory=dict)
-    # ``candidate``/``reference_weapon`` are accepted as aliases so clients
-    # can post the card object shown in the UI without first flattening it.
-    candidate: dict[str, Any] = Field(default_factory=dict)
-    reference_weapon: dict[str, Any] = Field(default_factory=dict)
-    auto_merge: bool = False
-
-
-class DeepSessionMessageBody(BaseModel):
-    content: str = Field(min_length=1, max_length=DEEP_THINKING_MAX_MESSAGE_CHARS)
-    create_artifact: bool = True
-    focus: str = Field(default="", max_length=1600)
-
-
-class DeepSessionMergeBody(BaseModel):
-    artifact_id: str = Field(default="", max_length=256)
-    mode: str = Field(default="append", max_length=32)
-
-
-class ReferenceResearchBody(BaseModel):
-    hypothesis_id: str = Field(default="", max_length=256)
-    focus: str = Field(default="", max_length=1600)
-    question: str = Field(default="", max_length=DEEP_THINKING_MAX_MESSAGE_CHARS)
-    candidate: dict[str, Any] = Field(default_factory=dict)
-    session_id: str = Field(default="", max_length=256)
-    # An explicit retry reuses the canonical parent/hypothesis fingerprint
-    # and requeues the existing partial job instead of creating a duplicate
-    # child run.  Ordinary repeated requests remain idempotent replays.
-    retry: bool = False
+# Canonical API schemas live in ``api.schemas``. Keep the old names available
+# from this module while routing every endpoint through the canonical classes.
+for _schema_name in _api_schemas.__all__:
+    globals()[_schema_name] = getattr(_api_schemas, _schema_name)
 
 
 class _DeepJobCancelled(Exception):
     """Internal sentinel used to stop a queued deep-thinking turn."""
 
 
+class _DeepJobInterrupted(Exception):
+    """Stop the old turn at a checkpoint and continue from a steering message."""
+
+    def __init__(self, steer: Mapping[str, Any]) -> None:
+        super().__init__("deep-thinking turn interrupted by user")
+        self.steer = dict(steer)
+
+
+class _DeepJobClaimLost(Exception):
+    """Stop a stale worker after restart recovery transfers job ownership."""
+
+
 class _DeepLedgerUnavailable(RuntimeError):
     """Internal sentinel for an unavailable configured deep ledger.
 
     A modern deployment must not turn a transient SQLite/adapter outage into
-    a successful empty projection (or a misleading 404).  Read helpers keep
+    a successful empty projection (or a misleading 404). Read helpers keep
     their historical compatibility behaviour by default, while HTTP routes
     that need an authoritative answer opt into ``strict=True`` and translate
     this sentinel into a bounded 503 response.
     """
-
-
-class PromptEvolutionBody(BaseModel):
-    feedback: str = Field(min_length=1, max_length=6000)
-    stages: list[str] = Field(default_factory=lambda: ["S3", "S4", "S5", "S6"], max_length=6)
-    context: dict[str, Any] = Field(default_factory=dict)
-
-
-class PromptEvolutionReviewBody(BaseModel):
-    decision: str = Field(pattern="^(approved|rejected)$")
-    comment: str = Field(default="", max_length=2000)
-    review_password: str = Field(default="", min_length=1, max_length=128)
-
-
-class EvolutionEffectBody(BaseModel):
-    effect_status: str = Field(min_length=1, max_length=32)
-    evaluator_id: str = Field(default="", max_length=160)
-    evaluation_id: str = Field(default="", max_length=160)
-    reason: str = Field(default="", max_length=2000)
-    metrics: dict[str, Any] = Field(default_factory=dict)
-
-
-class PromptReplayEvidenceBody(BaseModel):
-    """Bounded replay evidence attached before a Prompt review.
-
-    Replay artifacts are generated by the evaluation service, not by the API
-    reviewer.  The API stores only a bounded summary and a relocatable
-    artifact reference; production Prompt files are untouched until a later
-    explicit review call passes the replay-first gate.
-    """
-
-    evaluation_id: str = Field(min_length=1, max_length=160)
-    replay_summary: dict[str, Any] = Field(default_factory=dict)
-    artifact_path: str = Field(default="", max_length=400)
-    evaluator_id: str = Field(default="", max_length=160)
-    require_pass: bool = True
 
 
 _EVOLUTION_STAGE_IDS = frozenset({"S1", "S2", "S3", "S4", "S5", "S6"})
@@ -512,8 +398,10 @@ _DEEP_EVENT_STAGES = frozenset(
     {
         "context",
         "s3_divergence",
+        "council_critique",
         "s4_mapping",
         "retrieval",
+        "s5_adjudication",
         "s6_authoring",
         "validation",
         "publish",
@@ -521,10 +409,215 @@ _DEEP_EVENT_STAGES = frozenset(
     }
 )
 _DEEP_EVENT_STATUSES = frozenset(
-    {"queued", "running", "completed", "partial", "failed", "blocked", "cancelled"}
+    {
+        "queued",
+        "running",
+        "completed",
+        "partial",
+        "failed",
+        "blocked",
+        "cancelled",
+        "accepted",
+        "applied",
+        "parked",
+    }
 )
 _DEEP_EVENT_KINDS = frozenset({"summary", "answer", "candidate"})
 _DEEP_EVENT_TYPE_PATTERN = re.compile(r"^[A-Za-z0-9_.:-]{1,64}$")
+_DEEP_RUNTIME_METADATA_KEYS = (
+    "engine",
+    "tools",
+    "plan",
+    "active_skill_ids",
+    "plugin_ids",
+    "mcp_servers",
+    "command",
+    "conductor",
+    "status",
+    "turn_count",
+    "tool_call_count",
+    "stop_reason",
+)
+
+
+def _deep_authoring_requested(content: object, explicit: object = False) -> bool:
+    """Normalize the user-confirmed S6 signal at every API boundary."""
+
+    parsed = parse_slash_command(content)
+    return bool(explicit) or parsed.name == "card" or is_card_confirmation(content)
+
+
+def _bounded_deep_runtime_value(value: Any, *, depth: int = 0) -> Any:
+    """Return a small JSON-compatible value for public runtime metadata."""
+
+    if depth >= 4:
+        if isinstance(value, Mapping):
+            return {"truncated": True}
+        if isinstance(value, (list, tuple, set, frozenset)):
+            return []
+    if value is None or isinstance(value, (bool, int)):
+        return value
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    if isinstance(value, str):
+        return value[:1000]
+    if isinstance(value, Mapping):
+        return {
+            str(key)[:120]: _bounded_deep_runtime_value(item, depth=depth + 1)
+            for key, item in list(value.items())[:24]
+        }
+    if isinstance(value, (list, tuple, set, frozenset)):
+        return [
+            _bounded_deep_runtime_value(item, depth=depth + 1)
+            for item in list(value)[:16]
+        ]
+    return str(value)[:1000]
+
+
+def _deep_runtime_metadata(value: object) -> dict[str, Any]:
+    """Project runtime output onto the stable, browser-safe metadata contract."""
+
+    if not isinstance(value, Mapping):
+        return {}
+    projected: dict[str, Any] = {}
+    for key in _DEEP_RUNTIME_METADATA_KEYS:
+        if key not in value:
+            continue
+        raw = value.get(key)
+        if key in {"active_skill_ids", "plugin_ids", "mcp_servers", "tools", "plan"}:
+            if not isinstance(raw, (list, tuple, set, frozenset)):
+                continue
+            count_limit = 6 if key == "active_skill_ids" else 16
+            item_limit = 140 if key in {"active_skill_ids", "plugin_ids", "mcp_servers"} else 120
+            projected[key] = [
+                str(item).strip()[:item_limit]
+                for item in list(raw)[:count_limit]
+                if not isinstance(item, Mapping) and str(item or "").strip()
+            ]
+            continue
+        if key in {"turn_count", "tool_call_count"}:
+            try:
+                projected[key] = max(0, min(int(raw or 0), 1_000_000))
+            except (TypeError, ValueError, OverflowError):
+                projected[key] = 0
+            continue
+        if key == "conductor":
+            projected[key] = _bounded_deep_runtime_value(raw)
+            continue
+        text_limit = 400 if key in {"command", "stop_reason"} else 160
+        projected[key] = str(raw or "")[:text_limit]
+    safe = sanitize_runtime_payload(
+        _bounded_deep_runtime_value(projected), max_string_length=1000
+    )
+    return dict(safe) if isinstance(safe, Mapping) else {}
+
+
+def _deep_runtime_equipment_identity(value: object) -> dict[str, str]:
+    """Project a server-owned candidate onto stable workspace identity fields.
+
+    DeepWorkspace is an optional file-backed projection of the authoritative
+    SQL dialogue ledger.  Its manifest must be keyed by the canonical
+    equipment lineage, rather than mutable prose or evidence metadata.  Keep
+    this projection deliberately small so a later turn cannot accidentally
+    bind the same workspace to a different equipment target.
+    """
+
+    if not isinstance(value, Mapping):
+        return {}
+    identity: dict[str, str] = {}
+    stable_fields = (
+        "hypothesis_id",
+        "card_binding_id",
+        "capability_id",
+        "primary_equipment_identity",
+        "source_equipment_identity",
+        "equipment_form",
+    )
+    for key in stable_fields:
+        raw = value.get(key)
+        normalized = " ".join(str(raw or "").split()).strip()
+        if normalized:
+            identity[key] = normalized[:240]
+    # Analysis-only sessions may have no durable hypothesis/binding yet.  A
+    # canonical equipment label still gives the workspace a useful lock; use
+    # display aliases only as the final fallback when no stable field exists.
+    if not identity:
+        for key in ("name", "title"):
+            normalized = " ".join(str(value.get(key) or "").split()).strip()
+            if normalized:
+                identity[key] = normalized[:240]
+                break
+    return identity
+
+
+def _open_trusted_deep_runtime_workspace(
+    output_root: Path,
+    run_id: str,
+    *,
+    identity: Mapping[str, str],
+) -> tuple[Any | None, Any | None]:
+    """Open a run-bound DeepWorkspace without trusting request paths.
+
+    The first path uses the descriptor-backed ``RunWorkspace`` API.  A
+    read-only historical artifact may not have ``run.db``; in that case a
+    direct child of one of the approved output roots is accepted as a bounded
+    fallback.  All failures are intentionally non-blocking for the SQL
+    dialogue path, and exception text is discarded so local paths cannot
+    escape through API/SSE responses.
+    """
+
+    if not identity or not _is_safe_run_id(str(run_id)):
+        return None, None
+    try:
+        from equipment_deep_research.deep_runtime.workspace import DeepWorkspace
+        from equipment_deep_research.domain.workspace import RunWorkspace
+    except Exception:
+        return None, None
+
+    bases = _artifact_run_base_dirs(output_root)
+    # Prefer the descriptor-backed route.  Keep the handle alive alongside
+    # the DeepWorkspace until the provider turn returns; DeepWorkspace itself
+    # resolves its path from this authenticated descriptor.
+    for base in bases:
+        run_workspace = None
+        try:
+            run_workspace = RunWorkspace.open_existing(base, str(run_id))
+            deep_workspace = run_workspace.deep_workspace(identity=dict(identity), equipment_scoped=True)
+            return deep_workspace, run_workspace
+        except Exception:
+            if run_workspace is not None:
+                try:
+                    run_workspace.close()
+                except Exception:
+                    pass
+
+    # Historical artifact-only runs do not carry the secure run database.
+    # Accept only an existing, non-symlinked direct child under an approved
+    # base; never use a path supplied by the browser or by persisted payload.
+    for base in bases:
+        root = base / str(run_id)
+        try:
+            if not root.is_dir() or root.is_symlink():
+                continue
+            resolved = root.resolve()
+            if resolved.name != str(run_id) or resolved.parent != base:
+                continue
+            deep_workspace = DeepWorkspace.open_equipment(
+                resolved,
+                workspace_id=f"run:{run_id}",
+                identity=dict(identity),
+            )
+            return deep_workspace, None
+        except Exception:
+            continue
+    return None, None
+
+
+def _deep_message_metadata(value: object) -> dict[str, Any]:
+    if not isinstance(value, Mapping):
+        return {}
+    runtime = _deep_runtime_metadata(value.get("runtime"))
+    return {"runtime": runtime} if runtime else {}
 
 
 def _deep_public_event_type(value: object) -> str:
@@ -639,6 +732,157 @@ def _deep_public_event_payload(
         raw_delta.get("text", source.get("text", source.get("summary", ""))),
         limit=2000,
     )
+    delta: dict[str, Any] = {
+        "kind": kind,
+        "text": text,
+    }
+    role = _deep_public_text(
+        raw_delta.get("role", source.get("role", "")),
+        limit=80,
+    )
+    axis = _deep_public_text(
+        raw_delta.get("axis", source.get("axis", "")),
+        limit=80,
+    )
+    agent_id = _deep_public_identifier(
+        raw_delta.get("agent_id", source.get("agent_id", "")),
+        limit=80,
+    )
+    if role:
+        delta["role"] = role
+    if axis:
+        delta["axis"] = axis
+    if agent_id:
+        delta["agent_id"] = agent_id
+    names_source = raw_delta.get("proposal_names", source.get("proposal_names", []))
+    if isinstance(names_source, (list, tuple, set, frozenset)):
+        public_names = [
+            _deep_public_text(name, limit=80)
+            for name in list(names_source)[:3]
+            if _deep_public_text(name, limit=80)
+        ]
+        if public_names:
+            delta["proposal_names"] = public_names
+    briefs_source = raw_delta.get("proposal_briefs", source.get("proposal_briefs", []))
+    if isinstance(briefs_source, (list, tuple)):
+        public_briefs: list[dict[str, str]] = []
+        for item in list(briefs_source)[:3]:
+            if not isinstance(item, Mapping):
+                continue
+            brief = {
+                key: _deep_public_text(item.get(key, ""), limit=120)
+                for key in ("name", "equipment_form", "winning_angle", "disruptive_difference")
+            }
+            brief = {key: value for key, value in brief.items() if value}
+            if brief.get("name"):
+                public_briefs.append(brief)
+        if public_briefs:
+            delta["proposal_briefs"] = public_briefs
+    parallel_group = _deep_public_identifier(
+        raw_delta.get("parallel_group", source.get("parallel_group", "")),
+        limit=64,
+    )
+    if parallel_group:
+        delta["parallel_group"] = parallel_group
+        delta["parallel"] = True
+    elif raw_delta.get("parallel") or source.get("parallel"):
+        delta["parallel"] = True
+    try:
+        parallelism = int(raw_delta.get("parallelism", source.get("parallelism", 0)) or 0)
+    except (TypeError, ValueError, OverflowError):
+        parallelism = 0
+    if parallelism > 0:
+        delta["parallelism"] = min(parallelism, 8)
+    try:
+        active_agents = int(
+            raw_delta.get("active_agents", source.get("active_agents", 0)) or 0
+        )
+    except (TypeError, ValueError, OverflowError):
+        active_agents = 0
+    if active_agents > 0:
+        delta["active_agents"] = min(active_agents, 8)
+    round_name = _deep_public_identifier(
+        raw_delta.get("round", source.get("round", "")),
+        limit=32,
+    )
+    if round_name:
+        delta["round"] = round_name
+    for key, limit in (
+        ("from_agent_id", 80),
+        ("to_agent_id", 80),
+        ("handoff_kind", 48),
+    ):
+        value = _deep_public_identifier(
+            raw_delta.get(key, source.get(key, "")),
+            limit=limit,
+        )
+        if value:
+            delta[key] = value
+    deliverable_source = raw_delta.get(
+        "deliverable_refs", source.get("deliverable_refs", [])
+    )
+    deliverable_refs = _deep_public_refs(deliverable_source, limit=8)
+    if deliverable_refs:
+        delta["deliverable_refs"] = deliverable_refs
+    try:
+        completed_count = int(
+            raw_delta.get("completed_count", source.get("completed_count", 0)) or 0
+        )
+    except (TypeError, ValueError, OverflowError):
+        completed_count = 0
+    try:
+        total_count = int(
+            raw_delta.get("total_count", source.get("total_count", 0)) or 0
+        )
+    except (TypeError, ValueError, OverflowError):
+        total_count = 0
+    if completed_count > 0:
+        delta["completed_count"] = min(completed_count, 8)
+    if total_count > 0:
+        delta["total_count"] = min(total_count, 8)
+    for key in ("living_turns", "archived_turns"):
+        try:
+            count = int(raw_delta.get(key, source.get(key, 0)) or 0)
+        except (TypeError, ValueError, OverflowError):
+            count = 0
+        if count > 0:
+            delta[key] = min(count, 64)
+    for key, limit in (("tool_name", 120), ("tool_call_id", 128)):
+        value = _deep_public_identifier(
+            raw_delta.get(key, source.get(key, "")), limit=limit
+        )
+        if value:
+            delta[key] = value
+    if "turn_index" in raw_delta or "turn_index" in source:
+        try:
+            turn_index = int(raw_delta.get("turn_index", source.get("turn_index", 0)) or 0)
+        except (TypeError, ValueError, OverflowError):
+            turn_index = 0
+        delta["turn_index"] = max(0, min(turn_index, 1_000_000))
+    if "duration_ms" in raw_delta or "duration_ms" in source:
+        try:
+            duration_ms = float(
+                raw_delta.get("duration_ms", source.get("duration_ms", 0)) or 0
+            )
+        except (TypeError, ValueError, OverflowError):
+            duration_ms = 0.0
+        delta["duration_ms"] = (
+            max(0.0, min(duration_ms, 86_400_000.0))
+            if math.isfinite(duration_ms)
+            else 0.0
+        )
+    for key, count_limit in (("active_skill_ids", 6), ("plugin_ids", 16)):
+        raw_ids = raw_delta.get(key, source.get(key, []))
+        if not isinstance(raw_ids, (list, tuple, set, frozenset)):
+            continue
+        identifiers = [
+            _deep_public_identifier(item, limit=140)
+            for item in list(raw_ids)[:count_limit]
+            if not isinstance(item, Mapping)
+            and _deep_public_identifier(item, limit=140)
+        ]
+        if identifiers:
+            delta[key] = identifiers
     try:
         public_sequence = int(sequence or 0)
     except (TypeError, ValueError, OverflowError):
@@ -650,7 +894,7 @@ def _deep_public_event_payload(
     stage = str(source.get("stage", "context") or "context").strip().lower()
     if stage not in _DEEP_EVENT_STAGES:
         stage = "context"
-    return {
+    public = {
         "schema_version": "deep-events-v1",
         "event_id": _deep_public_identifier(source.get("event_id", "")),
         "sequence": public_sequence,
@@ -669,16 +913,62 @@ def _deep_public_event_payload(
         "stage": stage,
         "status": status,
         "progress": _deep_public_progress(source.get("progress", 0)),
-        "delta": {
-            "kind": kind,
-            "text": text,
-        },
+        "delta": delta,
         "evidence_refs": _deep_public_refs(source.get("evidence_refs", source.get("evidence_ids", []))),
         "artifact_refs": _deep_public_refs(source.get("artifact_refs", [])),
         "version_refs": _deep_public_refs(source.get("version_refs", [])),
         "error": _deep_public_text(source.get("error", ""), limit=1000) or None,
         "created_at": _deep_public_identifier(source.get("created_at", ""), limit=64),
     }
+    try:
+        state_version = max(0, int(source.get("state_version", 0) or 0))
+    except (TypeError, ValueError, OverflowError):
+        state_version = 0
+    if state_version:
+        public["state_version"] = state_version
+    for key in ("steer_id", "message_id", "next_job_id", "branch_id"):
+        value = _deep_public_identifier(source.get(key, ""))
+        if value:
+            public[key] = value
+    steer_mode = _deep_public_identifier(source.get("mode", ""), limit=32)
+    if steer_mode:
+        public["mode"] = steer_mode
+    for key in (
+        "role",
+        "axis",
+        "agent_id",
+        "proposal_names",
+        "proposal_briefs",
+        "parallel_group",
+        "round",
+        "from_agent_id",
+        "to_agent_id",
+        "handoff_kind",
+        "deliverable_refs",
+        "tool_name",
+        "tool_call_id",
+        "turn_index",
+        "duration_ms",
+        "active_skill_ids",
+        "plugin_ids",
+    ):
+        if key in delta:
+            public[key] = delta[key]
+    if delta.get("parallel"):
+        public["parallel"] = True
+    if "parallelism" in delta:
+        public["parallelism"] = delta["parallelism"]
+    if "active_agents" in delta:
+        public["active_agents"] = delta["active_agents"]
+    if "completed_count" in delta:
+        public["completed_count"] = delta["completed_count"]
+    if "total_count" in delta:
+        public["total_count"] = delta["total_count"]
+    if "living_turns" in delta:
+        public["living_turns"] = delta["living_turns"]
+    if "archived_turns" in delta:
+        public["archived_turns"] = delta["archived_turns"]
+    return public
 
 
 def _bounded_scope_id(value: object, *, limit: int = 160) -> str:
@@ -918,12 +1208,57 @@ def create_app(
     preset_config_path: str | Path | None = None,
     query_library_service: QueryLibraryService | None = None,
     provider_config_path: str | Path | None = None,
+    mcp_config_path: str | Path | None = None,
+    mcp_mounts: Sequence[HostMCPMount] = (),
     strict_auth: bool | None = None,
+    channel_gateways: Mapping[str, VerifiedChannelGateway] | None = None,
 ) -> FastAPI:
     service = service or build_application_service()
     if event_repository is None:
         event_repository = getattr(service, "repository", None)
     app = FastAPI(title="Equipment Deep Research API", version="0.1.0")
+
+    # Optional deployment-owned webhook boundary.  The gateway instances
+    # carry only verification/session callbacks; platform tokens, HTTP
+    # clients and delivery retries remain in the deployment host.  Keeping
+    # this route opt-in avoids silently exposing an unauthenticated channel
+    # surface in local/test deployments.
+    configured_gateways = {
+        str(name).strip().lower(): gateway
+        for name, gateway in (channel_gateways or {}).items()
+        if str(name).strip()
+    }
+    if any(not isinstance(gateway, VerifiedChannelGateway) for gateway in configured_gateways.values()):
+        raise TypeError("channel_gateways must contain VerifiedChannelGateway instances")
+
+    @app.post("/api/v1/channels/{channel}/webhook")
+    async def dispatch_channel_webhook(channel: str, request: Request) -> JSONResponse:
+        gateway = configured_gateways.get(str(channel or "").strip().lower())
+        if gateway is None:
+            raise HTTPException(status_code=404, detail="channel webhook is not configured")
+        body = bytearray()
+        async for chunk in request.stream():
+            if len(body) + len(chunk) > 256 * 1024:
+                raise HTTPException(status_code=413, detail="channel webhook body is too large")
+            body.extend(chunk)
+        body = bytes(body)
+        try:
+            payload = json.loads(body.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise HTTPException(status_code=400, detail="channel webhook body must be valid JSON") from exc
+        if not isinstance(payload, Mapping):
+            raise HTTPException(status_code=400, detail="channel webhook payload must be an object")
+        try:
+            result = await gateway.dispatch(
+                payload,
+                body=body,
+                headers=dict(request.headers),
+            )
+        except ChannelPayloadRejected as exc:
+            # Do not reveal whether signature, allowlist, or session mapping
+            # failed.  The deployment host can inspect its own audit logs.
+            raise HTTPException(status_code=403, detail="channel webhook rejected") from exc
+        return JSONResponse(result.to_plain())
     # Peanut Shell adds latency to every round trip. Compress JSON responses
     # at the API boundary so task lists and artifact summaries cross the tunnel
     # with fewer bytes. Streaming event responses remain usable because the
@@ -945,7 +1280,9 @@ def create_app(
     deep_worker_lock = Lock()
     deep_worker_threads: dict[str, Thread] = {}
     deep_worker_cancel: dict[str, Event] = {}
+    deep_worker_claim_tokens: dict[str, str] = {}
     deep_memory_jobs: dict[str, dict[str, Any]] = {}
+    deep_job_live_progress: dict[str, float] = {}
     create_run_idempotency: dict[str, tuple[str, object]] = {}
     create_run_idempotency_lock = Lock()
     favorite_memory: dict[str, dict[str, Any]] = {}
@@ -1356,6 +1693,26 @@ def create_app(
     agent_path = Path(agent_config_path or project_root / "configs/equipment_deep_research/agents.yaml")
     preset_path = Path(preset_config_path or project_root / "configs/equipment_deep_research/presets.yaml")
     provider_path = Path(provider_config_path or project_root / "configs/equipment_deep_research/providers.yaml")
+    # MCP execution is a deployment capability.  It is sourced only from an
+    # explicit create_app argument or the server-owned config-path variable;
+    # Plugin mcp.json declarations never become executable here.
+    configured_mcp_path = str(
+        mcp_config_path or os.environ.get("EQUIPMENT_DR_MCP_HOST_CONFIG", "")
+    ).strip()
+    if mcp_mounts and configured_mcp_path:
+        raise ValueError("choose either explicit MCP mounts or an MCP host config path")
+    if mcp_mounts:
+        deep_mcp_host: PersistentMCPHost | ReloadingMCPHost | None = PersistentMCPHost(
+            tuple(mcp_mounts)
+        )
+    elif configured_mcp_path:
+        resolved_mcp_path = Path(configured_mcp_path).expanduser()
+        if not resolved_mcp_path.is_absolute():
+            resolved_mcp_path = (project_root / resolved_mcp_path).resolve()
+        deep_mcp_host = ReloadingMCPHost(resolved_mcp_path)
+    else:
+        deep_mcp_host = None
+    app.state.deep_mcp_host = deep_mcp_host
     catalog_payload = _catalog_payload(agent_path, preset_path)
     agent_registry = AgentRegistry.load(agent_path)
     interaction_agents = _interaction_agents(agent_path)
@@ -1401,6 +1758,40 @@ def create_app(
             key=lambda item: item.updated_at,
             reverse=True,
         )
+
+    def _deep_parent_run(run_id: str) -> RunView:
+        """Return a deep-research parent and materialize artifact-only runs.
+
+        CLI/worker research can finish with a durable artifact directory but
+        without an application-DB ``runs`` row.  That is a valid read-only
+        historical view, but a queued dialogue worker needs the same snapshot
+        through ``ResearchApplicationService`` after an API restart.  Promote
+        the immutable artifact metadata exactly once at the mutation boundary
+        so recovery never depends on a browser request or a sidecar-only
+        lookup.
+        """
+
+        try:
+            return service.get_run(run_id)
+        except (KeyError, NoResultFound, RunNotFoundError):
+            historical = _artifact_run_view(output_root, run_id)
+            if historical is None:
+                raise RunNotFoundError(run_id)
+            repository = getattr(service, "repository", None)
+            saver = getattr(repository, "save", None)
+            if callable(saver):
+                saver(historical)
+            else:
+                # Lightweight in-memory services used by embedders/tests do
+                # not expose a repository, but still need the same recovery
+                # semantics within the process.
+                memory_runs = getattr(service, "_runs", None)
+                if isinstance(memory_runs, dict):
+                    memory_runs[run_id] = historical
+            try:
+                return service.get_run(run_id)
+            except (KeyError, NoResultFound, RunNotFoundError):
+                return historical
 
     # Install one boundary check for every run sub-route, including SSE and
     # artifact downloads.  Existing handlers still own role checks and their
@@ -1892,7 +2283,10 @@ def create_app(
             pass
 
     def permanently_remove(run_id: str) -> None:
-        current = service.get_run(run_id)
+        # ``read_view`` also materializes completed artifact-only historical
+        # runs into the repository, so the delete contract covers both the
+        # current SQL-backed lifecycle and legacy direct-run artifacts.
+        current = read_view(run_id)
         # Deletion is destructive by design: stop the run and terminate every
         # process group registered under it before removing its records/files.
         # This also handles a Worker that has already claimed the queue item.
@@ -3174,7 +3568,7 @@ def create_app(
                 for row in raw_rows
                 if not (
                     _looks_deep(row)
-                    and _status(row) in {"rejected", "rolled_back", "cancelled", "failed", "blocked", "partial"}
+                    and _status(row) in {"rejected", "rolled_back", "cancelled", "failed", "blocked", "partial", "deleted"}
                 )
             ]
             for extra in list_reference_research(output_root, run_id=run_id):
@@ -3182,7 +3576,7 @@ def create_app(
                     continue
                 item = dict(extra)
                 status = _status(item)
-                if status in {"rejected", "rolled_back", "cancelled", "failed", "blocked", "partial"}:
+                if status in {"rejected", "rolled_back", "cancelled", "failed", "blocked", "partial", "deleted"}:
                     continue
                 item.setdefault("is_deep_research", True)
                 item.setdefault("research_version", _version_no(item))
@@ -3440,7 +3834,7 @@ def create_app(
                     # be treated as publishable capability cards by ordinary
                     # projections.  Callers performing an explicit retry or
                     # merge may opt in with ``include_partial=True``.
-                    hidden_statuses = {"rejected", "rolled_back", "cancelled", "failed", "blocked"}
+                    hidden_statuses = {"rejected", "rolled_back", "cancelled", "failed", "blocked", "deleted"}
                     if not include_partial:
                         hidden_statuses.add("partial")
                     if not include_history and status in hidden_statuses:
@@ -3501,7 +3895,11 @@ def create_app(
         ).hexdigest()
         return fingerprint, query_snapshot_hash, focus_hash
 
-    def _deep_job_get(job_id: str) -> dict[str, Any] | None:
+    def _deep_job_get(
+        job_id: str,
+        *,
+        strict: bool = False,
+    ) -> dict[str, Any] | None:
         """Read a deep job from the authoritative ledger.
 
         An API process can retain an in-memory compatibility row after a
@@ -3517,10 +3915,14 @@ def create_app(
         if callable(getter):
             try:
                 row = getter(str(job_id))
-            except Exception:
+            except Exception as exc:
                 # Fail closed on a configured ledger.  Callers may surface a
                 # bounded partial/503 state, but must not silently fall back
                 # to a potentially stale process-local projection.
+                if strict:
+                    raise _DeepLedgerUnavailable(
+                        "deep job ledger unavailable"
+                    ) from exc
                 return None
             return dict(row) if isinstance(row, Mapping) else None
         with deep_worker_lock:
@@ -3577,6 +3979,15 @@ def create_app(
             for key in ("session_id", "hypothesis_id", "query_snapshot_hash", "focus_hash")
             if key in payload
         }
+        raw_active_skill_ids = payload.get("active_skill_ids", [])
+        if isinstance(raw_active_skill_ids, Sequence) and not isinstance(
+            raw_active_skill_ids, (str, bytes)
+        ):
+            payload_public["active_skill_ids"] = [
+                str(value).strip()[:140]
+                for value in list(raw_active_skill_ids)[:6]
+                if str(value or "").strip()
+            ]
         if candidate_public:
             payload_public["candidate"] = candidate_public
         public_keys = (
@@ -3585,9 +3996,15 @@ def create_app(
             "session_id",
             "child_run_id",
             "parent_job_id",
+            "branch_id",
+            "root_message_id",
+            "state_version",
+            "steer_closed",
             "kind",
             "stage",
             "status",
+            "progress",
+            "text",
             "error",
             "created_at",
             "updated_at",
@@ -3609,6 +4026,17 @@ def create_app(
             for key in public_keys
             if key in job
         }
+        live_progress = None
+        job_key = str(job.get("job_id") or "")
+        if job_key:
+            with deep_worker_lock:
+                live_progress = deep_job_live_progress.get(job_key)
+        if live_progress is not None:
+            try:
+                current_progress = float(result.get("progress") or 0)
+            except (TypeError, ValueError, OverflowError):
+                current_progress = 0.0
+            result["progress"] = max(current_progress, float(live_progress))
         # The browser uses these normalized aliases when rendering reference
         # cards.  They are derived from canonical server data, never copied
         # from an arbitrary request body.
@@ -3739,6 +4167,7 @@ def create_app(
             "snapshot",
             "diff",
             "status",
+            "previous_status",
             "source_deleted",
             "source_status",
             "created_at",
@@ -3776,6 +4205,10 @@ def create_app(
         artifact_refs: Sequence[str] = (),
         version_refs: Sequence[str] = (),
         child_run_id: str = "",
+        checkpoint: Mapping[str, Any] | None = None,
+        delta: Mapping[str, Any] | None = None,
+        persist_status: str | None = None,
+        event_type: str = "deep_stage",
     ) -> dict[str, Any] | None:
         """Advance a deep job and emit one public stage event atomically-ish.
 
@@ -3785,36 +4218,59 @@ def create_app(
         """
 
         normalized_stage = str(stage or "").strip().lower() or None
-        normalized_status = str(status or "").strip().lower() or None
+        requested_event_status = str(status or "").strip().lower() or None
+        normalized_status = (
+            str(persist_status or "").strip().lower() or requested_event_status
+        )
         repo = _deep_repository()
         updated: dict[str, Any] | None = None
         persistence_error = ""
         if repo is not None:
             try:
+                with deep_worker_lock:
+                    worker_claim_token = deep_worker_claim_tokens.get(str(job_id), "")
+                update_kwargs = {
+                    "stage": normalized_stage,
+                    "status": normalized_status,
+                    "error": error if error else None,
+                    "child_run_id": child_run_id if child_run_id else None,
+                    "session_id": session_id if session_id else None,
+                    "checkpoint": dict(checkpoint)
+                    if isinstance(checkpoint, Mapping)
+                    else None,
+                    "claim_token": worker_claim_token or None,
+                }
                 try:
-                    updated_raw = repo.update_deep_job(
-                        str(job_id),
-                        stage=normalized_stage,
-                        status=normalized_status,
-                        error=error if error else None,
-                        child_run_id=child_run_id if child_run_id else None,
-                        session_id=session_id if session_id else None,
+                    parameters = inspect.signature(
+                        repo.update_deep_job
+                    ).parameters.values()
+                    parameter_names = {parameter.name for parameter in parameters}
+                    accepts_kwargs = any(
+                        parameter.kind is inspect.Parameter.VAR_KEYWORD
+                        for parameter in parameters
                     )
-                except TypeError:
-                    # Compatibility with repositories from before the
-                    # session-binding column was introduced.
-                    updated_raw = repo.update_deep_job(
-                        str(job_id),
-                        stage=normalized_stage,
-                        status=normalized_status,
-                        error=error if error else None,
-                        child_run_id=child_run_id if child_run_id else None,
-                    )
+                    if not accepts_kwargs:
+                        update_kwargs = {
+                            key: value
+                            for key, value in update_kwargs.items()
+                            if key in parameter_names
+                        }
+                except (TypeError, ValueError):
+                    pass
+                updated_raw = repo.update_deep_job(str(job_id), **update_kwargs)
                 if updated_raw is not None:
                     updated = dict(updated_raw)
+                    if bool(updated.pop("_claim_rejected", False)):
+                        raise _DeepJobClaimLost(str(job_id))
+                    # Repository terminal-replay markers are strictly
+                    # internal coordination data. Keep them out of the
+                    # in-memory job projection and every public event.
+                    updated.pop("_already_terminal", None)
                 else:
                     persistence_error = "deep job row was not found during update"
             except Exception as exc:
+                if isinstance(exc, _DeepJobClaimLost):
+                    raise
                 # SQLite is the authoritative ledger whenever it is
                 # configured.  Falling through as if the write succeeded
                 # used to make a completed/failed event hide a lost job row.
@@ -3826,6 +4282,10 @@ def create_app(
         if updated is None:
             with deep_worker_lock:
                 current = dict(deep_memory_jobs.get(str(job_id), {}))
+                if current:
+                    current["state_version"] = max(
+                        0, int(current.get("state_version", 0) or 0)
+                    ) + 1
                 if normalized_stage:
                     current["stage"] = normalized_stage
                 if normalized_status:
@@ -3839,27 +4299,39 @@ def create_app(
                         current["status"] = "partial"
                 if child_run_id:
                     current["child_run_id"] = str(child_run_id)
+                if isinstance(checkpoint, Mapping):
+                    current["checkpoint"] = dict(checkpoint)
                 current["updated_at"] = now_iso()
                 if current:
                     deep_memory_jobs[str(job_id)] = current
                     updated = dict(current)
         authoritative_status = str((updated or {}).get("status", "")).strip().lower()
         authoritative_stage = str((updated or {}).get("stage", "")).strip().lower()
+        authoritative_terminal = authoritative_status in {
+            "failed",
+            "blocked",
+            "cancelled",
+        } or (
+            authoritative_status == "partial"
+            and authoritative_stage in {"validation", "publish"}
+        ) or (
+            authoritative_stage == "publish" and authoritative_status == "completed"
+        )
         # The repository may reject a late transition after cancellation or
         # another terminal boundary.  Publish that durable status instead of
         # echoing the stale caller request (which would make SSE resurrect a
         # cancelled job in the UI).
+        # Live mid-turn ticks persist the job as ``running`` even when the
+        # SSE row reports a stage-level ``completed``.  Keep that visual
+        # event status unless the durable ledger has already fenced the job.
+        visible_status = requested_event_status or normalized_status
         event_status = (
             authoritative_status
             if (
-                authoritative_status == "cancelled"
-                or (
-                    authoritative_stage == "publish"
-                    and authoritative_status in {"completed", "failed", "blocked"}
-                )
+                authoritative_terminal
             )
-            and authoritative_status != normalized_status
-            else normalized_status or authoritative_status or "running"
+            and authoritative_status != visible_status
+            else visible_status or authoritative_status or "running"
         )
         if persistence_error and event_status in {"completed", "running"}:
             event_status = "partial"
@@ -3869,7 +4341,7 @@ def create_app(
         # SSE consumers can visually regress from ``publish/completed`` back
         # to ``validation/completed`` even though the ledger is monotonic.
         stage_was_rejected = bool(
-            authoritative_status in {"completed", "failed", "blocked", "cancelled"}
+            authoritative_terminal
             and normalized_stage
             and authoritative_stage
             and normalized_stage != authoritative_stage
@@ -3892,8 +4364,48 @@ def create_app(
             "artifact_refs": list(artifact_refs or [])[:32],
             "version_refs": list(version_refs or [])[:32],
             "child_run_id": str(child_run_id or (updated or {}).get("child_run_id", "")),
+            "state_version": int((updated or {}).get("state_version", 0) or 0),
         }
-        _publish_deep_event(run_id, "deep_stage", details)
+        if progress is not None:
+            try:
+                incoming_progress = float(progress)
+            except (TypeError, ValueError, OverflowError):
+                incoming_progress = 0.0
+            if math.isfinite(incoming_progress):
+                incoming_progress = max(0.0, min(1.0, incoming_progress))
+                with deep_worker_lock:
+                    previous_progress = float(
+                        deep_job_live_progress.get(str(job_id), 0.0) or 0.0
+                    )
+                    stored_progress = max(previous_progress, incoming_progress)
+                    deep_job_live_progress[str(job_id)] = stored_progress
+                details["progress"] = stored_progress
+        if isinstance(delta, Mapping):
+            details["delta"] = dict(delta)
+            for key in (
+                "role",
+                "axis",
+                "agent_id",
+                "proposal_names",
+                "proposal_briefs",
+                "parallel_group",
+                "parallel",
+                "parallelism",
+                "active_agents",
+                "round",
+                "completed_count",
+                "total_count",
+                "from_agent_id",
+                "to_agent_id",
+                "handoff_kind",
+                "deliverable_refs",
+            ):
+                if key in delta and key not in details:
+                    details[key] = delta[key]
+            delta_text = str(delta.get("text", "") or "").strip()
+            if not details.get("text") and delta_text:
+                details["text"] = delta_text[:2000]
+        _publish_deep_event(run_id, event_type, details)
         if persistence_error:
             _publish_deep_event(
                 run_id,
@@ -3908,12 +4420,63 @@ def create_app(
             )
         return updated
 
+    def _deep_worker_claim_token(job_id: str) -> str:
+        with deep_worker_lock:
+            return str(deep_worker_claim_tokens.get(str(job_id), "") or "")
+
+    def _assert_deep_job_claim(job_id: str) -> None:
+        """Fence durable writes from a worker whose lease was reclaimed."""
+
+        token = _deep_worker_claim_token(job_id)
+        if not token:
+            return
+        repository = _deep_repository()
+        matches = (
+            getattr(repository, "deep_job_claim_matches", None)
+            if repository is not None
+            else None
+        )
+        if not callable(matches):
+            return
+        try:
+            owned = bool(matches(str(job_id), token))
+        except TypeError:
+            # Pre-token repository adapters remain supported.
+            return
+        if not owned:
+            raise _DeepJobClaimLost(str(job_id))
+
+    def _call_with_deep_job_claim(
+        callback: Any,
+        job_id: str,
+        *args: Any,
+        **kwargs: Any,
+    ) -> Any:
+        """Pass the private claim token when an adapter supports it."""
+
+        token = _deep_worker_claim_token(job_id)
+        if not token:
+            return callback(*args, **kwargs)
+        try:
+            parameters = inspect.signature(callback).parameters.values()
+            supports_token = any(
+                parameter.name == "claim_token"
+                or parameter.kind is inspect.Parameter.VAR_KEYWORD
+                for parameter in parameters
+            )
+        except (TypeError, ValueError):
+            supports_token = True
+        if supports_token:
+            return callback(*args, claim_token=token, **kwargs)
+        return callback(*args, **kwargs)
+
     def _deep_update_session(
         run_id: str,
         session_id: str,
         *,
         status: str | None = None,
         artifacts: Sequence[Mapping[str, Any]] | None = None,
+        title: str | None = None,
     ) -> dict[str, Any] | None:
         """Keep sidecar and SQLite session projections in sync.
 
@@ -3934,7 +4497,7 @@ def create_app(
         updater = getattr(repo, "update_deep_session", None) if repo is not None else None
         if callable(updater):
             try:
-                durable = updater(session_id, status=status)
+                durable = updater(session_id, status=status, title=title)
             except Exception as exc:
                 # A configured durable ledger must fail closed.  Returning a
                 # structured diagnostic (rather than ``None``) lets mutation
@@ -3959,15 +4522,14 @@ def create_app(
                     "_deep_update_error": "deep session row was not found during update",
                 }
             result = dict(durable)
-            durable_cancelled = str(result.get("status", "")).strip().lower() == "cancelled"
             requested_status = str(status or "").strip().lower()
+            durable_status = str(result.get("status", "")).strip().lower()
             projection_error = ""
             transition_rejected = bool(
-                durable_cancelled
-                and requested_status
-                and requested_status != "cancelled"
+                requested_status
+                and durable_status != requested_status
             )
-            if not (durable_cancelled and requested_status and requested_status != "cancelled"):
+            if not transition_rejected:
                 try:
                     projected = update_deep_session(
                         output_root,
@@ -3986,7 +4548,7 @@ def create_app(
             result["_deep_transition_rejected"] = transition_rejected
             if transition_rejected:
                 result["_deep_update_error"] = (
-                    "deep session transition fenced by cancellation"
+                    "deep session transition fenced by terminal status"
                 )
             if projection_error:
                 # The SQL transition already committed.  Preserve the
@@ -4046,6 +4608,32 @@ def create_app(
             or "deep session update failed"
         ).strip()[:1000]
 
+    def _deep_delete_session(run_id: str, session_id: str) -> bool:
+        """Delete the durable transcript, then its optional JSON projection."""
+
+        repo = _deep_repository()
+        deleter = (
+            getattr(repo, "delete_deep_session", None)
+            if repo is not None
+            else None
+        )
+        if callable(deleter):
+            deleted = deleter(session_id, parent_run_id=run_id)
+            if not isinstance(deleted, Mapping):
+                return False
+            try:
+                delete_deep_session_sidecar(
+                    output_root, run_id=run_id, session_id=session_id
+                )
+            except Exception:
+                # SQLite is authoritative; a stale compatibility file must
+                # not turn a committed deletion into an API failure.
+                pass
+            return True
+        return delete_deep_session_sidecar(
+            output_root, run_id=run_id, session_id=session_id
+        )
+
     def _deep_store_job(
         *,
         job_id: str,
@@ -4057,6 +4645,9 @@ def create_app(
         payload: Mapping[str, Any] | None = None,
         child_run_id: str = "",
         parent_job_id: str = "",
+        branch_id: str = DEFAULT_BRANCH_ID,
+        root_message_id: str = "",
+        checkpoint: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         repo = _deep_repository()
         if repo is not None:
@@ -4070,6 +4661,9 @@ def create_app(
                 payload=dict(payload or {}),
                 child_run_id=str(child_run_id or ""),
                 parent_job_id=str(parent_job_id or ""),
+                branch_id=normalize_branch_id(branch_id),
+                root_message_id=str(root_message_id or ""),
+                checkpoint=dict(checkpoint or {}),
             )
             return dict(row)
         now = now_iso()
@@ -4094,6 +4688,11 @@ def create_app(
                 "session_id": str(session_id or ""),
                 "child_run_id": str(child_run_id or ""),
                 "parent_job_id": str(parent_job_id or ""),
+                "branch_id": normalize_branch_id(branch_id),
+                "root_message_id": str(root_message_id or "")[:128],
+                "checkpoint": dict(checkpoint or {}),
+                "state_version": 1,
+                "steer_closed": False,
                 "kind": str(kind),
                 "stage": "queued",
                 "status": "queued",
@@ -4121,7 +4720,28 @@ def create_app(
         cancel_event = Event()
 
         def runner() -> None:
-            deep_worker_slots.acquire()
+            runner_claim_token = ""
+            queued_job = _deep_job_get(job_id) or {}
+            parent_job_id = str(queued_job.get("parent_job_id", "") or "")
+            while parent_job_id:
+                if cancel_event.is_set():
+                    return
+                parent_job = _deep_job_get(parent_job_id)
+                parent_status = str(
+                    (parent_job or {}).get("status", "completed")
+                ).strip().lower()
+                parent_stage = str(
+                    (parent_job or {}).get("stage", "publish")
+                ).strip().lower()
+                parent_live = not bool((parent_job or {}).get("steer_closed")) and (
+                    parent_status in {"queued", "running", "partial"} or (
+                    parent_status == "completed" and parent_stage not in {"", "publish"}
+                    )
+                )
+                if not parent_live:
+                    break
+                time.sleep(0.05)
+            slot_acquired = False
             try:
                 repository = _deep_repository()
                 claim = getattr(repository, "claim_deep_job", None)
@@ -4132,22 +4752,140 @@ def create_app(
                         )
                     except (TypeError, ValueError):
                         stale_seconds = 90.0
+                    claim_kwargs = {
+                        "recover": bool(recover),
+                        "stale_after_seconds": stale_seconds,
+                    }
                     try:
-                        claimed = claim(
-                            str(job_id),
-                            recover=bool(recover),
-                            stale_after_seconds=stale_seconds,
+                        parameters = inspect.signature(claim).parameters.values()
+                        parameter_names = {
+                            parameter.name for parameter in parameters
+                        }
+                        accepts_kwargs = any(
+                            parameter.kind is inspect.Parameter.VAR_KEYWORD
+                            for parameter in parameters
                         )
-                    except TypeError:
-                        # Compatibility with a repository adapter that only
-                        # implements the initial queued->running claim.
-                        claimed = claim(str(job_id))
+                        if not accepts_kwargs:
+                            claim_kwargs = {
+                                key: value
+                                for key, value in claim_kwargs.items()
+                                if key in parameter_names
+                            }
+                    except (TypeError, ValueError):
+                        pass
+                    # Jobs on one session branch are durable FIFO work.  A
+                    # newer HTTP request can arrive while its predecessor is
+                    # still running; the repository intentionally returns
+                    # ``None`` for that ordering fence.  Retry the queued row
+                    # for a bounded interval so it starts automatically when
+                    # the predecessor commits, while still allowing a
+                    # crashed dispatcher to be recovered by the normal
+                    # startup sweep.
+                    try:
+                        order_wait_seconds = max(
+                            1.0,
+                            min(
+                                900.0,
+                                float(
+                                    os.environ.get(
+                                        "EQUIPMENT_DR_DEEP_JOB_ORDER_WAIT_SECONDS",
+                                        "600",
+                                    )
+                                ),
+                            ),
+                        )
+                    except (TypeError, ValueError):
+                        order_wait_seconds = 600.0
+                    order_deadline = time.monotonic() + order_wait_seconds
+                    claimed = None
+                    while True:
+                        if cancel_event.is_set():
+                            return
+                        claimed = claim(str(job_id), **claim_kwargs)
+                        if claimed is not None:
+                            break
+                        current = _deep_job_get(job_id) or {}
+                        current_status = str(
+                            current.get("status", "") or ""
+                        ).strip().lower()
+                        if current_status != "queued" or time.monotonic() >= order_deadline:
+                            # A live owner, terminal row, or an unusually long
+                            # predecessor leaves the durable row for restart
+                            # recovery/explicit retry; never execute it out of
+                            # order.
+                            return
+                        time.sleep(
+                            min(
+                                2.0,
+                                max(0.1, order_deadline - time.monotonic()),
+                            )
+                        )
                     if claimed is None:
                         # A different API process owns the row, or the job is
                         # already terminal/cancelled.  Do not emit a failure
                         # event and, importantly, do not run the target.
                         return
-                target(cancel_event)
+                    if isinstance(claimed, Mapping):
+                        runner_claim_token = str(
+                            claimed.get("claim_token", "") or ""
+                        ).strip()
+                        if runner_claim_token:
+                            with deep_worker_lock:
+                                deep_worker_claim_tokens[str(job_id)] = (
+                                    runner_claim_token
+                                )
+                    while not cancel_event.is_set():
+                        if deep_worker_slots.acquire(timeout=0.25):
+                            slot_acquired = True
+                            break
+                    if not slot_acquired:
+                        return
+                    target(cancel_event)
+            except _DeepJobClaimLost:
+                # Another worker reclaimed the durable lease. The former
+                # owner must stop without overwriting the new owner's state.
+                return
+            except _DeepJobInterrupted as exc:
+                job = _deep_job_get(job_id) or {}
+                run = str(job.get("parent_run_id", ""))
+                sid = str(job.get("session_id", ""))
+                _deep_job_update(
+                    job_id,
+                    run_id=run,
+                    session_id=sid,
+                    stage="publish",
+                    status="cancelled",
+                    progress=1.0,
+                    text="旧方向已在安全检查点中断，正在从你的新问题继续。",
+                )
+                parked: list[dict[str, Any]] = []
+                repository = _deep_repository()
+                close_steers = (
+                    getattr(repository, "close_and_park_deep_steers", None)
+                    if repository is not None
+                    else None
+                )
+                if callable(close_steers):
+                    try:
+                        parked = _call_with_deep_job_claim(
+                            close_steers, job_id, job_id
+                        )
+                    except Exception:
+                        parked = []
+                _publish_deep_event(
+                    run,
+                    "deep_job_interrupted",
+                    {
+                        "job_id": job_id,
+                        "session_id": sid,
+                        "stage": "publish",
+                        "status": "cancelled",
+                        "steer_id": exc.steer.get("steer_id", ""),
+                        "message_id": exc.steer.get("message_id", ""),
+                        "branch_id": exc.steer.get("branch_id", "main"),
+                    },
+                )
+                _schedule_deep_steer_followups(job, [exc.steer, *parked])
             except _DeepJobCancelled:
                 job = _deep_job_get(job_id) or {}
                 _deep_job_update(
@@ -4159,6 +4897,17 @@ def create_app(
                     progress=1.0,
                     text="深度研究任务已取消，已保留此前阶段摘要。",
                 )
+                repository = _deep_repository()
+                close_steers = (
+                    getattr(repository, "close_and_park_deep_steers", None)
+                    if repository is not None
+                    else None
+                )
+                if callable(close_steers):
+                    try:
+                        _call_with_deep_job_claim(close_steers, job_id, job_id)
+                    except Exception:
+                        pass
             except Exception as exc:  # pragma: no cover - defensive worker fence
                 job = _deep_job_get(job_id) or {}
                 run = str(job.get("parent_run_id", ""))
@@ -4189,10 +4938,17 @@ def create_app(
                         },
                     )
             finally:
-                deep_worker_slots.release()
+                if slot_acquired:
+                    deep_worker_slots.release()
                 with deep_worker_lock:
                     deep_worker_threads.pop(str(job_id), None)
                     deep_worker_cancel.pop(str(job_id), None)
+                    if (
+                        runner_claim_token
+                        and deep_worker_claim_tokens.get(str(job_id))
+                        == runner_claim_token
+                    ):
+                        deep_worker_claim_tokens.pop(str(job_id), None)
 
         thread = Thread(target=runner, name=f"deep-job-{job_id}", daemon=True)
         with deep_worker_lock:
@@ -4286,10 +5042,10 @@ def create_app(
             run_id=run_id,
             session_id=session_id,
             stage="s6_authoring",
-            status="partial",
+            status="running",
             progress=0.60,
             kind="candidate",
-            text="已形成待核验候选卡，等待子运行补充受治理证据。",
+            text="已形成候选草案，继续吸收子运行的补充分析。",
             artifact_refs=[str(local_artifact.get("capability_id", ""))],
             evidence_refs=list(local_artifact.get("evidence_ids", [])),
             child_run_id=child_run_id,
@@ -4327,7 +5083,7 @@ def create_app(
             # before handing control to the child-run monitor.  In that
             # normal path ``local_artifact`` is already populated, so the
             # recovery-only branch below is skipped.  Keep a canonical
-            # candidate in scope for the later evidence gate regardless of
+            # candidate in scope for the later identity fence regardless of
             # which path supplied the artifact; otherwise a completed child
             # would raise ``UnboundLocalError`` while constructing
             # ``review_candidate`` and be reported as a spurious failure.
@@ -4401,7 +5157,7 @@ def create_app(
                 stage="retrieval",
                 status="running",
                 progress=0.62,
-                text="等待受治理检索与子运行证据返回。",
+                text="等待子运行返回补充分析。",
                 child_run_id=child_run_id,
             )
             try:
@@ -4414,11 +5170,12 @@ def create_app(
                 if cancellation_requested(active_cancel_event):
                     raise _DeepJobCancelled()
                 if poll_index % 4 == 0:
+                    _assert_deep_job_claim(job_id)
                     repository = _deep_repository()
                     touch = getattr(repository, "touch_deep_job", None) if repository is not None else None
                     if callable(touch):
                         try:
-                            touch(job_id)
+                            _call_with_deep_job_claim(touch, job_id, job_id)
                         except Exception:
                             # A heartbeat failure is observable through the
                             # next stage update; do not discard child results
@@ -4465,11 +5222,9 @@ def create_app(
                     ]))[:32],
                     "verification_status": "pending",
                 }
-                # The child run may complete successfully while still
-                # lacking an independently supported mechanism/effect.  Keep
-                # that analysis visible as a blocked draft, but do not write a
-                # capability_versions row (or expose it in the default
-                # capability projection) until the evidence gate passes.
+                # Legacy child-run recovery still enforces the server-owned
+                # equipment lineage. Evidence depth and publication quality
+                # are advisory for deep ideation and cannot block persistence.
                 review_context = {
                     "kind": "reference-research",
                     "session_id": session_id,
@@ -4477,7 +5232,9 @@ def create_app(
                     "card_binding_id": artifact.get("card_binding_id", ""),
                 }
                 review_candidate = {**dict(candidate if isinstance(candidate, Mapping) else {}), **artifact}
-                reviewable = _deep_candidate_reviewable(review_candidate, review_context)
+                identity_bound = _deep_candidate_identity_bound(
+                    review_candidate, review_context
+                )
                 _deep_job_update(
                     job_id,
                     run_id=run_id,
@@ -4485,16 +5242,20 @@ def create_app(
                     stage="validation",
                     status="running",
                     progress=0.86,
-                    text=("子运行完成，正在校验候选与证据引用。" if reviewable else "子运行完成，但证据门未通过，保留为可见阻塞草稿。"),
+                    text=(
+                        "子运行完成，正在固定候选版本。"
+                        if identity_bound
+                        else "子运行完成，但候选身份与会话绑定不一致。"
+                    ),
                     child_run_id=child_run_id,
                 )
-                if not reviewable:
+                if not identity_bound:
                     blocked_artifact = {
                         **artifact,
                         "verification_status": "blocked",
                         "draft_status": "blocked",
                         "candidate_reviewable": False,
-                        "evidence_gate": "blocked",
+                        "identity_gate": "blocked",
                     }
                     try:
                         save_reference_research(
@@ -4524,7 +5285,7 @@ def create_app(
                         stage="validation",
                         status="blocked",
                         progress=1.0,
-                        text="参考武器研究完成，但未达到稳定身份、独立机理、直接军事效果和可审核证据门；仅保留可见分析草稿。",
+                        text="参考武器研究完成，但候选身份与会话绑定不一致；仅保留可见分析草稿。",
                         child_run_id=child_run_id,
                     )
                     _publish_deep_event(
@@ -4750,9 +5511,9 @@ def create_app(
             reason = "参考武器子运行失败" if child_status == "failed" else "参考武器子运行在限定时间内未完成"
             final_status = "failed" if child_status == "failed" else "partial"
             if artifact:
-                # Keep a visible draft for failed/blocked runs, but do not
-                # append a pending capability version until the evidence gate
-                # has a completed child result.
+                # Keep a visible draft when the legacy child run itself fails
+                # or times out. These are execution failures, not research
+                # quality judgements.
                 try:
                     save_reference_research(
                         output_root,
@@ -4847,6 +5608,191 @@ def create_app(
         except Exception:
             pass
 
+    def _schedule_deep_steer_followups(
+        job: Mapping[str, Any],
+        steers: Sequence[Mapping[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """Turn parked steering messages into a serial continuation chain."""
+
+        parent_id = str(job.get("parent_run_id", ""))
+        session_id = str(job.get("session_id", ""))
+        previous_job_id = str(job.get("job_id", ""))
+        if not parent_id or not session_id:
+            return []
+        try:
+            view = _deep_parent_run(parent_id)
+            session = _deep_session_read(parent_id, session_id, strict=True)
+        except Exception:
+            return []
+        if not isinstance(session, Mapping):
+            return []
+        source_payload = job.get("payload", {})
+        source_payload = source_payload if isinstance(source_payload, Mapping) else {}
+        inherited_skill_ids = source_payload.get("active_skill_ids", [])
+        inherited_skill_ids = (
+            list(inherited_skill_ids)[:6]
+            if isinstance(inherited_skill_ids, Sequence)
+            and not isinstance(inherited_skill_ids, (str, bytes))
+            else []
+        )
+        scheduled: list[dict[str, Any]] = []
+        for steer in steers:
+            if not isinstance(steer, Mapping):
+                continue
+            content = str(steer.get("content", "")).strip()
+            if not content:
+                continue
+            branch_id = normalize_branch_id(
+                steer.get("branch_id") or job.get("branch_id")
+            )
+            try:
+                response = _enqueue_deep_turn_job(
+                    run_id=parent_id,
+                    view=view,
+                    session=session,
+                    content=content,
+                    focus="",
+                    create_artifact=False,
+                    active_skill_ids=inherited_skill_ids,
+                    user_message={
+                        "message_id": str(steer.get("message_id", "")),
+                        "role": "user",
+                        "content": content,
+                        "status": "parked",
+                        "branch_id": branch_id,
+                        "message_kind": "steer",
+                    },
+                    idempotency_key=f"steer:{steer.get('steer_id', '')}",
+                    fingerprint=hashlib.sha256(
+                        f"{parent_id}:{session_id}:{branch_id}:{steer.get('steer_id', '')}".encode(
+                            "utf-8"
+                        )
+                    ).hexdigest(),
+                    branch_id=branch_id,
+                    parent_message_id=str(steer.get("message_id", "")),
+                    parent_job_id=previous_job_id,
+                )
+                next_job = response.get("job", {}) if isinstance(response, Mapping) else {}
+                next_job_id = str(next_job.get("job_id", ""))
+                if next_job_id:
+                    previous_job_id = next_job_id
+                scheduled.append(dict(response))
+                _publish_deep_event(
+                    parent_id,
+                    "deep_steer_parked",
+                    {
+                        "job_id": str(job.get("job_id", "")),
+                        "next_job_id": next_job_id,
+                        "session_id": session_id,
+                        "steer_id": steer.get("steer_id", ""),
+                        "message_id": steer.get("message_id", ""),
+                        "branch_id": branch_id,
+                        "mode": steer.get("mode", "queue"),
+                        "status": "parked",
+                        "kind": "summary",
+                        "text": "该问题已排入下一轮研究。",
+                    },
+                )
+            except Exception:
+                continue
+        return scheduled
+
+    def _close_and_schedule_deep_steers(job: Mapping[str, Any]) -> list[dict[str, Any]]:
+        repository = _deep_repository()
+        close_steers = (
+            getattr(repository, "close_and_park_deep_steers", None)
+            if repository is not None
+            else None
+        )
+        if not callable(close_steers):
+            return []
+        job_id = str(job.get("job_id", ""))
+        try:
+            parked = _call_with_deep_job_claim(close_steers, job_id, job_id)
+        except Exception:
+            return []
+        return _schedule_deep_steer_followups(job, parked)
+
+    def _reconcile_completed_deep_dialogue(
+        self_job: Mapping[str, Any],
+        *,
+        parent_id: str,
+        session_id: str,
+        session: Mapping[str, Any],
+    ) -> bool:
+        """Finalize a turn whose visible answer already survived a restart.
+
+        Runtime checkpoints are committed before the provider turn returns.
+        If the API process exits after the assistant message is durable but
+        before the final job transition, replaying the provider call wastes a
+        real-model turn and can append duplicate transcript rows.  The
+        ``turn_id`` + ``final_response`` pair is the durable idempotency fence.
+        """
+
+        checkpoint = self_job.get("checkpoint", {})
+        checkpoint = checkpoint if isinstance(checkpoint, Mapping) else {}
+        if (
+            str(checkpoint.get("phase", "")).strip().lower() != "final_response"
+            or str(checkpoint.get("status", "")).strip().lower() != "completed"
+        ):
+            return False
+        messages = session.get("messages", [])
+        if not isinstance(messages, Sequence) or isinstance(messages, (str, bytes)):
+            return False
+        job_id = str(self_job.get("job_id", ""))
+        assistant = next(
+            (
+                item
+                for item in messages
+                if isinstance(item, Mapping)
+                and str(item.get("role", "")).strip().lower() == "assistant"
+                and str(item.get("status", "")).strip().lower() == "completed"
+                and str(item.get("turn_id", "")) == job_id
+            ),
+            None,
+        )
+        if assistant is None:
+            return False
+        try:
+            updated = _deep_job_update(
+                job_id,
+                run_id=parent_id,
+                session_id=session_id,
+                stage="publish",
+                status="completed",
+                progress=1.0,
+                text="已从最终 checkpoint 恢复深研答复，未重复调用模型。",
+                checkpoint=checkpoint,
+            )
+        except _DeepJobClaimLost:
+            raise
+        except Exception:
+            # Leave the durable row recoverable. A later API restart can retry
+            # this reconciliation without invoking the provider again.
+            return True
+        if not isinstance(updated, Mapping) or str(updated.get("status", "")).lower() != "completed":
+            return True
+        _publish_deep_event(
+            parent_id,
+            "deep_research_completed",
+            {
+                "job_id": job_id,
+                "session_id": session_id,
+                "stage": "publish",
+                "status": "completed",
+                "result_count": len(assistant.get("artifact_refs", []) or []),
+                "recovered_from_checkpoint": True,
+            },
+        )
+        _close_and_schedule_deep_steers(
+            {
+                **dict(self_job),
+                "parent_run_id": parent_id,
+                "session_id": session_id,
+            }
+        )
+        return True
+
     def _execute_deep_dialogue_job(
         job: Mapping[str, Any],
         cancel_event: Event,
@@ -4897,6 +5843,12 @@ def create_app(
             or ""
         ).strip()[:DEEP_THINKING_MAX_MESSAGE_CHARS]
         focus = str(payload.get("focus", "") or "").strip()[:1600]
+        branch_id = normalize_branch_id(
+            row.get("branch_id") or payload.get("branch_id")
+        )
+        root_message_id = str(
+            row.get("root_message_id") or payload.get("root_message_id") or ""
+        )
         if not job_id or not parent_id or not session_id or not question:
             _mark_deep_recovery_failure(
                 row,
@@ -4905,7 +5857,7 @@ def create_app(
             )
             return
         try:
-            parent = service.get_run(parent_id)
+            parent = _deep_parent_run(parent_id)
         except Exception as exc:
             _mark_deep_recovery_failure(row, message=f"parent run unavailable: {exc}")
             return
@@ -4916,6 +5868,14 @@ def create_app(
         if cancel_event.is_set():
             raise _DeepJobCancelled()
 
+        if _reconcile_completed_deep_dialogue(
+            row,
+            parent_id=parent_id,
+            session_id=session_id,
+            session=session,
+        ):
+            return
+
         # The initial HTTP path writes the user message before queueing.  A
         # crash can occur in the tiny window before that write, so recover it
         # once by content rather than blindly appending a duplicate transcript
@@ -4925,6 +5885,11 @@ def create_app(
             isinstance(item, Mapping)
             and str(item.get("role", "")).strip().lower() == "user"
             and str(item.get("content", "")).strip() == question
+            and normalize_branch_id(item.get("branch_id")) == branch_id
+            and (
+                not root_message_id
+                or str(item.get("message_id", "")) == root_message_id
+            )
             for item in messages
         ) if isinstance(messages, Sequence) and not isinstance(messages, (str, bytes)) else False
         if not has_user:
@@ -4934,6 +5899,8 @@ def create_app(
                 role="user",
                 content=question,
                 status="completed",
+                branch_id=branch_id,
+                turn_id=job_id,
             )
             _persist_deep_message(session_id, user_message)
             _publish_deep_event(
@@ -4953,10 +5920,18 @@ def create_app(
             session,
             question,
             focus,
-            bool(payload.get("create_artifact", True)),
+            bool(payload.get("create_artifact", False)),
             job_id=job_id,
             append_user=False,
             cancel_event=cancel_event,
+            branch_id=branch_id,
+            source_channel=str(payload.get("channel") or "web"),
+            active_skill_ids=(
+                payload.get("active_skill_ids", [])
+                if isinstance(payload.get("active_skill_ids", []), Sequence)
+                and not isinstance(payload.get("active_skill_ids", []), (str, bytes))
+                else []
+            ),
         )
         if cancel_event.is_set():
             raise _DeepJobCancelled()
@@ -4971,18 +5946,24 @@ def create_app(
         ).strip().lower().replace("-", "_")
         final_status = (
             result_status
-            if result_status in {"partial", "failed", "blocked", "cancelled"}
+            if result_status in {"partial", "failed", "cancelled"}
             else workflow_status
-            if workflow_status in {"partial", "failed", "blocked", "cancelled"}
+            if workflow_status in {"partial", "failed", "cancelled"}
             else "completed"
         )
+        finalization_status = str(
+            (result.get("answer", {}) or {}).get("finalization_status", "")
+            if isinstance(result, Mapping)
+            and isinstance(result.get("answer", {}), Mapping)
+            else ""
+        ).strip().lower()
         updated_job = _deep_job_update(
             job_id,
             run_id=parent_id,
             session_id=session_id,
             stage=(
                 "validation"
-                if final_status in {"partial", "failed", "blocked", "cancelled"}
+                if final_status in {"partial", "failed", "cancelled"}
                 else "publish"
             ),
             status=final_status,
@@ -4992,12 +5973,12 @@ def create_app(
                 if final_status == "partial"
                 else "深度思考恢复失败，已保留可见阶段摘要。"
                 if final_status == "failed"
-                else "深度思考恢复被证据门阻塞，已保留阶段摘要。"
-                if final_status == "blocked"
                 else "深度思考任务已取消，已保留此前阶段摘要。"
                 if final_status == "cancelled"
                 else "深度思考完成，结果以待核验版本保留。"
                 if artifact
+                else "本轮已形成高价值候选，等待用户确认是否形成能力卡。"
+                if finalization_status == "awaiting_user_confirmation"
                 else "深度思考完成，本轮仅返回可见分析。"
             ),
             error=str(result.get("job_error", "") or "")[:1000]
@@ -5010,17 +5991,22 @@ def create_app(
             if isinstance(artifact, Mapping)
             and isinstance(artifact.get("evidence_ids", []), list)
             else [],
+            checkpoint=(
+                result.get("working_memory")
+                if isinstance(result, Mapping)
+                and isinstance(result.get("working_memory"), Mapping)
+                and "phase" in result.get("working_memory", {})
+                else None
+            ),
         )
         durable_status = str(
             updated_job.get("status", "") if isinstance(updated_job, Mapping) else ""
         ).strip().lower()
-        if durable_status in {"partial", "failed", "blocked", "cancelled"}:
+        if durable_status in {"partial", "failed", "cancelled"}:
             final_status = durable_status
         event_type = (
             "deep_research_completed"
             if final_status == "completed"
-            else "deep_research_blocked"
-            if final_status == "blocked"
             else "deep_job_cancelled"
             if final_status == "cancelled"
             else "deep_research_failed"
@@ -5033,7 +6019,7 @@ def create_app(
                 "session_id": session_id,
                 "stage": (
                     "validation"
-                    if final_status in {"partial", "failed", "blocked", "cancelled"}
+                    if final_status in {"partial", "failed", "cancelled"}
                     else "publish"
                 ),
                 "status": final_status,
@@ -5042,6 +6028,15 @@ def create_app(
                 if isinstance(result, Mapping)
                 else "",
             },
+        )
+        _close_and_schedule_deep_steers(
+            {
+                **row,
+                "job_id": job_id,
+                "parent_run_id": parent_id,
+                "session_id": session_id,
+                "branch_id": branch_id,
+            }
         )
 
     def _resume_deep_dialogue_job(job: Mapping[str, Any], cancel_event: Event) -> None:
@@ -5085,7 +6080,7 @@ def create_app(
             )
             return
         try:
-            parent = service.get_run(parent_id)
+            parent = _deep_parent_run(parent_id)
         except Exception as exc:
             _mark_deep_recovery_failure(row, message=f"parent run unavailable: {exc}")
             return
@@ -5348,9 +6343,11 @@ def create_app(
             )
             session_id = str(job.get("session_id") or payload.get("session_id") or "")
             if is_reference:
-                target = lambda event, item=job: _resume_reference_job(item, event)
+                def target(event: Event, item=job) -> None:
+                    _resume_reference_job(item, event)
             elif is_dialogue:
-                target = lambda event, item=job: _resume_deep_dialogue_job(item, event)
+                def target(event: Event, item=job) -> None:
+                    _resume_deep_dialogue_job(item, event)
             else:
                 question = str(payload.get("question", "") or "").strip()
                 if not question or not session_id:
@@ -5360,13 +6357,13 @@ def create_app(
 
                 def target(event: Event, item=job, sid=session_id, prompt=question) -> None:
                     try:
-                        parent = service.get_run(str(item.get("parent_run_id", "")))
+                        parent = _deep_parent_run(str(item.get("parent_run_id", "")))
                         session = _deep_session_read(str(item.get("parent_run_id", "")), sid)
                         if session is None:
                             _mark_deep_recovery_failure(item, message="deep-thinking session not found")
                             return
                         focus = str((item.get("payload", {}) or {}).get("focus", "") or "")
-                        create_artifact = bool((item.get("payload", {}) or {}).get("create_artifact", True))
+                        create_artifact = bool((item.get("payload", {}) or {}).get("create_artifact", False))
                         result = _answer_deep_turn(
                             str(item.get("parent_run_id", "")),
                             parent,
@@ -5377,6 +6374,14 @@ def create_app(
                             job_id=str(item.get("job_id", "")),
                             append_user=False,
                             cancel_event=event,
+                            source_channel=str((item.get("payload", {}) or {}).get("channel") or "web"),
+                            active_skill_ids=(
+                                (item.get("payload", {}) or {}).get(
+                                    "active_skill_ids", []
+                                )
+                                if isinstance(item.get("payload", {}), Mapping)
+                                else []
+                            ),
                         )
                         if event.is_set():
                             raise _DeepJobCancelled()
@@ -5399,16 +6404,16 @@ def create_app(
                         ).strip().lower().replace("-", "_")
                         final_status = (
                             result_status
-                            if result_status in {"partial", "failed", "blocked", "cancelled"}
+                            if result_status in {"partial", "failed", "cancelled"}
                             else workflow_status
-                            if workflow_status in {"partial", "failed", "blocked", "cancelled"}
+                            if workflow_status in {"partial", "failed", "cancelled"}
                             else "completed"
                         )
                         updated_job = _deep_job_update(
                             str(item.get("job_id", "")),
                             run_id=str(item.get("parent_run_id", "")),
                             session_id=sid,
-                            stage="validation" if final_status in {"partial", "failed", "blocked", "cancelled"} else "publish",
+                            stage="validation" if final_status in {"partial", "failed", "cancelled"} else "publish",
                             status=final_status,
                             progress=1.0,
                             text=(
@@ -5416,8 +6421,6 @@ def create_app(
                                 if final_status == "partial"
                                 else "深度思考恢复失败，已保留可见阶段摘要。"
                                 if final_status == "failed"
-                                else "深度思考恢复被证据门阻塞，已保留阶段摘要。"
-                                if final_status == "blocked"
                                 else "深度思考恢复完成，结果已保留。"
                                 if artifact
                                 else "深度思考恢复完成，本轮仅返回可见分析。"
@@ -5433,13 +6436,11 @@ def create_app(
                             if isinstance(updated_job, Mapping)
                             else ""
                         ).strip().lower()
-                        if durable_status in {"partial", "failed", "blocked", "cancelled"}:
+                        if durable_status in {"partial", "failed", "cancelled"}:
                             final_status = durable_status
                         event_type = (
                             "deep_research_completed"
                             if final_status == "completed"
-                            else "deep_research_blocked"
-                            if final_status == "blocked"
                             else "deep_job_cancelled"
                             if final_status == "cancelled"
                             else "deep_research_failed"
@@ -5450,7 +6451,7 @@ def create_app(
                             {
                                 "job_id": str(item.get("job_id", "")),
                                 "session_id": sid,
-                                "stage": "validation" if final_status in {"partial", "failed", "blocked", "cancelled"} else "publish",
+                                "stage": "validation" if final_status in {"partial", "failed", "cancelled"} else "publish",
                                 "status": final_status,
                                 "result_count": 1 if artifact else 0,
                                 "error": str(result.get("job_error", "") or "")[:1000]
@@ -5523,8 +6524,6 @@ def create_app(
             payload = dict(payload) if isinstance(payload, Mapping) else {}
             candidate_payload = payload.get("candidate", {})
             candidate_payload = dict(candidate_payload) if isinstance(candidate_payload, Mapping) else {}
-            query = str(payload.get("query", "") or "").strip()
-            focus = str(payload.get("focus", "") or "").strip()
             hypothesis = str(
                 candidate_payload.get("hypothesis_id")
                 or payload.get("hypothesis_id")
@@ -5704,9 +6703,50 @@ def create_app(
         completer = getattr(repo, "complete_deep_idempotency", None)
         if not callable(completer):
             return
-        try: repo.complete_deep_idempotency(scope_key=str(run_id), operation=operation, idempotency_key=str(key), resource_id=resource_id, response=dict(response))
+        try:
+            repo.complete_deep_idempotency(
+                scope_key=str(run_id),
+                operation=operation,
+                idempotency_key=str(key),
+                resource_id=resource_id,
+                response=dict(response),
+            )
         except Exception as exc:
+            # Completion itself is the replay commit.  If the write failed
+            # before a response was stored, release_deep_idempotency's
+            # conditional delete removes only the still-empty claim and lets
+            # a retry proceed.  If another worker committed the response in
+            # the race, the repository predicate preserves that completed
+            # claim and replay safety is retained.
+            _release_deep_idempotency(
+                run_id=run_id,
+                operation=operation,
+                key=key,
+            )
             raise HTTPException(status_code=503, detail="deep idempotency ledger unavailable") from exc
+
+    def _release_deep_idempotency(*, run_id: str, operation: str, key: str) -> None:
+        """Best-effort removal of an empty claim after a failed mutation.
+
+        Durable claims are created before side effects.  If the side effect
+        fails and no response was committed, retaining that empty row would
+        permanently fence a retry.  Legacy adapters simply have no release
+        method; modern repositories expose the conditional delete below.
+        Never mask the original operation error with a cleanup failure.
+        """
+
+        repo = _deep_repository()
+        releaser = getattr(repo, "release_deep_idempotency", None) if repo is not None else None
+        if not callable(releaser):
+            return
+        try:
+            releaser(
+                scope_key=str(run_id),
+                operation=str(operation),
+                idempotency_key=str(key),
+            )
+        except Exception:
+            return
 
     def _replay_or_raise_in_progress(claimed: Mapping[str, Any] | None) -> dict[str, Any] | None:
         """Replay a completed idempotent request or fence an in-flight one.
@@ -5750,7 +6790,7 @@ def create_app(
             else {}
         )
         try:
-            persisted = creator(
+            creator(
                 session_id=str(session.get("session_id", "")),
                 parent_run_id=str(session.get("run_id", "")),
                 kind=str(session.get("kind", "deep-thinking")),
@@ -5787,7 +6827,12 @@ def create_app(
                 return False
         return True
 
-    def _persist_deep_message(session_id: str, message: Mapping[str, Any]) -> None:
+    def _persist_deep_message(
+        session_id: str,
+        message: Mapping[str, Any],
+        *,
+        metadata: Mapping[str, Any] | None = None,
+    ) -> None:
         if bool(message.get("_durable_persisted")):
             # ``_append_visible_deep_message`` already wrote the fallback
             # message to SQLite when the legacy sidecar was unavailable.
@@ -5804,6 +6849,13 @@ def create_app(
                 status=str(message.get("status", "completed")),
                 artifact_refs=list(message.get("artifact_refs", [])) if isinstance(message.get("artifact_refs", []), list) else [],
                 version_refs=list(message.get("version_refs", [])) if isinstance(message.get("version_refs", []), list) else [],
+                parent_message_id=str(message.get("parent_message_id", "")),
+                branch_id=normalize_branch_id(message.get("branch_id")),
+                turn_id=str(message.get("turn_id", "")),
+                message_kind=str(message.get("message_kind", "message")),
+                metadata=_deep_message_metadata(
+                    metadata if metadata is not None else message.get("metadata", {})
+                ),
             )
         except Exception:
             pass
@@ -5817,6 +6869,11 @@ def create_app(
         status: str = "completed",
         artifact_refs: Sequence[str] = (),
         version_refs: Sequence[str] = (),
+        parent_message_id: str = "",
+        branch_id: str = DEFAULT_BRANCH_ID,
+        turn_id: str = "",
+        message_kind: str = "message",
+        metadata: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Append a visible message using SQL-first authority.
 
@@ -5827,47 +6884,44 @@ def create_app(
         sidecar-only branch is retained solely for pre-ledger adapters.
         """
 
+        safe_metadata = _deep_message_metadata(metadata)
         repo = _deep_repository()
         append = getattr(repo, "append_deep_message", None) if repo is not None else None
         if callable(append):
             # Write the authoritative transcript first.  Do not fall back to
             # a sidecar if this raises; doing so creates divergent histories.
-            accepts_version_refs = True
+            accepted_parameters: set[str] | None = None
+            accepts_var_kwargs = False
             try:
                 parameters = inspect.signature(append).parameters
-                accepts_version_refs = (
-                    "version_refs" in parameters
-                    or any(
-                        parameter.kind is inspect.Parameter.VAR_KEYWORD
-                        for parameter in parameters.values()
-                    )
+                accepted_parameters = set(parameters)
+                accepts_var_kwargs = any(
+                    parameter.kind is inspect.Parameter.VAR_KEYWORD
+                    for parameter in parameters.values()
                 )
             except (TypeError, ValueError):
-                # Builtin/proxy callables may not expose a signature.  Passing
-                # the current keyword keeps the modern contract; a genuine
-                # operational TypeError must not be mistaken for an old
-                # adapter mismatch.
-                accepts_version_refs = True
-            if accepts_version_refs:
-                message = append(
-                    session_id=session_id,
-                    role=role,
-                    content=content,
-                    status=status,
-                    artifact_refs=list(artifact_refs),
-                    version_refs=list(version_refs),
-                )
-            else:
-                # Adapters from the first ledger revision did not yet expose
-                # ``version_refs``.  Preserve compatibility only for this
-                # inspected signature mismatch.
-                message = append(
-                    session_id=session_id,
-                    role=role,
-                    content=content,
-                    status=status,
-                    artifact_refs=list(artifact_refs),
-                )
+                accepted_parameters = None
+                accepts_var_kwargs = True
+            append_kwargs = {
+                "session_id": session_id,
+                "role": role,
+                "content": content,
+                "status": status,
+                "artifact_refs": list(artifact_refs),
+                "version_refs": list(version_refs),
+                "parent_message_id": str(parent_message_id or ""),
+                "branch_id": normalize_branch_id(branch_id),
+                "turn_id": str(turn_id or ""),
+                "message_kind": str(message_kind or "message"),
+                "metadata": safe_metadata,
+            }
+            if accepted_parameters is not None and not accepts_var_kwargs:
+                append_kwargs = {
+                    key: value
+                    for key, value in append_kwargs.items()
+                    if key in accepted_parameters
+                }
+            message = append(**append_kwargs)
             result = dict(message) if isinstance(message, Mapping) else {
                 "session_id": session_id,
                 "role": role,
@@ -5875,7 +6929,13 @@ def create_app(
                 "status": status,
                 "artifact_refs": list(artifact_refs),
                 "version_refs": list(version_refs),
+                "parent_message_id": str(parent_message_id or ""),
+                "branch_id": normalize_branch_id(branch_id),
+                "turn_id": str(turn_id or ""),
+                "message_kind": str(message_kind or "message"),
+                "metadata": safe_metadata,
             }
+            result["metadata"] = safe_metadata
             result["_durable_persisted"] = True
             # Keep old JSON readers useful, but never make this projection a
             # prerequisite for a successful durable append (SQL-only restart
@@ -5888,7 +6948,12 @@ def create_app(
                     role=role,
                     content=content,
                     artifact_refs=artifact_refs,
+                    version_refs=version_refs,
                     status=status,
+                    parent_message_id=parent_message_id,
+                    branch_id=branch_id,
+                    turn_id=turn_id,
+                    message_kind=message_kind,
                 )
             except Exception:
                 pass
@@ -5904,11 +6969,18 @@ def create_app(
             role=role,
             content=content,
             artifact_refs=artifact_refs,
+            version_refs=version_refs,
             status=status,
+            parent_message_id=parent_message_id,
+            branch_id=branch_id,
+            turn_id=turn_id,
+            message_kind=message_kind,
         )
         result = dict(message)
         if version_refs:
             result["version_refs"] = list(version_refs)
+        if safe_metadata:
+            result["metadata"] = safe_metadata
         return result
 
     def _deep_session_read(
@@ -5985,6 +7057,10 @@ def create_app(
                 "capability_id": context_candidate.get("capability_id", ""), "card_binding_id": durable.get("card_binding_id", ""),
                 "capability_name": context_candidate.get("name") or context_candidate.get("title", ""), "hypothesis_id": durable.get("hypothesis_id", ""),
                 "context_refs": context_refs, "messages": messages, "artifacts": [],
+                "working_memory": dict(durable.get("working_memory", {}))
+                if isinstance(durable.get("working_memory"), Mapping)
+                else {},
+                "branches": [],
                 "status": durable.get("status", "active"), "created_by": durable.get("created_by", "analyst"),
                 "created_at": durable.get("created_at", ""), "updated_at": durable.get("updated_at", ""),
             }
@@ -5992,8 +7068,20 @@ def create_app(
             # corresponding snapshots so a SQL-only deployment can resume a
             # session without depending on a sidecar file.
             if repo is not None:
+                list_branches = getattr(repo, "list_deep_branches", None)
+                if callable(list_branches):
+                    try:
+                        result["branches"] = [
+                            dict(item)
+                            for item in list_branches(session_id)
+                            if isinstance(item, Mapping)
+                        ]
+                    except Exception as exc:
+                        if strict:
+                            raise _DeepLedgerUnavailable(
+                                "deep branch ledger unavailable"
+                            ) from exc
                 list_versions = getattr(repo, "list_capability_versions", None)
-                version_method_available = callable(list_versions)
                 try:
                     # Never query an empty binding as a wildcard for every
                     # card in the run.  Load the run's ledger once, then
@@ -6003,17 +7091,55 @@ def create_app(
                     all_versions = list_versions(run_id) if callable(list_versions) else []
                     wanted_binding = str(durable.get("card_binding_id", "") or "").strip()
                     wanted_hypothesis = str(durable.get("hypothesis_id", "") or "").strip()
-                    versions = (
-                        [
-                            item
-                            for item in (all_versions if isinstance(all_versions, Sequence) else [])
-                            if isinstance(item, Mapping)
-                            and (not wanted_binding or str(item.get("card_binding_id", "") or "").strip() == wanted_binding)
-                            and (not wanted_hypothesis or str(item.get("hypothesis_id", "") or "").strip() == wanted_hypothesis)
-                        ]
-                        if (wanted_binding or wanted_hypothesis)
-                        else []
+                    # A contextual dialogue may fork a genuinely new
+                    # hypothesis while remaining about the same canonical
+                    # equipment.  Such versions deliberately receive a new
+                    # binding/hypothesis, but the authoring worker stamps the
+                    # immutable source session id into the snapshot.  On a
+                    # process restart we must recover those artifacts as part
+                    # of this session; filtering only by the session's
+                    # original binding/hypothesis would silently hide them.
+                    # Keep the original lineage fence as the primary match,
+                    # and admit a source-session match only from this run's
+                    # already scoped ledger.  Never treat an empty binding or
+                    # hypothesis as a wildcard.
+                    scoped_versions = (
+                        all_versions if isinstance(all_versions, Sequence) else []
                     )
+                    versions = []
+                    for item in scoped_versions:
+                        if not isinstance(item, Mapping):
+                            continue
+                        binding_match = (
+                            not wanted_binding
+                            or str(item.get("card_binding_id", "") or "").strip()
+                            == wanted_binding
+                        )
+                        hypothesis_match = (
+                            not wanted_hypothesis
+                            or str(item.get("hypothesis_id", "") or "").strip()
+                            == wanted_hypothesis
+                        )
+                        # Empty binding/hypothesis values are never a lineage
+                        # wildcard.  A row is lineage-matched only when the
+                        # session has at least one server-bound identifier;
+                        # source-session matching remains safe even for an
+                        # older session row that predates those identifiers.
+                        lineage_match = bool(wanted_binding or wanted_hypothesis) and binding_match and hypothesis_match
+                        snapshot = item.get("snapshot")
+                        snapshot = snapshot if isinstance(snapshot, Mapping) else {}
+                        source_session = str(
+                            item.get("source_session_id", "")
+                            or snapshot.get("source_session_id", "")
+                            or ""
+                        ).strip()
+                        if lineage_match or source_session == str(session_id).strip():
+                            versions.append(item)
+                    # An unbound/global session is analysis-only and cannot
+                    # expose arbitrary run artifacts.  It can be upgraded to
+                    # a concrete target later, at which point the durable
+                    # session row has a binding/hypothesis and the branch
+                    # above applies.
                     # Recover stable identity from the server-owned formal
                     # baseline as well as deep versions.  Formal v1 remains
                     # immutable and is never exposed as a deep artifact.
@@ -6024,6 +7150,22 @@ def create_app(
                             if isinstance(item, Mapping)
                             and str(item.get("status", "")).strip().lower() == "formal"
                             and isinstance(item.get("snapshot"), Mapping)
+                            # A version produced by this session may belong
+                            # to a newly forked hypothesis.  It is an
+                            # artifact to restore, not the canonical formal
+                            # baseline used to re-establish the target
+                            # equipment identity.
+                            and (wanted_binding or wanted_hypothesis)
+                            and (
+                                not wanted_binding
+                                or str(item.get("card_binding_id", "") or "").strip()
+                                == wanted_binding
+                            )
+                            and (
+                                not wanted_hypothesis
+                                or str(item.get("hypothesis_id", "") or "").strip()
+                                == wanted_hypothesis
+                            )
                         ),
                         None,
                     )
@@ -6063,12 +7205,33 @@ def create_app(
                                 **dict(context_candidate),
                                 **canonical_candidate,
                             }
+                            # A formal baseline is server-owned evidence of
+                            # the target equipment.  Restore the authoring
+                            # fence for sessions created before the explicit
+                            # ``canonical_candidate`` marker was introduced.
+                            context_refs["canonical_candidate"] = True
                             result["context_refs"] = context_refs
                     result["artifacts"] = [
-                        {**dict(item.get("snapshot", {})), "artifact_id": item.get("snapshot", {}).get("capability_id", ""), "version_id": item.get("version_id", ""), "version_status": item.get("status", "pending_verification")}
+                        {
+                            **dict(item.get("snapshot", {})),
+                            "artifact_id": item.get("snapshot", {}).get("capability_id", ""),
+                            "version_id": item.get("version_id", ""),
+                            "version_status": item.get("status", "pending_verification"),
+                        }
                         for item in versions
                         if isinstance(item.get("snapshot"), Mapping)
-                        and str(item.get("status", "pending_verification") or "pending_verification").strip().lower() != "formal"
+                        and str(
+                            item.get("status", "pending_verification") or "pending_verification"
+                        ).strip().lower().replace("-", "_")
+                        not in {
+                            "formal",
+                            "deleted",
+                            "rejected",
+                            "rolled_back",
+                            "cancelled",
+                            "failed",
+                            "blocked",
+                        }
                     ]
                 except Exception as exc:
                     # A configured version ledger is authoritative too.  Keep
@@ -6113,40 +7276,71 @@ def create_app(
             "created_at",
             "updated_at",
             "scope",
+            "working_memory",
+            "branches",
         }
         public = {
             key: sanitize_runtime_payload(session.get(key), max_string_length=2000)
             for key in allowed
             if key in session
         }
+        parent_run_id = str(
+            session.get("parent_run_id") or session.get("run_id") or ""
+        ).strip()
+        if parent_run_id and "run_id" not in public:
+            public["run_id"] = parent_run_id[:128]
+        if parent_run_id:
+            public["parent_run_id"] = parent_run_id[:128]
+        snapshot = (
+            session.get("query_snapshot")
+            if isinstance(session.get("query_snapshot"), Mapping)
+            else {}
+        )
+        query_text = str(
+            session.get("query") or snapshot.get("query") or session.get("run_topic") or ""
+        ).strip()
+        if query_text:
+            public["query"] = sanitize_runtime_payload(query_text[:1200], max_string_length=1200)
+        if session.get("query_snapshot_hash"):
+            public["query_snapshot_hash"] = str(session.get("query_snapshot_hash", ""))[:128]
+        if session.get("run_topic"):
+            public["run_topic"] = str(session.get("run_topic", ""))[:400]
+        if session.get("capability_name") and "capability_name" not in public:
+            public["capability_name"] = str(session.get("capability_name", ""))[:240]
         messages = session.get("messages", [])
         if isinstance(messages, Sequence) and not isinstance(messages, (str, bytes)):
             visible_messages: list[dict[str, Any]] = []
             for item in list(messages)[-80:]:
                 if not isinstance(item, Mapping):
                     continue
-                visible_messages.append(
-                    {
-                        "message_id": str(item.get("message_id", ""))[:128],
-                        "role": str(item.get("role", "user"))[:24],
-                        "content": sanitize_runtime_payload(
-                            str(item.get("content", ""))[:8000],
-                            max_string_length=8000,
-                        ),
-                        "status": str(item.get("status", "completed"))[:32],
-                        "created_at": str(item.get("created_at", ""))[:64],
-                        "artifact_refs": sanitize_runtime_payload(
-                            list(item.get("artifact_refs", []))[:16]
-                            if isinstance(item.get("artifact_refs", []), (list, tuple, set))
-                            else []
-                        ),
-                        "version_refs": sanitize_runtime_payload(
-                            list(item.get("version_refs", []))[:16]
-                            if isinstance(item.get("version_refs", []), (list, tuple, set))
-                            else []
-                        ),
-                    }
-                )
+                visible_message = {
+                    "message_id": str(item.get("message_id", ""))[:128],
+                    "parent_message_id": str(item.get("parent_message_id", ""))[:128],
+                    "branch_id": normalize_branch_id(item.get("branch_id")),
+                    "turn_id": str(item.get("turn_id", ""))[:128],
+                    "message_kind": str(item.get("message_kind", "message"))[:32],
+                    "role": str(item.get("role", "user"))[:24],
+                    "content": sanitize_runtime_payload(
+                        str(item.get("content", ""))[:8000],
+                        max_string_length=8000,
+                    ),
+                    "status": str(item.get("status", "completed"))[:32],
+                    "created_at": str(item.get("created_at", ""))[:64],
+                    "artifact_refs": sanitize_runtime_payload(
+                        list(item.get("artifact_refs", []))[:16]
+                        if isinstance(item.get("artifact_refs", []), (list, tuple, set))
+                        else []
+                    ),
+                    "version_refs": sanitize_runtime_payload(
+                        list(item.get("version_refs", []))[:16]
+                        if isinstance(item.get("version_refs", []), (list, tuple, set))
+                        else []
+                    ),
+                }
+                public_metadata = _deep_message_metadata(item.get("metadata", {}))
+                if public_metadata:
+                    visible_message["metadata"] = public_metadata
+                visible_messages.append(visible_message)
             public["messages"] = visible_messages
         artifacts = session.get("artifacts", [])
         if isinstance(artifacts, Sequence) and not isinstance(artifacts, (str, bytes)):
@@ -6155,7 +7349,218 @@ def create_app(
                 for item in list(artifacts)[-24:]
                 if isinstance(item, Mapping)
             ]
+        stored_memory = public.get("working_memory")
+        stored_memory = stored_memory if isinstance(stored_memory, Mapping) else {}
+        active_branch = normalize_branch_id(
+            stored_memory.get("active_branch_id") or DEFAULT_BRANCH_ID
+        )
+        branch_memory = branch_working_memory(stored_memory, active_branch)
+        context_refs = (
+            public.get("context_refs")
+            if isinstance(public.get("context_refs"), Mapping)
+            else {}
+        )
+        raw_active_skills = branch_memory.get(
+            "active_skill_ids", context_refs.get("active_skill_ids", [])
+        )
+        public["active_skill_ids"] = (
+            [
+                str(value).strip()[:140]
+                for value in list(raw_active_skills)[:6]
+                if str(value or "").strip()
+            ]
+            if isinstance(raw_active_skills, Sequence)
+            and not isinstance(raw_active_skills, (str, bytes))
+            else []
+        )
+        public["context_usage"] = sanitize_runtime_payload(
+            conversation_context_usage(
+                messages=branch_message_path(
+                    public.get("messages")
+                    if isinstance(public.get("messages"), Sequence)
+                    else [],
+                    active_branch,
+                    public.get("branches")
+                    if isinstance(public.get("branches"), Sequence)
+                    else [],
+                ),
+                working_memory=branch_memory,
+            ),
+            max_string_length=400,
+        )
         return public
+
+    def _deep_session_history_public(session: Mapping[str, Any] | None) -> dict[str, Any]:
+        """Lightweight cross-run history row for the directed deep-research sidebar."""
+
+        if not isinstance(session, Mapping):
+            return {}
+        parent_run_id = str(
+            session.get("parent_run_id") or session.get("run_id") or ""
+        ).strip()
+        snapshot = (
+            session.get("query_snapshot")
+            if isinstance(session.get("query_snapshot"), Mapping)
+            else {}
+        )
+        query_text = str(
+            session.get("query") or snapshot.get("query") or session.get("run_topic") or ""
+        ).strip()
+        return {
+            "session_id": str(session.get("session_id", ""))[:128],
+            "run_id": parent_run_id[:128],
+            "parent_run_id": parent_run_id[:128],
+            "kind": str(session.get("kind", "deep-thinking"))[:64],
+            "title": str(session.get("title", ""))[:240],
+            "status": str(session.get("status", "active"))[:32],
+            "card_binding_id": str(session.get("card_binding_id", ""))[:256],
+            "hypothesis_id": str(session.get("hypothesis_id", ""))[:256],
+            "capability_id": str(session.get("capability_id", ""))[:256],
+            "capability_name": str(session.get("capability_name", ""))[:240],
+            "query": sanitize_runtime_payload(query_text[:1200], max_string_length=1200),
+            "query_snapshot_hash": str(session.get("query_snapshot_hash", ""))[:128],
+            "query_group_key": str(
+                session.get("query_group_key") or session.get("query_snapshot_hash") or parent_run_id
+            )[:128],
+            "run_topic": str(session.get("run_topic", ""))[:400],
+            "created_at": str(session.get("created_at", ""))[:64],
+            "updated_at": str(session.get("updated_at", ""))[:64],
+            "created_by": str(session.get("created_by", ""))[:128],
+        }
+
+    def _group_deep_session_history(
+        items: Sequence[Mapping[str, Any]],
+        *,
+        current_run_id: str = "",
+        current_query: str = "",
+    ) -> list[dict[str, Any]]:
+        """Group directed deep-research sessions by Query task fingerprint."""
+
+        groups: dict[str, dict[str, Any]] = {}
+        for item in items:
+            if not isinstance(item, Mapping):
+                continue
+            query_hash = str(
+                item.get("query_group_key")
+                or item.get("query_snapshot_hash", "")
+                or ""
+            ).strip()
+            parent_id = str(
+                item.get("parent_run_id") or item.get("run_id") or ""
+            ).strip()
+            query_text = str(item.get("query") or item.get("run_topic") or "").strip()
+            group_key = query_hash or f"run:{parent_id}" or f"query:{query_text[:80]}"
+            bucket = groups.get(group_key)
+            if bucket is None:
+                bucket = {
+                    "group_key": group_key[:160],
+                    "query": query_text[:1200],
+                    "query_snapshot_hash": str(item.get("query_snapshot_hash", ""))[:128],
+                    "query_group_key": query_hash[:128],
+                    "run_ids": [],
+                    "session_count": 0,
+                    "updated_at": str(item.get("updated_at", "") or ""),
+                    "is_current": False,
+                    "sessions": [],
+                }
+                groups[group_key] = bucket
+            run_id = parent_id
+            if run_id and run_id not in bucket["run_ids"]:
+                bucket["run_ids"].append(run_id)
+            bucket["sessions"].append(dict(item))
+            bucket["session_count"] = len(bucket["sessions"])
+            updated_at = str(item.get("updated_at", "") or "")
+            if updated_at > str(bucket.get("updated_at", "") or ""):
+                bucket["updated_at"] = updated_at
+            if not bucket.get("query") and query_text:
+                bucket["query"] = query_text[:1200]
+            if current_run_id and run_id == current_run_id:
+                bucket["is_current"] = True
+            if current_query and query_text and query_text.strip() == current_query.strip():
+                bucket["is_current"] = True
+        ordered = sorted(
+            groups.values(),
+            key=lambda item: (
+                0 if item.get("is_current") else 1,
+                str(item.get("updated_at", "") or ""),
+            ),
+            reverse=False,
+        )
+        # Keep current groups first, then newest among the rest.
+        current = [item for item in ordered if item.get("is_current")]
+        others = sorted(
+            [item for item in ordered if not item.get("is_current")],
+            key=lambda item: str(item.get("updated_at", "") or ""),
+            reverse=True,
+        )
+        return current + others
+
+    def _deep_sessions_history_read(
+        *,
+        limit: int = 200,
+        include_archived: bool = True,
+        strict: bool = False,
+        tenant_id: str = "",
+        workspace_id: str = "",
+        project_id: str = "",
+        profile_id: str = "",
+    ) -> list[dict[str, Any]]:
+        repo = _deep_repository()
+        listing = (
+            getattr(repo, "list_deep_sessions_history", None) if repo is not None else None
+        )
+        if not callable(listing):
+            if strict:
+                raise _DeepLedgerUnavailable("deep session history ledger unavailable")
+            return []
+        try:
+            rows = listing(
+                limit=limit,
+                include_archived=include_archived,
+                tenant_id=_bounded_scope_id(tenant_id),
+                workspace_id=_bounded_scope_id(workspace_id),
+                project_id=_bounded_scope_id(project_id),
+                profile_id=_bounded_scope_id(profile_id),
+                kinds=(
+                    "deep-thinking",
+                    "capability-followup",
+                    "reference-research",
+                    "capability",
+                    "follow-up",
+                    "reference-weapon",
+                ),
+            )
+        except Exception as exc:
+            if strict:
+                raise _DeepLedgerUnavailable(
+                    "deep session history ledger unavailable"
+                ) from exc
+            return []
+        requested_scope = {
+            "tenant_id": _bounded_scope_id(tenant_id),
+            "workspace_id": _bounded_scope_id(workspace_id),
+            "project_id": _bounded_scope_id(project_id),
+            "profile_id": _bounded_scope_id(profile_id),
+        }
+        scope_supplied = any(requested_scope.values())
+        filtered: list[dict[str, Any]] = []
+        for item in rows if isinstance(rows, list) else []:
+            if not isinstance(item, Mapping):
+                continue
+            item_scope = item.get("scope") if isinstance(item.get("scope"), Mapping) else {}
+            normalized_item_scope = {
+                key: _bounded_scope_id(item_scope.get(key, ""))
+                for key in requested_scope
+            }
+            if scope_supplied and any(
+                value and normalized_item_scope[key] != value
+                for key, value in requested_scope.items()
+            ):
+                continue
+            if not scope_supplied and any(normalized_item_scope.values()):
+                continue
+            filtered.append(dict(item))
+        return filtered[: max(1, int(limit or 200))]
 
     def _deep_sessions_read(
         run_id: str,
@@ -6215,31 +7620,378 @@ def create_app(
         ]
 
     def _deep_context_for_run(run_id: str, view: object, body_context: Mapping[str, Any] | None = None) -> dict[str, Any]:
+        """Assemble a bounded, server-owned snapshot for one deep turn.
+
+        The browser may suggest a focus, but the contextual dialogue must be
+        grounded in the immutable run result.  Keep this envelope deliberately
+        small and field-selective: it contains visible cards, candidate
+        lineage, evidence index, round status and recent public interactions,
+        never raw traces/provider metadata/credentials or hidden reasoning.
+        """
         context: dict[str, Any] = {
             "run_id": run_id,
             "query": _deep_query(view),
             "research_route": str(getattr(view, "research_route", "") or ""),
             "discovery_branch": str(getattr(view, "discovery_branch", "") or ""),
         }
+        capability_rows: list[dict[str, Any]] = []
         try:
             rows = get_capabilities(run_id, x_role="analyst")
         except Exception:
             rows = []
         if isinstance(rows, list):
-            context["capability_ids"] = [str(row.get("capability_id", "")) for row in rows[:24] if isinstance(row, Mapping)]
-            context["capability_names"] = [str(row.get("name", "")) for row in rows[:24] if isinstance(row, Mapping)]
+            capability_rows = [dict(row) for row in rows if isinstance(row, Mapping)]
+            context["capability_ids"] = [
+                str(row.get("capability_id", ""))
+                for row in capability_rows[:24]
+                if str(row.get("capability_id", "")).strip()
+            ]
+            context["capability_names"] = [
+                str(row.get("name", ""))
+                for row in capability_rows[:24]
+                if str(row.get("name", "")).strip()
+            ]
+
+        def _card_snapshot(row: Mapping[str, Any]) -> dict[str, Any]:
+            """Select only visible, decision-bearing card fields."""
+
+            fields = (
+                "capability_id", "card_binding_id", "hypothesis_id", "name",
+                "title", "primary_equipment_identity", "equipment_form",
+                "equipment_forms", "equipment_category", "mechanism_chain",
+                "operational_mechanism", "source_winning_logic", "military_value",
+                "direct_military_effects", "mission_effect", "project_function",
+                "related_scenario", "capability_gap", "failure_boundary",
+                "validation_plan", "verification_plan", "evidence_ids",
+                "selection_status", "s6_eligible", "version_status",
+                "capability_version_status", "verification_status", "source",
+            )
+            return {
+                key: row.get(key)
+                for key in fields
+                if row.get(key) not in (None, "", [], {})
+            }
+
+        # Formal cards and pending deep versions are kept separate so the
+        # provider can compare against the baseline without mistaking a draft
+        # for an accepted result.  Reference candidates are reconstructed from
+        # the server interaction summary below.
+        formal_cards = []
+        for row in capability_rows:
+            status = str(
+                row.get("version_status")
+                or row.get("capability_version_status")
+                or row.get("verification_status")
+                or "formal"
+            ).strip().lower().replace("-", "_")
+            source = str(row.get("source", "") or "").strip().lower()
+            selection_status = str(
+                row.get("selection_status")
+                or row.get("provenance_status")
+                or ""
+            ).strip().lower().replace("-", "_")
+            if status in {"rejected", "rolled_back", "partial", "blocked", "failed", "cancelled"}:
+                continue
+            # A capability endpoint can expose low-scoring/reference rows
+            # alongside formal S6 cards.  They are useful in the candidate
+            # context, but must not be labelled as the formal baseline merely
+            # because an older artifact omitted ``is_deep_research``.
+            if selection_status in {
+                "reference", "reference_weapon", "candidate", "unselected",
+                "not_selected", "rejected", "limited",
+            } or row.get("s6_eligible") is False:
+                continue
+            if row.get("is_deep_research") or source in {
+                "deep-thinking", "reference_weapon_deep_research", "reference_weapon",
+            }:
+                continue
+            formal_cards.append(_card_snapshot(row))
+        context["formal_capability_cards"] = formal_cards[:16]
+        # Keep the result envelope shape stable for both the provider adapter
+        # and offline ``synthesize_reply``.  The selected target is filled by
+        # the launcher after canonical resolution; these aggregate lists are
+        # still useful when a caller opens a session before selecting a card.
+        context["current_result_context"] = {
+            "capability_cards": formal_cards[:16],
+            "reference_weapons": [],
+        }
         try:
             workflow = _interaction_workflow_summary(interaction_rows(run_id, view), view)
             swarm = workflow.get("swarm_cluster", {}) if isinstance(workflow, Mapping) else {}
             candidates = swarm.get("candidate_lineage", []) if isinstance(swarm, Mapping) else []
             context["candidate_count"] = len(candidates) if isinstance(candidates, list) else 0
+
+            def _candidate_snapshot(row: Mapping[str, Any]) -> dict[str, Any]:
+                fields = (
+                    "candidate_id", "hypothesis_id", "card_binding_id", "capability_id",
+                    "name", "title", "primary_equipment_identity", "equipment_form",
+                    "equipment_forms", "equipment_category", "mechanism_chain",
+                    "operational_mechanism", "winning_mechanism", "military_value",
+                    "direct_military_effects", "mission_effect", "project_function",
+                    "related_scenario", "capability_gap", "failure_boundary",
+                    "validation_plan", "evidence_ids", "direct_evidence_refs",
+                    "selection_status", "s6_eligible", "score", "status", "source",
+                )
+                return {
+                    key: row.get(key)
+                    for key in fields
+                    if row.get(key) not in (None, "", [], {})
+                }
+
+            lineage_rows = [
+                _candidate_snapshot(item)
+                for item in candidates[:24]
+                if isinstance(item, Mapping)
+            ] if isinstance(candidates, list) else []
+            context["candidate_lineage"] = lineage_rows
+            context["reference_weapons"] = [
+                item for item in lineage_rows
+                if str(item.get("selection_status", "") or "").strip().lower().replace("-", "_")
+                not in {"selected", "accepted", "formal_s6", "s6", "s6_eligible"}
+                and item.get("s6_eligible") is not True
+            ][:16]
+            context["current_result_context"]["reference_weapons"] = context[
+                "reference_weapons"
+            ]
+
+            # Evidence cards are public, auditable inputs.  Keep identifiers and
+            # short claims, but omit URLs/raw provider metadata from the model
+            # snapshot; retrieval can be requested separately when needed.
+            root = _resolve_run_root(output_root, run_id, getattr(view, "result", {}))
+            evidence_rows: list[dict[str, Any]] = []
+            if root is not None:
+                domain_path = root / "domain.jsonl"
+                if domain_path.is_file():
+                    try:
+                        for record in _jsonl_path(domain_path):
+                            if record.get("type") != "EvidenceCard":
+                                continue
+                            payload = record.get("payload", {})
+                            if not isinstance(payload, Mapping):
+                                continue
+                            item = {
+                                key: payload.get(key)
+                                for key in (
+                                    "evidence_id", "source_title", "source_tier",
+                                    "quality_assessment", "claim", "evidence_summary",
+                                )
+                                if payload.get(key) not in (None, "", [], {})
+                            }
+                            if item.get("evidence_id") and item.get("evidence_id") not in {
+                                str(existing.get("evidence_id", "")) for existing in evidence_rows
+                            }:
+                                evidence_rows.append(item)
+                            if len(evidence_rows) >= 48:
+                                break
+                    except Exception:
+                        evidence_rows = []
+            context["evidence_index"] = evidence_rows
+            context["evidence_ids"] = [
+                str(item.get("evidence_id")) for item in evidence_rows
+                if str(item.get("evidence_id", "")).strip()
+            ][:64]
+
+            # Round summary gives the dialogue a compact view of the current
+            # result state (stage/audit/report), without exposing the full
+            # trace or hidden provider payload.
+            round_summary: Mapping[str, Any] = {}
+            if root is not None:
+                summary_path = root / "round_summary.json"
+                if summary_path.is_file():
+                    try:
+                        loaded = json.loads(summary_path.read_text(encoding="utf-8"))
+                        if isinstance(loaded, Mapping):
+                            round_summary = loaded
+                    except (OSError, UnicodeDecodeError, ValueError, json.JSONDecodeError):
+                        round_summary = {}
+            if round_summary:
+                # ``round_summary.json`` is a broad audit artifact.  It may
+                # contain provider traces, nested swarm ledgers and large
+                # S1--S6 reasoning payloads which are neither needed for a
+                # contextual dialogue nor safe to put into a model prompt.
+                # Build a fresh, scalar-only projection instead of selecting
+                # whole top-level objects and relying on a late size bound.
+                selected_summary: dict[str, Any] = {}
+
+                def _summary_scalar(value: Any) -> Any:
+                    if isinstance(value, bool):
+                        return value
+                    if isinstance(value, int) and not isinstance(value, bool):
+                        return max(-1_000_000_000, min(1_000_000_000, value))
+                    if isinstance(value, float) and math.isfinite(value):
+                        return round(max(-1_000_000_000.0, min(1_000_000_000.0, value)), 3)
+                    if isinstance(value, str):
+                        return " ".join(value.split())[:240]
+                    return None
+
+                for key in ("status", "audit_status", "report_available"):
+                    value = _summary_scalar(round_summary.get(key))
+                    if value not in (None, ""):
+                        selected_summary[key] = value
+
+                # Keep only bounded operational counters/timings.  In
+                # particular, omit ``usage`` and nested provider accounting
+                # blobs; those are useful for audit pages but not for model
+                # context and have historically been a source of oversized
+                # snapshots.
+                performance_source = round_summary.get("performance_summary")
+                if isinstance(performance_source, Mapping):
+                    performance_keys = (
+                        "model_call_count",
+                        "selected_agent_count",
+                        "selected_business_agent_count",
+                        "dynamic_agent_count",
+                        "reference_agent_count",
+                        "required_agent_count",
+                        "middle_cycle_count",
+                        "middle_review_count",
+                        "inner_retry_count",
+                        "inner_review_count",
+                        "wall_time_seconds",
+                        "model_elapsed_seconds_sum",
+                        "max_model_call_seconds",
+                        "max_queue_wait_seconds",
+                        "orchestration_setup_seconds",
+                    )
+                    compact_performance = {
+                        key: value
+                        for key in performance_keys
+                        for value in (_summary_scalar(performance_source.get(key)),)
+                        if value is not None
+                    }
+                    if compact_performance:
+                        selected_summary["performance_summary"] = _bounded_deep_json(
+                            compact_performance,
+                            limit=1200,
+                        )
+
+                # Preserve only a short, visible statement of the winning
+                # logic.  Never copy ``winning_swarm`` or ``winning_mechanism``
+                # wholesale: those objects include hypothesis ledgers,
+                # reasoning nodes and provider-shaped metadata.  The compact
+                # text below is enough to orient a dialogue; detailed cards
+                # and evidence remain available through their dedicated,
+                # server-owned projections above.
+                logic_fragments: list[str] = []
+                seen_logic: set[str] = set()
+
+                def _add_logic(value: Any, *, label: str = "") -> None:
+                    if isinstance(value, str):
+                        text_value = " ".join(value.split())[:720]
+                    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+                        parts = [
+                            " ".join(str(item).split())[:360]
+                            for item in list(value)[:4]
+                            if isinstance(item, (str, int, float)) and str(item).strip()
+                        ]
+                        text_value = "；".join(parts)[:720]
+                    else:
+                        text_value = ""
+                    if not text_value:
+                        return
+                    fragment = f"{label}：{text_value}" if label else text_value
+                    key = fragment.casefold()
+                    if key not in seen_logic:
+                        seen_logic.add(key)
+                        logic_fragments.append(fragment)
+
+                winning_mechanism = round_summary.get("winning_mechanism")
+                if isinstance(winning_mechanism, str):
+                    _add_logic(winning_mechanism, label="制胜逻辑")
+                elif isinstance(winning_mechanism, Mapping):
+                    for key, label in (
+                        ("winning_logic", "制胜逻辑"),
+                        ("winning_mechanism", "制胜机理"),
+                        ("concise_winning_summary", "制胜摘要"),
+                        ("core_disruptive_difference", "关键差异"),
+                    ):
+                        _add_logic(winning_mechanism.get(key), label=label)
+
+                winning_swarm = round_summary.get("winning_swarm")
+                hypothesis_ledger = (
+                    winning_swarm.get("hypothesis_ledger")
+                    if isinstance(winning_swarm, Mapping)
+                    else None
+                )
+                hypotheses = (
+                    hypothesis_ledger.get("hypotheses")
+                    if isinstance(hypothesis_ledger, Mapping)
+                    else None
+                )
+                if isinstance(hypotheses, Sequence) and not isinstance(hypotheses, (str, bytes)):
+                    for item in list(hypotheses)[:3]:
+                        if not isinstance(item, Mapping):
+                            continue
+                        title = " ".join(
+                            str(
+                                item.get("title")
+                                or item.get("name")
+                                or item.get("equipment_form")
+                                or ""
+                            ).split()
+                        )[:180]
+                        parts: list[str] = []
+                        for key in (
+                            "changed_confrontation_variable",
+                            "decisive_advantage_thesis",
+                            "mechanism_chain",
+                            "direct_military_effects",
+                            "project_function",
+                        ):
+                            value = item.get(key)
+                            if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+                                value = "；".join(str(part) for part in list(value)[:2])
+                            if isinstance(value, str) and value.strip():
+                                parts.append(" ".join(value.split())[:360])
+                        if parts:
+                            prefix = f"方向 {title}" if title else "候选方向"
+                            _add_logic("；".join(parts), label=prefix)
+
+                if logic_fragments:
+                    selected_summary["winning_logic_summary"] = _bounded_deep_json(
+                        "；".join(logic_fragments),
+                        limit=2400,
+                    )
+
+                # Run one final redaction/size pass over the deliberately
+                # small projection.  This protects against legacy rows that
+                # contain unexpected scalar values while keeping the shape
+                # stable for providers and restart recovery.
+                projected_summary = _bounded_deep_json(selected_summary, limit=4200)
+                if isinstance(projected_summary, Mapping) and projected_summary:
+                    context["round_summary"] = dict(projected_summary)
+
+            # Recent interactions are already converted to the public
+            # interaction projection.  Retain only titles/summaries and a few
+            # structural refs, capped to avoid turning a conversation into a
+            # full-trace replay.
+            try:
+                recent_rows = interaction_rows(run_id, view)[-12:]
+            except Exception:
+                recent_rows = []
+            context["recent_visible_history"] = [
+                {
+                    key: item.get(key)
+                    for key in ("event_type", "actor", "title", "summary", "created_at", "input_refs", "output_refs")
+                    if item.get(key) not in (None, "", [], {})
+                }
+                for item in recent_rows
+                if isinstance(item, Mapping)
+            ]
         except Exception:
             pass
         if isinstance(body_context, Mapping):
             # Client context is advisory only and is bounded before storage;
             # server-derived query/run identifiers remain authoritative.
-            context["client_context"] = dict(body_context)
-        return context
+            context["client_context"] = _bounded_deep_json(dict(body_context), limit=6000)
+        # Enforce one total budget after adding all server snapshots.  Essential
+        # identifiers/query fields are inserted first and therefore survive
+        # deterministic pruning when an unusually large result is encountered.
+        bounded = _bounded_deep_json(context, limit=24000)
+        return bounded if isinstance(bounded, dict) else {
+            "run_id": run_id,
+            "query": _deep_query(view),
+        }
 
     def _candidate_from_run(run_id: str, view: object, body: Mapping[str, Any]) -> dict[str, Any]:
         """Resolve a client card to the canonical candidate-lineage row.
@@ -6388,6 +8140,14 @@ def create_app(
             "stage": details.get("stage") or default_stage,
             "status": details.get("status") or default_status,
         }
+        if job_id and not public_details.get("state_version"):
+            try:
+                job_snapshot = _deep_job_get(job_id) or {}
+                public_details["state_version"] = int(
+                    job_snapshot.get("state_version", 0) or 0
+                )
+            except (TypeError, ValueError, OverflowError):
+                public_details["state_version"] = 0
         # Runtime events do not have dedicated event_id/created_at columns.
         # Generate them before publishing so the payload remains a stable,
         # replayable public record even when the dedicated deep ledger is
@@ -6420,6 +8180,7 @@ def create_app(
                     child_run_id=str(details.get("child_run_id", "")),
                     stage=stage,
                     status=status,
+                    state_version=int(public.get("state_version", 0) or 0),
                     progress=public["progress"],
                     delta=delta,
                     evidence_refs=evidence_refs,
@@ -6454,6 +8215,270 @@ def create_app(
             # Sidecar session files are authoritative; telemetry failure must
             # not make an already saved expert turn appear lost.
             pass
+
+    def _deep_session_capability_registry(run_id: str, session: Mapping[str, Any]):
+        try:
+            registry = load_capability_registry()
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="deep capability registry unavailable") from exc
+        context = session.get("context_refs")
+        context = context if isinstance(context, Mapping) else {}
+        candidate = context.get("candidate")
+        if context.get("canonical_candidate") is not True or not isinstance(candidate, Mapping):
+            return registry
+        workspace, handle = _open_trusted_deep_runtime_workspace(
+            output_root, run_id, identity=_deep_runtime_equipment_identity(candidate)
+        )
+        try:
+            return registry.with_workspace(workspace) if workspace is not None else registry
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="deep capability registry unavailable") from exc
+        finally:
+            if handle is not None:
+                handle.close()
+
+    _DEEP_WORKSPACE_RESOURCE_KINDS = {
+        "config": "config",
+        "skill": "skill",
+        "skills": "skill",
+        "plugin": "plugin",
+        "plugins": "plugin",
+    }
+
+    def _deep_workspace_resource_kind(kind: str) -> str:
+        normalized = str(kind or "").strip().lower()
+        try:
+            return _DEEP_WORKSPACE_RESOURCE_KINDS[normalized]
+        except KeyError as exc:
+            raise HTTPException(status_code=422, detail="unsupported workspace resource kind") from exc
+
+    def _deep_session_workspace(
+        run_id: str,
+        session: Mapping[str, Any],
+    ) -> tuple[Any, Any | None]:
+        context = session.get("context_refs")
+        context = context if isinstance(context, Mapping) else {}
+        candidate = context.get("candidate")
+        if context.get("canonical_candidate") is not True or not isinstance(candidate, Mapping):
+            raise HTTPException(
+                status_code=409,
+                detail="workspace resources require a canonical equipment session",
+            )
+        identity = _deep_runtime_equipment_identity(candidate)
+        if not identity:
+            raise HTTPException(
+                status_code=409,
+                detail="workspace equipment identity is unavailable",
+            )
+        workspace, handle = _open_trusted_deep_runtime_workspace(
+            output_root, run_id, identity=identity
+        )
+        if workspace is None:
+            if handle is not None:
+                try:
+                    handle.close()
+                except Exception:
+                    pass
+            raise HTTPException(status_code=503, detail="workspace unavailable")
+        return workspace, handle
+
+    def _deep_workspace_resource_catalog(workspace: Any) -> dict[str, Any]:
+        resources: dict[str, list[str]] = {}
+        for kind in ("config", "skill", "plugin"):
+            resources[kind] = workspace.list_resources(kind)
+        return {
+            "schema_version": "deep-workspace-resources-v1",
+            "workspace": {
+                "workspace_id": str(getattr(workspace, "workspace_id", "")),
+                "identity_fingerprint": str(getattr(workspace, "identity_fingerprint", "")),
+            },
+            "resources": resources,
+            "limits": {
+                "max_resource_bytes": 2 * 1024 * 1024,
+                "editable_kinds": ["config", "skill", "plugin"],
+            },
+        }
+
+    def _read_deep_workspace_resource(
+        workspace: Any,
+        *,
+        kind: str,
+        resource_path: str,
+    ) -> dict[str, Any]:
+        canonical_kind = _deep_workspace_resource_kind(kind)
+        try:
+            payload = workspace.read_resource(canonical_kind, resource_path)
+        except FileNotFoundError as exc:
+            raise HTTPException(status_code=404, detail="workspace resource not found") from exc
+        except UnicodeError as exc:
+            raise HTTPException(status_code=415, detail="workspace resource is not UTF-8 text") from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        try:
+            content = payload.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise HTTPException(status_code=415, detail="workspace resource is not UTF-8 text") from exc
+        versions: list[dict[str, Any]] = []
+        list_versions = getattr(workspace, "list_resource_versions", None)
+        if callable(list_versions):
+            try:
+                loaded = list_versions(canonical_kind, resource_path)
+                if isinstance(loaded, Sequence):
+                    versions = [dict(item) for item in loaded if isinstance(item, Mapping)][:24]
+            except (FileNotFoundError, ValueError):
+                versions = []
+        current_hash = hashlib.sha256(payload).hexdigest()
+        current_version = next(
+            (item.get("version_id") for item in versions if item.get("sha256") == current_hash and not item.get("deleted")),
+            "",
+        )
+        try:
+            validation = validate_workspace_capability_resource(
+                canonical_kind,
+                resource_path,
+                content,
+            )
+        except ValueError as exc:
+            validation = {
+                "valid": False,
+                "kind": canonical_kind,
+                "name": str(resource_path or ""),
+                "errors": [str(exc)],
+                "warnings": [],
+                "contract": {},
+            }
+        return {
+            "kind": canonical_kind,
+            "name": str(resource_path or ""),
+            "content": content,
+            "encoding": "utf-8",
+            "bytes": len(payload),
+            "sha256": current_hash,
+            "version_id": current_version,
+            "versions": versions,
+            "validation": validation,
+        }
+
+    def _validated_deep_skill_ids(values: Sequence[object] | None, *, registry=None) -> list[str]:
+        requested: list[str] = []
+        for value in values or ():
+            skill_id = str(value or "").strip()[:140]
+            if skill_id and skill_id not in requested:
+                requested.append(skill_id)
+            if len(requested) >= 6:
+                break
+        try:
+            registry = registry if registry is not None else load_capability_registry()
+        except Exception as exc:
+            raise HTTPException(
+                status_code=503, detail="deep capability registry unavailable"
+            ) from exc
+        unknown = [skill_id for skill_id in requested if skill_id not in registry.skills]
+        if unknown:
+            raise HTTPException(
+                status_code=422,
+                detail=f"deep skill is unavailable or not enabled: {', '.join(unknown)}",
+            )
+        return requested
+
+    @app.get("/api/v1/deep-thinking/capabilities")
+    def get_deep_thinking_capabilities(
+        x_role: str = Header(default="analyst", alias="X-Role"),
+    ) -> dict[str, Any]:
+        _require_role(x_role, {"analyst", "reviewer", "auditor", "admin"})
+        try:
+            capability_registry = load_capability_registry()
+            catalog = capability_registry.public_payload()
+            # Expose the same bounded registry snapshot used by the Agent
+            # Loop.  MCP declarations remain inert until a host explicitly
+            # attaches a sandboxed adapter; this endpoint never starts one.
+            catalog["tool_registry"] = build_tool_registry(
+                capability_registry=capability_registry
+            ).public_payload()
+            catalog["mcp_host"] = (
+                deep_mcp_host.public_payload()
+                if deep_mcp_host is not None
+                else {
+                    "schema_version": "deep-mcp-host-v1",
+                    "status": "not_configured",
+                    "servers": [],
+                }
+            )
+            return catalog
+        except Exception as exc:
+            raise HTTPException(
+                status_code=503, detail="deep capability registry unavailable"
+            ) from exc
+
+    @app.patch("/api/v1/deep-thinking/plugins/{plugin_id}")
+    def update_deep_thinking_plugin(
+        plugin_id: str,
+        body: DeepPluginStateBody,
+        x_role: str = Header(default="analyst", alias="X-Role"),
+    ) -> dict[str, Any]:
+        _require_role(x_role, {"admin"})
+        try:
+            registry = load_capability_registry()
+            plugin = registry.set_plugin_enabled(plugin_id, body.enabled)
+            catalog = load_capability_registry().public_payload()
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="deep plugin not found") from exc
+        except Exception as exc:
+            raise HTTPException(
+                status_code=503, detail="deep plugin state unavailable"
+            ) from exc
+        return {"plugin": plugin.public_payload(), "catalog": catalog}
+
+    @app.get("/api/v1/deep-thinking/sessions/history")
+    @app.get("/api/v1/deep-sessions/history")
+    def get_deep_thinking_session_history(
+        current_run_id: str = "",
+        include_archived: bool = True,
+        limit: int = 200,
+        x_role: str = Header(default="analyst", alias="X-Role"),
+        x_tenant_id: str = Header(default="", alias="X-Tenant-ID"),
+        x_workspace_id: str = Header(default="", alias="X-Workspace-ID"),
+        x_project_id: str = Header(default="", alias="X-Project-ID"),
+        x_profile_id: str = Header(default="", alias="X-Profile-ID"),
+    ) -> dict[str, Any]:
+        """List all directed deep-research conversations grouped by Query task."""
+
+        _require_role(x_role, {"analyst", "reviewer", "auditor", "admin"})
+        bounded_limit = max(1, min(int(limit or 200), 500))
+        try:
+            rows = _deep_sessions_history_read(
+                limit=bounded_limit,
+                include_archived=bool(include_archived),
+                strict=True,
+                tenant_id=x_tenant_id,
+                workspace_id=x_workspace_id,
+                project_id=x_project_id,
+                profile_id=x_profile_id,
+            )
+        except _DeepLedgerUnavailable as exc:
+            raise HTTPException(
+                status_code=503,
+                detail=str(exc) or "deep session history ledger unavailable",
+            ) from exc
+        items = [_deep_session_history_public(item) for item in rows]
+        current_query = ""
+        wanted_run = str(current_run_id or "").strip()
+        if wanted_run:
+            try:
+                current_query = _deep_query(read_view(wanted_run))
+            except Exception:
+                current_query = ""
+        groups = _group_deep_session_history(
+            items,
+            current_run_id=wanted_run,
+            current_query=current_query,
+        )
+        return {
+            "items": items,
+            "groups": groups,
+            "count": len(items),
+            "current_run_id": wanted_run,
+        }
 
     @app.get("/api/v1/runs/{run_id}/deep-thinking/sessions")
     @app.get("/api/v1/runs/{run_id}/deep-sessions")
@@ -6523,21 +8548,96 @@ def create_app(
             cross_scope=x_role == "admin" and _cross_scope_requested(x_evolution_cross_scope),
             mutation=True,
         )
-        idem = _deep_idempotency(idempotency_key, operation="session", payload=body.model_dump(mode="json"))
-        claimed = _claim_deep_idempotency(run_id=run_id, operation="session", key=idempotency_key, payload=body.model_dump(mode="json"))
-        replay = _replay_or_raise_in_progress(claimed)
-        if replay is not None:
-            return replay
+        requested_create_artifact = _deep_authoring_requested(
+            body.question, body.create_artifact
+        )
+        body_payload = body.model_dump(mode="json")
+        body_payload["create_artifact"] = requested_create_artifact
+        active_skill_ids = _validated_deep_skill_ids(body.active_skill_ids)
+        # Validate the request key before any target lookup, but defer the
+        # durable claim until the server has resolved a canonical equipment
+        # identity.  Invalid/unbound requests must not poison a key as
+        # ``in progress`` and prevent a corrected retry.
+        idem = _deep_idempotency(
+            idempotency_key,
+            operation="session",
+            payload=body_payload,
+        )
         repo = _deep_repository()
         if repo is not None:
             try:
                 existing = [item for item in repo.list_deep_sessions(run_id) if str(item.get("idempotency_key", "")) == idem]
                 if existing:
+                    existing_row = existing[0]
+                    existing_session = _deep_session_read(
+                        run_id,
+                        str(existing_row.get("session_id", "")),
+                    ) or existing_row
                     response = {
-                        "session": _deep_session_public(existing[0]),
+                        "session": _deep_session_public(existing_session),
                         "scope": scope,
                         "idempotent_replay": True,
                     }
+                    # A session can be durable even when the original worker
+                    # disappeared after the session write but before its
+                    # initial question/job was queued.  Include an already
+                    # reserved job in the replay and, for an explicitly
+                    # partial session, resume the same question through the
+                    # normal fingerprint/idempotency fence.  This keeps a
+                    # released claim retryable without creating a duplicate
+                    # visible user message or a second job.
+                    existing_sid = str(existing_row.get("session_id", ""))
+                    existing_jobs = []
+                    list_jobs = getattr(repo, "list_deep_jobs", None)
+                    if callable(list_jobs):
+                        existing_jobs = [
+                            item
+                            for item in list_jobs(run_id)
+                            if isinstance(item, Mapping)
+                            and str(item.get("session_id", "")) == existing_sid
+                            and (
+                                str(item.get("idempotency_key", "")) == idem
+                                or str((item.get("payload") or {}).get("question", ""))
+                                == str(body.question or "").strip()
+                            )
+                        ]
+                    if existing_jobs:
+                        response["job"] = _deep_job_public(existing_jobs[0])
+                    elif (
+                        str(body.question or "").strip()
+                        and str(existing_session.get("status", "")).strip().lower()
+                        in {"active", "running", "partial", "failed", "blocked"}
+                    ):
+                        # The prior attempt released its empty claim before
+                        # returning 503.  Re-claiming is intentionally done
+                        # here (rather than relying on the old claim) so a
+                        # retry can proceed even when the first request died
+                        # before recording a response.
+                        retry_claim = _claim_deep_idempotency(
+                            run_id=run_id,
+                            operation="session",
+                            key=idempotency_key,
+                            payload=body_payload,
+                        )
+                        retry_response = (
+                            retry_claim.get("response")
+                            if isinstance(retry_claim, Mapping)
+                            else None
+                        )
+                        if isinstance(retry_response, Mapping) and retry_response:
+                            return dict(retry_response)
+                        response.update(
+                            _enqueue_deep_turn_job(
+                                run_id=run_id,
+                                view=view,
+                                session=existing_session,
+                                content=body.question,
+                                focus=body.focus,
+                                create_artifact=requested_create_artifact,
+                                active_skill_ids=active_skill_ids,
+                                idempotency_key=idem,
+                            )
+                        )
                     # The request may have reached the durable session table
                     # before the idempotency response was committed (for
                     # example after a worker timeout).  Finish the claim now
@@ -6560,10 +8660,48 @@ def create_app(
                     status_code=503,
                     detail="deep session ledger unavailable",
                 ) from exc
-        candidate = _candidate_from_run(run_id, view, body.model_dump(mode="json"))
+        candidate = _candidate_from_run(run_id, view, body_payload)
+        # The global Agent entrypoint may open an unbound, analysis-only
+        # conversation so the expert can inspect the current Query/result and
+        # then choose one concrete weapon/equipment target.  It is important
+        # that this is only a conversation surface: the authoring path below
+        # requires ``context[canonical_candidate]`` and therefore cannot mint
+        # a hypothesis, capability card, or version from arbitrary client IDs.
+        # Card/reference launches still resolve a server-owned candidate here
+        # and receive the same single-equipment authoring contract.
         context = _deep_context_for_run(run_id, view, body.context_refs)
+        context["innovation_mode"] = SINGLE_EQUIPMENT_INNOVATION_MODE
+        context["context_policy"] = "query_equipment_questions_only"
+        context["active_skill_ids"] = active_skill_ids
         if candidate:
             context["candidate"] = candidate
+            # This marker is server-owned.  A browser may send an advisory
+            # ``candidate`` object in ``context_refs``, but only a row
+            # resolved by ``_candidate_from_run`` is allowed to authorize
+            # capability-card authoring.  Keeping the marker in the durable
+            # snapshot also lets restart recovery preserve the single
+            # equipment target without trusting the original request again.
+            context["canonical_candidate"] = True
+            current_result = context.get("current_result_context")
+            if isinstance(current_result, Mapping):
+                context["current_result_context"] = {
+                    **dict(current_result),
+                    "selected": dict(candidate),
+                }
+        claimed = _claim_deep_idempotency(
+            run_id=run_id,
+            operation="session",
+            key=idempotency_key,
+            payload=body_payload,
+        )
+        replay = _replay_or_raise_in_progress(claimed)
+        if replay is not None:
+            return replay
+        # Everything through response construction is pre-commit work.  If a
+        # session/message/job write fails here, release the empty claim so an
+        # exact retry can continue.  Keep completion outside this block: a
+        # failure while recording the replay response must not reopen a
+        # mutation that already created a durable session/job.
         try:
             session = create_deep_session(
                 output_root,
@@ -6609,14 +8747,44 @@ def create_app(
                         session=session,
                         content=body.question,
                         focus=body.focus,
-                        create_artifact=True,
+                        create_artifact=requested_create_artifact,
+                        active_skill_ids=active_skill_ids,
                         idempotency_key=idem,
                     )
                 )
-            _complete_deep_idempotency(run_id=run_id, operation="session", key=idempotency_key, resource_id=str(session.get("session_id", "")), response=response)
-            return response
+        except HTTPException:
+            _release_deep_idempotency(
+                run_id=run_id,
+                operation="session",
+                key=idempotency_key,
+            )
+            raise
         except (ValueError, FileNotFoundError) as exc:
+            _release_deep_idempotency(
+                run_id=run_id,
+                operation="session",
+                key=idempotency_key,
+            )
             raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except Exception as exc:
+            _release_deep_idempotency(
+                run_id=run_id,
+                operation="session",
+                key=idempotency_key,
+            )
+            raise HTTPException(
+                status_code=503,
+                detail="deep session persistence unavailable",
+            ) from exc
+
+        _complete_deep_idempotency(
+            run_id=run_id,
+            operation="session",
+            key=idempotency_key,
+            resource_id=str(session.get("session_id", "")),
+            response=response,
+        )
+        return response
 
     def _answer_deep_turn(
         run_id: str,
@@ -6624,23 +8792,82 @@ def create_app(
         session: Mapping[str, Any],
         content: str,
         focus: str = "",
-        create_artifact: bool = True,
+        create_artifact: bool = False,
         *,
         job_id: str = "",
         append_user: bool = True,
         cancel_event: Event | None = None,
+        branch_id: str = DEFAULT_BRANCH_ID,
+        active_skill_ids: Sequence[str] = (),
+        source_channel: str = "web",
     ) -> dict[str, Any]:
         session_id = str(session.get("session_id", ""))
+        normalized_branch = normalize_branch_id(branch_id)
+        conversation_messages = branch_message_path(
+            session.get("messages", [])
+            if isinstance(session.get("messages", []), Sequence)
+            else [],
+            normalized_branch,
+            session.get("branches", [])
+            if isinstance(session.get("branches", []), Sequence)
+            else [],
+        )
+        session_memory = (
+            session.get("working_memory", {})
+            if isinstance(session.get("working_memory"), Mapping)
+            else {}
+        )
+        current_working_memory = branch_working_memory(
+            session_memory, normalized_branch
+        )
+        context_usage: dict[str, Any] = {}
         context = session.get("context_refs", {}) if isinstance(session.get("context_refs"), Mapping) else {}
+        canonical_context_candidate = (
+            context.get("candidate", {}) if isinstance(context, Mapping) else {}
+        )
+        canonical_context_candidate = (
+            canonical_context_candidate
+            if isinstance(canonical_context_candidate, Mapping)
+            else {}
+        )
+        canonical_target_bound = bool(
+            isinstance(context, Mapping)
+            and context.get("canonical_candidate") is True
+            and any(
+                str(canonical_context_candidate.get(key, "") or "").strip()
+                for key in (
+                    "hypothesis_id",
+                    "card_binding_id",
+                    "capability_id",
+                    "primary_equipment_identity",
+                    "equipment_form",
+                    "name",
+                    "title",
+                )
+            )
+        )
+        requested_skill_ids = [
+            str(value).strip()[:140]
+            for value in list(active_skill_ids)[:6]
+            if str(value or "").strip()
+        ]
+        # Treat the explicit S6 command/confirmation as the user confirmation
+        # signal at the API boundary too.  The WebUI sets ``create_artifact``
+        # for its confirmation button, but direct API clients may send the
+        # governed command without knowing that transport detail.
+        authoring_requested = _deep_authoring_requested(content, create_artifact)
+        create_artifact = authoring_requested
         def check_cancel() -> None:
             if cancel_event is not None and cancel_event.is_set():
                 raise _DeepJobCancelled()
             current_job = _deep_job_get(job_id) if job_id else None
             if current_job is not None and str(current_job.get("status", "")).lower() == "cancelled":
                 raise _DeepJobCancelled()
+            if job_id:
+                _assert_deep_job_claim(job_id)
 
         check_cancel()
-        _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "context", "status": "running", "progress": 0.05, "kind": "summary", "text": "已组装当前 Query、目标卡、可见证据和会话历史。"})
+        _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "context", "status": "running", "progress": 0.05, "kind": "summary", "text": "已锁定当前 Query、单个装备身份和专家问题。"})
         user_message: dict[str, Any] = {}
         if append_user:
             user_message = _append_visible_deep_message(
@@ -6649,18 +8876,67 @@ def create_app(
                 role="user",
                 content=content,
                 status="completed",
+                branch_id=normalized_branch,
+                turn_id=job_id,
             )
             _persist_deep_message(session_id, user_message)
             _publish_deep_event(run_id, "deep_session_message", {"job_id": job_id, "session_id": session_id, "role": "user", "message_id": user_message.get("message_id", "")})
         check_cancel()
-        _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "context", "status": "completed", "progress": 0.15, "kind": "summary", "text": "上下文快照已固定，进入多维发散。"})
-        _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "s3_divergence", "status": "running", "progress": 0.25, "kind": "summary", "text": "基于已有结果开展多维武器/装备发散，暂不重复检索。"})
+        context_usage = conversation_context_usage(
+            messages=conversation_messages,
+            working_memory=current_working_memory,
+            current_question=content,
+        )
+        compaction_text = compaction_notice(context_usage)
+        if compaction_text:
+            _publish_deep_event(
+                run_id,
+                "deep_context_compacted",
+                {
+                    "job_id": job_id,
+                    "session_id": session_id,
+                    "stage": "context",
+                    "status": "completed",
+                    "progress": 0.12,
+                    "kind": "summary",
+                    "text": compaction_text,
+                    "living_turns": context_usage.get("living_turns", 0),
+                    "archived_turns": context_usage.get("archived_turns", 0),
+                },
+            )
+        turn_plan = preview_turn_plan(
+            content=content,
+            authoring_requested=authoring_requested,
+            working_memory=current_working_memory,
+            defer_model_choice=True,
+        )
+        if "research_council" in turn_plan:
+            _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "context", "status": "completed", "progress": 0.15, "kind": "summary", "text": "上下文快照已固定，进入深度发散。"})
+            _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "s3_divergence", "status": "running", "progress": 0.20, "kind": "summary", "text": "创新舱正在基于当前 Query 下已有武器装备做内部多维发散，推理新质颠覆候选。"})
+        elif "author_s6" in turn_plan:
+            _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "context", "status": "completed", "progress": 0.15, "kind": "summary", "text": "上下文快照已固定，沿已收敛方向成卡，不再重开议事。"})
+            _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "s6_authoring", "status": "running", "progress": 0.55, "kind": "summary", "text": "创新舱正在读取决策记忆并逐栏写入五栏能力画像。"})
+        elif "deepen" in turn_plan:
+            _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "context", "status": "completed", "progress": 0.15, "kind": "summary", "text": "上下文快照已固定，本轮在已有方向上做内部多维发散，不重开三席流水线。"})
+            _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "s4_mapping", "status": "running", "progress": 0.40, "kind": "summary", "text": "综合总编正在沿多维度、多角度交叉发散，再收敛到本轮问题。"})
+        elif turn_plan:
+            _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "context", "status": "completed", "progress": 0.15, "kind": "summary", "text": "上下文快照已固定，本轮只处理命令或决策记忆，不重开三席议事。"})
+        else:
+            # Existing directions make the next tool model-selectable.  Keep
+            # the public timeline in context until the conductor chooses; the
+            # selected tool will emit its own concrete stage and avoid a false
+            # s4_mapping -> s3_divergence jump in the UI.
+            _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "context", "status": "running", "progress": 0.15, "kind": "summary", "text": "上下文快照已固定，正在根据本轮问题选择研究动作。"})
         provider_status = "deterministic_fallback"
         provider_error = ""
         provider_workflow_status = "completed"
+        provider_reported_workflow_status = "completed"
+        provider_finalization_status = ""
+        provider_runtime_managed = False
+        provider_authoring_completed = False
 
         def _provider_deep_answer() -> dict[str, Any] | None:
-            """Run one provider-backed contextual turn when the parent is real.
+            """Run one bounded provider-backed council when the parent is real.
 
             Deep-thinking previously always called ``synthesize_reply``. That
             deterministic helper remains a safe offline fallback, but a real
@@ -6681,6 +8957,27 @@ def create_app(
             provider_model = str(execution.get("model", "") or "").strip()
             provider_base_url = str(execution.get("base_url", "") or "").strip()
             provider_api_key_env = str(execution.get("api_key_env", "") or "").strip()
+            # Deep dialogue starts with the exact provider snapshot used by
+            # the parent research task.  Deployments may then route dialogue
+            # turns to another compatible model without rewriting completed
+            # run metadata: all four overrides are optional and secret values
+            # remain referenced by environment-variable name only.
+            provider_name = str(
+                os.environ.get("EQUIPMENT_DR_DEEP_PROVIDER", "") or provider_name
+            ).strip()
+            provider_model = str(
+                os.environ.get("EQUIPMENT_DR_DEEP_MODEL", "") or provider_model
+            ).strip()
+            provider_base_url = str(
+                os.environ.get("EQUIPMENT_DR_DEEP_BASE_URL", "")
+                or provider_base_url
+            ).strip()
+            provider_api_key_env = str(
+                os.environ.get("EQUIPMENT_DR_DEEP_API_KEY_ENV", "")
+                or provider_api_key_env
+            ).strip()
+            runtime_workspace = None
+            runtime_run_workspace = None
             try:
                 registry = ProviderRegistry.load(provider_path)
                 provider = registry.create(
@@ -6694,10 +8991,22 @@ def create_app(
                 # ProviderRegistry returns a wire-level ModelProvider.  Deep
                 # thinking is a single-equipment conversation primitive, not
                 # a child S1-S6/deep-divergence workflow.  Prefer the dedicated
-                # contextual dialogue entrypoint so each user turn is one
-                # governed model call over the canonical snapshot.
+                # contextual dialogue entrypoint so each user turn follows a
+                # governed propose--challenge--synthesize graph over the same
+                # canonical snapshot.  Always keep a host that can emit live
+                # mid-council progress into the deep SSE stream.
+                host = None
                 advisor = getattr(provider, "deep_contextual_dialogue", None)
-                if not callable(advisor):
+                if callable(advisor):
+                    # A provider may implement the governed dialogue contract
+                    # without supporting live progress callbacks (for example
+                    # a test adapter or a backwards-compatible integration).
+                    # That callback is an optional UX enhancement, not a
+                    # requirement for using the provider's native dialogue
+                    # entrypoint.  Only wrap wire-level model providers that
+                    # do not expose ``deep_contextual_dialogue`` at all.
+                    host = provider
+                else:
                     definitions = {
                         agent_id: agent_registry.get(agent_id)
                         for agent_id in agent_registry.all_agent_ids()
@@ -6713,6 +9022,369 @@ def create_app(
                         ),
                     )
                     advisor = host.deep_contextual_dialogue
+                live_progress_emitted = False
+
+                def _on_deep_dialogue_progress(row: Mapping[str, Any]) -> None:
+                    nonlocal live_progress_emitted
+                    live_progress_emitted = True
+                    lifecycle_event_types = {
+                        "deep_agent_started",
+                        "deep_agent_progress",
+                        "deep_agent_handoff",
+                        "deep_agent_completed",
+                        "deep_agent_failed",
+                    }
+                    requested_event_type = str(
+                        row.get("event_type", "") or ""
+                    ).strip()
+                    event_type = (
+                        requested_event_type
+                        if requested_event_type in lifecycle_event_types
+                        else "deep_stage"
+                    )
+                    stage = str(row.get("stage", "s3_divergence") or "s3_divergence").strip().lower()
+                    if stage not in {
+                        "context",
+                        "s3_divergence",
+                        "council_critique",
+                        "s4_mapping",
+                        "s5_adjudication",
+                        "s6_authoring",
+                        "validation",
+                    }:
+                        stage = {
+                            "divergence": "s3_divergence",
+                            "critique": "council_critique",
+                            "mapping": "s4_mapping",
+                            "authoring": "s6_authoring",
+                            "synthesis": "s6_authoring",
+                        }.get(stage, "s3_divergence")
+                    try:
+                        progress = float(row.get("progress", 0) or 0)
+                    except (TypeError, ValueError):
+                        progress = 0.0
+                    progress = max(0.0, min(1.0, progress))
+                    status = str(row.get("status", "running") or "running").strip().lower() or "running"
+                    summary_text = str(row.get("summary_text", "") or "").strip()[:800]
+                    answer_text = str(row.get("text", "") or "").strip()[:1200]
+                    visible_text = answer_text or summary_text
+                    delta_payload: dict[str, Any] = {
+                        "kind": "answer" if answer_text else "summary",
+                        "text": visible_text[:1200],
+                    }
+                    for key, limit in (
+                        ("role", 80),
+                        ("axis", 80),
+                        ("agent_id", 80),
+                        ("parallel_group", 64),
+                        ("round", 32),
+                        ("from_agent_id", 80),
+                        ("to_agent_id", 80),
+                        ("handoff_kind", 48),
+                    ):
+                        value = str(row.get(key, "") or "").strip()
+                        if value:
+                            delta_payload[key] = value[:limit]
+                    names = row.get("proposal_names", [])
+                    if isinstance(names, (list, tuple)):
+                        public_names = [
+                            str(name).strip()[:80]
+                            for name in list(names)[:3]
+                            if str(name).strip()
+                        ]
+                        if public_names:
+                            delta_payload["proposal_names"] = public_names
+                    briefs = row.get("proposal_briefs", [])
+                    if isinstance(briefs, (list, tuple)):
+                        public_briefs = []
+                        for item in list(briefs)[:3]:
+                            if not isinstance(item, Mapping):
+                                continue
+                            brief = {
+                                key: str(item.get(key, "") or "").strip()[:120]
+                                for key in (
+                                    "name",
+                                    "equipment_form",
+                                    "winning_angle",
+                                    "disruptive_difference",
+                                )
+                                if str(item.get(key, "") or "").strip()
+                            }
+                            if brief.get("name"):
+                                public_briefs.append(brief)
+                        if public_briefs:
+                            delta_payload["proposal_briefs"] = public_briefs
+                    deliverable_refs = row.get("deliverable_refs", [])
+                    if isinstance(
+                        deliverable_refs, (list, tuple, set, frozenset)
+                    ):
+                        public_deliverables = [
+                            str(item).strip()[:120]
+                            for item in list(deliverable_refs)[:8]
+                            if str(item).strip()
+                            and not isinstance(item, Mapping)
+                        ]
+                        if public_deliverables:
+                            delta_payload["deliverable_refs"] = public_deliverables
+                    if row.get("parallel"):
+                        delta_payload["parallel"] = True
+                    try:
+                        parallelism = int(row.get("parallelism", 0) or 0)
+                    except (TypeError, ValueError, OverflowError):
+                        parallelism = 0
+                    if parallelism > 0:
+                        delta_payload["parallelism"] = min(parallelism, 8)
+                    try:
+                        active_agents = int(row.get("active_agents", 0) or 0)
+                    except (TypeError, ValueError, OverflowError):
+                        active_agents = 0
+                    if active_agents > 0:
+                        delta_payload["active_agents"] = min(active_agents, 8)
+                    try:
+                        completed_count = int(row.get("completed_count", 0) or 0)
+                    except (TypeError, ValueError, OverflowError):
+                        completed_count = 0
+                    try:
+                        total_count = int(row.get("total_count", 0) or 0)
+                    except (TypeError, ValueError, OverflowError):
+                        total_count = 0
+                    if completed_count > 0:
+                        delta_payload["completed_count"] = min(completed_count, 8)
+                    if total_count > 0:
+                        delta_payload["total_count"] = min(total_count, 8)
+                    persist_status = (
+                        "running"
+                        if event_type in lifecycle_event_types
+                        or status in {"completed", "queued"}
+                        else status
+                    )
+                    # Keep the durable job row aligned with the SSE timeline.
+                    # The poller otherwise keeps replaying the original
+                    # ``queued`` stage over newer live events, making the
+                    # stage strip visually jump backwards while S6 is already
+                    # authoring. ``_deep_job_update`` persists the stage and
+                    # emits the same public event in one governed path.
+                    _deep_job_update(
+                        job_id,
+                        run_id=run_id,
+                        session_id=session_id,
+                        stage=stage,
+                        status=status,
+                        persist_status=persist_status,
+                        progress=progress,
+                        text=summary_text or answer_text[:400],
+                        kind=str(delta_payload.get("kind") or "summary"),
+                        delta=delta_payload if visible_text or delta_payload.get("role") else None,
+                        event_type=event_type,
+                    )
+
+                def _on_deep_dialogue_steer(stage: str) -> list[dict[str, Any]]:
+                    repository = _deep_repository()
+                    claim = (
+                        getattr(repository, "claim_deep_steers", None)
+                        if repository is not None
+                        else None
+                    )
+                    if not callable(claim):
+                        return []
+                    claimed = _call_with_deep_job_claim(
+                        claim, job_id, job_id, live_only=True
+                    )
+                    accepted: list[dict[str, Any]] = []
+                    mark_applied = getattr(
+                        repository, "mark_deep_steers_applied", None
+                    )
+                    stage_agent = {
+                        "context": ("deep_dialogue_orchestrator", "任务编排 Agent"),
+                        "s3_divergence": ("deep_dialogue_council", "并行发散 Agent 组"),
+                        "council_critique": (
+                            "deep_dialogue_adversarial_judge",
+                            "对抗裁决 Agent",
+                        ),
+                        "s4_mapping": (
+                            "deep_thinking_dialogue",
+                            "候选方向综合总编",
+                        ),
+                        "s6_authoring": (
+                            "deep_thinking_dialogue",
+                            "能力画像综合总编",
+                        ),
+                    }.get(stage, ("deep_thinking_dialogue", "综合总编"))
+                    for steer in claimed:
+                        if not isinstance(steer, Mapping):
+                            continue
+                        steer_row = dict(steer)
+                        if callable(mark_applied):
+                            applied = _call_with_deep_job_claim(
+                                mark_applied,
+                                job_id,
+                                [str(steer_row.get("steer_id", ""))],
+                                stage=stage,
+                            )
+                            if applied:
+                                steer_row = dict(applied[0])
+                        _publish_deep_event(
+                            run_id,
+                            "deep_steer_applied",
+                            {
+                                "job_id": job_id,
+                                "session_id": session_id,
+                                "stage": stage,
+                                "status": "applied",
+                                "steer_id": steer_row.get("steer_id", ""),
+                                "message_id": steer_row.get("message_id", ""),
+                                "mode": steer_row.get("mode", "steer"),
+                                "branch_id": normalized_branch,
+                                "agent_id": stage_agent[0],
+                                "role": stage_agent[1],
+                                "kind": "summary",
+                                "text": f"你的补充已由{stage_agent[1]}纳入当前研究。",
+                            },
+                        )
+                        if str(steer_row.get("mode", "")) == "interrupt_send":
+                            raise _DeepJobInterrupted(steer_row)
+                        accepted.append(steer_row)
+                    return accepted
+
+                if callable(getattr(host, "set_deep_dialogue_progress_callback", None)):
+                    host.set_deep_dialogue_progress_callback(_on_deep_dialogue_progress)
+                if callable(getattr(host, "set_deep_dialogue_steer_callback", None)):
+                    host.set_deep_dialogue_steer_callback(_on_deep_dialogue_steer)
+                # Deep dialogue is an ideation surface for one selected
+                # equipment, not a replay of the parent research packet.  In
+                # particular, do not send the parent's evidence index,
+                # verification plan, failure boundaries, round summary or
+                # aggregate cards: those fields anchor the model on proving
+                # the old conclusion and were the main source of
+                # "verification-boundary" contamination.  Keep only the
+                # server-resolved equipment identity; the visible expert
+                # questions are the conversational substrate for novelty.
+                canonical_candidate = context.get("candidate", {}) if isinstance(context, Mapping) else {}
+                if not isinstance(canonical_candidate, Mapping):
+                    canonical_candidate = {}
+                innovation_context = single_equipment_innovation_context(
+                    context,
+                    query=_deep_query(view),
+                    equipment=canonical_candidate,
+                    question=content,
+                    focus=focus,
+                    messages=conversation_messages,
+                    working_memory=current_working_memory,
+                    limit=12000,
+                )
+                equipment = innovation_context.get("source_equipment", {})
+                expert_questions = innovation_context.get("prior_expert_questions", [])
+                # Bind the optional nanobot-style file state to the
+                # server-resolved candidate.  The browser never supplies a
+                # path: the helper accepts only an authenticated run root and
+                # silently falls back to the SQL ledger when the artifact is
+                # historical, unavailable, or already locked to another
+                # equipment identity.
+                runtime_identity = _deep_runtime_equipment_identity(
+                    canonical_candidate
+                )
+                if runtime_identity and canonical_target_bound:
+                    runtime_workspace, runtime_run_workspace = (
+                        _open_trusted_deep_runtime_workspace(
+                            output_root,
+                            run_id,
+                            identity=runtime_identity,
+                        )
+                    )
+                try:
+                    deep_context_chars = int(
+                        os.environ.get("EQUIPMENT_DR_DEEP_CONTEXT_CHARS", "8000")
+                    )
+                except (TypeError, ValueError):
+                    deep_context_chars = 8000
+                dialogue_context = {
+                    **innovation_context,
+                    "active_skill_ids": requested_skill_ids,
+                }
+
+                def _checkpoint_deep_runtime(
+                    checkpoint: Mapping[str, Any],
+                ) -> None:
+                    checkpoint_payload = (
+                        dict(checkpoint) if isinstance(checkpoint, Mapping) else {}
+                    )
+                    if not checkpoint_payload:
+                        raise RuntimeError("deep runtime checkpoint is empty")
+                    tool_row: Mapping[str, Any] = {}
+                    pending_tools = checkpoint_payload.get("pending_tool_calls", [])
+                    completed_tools = checkpoint_payload.get(
+                        "completed_tool_results", []
+                    )
+                    if isinstance(pending_tools, list) and pending_tools and isinstance(
+                        pending_tools[0], Mapping
+                    ):
+                        tool_row = pending_tools[0]
+                    elif (
+                        isinstance(completed_tools, list)
+                        and completed_tools
+                        and isinstance(completed_tools[-1], Mapping)
+                    ):
+                        tool_row = completed_tools[-1]
+                    runtime_delta: dict[str, Any] = {}
+                    for key in ("tool_name", "tool_call_id", "turn_index", "duration_ms"):
+                        if key in tool_row:
+                            runtime_delta[key] = tool_row[key]
+                    if "turn_index" not in runtime_delta:
+                        runtime_delta["turn_index"] = checkpoint_payload.get(
+                            "turn_count", 0
+                        )
+                    for key in ("active_skill_ids", "plugin_ids"):
+                        if key in checkpoint_payload:
+                            runtime_delta[key] = checkpoint_payload[key]
+                    phase = str(checkpoint_payload.get("phase", "") or "")[:64]
+                    checkpoint_text = checkpoint_visible_text(
+                        checkpoint_payload,
+                        phase=phase,
+                        limit=1200,
+                    )
+                    if not checkpoint_text:
+                        checkpoint_text = {
+                            "awaiting_tools": "Agent 已形成下一步动作并等待工具执行。",
+                            "tools_completed": "工具结果已写入 Agent 观察状态。",
+                            "final_response": "Agent 已形成最终可见答复。",
+                        }.get(phase, "Agent 运行状态已保存。")
+                    runtime_delta.update(
+                        {
+                            "kind": (
+                                "answer"
+                                if phase == "tools_completed"
+                                else "summary"
+                            ),
+                            "text": checkpoint_text,
+                        }
+                    )
+                    updated_checkpoint = _deep_job_update(
+                        job_id,
+                        run_id=run_id,
+                        session_id=session_id,
+                        status="running",
+                        persist_status="running",
+                        text=checkpoint_text,
+                        checkpoint=checkpoint_payload,
+                        delta=runtime_delta or None,
+                        event_type="deep_runtime_checkpoint",
+                    )
+                    if not isinstance(updated_checkpoint, Mapping):
+                        raise RuntimeError(
+                            "deep runtime checkpoint persistence unavailable"
+                        )
+                    if str(updated_checkpoint.get("persistence_error", "")).strip():
+                        raise RuntimeError(
+                            "deep runtime checkpoint persistence unavailable"
+                        )
+                    persisted_checkpoint = updated_checkpoint.get("checkpoint", {})
+                    if not isinstance(persisted_checkpoint, Mapping) or dict(
+                        persisted_checkpoint
+                    ) != checkpoint_payload:
+                        raise RuntimeError(
+                            "deep runtime checkpoint was not durably acknowledged"
+                        )
+
                 payload = {
                     "run_id": run_id,
                     "topic": _deep_query(view),
@@ -6722,38 +9394,148 @@ def create_app(
                     # deep-divergence execution profile.  The latter remains
                     # available only for historical child-run recovery.
                     "execution_profile_id": "deep_dialogue_v1",
-                    "stage_scope": ["context", "divergence", "mapping", "authoring"],
+                    "stage_scope": ["context", "equipment_innovation", "portrait_revision"],
                     "dialogue_mode": "single_equipment_contextual_divergence",
+                    "orchestration_mode": "parallel_propose_adversarial_review_synthesis",
+                    "innovation_mode": SINGLE_EQUIPMENT_INNOVATION_MODE,
+                    "authoring_requested": authoring_requested,
                     "workflow_dispatch": "none",
-                    "deep_parent_context": sanitize_runtime_payload(
-                        dict(context), max_string_length=8000
+                    "context_policy": "query_equipment_questions_only",
+                    # Keep the legacy field name for provider compatibility,
+                    # but its contents are intentionally isolated from the
+                    # parent evidence/result packet.
+                    "deep_parent_context": _bounded_deep_json(
+                        dialogue_context,
+                        limit=max(
+                            2400,
+                            min(24000, deep_context_chars),
+                        ),
                     ),
-                    "evidence_index": sanitize_runtime_payload(
-                        context.get("evidence_index", [])
-                        if isinstance(context, Mapping)
-                        else [],
-                        max_string_length=6000,
+                    "expert_questions": expert_questions,
+                    "active_skill_ids": requested_skill_ids,
+                    # Web deep research uses one optional observation-aware
+                    # continuation after the first domain action. Explicit
+                    # /diverge requests also receive two bounded, identity-
+                    # locked probes; ordinary follow-ups remain a single
+                    # Agent rather than a standing multi-agent workflow.
+                    "adaptive_tool_loop": True,
+                    "enable_subagents": (
+                        "diverge" in turn_plan and not authoring_requested
                     ),
-                    "conversation_history": [
-                        {
-                            "role": str(item.get("role", ""))[:24],
-                            "content": str(item.get("content", ""))[:4000],
-                        }
-                        for item in list(session.get("messages", []))[-12:]
-                        if isinstance(item, Mapping)
-                    ],
                 }
-                result = advisor(payload)
+                if runtime_workspace is not None:
+                    # These fields are consumed by the in-process runtime and
+                    # removed before any provider/model payload is built.
+                    payload.update(
+                        {
+                            "deep_workspace": runtime_workspace,
+                            "workspace_id": runtime_workspace.workspace_id,
+                            "session_id": session_id,
+                            "branch_id": normalized_branch,
+                            "workspace_record_turn": True,
+                            "workspace_required": False,
+                            "equipment_identity": dict(runtime_identity),
+                        }
+                    )
+                if job_id:
+                    # Keep this callable outside the JSON-bounded context above.
+                    # It is an in-process persistence hook, never provider input.
+                    payload["checkpoint_callback"] = _checkpoint_deep_runtime
+                if deep_mcp_host is not None:
+                    # The core removes this dependency before constructing any
+                    # provider/model payload. Every Web job gets a short-lived
+                    # registry lease while the app-level SDK connection stays
+                    # alive across turns.
+                    payload["persistent_mcp_host"] = deep_mcp_host
+                try:
+                    message_options = {"message_id": job_id} if job_id else {}
+                    channel_message = InboundMessage(
+                        channel=(
+                            source_channel
+                            if source_channel
+                            in {"web", "cli", "telegram", "discord"}
+                            else "web"
+                        ),
+                        sender_id="session-client",
+                        chat_id=session_id,
+                        content=payload["question"],
+                        session_key_override=f"{run_id}:{session_id}:{normalized_branch}",
+                        metadata={"job_id": job_id, "branch_id": normalized_branch},
+                        **message_options,
+                    )
+                    result = dispatch_channel_call(
+                        advisor, channel_message, host_payload=payload,
+                    )
+                finally:
+                    if host is not None and callable(
+                        getattr(host, "set_deep_dialogue_progress_callback", None)
+                    ):
+                        host.set_deep_dialogue_progress_callback(None)
+                    if host is not None and callable(
+                        getattr(host, "set_deep_dialogue_steer_callback", None)
+                    ):
+                        host.set_deep_dialogue_steer_callback(None)
                 if not isinstance(result, Mapping):
                     return None
-                nonlocal provider_workflow_status
+                nonlocal provider_workflow_status, provider_reported_workflow_status, provider_finalization_status, provider_runtime_managed, provider_authoring_completed
+                raw_runtime = result.get("runtime", {})
+                raw_runtime = raw_runtime if isinstance(raw_runtime, Mapping) else {}
+                runtime_tools = raw_runtime.get("tools", [])
+                runtime_tools = runtime_tools if isinstance(runtime_tools, list) else []
+                raw_card_draft = result.get("capability_card_draft", {})
+                raw_card_draft = (
+                    raw_card_draft if isinstance(raw_card_draft, Mapping) else {}
+                )
+                provider_runtime_managed = (
+                    str(raw_runtime.get("engine", "") or "").strip()
+                    == "equipment_deep_runtime_v2"
+                )
+                provider_authoring_completed = bool(
+                    "author_s6" in runtime_tools
+                    and any(
+                        str(raw_card_draft.get(key, "") or "").strip()
+                        for key in (
+                            "overview",
+                            "technology_implementation",
+                            "operational_process",
+                            "capability_effects",
+                            "winning_logic",
+                        )
+                    )
+                )
                 raw_workflow_status = str(
                     result.get("deep_divergence_status", "completed")
                     or "completed"
                 ).strip().lower().replace("-", "_")
                 if raw_workflow_status not in {"completed", "partial", "blocked"}:
                     raw_workflow_status = "partial"
-                provider_workflow_status = raw_workflow_status
+                provider_reported_workflow_status = raw_workflow_status
+                # Older providers used ``blocked`` when an evidence or
+                # publication-quality rubric was not satisfied. Deep research
+                # is an ideation surface: preserve those gaps as advice while
+                # treating a visible research turn as completed. An empty
+                # provider result remains partial because there is no result
+                # to persist or display.
+                has_visible_research = any(
+                    result.get(key)
+                    for key in (
+                        "visible_summary",
+                        "concept_directions",
+                        "agent_dialogue",
+                        "divergence_steps",
+                        "capability_card_draft",
+                    )
+                )
+                provider_workflow_status = (
+                    "completed"
+                    if raw_workflow_status == "blocked" and has_visible_research
+                    else "partial"
+                    if raw_workflow_status == "blocked"
+                    else raw_workflow_status
+                )
+                provider_finalization_status = str(
+                    result.get("finalization_status", "") or ""
+                ).strip().lower().replace("-", "_")
                 # Only project user-visible, decision-bearing fields.  Do not
                 # persist the complete provider result or nested session data.
                 directions = result.get("concept_directions", [])
@@ -6761,18 +9543,26 @@ def create_app(
                 directions = [
                     {
                         "name": str(item.get("name", ""))[:240],
+                        "innovation_variant_name": str(item.get("innovation_variant_name", "") or item.get("name", ""))[:240],
                         "hypothesis_id": str(item.get("hypothesis_id", ""))[:180],
                         "function": str(item.get("function", ""))[:500],
                         "equipment_form": str(item.get("equipment_form", ""))[:320],
+                        "innovation_equipment_form": str(item.get("innovation_equipment_form", "") or item.get("equipment_form", ""))[:320],
                         "operational_mechanism": str(item.get("operational_mechanism", ""))[:600],
+                        "decisive_target": str(item.get("decisive_target", ""))[:500],
+                        "direct_damage_mechanism": str(item.get("direct_damage_mechanism", ""))[:700],
+                        "mission_kill_criterion": str(item.get("mission_kill_criterion", ""))[:500],
                         "military_value": str(item.get("military_value", ""))[:600],
                         "direct_military_effects": str(item.get("direct_military_effects", ""))[:600],
                         "related_scenario": str(item.get("related_scenario", ""))[:500],
+                        "innovation_thesis": str(item.get("innovation_thesis", ""))[:700],
+                        "winning_angle": str(item.get("winning_angle", ""))[:500],
+                        "changed_assumption": str(item.get("changed_assumption", ""))[:700],
+                        "novelty": str(item.get("novelty", ""))[:600],
+                        "disruptive_difference": str(item.get("disruptive_difference", ""))[:700],
+                        "implementation_concept": str(item.get("implementation_concept", ""))[:700],
                         "capability_gap": str(item.get("capability_gap", ""))[:500],
-                        "failure_boundary": str(item.get("failure_boundary", ""))[:500],
-                        "validation_plan": str(item.get("validation_plan", ""))[:500],
                         "stable": bool(item.get("stable", False)),
-                        "direct_evidence_refs": [str(ref)[:180] for ref in item.get("direct_evidence_refs", [])[:8]],
                     }
                     for item in directions[:3]
                     if isinstance(item, Mapping) and str(item.get("name", "")).strip()
@@ -6791,89 +9581,664 @@ def create_app(
                 visible_summary = result.get("visible_summary", [])
                 visible_summary = visible_summary if isinstance(visible_summary, list) else []
                 visible_summary = [str(item)[:1200] for item in visible_summary[:6] if str(item).strip()]
+                agent_dialogue = result.get("agent_dialogue", [])
+                agent_dialogue = agent_dialogue if isinstance(agent_dialogue, list) else []
+                agent_dialogue = [
+                    {
+                        "agent_id": str(item.get("agent_id", ""))[:120],
+                        "role": str(item.get("role", "议事 Agent"))[:120],
+                        "axis": str(item.get("axis", ""))[:120],
+                        "round": str(item.get("round", "divergence"))[:32],
+                        "summary": str(item.get("summary", ""))[:1200],
+                        "proposal_names": [
+                            str(name)[:240]
+                            for name in (
+                                item.get("proposal_names", [])
+                                if isinstance(item.get("proposal_names"), list)
+                                else []
+                            )[:3]
+                            if str(name).strip()
+                        ],
+                        "verdicts": [
+                            str(name)[:240]
+                            for name in (
+                                item.get("verdicts", [])
+                                if isinstance(item.get("verdicts"), list)
+                                else []
+                            )[:6]
+                            if str(name).strip()
+                        ],
+                    }
+                    for item in agent_dialogue[:8]
+                    if isinstance(item, Mapping) and str(item.get("summary", "")).strip()
+                ]
+                quality_gate = result.get("quality_gate", {})
+                quality_gate = quality_gate if isinstance(quality_gate, Mapping) else {}
+                provider_assessment = result.get("research_assessment", {})
+                provider_assessment = (
+                    provider_assessment
+                    if isinstance(provider_assessment, Mapping)
+                    else {}
+                )
+                provider_strategy = result.get("research_strategy", {})
+                provider_strategy = (
+                    provider_strategy if isinstance(provider_strategy, Mapping) else {}
+                )
+                direction_ready = bool(
+                    quality_gate.get("direction_ready", False)
+                    or provider_assessment.get("direction_ready", False)
+                    or provider_assessment.get("research_ready_count", 0)
+                    or any(item.get("stable") for item in directions)
+                )
+                research_dimension_labels = {
+                    "winning_angle": "制胜切入点",
+                    "changed_assumption": "被改写假设",
+                    "equipment_form": "装备构型",
+                    "operational_mechanism": "作用机理",
+                    "decisive_target": "关键打击对象",
+                    "direct_damage_mechanism": "直接毁伤机理",
+                    "mission_kill_criterion": "任务失能判据",
+                    "direct_military_effects": "直接军事效果",
+                    "disruptive_difference": "颠覆性差异",
+                }
+
+                def _public_research_gap(item: object) -> str:
+                    if isinstance(item, Mapping):
+                        candidate_name = str(
+                            item.get("candidate_name")
+                            or item.get("direction")
+                            or item.get("name")
+                            or ""
+                        ).strip()[:120]
+                        question = str(
+                            item.get("suggested_question")
+                            or item.get("next_probe")
+                            or item.get("question")
+                            or item.get("reason")
+                            or ""
+                        ).strip()[:320]
+                        missing = item.get("missing_dimensions") or item.get(
+                            "missing_fields"
+                        )
+                        missing = missing if isinstance(missing, list) else []
+                        missing_text = "、".join(
+                            research_dimension_labels.get(str(value), str(value))[:48]
+                            for value in missing[:8]
+                            if str(value).strip()
+                        )
+                        detail = question or (
+                            f"待补研究维度：{missing_text}" if missing_text else ""
+                        )
+                        return "：".join(
+                            value for value in (candidate_name, detail) if value
+                        )[:400]
+                    return str(item or "").strip()[:400]
+
+                raw_research_gaps: list[object] = []
+                for source in (
+                    result.get("research_gaps", []),
+                    provider_assessment.get("gaps", []),
+                    provider_assessment.get("advisories", []),
+                    quality_gate.get("advisories", []),
+                    quality_gate.get("block_reasons", []),
+                ):
+                    if isinstance(source, list):
+                        raw_research_gaps.extend(source[:8])
+                research_gaps = list(
+                    dict.fromkeys(
+                        gap
+                        for gap in (
+                            _public_research_gap(item) for item in raw_research_gaps
+                        )
+                        if gap
+                    )
+                )[:8]
+                # S6 authoring is a deliberate runtime action.  A provider
+                # result (including a legacy/deterministic fallback) may
+                # contain a card-shaped draft, but it cannot claim that the
+                # draft is ready to persist unless the v2 runtime explicitly
+                # ran ``author_s6``.
+                if (
+                    authoring_requested
+                    and not (
+                        provider_runtime_managed
+                        and provider_authoring_completed
+                    )
+                ):
+                    research_gaps = list(
+                        dict.fromkeys(
+                            [
+                                *research_gaps,
+                                "当前方向尚未完成 S6 成卡动作；本轮研究结果已保留，请先继续闭合方向后再确认成卡",
+                            ]
+                        )
+                    )[:8]
+                provider_finalization_status = (
+                    "candidate_ready"
+                    if authoring_requested
+                    and canonical_target_bound
+                    and provider_runtime_managed
+                    and provider_authoring_completed
+                    else "awaiting_user_confirmation"
+                    if direction_ready
+                    else "research_complete"
+                )
+                open_questions = [
+                    str(item)[:400]
+                    for item in (
+                        result.get("open_questions", [])
+                        if isinstance(result.get("open_questions"), list)
+                        else []
+                    )[:4]
+                    if str(item).strip()
+                ]
+                adjudication = result.get("adjudication", {})
+                adjudication = adjudication if isinstance(adjudication, Mapping) else {}
+                orchestration = result.get("orchestration", {})
+                orchestration = orchestration if isinstance(orchestration, Mapping) else {}
+                capability_card_draft = (
+                    result.get("capability_card_draft", {})
+                    if isinstance(result.get("capability_card_draft"), Mapping)
+                    else {}
+                )
+                if not authoring_requested:
+                    capability_card_draft = {}
+                selection_rationale = str(result.get("selection_rationale", "") or "")[:1200]
+                source_equipment_label = ""
+                if isinstance(equipment, Mapping):
+                    source_equipment_label = str(
+                        equipment.get("name")
+                        or equipment.get("title")
+                        or equipment.get("primary_equipment_identity")
+                        or equipment.get("equipment_form")
+                        or ""
+                    ).strip()[:120]
+                query_weapon_names = [
+                    str(item.get("name") or item.get("title") or "").strip()[:120]
+                    for item in (
+                        innovation_context.get("query_weapons", [])
+                        if isinstance(innovation_context.get("query_weapons"), list)
+                        else []
+                    )
+                    if isinstance(item, Mapping) and str(item.get("name") or item.get("title") or "").strip()
+                ][:6]
+                complete_sections = build_deep_complete_sections(
+                    visible_summary=visible_summary,
+                    agent_dialogue=agent_dialogue,
+                    dialogue_steps=dialogue_steps,
+                    directions=directions,
+                    capability_card_draft=capability_card_draft,
+                    adjudication=adjudication,
+                    open_questions=[*open_questions, *research_gaps][:6],
+                    block_reasons=[],
+                    provider_finalization_status=provider_finalization_status,
+                    selection_rationale=selection_rationale,
+                    source_equipment_label=source_equipment_label,
+                    query_weapon_names=query_weapon_names,
+                )
                 visible = {
-                    "sections": [
-                        {
-                            "title": "基于已有成果的可见推演",
-                            "text": "；".join(visible_summary)[:2600]
-                            or "已基于当前 Query 和该装备成果快照形成受限推演。",
-                        },
-                        {
-                            "title": "发散过程",
-                            "text": "\n".join(
-                                f"{item['title']}：{item['text']}"
-                                for item in dialogue_steps
-                            )[:4200]
-                            or "正在围绕单个装备形成可见发散方向。",
-                        },
-                        {
-                            "title": "候选方向",
-                            "text": "\n".join(
-                                f"{item['name']}：{item['function'] or item['military_value']}"
-                                for item in directions
-                            )[:4200]
-                            or "本轮未形成稳定候选能力卡。",
-                        },
-                        {
-                            "title": "证据与边界",
-                            "text": "；".join(
-                                str(item)
-                                for item in (
-                                    result.get("evidence_gaps", []),
-                                    result.get("open_questions", []),
-                                )
-                                if item
-                            )[:2200]
-                            or "证据边界沿用父任务快照，新增结论仍需验证。",
-                        },
-                    ],
+                    "sections": complete_sections,
                     "provider_backed": True,
+                    "live_progress_emitted": live_progress_emitted,
                     "deep_divergence_status": provider_workflow_status,
                     "dialogue_mode": "single_equipment_contextual_divergence",
+                    "orchestration_mode": "parallel_propose_adversarial_review_synthesis",
                     "workflow_dispatch": "none",
+                    "agent_dialogue": agent_dialogue,
+                    "adjudication": {
+                        "review_summary": str(adjudication.get("review_summary", ""))[:1200],
+                        "mission_focus": str(adjudication.get("mission_focus", ""))[:800],
+                        "selection_order": [
+                            str(item)[:240]
+                            for item in (
+                                adjudication.get("selection_order", [])
+                                if isinstance(adjudication.get("selection_order"), list)
+                                else []
+                            )[:3]
+                            if str(item).strip()
+                        ],
+                        "priority_revision_targets": [
+                            str(item)[:240]
+                            for item in (
+                                adjudication.get("priority_revision_targets", [])
+                                if isinstance(adjudication.get("priority_revision_targets"), list)
+                                else []
+                            )[:3]
+                            if str(item).strip()
+                        ],
+                        "candidate_reviews": [
+                            {
+                                "candidate_name": str(item.get("candidate_name", ""))[:240],
+                                "verdict": str(item.get("verdict", ""))[:32],
+                                "winning_logic_class": str(item.get("winning_logic_class", ""))[:32],
+                                "initiative_claim": str(item.get("initiative_claim", ""))[:500],
+                                "counterbalance_claim": str(item.get("counterbalance_claim", ""))[:500],
+                                "decisive_issue": str(item.get("decisive_issue", ""))[:500],
+                                "required_revision": str(item.get("required_revision", ""))[:500],
+                                "priority_score": item.get("priority_score", 0),
+                                "direct_damage_closure_score": item.get("direct_damage_closure_score", 0),
+                            }
+                            for item in (
+                                adjudication.get("candidate_reviews", [])
+                                if isinstance(adjudication.get("candidate_reviews"), list)
+                                else []
+                            )[:6]
+                            if isinstance(item, Mapping) and str(item.get("candidate_name", "")).strip()
+                        ],
+                    },
+                    "research_assessment": {
+                        "advisory_only": True,
+                        "non_blocking": True,
+                        "research_complete": bool(
+                            provider_assessment.get(
+                                "research_complete", bool(directions)
+                            )
+                        ),
+                        "status": str(
+                            provider_assessment.get("status", "") or ""
+                        )[:48],
+                        "direction_ready": direction_ready,
+                        "candidate_count": min(
+                            8,
+                            _positive_int(
+                                provider_assessment.get(
+                                    "candidate_count",
+                                    provider_assessment.get(
+                                        "direction_count", len(directions)
+                                    ),
+                                )
+                            ),
+                        ),
+                        "research_ready_count": min(
+                            8,
+                            _positive_int(
+                                provider_assessment.get(
+                                    "research_ready_count",
+                                    provider_assessment.get(
+                                        "structurally_complete_directions",
+                                        quality_gate.get("passed_directions", 0),
+                                    ),
+                                )
+                            ),
+                        ),
+                        "average_completeness": _deep_public_progress(
+                            provider_assessment.get("average_completeness", 0.0)
+                        ),
+                        "missing_s6_columns": [
+                            str(item)[:64]
+                            for item in (
+                                quality_gate.get("missing_s6_columns", [])
+                                if isinstance(quality_gate.get("missing_s6_columns"), list)
+                                else []
+                            )[:5]
+                            if str(item).strip()
+                        ],
+                        "gaps": research_gaps,
+                        "research_gaps": research_gaps,
+                    },
+                    "research_gaps": research_gaps,
+                    "research_strategy": {
+                        "mode": str(provider_strategy.get("mode", "") or "")[:80],
+                        "topology": str(
+                            provider_strategy.get("topology", "") or ""
+                        )[:120],
+                        "rationale": str(
+                            provider_strategy.get("rationale", "") or ""
+                        )[:500],
+                        "actions": [
+                            str(item)[:64]
+                            for item in (
+                                provider_strategy.get("actions", [])
+                                if isinstance(provider_strategy.get("actions"), list)
+                                else []
+                            )[:6]
+                            if str(item).strip()
+                        ],
+                        "lenses": [
+                            str(item)[:120]
+                            for item in (
+                                provider_strategy.get("lenses", [])
+                                if isinstance(provider_strategy.get("lenses"), list)
+                                else []
+                            )[:8]
+                            if str(item).strip()
+                        ],
+                        "fixed_pipeline": bool(
+                            provider_strategy.get("fixed_pipeline", False)
+                        ),
+                        "s6_requires_confirmation": True,
+                    },
+                    "orchestration": {
+                        "pattern": str(orchestration.get("pattern", ""))[:120],
+                        "rounds": min(8, _positive_int(orchestration.get("rounds", 0))),
+                        "requested_agents": min(12, _positive_int(orchestration.get("requested_agents", 0))),
+                        "completed_divergence_agents": min(8, _positive_int(orchestration.get("completed_divergence_agents", 0))),
+                        "degraded": bool(orchestration.get("degraded", False)),
+                        "authoring_requested": authoring_requested,
+                        "reported_workflow_status": provider_reported_workflow_status,
+                        "finalization_status": str(
+                            orchestration.get("finalization_status", provider_finalization_status) or ""
+                        )[:32],
+                        "divergence_axes": [
+                            str(item)[:80]
+                            for item in (
+                                orchestration.get("divergence_axes", [])
+                                if isinstance(orchestration.get("divergence_axes"), list)
+                                else []
+                            )[:8]
+                            if str(item).strip()
+                        ],
+                    },
+                    "finalization_status": provider_finalization_status,
+                    "selection_rationale": selection_rationale,
                     "divergence_steps": dialogue_steps,
                     "concept_directions": directions,
+                    "next_questions": open_questions
+                    or [
+                        "哪个内部维度还能继续推翻当前作战假设？",
+                        "如何把保留方向进一步闭合到可核验的装备构型与直接军事效果？",
+                        "若对手快速适应，还需要改写哪一段任务链？",
+                    ],
+                    "capability_card_draft": {
+                        key: str(capability_card_draft.get(key, ""))[:1800]
+                        for key in (
+                            "overview",
+                            "technology_implementation",
+                            "operational_process",
+                            "capability_effects",
+                            "winning_logic",
+                        )
+                    },
                 }
+                runtime_metadata = _deep_runtime_metadata(result.get("runtime", {}))
+                if runtime_metadata:
+                    visible["runtime"] = runtime_metadata
                 return visible
+            except _DeepJobInterrupted:
+                raise
             except Exception as exc:
-                # The caller converts this into a partial, auditable turn. Do
+                # The caller converts this into a bounded, auditable turn. Do
                 # not expose provider names, URLs, credentials or raw errors.
                 nonlocal provider_error
-                provider_error = type(exc).__name__
+                error_type = type(exc).__name__
+                provider_error = (
+                    (
+                        "成卡服务暂时中断，已保留各 Agent 的阶段成果；可重试完成五栏成卡。"
+                        if authoring_requested
+                        else "深研服务暂时中断，已保留各 Agent 的阶段成果；可重试当前问题。"
+                    )
+                    if error_type
+                    in {
+                        "ProviderRequestError",
+                        "ProviderRetryableError",
+                        "ProviderCapacityError",
+                        "TimeoutError",
+                    }
+                    else "深研服务本轮未完整返回，已保留阶段成果；可直接重试。"
+                )
                 return None
+            finally:
+                # ``DeepWorkspace.from_run_workspace`` duplicates the
+                # descriptor only long enough to resolve the authenticated
+                # path.  Close the original descriptor after the provider
+                # turn so worker threads do not accumulate run handles.
+                if runtime_run_workspace is not None:
+                    try:
+                        runtime_run_workspace.close()
+                    except Exception:
+                        pass
 
         provider_answer = _provider_deep_answer()
         if provider_answer is not None:
             answer = provider_answer
             provider_status = "provider_backed"
         else:
+            offline_candidate = context.get("candidate", {}) if isinstance(context, Mapping) else {}
+            if not isinstance(offline_candidate, Mapping):
+                offline_candidate = {}
+            offline_context = single_equipment_innovation_context(
+                context,
+                query=_deep_query(view),
+                equipment=offline_candidate,
+                question=content,
+                focus=focus,
+                messages=conversation_messages,
+                working_memory=current_working_memory,
+                limit=12000,
+            )
             answer = synthesize_reply(
                 query=_deep_query(view),
                 question=content,
-                context_refs=context,
+                context_refs=offline_context,
                 capability_name=str(session.get("capability_name", "")),
             )
             if str(getattr(view, "execution", {}).get("mode", "fake") or "fake").lower() == "real":
                 provider_status = "provider_unavailable"
+        if isinstance(answer, Mapping) and requested_skill_ids:
+            answer = dict(answer)
+            runtime = answer.get("runtime", {})
+            runtime = dict(runtime) if isinstance(runtime, Mapping) else {}
+            runtime.setdefault("active_skill_ids", requested_skill_ids)
+            answer["runtime"] = runtime
+        if isinstance(answer, Mapping):
+            answer = dict(answer)
+            answer_directions = answer.get("concept_directions", [])
+            answer_directions = (
+                answer_directions if isinstance(answer_directions, list) else []
+            )
+            direction_ready = any(
+                isinstance(item, Mapping) and bool(item.get("stable", False))
+                for item in answer_directions
+            )
+            legacy_gate = answer.pop("quality_gate", {})
+            legacy_gate = legacy_gate if isinstance(legacy_gate, Mapping) else {}
+            assessment = answer.get("research_assessment", {})
+            assessment = dict(assessment) if isinstance(assessment, Mapping) else {}
+            projected_gaps = answer.get("research_gaps", [])
+            projected_gaps = projected_gaps if isinstance(projected_gaps, list) else []
+            legacy_gaps: list[object] = []
+            for source in (
+                legacy_gate.get("advisories", []),
+                legacy_gate.get("block_reasons", []),
+            ):
+                if isinstance(source, list):
+                    legacy_gaps.extend(source)
+            normalized_gaps = [
+                str(item)[:400]
+                for item in [
+                    *(
+                        assessment.get("gaps", [])
+                        if isinstance(assessment.get("gaps"), list)
+                        else []
+                    ),
+                    *projected_gaps,
+                    *legacy_gaps,
+                ]
+                if str(item).strip()
+            ]
+            if authoring_requested and not (
+                canonical_target_bound
+                and provider_runtime_managed
+                and provider_authoring_completed
+            ):
+                normalized_gaps.append(
+                    "当前方向尚未完成受控 S6 成卡动作；本轮研究结果已保留，请先继续闭合方向后再确认成卡"
+                )
+            assessment.update(
+                {
+                    "advisory_only": True,
+                    "non_blocking": True,
+                    "direction_ready": bool(
+                        assessment.get("direction_ready", False)
+                        or legacy_gate.get("direction_ready", False)
+                        or direction_ready
+                    ),
+                    "gaps": list(dict.fromkeys(normalized_gaps))[:8],
+                }
+            )
+            assessment["research_gaps"] = list(assessment["gaps"])
+            answer["research_assessment"] = assessment
+            answer["research_gaps"] = list(assessment["gaps"])
+            if authoring_requested:
+                provider_finalization_status = (
+                    "candidate_ready"
+                    if canonical_target_bound
+                    and provider_runtime_managed
+                    and provider_authoring_completed
+                    and provider_status != "provider_unavailable"
+                    else "research_complete"
+                )
+            else:
+                provider_finalization_status = (
+                    "awaiting_user_confirmation"
+                    if assessment["direction_ready"]
+                    and provider_status != "provider_unavailable"
+                    else "research_complete"
+                )
+            answer["finalization_status"] = provider_finalization_status
+            orchestration = answer.get("orchestration", {})
+            if isinstance(orchestration, Mapping):
+                normalized_orchestration = dict(orchestration)
+                normalized_orchestration.pop("quality_gate_passed", None)
+                normalized_orchestration["finalization_status"] = (
+                    provider_finalization_status
+                )
+                normalized_orchestration["authoring_requested"] = authoring_requested
+                answer["orchestration"] = normalized_orchestration
+            sections = (
+                list(answer.get("sections", []))
+                if isinstance(answer.get("sections"), list)
+                else []
+            )
+            sections = [
+                item
+                for item in sections
+                if not (
+                    isinstance(item, Mapping)
+                    and str(item.get("title", "")).strip() == "发布质量门"
+                )
+            ]
+            if (
+                provider_finalization_status == "awaiting_user_confirmation"
+                and not any(
+                    isinstance(item, Mapping)
+                    and str(item.get("title", "")).strip() == "是否形成能力卡"
+                    for item in sections
+                )
+            ):
+                sections.append(
+                    {
+                        "title": "是否形成能力卡",
+                        "text": (
+                            "这个方向已经形成了可辨识的装备构型、作用机理和直接军事价值。"
+                            "你可以继续追问，把关键边界再挖深；如果认可当前方向，再确认形成五栏能力卡。"
+                        ),
+                    }
+                )
+            answer["sections"] = sections
         check_cancel()
         workflow_stage_status = (
             provider_workflow_status
             if provider_workflow_status in {"partial", "blocked"}
             else "completed"
         )
-        _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "s3_divergence", "status": workflow_stage_status, "progress": 0.35, "kind": "summary", "text": "已形成可见发散方向，进入能力映射。" if workflow_stage_status == "completed" else "发散流程部分受限，保留可见阶段草稿。"})
-        _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "s4_mapping", "status": "running", "progress": 0.45, "kind": "summary", "text": "将发散方向映射到直接军事效果、任务节点和装备构型。"})
-        visible_answer = "\n\n".join(f"### {item['title']}\n{item['text']}" for item in answer.get("sections", []) if isinstance(item, Mapping))
+        completed_proposers = _positive_int(
+            (answer.get("orchestration", {}) or {}).get("completed_divergence_agents", 0)
+        ) if isinstance(answer.get("orchestration"), Mapping) else 0
+        live_progress_emitted = bool(
+            isinstance(answer, Mapping) and answer.get("live_progress_emitted")
+        )
+        if not live_progress_emitted:
+            _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "s3_divergence", "status": workflow_stage_status, "progress": 0.35, "kind": "summary", "text": (f"{completed_proposers or 2} 路发散 Agent 已完成内部多维提案，候选进入对抗裁决。" if workflow_stage_status == "completed" else "发散流程部分受限，保留已完成角色的可见提案。")})
+            _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "council_critique", "status": "completed" if provider_status == "provider_backed" else "running", "progress": 0.45, "kind": "summary", "text": "对抗裁决已按颠覆制胜、先机优势、局势贴合与反适应韧性完成筛选排序。" if provider_status == "provider_backed" else "正在按先机制衡标准复核候选的颠覆性与局势贴合。"})
+            _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "s4_mapping", "status": "running", "progress": 0.52, "kind": "summary", "text": "综合总编正在修订候选并映射直接军事效果、任务节点和装备构型。"})
+        if provider_status == "provider_backed" and isinstance(answer, Mapping) and not live_progress_emitted:
+            for item in (answer.get("agent_dialogue", []) if isinstance(answer.get("agent_dialogue"), list) else []):
+                if not isinstance(item, Mapping):
+                    continue
+                summary = str(item.get("summary", "") or "").strip()
+                if not summary:
+                    continue
+                round_name = str(item.get("round", "divergence") or "divergence").strip().lower()
+                stage = {
+                    "divergence": "s3_divergence",
+                    "critique": "council_critique",
+                    "synthesis": "s6_authoring" if authoring_requested else "s4_mapping",
+                }.get(round_name, "s3_divergence")
+                axis = str(item.get("axis", "") or item.get("role", "") or "").strip()
+                role = str(item.get("role", "") or "").strip()
+                proposals = item.get("proposal_names", [])
+                proposal_names = [
+                    str(name).strip()[:80]
+                    for name in (proposals if isinstance(proposals, list) else [])[:3]
+                    if str(name).strip()
+                ]
+                proposal_text = f" · 候选：{'、'.join(proposal_names[:2])}" if proposal_names else ""
+                fallback_delta: dict[str, Any] = {
+                    "kind": "answer",
+                    "text": f"{axis}：{summary[:900]}{proposal_text}"[:1200],
+                }
+                if role:
+                    fallback_delta["role"] = role[:80]
+                if axis:
+                    fallback_delta["axis"] = axis[:80]
+                agent_id = str(item.get("agent_id", "") or "").strip()
+                if agent_id:
+                    fallback_delta["agent_id"] = agent_id[:80]
+                if proposal_names:
+                    fallback_delta["proposal_names"] = proposal_names
+                if round_name == "divergence":
+                    fallback_delta["parallel_group"] = "deep_dialogue_council"
+                    fallback_delta["parallel"] = True
+                _publish_deep_event(
+                    run_id,
+                    "deep_stage",
+                    {
+                        "job_id": job_id,
+                        "session_id": session_id,
+                        "stage": stage,
+                        "status": "running",
+                        "progress": 0.38 if stage == "s3_divergence" else 0.48 if stage == "council_critique" else 0.70,
+                        "delta": fallback_delta,
+                    },
+                )
+        visible_answer = format_deep_complete_answer(answer)
         # Surface the model's bounded, user-visible reasoning as incremental
         # deltas.  These are summaries only; hidden chain-of-thought and raw
         # provider output never enter the event stream or ledger.
-        if provider_status == "provider_backed":
+        if provider_status == "provider_backed" and not live_progress_emitted:
             for step in (answer.get("divergence_steps", []) if isinstance(answer, Mapping) else []):
                 if not isinstance(step, Mapping) or not str(step.get("text", "")).strip():
                     continue
                 stage = str(step.get("stage", "divergence")).strip().lower()
-                stage = {"context": "context", "divergence": "s3_divergence", "mapping": "s4_mapping", "authoring": "s6_authoring"}.get(stage, "s3_divergence")
+                stage = {"context": "context", "divergence": "s3_divergence", "critique": "council_critique", "mapping": "s4_mapping", "authoring": "s6_authoring" if authoring_requested else "s4_mapping"}.get(stage, "s3_divergence")
                 _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": stage, "status": "running", "progress": 0.30, "delta": {"kind": "answer", "text": str(step.get("text", ""))[:1200]}})
+        if provider_status == "provider_backed" and visible_answer:
+            _publish_deep_event(
+                run_id,
+                "deep_stage",
+                {
+                    "job_id": job_id,
+                    "session_id": session_id,
+                    "stage": "s6_authoring" if authoring_requested else "s4_mapping",
+                    "status": "completed" if provider_finalization_status in {"candidate_ready", "awaiting_user_confirmation"} else "partial",
+                    "progress": 0.82,
+                    "kind": "summary",
+                    "text": "本轮完整总结结果已生成，正在写入会话。",
+                    "delta": {
+                        # Keep the process thread light: the durable assistant
+                        # message already carries the full markdown summary.
+                        # Dumping it here again caused duplicate headings and
+                        # unreadable raw markdown in the live feedback lane.
+                        "kind": "status",
+                        "text": (
+                            "本轮完整结果已生成，正在写入会话与能力画像。"
+                            if authoring_requested
+                            else "本轮高价值方向已生成，正在写入会话并询问是否成卡。"
+                        ),
+                    },
+                },
+            )
         provider_directions = answer.get("concept_directions", []) if isinstance(answer, Mapping) else []
         provider_directions = [
             dict(item)
@@ -6882,19 +10247,77 @@ def create_app(
         ][:3]
         artifact: dict[str, Any] | None = None
         refs: list[str] = []
-        if provider_status == "provider_unavailable" or provider_workflow_status in {"partial", "blocked"}:
+        if provider_status == "provider_unavailable" or provider_workflow_status == "partial":
             # A real-mode deep turn that could not reach its configured
             # provider may still return the deterministic context summary for
             # the analyst, but it is not allowed to mint a completed
             # capability/version artifact.
+            create_artifact = False
+        # The write path has one strict contract.  This is intentionally
+        # stricter than the visible research path: canonical identity, the
+        # managed deep runtime, and an explicit S6 authoring tool invocation
+        # with a non-empty draft are all required before a version can exist.
+        # In particular, deterministic/legacy fallback output must remain
+        # analysis-only even when the caller requested an artifact.
+        if create_artifact and not (
+            canonical_target_bound
+            and provider_runtime_managed
+            and provider_authoring_completed
+        ):
             create_artifact = False
         if create_artifact:
             check_cancel()
             candidate = context.get("candidate", {}) if isinstance(context, Mapping) else {}
             if not isinstance(candidate, Mapping):
                 candidate = {}
-            candidate = dict(candidate)
-            direction_stable = False
+            innovation_seed = single_equipment_innovation_context(
+                context,
+                query=_deep_query(view),
+                equipment=candidate,
+                question=content,
+                focus=focus,
+                messages=conversation_messages,
+                working_memory=current_working_memory,
+                limit=12000,
+            ).get("source_equipment", {})
+            candidate = dict(innovation_seed) if isinstance(innovation_seed, Mapping) else {}
+            source_identity = next(
+                (
+                    str(candidate.get(key, "") or "").strip()
+                    for key in ("name", "title", "primary_equipment_identity", "equipment_form")
+                    if str(candidate.get(key, "") or "").strip()
+                ),
+                "",
+            )
+            if source_identity:
+                candidate["source_equipment_identity"] = source_identity
+            # The latest deep-thinking contract is strictly single-equipment:
+            # a global/advisory conversation may still return visible
+            # analysis, but it must never mint a hypothesis or capability
+            # version from a provider-supplied direction alone.  Only a
+            # server-resolved canonical candidate (set above or by the
+            # reference-research hand-off) can enter the authoring/version
+            # path.  This also closes the direct-API hole where arbitrary
+            # ``capability_id``/``hypothesis_id`` fields previously made an
+            # unbound session appear eligible for a card.
+            canonical_target = bool(
+                isinstance(context, Mapping)
+                and context.get("canonical_candidate") is True
+                and any(
+                    str(candidate.get(key, "") or "").strip()
+                    for key in (
+                        "hypothesis_id",
+                        "card_binding_id",
+                        "capability_id",
+                        "primary_equipment_identity",
+                        "equipment_form",
+                        "name",
+                        "title",
+                    )
+                )
+            )
+            if not canonical_target:
+                create_artifact = False
             session_kind = str(session.get("kind", "") or "").strip().lower().replace("_", "-")
             lineage_locked = session_kind in {
                 "capability-followup",
@@ -6908,15 +10331,25 @@ def create_app(
             # identity before applying any model-proposed direction fields;
             # the model may enrich the mechanism/effects, but it cannot
             # relabel the equipment or move the turn to another hypothesis.
-            locked_identity_keys = {
-                "hypothesis_id",
-                "card_binding_id",
-                "capability_id",
+            # Every server-resolved target is a *single equipment* scope.  A
+            # generic deep-thinking session may fork a genuinely new
+            # hypothesis, but the provider must never turn that turn into a
+            # different weapon/platform (or relabel the canonical card).  Keep
+            # these fields locked for all canonical targets.  Formal-card and
+            # reference-research sessions additionally lock their lineage
+            # identifiers below.
+            equipment_identity_keys = {
                 "name",
                 "title",
                 "primary_equipment_identity",
                 "equipment_form",
                 "equipment_forms",
+                "capability_id",
+            }
+            locked_identity_keys = {
+                "hypothesis_id",
+                "card_binding_id",
+                *equipment_identity_keys,
             }
             locked_identity = {
                 key: candidate.get(key)
@@ -6933,37 +10366,58 @@ def create_app(
                 if key not in locked_identity and value not in (None, "", [], {}):
                     locked_identity[key] = value
             # A provider-backed deep turn may discover a genuinely new
-            # direction.  Feed the first stable, visible direction into S6
+            # direction. Feed the strongest visible direction into S6
             # authoring instead of rebuilding a card from the stale parent
             # candidate alone.  For formal-card follow-ups the session-bound
             # lineage remains authoritative; global/reference sessions may
             # adopt the provider's new hypothesis identity.
             if provider_directions:
-                direction = provider_directions[0]
-                direction_stable = bool(direction.get("stable", False))
+                direction = next(
+                    (
+                        item
+                        for item in provider_directions
+                        if bool(item.get("stable", False))
+                    ),
+                    provider_directions[0],
+                )
                 direction_map = {
                     "name": ("name", "title", "primary_equipment_identity", "equipment_form"),
                     "title": ("title", "name"),
                     "equipment_form": ("equipment_form", "equipment_forms", "primary_equipment_identity"),
+                    "innovation_variant_name": ("innovation_variant_name", "name"),
+                    "innovation_equipment_form": ("innovation_equipment_form", "new_equipment_form", "equipment_form"),
                     "operational_mechanism": ("operational_mechanism", "depth_mechanism", "mechanism_chain", "winning_mechanism"),
                     "mechanism_chain": ("mechanism_chain", "operational_mechanism", "depth_mechanism", "winning_mechanism"),
+                    "decisive_target": ("decisive_target", "target_set", "target_scenario"),
+                    "direct_damage_mechanism": ("direct_damage_mechanism", "terminal_effect", "operational_mechanism"),
+                    "mission_kill_criterion": ("mission_kill_criterion", "direct_military_effects", "mission_effect"),
                     "military_value": ("military_value", "direct_military_effects", "mission_effect"),
                     "direct_military_effects": ("direct_military_effects", "military_value", "mission_effect"),
                     "project_function": ("project_function", "function", "military_value"),
                     "related_scenario": ("related_scenario", "target_scenario", "scenario"),
                     "capability_gap": ("capability_gap", "failure_boundary", "evidence_gap"),
-                    "validation_plan": ("validation_plan", "verification_plan"),
-                    "evidence_ids": ("evidence_ids", "direct_evidence_refs", "evidence_refs"),
+                    "innovation_thesis": ("innovation_thesis",),
+                    "winning_angle": ("winning_angle",),
+                    "changed_assumption": ("changed_assumption",),
+                    "novelty": ("novelty",),
+                    "disruptive_difference": ("disruptive_difference",),
+                    "implementation_concept": ("implementation_concept",),
                     "hypothesis_id": ("hypothesis_id",),
                 }
                 for target, source_keys in direction_map.items():
-                    if lineage_locked and target in locked_identity_keys:
+                    if (
+                        canonical_target
+                        and target in equipment_identity_keys
+                    ) or (lineage_locked and target in locked_identity_keys):
                         continue
                     for source_key in source_keys:
                         value = direction.get(source_key)
                         if value not in (None, "", [], {}):
                             candidate[target] = value
                             break
+                capability_draft = answer.get("capability_card_draft", {}) if isinstance(answer, Mapping) else {}
+                if isinstance(capability_draft, Mapping) and any(str(value or "").strip() for value in capability_draft.values()):
+                    candidate["capability_card_draft"] = dict(capability_draft)
                 # A formal-card follow-up is explicitly bound to the original
                 # card/hypothesis.  Global/reference sessions, however, may
                 # discover a genuinely new direction; when the provider does
@@ -7035,7 +10489,7 @@ def create_app(
                 ][:32]
             # A formal-card launcher may carry only the stable binding and
             # hypothesis.  Recover the server-owned baseline snapshot so the
-            # evidence gate and version chain operate on canonical content,
+            # version chain operates on canonical content,
             # never on a browser-authored replacement.
             repo_for_context = _deep_repository()
             if repo_for_context is not None and session.get("card_binding_id"):
@@ -7091,6 +10545,15 @@ def create_app(
             # well.  This second fence covers both model directions and the
             # legacy baseline merge above, so a reference session can never
             # drift to a different equipment/hypothesis during authoring.
+            # Re-apply the canonical equipment identity after baseline and
+            # provider enrichment.  This fence also applies to a generic
+            # deep-thinking session: it may produce a new hypothesis, but it
+            # remains about the selected weapon/equipment.
+            if canonical_target:
+                for key in equipment_identity_keys:
+                    value = locked_identity.get(key)
+                    if value not in (None, "", [], {}):
+                        candidate[key] = value
             if lineage_locked:
                 for key, value in locked_identity.items():
                     if value not in (None, "", [], {}):
@@ -7107,15 +10570,15 @@ def create_app(
                 candidate["card_binding_id"] = session.get("card_binding_id")
             if session.get("capability_name"):
                 candidate.setdefault("name", session.get("capability_name"))
-            if provider_status == "provider_backed" and not direction_stable:
-                # The dialogue may expose useful visible exploration without
-                # freezing an unstable idea into the capability/version ledger.
+            if not canonical_target:
+                # The flag above controls entry into this block, but the
+                # provider direction may still have been copied into the
+                # local candidate while building the visible answer.  Keep a
+                # second, immediate fence at the actual authoring call so an
+                # unbound/global session can never mint a version.
                 create_artifact = False
-            elif not _deep_candidate_reviewable(candidate, session):
-                # Keep the visible synthesis, but do not turn an exploratory
-                # answer into a card until the identity/mechanism/effect and
-                # auditable-input gates are all satisfied.
-                create_artifact = False
+            if not canonical_target:
+                artifact = None
             else:
                 artifact = build_reference_capability(run_id=run_id, query=_deep_query(view), candidate=candidate, focus=focus or content, source_session_id=session_id)
             # Deep-thinking cards remain explicitly provisional until an
@@ -7124,10 +10587,26 @@ def create_app(
             # version: a sidecar-only success is not a published result.
             if artifact is not None:
                 refs = [str(artifact.get("capability_id", ""))]
-                _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "s4_mapping", "status": "completed", "progress": 0.60, "kind": "summary", "text": "已完成能力缺口与直接军事效果映射。"})
-                _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "s6_authoring", "status": "completed", "progress": 0.78, "kind": "candidate", "text": "已形成待核验能力卡候选。", "artifact_refs": [str(artifact.get("capability_id", ""))], "evidence_refs": list(artifact.get("evidence_ids", []))})
+        if artifact is not None:
+            # Mapping is a single governed transition, regardless of whether
+            # the subsequent S6 authoring gate accepts a candidate.
+            _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "s4_mapping", "status": "completed", "progress": 0.60, "kind": "summary", "text": "已完成能力缺口与直接军事效果映射。"})
+            _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "s6_authoring", "status": "completed", "progress": 0.78, "kind": "candidate", "text": "已形成待核验能力卡候选。", "artifact_refs": [str(artifact.get("capability_id", ""))], "evidence_refs": list(artifact.get("evidence_ids", []))})
         else:
-            _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "s4_mapping", "status": "completed", "progress": 0.60, "kind": "summary", "text": "已完成可见能力映射，本轮不生成候选卡。"})
+            mapping_text = (
+                "已形成值得继续深挖的候选方向，等待用户决定是否形成能力卡。"
+                if provider_finalization_status == "awaiting_user_confirmation"
+                else "深度发散已完成，本轮结果与研究缺口均已保留。"
+            )
+            _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "s4_mapping", "status": "completed", "progress": 0.78 if not authoring_requested else 0.60, "kind": "summary", "text": mapping_text})
+            if authoring_requested:
+                if not canonical_target_bound:
+                    authoring_text = "本轮发散结果已保留；当前会话未绑定可写入的单装备身份，未创建能力画像版本。"
+                elif not provider_runtime_managed or not provider_authoring_completed:
+                    authoring_text = "本轮发散结果已保留；尚未完成受控 S6 成卡动作，未创建能力画像版本。"
+                else:
+                    authoring_text = "本轮发散结果已保留；运行服务未完整返回，暂未创建能力画像版本。"
+                _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "s6_authoring", "status": "partial" if provider_status == "provider_unavailable" else "completed", "progress": 0.78, "kind": "summary", "text": authoring_text})
         check_cancel()
         version_record: dict[str, Any] | None = None
         version_error = ""
@@ -7220,6 +10699,7 @@ def create_app(
         persistence_error = version_error or projection_error
         if version_record is not None:
             refs = [str(artifact.get("capability_id", ""))] if artifact else []
+        check_cancel()
         assistant_message = _append_visible_deep_message(
             run_id=run_id,
             session_id=session_id,
@@ -7230,18 +10710,143 @@ def create_app(
             if version_record is not None
             else (),
             status="completed",
+            branch_id=normalized_branch,
+            turn_id=job_id,
+            metadata={
+                "runtime": answer.get("runtime", {})
+                if isinstance(answer, Mapping)
+                else {}
+            },
         )
         _persist_deep_message(session_id, assistant_message)
+        steering_inputs: list[str] = []
+        repo_for_memory = _deep_repository()
+        list_steers = (
+            getattr(repo_for_memory, "list_deep_steers", None)
+            if repo_for_memory is not None
+            else None
+        )
+        if job_id and callable(list_steers):
+            try:
+                steering_inputs = [
+                    str(item.get("content", ""))
+                    for item in list_steers(job_id, statuses=("applied",))
+                    if isinstance(item, Mapping) and str(item.get("content", "")).strip()
+                ]
+            except Exception:
+                steering_inputs = []
+        checkpoint = build_working_memory(
+            answer=answer if isinstance(answer, Mapping) else {},
+            question=content,
+            branch_id=normalized_branch,
+            turn_id=job_id,
+            previous=current_working_memory,
+            steering_inputs=steering_inputs,
+            source_message_id=str(assistant_message.get("message_id", "")),
+            source_sequence=int(assistant_message.get("sequence", 0) or 0),
+        )
+        next_context_usage = conversation_context_usage(
+            messages=[
+                *conversation_messages,
+                *(
+                    [user_message]
+                    if isinstance(user_message, Mapping) and user_message
+                    else []
+                ),
+                assistant_message,
+            ],
+            working_memory=checkpoint,
+            current_question=content,
+        )
+        next_compaction = compaction_notice(next_context_usage)
+        if next_compaction and int(next_context_usage.get("archived_turns", 0) or 0) > int(
+            context_usage.get("archived_turns", 0) or 0
+        ):
+            _publish_deep_event(
+                run_id,
+                "deep_context_compacted",
+                {
+                    "job_id": job_id,
+                    "session_id": session_id,
+                    "stage": "s4_mapping",
+                    "status": "completed",
+                    "progress": 0.9,
+                    "kind": "summary",
+                    "text": next_compaction,
+                    "living_turns": next_context_usage.get("living_turns", 0),
+                    "archived_turns": next_context_usage.get("archived_turns", 0),
+                },
+            )
+        check_cancel()
+        update_branch_memory = (
+            getattr(repo_for_memory, "update_deep_branch_working_memory", None)
+            if repo_for_memory is not None
+            else None
+        )
+        memory_error = ""
+        if callable(update_branch_memory):
+            try:
+                memory_update = update_branch_memory(
+                    session_id,
+                    branch_id=normalized_branch,
+                    checkpoint=checkpoint,
+                )
+                if not isinstance(memory_update, Mapping):
+                    raise RuntimeError("deep working memory row was not found")
+            except Exception as exc:
+                safe_error = sanitize_runtime_payload(
+                    str(exc).strip()[:800] or type(exc).__name__,
+                    max_string_length=800,
+                )
+                memory_error = f"working memory ledger: {safe_error}"[:1000]
+        else:
+            update_memory = (
+                getattr(repo_for_memory, "update_deep_working_memory", None)
+                if repo_for_memory is not None
+                else None
+            )
+            if callable(update_memory):
+                try:
+                    memory_update = update_memory(
+                        session_id,
+                        merge_branch_working_memory(
+                            session_memory, normalized_branch, checkpoint
+                        ),
+                    )
+                    if not isinstance(memory_update, Mapping):
+                        raise RuntimeError("deep working memory row was not found")
+                except Exception as exc:
+                    safe_error = sanitize_runtime_payload(
+                        str(exc).strip()[:800] or type(exc).__name__,
+                        max_string_length=800,
+                    )
+                    memory_error = f"working memory ledger: {safe_error}"[:1000]
+        if memory_error:
+            persistence_error = "; ".join(
+                value for value in (persistence_error, memory_error) if value
+            )[:1000]
+            _publish_deep_event(
+                run_id,
+                "deep_memory_persistence_warning",
+                {
+                    "job_id": job_id,
+                    "session_id": session_id,
+                    "stage": "validation" if authoring_requested else "s4_mapping",
+                    "status": "partial",
+                    "progress": 0.91,
+                    "kind": "summary",
+                    "text": "本轮答复已保留，但工作记忆写入失败，任务可重试。",
+                    "error": memory_error,
+                },
+            )
         turn_status = (
-            "blocked"
-            if provider_workflow_status == "blocked"
-            else "partial"
+            "partial"
             if persistence_error
             or provider_status == "provider_unavailable"
             or provider_workflow_status == "partial"
             else "completed"
         )
-        session_status = "blocked" if turn_status == "blocked" else "partial" if turn_status == "partial" else "active"
+        session_status = "partial" if turn_status == "partial" else "active"
         session_update = _deep_update_session(
             run_id,
             session_id,
@@ -7254,18 +10859,26 @@ def create_app(
         # can downgrade this turn to a partial result.
         session_projection_error = _deep_session_update_error(session_update)
         if session_projection_error:
+            session_ledger_error = (
+                f"session ledger: {session_projection_error}"[:1000]
+            )
+            persistence_error = "; ".join(
+                value
+                for value in (persistence_error, session_ledger_error)
+                if value
+            )[:1000]
             if version_error:
-                version_error = f"{version_error}; session ledger: {session_projection_error}"[:1000]
+                version_error = f"{version_error}; {session_ledger_error}"[:1000]
             else:
-                version_error = f"session ledger: {session_projection_error}"[:1000]
+                version_error = session_ledger_error
             session_status = "partial"
             turn_status = "partial" if turn_status == "completed" else turn_status
-        validation_status = "blocked" if turn_status == "blocked" else "partial" if turn_status == "partial" else "completed"
-        _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "validation", "status": validation_status, "progress": 0.92, "kind": "summary", "text": ("模型提供方不可用；已返回可见上下文分析，但未生成候选卡。" if provider_status == "provider_unavailable" else ("候选已形成，但版本账本写入受限，保留为部分结果。" if version_error else ("候选已通过结构完整性校验，状态保持 pending_verification。" if artifact else "本轮仅返回可见分析，尚未形成稳定候选卡。"))), "error": version_error or provider_error})
+        validation_status = "partial" if turn_status == "partial" else "completed"
+        _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "s6_authoring" if authoring_requested else "s4_mapping", "status": validation_status, "progress": 0.92, "kind": "summary", "text": ("模型提供方不可用；已返回可见上下文分析，但未生成候选卡。" if provider_status == "provider_unavailable" else ("候选已形成，但持久化账本写入受限，保留为部分结果。" if persistence_error else ("用户确认的能力卡已保存为待评议版本；研究缺口继续作为后续问题保留。" if artifact else "方向已通过价值判断，等待用户确认是否成卡。" if provider_finalization_status == "awaiting_user_confirmation" else "本轮深度发散已完成，结果与研究缺口均已保留。"))), "error": persistence_error or provider_error})
         if artifact:
             _publish_deep_event(run_id, "deep_thinking_candidate_created", {"job_id": job_id, "session_id": session_id, "capability_id": artifact.get("capability_id", ""), "hypothesis_id": artifact.get("hypothesis_id", ""), "provisional": True})
         _publish_deep_event(run_id, "deep_session_message", {"job_id": job_id, "session_id": session_id, "role": "assistant", "message_id": assistant_message.get("message_id", ""), "artifact_refs": refs})
-        return {"session": updated, "user_message": user_message, "assistant_message": assistant_message, "answer": answer, "artifact": artifact, "job_status": turn_status, "job_error": version_error or projection_error or provider_error, "provider_status": provider_status, "deep_divergence_status": provider_workflow_status}
+        return {"session": updated, "user_message": user_message, "assistant_message": assistant_message, "answer": answer, "artifact": artifact, "working_memory": checkpoint, "job_status": turn_status, "job_error": persistence_error or provider_error, "provider_status": provider_status, "deep_divergence_status": provider_workflow_status}
 
     def _enqueue_deep_turn_job(
         *,
@@ -7274,13 +10887,18 @@ def create_app(
         session: Mapping[str, Any],
         content: str,
         focus: str = "",
-        create_artifact: bool = True,
+        create_artifact: bool = False,
+        active_skill_ids: Sequence[str] = (),
+        source_channel: str = "web",
         user_message: Mapping[str, Any] | None = None,
         idempotency_key: str = "",
         fingerprint: str = "",
         job_id: str = "",
         job_kind: str = "deep-dialogue-v1",
         pre_reserved: bool = False,
+        branch_id: str = DEFAULT_BRANCH_ID,
+        parent_message_id: str = "",
+        parent_job_id: str = "",
     ) -> dict[str, Any]:
         """Persist and asynchronously execute one visible deep-thinking turn.
 
@@ -7294,29 +10912,90 @@ def create_app(
         session_id = str(session.get("session_id", ""))
         if not session_id:
             raise ValueError("deep-thinking session id is required")
-        if user_message is None:
-            user_message = _append_visible_deep_message(
-                run_id=run_id,
-                session_id=session_id,
-                role="user",
-                content=content,
-                status="completed",
-            )
-            _persist_deep_message(session_id, user_message)
-            _publish_deep_event(
-                run_id,
-                "deep_session_message",
-                {
-                    "session_id": session_id,
-                    "role": "user",
-                    "message_id": user_message.get("message_id", ""),
-                },
-            )
+        create_artifact = _deep_authoring_requested(content, create_artifact)
+        normalized_branch = normalize_branch_id(branch_id)
+        normalized_parent_message_id = str(parent_message_id or "").strip()[:128]
+        normalized_skill_ids: list[str] = []
+        for value in active_skill_ids:
+            skill_id = str(value or "").strip()[:140]
+            if skill_id and skill_id not in normalized_skill_ids:
+                normalized_skill_ids.append(skill_id)
+            if len(normalized_skill_ids) >= 6:
+                break
+        known_branches = session.get("branches", [])
+        if isinstance(known_branches, Sequence) and not isinstance(
+            known_branches, (str, bytes)
+        ):
+            branch_ids = {
+                normalize_branch_id(item.get("branch_id"))
+                for item in known_branches
+                if isinstance(item, Mapping)
+            }
+            if branch_ids and normalized_branch not in branch_ids:
+                raise ValueError("deep-thinking branch not found")
         supplied_job_id = str(job_id or "").strip()
         generated_job_id = supplied_job_id or new_stable_id("deep-thinking")
+        if user_message is None:
+            # A request may have committed the visible user message and then
+            # failed while reserving/scheduling its job.  On an idempotent
+            # retry, reuse that exact transcript row instead of appending a
+            # duplicate visible turn.  The lookup is deliberately advisory:
+            # if the ledger is temporarily unavailable, the authoritative
+            # append below still fails closed rather than silently using a
+            # stale sidecar.
+            existing_message: Mapping[str, Any] | None = None
+            try:
+                existing_session = _deep_session_read(run_id, session_id)
+                existing_messages = (
+                    existing_session.get("messages", [])
+                    if isinstance(existing_session, Mapping)
+                    else []
+                )
+                if isinstance(existing_messages, Sequence) and not isinstance(
+                    existing_messages, (str, bytes)
+                ):
+                    existing_message = next(
+                        (
+                            item
+                            for item in reversed(list(existing_messages))
+                            if isinstance(item, Mapping)
+                            and str(item.get("role", "")).strip().lower() == "user"
+                            and str(item.get("content", "")).strip() == str(content).strip()
+                            and normalize_branch_id(item.get("branch_id"))
+                            == normalized_branch
+                            and str(item.get("parent_message_id", "")).strip()[:128]
+                            == normalized_parent_message_id
+                        ),
+                        None,
+                    )
+            except Exception:
+                existing_message = None
+            if isinstance(existing_message, Mapping):
+                user_message = dict(existing_message)
+            else:
+                user_message = _append_visible_deep_message(
+                    run_id=run_id,
+                    session_id=session_id,
+                    role="user",
+                    content=content,
+                    status="completed",
+                    parent_message_id=normalized_parent_message_id,
+                    branch_id=normalized_branch,
+                    turn_id=generated_job_id,
+                )
+                _persist_deep_message(session_id, user_message)
+                _publish_deep_event(
+                    run_id,
+                    "deep_session_message",
+                    {
+                        "session_id": session_id,
+                        "role": "user",
+                        "message_id": user_message.get("message_id", ""),
+                    },
+                )
         if not fingerprint:
             fingerprint = hashlib.sha256(
-                f"{run_id}:{session_id}:{content}:{focus}:{bool(create_artifact)}".encode("utf-8")
+                f"{run_id}:{session_id}:{normalized_branch}:{normalized_parent_message_id}:{content}:{focus}:{bool(create_artifact)}:{json.dumps(normalized_skill_ids, ensure_ascii=False)}".encode("utf-8")
             ).hexdigest()
         row = _deep_store_job(
             job_id=generated_job_id,
@@ -7325,12 +11004,23 @@ def create_app(
             kind=str(job_kind or "deep_dialogue_v1"),
             idempotency_key=idempotency_key,
             fingerprint=fingerprint,
+            parent_job_id=parent_job_id,
+            branch_id=normalized_branch,
+            root_message_id=str(user_message.get("message_id", "")),
             payload={
                 "session_id": session_id,
                 "question": str(content)[:DEEP_THINKING_MAX_MESSAGE_CHARS],
                 "focus": str(focus or "")[:1600],
                 "create_artifact": bool(create_artifact),
+                "active_skill_ids": normalized_skill_ids,
+                "channel": (
+                    source_channel
+                    if source_channel in {"web", "cli", "telegram", "discord"}
+                    else "web"
+                ),
                 "dialogue_mode": "single_equipment_contextual_divergence",
+                "branch_id": normalized_branch,
+                "root_message_id": str(user_message.get("message_id", "")),
             },
         )
         job_id = str(row.get("job_id") or generated_job_id)
@@ -7374,6 +11064,15 @@ def create_app(
                             "question": content,
                             "focus": focus,
                             "create_artifact": bool(create_artifact),
+                            "active_skill_ids": normalized_skill_ids,
+                            "channel": (
+                                source_channel
+                                if source_channel
+                                in {"web", "cli", "telegram", "discord"}
+                                else "web"
+                            ),
+                            "branch_id": normalized_branch,
+                            "root_message_id": str(user_message.get("message_id", "")),
                         },
                     },
                     cancel_event,
@@ -7389,250 +11088,36 @@ def create_app(
             "user_message": dict(user_message),
         }
 
-    def _deep_candidate_reviewable(
+    def _deep_candidate_identity_bound(
         candidate: Mapping[str, Any],
         session: Mapping[str, Any],
     ) -> bool:
-        """Apply the visible evidence gate before authoring a candidate card.
+        """Require a server-bound identity before a legacy job authors a card.
 
-        A generic deep-thinking answer is useful without becoming a capability
-        card.  Card authoring is reserved for turns that carry a stable
-        identity, an independent mechanism, a direct military effect, and at
-        least one auditable input (evidence/validation or an existing formal
-        binding).  This keeps speculative conversation visible while
-        preventing accidental publication of a generic template card.
+        Evidence depth, mechanism completeness, and publication quality remain
+        visible research advice. They do not decide whether an explicitly
+        confirmed deep-research result can be persisted.
         """
 
-        if not isinstance(candidate, Mapping):
+        if not isinstance(candidate, Mapping) or not isinstance(session, Mapping):
             return False
-
-        # Model/template fallbacks are useful for visible conversation, but
-        # they are not auditable inputs.  Keep this list deliberately narrow:
-        # a card containing one of these phrases must acquire an actual
-        # source/ref or a concrete validation record before authoring.
-        placeholder_markers = (
-            "待核验",
-            "待验证",
-            "待补证",
-            "待审核",
-            "待确认",
-            "当前 query",
-            "当前query",
-            "参考方向对应",
-            "参考装备能力方向",
-            "潜在制胜机理假设",
-            "需要进一步确认",
-            "独立证据核验",
-            "通过改变任务链中的感知、决策、打击或保障连接",
-        )
-
-        def text_values(value: object) -> list[str]:
-            if isinstance(value, Mapping):
-                return [text for child in value.values() for text in text_values(child)]
-            if isinstance(value, (list, tuple, set, frozenset)):
-                return [text for child in value for text in text_values(child)]
-            text = re.sub(r"\s+", " ", str(value or "")).strip()
-            return [text] if text else []
-
-        def substantive(value: object, *, minimum: int = 6) -> bool:
-            values = text_values(value)
-            for text in values:
-                compact = re.sub(r"[\s，。；：:、,.;!?！？()（）\[\]{}]", "", text)
-                if len(compact) < minimum:
-                    continue
-                lowered = text.casefold()
-                if any(marker.casefold() in lowered for marker in placeholder_markers):
-                    continue
-                return True
+        identity_keys = ("hypothesis_id", "card_binding_id", "capability_id")
+        candidate_ids = {
+            key: str(candidate.get(key, "") or "").strip()
+            for key in identity_keys
+        }
+        session_ids = {
+            key: str(session.get(key, "") or "").strip()
+            for key in identity_keys
+        }
+        if not any(candidate_ids.values()) and not any(session_ids.values()):
             return False
-
-        # Stable identity must be server-bound.  A display name alone is not
-        # enough because two reference cards may share a title.  Formal
-        # follow-ups inherit their binding/hypothesis from the session.
-        identity = any(
-            substantive(candidate.get(key), minimum=3)
-            for key in ("hypothesis_id", "card_binding_id", "capability_id")
-        ) or any(
-            substantive(session.get(key), minimum=3)
-            for key in ("hypothesis_id", "card_binding_id", "capability_id")
+        return all(
+            not candidate_ids[key]
+            or not session_ids[key]
+            or candidate_ids[key] == session_ids[key]
+            for key in identity_keys
         )
-        if not identity:
-            return False
-
-        mechanism_fields = (
-            "mechanism_chain",
-            "winning_mechanism",
-            "core_disruptive_difference",
-            "independent_winning_mechanism",
-            "source_winning_logic",
-            "operational_mechanism",
-            "depth_mechanism",
-        )
-        mechanism_markers = (
-            "通过", "从而", "使", "导致", "压制", "破坏", "改变", "重构",
-            "阻断", "欺骗", "诱导", "分散", "缩短", "扩大", "维持", "切断",
-            "锁定", "复核", "续接", "扰乱", "夺取", "隔离", "穿透",
-        )
-        mechanism = any(
-            substantive(candidate.get(key), minimum=8)
-            # Explicit mechanism fields are already semantic evidence.  The
-            # causal-marker check is advisory (rather than mandatory) so
-            # concise expert labels such as ``独立机理：末段复核`` remain
-            # reviewable while placeholder prose is still rejected above.
-            and (
-                any(
-                    marker in text
-                    for text in text_values(candidate.get(key))
-                    for marker in mechanism_markers
-                )
-                or key in {"mechanism_chain", "winning_mechanism", "independent_winning_mechanism"}
-            )
-            for key in mechanism_fields
-        )
-        if not mechanism:
-            return False
-
-        # A scenario/mission node describes where the card is used, not what
-        # direct military effect it produces.  Require an explicit effect
-        # field so a generic scenario cannot create a candidate card.
-        effect_fields = (
-            "direct_military_effects",
-            "military_effects",
-            "capability_effects",
-            "direct_effect",
-            "military_value",
-            "mission_effect",
-            "strike_countermeasure_value",
-            "target_and_direct_effect",
-            "project_function",
-        )
-        effect_markers = (
-            "摧毁", "毁伤", "压制", "阻断", "迟滞", "迫使", "缩短", "扩大",
-            "夺取", "维持", "打乱", "干扰", "切断", "打开", "保障", "穿透",
-            "击沉", "歼灭", "封锁", "削弱", "分散", "破坏", "杀伤",
-        )
-        direct_effect = any(
-            substantive(candidate.get(key), minimum=6)
-            # A value in an explicitly named direct-effect field is
-            # reviewable even when it is a terse expert label.  Reject only
-            # generic scenario prose by requiring either a concrete effect
-            # marker or an explicitly effect-oriented field.
-            and (
-                any(
-                    marker in text
-                    for text in text_values(candidate.get(key))
-                    for marker in effect_markers
-                )
-                or key in {
-                    "direct_military_effects",
-                    "military_effects",
-                    "capability_effects",
-                    "direct_effect",
-                    "target_and_direct_effect",
-                }
-            )
-            for key in effect_fields
-        )
-        if not direct_effect:
-            return False
-
-        # Evidence may be a list of canonical IDs, an evidence object, or a
-        # concrete audit/validation input.  Generic failure-boundary prose is
-        # not evidence by itself; it becomes acceptable only when accompanied
-        # by an explicit test/source reference.
-        evidence_fields = (
-            "evidence_ids",
-            "evidence_refs",
-            "direct_evidence_refs",
-            "source_evidence_refs",
-            "evidence_cards",
-            "evidence",
-        )
-
-        def real_evidence_ref(value: object) -> bool:
-            """Recognize a canonical reference rather than arbitrary prose."""
-
-            if isinstance(value, Mapping):
-                for key in (
-                    "evidence_id",
-                    "evidence_ref",
-                    "evidence_id_ref",
-                    "source_id",
-                    "source_ref",
-                    "packet_id",
-                    "id",
-                    "ref",
-                    "url",
-                ):
-                    if real_evidence_ref(value.get(key)):
-                        return True
-                return False
-            if isinstance(value, (list, tuple, set, frozenset)):
-                return any(real_evidence_ref(item) for item in value)
-            text = re.sub(r"\s+", " ", str(value or "")).strip()
-            if not text or len(text) > 500:
-                return False
-            lowered = text.casefold()
-            if any(marker.casefold() in lowered for marker in placeholder_markers):
-                return False
-            if lowered in {
-                "none",
-                "null",
-                "n/a",
-                "na",
-                "unknown",
-                "tbd",
-                "todo",
-                "placeholder",
-                "sample",
-                "test",
-                "invented",
-                "invented-id",
-            }:
-                return False
-            if re.match(r"^(?:https?://|doi:\s*10\.|urn:|arxiv:)", lowered):
-                return True
-            # Current ledgers use ev-*/evidence-*/packet-* identifiers. Keep
-            # support for the short ``ev`` compatibility token as well.
-            return bool(
-                re.match(
-                    r"^(?:e(?:v(?:idence)?)?|packet|source|src|ref(?:erence)?)[-_:.]?[a-z0-9][a-z0-9_.:@/+\-]*$",
-                    lowered,
-                )
-            )
-
-        evidence_present = any(real_evidence_ref(candidate.get(key)) for key in evidence_fields)
-        audit_fields = (
-            "validation_plan",
-            "verification_plan",
-            "verification",
-            "audit_inputs",
-            "auditability",
-            "source_url",
-            "source_urls",
-            "evidence_basis",
-        )
-        auditable_input = any(
-            substantive(candidate.get(key), minimum=12)
-            and not any(
-                marker.casefold() in text.casefold()
-                for text in text_values(candidate.get(key))
-                for marker in placeholder_markers
-            )
-            for key in audit_fields
-        )
-
-        # An existing formal binding is an auditable input only when the
-        # session is explicitly a capability follow-up.  Reference research
-        # must still carry evidence from the canonical candidate/child run.
-        kind = str(session.get("kind", "")).strip().lower().replace("_", "-")
-        formal_binding = bool(
-            kind in {"capability-followup", "capability", "follow-up"}
-            and substantive(session.get("card_binding_id"), minimum=3)
-            and str(candidate.get("candidate_provenance", "")).strip()
-            != "explicit_client_context"
-        )
-        return bool(evidence_present or auditable_input or formal_binding)
 
     def _ensure_deep_baseline(
         repo: object,
@@ -7708,6 +11193,7 @@ def create_app(
                     "rolled_back",
                     "blocked",
                     "partial",
+                    "deleted",
                 }
             ):
                 raise RuntimeError("formal capability baseline unavailable")
@@ -7763,6 +11249,767 @@ def create_app(
             "research": research,
         }
 
+    @app.get("/api/v1/runs/{run_id}/deep-thinking/sessions/{session_id}/capabilities")
+    def get_deep_session_capabilities(
+        run_id: str,
+        session_id: str,
+        x_role: str = Header(default="analyst", alias="X-Role"),
+        x_tenant_id: str = Header(default="", alias="X-Tenant-ID"),
+        x_workspace_id: str = Header(default="", alias="X-Workspace-ID"),
+        x_project_id: str = Header(default="", alias="X-Project-ID"),
+        x_profile_id: str = Header(default="", alias="X-Profile-ID"),
+        x_evolution_stage_scope: str = Header(default="", alias="X-Evolution-Stage-Scope"),
+        x_evolution_cross_scope: str = Header(default="", alias="X-Evolution-Cross-Scope"),
+    ) -> dict[str, Any]:
+        _require_role(x_role, {"analyst", "reviewer", "auditor", "admin"})
+        view = read_view(run_id)
+        _assert_deep_scope(
+            view, role=x_role, tenant_id=x_tenant_id, workspace_id=x_workspace_id,
+            project_id=x_project_id, profile_id=x_profile_id, stage_scope=x_evolution_stage_scope,
+            cross_scope=x_role == "admin" and _cross_scope_requested(x_evolution_cross_scope),
+        )
+        try:
+            session = _deep_session_read(run_id, session_id, strict=True)
+            if session is None:
+                raise HTTPException(status_code=404, detail="deep-thinking session not found")
+            registry = _deep_session_capability_registry(run_id, session)
+            catalog = registry.public_payload()
+            catalog["tool_registry"] = build_tool_registry(capability_registry=registry).public_payload()
+            catalog["mcp_host"] = (
+                deep_mcp_host.public_payload()
+                if deep_mcp_host is not None
+                else {
+                    "schema_version": "deep-mcp-host-v1",
+                    "status": "not_configured",
+                    "servers": [],
+                }
+            )
+            return catalog
+        except HTTPException:
+            raise
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="deep capability registry unavailable") from exc
+
+    @app.get("/api/v1/runs/{run_id}/deep-thinking/sessions/{session_id}/workspace/resources")
+    def list_deep_session_workspace_resources(
+        run_id: str,
+        session_id: str,
+        x_role: str = Header(default="analyst", alias="X-Role"),
+        x_tenant_id: str = Header(default="", alias="X-Tenant-ID"),
+        x_workspace_id: str = Header(default="", alias="X-Workspace-ID"),
+        x_project_id: str = Header(default="", alias="X-Project-ID"),
+        x_profile_id: str = Header(default="", alias="X-Profile-ID"),
+        x_evolution_stage_scope: str = Header(default="", alias="X-Evolution-Stage-Scope"),
+        x_evolution_cross_scope: str = Header(default="", alias="X-Evolution-Cross-Scope"),
+    ) -> dict[str, Any]:
+        _require_role(x_role, {"analyst", "reviewer", "auditor", "admin"})
+        view = read_view(run_id)
+        _assert_deep_scope(
+            view, role=x_role, tenant_id=x_tenant_id, workspace_id=x_workspace_id,
+            project_id=x_project_id, profile_id=x_profile_id, stage_scope=x_evolution_stage_scope,
+            cross_scope=x_role == "admin" and _cross_scope_requested(x_evolution_cross_scope),
+        )
+        try:
+            session = _deep_session_read(run_id, session_id, strict=True)
+        except _DeepLedgerUnavailable as exc:
+            raise HTTPException(status_code=503, detail="deep session ledger unavailable") from exc
+        if session is None:
+            raise HTTPException(status_code=404, detail="deep-thinking session not found")
+        workspace, handle = _deep_session_workspace(run_id, session)
+        try:
+            return _deep_workspace_resource_catalog(workspace)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        finally:
+            if handle is not None:
+                handle.close()
+
+    @app.get("/api/v1/runs/{run_id}/deep-thinking/sessions/{session_id}/workspace/resources/{kind}/{resource_path:path}")
+    def get_deep_session_workspace_resource(
+        run_id: str,
+        session_id: str,
+        kind: str,
+        resource_path: str,
+        x_role: str = Header(default="analyst", alias="X-Role"),
+        x_tenant_id: str = Header(default="", alias="X-Tenant-ID"),
+        x_workspace_id: str = Header(default="", alias="X-Workspace-ID"),
+        x_project_id: str = Header(default="", alias="X-Project-ID"),
+        x_profile_id: str = Header(default="", alias="X-Profile-ID"),
+        x_evolution_stage_scope: str = Header(default="", alias="X-Evolution-Stage-Scope"),
+        x_evolution_cross_scope: str = Header(default="", alias="X-Evolution-Cross-Scope"),
+    ) -> dict[str, Any]:
+        _require_role(x_role, {"analyst", "reviewer", "auditor", "admin"})
+        view = read_view(run_id)
+        _assert_deep_scope(
+            view, role=x_role, tenant_id=x_tenant_id, workspace_id=x_workspace_id,
+            project_id=x_project_id, profile_id=x_profile_id, stage_scope=x_evolution_stage_scope,
+            cross_scope=x_role == "admin" and _cross_scope_requested(x_evolution_cross_scope),
+        )
+        try:
+            session = _deep_session_read(run_id, session_id, strict=True)
+        except _DeepLedgerUnavailable as exc:
+            raise HTTPException(status_code=503, detail="deep session ledger unavailable") from exc
+        if session is None:
+            raise HTTPException(status_code=404, detail="deep-thinking session not found")
+        workspace, handle = _deep_session_workspace(run_id, session)
+        try:
+            return {"resource": _read_deep_workspace_resource(workspace, kind=kind, resource_path=resource_path)}
+        finally:
+            if handle is not None:
+                handle.close()
+
+    @app.put("/api/v1/runs/{run_id}/deep-thinking/sessions/{session_id}/workspace/resources/{kind}/{resource_path:path}")
+    def write_deep_session_workspace_resource(
+        run_id: str,
+        session_id: str,
+        kind: str,
+        resource_path: str,
+        body: DeepWorkspaceResourceBody,
+        x_role: str = Header(default="analyst", alias="X-Role"),
+        idempotency_key: str = Header(default="", alias="Idempotency-Key"),
+        x_tenant_id: str = Header(default="", alias="X-Tenant-ID"),
+        x_workspace_id: str = Header(default="", alias="X-Workspace-ID"),
+        x_project_id: str = Header(default="", alias="X-Project-ID"),
+        x_profile_id: str = Header(default="", alias="X-Profile-ID"),
+        x_evolution_stage_scope: str = Header(default="", alias="X-Evolution-Stage-Scope"),
+        x_evolution_cross_scope: str = Header(default="", alias="X-Evolution-Cross-Scope"),
+    ) -> dict[str, Any]:
+        _require_role(x_role, {"admin"})
+        canonical_kind = _deep_workspace_resource_kind(kind)
+        payload = {
+            "kind": canonical_kind,
+            "name": str(resource_path or ""),
+            "content_sha256": hashlib.sha256(body.content.encode("utf-8")).hexdigest(),
+            "expected_sha256": str(body.expected_sha256 or "").strip().lower(),
+        }
+        _deep_idempotency(idempotency_key, operation="workspace-resource-write", payload=payload)
+        view = read_view(run_id)
+        _assert_deep_scope(
+            view, role=x_role, tenant_id=x_tenant_id, workspace_id=x_workspace_id,
+            project_id=x_project_id, profile_id=x_profile_id, stage_scope=x_evolution_stage_scope,
+            cross_scope=x_role == "admin" and _cross_scope_requested(x_evolution_cross_scope),
+            mutation=True,
+        )
+        try:
+            session = _deep_session_read(run_id, session_id, strict=True)
+        except _DeepLedgerUnavailable as exc:
+            raise HTTPException(status_code=503, detail="deep session ledger unavailable") from exc
+        if session is None:
+            raise HTTPException(status_code=404, detail="deep-thinking session not found")
+        workspace, handle = _deep_session_workspace(run_id, session)
+        try:
+            claimed = _claim_deep_idempotency(
+                run_id=session_id,
+                operation="workspace-resource-write",
+                key=idempotency_key,
+                payload=payload,
+            )
+        except Exception:
+            if handle is not None:
+                handle.close()
+            raise
+        replay = _replay_or_raise_in_progress(claimed)
+        if replay is not None:
+            if handle is not None:
+                handle.close()
+            return replay
+        try:
+            # Resolve the optimistic fence before content validation so a
+            # stale editor receives 409 even when its submitted draft is
+            # malformed.  This also guarantees invalid content is never
+            # written as a side effect of returning 422.
+            expected = str(body.expected_sha256 or "").strip().lower()
+            if expected:
+                try:
+                    current_payload = workspace.read_resource(canonical_kind, resource_path)
+                except FileNotFoundError:
+                    current_payload = b""
+                current_hash = hashlib.sha256(current_payload).hexdigest()
+                if expected != current_hash:
+                    raise WorkspaceResourceConflict(
+                        f"workspace resource changed: expected {expected}, current {current_hash}",
+                        expected=expected,
+                        current=current_hash,
+                    )
+            try:
+                validation = validate_workspace_capability_resource(
+                    canonical_kind,
+                    resource_path,
+                    body.content,
+                )
+            except ValueError as exc:
+                raise HTTPException(status_code=422, detail=str(exc)) from exc
+            workspace.write_resource(
+                canonical_kind,
+                resource_path,
+                body.content,
+                expected_sha256=body.expected_sha256,
+            )
+            resource = _read_deep_workspace_resource(workspace, kind=canonical_kind, resource_path=resource_path)
+            catalog = _deep_workspace_resource_catalog(workspace)
+            response = {
+                "resource": resource,
+                "workspace": catalog["workspace"],
+                "resources": catalog["resources"],
+                "validation": validation,
+            }
+        except HTTPException:
+            _release_deep_idempotency(run_id=session_id, operation="workspace-resource-write", key=idempotency_key)
+            raise
+        except WorkspaceResourceConflict as exc:
+            _release_deep_idempotency(run_id=session_id, operation="workspace-resource-write", key=idempotency_key)
+            raise HTTPException(
+                status_code=409,
+                detail="workspace resource changed since it was read",
+                headers={"ETag": exc.current} if exc.current else None,
+            ) from exc
+        except (ValueError, FileNotFoundError) as exc:
+            _release_deep_idempotency(run_id=session_id, operation="workspace-resource-write", key=idempotency_key)
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except Exception as exc:
+            _release_deep_idempotency(run_id=session_id, operation="workspace-resource-write", key=idempotency_key)
+            raise HTTPException(status_code=503, detail="workspace resource write failed") from exc
+        finally:
+            if handle is not None:
+                handle.close()
+        _complete_deep_idempotency(
+            run_id=session_id,
+            operation="workspace-resource-write",
+            key=idempotency_key,
+            resource_id=f"{canonical_kind}:{resource_path}",
+            response=response,
+        )
+        return response
+
+    @app.delete("/api/v1/runs/{run_id}/deep-thinking/sessions/{session_id}/workspace/resources/{kind}/{resource_path:path}")
+    def delete_deep_session_workspace_resource(
+        run_id: str,
+        session_id: str,
+        kind: str,
+        resource_path: str,
+        x_role: str = Header(default="analyst", alias="X-Role"),
+        idempotency_key: str = Header(default="", alias="Idempotency-Key"),
+        x_tenant_id: str = Header(default="", alias="X-Tenant-ID"),
+        x_workspace_id: str = Header(default="", alias="X-Workspace-ID"),
+        x_project_id: str = Header(default="", alias="X-Project-ID"),
+        x_profile_id: str = Header(default="", alias="X-Profile-ID"),
+        x_evolution_stage_scope: str = Header(default="", alias="X-Evolution-Stage-Scope"),
+        x_evolution_cross_scope: str = Header(default="", alias="X-Evolution-Cross-Scope"),
+    ) -> dict[str, Any]:
+        _require_role(x_role, {"admin"})
+        canonical_kind = _deep_workspace_resource_kind(kind)
+        payload = {"kind": canonical_kind, "name": str(resource_path or "")}
+        _deep_idempotency(idempotency_key, operation="workspace-resource-delete", payload=payload)
+        view = read_view(run_id)
+        _assert_deep_scope(
+            view, role=x_role, tenant_id=x_tenant_id, workspace_id=x_workspace_id,
+            project_id=x_project_id, profile_id=x_profile_id, stage_scope=x_evolution_stage_scope,
+            cross_scope=x_role == "admin" and _cross_scope_requested(x_evolution_cross_scope),
+            mutation=True,
+        )
+        try:
+            session = _deep_session_read(run_id, session_id, strict=True)
+        except _DeepLedgerUnavailable as exc:
+            raise HTTPException(status_code=503, detail="deep session ledger unavailable") from exc
+        if session is None:
+            raise HTTPException(status_code=404, detail="deep-thinking session not found")
+        workspace, handle = _deep_session_workspace(run_id, session)
+        try:
+            claimed = _claim_deep_idempotency(
+                run_id=session_id,
+                operation="workspace-resource-delete",
+                key=idempotency_key,
+                payload=payload,
+            )
+        except Exception:
+            if handle is not None:
+                handle.close()
+            raise
+        replay = _replay_or_raise_in_progress(claimed)
+        if replay is not None:
+            if handle is not None:
+                handle.close()
+            return replay
+        try:
+            deleted = workspace.delete_resource(canonical_kind, resource_path)
+            if not deleted:
+                raise HTTPException(status_code=404, detail="workspace resource not found")
+            catalog = _deep_workspace_resource_catalog(workspace)
+            response = {"deleted": True, "workspace": catalog["workspace"], "resources": catalog["resources"]}
+        except HTTPException:
+            _release_deep_idempotency(run_id=session_id, operation="workspace-resource-delete", key=idempotency_key)
+            raise
+        except (ValueError, FileNotFoundError) as exc:
+            _release_deep_idempotency(run_id=session_id, operation="workspace-resource-delete", key=idempotency_key)
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except Exception as exc:
+            _release_deep_idempotency(run_id=session_id, operation="workspace-resource-delete", key=idempotency_key)
+            raise HTTPException(status_code=503, detail="workspace resource delete failed") from exc
+        finally:
+            if handle is not None:
+                handle.close()
+        _complete_deep_idempotency(
+            run_id=session_id,
+            operation="workspace-resource-delete",
+            key=idempotency_key,
+            resource_id=f"{canonical_kind}:{resource_path}",
+            response=response,
+        )
+        return response
+
+    @app.post("/api/v1/runs/{run_id}/deep-thinking/sessions/{session_id}/workspace/resources/{kind}/{resource_path:path}/restore/{version_id}")
+    def restore_deep_session_workspace_resource(
+        run_id: str,
+        session_id: str,
+        kind: str,
+        resource_path: str,
+        version_id: str,
+        body: DeepWorkspaceResourceRestoreBody,
+        x_role: str = Header(default="analyst", alias="X-Role"),
+        idempotency_key: str = Header(default="", alias="Idempotency-Key"),
+        x_tenant_id: str = Header(default="", alias="X-Tenant-ID"),
+        x_workspace_id: str = Header(default="", alias="X-Workspace-ID"),
+        x_project_id: str = Header(default="", alias="X-Project-ID"),
+        x_profile_id: str = Header(default="", alias="X-Profile-ID"),
+        x_evolution_stage_scope: str = Header(default="", alias="X-Evolution-Stage-Scope"),
+        x_evolution_cross_scope: str = Header(default="", alias="X-Evolution-Cross-Scope"),
+    ) -> dict[str, Any]:
+        _require_role(x_role, {"admin"})
+        canonical_kind = _deep_workspace_resource_kind(kind)
+        payload = {
+            "kind": canonical_kind,
+            "name": str(resource_path or ""),
+            "version_id": str(version_id or ""),
+            "expected_sha256": str(body.expected_sha256 or "").strip().lower(),
+        }
+        _deep_idempotency(idempotency_key, operation="workspace-resource-restore", payload=payload)
+        view = read_view(run_id)
+        _assert_deep_scope(
+            view, role=x_role, tenant_id=x_tenant_id, workspace_id=x_workspace_id,
+            project_id=x_project_id, profile_id=x_profile_id, stage_scope=x_evolution_stage_scope,
+            cross_scope=x_role == "admin" and _cross_scope_requested(x_evolution_cross_scope),
+            mutation=True,
+        )
+        try:
+            session = _deep_session_read(run_id, session_id, strict=True)
+        except _DeepLedgerUnavailable as exc:
+            raise HTTPException(status_code=503, detail="deep session ledger unavailable") from exc
+        if session is None:
+            raise HTTPException(status_code=404, detail="deep-thinking session not found")
+        workspace, handle = _deep_session_workspace(run_id, session)
+        operation = "workspace-resource-restore"
+        try:
+            claimed = _claim_deep_idempotency(
+                run_id=session_id, operation=operation, key=idempotency_key, payload=payload
+            )
+        except Exception:
+            if handle is not None:
+                handle.close()
+            raise
+        replay = _replay_or_raise_in_progress(claimed)
+        if replay is not None:
+            if handle is not None:
+                handle.close()
+            return replay
+        try:
+            workspace.restore_resource_version(
+                canonical_kind,
+                resource_path,
+                version_id,
+                expected_sha256=body.expected_sha256,
+            )
+            resource = _read_deep_workspace_resource(
+                workspace, kind=canonical_kind, resource_path=resource_path
+            )
+            catalog = _deep_workspace_resource_catalog(workspace)
+            response = {
+                "resource": resource,
+                "workspace": catalog["workspace"],
+                "resources": catalog["resources"],
+                "restored_version_id": str(version_id),
+            }
+        except WorkspaceResourceConflict as exc:
+            _release_deep_idempotency(run_id=session_id, operation=operation, key=idempotency_key)
+            raise HTTPException(
+                status_code=409,
+                detail="workspace resource changed since it was read",
+                headers={"ETag": exc.current} if exc.current else None,
+            ) from exc
+        except (ValueError, FileNotFoundError) as exc:
+            _release_deep_idempotency(run_id=session_id, operation=operation, key=idempotency_key)
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except Exception as exc:
+            _release_deep_idempotency(run_id=session_id, operation=operation, key=idempotency_key)
+            raise HTTPException(status_code=503, detail="workspace resource restore failed") from exc
+        finally:
+            if handle is not None:
+                handle.close()
+        _complete_deep_idempotency(
+            run_id=session_id,
+            operation=operation,
+            key=idempotency_key,
+            resource_id=f"{canonical_kind}:{resource_path}:{version_id}",
+            response=response,
+        )
+        return response
+
+    @app.post("/api/v1/runs/{run_id}/deep-thinking/sessions/{session_id}/workspace/resources/{kind}/{resource_path:path}/merge")
+    def merge_deep_session_workspace_resource(
+        run_id: str,
+        session_id: str,
+        kind: str,
+        resource_path: str,
+        body: DeepWorkspaceResourceMergeBody,
+        x_role: str = Header(default="analyst", alias="X-Role"),
+        x_tenant_id: str = Header(default="", alias="X-Tenant-ID"),
+        x_workspace_id: str = Header(default="", alias="X-Workspace-ID"),
+        x_project_id: str = Header(default="", alias="X-Project-ID"),
+        x_profile_id: str = Header(default="", alias="X-Profile-ID"),
+        x_evolution_stage_scope: str = Header(default="", alias="X-Evolution-Stage-Scope"),
+        x_evolution_cross_scope: str = Header(default="", alias="X-Evolution-Cross-Scope"),
+    ) -> dict[str, Any]:
+        """Return a reviewable three-way merge without mutating Workspace."""
+
+        _require_role(x_role, {"analyst", "reviewer", "auditor", "admin"})
+        canonical_kind = _deep_workspace_resource_kind(kind)
+        view = read_view(run_id)
+        _assert_deep_scope(
+            view, role=x_role, tenant_id=x_tenant_id, workspace_id=x_workspace_id,
+            project_id=x_project_id, profile_id=x_profile_id, stage_scope=x_evolution_stage_scope,
+            cross_scope=x_role == "admin" and _cross_scope_requested(x_evolution_cross_scope),
+        )
+        try:
+            session = _deep_session_read(run_id, session_id, strict=True)
+        except _DeepLedgerUnavailable as exc:
+            raise HTTPException(status_code=503, detail="deep session ledger unavailable") from exc
+        if session is None:
+            raise HTTPException(status_code=404, detail="deep-thinking session not found")
+        workspace, handle = _deep_session_workspace(run_id, session)
+        try:
+            merge = workspace.merge_resource_version(
+                canonical_kind,
+                resource_path,
+                body.base_version_id,
+                body.content,
+            )
+            resource = _read_deep_workspace_resource(
+                workspace, kind=canonical_kind, resource_path=resource_path
+            )
+            catalog = _deep_workspace_resource_catalog(workspace)
+            return {
+                "merge": merge,
+                "resource": {
+                    "kind": resource["kind"],
+                    "name": resource["name"],
+                    "sha256": resource["sha256"],
+                    "version_id": resource.get("version_id", ""),
+                },
+                "workspace": catalog["workspace"],
+            }
+        except FileNotFoundError as exc:
+            raise HTTPException(status_code=404, detail="workspace resource or base version not found") from exc
+        except (UnicodeError, ValueError) as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        finally:
+            if handle is not None:
+                handle.close()
+
+    @app.post("/api/v1/runs/{run_id}/deep-thinking/sessions/{session_id}/workspace/resources/plugin/{plugin_id}/merge-package")
+    def merge_deep_session_workspace_plugin_package(
+        run_id: str,
+        session_id: str,
+        plugin_id: str,
+        body: DeepWorkspacePluginPackageMergeBody,
+        x_role: str = Header(default="analyst", alias="X-Role"),
+        x_tenant_id: str = Header(default="", alias="X-Tenant-ID"),
+        x_workspace_id: str = Header(default="", alias="X-Workspace-ID"),
+        x_project_id: str = Header(default="", alias="X-Project-ID"),
+        x_profile_id: str = Header(default="", alias="X-Profile-ID"),
+        x_evolution_stage_scope: str = Header(default="", alias="X-Evolution-Stage-Scope"),
+        x_evolution_cross_scope: str = Header(default="", alias="X-Evolution-Cross-Scope"),
+    ) -> dict[str, Any]:
+        """Preview a package merge as one coherent Plugin change set."""
+
+        _require_role(x_role, {"analyst", "reviewer", "auditor", "admin"})
+        view = read_view(run_id)
+        _assert_deep_scope(
+            view, role=x_role, tenant_id=x_tenant_id, workspace_id=x_workspace_id,
+            project_id=x_project_id, profile_id=x_profile_id, stage_scope=x_evolution_stage_scope,
+            cross_scope=x_role == "admin" and _cross_scope_requested(x_evolution_cross_scope),
+        )
+        try:
+            session = _deep_session_read(run_id, session_id, strict=True)
+        except _DeepLedgerUnavailable as exc:
+            raise HTTPException(status_code=503, detail="deep session ledger unavailable") from exc
+        if session is None:
+            raise HTTPException(status_code=404, detail="deep-thinking session not found")
+        workspace, handle = _deep_session_workspace(run_id, session)
+        try:
+            package = workspace.merge_plugin_package(
+                plugin_id,
+                base_versions=body.base_versions,
+                incoming_files=body.files,
+            )
+            return {"merge": package, "workspace": _deep_workspace_resource_catalog(workspace)["workspace"]}
+        except (UnicodeError, ValueError, FileNotFoundError) as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        finally:
+            if handle is not None:
+                handle.close()
+
+    @app.post("/api/v1/runs/{run_id}/deep-thinking/sessions/{session_id}/workspace/resources/plugin/{plugin_id}/merge-package/apply")
+    def apply_deep_session_workspace_plugin_package(
+        run_id: str,
+        session_id: str,
+        plugin_id: str,
+        body: DeepWorkspacePluginPackageMergeBody,
+        x_role: str = Header(default="analyst", alias="X-Role"),
+        idempotency_key: str = Header(default="", alias="Idempotency-Key"),
+        x_tenant_id: str = Header(default="", alias="X-Tenant-ID"),
+        x_workspace_id: str = Header(default="", alias="X-Workspace-ID"),
+        x_project_id: str = Header(default="", alias="X-Project-ID"),
+        x_profile_id: str = Header(default="", alias="X-Profile-ID"),
+        x_evolution_stage_scope: str = Header(default="", alias="X-Evolution-Stage-Scope"),
+        x_evolution_cross_scope: str = Header(default="", alias="X-Evolution-Cross-Scope"),
+    ) -> dict[str, Any]:
+        """Apply one conflict-free Plugin package transaction atomically."""
+
+        _require_role(x_role, {"admin"})
+        payload = {
+            "plugin_id": str(plugin_id or ""),
+            "base_versions": body.base_versions,
+            "files": body.files,
+        }
+        _deep_idempotency(idempotency_key, operation="workspace-plugin-package-apply", payload=payload)
+        view = read_view(run_id)
+        _assert_deep_scope(
+            view, role=x_role, tenant_id=x_tenant_id, workspace_id=x_workspace_id,
+            project_id=x_project_id, profile_id=x_profile_id, stage_scope=x_evolution_stage_scope,
+            cross_scope=_cross_scope_requested(x_evolution_cross_scope), mutation=True,
+        )
+        try:
+            session = _deep_session_read(run_id, session_id, strict=True)
+        except _DeepLedgerUnavailable as exc:
+            raise HTTPException(status_code=503, detail="deep session ledger unavailable") from exc
+        if session is None:
+            raise HTTPException(status_code=404, detail="deep-thinking session not found")
+        workspace, handle = _deep_session_workspace(run_id, session)
+        operation = "workspace-plugin-package-apply"
+        try:
+            claimed = _claim_deep_idempotency(
+                run_id=session_id, operation=operation, key=idempotency_key, payload=payload
+            )
+        except Exception:
+            if handle is not None:
+                handle.close()
+            raise
+        replay = _replay_or_raise_in_progress(claimed)
+        if replay is not None:
+            if handle is not None:
+                handle.close()
+            return replay
+        try:
+            for name, content in body.files.items():
+                validate_workspace_capability_resource("plugin", name, content)
+            merge = workspace.apply_plugin_package_merge(
+                plugin_id,
+                base_versions=body.base_versions,
+                incoming_files=body.files,
+            )
+            if not merge.get("applied"):
+                _release_deep_idempotency(run_id=session_id, operation=operation, key=idempotency_key)
+                raise HTTPException(status_code=409, detail="plugin package changed or contains conflicts")
+            catalog = _deep_workspace_resource_catalog(workspace)
+            response = {
+                "merge": merge,
+                "workspace": catalog["workspace"],
+                "resources": catalog["resources"],
+            }
+        except HTTPException:
+            raise
+        except (UnicodeError, ValueError, FileNotFoundError) as exc:
+            _release_deep_idempotency(run_id=session_id, operation=operation, key=idempotency_key)
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except Exception as exc:
+            _release_deep_idempotency(run_id=session_id, operation=operation, key=idempotency_key)
+            raise HTTPException(status_code=503, detail="plugin package apply failed") from exc
+        finally:
+            if handle is not None:
+                handle.close()
+        _complete_deep_idempotency(
+            run_id=session_id,
+            operation=operation,
+            key=idempotency_key,
+            resource_id=f"plugin:{plugin_id}",
+            response=response,
+        )
+        return response
+
+    @app.patch("/api/v1/runs/{run_id}/deep-thinking/sessions/{session_id}/plugins/{plugin_id}")
+    def update_deep_session_plugin(
+        run_id: str,
+        session_id: str,
+        plugin_id: str,
+        body: DeepPluginStateBody,
+        x_role: str = Header(default="analyst", alias="X-Role"),
+        x_tenant_id: str = Header(default="", alias="X-Tenant-ID"),
+        x_workspace_id: str = Header(default="", alias="X-Workspace-ID"),
+        x_project_id: str = Header(default="", alias="X-Project-ID"),
+        x_profile_id: str = Header(default="", alias="X-Profile-ID"),
+        x_evolution_stage_scope: str = Header(default="", alias="X-Evolution-Stage-Scope"),
+        x_evolution_cross_scope: str = Header(default="", alias="X-Evolution-Cross-Scope"),
+    ) -> dict[str, Any]:
+        _require_role(x_role, {"admin"})
+        view = read_view(run_id)
+        _assert_deep_scope(
+            view, role=x_role, tenant_id=x_tenant_id, workspace_id=x_workspace_id,
+            project_id=x_project_id, profile_id=x_profile_id, stage_scope=x_evolution_stage_scope,
+            cross_scope=_cross_scope_requested(x_evolution_cross_scope), mutation=True,
+        )
+        try:
+            session = _deep_session_read(run_id, session_id, strict=True)
+        except _DeepLedgerUnavailable as exc:
+            raise HTTPException(status_code=503, detail="deep session ledger unavailable") from exc
+        if session is None:
+            raise HTTPException(status_code=404, detail="deep-thinking session not found")
+        merged = _deep_session_capability_registry(run_id, session)
+        if not any(item.plugin_id == plugin_id and item.source == "workspace" for item in merged.plugins):
+            raise HTTPException(status_code=404, detail="workspace plugin not found")
+        context = session.get("context_refs", {})
+        workspace, handle = _open_trusted_deep_runtime_workspace(
+            output_root, run_id, identity=_deep_runtime_equipment_identity(context.get("candidate", {}))
+        )
+        try:
+            if workspace is None:
+                raise HTTPException(status_code=503, detail="workspace unavailable")
+            from equipment_deep_research.deep_runtime.capabilities import DeepCapabilityRegistry
+
+            if workspace.config_dir.is_symlink() or workspace.plugins_dir.is_symlink():
+                raise ValueError("workspace capability directory must not be a symlink")
+            local = DeepCapabilityRegistry(
+                harness_path=merged.harness_path, plugins_root=workspace.plugins_dir,
+                state_path=workspace.config_dir / "plugins.json",
+            )
+            plugin = local.set_plugin_enabled(plugin_id, body.enabled)
+            catalog = load_capability_registry().with_workspace(workspace).public_payload()
+            return {"plugin": {**plugin.public_payload(), "source": "workspace"}, "catalog": catalog}
+        except HTTPException:
+            raise
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="workspace plugin not found") from exc
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="workspace plugin state unavailable") from exc
+        finally:
+            if handle is not None:
+                handle.close()
+
+    @app.patch("/api/v1/runs/{run_id}/deep-thinking/sessions/{session_id}")
+    @app.patch("/api/v1/runs/{run_id}/deep-sessions/{session_id}")
+    def manage_deep_thinking_session(
+        run_id: str,
+        session_id: str,
+        body: DeepSessionManageBody,
+        x_role: str = Header(default="analyst", alias="X-Role"),
+        x_tenant_id: str = Header(default="", alias="X-Tenant-ID"),
+        x_workspace_id: str = Header(default="", alias="X-Workspace-ID"),
+        x_project_id: str = Header(default="", alias="X-Project-ID"),
+        x_profile_id: str = Header(default="", alias="X-Profile-ID"),
+        x_evolution_stage_scope: str = Header(default="", alias="X-Evolution-Stage-Scope"),
+        x_evolution_cross_scope: str = Header(default="", alias="X-Evolution-Cross-Scope"),
+    ) -> dict[str, Any]:
+        _require_role(x_role, {"analyst", "reviewer", "admin"})
+        view = read_view(run_id)
+        _assert_deep_scope(
+            view,
+            role=x_role,
+            tenant_id=x_tenant_id,
+            workspace_id=x_workspace_id,
+            project_id=x_project_id,
+            profile_id=x_profile_id,
+            stage_scope=x_evolution_stage_scope,
+            cross_scope=x_role == "admin" and _cross_scope_requested(x_evolution_cross_scope),
+            mutation=True,
+        )
+        try:
+            session = _deep_session_read(run_id, session_id, strict=True)
+        except _DeepLedgerUnavailable as exc:
+            raise HTTPException(
+                status_code=503,
+                detail=str(exc) or "deep session ledger unavailable",
+            ) from exc
+        if session is None:
+            raise HTTPException(status_code=404, detail="deep-thinking session not found")
+        requested_status = "archived" if body.archived is True else ("active" if body.archived is False else None)
+        updated = _deep_update_session(run_id, session_id, status=requested_status, title=body.title)
+        if not updated:
+            raise HTTPException(status_code=404, detail="deep-thinking session not found")
+        update_error = _deep_session_update_error(updated)
+        if update_error:
+            raise HTTPException(status_code=503, detail="deep session ledger unavailable")
+        try:
+            fresh = _deep_session_read(run_id, session_id, strict=True) or updated
+        except _DeepLedgerUnavailable as exc:
+            raise HTTPException(
+                status_code=503,
+                detail=str(exc) or "deep session ledger unavailable",
+            ) from exc
+        return {"session": _deep_session_public(fresh)}
+
+    @app.delete("/api/v1/runs/{run_id}/deep-thinking/sessions/{session_id}")
+    @app.delete("/api/v1/runs/{run_id}/deep-sessions/{session_id}")
+    def delete_deep_thinking_session(
+        run_id: str,
+        session_id: str,
+        x_role: str = Header(default="analyst", alias="X-Role"),
+        x_tenant_id: str = Header(default="", alias="X-Tenant-ID"),
+        x_workspace_id: str = Header(default="", alias="X-Workspace-ID"),
+        x_project_id: str = Header(default="", alias="X-Project-ID"),
+        x_profile_id: str = Header(default="", alias="X-Profile-ID"),
+        x_evolution_stage_scope: str = Header(default="", alias="X-Evolution-Stage-Scope"),
+        x_evolution_cross_scope: str = Header(default="", alias="X-Evolution-Cross-Scope"),
+    ) -> dict[str, Any]:
+        _require_role(x_role, {"analyst", "reviewer", "admin"})
+        view = read_view(run_id)
+        _assert_deep_scope(
+            view,
+            role=x_role,
+            tenant_id=x_tenant_id,
+            workspace_id=x_workspace_id,
+            project_id=x_project_id,
+            profile_id=x_profile_id,
+            stage_scope=x_evolution_stage_scope,
+            cross_scope=x_role == "admin"
+            and _cross_scope_requested(x_evolution_cross_scope),
+            mutation=True,
+        )
+        try:
+            session = _deep_session_read(run_id, session_id, strict=True)
+        except _DeepLedgerUnavailable as exc:
+            raise HTTPException(
+                status_code=503,
+                detail=str(exc) or "deep session ledger unavailable",
+            ) from exc
+        if session is None:
+            raise HTTPException(
+                status_code=404, detail="deep-thinking session not found"
+            )
+        try:
+            deleted = _deep_delete_session(run_id, session_id)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail="当前对话仍有研究任务运行，请先取消或等待完成后再删除。",
+            ) from exc
+        except Exception as exc:
+            raise HTTPException(
+                status_code=503, detail="deep session ledger unavailable"
+            ) from exc
+        if not deleted:
+            raise HTTPException(
+                status_code=404, detail="deep-thinking session not found"
+            )
+        return {"deleted": True, "session_id": session_id}
+
     @app.get("/api/v1/runs/{run_id}/deep-thinking/sessions/{session_id}/events")
     @app.get("/api/v1/runs/{run_id}/deep-sessions/{session_id}/events")
     async def replay_deep_thinking_events(
@@ -7815,6 +12062,38 @@ def create_app(
                         sequence = 0
             repo = _deep_repository()
             idle = 0
+            last_event_status = ""
+            latest_status = str((session or {}).get("status", "") or "").strip().lower()
+            active_job_status = ""
+            # A browser can subscribe before the queue worker has persisted
+            # its first event. Give that hand-off a small grace window so the
+            # client does not have to reconnect just to receive the same job's
+            # completion event.
+            preflight_deadline = time.monotonic() + 6.0
+
+            def session_job_status() -> str:
+                if repo is None:
+                    return ""
+                try:
+                    listing = getattr(repo, "list_deep_jobs", None)
+                    if not callable(listing):
+                        return ""
+                    jobs = listing(run_id)
+                    statuses = [
+                        str(item.get("status", "") or "").strip().lower()
+                        for item in jobs
+                        if isinstance(item, Mapping)
+                        and str(item.get("session_id", "") or "") == session_id
+                    ]
+                    for status in ("running", "queued", "partial", "failed", "cancelled", "completed"):
+                        if status in statuses:
+                            return status
+                except Exception:
+                    # The event ledger remains the source of truth for replay;
+                    # a transient job-list read must not tear down the stream.
+                    return ""
+                return ""
+
             while True:
                 try:
                     rows = (
@@ -7880,32 +12159,356 @@ def create_app(
                             event_type=row.get("event_type", "deep_stage"),
                         )
                         yield f"id: {sequence}\nevent: {safe_public['event_type']}\ndata: {json.dumps(safe_public, ensure_ascii=False)}\n\n"
+                        if str(safe_public.get("event_type", "") or "") == "deep_stage":
+                            last_event_status = str(safe_public.get("status", "") or "").strip().lower()
                     idle = 0
                 else:
                     idle += 1
                 # Emit a heartbeat before the bounded replay window closes so
                 # proxies and browsers can keep the connection alive.  A
                 # reconnect remains safe because the cursor is monotonic.
-                if idle and idle % 4 == 0:
+                if idle and idle % 6 == 0:
                     yield ": heartbeat\n\n"
-                # Use the SQLite-first projection for stream termination; a
-                # stale sidecar status must not keep a cancelled/failed
-                # stream alive after a worker restart.
-                latest = _deep_session_read(run_id, session_id) or session
-                if latest.get("status") in {"failed", "cancelled"} and not rows:
+                if rows or idle % 6 == 0:
+                    latest = _deep_session_read(run_id, session_id) or session
+                    latest_status = str((latest or {}).get("status", "") or "").strip().lower()
+                    active_job_status = session_job_status()
+                if latest_status in {"failed", "cancelled"} and not rows:
                     break
-                # A request should never hold a worker thread forever.  The
-                # client reconnects with Last-Event-ID when more stages arrive;
-                # after a short quiet window close this bounded replay stream.
-                if idle >= 20:
+                # Keep the socket open while a turn is still in flight.  Long
+                # model calls can go several seconds without a new stage; closing
+                # after a short idle window forced the UI to reconnect and made
+                # live feedback feel delayed.
+                in_flight = last_event_status in {"queued", "running"} or latest_status in {
+                    "running",
+                    "queued",
+                } or active_job_status in {"queued", "running", "partial"}
+                if in_flight:
+                    await asyncio.sleep(0.08)
+                    continue
+                # After the turn settles, close this bounded replay stream so an
+                # idle panel does not hold a worker forever.  The client
+                # reconnects with Last-Event-ID when the next question starts.
+                if idle >= 25 and time.monotonic() >= preflight_deadline:
                     break
-                await asyncio.sleep(0.25)
+                await asyncio.sleep(0.08)
 
         return StreamingResponse(
             stream(),
             media_type="text/event-stream",
-            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+            headers={
+                "Cache-Control": "no-cache, no-transform",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",
+            },
         )
+
+    @app.post(
+        "/api/v1/runs/{run_id}/deep-thinking/sessions/{session_id}/branches",
+        status_code=201,
+    )
+    @app.post(
+        "/api/v1/runs/{run_id}/deep-sessions/{session_id}/branches",
+        status_code=201,
+    )
+    def fork_deep_thinking_branch(
+        run_id: str,
+        session_id: str,
+        body: DeepBranchForkBody,
+        x_role: str = Header(default="analyst", alias="X-Role"),
+        idempotency_key: str = Header(default="", alias="Idempotency-Key"),
+        x_tenant_id: str = Header(default="", alias="X-Tenant-ID"),
+        x_workspace_id: str = Header(default="", alias="X-Workspace-ID"),
+        x_project_id: str = Header(default="", alias="X-Project-ID"),
+        x_profile_id: str = Header(default="", alias="X-Profile-ID"),
+        x_evolution_stage_scope: str = Header(default="", alias="X-Evolution-Stage-Scope"),
+        x_evolution_cross_scope: str = Header(default="", alias="X-Evolution-Cross-Scope"),
+    ) -> dict[str, Any]:
+        _require_role(x_role, {"analyst", "reviewer", "admin"})
+        view = read_view(run_id)
+        _assert_deep_scope(
+            view,
+            role=x_role,
+            tenant_id=x_tenant_id,
+            workspace_id=x_workspace_id,
+            project_id=x_project_id,
+            profile_id=x_profile_id,
+            stage_scope=x_evolution_stage_scope,
+            cross_scope=x_role == "admin"
+            and _cross_scope_requested(x_evolution_cross_scope),
+            mutation=True,
+        )
+        branch_id = normalize_branch_id(
+            body.branch_id or new_stable_id("branch")
+        )
+        if branch_id == DEFAULT_BRANCH_ID:
+            raise HTTPException(status_code=409, detail="main branch already exists")
+        fork_payload = {
+            "session_id": session_id,
+            "from_message_id": body.from_message_id,
+            "branch_id": normalize_branch_id(body.branch_id) if body.branch_id else "",
+            "title": body.title,
+        }
+        _deep_idempotency(
+            idempotency_key,
+            operation="fork-branch",
+            payload=fork_payload,
+        )
+        try:
+            session = _deep_session_read(run_id, session_id, strict=True)
+        except _DeepLedgerUnavailable as exc:
+            raise HTTPException(
+                status_code=503,
+                detail=str(exc) or "deep session ledger unavailable",
+            ) from exc
+        if session is None:
+            raise HTTPException(status_code=404, detail="deep-thinking session not found")
+        repository = _deep_repository()
+        creator = (
+            getattr(repository, "create_deep_branch", None)
+            if repository is not None
+            else None
+        )
+        if not callable(creator):
+            raise HTTPException(status_code=503, detail="deep branch ledger unavailable")
+        claimed = _claim_deep_idempotency(
+            run_id=session_id,
+            operation="fork-branch",
+            key=idempotency_key,
+            payload=fork_payload,
+        )
+        replay = _replay_or_raise_in_progress(claimed)
+        if replay is not None:
+            return replay
+        try:
+            branch = creator(
+                session_id=session_id,
+                branch_id=branch_id,
+                forked_from_message_id=body.from_message_id,
+                title=body.title,
+            )
+        except ValueError as exc:
+            _release_deep_idempotency(
+                run_id=session_id,
+                operation="fork-branch",
+                key=idempotency_key,
+            )
+            detail = str(exc)
+            status_code = 409 if "already exists" in detail else 422
+            raise HTTPException(status_code=status_code, detail=detail) from exc
+        except Exception as exc:
+            _release_deep_idempotency(
+                run_id=session_id,
+                operation="fork-branch",
+                key=idempotency_key,
+            )
+            raise HTTPException(status_code=503, detail="deep branch ledger unavailable") from exc
+        _publish_deep_event(
+            run_id,
+            "deep_branch_created",
+            {
+                "session_id": session_id,
+                "branch_id": branch_id,
+                "message_id": body.from_message_id,
+                "status": "completed",
+                "kind": "summary",
+                "text": f"已从当前结论创建分支：{body.title}",
+            },
+        )
+        response = {
+            "branch": sanitize_runtime_payload(branch),
+            "session_id": session_id,
+        }
+        _complete_deep_idempotency(
+            run_id=session_id,
+            operation="fork-branch",
+            key=idempotency_key,
+            resource_id=branch_id,
+            response=response,
+        )
+        return response
+
+    @app.post(
+        "/api/v1/runs/{run_id}/deep-thinking/jobs/{job_id}/steers",
+        status_code=202,
+    )
+    @app.post(
+        "/api/v1/runs/{run_id}/deep-jobs/{job_id}/steers",
+        status_code=202,
+    )
+    def steer_deep_thinking_job(
+        run_id: str,
+        job_id: str,
+        body: DeepSteerBody,
+        x_role: str = Header(default="analyst", alias="X-Role"),
+        x_tenant_id: str = Header(default="", alias="X-Tenant-ID"),
+        x_workspace_id: str = Header(default="", alias="X-Workspace-ID"),
+        x_project_id: str = Header(default="", alias="X-Project-ID"),
+        x_profile_id: str = Header(default="", alias="X-Profile-ID"),
+        x_evolution_stage_scope: str = Header(default="", alias="X-Evolution-Stage-Scope"),
+        x_evolution_cross_scope: str = Header(default="", alias="X-Evolution-Cross-Scope"),
+    ) -> dict[str, Any]:
+        _require_role(x_role, {"analyst", "reviewer", "admin"})
+        view = read_view(run_id)
+        _assert_deep_scope(
+            view,
+            role=x_role,
+            tenant_id=x_tenant_id,
+            workspace_id=x_workspace_id,
+            project_id=x_project_id,
+            profile_id=x_profile_id,
+            stage_scope=x_evolution_stage_scope,
+            cross_scope=x_role == "admin"
+            and _cross_scope_requested(x_evolution_cross_scope),
+            mutation=True,
+        )
+        try:
+            job = _deep_job_get(job_id, strict=True)
+        except _DeepLedgerUnavailable as exc:
+            raise HTTPException(
+                status_code=503,
+                detail=str(exc) or "deep job ledger unavailable",
+            ) from exc
+        if job is None or str(job.get("parent_run_id", "")) != str(run_id):
+            raise HTTPException(status_code=404, detail="deep-thinking job not found")
+        repository = _deep_repository()
+        enqueue = (
+            getattr(repository, "enqueue_deep_steer", None)
+            if repository is not None
+            else None
+        )
+        if not callable(enqueue):
+            raise HTTPException(status_code=503, detail="deep steering ledger unavailable")
+        try:
+            mode = normalize_steer_mode(body.mode)
+            steer = enqueue(
+                job_id=job_id,
+                content=body.content,
+                mode=mode,
+                client_steer_id=body.client_steer_id,
+                branch_id=body.branch_id,
+                parent_message_id=body.parent_message_id,
+            )
+        except ValueError as exc:
+            detail = str(exc)
+            status_code = 409 if "no longer accepts" in detail else 422
+            raise HTTPException(status_code=status_code, detail=detail) from exc
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="deep steering ledger unavailable") from exc
+        _publish_deep_event(
+            run_id,
+            "deep_steer_accepted",
+            {
+                "job_id": job_id,
+                "session_id": steer.get("session_id", ""),
+                "steer_id": steer.get("steer_id", ""),
+                "message_id": steer.get("message_id", ""),
+                "branch_id": steer.get("branch_id", DEFAULT_BRANCH_ID),
+                "mode": mode,
+                "stage": str(job.get("stage", "context")),
+                "status": "accepted",
+                "kind": "summary",
+                "text": "已接收，将在最近的安全阶段纳入当前研究。"
+                if mode in {"steer", "interrupt_steer"}
+                else "已接收，将中断旧方向并从该问题继续。"
+                if mode == "interrupt_send"
+                else "已接收，当前轮完成后自动开始下一轮。",
+            },
+        )
+        return {
+            "steer": sanitize_runtime_payload(steer, max_string_length=8000),
+            "job": _deep_job_public(_deep_job_get(job_id) or job),
+        }
+
+    @app.get("/api/v1/runs/{run_id}/deep-thinking/jobs/{job_id}/steers")
+    @app.get("/api/v1/runs/{run_id}/deep-jobs/{job_id}/steers")
+    def list_deep_thinking_steers(
+        run_id: str,
+        job_id: str,
+        x_role: str = Header(default="analyst", alias="X-Role"),
+        x_tenant_id: str = Header(default="", alias="X-Tenant-ID"),
+        x_workspace_id: str = Header(default="", alias="X-Workspace-ID"),
+        x_project_id: str = Header(default="", alias="X-Project-ID"),
+        x_profile_id: str = Header(default="", alias="X-Profile-ID"),
+        x_evolution_stage_scope: str = Header(default="", alias="X-Evolution-Stage-Scope"),
+        x_evolution_cross_scope: str = Header(default="", alias="X-Evolution-Cross-Scope"),
+    ) -> dict[str, Any]:
+        _require_role(x_role, {"analyst", "reviewer", "auditor", "admin"})
+        view = read_view(run_id)
+        _assert_deep_scope(
+            view,
+            role=x_role,
+            tenant_id=x_tenant_id,
+            workspace_id=x_workspace_id,
+            project_id=x_project_id,
+            profile_id=x_profile_id,
+            stage_scope=x_evolution_stage_scope,
+            cross_scope=x_role == "admin"
+            and _cross_scope_requested(x_evolution_cross_scope),
+            mutation=False,
+        )
+        job = _deep_job_get(job_id)
+        if job is None or str(job.get("parent_run_id", "")) != str(run_id):
+            raise HTTPException(status_code=404, detail="deep-thinking job not found")
+        repository = _deep_repository()
+        listing = (
+            getattr(repository, "list_deep_steers", None)
+            if repository is not None
+            else None
+        )
+        if not callable(listing):
+            raise HTTPException(status_code=503, detail="deep steering ledger unavailable")
+        return {
+            "steers": sanitize_runtime_payload(listing(job_id), max_string_length=8000)
+        }
+
+    @app.delete(
+        "/api/v1/runs/{run_id}/deep-thinking/jobs/{job_id}/steers/{steer_id}"
+    )
+    @app.delete("/api/v1/runs/{run_id}/deep-jobs/{job_id}/steers/{steer_id}")
+    def cancel_deep_thinking_steer(
+        run_id: str,
+        job_id: str,
+        steer_id: str,
+        x_role: str = Header(default="analyst", alias="X-Role"),
+        x_tenant_id: str = Header(default="", alias="X-Tenant-ID"),
+        x_workspace_id: str = Header(default="", alias="X-Workspace-ID"),
+        x_project_id: str = Header(default="", alias="X-Project-ID"),
+        x_profile_id: str = Header(default="", alias="X-Profile-ID"),
+        x_evolution_stage_scope: str = Header(default="", alias="X-Evolution-Stage-Scope"),
+        x_evolution_cross_scope: str = Header(default="", alias="X-Evolution-Cross-Scope"),
+    ) -> dict[str, Any]:
+        _require_role(x_role, {"analyst", "reviewer", "admin"})
+        view = read_view(run_id)
+        _assert_deep_scope(
+            view,
+            role=x_role,
+            tenant_id=x_tenant_id,
+            workspace_id=x_workspace_id,
+            project_id=x_project_id,
+            profile_id=x_profile_id,
+            stage_scope=x_evolution_stage_scope,
+            cross_scope=x_role == "admin"
+            and _cross_scope_requested(x_evolution_cross_scope),
+            mutation=True,
+        )
+        job = _deep_job_get(job_id)
+        if job is None or str(job.get("parent_run_id", "")) != str(run_id):
+            raise HTTPException(status_code=404, detail="deep-thinking job not found")
+        repository = _deep_repository()
+        cancel = (
+            getattr(repository, "cancel_deep_steer", None)
+            if repository is not None
+            else None
+        )
+        if not callable(cancel):
+            raise HTTPException(status_code=503, detail="deep steering ledger unavailable")
+        steer = cancel(job_id, steer_id)
+        if steer is None:
+            raise HTTPException(status_code=404, detail="deep steering receipt not found")
+        if str(steer.get("status", "")) != "cancelled":
+            raise HTTPException(status_code=409, detail="deep steering is already being applied")
+        return {"steer": sanitize_runtime_payload(steer, max_string_length=8000)}
 
     @app.post("/api/v1/runs/{run_id}/deep-thinking/sessions/{session_id}/messages", status_code=202)
     @app.post("/api/v1/runs/{run_id}/deep-sessions/{session_id}/messages", status_code=202)
@@ -7925,6 +12528,24 @@ def create_app(
         _require_role(x_role, {"analyst", "reviewer", "admin"})
         view = read_view(run_id)
         _assert_deep_scope(view, role=x_role, tenant_id=x_tenant_id, workspace_id=x_workspace_id, project_id=x_project_id, profile_id=x_profile_id, stage_scope=x_evolution_stage_scope, cross_scope=x_role == "admin" and _cross_scope_requested(x_evolution_cross_scope), mutation=True)
+        # Validate the transport requirement before resolving the target
+        # session, but defer the durable claim until ownership has been
+        # established.  This keeps every message POST on the documented
+        # Idempotency-Key contract without poisoning a key for a typoed
+        # session id.
+        requested_create_artifact = _deep_authoring_requested(
+            body.content, body.create_artifact
+        )
+        body_payload = body.model_dump(mode="json")
+        if body.channel is None:
+            # Preserve fingerprints of requests saved before channel routing.
+            body_payload.pop("channel", None)
+        body_payload["create_artifact"] = requested_create_artifact
+        _deep_idempotency(
+            idempotency_key,
+            operation="message",
+            payload=body_payload,
+        )
         # A configured SQLite ledger is authoritative for mutation ownership.
         # Do not turn a transient session-read outage into a misleading 404
         # (or let a stale sidecar transcript receive a new message).  Strict
@@ -7940,7 +12561,31 @@ def create_app(
             ) from exc
         if session is None:
             raise HTTPException(status_code=404, detail="deep-thinking session not found")
-        claimed = _claim_deep_idempotency(run_id=session_id, operation="message", key=idempotency_key, payload=body.model_dump(mode="json"))
+        if "active_skill_ids" in body.model_fields_set:
+            active_skill_ids = _validated_deep_skill_ids(
+                body.active_skill_ids, registry=_deep_session_capability_registry(run_id, session)
+            )
+        else:
+            inherited_skill_ids = _deep_session_public(session).get(
+                "active_skill_ids", []
+            )
+            try:
+                available_skills = _deep_session_capability_registry(run_id, session).skills
+            except Exception as exc:
+                raise HTTPException(
+                    status_code=503, detail="deep capability registry unavailable"
+                ) from exc
+            active_skill_ids = [
+                str(value)
+                for value in inherited_skill_ids
+                if str(value) in available_skills
+            ][:6]
+        claimed = _claim_deep_idempotency(
+            run_id=session_id,
+            operation="message",
+            key=idempotency_key,
+            payload=body_payload,
+        )
         replay = _replay_or_raise_in_progress(claimed)
         if replay is not None:
             return replay
@@ -7951,26 +12596,59 @@ def create_app(
                 session=session,
                 content=body.content,
                 focus=body.focus,
-                create_artifact=body.create_artifact,
+                create_artifact=requested_create_artifact,
+                active_skill_ids=active_skill_ids,
+                branch_id=body.branch_id,
+                source_channel=body.channel or "web",
+                parent_message_id=body.parent_message_id,
                 idempotency_key=_deep_idempotency(
                     idempotency_key,
                     operation="message",
-                    payload=body.model_dump(mode="json"),
+                    payload=body_payload,
                 ),
             )
-            # Complete the idempotency claim with the durable job reference,
-            # not with a provider answer that may still be running.  Retries
-            # after a timeout therefore replay the same task safely.
-            _complete_deep_idempotency(
+            if not isinstance(response, Mapping):
+                raise RuntimeError("deep message queue returned no response")
+        except HTTPException:
+            # The claim is still empty when queueing fails.  Release it so a
+            # retry can reserve the same message/job; completion failures are
+            # intentionally outside this block because the mutation may
+            # already have been durably accepted.
+            _release_deep_idempotency(
                 run_id=session_id,
                 operation="message",
                 key=idempotency_key,
-                resource_id=str(response.get("job", {}).get("job_id", "")),
-                response=response,
             )
-            return response
+            raise
         except (ValueError, FileNotFoundError) as exc:
+            _release_deep_idempotency(
+                run_id=session_id,
+                operation="message",
+                key=idempotency_key,
+            )
             raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except Exception as exc:
+            _release_deep_idempotency(
+                run_id=session_id,
+                operation="message",
+                key=idempotency_key,
+            )
+            raise HTTPException(
+                status_code=503,
+                detail="deep message queue unavailable",
+            ) from exc
+
+        # Complete the idempotency claim with the durable job reference,
+        # not with a provider answer that may still be running.  Retries
+        # after a timeout therefore replay the same task safely.
+        _complete_deep_idempotency(
+            run_id=session_id,
+            operation="message",
+            key=idempotency_key,
+            resource_id=str(response.get("job", {}).get("job_id", "")),
+            response=response,
+        )
+        return response
 
     @app.post("/api/v1/runs/{run_id}/deep-thinking/sessions/{session_id}/merge")
     @app.post("/api/v1/runs/{run_id}/deep-sessions/{session_id}/merge")
@@ -7994,7 +12672,7 @@ def create_app(
         verification until a later quality review accepts it.
         """
 
-        _require_role(x_role, {"analyst", "reviewer", "auditor", "admin"})
+        _require_role(x_role, {"analyst", "reviewer", "admin"})
         view = read_view(run_id)
         _assert_deep_scope(view, role=x_role, tenant_id=x_tenant_id, workspace_id=x_workspace_id, project_id=x_project_id, profile_id=x_profile_id, stage_scope=x_evolution_stage_scope, cross_scope=x_role == "admin" and _cross_scope_requested(x_evolution_cross_scope), mutation=True)
         # Validate the required key before looking up the target session, but
@@ -8230,12 +12908,26 @@ def create_app(
                 "error": "capability version ledger unavailable",
                 "retryable": True,
             }
-            _deep_update_session(
-                run_id,
-                session_id,
-                status="partial",
-                artifacts=[{**partial_artifact, "artifact_id": wanted or artifact.get("capability_id", "")}],
-            )
+            try:
+                _deep_update_session(
+                    run_id,
+                    session_id,
+                    status="partial",
+                    artifacts=[{**partial_artifact, "artifact_id": wanted or artifact.get("capability_id", "")}],
+                )
+            except Exception as exc:
+                # No replay response has been committed yet.  Release the
+                # empty claim so a retry can reconcile the same partial
+                # version once the session ledger recovers.
+                _release_deep_idempotency(
+                    run_id=session_id,
+                    operation="merge",
+                    key=idempotency_key,
+                )
+                raise HTTPException(
+                    status_code=503,
+                    detail="deep session ledger unavailable",
+                ) from exc
             _publish_deep_event(
                 run_id,
                 "deep_stage",
@@ -8281,6 +12973,8 @@ def create_app(
                 projection_error = str(exc)[:1000]
             except OSError:
                 projection_error = "parent capability artifact projection is unavailable"
+            except Exception as exc:
+                projection_error = str(exc).strip()[:1000] or type(exc).__name__
 
         if projection_error:
             partial_artifact = {
@@ -8298,12 +12992,23 @@ def create_app(
                 "error": projection_error,
                 "retryable": True,
             }
-            _deep_update_session(
-                run_id,
-                session_id,
-                status="partial",
-                artifacts=[{**partial_artifact, "artifact_id": wanted or artifact.get("capability_id", "")}],
-            )
+            try:
+                _deep_update_session(
+                    run_id,
+                    session_id,
+                    status="partial",
+                    artifacts=[{**partial_artifact, "artifact_id": wanted or artifact.get("capability_id", "")}],
+                )
+            except Exception as exc:
+                _release_deep_idempotency(
+                    run_id=session_id,
+                    operation="merge",
+                    key=idempotency_key,
+                )
+                raise HTTPException(
+                    status_code=503,
+                    detail="deep session ledger unavailable",
+                ) from exc
             _publish_deep_event(
                 run_id,
                 "deep_stage",
@@ -8326,12 +13031,27 @@ def create_app(
             )
             return partial
 
-        session_update = _deep_update_session(
-            run_id,
-            session_id,
-            status="completed",
-            artifacts=[{**artifact, "artifact_id": wanted or artifact.get("capability_id", ""), "status": "merged_pending_verification"}],
-        )
+        try:
+            session_update = _deep_update_session(
+                run_id,
+                session_id,
+                status="completed",
+                artifacts=[{**artifact, "artifact_id": wanted or artifact.get("capability_id", ""), "status": "merged_pending_verification"}],
+            )
+        except Exception as exc:
+            # The version/projection may already be durable, but the merge
+            # response has not been committed.  The idempotency cleanup is
+            # conditional on an empty claim, so a concurrent completion wins
+            # safely while a failed session write remains retryable.
+            _release_deep_idempotency(
+                run_id=session_id,
+                operation="merge",
+                key=idempotency_key,
+            )
+            raise HTTPException(
+                status_code=503,
+                detail="deep session ledger unavailable",
+            ) from exc
         session_update_error = _deep_session_update_error(session_update)
         if session_update_error:
             # The immutable capability version and parent snapshot projection
@@ -8442,6 +13162,15 @@ def create_app(
         _require_role(x_role, {"analyst", "admin"})
         parent = read_view(run_id)
         scope = _assert_deep_scope(parent, role=x_role, tenant_id=x_tenant_id, workspace_id=x_workspace_id, project_id=x_project_id, profile_id=x_profile_id, stage_scope=x_evolution_stage_scope, cross_scope=x_role == "admin" and _cross_scope_requested(x_evolution_cross_scope), mutation=True)
+        # Missing replay protection is a request-contract error independent
+        # of whether the submitted card can be resolved.  Validate the header
+        # up front, then claim only after canonical candidate/selection checks
+        # so an invalid card cannot leave an in-progress ledger row.
+        _deep_idempotency(
+            idempotency_key,
+            operation="reference-research",
+            payload=body.model_dump(mode="json"),
+        )
         candidate = _candidate_from_run(run_id, parent, body.model_dump(mode="json"))
         if not candidate:
             raise HTTPException(status_code=422, detail="reference weapon context is required")
@@ -8482,10 +13211,10 @@ def create_app(
         # question there would make a process restart lose the only user
         # visible turn and incorrectly mark the job partial.
         question = str(body.question or "").strip() or (
-            f"请围绕“{name}”在当前 Query 下继续发散，比较竞争方向并判断是否达到固定成卡条件。"
+            f"请围绕“{name}”在当前 Query 下继续发散，比较竞争方向并判断哪些值得继续深挖。"
         )
         question = question[:DEEP_THINKING_MAX_MESSAGE_CHARS]
-        focus = str(body.focus or question or "针对该参考装备方向补齐当前 Query 的能力画像").strip()[:1600]
+        focus = str(body.focus or question or "针对该参考装备方向深挖当前 Query 下的价值与边界").strip()[:1600]
         query = _deep_query(parent)
         fingerprint, query_snapshot_hash, focus_hash = _deep_canonical_fingerprint(
             parent_run_id=run_id,
@@ -8495,6 +13224,10 @@ def create_app(
         )
         idem = _deep_idempotency(idempotency_key, operation="reference-research", payload={"hypothesis_id": candidate_hypothesis, "focus": focus, "question": question, "fingerprint": fingerprint})
         repo = _deep_repository()
+        # A reservation can outlive the HTTP request by a few writes.  Keep
+        # the durable row here so a retry can finish session binding instead
+        # of returning an unusable job with an empty ``session_id``.
+        reserved_job: dict[str, Any] | None = None
         reference_idempotency_payload = {
             "hypothesis_id": candidate_hypothesis,
             "focus": focus,
@@ -8564,22 +13297,58 @@ def create_app(
                             response=response,
                         )
                         return response
-                    # Even a fingerprint replay must pass through the
-                    # request-key ledger.  Otherwise a caller could reuse an
-                    # existing key with a different question/focus and
-                    # bypass the request-hash conflict fence.
-                    replay_claim = _claim_deep_idempotency(
-                        run_id=run_id,
-                        operation="reference-research",
-                        key=idempotency_key,
-                        payload=reference_idempotency_payload,
-                    )
-                    replay_response = _replay_or_raise_in_progress(replay_claim)
-                    if replay_response is not None:
-                        return replay_response
-                    response = {"job": _deep_job_public(canonical), "scope": scope, "idempotent_replay": True}
-                    _complete_deep_idempotency(run_id=run_id, operation="reference-research", key=idempotency_key, resource_id=str(canonical.get("job_id", "")), response=response)
-                    return response
+                    # A fully bound canonical job is a normal fingerprint
+                    # replay.  A reservation with no session is different:
+                    # the prior request failed between the reservation and
+                    # session write, so fall through and finish that same
+                    # durable row rather than returning an unusable job.
+                    if str(canonical.get("session_id", "") or "").strip():
+                        # Even a fingerprint replay must pass through the
+                        # request-key ledger.  Otherwise a caller could reuse
+                        # an existing key with a different question/focus and
+                        # bypass the request-hash conflict fence.
+                        replay_claim = _claim_deep_idempotency(
+                            run_id=run_id,
+                            operation="reference-research",
+                            key=idempotency_key,
+                            payload=reference_idempotency_payload,
+                        )
+                        replay_response = _replay_or_raise_in_progress(replay_claim)
+                        if replay_response is not None:
+                            return replay_response
+                        response = {"job": _deep_job_public(canonical), "scope": scope, "idempotent_replay": True}
+                        _complete_deep_idempotency(run_id=run_id, operation="reference-research", key=idempotency_key, resource_id=str(canonical.get("job_id", "")), response=response)
+                        return response
+                    if (
+                        str(canonical.get("idempotency_key", "") or "")
+                        == idem
+                        and canonical_status
+                        in {"queued", "running", "partial", "failed", "blocked"}
+                    ):
+                        reserved_job = dict(canonical)
+                    elif not str(canonical.get("session_id", "") or "").strip():
+                        # A different request key may observe a reservation
+                        # while its owner is still binding the session.  Do
+                        # not steal that reservation; return the canonical
+                        # job as a replay and let the owner/retry finish it.
+                        replay_claim = _claim_deep_idempotency(
+                            run_id=run_id,
+                            operation="reference-research",
+                            key=idempotency_key,
+                            payload=reference_idempotency_payload,
+                        )
+                        replay_response = _replay_or_raise_in_progress(replay_claim)
+                        if replay_response is not None:
+                            return replay_response
+                        response = {"job": _deep_job_public(canonical), "scope": scope, "idempotent_replay": True}
+                        _complete_deep_idempotency(
+                            run_id=run_id,
+                            operation="reference-research",
+                            key=idempotency_key,
+                            resource_id=str(canonical.get("job_id", "")),
+                            response=response,
+                        )
+                        return response
                 # The fingerprint query is authoritative.  A separate
                 # idempotency-key lookup is still useful for retries from an
                 # older client, but it must also fail closed when available.
@@ -8597,7 +13366,7 @@ def create_app(
                             status_code=503,
                             detail="deep job ledger unavailable",
                         ) from exc
-                    if existing:
+                    if existing and str(existing[0].get("session_id", "") or "").strip():
                         replay_claim = _claim_deep_idempotency(
                             run_id=run_id,
                             operation="reference-research",
@@ -8629,19 +13398,12 @@ def create_app(
                             status_code=503,
                             detail="deep job ledger unavailable",
                         ) from exc
-                    if existing:
-                        replay_claim = _claim_deep_idempotency(
-                            run_id=run_id,
-                            operation="reference-research",
-                            key=idempotency_key,
-                            payload=reference_idempotency_payload,
-                        )
-                        replay_response = _replay_or_raise_in_progress(replay_claim)
-                        if replay_response is not None:
-                            return replay_response
-                        response = {"job": _deep_job_public(existing[0]), "scope": scope, "idempotent_replay": True}
-                        _complete_deep_idempotency(run_id=run_id, operation="reference-research", key=idempotency_key, resource_id=str(existing[0].get("job_id", "")), response=response)
-                        return response
+                    if (
+                        existing
+                        and not str(existing[0].get("session_id", "") or "").strip()
+                        and str(existing[0].get("idempotency_key", "") or "") == idem
+                    ):
+                        reserved_job = dict(existing[0])
         else:
             with deep_worker_lock:
                 canonical = next(
@@ -8653,7 +13415,7 @@ def create_app(
                     ),
                     None,
                 )
-            if canonical is not None:
+            if canonical is not None and str(canonical.get("session_id", "") or "").strip():
                 replay_claim = _claim_deep_idempotency(
                     run_id=run_id,
                     operation="reference-research",
@@ -8713,26 +13475,46 @@ def create_app(
         # the reservation separate from execution closes the race where two
         # clicks with different request keys would otherwise create two
         # sessions or two capability versions.
-        generated_job_id = new_stable_id("deep-research")
-        reserved_job = _deep_store_job(
-            job_id=generated_job_id,
-            parent_run_id=run_id,
-            session_id="",
-            kind="reference-research",
-            idempotency_key=idem,
-            fingerprint=fingerprint,
-            payload={
-                "hypothesis_id": candidate_hypothesis,
-                "query_snapshot_hash": query_snapshot_hash,
-                "focus_hash": focus_hash,
-                "query": query[:4000],
-                "focus": focus[:1600],
-                "question": question,
-                "dialogue_mode": "single_equipment_contextual_divergence",
-                "create_artifact": True,
-                "candidate": candidate,
-            },
+        generated_job_id = str(
+            (reserved_job or {}).get("job_id", "") or new_stable_id("deep-research")
         )
+        if reserved_job is None:
+            try:
+                reserved_job = _deep_store_job(
+                job_id=generated_job_id,
+                parent_run_id=run_id,
+                session_id="",
+                kind="reference-research",
+                idempotency_key=idem,
+                fingerprint=fingerprint,
+                payload={
+                    "hypothesis_id": candidate_hypothesis,
+                    "query_snapshot_hash": query_snapshot_hash,
+                    "focus_hash": focus_hash,
+                    "query": query[:4000],
+                    "focus": focus[:1600],
+                    "question": question,
+                    "dialogue_mode": "single_equipment_contextual_divergence",
+                    "create_artifact": False,
+                    "candidate": candidate,
+                },
+                )
+            except HTTPException:
+                _release_deep_idempotency(
+                    run_id=run_id,
+                    operation="reference-research",
+                    key=idempotency_key,
+                )
+                raise
+            except Exception as exc:
+                _release_deep_idempotency(
+                    run_id=run_id,
+                    operation="reference-research",
+                    key=idempotency_key,
+                )
+                raise HTTPException(status_code=503, detail="deep job ledger unavailable") from exc
+        else:
+            reserved_job = dict(reserved_job)
         job_id = str(reserved_job.get("job_id") or generated_job_id)
         if job_id != generated_job_id:
             response = {"job": _deep_job_public(reserved_job), "scope": scope, "idempotent_replay": True}
@@ -8744,31 +13526,61 @@ def create_app(
                 response=response,
             )
             return response
-        # The selected candidate is the only equipment identity this session
-        # may author.  Keep the broader run snapshot for evidence/history, but
-        # make the target explicit so a model cannot merge multiple cards.
+        # The selected candidate is the source equipment for this session.
+        # The model-facing projection below retains only its equipment fields.
         context = _deep_context_for_run(run_id, parent, {})
         context.update(
             {
                 "candidate": candidate,
                 "reference_weapon": candidate,
+                "canonical_candidate": True,
                 "query": query,
                 "focus": focus,
                 "deep_research_mode": "single_equipment_contextual_divergence",
+                "innovation_mode": SINGLE_EQUIPMENT_INNOVATION_MODE,
+                "context_policy": "query_equipment_questions_only",
                 "canonical_hypothesis_id": candidate_hypothesis,
             }
         )
-        session = create_deep_session(
-            output_root,
-            run_id=run_id,
-            kind="reference-research",
-            title=f"参考武器深度研究 · {name}",
-            capability_name=name,
-            card_binding_id=str(candidate.get("card_binding_id", "")),
-            hypothesis_id=candidate_hypothesis,
-            context_refs=context,
-            created_by=x_role,
-        )
+        current_result = context.get("current_result_context")
+        if isinstance(current_result, Mapping):
+            context["current_result_context"] = {
+                **dict(current_result),
+                "selected": dict(candidate),
+            }
+        try:
+            session = create_deep_session(
+                output_root,
+                run_id=run_id,
+                kind="reference-research",
+                title=f"参考武器深度研究 · {name}",
+                capability_name=name,
+                card_binding_id=str(candidate.get("card_binding_id", "")),
+                hypothesis_id=candidate_hypothesis,
+                context_refs=context,
+                created_by=x_role,
+            )
+        except HTTPException:
+            _release_deep_idempotency(
+                run_id=run_id,
+                operation="reference-research",
+                key=idempotency_key,
+            )
+            raise
+        except (ValueError, FileNotFoundError) as exc:
+            _release_deep_idempotency(
+                run_id=run_id,
+                operation="reference-research",
+                key=idempotency_key,
+            )
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except Exception as exc:
+            _release_deep_idempotency(
+                run_id=run_id,
+                operation="reference-research",
+                key=idempotency_key,
+            )
+            raise HTTPException(status_code=503, detail="deep session persistence unavailable") from exc
         session = {**session, "idempotency_key": idem, "scope": scope}
         # Persist the parent-bound session before scheduling the dialogue.  The
         # sidecar remains a compatibility projection, but a worker restart
@@ -8784,19 +13596,119 @@ def create_app(
                 )
             except Exception:
                 pass
+            _release_deep_idempotency(
+                run_id=run_id,
+                operation="reference-research",
+                key=idempotency_key,
+            )
             raise HTTPException(
                 status_code=503,
                 detail="deep session ledger unavailable; research kept as partial draft",
             )
-        _deep_job_update(
-            job_id,
-            run_id=run_id,
-            session_id=str(session.get("session_id", "")),
-            stage="queued",
-            status="queued",
-            progress=0.0,
-            text="参考武器深度对话已排队，等待单装备发散 Worker。",
+        session_id = str(session.get("session_id", ""))
+        repository = _deep_repository()
+        binder = (
+            getattr(repository, "bind_deep_job_session", None)
+            if repository is not None
+            else None
         )
+
+        def _cleanup_unbound_reference_session() -> None:
+            """Fence a session whose reserved job never became bindable."""
+
+            try:
+                if _deep_delete_session(run_id, session_id):
+                    return
+            except Exception:
+                pass
+            # Legacy adapters, or a concurrent delete/bind race, may reject
+            # physical removal.  A durable partial state still prevents the
+            # UI and recovery worker from treating this transcript as live.
+            try:
+                _deep_update_session(
+                    run_id,
+                    session_id,
+                    status="partial",
+                )
+            except Exception:
+                pass
+
+        try:
+            bound_job = (
+                binder(
+                    job_id,
+                    parent_run_id=run_id,
+                    session_id=session_id,
+                )
+                if callable(binder)
+                else _deep_job_update(
+                    job_id,
+                    run_id=run_id,
+                    session_id=session_id,
+                    stage="queued",
+                    status="queued",
+                    progress=0.0,
+                    text="参考武器深度对话已排队，等待单装备发散 Worker。",
+                )
+            )
+        except Exception as exc:
+            _cleanup_unbound_reference_session()
+            _release_deep_idempotency(
+                run_id=run_id,
+                operation="reference-research",
+                key=idempotency_key,
+            )
+            raise HTTPException(
+                status_code=503,
+                detail="deep job/session binding unavailable",
+            ) from exc
+        if not isinstance(bound_job, Mapping):
+            # A reservation can disappear between the durable session write
+            # and the bind (for example, an operator or another worker may
+            # cancel/delete the job).  Do not leave the newly-created session
+            # active: there is no job left that can advance its transcript.
+            # The SQL-backed delete is transactional and also removes the
+            # transient session ledger.  Older adapters may not support
+            # deletion, so retain a visible partial draft as the fallback.
+            _cleanup_unbound_reference_session()
+            _release_deep_idempotency(
+                run_id=run_id,
+                operation="reference-research",
+                key=idempotency_key,
+            )
+            raise HTTPException(
+                status_code=503,
+                detail="deep job/session binding unavailable",
+            )
+        if str(bound_job.get("status", "") or "").strip().lower() == "cancelled":
+            try:
+                update_deep_session(
+                    output_root,
+                    run_id=run_id,
+                    session_id=session_id,
+                    status="cancelled",
+                )
+            except Exception:
+                pass
+            cancelled_session = _deep_session_read(run_id, session_id) or {
+                **session,
+                "status": "cancelled",
+            }
+            response = {
+                "job": _deep_job_public(bound_job),
+                "child_run": None,
+                "session": _deep_session_public(cancelled_session),
+                "artifact": None,
+                "scope": scope,
+            }
+            _complete_deep_idempotency(
+                run_id=run_id,
+                operation="reference-research",
+                key=idempotency_key,
+                resource_id=job_id,
+                response=response,
+            )
+            return response
         # Reference research now follows exactly the same visible dialogue
         # lifecycle as a card follow-up.  It is a single bounded model turn,
         # not a newly created Run and not a re-entry into S1--S6.
@@ -8814,19 +13726,41 @@ def create_app(
                 "text": "参考武器已锁定为单装备目标，进入对话式深度发散。",
             },
         )
-        response_turn = _enqueue_deep_turn_job(
-            run_id=run_id,
-            view=parent,
-            session=session,
-            content=question,
-            focus=focus,
-            create_artifact=True,
-            idempotency_key=idem,
-            fingerprint=fingerprint,
-            job_id=job_id,
-            job_kind="reference-research",
-            pre_reserved=True,
-        )
+        try:
+            response_turn = _enqueue_deep_turn_job(
+                run_id=run_id,
+                view=parent,
+                session=session,
+                content=question,
+                focus=focus,
+                create_artifact=False,
+                idempotency_key=idem,
+                fingerprint=fingerprint,
+                job_id=job_id,
+                job_kind="reference-research",
+                pre_reserved=True,
+            )
+        except HTTPException:
+            _release_deep_idempotency(
+                run_id=run_id,
+                operation="reference-research",
+                key=idempotency_key,
+            )
+            raise
+        except (ValueError, FileNotFoundError) as exc:
+            _release_deep_idempotency(
+                run_id=run_id,
+                operation="reference-research",
+                key=idempotency_key,
+            )
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except Exception as exc:
+            _release_deep_idempotency(
+                run_id=run_id,
+                operation="reference-research",
+                key=idempotency_key,
+            )
+            raise HTTPException(status_code=503, detail="deep message queue unavailable") from exc
         response_job = _deep_job_get(job_id) or {"job_id": job_id, "status": "queued", "stage": "queued", "fingerprint": fingerprint}
         response = {
             "job": _deep_job_public(response_turn.get("job") or response_job),
@@ -8941,7 +13875,7 @@ def create_app(
                 session_id = str(item.get("session_id", "") or "")
                 if session_id:
                     try:
-                        session = _deep_session_read(run_id, session_id)
+                        session = _deep_session_read(run_id, session_id, strict=True)
                         if isinstance(session, Mapping):
                             item["session_status"] = session.get("status", "")
                             artifacts = session.get("artifacts", [])
@@ -8956,6 +13890,11 @@ def create_app(
                                     item.get("merge_status")
                                     or ("merged_pending_verification" if item.get("merged") else "available_for_parent")
                                 )
+                    except _DeepLedgerUnavailable as exc:
+                        raise HTTPException(
+                            status_code=503,
+                            detail=str(exc) or "deep session ledger unavailable",
+                        ) from exc
                     except Exception as exc:
                         item["error"] = str(exc)[:1000]
             # Keep polling responses on the same browser-safe contract as the
@@ -9025,11 +13964,17 @@ def create_app(
                             )
                             if link:
                                 item = {**link, **item}
-                        except Exception:
-                            # The job row is still authoritative; an optional
-                            # link projection being unavailable must not revive
-                            # a sidecar row.
-                            pass
+                        except Exception as exc:
+                            # A configured durable link table is part of the
+                            # parent/child ownership envelope.  Returning the
+                            # job while silently dropping a failed link query
+                            # can hide lineage (and previously made an outage
+                            # look like a healthy standalone job).  Fail
+                            # closed just like the primary deep-job lookup.
+                            raise HTTPException(
+                                status_code=503,
+                                detail="deep job ledger unavailable",
+                            ) from exc
             except Exception:
                 # A configured durable lookup failure is fail-closed.
                 raise HTTPException(status_code=503, detail="deep job ledger unavailable")
@@ -9058,7 +14003,7 @@ def create_app(
             session_id = str(item.get("session_id", "") or "")
             if session_id:
                 try:
-                    session = _deep_session_read(run_id, session_id)
+                    session = _deep_session_read(run_id, session_id, strict=True)
                     if isinstance(session, Mapping):
                         item["session_status"] = session.get("status", "")
                         artifacts = session.get("artifacts", [])
@@ -9068,6 +14013,11 @@ def create_app(
                                 for row in artifacts[:24]
                                 if isinstance(row, Mapping)
                             ]
+                except _DeepLedgerUnavailable as exc:
+                    raise HTTPException(
+                        status_code=503,
+                        detail=str(exc) or "deep session ledger unavailable",
+                    ) from exc
                 except Exception as exc:
                     item["error"] = str(exc)[:1000]
         return {"job": _deep_job_public(item)}
@@ -9162,40 +14112,80 @@ def create_app(
         replay = _replay_or_raise_in_progress(claimed)
         if replay is not None:
             return replay
+        # The repository applies the same monotonic terminal fence to worker
+        # writes and operator cancellation.  Check it before signalling local
+        # workers or touching child runs so a race against a completed publish
+        # cannot be reported as a fresh cancellation.  Return the canonical
+        # terminal projection idempotently and emit no duplicate event.
+        current_status = str(job.get("status", "") or "").strip().lower()
+        current_stage = str(job.get("stage", "") or "").strip().lower()
+        terminal_now = current_status in {"failed", "blocked", "cancelled"} or (
+            current_status == "partial"
+            and current_stage in {"validation", "publish"}
+        ) or (
+            current_status == "completed" and current_stage == "publish"
+        )
+        if terminal_now:
+            response = {
+                "job": _deep_job_public(job),
+                "status": current_status,
+                "already_terminal": True,
+                "child_cleanup": {},
+                "scope": scope,
+            }
+            _complete_deep_idempotency(
+                run_id=run_id,
+                operation="cancel-job",
+                key=idempotency_key,
+                resource_id=job_id,
+                response=response,
+            )
+            return response
         # Signal the in-process dispatcher first so a queued turn exits at its
         # next visible stage boundary.  The durable status update is still the
         # source of truth for API workers that do not share this process.
         _deep_cancel_signal(job_id)
         child_run_id = str(job.get("child_run_id", "") or "")
         child_cleanup: dict[str, Any] = {}
-        if child_run_id:
-            try:
-                child = service.get_run(child_run_id)
-                if child.status not in {"completed", "failed", "cancelled", "archived"}:
-                    try:
-                        service.cancel_run(
-                            child_run_id,
-                            actor="deep-thinking-agent",
-                            idempotency_key=f"deep-cancel:{job_id}",
-                        )
-                    except Exception:
-                        pass
-                    try:
-                        service.set_status(child_run_id, "cancelled")
-                    except Exception:
-                        pass
-                cleanup = terminate_run_process_groups(child_run_id)
-                child_cleanup = cleanup.__dict__
-            except Exception as exc:
-                child_cleanup = {"error": str(exc)[:1000]}
         try:
-            updated = repo.update_deep_job(
-                job_id,
-                stage="publish",
-                status="cancelled",
-                child_run_id=child_run_id or None,
-            )
+            # A stage update can win between the ownership read above and the
+            # conditional cancellation write. Retry a few times against the
+            # refreshed row instead of acknowledging a non-terminal running
+            # row as if cancellation succeeded. The repository's terminal
+            # marker ends the loop when another caller already crossed the
+            # fence.
+            updated = None
+            for _cancel_attempt in range(3):
+                updated = repo.update_deep_job(
+                    job_id,
+                    stage="publish",
+                    status="cancelled",
+                    child_run_id=child_run_id or None,
+                )
+                if not isinstance(updated, Mapping):
+                    break
+                updated_status = str(updated.get("status", "") or "").strip().lower()
+                updated_stage = str(updated.get("stage", "") or "").strip().lower()
+                updated_terminal = bool(updated.get("_already_terminal")) or (
+                    updated_status in {"failed", "blocked", "cancelled"}
+                    or (
+                        updated_status == "partial"
+                        and updated_stage in {"validation", "publish"}
+                    )
+                    or (updated_status == "completed" and updated_stage == "publish")
+                )
+                if updated_terminal:
+                    break
         except Exception as exc:
+            # The claim was created before the durable transition.  Release
+            # it when SQLite is unavailable so the exact request key can be
+            # retried after recovery instead of being fenced forever as
+            # ``already in progress``.
+            _release_deep_idempotency(
+                run_id=run_id,
+                operation="cancel-job",
+                key=idempotency_key,
+            )
             raise HTTPException(
                 status_code=503,
                 detail="deep job ledger unavailable",
@@ -9204,13 +14194,87 @@ def create_app(
             # The row existed during the ownership check but disappeared (or
             # became unreadable) before the conditional transition.  Do not
             # acknowledge cancellation without a durable terminal row.
+            _release_deep_idempotency(
+                run_id=run_id,
+                operation="cancel-job",
+                key=idempotency_key,
+            )
             raise HTTPException(status_code=404, detail="deep job not found")
-        sid = str(job.get("session_id", ""))
-        if sid:
-            try: _deep_update_session(run_id, sid, status="cancelled")
-            except Exception: pass
-        _publish_deep_event(run_id, "deep_job_cancelled", {"job_id": job_id, "session_id": sid, "child_run_id": child_run_id, "stage": "publish", "status": "cancelled", "progress": 1.0})
-        response = {"job": _deep_job_public(updated or job), "status": "cancelled", "child_cleanup": child_cleanup, "scope": scope}
+        terminal_replay = bool(
+            isinstance(updated, Mapping) and updated.get("_already_terminal")
+        )
+        effective_job = dict(updated) if isinstance(updated, Mapping) else dict(job)
+        # ``_already_terminal`` is a private repository hand-off marker. It
+        # controls duplicate side effects below but never enters the response
+        # projection or durable idempotency payload.
+        effective_job.pop("_already_terminal", None)
+        effective_status = str(
+            effective_job.get("status", "") or ""
+        ).strip().lower()
+        effective_stage = str(
+            effective_job.get("stage", "") or ""
+        ).strip().lower()
+        effective_terminal = terminal_replay or (
+            effective_status in {"failed", "blocked", "cancelled"}
+            or (
+                effective_status == "partial"
+                and effective_stage in {"validation", "publish"}
+            )
+            or (effective_status == "completed" and effective_stage == "publish")
+        )
+        if not effective_terminal:
+            # A continuously changing non-terminal row could not be fenced in
+            # the bounded retry window. Leave the idempotency claim retryable
+            # and return a conflict rather than reporting a false cancellation.
+            _release_deep_idempotency(
+                run_id=run_id,
+                operation="cancel-job",
+                key=idempotency_key,
+            )
+            raise HTTPException(
+                status_code=409,
+                detail="deep job changed while cancellation was in progress",
+            )
+        child_run_id = str(
+            effective_job.get("child_run_id", "") or child_run_id
+        )
+        # A worker may publish between the ownership read and the conditional
+        # cancellation update.  ``update_deep_job`` then returns that frozen
+        # terminal row; do not cancel its child or emit a misleading event.
+        if effective_status == "cancelled" and not terminal_replay:
+            if child_run_id:
+                try:
+                    child = service.get_run(child_run_id)
+                    if child.status not in {"completed", "failed", "cancelled", "archived"}:
+                        try:
+                            service.cancel_run(
+                                child_run_id,
+                                actor="deep-thinking-agent",
+                                idempotency_key=f"deep-cancel:{job_id}",
+                            )
+                        except Exception:
+                            pass
+                        try:
+                            service.set_status(child_run_id, "cancelled")
+                        except Exception:
+                            pass
+                    cleanup = terminate_run_process_groups(child_run_id)
+                    child_cleanup = cleanup.__dict__
+                except Exception as exc:
+                    child_cleanup = {"error": str(exc)[:1000]}
+        sid = str(
+            effective_job.get("session_id", "")
+            or job.get("session_id", "")
+            or ""
+        )
+        if sid and effective_status == "cancelled" and not terminal_replay:
+            try:
+                _deep_update_session(run_id, sid, status="cancelled")
+            except Exception:
+                pass
+        if effective_status == "cancelled" and not terminal_replay:
+            _publish_deep_event(run_id, "deep_job_cancelled", {"job_id": job_id, "session_id": sid, "child_run_id": child_run_id, "stage": "publish", "status": "cancelled", "progress": 1.0})
+        response = {"job": _deep_job_public(effective_job), "status": effective_status, "already_terminal": effective_terminal and (terminal_replay or effective_status != "cancelled"), "child_cleanup": child_cleanup, "scope": scope}
         _complete_deep_idempotency(run_id=run_id, operation="cancel-job", key=idempotency_key, resource_id=job_id, response=response)
         return response
 
@@ -9260,6 +14324,14 @@ def create_app(
         _require_role(x_role, {"reviewer", "auditor", "admin"})
         view = read_view(run_id)
         _assert_deep_scope(view, role=x_role, tenant_id=x_tenant_id, workspace_id=x_workspace_id, project_id=x_project_id, profile_id=x_profile_id, stage_scope=x_evolution_stage_scope, cross_scope=x_role == "admin" and _cross_scope_requested(x_evolution_cross_scope))
+        # The target URI is part of the logical mutation.  Hashing only the
+        # JSON body would let one key used for ``version-a`` replay that
+        # response when a caller later submits the same decision for
+        # ``version-b`` in the same run.
+        verification_payload = {
+            "version_id": str(version_id),
+            "decision": dict(body),
+        }
         # Require the key before validating the target, but do not claim an
         # idempotency row until the version/decision are known to be valid.
         # Otherwise a typoed version id would poison the key as permanently
@@ -9267,7 +14339,7 @@ def create_app(
         _deep_idempotency(
             idempotency_key,
             operation="verify-version",
-            payload=body,
+            payload=verification_payload,
         )
         status = str(body.get("status", body.get("decision", ""))).strip().lower()
         status = {"approved": "verified", "accept": "verified", "rejected": "rejected", "rollback": "rolled_back"}.get(status, status)
@@ -9294,7 +14366,7 @@ def create_app(
             run_id=run_id,
             operation="verify-version",
             key=idempotency_key,
-            payload=body,
+            payload=verification_payload,
         )
         replay = _replay_or_raise_in_progress(claimed)
         if replay is not None:
@@ -9308,12 +14380,219 @@ def create_app(
         except ValueError as exc:
             # Invalid decisions and attempts to mutate the immutable formal
             # v1 baseline are client errors, never uncaught worker failures.
+            _release_deep_idempotency(
+                run_id=run_id,
+                operation="verify-version",
+                key=idempotency_key,
+            )
             raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except Exception as exc:
+            _release_deep_idempotency(
+                run_id=run_id,
+                operation="verify-version",
+                key=idempotency_key,
+            )
+            raise HTTPException(
+                status_code=503,
+                detail="deep version repository unavailable",
+            ) from exc
         if version is None:
+            _release_deep_idempotency(
+                run_id=run_id,
+                operation="verify-version",
+                key=idempotency_key,
+            )
             raise HTTPException(status_code=404, detail="capability version not found")
         _publish_deep_event(run_id, "capability_version_verified", {"version_refs": [version_id], "status": status, "stage": "publish"})
         response = {"version": _deep_version_public(version)}
         _complete_deep_idempotency(run_id=run_id, operation="verify-version", key=idempotency_key, resource_id=version_id, response=response)
+        return response
+
+    def _mutate_capability_version_visibility(
+        *,
+        run_id: str,
+        version_id: str,
+        operation: str,
+        idempotency_key: str,
+        restore: bool,
+    ) -> dict[str, Any]:
+        """Delete/restore one deep version through the durable ledger."""
+
+        payload = {"version_id": str(version_id), "restore": bool(restore)}
+        _deep_idempotency(idempotency_key, operation=operation, payload=payload)
+        repo = _deep_repository()
+        if repo is None:
+            raise HTTPException(status_code=503, detail="deep version repository unavailable")
+        getter = getattr(repo, "get_capability_version", None)
+        mutator = getattr(
+            repo,
+            "restore_capability_version" if restore else "delete_capability_version",
+            None,
+        )
+        if not callable(getter) or not callable(mutator):
+            raise HTTPException(status_code=503, detail="deep version repository unavailable")
+        try:
+            existing = getter(version_id, parent_run_id=run_id)
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="deep version repository unavailable") from exc
+        if existing is None:
+            raise HTTPException(status_code=404, detail="capability version not found")
+        if str(existing.get("status", "") or "").strip().lower() == "formal":
+            raise HTTPException(status_code=422, detail="formal capability version is immutable")
+        claimed = _claim_deep_idempotency(
+            run_id=run_id,
+            operation=operation,
+            key=idempotency_key,
+            payload=payload,
+        )
+        replay = _replay_or_raise_in_progress(claimed)
+        if replay is not None:
+            return replay
+        try:
+            version = mutator(version_id, parent_run_id=run_id)
+        except ValueError as exc:
+            _release_deep_idempotency(run_id=run_id, operation=operation, key=idempotency_key)
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except Exception as exc:
+            _release_deep_idempotency(run_id=run_id, operation=operation, key=idempotency_key)
+            raise HTTPException(status_code=503, detail="deep version repository unavailable") from exc
+        if version is None:
+            _release_deep_idempotency(run_id=run_id, operation=operation, key=idempotency_key)
+            raise HTTPException(status_code=404, detail="capability version not found")
+        event_type = "capability_version_restored" if restore else "capability_version_deleted"
+        _publish_deep_event(
+            run_id,
+            event_type,
+            {
+                "version_refs": [version_id],
+                "status": str(version.get("status", "")),
+                "stage": "publish",
+            },
+        )
+        response = {"version": _deep_version_public(version)}
+        _complete_deep_idempotency(
+            run_id=run_id,
+            operation=operation,
+            key=idempotency_key,
+            resource_id=version_id,
+            response=response,
+        )
+        return response
+
+    @app.delete("/api/v1/runs/{run_id}/capability-versions/{version_id}")
+    def delete_capability_version(
+        run_id: str,
+        version_id: str,
+        x_role: str = Header(default="analyst", alias="X-Role"),
+        idempotency_key: str = Header(default="", alias="Idempotency-Key"),
+        x_tenant_id: str = Header(default="", alias="X-Tenant-ID"), x_workspace_id: str = Header(default="", alias="X-Workspace-ID"), x_project_id: str = Header(default="", alias="X-Project-ID"), x_profile_id: str = Header(default="", alias="X-Profile-ID"), x_evolution_stage_scope: str = Header(default="", alias="X-Evolution-Stage-Scope"), x_evolution_cross_scope: str = Header(default="", alias="X-Evolution-Cross-Scope"),
+    ) -> dict[str, Any]:
+        _require_role(x_role, {"analyst", "reviewer", "admin"})
+        view = read_view(run_id)
+        _assert_deep_scope(view, role=x_role, tenant_id=x_tenant_id, workspace_id=x_workspace_id, project_id=x_project_id, profile_id=x_profile_id, stage_scope=x_evolution_stage_scope, cross_scope=x_role == "admin" and _cross_scope_requested(x_evolution_cross_scope))
+        return _mutate_capability_version_visibility(
+            run_id=run_id,
+            version_id=version_id,
+            operation="delete-version",
+            idempotency_key=idempotency_key,
+            restore=False,
+        )
+
+    @app.post("/api/v1/runs/{run_id}/capability-versions/{version_id}/restore")
+    def restore_capability_version(
+        run_id: str,
+        version_id: str,
+        x_role: str = Header(default="analyst", alias="X-Role"),
+        idempotency_key: str = Header(default="", alias="Idempotency-Key"),
+        x_tenant_id: str = Header(default="", alias="X-Tenant-ID"), x_workspace_id: str = Header(default="", alias="X-Workspace-ID"), x_project_id: str = Header(default="", alias="X-Project-ID"), x_profile_id: str = Header(default="", alias="X-Profile-ID"), x_evolution_stage_scope: str = Header(default="", alias="X-Evolution-Stage-Scope"), x_evolution_cross_scope: str = Header(default="", alias="X-Evolution-Cross-Scope"),
+    ) -> dict[str, Any]:
+        _require_role(x_role, {"analyst", "reviewer", "admin"})
+        view = read_view(run_id)
+        _assert_deep_scope(view, role=x_role, tenant_id=x_tenant_id, workspace_id=x_workspace_id, project_id=x_project_id, profile_id=x_profile_id, stage_scope=x_evolution_stage_scope, cross_scope=x_role == "admin" and _cross_scope_requested(x_evolution_cross_scope))
+        return _mutate_capability_version_visibility(
+            run_id=run_id,
+            version_id=version_id,
+            operation="restore-version",
+            idempotency_key=idempotency_key,
+            restore=True,
+        )
+
+    @app.delete("/api/v1/runs/{run_id}/capability-versions/{version_id}/permanent")
+    def purge_capability_version(
+        run_id: str,
+        version_id: str,
+        x_role: str = Header(default="analyst", alias="X-Role"),
+        idempotency_key: str = Header(default="", alias="Idempotency-Key"),
+        x_tenant_id: str = Header(default="", alias="X-Tenant-ID"), x_workspace_id: str = Header(default="", alias="X-Workspace-ID"), x_project_id: str = Header(default="", alias="X-Project-ID"), x_profile_id: str = Header(default="", alias="X-Profile-ID"), x_evolution_stage_scope: str = Header(default="", alias="X-Evolution-Stage-Scope"), x_evolution_cross_scope: str = Header(default="", alias="X-Evolution-Cross-Scope"),
+    ) -> dict[str, Any]:
+        """Permanently erase one already soft-deleted deep version."""
+
+        _require_role(x_role, {"analyst", "reviewer", "admin"})
+        view = read_view(run_id)
+        _assert_deep_scope(view, role=x_role, tenant_id=x_tenant_id, workspace_id=x_workspace_id, project_id=x_project_id, profile_id=x_profile_id, stage_scope=x_evolution_stage_scope, cross_scope=x_role == "admin" and _cross_scope_requested(x_evolution_cross_scope))
+        payload = {"version_id": str(version_id), "purge": True}
+        _deep_idempotency(idempotency_key, operation="purge-version", payload=payload)
+        repo = _deep_repository()
+        if repo is None:
+            raise HTTPException(status_code=503, detail="deep version repository unavailable")
+        getter = getattr(repo, "get_capability_version", None)
+        purger = getattr(repo, "purge_capability_version", None)
+        if not callable(getter) or not callable(purger):
+            raise HTTPException(status_code=503, detail="deep version repository unavailable")
+        try:
+            existing = getter(version_id, parent_run_id=run_id)
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="deep version repository unavailable") from exc
+        if existing is None:
+            raise HTTPException(status_code=404, detail="capability version not found")
+        if str(existing.get("status", "") or "").strip().lower() == "formal":
+            raise HTTPException(status_code=422, detail="formal capability version is immutable")
+        if str(existing.get("status", "") or "").strip().lower() != "deleted":
+            raise HTTPException(
+                status_code=422,
+                detail="only soft-deleted capability versions can be purged",
+            )
+        claimed = _claim_deep_idempotency(
+            run_id=run_id,
+            operation="purge-version",
+            key=idempotency_key,
+            payload=payload,
+        )
+        replay = _replay_or_raise_in_progress(claimed)
+        if replay is not None:
+            return replay
+        try:
+            purged = purger(version_id, parent_run_id=run_id)
+        except ValueError as exc:
+            _release_deep_idempotency(run_id=run_id, operation="purge-version", key=idempotency_key)
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except Exception as exc:
+            _release_deep_idempotency(run_id=run_id, operation="purge-version", key=idempotency_key)
+            raise HTTPException(status_code=503, detail="deep version repository unavailable") from exc
+        if purged is None:
+            _release_deep_idempotency(run_id=run_id, operation="purge-version", key=idempotency_key)
+            raise HTTPException(status_code=404, detail="capability version not found")
+        _publish_deep_event(
+            run_id,
+            "capability_version_purged",
+            {
+                "version_refs": [version_id],
+                "status": "purged",
+                "stage": "publish",
+            },
+        )
+        response = {
+            "purged": True,
+            "version_id": version_id,
+            "version": _deep_version_public({**purged, "status": "purged"}),
+        }
+        _complete_deep_idempotency(
+            run_id=run_id,
+            operation="purge-version",
+            key=idempotency_key,
+            resource_id=version_id,
+            response=response,
+        )
         return response
 
     def _favorite_owner(scope: str, user_id: str) -> str:
@@ -10006,6 +15285,7 @@ def create_app(
             feedback = normalize_feedback(
                 run_id=run_id,
                 capability_id=body.capability_id,
+                hypothesis_id=body.hypothesis_id,
                 capability_name=body.capability_name,
                 comment=body.comment,
                 important_information=body.important_information,
@@ -10021,6 +15301,8 @@ def create_app(
                 workspace_id=requested_scope["workspace_id"],
                 project_id=requested_scope["project_id"],
                 route=run_route,
+                model_dimension_scores=body.model_dimension_scores,
+                expert_dimension_scores=body.expert_dimension_scores,
             )
             saved = append_feedback(run_root=root, output_root=output_root, feedback=feedback)
         except ValueError as exc:
@@ -10032,9 +15314,11 @@ def create_app(
                 {
                     "feedback_id": saved["feedback_id"],
                     "capability_id": saved["capability_id"],
+                    "hypothesis_id": saved.get("hypothesis_id", ""),
                     "capability_name": saved["capability_name"],
                     "verdict": saved["verdict"],
                     "rating": saved["rating"],
+                    "expert_weighted_score": saved.get("expert_weighted_score"),
                     "target_agent_ids": saved["target_agent_ids"],
                     "important_information_present": bool(saved["important_information"]),
                     "reviewer_role": saved["reviewer_role"],
@@ -10300,6 +15584,11 @@ def create_app(
     # bundled in the desktop runtime (which does not expose
     # ``add_event_handler`` on the app object).
     app.router.on_startup.append(_recover_deep_jobs)
+    if deep_mcp_host is not None:
+        async def _close_deep_mcp_host() -> None:
+            await deep_mcp_host.close()
+
+        app.router.on_shutdown.append(_close_deep_mcp_host)
     return app
 
 
@@ -13577,19 +18866,118 @@ def _strip_mechanical_verification_fill(value: object) -> object:
     return value
 
 
+_CAPABILITY_DIRECTION_SUFFIX_RE = re.compile(r"(?:型|方向|类别|路线|构型)$")
+_CAPABILITY_NAMED_EQUIPMENT_RE = re.compile(
+    r"[“\"「『](?P<name>[^”\"」』]{2,80}"
+    r"(?:巡飞弹|导弹|弹药|无人机|无人艇|无人车|无人潜航器|鱼雷|火箭弹|炸弹|武器系统|效应器|平台))"
+    r"[”\"」』]"
+)
+
+
+def _project_capability_equipment_identity(result: dict) -> dict:
+    """Keep a concrete equipment name separate from its abstract direction.
+
+    Deep-research drafts created before the identity split often stored a
+    direction such as ``运动链截断型`` in ``name`` while the authored portrait
+    already contained the concrete name ``折脊截姿巡飞弹``.  Promote the
+    concrete name to ``name`` and expose the former value as
+    ``equipment_direction`` without changing the underlying artifact.
+    """
+
+    if not isinstance(result, dict):
+        return result
+
+    current_name = str(
+        result.get("name")
+        or result.get("title")
+        or result.get("capability_name")
+        or ""
+    ).strip()
+    explicit_name = next(
+        (
+            str(result.get(field) or "").strip()
+            for field in (
+                "equipment_name",
+                "weapon_name",
+                "primary_equipment_name",
+                "display_equipment_name",
+            )
+            if str(result.get(field) or "").strip()
+        ),
+        "",
+    )
+    direction = next(
+        (
+            str(result.get(field) or "").strip()
+            for field in (
+                "equipment_direction",
+                "equipmentDirection",
+                "equipment_direction_name",
+                "innovation_variant_name",
+            )
+            if str(result.get(field) or "").strip()
+        ),
+        "",
+    )
+    is_directional_name = bool(
+        current_name and _CAPABILITY_DIRECTION_SUFFIX_RE.search(current_name)
+    )
+    if not direction and is_directional_name:
+        direction = current_name
+
+    portrait_parts = [
+        result.get("deep_capability_portrait"),
+        result.get("capability_image"),
+    ]
+    modules = result.get("capability_portrait_modules")
+    if isinstance(modules, Mapping):
+        portrait_parts.extend(modules.values())
+    portrait_text = " ".join(
+        str(value).strip() for value in portrait_parts if str(value or "").strip()
+    )
+    named_equipment = [
+        match.group("name").strip()
+        for match in _CAPABILITY_NAMED_EQUIPMENT_RE.finditer(portrait_text)
+    ]
+    named_equipment = list(dict.fromkeys(named_equipment))
+
+    concrete_name = explicit_name
+    if not concrete_name and is_directional_name and named_equipment:
+        concrete_name = named_equipment[0]
+    if not concrete_name and current_name and not is_directional_name:
+        concrete_name = current_name
+
+    if concrete_name:
+        result["equipment_name"] = concrete_name
+        if is_directional_name or (
+            direction and direction != concrete_name and current_name == direction
+        ):
+            result["name"] = concrete_name
+    if direction:
+        # Direction labels are rendered as a category, so make the equipment
+        # suffix explicit when the source only supplied the shorthand ``…型``.
+        if direction.endswith("型") and not direction.endswith("装备"):
+            direction = f"{direction}装备"
+        result["equipment_direction"] = direction
+    return result
+
+
 def _delete_run_output(output_root: Path, run_id: str) -> None:
     if not _is_safe_run_id(run_id) or run_id == ".":
         raise HTTPException(status_code=400, detail="invalid run id")
-    root = output_root.resolve()
-    target = root / run_id
-    if target.is_symlink():
-        target.unlink()
-        return
-    if not target.exists():
-        return
-    if target.resolve().parent != root:
-        raise HTTPException(status_code=400, detail="invalid run output path")
-    shutil.rmtree(target)
+    # Current workers write to ``outputs/runs``; older direct-run commands
+    # wrote beside it under ``outputs``.  Remove both bounded layouts so a
+    # successful UI deletion cannot leave a readable legacy artifact behind.
+    for root in _artifact_run_base_dirs(output_root):
+        target = root / run_id
+        if target.is_symlink():
+            target.unlink()
+            continue
+        if not target.exists():
+            continue
+        if target.resolve().parent != root:
+            raise HTTPException(status_code=400, detail="invalid run output path")
+        shutil.rmtree(target)
 
 
 def _verify_run_deleted(
@@ -13615,9 +19003,11 @@ def _verify_run_deleted(
             }
         )
 
-    target = output_root.resolve() / run_id
-    if target.exists() or target.is_symlink():
-        residue["run_output"] = True
+    for root in _artifact_run_base_dirs(output_root):
+        target = root / run_id
+        if target.exists() or target.is_symlink():
+            residue["run_output"] = True
+            break
     if residue:
         raise RuntimeError(f"permanent deletion left backend residue: {residue}")
 
@@ -13747,13 +19137,24 @@ def _capability_api_view(row: dict) -> dict:
     # Provenance is content-first.  Older runs can carry a legacy authoring
     # tag while still containing the complete structured value/trace fields;
     # those cards must remain on the same normative display path.
+    raw_modules = result.get("capability_portrait_modules")
+    has_governed_modules = (
+        any(str(value or "").strip() for value in raw_modules.values())
+        if isinstance(raw_modules, Mapping)
+        else bool(raw_modules)
+    )
     has_governed_portrait = bool(
-        result.get("capability_portrait_modules")
+        has_governed_modules
         or result.get("deep_capability_portrait")
         or result.get("capability_image")
     )
     if portrait_authoring_status == "authored_quality_limited":
         result["analysis_provenance_status"] = "limited_quality"
+    elif portrait_authoring_status in {
+        "pending_s6_authoring",
+        "analysis_only_pending_authoring",
+    }:
+        result["analysis_provenance_status"] = "pending_authoring"
     elif portrait_authoring_status.startswith("s6_authored") or portrait_authoring_status == "authored_semantically_consistent":
         result["analysis_provenance_status"] = "s6_authored"
     elif portrait_authoring_status.startswith("limited") or portrait_authoring_status in {
@@ -13841,6 +19242,7 @@ def _capability_api_view(row: dict) -> dict:
         authored_portrait,
         scenario=portrait_scenario,
     )
+    result = _project_capability_equipment_identity(result)
     result["confidence"], result["confidence_components"] = (
         calibrate_capability_confidence(result, prior=result.get("confidence"))
     )
@@ -14650,18 +20052,50 @@ def _public_session_interaction(event: dict) -> dict | None:
     safe_keys = {
         "task_id", "title", "summary", "capability_tags", "context_sections",
         "allowed_tools", "round_index", "recall_request", "tool_name", "call_id",
+        "tool_call_id", "turn_index", "duration_ms", "active_skill_ids", "plugin_ids",
         "arguments", "status", "artifact_refs", "formal_evidence_allowed",
         "evidence_id", "decision", "quality_score", "reasons", "packet_id",
         "evidence_ids", "materialized_artifact_refs", "checkpoint_id", "output_refs",
         "worker_report_id",
     }
     details = {key: value for key, value in event.items() if key in safe_keys}
+    for key, limit in (("tool_name", 120), ("call_id", 128), ("tool_call_id", 128)):
+        if key in details:
+            details[key] = _deep_public_identifier(details[key], limit=limit)
+    for key in ("turn_index",):
+        if key in details:
+            try:
+                details[key] = max(0, min(int(details[key] or 0), 1_000_000))
+            except (TypeError, ValueError, OverflowError):
+                details[key] = 0
+    if "duration_ms" in details:
+        try:
+            duration_ms = float(details["duration_ms"] or 0)
+        except (TypeError, ValueError, OverflowError):
+            duration_ms = 0.0
+        details["duration_ms"] = (
+            max(0.0, min(duration_ms, 86_400_000.0))
+            if math.isfinite(duration_ms)
+            else 0.0
+        )
+    for key, count_limit in (("active_skill_ids", 6), ("plugin_ids", 16)):
+        raw_ids = details.get(key, [])
+        details[key] = (
+            [
+                _deep_public_identifier(item, limit=140)
+                for item in list(raw_ids)[:count_limit]
+                if not isinstance(item, Mapping)
+                and _deep_public_identifier(item, limit=140)
+            ]
+            if isinstance(raw_ids, (list, tuple, set, frozenset))
+            else []
+        )
     tool_name = str(event.get("tool_name", ""))
     summary = str(event.get("summary", ""))
     if not summary:
         summary = tool_name or str(event.get("title", "")) or event_type
     return {
-        "event_id": str(event.get("call_id") or event.get("checkpoint_id") or f"{actor}:{event_type}"),
+        "event_id": str(event.get("call_id") or event.get("tool_call_id") or event.get("checkpoint_id") or f"{actor}:{event_type}"),
         "created_at": str(event.get("created_at", "")),
         "actor": actor,
         "event_type": event_type,

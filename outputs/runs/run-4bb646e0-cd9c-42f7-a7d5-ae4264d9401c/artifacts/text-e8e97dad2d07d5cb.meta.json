@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:e8e97dad2d07d5cb",
+  "content_path": "text-e8e97dad2d07d5cb.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: cached_origin_failure:HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-cross_domain_fusion-web-8202523ac018",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "e8e97dad2d07d5cbdf8ff2107fb82b3525618fbd3bf2e1d50c303e6a206e109c",
+  "url": "https://www.gao.gov/products/gao-25-107034"
+}

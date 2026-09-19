@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=Navy completes first delivery of Block V Tomahawk Missile | NAVAIR
-source_url=https://www.navair.navy.mil/news/Navy-completes-first-delivery-Block-V-Tomahawk-Missile/Wed-03242021-1700
-claim=NAVAIR公开称Block V Tomahawk包含导航和通信升级，Block Va指向海上打击，Block Vb指向联合多效应战斗部，支撑其作为海基远程预规划精确打击基线。
-excerpt=
-retrieval=Hosted web search citation metadata

@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · Force Design Update October 2025.pdf
+source_url=https://www.marines.mil/Portals/1/Docs/Force_Design_Update-October_2025.pdf
+claim=美国海军陆战队文件强调在拒止和降级环境下使用分散机动系统、跨域数据融合、移动自组网网关及传感器到射手连接。
+excerpt=
+retrieval=Hosted web search citation metadata

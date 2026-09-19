@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=dodcio.defense.gov · DoD C3 Strategy.pdf
-source_url=https://dodcio.defense.gov/Portals/0/Documents/DoD-C3-Strategy.pdf
-claim=DoD C3现代化面向联合全域指挥控制，并要求部队能够在拒止、降级、间歇和受限通信环境中运行。
-excerpt=
-retrieval=Hosted web search citation metadata

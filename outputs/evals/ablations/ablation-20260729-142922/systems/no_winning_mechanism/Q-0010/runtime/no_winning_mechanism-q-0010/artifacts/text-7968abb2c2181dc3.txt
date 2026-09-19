@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=gao.gov · gao 25 106454
-source_url=https://www.gao.gov/products/gao-25-106454
-claim=GAO指出CJADC2不是单一系统，国防部仍需完善评估框架、共享实验和作战经验，并处理阻碍CJADC2目标的关键挑战。
-excerpt=
-retrieval=Hosted web search citation metadata

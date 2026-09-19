@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=army.mil · precision strike missile increment 1 achieves milestone c approval
-source_url=https://www.army.mil/article/286878/precision_strike_missile_increment_1_achieves_milestone_c_approval
-claim=美国陆军公开称PrSM Increment 1于2025年7月2日获Milestone C，进入生产部署阶段，射程超过400公里，对远打精打导弹装备基线和技术成熟度有贡献。
-excerpt=
-retrieval=Hosted web search citation metadata

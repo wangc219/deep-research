@@ -1,8 +1,0 @@
-{"ts": 1784730575.609548, "file": "01_cover.svg", "element_id": "background", "action": "annotation_saved", "old": null, "new": "标题直接改为项目名称"}
-{"ts": 1784733381.004166, "file": "02_executive_summary.svg", "element_id": "_edit_29", "action": "annotation_saved", "old": null, "new": "尽量显示项目的功能，少显示不足"}
-{"ts": 1784733381.007591, "file": "04_architecture.svg", "element_id": "_edit_3", "action": "annotation_saved", "old": null, "new": "希望利用生图功能，生成一个适配我们项目的架构图"}
-{"ts": 1784733381.008394, "file": "13_capability_delivery.svg", "element_id": "_edit_4", "action": "annotation_saved", "old": null, "new": "不要这个九字段能力画像"}
-{"ts": 1784733381.010002, "file": "16_pairwise_benchmark.svg", "element_id": "_edit_73", "action": "annotation_saved", "old": null, "new": "不显示时间这个"}
-{"ts": 1784734372.7395148, "file": "11_interaction_audit.svg", "element_id": "_edit_3", "action": "annotation_saved", "old": null, "new": "门控再调回溯的界面 没有截到显示"}
-{"ts": 1784734973.494407, "file": "04_architecture.svg", "element_id": "_edit_3", "action": "annotation_saved", "old": null, "new": "希望利用生图功能，生成一个适配我们项目的架构图；\n需要适配项目功能和业务流程"}
-{"ts": 1784735032.1375291, "file": "04_architecture.svg", "element_id": "_edit_3", "action": "annotation_updated", "old": "希望利用生图功能，生成一个适配我们项目的架构图；\n需要适配项目功能和业务流程", "new": "希望利用生图功能，生成一个适配我们项目的架构图；\n需要适配项目功能和业务流程，最后标明各层以及Agent，体现项目设计与功能"}

@@ -1,0 +1,272 @@
+{
+  "checkpoint": {
+    "budget_remaining": {
+      "baseline_tasks": 0,
+      "finalize_tasks": 1,
+      "rounds": 1
+    },
+    "checkpoint_id": "run-checkpoint-run-8e47e12e-7448-49c7-bbaa-2bc28079f309",
+    "completed_task_ids": [
+      "baseline:combat_scenario",
+      "baseline:weapon_equipment",
+      "baseline:operational_employment"
+    ],
+    "config_fingerprint": "sha256:62516f39c489de385e4ad521e2e20130b343af1f88686ac3be263fae6a3e451c",
+    "created_at": "2026-09-04T20:41:14.154485+00:00",
+    "mode": "real",
+    "pending_task_ids": [
+      "finalize:winning-report"
+    ],
+    "research_route": "new_winning_mechanism",
+    "resolved_route": "new_winning_mechanism",
+    "resume_count": 0,
+    "round_index": 1,
+    "run_id": "run-8e47e12e-7448-49c7-bbaa-2bc28079f309",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "combat_scenario",
+      "weapon_equipment",
+      "operational_employment"
+    ],
+    "source_materials": [
+      {
+        "artifact_refs": [
+          "text:a21dfc11e5c55ba6"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-8952c3805d5a",
+          "normalized_url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "reasons": [],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-8952c3805d5a",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+      },
+      {
+        "artifact_refs": [
+          "text:62570fd4d81f0ebd"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-weapon_equipment-web-6c1c84a0e24e",
+          "normalized_url": "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all",
+          "reasons": [],
+          "score": 0.689
+        },
+        "evidence_id": "ev-weapon_equipment-web-6c1c84a0e24e",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+      },
+      {
+        "artifact_refs": [
+          "text:6fe6fc876d0711cc"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-5824f31b34e3",
+          "normalized_url": "https://www.marines.mil/Force-Design",
+          "reasons": [],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-5824f31b34e3",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.marines.mil/Force-Design/"
+      },
+      {
+        "artifact_refs": [
+          "text:7f7ff9cb21408ee0"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-f42ad4ad8ea8",
+          "normalized_url": "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo",
+          "reasons": [],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-f42ad4ad8ea8",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/"
+      },
+      {
+        "artifact_refs": [
+          "text:4a0b333c65abf9ea"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "duplicate",
+          "evidence_id": "ev-combat_scenario-web-8952c3805d5a",
+          "normalized_url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "reasons": [
+            "与 ev-weapon_equipment-web-8952c3805d5a URL 重复"
+          ],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-8952c3805d5a",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+      },
+      {
+        "artifact_refs": [
+          "text:c183c4b5c4b9860a"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-de6b507b70c6",
+          "normalized_url": "https://www.war.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems",
+          "reasons": [],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-de6b507b70c6",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.war.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/"
+      },
+      {
+        "artifact_refs": [
+          "text:176f3e428c123b72"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-9287bba9dad6",
+          "normalized_url": "https://www.marines.mil/News/News-Display/Article/2708140/stand-in-forces",
+          "reasons": [],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-9287bba9dad6",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.marines.mil/News/News-Display/Article/2708140/stand-in-forces/"
+      }
+    ],
+    "status": "running",
+    "task_statuses": {
+      "baseline:combat_scenario": "completed",
+      "baseline:operational_employment": "completed",
+      "baseline:weapon_equipment": "completed",
+      "finalize:winning-report": "pending"
+    },
+    "topic": "未来高强度海空对抗中强干扰弱通信条件下低成本精确火力与反无人装备需求研究",
+    "worker_reports": [
+      {
+        "active_skill_ids": [
+          "scenario_engineering",
+          "modern_battlespace_analysis",
+          "adversary_coa_analysis"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "fetch_page",
+          "create_evidence_card",
+          "build_scenario_graph",
+          "branch_scenario",
+          "map_critical_window",
+          "map_environment_constraint",
+          "stress_test_scenario"
+        ],
+        "agent_id": "combat_scenario",
+        "created_at": "2026-09-04T20:45:08.497060+00:00",
+        "domain_object_id": "scenario-packet-combat_scenario",
+        "domain_object_type": "ScenarioModel",
+        "error": "",
+        "handoff_summary": "已形成的事实基线是：在强干扰、弱通信条件下，海空对抗的直接作战价值正从中心化远程火控转向前沿分布式、自持闭环、低成本和低特征的精确火力与反无人系统；公开证据对DoD反无人战略、Replicator、Marine Corps EABO/Stand-in Forces给出一致方向，但没有验证单一成品架构。证据边界在于当前结论主要是公开概念、方向与任务需求层判断，不能外推为具体装备定型或性能上限。",
+        "harness_profile": "scenario_research_v1",
+        "new_evidence_ids": [
+          "ev-combat_scenario-web-9287bba9dad6",
+          "ev-combat_scenario-web-de6b507b70c6"
+        ],
+        "packet_id": "packet-combat_scenario",
+        "schema_version": "1.0",
+        "session_path": "/Users/hitsz/equipment research/outputs/runs/run-8e47e12e-7448-49c7-bbaa-2bc28079f309/agent_sessions/combat_scenario.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-8cd2e53b-6b3e-4c91-a5c0-ef819848e24a"
+      },
+      {
+        "active_skill_ids": [
+          "equipment_osint",
+          "capability_comparison",
+          "technology_readiness_analysis",
+          "defensive_countermeasure_analysis"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "fetch_page",
+          "create_evidence_card",
+          "extract_parameter_observation",
+          "normalize_equipment_variant",
+          "reconcile_parameter_conflict",
+          "assess_technology_readiness",
+          "compare_equipment_capability",
+          "map_defensive_countermeasure",
+          "formulate_equipment_requirement"
+        ],
+        "agent_id": "weapon_equipment",
+        "created_at": "2026-09-04T20:42:50.394883+00:00",
+        "domain_object_id": "equipment-packet-weapon_equipment",
+        "domain_object_type": "EquipmentObservation",
+        "error": "",
+        "handoff_summary": "本轮公开材料支持一个清晰基线：在强干扰、弱通信的海空高强度对抗中，真正有价值的直接作战装备必须把发现、跟踪、识别、命中或拦截闭环尽量压缩在武器本体或极短链路内；低成本与反无人都必须同时满足效费比、分层抗饱和和可工程化。公开可证实的现役方向集中于低成本attritable无人机/loitering munition、分层反无人防空、机动近程防护和可重构载荷；但在极端电磁压制下的稳定作战边界、批量化成本和失效条件仍是主要未闭合问题。",
+        "harness_profile": "equipment_research_v1",
+        "new_evidence_ids": [
+          "ev-weapon_equipment-web-6c1c84a0e24e",
+          "ev-weapon_equipment-web-8952c3805d5a"
+        ],
+        "packet_id": "packet-weapon_equipment",
+        "schema_version": "1.0",
+        "session_path": "/Users/hitsz/equipment research/outputs/runs/run-8e47e12e-7448-49c7-bbaa-2bc28079f309/agent_sessions/weapon_equipment.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-fe81860a-ad42-4edf-8211-76284e8a02d5"
+      },
+      {
+        "active_skill_ids": [
+          "operational_synthesis",
+          "coa_comparison",
+          "joint_force_coordination",
+          "lessons_transfer"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "fetch_page",
+          "create_evidence_card",
+          "map_task_capability",
+          "build_coordination_dependency",
+          "compare_coa",
+          "assess_sustainment_resilience",
+          "transfer_case_lesson"
+        ],
+        "agent_id": "operational_employment",
+        "created_at": "2026-09-04T20:43:34.889065+00:00",
+        "domain_object_id": "operational-packet-operational_employment",
+        "domain_object_type": "OperationalSynthesis",
+        "error": "",
+        "handoff_summary": "本轮已形成的基线是：未来高强度海空对抗中的低成本精确火力与反无人能力，核心不在远程集中控制，而在前沿单元的本地感知、断链自治、快速处置和分布式部署。公开证据支持 small, smart, cheap, and many 的方向，但尚不足以证明某一具体装备形态优于其他形态；可排除的是高链路依赖、重中继依赖、固定化和高单位消耗成本的机制。",
+        "harness_profile": "operational_synthesis_v1",
+        "new_evidence_ids": [
+          "ev-operational_employment-web-5824f31b34e3",
+          "ev-operational_employment-web-f42ad4ad8ea8"
+        ],
+        "packet_id": "packet-operational_employment",
+        "schema_version": "1.0",
+        "session_path": "/Users/hitsz/equipment research/outputs/runs/run-8e47e12e-7448-49c7-bbaa-2bc28079f309/agent_sessions/operational_employment.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-56ea6f1f-aa30-4b53-9328-db00c5c48334"
+      }
+    ]
+  },
+  "savepoint_id": "checkpoint-84c91341537b323d31563bd5"
+}

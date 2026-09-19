@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=defense.gov · electromagnetic spectrum superiority strategy released
-source_url=https://www.defense.gov/News/Releases/Release/Article/2397850/electromagnetic-spectrum-superiority-strategy-released/
-claim=DoD发布说明强调EMS自由行动支撑感知、C2、通信、防护和火力投送，并突出EMS战斗管理、伙伴协作和能力现代化。
-excerpt=
-retrieval=Hosted web search citation metadata

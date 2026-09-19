@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · 100000118135009
+source_url=https://www.marines.mil/Force-Design/linkId/100000118135009/
+claim=海军陆战队公开材料强调在通信降级、PNT受扰和电子攻击条件下仍需闭合精确火力与分布式作战链路。
+excerpt=
+retrieval=Hosted web search citation metadata

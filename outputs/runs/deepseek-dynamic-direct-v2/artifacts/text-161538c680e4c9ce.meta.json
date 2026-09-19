@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:161538c680e4c9ce",
+  "content_path": "text-161538c680e4c9ce.txt",
+  "content_type": "text/plain",
+  "direct_error": "_NetworkSafetyError: host_resolution_failed",
+  "encoding": "utf-8",
+  "evidence_id": "ev-system_confrontation-web-c8aba43133b8",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "161538c680e4c9ce757c167a4f63ddea1f0fc5a95361917c27b90077b21fad10",
+  "url": "https://www.jcs.mil/Doctrine/"
+}

@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=gao.gov · gao 21 145
-source_url=https://www.gao.gov/products/gao-21-145
-claim=GAO指出M-code是更强、更安全的军用GPS信号，但广泛列装仍需多年，并受大量武器系统接收机集成复杂度影响。
-excerpt=
-retrieval=Hosted web search citation metadata

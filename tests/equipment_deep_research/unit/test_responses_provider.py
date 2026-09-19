@@ -89,6 +89,35 @@ def test_responses_provider_retries_transient_network_failures(monkeypatch) -> N
     assert events[-1].event_type == "final"
 
 
+def test_responses_provider_honors_single_attempt_budget(monkeypatch) -> None:
+    provider = ResponsesProvider(
+        model="gpt-5.5",
+        base_url="https://gateway.example/v1/responses",
+        api_key="test-key",
+    )
+    attempts = 0
+
+    def post(_payload):
+        nonlocal attempts
+        attempts += 1
+        raise ProviderRetryableError("temporary failure")
+
+    monkeypatch.setattr(provider, "_post", post)
+
+    async def collect():
+        return [
+            event
+            async for event in provider.stream(
+                [], [], {"_provider_retry_attempts": 1}
+            )
+        ]
+
+    with pytest.raises(ProviderRetryableError):
+        asyncio.run(collect())
+
+    assert attempts == 1
+
+
 async def _completed_sleep() -> None:
     return None
 
@@ -140,6 +169,17 @@ def test_responses_payload_enables_hosted_web_search_and_source_export() -> None
     ]
     assert payload["include"] == ["web_search_call.action.sources"]
     assert payload["tool_choice"] == {"type": "web_search"}
+
+
+def test_responses_payload_can_omit_search_context_size(monkeypatch) -> None:
+    monkeypatch.setenv("EQUIPMENT_DR_SEARCH_CONTEXT_SIZE_MODE", "omit")
+    payload = build_request_payload(
+        model="kimi-k3",
+        messages=[ModelMessage("user", "研究主题")],
+        tools=[],
+        options={"web_search": {"search_context_size": "low"}},
+    )
+    assert payload["tools"] == [{"type": "web_search"}]
 
 
 def test_responses_payload_enforces_compact_output_schema() -> None:

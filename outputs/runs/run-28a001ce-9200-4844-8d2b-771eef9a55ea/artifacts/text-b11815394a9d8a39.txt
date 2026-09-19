@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=media.defense.gov · FACT SHEET STRATEGY FOR COUNTERING UNMANNED SYSTEMS.PDF
+source_url=https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF
+claim=DoD公开强调低成本、广泛可得的无人系统正在推动精确打击能力扩散，反制重点包括探测、主动/被动防护，以及模块化、开放式、快速扩展方案。
+excerpt=
+retrieval=Hosted web search citation metadata

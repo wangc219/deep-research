@@ -1,0 +1,7 @@
+2026-09-09T06:43:37.909566Z  WARN codex_models_manager::model_info: Unknown model qwen3.8-flash is used. This will use fallback model metadata.
+2026-09-09T06:43:38.066856Z  WARN codex_models_manager::model_info: Unknown model qwen3.8-flash is used. This will use fallback model metadata.
+2026-09-09T06:43:38.245929Z  WARN codex_core::client: model_verbosity is set but ignored as the model does not support verbosity: qwen3.8-flash
+2026-09-09T06:44:39.477119Z  WARN codex_core::client: model_verbosity is set but ignored as the model does not support verbosity: qwen3.8-flash
+2026-09-09T06:44:55.617039Z  WARN codex_sandboxing::violation: recorded sandbox violation: resource=filesystem backend=seatbelt reason=operation_not_permitted path=unknown
+2026-09-09T06:44:55.624102Z  WARN codex_core::client: model_verbosity is set but ignored as the model does not support verbosity: qwen3.8-flash
+2026-09-09T06:45:00.657525Z  WARN codex_core::client: model_verbosity is set but ignored as the model does not support verbosity: qwen3.8-flash

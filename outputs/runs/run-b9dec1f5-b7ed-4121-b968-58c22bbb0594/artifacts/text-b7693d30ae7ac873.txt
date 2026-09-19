@@ -1,0 +1,34 @@
+Title: Deputy Secretary of Defense Kathleen Hicks Announces Additional Replicator All-Domain Attr
+
+URL Source: http://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/
+
+Markdown Content:
+_Building on the Department's growing autonomy portfolio, selections focus on scalable production of class-leading systems across multiple domains and critical enabling software._
+
+Today, Deputy Secretary of Defense Kathleen Hicks announced additional capabilities selected for accelerated fielding as part of the Replicator initiative. This second tranche, or _Replicator 1.2_, will include systems in the air and maritime domains, as well as integrated software enablers that will enhance the autonomy and resilience of other Replicator systems.
+
+These capabilities add to the [first tranche](https://www.defense.gov/News/Releases/Release/Article/3765644/deputy-secretary-of-defense-hicks-announces-first-tranche-of-replicator-capabil/) of selected systems announced earlier in 2024 and further contribute to the Department's goal of fielding multiple thousands of all-domain, attritable autonomous (ADA2) systems to warfighters by August of 2025 — or within 24 months of Deputy Secretary Hicks launching the initiative.
+
+"The Replicator initiative is demonstrably reducing barriers to innovation, and delivering capabilities to warfighters at a rapid pace," said Hicks. "We are creating opportunities for a broad range of traditional and nontraditional defense and technology companies, including system vendors, component manufacturers, and software developers, to deliver critical capabilities that our warfighters need, and we are building the capability to do that again and again."
+
+Collectively across both tranches, more than 500 commercial firms were considered for Replicator hardware and software contracting and major subcontracting opportunities. Contracts have been awarded to more than 30 hardware and software companies, of which 75 percent are non-traditional defense contractors, in addition to more than 50 subcontractors.
+
+Included in Replicator-1, Tranche 2 (1.2) is the Army's Company-Level Small UAS effort, which has selected the Anduril Industries Ghost-X and the Performance Drone Works C-100 UAS. These systems will enable Army maneuver companies to conduct multiple tasks with rapidly reconfigurable, attritable, modular payload capabilities to execute reconnaissance, surveillance, and target acquisition missions.
+
+"Ukraine has demonstrated the value of small, attritable drones on the battlefield," said Gen. Randy A. George, the Chief of Staff of the Army. "The delivery of commercially available Company Level Small UAS with support from the Replicator initiative will allow American soldiers to rapidly experiment, learn and innovate with these systems. The advancement of battlefield technology requires us to innovate faster than ever before."
+
+The Department is also scaling loitering munitions through fielding and expanded experimentation of the Anduril Industries Altius-600 as part of the U.S. Marine Corps Organic Precision Fires program. This system complements the Switchblade-600 loitering munition produced by AeroVironment Inc. that was included in the first tranche of Replicator.
+
+"Replicator is helping Marines experiment with a portfolio of systems that deliver organic, loitering, beyond-line-of-sight precision strike capability," said Marine Corps Commandant Gen. Eric M. Smith. "Expanded experimentation with these systems will inform future Organic Precision Fires efforts and enable refinement of our Force Design, concepts and doctrine."
+
+Additionally, the Replicator initiative has selected the U.S. Air Force's Enterprise Test Vehicle (ETV). Over the next year, the Air Force and DIU will partner with multiple vendors to develop and demonstrate design variants. Four vendors are currently providing prototypes: Anduril Industries, Integrated Solutions for Systems Inc., Leidos Dynetics, and Zone 5 Technologies. Select ETV prototypes will be accelerated to scaled production.
+
+"The ETV's modular design and open system architecture make it an ideal platform for program offices to test out new capabilities at the sub-system level, reducing risk, and demonstrating various options for weapon employment," said Gen. Jim Slife, Vice Chief of Staff of the U.S. Air Force. "We are excited to be a part of Replicator 1.2 and to increase the speed of the ETV effort."
+
+Replicator 1.2 also includes additional systems that remain classified, including low-cost long-range strike capabilities and maritime uncrewed systems.
+
+The Department's autonomy efforts, including Replicator, are also leveraging resilient decision-making architectures for collaborative autonomy teaming, or 'integrated enablers' capable of coordinating hundreds or thousands of unmanned assets in a secure shared environment. These 'integrated enablers' are enhancing the ability of Replicator systems to operate and collaborate autonomously, and to remain resilient in the face of jamming and other countermeasures. The Department is acquiring many of these integrated software enablers using Commercial Solutions Openings led by the Defense Innovation Unit (DIU) that streamline and accelerate onramps for commercial industry. Announcement of these awards is forthcoming.
+
+"Combining cutting-edge hardware with cutting-edge software — the capabilities and needs of each pushing the bounds of what is possible with the other — is at the heart of the very best of technology in the commercial sector," said Doug Beck, Director of DIU. "Replicator is harnessing this same synergy, ensuring we can adopt commercial best practices to iteratively develop, test, and ultimately field autonomous systems, both individually and collectively, at scale."
+
+Selected capabilities fill both operational and scaling gaps and will be fielded by August 2025 to meet the ambitious goals of the Replicator initiative.

@@ -1,0 +1,127 @@
+{
+  "actual_counts": {
+    "capability_domains": 7,
+    "capability_indicators": 0,
+    "capability_items": 7
+  },
+  "branch": "B",
+  "branch_name": "传统能力缺口发现",
+  "cross_domain_indicators": [],
+  "domains": [
+    {
+      "capability_ids": [
+        "cap-new-001"
+      ],
+      "domain": "共口径高功率微波近防阵列",
+      "evidence_ids": [
+        "ev-combat_scenario-web-bc1c2e8c3176",
+        "ev-combat_scenario-web-f42ad4ad8ea8",
+        "ev-operational_employment-web-6c1c84a0e24e",
+        "ev-operational_employment-web-8952c3805d5a"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "评估小型无人系统在复杂电磁环境下的防御装备需求"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-002"
+      ],
+      "domain": "“聆蜂”末端拦截弹",
+      "evidence_ids": [
+        "ev-combat_scenario-web-bc1c2e8c3176",
+        "ev-combat_scenario-web-f42ad4ad8ea8",
+        "ev-operational_employment-web-6c1c84a0e24e",
+        "ev-operational_employment-web-8952c3805d5a"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "评估小型无人系统在复杂电磁环境下的防御装备需求"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-003"
+      ],
+      "domain": "“掣电”共孔径微波截击弹",
+      "evidence_ids": [
+        "ev-combat_scenario-web-bc1c2e8c3176",
+        "ev-combat_scenario-web-f42ad4ad8ea8",
+        "ev-operational_employment-web-6c1c84a0e24e",
+        "ev-operational_employment-web-8952c3805d5a"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "评估小型无人系统在复杂电磁环境下的防御装备需求"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-004"
+      ],
+      "domain": "“惊蛰”弹幕拦截雷",
+      "evidence_ids": [
+        "ev-combat_scenario-web-bc1c2e8c3176",
+        "ev-combat_scenario-web-f42ad4ad8ea8",
+        "ev-operational_employment-web-6c1c84a0e24e",
+        "ev-operational_employment-web-8952c3805d5a"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "评估小型无人系统在复杂电磁环境下的防御装备需求"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-005"
+      ],
+      "domain": "“蛛垣”缠绞网雷",
+      "evidence_ids": [
+        "ev-combat_scenario-web-bc1c2e8c3176",
+        "ev-combat_scenario-web-f42ad4ad8ea8",
+        "ev-operational_employment-web-6c1c84a0e24e",
+        "ev-operational_employment-web-8952c3805d5a"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "评估小型无人系统在复杂电磁环境下的防御装备需求"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-006"
+      ],
+      "domain": "收口钨栅拦截弹",
+      "evidence_ids": [
+        "ev-combat_scenario-web-bc1c2e8c3176",
+        "ev-combat_scenario-web-f42ad4ad8ea8",
+        "ev-operational_employment-web-6c1c84a0e24e",
+        "ev-operational_employment-web-8952c3805d5a"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "评估小型无人系统在复杂电磁环境下的防御装备需求"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-007"
+      ],
+      "domain": "长丝撒布空爆弹",
+      "evidence_ids": [
+        "ev-combat_scenario-web-bc1c2e8c3176",
+        "ev-combat_scenario-web-f42ad4ad8ea8",
+        "ev-operational_employment-web-6c1c84a0e24e",
+        "ev-operational_employment-web-8952c3805d5a"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "评估小型无人系统在复杂电磁环境下的防御装备需求"
+      ]
+    }
+  ],
+  "equipment_forms": [],
+  "target_counts": {},
+  "topic": "评估小型无人系统在复杂电磁环境下的防御装备需求"
+}

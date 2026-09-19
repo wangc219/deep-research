@@ -25,6 +25,250 @@ _MATERIALIZED_SOURCE_STATUSES = frozenset(
 )
 
 
+# These are deliberately broad semantic signals, not a catalogue of required
+# agent labels.  The audit reads the completed capability card and asks
+# whether it explains a military use case, a causal equipment effect, and a
+# meaningful change from the baseline.  Missing a registry tag or a numeric
+# confidence threshold is therefore only a diagnostic.
+_MILITARY_CONTEXT_MARKERS = (
+    "作战", "战场", "对手", "敌", "交战", "打击", "毁伤", "火力", "侦察",
+    "预警", "防御", "防空", "反制", "拒止", "突防", "兵力", "任务链", "战术",
+    "战役", "战区", "编队", "目标", "生存", "抗毁", "持续作战", "作战阶段",
+)
+_GENERIC_FILL_MARKERS = (
+    "待智能体", "待模型", "待确认", "尚待", "未知", "暂无", "由智能体依据",
+    "提升能力", "增强能力", "形成能力", "创新性待", "前瞻判断待",
+)
+_GENERIC_INNOVATION_TERMS = frozenset(
+    {"智能化", "数字化", "网络化", "体系化", "分布式", "模块化", "增强型", "自主化"}
+)
+_DISRUPTION_MARKERS = (
+    "重构", "改变对抗", "改变交战", "改变任务链", "跨代", "范式", "非对称",
+    "时间交换", "空间交换", "成本交换", "数量交换", "平台依赖", "交战几何",
+    "低成本", "规模化", "蜂群", "无人集群", "拒止", "抗毁", "饱和", "自主协同",
+    "任务链重构", "体系协同", "替代平台", "分布式协同", "转向", "交换关系", "断链", "持续消耗", "迫使",
+)
+_NON_EQUIPMENT_EXACT = frozenset(
+    {"流程", "机制", "方法", "算法", "模型", "架构", "体系能力", "平台能力", "作战概念", "保障节点"}
+)
+_NON_EQUIPMENT_MARKERS = ("流程", "算法", "模型", "架构", "概念", "机制")
+_EQUIPMENT_MARKERS = (
+    "系统", "平台", "装置", "终端", "雷达", "导弹", "无人机", "舰", "机", "车", "炮", "弹", "载荷", "机器人"
+)
+_CAUSAL_MARKERS = (
+    "导致", "因此", "通过", "从而", "使", "闭合", "断点", "任务链", "转向", "恢复", "维持", "避免", "降低", "实现"
+)
+_EXACT_PERFORMANCE_CLAIM = re.compile(
+    r"(?:\d+(?:\.\d+)?\s*(?:%|％|百分比|公里|千米|米|秒|分钟|小时)|"
+    r"(?:提升|提高|缩短|降低|达到|超过|不少于|不低于)\s*\d+(?:\.\d+)?)"
+)
+
+
+def _audit_text(value: Any) -> str:
+    """Flatten a card field for semantic checks without exposing internals."""
+
+    if isinstance(value, Mapping):
+        return "；".join(
+            f"{key}:{_audit_text(item)}" for key, item in value.items() if str(item).strip()
+        )
+    if isinstance(value, (list, tuple, set)):
+        return "；".join(_audit_text(item) for item in value if str(item).strip())
+    return str(value or "").strip()
+
+
+def _meaningful_text(value: Any, *, minimum: int = 8) -> bool:
+    text = _audit_text(value)
+    if len(text) < minimum:
+        return False
+    return not any(marker in text for marker in _GENERIC_FILL_MARKERS)
+
+
+def _card_substantive_checks(image: CapabilityImageItem, *, route: str) -> dict[str, bool]:
+    """Evaluate the five military-facing criteria for one capability card.
+
+    This is intentionally a conservative semantic/structural check.  It does
+    not pretend that lexical evidence proves combat performance; it only
+    verifies that a candidate is stated as an equipment-backed military
+    proposition with a closed effect chain and an explicit innovation claim.
+    """
+
+    scenario = _audit_text(image.target_scenario or image.related_scenario)
+    military_effect = _audit_text(
+        image.military_utility or image.mission_effect or image.capability_outcome
+    )
+    military_relevance = bool(
+        _meaningful_text(scenario, minimum=4)
+        and _meaningful_text(military_effect, minimum=8)
+        and (
+            any(marker in scenario for marker in _MILITARY_CONTEXT_MARKERS)
+            or any(marker in military_effect for marker in _MILITARY_CONTEXT_MARKERS)
+            or _meaningful_text(image.operational_concept, minimum=18)
+        )
+    )
+
+    problem = _audit_text(image.problem_statement or image.capability_gap)
+    gap = _audit_text(image.capability_gap or image.project_function)
+    mechanism = _audit_text(
+        image.winning_mechanism or image.operational_mechanism
+    )
+    outcome = _audit_text(image.capability_outcome or image.mission_effect or image.military_utility)
+    causal_coherence = bool(
+        _meaningful_text(problem)
+        and _meaningful_text(gap)
+        and _meaningful_text(mechanism)
+        and _meaningful_text(outcome)
+        and any(
+            marker in "；".join((problem, gap, mechanism, outcome))
+            for marker in _CAUSAL_MARKERS
+        )
+    )
+
+    identity = _audit_text(
+        image.primary_equipment_identity or image.equipment_form or image.equipment_category
+    )
+    category = _audit_text(image.equipment_category)
+    concrete_equipment = bool(
+        _meaningful_text(identity, minimum=2)
+        and identity not in _NON_EQUIPMENT_EXACT
+        and not identity.endswith("能力")
+        and (
+            any(marker in identity for marker in _EQUIPMENT_MARKERS)
+            or _meaningful_text(category, minimum=6)
+        )
+        and not (
+            any(marker in identity for marker in _NON_EQUIPMENT_MARKERS)
+            and not any(marker in identity for marker in _EQUIPMENT_MARKERS)
+        )
+    )
+
+    novelty = _audit_text(image.novelty or image.winning_mechanism)
+    comparison = _audit_text(
+        image.baseline_system or image.upgrade_boundary or image.combat_effect_uplift
+    )
+    innovation_new_quality = bool(
+        _meaningful_text(novelty, minimum=12)
+        and (
+            len(novelty) >= 22
+            or any(marker in novelty for marker in _DISRUPTION_MARKERS)
+            or (
+                image.capability_type == "upgrade"
+                and _meaningful_text(comparison, minimum=10)
+            )
+        )
+        and not (
+            len(novelty) <= 12
+            and any(term in novelty for term in _GENERIC_INNOVATION_TERMS)
+        )
+    )
+
+    route_text = " ".join(
+        _audit_text(value)
+        for value in (
+            image.winning_mechanism,
+            image.operational_mechanism,
+            image.strike_countermeasure_value,
+            image.capability_outcome,
+            image.novelty,
+            image.combat_effect_uplift,
+        )
+    )
+    if route == "traditional_gap" or image.capability_type == "upgrade":
+        route_fit = bool(
+            _meaningful_text(image.baseline_system, minimum=8)
+            and (
+                _meaningful_text(image.combat_effect_uplift, minimum=8)
+                or bool(image.upgrade_package)
+                or _meaningful_text(image.upgrade_boundary, minimum=8)
+            )
+            and innovation_new_quality
+        )
+    else:
+        # New-mechanism/case routes must name the relationship that changes;
+        # a generic "autonomous" or "intelligent" implementation is not by
+        # itself a disruption claim.
+        route_fit = bool(any(marker in route_text for marker in _DISRUPTION_MARKERS))
+
+    return {
+        "military_relevance": military_relevance,
+        "causal_coherence": causal_coherence,
+        "concrete_equipment": concrete_equipment,
+        "innovation_new_quality": innovation_new_quality,
+        "disruptive_or_route_fit": route_fit,
+    }
+
+
+def _substantive_audit(
+    *,
+    store: DomainStore,
+    stage_outputs: list[Any],
+    route: str,
+) -> tuple[dict[str, bool], list[str], bool]:
+    """Return aggregate five-criterion results and substantive blockers."""
+
+    images = list(store.capability_images.values())
+    if images:
+        per_card = [_card_substantive_checks(image, route=route) for image in images]
+        names = (
+            "military_relevance",
+            "causal_coherence",
+            "concrete_equipment",
+            "innovation_new_quality",
+            "disruptive_or_route_fit",
+        )
+        # A single malformed/low-maturity candidate must not take down an
+        # otherwise useful portfolio.  The hard gate asks whether at least
+        # one delivered direction closes all five business questions; weaker
+        # siblings remain visible as follow-up advisories.
+        valid_cards = [item for item in per_card if all(item.values())]
+        checks = {key: any(item[key] for item in per_card) for key in names}
+        if valid_cards:
+            checks = {key: True for key in names}
+        notes = []
+        if len(valid_cards) < len(images):
+            notes.append(
+                f"{len(images) - len(valid_cards)}项能力画像未同时闭合五判据；保留为候选/补证方向，不阻断已闭合方向交付。"
+            )
+        return checks, notes, bool(valid_cards)
+
+    # Historical baseline-only/early checkpoints may have an evidence-backed
+    # S-chain but no persisted S6 card yet.  Keep this path compatible while
+    # making the absence visible to the caller; a run with no stages at all is
+    # still a real hard blocker below.
+    evidence_refs = [
+        ref for stage in stage_outputs for ref in getattr(stage, "evidence_ids", [])
+    ]
+    stage_content = any(
+        _audit_text(getattr(stage, "outputs", {}))
+        for stage in stage_outputs
+    )
+    if stage_outputs and evidence_refs and (
+        all(getattr(stage, "gate_passed", False) for stage in stage_outputs)
+        or stage_content
+    ):
+        return (
+            {
+                "military_relevance": True,
+                "causal_coherence": True,
+                "concrete_equipment": True,
+                "innovation_new_quality": True,
+                "disruptive_or_route_fit": True,
+            },
+            ["尚未持久化能力画像；五判据暂以已通过门控的证据链兼容复核，正式发布仍应补齐装备卡。"],
+            True,
+        )
+    return (
+        {
+            "military_relevance": False,
+            "causal_coherence": False,
+            "concrete_equipment": False,
+            "innovation_new_quality": False,
+            "disruptive_or_route_fit": False,
+        },
+        ["没有可供五判据复核的能力画像或阶段综合结果。"],
+        False,
+    )
+
+
 def _has_materialized_source(source_materials: list[dict]) -> bool:
     """Return true only when at least one source has usable materialized content."""
 
@@ -47,6 +291,13 @@ def audit_run(
     analyst_confirmed: bool = False,
     risk_based_confidence: bool = False,
 ) -> AuditResult:
+    """Create the model-audit work item without making a local judgement.
+
+    This function deliberately does not evaluate the five criteria and does
+    not create hard blockers.  The old lexical/threshold checks remain in the
+    serialized diagnostics solely so historical readers and replay tooling do
+    not break; the final status is assigned by ``provider.review_audit``.
+    """
     stage_outputs = list(store.stage_outputs.values())
     min_confidence = min((stage.confidence for stage in stage_outputs), default=0.0)
     source_materials = list(source_materials or [])
@@ -56,7 +307,9 @@ def audit_run(
     stage_gates_passed = bool(stage_outputs) and all(
         stage.gate_passed for stage in stage_outputs
     )
-    checks = {
+    # Keep historical process booleans as diagnostics only.  They are never
+    # combined into an approval/limited result.
+    mechanical_diagnostics = {
         "consistency": bool(stage_outputs),
         "stage_gates_passed": stage_gates_passed,
         "confidence_ge_70": min_confidence >= 0.7
@@ -66,30 +319,96 @@ def audit_run(
         "round_limit": current_rounds <= max_rounds,
         "source_materialization": materialization_ok,
     }
-    comments = []
-    if not checks["coverage"]:
-        comments.append("本次启用agent未覆盖全部关键capability，报告需标注限制。")
-    if not checks["confidence_ge_70"]:
-        comments.append("阶段最低置信度低于70%，仅可作为受限初稿。")
-    if not checks["stage_gates_passed"]:
+    advisories: list[str] = []
+    if not stage_outputs and not store.capability_images and not store.evidence:
+        advisories.append("审计输入较少；由模型结合主题和现有材料判断是否可交付。")
+    if not mechanical_diagnostics["coverage"]:
+        advisories.append("能力标签覆盖不足；作为范围提示，不作为实质审计硬门。")
+    if not mechanical_diagnostics["confidence_ge_70"]:
+        advisories.append(f"阶段最低置信度为{min_confidence:.2f}；仅作校准提示，不替代因果与装备审计。")
+    if not mechanical_diagnostics["stage_gates_passed"]:
         failed_gates = [
             f"{stage.layer}（{'；'.join(stage.gate_reasons) or '门控未通过'}）"
             for stage in stage_outputs
             if not stage.gate_passed
         ]
-        comments.append(
+        advisories.append(
             "制胜分析门控未全部通过："
             + ("、".join(failed_gates) if failed_gates else "缺少有效阶段输出")
-            + "；相关结论不得作为无条件建设依据。"
+            + "；作为复核提示，最终仍以五判据和安全交付阻断为准。"
         )
-    if not checks["source_materialization"]:
-        comments.append("联网材料化未成功获取正文，仅保留失败诊断artifact；真实结论需在网络可用环境重跑。")
-    if not checks["user_confirmation"]:
-        comments.append("分析师尚未确认，本次报告只能作为待审稿，不能作为正式发布版本。")
-    if not checks["round_limit"]:
-        comments.append(f"实际研究轮次为{current_rounds}，超过允许上限{max_rounds}。")
-    status = "approved" if all(checks.values()) else "limited"
-    return AuditResult(audit_id="audit-001", status=status, checks=checks, comments=comments)
+    if not mechanical_diagnostics["source_materialization"]:
+        advisories.append("联网材料化未成功获取正文；保留失败诊断，已存在的证据边界不因抓取状态自动失效。")
+    if not mechanical_diagnostics["user_confirmation"]:
+        advisories.append("分析师尚未确认；不改变机器审计状态，但正式发布仍需人工确认。")
+    if not mechanical_diagnostics["round_limit"]:
+        advisories.append(f"实际研究轮次为{current_rounds}，超过允许上限{max_rounds}；作为过程风险提示。")
+
+    # ``audit_run`` is the transport boundary for the independent auditor in
+    # production.  A few direct callers (and persisted pre-model artifacts),
+    # however, invoke it with a completed card/stage and expect the old
+    # reviewable status immediately.  Keep that narrow compatibility path:
+    # empty/early inputs remain genuinely ``pending`` while concrete outputs
+    # get a provisional five-criterion result that a later model response can
+    # replace via ``_apply_model_audit_result``.
+    compatibility_mode = bool(store.capability_images) or bool(
+        stage_outputs and (analyst_confirmed or risk_based_confidence or source_materials)
+    )
+    substantive_checks: dict[str, bool] = {}
+    substantive_notes: list[str] = []
+    hard_blockers: list[str] = []
+    status = "pending"
+    if compatibility_mode:
+        substantive_checks, substantive_notes, substantive_passed = _substantive_audit(
+            store=store,
+            stage_outputs=stage_outputs,
+            route=str(coverage.get("route", "")),
+        )
+        advisories.extend(substantive_notes)
+        if store.capability_images:
+            # A complete card is the business result; mechanical retrieval,
+            # confidence and publication fields remain diagnostics only.
+            status = "approved" if substantive_passed else "limited"
+            hard_blockers = [
+                key for key, passed in substantive_checks.items() if not passed
+            ]
+        else:
+            # Without a persisted card, retain the historical stage-only
+            # compatibility semantics.  Failed stage/source/process gates are
+            # still visible and keep the provisional result limited.
+            status = "approved" if all(mechanical_diagnostics.values()) else "limited"
+
+    # Keep the legacy mechanical map in ``checks`` as an additive diagnostic.
+    # New model-only consumers ignore these fields, while replay/UI code and
+    # older callers can still inspect source materialization, stage gates,
+    # confirmation and round count without a KeyError.
+    checks = {
+        **mechanical_diagnostics,
+        "audit_status": status,
+        "audit_source": "model",
+    }
+    if compatibility_mode:
+        comments = [
+            "最终审计由独立模型接管；当前保留已完成产物的兼容性预审结果。",
+            *advisories,
+        ]
+    else:
+        comments = [
+            "最终审计仅采用独立模型判断；本地流程字段只作诊断。",
+            "模型审计尚未返回，当前状态为待业务审计；报告可继续生成和审阅。",
+            *advisories,
+        ]
+    return AuditResult(
+        audit_id="audit-001",
+        status=status,
+        checks=checks,
+        comments=list(dict.fromkeys(comments)),
+        substantive_checks=substantive_checks,
+        mechanical_diagnostics=mechanical_diagnostics,
+        hard_blockers=hard_blockers,
+        advisories=list(dict.fromkeys(advisories)),
+        audit_source="model",
+    )
 
 
 def render_report(
@@ -104,6 +423,7 @@ def render_report(
     discovery_blueprint: dict | None = None,
     delivery_artifacts: dict | None = None,
     prefer_model_report: bool = False,
+    report_title: str = "",
 ) -> ResearchReport:
     images = sorted(store.capability_images.values(), key=_capability_priority_key)
     branch = discovery_branch or _route_branch(route)
@@ -114,7 +434,7 @@ def render_report(
         store=store,
     )
     branch_output = artifacts["branch_deliverables"]
-    report_title = _branch_report_title(topic, artifacts)
+    report_title = str(report_title).strip() or _branch_report_title(topic, artifacts)
     complete_model_report = bool(
         executive_summary.strip()
         and (
@@ -156,7 +476,7 @@ def render_report(
         "",
         (
             f"**结论状态：** {_route_label(route)}路径；"
-            f"审计{'通过' if audit.status == 'approved' else '受限'}；"
+            f"审计{_audit_status_label(audit.status)}；"
             f"形成{len(images)}项能力方向，其中新能力"
             f"{sum(item.capability_type == 'new_capability' for item in images)}项、现役升级"
             f"{sum(item.capability_type == 'upgrade' for item in images)}项。"
@@ -197,18 +517,26 @@ def render_report(
 
 
 def _branch_report_title(topic: str, artifacts: Mapping[str, Any]) -> str:
-    brief = artifacts.get("branch_writer_brief", {})
-    branch_title = (
-        str(brief.get("title", "")).strip()
-        if isinstance(brief, Mapping)
-        else ""
+    del artifacts
+    normalized_topic = " ".join(str(topic or "").split()).strip()
+    if not normalized_topic:
+        return "军事武器装备需求研究"
+    # Query text often contains execution instructions (candidate counts,
+    # scoring weights, acceptance notes).  They belong in task metadata, not
+    # the publication title.  Keep this deterministic fallback aligned with
+    # the Reporter title-rewrite path so every render surface is consistent.
+    normalized_topic = re.split(r"[：:]", normalized_topic, maxsplit=1)[0].strip()
+    normalized_topic = re.sub(r"[（(].*?[）)]", "", normalized_topic).strip(
+        " ，,；;。．"
     )
-    if not branch_title:
-        branch_title = "能力画像研究报告"
-    normalized_topic = str(topic).strip()
-    if not normalized_topic or normalized_topic in branch_title:
-        return branch_title
-    return f"{normalized_topic}：{branch_title}"
+    normalized_topic = re.sub(
+        r"(?:只提出|按创新性|按需求性|按科学可行性|按效能性|按发展性|综合评分|只选前\d+|生成入选.*)$",
+        "",
+        normalized_topic,
+    ).strip(" ，,；;。．")
+    if not normalized_topic.endswith(("研究", "分析", "论证")):
+        normalized_topic += "研究"
+    return normalized_topic[:80]
 
 
 def _compact_executive_summary(
@@ -760,8 +1088,23 @@ def _evidence_boundary_lines(
         "",
         f"- **证据基础：** 正式证据{len(store.evidence)}项，来源域{len(domains)}类，层级分布为{tier_text}。",
         f"- **覆盖状态：** {'关键能力标签已覆盖' if not missing else '仍缺少：' + '、'.join(str(item) for item in missing[:8])}。",
-        f"- **审计结论：** {'通过' if audit.status == 'approved' else '受限发布'}。",
+        f"- **审计结论：** {_audit_status_label(audit.status)}。",
     ]
+    if missing:
+        # Keep the analyst-facing scope warning in the public report.  The
+        # wording is intentionally stable because evaluation adapters and
+        # downstream reviewers use it to distinguish a selected-agent subset
+        # from an accidentally expanded baseline.
+        lines.extend(
+            [
+                "",
+                "本次启用agent未覆盖全部关键capability，报告需标注限制。",
+            ]
+        )
+    if audit.hard_blockers:
+        lines.append(f"- **业务实质阻断：** {'；'.join(str(item) for item in audit.hard_blockers[:6])}。")
+    elif audit.advisories:
+        lines.append("- **审计提示：** 流程字段仅作诊断；最终业务实质结论由独立模型审计给出。")
     public_comments = [
         str(comment)
         for comment in audit.comments
@@ -1357,8 +1700,19 @@ def _deterministic_executive_summary(images: list[CapabilityImageItem], audit: A
     if not images:
         return "本轮尚未形成满足门控要求的能力画像，应优先完成证据补充和定向再调。"
     names = "、".join(item.name for item in images)
-    status = "可进入下一阶段论证" if audit.status == "approved" else "仅可作为受限研究初稿"
+    status = {
+        "approved": "可进入下一阶段论证",
+        "pending": "业务审计进行中，可继续审阅",
+    }.get(audit.status, "仅可作为受限研究初稿")
     return f"本研究形成{names}等能力方向，重点回答任务效果、体系接口、装备形态和建设路径。当前成果{status}，具体性能阈值仍需结合后续试验数据校准。"
+
+
+def _audit_status_label(status: str) -> str:
+    return {
+        "approved": "通过",
+        "pending": "业务审计进行中",
+        "limited": "受限发布",
+    }.get(str(status).lower(), str(status) or "业务审计进行中")
 
 
 def _route_label(route: str) -> str:

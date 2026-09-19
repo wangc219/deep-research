@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=defense.gov · deputy secretary of defense kathleen hicks announces additional replicator all
+source_url=https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/
+claim=Replicator 1.2包含Army公司级小型UAS、Marine Corps有机精确火力的loitering munitions扩展，以及面向抗干扰协同自治的集成使能器。
+excerpt=
+retrieval=Hosted web search citation metadata

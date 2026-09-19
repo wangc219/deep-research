@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=navair.navy.mil · Long Range Anti Ship Missile LRASM
-source_url=https://www.navair.navy.mil/product/Long-Range-Anti-Ship-Missile-LRASM
-claim=LRASM被公开定位为远程进攻反舰能力，强调在电子战环境下降低对外部ISR、网络链路和GPS导航的依赖。
-excerpt=
-retrieval=Hosted web search citation metadata

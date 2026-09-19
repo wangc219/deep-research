@@ -1,5 +1,0 @@
-# Optional dependencies for the standalone evaluation tool only.
-# Production requirements.txt intentionally remains unchanged.
-openpyxl>=3.1
-requests>=2.31
-PyYAML>=6.0

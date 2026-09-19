@@ -1,0 +1,47 @@
+version: 1
+default_profile: codex-gpt
+
+# Model profiles are routing metadata only. Model ids / URLs / secrets live in
+# the unified `.env` (see `.env.example`). UI picks a profile per research task.
+profiles:
+  # GPT or any OpenAI-compatible Codex / Responses relay.
+  codex-gpt:
+    label: GPT
+    provider: codex
+    protocol: codex_cli
+    model_env: EQUIPMENT_DR_MODEL
+    base_url_env: EQUIPMENT_DR_CODEX_BASE_URL
+    api_key_env: EQUIPMENT_DR_CODEX_API_KEY
+    fallback:
+      policy: capacity_only
+      profiles:
+        - codex-queen
+
+  # DeepSeek always executes through Codex CLI. The launcher maps the official
+  # API to native Responses and third-party hosts to the local bridge.
+  codex-deepseek:
+    label: DeepSeek
+    provider: codex_deepseek
+    protocol: codex_cli
+    model_env: EQUIPMENT_DR_DEEPSEEK_MODEL
+    base_url_env: EQUIPMENT_DR_CODEX_DEEPSEEK_BASE_URL
+    api_key_env: DEEPSEEK_API_KEY
+    fallback:
+      policy: none
+      profiles: []
+
+  # Queen / Qwen endpoint; model and URL are deployment-owned env values.
+  codex-queen:
+    label: Queen
+    provider: codex_queen
+    protocol: codex_cli
+    model_env: EQUIPMENT_DR_QUEEN_MODEL
+    base_url_env: EQUIPMENT_DR_QUEEN_BASE_URL
+    api_key_env: QUEEN_API_KEY
+    fallback:
+      policy: none
+      profiles: []
+
+# Optional role-level routing via EQUIPMENT_DR_SWARM_PROFILE_OVERRIDES_JSON
+# in .env.local, e.g. {"S4":"codex-deepseek"}.
+swarm_overrides: {}

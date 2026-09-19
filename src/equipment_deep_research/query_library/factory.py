@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from equipment_deep_research.config.settings import Settings, load_settings
 from equipment_deep_research.persistence.database import create_database_engine
 from equipment_deep_research.providers.registry import ProviderRegistry
 from equipment_deep_research.query_library.generator import ModelQueryGenerator
@@ -12,18 +13,20 @@ from equipment_deep_research.query_library.service import QueryLibraryService
 
 
 def project_root() -> Path:
-    return Path(__file__).resolve().parents[3]
+    return load_settings().paths.root
 
 
 def default_database_url() -> str:
-    configured = os.environ.get("EQUIPMENT_DR_QUERY_LIBRARY_DB", "").strip()
-    if configured:
-        return configured
-    return f"sqlite:///{project_root() / 'outputs' / 'query-library.db'}"
+    return load_settings().query_library_database_url
 
 
-def build_repository(database_url: str | None = None) -> QueryLibraryRepository:
-    url = database_url or default_database_url()
+def build_repository(
+    database_url: str | None = None,
+    *,
+    settings: Settings | None = None,
+) -> QueryLibraryRepository:
+    resolved_settings = settings or load_settings()
+    url = database_url or resolved_settings.query_library_database_url
     if url.startswith("sqlite:///"):
         Path(url.removeprefix("sqlite:///")).expanduser().parent.mkdir(
             parents=True, exist_ok=True
@@ -36,9 +39,17 @@ def build_service(
     *,
     with_generator: bool = False,
     provider_name: str | None = None,
+    settings: Settings | None = None,
 ) -> QueryLibraryService:
-    repository = build_repository(database_url)
-    root = project_root()
+    resolved_settings = settings or load_settings()
+    repository = build_repository(settings=resolved_settings, database_url=database_url)
+    root = resolved_settings.paths.root
+    artifact_root = Path(
+        os.environ.get(
+            "EQUIPMENT_DR_CODEX_HOME",
+            str(root / "outputs" / "runtime" / "codex-homes"),
+        )
+    ).expanduser()
     registry = ProviderRegistry.load(
         root / "configs" / "equipment_deep_research" / "providers.yaml"
     )
@@ -54,6 +65,7 @@ def build_service(
             repository,
             model_options=model_options,
             credential_store=credential_store,
+            artifact_root=artifact_root,
         )
     default_profile = provider_name or registry.default_provider
 
@@ -70,13 +82,20 @@ def build_service(
         )
         if base_url is None:
             base_url = _query_library_base_url()
+        generation_id = str(model_config.get("_generation_id", ""))
+        generation_suffix = generation_id.removeprefix("generation-")
+        isolation_key = (
+            f"query-gen-{generation_suffix}"
+            if generation_suffix
+            else "query-library-generator"
+        )
         provider = registry.create(
             profile,
             model=model,
             base_url=base_url,
             api_key=api_key,
             workspace_path=root,
-            isolation_key="query-library-generator",
+            isolation_key=isolation_key,
             include_default_skills=False,
         )
         snapshot = registry.profile_snapshot(profile, model=model)
@@ -105,6 +124,7 @@ def build_service(
         generator_factory=generator_factory,
         model_options=model_options,
         credential_store=credential_store,
+        artifact_root=artifact_root,
     )
 
 

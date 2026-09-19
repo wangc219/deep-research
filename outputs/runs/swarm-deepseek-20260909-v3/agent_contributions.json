@@ -1,0 +1,220 @@
+[
+  {
+    "adopted_by_capability_ids": [],
+    "adopted_by_report_sections": [],
+    "adopted_by_s_steps": {},
+    "agent_id": "weapon_equipment",
+    "contributed": false,
+    "loao_quality_delta": null,
+    "model_calls": 0,
+    "observation_id": "contribution-packet-weapon_equipment",
+    "packet_id": "packet-weapon_equipment",
+    "produced_claim_ids": []
+  },
+  {
+    "adopted_by_capability_ids": [
+      "cap-new-001",
+      "cap-new-002",
+      "cap-new-003",
+      "cap-new-004",
+      "cap-new-005",
+      "cap-new-006",
+      "cap-new-007"
+    ],
+    "adopted_by_report_sections": [
+      "final_report"
+    ],
+    "adopted_by_s_steps": {
+      "S1": [
+        "claim-7a00d130316e",
+        "claim-a5f5764f05b0",
+        "claim-14ac6a700322",
+        "claim-5ded0dc5be3b",
+        "claim-d6103d230ff6"
+      ],
+      "S2": [
+        "claim-7a00d130316e",
+        "claim-a5f5764f05b0",
+        "claim-14ac6a700322",
+        "claim-5ded0dc5be3b",
+        "claim-d6103d230ff6"
+      ],
+      "S3": [
+        "claim-7a00d130316e",
+        "claim-a5f5764f05b0",
+        "claim-14ac6a700322",
+        "claim-5ded0dc5be3b",
+        "claim-d6103d230ff6"
+      ],
+      "S4": [
+        "claim-7a00d130316e",
+        "claim-a5f5764f05b0",
+        "claim-14ac6a700322",
+        "claim-5ded0dc5be3b",
+        "claim-d6103d230ff6"
+      ],
+      "S5": [
+        "claim-7a00d130316e",
+        "claim-a5f5764f05b0",
+        "claim-14ac6a700322",
+        "claim-5ded0dc5be3b",
+        "claim-d6103d230ff6"
+      ],
+      "S6": [
+        "claim-7a00d130316e",
+        "claim-a5f5764f05b0",
+        "claim-14ac6a700322",
+        "claim-5ded0dc5be3b",
+        "claim-d6103d230ff6"
+      ]
+    },
+    "agent_id": "international_situation",
+    "contributed": true,
+    "loao_quality_delta": null,
+    "model_calls": 2,
+    "observation_id": "contribution-packet-international_situation",
+    "packet_id": "packet-international_situation",
+    "produced_claim_ids": [
+      "claim-7a00d130316e",
+      "claim-a5f5764f05b0",
+      "claim-14ac6a700322",
+      "claim-5ded0dc5be3b",
+      "claim-d6103d230ff6"
+    ]
+  },
+  {
+    "adopted_by_capability_ids": [
+      "cap-new-001",
+      "cap-new-002",
+      "cap-new-003",
+      "cap-new-004",
+      "cap-new-005",
+      "cap-new-006",
+      "cap-new-007"
+    ],
+    "adopted_by_report_sections": [
+      "final_report"
+    ],
+    "adopted_by_s_steps": {
+      "S1": [
+        "claim-e3b1b9cc184b",
+        "claim-d2a591c99ffd",
+        "claim-27ba3eee241f",
+        "claim-4922bc73cafa"
+      ],
+      "S2": [
+        "claim-e3b1b9cc184b",
+        "claim-d2a591c99ffd",
+        "claim-27ba3eee241f",
+        "claim-4922bc73cafa"
+      ],
+      "S3": [
+        "claim-e3b1b9cc184b",
+        "claim-d2a591c99ffd",
+        "claim-27ba3eee241f",
+        "claim-4922bc73cafa"
+      ],
+      "S4": [
+        "claim-e3b1b9cc184b",
+        "claim-d2a591c99ffd",
+        "claim-27ba3eee241f",
+        "claim-4922bc73cafa"
+      ],
+      "S5": [
+        "claim-e3b1b9cc184b",
+        "claim-d2a591c99ffd",
+        "claim-27ba3eee241f",
+        "claim-4922bc73cafa"
+      ],
+      "S6": [
+        "claim-e3b1b9cc184b",
+        "claim-d2a591c99ffd",
+        "claim-27ba3eee241f",
+        "claim-4922bc73cafa"
+      ]
+    },
+    "agent_id": "case_research",
+    "contributed": true,
+    "loao_quality_delta": null,
+    "model_calls": 3,
+    "observation_id": "contribution-packet-case_research",
+    "packet_id": "packet-case_research",
+    "produced_claim_ids": [
+      "claim-e3b1b9cc184b",
+      "claim-d2a591c99ffd",
+      "claim-27ba3eee241f",
+      "claim-4922bc73cafa"
+    ]
+  },
+  {
+    "adopted_by_capability_ids": [
+      "cap-new-001",
+      "cap-new-002",
+      "cap-new-003",
+      "cap-new-004",
+      "cap-new-005",
+      "cap-new-006",
+      "cap-new-007"
+    ],
+    "adopted_by_report_sections": [
+      "final_report"
+    ],
+    "adopted_by_s_steps": {
+      "S1": [
+        "claim-e2f12107c0d0",
+        "claim-9c28e791d7b0",
+        "claim-5ca8ff7d5c21",
+        "claim-ced14e244423",
+        "claim-85568da30c87"
+      ],
+      "S2": [
+        "claim-e2f12107c0d0",
+        "claim-9c28e791d7b0",
+        "claim-5ca8ff7d5c21",
+        "claim-ced14e244423",
+        "claim-85568da30c87"
+      ],
+      "S3": [
+        "claim-e2f12107c0d0",
+        "claim-9c28e791d7b0",
+        "claim-5ca8ff7d5c21",
+        "claim-ced14e244423",
+        "claim-85568da30c87"
+      ],
+      "S4": [
+        "claim-e2f12107c0d0",
+        "claim-9c28e791d7b0",
+        "claim-5ca8ff7d5c21",
+        "claim-ced14e244423",
+        "claim-85568da30c87"
+      ],
+      "S5": [
+        "claim-e2f12107c0d0",
+        "claim-9c28e791d7b0",
+        "claim-5ca8ff7d5c21",
+        "claim-ced14e244423",
+        "claim-85568da30c87"
+      ],
+      "S6": [
+        "claim-e2f12107c0d0",
+        "claim-9c28e791d7b0",
+        "claim-5ca8ff7d5c21",
+        "claim-ced14e244423",
+        "claim-85568da30c87"
+      ]
+    },
+    "agent_id": "operational_employment",
+    "contributed": true,
+    "loao_quality_delta": null,
+    "model_calls": 3,
+    "observation_id": "contribution-packet-operational_employment",
+    "packet_id": "packet-operational_employment",
+    "produced_claim_ids": [
+      "claim-e2f12107c0d0",
+      "claim-9c28e791d7b0",
+      "claim-5ca8ff7d5c21",
+      "claim-ced14e244423",
+      "claim-85568da30c87"
+    ]
+  }
+]

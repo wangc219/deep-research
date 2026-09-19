@@ -1,0 +1,31 @@
+DeepSeek Codex 路由: 官方原生 Responses API（不启动 bridge）
+INFO:     Started server process [26476]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+
+  VITE v8.2.2  ready in 210 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://192.168.1.5:5173/  en0
+  ➜  Network: http://198.18.0.1:5173/   utun4
+API（仅本机）: http://127.0.0.1:8000
+Web（本机）: http://127.0.0.1:5173
+Web（内网）: http://192.168.1.5:5173
+API、可动态伸缩的研究 Worker 池、Query 生成 Worker 与 Web 已统一启动；按 Ctrl+C 停止。
+(eval):13: command not found: setsid
+DeepSeek Codex 路由: 官方原生 Responses API（不启动 bridge）
+INFO:     Started server process [28238]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+
+  VITE v8.2.2  ready in 161 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://192.168.1.5:5173/  en0
+  ➜  Network: http://198.18.0.1:5173/   utun4
+API（仅本机）: http://127.0.0.1:8000
+Web（本机）: http://127.0.0.1:5173
+Web（内网）: http://192.168.1.5:5173
+API、可动态伸缩的研究 Worker 池、Query 生成 Worker 与 Web 已统一启动；按 Ctrl+C 停止。

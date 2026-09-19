@@ -1,0 +1,45 @@
+{
+  "blockers": [],
+  "core_gates": {
+    "内容闭环": {
+      "failed": [],
+      "passed": true,
+      "score": 1.0
+    },
+    "军事决策信息密度": {
+      "failed": [],
+      "passed": true,
+      "score": 1.0
+    },
+    "发布安全": {
+      "failed": [],
+      "passed": true
+    },
+    "模板结构": {
+      "failed": [],
+      "passed": true,
+      "score": 1.0
+    },
+    "装备主体约束": {
+      "failed": [
+        "has_remote_precision_missile_equipment"
+      ],
+      "passed": true,
+      "score": 0.8889
+    },
+    "证据与验证边界": {
+      "failed": [],
+      "passed": true,
+      "score": 1.0
+    }
+  },
+  "diagnostics": {
+    "advisories": [],
+    "depth": 1.0,
+    "foresight": 1.0,
+    "military_value": 0.75,
+    "novelty": 1.0
+  },
+  "overall_score": 0.9778,
+  "passed": true
+}

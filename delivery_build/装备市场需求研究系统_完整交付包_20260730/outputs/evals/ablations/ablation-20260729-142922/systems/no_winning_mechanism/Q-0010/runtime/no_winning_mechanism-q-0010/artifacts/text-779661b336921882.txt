@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=media.defense.gov · SUMMARY OFTHE JOINT ALL DOMAIN COMMAND AND CONTROL STRATEGY.pdf
-source_url=https://media.defense.gov/2022/Mar/17/2002958406/-1/-1/1/SUMMARY-OFTHE-JOINT-ALL-DOMAIN-COMMAND-AND-CONTROL-STRATEGY.pdf
-claim=该来源支持JADC2强调联合部队在多域环境下共享数据、加速决策和形成作战优势，但不提供强对抗下的具体性能参数。
-excerpt=
-retrieval=Hosted web search citation metadata

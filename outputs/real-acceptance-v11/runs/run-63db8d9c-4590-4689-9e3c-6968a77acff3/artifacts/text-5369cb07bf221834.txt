@@ -1,4 +1,0 @@
-fetch_failed
-url=https://dpa.mod.gov.ua/document/9f2b616e-19bf-412d-8f5b-cfdcc1468dc6?utm_source=openai
-error=HTTPStatusError: HTTP 403: Forbidden
-该诊断用于保留真实联网smoke边界；正式结论不应仅依赖失败材料。

@@ -1,0 +1,199 @@
+{
+  "checkpoint": {
+    "budget_remaining": {
+      "baseline_tasks": 0,
+      "finalize_tasks": 1,
+      "rounds": 2
+    },
+    "checkpoint_id": "run-checkpoint-run-b9dec1f5-b7ed-4121-b968-58c22bbb0594",
+    "completed_task_ids": [
+      "baseline:system_confrontation",
+      "baseline:weapon_equipment",
+      "baseline:technology_radar"
+    ],
+    "config_fingerprint": "sha256:0af5d5cfb648e4a471b7ca80580e6d1f7cf5e38811d7753fb808d07ec0ed96e9",
+    "created_at": "2026-08-20T03:15:27.309292+00:00",
+    "mode": "real",
+    "pending_task_ids": [
+      "finalize:winning-report"
+    ],
+    "research_route": "auto",
+    "resolved_route": "traditional_gap",
+    "resume_count": 0,
+    "round_index": 1,
+    "run_id": "run-b9dec1f5-b7ed-4121-b968-58c22bbb0594",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "system_confrontation",
+      "weapon_equipment",
+      "technology_radar"
+    ],
+    "source_materials": [
+      {
+        "artifact_refs": [
+          "text:a45f081bd22b37fa"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-technology_radar-web-8952c3805d5a",
+          "normalized_url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "reasons": [],
+          "score": 0.85
+        },
+        "evidence_id": "ev-technology_radar-web-8952c3805d5a",
+        "formal_evidence_allowed": true,
+        "reader_attempt": 1,
+        "reader_url": "https://r.jina.ai/http://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+        "status": "reader_fetched",
+        "url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+      },
+      {
+        "artifact_refs": [
+          "text:b7693d30ae7ac873"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-technology_radar-web-6c1c84a0e24e",
+          "normalized_url": "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all",
+          "reasons": [],
+          "score": 0.85
+        },
+        "evidence_id": "ev-technology_radar-web-6c1c84a0e24e",
+        "formal_evidence_allowed": true,
+        "reader_attempt": 1,
+        "reader_url": "https://r.jina.ai/http://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+        "status": "reader_fetched",
+        "url": "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+      },
+      {
+        "artifact_refs": [
+          "text:a45f081bd22b37fa"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "duplicate",
+          "evidence_id": "ev-system_confrontation-web-8952c3805d5a",
+          "normalized_url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "reasons": [
+            "与 ev-technology_radar-web-8952c3805d5a URL 重复"
+          ],
+          "score": 0.85
+        },
+        "evidence_id": "ev-system_confrontation-web-8952c3805d5a",
+        "formal_evidence_allowed": true,
+        "reader_attempt": 1,
+        "reader_url": "https://r.jina.ai/http://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+        "status": "reader_fetched",
+        "url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+      }
+    ],
+    "status": "running",
+    "task_statuses": {
+      "baseline:system_confrontation": "completed",
+      "baseline:technology_radar": "completed",
+      "baseline:weapon_equipment": "completed",
+      "finalize:winning-report": "pending"
+    },
+    "topic": "低空多源感知至软硬杀伤闭环杀伤链研究",
+    "worker_reports": [
+      {
+        "active_skill_ids": [
+          "system_confrontation_modeling",
+          "cascading_vulnerability_analysis"
+        ],
+        "active_tool_names": [
+          "map_task_capability",
+          "build_coordination_dependency",
+          "build_system_model",
+          "identify_cascading_vulnerability",
+          "stress_test_scenario",
+          "compare_coa",
+          "test_competing_hypothesis"
+        ],
+        "agent_id": "system_confrontation",
+        "created_at": "2026-08-20T03:17:03.756654+00:00",
+        "domain_object_id": "",
+        "domain_object_type": "",
+        "error": "",
+        "handoff_summary": "本角色形成的体系判断是：低空多源感知至软硬杀伤闭环的主矛盾在于多节点可信度、时延、资源和战果评估之间的级联耦合，而非单一传感器或单一拦截器性能。公开来源可支撑分层防御、互操作、数据共享、快速闭环和韧性需求，但不足以证明具体融合门限、交战规则、效应组合或保障消耗参数。",
+        "harness_profile": "system_analysis_v1",
+        "new_evidence_ids": [],
+        "packet_id": "packet-system_confrontation",
+        "schema_version": "1.0",
+        "session_path": "/Users/hitsz/equipment research/outputs/runs/run-b9dec1f5-b7ed-4121-b968-58c22bbb0594/agent_sessions/system_confrontation.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_limited",
+        "worker_report_id": "worker-report-1c782261-0c5c-4f7e-b0ac-ecb39fe9028f"
+      },
+      {
+        "active_skill_ids": [
+          "equipment_osint",
+          "capability_comparison",
+          "technology_readiness_analysis",
+          "defensive_countermeasure_analysis"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "fetch_page",
+          "create_evidence_card",
+          "extract_parameter_observation",
+          "normalize_equipment_variant",
+          "reconcile_parameter_conflict",
+          "assess_technology_readiness",
+          "compare_equipment_capability",
+          "map_defensive_countermeasure",
+          "formulate_equipment_requirement"
+        ],
+        "agent_id": "weapon_equipment",
+        "created_at": "2026-08-20T03:16:05.595178+00:00",
+        "domain_object_id": "",
+        "domain_object_type": "",
+        "error": "weapon_equipment model turn completed but outer baseline result validation found no substantive findings",
+        "handoff_summary": "武器装备公开基线本轮受限；S1–S3继续独立推演，S4/S5在候选级按需补证。",
+        "harness_profile": "equipment_research_v1",
+        "new_evidence_ids": [],
+        "packet_id": "packet-weapon_equipment",
+        "schema_version": "1.0",
+        "session_path": "/Users/hitsz/equipment research/outputs/runs/run-b9dec1f5-b7ed-4121-b968-58c22bbb0594/agent_sessions/weapon_equipment.jsonl",
+        "status": "limited",
+        "stop_reason": "recoverable_baseline_unavailable",
+        "worker_report_id": "worker-report-fdf03bab-e496-4cfe-a7e4-3b89a255d13f"
+      },
+      {
+        "active_skill_ids": [
+          "frontier_technology_radar",
+          "disruptive_scenario_construction"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "fetch_page",
+          "create_evidence_card",
+          "assess_technology_readiness",
+          "assess_technology_potential",
+          "construct_disruptive_scenario",
+          "test_competing_hypothesis"
+        ],
+        "agent_id": "technology_radar",
+        "created_at": "2026-08-20T03:16:46.293784+00:00",
+        "domain_object_id": "",
+        "domain_object_type": "",
+        "error": "",
+        "handoff_summary": "本角色判断：低空多源感知至软硬杀伤闭环的核心军事矛盾是短时窗、多目标、强误报背景下的可信闭环，而不是单点探测或单一拦截能力。公开证据支持反无人系统正从平台采购转向体系化、软件化、规模化和可消耗化；但公开证据不能闭合具体性能参数、饱和边界和真实对抗效果。",
+        "harness_profile": "technology_discovery_v1",
+        "new_evidence_ids": [
+          "ev-technology_radar-web-6c1c84a0e24e",
+          "ev-technology_radar-web-8952c3805d5a"
+        ],
+        "packet_id": "packet-technology_radar",
+        "schema_version": "1.0",
+        "session_path": "/Users/hitsz/equipment research/outputs/runs/run-b9dec1f5-b7ed-4121-b968-58c22bbb0594/agent_sessions/technology_radar.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-5b057c14-6f56-404a-8f40-26677e238fe1"
+      }
+    ]
+  },
+  "savepoint_id": "checkpoint-89f8262e6a5ebe77c35417d8"
+}

@@ -1,0 +1,64 @@
+[
+  {
+    "accepted_claim_ids": [
+      "claim-f825c8bd641e",
+      "claim-d27a7d4212e7",
+      "claim-0eab3c706fc8",
+      "claim-7d529850f0ca",
+      "claim-1fe4da2d83cb"
+    ],
+    "incremental_value": 1.0,
+    "packet_id": "packet-weapon_equipment",
+    "reasons": [],
+    "rejected_claim_ids": [],
+    "scores": {
+      "claim_evidence_match": 1.0,
+      "incremental_value": 1.0,
+      "source_quality": 0.8,
+      "task_relevance": 1.0,
+      "upstream_acceptance": 1.0
+    },
+    "status": "accepted"
+  },
+  {
+    "accepted_claim_ids": [
+      "claim-d2d1851d4db5",
+      "claim-8f2f696e2bde",
+      "claim-769c01f72d87",
+      "claim-73a504ab5893"
+    ],
+    "incremental_value": 1.0,
+    "packet_id": "packet-cross_domain_fusion",
+    "reasons": [],
+    "rejected_claim_ids": [],
+    "scores": {
+      "claim_evidence_match": 1.0,
+      "incremental_value": 1.0,
+      "source_quality": 0.8,
+      "task_relevance": 1.0,
+      "upstream_acceptance": 1.0
+    },
+    "status": "accepted"
+  },
+  {
+    "accepted_claim_ids": [
+      "claim-b222e7f40262",
+      "claim-98a780a795b5",
+      "claim-05c0904adbd9",
+      "claim-5eba36096c0c",
+      "claim-c7cfe453b8f0"
+    ],
+    "incremental_value": 1.0,
+    "packet_id": "packet-combat_scenario",
+    "reasons": [],
+    "rejected_claim_ids": [],
+    "scores": {
+      "claim_evidence_match": 1.0,
+      "incremental_value": 1.0,
+      "source_quality": 0.8,
+      "task_relevance": 1.0,
+      "upstream_acceptance": 1.0
+    },
+    "status": "accepted"
+  }
+]

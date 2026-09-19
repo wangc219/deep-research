@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · Force Design Update October 2025.pdf
+source_url=https://www.marines.mil/Portals/1/Docs/Force_Design_Update-October_2025.pdf
+claim=美国海军陆战队公开建设文件强调空中系统中继、协议转换、受限电磁环境下路由、分布式保障、预置库存和受损条件下的快速适应。
+excerpt=
+retrieval=Hosted web search citation metadata

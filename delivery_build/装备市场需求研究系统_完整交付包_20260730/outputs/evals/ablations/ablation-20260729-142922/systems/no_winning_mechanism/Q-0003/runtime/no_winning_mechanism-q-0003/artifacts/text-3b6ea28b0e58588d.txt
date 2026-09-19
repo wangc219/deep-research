@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=https://comptroller.defense.gov/Portals/45/Documents/defbudget/FY2026/FY2026_Budget_Request_Overview_Book.pdf?utm_source=openai
-source_url=https://comptroller.defense.gov/Portals/45/Documents/defbudget/FY2026/FY2026_Budget_Request_Overview_Book.pdf
-claim=FY2026美国防部预算继续支持JASSM-ER、LRASM、AARGM-ER、PrSM等精确弹药，显示远程精打和防空压制为持续投入方向。
-excerpt=
-retrieval=Hosted web search citation metadata

@@ -27,12 +27,40 @@ _SENSITIVE_KEY_SUFFIXES = (
     "credential",
     "credentials",
     "privatekey",
+    # Internal/provider payloads are not credentials by themselves, but they
+    # can contain raw model sessions, hidden reasoning or request metadata.
+    # Treat these keys as sensitive at every runtime/event boundary so a
+    # legacy worker cannot bypass the deep-event projector by nesting them in
+    # an otherwise visible object.
+    "rawsession",
+    "rawsessions",
+    "rawmessage",
+    "rawmessages",
+    "providerheaders",
+    "providermetadata",
+    "rawmetadata",
+    "hiddenreasoning",
+    "reasoningtrace",
+    "chainofthought",
+    "internalprompt",
+    "providersession",
+    "providerresponse",
+    "rawresponse",
+    "rawoutput",
+    "modelresponse",
+    "responsebody",
+    "systemprompt",
+    "reasoning",
+    "cot",
 )
 _URL_PATTERN = re.compile(r"https?://[^\s<>\"']+", re.IGNORECASE)
 _PEM_PRIVATE_KEY_PATTERN = re.compile(
     r"-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----.*?"
     r"-----END [A-Z0-9 ]*PRIVATE KEY-----",
     re.DOTALL,
+)
+_HIDDEN_REASONING_PATTERN = re.compile(
+    r"(?is)<(?:think|analysis|reasoning)>.*?</(?:think|analysis|reasoning)>"
 )
 _BEARER_PATTERN = re.compile(r"(?i)\bBearer\s+[^\s,;]+")
 _COOKIE_HEADER_PATTERN = re.compile(
@@ -241,7 +269,8 @@ def _is_sensitive_key(key: str) -> bool:
 
 
 def _sanitize_string(value: str) -> str:
-    safe = _PEM_PRIVATE_KEY_PATTERN.sub("<redacted-private-key>", value)
+    safe = _HIDDEN_REASONING_PATTERN.sub("<redacted>", value)
+    safe = _PEM_PRIVATE_KEY_PATTERN.sub("<redacted-private-key>", safe)
     safe = _URL_PATTERN.sub(_sanitize_url_match, safe)
     safe = _COOKIE_HEADER_PATTERN.sub("Cookie: <redacted>", safe)
     safe = _BEARER_PATTERN.sub("Bearer <redacted>", safe)

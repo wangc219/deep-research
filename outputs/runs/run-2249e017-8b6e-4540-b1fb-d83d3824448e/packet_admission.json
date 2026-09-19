@@ -1,0 +1,63 @@
+[
+  {
+    "accepted_claim_ids": [
+      "claim-7c405ec4a4d7",
+      "claim-2a31a8d12a11",
+      "claim-a20657006d07",
+      "claim-bd9dcfbbc606"
+    ],
+    "incremental_value": 1.0,
+    "packet_id": "packet-weapon_equipment",
+    "reasons": [],
+    "rejected_claim_ids": [],
+    "scores": {
+      "claim_evidence_match": 1.0,
+      "incremental_value": 1.0,
+      "source_quality": 0.8,
+      "task_relevance": 1.0,
+      "upstream_acceptance": 1.0
+    },
+    "status": "accepted"
+  },
+  {
+    "accepted_claim_ids": [
+      "claim-00a535289441",
+      "claim-17f75f187eec",
+      "claim-f5bab9ea9b98",
+      "claim-aa06292ae792",
+      "claim-74b6832284bf"
+    ],
+    "incremental_value": 1.0,
+    "packet_id": "packet-system_confrontation",
+    "reasons": [],
+    "rejected_claim_ids": [],
+    "scores": {
+      "claim_evidence_match": 1.0,
+      "incremental_value": 1.0,
+      "source_quality": 0.8,
+      "task_relevance": 1.0,
+      "upstream_acceptance": 1.0
+    },
+    "status": "accepted"
+  },
+  {
+    "accepted_claim_ids": [
+      "claim-42e034150e85",
+      "claim-72ff12af402e",
+      "claim-ce2550279482",
+      "claim-75cb9dbc77a3"
+    ],
+    "incremental_value": 1.0,
+    "packet_id": "packet-technology_radar",
+    "reasons": [],
+    "rejected_claim_ids": [],
+    "scores": {
+      "claim_evidence_match": 1.0,
+      "incremental_value": 1.0,
+      "source_quality": 0.8,
+      "task_relevance": 1.0,
+      "upstream_acceptance": 1.0
+    },
+    "status": "accepted"
+  }
+]

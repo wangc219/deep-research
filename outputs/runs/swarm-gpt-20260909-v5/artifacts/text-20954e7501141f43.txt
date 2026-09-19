@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=media.defense.gov · FACT SHEET STRATEGY FOR COUNTERING UNMANNED SYSTEMS.PDF
+source_url=https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF
+claim=美国国防部公开反无人系统战略摘要强调跨域、跨特征和跨时间尺度的探测、跟踪、特征判定、主动与被动防御、权责下放、开放模块化和持续再评估。
+excerpt=
+retrieval=Hosted web search citation metadata

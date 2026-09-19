@@ -1,0 +1,54 @@
+{
+  "blockers": [],
+  "core_gates": {
+    "内容闭环": {
+      "failed": [],
+      "passed": true,
+      "score": 1.0
+    },
+    "军事决策信息密度": {
+      "failed": [
+        "long_sentence_reuse_bounded",
+        "capability_portrait_contract_passed"
+      ],
+      "passed": false,
+      "score": 0.6667
+    },
+    "发布安全": {
+      "failed": [],
+      "passed": true
+    },
+    "模板结构": {
+      "failed": [
+        "has_complete_paragraphs"
+      ],
+      "passed": false,
+      "score": 0.9286
+    },
+    "装备主体约束": {
+      "failed": [
+        "has_remote_precision_missile_equipment"
+      ],
+      "passed": true,
+      "score": 0.8889
+    },
+    "证据与验证边界": {
+      "failed": [],
+      "passed": true,
+      "score": 1.0
+    }
+  },
+  "diagnostics": {
+    "advisories": [
+      "修复残句、未闭合Markdown和超长段落",
+      "跨章节长句复用过多：同一完整长句不得出现三次，重复长句实例占比不得超过8%",
+      "装备能力画像未通过精简交付门：等离子羽流压制无人机：概述未说明传统能力或敌方优势为何失效；“槲寄生”贴附式低空截杀无人机：概述未聚焦颠覆作战关系或敌方新增代价；折翼泡沫包覆弹：概述未说明传统能力或敌方优势为何失效；折翼泡沫包覆弹：概述未聚焦颠覆作战关系或敌方新增代价；气溶胶结壳拒止火箭弹：概述未说明传统能力或敌方优势为何失效"
+    ],
+    "depth": 1.0,
+    "foresight": 0.8333,
+    "military_value": 1.0,
+    "novelty": 1.0
+  },
+  "overall_score": 0.8968,
+  "passed": true
+}

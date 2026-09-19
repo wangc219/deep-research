@@ -1,5 +1,0 @@
-fetch_failed
-url=https://comptroller.defense.gov/Portals/45/Documents/defbudget/FY2025/FY2025
-error=HTTPStatusError: cached_origin_failure:HTTPStatusError: HTTP 403: Forbidden
-reader_error=attempt_1:HTTPStatusError: HTTP 401: Unauthorized
-该诊断用于保留真实联网smoke边界；正式结论不应仅依赖失败材料。

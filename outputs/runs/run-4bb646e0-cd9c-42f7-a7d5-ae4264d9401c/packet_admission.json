@@ -1,0 +1,64 @@
+[
+  {
+    "accepted_claim_ids": [
+      "claim-6b01d9354886",
+      "claim-4c84d58ce7e3",
+      "claim-69b6308f0c8b",
+      "claim-ff57de586c63",
+      "claim-ad6fbde7af20"
+    ],
+    "incremental_value": 1.0,
+    "packet_id": "packet-system_confrontation",
+    "reasons": [],
+    "rejected_claim_ids": [],
+    "scores": {
+      "claim_evidence_match": 1.0,
+      "incremental_value": 1.0,
+      "source_quality": 0.8,
+      "task_relevance": 1.0,
+      "upstream_acceptance": 1.0
+    },
+    "status": "accepted"
+  },
+  {
+    "accepted_claim_ids": [
+      "claim-65c33fd2f36c",
+      "claim-a4894deebd4a",
+      "claim-2084e268ae38",
+      "claim-d93b6c545481"
+    ],
+    "incremental_value": 1.0,
+    "packet_id": "packet-cross_domain_fusion",
+    "reasons": [],
+    "rejected_claim_ids": [],
+    "scores": {
+      "claim_evidence_match": 1.0,
+      "incremental_value": 1.0,
+      "source_quality": 0.8,
+      "task_relevance": 1.0,
+      "upstream_acceptance": 1.0
+    },
+    "status": "accepted"
+  },
+  {
+    "accepted_claim_ids": [
+      "claim-e2ff7ef866ee",
+      "claim-edda7524e6ed",
+      "claim-5b845f680fab",
+      "claim-adae6b9d121e",
+      "claim-b9262d40794c"
+    ],
+    "incremental_value": 1.0,
+    "packet_id": "packet-operational_employment",
+    "reasons": [],
+    "rejected_claim_ids": [],
+    "scores": {
+      "claim_evidence_match": 1.0,
+      "incremental_value": 1.0,
+      "source_quality": 0.8,
+      "task_relevance": 1.0,
+      "upstream_acceptance": 1.0
+    },
+    "status": "accepted"
+  }
+]

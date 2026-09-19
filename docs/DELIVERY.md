@@ -15,7 +15,7 @@
 ```bash
 python3 -m uvicorn equipment_deep_research.api.app:create_app --factory --app-dir src --host 127.0.0.1 --port 8000
 PYTHONPATH=src python3 -m equipment_deep_research.interfaces.worker --project-root . --output-root outputs/runs
-pnpm --dir apps/web dev --host 127.0.0.1
+pnpm --dir apps/web dev
 ```
 
 以上三个命令分别启动 API、常驻 worker 和前端开发服务器。未将项目安装到当前 Python 环境时，worker 命令必须保留 `PYTHONPATH=src`。

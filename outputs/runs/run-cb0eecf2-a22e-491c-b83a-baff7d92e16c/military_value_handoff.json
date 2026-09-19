@@ -1,0 +1,243 @@
+{
+  "baseline_boundaries": [],
+  "branch_products": {},
+  "claims": [
+    {
+      "claim_id": "claim-7354e2791fc4",
+      "claim_type": "hypothesis",
+      "confidence": 0.84,
+      "downstream_steps": [
+        "S1",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-weapon_equipment-web-c8045cd752dc",
+        "ev-weapon_equipment-web-f77a0218ec64"
+      ],
+      "failure_boundary": "公开材料一方面强调反无人机系统之系统和多层防御，另一方面又明确指出小目标探测、误警、干扰附带影响和有效距离限制；因此不能从体系集成直接推断复杂电磁环境下的闭环可靠性。",
+      "mechanism": "公开基线表明，低空无人集群反制已形成“探测/跟踪—指挥控制—电子压制—动能拦截—定向能补充”的分层体系，但直接效果仍高度依赖多传感器融合、火控网络和稳定数据链；美国陆军将Coyote拦截器、雷达、电子战和FAAD C2作为系统之系统部署，而非孤立武器。军事任务影响：可支撑重点空域和机动部队伴随防护，但单一效应器难以独立承担饱和处置。证据边界：公开材料能证明体系集成方向和部分装备部署，不能证明其在复杂电磁对抗、异构集群和通信受限条件下的闭环成功率。失效条件：目标数量、频谱拥塞或数据链中断超过体系冗余能力时，分层处置可能退化。",
+      "military_effects": [
+        "侦察预警",
+        "指挥决策",
+        "拦截反制",
+        "生存抗毁",
+        "持续作战",
+        "体系协同"
+      ],
+      "packet_id": "packet-weapon_equipment",
+      "source_agent_id": "weapon_equipment",
+      "source_urls": [
+        "https://www.army.mil/article-amp/273625/army_announces_rapid_acquisition_authority_contract_for_coyote_interceptors"
+      ]
+    },
+    {
+      "claim_id": "claim-fc6f6a478d33",
+      "claim_type": "inference",
+      "confidence": 0.78,
+      "downstream_steps": [
+        "S2",
+        "S3",
+        "S4"
+      ],
+      "evidence_ids": [
+        "ev-combat_scenario-web-6fbc3dab99d5",
+        "ev-combat_scenario-web-06d26c44006f"
+      ],
+      "failure_boundary": "RUSI关于无人机复杂体和陆军防护压力的公开论述，与本Query的低空、强电磁对抗和闭环反制边界并不完全重合。",
+      "mechanism": "公开材料能支持体系韧性、跨域协同和无GPS条件下持续行动的重要性，但不足以证明某种具体闭环反制架构已成熟。RUSI材料强化了无人机复杂体对陆军防护和火力体系的压力，JADC2与SDA材料支持分布式协同和韧性网络方向，DARPA材料支持导航受限环境的作战连续性；对本Query的直接装备结论仍属推断。贡献：替代方案与证据边界。",
+      "military_effects": [
+        "指挥决策",
+        "打击歼灭",
+        "拦截反制",
+        "生存抗毁",
+        "持续作战",
+        "体系协同"
+      ],
+      "packet_id": "packet-combat_scenario",
+      "source_agent_id": "combat_scenario",
+      "source_urls": [
+        "https://www.rusi.org/explore-our-research/publications/occasional-papers/mass-precision-strike-designing-uav-complexes-land-forces"
+      ]
+    },
+    {
+      "claim_id": "claim-5dc5337b4f8c",
+      "claim_type": "fact",
+      "confidence": 0.25,
+      "downstream_steps": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-system_confrontation-web-65658b6cc7db",
+        "ev-system_confrontation-web-8d325b5069ef"
+      ],
+      "failure_boundary": "evidence_analysis_limited:ProviderRequestError:Codex CLI timed out after 90 seconds",
+      "mechanism": "体系对抗仿真本轮检索受限，保留已登记来源并进入后续定向补证。",
+      "military_effects": [
+        "体系协同"
+      ],
+      "packet_id": "packet-system_confrontation",
+      "source_agent_id": "system_confrontation",
+      "source_urls": [
+        "https://www.defense.gov/News/Releases/Release/article/2970094/dod-announces-release-of-jadc2-implementation-plan/"
+      ]
+    },
+    {
+      "claim_id": "claim-e54fd587758d",
+      "claim_type": "fact",
+      "confidence": 0.84,
+      "downstream_steps": [
+        "S1",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-weapon_equipment-web-c8045cd752dc",
+        "ev-weapon_equipment-web-f77a0218ec64"
+      ],
+      "failure_boundary": "公开材料一方面强调反无人机系统之系统和多层防御，另一方面又明确指出小目标探测、误警、干扰附带影响和有效距离限制；因此不能从体系集成直接推断复杂电磁环境下的闭环可靠性。",
+      "mechanism": "复杂电磁环境下的关键瓶颈不是单纯缺少拦截器，而是发现、识别、跟踪保持和火力分配同时承受频谱拥塞、误警、通信受限与敌方自主化适应。GAO指出，小型无人机探测跟踪易受电磁干扰和鸟类等小目标影响，许多反制手段有效距离有限；既有UAS体系也曾因带宽不足和互操作性不足而延误时敏处置。军事任务影响：闭环装备必须能够在部分通信失效时维持目标关联和效果评估，否则“发现—处置”链条会在饱和攻击中断裂。证据边界：相关报告多为能力评估和历史审计，并非针对当前异构无人集群的战场实测。失效条件：强干扰、低可探测目标、非合作导航或多方向同时突入会显著削弱传统依赖外部链路的反制流程。",
+      "military_effects": [
+        "侦察预警",
+        "指挥决策",
+        "打击歼灭",
+        "拦截反制",
+        "体系协同"
+      ],
+      "packet_id": "packet-weapon_equipment",
+      "source_agent_id": "weapon_equipment",
+      "source_urls": [
+        "https://www.army.mil/article-amp/273625/army_announces_rapid_acquisition_authority_contract_for_coyote_interceptors"
+      ]
+    },
+    {
+      "claim_id": "claim-707f0385ece8",
+      "claim_type": "hypothesis",
+      "confidence": 0.78,
+      "downstream_steps": [
+        "S2",
+        "S3",
+        "S4"
+      ],
+      "evidence_ids": [
+        "ev-combat_scenario-web-6fbc3dab99d5",
+        "ev-combat_scenario-web-06d26c44006f"
+      ],
+      "failure_boundary": "RUSI关于无人机复杂体和陆军防护压力的公开论述，与本Query的低空、强电磁对抗和闭环反制边界并不完全重合。",
+      "mechanism": "核心矛盾不是单一探测或单一压制性能，而是在低空遮蔽、强干扰和目标快速重组下，发现—识别—决策—处置—效果评估链能否持续闭合。任何单点失效都可能使数量优势转化为关键节点持续暴露。贡献：三层九项中的体系边界、任务依赖图、脆弱点。",
+      "military_effects": [
+        "侦察预警",
+        "指挥决策",
+        "拦截反制",
+        "体系协同"
+      ],
+      "packet_id": "packet-combat_scenario",
+      "source_agent_id": "combat_scenario",
+      "source_urls": [
+        "https://www.rusi.org/explore-our-research/publications/occasional-papers/mass-precision-strike-designing-uav-complexes-land-forces"
+      ]
+    }
+  ],
+  "conflicts": [
+    "现有公开体系已形成雷达、电子战、动能拦截和定向能的组合方向，但公开证据不足以证明其在异构集群、强干扰和通信受限条件下能够稳定闭环；体系集成方向不能等同于战场可靠性。",
+    "电子压制被认为具有低成本和非动能优势，但对自主导航、抗干扰链路、预设航线和频率机动目标的效果不确定；其适合作为分层处置手段，而非普遍拒止方案。",
+    "动能拦截和定向能可弥补电子压制失效区，但分别受到弹药补充、目标数量、射界、距离、天气、散热和供电限制；不能据此推断具备对高密度集群的整体防护能力。"
+  ],
+  "frontier_inspiration_rule": "仅在后续模型完成首次自由发散后作为可选启发；可重构或全部舍弃，不得视为装备答案、命名种子、技术目录或覆盖配额。",
+  "frontier_inspirations": [
+    {
+      "conventional_assumption_challenged": "传统假设是提高单个探测器、干扰机或拦截器性能即可解决集群威胁；公开证据更支持“闭环在受损条件下仍能维持”比单项峰值性能更可能成为制胜变量。",
+      "downstream_question": "在外部通信被压制、目标特征持续变化且拦截资源有限时，什么样的直接战斗装备能够独立维持目标关联、效应器切换和毁伤确认，并且其失败是否会导致局部链路崩溃而非单目标漏打？",
+      "evidence_boundary": "现有来源只证明频谱拥塞、互操作性和效应器边界，未证明此类抗毁闭环装备已经公开存在；该方向属于由公开瓶颈推导出的研究假设。",
+      "evidence_ids": [
+        "ev-weapon_equipment-web-f77a0218ec64"
+      ],
+      "packet_id": "packet-weapon_equipment",
+      "possible_military_discontinuity": "若能形成不依赖持续中心通信、能够在链路受限和多目标饱和下自主维持目标关联、选择软硬杀伤并完成效果复核的直接战斗装备，可能改变反无人机从逐目标处置转向抗毁闭环作战的交换关系。",
+      "query_relevance": "直接对应持续监视、通信受限协同、多目标分层处置和关键节点连续作业四个任务断点。",
+      "signal": "公开体系正在把雷达、电子战、动能拦截和定向能组合成系统之系统，但公开评估同时显示数据链、频谱和资源持续性是共同瓶颈。",
+      "source_agent_id": "weapon_equipment",
+      "source_urls": [
+        "https://www.gao.gov/products/gao-22-105705",
+        "https://www.gao.gov/assets/a248760.html"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "传统假设是扩大干扰功率或频谱覆盖即可拒止集群；公开边界表明对自主目标和己方通信密集环境，这一逻辑可能失效。",
+      "downstream_question": "需要区分目标失去操控链路、目标失去协同关系和目标物理失能三类效果，并核验在强干扰环境中哪一种效果最能阻止集群持续施压且不牺牲己方关键通信。",
+      "evidence_boundary": "来源支持干扰有效性和附带影响存在边界，但没有公开证明针对集群协同关系实施选择性压制的成熟装备或实战效果。",
+      "evidence_ids": [
+        "ev-weapon_equipment-web-f77a0218ec64"
+      ],
+      "packet_id": "packet-weapon_equipment",
+      "possible_military_discontinuity": "若出现能够把有限电磁效应精确施加到目标群体关键协同关系、同时减少对己方通信和导航影响的直接战斗效应器，可能把反无人机交换关系从“功率对功率”转向“协同结构对协同结构”。",
+      "query_relevance": "直接关联异构协同、电磁对抗适应、通信受限和关键节点连续作业。",
+      "signal": "电子压制的低成本优势与自主化、抗干扰和通信附带影响之间存在明显张力；软杀伤不再天然等同于低风险或高覆盖。",
+      "source_agent_id": "weapon_equipment",
+      "source_urls": [
+        "https://www.gao.gov/products/gao-22-105705",
+        "https://www.gao.gov/products/gao-12-175"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "反制效果必须依赖稳定后方网络、持续人工融合和全域统一态势图。",
+      "downstream_question": "在身份不确定、链路间歇和目标快速重组时，哪些局部决策规则能维持关键节点防护而不扩大误处置风险？",
+      "evidence_boundary": "DARPA的GPS-free方向和JADC2/SDA的韧性协同只能构成启发性支撑，尚无本Query条件下的直接验证。",
+      "evidence_ids": [
+        "ev-combat_scenario-web-06d26c44006f"
+      ],
+      "packet_id": "packet-combat_scenario",
+      "possible_military_discontinuity": "对抗关系可能从争夺单一频谱或单个目标，转为争夺谁能在信息不完整时更快恢复可用任务闭环，使局部节点具备有限自主的抗毁作战价值。",
+      "query_relevance": "直接对应复杂电磁环境、通信受限和多目标饱和下的闭环反制问题。",
+      "signal": "当通信、导航和集中式识别同时受损时，反制体系仍可能依靠局部感知、短时记忆和跨节点行为一致性维持有限闭环。",
+      "source_agent_id": "combat_scenario",
+      "source_urls": [
+        "https://www.darpa.mil/news/2026/rockn-enables-gps-free-operations",
+        "https://www.defense.gov/News/Releases/Release/article/2970094/dod-announces-release-of-jadc2-implementation-plan/"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "所有来袭目标可按个体威胁等级独立排序，并以平均处置率衡量体系效能。",
+      "downstream_question": "在不依赖稳定通信和完整身份识别的前提下，能否从群体行为可靠推断功能分工，并避免被敌方诱骗造成处置资源错配？",
+      "evidence_boundary": "RUSI材料支持无人机复杂体的体系压力，但未提供功能节点识别或结构扰动的实证。",
+      "evidence_ids": [
+        "ev-combat_scenario-web-6fbc3dab99d5"
+      ],
+      "packet_id": "packet-combat_scenario",
+      "possible_military_discontinuity": "若能稳定识别编组中的功能性节点，防护体系可能由逐目标消耗转向对协同结构施加有限扰动，从而改变资源交换关系；反之，敌方可通过伪装功能节点迫使防守方过度消耗。",
+      "query_relevance": "直接对应异构协同、数量饱和、分层处置和资源受限条件。",
+      "signal": "集群的主要军事价值可能不只来自数量，还来自少量承担诱导、协同或中继作用的节点对整个编组节奏的塑形。",
+      "source_agent_id": "combat_scenario",
+      "source_urls": [
+        "https://www.rusi.org/explore-our-research/publications/occasional-papers/mass-precision-strike-designing-uav-complexes-land-forces"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    }
+  ],
+  "open_questions": [
+    "中国国内现役或在研低空集群反制装备的公开试验、部署和复杂电磁环境效果数据不足，尚不能与美国公开体系按同一口径比较。",
+    "evidence_analysis_limited:ProviderRequestError:Codex CLI timed out after 90 seconds；已有来源数=6，需在候选级核验。",
+    "在强干扰和链路间歇可用条件下，哪些闭环决策能够安全下沉到边缘节点，哪些必须保留人工确认？"
+  ],
+  "query_anchor": "低空无人集群复杂电磁环境闭环反制装备研究",
+  "schema": "military_value_handoff_v1",
+  "statistics": {
+    "candidate_claim_count": 9,
+    "compression_ratio": 0.8649,
+    "evidence_url_count": 3,
+    "frontier_inspiration_count": 4,
+    "input_chars": 9187,
+    "input_packet_count": 3,
+    "limited_baseline_count": 0,
+    "output_chars": 7946,
+    "selected_claim_count": 5,
+    "source_agent_count": 3
+  }
+}

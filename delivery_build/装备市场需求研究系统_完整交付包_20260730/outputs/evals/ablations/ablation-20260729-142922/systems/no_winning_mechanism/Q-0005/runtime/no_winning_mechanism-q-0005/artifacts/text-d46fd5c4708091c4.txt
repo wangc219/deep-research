@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=defense.gov · deputy secretary of defense hicks announces first tranche of replicator capabil
-source_url=https://www.defense.gov/News/Releases/Release/Article/3765644/deputy-secretary-of-defense-hicks-announces-first-tranche-of-replicator-capabil/
-claim=DoD Replicator公开资料支持Switchblade-600等可消耗自主系统进入规模化部署方向，用于补充高端弹药成本和库存不足。
-excerpt=
-retrieval=Hosted web search citation metadata

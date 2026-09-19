@@ -4,7 +4,7 @@ import base64
 import binascii
 from typing import Literal
 
-from fastapi import APIRouter, FastAPI, Header, HTTPException, Query, status
+from fastapi import APIRouter, FastAPI, Header, HTTPException, Query, Response, status
 from pydantic import BaseModel, Field
 
 from equipment_deep_research.query_library.factory import build_service
@@ -120,6 +120,33 @@ def create_router(service: QueryLibraryService) -> APIRouter:
         except QueryLibraryError as exc:
             _raise_http(exc)
 
+    @router.delete(
+        "/generations/{generation_id}",
+        status_code=status.HTTP_204_NO_CONTENT,
+    )
+    def delete_generation(generation_id: str) -> Response:
+        try:
+            service.delete_generation(generation_id)
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
+        except QueryLibraryError as exc:
+            _raise_http(exc)
+
+    @router.post("/generations/{generation_id}/cancel")
+    def cancel_generation(generation_id: str) -> dict:
+        try:
+            return service.cancel_generation(generation_id).to_dict()
+        except QueryLibraryError as exc:
+            _raise_http(exc)
+
+    @router.get("/generations")
+    def list_generations(
+        generation_status: Literal["queued", "running", "completed", "failed", "cancelled"] | None = Query(
+            default=None, alias="status"
+        ),
+        limit: int = Query(default=20, ge=1, le=100),
+    ) -> dict:
+        return service.list_generations(status=generation_status, limit=limit)
+
     @router.post("/generations/{generation_id}/retry")
     def retry_generation(generation_id: str) -> dict:
         try:
@@ -233,6 +260,14 @@ def create_router(service: QueryLibraryService) -> APIRouter:
                 status="archived",
                 expected_version=body.expected_version,
             ).to_dict()
+        except QueryLibraryError as exc:
+            _raise_http(exc)
+
+    @router.delete("/queries/{query_id}", status_code=status.HTTP_204_NO_CONTENT)
+    def delete_query(query_id: str) -> Response:
+        try:
+            service.delete_query(query_id)
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
         except QueryLibraryError as exc:
             _raise_http(exc)
 

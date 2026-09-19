@@ -13,6 +13,7 @@ import stat
 from threading import RLock
 from typing import Any, Callable
 from urllib.parse import quote
+from uuid import uuid4
 
 from equipment_deep_research.domain.models import (
     AgentRecommendation,
@@ -293,6 +294,42 @@ class TraceStore:
                 event.event_type,
                 {"source": "trace", "event": to_plain(event)},
             )
+
+    def append_evolution_event(self, event: Mapping[str, Any]) -> None:
+        """Append one prompt/memory attribution row as a normal TraceEvent.
+
+        Runtime providers intentionally know nothing about persistence.  This
+        adapter keeps that boundary explicit and gives runners a one-line sink
+        (``trace.append_evolution_event``) while preserving the existing trace
+        schema, idempotency and event-stream callbacks.
+        """
+
+        row = {str(key): value for key, value in dict(event).items()}
+        retrieval_id = str(row.get("retrieval_event_id", "")).strip()
+        status = str(row.get("retrieval_status", row.get("event_type", "outcome"))).strip()
+        event_id = retrieval_id or f"evolution-{uuid4()}"
+        # A lifecycle emits selected/applied/outcome rows under one retrieval
+        # id.  TraceStore requires unique event ids, so suffix each phase.
+        if status and not event_id.endswith(status):
+            event_id = f"{event_id}:{status}"
+        stage = str(row.get("stage_id") or row.get("stage") or "")
+        actor = str(row.get("agent_id") or "evolution")
+        memory_ids = [str(item) for item in row.get("memory_ids", []) if str(item).strip()]
+        evidence_ids = [str(item) for item in row.get("evidence_ids", []) if str(item).strip()]
+        self.append(
+            TraceEvent(
+                event_id=event_id,
+                event_type=str(row.get("event_type") or "evolution_retrieval_event"),
+                actor=actor,
+                summary=(
+                    f"{stage or 'S?'} {status}: "
+                    f"memory={len(memory_ids)} evidence={len(evidence_ids)}"
+                ),
+                input_refs=[*memory_ids, *evidence_ids],
+                output_refs=[retrieval_id] if retrieval_id else [],
+                payload=row,
+            )
+        )
 
     def snapshot(self) -> list[TraceEvent]:
         with self._lock:

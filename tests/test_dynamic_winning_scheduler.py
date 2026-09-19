@@ -617,6 +617,41 @@ async def test_dynamic_scheduler_propagates_step_failure_and_cancels_siblings():
     assert cancelled.is_set()
 
 
+@pytest.mark.anyio
+async def test_dynamic_scheduler_passes_tick_snapshot_to_ready_steps():
+    observed: dict[int, dict[str, int]] = {}
+    state = {"version": 0}
+
+    async def run(step, cycle, prior_state, feedback):
+        del cycle, feedback
+        observed[step] = dict(prior_state)
+        await asyncio.sleep(0)
+        return {
+            "result": {},
+            "run": {
+                "step": step,
+                "agent_id": f"s{step}",
+                "status": "completed",
+            },
+        }
+
+    def commit(outcome):
+        state["version"] += 1
+
+    scheduler = DynamicWinningScheduler(
+        step_definitions=[(f"s{i}", "", {}) for i in range(1, 7)],
+        step_modes={i: "standard" for i in range(1, 7)},
+        run_step_fn=run,
+        commit_step_fn=commit,
+        max_parallel=2,
+        snapshot_state_fn=lambda: state,
+    )
+    await scheduler.execute_pipeline()
+
+    assert observed[1] == observed[2] == {"version": 0}
+    assert observed[3]["version"] == 2
+
+
 def test_reserve_parallel_capacity_respects_budget_and_in_flight():
     assert reserve_parallel_capacity(
         in_flight=6,
@@ -686,3 +721,40 @@ async def test_parallel_action_awakens_skipped_exploration_within_budget(max_par
         and item['parallel_steps'] == [6]
         for item in events
     )
+
+
+@pytest.mark.anyio
+async def test_parallel_action_keeps_pending_requested_nodes_executable():
+    """A PARALLEL request must not discard a node already pending in the DAG."""
+
+    seen: list[int] = []
+
+    async def run(step, cycle, state, feedback):
+        seen.append(step)
+        action = (
+            {
+                "action": StepAction.PARALLEL,
+                "parallel_steps": [3],
+            }
+            if step == 1
+            else {"action": StepAction.CONTINUE}
+        )
+        return {
+            "result": {},
+            "run": {
+                "step": step,
+                "agent_id": f"s{step}",
+                "status": "completed",
+                "next_action": action,
+            },
+        }
+
+    scheduler = DynamicWinningScheduler(
+        step_definitions=[(f"s{i}", "", {}) for i in range(1, 7)],
+        step_modes={i: "standard" for i in range(1, 7)},
+        run_step_fn=run,
+        commit_step_fn=lambda outcome: None,
+    )
+    await scheduler.execute_pipeline()
+
+    assert seen == [1, 2, 3, 4, 5, 6]

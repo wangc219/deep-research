@@ -98,7 +98,7 @@ def test_generator_returns_all_twelve_coverage_slots_with_sources() -> None:
     assert "项目功能" in requirements
 
 
-def test_generator_falls_back_to_auditable_semantic_source_without_web_results() -> None:
+def test_generator_records_codex_situation_assessment_without_web_results() -> None:
     grounding = {
         "summary": "未获得外部网页来源，按用户母题进行语义发散。",
         "search_queries": [],
@@ -120,9 +120,12 @@ def test_generator_falls_back_to_auditable_semantic_source_without_web_results()
     )
 
     result = asyncio.run(
-        ModelQueryGenerator(provider).generate(
+        ModelQueryGenerator(
+            provider,
+            provider_snapshot={"type": "codex_cli", "model": "test"},
+        ).generate(
             topic="未来无人精确打击装备",
-            supplemental_information="不提供参考 URL 也应能够完成生成。",
+            supplemental_information="自动态势发散模式。不提供参考 URL 也应能够完成生成。",
             count=1,
             existing_queries=[],
         )
@@ -131,8 +134,25 @@ def test_generator_falls_back_to_auditable_semantic_source_without_web_results()
     assert len(result.candidates) == 1
     assert result.source_references[0].source_kind == "document"
     assert result.source_references[0].url == ""
-    assert "未获得可核验的公开 HTTPS 来源" in result.source_references[0].relevance_note
+    assert result.source_references[0].title.startswith("态势研判")
+    assert "中国当前安全环境" in result.source_references[0].relevance_note
     assert result.candidates[0].source_references == result.source_references
+    grounding_request = json.loads(provider.inputs[0][0][1].content)
+    assert grounding_request["analysis_mode"] == "codex_cli_china_situation_assessment"
+    assert "3至5个聚焦检索" in grounding_request["task"]
+    assert "外部态势→任务压力→作战缺口→武器装备能力与发展需求" in grounding_request["task"]
+    assert provider.inputs[0][2]["web_search"]["search_context_size"] == "low"
+    assert provider.inputs[0][2]["_provider_retry_attempts"] == 1
+    generation_request = json.loads(provider.inputs[1][0][1].content)
+    requirements = "".join(generation_request["requirements"])
+    assert "实质不同的装备需求矛盾" in requirements
+    assert "高关注方向" in requirements
+    assert "不设固定类别配额" in requirements
+    assert "充分发挥模型的异质发散能力" in requirements
+    assert "被态势直接牵引的武器装备需求" in requirements
+    assert "direct_strike_priority_slots" not in generation_request
+    assert "不写成时事摘要" in requirements
+    assert provider.inputs[1][2]["_provider_retry_attempts"] == 2
 
 
 def test_source_sanitizer_removes_sensitive_query_parameters() -> None:

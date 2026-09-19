@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=csis.org · lessons ukraine conflict modern warfare age autonomy information and resilience
+source_url=https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience
+claim=CSIS乌战教训分析以自主性、信息与韧性为主线，主题上支持'消耗战、电子战对抗、快速适配与后勤/指挥韧性决定现代冲突走向'的判断；本会话未逐页复核。
+excerpt=
+retrieval=Hosted web search citation metadata

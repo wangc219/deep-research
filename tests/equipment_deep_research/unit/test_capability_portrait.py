@@ -2,19 +2,186 @@ from equipment_deep_research.orchestration.capability_fallback import (
     build_deadline_weapon_directions,
 )
 from equipment_deep_research.orchestration.capability_portrait import (
+    CAPABILITY_PORTRAIT_MODULES,
     assemble_capability_portrait_modules,
     build_agent_led_capability_portrait,
     build_capability_portrait,
     build_capability_title,
+    capability_portrait_quality_issues,
+    capability_portrait_repair_issues,
     complete_operational_process,
     is_launch_mode_generic_weapon_title,
     normalize_operational_process,
+    normalize_capability_classification,
     normalize_verification_plan,
     primary_equipment_form_title,
     parse_capability_portrait_modules,
     resolve_capability_portrait,
     strip_schema_placeholders,
 )
+
+
+def test_portrait_quality_gate_flags_mechanical_overview_slogan() -> None:
+    modules = {
+        "overview": (
+            "传统防空依赖逐目标拦截，敌方以蜂群压缩窗口；测试拦截弹进入航路后形成直接拦截。"
+            "把原本依赖固定节奏的处置过程前移到装备本体或编组内，"
+            "对目标、火力节点或防御节奏形成可验证的直接约束；"
+            "在敌方保持原有突防方式时形成直接杀伤或削峰，迫使其改变航路、编组或投入节奏。"
+        ),
+        "technology_implementation": "弹载导引头、任务计算机和战斗部接口联锁形成近距拦截闭环。" * 8,
+        "operational_process": "发射单元完成航路授权后投放，弹体进入拦截区自主接敌并在作用后退出。" * 8,
+        "capability_effects": "形成不依赖逐目标火控通道的并行拦截能力，直接阻断蜂群穿越。" * 8,
+        "winning_logic": "把高价单发对廉价数量的旧交换改为按航路拦阻，迫使对手分散编组。" * 8,
+    }
+
+    assert any(
+        "概述含跨装备通用机械句式" in issue
+        for issue in capability_portrait_quality_issues(modules)
+    )
+
+
+def test_portrait_quality_gate_keeps_length_advisory_and_rejects_cross_module_reuse() -> None:
+    repeated = "该装备进入受扰空域后持续复核授权目标并在满足证据门槛时实施直接毁伤"
+    modules = {
+            key: (repeated + "；" + label * 160)
+        for key, label in (
+            ("overview", "场景"),
+            ("technology_implementation", "接口"),
+            ("operational_process", "流程"),
+            ("capability_effects", "战果"),
+            ("winning_logic", "交换"),
+        )
+    }
+
+    issues = capability_portrait_quality_issues(modules)
+
+    assert not any("总长度超限" in issue for issue in issues)
+    assert any("跨栏重复" in issue for issue in issues)
+
+
+def test_portrait_repair_gate_keeps_editorial_advisories_out_of_model_wave() -> None:
+    shared = "敌方持续机动，装备通过受控搜索形成直接毁伤并迫使其改变部署。"
+    modules = {
+        "overview": ("传统拦截依赖逐目标射击，敌方以数量压缩窗口；本装备改写交换关系，形成直接拦截战果并迫使其改变部署。" + shared) * 3,
+        "technology_implementation": ("导弹弹体内置任务计算机、导引头和战斗部接口，通过受控授权把搜索原理落到装备本体。" + shared) * 3,
+        "operational_process": ("发射单元装订区域后，弹体自主复核目标，满足授权即实施作用，否则退出并保留复击条件。" + shared) * 3,
+        "capability_effects": ("形成断链条件下的受控拦截能力，直接压缩目标脱离窗口并增加对手机动成本。" + shared) * 3,
+        "winning_logic": ("传统火力交换依赖连续链路，敌方可借断链脱离；本装备把断链转化为受控搜索问题，迫使对手暴露。" + shared) * 3,
+    }
+
+    issues = capability_portrait_quality_issues(modules)
+    repair_issues = capability_portrait_repair_issues(modules)
+    assert any("跨栏重复" in issue for issue in issues)
+    assert any("跨栏重复" in issue for issue in repair_issues)
+
+
+def test_portrait_repair_gate_keeps_hard_semantic_defects() -> None:
+    modules = {key: "完整装备论证。" * 25 for key, _ in CAPABILITY_PORTRAIT_MODULES}
+    modules["overview"] = "传统优势与敌方行动方式需要重新审视。" * 12
+
+    repair_issues = capability_portrait_repair_issues(modules)
+    assert any("未聚焦颠覆作战关系" in issue for issue in repair_issues)
+
+
+def test_portrait_quality_gate_accepts_concise_distinct_modules() -> None:
+    modules = {
+        "overview": "敌舰利用航迹过期脱离补击窗口，有限区复获巡航弹把最后可信区域转化为可控搜索空间，以弹上复核恢复交战机会并直接毁伤授权目标。" * 4,
+        "technology_implementation": "弹上组合导航维持位置基准，射频与成像载荷形成同源目标证据，任务计算机联锁禁击区、授权门槛和导引头；样机以搜索包线和剩余能量不闭合为判退条件。" * 4,
+        "operational_process": "舰载单元装订最后可信区域后齐射，弹群在干扰空域分配扇区；复获目标后交叉复核，满足授权即攻击，否则越界弃攻，余弹依据毁伤确认转入补击。" * 4,
+        "capability_effects": "形成外部更新中断后的有限区复获、正确拒打与受控毁伤能力，直接压缩敌舰脱离窗口；以复获时间、正确交战率、剩余能量和单位有效毁伤成本验收。" * 4,
+        "winning_logic": "传统补击依赖连续航迹，对手可用拖延更新换取脱离时间；新构型迫使其在高速机动暴露与降低航速之间选择，并增加诱饵管理、分层拦截和电磁静默成本。" * 4,
+    }
+
+    assert capability_portrait_quality_issues(modules) == []
+
+
+def test_portrait_quality_gate_flags_each_visibly_thin_module() -> None:
+    modules = {
+        "overview": "传统补击依赖连续航迹，敌方可借断链换取脱离时间；本装备把航迹过期改写为有界搜索与受控复核，恢复断链后的直接打击机会，压缩目标转移窗口，并迫使对手在持续机动暴露和降低行动节奏之间选择，打开失联条件下的持续猎歼任务。",
+        "technology_implementation": "弹载任务计算机把目标证据、禁击边界和末制导授权联锁，避免失联后误击。",
+        "operational_process": "装订任务边界后发射，弹体复核目标，满足授权则攻击，否则退出。",
+        "capability_effects": "形成断链条件下的受控精确打击能力。",
+        "winning_logic": "迫使对手同时压制导航、感知和任务判断，不能只靠断链解除威胁。",
+    }
+
+    issues = capability_portrait_quality_issues(modules)
+
+    for label in (
+        "概述",
+        "装备与技术实现",
+        "关键作战流程",
+        "形成能力与作战效果",
+        "制胜逻辑机理",
+    ):
+        assert any(
+            f"{label}明显过短，低于约180字告警线" in issue
+            for issue in issues
+        )
+
+
+def test_portrait_quality_gate_requires_overview_to_center_disruptive_effect() -> None:
+    modules = {
+        "overview": "面向复杂背景，装备具备多模感知、边缘处理和自主打击能力，提升目标识别效率。",
+        "technology_implementation": "弹载任务计算机把目标证据、禁击边界和末制导授权联锁，避免失联后误击。",
+        "operational_process": "装订任务边界后发射，弹体复核目标，满足授权则攻击，否则退出。",
+        "capability_effects": "形成断链条件下的受控精确打击能力。",
+        "winning_logic": "迫使对手同时压制导航、感知和任务判断，不能只靠断链解除威胁。",
+    }
+
+    issues = capability_portrait_quality_issues(modules)
+    assert any("概述明显过短，低于约180字告警线" in issue for issue in issues)
+    assert any("概述未说明传统能力" in issue for issue in issues)
+    assert any("概述未聚焦颠覆作战关系" in issue for issue in issues)
+
+
+def test_portrait_quality_gate_rejects_generic_technology_paragraph() -> None:
+    modules = {
+        "overview": "断链后仍能受控打击授权目标。",
+        "technology_implementation": "采用人工智能、分布式协同和智能化决策提升体系效能。",
+        "operational_process": "装订任务边界后发射，弹体复核目标，满足授权则攻击，否则退出。",
+        "capability_effects": "形成断链条件下的受控精确打击能力。",
+        "winning_logic": "迫使对手同时压制导航、感知和任务判断，不能只靠断链解除威胁。",
+    }
+
+    assert any(
+        "未绑定具体武器本体或工程模块" in issue
+        for issue in capability_portrait_quality_issues(modules)
+    )
+
+
+def test_portrait_quality_gate_accepts_explicit_component_placement_language() -> None:
+    modules = {
+        "overview": "传统拦截按架次消耗，敌方数量优势会压穿火力通道；本装备改变交换关系并形成直接拒止战果。" * 3,
+        "technology_implementation": (
+            "导引头装在弹头前视窗，任务计算机搭载于弹体中段并与飞控、战斗部接口联锁，"
+            "使目标发现、授权判断和末段作用在装备本体内闭合。"
+        ) * 3,
+        "operational_process": "发射单元完成授权与空域装订，弹体进入拦阻区后自主认领目标并在作用后退出。" * 3,
+        "capability_effects": "形成不依赖逐目标火控通道的并行拦截能力，使后续波次无法利用再装填空窗突防。" * 3,
+        "winning_logic": "把高价单发对廉价数量的旧交换改为低成本并行拦阻，迫使对手分散编组并延长暴露时间。" * 3,
+    }
+
+    issues = capability_portrait_quality_issues(modules)
+
+    assert "装备与技术实现未说明关键原理如何落到装备本体" not in issues
+
+
+def test_portrait_quality_gate_accepts_non_missile_weapon_body_components() -> None:
+    modules = {
+        "overview": "传统低空防空依赖逐目标射击，低慢小蜂群会耗尽火力通道；本装备把低空走廊变成持续物理拒止面并形成直接拦截战果。" * 3,
+        "technology_implementation": (
+            "伞骨装在浮体下方并撑开网幕，系留绞车与锚定结构吸收撞击动量后自动复位，"
+            "网衣、伞骨和浮体共同把几何覆盖原理落到拦阻飞艇本体。"
+        ) * 3,
+        "operational_process": "班组完成走廊授权后展开浮体，网幕持续拦阻贴地目标，受损后补位或收网转移。" * 3,
+        "capability_effects": "形成不占火控通道的持续低空物理拦截能力，迫使对手抬升或投入扫障兵力。" * 3,
+        "winning_logic": "把逐目标射击交换改为预置障碍交换，敌方数量优势转化为碰撞风险与清障成本。" * 3,
+    }
+
+    issues = capability_portrait_quality_issues(modules)
+
+    assert "装备与技术实现未绑定具体武器本体或工程模块" not in issues
 
 
 def test_five_authored_modules_are_assembled_without_cross_field_synthesis() -> None:
@@ -56,6 +223,26 @@ def test_capability_classification_is_displayed_without_changing_five_modules() 
         key: value
         for key, value in modules.items()
         if key != "capability_classification"
+    }
+
+
+def test_capability_classification_deduplicates_and_drops_equipment_forms() -> None:
+    classification = normalize_capability_classification(
+        {
+            "primary_dimension": "失联自主精确打击",
+            "secondary_dimensions": [
+                "离线协同巡飞弹群",
+                "打击维度",
+                "目标识别能力",
+            ],
+            "classification_basis": "以直接打击为主，并依靠目标识别形成授权条件。",
+        }
+    )
+
+    assert classification == {
+        "primary_dimension": "打击维度",
+        "secondary_dimensions": ["侦察感知维度"],
+        "classification_basis": "以直接打击为主，并依靠目标识别形成授权条件。",
     }
 
 
@@ -179,6 +366,84 @@ def test_schema_placeholders_are_removed_from_verification_and_portrait_prose() 
         "制胜逻辑机理与对抗边界：失效边界；string；对抗验证。",
         **_fields(),
     )
+
+
+def test_nested_module_object_is_rejected_for_authoring_but_salvaged_for_display() -> None:
+    from equipment_deep_research.agents.workflows.winning_flows.s6_authoring import (
+        _extract_s6_module_content,
+    )
+    from equipment_deep_research.orchestration.capability_portrait import (
+        coerce_portrait_module_prose,
+        normalize_capability_portrait_text,
+        portrait_module_looks_structured,
+    )
+
+    nested = {
+        "key_technologies": [
+            "边缘在线强化学习与神经形态芯片",
+            "机间动态网状自组网与经验压缩编码",
+            "低成本抗干扰弹道末制导与多模导引头",
+        ],
+        "system_architecture": (
+            "三层架构：指控层负责任务规划；边缘计算层运行在线学习；"
+            "通信层采用动态网状自组网。"
+        ),
+        "implementation_path": "分三阶段：实验室验证、对抗试验、实战集成验证。",
+        "key_bottlenecks": {
+            "intelligence_requirement": "机间通信量随规模上升，需特征压缩。",
+            "latency_requirement": "在线学习需毫秒级反馈，机载算力有限。",
+        },
+        "keyword_context": "在线学习指机载实时辨识并调整攻击参数。",
+    }
+    dump = str(nested)
+
+    assert portrait_module_looks_structured(nested)
+    assert portrait_module_looks_structured(dump)
+    assert (
+        coerce_portrait_module_prose(
+            nested,
+            module_key="technology_implementation",
+            allow_structured_salvage=False,
+        )
+        == ""
+    )
+    assert _extract_s6_module_content({"module_content": nested}, "technology_implementation") == ""
+    assert _extract_s6_module_content({"module_content": dump}, "technology_implementation") == ""
+
+    salvaged = coerce_portrait_module_prose(
+        nested,
+        module_key="technology_implementation",
+        allow_structured_salvage=True,
+    )
+    assert salvaged
+    assert "key_technologies" not in salvaged
+    assert "system_architecture" not in salvaged
+    assert "边缘在线强化学习与神经形态芯片" in salvaged
+    assert "三层架构" in salvaged
+
+    modules = {
+        "overview": "敌方依托固定防御节奏消耗首波突防，本装备以代际经验继承改写蜂群交战窗口并恢复持续压制。",
+        "technology_implementation": dump,
+        "operational_process": "装订任务后投放，机群在线学习并动态组网，经验压缩后交接后续波次继续突防。",
+        "capability_effects": "形成多波次经验继承下的持续突防与末端精确打击能力，压缩敌方拦截窗口。",
+        "winning_logic": "传统蜂群依赖地面重规划，新构型把经验继承内化到机间交换，迫使对手同时应对学习与组网。",
+    }
+    issues = capability_portrait_quality_issues(modules)
+    assert any("一次性写成中文正文" in issue or "结构化对象" in issue for issue in issues)
+    assert assemble_capability_portrait_modules(modules) == ""
+
+    portrait = (
+        "概述：敌方依托固定防御节奏消耗首波突防，本装备以代际经验继承改写蜂群交战窗口。\n"
+        f"- 装备与技术实现：{dump}\n"
+        "- 关键作战流程：装订任务后投放，机群在线学习并动态组网。\n"
+        "- 形成能力与作战效果：形成多波次经验继承下的持续突防能力。\n"
+        "- 制胜逻辑机理：传统蜂群依赖地面重规划，新构型把经验继承内化到机间交换。"
+    )
+    normalized = normalize_capability_portrait_text(portrait)
+    assert "key_technologies" not in normalized
+    assert "system_architecture" not in normalized
+    assert "边缘在线强化学习与神经形态芯片" in normalized
+    assert "装备与技术实现：" in normalized
 
 
 def test_legacy_winning_logic_label_and_key_are_read_into_the_new_module() -> None:

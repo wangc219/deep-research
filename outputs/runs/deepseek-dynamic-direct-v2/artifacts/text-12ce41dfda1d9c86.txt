@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=newsukraine.rbc.ua · russia s fiber optic fpv drones on rise ukraine 1752818725.html
+source_url=https://newsukraine.rbc.ua/analytics/russia-s-fiber-optic-fpv-drones-on-rise-ukraine-1752818725.html
+claim=电子战对光纤无人机无效，主要方法转为物理摧毁（含专门射击员学校）。来源URL不完整，需修正。
+excerpt=
+retrieval=Hosted web search citation metadata

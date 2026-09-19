@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=war.gov · dod announces strategy for countering unmanned systems
+source_url=https://www.war.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/
+claim=DoD公开发布反无人系统战略，强化规模化、韧性和作战整合方向。
+excerpt=
+retrieval=Hosted web search citation metadata

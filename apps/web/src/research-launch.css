@@ -58,6 +58,23 @@
   border-radius: 15px 15px 0 0;
 }
 
+.research-query-input-state {
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 14px;
+  border-top: 1px solid #f0f2f7;
+  color: #8a94a8;
+  font-size: 10px;
+}
+
+.research-query-input-state span:nth-child(2) { margin-left: auto; }
+.research-query-input-state kbd { padding: 2px 4px; border: 1px solid #dfe4ef; border-bottom-width: 2px; border-radius: 4px; background: #fafbfe; color: #64718a; font: 10px/1.2 inherit; }
+.research-query-input-state button { height: 24px; padding: 0 7px; border-color: transparent; background: transparent; color: #7c879b; font-size: 10px; }
+.research-query-input-state button:hover { border-color: #e1e6ef; background: #f7f8fc; color: #5268c8; }
+.research-query-composer:focus-within { border-color: rgba(83,107,214,.55); box-shadow: 0 18px 46px rgba(72,82,155,.16), 0 0 0 4px rgba(83,107,214,.08); }
+
 .research-query-composer > footer {
   display: flex;
   align-items: center;
@@ -89,13 +106,6 @@
 .research-query-footer-right > button {
   border-radius: 9px;
   font-size: 10px;
-}
-
-.research-query-footer-right > .manual-query-picker-trigger {
-  border-color: #d6daf0;
-  background: #fff;
-  color: #5562b8;
-  font-weight: 700;
 }
 
 .manual-query-modal-backdrop {
@@ -200,7 +210,7 @@
 .manual-query-category-filter button em {
   margin-left: 4px;
   color: #9aa3b3;
-  font-size: 9px;
+  font-size: 10px;
   font-style: normal;
 }
 
@@ -266,8 +276,8 @@
 }
 
 .manual-query-select-list > button > span { display: flex; gap: 7px; }
-.manual-query-select-list > button > span em { color: #625ac1; font-size: 9px; font-style: normal; font-weight: 750; }
-.manual-query-select-list > button > span small { color: #969fb0; font-size: 9px; }
+.manual-query-select-list > button > span em { color: #625ac1; font-size: 10px; font-style: normal; font-weight: 750; }
+.manual-query-select-list > button > span small { color: #969fb0; font-size: 10px; }
 .manual-query-select-list > button > b { font-size: 12px; line-height: 1.55; }
 .manual-query-select-list > button > p { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; margin: 0; color: #758096; font-size: 10px; line-height: 1.5; }
 .manual-query-select-list > button > svg { position: absolute; top: 13px; right: 13px; color: #625dcc; }
@@ -322,7 +332,7 @@
 .manual-query-import-pane.long-text input,
 .manual-query-import-pane.long-text textarea { padding: 10px 12px; border: 1px solid #dce1ec; border-radius: 8px; outline: 0; font: 11px/1.65 Inter, "PingFang SC", sans-serif; }
 .manual-query-import-pane.long-text textarea { min-height: 270px; resize: vertical; }
-.manual-query-import-pane.long-text small { color: #8a94a7; font-size: 9px; font-weight: 400; line-height: 1.55; }
+.manual-query-import-pane.long-text small { color: #8a94a7; font-size: 10px; font-weight: 400; line-height: 1.55; }
 
 .manual-query-import-summary,
 .manual-query-error {
@@ -337,7 +347,7 @@
 .manual-query-import-summary { border: 1px solid #c6e8d5; background: #f1fbf5; color: #238258; }
 .manual-query-import-summary span { display: grid; gap: 2px; }
 .manual-query-import-summary b { font-size: 10px; }
-.manual-query-import-summary small { color: #63917b; font-size: 9px; }
+.manual-query-import-summary small { color: #63917b; font-size: 10px; }
 .manual-query-error { border: 1px solid #efc7cb; background: #fff6f6; color: #b54b56; font-size: 10px; }
 
 .manual-query-modal > footer {
@@ -431,7 +441,7 @@
 
 .research-mode-picker > summary small {
   color: #9299aa;
-  font-size: 7px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: .05em;
 }
@@ -479,7 +489,7 @@
 
 .research-mode-menu > header small {
   color: #8a93a6;
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .research-mode-menu > header em {
@@ -487,7 +497,7 @@
   border-radius: 10px;
   background: #f0f1fb;
   color: #7078ad;
-  font-size: 9px;
+  font-size: 10px;
   font-style: normal;
 }
 
@@ -550,7 +560,7 @@
   border-radius: 8px;
   background: #eceefe;
   color: #646dc7;
-  font-size: 8px;
+  font-size: 10px;
   font-style: normal;
   font-weight: 700;
 }
@@ -558,14 +568,14 @@
 .research-mode-menu button small {
   overflow: hidden;
   color: #7d8799;
-  font-size: 9px;
+  font-size: 10px;
   line-height: 1.45;
   text-overflow: ellipsis;
 }
 
 .research-mode-menu button code {
   color: #a0a7b8;
-  font-size: 8px;
+  font-size: 10px;
 }
 
 .research-mode-menu button > svg {
@@ -580,7 +590,7 @@
   padding: 9px 5px 1px;
   border-top: 1px solid #eceef5;
   color: #858da0;
-  font-size: 8px;
+  font-size: 10px;
 }
 
 .report-template-picker {
@@ -611,7 +621,7 @@
 
 .report-template-picker > header small {
   color: #8b94a6;
-  font-size: 8px;
+  font-size: 10px;
 }
 
 .report-template-picker > header > em {
@@ -619,7 +629,7 @@
   border-radius: 8px;
   background: #eef0fc;
   color: #626ac0;
-  font-size: 8px;
+  font-size: 10px;
   font-style: normal;
 }
 
@@ -672,13 +682,13 @@
   border-radius: 7px;
   background: #e9ecff;
   color: #616bc5;
-  font-size: 7px;
+  font-size: 10px;
   font-style: normal;
 }
 
 .report-template-picker button small {
   color: #858ea1;
-  font-size: 8px;
+  font-size: 10px;
   line-height: 1.4;
 }
 
@@ -781,7 +791,7 @@
   align-items: center;
   gap: 5px;
   color: #939bb0;
-  font-size: 8px;
+  font-size: 10px;
   font-style: normal;
 }
 
@@ -791,7 +801,6 @@
   border-radius: 50%;
   background: #756be8;
   box-shadow: 0 0 0 4px rgba(117, 107, 232, 0.1);
-  animation: recommendationPulse 1.8s ease-in-out infinite;
 }
 
 .research-query-suggestion-heading button.suggestion-refresh {
@@ -804,19 +813,18 @@
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.75);
   color: #6467ba;
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .recommendation-carousel {
   position: relative;
   z-index: 2;
-  height: 178px;
-  perspective: 1200px;
+  height: 202px;
 }
 
 .recommendation-stage {
   position: absolute;
-  inset: 0 42px;
+  inset: 0 42px 24px;
   overflow: hidden;
   isolation: isolate;
 }
@@ -839,9 +847,8 @@
   color: #2f3952;
   text-align: left;
   transform-origin: center;
-  transition: transform 720ms cubic-bezier(.22,.8,.25,1), opacity 620ms ease, filter 680ms cubic-bezier(.22,.8,.25,1), border-color 520ms ease, background 620ms ease, box-shadow 620ms ease;
-  backdrop-filter: blur(16px);
-  will-change: transform, opacity, filter;
+  transition: transform 600ms ease, opacity 600ms ease;
+  will-change: transform, opacity;
 }
 
 .recommendation-card.current {
@@ -850,37 +857,44 @@
   background: linear-gradient(145deg, rgba(255,255,255,.97), rgba(248,249,255,.91));
   box-shadow: 0 18px 42px rgba(57, 77, 156, 0.14), 0 0 0 1px rgba(119, 109, 226, 0.08);
   opacity: 1;
-  transform: translateX(-50%) translateZ(50px) scale(1);
+  transform: translateX(-50%) scale(1);
 }
 
 .recommendation-card.previous {
   z-index: 1;
   opacity: 0.3;
-  filter: blur(3.2px) saturate(.78);
-  transform: translateX(-122%) translateZ(-120px) scale(.82) rotateY(7deg);
+  transform: translateX(-122%) scale(.82);
 }
 
 .recommendation-card.next {
   z-index: 1;
   opacity: 0.3;
-  filter: blur(3.2px) saturate(.78);
-  transform: translateX(22%) translateZ(-120px) scale(.82) rotateY(-7deg);
+  transform: translateX(22%) scale(.82);
 }
 
 .recommendation-card.far-previous,
 .recommendation-card.far-next {
   z-index: 0;
   opacity: 0;
-  filter: blur(9px) saturate(.55);
   pointer-events: none;
 }
 
 .recommendation-card.far-previous {
-  transform: translateX(-190%) translateZ(-210px) scale(.68) rotateY(12deg);
+  transform: translateX(-190%) scale(.68);
 }
 
 .recommendation-card.far-next {
-  transform: translateX(90%) translateZ(-210px) scale(.68) rotateY(-12deg);
+  transform: translateX(90%) scale(.68);
+}
+
+.recommendation-playback {
+  position: absolute;
+  right: 42px;
+  bottom: 0;
+  z-index: 5;
+  height: 24px;
+  padding: 0 8px;
+  font-size: 10px;
 }
 
 .recommendation-card:hover.current,
@@ -894,7 +908,7 @@
   align-items: center;
   justify-content: space-between;
   color: #5863d7;
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: .09em;
 }
@@ -976,7 +990,7 @@
 .recommendation-progress span {
   min-width: 38px;
   color: #929aac;
-  font-size: 8px;
+  font-size: 10px;
   font-variant-numeric: tabular-nums;
 }
 
@@ -985,13 +999,57 @@
   z-index: 2;
   justify-self: center;
   color: #a06971;
-  font-size: 9px;
+  font-size: 10px;
   font-style: normal;
 }
 
-@keyframes recommendationPulse {
-  0%, 100% { opacity: .55; transform: scale(.85); }
-  50% { opacity: 1; transform: scale(1.1); }
+/* The left navigation remains visible down to 900px, leaving a compact
+   content column in the in-app browser. Let the composer controls and
+   recommendation stage reflow before they become cramped or overflow. */
+@media (max-width: 1100px) {
+  .research-query-hero {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .research-query-composer {
+    width: 100%;
+  }
+
+  .research-query-composer > footer {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 9px;
+  }
+
+  .research-query-footer-left,
+  .research-query-footer-right {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .research-query-footer-right {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: stretch;
+    margin-left: 0;
+  }
+
+  .research-query-footer-right > button {
+    width: 100%;
+  }
+
+  .research-query-footer-right > .research-start-trigger {
+    grid-column: 1 / -1;
+  }
+
+  .recommendation-stage {
+    inset: 0 34px 24px;
+  }
+
+  .recommendation-card {
+    width: min(72%, 520px);
+  }
 }
 
 @media (max-width: 900px) {
@@ -1035,7 +1093,7 @@
 
 .selected-research-query header small {
   color: #7d899f;
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .selected-research-query > p {
@@ -1089,7 +1147,7 @@
 
 .research-advanced-toggle small {
   color: #7e899d;
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .research-advanced-toggle.open > svg:last-child {
@@ -1143,7 +1201,7 @@
 .inline-research-config-heading small {
   overflow: hidden;
   color: #8993a8;
-  font-size: 9px;
+  font-size: 10px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1375,6 +1433,18 @@
   box-shadow: 0 12px 25px rgba(51, 59, 104, 0.09);
 }
 
+.research-run-card.run-card-spotlight {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18), 0 14px 30px rgba(51, 59, 104, 0.12);
+  animation: run-card-spotlight 1.8s ease both;
+}
+
+@keyframes run-card-spotlight {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.38), 0 5px 18px rgba(51, 59, 104, 0.04); }
+  24% { transform: scale(1.015); box-shadow: 0 0 0 5px rgba(99, 102, 241, 0.14), 0 14px 30px rgba(51, 59, 104, 0.12); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0), 0 5px 18px rgba(51, 59, 104, 0.04); }
+}
+
 .research-run-card.completed {
   border-top-color: #bce9d3;
 }
@@ -1483,6 +1553,43 @@
   font-size: 12px;
 }
 
+.run-card-artifacts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.run-card-artifacts button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 28px;
+  padding: 5px 9px;
+  border: 1px solid #dfe3f5;
+  border-radius: 9px;
+  background: #f8f9ff;
+  color: #5864a6;
+  font-size: 10px;
+  font-weight: 600;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.run-card-artifacts button:hover {
+  border-color: #bfc6f6;
+  background: #eef0ff;
+  color: #4e55c6;
+}
+
+.run-card-artifacts button span {
+  min-width: 16px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: #e4e7ff;
+  color: #4e55c6;
+  text-align: center;
+}
+
 .run-card-meta {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -1500,6 +1607,64 @@
 
 .run-card-meta span:last-child {
   color: #6374b5;
+}
+
+.run-card-recovery {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 10px;
+  border: 1px solid #f0cdd1;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #fff8f8, #fffdfd);
+}
+
+.run-card-recovery > div {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 7px;
+  color: #bb5260;
+}
+
+.run-card-recovery > div > svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.run-card-recovery span {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.run-card-recovery b,
+.run-card-recovery small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.run-card-recovery b {
+  color: #963c4b;
+  font-size: 11px;
+}
+
+.run-card-recovery small {
+  color: #a77980;
+  font-size: 9px;
+}
+
+.run-card-recovery button {
+  flex: 0 0 auto;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 10px;
+  white-space: nowrap;
+  box-shadow: 0 4px 10px rgba(82, 78, 204, 0.14);
 }
 
 .run-card-footer {
@@ -1585,16 +1750,21 @@
     text-align: center;
   }
 
+  .research-query-composer { margin-top: 17px; }
+  .research-query-composer textarea { height: 112px; padding: 16px; font-size: 14px; }
+  .research-query-input-state span:nth-child(2) { display: none; }
+  .research-query-input-state button { margin-left: auto; }
+
   .research-query-suggestion-heading {
     padding: 0 7px;
   }
 
   .recommendation-carousel {
-    height: 178px;
+    height: 202px;
   }
 
   .recommendation-stage {
-    inset: 0 28px;
+    inset: 0 28px 24px;
   }
 
   .recommendation-card {
@@ -1629,9 +1799,14 @@
   }
 
   .research-query-footer-right {
-    justify-content: flex-end;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: stretch;
     margin-left: 0;
   }
+
+  .research-query-footer-right > button { width: 100%; }
+  .research-query-footer-right > .research-start-trigger { grid-column: 1 / -1; height: 40px; }
 
   .research-mode-picker,
   .research-mode-picker > summary {
@@ -1716,4 +1891,19 @@
   .run-search-row {
     padding: 0 12px 13px;
   }
+}
+/* Fill the available workspace while keeping a small breathing margin. */
+.research-query-home,
+.research-query-hero { width: 100%; }
+.research-query-hero { padding-left: clamp(18px, 3vw, 48px); padding-right: clamp(18px, 3vw, 48px); }
+.research-query-composer,
+.research-query-suggestions { width: min(100%, 1180px); }
+/* Balanced vertical rhythm for wide and short browser windows. */
+.research-query-home { gap: clamp(12px, 1.8vh, 22px); margin-bottom: clamp(18px, 3vh, 36px); }
+.research-query-hero { padding-top: clamp(24px, 4vh, 48px); padding-bottom: clamp(22px, 3vh, 36px); }
+.research-query-composer { margin-top: clamp(16px, 2.5vh, 28px); }
+.research-query-suggestions { margin-top: clamp(12px, 2vh, 20px); padding-top: clamp(10px, 1.5vh, 16px); }
+@media (max-height: 760px) and (min-width: 700px) {
+  .research-query-hero { padding-top: 20px; padding-bottom: 20px; }
+  .research-query-composer textarea { height: 108px; }
 }

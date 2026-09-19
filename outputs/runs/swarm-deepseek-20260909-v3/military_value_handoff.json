@@ -1,0 +1,227 @@
+{
+  "baseline_boundaries": [
+    {
+      "agent_id": "weapon_equipment",
+      "availability": "unavailable",
+      "downstream_obligations": [
+        "S3不得把基线缺失解释为候选不可行或收缩创新空间",
+        "S4按保留候选核验最近公开装备基线与直接反证",
+        "S5汇总候选级成熟度、成本产能、现役差距与未决证据"
+      ],
+      "limitations": [
+        "基线不可用原因：RuntimeError: weapon_equipment model turn completed but outer baseline result validation found no substantive findings"
+      ],
+      "open_questions": [
+        "S4/S5须针对保留的具体候选逐项核验公开装备基线、现役/在研边界、反证、成熟度与差距。"
+      ],
+      "packet_id": "packet-weapon_equipment"
+    }
+  ],
+  "branch_products": {},
+  "claims": [
+    {
+      "claim_id": "claim-d6103d230ff6",
+      "claim_type": "hypothesis",
+      "confidence": 0.5,
+      "downstream_steps": [
+        "S1",
+        "S3"
+      ],
+      "evidence_ids": [
+        "ev-international_situation-web-5824f31b34e3",
+        "ev-international_situation-web-8952c3805d5a"
+      ],
+      "failure_boundary": "GAO-25-106454在补充材料语境中易被误作反无人专项报告，实为'Defense Command and Control'框架评估（2025-04），只能支撑C2/集成类结论",
+      "mechanism": "判断：俄乌战争使'大规模低成本反无人+分布式预置+弹药储备'进入威慑力量建设维度，美及盟友制度化进程将抬高攻方以蜂群换取制空/制海权的成本，并拉长联盟介入的决策窗口，改变区域威慑与拒止可信度结构。军事任务价值：威慑评估需把'可消耗弹药库+反无人C2网'纳入力量对比，而非只看高端平台数；联盟是否共享反无人态势网络是判断介入深度的重要信号。证据边界：PDI与Force Design为公开预算/概念文件，不含对手反应与联盟承诺的实证。失效条件：若对手以中远程打击与网电攻击压制前沿分布式反无人节点，使C2节点先于蜂群被毁，威慑增量显著衰减。",
+      "military_effects": [
+        "侦察预警",
+        "指挥决策",
+        "打击歼灭",
+        "拦截反制",
+        "拒止制衡",
+        "威慑慑止"
+      ],
+      "packet_id": "packet-international_situation",
+      "source_agent_id": "international_situation",
+      "source_urls": [
+        "https://www.marines.mil/Force-Design/"
+      ]
+    },
+    {
+      "claim_id": "claim-e2f12107c0d0",
+      "claim_type": "fact",
+      "confidence": 0.49,
+      "downstream_steps": [
+        "S2",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-operational_employment-web-36638e192ebe"
+      ],
+      "failure_boundary": "'蜂群自主协同'常被视为乌战主教训，但公开战例以单机FPV与中大型侦察打击一体为主，大规模自主蜂群未见确证，将其作为迁移主线缺乏直接证据。",
+      "mechanism": "侦察-打击时间链被压缩至分钟级，制胜变量从单平台性能转向'单位时间可用架次+射手接口+信息回环时延'。军事任务价值：直接决定打击/歼灭闭环效率与连排级持续作战强度。证据边界：符合CSIS乌战教训报告主题与公开复盘共识，但本会话未能复核具体损耗统计。失效条件：电磁环境全面压制无人机链路、或对方纵深打击发射与回收点使其无法生成架次率。",
+      "military_effects": [
+        "侦察预警",
+        "指挥决策",
+        "打击歼灭",
+        "拦截反制",
+        "持续作战"
+      ],
+      "packet_id": "packet-operational_employment",
+      "source_agent_id": "operational_employment",
+      "source_urls": [
+        "https://files.gao.gov/reports/GAO-25-106454/index.html"
+      ]
+    },
+    {
+      "claim_id": "claim-14ac6a700322",
+      "claim_type": "hypothesis",
+      "confidence": 0.5,
+      "downstream_steps": [
+        "S1",
+        "S3",
+        "S4"
+      ],
+      "evidence_ids": [
+        "ev-international_situation-web-5824f31b34e3",
+        "ev-international_situation-web-8952c3805d5a"
+      ],
+      "failure_boundary": "GAO-25-106454在补充材料语境中易被误作反无人专项报告，实为'Defense Command and Control'框架评估（2025-04），只能支撑C2/集成类结论",
+      "mechanism": "判断：双方无人机损耗极高，持久作战力由弹药/机身工业产能、快速改型与再补给节律决定；俄乌启示的稀缺变量是'消耗储备+产线重组+频谱管理'，而非平台总数，这对可能遭封锁/补给中断的海岛方向更具意义。军事任务价值：抗毁与保障恢复任务效果直接决定持久拒止时长；预警指标转为无人机与反无人弹药月产能、关键器件进口依赖和前沿预置维修节点。证据边界：损耗率与产能公开数据碎片化且常夸大，目录内仅美方预算侧量级可支撑方向判断。失效条件：若未来冲突为数周定局的短高强度形态，消耗战储备权重下降，产能逻辑让位于首波火力密度。",
+      "military_effects": [
+        "侦察预警",
+        "打击歼灭",
+        "拒止制衡",
+        "生存抗毁",
+        "保障恢复"
+      ],
+      "packet_id": "packet-international_situation",
+      "source_agent_id": "international_situation",
+      "source_urls": [
+        "https://www.marines.mil/Force-Design/"
+      ]
+    },
+    {
+      "claim_id": "claim-ced14e244423",
+      "claim_type": "hypothesis",
+      "confidence": 0.49,
+      "downstream_steps": [
+        "S2",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-operational_employment-web-36638e192ebe"
+      ],
+      "failure_boundary": "'蜂群自主协同'常被视为乌战主教训，但公开战例以单机FPV与中大型侦察打击一体为主，大规模自主蜂群未见确证，将其作为迁移主线缺乏直接证据。",
+      "mechanism": "向岛链/海峡场景迁移的要点：短航渡、高密度电磁对抗与封闭后勤条件下，装备需求应聚焦抗干扰/隐蔽链路、自主末段制导、分布式低特征发射单元、以及被打断后经模块化设计与预置供应链快速再生的产能，而非继续追逐少量高精平台。军事价值：抗毁、战损续接与持续作战能力。证据边界：USMC Force Design强调分散、低特征、有人无人混编方向，PLA具体能力结构未获公开权威数据。失效条件：若海峡场景无人机生存窗口远短于乌战或补给完全中断，低成本可损耗模型不成立。",
+      "military_effects": [
+        "拦截反制",
+        "生存抗毁",
+        "保障恢复",
+        "持续作战"
+      ],
+      "packet_id": "packet-operational_employment",
+      "source_agent_id": "operational_employment",
+      "source_urls": [
+        "https://files.gao.gov/reports/GAO-25-106454/index.html"
+      ]
+    }
+  ],
+  "conflicts": [
+    "'低成本可消耗单机FPV/消耗战'与'大规模自主蜂群为主教训'冲突：公开战例以单机FPV及中大型侦察打击为主，自主协同蜂群未见确证，不应作为迁移主线。",
+    "'电子战是反无人主线'与'光纤/自主末段使射频干扰整体失效'冲突：单一克制叙事在数周尺度内反转，须按时间窗分别收敛而非择一叙事。",
+    "'持久消耗战储备/产能逻辑'与'短时高强度首波火力逻辑'冲突：若台海交战为短时高强度，储备权重下降、首波火力密度权重上升，装备需求排序随之翻转。"
+  ],
+  "frontier_inspiration_rule": "仅在后续模型完成首次自由发散后作为可选启发；可重构或全部舍弃，不得视为装备答案、命名种子、技术目录或覆盖配额。",
+  "frontier_inspirations": [
+    {
+      "conventional_assumption_challenged": "装备需求由初始技术代差与多年采购周期决定，而非前线数据回流与工业改型速度决定",
+      "downstream_question": "用什么可观测体系度量并预警对手的'数据-产线回环'速度，从而在冲突前判读其蜂群改型势能？",
+      "evidence_boundary": "改型周期与产能数据多为媒体与开源报告披露，未经本目录来源互证",
+      "evidence_ids": [
+        "ev-international_situation-web-8952c3805d5a"
+      ],
+      "packet_id": "packet-international_situation",
+      "possible_military_discontinuity": "力量运用方式从'平台编成'转向'迭代势能'：具备快速改型-再规模化-频谱更新组织能力的国家，即使未大规模交战也可形成威慑，传统军备竞赛的采购算术失效",
+      "query_relevance": "台海装备需求由此不是平台清单问题，而是如何建立并度量对手'数据-产线回环'速率并加以对抗的组织问题",
+      "signal": "俄乌双方以周/月为周期回传实战数据并改型机载软件、弹型与EW对策，形成'数据-产线-战场'快速回环",
+      "source_agent_id": "international_situation",
+      "source_urls": [
+        "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+        "https://files.gao.gov/reports/GAO-25-106454/index.html"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "反无人机制胜=更快的炮/激光/网捕等末端对抗装备的性能竞赛",
+      "downstream_question": "频谱全域反无人架构在饱和攻击与高诱饵密度下是否仍成立，需要多大规模的干扰/欺骗与备频储备支撑？",
+      "evidence_boundary": "战略与监督文件支撑方向判断，但不含真实对抗交换比",
+      "evidence_ids": [
+        "ev-international_situation-web-8952c3805d5a"
+      ],
+      "packet_id": "packet-international_situation",
+      "possible_military_discontinuity": "反无人胜负点前移至电磁频谱感知融合与联合C2：蜂群价值在链路与导航被压制时整体崩解，单件反无人装备边际价值下降，交换关系由频谱控制权决定",
+      "query_relevance": "海岛方向装备需求应围绕频谱感知、数据链韧性、欺骗/诱饵与目标数据库展开，而非仅堆叠拦截火力",
+      "signal": "美反无人政策重心落在C2框架与频谱全域应对，而非单一末端对抗装备",
+      "source_agent_id": "international_situation",
+      "source_urls": [
+        "https://files.gao.gov/reports/GAO-25-106454/index.html",
+        "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "挑战'电子战是反无人作战主线、无人机必然依赖射频链路'的常规假设。",
+      "downstream_question": "非射频链路无人机在成建制规模下受哪些后勤与战术约束限制，其对抗收敛点是物理拦截、寻源打击还是成本消耗？",
+      "evidence_boundary": "光纤FPV使用来自公开报道与交战视频，多为零散且受双方宣传口径影响，成建制占比、作战统计与跨水/巷战限制缺乏系统审计；来源目录未直接覆盖该主题。",
+      "evidence_ids": [],
+      "packet_id": "packet-operational_employment",
+      "possible_military_discontinuity": "对抗重心从电磁域干扰转向物理层：切断线缆、攻击发射阵地与操作手、以低成本动能/破缆效应器拦截，并把生产端纳入打击清单；无人机对EW的依赖被移除后，战场可用性由'链路不被压制'变为'存量与物理生存'决定。",
+      "query_relevance": "直接改变海峡高密度电磁环境下无人机与反无人机双方的可迁移装备需求，弱化单一干扰叙事，强化自主末端与物理杀伤层。",
+      "signal": "乌战双方迅速转向光纤制导FPV等非射频链路无人机，使以射频干扰为主的整条C-UAS战线阶段性失效。",
+      "source_agent_id": "operational_employment",
+      "source_urls": [
+        "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+        "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "挑战'战备库存与单件平台质量主导战果、工厂只属后方经济问题'的常规假设。",
+      "downstream_question": "何种单位成本与月产能组合能使防御方在72小时高损耗峰值期维持效果连续性，且如何以可证伪指标度量？",
+      "evidence_boundary": "产量与损耗数字主要依赖开源估算，俄乌双方官方口径相互冲突，无独立审计；'产能决定战果'是推论而非已证实规律。",
+      "evidence_ids": [],
+      "packet_id": "packet-operational_employment",
+      "possible_military_discontinuity": "把'单位成本×月产能×软件/构型改型时延'纳入战役函数后，装备体系设计的第一类指标从峰值性能转为可再生产性与可快速改型性，战争可能由'消耗战'转变为'产能与适配节奏竞争'。",
+      "query_relevance": "岛内与跨海后勤封闭性下，无人机/反无人机弹药的再生能力直接决定能否支撑高损耗强度下的持续拒止。",
+      "signal": "双方把机体月产量、改型周期与工厂作为作战变量对待，前线可用率与工业/供应链再生速率高度耦合。",
+      "source_agent_id": "operational_employment",
+      "source_urls": [
+        "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+        "https://files.gao.gov/reports/GAO-25-107263/index.html"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    }
+  ],
+  "open_questions": [
+    "乌战双方无人机月损耗量与再生产速率的可信口径？战报失真导致损耗经济学难以闭合。",
+    "RUSI/CRS等对俄乌双方无人机损耗率、有效命中与EW致效量的独立估计是多少，能否校准目录内缺失的战术级基线",
+    "S4/S5须针对保留的具体候选逐项核验公开装备基线、现役/在研边界、反证、成熟度与差距。"
+  ],
+  "query_anchor": "俄乌战争无人机与反无人机作战案例对装备需求的可迁移启示",
+  "schema": "military_value_handoff_v1",
+  "statistics": {
+    "candidate_claim_count": 10,
+    "compression_ratio": 0.5427,
+    "evidence_url_count": 2,
+    "frontier_inspiration_count": 4,
+    "input_chars": 14117,
+    "input_packet_count": 4,
+    "limited_baseline_count": 1,
+    "output_chars": 7662,
+    "selected_claim_count": 4,
+    "source_agent_count": 2
+  }
+}

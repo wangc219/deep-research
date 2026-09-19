@@ -1,4 +1,0 @@
-fetch_failed
-url=https://www.army.mil/article-amp/273510/lessons_learned_from_the_ukrainian_territorial_defense_forces_command_post_survivability
-error=HTTPStatusError: HTTP 403: Forbidden
-该诊断用于保留真实联网smoke边界；正式结论不应仅依赖失败材料。

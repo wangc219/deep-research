@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import os
 from pathlib import Path
+import signal
 import socket
 import sys
 from threading import Event, Thread
@@ -15,6 +16,10 @@ from equipment_deep_research.queue.worker import ResearchWorker
 from equipment_deep_research.runtime_identity import (
     RUNTIME_BUILD_HASH,
     versioned_worker_id,
+)
+from equipment_deep_research.runtime_process_registry import (
+    current_run_id,
+    terminate_run_process_groups,
 )
 
 
@@ -33,6 +38,15 @@ def runtime_status_for_event(event_type: str) -> str:
     if event_type == "report_model_call_started":
         return "reporting"
     return ""
+
+
+def releases_research_slot_for_event(event_type: str) -> bool:
+    """Whether a run has entered internally parallel, run-owned execution."""
+
+    return event_type in {
+        "winning_mission_graph_planned",
+        "winning_s6_card_authoring_started",
+    }
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -98,13 +112,15 @@ def main(argv: list[str] | None = None) -> int:
             None,
         )
         if existing_worker is not None:
-            current_run_id = str(existing_worker.get("current_run_id", ""))
-            detail = f"，当前任务 {current_run_id}" if current_run_id else ""
+            existing_run_id = str(existing_worker.get("current_run_id", ""))
+            detail = f"，当前任务 {existing_run_id}" if existing_run_id else ""
             print(
                 f"Worker 身份 {args.worker_id} 已由在线进程占用{detail}；拒绝重复启动。",
                 file=sys.stderr,
             )
             return 2
+
+    worker: ResearchWorker | None = None
 
     def execute(run_id: str) -> dict:
         view = service.get_run(run_id)
@@ -112,6 +128,18 @@ def main(argv: list[str] | None = None) -> int:
         run_dir = output_root / view.run_id
 
         def publish_event(event_type: str, payload: dict) -> None:
+            if releases_research_slot_for_event(event_type) and worker is not None:
+                # Dynamic S1-S6 instances and S6 cards are internal, bounded
+                # work owned by this run. Keep the process and run lease alive,
+                # but release outer research-slot accounting as soon as the
+                # mission graph starts so another queued research task can use
+                # the configured pool capacity.
+                worker.set_lease_status("internal")
+                service.touch_worker(
+                    args.worker_id,
+                    status="internal",
+                    current_run_id=run_id,
+                )
             service.publish_runtime_event(
                 run_id,
                 event_type,
@@ -162,9 +190,20 @@ def main(argv: list[str] | None = None) -> int:
             interaction_mode=getattr(view, "interaction_mode", "expert"),
             discovery_branch=getattr(view, "discovery_branch", "auto"),
             execution_profile_id=getattr(view, "execution_profile_id", "") or "legacy_v1",
-            report_template_mode=getattr(
-                view, "report_template_mode", "three_layer_nine_item"
+            report_template_mode=(
+                str(getattr(view, "report_template_mode", "") or "").strip()
+                if str(getattr(view, "report_template_mode", "") or "").strip()
+                in {"three_layer_nine_item", "project_argument_v1"}
+                else "three_layer_nine_item"
             ),
+            tenant_id=str(getattr(view, "tenant_id", "") or ""),
+            workspace_id=str(getattr(view, "workspace_id", "") or ""),
+            project_id=str(getattr(view, "project_id", "") or ""),
+            profile_id=str(
+                getattr(view, "profile_id", "")
+                or ""
+            ),
+            stage_scope=list(getattr(view, "stage_scope", []) or []),
             allow_resume_config_mismatch=run_dir.exists(),
         )
 
@@ -174,6 +213,36 @@ def main(argv: list[str] | None = None) -> int:
         worker_id=args.worker_id,
         runtime_generation=args.runtime_generation,
     )
+
+    def request_stop(signum: int, _frame: object) -> None:
+        """Stop run-owned children before the Worker process exits.
+
+        Provider CLIs deliberately run in their own process groups, so a
+        supervisor terminating this Worker cannot rely on a group-wide signal
+        to reach them.  Handle graceful Worker interruption at the boundary
+        and synchronously consume the durable registry before exiting.  The
+        task scope performs the same cleanup in its ``finally`` block during
+        ordinary exceptions; this handler covers an abrupt SIGTERM/SIGINT
+        while a model call is still in flight.
+        """
+
+        run_id = current_run_id()
+        if run_id:
+            try:
+                terminate_run_process_groups(run_id)
+            except Exception:
+                # The process is exiting; cleanup is best effort here.  A
+                # replacement Worker can still reconcile durable entries.
+                pass
+        try:
+            service.touch_worker(args.worker_id, status="stopped")
+        except Exception:
+            pass
+        raise SystemExit(128 + int(signum))
+
+    signal.signal(signal.SIGINT, request_stop)
+    signal.signal(signal.SIGTERM, request_stop)
+
     # Replace a stale heartbeat from a previous process before marking an
     # orphaned run failed. Recovery remains an explicit analyst action.
     touch_worker = getattr(service, "touch_worker", None)

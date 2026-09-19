@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=jcs.mil · Doctrine
+source_url=https://www.jcs.mil/Doctrine/
+claim=联合条令体系对频谱管理及无意干扰/蓝方自扰提出管理要求，构成复杂电磁条件下自扰风险的条令依据。
+excerpt=
+retrieval=Hosted web search citation metadata

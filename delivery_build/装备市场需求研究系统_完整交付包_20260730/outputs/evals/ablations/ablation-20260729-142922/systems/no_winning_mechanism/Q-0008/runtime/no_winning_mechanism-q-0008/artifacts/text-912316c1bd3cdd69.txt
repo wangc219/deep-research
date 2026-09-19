@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=Fact Sheet: DoD Strategy for Countering Unmanned Systems
-source_url=https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF
-claim=DoD反无人系统战略事实页指出无人系统扩散正在改变隐藏、集中、通信、机动和低成本精确打击环境。
-excerpt=
-retrieval=Hosted web search citation metadata

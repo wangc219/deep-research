@@ -3,6 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 import json
 
+import pytest
+
 from equipment_deep_research.agents.provider import (
     AgentRunResult,
     FakeAgentProvider,
@@ -14,7 +16,9 @@ from equipment_deep_research.domain.store import DomainStore, TraceStore
 from equipment_deep_research.harness.scheduler import (
     DiscoveryScheduler,
     _evidence_accept_target,
+    _evidence_saturation_target,
 )
+from equipment_deep_research.orchestration.admission import PacketAdmissionGate
 from equipment_deep_research.tools.evidence import EvidenceGovernor
 from equipment_deep_research.providers.base import ProviderFinalTurn, ProviderStreamEvent
 from equipment_deep_research.providers.fake import ScriptedFakeProvider
@@ -35,6 +39,83 @@ def test_weapon_equipment_has_deeper_formal_evidence_target(monkeypatch) -> None
 
     assert _evidence_accept_target(agent, targeted_supplement=False) == 10
     assert _evidence_accept_target(agent, targeted_supplement=True) == 3
+
+
+def test_default_evidence_targets_are_bounded_by_quality_saturation(
+    monkeypatch,
+) -> None:
+    for name in (
+        "EQUIPMENT_DR_EVIDENCE_ACCEPT_TARGET",
+        "EQUIPMENT_DR_WEAPON_EVIDENCE_ACCEPT_TARGET",
+        "EQUIPMENT_DR_EVIDENCE_SATURATION_TARGET",
+        "EQUIPMENT_DR_WEAPON_EVIDENCE_SATURATION_TARGET",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    general = AgentDef("agent", "Agent", "", ["threat"], [], {})
+    weapon = AgentDef(
+        "weapon_equipment",
+        "武器装备",
+        "",
+        ["equipment"],
+        [],
+        {},
+    )
+
+    general_target = _evidence_accept_target(
+        general, targeted_supplement=False
+    )
+    weapon_target = _evidence_accept_target(
+        weapon, targeted_supplement=False
+    )
+
+    assert general_target == 4
+    assert weapon_target == 4
+    assert _evidence_saturation_target(
+        general,
+        accepted_target=general_target,
+        targeted_supplement=False,
+    ) == 3
+    assert _evidence_saturation_target(
+        weapon,
+        accepted_target=weapon_target,
+        targeted_supplement=False,
+    ) == 3
+
+
+def test_quality_profile_caps_evidence_before_generation(monkeypatch) -> None:
+    monkeypatch.setenv("EQUIPMENT_DR_EVIDENCE_ACCEPT_TARGET", "8")
+    monkeypatch.setenv("EQUIPMENT_DR_WEAPON_EVIDENCE_ACCEPT_TARGET", "10")
+    monkeypatch.setenv("EQUIPMENT_DR_EVIDENCE_SATURATION_TARGET", "5")
+    monkeypatch.setenv("EQUIPMENT_DR_WEAPON_EVIDENCE_SATURATION_TARGET", "6")
+    weapon = AgentDef(
+        "weapon_equipment",
+        "武器装备",
+        "",
+        ["equipment"],
+        [],
+        {},
+    )
+
+    core_target = _evidence_accept_target(
+        weapon,
+        targeted_supplement=False,
+        quality_profile=True,
+    )
+    reference_target = _evidence_accept_target(
+        weapon,
+        targeted_supplement=False,
+        quality_profile=True,
+        compact_agent=True,
+    )
+
+    assert core_target == 3
+    assert reference_target == 2
+    assert _evidence_saturation_target(
+        weapon,
+        accepted_target=core_target,
+        targeted_supplement=False,
+        quality_profile=True,
+    ) == 2
 
 
 def test_scheduler_retains_low_quality_material_but_blocks_formal_evidence(tmp_path: Path) -> None:
@@ -142,11 +223,12 @@ def test_real_scheduler_streams_hosted_search_then_fetch_and_evidence_tools(
         scheduler.close()
 
 
-def test_materialization_stops_after_governed_quality_target(
+def test_materialization_stops_after_governed_quality_saturation(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    monkeypatch.setenv("EQUIPMENT_DR_EVIDENCE_ACCEPT_TARGET", "1")
+    monkeypatch.setenv("EQUIPMENT_DR_EVIDENCE_ACCEPT_TARGET", "5")
+    monkeypatch.setenv("EQUIPMENT_DR_EVIDENCE_SATURATION_TARGET", "3")
     monkeypatch.setenv("EQUIPMENT_DR_EVIDENCE_MIN_COUNT", "1")
     monkeypatch.setenv("EQUIPMENT_DR_EVIDENCE_MIN_DOMAINS", "1")
     monkeypatch.setenv("EQUIPMENT_DR_EVIDENCE_MATERIALIZE_ATTEMPTS", "5")
@@ -226,9 +308,13 @@ def test_materialization_stops_after_governed_quality_target(
             for event in scheduler.trace.events
             if event.event_type == "baseline_materialization_progress"
         ]
-        assert len(report.new_evidence_ids) == 1
-        assert all(not event.payload["continued_after_threshold"] for event in progress)
-        assert progress[-1].payload["quality_target_met"] is True
+        assert len(report.new_evidence_ids) == 3
+        assert any(event.payload["continued_after_threshold"] for event in progress)
+        assert progress[-1].payload["continued_after_threshold"] is False
+        assert progress[-1].payload["quality_saturation_met"] is True
+        assert progress[-1].payload["quality_target_met"] is False
+        assert progress[-1].payload["saturation_target"] == 3
+        assert progress[-1].payload["attempted_count"] == 3
         assert progress[-1].payload["parallel_batch_size"] == 1
     finally:
         scheduler.close()
@@ -333,5 +419,106 @@ def test_real_codex_baseline_with_one_formal_source_is_limited_not_fatal(
         assert packet.evidence_ids == ["ev-one"]
         assert packet.confidence == 0.49
         assert any("正式证据少于3条" in item for item in packet.limitations)
+    finally:
+        scheduler.close()
+
+
+def test_recoverable_baseline_timeout_becomes_auditable_limited_boundary(
+    tmp_path: Path,
+) -> None:
+    class TimedOutCodexProvider:
+        provider_kind = "codex_cli"
+        enforce_profile_stops = True
+        uses_hosted_web_search = False
+
+        def run_baseline_agent(self, request):
+            del request
+            raise RuntimeError("Codex CLI timed out after 90 seconds")
+
+    store = DomainStore()
+    trace = TraceStore()
+    scheduler = DiscoveryScheduler(
+        run_id="run-timeout-limited",
+        run_dir=tmp_path / "run-timeout-limited",
+        provider=TimedOutCodexProvider(),
+        store=store,
+        trace=trace,
+        mode="real",
+    )
+    try:
+        report = scheduler.run_agent(
+            agent=AgentDef(
+                "weapon_equipment",
+                "武器装备",
+                "",
+                ["equipment", "capability_gap"],
+                [],
+                {},
+            ),
+            topic="不完备战场信息条件下精确打击",
+            research_route="traditional_gap",
+            raise_on_error=True,
+            plan_mode="required",
+        )
+        packet = store.baseline_packets[report.packet_id]
+        bundle = PacketAdmissionGate().extract_claim_bundle(packet, {})
+        decision = PacketAdmissionGate().evaluate(packet, bundle, {})
+
+        assert report.status == "limited"
+        assert report.stop_reason == "recoverable_baseline_unavailable"
+        assert packet.payload_type == "baseline_availability_boundary_v1"
+        assert packet.findings == []
+        assert packet.evidence_ids == []
+        assert packet.payload["evidence_assertion"] == "none"
+        assert decision.status == "limited"
+        assert decision.accepted_claim_ids == ()
+        limited = [
+            event
+            for event in trace.events
+            if event.event_type == "baseline_agent_limited"
+        ]
+        assert limited[-1].payload["gate_impact"] == (
+            "non_blocking_degraded_baseline"
+        )
+    finally:
+        scheduler.close()
+
+
+def test_nonrecoverable_baseline_schema_error_remains_hard_failure(
+    tmp_path: Path,
+) -> None:
+    class InvalidSchemaProvider:
+        provider_kind = "codex_cli"
+        enforce_profile_stops = True
+        uses_hosted_web_search = False
+
+        def run_baseline_agent(self, request):
+            del request
+            raise ValueError("baseline packet schema is corrupt")
+
+    scheduler = DiscoveryScheduler(
+        run_id="run-schema-hard-failure",
+        run_dir=tmp_path / "run-schema-hard-failure",
+        provider=InvalidSchemaProvider(),
+        store=DomainStore(),
+        trace=TraceStore(),
+        mode="real",
+    )
+    try:
+        with pytest.raises(ValueError, match="schema is corrupt"):
+            scheduler.run_agent(
+                agent=AgentDef(
+                    "weapon_equipment",
+                    "武器装备",
+                    "",
+                    ["equipment"],
+                    [],
+                    {},
+                ),
+                topic="topic",
+                research_route="traditional_gap",
+                raise_on_error=True,
+            )
+        assert scheduler.store.baseline_packets == {}
     finally:
         scheduler.close()

@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · expeditionary advanced base operations eabo
+source_url=https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/
+claim=EABO 将前沿、低特征、可分布部署的海军远征运用与海上拒止、前推感知和前推保障联系起来。
+excerpt=
+retrieval=Hosted web search citation metadata

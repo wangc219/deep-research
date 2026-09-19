@@ -1,0 +1,150 @@
+{
+  "baseline_boundaries": [
+    {
+      "agent_id": "weapon_equipment",
+      "availability": "unavailable",
+      "downstream_obligations": [
+        "S3不得把基线缺失解释为候选不可行或收缩创新空间",
+        "S4按保留候选核验最近公开装备基线与直接反证",
+        "S5汇总候选级成熟度、成本产能、现役差距与未决证据"
+      ],
+      "limitations": [
+        "基线不可用原因：RuntimeError: weapon_equipment model turn completed but outer baseline result validation found no substantive findings"
+      ],
+      "open_questions": [
+        "S4/S5须针对保留的具体候选逐项核验公开装备基线、现役/在研边界、反证、成熟度与差距。"
+      ],
+      "packet_id": "packet-weapon_equipment"
+    },
+    {
+      "agent_id": "operational_employment",
+      "availability": "unavailable",
+      "downstream_obligations": [
+        "S3不得把基线缺失解释为候选不可行或收缩创新空间",
+        "S4按保留候选核验最近公开装备基线与直接反证",
+        "S5汇总候选级成熟度、成本产能、现役差距与未决证据"
+      ],
+      "limitations": [
+        "基线不可用原因：RuntimeError: operational_employment model turn completed but outer baseline result validation found no substantive findings"
+      ],
+      "open_questions": [
+        "S4/S5须针对保留的具体候选逐项核验公开装备基线、现役/在研边界、反证、成熟度与差距。"
+      ],
+      "packet_id": "packet-operational_employment"
+    }
+  ],
+  "branch_products": {},
+  "claims": [
+    {
+      "claim_id": "claim-93d2070e5ed9",
+      "claim_type": "hypothesis",
+      "confidence": 0.7,
+      "downstream_steps": [
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-combat_scenario-web-5824f31b34e3",
+        "ev-combat_scenario-web-8952c3805d5a"
+      ],
+      "failure_boundary": "{'id': 'C1', 'type': '资源优先级与差距命题冲突', 'description': \"E6 显示审计与采办注意力优先流向远距火力/炮兵现代化，与本报告'低空防空闭环为首要差距'的判断方向相反。该反证仅为主题相邻的次级证据，未直接否定差距本身，但否定其当期制度性优先级。\", 'handling': '保留为次级反证，F1/F2 的主次排序按",
+      "mechanism": "{'id': 'F5', 'judgment': '第五差距是环境与部署形态差距：高海拔稀薄空气、湿热、城市峡谷多径、海面杂波与地形遮蔽共同压缩传统低空防空的探测与导弹动力学包线，且重装备难以快速转场补盲。', 'military_task_value': '保障恢复+威慑：防空覆盖的地理连续性本身是拒止与威慑的可信度来源；盲区的存在即鼓励对方渗透。', 'evidence_boundary': 'E2/E3提供分布式与多环境运用的概念性依据；具体高度/温度对某型拦截弹的包线衰减数据属工程参数，本回合未获目录内来源支持，仅为压力条件设定。', 'confidence': 0.62, 'invalidation_condition': '若主要作战方向为开阔地形、预警体系前",
+      "military_effects": [
+        "侦察预警",
+        "拦截反制",
+        "拒止制衡",
+        "威慑慑止",
+        "保障恢复",
+        "体系协同"
+      ],
+      "packet_id": "packet-combat_scenario",
+      "source_agent_id": "combat_scenario",
+      "source_urls": [
+        "https://www.marines.mil/Force-Design/"
+      ]
+    },
+    {
+      "claim_id": "claim-8d2bc9f8a04d",
+      "claim_type": "hypothesis",
+      "confidence": 0.7,
+      "downstream_steps": [
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-combat_scenario-web-5824f31b34e3",
+        "ev-combat_scenario-web-8952c3805d5a"
+      ],
+      "failure_boundary": "{'id': 'C1', 'type': '资源优先级与差距命题冲突', 'description': \"E6 显示审计与采办注意力优先流向远距火力/炮兵现代化，与本报告'低空防空闭环为首要差距'的判断方向相反。该反证仅为主题相邻的次级证据，未直接否定差距本身，但否定其当期制度性优先级。\", 'handling': '保留为次级反证，F1/F2 的主次排序按",
+      "mechanism": "{'id': 'F1', 'judgment': \"首要差距不是射程/速度包线不足，而是'低空发现—敌我识别—火力分配'闭环在低慢小目标、地杂波与诱饵混合编队下不闭合：传统低空雷达与火控按有人机/反辐射导弹目标设计，微小型RCS目标的杂波抑制、虚警率与多目标通道数成为瓶颈。\", 'military_task_value': \"侦察预警+指挥决策：决定'发现—决策—打击—评估'链能否在数十秒内闭合，直接决定要地是否出现拦截空洞。\", 'evidence_boundary': \"E4/E5支撑'自主系统与多域对抗使防空预警决策链承压、联合C2缺乏统一框架'的判断；具体雷达虚警/通道数指标来自未纳入来源目录的公开报道，未获目录内交叉印证。\", 'invalidation_con",
+      "military_effects": [
+        "侦察预警",
+        "指挥决策",
+        "打击歼灭",
+        "拦截反制"
+      ],
+      "packet_id": "packet-combat_scenario",
+      "source_agent_id": "combat_scenario",
+      "source_urls": [
+        "https://www.marines.mil/Force-Design/"
+      ]
+    }
+  ],
+  "conflicts": [],
+  "frontier_inspiration_rule": "仅在后续模型完成首次自由发散后作为可选启发；可重构或全部舍弃，不得视为装备答案、命名种子、技术目录或覆盖配额。",
+  "frontier_inspirations": [
+    {
+      "conventional_assumption_challenged": "",
+      "downstream_question": "",
+      "evidence_boundary": "",
+      "evidence_ids": [
+        "ev-combat_scenario-web-5824f31b34e3",
+        "ev-combat_scenario-web-8952c3805d5a"
+      ],
+      "packet_id": "packet-combat_scenario",
+      "possible_military_discontinuity": "",
+      "query_relevance": "直接决定升级功能应指向'可消耗、可量产、可自主交战'的低端拦截能力，而非高端单平台指标叠加。",
+      "signal": "公开战例中出现单价数千美元级固定翼/旋翼自主拦截无人机与'用无人机打无人机'的作战需求，同时防空系统自身的雷达/发射车被廉价无人机击伤。",
+      "source_agent_id": "combat_scenario",
+      "source_urls": [],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "",
+      "downstream_question": "",
+      "evidence_boundary": "",
+      "evidence_ids": [
+        "ev-combat_scenario-web-5824f31b34e3",
+        "ev-combat_scenario-web-8952c3805d5a"
+      ],
+      "packet_id": "packet-combat_scenario",
+      "possible_military_discontinuity": "",
+      "query_relevance": "为传统低空防空'雷达即命门'的结构性差距提供替代路径，是升级功能中可能被低估的一档。",
+      "signal": "辐射控制与反辐射/无人机猎杀压力下，无源/被动协同探测（分布式射频收检、光电、声学交叉定位）进入防空传感器讨论。",
+      "source_agent_id": "combat_scenario",
+      "source_urls": [],
+      "status": "optional_post_divergence_inspiration"
+    }
+  ],
+  "open_questions": [
+    "S4/S5须针对保留的具体候选逐项核验公开装备基线、现役/在研边界、反证、成熟度与差距。"
+  ],
+  "query_anchor": "传统低空防空装备差距与升级功能",
+  "schema": "military_value_handoff_v1",
+  "statistics": {
+    "candidate_claim_count": 5,
+    "compression_ratio": 0.31,
+    "evidence_url_count": 1,
+    "frontier_inspiration_count": 2,
+    "input_chars": 13645,
+    "input_packet_count": 3,
+    "limited_baseline_count": 2,
+    "output_chars": 4230,
+    "selected_claim_count": 2,
+    "source_agent_count": 1
+  }
+}

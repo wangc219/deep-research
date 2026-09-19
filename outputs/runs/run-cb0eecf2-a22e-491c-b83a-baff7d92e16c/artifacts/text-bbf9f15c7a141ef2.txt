@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=gao.gov · gao 22 105705
+source_url=https://www.gao.gov/products/gao-22-105705
+claim=GAO指出反无人机系统面临小型目标探测跟踪困难、电磁干扰与误警、有效距离有限以及强干扰可能影响己方通信等问题。
+excerpt=
+retrieval=Hosted web search citation metadata

@@ -40,7 +40,7 @@ from equipment_deep_research.harness.event_bus import (
 from equipment_deep_research.harness.events import RuntimeEvent
 from equipment_deep_research.harness.session import JsonlSessionStore
 from equipment_deep_research.providers.base import ModelMessage, ModelProvider
-from equipment_deep_research.tools.definitions import (
+from equipment_deep_research.contracts.tools import (
     ToolCall,
     ToolDefinition,
     ToolExecutionContext,

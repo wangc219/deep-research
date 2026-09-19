@@ -1,0 +1,91 @@
+[
+  {
+    "adopted_by_capability_ids": [],
+    "adopted_by_report_sections": [],
+    "adopted_by_s_steps": {},
+    "agent_id": "case_research",
+    "contributed": false,
+    "loao_quality_delta": null,
+    "model_calls": 3,
+    "observation_id": "contribution-packet-case_research",
+    "packet_id": "packet-case_research",
+    "produced_claim_ids": [
+      "claim-e3fafd88324d"
+    ]
+  },
+  {
+    "adopted_by_capability_ids": [],
+    "adopted_by_report_sections": [
+      "final_report"
+    ],
+    "adopted_by_s_steps": {
+      "S1": [
+        "claim-3dd97da43827",
+        "claim-6493195c1ef9",
+        "claim-8d1cd9bb855f",
+        "claim-df8ee2e9776e",
+        "claim-1b522596a5b9"
+      ],
+      "S2": [
+        "claim-3dd97da43827",
+        "claim-6493195c1ef9",
+        "claim-8d1cd9bb855f",
+        "claim-df8ee2e9776e",
+        "claim-1b522596a5b9"
+      ],
+      "S3": [
+        "claim-3dd97da43827",
+        "claim-6493195c1ef9",
+        "claim-8d1cd9bb855f",
+        "claim-df8ee2e9776e",
+        "claim-1b522596a5b9"
+      ],
+      "S4": [
+        "claim-3dd97da43827",
+        "claim-6493195c1ef9",
+        "claim-8d1cd9bb855f",
+        "claim-df8ee2e9776e",
+        "claim-1b522596a5b9"
+      ],
+      "S5": [
+        "claim-3dd97da43827",
+        "claim-6493195c1ef9",
+        "claim-8d1cd9bb855f",
+        "claim-df8ee2e9776e",
+        "claim-1b522596a5b9"
+      ],
+      "S6": [
+        "claim-3dd97da43827",
+        "claim-6493195c1ef9",
+        "claim-8d1cd9bb855f",
+        "claim-df8ee2e9776e",
+        "claim-1b522596a5b9"
+      ]
+    },
+    "agent_id": "system_confrontation",
+    "contributed": true,
+    "loao_quality_delta": null,
+    "model_calls": 2,
+    "observation_id": "contribution-packet-system_confrontation",
+    "packet_id": "packet-system_confrontation",
+    "produced_claim_ids": [
+      "claim-3dd97da43827",
+      "claim-6493195c1ef9",
+      "claim-8d1cd9bb855f",
+      "claim-df8ee2e9776e",
+      "claim-1b522596a5b9"
+    ]
+  },
+  {
+    "adopted_by_capability_ids": [],
+    "adopted_by_report_sections": [],
+    "adopted_by_s_steps": {},
+    "agent_id": "weapon_equipment",
+    "contributed": false,
+    "loao_quality_delta": null,
+    "model_calls": 0,
+    "observation_id": "contribution-packet-weapon_equipment",
+    "packet_id": "packet-weapon_equipment",
+    "produced_claim_ids": []
+  }
+]

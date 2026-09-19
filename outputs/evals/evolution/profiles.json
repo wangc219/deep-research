@@ -7,7 +7,7 @@
       "base_profile_id": "",
       "changes": {},
       "config_hash": "legacy-v1",
-      "created_at": "2026-07-28T05:33:08.856878+00:00",
+      "created_at": "2026-09-19T16:22:23.594424+00:00",
       "hypothesis": "production-compatible legacy behavior",
       "profile_id": "legacy_v1",
       "source_code_change": false,
@@ -18,20 +18,24 @@
       "base_profile_id": "legacy_v1",
       "changes": {
         "budget": {
-          "absolute_deadline_seconds": 2100,
-          "codex_concurrency": 5,
-          "critical_fast_finalize_seconds": 120,
+          "absolute_deadline_seconds": 0,
+          "codex_concurrency": 8,
+          "critical_fast_finalize_seconds": 0,
           "deadline_downshift_window_seconds": 240,
-          "delivery_grace_seconds": 300,
+          "delivery_grace_seconds": 0,
           "delivery_retry_reserve_seconds": 45,
           "fast_finalize_output_token_cap": 4200,
-          "hard_deadline_seconds": 1800,
+          "hard_deadline_seconds": 0,
           "max_rounds": 3,
-          "maximum_delivery_model_calls": 4,
+          "maximum_delivery_model_calls": 8,
+          "maximum_reporter_model_calls": 36,
           "normal_model_calls": 10,
+          "reporter_codex_concurrency": 12,
           "residual_model_calls": 14,
+          "s6_codex_concurrency": 32,
           "searches": 12,
-          "soft_deadline_seconds": 1200
+          "soft_deadline_seconds": 0,
+          "wall_clock_deadlines_enabled": false
         },
         "dependency": "hard barriers and physical cohorts",
         "model_tier": {
@@ -47,14 +51,14 @@
         },
         "routing": "A-H branch contracts"
       },
-      "config_hash": "87117162b40f94b82c5875f4fb3e6dff3b80f2c11ab8c84ad2215f5187ef18e7",
-      "created_at": "2026-07-28T05:33:08.856878+00:00",
+      "config_hash": "360ee539a2109c26757737dea1032a57e722af9e9e8dbffc7b091a1bb6d21a1d",
+      "created_at": "2026-09-19T16:22:23.594424+00:00",
       "execution_profile": {
         "agent_mode": "branch_contract_with_physical_cohorts",
         "approved": false,
         "branch_contracts": {
           "A": {
-            "absolute_deadline_seconds": 2100,
+            "absolute_deadline_seconds": 0,
             "background_count": 3,
             "backtrack_map": {
               "capability_mapping": [
@@ -92,12 +96,12 @@
             ],
             "codex_concurrency": 5,
             "contract_id": "branch-a-optimized-v2",
-            "critical_fast_finalize_seconds": 120,
+            "critical_fast_finalize_seconds": 0,
             "deadline_downshift_window_seconds": 240,
-            "delivery_grace_seconds": 300,
+            "delivery_grace_seconds": 0,
             "delivery_retry_reserve_seconds": 45,
             "fast_finalize_output_token_cap": 4200,
-            "hard_deadline_seconds": 1800,
+            "hard_deadline_seconds": 0,
             "logical_agent_dag": {
               "S1": [
                 "combat_scenario"
@@ -129,17 +133,20 @@
                 "S2"
               ]
             },
-            "maximum_delivery_model_calls": 4,
+            "maximum_delivery_model_calls": 8,
             "maximum_model_calls": 10,
             "maximum_model_calls_with_residuals": 14,
+            "maximum_quality_judge_model_calls": 2,
             "maximum_rounds": 3,
             "maximum_searches": 12,
+            "maximum_swarm_model_calls": 20,
             "physical_cohorts": [
               [
                 1,
                 2
               ],
               [
+                3,
                 4,
                 5
               ]
@@ -149,7 +156,7 @@
               2
             ],
             "schema_version": "2.0",
-            "soft_deadline_seconds": 1200,
+            "soft_deadline_seconds": 0,
             "step_intensity": {
               "1": "light",
               "2": "deep",
@@ -162,12 +169,12 @@
               "all_required_branch_products_present",
               "accepted_claims_traceable_to_public_sources",
               "no_repeated_residual_without_new_evidence",
-              "estimated_quality_gain_below_0.03",
-              "hard_deadline_enters_fast_finalize"
-            ]
+              "estimated_quality_gain_below_0.03"
+            ],
+            "wall_clock_deadlines_enabled": false
           },
           "B": {
-            "absolute_deadline_seconds": 2100,
+            "absolute_deadline_seconds": 0,
             "background_count": 3,
             "backtrack_map": {
               "capability_mapping": [
@@ -203,12 +210,12 @@
             ],
             "codex_concurrency": 5,
             "contract_id": "branch-b-optimized-v2",
-            "critical_fast_finalize_seconds": 120,
+            "critical_fast_finalize_seconds": 0,
             "deadline_downshift_window_seconds": 240,
-            "delivery_grace_seconds": 300,
+            "delivery_grace_seconds": 0,
             "delivery_retry_reserve_seconds": 45,
             "fast_finalize_output_token_cap": 4200,
-            "hard_deadline_seconds": 1800,
+            "hard_deadline_seconds": 0,
             "logical_agent_dag": {
               "S1": [
                 "combat_scenario"
@@ -237,11 +244,13 @@
                 "S6"
               ]
             },
-            "maximum_delivery_model_calls": 4,
+            "maximum_delivery_model_calls": 8,
             "maximum_model_calls": 10,
             "maximum_model_calls_with_residuals": 14,
+            "maximum_quality_judge_model_calls": 2,
             "maximum_rounds": 3,
             "maximum_searches": 12,
+            "maximum_swarm_model_calls": 20,
             "physical_cohorts": [
               [
                 1,
@@ -258,7 +267,7 @@
               3
             ],
             "schema_version": "2.0",
-            "soft_deadline_seconds": 1200,
+            "soft_deadline_seconds": 0,
             "step_intensity": {
               "1": "standard",
               "2": "standard",
@@ -271,12 +280,12 @@
               "all_required_branch_products_present",
               "accepted_claims_traceable_to_public_sources",
               "no_repeated_residual_without_new_evidence",
-              "estimated_quality_gain_below_0.03",
-              "hard_deadline_enters_fast_finalize"
-            ]
+              "estimated_quality_gain_below_0.03"
+            ],
+            "wall_clock_deadlines_enabled": false
           },
           "C": {
-            "absolute_deadline_seconds": 2100,
+            "absolute_deadline_seconds": 0,
             "background_count": null,
             "backtrack_map": {
               "capability_mapping": [
@@ -307,12 +316,12 @@
             ],
             "codex_concurrency": 5,
             "contract_id": "branch-c-optimized-v2",
-            "critical_fast_finalize_seconds": 120,
+            "critical_fast_finalize_seconds": 0,
             "deadline_downshift_window_seconds": 240,
-            "delivery_grace_seconds": 300,
+            "delivery_grace_seconds": 0,
             "delivery_retry_reserve_seconds": 45,
             "fast_finalize_output_token_cap": 4200,
-            "hard_deadline_seconds": 1800,
+            "hard_deadline_seconds": 0,
             "logical_agent_dag": {
               "S3": [
                 "case_research"
@@ -335,11 +344,13 @@
               ],
               "scenario_divergence": []
             },
-            "maximum_delivery_model_calls": 4,
+            "maximum_delivery_model_calls": 8,
             "maximum_model_calls": 10,
             "maximum_model_calls_with_residuals": 14,
+            "maximum_quality_judge_model_calls": 2,
             "maximum_rounds": 3,
             "maximum_searches": 12,
+            "maximum_swarm_model_calls": 20,
             "physical_cohorts": [
               [
                 3,
@@ -349,7 +360,7 @@
             ],
             "scenarios_per_background": null,
             "schema_version": "2.0",
-            "soft_deadline_seconds": 1200,
+            "soft_deadline_seconds": 0,
             "step_intensity": {
               "1": "skip",
               "2": "skip",
@@ -362,12 +373,12 @@
               "all_required_branch_products_present",
               "accepted_claims_traceable_to_public_sources",
               "no_repeated_residual_without_new_evidence",
-              "estimated_quality_gain_below_0.03",
-              "hard_deadline_enters_fast_finalize"
-            ]
+              "estimated_quality_gain_below_0.03"
+            ],
+            "wall_clock_deadlines_enabled": false
           },
           "D": {
-            "absolute_deadline_seconds": 2100,
+            "absolute_deadline_seconds": 0,
             "background_count": null,
             "backtrack_map": {
               "driver": [
@@ -393,12 +404,12 @@
             ],
             "codex_concurrency": 5,
             "contract_id": "branch-d-optimized-v2",
-            "critical_fast_finalize_seconds": 120,
+            "critical_fast_finalize_seconds": 0,
             "deadline_downshift_window_seconds": 240,
-            "delivery_grace_seconds": 300,
+            "delivery_grace_seconds": 0,
             "delivery_retry_reserve_seconds": 45,
             "fast_finalize_output_token_cap": 4200,
-            "hard_deadline_seconds": 1800,
+            "hard_deadline_seconds": 0,
             "logical_agent_dag": {
               "S3": [
                 "driver_agent"
@@ -414,11 +425,13 @@
                 "S6"
               ]
             },
-            "maximum_delivery_model_calls": 4,
+            "maximum_delivery_model_calls": 8,
             "maximum_model_calls": 10,
             "maximum_model_calls_with_residuals": 14,
+            "maximum_quality_judge_model_calls": 2,
             "maximum_rounds": 3,
             "maximum_searches": 12,
+            "maximum_swarm_model_calls": 20,
             "physical_cohorts": [
               [
                 3,
@@ -428,7 +441,7 @@
             ],
             "scenarios_per_background": null,
             "schema_version": "2.0",
-            "soft_deadline_seconds": 1200,
+            "soft_deadline_seconds": 0,
             "step_intensity": {
               "1": "skip",
               "2": "skip",
@@ -441,12 +454,12 @@
               "all_required_branch_products_present",
               "accepted_claims_traceable_to_public_sources",
               "no_repeated_residual_without_new_evidence",
-              "estimated_quality_gain_below_0.03",
-              "hard_deadline_enters_fast_finalize"
-            ]
+              "estimated_quality_gain_below_0.03"
+            ],
+            "wall_clock_deadlines_enabled": false
           },
           "E": {
-            "absolute_deadline_seconds": 2100,
+            "absolute_deadline_seconds": 0,
             "background_count": null,
             "backtrack_map": {
               "driver": [
@@ -472,12 +485,12 @@
             ],
             "codex_concurrency": 5,
             "contract_id": "branch-e-optimized-v2",
-            "critical_fast_finalize_seconds": 120,
+            "critical_fast_finalize_seconds": 0,
             "deadline_downshift_window_seconds": 240,
-            "delivery_grace_seconds": 300,
+            "delivery_grace_seconds": 0,
             "delivery_retry_reserve_seconds": 45,
             "fast_finalize_output_token_cap": 4200,
-            "hard_deadline_seconds": 1800,
+            "hard_deadline_seconds": 0,
             "logical_agent_dag": {
               "S3": [
                 "driver_agent"
@@ -493,11 +506,13 @@
                 "S6"
               ]
             },
-            "maximum_delivery_model_calls": 4,
+            "maximum_delivery_model_calls": 8,
             "maximum_model_calls": 10,
             "maximum_model_calls_with_residuals": 14,
+            "maximum_quality_judge_model_calls": 2,
             "maximum_rounds": 3,
             "maximum_searches": 12,
+            "maximum_swarm_model_calls": 20,
             "physical_cohorts": [
               [
                 3,
@@ -507,7 +522,7 @@
             ],
             "scenarios_per_background": null,
             "schema_version": "2.0",
-            "soft_deadline_seconds": 1200,
+            "soft_deadline_seconds": 0,
             "step_intensity": {
               "1": "deep",
               "2": "skip",
@@ -520,12 +535,12 @@
               "all_required_branch_products_present",
               "accepted_claims_traceable_to_public_sources",
               "no_repeated_residual_without_new_evidence",
-              "estimated_quality_gain_below_0.03",
-              "hard_deadline_enters_fast_finalize"
-            ]
+              "estimated_quality_gain_below_0.03"
+            ],
+            "wall_clock_deadlines_enabled": false
           },
           "F": {
-            "absolute_deadline_seconds": 2100,
+            "absolute_deadline_seconds": 0,
             "background_count": null,
             "backtrack_map": {
               "driver": [
@@ -551,12 +566,12 @@
             ],
             "codex_concurrency": 5,
             "contract_id": "branch-f-optimized-v2",
-            "critical_fast_finalize_seconds": 120,
+            "critical_fast_finalize_seconds": 0,
             "deadline_downshift_window_seconds": 240,
-            "delivery_grace_seconds": 300,
+            "delivery_grace_seconds": 0,
             "delivery_retry_reserve_seconds": 45,
             "fast_finalize_output_token_cap": 4200,
-            "hard_deadline_seconds": 1800,
+            "hard_deadline_seconds": 0,
             "logical_agent_dag": {
               "S3": [
                 "driver_agent"
@@ -572,11 +587,13 @@
                 "S6"
               ]
             },
-            "maximum_delivery_model_calls": 4,
+            "maximum_delivery_model_calls": 8,
             "maximum_model_calls": 10,
             "maximum_model_calls_with_residuals": 14,
+            "maximum_quality_judge_model_calls": 2,
             "maximum_rounds": 3,
             "maximum_searches": 12,
+            "maximum_swarm_model_calls": 20,
             "physical_cohorts": [
               [
                 3,
@@ -586,7 +603,7 @@
             ],
             "scenarios_per_background": null,
             "schema_version": "2.0",
-            "soft_deadline_seconds": 1200,
+            "soft_deadline_seconds": 0,
             "step_intensity": {
               "1": "skip",
               "2": "skip",
@@ -599,12 +616,12 @@
               "all_required_branch_products_present",
               "accepted_claims_traceable_to_public_sources",
               "no_repeated_residual_without_new_evidence",
-              "estimated_quality_gain_below_0.03",
-              "hard_deadline_enters_fast_finalize"
-            ]
+              "estimated_quality_gain_below_0.03"
+            ],
+            "wall_clock_deadlines_enabled": false
           },
           "G": {
-            "absolute_deadline_seconds": 2100,
+            "absolute_deadline_seconds": 0,
             "background_count": null,
             "backtrack_map": {
               "driver": [
@@ -630,12 +647,12 @@
             ],
             "codex_concurrency": 5,
             "contract_id": "branch-g-optimized-v2",
-            "critical_fast_finalize_seconds": 120,
+            "critical_fast_finalize_seconds": 0,
             "deadline_downshift_window_seconds": 240,
-            "delivery_grace_seconds": 300,
+            "delivery_grace_seconds": 0,
             "delivery_retry_reserve_seconds": 45,
             "fast_finalize_output_token_cap": 4200,
-            "hard_deadline_seconds": 1800,
+            "hard_deadline_seconds": 0,
             "logical_agent_dag": {
               "S3": [
                 "driver_agent"
@@ -651,11 +668,13 @@
                 "S6"
               ]
             },
-            "maximum_delivery_model_calls": 4,
+            "maximum_delivery_model_calls": 8,
             "maximum_model_calls": 10,
             "maximum_model_calls_with_residuals": 14,
+            "maximum_quality_judge_model_calls": 2,
             "maximum_rounds": 3,
             "maximum_searches": 12,
+            "maximum_swarm_model_calls": 20,
             "physical_cohorts": [
               [
                 3,
@@ -664,7 +683,7 @@
             ],
             "scenarios_per_background": null,
             "schema_version": "2.0",
-            "soft_deadline_seconds": 1200,
+            "soft_deadline_seconds": 0,
             "step_intensity": {
               "1": "skip",
               "2": "skip",
@@ -677,12 +696,12 @@
               "all_required_branch_products_present",
               "accepted_claims_traceable_to_public_sources",
               "no_repeated_residual_without_new_evidence",
-              "estimated_quality_gain_below_0.03",
-              "hard_deadline_enters_fast_finalize"
-            ]
+              "estimated_quality_gain_below_0.03"
+            ],
+            "wall_clock_deadlines_enabled": false
           },
           "H": {
-            "absolute_deadline_seconds": 2100,
+            "absolute_deadline_seconds": 0,
             "background_count": null,
             "backtrack_map": {
               "driver": [
@@ -708,12 +727,12 @@
             ],
             "codex_concurrency": 5,
             "contract_id": "branch-h-optimized-v2",
-            "critical_fast_finalize_seconds": 120,
+            "critical_fast_finalize_seconds": 0,
             "deadline_downshift_window_seconds": 240,
-            "delivery_grace_seconds": 300,
+            "delivery_grace_seconds": 0,
             "delivery_retry_reserve_seconds": 45,
             "fast_finalize_output_token_cap": 4200,
-            "hard_deadline_seconds": 1800,
+            "hard_deadline_seconds": 0,
             "logical_agent_dag": {
               "S3": [
                 "driver_agent"
@@ -729,11 +748,13 @@
                 "S6"
               ]
             },
-            "maximum_delivery_model_calls": 4,
+            "maximum_delivery_model_calls": 8,
             "maximum_model_calls": 10,
             "maximum_model_calls_with_residuals": 14,
+            "maximum_quality_judge_model_calls": 2,
             "maximum_rounds": 3,
             "maximum_searches": 12,
+            "maximum_swarm_model_calls": 20,
             "physical_cohorts": [
               [
                 3,
@@ -742,7 +763,7 @@
             ],
             "scenarios_per_background": null,
             "schema_version": "2.0",
-            "soft_deadline_seconds": 1200,
+            "soft_deadline_seconds": 0,
             "step_intensity": {
               "1": "deep",
               "2": "skip",
@@ -755,28 +776,32 @@
               "all_required_branch_products_present",
               "accepted_claims_traceable_to_public_sources",
               "no_repeated_residual_without_new_evidence",
-              "estimated_quality_gain_below_0.03",
-              "hard_deadline_enters_fast_finalize"
-            ]
+              "estimated_quality_gain_below_0.03"
+            ],
+            "wall_clock_deadlines_enabled": false
           }
         },
         "budgets": {
-          "absolute_deadline_seconds": 2100,
-          "codex_concurrency": 5,
-          "critical_fast_finalize_seconds": 120,
+          "absolute_deadline_seconds": 0,
+          "codex_concurrency": 8,
+          "critical_fast_finalize_seconds": 0,
           "deadline_downshift_window_seconds": 240,
-          "delivery_grace_seconds": 300,
+          "delivery_grace_seconds": 0,
           "delivery_retry_reserve_seconds": 45,
           "fast_finalize_output_token_cap": 4200,
-          "hard_deadline_seconds": 1800,
+          "hard_deadline_seconds": 0,
           "max_rounds": 3,
-          "maximum_delivery_model_calls": 4,
+          "maximum_delivery_model_calls": 8,
+          "maximum_reporter_model_calls": 36,
           "normal_model_calls": 10,
+          "reporter_codex_concurrency": 12,
           "residual_model_calls": 14,
+          "s6_codex_concurrency": 32,
           "searches": 12,
-          "soft_deadline_seconds": 1200
+          "soft_deadline_seconds": 0,
+          "wall_clock_deadlines_enabled": false
         },
-        "config_hash": "87117162b40f94b82c5875f4fb3e6dff3b80f2c11ab8c84ad2215f5187ef18e7",
+        "config_hash": "360ee539a2109c26757737dea1032a57e722af9e9e8dbffc7b091a1bb6d21a1d",
         "harness_version": "optimized_v2",
         "model_tiers": {
           "S2-S6": "quality",

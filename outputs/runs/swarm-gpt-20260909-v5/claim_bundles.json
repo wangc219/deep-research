@@ -1,0 +1,357 @@
+[
+  {
+    "bundle_id": "claims-2c10f17e400f",
+    "claims": [
+      {
+        "claim_id": "claim-77cdad038b25",
+        "claim_type": "hypothesis",
+        "confidence": 0.72,
+        "counter_evidence": [
+          "公开材料一方面强调联合全域指挥控制、共同态势图和伙伴互操作，另一方面GAO仍指出数据孤岛、人工转录、非互操作接口和分类限制，显示概念目标与现有执行能力之间存在落差。",
+          "反无人系统战略强调开放式、模块化、规模化交付，但高强度台海环境同时要求抗毁、低误警和快速适应，公开材料未证明这些目标能在受扰环境中同时满足。",
+          "台湾方面公开称预警应变时间被压缩并发展多源情报共享，但未公开说明低空无人系统在复杂地物、海杂波和饱和条件下的识别可信度边界。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-international_situation-web-8952c3805d5a",
+          "ev-international_situation-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "判断：台海低空无人系统探测预警的首要失效断点不是单一传感器探测距离，而是危机到局部冲突阶段“发现-识别-告警-防御响应”的跨域时序塌缩；军事任务价值在于把零散低空接触转化为可置信告警，维持持续发现和早期拒止窗口。证据边界：公开材料只能证明美军反无人系统战略强调探测、跟踪、特征识别，以及台湾方面认为解放军空海活动压缩预警应变时间；不能证明具体台海岸段、航线或无人机型号的实时链路表现。失效条件：若对手活动仍以少量、可预测、非协同低空目标为主，或防御方已有稳定多源融合与自动化告警闭环，则该断点的重要性下降。"
+      },
+      {
+        "claim_id": "claim-90af9a84c389",
+        "claim_type": "hypothesis",
+        "confidence": 0.72,
+        "counter_evidence": [
+          "公开材料一方面强调联合全域指挥控制、共同态势图和伙伴互操作，另一方面GAO仍指出数据孤岛、人工转录、非互操作接口和分类限制，显示概念目标与现有执行能力之间存在落差。",
+          "反无人系统战略强调开放式、模块化、规模化交付，但高强度台海环境同时要求抗毁、低误警和快速适应，公开材料未证明这些目标能在受扰环境中同时满足。",
+          "台湾方面公开称预警应变时间被压缩并发展多源情报共享，但未公开说明低空无人系统在复杂地物、海杂波和饱和条件下的识别可信度边界。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-international_situation-web-8952c3805d5a",
+          "ev-international_situation-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "判断：高强度对抗下，集中式、单域、单目标的探测预警假设将被多批次、诱骗、有人/无人混合和电磁受扰共同削弱；军事任务价值在于推动预警体系从“确认后响应”转向“概率化持续跟踪、分层告警和资源保全”，避免防御火力被低价值目标牵引。证据边界：美国防部反无人系统战略明确把更大数量、更高自主性、更强网络化无人系统作为实验测试背景，但公开来源未给出台海集群规模、诱骗比例或具体突防战法。失效条件：若无人系统无法形成数量压力、协同欺骗或持续链路，传统点防御和人工判读仍可能满足任务需求。"
+      },
+      {
+        "claim_id": "claim-10573466ae72",
+        "claim_type": "hypothesis",
+        "confidence": 0.72,
+        "counter_evidence": [
+          "公开材料一方面强调联合全域指挥控制、共同态势图和伙伴互操作，另一方面GAO仍指出数据孤岛、人工转录、非互操作接口和分类限制，显示概念目标与现有执行能力之间存在落差。",
+          "反无人系统战略强调开放式、模块化、规模化交付，但高强度台海环境同时要求抗毁、低误警和快速适应，公开材料未证明这些目标能在受扰环境中同时满足。",
+          "台湾方面公开称预警应变时间被压缩并发展多源情报共享，但未公开说明低空无人系统在复杂地物、海杂波和饱和条件下的识别可信度边界。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-international_situation-web-8952c3805d5a",
+          "ev-international_situation-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "判断：跨军种、跨伙伴数据接口和权限边界是比传感器门类更现实的联盟级预警风险；军事任务价值在于决定美台及区域伙伴能否形成共同低空态势、缩短告警分发并支撑拒止/威慑可信度。证据边界：GAO指出美军系统间连接性、互操作性、数据孤岛、人工转录和分类限制问题仍存在，并提到印太联合火力网络方向；这能支持“接口风险”判断，但不能证明相关网络已覆盖台海低空无人系统预警任务。失效条件：若危机中数据共享受政治限制、分类壁垒或链路受扰影响严重，跨域融合机制会退化为单方态势拼接。"
+      },
+      {
+        "claim_id": "claim-e56de69bc477",
+        "claim_type": "hypothesis",
+        "confidence": 0.72,
+        "counter_evidence": [
+          "公开材料一方面强调联合全域指挥控制、共同态势图和伙伴互操作，另一方面GAO仍指出数据孤岛、人工转录、非互操作接口和分类限制，显示概念目标与现有执行能力之间存在落差。",
+          "反无人系统战略强调开放式、模块化、规模化交付，但高强度台海环境同时要求抗毁、低误警和快速适应，公开材料未证明这些目标能在受扰环境中同时满足。",
+          "台湾方面公开称预警应变时间被压缩并发展多源情报共享，但未公开说明低空无人系统在复杂地物、海杂波和饱和条件下的识别可信度边界。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-international_situation-web-8952c3805d5a",
+          "ev-international_situation-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "判断：对手无人系统在演训中被公开置于联合侦察、低空引导和目标打击链条内，说明其军事价值不止于低空突防本身，而是作为压缩防御决策时间和暴露防御节点的前端触发器；军事任务价值在于预警体系必须同时防“目标”与防“目标网络”。证据边界：中国国防部关于“联合利剑-2024A”的公开表述证明无人机被纳入联合战场侦察、低空实时引导和目标打击任务，但不能外推具体战时编组、频次或打击授权流程。失效条件：若无人机只能单机侦察、无法稳定回传或无法与火力网络闭合，其对防御体系的压制效应会显著降低。"
+      },
+      {
+        "claim_id": "claim-d90dadabd97f",
+        "claim_type": "hypothesis",
+        "confidence": 0.72,
+        "counter_evidence": [
+          "公开材料一方面强调联合全域指挥控制、共同态势图和伙伴互操作，另一方面GAO仍指出数据孤岛、人工转录、非互操作接口和分类限制，显示概念目标与现有执行能力之间存在落差。",
+          "反无人系统战略强调开放式、模块化、规模化交付，但高强度台海环境同时要求抗毁、低误警和快速适应，公开材料未证明这些目标能在受扰环境中同时满足。",
+          "台湾方面公开称预警应变时间被压缩并发展多源情报共享，但未公开说明低空无人系统在复杂地物、海杂波和饱和条件下的识别可信度边界。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-international_situation-web-8952c3805d5a",
+          "ev-international_situation-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "判断：分布式、抗毁、可降级运行的预警链条比单点高性能节点更可能形成新制胜机制；军事任务价值在于节点受损、跨域失联和频谱受争夺时仍保持最低可信告警、局部拒止和持续作战能力。证据边界：美国海军陆战队GCE 2040强调普遍传感器、分布式传感器网络、联合全域指挥控制、分层防空、反侦察和通信优势被削弱时保持效能；这支持机制方向，但不等于存在面向台海的成熟装备方案。失效条件：若分布式节点缺乏共同时间基准、身份管理、边缘融合规则或补给恢复能力，网络规模会转化为告警噪声和维护负担。"
+      }
+    ],
+    "packet_id": "packet-international_situation",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-2a808c2ccd6d",
+    "claims": [
+      {
+        "claim_id": "claim-979703469fc9",
+        "claim_type": "hypothesis",
+        "confidence": 0.86,
+        "counter_evidence": [
+          "分布式节点可提高抗毁性，但缺乏统一数据标准和权限治理时会增加态势割裂与重复响应；集中式架构便于统一判定，却更易形成单点失效。",
+          "更快的边缘自治有利于缩短响应时间，但在诱骗、混合目标和数据不完整条件下可能降低识别可信度。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-cross_domain_fusion-web-5824f31b34e3",
+          "ev-cross_domain_fusion-web-4471cf21534c"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://media.defense.gov/2022/Mar/17/2002958406/-1/-1/1/SUMMARY-OFTHE-JOINT-ALL-DOMAIN-COMMAND-AND-CONTROL-STRATEGY.pdf"
+        ],
+        "text": "核心判断：台海低空无人系统预警的主要跨域矛盾不是单一传感器覆盖不足，而是“发现—关联—识别—告警—防御响应”之间的接口和时序损耗；其军事价值在于缩短从弱信号出现到可信防御动作的闭环，直接提升持续发现、拒止突防和防御资源匹配能力。证据支持跨域融合、标准化接口和弹性通信的重要性，但未证明其在台海特定地理与电磁条件下的实际增益；若目标特征不足、时间基准失配或融合节点受扰，该机制可能放大误关联和误报。"
+      },
+      {
+        "claim_id": "claim-103953909c56",
+        "claim_type": "hypothesis",
+        "confidence": 0.86,
+        "counter_evidence": [
+          "分布式节点可提高抗毁性，但缺乏统一数据标准和权限治理时会增加态势割裂与重复响应；集中式架构便于统一判定，却更易形成单点失效。",
+          "更快的边缘自治有利于缩短响应时间，但在诱骗、混合目标和数据不完整条件下可能降低识别可信度。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-cross_domain_fusion-web-5824f31b34e3",
+          "ev-cross_domain_fusion-web-4471cf21534c"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://media.defense.gov/2022/Mar/17/2002958406/-1/-1/1/SUMMARY-OFTHE-JOINT-ALL-DOMAIN-COMMAND-AND-CONTROL-STRATEGY.pdf"
+        ],
+        "text": "核心判断：边缘轨迹协同和任务式授权比集中式逐级判定更能维持高强度对抗下的最低可用态势。其军事价值在于中心节点、主干链路或人工审核环节受损时仍保持局部告警、航迹连续性和分散响应，增强抗毁与持续作战能力。公开资料支持任务式指挥和受损环境运行原则，但未给出台海具体权限边界、自治规则或实测时延；若分布式节点缺乏共同数据语义，可能造成局部态势割裂、重复响应或交战权限冲突。"
+      },
+      {
+        "claim_id": "claim-009a3db3ac42",
+        "claim_type": "fact",
+        "confidence": 0.86,
+        "counter_evidence": [
+          "分布式节点可提高抗毁性，但缺乏统一数据标准和权限治理时会增加态势割裂与重复响应；集中式架构便于统一判定，却更易形成单点失效。",
+          "更快的边缘自治有利于缩短响应时间，但在诱骗、混合目标和数据不完整条件下可能降低识别可信度。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-cross_domain_fusion-web-5824f31b34e3",
+          "ev-cross_domain_fusion-web-4471cf21534c"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://media.defense.gov/2022/Mar/17/2002958406/-1/-1/1/SUMMARY-OFTHE-JOINT-ALL-DOMAIN-COMMAND-AND-CONTROL-STRATEGY.pdf"
+        ],
+        "text": "核心判断：跨域融合的关键接口应同时携带目标身份、时标、置信度、来源和保护对象关联，而非只交换位置航迹。其军事价值在于把探测结果转化为可解释的威胁排序和防御资源匹配，降低多批次、诱骗和混合有人/无人活动造成的错配。公开来源确认数据孤岛、非互操作接口和人工转录是现实障碍，但没有证明统一字段本身能够解决诱骗判定；在来源质量不一致、密级转换延迟或目标身份频繁变化时，置信度传播会失真。"
+      },
+      {
+        "claim_id": "claim-d229e8ecb795",
+        "claim_type": "hypothesis",
+        "confidence": 0.86,
+        "counter_evidence": [
+          "分布式节点可提高抗毁性，但缺乏统一数据标准和权限治理时会增加态势割裂与重复响应；集中式架构便于统一判定，却更易形成单点失效。",
+          "更快的边缘自治有利于缩短响应时间，但在诱骗、混合目标和数据不完整条件下可能降低识别可信度。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-cross_domain_fusion-web-5824f31b34e3",
+          "ev-cross_domain_fusion-web-4471cf21534c"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://media.defense.gov/2022/Mar/17/2002958406/-1/-1/1/SUMMARY-OFTHE-JOINT-ALL-DOMAIN-COMMAND-AND-CONTROL-STRATEGY.pdf"
+        ],
+        "text": "核心判断：保障域是跨域预警链条的共同失效面，能源、维护、计算、通信和备件状态若不进入共同态势，分布式感知节点难以转化为持续作战能力。其军事价值在于把一次性告警能力转化为危机预警、局部冲突和高强度对抗中的连续可用能力。公开资料支持分布式保障和弹性网络方向，但未确认台海部署的冗余度、维修周期或抗毁阈值；若保障状态数据不及时或本身依赖受损网络，可能形成“看得见但无法持续运行”的虚假可用性。"
+      }
+    ],
+    "packet_id": "packet-cross_domain_fusion",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-39ff1148f328",
+    "claims": [
+      {
+        "claim_id": "claim-5e7d99e6bf69",
+        "claim_type": "hypothesis",
+        "confidence": 0.82,
+        "counter_evidence": [
+          "公开战略文件强调跨域融合、模块化和快速迭代，但并未证明这些机制在海峡、岛屿和城市混合环境中能够稳定保持航迹连续性。",
+          "分布式和局部自治可降低中心节点失效风险，但也可能增加身份不一致、责任边界模糊和误告警扩散风险。",
+          "高成本拦截手段可提供直接防御效果，却可能在多批次和集群压力下形成不利资源交换比；公开材料未给出台海条件下的具体交换关系。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-86db21a85719",
+          "ev-combat_scenario-web-aa0d7c99c469"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.gao.gov/assets/gao-25-107491.pdf",
+          "https://www.marines.mil/Portals/1/Docs/Force_Design_Update-October_2025.pdf"
+        ],
+        "text": "台海低空无人系统的首要作战矛盾是连续航迹与可信告警难以同时保持，而非单一传感器探测概率不足。其军事价值在于把低空目标从一次性告警转化为带时间、来源和置信度的持续态势，支撑早期预警与资源分配；公开材料支持跨域探测、跟踪和特征判定的重要性，但未给出台海具体覆盖率或告警时限。若时间同步、坐标转换或航迹关联失真，多源融合会制造虚假确定性。"
+      },
+      {
+        "claim_id": "claim-914fdc1601eb",
+        "claim_type": "hypothesis",
+        "confidence": 0.82,
+        "counter_evidence": [
+          "公开战略文件强调跨域融合、模块化和快速迭代，但并未证明这些机制在海峡、岛屿和城市混合环境中能够稳定保持航迹连续性。",
+          "分布式和局部自治可降低中心节点失效风险，但也可能增加身份不一致、责任边界模糊和误告警扩散风险。",
+          "高成本拦截手段可提供直接防御效果，却可能在多批次和集群压力下形成不利资源交换比；公开材料未给出台海条件下的具体交换关系。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-86db21a85719",
+          "ev-combat_scenario-web-aa0d7c99c469"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.gao.gov/assets/gao-25-107491.pdf",
+          "https://www.marines.mil/Portals/1/Docs/Force_Design_Update-October_2025.pdf"
+        ],
+        "text": "局部冲突中，决策拥塞和信息不完整会共同压缩防御响应窗口。允许在受限权限内进行局部告警、航迹共享和人工复核并行，有助于避免集中授权成为单点失效；其军事价值是维持快速分类和可信响应。证据来自反无人系统现代化与公开战例研究，但不能据此确认特定指挥权限或交战规则。若局部自治缺少一致的威胁标识和责任边界，可能扩大误报、重复响应或误判。"
+      },
+      {
+        "claim_id": "claim-f49587ad297d",
+        "claim_type": "hypothesis",
+        "confidence": 0.82,
+        "counter_evidence": [
+          "公开战略文件强调跨域融合、模块化和快速迭代，但并未证明这些机制在海峡、岛屿和城市混合环境中能够稳定保持航迹连续性。",
+          "分布式和局部自治可降低中心节点失效风险，但也可能增加身份不一致、责任边界模糊和误告警扩散风险。",
+          "高成本拦截手段可提供直接防御效果，却可能在多批次和集群压力下形成不利资源交换比；公开材料未给出台海条件下的具体交换关系。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-86db21a85719",
+          "ev-combat_scenario-web-aa0d7c99c469"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.gao.gov/assets/gao-25-107491.pdf",
+          "https://www.marines.mil/Portals/1/Docs/Force_Design_Update-October_2025.pdf"
+        ],
+        "text": "高强度对抗的关键不是单次拦截效率，而是节点受损、通信受扰和告警饱和后仍能维持发现—判定—告警—响应闭环。分布式中继、局部自治和降级运行可提高抗毁与持续作战价值；公开材料支持受扰条件下的抗毁通信、协议转换和分布式保障方向，但未证明其在台海海岛和海峡环境中的稳定效果。若中继、能源、维修或软件更新不能持续，体系能力会随时间快速衰减。"
+      },
+      {
+        "claim_id": "claim-ad66369dfa2c",
+        "claim_type": "hypothesis",
+        "confidence": 0.82,
+        "counter_evidence": [
+          "公开战略文件强调跨域融合、模块化和快速迭代，但并未证明这些机制在海峡、岛屿和城市混合环境中能够稳定保持航迹连续性。",
+          "分布式和局部自治可降低中心节点失效风险，但也可能增加身份不一致、责任边界模糊和误告警扩散风险。",
+          "高成本拦截手段可提供直接防御效果，却可能在多批次和集群压力下形成不利资源交换比；公开材料未给出台海条件下的具体交换关系。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-86db21a85719",
+          "ev-combat_scenario-web-aa0d7c99c469"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.gao.gov/assets/gao-25-107491.pdf",
+          "https://www.marines.mil/Portals/1/Docs/Force_Design_Update-October_2025.pdf"
+        ],
+        "text": "敌方更可能通过多批次、混合有人/无人、低空背景贴近和诱骗特征制造防御资源错配，而不只是依赖单个低可探测目标。防御体系的直接价值在于保持目标身份不确定性可见、动态更新威胁优先级并避免高成本资源被低价值目标耗尽。公开战例显示电子战会干扰通信、传感器回传和指挥链，但未披露台海对手的具体编组、规模或频谱行为。若融合模型过度依赖历史特征或稳定通信，混合目标和新型诱骗会使分类迅速失效。"
+      }
+    ],
+    "packet_id": "packet-combat_scenario",
+    "schema_version": "1.0"
+  }
+]

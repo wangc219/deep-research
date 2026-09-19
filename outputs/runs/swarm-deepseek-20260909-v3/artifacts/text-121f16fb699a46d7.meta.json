@@ -1,0 +1,10 @@
+{
+  "artifact_ref": "text:121f16fb699a46d7",
+  "content_hash": "ce3515800abb344eba92e5708193733615d37adb5e3a8e2d8d3f5836f7ca167f",
+  "content_path": "text-121f16fb699a46d7.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "kind": "text",
+  "materialization_status": "simplified",
+  "sha256": "121f16fb699a46d73997ba36c01fc9998b9f2b7a8de2981c35012aebcf97fad4"
+}

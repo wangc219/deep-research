@@ -1,0 +1,64 @@
+[
+  {
+    "accepted_claim_ids": [],
+    "incremental_value": 0.0,
+    "packet_id": "packet-weapon_equipment",
+    "reasons": [
+      "baseline_agent_unavailable",
+      "candidate_level_verification_required"
+    ],
+    "rejected_claim_ids": [],
+    "scores": {
+      "claim_evidence_match": 0.0,
+      "incremental_value": 0.0,
+      "source_quality": 0.0,
+      "task_relevance": 0.0,
+      "upstream_acceptance": 0.0
+    },
+    "status": "limited"
+  },
+  {
+    "accepted_claim_ids": [
+      "claim-779599ee180a",
+      "claim-fb8b9f07e03a",
+      "claim-2a6b895122e9",
+      "claim-86bb22945d20"
+    ],
+    "incremental_value": 1.0,
+    "packet_id": "packet-technology_radar",
+    "reasons": [],
+    "rejected_claim_ids": [],
+    "scores": {
+      "claim_evidence_match": 1.0,
+      "incremental_value": 1.0,
+      "source_quality": 0.8,
+      "task_relevance": 1.0,
+      "upstream_acceptance": 1.0
+    },
+    "status": "accepted"
+  },
+  {
+    "accepted_claim_ids": [
+      "claim-29637616872d",
+      "claim-4a5ef0d4cf91",
+      "claim-3b9b25636df3",
+      "claim-c0ebef677bf6",
+      "claim-65ee083199a2"
+    ],
+    "incremental_value": 1.0,
+    "packet_id": "packet-system_confrontation",
+    "reasons": [
+      "public_source_quality_low",
+      "claim_evidence_binding_incomplete"
+    ],
+    "rejected_claim_ids": [],
+    "scores": {
+      "claim_evidence_match": 0.0,
+      "incremental_value": 1.0,
+      "source_quality": 0.0,
+      "task_relevance": 1.0,
+      "upstream_acceptance": 1.0
+    },
+    "status": "limited"
+  }
+]

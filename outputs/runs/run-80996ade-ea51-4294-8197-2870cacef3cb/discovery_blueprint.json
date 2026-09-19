@@ -1,0 +1,493 @@
+{
+  "adaptive_winning_step_modes": {
+    "1": "skip",
+    "2": "skip",
+    "3": "deep",
+    "4": "deep",
+    "5": "skip",
+    "6": "deep"
+  },
+  "assumptions": [
+    "假设未来场景存在持续电磁压制、侦察压制和高消耗补给约束",
+    "假设“低成本”是相对对抗交换比的约束，不等于低能力",
+    "假设S3约20个候选、S5权重和S6前7项输出是用户设定的研究格式约束"
+  ],
+  "baseline_agent_plan": [
+    {
+      "agent_id": "combat_scenario",
+      "mode": "required",
+      "reason": "需要先把未来海空对抗的阶段、环境与时间窗口定准，避免候选装备脱离真实对抗条件"
+    },
+    {
+      "agent_id": "cross_domain_fusion",
+      "mode": "required",
+      "reason": "任务核心是海空跨域协同和接口缝隙，必须先明确域间效应链与降级点"
+    },
+    {
+      "agent_id": "weapon_equipment",
+      "mode": "required",
+      "reason": "最终交付是装备需求、候选生成、评分和能力画像，必须由该专长承接"
+    },
+    {
+      "agent_id": "system_confrontation",
+      "mode": "callback",
+      "reason": "当候选是否成立主要取决于依赖图、级联脆弱点和交换比时启用"
+    },
+    {
+      "agent_id": "technology_radar",
+      "mode": "callback",
+      "reason": "当“真正新质”与工程可行性的边界不清时启用"
+    }
+  ],
+  "baseline_execution_mode": "query_dominant_isolated_parallel",
+  "blueprint_id": "blueprint-g-de410f89",
+  "blueprint_mode": "meta_composed",
+  "branch_name": "跨域融合发现",
+  "callback_agent_ids": [
+    "system_confrontation",
+    "technology_radar"
+  ],
+  "confidence": 0.86,
+  "custom_blueprint": {
+    "dependencies": [
+      {
+        "downstream": "weapon_equipment",
+        "handoff": "提供阶段划分、环境约束、对抗强度和时间窗口",
+        "upstream": "combat_scenario"
+      },
+      {
+        "downstream": "weapon_equipment",
+        "handoff": "提供海空接口、协同缝隙、降级路径和跨域效应链",
+        "upstream": "cross_domain_fusion"
+      }
+    ],
+    "dependency_cycle_rejected": false,
+    "driver_type": "G主导，D/F协同的海空跨域装备需求发现蓝图",
+    "preferred_agent_ids": [
+      "combat_scenario",
+      "cross_domain_fusion",
+      "weapon_equipment"
+    ],
+    "rationale": "先用场景与跨域接口锁定真实约束，再进入装备候选生成与筛选，避免过早把问题收缩成单一型号或单一路线。",
+    "required_capability_tags": [
+      "cross_domain",
+      "equipment",
+      "system_modeling",
+      "coordination",
+      "technology_readiness"
+    ],
+    "required_outputs": [
+      "结构化任务语义卡",
+      "20个候选装备问题/概念池",
+      "按30/30/20/10/10生成的评分矩阵",
+      "前7项能力画像",
+      "候选淘汰与证伪记录"
+    ],
+    "s1_s6_modes": {
+      "1": "standard",
+      "2": "light",
+      "3": "deep",
+      "4": "deep",
+      "5": "standard",
+      "6": "standard"
+    },
+    "stop_conditions": [
+      "候选数不足20且无法再分裂出新的独立制胜问题",
+      "大部分候选收敛为同一装备家族而没有实质排他边界",
+      "S5前7名对一次复评分敏感到无法稳定排序"
+    ],
+    "waves": [
+      [
+        "combat_scenario",
+        "cross_domain_fusion"
+      ],
+      [
+        "weapon_equipment"
+      ]
+    ]
+  },
+  "driver_scores": [
+    {
+      "branch": "G",
+      "exclusion_reason": "",
+      "score": 0.92,
+      "signals": [
+        "主题核心是海空跨域对抗中的分布式协同与接口问题",
+        "重点在无人协同、精确火力和跨域效应链",
+        "要求从装备需求而非单纯现役缺口出发"
+      ]
+    },
+    {
+      "branch": "D",
+      "exclusion_reason": "若任务主要是现役能力缺口盘点而非新质候选发现，则可退为次优",
+      "score": 0.82,
+      "signals": [
+        "明确要求识别真正新质且可工程化的候选",
+        "S3/S4需要生成和筛选约20个候选",
+        "S5强调创新性与可行性并重"
+      ]
+    }
+  ],
+  "dynamic_subagents": [],
+  "emphasis": [
+    "跨域矩阵",
+    "S3",
+    "S4",
+    "S6"
+  ],
+  "execution_contract": {
+    "absolute_deadline_seconds": 0,
+    "background_count": null,
+    "backtrack_map": {
+      "driver": [
+        3,
+        4,
+        6
+      ],
+      "mapping": [
+        4,
+        5,
+        6
+      ],
+      "report_section": []
+    },
+    "branch": "G",
+    "branch_products": [
+      "cross_domain_driver",
+      "interface_gap",
+      "causal_mechanism",
+      "capability_need",
+      "equipment_form",
+      "validation_route"
+    ],
+    "codex_concurrency": 8,
+    "contract_id": "branch-g-optimized-v2",
+    "critical_fast_finalize_seconds": 0,
+    "deadline_downshift_window_seconds": 240,
+    "delivery_grace_seconds": 0,
+    "delivery_retry_reserve_seconds": 45,
+    "fast_finalize_output_token_cap": 4200,
+    "hard_deadline_seconds": 0,
+    "logical_agent_dag": {
+      "S3": [
+        "driver_agent"
+      ],
+      "S4": [
+        "S3"
+      ],
+      "S6": [
+        "S4"
+      ],
+      "driver_agent": [],
+      "reporter": [
+        "S6"
+      ]
+    },
+    "maximum_delivery_model_calls": 8,
+    "maximum_model_calls": 10,
+    "maximum_model_calls_with_residuals": 14,
+    "maximum_quality_judge_model_calls": 2,
+    "maximum_rounds": 3,
+    "maximum_searches": 12,
+    "maximum_swarm_model_calls": 20,
+    "physical_cohorts": [
+      [
+        3,
+        4
+      ]
+    ],
+    "scenarios_per_background": null,
+    "schema_version": "2.0",
+    "soft_deadline_seconds": 0,
+    "step_intensity": {
+      "1": "skip",
+      "2": "skip",
+      "3": "deep",
+      "4": "deep",
+      "5": "skip",
+      "6": "deep"
+    },
+    "stop_conditions": [
+      "all_required_branch_products_present",
+      "accepted_claims_traceable_to_public_sources",
+      "no_repeated_residual_without_new_evidence",
+      "estimated_quality_gain_below_0.03"
+    ],
+    "wall_clock_deadlines_enabled": false
+  },
+  "execution_profile_hash": "e4846e700ee05079b2c6664b3b9d1172524e6f6492c1677a53d1a117460f66e6",
+  "execution_profile_id": "winning_swarm_dynamic_v2",
+  "focus_questions": [
+    "在高强度海空对抗中，哪些分布式低成本精确火力形态能在受压制环境下保持持续战果？",
+    "无人协同要把自治边界定到哪里，才能在通信受损和电磁压制下仍维持任务链闭合？",
+    "哪些跨域接口和工程约束决定候选装备从概念可行变成可工程化？",
+    "哪些候选应因成本交换比、战损替换或效能不稳定被早期淘汰？"
+  ],
+  "generated_by": "codex_orchestrator",
+  "hard_constraints": [
+    "蓝图阶段不得输出具体装备名称、家族、技术路线、载荷组合或近似成品方案",
+    "必须区分事实、用户假设、未知项和冲突，不能把假设写成既成事实",
+    "研究仅限公开来源下的战略、能力、装备市场与防御性需求，不得给出攻击步骤或伤害行动指令",
+    "S5必须按创新性30%、需求性30%、可行性20%、效能性10%、发展性10%评审",
+    "S6仅对前7项形成能力画像"
+  ],
+  "hard_dependencies": {
+    "driver_agent": []
+  },
+  "initial_baseline_agent_ids": [
+    "combat_scenario",
+    "cross_domain_fusion",
+    "weapon_equipment"
+  ],
+  "interaction_mode": "autonomous",
+  "loop_policy": {
+    "inner_max_iterations": 1,
+    "meta_max_cycles": 1,
+    "middle_max_cycles": 1,
+    "minimum_expected_gain": 0.03,
+    "outer_max_rounds": 3,
+    "residual_only_after_first_round": true
+  },
+  "maximum_business_agents": 3,
+  "meta_review": {
+    "added_secondary_branches": [],
+    "dynamic_subagents": [],
+    "focus_questions": [],
+    "rationale": "覆盖与收敛结果未触发实质性重规划条件，保留当前蓝图。",
+    "replan_required": false,
+    "step_mode_changes": [],
+    "step_mode_overrides": [],
+    "stop_reason": "lean_meta_gate_passed"
+  },
+  "meta_triggers": [
+    "出现跨分支高价值线索",
+    "当前分支无法覆盖关键能力标签",
+    "案例/技术/对手变化反向触发其他发现路径",
+    "A-H运行基座无法解释OTHER驱动源，需动态组合蓝图",
+    "S3候选池明显收敛到单一装备家族时，重新拉宽跨域接口与效应变量",
+    "S4阶段多数候选因工程化或批产约束被淘汰时，回溯到问题定义",
+    "S5排名对权重或环境假设高度敏感时，触发复核",
+    "当新质判断无法由现有装备能力解释时，才上调技术雷达或体系对抗补充"
+  ],
+  "minimum_business_agents": 2,
+  "primary_branch": "G",
+  "promoted_callback_agent_ids": [],
+  "prompt_version": "2.8",
+  "rationale": "主驱动是G：海空跨域对抗中的接口、协同与效应链决定装备需求。D提供新质与工程化判别框架，F提供体系依赖和降级约束。任务没有独立于A-H的新增驱动源，因此不进OTHER。",
+  "reference_focus": {
+    "source_items": [
+      7,
+      8
+    ],
+    "task_kernel": "空天、深海、电磁和网络能力扩展→研究信息、指挥、效应与保障接口→交付跨域装备组合、失联降级模式和联合验证方案。"
+  },
+  "required_capability_tags": [
+    "cross_domain",
+    "equipment",
+    "coordination",
+    "system_modeling",
+    "technology_readiness",
+    "autonomous_discovery"
+  ],
+  "required_outputs": [
+    "跨域边界",
+    "域间接口",
+    "协同缝隙",
+    "跨域效果链",
+    "融合能力",
+    "装备能力需求图像（需求卡片）",
+    "深度研究主报告（深度性、创新性、前瞻性、军事价值性）",
+    "分支专用收敛产物",
+    "结构化任务语义卡",
+    "20个候选装备问题/概念池",
+    "按30/30/20/10/10生成的评分矩阵",
+    "前7项能力画像",
+    "候选淘汰与证伪记录"
+  ],
+  "runtime_budgets": {
+    "absolute_deadline_seconds": 0,
+    "codex_concurrency": 8,
+    "critical_fast_finalize_seconds": 0,
+    "deadline_downshift_window_seconds": 240,
+    "delivery_grace_seconds": 0,
+    "delivery_retry_reserve_seconds": 45,
+    "fast_finalize_output_token_cap": 4200,
+    "hard_deadline_seconds": 0,
+    "maximum_delivery_model_calls": 8,
+    "maximum_model_calls": 10,
+    "maximum_model_calls_with_residuals": 14,
+    "maximum_quality_judge_model_calls": 0,
+    "maximum_searches": 12,
+    "maximum_swarm_model_calls": 48,
+    "s6_codex_concurrency": 8,
+    "soft_deadline_seconds": 0,
+    "wall_clock_deadlines_enabled": false
+  },
+  "runtime_route": "new_winning_mechanism",
+  "secondary_branches": [
+    "D",
+    "F"
+  ],
+  "semantic_agent_signals": [],
+  "specialist_agent_ids": [
+    "scenario_divergence",
+    "cross_domain_fusion"
+  ],
+  "structured_query_brief": {
+    "battle_phase_and_constraints": [
+      "远距发现到交战的高压阶段",
+      "电磁压制、通信受损和链路不稳定环境",
+      "高消耗、快速补充和战损替换约束",
+      "海空跨域协同与时序耦合约束"
+    ],
+    "combat_problem_frame": "海空跨域高强度对抗中，分布式低成本精确火力与无人协同装备必须在受压制、受干扰、可消耗的环境里持续形成可验证的打击、拒止和抗毁效果。",
+    "constraints_and_assumptions": [
+      "约束：研究对象是未来高强度海空对抗中的装备需求",
+      "约束：输出应以候选、评审和画像为主，不在蓝图阶段给出具体装备方案",
+      "假设：无人协同与低成本精确火力将同时受链路、成本和工程化约束",
+      "假设：高强度对抗下的持续作战能力比单次性能峰值更重要"
+    ],
+    "core_query": "未来高强度海空对抗中的分布式低成本精确火力与无人协同装备需求研究",
+    "enemy_target_profile": [
+      "具备多层防护、快速补损和体系化协同能力的高强度对手",
+      "具备较强侦察、电子压制和反无人适应能力的对手"
+    ],
+    "equipment_project_hypotheses": [],
+    "equipment_semantic_boundary": "必须由具体战斗装备本体承担的部分包括火力投送、末端命中、抗干扰、自主感知和战损替换；只可作为接口或保障的部分包括任务规划、通信组织、编组规则和后勤支撑。蓝图不把流程、软件或组织方式当作装备本体。",
+    "expansion_dimensions": [
+      "任务对象与直接效果",
+      "对手适应与失效边界",
+      "装备形态与工程约束",
+      "证据问题与淘汰条件"
+    ],
+    "focus_questions": [
+      "重点发现真正新质、可工程化且能改写作战关系的武器装备候选",
+      "S3/S4创作约20个高质量候选，S5按创新性30%、需求性30%、可行性20%、效能性10%、发展性10%评审，S6为前7项形成能力画像"
+    ],
+    "frontier_technology_hypotheses": [],
+    "handoff_rule": "S1-S3只传递结构化任务边界、约束和证伪问题；S4-S6只在此基础上形成候选、评分和画像，不回传原始会话文本。",
+    "query_specific_weapon_architectures": [],
+    "rejected_template_anchors": [
+      "具体型号清单",
+      "先验技术路线拼装",
+      "现役装备目录复制",
+      "单一平台最优解",
+      "流程口号式体系能力"
+    ],
+    "required_direct_military_effects": [
+      "持续精确毁伤",
+      "拒止与区域控制",
+      "饱和消耗与交换比改善",
+      "失联或受损条件下的降级持续作战"
+    ],
+    "supplement_present": true,
+    "supplement_summary": "补充信息要求从任务对象、直接效果、对手适应、失效边界、工程约束和证据问题出发，生成约20个候选并按给定权重筛选前7项；这些都是研究约束，不是既成结论。",
+    "weapon_design_variables": [],
+    "winning_problem_propositions": [
+      {
+        "changeable_variable": "单位毁伤成本、分布部署能力、战损替换速度",
+        "conventional_assumption": "高价值、少量高性能火力一定优于分布式低成本火力",
+        "direct_military_result": "持续穿透并消耗对手防护资源",
+        "exclusion_and_falsification_boundary": "如果方案只能在完全通联和高可用传感器条件下成立，则排除",
+        "mechanism_search_question": "哪些低成本精确火力组织方式能在受压制链路下保持有效命中率和持续毁伤节奏",
+        "target_and_phase": "远距交战与防区外压制阶段",
+        "task_breakpoint": "昂贵且稀缺的打击资源难以在高损耗环境里维持持续效果"
+      },
+      {
+        "changeable_variable": "自治级别、分组尺度、失联降级策略",
+        "conventional_assumption": "无人只适合单平台执行，复杂协同必须依赖人控",
+        "direct_military_result": "降低人员暴露并延长链路生存",
+        "exclusion_and_falsification_boundary": "如果只适用于低威胁环境或单次任务，则排除",
+        "mechanism_search_question": "何种自治与分布式协同边界可在海空对抗中维持任务链闭合",
+        "target_and_phase": "无人侦察-打击-补充闭环阶段",
+        "task_breakpoint": "无人系统在干扰和损失下难以稳定协同"
+      },
+      {
+        "changeable_variable": "本体感知、自主修正和临机重构能力",
+        "conventional_assumption": "精确火力必须依赖高带宽持续连接",
+        "direct_military_result": "受损条件下仍可维持最低有效战果",
+        "exclusion_and_falsification_boundary": "如果方案本质上只是软件编排而不是装备本体能力，则排除",
+        "mechanism_search_question": "哪些能力必须由装备本体承担，才能在失联条件下仍形成有限但可用的效果",
+        "target_and_phase": "链路受损与强干扰后的继续作战阶段",
+        "task_breakpoint": "通信、导航和识别受损即导致装备失效"
+      },
+      {
+        "changeable_variable": "模块化、标准接口、供应链简化和替换性",
+        "conventional_assumption": "效能只能来自高端单价装备",
+        "direct_military_result": "形成可持续火力池",
+        "exclusion_and_falsification_boundary": "如果降本明显损伤任务效果或无法批产，则排除",
+        "mechanism_search_question": "哪些工程约束下的装备形态能同时实现可批产、可替换和任务效能保持",
+        "target_and_phase": "高强度消耗与批产扩展阶段",
+        "task_breakpoint": "后勤补充慢，导致火力池无法持续"
+      }
+    ]
+  },
+  "unmatched_driver": "无",
+  "waves": [
+    [
+      "scenario_divergence"
+    ],
+    [
+      "combat_scenario",
+      "cross_domain_fusion"
+    ],
+    [
+      "weapon_equipment"
+    ]
+  ],
+  "winning_swarm_policy": {
+    "archetypes": [
+      "disruptive_mechanism_generator",
+      "independent_portfolio_reviewer",
+      "innovative_equipment_dimension_generator",
+      "weak_signal_scout"
+    ],
+    "breadth_hypothesis_maximum": 20,
+    "breadth_hypothesis_minimum": 1,
+    "enabled": true,
+    "expert_candidate_pool_maximum": 0,
+    "expert_judge_critical_dimension_minimum": 0.52,
+    "expert_judge_enabled": false,
+    "expert_judge_minimum_score": 0.68,
+    "expert_judge_required": false,
+    "expert_repair_enabled": false,
+    "expert_repair_max_candidates": 0,
+    "expert_repair_minimum_score": 0.64,
+    "expert_repair_reserved_instances": 0,
+    "finalist_maximum": 7,
+    "finalist_minimum": 6,
+    "foresight_first_enabled": true,
+    "frontier_critical_dimension_minimum": 0.5,
+    "frontier_evidence_relaxation": true,
+    "frontier_expert_judge_minimum_score": 0.66,
+    "frontier_final_gate_minimum_score": 0.62,
+    "max_concurrency": 8,
+    "max_dynamic_instances": 21,
+    "max_waves": 3,
+    "minimum_direct_combat_equipment": 2,
+    "minimum_expected_gain": 0.03,
+    "mission_graph_max_instances": 21,
+    "mission_graph_min_instances": 8,
+    "mission_graph_target_instances": 15,
+    "pending_verification_backfill_enabled": false,
+    "pending_verification_critical_dimension_minimum": 0.42,
+    "pending_verification_minimum_score": 0.54,
+    "policy_id": "winning_swarm_dynamic_v2",
+    "preferred_distinct_direct_equipment": 3,
+    "promotion": {
+      "human_approval_required": true,
+      "maximum_evidence_hard_failures": 0,
+      "maximum_permission_hard_failures": 0,
+      "minimum_eligible_runs": 10,
+      "minimum_positive_increment_rate": 0.7,
+      "offline_evaluation_required": true
+    },
+    "raw_session_sharing_allowed": false,
+    "recursive_recruitment_allowed": false,
+    "s3_empty_reallocation_max": 2,
+    "s3_s4_candidate_maximum_per_session": 2,
+    "s3_s4_candidate_pool_maximum_per_session": 2,
+    "s3_winning_thesis_capacity": 10,
+    "same_family_minimum_independent_axes": 2
+  }
+}

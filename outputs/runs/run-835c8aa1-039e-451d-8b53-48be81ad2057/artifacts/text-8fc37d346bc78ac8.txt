@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · Force Design
+source_url=https://www.marines.mil/Force-Design/
+claim=公开转型方向包括分布式编组、无人系统比重上升与跨域 fires/电子战/防空一体化。
+excerpt=
+retrieval=Hosted web search citation metadata

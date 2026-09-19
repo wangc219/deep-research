@@ -1,0 +1,61 @@
+[
+  {
+    "accepted_claim_ids": [],
+    "incremental_value": 0.0,
+    "packet_id": "packet-weapon_equipment",
+    "reasons": [
+      "baseline_agent_unavailable",
+      "candidate_level_verification_required"
+    ],
+    "rejected_claim_ids": [],
+    "scores": {
+      "claim_evidence_match": 0.0,
+      "incremental_value": 0.0,
+      "source_quality": 0.0,
+      "task_relevance": 0.0,
+      "upstream_acceptance": 0.0
+    },
+    "status": "limited"
+  },
+  {
+    "accepted_claim_ids": [
+      "claim-7481e2d5f039",
+      "claim-57a4a10b1b68",
+      "claim-17eded15e0c7",
+      "claim-bfa22f6590f5"
+    ],
+    "incremental_value": 1.0,
+    "packet_id": "packet-combat_scenario",
+    "reasons": [],
+    "rejected_claim_ids": [],
+    "scores": {
+      "claim_evidence_match": 1.0,
+      "incremental_value": 1.0,
+      "source_quality": 0.8,
+      "task_relevance": 1.0,
+      "upstream_acceptance": 1.0
+    },
+    "status": "accepted"
+  },
+  {
+    "accepted_claim_ids": [
+      "claim-270ca48c1a8d",
+      "claim-16b6472f036a",
+      "claim-2907cfe3a58b",
+      "claim-6c31fa5a8ac6",
+      "claim-60b3cfc702e6"
+    ],
+    "incremental_value": 1.0,
+    "packet_id": "packet-operational_employment",
+    "reasons": [],
+    "rejected_claim_ids": [],
+    "scores": {
+      "claim_evidence_match": 1.0,
+      "incremental_value": 1.0,
+      "source_quality": 0.8,
+      "task_relevance": 1.0,
+      "upstream_acceptance": 1.0
+    },
+    "status": "accepted"
+  }
+]

@@ -49,6 +49,70 @@ _CHECKPOINT_RESULT_KEYS = (
 _MAX_CHECKPOINT_CHARS = 60_000
 
 
+def checkpoint_visible_text(
+    checkpoint: Mapping[str, Any] | None,
+    *,
+    phase: str = "",
+    limit: int = 1200,
+) -> str:
+    """Project the latest bounded tool result into a short live update.
+
+    Checkpoints intentionally contain only a compact, sanitized result
+    projection.  Reusing that projection for the live event stream gives a
+    reconnectable interim answer without exposing provider output or turning a
+    partial result into the durable assistant message.
+    """
+
+    payload = checkpoint if isinstance(checkpoint, Mapping) else {}
+    completed = payload.get("completed_tool_results", [])
+    row = completed[-1] if isinstance(completed, list) and completed else {}
+    row = row if isinstance(row, Mapping) else {}
+    if not row:
+        pending = payload.get("pending_tool_calls", [])
+        row = pending[0] if isinstance(pending, list) and pending else {}
+        row = row if isinstance(row, Mapping) else {}
+    result = row.get("result")
+    result = result if isinstance(result, Mapping) else {}
+
+    values: list[str] = []
+    summaries = result.get("visible_summary")
+    if isinstance(summaries, Sequence) and not isinstance(summaries, (str, bytes)):
+        values.extend(
+            " ".join(str(item).split())[:500]
+            for item in list(summaries)[:2]
+            if str(item).strip()
+        )
+    for key in ("selection_rationale", "research_assessment"):
+        value = result.get(key)
+        if isinstance(value, Mapping):
+            if key == "research_assessment":
+                gaps = value.get("gaps")
+                value = value.get("status") or (
+                    gaps[0] if isinstance(gaps, list) and gaps else ""
+                )
+            else:
+                value = ""
+        if isinstance(value, str) and value.strip():
+            values.append(" ".join(value.split())[:500])
+    directions = result.get("concept_directions")
+    if isinstance(directions, Sequence) and not isinstance(directions, (str, bytes)):
+        names = [
+            str(item.get("name") or item.get("title") or "").strip()
+            for item in list(directions)[:3]
+            if isinstance(item, Mapping)
+        ]
+        names = [name[:120] for name in names if name]
+        if names:
+            values.append("形成方向：" + "、".join(names))
+    text = "；".join(dict.fromkeys(values))
+    if not text:
+        tool_name = str(row.get("tool_name") or "").strip()
+        if phase == "awaiting_tools" and tool_name:
+            return f"正在执行 {tool_name}，完成后会把阶段发现写入当前对话。"[:limit]
+        return ""
+    return ("阶段发现：" + text)[: max(0, int(limit))]
+
+
 def _bounded_checkpoint_value(value: Any, *, depth: int = 0) -> Any:
     """Project runtime state into a small, JSON-compatible recovery payload."""
 

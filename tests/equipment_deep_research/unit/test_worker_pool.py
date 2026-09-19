@@ -70,6 +70,38 @@ def test_reconcile_restarts_an_exited_target_slot(tmp_path: Path, monkeypatch) -
     assert sorted(pool.processes) == [1, 2]
 
 
+def test_reconcile_adds_replacement_for_internal_s6_owner(
+    tmp_path: Path, monkeypatch
+) -> None:
+    pool = _pool(tmp_path, monkeypatch, 2)
+    pool.service = SimpleNamespace(
+        runtime_health=lambda: {
+            "workers": [
+                {
+                    "worker_id": pool._worker_id(1),
+                    "status": "internal",
+                    "current_run_id": "run-s6",
+                    "online": True,
+                },
+                {
+                    "worker_id": pool._worker_id(2),
+                    "status": "idle",
+                    "current_run_id": "",
+                    "online": True,
+                },
+            ]
+        },
+        touch_worker=lambda *args, **kwargs: None,
+    )
+    spawned = []
+    monkeypatch.setattr(pool, "_spawn", lambda slot: spawned.append(slot) or _Process())
+
+    pool.reconcile()
+
+    assert spawned == [3]
+    assert sorted(pool.processes) == [3]
+
+
 def test_reconcile_ignores_an_online_worker_from_an_older_generation(
     tmp_path: Path,
     monkeypatch,

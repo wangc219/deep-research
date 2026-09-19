@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:6fe6fc876d0711cc",
+  "content_path": "text-6fe6fc876d0711cc.txt",
+  "content_type": "text/plain",
+  "direct_error": "_NetworkSafetyError: host_resolution_failed",
+  "encoding": "utf-8",
+  "evidence_id": "ev-operational_employment-web-5824f31b34e3",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "6fe6fc876d0711cc356d47c1a1eadb3c4c50f3b99e719f460b607abac0e71231",
+  "url": "https://www.marines.mil/Force-Design/"
+}

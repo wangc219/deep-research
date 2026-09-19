@@ -10,6 +10,7 @@ import asyncio
 from collections.abc import AsyncIterator, Iterable, Mapping, Sequence
 from http.client import RemoteDisconnected
 import json
+import os
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -17,12 +18,13 @@ from urllib.parse import urlsplit
 
 from equipment_deep_research.providers.base import (
     ModelMessage,
+    ProviderCapabilities,
     ProviderFinalTurn,
     ProviderStreamEvent,
     ProviderToolCall,
 )
 from equipment_deep_research.domain.proposals import thaw_plain
-from equipment_deep_research.tools.definitions import ToolDefinition
+from equipment_deep_research.contracts.tools import ToolDefinition
 
 
 class ProviderAuthenticationError(RuntimeError):
@@ -37,6 +39,12 @@ class ProviderRequestError(RuntimeError):
     pass
 
 
+class ProviderCapacityError(ProviderRequestError):
+    """A provider refused a request because the selected model is saturated."""
+
+    pass
+
+
 def build_request_payload(
     *, model: str, messages: Sequence[ModelMessage], tools: Sequence[ToolDefinition], options: Mapping[str, Any]
 ) -> dict[str, Any]:
@@ -48,7 +56,14 @@ def build_request_payload(
     declared_tools: list[dict[str, Any]] = []
     web_search = options.get("web_search")
     if isinstance(web_search, Mapping):
-        declared_tools.append({"type": "web_search", **thaw_plain(web_search)})
+        web_search_payload = thaw_plain(web_search)
+        if isinstance(web_search_payload, dict):
+            search_context_mode = os.environ.get(
+                "EQUIPMENT_DR_SEARCH_CONTEXT_SIZE_MODE", "send"
+            ).strip().lower()
+            if search_context_mode in {"omit", "none", "disabled"}:
+                web_search_payload.pop("search_context_size", None)
+        declared_tools.append({"type": "web_search", **web_search_payload})
     if tools:
         declared_tools.extend([
             {"type": "function", "name": tool.name, "description": tool.description, "parameters": thaw_plain(tool.input_schema)}
@@ -59,7 +74,15 @@ def build_request_payload(
     if options.get("include_web_sources"):
         payload["include"] = ["web_search_call.action.sources"]
     if options.get("require_web_search"):
-        payload["tool_choice"] = {"type": "web_search"}
+        # DashScope's Qwen Responses endpoint rejects an object/required
+        # ``tool_choice`` while reasoning (thinking) mode is enabled.  The
+        # request is otherwise valid and the gateway will select web_search
+        # when offered, so use ``auto`` for those deployment models.  Keep the
+        # strict choice for OpenAI-compatible gateways that support it.
+        if str(model).strip().lower().startswith(("qwen", "qwen3")):
+            payload["tool_choice"] = "auto"
+        else:
+            payload["tool_choice"] = {"type": "web_search"}
     effort = options.get("reasoning_effort")
     if effort:
         payload["reasoning"] = {"effort": effort}
@@ -269,6 +292,14 @@ class ResponsesProvider:
     def __repr__(self) -> str:
         return f"ResponsesProvider(model={self.model!r}, base_url_host={urlsplit(self.base_url).hostname!r})"
 
+    def capabilities(self) -> ProviderCapabilities:
+        return ProviderCapabilities(
+            streaming=True,
+            structured_output=True,
+            function_tools=True,
+            hosted_web_search=True,
+        )
+
     def snapshot(self) -> dict[str, str]:
         return {"type": "responses", "model": self.model, "base_url_host": urlsplit(self.base_url).hostname or ""}
 
@@ -277,12 +308,49 @@ class ResponsesProvider:
     ) -> AsyncIterator[ProviderStreamEvent]:
         payload = build_request_payload(model=self.model, messages=messages, tools=tools, options=options)
         lines: list[str] | None = None
-        for attempt in range(3):
+        # Respect the workflow's retry budget.  Blueprint design and other
+        # short routing turns explicitly use one attempt; a fixed three-turn
+        # replay here silently multiplied their latency and made a single
+        # transient gateway stall look like a model long-tail.
+        try:
+            retry_attempts = max(
+                1,
+                min(3, int(options.get("_provider_retry_attempts", 3))),
+            )
+        except (TypeError, ValueError):
+            retry_attempts = 3
+        requested_timeout = options.get("_provider_timeout_seconds")
+        call_timeout: float | None = None
+        if (
+            not bool(options.get("_disable_provider_timeout", False))
+            and requested_timeout is not None
+        ):
             try:
-                lines = await asyncio.to_thread(self._post, payload)
+                call_timeout = max(1.0, float(requested_timeout))
+            except (TypeError, ValueError):
+                call_timeout = None
+        for attempt in range(retry_attempts):
+            try:
+                post_call = asyncio.to_thread(
+                    self._post_for_options,
+                    payload,
+                    options,
+                )
+                if call_timeout is None:
+                    lines = await post_call
+                else:
+                    # urllib's timeout applies to an individual socket read;
+                    # an SSE stream can otherwise keep a small routing turn
+                    # alive indefinitely.  Enforce the workflow's total
+                    # provider-call budget at the async boundary as well.
+                    lines = await asyncio.wait_for(post_call, timeout=call_timeout)
                 break
+            except asyncio.TimeoutError as exc:
+                raise ProviderRetryableError(
+                    f"Responses request timed out after {call_timeout:g} seconds"
+                ) from exc
             except ProviderRetryableError:
-                if attempt == 2:
+                if attempt + 1 >= retry_attempts:
                     raise
                 await asyncio.sleep(2 ** attempt)
         assert lines is not None
@@ -299,7 +367,50 @@ class ResponsesProvider:
                 yield ProviderStreamEvent.reasoning_delta(str(event.get("delta", "")))
         yield ProviderStreamEvent.final(assistant_from_events(events))
 
-    def _post(self, payload: Mapping[str, Any]) -> list[str]:
+    def _post_for_options(
+        self, payload: Mapping[str, Any], options: Mapping[str, Any]
+    ) -> list[str]:
+        """Apply workflow-level timeout policy without changing direct callers.
+
+        Reporter delivery explicitly opts out of a wall-clock cutoff. Other
+        Responses calls retain the provider's normal transport timeout.
+        Keeping the default path as a one-argument ``_post`` call preserves
+        the small injection seam used by tests and embedders.
+        """
+
+        if bool(options.get("_disable_provider_timeout", False)):
+            return self._post(payload, disable_timeout=True)
+        requested = options.get("_provider_timeout_seconds")
+        if requested is not None:
+            try:
+                ceiling = float(self.timeout_seconds)
+                if bool(options.get("_allow_extended_provider_timeout", False)):
+                    try:
+                        configured_ceiling = float(
+                            os.environ.get(
+                                "EQUIPMENT_DR_BLUEPRINT_MAX_TIMEOUT_SECONDS",
+                                "180",
+                            )
+                        )
+                    except (TypeError, ValueError):
+                        configured_ceiling = 180.0
+                    ceiling = max(ceiling, configured_ceiling)
+                timeout_seconds = max(
+                    1.0,
+                    min(ceiling, float(requested)),
+                )
+            except (TypeError, ValueError):
+                timeout_seconds = float(self.timeout_seconds)
+            return self._post(payload, timeout_seconds=timeout_seconds)
+        return self._post(payload)
+
+    def _post(
+        self,
+        payload: Mapping[str, Any],
+        *,
+        timeout_seconds: float | None = None,
+        disable_timeout: bool = False,
+    ) -> list[str]:
         request = Request(
             self.base_url,
             data=json.dumps(payload).encode("utf-8"),
@@ -307,7 +418,14 @@ class ResponsesProvider:
             method="POST",
         )
         try:
-            with urlopen(request, timeout=self.timeout_seconds) as response:  # nosec B310: HTTPS validated at construction
+            request_timeout = (
+                None
+                if disable_timeout
+                else self.timeout_seconds
+                if timeout_seconds is None
+                else timeout_seconds
+            )
+            with urlopen(request, timeout=request_timeout) as response:  # nosec B310: HTTPS validated at construction
                 lines: list[str] = []
                 frame: list[str] = []
 
@@ -363,7 +481,7 @@ def _message_to_response_input(message: ModelMessage) -> dict[str, Any]:
 
 
 __all__ = [
-    "ProviderAuthenticationError", "ProviderRequestError", "ProviderRetryableError",
+    "ProviderAuthenticationError", "ProviderRequestError", "ProviderCapacityError", "ProviderRetryableError",
     "ResponsesProvider", "assistant_from_events", "build_request_payload",
     "iter_sse_frames", "parse_sse_event", "parse_sse_frame",
 ]

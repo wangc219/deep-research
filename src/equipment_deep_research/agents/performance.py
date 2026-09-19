@@ -11,6 +11,11 @@ from threading import Condition
 from time import monotonic
 from typing import Any, Iterator
 
+from equipment_deep_research.domain.capability_portrait import (
+    S6_DEFAULT_CODEX_CONCURRENCY,
+    S6_MAX_CODEX_CONCURRENCY,
+)
+
 
 @dataclass(frozen=True)
 class CallLease:
@@ -26,7 +31,7 @@ class AdaptiveCallGate:
     def __init__(self) -> None:
         configured = max(
             1,
-            int(os.environ.get("EQUIPMENT_DR_CODEX_MODEL_CONCURRENCY", "6")),
+            int(os.environ.get("EQUIPMENT_DR_CODEX_MODEL_CONCURRENCY", "8")),
         )
         self.minimum = max(
             1,
@@ -37,9 +42,34 @@ class AdaptiveCallGate:
         )
         self.maximum = max(
             configured,
-            int(os.environ.get("EQUIPMENT_DR_CODEX_MODEL_CONCURRENCY_MAX", "6")),
+            int(os.environ.get("EQUIPMENT_DR_CODEX_MODEL_CONCURRENCY_MAX", "8")),
+        )
+        # Report delivery is split into independent single-column authors.  It
+        # may use a larger ceiling than research waves without widening the
+        # normal run limit configured below.
+        self.reporter_maximum = max(
+            1,
+            int(os.environ.get("EQUIPMENT_DR_REPORTER_MODEL_CONCURRENCY", "12")),
+        )
+        self.s6_maximum = max(
+            1,
+            min(
+                S6_MAX_CODEX_CONCURRENCY,
+                int(
+                    os.environ.get(
+                        "EQUIPMENT_DR_S6_MODEL_CONCURRENCY_MAX",
+                        str(S6_DEFAULT_CODEX_CONCURRENCY),
+                    )
+                ),
+            ),
+        )
+        self.deployment_maximum = max(
+            self.maximum,
+            self.reporter_maximum,
+            self.s6_maximum,
         )
         self.limit = min(self.maximum, max(self.minimum, configured))
+        self._recovery_limit = self.limit
         self.reserved_priority_slots = max(
             0,
             min(
@@ -128,6 +158,9 @@ class AdaptiveCallGate:
                 "limit": self.limit,
                 "minimum": self.minimum,
                 "maximum": self.maximum,
+                "reporter_maximum": self.reporter_maximum,
+                "s6_maximum": self.s6_maximum,
+                "deployment_maximum": self.deployment_maximum,
                 "active": self._active,
                 "reserved_priority_slots": self.reserved_priority_slots,
                 "priority_waiters": self._priority_waiters,
@@ -135,18 +168,26 @@ class AdaptiveCallGate:
                 "latency_downshift_enabled": self.latency_downshift_enabled,
             }
 
-    def cap_concurrency(self, maximum: int) -> None:
-        """Apply a per-run upper bound without increasing deployment limits."""
+    def configure_concurrency(self, maximum: int) -> None:
+        """Set one run's concurrency within the deployment-wide ceiling."""
+
         bounded = max(1, int(maximum))
         with self._condition:
-            self.maximum = min(self.maximum, bounded)
+            self.maximum = min(self.deployment_maximum, bounded)
             self.minimum = min(self.minimum, self.maximum)
-            self.limit = min(self.limit, self.maximum)
+            self.limit = self.maximum
+            self._recovery_limit = self.limit
+            self._recent.clear()
             self.reserved_priority_slots = min(
                 self.reserved_priority_slots,
                 max(0, self.limit - 1),
             )
             self._condition.notify_all()
+
+    def cap_concurrency(self, maximum: int) -> None:
+        """Backward-compatible alias for per-run concurrency configuration."""
+
+        self.configure_concurrency(maximum)
 
     def _can_acquire(self, priority: str) -> bool:
         if self._active >= self.limit:
@@ -173,13 +214,24 @@ class AdaptiveCallGate:
         )
         if failures >= 2 or latency_overloaded:
             self.limit = max(self.minimum, self.limit - 1)
+            # Consume this observation window once. Otherwise the same two
+            # failures reduce the limit again on every successful completion.
+            self._recent.clear()
             return
         if (
             self.limit < self.maximum
             and len(durations) >= 4
-            and sum(durations[-4:]) / 4 <= self.fast_seconds
+            and failures == 0
+            and (
+                sum(durations[-4:]) / 4 <= self.fast_seconds
+                or (
+                    not self.latency_downshift_enabled
+                    and self.limit < self._recovery_limit
+                )
+            )
         ):
             self.limit += 1
+            self._recent.clear()
 
 
 def _normalize_priority(value: str) -> str:

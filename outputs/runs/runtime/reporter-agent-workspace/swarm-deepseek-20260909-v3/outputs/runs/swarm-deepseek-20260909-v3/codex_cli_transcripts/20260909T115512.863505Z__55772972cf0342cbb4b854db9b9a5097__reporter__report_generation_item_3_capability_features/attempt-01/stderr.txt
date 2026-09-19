@@ -1,0 +1,7 @@
+2026-09-09T11:55:12.996905Z  WARN codex_models_manager::model_info: Unknown model deepseek-v4-flash is used. This will use fallback model metadata.
+2026-09-09T11:55:13.037566Z  WARN codex_models_manager::model_info: Unknown model deepseek-v4-flash is used. This will use fallback model metadata.
+2026-09-09T11:55:13.245423Z  WARN codex_core::client: model_verbosity is set but ignored as the model does not support verbosity: deepseek-v4-flash
+2026-09-09T11:56:56.539140Z  WARN codex_sandboxing::violation: recorded sandbox violation: resource=filesystem backend=seatbelt reason=operation_not_permitted path=unknown
+2026-09-09T11:56:56.547735Z  WARN codex_core::client: model_verbosity is set but ignored as the model does not support verbosity: deepseek-v4-flash
+2026-09-09T11:57:06.457742Z  WARN codex_core::client: model_verbosity is set but ignored as the model does not support verbosity: deepseek-v4-flash
+2026-09-09T11:57:16.966146Z  WARN codex_core::client: model_verbosity is set but ignored as the model does not support verbosity: deepseek-v4-flash

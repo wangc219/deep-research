@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=media.defense.gov · FACT SHEET STRATEGY FOR COUNTERING UNMANNED SYSTEMS.PDF
+source_url=https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF
+claim=DoD将反无人系统作为近中远期重点，强调提升探测、跟踪、表征能力，降低反制与无人系统之间的成本失衡，并把抗无人系统纳入未来部队设计。
+excerpt=
+retrieval=Hosted web search citation metadata

@@ -1,0 +1,216 @@
+{
+  "baseline_boundaries": [
+    {
+      "agent_id": "weapon_equipment",
+      "availability": "unavailable",
+      "downstream_obligations": [
+        "S3不得把基线缺失解释为候选不可行或收缩创新空间",
+        "S4按保留候选核验最近公开装备基线与直接反证",
+        "S5汇总候选级成熟度、成本产能、现役差距与未决证据"
+      ],
+      "limitations": [
+        "基线不可用原因：RuntimeError: weapon_equipment model turn completed but outer baseline result validation found no substantive findings"
+      ],
+      "open_questions": [
+        "S4/S5须针对保留的具体候选逐项核验公开装备基线、现役/在研边界、反证、成熟度与差距。"
+      ],
+      "packet_id": "packet-weapon_equipment"
+    }
+  ],
+  "branch_products": {},
+  "claims": [
+    {
+      "claim_id": "claim-869deb07ff49",
+      "claim_type": "hypothesis",
+      "confidence": 0.49,
+      "downstream_steps": [
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-combat_scenario-web-5824f31b34e3",
+        "ev-combat_scenario-web-8952c3805d5a"
+      ],
+      "failure_boundary": "{'id': 'C1', 'topic': '缺口的定位：维持链路 vs 取消链路依赖', 'positions': ['F1 把首要缺口定义为链路降级后的自主重排与降级模式，隐含目标是保住可用回传', 'FI-1 主张把不回传/不辐射/不联网改写为默认作战样式，把链路问题从抗扰层移除'], 'status': 'unresolved_in_current_",
+      "mechanism": "{'id': 'F1', 'task_effect': '抗毁/拒止', 'judgment': '首要缺口是链路降级后的任务维持形态：现有低空无人装备的自主性集中于航路保持与返航，缺少受扰/欺骗条件下按预置优先级自主重排任务、并在无回传时维持受控交战的降级模式，导致侦察—打击链在分钟级内脱节。', 'military_value': '决定拒止环境中打击链是否断裂，以及能否保住前沿持续存在与再组织起点。', 'evidence_boundary': '美方反无人机政策文件把电子干扰列为主要生效手段并将抗扰列为能力关口（S1）；断链后可维持时长、误判率无公开参数，属体系层判断。', 'failure_condition': '若对方以欺骗、协议注入或导航接管替代功率压制，",
+      "military_effects": [
+        "侦察预警",
+        "打击歼灭",
+        "拦截反制",
+        "拒止制衡",
+        "生存抗毁",
+        "体系协同"
+      ],
+      "packet_id": "packet-combat_scenario",
+      "source_agent_id": "combat_scenario",
+      "source_urls": [
+        "https://www.marines.mil/Force-Design/"
+      ]
+    },
+    {
+      "claim_id": "claim-1fec8136e5d7",
+      "claim_type": "hypothesis",
+      "confidence": 0.5,
+      "downstream_steps": [
+        "S2",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-operational_employment-web-36638e192ebe"
+      ],
+      "failure_boundary": "{'ref': 'C1', 'type': 'cross_agent_architecture_conflict', 'sides': ['OE-D3：免疫信道与自主信道为替代关系', '上游：多信道并存即增强'], 'disposition': '未决（本轮不重做检索）', 'required_action': '上游须以接触线静态程度与轴向集中度为条件限",
+      "mechanism": "{'id': 'OF-1', 'links_to': ['OE-D1'], 'statement': '任务链首要缺口位于闭环后段（效果可判定性与跨单元再分配），而非末段导引或火力通道；技术优先级应由单装峰值精度上移至断链条件下的效果可判定性。', 'status': 'inference_from_registered_sources', 'confidence': 'medium', 'falsifier': '若存在证据显示断链条件下末段自主接管即可维持第二轮节奏，则断点顺序回到导引段。'}",
+      "military_effects": [
+        "指挥决策",
+        "打击歼灭",
+        "体系协同"
+      ],
+      "packet_id": "packet-operational_employment",
+      "source_agent_id": "operational_employment",
+      "source_urls": [
+        "https://files.gao.gov/reports/GAO-25-106454/index.html"
+      ]
+    },
+    {
+      "claim_id": "claim-2ccda65f37c6",
+      "claim_type": "hypothesis",
+      "confidence": 0.49,
+      "downstream_steps": [
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-combat_scenario-web-5824f31b34e3",
+        "ev-combat_scenario-web-8952c3805d5a"
+      ],
+      "failure_boundary": "{'id': 'C1', 'topic': '缺口的定位：维持链路 vs 取消链路依赖', 'positions': ['F1 把首要缺口定义为链路降级后的自主重排与降级模式，隐含目标是保住可用回传', 'FI-1 主张把不回传/不辐射/不联网改写为默认作战样式，把链路问题从抗扰层移除'], 'status': 'unresolved_in_current_",
+      "mechanism": "{'id': 'F4', 'task_effect': '打击/评估', 'judgment': '缺少独立于打击链的毁伤评估通道：评估依赖同一受扰数据链与同一被拒止空域的传感，造成“不确定摧毁—重复出击”的正反馈，把链路缺口放大为弹药、架次与暴露时间的消耗缺口。', 'military_value': '决定火力效率、再出动节奏与编队持续压制能力。', 'evidence_boundary': '由公开政策与审计材料对能力分散、集成不足的表述推导（S1/S2），重复出击率无战例量化来源，属推导结论。', 'failure_condition': '若目标存续窗口极短、被迫采用“先发后评”，本缺口不再是首要，转为授权与误伤缺口。', 'confidence': 'low-",
+      "military_effects": [
+        "打击歼灭",
+        "拦截反制",
+        "拒止制衡",
+        "生存抗毁"
+      ],
+      "packet_id": "packet-combat_scenario",
+      "source_agent_id": "combat_scenario",
+      "source_urls": [
+        "https://www.marines.mil/Force-Design/"
+      ]
+    },
+    {
+      "claim_id": "claim-53ea55a0ff66",
+      "claim_type": "fact",
+      "confidence": 0.5,
+      "downstream_steps": [
+        "S2",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-operational_employment-web-36638e192ebe"
+      ],
+      "failure_boundary": "{'ref': 'C1', 'type': 'cross_agent_architecture_conflict', 'sides': ['OE-D3：免疫信道与自主信道为替代关系', '上游：多信道并存即增强'], 'disposition': '未决（本轮不重做检索）', 'required_action': '上游须以接触线静态程度与轴向集中度为条件限",
+      "mechanism": "{'id': 'OF-2', 'links_to': ['OE-D2'], 'statement': '弹性分布方案对集中基线的占优是条件性的，门控为两条：跨建制/跨密级目标归因与效果共享的机读接口可闭合，发射—保障节点可前推；任一不闭合则集中基线更优。', 'status': 'inference', 'confidence': 'medium', 'falsifier': '接口成本与授权时延被证明低于同步收益时，门控放松。'}",
+      "military_effects": [
+        "保障恢复"
+      ],
+      "packet_id": "packet-operational_employment",
+      "source_agent_id": "operational_employment",
+      "source_urls": [
+        "https://files.gao.gov/reports/GAO-25-106454/index.html"
+      ]
+    }
+  ],
+  "conflicts": [
+    "断点顺序未决：OF-1/OE-D1 判'评估回传—再分配'先致断，上游判'末段导引'为首位缺口。须由裁决节点三选一（采纳重排/保留原序/拆为双场景序列），融合层不默认取一。",
+    "链路定位对立：F1 以保住可用回传为目标（抗扰层），FI-1 主张把不回传/不辐射/不联网设为默认作战样式（把链路问题移出抗扰层）。两者并列保留，FI-1 为机制推演不作候选结论。",
+    "结构互斥：F4 要求独立于打击链的 BDA 通道，F2/SC-01 禁持续大功率辐射且回传窗口按小时计，FI-1 进一步取消回传。评估通道载体在本轮无证据指定，保留为未解张力。"
+  ],
+  "frontier_inspiration_rule": "仅在后续模型完成首次自由发散后作为可选启发；可重构或全部舍弃，不得视为装备答案、命名种子、技术目录或覆盖配额。",
+  "frontier_inspirations": [
+    {
+      "conventional_assumption_challenged": "",
+      "downstream_question": "",
+      "evidence_boundary": "",
+      "evidence_ids": [
+        "ev-operational_employment-web-36638e192ebe"
+      ],
+      "packet_id": "packet-operational_employment",
+      "possible_military_discontinuity": "",
+      "query_relevance": "直接指向低空无人体系缺口的位置判定，改变差距排序与需求对象。",
+      "signal": "效果判定与再分配在公开战例中反复成为链条断点，但其载体仍是“附带软件功能”，没有任何一类低空装备把“断链下的可验证性”作为自身存在理由。",
+      "source_agent_id": "operational_employment",
+      "source_urls": [],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "",
+      "downstream_question": "",
+      "evidence_boundary": "",
+      "evidence_ids": [
+        "ev-operational_employment-web-36638e192ebe"
+      ],
+      "packet_id": "packet-operational_employment",
+      "possible_military_discontinuity": "",
+      "query_relevance": "决定强对抗低空场景中“缺口”是可补齐的性能差还是不可补齐的速率差。",
+      "signal": "公开材料把“改型—反制到场周期”当作解释战场效果变化的主因，但装备体系仍按换代周期与固定配置管理来规划。",
+      "source_agent_id": "operational_employment",
+      "source_urls": [],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "",
+      "downstream_question": "",
+      "evidence_boundary": "",
+      "evidence_ids": [
+        "ev-combat_scenario-web-5824f31b34e3",
+        "ev-combat_scenario-web-8952c3805d5a"
+      ],
+      "packet_id": "packet-combat_scenario",
+      "possible_military_discontinuity": "",
+      "query_relevance": "直指本Query核心矛盾（链路代价被抬高的根源），可能把“抗扰”问题从链路层移除。",
+      "signal": "把“不回传、不辐射、不联网”从失效状态改写为默认作战样式的弱信号（被动截获、非协作照射源、预置任务+末端自主）。",
+      "source_agent_id": "combat_scenario",
+      "source_urls": [],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "",
+      "downstream_question": "",
+      "evidence_boundary": "",
+      "evidence_ids": [
+        "ev-combat_scenario-web-5824f31b34e3",
+        "ev-combat_scenario-web-8952c3805d5a"
+      ],
+      "packet_id": "packet-combat_scenario",
+      "possible_military_discontinuity": "",
+      "query_relevance": "本Query问的是体系缺口，此启发给出缺口的可度量表达形式。",
+      "signal": "多份公开文件反复指向集成与授权瓶颈，而非传感器或平台性能瓶颈（能力分散、跨域协同困难）。",
+      "source_agent_id": "combat_scenario",
+      "source_urls": [],
+      "status": "optional_post_divergence_inspiration"
+    }
+  ],
+  "open_questions": [
+    "S4/S5须针对保留的具体候选逐项核验公开装备基线、现役/在研边界、反证、成熟度与差距。"
+  ],
+  "query_anchor": "低空无人装备在强对抗环境中的体系能力缺口研究",
+  "schema": "military_value_handoff_v1",
+  "statistics": {
+    "candidate_claim_count": 9,
+    "compression_ratio": 0.2734,
+    "evidence_url_count": 2,
+    "frontier_inspiration_count": 4,
+    "input_chars": 24411,
+    "input_packet_count": 3,
+    "limited_baseline_count": 1,
+    "output_chars": 6675,
+    "selected_claim_count": 4,
+    "source_agent_count": 2
+  }
+}

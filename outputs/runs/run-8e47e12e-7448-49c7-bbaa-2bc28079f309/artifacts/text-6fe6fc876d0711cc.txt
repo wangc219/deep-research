@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · Force Design
+source_url=https://www.marines.mil/Force-Design/
+claim=海军陆战队将未来作战重点放在对抗环境、精确火力、无人系统、韧性指挥控制与对抗环境保障。
+excerpt=
+retrieval=Hosted web search citation metadata

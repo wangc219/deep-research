@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=marines.mil · force design
-source_url=https://www.marines.mil/force-design/
-claim=S4：Force Design强调无人系统、精确火力、机动C2、AI和电磁频谱机动在竞争环境中的整合；贡献S4/S6的体系基线和协同判断。
-excerpt=
-retrieval=Hosted web search citation metadata

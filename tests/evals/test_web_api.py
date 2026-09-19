@@ -11,6 +11,7 @@ import pytest
 from evals.models import EvalRunResult, read_jsonl, write_jsonl
 from evals.web_api import (
     BareLLMConfig,
+    DEFAULT_EXPERT_WORKBOOK,
     GenericAgentConfig,
     JudgeLLMConfig,
     ZhipuLLMConfig,
@@ -106,6 +107,44 @@ def test_benchmark_overview_exposes_project_environment_without_api_key(
         "ready": True,
     }
     assert "super-secret-benchmark-key" not in response.text
+
+
+def test_benchmark_default_workbook_is_resolved_from_project_root(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    project = _project(tmp_path)
+    monkeypatch.delenv("EQUIPMENT_EVAL_DEFAULT_WORKBOOK", raising=False)
+    app = FastAPI()
+    app.include_router(create_benchmark_router(project))
+    client = TestClient(app)
+
+    workbook = client.get("/api/v1/benchmarks/overview").json()["default_workbook"]
+
+    assert Path(workbook["path"]) == (project / DEFAULT_EXPERT_WORKBOOK).resolve()
+    assert workbook["filename"] == DEFAULT_EXPERT_WORKBOOK.name
+    assert workbook["available"] is False
+
+
+def test_benchmark_relative_workbook_override_is_resolved_from_project_root(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    project = _project(tmp_path)
+    relative_workbook = Path("datasets") / "expert.xlsx"
+    expected = project / relative_workbook
+    expected.parent.mkdir(parents=True)
+    expected.write_bytes(b"placeholder")
+    monkeypatch.setenv("EQUIPMENT_EVAL_DEFAULT_WORKBOOK", str(relative_workbook))
+    app = FastAPI()
+    app.include_router(create_benchmark_router(project))
+    client = TestClient(app)
+
+    workbook = client.get("/api/v1/benchmarks/overview").json()["default_workbook"]
+
+    assert Path(workbook["path"]) == expected.resolve()
+    assert workbook["filename"] == "expert.xlsx"
+    assert workbook["available"] is True
 
 
 def test_benchmark_custom_judge_prompt_is_snapshotted(tmp_path: Path) -> None:

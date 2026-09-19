@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:c737a90f81387d94",
+  "content_path": "text-c737a90f81387d94.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "evidence_id": "ev-cross_domain_fusion-web-8952c3805d5a",
+  "kind": "text",
+  "materialization_status": "fetch_failed",
+  "mode": "real",
+  "reader_error": "attempt_1:TimeoutError: timed out",
+  "sha256": "c737a90f81387d94e43fbca939ef4e4aed8766134f35435f355c624dc39445f0",
+  "url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+}

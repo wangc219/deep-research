@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, replace
 
-from equipment_deep_research.agents.registry import AgentRegistry
+from equipment_deep_research.contracts.agents import AgentCatalog
 from equipment_deep_research.domain.models import AgentRecommendation, RecallRequest
 
 
@@ -31,7 +31,7 @@ class RecallCoordinator:
         self.max_per_target, self.max_rounds = max_per_target, max_rounds
         self._attempts: dict[str, int] = {}
 
-    def route(self, recall: RecallRequest, registry: AgentRegistry, selected_agent_ids: list[str], *, round_index: int) -> RecallRoute:
+    def route(self, recall: RecallRequest, registry: AgentCatalog, selected_agent_ids: list[str], *, round_index: int) -> RecallRoute:
         target = recall.target_agent_id
         if not target and recall.target_capability_tag:
             selected = [registry.get(item) for item in selected_agent_ids]

@@ -5,5 +5,12 @@ evaluation harness cannot become a production runtime dependency.
 """
 
 from .models import EvalQuery, EvalRunResult, PairwiseJudgment
+from .replay import ReplayObservation, ReplayPolicy
 
-__all__ = ["EvalQuery", "EvalRunResult", "PairwiseJudgment"]
+__all__ = [
+    "EvalQuery",
+    "EvalRunResult",
+    "PairwiseJudgment",
+    "ReplayObservation",
+    "ReplayPolicy",
+]

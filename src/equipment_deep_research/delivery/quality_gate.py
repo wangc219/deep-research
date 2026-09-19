@@ -14,7 +14,7 @@ import logging
 from equipment_deep_research.domain.research_focus import (
     disruptive_relationship_groups,
 )
-from equipment_deep_research.orchestration.capability_portrait import (
+from equipment_deep_research.domain.capability_portrait import (
     capability_portrait_quality_issues,
 )
 
@@ -88,6 +88,10 @@ _INTERNAL_REWRITE_BOUNDARY = "〔改写断点：保留事实但不得照录〕"
 _INTERNAL_CANDIDATE_PREFIX_RE = re.compile(
     r"(?m)(?:^|\|\s*|\*\*)[A-Ha-h]\s*[.．、:：]\s*(?=[^\s|*])"
 )
+_VISIBLE_REPORT_TEMPLATE_INSTRUCTIONS = (
+    "按任务准备与装订、平台部署与进入、目标发现确认、火力分配、交战毁伤、效果评估和再组织分阶段说明装备使用方式与指标口径",
+    "围绕时间链、信息与精度链、火力链、毁伤评估链分析单点短板、级联风险和制胜机理",
+)
 
 
 _MILITARY_INFORMATION_SIGNALS = {
@@ -112,6 +116,15 @@ _MILITARY_INFORMATION_SIGNALS = {
     "validation": (
         "验证", "试验", "指标", "判据", "通过条件", "失败条件", "验收",
         "门槛", "待核验", "待校准", "仿真", "半实物", "硬件在环", "海试",
+    ),
+    # Boundary language is intentionally broader than a validation plan.  A
+    # project report may establish the engineering limit through safe abort,
+    # degraded operation, adversary adaptation, or evidence uncertainty
+    # without inventing a uniform verification-metric column.
+    "boundary": (
+        "失效边界", "适用边界", "工程判退", "安全中止", "中止", "降级",
+        "反适应", "证据不足", "公开资料不足", "不确定", "约束", "风险",
+        "判退", "不适用", "边界条件",
     ),
     "decision": (
         "P0", "P1", "P2", "优先级", "优先", "建设", "取舍", "转段",
@@ -297,6 +310,15 @@ def _report_military_information_metrics(
     repeated_occurrences = sum(max(0, count - 1) for count in reuse_counts.values())
     maximum_reuse = max(reuse_counts.values(), default=1)
 
+    # ``project_argument_v1`` must preserve a concrete equipment/action/effect
+    # argument, but it must not force every direction through the same
+    # validation-keyword bundle.  A model may express a boundary as a cost
+    # trade-off, a safe-abort condition, an evidence caveat, or an adversary
+    # adaptation rather than repeating "验证指标/通过条件".
+    project_mode = (
+        str(metadata.get("report_template_mode", "")).strip() == "project_argument_v1"
+        or bool(re.search(r"^##\s*一、需求分析\s*$", report, flags=re.MULTILINE))
+    )
     missing_bundles: list[str] = []
     for name in names:
         windows: list[str] = []
@@ -308,7 +330,15 @@ def _report_military_information_metrics(
             windows.append(report[max(0, position - 240) : position + len(name) + 900])
             start = position + len(name)
         groups = _military_information_signal_groups(" ".join(windows), [name])
-        if not {"adversary", "action", "effect", "validation"}.issubset(groups):
+        required_groups = {"adversary", "action", "effect"}
+        if project_mode:
+            required_groups.add("boundary")
+        if not required_groups.issubset(groups):
+            missing_bundles.append(name)
+        elif not project_mode and "validation" not in groups:
+            # Legacy/three-layer reports retain the stricter validation bundle
+            # for compatibility.  Project reports use the adaptive semantic
+            # boundary above and are not forced to repeat a validation label.
             missing_bundles.append(name)
 
     section_metrics: list[dict[str, Any]] = []
@@ -483,7 +513,8 @@ def _has_dangling_report_fragment(report: str) -> bool:
                 and not any(
                     term in candidate
                     for term in (
-                        "形成", "实现", "完成", "提升", "降低", "打击", "压制",
+                        "形成", "实现", "完成", "构造", "设计", "建立", "明确",
+                        "围绕", "覆盖", "说明", "提升", "降低", "打击", "压制",
                         "猎歼", "承担", "支持", "支撑", "应对", "用于", "采用", "具备", "保持", "选择",
                         "识别", "发现", "确认", "记录", "拒打", "进入", "验证", "评估", "部署", "发射", "交战", "毁伤",
                         "表明", "说明", "决定", "依赖", "位于", "贡献", "对应",
@@ -517,6 +548,7 @@ class QualityReport:
     passed: bool
     summary: str
     publication_blockers: list[str] = field(default_factory=list)
+    publication_advisories: list[str] = field(default_factory=list)
 
     def compact(self) -> dict[str, Any]:
         """Return the publication-oriented gate result without verbose diagnostics."""
@@ -557,9 +589,8 @@ class QualityReport:
                 "foresight": round(self.foresight.score, 4),
                 "advisories": list(
                     dict.fromkeys(
-                        suggestion
-                        for suggestion in all_suggestions
-                        if suggestion not in blockers
+                        [*self.publication_advisories,
+                         *[suggestion for suggestion in all_suggestions if suggestion not in blockers]]
                     )
                 )[:8],
             },
@@ -621,14 +652,28 @@ class ReportQualityGate:
         foresight = self._check_foresight(report, metadata)
         format_integrity = self._check_format_integrity(report, metadata)
         publication_blockers: list[str] = []
+        publication_advisories: list[str] = []
         if not report.strip():
             publication_blockers.append("正式报告为空")
+        # Broken Markdown is objective publication damage.  It cannot remain an
+        # advisory because downstream clients expose the report as a finished
+        # artifact and cannot distinguish a clipped table or unclosed marker
+        # from intentional prose.
         if not self._publication_markdown_intact(report):
-            publication_blockers.append("报告Markdown结构损坏或标记未闭合")
+            publication_blockers.append("正式报告Markdown结构损坏")
         if _INTERNAL_REWRITE_BOUNDARY in report:
+            # An internal handoff marker is an unsafe publication artifact,
+            # regardless of whether the surrounding prose is substantive. It
+            # must remain a hard blocker; mechanical-copy findings elsewhere
+            # are advisory and must not be confused with this contract.
             publication_blockers.append("正式报告仍含内部改写边界标记")
         if _INTERNAL_CANDIDATE_PREFIX_RE.search(report):
+            # Candidate labels are an internal routing artifact. Leaving one
+            # in a released report makes the selected equipment identity
+            # ambiguous, so keep this as a publication blocker.
             publication_blockers.append("正式报告仍含内部候选分支标记")
+        if any(instruction in report for instruction in _VISIBLE_REPORT_TEMPLATE_INSTRUCTIONS):
+            publication_blockers.append("正式报告仍包含写作指令或模板占位句")
 
         # 报告门只检查交付合同，不重复评判上游专家已经评过的装备组合、创新性
         # 和军事价值。通用四维及原细项仍保留为诊断信号；质量模式额外阻断
@@ -643,6 +688,43 @@ class ReportQualityGate:
                 "装备主体约束": self._check_domain_fitness(report, metadata),
                 **fitness,
             }
+        # A bare call to ``validate`` is also used by library consumers for
+        # prose diagnostics (for example a short executive note).  Canonical
+        # H2/H3/H4 publication structure is enforced only when the caller has
+        # supplied a report-delivery contract, or when the body clearly claims
+        # to be one of the governed templates.  The Runner always supplies the
+        # contract metadata, so formal artifacts retain the strict blocker
+        # semantics while generic diagnostics do not become false failures.
+        strict_publication_contract = bool(
+            (metadata or {}).get("strict_publication_contract")
+            or (metadata or {}).get("report_template_mode")
+            or (metadata or {}).get("delivery_owned_h1")
+            or any(title in report for title in (*CANONICAL_REPORT_H2, *PROJECT_ARGUMENT_REPORT_H2))
+        )
+        mechanical_structure_blocking = bool(
+            (metadata or {}).get("mechanical_structure_blocking", True)
+        )
+        objective_format_failures = {
+            "has_canonical_sections": "正式报告缺少规定二级栏目",
+            "has_canonical_order": "正式报告二级栏目顺序错误",
+            "has_canonical_items": "正式报告缺少规定三级栏目",
+            "has_canonical_item_order": "正式报告三级栏目顺序错误",
+            "has_canonical_subitems": "正式报告缺少规定四级栏目",
+            "has_canonical_subitem_order": "正式报告四级栏目顺序错误",
+            "has_exact_heading_counts": "正式报告含重复或越界栏目",
+            "has_bounded_heading_depth": "正式报告标题层级越界",
+            "has_bounded_tables": "正式报告表格结构或规模不合格",
+            "has_complete_paragraphs": "正式报告含残句、截断段落或未闭合单元格",
+            "has_exact_capability_direction_set": "正式报告装备图像未完整覆盖交接装备",
+            "has_no_report_owned_h1": "Reporter正文含越权一级标题",
+            "has_no_internal_rewrite_boundary": "正式报告仍含内部改写边界标记",
+            "has_no_internal_candidate_prefix": "正式报告仍含内部候选分支标记",
+        }
+        if strict_publication_contract and mechanical_structure_blocking:
+            for indicator, blocker in objective_format_failures.items():
+                if not format_integrity.indicators.get(indicator, False):
+                    publication_blockers.append(blocker)
+        publication_blockers = list(dict.fromkeys(publication_blockers))
         core_checks = [format_integrity, *fitness.values()]
         overall_score = sum(item.score for item in core_checks) / len(core_checks)
         passed = not publication_blockers
@@ -670,15 +752,31 @@ class ReportQualityGate:
             passed=passed,
             summary=summary,
             publication_blockers=publication_blockers,
+            publication_advisories=list(dict.fromkeys(publication_advisories)),
         )
 
     def _check_depth(self, report: str, metadata: dict | None) -> QualityCheck:
         """检查深度性"""
         domain_required = self._requires_unmanned_remote_fire_domain(metadata)
+        project_mode = self._is_project_argument_mode(report, metadata)
+        # Project reports may need to compare mission-level directions (for
+        # example target-handling window, autonomy boundary, cost exchange,
+        # survivability or evidence status) without inventing hard numbers.
+        # Keep hard numeric quantification as a diagnostic, but let a
+        # substantive qualitative indicator direction satisfy the depth slot.
+        has_indicator_direction = self._has_quantification(report) or bool(
+            re.search(
+                r"指标方向|指标画像|效能方向|比较口径|适用条件|适用边界|失效边界|"
+                r"任务成功|闭环时间|响应时间|交换比|持续波次|成本规模|规模关系|"
+                r"射程|精度|抗扰|生存性|自主边界|成熟度|证据边界",
+                report,
+            )
+        )
         indicators = {
             'has_causality': self._has_causality(report),
             'has_mechanism': self._has_mechanism(report),
             'has_quantification': self._has_quantification(report),
+            'has_indicator_direction': has_indicator_direction,
             'has_detailed_analysis': self._has_detailed_analysis(report),
             'has_evidence_support': self._has_evidence_support(report, metadata),
             'has_evidence_bounded_feasibility': (
@@ -690,7 +788,12 @@ class ReportQualityGate:
         scored_indicators = {
             key: value
             for key, value in indicators.items()
-            if key not in {'has_evidence_support', 'has_evidence_bounded_feasibility'}
+            if key not in {
+                'has_evidence_support',
+                'has_evidence_bounded_feasibility',
+                'has_quantification' if project_mode else '__never__',
+                'has_indicator_direction' if not project_mode else '__never__',
+            }
         }
         passed_count = sum(scored_indicators.values())
         score = passed_count / len(scored_indicators)
@@ -701,8 +804,13 @@ class ReportQualityGate:
             suggestions.append("增加因果关系分析（如：因此、导致、由于）")
         if not indicators['has_mechanism']:
             suggestions.append("解释底层机制和原理")
-        if not indicators['has_quantification']:
-            suggestions.append("添加量化数据（百分比、倍数、区间）")
+        if not indicators['has_quantification'] and not indicators['has_indicator_direction']:
+            suggestions.append(
+                "补充量化数据（百分比、倍数、区间）或与装备任务直接相关的定性指标方向；"
+                "项目报告无需为满足门槛补造点值"
+                if project_mode
+                else "添加量化数据（百分比、倍数、区间）"
+            )
         if not indicators['has_detailed_analysis']:
             suggestions.append("增加详细分析，避免简单罗列")
         if not indicators['has_evidence_support']:
@@ -721,6 +829,7 @@ class ReportQualityGate:
     def _check_military_value(self, report: str, metadata: dict | None) -> QualityCheck:
         """检查军事价值性"""
         domain_required = self._requires_unmanned_remote_fire_domain(metadata)
+        project_mode = self._is_project_argument_mode(report, metadata)
         indicators = {
             'has_effectiveness': self._has_effectiveness(report),
             'has_resilience': self._has_resilience(report),
@@ -740,13 +849,18 @@ class ReportQualityGate:
 
         passed_count = sum(indicators.values())
         score = passed_count / len(indicators)
+        required_indicators = [
+            'has_unmanned_remote_fire_domain_alignment',
+            'has_capability_and_operational_concept',
+        ]
+        # The three-track formulation is a useful comparison lens, not a
+        # universal project-report schema.  Keep it as a diagnostic in
+        # project_argument_v1 so a strong query-specific effect argument is
+        # not rejected merely because it uses different military language.
+        if not project_mode:
+            required_indicators.append('has_three_track_winning_effect')
         passed = score >= self.thresholds['military_value'] and all(
-            indicators[key]
-            for key in (
-                'has_unmanned_remote_fire_domain_alignment',
-                'has_capability_and_operational_concept',
-                'has_three_track_winning_effect',
-            )
+            indicators[key] for key in required_indicators
         )
 
         suggestions = []
@@ -768,7 +882,10 @@ class ReportQualityGate:
         if not indicators['has_capability_and_operational_concept']:
             suggestions.append("装备能力图像需同时给出具体装备能力、指标画像和作战运用概念")
         if not indicators['has_three_track_winning_effect']:
-            suggestions.append("制胜效能需区分现役效能跃升、传统赛道跨代优势和新概念赛道开辟")
+            suggestions.append(
+                "可选增强：用现役效能跃升、传统赛道跨代优势或新概念赛道开辟等任一合适视角说明制胜效能，"
+                "不要求套用三赛道固定表述"
+            )
 
         return QualityCheck(
             dimension='军事价值性',
@@ -781,6 +898,7 @@ class ReportQualityGate:
     def _check_novelty(self, report: str, metadata: dict | None) -> QualityCheck:
         """检查新颖性"""
         domain_required = self._requires_unmanned_remote_fire_domain(metadata)
+        project_mode = self._is_project_argument_mode(report, metadata)
         disruptive_groups = disruptive_relationship_groups(report)
         diversity_required = bool(
             metadata and metadata.get("require_disruptive_lens_diversity")
@@ -792,7 +910,9 @@ class ReportQualityGate:
             'has_cross_domain': self._has_cross_domain(report),
             'has_disruptive_relationship_diversity': len(disruptive_groups) >= 3,
             'has_cross_generation_or_new_track': (
-                not domain_required or self._has_cross_generation_or_new_track(report)
+                not domain_required
+                or project_mode
+                or self._has_cross_generation_or_new_track(report)
             ),
             'has_evidence_grounded_novelty': (
                 not domain_required or self._has_evidence_grounded_novelty(report)
@@ -824,7 +944,7 @@ class ReportQualityGate:
                 "低优先级增强：围绕具体装备补充Query因果相关的关系变化，避免罗列方法论维度"
             )
         if not indicators['has_cross_generation_or_new_track']:
-            suggestions.append("说明传统赛道的跨代优势或新概念装备如何开辟新赛道")
+            suggestions.append("可选增强：说明相对基线的代际差异或新的作战路径，不要求使用固定赛道术语")
         if not indicators['has_evidence_grounded_novelty']:
             suggestions.append("创新性必须说明相对基线改变的作战关系，并给出对手反适应或失效边界")
 
@@ -936,8 +1056,28 @@ class ReportQualityGate:
         heading_depth_ok = not any(
             level > maximum_heading_depth for level, _ in contract_headings
         )
-        tables_ok = self._tables_are_bounded(report)
-        paragraphs_ok = self._paragraphs_are_complete(report)
+        # Project reports may choose a compact matrix, a wider comparison
+        # table, or prose-led equipment analysis.  Keep Markdown safety
+        # limits, but do not impose the legacy five-column/row shape.
+        tables_ok = self._tables_are_bounded(report, project_mode=project_mode)
+        # Keep prose diagnostics permissive for callers that do not identify a
+        # governed delivery contract.  The Runner supplies one explicitly, so
+        # actual report artifacts still reject dangling clauses and malformed
+        # table cells; arbitrary long prose remains inspectable rather than a
+        # spurious task failure.
+        strict_publication_contract = bool(
+            (metadata or {}).get("strict_publication_contract")
+            or (metadata or {}).get("report_template_mode")
+            or (metadata or {}).get("delivery_owned_h1")
+            or any(
+                title in report
+                for title in (*CANONICAL_REPORT_H2, *PROJECT_ARGUMENT_REPORT_H2)
+            )
+        )
+        paragraphs_ok = self._paragraphs_are_complete(
+            report,
+            strict=strict_publication_contract,
+        )
         expected_capability_directions = []
         if metadata:
             raw_expected = metadata.get("expected_capability_directions", [])
@@ -945,19 +1085,46 @@ class ReportQualityGate:
                 expected_capability_directions = [
                     str(item).strip() for item in raw_expected
                     if str(item).strip()
-                ][:12]
+                ]
         table_capability_directions = self._capability_image_table_directions(
             report, metadata
         )
+        capability_section = self._section_body(
+            report,
+            "（一）装备图像概述" if project_mode else "⑦ 装备能力图像",
+            "（二）作战运用模式" if project_mode else "⑧ 效能贡献评估",
+        )
         exact_capability_direction_set = (
-            not expected_capability_directions
-            or (
-                table_capability_directions == expected_capability_directions
-                and len(table_capability_directions)
-                == len(expected_capability_directions)
+            self._project_capability_section_grounded(
+                # The image section identifies the equipment; the adjacent
+                # operation/effect/boundary prose may legitimately live in
+                # later project sections rather than be duplicated in every
+                # table cell.
+                capability_section + "\n" + report,
+                table_capability_directions,
+                expected_capability_directions,
+                require_boundary=bool(
+                    (metadata or {}).get("require_high_value_military_information")
+                    or (metadata or {}).get("expected_capability_records")
+                ),
+            )
+            if project_mode
+            else (
+                not expected_capability_directions
+                or (
+                    table_capability_directions == expected_capability_directions
+                    and len(table_capability_directions)
+                    == len(expected_capability_directions)
+                )
             )
         )
-        no_h1 = not any(level == 1 for level, _ in contract_headings)
+        h1_count = sum(1 for level, _ in contract_headings if level == 1)
+        # The orchestration layer owns the publication title and may wrap a
+        # Reporter body in exactly one H1.  Treat that explicitly declared
+        # wrapper as delivery chrome, while still rejecting Reporter-authored
+        # H1 headings and duplicate titles.
+        delivery_owned_h1 = bool((metadata or {}).get("delivery_owned_h1"))
+        no_h1 = h1_count == 0 or (delivery_owned_h1 and h1_count == 1)
         no_internal_rewrite_boundary = _INTERNAL_REWRITE_BOUNDARY not in report
         no_internal_candidate_prefix = not _INTERNAL_CANDIDATE_PREFIX_RE.search(
             report
@@ -1047,12 +1214,17 @@ class ReportQualityGate:
             if not heading_depth_ok:
                 suggestions.append("标题最多使用三级，合并碎片化小节")
         if not tables_ok:
-            suggestions.append("表格控制在6列、12行以内，拆分超长单元格")
+            suggestions.append(
+                "修复Markdown表格边界、列宽不一致或过长单元格；项目论证表格列数和装备行数按内容自适应"
+                if project_mode
+                else "表格控制在6列、12行以内，拆分超长单元格"
+            )
         if not paragraphs_ok:
             suggestions.append("修复残句、未闭合Markdown和超长段落")
         if not exact_capability_direction_set:
             suggestions.append(
-                "装备能力图像表只能逐项使用输入的具体武器装备方向，禁止新增装备包、保障节点或C2/网络主体"
+                "装备图像概述需关联至少一个具体武器装备，并把平台、载荷/感知火控、交战效果或失效边界写清；"
+                "表格列数和装备行数按Query与证据自适应，不要求固定矩阵"
             )
         if not no_h1:
             suggestions.append("报告正文不得自行输出一级标题，标题由交付层统一生成")
@@ -1085,26 +1257,46 @@ class ReportQualityGate:
             (metadata or {}).get("military_scenario_first_gate")
         )
         if scenario_first:
-            represented_names = sum(name in report for name in names if name)
-            capability_projection_ok = (
-                (
-                    4 <= len(rows) <= 8
-                    and all(len(row) > concept_index for row in rows)
+            # Scenario-first quality runs may use editorial weapon names and
+            # a variable portfolio.  Keep the semantic equipment/action/effect
+            # check, but remove the former 4–8-row and fixed-column quota.
+            capability_projection_ok = self._project_capability_section_grounded(
+                self._section_body(
+                    report,
+                    "（一）装备图像概述" if project_mode else "⑦ 装备能力图像",
+                    "（二）作战运用模式" if project_mode else "⑧ 效能贡献评估",
                 )
-                or (
-                    not names
-                    or represented_names >= max(1, len(names) - 1)
-                )
+                + "\n"
+                + report,
+                row_names,
+                names,
+                require_boundary=True,
             )
         else:
             capability_projection_ok = (
-                (
-                    len(rows) == len(names)
-                    if names
-                    else 5 <= len(rows) <= 7
+                self._project_capability_section_grounded(
+                    self._section_body(
+                        report,
+                        "（一）装备图像概述" if project_mode else "⑦ 装备能力图像",
+                        "（二）作战运用模式" if project_mode else "⑧ 效能贡献评估",
+                    ) + "\n" + report,
+                    row_names,
+                    names,
+                    require_boundary=bool(
+                        (metadata or {}).get("require_high_value_military_information")
+                        or (metadata or {}).get("expected_capability_records")
+                    ),
                 )
-                and all(len(row) > concept_index for row in rows)
-                and (not names or row_names == names)
+                if project_mode
+                else (
+                    (
+                        len(rows) == len(names)
+                        if names
+                        else 5 <= len(rows) <= 7
+                    )
+                    and all(len(row) > concept_index for row in rows)
+                    and (not names or row_names == names)
+                )
             )
         require_detailed_portraits = bool(
             (metadata or {}).get("require_detailed_capability_portraits")
@@ -1221,9 +1413,15 @@ class ReportQualityGate:
                     "突防",
                     "毁伤",
                     "任务成功率",
+                    "作战效果",
+                    "直接效果",
                 )
             )
-            and (not names or represented >= max(1, len(names) - 1)),
+            and (
+                (not names or represented >= max(1, len(names) - 1))
+                if not project_mode
+                else (not names or represented >= 1)
+            ),
             "core_indicators_present": any(
                 term in indicators_section
                 for term in (
@@ -1235,6 +1433,12 @@ class ReportQualityGate:
                     "精度",
                     "成本",
                     "规模",
+                    "抗扰",
+                    "生存",
+                    "毁伤",
+                    "作战效果",
+                    "失效边界",
+                    "待核验",
                     "待验证",
                 )
             ),
@@ -1278,17 +1482,25 @@ class ReportQualityGate:
             )
         suggestions: list[str] = []
         if not indicators["capability_projection_complete"]:
-            suggestions.append("能力画像表须完整投影本次全部既定装备方向，不新增或遗漏主体")
+            suggestions.append(
+                "装备图像概述需保留与Query相关的具体武器装备主体，并说明其平台/载荷/感知火控、交战效果和边界；"
+                "不按固定行数或表格列数凑齐"
+                if project_mode
+                else "能力画像表须完整投影本次全部既定装备方向，不新增或遗漏主体"
+            )
         if not indicators["detailed_capability_portraits_complete"]:
             suggestions.append(
-                "逐装备能力画像须各出现一次，并完整包含概述与四个受控分点；不得只保留表格或标题"
+                "逐装备能力画像需形成可区分的装备主体、实现路径、作战动作、直接效果与失效/适用边界；"
+                "不要求每项重复同一组字段或验证标签"
             )
         if not indicators["operational_concept_and_process_present"]:
             suggestions.append("补齐作战概念、关键作战流程和链路闭环")
         if not indicators["system_contribution_present"]:
             suggestions.append("逐装备说明体系贡献及可校准效能方向")
         if not indicators["core_indicators_present"]:
-            suggestions.append("列出核心战技指标；无证据时标注待验证，不要求虚构数值")
+            suggestions.append(
+                "说明与Query相关的作战效果、能力边界或可比较指标方向；不要求统一列出验证指标或补造点值"
+            )
         if not indicators["solution_and_technology_present"]:
             suggestions.append("总体方案需落到子系统、硬件/软件和关键技术途径")
         return QualityCheck("内容闭环", passed, score, indicators, suggestions)
@@ -1303,6 +1515,7 @@ class ReportQualityGate:
         evidence_available = bool((metadata or {}).get("evidence_count")) or bool(
             re.search(r"https?://|\[[^\]]+\]\(https?://", report)
         )
+        project_mode = self._is_project_argument_mode(report, metadata)
         indicators = {
             "evidence_handoff_available": evidence_available,
             "fact_inference_boundary_present": any(
@@ -1311,7 +1524,11 @@ class ReportQualityGate:
             ),
             "validation_boundary_present": any(
                 term in report
-                for term in ("待验证", "验证指标", "通过条件", "失败条件", "验收判据", "试验验证")
+                for term in (
+                    "待验证", "验证指标", "通过条件", "失败条件", "验收判据", "试验验证",
+                    "失效边界", "适用边界", "工程判退", "安全中止", "降级运行",
+                    "证据边界", "不确定性", "反适应",
+                )
             ),
         }
         score = sum(indicators.values()) / len(indicators)
@@ -1327,7 +1544,10 @@ class ReportQualityGate:
         if not indicators["fact_inference_boundary_present"]:
             suggestions.append("明确区分公开事实、分析推断与待核验假设")
         if not indicators["validation_boundary_present"]:
-            suggestions.append("为关键指标或方案给出待验证边界和通过/失败判据")
+            suggestions.append(
+                "说明关键方案的证据边界、失效/适用边界或后续验证方向；"
+                + ("不要求统一设置验证指标列" if project_mode else "必要时给出通过/失败判据")
+            )
         return QualityCheck("证据与验证边界", passed, score, indicators, suggestions)
 
     def _check_report_information_density(
@@ -1368,6 +1588,7 @@ class ReportQualityGate:
         concrete_equipment_rows = len(
             self._capability_image_table_directions(report, metadata)
         )
+        project_mode = self._is_project_argument_mode(report, metadata)
         indicators = {
             "decision_dense_paragraphs": metrics["decision_dense_ratio"] >= (
                 0.45 if scenario_first else 0.55
@@ -1383,9 +1604,25 @@ class ReportQualityGate:
                 )
             ),
             "equipment_decision_bundles_complete": (
-                4 <= concrete_equipment_rows <= 8
-                if scenario_first
-                else not metrics["missing_equipment_bundles"]
+                (
+                    not metrics["missing_equipment_bundles"]
+                    and (
+                        concrete_equipment_rows > 0
+                        or any(
+                            term in report
+                            for term in (
+                                "导弹", "弹药", "无人机", "无人艇", "拦截弹",
+                                "发射车", "火炮", "效应器", "武器站",
+                            )
+                        )
+                    )
+                )
+                if project_mode
+                else (
+                    4 <= concrete_equipment_rows <= 8
+                    if scenario_first
+                    else not metrics["missing_equipment_bundles"]
+                )
             ),
         }
         if self._metadata_portrait_records_present(metadata):
@@ -1410,10 +1647,21 @@ class ReportQualityGate:
                 "跨章节长句复用过多：同一完整长句不得出现三次，重复长句实例占比不得超过8%"
             )
         if not indicators["equipment_decision_bundles_complete"]:
-            suggestions.append(
-                "以下装备未成套说明敌方目标/反制、我方作战动作、直接战果与验证判据："
-                + "、".join(metrics["missing_equipment_bundles"][:5])
-            )
+            if project_mode:
+                suggestions.append(
+                    "具体武器装备需至少关联作战对象/威胁、我方动作、直接效果和适用边界；"
+                    "边界可用中止、降级、反适应或证据不足表述，不要求统一验证指标"
+                    + (
+                        "；当前缺少：" + "、".join(metrics["missing_equipment_bundles"][:5])
+                        if metrics["missing_equipment_bundles"]
+                        else ""
+                    )
+                )
+            else:
+                suggestions.append(
+                    "以下装备未成套说明敌方目标/反制、我方作战动作、直接战果与验证判据："
+                    + "、".join(metrics["missing_equipment_bundles"][:5])
+                )
         portrait_issues = self._metadata_portrait_issues(metadata)
         if portrait_issues:
             suggestions.append(
@@ -1425,6 +1673,10 @@ class ReportQualityGate:
             value
             for key, value in indicators.items()
             if key != "equipment_decision_bundles_complete"
+            and not (
+                project_mode
+                and key == "capability_portrait_contract_passed"
+            )
         )
         return QualityCheck(
             "军事决策信息密度",
@@ -1481,11 +1733,62 @@ class ReportQualityGate:
         metadata: dict | None,
     ) -> QualityCheck:
         records = self._expected_capability_records(metadata)
+        domain = (metadata or {}).get("query_domain_contract", {})
+        if isinstance(domain, dict) and domain.get("mode") == "mission_equipment":
+            support = [item for item in records if self._is_support_only_record(item)]
+            # Detection/inspection Queries need a concrete, independently
+            # deployable sensing or diagnostic body.  Reuse the same records
+            # supplied to the report instead of looking for weapon keywords.
+            mission_records = [item for item in records if item not in support]
+            binding_rows = [
+                item.get("evidence_binding")
+                for item in mission_records
+                if isinstance(item.get("evidence_binding"), dict)
+                and item.get("evidence_binding")
+            ]
+            indicators = {
+                "has_4_to_8_equipment_directions": 4 <= len(records) <= 8,
+                "has_query_mission_equipment": bool(mission_records),
+                "mission_equipment_is_portfolio_majority": len(mission_records)
+                >= max(1, len(support)),
+                "has_no_unrelated_attack_equipment": not any(
+                    self._is_direct_combat_record(item) for item in mission_records
+                ),
+                "report_matches_query_effect": bool(
+                    re.search(
+                        r"检测|探测|感知|识别|定位|跟踪|测量|诊断|复核|预警|维护|保障",
+                        report,
+                    )
+                ),
+                "candidate_local_evidence_is_explicit": (
+                    not binding_rows
+                    or all(bool(row.get("direct_support")) for row in binding_rows)
+                ),
+            }
+            required = (
+                "has_query_mission_equipment",
+                "mission_equipment_is_portfolio_majority",
+                "has_no_unrelated_attack_equipment",
+                "candidate_local_evidence_is_explicit",
+            )
+            passed = all(indicators[key] for key in required)
+            suggestions: list[str] = []
+            if not indicators["has_no_unrelated_attack_equipment"]:
+                suggestions.append("候选装备超出Query检测/保障语义边界，应降级为假设或淘汰")
+            if not indicators["report_matches_query_effect"]:
+                suggestions.append("报告应围绕Query要求的检测、感知、定位或保障直接效果展开")
+            return QualityCheck("领域属性符合性", passed, sum(indicators.values()) / len(indicators), indicators, suggestions)
         direct = [item for item in records if self._is_direct_combat_record(item)]
         support = [item for item in records if self._is_support_only_record(item)]
         unmanned = [item for item in records if self._is_unmanned_record(item)]
         missile = [item for item in records if self._is_remote_precision_record(item)]
         offensive = [item for item in records if self._is_offensive_strike_record(item)]
+        binding_rows = [
+            item.get("evidence_binding")
+            for item in records
+            if isinstance(item.get("evidence_binding"), dict)
+            and item.get("evidence_binding")
+        ]
         topic = str((metadata or {}).get("topic", ""))
         strike_focused = any(term in topic for term in ("精确打击", "远程火力", "远打精打", "远域压制"))
         defensive_focus = any(term in topic for term in ("防空", "反无人", "拦截", "要地防护"))
@@ -1495,13 +1798,23 @@ class ReportQualityGate:
             "direct_combat_weapons_are_portfolio_majority": len(direct)
             >= max(1, (len(records) + 1) // 2),
             "has_direct_combat_weapon": bool(direct),
-            "has_no_support_only_main_direction": not support,
+            # Support equipment is a legitimate dependency of a weapon
+            # portfolio (for example sensing, relay, launch and BDA nodes).
+            # Reject only portfolios that contain no direct weapon or where
+            # support directions outnumber the direct combat主体; do not make
+            # the mere presence of a support record a hard failure.
+            "has_no_support_only_main_direction": bool(direct)
+            and len(direct) >= max(1, len(support)),
             "has_unmanned_combat_equipment": bool(unmanned),
             "has_remote_precision_missile_equipment": bool(missile),
             "has_query_aligned_offensive_portfolio": (
                 not strike_focused or defensive_focus or len(offensive) >= 4
             ),
             "report_stays_in_unmanned_remote_fire_domain": self._has_unmanned_remote_fire_alignment(report),
+            "candidate_local_evidence_is_explicit": (
+                not binding_rows
+                or all(bool(row.get("direct_support")) for row in binding_rows)
+            ),
         }
         score = sum(indicators.values()) / len(indicators)
         # The portfolio is generated from the Query and is intentionally
@@ -1512,12 +1825,13 @@ class ReportQualityGate:
         required = (
             "has_direct_combat_weapon",
             "has_no_support_only_main_direction",
+            "candidate_local_evidence_is_explicit",
         )
         passed = all(indicators[key] for key in required)
         suggestions: list[str] = []
-        if support:
+        if support and not indicators["has_no_support_only_main_direction"]:
             suggestions.append(
-                "以下主体不是直接战斗武器装备，应下沉为体系依赖："
+                "支撑装备数量或权重超过直接战斗装备，应下沉为体系依赖："
                 + "、".join(str(item.get("name", "")) for item in support[:3])
             )
         if direct and len(direct) < max(1, (len(records) + 1) // 2):
@@ -1555,23 +1869,64 @@ class ReportQualityGate:
             or ("射程/响应时间" in cell and "待" in cell)
             for cell in indicator_cells
         )
+        project_grounded = self._project_capability_section_grounded(
+            self._section_body(
+                report,
+                "（一）装备图像概述" if project_mode else "⑦ 装备能力图像",
+                "（二）作战运用模式" if project_mode else "⑧ 效能贡献评估",
+            ) + "\n" + report,
+            row_names,
+            names,
+            require_boundary=bool(
+                (metadata or {}).get("require_high_value_military_information")
+                or (metadata or {}).get("expected_capability_records")
+            ),
+        )
         indicators = {
-            "has_exact_equipment_direction_set": bool(names) and row_names == names,
-            "has_5_to_7_rows": 5 <= len(rows) <= 7,
-            "each_row_has_capability_indicator_and_employment": bool(rows)
-            and all(len(row) >= 5 and all(cell.strip() for cell in row[:5]) for row in rows),
-            "indicator_portraits_are_direction_specific": bool(indicator_cells)
-            and generic_indicator_count <= 1
-            and len(set(indicator_cells)) >= max(3, len(indicator_cells) - 1),
-            "operational_employment_concepts_are_specific": bool(concept_cells)
-            and all(len(cell) >= 24 for cell in concept_cells)
-            and len(set(concept_cells)) >= max(3, len(concept_cells) - 1),
+            "has_exact_equipment_direction_set": (
+                project_grounded if project_mode else bool(names) and row_names == names
+            ),
+            # In project mode these two indicators describe semantic coverage,
+            # not a prescribed matrix shape.  Keep the legacy names in the
+            # payload for backwards-compatible consumers.
+            "has_5_to_7_rows": (
+                project_grounded if project_mode else 5 <= len(rows) <= 7
+            ),
+            "each_row_has_capability_indicator_and_employment": (
+                project_grounded
+                if project_mode
+                else bool(rows)
+                and all(len(row) >= 5 and all(cell.strip() for cell in row[:5]) for row in rows)
+            ),
+            "indicator_portraits_are_direction_specific": (
+                project_grounded
+                if project_mode
+                else bool(indicator_cells)
+                and generic_indicator_count <= 1
+                and len(set(indicator_cells)) >= max(3, len(indicator_cells) - 1)
+            ),
+            "operational_employment_concepts_are_specific": (
+                project_grounded
+                if project_mode
+                else bool(concept_cells)
+                and all(len(cell) >= 24 for cell in concept_cells)
+                and len(set(concept_cells)) >= max(3, len(concept_cells) - 1)
+            ),
             "has_capability_domain_and_lineage_position": (
                 (
-                    any(term in report for term in ("形成能力", "主要能力", "能力画像"))
+                    any(
+                        term in report
+                        for term in (
+                            "形成能力", "主要能力", "能力画像", "装备平台", "平台与方案",
+                            "载荷", "传感器", "火控", "子系统", "技术途径",
+                        )
+                    )
                     and any(
                         term in report
-                        for term in ("装备平台", "总体方案", "子系统", "技术途径")
+                        for term in (
+                            "作战效果", "直接效果", "毁伤", "交战", "失效边界",
+                            "中止", "降级", "证据不足", "待核验", "谱系", "现役",
+                        )
                     )
                 )
                 if project_mode
@@ -1592,10 +1947,17 @@ class ReportQualityGate:
         )
         suggestions = []
         if not indicators["has_exact_equipment_direction_set"]:
-            section_label = "装备图像概述" if project_mode else "⑦"
-            suggestions.append(f"{section_label}第一列必须逐项等于能力画像中的具体装备名称，不得改成能力、网络或装备包")
+            if project_mode:
+                suggestions.append(
+                    "装备图像概述需保留具体武器装备主体，并结合平台、载荷/感知火控、交战效果与失效边界；"
+                    "不要求第一列、行数或列数固定"
+                )
+            else:
+                suggestions.append("⑦第一列必须逐项等于能力画像中的具体装备名称，不得改成能力、网络或装备包")
         if not indicators["indicator_portraits_are_direction_specific"]:
-            suggestions.append("每项装备需给出不同的射程/覆盖、响应、自主、成本、规模或生存指标方向，不能统一写待校准")
+            suggestions.append(
+                "每项装备需给出与自身作战任务相关的效果、边界或比较维度，避免机械复制统一指标占位"
+            )
         if not indicators["operational_employment_concepts_are_specific"]:
             suggestions.append("逐项说明编组、待机、发射、突防、压制、毁伤或再打击的作战运用概念")
         return QualityCheck("装备能力图像", passed, score, indicators, suggestions)
@@ -1616,27 +1978,64 @@ class ReportQualityGate:
         represented = sum(name in section for name in names if name)
         indicators = {
             "has_three_winning_tracks": self._has_three_track_winning_effect(section),
-            "covers_each_equipment_direction": not names or represented >= max(5, len(names) - 1),
-            "has_chain_contribution_type": any(term in section for term in ("补链", "强链", "开链")),
-            "has_quantifiable_effect_directions": sum(
+            "covers_each_equipment_direction": (
+                (not names or represented >= 1)
+                if project_mode
+                else (not names or represented >= max(5, len(names) - 1))
+            ),
+            "has_chain_contribution_type": any(
                 term in section
-                for term in ("突防率", "交换比", "决策周期", "任务成功率", "压制窗口", "再打击")
-            ) >= 3,
+                for term in (
+                    "补链", "强链", "开链", "体系贡献", "作战贡献", "直接效果",
+                    "任务效果", "战果", "作用", "改善", "替代",
+                )
+            ),
+            "has_quantifiable_effect_directions": (
+                any(
+                    term in section
+                    for term in (
+                        "突防率", "交换比", "决策周期", "任务成功率", "压制窗口", "再打击",
+                        "闭环时间", "耗弹量", "持续波次", "成本", "效能", "效果", "战果",
+                    )
+                )
+                if project_mode
+                else sum(
+                    term in section
+                    for term in ("突防率", "交换比", "决策周期", "任务成功率", "压制窗口", "再打击")
+                ) >= 3
+            ),
             "has_cross_generation_or_new_track_advantage": self._has_cross_generation_or_new_track(section),
             "has_evidence_boundary_for_effect": any(
-                term in section for term in ("公开证据", "待验证", "无校准", "验证方向", "不承诺")
+                term in section
+                for term in (
+                    "公开证据", "待验证", "无校准", "验证方向", "不承诺",
+                    "证据不足", "待核验", "失效边界", "适用边界", "反适应",
+                    "中止", "降级", "约束",
+                )
             ),
         }
         scored_indicators = {
             key: value
             for key, value in indicators.items()
             if key != "has_evidence_boundary_for_effect"
+            and not (project_mode and key == "has_three_winning_tracks")
         }
         score = sum(scored_indicators.values()) / len(scored_indicators)
-        passed = all(scored_indicators.values())
+        # A project argument may demonstrate a different, query-specific
+        # winning logic.  The three-track vocabulary and cross-generation
+        # label are advisory; concrete effect plus an explicit evidence or
+        # failure boundary remain the semantic requirements.
+        if project_mode:
+            scored_indicators.pop("has_cross_generation_or_new_track_advantage", None)
+        passed = all(scored_indicators.values()) and (
+            not project_mode or indicators["has_evidence_boundary_for_effect"]
+        )
         suggestions = []
         if not indicators["has_three_winning_tracks"]:
-            suggestions.append("分别论证现役效能跃升、传统赛道跨代优势和新概念赛道开辟")
+            suggestions.append(
+                "可选增强：从最适合Query的一个或多个制胜视角说明效能变化；"
+                "不要求固定套用三赛道表述"
+            )
         if not indicators["covers_each_equipment_direction"]:
             suggestions.append(
                 "体系贡献率分析必须逐项说明每种装备对杀伤链和作战体系的贡献"
@@ -1644,7 +2043,10 @@ class ReportQualityGate:
                 else "⑧必须逐项说明每种装备对杀伤链和作战体系的贡献"
             )
         if not indicators["has_quantifiable_effect_directions"]:
-            suggestions.append("至少给出三类可校准效能方向，如突防率、交换比、决策周期、压制窗口或任务成功率")
+            suggestions.append(
+                "给出与具体装备和作战任务相称的效果比较方向（如闭环时间、突防/拦截效果、持续波次或成本交换），"
+                "数量和口径由Query与证据决定"
+            )
         return QualityCheck("制胜效能", passed, score, indicators, suggestions)
 
     def _check_innovation_fitness(
@@ -1679,7 +2081,11 @@ class ReportQualityGate:
             "has_disruptive_relationship_diversity": len(disruptive_relationship_groups(innovation_sections)) >= 3,
             "has_adversary_readaptation": any(term in innovation_sections for term in ("对手反适应", "反适应", "诱饵", "针对性拦截")),
             "has_failure_boundary": any(term in innovation_sections for term in ("失效边界", "失败条件", "适用边界")),
-            "innovation_reaches_equipment_directions": not names or represented >= max(4, len(names) - 2),
+            "innovation_reaches_equipment_directions": (
+                (not names or represented >= 1)
+                if project_mode
+                else (not names or represented >= max(4, len(names) - 2))
+            ),
             "has_new_track_or_cross_generation_result": self._has_cross_generation_or_new_track(report),
         }
         scored_indicators = {
@@ -1687,6 +2093,12 @@ class ReportQualityGate:
             for key, value in indicators.items()
             if key != "has_evidence_boundary"
         }
+        if project_mode:
+            # Query-specific innovation need not enumerate three relationship
+            # categories or use a "new track/cross-generation" label.  Keep
+            # adversary adaptation and failure boundary as semantic gates.
+            scored_indicators.pop("has_disruptive_relationship_diversity", None)
+            scored_indicators.pop("has_new_track_or_cross_generation_result", None)
         score = sum(scored_indicators.values()) / len(scored_indicators)
         passed = all(scored_indicators.values())
         suggestions = []
@@ -1750,12 +2162,28 @@ class ReportQualityGate:
             if term in section
         }
         indicators = {
-            "covers_each_equipment_direction": not names or represented >= max(5, len(names) - 1),
-            "has_specific_core_technologies": len(technical_terms) >= 4,
+            "covers_each_equipment_direction": (
+                (not names or represented >= max(1, len(names) - 1))
+                if project_mode
+                else (not names or represented >= max(5, len(names) - 1))
+            ),
+            "has_specific_core_technologies": len(technical_terms) >= (2 if project_mode else 4),
             "has_maturity_per_direction": sum(term in section for term in ("成熟度", "TRL", "样机", "工程化", "现役改装")) >= 2,
             "has_bottleneck_and_priority": any(term in section for term in ("瓶颈", "卡脖子", "短板"))
-            and any(term in section for term in ("P0", "P1", "P2", "优先级")),
-            "has_evidence_boundary": any(term in section for term in ("公开证据", "证据不足", "待验证", "事实", "推断", "假设")),
+            and any(
+                term in section
+                for term in (
+                    "P0", "P1", "P2", "优先级", "近期", "中期", "远期",
+                    "优先", "先行", "分阶段", "排序",
+                )
+            ),
+            "has_evidence_boundary": any(
+                term in section
+                for term in (
+                    "公开证据", "公开资料不足", "证据不足", "待验证", "待核验",
+                    "事实", "推断", "假设", "边界", "不确定",
+                )
+            ),
             "has_validation_and_failure_conditions": any(
                 term in section
                 for term in (
@@ -1763,15 +2191,35 @@ class ReportQualityGate:
                     "演示项目", "综合靶场", "靶场试验", "红队试验", "联测",
                 )
             )
-            and any(term in section for term in ("通过条件", "失败条件", "验收指标", "判据")),
-            "has_coupling_single_point_risk": any(term in section for term in ("耦合", "依赖", "级联"))
-            and any(term in section for term in ("拖垮", "卡脖子", "单点", "短板")),
+            and any(term in section for term in ("通过条件", "失败条件", "验收指标", "判据"))
+            if not project_mode
+            else any(
+                term in section
+                for term in (
+                    "失效边界", "适用边界", "工程判退", "安全中止", "降级",
+                    "中止", "失败条件", "判据", "反适应", "证据不足",
+                )
+            ),
+            "has_coupling_single_point_risk": any(
+                term in section for term in ("耦合", "依赖", "级联", "接口", "链路")
+            )
+            and any(
+                term in section
+                for term in ("拖垮", "卡脖子", "单点", "短板", "失效", "中止", "降级")
+            ),
         }
         score = sum(indicators.values()) / len(indicators)
-        passed = all(indicators.values())
+        passed = all(
+            value
+            for key, value in indicators.items()
+            if not (project_mode and key == "has_validation_and_failure_conditions")
+        )
         suggestions = []
         if not indicators["has_specific_core_technologies"]:
-            suggestions.append("核心技术需精确到制导律、导引头、材料体系、推进能源、被动测向或协同算法等技术点")
+            suggestions.append(
+                "核心技术应落到本项目装备的具体平台、载荷、感知/火控、交战或保障实现点，"
+                "由模型结合Query选择，不按固定技术清单凑数"
+            )
         if not indicators["covers_each_equipment_direction"]:
             suggestions.append(
                 "总体方案、关键技术和技术基础需逐项覆盖主要装备方向，不得只给通用技术模板"
@@ -1781,7 +2229,10 @@ class ReportQualityGate:
         if not indicators["has_evidence_boundary"]:
             suggestions.append("成熟度结论必须标注公开证据、推断和待验证边界，禁止把概念写成既成能力")
         if not indicators["has_validation_and_failure_conditions"]:
-            suggestions.append("近期抓手需同时给出演示/靶场/半实物等验证方式，以及通过条件、失败条件或验收判据")
+            suggestions.append(
+                "补充装备专属工程边界、失效/中止条件或必要的验证路径；"
+                + ("不要求统一验证指标和通过/失败列" if project_mode else "同时给出通过/失败条件或验收判据")
+            )
         return QualityCheck("可实现性（成熟度）", passed, score, indicators, suggestions)
 
     @staticmethod
@@ -1828,6 +2279,7 @@ class ReportQualityGate:
                 continue
             first = cells[0]
             if first.casefold() in {
+                "武器装备",
                 "装备系统方向",
                 "装备方向",
                 "具体装备方向",
@@ -1887,12 +2339,12 @@ class ReportQualityGate:
             return []
         records = metadata.get("expected_capability_records", [])
         if isinstance(records, list) and records:
-            return [dict(item) for item in records if isinstance(item, dict)][:12]
+            return [dict(item) for item in records if isinstance(item, dict)]
         return [
             {"name": str(item)}
             for item in metadata.get("expected_capability_directions", [])
             if str(item).strip()
-        ][:12]
+        ]
 
     @staticmethod
     def _detailed_capability_portraits_complete(
@@ -2093,7 +2545,11 @@ class ReportQualityGate:
         )
 
     @staticmethod
-    def _tables_are_bounded(report: str) -> bool:
+    def _tables_are_bounded(
+        report: str,
+        *,
+        project_mode: bool = False,
+    ) -> bool:
         current: list[str] = []
         tables: list[list[str]] = []
         for raw in report.splitlines():
@@ -2109,9 +2565,16 @@ class ReportQualityGate:
             tables.append(current)
         for table in tables:
             widths = [len(row.strip('|').split('|')) for row in table]
-            if not widths or len(set(widths)) > 1 or max(widths) > 6:
+            # Width consistency is an objective Markdown safety check.  The
+            # project template deliberately does not prescribe a capability
+            # table width; wider evidence/engineering matrices are allowed.
+            if not widths or len(set(widths)) > 1:
                 return False
-            if max(0, len(table) - 2) > 12:
+            # Keep a generous anti-abuse guard for generated documents while
+            # removing the old 6-column/12-row equipment shape.  A project
+            # report may use as many rows as its selected equipment portfolio
+            # and evidence require.
+            if not project_mode and max(0, len(table) - 2) > 12:
                 return False
             if any(
                 len(cell.strip()) > 220
@@ -2120,6 +2583,60 @@ class ReportQualityGate:
             ):
                 return False
         return True
+
+    @staticmethod
+    def _project_capability_section_grounded(
+        section: str,
+        table_directions: list[str],
+        expected_directions: list[str],
+        *,
+        require_boundary: bool = True,
+    ) -> bool:
+        """Return whether a project image is grounded without a fixed schema.
+
+        A project image may be a table, prose, or a mix.  What matters is that
+        the selected concrete equipment remains identifiable and is connected
+        to military action/effect and an explicit boundary.  The function
+        intentionally does not count rows, columns, or a prescribed metric
+        vocabulary.
+        """
+
+        body = str(section or "")
+        if not body.strip():
+            return False
+        names = [name for name in expected_directions if str(name).strip()]
+        concrete_rows = [row for row in table_directions if str(row).strip()]
+        weapon_terms = (
+            "导弹", "弹药", "无人机", "无人艇", "拦截弹", "火炮", "发射车",
+            "效应器", "战斗机", "武器站", "雷达", "巡飞弹", "鱼雷",
+        )
+        named_anchor = any(name in body for name in names)
+        if not concrete_rows and not named_anchor and not any(
+            term in body for term in weapon_terms
+        ):
+            return False
+        action_present = any(
+            term in body
+            for term in (
+                "部署", "搜索", "发现", "确认", "发射", "突防", "交战",
+                "拦截", "压制", "毁伤", "评估", "再组织", "补击",
+            )
+        )
+        effect_present = any(
+            term in body
+            for term in ("战果", "毁伤", "阻断", "压制", "拒止", "任务成功", "直接效果", "作战效果")
+        )
+        boundary_present = any(
+            term in body
+            for term in (
+                "失效边界", "适用边界", "中止", "降级", "约束", "瓶颈",
+                "证据不足", "待核验", "待验证", "不确定", "反适应", "判退",
+            )
+        )
+        # A compact table may encode action/effect in one cell; prose may use
+        # only the boundary and effect paragraphs.  Require the two military
+        # anchors plus a boundary, without dictating their wording or order.
+        return action_present and effect_present and (boundary_present or not require_boundary)
 
     @staticmethod
     def _publication_markdown_intact(report: str) -> bool:
@@ -2135,6 +2652,7 @@ class ReportQualityGate:
 
         current_width: int | None = None
         in_table = False
+        table_rows = 0
         for raw in report.splitlines():
             line = raw.strip()
             starts = line.startswith("|")
@@ -2147,13 +2665,24 @@ class ReportQualityGate:
                     return False
                 current_width = width
                 in_table = True
+                table_rows += 1
+                if table_rows == 2 and not all(
+                    re.fullmatch(r":?-{3,}:?", cell.strip())
+                    for cell in line.strip("|").split("|")
+                ):
+                    return False
             else:
+                if in_table and table_rows < 3:
+                    return False
                 current_width = None
                 in_table = False
+                table_rows = 0
+        if in_table and table_rows < 3:
+            return False
         return True
 
     @staticmethod
-    def _paragraphs_are_complete(report: str) -> bool:
+    def _paragraphs_are_complete(report: str, *, strict: bool = True) -> bool:
         without_fences = re.sub(r"```.*?```", "", report, flags=re.DOTALL)
         if _has_dangling_report_fragment(without_fences):
             return False
@@ -2165,7 +2694,7 @@ class ReportQualityGate:
             row = " ".join(block.split()).strip()
             if not row or row.startswith(('#', '|', '- ', '* ')):
                 continue
-            if len(row) > 1100:
+            if strict and len(row) > 1100:
                 return False
             if row[-1] in "，、（([【“‘：" or row.endswith(
                 ("包括", "如下", "例如", "即", "以及", "并且", "从而")
@@ -2481,7 +3010,7 @@ class ReportQualityGate:
                 and any(term in body for term in ("指标画像", "指标特征", "指标谱"))
             )
         )
-        return 5 <= len(directions) <= 7 and capability_signal and sum(
+        operation_signal = sum(
             term in body
             for term in (
                 "作战运用",
@@ -2494,8 +3023,18 @@ class ReportQualityGate:
                 "突防",
                 "交战",
                 "巡飞",
+                "部署",
+                "毁伤",
+                "中止",
+                "补击",
             )
-        ) >= 2
+        )
+        if project_mode:
+            # Project images may be prose-led and may contain any number of
+            # selected weapons.  Require concrete capability and military
+            # employment language, not a five-to-seven-row table.
+            return bool(directions or re.search(r"导弹|弹药|无人机|拦截弹|发射车|效应器|武器站", body)) and capability_signal and operation_signal >= 2
+        return 5 <= len(directions) <= 7 and capability_signal and operation_signal >= 2
 
     @staticmethod
     def _has_three_track_winning_effect(report: str) -> bool:
@@ -2559,7 +3098,13 @@ class ReportQualityGate:
             self._has_evidence_support(report, metadata)
             and self._has_maturity_assessment(report)
             and any(term in report for term in ("证据不足", "公开证据", "待验证", "事实", "推断", "假设"))
-            and any(term in report for term in ("试验验证", "演示验证", "验证指标", "通过条件", "失败条件"))
+            and any(
+                term in report
+                for term in (
+                    "试验验证", "演示验证", "验证指标", "工程判退", "失效边界",
+                    "适用边界", "失败条件", "安全中止", "降级", "判据",
+                )
+            )
         )
 
     @staticmethod
@@ -2567,7 +3112,14 @@ class ReportQualityGate:
         return (
             any(term in report for term in ("成熟度", "TRL", "工程化", "样机", "现役改装"))
             and any(term in report for term in ("瓶颈", "短板", "工程风险", "集成风险"))
-            and any(term in report for term in ("待验证", "试验验证", "演示验证", "实弹验证"))
+            and any(
+                term in report
+                for term in (
+                    "工程判退", "失效边界", "适用边界", "证据不足", "公开证据",
+                    "待核验", "待验证", "验证指标", "安全中止", "降级",
+                    "通过条件", "失败条件", "判据",
+                )
+            )
         )
 
     # ========== 工具方法 ==========

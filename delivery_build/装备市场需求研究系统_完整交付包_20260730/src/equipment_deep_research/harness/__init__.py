@@ -1,2 +1,0 @@
-"""Reusable agent harness runtime."""
-

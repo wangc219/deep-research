@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-from equipment_deep_research.orchestration.capability_portrait import (
+from equipment_deep_research.domain.capability_portrait import (
     build_capability_portrait,
 )
 

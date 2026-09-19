@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · Force Design
+source_url=https://www.marines.mil/Force-Design/
+claim=美海军陆战队将 Force Design 作为战略优先，强调多域海军远征、联合/盟军体系和分布式作战。
+excerpt=
+retrieval=Hosted web search citation metadata

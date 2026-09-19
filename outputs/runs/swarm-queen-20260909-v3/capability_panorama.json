@@ -1,0 +1,120 @@
+{
+  "actual_counts": {
+    "capability_domains": 7,
+    "capability_indicators": 0,
+    "capability_items": 7
+  },
+  "branch": "B",
+  "branch_name": "传统能力缺口发现",
+  "cross_domain_indicators": [],
+  "domains": [
+    {
+      "capability_ids": [
+        "cap-new-001"
+      ],
+      "domain": "磁通压缩脉冲微波拦截弹",
+      "evidence_ids": [
+        "ev-combat_scenario-web-4b1083a4d3ca",
+        "ev-combat_scenario-web-a9704512f4c0",
+        "ev-combat_scenario-web-e6e73b8fbd18"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "传统低空防空场景下现有装备能力差距与升级功能需求"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-002"
+      ],
+      "domain": "碳长丝缠翼近程拦截弹",
+      "evidence_ids": [
+        "ev-combat_scenario-web-4b1083a4d3ca",
+        "ev-combat_scenario-web-a9704512f4c0",
+        "ev-combat_scenario-web-e6e73b8fbd18"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "传统低空防空场景下现有装备能力差距与升级功能需求"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-003"
+      ],
+      "domain": "「灼羽」低空激光歼击炮",
+      "evidence_ids": [
+        "ev-combat_scenario-web-4b1083a4d3ca",
+        "ev-combat_scenario-web-a9704512f4c0",
+        "ev-combat_scenario-web-e6e73b8fbd18"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "传统低空防空场景下现有装备能力差距与升级功能需求"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-004"
+      ],
+      "domain": "千枚廉价撞杀巡飞弹",
+      "evidence_ids": [
+        "ev-combat_scenario-web-4b1083a4d3ca",
+        "ev-combat_scenario-web-a9704512f4c0",
+        "ev-combat_scenario-web-e6e73b8fbd18"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "传统低空防空场景下现有装备能力差距与升级功能需求"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-005"
+      ],
+      "domain": "伞骨撑网拦阻飞艇",
+      "evidence_ids": [
+        "ev-combat_scenario-web-4b1083a4d3ca",
+        "ev-combat_scenario-web-a9704512f4c0",
+        "ev-combat_scenario-web-e6e73b8fbd18"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "传统低空防空场景下现有装备能力差距与升级功能需求"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-006"
+      ],
+      "domain": "「山听」无源截杀拦截弹",
+      "evidence_ids": [
+        "ev-combat_scenario-web-4b1083a4d3ca",
+        "ev-combat_scenario-web-a9704512f4c0",
+        "ev-combat_scenario-web-e6e73b8fbd18"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "传统低空防空场景下现有装备能力差距与升级功能需求"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-007"
+      ],
+      "domain": "自组补射协同拦截弹群",
+      "evidence_ids": [
+        "ev-combat_scenario-web-4b1083a4d3ca",
+        "ev-combat_scenario-web-a9704512f4c0",
+        "ev-combat_scenario-web-e6e73b8fbd18"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "传统低空防空场景下现有装备能力差距与升级功能需求"
+      ]
+    }
+  ],
+  "equipment_forms": [],
+  "target_counts": {},
+  "topic": "传统低空防空场景下现有装备能力差距与升级功能需求"
+}

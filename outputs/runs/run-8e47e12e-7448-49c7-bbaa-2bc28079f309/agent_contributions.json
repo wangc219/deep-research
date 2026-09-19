@@ -1,0 +1,194 @@
+[
+  {
+    "adopted_by_capability_ids": [
+      "cap-new-001",
+      "cap-new-002",
+      "cap-new-003",
+      "cap-new-004",
+      "cap-new-005",
+      "cap-new-006",
+      "cap-new-007"
+    ],
+    "adopted_by_report_sections": [
+      "final_report"
+    ],
+    "adopted_by_s_steps": {
+      "S1": [
+        "claim-458a1b93ba30",
+        "claim-c2abf3172d52",
+        "claim-c3c7b9ffe96f",
+        "claim-5c095179c3df"
+      ],
+      "S2": [
+        "claim-458a1b93ba30",
+        "claim-c2abf3172d52",
+        "claim-c3c7b9ffe96f",
+        "claim-5c095179c3df"
+      ],
+      "S3": [
+        "claim-458a1b93ba30",
+        "claim-c2abf3172d52",
+        "claim-c3c7b9ffe96f",
+        "claim-5c095179c3df"
+      ],
+      "S4": [
+        "claim-458a1b93ba30",
+        "claim-c2abf3172d52",
+        "claim-c3c7b9ffe96f",
+        "claim-5c095179c3df"
+      ],
+      "S5": [
+        "claim-458a1b93ba30",
+        "claim-c2abf3172d52",
+        "claim-c3c7b9ffe96f",
+        "claim-5c095179c3df"
+      ],
+      "S6": [
+        "claim-458a1b93ba30",
+        "claim-c2abf3172d52",
+        "claim-c3c7b9ffe96f",
+        "claim-5c095179c3df"
+      ]
+    },
+    "agent_id": "weapon_equipment",
+    "contributed": true,
+    "loao_quality_delta": null,
+    "model_calls": 1,
+    "observation_id": "contribution-packet-weapon_equipment",
+    "packet_id": "packet-weapon_equipment",
+    "produced_claim_ids": [
+      "claim-458a1b93ba30",
+      "claim-c2abf3172d52",
+      "claim-c3c7b9ffe96f",
+      "claim-5c095179c3df"
+    ]
+  },
+  {
+    "adopted_by_capability_ids": [
+      "cap-new-001",
+      "cap-new-002",
+      "cap-new-003",
+      "cap-new-004",
+      "cap-new-005",
+      "cap-new-006",
+      "cap-new-007"
+    ],
+    "adopted_by_report_sections": [
+      "final_report"
+    ],
+    "adopted_by_s_steps": {
+      "S1": [
+        "claim-36b6812d074f",
+        "claim-6a7ef56cfa5f",
+        "claim-74c13f7cdee8",
+        "claim-a54b168acd7d"
+      ],
+      "S2": [
+        "claim-36b6812d074f",
+        "claim-6a7ef56cfa5f",
+        "claim-74c13f7cdee8",
+        "claim-a54b168acd7d"
+      ],
+      "S3": [
+        "claim-36b6812d074f",
+        "claim-6a7ef56cfa5f",
+        "claim-74c13f7cdee8",
+        "claim-a54b168acd7d"
+      ],
+      "S4": [
+        "claim-36b6812d074f",
+        "claim-6a7ef56cfa5f",
+        "claim-74c13f7cdee8",
+        "claim-a54b168acd7d"
+      ],
+      "S5": [
+        "claim-36b6812d074f",
+        "claim-6a7ef56cfa5f",
+        "claim-74c13f7cdee8",
+        "claim-a54b168acd7d"
+      ],
+      "S6": [
+        "claim-36b6812d074f",
+        "claim-6a7ef56cfa5f",
+        "claim-74c13f7cdee8",
+        "claim-a54b168acd7d"
+      ]
+    },
+    "agent_id": "operational_employment",
+    "contributed": true,
+    "loao_quality_delta": null,
+    "model_calls": 2,
+    "observation_id": "contribution-packet-operational_employment",
+    "packet_id": "packet-operational_employment",
+    "produced_claim_ids": [
+      "claim-36b6812d074f",
+      "claim-6a7ef56cfa5f",
+      "claim-74c13f7cdee8",
+      "claim-a54b168acd7d"
+    ]
+  },
+  {
+    "adopted_by_capability_ids": [
+      "cap-new-001",
+      "cap-new-002",
+      "cap-new-003",
+      "cap-new-004",
+      "cap-new-005",
+      "cap-new-006",
+      "cap-new-007"
+    ],
+    "adopted_by_report_sections": [
+      "final_report"
+    ],
+    "adopted_by_s_steps": {
+      "S1": [
+        "claim-6c8c2af008e3",
+        "claim-dbff53a90395",
+        "claim-bad57846924d",
+        "claim-584ee513aad9"
+      ],
+      "S2": [
+        "claim-6c8c2af008e3",
+        "claim-dbff53a90395",
+        "claim-bad57846924d",
+        "claim-584ee513aad9"
+      ],
+      "S3": [
+        "claim-6c8c2af008e3",
+        "claim-dbff53a90395",
+        "claim-bad57846924d",
+        "claim-584ee513aad9"
+      ],
+      "S4": [
+        "claim-6c8c2af008e3",
+        "claim-dbff53a90395",
+        "claim-bad57846924d",
+        "claim-584ee513aad9"
+      ],
+      "S5": [
+        "claim-6c8c2af008e3",
+        "claim-dbff53a90395",
+        "claim-bad57846924d",
+        "claim-584ee513aad9"
+      ],
+      "S6": [
+        "claim-6c8c2af008e3",
+        "claim-dbff53a90395",
+        "claim-bad57846924d",
+        "claim-584ee513aad9"
+      ]
+    },
+    "agent_id": "combat_scenario",
+    "contributed": true,
+    "loao_quality_delta": null,
+    "model_calls": 2,
+    "observation_id": "contribution-packet-combat_scenario",
+    "packet_id": "packet-combat_scenario",
+    "produced_claim_ids": [
+      "claim-6c8c2af008e3",
+      "claim-dbff53a90395",
+      "claim-bad57846924d",
+      "claim-584ee513aad9"
+    ]
+  }
+]

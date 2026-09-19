@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Chat Completions → Codex Responses bridge using settings from unified `.env`.
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ENV_FILE="${EQUIPMENT_DR_ENV_FILE:-$ROOT/.env}"
+if [[ ! -f "$ENV_FILE" ]]; then
+  echo "未找到 $ENV_FILE。请复制 .env.example 为 .env，并填写 bridge 区块。" >&2
+  exit 1
+fi
+set -a; source "$ENV_FILE"; set +a
+export EQUIPMENT_DR_PROVIDER=codex
+export EQUIPMENT_DR_MODE=real
+export EQUIPMENT_DR_BRIDGE_ENABLED=1
+export EQUIPMENT_DR_BRIDGE_MANAGED_EXTERNALLY=1
+export EQUIPMENT_DR_BRIDGE_HOST="${EQUIPMENT_DR_BRIDGE_HOST:-127.0.0.1}"
+export EQUIPMENT_DR_BRIDGE_PORT="${EQUIPMENT_DR_BRIDGE_PORT:-8787}"
+export EQUIPMENT_DR_MODEL="${EQUIPMENT_DR_MODEL:-${EQUIPMENT_DR_BRIDGE_MODEL:-}}"
+export EQUIPMENT_DR_BRIDGE_MODEL="${EQUIPMENT_DR_BRIDGE_MODEL:-$EQUIPMENT_DR_MODEL}"
+export EQUIPMENT_DR_BRIDGE_API_KEY_ENV="${EQUIPMENT_DR_BRIDGE_API_KEY_ENV:-EQUIPMENT_DR_API_KEY}"
+export EQUIPMENT_DR_BRIDGE_UPSTREAM_URL="${EQUIPMENT_DR_BRIDGE_UPSTREAM_URL:?在 .env 中设置 EQUIPMENT_DR_BRIDGE_UPSTREAM_URL}"
+export EQUIPMENT_DR_CODEX_BASE_URL="http://${EQUIPMENT_DR_BRIDGE_HOST}:${EQUIPMENT_DR_BRIDGE_PORT}/v1"
+export EQUIPMENT_DR_CODEX_API_KEY_ENV="${EQUIPMENT_DR_CODEX_API_KEY_ENV:-$EQUIPMENT_DR_BRIDGE_API_KEY_ENV}"
+PYTHON_BIN="${EQUIPMENT_DR_PYTHON_BIN:-$ROOT/.venv/bin/python}"
+PYTHONPATH="$ROOT/src" "$PYTHON_BIN" "$ROOT/scripts/responses_chat_bridge.py" &
+BRIDGE_PID=$!
+trap 'kill "$BRIDGE_PID" 2>/dev/null || true' EXIT INT TERM
+"$ROOT/scripts/start-local.sh"

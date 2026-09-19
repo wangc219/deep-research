@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=media.defense.gov · FACT SHEET STRATEGY FOR COUNTERING UNMANNED SYSTEMS.PDF
+source_url=https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF
+claim=美国国防部公开文件将无人系统压力概括为数量更多、更自主、更网络化，并强调detect、track、characterize、主动防御、被动防御和可度量的开放模块化能力。
+excerpt=
+retrieval=Hosted web search citation metadata

@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=af.mil · FY27%20Air%20Force%20Aircraft%20%20Missile%20Procurement.pdf
-source_url=https://www.af.mil/Portals/1/documents/Secretariat%20of%20the%20AF/SAF-FM/Budget%20-%202027/Budget%20docs/FY27%20Air%20Force%20Aircraft%20%20Missile%20Procurement.pdf?ver=6zKfXa_IITL18fK0xVVdIA%3D%3D
-claim=FY2027空军导弹采购预算支持JASSM/AGM-158D持续采购、批次升级和单位成本口径判断。
-excerpt=
-retrieval=Hosted web search citation metadata

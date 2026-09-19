@@ -1,0 +1,274 @@
+[
+  {
+    "bundle_id": "claims-42e2d45402c3",
+    "claims": [],
+    "packet_id": "packet-weapon_equipment",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-f8e8bafe3c9c",
+    "claims": [
+      {
+        "claim_id": "claim-8767dfec122d",
+        "claim_type": "fact",
+        "confidence": 0.44,
+        "counter_evidence": [
+          "公开材料同时显示干扰对RF-FPV'有效'（曾迫使乌方战术改变/加装抗干扰）与'不再决定胜负'（俄方靠数量与光纤翻盘），说明干扰效果受红方成本与改型速度调制，不能作为稳定常数",
+          "拦截率数值口径冲突：部分材料宣传激光/低端拦截（数百至数千美元/发）有效，另一部分显示Shahed拦截率已降至70%且交换比仍190:1不利，需区分'命中'与'交换比可承受'两个不同标准"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-case_research-web-fa6b7ef26d3a",
+          "ev-case_research-web-80ecdfd893e8"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.airforce-technology.com/analyst-comment/disruptive-innovation-electronic-warfare-arms-race/",
+          "https://newsukraine.rbc.ua/analytics/russia-s-fiber-optic-fpv-drones-on-rise-ukraine-1752818725.html"
+        ],
+        "text": "反制链首断环节已从'频谱截断'迁移为'发现-识别'：蓝方自扰与拥塞会先压低雷达/链路探测识别概率；红方小型UAS以低成本RG抗扰链、光纤链与预规划自主航路把链路依赖降到最低后，仅剩的可靠拦截窗口是物理效应环节。真实战例支持链路不可抗后只能物理摧毁（射击员/拦截弹）的转向，故探测-识别在复杂电磁+遮蔽地形下成为决定性瓶颈。"
+      },
+      {
+        "claim_id": "claim-aa7ced5eb1cb",
+        "claim_type": "fact",
+        "confidence": 0.44,
+        "counter_evidence": [
+          "公开材料同时显示干扰对RF-FPV'有效'（曾迫使乌方战术改变/加装抗干扰）与'不再决定胜负'（俄方靠数量与光纤翻盘），说明干扰效果受红方成本与改型速度调制，不能作为稳定常数",
+          "拦截率数值口径冲突：部分材料宣传激光/低端拦截（数百至数千美元/发）有效，另一部分显示Shahed拦截率已降至70%且交换比仍190:1不利，需区分'命中'与'交换比可承受'两个不同标准"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-case_research-web-fa6b7ef26d3a",
+          "ev-case_research-web-80ecdfd893e8"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.airforce-technology.com/analyst-comment/disruptive-innovation-electronic-warfare-arms-race/",
+          "https://newsukraine.rbc.ua/analytics/russia-s-fiber-optic-fpv-drones-on-rise-ukraine-1752818725.html"
+        ],
+        "text": "低成本饱和把成本交换比设为否决性约束：公开测算显示Shahed（约2-5万美元/架）拦截消耗导弹可达数十万至数百万美元，交换比约190:1不利；拦截率随饱和战术从约88.7%降至约70%，防御成本还随空袭警报与漏防后果近似指数增长。这使'高价值精确弹药换廉价无人机'在持续/饱和想定下不可持续，防御装备需求被改写为低位弹药成本、可再装填/可复用效应器与单发边际成本极低的体系。"
+      },
+      {
+        "claim_id": "claim-6da62b3d6cce",
+        "claim_type": "fact",
+        "confidence": 0.44,
+        "counter_evidence": [
+          "公开材料同时显示干扰对RF-FPV'有效'（曾迫使乌方战术改变/加装抗干扰）与'不再决定胜负'（俄方靠数量与光纤翻盘），说明干扰效果受红方成本与改型速度调制，不能作为稳定常数",
+          "拦截率数值口径冲突：部分材料宣传激光/低端拦截（数百至数千美元/发）有效，另一部分显示Shahed拦截率已降至70%且交换比仍190:1不利，需区分'命中'与'交换比可承受'两个不同标准"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-case_research-web-fa6b7ef26d3a",
+          "ev-case_research-web-80ecdfd893e8"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.airforce-technology.com/analyst-comment/disruptive-innovation-electronic-warfare-arms-race/",
+          "https://newsukraine.rbc.ua/analytics/russia-s-fiber-optic-fpv-drones-on-rise-ukraine-1752818725.html"
+        ],
+        "text": "己方辐射与频谱自伤构成反制边界：蓝方压制链路时同步占用/烧毁本域EMS，压缩己方通信与遥控反制资源；俄方2024年决策将轻型反UAS EW装备月产提升至约5000套后，红方被迫转向光纤FPV等抗干扰手段，说明纯干扰型反制会驱动威胁转非RF，不能作为单层主答案，只能与不依赖射频链路的探测与效应器组合。"
+      },
+      {
+        "claim_id": "claim-b2cdd4d8e1ff",
+        "claim_type": "fact",
+        "confidence": 0.44,
+        "counter_evidence": [
+          "公开材料同时显示干扰对RF-FPV'有效'（曾迫使乌方战术改变/加装抗干扰）与'不再决定胜负'（俄方靠数量与光纤翻盘），说明干扰效果受红方成本与改型速度调制，不能作为稳定常数",
+          "拦截率数值口径冲突：部分材料宣传激光/低端拦截（数百至数千美元/发）有效，另一部分显示Shahed拦截率已降至70%且交换比仍190:1不利，需区分'命中'与'交换比可承受'两个不同标准"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-case_research-web-fa6b7ef26d3a",
+          "ev-case_research-web-80ecdfd893e8"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.airforce-technology.com/analyst-comment/disruptive-innovation-electronic-warfare-arms-race/",
+          "https://newsukraine.rbc.ua/analytics/russia-s-fiber-optic-fpv-drones-on-rise-ukraine-1752818725.html"
+        ],
+        "text": "防御需求的结构语义应界定为'交换比+自扰+非RF威胁下的分层末端防御'，即低成本物理拦截（含拦截无人机/弹药）、低边际成本定向能、分布式非辐射探测，并把民用混杂/误击约束单列为差异化输入——这一组合在本query设定的蓝方不占频谱优势条件中成立，且与常规'频谱占优反制'路径构成实质性替代。"
+      }
+    ],
+    "packet_id": "packet-case_research",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-d5cf0cba42e6",
+    "claims": [
+      {
+        "claim_id": "claim-7713d0b96263",
+        "claim_type": "hypothesis",
+        "confidence": 0.45,
+        "counter_evidence": [
+          "公开条令/监督材料强调体系集成与频谱管理，但缺少复杂电磁条件下C-UAS全链路的失败实证，存在‘规划叙事强、验证证据弱’的落差",
+          "‘成本交换比不利’是常见公开结论，但其是否主导失效取决于威胁运用强度，两种叙事(技术断点主导 vs 保障/交换比主导)在公开来源中未统一"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-c8aba43133b8",
+          "ev-system_confrontation-web-1f6bd4975c3e"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.jcs.mil/Doctrine/",
+          "https://www.gao.gov/"
+        ],
+        "text": "{'judgment': '小型无人防御任务的体系断点在探测-识别节点先于效应节点出现：复杂电磁条件下，主被动探测(雷达/射频侦测)与识别所需链路同时被压制/拥塞/自扰劣化时，效应器即使在位也因目标数据不可用或敌我置信度不足而无法合法接战，形成‘效应可用、闭环断开’的体系失效。', 'military_task_value': '直接决定反制闭环是否成立：识别置信度是误击约束下的发射门槛，频谱劣势使门槛无法跨越，反制能力被体系性冻结。', 'evidence_boundary': '基于公开对JCO演示将复杂电磁环境作为焦点条件、DOT&E对系统级集成与作战限制的评估以及GAO对集成风险的监督脉络形成的推断；缺乏公开定量误击门槛数据。', 'failure_condition': '若蓝方存在不依赖射频探测/识别的通道(如光电多源+本地规则库)且链路自主性足够，断点判断不成立。'}"
+      },
+      {
+        "claim_id": "claim-851ca85bdb94",
+        "claim_type": "hypothesis",
+        "confidence": 0.45,
+        "counter_evidence": [
+          "公开条令/监督材料强调体系集成与频谱管理，但缺少复杂电磁条件下C-UAS全链路的失败实证，存在‘规划叙事强、验证证据弱’的落差",
+          "‘成本交换比不利’是常见公开结论，但其是否主导失效取决于威胁运用强度，两种叙事(技术断点主导 vs 保障/交换比主导)在公开来源中未统一"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-c8aba43133b8",
+          "ev-system_confrontation-web-1f6bd4975c3e"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.jcs.mil/Doctrine/",
+          "https://www.gao.gov/"
+        ],
+        "text": "{'judgment': '最脆弱依赖是‘多节点射频组网—中心化指挥—单一效应调度’的单链结构：压制或自扰任意一环即截断任务链，且蓝方反制辐射与己方探测/组网同频段竞争时，自扰构成内部级联源。', 'military_task_value': '识别补链强链方向：需将探测、决策、效应之间的依赖从单链改为可降级的并行/自治链路，使指挥节点失效时末端仍可执行已授权交战规则。', 'evidence_boundary': '来自DoD C-sUAS战略强调体系架构与接口、JP 3-85对无意干扰/频谱管理的条文表述，以及RAND分布式作战/降级网络研究的一般结论；未获得具体系统拓扑公开证据。', 'failure_condition': '若防御体系已实现完全分布式自主交战且无中心依赖，单链脆弱性判断高估风险。'}"
+      },
+      {
+        "claim_id": "claim-2f4f2caa7666",
+        "claim_type": "hypothesis",
+        "confidence": 0.45,
+        "counter_evidence": [
+          "公开条令/监督材料强调体系集成与频谱管理，但缺少复杂电磁条件下C-UAS全链路的失败实证，存在‘规划叙事强、验证证据弱’的落差",
+          "‘成本交换比不利’是常见公开结论，但其是否主导失效取决于威胁运用强度，两种叙事(技术断点主导 vs 保障/交换比主导)在公开来源中未统一"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-c8aba43133b8",
+          "ev-system_confrontation-web-1f6bd4975c3e"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.jcs.mil/Doctrine/",
+          "https://www.gao.gov/"
+        ],
+        "text": "{'judgment': '交换比级联是持续性威胁的主失效模式：低成本消耗型小UAS饱和进入时，在位高价拦截弹与有限火力通道在单次交战内可能成功，但在持续运用中因‘换不起’而防御体系整体溃退，属保障链而非技术链失效。', 'military_task_value': '把需求从单一拦截器转向在位资源管理与可再生产效应(定向能、网捕、低成本拦截、欺骗)，缓解保障链瓶颈。', 'evidence_boundary': '支撑来自公开对成本交换比与饱和攻击的关注(GAO/RAND层面)；‘换不起’在本Query作战框架中为给定约束，量化交换比数据不公开。', 'failure_condition': '若威胁仅限少量高价值而非饱和消耗运用，或防御方拦截成本已低于单次威胁成本，此级联不主导。'}"
+      },
+      {
+        "claim_id": "claim-14a22d2caf17",
+        "claim_type": "hypothesis",
+        "confidence": 0.45,
+        "counter_evidence": [
+          "公开条令/监督材料强调体系集成与频谱管理，但缺少复杂电磁条件下C-UAS全链路的失败实证，存在‘规划叙事强、验证证据弱’的落差",
+          "‘成本交换比不利’是常见公开结论，但其是否主导失效取决于威胁运用强度，两种叙事(技术断点主导 vs 保障/交换比主导)在公开来源中未统一"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-c8aba43133b8",
+          "ev-system_confrontation-web-1f6bd4975c3e"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.jcs.mil/Doctrine/",
+          "https://www.gao.gov/"
+        ],
+        "text": "{'judgment': '频谱拥塞与民用混杂使‘误击与代价约束’与电磁截断叠加，形成第二类级联：识别不可靠→提高发射门槛→窗口进一步压缩→被迫依赖更近程效应→防御纵深被压平为单点。', 'military_task_value': '论证需保留分层纵深而非集中于末端点防御，并在中近层设置不依赖频谱的确认/分类手段以维持分层。', 'evidence_boundary': '基于复杂电磁+民用混杂约束下的任务逻辑推演；公开资料未给出混杂场景下的误击率或纵深配置实证。', 'failure_condition': '若防御区域频谱条件允许保持中程可靠识别，纵深压缩级联不触发。'}"
+      },
+      {
+        "claim_id": "claim-21217c08ad41",
+        "claim_type": "hypothesis",
+        "confidence": 0.45,
+        "counter_evidence": [
+          "公开条令/监督材料强调体系集成与频谱管理，但缺少复杂电磁条件下C-UAS全链路的失败实证，存在‘规划叙事强、验证证据弱’的落差",
+          "‘成本交换比不利’是常见公开结论，但其是否主导失效取决于威胁运用强度，两种叙事(技术断点主导 vs 保障/交换比主导)在公开来源中未统一"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-c8aba43133b8",
+          "ev-system_confrontation-web-1f6bd4975c3e"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.jcs.mil/Doctrine/",
+          "https://www.gao.gov/"
+        ],
+        "text": "{'judgment': '体系韧性优先的替代链路方向是‘频谱非占优处置效应’(光电/声学/被动定位引导的硬杀伤与网捕/诱骗等非辐射效应)，其价值在于把关键依赖从‘频谱占有’转移到‘频谱规避’，使反制链首断环节前移至可自主闭环的节点。', 'military_task_value': '直接补强在被压制条件下的任务续接能力，是战损与电磁截断后恢复作战功能的核心杠杆。', 'evidence_boundary': '作为架构方向判断，符合Query‘不依赖频谱占优的处置所需效应与分配条件’的设问逻辑；公开证据支持此类效应存在(JCO/SAPIENT互操作生态)，但不支持其已具备复杂电磁下可靠闭环。', 'failure_condition': '若目标小UAS具备对抗非辐射探测的隐蔽性(强遮蔽/低可观测特征)且无辐射探测可用，该替代链路同样被截断，需多模态互补而非单一替代。'}"
+      }
+    ],
+    "packet_id": "packet-system_confrontation",
+    "schema_version": "1.0"
+  }
+]

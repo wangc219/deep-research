@@ -1,0 +1,5 @@
+{"type":"thread.started","thread_id":"01a0a3e1-ac74-71d2-9549-521f47ab726c"}
+{"type":"turn.started"}
+{"type":"item.started","item":{"id":"item_0","type":"web_search","id":"ws_01b78a336c9778bd016aa8ee1be82887d08ee1f3eba4870356","query":"","action":{"type":"other"}}}
+{"type":"error","message":"Selected model is at capacity. Please try a different model."}
+{"type":"turn.failed","error":{"message":"Selected model is at capacity. Please try a different model."}}

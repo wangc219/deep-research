@@ -1,4 +1,0 @@
-fetch_failed
-url=https://api.army.mil/e2/c/downloads/2025/06/03/167e7d2f/army-equipment-for-festival.pdf?utm_source=openai
-error=HTTPStatusError: HTTP 403: Forbidden
-该诊断用于保留真实联网smoke边界；正式结论不应仅依赖失败材料。

@@ -17,6 +17,7 @@ import json
 import logging
 import os
 from pathlib import Path
+import random
 import shutil
 import signal
 import subprocess
@@ -30,18 +31,25 @@ from uuid import uuid4
 from equipment_deep_research.domain.proposals import thaw_plain
 from equipment_deep_research.providers.base import (
     ModelMessage,
+    ProviderCapabilities,
     ProviderFinalTurn,
     ProviderStreamEvent,
 )
-from equipment_deep_research.providers.responses import ProviderRequestError
+from equipment_deep_research.providers.responses import (
+    ProviderCapacityError,
+    ProviderRequestError,
+)
 from equipment_deep_research.runtime_process_registry import (
     register_process_group as register_run_process_group,
     release_process_group as release_run_process_group,
 )
-from equipment_deep_research.tools.definitions import ToolDefinition
+from equipment_deep_research.contracts.tools import ToolDefinition
 from equipment_deep_research.providers.codex_optimizations import (
     render_prompt_optimized,
     get_perf_monitor,
+)
+from equipment_deep_research.providers.codex_call_gate import (
+    shared_codex_call_gate,
 )
 
 
@@ -200,6 +208,17 @@ class CodexCliProvider:
 
     provider_type = "codex_cli"
 
+    def capabilities(self) -> ProviderCapabilities:
+        return ProviderCapabilities(
+            streaming=True,
+            structured_output=True,
+            hosted_web_search=True,
+            isolated_sessions=True,
+            cancellation=True,
+            workspace_scope=True,
+            agent_runtime=True,
+        )
+
     def __init__(
         self,
         *,
@@ -249,12 +268,13 @@ class CodexCliProvider:
         if self.base_url:
             parsed_base_url = urlsplit(self.base_url)
             if (
-                parsed_base_url.scheme != "https"
+                parsed_base_url.scheme not in {"https", "http"}
                 or not parsed_base_url.hostname
                 or parsed_base_url.username
                 or parsed_base_url.password
                 or parsed_base_url.query
                 or parsed_base_url.fragment
+                or (parsed_base_url.scheme == "http" and parsed_base_url.hostname not in {"127.0.0.1", "localhost"})
             ):
                 raise ValueError(
                     "Codex base URL must be HTTPS without credentials, query, or fragment"
@@ -308,6 +328,16 @@ class CodexCliProvider:
         self._base_command = self._build_base_command()
         self._active_process_groups: set[int] = set()
         self._active_process_groups_lock = RLock()
+        # The gate is resolved lazily inside ``stream`` because asyncio event
+        # loops are owned by the caller.  The identity is shared by isolated
+        # provider copies that target the same upstream model.
+        self._call_gate_key = "|".join(
+            (
+                self.provider_type,
+                self.base_url or "default",
+                self.model or "default",
+            )
+        )
 
     def close(self) -> None:
         """Terminate any task-scoped Codex process groups still alive.
@@ -410,13 +440,19 @@ class CodexCliProvider:
             "process_isolation": "new_process_per_turn",
         }
 
-    def isolated_copy(self, isolation_id: str) -> CodexCliProvider:
+    def isolated_copy(
+        self,
+        isolation_id: str,
+        *,
+        model: str | None = None,
+    ) -> CodexCliProvider:
         """Create a role/task-scoped CLI adapter with a separate runtime home.
 
         Every turn is already a fresh ``codex exec --ephemeral`` process.  A
         scoped copy additionally separates Codex runtime/config state for a
-        dynamically recruited specialist while preserving the governed model,
-        sandbox and Skill configuration of the parent adapter.
+        dynamically recruited specialist while preserving the governed
+        sandbox and Skill configuration of the parent adapter.  Its model may
+        be overridden by the dynamic-swarm environment routing.
         """
 
         safe_id = "".join(
@@ -425,7 +461,7 @@ class CodexCliProvider:
         ).strip("-")[:96] or "specialist"
         return CodexCliProvider(
             command=self.command,
-            model=self.model,
+            model=str(model or self.model).strip(),
             workspace_path=self.workspace_path,
             codex_home=self.codex_home / "isolated" / safe_id,
             source_codex_home=self.source_codex_home,
@@ -554,6 +590,23 @@ class CodexCliProvider:
             self.retry_attempts,
             max(1, int(options.get("_provider_retry_attempts", self.retry_attempts))),
         )
+        # A gateway capacity refusal is not a model/content failure and is
+        # frequently returned while several independent Codex CLI sessions are
+        # admitted at once.  Give this one transient class its own bounded
+        # retry budget, even when a workflow deliberately disables ordinary
+        # provider replay (for example, S6 card calls).  Retries stay on this
+        # exact Codex provider/model; no fallback provider is consulted.
+        capacity_retry_attempts = min(
+            6,
+            max(
+                retry_attempts,
+                _configured_positive_int(
+                    "EQUIPMENT_DR_CODEX_CAPACITY_RETRY_ATTEMPTS",
+                    4,
+                ),
+            ),
+        )
+        max_attempts = max(retry_attempts, capacity_retry_attempts)
 
         try:
             # 优化：使用缓存的命令构建
@@ -567,10 +620,38 @@ class CodexCliProvider:
             result: subprocess.CompletedProcess[str] | None = None
             failure_detail = ""
             attempts_used = 0
+            retry_reasons: list[str] = []
+            capacity_retry_mode = False
+            call_gate = shared_codex_call_gate(
+                self._call_gate_key,
+                lock_root=(
+                    self.workspace_path
+                    / "outputs"
+                    / "runtime"
+                    / "codex-call-gates"
+                ),
+            )
+            call_priority = options.get(
+                "_codex_call_priority",
+                options.get("priority", "normal"),
+            )
+            fairness_key = options.get("_fairness_key") or options.get("_run_id") or ""
+            queue_waits: list[float] = []
+            gate_limits: list[int] = []
+            gate_active: list[int] = []
 
-            for attempt in range(retry_attempts):
+            for attempt in range(max_attempts):
                 attempts_used = attempt + 1
                 attempt_started_at = datetime.now(timezone.utc).isoformat()
+                attempt_started = monotonic()
+                gate_lease = await call_gate.acquire(
+                    priority=call_priority,
+                    fairness_key=fairness_key,
+                )
+                queue_waits.append(gate_lease.queue_wait_seconds)
+                gate_limits.append(gate_lease.concurrency_limit)
+                gate_active.append(gate_lease.active_calls)
+                attempt_capacity_failure = False
 
                 # 优化：使用预热的环境变量
                 exec_start = monotonic()
@@ -601,6 +682,10 @@ class CodexCliProvider:
                     )
                     if archive_path:
                         transcript_paths.append(archive_path)
+                    await gate_lease.release(
+                        success=False,
+                        elapsed_seconds=monotonic() - attempt_started,
+                    )
                     raise
                 self._perf_monitor.record('process_execute', monotonic() - exec_start)
 
@@ -620,13 +705,46 @@ class CodexCliProvider:
                     transcript_paths.append(archive_path)
 
                 if result.returncode == 0:
+                    await gate_lease.release(
+                        success=True,
+                        elapsed_seconds=monotonic() - attempt_started,
+                    )
                     break
                 failure_detail = _codex_failure_detail(result.stdout, result.stderr)
-                if attempt + 1 >= retry_attempts or not _is_retryable_failure(
-                    failure_detail
-                ):
+                capacity_failure = _is_capacity_failure(failure_detail)
+                attempt_capacity_failure = capacity_failure
+                capacity_retry_mode = capacity_retry_mode or capacity_failure
+                retry_limit = (
+                    capacity_retry_attempts if capacity_retry_mode else retry_attempts
+                )
+                if attempt + 1 >= retry_limit or not _is_retryable_failure(failure_detail):
+                    await gate_lease.release(
+                        success=False,
+                        elapsed_seconds=monotonic() - attempt_started,
+                        capacity_failure=attempt_capacity_failure,
+                    )
                     break
-                await asyncio.sleep(min(2**attempt, 4))
+                retry_reasons.append(
+                    "capacity" if capacity_failure else "transient"
+                )
+                retry_delay = _codex_retry_delay(
+                    attempt,
+                    capacity=capacity_failure,
+                )
+                if capacity_failure:
+                    logger.warning(
+                        "Codex model capacity refusal; retrying same model in %.1fs "
+                        "(attempt %s/%s)",
+                        retry_delay,
+                        attempt + 2,
+                        retry_limit,
+                    )
+                await gate_lease.release(
+                    success=False,
+                    elapsed_seconds=monotonic() - attempt_started,
+                    capacity_failure=attempt_capacity_failure,
+                )
+                await asyncio.sleep(retry_delay)
         finally:
             if schema_path is not None:
                 schema_path.unlink(missing_ok=True)
@@ -642,7 +760,12 @@ class CodexCliProvider:
         self._perf_monitor.record('total', elapsed_seconds)
 
         if result.returncode != 0:
-            raise ProviderRequestError(
+            error_type = (
+                ProviderCapacityError
+                if _is_capacity_failure(failure_detail)
+                else ProviderRequestError
+            )
+            raise error_type(
                 f"Codex CLI exited with status {result.returncode} "
                 f"after {attempts_used} attempt(s): {failure_detail}"
             )
@@ -661,6 +784,13 @@ class CodexCliProvider:
                     "sandbox_mode": self.sandbox_mode,
                     "elapsed_seconds": round(elapsed_seconds, 3),
                     "attempts": attempts_used,
+                    "retry_reasons": retry_reasons,
+                    "codex_gate_queue_wait_seconds": queue_waits,
+                    "codex_gate_queue_wait_total_seconds": round(sum(queue_waits), 3),
+                    "codex_gate_limit": gate_limits[-1] if gate_limits else None,
+                    "codex_gate_active_at_start": gate_active[-1] if gate_active else None,
+                    "codex_gate": call_gate.snapshot(),
+                    "capacity_retry_attempts": capacity_retry_attempts,
                     "provider_timeout_seconds": (
                         None
                         if provider_timeout_disabled
@@ -704,6 +834,11 @@ class CodexCliProvider:
 
         # 添加可变配置
         reasoning_effort = str(options.get("reasoning_effort", "")).strip().lower()
+        configured_reasoning_effort = os.environ.get(
+            "EQUIPMENT_DR_CODEX_REASONING_EFFORT", ""
+        ).strip().lower()
+        if configured_reasoning_effort in {"low", "medium", "high", "xhigh"}:
+            reasoning_effort = configured_reasoning_effort
         if reasoning_effort in {"low", "medium", "high", "xhigh"}:
             command.extend(
                 [
@@ -723,17 +858,29 @@ class CodexCliProvider:
 
         search_options = options.get("web_search")
         if isinstance(search_options, Mapping):
-            context_size = str(search_options.get("search_context_size", "high"))
-            if context_size not in {"low", "medium", "high"}:
-                context_size = "high"
             command.extend(
                 [
                     "--config",
                     'web_search="live"',
-                    "--config",
-                    f'tools.web_search={{context_size="{context_size}"}}',
                 ]
             )
+            # Responses-compatible gateways do not all accept Codex's
+            # optional search_context_size field (Kimi documents a 400 for
+            # this parameter).  Keep the richer setting by default, but let a
+            # deployment omit it without changing the orchestration chain.
+            search_context_mode = os.environ.get(
+                "EQUIPMENT_DR_SEARCH_CONTEXT_SIZE_MODE", "send"
+            ).strip().lower()
+            if search_context_mode not in {"omit", "none", "disabled"}:
+                context_size = str(search_options.get("search_context_size", "high"))
+                if context_size not in {"low", "medium", "high"}:
+                    context_size = "high"
+                command.extend(
+                    [
+                        "--config",
+                        f'tools.web_search={{context_size="{context_size}"}}',
+                    ]
+                )
             command.extend(self.search_extra_args)
 
         command.append("-")
@@ -1158,7 +1305,7 @@ def _is_retryable_failure(detail: str) -> bool:
         and "unauthorized" in normalized
         and "invalid api key" in normalized
     )
-    return transient_relay_auth or any(
+    return transient_relay_auth or _is_capacity_failure(normalized) or any(
         signal in normalized
         for signal in (
             "429",
@@ -1178,6 +1325,75 @@ def _is_retryable_failure(detail: str) -> bool:
             "no diagnostic output",
         )
     )
+
+
+def _is_capacity_failure(detail: str) -> bool:
+    """Return whether the Codex gateway rejected a turn for model capacity.
+
+    Codex CLI surfaces this as a process failure (rather than a stable HTTP
+    status), commonly with the exact message ``Selected model is at capacity``.
+    Keep the matcher narrow so authentication, schema, and policy failures are
+    not accidentally replayed with a longer delay.
+    """
+
+    normalized = str(detail or "").lower()
+    return any(
+        signal in normalized
+        for signal in (
+            "selected model is at capacity",
+            "model is at capacity",
+            "currently at capacity",
+            "temporarily at capacity",
+            "at capacity, please retry",
+            "capacity exceeded",
+            "上游负载已饱和",
+            "负载已饱和",
+            "容量已满",
+            "服务繁忙，请稍后再试",
+        )
+    )
+
+
+def _configured_nonnegative_float(name: str, default: float) -> float:
+    try:
+        value = float(os.environ.get(name, str(default)))
+    except (TypeError, ValueError):
+        value = default
+    return max(0.0, value)
+
+
+def _codex_retry_delay(attempt: int, *, capacity: bool) -> float:
+    """Compute a bounded retry delay with jitter for a failed CLI turn."""
+
+    if capacity:
+        base = _configured_nonnegative_float(
+            "EQUIPMENT_DR_CODEX_CAPACITY_RETRY_BACKOFF_SECONDS",
+            8.0,
+        )
+        ceiling = _configured_nonnegative_float(
+            "EQUIPMENT_DR_CODEX_CAPACITY_RETRY_BACKOFF_MAX_SECONDS",
+            60.0,
+        )
+        jitter = _configured_nonnegative_float(
+            "EQUIPMENT_DR_CODEX_CAPACITY_RETRY_JITTER_SECONDS",
+            2.0,
+        )
+    else:
+        base = _configured_nonnegative_float(
+            "EQUIPMENT_DR_CODEX_RETRY_BACKOFF_SECONDS",
+            1.0,
+        )
+        ceiling = _configured_nonnegative_float(
+            "EQUIPMENT_DR_CODEX_RETRY_BACKOFF_MAX_SECONDS",
+            4.0,
+        )
+        jitter = _configured_nonnegative_float(
+            "EQUIPMENT_DR_CODEX_RETRY_JITTER_SECONDS",
+            0.25,
+        )
+    ceiling = max(base, ceiling)
+    exponential = min(ceiling, base * (2**max(0, attempt)))
+    return exponential + (random.uniform(0.0, jitter) if jitter else 0.0)
 
 
 def _trim(value: str, limit: int) -> str:

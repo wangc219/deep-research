@@ -1,0 +1,820 @@
+<!doctype html>
+<html id="htmlTag" lang="zh-Hant-TW" class="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>中華民國國防部-全球資訊網-反制無人機系統</title>
+    <link rel="shortcut icon" type="image/x-icon" href="img/favicon.ico" />
+    <link href="css/bootstrap.min.css" rel="stylesheet" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/dio3.css" />
+    <link rel="stylesheet" href="css/advanced-filters.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick-theme.css"
+    />
+    <link rel="stylesheet" href="css/pageloading.css" />
+  </head>
+  <body class="no-scroll">
+    <a href="#main" class="skip-link" title="跳至主要內容區">跳到主要內容區塊</a>
+    <a
+      href="#Accesskey_U"
+      id="Accesskey_U"
+      accesskey="U"
+      class="skip-link-u"
+      title="頁面頂端功能區塊"
+      >:::</a
+    >
+    <!-- 讀取畫面 -->
+    <div class="loading-screen">
+      <div class="loading-line-vertical"></div>
+      <div class="loading-moving-line2"></div>
+      <div class="loading-c-child">
+        <div class="loading-cross-deco">
+          <svg width="100%" height="100%" viewBox="0 0 100 100">
+            <path
+              d="
+                M 0 50
+                Q 50 50 50 0
+                Q 50 50 100 50
+                Q 50 50 50 100
+                Q 50 50 0 50
+                Z
+              "
+              fill="var(--op-blue5)"
+            ></path>
+          </svg>
+        </div>
+      </div>
+      <div class="loading-moving-line"></div>
+      <div class="percentage">
+        <span class="percentageNum">0</span><span class="percentagePer">%</span>
+      </div>
+    </div>
+
+    <div class="main-content">
+ <!-- 導覽列 -->
+ <header class="nav-wrapper" id="navWrapper">
+  <div class="nav-bar">
+      <div class="mainlogo">
+          <a href="https://www.mnd.gov.tw/" title="回首頁">
+              <h1>
+                  <img src="img/logo_w.svg" alt="中華民國國防部首頁">
+              </h1>
+          </a>
+      </div>
+      <div class="nav-right">
+          <div class="hamburger" id="hamburger">
+              <img class="hamburger-icon" src="/img/menu.svg" alt="選單">
+          </div>
+          <div class="nav-icons">
+              <div class="nav-icons-sitemap">
+                    <a href="https://www.mnd.gov.tw/Sitemap" title="前往網站導覽頁" class="body-1 nav-icon" id="sitemapBtn">
+                      <img src="/img/sitemap.svg" alt="網站導覽" class="nav-svg" width="18" height="16">
+                  </a>
+              </div>
+
+              <div class="search-input-container" id="searchInputContainer">
+                  <input id="searchInput" type="text" aria-label="搜尋網站內容" placeholder="請輸入搜尋內容" class="search-input" />
+                  <button id="searchBtn" type="submit" class="search-submit-btn" title="搜尋" aria-label="搜尋">
+                      <img src="/img/search_b.svg" alt="搜尋" width="20" height="20" />
+                  </button>
+              </div>
+              <div class="nav-icons-search">
+                    <a href="#" title="開啟搜尋功能" class="body-1 nav-icon" id="search" accesskey="S">
+                      <img src="/img/search.svg" alt="搜尋" width="20" height="20" />
+                  </a>
+              </div>
+              <div class="nav-icons-fontsize">
+                    <a href="#" title="調整字體大小" class="body-1 nav-icon" id="fontsize">
+                      <img src="/img/fontsize.svg" alt="字體大小" width="20" height="20" />
+                  </a>
+                  <div class="font-size-selector-container">
+                      <div id="size-small" class="size-button unselected">小</div>
+                      <div id="size-medium" class="size-button selected">中</div>
+                      <div id="size-large" class="size-button unselected">大</div>
+                  </div>
+              </div>
+              <div class="nav-icons-language">
+                    <a href="https://www.mnd.gov.tw/en" title="切換網站語言" class="body-1 nav-icon" id="language">
+                      <img src="/img/language.svg" alt="語言切換" width="20" height="20" />
+                      <span class="body-2">EN</span>
+                  </a>
+              </div>
+              <div class="theme-toggle" id="toggleDarkMode" role="button" aria-label="切換深色模式">
+                  <div class="icon sun">
+                      <img src="/img/sun.svg" alt="Sun icon" />
+                  </div>
+                  <div class="icon moon">
+                      <img src="/img/moon.svg" alt="Moon icon" />
+                  </div>
+                  <div class="toggle-indicator"></div>
+              </div>
+          </div>
+          <nav id="navMenuContainer">
+
+                      <div class="nav-item" role=menuitem aria-haspopup=true aria-expanded=false>
+                          <span class="nav-text middlebutton" role="menuitem" aria-haspopup="true" aria-expanded="false">&#x672C;&#x90E8;&#x7C21;&#x4ECB;</span>
+                                  <!--第二層測試-->
+                                  <div class="dropdown-menu-full" role="menu" aria-hidden="true">
+                                      <div class="wrap-menu">
+                                          <div class="sevNavContent">
+                                                      <div class="secNavWithThi secNavCol3">
+                                                              <a href="https://www.mnd.gov.tw/About/Minister"  class="middlebutton aTagDec"  title="前往「部長」頁面"><i class="bi bi-arrow-right-circle-fill secIcon"></i><span>&#x90E8;&#x9577;</span></a>
+                                                      </div>
+                                                      <div class="secNavWithThi secNavCol3">
+                                                              <a href="https://www.mnd.gov.tw/publication/71861"  class="middlebutton aTagDec"  title="前往「組織及職掌」頁面"><i class="bi bi-arrow-right-circle-fill secIcon"></i><span>&#x7D44;&#x7E54;&#x53CA;&#x8077;&#x638C;</span></a>
+                                                      </div>
+                                                      <div class="secNavWithThi secNavCol3">
+                                                              <a href="https://www.mnd.gov.tw/About/FormerMinisters"  class="middlebutton aTagDec"  title="前往「歷任部長」頁面"><i class="bi bi-arrow-right-circle-fill secIcon"></i><span>&#x6B77;&#x4EFB;&#x90E8;&#x9577;</span></a>
+                                                      </div>
+                                                      <div class="secNavWithThi secNavCol3">
+                                                              <a href="https://www.mnd.gov.tw/publication/85983"  class="middlebutton aTagDec"  title="前往「國防部標誌」頁面"><i class="bi bi-arrow-right-circle-fill secIcon"></i><span>&#x570B;&#x9632;&#x90E8;&#x6A19;&#x8A8C;</span></a>
+                                                      </div>
+                                          </div>
+                                      </div>
+                                  </div>
+                      </div>
+                      <div class="nav-item" >
+                          <span class="nav-text middlebutton" role="menuitem" aria-haspopup="true" aria-expanded="false">&#x91CD;&#x8981;&#x653F;&#x7B56;</span>
+                                  <!--第二層測試-->
+                                  <div class="dropdown-menu-full" role="menu" aria-hidden="true">
+                                      <div class="wrap-menu">
+                                          <div class="sevNavContent">
+                                                      <div class="secNavWithThi secNavCol3">
+                                                              <span href="" class="middlebutton aTagDec"><i class="bi bi-arrow-right-circle-fill secIcon"></i><span>&#x6575;&#x60C5;&#x5A01;&#x8105;&#x53CA;&#x570B;&#x8ECD;&#x6230;&#x5099;&#x61C9;&#x8655;</span></span>
+                                                                  <!--第三層測試-->
+                                                                  <div class="dropdown-menu-Third" role="menu">
+                                                                                      <a href="https://www.mnd.gov.tw/publication/85273"  class="middlebutton"  title="前往「區域安全情勢」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x5340;&#x57DF;&#x5B89;&#x5168;&#x60C5;&#x52E2;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/publication/85274"  class="middlebutton"  title="前往「共軍動態威脅」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x5171;&#x8ECD;&#x52D5;&#x614B;&#x5A01;&#x8105;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/publication/85275"  class="middlebutton"  title="前往「中共認知作戰」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x4E2D;&#x5171;&#x8A8D;&#x77E5;&#x4F5C;&#x6230;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/publication/85276"  class="middlebutton"  title="前往「國軍戰備應處」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x570B;&#x8ECD;&#x6230;&#x5099;&#x61C9;&#x8655;</span></a>
+                                                                  </div>
+                                                      </div>
+                                                      <div class="secNavWithThi secNavCol3">
+                                                              <span href="" class="middlebutton aTagDec"><i class="bi bi-arrow-right-circle-fill secIcon"></i><span>&#x570B;&#x9632;&#x65BD;&#x653F;&#x8981;&#x9805;</span></span>
+                                                                  <!--第三層測試-->
+                                                                  <div class="dropdown-menu-Third" role="menu">
+                                                                                      <a href="https://www.mnd.gov.tw/publication/85277"  class="middlebutton"  title="前往「深化實戰訓練」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x6DF1;&#x5316;&#x5BE6;&#x6230;&#x8A13;&#x7DF4;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/publication/85278"  class="middlebutton"  title="前往「廣儲優質人力」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x5EE3;&#x5132;&#x512A;&#x8CEA;&#x4EBA;&#x529B;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/publication/85279"  class="middlebutton"  title="前往「籌建武器裝備」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x7C4C;&#x5EFA;&#x6B66;&#x5668;&#x88DD;&#x5099;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/publication/85280"  class="middlebutton"  title="前往「組織編裝調整」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x7D44;&#x7E54;&#x7DE8;&#x88DD;&#x8ABF;&#x6574;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/publication/85281"  class="middlebutton"  title="前往「應用新興科技」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x61C9;&#x7528;&#x65B0;&#x8208;&#x79D1;&#x6280;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/publication/85282"  class="middlebutton"  title="前往「全民防衛韌性」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x5168;&#x6C11;&#x9632;&#x885B;&#x97CC;&#x6027;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/publication/85283"  class="middlebutton"  title="前往「拓展友盟夥伴」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x62D3;&#x5C55;&#x53CB;&#x76DF;&#x5925;&#x4F34;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/publication/85284"  class="middlebutton"  title="前往「軍法制度改革」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x8ECD;&#x6CD5;&#x5236;&#x5EA6;&#x6539;&#x9769;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/publication/85285"  class="middlebutton"  title="前往「國防預算編列」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x570B;&#x9632;&#x9810;&#x7B97;&#x7DE8;&#x5217;</span></a>
+                                                                  </div>
+                                                      </div>
+                                          </div>
+                                      </div>
+                                  </div>
+                      </div>
+                      <div class="nav-item" >
+                          <span class="nav-text middlebutton" role="menuitem" aria-haspopup="true" aria-expanded="false">&#x65B0;&#x805E;&#x8207;&#x516C;&#x544A;</span>
+                                  <!--第二層測試-->
+                                  <div class="dropdown-menu-full" role="menu" aria-hidden="true">
+                                      <div class="wrap-menu">
+                                          <div class="sevNavContent">
+                                                      <div class="secNavWithThi secNavCol3">
+                                                              <a href="https://www.mnd.gov.tw/news/pressreleaselist"  class="middlebutton aTagDec"  title="前往「新聞稿」頁面"><i class="bi bi-arrow-right-circle-fill secIcon"></i><span>&#x65B0;&#x805E;&#x7A3F;</span></a>
+                                                      </div>
+                                                      <div class="secNavWithThi secNavCol3">
+                                                              <a href="https://www.mnd.gov.tw/news/mndlist"  class="middlebutton aTagDec"  title="前往「本部新聞」頁面"><i class="bi bi-arrow-right-circle-fill secIcon"></i><span>&#x672C;&#x90E8;&#x65B0;&#x805E;</span></a>
+                                                      </div>
+                                                      <div class="secNavWithThi secNavCol3">
+                                                              <a href="https://www.mnd.gov.tw/news/pressreleaselist/cate/66"  class="middlebutton aTagDec"  title="前往「新聞澄清」頁面"><i class="bi bi-arrow-right-circle-fill secIcon"></i><span>&#x65B0;&#x805E;&#x6F84;&#x6E05;</span></a>
+                                                      </div>
+                                                      <div class="secNavWithThi secNavCol3">
+                                                              <a href="https://www.mnd.gov.tw/news/plaactlist"  class="middlebutton aTagDec"  title="前往「區域動態」頁面"><i class="bi bi-arrow-right-circle-fill secIcon"></i><span>&#x5340;&#x57DF;&#x52D5;&#x614B;</span></a>
+                                                      </div>
+                                                      <div class="secNavWithThi secNavCol3">
+                                                              <a href="https://www.mnd.gov.tw/news/announcementlist"  class="middlebutton aTagDec"  title="前往「行政公告」頁面"><i class="bi bi-arrow-right-circle-fill secIcon"></i><span>&#x884C;&#x653F;&#x516C;&#x544A;</span></a>
+                                                      </div>
+                                                      <div class="secNavWithThi secNavCol3">
+                                                              <a href="https://www.mnd.gov.tw/news/medialist"  class="middlebutton aTagDec"  title="前往「影音專區」頁面"><i class="bi bi-arrow-right-circle-fill secIcon"></i><span>&#x5F71;&#x97F3;&#x5C08;&#x5340;</span></a>
+                                                      </div>
+                                          </div>
+                                      </div>
+                                  </div>
+                      </div>
+                      <div class="nav-item" >
+                          <span class="nav-text middlebutton" role="menuitem" aria-haspopup="true" aria-expanded="false">&#x4FBF;&#x6C11;&#x670D;&#x52D9;</span>
+                                  <!--第二層測試-->
+                                  <div class="dropdown-menu-full" role="menu" aria-hidden="true">
+                                      <div class="wrap-menu">
+                                          <div class="sevNavContent">
+                                                      <div class="secNavWithThi secNavCol3">
+                                                              <a href="https://mailbox.mnd.gov.tw" target=&quot;_blank&quot; class="middlebutton aTagDec" title=&#x53E6;&#x958B;&#x65B0;&#x8996;&#x7A97;><i class="bi bi-arrow-right-circle-fill secIcon"></i><span>&#x90E8;&#x9577;&#x6C11;&#x610F;&#x4FE1;&#x7BB1;</span></a>
+                                                      </div>
+                                                      <div class="secNavWithThi secNavCol3">
+                                                              <span href="" class="middlebutton aTagDec"><i class="bi bi-arrow-right-circle-fill secIcon"></i><span>&#x570B;&#x8ECD;&#x6A94;&#x6848;&#x61C9;&#x7528;&#x5C08;&#x5340;</span></span>
+                                                                  <!--第三層測試-->
+                                                                  <div class="dropdown-menu-Third" role="menu">
+                                                                                      <a href="https://newarchive.mnd.gov.tw" target=&quot;_blank&quot; class="middlebutton" title=&#x53E6;&#x958B;&#x65B0;&#x8996;&#x7A97;><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x570B;&#x8ECD;&#x53F2;&#x653F;&#x6A94;&#x6848;&#x8ABF;&#x95B1;&#x7CFB;&#x7D71;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/CitizenServices/DocumentServices"  class="middlebutton"  title="前往「檔案應用服務」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x6A94;&#x6848;&#x61C9;&#x7528;&#x670D;&#x52D9;</span></a>
+                                                                  </div>
+                                                      </div>
+                                                      <div class="secNavWithThi secNavCol3">
+                                                              <a href="https://www.mnd.gov.tw/CitizenServices/FAQ"  class="middlebutton aTagDec"  title="前往「常見問答」頁面"><i class="bi bi-arrow-right-circle-fill secIcon"></i><span>&#x5E38;&#x898B;&#x554F;&#x7B54;</span></a>
+                                                                  <!--第三層測試-->
+                                                                  <div class="dropdown-menu-Third" role="menu">
+                                                                                      <a href="https://www.mnd.gov.tw/CitizenServices/FAQ/cate/561368"  class="middlebutton"  title="前往「兵役制度」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x5175;&#x5F79;&#x5236;&#x5EA6;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/CitizenServices/FAQ/cate/561369"  class="middlebutton"  title="前往「法服諮詢」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x6CD5;&#x670D;&#x8AEE;&#x8A62;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/CitizenServices/FAQ/cate/561370"  class="middlebutton"  title="前往「申訴資訊」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x7533;&#x8A34;&#x8CC7;&#x8A0A;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/CitizenServices/FAQ/cate/561371"  class="middlebutton"  title="前往「採購資訊」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x63A1;&#x8CFC;&#x8CC7;&#x8A0A;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/CitizenServices/FAQ/cate/561372"  class="middlebutton"  title="前往「人才招募」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x4EBA;&#x624D;&#x62DB;&#x52DF;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/CitizenServices/FAQ/cate/561373"  class="middlebutton"  title="前往「動員教召」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x52D5;&#x54E1;&#x6559;&#x53EC;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/CitizenServices/FAQ/cate/561374"  class="middlebutton"  title="前往「軍眷服務」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x8ECD;&#x7737;&#x670D;&#x52D9;</span></a>
+                                                                  </div>
+                                                      </div>
+                                                      <div class="secNavWithThi secNavCol3">
+                                                              <a href="https://www.mnd.gov.tw/publication/74610"  class="middlebutton aTagDec"  title="前往「機關交通及聯絡資訊」頁面"><i class="bi bi-arrow-right-circle-fill secIcon"></i><span>&#x6A5F;&#x95DC;&#x4EA4;&#x901A;&#x53CA;&#x806F;&#x7D61;&#x8CC7;&#x8A0A;</span></a>
+                                                      </div>
+                                          </div>
+                                      </div>
+                                  </div>
+                      </div>
+                      <div class="nav-item" >
+                          <span class="nav-text middlebutton" role="menuitem" aria-haspopup="true" aria-expanded="false">&#x570B;&#x9632;&#x5275;&#x65B0;</span>
+                                  <!--第二層測試-->
+                                  <div class="dropdown-menu-full" role="menu" aria-hidden="true">
+                                      <div class="wrap-menu">
+                                          <div class="sevNavContent">
+                                                      <div class="secNavWithThi secNavCol3">
+                                                              <span href="" class="middlebutton aTagDec"><i class="bi bi-arrow-right-circle-fill secIcon"></i><span>&#x570B;&#x9632;&#x5275;&#x65B0;</span></span>
+                                                                  <!--第三層測試-->
+                                                                  <div class="dropdown-menu-Third" role="menu">
+                                                                                      <a href="https://www.mnd.gov.tw/dio" target=&quot;_blank&quot; class="middlebutton" title=&#x53E6;&#x958B;&#x65B0;&#x8996;&#x7A97;><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x570B;&#x9632;&#x5275;&#x65B0;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/news/innovationnewslist"  class="middlebutton"  title="前往「最新消息」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x6700;&#x65B0;&#x6D88;&#x606F;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/news/prototypelist"  class="middlebutton"  title="前往「原型開發」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x539F;&#x578B;&#x958B;&#x767C;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/news/procurementlist"  class="middlebutton"  title="前往「少量採購」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x5C11;&#x91CF;&#x63A1;&#x8CFC;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/dio/CollaborationOpportunities.html" target=&quot;_blank&quot; class="middlebutton" title=&#x53E6;&#x958B;&#x65B0;&#x8996;&#x7A97;><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x5408;&#x4F5C;&#x4EA4;&#x6D41;</span></a>
+                                                                  </div>
+                                                      </div>
+                                          </div>
+                                      </div>
+                                  </div>
+                      </div>
+                      <div class="nav-item" >
+                          <span class="nav-text middlebutton" role="menuitem" aria-haspopup="true" aria-expanded="false">&#x8CC7;&#x8A0A;&#x670D;&#x52D9;</span>
+                                  <!--第二層測試-->
+                                  <div class="dropdown-menu-full" role="menu" aria-hidden="true">
+                                      <div class="wrap-menu">
+                                          <div class="sevNavContentCol">
+                                                      <div class="secNavWithThi secNavCol2">
+                                                              <span href="" class="middlebutton aTagDec"><i class="bi bi-arrow-right-circle-fill secIcon"></i><span>&#x4EBA;&#x624D;&#x62DB;&#x52DF;</span></span>
+                                                                  <!--第三層測試-->
+                                                                  <div class="dropdown-menu-Third" role="menu">
+                                                                                      <a href="https://www.mnd.gov.tw/publication/85167"  class="middlebutton"  title="前往「國軍人才招募」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x570B;&#x8ECD;&#x4EBA;&#x624D;&#x62DB;&#x52DF;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/InformationServices/RecruitmentSection"  class="middlebutton"  title="前往「聘雇招募」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x8058;&#x96C7;&#x62DB;&#x52DF;</span></a>
+                                                                  </div>
+                                                      </div>
+                                                      <div class="secNavWithThi secNavCol2">
+                                                              <span href="" class="middlebutton aTagDec"><i class="bi bi-arrow-right-circle-fill secIcon"></i><span>&#x6CD5;&#x898F;&#x5C08;&#x5340;</span></span>
+                                                                  <!--第三層測試-->
+                                                                  <div class="dropdown-menu-Third" role="menu">
+                                                                                      <a href="https://law.mnd.gov.tw" target=&quot;_blank&quot; class="middlebutton" title=&#x53E6;&#x958B;&#x65B0;&#x8996;&#x7A97;><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x570B;&#x9632;&#x6CD5;&#x898F;&#x8CC7;&#x6599;&#x5EAB;</span></a>
+                                                                                      <a href="https://law.moj.gov.tw" target=&quot;_blank&quot; class="middlebutton" title=&#x53E6;&#x958B;&#x65B0;&#x8996;&#x7A97;><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x5168;&#x570B;&#x6CD5;&#x898F;&#x8CC7;&#x6599;&#x5EAB;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/InformationServices/AnnualPlanforRegulatoryDrafts"  class="middlebutton"  title="前往「法規命令草案年度立法計畫」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x6CD5;&#x898F;&#x547D;&#x4EE4;&#x8349;&#x6848;&#x5E74;&#x5EA6;&#x7ACB;&#x6CD5;&#x8A08;&#x756B;</span></a>
+                                                                  </div>
+                                                      </div>
+                                                      <div class="secNavWithThi secNavCol6">
+                                                              <a href="https://www.mnd.gov.tw/CategoryOf/InformationServices"  class="middlebutton aTagDec"  title="前往「資訊公開」頁面"><i class="bi bi-arrow-right-circle-fill secIcon"></i><span>&#x8CC7;&#x8A0A;&#x516C;&#x958B;</span></a>
+                                                                  <!--第三層測試-->
+                                                                  <div class="dropdown-menu-ThirdCol" role="menu">
+                                                                                      <a href="https://www.mnd.gov.tw/InformationServices/PolicyPlans"  class="middlebutton"  title="前往「施政計畫」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x65BD;&#x653F;&#x8A08;&#x756B;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/CategoryOf/PolicyPerformanceReports"  class="middlebutton"  title="前往「施政績效報告」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x65BD;&#x653F;&#x7E3E;&#x6548;&#x5831;&#x544A;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/InformationServices/LYBusinessReports"  class="middlebutton"  title="前往「立法院業務報告」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x7ACB;&#x6CD5;&#x9662;&#x696D;&#x52D9;&#x5831;&#x544A;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/CategoryOf/StatisticsandResearchReports"  class="middlebutton"  title="前往「業務統計及研究報告」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x696D;&#x52D9;&#x7D71;&#x8A08;&#x53CA;&#x7814;&#x7A76;&#x5831;&#x544A;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/CategoryOf/BudgetandFinalAccounts"  class="middlebutton"  title="前往「預算及決算書」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x9810;&#x7B97;&#x53CA;&#x6C7A;&#x7B97;&#x66F8;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/InformationServices/AdministrativeRemedies"  class="middlebutton"  title="前往「行政救濟」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x884C;&#x653F;&#x6551;&#x6FDF;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/CategoryOf/MilitaryJusticeCaseInformation"  class="middlebutton"  title="前往「軍法案件資訊」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x8ECD;&#x6CD5;&#x6848;&#x4EF6;&#x8CC7;&#x8A0A;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/InformationServices/PublicWorksProcurementContracts"  class="middlebutton"  title="前往「公共工程採購契約」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x516C;&#x5171;&#x5DE5;&#x7A0B;&#x63A1;&#x8CFC;&#x5951;&#x7D04;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/CategoryOf/SubsidiesGrantedorReceived"  class="middlebutton"  title="前往「支付或接受之補助」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x652F;&#x4ED8;&#x6216;&#x63A5;&#x53D7;&#x4E4B;&#x88DC;&#x52A9;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/CategoryOf/FoundationInformationSection"  class="middlebutton"  title="前往「財團法人專區」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x8CA1;&#x5718;&#x6CD5;&#x4EBA;&#x5C08;&#x5340;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/InformationServices/GenderEqualitySection"  class="middlebutton"  title="前往「性別平等專區」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x6027;&#x5225;&#x5E73;&#x7B49;&#x5C08;&#x5340;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/InformationServices/HumanRightsSection"  class="middlebutton"  title="前往「人權業務專區」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x4EBA;&#x6B0A;&#x696D;&#x52D9;&#x5C08;&#x5340;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/InformationServices/ExitInformationClassifiedRetirees"  class="middlebutton"  title="前往「涉密離退人員出境資訊」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x6D89;&#x5BC6;&#x96E2;&#x9000;&#x4EBA;&#x54E1;&#x51FA;&#x5883;&#x8CC7;&#x8A0A;</span></a>
+                                                                                  <a href="https://www.mnd.gov.tw/CategoryOf/InformationServices" class="middlebutton" title="前往資訊公開頁面"><span class="more">...更多</span></a>
+                                                                  </div>
+                                                      </div>
+                                                      <div class="secNavWithThi secNavCol2">
+                                                              <span href="" class="middlebutton aTagDec"><i class="bi bi-arrow-right-circle-fill secIcon"></i><span>&#x4E2D;&#x82F1;&#x6587;&#x8A5E;&#x5F59;&#x5C0D;&#x7167;</span></span>
+                                                                  <!--第三層測試-->
+                                                                  <div class="dropdown-menu-Third" role="menu">
+                                                                                      <a href="https://www.mnd.gov.tw/InformationServices/BilingualGlossary"  class="middlebutton"  title="前往「詞彙對照」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x8A5E;&#x5F59;&#x5C0D;&#x7167;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/NewUpload/files/&#x7F8E;&#x83EF;&#x8ECD;&#x8A9E;&#x8FAD;&#x5178;.pdf" target=&quot;_blank&quot; class="middlebutton" title=&#x53E6;&#x958B;&#x65B0;&#x8996;&#x7A97;><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x7F8E;&#x83EF;&#x8ECD;&#x8A9E;&#x8FAD;&#x5178;</span></a>
+                                                                  </div>
+                                                      </div>
+                                                      <div class="secNavWithThi secNavCol2">
+                                                              <span href="" class="middlebutton aTagDec"><i class="bi bi-arrow-right-circle-fill secIcon"></i><span>&#x51FA;&#x7248;&#x54C1;</span></span>
+                                                                  <!--第三層測試-->
+                                                                  <div class="dropdown-menu-Third" role="menu">
+                                                                                      <a href="https://www.mnd.gov.tw/InformationServices/NDRList"  class="middlebutton"  title="前往「國防報告書」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x570B;&#x9632;&#x5831;&#x544A;&#x66F8;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/InformationServices/QDR"  class="middlebutton"  title="前往「國防總檢討QDR」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x570B;&#x9632;&#x7E3D;&#x6AA2;&#x8A0E;QDR</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/InformationServices/MilitaryJournals"  class="middlebutton"  title="前往「軍事期刊」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x8ECD;&#x4E8B;&#x671F;&#x520A;</span></a>
+                                                                                      <a href="https://www.mnd.gov.tw/InformationServices/MilitaryBooks"  class="middlebutton"  title="前往「軍事書籍」頁面"><i class="bi bi-arrow-right-circle-fill thiIcon"></i><span>&#x8ECD;&#x4E8B;&#x66F8;&#x7C4D;</span></a>
+                                                                  </div>
+                                                      </div>
+                                          </div>
+                                      </div>
+                                  </div>
+                      </div>
+                      <div class="nav-item" >
+                          <span class="nav-text middlebutton" role="menuitem" aria-haspopup="true" aria-expanded="false">&#x76F8;&#x95DC;&#x9023;&#x7D50;</span>
+                                  <!--第二層測試-->
+                                  <div class="dropdown-menu-full" role="menu" aria-hidden="true">
+                                      <div class="wrap-menu">
+                                          <div class="sevNavContent">
+                                                      <div class="secNavWithThi secNavCol3">
+                                                              <a href="https://www.mnd.gov.tw/RelatedLinks/MilitaryAgencies"  class="middlebutton aTagDec"  title="前往「國軍機關單位」頁面"><i class="bi bi-arrow-right-circle-fill secIcon"></i><span>&#x570B;&#x8ECD;&#x6A5F;&#x95DC;&#x55AE;&#x4F4D;</span></a>
+                                                      </div>
+                                                      <div class="secNavWithThi secNavCol3">
+                                                              <a href="https://www.mnd.gov.tw/RelatedLinks/MilitaryAcademies"  class="middlebutton aTagDec"  title="前往「軍事院校」頁面"><i class="bi bi-arrow-right-circle-fill secIcon"></i><span>&#x8ECD;&#x4E8B;&#x9662;&#x6821;</span></a>
+                                                      </div>
+                                                      <div class="secNavWithThi secNavCol3">
+                                                              <a href="https://www.mnd.gov.tw/RelatedLinks/MilitaryHospitals"  class="middlebutton aTagDec"  title="前往「國軍醫院」頁面"><i class="bi bi-arrow-right-circle-fill secIcon"></i><span>&#x570B;&#x8ECD;&#x91AB;&#x9662;</span></a>
+                                                      </div>
+                                                      <div class="secNavWithThi secNavCol3">
+                                                              <a href="https://www.mnd.gov.tw/RelatedLinks/MilitaryInformationServices"  class="middlebutton aTagDec"  title="前往「國軍資訊服務」頁面"><i class="bi bi-arrow-right-circle-fill secIcon"></i><span>&#x570B;&#x8ECD;&#x8CC7;&#x8A0A;&#x670D;&#x52D9;</span></a>
+                                                      </div>
+                                                      <div class="secNavWithThi secNavCol3">
+                                                              <a href="https://www.mnd.gov.tw/RelatedLinks/DefenseRelatedOrganizations"  class="middlebutton aTagDec"  title="前往「國防相關組織」頁面"><i class="bi bi-arrow-right-circle-fill secIcon"></i><span>&#x570B;&#x9632;&#x76F8;&#x95DC;&#x7D44;&#x7E54;</span></a>
+                                                      </div>
+                                                      <div class="secNavWithThi secNavCol3">
+                                                              <a href="https://www.mnd.gov.tw/RelatedLinks/GovernmentInformationServices"  class="middlebutton aTagDec"  title="前往「政府資訊服務」頁面"><i class="bi bi-arrow-right-circle-fill secIcon"></i><span>&#x653F;&#x5E9C;&#x8CC7;&#x8A0A;&#x670D;&#x52D9;</span></a>
+                                                      </div>
+                                          </div>
+                                      </div>
+                                  </div>
+                      </div>
+          </nav>
+      </div>
+  </div>
+</header>
+<!-- 導覽列結束 -->
+
+      <!-- 主內容開始 -->
+      <a
+        href="#Accesskey_C"
+        id="Accesskey_C"
+        accesskey="C"
+        class="skip-link-c"
+        title="中間主要內容區"
+        >:::</a
+      >
+      <main class="main" id="main">
+        <!-- 標題 -->
+        <div class="top-bg">
+          <div class="top-wrap">
+            <div class="insidepage-title">
+              <div class="breadcrumb">
+                <div class="first body-2">國防創新</div>
+                <span class="separator body-2"
+                  ><i class="bi bi-chevron-right"></i
+                ></span>
+                <a href="dio_home.html" class="body-2">國防創新</a>
+                <span class="separator body-2"
+                  ><i class="bi bi-chevron-right"></i
+                ></span>
+                <span class="body-2" aria-current="page">反制無人機系統</span>
+              </div>
+              <h2 class="title headline-h2">反制無人機系統</h2>
+            </div>
+          </div>
+          <!-- 線段位移開始 -->
+          <div class="line-vertical"></div>
+          <div class="moving-line2"></div>
+          <div class="c-child">
+            <div class="cross-deco">
+              <svg width="100%" height="100%" viewBox="0 0 100 100">
+                <path
+                  d="
+                M 0 50
+                Q 50 50 50 0
+                Q 50 50 100 50
+                Q 50 50 50 100
+                Q 50 50 0 50
+                Z
+                "
+                  fill="var(--op-blue5-b)"
+                ></path>
+              </svg>
+            </div>
+            <div class="moving-line"></div>
+          </div>
+          <!-- 線段位移結束 -->
+        </div>
+
+        <!-- 內文 -->
+        <div class="pagewrap1">
+          <div class="wrap-page">
+            <section class="half-grid-section counter-drone-intro-dropdown">
+              <div
+                class="half-grid-left counter-drone-intro-trigger"
+                role="button"
+                tabindex="0"
+                aria-expanded="false"
+                aria-controls="counterDroneIntroContent"
+              >
+                <div class="headline-h3 section-title">領域簡介</div>
+                <p class="intro-text">
+                  透過雷達、電偵、光電、聲響等主被動感測器，偵測、識別、追蹤各類無人機；並透過電磁干擾、偽冒、欺騙等軟殺手段，及槍砲、精準導引武器、無人機攔截器等硬殺裝備，或高能雷射、高能微波等定向能系統，重層攔截來襲無人機；而AI驅動之指管系統，可整合感測、防攔系統，提升無人機反制效能，增進關鍵設施、軍事基地與作戰部隊安全。
+                </p>
+                <!--<p class="intro-text">
+                  而AI驅動之指管系統，可整合感測、防攔系統，提升無人機反制效能，增進關鍵設施、軍事基地與作戰部隊安全。
+                </p>-->
+
+                <span class="counter-drone-intro-icon" aria-hidden="true"></span>
+
+                <div
+                  class="counter-drone-intro-content"
+                  id="counterDroneIntroContent"
+                  aria-hidden="true"
+                >
+                  <div class="headline-h4 counter-drone-feature-title">關鍵性能</div>
+                  <div class="counter-drone-intro-item">
+                    <div class="counter-drone-feature-icon"><img src="img/02-counter-uas/09-multimodal-sensing-target-identification.png" alt="" /></div>
+                    <p><strong>感測器融合：</strong>整合雷達、電偵、光電/紅外線（EO/IR）及聲響感測器，建立航跡並交互驗證，降低誤擊，辨識單機、集群等「低空、慢速、小型」目標。</p>
+                  </div>
+                  <div class="counter-drone-intro-item">
+                    <div class="counter-drone-feature-icon"><img src="img/02-counter-uas/10-electromagnetic-jamming-navigation-deception-capability.png" alt="" /></div>
+                    <p><strong>電磁干擾與導航欺騙：</strong>針對敵無人機導控、情傳及衛星導航訊號，運用阻斷干擾、接管或欺騙等手段降低其任務效能，並維持己方電磁頻譜管制。</p>
+                  </div>
+                  <div class="counter-drone-intro-item">
+                    <div class="counter-drone-feature-icon"><img src="img/02-counter-uas/11-layered-interception-effect-matching-capability.png" alt="" /></div>
+                    <p><strong>多層次攔截：</strong>依目標類型、距離、速度、數量及附帶損害風險，運用槍砲、導引彈藥、攔截無人機、雷射或高能微波，建立具成本效益之多層防禦。</p>
+                  </div>
+                  <div class="counter-drone-intro-item">
+                    <div class="counter-drone-feature-icon"><img src="img/02-counter-uas/12-ai-integrated-defense-capability.png" alt="" /></div>
+                    <p><strong>AI整合防禦：</strong>運用AI協助航跡融合、目標分類、威脅評估與武器指派，將偵測、干擾及攔截系統整合至共同指管架構，並由人員保有最終處置權責。</p>
+                  </div>
+                </div>
+
+                <!-- <div class="darkblue-icons-row">
+                  <div class="db-icon-item">
+                    <img src="img/c-usa/c-usa_icon_01.png" alt="" />
+                    <span class="body-2">偵測監視</span>
+                  </div>
+                  <div class="db-icon-item">
+                    <img src="img/c-usa/c-usa_icon_02.png" alt="" />
+                    <span class="body-2">目標識別</span>
+                  </div>
+                  <div class="db-icon-item">
+                    <img src="img/c-usa/c-usa_icon_03.png" alt="" />
+                    <span class="body-2">干擾壓制</span>
+                  </div>
+                  <div class="db-icon-item">
+                    <img src="img/c-usa/c-usa_icon_04.png" alt="" />
+                    <span class="body-2">多層攔截</span>
+                  </div>
+                </div> -->
+              </div>
+
+              <!-- <div class="half-grid-right">
+                <div class="dio-img-wrap">
+                  <img src="img/c-usa/c-usa_icon_r.png" alt="領域簡介" />
+                </div>
+              </div> -->
+            </section>
+
+            <div class="headline-h3 section-title counter-drone-products-title">主要裝備與技術</div>
+            <section class="four-cards-section counter-drone-system-cards">
+              <div class="gradient-card counter-drone-card">
+              <div class="g-card-top">
+                <div class="g-card-img counter-drone-feature-icon">
+                  <img src="img/02-counter-uas/13-jamming-deception-device.png" alt="" />
+                </div>
+                <h4 class="headline-h5 g-card-title">干擾裝置</h4>
+                </div>
+                <div class="g-card-text">
+                  運用手持式干擾槍、人攜式干擾器乃至車載電戰系統，並配合電偵系統偵獲之目標訊號特徵，對無人機導控情傳與導航信號進行阻斷干擾或欺騙。
+                </div>
+              </div>
+
+              <div class="gradient-card counter-drone-card">
+              <div class="g-card-top">
+                <div class="g-card-img counter-drone-feature-icon">
+                  <img src="img/02-counter-uas/14-electromagnetic-jamming-navigation-deception-system.png" alt="" />
+                </div>
+                <h4 class="headline-h5 g-card-title">動能殺傷</h4>
+                </div>
+                <div class="g-card-text">
+                  <p>運用搭載於精準遙控槍塔的機槍、鏈砲，配合可編程/近炸彈藥，接戰來襲的無人機。另低成本導引火箭或微型化飛彈，用於攔截較大型（第2、3類）無人機。</p>
+                </div>
+              </div>
+
+              <div class="gradient-card counter-drone-card">
+              <div class="g-card-top">
+                <div class="g-card-img counter-drone-feature-icon">
+                  <img src="img/02-counter-uas/15-layered-interception-effect-matching-system.png" alt="" />
+                </div>
+                <h4 class="headline-h5 g-card-title">無人機攔截器</h4>
+                </div>
+                <div class="g-card-text">
+                  含非殺傷性、適用於平時無人機防護，可發射無人機捕捉網之攔截器；及戰時以動能衝撞引爆、近炸方式，接戰較大型無人機的無人機攔截器。
+                </div>
+              </div>
+
+              <div class="gradient-card counter-drone-card">
+              <div class="g-card-top">
+                <div class="g-card-img counter-drone-feature-icon">
+                  <img src="img/02-counter-uas/16-ai-integrated-defense-command-system.png" alt="" />
+                </div>
+                <h4 class="headline-h5 g-card-title">定向能武器</h4>
+                </div>
+                <div class="g-card-text">
+                  <p>高能雷射用於在防護空域逐次接戰來襲無人機，可採固定防護或機動伴護方式運作。</p>
+                  <p>高能微波武器可同時接戰大量來襲無人機蜂群，以防護軍民重要關鍵設施為主。</p>
+                </div>
+              </div>
+            </section>
+
+            <section class="focus-line-section">
+              <div class="headline-h3 section-title">應用重點</div>
+
+              <div class="focus-line-grid">
+                <div class="focus-col">
+                  <img src="img/c-usa/c-usa_item_01.png" alt="" />
+                  <div class="focus-content">
+                    <h4 class="headline-h6">關鍵基礎設施防護</h4>
+                    <p class="body-2">
+                      以干擾為主與攔截措施為輔，保護電力、水利、能源、通訊與交通關鍵基礎設施安全。
+                    </p>
+                  </div>
+                </div>
+
+                <div class="focus-col">
+                  <img src="img/c-usa/c-usa_item_02.png" alt="" />
+                  <div class="focus-content">
+                    <h4 class="headline-h6">基地防衛</h4>
+                    <p class="body-2">
+                      兼用干擾、攔截與定向能系統，提供海空軍事基地、營區及重要軍事設施重層防護，防止敵無人機滲透與攻擊。
+                    </p>
+                  </div>
+                </div>
+
+                <div class="focus-col">
+                  <img src="img/c-usa/c-usa_item_03.png" alt="" />
+                  <div class="focus-content">
+                    <h4 class="headline-h6">部隊掩護</h4>
+                    <p class="body-2">
+                      運用可攜行、機動之軟硬殺反制系統，提供部隊集結、機動、戰力防護及執行作戰任務期間，應對敵無人機威脅之能力。
+                    </p>
+                  </div>
+                </div>
+
+                <div class="focus-col">
+                  <img src="img/c-usa/c-usa_item_04.png" alt="" />
+                  <div class="focus-content">
+                    <h4 class="headline-h6">聯合防空協同</h4>
+                    <p class="body-2">
+                      透過聯網通訊方式，與防空、指管及作戰系統整合，提升區域聯合防空、無人機反制之整體協同運作效能。
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section> 
+
+          </div>
+        </div>
+
+        <div class="share-mobile-container">
+          <button id="mobileShareBtn" class="mobile-share-button">
+            <img id="shareIcon" src="img/share.svg" alt="分享" />
+          </button>
+          <div id="mobileSharePopup" class="mobile-share-popup">
+            <div class="share-icons">
+              <a href="#" class="share-icon"
+                 title="分享本頁至 Facebook（另開新視窗）"><img src="img/facebook.svg" alt="分享至 Facebook(另開新視窗)"
+              /></a>
+              <a href="#" class="share-icon"
+                 title="分享本頁至 LINE（另開新視窗）"><img src="img/line.svg" alt="分享至 Line(另開新視窗)"
+              /></a>
+              <a href="#" class="share-icon"
+                 title="分享本頁至 X（另開新視窗）"><img src="img/x.svg" alt="分享至 X(Twitter)(另開新視窗)"
+              /></a>
+              <a href="#" class="share-icon"
+                 title="複製本頁連結"><img src="img/link.svg" alt="複製連結(另開新視窗)"
+              /></a>
+              <a href="#" class="share-icon"
+                 title="訂閱 RSS"><img src="img/rss.svg" alt="訂閱 RSS(另開新視窗)"
+              /></a>
+              <a href="#" class="share-icon"
+                 title="列印本頁"><img src="img/print.svg" alt="列印(另開新視窗)"
+              /></a>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="back-to-top" id="backToTop" title="回到頁首" aria-label="回到頁首"></button>
+      </main>
+      <!-- 主內容結束 -->
+              <!-- footer開始 -->
+              <footer class="footer">
+                <a href="https://www.mnd.gov.tw#Accesskey_Z" id="Accesskey_Z" accesskey="Z" class="skip-link-z" title="頁面底部功能區塊">:::</a>
+                <div class="wrap">
+                    <div class="footer-top">
+                        <div class="logo">
+                            <a href="https://www.mnd.gov.tw/" title="回首頁">
+                                <div class="body-1">
+                                    <img src="img/logo_w.svg" alt="中華民國國防部首頁">
+                                </div>
+                            </a>
+                        </div>
+                        <div class="links">
+                            <div class="links-row">
+                                <a href="https://www.mnd.gov.tw/publication/74606" class="body-2" title="前往「網站隱私權政策」頁面">網站隱私權政策</a>
+                                <a href="https://www.mnd.gov.tw/publication/74607" class="body-2" title="前往「網站安全政策宣告」頁面">網站安全政策宣告</a>
+                            </div>
+                            <div class="links-row">
+                                <a href="https://www.mnd.gov.tw/publication/74609" class="body-2" title="前往「個資法保護聲明」頁面">個資法保護聲明</a>
+                                <a href="https://www.mnd.gov.tw/publication/74608" class="body-2" title="前往「政府網站資料開放宣告」頁面">政府網站資料開放宣告</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                                <div class="col-md-2">
+                                    <strong class="body-1">&#x672C;&#x90E8;&#x7C21;&#x4ECB;</strong>
+    
+                                        <a href="https://www.mnd.gov.tw/About/Minister"  class="body-1"  title="前往「部長」頁面">&#x90E8;&#x9577;</a>
+                                        <a href="https://www.mnd.gov.tw/publication/71861"  class="body-1"  title="前往「組織及職掌」頁面">&#x7D44;&#x7E54;&#x53CA;&#x8077;&#x638C;</a>
+                                        <a href="https://www.mnd.gov.tw/About/FormerMinisters"  class="body-1"  title="前往「歷任部長」頁面">&#x6B77;&#x4EFB;&#x90E8;&#x9577;</a>
+                                        <a href="https://www.mnd.gov.tw/publication/85983"  class="body-1"  title="前往「國防部標誌」頁面">&#x570B;&#x9632;&#x90E8;&#x6A19;&#x8A8C;</a>
+                                </div>
+                                <div class="col-md-2">
+                                    <strong class="body-1">&#x91CD;&#x8981;&#x653F;&#x7B56;</strong>
+    
+                                        <a href=""  class="body-1"  title="展開「敵情威脅及國軍戰備應處」選單">&#x6575;&#x60C5;&#x5A01;&#x8105;&#x53CA;&#x570B;&#x8ECD;&#x6230;&#x5099;&#x61C9;&#x8655;</a>
+                                        <a href=""  class="body-1"  title="展開「國防施政要項」選單">&#x570B;&#x9632;&#x65BD;&#x653F;&#x8981;&#x9805;</a>
+                                </div>
+                                <div class="col-md-2">
+                                    <strong class="body-1">&#x65B0;&#x805E;&#x8207;&#x516C;&#x544A;</strong>
+    
+                                        <a href="https://www.mnd.gov.tw/news/pressreleaselist"  class="body-1"  title="前往「新聞稿」頁面">&#x65B0;&#x805E;&#x7A3F;</a>
+                                        <a href="https://www.mnd.gov.tw/news/mndlist"  class="body-1"  title="前往「本部新聞」頁面">&#x672C;&#x90E8;&#x65B0;&#x805E;</a>
+                                        <a href="https://www.mnd.gov.tw/news/pressreleaselist/cate/66"  class="body-1"  title="前往「新聞澄清」頁面">&#x65B0;&#x805E;&#x6F84;&#x6E05;</a>
+                                        <a href="https://www.mnd.gov.tw/news/plaactlist"  class="body-1"  title="前往「區域動態」頁面">&#x5340;&#x57DF;&#x52D5;&#x614B;</a>
+                                        <a href="https://www.mnd.gov.tw/news/announcementlist"  class="body-1"  title="前往「行政公告」頁面">&#x884C;&#x653F;&#x516C;&#x544A;</a>
+                                        <a href="https://www.mnd.gov.tw/news/medialist"  class="body-1"  title="前往「影音專區」頁面">&#x5F71;&#x97F3;&#x5C08;&#x5340;</a>
+                                </div>
+                                <div class="col-md-2">
+                                    <strong class="body-1">&#x4FBF;&#x6C11;&#x670D;&#x52D9;</strong>
+    
+                                        <a href="https://mailbox.mnd.gov.tw" target=&quot;_blank&quot; class="body-1" title=&#x53E6;&#x958B;&#x65B0;&#x8996;&#x7A97;>&#x90E8;&#x9577;&#x6C11;&#x610F;&#x4FE1;&#x7BB1;</a>
+                                        <a href=""  class="body-1"  title="展開「國軍檔案應用專區」選單">&#x570B;&#x8ECD;&#x6A94;&#x6848;&#x61C9;&#x7528;&#x5C08;&#x5340;</a>
+                                        <a href="https://www.mnd.gov.tw/CitizenServices/FAQ"  class="body-1"  title="前往「常見問答」頁面">&#x5E38;&#x898B;&#x554F;&#x7B54;</a>
+                                        <a href="https://www.mnd.gov.tw/publication/74610"  class="body-1"  title="前往「機關交通及聯絡資訊」頁面">&#x6A5F;&#x95DC;&#x4EA4;&#x901A;&#x53CA;&#x806F;&#x7D61;&#x8CC7;&#x8A0A;</a>
+                                </div>
+                                <div class="col-md-2">
+                                    <strong class="body-1">&#x570B;&#x9632;&#x5275;&#x65B0;</strong>
+    
+                                        <a href="https://www.mnd.gov.tw/dio"  class="body-1"  title="前往國防創新首頁">&#x570B;&#x9632;&#x5275;&#x65B0;</a>
+                                        <a href="https://www.mnd.gov.tw/news/innovationnewslist"  class="body-1"  title="前往「最新消息」頁面">&#x6700;&#x65B0;&#x6D88;&#x606F;</a>
+                                        <a href="https://www.mnd.gov.tw/news/prototypelist"  class="body-1"  title="前往「原型開發」頁面">&#x539F;&#x578B;&#x958B;&#x767C;</a>
+                                        <a href="https://www.mnd.gov.tw/news/procurementlist"  class="body-1"  title="前往「少量採購」頁面">&#x5C11;&#x91CF;&#x63A1;&#x8CFC;</a>
+                                </div>
+                                <div class="col-md-2">
+                                    <strong class="body-1">&#x8CC7;&#x8A0A;&#x670D;&#x52D9;</strong>
+    
+                                        <a href=""  class="body-1"  title="展開「人才招募」選單">&#x4EBA;&#x624D;&#x62DB;&#x52DF;</a>
+                                        <a href=""  class="body-1"  title="展開「法規專區」選單">&#x6CD5;&#x898F;&#x5C08;&#x5340;</a>
+                                        <a href="https://www.mnd.gov.tw/CategoryOf/InformationServices"  class="body-1"  title="前往「資訊公開」頁面">&#x8CC7;&#x8A0A;&#x516C;&#x958B;</a>
+                                        <a href=""  class="body-1"  title="展開「中英文詞彙對照」選單">&#x4E2D;&#x82F1;&#x6587;&#x8A5E;&#x5F59;&#x5C0D;&#x7167;</a>
+                                        <a href=""  class="body-1"  title="展開「出版品」選單">&#x51FA;&#x7248;&#x54C1;</a>
+                                </div>
+                                <div class="col-md-2">
+                                    <strong class="body-1">&#x76F8;&#x95DC;&#x9023;&#x7D50;</strong>
+    
+                                        <a href="https://www.mnd.gov.tw/RelatedLinks/MilitaryAgencies"  class="body-1"  title="前往「國軍機關單位」頁面">&#x570B;&#x8ECD;&#x6A5F;&#x95DC;&#x55AE;&#x4F4D;</a>
+                                        <a href="https://www.mnd.gov.tw/RelatedLinks/MilitaryAcademies"  class="body-1"  title="前往「軍事院校」頁面">&#x8ECD;&#x4E8B;&#x9662;&#x6821;</a>
+                                        <a href="https://www.mnd.gov.tw/RelatedLinks/MilitaryHospitals"  class="body-1"  title="前往「國軍醫院」頁面">&#x570B;&#x8ECD;&#x91AB;&#x9662;</a>
+                                        <a href="https://www.mnd.gov.tw/RelatedLinks/MilitaryInformationServices"  class="body-1"  title="前往「國軍資訊服務」頁面">&#x570B;&#x8ECD;&#x8CC7;&#x8A0A;&#x670D;&#x52D9;</a>
+                                        <a href="https://www.mnd.gov.tw/RelatedLinks/DefenseRelatedOrganizations"  class="body-1"  title="前往「國防相關組織」頁面">&#x570B;&#x9632;&#x76F8;&#x95DC;&#x7D44;&#x7E54;</a>
+                                        <a href="https://www.mnd.gov.tw/RelatedLinks/GovernmentInformationServices"  class="body-1"  title="前往「政府資訊服務」頁面">&#x653F;&#x5E9C;&#x8CC7;&#x8A0A;&#x670D;&#x52D9;</a>
+                                </div>
+                    </div>
+                    <div class="footer-content-wrap">
+                        <div class="footer-c-child">
+                        </div>
+                        <div class="footer-moving-line-container">
+                            <div class="footer-moving-line"></div>
+                        </div>
+                    </div>
+                    <div class="footer-bottom">
+                        <a href="https://accessibility.moda.gov.tw/Applications/Detail?category=20250410155008" target="_blank" title="無障礙網站-另開新視窗">
+                            <img src="img/AA2.1.jpg" alt="通過AA檢測等級無障礙網頁檢測">
+                        </a>
+                        <div class="accessibility">
+                            <div class="left-block">
+                                <span class="body-1">機關地址: 104237 台北市中山區北安路409號</span>
+                                <span class="body-1">總機電話: (02)2311-6117(代表號) 國軍人員申訴專線: 1985</span>
+                            </div>
+                        </div>
+                        <div class="copyright">
+                            <span class="body-1">國防部版權所有</span>
+                            <span class="body-1" lang="en">© 2025 Ministry of National Defense. All rights reserved.</span>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+            <!-- footer結束 -->
+      <div class="share-mobile-container">
+        <button id="mobileShareBtn" class="mobile-share-button">
+          <img id="shareIcon" src="img/share.svg" alt="分享" />
+        </button>
+        <div id="mobileSharePopup" class="mobile-share-popup">
+          <div class="share-icons">
+            <a href="#" class="share-icon"
+               title="分享本頁至 Facebook（另開新視窗）"><img src="img/facebook.svg" alt="分享至 Facebook(另開新視窗)"
+            /></a>
+            <a href="#" class="share-icon"
+               title="分享本頁至 LINE（另開新視窗）"><img src="img/line.svg" alt="分享至 Line(另開新視窗)"
+            /></a>
+            <a href="#" class="share-icon"
+               title="分享本頁至 X（另開新視窗）"><img src="img/x.svg" alt="分享至 X(Twitter)(另開新視窗)"
+            /></a>
+            <a href="#" class="share-icon"
+               title="複製本頁連結"><img src="img/link.svg" alt="複製連結(另開新視窗)"
+            /></a>
+            <a href="#" class="share-icon"
+               title="訂閱 RSS"><img src="img/rss.svg" alt="訂閱 RSS(另開新視窗)"
+            /></a>
+            <a href="#" class="share-icon"
+               title="列印本頁"><img src="img/print.svg" alt="列印(另開新視窗)"
+            /></a>
+          </div>
+        </div>
+      </div>
+      <div class="share-fixed">
+        <div class="share-label minimum">Share</div>
+        <div class="share-line"></div>
+        <div class="share-icons">
+          <a href="#" class="share-icon"
+             title="分享本頁至 Facebook（另開新視窗）"><img src="img/facebook.svg" alt="分享至 Facebook(另開新視窗)"
+          /></a>
+          <a href="#" class="share-icon"
+             title="分享本頁至 LINE（另開新視窗）"><img src="img/line.svg" alt="分享至 Line(另開新視窗)"
+          /></a>
+          <a href="#" class="share-icon"
+             title="分享本頁至 X（另開新視窗）"><img src="img/x.svg" alt="分享至 X(Twitter)(另開新視窗)"
+          /></a>
+          <a href="#" class="share-icon"
+             title="複製本頁連結"><img src="img/link.svg" alt="複製連結(另開新視窗)"
+          /></a>
+          <a href="#" class="share-icon"
+             title="訂閱 RSS"><img src="img/rss.svg" alt="訂閱 RSS(另開新視窗)"
+          /></a>
+          <a href="#" class="share-icon"
+             title="列印本頁"><img src="img/print.svg" alt="列印(另開新視窗)"
+          /></a>
+        </div>
+      </div>
+      <div class="menu-overlay"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
+    <script src="js/index.js"></script>
+    <script src="js/pageloading.js"></script>
+
+    <script>
+      homePageLoading();
+
+      const counterDroneIntro = document.querySelector(".counter-drone-intro-dropdown");
+      const counterDroneTrigger = counterDroneIntro?.querySelector(".counter-drone-intro-trigger");
+      const counterDroneContent = counterDroneIntro?.querySelector(".counter-drone-intro-content");
+
+      function toggleCounterDroneIntro() {
+        const isOpen = counterDroneIntro.classList.toggle("is-open");
+        counterDroneTrigger.setAttribute("aria-expanded", String(isOpen));
+        counterDroneContent.setAttribute("aria-hidden", String(!isOpen));
+      }
+
+      counterDroneTrigger?.addEventListener("click", toggleCounterDroneIntro);
+      counterDroneTrigger?.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          toggleCounterDroneIntro();
+        }
+      });
+
+    </script>
+  </body>
+</html>

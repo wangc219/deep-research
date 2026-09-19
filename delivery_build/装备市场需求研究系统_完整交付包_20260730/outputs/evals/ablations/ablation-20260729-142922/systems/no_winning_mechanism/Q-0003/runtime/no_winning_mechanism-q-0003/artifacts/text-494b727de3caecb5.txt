@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=media.defense.gov · FACT SHEET STRATEGY FOR COUNTERING UNMANNED SYSTEMS.PDF
-source_url=https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF
-claim=DoD反无人系统战略事实单指出无人系统降低精确打击门槛、压缩创新周期，并要求检测、防护、开放模块化、规模化、快速试验和成本平衡。
-excerpt=
-retrieval=Hosted web search citation metadata

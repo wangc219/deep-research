@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:f39194efe6932930",
+  "content_path": "text-f39194efe6932930.txt",
+  "content_type": "text/plain",
+  "direct_error": "SSLEOFError: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1010)",
+  "encoding": "utf-8",
+  "evidence_id": "ev-combat_scenario-web-a9704512f4c0",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "f39194efe6932930303ad7eeeec7058887307d60f853f6be31a24fb4acc642fe",
+  "url": "https://defense.info/re-shaping-defense-security/2026/03/from-red-sea-defense-to-epic-fury-how-the-u-s-flipped-the-drone-cost-equation/"
+}

@@ -8,6 +8,8 @@
 .env
 .env.*
 !.env.example
+!.env.codex-deepseek.example
+!.env.codex-gateway.example
 *.pem
 *.key
 
@@ -32,6 +34,10 @@ apps/web/test-results/
 # Runtime and generated working data
 outputs/runs/
 outputs/runtime/codex-home/
+# Codex homes contain local authentication and session state. They may also be
+# nested inside captured run workspaces.
+outputs/**/codex-homes/
+outputs/**/auth.json
 tmp/
 *.db
 *.db-shm

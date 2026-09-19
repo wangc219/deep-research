@@ -1,0 +1,57 @@
+[1] Analyst Comment
+
+[2] Nato’s 16th Innovation Challenge highlights the need to depart from solely traditional procurement demand themes.
+
+[3] Share on Linkedin
+
+[4] Share on Facebook
+
+[5] The electronic warfare (EW) market has seen a resurgence as major players in the global defence market – such as China, Russia, and the US – increase investments in this domain due to a renewed focus on great-power competition and high-intensity conflicts. Demand for multifunctional and cost-effective EW has noticeably increased since 2017, with the Russian invasion of Ukraine and subsequent illustration of EW’s relevance on the modern battlefield further incentivising global investment in this previously niche capability set. An EW technological arms race is seemingly unfolding, characterised by increasing investment and procurement, strategic reevaluations, and force restructuring. However, as these great powers compete for technological overmatch, disruptive EW technologies are arising in arsenals, challenging the efficacy of their rivals’ traditional EW capabilities.
+
+[6] Fibreoptic FPV drones
+
+[7] Improved electronic jamming by Ukrainian forces has stimulated the proliferation of Russian fibreoptic first-person view (FPV) drones in 2024 and 2025, serving as one of Russia’s most recent and disruptive EW innovations. Unlike wireless drones, fibreoptic drones are connected to operators by a fibre optic cable. Although this system offers a shorter range, fibreoptic drones cannot be electronically jammed, nullifying many electronic protection countermeasures and are cited by the Atlantic Council as crucial to Russia’s counterattack in the Kursk region in 2025, forcing Ukrainian withdrawal.
+
+[8] Go deeper with GlobalData
+
+[9] Reports Environment Sustainability in Aerospace, Defence & Security: Electr...
+
+[10] Reports Soldier Modernization in Aerospace, Defence & Security: Navigation ...
+
+[11] The gold standard of business intelligence.
+
+[12] Find out more
+
+[13] Experience unmatched clarity with a single platform that combines unique data, AI, and human expertise.
+
+[14] Find out more
+
+[15] Specifically responding to this disruptive battlefield technology, in April 2025 Nato launched its 16th Innovation Challenge, a partnership between Nato-Ukraine Joint Analysis Training and Education Centre, Nato Allied Command Transformation, and Nato Cooperative Cyber Defence Centre of Excellence. US-based KMB Telematics won the challenge with a proposal utilising commercial off-the-shelf parts to detect and track low-signature threats, described by Nato as cost-effective, scalable and swiftly integrable with Nato platforms. Sentradel, also from the US, was awarded second place with an AI and sensor fusion-based autonomous turret, described as field-ready through its adaptable payloads, modularity, and integration with Nato platforms. DONS, a Ukrainian defence-technical startup in Brave1, a financial, informational and organisational support programme within the Ukrainian defence tech industry, came third. Combining ballistic calculation with AI detection and thermal tracking, the proposal offers a stabilised Remote Weapon Station, protecting infrastructure and personnel from FPV drones.
+
+[16] Nato’s 16th Innovation Challenge highlights the need for militaries and defence contractors to depart from solely traditional procurement demand themes, diversifying with niche and disruptive approaches. It has simultaneously demonstrated that the implementation of AI to enhance EW systems, as well as Nato integration with fast fielding potential, has increased proposal appeal to the alliance.
+
+[17] Like Russia, China is actively refining its EW capabilities. 2022 marked the launch of the People’s Liberation Army Navy’s (PLAN) Fujian aircraft carrier, utilising an electromagnetic launch system. The carrier can deploy various aircraft, including the PLAN’s new Airborne Early Warning aircraft. Complimenting the J-15 fighter, a catapult-compatible J-15, tandem-seat J-15S and EW variant J-15D are all in development. Additionally, the Strategic Support Force (SSF), specialising in the military space, EW, and cyber domains with similar status to the PLA Navy, dissolved in 2024 into the Aerospace Force (ASF), Cyberspace Force (CSF), and Information Support (ISF). The CSF conducts information warfare, including EW, whilst the ASF is responsible for military space and counterspace. Finally, the ISF supports PLA communications and network information systems. The ASF, CSF, and ISF all now operate under the PLA Central Military Commission, reflecting ongoing force refinement to enhance the Chinese Communist Party’s (CCP) military versatility.
+
+[18] However, China is also pursuing less conventional forms of EW innovation. In July 2025, reports emerged regarding a revolutionary EW concept known as ‘Storm Eye’, which may provide China’s PLA with a specific EW advantage over its US rival. The Chinese peer-reviewed journal Acta Electronica Sinica details the technology behind the innovative system. Described as utilising two drones with variable but corresponding jamming and counter-signalling frequencies to cancel each other out, Storm Eye creates an area of relief from electronic disruption. Unlike more traditional EW jamming systems, which can unintentionally hamper friendly assets through their omnidirectionality, Storm Eye’s specific zonal protection removes this collateral risk. While accurate intelligence on this system is difficult to conduct due to the opaque nature of the CCP, the US will likely have to adopt similarly unorthodox methods to match and outcompete its strategic rival.
+
+[19] MQ-9 Reaper Drone
+
+[20] As with Russia and China, the US has undergone EW strategic revision and capability growth. While its cross-branch EW systems boast a wide array of operational use, specific platforms offer insight into how the US is radically innovating to outmanoeuvre its arguably technologically superior adversaries. In 2024, the War Zone ( TWZ ) reported that the US Marines Corps’ (USMC) MQ-9 Reaper Drone received a significant EW upgrade. The MQ-9 has been fitted with a Reaper Defense Electronic Support System/Scalable Open Architecture Reconnaissance (RDESS/SOAR) system. General Eric M Smith described the General Atomics EW pod as able to “mimic” and return incoming signals, enabling the MQ-9 to “disappear off enemy radar”. The RDESS/SOAR stems from SOAR by General Atomics and L3Harris, which delivers ‘standoff surveillance’, or the ability for threats to be identified before the aircraft is detected by the enemy. Although details of the RDESS/SOAR pod have not been publicly disclosed, given that the USMC has stationed MQ-9s in Hawaii to observe China in the Indo-Pacific, as TWZ outlines, the implementation of this novel technology will seemingly help the USMC’s small MQ-9 fleet remain tactically competitive with key adversaries.
+
+[21] Despite its status as the leader of global EW spending, the US debatably trails to competitors in EW development. Given the innovation of China and Russia, the US’ geopolitical rivals, especially the revolutionary nature of China’s ‘Storm Eye’, advanced EW upgrades to platforms, like the MQ-9 shielding from enemy detection, will be critical to maintaining parity. This sets a precedent for the industry to ensure that proposals can offer the highest level of disruptive and/or novel innovation at the greatest speed to deliver critical battlefield advantages and maintain operational suitability. It is likely that diversification within EW portfolios will increase in the coming years, reflecting the full-spectrum nature of increasingly complex battlefields and shorter innovation cycles.
+
+[22] Go deeper with GlobalData
+
+[23] Reports Environment Sustainability in Aerospace, Defence & Security: Electric Aircraft Charging Interfaces
+
+[24] Reports Soldier Modernization in Aerospace, Defence & Security: Navigation Device Calibration
+
+[25] The gold standard of business intelligence.
+
+[26] Find out more
+
+[27] Experience unmatched clarity with a single platform that combines unique data, AI, and human expertise.
+
+[28] Find out more
+
+[29] Related Company Profiles

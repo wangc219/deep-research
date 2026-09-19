@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from typing import Any, Literal, Protocol, cast, runtime_checkable
 
 from equipment_deep_research.domain.proposals import freeze_plain, thaw_plain
-from equipment_deep_research.tools.definitions import ToolDefinition
+from equipment_deep_research.contracts.tools import ToolDefinition
 
 
 MessageRole = Literal["system", "developer", "user", "assistant", "tool"]
@@ -17,6 +17,36 @@ ProviderEventType = Literal[
     "tool_call",
     "final",
 ]
+
+
+@dataclass(frozen=True)
+class ProviderCapabilities:
+    """Feature contract used by orchestration instead of provider-name checks."""
+
+    streaming: bool = True
+    structured_output: bool = False
+    function_tools: bool = False
+    hosted_web_search: bool = False
+    isolated_sessions: bool = False
+    resumable_sessions: bool = False
+    cancellation: bool = False
+    workspace_scope: bool = False
+    max_output_tokens: int | None = None
+    agent_runtime: bool = False
+
+    def to_plain(self) -> dict[str, Any]:
+        return {
+            "streaming": self.streaming,
+            "structured_output": self.structured_output,
+            "function_tools": self.function_tools,
+            "hosted_web_search": self.hosted_web_search,
+            "isolated_sessions": self.isolated_sessions,
+            "resumable_sessions": self.resumable_sessions,
+            "cancellation": self.cancellation,
+            "workspace_scope": self.workspace_scope,
+            "max_output_tokens": self.max_output_tokens,
+            "agent_runtime": self.agent_runtime,
+        }
 
 
 @dataclass(frozen=True)
@@ -217,6 +247,22 @@ class ModelProvider(Protocol):
     ) -> AsyncIterator[ProviderStreamEvent]:
         ...
 
+    def capabilities(self) -> ProviderCapabilities:
+        ...
+
+
+@runtime_checkable
+class ProviderAdapter(Protocol):
+    """Factory contract for adding a model/vendor without orchestration changes.
+
+    Adapters only translate the provider wire protocol into ``ModelProvider``
+    events.  Scheduling, tools, retries, checkpoints and report gates remain
+    provider agnostic.
+    """
+
+    def create(self, *, model: str, base_url: str, api_key: str, **options: Any) -> ModelProvider:
+        ...
+
 
 # Readable compatibility names for provider and harness implementations.
 AgentMessage = ModelMessage
@@ -231,10 +277,12 @@ __all__ = [
     "MessageRole",
     "ModelMessage",
     "ModelProvider",
+    "ProviderCapabilities",
     "ProviderEvent",
     "ProviderEventType",
     "ProviderFinalTurn",
     "ProviderStreamEvent",
     "ProviderToolCall",
+    "ProviderAdapter",
     "ToolCallRequest",
 ]

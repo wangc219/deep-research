@@ -10,12 +10,32 @@ from threading import Lock
 from sqlalchemy.exc import NoResultFound
 
 from equipment_deep_research.application.dto import CreateRunCommand, RunView, UpdateRunCommand
+from equipment_deep_research.application.ports import RunQueue, RunRepository
 from equipment_deep_research.application.worker_pool_config import read_worker_capacity
 from equipment_deep_research.domain.models import new_stable_id, now_iso
 from equipment_deep_research.runtime_identity import RUNTIME_BUILD_HASH
 from equipment_deep_research.runtime_process_registry import (
     terminate_run_process_groups,
 )
+
+
+_EVOLUTION_STAGE_IDS = frozenset({"S1", "S2", "S3", "S4", "S5", "S6"})
+
+
+def _scope_id(value: object, *, limit: int = 160) -> str:
+    """Return a bounded, whitespace-normalized evolution scope identifier."""
+
+    return " ".join(str(value or "").split()).strip()[:limit]
+
+
+def _stage_scope(value: object) -> list[str]:
+    values = value if isinstance(value, (list, tuple, set, frozenset)) else []
+    result: list[str] = []
+    for raw in values:
+        stage = _scope_id(raw, limit=16).upper()
+        if stage in _EVOLUTION_STAGE_IDS and stage not in result:
+            result.append(stage)
+    return result
 
 
 class InvalidRunTransition(ValueError):
@@ -86,7 +106,12 @@ def _configured_worker_stale_after_seconds() -> int:
 
 
 class ResearchApplicationService:
-    def __init__(self, *, queue: InProcessRunQueue | None = None, repository: object | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        queue: RunQueue | None = None,
+        repository: RunRepository | None = None,
+    ) -> None:
         self.queue = queue or InProcessRunQueue()
         self.repository = repository
         self._runs: dict[str, RunView] = {}
@@ -109,10 +134,30 @@ class ResearchApplicationService:
             execution_profile_id=command.execution_profile_id,
             report_template_mode=command.report_template_mode,
             supplemental_information=command.supplemental_information.strip(),
+            model_profile_id=command.model_profile_id,
+            tenant_id=_scope_id(command.tenant_id),
+            workspace_id=_scope_id(command.workspace_id),
+            project_id=_scope_id(command.project_id),
+            profile_id=_scope_id(command.profile_id),
+            stage_scope=_stage_scope(command.stage_scope),
         )
         self._runs[view.run_id] = view
         self._save(view)
-        self._event(view.run_id, "run_created", {"status": view.status, "actor": command.created_by})
+        self._event(
+            view.run_id,
+            "run_created",
+            {
+                "status": view.status,
+                "actor": command.created_by,
+                "evolution_scope": {
+                    "tenant_id": view.tenant_id,
+                    "workspace_id": view.workspace_id,
+                    "project_id": view.project_id,
+                    "profile_id": view.profile_id,
+                    "stage_scope": list(view.stage_scope),
+                },
+            },
+        )
         return view
 
     def get_run(self, run_id: str) -> RunView:
@@ -163,6 +208,34 @@ class ResearchApplicationService:
                 if command.supplemental_information is None
                 else command.supplemental_information.strip()
             ),
+            model_profile_id=(
+                command.model_profile_id or current.model_profile_id
+            ),
+            tenant_id=(
+                _scope_id(command.tenant_id)
+                if command.tenant_id
+                else current.tenant_id
+            ),
+            workspace_id=(
+                _scope_id(command.workspace_id)
+                if command.workspace_id
+                else current.workspace_id
+            ),
+            project_id=(
+                _scope_id(command.project_id)
+                if command.project_id
+                else current.project_id
+            ),
+            profile_id=(
+                _scope_id(command.profile_id)
+                if command.profile_id
+                else current.profile_id
+            ),
+            stage_scope=(
+                _stage_scope(command.stage_scope)
+                if command.stage_scope is not None
+                else list(current.stage_scope)
+            ),
             updated_at=now_iso(),
         )
         self._runs[run_id] = updated
@@ -185,9 +258,17 @@ class ResearchApplicationService:
                 "discovery_branch": updated.discovery_branch,
                 "execution_profile_id": updated.execution_profile_id,
                 "report_template_mode": updated.report_template_mode,
+                "model_profile_id": updated.model_profile_id,
                 "supplemental_information_present": bool(
                     updated.supplemental_information
                 ),
+                "evolution_scope": {
+                    "tenant_id": updated.tenant_id,
+                    "workspace_id": updated.workspace_id,
+                    "project_id": updated.project_id,
+                    "profile_id": updated.profile_id,
+                    "stage_scope": list(updated.stage_scope),
+                },
             },
         )
         return updated
@@ -200,12 +281,21 @@ class ResearchApplicationService:
         self._runs[run_id] = updated
         self._save(updated)
         self._event(run_id, "run_archived", {"actor": actor, "prior_status": current.status})
+        # Archived parents are read-only and must not leave detached deep
+        # workers running.  The durable cancellation also covers API workers
+        # that are not sharing this process' dispatcher state.
+        self._cancel_deep_children(run_id, actor=actor)
         return updated
 
     def delete_run(self, run_id: str, *, allow_active: bool = False) -> RunView:
         current = self.get_run(run_id)
         if current.status not in PERMANENTLY_DELETABLE_STATUSES and not allow_active:
             raise InvalidRunTransition(f"{current.status} cannot be permanently deleted")
+        # A parent can be terminal while an asynchronously queued deep
+        # research job (or its child run) is still active.  Mark those jobs
+        # cancelled before deleting the source rows so another API/Worker
+        # process cannot continue writing into a soon-to-be-removed ledger.
+        self._cancel_deep_children(run_id, actor="delete")
         remove = getattr(self.repository, "delete_run", None)
         if callable(remove):
             remove(run_id)
@@ -256,11 +346,48 @@ class ResearchApplicationService:
             raise InvalidRunTransition(
                 f"{current.status} cannot transition to queued"
             )
+
+        # A Worker can be interrupted after its checkpoint is committed but
+        # before its provider children have exited.  Those children run in
+        # independent process groups and therefore survive the Worker itself;
+        # starting the resumed execution beside them would duplicate model
+        # calls and mutate the same checkpoint concurrently.  Consume both
+        # in-memory and durable registrations immediately before enqueueing
+        # the resume.  This is intentionally after the live-owner fence above
+        # so a still-running Worker is never disrupted by a stale UI action.
+        cleanup = terminate_run_process_groups(run_id)
+        if cleanup.orphan_count:
+            try:
+                self.publish_runtime_event(
+                    run_id,
+                    "run_orphan_process_cleanup",
+                    {
+                        "terminal_status": "resume",
+                        "reason": "resume_before_execution",
+                        "registered_process_groups": cleanup.registered_count,
+                        "orphan_process_groups": cleanup.orphan_count,
+                        "terminated_process_groups": cleanup.terminated_count,
+                        "forced_process_groups": cleanup.forced_count,
+                        "status": "released",
+                    },
+                )
+            except Exception:
+                # Process termination is the correctness boundary.  A locked
+                # event store must not turn a successful cleanup into a failed
+                # resume request; the next runtime refresh can reconcile the
+                # missing diagnostic event.
+                pass
+
         refreshed_execution = dict(execution or current.execution)
         if refreshed_execution != current.execution:
+            refreshed_model_profile_id = str(
+                refreshed_execution.get("model_profile_id")
+                or current.model_profile_id
+            ).strip()
             updated = replace(
                 current,
                 execution=refreshed_execution,
+                model_profile_id=refreshed_model_profile_id,
                 updated_at=now_iso(),
             )
             self._runs[run_id] = updated
@@ -291,7 +418,103 @@ class ResearchApplicationService:
         )
 
     def cancel_run(self, run_id: str, *, actor: str, idempotency_key: str) -> RunView:
-        return self._command(run_id, actor, idempotency_key, {"draft", "queued", "planning", "researching", "paused", "recalling"}, "cancel_requested")
+        updated = self._command(
+            run_id,
+            actor,
+            idempotency_key,
+            {
+                "draft",
+                "queued",
+                "planning",
+                "researching",
+                "recalling",
+                "synthesizing",
+                "reviewing",
+                "reporting",
+                "paused",
+                "pause_requested",
+            },
+            "cancel_requested",
+        )
+        self._cancel_deep_children(run_id, actor=actor)
+        return updated
+
+    def _cancel_deep_children(self, run_id: str, *, actor: str) -> list[dict]:
+        """Durably cancel deep jobs and any associated child runs.
+
+        Deep-thinking dispatchers are intentionally detached from the normal
+        run Worker and may live in another API process.  Updating only an
+        in-memory Event therefore leaves a race in which a child keeps
+        running after its parent is stopped/deleted.  Repositories that know
+        about the deep ledger expose ``cancel_deep_jobs``; older/lightweight
+        repositories simply return no rows and retain their prior behavior.
+        """
+
+        cancel_jobs = getattr(self.repository, "cancel_deep_jobs", None)
+        if not callable(cancel_jobs):
+            return []
+        try:
+            try:
+                rows = cancel_jobs(
+                    str(run_id),
+                    reason=f"parent run {run_id} cancelled by {actor}",
+                    # ``partial`` is an active deep job state (for example
+                    # while a child run is waiting on retrieval or a durable
+                    # write). Parent cancellation must fence those jobs as
+                    # well; leaving them untouched allows a detached worker
+                    # to continue after the parent has been stopped or
+                    # archived.
+                    include_partial=True,
+                )
+            except TypeError:
+                # Lightweight/older repository adapters may not yet expose
+                # the optional ``include_partial`` keyword. Preserve their
+                # cancellation behavior rather than turning a parent stop
+                # into a storage error; current SQLite adapters take the
+                # branch above and include partial jobs.
+                rows = cancel_jobs(
+                    str(run_id),
+                    reason=f"parent run {run_id} cancelled by {actor}",
+                )
+        except Exception:
+            # Cancellation of the primary run must remain available even when
+            # an older repository lacks the optional deep tables.  A current
+            # SQLite repository should not hit this path; its durable status
+            # transition is covered by the deep-ledger integration tests.
+            return []
+        if not isinstance(rows, list):
+            return []
+        child_ids = {
+            str(row.get("child_run_id", "")).strip()
+            for row in rows
+            if isinstance(row, dict) and str(row.get("child_run_id", "")).strip()
+        }
+        terminal = {"completed", "failed", "cancelled", "archived"}
+        for child_id in sorted(child_ids):
+            if child_id == str(run_id):
+                continue
+            try:
+                child = self.get_run(child_id)
+            except Exception:
+                continue
+            if str(getattr(child, "status", "")).lower() not in terminal:
+                try:
+                    self.cancel_run(
+                        child_id,
+                        actor=actor,
+                        idempotency_key=f"deep-cascade:{run_id}:{child_id}",
+                    )
+                except Exception:
+                    pass
+                try:
+                    self.set_status(child_id, "cancelled")
+                except Exception:
+                    pass
+            try:
+                terminate_run_process_groups(child_id)
+            except Exception:
+                pass
+        return [dict(row) for row in rows if isinstance(row, dict)]
 
     def _command(
         self,
@@ -542,15 +765,30 @@ class ResearchApplicationService:
             })
         online_workers = [item for item in active if item["online"]]
         online_workers.sort(key=lambda item: str(item.get("worker_id", "")))
-        for slot_index, worker in enumerate(online_workers, start=1):
+        research_workers = [
+            item for item in online_workers if item.get("status") != "internal"
+        ]
+        # Slot numbers describe the outer research-task capacity only. Internal
+        # S6 workers share their owner process and must never create gaps (or
+        # appear to consume slots) in the user-facing numbering.
+        for slot_index, worker in enumerate(research_workers, start=1):
             worker["slot_index"] = slot_index
+        for worker in online_workers:
+            if worker.get("status") == "internal":
+                worker.pop("slot_index", None)
         active_workers = [
             item
-            for item in online_workers
+            for item in research_workers
             if item.get("status") == "working" and item.get("current_run_id")
         ]
+        internal_workers = [
+            item
+            for item in online_workers
+            if item.get("status") == "internal" and item.get("current_run_id")
+        ]
+        owned_workers = [*active_workers, *internal_workers]
         configured_capacity = _configured_worker_concurrency()
-        worker_capacity = len(online_workers)
+        worker_capacity = len(research_workers)
         capacity_transition = (
             "scaling_up"
             if worker_capacity < configured_capacity
@@ -569,14 +807,20 @@ class ResearchApplicationService:
             "worker_capacity": worker_capacity,
             "online_worker_count": len(online_workers),
             "active_count": len(active_workers),
-            "idle_count": sum(item.get("status") == "idle" for item in online_workers),
-            "available_slots": max(0, len(online_workers) - len(active_workers)),
-            "parallel_enabled": len(online_workers) > 1,
+            "idle_count": sum(item.get("status") == "idle" for item in research_workers),
+            "internal_count": len(internal_workers),
+            "internal_run_ids": [
+                str(item["current_run_id"]) for item in internal_workers
+            ],
+            "available_slots": max(0, len(research_workers) - len(active_workers)),
+            "parallel_enabled": len(research_workers) > 1,
             "utilization_percent": round(
                 len(active_workers) / worker_capacity * 100,
                 1,
             ) if worker_capacity else 0.0,
-            "active_run_ids": [str(item["current_run_id"]) for item in active_workers],
+            # Includes internal owners for duplicate-resume/liveness checks,
+            # while active_count excludes them from research-slot capacity.
+            "active_run_ids": [str(item["current_run_id"]) for item in owned_workers],
             "pending_count": len(pending),
             "pending_run_ids": pending,
         }

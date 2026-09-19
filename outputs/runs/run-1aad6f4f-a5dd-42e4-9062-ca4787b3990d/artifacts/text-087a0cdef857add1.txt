@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=media.defense.gov · FACT SHEET STRATEGY FOR COUNTERING UNMANNED SYSTEMS.PDF
+source_url=https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF
+claim=该战略公开确立以联合反小型无人机办公室与Replicator 2推进规模化低成本对抗，覆盖关键设施与部队集结点防护。
+excerpt=
+retrieval=Hosted web search citation metadata

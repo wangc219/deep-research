@@ -1,0 +1,14 @@
+{
+  "contradictions": [
+    "conflicting evidence, alternative hypothesis, or uncertainty"
+  ],
+  "analysis_sections": {
+    "scenario_framework": "string | object | array",
+    "enemy_coa": "string | object | array",
+    "critical_timeline": "string | object | array",
+    "environment_constraints": "string | object | array",
+    "scenario_branches": "string | object | array",
+    "capability_pressure_points": "string | object | array",
+    "assumptions": "string | object | array"
+  }
+}

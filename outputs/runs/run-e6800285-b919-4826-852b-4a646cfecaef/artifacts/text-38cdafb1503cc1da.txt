@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=media.defense.gov · FACT SHEET STRATEGY FOR COUNTERING UNMANNED SYSTEMS.PDF
+source_url=https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF
+claim=无人系统对抗要求综合考虑探测、识别、跟踪、处置和体系韧性，而非依赖单一反制手段。
+excerpt=
+retrieval=Hosted web search citation metadata

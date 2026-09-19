@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:84d360448538bd83",
+  "content_path": "text-84d360448538bd83.txt",
+  "content_type": "text/plain",
+  "direct_error": "_NetworkSafetyError: host_resolution_failed",
+  "encoding": "utf-8",
+  "evidence_id": "ev-technology_radar-web-daca76be665a",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "84d360448538bd8316c1e968a7bfb603c17a98ab5eaa0d2a4e057b6ef80ec3ca",
+  "url": "https://www.diu.mil/latest/defense-innovation-unit-announces-software-vendors-to-support-replicator"
+}

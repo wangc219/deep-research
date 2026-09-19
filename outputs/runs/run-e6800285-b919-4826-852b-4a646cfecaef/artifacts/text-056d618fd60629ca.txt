@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=csis.org · lessons ukraine conflict modern warfare age autonomy information and resilience
+source_url=https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience
+claim=乌克兰战争公开观察强调无人侦察、信息优势、自动化辅助和韧性对现代作战节奏及持续作战的影响。
+excerpt=
+retrieval=Hosted web search citation metadata

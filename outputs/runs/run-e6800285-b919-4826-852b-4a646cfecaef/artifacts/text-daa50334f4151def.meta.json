@@ -1,0 +1,10 @@
+{
+  "artifact_ref": "text:daa50334f4151def",
+  "content_hash": "97591582f626c1979016a8cd41cffa7359622d91d0cb8ac2764b73bd3934031a",
+  "content_path": "text-daa50334f4151def.txt",
+  "content_type": "text/plain",
+  "encoding": "utf-8",
+  "kind": "text",
+  "materialization_status": "simplified",
+  "sha256": "daa50334f4151def23d3322faca14ba9d55e59206ff26700f25c564e4d418e96"
+}

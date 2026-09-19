@@ -1,0 +1,16 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "deep-innovation-methods",
+  "description": "Single-equipment innovation procedures for constraint reversal and adversarial stress testing.",
+  "extensions": {
+    "dev.equipment-deep-research": {
+      "displayName": "深研创新方法包",
+      "category": "研究方法",
+      "defaultEnabled": false,
+      "permissions": [
+        "read_session_memory",
+        "guide_model_reasoning"
+      ]
+    }
+  }
+}

@@ -142,8 +142,8 @@ agents:
         examples_non_exhaustive: true
         no_mandatory_coverage: true
         divergence_mode: 先做Query大方向、跨域和机制级发散，再以公开基线、直接军事效果与工程边界收敛到具体装备项目；示例只作为思考发生维度。
-        combat_subject_rule: 最终候选主体必须是具体无人、低空武器、打击弹药、拦截器、定向能或电子攻击效应器、武装无人平台等直接作战装备。
-        project_function_rule: 每个现役升级或新研候选都必须明确项目功能，即谁在何种场景和约束下依靠哪一种具体装备完成何种动作并形成何种任务结果，以及解决Query中的哪一任务链断点。
+        combat_subject_rule: 最终候选主体应是由Query决定的具体战斗装备或承担直接军事效果的装备系统；无人、低空武器、打击弹药、拦截器、定向能和电子攻击效应器仅为非穷尽示例，不作固定覆盖要求。
+        project_function_rule: 对进入候选组合的现役升级或新研方向，明确项目功能并结合证据说明其在何种场景和约束下完成何种作战动作、改变何种任务结果，以及与Query任务链断点的关系；字段不齐全时明确待核验，不为填表补写。
         illustrative_name_rule: 用户示例中的项目名若无公开证据，只能作为概念性工作名，不得写成已存在或已列装事实。
         support_only_exclusion: 通信、C2、算法、网关、供应链、产线、后勤和软件只能作为装备接口、工程约束或横向支撑层，不能独立占用最终武器方向。
       target_source_count: 16
@@ -434,6 +434,19 @@ agents:
     model_profile: {provider: codex, model: gpt-5.5, reasoning_effort: high, max_output_tokens: 3200}
     system_agent: true
     enabled: true
+  - agent_id: deep_divergence_v1
+    harness_profile: deep_divergence_v1
+    skill_ids: [effect_chain_analysis, capability_mapping]
+    display_name: 深度发散研究 Agent
+    description: 继承当前 Query、结果、证据与会话历史，在不重跑 S1-S6 的前提下执行 S3/S4 多维发散、按需检索和 S6 待核验成卡。
+    capability_tags: [deep_thinking, divergence, capability_mapping]
+    tools: [generate_counterfactual_option, map_dotmlpf_requirement, create_evidence_card, create_capability_image, write_reasoning_node, write_stage_output, create_recall_request]
+    context_policy: {visible_sections: [task, baseline_summaries, evidence_index, trace_summary], hide_other_agent_raw_sessions: true}
+    object_read_scopes: [ResearchProblem, EvidenceCard, WinningReasoningNode, CapabilityImageItem]
+    object_write_scopes: [WinningReasoningNode, WinningMechanismStageOutput, RecallRequest, CapabilityImageItem, EvidenceCard]
+    model_profile: {provider: codex, model: gpt-5.5, reasoning_effort: high, max_output_tokens: 4200}
+    system_agent: true
+    enabled: true
   - agent_id: winning_s4_capability
     harness_profile: winning_step_v1
     skill_ids: [capability_mapping, dotmlpf_capability_mapping]
@@ -450,14 +463,14 @@ agents:
   - agent_id: winning_s5_gap
     harness_profile: winning_step_v1
     skill_ids: [gap_quantification, equipment_system_gap_assessment]
-    display_name: S5 装备现状与差距
-    description: 以Query的作战后果对齐现役、在研装备和体系约束，用最强常规升级与非装备路径复做吸收测试，裁决新研、升级或判退并形成五档差距。
+    display_name: S5 创新候选快速筛选
+    description: 只接收候选装备名称和精简制胜逻辑，按创新性、新颖性和相对独立性快速筛选；创新性内部以机理/装备创新性为主，并有限纳入命名新质度及命名与武器本体的一致性，名称不能替代真实机理，也不能把普通升级救活；不负责基线、成熟度、成本、证据、工程边界或验证审查。
     capability_tags: [equipment_baseline, gap_quantification]
     tools: [write_reasoning_node, write_stage_output, create_recall_request]
     context_policy: {visible_sections: [task, baseline_summaries, evidence_index, coverage], hide_other_agent_raw_sessions: true}
     object_read_scopes: [ResearchProblem, EvidenceCard, BaselineFindingPacket, WinningReasoningNode]
     object_write_scopes: [WinningReasoningNode, WinningMechanismStageOutput, RecallRequest]
-    model_profile: {provider: codex, model: gpt-5.5, reasoning_effort: high, max_output_tokens: 3200}
+    model_profile: {provider: codex, reasoning_effort: high, max_output_tokens: 3200}
     system_agent: true
     enabled: true
   - agent_id: winning_s6_image
@@ -470,7 +483,7 @@ agents:
     context_policy: {visible_sections: [task, baseline_summaries, evidence_index, coverage], hide_other_agent_raw_sessions: true}
     object_read_scopes: [ResearchProblem, EvidenceCard, BaselineFindingPacket, WinningReasoningNode, WinningMechanismStageOutput]
     object_write_scopes: [WinningKnowledgeProjection, WinningReasoningNode, WinningMechanismStageOutput, CapabilityImageItem, RecallRequest]
-    model_profile: {provider: codex, model: gpt-5.5, reasoning_effort: high, max_output_tokens: 6200}
+    model_profile: {provider: codex, model: gpt-5.5, reasoning_effort: high, max_output_tokens: 12000}
     system_agent: true
     enabled: true
   - agent_id: winning_step_critic
@@ -537,7 +550,7 @@ agents:
     skill_ids: [evidence_based_delivery]
     knowledge_pack_ids: []
     display_name: 军事装备研究报告
-    description: 以原始Query为主、前置处理后的精简高价值研判和代表性公开来源为辅，围绕无人化、低空无人机、远程精确打击及强打击歼灭压制毁伤装备，形成三层九项市场需求深研报告。
+    description: 以原始Query为主、前置处理后的精简高价值研判和代表性公开来源为辅，围绕Query实际命中的未来作战制胜问题与具体战斗装备，按当前报告模板形成研究报告；无人化、低空、远程精确火力、反无人等仅在Query相关时优先展开。
     capability_tags: [report, military_synthesis, demand_discovery, technology_breakdown, capability_mapping, effectiveness_assessment, evidence_review]
     input_contract: research_task
     output_contract:
@@ -545,11 +558,11 @@ agents:
       properties: [operational_scenarios, winning_mechanism, capability_features, realization_paths, core_technologies, technology_coupling, capability_image, effectiveness_contribution, development_priority, citations]
     tools: [write_report]
     research_policy:
-      required_outputs: [典型作战场景, 新战法或新概念技术及制胜机理, 装备能力特征清单, 能力实现途径, 核心技术清单与攻关优先级, 技术耦合与短板风险, 装备能力图像, 效能贡献评估, 发展优先级与演示验证抓手]
-      writing_priorities: [Query主题发散, 前置研判高价值压缩, 无人化与低空无人机, 远程精确打击, 强打击歼灭压制毁伤, 能力指标方向, 技术成熟度与瓶颈, 补链强链开链效能, 近期可启动抓手]
-      evidence_policy: [只使用输入公开URL, 关键事实区分事实推断假设, 保留反证与证据边界, 不虚构数字型号和来源]
-      structure_policy: [固定三层九项, 先场景战法后能力技术再能力图像效能, 分支产物仅作前置素材并融入九项, 同一结论只写一次, 表格只承载高密度清单]
-      stopping_conditions: [三层九项完整, 军事任务价值具体, 场景战法能力技术效能链闭环, 技术短板和优先级明确, 引用可追溯, 篇幅与结构门控通过]
+      required_outputs: [需求分析, 项目画像, 总体方案, 关键技术, 研制基础（或当前模板对应栏目）]
+      writing_priorities: [Query主题发散, 前置研判高价值压缩, 未来作战制胜问题, 具体战斗装备与直接军事效果, 强干扰弱通信/低空海空/精确火力/反无人（仅按Query命中取舍）, 技术成熟度与瓶颈, 中国国内可承接基础, 体系贡献与成本交换, 近期可启动抓手]
+      evidence_policy: [只使用输入公开URL, 优先军事装备作战运用和官方试验来源, 正文仅保留1至2条关键链接其余集中到文末来源索引, 关键事实区分事实推断假设, 保留反证与证据边界, 不虚构数字型号和来源]
+      structure_policy: [按当前report_template_mode保留既定大标题和顺序, 分支产物仅作前置素材并融入栏目, 同一结论只写一次, 表格只承载高密度清单；标题之外不按固定字段填空]
+      stopping_conditions: [模板标题完整, 军事任务价值具体, 场景—装备—技术—效果与边界形成闭环, 技术短板和优先级有依据, 引用可追溯；不以统一指标列或篇幅作为停止条件]
     handoff_policy:
       accept_from: [winning_mechanism, auditor]
       wait_for: []

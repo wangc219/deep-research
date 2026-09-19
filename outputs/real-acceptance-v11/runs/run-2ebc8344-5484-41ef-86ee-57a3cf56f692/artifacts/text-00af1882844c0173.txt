@@ -1,5 +1,0 @@
-network_safety_rejected
-url=https://www.armyupress.army.mil/Journals/Military-Review/English-Edition-Archives/May-June-2024/MJ-24-Modern-Warfare/?utm_source=openai
-rejected_url=https://www.armyupress.army.mil/Journals/Military-Review/English-Edition-Archives/May-June-2024/MJ-24-Modern-Warfare/?utm_source=openai
-reason=host_resolution_failed
-该地址未通过网络安全校验，诊断材料不进入正式证据集。

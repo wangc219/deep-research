@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=army.mil · army announces first precision strike missiles delivery
-source_url=https://www.army.mil/article/272301/army_announces_first_precision_strike_missiles_delivery
-claim=美国陆军宣布首批PrSM早期作战能力导弹交付，并提及生产资格试验完成，可作为PrSM现役化节点证据。
-excerpt=
-retrieval=Hosted web search citation metadata

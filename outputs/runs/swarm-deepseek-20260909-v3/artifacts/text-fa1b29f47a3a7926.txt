@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=media.defense.gov · FACT SHEET STRATEGY FOR COUNTERING UNMANNED SYSTEMS.PDF
+source_url=https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF
+claim=锚点登记：本运行仅收录URL（required_source_anchor），未提供正文与EvidenceCard引用位置；未据此作出内容级事实主张。
+excerpt=
+retrieval=Hosted web search citation metadata

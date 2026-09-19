@@ -1,6 +1,10 @@
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
+import pytest
 import json
+import os
+import signal
+import subprocess
 from threading import Barrier, Lock
 import time
 
@@ -8,11 +12,13 @@ from fastapi.testclient import TestClient
 
 from equipment_deep_research.api.app import create_app
 from equipment_deep_research.application.dto import CreateRunCommand
-from equipment_deep_research.application.run_service import ResearchApplicationService
+from equipment_deep_research.application.run_service import InvalidRunTransition, ResearchApplicationService
 from equipment_deep_research.persistence.database import create_database_engine
 from equipment_deep_research.persistence.repositories import SqlRunQueue, SqlRunRepository
+from equipment_deep_research.deep_thinking import create_session, save_research_link
 from equipment_deep_research.queue.worker import ResearchWorker, WorkerOutcome
 from equipment_deep_research.orchestration.runner import DeepResearchRunner
+from equipment_deep_research.runtime_process_registry import register_process_group
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -39,6 +45,21 @@ def test_worker_executes_queued_run() -> None:
     assert executed == [run.run_id]
 
 
+def test_worker_does_not_overwrite_user_stop_with_completed_status() -> None:
+    service = ResearchApplicationService()
+    run = service.create_run(CreateRunCommand("topic", "auto", [], 2, "analyst"))
+    service.start_run(run.run_id, actor="analyst", idempotency_key="start")
+
+    def execute(run_id: str) -> dict:
+        service.cancel_run(run_id, actor="analyst", idempotency_key="stop")
+        return {}
+
+    outcome = ResearchWorker(service=service, execute=execute).run_once()
+
+    assert outcome == WorkerOutcome(run.run_id, "cancelled")
+    assert service.get_run(run.run_id).status == "cancelled"
+
+
 def test_failed_worker_run_is_persisted_and_removed_from_pending_queue(tmp_path: Path) -> None:
     engine = create_database_engine(f"sqlite:///{tmp_path / 'failed.db'}")
     service = ResearchApplicationService(repository=SqlRunRepository(engine), queue=SqlRunQueue(engine))
@@ -52,6 +73,108 @@ def test_failed_worker_run_is_persisted_and_removed_from_pending_queue(tmp_path:
     assert outcome and outcome.status == "failed"
     assert service.get_run(run.run_id).error == "provider unavailable"
     assert service.queue.pending_run_ids() == []
+
+
+def test_worker_releases_registered_process_groups_before_completed_status(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv(
+        "EQUIPMENT_DR_PROCESS_REGISTRY_ROOT",
+        str(tmp_path / "process-registry"),
+    )
+    engine = create_database_engine(f"sqlite:///{tmp_path / 'cleanup.db'}")
+    repository = SqlRunRepository(engine)
+    service = ResearchApplicationService(
+        repository=repository,
+        queue=SqlRunQueue(engine),
+    )
+    run = service.create_run(CreateRunCommand("topic", "auto", [], 2, "analyst"))
+    service.start_run(run.run_id, actor="analyst", idempotency_key="start")
+    children: list[subprocess.Popen] = []
+
+    def execute(_: str) -> dict:
+        child = subprocess.Popen(["/bin/sleep", "60"], start_new_session=True)
+        children.append(child)
+        register_process_group(child.pid, command_hint="sleep")
+        return {}
+
+    try:
+        outcome = ResearchWorker(service=service, execute=execute).run_once()
+
+        assert outcome == WorkerOutcome(run.run_id, "completed")
+        children[0].wait(timeout=3)
+        events = repository.events_after(run.run_id, 0)
+        cleanup_index = next(
+            index
+            for index, event in enumerate(events)
+            if event["event_type"] == "run_orphan_process_cleanup"
+        )
+        completed_index = next(
+            index
+            for index, event in enumerate(events)
+            if event["event_type"] == "run_status_changed"
+            and event["payload"].get("status") == "completed"
+        )
+        assert cleanup_index < completed_index
+    finally:
+        for child in children:
+            if child.poll() is None:
+                os.killpg(child.pid, signal.SIGKILL)
+                child.wait(timeout=3)
+
+
+def test_worker_releases_registered_process_groups_before_failed_status(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv(
+        "EQUIPMENT_DR_PROCESS_REGISTRY_ROOT",
+        str(tmp_path / "process-registry"),
+    )
+    engine = create_database_engine(f"sqlite:///{tmp_path / 'cleanup-failed.db'}")
+    repository = SqlRunRepository(engine)
+    service = ResearchApplicationService(
+        repository=repository,
+        queue=SqlRunQueue(engine),
+    )
+    run = service.create_run(CreateRunCommand("topic", "auto", [], 2, "analyst"))
+    service.start_run(run.run_id, actor="analyst", idempotency_key="start")
+    children: list[subprocess.Popen] = []
+
+    def execute(_: str) -> dict:
+        child = subprocess.Popen(["/bin/sleep", "60"], start_new_session=True)
+        children.append(child)
+        register_process_group(child.pid, command_hint="sleep")
+        raise RuntimeError("research task failed")
+
+    try:
+        outcome = ResearchWorker(service=service, execute=execute).run_once()
+
+        assert outcome == WorkerOutcome(
+            run.run_id,
+            "failed",
+            "research task failed",
+        )
+        children[0].wait(timeout=3)
+        events = repository.events_after(run.run_id, 0)
+        cleanup_index = next(
+            index
+            for index, event in enumerate(events)
+            if event["event_type"] == "run_orphan_process_cleanup"
+        )
+        failed_index = next(
+            index
+            for index, event in enumerate(events)
+            if event["event_type"] == "run_status_changed"
+            and event["payload"].get("status") == "failed"
+        )
+        assert cleanup_index < failed_index
+    finally:
+        for child in children:
+            if child.poll() is None:
+                os.killpg(child.pid, signal.SIGKILL)
+                child.wait(timeout=3)
 
 
 def test_worker_automatically_resumes_one_transient_failure_from_checkpoint(
@@ -80,24 +203,19 @@ def test_worker_automatically_resumes_one_transient_failure_from_checkpoint(
 
     assert first == WorkerOutcome(
         run.run_id,
-        "queued",
+        "failed",
         "upstream stream disconnected before completion",
     )
-    assert service.get_run(run.run_id).status == "queued"
-    assert service.get_run(run.run_id).error == ""
-    assert service.queue.pending_run_ids() == [run.run_id]
+    assert service.get_run(run.run_id).status == "failed"
+    assert "upstream stream disconnected" in service.get_run(run.run_id).error
+    assert service.queue.pending_run_ids() == []
     retry_events = [
         event
         for event in repository.events_after(run.run_id, 0)
-        if event["event_type"] == "run_transient_resume_scheduled"
+        if event["event_type"] == "run_manual_resume_required"
     ]
     assert len(retry_events) == 1
-    assert retry_events[0]["payload"]["attempt"] == 1
-
-    second = worker.run_once()
-
-    assert second == WorkerOutcome(run.run_id, "completed")
-    assert calls == 2
+    assert calls == 1
 
 
 def test_worker_transient_resume_is_bounded(tmp_path: Path) -> None:
@@ -115,10 +233,9 @@ def test_worker_transient_resume_is_bounded(tmp_path: Path) -> None:
 
     worker = ResearchWorker(service=service, execute=fail)
 
-    assert worker.run_once().status == "queued"
-    second = worker.run_once()
+    first = worker.run_once()
 
-    assert second == WorkerOutcome(
+    assert first == WorkerOutcome(
         run.run_id,
         "failed",
         "upstream stream disconnected before completion",
@@ -128,7 +245,7 @@ def test_worker_transient_resume_is_bounded(tmp_path: Path) -> None:
     retry_events = [
         event
         for event in repository.events_after(run.run_id, 0)
-        if event["event_type"] == "run_transient_resume_scheduled"
+        if event["event_type"] == "run_manual_resume_required"
     ]
     assert len(retry_events) == 1
 
@@ -222,6 +339,203 @@ def test_worker_reconciles_failed_status_when_completed_delivery_exists(tmp_path
     assert service.get_run(run.run_id).error == ""
 
 
+def test_worker_keeps_deep_child_job_recoverable_until_version_publish(tmp_path: Path) -> None:
+    """Child completion must not hide a pending capability-version write.
+
+    The child run worker and the API deep-job monitor are independent
+    processes.  The worker therefore records only a validation hand-off;
+    the monitor owns the terminal publish transition after the SQLite
+    capability version has been committed.
+    """
+
+    engine = create_database_engine(f"sqlite:///{tmp_path / 'deep-child-handoff.db'}")
+    repository = SqlRunRepository(engine)
+    service = ResearchApplicationService(
+        repository=repository,
+        queue=SqlRunQueue(engine),
+    )
+    parent = service.create_run(CreateRunCommand("parent", "auto", [], 2, "analyst"))
+    child = service.create_run(
+        CreateRunCommand(
+            "child",
+            "auto",
+            [],
+            2,
+            "deep-thinking-agent",
+            execution={"parent_run_id": parent.run_id, "deep_job_id": "job-handoff"},
+        )
+    )
+    repository.create_or_get_deep_job(
+        job_id="job-handoff",
+        parent_run_id=parent.run_id,
+        session_id="session-handoff",
+        child_run_id=child.run_id,
+        idempotency_key="handoff-request",
+        fingerprint="handoff-fingerprint",
+    )
+
+    worker = ResearchWorker(service=service, execute=lambda _: {})
+    worker._reconcile_deep_child_completion(child.run_id, {"status": "completed"})
+
+    job = repository.get_deep_job("job-handoff")
+    assert job is not None
+    assert job["stage"] == "validation"
+    assert job["status"] == "running"
+    events = repository.events_after(parent.run_id, 0)
+    handoff = [event for event in events if event["event_type"] == "deep_child_completed"]
+    assert handoff
+    assert handoff[-1]["payload"]["status"] == "running"
+    assert handoff[-1]["payload"]["stage"] == "validation"
+
+
+def test_worker_does_not_resurrect_terminal_deep_child_job(tmp_path: Path) -> None:
+    """A late child completion cannot overwrite cancellation/publication."""
+
+    engine = create_database_engine(f"sqlite:///{tmp_path / 'deep-child-terminal.db'}")
+    repository = SqlRunRepository(engine)
+    service = ResearchApplicationService(
+        repository=repository,
+        queue=SqlRunQueue(engine),
+    )
+    parent = service.create_run(CreateRunCommand("parent", "auto", [], 2, "analyst"))
+    child = service.create_run(
+        CreateRunCommand(
+            "child",
+            "auto",
+            [],
+            2,
+            "deep-thinking-agent",
+            execution={"parent_run_id": parent.run_id, "deep_job_id": "job-terminal"},
+        )
+    )
+    repository.create_or_get_deep_job(
+        job_id="job-terminal",
+        parent_run_id=parent.run_id,
+        session_id="session-terminal",
+        child_run_id=child.run_id,
+        idempotency_key="terminal-request",
+        fingerprint="terminal-fingerprint",
+    )
+    repository.update_deep_job("job-terminal", stage="publish", status="cancelled")
+
+    worker = ResearchWorker(service=service, execute=lambda _: {})
+    worker._reconcile_deep_child_completion(child.run_id, {"status": "completed"})
+
+    job = repository.get_deep_job("job-terminal")
+    assert job is not None
+    assert job["stage"] == "publish"
+    assert job["status"] == "cancelled"
+    assert not [
+        event
+        for event in repository.events_after(parent.run_id, 0)
+        if event["event_type"] == "deep_child_completed"
+    ]
+
+
+def test_terminal_deep_job_rejects_same_status_stale_checkpoint(tmp_path: Path) -> None:
+    repository = SqlRunRepository(
+        create_database_engine(f"sqlite:///{tmp_path / 'deep-terminal-checkpoint.db'}")
+    )
+    repository.create_or_get_deep_job(
+        job_id="job-terminal-checkpoint",
+        parent_run_id="run-terminal-checkpoint",
+        session_id="session-terminal-checkpoint",
+    )
+    final_checkpoint = {"phase": "final_response", "tool_call_count": 1}
+    final = repository.update_deep_job(
+        "job-terminal-checkpoint",
+        stage="publish",
+        status="completed",
+        checkpoint=final_checkpoint,
+    )
+    assert final is not None
+    final_version = final["state_version"]
+
+    stale = repository.update_deep_job(
+        "job-terminal-checkpoint",
+        stage="s4_mapping",
+        status="completed",
+        checkpoint={"phase": "tools_completed", "tool_call_count": 1},
+    )
+
+    assert stale is not None
+    assert stale["stage"] == "publish"
+    assert stale["status"] == "completed"
+    assert stale["checkpoint"] == final_checkpoint
+    assert stale["state_version"] == final_version
+
+
+@pytest.mark.parametrize("terminal_status", ["partial", "failed", "blocked"])
+def test_validation_terminal_deep_job_rejects_late_running_checkpoint(
+    tmp_path: Path,
+    terminal_status: str,
+) -> None:
+    repository = SqlRunRepository(
+        create_database_engine(
+            f"sqlite:///{tmp_path / f'deep-validation-{terminal_status}.db'}"
+        )
+    )
+    job_id = f"job-validation-{terminal_status}"
+    repository.create_or_get_deep_job(
+        job_id=job_id,
+        parent_run_id="run-validation-terminal",
+        session_id="session-validation-terminal",
+    )
+    final_checkpoint = {"phase": "final_response", "status": terminal_status}
+    final = repository.update_deep_job(
+        job_id,
+        stage="validation",
+        status=terminal_status,
+        checkpoint=final_checkpoint,
+    )
+    assert final is not None
+    final_version = final["state_version"]
+
+    stale = repository.update_deep_job(
+        job_id,
+        stage="s4_mapping",
+        status="running",
+        checkpoint={"phase": "tools_completed", "status": "running"},
+    )
+
+    assert stale is not None
+    assert stale["stage"] == "validation"
+    assert stale["status"] == terminal_status
+    assert stale["checkpoint"] == final_checkpoint
+    assert stale["state_version"] == final_version
+
+
+def test_nonterminal_authoring_partial_can_advance_to_validation(tmp_path: Path) -> None:
+    repository = SqlRunRepository(
+        create_database_engine(f"sqlite:///{tmp_path / 'deep-authoring-partial.db'}")
+    )
+    repository.create_or_get_deep_job(
+        job_id="job-authoring-partial",
+        parent_run_id="run-authoring-partial",
+        session_id="session-authoring-partial",
+    )
+    partial = repository.update_deep_job(
+        "job-authoring-partial",
+        stage="s6_authoring",
+        status="partial",
+        checkpoint={"phase": "tools_completed"},
+    )
+    assert partial is not None
+
+    advanced = repository.update_deep_job(
+        "job-authoring-partial",
+        stage="validation",
+        status="running",
+        checkpoint={"phase": "awaiting_validation"},
+    )
+
+    assert advanced is not None
+    assert advanced["stage"] == "validation"
+    assert advanced["status"] == "running"
+    assert advanced["checkpoint"] == {"phase": "awaiting_validation"}
+    assert advanced["state_version"] == partial["state_version"] + 1
+
+
 def test_worker_survives_queued_run_deleted_after_claim() -> None:
     class ClaimedQueue:
         def __init__(self) -> None:
@@ -274,6 +588,36 @@ def test_sql_queue_requeues_an_acked_run_for_checkpoint_resume(tmp_path: Path) -
     assert queue.claim() == "run-1"
 
 
+def test_resume_does_not_enqueue_when_online_worker_owns_run(tmp_path: Path) -> None:
+    engine = create_database_engine(f"sqlite:///{tmp_path / 'resume-live.db'}")
+    service = ResearchApplicationService(
+        repository=SqlRunRepository(engine), queue=SqlRunQueue(engine)
+    )
+    run = service.create_run(CreateRunCommand("topic", "auto", [], 3, "analyst"))
+    service.set_status(run.run_id, "failed")
+    service.touch_worker("research-worker-1", status="working", current_run_id=run.run_id)
+
+    with pytest.raises(InvalidRunTransition, match="already executing"):
+        service.resume_run(run.run_id, actor="analyst", idempotency_key="resume-live")
+
+
+def test_sql_queue_does_not_requeue_a_live_claimed_run(tmp_path: Path) -> None:
+    engine = create_database_engine(f"sqlite:///{tmp_path / 'claimed-resume.db'}")
+    queue = SqlRunQueue(engine)
+    queue.enqueue("run-live")
+    assert queue.claim() == "run-live"
+
+    # A duplicate Resume request must not create a second execution lease.
+    queue.enqueue("run-live")
+    assert queue.pending_run_ids() == []
+    assert queue.claim() is None
+
+    # Once the service has established that the original owner is gone, it
+    # may explicitly reopen the stale claim for checkpoint recovery.
+    queue.enqueue("run-live", allow_claimed=True)
+    assert queue.pending_run_ids() == ["run-live"]
+
+
 def test_sql_queue_claim_is_atomic_across_worker_connections(tmp_path: Path) -> None:
     url = f"sqlite:///{tmp_path / 'parallel-claim.db'}"
     first = SqlRunQueue(create_database_engine(url))
@@ -292,6 +636,19 @@ def test_sql_queue_claim_is_atomic_across_worker_connections(tmp_path: Path) -> 
     assert set(claimed) == {"run-1", "run-2"}
     assert len(claimed) == len(set(claimed))
     assert first.pending_run_ids() == []
+
+
+def test_sql_queue_build_generation_fences_old_workers(tmp_path: Path) -> None:
+    url = f"sqlite:///{tmp_path / 'generation-fence.db'}"
+    new_queue = SqlRunQueue(create_database_engine(url), generation="new-build")
+    old_queue = SqlRunQueue(create_database_engine(url), generation="old-build")
+
+    new_queue.enqueue("run-new")
+
+    assert old_queue.claim(generation="old-build") is None
+    assert old_queue.pending_run_ids() == []
+    assert new_queue.pending_run_ids() == ["run-new"]
+    assert new_queue.claim(generation="new-build") == "run-new"
 
 
 def test_same_topic_runs_enqueue_concurrently_without_blocking(tmp_path: Path) -> None:
@@ -412,6 +769,39 @@ def test_runtime_health_reports_parallel_slots_and_active_runs(tmp_path: Path, m
     assert [worker["slot_index"] for worker in health["workers"] if worker["online"]] == [1, 2]
 
 
+def test_runtime_health_excludes_internal_s6_from_research_capacity(
+    tmp_path: Path, monkeypatch
+) -> None:
+    monkeypatch.setenv("EQUIPMENT_DR_RESEARCH_WORKER_CONCURRENCY", "2")
+    monkeypatch.setenv("EQUIPMENT_DR_WORKER_POOL_CONFIG", str(tmp_path / "worker-pool.json"))
+    engine = create_database_engine(f"sqlite:///{tmp_path / 'runtime-health-internal.db'}")
+    service = ResearchApplicationService(
+        repository=SqlRunRepository(engine),
+        queue=SqlRunQueue(engine),
+    )
+    service.touch_worker("research-worker-1", status="internal", current_run_id="run-s6")
+    service.touch_worker("research-worker-2", status="working", current_run_id="run-active")
+    service.touch_worker("research-worker-3", status="idle")
+
+    health = service.runtime_health()
+
+    assert health["worker_capacity"] == 2
+    assert health["active_count"] == 1
+    assert health["internal_count"] == 1
+    assert health["available_slots"] == 1
+    assert health["active_run_ids"] == ["run-active", "run-s6"]
+    assert [
+        worker.get("slot_index")
+        for worker in health["workers"]
+        if worker["online"] and worker.get("status") != "internal"
+    ] == [1, 2]
+    assert all(
+        "slot_index" not in worker
+        for worker in health["workers"]
+        if worker["online"] and worker.get("status") == "internal"
+    )
+
+
 def test_sse_replay_and_rbac(tmp_path: Path) -> None:
     repository = SqlRunRepository(create_database_engine(f"sqlite:///{tmp_path / 'api.db'}"))
     repository.append_event("run-1", "stage_completed", {"layer": "L1"})
@@ -420,6 +810,378 @@ def test_sse_replay_and_rbac(tmp_path: Path) -> None:
     assert denied.status_code == 403
     replay = client.get("/api/v1/runs/run-1/events", headers={"Last-Event-ID": "0"})
     assert "event: stage_completed" in replay.text
+
+
+def test_deep_sse_contract_redacts_legacy_delta_and_clamps_progress(tmp_path: Path, monkeypatch) -> None:
+    """Deep SSE must expose only the fixed public event shape."""
+
+    monkeypatch.setenv("EQUIPMENT_DR_OUTPUT_ROOT", str(tmp_path / "runs"))
+    engine = create_database_engine(f"sqlite:///{tmp_path / 'deep-sse.db'}")
+    repository = SqlRunRepository(engine)
+    service = ResearchApplicationService(repository=repository, queue=SqlRunQueue(engine))
+    run = service.create_run(CreateRunCommand("topic", "auto", [], 2, "analyst"))
+    repository.create_deep_session(
+        session_id="session-sse",
+        parent_run_id=run.run_id,
+        kind="deep-thinking",
+    )
+    repository.append_deep_event(
+        stream_id=f"deep-session:{run.run_id}:session-sse",
+        parent_run_id=run.run_id,
+        session_id="session-sse",
+        event_type="deep_stage",
+        stage="s3_divergence",
+        status="running",
+        progress=150,
+        delta={
+            "kind": "answer",
+            "text": "visible",
+            "provider_metadata": {"raw_session": "must-not-escape"},
+            "unexpected": "must-not-escape",
+        },
+    )
+    # End the bounded stream after replaying the event rather than waiting for
+    # its idle timeout.
+    repository.update_deep_session("session-sse", status="failed")
+    client = TestClient(create_app(service, event_repository=repository))
+
+    response = client.get(
+        f"/api/v1/runs/{run.run_id}/deep-thinking/sessions/session-sse/events",
+        headers={"Last-Event-ID": "0"},
+    )
+
+    assert response.status_code == 200
+    payload = response.text
+    assert '"progress": 1.0' in payload
+    assert '"delta": {"kind": "answer", "text": "visible"}' in payload
+    assert "provider_metadata" not in payload
+    assert "unexpected" not in payload
+    assert "id: 1" in payload
+
+
+def test_deep_session_reads_fail_closed_when_durable_ledger_is_unavailable(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Modern SQL session reads must not degrade to an empty/404 projection."""
+
+    engine = create_database_engine(f"sqlite:///{tmp_path / 'deep-read-outage.db'}")
+    repository = SqlRunRepository(engine)
+    service = ResearchApplicationService(repository=repository, queue=SqlRunQueue(engine))
+    run = service.create_run(CreateRunCommand("topic", "auto", [], 2, "analyst"))
+    repository.create_deep_session(
+        session_id="session-outage",
+        parent_run_id=run.run_id,
+        kind="deep-thinking",
+    )
+    monkeypatch.setattr(
+        repository,
+        "get_deep_session",
+        lambda _session_id: (_ for _ in ()).throw(RuntimeError("database down")),
+    )
+    client = TestClient(create_app(service, event_repository=repository))
+
+    response = client.get(
+        f"/api/v1/runs/{run.run_id}/deep-thinking/sessions/session-outage"
+    )
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "deep session ledger unavailable"
+
+
+def test_deep_session_list_fails_closed_when_durable_listing_is_unavailable(
+    tmp_path: Path, monkeypatch
+) -> None:
+    engine = create_database_engine(f"sqlite:///{tmp_path / 'deep-list-outage.db'}")
+    repository = SqlRunRepository(engine)
+    service = ResearchApplicationService(repository=repository, queue=SqlRunQueue(engine))
+    run = service.create_run(CreateRunCommand("topic", "auto", [], 2, "analyst"))
+    monkeypatch.setattr(
+        repository,
+        "list_deep_sessions",
+        lambda _run_id: (_ for _ in ()).throw(RuntimeError("database down")),
+    )
+    client = TestClient(create_app(service, event_repository=repository))
+
+    response = client.get(f"/api/v1/runs/{run.run_id}/deep-thinking/sessions")
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "deep session ledger unavailable"
+
+
+def test_reference_research_list_fails_closed_when_durable_job_listing_is_unavailable(
+    tmp_path: Path, monkeypatch
+) -> None:
+    engine = create_database_engine(f"sqlite:///{tmp_path / 'deep-reference-outage.db'}")
+    repository = SqlRunRepository(engine)
+    service = ResearchApplicationService(repository=repository, queue=SqlRunQueue(engine))
+    run = service.create_run(CreateRunCommand("topic", "auto", [], 2, "analyst"))
+    monkeypatch.setattr(
+        repository,
+        "list_deep_jobs",
+        lambda _run_id: (_ for _ in ()).throw(RuntimeError("database down")),
+    )
+    client = TestClient(create_app(service, event_repository=repository))
+
+    response = client.get(
+        f"/api/v1/runs/{run.run_id}/deep-thinking/reference-research"
+    )
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "deep job ledger unavailable"
+
+
+def test_deep_job_cancel_returns_503_when_durable_update_fails(
+    tmp_path: Path, monkeypatch
+) -> None:
+    engine = create_database_engine(f"sqlite:///{tmp_path / 'deep-cancel-outage.db'}")
+    repository = SqlRunRepository(engine)
+    service = ResearchApplicationService(repository=repository, queue=SqlRunQueue(engine))
+    run = service.create_run(CreateRunCommand("topic", "auto", [], 2, "analyst"))
+    repository.create_or_get_deep_job(
+        job_id="cancel-outage",
+        parent_run_id=run.run_id,
+        session_id="session-cancel-outage",
+        idempotency_key="cancel-request",
+        fingerprint="cancel-fingerprint",
+    )
+    monkeypatch.setattr(
+        repository,
+        "update_deep_job",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("database down")),
+    )
+    client = TestClient(create_app(service, event_repository=repository))
+
+    response = client.post(
+        f"/api/v1/runs/{run.run_id}/deep-thinking/jobs/cancel-outage/cancel",
+        headers={"Idempotency-Key": "cancel-api-request"},
+    )
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "deep job ledger unavailable"
+
+
+def test_deep_sse_replay_sanitizes_legacy_event_name_refs_and_opaque_cursor(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Legacy ledger rows cannot inject SSE frames or provider metadata."""
+
+    monkeypatch.setenv("EQUIPMENT_DR_OUTPUT_ROOT", str(tmp_path / "runs"))
+    engine = create_database_engine(f"sqlite:///{tmp_path / 'deep-sse-legacy.db'}")
+    repository = SqlRunRepository(engine)
+    service = ResearchApplicationService(repository=repository, queue=SqlRunQueue(engine))
+    run = service.create_run(CreateRunCommand("topic", "auto", [], 2, "analyst"))
+    repository.create_deep_session(
+        session_id="session-legacy-sse",
+        parent_run_id=run.run_id,
+        kind="deep-thinking",
+    )
+    first = repository.append_deep_event(
+        stream_id=f"deep-session:{run.run_id}:session-legacy-sse",
+        parent_run_id=run.run_id,
+        session_id="session-legacy-sse",
+        event_type="deep_stage\ninjected",
+        stage="not-a-stage",
+        status="not-a-status",
+        progress=float("nan"),
+        delta={
+            "kind": "not-a-kind",
+            "text": "visible",
+            "provider_metadata": {"raw_session": "must-not-escape"},
+        },
+        evidence_refs=[{"provider_metadata": "must-not-escape"}, "ev-1"],
+    )
+    repository.append_deep_event(
+        stream_id=f"deep-session:{run.run_id}:session-legacy-sse",
+        parent_run_id=run.run_id,
+        session_id="session-legacy-sse",
+        event_type="deep_stage",
+        stage="publish",
+        status="completed",
+        progress=1.0,
+        delta={"kind": "summary", "text": "done"},
+    )
+    repository.update_deep_session("session-legacy-sse", status="failed")
+    client = TestClient(create_app(service, event_repository=repository))
+
+    response = client.get(
+        f"/api/v1/runs/{run.run_id}/deep-thinking/sessions/session-legacy-sse/events",
+        headers={"Last-Event-ID": "0"},
+    )
+    assert response.status_code == 200
+    payload = response.text
+    assert "event: deep_stage_injected" in payload
+    assert "event: deep_stage\ninjected" not in payload
+    assert '"progress": 0.0' in payload
+    assert '"stage": "context"' in payload
+    assert '"status": "partial"' in payload
+    assert '"evidence_refs": ["ev-1"]' in payload
+    assert "provider_metadata" not in payload
+    assert "must-not-escape" not in payload
+
+    # Older clients persisted the opaque event_id rather than the numeric
+    # sequence.  Replaying from that cursor must return only the suffix.
+    suffix = client.get(
+        f"/api/v1/runs/{run.run_id}/deep-thinking/sessions/session-legacy-sse/events",
+        headers={"Last-Event-ID": first["event_id"]},
+    )
+    assert suffix.status_code == 200
+    assert "done" in suffix.text
+    assert "visible" not in suffix.text
+
+
+def test_generic_runtime_history_and_sse_project_deep_events(tmp_path: Path) -> None:
+    """The legacy run stream must use the same deep-event redaction contract."""
+
+    engine = create_database_engine(f"sqlite:///{tmp_path / 'runtime-deep.db'}")
+    repository = SqlRunRepository(engine)
+    service = ResearchApplicationService(repository=repository, queue=SqlRunQueue(engine))
+    run = service.create_run(CreateRunCommand("topic", "auto", [], 2, "analyst"))
+    service.set_error(run.run_id, "stopped")
+    service.set_status(run.run_id, "failed")
+    repository.append_event(
+        run.run_id,
+        "deep_stage\ninjected",
+        {
+            "schema_version": "deep-events-v1",
+            "event_type": "deep_stage\ninjected",
+            "stage": "retrieval",
+            "status": "running",
+            "progress": float("inf"),
+            "delta": {
+                "kind": "answer",
+                "text": "visible",
+                "provider_metadata": {"raw_session": "must-not-escape"},
+            },
+            "evidence_refs": [{"raw_session": "must-not-escape"}, "ev-2"],
+        },
+    )
+    client = TestClient(create_app(service, event_repository=repository))
+
+    history = client.get(f"/api/v1/runs/{run.run_id}/history").json()
+    deep_history = history[-1]
+    assert deep_history["event_type"] == "deep_stage_injected"
+    assert deep_history["payload"]["progress"] == 0.0
+    assert deep_history["payload"]["evidence_refs"] == ["ev-2"]
+    assert "provider_metadata" not in json.dumps(deep_history, ensure_ascii=False)
+    assert "must-not-escape" not in json.dumps(deep_history, ensure_ascii=False)
+
+    replay = client.get(f"/api/v1/runs/{run.run_id}/events")
+    assert replay.status_code == 200
+    assert "event: deep_stage_injected" in replay.text
+    assert "event: deep_stage\ninjected" not in replay.text
+    assert "provider_metadata" not in replay.text
+    assert "must-not-escape" not in replay.text
+
+
+def test_deep_job_polling_does_not_expose_internal_payload_or_credentials(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("EQUIPMENT_DR_OUTPUT_ROOT", str(tmp_path / "runs"))
+    engine = create_database_engine(f"sqlite:///{tmp_path / 'deep-job-public.db'}")
+    repository = SqlRunRepository(engine)
+    service = ResearchApplicationService(repository=repository, queue=SqlRunQueue(engine))
+    run = service.create_run(CreateRunCommand("topic", "auto", [], 2, "analyst"))
+    repository.create_or_get_deep_job(
+        job_id="job-public",
+        parent_run_id=run.run_id,
+        session_id="session-public",
+        idempotency_key="request-public",
+        fingerprint="fingerprint-public",
+        payload={
+            "query": "server query",
+            "active_skill_ids": [
+                "skill-0",
+                "skill-1",
+                "skill-2",
+                "skill-3",
+                "skill-4",
+                "x" * 200,
+                "skill-ignored",
+            ],
+            "candidate": {
+                "name": "参考方向",
+                "mechanism_chain": "visible mechanism",
+                "api_key": "do-not-return",
+            },
+            "provider_metadata": {"raw_session": "do-not-return"},
+        },
+    )
+    client = TestClient(create_app(service, event_repository=repository))
+
+    response = client.get(f"/api/v1/runs/{run.run_id}/deep-thinking/jobs/job-public")
+
+    assert response.status_code == 200
+    payload = response.json()["job"]
+    assert payload["candidate"]["name"] == "参考方向"
+    assert payload["candidate"]["mechanism_chain"] == "visible mechanism"
+    assert payload["payload"]["active_skill_ids"] == [
+        "skill-0",
+        "skill-1",
+        "skill-2",
+        "skill-3",
+        "skill-4",
+        "x" * 140,
+    ]
+    assert set(payload["payload"]) == {"active_skill_ids", "candidate"}
+    assert "api_key" not in json.dumps(payload, ensure_ascii=False)
+    assert "provider_metadata" not in json.dumps(payload, ensure_ascii=False)
+    assert "idempotency_key" not in payload
+    assert "fingerprint" not in payload
+
+
+def test_durable_deep_job_miss_does_not_resurrect_legacy_sidecar(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """A configured SQLite ledger is authoritative for job polling."""
+
+    monkeypatch.setenv("EQUIPMENT_DR_OUTPUT_ROOT", str(tmp_path / "runs"))
+    engine = create_database_engine(f"sqlite:///{tmp_path / 'deep-authority.db'}")
+    repository = SqlRunRepository(engine)
+    service = ResearchApplicationService(
+        repository=repository, queue=SqlRunQueue(engine)
+    )
+    run = service.create_run(CreateRunCommand("topic", "auto", [], 2, "analyst"))
+    save_research_link(
+        tmp_path / "runs",
+        {
+            "job_id": "stale-job",
+            "parent_run_id": run.run_id,
+            "child_run_id": "stale-child",
+            "capability_name": "过期 sidecar 方向",
+        },
+    )
+    client = TestClient(create_app(service, event_repository=repository))
+
+    response = client.get(
+        f"/api/v1/runs/{run.run_id}/deep-thinking/jobs/stale-job"
+    )
+
+    assert response.status_code == 404
+
+
+def test_durable_session_miss_does_not_resurrect_legacy_sidecar(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """A missing SQL session must not be recovered from JSON."""
+
+    monkeypatch.setenv("EQUIPMENT_DR_OUTPUT_ROOT", str(tmp_path / "runs"))
+    engine = create_database_engine(f"sqlite:///{tmp_path / 'session-authority.db'}")
+    repository = SqlRunRepository(engine)
+    service = ResearchApplicationService(
+        repository=repository, queue=SqlRunQueue(engine)
+    )
+    run = service.create_run(CreateRunCommand("topic", "auto", [], 2, "analyst"))
+    sidecar = create_session(
+        tmp_path / "runs",
+        run_id=run.run_id,
+        kind="deep-thinking",
+        title="stale session",
+    )
+    client = TestClient(create_app(service, event_repository=repository))
+
+    response = client.get(
+        f"/api/v1/runs/{run.run_id}/deep-thinking/sessions/{sidecar['session_id']}"
+    )
+
+    assert response.status_code == 404
 
 
 def test_runtime_event_sequence_is_safe_across_repository_instances(tmp_path: Path) -> None:

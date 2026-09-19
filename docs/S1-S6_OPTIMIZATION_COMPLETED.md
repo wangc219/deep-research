@@ -72,7 +72,8 @@
 #### 选项 1: 直接集成（推荐）⭐
 ```bash
 # 1. 备份当前代码
-cd "/Users/wangchen/equipment research"
+# Run from the repository root; keep the checkout path relocatable.
+cd .
 git add -A
 git commit -m "backup: before dynamic scheduler integration"
 
@@ -223,7 +224,7 @@ S6: 230-280s (等S4,S5，但S5早完成)
 所有文件已创建并保存：
 
 ```
-equipment research/
+./
 ├── src/equipment_deep_research/orchestration/
 │   └── dynamic_winning_scheduler.py          (新增 400+ 行)
 ├── tests/

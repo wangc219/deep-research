@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=gao.gov · gao 25 107491.pdf
+source_url=https://www.gao.gov/assets/gao-25-107491.pdf
+claim=GAO公开报告指出反小型无人系统涉及雷达、动能和电子战等组合，机动性、生存性、集群应对以及传感器、指挥控制和效应器的系统集成可能成为瓶颈。
+excerpt=
+retrieval=Hosted web search citation metadata

@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-from equipment_deep_research.orchestration.capability_portrait import (
+from equipment_deep_research.domain.capability_portrait import (
     build_agent_led_capability_portrait,
 )
 
@@ -37,7 +37,7 @@ def build_deadline_weapon_directions(
         dict(item) for item in candidate_directions if isinstance(item, Mapping)
     ]
     recovered: list[dict[str, Any]] = []
-    for position, source in enumerate(authored_rows[:12], start=1):
+    for position, source in enumerate(authored_rows, start=1):
         name = str(source.get("name") or source.get("title") or "").strip()
         equipment_form = str(
             source.get("equipment_form")

@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=darpa.mil · collaborative operations in denied environment
-source_url=https://www.darpa.mil/research/programs/collaborative-operations-in-denied-environment
-claim=DARPA CODE面向被拒止环境中的协同作战，目标是降低对连续人工控制、遥控和高质量通信链路的依赖，并适应带宽限制和通信中断。
-excerpt=
-retrieval=Hosted web search citation metadata

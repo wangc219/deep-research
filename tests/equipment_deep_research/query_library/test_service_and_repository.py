@@ -88,6 +88,25 @@ class DuplicateGenerator(SuccessfulGenerator):
         )
 
 
+class SlowGenerator:
+    provider_snapshot = {"type": "fake", "model": "slow-query-test"}
+
+    def __init__(self) -> None:
+        self.started = asyncio.Event()
+        self.cancelled = False
+
+    async def generate(self, *, on_stage, **kwargs) -> GenerationResult:
+        del kwargs
+        on_stage("web_validation")
+        self.started.set()
+        try:
+            await asyncio.sleep(30)
+        except asyncio.CancelledError:
+            self.cancelled = True
+            raise
+        raise AssertionError("slow generator should have been cancelled")
+
+
 def test_manual_query_edit_revision_and_publish(
     query_service: QueryLibraryService,
 ) -> None:
@@ -147,6 +166,45 @@ def test_worker_generates_twelve_drafts_atomically(
     assert all(item["source_references"] for item in stored["items"])
 
 
+def test_delete_query_detaches_generation_result_reference(
+    query_service: QueryLibraryService,
+) -> None:
+    query_service.generator = SuccessfulGenerator()
+    job = query_service.submit_generation(topic="删除结果同步测试", count=4)
+    completed = asyncio.run(
+        QueryGenerationWorker(query_service, worker_id="delete-query-worker").run_once()
+    )
+    assert completed is not None
+    query_id = completed["result_query_ids"][0]
+    query_service.delete_query(query_id)
+    refreshed = query_service.get_generation(job.generation_id)
+    assert query_id not in refreshed["result_query_ids"]
+    assert query_service.list_queries(source_type="agent")["total"] == 3
+
+
+def test_running_generation_can_be_cancelled_at_worker_checkpoint(
+    query_service: QueryLibraryService,
+) -> None:
+    generator = SlowGenerator()
+    query_service.generator = generator
+    job = query_service.submit_generation(topic="终止测试任务")
+
+    async def scenario():
+        worker_task = asyncio.create_task(
+            query_service.process_generation(job.generation_id, worker_id="cancel-worker")
+        )
+        await generator.started.wait()
+        cancelled = query_service.cancel_generation(job.generation_id)
+        completed = await asyncio.wait_for(worker_task, timeout=2)
+        return cancelled, completed
+
+    cancelled, completed = asyncio.run(scenario())
+
+    assert cancelled.status == "cancelled"
+    assert completed.status == "cancelled"
+    assert generator.cancelled is True
+
+
 def test_generation_supports_variable_count_and_task_level_model_config(
     query_service: QueryLibraryService,
 ) -> None:
@@ -180,13 +238,27 @@ def test_generation_supports_variable_count_and_task_level_model_config(
             "provider": "responses",
             "model": "gpt-5.5",
             "reasoning_effort": "xhigh",
+            "_generation_id": job.generation_id,
         }
     ]
     assert query_service.get_generation(job.generation_id)["model_config"] == {
-        **requested_configs[0],
+        "provider": "responses",
+        "model": "gpt-5.5",
+        "reasoning_effort": "xhigh",
         "credential_configured": False,
     }
     assert completed.provider_snapshot["model"] == "gpt-5.5"
+
+
+def test_autonomous_situation_discovery_keeps_selected_provider(
+    query_service: QueryLibraryService,
+) -> None:
+    job = query_service.submit_generation(
+        topic="自主发现装备需求方向",
+        supplemental_information="自动态势发散模式。由Agent自主选择高价值方向。",
+        model_config={"provider": "responses", "reasoning_effort": "high"},
+    )
+    assert job.model_config["provider"] == "responses"
 
 
 def test_custom_provider_credential_is_encrypted_and_redacted(

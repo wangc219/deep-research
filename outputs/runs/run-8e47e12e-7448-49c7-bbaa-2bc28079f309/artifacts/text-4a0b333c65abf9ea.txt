@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=media.defense.gov · FACT SHEET STRATEGY FOR COUNTERING UNMANNED SYSTEMS.PDF
+source_url=https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF
+claim=DoD公开将无人系统与反无人能力视为改变作战样式的核心问题，并强调低成本、广泛可得无人系统已普及精确打击。
+excerpt=
+retrieval=Hosted web search citation metadata

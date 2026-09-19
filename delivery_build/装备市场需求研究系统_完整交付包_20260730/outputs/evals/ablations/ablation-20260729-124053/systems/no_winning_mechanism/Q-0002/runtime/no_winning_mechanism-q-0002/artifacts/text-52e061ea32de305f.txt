@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=lineofdeparture.army.mil · Strategic APNT
-source_url=https://www.lineofdeparture.army.mil/Journals/Gray-Space/Archive/Summer-2025/Strategic-APNT/
-claim=美国陆军公开文章支持精确授时对通信、导航和精确武器同步的重要性，并指出受争夺环境中电磁与网络战可破坏PNT。
-excerpt=
-retrieval=Hosted web search citation metadata

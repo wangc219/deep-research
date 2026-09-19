@@ -71,6 +71,7 @@ async def run_reporter_agent(
             "不得搜索、抓取网页、浏览器操作或创建新 EvidenceCard",
             "不得新增未在 ReportContextBundle 中出现的核心事实或引用 id",
             "审计不通过或证据不足时写成解释性降级报告，而不是虚构结论",
+            "正文优先使用中文直述；英文缩写首次出现必须给出中文全称，后续尽量使用中文简称（正式来源标题、型号、证据编号和网址除外）",
         ],
         authorized_scope={"report_context_bundle_id": bundle_id},
         parallel_tool_calls=False,

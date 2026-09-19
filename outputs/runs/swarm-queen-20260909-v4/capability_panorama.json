@@ -1,0 +1,113 @@
+{
+  "actual_counts": {
+    "capability_domains": 7,
+    "capability_indicators": 0,
+    "capability_items": 7
+  },
+  "branch": "B",
+  "branch_name": "传统能力缺口发现",
+  "cross_domain_indicators": [],
+  "domains": [
+    {
+      "capability_ids": [
+        "cap-new-001"
+      ],
+      "domain": "“雾蚀”蜂群桨损播撒弹",
+      "evidence_ids": [
+        "ev-combat_scenario-web-5824f31b34e3",
+        "ev-combat_scenario-web-8952c3805d5a"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "传统低空防空装备差距与升级功能"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-002"
+      ],
+      "domain": "低空航道封锁布雷弹",
+      "evidence_ids": [
+        "ev-combat_scenario-web-5824f31b34e3",
+        "ev-combat_scenario-web-8952c3805d5a"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "传统低空防空装备差距与升级功能"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-003"
+      ],
+      "domain": "峡谷多径折返拦截弹",
+      "evidence_ids": [
+        "ev-combat_scenario-web-5824f31b34e3",
+        "ev-combat_scenario-web-8952c3805d5a"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "传统低空防空装备差距与升级功能"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-004"
+      ],
+      "domain": "柔索缠桨拦截无人机",
+      "evidence_ids": [
+        "ev-combat_scenario-web-5824f31b34e3",
+        "ev-combat_scenario-web-8952c3805d5a"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "传统低空防空装备差距与升级功能"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-005"
+      ],
+      "domain": "阵前预置零延拦射雷",
+      "evidence_ids": [
+        "ev-combat_scenario-web-5824f31b34e3",
+        "ev-combat_scenario-web-8952c3805d5a"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "传统低空防空装备差距与升级功能"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-006"
+      ],
+      "domain": "展幕缠旋拦阻航弹",
+      "evidence_ids": [
+        "ev-combat_scenario-web-5824f31b34e3",
+        "ev-combat_scenario-web-8952c3805d5a"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "传统低空防空装备差距与升级功能"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-007"
+      ],
+      "domain": "群站共瞄分布式拦射弹",
+      "evidence_ids": [
+        "ev-combat_scenario-web-5824f31b34e3",
+        "ev-combat_scenario-web-8952c3805d5a"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "传统低空防空装备差距与升级功能"
+      ]
+    }
+  ],
+  "equipment_forms": [],
+  "target_counts": {},
+  "topic": "传统低空防空装备差距与升级功能"
+}

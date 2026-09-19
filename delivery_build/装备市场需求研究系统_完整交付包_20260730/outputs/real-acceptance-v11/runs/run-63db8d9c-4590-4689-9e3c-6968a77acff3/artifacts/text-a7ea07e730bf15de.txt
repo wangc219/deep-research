@@ -1,4 +1,0 @@
-fetch_failed
-url=https://comptroller.defense.gov/Portals/45/Documents/defbudget/FY2026/FY2026_Budget_Request_Overview_Book.pdf?utm_source=openai
-error=HTTPStatusError: HTTP 403: Forbidden
-该诊断用于保留真实联网smoke边界；正式结论不应仅依赖失败材料。

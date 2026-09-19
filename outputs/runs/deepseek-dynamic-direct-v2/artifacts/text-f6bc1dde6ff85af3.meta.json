@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:f6bc1dde6ff85af3",
+  "content_path": "text-f6bc1dde6ff85af3.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-system_confrontation-web-1f6bd4975c3e",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "f6bc1dde6ff85af3a31f7d1409d7388083c29f019735083469b6a21e3f7a9cbc",
+  "url": "https://www.gao.gov/"
+}

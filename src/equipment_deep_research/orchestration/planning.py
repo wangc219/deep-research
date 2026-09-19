@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from equipment_deep_research.agents.registry import AgentDef
+from equipment_deep_research.contracts.agents import AgentSpec
 from equipment_deep_research.domain.models import ResearchProblem
 from equipment_deep_research.domain.planning import ResearchPlanGraph, ResearchPlanNode
 from equipment_deep_research.orchestration.coverage import PresetPolicy
@@ -28,7 +28,7 @@ class ResearchPlanner:
     def __init__(self, policy: PresetPolicy) -> None:
         self.policy = policy
 
-    def build(self, problem: ResearchProblem, selected_agents: list[AgentDef]) -> ResearchPlanGraph:
+    def build(self, problem: ResearchProblem, selected_agents: list[AgentSpec]) -> ResearchPlanGraph:
         # Agent selection is a preceding orchestration decision.  The graph must
         # faithfully represent that audited decision, including any model-chosen
         # specialist beyond the mandatory minimum.
@@ -43,10 +43,10 @@ class ResearchPlanner:
     def select_for_problem(
         self,
         problem: ResearchProblem,
-        candidates: list[AgentDef],
+        candidates: list[AgentSpec],
         preferred_agent_ids: list[str] | None = None,
         additional_required_tags: set[str] | None = None,
-    ) -> list[AgentDef]:
+    ) -> list[AgentSpec]:
         """Reconcile a model preference with mandatory capability coverage."""
         required = self.required_tags_for_problem(problem) | set(
             additional_required_tags or set()
@@ -81,15 +81,15 @@ class ResearchPlanner:
                 required.add(tag)
         return required
 
-    def _minimal_cover(self, route: str, agents: list[AgentDef]) -> list[AgentDef]:
+    def _minimal_cover(self, route: str, agents: list[AgentSpec]) -> list[AgentSpec]:
         required = set(self.policy.required_capability_tags.get(route, []))
         return self._minimal_cover_tags(required, agents)
 
     @staticmethod
-    def _minimal_cover_tags(required: set[str], agents: list[AgentDef]) -> list[AgentDef]:
+    def _minimal_cover_tags(required: set[str], agents: list[AgentSpec]) -> list[AgentSpec]:
         remaining = set(required)
         candidates = list(agents)
-        result: list[AgentDef] = []
+        result: list[AgentSpec] = []
         while candidates and remaining:
             candidate = max(candidates, key=lambda item: (len(set(item.capability_tags) & remaining), item.agent_id))
             if not set(candidate.capability_tags) & remaining:

@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=lineofdeparture.army.mil · Project Convergence
-source_url=https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2025-E-Edition/Project-Convergence/
-claim=支撑传感器-射手连接、AI/JADC2、战术云和跨域数据共享可压缩目标获取与交战流程的判断。
-excerpt=
-retrieval=Hosted web search citation metadata

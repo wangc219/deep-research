@@ -1,13 +1,20 @@
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Callable, Mapping
 import json
+import os
 from pathlib import Path
+import re
+import shutil
+import stat
 from typing import Any
 
 from equipment_deep_research.query_library.models import (
     DuplicateQueryError,
+    GenerationArtifactCleanupError,
     GenerationJob,
+    InvalidStatusTransition,
     QueryRecord,
     SourceReference,
 )
@@ -28,12 +35,16 @@ class QueryLibraryService:
         generator_factory: Callable[[dict[str, Any]], object] | None = None,
         model_options: dict[str, Any] | None = None,
         credential_store: object | None = None,
+        artifact_root: str | Path | None = None,
     ) -> None:
         self.repository = repository
         self.generator = generator
         self.generator_factory = generator_factory
         self.model_options = dict(model_options or {})
         self.credential_store = credential_store
+        self.artifact_root = (
+            None if artifact_root is None else Path(artifact_root).resolve()
+        )
 
     def create_query(
         self,
@@ -222,6 +233,9 @@ class QueryLibraryService:
             expected_version=expected_version,
         )
 
+    def delete_query(self, query_id: str) -> None:
+        self.repository.delete_query(query_id)
+
     def bulk_status(
         self,
         query_ids: list[str],
@@ -283,6 +297,42 @@ class QueryLibraryService:
     def get_generation(self, generation_id: str) -> dict[str, Any]:
         return self.repository.get_generation(generation_id).to_dict()
 
+    def list_generations(
+        self,
+        *,
+        status: str | None = None,
+        limit: int = 20,
+    ) -> dict[str, Any]:
+        rows = self.repository.list_generations(status=status, limit=limit)
+        return {"items": [item.to_dict() for item in rows], "limit": limit}
+
+    def delete_generation(self, generation_id: str) -> None:
+        current = self.repository.get_generation(generation_id)
+        if current.status in {"queued", "running"}:
+            raise InvalidStatusTransition(
+                "active Query generation tasks cannot be deleted"
+            )
+        artifact_directory = self._artifact_directory(generation_id)
+        if artifact_directory is not None:
+            _remove_generation_artifacts(artifact_directory)
+        self.repository.delete_generation(generation_id)
+
+    def cancel_generation(self, generation_id: str) -> GenerationJob:
+        return self.repository.cancel_generation(generation_id)
+
+    def _artifact_directory(self, generation_id: str) -> Path | None:
+        if self.artifact_root is None:
+            return None
+        match = re.fullmatch(
+            r"generation-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})",
+            generation_id,
+        )
+        if match is None:
+            return None
+        target = self.artifact_root / f"query-gen-{match.group(1)}"
+        if target.parent.resolve() != self.artifact_root:
+            raise ValueError("invalid Query generation artifact path")
+        return target
     def get_model_options(self) -> dict[str, Any]:
         return self.model_options
 
@@ -310,7 +360,9 @@ class QueryLibraryService:
         generator = self.generator
         try:
             if self.generator_factory is not None:
-                generator = self.generator_factory(job.model_config)
+                generator = self.generator_factory(
+                    {**job.model_config, "_generation_id": job.generation_id}
+                )
         except Exception as exc:
             return self.repository.fail_generation(
                 job.generation_id,
@@ -325,7 +377,7 @@ class QueryLibraryService:
                 provider_snapshot=snapshot,
             )
         try:
-            result = await generator.generate(
+            generation_task = asyncio.create_task(generator.generate(
                 topic=job.topic,
                 supplemental_information=job.supplemental_information,
                 reference_urls=job.reference_urls,
@@ -334,7 +386,19 @@ class QueryLibraryService:
                 on_stage=lambda stage: self.repository.update_generation_stage(
                     job.generation_id, stage
                 ),
-            )
+            ))
+            while not generation_task.done():
+                await asyncio.wait({generation_task}, timeout=0.5)
+                if self.repository.get_generation(job.generation_id).status == "cancelled":
+                    generation_task.cancel()
+                    try:
+                        await generation_task
+                    except asyncio.CancelledError:
+                        pass
+                    return self.repository.get_generation(job.generation_id)
+            result = await generation_task
+            if self.repository.get_generation(job.generation_id).status == "cancelled":
+                return self.repository.get_generation(job.generation_id)
             self.repository.update_generation_stage(job.generation_id, "persisting")
             return self.repository.complete_generation(
                 job.generation_id,
@@ -344,6 +408,9 @@ class QueryLibraryService:
                 provider_snapshot=result.provider_snapshot,
             )
         except Exception as exc:
+            current = self.repository.get_generation(job.generation_id)
+            if current.status == "cancelled":
+                return current
             return self.repository.fail_generation(
                 job.generation_id,
                 error=f"{type(exc).__name__}: {exc}",
@@ -421,6 +488,30 @@ class QueryLibraryService:
         }
 
 
+def _remove_generation_artifacts(target: Path) -> None:
+    """Remove one isolated generation home without following directory links."""
+
+    try:
+        if target.is_symlink():
+            target.unlink(missing_ok=True)
+            return
+        shutil.rmtree(target, onerror=_repair_permissions_and_retry)
+    except FileNotFoundError:
+        # A previous cleanup or concurrent retry already removed the directory.
+        return
+    except OSError as exc:
+        raise GenerationArtifactCleanupError(
+            f"Query 任务本地文件清理失败：{target.name}"
+        ) from exc
+
+
+def _repair_permissions_and_retry(
+    function: Callable[[str], None], path: str, _error: object
+) -> None:
+    os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+    function(path)
+
+
 def _validate_model_config(value: Mapping[str, Any]) -> dict[str, str]:
     allowed = {"provider", "model", "reasoning_effort", "base_url", "credential_id"}
     unknown = set(value) - allowed
@@ -433,8 +524,15 @@ def _validate_model_config(value: Mapping[str, Any]) -> dict[str, str]:
     reasoning = str(value.get("reasoning_effort", "high")).strip() or "high"
     base_url = str(value.get("base_url", "")).strip()
     credential_id = str(value.get("credential_id", "")).strip()
-    if provider and provider not in {"codex", "responses", "fake"}:
-        raise ValueError("model_config.provider must be codex, responses, or fake")
+    # Provider IDs are deployment configuration, not a closed application
+    # enum.  New CLI/API adapters can be registered in providers.yaml without
+    # changing query-library validation; the factory performs the final
+    # registry lookup when a generation starts.
+    if provider and (
+        len(provider) > 80
+        or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", provider)
+    ):
+        raise ValueError("model_config.provider must be a valid configured provider id")
     if len(model) > 120:
         raise ValueError("model_config.model exceeds 120 characters")
     if reasoning not in {"low", "medium", "high", "xhigh"}:

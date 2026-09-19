@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=media.defense.gov · FACT SHEET STRATEGY FOR COUNTERING UNMANNED SYSTEMS.PDF
+source_url=https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF
+claim=2024年12月美防长签署(保密)反无人系统战略，配套公开情况说明书称无人系统威胁上升、由商业创新与AI进步推动，要求跨领域、跨特征、跨时限统一反无人方法(经国防部新闻稿互证)。
+excerpt=
+retrieval=Hosted web search citation metadata

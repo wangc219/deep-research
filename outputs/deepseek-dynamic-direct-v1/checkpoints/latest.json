@@ -1,0 +1,256 @@
+{
+  "checkpoint": {
+    "budget_remaining": {
+      "baseline_tasks": 0,
+      "finalize_tasks": 0,
+      "rounds": 0
+    },
+    "checkpoint_id": "run-checkpoint-deepseek-dynamic-direct-v1",
+    "completed_task_ids": [
+      "baseline:operational_employment",
+      "baseline:combat_scenario",
+      "baseline:weapon_equipment",
+      "finalize:winning-report"
+    ],
+    "config_fingerprint": "sha256:7d4daa9386c237298f53ba6e9d7d52a31645c285c8e51e0dc65e75bdb62eea8f",
+    "created_at": "2026-09-03T07:47:00.852522+00:00",
+    "mode": "real",
+    "pending_task_ids": [],
+    "research_route": "traditional_gap",
+    "resolved_route": "traditional_gap",
+    "resume_count": 0,
+    "round_index": 1,
+    "run_id": "deepseek-dynamic-direct-v1",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "operational_employment",
+      "combat_scenario",
+      "weapon_equipment"
+    ],
+    "source_materials": [
+      {
+        "artifact_refs": [
+          "text:6e4b242dc10ac9de"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-bc1c2e8c3176",
+          "normalized_url": "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "reasons": [],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-bc1c2e8c3176",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience"
+      },
+      {
+        "artifact_refs": [
+          "text:cfffe508f0af8a61"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-combat_scenario-web-f42ad4ad8ea8",
+          "normalized_url": "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo",
+          "reasons": [],
+          "score": 0.698
+        },
+        "evidence_id": "ev-combat_scenario-web-f42ad4ad8ea8",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/"
+      },
+      {
+        "artifact_refs": [
+          "text:e1fcbd6f1cdd520e"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-8952c3805d5a",
+          "normalized_url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "reasons": [],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-8952c3805d5a",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+      },
+      {
+        "artifact_refs": [
+          "text:c130d379fd20698f"
+        ],
+        "evidence_assessment": {
+          "conflict_group": "conflict-ca64f7e363",
+          "decision": "duplicate",
+          "evidence_id": "ev-operational_employment-web-bc1c2e8c3176",
+          "normalized_url": "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "reasons": [
+            "与 ev-combat_scenario-web-bc1c2e8c3176 URL 重复",
+            "保留为冲突/反证材料"
+          ],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-bc1c2e8c3176",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience"
+      },
+      {
+        "artifact_refs": [
+          "text:c6828cafbcece4a4"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "duplicate",
+          "evidence_id": "ev-operational_employment-web-f42ad4ad8ea8",
+          "normalized_url": "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo",
+          "reasons": [
+            "与 ev-combat_scenario-web-f42ad4ad8ea8 URL 重复"
+          ],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-f42ad4ad8ea8",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/"
+      },
+      {
+        "artifact_refs": [
+          "text:fc93fa8b71680bc8"
+        ],
+        "evidence_assessment": {
+          "conflict_group": "conflict-9c98eeaaa3",
+          "decision": "accepted",
+          "evidence_id": "ev-operational_employment-web-6c1c84a0e24e",
+          "normalized_url": "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all",
+          "reasons": [
+            "保留为冲突/反证材料"
+          ],
+          "score": 0.695
+        },
+        "evidence_id": "ev-operational_employment-web-6c1c84a0e24e",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/"
+      }
+    ],
+    "status": "completed",
+    "task_statuses": {
+      "baseline:combat_scenario": "completed",
+      "baseline:operational_employment": "completed",
+      "baseline:weapon_equipment": "completed",
+      "finalize:winning-report": "completed"
+    },
+    "topic": "评估小型无人系统在复杂电磁环境下的防御装备需求",
+    "worker_reports": [
+      {
+        "active_skill_ids": [
+          "operational_synthesis",
+          "coa_comparison",
+          "joint_force_coordination",
+          "lessons_transfer"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "fetch_page",
+          "create_evidence_card",
+          "map_task_capability",
+          "build_coordination_dependency",
+          "compare_coa",
+          "assess_sustainment_resilience",
+          "transfer_case_lesson"
+        ],
+        "agent_id": "operational_employment",
+        "created_at": "2026-09-03T07:51:39.066084+00:00",
+        "domain_object_id": "operational-packet-operational_employment",
+        "domain_object_type": "OperationalSynthesis",
+        "error": "",
+        "handoff_summary": "本角色以任务链、力量协同、COA、保障韧性与经验迁移完成核验扩展：防御需求以任务连续度为判据，核心缺口在强干扰加低慢小下的探测归属与软杀伤效应确认（F1）；识别-去冲突是规模化门槛而非防误击附件（F2）；COA按自主化程度与价值分层并计入不交战即防御效应（F3）；防御须前移拒止并保持低特征抗毁（F4）；保障按断链可用的版本化续战设计（F5）。证据全部为方向性与推演级，置信度约0.3，无指标与审计数据，未给出装备成品结论。",
+        "harness_profile": "operational_synthesis_v1",
+        "new_evidence_ids": [
+          "ev-operational_employment-web-6c1c84a0e24e",
+          "ev-operational_employment-web-8952c3805d5a"
+        ],
+        "packet_id": "packet-operational_employment",
+        "schema_version": "1.0",
+        "session_path": "/Users/hitsz/equipment research/outputs/deepseek-dynamic-direct-v1/agent_sessions/operational_employment.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-e6ed2e3f-478f-48c1-ac6d-be385433cf39"
+      },
+      {
+        "active_skill_ids": [
+          "scenario_engineering",
+          "modern_battlespace_analysis",
+          "adversary_coa_analysis"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "fetch_page",
+          "create_evidence_card",
+          "build_scenario_graph",
+          "branch_scenario",
+          "map_critical_window",
+          "map_environment_constraint",
+          "stress_test_scenario"
+        ],
+        "agent_id": "combat_scenario",
+        "created_at": "2026-09-03T07:48:59.419196+00:00",
+        "domain_object_id": "scenario-packet-combat_scenario",
+        "domain_object_type": "ScenarioModel",
+        "error": "",
+        "handoff_summary": "本角色完成作战场景侧独立研判:复杂电磁环境下小型无人防御的失败条件由成本交换比与弹药深度、EMCON暴露代价、对手反适应速度、无链路自治突防四要素共同决定,其中无链路突防是对'干扰压制中心'框架的反证,把需求重心推向被动探测+行为识别+低成本末段硬杀伤+可重配置闭环;据此从三个上游背景衍生6个场景并映射各阶段失败条件。证据边界:乌克兰与EABO判断有来源目录公开URL支撑,S6自治外推与周级适应周期仅为推演,置信度中等偏低,重验要求有效。",
+        "harness_profile": "scenario_research_v1",
+        "new_evidence_ids": [
+          "ev-combat_scenario-web-bc1c2e8c3176",
+          "ev-combat_scenario-web-f42ad4ad8ea8"
+        ],
+        "packet_id": "packet-combat_scenario",
+        "schema_version": "1.0",
+        "session_path": "/Users/hitsz/equipment research/outputs/deepseek-dynamic-direct-v1/agent_sessions/combat_scenario.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-f930abfb-f867-4744-8ce5-5f50d99c3c4c"
+      },
+      {
+        "active_skill_ids": [
+          "equipment_osint",
+          "capability_comparison",
+          "technology_readiness_analysis",
+          "defensive_countermeasure_analysis"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "fetch_page",
+          "create_evidence_card",
+          "extract_parameter_observation",
+          "normalize_equipment_variant",
+          "reconcile_parameter_conflict",
+          "assess_technology_readiness",
+          "compare_equipment_capability",
+          "map_defensive_countermeasure",
+          "formulate_equipment_requirement"
+        ],
+        "agent_id": "weapon_equipment",
+        "created_at": "2026-09-03T07:47:56.661677+00:00",
+        "domain_object_id": "",
+        "domain_object_type": "",
+        "error": "weapon_equipment model turn completed but outer baseline result validation found no substantive findings",
+        "handoff_summary": "武器装备公开基线本轮受限；S1–S3继续独立推演，S4/S5在候选级按需补证。",
+        "harness_profile": "equipment_research_v1",
+        "new_evidence_ids": [],
+        "packet_id": "packet-weapon_equipment",
+        "schema_version": "1.0",
+        "session_path": "/Users/hitsz/equipment research/outputs/deepseek-dynamic-direct-v1/agent_sessions/weapon_equipment.jsonl",
+        "status": "limited",
+        "stop_reason": "recoverable_baseline_unavailable",
+        "worker_report_id": "worker-report-989508a9-833d-4b6b-a1b0-aeff43137d1b"
+      }
+    ]
+  },
+  "savepoint_id": "checkpoint-aeec3825ae03722102a0dfe5"
+}

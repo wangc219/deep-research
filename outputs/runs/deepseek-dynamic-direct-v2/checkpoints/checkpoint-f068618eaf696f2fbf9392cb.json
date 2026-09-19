@@ -1,0 +1,247 @@
+{
+  "checkpoint": {
+    "budget_remaining": {
+      "baseline_tasks": 0,
+      "finalize_tasks": 1,
+      "rounds": 2
+    },
+    "checkpoint_id": "run-checkpoint-deepseek-dynamic-direct-v2",
+    "completed_task_ids": [
+      "baseline:weapon_equipment",
+      "baseline:system_confrontation",
+      "baseline:case_research"
+    ],
+    "config_fingerprint": "sha256:c799f2bf71502eddbd21aa81d4b4e80da3df21378baedef8720707c88aaa527f",
+    "created_at": "2026-09-03T09:15:14.008540+00:00",
+    "mode": "real",
+    "pending_task_ids": [],
+    "research_route": "traditional_gap",
+    "resolved_route": "traditional_gap",
+    "resume_count": 0,
+    "round_index": 1,
+    "run_id": "deepseek-dynamic-direct-v2",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "weapon_equipment",
+      "system_confrontation",
+      "case_research"
+    ],
+    "source_materials": [
+      {
+        "artifact_refs": [
+          "html:f4d2d07a36904481"
+        ],
+        "content_type": "text/html; charset=UTF-8",
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-case_research-web-fa6b7ef26d3a",
+          "normalized_url": "https://www.airforce-technology.com/analyst-comment/disruptive-innovation-electronic-warfare-arms-race",
+          "reasons": [],
+          "score": 0.85
+        },
+        "evidence_id": "ev-case_research-web-fa6b7ef26d3a",
+        "fetch_cache_hit": false,
+        "final_url": "https://www.airforce-technology.com/analyst-comment/disruptive-innovation-electronic-warfare-arms-race/",
+        "formal_evidence_allowed": true,
+        "paragraph_locations": [
+          "text:9642a419f24e3153#p1",
+          "text:9642a419f24e3153#p2",
+          "text:9642a419f24e3153#p3",
+          "text:9642a419f24e3153#p4",
+          "text:9642a419f24e3153#p5",
+          "text:9642a419f24e3153#p6",
+          "text:9642a419f24e3153#p7",
+          "text:9642a419f24e3153#p8",
+          "text:9642a419f24e3153#p9",
+          "text:9642a419f24e3153#p10",
+          "text:9642a419f24e3153#p11",
+          "text:9642a419f24e3153#p12",
+          "text:9642a419f24e3153#p13",
+          "text:9642a419f24e3153#p14",
+          "text:9642a419f24e3153#p15",
+          "text:9642a419f24e3153#p16",
+          "text:9642a419f24e3153#p17",
+          "text:9642a419f24e3153#p18",
+          "text:9642a419f24e3153#p19",
+          "text:9642a419f24e3153#p20",
+          "text:9642a419f24e3153#p21",
+          "text:9642a419f24e3153#p22",
+          "text:9642a419f24e3153#p23",
+          "text:9642a419f24e3153#p24",
+          "text:9642a419f24e3153#p25",
+          "text:9642a419f24e3153#p26",
+          "text:9642a419f24e3153#p27",
+          "text:9642a419f24e3153#p28",
+          "text:9642a419f24e3153#p29"
+        ],
+        "simplified_artifact_ref": "text:9642a419f24e3153",
+        "status": "fetched",
+        "url": "https://www.airforce-technology.com/analyst-comment/disruptive-innovation-electronic-warfare-arms-race/"
+      },
+      {
+        "artifact_refs": [
+          "text:12ce41dfda1d9c86"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-case_research-web-80ecdfd893e8",
+          "normalized_url": "https://newsukraine.rbc.ua/analytics/russia-s-fiber-optic-fpv-drones-on-rise-ukraine-1752818725.html",
+          "reasons": [],
+          "score": 0.688
+        },
+        "evidence_id": "ev-case_research-web-80ecdfd893e8",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://newsukraine.rbc.ua/analytics/russia-s-fiber-optic-fpv-drones-on-rise-ukraine-1752818725.html"
+      },
+      {
+        "artifact_refs": [
+          "text:161538c680e4c9ce"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-system_confrontation-web-c8aba43133b8",
+          "normalized_url": "https://www.jcs.mil/Doctrine",
+          "reasons": [],
+          "score": 0.688
+        },
+        "evidence_id": "ev-system_confrontation-web-c8aba43133b8",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.jcs.mil/Doctrine/"
+      },
+      {
+        "artifact_refs": [
+          "text:f6bc1dde6ff85af3"
+        ],
+        "evidence_assessment": {
+          "conflict_group": null,
+          "decision": "accepted",
+          "evidence_id": "ev-system_confrontation-web-1f6bd4975c3e",
+          "normalized_url": "https://www.gao.gov",
+          "reasons": [],
+          "score": 0.688
+        },
+        "evidence_id": "ev-system_confrontation-web-1f6bd4975c3e",
+        "formal_evidence_allowed": true,
+        "status": "hosted_search_citation",
+        "url": "https://www.gao.gov/"
+      }
+    ],
+    "status": "running",
+    "task_statuses": {
+      "baseline:case_research": "completed",
+      "baseline:system_confrontation": "completed",
+      "baseline:weapon_equipment": "completed",
+      "finalize:winning-report": "running"
+    },
+    "topic": "评估小型无人系统在复杂电磁环境下的防御装备需求",
+    "worker_reports": [
+      {
+        "active_skill_ids": [
+          "equipment_osint",
+          "capability_comparison",
+          "technology_readiness_analysis",
+          "defensive_countermeasure_analysis"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "fetch_page",
+          "create_evidence_card",
+          "extract_parameter_observation",
+          "normalize_equipment_variant",
+          "reconcile_parameter_conflict",
+          "assess_technology_readiness",
+          "compare_equipment_capability",
+          "map_defensive_countermeasure",
+          "formulate_equipment_requirement"
+        ],
+        "agent_id": "weapon_equipment",
+        "created_at": "2026-09-03T09:15:57.986801+00:00",
+        "domain_object_id": "",
+        "domain_object_type": "",
+        "error": "weapon_equipment model turn completed but outer baseline result validation found no substantive findings",
+        "handoff_summary": "武器装备公开基线本轮受限；S1–S3继续独立推演，S4/S5在候选级按需补证。",
+        "harness_profile": "equipment_research_v1",
+        "new_evidence_ids": [],
+        "packet_id": "packet-weapon_equipment",
+        "schema_version": "1.0",
+        "session_path": "/Users/hitsz/equipment research/outputs/runs/deepseek-dynamic-direct-v2/agent_sessions/weapon_equipment.jsonl",
+        "status": "limited",
+        "stop_reason": "recoverable_baseline_unavailable",
+        "worker_report_id": "worker-report-7ae105bc-558a-4120-94f6-e3623684bc7b"
+      },
+      {
+        "active_skill_ids": [
+          "system_confrontation_modeling",
+          "cascading_vulnerability_analysis"
+        ],
+        "active_tool_names": [
+          "map_task_capability",
+          "build_coordination_dependency",
+          "build_system_model",
+          "identify_cascading_vulnerability",
+          "stress_test_scenario",
+          "compare_coa",
+          "test_competing_hypothesis"
+        ],
+        "agent_id": "system_confrontation",
+        "created_at": "2026-09-03T09:18:25.159502+00:00",
+        "domain_object_id": "",
+        "domain_object_type": "",
+        "error": "",
+        "handoff_summary": "本Agent从红蓝体系对抗视角确认：核心脆弱性不在单一效应器而在‘探测-识别链路被电磁截断→发射门槛无法越过→效应冻结→纵深压平→交换比溃退’的级联；最脆弱依赖为多节点组网-中心决策-单一效应的单链，自扰构成内部级联源；补链方向应以频谱规避型多模态识别与非辐射/可再生效应维持任务续接。所有判断为任务级架构推断，证据限于公开监督与条令文件脉络，定量边界不闭合。",
+        "harness_profile": "system_analysis_v1",
+        "new_evidence_ids": [
+          "ev-system_confrontation-web-1f6bd4975c3e",
+          "ev-system_confrontation-web-c8aba43133b8"
+        ],
+        "packet_id": "packet-system_confrontation",
+        "schema_version": "1.0",
+        "session_path": "/Users/hitsz/equipment research/outputs/runs/deepseek-dynamic-direct-v2/agent_sessions/system_confrontation.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-039762d3-bdb3-4433-a688-208afa38c9fe"
+      },
+      {
+        "active_skill_ids": [
+          "case_timeline_reconstruction",
+          "causal_chain_analysis",
+          "cross_case_pattern_transfer"
+        ],
+        "active_tool_names": [
+          "search_sources",
+          "fetch_page",
+          "create_evidence_card",
+          "register_event_timeline",
+          "reconstruct_case_timeline",
+          "build_causal_chain",
+          "compare_case_patterns",
+          "transfer_case_lesson",
+          "test_competing_hypothesis"
+        ],
+        "agent_id": "case_research",
+        "created_at": "2026-09-03T09:16:48.324835+00:00",
+        "domain_object_id": "",
+        "domain_object_type": "",
+        "error": "",
+        "handoff_summary": "主案例：2024-2025乌东/俄乌战场EW-FPV-光纤无人机构成的反制链演化，辅以Shahed饱和与红海海上拦截作迁移验证。已还原事实：干扰曾有效压制RF-FPV并促成俄方EW规模化（2024年月产约5000套级），随后红方转向光纤/物理摧毁逻辑；Shahed与高价值拦截弹交换比约190:1，拦截率随饱和由约88.7%降至约70%。专业结论：蓝方不占频谱优势时，探测-识别为最可能的首断环节，效应器需求集中在非RF、低成本、可饱和适配的物理与定向能手段；饱和与民用混杂使交换比与误击成为否决性约束。证据边界：本次仅目录检索，未核原始一手数据，定量数值为媒体/第三方测算，需下游S节点以来源目录逐项核实。",
+        "harness_profile": "case_research_v1",
+        "new_evidence_ids": [
+          "ev-case_research-web-80ecdfd893e8",
+          "ev-case_research-web-fa6b7ef26d3a"
+        ],
+        "packet_id": "packet-case_research",
+        "schema_version": "1.0",
+        "session_path": "/Users/hitsz/equipment research/outputs/runs/deepseek-dynamic-direct-v2/agent_sessions/case_research.jsonl",
+        "status": "completed",
+        "stop_reason": "quality_gates_passed",
+        "worker_report_id": "worker-report-25e296f5-3aaa-43ed-a904-d7d62c3b0f4d"
+      }
+    ]
+  },
+  "savepoint_id": "checkpoint-f068618eaf696f2fbf9392cb"
+}

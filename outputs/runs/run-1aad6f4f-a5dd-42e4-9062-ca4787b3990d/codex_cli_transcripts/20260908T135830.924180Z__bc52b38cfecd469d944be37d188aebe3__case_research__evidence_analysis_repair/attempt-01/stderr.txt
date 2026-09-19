@@ -1,0 +1,3 @@
+2026-09-08T13:58:30.999836Z  WARN codex_models_manager::model_info: Unknown model deepseek-v4-flash is used. This will use fallback model metadata.
+2026-09-08T13:58:31.008406Z  WARN codex_models_manager::model_info: Unknown model deepseek-v4-flash is used. This will use fallback model metadata.
+2026-09-08T13:58:31.019008Z  WARN codex_core::client: model_verbosity is set but ignored as the model does not support verbosity: deepseek-v4-flash

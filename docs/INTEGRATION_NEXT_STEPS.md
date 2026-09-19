@@ -38,7 +38,9 @@
 ### 步骤 1：定位修改位置
 
 ```bash
-cd "/Users/wangchen/equipment research"
+# Run this command from the repository root (the checkout directory is
+# intentionally not embedded so the project can be relocated).
+cd .
 ```
 
 打开 `src/equipment_deep_research/agents/provider.py`，找到第 **2197 行**：

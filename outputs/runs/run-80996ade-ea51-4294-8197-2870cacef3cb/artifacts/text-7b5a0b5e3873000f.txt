@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · Force Design
+source_url=https://www.marines.mil/Force-Design/
+claim=Force Design Update 强调精确火力、无人系统、先进机动、韧性指挥控制和数据驱动决策，用以适应 contested environment。
+excerpt=
+retrieval=Hosted web search citation metadata

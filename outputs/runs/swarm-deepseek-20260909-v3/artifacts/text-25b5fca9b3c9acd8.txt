@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · Force Design
+source_url=https://www.marines.mil/Force-Design/
+claim=USMC Force Design公开方向指向更分散、机动、低特征的远征部队结构与有人无人混编能力扩展；本会话未复核具体内容。
+excerpt=
+retrieval=Hosted web search citation metadata

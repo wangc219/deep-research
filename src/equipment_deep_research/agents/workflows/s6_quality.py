@@ -3,19 +3,67 @@
 
 from __future__ import annotations
 
-from equipment_deep_research.agents.workflows import coordinator as _legacy
-from equipment_deep_research.agents.workflows.reporting_support import (
-    _clip_complete_report_phrase,
-)
-from equipment_deep_research.orchestration.capability_portrait import (
-    CAPABILITY_PORTRAIT_MODULES,
-    assemble_capability_portrait_modules,
-    parse_capability_portrait_modules,
+from collections import Counter
+from collections.abc import Mapping, Sequence
+import re
+import sys
+from typing import Any
+
+from equipment_deep_research.agents.dynamic_prompt_resources import (
+    load_dynamic_winning_prompt,
 )
 
-globals().update(
-    {name: value for name, value in vars(_legacy).items() if not name.startswith("__")}
+
+_legacy = None
+_legacy_syncing = False
+
+
+def _sync_legacy_globals() -> None:
+    """Resolve coordinator helpers after this module's definitions exist."""
+
+    global _legacy, _legacy_syncing
+    if _legacy_syncing:
+        return
+    if _legacy is None:
+        _legacy_syncing = True
+        try:
+            from equipment_deep_research.agents.workflows import coordinator
+
+            _legacy = coordinator
+        finally:
+            _legacy_syncing = False
+    if _legacy is not None:
+        globals().update(
+            {
+                name: value
+                for name, value in vars(_legacy).items()
+                if not name.startswith("__")
+            }
+        )
+
+
+def _clip_complete_report_phrase(text: str, maximum: int) -> str:
+    """Lazily use the report editor to avoid the support/coordinator cycle."""
+
+    from equipment_deep_research.agents.workflows.reporting_support import (
+        _clip_complete_report_phrase as _clip,
+    )
+
+    return _clip(text, maximum)
+from equipment_deep_research.domain.capability_portrait import (
+    CAPABILITY_PORTRAIT_MODULES,
+    S6_DEFAULT_CODEX_CONCURRENCY,
+    S6_MAX_CODEX_CONCURRENCY,
+    assemble_capability_portrait_modules,
+    capability_portrait_quality_issues,
+    normalize_capability_classification,
+    parse_capability_portrait_modules,
+    short_capability_portrait_modules,
 )
+from equipment_deep_research.orchestration.capability_confidence import (
+    calibrate_capability_confidence,
+)
+from equipment_deep_research.agents.workflows.shared_context import query_domain_contract
 
 def _normalized_source_title(title: str, url: str) -> str:
     return _legacy._normalized_source_title(title, url)
@@ -832,12 +880,23 @@ def _capability_synthesis_handoff(
         and str(item.get("title", "")).strip()
     }
     raw_selected_portfolio = dynamic_swarm.get("final_equipment_portfolio", [])
+    domain_contract = query_domain_contract(
+        topic,
+        structured_query_brief=(
+            prior_step_outputs.get("structured_query_brief", {})
+            if isinstance(prior_step_outputs.get("structured_query_brief", {}), Mapping)
+            else {}
+        ),
+    )
     selected_portfolio: list[dict[str, Any]] = []
     if isinstance(raw_selected_portfolio, list):
         for item in raw_selected_portfolio:
             if (
                 not isinstance(item, Mapping)
-                or item.get("direct_combat_equipment") is False
+                or (
+                    item.get("direct_combat_equipment") is False
+                    and domain_contract["requires_direct_combat_weapon"]
+                )
                 or not str(item.get("name") or item.get("equipment_form") or "").strip()
             ):
                 continue
@@ -849,7 +908,7 @@ def _capability_synthesis_handoff(
                     "primary_equipment_identity", "target_scenario", "problem_statement",
                     "military_value", "mission_effects", "equipment_forms",
                     "baseline_system", "capability_gap", "direct_evidence_refs",
-                    "evidence_ids", "failure_boundaries", "failure_boundary",
+                    "evidence_ids",
                     "validation_plan", "indicator_portrait", "query_relevance",
                     "capability_classification", "equipment_classification",
                     "equipment_semantic_assessment",
@@ -876,7 +935,6 @@ def _capability_synthesis_handoff(
                 "military_value",
                 "baseline_system",
                 "capability_gap",
-                "failure_boundary",
                 "indicator_portrait",
                 "query_relevance",
                 "concise_winning_summary",
@@ -903,7 +961,6 @@ def _capability_synthesis_handoff(
                         projected[field] = cleaned_value
             for field in (
                 "mission_effects",
-                "failure_boundaries",
                 "validation_plan",
             ):
                 if isinstance(projected.get(field), list):
@@ -954,14 +1011,25 @@ def _capability_synthesis_handoff(
         ),
         "high_value_capability_gaps": gaps,
         "equipment_portfolio_preflight": preflight_rows,
+        "query_domain_contract": domain_contract,
         "support_layer_constraint": (
-            "上游支撑性方案名称和既有解决方案已剔除；不得把非直接作战效应事项单列为最终方向。"
+            "上游支撑性方案名称和既有解决方案已剔除；不得把非Query主体事项单列为最终方向。"
+            if domain_contract["requires_direct_combat_weapon"]
+            else "检测/感知/保障装备可以独立成项，但通信、算法或治理节点不能冒充装备本体。"
         ),
-        "mission_effect_escalation_questions": [
-            "该能力最终使哪类现役武器、侦察、指挥或效应平台获得新的目标发现、火力分配、突防、拦截、毁伤或再打击能力？",
-            "相较只维持通信与任务连续性，它新增了什么可改变打击、歼灭、反制、拒止或威慑结果的制胜机制？",
-            "若无法证明直接作战增益，是否应合并为横向支撑层而不是独立能力方向？",
-        ],
+        "mission_effect_escalation_questions": (
+            [
+                "该能力最终使哪类现役武器、侦察、指挥或效应平台获得新的目标发现、火力分配、突防、拦截、毁伤或再打击能力？",
+                "相较只维持通信与任务连续性，它新增了什么可改变打击、歼灭、反制、拒止或威慑结果的制胜机制？",
+                "若无法证明直接作战增益，是否应合并为横向支撑层而不是独立能力方向？",
+            ]
+            if domain_contract["requires_direct_combat_weapon"]
+            else [
+                "该装备本体直接形成哪一种可验收的发现、识别、定位、跟踪、测量或诊断效果？",
+                "它的传感器、机动平台和现场流程如何共同应对Query中的环境约束？",
+                "若证据只支持通用技术，哪些内容必须明确标为待验证假设？",
+            ]
+        ),
         "public_evidence": evidence,
         # In dynamic mode this is the authoritative, expert-reviewed weapon
         # portfolio. S6 authors one card per row rather than replanning it to a
@@ -977,11 +1045,14 @@ def _capability_synthesis_handoff(
         "s6_parallelism": max(
             1,
             min(
-                6,
+                S6_MAX_CODEX_CONCURRENCY,
                 int(
                     s6_parallelism
                     if s6_parallelism is not None
-                    else os.environ.get("EQUIPMENT_DR_S6_CODEX_CONCURRENCY", "6")
+                    else os.environ.get(
+                        "EQUIPMENT_DR_S6_CODEX_CONCURRENCY",
+                        str(S6_DEFAULT_CODEX_CONCURRENCY),
+                    )
                 ),
             ),
         ),
@@ -992,6 +1063,11 @@ def _s6_card_is_reusable(direction: Mapping[str, Any]) -> bool:
     """Whether a persisted direction is a completed S6 card, not an S5 brief."""
 
     portrait = str(direction.get("capability_portrait", "") or "").strip()
+    portrait_modules = direction.get("capability_portrait_modules", {})
+    if not isinstance(portrait_modules, Mapping):
+        portrait_modules = parse_capability_portrait_modules(portrait)
+    else:
+        portrait_modules = dict(portrait_modules)
     process = direction.get("operational_process", [])
     consistency = direction.get("semantic_consistency_check", {})
     consistent = (
@@ -1001,12 +1077,27 @@ def _s6_card_is_reusable(direction: Mapping[str, Any]) -> bool:
     )
     return bool(
         str(direction.get("name", "")).strip()
-        and direction.get("s6_authoring_status") != "limited_provider_failure"
-        and len(parse_capability_portrait_modules(portrait))
-        == len(CAPABILITY_PORTRAIT_MODULES)
+        and direction.get("s6_authoring_status")
+        not in {
+            "limited_provider_failure",
+            "authored_fallback_from_frozen_selection",
+            "authored_quality_limited",
+        }
+        and len(portrait_modules) >= len(CAPABILITY_PORTRAIT_MODULES)
+        # A concise, semantically closed module is reusable; length alone must
+        # never force a card back through a mechanical filler pass.
         and isinstance(process, list)
         and len([item for item in process if str(item).strip()]) >= 2
         and consistent
+    )
+
+
+def _s6_markdown_authoring_contract() -> str:
+    """Inject the authoritative S6 writing contract from Markdown sections."""
+
+    return "\n".join(
+        load_dynamic_winning_prompt("S6", section=section)
+        for section in ("system", "S6_1", "S6_2", "S6_3", "S6_4", "S6_5")
     )
 
 
@@ -1141,21 +1232,21 @@ def _s6_first_pass_quality_contract(
         "per_card_submission_check": [
             "标题由S3提出、S4装备化收敛并由S5冻结；S6必须逐字继承，不得清理、压缩、扩写、同义替换、换装或由公开基线反向改名",
             "每卡只允许一个主装备族；不同平台、直接效应和任务边界不得压成同一方向",
-            "先锁定primary_equipment_identity，再让项目功能、装备形态、运用主体、发射/释放域、完整operational_process、目标对象、直接战果、画像和失效边界全部围绕同一主装备；流程步数由该装备真实交战逻辑决定，不得由本地关键词模板代写流程",
+            "先锁定primary_equipment_identity，再让项目功能、装备形态、运用主体、发射/释放域、完整operational_process、目标对象、直接战果和画像全部围绕同一主装备；流程步数由该装备真实交战逻辑决定，不得由本地关键词模板代写流程",
             "提交前完成semantic_consistency_check：逐字段复核主语、平台/弹体/载荷边界、发射域、目标与毁伤方式；载荷不得无说明替代母平台或发射装置，公开基线不得擅自改变方案发射域，防御装备不得串入进攻察打流程；consistent必须是JSON布尔值true而不是字符串",
             "公开型号只作为baseline_system证据锚点；可见标题必须使用S3已给出命名论证的Query专属新质武器名称，不得由公开基线反向生成或覆盖",
             "direct_evidence_refs、foresight_evidence_status与evidence_boundary属于推荐追溯信息：有则按卡片用途填写，"
             "无公开证据时不得因此阻断前瞻new_capability；现役升级或声称公开型号既有能力时仍不得把未经证实的属性写成事实，"
             "应明确不确定性并安排后续验证",
             "confidence必须按对象证据直接性、来源质量和工程推导跨度逐卡给出，禁止整组机械同值；前瞻新质方向允许较低置信度，低置信度本身不是失败原因",
-            "能力画像是区别于完整报告的决策短卡，并在本次单装备Codex调用内直接成稿；五个结构化模块各回答一个问题：概述给关键断点、核心改变和直接结果，技术实现给决定性机理及装备内实现，流程只给改变任务状态的专属动作，能力效果给直接战果与判别信号，制胜逻辑给被颠覆的常规关系及新优势。没有最低字数、固定句数或关键词清单，不得先写长文再压缩；由Codex语义编辑避免跨栏复述",
+            _s6_markdown_authoring_contract(),
+            "五栏内容职责是首轮模型的写作与静默审校指南，不是关键词命中、固定句式、栏目枚举或本地语义验收门；未命中某个示例词不得阻断、删除或降级入选卡，语义诊断只记录告警或触发一次可回退增强",
             "能力画像开头显示能力分类；主维度按本卡最主要可验收战果自然确定，可为毁伤、突防或Query驱动的其他维度，辅维度只在改变设计判断时保留，不按示例凑类",
-            "关键作战流程突出决定成败的节点及其进入条件、行动主体、状态变化和转入下一节点的条件；技术实现说明可复用底座、决定性瓶颈、装备内实现、集成约束与可判退验证，不以通用流程或成熟度标签代替推理",
             "面向一线设计人员使用通俗、准确中文；必要术语首次写全称，避免生僻造词、无解释缩写、字段拼接和跨栏重复",
             "baseline_system为该卡独有的现役或类比装备基线",
             "capability_gap为该卡独有且与query相关的能力差距",
             "query_relevance明确任务对象、阶段、压力和直接效果",
-            "indicator_portrait与query_relevance由S5交接门闭合并锁定；S6逐字继承，不重新生成、不补洞",
+            "非动态兼容流程的indicator_portrait与query_relevance由S5交接门闭合并锁定；动态并发写卡由S6依据本卡机理独立形成indicator_portrait，query_relevance仍逐字继承",
             "卡片间标题、基线、差距和作战机理不套用同一模板",
             "每卡必须声明且兑现一个不可由其他卡替代的差异变量，至少明确发射域/平台、目标运动包线、末制导传感器、授权来源、补击时序和专属验证指标中的两项；禁止用同一目标、同一再捕获机理和同一战果重复占位，无法独立验收时合并或替换该卡",
             "逐卡自检后执行组合级语义复核，比较全部卡片的主装备、发射域、目标、作用机理和验证指标；实质重复项必须在首次提交前合并或替换，不得依赖后置去重或卡片修复",
@@ -1165,8 +1256,8 @@ def _s6_first_pass_quality_contract(
             "maximum_targeted_repair_passes": 1,
             "repair_scope": "failed_portrait_modules_only_identity_locked",
             "card_scope": (
-                "每卡只写一个具体战场问题、一条装备专属交战链、直接战果、"
-                "2至5个专属验证轴和必要失效边界；不复述完整上游研究过程"
+                "每卡围绕具体战场问题和装备专属交战机理形成闭合判断；"
+                "验证画像的内容与规模由该装备真正需要证伪的假设决定，不复述完整上游研究过程"
             ),
         },
     }
@@ -1200,10 +1291,70 @@ def _s6_primary_equipment_object_kind(value: Any) -> str:
 
 
 def _s6_primary_equipment_identity_mismatch(direction: Mapping[str, Any]) -> bool:
-    """Semantic mismatch is decided by ``semantic_consistency_check``."""
+    """Return the model-independent identity mismatch flag when present."""
 
-    del direction
-    return False
+    check = direction.get("semantic_consistency_check")
+    return isinstance(check, Mapping) and check.get("consistent") is False
+
+
+def _s6_cross_card_identity_issues(
+    direction: Mapping[str, Any],
+    sibling_cards: Sequence[Any] = (),
+) -> list[str]:
+    """Detect prose from a different portfolio item after identity rebinding.
+
+    S6 is allowed to author prose, but it is not allowed to silently change the
+    equipment object.  This check deliberately uses exact, model-supplied
+    identity strings only; it never infers a weapon family from keywords.
+    """
+
+    def aliases(card: Mapping[str, Any]) -> set[str]:
+        values = {
+            str(card.get(field, "") or "").strip()
+            for field in (
+                "name",
+                "primary_equipment_identity",
+                "equipment_form",
+                "source_hypothesis_title",
+            )
+        }
+        return {value for value in values if len(value) >= 4}
+
+    own = aliases(direction)
+    if not own:
+        return []
+    prose = " ".join(
+        str(direction.get(field, "") or "")
+        for field in (
+            "capability_portrait",
+            "deep_capability_portrait",
+            "capability_image",
+            "operational_mechanism",
+            "operational_process",
+            "capability_outcome",
+            "military_value",
+            "winning_mechanism",
+        )
+    )
+    if not prose.strip():
+        return []
+    own_present = any(alias in prose for alias in own)
+    issues: list[str] = []
+    for sibling in sibling_cards:
+        if not isinstance(sibling, Mapping):
+            continue
+        sibling_aliases = aliases(sibling) - own
+        for alias in sorted(sibling_aliases, key=len, reverse=True):
+            occurrences = prose.count(alias)
+            sibling_name = str(sibling.get("name", "") or "").strip()
+            # A sibling's exact frozen title is a strong contamination signal;
+            # accept it only when the card also explicitly names its own
+            # identity (e.g. a comparison sentence).
+            strong_name_hit = bool(sibling_name and alias == sibling_name)
+            if occurrences and (not own_present or strong_name_hit):
+                issues.append(f"画像正文疑似串入其他候选装备“{alias}”")
+                break
+    return issues
 
 
 def _build_direction_capability_portrait(
@@ -1243,11 +1394,6 @@ def _build_direction_capability_portrait(
         or direction.get("equipment_category"),
         baseline=direction.get("baseline_system") or direction.get("equipment_form"),
         development_path=direction.get("development_path"),
-        failure_boundary=[
-            direction.get("adversary_adaptation", ""),
-            direction.get("failure_boundary", ""),
-            direction.get("upgrade_boundary", ""),
-        ],
         verification_plan=direction.get("verification")
         or direction.get("feasibility_basis"),
     )
@@ -1291,7 +1437,6 @@ def _normalize_s6_deterministic_format(
         "development_path",
         "future_trigger",
         "adversary_adaptation",
-        "failure_boundary",
         "query_relevance",
         "baseline_system",
         "capability_gap",
@@ -1306,6 +1451,9 @@ def _normalize_s6_deterministic_format(
             directions.append(raw_direction)
             continue
         direction = dict(raw_direction)
+        direction["capability_classification"] = normalize_capability_classification(
+            direction.get("capability_classification", {})
+        )
         portrait_modules = direction.get("capability_portrait_modules", {})
         if isinstance(portrait_modules, Mapping):
             portrait_modules = dict(portrait_modules)
@@ -1399,55 +1547,25 @@ def _normalize_s6_deterministic_format(
                 )
             ][:6]
 
-        # Confidence is a card-level evidence calibration, not prose that
-        # warrants another model call.  Some gateways omit the nested numeric
-        # field even when the portfolio-level confidence and all evidence refs
-        # are present.  Derive only missing/invalid values from observable card
-        # facts: direct evidence count, object-level equipment evidence,
-        # implementation span, and explicit validation bounds.
-        # Existing valid model-authored confidences remain authoritative.
+        # Confidence is always recalibrated at card level.  The previous
+        # missing-value-only fallback inherited the same portfolio prior for
+        # every card, which made otherwise different weapons all display 58%.
+        # Keep the authored numeric judgement as a prior, then combine it with
+        # this card's evidence fit, use scene and forward-looking verifiability.
         try:
             direction_confidence = float(direction.get("confidence"))
         except (TypeError, ValueError):
-            direction_confidence = -1.0
-        if not 0.0 <= direction_confidence <= 1.0:
-            direct_refs = list(
-                dict.fromkeys(
-                    str(ref).strip()
-                    for ref in direction.get("direct_evidence_refs", [])
-                    if str(ref).strip()
-                )
-            )
-            evidence_gain = 0.02 * min(4, len(direct_refs))
-            object_gain = (
-                0.03
-                if any(ref.startswith("ev-weapon_equipment-") for ref in direct_refs)
-                else 0.0
-            )
-            implementation_adjustment = (
-                0.01 if str(direction.get("type", "")) == "upgrade" else -0.02
-            )
-            validation_gain = (
-                0.01
-                if str(direction.get("verification", "")).strip()
-                and str(direction.get("failure_boundary", "")).strip()
-                else 0.0
-            )
-            direction["confidence"] = round(
-                max(
-                    0.55,
-                    min(
-                        0.86,
-                        portfolio_confidence
-                        - 0.08
-                        + evidence_gain
-                        + object_gain
-                        + implementation_adjustment
-                        + validation_gain,
-                    ),
-                ),
-                3,
-            )
+            direction_confidence = portfolio_confidence
+        confidence, confidence_components = calibrate_capability_confidence(
+            direction,
+            prior=(
+                direction_confidence
+                if 0.0 <= direction_confidence <= 1.0
+                else portfolio_confidence
+            ),
+        )
+        direction["confidence"] = confidence
+        direction["confidence_components"] = confidence_components
 
         portrait = str(direction.get("capability_portrait", "")).strip()
         if portrait and portrait[-1] not in "。！？；”’」』）)":
@@ -1754,6 +1872,13 @@ def _capability_direction_quality_issues(
             issues.append(f"S6第{position}项缺少0至1之间的独立confidence")
 
         issues.extend(_capability_portrait_alignment_issues(position, direction))
+        portrait_modules = direction.get("capability_portrait_modules", {})
+        if not isinstance(portrait_modules, Mapping):
+            portrait_modules = parse_capability_portrait_modules(
+                direction.get("capability_portrait", "")
+            )
+        for portrait_issue in capability_portrait_quality_issues(portrait_modules):
+            issues.append(f"S6第{position}项{portrait_issue}")
         issues.extend(
             _capability_language_issues(
                 position,
@@ -1826,7 +1951,15 @@ def _capability_direction_quality_issues(
 
 
 def _s6_delivery_blocking_issues(issues: Sequence[Any]) -> list[str]:
-    """Keep deterministic S6 prose diagnostics advisory at delivery time."""
+    """Keep deterministic prose diagnostics advisory at delivery time.
+
+    Portfolio admission and weapon identity are frozen before S6.  Local
+    length, repetition and writing-density heuristics are useful for choosing
+    a bounded card-local edit, but they are not reliable enough to delete an
+    admitted weapon or fail the entire release.  Structural provider failures
+    are handled transactionally by the parallel authoring workflow instead of
+    being smuggled into this prose-quality classifier.
+    """
 
     del issues
     return []
@@ -1858,7 +1991,7 @@ def _s6_release_gate_state(
     blocking_issues: Sequence[Any],
     nonblocking_warnings: Sequence[Any],
 ) -> dict[str, Any]:
-    """Build a release state in which local diagnostics are advisory only."""
+    """Build a release state where local S6 diagnostics remain advisory."""
 
     warnings = list(
         dict.fromkeys(
@@ -2195,6 +2328,7 @@ def _s6_portfolio_confidence(
 
 
 _S6_AUTHORED_EXPOSITION_FIELDS = (
+    "card_binding_id",
     "function",
     "project_function",
     "feasibility",
@@ -2218,7 +2352,6 @@ _S6_AUTHORED_EXPOSITION_FIELDS = (
     "development_path",
     "future_trigger",
     "adversary_adaptation",
-    "failure_boundary",
     "capability_gap",
     "upgrade_package",
     "combat_effect_uplift",
@@ -2226,7 +2359,13 @@ _S6_AUTHORED_EXPOSITION_FIELDS = (
     "upgrade_boundary",
     "capability_portrait",
     "capability_portrait_modules",
+    "portrait_module_character_counts",
+    "portrait_quality_contract_version",
+    "s6_authoring_quality_warnings",
+    "system_contribution_thesis",
+    "indicator_portrait",
     "confidence",
+    "confidence_components",
 )
 
 
@@ -2245,8 +2384,9 @@ def _merge_dynamic_portfolio_with_s6_authored_cards(
 
     The swarm owns which independently reviewed weapons reach S6.  The S6
     Codex sessions own each selected weapon's battlefield scene, operational
-    sequence and capability portrait. Indicator and Query-relevance contracts
-    remain owned by the pre-S6 S5 handoff. A
+    sequence, capability portrait, report contribution thesis and indicator
+    portrait. Query relevance and frozen identity remain owned by the pre-S6
+    handoff. A
     deterministic portfolio projection must never overwrite those authored
     fields after the expensive S6 calls have completed.
     """
@@ -2263,25 +2403,79 @@ def _merge_dynamic_portfolio_with_s6_authored_cards(
         hypothesis_id = str(base.get("hypothesis_id", "")).strip()
         authored_card = authored_by_id.get(hypothesis_id)
         if authored_card is None and position < len(authored):
-            authored_card = authored[position]
+            positional = authored[position]
+            positional_id = str(positional.get("hypothesis_id", "")).strip()
+            # Positional fallback is only safe for legacy cards with no ID;
+            # never bind a known different candidate merely because a worker
+            # completed out of order.
+            if not positional_id or not hypothesis_id or positional_id == hypothesis_id:
+                authored_card = positional
+        # A failed S6 call still has a deterministic frozen-selection fallback
+        # card. Only a truly missing card is omitted; an admitted weapon must
+        # not disappear because a prose provider or quality enhancement timed
+        # out.
+        if authored_card is None:
+            continue
+        identity_conflicts = []
+        for field_name in (
+            "primary_equipment_identity",
+            "equipment_form",
+            "source_hypothesis_title",
+        ):
+            base_value = str(base.get(field_name, "") or "").strip()
+            authored_value = str(authored_card.get(field_name, "") or "").strip()
+            if base_value and authored_value and base_value != authored_value:
+                identity_conflicts.append(field_name)
+        if identity_conflicts:
+            continue
+        base_binding = str(base.get("card_binding_id", "") or "").strip()
+        authored_binding = str(authored_card.get("card_binding_id", "") or "").strip()
+        if base_binding and authored_binding != base_binding:
+            continue
+        identity_issues = _s6_cross_card_identity_issues(
+            authored_card,
+            selected,
+        )
+        if identity_issues:
+            # Defense in depth for persisted checkpoints and alternate S6
+            # producers.  The primary gate runs immediately after each
+            # parallel card returns, before caching and portfolio merge.
+            continue
         merged = dict(base)
-        if authored_card is not None:
-            base_name = str(base.get("name", "")).strip()
-            authored_name = str(authored_card.get("name", "")).strip()
-            if (
-                authored_name
-                and _s6_weapon_title_is_descriptive_sentence(base_name)
-                and not _s6_weapon_title_is_descriptive_sentence(authored_name)
-            ):
-                # The swarm still owns the selected equipment object, while S6
-                # may remove a loadout sentence from its visible title.  All
-                # identity, form, target and evidence fields remain frozen.
-                merged["name"] = authored_name
-            for field_name in _S6_AUTHORED_EXPOSITION_FIELDS:
-                value = authored_card.get(field_name)
-                if value not in (None, "", []):
-                    merged[field_name] = value
+        base_name = str(base.get("name", "")).strip()
+        authored_name = str(authored_card.get("name", "")).strip()
+        if (
+            authored_name
+            and _s6_weapon_title_is_descriptive_sentence(base_name)
+            and not _s6_weapon_title_is_descriptive_sentence(authored_name)
+        ):
+            # The swarm still owns the selected equipment object, while S6
+            # may remove a loadout sentence from its visible title.  All
+            # identity, form, target and evidence fields remain frozen.
+            merged["name"] = authored_name
+        for field_name in _S6_AUTHORED_EXPOSITION_FIELDS:
+            value = authored_card.get(field_name)
+            if value not in (None, "", []):
+                merged[field_name] = value
+        authored_binding = str(authored_card.get("card_binding_id", "") or "").strip()
+        if authored_binding:
+            merged["card_binding_id"] = authored_binding
+        if not merged.get("evidence_ids") and merged.get("direct_evidence_refs"):
+            merged["evidence_ids"] = list(merged["direct_evidence_refs"])
+        merged["s6_authoring_status"] = str(
+            authored_card.get(
+                "s6_authoring_status", "authored_semantically_consistent"
+            )
+        )
         merged_rows.append(merged)
     return merged_rows
 
-__all__ = ['_equipment_semantic_assessment', '_has_combat_effect_signal', '_has_high_order_combat_value', '_is_ordinary_support_direction', '_direction_name_has_equipment_object', '_is_ancillary_support_equipment_direction', '_query_explicitly_requests_support_equipment', '_weapon_equipment_identity', '_equipment_direction_categories', '_is_unmanned_combat_equipment_direction', '_is_lethal_weapon_equipment_direction', '_is_missile_precision_munition_direction', '_dedupe_capability_title', '_s6_title_requires_structural_repair', '_capability_title_equipment_anchor', '_capability_upgrade_effect_anchor', '_compact_capability_direction_title', '_uniquify_compacted_capability_titles', '_capability_portrait_alignment_issues', '_capability_language_issues', '_collect_reference_ids', '_normalize_effect_chain_references', '_normalize_concept_direction_priorities', '_normalize_priority_references', '_prioritized_evidence_index', '_compact_s6_prior_outputs', '_evidence_boundary_is_public_semantic', '_query_relevance_issues', '_truncate_complete_text', '_clean_capability_handoff_text', '_capability_handoff_statement', '_capability_synthesis_handoff', '_s6_card_is_reusable', '_s6_first_pass_quality_contract', '_capability_text_similarity', '_capability_primary_equipment_family', '_s6_primary_equipment_object_kind', '_s6_primary_equipment_identity_mismatch', '_build_direction_capability_portrait', '_normalize_s6_deterministic_format', '_equipment_form_identity_text', '_direction_is_defensive_only', '_s6_frontier_evidence_allowance', '_indicator_portrait_is_specific', '_query_relevance_is_specific', '_prepare_pre_s6_card_contract', '_capability_direction_quality_issues', '_s6_delivery_blocking_issues', '_s6_portrait_repair_issues', '_s6_release_gate_state', '_recover_invalid_s6_result', '_requires_s6_combat_value_rewrite', '_s6_repair_targets', '_s6_portrait_module_repair_targets', '_s6_can_use_lightweight_card_repair', '_merge_s6_direction_repairs', '_merge_s6_portrait_module_repairs', '_s6_portfolio_confidence', '_s6_weapon_title_is_descriptive_sentence', '_merge_dynamic_portfolio_with_s6_authored_cards']
+
+# Complete the two-way workflow binding only after every S6 helper is defined.
+# When this module is imported directly, coordinator may have observed a
+# partial module and skipped its first binding attempt.
+_sync_legacy_globals()
+if _legacy is not None:
+    _legacy._bind_s6_quality_helpers(sys.modules[__name__])
+
+__all__ = ['_equipment_semantic_assessment', '_has_combat_effect_signal', '_has_high_order_combat_value', '_is_ordinary_support_direction', '_direction_name_has_equipment_object', '_is_ancillary_support_equipment_direction', '_query_explicitly_requests_support_equipment', '_weapon_equipment_identity', '_equipment_direction_categories', '_is_unmanned_combat_equipment_direction', '_is_lethal_weapon_equipment_direction', '_is_missile_precision_munition_direction', '_dedupe_capability_title', '_s6_title_requires_structural_repair', '_capability_title_equipment_anchor', '_capability_upgrade_effect_anchor', '_compact_capability_direction_title', '_uniquify_compacted_capability_titles', '_capability_portrait_alignment_issues', '_capability_language_issues', '_collect_reference_ids', '_normalize_effect_chain_references', '_normalize_concept_direction_priorities', '_normalize_priority_references', '_prioritized_evidence_index', '_compact_s6_prior_outputs', '_evidence_boundary_is_public_semantic', '_query_relevance_issues', '_truncate_complete_text', '_clean_capability_handoff_text', '_capability_handoff_statement', '_capability_synthesis_handoff', '_s6_card_is_reusable', '_s6_first_pass_quality_contract', '_capability_text_similarity', '_capability_primary_equipment_family', '_s6_primary_equipment_object_kind', '_s6_primary_equipment_identity_mismatch', '_s6_cross_card_identity_issues', '_build_direction_capability_portrait', '_normalize_s6_deterministic_format', '_equipment_form_identity_text', '_direction_is_defensive_only', '_s6_frontier_evidence_allowance', '_indicator_portrait_is_specific', '_query_relevance_is_specific', '_prepare_pre_s6_card_contract', '_capability_direction_quality_issues', '_s6_delivery_blocking_issues', '_s6_portrait_repair_issues', '_s6_release_gate_state', '_recover_invalid_s6_result', '_requires_s6_combat_value_rewrite', '_s6_repair_targets', '_s6_portrait_module_repair_targets', '_s6_can_use_lightweight_card_repair', '_merge_s6_direction_repairs', '_merge_s6_portrait_module_repairs', '_s6_portfolio_confidence', '_s6_weapon_title_is_descriptive_sentence', '_merge_dynamic_portfolio_with_s6_authored_cards']

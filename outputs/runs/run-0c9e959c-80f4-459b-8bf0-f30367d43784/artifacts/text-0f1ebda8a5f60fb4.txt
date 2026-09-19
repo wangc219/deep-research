@@ -1,0 +1,362 @@
+Title: Force Design
+
+URL Source: http://www.marines.mil/Force-Design/
+
+Markdown Content:
+### Force Design Update - October 2025
+
+_**First to Fight—Our Nation’s Expeditionary Force in Readiness**_
+
+_**The Marine Corps is a globally responsive, lethal, and resilient combined-arms naval expeditionary force that projects power from sea to land and land to sea, fighting as a Marine Air Ground Task Force across all domains in contested environments to deter, deny, and defeat adversaries. Marines conduct sea-denial 1, contribute to sea control 2, and conduct amphibious operations to deny adversary freedom of action, while extending Joint Force commanders’ operational reach. Modernized forward forces, optimized to operate in the littorals, seize and hold key maritime terrain to deliver lethal effects, sense and shape the operating environment, and close kill webs in support of fleet maneuver and joint campaigns.**_
+
+#### 1. Introduction
+
+The Marine Corps is a naval expeditionary warfighting organization. We exist for one purpose: to fight and win our Nation’s battles. That truth has not changed since 1775, and it remains the measure of our relevance today.
+
+We are modernizing at a time when the character of war is shifting rapidly. Adversaries are fielding advanced weapons and employing new methods designed to erode our warfighting advantages. Drones, long-range precision fires, cyber effects, and electronic warfare are now daily features of conflict. The lessons drawn from contemporary battlefields underscore what Marines have long understood: combat is unforgiving, and victory belongs to the side that adapts faster, fights harder, and endures longer.
+
+Force Design is how we ensure our Corps stays ahead of this change and is driven by a continuous Campaign of Learning tested in wargames, refined in exercises, and proven in real-world operations. We are equipping Marines with the tools to thrive in contested environments: precision fires, unmanned systems, advanced mobility, resilient command and control, and data-driven decision-making. Yet technology alone will never define us. While the character of war evolves, its nature endures, and our ethos remains aligned to that truth. We do not man the equipment, we equip the Marine. Discipline, toughness, and initiative will always remain the decisive factors in battle.
+
+Our enduring strength remains the Marine Air-Ground Task Force (MAGTF). MAGTFs are balanced, multi-domain naval expeditionary formations under one commander, rapidly tailored to purpose and scalable to meet any threat. Whether a Marine Expeditionary Unit (MEU), Marine Expeditionary Brigade (MEB), or Marine Expeditionary Force (MEF), they give our Nation flexible options and a proven system of warfighting that will endure. In combat, Marines will fight as part of a Joint and Combined Force, and our ability to plug into that structure, while bringing unique naval expeditionary capabilities, is vital to prevailing against a peer adversary.
+
+This update provides a candid account of where we are at with Force Design and where we are going in the future. It highlights progress across formations, capabilities, and concepts, while acknowledging that modernization is a continuous process of refinement. Force Design remains the Marine Corps’ strategic priority, and we must continue to accelerate at pace. The American people trust that when conflict comes, Marines will be first to fight and certain to win. That trust was earned over generations. It is now ours to protect, and we will.
+
+Semper Fidelis!
+
+![Image 1](http://www.marines.mil/portals/1/Images/Force-Design/CMC-39-Signature.png?ver=A-FNjZPc1a9XF9fxYM1vaw%3d%3d)
+
+Eric M. Smith
+
+ General, U.S. Marine Corps
+
+ Commandant of the Marine Corps
+
+* * *
+
+1 Sea denial:Partially or completely denying the adversary the use of the sea
+
+2 Sea control is the condition in which one has freedom of action to use the sea for one’s own purposes in specified areas and for specified periods of time and, where necessary, to deny or limit its use to the enemy.
+
+([Return to top](http://www.marines.mil/Force-Design/#top1))
+
+#### 2. Force Design In Review
+
+The Marine Corps is in the implementation phase of Force Design, integrating new technology, refining organizational structure, and strengthening naval and Joint Forces. These efforts ensure that Marines across the MAGTF are lethal, survivable, and resilient. While there is more work to be done, it is worthwhile to highlight progress since the release of my planning guidance in August 2024.
+
+![Image 2](http://www.marines.mil/portals/1/Images/Force-Design/Photo29.jpg?ver=ADJwy5-66ysBFyXqJjS0sg%3d%3d)
+
+([Return to top](http://www.marines.mil/Force-Design/#top2))
+
+#### 2.1 Marine Corps Achievements
+
+_**The Marine Corps is a globally responsive, lethal, combined-arms naval expeditionary force that projects power from sea to land and land to sea.**_
+
+###### **OPERATIONS, ACTIVITIES, INVESTMENTS.**
+
+The strength of Force Design is measured in execution. Our MEFs are not only integrating new capabilities into daily operations, they are proving them in large-scale exercises with allies and partners. These events sharpen readiness, validate emerging concepts, and accelerate the transition of new systems from experimentation to operational use.
+
+*   **BALIKATAN 25.** I MEF executed a Joint Task Force certification that incorporated live forces and events into a live, virtual, and constructive (LVC) exercise. This exercise spanned multiple domains to experiment with deploying low-signature, lightweight naval expeditionary formations to test sensing capabilities and rehearse securing and defending key maritime terrain. This event helped to enhance interoperability between the Marine Corps, Japan Self-Defense Forces (JSDF), and the Armed Forces of the Philippines. For the first time, 3d Marine Littoral Regiment (MLR) integrated the Navy-Marine Expeditionary Ship Interdiction System (NMESIS), Marine Air Defense Integrated System (MADIS), and AN/TPS-80 Ground/ Air Task-Oriented Radar (G/ATOR) into this exercise, all within the First Island Chain.
+
+*   **KAMANDAG 9 AND TALISMAN SABRE 25.** I MEF and III MEF participation in KAMANDAG 9 and TALISMAN SABRE 25 showcased multimodal and mobile command and control and synchronized precision fires across contested terrain. This effort advanced the Marine Corps’ ability to fuse intelligence and operations for faster and more precise target engagement. These exercises also improved combat readiness and strengthened alliances between the U.S., Japan, Australia, Republic of Korea, and the United Kingdom Armed Forces.
+
+*   **RESOLUTE DRAGON 25.** III MEF and the JSDF rehearsed Expeditionary Advanced Basing Operations (EABO) and cross-domain operations to close kill webs in defense of key maritime terrain. RESOLUTE DRAGON 25 is III MEF’s premier bilateral exercise with the JSDF across Japan, including the Southwest Islands.
+
+*   **ATLANTIC ALLIANCE 25.** II MEF and 2d Fleet exercised distributed littoral warfare in a contested environment, advancing amphibious capabilities in support of naval maneuver. Marines employed robust, integrated all-domain awareness capabilities and EABO alongside Dutch, Canadian, and United Kingdom forces both afloat and ashore. This event was the largest amphibious exercise in the Western Atlantic in over a decade.
+
+*   **NORTHERN EDGE, STEEL KNIGHT, BOLD QUEST, ISLAND MARAUDER, AND PROJECT CONVERGENCE.** Participation in these exercises advanced our ability to create joint and combined kill webs by linking sensors to shooters and fusing operations and intelligence at every participating echelon. These events demonstrated resilient networks and processing tools that integrate national, commercial, theater, and tactical feeds to strengthen maritime domain awareness at the tactical edge. Prototypes in multiple form factors now support highly mobile, dispersed units in denied and degraded environments. We are pushing these capabilities forward so Marines can ingest, process, and share what they sense with the Joint Force.
+
+###### **FORCE STRUCTURE.**
+
+The Marine Corps is adapting to ensure our force is properly organized, and manned to meet strategic intent. Guided by the National Defense Strategy, we are refining our force structure to strengthen the Stand-in-Force (SIF), posture Marines for naval expeditionary operations, and ensure our units remain capable of deterring and defeating peer adversaries in the First Island Chain. These changes are driven by lessons from the Campaign of Learning and reflect the need for formations that are agile, resilient, and lethal, with the ability to persist forward and impose cost on any adversary.
+
+*   **MARINE LITTORAL REGIMENTS.** We established two MLRs in III MEF—3d MLR and 12th MLR. 3d MLR achieved Initial Operating Capability (IOC) in December 2023, and 12th MLR is projected to achieve IOC in 2026. MLRs are specialized and purpose-built regiments designed for distributed operations that integrate advanced command, control, communications, computers, cyber, intelligence, surveillance, and reconnaissance (C5ISR) capabilities. These regiments enhance the Joint Force’s ability to find, fix, track, target, engage, and assess (F2T2EA) threats rapidly from key maritime terrain in support of a naval campaign.
+
+    *   **4TH MARINE REGIMENT.**4th Marine Regiment will be retained in III MEF as a reinforced Marine Infantry Regiment, preserving its core mission while preparing to respond to potential crisis and conflict. We determined through the Campaign of Learning that two MLRs and one reinforced Marine Infantry Regiment in III MEF is the optimal force composition to meet III MEF’s missions and objectives. The Marine Corps will provide previously programmed MLR-associated equipment and personnel to III MEF to be task organized in support of the commander’s objectives.
+
+*   **MARINE EXPEDITIONARY UNITS.** Just as our MLRs are being equipped with NMESIS, MADIS, resilient command and control, unmanned systems, and advanced sensing networks, those same capabilities are now being fielded across the MEUs. This modernization strengthens the MEU’s role as a versatile, multi-domain naval expeditionary force from the sea, able to project power, seize and hold key maritime terrain, sense and make sense of the operating environment, integrate with the fleet, and directly contribute to joint kill webs. Recent deployments by the 15th, 24th, and 31st MEUs have showcased the enhanced capabilities of the MEU.
+
+*   **INFANTRY BATTALIONS.** The Marine Corps has made two in-stride adjustments to the Infantry Battalion’s structure based on feedback from the Fleet Marine Force (FMF) and observations gathered through the Campaign of Learning. Further informed by our Marine Corps Warfighting Laboratory (MCWL) led Infantry Battalion Experimentation (IBX) efforts, over the next year we will recommend further changes that preserve our infantry battalions’ combat advantage as the character of war evolves.
+
+    *   **FIRES AND RECONNAISSANCE COMPANY.** We directed the establishment of a Fires and Reconnaissance company that enables the integration of manned and unmanned intelligence, surveillance, reconnaissance (ISR) assets with organic fires capabilities.
+
+    *   **INFANTRY SQUAD.** We made the decision to return to the 13-Marine rifle squad, three fire teams led by a school-trained Sergeant with an added precision fires Marine to operate our small lethal drones.
+
+###### **CAPABILITIES, PLATFORMS, AND SYSTEMS.**
+
+The changing character of war demands new tools and we have begun fielding capabilities that ensure Marines remain lethal, resilient, and adaptable in contested environments. From long-range fires and unmanned systems to advanced sensing networks and resilient air defense, these capabilities are already in the hands of Marines across the MAGTF. We will continue to increase their capacity and refine their employment so that the force is ready to deter, deny, and, when required, defeat adversaries in any domain.
+
+![Image 3](http://www.marines.mil/portals/1/Images/Force-Design/Photo27.jpg?ver=nAO2CXZo9S6asnXODnrgig%3d%3d)
+
+*   **NAVY MARINE EXPEDITIONARY SHIP INTERDICTION SYSTEM (NMESIS).** NMESIS is the Marine Corps’ premier land-based, anti-ship platform, integrated into naval and joint command and control (C2) and targeting architectures, postured to engage threat surface ships. The Service fielded the first six NMESIS launchers to 3d MLR in 2023 and continues to build capacity toward 18 launchers per medium- range missile system launcher (MMSL) battery which will be fully realized in FY33.
+
+*   **HIGH MOBILITY ARTILLERY ROCKET SYSTEM (HIMARS).** HIMARS and M777A2 howitzers provide complementary ground-based rocket/missile fires support to the MAGTF. We have fielded the remaining HIMARS launchers, bringing the Marine Corps to ten HIMARS batteries in the Active and Reserve Components and enhancing the HIMARS batteries communications architecture.
+
+*   **TPS-80 GROUND/AIR TASK ORIENTED RADAR (G/ATOR).**G/ATOR is a mobile, multi-role sensor that supports air defense, counter-fire, and air traffic control. It enhances situational awareness at the tactical edge and feeds data into joint kill webs, strengthening naval and joint fires. By the end of FY25, nearly 60 percent of planned systems will be fielded to the fleet.
+
+*   **ORGANIC PRECISION FIRES (OPF).**We are adding OPF capabilities to improve infantry unit lethality through advanced, precision-guided, loitering munitions that can engage targets from extended ranges in austere environments. We will begin fielding these systems to the FMF in FY26.
+
+*   **F-35.** The Marine Corps has deployed F-35s across multiple Combatant Commands, operating both afloat and ashore. We have completed the transition of eleven operational squadrons and two training squadrons, with four additional squadrons now in transition. Our updated procurement profile adjusts the balance of F-35B and F-35C aircraft across the Active and Reserve Components.
+
+*   **XQ-58.** We have also begun experimenting with the XQ-58 Valkyrie Combat Collaborative Aircraft (CCA), pairing it with the F-35 to explore manned-unmanned teaming (MUM-T) that expands aviation’s reach, survivability, and effectiveness.
+
+*   **MQ-9A.**The Marine Corps has employed the MAGTF Unmanned Expeditionary Medium-Altitude, Long- Endurance (MUX/MALE) MQ-9A unmanned aerial system (UAS) extensively in the Indo-Pacific region. The MQ-9A supports enhanced battlespace awareness through Electro-Optical/Infrared (EO/IR), Synthetic Aperture Radar (SAR), and Electronic Support (ES), provides an aerial C2 gateway.
+
+*   **EXPEDITIONARY MANUFACTURING.**We have already fielded 12 expeditionary fabrication laboratories (XFAB) and 25 tactical fabrication laboratories (TACFAB), enabling in-theater repair and production of parts to reduce reliance on limited lift. We will continue to increase the number and capabilities of these systems to augment our supply chains and increase our resilience in future operating environments.
+
+*   **GROUND-BASED AIR DEFENSE.** The Marine Corps recognizes the quickly emerging and dynamic threat posed by modern air systems, from short-range low-altitude UAS to medium-range cruise missiles, that endanger Marines on contemporary battlefields as well as our bases and stations. To counter these threats, we are building the Corps’ short- and medium-range air defense capability through five complementary programs that provide integrated protection in depth for expeditionary forces and installations.
+
+    *   **MEDIUM RANGE INTERCEPT CAPABILITY (MRIC).** MRIC defends critical assets from subsonic and supersonic air threats, to include UAS and cruise missiles. We are on path to fully equip three MRIC batteries in the next three years.
+
+    *   **MARINE AIR DEFENSE INTEGRATED SYSTEM (MADIS).** MADIS provides an upgradable expeditionary capability that utilizes organic sensors to detect and target aerial threats to defend maneuver forces, expeditionary bases, and critical assets. We have delivered the first 20 systems across the force.
+
+    *   **LIGHT-MARINE AIR DEFENSE INTEGRATED SYSTEM (L-MADIS).** L-MADIS is an upgradeable expeditionary capability that is employed on a pair of ultra-light tactical vehicles (ULTVs). The first 10 L-MADIS systems are scheduled to be fielded in 2026.
+
+    *   **INSTALLATION-COUNTER SMALL UAS (I-CSUAS).** I-CsUAS has been fielded to five Marine Corps installations, with additional systems on the way.
+
+    *   **ORGANIC-COUNTER SMALL UAS (O-CSUAS).** O-CsUAS is our newest initiative aimed at providing an organic capability against small UAS across every element of the Marine Corps in dismounted, mounted, and expeditionary packages. This capability will help to close the growing capacity gap brought on by an increased use of small UAS and the low barrier for entry by malicious state and non-state actors. By the end of this year, we will have 84 O-CsUAS interim solution dismounted kits fielded across the Service.
+
+The implementation of Force Design is a total force effort. As our MEFs become more capable and lethal, each Marine Forces Component (MARFOR) plays a critical role in ensuring the unique capabilities of our MAGTFs are employed effectively in support of naval and joint campaigning. They work closely with naval counterparts, Joint commands, and key allies and partners to achieve this goal. Marine Corps Forces Reserve contributes both as an operational reserve and as a testbed for service-level experimentation, such as their work with small expeditionary watercraft. Marine Forces Special Operations Command plays a distinct role as well, with Marine Raiders developing capabilities that persist in austere environments, conduct special reconnaissance and counter- reconnaissance, and enable naval and joint kill webs.
+
+([Return to top](http://www.marines.mil/Force-Design/#top3))
+
+#### 2.2 Concepts and Doctrine
+
+*   **DOCTRINE.** Years of wargaming, experimentation, and study, have matured our concepts for EABO and SIF. They are now moving into doctrine with updates to _MCDP 3 Expeditionary Operations_ and a new Marine Corps Warfighting Publication,_Littoral Operations_. We are also shaping naval, joint, and allied doctrinal publications, including _Allied Joint Doctrine for Maritime Operations_ (December 2023) and JP 3-02 _Amphibious Operations_ (April 2025) so that our concepts align with the way the broader force will fight.
+
+*   **CONCEPTS.** We have developed and approved a family of operating concepts nested within the _Navy Concept for Distributed Maritime Operations_ (DMO). _The Concept for Naval and Special Operations Forces Operations, Naval Concept for Distributed Maritime Logistics Operations, Concept for 21st Century Amphibious Operations_, and the _Marine Corps Concept for Logistics_. Together, they explain how Marines integrate with naval, joint, and allied forces to shape the battlespace and sustain distributed operations.
+
+*   **MARINE CORPS CAPSTONE CONCEPT.** The next step is a Marine Corps capstone concept. This will connect our operational ideas and state clearly what the Marine Corps provides to Naval and Joint Force: _**a globally responsive, lethal, and resilient combined-arms naval expeditionary force that projects power from sea to land and land to sea, fighting as a Marine Air Ground Task Force across all domains in contested environments to deter, deny, and defeat adversaries**_.
+
+![Image 4](http://www.marines.mil/portals/1/Images/Force-Design/Photo20.jpg?ver=7lyxaslpfZbqEqu2uSJOTw%3d%3d)
+
+([Return to top](http://www.marines.mil/Force-Design/#top4))
+
+#### 2.3 Installations
+
+*   **MARINE CORPS INSTALLATIONS PLAN (MCIP).** This is our roadmap to adapt our installations at tempo and scale to meet the future threat environment. Installations are power projection nodes that enable training for all warfighting functions and must provide defense against all-domain kinetic and non-kinetic threats to the force. Marine Corps installations underpin the Service’s contributions to the Joint Force and national defense. Our installations are warfighting platforms that require robust information technology infrastructure, hardened facilities, enhanced training ranges, countermeasures for unmanned systems, and other advanced capabilities. The MCIP provides a vision to modernize our installations to meet the needs of our Marines, their families, and our civilian workforce.
+
+    *   **BARRACKS 2030**. This initiative, under the umbrella of MCIP, is the most consequential infrastructure investment in Marine Corps history. It is a clear priority for the Service as it provides safe and modern living conditions for our Marines—we are fully committed. Taking care of Marines is a warfighting necessity that improves our readiness; it enables Marines to focus on the mission at hand. Specific barracks investments include professionalizing and streamlining barracks management, modernizing living quarters, and refreshing materiel. We have outfitted 159 barracks with new room furnishings, awarded 11 barracks for renovation in FY24, and contracted 200 building managers to provide better oversight and maintenance response times. We are making necessary investments, moving the needle, and will maintain momentum.
+
+([Return to top](http://www.marines.mil/Force-Design/#top5))
+
+#### 2.4 Talent Management
+
+Since the release of Talent Management 2030, we continue building momentum across four primary lines of effort (LOE) championed by the Manpower and Reserve Affairs team:
+
+*   LOE 1: Rebalancing recruiting and retention.
+
+*   LOE 2: Optimizing the employment of talent.
+
+*   LOE 3: Establishing multiple pathways to career success.
+
+*   LOE 4: Modernizing our talent management digital tools.
+
+**RECRUITING.** Since 1994, Marine Corps Recruiting Command (MCRC) has successfully met its recruitment goals and just recently achieved its mission for Fiscal Year 2025. Notably, MCRC has achieved this success while upholding the Marine Corps’ high-quality standards, even in the most challenging recruiting environment since the establishment of the all-volunteer force.
+
+**RETENTION.** We are retaining Marines at historic levels, strengthening our force across critical specialties. We met our FY25 retention mission in February 2025 and by the end of September we had retained 15,429 Marines—110 percent of our goal—with a 96 percent first-term MOS match. FY26 retention mission reached its aggregate requirement in submissions within the first month of the fiscal year with 75 percent of those Marines executing reenlistment before the fiscal year began. Programs like the Multi-Year Reenlistment Cohorts, Commandant’s Retention Program, Direct Affiliation, Small Unit Leader Initiative, and Prior Service Enlistment are in execution and delivering results. These efforts ensure we keep the Nation’s very best Marines and sustain the end strength needed to confront adversaries worldwide.
+
+Building on this success, we are evolving Talent Management to retain the best Marines and maximize the lethality of the force. Programs such as the Enlisted Career Designation Pilot and the Marine Corps Talent Acquisition Program are underway to retain highly qualified Marines, while Manpower and Reserve Affairs continuously adapts plans to meet Service requirements. Talent Management will continue to evolve with the needs of the force to ensure we remain manned, trained, and equipped to meet our Title 10 obligations.
+
+([Return to top](http://www.marines.mil/Force-Design/#top6))
+
+#### 2.5 Training and Education
+
+**TECOM CAMPAIGN PLAN.** As we continue to implement Force Design, we are introducing innovative, standards- based improvements to how we train and educate Marines. TECOM published a new campaign plan in June 2025 to prepare Marines at all echelons to fight and win on modern battlefields. This campaign plan ensures we instill in our Marines a maneuver warfare mindset through modernized training and education that accounts for the evolving character of war, while continuing to uphold the rigorous standards that make disciplined Marines the foundation of lethal and effective naval expeditionary formations.
+
+The TECOM campaign plan illustrates a more holistic vision of our training and education approach, centered around lethality and warfighting effectiveness. It expands upon _Training and Education 2030_ and incorporates the “3 T” projects (Tripoli — LVC training environment; Triumph — learner-centric training; and Trident — training to support integrated kill webs) as important efforts within specific focus areas, but now takes on a more expansive agenda that includes initiatives to improve individual and small unit lethality, build proficiency in unmanned and counter-unmanned systems, develop Artificial Intelligence (AI) literacy, develop joint all- domain warfighters and staff officers, enhance character development, and expand support to the naval expeditionary force.
+
+*   **LOE 1: MAKING MARINES.** This line of effort spans recruit training, entry-level training, professionalism and culture, and total learning architecture (to include Project Triumph). We are modernizing education by adopting an outcomes-based, learner-centric model. The Instructor Development and Recognition Program is standardizing instructor training and professional development across schools. Early results from the Infantry Marine Course show improved combat proficiency among graduates. Pilot programs at The Basic School and School of Infantry are testing adaptive learning, AI-driven simulations, and digital tools, all aimed at producing Marines that are aggressive, who can think critically, decide under stress, and adapt quickly in combat. These improvements emphasize character development, reinforce discipline and toughness standards, and maintains the enduring baseline of training every Marine to be a rifleman or rifle platoon commander.
+
+*   **LOE 2: ENHANCING LETHALITY.** This line of effort includes intermediate and advanced training, maritime fires (to include Project Trident), unmanned systems integration and counter UAS, and the Marksmanship Campaign Plan. We are integrating all-domain fires into individual and unit level training to better prepare Marines for naval campaigns. Service-Level Training Exercises now include non-kinetic effects, electronic warfare, and cyber opposition forces to refine multi-domain warfare execution. We will expand formal instruction in all-domain fires through new courses. Our objective is to ensure the Marine Corps is manned with lethal, tough, professional warfighters who are prepared for combat in austere, expeditionary environments.
+
+*   **LOE 3: TRAINING UNITS TO FIGHT.** This line of effort comprises live, virtual, and constructive (LVC) training (to include Project Tripoli), service-level training, naval expeditionary warfare and amphibious operations, and joint all-domain combined arms. We are establishing a persistent LVC training environment that links Marines across the globe. The Marine Training Enterprise Network now connects seamlessly with Navy and Joint training systems, while the Joint LVC Federation delivers advanced simulations for command post exercises. More than 250 Marine Common Virtual Platforms (MCVP) are in the field, providing tools for fires, casualty care, ISR, and decision-making. We are also improving signature management training so Marines can maneuver effectively in the electromagnetic spectrum. New tools like Marine Corps Tactical Instrumentation System (MCTIS) and MCVP let evaluators see physical signatures in real time and assess how units appear across multiple sensors. With the Electromagnetic Warfare Ground Instrumented Range and Office of Naval Research support, training now replicates denied, degraded, and limited-bandwidth environments to prepare Marines for modern conflict.
+
+*   **LOE 4: LEARNING AND ADAPTING.**This line of effort covers Professional Military Education (PME), leveraging data and AI, assessments, and requirements development. We are modernizing PME to develop adaptive, strategic leaders for multi-domain operations. Enlisted PME is being restructured to emphasize maneuver warfare, leadership under stress, and joint integration, with the new Staff Non-commissioned Officer (SNCO) Leadership Course strengthening small-unit leadership. The College of Distance Education and Training is employing AI-driven adaptive learning to tailor coursework, and Marine Corps University has expanded wargaming, scenario planning, and naval integration. New initiatives such as the Joint All Domain Officer Program and the Commandant’s Research Fellows Program are bridging education gaps, deepening partnerships with civilian institutions, and strengthening interoperability with allies.
+
+([Return to top](http://www.marines.mil/Force-Design/#top7))
+
+#### 3. Where We Are Going
+
+![Image 5](http://www.marines.mil/portals/1/Images/Force-Design/Photo10.jpg?ver=PbKC7P5ur2U3jmOVwOhNNQ%3d%3d)
+
+([Return to top](http://www.marines.mil/Force-Design/#top8))
+
+#### 3.1 Maneuver and Mobility
+
+Maneuver is the employment of forces for offensive and defensive purposes to gain an advantage over the enemy. Mobility and maneuver are force design priorities given our foundational maneuver warfare philosophy which guides our approach to operations. The MAGTF is designed to leverage all-domain combined arms to concentrate fires and effects at decisive points to achieve surprise, create psychological effects, and generate a faster operational tempo than the enemy.3 Marine Corps modernization efforts improve the ability to operate with speed and agility across the littorals, on the sea, ashore, in the air, or across the information environment, cyberspace, and the electromagnetic spectrum.
+
+##### 3.1.1 SEA-BASED EXPEDITIONARY FORCES AND LITTORAL MANEUVER
+
+Sea-based expeditionary forces are the foundation of our forward presence and global campaigning. Amphibious warfare ships and smaller littoral maneuver platforms give Marines the ability to seize and hold key maritime terrain, deliver lethal effects, and close kill webs in support of fleet maneuver and joint operations, creating dilemmas for the enemy and options for Joint Force commanders.
+
+*   **AMPHIBIOUS READY GROUP / MARINE EXPEDITIONARY UNIT (ARG/MEU)**. The ARG/MEU is our premier formation: flexible, lethal, and persistently forward. Recent changes in Title 10 U.S. Code make the Commandant responsible for developing requirements for amphibious warfare ships and vessels designed to carry Marines. The law also establishes a floor of 31 operational amphibious ships, including 10 assault ships. These changes give the Marine Corps greater influence over the capabilities needed to enable our sea-based MAGTFs. Meeting the requirement for a continuous 3.0 ARG/MEU presence however, will take more than this statutory minimum at our current readiness levels. We are working closely with the Navy to chart a viable path to achieve this goal, ensuring commanders have combat-credible forces forward every day.
+
+*   **MEDIUM LANDING SHIP (LSM)**. The LSM is central to providing mobility for fires, sensors, command and control, and sustainment across contested littorals. We are pursuing this program through a three-phased approach. First, we are filling today’s gap with interim solutions under the Littoral Maneuver Bridging Strategy to enhance mobility within the First Island Chain now. Second, we are procuring LSM Block 1, a proven non-developmental vessel, to achieve initial operational capability. Third, we will procure LSM Block Next, a fully mature, optimized solution that incorporates advanced technologies to ensure the platform remains relevant in future operational environments. Working aggressively with the Navy, we are moving to field this capability as soon as possible. These efforts ensure Marines can gain advantage against peer adversaries today while shaping the future of amphibious operations through wargames, studies, and large-scale exercises.
+
+*   **MULTI-MISSION RECONNAISSANCE CRAFT (MMRC)**. We are developing a new Maritime Reconnaissance Company (MRC) unit as part of the broader evolution of our light armored reconnaissance (LAR) battalions into mobile reconnaissance battalions (MRBs). The MRC will operate a new tactical boat, the MMRC, which can partner with unmanned surface vessels to maneuver sensors and personnel in support of Marine forces operating in the littorals.
+
+##### 3.1.2. GROUND MOBILITY
+
+_**To enable naval, joint, and combined warfighting, Marines must be forward-deployed, agile, and positioned to seize, secure, occupy, and hold key maritime terrain.**_
+
+Ground tactical vehicles are central to providing the agility and speed required to navigate diverse terrain while complementing aviation and amphibious mobility. We are executing our Ground Combat and Tactical Vehicle (GCTV) modernization strategy to field a versatile mix of vehicles capable of embarking aboard amphibious warships, traversing soft beach landing sites, and operating across a wide range of mission profiles.
+
+*   **ADVANCED RECONNAISSANCE VEHICLE (ARV)**. We have continued to develop the ARV to support the transition from LAR battalions to MRBs. Compared to its LAV predecessor, the ARV will be capable of operating in the littorals with greater mobility and will be outfitted with advanced sensing and communications equipment.
+
+*   **AMPHIBIOUS COMBAT VEHICLE (ACV)**. The ACV is our replacement for the Amphibious Assault Vehicle (AAV). By the end of this year, we will have fielded 257 ACV personnel carriers and mission control variants across the three MEFs, 41 percent of our total acquisition objective. ACVs are in the fight. They have already deployed with 31st MEU and 15th MEU and are on track to deploy from the East Coast soon.
+
+*   **JOINT LIGHT TACTICAL VEHICLE (JLTV)**. We are replacing the High Mobility Multi-Purpose Wheeled Vehicle (HMMWV) fleet with the JLTV. The JLTV program is in the production phase and has fielded 5,031 of our total acquisition objective of 12,500.
+
+*   **ULTRA-LIGHT TACTICAL VEHICLES (ULTV)**. A lighter more expeditionary version of the JLTV, the ULTV will directly enhance mobility and sustainability within the First Island Chain. To date, 504 have been delivered across the force.
+
+*   **MEDIUM AND HEAVY TACTICAL VEHICLES.** We are refining a coherent strategy to modernize the medium and heavy tactical vehicle fleet. Near-term actions include establishing modernization plans for the Medium Tactical Vehicle Replacement (MTVR) and Logistics Vehicle System Replacement (LVSR), while experimenting with Medium Tactical Truck (MTT) prototypes to inform future requirements.
+
+*   **GAP CROSSING AND OBSTACLE BREACHING.** Ground mobility must account for the complexity of littoral terrain and the reality that it will be contested. To meet this challenge, Combat Engineers across all three MEFs are exploring gap crossing and obstacle breaching capabilities to ensure our forces can close with and destroy the enemy.
+
+##### 3.1.3 AVIATION ASSAULT SUPPORT
+
+Marine Aviation provides essential mobility via our assault support platforms. We are modernizing platforms, sustainment models, and doctrine to remain lethal and resilient. As outlined in the 2025 Marine Aviation Plan, Project Eagle, and the _Functional Concept for Distributed Aviation Operations_ (DAO), aviation enables forward- positioned formations while remaining postured for scalable crisis response.
+
+Our highlight initiatives include:
+
+*   **AVIATION ASSAULT SUPPORT PLATFORMS.** We continue to modernize and evolve the KC-130, CH- 53E/K, MV-22, and UH-1Y, along with essential aviation command and control capabilities, ensuring the Aviation Combat Element delivers mobility, firepower, and persistence in crisis and conflict.
+
+*   **DISTRIBUTED AVIATION OPERATIONS (DAO)**. A broad concept now implemented as a capability priority, DAO enables aviation units to generate combat power from multiple, dispersed, and relocatable sites across all domains.
+
+*   **PROJECT EAGLE.** Guides aviation transformation across the next three Future Years Defense Program cycles, ensuring aviation can persist and sustain forward forces while scaling for crisis response.
+
+*   **AVIATION GROUND SUPPORT (AGS).** Redefined as a core aviation function, AGS units are trained and equipped to establish and sustain DAO nodes with minimal infrastructure, reinforcing the Corps’ ability to operate from austere locations.
+
+These efforts ensure Marine Aviation remains lethal, resilient, and sustainable, providing the mobility and flexibility required for crisis response and high-end conflict alike.
+
+##### 3.1.4 MANEUVER IN THE INFORMATION DOMAIN, CYBERSPACE, AND THE ELECTROMAGNETIC SPECTRUM
+
+To win modern battles, Marines must maneuver as effectively in cyberspace and the electromagnetic spectrum as they do on land, sea, and air. Our Marine Information Groups and Marine Forces Cyber are building the capabilities to defend warfighting systems, preserve freedom of action, and when authorized, conduct offensive operations to deny the enemy the same. This is not just the work of specialists—every Marine must understand key terrain and positions of advantage in these arenas. Managing technical signatures is just as vital to managing physical and administrative signatures on contemporary battlefields where the enemy can collect and synthesize information across multiple axes.
+
+* * *
+
+3 Marine Corps Doctrinal Publication (MCDP) 1-0 _Marine Corps Operations_, 9 Aug 2011
+
+([Return to top](http://www.marines.mil/Force-Design/#top9))
+
+#### 3.2 Lethality
+
+_**Marines deliver lethal, all domain, combat power from sea and land.**_
+
+The Marine Corps approach to long-range precision fires encompasses both surface and aviation-based fires. Lethality is an indispensable contribution of the Marine Corps as outlined in _Marine Corps Warfighting Publication (MCWP 3-31) MAGTF Fires and Effects_.
+
+Precision fires give Marines the ability to close kill webs across the littorals and support fleet maneuver. We’re modernizing to strike under electronic attack and in position, navigation, and timing (PNT)-contested, communications-degraded conditions—while fielding new options that expand reach and flexibility.
+
+Future capabilities include:
+
+*   **NMESIS/HIMARS.** We are upgrading our NMESIS and HIMARS capabilities with digital fire control systems and assured PNT solutions to enhance lethality in a denied, degraded, and disrupted space operating environment (D3SOE).
+
+*   **MULTIPLE LAUNCH ROCKET SYSTEM FAMILY OF MUNITIONS (MFOM) LAUNCH UNIT (MLU).** This expeditionary launcher, built on the remotely-operated ground unit for expeditionary (ROGUE) chassis, will provide littoral fires batteries a general-support rocket capability with all current and future MFOM munitions.
+
+*   **INFANTRY BATTALION EXPERIMENTATION (IBX).** Four years of IBX have driven structural changes to infantry battalions and integrated new capabilities, including expanded access to small unmanned aerial systems, loitering munitions, and first person view (FPV) one-way attack drones. Over the next year, we will continue experimentation efforts and recommend further changes to our modernized infantry battalions.
+
+*   **MARINE CORPS ATTACK DRONE TEAM (MCADT).** Established at Quantico, this team is accelerating the integration of FPV and one-way attack drones through training, experimentation, to direct Service inputs to sUAS and C-sUAS requirements.
+
+*   **COLLABORATIVE COMBAT AIRCRAFT (CCA).** We have executed four test flights pairing the XQ- 58 Valkyrie with the F-35, with two more scheduled this year, to explore MUM-T, electronic warfare, autonomous missions, and survivability.
+
+*   **LONG-RANGE ANTI-SHIP MISSILE (LRASM).** This air-launched missile provides offensive anti-surface warfare capability against high-end maritime targets. The integration of these capabilities reinforces the Marine Corps’ commitment to maintaining a balanced and lethal force, that is well-equipped to meet the evolving challenges of contemporary conflict.
+
+*   **PRECISION ATTACK STRIKE MUNITION (PASM).** This air-launched munition, initially employed from the AH-1Z, is under experimentation to expand options for striking ground and surface targets.
+
+These initiatives ensure Marine fires remain lethal, resilient, and adaptable to support closing kill webs and give Joint Force commanders flexible options against peer adversaries.
+
+([Return to top](http://www.marines.mil/Force-Design/#top10))
+
+#### 3.3 Enabling Joint Kill Webs
+
+_**Marines enable naval, Joint, and combined kill webs**_
+
+Marines provide the Joint Force with forward sensors and shooters, networked to enable kill webs in contested environments. We are modernizing C2 across the force so Marines can sense, make sense, and hold targets at risk with speed and resilience.
+
+Future initiatives include:
+
+*   **PROJECT DYNAMIS.** This Service-level Combined Joint All-Domain Command and Control accelerator, executed with the Navy’s Project Overmatch, to accelerate the advancement of our C2 and targeting capabilities for contested environments. This effort is organized around 90-day sprints and integrates FMF experimentation hubs, the Joint Fires Network office, MCWL, and other partners. Its goal is to create a military internet of things that connects every sensor to every shooter within the Naval Operational Architecture.
+
+*   **MARINE AIR COMMAND AND CONTROL SYSTEM (MACCS).** The MACCS is undergoing its most significant modernization in a generation, merging legacy air support and air defense specialties and reorganizing Marine Air Control Groups to train and employ Marines to perform multiple functions in Marine Air Operations Centers.
+
+*   **AIR COMMAND AND CONTROL EQUIPMENT.** Systems such as the TPS-80 G/ATOR, the common aviation command and control system (CAC2S) to include CAC2S Small Form Factor (CAC2S SFF), Composite Tracking Network, Medium Range Air Defense Radar, MRIC, and MADIS provide a system of systems for air battle management and integrated air and missile defense. By the end of FY25, five CAC2S SFF will be fielded to units including 3d and 12th MLR, MASS-2, MASS-3, and Marine Corps Systems Command (MARCORSYSCOM), and nearly 60 percent of planned TPS-80 G/ATOR systems will be in the fleet.
+
+*   **DIGITAL INTEROPERABILITY/MOBILE AD-HOC NETWORKING GATEWAY LINK (DI/MANGL).** This airborne system enables aircraft to act as tactical cloud relays, providing beyond-line-of-sight transport, translation across network protocols, and real-time routing in contested electromagnetic environments.
+
+*   **MUX/MALE MQ-9A IMPROVEMENTS.** Spiral upgrades are adding AI/Machine Learning autonomy that can cross-cue EO/IR, SAR, and ES sensors, fuse and process data, and transmit target tracks via aerial C2 gateways or improved satellite communications.
+
+*   **DECISION-CENTRIC AVIATION OPERATIONS (DCAO).** Embedded in Project Eagle, DCAO enables aviation units to reconfigure strike, ISR, logistics, and electronic warfare packages rapidly, sustaining operations under degraded C2 conditions.
+
+These efforts ensure Marines can aggregate and share fused data at the speed of relevance, act as the forward element of the Joint Force, and deliver the decision advantage needed to defeat peer adversaries.
+
+([Return to top](http://www.marines.mil/Force-Design/#top11))
+
+#### 3.4 Logistics in Contested Environments
+
+_**Marines require the ability to conduct logistics in support of all-domain, distributed operations in contested environments.**_
+
+Marines are operating in contested environments every day, with all-domain threats targeting logistics capabilities, locations, and activities. To mitigate these threats, the Marine Corps is prioritizing a holistic approach via institutional investments in key capabilities across our logistics portfolio. We are modernizing logistics to ensure distributed forces can persist in contested environments and remain combat effective.
+
+Future capabilities include:
+
+*   **GLOBAL POSITIONING NETWORK (GPN).** We are expanding prepositioned stocks across the Indo- Pacific to reduce reliance on long supply chains and build a resilient sustainment web.
+
+*   **MARINE CORPS PREPOSITIONING PROGRAM (MCPP).** New programs in the Philippines, Australia, and Palau—alongside established programs in Norway and afloat—are increasing regional responsiveness and strengthening alliances.
+
+*   **MARITIME PREPOSITIONING FORCE (MPF).** We are addressing MPF shortfalls to ensure forces can deploy rapidly, sustain in crisis, and decrease risk to mission.
+
+*   **AUTONOMOUS LOW-PROFILE VESSEL (ALPV).** This unmanned surface craft is transitioning to a program of record to provide autonomous long-range logistics distribution.
+
+*   **UNMANNED LOGISTICS SYSTEM–AIRBORNE.** We are fielding the Tactical Resupply Unmanned Aircraft System (TRUAS) and experimenting with the Medium Aerial Resupply Vehicle–Expeditionary Logistics (MARV-EL), complemented by the Aerial Logistics Connector (ALC), to expand aerial distribution in austere environments.
+
+*   **ADVANCED LOGISTICS ANALYTICS.** A platform that provides a unified logistics picture, fusing operations, intelligence, and sustainment data to enable rapid, precise, and adaptive fulfillment, even in degraded conditions.
+
+These efforts will ensure Marines can sustain distributed operations, strengthen deterrence, and keep combat power forward in the face of peer threats.
+
+([Return to top](http://www.marines.mil/Force-Design/#top12))
+
+#### 3.5 Adaptation via a Continuous Campaign of Learning
+
+_**The future operating environment requires threat-informed modernization: Formations, capabilities, and methods we use against our adversaries must evolve.**_
+
+The Campaign of Learning is a continuous process integral to our modernization efforts. Marines in the FMF and Marine Components must innovate and adapt. Their feedback drives new concepts, requirements, and technologies. Headquarters input alone is not enough. FMF, MARFORs, and other Service entities must inform innovation across the Force Development Enterprise. This includes CD&I, Marine Corps Systems Command, Program Executive Officer Land Systems, Training and Education Command, DC Programs and Resources, DC Installations and Logistics, DC Information, Office of the Chief of Naval Operations, and the Naval Research Enterprise.
+
+##### 3.5.1 LEARNING THAT SHAPES THE FORCE
+
+Battlefield and training observations generate institutional learning that drives modernization. Marines must capture, analyze, and resolve issues from training, education, and operations so best practices become standard and challenges are fixed.
+
+The Marine Corps Lessons Learned Program (MCLLP) and TECOM’s Trend Reversal and Reinforcement Process (TRRP) provide this analysis. They use advanced tools like AI, large language models, and machine learning to process data. Outputs include readiness reports, annual Lessons Learned Collection Campaign Plan products, studies, and a web-based repository accessible across the force.
+
+Improvement requires thorough after-action reports from all FMF and supporting establishment echelons, active involvement in TRRP and the assessments working group, investment in data management, and standardized systems, analytic tools, and talent—analysts, software engineers, and operations researchers—to make sense of the information.
+
+MCWL, guided by the service-level experimentation plan (SLEP) and informed by MCLLP, runs systematic experimentation. Validated lessons are applied to changes in doctrine, organization, training, materiel, leadership and education, personnel, and facilities.
+
+To accelerate the Campaign of Learning, Combat Development and Integration (CD&I) is developing the Analytic Master Plan–Marine Corps (AMP-MC). This plan aligns analysis and research across the Service, prioritizes resources against key research questions, and unites decision-makers with the analytic organizations that support them.
+
+MEFs have a special responsibility. They execute our concepts, employ new capabilities, test prototypes, and provide feedback to the Force Development Enterprise. Through MCLLP, TRRP, SLEP, and AMP-MC, we are accelerating innovation to ensure the Marine Corps remains lethal and effective within fiscal and end strength limitations.
+
+##### 3.5.2 MODERNIZING OUR FORCE DEVELOPMENT PROCESS
+
+Modernization is not just about new weapons and formations. It depends on how we develop and deliver them. We are updating our force development processes to more rapidly transition technology, improve acquisition, and ensure feedback from the fleet drives results.
+
+One example is the new Capability Portfolio approach in Program Executive Officer, Land Systems. Instead of managing programs one-by-one with a focus on cost, this model gives a program manager responsibility for a suite of programs under a common capability area. That means multiple systems can be developed and fielded together, with constant input from the FMF. This makes the process more flexible than the legacy readiness boards and ensures capability gaps are closed in real time.
+
+Building on this approach, the Fusion framework closes the gap between new technology and real-world capability. A dedicated fusion cell, consisting of CDD, MCWL, ONR, MCSC, and others, evaluates technologies against capability gaps and readiness levels. Viable systems move into detailed transition plans that connect directly to doctrine, training, and other requirements to ensure new capabilities move rapidly from concept to fielding. This approach will also cover training and sustainment requirements, creating a more integrated path from concept to capability.
+
+Finally, the Marine Corps is _**emphasizing continuous fleet feedback**_. The Naval Aviation Enterprise and Ground Support Enterprise have proven the value of early engagement in sustaining readiness, an approach that has benefitted ACV, NMESIS, G/ATOR, MADIS, and various other programs.
+
+These efforts ensure that promising technologies do not stall in development, that acquisition keeps pace with demand, and that Marines get the capabilities they need to win the future fight.
+
+([Return to top](http://www.marines.mil/Force-Design/#top13))
+
+#### 4. Conclusion
+
+Force Design is the Marine Corps’ strategic priority, and this update makes clear both our progress and our direction. We have strengthened formations, fielded new capabilities, and refined our concepts, but modernization remains a continuous Campaign of Learning and adaptation. We are modernizing for one purpose: to ensure that when our Nation calls, Marines will fight and win.
+
+Modernization is already delivering results. Marines are forward every day, postured across multiple theaters, conducting sea-denial and amphibious operations, seizing key terrain, and enabling joint and combined kill webs in support of naval and joint campaigning. These actions prove that Force Design is not theory, but practice.
+
+The way ahead is clear. Force Design is not an endstate but a journey—one that ensures we adapt faster than our adversaries, integrate with the Navy and Joint Force, and remain ready for the future fight. Our charge is to remain the world’s finest fighting force, organized, trained, and equipped to meet the challenges of today and tomorrow. Marines will be first to fight, and Marines will win.
+
+![Image 6](http://www.marines.mil/portals/1/Images/Force-Design/EGA-Transparent-Bg.png)
+
+([Return to top](http://www.marines.mil/Force-Design/#top14))

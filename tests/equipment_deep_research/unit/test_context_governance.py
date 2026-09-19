@@ -6,6 +6,7 @@ from types import SimpleNamespace
 from equipment_deep_research.agents.registry import AgentDef
 from equipment_deep_research.agents.prompts import BaselinePromptBuilder
 from equipment_deep_research.agents.workflows.runtime import runtime_messages
+from equipment_deep_research.agents.runtime_profiles import build_codex_runtime_profile
 from equipment_deep_research.domain.messages import TaskEnvelope
 from equipment_deep_research.domain.models import BaselineFindingPacket, WorkingCheckpoint
 from equipment_deep_research.domain.store import DomainStore
@@ -119,8 +120,125 @@ def test_minimal_dependency_handoff_keeps_explicit_lineage_fields() -> None:
         "context_delta",
         "evidence_refs",
         "uncertainties",
-        "requested_next_action",
     }
+    assert "requested_next_action" not in handoff
+
+
+def test_minimal_dependency_handoff_prefers_consumer_fields() -> None:
+    projected = _dependency_handoff(
+        BaselineFindingPacket(
+            packet_id="packet-source",
+            agent_id="combat_scenario",
+            capability_tags=["scenario"],
+            topic_focus="topic",
+            findings=["场景判断"],
+            evidence_ids=["ev-1"],
+            confidence=0.8,
+            coverage_notes=[],
+            open_questions=[],
+            handoff_summary="场景摘要",
+            checkpoint="done",
+            payload={
+                "historical_background": "低优先级背景",
+                "scenario_breakpoint": "任务断点",
+                "phase_constraint": "阶段约束",
+                "unrelated_catalog": "不应优先传递",
+                "risk_boundary": "风险边界",
+                "evidence_boundary": "证据边界",
+            },
+        ),
+        target_agent_id="weapon_equipment",
+        minimal=True,
+    )
+
+    keys = set(projected["context_delta"])
+    assert "scenario_breakpoint" in keys
+    assert "phase_constraint" in keys
+    assert len(keys) <= 5
+
+
+def test_non_s1_s6_runtime_card_drops_registry_prose() -> None:
+    agent = AgentDef(
+        "weapon_equipment",
+        "武器装备",
+        "装备基线与能力差距",
+        ["equipment"],
+        ["search_sources", "create_evidence_card", "compare_equipment_capability"],
+        {},
+        skills=[
+            {
+                "name": "装备分析",
+                "steps": ["长步骤"],
+                "allowed_tools": ["search_sources"],
+                "quality_gates": ["证据可追溯"],
+            }
+        ],
+        research_policy={"required_outputs": ["完整基线"], "internal_rule": "不要重复"},
+        output_contract={"name": "baseline_finding_packet", "properties": ["payload"]},
+    )
+    runtime = build_codex_runtime_profile(
+        "weapon_equipment",
+        agent=agent,
+        payload={
+            "execution_profile_id": "swarm_quality_v1",
+            "discovery_blueprint": {
+                "primary_branch": "B",
+                "secondary_branches": ["F"],
+            },
+        },
+        phase="evidence_analysis",
+        compact=True,
+    )
+
+    assert "research_policy" not in runtime
+    assert "output_contract" not in runtime
+    assert runtime["skill"] == "装备分析"
+    assert runtime["discovery_branches"][0]["code"] == "B"
+    assert "methodology" not in runtime
+    assert "quality_gates" in runtime
+
+
+def test_cross_agent_handoff_drops_prescriptive_follow_up_language() -> None:
+    packet = BaselineFindingPacket(
+        packet_id="packet-source",
+        agent_id="combat_scenario",
+        capability_tags=["scenario"],
+        topic_focus="topic",
+        findings=["决定性边界是目标同一性与任务更新链闭合。"],
+        evidence_ids=["ev-1"],
+        confidence=0.8,
+        coverage_notes=[],
+        open_questions=[
+            "后续应重点补充数据链资料。",
+            "公开材料是否能够证明断续链路下的重关联精度？",
+        ],
+        handoff_summary=(
+            "决定性边界是目标同一性与任务更新链闭合。"
+            "装备与技术优先级应围绕跨域状态接口和降级C2展开。"
+            "下一步应把证据重点放在数据链公开材料上。"
+        ),
+        checkpoint="done",
+        payload={
+            "assessment": "公开资料仅证明体系概念，未证明闭环指标。",
+            "next_action": "后置Agent必须继续核验更新时间窗。",
+        },
+    )
+
+    handoff = _dependency_handoff(
+        packet,
+        target_agent_id="weapon_equipment",
+        minimal=True,
+    )
+    serialized = str(handoff)
+
+    assert handoff["summary"] == "决定性边界是目标同一性与任务更新链闭合。"
+    assert handoff["uncertainties"] == [
+        "公开材料是否能够证明断续链路下的重关联精度？"
+    ]
+    assert "下一步应" not in serialized
+    assert "优先级应" not in serialized
+    assert "后置Agent必须" not in serialized
+    assert "requested_next_action" not in handoff
 
 
 def test_scheduler_rejects_undeclared_shared_and_incremental_context(

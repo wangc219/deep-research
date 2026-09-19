@@ -1,0 +1,15 @@
+{
+  "artifact_ref": "text:0f1ebda8a5f60fb4",
+  "content_path": "text-0f1ebda8a5f60fb4.txt",
+  "content_type": "text/plain; charset=utf-8",
+  "direct_error": "HTTPStatusError: cached_origin_failure:HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-system_confrontation-web-5824f31b34e3",
+  "kind": "text",
+  "materialization_status": "reader_fetched",
+  "mode": "real",
+  "reader_attempt": 1,
+  "reader_url": "https://r.jina.ai/http://www.marines.mil/Force-Design/",
+  "sha256": "0f1ebda8a5f60fb42dac91417bc8fbbef894603e50d7f13ab3b92e7ffc9c1eef",
+  "url": "https://www.marines.mil/Force-Design/"
+}

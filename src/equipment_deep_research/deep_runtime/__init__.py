@@ -1,0 +1,157 @@
+"""Nanobot-adapted conversation runtime for directed equipment research.
+
+The package surface exposes the synchronous and asynchronous entrypoints
+together with the transport, provider, subagent, capability and workspace
+boundaries.  Channel adapters and the HTTP host can depend on one stable
+contract instead of importing implementation modules directly.
+"""
+
+from equipment_deep_research.deep_runtime.commands import (
+    CARD_AUTHORING_CONFIRMATION,
+    parse_slash_command,
+)
+from equipment_deep_research.deep_runtime.channel import (
+    DurableMessageBus,
+    InboundMessage,
+    MessageBus,
+    MessageBusClosed,
+    OutboundMessage,
+    dispatch_channel_call,
+    dispatch_channel_call_async,
+)
+from equipment_deep_research.deep_runtime.gateways import (
+    ChannelGatewayAdapter,
+    ChannelPayloadRejected,
+    DiscordGatewayAdapter,
+    GatewayDeliveryCache,
+    GatewayDeliveryStore,
+    GatewayDispatchResult,
+    GatewayIdentity,
+    GatewaySessionResolver,
+    TelegramGatewayAdapter,
+    VerifiedChannelGateway,
+    WebhookReplayCache,
+    WebhookSignaturePolicy,
+    dispatch_gateway_payload,
+    dispatch_verified_gateway_payload,
+)
+from equipment_deep_research.deep_runtime.loop import (
+    run_deep_research_message,
+    run_deep_research_turn,
+    run_deep_research_turn_async,
+)
+from equipment_deep_research.deep_runtime.provider_runtime import (
+    ProviderRequest,
+    ProviderResult,
+    ProviderRuntime,
+    run_json_with_provider,
+)
+from equipment_deep_research.deep_runtime.planner import preview_turn_plan
+from equipment_deep_research.deep_runtime.tool_registry import (
+    DeclarationOnlyMCPAdapter,
+    InProcessMCPAdapter,
+    MCPAdapter,
+    MCPAdapterError,
+    MCPNotEnabledError,
+    MCPServerRuntime,
+    MCPToolDefinition,
+    MCPToolNotAllowedError,
+    ToolRegistry,
+    ToolSpec,
+    build_tool_registry,
+)
+from equipment_deep_research.deep_runtime.mcp_transport import (
+    HostMCPMount,
+    MCPTransportConfig,
+    PersistentMCPHost,
+    ReloadingMCPHost,
+    SDKMCPAdapter,
+    load_host_mcp_mounts,
+    mounted_mcp_transports,
+)
+from equipment_deep_research.deep_runtime.subagents import (
+    default_divergence_subtasks,
+    LightweightSubagentRunner,
+    SubagentResult,
+    SubagentTask,
+    tasks_from_payload,
+)
+from equipment_deep_research.deep_runtime.workspace import (
+    DeepMemoryStore,
+    DeepSessionStore,
+    DeepWorkspace,
+    DreamBatch,
+    DreamResult,
+    MemoryStore,
+    ResearchWorkspace,
+    SessionStore,
+    WorkspaceManifest,
+    WorkspaceResourceConflict,
+)
+
+__all__ = [
+    "CARD_AUTHORING_CONFIRMATION",
+    "parse_slash_command",
+    "preview_turn_plan",
+    "run_deep_research_message",
+    "run_deep_research_turn",
+    "run_deep_research_turn_async",
+    "InboundMessage",
+    "DurableMessageBus",
+    "MessageBus",
+    "MessageBusClosed",
+    "OutboundMessage",
+    "dispatch_channel_call",
+    "dispatch_channel_call_async",
+    "ChannelGatewayAdapter",
+    "ChannelPayloadRejected",
+    "DiscordGatewayAdapter",
+    "GatewayDeliveryCache",
+    "GatewayDeliveryStore",
+    "GatewayDispatchResult",
+    "GatewayIdentity",
+    "GatewaySessionResolver",
+    "TelegramGatewayAdapter",
+    "VerifiedChannelGateway",
+    "WebhookReplayCache",
+    "WebhookSignaturePolicy",
+    "dispatch_gateway_payload",
+    "dispatch_verified_gateway_payload",
+    "ProviderRequest",
+    "ProviderResult",
+    "ProviderRuntime",
+    "LightweightSubagentRunner",
+    "SubagentResult",
+    "SubagentTask",
+    "default_divergence_subtasks",
+    "tasks_from_payload",
+    "run_json_with_provider",
+    "DeclarationOnlyMCPAdapter",
+    "InProcessMCPAdapter",
+    "MCPAdapter",
+    "MCPAdapterError",
+    "MCPNotEnabledError",
+    "MCPServerRuntime",
+    "MCPToolDefinition",
+    "MCPToolNotAllowedError",
+    "ToolRegistry",
+    "ToolSpec",
+    "build_tool_registry",
+    "HostMCPMount",
+    "MCPTransportConfig",
+    "PersistentMCPHost",
+    "ReloadingMCPHost",
+    "SDKMCPAdapter",
+    "load_host_mcp_mounts",
+    "mounted_mcp_transports",
+    "DeepWorkspace",
+    "ResearchWorkspace",
+    "DeepMemoryStore",
+    "MemoryStore",
+    "DeepSessionStore",
+    "SessionStore",
+    "DreamBatch",
+    "DreamResult",
+    "WorkspaceManifest",
+    "WorkspaceResourceConflict",
+]

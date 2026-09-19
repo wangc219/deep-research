@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=defense.info · from red sea defense to epic fury how the u s flipped the drone cost equation
+source_url=https://defense.info/re-shaping-defense-security/2026/03/from-red-sea-defense-to-epic-fury-how-the-u-s-flipped-the-drone-cost-equation/
+claim=红海行动暴露高价值拦截弹消耗速度远超补充速度；定向能（舰载激光）与低成本拦截器被视为翻转成本方程的主要路径，且已在多次舰上测试中命中目标。
+excerpt=
+retrieval=Hosted web search citation metadata

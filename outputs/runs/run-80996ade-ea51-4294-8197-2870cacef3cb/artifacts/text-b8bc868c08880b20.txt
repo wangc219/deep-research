@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · Force Design
+source_url=https://www.marines.mil/Force-Design/
+claim=海军陆战队公开称其现代化重点包括precision fires、unmanned systems、resilient command and control，并在争夺环境中实施分布式作战。
+excerpt=
+retrieval=Hosted web search citation metadata

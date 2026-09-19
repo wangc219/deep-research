@@ -1,7 +1,0 @@
-interface:
-  display_name: "JS制胜智能体共享层"
-  short_description: "Tree-of-Warfare、动态子Agent、共享Skill与知识包访问规则"
-  default_prompt: "使用 $js-winning-shared-layer 执行受治理的制胜机理任务。"
-
-policy:
-  allow_implicit_invocation: false

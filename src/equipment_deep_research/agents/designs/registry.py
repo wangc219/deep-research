@@ -30,6 +30,7 @@ DEFAULT_AGENT_IDS = (
     "winning_s4_capability",
     "winning_s5_gap",
     "winning_s6_image",
+    "deep_divergence_v1",
     "winning_step_critic",
     "winning_round_critic",
     "winning_dynamic_specialist",

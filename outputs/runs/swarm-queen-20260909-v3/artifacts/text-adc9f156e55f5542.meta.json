@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:adc9f156e55f5542",
+  "content_path": "text-adc9f156e55f5542.txt",
+  "content_type": "text/plain",
+  "direct_error": "SSLEOFError: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1010)",
+  "encoding": "utf-8",
+  "evidence_id": "ev-combat_scenario-web-4b1083a4d3ca",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "adc9f156e55f5542535244575decbdc67ddacf5c221cb4718fccc5131282d636",
+  "url": "https://mwi.westpoint.edu/the-indispensable-interceptor-air-defense-and-the-problem-of-cost-exchange-logic/"
+}

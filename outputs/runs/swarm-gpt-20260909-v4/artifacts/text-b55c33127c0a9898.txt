@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=media.defense.gov · FACT SHEET STRATEGY FOR COUNTERING UNMANNED SYSTEMS.PDF
+source_url=https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF
+claim=公开战略提出感知和理解无人系统威胁、主动与被动防御、开放模块化方案、降低防御交换成本、快速真实测试和效果指标。
+excerpt=
+retrieval=Hosted web search citation metadata

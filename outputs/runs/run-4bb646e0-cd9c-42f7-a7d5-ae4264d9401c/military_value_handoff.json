@@ -1,0 +1,308 @@
+{
+  "baseline_boundaries": [],
+  "branch_products": {},
+  "claims": [
+    {
+      "claim_id": "claim-65c33fd2f36c",
+      "claim_type": "fact",
+      "confidence": 0.78,
+      "evidence_ids": [
+        "ev-cross_domain_fusion-web-46912ac2f942",
+        "ev-cross_domain_fusion-web-8202523ac018"
+      ],
+      "failure_boundary": "公开JADC2叙述强调更快共享与决策，但GAO对相关新体系的评估持续提示成熟度、进度与需求错配风险，意味着能力承诺与可用性之间仍存在明显张力。",
+      "mechanism": "判断：目标持续监视与精确打击的一体化，本质上不是单一传感器问题，而是发现-确认-授权-接力-评估的时效闭环问题；军事任务价值在于压缩火力窗口错失并提高拒止与压制效果；证据边界是公开JADC2表述主要体现体系意图而非战场实测；失效条件是身份可信度不足、链路时延上升或指挥授权不能跨平台继承。",
+      "military_effects": [
+        "指挥决策",
+        "打击歼灭",
+        "拦截反制",
+        "拒止制衡",
+        "体系协同"
+      ],
+      "packet_id": "packet-cross_domain_fusion",
+      "source_agent_id": "cross_domain_fusion",
+      "source_urls": [
+        "https://www.war.gov/News/Releases/Release/article/2970094/dod-announces-release-of-jadc2-implementation-plan/"
+      ]
+    },
+    {
+      "claim_id": "claim-ad6fbde7af20",
+      "claim_type": "fact",
+      "confidence": 0.74,
+      "downstream_steps": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-system_confrontation-web-5824f31b34e3",
+        "ev-system_confrontation-web-6c1c84a0e24e"
+      ],
+      "failure_boundary": "公开材料同时强调分布式节点提高韧性，但分布式闭环也增加跨平台交接、供能、频谱管理和数据一致性负担；两者并不自动兼容。",
+      "mechanism": "蓝方体系强化方向应集中在抗毁信息闭环、可解释身份置信度、跨平台任务接力和打击后再捕获；红方反制则集中于制造目标状态失真、身份争议、火力窗口压缩和评估反馈污染。军事任务价值在于把打击、反制、拒止和威慑统一到闭环质量竞争：谁能更快维持可信目标状态，谁就能更稳定地分配火力并迫使对方分散、隐蔽或停机。证据边界是CSIS对乌克兰战争的公开分析支持自主、信息和韧性成为现代战争关键因素，但不能外推到所有战区和目标类型；失效条件是目标价值低于闭环维护成本，或敌方适应使持续暴露本身不再发生。",
+      "military_effects": [
+        "指挥决策",
+        "打击歼灭",
+        "拦截反制",
+        "拒止制衡",
+        "威慑慑止",
+        "生存抗毁",
+        "持续作战",
+        "体系协同"
+      ],
+      "packet_id": "packet-system_confrontation",
+      "source_agent_id": "system_confrontation",
+      "source_urls": [
+        "https://www.marines.mil/Force-Design/"
+      ]
+    },
+    {
+      "claim_id": "claim-edda7524e6ed",
+      "claim_type": "fact",
+      "confidence": 0.74,
+      "downstream_steps": [
+        "S2",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-operational_employment-web-3d7959b9394f",
+        "ev-operational_employment-web-f42ad4ad8ea8"
+      ],
+      "failure_boundary": "公开概念强调分布式和低特征部署，但持续监视、频繁通信和火力发射本身会增加暴露特征，二者存在内在张力。",
+      "mechanism": "判断：跨平台交接是闭环最容易断裂的阶段，因为交接传递的不只是坐标，还包括身份、置信度、时间戳、责任主体和可继续跟踪的传感器链。军事任务价值在于让火力任务能在侦察平台、C2节点、打击平台和评估平台之间切换，而不因责任边界不清或信息过期错失打击、压制或拒止窗口。证据边界：EABO、Force Design和Replicator公开材料均指向分布式、开放架构、软件编排和联合互操作需求，但未证明任何单一架构已经稳定解决交接责任与授权问题。失效条件：链路带宽受限、节点被压制、数据格式不兼容、平台间目标命名不一致，或指挥授权滞后于目标机动节奏。",
+      "military_effects": [
+        "侦察预警",
+        "指挥决策",
+        "打击歼灭",
+        "拦截反制",
+        "拒止制衡",
+        "生存抗毁"
+      ],
+      "packet_id": "packet-operational_employment",
+      "source_agent_id": "operational_employment",
+      "source_urls": [
+        "https://www.mcwl.marines.mil/TM-EABO/"
+      ]
+    },
+    {
+      "claim_id": "claim-d93b6c545481",
+      "claim_type": "fact",
+      "confidence": 0.78,
+      "downstream_steps": [
+        "S2",
+        "S4"
+      ],
+      "evidence_ids": [
+        "ev-cross_domain_fusion-web-46912ac2f942",
+        "ev-cross_domain_fusion-web-8202523ac018"
+      ],
+      "failure_boundary": "公开JADC2叙述强调更快共享与决策，但GAO对相关新体系的评估持续提示成熟度、进度与需求错配风险，意味着能力承诺与可用性之间仍存在明显张力。",
+      "mechanism": "判断：分布式前沿节点与低特征机动部署会放大跨域接力的依赖，使持续监视与精确打击更依赖海空天网的协同保障而非单平台性能；军事任务价值在于提高抗毁与拒止条件下的持续打击能力；证据边界是EABO体现概念方向，不证明具体编组已达成；失效条件是前沿节点暴露、被隔断或缺乏可靠回传与火力支援。",
+      "military_effects": [
+        "打击歼灭",
+        "拒止制衡",
+        "生存抗毁",
+        "保障恢复",
+        "体系协同"
+      ],
+      "packet_id": "packet-cross_domain_fusion",
+      "source_agent_id": "cross_domain_fusion",
+      "source_urls": [
+        "https://www.war.gov/News/Releases/Release/article/2970094/dod-announces-release-of-jadc2-implementation-plan/"
+      ]
+    },
+    {
+      "claim_id": "claim-5b845f680fab",
+      "claim_type": "fact",
+      "confidence": 0.74,
+      "downstream_steps": [
+        "S1",
+        "S2",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-operational_employment-web-3d7959b9394f",
+        "ev-operational_employment-web-f42ad4ad8ea8"
+      ],
+      "failure_boundary": "公开概念强调分布式和低特征部署，但持续监视、频繁通信和火力发射本身会增加暴露特征，二者存在内在张力。",
+      "mechanism": "判断：目标跟丢后的关键不是立即补打一轮火力，而是重建“搜索扇区、身份确认、状态更新、火力可用性、打击后评估”的再闭环。军事任务价值在于把跟丢从任务失败转化为可恢复的监视中断，保持对高价值或动态目标的拒止压力，并降低误击、空耗和暴露己方火力节点的风险。证据边界：反无人系统策略强调发现、跟踪、表征威胁以及在无人系统普及下目标更难隐藏和集结；这能支撑恢复监视的任务逻辑，但不是专门的目标打击链条 doctrine。失效条件：跟丢期间目标完成伪装、分散、换乘、进入禁打区域，或多个疑似目标同时出现导致身份链断裂。",
+      "military_effects": [
+        "指挥决策",
+        "打击歼灭",
+        "拒止制衡",
+        "生存抗毁",
+        "保障恢复"
+      ],
+      "packet_id": "packet-operational_employment",
+      "source_agent_id": "operational_employment",
+      "source_urls": [
+        "https://www.mcwl.marines.mil/TM-EABO/"
+      ]
+    },
+    {
+      "claim_id": "claim-6b01d9354886",
+      "claim_type": "fact",
+      "confidence": 0.74,
+      "downstream_steps": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-system_confrontation-web-5824f31b34e3",
+        "ev-system_confrontation-web-6c1c84a0e24e"
+      ],
+      "failure_boundary": "公开材料同时强调分布式节点提高韧性，但分布式闭环也增加跨平台交接、供能、频谱管理和数据一致性负担；两者并不自动兼容。",
+      "mechanism": "持续监视-精确打击一体化的体系边界不应止于“发现目标”和“发射武器”，而是包含发现、分类、身份确认、连续定位、状态更新、火力任务授权/切换、武器可用性匹配、打击效果评估和再捕获。军事任务价值在于把动态目标从一次性命中问题转化为闭环控制问题，减少目标机动、伪装或通信中断造成的火力窗口错失。证据边界是公开材料只能支撑美军强调分布式、无人化、韧性与信息优势方向，不能证明任何特定闭环架构已成熟部署；失效条件是目标特征不可稳定观测、身份规则无法满足交战要求，或链路时延超过火力窗口。",
+      "military_effects": [
+        "指挥决策",
+        "打击歼灭",
+        "生存抗毁",
+        "持续作战",
+        "体系协同"
+      ],
+      "packet_id": "packet-system_confrontation",
+      "source_agent_id": "system_confrontation",
+      "source_urls": [
+        "https://www.marines.mil/Force-Design/"
+      ]
+    }
+  ],
+  "conflicts": [
+    "速度与可信度存在内在张力：持续监视要求快，火力授权要求高可信，二者在高动态目标场景下会互相制约。",
+    "分布式与低特征部署提升韧性，但也放大跨平台交接、供能、频谱管理和数据一致性的负担。",
+    "规模化自主系统可能扩大覆盖与续接能力，也可能引入识别可信度、误报控制和指挥负荷的新瓶颈。"
+  ],
+  "frontier_inspiration_rule": "仅在后续模型完成首次自由发散后作为可选启发；可重构或全部舍弃，不得视为装备答案、命名种子、技术目录或覆盖配额。",
+  "frontier_inspirations": [
+    {
+      "conventional_assumption_challenged": "传统假设认为精确打击需要少数高质量传感器持续保持精确轨迹。",
+      "downstream_question": "在何种目标机动速度、观测密度和通信受限条件下，概率状态足以替代连续精确轨迹来支撑火力授权？",
+      "evidence_boundary": "来源只支持无人化、分布式和韧性方向；概率场闭环作为军事不连续性属于推断，未由材料证明。",
+      "evidence_ids": [
+        "ev-system_confrontation-web-6c1c84a0e24e"
+      ],
+      "packet_id": "packet-system_confrontation",
+      "possible_military_discontinuity": "如果概率场足以支持火力任务切换，打击体系可能不再依赖单条高保真轨迹，而依赖多节点持续压缩目标不确定区；对手隐蔽机动的收益会下降。",
+      "query_relevance": "直接关联跟丢恢复、目标状态更新和火力窗口保持。",
+      "signal": "公开材料中的低成本自主系统扩散与分布式前沿节点趋势共同指向一种弱信号：持续监视可能从少数高端平台的连续跟踪，转为大量可损耗节点维持目标状态概率场。",
+      "source_agent_id": "system_confrontation",
+      "source_urls": [
+        "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+        "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "传统假设把ISR平台视为支撑打击链的后方或高价值保护资产，而非可快速消耗和再生的前线弹性资源。",
+      "downstream_question": "持续监视体系的关键指标应从单平台存活率转向何种密度、恢复时间和身份置信度保持指标？",
+      "evidence_boundary": "来源支持无人系统威胁和反制需求，不证明传感器消耗战已成为主导模式。",
+      "evidence_ids": [],
+      "packet_id": "packet-system_confrontation",
+      "possible_military_discontinuity": "若监视节点可被大量消耗并快速补位，体系优势可能从保护单个平台转为维持监视密度和数据可信度；反制方需要同时压制传感器、数据融合和补给再生。",
+      "query_relevance": "直接影响持续监视抗毁、跟丢恢复和打击后评估不中断。",
+      "signal": "反无人系统战略与无人化扩散同时出现，显示监视节点本身会成为主要被猎杀对象，持续监视闭环可能进入“传感器消耗战”。",
+      "source_agent_id": "system_confrontation",
+      "source_urls": [
+        "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+        "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "持续监视与精确打击主要由“更多发现平台”驱动。",
+      "downstream_question": "哪些最小化的数据与权限字段，就足以支持跨平台火力任务切换而不丢失责任边界？",
+      "evidence_boundary": "这是对公开政策意图的机制推断，不是实战验证。",
+      "evidence_ids": [
+        "ev-cross_domain_fusion-web-46912ac2f942"
+      ],
+      "packet_id": "packet-cross_domain_fusion",
+      "possible_military_discontinuity": "能力重心可能转向可中断情况下的任务接力、授权继承和决策压缩，形成软件化C2优先于平台堆叠的新闭环。",
+      "query_relevance": "直接对应发现-确认-授权-打击的闭环重构。",
+      "signal": "DoD把JADC2公开叙述聚焦在更快共享与决策，而不是单纯增加传感器数量。",
+      "source_agent_id": "cross_domain_fusion",
+      "source_urls": [
+        "https://www.war.gov/News/Releases/Release/article/2970094/dod-announces-release-of-jadc2-implementation-plan/",
+        "https://www.war.gov/News/News-Stories/Article/Article/3683482/hicks-announces-delivery-of-initial-cjadc2-capability/"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "只要探测性能更高，就能自然维持持续监视与精确打击。",
+      "downstream_question": "在目标短时失联条件下，哪一类链路冗余最能缩短重新建轨时间？",
+      "evidence_boundary": "来源是项目评估与风险分析，尚不能证明作战级效果。",
+      "evidence_ids": [
+        "ev-cross_domain_fusion-web-8202523ac018"
+      ],
+      "packet_id": "packet-cross_domain_fusion",
+      "possible_military_discontinuity": "一体化作战可能从“高性能传感器中心”转向“可恢复网络中心”，其关键不在瞬时看见，而在丢失后能否快速重连、重识别、重授权。",
+      "query_relevance": "直接对应跟丢恢复、身份重建与火力再接续。",
+      "signal": "GAO关于企业化SATCOM和新跟踪体系的风险提示表明，韧性和重建航迹速度可能比峰值探测能力更决定闭环成败。",
+      "source_agent_id": "cross_domain_fusion",
+      "source_urls": [
+        "https://www.gao.gov/products/gao-25-107034",
+        "https://www.gao.gov/blog/can-dods-ambitious-new-missile-threat-tracking-system-deliver"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "传统假设把持续监视视为少数高价值传感平台对目标的连续看护，把精确打击视为随后接入的独立火力环节。",
+      "downstream_question": "在强对抗环境中，什么样的目标状态证据组合足以让消耗型接力监视结果进入火力授权链，而不把误报风险转移给打击端？",
+      "evidence_boundary": "公开证据只显示规模化、自主、开放架构和抗干扰软件方向，不能证明其已能满足身份可信度、授权边界和复杂目标区分要求。",
+      "evidence_ids": [],
+      "packet_id": "packet-operational_employment",
+      "possible_military_discontinuity": "若规模化可消耗节点能承担短寿命、接力式、局部自治的目标状态维护，闭环可能从“少数平台保持连续跟踪”转为“目标周边不断再生成可信状态”，从而改变对高价值ISR平台和单次火力窗口的依赖。",
+      "query_relevance": "这直接触及跟丢恢复、跨平台交接和打击后持续评估三个断点，并可能把监视中断从异常事件变为闭环设计的一部分。",
+      "signal": "公开材料同时出现两个弱信号：一是可消耗自主系统规模化进入侦察、监视、目标获取与精确火力链；二是软件使能环境被用于在干扰和反制下协调大量无人资产。",
+      "source_agent_id": "operational_employment",
+      "source_urls": [
+        "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+        "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "传统假设认为监视打击一体化主要由传感器、通信链和弹药精度决定，保障只是背景条件。",
+      "downstream_question": "当对手把打击重点转向前沿闭环节点和保障链时，哪些功能必须本地化、冗余化或可抛弃化，才能维持目标状态连续性？",
+      "evidence_boundary": "公开资料能支持低特征、易保障、远征制造和基地防护方向，但无法证明其在高强度持续打击下的修复周期、补给损耗和可用率。",
+      "evidence_ids": [
+        "ev-operational_employment-web-f42ad4ad8ea8"
+      ],
+      "packet_id": "packet-operational_employment",
+      "possible_military_discontinuity": "如果前沿节点能在受威胁区域内快速修复、替换、伪装和重构传感-C2-火力组合，精确打击能力可能从“库存型火力优势”转向“闭环再生速度优势”。",
+      "query_relevance": "持续监视、火力任务切换和打击后复评都依赖节点不被一次压制后永久退出；保障韧性会直接影响歼灭、压制和拒止效果的持续性。",
+      "signal": "EABO低特征前沿部署与Force Design中的远征制造、基地加固、反无人系统和IT基础设施同时出现，暗示持续打击闭环的竞争点正在从平台性能外移到前沿节点的可恢复性。",
+      "source_agent_id": "operational_employment",
+      "source_urls": [
+        "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/",
+        "https://www.marines.mil/force-design/"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    }
+  ],
+  "open_questions": [
+    "未指定目标类型、地理环境、敌方防空/电子战强度和交战授权规则，因此无法判定最关键断点究竟在身份确认、通信交接还是火力可用性。",
+    "什么级别的时延和身份置信阈值会让火力任务不能跨平台切换？",
+    "在未指定目标类型和战区条件下，无法确定目标状态更新周期、身份置信度和火力窗口之间的具体阈值关系。"
+  ],
+  "query_anchor": "目标持续监视与精确打击一体化研究",
+  "schema": "military_value_handoff_v1",
+  "statistics": {
+    "candidate_claim_count": 14,
+    "compression_ratio": 0.7352,
+    "evidence_url_count": 3,
+    "frontier_inspiration_count": 6,
+    "input_chars": 14178,
+    "input_packet_count": 3,
+    "limited_baseline_count": 0,
+    "output_chars": 10423,
+    "selected_claim_count": 6,
+    "source_agent_count": 3
+  }
+}

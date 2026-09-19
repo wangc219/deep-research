@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=darpa.mil · pinpoint
-source_url=https://www.darpa.mil/research/programs/pinpoint
-claim=PINPOINT针对防务系统过度依赖GPS的脆弱性，目标是小型MEMS IMU在GPS拒止环境下支撑多小时近GPS质量导航；现有紧凑低成本MEMS IMU失去GPS后会快速漂移。
-excerpt=
-retrieval=Hosted web search citation metadata

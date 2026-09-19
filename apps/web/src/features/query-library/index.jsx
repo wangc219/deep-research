@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   BookOpenCheck,
   CheckCircle2,
+  ChevronDown,
   CircleAlert,
   Clock3,
   Database,
@@ -21,15 +22,24 @@ import {
   Send,
   ShieldCheck,
   Sparkles,
+  Trash2,
   WandSparkles,
   X,
 } from 'lucide-react';
 import './styles.css';
 import './embedded.css';
 import './navigation.css';
+import {autonomousDiscoveryTopic, selectAutonomousDiscoveryAngle} from './autonomous-discovery.mjs';
 
 const STATUS_LABELS = {draft: '待审核', published: '已发布', archived: '已归档'};
 const SOURCE_LABELS = {agent: 'Agent 生成', manual: '人工录入', import: '资料导入'};
+const displaySourceTitle = title => String(title || '').replace(/^本地语义生成\s*[:：]?\s*/, '态势研判：');
+const formatDateTime = value => {
+  if (!value) return '时间未知';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return new Intl.DateTimeFormat('zh-CN', {month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'}).format(date);
+};
 const STAGE_LABELS = {
   queued: '等待生成 Worker',
   web_validation: '联网校验公开线索',
@@ -37,8 +47,8 @@ const STAGE_LABELS = {
   persisting: '质量门控与原子入库',
   completed: '生成完成',
   failed: '生成失败',
+  cancelled: '已终止',
 };
-const AUTONOMOUS_DISCOVERY_TOPIC = '基于公开可研究资料，结合我国当前安全环境、装备建设基础、未来作战任务和技术发展信号，自主发现无人、低空、远程火力与精确打击领域值得开展装备发展研究的需求方向。';
 const DIVERGENCE_EXAMPLES = [
   {label: '天基赋能地面导弹', topic: '天基平台与地面导弹平台协同赋能运用', angle: '以天基与地面导弹平台相互赋能为主线，牵引双方装备和体系发展。', demand: '分析当前与未来协同态势、主要协同方式、作战效能提升，以及地面作战中可由天基能力解决的单装与体系痛点。', technology: '分析天基资源能力与规划、天地通信技术途径和水平、天基能力向地面装备映射，以及融合后对导弹能力建设方向的影响。'},
   {label: '海上无人导弹融合', topic: '海上无人平台与导弹融合的新型作战模式', angle: '探索面向远海任务的无人平台与导弹或导弹投送融合模式，牵引无人装备与作战体系发展。', demand: '分析主要海上作战场景、对手装备与威胁形式、侦控抗打等应对模式，以及远海作战难点痛点。', technology: '分析海上无人装备与远海应用技术的发展现状和趋势，识别能够解决关键难点的装备技术组合。'},
@@ -59,7 +69,7 @@ function validateReferenceUrls(urls) {
   return '';
 }
 
-function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBack, embedded = false}) {
+function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBatchResearchStarted, onBack, embedded = false}) {
   const [queries, setQueries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -67,6 +77,7 @@ function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBack, embedd
   const [status, setStatus] = useState('all');
   const [sourceType, setSourceType] = useState('all');
   const [selectedId, setSelectedId] = useState('');
+  const [selectedQueryIds, setSelectedQueryIds] = useState([]);
   const [topic, setTopic] = useState('');
   const [generationMode, setGenerationMode] = useState('guided');
   const [supplement, setSupplement] = useState('');
@@ -76,15 +87,16 @@ function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBack, embedd
   const [generationCount, setGenerationCount] = useState(8);
   const [modelOptions, setModelOptions] = useState({providers: [], default_provider: 'codex', reasoning_efforts: ['low', 'medium', 'high', 'xhigh']});
   const [modelProvider, setModelProvider] = useState('codex');
-  const [modelName, setModelName] = useState('');
   const [reasoningEffort, setReasoningEffort] = useState('high');
   const [connectionOpen, setConnectionOpen] = useState(false);
   const [customBaseUrl, setCustomBaseUrl] = useState('');
   const [customApiKey, setCustomApiKey] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
   const [referenceOpen, setReferenceOpen] = useState(false);
-  const [referenceText, setReferenceText] = useState('');
-  const [generation, setGeneration] = useState(null);
+  const [referenceText, setReferenceText] = useState('https://www.81.cn/');
+  const [generationTasks, setGenerationTasks] = useState([]);
+  const [deletingGenerationId, setDeletingGenerationId] = useState('');
+  const [cancellingGenerationId, setCancellingGenerationId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [mutating, setMutating] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
@@ -117,21 +129,40 @@ function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBack, embedd
     }
   };
 
+  const loadGenerationTasks = async () => {
+    try {
+      const payload = await request('/query-library/generations?limit=12');
+      setGenerationTasks(payload.items || []);
+    } catch (reason) {
+      setError(reason.message || '生成任务读取失败');
+    }
+  };
+
   useEffect(() => {
     void load();
+    void loadGenerationTasks();
     request('/query-library/model-options').then(value => {
       setModelOptions(value);
       setModelProvider(value.default_provider || value.providers?.[0]?.id || 'codex');
     }).catch(() => {});
   }, []);
   useEffect(() => {
-    if (!generation || !['queued', 'running'].includes(generation.status)) return undefined;
+    const activeTasks = generationTasks.filter(item => ['queued', 'running'].includes(item.status));
+    if (!activeTasks.length) return undefined;
     const timer = setInterval(async () => {
       try {
-        const value = await request(`/query-library/generations/${generation.generation_id}`);
-        setGeneration(value);
-        if (value.status === 'completed') {
-          await load(value.result_query_ids?.[0] || '');
+        const values = await Promise.all(activeTasks.map(item => request(`/query-library/generations/${item.generation_id}`)));
+        let completedId = '';
+        setGenerationTasks(current => {
+          const updates = new Map(values.map(item => [item.generation_id, item]));
+          const merged = current.map(item => updates.get(item.generation_id) || item);
+          values.forEach(item => {
+            if (item.status === 'completed' && current.find(previous => previous.generation_id === item.generation_id)?.status !== 'completed') completedId = item.result_query_ids?.[0] || '';
+          });
+          return merged;
+        });
+        if (completedId) {
+          await load(completedId);
           setStatus('draft');
           setSourceType('agent');
         }
@@ -140,7 +171,7 @@ function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBack, embedd
       }
     }, 1600);
     return () => clearInterval(timer);
-  }, [generation?.generation_id, generation?.status]);
+  }, [generationTasks.map(item => `${item.generation_id}:${item.status}`).join('|')]);
 
   const visible = useMemo(() => {
     const keyword = search.trim().toLowerCase();
@@ -151,6 +182,7 @@ function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBack, embedd
     ));
   }, [queries, search, status, sourceType]);
   const selected = queries.find(item => item.query_id === selectedId) || null;
+  const selectedItems = queries.filter(item => selectedQueryIds.includes(item.query_id));
   const counts = useMemo(() => ({
     total: queries.filter(item => item.status !== 'archived').length,
     draft: queries.filter(item => item.status === 'draft').length,
@@ -168,15 +200,23 @@ function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBack, embedd
     if (referenceError) { setError(referenceError); setReferenceOpen(true); return; }
     setSubmitting(true); setError('');
     try {
-      const generationTopic = generationMode === 'autonomous' ? AUTONOMOUS_DISCOVERY_TOPIC : topic.trim();
+      const autonomousAngle = generationMode === 'autonomous' ? selectAutonomousDiscoveryAngle(generationTasks) : null;
+      const generationTopic = autonomousAngle ? autonomousDiscoveryTopic(autonomousAngle) : topic.trim();
       const generationContext = generationMode === 'autonomous'
-        ? `自动态势发散模式。${supplement.trim() ? `用户补充偏好：${supplement.trim()}` : '由Agent自主选择高价值发散方向。'}\n发散框架：同时覆盖需求牵引、技术驱动、体系实战、颠覆逻辑与规模建设。`
+        ? `自动态势发散模式。\n本次轮换视角：${autonomousAngle.label}。\n${supplement.trim() ? `用户补充偏好：${supplement.trim()}` : '优先检索该视角下最新、权威的公开态势信号。'}\n因果链：外部态势→任务压力→作战缺口→武器装备能力与发展需求。\n发散框架：同时覆盖需求牵引、技术驱动、体系实战、颠覆逻辑与规模建设。`
         : [
             expectedAngle.trim() && `预期角度：${expectedAngle.trim()}`,
             demandDimension.trim() && `需求牵引维度：${demandDimension.trim()}`,
             technologyDimension.trim() && `技术驱动维度：${technologyDimension.trim()}`,
             supplement.trim() && `其他发散偏好：${supplement.trim()}`,
           ].filter(Boolean).join('\n');
+      const modelConfig = {
+        provider: modelProvider,
+        model: '',
+        reasoning_effort: reasoningEffort,
+        base_url: customBaseUrl.trim(),
+        api_key: customApiKey.trim(),
+      };
       const value = await request('/query-library/generations', {
         method: 'POST',
         headers: {'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID()},
@@ -185,16 +225,10 @@ function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBack, embedd
           supplemental_information: generationContext,
           reference_urls: referenceUrls,
           count: generationCount,
-          model_config: {
-            provider: modelProvider,
-            model: modelName.trim(),
-            reasoning_effort: reasoningEffort,
-            base_url: customBaseUrl.trim(),
-            api_key: customApiKey.trim(),
-          },
+          model_config: modelConfig,
         }),
       });
-      setGeneration(value);
+      setGenerationTasks(current => [value, ...current.filter(item => item.generation_id !== value.generation_id)].slice(0, 12));
     } catch (reason) {
       setError(reason.message || '生成任务提交失败');
     } finally {
@@ -216,6 +250,124 @@ function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBack, embedd
       return null;
     } finally {
       setMutating(false);
+    }
+  };
+
+  const toggleQuerySelection = item => {
+    setSelectedQueryIds(current => current.includes(item.query_id)
+      ? current.filter(id => id !== item.query_id)
+      : [...current, item.query_id]);
+  };
+
+  const publishSelected = async () => {
+    const drafts = selectedItems.filter(item => item.status === 'draft');
+    if (!drafts.length) return;
+    if (!window.confirm(`确定审核发布选中的 ${drafts.length} 条待审核 Query 吗？`)) return;
+    setMutating(true); setError('');
+    try {
+      await request('/query-library/queries/bulk-status', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({query_ids: drafts.map(item => item.query_id), status: 'published', versions: Object.fromEntries(drafts.map(item => [item.query_id, item.version]))}),
+      });
+      setSelectedQueryIds([]);
+      await load();
+    } catch (reason) {
+      setError(reason.message || '批量审核发布失败');
+    } finally { setMutating(false); }
+  };
+
+  const startSelectedResearch = async () => {
+    const targets = selectedItems.filter(item => item.status !== 'archived');
+    if (!targets.length) return;
+    if (!window.confirm(`将为选中的 ${targets.length} 条 Query 分别创建并启动研究任务，确认继续吗？`)) return;
+    setMutating(true); setError('');
+    let publishedById = new Map();
+    const batchRequestId = crypto.randomUUID();
+    const drafts = targets.filter(item => item.status === 'draft');
+    try {
+      if (drafts.length) {
+        const published = await request('/query-library/queries/bulk-status', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({query_ids: drafts.map(item => item.query_id), status: 'published', versions: Object.fromEntries(drafts.map(item => [item.query_id, item.version]))}),
+        });
+        publishedById = new Map((published.items || []).map(item => [item.query_id, item]));
+      }
+    } catch (reason) {
+      setMutating(false); setError(reason.message || '批量审核发布失败，未启动研究任务'); return;
+    }
+    const results = await Promise.all(targets.map(async item => {
+      try {
+        const current = publishedById.get(item.query_id) || item;
+        const body = {
+          topic: current.query,
+          supplemental_information: current.supplemental_information || '',
+          research_route: 'auto', interaction_mode: 'expert', discovery_branch: 'auto',
+          execution_profile_id: 'winning_swarm_dynamic_v2', max_rounds: 2,
+          selected_agent_ids: [], analyst_confirmed: true,
+          source_query_id: current.query_id, source_query_version: current.version,
+        };
+        const created = await request('/runs', {method: 'POST', headers: {'Content-Type': 'application/json', 'Idempotency-Key': `query-batch:${batchRequestId}:${current.query_id}`}, body: JSON.stringify(body)});
+        await request(`/runs/${encodeURIComponent(String(created.run_id || '').trim())}/start`, {method: 'POST', headers: {'Idempotency-Key': `query-batch-start:${batchRequestId}:${created.run_id}`}});
+        return {ok: true};
+      } catch (reason) { return {ok: false, error: reason.message || '启动失败'}; }
+    }));
+    setMutating(false);
+    const failed = results.filter(item => !item.ok).length;
+    if (failed) setError(`${results.length - failed} 条已创建并启动，${failed} 条启动失败，请检查研究 Worker 状态。`);
+    else { setError(''); onBatchResearchStarted?.(results.length); onBack?.(); }
+    setSelectedQueryIds([]);
+    await load();
+  };
+
+  const deleteSelectedQueries = async () => {
+    const targets = [...selectedItems];
+    if (!targets.length || !window.confirm(`确定永久删除选中的 ${targets.length} 条 Query 吗？删除后不可恢复，但不会删除已创建的研究任务。`)) return;
+    setMutating(true); setError('');
+    const results = await Promise.allSettled(targets.map(item => request(`/query-library/queries/${item.query_id}`, {method: 'DELETE'})));
+    const failed = results.filter(item => item.status === 'rejected').length;
+    setSelectedQueryIds([]);
+    await Promise.all([load(), loadGenerationTasks()]);
+    if (failed) setError(`${targets.length - failed} 条已删除，${failed} 条删除失败。`);
+    setMutating(false);
+  };
+
+  const deleteQuery = async item => {
+    if (!window.confirm(`确定永久删除 Query“${item.query}”吗？删除后不可恢复，但不会删除已创建的研究任务。`)) return;
+    setMutating(true); setError('');
+    try {
+      await request(`/query-library/queries/${item.query_id}`, {method: 'DELETE'});
+      setSelectedQueryIds(current => current.filter(id => id !== item.query_id));
+      await Promise.all([load(), loadGenerationTasks()]);
+    } catch (reason) {
+      setError(reason.message || 'Query 删除失败');
+    } finally { setMutating(false); }
+  };
+
+  const deleteGenerationTask = async item => {
+    if (['queued', 'running'].includes(item.status)) return;
+    if (!window.confirm('删除这条 Query 发散任务记录及其专属本地运行文件？已经入库的 Query 草稿会继续保留。')) return;
+    setDeletingGenerationId(item.generation_id); setError('');
+    try {
+      await request(`/query-library/generations/${item.generation_id}`, {method: 'DELETE'});
+      setGenerationTasks(current => current.filter(task => task.generation_id !== item.generation_id));
+    } catch (reason) {
+      setError(reason.message || '任务记录或本地文件删除失败');
+    } finally {
+      setDeletingGenerationId('');
+    }
+  };
+
+  const cancelGenerationTask = async item => {
+    if (!['queued', 'running'].includes(item.status)) return;
+    if (!window.confirm('确定终止这个 Query 发散任务吗？Worker 会在安全检查点停止当前生成，已产生但尚未入库的内容不会保存。')) return;
+    setCancellingGenerationId(item.generation_id); setError('');
+    try {
+      const value = await request(`/query-library/generations/${item.generation_id}/cancel`, {method: 'POST'});
+      setGenerationTasks(current => current.map(task => task.generation_id === value.generation_id ? value : task));
+    } catch (reason) {
+      setError(reason.message || '任务终止失败');
+    } finally {
+      setCancellingGenerationId('');
     }
   };
 
@@ -249,10 +401,10 @@ function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBack, embedd
       <p>可输入选题角度、场景描述或文档材料，也可由 Agent 结合公开态势自主发现方向；从需求牵引、技术驱动、体系实战和颠覆逻辑等维度形成简洁研究选题。</p>
       <div className="query-generation-mode-tabs" aria-label="Query 生成模式">
         <button className={generationMode === 'guided' ? 'active' : ''} onClick={() => setGenerationMode('guided')}><Lightbulb size={15}/><span><b>围绕母题发散</b><small>输入一个方向，向多维度深挖</small></span></button>
-        <button className={generationMode === 'autonomous' ? 'active' : ''} onClick={() => setGenerationMode('autonomous')}><Sparkles size={15}/><span><b>自动态势发散</b><small>无需母题，Agent 自主发现研究方向</small></span></button>
+        <button className={generationMode === 'autonomous' ? 'active' : ''} onClick={() => { setGenerationMode('autonomous'); setModelProvider('codex'); }}><Sparkles size={15}/><span><b>自动态势发散</b><small>无需母题，Agent 自主发现研究方向</small></span></button>
       </div>
       <div className="query-generator-card">
-        {generationMode === 'guided' ? <><label>需求母题 / 发散材料</label><textarea value={topic} onChange={event => setTopic(event.target.value)} placeholder="例如：输入‘复杂电磁环境下精确打击装备能力需求’，Agent 将围绕场景、任务、技术、体系和颠覆方向发散生成多条短 Query。" maxLength={500}/></> : <div className="query-autonomous-context"><Sparkles size={23}/><span><b>由 Agent 自主发现装备发展研究方向</b><p>结合公开可研究的我国安全环境、装备建设基础、未来作战任务和技术发展信号，覆盖需求缺口、技术机会、体系韧性、颠覆逻辑与规模化建设。</p><em>不预设具体结论，所有态势信息先经过轻量联网校验。</em></span></div>}
+        {generationMode === 'guided' ? <><label>需求母题 / 发散材料</label><textarea value={topic} onChange={event => setTopic(event.target.value)} placeholder="例如：输入‘复杂电磁环境下精确打击装备能力需求’，Agent 将围绕场景、任务、技术、体系和颠覆方向发散生成多条短 Query。" maxLength={500}/></> : <div className="query-autonomous-context"><Sparkles size={23}/><span><b>快速研判中国周边态势并发现装备发展方向</b><p>聚焦邻国、周边海域、岛链与边境任务环境，检索最新公开信号，再按“外部态势→任务压力→作战缺口→装备需求”快速转译为研究 Query。</p><em>无人、低空反制、颠覆性远打和精打武器是高关注方向，但不设封闭目录或固定配额；由模型根据本次态势因果链自主发现更多高价值武器装备需求。</em></span></div>}
         {generationMode === 'guided' && <div className="query-divergence-framework">
           <div className="query-framework-heading"><span><Sparkles size={15}/><b>多维发散框架</b><small>先明确研究意图，再由 Agent 深度发散，避免只做同义改写</small></span><div>{DIVERGENCE_EXAMPLES.map(example => <button key={example.label} onClick={() => {setTopic(example.topic); setExpectedAngle(example.angle); setDemandDimension(example.demand); setTechnologyDimension(example.technology);}}>{example.label}</button>)}</div></div>
           <label><span><b>预期角度</b><small>希望牵引什么发展</small></span><textarea value={expectedAngle} onChange={event => setExpectedAngle(event.target.value)} placeholder="例如：以天基与地面导弹平台相互赋能为主线，牵引双方装备与体系发展。"/></label>
@@ -263,8 +415,7 @@ function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBack, embedd
         {generationMode === 'autonomous' && <textarea id="query-generation-context" className="query-generation-context autonomous" value={supplement} onChange={event => setSupplement(event.target.value)} placeholder="自主发现偏好（可选）：希望重点关注的装备领域、区域态势、技术方向或时间范围。" maxLength={8000}/>} 
         <div className="query-agent-config">
           <div className="query-count-control"><span><b>生成数量</b><small>按本次需要灵活选择</small></span><div>{[4, 6, 8, 12, 16, 20].map(value => <button className={generationCount === value ? 'active' : ''} key={value} onClick={() => setGenerationCount(value)}>{value}</button>)}</div></div>
-          <label><span>Agent</span><select value={modelProvider} onChange={event => {setModelProvider(event.target.value); setModelName('');}}>{modelOptions.providers?.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
-          <label><span>模型</span><input value={modelName} onChange={event => setModelName(event.target.value)} placeholder={modelOptions.providers?.find(item => item.id === modelProvider)?.default_model || '服务端默认模型'}/></label>
+          <label><span>Agent</span><select value={modelProvider} onChange={event => setModelProvider(event.target.value)}>{modelOptions.providers?.map(item => <option key={item.id} value={item.id}>{item.id === 'codex' ? '智能体' : item.label}</option>)}</select></label>
           <label><span>思考强度</span><select value={reasoningEffort} onChange={event => setReasoningEffort(event.target.value)}>{(modelOptions.reasoning_efforts || []).map(value => <option key={value} value={value}>{({low: '快速', medium: '均衡', high: '深度', xhigh: '极深'})[value] || value}</option>)}</select></label>
           <button className={`query-connection-toggle ${connectionOpen || customBaseUrl || customApiKey ? 'active' : ''}`} onClick={() => setConnectionOpen(value => !value)}><ShieldCheck size={15}/><span><b>连接设置</b><small>{customApiKey ? '本次密钥已填写' : environmentDefaults.api_key_configured ? '项目环境已配置' : 'URL / API Key'}</small></span></button>
         </div>
@@ -291,14 +442,15 @@ function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBack, embedd
         <article><span>2</span><div><b>多维深度发散</b><small>从需求、技术、体系和颠覆角度寻找研究机会</small></div></article>
         <article><span>3</span><div><b>形成短选题</b><small>标题保持简洁，详细研究维度单独保存</small></div></article>
       </div>
-      {generation && <GenerationProgress generation={generation}/>} 
+      <GenerationTaskSlots generations={generationTasks}/>
+      <GenerationTaskList generations={generationTasks} libraryQueries={queries} refresh={() => void loadGenerationTasks()} remove={deleteGenerationTask} cancel={cancelGenerationTask} deletingId={deletingGenerationId} cancellingId={cancellingGenerationId} selectQuery={queryId => { setSelectedId(queryId); window.scrollTo({top: document.querySelector('.query-library-shell')?.offsetTop || 0, behavior: 'smooth'}); }} publishQuery={publish} researchQuery={useForResearch} deleteQuery={deleteQuery}/>
     </section>
 
     {error && <div className="query-error"><CircleAlert size={16}/>{error}<button onClick={() => setError('')}><X size={14}/></button></div>}
 
     <section className="query-library-heading">
       <div><span>QUERY LIBRARY</span><h2>装备需求短 Query 库</h2><p>卡片只展示短选题；研究维度、形成理由和来源依据在详情中保留。</p></div>
-      <div><button onClick={() => setManualOpen(value => !value)}><FilePlus2 size={15}/>人工录入</button><button onClick={() => load()}><RefreshCw size={15}/>刷新</button></div>
+      <div><button onClick={() => setManualOpen(value => !value)}><FilePlus2 size={15}/>人工录入</button><button onClick={() => { void load(); void loadGenerationTasks(); }}><RefreshCw size={15}/>刷新</button></div>
     </section>
 
     {manualOpen && <ManualQueryForm request={request} close={() => setManualOpen(false)} saved={item => { setManualOpen(false); void load(item.query_id); }}/>} 
@@ -318,39 +470,119 @@ function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBack, embedd
           <select value={sourceType} onChange={event => setSourceType(event.target.value)}><option value="all">全部来源</option><option value="agent">Agent 生成</option><option value="manual">人工录入</option><option value="import">资料导入</option></select>
           <span>{visible.length} 条</span>
         </div>
-        {loading ? <div className="query-empty"><LoaderCircle className="spin"/>正在读取 Query 库</div> : visible.length ? <div className="query-card-grid">{visible.map(item => <QueryCard key={item.query_id} item={item} selected={item.query_id === selectedId} choose={() => setSelectedId(item.query_id)}/>)}</div> : <div className="query-empty"><Search/>没有匹配的 Query</div>}
+        <div className="query-bulk-toolbar">
+          <label><input type="checkbox" aria-label="选择当前筛选结果" checked={visible.length > 0 && visible.every(item => selectedQueryIds.includes(item.query_id))} onChange={event => setSelectedQueryIds(event.target.checked ? [...new Set([...selectedQueryIds, ...visible.map(item => item.query_id)])] : selectedQueryIds.filter(id => !visible.some(item => item.query_id === id)))} /><span>选择当前结果</span></label>
+          {selectedQueryIds.length > 0 && <><span className="query-bulk-count">已选 {selectedQueryIds.length} 条</span><button disabled={mutating || !selectedItems.some(item => item.status === 'draft')} onClick={publishSelected}><BookOpenCheck size={14}/>批量审核发布</button><button className="primary" disabled={mutating || !selectedItems.some(item => item.status !== 'archived')} onClick={startSelectedResearch}><Play size={14}/>批量启动研究</button><button className="danger" disabled={mutating} onClick={deleteSelectedQueries}><Trash2 size={14}/>批量删除</button><button disabled={mutating} onClick={() => setSelectedQueryIds([])}><X size={14}/>清除</button></>}
+        </div>
+        {loading ? <div className="query-empty"><LoaderCircle className="spin"/>正在读取 Query 库</div> : visible.length ? <div className="query-card-grid">{visible.map(item => <QueryCard key={item.query_id} item={item} selected={item.query_id === selectedId} checked={selectedQueryIds.includes(item.query_id)} toggle={() => toggleQuerySelection(item)} choose={() => setSelectedId(item.query_id)}/>)}</div> : <div className="query-empty"><Search/>没有匹配的 Query</div>}
       </div>
-      <QueryDetail item={selected} mutating={mutating} publish={publish} archiveQuery={archiveQuery} useForResearch={useForResearch}/>
+      <QueryDetail item={selected} mutating={mutating} publish={publish} archiveQuery={archiveQuery} deleteQuery={deleteQuery} useForResearch={useForResearch}/>
     </section>
   </div>;
 }
 
-function GenerationProgress({generation}) {
-  const running = ['queued', 'running'].includes(generation.status);
-  const completed = generation.status === 'completed';
-  return <section className={`query-generation-progress ${generation.status}`}>
-    <div>{running ? <LoaderCircle className="spin" size={17}/> : completed ? <CheckCircle2 size={17}/> : <CircleAlert size={17}/>}<span><b>{STAGE_LABELS[generation.stage] || STAGE_LABELS[generation.status] || generation.stage}</b><small>{generation.generation_id}</small></span></div>
-    <em>{completed ? `已生成 ${generation.result_query_ids?.length || 0} 条草稿` : generation.status === 'failed' ? generation.error || '生成失败' : '生成任务在后台持续执行，离开页面也不会中断'}</em>
+function GenerationTaskSlots({generations}) {
+  const active = generations.filter(item => ['queued', 'running'].includes(item.status));
+  return <section className="query-generation-task-slots" aria-live="polite">
+    <header>
+      <div><Sparkles size={16}/><span><b>Query 发散执行槽位</b><small>独立于研究任务并行槽位，仅显示正在执行的 Query 任务</small></span></div>
+      <em>{active.length} 个进行中</em>
+    </header>
+    {active.length ? <div className="query-generation-task-grid">{active.map(item => <GenerationTaskCard key={item.generation_id} generation={item}/>)}</div> : <div className="query-generation-task-empty"><Clock3 size={15}/>当前没有正在执行的 Query 任务。</div>}
   </section>;
 }
 
-function QueryCard({item, selected, choose}) {
-  return <button className={`query-library-card ${selected ? 'selected' : ''}`} onClick={choose} key={item.query_id}>
-    <header><span className={`query-status ${item.status}`}>{STATUS_LABELS[item.status]}</span><em>{SOURCE_LABELS[item.source_type]}</em></header>
-    <p>{item.query}</p>
-    <footer><span><Lightbulb size={12}/>{item.generation_rationale ? '含生成理由' : '理由待补充'}</span><span>{item.source_references?.length || 0} 个来源</span></footer>
-  </button>;
+function GenerationTaskList({generations, libraryQueries, refresh, remove, cancel, deletingId, cancellingId, selectQuery, publishQuery, researchQuery, deleteQuery}) {
+  const [taskFilter, setTaskFilter] = useState('all');
+  const [taskSearch, setTaskSearch] = useState('');
+  const [collapsedIds, setCollapsedIds] = useState(() => new Set());
+  const counts = {
+    all: generations.length,
+    running: generations.filter(item => ['queued', 'running'].includes(item.status)).length,
+    completed: generations.filter(item => item.status === 'completed').length,
+  };
+  const keyword = taskSearch.trim().toLowerCase();
+  const visibleTasks = generations.filter(item => (
+    (taskFilter === 'all'
+      || (taskFilter === 'running' && ['queued', 'running'].includes(item.status))
+      || item.status === taskFilter)
+    && (!keyword || `${item.topic} ${item.generation_id} ${item.stage}`.toLowerCase().includes(keyword))
+  ));
+  const queryById = useMemo(() => new Map(libraryQueries.map(item => [item.query_id, item])), [libraryQueries]);
+  const toggleTask = item => {
+    setCollapsedIds(current => {
+      const next = new Set(current);
+      if (next.has(item.generation_id)) next.delete(item.generation_id);
+      else next.add(item.generation_id);
+      return next;
+    });
+  };
+  return <section className="query-generation-task-list">
+    <header className="query-task-list-tabs">
+      <div>
+        <button className={taskFilter === 'all' ? 'active' : ''} onClick={() => setTaskFilter('all')}><Archive size={15}/>全部 <em>{counts.all}</em></button>
+        <button className={taskFilter === 'running' ? 'active' : ''} onClick={() => setTaskFilter('running')}><Clock3 size={15}/>进行中 <em>{counts.running}</em></button>
+        <button className={taskFilter === 'completed' ? 'active' : ''} onClick={() => setTaskFilter('completed')}><CheckCircle2 size={15}/>已完成 <em>{counts.completed}</em></button>
+      </div>
+      <button className="query-task-list-refresh" onClick={refresh}><RefreshCw size={15}/>刷新</button>
+    </header>
+    <div className="query-task-list-note"><Sparkles size={15}/><b>实时</b><span>Query 发散任务持续沉淀生成状态、产出数量与可追溯的执行时间；删除任务会同步清理专属本地文件。</span></div>
+    <div className="query-task-list-toolbar"><label><Search size={16}/><input value={taskSearch} onChange={event => setTaskSearch(event.target.value)} placeholder="搜索发散主题或任务 ID"/></label><span>{visibleTasks.length} 项结果</span></div>
+    {visibleTasks.length ? <div className="query-generation-task-list-grid">{visibleTasks.map(item => <GenerationTaskListRow key={item.generation_id} generation={item} expanded={!collapsedIds.has(item.generation_id)} queries={(item.result_query_ids || []).map(queryId => queryById.get(queryId)).filter(Boolean)} toggle={() => toggleTask(item)} remove={remove} cancel={cancel} deleting={deletingId === item.generation_id} cancelling={cancellingId === item.generation_id} selectQuery={selectQuery} publishQuery={publishQuery} researchQuery={researchQuery} deleteQuery={deleteQuery}/>)}</div> : <div className="query-generation-task-empty"><Search size={15}/>没有匹配的 Query 发散任务。</div>}
+  </section>;
 }
 
-function QueryDetail({item, mutating, publish, archiveQuery, useForResearch}) {
+function GenerationTaskListRow({generation, expanded, queries, toggle, remove, cancel, deleting, cancelling, selectQuery, publishQuery, researchQuery, deleteQuery}) {
+  const running = ['queued', 'running'].includes(generation.status);
+  const completed = generation.status === 'completed';
+  const cancelled = generation.status === 'cancelled';
+  const resultCount = generation.result_query_ids?.length || 0;
+  const handleKeyDown = event => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      toggle();
+    }
+  };
+  return <article className={`query-generation-task-list-row ${generation.status} ${expanded ? 'expanded' : ''}`} role="button" tabIndex={0} aria-expanded={expanded} onClick={toggle} onKeyDown={handleKeyDown}>
+    <header><span className="query-generation-task-list-check"><ChevronDown size={12}/></span><b>{generation.topic}</b><em>{running ? <LoaderCircle className="spin" size={12}/> : completed ? <CheckCircle2 size={12}/> : cancelled ? <X size={12}/> : <CircleAlert size={12}/>} {running ? '进行中' : completed ? '已完成' : cancelled ? '已终止' : '失败'}</em></header>
+    <p>{generation.supplemental_information || '由 Agent 结合公开态势与输入偏好，多维发散形成装备需求 Query。'}</p>
+    <div className="query-generation-task-list-metrics"><span><strong>{generation.requested_count}</strong> 目标</span><span><strong>{resultCount}</strong> 草稿</span><span><strong>{generation.source_references?.length || 0}</strong> 来源</span></div>
+    <div className="query-generation-task-list-meta"><span>{STAGE_LABELS[generation.stage] || generation.stage}</span><time dateTime={generation.created_at}>创建于 {formatDateTime(generation.created_at)}</time></div>
+    <footer><span><i/>真实运行</span>{running ? <button className="query-generation-task-stop" title="终止当前生成任务" disabled={cancelling} onClick={event => { event.stopPropagation(); cancel(generation); }}>{cancelling ? <LoaderCircle className="spin" size={13}/> : <X size={13}/>}</button> : <button title="删除任务记录" disabled={deleting} onClick={event => { event.stopPropagation(); remove(generation); }}>{deleting ? <LoaderCircle className="spin" size={13}/> : <Trash2 size={13}/>}</button>}</footer>
+    {expanded && <section className="query-generation-task-results" onClick={event => event.stopPropagation()}>
+      <header><span><Sparkles size={14}/><b>本次生成的 Query</b></span><em>{resultCount} 条</em></header>
+      {queries.length ? <ol>{queries.map(item => <li key={item.query_id}><button className="query-result-title" onClick={() => selectQuery?.(item.query_id)}><span>{item.query}</span><small>{STATUS_LABELS[item.status] || item.status}</small></button><div className="query-result-actions"><button title="查看详情" onClick={() => selectQuery?.(item.query_id)}><Eye size={12}/></button>{item.status === 'draft' && <button title="审核发布" onClick={() => publishQuery?.(item)}><BookOpenCheck size={12}/></button>}<button title="新建研究任务" onClick={() => researchQuery?.(item)}><Play size={12}/></button><button title="删除 Query" onClick={() => deleteQuery?.(item)}><Trash2 size={12}/></button></div></li>)}</ol>
+        : <div className="query-generation-task-results-state"><Clock3 size={15}/>{running ? 'Query 正在生成，完成后可在这里查看。' : resultCount ? '生成结果正在同步到 Query 库。' : '这个任务没有保存 Query 结果。'}</div>}
+    </section>}
+  </article>;
+}
+
+function GenerationTaskCard({generation}) {
+  const running = ['queued', 'running'].includes(generation.status);
+  const completed = generation.status === 'completed';
+  return <article className={`query-generation-task ${generation.status}`}>
+    <div className="query-generation-task-icon">{running ? <LoaderCircle className="spin" size={15}/> : completed ? <CheckCircle2 size={15}/> : <CircleAlert size={15}/>}</div>
+    <div className="query-generation-task-body"><div className="query-generation-task-title"><b>{running ? '正在生成 Query' : completed ? 'Query 生成完成' : 'Query 生成失败'}</b><span>{generation.requested_count} 条</span></div><p title={generation.topic}>{generation.topic}</p><small>{STAGE_LABELS[generation.stage] || generation.stage} · {completed ? `已生成 ${generation.result_query_ids?.length || 0} 条草稿` : generation.status === 'failed' ? generation.error || '请重试任务' : '后台持续执行中'} · 创建于 {formatDateTime(generation.created_at)}</small></div>
+  </article>;
+}
+
+function QueryCard({item, selected, checked, toggle, choose}) {
+  return <article className={`query-library-card ${selected ? 'selected' : ''}`} role="button" tabIndex={0} onClick={choose} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); choose(); } }} key={item.query_id}>
+    <header><label className="query-card-select" onClick={event => event.stopPropagation()}><input type="checkbox" checked={checked} onChange={toggle} aria-label={`选择 ${item.query}`}/><span className={`query-status ${item.status}`}>{STATUS_LABELS[item.status]}</span></label><em>{SOURCE_LABELS[item.source_type]}</em></header>
+    <p>{item.query}</p>
+    <footer><span><Lightbulb size={12}/>{item.generation_rationale ? '含生成理由' : '理由待补充'}</span><span className="query-card-time" title={item.created_at}><Clock3 size={11}/>{item.source_type === 'agent' ? '生成于 ' : '录入于 '}{formatDateTime(item.created_at)}</span><span>{item.source_references?.length || 0} 个来源</span></footer>
+  </article>;
+}
+
+function QueryDetail({item, mutating, publish, archiveQuery, deleteQuery, useForResearch}) {
   if (!item) return <aside className="query-detail-panel empty"><Lightbulb/><p>选择一条短 Query，查看它对应的详细研究维度、生成理由和来源依据。</p></aside>;
   return <aside className="query-detail-panel">
-    <header><div><span className={`query-status ${item.status}`}>{STATUS_LABELS[item.status]}</span><em>{SOURCE_LABELS[item.source_type]} · v{item.version}</em></div><small>{item.query_id}</small></header>
+    <header><div><span className={`query-status ${item.status}`}>{STATUS_LABELS[item.status]}</span><em>{SOURCE_LABELS[item.source_type]} · v{item.version} · {item.source_type === 'agent' ? '生成于' : '录入于'} {formatDateTime(item.created_at)}</em></div><small>{item.query_id}</small></header>
     <h3>{item.query}</h3>
     <DetailBlock title="研究角度与补充信息" text={item.supplemental_information || '暂无补充信息，可在启动研究前继续编辑。'}/>
     <DetailBlock title="生成理由" text={item.generation_rationale || '该条为人工或资料导入 Query，尚未补充生成理由。'}/>
-    <section className="query-source-list"><b>来源依据</b>{item.source_references?.length ? item.source_references.map((source, index) => <article key={`${source.url}-${index}`}><span>{source.url ? <a href={source.url} target="_blank" rel="noreferrer">{source.title}<ExternalLink size={12}/></a> : source.title}<small>{source.relevance_note || '用于形成 Query 的背景线索'}</small></span></article>) : <p>暂无直接来源，后续研究仍需独立采集与核验正式证据。</p>}<em>{item.source_disclaimer}</em></section>
-    <div className="query-detail-actions">{item.status !== 'archived' && <button disabled={mutating} onClick={() => archiveQuery(item)}><Archive size={15}/>归档</button>}{item.status === 'draft' && <button disabled={mutating} onClick={() => publish(item)}><BookOpenCheck size={15}/>审核发布</button>}{item.status !== 'archived' && <button className="primary" disabled={mutating} onClick={() => useForResearch(item)}><Play size={15}/>{item.status === 'draft' ? '发布并新建研究' : '用此 Query 新建研究'}</button>}</div>
+    <section className="query-source-list"><b>来源依据</b>{item.source_references?.length ? item.source_references.map((source, index) => <article key={`${source.url}-${index}`}><span>{source.url ? <a href={source.url} target="_blank" rel="noreferrer">{displaySourceTitle(source.title)}<ExternalLink size={12}/></a> : displaySourceTitle(source.title)}<small>{source.relevance_note || '用于形成 Query 的背景线索'}</small></span></article>) : <p>暂无直接来源，后续研究仍需独立采集与核验正式证据。</p>}<em>{item.source_disclaimer}</em></section>
+    <div className="query-detail-actions">{item.status !== 'archived' && <button disabled={mutating} onClick={() => archiveQuery(item)}><Archive size={15}/>归档</button>}<button className="danger" disabled={mutating} onClick={() => deleteQuery(item)}><Trash2 size={15}/>删除</button>{item.status === 'draft' && <button disabled={mutating} onClick={() => publish(item)}><BookOpenCheck size={15}/>审核发布</button>}{item.status !== 'archived' && <button className="primary" disabled={mutating} onClick={() => useForResearch(item)}><Play size={15}/>{item.status === 'draft' ? '发布并新建研究' : '用此 Query 新建研究'}</button>}</div>
   </aside>;
 }
 

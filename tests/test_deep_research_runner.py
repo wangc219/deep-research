@@ -170,11 +170,13 @@ def test_subset_agents_run_without_unnecessary_coverage_expansion(tmp_path: Path
     )
     summary = json.loads(Path(result["summary_path"]).read_text(encoding="utf-8"))
     assert summary["selected_agent_ids"] == ["combat_scenario", "weapon_equipment"]
-    assert summary["coverage"]["missing_required_tags"] == []
+    assert summary["coverage"]["missing_required_tags"] == ["operation"]
     assert summary["recall_requests"] == []
-    assert summary["agent_recommendations"] == []
+    assert [
+        item["missing_capability_tag"] for item in summary["agent_recommendations"]
+    ] == ["operation"]
     report = Path(result["report_path"]).read_text(encoding="utf-8")
-    assert "本次启用agent未覆盖全部关键capability" not in report
+    assert "本次启用agent未覆盖全部关键capability" in report
 
 
 def test_three_research_routes_have_e2e(tmp_path: Path) -> None:
@@ -502,7 +504,7 @@ def test_real_mode_rejects_fixture_hostname_without_transport(tmp_path: Path) ->
     assert transport.calls == []
 
 
-def test_recall_requests_are_traceable_for_missing_coverage(
+def test_missing_coverage_is_traceable_without_mechanical_recall(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
@@ -515,13 +517,18 @@ def test_recall_requests_are_traceable_for_missing_coverage(
         agent_ids=["combat_scenario", "weapon_equipment"],
     )
     summary = json.loads(Path(result["summary_path"]).read_text(encoding="utf-8"))
-    assert summary["recall_requests"]
+    assert summary["recall_requests"] == []
+    assert summary["coverage"]["missing_required_tags"] == ["operation"]
     trace_rows = [
         json.loads(line)
         for line in (Path(result["run_dir"]) / "trace.jsonl").read_text(encoding="utf-8").splitlines()
     ]
-    recall_events = [row["payload"] for row in trace_rows if row["payload"]["event_type"] == "recall_requested"]
-    assert {event["payload"]["target_capability_tag"] for event in recall_events} >= {"operation"}
+    recall_events = [
+        row["payload"]
+        for row in trace_rows
+        if row["payload"]["event_type"] == "recall_requested"
+    ]
+    assert recall_events == []
 
 
 def test_custom_agent_config_is_selected_without_explicit_agent_ids(tmp_path: Path) -> None:

@@ -391,8 +391,8 @@ def test_required_weapon_equipment_uses_bounded_quality_source_target() -> None:
     }
     assert discovery_options["max_output_tokens"] == 1400
     assert discovery_options["reasoning_effort"] == "low"
-    assert discovery_options["_disable_provider_timeout"] is True
-    assert "_provider_timeout_seconds" not in discovery_options
+    assert discovery_options["_disable_provider_timeout"] is False
+    assert discovery_options["_provider_timeout_seconds"] == 90
     assert discovery_options["web_search"]["search_context_size"] == "medium"
     assert "output_schema" in discovery_options
     snapshot_prompt = repr([message.content for message in backend.inputs[0][0]])
@@ -1132,6 +1132,44 @@ def test_successful_long_quality_calls_do_not_collapse_concurrency(monkeypatch) 
 
     assert gate.snapshot()["limit"] == 6
     assert gate.snapshot()["latency_downshift_enabled"] is False
+
+
+def test_run_can_raise_gate_to_deployment_maximum(monkeypatch) -> None:
+    monkeypatch.setenv("EQUIPMENT_DR_CODEX_MODEL_CONCURRENCY", "6")
+    monkeypatch.setenv("EQUIPMENT_DR_CODEX_MODEL_CONCURRENCY_MIN", "4")
+    monkeypatch.setenv("EQUIPMENT_DR_CODEX_MODEL_CONCURRENCY_MAX", "8")
+    gate = AdaptiveCallGate()
+
+    gate.configure_concurrency(8)
+    leases = [gate.try_acquire(priority="swarm") for _ in range(8)]
+
+    assert all(lease is not None for lease in leases)
+    assert gate.try_acquire(priority="swarm") is None
+    assert gate.snapshot()["limit"] == 8
+    for lease in leases:
+        assert lease is not None
+        gate.release(0.1, success=True)
+
+
+def test_s6_can_raise_gate_to_independent_32_process_ceiling(monkeypatch) -> None:
+    monkeypatch.setenv("EQUIPMENT_DR_CODEX_MODEL_CONCURRENCY", "8")
+    monkeypatch.setenv("EQUIPMENT_DR_CODEX_MODEL_CONCURRENCY_MIN", "4")
+    monkeypatch.setenv("EQUIPMENT_DR_CODEX_MODEL_CONCURRENCY_MAX", "8")
+    monkeypatch.setenv("EQUIPMENT_DR_REPORTER_MODEL_CONCURRENCY", "12")
+    monkeypatch.setenv("EQUIPMENT_DR_S6_MODEL_CONCURRENCY_MAX", "32")
+    gate = AdaptiveCallGate()
+
+    gate.configure_concurrency(32)
+    leases = [gate.try_acquire(priority="critical") for _ in range(32)]
+
+    assert all(lease is not None for lease in leases)
+    assert gate.try_acquire(priority="critical") is None
+    assert gate.snapshot()["s6_maximum"] == 32
+    assert gate.snapshot()["deployment_maximum"] == 32
+    assert gate.snapshot()["limit"] == 32
+    for lease in leases:
+        assert lease is not None
+        gate.release(0.1, success=True)
 
 
 def test_latency_downshift_is_explicit_and_requires_repeated_slow_calls(

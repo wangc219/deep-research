@@ -10,7 +10,7 @@ from typing import Any, Mapping, Sequence
 from equipment_deep_research.agents.orchestrator_prompt import (
     ORCHESTRATOR_PROMPT_VERSION,
 )
-from equipment_deep_research.agents.registry import AgentDef
+from equipment_deep_research.contracts.agents import AgentSpec
 from equipment_deep_research.domain.models import ResearchProblem
 from equipment_deep_research.orchestration.winning_swarm import (
     normalize_winning_swarm_policy,
@@ -791,6 +791,12 @@ def _normalize_structured_query_brief(
         raw.get("equipment_semantic_boundary")
         or base.get("equipment_semantic_boundary", "")
     ).strip()[:700]
+    query_equipment_mode = str(
+        raw.get("query_equipment_mode")
+        or base.get("query_equipment_mode", "direct_combat")
+    ).strip().lower()
+    if query_equipment_mode not in {"direct_combat", "mission_equipment"}:
+        query_equipment_mode = "direct_combat"
     winning_problem_propositions = _normalize_winning_problem_propositions(
         raw.get("winning_problem_propositions")
         or base.get("winning_problem_propositions", []),
@@ -834,6 +840,7 @@ def _normalize_structured_query_brief(
         "battle_phase_and_constraints": battle_phase_and_constraints,
         "required_direct_military_effects": required_direct_military_effects,
         "equipment_semantic_boundary": equipment_semantic_boundary,
+        "query_equipment_mode": query_equipment_mode,
         "winning_problem_propositions": winning_problem_propositions,
         "weapon_design_variables": weapon_design_variables,
         "query_specific_weapon_architectures": query_specific_weapon_architectures,
@@ -1481,11 +1488,11 @@ def _bounded_text_list(value: Any, *, limit: int) -> list[str]:
 
 
 def execution_waves_from_blueprint(
-    selected: Sequence[AgentDef],
+    selected: Sequence[AgentSpec],
     blueprint: Mapping[str, Any],
     *,
     maximize_parallelism: bool = False,
-) -> list[list[AgentDef]]:
+) -> list[list[AgentSpec]]:
     if (
         maximize_parallelism
         and blueprint.get("baseline_execution_mode")
@@ -1522,7 +1529,7 @@ def execution_waves_from_blueprint(
     }
     pending = dict(by_id)
     completed: set[str] = set()
-    result: list[list[AgentDef]] = []
+    result: list[list[AgentSpec]] = []
     while pending:
         ready = [
             agent

@@ -1,0 +1,388 @@
+[
+  {
+    "bundle_id": "claims-42e2d45402c3",
+    "claims": [],
+    "packet_id": "packet-weapon_equipment",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-2c10f17e400f",
+    "claims": [
+      {
+        "claim_id": "claim-7a00d130316e",
+        "claim_type": "hypothesis",
+        "confidence": 0.5,
+        "counter_evidence": [
+          "GAO-25-106454在补充材料语境中易被误作反无人专项报告，实为'Defense Command and Control'框架评估（2025-04），只能支撑C2/集成类结论",
+          "俄乌双方公开宣称命中率与独立评估的交换比存在系统性差距，基于战报校准装备需求会失真，需求推算须用产能/残骸/卫星等物理证据"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-international_situation-web-5824f31b34e3",
+          "ev-international_situation-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "判断：俄乌案例已实证低成本可消耗无人机/巡飞弹配合电子战能持续压制传统高价值防空与装甲体系，其效力不取决于单机代差，而取决于规模化储备、频谱环境与战法迭代节律；向台海等海岛方向迁移的核心是饱和压制与反制竞赛，而非高端突防平台主导。军事任务价值：塑造对蜂群产能、巡飞弹库存和EW装备密度的预警指标，界定滩头/机场/雷达节点反制任务压力。证据边界：本目录来源均为美方政策/监督/预算文件，缺俄乌战术级互证，判断为公开案例加政策逻辑外推。失效条件：若岛礁/海峡交战以海上机动和短时强对抗为主而非静态接触线，堑壕式蜂群节律不成立，迁移强度大幅下降。"
+      },
+      {
+        "claim_id": "claim-a5f5764f05b0",
+        "claim_type": "hypothesis",
+        "confidence": 0.5,
+        "counter_evidence": [
+          "GAO-25-106454在补充材料语境中易被误作反无人专项报告，实为'Defense Command and Control'框架评估（2025-04），只能支撑C2/集成类结论",
+          "俄乌双方公开宣称命中率与独立评估的交换比存在系统性差距，基于战报校准装备需求会失真，需求推算须用产能/残骸/卫星等物理证据"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-international_situation-web-5824f31b34e3",
+          "ev-international_situation-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "判断：美方已把反无人从末端对抗升格为战略与C2问题——2024-12《反无人系统战略》情况说明书强调跨领域、跨特征、跨时限统一应对，GAO-25-106454将国防指挥控制缺乏全面框架列为进展瓶颈；USMC Force Design与FY2026 PDI则将分布式反无人与印太威慑投资制度化。军事任务价值：反制/拒止/威慑可信度取决于全链路探测-决策-交战架构而非单件反无人装备；提示跟踪C-sUAS战略向条令、采购、演习落地的时间窗。证据边界：GAO-25-106454实为国防C2评估（2025-04），非反无人专项报告，引用须限定在C2整合结论；目录内无台海作战实证。失效条件：若美国反无人投入实际集中于本土/基地防护而非印太前沿，将高估其岛链拒止网络成熟度。"
+      },
+      {
+        "claim_id": "claim-14ac6a700322",
+        "claim_type": "hypothesis",
+        "confidence": 0.5,
+        "counter_evidence": [
+          "GAO-25-106454在补充材料语境中易被误作反无人专项报告，实为'Defense Command and Control'框架评估（2025-04），只能支撑C2/集成类结论",
+          "俄乌双方公开宣称命中率与独立评估的交换比存在系统性差距，基于战报校准装备需求会失真，需求推算须用产能/残骸/卫星等物理证据"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-international_situation-web-5824f31b34e3",
+          "ev-international_situation-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "判断：双方无人机损耗极高，持久作战力由弹药/机身工业产能、快速改型与再补给节律决定；俄乌启示的稀缺变量是'消耗储备+产线重组+频谱管理'，而非平台总数，这对可能遭封锁/补给中断的海岛方向更具意义。军事任务价值：抗毁与保障恢复任务效果直接决定持久拒止时长；预警指标转为无人机与反无人弹药月产能、关键器件进口依赖和前沿预置维修节点。证据边界：损耗率与产能公开数据碎片化且常夸大，目录内仅美方预算侧量级可支撑方向判断。失效条件：若未来冲突为数周定局的短高强度形态，消耗战储备权重下降，产能逻辑让位于首波火力密度。"
+      },
+      {
+        "claim_id": "claim-5ded0dc5be3b",
+        "claim_type": "hypothesis",
+        "confidence": 0.5,
+        "counter_evidence": [
+          "GAO-25-106454在补充材料语境中易被误作反无人专项报告，实为'Defense Command and Control'框架评估（2025-04），只能支撑C2/集成类结论",
+          "俄乌双方公开宣称命中率与独立评估的交换比存在系统性差距，基于战报校准装备需求会失真，需求推算须用产能/残骸/卫星等物理证据"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-international_situation-web-5824f31b34e3",
+          "ev-international_situation-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "判断：俄乌无人机战本质是把传感器-射手链路压缩到战术级，多源目标生产决定火力有效性与弹药交换比；其对抗形态演变为'目标发现/数据共享/抗诱饵'对'信号管理/欺骗'的军备竞赛，直接映射到两栖与舰艇防空的反舰/防空火力分配。军事任务价值：侦察预警与指挥协同任务效果成为火力效能前提；预警指标为对手跨平台目标指示网络与抗诱骗算法的成熟度。证据边界：俄乌命中率与交换比细节未在本目录来源互证，主要源自公开案例研究；目录内GAO-25-106454仅证实美方视C2整合为瓶颈。失效条件：若海峡电磁与海杂波环境、通信架构和交战节奏与东欧差异过大，案例中感知-决策经验将失真。"
+      },
+      {
+        "claim_id": "claim-d6103d230ff6",
+        "claim_type": "hypothesis",
+        "confidence": 0.5,
+        "counter_evidence": [
+          "GAO-25-106454在补充材料语境中易被误作反无人专项报告，实为'Defense Command and Control'框架评估（2025-04），只能支撑C2/集成类结论",
+          "俄乌双方公开宣称命中率与独立评估的交换比存在系统性差距，基于战报校准装备需求会失真，需求推算须用产能/残骸/卫星等物理证据"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-international_situation-web-5824f31b34e3",
+          "ev-international_situation-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "判断：俄乌战争使'大规模低成本反无人+分布式预置+弹药储备'进入威慑力量建设维度，美及盟友制度化进程将抬高攻方以蜂群换取制空/制海权的成本，并拉长联盟介入的决策窗口，改变区域威慑与拒止可信度结构。军事任务价值：威慑评估需把'可消耗弹药库+反无人C2网'纳入力量对比，而非只看高端平台数；联盟是否共享反无人态势网络是判断介入深度的重要信号。证据边界：PDI与Force Design为公开预算/概念文件，不含对手反应与联盟承诺的实证。失效条件：若对手以中远程打击与网电攻击压制前沿分布式反无人节点，使C2节点先于蜂群被毁，威慑增量显著衰减。"
+      }
+    ],
+    "packet_id": "packet-international_situation",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-f8e8bafe3c9c",
+    "claims": [
+      {
+        "claim_id": "claim-e3b1b9cc184b",
+        "claim_type": "fact",
+        "confidence": 0.15,
+        "counter_evidence": [
+          "任务约束“不新增URL、不重做检索、不改写已有效字段”与“补齐全部缺失字段”在证据面为空时冲突：current_payload为空即无有效字段可保留，而全部字段缺证，实质补齐必须依赖新检索与材料化，本回合被禁止。",
+          "若将本输出中的框架性表述当作已核验战例事实，将违反“结论不超出材料化证据支持范围”；故各字段一律标注为待证据补强，防止多数意见或常识替代证据。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-case_research-web-bc1c2e8c3176",
+          "ev-case_research-web-f5b871d2abb2"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "https://www.gov.uk/government/publications/defence-drone-strategy-the-uks-approach-to-defence-uncrewed-systems/defence-drone-strategy-the-uks-approach-to-defence-uncrewed-systems"
+        ],
+        "text": "本回合为修复运行且证据面为空：current_payload 为空，missing_fields 覆盖全部输出字段；在“不新增URL、不重做检索”约束下，仅凭锚点URL无法重建可追溯的战例事实内容。"
+      },
+      {
+        "claim_id": "claim-d2a591c99ffd",
+        "claim_type": "fact",
+        "confidence": 0.15,
+        "counter_evidence": [
+          "任务约束“不新增URL、不重做检索、不改写已有效字段”与“补齐全部缺失字段”在证据面为空时冲突：current_payload为空即无有效字段可保留，而全部字段缺证，实质补齐必须依赖新检索与材料化，本回合被禁止。",
+          "若将本输出中的框架性表述当作已核验战例事实，将违反“结论不超出材料化证据支持范围”；故各字段一律标注为待证据补强，防止多数意见或常识替代证据。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-case_research-web-bc1c2e8c3176",
+          "ev-case_research-web-f5b871d2abb2"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "https://www.gov.uk/government/publications/defence-drone-strategy-the-uks-approach-to-defence-uncrewed-systems/defence-drone-strategy-the-uks-approach-to-defence-uncrewed-systems"
+        ],
+        "text": "8个discovered_sources 全部为 required_source_anchor=true 的URL锚点（retrieval_lane=provider_neutral_source_anchor_fallback），均未提供正文、EvidenceCard ID 或引用位置；按证据治理规则，搜索摘要/锚点不得升级为事实，本回合不作内容级引用。"
+      },
+      {
+        "claim_id": "claim-27ba3eee241f",
+        "claim_type": "fact",
+        "confidence": 0.15,
+        "counter_evidence": [
+          "任务约束“不新增URL、不重做检索、不改写已有效字段”与“补齐全部缺失字段”在证据面为空时冲突：current_payload为空即无有效字段可保留，而全部字段缺证，实质补齐必须依赖新检索与材料化，本回合被禁止。",
+          "若将本输出中的框架性表述当作已核验战例事实，将违反“结论不超出材料化证据支持范围”；故各字段一律标注为待证据补强，防止多数意见或常识替代证据。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-case_research-web-bc1c2e8c3176",
+          "ev-case_research-web-f5b871d2abb2"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "https://www.gov.uk/government/publications/defence-drone-strategy-the-uks-approach-to-defence-uncrewed-systems/defence-drone-strategy-the-uks-approach-to-defence-uncrewed-systems"
+        ],
+        "text": "所有实质字段按“证据不足”处理并登记为开放问题：本输出仅提供案例框架占位、证据充分性审计和待补清单，不构成型号级或日期级战例事实结论。"
+      },
+      {
+        "claim_id": "claim-4922bc73cafa",
+        "claim_type": "fact",
+        "confidence": 0.15,
+        "counter_evidence": [
+          "任务约束“不新增URL、不重做检索、不改写已有效字段”与“补齐全部缺失字段”在证据面为空时冲突：current_payload为空即无有效字段可保留，而全部字段缺证，实质补齐必须依赖新检索与材料化，本回合被禁止。",
+          "若将本输出中的框架性表述当作已核验战例事实，将违反“结论不超出材料化证据支持范围”；故各字段一律标注为待证据补强，防止多数意见或常识替代证据。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-case_research-web-bc1c2e8c3176",
+          "ev-case_research-web-f5b871d2abb2"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "https://www.gov.uk/government/publications/defence-drone-strategy-the-uks-approach-to-defence-uncrewed-systems/defence-drone-strategy-the-uks-approach-to-defence-uncrewed-systems"
+        ],
+        "text": "主题域存在高价值公开文献锚点（DoD C-sUAS战略、RUSI、CSIS、GAO、UK Defence Drone Strategy等），提示后续补齐检索有明确信息增益；但锚点正文未材料化，故正式结论全部挂起。"
+      }
+    ],
+    "packet_id": "packet-case_research",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-978ac9dc8329",
+    "claims": [
+      {
+        "claim_id": "claim-e2f12107c0d0",
+        "claim_type": "fact",
+        "confidence": 0.49,
+        "counter_evidence": [
+          "'蜂群自主协同'常被视为乌战主教训，但公开战例以单机FPV与中大型侦察打击一体为主，大规模自主蜂群未见确证，将其作为迁移主线缺乏直接证据。",
+          "电子战被部分复盘奉为反无人主线，但光纤/自主末端无人机的出现使射频干扰整体失效，任何单一克制叙事在数周内即被反转。",
+          "正式证据少于2条；独立来源域少于2类"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "侦察-打击时间链被压缩至分钟级，制胜变量从单平台性能转向'单位时间可用架次+射手接口+信息回环时延'。军事任务价值：直接决定打击/歼灭闭环效率与连排级持续作战强度。证据边界：符合CSIS乌战教训报告主题与公开复盘共识，但本会话未能复核具体损耗统计。失效条件：电磁环境全面压制无人机链路、或对方纵深打击发射与回收点使其无法生成架次率。"
+      },
+      {
+        "claim_id": "claim-9c28e791d7b0",
+        "claim_type": "hypothesis",
+        "confidence": 0.49,
+        "counter_evidence": [
+          "'蜂群自主协同'常被视为乌战主教训，但公开战例以单机FPV与中大型侦察打击一体为主，大规模自主蜂群未见确证，将其作为迁移主线缺乏直接证据。",
+          "电子战被部分复盘奉为反无人主线，但光纤/自主末端无人机的出现使射频干扰整体失效，任何单一克制叙事在数周内即被反转。",
+          "正式证据少于2条；独立来源域少于2类"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "反无人机必须按'成本交换率'设计分层体系：探测(多模融合)→非动能(干扰/诱骗)→低成本动能(炮射空爆、反无人机无人机)→高端动能/定向能→对发射端与生产端纵深打击。军事价值：以可持续成本维持拒止与压制，防止经济耗竭。证据边界：DoD 2024年12月反无人系统战略采分层与成本不对称框架，但乌战各层效果占比无可靠统计。失效条件：敌用光纤/自主末段无人机绕过射频层时，若动能层库存不足则防线洞穿。"
+      },
+      {
+        "claim_id": "claim-5ca8ff7d5c21",
+        "claim_type": "hypothesis",
+        "confidence": 0.49,
+        "counter_evidence": [
+          "'蜂群自主协同'常被视为乌战主教训，但公开战例以单机FPV与中大型侦察打击一体为主，大规模自主蜂群未见确证，将其作为迁移主线缺乏直接证据。",
+          "电子战被部分复盘奉为反无人主线，但光纤/自主末端无人机的出现使射频干扰整体失效，任何单一克制叙事在数周内即被反转。",
+          "正式证据少于2条；独立来源域少于2类"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "对手以周-月尺度适应(干扰→跳频→光纤/自主末端)，能力半衰期短于传统采办周期。军事价值：决定反制是否跟得上适应，进而决定压制能否持续。证据边界：GAO-25-107263证实美陆军远火因线性采办与迭代开发脱节导致项目失败，间接支持'迭代快于线性'规律，但非乌战直接案例。失效条件：若对手适应集中于少数昂贵改型而非普遍换装，该结论可能高估迭代速度的作用。"
+      },
+      {
+        "claim_id": "claim-ced14e244423",
+        "claim_type": "hypothesis",
+        "confidence": 0.49,
+        "counter_evidence": [
+          "'蜂群自主协同'常被视为乌战主教训，但公开战例以单机FPV与中大型侦察打击一体为主，大规模自主蜂群未见确证，将其作为迁移主线缺乏直接证据。",
+          "电子战被部分复盘奉为反无人主线，但光纤/自主末端无人机的出现使射频干扰整体失效，任何单一克制叙事在数周内即被反转。",
+          "正式证据少于2条；独立来源域少于2类"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "向岛链/海峡场景迁移的要点：短航渡、高密度电磁对抗与封闭后勤条件下，装备需求应聚焦抗干扰/隐蔽链路、自主末段制导、分布式低特征发射单元、以及被打断后经模块化设计与预置供应链快速再生的产能，而非继续追逐少量高精平台。军事价值：抗毁、战损续接与持续作战能力。证据边界：USMC Force Design强调分散、低特征、有人无人混编方向，PLA具体能力结构未获公开权威数据。失效条件：若海峡场景无人机生存窗口远短于乌战或补给完全中断，低成本可损耗模型不成立。"
+      },
+      {
+        "claim_id": "claim-85568da30c87",
+        "claim_type": "hypothesis",
+        "confidence": 0.49,
+        "counter_evidence": [
+          "'蜂群自主协同'常被视为乌战主教训，但公开战例以单机FPV与中大型侦察打击一体为主，大规模自主蜂群未见确证，将其作为迁移主线缺乏直接证据。",
+          "电子战被部分复盘奉为反无人主线，但光纤/自主末端无人机的出现使射频干扰整体失效，任何单一克制叙事在数周内即被反转。",
+          "正式证据少于2条；独立来源域少于2类"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "战术边缘目标数据必须可跨建制即时共享，否则传感器与弹药无法闭合杀伤链。军事价值：协同与任务闭环的前置条件。证据边界：GAO-25-106454证实美军CJADC2尚无统一框架、教训共享机制缺失且过度密级阻碍数据共享，属美军管理评估而非乌战作战证据。失效条件：若敌方以网络/电磁手段直接攻击C2节点而非干扰数据流，纯数据共享方案不能解决韧性。"
+      }
+    ],
+    "packet_id": "packet-operational_employment",
+    "schema_version": "1.0"
+  }
+]

@@ -1,0 +1,68 @@
+{
+  "blueprint_required_outputs": [
+    "体系边界",
+    "任务依赖图",
+    "脆弱点",
+    "替代方案",
+    "补链强链",
+    "装备能力需求图像（需求卡片）",
+    "深度研究主报告（深度性、创新性、前瞻性、军事价值性）",
+    "分支专用收敛产物"
+  ],
+  "branch": "F",
+  "branch_name": "体系对抗博弈发现",
+  "completion": {
+    "capability_domains": {
+      "actual": 0,
+      "met": false,
+      "target": 1
+    },
+    "demand_cards": {
+      "actual": 0,
+      "met": false,
+      "target": 1
+    },
+    "equipment_forms": {
+      "actual": 0,
+      "met": false,
+      "target": 1
+    },
+    "future_scenarios": {
+      "actual": 0,
+      "met": false,
+      "target": 1
+    },
+    "system_vulnerabilities": {
+      "actual": 0,
+      "met": false,
+      "target": 1
+    }
+  },
+  "delivery_status": "limited",
+  "non_fabrication_rule": "未达到数量门槛时必须披露缺口，不得用同义改写或无证据条目凑数。",
+  "products": {
+    "capability_domains": [],
+    "demand_cards": [],
+    "equipment_forms": [],
+    "future_scenarios": [],
+    "system_vulnerabilities": []
+  },
+  "report_contract": {
+    "future_test": "考虑对手绕开单点加固后的二次适应，验证能力组合是否具备分布式、可替换和动态重构特征。",
+    "military_test": "重点评估在关键节点受压、通信降级或保障中断时，体系能否维持打击、反制和任务闭环，而非追求单个平台峰值。",
+    "thesis": "围绕体系节点、链路和资源依赖识别级联失效机理，论证补链、强链、替代链和快速重构能力如何改变体系对抗结果。"
+  },
+  "report_quality_requirements": {
+    "创新性": "说明相对现役基线改变的作战关系、对手反适应和失效边界，创新必须落实到具体装备。",
+    "制胜效能": "分别证明现役效能跃升、传统赛道跨代优势和新概念赛道开辟，并给出可校准效能方向。",
+    "可实现性（成熟度）": "逐项给出核心技术点、成熟度、工程瓶颈、证据边界和验证条件，禁止把推断写成既成能力。",
+    "装备能力图像": "逐项保留动态组合中证据闭环的具体直接战斗武器，给出差异化指标画像、军事作战流程、直接战果和装备谱系位置；数量不设固定配额。",
+    "领域属性符合性": "持续符合当前Query确定的具体军事装备领域；无人、低空、远程和精确打击仅在Query明确涉及时作为领域锚点，通信、C2、保障和工程只能作为具体武器装备的内部依赖。"
+  },
+  "required_sections": [
+    "体系脆弱性规律",
+    "级联失效场景",
+    "补链强链能力组合",
+    "装备能力需求图像（需求卡片）"
+  ]
+}

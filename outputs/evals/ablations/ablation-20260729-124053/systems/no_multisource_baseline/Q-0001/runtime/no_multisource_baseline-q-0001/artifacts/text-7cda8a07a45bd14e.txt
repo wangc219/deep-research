@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=lineofdeparture.army.mil · Engineering Resilient Fire Support in
-source_url=https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/
-claim=强干扰环境下火力体系通信、传感器和传感器到射手链路易被探测、干扰和利用；PACE通信、发射管控、分散部署、雷达短时开机和机动可增强火力链路韧性。
-excerpt=
-retrieval=Hosted web search citation metadata

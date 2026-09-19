@@ -550,6 +550,7 @@ class DynamicWinningScheduler:
         emit_progress_fn: Callable[[dict[str, Any]], None] | None = None,
         max_parallel: int | None = None,
         parallel_call_budget: int | None = None,
+        snapshot_state_fn: Callable[[], Mapping[str, Any]] | None = None,
     ) -> None:
         """Initialize scheduler.
 
@@ -565,6 +566,7 @@ class DynamicWinningScheduler:
         self.run_step_fn = run_step_fn
         self.commit_step_fn = commit_step_fn
         self.emit_progress_fn = emit_progress_fn or (lambda x: None)
+        self.snapshot_state_fn = snapshot_state_fn or (lambda: {})
         if max_parallel is None:
             try:
                 configured_parallel = int(
@@ -649,7 +651,10 @@ class DynamicWinningScheduler:
         parallel_budget_remaining = self.parallel_call_budget
         failures: list[BaseException] = []
 
-        async def run_step_wrapper(step: int) -> None:
+        async def run_step_wrapper(
+            step: int,
+            prior_state: Mapping[str, Any],
+        ) -> None:
             """Wrapper to execute step and handle completion."""
             nonlocal parallel_budget_remaining
             try:
@@ -660,7 +665,7 @@ class DynamicWinningScheduler:
                 outcome = await self.run_step_fn(
                     step,
                     middle_cycle,
-                    {},  # Prior outputs retrieved inside run_step_fn
+                    prior_state,
                     middle_feedback,
                 )
 
@@ -691,25 +696,54 @@ class DynamicWinningScheduler:
                             extra_node = self.plan.nodes.get(extra)
                             if extra_node is None:
                                 continue
-                            if extra_node.status == "skipped" and extra not in extra_steps:
+                            # A dynamic action may point at an optional branch
+                            # that was pruned (``skipped``) or at a node that
+                            # was kept pending by the initial blueprint.  The
+                            # old skipped-only check silently ignored the
+                            # latter, making a valid PARALLEL request appear
+                            # to succeed while never changing execution.
+                            if (
+                                extra_node.status in {"pending", "skipped"}
+                                and extra not in self.plan.completed_steps
+                                and extra not in running_tasks
+                                and extra not in extra_steps
+                            ):
                                 extra_steps.append(extra)
                     granted = reserve_parallel_capacity(
                         in_flight=max(0, len(running_tasks) - 1),
                         max_parallel=self.max_parallel,
                         remaining_call_budget=parallel_budget_remaining,
-                        requested_slots=len(extra_steps),
+                        requested_slots=sum(
+                            1
+                            for extra in extra_steps
+                            if self.plan.nodes[extra].status == "skipped"
+                        ),
                     )
                     parallel_budget_remaining = max(
                         0, parallel_budget_remaining - granted
                     )
-                    awakened = extra_steps[:granted]
-                    for extra in awakened:
+                    # Pending nodes are already budgeted by the normal graph;
+                    # only reactivating a skipped node consumes an exploration
+                    # slot. Keep the requested ordering stable for the event
+                    # stream and make the cap apply only to newly activated
+                    # work.
+                    awakened: list[int] = []
+                    remaining_grants = granted
+                    for extra in extra_steps:
                         extra_node = self.plan.nodes[extra]
-                        extra_node.status = "pending"
-                        if extra_node.mode == ExecutionMode.SKIP:
-                            extra_node.mode = ExecutionMode.STANDARD
-                        self.plan.skipped_steps.discard(extra)
-                        pending_steps.add(extra)
+                        if extra_node.status == "skipped":
+                            if remaining_grants <= 0:
+                                continue
+                            remaining_grants -= 1
+                            extra_node.status = "pending"
+                            if extra_node.mode == ExecutionMode.SKIP:
+                                extra_node.mode = ExecutionMode.STANDARD
+                            self.plan.skipped_steps.discard(extra)
+                            pending_steps.add(extra)
+                            awakened.append(extra)
+                        elif extra_node.status == "pending":
+                            pending_steps.add(extra)
+                            awakened.append(extra)
                     self.emit_progress_fn({
                         "step": step,
                         "agent_id": node.agent_id,
@@ -769,10 +803,15 @@ class DynamicWinningScheduler:
 
                 # Launch a bounded ready slice to protect providers under dynamic load.
                 capacity = max(0, self.max_parallel - len(running_tasks))
+                prior_state = (
+                    dict(self.snapshot_state_fn()) if ready_steps else {}
+                )
                 for step in ready_steps[:capacity]:
                     if step not in running_tasks:
                         pending_steps.discard(step)
-                        running_tasks[step] = asyncio.create_task(run_step_wrapper(step))
+                        running_tasks[step] = asyncio.create_task(
+                            run_step_wrapper(step, prior_state)
+                        )
 
                 # If nothing is running and nothing is ready, we're stuck or done
                 if not running_tasks:
@@ -898,6 +937,7 @@ async def execute_s1_s6_dynamic(
     critic_fn: Callable[[dict[str, Any]], Awaitable[dict[str, Any]]],
     accumulated_state: Mapping[str, Any],
     emit_progress_fn: Callable[[dict[str, Any]], None] | None = None,
+    snapshot_state_fn: Callable[[], Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Execute S1-S6 with dynamic scheduling, pipeline parallelism, and intelligent backtracking.
 
@@ -921,6 +961,7 @@ async def execute_s1_s6_dynamic(
         run_step_fn=run_step_fn,
         commit_step_fn=commit_step_fn,
         emit_progress_fn=emit_progress_fn,
+        snapshot_state_fn=snapshot_state_fn or (lambda: accumulated_state),
     )
 
     return await scheduler.execute_with_middle_loop(

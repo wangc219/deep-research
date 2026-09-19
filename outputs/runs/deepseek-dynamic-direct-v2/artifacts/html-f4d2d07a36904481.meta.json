@@ -1,0 +1,15 @@
+{
+  "artifact_ref": "html:f4d2d07a36904481",
+  "connect_ip": "2620:12a:8001::4",
+  "content_path": "html-f4d2d07a36904481.html",
+  "content_type": "text/html; charset=UTF-8",
+  "encoding": null,
+  "evidence_id": "ev-case_research-web-fa6b7ef26d3a",
+  "fetch_cache_hit": false,
+  "final_url": "https://www.airforce-technology.com/analyst-comment/disruptive-innovation-electronic-warfare-arms-race/",
+  "kind": "html",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "f4d2d07a36904481771d44c27563541b20c4bdf45aff4dc7d661b98710fa3ad7",
+  "url": "https://www.airforce-technology.com/analyst-comment/disruptive-innovation-electronic-warfare-arms-race/"
+}

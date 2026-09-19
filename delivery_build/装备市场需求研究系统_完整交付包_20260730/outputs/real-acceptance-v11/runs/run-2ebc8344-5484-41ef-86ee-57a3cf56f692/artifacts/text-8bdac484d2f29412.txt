@@ -1,5 +1,0 @@
-network_safety_rejected
-url=https://www.congress.gov/crs-product/IN12418?utm_source=openai
-rejected_url=https://www.congress.gov/crs-product/IN12418?utm_source=openai
-reason=host_resolution_failed
-该地址未通过网络安全校验，诊断材料不进入正式证据集。

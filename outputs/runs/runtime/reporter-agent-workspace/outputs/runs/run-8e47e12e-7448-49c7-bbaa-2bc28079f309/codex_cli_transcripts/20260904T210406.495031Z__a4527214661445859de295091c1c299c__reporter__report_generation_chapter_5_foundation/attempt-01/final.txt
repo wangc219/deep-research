@@ -1,0 +1,21 @@
+## 五、研制基础
+
+### （一）参与单位
+公开资料不足/待核验，当前不能把本项目的承研单位写死到具体机构。按该类任务的现实分工，至少应明确五类主体：一是作战需求牵引与试验评估单位，负责把“强干扰、弱通信、低成本精确火力与反无人”转成可验收的任务口径；二是低成本火力与发射平台单位，负责把现役平台、简易发射器或分布式载具接入任务链；三是探测识别与抗干扰通信单位，负责在链路受压条件下维持目标发现、确认和指令下传；四是任务软件与仿真单位，负责把分布式火力、补击时序和毁伤评估做成可联试的流程；五是保障与供应链单位，负责把弹药、传感器、通用电子件和批产一致性压到可规模化水平。
+
+能公开核验的外部参照单位主要是美国国防部、美国海军陆战队，以及其围绕反无人系统、远征前沿部署和有机精确火力形成的一组方向性力量。这些单位不是本项目承研方，但它们公开展示了强干扰环境下“分布式、低特征、可持续、可快速补位”的能力需求，对本项目的研制组织方式有直接参考价值。其边界也很清楚：公开材料能证明方向和编组思路，不能证明本项目具体单位、具体样机成熟度或量化指标。
+
+### （二）技术基础
+本项目的公开技术底座，已经能从三个方向拼起来。第一，作战组织底座来自美国海军陆战队的“前沿存在、分布式机动、快速开火/脱离”和远征前沿基地作战思路，这说明低可探测平台、短链路交战和局部火力自治并非边缘概念，而是面向强对抗的主流任务组织方式。对应到本项目，就是要把火力、感知和控制从中心化长链路，改成可在局部节点失效时继续运行的降级链路。来源可见：[Marine Corps Stand-in Forces](https://www.marines.mil/News/News-Display/Article/2708140/stand-in-forces/) 与 [EABO](https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/)，其公开证据边界是作战理念和编组方向，不含本项目所需的具体工程参数。
+
+第二，装备演进底座来自美国国防部公开反无人系统战略和 Replicator 1.2。公开文件反复强调规模化、韧性、抗干扰协同自治、探测-跟踪-表征能力提升，以及把反无人系统纳入未来部队设计。这对本项目最关键的启示，不是单一拦截器性能，而是“低成本效费比”与“抗干扰自治”必须同时成立，否则一旦敌方以数量和电磁压制对冲，现有高价值拦截弹会迅速失去交换优势。相关公开来源见：[DoD 反无人系统战略](https://www.war.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/)、[反无人系统事实清单](https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF) 和 [Replicator 1.2](https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/)。这些材料证明了方向存在，但没有公开到足以支持具体点值、具体拦截距离或具体毁伤阈值。
+
+第三，工程实现底座来自“任务级仿真、接口联试、演训验证”这一路径。对本项目而言，真正的研制基础不在单项硬件，而在能否把弱通信条件下的目标发现、火力分配、补击时序和毁伤评估做成闭环，并在分布式节点缺失时保持最低可用能力。现阶段公开材料足以支撑以下判断：一是低成本精确火力与反无人装备可以共享部分感知、火控和保障链路，降低重复建设；二是必须保留抗干扰、断链继续作战和局部自组织能力，否则在强电磁对抗下会被对手用低成本蜂群持续消耗；三是技术成熟度仍取决于实装联试和演训结果，公开证据不足以把“方向成立”直接等同于“工程可定型”。因此，技术基础已经足够支撑立项论证，但不足以替代样机试验、对抗条件下的效费比测试和批量化保障验证。
+
+### 核心公开来源索引
+- [Marine Corps Stand-in Forces](https://www.marines.mil/News/News-Display/Article/2708140/stand-in-forces/)
+- [DoD announces strategy for countering unmanned systems](https://www.war.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/)
+- [Marine Corps Force Design](https://www.marines.mil/Force-Design/)
+- [Replicator 1.2 announcement](https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/)
+- [Expeditionary Advanced Base Operations (EABO)](https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/)
+- [FACT SHEET: Strategy for Countering Unmanned Systems](https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF)

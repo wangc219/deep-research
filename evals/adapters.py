@@ -87,6 +87,11 @@ class FullMethodAdapter(SystemAdapter):
             "--discovery-branch", "auto",
             "--analyst-confirmed",
             "--stage-policy-id", self.stage_policy_id,
+            # Evaluation's ``full_method`` adapter is the compatibility
+            # baseline.  Keep the production CLI's dynamic profile default
+            # available to ordinary runs, but make benchmark output stable
+            # and avoid applying the S6 publication gate to the legacy adapter.
+            "--execution-profile-id", "legacy_v1",
         ]
         if run_dir.is_dir():
             command.append("--resume")

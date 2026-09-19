@@ -1,0 +1,329 @@
+[
+  {
+    "bundle_id": "claims-42e2d45402c3",
+    "claims": [],
+    "packet_id": "packet-weapon_equipment",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-978ac9dc8329",
+    "claims": [
+      {
+        "claim_id": "claim-1fec8136e5d7",
+        "claim_type": "hypothesis",
+        "confidence": 0.5,
+        "counter_evidence": [
+          "{'ref': 'C1', 'type': 'cross_agent_architecture_conflict', 'sides': ['OE-D3：免疫信道与自主信道为替代关系', '上游：多信道并存即增强'], 'disposition': '未决（本轮不重做检索）', 'required_action': '上游须以接触线静态程度与轴向集中度为条件限定其架构主张，或提出反证；无条件化前不得并存', 'evidence_status': '双方均无直接支持性实测，OE-D3 为强推断'}",
+          "{'ref': 'C2', 'type': 'ordering_conflict', 'sides': ['OE-D1：评估回传—再分配先致断', '上游：末段导引为首位缺口'], 'disposition': '未决，需三选一处置（采纳重排 / 保留原序 / 拆分为双场景序列）', 'required_action': '由裁决节点按“是否引入断链可判定性证据”选择', 'evidence_status': '断点顺序为推导结论'}",
+          "{'ref': 'X3', 'type': 'internal_unresolved', 'sides': ['OF-2 弹性分布收益', 'OF-5 未标定的反制到场周期'], 'disposition': '条件耦合：弹性分布收益的持续性依赖反制到场周期慢于改型回路', 'evidence_status': '无可引用值，登记为开放问题'}"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "{'id': 'OF-1', 'links_to': ['OE-D1'], 'statement': '任务链首要缺口位于闭环后段（效果可判定性与跨单元再分配），而非末段导引或火力通道；技术优先级应由单装峰值精度上移至断链条件下的效果可判定性。', 'status': 'inference_from_registered_sources', 'confidence': 'medium', 'falsifier': '若存在证据显示断链条件下末段自主接管即可维持第二轮节奏，则断点顺序回到导引段。'}"
+      },
+      {
+        "claim_id": "claim-53ea55a0ff66",
+        "claim_type": "fact",
+        "confidence": 0.5,
+        "counter_evidence": [
+          "{'ref': 'C1', 'type': 'cross_agent_architecture_conflict', 'sides': ['OE-D3：免疫信道与自主信道为替代关系', '上游：多信道并存即增强'], 'disposition': '未决（本轮不重做检索）', 'required_action': '上游须以接触线静态程度与轴向集中度为条件限定其架构主张，或提出反证；无条件化前不得并存', 'evidence_status': '双方均无直接支持性实测，OE-D3 为强推断'}",
+          "{'ref': 'C2', 'type': 'ordering_conflict', 'sides': ['OE-D1：评估回传—再分配先致断', '上游：末段导引为首位缺口'], 'disposition': '未决，需三选一处置（采纳重排 / 保留原序 / 拆分为双场景序列）', 'required_action': '由裁决节点按“是否引入断链可判定性证据”选择', 'evidence_status': '断点顺序为推导结论'}",
+          "{'ref': 'X3', 'type': 'internal_unresolved', 'sides': ['OF-2 弹性分布收益', 'OF-5 未标定的反制到场周期'], 'disposition': '条件耦合：弹性分布收益的持续性依赖反制到场周期慢于改型回路', 'evidence_status': '无可引用值，登记为开放问题'}"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "{'id': 'OF-2', 'links_to': ['OE-D2'], 'statement': '弹性分布方案对集中基线的占优是条件性的，门控为两条：跨建制/跨密级目标归因与效果共享的机读接口可闭合，发射—保障节点可前推；任一不闭合则集中基线更优。', 'status': 'inference', 'confidence': 'medium', 'falsifier': '接口成本与授权时延被证明低于同步收益时，门控放松。'}"
+      },
+      {
+        "claim_id": "claim-3ebe8e80ad5f",
+        "claim_type": "hypothesis",
+        "confidence": 0.5,
+        "counter_evidence": [
+          "{'ref': 'C1', 'type': 'cross_agent_architecture_conflict', 'sides': ['OE-D3：免疫信道与自主信道为替代关系', '上游：多信道并存即增强'], 'disposition': '未决（本轮不重做检索）', 'required_action': '上游须以接触线静态程度与轴向集中度为条件限定其架构主张，或提出反证；无条件化前不得并存', 'evidence_status': '双方均无直接支持性实测，OE-D3 为强推断'}",
+          "{'ref': 'C2', 'type': 'ordering_conflict', 'sides': ['OE-D1：评估回传—再分配先致断', '上游：末段导引为首位缺口'], 'disposition': '未决，需三选一处置（采纳重排 / 保留原序 / 拆分为双场景序列）', 'required_action': '由裁决节点按“是否引入断链可判定性证据”选择', 'evidence_status': '断点顺序为推导结论'}",
+          "{'ref': 'X3', 'type': 'internal_unresolved', 'sides': ['OF-2 弹性分布收益', 'OF-5 未标定的反制到场周期'], 'disposition': '条件耦合：弹性分布收益的持续性依赖反制到场周期慢于改型回路', 'evidence_status': '无可引用值，登记为开放问题'}"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "{'id': 'OF-3', 'links_to': ['OE-D3'], 'statement': '免疫（非射频/有线类）信道与末段自主信道在低空近程装备族上呈替代而非叠加关系，取舍变量为接触线静态程度与轴向集中度；默认多信道并存即增强属未条件化假设。', 'status': 'strong_inference_with_assumption', 'confidence': 'medium_low', 'assumption': '接触线相对静态。', 'falsifier': '高动态接触线下两者同时有效的实测运用记录。'}"
+      },
+      {
+        "claim_id": "claim-c7f999662229",
+        "claim_type": "fact",
+        "confidence": 0.5,
+        "counter_evidence": [
+          "{'ref': 'C1', 'type': 'cross_agent_architecture_conflict', 'sides': ['OE-D3：免疫信道与自主信道为替代关系', '上游：多信道并存即增强'], 'disposition': '未决（本轮不重做检索）', 'required_action': '上游须以接触线静态程度与轴向集中度为条件限定其架构主张，或提出反证；无条件化前不得并存', 'evidence_status': '双方均无直接支持性实测，OE-D3 为强推断'}",
+          "{'ref': 'C2', 'type': 'ordering_conflict', 'sides': ['OE-D1：评估回传—再分配先致断', '上游：末段导引为首位缺口'], 'disposition': '未决，需三选一处置（采纳重排 / 保留原序 / 拆分为双场景序列）', 'required_action': '由裁决节点按“是否引入断链可判定性证据”选择', 'evidence_status': '断点顺序为推导结论'}",
+          "{'ref': 'X3', 'type': 'internal_unresolved', 'sides': ['OF-2 弹性分布收益', 'OF-5 未标定的反制到场周期'], 'disposition': '条件耦合：弹性分布收益的持续性依赖反制到场周期慢于改型回路', 'evidence_status': '无可引用值，登记为开放问题'}"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "{'id': 'OF-4', 'links_to': ['OE-D3'], 'statement': '可消耗性把保障重心由维修能力迁移至供应链与介质补给响应速度，故“产能与介质补给即作战持续时间”；补给中断容限为小时—天量级（量级为推导，非实测）。', 'status': 'directional', 'confidence': 'medium_low', 'numeric_use_prohibited': True}"
+      },
+      {
+        "claim_id": "claim-7d90070dfea5",
+        "claim_type": "fact",
+        "confidence": 0.5,
+        "counter_evidence": [
+          "{'ref': 'C1', 'type': 'cross_agent_architecture_conflict', 'sides': ['OE-D3：免疫信道与自主信道为替代关系', '上游：多信道并存即增强'], 'disposition': '未决（本轮不重做检索）', 'required_action': '上游须以接触线静态程度与轴向集中度为条件限定其架构主张，或提出反证；无条件化前不得并存', 'evidence_status': '双方均无直接支持性实测，OE-D3 为强推断'}",
+          "{'ref': 'C2', 'type': 'ordering_conflict', 'sides': ['OE-D1：评估回传—再分配先致断', '上游：末段导引为首位缺口'], 'disposition': '未决，需三选一处置（采纳重排 / 保留原序 / 拆分为双场景序列）', 'required_action': '由裁决节点按“是否引入断链可判定性证据”选择', 'evidence_status': '断点顺序为推导结论'}",
+          "{'ref': 'X3', 'type': 'internal_unresolved', 'sides': ['OF-2 弹性分布收益', 'OF-5 未标定的反制到场周期'], 'disposition': '条件耦合：弹性分布收益的持续性依赖反制到场周期慢于改型回路', 'evidence_status': '无可引用值，登记为开放问题'}"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "{'id': 'OF-5', 'links_to': ['OE-D4'], 'statement': '两个未验反证变量决定链路侧缺口是否具决定性：对手电子/反无反制到场周期 vs 己方改型—反制回路周期；人员（操作/维护）补充速率 vs 装备补充速率。二者本轮零材料化证据，故三方案比较的基准仍处未标定状态。', 'status': 'hypothesis', 'confidence': 'low', 'may_enter_baseline_or_thresholds': False}"
+      },
+      {
+        "claim_id": "claim-b5265af6cfb8",
+        "claim_type": "fact",
+        "confidence": 0.5,
+        "counter_evidence": [
+          "{'ref': 'C1', 'type': 'cross_agent_architecture_conflict', 'sides': ['OE-D3：免疫信道与自主信道为替代关系', '上游：多信道并存即增强'], 'disposition': '未决（本轮不重做检索）', 'required_action': '上游须以接触线静态程度与轴向集中度为条件限定其架构主张，或提出反证；无条件化前不得并存', 'evidence_status': '双方均无直接支持性实测，OE-D3 为强推断'}",
+          "{'ref': 'C2', 'type': 'ordering_conflict', 'sides': ['OE-D1：评估回传—再分配先致断', '上游：末段导引为首位缺口'], 'disposition': '未决，需三选一处置（采纳重排 / 保留原序 / 拆分为双场景序列）', 'required_action': '由裁决节点按“是否引入断链可判定性证据”选择', 'evidence_status': '断点顺序为推导结论'}",
+          "{'ref': 'X3', 'type': 'internal_unresolved', 'sides': ['OF-2 弹性分布收益', 'OF-5 未标定的反制到场周期'], 'disposition': '条件耦合：弹性分布收益的持续性依赖反制到场周期慢于改型回路', 'evidence_status': '无可引用值，登记为开放问题'}"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "{'id': 'OF-6', 'links_to': ['OE-D1', 'OE-D2', 'OE-D4'], 'statement': '综合判断：本议题当前可交付的是断点位置、方案门控条件与两条证伪入口；差距分级、数值门限与配比结论均不可交付，须待 OF-5 两变量获得可比较指标后重开。', 'status': 'synthesis', 'confidence': 'medium'}"
+      }
+    ],
+    "packet_id": "packet-operational_employment",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-39ff1148f328",
+    "claims": [
+      {
+        "claim_id": "claim-869deb07ff49",
+        "claim_type": "hypothesis",
+        "confidence": 0.49,
+        "counter_evidence": [
+          "{'id': 'C1', 'topic': '缺口的定位：维持链路 vs 取消链路依赖', 'positions': ['F1 把首要缺口定义为链路降级后的自主重排与降级模式，隐含目标是保住可用回传', 'FI-1 主张把不回传/不辐射/不联网改写为默认作战样式，把链路问题从抗扰层移除'], 'status': 'unresolved_in_current_evidence', 'governance': '两者并列保留，不以任何一方覆盖另一方；F1 为现证据可支撑判断，FI-1 为机制推演不是候选结论', 'affected_nodes': ['F1', 'SC-01', 'SC-06']}",
+          "{'id': 'C2', 'topic': '独立毁伤评估通道与辐射/回传纪律互斥', 'positions': ['F4 要求存在独立于打击链的 BDA 通道', 'F2/SC-01 约束禁持续大功率辐射、可用回传窗口按小时计', 'FI-1 方向进一步取消回传'], 'status': 'structural_tension', 'note': '评估通道的载体（另一条链路/另一域传感/延时自主评估）在本 payload 中无证据指定', 'affected_nodes': ['F2', 'F4', 'SC-06']}",
+          "{'id': 'C3', 'topic': '常开探测必要性与开机即暴露', 'positions': ['末端反制与指示要求近距密集常开传感（F2）', '同一无人体系又要求分散隐蔽、少辐射以避火力定位（S4/SC-01/SC-02）'], 'status': 'unresolved', 'affected_nodes': ['F2', 'SC-03', 'SC-05']}"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-5824f31b34e3",
+          "ev-combat_scenario-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "{'id': 'F1', 'task_effect': '抗毁/拒止', 'judgment': '首要缺口是链路降级后的任务维持形态：现有低空无人装备的自主性集中于航路保持与返航，缺少受扰/欺骗条件下按预置优先级自主重排任务、并在无回传时维持受控交战的降级模式，导致侦察—打击链在分钟级内脱节。', 'military_value': '决定拒止环境中打击链是否断裂，以及能否保住前沿持续存在与再组织起点。', 'evidence_boundary': '美方反无人机政策文件把电子干扰列为主要生效手段并将抗扰列为能力关口（S1）；断链后可维持时长、误判率无公开参数，属体系层判断。', 'failure_condition': '若对方以欺骗、协议注入或导航接管替代功率压制，自主重排逻辑被污染，本缺口定位失效，需改判为完整性与可信度缺口。', 'confidence': 'medium', 'evidence_ids': ['S1']}"
+      },
+      {
+        "claim_id": "claim-85aff0305d59",
+        "claim_type": "hypothesis",
+        "confidence": 0.49,
+        "counter_evidence": [
+          "{'id': 'C1', 'topic': '缺口的定位：维持链路 vs 取消链路依赖', 'positions': ['F1 把首要缺口定义为链路降级后的自主重排与降级模式，隐含目标是保住可用回传', 'FI-1 主张把不回传/不辐射/不联网改写为默认作战样式，把链路问题从抗扰层移除'], 'status': 'unresolved_in_current_evidence', 'governance': '两者并列保留，不以任何一方覆盖另一方；F1 为现证据可支撑判断，FI-1 为机制推演不是候选结论', 'affected_nodes': ['F1', 'SC-01', 'SC-06']}",
+          "{'id': 'C2', 'topic': '独立毁伤评估通道与辐射/回传纪律互斥', 'positions': ['F4 要求存在独立于打击链的 BDA 通道', 'F2/SC-01 约束禁持续大功率辐射、可用回传窗口按小时计', 'FI-1 方向进一步取消回传'], 'status': 'structural_tension', 'note': '评估通道的载体（另一条链路/另一域传感/延时自主评估）在本 payload 中无证据指定', 'affected_nodes': ['F2', 'F4', 'SC-06']}",
+          "{'id': 'C3', 'topic': '常开探测必要性与开机即暴露', 'positions': ['末端反制与指示要求近距密集常开传感（F2）', '同一无人体系又要求分散隐蔽、少辐射以避火力定位（S4/SC-01/SC-02）'], 'status': 'unresolved', 'affected_nodes': ['F2', 'SC-03', 'SC-05']}"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-5824f31b34e3",
+          "ev-combat_scenario-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "{'id': 'F2', 'task_effect': '侦察预警/反制', 'judgment': '低空监视存在覆盖—密度—生存性三角：探测低空小目标须近距、密集、常开，但常开有源节点在反辐射与精确火力定位下生存性低，形成“开机即暴露、关机即失明”的探测拒止自伤；缺的是分布式被动/多基与快闪辐射调度。', 'military_value': '决定末端防御通道能否不饱和、火力能否获得持续指示；不解决则后续拦截与授权均在盲区内决策。', 'evidence_boundary': '反无人机能力在鉴定、测试与部署节奏上长期滞后为公开审计主题（S1/S2/S3）；具体探测网密度、盲区尺寸无本节点可引数值。', 'failure_condition': '若对方主战手段转为无需回传的自主末端寻的巡飞弹，上游探测需求下降，缺口重心移至分层拦截与硬杀伤通道。', 'confidence': 'medium', 'evidence_ids': ['S1', 'S2', 'S3']}"
+      },
+      {
+        "claim_id": "claim-5b872540b5b8",
+        "claim_type": "hypothesis",
+        "confidence": 0.49,
+        "counter_evidence": [
+          "{'id': 'C1', 'topic': '缺口的定位：维持链路 vs 取消链路依赖', 'positions': ['F1 把首要缺口定义为链路降级后的自主重排与降级模式，隐含目标是保住可用回传', 'FI-1 主张把不回传/不辐射/不联网改写为默认作战样式，把链路问题从抗扰层移除'], 'status': 'unresolved_in_current_evidence', 'governance': '两者并列保留，不以任何一方覆盖另一方；F1 为现证据可支撑判断，FI-1 为机制推演不是候选结论', 'affected_nodes': ['F1', 'SC-01', 'SC-06']}",
+          "{'id': 'C2', 'topic': '独立毁伤评估通道与辐射/回传纪律互斥', 'positions': ['F4 要求存在独立于打击链的 BDA 通道', 'F2/SC-01 约束禁持续大功率辐射、可用回传窗口按小时计', 'FI-1 方向进一步取消回传'], 'status': 'structural_tension', 'note': '评估通道的载体（另一条链路/另一域传感/延时自主评估）在本 payload 中无证据指定', 'affected_nodes': ['F2', 'F4', 'SC-06']}",
+          "{'id': 'C3', 'topic': '常开探测必要性与开机即暴露', 'positions': ['末端反制与指示要求近距密集常开传感（F2）', '同一无人体系又要求分散隐蔽、少辐射以避火力定位（S4/SC-01/SC-02）'], 'status': 'unresolved', 'affected_nodes': ['F2', 'SC-03', 'SC-05']}"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-5824f31b34e3",
+          "ev-combat_scenario-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "{'id': 'F3', 'task_effect': '协同/指挥决策', 'judgment': '探测—归因—射击链的主瓶颈在体系集成而非传感器：火力、电子战与防空的分域融合、频谱与空域去冲突、跨单元交战授权未闭合，同时己方干扰与己方无人机互相致盲，使可用窗口在审批与自扰中被消耗。', 'military_value': '直接决定压制与反制的实际效果、时敏目标捕获率与误击风险。', 'evidence_boundary': '分布式海上作战与前沿存在概念明确要求去中心化指挥与火力—电子战—防空一体化（S4/S5），属意图性文件而非实测；时延量级为推断。', 'failure_condition': '若转向高自主交战，授权时延缺口即转化为可信度、责任与合规缺口，不能视为已解决。', 'confidence': 'medium', 'evidence_ids': ['S4', 'S5']}"
+      },
+      {
+        "claim_id": "claim-2ccda65f37c6",
+        "claim_type": "hypothesis",
+        "confidence": 0.49,
+        "counter_evidence": [
+          "{'id': 'C1', 'topic': '缺口的定位：维持链路 vs 取消链路依赖', 'positions': ['F1 把首要缺口定义为链路降级后的自主重排与降级模式，隐含目标是保住可用回传', 'FI-1 主张把不回传/不辐射/不联网改写为默认作战样式，把链路问题从抗扰层移除'], 'status': 'unresolved_in_current_evidence', 'governance': '两者并列保留，不以任何一方覆盖另一方；F1 为现证据可支撑判断，FI-1 为机制推演不是候选结论', 'affected_nodes': ['F1', 'SC-01', 'SC-06']}",
+          "{'id': 'C2', 'topic': '独立毁伤评估通道与辐射/回传纪律互斥', 'positions': ['F4 要求存在独立于打击链的 BDA 通道', 'F2/SC-01 约束禁持续大功率辐射、可用回传窗口按小时计', 'FI-1 方向进一步取消回传'], 'status': 'structural_tension', 'note': '评估通道的载体（另一条链路/另一域传感/延时自主评估）在本 payload 中无证据指定', 'affected_nodes': ['F2', 'F4', 'SC-06']}",
+          "{'id': 'C3', 'topic': '常开探测必要性与开机即暴露', 'positions': ['末端反制与指示要求近距密集常开传感（F2）', '同一无人体系又要求分散隐蔽、少辐射以避火力定位（S4/SC-01/SC-02）'], 'status': 'unresolved', 'affected_nodes': ['F2', 'SC-03', 'SC-05']}"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-5824f31b34e3",
+          "ev-combat_scenario-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "{'id': 'F4', 'task_effect': '打击/评估', 'judgment': '缺少独立于打击链的毁伤评估通道：评估依赖同一受扰数据链与同一被拒止空域的传感，造成“不确定摧毁—重复出击”的正反馈，把链路缺口放大为弹药、架次与暴露时间的消耗缺口。', 'military_value': '决定火力效率、再出动节奏与编队持续压制能力。', 'evidence_boundary': '由公开政策与审计材料对能力分散、集成不足的表述推导（S1/S2），重复出击率无战例量化来源，属推导结论。', 'failure_condition': '若目标存续窗口极短、被迫采用“先发后评”，本缺口不再是首要，转为授权与误伤缺口。', 'confidence': 'low-medium', 'evidence_ids': ['S1', 'S2']}"
+      },
+      {
+        "claim_id": "claim-59c07846f648",
+        "claim_type": "fact",
+        "confidence": 0.49,
+        "counter_evidence": [
+          "{'id': 'C1', 'topic': '缺口的定位：维持链路 vs 取消链路依赖', 'positions': ['F1 把首要缺口定义为链路降级后的自主重排与降级模式，隐含目标是保住可用回传', 'FI-1 主张把不回传/不辐射/不联网改写为默认作战样式，把链路问题从抗扰层移除'], 'status': 'unresolved_in_current_evidence', 'governance': '两者并列保留，不以任何一方覆盖另一方；F1 为现证据可支撑判断，FI-1 为机制推演不是候选结论', 'affected_nodes': ['F1', 'SC-01', 'SC-06']}",
+          "{'id': 'C2', 'topic': '独立毁伤评估通道与辐射/回传纪律互斥', 'positions': ['F4 要求存在独立于打击链的 BDA 通道', 'F2/SC-01 约束禁持续大功率辐射、可用回传窗口按小时计', 'FI-1 方向进一步取消回传'], 'status': 'structural_tension', 'note': '评估通道的载体（另一条链路/另一域传感/延时自主评估）在本 payload 中无证据指定', 'affected_nodes': ['F2', 'F4', 'SC-06']}",
+          "{'id': 'C3', 'topic': '常开探测必要性与开机即暴露', 'positions': ['末端反制与指示要求近距密集常开传感（F2）', '同一无人体系又要求分散隐蔽、少辐射以避火力定位（S4/SC-01/SC-02）'], 'status': 'unresolved', 'affected_nodes': ['F2', 'SC-03', 'SC-05']}"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-5824f31b34e3",
+          "ev-combat_scenario-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "{'id': 'F5', 'task_effect': '保障恢复', 'judgment': '可持续天数是被低估的体系缺口：低空无人装备的现场维修、能源再充、弹药再装填、抗扰配置快速改写与节点接替缺标准化与野战化，一次定位即导致节点撤离，平台完好但无法维持任务节奏。', 'military_value': '决定持续拒止能否跨越数日，以及消耗对抗中谁先失去节奏。', 'evidence_boundary': '能力滞后与采办/部署节奏问题在公开审计中反复出现（S1/S2/S3）；具体再出动率与备件口径未取正文数值。', 'failure_condition': '在小时级短冲突中该缺口不显现；仅在持续对抗且对方具备节点定位能力时主导结论。', 'confidence': 'medium', 'evidence_ids': ['S1', 'S2', 'S3']}"
+      }
+    ],
+    "packet_id": "packet-combat_scenario",
+    "schema_version": "1.0"
+  }
+]

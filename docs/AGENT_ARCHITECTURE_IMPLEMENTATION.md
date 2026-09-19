@@ -8,7 +8,7 @@
 分析师输入 -> 编排器问题解析/路线与能力规划 -> 动态选择基线 Agent
   -> 受限上下文的子任务执行 -> Packet/证据汇总初检
   -> 制胜机理四类资源、六步推理、L1/L2/L3
-  -> 定向再调 -> 五判据审计 -> 报告与九字段文字能力画像
+  -> 定向再调 -> 精简模型业务审计 -> 报告与九字段文字能力画像
 ```
 
 编排器不共享其他 Agent 的原始 session；它仅基于研究问题、coverage、结构化 handoff packet、证据索引和 trace 摘要委派任务、设置门控和再调回传节点。
@@ -23,7 +23,7 @@
 | 武器装备 | `equipment_research_v1` | 国外装备全景、型号档案、参数冲突、成熟度、体系依赖、能力边界、防御性反制、现役升级、新研需求和验证计划 | 已完成的形势/场景 typed Packet（若可用），不读取原始会话 | 型号批次归一、参数观测抽取、冲突调和、成熟度评估、能力比较、反制映射、需求形成 |
 | 作战运用 | `operational_synthesis_v1` | 作战约束、任务链、协同依赖、三类 COA、持续保障、失败模式和功能要求 | 当前路线已选择的场景与装备 typed Packet | 任务能力映射、协同依赖图、COA 比较、保障评估、战例迁移 |
 | 制胜机理（核心 Agent） | `winning_core_v1` | 独立 LLM 推导四类资源投影、六步推理、L1/L2/L3、能力画像、再调请求；确定性引擎负责契约、证据门控与安全回退 | typed payload、证据索引、coverage、冲突、开放问题、checkpoint | 输入包准备、四库投影、推理节点、阶段输出、定向再调、能力画像 |
-| 审计 | `audit_v1` | 证据、覆盖、门控、追溯、轮次五判据 | task、证据索引、stage outputs、capability images、trace summary | 发布就绪评估、write audit |
+| 审计 | `audit_v1` | 独立模型精简判断军事价值、因果闭环、具体装备本体、创新/新质、颠覆性或路线适配，并复核安全与越界承诺；不执行机械五判据，流程字段仅作诊断；超时标记待审计 | task、压缩证据摘要、stage 摘要、能力卡关键字段 | `review_audit` |
 | 报告 | `report_v1` | 研究报告、能力需求卡片、限制说明、能力画像结论 | task、证据索引、能力画像、audit、coverage、trace summary | 需求卡片生成、write report |
 
 默认四路是可替换预设，而不是编排器硬编码。`agents.yaml` 定义 agent ID、能力标签、输入输出契约、上下文可见区、对象读写 scope、工具权限和启用状态；任意子集运行时，coverage 缺口会进入再调、审计和报告限制。
@@ -82,6 +82,8 @@ Real 模式新增 Codex CLI 接入，默认由 Codex 承担编排器、四个基
 Codex 模式显式实现四层循环：S1-S6 每步经过批判 Agent 并最多重试一次形成内循环；有效步骤完成后由中循环批判 Agent 指定回溯点并最多重跑一轮；L1/L2/L3 的定向 Recall、补证与断点恢复构成受 `max_rounds` 约束的外循环；L4 在收敛后由编排器复核并有界调整 A-H 次分支和 S1-S6 执行强度。交互 Trace 分别记录子 Agent 完成、内循环、中循环、Recall、恢复节点和元循环重规划结果。
 
 模型执行配置属于研究任务的受控元数据。工作台统一显示“Agent”，当前不暴露自定义 Agent 切换入口；新建真实任务固定进入 Codex Agent 后端。底层使用 API Key、兼容 HTTPS Base URL 和项目隔离 Home，不要求设备登录；Responses-compatible 代码仅作为后端兼容路径保留。API Key 只在 worker 环境读取。公开来源都会进入后续 `fetch_page`、证据评分和证据写入，模型原始消息不进入实时事件表。运行启动 trace 只记录 provider、模型名、URL 主机和环境变量名，不记录完整密钥或密钥值。
+
+动态蜂群的覆盖与补招由 `orchestration/swarm_strategy/` 的纯策略模块负责：覆盖矩阵和 Gap Analyzer 依据 Query 与候选结构化字段确定 `EXPAND`、`VERIFY`、`REVIEW` 或 `STOP`，而不是通过额外模型调用判断覆盖。执行器使用宿主暴露的实际调用/时间预算，并为待执行的 S5/S6 保留余量；首个 S5 reviewer 启动后停止 coverage 补招。`winning_flows/ports.py` 的 `ModelRuntime`、`SwarmRuntime`、`CardRuntime`、`BudgetRuntime` 目前是结构性 Protocol，用于约束模块边界，尚不是完整的 provider 适配层。
 
 编排器、四个基线 Agent、核心制胜机理 Agent、审计 Agent 和报告 Agent 均可配置独立模型、Responses URL 与 API Key 环境变量名。任务创建时保存脱敏模型快照，Worker 按 Agent ID 路由真实调用；配置缺失或调用失败不会静默降级到 Fake。基线 Agent 使用“两阶段真实调用”：先以短请求执行 Hosted Web Search 并发现来源，再由该 Agent 的独立模型基于发现结果完成结构化专业推理，避免把长篇 JSON 生成与搜索流绑定在同一连接。Responses SSE 在收到终态事件时立即结束读取，并对可重试网络故障执行最多三次有界指数退避重试。
 

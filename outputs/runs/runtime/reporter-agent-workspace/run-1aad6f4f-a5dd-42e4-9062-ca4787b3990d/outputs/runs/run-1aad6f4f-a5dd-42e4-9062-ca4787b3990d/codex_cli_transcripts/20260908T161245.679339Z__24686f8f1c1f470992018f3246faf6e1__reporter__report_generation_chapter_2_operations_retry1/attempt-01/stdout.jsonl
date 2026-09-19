@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a081cb-1775-7382-8ba3-05ed02b47df2"}
+{"type":"turn.started"}
+{"type":"error","message":"This content was flagged for possible cybersecurity risk. If this seems wrong, try rephrasing your request. To get authorized for security work, join the Trusted Access for Cyber program: https://chatgpt.com/cyber"}
+{"type":"turn.failed","error":{"message":"This content was flagged for possible cybersecurity risk. If this seems wrong, try rephrasing your request. To get authorized for security work, join the Trusted Access for Cyber program: https://chatgpt.com/cyber"}}

@@ -1,0 +1,19 @@
+{
+  "artifact_ref": "html:97591582f626c197",
+  "connect_ip": "2600:9000:2178:fa00:15:e409:7e00:93a1",
+  "content_path": "html-97591582f626c197.html",
+  "content_type": "text/html",
+  "encoding": null,
+  "evidence_id": "ev-weapon_equipment-web-36638e192ebe",
+  "evidence_ids": [
+    "ev-weapon_equipment-web-36638e192ebe",
+    "ev-system_confrontation-web-36638e192ebe"
+  ],
+  "fetch_cache_hit": true,
+  "final_url": "https://files.gao.gov/reports/GAO-25-106454/index.html",
+  "kind": "html",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "97591582f626c1979016a8cd41cffa7359622d91d0cb8ac2764b73bd3934031a",
+  "url": "https://files.gao.gov/reports/GAO-25-106454/index.html"
+}

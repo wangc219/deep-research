@@ -1,0 +1,9 @@
+2026-09-09T06:43:37.944900Z  WARN codex_models_manager::model_info: Unknown model qwen3.8-flash is used. This will use fallback model metadata.
+2026-09-09T06:43:38.022476Z  WARN codex_models_manager::model_info: Unknown model qwen3.8-flash is used. This will use fallback model metadata.
+2026-09-09T06:43:38.056834Z  WARN codex_core::client: model_verbosity is set but ignored as the model does not support verbosity: qwen3.8-flash
+2026-09-09T06:45:25.240221Z  WARN codex_core::client: model_verbosity is set but ignored as the model does not support verbosity: qwen3.8-flash
+2026-09-09T06:46:26.030719Z  WARN codex_core::client: model_verbosity is set but ignored as the model does not support verbosity: qwen3.8-flash
+2026-09-09T06:46:53.790245Z  WARN codex_core::client: model_verbosity is set but ignored as the model does not support verbosity: qwen3.8-flash
+2026-09-09T06:47:31.544673Z  WARN codex_core::client: model_verbosity is set but ignored as the model does not support verbosity: qwen3.8-flash
+2026-09-09T06:47:55.173687Z  WARN codex_core::client: model_verbosity is set but ignored as the model does not support verbosity: qwen3.8-flash
+2026-09-09T06:48:33.456170Z  WARN codex_core::client: model_verbosity is set but ignored as the model does not support verbosity: qwen3.8-flash

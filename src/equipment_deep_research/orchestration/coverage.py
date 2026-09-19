@@ -6,7 +6,7 @@ from typing import Any
 
 import yaml
 
-from equipment_deep_research.agents.registry import AgentDef
+from equipment_deep_research.contracts.agents import AgentSpec
 
 
 @dataclass(frozen=True)
@@ -31,7 +31,7 @@ def load_preset_policy(path: str | Path, preset_id: str = "default") -> PresetPo
 def coverage_for_route(
     *,
     route: str,
-    selected_agents: list[AgentDef],
+    selected_agents: list[AgentSpec],
     policy: PresetPolicy,
     additional_required_tags: list[str] | None = None,
     discovery_branch: str = "",

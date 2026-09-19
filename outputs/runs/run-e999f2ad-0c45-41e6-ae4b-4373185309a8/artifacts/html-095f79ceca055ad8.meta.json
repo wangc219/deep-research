@@ -1,0 +1,15 @@
+{
+  "artifact_ref": "html:095f79ceca055ad8",
+  "connect_ip": "2600:9000:21c5:400:15:e409:7e00:93a1",
+  "content_path": "html-095f79ceca055ad8.html",
+  "content_type": "text/html",
+  "encoding": null,
+  "evidence_id": "ev-operational_employment-web-1f3003a466a5",
+  "fetch_cache_hit": true,
+  "final_url": "https://files.gao.gov/reports/GAO-25-107034/index.html",
+  "kind": "html",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "095f79ceca055ad81f9999b26c28f74f830d85029c9c15bfc8056bf87e4acc9e",
+  "url": "https://files.gao.gov/reports/GAO-25-107034/index.html"
+}

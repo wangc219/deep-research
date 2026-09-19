@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · Force Design
+source_url=https://www.marines.mil/Force-Design/
+claim=公开基线将第一岛链、受限环境、韧性C2、无人系统和精确火力绑定为分布式作战语义。
+excerpt=
+retrieval=Hosted web search citation metadata

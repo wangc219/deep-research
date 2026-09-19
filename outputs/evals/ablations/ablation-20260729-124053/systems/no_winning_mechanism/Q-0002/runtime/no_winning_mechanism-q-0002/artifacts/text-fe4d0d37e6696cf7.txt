@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=stib.cto.mil · DSB PNT Control ExecutiveSummary 5 1 24.pdf
-source_url=https://stib.cto.mil/wp-content/uploads/2024/07/DSB_PNT-Control_ExecutiveSummary_5-1-24.pdf
-claim=贡献项：任务链/装备功能需求。DSB指出不存在一种适用于所有任务的GNSS替代方案，视觉、天文、机会信号、地图匹配等需与INS和软件融合组合使用。
-excerpt=
-retrieval=Hosted web search citation metadata

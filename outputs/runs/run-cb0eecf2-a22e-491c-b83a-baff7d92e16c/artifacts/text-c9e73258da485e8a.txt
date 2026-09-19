@@ -1,0 +1,41 @@
+[1] Synchronizing time in modern warfare – often down to billionths of a second – is critical for mission success. The Robust Optical Clock Network (ROCkN) program enables precision timekeeping, even in contested and/or GPS-denied environments, creating the opportunity for unprecedented endurance and coordination for warfighters around the world.
+
+[2] High-tech missiles, sensors, aircraft, ships, and artillery all rely on atomic clocks on Global Positioning System (GPS) satellites for nanosecond timing accuracy. A timing error of just a few billionths of a second can translate to positioning being off by a meter or more.
+
+[3] Despite various augmentations to improve the resilience of GPS signals, this system of time synchronization has well-documented vulnerabilities to jamming, spoofing, and other forms of interference – often leaving warfighters without crucial capabilities that determine mission success.
+
+[4] ROCkN addresses these position, navigation, and timing (PNT) vulnerabilities by developing tactical-grade optical clocks to sustain GPS-level timing capabilities for extended durations (even up to several months) without the need for GPS-based timing signals.
+
+[5] The program is currently developing two grades of tactical clocks:
+
+[6] A compact, portable clock in a shoebox-sized footprint, using only as much power as a lightbulb, that can sustain GPS-level timing precision (sub-nanosecond) for up to two weeks without intervention
+
+[7] A washing-machine sized ‘local master clock’ that aims to support a large area regional network with GPS-level timing precision for more than six months without intervention or synchronization to GPS
+
+[8] While ensuring GPS-grade PNT capabilities even in contested environments is crucial for sustained mission operability, ROCkN is also looking beyond our current reliance on GPS-level timing.
+
+[9] GPS signals have accuracy within a few nanoseconds; light travels approximately 30 cm (~1 foot) in a nanosecond, so tiny differences quickly become errors of a meter or more. While GPS-level tolerances are sufficient for many applications, the margins of error are a liability for some mission sets.
+
+[10] In addition to the two clock-sizes, ROCkN is demonstrating over-the-air optical time synchronization protocols capable of precision many orders of magnitude beyond GPS-grade timing. Such optical time synchronization techniques also offer the benefit of being much harder to spoof or jam.
+
+[11] In recent demonstrations of optical synchronization protocols, ROCkN has achieved synchronization at the level of femtoseconds over distances of hundreds of kilometers. ROCkN has also demonstrated the operation of multi-node clock networks in a range of weather conditions, from humidity to heat waves to blizzards.
+
+[12] The transition from nanosecond-level timing precision (GPS-level) to picosecond-or-better-level timing precision (ROCkN) should enable a host of disruptive capabilities for communications, distributed sensor networks, and next-generation battlefield awareness.
+
+[13] As one example, the timing precision demonstrated within ROCkN should enable coherent synthesis of information from multiple compact, mobile, and expeditionary sensor networks at frequencies beyond the X-band. As sensor capabilities continue to improve in sensitivity and frequency range, this ability to rapidly and precisely synthesize multimodal sensor data from multiple frequency bands and locations should dramatically enhance battlefield awareness. Such coherent synthesis of sensor data could enable rapid geolocation and targeting of emitters in contested environments, power-beaming from multiple compact transmitters, and other forms of electronic warfare. The superior timing precision should also enable a range of resilient, high-speed, and wideband communication networks.
+
+[14] ROCkN systems are increasingly undergoing test and capability demonstrations in various military-relevant mission sets. They have been successfully flown on fixed-wing aircraft, driven on a variety of ground vehicles, and even performed while being deployed at sea for three weeks aboard a naval ship steaming around the Pacific Ocean tropics.
+
+[15] Over the coming year, a campaign of field exercises is planned to showcase ROCkN clock technologies for:
+
+[16] Next-generation PNT
+
+[17] Electronic warfare
+
+[18] Intelligence, surveillance, and reconnaissance capabilities
+
+[19] The program also plans to incorporate pilot-line manufacturing of ROCkN clock units to meet the various needs of Department of War (DOW) transition partners.
+
+[20] The time is now for key DOW components to send the right demand signals so that ROCkN’s groundbreaking capabilities can be produced at scale to meet the needs of American warfighters in GPS-denied environments.
+
+[21] Providing GPS-quality timing accuracy without GPS

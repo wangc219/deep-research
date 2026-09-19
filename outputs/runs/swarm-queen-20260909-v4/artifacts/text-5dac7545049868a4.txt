@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · Force Design
+source_url=https://www.marines.mil/Force-Design/
+claim=公开部队设计文件显示美军陆战队向分布式、跨域、轻量化与远征前进基地形态转型，隐含对伴随/要地低空防护与快速部署的新要求。
+excerpt=
+retrieval=Hosted web search citation metadata

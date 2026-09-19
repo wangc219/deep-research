@@ -7,7 +7,8 @@ from typing import Any
 
 import yaml
 
-from equipment_deep_research.agents.contracts import (
+from equipment_deep_research.execution_model import configured_provider, resolve_model
+from equipment_deep_research.contracts.catalog import (
     DEFAULT_MODEL_PROFILE,
     LEGACY_SYSTEM_AGENT_IDS,
     OBJECT_SCOPE_CATALOG,
@@ -165,6 +166,19 @@ class AgentRegistry:
             model_profile = row.get("model_profile", DEFAULT_MODEL_PROFILE)
             if not isinstance(model_profile, Mapping):
                 raise ValueError("model_profile must be an object")
+            model_profile = dict(model_profile)
+            declared_provider = str(model_profile.get("provider", "")).strip()
+            selected_provider = configured_provider(fallback="")
+            if selected_provider and declared_provider in {"", "default", "codex"}:
+                declared_provider = selected_provider
+            model_profile["provider"] = declared_provider or "responses"
+            model_profile["model"] = resolve_model(
+                agent_id,
+                requested=str(model_profile.get("model", "")),
+                fallback=str(data.get("default_model", ""))
+                or DEFAULT_MODEL_PROFILE["model"],
+                provider=str(model_profile.get("provider", "")),
+            )
             harness_profile = str(row.get("harness_profile", "")).strip()
             if harness_profile and harness_profile not in harness_catalog.profiles:
                 raise ValueError(
@@ -240,7 +254,7 @@ class AgentRegistry:
                 output_contract=_copy_contract(output_contract),
                 object_read_scopes=list(row.get("object_read_scopes", [])),
                 object_write_scopes=list(row.get("object_write_scopes", [])),
-                model_profile=dict(model_profile),
+                model_profile=model_profile,
                 skills=resolved_skills,
                 research_policy=dict(row.get("research_policy", {})),
                 handoff_policy=dict(row.get("handoff_policy", {})),
@@ -266,7 +280,10 @@ class AgentRegistry:
         AgentDesignRegistry.load_default().validate_agent_ids(agents)
         return cls(
             agents=agents,
-            default_model=str(data.get("default_model", "gpt-5.5")),
+            default_model=resolve_model(
+                requested=str(data.get("default_model", "")),
+                fallback=DEFAULT_MODEL_PROFILE["model"],
+            ),
             harness_catalog=harness_catalog,
         )
 

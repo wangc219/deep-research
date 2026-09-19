@@ -1,0 +1,68 @@
+{
+  "blockers": [],
+  "core_gates": {
+    "内容闭环": {
+      "failed": [
+        "system_contribution_present",
+        "core_indicators_present",
+        "solution_and_technology_present"
+      ],
+      "passed": false,
+      "score": 0.5
+    },
+    "军事决策信息密度": {
+      "failed": [
+        "capability_portrait_contract_passed"
+      ],
+      "passed": true,
+      "score": 0.8333
+    },
+    "发布安全": {
+      "failed": [],
+      "passed": true
+    },
+    "模板结构": {
+      "failed": [
+        "has_canonical_sections",
+        "has_canonical_order",
+        "has_canonical_items",
+        "has_canonical_item_order",
+        "has_exact_heading_counts",
+        "has_complete_paragraphs"
+      ],
+      "passed": false,
+      "score": 0.5714
+    },
+    "装备主体约束": {
+      "failed": [
+        "has_remote_precision_missile_equipment",
+        "report_stays_in_unmanned_remote_fire_domain",
+        "candidate_local_evidence_is_explicit"
+      ],
+      "passed": false,
+      "score": 0.7
+    },
+    "证据与验证边界": {
+      "failed": [],
+      "passed": true,
+      "score": 1.0
+    }
+  },
+  "diagnostics": {
+    "advisories": [
+      "按需求分析、项目画像、总体方案、关键技术、研制基础五章组织",
+      "补齐项目论证模板规定的三级标题，保持章节内顺序",
+      "只保留项目论证模板规定的五章及其三级、四级标题",
+      "修复残句、未闭合Markdown和超长段落",
+      "逐装备说明体系贡献及可校准效能方向",
+      "说明与Query相关的作战效果、能力边界或可比较指标方向；不要求统一列出验证指标或补造点值",
+      "总体方案需落到子系统、硬件/软件和关键技术途径"
+    ],
+    "depth": 1.0,
+    "foresight": 1.0,
+    "military_value": 1.0,
+    "novelty": 0.8333
+  },
+  "overall_score": 0.721,
+  "passed": true
+}

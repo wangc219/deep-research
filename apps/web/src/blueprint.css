@@ -154,13 +154,13 @@
   border-radius: 5px;
   background: #eaf4ff;
   color: #426f9c;
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .branch-step-preview > b.deep { background: #ece9ff; color: #5a4cc0; }
 .branch-step-preview > b.light { background: #f4eedf; color: #846d37; }
 .branch-step-preview > b.skip { background: #e8eaed; color: #858d98; }
-.branch-step-preview em { font-size: 9px; font-style: normal; font-weight: 500; }
+.branch-step-preview em { font-size: 10px; font-style: normal; font-weight: 500; }
 
 .real-grid {
   grid-template-columns: minmax(180px, 1fr) minmax(320px, 2fr) minmax(220px, 1.2fr);

@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=darpa.mil · pinpoint
-source_url=https://www.darpa.mil/research/programs/pinpoint
-claim=PINPOINT针对GPS过度依赖，目标是开发小型高精度MEMS IMU，在GPS拒止环境下于多小时任务内提供接近GPS质量的精确定位；现有低成本MEMS IMU在失去GPS后会快速漂移。
-excerpt=
-retrieval=Hosted web search citation metadata

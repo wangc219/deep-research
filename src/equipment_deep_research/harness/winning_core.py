@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from equipment_deep_research.agents.registry import AgentDef
+from equipment_deep_research.execution_model import configured_model
 from equipment_deep_research.domain.messages import AgentExecutionResult, TaskEnvelope
 from equipment_deep_research.domain.models import new_stable_id
 from equipment_deep_research.harness.agent_harness import AgentHarness
@@ -20,7 +21,7 @@ from equipment_deep_research.providers.base import (
     ProviderFinalTurn,
     ProviderStreamEvent,
 )
-from equipment_deep_research.tools.definitions import ToolDefinition
+from equipment_deep_research.contracts.tools import ToolDefinition
 from equipment_deep_research.tools.domain_tools import build_domain_tool_definitions
 from equipment_deep_research.tools.permissions import effective_tool_names
 
@@ -95,7 +96,9 @@ class WinningCoreHarness:
             build_domain_tool_definitions(active_tools),
             _BufferedHarnessStore(self.store, self.run_id),
             sessions_root=self.sessions_dir,
-            model_name=str(self.agent.model_profile.get("model", "gpt-5.5")),
+            model_name=str(
+                self.agent.model_profile.get("model") or configured_model()
+            ),
             model_options={
                 key: value
                 for key, value in self.agent.model_profile.items()

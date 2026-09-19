@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=navair.navy.mil · AARGM
-source_url=https://www.navair.navy.mil/product/AARGM
-claim=NAVAIR资料支撑AARGM/AARGM-ER用于SEAD/DEAD、反辐射、多模导引、平台集成和生产状态判断。
-excerpt=
-retrieval=Hosted web search citation metadata

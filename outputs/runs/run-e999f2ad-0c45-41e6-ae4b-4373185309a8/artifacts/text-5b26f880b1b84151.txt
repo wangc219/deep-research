@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=gao.gov · gao 25 106454
+source_url=https://www.gao.gov/products/gao-25-106454
+claim=GAO称DOD的CJADC2进展受综合框架不足、项目割裂、数据共享和分类限制等挑战影响，支持“不能假设跨域C2总能可靠支撑前沿闭环”的判断。
+excerpt=
+retrieval=Hosted web search citation metadata

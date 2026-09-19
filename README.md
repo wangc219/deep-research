@@ -55,7 +55,7 @@ EQUIPMENT_DR_PYTHON_BIN=/path/to/python3.12 ./scripts/start-local.sh
 docker compose up --build
 ```
 
-Web 默认地址为 `http://127.0.0.1:8080`。
+Docker Web 默认地址为 `http://内网主机IP:8080`；端口映射会监听所有主机网卡。
 
 ### CLI 烟测
 
@@ -96,21 +96,83 @@ python3 scripts/run_deep_research.py \
 ./scripts/start-local.sh
 ```
 
-`start-local.sh` 会优先读取 gitignored 的 `.env.codex`，由服务端统一管理 Codex CLI、模型、URL 和密钥环境变量；只有 `.env.codex` 不存在时才回退到 `.env`：
+`start-local.sh` 读取统一的 gitignored `.env`（由 `.env.example` 复制而来），
+管理 Codex CLI、各网关 URL/模型/密钥。可选的 `.env.local` 只保存 UI 选择的
+model profile，不含密钥。旧的 `.env.codex*` 拆分文件已弃用，仅作兼容叠加载。
 
 ```dotenv
+# GPT / 中转站（动态蜂群 Codex CLI）
+EQUIPMENT_DR_MODEL=gpt-5.5
 EQUIPMENT_DR_CODEX_BASE_URL=https://api.openai.com/v1
 EQUIPMENT_DR_CODEX_API_KEY_ENV=EQUIPMENT_DR_CODEX_API_KEY
 EQUIPMENT_DR_CODEX_API_KEY=你的服务端密钥
+
+# DeepSeek（官方或中转）
+EQUIPMENT_DR_DEEPSEEK_MODEL=deepseek-chat
+EQUIPMENT_DR_DEEPSEEK_BASE_URL=https://api.deepseek.com/v1/chat/completions
+DEEPSEEK_API_KEY=你的 DeepSeek 密钥
+
+# Queen / Qwen（可选）
+EQUIPMENT_DR_QUEEN_MODEL=qwen3.8-flash
+EQUIPMENT_DR_QUEEN_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+EQUIPMENT_DR_QUEEN_API_KEY_ENV=QUEEN_API_KEY
+QUEEN_API_KEY=
 ```
 
 然后直接运行：
 
 ```bash
+cp .env.example .env   # 首次
 ./scripts/start-local.sh
 ```
 
-Codex CLI 会在项目隔离的 `CODEX_HOME` 中使用 API Key 认证，不需要设备登录。前端不展示或提交执行配置；API 在创建和编辑草稿时直接投影 `.env.codex` 中的服务端默认值，任务只保存必要的执行快照，不保存密钥值。
+Web 默认监听 `0.0.0.0:5173`。启动成功后脚本会打印
+`http://内网主机IP:5173`，同一局域网内的设备或内网穿透工具可直接使用该地址。
+如需修改监听地址或端口，可在 `.env` 或启动命令中设置：
+
+```dotenv
+EQUIPMENT_DR_WEB_HOST=0.0.0.0
+EQUIPMENT_DR_WEB_PORT=5173
+EQUIPMENT_DR_WEB_ALLOWED_HOSTS=12738agqw5541.vicp.fun
+```
+
+多个内网穿透域名可使用英文逗号分隔。修改后需重启前端服务。
+
+生产部署应启用可信身份边界：
+
+```dotenv
+EQUIPMENT_DR_AUTH_MODE=trusted_headers
+EQUIPMENT_DR_REQUIRE_TRUSTED_IDENTITY=1
+```
+
+此模式要求反向代理先剥离客户端伪造的 `X-Authenticated-*`、`X-Role` 和
+`X-Tenant-ID`，再注入经 OIDC/JWT 校验的 `X-Authenticated-Tenant-ID`、
+`X-Authenticated-Roles` 等声明。前端只发送最低权限的分析员请求；审核和
+跨范围操作由可信身份中的 reviewer/auditor/admin 角色授权，不能通过浏览器
+修改 `X-Role` 冒充审核员。未开启严格模式时，`X-*` 仍可用于本地集成测试，
+不应作为公网身份边界。
+
+Codex CLI 会在项目隔离的 `CODEX_HOME` 中使用 API Key 认证，不需要设备登录。前端不展示或提交执行配置；API 在创建和编辑草稿时直接投影 `.env` 中的服务端默认值，任务只保存必要的执行快照，不保存密钥值。
+
+模型解析以服务端环境 + 任务所选 model profile 为准：
+`EQUIPMENT_DR_MODEL` / `EQUIPMENT_DR_DEEPSEEK_MODEL` / `EQUIPMENT_DR_QUEEN_MODEL`
+是各网关的部署模型 ID；UI 选择 `codex-gpt` / `codex-deepseek` / `codex-queen`。
+决定本任务走哪一套。动态蜂群默认继承该任务模型；仅在需要「同任务多模型」时
+填写 `EQUIPMENT_DR_SWARM_AGENT_MODELS_JSON`。
+
+Codex CLI 遇到 `Selected model is at capacity` 时，会在同一模型上按指数退避重试（默认最多 4 次）。若 GPT 重试仍耗尽，系统优先使用 Queen 兜底；未配置 `QUEEN_API_KEY` 时自动改用 DeepSeek。普通认证、参数或业务错误不会切换模型。
+
+Codex CLI 的 Queen / Qwen 接入参数（模型 ID、URL、API Key）统一从 `.env` 读取；更换模型只需改 `.env`，不需要改编排代码。请按当前 DashScope 文档选择支持 Responses 的兼容端点。
+
+动态蜂群可通过 `EQUIPMENT_DR_SWARM_AGENT_MODELS_JSON` 按蜂群角色配置不同
+Codex CLI 模型。例如：
+
+```dotenv
+EQUIPMENT_DR_SWARM_AGENT_MODELS_JSON={"weak_signal_scout":"gpt-5.5","disruptive_mechanism_generator":"gpt-5.5","independent_portfolio_reviewer":"gpt-5.5"}
+```
+
+键可以使用蜂群 archetype、运行时 Agent ID（如 `winning_swarm_weak_signal_scout`）
+或 `*` 通配符；配置在每个动态专家的隔离 Codex 会话创建时生效。留空 `{}` 时继承本任务 profile 的模型。
 
 脚本同时启动 API、持久化研究队列 Worker、Query 生成 Worker 和 Web。工作台会检查研究 Worker 心跳；研究 Worker 未在线时会阻止任务进入无人消费的队列。研究任务首页可直接输入或选择推荐 Query，并通过“需求研究问题库”卡片进入独立的联网生成、草稿审核和来源追溯界面；已发布 Query 可一键带回研究任务。
 
@@ -119,7 +181,7 @@ Codex CLI 会在项目隔离的 `CODEX_HOME` 中使用 API Key 认证，不需�
 ```bash
 python3 -m uvicorn equipment_deep_research.api.app:create_app --factory --app-dir src --host 127.0.0.1 --port 8000
 PYTHONPATH=src python3 -m equipment_deep_research.interfaces.worker --project-root . --output-root outputs/runs
-pnpm --dir apps/web dev --host 127.0.0.1
+pnpm --dir apps/web dev
 ```
 
 API 创建并启动任务后，由独立 worker 从共享数据库领取任务。worker 完成研究、报告与 manifest 后，Web 可读取证据、L1/L2/L3、九字段能力画像和报告。
@@ -151,4 +213,32 @@ docker compose config
 
 企业交付成熟度、投产前必做项和长期演进建议见 `docs/ENTERPRISE_DELIVERY_AUDIT.md`。
 
+S1–S6 Prompt/Memory 文本型自进化的调研、评测闭环、多租户治理和分阶段路线见
+`docs/SELF_EVOLUTION_RESEARCH_AND_ROADMAP.md`；当前 Prompt API 的兼容与迁移规范见
+`docs/PROMPT_EVOLUTION.md`。
+
 独立的需求挖掘 Query 自动生成、草稿审核、来源追溯和 Query 库使用方式见 `docs/QUERY_LIBRARY.md`。
+# 统一模型档案
+
+生产环境用 `configs/equipment_deep_research/model-profiles.yaml` 描述档案路由，
+模型 ID / URL / 密钥只写在统一 `.env`。档案：`codex-gpt`、`codex-deepseek`、`codex-queen`。
+
+```bash
+.venv/bin/python scripts/model-profile.py list
+.venv/bin/python scripts/model-profile.py show codex-gpt
+.venv/bin/python scripts/model-profile.py doctor codex-gpt
+.venv/bin/python scripts/model-profile.py doctor codex-deepseek
+.venv/bin/python scripts/model-profile.py doctor codex-queen
+```
+
+`use` 只会在 `.env.local` 写入档案 ID，不会写入 API key。研究任务更推荐在 UI
+按任务选择模型；`doctor` 仅显示脱敏主机、凭据是否配置和模型可用性。
+
+蜂群角色也可以独立路由到不同档案：
+
+```bash
+.venv/bin/python scripts/model-profile.py use-swarm '{"S3":"codex-gpt","S4":"codex-deepseek","S5":"codex-queen"}'
+```
+
+运行时会在 S Agent 隔离会话创建时解析角色档案；新增同协议模型只需增加 profile
+并在 `.env` 增加对应 MODEL/URL/KEY，只有接入全新协议时才需要增加 provider adapter。

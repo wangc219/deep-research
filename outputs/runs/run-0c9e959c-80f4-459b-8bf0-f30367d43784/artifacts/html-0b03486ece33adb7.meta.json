@@ -1,0 +1,15 @@
+{
+  "artifact_ref": "html:0b03486ece33adb7",
+  "connect_ip": "198.18.1.17",
+  "content_path": "html-0b03486ece33adb7.html",
+  "content_type": "text/html",
+  "encoding": null,
+  "evidence_id": "ev-technology_radar-web-912bbaba1ca2",
+  "fetch_cache_hit": true,
+  "final_url": "https://www.darpa.mil/research/programs/collaborative-operations-in-denied-environment",
+  "kind": "html",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "0b03486ece33adb74ce13263f9b6440fbd3c4bf636bcfdc95f9d2c36eebda3ee",
+  "url": "https://www.darpa.mil/research/programs/collaborative-operations-in-denied-environment"
+}

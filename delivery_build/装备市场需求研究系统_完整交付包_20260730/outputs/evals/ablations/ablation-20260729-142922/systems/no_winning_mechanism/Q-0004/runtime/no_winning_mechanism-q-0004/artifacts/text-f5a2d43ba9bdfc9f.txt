@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=saffm.hq.af.mil · FY25%20Air%20Force%20Missile%20Procurement.pdf
-source_url=https://www.saffm.hq.af.mil/Portals/84/documents/FY25/FY25%20Air%20Force%20Missile%20Procurement.pdf
-claim=FY25空军导弹采购资料显示JASSM系列批次演进，并将AGM-158D/JASSM-D方向与武器数据链和发射后重定向能力相关联。
-excerpt=
-retrieval=Hosted web search citation metadata

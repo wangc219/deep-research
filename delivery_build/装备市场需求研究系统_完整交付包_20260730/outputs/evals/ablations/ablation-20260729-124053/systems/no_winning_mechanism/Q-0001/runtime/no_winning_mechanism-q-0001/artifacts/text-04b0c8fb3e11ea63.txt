@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=lineofdeparture.army.mil · Engineering Resilient Fire Support in
-source_url=https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/
-claim=陆军火力韧性材料支撑PACE通信、互操作、降级火力流程和受扰环境下分布式火力控制的需求。
-excerpt=
-retrieval=Hosted web search citation metadata

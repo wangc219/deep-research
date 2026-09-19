@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=asafm.army.mil · Missile%20Procurement%20Army.pdf
-source_url=https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2026/Discretionary%20Budget/Procurement/Missile%20Procurement%20Army.pdf
-claim=美国陆军FY2026导弹采购预算文件公开PrSM任务、400公里以上射程、M270A2/M142兼容性和每发射箱2枚，对参数核验、平台依赖和装备档案有贡献。
-excerpt=
-retrieval=Hosted web search citation metadata

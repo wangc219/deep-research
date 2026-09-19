@@ -1,0 +1,42 @@
+{
+  "checkpoint": {
+    "budget_remaining": {
+      "baseline_tasks": 3,
+      "finalize_tasks": 1,
+      "rounds": 1
+    },
+    "checkpoint_id": "run-checkpoint-swarm-gpt-20260909-v5",
+    "completed_task_ids": [],
+    "config_fingerprint": "sha256:4445e7375195b7483e24b5c570c2ec09637c1e2977ce45abe83250276c69dcb2",
+    "created_at": "2026-09-09T13:43:23.427173+00:00",
+    "mode": "real",
+    "pending_task_ids": [
+      "baseline:cross_domain_fusion",
+      "baseline:international_situation",
+      "baseline:combat_scenario",
+      "finalize:winning-report"
+    ],
+    "research_route": "new_winning_mechanism",
+    "resolved_route": "new_winning_mechanism",
+    "resume_count": 0,
+    "round_index": 1,
+    "run_id": "swarm-gpt-20260909-v5",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "cross_domain_fusion",
+      "international_situation",
+      "combat_scenario"
+    ],
+    "source_materials": [],
+    "status": "running",
+    "task_statuses": {
+      "baseline:combat_scenario": "pending",
+      "baseline:cross_domain_fusion": "pending",
+      "baseline:international_situation": "pending",
+      "finalize:winning-report": "pending"
+    },
+    "topic": "台海低空无人系统探测预警与新制胜机制",
+    "worker_reports": []
+  },
+  "savepoint_id": "checkpoint-913915e523243b32d05ab417"
+}

@@ -1,9 +1,0 @@
-[1] The Long Range Anti-Ship Missile (LRASM) Deployment Office (LDO) is a partnership of DARPA, the United States Navy (NAVAIR), and the United States Air Force to provide an improved offensive anti-surface warfare capability to the fleet on a compressed timeline.
-
-[2] In order to meet an Early Operational Capability for B-1B employment by 2018 and F/A-18 E/F employment by 2019, the LDO is leveraging the technologies developed during the DARPA LRASM Demonstration (2009-2013) and serving as a pioneer Model 4 accelerated acquisition program.
-
-[3] The DARPA Demonstration effort culminated in the successful execution of two flight tests in 2013 and became a formal U.S. Navy program of record in February 2014. The LDO conducted a third successful flight test in February 2015 and aims to transition the program to NAVAIR leadership in FY2016.
-
-[4] With the growth of maritime threats in anti-access/area denial (A2AD) environments, this semi-autonomous, air-launched anti-ship missile promises to reduce dependence on external platforms and network links in order to penetrate sophisticated enemy air-defense systems. LRASM leverages the proven performance of the JASSM airframe while incorporating several unique capabilities. Once operational, LRASM is anticipated to play a significant role in ensuring military access to operate in both open-ocean and littoral environments due to its enhanced ability to discriminate between targets and conduct tactical engagements from extended ranges.
-
-[5] This content is available for reference purposes. This page is no longer maintained.

@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=ai.mil · CJADC2
-source_url=https://www.ai.mil/Initiatives/CJADC2/
-claim=CDAO公开页面将CJADC2描述为连接战术边缘到战略层、提高联合指挥员态势理解并支持盟友伙伴互操作的能力方向。
-excerpt=
-retrieval=Hosted web search citation metadata

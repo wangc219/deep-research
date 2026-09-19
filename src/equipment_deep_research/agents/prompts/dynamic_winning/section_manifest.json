@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0",
+  "bundle_id": "winning_swarm_dynamic_v2",
+  "description": "Static dependency and protection contract for section-level prompt evolution.",
+  "prompt_root": "src/equipment_deep_research/agents/prompts/dynamic_winning",
+  "files": {
+    "common": {
+      "path": "common.md",
+      "mutable_sections": ["runtime.*", "call_instance.*", "s3_s4.*", "s6.*", "quality_swarm.*"],
+      "protected_sections": ["role_governance", "contract_defaults", "mission_graph_contracts", "common.combat_equipment_dimensions", "s1_s2.output_schema", "s3_s4.output_schema", "s5.output_schema"]
+    },
+    "S1": {
+      "path": "S1.md",
+      "mutable_sections": ["system"],
+      "protected_sections": ["system.output_schema", "system.evidence_boundary", "system.identity_freeze"]
+    },
+    "S2": {
+      "path": "S2.md",
+      "mutable_sections": ["system"],
+      "protected_sections": ["system.output_schema", "system.evidence_boundary", "system.identity_freeze"]
+    },
+    "S3": {
+      "path": "S3.md",
+      "mutable_sections": ["system", "creative"],
+      "protected_sections": ["system.output_schema", "system.evidence_boundary", "system.identity_freeze"]
+    },
+    "S4": {
+      "path": "S4.md",
+      "mutable_sections": ["system", "creative"],
+      "protected_sections": ["system.output_schema", "system.evidence_boundary", "system.identity_freeze"]
+    },
+    "S5": {
+      "path": "S5.md",
+      "mutable_sections": ["system"],
+      "protected_sections": ["system.output_schema", "system.evidence_boundary", "system.identity_freeze"]
+    },
+    "S6": {
+      "path": "S6.md",
+      "companion_paths": ["S6_1.md", "S6_2.md", "S6_3.md", "S6_4.md", "S6_5.md"],
+      "mutable_sections": ["system", "short_module_repair", "module_repair", "quality_repair", "module_instruction_suffix"],
+      "protected_sections": ["system.output_schema", "system.evidence_boundary", "system.identity_freeze"]
+    }
+  },
+  "dependencies": [
+    {"from": "S1", "to": "S2", "reason": "battlefield contradiction and evidence handoff"},
+    {"from": "S2", "to": "S3", "reason": "mission and effect-window constraints"},
+    {"from": "S2", "to": "S4", "reason": "mission and effect-window constraints"},
+    {"from": "S3", "to": "S4", "reason": "paired creative and technical realization"},
+    {"from": "S3", "to": "S5", "reason": "candidate portfolio review"},
+    {"from": "S4", "to": "S5", "reason": "candidate portfolio review"},
+    {"from": "S5", "to": "S6", "reason": "selected capability-card grounding"},
+    {"from": "common", "to": "S1-S6", "reason": "shared runtime and contract fragments"}
+  ],
+  "change_units": [
+    {"id": "CU-S3-S4", "members": ["S3", "S4"], "rule": "must be evaluated and promoted together"},
+    {"id": "CU-COMMON-RUNTIME", "members": ["common"], "rule": "requires full paired replay because it affects all stages"}
+  ],
+  "immutable_runtime_contracts": ["output_schema", "evidence_boundary", "identity_freeze", "candidate_identity", "security_rules"]
+}

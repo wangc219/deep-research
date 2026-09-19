@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · Force Design
+source_url=https://www.marines.mil/Force-Design/
+claim=美海军陆战队公开将precision fires、unmanned systems、resilient C2和data-driven decision-making并列为 contested environments 的关键能力，并强调 communications-degraded 条件下作战。
+excerpt=
+retrieval=Hosted web search citation metadata

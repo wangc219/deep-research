@@ -1,0 +1,8 @@
+{
+  "detail": "reporter retained quality issues: 装备图像概述未关联具体武器装备主体；应由Query和证据选择装备，不以抽象能力或支撑节点代替",
+  "postfix_mode": false,
+  "reason": "RuntimeError",
+  "report_overwritten": false,
+  "run_id": "run-e999f2ad-0c45-41e6-ae4b-4373185309a8",
+  "status": "failed_no_fallback"
+}

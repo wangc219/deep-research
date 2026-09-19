@@ -1,0 +1,39 @@
+{
+  "checkpoint": {
+    "budget_remaining": {
+      "baseline_tasks": 3,
+      "finalize_tasks": 1,
+      "rounds": 2
+    },
+    "checkpoint_id": "run-checkpoint-run-80996ade-ea51-4294-8197-2870cacef3cb",
+    "completed_task_ids": [],
+    "config_fingerprint": "sha256:35764ba0ad6365b020fd38e91e4b0ee209b87fbcbe505d2bf16c16d0627db549",
+    "created_at": "2026-09-04T17:55:02.194952+00:00",
+    "mode": "real",
+    "pending_task_ids": [
+      "finalize:winning-report"
+    ],
+    "research_route": "auto",
+    "resolved_route": "new_winning_mechanism",
+    "resume_count": 0,
+    "round_index": 1,
+    "run_id": "run-80996ade-ea51-4294-8197-2870cacef3cb",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "combat_scenario",
+      "cross_domain_fusion",
+      "weapon_equipment"
+    ],
+    "source_materials": [],
+    "status": "running",
+    "task_statuses": {
+      "baseline:combat_scenario": "running",
+      "baseline:cross_domain_fusion": "running",
+      "baseline:weapon_equipment": "running",
+      "finalize:winning-report": "pending"
+    },
+    "topic": "未来高强度海空对抗中的分布式低成本精确火力与无人协同装备需求研究",
+    "worker_reports": []
+  },
+  "savepoint_id": "checkpoint-30128dad8b90eb7e027fd180"
+}

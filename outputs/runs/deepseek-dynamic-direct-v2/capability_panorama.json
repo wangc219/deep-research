@@ -1,0 +1,63 @@
+{
+  "actual_counts": {
+    "capability_domains": 3,
+    "capability_indicators": 0,
+    "capability_items": 3
+  },
+  "branch": "B",
+  "branch_name": "传统能力缺口发现",
+  "cross_domain_indicators": [],
+  "domains": [
+    {
+      "capability_ids": [
+        "cap-new-001"
+      ],
+      "domain": "絮云防空弹",
+      "evidence_ids": [
+        "ev-case_research-web-80ecdfd893e8",
+        "ev-case_research-web-fa6b7ef26d3a",
+        "ev-system_confrontation-web-1f6bd4975c3e",
+        "ev-system_confrontation-web-c8aba43133b8"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "评估小型无人系统在复杂电磁环境下的防御装备需求"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-002"
+      ],
+      "domain": "“门槛”低空平面拦截雷",
+      "evidence_ids": [
+        "ev-case_research-web-80ecdfd893e8",
+        "ev-case_research-web-fa6b7ef26d3a",
+        "ev-system_confrontation-web-1f6bd4975c3e",
+        "ev-system_confrontation-web-c8aba43133b8"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "评估小型无人系统在复杂电磁环境下的防御装备需求"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-003"
+      ],
+      "domain": "“入列”巡飞拦截弹",
+      "evidence_ids": [
+        "ev-case_research-web-80ecdfd893e8",
+        "ev-case_research-web-fa6b7ef26d3a",
+        "ev-system_confrontation-web-1f6bd4975c3e",
+        "ev-system_confrontation-web-c8aba43133b8"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "评估小型无人系统在复杂电磁环境下的防御装备需求"
+      ]
+    }
+  ],
+  "equipment_forms": [],
+  "target_counts": {},
+  "topic": "评估小型无人系统在复杂电磁环境下的防御装备需求"
+}

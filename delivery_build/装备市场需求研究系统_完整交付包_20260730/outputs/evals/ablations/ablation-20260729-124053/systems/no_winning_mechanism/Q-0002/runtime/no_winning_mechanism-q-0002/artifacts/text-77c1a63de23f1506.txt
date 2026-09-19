@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=army.mil · next gen navigation systems reach army units
-source_url=https://www.army.mil/article-amp/288793/next_gen_navigation_systems_reach_army_units
-claim=美国陆军公开报道支持MAPS GEN II等下一代导航系统正在向部队交付，用于GPS退化或拒止环境下提供更具韧性的PNT。
-excerpt=
-retrieval=Hosted web search citation metadata

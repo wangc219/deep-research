@@ -1,0 +1,166 @@
+[
+  {
+    "bundle_id": "claims-42e2d45402c3",
+    "claims": [],
+    "packet_id": "packet-weapon_equipment",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-978ac9dc8329",
+    "claims": [],
+    "packet_id": "packet-operational_employment",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-39ff1148f328",
+    "claims": [
+      {
+        "claim_id": "claim-cb7617c4f856",
+        "claim_type": "hypothesis",
+        "confidence": 0.45,
+        "counter_evidence": [
+          "缺少反证、冲突或适用边界"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-a9704512f4c0",
+          "ev-combat_scenario-web-4b1083a4d3ca",
+          "ev-combat_scenario-web-e6e73b8fbd18"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://defense.info/re-shaping-defense-security/2026/03/from-red-sea-defense-to-epic-fury-how-the-u-s-flipped-the-drone-cost-equation/",
+          "https://mwi.westpoint.edu/the-indispensable-interceptor-air-defense-and-the-problem-of-cost-exchange-logic/",
+          "https://www.usni.org/magazines/proceedings/2025/april/wash-sky-clean-drones"
+        ],
+        "text": "{'id': 'F1', 'judgment': '传统低空防空的第一个能力差距不是探测距离或命中精度，而是‘可持续火力预算’：在低成本巡飞弹/FPV多波次攻击下，硬动能拦截弹的通道数与基数在数小时内被耗尽，防线崩溃由弹药经济学而非传感器失效触发。', 'military_task_value': '直接决定要地拒止任务能否从‘单日防御’延展为‘持续防御’，影响歼灭效果的时间分布与再装填节奏。', 'evidence_refs': ['E1', 'E2', 'E3', 'E4'], 'evidence_boundary': '成本区间与消耗速率来自公开分析与战场报道，缺乏可核实的完整弹药账目；不同拦截弹型号差异巨大。', 'invalidation_conditions': '若对手主要使用高价值航空平台而非低成本弹药；或低成本拦截器/定向能单位成本与可靠性达到与导弹同级；或攻击方采用有限波次以保存突防弹药。'}"
+      },
+      {
+        "claim_id": "claim-83099b6145d3",
+        "claim_type": "hypothesis",
+        "confidence": 0.45,
+        "counter_evidence": [
+          "缺少反证、冲突或适用边界"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-a9704512f4c0",
+          "ev-combat_scenario-web-4b1083a4d3ca",
+          "ev-combat_scenario-web-e6e73b8fbd18"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://defense.info/re-shaping-defense-security/2026/03/from-red-sea-defense-to-epic-fury-how-the-u-s-flipped-the-drone-cost-equation/",
+          "https://mwi.westpoint.edu/the-indispensable-interceptor-air-defense-and-the-problem-of-cost-exchange-logic/",
+          "https://www.usni.org/magazines/proceedings/2025/april/wash-sky-clean-drones"
+        ],
+        "text": "{'id': 'F2', 'judgment': '第二个差距是‘目标域错配’：现有雷达—光电—火控链按可分离、可分类的空警目标设计，面对低空杂波中的微型群目标时，跟踪通道、目标分群与威胁排序同时饱和，出现有传感器无决策的拥塞。', 'military_task_value': '决定侦察预警到指挥决策链的闭合速度；通道拥塞会直接把预警时间转化为无效时间。', 'evidence_refs': ['E2', 'E4', 'E6'], 'evidence_boundary': '错配在舰艇与要地场景被反复指出，具体雷达型号的通道上限属未公开参数。', 'invalidation_conditions': '若来袭为小规模、非协同、低密度目标；或分区低分辨率警戒+末端确认的双层体制能稳定把航迹数压到火控容量内。'}"
+      },
+      {
+        "claim_id": "claim-7ee99028092e",
+        "claim_type": "hypothesis",
+        "confidence": 0.45,
+        "counter_evidence": [
+          "缺少反证、冲突或适用边界"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-a9704512f4c0",
+          "ev-combat_scenario-web-4b1083a4d3ca",
+          "ev-combat_scenario-web-e6e73b8fbd18"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://defense.info/re-shaping-defense-security/2026/03/from-red-sea-defense-to-epic-fury-how-the-u-s-flipped-the-drone-cost-equation/",
+          "https://mwi.westpoint.edu/the-indispensable-interceptor-air-defense-and-the-problem-of-cost-exchange-logic/",
+          "https://www.usni.org/magazines/proceedings/2025/april/wash-sky-clean-drones"
+        ],
+        "text": "{'id': 'F3', 'judgment': '第三个差距是‘压制效果的可靠性’：电子干扰对依赖链路的目标有效，但对具备自主末端制导与抗干扰导航的目标只是延后而非取消威胁；把软杀伤当作主歼灭手段是当前能力结构的高风险假设。', 'military_task_value': '影响反制与压制任务能否形成确定战果，进而决定硬杀伤火力是否被迫保留全部需求。', 'evidence_refs': ['E8', 'E5', 'E4'], 'evidence_boundary': '自主末端的实际普及率、有效干扰距离与重捕速度均无公开统计支撑。', 'invalidation_conditions': '对手目标仍高度依赖人工/数据链遥控；或频谱管理能让干扰在关键窗口内持续占优；或定位降级手段可稳定剥夺自主目标的终端精度。'}"
+      },
+      {
+        "claim_id": "claim-54ea1fa3ee27",
+        "claim_type": "fact",
+        "confidence": 0.45,
+        "counter_evidence": [
+          "缺少反证、冲突或适用边界"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-a9704512f4c0",
+          "ev-combat_scenario-web-4b1083a4d3ca",
+          "ev-combat_scenario-web-e6e73b8fbd18"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://defense.info/re-shaping-defense-security/2026/03/from-red-sea-defense-to-epic-fury-how-the-u-s-flipped-the-drone-cost-equation/",
+          "https://mwi.westpoint.edu/the-indispensable-interceptor-air-defense-and-the-problem-of-cost-exchange-logic/",
+          "https://www.usni.org/magazines/proceedings/2025/april/wash-sky-clean-drones"
+        ],
+        "text": "{'id': 'F4', 'judgment': '第四个差距是‘授权与协同时延’：机场、港口、城市基础设施的交火权、空域管制与跨机构责任划分，使决策—开火链长于目标突防窗口，体制断层比硬件断层更难在演习中被发现。', 'military_task_value': '直接压缩指挥决策与协同效果，是打击窗口丢失的主要非技术成因。', 'evidence_refs': ['E5', 'E6', 'E7'], 'evidence_boundary': '来自战略与审计文件的流程性表述，缺少分场景的实测时延数据。', 'invalidation_conditions': '预授权与自动交战规则在特定禁区被制度化；或军民一体化空域管理实现秒级协同；或来袭方被迫在防空识别区外暴露意图。'}"
+      },
+      {
+        "claim_id": "claim-239d37f79bc3",
+        "claim_type": "fact",
+        "confidence": 0.45,
+        "counter_evidence": [
+          "缺少反证、冲突或适用边界"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-a9704512f4c0",
+          "ev-combat_scenario-web-4b1083a4d3ca",
+          "ev-combat_scenario-web-e6e73b8fbd18"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://defense.info/re-shaping-defense-security/2026/03/from-red-sea-defense-to-epic-fury-how-the-u-s-flipped-the-drone-cost-equation/",
+          "https://mwi.westpoint.edu/the-indispensable-interceptor-air-defense-and-the-problem-of-cost-exchange-logic/",
+          "https://www.usni.org/magazines/proceedings/2025/april/wash-sky-clean-drones"
+        ],
+        "text": "{'id': 'F5', 'judgment': '第五个差距是‘抗毁与再组织’：传统低空防空把传感器—指挥所—发射单元按固定拓扑集中部署，节点被断链或打掉后不以降级方式继续闭合杀伤链，保障恢复速度成为实际防御厚度。', 'military_task_value': '决定被压制后能否维持拒止效果，也是评估—再组织环节能否闭合的判据。', 'evidence_refs': ['E9', 'E8', 'E5'], 'evidence_boundary': '分布式组网的战时生存性缺少公开实验数据，主要由概念设计与冲突经验推定。', 'invalidation_conditions': '对手缺乏对防空节点本身的中远程打击手段；或备份链路与机动部署足以在攻击周期内完成重组。'}"
+      }
+    ],
+    "packet_id": "packet-combat_scenario",
+    "schema_version": "1.0"
+  }
+]

@@ -1,0 +1,157 @@
+{
+  "baseline_boundaries": [
+    {
+      "agent_id": "weapon_equipment",
+      "availability": "unavailable",
+      "downstream_obligations": [
+        "S3不得把基线缺失解释为候选不可行或收缩创新空间",
+        "S4按保留候选核验最近公开装备基线与直接反证",
+        "S5汇总候选级成熟度、成本产能、现役差距与未决证据"
+      ],
+      "limitations": [
+        "基线不可用原因：RuntimeError: weapon_equipment model turn completed but outer baseline result validation found no substantive findings"
+      ],
+      "open_questions": [
+        "S4/S5须针对保留的具体候选逐项核验公开装备基线、现役/在研边界、反证、成熟度与差距。"
+      ],
+      "packet_id": "packet-weapon_equipment"
+    },
+    {
+      "agent_id": "operational_employment",
+      "availability": "unavailable",
+      "downstream_obligations": [
+        "S3不得把基线缺失解释为候选不可行或收缩创新空间",
+        "S4按保留候选核验最近公开装备基线与直接反证",
+        "S5汇总候选级成熟度、成本产能、现役差距与未决证据"
+      ],
+      "limitations": [
+        "基线不可用原因：RuntimeError: operational_employment model turn completed but outer baseline result validation found no substantive findings"
+      ],
+      "open_questions": [
+        "S4/S5须针对保留的具体候选逐项核验公开装备基线、现役/在研边界、反证、成熟度与差距。"
+      ],
+      "packet_id": "packet-operational_employment"
+    }
+  ],
+  "branch_products": {},
+  "claims": [
+    {
+      "claim_id": "claim-239d37f79bc3",
+      "claim_type": "fact",
+      "confidence": 0.45,
+      "downstream_steps": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-combat_scenario-web-a9704512f4c0",
+        "ev-combat_scenario-web-4b1083a4d3ca"
+      ],
+      "failure_boundary": "缺少反证、冲突或适用边界",
+      "mechanism": "{'id': 'F5', 'judgment': '第五个差距是‘抗毁与再组织’：传统低空防空把传感器—指挥所—发射单元按固定拓扑集中部署，节点被断链或打掉后不以降级方式继续闭合杀伤链，保障恢复速度成为实际防御厚度。', 'military_task_value': '决定被压制后能否维持拒止效果，也是评估—再组织环节能否闭合的判据。', 'evidence_refs': ['E9', 'E8', 'E5'], 'evidence_boundary': '分布式组网的战时生存性缺少公开实验数据，主要由概念设计与冲突经验推定。', 'invalidation_conditions': '对手缺乏对防空节点本身的中远程打击手段；或备份链路与机动部署足以在攻击周期内完成重组。'",
+      "military_effects": [
+        "指挥决策",
+        "打击歼灭",
+        "拦截反制",
+        "拒止制衡",
+        "生存抗毁",
+        "保障恢复",
+        "体系协同"
+      ],
+      "packet_id": "packet-combat_scenario",
+      "source_agent_id": "combat_scenario",
+      "source_urls": [
+        "https://defense.info/re-shaping-defense-security/2026/03/from-red-sea-defense-to-epic-fury-how-the-u-s-flipped-the-drone-cost-equation/"
+      ]
+    },
+    {
+      "claim_id": "claim-cb7617c4f856",
+      "claim_type": "hypothesis",
+      "confidence": 0.45,
+      "downstream_steps": [
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-combat_scenario-web-a9704512f4c0",
+        "ev-combat_scenario-web-4b1083a4d3ca"
+      ],
+      "failure_boundary": "缺少反证、冲突或适用边界",
+      "mechanism": "{'id': 'F1', 'judgment': '传统低空防空的第一个能力差距不是探测距离或命中精度，而是‘可持续火力预算’：在低成本巡飞弹/FPV多波次攻击下，硬动能拦截弹的通道数与基数在数小时内被耗尽，防线崩溃由弹药经济学而非传感器失效触发。', 'military_task_value': '直接决定要地拒止任务能否从‘单日防御’延展为‘持续防御’，影响歼灭效果的时间分布与再装填节奏。', 'evidence_refs': ['E1', 'E2', 'E3', 'E4'], 'evidence_boundary': '成本区间与消耗速率来自公开分析与战场报道，缺乏可核实的完整弹药账目；不同拦截弹型号差异巨大。', 'invalidation_conditions'",
+      "military_effects": [
+        "侦察预警",
+        "打击歼灭",
+        "拦截反制",
+        "拒止制衡"
+      ],
+      "packet_id": "packet-combat_scenario",
+      "source_agent_id": "combat_scenario",
+      "source_urls": [
+        "https://defense.info/re-shaping-defense-security/2026/03/from-red-sea-defense-to-epic-fury-how-the-u-s-flipped-the-drone-cost-equation/"
+      ]
+    }
+  ],
+  "conflicts": [
+    "{'conflict_id': 'CF1', 'type': 'assumption_conflict', 'position_a': 'C1将低成本硬拦截器/定向能作为主解', 'position_b': 'C3主张软压制不可验证、硬杀伤需求不可削减', 'held_reason': '双方失效条件互斥但均无公开数据可裁决', 'carry_forward': True, 'testable_proposition': '在同一波次假设下对比：低成本硬拦截、定向能、干扰三者",
+    "{'conflict_id': 'CF2', 'type': 'coverage_conflict', 'position_a': 'packet-combat_scenario 交付摘要声明六场景含山岳走廊补盲与后勤枢纽抗干扰', 'position_b': '该packet的F1-F5中无对应独立差距轴', 'held_reason': 'handoff与findings不一致，无法判定为遗漏还是隐含于C2/C3', 'carry_forward': True, 'tes"
+  ],
+  "frontier_inspiration_rule": "仅在后续模型完成首次自由发散后作为可选启发；可重构或全部舍弃，不得视为装备答案、命名种子、技术目录或覆盖配额。",
+  "frontier_inspirations": [
+    {
+      "conventional_assumption_challenged": "",
+      "downstream_question": "",
+      "evidence_boundary": "",
+      "evidence_ids": [
+        "ev-combat_scenario-web-a9704512f4c0",
+        "ev-combat_scenario-web-4b1083a4d3ca",
+        "ev-combat_scenario-web-e6e73b8fbd18"
+      ],
+      "packet_id": "packet-combat_scenario",
+      "possible_military_discontinuity": "",
+      "query_relevance": "直接改写传统低空防空的差距定义：差距不再位于通道数，而位于可交付的持续火力成本曲线。",
+      "signal": "公开材料中‘每次拦截成本’开始替代‘拦截成功率’成为防空指标；定向能与低成本拦截器被描述为翻转方程而非补充手段（E3/E1/E2）。",
+      "source_agent_id": "combat_scenario",
+      "source_urls": [],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "",
+      "downstream_question": "",
+      "evidence_boundary": "",
+      "evidence_ids": [
+        "ev-combat_scenario-web-a9704512f4c0",
+        "ev-combat_scenario-web-4b1083a4d3ca",
+        "ev-combat_scenario-web-e6e73b8fbd18"
+      ],
+      "packet_id": "packet-combat_scenario",
+      "possible_military_discontinuity": "",
+      "query_relevance": "解释为什么升级需求集中在软硬衔接与效果评估，而非单纯提升干扰功率。",
+      "signal": "防御方在多个来源中被描述为无法判断干扰是否生效，而对手通过自主末端摆脱链路依赖（E8/E4/E5）。",
+      "source_agent_id": "combat_scenario",
+      "source_urls": [],
+      "status": "optional_post_divergence_inspiration"
+    }
+  ],
+  "open_questions": [
+    "S4/S5须针对保留的具体候选逐项核验公开装备基线、现役/在研边界、反证、成熟度与差距。"
+  ],
+  "query_anchor": "传统低空防空场景下现有装备能力差距与升级功能需求",
+  "schema": "military_value_handoff_v1",
+  "statistics": {
+    "candidate_claim_count": 5,
+    "compression_ratio": 0.2444,
+    "evidence_url_count": 1,
+    "frontier_inspiration_count": 2,
+    "input_chars": 18990,
+    "input_packet_count": 3,
+    "limited_baseline_count": 2,
+    "output_chars": 4642,
+    "selected_claim_count": 2,
+    "source_agent_count": 1
+  }
+}

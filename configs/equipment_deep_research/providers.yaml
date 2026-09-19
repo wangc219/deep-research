@@ -2,6 +2,9 @@ default_provider: codex
 providers:
   codex:
     type: codex_cli
+    fallback_providers:
+      - deepseek
+    fallback_policy: capacity_only
     command: codex
     model: ""
     timeout_seconds: 900
@@ -23,5 +26,125 @@ providers:
     base_url_env: EQUIPMENT_DR_BASE_URL
     api_key_env: EQUIPMENT_DR_API_KEY
     timeout_seconds: 120
+  deepseek:
+    type: openai_compatible
+    label: DeepSeek API
+    optional_fallback: true
+    # Model and endpoint are deployment-specific.  Read them from the
+    # deepseek environment variables so switching between DeepSeek/OpenLux
+    # and other compatible gateways never requires editing this file.
+    model: ""
+    base_url: ""
+    base_url_env: EQUIPMENT_DR_DEEPSEEK_BASE_URL
+    api_key_env: DEEPSEEK_API_KEY
+    timeout_seconds: 180
+    structured_mode: json_object
+    capabilities:
+      structured_output: true
+      function_tools: true
+      streaming: true
+      cancellation: true
+  # Dedicated Codex CLI adapter for DeepSeek. Runtime routing selects the
+  # official Responses endpoint or the local bridge for third-party relays.
+  codex_deepseek:
+    type: codex_cli
+    label: Codex CLI + DeepSeek
+    optional_fallback: true
+    command: codex
+    model: deepseek-v4-flash
+    base_url: ""
+    base_url_env: EQUIPMENT_DR_CODEX_DEEPSEEK_BASE_URL
+    api_key_env: DEEPSEEK_API_KEY
+    timeout_seconds: 900
+    sandbox_mode: read-only
+    retry_attempts: 1
+    extra_args:
+      - --ignore-user-config
+      - --ignore-rules
+      - --disable
+      - plugins
+      - --disable
+      - remote_plugin
+      - --disable
+      - plugin_sharing
+    search_extra_args: []
+  # Dedicated Codex CLI adapter keeps Queen task settings isolated from the
+  # process-wide GPT defaults. The selected Queen endpoint is supplied by
+  # EQUIPMENT_DR_QUEEN_BASE_URL, so deployments can change it without code edits.
+  codex_queen:
+    type: codex_cli
+    label: Codex CLI + Queen
+    command: codex
+    model: ""
+    base_url: ""
+    base_url_env: EQUIPMENT_DR_QUEEN_BASE_URL
+    api_key_env: QUEEN_API_KEY
+    timeout_seconds: 900
+    sandbox_mode: read-only
+    retry_attempts: 1
+    extra_args:
+      - --ignore-user-config
+      - --ignore-rules
+      - --disable
+      - plugins
+      - --disable
+      - remote_plugin
+      - --disable
+      - plugin_sharing
+    search_extra_args: []
+  claude:
+    type: external_cli
+    fallback_providers: []
+    label: Claude Code
+    command: claude
+    protocol: claude_json
+    model: claude-sonnet
+    base_url: https://api.anthropic.com
+    base_url_env: EQUIPMENT_DR_CLAUDE_BASE_URL
+    base_url_target_env: ANTHROPIC_BASE_URL
+    api_key_env: ANTHROPIC_API_KEY
+    api_key_target_env: ANTHROPIC_API_KEY
+    model_flag: --model
+    schema_flag: --json-schema
+    schema_mode: inline
+    base_args:
+      - --print
+      - --output-format
+      - json
+      - --no-session-persistence
+      - --permission-mode
+      - plan
+    extra_args: []
+    timeout_seconds: 900
+    retry_attempts: 1
+    capabilities:
+      structured_output: true
+      hosted_web_search: true
+      isolated_sessions: true
+      cancellation: true
+      workspace_scope: true
+  generic_cli:
+    type: external_cli
+    label: Generic External Agent CLI
+    command: agent-cli
+    protocol: jsonl
+    model: ""
+    base_url: https://api.example.invalid
+    base_url_env: EQUIPMENT_DR_GENERIC_CLI_BASE_URL
+    base_url_target_env: AGENT_BASE_URL
+    api_key_env: EQUIPMENT_DR_GENERIC_CLI_API_KEY
+    api_key_target_env: AGENT_API_KEY
+    model_flag: --model
+    schema_flag: --output-schema
+    schema_mode: file
+    base_args: []
+    extra_args: []
+    timeout_seconds: 900
+    retry_attempts: 1
+    capabilities:
+      structured_output: true
+      isolated_sessions: true
+      cancellation: true
+      workspace_scope: true
   fake:
     type: fake

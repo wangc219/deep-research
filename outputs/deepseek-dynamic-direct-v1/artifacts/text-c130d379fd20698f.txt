@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=csis.org · lessons ukraine conflict modern warfare age autonomy information and resilience
+source_url=https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience
+claim=乌克兰冲突显示无人机运用呈高损耗、快速迭代与成本不对称特征，频谱与电磁对抗激烈。
+excerpt=
+retrieval=Hosted web search citation metadata

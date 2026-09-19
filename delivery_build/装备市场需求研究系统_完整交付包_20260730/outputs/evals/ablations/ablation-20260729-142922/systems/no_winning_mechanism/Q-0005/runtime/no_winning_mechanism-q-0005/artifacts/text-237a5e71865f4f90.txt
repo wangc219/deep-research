@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=gao.gov · gao 25 107263
-source_url=https://www.gao.gov/products/gao-25-107263
-claim=GAO资料支持以PrSM和陆军远程火力现代化作为远打精打导弹基线，同时提示后续增量和项目交付存在成熟度、成本和数字工程实践风险。
-excerpt=
-retrieval=Hosted web search citation metadata

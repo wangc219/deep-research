@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 
 from equipment_deep_research.orchestration.runner import DeepResearchRunner
+from equipment_deep_research.providers.registry import ProviderConfigurationError
 from equipment_deep_research.harness.optimizations import (
     apply_quick_optimizations,
     print_performance_report,
@@ -20,11 +22,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--mode", choices=["fake", "real"], default="fake")
     parser.add_argument(
         "--provider",
-        choices=["fake", "codex", "responses", "smoke"],
         default=None,
         help=(
-            "Execution backend. Codex uses isolated codex exec sessions; "
-            "Responses requires API credentials; smoke must be selected explicitly."
+            "Configured execution provider id (for example codex, claude, "
+            "responses, or a custom external CLI)."
         ),
     )
     parser.add_argument("--topic", required=True)
@@ -74,10 +75,22 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--as-of-date", default="", help="Research evidence cutoff date (YYYY-MM-DD).")
     parser.add_argument("--interaction-mode", choices=["expert", "autonomous"], default="expert")
     parser.add_argument("--discovery-branch", choices=["auto", "A", "B", "C", "D", "E", "F", "G", "H"], default="auto")
+    parser.add_argument("--tenant-id", default="", help="Evolution-memory tenant scope")
+    parser.add_argument("--workspace-id", default="", help="Evolution-memory workspace scope")
+    parser.add_argument("--project-id", default="", help="Evolution-memory project scope")
+    parser.add_argument("--profile-id", default="", help="Evolution-memory profile scope")
+    parser.add_argument(
+        "--stage-scope",
+        default="",
+        help="Comma-separated S1-S6 evolution-memory stage scope",
+    )
     parser.add_argument(
         "--execution-profile-id",
         choices=["legacy_v1", "optimized_v2", "swarm_quality_v1", "winning_swarm_dynamic_v2"],
-        default="winning_swarm_dynamic_v2",
+        default=os.environ.get(
+            "EQUIPMENT_DR_EXECUTION_PROFILE_ID", "winning_swarm_dynamic_v2"
+        ).strip()
+        or "winning_swarm_dynamic_v2",
         help="Select the harness implementation. Dynamic swarm v2 is the default; legacy v1 remains available for compatibility and controlled comparisons.",
     )
     parser.add_argument(
@@ -94,33 +107,41 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
     agent_ids = [item.strip() for item in args.agents.split(",") if item.strip()]
-    runner = DeepResearchRunner(
-        project_root=project_root,
-        output_root=Path(args.output_root),
-        agent_config_path=Path(args.agent_config),
-        preset_config_path=Path(args.preset_config),
-        provider_config_path=Path(args.provider_config),
-        evidence_config_path=Path(args.evidence_config),
-    )
-    result = runner.run(
-        mode=args.mode,
-        topic=args.topic,
-        supplemental_information=args.supplemental_information,
-        research_route=args.research_route,
-        run_id=args.run_id,
-        agent_ids=agent_ids or None,
-        max_rounds=args.max_rounds or None,
-        provider_name=args.provider,
-        resume=args.resume,
-        allow_resume_config_mismatch=args.allow_resume_config_mismatch,
-        analyst_confirmed=args.analyst_confirmed,
-        as_of_date=args.as_of_date,
-        interaction_mode=args.interaction_mode,
-        discovery_branch=args.discovery_branch,
-        execution_profile_id=args.execution_profile_id,
-        report_template_mode=args.report_template_mode,
-        stage_policy_id=args.stage_policy_id,
-    )
+    try:
+        runner = DeepResearchRunner(
+            project_root=project_root,
+            output_root=Path(args.output_root),
+            agent_config_path=Path(args.agent_config),
+            preset_config_path=Path(args.preset_config),
+            provider_config_path=Path(args.provider_config),
+            evidence_config_path=Path(args.evidence_config),
+        )
+        result = runner.run(
+            mode=args.mode,
+            topic=args.topic,
+            supplemental_information=args.supplemental_information,
+            research_route=args.research_route,
+            run_id=args.run_id,
+            agent_ids=agent_ids or None,
+            max_rounds=args.max_rounds or None,
+            provider_name=args.provider,
+            resume=args.resume,
+            allow_resume_config_mismatch=args.allow_resume_config_mismatch,
+            analyst_confirmed=args.analyst_confirmed,
+            as_of_date=args.as_of_date,
+            interaction_mode=args.interaction_mode,
+            discovery_branch=args.discovery_branch,
+            execution_profile_id=args.execution_profile_id,
+            report_template_mode=args.report_template_mode,
+            stage_policy_id=args.stage_policy_id,
+            tenant_id=args.tenant_id,
+            workspace_id=args.workspace_id,
+            project_id=args.project_id,
+            profile_id=args.profile_id,
+            stage_scope=[item.strip() for item in args.stage_scope.split(",") if item.strip()],
+        )
+    except ProviderConfigurationError as exc:
+        parser.error(str(exc))
     print(f"Run dir: {result['run_dir']}")
     print(f"Status: {result.get('status', 'completed')}")
     print(f"Route: {result['route']}")
@@ -134,3 +155,7 @@ def main(argv: list[str] | None = None) -> int:
     print_codex_performance_report()
 
     return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

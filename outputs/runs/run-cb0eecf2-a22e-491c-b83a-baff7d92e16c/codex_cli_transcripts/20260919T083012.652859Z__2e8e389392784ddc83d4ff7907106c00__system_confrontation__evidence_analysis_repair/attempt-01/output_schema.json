@@ -1,0 +1,17 @@
+{
+  "source_claims": [
+    {
+      "url": "cited public source URL",
+      "claim": "claim supported by that source"
+    }
+  ],
+  "analysis_sections": {
+    "system_boundaries": "string | object | array",
+    "red_blue_models": "string | object | array",
+    "dependency_graph": "string | object | array",
+    "cascading_failures": "string | object | array",
+    "critical_vulnerabilities": "string | object | array",
+    "alternative_configs": "string | object | array",
+    "reinforcement_directions": "string | object | array"
+  }
+}

@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=marines.mil · Force Design
-source_url=https://www.marines.mil/Force-Design/
-claim=该来源支持将无人系统、精确火力、韧性C2、数据驱动决策和联合杀伤网作为一体化能力建设方向。
-excerpt=
-retrieval=Hosted web search citation metadata

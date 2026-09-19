@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=darpa.mil · code success
-source_url=https://www.darpa.mil/news/2019/code-success
-claim=CODE演示表明，无人机群可在通信离线、GPS不可用条件下继续围绕任务目标行动，并通过自主协同适应新目标或威胁。
-excerpt=
-retrieval=Hosted web search citation metadata

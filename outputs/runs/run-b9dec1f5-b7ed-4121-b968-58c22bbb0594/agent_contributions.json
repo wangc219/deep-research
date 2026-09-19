@@ -1,0 +1,96 @@
+[
+  {
+    "adopted_by_capability_ids": [],
+    "adopted_by_report_sections": [],
+    "adopted_by_s_steps": {},
+    "agent_id": "weapon_equipment",
+    "contributed": false,
+    "loao_quality_delta": null,
+    "model_calls": 0,
+    "observation_id": "contribution-packet-weapon_equipment",
+    "packet_id": "packet-weapon_equipment",
+    "produced_claim_ids": []
+  },
+  {
+    "adopted_by_capability_ids": [
+      "cap-new-001",
+      "cap-new-002",
+      "cap-new-003",
+      "cap-new-004",
+      "cap-new-005",
+      "cap-new-006",
+      "cap-new-007"
+    ],
+    "adopted_by_report_sections": [
+      "final_report"
+    ],
+    "adopted_by_s_steps": {
+      "S1": [
+        "claim-779599ee180a",
+        "claim-fb8b9f07e03a",
+        "claim-2a6b895122e9",
+        "claim-86bb22945d20"
+      ],
+      "S2": [
+        "claim-779599ee180a",
+        "claim-fb8b9f07e03a",
+        "claim-2a6b895122e9",
+        "claim-86bb22945d20"
+      ],
+      "S3": [
+        "claim-779599ee180a",
+        "claim-fb8b9f07e03a",
+        "claim-2a6b895122e9",
+        "claim-86bb22945d20"
+      ],
+      "S4": [
+        "claim-779599ee180a",
+        "claim-fb8b9f07e03a",
+        "claim-2a6b895122e9",
+        "claim-86bb22945d20"
+      ],
+      "S5": [
+        "claim-779599ee180a",
+        "claim-fb8b9f07e03a",
+        "claim-2a6b895122e9",
+        "claim-86bb22945d20"
+      ],
+      "S6": [
+        "claim-779599ee180a",
+        "claim-fb8b9f07e03a",
+        "claim-2a6b895122e9",
+        "claim-86bb22945d20"
+      ]
+    },
+    "agent_id": "technology_radar",
+    "contributed": true,
+    "loao_quality_delta": null,
+    "model_calls": 2,
+    "observation_id": "contribution-packet-technology_radar",
+    "packet_id": "packet-technology_radar",
+    "produced_claim_ids": [
+      "claim-779599ee180a",
+      "claim-fb8b9f07e03a",
+      "claim-2a6b895122e9",
+      "claim-86bb22945d20"
+    ]
+  },
+  {
+    "adopted_by_capability_ids": [],
+    "adopted_by_report_sections": [],
+    "adopted_by_s_steps": {},
+    "agent_id": "system_confrontation",
+    "contributed": false,
+    "loao_quality_delta": null,
+    "model_calls": 2,
+    "observation_id": "contribution-packet-system_confrontation",
+    "packet_id": "packet-system_confrontation",
+    "produced_claim_ids": [
+      "claim-29637616872d",
+      "claim-4a5ef0d4cf91",
+      "claim-3b9b25636df3",
+      "claim-c0ebef677bf6",
+      "claim-65ee083199a2"
+    ]
+  }
+]

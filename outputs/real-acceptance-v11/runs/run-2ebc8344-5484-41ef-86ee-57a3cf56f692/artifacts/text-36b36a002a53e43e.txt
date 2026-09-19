@@ -1,5 +1,0 @@
-network_safety_rejected
-url=https://media.defense.gov/2021/Jan/07/2002561080/-1/-1/1/COUNTER-SMALL-UNMANNED-AIRCRAFT-SYSTEMS-STRATEGY.PDF?utm_source=openai
-rejected_url=https://media.defense.gov/2021/Jan/07/2002561080/-1/-1/1/COUNTER-SMALL-UNMANNED-AIRCRAFT-SYSTEMS-STRATEGY.PDF?utm_source=openai
-reason=host_resolution_failed
-该地址未通过网络安全校验，诊断材料不进入正式证据集。

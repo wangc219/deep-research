@@ -1,0 +1,54 @@
+{
+  "blockers": [],
+  "core_gates": {
+    "内容闭环": {
+      "failed": [],
+      "passed": true,
+      "score": 1.0
+    },
+    "军事决策信息密度": {
+      "failed": [
+        "section_density_bounded",
+        "capability_portrait_contract_passed"
+      ],
+      "passed": false,
+      "score": 0.6667
+    },
+    "发布安全": {
+      "failed": [],
+      "passed": true
+    },
+    "模板结构": {
+      "failed": [
+        "has_complete_paragraphs"
+      ],
+      "passed": false,
+      "score": 0.9286
+    },
+    "装备主体约束": {
+      "failed": [
+        "has_remote_precision_missile_equipment"
+      ],
+      "passed": true,
+      "score": 0.8889
+    },
+    "证据与验证边界": {
+      "failed": [],
+      "passed": true,
+      "score": 1.0
+    }
+  },
+  "diagnostics": {
+    "advisories": [
+      "修复残句、未闭合Markdown和超长段落",
+      "以下二级章节的军事决策信息密度低于50%或套话比例超过25%：四、关键技术",
+      "装备能力画像未通过精简交付门：崖影穿谷攻击无人机：装备与技术实现明显过短，低于约180字告警线；请补足缺失论证，但不要用泛化句凑字；崖影穿谷攻击无人机：装备与技术实现未说明关键原理如何落到装备本体；崖影穿谷攻击无人机：装备能力画像存在跨栏重复（6组栏目复用相同或近似长句）；崖影穿谷攻击无人机：装备能力画像栏目缺少独占信息：装备与技术实现、关键作战流程、形成能力与作战效果、制胜逻辑机理；无影猎群拦截无人机：装备与技术实现明显过短，低于约180字告警线；请补足缺失论证，但不要用泛化句凑字"
+    ],
+    "depth": 1.0,
+    "foresight": 1.0,
+    "military_value": 0.875,
+    "novelty": 1.0
+  },
+  "overall_score": 0.8968,
+  "passed": true
+}

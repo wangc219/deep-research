@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=mwi.westpoint.edu · the indispensable interceptor air defense and the problem of cost exchange logic
+source_url=https://mwi.westpoint.edu/the-indispensable-interceptor-air-defense-and-the-problem-of-cost-exchange-logic/
+claim=高端拦截弹的采购与库存逻辑与低成本无人机/巡飞弹之间存在结构性失配，成本交换比成为防空体系设计的主矛盾而非附带指标。
+excerpt=
+retrieval=Hosted web search citation metadata

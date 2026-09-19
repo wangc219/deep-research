@@ -17,14 +17,17 @@ from equipment_deep_research.agents.provider import (
     RealAgentProvider,
 )
 from equipment_deep_research.domain.store import SqliteRunStore
+from equipment_deep_research.domain.store import DomainStore, TraceStore
 from equipment_deep_research.domain.workspace import RunWorkspace
 from equipment_deep_research.domain.messages import RunCheckpoint
+from equipment_deep_research.domain.models import ResearchProblem
 from equipment_deep_research.harness.recovery import RecoveryError, RecoveryManager
 from equipment_deep_research.harness import recovery as recovery_module
 from equipment_deep_research.harness.session import JsonlSessionStore
 from equipment_deep_research.orchestration.runner import (
     DeepResearchRunner,
     _winning_analysis_reusable_for_profile,
+    _winning_analysis_can_resume_s6_only,
 )
 
 
@@ -49,6 +52,8 @@ def test_dynamic_resume_rejects_stale_core_result_without_authoritative_portfoli
     }
     current = {
         "concept_directions": [{"name": f"具体武器装备{index}"} for index in range(5)],
+        "s6_quality_gate_passed": True,
+        "s6_quality_gate_failed": False,
         "winning_swarm": {
             "final_equipment_portfolio": [
                 {"name": f"具体武器装备{index}"} for index in range(5)
@@ -69,6 +74,72 @@ def test_dynamic_resume_rejects_stale_core_result_without_authoritative_portfoli
         stale,
         execution_profile_id="swarm_quality_v1",
     )
+
+    limited = {
+        **current,
+        "concept_directions": [
+            {
+                "name": "具体武器装备0",
+                "s6_authoring_status": "authored_quality_limited",
+            }
+        ],
+        "s6_quality_gate_limited": True,
+    }
+    assert not _winning_analysis_reusable_for_profile(
+        limited,
+        execution_profile_id="winning_swarm_dynamic_v2",
+    )
+    assert _winning_analysis_can_resume_s6_only(
+        limited,
+        execution_profile_id="winning_swarm_dynamic_v2",
+    )
+
+
+def test_dynamic_resume_s6_only_accepts_partial_s6_checkpoint() -> None:
+    partial = {
+        "concept_directions": [{"name": "已完成画像，待修复"}],
+        "s6_quality_gate_passed": False,
+        "s6_quality_gate_failed": True,
+        "winning_swarm": {
+            "final_equipment_portfolio": [{"name": "已完成画像，待修复"}],
+            "portfolio_quality_gate": {
+                "passed": True,
+                "expert_judge_passed": True,
+                "expert_judge_status": "completed",
+            },
+        },
+    }
+
+    assert _winning_analysis_can_resume_s6_only(
+        partial,
+        execution_profile_id="winning_swarm_dynamic_v2",
+    )
+
+
+def test_s6_resume_reuses_convergence_session_when_trace_batch_was_uncommitted(
+    tmp_path: Path,
+) -> None:
+    sessions = tmp_path / "agent_sessions"
+    sessions.mkdir()
+    convergence = {
+        "clusters": [{"cluster_id": "query-cluster-1"}],
+        "priorities": ["query-cluster-1"],
+    }
+    (sessions / "convergence_fusion.jsonl").write_text(
+        json.dumps(
+            {"event_type": "model_result", "result": convergence},
+            ensure_ascii=False,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    recovered = DeepResearchRunner._reusable_convergence_for_resume(
+        SimpleNamespace(sessions_dir=sessions),
+        TraceStore(),
+    )
+
+    assert recovered == convergence
 
 
 def test_resume_loads_passed_dynamic_model_checkpoint(tmp_path: Path) -> None:
@@ -1014,6 +1085,31 @@ def test_initial_transaction_persists_research_problem_and_resume_validates_it(
         build_runner(tmp_path, provider=RecordingProvider()).run(
             **run_args(topic="different topic", resume=True)
         )
+
+
+def test_recovery_uses_checkpoint_route_for_auto_routed_problem() -> None:
+    store = DomainStore()
+    problem = ResearchProblem(
+        topic="改变传统发现定位链条的新战法",
+        research_route="auto",
+        discovery_branch="A",
+    )
+    # The phrase describes a new way of fighting that changes the incumbent
+    # chain; the route should follow that intent instead of the isolated word
+    # "传统".
+    assert problem.resolved_route() == "new_winning_mechanism"
+    store.add_problem(problem)
+
+    loaded = RecoveryManager._load_problem(
+        store,
+        topic=problem.topic,
+        supplemental_information="",
+        research_route="auto",
+        resolved_route="new_winning_mechanism",
+        selected_agent_ids=[],
+    )
+
+    assert loaded is problem
 
 
 def test_recovery_deduplicates_checkpoint_materials_and_worker_reports(

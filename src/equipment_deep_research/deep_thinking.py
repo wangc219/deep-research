@@ -34,6 +34,379 @@ MAX_MESSAGE_CHARS = 8000
 MAX_CONTEXT_CHARS = 24000
 MAX_ARTIFACTS_PER_SESSION = 24
 
+# The live single-equipment dialogue is intentionally a different context
+# contract from the evidence/audit pipeline.  It is a creative redesign
+# surface: the current Query, the weapons already formed under that Query,
+# one focused seed and the expert's questions are enough to leap to a new
+# equipment hypothesis.  Keep this list explicit so a future card field
+# cannot accidentally pull the old audit context back into the model prompt.
+SINGLE_EQUIPMENT_INNOVATION_MODE = "single_equipment_innovation_v1"
+_QUERY_WEAPON_CATALOG_FIELDS = (
+    "name",
+    "title",
+    "primary_equipment_identity",
+    "equipment_form",
+    "equipment_forms",
+    "equipment_category",
+    "operational_mechanism",
+    "mechanism_chain",
+    "winning_mechanism",
+    "direct_military_effects",
+    "military_value",
+    "capability_gap",
+    "related_scenario",
+    "innovation_variant_name",
+    "innovation_equipment_form",
+)
+_INNOVATION_DROP_KEYS = {
+    "evidence",
+    "evidence_id",
+    "evidence_ids",
+    "evidence_refs",
+    "direct_evidence_refs",
+    "source_evidence_refs",
+    "evidence_index",
+    "evidence_gaps",
+    "validation",
+    "validation_plan",
+    "verification",
+    "verification_plan",
+    "verification_status",
+    "version_status",
+    "capability_version_status",
+    "failure_boundary",
+    "failure_boundaries",
+    "risk_boundaries",
+    "operational_constraints",
+    "audit",
+    "audit_inputs",
+    "auditability",
+    "round_summary",
+    "recent_visible_history",
+    "formal_capability_cards",
+    "candidate_lineage",
+    "capability_cards",
+    "reference_weapons",
+    "provider_metadata",
+    "raw_session",
+    "chain_of_thought",
+    "confidence",
+    "confidence_limited",
+    "status",
+    "source",
+    "selection_status",
+    "provenance_status",
+}
+_INNOVATION_ALLOWED_EQUIPMENT_KEYS = {
+    "hypothesis_id",
+    "card_binding_id",
+    "capability_id",
+    "candidate_id",
+    "name",
+    "title",
+    "primary_equipment_identity",
+    "equipment_form",
+    "equipment_forms",
+    "equipment_category",
+    "capability_type",
+    "function",
+    "project_function",
+    "operational_mechanism",
+    "mechanism_chain",
+    "winning_mechanism",
+    "source_winning_logic",
+    "military_value",
+    "direct_military_effects",
+    "mission_effect",
+    "related_scenario",
+    "capability_gap",
+    "mission_node",
+    "target",
+    "target_type",
+    "platform",
+    "payload",
+    "technology_implementation",
+    "technology_features",
+    "system_architecture",
+    "innovation_delta",
+    "innovation_variant_name",
+    "innovation_equipment_form",
+    "new_equipment_form",
+    "design_principle",
+    "implementation_concept",
+    "evolution_path",
+    "differentiation",
+    "task_effect",
+}
+
+
+def _innovation_key(value: object) -> str:
+    return re.sub(r"[^a-z0-9_]+", "_", str(value or "").strip().lower()).strip("_")
+
+
+def _query_weapon_identity(item: Mapping[str, Any]) -> str:
+    parts = [
+        str(item.get(key, "") or "").strip()
+        for key in (
+            "name",
+            "title",
+            "primary_equipment_identity",
+            "innovation_variant_name",
+            "equipment_form",
+            "innovation_equipment_form",
+        )
+    ]
+    return re.sub(r"\s+", "", "".join(parts)).casefold()
+
+
+def _compact_query_weapon(item: Mapping[str, Any]) -> dict[str, Any]:
+    compact: dict[str, Any] = {}
+    for key in _QUERY_WEAPON_CATALOG_FIELDS:
+        child = item.get(key)
+        if child in (None, "", [], {}):
+            continue
+        if isinstance(child, (list, tuple, set, frozenset)):
+            values = [str(part).strip()[:180] for part in list(child)[:4] if str(part).strip()]
+            if values:
+                compact[key] = values
+            continue
+        compact[key] = str(child).strip()[:500]
+    name = str(
+        compact.get("name")
+        or compact.get("title")
+        or compact.get("primary_equipment_identity")
+        or compact.get("innovation_variant_name")
+        or compact.get("equipment_form")
+        or ""
+    ).strip()
+    if not name:
+        return {}
+    compact.setdefault("name", name)
+    return compact
+
+
+def project_query_weapons(
+    context_refs: Mapping[str, Any] | None = None,
+    *,
+    source_equipment: Mapping[str, Any] | None = None,
+    limit: int = 8,
+) -> list[dict[str, Any]]:
+    """Project the current Query's already-formed weapons as a leap catalog.
+
+    Evidence, validation and audit fields stay dropped.  The selected seed is
+    kept first so later Agents can diverge *from* it instead of rewriting it.
+    """
+
+    source = context_refs if isinstance(context_refs, Mapping) else {}
+    current = source.get("current_result_context")
+    current = current if isinstance(current, Mapping) else {}
+    buckets: list[Any] = [
+        source_equipment,
+        source.get("candidate"),
+        source.get("reference_weapon"),
+        source.get("focused_equipment"),
+        current.get("selected"),
+        current.get("capability_cards"),
+        current.get("reference_weapons"),
+        source.get("formal_capability_cards"),
+        source.get("reference_weapons"),
+        source.get("candidate_lineage"),
+    ]
+    catalog: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for bucket in buckets:
+        rows: Sequence[Any]
+        if isinstance(bucket, Mapping):
+            rows = [bucket]
+        elif isinstance(bucket, Sequence) and not isinstance(bucket, (str, bytes)):
+            rows = list(bucket)[:16]
+        else:
+            continue
+        for item in rows:
+            if not isinstance(item, Mapping):
+                continue
+            compact = _compact_query_weapon(item)
+            identity = _query_weapon_identity(compact)
+            if not compact or not identity or identity in seen:
+                continue
+            seen.add(identity)
+            catalog.append(compact)
+            if len(catalog) >= max(1, min(12, int(limit or 8))):
+                return catalog
+    return catalog
+
+
+def single_equipment_innovation_context(
+    context_refs: Mapping[str, Any] | None = None,
+    *,
+    query: str = "",
+    equipment: Mapping[str, Any] | None = None,
+    question: str = "",
+    focus: str = "",
+    messages: Sequence[Mapping[str, Any]] | None = None,
+    working_memory: Mapping[str, Any] | None = None,
+    limit: int = 12000,
+) -> dict[str, Any]:
+    """Build the model-facing context for Query-weapon creative divergence.
+
+    This is deliberately *not* a generic redaction pass.  It is a positive
+    projection with a small allow-list.  The parent run may contain dozens of
+    evidence cards, audit decisions and validation boundaries, but none of
+    those are inputs to this mode.  Only the Query, the weapons already
+    formed under that Query, one focused seed and expert questions are
+    retained.  Canonical IDs remain so a resulting hypothesis can be linked
+    by the server; they do not carry source prose.
+    """
+
+    source = context_refs if isinstance(context_refs, Mapping) else {}
+    candidate: Mapping[str, Any] | None = equipment if isinstance(equipment, Mapping) else None
+    if candidate is None:
+        for key in ("candidate", "reference_weapon", "focused_equipment"):
+            value = source.get(key)
+            if isinstance(value, Mapping):
+                candidate = value
+                break
+    if candidate is None:
+        current = source.get("current_result_context")
+        if isinstance(current, Mapping) and isinstance(current.get("selected"), Mapping):
+            candidate = current.get("selected")
+    candidate = candidate or {}
+
+    def project(value: Any, *, equipment_object: bool = False, depth: int = 0) -> Any:
+        if depth > 5:
+            return _bounded_text(value, 600)
+        if isinstance(value, Mapping):
+            result: dict[str, Any] = {}
+            for raw_key, child in list(value.items())[:80]:
+                key = str(raw_key)
+                normalized = _innovation_key(key)
+                if normalized in _INNOVATION_DROP_KEYS:
+                    continue
+                # Do not let aliases such as ``prior_evidence`` or
+                # ``validation_notes`` bypass the explicit field list.
+                if any(token in normalized for token in ("evidence", "validation", "verification", "failure_boundary", "provider", "trace", "audit")):
+                    continue
+                if equipment_object and normalized not in _INNOVATION_ALLOWED_EQUIPMENT_KEYS:
+                    continue
+                projected = project(child, equipment_object=False, depth=depth + 1)
+                if projected not in (None, "", [], {}):
+                    result[key] = projected
+            return result
+        if isinstance(value, (list, tuple, set, frozenset)):
+            return [project(item, equipment_object=False, depth=depth + 1) for item in list(value)[:16]]
+        if isinstance(value, str):
+            return _bounded_text(value, 1400)
+        if isinstance(value, (int, float, bool)) or value is None:
+            return value
+        return _bounded_text(value, 600)
+
+    projected_equipment = project(candidate, equipment_object=True)
+    if not isinstance(projected_equipment, dict):
+        projected_equipment = {}
+
+    from equipment_deep_research.domain.conversation import (
+        living_transcript,
+        living_user_questions,
+        user_turn_count,
+        working_memory_prompt,
+    )
+    from equipment_deep_research.deep_runtime.identity import IDENTITY_SKILL
+
+    durable_memory = working_memory_prompt(working_memory)
+    living_messages = living_transcript(messages)
+    prior_questions = living_user_questions(messages)
+    prior_round_conclusions = ""
+    if durable_memory:
+        prior_constraints = durable_memory.get("user_constraints", [])
+        if isinstance(prior_constraints, Sequence) and not isinstance(
+            prior_constraints, (str, bytes)
+        ):
+            for item in list(prior_constraints)[-8:]:
+                text = _bounded_text(item, 1600)
+                if text and text not in prior_questions:
+                    prior_questions.append(text)
+        memory_summary = {
+            key: durable_memory.get(key)
+            for key in (
+                "current_objective",
+                "candidate_directions",
+                "decisions",
+                "rejected_directions",
+                "latest_summary",
+                "open_questions",
+            )
+            if durable_memory.get(key) not in (None, "", [], {})
+        }
+        prior_round_conclusions = json.dumps(
+            memory_summary, ensure_ascii=False, separators=(",", ":")
+        )[:4200]
+    elif living_messages:
+        # A follow-up turn must iterate on the previous round's directions
+        # rather than re-derive them from the raw seed.  Extract only the
+        # decision-bearing sections (result + candidate directions) from the
+        # latest living assistant summary; the full transcript would re-anchor
+        # the model on its own prose.
+        for item in reversed(living_messages):
+            if str(item.get("role", "")).strip().lower() != "assistant":
+                continue
+            content = str(item.get("content", "") or "")
+            if not content.strip():
+                continue
+            sections: list[str] = []
+            for title in ("本轮完整结果", "候选方向"):
+                match = re.search(
+                    rf"#{{1,6}}\s*{title}\s*\n(.*?)(?=\n#{{1,6}}\s|\Z)",
+                    content,
+                    flags=re.DOTALL,
+                )
+                if match and match.group(1).strip():
+                    sections.append(f"{title}：{match.group(1).strip()}")
+            prior_round_conclusions = _bounded_text(
+                "\n".join(sections) or content, 2400
+            )
+            break
+    # A caller can pass the session history through context_refs when this
+    # helper is used outside the API worker.
+    if not prior_questions:
+        history = source.get("conversation_history") or source.get("messages")
+        if isinstance(history, Sequence) and not isinstance(history, (str, bytes)):
+            prior_questions = living_user_questions(history)
+
+    query_weapons = project_query_weapons(
+        source,
+        source_equipment=projected_equipment or candidate,
+        limit=8,
+    )
+    projected_context = {
+        "mode": SINGLE_EQUIPMENT_INNOVATION_MODE,
+        "context_policy": "query_equipment_questions_only",
+        "identity": IDENTITY_SKILL,
+        "innovation_goal": "以当前 Query 下已有武器装备为基线，深度发散并推理出名称、构型与作用机理均已跃迁的新质颠覆武器装备",
+        "query": _bounded_text(query or source.get("query", ""), 4000),
+        "focus": _bounded_text(focus or source.get("focus", ""), 1600),
+        "question": _bounded_text(question, MAX_MESSAGE_CHARS),
+        "source_equipment": projected_equipment,
+        "query_weapons": query_weapons,
+        "prior_expert_questions": prior_questions[:8],
+        # Empty on the first turn; later turns carry the previous round's
+        # visible conclusions so the council deepens or refutes them instead
+        # of restarting from the raw equipment seed.
+        "prior_round_conclusions": prior_round_conclusions,
+        "living_transcript": living_messages,
+        "working_memory": durable_memory,
+        "dialogue_turn": user_turn_count(messages) + 1,
+    }
+    bounded = _bounded_json(projected_context, limit=limit)
+    fallback = {
+        "mode": SINGLE_EQUIPMENT_INNOVATION_MODE,
+        "context_policy": "query_equipment_questions_only",
+        "query": _bounded_text(query, 4000),
+        "question": _bounded_text(question, MAX_MESSAGE_CHARS),
+        "source_equipment": projected_equipment,
+        "query_weapons": query_weapons[:4],
+    }
+    return bounded if isinstance(bounded, dict) else fallback
+
 # Context is assembled from browser payloads and interaction projections.  Do
 # not persist or return credential-like fields even when a caller accidentally
 # includes them in a card/context object.  This is intentionally key-based;
@@ -283,6 +656,9 @@ def _session_public(record: Mapping[str, Any]) -> dict[str, Any]:
         "context_refs",
         "messages",
         "artifacts",
+        "working_memory",
+        "branches",
+        "context_usage",
         "status",
         "turn_count",
         "created_by",
@@ -309,8 +685,15 @@ def _session_public(record: Mapping[str, Any]) -> dict[str, Any]:
                     "content": _bounded_text(item.get("content", ""), MAX_MESSAGE_CHARS),
                     "created_at": str(item.get("created_at", "")),
                     "status": str(item.get("status", "completed")),
+                    "parent_message_id": str(item.get("parent_message_id", "")),
+                    "branch_id": str(item.get("branch_id", "main") or "main"),
+                    "turn_id": str(item.get("turn_id", "")),
+                    "message_kind": str(item.get("message_kind", "message")),
                     "artifact_refs": list(item.get("artifact_refs", []))[:16]
                     if isinstance(item.get("artifact_refs", []), list)
+                    else [],
+                    "version_refs": list(item.get("version_refs", []))[:16]
+                    if isinstance(item.get("version_refs", []), list)
                     else [],
                 }
             )
@@ -321,6 +704,27 @@ def _session_public(record: Mapping[str, Any]) -> dict[str, Any]:
     artifacts = result.get("artifacts")
     if isinstance(artifacts, list):
         result["artifacts"] = [_bounded_json(item, limit=12000) for item in artifacts[-MAX_ARTIFACTS_PER_SESSION:]]
+    from equipment_deep_research.domain.conversation import (
+        DEFAULT_BRANCH_ID,
+        branch_message_path,
+        branch_working_memory,
+        conversation_context_usage,
+        normalize_branch_id,
+    )
+
+    stored_memory = result.get("working_memory")
+    stored_memory = stored_memory if isinstance(stored_memory, Mapping) else {}
+    active_branch = normalize_branch_id(
+        stored_memory.get("active_branch_id") or DEFAULT_BRANCH_ID
+    )
+    result["context_usage"] = conversation_context_usage(
+        messages=branch_message_path(
+            result.get("messages") if isinstance(result.get("messages"), list) else [],
+            active_branch,
+            result.get("branches") if isinstance(result.get("branches"), list) else [],
+        ),
+        working_memory=branch_working_memory(stored_memory, active_branch),
+    )
     return result
 
 
@@ -361,6 +765,16 @@ def create_session(
             "context_refs": _bounded_json(dict(context_refs or {})),
             "messages": [],
             "artifacts": [],
+            "working_memory": {},
+            "branches": [
+                {
+                    "branch_id": "main",
+                    "parent_branch_id": "",
+                    "forked_from_message_id": "",
+                    "title": "主线",
+                    "status": "active",
+                }
+            ],
             "status": "active",
             "turn_count": 0,
             "created_by": _bounded_text(created_by or "analyst", 120),
@@ -392,6 +806,23 @@ def list_sessions(output_root: str | Path, *, run_id: str) -> list[dict[str, Any
     return rows[:MAX_SESSIONS_PER_RUN]
 
 
+def delete_session(
+    output_root: str | Path, *, run_id: str, session_id: str
+) -> bool:
+    """Delete one compatibility sidecar without touching capability outputs."""
+
+    try:
+        path = _session_path(output_root, run_id, session_id)
+    except ValueError:
+        return False
+    with _LOCK:
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            return False
+    return True
+
+
 def _load_session_record(output_root: str | Path, run_id: str, session_id: str) -> tuple[Path, dict[str, Any]]:
     path = _session_path(output_root, run_id, session_id)
     payload = _read_json(path, None)
@@ -408,7 +839,12 @@ def append_message(
     role: str,
     content: str,
     artifact_refs: Sequence[str] = (),
+    version_refs: Sequence[str] = (),
     status: str = "completed",
+    parent_message_id: str = "",
+    branch_id: str = "main",
+    turn_id: str = "",
+    message_kind: str = "message",
 ) -> dict[str, Any]:
     """Append one visible message, enforcing session/turn bounds."""
 
@@ -423,20 +859,95 @@ def append_message(
     with _LOCK:
         path, record = _load_session_record(output_root, run_id, session_id)
         messages = record.setdefault("messages", [])
-        if not isinstance(messages, list) or len(messages) >= MAX_MESSAGES_PER_SESSION:
+        if not isinstance(messages, list):
+            raise ValueError("message limit reached for this session")
+        normalized_branch = _bounded_text(branch_id or "main", 128) or "main"
+        normalized_turn = _bounded_text(turn_id, 128)
+        normalized_kind = _bounded_text(message_kind or "message", 32) or "message"
+        normalized_status = _bounded_text(status or "completed", 32)
+        normalized_artifacts = [
+            _bounded_text(ref, 180)
+            for ref in list(artifact_refs)[:16]
+            if _bounded_text(ref, 180)
+        ]
+        normalized_versions = [
+            _bounded_text(ref, 180)
+            for ref in list(version_refs)[:16]
+            if _bounded_text(ref, 180)
+        ]
+
+        # A retry may replay the same assistant turn after the durable write
+        # succeeded but a compatibility projection or memory checkpoint did
+        # not.  Update that visible turn in place so the sidecar cannot show a
+        # second assistant bubble.  Empty turn IDs intentionally retain the
+        # historical append behavior.
+        existing_index = None
+        if normalized_role == "assistant" and normalized_turn:
+            for index, existing in enumerate(messages):
+                if not isinstance(existing, Mapping):
+                    continue
+                if (
+                    str(existing.get("role", "")).strip().lower() == "assistant"
+                    and _bounded_text(existing.get("turn_id", ""), 128)
+                    == normalized_turn
+                    and (_bounded_text(existing.get("branch_id") or "main", 128) or "main")
+                    == normalized_branch
+                    and (_bounded_text(existing.get("message_kind") or "message", 32) or "message")
+                    == normalized_kind
+                ):
+                    existing_index = index
+                    break
+        if existing_index is not None:
+            current = dict(messages[existing_index])
+            merged_artifacts = list(current.get("artifact_refs", [])) if isinstance(current.get("artifact_refs", []), list) else []
+            for value in normalized_artifacts:
+                if value not in merged_artifacts:
+                    merged_artifacts.append(value)
+            merged_versions = list(current.get("version_refs", [])) if isinstance(current.get("version_refs", []), list) else []
+            for value in normalized_versions:
+                if value not in merged_versions:
+                    merged_versions.append(value)
+            current.update(
+                {
+                    "role": normalized_role,
+                    "content": text,
+                    "status": normalized_status,
+                    "artifact_refs": merged_artifacts[:16],
+                    "version_refs": merged_versions[:16],
+                    "turn_id": normalized_turn,
+                    "message_kind": normalized_kind,
+                }
+            )
+            messages[existing_index] = current
+            record["updated_at"] = now_iso()
+            _atomic_write(path, record)
+            return dict(current)
+        if len(messages) >= MAX_MESSAGES_PER_SESSION:
             raise ValueError("message limit reached for this session")
         item = {
             "message_id": new_id("message"),
             "role": normalized_role,
             "content": text,
             "created_at": now_iso(),
-            "status": _bounded_text(status or "completed", 32),
-            "artifact_refs": [
-                _bounded_text(ref, 180)
-                for ref in list(artifact_refs)[:16]
-                if _bounded_text(ref, 180)
-            ],
+            "status": normalized_status,
+            "parent_message_id": _bounded_text(parent_message_id, 128),
+            "branch_id": normalized_branch,
+            "turn_id": normalized_turn,
+            "message_kind": normalized_kind,
+            "artifact_refs": normalized_artifacts,
+            "version_refs": normalized_versions,
         }
+        if not item["parent_message_id"]:
+            item["parent_message_id"] = next(
+                (
+                    str(existing.get("message_id", ""))
+                    for existing in reversed(messages)
+                    if isinstance(existing, Mapping)
+                    and str(existing.get("branch_id", "main") or "main")
+                    == item["branch_id"]
+                ),
+                "",
+            )
         messages.append(item)
         record["turn_count"] = int(record.get("turn_count", 0) or 0) + (1 if normalized_role == "user" else 0)
         record["updated_at"] = item["created_at"]
@@ -633,81 +1144,393 @@ def synthesize_reply(
 
     context = context_refs if isinstance(context_refs, Mapping) else {}
     sources = _context_sources(context)
+    source_equipment = context.get("source_equipment") if isinstance(context.get("source_equipment"), Mapping) else None
+    equipment_sources = [source_equipment] if source_equipment is not None else sources
     candidate = _first_context_text(
-        sources,
+        equipment_sources,
         ("title", "name", "equipment_form", "primary_equipment_identity", "capability_name"),
         capability_name or "当前能力方向",
     )
     mechanism = _first_context_text(
-        sources,
+        equipment_sources,
         ("mechanism_chain", "winning_mechanism", "core_disruptive_difference", "reference_overview", "concise_winning_summary"),
         "需进一步确认该方向如何改变现有任务链和对手反应节奏",
     )
-    evidence = _first_context_text(
-        sources,
-        ("evidence_ids", "evidence_refs", "validation_plan", "failure_boundaries", "evidence_basis"),
-        "当前仅继承父任务的证据引用，新增判断需回到可核验来源",
+    equipment_form = _first_context_text(
+        equipment_sources,
+        ("equipment_form", "equipment_forms", "primary_equipment_identity"),
+        candidate,
+    )
+    direct_effect = _first_context_text(
+        equipment_sources,
+        ("direct_military_effects", "military_value", "mission_effect", "function"),
+        "在当前任务节点形成不同于原装备的直接军事效果",
     )
     question = _bounded_text(question, MAX_MESSAGE_CHARS)
     query = _bounded_text(query, 1800)
-    capability_names = _context_name_list(
-        context,
-        "capability_cards",
-        ("name", "title", "capability_name"),
+    query_weapon_names = [
+        str(item.get("name") or item.get("title") or "").strip()
+        for item in (
+            context.get("query_weapons", [])
+            if isinstance(context.get("query_weapons"), list)
+            else []
+        )
+        if isinstance(item, Mapping) and str(item.get("name") or item.get("title") or "").strip()
+    ][:4]
+    catalog_clause = (
+        f"当前 Query 下已有武器基线包括：{'、'.join(query_weapon_names)}。"
+        if query_weapon_names
+        else ""
     )
-    reference_names = _context_name_list(
-        context,
-        "reference_weapons",
-        ("title", "name", "equipment_form", "primary_equipment_identity"),
+    context_sentence = (
+        "本轮以当前 Query 下已有武器装备为种子展开深度发散，推理新质颠覆构型。"
+        if query_weapon_names
+        else "本轮只基于当前 Query、目标装备和专家问题展开。"
     )
-    context_hint_parts: list[str] = []
-    if capability_names:
-        context_hint_parts.append(f"能力卡：{'、'.join(capability_names)}")
-    if reference_names:
-        context_hint_parts.append(f"参考方向：{'、'.join(reference_names)}")
-    context_hint = "；".join(context_hint_parts)
-    context_sentence = f"当前结果上下文（{context_hint}）已纳入本轮判断。" if context_hint else "本轮使用了当前会话保存的可见结果上下文。"
     answer = {
         "mode": mode,
         "sections": [
             {
-                "title": "核心判断",
-                "text": f"围绕“{candidate}”继续追问“{question}”，当前 Query（{query}）下最值得验证的是：{mechanism}。这是一条待核验的研究假设，不等同于已证实事实。",
+                "title": "创新起点",
+                "text": f"围绕“{candidate}”继续追问“{question}”，当前 Query（{query}）下可先重写其默认作用方式：{mechanism}。",
             },
             {
-                "title": "发散方向",
-                "text": f"{context_sentence} 可沿任务对象与直接效果、对手适应与失效边界、装备形态与工程约束、证据与淘汰条件四条线并行展开；先判断哪一条会改变能力结论，再决定是否启动独立深研。",
+                "title": "关键假设改写",
+                "text": (
+                    f"{context_sentence}{catalog_clause} "
+                    "优先探索任务角色、作用机理、构型和运用方式的改写，形成性能跃迁之外的新质装备方向。"
+                ).strip(),
             },
             {
-                "title": "证据与验证",
-                "text": f"继承上下文提示：{evidence}。下一轮应补充可定位的一手或高质量二手来源，并记录支持、反证和适用范围，避免把参考武器的存在误写成能力事实。",
+                "title": "新质装备方向",
+                "text": f"可以把“{candidate}”推进为具备新构型与新作战角色的变体，并围绕直接军事效果说明其作用机理。",
             },
         ],
         "next_questions": [
             f"{candidate}在哪个具体作战节点形成不可替代的直接效果？",
-            "对手采取哪一种低成本适应后，该方向会失效？",
-            "需要补哪类证据才能把这条假设升级为可审核的能力画像？",
+            "哪个既有任务假设最值得彻底改写，才能形成新的装备角色？",
+            "如何把该装备从性能改良推进到作用机理跃迁？",
+            "怎样设计新的构型与运用方式，产生不同于现有装备的直接军事效果？",
         ],
+        "concept_directions": [
+            {
+                "name": f"{candidate}创新变体",
+                "innovation_variant_name": f"{candidate}创新变体",
+                "innovation_thesis": f"以“{candidate}”为种子，改写其任务角色与作用方式",
+                "winning_angle": "任务链重构",
+                "changed_assumption": "既有装备必须沿用原有构型和任务角色",
+                "equipment_form": equipment_form,
+                "innovation_equipment_form": equipment_form,
+                "operational_mechanism": mechanism,
+                "military_value": direct_effect,
+                "direct_military_effects": direct_effect,
+                "novelty": "由单项性能改良转向装备角色与作用链重构",
+                "disruptive_difference": "改变装备在任务链中的作用节点与协同关系",
+                "implementation_concept": "围绕新任务角色重组感知、决策、载荷和协同接口",
+                "stable": True,
+            }
+        ],
+        "capability_card_draft": {},
     }
     return answer
 
 
+def _pretty_section_body(text: str) -> str:
+    """Normalize jammed Chinese summaries into readable markdown paragraphs."""
+
+    body = str(text or "").strip()
+    if not body:
+        return ""
+    # Prefer existing paragraph breaks; otherwise split dense「；」chains that
+    # were historically used as pseudo-bullets in the complete-result block.
+    if "\n" in body:
+        return body
+    parts = [part.strip(" ；;·") for part in body.split("；") if part.strip(" ；;·")]
+    if len(parts) >= 3 and sum(1 for part in parts if len(part) >= 12) >= 2:
+        return "\n\n".join(parts)
+    return body
+
+
+def format_deep_complete_answer(answer: Mapping[str, Any] | None) -> str:
+    """Build the durable assistant transcript for one finished deep turn.
+
+    Mid-flight SSE deltas remain incremental.  The final assistant message must
+    still present a single, self-contained summary the expert can read after
+    the process thread settles.
+    """
+
+    payload = answer if isinstance(answer, Mapping) else {}
+    sections = payload.get("sections", [])
+    sections = sections if isinstance(sections, list) else []
+    blocks: list[str] = []
+    for item in sections:
+        if not isinstance(item, Mapping):
+            continue
+        title = str(item.get("title", "") or "").strip()
+        text = _pretty_section_body(str(item.get("text", "") or ""))
+        if not title or not text:
+            continue
+        # Avoid ``### Title`` + body that itself starts with the same heading.
+        heading_prefix = re.compile(rf"^#{{1,6}}\s*{re.escape(title)}\s*", re.MULTILINE)
+        text = heading_prefix.sub("", text).strip()
+        blocks.append(f"### {title}\n\n{text}")
+    if blocks:
+        return "\n\n".join(blocks)
+
+    # Fallback for older/offline payloads that only carry next_questions.
+    questions = payload.get("next_questions", [])
+    questions = questions if isinstance(questions, list) else []
+    question_bits = [str(item).strip() for item in questions[:4] if str(item).strip()]
+    if question_bits:
+        return "### 下一轮创新问题\n\n" + "\n".join(f"- {item}" for item in question_bits)
+    return "本轮深度发散已结束。"
+
+
+def build_deep_complete_sections(
+    *,
+    visible_summary: Sequence[str] | None = None,
+    agent_dialogue: Sequence[Mapping[str, Any]] | None = None,
+    dialogue_steps: Sequence[Mapping[str, Any]] | None = None,
+    directions: Sequence[Mapping[str, Any]] | None = None,
+    capability_card_draft: Mapping[str, Any] | None = None,
+    adjudication: Mapping[str, Any] | None = None,
+    open_questions: Sequence[str] | None = None,
+    block_reasons: Sequence[str] | None = None,
+    provider_finalization_status: str = "",
+    selection_rationale: str = "",
+    source_equipment_label: str = "",
+    query_weapon_names: Sequence[str] | None = None,
+) -> list[dict[str, str]]:
+    """Assemble the complete end-of-turn summary sections for deep dialogue."""
+
+    summaries = [str(item).strip() for item in (visible_summary or []) if str(item).strip()]
+    dialogue = [item for item in (agent_dialogue or []) if isinstance(item, Mapping)]
+    steps = [item for item in (dialogue_steps or []) if isinstance(item, Mapping)]
+    direction_rows = [item for item in (directions or []) if isinstance(item, Mapping)]
+    draft = capability_card_draft if isinstance(capability_card_draft, Mapping) else {}
+    adjudication_row = adjudication if isinstance(adjudication, Mapping) else {}
+    questions = [str(item).strip() for item in (open_questions or []) if str(item).strip()]
+    reasons = [str(item).strip() for item in (block_reasons or []) if str(item).strip()]
+    rationale = str(selection_rationale or "").strip()
+    mission = str(adjudication_row.get("mission_focus", "") or "").strip()
+    review = str(adjudication_row.get("review_summary", "") or "").strip()
+    seed_label = str(source_equipment_label or "").strip()
+    catalog_names = [
+        str(item).strip()
+        for item in (query_weapon_names or [])
+        if str(item).strip()
+    ][:6]
+    new_names = [
+        str(item.get("name") or item.get("innovation_variant_name") or "").strip()
+        for item in direction_rows
+        if str(item.get("name") or item.get("innovation_variant_name") or "").strip()
+    ][:3]
+    leap_line = ""
+    if seed_label or catalog_names:
+        baseline = "、".join(catalog_names[:4]) or seed_label
+        arrived = "、".join(new_names) if new_names else "新质颠覆候选"
+        leap_line = (
+            f"以当前 Query 已有装备「{baseline}」为基线，本轮已推理出与其相关但构型/机理跃迁的方向：{arrived}。"
+        )
+
+    complete_bits = [
+        part
+        for part in (
+            leap_line,
+            rationale,
+            *summaries[:4],
+            mission,
+            review,
+        )
+        if part
+    ]
+    # Deduplicate near-identical summary sentences that often repeat across
+    # rationale / visible_summary / adjudication review fields.
+    deduped_complete: list[str] = []
+    seen_complete: set[str] = set()
+    for part in complete_bits:
+        key = re.sub(r"\s+", "", part)
+        if key in seen_complete:
+            continue
+        seen_complete.add(key)
+        deduped_complete.append(part)
+    sections: list[dict[str, str]] = [
+        {
+            "title": "本轮完整结果",
+            "text": (
+                "\n\n".join(deduped_complete)[:3200]
+                or "已完成本轮内部多维发散、对抗裁决与综合收敛。"
+            ),
+        },
+        {
+            "title": "多 Agent 交叉审议 · 深度发散过程",
+            "text": "\n\n".join(
+                (
+                    f"**{item.get('axis') or item.get('role') or '发散'}**\n"
+                    f"{str(item.get('summary', '') or '').strip()}"
+                    + (
+                        f"\n- 候选：{'、'.join(str(name) for name in item.get('proposal_names', [])[:3] if str(name).strip())}"
+                        if isinstance(item.get("proposal_names"), list)
+                        and any(str(name).strip() for name in item.get("proposal_names", [])[:3])
+                        else ""
+                    )
+                )
+                for item in dialogue
+                if str(item.get("round", "")).strip().lower() == "divergence"
+                and str(item.get("summary", "") or "").strip()
+            )[:5200]
+            or "\n\n".join(
+                f"**{item.get('title') or '步骤'}**\n{item.get('text') or ''}".strip()
+                for item in steps
+                if str(item.get("text", "") or "").strip()
+            )[:4200]
+            or "本轮围绕单个装备完成了内部多维可见发散。",
+        },
+        {
+            "title": "对抗裁决与综合",
+            "text": "\n\n".join(
+                (
+                    f"**{item.get('role') or '议事 Agent'}**\n"
+                    f"{str(item.get('summary', '') or '').strip()}"
+                    + (
+                        f"\n- {'、'.join(str(name) for name in (item.get('verdicts') or item.get('proposal_names') or [])[:6] if str(name).strip())}"
+                        if (item.get("verdicts") or item.get("proposal_names"))
+                        else ""
+                    )
+                )
+                for item in dialogue
+                if str(item.get("round", "")).strip().lower() in {"critique", "synthesis"}
+                and str(item.get("summary", "") or "").strip()
+            )[:5200]
+            or "本轮由内部多维发散、对抗裁决并综合收敛。",
+        },
+        {
+            "title": "候选方向",
+            "text": "\n\n".join(
+                "\n".join(
+                    part
+                    for part in (
+                        f"**{str(item.get('name', '') or item.get('innovation_variant_name', '') or '').strip()}**",
+                        f"- 制胜角度：{item['winning_angle']}" if item.get("winning_angle") else "",
+                        f"- 改写假设：{item['changed_assumption']}" if item.get("changed_assumption") else "",
+                        (
+                            f"- 构型：{item.get('innovation_equipment_form') or item.get('equipment_form')}"
+                            if (item.get("innovation_equipment_form") or item.get("equipment_form"))
+                            else ""
+                        ),
+                        f"- 机理：{item['operational_mechanism']}" if item.get("operational_mechanism") else "",
+                        (
+                            f"- 效果：{item.get('direct_military_effects') or item.get('military_value') or item.get('function')}"
+                            if (item.get("direct_military_effects") or item.get("military_value") or item.get("function"))
+                            else ""
+                        ),
+                        (
+                            f"- 打击对象：{item.get('decisive_target')}"
+                            if item.get("decisive_target")
+                            else ""
+                        ),
+                        (
+                            f"- 直接毁伤：{item.get('direct_damage_mechanism')}"
+                            if item.get("direct_damage_mechanism")
+                            else ""
+                        ),
+                        (
+                            f"- 失能判据：{item.get('mission_kill_criterion')}"
+                            if item.get("mission_kill_criterion")
+                            else ""
+                        ),
+                        (
+                            f"- 颠覆差异：{item.get('disruptive_difference') or item.get('novelty')}"
+                            if (item.get("disruptive_difference") or item.get("novelty"))
+                            else ""
+                        ),
+                    )
+                    if str(part or "").strip()
+                )
+                for item in direction_rows
+            )[:5200]
+            or "本轮未形成稳定候选能力卡。",
+        },
+    ]
+    draft_text = "\n\n".join(
+        f"#### {label}\n{str(draft.get(key, '') or '').strip()}"
+        for key, label in (
+            ("overview", "概述"),
+            ("technology_implementation", "装备与技术实现"),
+            ("operational_process", "关键作战流程"),
+            ("capability_effects", "能力与作战效果"),
+            ("winning_logic", "制胜逻辑机理"),
+        )
+        if str(draft.get(key, "") or "").strip()
+    )[:9000]
+    if draft_text:
+        sections.append({"title": "五栏能力画像", "text": draft_text})
+    if provider_finalization_status == "analysis_only" or reasons:
+        reason_text = "\n".join(f"- {item}" for item in reasons[:6]) if reasons else ""
+        sections.append(
+            {
+                "title": "发布质量门",
+                "text": (
+                    "本轮讨论可见，但未写入正式能力画像版本。"
+                    + (f"\n\n原因：\n{reason_text}" if reason_text else "")
+                )[:2200],
+            }
+        )
+    if provider_finalization_status == "awaiting_user_confirmation":
+        sections.append(
+            {
+                "title": "是否形成能力卡",
+                "text": (
+                    "这个方向已经形成了可辨识的装备构型、作用机理和直接军事价值。"
+                    "你可以继续追问，把关键边界再挖深；如果认可当前方向，再确认形成五栏能力卡。"
+                ),
+            }
+        )
+    question_text = "\n".join(f"- {item}" for item in questions[:6]) if questions else ""
+    sections.append(
+        {
+            "title": "下一轮创新问题",
+            "text": question_text[:2200]
+            or "继续追问装备构型、作用机理和作战角色的跃迁。",
+        }
+    )
+    return sections
+
+
 def _default_module_texts(candidate: Mapping[str, Any], *, query: str, focus: str) -> dict[str, str]:
-    name = _first_text(candidate, ("title", "name", "primary_equipment_identity", "equipment_form"), "参考装备方向")
-    overview = _first_text(candidate, ("reference_overview", "overview", "concise_winning_summary"), "该参考方向来自当前 Query 的候选谱系，需通过独立证据核验其作战作用、适用条件与失效边界。")
-    mechanism = _first_text(candidate, ("operational_mechanism", "mechanism_chain", "winning_mechanism", "core_disruptive_difference"), "通过改变任务链中的感知、决策、打击或保障连接，争取传统方案难以形成的时间、空间或资源窗口。")
-    forms = _first_text(candidate, ("equipment_forms", "equipment_form", "primary_equipment_identity"), name)
-    boundaries = _first_text(candidate, ("failure_boundary", "failure_boundaries", "risk_boundaries", "validation_plan"), "强干扰、目标特征不足、授权约束或关键链路中断时，能力可能退化为普通装备效果。")
-    direct_effect = _first_text(candidate, ("direct_military_effects", "military_value", "mission_effect", "function"), "压缩对手反应时间、打乱资源分配或扩大局部任务窗口。")
-    focus_text = _bounded_text(focus or "针对参考装备方向开展深度研究", 900)
-    prefix = f"研究 Query：{_bounded_text(query, 500)}；本次聚焦：{focus_text}。"
-    return {
-        "overview": f"{prefix}“{name}”不是已入选 S6 卡片，而是从候选谱系中抽取的参考方向。{overview} 研究重点是说明它在何种任务对象、对手反应和约束下改变原有作战窗口，并明确哪些判断仍需证据支持。",
-        "technology_implementation": f"围绕“{forms}”的实现，应优先核查感知与识别、任务规划、抗干扰通信、动力与载荷、制造维护等耦合关系。不要只描述技术名词，而要说明技术如何支撑“发现—决策—作用—评估”闭环；{mechanism}",
-        "operational_process": f"在授权条件满足后，先确认目标和直接效果，再安排该方向进入任务链；根据对手搜索、拦截、欺骗或机动反馈调整投入，出现识别冲突、附带损伤风险或链路失稳时拒止、脱离或转交后续节点。{boundaries}",
-        "capability_effects": f"若假设成立，该方向的直接军事效果应表现为：{direct_effect} 不能只宣称性能提升；需要用任务前后对照和可追溯来源验证效果强度、适用场景与替代方案。",
-        "winning_logic": f"其潜在制胜逻辑是把对手原本可预测的处置节奏变成多点、连续或不对称的选择压力；对手若采用低成本适应，{boundaries}。因此本卡应作为可审核候选画像，待补证与专家复核后再决定是否升级为正式能力卡。",
-    }
+    # A reference artifact may be created before the model has authored the
+    # five S6 columns.  Do not synthesize generic prose here: an empty/partial
+    # module map makes the pending authoring state explicit and prevents a
+    # template paragraph from being mistaken for a reviewed capability card.
+    module_keys = (
+        "overview",
+        "technology_implementation",
+        "operational_process",
+        "capability_effects",
+        "winning_logic",
+    )
+    draft = candidate.get("capability_card_draft")
+    if isinstance(draft, Mapping):
+        drafted_modules = {
+            key: _bounded_text(draft.get(key, ""), 6000)
+            for key in module_keys
+            if _bounded_text(draft.get(key, ""), 6000)
+        }
+    else:
+        drafted_modules = {}
+    # Preserve explicitly authored module fields supplied by an upstream
+    # adapter, but never derive prose from generic equipment metadata.
+    for key in module_keys:
+        if key not in drafted_modules:
+            direct = _bounded_text(candidate.get(key, ""), 6000)
+            if direct:
+                drafted_modules[key] = direct
+    if drafted_modules:
+        return {key: drafted_modules.get(key, "") for key in module_keys}
+
+    # Keep the stable five-key shape for compatibility, while leaving missing
+    # prose empty so callers can show an explicit pending-authoring state.
+    return {key: "" for key in module_keys}
 
 
 def build_reference_capability(
@@ -721,7 +1544,8 @@ def build_reference_capability(
     """Build a versioned capability-card artifact from a reference candidate."""
 
     hypothesis_id = _first_text(candidate, ("hypothesis_id", "candidate_id", "id"), new_id("hypothesis"))
-    name = _first_text(candidate, ("title", "name", "primary_equipment_identity", "equipment_form"), "参考装备方向")
+    source_equipment_identity = _first_text(candidate, ("source_equipment_identity", "title", "name", "primary_equipment_identity", "equipment_form"), "参考装备方向")
+    name = _first_text(candidate, ("innovation_variant_name", "title", "name", "primary_equipment_identity", "equipment_form"), "参考装备方向")
     capability_id = f"deep-{safe_segment(hypothesis_id, limit=100) or uuid4().hex}"
     # Card identity is stable across retries and conversation turns.  Version
     # numbers, rather than random card ids, represent subsequent deep-research
@@ -729,9 +1553,19 @@ def build_reference_capability(
     supplied_binding = _first_text(candidate, ("card_binding_id", "capability_binding_id"), "")
     card_binding_id = supplied_binding or f"deep-card-{hashlib.sha256(hypothesis_id.encode('utf-8')).hexdigest()[:24]}"
     modules = _default_module_texts(candidate, query=query, focus=focus)
+    modules_complete = all(
+        _bounded_text(modules.get(key, ""), 8)
+        for key in (
+            "overview",
+            "technology_implementation",
+            "operational_process",
+            "capability_effects",
+            "winning_logic",
+        )
+    )
     equipment_form = _first_text(
         candidate,
-        ("equipment_form", "primary_equipment_identity", "equipment_forms"),
+        ("innovation_equipment_form", "new_equipment_form", "equipment_form", "primary_equipment_identity", "equipment_forms"),
         name,
     )
     raw_forms = candidate.get("equipment_forms", candidate.get("equipment_form", []))
@@ -777,6 +1611,14 @@ def build_reference_capability(
         "name": name,
         "title": name,
         "primary_equipment_identity": name,
+        "source_equipment_identity": source_equipment_identity,
+        "innovation_variant_name": _first_text(candidate, ("innovation_variant_name",), ""),
+        "innovation_thesis": _first_text(candidate, ("innovation_thesis",), ""),
+        "winning_angle": _first_text(candidate, ("winning_angle",), ""),
+        "changed_assumption": _first_text(candidate, ("changed_assumption",), ""),
+        "novelty": _first_text(candidate, ("novelty",), ""),
+        "disruptive_difference": _first_text(candidate, ("disruptive_difference",), ""),
+        "implementation_concept": _first_text(candidate, ("implementation_concept",), ""),
         "equipment_category": _first_text(candidate, ("equipment_category", "category"), equipment_form or "参考装备能力方向"),
         "equipment_form": equipment_form,
         "equipment_forms": equipment_forms,
@@ -802,8 +1644,21 @@ def build_reference_capability(
         "confidence": 0.35,
         "confidence_limited": True,
         "verification_status": "pending",
-        "portrait_authoring_status": "deep_research_authored",
-        "analysis_provenance_status": "deep_research_reference",
+        "portrait_authoring_status": (
+            "deep_research_authored"
+            if modules_complete
+            else "pending_s6_authoring"
+        ),
+        "analysis_provenance_status": (
+            "deep_research_reference"
+            if modules_complete
+            else "pending_authoring"
+        ),
+        "capability_card_status": (
+            "authored"
+            if modules_complete
+            else "analysis_only_pending_authoring"
+        ),
         "source": "reference_weapon_deep_research",
         "source_run_id": run_id,
         "source_session_id": source_session_id,
@@ -1077,6 +1932,7 @@ def delete_run_sidecars(output_root: str | Path, run_id: str) -> None:
 __all__ = [
     "SCHEMA_VERSION",
     "MAX_MESSAGE_CHARS",
+    "SINGLE_EQUIPMENT_INNOVATION_MODE",
     "append_message",
     "build_reference_capability",
     "create_session",
@@ -1088,6 +1944,10 @@ __all__ = [
     "merge_capability_into_snapshot",
     "save_research_link",
     "save_reference_research",
+    "single_equipment_innovation_context",
+    "project_query_weapons",
     "synthesize_reply",
+    "build_deep_complete_sections",
+    "format_deep_complete_answer",
     "update_session",
 ]

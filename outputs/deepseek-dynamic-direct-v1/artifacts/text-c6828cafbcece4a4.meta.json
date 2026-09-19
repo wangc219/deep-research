@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:c6828cafbcece4a4",
+  "content_path": "text-c6828cafbcece4a4.txt",
+  "content_type": "text/plain",
+  "direct_error": "_NetworkSafetyError: host_resolution_failed",
+  "encoding": "utf-8",
+  "evidence_id": "ev-operational_employment-web-f42ad4ad8ea8",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "c6828cafbcece4a45fc4f953457870ab751b92f89c2ca9a211870237d509a710",
+  "url": "https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/"
+}

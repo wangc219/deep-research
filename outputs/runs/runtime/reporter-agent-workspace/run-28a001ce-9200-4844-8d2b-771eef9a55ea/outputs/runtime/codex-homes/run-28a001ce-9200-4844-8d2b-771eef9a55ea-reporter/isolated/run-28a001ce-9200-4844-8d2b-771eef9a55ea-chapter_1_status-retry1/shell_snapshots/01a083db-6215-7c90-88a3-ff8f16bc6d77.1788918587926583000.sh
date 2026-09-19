@@ -1,0 +1,132 @@
+# Snapshot file
+# Unset all aliases to avoid conflicts with functions
+unalias -a 2>/dev/null || true
+# Functions
+
+# setopts 2
+setopt nohashdirs
+setopt login
+
+# aliases 2
+alias run-help=man
+alias which-command=whence
+
+# exports 118
+export CODEX_APP_TOOLS_PIPE_PATH=/tmp/codex-browser-use/cde290ac-240c-4b64-847e-677d1672fca1.sock
+export CODEX_CI=1
+export CODEX_HOME='/Users/hitsz/equipment research/outputs/runs/runtime/reporter-agent-workspace/run-28a001ce-9200-4844-8d2b-771eef9a55ea/outputs/runtime/codex-homes/run-28a001ce-9200-4844-8d2b-771eef9a55ea-reporter/isolated/run-28a001ce-9200-4844-8d2b-771eef9a55ea-chapter_1_status-retry1'
+export CODEX_MANAGED_BY_NPM=1
+export CODEX_MANAGED_PACKAGE_ROOT=/opt/homebrew/lib/node_modules/@openai/codex
+export CODEX_MCP_NODE_PATH=/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node
+export CODEX_PERMISSION_PROFILE=:danger-full-access
+export CODEX_SAGE_BACKFILL_TRACKER_TAB_REUSE=1
+export CODEX_SESSION_ID=01a08185-17f1-7d00-b3d7-eb8ec7be9111
+export CODEX_SHELL=1
+export COLORTERM=''
+export COMMAND_MODE=unix2003
+export DEEPSEEK_API_KEY=sk-755e5b663db04a7c914eaf57ad3cb897
+export DISABLE_AUTO_UPDATE=true
+export EQUIPMENT_DR_AGENT_KNOWLEDGE_INDEX=outputs/knowledge/agent-knowledge-index.json
+export EQUIPMENT_DR_AGENT_KNOWLEDGE_MAX_RECORDS=300
+export EQUIPMENT_DR_AGENT_MODELS_JSON='{}'
+export EQUIPMENT_DR_ALLOW_BENCHMARK_DNS_PROXY=1
+export EQUIPMENT_DR_ALLOW_LIMITED_BASELINE=1
+export EQUIPMENT_DR_BASELINE_ANALYSIS_MAX_OUTPUT_TOKENS=4200
+export EQUIPMENT_DR_BASELINE_PREFETCH_WORKERS=6
+export EQUIPMENT_DR_BUILD_HASH=233ce3ed47de
+export EQUIPMENT_DR_CODEX_API_KEY_ENV=EQUIPMENT_DR__API_KEY
+export EQUIPMENT_DR_CODEX_BASE_URL=https://codexpro.wwxb1123.xyz/v1
+export EQUIPMENT_DR_CODEX_CAPACITY_RETRY_ATTEMPTS=4
+export EQUIPMENT_DR_CODEX_CAPACITY_RETRY_BACKOFF_MAX_SECONDS=60
+export EQUIPMENT_DR_CODEX_CAPACITY_RETRY_BACKOFF_SECONDS=8
+export EQUIPMENT_DR_CODEX_CAPACITY_RETRY_JITTER_SECONDS=2
+export EQUIPMENT_DR_CODEX_COMMAND=codex
+export EQUIPMENT_DR_CODEX_FAST_CALL_SECONDS=75
+export EQUIPMENT_DR_CODEX_HOME=''
+export EQUIPMENT_DR_CODEX_INHERIT_CONFIG=0
+export EQUIPMENT_DR_CODEX_MAX_TIMEOUT_SECONDS=3600
+export EQUIPMENT_DR_CODEX_MODEL_CONCURRENCY=8
+export EQUIPMENT_DR_CODEX_MODEL_CONCURRENCY_MAX=8
+export EQUIPMENT_DR_CODEX_MODEL_CONCURRENCY_MIN=4
+export EQUIPMENT_DR_CODEX_PERFORMANCE_PROFILE=balanced
+export EQUIPMENT_DR_CODEX_QUALITY_TIMEOUT_SECONDS=3600
+export EQUIPMENT_DR_CODEX_REASONING_EFFORT=medium
+export EQUIPMENT_DR_CODEX_RESERVED_PRIORITY_SLOTS=2
+export EQUIPMENT_DR_CODEX_RETRY_ATTEMPTS=2
+export EQUIPMENT_DR_CODEX_RUNTIME_API_KEY=sk-95a00m1OGfixHTcrVhM9PQUgKrtItr4aXgL2J0N3ANzOEVh8
+export EQUIPMENT_DR_CODEX_SLOW_CALL_SECONDS=150
+export EQUIPMENT_DR_CODEX_SOURCE_HOME=''
+export EQUIPMENT_DR_CODEX_TIMEOUT_SECONDS=900
+export EQUIPMENT_DR_DEEPSEEK_API_KEY_ENV=DEEPSEEK_API_KEY
+export EQUIPMENT_DR_DEEPSEEK_BASE_URL=https://api.deepseek.com/v1/chat/completions
+export EQUIPMENT_DR_DEEPSEEK_MODEL=deepseek-v4-flash
+export EQUIPMENT_DR_DISCOVERY_MAX_BATCHES=2
+export EQUIPMENT_DR_ENTERPRISE_LATENCY_PROFILE=1
+export EQUIPMENT_DR_EQUIPMENT_ANALYSIS_MAX_OUTPUT_TOKENS=5200
+export EQUIPMENT_DR_EVIDENCE_ACCEPT_TARGET=4
+export EQUIPMENT_DR_EVIDENCE_FETCH_TIMEOUT_SECONDS=6
+export EQUIPMENT_DR_EVIDENCE_GLOBAL_CONCURRENCY=12
+export EQUIPMENT_DR_EVIDENCE_MATERIALIZE_ATTEMPTS=12
+export EQUIPMENT_DR_EVIDENCE_MATERIALIZE_CONCURRENCY=4
+export EQUIPMENT_DR_EVIDENCE_MIN_COUNT=3
+export EQUIPMENT_DR_EVIDENCE_MIN_DOMAINS=2
+export EQUIPMENT_DR_EVIDENCE_PREWARM_CONCURRENCY=4
+export EQUIPMENT_DR_EVIDENCE_PREWARM_LIMIT=4
+export EQUIPMENT_DR_EXECUTION_PROFILE_ID=winning_swarm_dynamic_v2
+export EQUIPMENT_DR_FORCE_S6_REWRITE=1
+export EQUIPMENT_DR_KIMI_API_KEY_ENV=KIMI_API_KEY
+export EQUIPMENT_DR_KIMI_BASE_URL=https://api.moonshot.cn/v1
+export EQUIPMENT_DR_KIMI_MODEL=kimi-k2.5
+export EQUIPMENT_DR_MAXIMIZE_AGENT_PARALLELISM=1
+export EQUIPMENT_DR_MODE=real
+export EQUIPMENT_DR_MODEL=gpt-5.5
+export EQUIPMENT_DR_MODEL_PROGRESS_INTERVAL_SECONDS=15
+export EQUIPMENT_DR_PROCESS_REGISTRY_ROOT='/Users/hitsz/equipment research/outputs/runtime/run-process-groups'
+export EQUIPMENT_DR_PROVIDER=codex
+export EQUIPMENT_DR_PUBLIC_READER_ATTEMPTS=1
+export EQUIPMENT_DR_PUBLIC_READER_BASE_URL=https://r.jina.ai/http://
+export EQUIPMENT_DR_PUBLIC_READER_CONCURRENCY=6
+export EQUIPMENT_DR_PUBLIC_READER_TIMEOUT_SECONDS=8
+export EQUIPMENT_DR_QUERY_MAX_IDLE_POLL_INTERVAL=10
+export EQUIPMENT_DR_REPORTER_MODEL_CONCURRENCY=12
+export EQUIPMENT_DR_REPORT_TIMEOUT_SECONDS=3600
+export EQUIPMENT_DR_RESEARCH_WORKER_CONCURRENCY=2
+export EQUIPMENT_DR_S6_CARD_ATTEMPTS=4
+export EQUIPMENT_DR_S6_CARD_RESUME_TIMEOUT_SECONDS=600
+export EQUIPMENT_DR_S6_CARD_TIMEOUT_SECONDS=600
+export EQUIPMENT_DR_S6_CODEX_CONCURRENCY=15
+export EQUIPMENT_DR_S6_HARD_TIMEOUTS=0
+export EQUIPMENT_DR_SOURCE_PRIORITY_INDEX=outputs/knowledge/source-priority-index.json
+export EQUIPMENT_DR_SWARM_AGENT_MODELS_JSON='{}'
+export EQUIPMENT_DR_WEB_HOST=0.0.0.0
+export EQUIPMENT_DR_WEB_PORT=5173
+export EQUIPMENT_DR__API_KEY=sk-95a00m1OGfixHTcrVhM9PQUgKrtItr4aXgL2J0N3ANzOEVh8
+export GH_PAGER=cat
+export GIT_PAGER=cat
+export HOME=/Users/hitsz
+export KIMI_API_KEY=''
+export LANG=C.UTF-8
+export LC_ALL=C.UTF-8
+export LC_CTYPE=C.UTF-8
+export LOGNAME=hitsz
+export LOG_FORMAT=json
+export MallocNanoZone=0
+export NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S=5b74180ac40ca4cf726cad15c5ff886f159224f1c0306ea364ad9eea6a7e7ac2,6d25aa7656feac858f3a3bdaea5bcbab0dbfd426c9de8e6931ce90c399ee8e4f
+export NO_COLOR=1
+export OPENAI_API_KEY=sk-95a00m1OGfixHTcrVhM9PQUgKrtItr4aXgL2J0N3ANzOEVh8
+export OSLogRateLimit=64
+export PAGER=cat
+export -T PATH path=( /usr/local/bin /System/Cryptexes/App/usr/bin /usr/bin /bin /usr/sbin /sbin /var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin /var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin /var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin /pkg/env/global/bin /opt/homebrew/bin '/Users/hitsz/equipment research/outputs/runs/runtime/reporter-agent-workspace/run-28a001ce-9200-4844-8d2b-771eef9a55ea/outputs/runtime/codex-homes/run-28a001ce-9200-4844-8d2b-771eef9a55ea-reporter/isolated/run-28a001ce-9200-4844-8d2b-771eef9a55ea-chapter_1_status-retry1/tmp/arg0/codex-arg04KLKZB' /opt/homebrew/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/codex-path /Users/hitsz/.codex/tmp/arg0/codex-arg064MPrG /Users/hitsz/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override /Users/hitsz/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback /Applications/ChatGPT.app/Contents/Resources )
+export PYTHONPATH=src
+export RUST_LOG=warn
+export SHELL=/bin/zsh
+export SSH_AUTH_SOCK=/var/run/com.apple.launchd.KvpyWM6Xmf/Listeners
+export TERM=dumb
+export TMPDIR=/var/folders/k3/4k9hkzlj02b2qtz7d1zqry4c0000gn/T/
+export USER=hitsz
+export VITE_API_BASE_URL=/api/v1
+export XPC_FLAGS=0x0
+export XPC_SERVICE_NAME=0
+export ZSH_TMUX_AUTOSTART=false
+export ZSH_TMUX_AUTOSTARTED=true
+export __CF_USER_TEXT_ENCODING=0x1F5:0x19:0x34

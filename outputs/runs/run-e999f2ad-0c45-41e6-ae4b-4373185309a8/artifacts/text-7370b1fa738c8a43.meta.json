@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:7370b1fa738c8a43",
+  "content_path": "text-7370b1fa738c8a43.txt",
+  "content_type": "text/plain",
+  "direct_error": "_NetworkSafetyError: host_resolution_failed",
+  "encoding": "utf-8",
+  "evidence_id": "ev-system_confrontation-web-5341b3aa85f5",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "7370b1fa738c8a43468d5c2d649ad2e566ac10cbca3987a56b150c3eb19d68ab",
+  "url": "https://www.marines.mil/Force-Design/linkId/100000118135009/"
+}

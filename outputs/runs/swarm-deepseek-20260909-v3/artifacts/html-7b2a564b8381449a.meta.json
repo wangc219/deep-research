@@ -1,0 +1,15 @@
+{
+  "artifact_ref": "html:7b2a564b8381449a",
+  "connect_ip": "198.18.0.141",
+  "content_path": "html-7b2a564b8381449a.html",
+  "content_type": "text/html; charset=utf-8",
+  "encoding": null,
+  "evidence_id": "ev-case_research-web-f5b871d2abb2",
+  "fetch_cache_hit": false,
+  "final_url": "https://www.gov.uk/government/publications/defence-drone-strategy-the-uks-approach-to-defence-uncrewed-systems/defence-drone-strategy-the-uks-approach-to-defence-uncrewed-systems",
+  "kind": "html",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "7b2a564b8381449a43369ed514c449954e9195ace4a013bdbbac8f48b5767802",
+  "url": "https://www.gov.uk/government/publications/defence-drone-strategy-the-uks-approach-to-defence-uncrewed-systems/defence-drone-strategy-the-uks-approach-to-defence-uncrewed-systems"
+}

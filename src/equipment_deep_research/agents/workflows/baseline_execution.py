@@ -4,10 +4,96 @@
 from __future__ import annotations
 
 from equipment_deep_research.agents.workflows import coordinator as _legacy
+from equipment_deep_research.harness.context import (
+    sanitize_handoff_summary,
+    sanitize_open_questions,
+)
 
 globals().update(
     {name: value for name, value in vars(_legacy).items() if not name.startswith("__")}
 )
+
+
+def _parse_confidence(value: object, fallback: float = 0.45) -> float:
+    """Accept numeric, percentage, and common qualitative model outputs."""
+    if isinstance(value, bool):
+        return 1.0 if value else 0.0
+    if isinstance(value, (int, float)):
+        score = float(value)
+    else:
+        text = str(value or "").strip().lower()
+        qualitative = {
+            "高": 0.85, "较高": 0.75, "中高": 0.75,
+            "中": 0.60, "中等": 0.60, "中低": 0.45,
+            "低": 0.30, "较低": 0.30,
+            "high": 0.85, "medium": 0.60, "low": 0.30,
+        }
+        if text in qualitative:
+            return qualitative[text]
+        try:
+            score = float(text.rstrip("%"))
+            if text.endswith("%") or score > 1.0:
+                score /= 100.0
+        except (TypeError, ValueError):
+            return fallback
+    return min(1.0, max(0.0, score))
+
+
+def _provider_neutral_source_anchor_rows(
+    request: AgentRunRequest,
+    *,
+    limit: int,
+) -> list[dict[str, Any]]:
+    """Build materialization leads when a provider has no hosted search.
+
+    OpenAI-compatible Chat Completions gateways can complete the research
+    turn but cannot return Responses ``web_search`` citations.  Existing
+    source-priority and incremental-knowledge URLs are controlled application
+    inputs, so they may be used as *anchors*; they are never accepted as
+    evidence until the scheduler fetches, materializes, and quality-gates the
+    corresponding page.  Local fixture URLs are intentionally excluded.
+    """
+    candidates: list[Mapping[str, Any]] = [
+        item
+        for item in (
+            *request.context.get("source_priorities", []),
+            *request.context.get("shared_source_priorities", []),
+        )
+        if isinstance(item, Mapping)
+    ]
+    for item in request.context.get("incremental_knowledge", []):
+        if not isinstance(item, Mapping):
+            continue
+        for url in item.get("source_urls", []):
+            candidates.append({"url": url, "title": "", "snippet": ""})
+    rows: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in candidates:
+        url = _without_tracking_parameters(str(item.get("url", "")).strip())
+        if not url or url in seen:
+            continue
+        try:
+            parsed = urlsplit(url)
+        except ValueError:
+            continue
+        if parsed.scheme != "https" or not parsed.hostname:
+            continue
+        if parsed.hostname.lower() in {"fixture.local", "localhost", "127.0.0.1"}:
+            continue
+        seen.add(url)
+        rows.append(
+            {
+                "url": url,
+                "title": str(item.get("title", "")).strip() or url,
+                "snippet": str(item.get("snippet", "")).strip(),
+                "retrieval_lane": "provider_neutral_source_anchor_fallback",
+                "required_source_anchor": True,
+            }
+        )
+        if len(rows) >= max(1, limit):
+            break
+    return rows
+
 
 def run_baseline_agent(host, request: AgentRunRequest) -> AgentRunResult:
     text, metadata = asyncio.run(host._run(request))
@@ -17,8 +103,32 @@ def run_baseline_agent(host, request: AgentRunRequest) -> AgentRunResult:
     ]
     if not findings:
         findings = [f"{request.agent.display_name}未返回可采纳的结构化发现。"]
-    confidence = float(payload.get("confidence", 0.45))
-    confidence = min(1.0, max(0.0, confidence))
+    confidence = _parse_confidence(payload.get("confidence", 0.45))
+    provider_kind = str(getattr(host, "provider_kind", "responses")).strip()
+    # Some OpenAI-compatible gateways (including Queen through Codex CLI) can
+    # complete a discovery turn without returning hosted-search annotations or
+    # without emitting concrete query terms. Reuse only governed
+    # source-priority URLs as leads; the scheduler still performs the
+    # authoritative fetch/materialization and evidence quality gate. Model-
+    # claimed URLs are deliberately ignored.
+    if provider_kind in {"chat_completions", "codex_cli"} and not metadata.get("web_sources"):
+        anchor_rows = _provider_neutral_source_anchor_rows(
+            request,
+            limit=max(
+                4,
+                int(
+                    os.environ.get(
+                        "EQUIPMENT_DR_PROVIDER_NEUTRAL_ANCHOR_LIMIT", "8"
+                    )
+                ),
+            ),
+        )
+        if anchor_rows:
+            metadata["web_sources"] = anchor_rows
+            metadata["source_anchor_fallback"] = (
+                "provider_neutral_source_anchor_fallback"
+            )
+            metadata["source_anchor_count"] = len(anchor_rows)
     evidence = _evidence_from_web_sources(
         request=request,
         payload=payload,
@@ -51,6 +161,11 @@ def run_baseline_agent(host, request: AgentRunRequest) -> AgentRunResult:
     payload_type, typed_payload, packet_version = _typed_packet_payload(
         request.agent.agent_id, analysis_sections
     )
+    open_questions = sanitize_open_questions(payload.get("open_questions", []))
+    handoff_summary = sanitize_handoff_summary(
+        payload.get("handoff_summary", ""),
+        fallback=findings[0],
+    )
     packet = BaselineFindingPacket(
         packet_id=(
             f"packet-{request.agent.agent_id}"
@@ -66,8 +181,8 @@ def run_baseline_agent(host, request: AgentRunRequest) -> AgentRunResult:
         coverage_notes=[
             "模型已使用 Responses Web Search 完成公开资料研判；来源仍须通过本地材料化和质量门控后才能成为正式证据。"
         ],
-        open_questions=[str(item) for item in payload.get("open_questions", [])],
-        handoff_summary=str(payload.get("handoff_summary", findings[0])),
+        open_questions=open_questions,
+        handoff_summary=handoff_summary,
         checkpoint=f"{request.agent.agent_id}: model turn complete",
         search_log=search_queries,
         limitations=(
@@ -94,6 +209,17 @@ def run_baseline_agent(host, request: AgentRunRequest) -> AgentRunResult:
             for item in metadata.get("call_metrics", [])
             if isinstance(item, Mapping)
         ],
+        metadata={
+            key: value
+            for key, value in metadata.items()
+            if key
+            in {
+                "source_anchor_fallback",
+                "source_anchor_count",
+                "analysis_limited",
+                "single_pass_degraded",
+            }
+        },
     )
 
 
@@ -135,8 +261,12 @@ def _baseline_output_schema(agent: AgentDef) -> dict[str, Any]:
     schema = {
         "findings": ["string"],
         "confidence": "0..1",
-        "open_questions": ["string"],
-        "handoff_summary": "string",
+        "open_questions": [
+            "genuine unresolved question or uncertainty; never a downstream task, recommendation or attention point"
+        ],
+        "handoff_summary": (
+            "completed findings and evidence boundary only; do not prescribe what a later agent should do"
+        ),
         "search_plan": [{"track": "string", "queries": ["string"]}],
         "contradictions": [
             "conflicting evidence, alternative hypothesis, or uncertainty"
@@ -166,6 +296,37 @@ def _baseline_output_schema(agent: AgentDef) -> dict[str, Any]:
         },
     }
     return schema
+
+
+def _limited_baseline_payload(
+    request: AgentRunRequest,
+    *,
+    reason: str,
+    source_count: int = 0,
+) -> str:
+    """Return a valid limited handoff after an isolated model timeout.
+
+    A transport timeout is a lane-level quality signal. Keeping the envelope
+    valid lets the scheduler materialize whatever sources are already shared
+    and continue with S3-S6 instead of converting one stalled call into a
+    failed research task.
+    """
+    return json.dumps(
+        {
+            "findings": [
+                f"{request.agent.display_name}本轮检索受限，保留已登记来源并进入后续定向补证。"
+            ],
+            "confidence": 0.25,
+            "open_questions": [
+                f"{reason[:220]}；已有来源数={int(source_count)}，需在候选级核验。"
+            ],
+            "handoff_summary": "本轮模型调用受限但未阻塞基线交接",
+            "contradictions": [reason[:300]],
+            "source_claims": [],
+            "analysis_sections": {},
+        },
+        ensure_ascii=False,
+    )
 
 
 async def run(host, request: AgentRunRequest) -> tuple[str, dict[str, Any]]:
@@ -206,11 +367,23 @@ async def run(host, request: AgentRunRequest) -> tuple[str, dict[str, Any]]:
     )
     plan_mode = _agent_plan_mode(request.context)
     compact_reference = optimized_v2 and plan_mode == "reference"
+    single_pass_equipment_boundary = bool(
+        optimized_v2
+        and deep_equipment_search
+        and str(getattr(host, "provider_kind", "responses")) != "chat_completions"
+        and not targeted_supplement
+    )
     analysis_specialization = design.analysis_specialization(
         optimized=optimized_v2
     )
     discovery_text, discovery_metadata = await host._discovery_for_request(request)
-    if optimized_v2 and deep_equipment_search:
+    # The one-call equipment boundary snapshot relies on a hosted Responses
+    # search result.  Chat Completions providers (DeepSeek/OpenLux) have no
+    # such annotation channel; run their normal provider-neutral analysis
+    # path instead, using governed source anchors that are materialized by
+    # the scheduler.  This keeps DeepSeek useful without pretending it has
+    # hosted web search.
+    if single_pass_equipment_boundary:
         single_pass_text = str(
             discovery_metadata.get("single_pass_baseline_text", "")
         ).strip()
@@ -218,10 +391,13 @@ async def run(host, request: AgentRunRequest) -> tuple[str, dict[str, Any]]:
             discovery_metadata.get("single_pass_baseline_error", "")
         ).strip()
         if single_pass_error:
-            raise RuntimeError(
-                "weapon_equipment boundary snapshot unavailable: "
-                + single_pass_error
+            single_pass_text = _limited_baseline_payload(
+                request,
+                reason="weapon_equipment boundary snapshot unavailable: "
+                + single_pass_error,
+                source_count=len(discovery_metadata.get("web_sources", [])),
             )
+            discovery_metadata["single_pass_degraded"] = True
         single_pass_payload = _parse_json_object(single_pass_text)
         substantive_findings = [
             str(item).strip()
@@ -229,27 +405,40 @@ async def run(host, request: AgentRunRequest) -> tuple[str, dict[str, Any]]:
             if str(item).strip()
         ]
         if not substantive_findings:
-            raise RuntimeError(
-                "weapon_equipment model turn completed but outer baseline result "
-                "validation found no substantive findings"
+            single_pass_text = _limited_baseline_payload(
+                request,
+                reason=(
+                    "weapon_equipment model turn returned no substantive findings"
+                ),
+                source_count=len(discovery_metadata.get("web_sources", [])),
             )
-        host._emit_baseline_progress(
-            {
-                "event_type": "baseline_analysis_completed",
-                "run_id": request.run_id,
-                "agent_id": request.agent.agent_id,
-                "round_index": request.round_index,
-                "repaired": False,
-                "execution_mode": "single_pass_public_boundary_snapshot",
-            }
-        )
-        return single_pass_text, discovery_metadata
+            discovery_metadata["single_pass_degraded"] = True
+        if not discovery_metadata.get("single_pass_degraded"):
+            host._emit_baseline_progress(
+                {
+                    "event_type": "baseline_analysis_completed",
+                    "run_id": request.run_id,
+                    "agent_id": request.agent.agent_id,
+                    "round_index": request.round_index,
+                    "repaired": False,
+                    "execution_mode": "single_pass_public_boundary_snapshot",
+                }
+            )
+            return single_pass_text, discovery_metadata
+        # A failed boundary lane still leaves a useful, valid envelope and
+        # any shared source anchors. Continue through the compact analysis
+        # pass so the first execution can recover substantive Query-specific
+        # reasoning instead of publishing a one-line timeout fallback.
+        single_pass_equipment_boundary = False
 
     if optimized_v2:
         role_focus = design.role_focus(optimized=True)
         if deep_equipment_search:
             role_focus += (
-                _query_led_combat_equipment_theme_instruction()
+                _query_led_combat_equipment_theme_instruction(
+                    request.topic,
+                    structured_query_brief=request.context.get("structured_query_brief", {}),
+                )
                 + "本Agent只建立可追溯的现役/在研事实、能力边界、体系依赖、反证和可验证差距；"
                 "不得提出前瞻装备候选、不得为S3命名装备、不得把公开型号谱系写成创新路线或推荐目录。"
                 "型号只作为后续候选的最近公开比较基线，不能进入首轮创新生成上下文。"
@@ -329,7 +518,10 @@ async def run(host, request: AgentRunRequest) -> tuple[str, dict[str, Any]]:
                 "source_claims最多12条；"
             )
             + (
-                _query_led_combat_equipment_theme_instruction()
+                _query_led_combat_equipment_theme_instruction(
+                    request.topic,
+                    structured_query_brief=request.context.get("structured_query_brief", {}),
+                )
                 if deep_equipment_search
                 else ""
             )
@@ -420,10 +612,32 @@ async def run(host, request: AgentRunRequest) -> tuple[str, dict[str, Any]]:
         )
         options["model_verbosity"] = "low"
     options = _apply_codex_performance_options(options, host.provider_kind)
+    if optimized_v2 and host.provider_kind == "chat_completions" and not targeted_supplement:
+        # OpenLux/DeepSeek bills hidden reasoning against max_tokens.  The
+        # compact optimized-v2 cap otherwise truncates the JSON envelope for
+        # every baseline role, not only the equipment role.
+        options["max_output_tokens"] = max(
+            int(options.get("max_output_tokens", 1800)),
+            int(
+                os.environ.get(
+                    "EQUIPMENT_DR_CHAT_COMPLETIONS_BASELINE_MAX_OUTPUT_TOKENS",
+                    "8192",
+                )
+            ),
+        )
     if optimized_v2 and deep_equipment_search and not targeted_supplement:
         options["reasoning_effort"] = "medium"
         options["_provider_timeout_seconds"] = min(
             int(options.get("_provider_timeout_seconds", 150)), 150
+        )
+        options["_disable_provider_timeout"] = False
+        options["_provider_retry_attempts"] = 1
+    elif optimized_v2 and not targeted_supplement:
+        # Baseline synthesis is a bounded first-pass handoff. Keep it below
+        # the legacy 900s CLI ceiling; the exception path emits a valid
+        # limited Packet and S3-S6 can still reason over shared evidence.
+        options["_provider_timeout_seconds"] = min(
+            int(options.get("_provider_timeout_seconds", 90)), 90
         )
         options["_disable_provider_timeout"] = False
         options["_provider_retry_attempts"] = 1
@@ -441,18 +655,32 @@ async def run(host, request: AgentRunRequest) -> tuple[str, dict[str, Any]]:
             "plan_mode": plan_mode,
         }
     )
-    text, analysis_metadata = await host._collect_stream(
-        provider,
-        messages,
-        options,
-        priority=str(request.context.get("_execution_priority", "critical")),
-        progress={
-            "run_id": request.run_id,
-            "agent_id": request.agent.agent_id,
-            "round_index": request.round_index,
-            "phase": "evidence_analysis",
-        },
-    )
+    try:
+        text, analysis_metadata = await host._collect_stream(
+            provider,
+            messages,
+            options,
+            priority=str(request.context.get("_execution_priority", "critical")),
+            progress={
+                "run_id": request.run_id,
+                "agent_id": request.agent.agent_id,
+                "round_index": request.round_index,
+                "phase": "evidence_analysis",
+            },
+        )
+    except Exception as exc:
+        text = _limited_baseline_payload(
+            request,
+            reason=f"evidence_analysis_limited:{type(exc).__name__}:{exc}",
+            source_count=len(discovery_metadata.get("web_sources", [])),
+        )
+        analysis_metadata = {
+            "finish_reason": "limited_fallback",
+            "failure_type": type(exc).__name__,
+            "error_message": str(exc)[:300],
+            "elapsed_seconds": 0,
+        }
+        discovery_metadata["analysis_limited"] = True
     analysis_metric = host._model_call_metric(
         request.agent.agent_id,
         "evidence_analysis",
@@ -646,7 +874,10 @@ async def discover(
         )
     )
     single_pass_equipment_boundary = bool(
-        optimized_v2 and deep_equipment_search and not targeted_supplement
+        optimized_v2
+        and deep_equipment_search
+        and str(getattr(host, "provider_kind", "responses")) != "chat_completions"
+        and not targeted_supplement
     )
     plan_mode = _agent_plan_mode(request.context)
     compact_reference = optimized_v2 and plan_mode == "reference"
@@ -702,6 +933,10 @@ async def discover(
         )
     )
     fast_lane_enabled = bool(known_urls)
+    hosted_search_available = bool(
+        getattr(host, "uses_hosted_web_search", False)
+        or getattr(host, "provider_kind", "") in {"responses", "codex", "codex_cli"}
+    )
     lanes: list[dict[str, Any]] = []
     if search_intensity == "light":
         lanes.append(
@@ -769,6 +1004,37 @@ async def discover(
         "cross_domain_fusion",
         "nontraditional_security",
     }
+    if not hosted_search_available:
+        # Codex CLI and Chat Completions can still reason over governed source
+        # anchors, but cannot return hosted-search annotations.  Do not launch
+        # an open-web tool call that will sit until the gateway timeout before
+        # falling back. Keep one short model lane only when anchors exist;
+        # otherwise the caller receives an explicit limited result.
+        if known_urls:
+            lanes = [
+                {
+                    **dict(lanes[0] if lanes else {"lane": "source_anchor"}),
+                    "lane": "source_anchor",
+                    "known_urls": known_urls[:12],
+                    "source_priorities": source_priorities,
+                    "reasoning_effort": "low",
+                    "max_output_tokens": min(
+                        int((lanes[0] if lanes else {}).get("max_output_tokens", 1000)),
+                        1200,
+                    ),
+                }
+            ]
+        else:
+            lanes = [
+                {
+                    "lane": "source_anchor",
+                    "tracks": search_tracks[:4],
+                    "source_priorities": [],
+                    "known_urls": [],
+                    "reasoning_effort": "low",
+                    "max_output_tokens": 900,
+                }
+            ]
     granted_lanes = host._reserve_search_batches(len(lanes))
     if granted_lanes < len(lanes):
         lanes = lanes[:granted_lanes]
@@ -827,10 +1093,22 @@ async def discover(
             "source_claims只能引用本次web search实际返回的URL；证据不足时写入open_questions或contradictions。"
             "输出严格JSON，不复述检索过程。"
             + _baseline_frontier_inspiration_instruction()
-            + _query_led_combat_equipment_theme_instruction()
+            + _query_led_combat_equipment_theme_instruction(
+                request.topic,
+                structured_query_brief=request.context.get("structured_query_brief", {}),
+            )
         )
     elif deep_equipment_search:
-        discovery_system += _query_led_combat_equipment_theme_instruction()
+        discovery_system += _query_led_combat_equipment_theme_instruction(
+            request.topic,
+            structured_query_brief=request.context.get("structured_query_brief", {}),
+        )
+    discovery_system += (
+        " 检索范围由当前Query决定，不限定为国外或外网：可并行使用中国国内公开资料、"
+        "国外资料、国际组织、学术论文、标准、采购/预算、厂商技术资料和公开试验材料。"
+        "source_priorities只是首批锚点，不是白名单；若锚点不足，继续开放检索并记录国家/机构、"
+        "来源类型、发布日期与证据边界。国内与国外材料按同一事实标准核验，不为凑对称而虚构。"
+    )
     if compact_reference or compact_callback:
         discovery_system += (
             " 本次采用精简参考检索：只返回4至6个最关键公开来源，优先决定性事实、明确边界、"
@@ -846,6 +1124,8 @@ async def discover(
             "known_source_count": len(known_urls),
             "search_intensity": search_intensity,
             "plan_mode": plan_mode,
+            "hosted_search_available": hosted_search_available,
+            "retrieval_route": "hosted_web" if hosted_search_available else "source_anchor_reasoning",
         }
     )
 
@@ -865,6 +1145,17 @@ async def discover(
                 "lane_count": len(lanes),
             }
         )
+        configured_timeout = int(
+            os.environ.get(
+                "EQUIPMENT_DR_WEB_DISCOVERY_TIMEOUT_SECONDS",
+                "60" if optimized_v2 else "150",
+            )
+        )
+        bounded_timeout = (
+            min(configured_timeout, 20)
+            if not hosted_search_available
+            else max(60, configured_timeout)
+        )
         options = _apply_codex_performance_options(
             {
                 "reasoning_effort": str(lane["reasoning_effort"]),
@@ -877,25 +1168,28 @@ async def discover(
                 # sources, explicit anchors, and clearly mark the gap.
                 **(
                     {
-                        # Efficiency comes from one bounded multi-point search
-                        # call, a small source/output budget and no second
-                        # analysis call.  Do not turn elapsed seconds into a
-                        # business failure for the equipment boundary snapshot.
-                        "_disable_provider_timeout": True,
+                        # The boundary snapshot is intentionally one call, but
+                        # it still needs a transport ceiling.  Quality-v2 runs
+                        # disable the global wall-clock deadline, so leaving
+                        # this provider timeout disabled would let one stalled
+                        # gateway request block the entire baseline wave.
+                        "_provider_timeout_seconds": max(
+                            30,
+                            min(
+                                150,
+                                int(
+                                    os.environ.get(
+                                        "EQUIPMENT_DR_EQUIPMENT_BOUNDARY_TIMEOUT_SECONDS",
+                                        "90",
+                                    )
+                                ),
+                            ),
+                        ),
+                        "_disable_provider_timeout": False,
                     }
                     if single_pass_equipment_boundary
                     else {
-                        "_provider_timeout_seconds": max(
-                            60,
-                            int(
-                                os.environ.get(
-                                    "EQUIPMENT_DR_WEB_DISCOVERY_TIMEOUT_SECONDS",
-                                    "120"
-                                    if optimized_v2 and deep_equipment_search
-                                    else "150",
-                                )
-                            ),
-                        )
+                        "_provider_timeout_seconds": bounded_timeout,
                     }
                 ),
                 **(
@@ -906,10 +1200,10 @@ async def discover(
                 "_provider_retry_attempts": 1,
                 "web_search": {
                     "search_context_size": search_context_size,
-                    "external_web_access": True,
+                    "external_web_access": hosted_search_available,
                 },
-                "include_web_sources": True,
-                "require_web_search": True,
+                "include_web_sources": hosted_search_available,
+                "require_web_search": hosted_search_available,
                 **(
                     {
                         "output_schema": host.baseline_workflow.output_schema(
@@ -926,6 +1220,8 @@ async def discover(
         phase = (
             "weapon_equipment_boundary_snapshot"
             if single_pass_equipment_boundary
+            else "source_anchor_reasoning"
+            if not hosted_search_available
             else "web_discovery_fast"
             if lane.get("lane") == "known_sources"
             else "web_discovery_open"
@@ -1111,6 +1407,38 @@ async def discover(
         if deep_equipment_search and use_specialized_anchors
         else sources[:target_source_count]
     )
+    provider_kind = str(getattr(host, "provider_kind", "responses")).strip()
+    if provider_kind in {"chat_completions", "codex_cli"} and not selected_sources:
+        # Some OpenAI-compatible gateways complete model turns without usable
+        # hosted-search annotations (or with a tool call that omitted queries).
+        # Reuse only application-owned source-priority / incremental-knowledge
+        # URLs as *leads*. They are still fetched, materialized, assessed and
+        # accepted by the scheduler; this branch never promotes a
+        # model-claimed URL directly to evidence.
+        selected_sources = _provider_neutral_source_anchor_rows(
+            request,
+            limit=max(
+                4,
+                int(
+                    os.environ.get(
+                        "EQUIPMENT_DR_PROVIDER_NEUTRAL_ANCHOR_LIMIT", "8"
+                    )
+                ),
+            ),
+        )
+        if selected_sources:
+            host._emit_baseline_progress(
+                {
+                    "event_type": "baseline_provider_neutral_source_anchor_fallback",
+                    "run_id": request.run_id,
+                    "agent_id": request.agent.agent_id,
+                    "round_index": request.round_index,
+                    "provider_kind": provider_kind,
+                    "source_count": len(selected_sources),
+                    "reason": "chat_completions_has_no_hosted_web_search",
+                    "materialization_required": True,
+                }
+            )
     with host._discovery_lock:
         shared = host._shared_discovery_sources.setdefault(request.run_id, {})
         for source in selected_sources:
@@ -1127,6 +1455,23 @@ async def discover(
         "lane_counts": lane_counts,
         "call_metrics": metrics,
         "shared_source_count": len(shared_sources),
+        "source_anchor_fallback": (
+            "provider_neutral_source_anchor_fallback"
+            if provider_kind in {"chat_completions", "codex_cli"}
+            and bool(selected_sources)
+            and all(
+                str(item.get("retrieval_lane", ""))
+                == "provider_neutral_source_anchor_fallback"
+                for item in selected_sources
+            )
+            else ""
+        ),
+        "source_anchor_count": sum(
+            1
+            for item in selected_sources
+            if str(item.get("retrieval_lane", ""))
+            == "provider_neutral_source_anchor_fallback"
+        ),
     }
     if single_pass_equipment_boundary and lane_results:
         single_pass_text = str(lane_results[0][2]).strip()
@@ -1138,7 +1483,7 @@ async def discover(
             )
         metadata["execution_mode"] = "single_pass_public_boundary_snapshot"
     if (
-        host.provider_kind == "codex_cli"
+        host.supports_agent_runtime
         and selected_sources
         and not metadata["search_queries"]
     ):
@@ -1166,7 +1511,28 @@ async def repair_baseline_output(
     schema: Mapping[str, Any],
     discovered_sources: Sequence[Mapping[str, Any]],
 ) -> tuple[str, dict[str, Any] | None]:
-    if host.provider_kind != "codex_cli":
+    # Structured repair is useful for every provider that can return a
+    # structured response, not only Codex's hosted Agent Runtime.  OpenAI
+    # compatible gateways (notably the DeepSeek/OpenLux profile) deliberately
+    # run without that runtime, but they can still repair an empty or partial
+    # JSON envelope through the normal Chat Completions path.  Previously this
+    # early return made a successful HTTP/model turn look like an empty
+    # baseline packet and the outer scheduler marked all DeepSeek agents
+    # limited.
+    supports_structured_output = bool(
+        getattr(host, "supports_capability", lambda *_args, **_kwargs: False)(
+            "structured_output"
+        )
+    )
+    # Keep the legacy fake/smoke adapters' call contract unchanged.  The
+    # additional repair path is specifically for provider-neutral Chat
+    # Completions gateways, whose structured output is real but which do not
+    # advertise the Codex Agent Runtime.
+    chat_gateway_repair = (
+        str(getattr(host, "provider_kind", "")).strip() == "chat_completions"
+        and supports_structured_output
+    )
+    if not host.supports_agent_runtime and not chat_gateway_repair:
         return text, None
     payload = _parse_json_object(text)
     missing = _missing_baseline_fields(payload, request.agent)
@@ -1179,6 +1545,10 @@ async def repair_baseline_output(
             "model_verbosity": "low",
             "max_output_tokens": min(1800, 300 + len(missing) * 180),
             "output_schema": patch_schema,
+            # A repair turn has to contain visible JSON.  DeepSeek reasoning
+            # gateways may otherwise spend the entire bounded turn in
+            # reasoning_content and return an empty assistant content field.
+            "_disable_hidden_reasoning": True,
         },
         host.provider_kind,
     )

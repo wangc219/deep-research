@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · Force Design
+source_url=https://www.marines.mil/Force-Design/
+claim=分布式、机动和可持续前沿力量是公开海军陆战队力量设计中的重要运用方向。
+excerpt=
+retrieval=Hosted web search citation metadata

@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=marines.mil · expeditionary advanced base operations eabo
-source_url=https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/
-claim=海军陆战队EABO公开概念强调在争夺海区使用机动、低特征、分布式前沿力量支撑海上控制、海上拒止、态势感知、前沿C4ISR-T和保障。
-excerpt=
-retrieval=Hosted web search citation metadata

@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=gao.gov · gao 22 106010
-source_url=https://www.gao.gov/products/gao-22-106010
-claim=贡献项：作战约束/COA反证。GAO指出GPS面临反卫星、干扰、欺骗和网络等威胁，且升级后仍有脆弱性，支持抗扰GPS/INS只能作为近期补强。
-excerpt=
-retrieval=Hosted web search citation metadata

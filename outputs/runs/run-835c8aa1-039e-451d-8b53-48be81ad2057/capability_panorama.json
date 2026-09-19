@@ -1,0 +1,120 @@
+{
+  "actual_counts": {
+    "capability_domains": 7,
+    "capability_indicators": 0,
+    "capability_items": 7
+  },
+  "branch": "B",
+  "branch_name": "传统能力缺口发现",
+  "cross_domain_indicators": [],
+  "domains": [
+    {
+      "capability_ids": [
+        "cap-new-001"
+      ],
+      "domain": "蜃楼抱弹诱撞无人机",
+      "evidence_ids": [
+        "ev-combat_scenario-web-5824f31b34e3",
+        "ev-combat_scenario-web-8952c3805d5a",
+        "ev-operational_employment-web-36638e192ebe"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "低空无人装备在强对抗环境中的体系能力缺口研究"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-002"
+      ],
+      "domain": "伞骨张环拦截无人机",
+      "evidence_ids": [
+        "ev-combat_scenario-web-5824f31b34e3",
+        "ev-combat_scenario-web-8952c3805d5a",
+        "ev-operational_employment-web-36638e192ebe"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "低空无人装备在强对抗环境中的体系能力缺口研究"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-003"
+      ],
+      "domain": "雾瞳蔽光巡飞攻击弹",
+      "evidence_ids": [
+        "ev-combat_scenario-web-5824f31b34e3",
+        "ev-combat_scenario-web-8952c3805d5a",
+        "ev-operational_employment-web-36638e192ebe"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "低空无人装备在强对抗环境中的体系能力缺口研究"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-004"
+      ],
+      "domain": "崖影穿谷攻击无人机",
+      "evidence_ids": [
+        "ev-combat_scenario-web-5824f31b34e3",
+        "ev-combat_scenario-web-8952c3805d5a",
+        "ev-operational_employment-web-36638e192ebe"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "低空无人装备在强对抗环境中的体系能力缺口研究"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-005"
+      ],
+      "domain": "倒悬坠袭伏击无人机",
+      "evidence_ids": [
+        "ev-combat_scenario-web-5824f31b34e3",
+        "ev-combat_scenario-web-8952c3805d5a",
+        "ev-operational_employment-web-36638e192ebe"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "低空无人装备在强对抗环境中的体系能力缺口研究"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-006"
+      ],
+      "domain": "无影猎群拦截无人机",
+      "evidence_ids": [
+        "ev-combat_scenario-web-5824f31b34e3",
+        "ev-combat_scenario-web-8952c3805d5a",
+        "ev-operational_employment-web-36638e192ebe"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "低空无人装备在强对抗环境中的体系能力缺口研究"
+      ]
+    },
+    {
+      "capability_ids": [
+        "cap-new-007"
+      ],
+      "domain": "无药坠杆低成本攻击无人机",
+      "evidence_ids": [
+        "ev-combat_scenario-web-5824f31b34e3",
+        "ev-combat_scenario-web-8952c3805d5a",
+        "ev-operational_employment-web-36638e192ebe"
+      ],
+      "indicators": [],
+      "supporting_scenarios": [
+        "低空无人装备在强对抗环境中的体系能力缺口研究"
+      ]
+    }
+  ],
+  "equipment_forms": [],
+  "target_counts": {},
+  "topic": "低空无人装备在强对抗环境中的体系能力缺口研究"
+}

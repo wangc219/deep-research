@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=army.mil · portfolio acquisition executive for fires hosts precision strike missile increment 4 industry、增量路线及Inc
-source_url=https://www.army.mil/article-amp/291321/portfolio_acquisition_executive_for_fires_hosts_precision_strike_missile_increment_4_industry、增量路线及Inc
-claim=美国陆军PrSM Increment 4线索支撑超过1000 km、HIMARS兼容以及打击移动海上/重定位陆上目标的增量方向，但该URL存在截断异常，需复核。
-excerpt=
-retrieval=Hosted web search citation metadata

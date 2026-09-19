@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · expeditionary advanced base operations eabo
+source_url=https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/
+claim=EABO以低足迹、机动、拒止环境下前沿展开为约束,防御生存性取决于暴露最小化与对远程打击的规避。
+excerpt=
+retrieval=Hosted web search citation metadata

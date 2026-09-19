@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=diu.mil · defense innovation unit announces software vendors to support replicator
+source_url=https://www.diu.mil/latest/defense-innovation-unit-announces-software-vendors-to-support-replicator
+claim=DIU把软件层定位为提升韧性C2、协同自主，以及在断续、受扰、低带宽环境中运行的关键支撑。
+excerpt=
+retrieval=Hosted web search citation metadata

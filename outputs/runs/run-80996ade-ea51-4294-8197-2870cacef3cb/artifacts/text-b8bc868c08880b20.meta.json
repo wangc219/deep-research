@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:b8bc868c08880b20",
+  "content_path": "text-b8bc868c08880b20.txt",
+  "content_type": "text/plain",
+  "direct_error": "_NetworkSafetyError: host_resolution_failed",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-5824f31b34e3",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "b8bc868c08880b2013ea052681d30f95ba403d45e33b59e75cdd6facb6a2cdcf",
+  "url": "https://www.marines.mil/Force-Design/"
+}

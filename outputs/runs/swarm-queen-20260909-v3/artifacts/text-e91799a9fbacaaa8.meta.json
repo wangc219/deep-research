@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:e91799a9fbacaaa8",
+  "content_path": "text-e91799a9fbacaaa8.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: cached_origin_failure:HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-combat_scenario-web-e6e73b8fbd18",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "e91799a9fbacaaa80c3c37bbbbbeb74b58b65744eb1cfb81aff317f72bec564b",
+  "url": "https://www.usni.org/magazines/proceedings/2025/april/wash-sky-clean-drones"
+}

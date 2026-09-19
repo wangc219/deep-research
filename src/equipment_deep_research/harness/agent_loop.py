@@ -16,7 +16,7 @@ from equipment_deep_research.providers.base import (
     ProviderStreamEvent,
     ProviderToolCall,
 )
-from equipment_deep_research.tools.definitions import (
+from equipment_deep_research.contracts.tools import (
     ToolCall,
     ToolDefinition,
     ToolExecutionContext,

@@ -61,9 +61,19 @@ class ResearchWorkerPool:
             str(item.get("worker_id", "")): item
             for item in runtime_workers
         }
+        internal_count = sum(
+            bool(item.get("online"))
+            and item.get("status") == "internal"
+            and bool(item.get("current_run_id"))
+            for item in runtime_workers
+        )
+        # Internal S6/finalization owners retain their run lease but no longer
+        # count as research slots. Add one replacement process for each owner;
+        # ordinary scale-down removes the replacement after the owner returns.
+        target_processes = desired + internal_count
         if sum(bool(item.get("online")) for item in runtime_workers) > desired:
             self._reap_idle_stale_workers(worker_states)
-        for slot in range(1, desired + 1):
+        for slot in range(1, target_processes + 1):
             if slot not in self.processes:
                 existing = worker_states.get(self._worker_id(slot), {})
                 if existing.get("online") and existing.get("status") != "stopped":
@@ -76,11 +86,13 @@ class ResearchWorkerPool:
                 self.processes[slot] = self._spawn(slot)
 
         for slot in sorted(
-            (item for item in self.processes if item > desired),
+            (item for item in self.processes if item > target_processes),
             reverse=True,
         ):
             state = worker_states.get(self._worker_id(slot), {})
-            if state.get("status") == "working" and state.get("current_run_id"):
+            if state.get("status") in {"working", "internal"} and state.get(
+                "current_run_id"
+            ):
                 continue
             process = self.processes.pop(slot)
             self._terminate(process)

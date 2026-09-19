@@ -49,6 +49,20 @@ DOMAIN_TERMS = (
     "毁伤",
     "压制",
     "打击装备",
+    "预警",
+    "侦察",
+    "探测",
+    "雷达",
+    "防空",
+    "反导",
+    "指挥",
+    "通信",
+    "电磁",
+    "电子战",
+    "导航",
+    "投送",
+    "防护",
+    "保障",
 )
 RESEARCH_TERMS = ("研究", "分析", "研判", "评估", "论证", "挖掘", "识别", "推演")
 OUTCOME_TERMS = ("装备", "能力", "体系", "需求", "发展", "形态", "效能")
@@ -190,7 +204,7 @@ def validate_generated_candidate(
     if len(query) > 30:
         issues.append("query should stay close to the preferred 18-25 character range")
     if not any(term in query for term in DOMAIN_TERMS):
-        issues.append("query is outside the supported fire-strike equipment domain")
+        issues.append("query is outside the supported weapon-equipment capability domain")
     if not any(term in query for term in RESEARCH_TERMS):
         issues.append("query lacks an explicit research or analysis action")
     combined_scope = f"{query} {candidate.supplemental_information}"

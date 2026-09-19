@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · stand in forces
+source_url=https://www.marines.mil/News/News-Display/Article/2708140/stand-in-forces/
+claim=Marine Corps Stand-in Forces强调低特征、分布式、受威胁区域内持续存在与机动。
+excerpt=
+retrieval=Hosted web search citation metadata

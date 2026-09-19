@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=media.defense.gov · FACT SHEET STRATEGY FOR COUNTERING UNMANNED SYSTEMS.PDF
+source_url=https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF
+claim=低成本无人系统使防御方面临成本失衡，DoD强调检测、跟踪、表征以及主动/被动防御和模块化交付。
+excerpt=
+retrieval=Hosted web search citation metadata

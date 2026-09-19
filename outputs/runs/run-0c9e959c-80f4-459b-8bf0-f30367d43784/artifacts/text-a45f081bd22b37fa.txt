@@ -1,0 +1,68 @@
+Title: Fact Sheet: DoD Strategy for Countering Unmanned Systems
+
+URL Source: http://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF
+
+Published Time: Thu, 05 Dec 2024 20:59:32 GMT
+
+Number of Pages: 2
+
+Markdown Content:
+FACT SHEET: Department of Defense Strategy for Countering Unmanned Systems 1
+
+The rapid development and proliferation of unmanned systems is changing the character of conflict. To meet this challenge, the Department of Defense (DoD) has developed a classified strategy to unify the Department’s approach to countering adversary use of these systems that looks across domains, characteristics, missions, and timeframes. 
+
+The strategy builds on other major DoD initiatives, including the standup of the Joint Counter-Small UAS Office, the establishment of a Warfighter Senior Integration Group to meet urgent operational needs, and the launch of the Replicator 2 initiative to defend against the threats of small aerial systems at our most critical installations and force concentrations. 
+
+# THE STRATEGIC ENVIRONMENT 
+
+Enabled by growing commercial innovation and the increasing sophistication of artificial intelligence (AI), autonomy, and networking technology, unmanned systems are fundamentally changing how militaries of all sizes, capacities, and capabilities – as well as non-state actors – achieve their objectives. 
+
+From the Middle East to Ukraine and across the globe – including in the U.S. homeland – unmanned systems are reshaping tactics, techniques, and procedures; challenging established operational principles; and condensing military innovation cycles. At the operational level, these systems are making it more difficult for forces to hide, concentrate, communicate, and maneuver. They allow adversaries to more easily surveil, disrupt, or attack our forces, assets, and installations, potentially without attribution. At the strategic level, unmanned systems provide aggressors with the ability to reduce the initial human, financial, and reputational costs of conflict. The relatively low-cost, widely available nature of these systems has, in effect, democratized precision strike. 
+
+Technological advances in the mid- to long-term will likely render unmanned systems increasingly capable, affordable, autonomous, and networked – able to loiter for longer timespans, to communicate better with other systems, move and act as swarms, and to carry larger payloads. These dynamics risk eroding deterrence and creating new and uncertain escalation dynamics. 
+
+# OUR STRATEGIC APPROACH 
+
+The Department is mitigating the potential negative effects of unmanned systems on U.S. forces, assets, and installations – at home and abroad. A critical portion of our efforts, particularly in the near-term, comes from improving our defenses, with an emphasis on detection as well as active and passive defenses. The Department will ensure our forces and priority installations have protection. To stay ahead of advances in unmanned systems – and their growing prevalence – the Department will prepare for more advanced challenges, pacing our future capabilities to more stressing cases (e.g., larger numbers of increasingly capable and autonomous systems). Over the mid- and long-term, the Department will also develop and design our future force to reduce their vulnerability and increase their resilience to these threats. Taken together, these approaches will allow the Department to maintain our advances and our ability to fight and win our Nation’s wars, if called upon. 
+
+# FACT SHEET Department of Defense Strategy for Countering Unmanned Systems FACT SHEET: Department of Defense Strategy for Countering Unmanned Systems 2
+
+# OUR STRATEGIC WAYS 
+
+To mitigate the effects of unmanned systems over the near-, mid-, and long-term, the strategy articulates five “strategic ways,” each of which provides specific direction that the Department will pursue in implementation. They are to:  
+
+> ►
+
+Deepen our Understanding and Awareness of Unmanned Systems Trends and Threats. The Department will 
+
+“sense and make sense” of threats that unmanned systems pose, including by gaining a greater understanding of unmanned systems threats and by improving the ability of our operational forces to detect, track, and characterize these threats.  
+
+> ►
+
+Disrupt & Degrade Unmanned Systems Threat Networks. The Department will address the threat networks 
+
+that drive the development and proliferation of unmanned systems whenever possible, including by launching and executing deliberate campaigns to counter these networks, in partnership with other U.S. departments and agencies.  
+
+> ►
+
+Defend Against Unmanned Systems Threats to U.S. Interests. The Department will adapt fully to defending 
+
+against unmanned systems as a core element of warfighting, including by: improving our active and passive defenses; clarifying, streamlining, and delegating authorities, as needed; and institutionalizing approaches across doctrine, organization, training, materiel, leadership, personnel, facilities, and policy.  
+
+> ►
+
+Deliver Solutions with Greater Speed, Adaptability, and Scale. The Department will deliver robust counter-
+
+unmanned systems at speed and scale, including by leveraging rapid acquisition approaches; prioritizing integrated, open, modular solutions; employing systems engineering and predictive analytics; reducing the cost imbalance between unmanned systems and countermeasures; expanded budget agility; increasing experimentation; creating conditions for rapid and realistic testing; and maximizing exportability, co-development, and co-production of capabilities with our closest allies and partners.  
+
+> ►
+
+Develop & Design the Future Joint Force for Unmanned Systems-Driven Ways of War. The Department will 
+
+make countering unmanned systems a key element of our thinking about future force development and design, including by pursuing changes to our force structure, employing our forces differently, and seeking technologies that could enable us to offset adversary advantages. 
+
+# IMPLEMENTATION 
+
+The Department’s ability to successfully execute this strategy requires a campaign mindset – denying adversaries and competitors the benefits of using unmanned systems. We will work in concert with U.S. interagency partners and Congress to align our authorities, resources, and approaches. We will fully incorporate allies and partners in our efforts – leveraging our collective strengths, maximizing interoperability and integration, and promoting responsible norms of behavior surrounding unmanned systems and related technologies. We will work with the defense industry and broader defense innovation ecosystem to address advances in unmanned systems rapidly and at scale. Most of all, in implementing this approach, the Department will draw upon our enduring advantages, including the U.S. military’s unrivaled initiative and creativity in adapting to new challenges and the strength of our diverse, dynamic society. 
+
+This strategy marks a critical next step in the Department of Defense’s efforts to counter unmanned systems, but much work lies ahead. The Department will establish clear metrics and measures of effectiveness to track progress in achieving outcomes. Although the rapidly evolving nature of the threats posed by adversary use of unmanned systems means that the Department will need to continually reassess our efforts, this strategy sets a foundation for action to meet this challenge.

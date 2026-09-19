@@ -4,7 +4,7 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
-from equipment_deep_research.agents.registry import AgentDef
+from equipment_deep_research.contracts.agents import AgentSpec
 from equipment_deep_research.domain.proposals import TraceProposal, thaw_plain
 from equipment_deep_research.tools.definitions import ToolResult
 from equipment_deep_research.tools.domain_tools import DOMAIN_TOOL_OUTPUTS
@@ -98,12 +98,12 @@ class ToolPermissionRegistry:
     def default(cls) -> "ToolPermissionRegistry":
         return cls(known_tools=set(KNOWN_TOOLS))
 
-    def validate_agent_tools(self, agent: AgentDef) -> None:
+    def validate_agent_tools(self, agent: AgentSpec) -> None:
         unknown = sorted(set(agent.tools) - self.known_tools)
         if unknown:
             raise ValueError(f"agent {agent.agent_id} declares unknown tools: {unknown}")
 
-    def enforce_active_tool(self, agent: AgentDef, tool_name: str) -> None:
+    def enforce_active_tool(self, agent: AgentSpec, tool_name: str) -> None:
         if tool_name not in self.known_tools:
             raise ValueError(f"unknown tool: {tool_name}")
         if tool_name not in agent.tools:

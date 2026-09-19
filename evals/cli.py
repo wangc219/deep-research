@@ -20,6 +20,13 @@ from .judging import judge_pair_file
 from .models import EvalQuery, EvalRunResult, read_jsonl, write_jsonl
 from .pairwise import build_blind_pairs
 from .query_import import import_expert_workbook
+from .replay import (
+    DEFAULT_BOOTSTRAP_SAMPLES,
+    DEFAULT_REPLAY_SEED,
+    REPLAY_ARMS,
+    ReplayPolicy,
+    run_replay,
+)
 
 
 SYSTEM_IDS = (
@@ -96,6 +103,36 @@ def main(argv: list[str] | None = None) -> int:
     aggregate_cmd.add_argument("--results", default=None)
     aggregate_cmd.add_argument("--output", required=True)
     aggregate_cmd.add_argument("--bootstrap-samples", type=int, default=5000)
+
+    replay_cmd = sub.add_parser(
+        "replay",
+        help="aggregate a fixed S1-S6 Prompt/Memory replay and apply promotion gates",
+    )
+    replay_cmd.add_argument(
+        "--fixture",
+        default=str(project_root / "evals" / "fixtures" / "s1_s6_evolution_pilot.jsonl"),
+        help="project-relative fixed Query fixture",
+    )
+    replay_cmd.add_argument("--observations", required=True, help="JSONL arm observations")
+    replay_cmd.add_argument("--eval-id", required=True)
+    replay_cmd.add_argument("--bundle-id", default="")
+    replay_cmd.add_argument("--output", required=True)
+    replay_cmd.add_argument(
+        "--arms",
+        default=",".join(REPLAY_ARMS),
+        help="comma-separated arms (prompt_only,memory_only,both; optional neither)",
+    )
+    replay_cmd.add_argument("--reference-arm", default="prompt_only")
+    replay_cmd.add_argument("--candidate-arm", default="both")
+    replay_cmd.add_argument("--bootstrap-samples", type=int, default=DEFAULT_BOOTSTRAP_SAMPLES)
+    replay_cmd.add_argument("--seed", type=int, default=20260913)
+    replay_cmd.add_argument("--fixture-seed", default=DEFAULT_REPLAY_SEED)
+    replay_cmd.add_argument("--min-quality-delta", type=float, default=0.03)
+    replay_cmd.add_argument("--max-hard-failure-rate", type=float, default=0.0)
+    replay_cmd.add_argument("--max-cost-increase", type=float, default=0.15)
+    replay_cmd.add_argument("--max-latency-increase", type=float, default=0.15)
+    replay_cmd.add_argument("--max-non-target-regression", type=float, default=0.02)
+    replay_cmd.add_argument("--min-complete-cases", type=int, default=1)
 
     smoke_cmd = sub.add_parser("smoke", help="run a one-query offline end-to-end smoke test")
     smoke_cmd.add_argument("--queries", required=True)
@@ -174,6 +211,33 @@ def main(argv: list[str] | None = None) -> int:
         target.write_text(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
         print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
         return 0
+    if args.command == "replay":
+        arms = tuple(dict.fromkeys(item.strip() for item in args.arms.split(",") if item.strip()))
+        policy = ReplayPolicy(
+            min_quality_delta=args.min_quality_delta,
+            max_hard_failure_rate=args.max_hard_failure_rate,
+            max_cost_increase=args.max_cost_increase,
+            max_latency_increase=args.max_latency_increase,
+            max_non_target_regression=args.max_non_target_regression,
+            min_complete_cases=args.min_complete_cases,
+        )
+        result = run_replay(
+            fixture_path=args.fixture,
+            observations=args.observations,
+            eval_id=args.eval_id,
+            bundle_id=args.bundle_id,
+            output_path=args.output,
+            expected_arms=arms,
+            reference_arm=args.reference_arm,
+            candidate_arm=args.candidate_arm,
+            fixture_seed=args.fixture_seed,
+            policy=policy,
+            bootstrap_samples=args.bootstrap_samples,
+            seed=args.seed,
+            project_root=project_root,
+        )
+        print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+        return 0 if result["gate"]["passed"] else 1
     if args.command == "smoke":
         output_root = _safe_eval_output(project_root, args.output_root)
         config = load_eval_config(args.config, project_root=project_root)

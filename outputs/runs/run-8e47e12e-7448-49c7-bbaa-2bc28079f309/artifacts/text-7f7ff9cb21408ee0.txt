@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · expeditionary advanced base operations eabo
+source_url=https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/
+claim=EABO强调分布式前沿据点、对抗环境中的持续存在，以及小单元、低可探测、快速机动与快速开火/脱离。
+excerpt=
+retrieval=Hosted web search citation metadata

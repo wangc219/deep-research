@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=media.defense.gov · FACT SHEET STRATEGY FOR COUNTERING UNMANNED SYSTEMS.PDF
+source_url=https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF
+claim=美国防部反无人系统战略把态势感知、威胁网络削弱、防御、快速适应与规模化交付、未来联合部队设计列为主要路径，并强调提升无人系统探测、跟踪和特征识别能力。
+excerpt=
+retrieval=Hosted web search citation metadata

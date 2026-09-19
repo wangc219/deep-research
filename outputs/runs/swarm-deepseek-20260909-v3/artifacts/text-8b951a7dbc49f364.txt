@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · Force Design
+source_url=https://www.marines.mil/Force-Design/
+claim=美国海军陆战队Force Design公开材料以印太分布式远征作战为再优化方向，无人威胁的感知与对抗能力是其编成和能力议题之一。
+excerpt=
+retrieval=Hosted web search citation metadata

@@ -14,6 +14,15 @@ from hashlib import sha256
 import re
 from typing import Any
 
+from equipment_deep_research.agents.dynamic_prompt_resources import (
+    load_dynamic_winning_json,
+    load_dynamic_winning_prompt,
+)
+from equipment_deep_research.domain.swarm_strategy import (
+    compose_dynamic_v2_first_wave,
+    recruit_archetype_for_gap,
+    resolve_dynamic_v2_instance_bounds,
+)
 from equipment_deep_research.domain.models import (
     AgentPromotionRecord,
     HypothesisLedgerVersion,
@@ -61,64 +70,78 @@ def _user_facing_text(value: Any, *, limit: int) -> str:
     return "" if _INTERNAL_WORKFLOW_COMMENTARY_RE.search(text) else text
 
 
+_MECHANICAL_SUMMARY_START_RE = re.compile(
+    r"^(?:这是一(?:种|型|组)|它是|一种|该装备是|本装备是)"
+)
+_UNEXPLAINED_SUMMARY_ABBREVIATION_RE = re.compile(
+    r"(?<![A-Za-z0-9])(?:[A-Z]{2,}(?:[-/][A-Z0-9]+)*)(?![A-Za-z0-9])"
+)
+def winning_summary_language_issues(value: Any) -> list[str]:
+    """Return authoring defects without rewriting specialist terminology."""
+
+    text = str(value or "").strip()
+    issues: list[str] = []
+    if not text:
+        return ["winning_summary_missing"]
+    if _MECHANICAL_SUMMARY_START_RE.search(text):
+        issues.append("winning_summary_mechanical_opening")
+    if _UNEXPLAINED_SUMMARY_ABBREVIATION_RE.search(text):
+        issues.append("winning_summary_unexplained_abbreviation")
+    if len(text) < 28:
+        issues.append("winning_summary_too_short")
+    if len(text) > 180:
+        issues.append("winning_summary_too_long")
+    if text[-1:] not in "。！？":
+        issues.append("winning_summary_incomplete_sentence")
+    if re.search(r"(?:实施|实现)[^，。；]{0,24}战果", text):
+        issues.append("winning_summary_awkward_collocation")
+    if any(text.count(word) >= 2 for word in ("凭借", "从而", "形成")):
+        issues.append("winning_summary_repetitive_connectives")
+    return issues
+
+
+# This is an authoring principle rather than a maturity threshold. Frontier
+# weapons may be difficult or years away, but their causal chain still has to
+# obey known science and close through an actual weapon body.
+SCIENTIFIC_WEAPON_REALIZABILITY_CONVENTION = load_dynamic_winning_prompt(
+    "common", section="scientific_realizability"
+)
+
+
 # Proposal names are communication aids, never claims that a named programme
 # exists.  Keeping this rule next to swarm planning makes it available before
 # S6, where names otherwise arrive already template-shaped.
 QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION = (
-    "把命名交给Codex基于完整Query和已经闭合的整装语义作最后一次整体编辑，而不是字段拼装任务。"
-    "名称在装备身份和制胜机理闭合后整体创作，应像未来装备体系中真实存在、作战人员会自然使用的真实装备名。"
-    "命名前先闭合frontier_principle、technology_discontinuity和disruptive_shift。"
-    "命名时遵循战场矛盾→制胜机制→技术断点→能力跃迁→颠覆逻辑→核心意象→命名风格→装备名称。"
-    "可在内部比较但不必覆盖这些开放视角：形态与物质（A构型意象型、G材料介质型、H环境融合型），"
-    "技术与原理（B原理突破型、F作战机制型），任务与能力（D使命任务型、E能力意象型、I动作行为型），"
-    "战争改变（J时空概念型、K体系节点型、M数量规模型、N经济学颠覆型），"
-    "认知表达（C装备专名型、L反传统隐喻型、O演化代际型）。"
-    "选择主导视角时先问三件事：若最值得记住的是‘它长什么样’，优先以构型、材料或环境融合形成名称，"
-    "如蜂巢式分布结构、仿生扑翼、液态金属变构、冰下潜行或海气界面滑翔；"
-    "若最值得记住的是‘它凭什么做到’，优先以超材料、相变、等离子流控、自组织、分布式或涌现机制形成名称；"
-    "若最值得记住的是‘它能干什么’，优先以断链、破障、裂域、锁穹、游猎、蛰伏等使命、能力状态或动作行为形成名称。"
-    "这些意象只解释命名范式，不是必须复用的词库；模型应从当前Query和整装构型创造同等自然的新表达。"
-    "允许跨视角自然融合，不得为了覆盖类型而强行组合。"
-    "naming_style只能记录名称形成后的主导理由，不能先选字母组再按模板造名。"
-    "只突出一个最有辨识度的构型、原理、任务能力、战争改变方式或认知意象，同时让人看得出主装备是什么；"
-    "名称可以是自然描述名、完整任务名、原理名、体系节点名、专名或跨类型表达，句法长短由整装语义决定；"
-    "当核心意象清晰时，允许并鼓励采用‘可解释代号＋具体装备类别’形成正式装备代号感；"
-    "也可直接采用能够识别核心构型、关键原理或作战机制的自然描述名。"
-    "不默认两字代号：只有核心意象足够清晰的候选才使用代号；不得让所有候选共享统一后缀或固定字符区间。"
-    "不使用统一系列标记。"
-    "名称不是候选摘要；以上只是开放思路，不是模板、配额或分类覆盖任务。"
-    "‘核心物理意象＋装备身份’、‘自然现象或生物意象＋新型装备’、‘代号＋装备类别’或‘原理突破＋装备身份’"
-    "都可以成为合适表达，但只能在对应装备确有该核心创新时采用，不能把示例直接复制成批量命名句法。"
-    "不要把字段压缩成标题，不用功能/动作短语＋装备类别尾词，"
-    "不套‘智能/增强型/下一代/多功能XX系统’模板，不复制真实项目名。"
-    "临时去掉引号或代号后仍是机械底名时，不能靠加意象挽救，应回到装备形态和原理重新命名。"
-    "若名称读起来只是给同一件武器替换了两字前缀，或把Query词、维度词、动作词和‘弹/雷/器/系统’机械相接，"
-    "应回到核心装备语义重新创作；不能用增加修饰词掩盖同构。"
-    "同一Query的候选应允许采用不同核心意象、命名节奏和装备身份表达，但差异必须来自不同的装备与制胜关系，"
-    "不能为了显得多样而把同一候选换皮。"
-    "自由角度形成后才允许由模型吸收外部启发。"
-    "不建立意象词库、后缀表、字符串评分或本地命名硬门；不得复制共享示例。"
-    "不输出备选名、逐词解释或检查过程。"
+    load_dynamic_winning_prompt("common", section="naming_convention")
+    + SCIENTIFIC_WEAPON_REALIZABILITY_CONVENTION
 )
 
 
 # These are open combat-effect lenses for the Query-level controller, not a
 # fixed taxonomy, production quota, keyword gate, or weapon-family catalogue.
 # The controller may activate any subset and may add a Query-specific OTHER
-# lens when the battlefield relationship does not fit this vocabulary.
+# lens when the battlefield relationship does not fit this vocabulary.  The
+# reviewed catalog lives in common.md so model-facing text is not hidden in
+# execution code.
+def _load_combat_equipment_divergence_dimensions() -> tuple[dict[str, str], ...]:
+    value = load_dynamic_winning_json(
+        "common", section="common.combat_equipment_dimensions"
+    )
+    if not isinstance(value, list) or not all(
+        isinstance(item, Mapping) for item in value
+    ):
+        raise ValueError(
+            "dynamic resource section must be a JSON object list: "
+            "common.combat_equipment_dimensions"
+        )
+    return tuple(
+        {str(key): str(item_value) for key, item_value in item.items()}
+        for item in value
+    )
+
+
 COMBAT_EQUIPMENT_DIVERGENCE_DIMENSIONS: tuple[dict[str, str], ...] = (
-    {"code": "damage", "dimension": "毁伤", "meaning": "直接破坏目标，或削弱目标的结构、功能与作战效能"},
-    {"code": "strike", "dimension": "打击", "meaning": "对指定目标实施远程或近程攻击并施加军事效果"},
-    {"code": "penetration", "dimension": "突防", "meaning": "突破敌方防御体系并进入目标有效作用区域"},
-    {"code": "interception", "dimension": "拦截", "meaning": "发现、跟踪并阻断敌方目标行动"},
-    {"code": "suppression", "dimension": "压制", "meaning": "降低敌方感知、通信、火力或行动能力"},
-    {"code": "denial", "dimension": "拒止", "meaning": "阻止敌方进入特定区域、实施行动或持续作战"},
-    {"code": "reconnaissance", "dimension": "侦察感知", "meaning": "发现、识别、定位目标并感知作战环境"},
-    {"code": "early_warning", "dimension": "预警", "meaning": "提前发现威胁并形成有效响应窗口"},
-    {"code": "electronic_countermeasure", "dimension": "电子对抗", "meaning": "干扰、削弱或影响敌方电子信息系统"},
-    {"code": "deterrence", "dimension": "威慑", "meaning": "通过可信军事能力影响敌方判断、决策与行为"},
-    {"code": "survivability", "dimension": "生存抗毁", "meaning": "提高装备在威胁环境下的生存、恢复与持续作战能力"},
-    {"code": "battlefield_control", "dimension": "战场控制", "meaning": "改变特定区域、空间或时间维度上的作战主动权"},
+    _load_combat_equipment_divergence_dimensions()
 )
 
 CORE_STEP_DEPENDENCIES: dict[int, tuple[int, ...]] = {
@@ -130,166 +153,32 @@ CORE_STEP_DEPENDENCIES: dict[int, tuple[int, ...]] = {
     6: (4, 5),
 }
 
-SWARM_SPECIALIST_ARCHETYPES: dict[str, dict[str, Any]] = {
-    "frontier_equipment_miner": {
-        "display_name": "前沿装备矿工",
-        "purpose": (
-            "以Query为先，从与任务对象、威胁形态、作战阶段、地域约束和制胜矛盾直接匹配的"
-            "公开项目、试验和装备族中寻找具体战斗武器；无人、远程、低空、精确打击等方向"
-            "只有被Query语义触发时才进入观察，不得作为跨Query默认目录。"
-        ),
-        "merge_target": "S5",
-        "residuals": ["equipment_not_concrete", "novelty_insufficient"],
-    },
-    "weak_signal_scout": {
-        "display_name": "技术弱信号侦察",
-        "purpose": "识别早期技术、试验里程碑和跨行业弱信号，并严格区分潜力与成熟能力。",
-        "merge_target": "S3",
-        "residuals": ["novelty_insufficient", "evidence_insufficient"],
-    },
-    "disruptive_mechanism_generator": {
-        "display_name": "颠覆机理生成",
-        "purpose": "构造机制真正不同的竞争假设，说明改变的对抗变量、军事效果和失败条件。",
-        "merge_target": "S3",
-        "residuals": ["causal_chain_broken", "novelty_insufficient"],
-    },
-    "direct_combat_equipment_generator": {
-        "display_name": "Query直接杀伤装备机理生成",
-        "purpose": (
-            "从直接军事效果反推可独立立项的主战或无人作战装备候选；候选主体必须是"
-            "具备侦察、压制、拦截、打击或毁伤效应的具体平台、弹药或任务载荷，"
-            "通信、算法、任务胶囊、网关和保障只能作为其体系接口。始终按Query筛选，"
-            "必须从Query的任务对象、威胁形态、作战阶段和制胜矛盾开放推演；无人、低空、"
-            "远程与精确打击只作为优先观察镜头，不得机械套用或框定最终装备。"
-        ),
-        "merge_target": "S3",
-        "residuals": [
-            "direct_combat_equipment_insufficient",
-            "equipment_not_concrete",
-            "novelty_insufficient",
-        ],
-    },
-    "remote_precision_munition_generator": {
-        "display_name": "Query主效武器架构生成",
-        "purpose": (
-            "依据Query语义形成可独立立项的主效打击、歼灭或反杀伤武器架构，开放比较发射域、"
-            "平台、目标包线、感知导引、突防/拦截方式和毁伤机理；候选必须是与Query直接相关的"
-            "具体武器装备。远程精打、巡飞弹、无人平台或模块化弹药仅是非穷尽观察镜头；"
-            "不输出制造参数、目标坐标或可执行攻击步骤。"
-        ),
-        "merge_target": "S3",
-        "residuals": [
-            "direct_combat_equipment_insufficient",
-            "equipment_not_concrete",
-            "military_effect_missing",
-        ],
-    },
-    "mass_scalable_combat_family_generator": {
-        "display_name": "Query非对称新质装备机理生成",
-        "purpose": (
-            "从Query的制胜矛盾探索改变成本、平台、时间、毁伤、体系或博弈关系的新质武器，"
-            "并落实为具体直接作战装备。低成本、系列化、规模化、柔性生产和战损补充仅在"
-            "Query因果需要时进入构型，不是强制主题；不能为覆盖镜头强造无关类别，也不能把"
-            "供应链或软件平台单列为主体装备。"
-        ),
-        "merge_target": "S3",
-        "residuals": [
-            "direct_combat_equipment_insufficient",
-            "engineering_feasibility_insufficient",
-            "novelty_insufficient",
-        ],
-    },
-    "baseline_delta_analyst": {
-        "display_name": "现有方案差异比较",
-        "purpose": "建立最近公开基线，识别候选相对现有方案的实质差异而非技术词堆叠。",
-        "merge_target": "S2",
-        "residuals": ["baseline_missing", "novelty_insufficient"],
-    },
-    "adversary_counter_adaptation_red_team": {
-        "display_name": "对手反适应红队",
-        "purpose": "检验对手适应后候选机理是否仍成立，并寻找可证伪失效边界。",
-        "merge_target": "S3",
-        "residuals": ["counter_adaptation_unresolved", "causal_chain_broken"],
-    },
-    "equipment_realization_architect": {
-        "display_name": "装备实现架构",
-        "purpose": (
-            "贯通任务效果、功能、性能约束、体系接口、装备形态和实现路径；对命名不完整的"
-            "候选，先按主装备本体、投送方式、目标、直接作用与机理重新作语义命名判断，"
-            "不得用词表拼接或以内部载荷、火力、平台、弹药代替主装备。"
-        ),
-        "merge_target": "S5",
-        "residuals": ["equipment_not_concrete", "engineering_feasibility_insufficient"],
-    },
-    "innovative_equipment_dimension_generator": {
-        "display_name": "开放创新武器创作",
-        "purpose": (
-            "先独立理解完整Query，再跨侦察感知、打击、毁伤、突防、拦截、压制、拒止、生存抗毁"
-            "及Query特有维度比较多种物理原理、战场存在方式和制胜关系；维度只是可舍弃的发散镜头，"
-            "不能成为角色身份、生产配额或预定答案。独立完成具体武器身份、自然命名和一句制胜说明。"
-            "本角色只创造候选，不承担后置物化、接口补全、证据核验或工程审查。"
-        ),
-        "merge_target": "S4",
-        "residuals": ["novelty_insufficient", "portfolio_direction_shortfall"],
-    },
-    "equipment_capability_image_repairer": {
-        "display_name": "装备能力画像定向修复",
-        "purpose": (
-            "依据专家残差重写单一候选的装备能力闭环，贯通任务效果、作战运用、功能约束、"
-            "体系接口、具体装备、公开基线、失效边界和验证指标；通信、算法、网关和治理"
-            "只能作为接口。若证据不足，必须删除或收窄无法证明的构型、效能、成本与产能"
-            "主张，改为证据边界内的固定构型和阶段目标，不能只追加验证要求。"
-        ),
-        "merge_target": "S5",
-        "residuals": [
-            "equipment_not_concrete",
-            "capability_portrait_incomplete",
-            "direct_combat_equipment_insufficient",
-        ],
-    },
-    "trl_cost_industrial_auditor": {
-        "display_name": "成熟度成本产能审查",
-        "purpose": "审查TRL、成本、产能、工业依赖和规模化补充约束，拒绝无依据精确判断。",
-        "merge_target": "S5",
-        "residuals": ["engineering_feasibility_insufficient"],
-    },
-    "cross_scenario_stress_tester": {
-        "display_name": "跨场景压力测试",
-        "purpose": "在不同环境、任务阶段和降级条件下检验候选稳健性及适用边界。",
-        "merge_target": "S3",
-        "residuals": ["cross_scenario_unstable"],
-    },
-    "evidence_verifier": {
-        "display_name": "证据与工程边界核验",
-        "purpose": (
-            "面向完整候选账本一次性核验公开基线、事实引用、反证与不确定性，并同步审查"
-            "TRL、成本、产能、工业依赖和规模化补充边界；为每项候选检查可证伪指标、"
-            "对照方案与判退条件，清除无效证据编号和无依据精确判断。"
-        ),
-        "merge_target": "S5",
-        "residuals": [
-            "evidence_insufficient",
-            "unsupported_precision",
-            "engineering_feasibility_insufficient",
-            "validation_route_missing",
-        ],
-    },
-    "validation_experiment_designer": {
-        "display_name": "验证试验设计",
-        "purpose": "在最终写卡前形成可证伪的指标、对照、试验步骤和淘汰条件，不虚构效能比例。",
-        "merge_target": "S5",
-        "residuals": ["validation_route_missing"],
-    },
-    "independent_portfolio_reviewer": {
-        "display_name": "独立组合评审",
-        "purpose": (
-            "候选一旦完成即增量审查其组合独立性、互补性与直接装备属性，"
-            "只作retain、merge或reject，不补写、改写或重新命名候选。"
-        ),
-        "merge_target": "S5",
-        "residuals": [],
-    },
-}
+def _load_role_catalog() -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
+    """Load model-facing role purposes from the reviewed Markdown catalog."""
+
+    value = load_dynamic_winning_json("common", section="role_catalog")
+    if not isinstance(value, Mapping):
+        raise ValueError("dynamic role_catalog must be an object")
+    specialists = value.get("specialists")
+    core = value.get("core")
+    if not isinstance(specialists, Mapping) or not isinstance(core, Mapping):
+        raise ValueError("dynamic role_catalog requires specialists and core objects")
+    def normalize(source: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+        rows: dict[str, dict[str, Any]] = {}
+        for key, raw in source.items():
+            if not isinstance(raw, Mapping):
+                continue
+            row = dict(raw)
+            row["display_name"] = str(row.get("display_name", ""))
+            row["purpose"] = str(row.get("purpose", ""))
+            row["merge_target"] = str(row.get("merge_target", ""))
+            row["residuals"] = [str(item) for item in row.get("residuals", [])]
+            rows[str(key)] = row
+        return rows
+    return normalize(specialists), normalize(core)
+
+
+SWARM_SPECIALIST_ARCHETYPES, MISSION_GRAPH_CORE_ARCHETYPES = _load_role_catalog()
 
 # Dynamic-v2 only exposes lightweight creative roles plus incremental S5.
 # Legacy archetypes remain available to the compatibility scheduler, but are
@@ -300,6 +189,8 @@ _DYNAMIC_V2_ARCHETYPE_IDS = frozenset(
         "disruptive_mechanism_generator",
         "innovative_equipment_dimension_generator",
         "independent_portfolio_reviewer",
+        "adversary_counter_adaptation_red_team",
+        "cross_scenario_stress_tester",
     }
 )
 
@@ -323,34 +214,6 @@ MISSION_GRAPH_SEED_ARCHETYPES: dict[str, tuple[str, ...]] = {
     "S5": ("independent_portfolio_reviewer",),
 }
 
-MISSION_GRAPH_CORE_ARCHETYPES: dict[str, dict[str, Any]] = {
-    "opponent_system_modeler": {
-        "display_name": "对手体系建模",
-        "purpose": "解释对手当前为何能赢，找出最值得改变的体系依赖和战场关系。",
-        "merge_target": "S1",
-        "residuals": ["causal_chain_broken", "counter_adaptation_unresolved"],
-    },
-    "adversary_adaptation_analyst": {
-        "display_name": "对手优势反向建模",
-        "purpose": "从对手最难被剥夺的优势出发，寻找另一组可被新装备改写的制胜矛盾。",
-        "merge_target": "S1",
-        "residuals": ["counter_adaptation_unresolved"],
-    },
-    "operational_baseline_analyst": {
-        "display_name": "作战运用基线",
-        "purpose": "从我方任务链、行动节奏和效应窗口中寻找值得新装备介入的矛盾。",
-        "merge_target": "S2",
-        "residuals": ["baseline_missing"],
-    },
-    "competitive_coa_designer": {
-        "display_name": "任务关系重构",
-        "purpose": "跳出现行流程，寻找能重新组织接敌、效应释放或战果积累关系的开放问题。",
-        "merge_target": "S2",
-        "residuals": ["novelty_insufficient", "military_effect_missing"],
-    },
-}
-
-
 def _all_role_archetypes() -> dict[str, dict[str, Any]]:
     return {**SWARM_SPECIALIST_ARCHETYPES, **MISSION_GRAPH_CORE_ARCHETYPES}
 
@@ -359,83 +222,35 @@ def _frontloaded_role_governance(
     mission_node: str,
 ) -> tuple[list[str], list[str], list[str]]:
     """Return query-agnostic mutation and identity rules for one graph node."""
-
+    resource = load_dynamic_winning_json("common", section="role_governance")
+    if not isinstance(resource, Mapping):
+        raise ValueError("dynamic role_governance must be an object")
     common_methods = [
-        "先读取角色合同、依赖快照和允许的hypothesis_id，再开始分析",
-        "只提交本节点新增的信息；已完成的上游字段原样复用，不重复生成",
-        "发现越权的新方向时写入portfolio_review，不直接改写候选账本",
+        str(item)
+        for item in resource.get("common_methodology", [])
+        if str(item).strip()
     ]
     common_gates = [
-        "候选身份主干在各节点间可追踪，禁止用同义改名掩盖装备替换",
-        "同族候选是否独立由S5结合完整军事语义整体判断，不设差异轴数量、关键词或字符串阈值",
-        "角色输出必须由完整Query决定，不得依赖固定装备类型清单",
+        str(item)
+        for item in resource.get("common_quality_gates", [])
+        if str(item).strip()
     ]
-    if mission_node in {"S1", "S2"}:
-        return (
-            [
-                "只形成对手或任务矛盾种子，不创建最终装备卡",
-                "从Query开放寻找值得新装备改变的关系，不从热门技术倒推问题",
-            ],
-            [
-                "种子必须足以打开后续独立创造，但不能预定装备答案",
-            ],
-            ["reasoning_seeds", "quality_residuals", "stop_reason"],
-        )
-    if mission_node in {"S3", "S4"}:
-        return (
-            [
-                "S3与S4都是创新武器候选创建入口；从Query与开放挑战独立创造，提交前锁定单一主装备身份",
-                "只提交最小候选卡；不读取或补写证据、TRL、验证和反适应材料",
-            ],
-            [
-                "候选自然闭合主装备、核心创新、制胜关系和直接战果",
-            ],
-            [
-                "title", "equipment_form", "primary_equipment_identity",
-                "target_and_direct_effect", "unique_operational_role",
-                "changed_confrontation_variable", "frontier_principle",
-                "disruptive_shift", "mechanism_chain", "direct_military_effects",
-            ],
-        )
-    if mission_node == "S5":
-        return (
-            [
-                "每批新增候选完成后立即审查其与已有组合的独立性、互补性和直接装备属性",
-                "只能输出retain、merge或reject，并可在冻结前修复机械、同构、空泛或不能识别主装备的名称",
-                "名称修复不得改变装备身份、精简制胜逻辑、成员关系或创造新候选；不得补强、补证、估算成熟度或设计验证",
-            ],
-            [
-                "审查结论必须明确retain、merge或reject及其组合理由",
-                "S5是名称冻结前最后一道语义编辑门；修复名必须仍指向原候选且能够识别具体武器装备",
-                "S5冻结后，名称、装备身份、机理和直接战果不得被S6修改",
-            ],
-            ["decisions", "portfolio_order", "portfolio_summary", "stop_reason"],
-        )
-    if mission_node == "S6":
-        return (
-            [
-                *common_methods,
-                "只为S5冻结组合并发撰写精简能力画像；不得新增、删除、换名或重排主装备",
-                "恢复时复用已完成装备卡，不重跑完整组合",
-            ],
-            [
-                *common_gates,
-                "每张卡保持一个主装备、一个专属战场问题和一个清晰制胜逻辑",
-                "五栏画像精简、互不复述，并使用一线设计人员可直接理解的语言",
-            ],
-            ["contributions", "portfolio_review", "stop_reason"],
-        )
-    return (
-        [
-            *common_methods,
-            "组合评审只读候选身份，对同族差异和跨卡一致性作裁决，不生成替代候选",
-        ],
-        [
-            *common_gates,
-            "组合入选必须保留可审计的入选、同族合并、参考或淘汰理由",
-        ],
-        ["assessments", "portfolio_findings", "stop_reason"],
-    )
+    nodes = resource.get("nodes", {})
+    node_key = "S3_S4" if mission_node in {"S3", "S4"} else mission_node
+    node = nodes.get(node_key, nodes.get("default", {})) if isinstance(nodes, Mapping) else {}
+    if not isinstance(node, Mapping):
+        node = {}
+    methods = [str(item) for item in node.get("methodology", []) if str(item).strip()]
+    gates = [str(item) for item in node.get("quality_gates", []) if str(item).strip()]
+    fields = [str(item) for item in node.get("output_fields", []) if str(item).strip()]
+    if mission_node in {"S1", "S2", "S3", "S4", "S5", "S6"}:
+        # Node-specific resources already include the common rules where they
+        # are part of that node's model-facing contract.
+        if mission_node == "S6":
+            methods = [*common_methods, *methods]
+            gates = [*common_gates, *gates]
+        return methods, gates, fields
+    return [*common_methods, *methods], [*common_gates, *gates], fields
 
 
 def default_winning_swarm_policy(
@@ -451,28 +266,43 @@ def default_winning_swarm_policy(
         "policy_id": policy_id,
         "enabled": enabled,
         "max_dynamic_instances": 21 if dynamic_v2 else 12,
-        "max_concurrency": 6,
+        "max_concurrency": 8 if dynamic_v2 else 6,
         "max_waves": 3,
+        # First wave is a compact heterogeneous scout set.  Remaining
+        # capacity up to max_instances is reserved for coverage-gap
+        # recruitment instead of cloning six identical creators.
         "mission_graph_min_instances": 8 if dynamic_v2 else 4,
-        "mission_graph_target_instances": 15 if dynamic_v2 else 4,
+        "mission_graph_target_instances": 10 if dynamic_v2 else 4,
         "mission_graph_max_instances": 21 if dynamic_v2 else 12,
+        "coverage_expand_max_recruits": 2 if dynamic_v2 else 0,
         "minimum_expected_gain": 0.03,
         "breadth_hypothesis_minimum": 1,
-        "breadth_hypothesis_maximum": 12,
+        # Dynamic-v2 has six independent creative seats (three S3 and three
+        # S4) and a three-concept cap per seat, giving the model room to form
+        # a diversified competition pool of up to eighteen without asking
+        # one call to enumerate a catalogue.
+        "breadth_hypothesis_maximum": 18 if dynamic_v2 else 12,
+        # S3/S4 are independent creative slots. Each isolated creator is
+        # expected to submit up to three strong, independent concepts.
+        "s3_s4_candidate_maximum_per_session": 3 if dynamic_v2 else 3,
+        # One seat contributes at most three concepts to the global pool.
+        "s3_s4_candidate_pool_maximum_per_session": 3 if dynamic_v2 else 3,
+        # S3/S4 use one creative pass by default.  A second pass remains
+        # available via policy/env when the first pass is structurally empty.
+        "s3_s4_creative_passes": 1 if dynamic_v2 else 3,
         # Capacity is not a quota. The Query controller may activate any
         # smaller number of relevant S3/S4 dimension Agents.
-        "s3_winning_thesis_capacity": 8 if dynamic_v2 else 0,
+        "s3_winning_thesis_capacity": 4 if dynamic_v2 else 0,
         # A branch may reject both its initial thesis and the first reserve.
         # Keep additional precomputed reserve handoffs so the dynamically
         # activated S3 set does not collapse after a sound semantic rejection. Every retry
         # still uses a thesis selected before S3; no local family filling.
         "s3_empty_reallocation_max": 2 if dynamic_v2 else 0,
-        # The lower bound is a delivery safety floor, not a generation quota.
-        # Dynamic v2 may stop with two independently valuable directions when
-        # additional candidates add no new winning relationship; the bounded
-        # upper limit still prevents an unreviewable card wall.
-        "finalist_minimum": 2 if dynamic_v2 else 5 if quality_cluster else 2,
-        "finalist_maximum": 7 if quality_cluster else 4,
+        # Kept as a compatibility preference for downstream dashboards; the
+        # dynamic S5 reviewer does not use it as an admission floor or refill
+        # target. Only genuinely disruptive rows are retained up to the cap.
+        "finalist_minimum": 6 if dynamic_v2 else 5 if quality_cluster else 2,
+        "finalist_maximum": 7 if dynamic_v2 else 7 if quality_cluster else 4,
         "minimum_direct_combat_equipment": 2
         if dynamic_v2
         else 3
@@ -513,6 +343,27 @@ def default_winning_swarm_policy(
     }
 
 
+def _policy_value(
+    raw: Mapping[str, Any], canonical: str, *aliases: str
+) -> Any:
+    """Read a canonical policy key while accepting legacy harness aliases.
+
+    Harness profiles historically used ``*_mission_graph_instances`` while
+    the normalized controller policy uses ``mission_graph_*_instances``.
+    Canonical values win whenever present; a non-null legacy value is only a
+    compatibility fallback for older profile payloads.
+    """
+
+    value = raw.get(canonical)
+    if value is not None:
+        return value
+    for alias in aliases:
+        value = raw.get(alias)
+        if value is not None:
+            return value
+    return None
+
+
 def normalize_winning_swarm_policy(
     value: Mapping[str, Any] | None,
     *,
@@ -530,11 +381,10 @@ def normalize_winning_swarm_policy(
         enabled=bool(raw.get("enabled", False) if enabled is None else enabled),
         policy_id=policy_id,
     )
-    # Dynamic v2 starts with 15 capacity slots, then may replace the single
-    # S4 placeholder with up to seven candidate-bound realization sessions:
-    # 4 S1/S2 + 8 S3 + 7 S4 + 2 S5 = 21 governed instances.
+    # Dynamic v2 first wave is 8-11 heterogeneous seats.  Capacity above
+    # target stays available for Gap Analyzer recruitment up to 21.
     maximum_instances = 21 if dynamic_v2 else 12
-    maximum_concurrency = 6
+    maximum_concurrency = 8 if dynamic_v2 else 6
     minimum_instances = 8 if dynamic_v2 else 1
     base.update(
         {
@@ -553,20 +403,38 @@ def normalize_winning_swarm_policy(
                 int(base["max_concurrency"]),
             ),
             "max_waves": _bounded_int(raw.get("max_waves"), 1, 3, 3),
+            "coverage_expand_max_recruits": 0 if not dynamic_v2 else _bounded_int(
+                raw.get("coverage_expand_max_recruits"),
+                0,
+                4,
+                int(base.get("coverage_expand_max_recruits", 2)),
+            ),
             "mission_graph_min_instances": _bounded_int(
-                raw.get("mission_graph_min_instances"),
+                _policy_value(
+                    raw,
+                    "mission_graph_min_instances",
+                    "min_mission_graph_instances",
+                ),
                 minimum_instances,
                 maximum_instances,
                 int(base["mission_graph_min_instances"]),
             ),
             "mission_graph_target_instances": _bounded_int(
-                raw.get("mission_graph_target_instances"),
+                _policy_value(
+                    raw,
+                    "mission_graph_target_instances",
+                    "target_mission_graph_instances",
+                ),
                 minimum_instances,
                 maximum_instances,
                 int(base["mission_graph_target_instances"]),
             ),
             "mission_graph_max_instances": _bounded_int(
-                raw.get("mission_graph_max_instances"),
+                _policy_value(
+                    raw,
+                    "mission_graph_max_instances",
+                    "max_dynamic_instances",
+                ),
                 minimum_instances,
                 maximum_instances,
                 int(base["mission_graph_max_instances"]),
@@ -578,12 +446,33 @@ def normalize_winning_swarm_policy(
                 raw.get("breadth_hypothesis_minimum"), 1, 12, 1
             ),
             "breadth_hypothesis_maximum": _bounded_int(
-                raw.get("breadth_hypothesis_maximum"), 1, 12, 12
+                raw.get("breadth_hypothesis_maximum"),
+                1,
+                18 if dynamic_v2 else 12,
+                int(base["breadth_hypothesis_maximum"]),
+            ),
+            "s3_s4_candidate_maximum_per_session": _bounded_int(
+                raw.get("s3_s4_candidate_maximum_per_session"),
+                1,
+                3 if dynamic_v2 else 6,
+                int(base["s3_s4_candidate_maximum_per_session"]),
+            ),
+            "s3_s4_candidate_pool_maximum_per_session": _bounded_int(
+                raw.get("s3_s4_candidate_pool_maximum_per_session"),
+                1,
+                3 if dynamic_v2 else 6,
+                int(base["s3_s4_candidate_pool_maximum_per_session"]),
+            ),
+            "s3_s4_creative_passes": _bounded_int(
+                raw.get("s3_s4_creative_passes"),
+                1,
+                4,
+                int(base["s3_s4_creative_passes"]),
             ),
             "s3_winning_thesis_capacity": _bounded_int(
                 raw.get("s3_winning_thesis_capacity"),
                 1 if dynamic_v2 else 0,
-                8 if dynamic_v2 else 0,
+                10 if dynamic_v2 else 0,
                 int(base["s3_winning_thesis_capacity"]),
             ),
             "s3_empty_reallocation_max": _bounded_int(
@@ -595,25 +484,25 @@ def normalize_winning_swarm_policy(
             "finalist_minimum": _bounded_int(
                 raw.get("finalist_minimum"),
                 1,
-                7 if quality_cluster else 7,
+                7,
                 int(base["finalist_minimum"]),
             ),
             "finalist_maximum": _bounded_int(
                 raw.get("finalist_maximum"),
                 1,
-                7 if quality_cluster else 7,
-                7 if quality_cluster else 4,
+                7,
+                int(base["finalist_maximum"]),
             ),
             "minimum_direct_combat_equipment": _bounded_int(
                 raw.get("minimum_direct_combat_equipment"),
                 0,
-                7 if quality_cluster else 7,
+                12 if dynamic_v2 else 7,
                 int(base["minimum_direct_combat_equipment"]),
             ),
             "preferred_distinct_direct_equipment": _bounded_int(
                 raw.get("preferred_distinct_direct_equipment"),
                 0,
-                7 if quality_cluster else 7,
+                12 if dynamic_v2 else 7,
                 int(base["preferred_distinct_direct_equipment"]),
             ),
             "recursive_recruitment_allowed": False,
@@ -841,38 +730,29 @@ class WinningSwarmController:
         residuals = _text_list(
             value.get("trigger_residuals", spec.get("residuals", [])), limit=8
         )
+        contract_defaults = load_dynamic_winning_json(
+            "common", section="contract_defaults"
+        )
+        if not isinstance(contract_defaults, Mapping):
+            raise ValueError("dynamic contract_defaults must be an object")
         methodology = _text_list(
             value.get(
                 "methodology",
-                [
-                    "只处理声明的质量残差",
-                    "依据公开证据形成结构化增量",
-                    "只写入声明的合并节点",
-                ],
+                contract_defaults.get("methodology", []),
             ),
             limit=8,
         )
         quality_gates = _text_list(
             value.get(
                 "quality_gates",
-                [
-                    "事实推断与假设分离",
-                    "证据边界和失效条件明确",
-                    "不得产生无依据精确判断",
-                ],
+                contract_defaults.get("quality_gates", []),
             ),
             limit=10,
         )
         output_fields = _text_list(
             value.get(
                 "output_fields",
-                [
-                    "findings",
-                    "evidence_ids",
-                    "evidence_boundary",
-                    "failure_boundaries",
-                    "incremental_quality",
-                ],
+                contract_defaults.get("output_fields", []),
             ),
             limit=12,
         )
@@ -912,19 +792,35 @@ class WinningSwarmController:
     ) -> WinningMissionGraph:
         """Build an 8-21 instance graph with parallel S3/S4 creators."""
 
-        minimum = 8
-        maximum = min(
-            21,
-            max(minimum, int(self.policy.get("mission_graph_max_instances", 21))),
-        )
-        target = _bounded_int(
-            target_instances
-            if target_instances is not None
-            else self.policy.get("mission_graph_target_instances"),
-            minimum,
-            maximum,
-            min(12, maximum),
-        )
+        dynamic_v2 = self.policy.get("policy_id") == "winning_swarm_dynamic_v2"
+        if dynamic_v2:
+            bounds = resolve_dynamic_v2_instance_bounds(
+                minimum_instances=self.policy.get("mission_graph_min_instances", 8),
+                target_instances=(
+                    target_instances
+                    if target_instances is not None
+                    else self.policy.get("mission_graph_target_instances", 10)
+                ),
+                maximum_instances=self.policy.get("mission_graph_max_instances", 21),
+                hard_maximum_instances=self.policy.get("max_dynamic_instances", 21),
+            )
+            minimum = bounds.minimum_instances
+            target = bounds.target_instances
+            maximum = bounds.maximum_instances
+        else:
+            minimum = 8
+            maximum = min(
+                21,
+                max(minimum, int(self.policy.get("mission_graph_max_instances", 21))),
+            )
+            target = _bounded_int(
+                target_instances
+                if target_instances is not None
+                else self.policy.get("mission_graph_target_instances"),
+                minimum,
+                maximum,
+                min(12, maximum),
+            )
         # Blueprint equipment hypotheses are evidence-free reasoning inputs,
         # not S3 role identities.  Feeding them into role names and purposes
         # before S1/S2 free divergence anchors every producer to the
@@ -933,32 +829,17 @@ class WinningSwarmController:
         # blueprint theses together with fresh S1/S2 reasoning and may reject
         # or replace every one of them before any candidate is authored.
         del query_theses
-        if self.policy.get("policy_id") == "winning_swarm_dynamic_v2":
-            # ``target`` is a capacity decision, not a quota.  Keep two
-            # independent S1 and S2 perspectives plus one incremental S5
-            # portfolio role, and let the remaining capacity determine how many
-            # isolated S3/S4 creators may be activated.  The later semantic
-            # scout may use fewer slots when expected information gain is low.
-            creative_capacity = min(8, max(3, target - 5))
-            # S3 and S4 are one homogeneous creative pool.  We retain the
-            # mission-node labels only for audit compatibility; neither node
-            # receives a different archetype, prompt, authority or upstream
-            # context, so the old S3-mechanism/S4-materialization split cannot
-            # leak back into the dynamic path.
-            creative_nodes = [
-                "S3" if index % 2 == 0 else "S4"
-                for index in range(creative_capacity)
-            ]
+        if dynamic_v2:
+            # Heterogeneous first wave: complementary S1/S2, unique creative
+            # scouts, and 2-3 cross-pool S5 reviewers.  ``target_instances``
+            # sizes this wave; leftover capacity is for Gap Analyzer
+            # recruitment rather than cloned creators or 1:1 reviewers.
+            first_wave = compose_dynamic_v2_first_wave(
+                target_instances=target,
+                maximum_instances=maximum,
+            )
             selected = [
-                ("S1", "opponent_system_modeler"),
-                ("S2", "operational_baseline_analyst"),
-                ("S1", "adversary_adaptation_analyst"),
-                ("S2", "competitive_coa_designer"),
-                *[
-                    (node, "innovative_equipment_dimension_generator")
-                    for node in creative_nodes
-                ],
-                ("S5", "independent_portfolio_reviewer"),
+                (seat.mission_node, seat.archetype) for seat in first_wave.seats
             ]
         else:
             selected = []
@@ -978,22 +859,40 @@ class WinningSwarmController:
         contracts: list[WinningRoleContract] = []
         instances: list[WinningAgentInstance] = []
         node_instances: dict[str, list[str]] = {f"S{step}": [] for step in range(1, 7)}
+        graph_prompt_resources = load_dynamic_winning_json(
+            "common", section="mission_graph_contracts"
+        )
+        if not isinstance(graph_prompt_resources, Mapping):
+            raise ValueError("dynamic mission_graph_contracts must be an object")
+        query_clauses = graph_prompt_resources.get("query_first_clause", {})
+        if not isinstance(query_clauses, Mapping):
+            raise ValueError("dynamic query_first_clause must be an object")
+        dynamic_methodology = _text_list(
+            graph_prompt_resources.get("dynamic_methodology", []), limit=8
+        )
+        dynamic_creative_methodology = _text_list(
+            graph_prompt_resources.get("dynamic_creative_methodology", []), limit=8
+        )
+        dynamic_s5_methodology = _text_list(
+            graph_prompt_resources.get("dynamic_s5_methodology", []), limit=8
+        )
+        dynamic_quality_gates = _text_list(
+            graph_prompt_resources.get("dynamic_quality_gates", []), limit=8
+        )
+        legacy_methodology = _text_list(
+            graph_prompt_resources.get("legacy_methodology", []), limit=8
+        )
+        legacy_quality_gates = _text_list(
+            graph_prompt_resources.get("legacy_quality_gates", []), limit=8
+        )
+        s5_ordinal = 0
         for ordinal, (node, archetype) in enumerate(selected, start=1):
             spec = _all_role_archetypes()[archetype]
             dynamic_contract = execution_profile_id == "winning_swarm_dynamic_v2"
-            query_first_clause = (
-                f"当前唯一任务主题为“{topic}”。围绕当前Query自主判断；不要从固定装备类别或示例反推答案。"
-                "最终装备应能直接承担打击、歼灭、毁伤、杀伤、压制、拦截或拒止任务。"
-                if dynamic_contract
-                else (
-                    f"当前唯一任务主题为“{topic}”。先从完整Query提取任务对象、威胁形态、作战阶段、"
-                    "地域环境、敌方反制和制胜矛盾，再执行本角色工作；不得先选择固定武器类别、公开"
-                    "型号或共享示例后反向拼接Query。产出的候选若替换成其他Query仍基本成立，必须判为"
-                    "模板化并重新发散。最终收敛对象必须是自身直接承担打击、歼灭、毁伤、杀伤、压制、"
-                    "突防、物理拦截或拒止任务的具体新质军事战斗武器；通信、算法、网络与保障只能作为"
-                    "内部接口或约束。具体命名由S3/S4 Codex会话基于完整装备语义整体创作。"
-                )
+            query_template = query_clauses.get(
+                "dynamic" if dynamic_contract else "legacy", ""
             )
+            query_first_clause = str(query_template).format(topic=topic)
             contract = self.govern_role_contract(
                 {
                     "archetype": archetype,
@@ -1002,27 +901,25 @@ class WinningSwarmController:
                     "purpose": f"{spec.get('purpose', '')}{query_first_clause}",
                     "methodology": (
                         [
-                            "从Query语义开放发散候选；保持轻型创造会话",
-                            "执行跨Query替换自检，避免通用模板",
-                            "只交接当前节点的最小语义",
+                            *dynamic_methodology,
+                            *(
+                                dynamic_creative_methodology
+                                if node in {"S3", "S4"}
+                                else []
+                            ),
+                            *(
+                                dynamic_s5_methodology
+                                if archetype == "independent_portfolio_reviewer"
+                                else []
+                            ),
                         ]
                         if dynamic_contract
-                        else [
-                            "先形成Query任务对象—威胁—阶段—制胜矛盾语义图",
-                            "从Query语义开放发散候选，不从装备目录或公开型号起步",
-                            "只处理声明的质量残差并写入声明节点",
-                            "执行跨Query替换自检，淘汰换题后仍成立的模板候选",
-                        ]
+                        else legacy_methodology
                     ),
                     "quality_gates": (
-                        ["输出服务当前Query，保持主装备和直接战果可理解"]
+                        dynamic_quality_gates
                         if dynamic_contract
-                        else [
-                            "候选主装备、目标、发射域、毁伤机理与Query形成直接因果闭环",
-                            "事实、推断与拟议假设分离，证据边界和失效条件明确",
-                            "不得复用共享示例名称或以固定装备族覆盖主题",
-                            "新研候选由Codex动态选择描述名、专名或可解释代号，不预设统一格式；名称须呈现具体主装备身份及其创新制胜特征",
-                        ]
+                        else legacy_quality_gates
                     ),
                 },
                 mission_node=node,
@@ -1042,7 +939,14 @@ class WinningSwarmController:
                     instance_id=instance_id,
                     role_contract_id=contract.role_contract_id,
                     archetype=archetype,
-                    display_name=contract.display_name,
+                    display_name=(
+                        f"S5跨池评审 Agent {chr(ord('A') + min(s5_ordinal, 25))}"
+                        if (
+                            self.policy.get("policy_id") == "winning_swarm_dynamic_v2"
+                            and node == "S5"
+                        )
+                        else contract.display_name
+                    ),
                     mission_node=node,
                     wave=0,
                     merge_target=node,
@@ -1051,6 +955,8 @@ class WinningSwarmController:
                     allow_child_spawn=False,
                 )
             )
+            if node == "S5":
+                s5_ordinal += 1
         dependencies: dict[str, list[str]] = {}
         dependency_instances: list[WinningAgentInstance] = []
         node_ordinals: dict[str, int] = {f"S{step}": 0 for step in range(1, 7)}
@@ -1075,10 +981,11 @@ class WinningSwarmController:
                     if upstream
                 ]
             elif step == 5 and instance.archetype == "independent_portfolio_reviewer":
-                # The runtime feeds this reviewer completed candidates
-                # incrementally. Static producer dependencies would recreate
-                # the same-wave barrier and let the slowest creator block S5.
-                depends_on = []
+                # Cross-pool S5 sees every S3/S4 producer.  Pairing one
+                # reviewer to one creator is the legacy dynamic-v2 path and is
+                # no longer the default first-wave shape.
+                producer_ids = [*node_instances["S3"], *node_instances["S4"]]
+                depends_on = list(producer_ids)
             elif step == 5:
                 upstream = node_instances["S4"]
                 depends_on = [upstream[ordinal % len(upstream)]] if upstream else []
@@ -1138,7 +1045,10 @@ class WinningSwarmController:
             s_node_seeds=node_instances,
             minimum_instances=minimum,
             maximum_instances=maximum,
-            maximum_concurrency=min(6, int(self.policy.get("max_concurrency", 6))),
+            maximum_concurrency=min(
+                8,
+                int(self.policy.get("max_concurrency", 8)),
+            ),
             merge_strategy="artifact_ready_speculative_parallel_then_versioned_rebase",
         )
 
@@ -1212,6 +1122,103 @@ class WinningSwarmController:
             waves=waves,
             s_node_seeds=seeds,
         )
+
+    def rewire_cross_pool_reviewers(
+        self, graph: WinningMissionGraph
+    ) -> WinningMissionGraph:
+        """Point every cross-pool S5 reviewer at the live S3/S4 producer set."""
+
+        producer_ids = [
+            item.instance_id
+            for item in graph.agent_instances
+            if item.mission_node in {"S3", "S4"} and not item.hypothesis_id
+        ]
+        instances: list[WinningAgentInstance] = []
+        dependencies = dict(graph.dependencies)
+        for item in graph.agent_instances:
+            if (
+                item.mission_node == "S5"
+                and item.archetype == "independent_portfolio_reviewer"
+                and not item.hypothesis_id
+            ):
+                updated = replace(item, depends_on=list(producer_ids))
+                instances.append(updated)
+                dependencies[item.instance_id] = list(producer_ids)
+            else:
+                instances.append(item)
+        return replace(
+            graph,
+            agent_instances=instances,
+            dependencies=dependencies,
+        )
+
+    def recruit_for_coverage_gap(
+        self,
+        graph: WinningMissionGraph,
+        *,
+        topic: str,
+        execution_profile_id: str,
+        gap_axis: str,
+        already_used: Sequence[str] = (),
+        expected_quality_gain: float = 0.05,
+    ) -> WinningMissionGraph:
+        """Govern and insert one Gap Analyzer recruit, then rewire S5."""
+
+        node, archetype = recruit_archetype_for_gap(
+            gap_axis, already_used=already_used
+        )
+        spec = _all_role_archetypes()[archetype]
+        graph_prompt_resources = load_dynamic_winning_json(
+            "common", section="mission_graph_contracts"
+        )
+        if not isinstance(graph_prompt_resources, Mapping):
+            raise ValueError("dynamic mission_graph_contracts must be an object")
+        query_clauses = graph_prompt_resources.get("query_first_clause", {})
+        if not isinstance(query_clauses, Mapping):
+            raise ValueError("dynamic query_first_clause must be an object")
+        query_template = query_clauses.get("dynamic", "")
+        query_first_clause = str(query_template).format(topic=topic)
+        dynamic_methodology = _text_list(
+            graph_prompt_resources.get("dynamic_methodology", []), limit=8
+        )
+        dynamic_creative_methodology = _text_list(
+            graph_prompt_resources.get("dynamic_creative_methodology", []), limit=8
+        )
+        dynamic_quality_gates = _text_list(
+            graph_prompt_resources.get("dynamic_quality_gates", []), limit=8
+        )
+        contract = self.govern_role_contract(
+            {
+                "archetype": archetype,
+                **spec,
+                "display_name": spec.get("display_name", ""),
+                "purpose": f"{spec.get('purpose', '')}{query_first_clause}",
+                "methodology": [
+                    *dynamic_methodology,
+                    *dynamic_creative_methodology,
+                    f"本席位由覆盖缺口{gap_axis}触发，必须改写该轴而不是重复已有机理",
+                ],
+                "quality_gates": dynamic_quality_gates,
+                "trigger_residuals": [
+                    *list(spec.get("residuals", [])),
+                    f"coverage_gap:{gap_axis}",
+                ],
+            },
+            mission_node=node,
+        )
+        seed_ids = [
+            item.instance_id
+            for item in graph.agent_instances
+            if item.mission_node in {"S1", "S2"} and not item.hypothesis_id
+        ]
+        graph = self.recruit_into_mission_graph(
+            graph,
+            contract,
+            hypothesis_id="",
+            expected_quality_gain=expected_quality_gain,
+            depends_on=seed_ids,
+        )
+        return self.rewire_cross_pool_reviewers(graph)
 
     def create_ledger(
         self,
@@ -2303,22 +2310,55 @@ class WinningSwarmController:
             value.get("evidence_ids", value.get("evidence_refs", [])),
             valid_evidence_ids,
         )
+        raw_semantic_spine = value.get("semantic_spine") or value.get(
+            "winning_logic_spine"
+        )
+        if isinstance(raw_semantic_spine, Mapping):
+            # Keep the model-facing contract as one optional grouped object,
+            # while accepting its compact aliases as first-class ledger
+            # fields.  This avoids making S3/S4 fill a long flat form.
+            spine_aliases = {
+                "equipment_identity": "primary_equipment_identity",
+                "equipment_form": "equipment_form",
+                "frontier_principle": "frontier_principle",
+                "technology_discontinuity": "technology_discontinuity",
+                "disruptive_difference": "core_disruptive_difference",
+                "combat_relation_shift": "disruptive_shift",
+                "changed_variable": "changed_confrontation_variable",
+                "direct_effect": "target_and_direct_effect",
+            }
+            promoted = dict(value)
+            for source_key, target_key in spine_aliases.items():
+                if not str(promoted.get(target_key, "") or "").strip():
+                    promoted[target_key] = raw_semantic_spine.get(source_key, "")
+            value = promoted
+            semantic_spine = "；".join(
+                str(raw_semantic_spine.get(key, "") or "").strip()
+                for key in spine_aliases
+                if str(raw_semantic_spine.get(key, "") or "").strip()
+            )[:1200]
+        else:
+            semantic_spine = _user_facing_text(raw_semantic_spine or "", limit=1200)
         changed_variable = _user_facing_text(
             value.get("changed_confrontation_variable")
             or value.get("changed_variable")
-            or "",
+            or semantic_spine,
             limit=600,
         )
         mechanism_chain = _user_facing_text_list(
             value.get("mechanism_chain", value.get("winning_mechanism_chain", [])),
             limit=8,
         )
+        if not mechanism_chain and semantic_spine:
+            mechanism_chain = [semantic_spine]
         direct_effects = _user_facing_text_list(
             value.get(
                 "direct_military_effects", value.get("direct_military_effect", [])
             ),
             limit=6,
         )
+        if not direct_effects and semantic_spine:
+            direct_effects = [semantic_spine]
         equipment_forms = _user_facing_text_list(
             value.get("equipment_forms", value.get("equipment_form", [])),
             limit=6,
@@ -2335,6 +2375,7 @@ class WinningSwarmController:
             value.get("project_function")
             or value.get("target_and_direct_effect")
             or value.get("primary_equipment_identity")
+            or semantic_spine
             or value.get("concise_winning_summary")
             or "",
             limit=700,
@@ -2348,6 +2389,20 @@ class WinningSwarmController:
             or "",
             limit=1800,
         )
+        # Dynamic S3/S4 intentionally return only a name and one winning
+        # sentence.  Preserve that sentence as the compact semantic spine so
+        # S5 can still judge the weapon's mechanism and relation shift without
+        # forcing creators to fill six separate fields.  Richer callers may
+        # provide an explicit ``semantic_spine`` and take precedence above.
+        if not semantic_spine and reference_overview:
+            semantic_spine = reference_overview[:1200]
+        if semantic_spine:
+            if not changed_variable:
+                changed_variable = semantic_spine[:600]
+            if not mechanism_chain:
+                mechanism_chain = [semantic_spine]
+            if not direct_effects:
+                direct_effects = [semantic_spine]
         frontier_principle = _user_facing_text(
             value.get("frontier_principle", ""), limit=320
         )
@@ -2370,6 +2425,8 @@ class WinningSwarmController:
             novelty_parts.append(f"前沿原理：{frontier_principle}")
         if technology_discontinuity:
             novelty_parts.append(f"不可由常规升级吸收：{technology_discontinuity}")
+        if semantic_spine:
+            novelty_parts.append(f"语义脊柱：{semantic_spine}")
         novelty_delta = _user_facing_text(
             "；".join(filter(None, novelty_parts)), limit=900
         )
@@ -2958,6 +3015,9 @@ class WinningSwarmController:
             residuals.append("equipment_not_concrete")
         if not hypothesis.project_function.strip():
             residuals.append("project_function_missing")
+        residuals.extend(
+            winning_summary_language_issues(hypothesis.reference_overview)
+        )
         if frontloaded_quality and not hypothesis.system_interfaces:
             residuals.append("system_interfaces_missing")
         if frontloaded_quality:

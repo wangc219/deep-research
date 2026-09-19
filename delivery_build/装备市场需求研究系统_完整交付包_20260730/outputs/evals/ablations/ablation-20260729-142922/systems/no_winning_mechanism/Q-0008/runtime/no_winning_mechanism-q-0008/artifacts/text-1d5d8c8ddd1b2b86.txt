@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=Large Constellations of Low-Altitude Satellites: A Primer | Congressional Budget Office
-source_url=https://www.cbo.gov/publication/59175
-claim=低轨卫星对单点区域覆盖窗口有限，连续服务依赖星座规模、调度和地面接入；大型星座对单星损失具备渐进退化优势。
-excerpt=
-retrieval=Hosted web search citation metadata

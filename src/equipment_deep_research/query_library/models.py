@@ -10,7 +10,7 @@ from uuid import uuid4
 
 QueryStatus = Literal["draft", "published", "archived"]
 QuerySourceType = Literal["manual", "agent", "import"]
-GenerationStatus = Literal["queued", "running", "completed", "failed"]
+GenerationStatus = Literal["queued", "running", "completed", "failed", "cancelled"]
 
 SOURCE_DISCLAIMER = "Query 生成参考线索，不等同于后续研究结论的正式证据。"
 
@@ -177,4 +177,8 @@ class InvalidStatusTransition(QueryLibraryError):
 
 
 class GenerationValidationError(QueryLibraryError):
+    pass
+
+
+class GenerationArtifactCleanupError(QueryLibraryError):
     pass

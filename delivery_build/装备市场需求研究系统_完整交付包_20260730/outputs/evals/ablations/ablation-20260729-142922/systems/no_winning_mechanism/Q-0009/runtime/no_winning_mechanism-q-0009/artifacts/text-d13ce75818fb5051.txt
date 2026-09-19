@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=Chief Digital and Artificial Intelligence Office > Initiatives > CJADC2
-source_url=https://www.ai.mil/Initiatives/CJADC2/
-claim=CJADC2被公开定位为连接战术边缘至战略层级的能力集合，目标是提升联合指挥员态势理解和决策速度/准确性。
-excerpt=
-retrieval=Hosted web search citation metadata

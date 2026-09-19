@@ -203,3 +203,58 @@ python3 -m evals.cli aggregate \
 
 System identities are stored only in `pairs.admin.jsonl`. The public judge
 file contains the query and anonymous answer A/B text.
+
+## 5. Text-evolution replay (Prompt / Memory ablation)
+
+`evals/replay.py` 提供一个与生产运行隔离的轻量回放闭环。它不修改
+S1–S6 的 Prompt 或 Memory，只消费固定 Query fixture 与每个实验臂的
+JSONL 观测结果，适合在候选提交审核前运行：
+
+- `prompt_only`：只启用 Prompt candidate；
+- `memory_only`：只启用 Memory candidate；
+- `both`：同时启用两者；
+- 可选 `neither`：额外的 Champion/无变更控制组。
+
+每个观测至少包含 `query_id`、`arm` 和 `quality_score`；建议同时记录
+`hard_failures`、`token_count`、`estimated_cost`、`duration_seconds`、
+`non_target_regression` 与按维度的 `metric_scores`。相同 Query 的各臂会先
+配对，再计算 bootstrap 95% CI，避免因不同分母误判收益。
+
+固定 pilot fixture 可先单独校验：
+
+```bash
+python3 - <<'PY'
+from evals.replay import validate_replay_fixture
+print(validate_replay_fixture(
+    "evals/fixtures/s1_s6_evolution_pilot.jsonl",
+    expected_seed="evolution-pilot-v1",
+    expected_count=12,
+))
+PY
+```
+
+准备 `observations.jsonl` 后运行聚合与硬门禁：
+
+```bash
+python3 -m evals.cli replay \
+  --fixture evals/fixtures/s1_s6_evolution_pilot.jsonl \
+  --observations outputs/evals/replay-v1/observations.jsonl \
+  --eval-id replay-v1 \
+  --bundle-id candidate-bundle-001 \
+  --arms prompt_only,memory_only,both \
+  --reference-arm prompt_only \
+  --candidate-arm both \
+  --output outputs/evals/replay-v1/summary.json
+```
+
+默认门禁为：候选相对参考臂的配对质量提升至少 `+0.03` 且 CI 下界也
+不低于该值；所有实验臂硬失败率为零；成本和 p95 延迟增幅不超过 15%；
+非目标阶段回退不超过 0.02；每个 Query 必须具备全部要求的实验臂。任何
+硬失败都会使结论为 `fail`，缺少配对或参考臂则为 `inconclusive`，不会
+自动晋级。要分析 Prompt/Memory 交互效应，可加入 `neither` 并将参考臂
+设为 `neither`；摘要会额外输出两者主效应和交互项。
+
+输出摘要包含 `manifest`（fixture hash、bundle id、seed、相对路径）、每臂
+质量/硬失败/Token/成本/时延统计、配对 delta/CI、资源变化和可审计的
+`gate.reasons`。结果只能作为 `prompt_evolution` 或专家反馈 API 的
+`replay_refs`/效果证据，仍需人工审核和后续 Shadow/Canary。

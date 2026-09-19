@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=defense.gov · deputy secretary of defense kathleen hicks announces additional replicator all
+source_url=https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/
+claim=美方以规模化低成本无人系统对冲规模化运用，反证小无人威胁以数量与低成本为主轴演进。
+excerpt=
+retrieval=Hosted web search citation metadata

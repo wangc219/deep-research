@@ -9,8 +9,12 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from importlib import import_module
+import re
 from typing import Any
 from equipment_deep_research.agents.designs.registry import DEFAULT_AGENT_IDS
+from equipment_deep_research.agents.dynamic_prompt_resources import (
+    load_dynamic_winning_json,
+)
 
 from equipment_deep_research.agents.performance import role_card_id
 from equipment_deep_research.domain.research_focus import (
@@ -473,6 +477,20 @@ def build_codex_runtime_profile(
                 phase=phase,
                 blueprint=blueprint,
             )
+        elif (
+            phase in {"web_discovery", "evidence_analysis"}
+            and not str(agent_id).startswith("winning")
+        ):
+            # Baseline/reference turns are independent research calls. They
+            # need a small role card and the target Query, not the complete
+            # registry policy or every branch's methodology. Their durable
+            # packet remains available to later orchestration and audit steps.
+            profile = _minimal_baseline_runtime_profile(
+                profile,
+                agent_id=agent_id,
+                phase=phase,
+                blueprint=blueprint,
+            )
     return profile
 
 
@@ -483,14 +501,33 @@ def is_dynamic_winning_payload(value: Mapping[str, Any]) -> bool:
     that card is useful for research/audit agents but repeats evidence,
     validation and quality-gate instructions inside creative sessions.
     """
-    candidates: list[Mapping[str, Any]] = [value]
-    for key in (
-        "discovery_blueprint", "visible_context", "context", "input",
-        "task_input", "winning_mechanism_input", "assignment",
-    ):
-        child = value.get(key)
-        if isinstance(child, Mapping):
-            candidates.append(child)
+    candidates = _swarm_payload_candidates(value)
+    for candidate in list(candidates):
+        blueprint = candidate.get("discovery_blueprint")
+        if isinstance(blueprint, Mapping):
+            candidates.append(blueprint)
+    # Isolated parallel S6 calls intentionally expose only three top-level
+    # business fields, so they do not carry the portfolio's execution profile.
+    # The frozen routing key inside candidate_weapon makes this shape
+    # unambiguous and lets runtime avoid injecting the generic evidence/TRL/
+    # validation role card back into a prose-only card session.
+    for candidate in candidates:
+        if str(candidate.get("s6_authoring_mode", "")).strip() == "quality_parallel":
+            continue
+        candidate_weapon = candidate.get("candidate_weapon")
+        if (
+            isinstance(candidate_weapon, Mapping)
+            and str(candidate_weapon.get("card_binding_id", ""))
+            .strip()
+            .startswith("s6-card-")
+            and {
+                "query_semantics",
+                "candidate_weapon",
+                "winning_logic_overview",
+            }
+            <= set(candidate)
+        ):
+            return True
     return any(
         str(candidate.get("execution_profile_id", "")).strip()
         == "winning_swarm_dynamic_v2"
@@ -511,25 +548,31 @@ def _minimal_dynamic_winning_runtime_profile(
     particular it does not replay methodology, quality_gates, evidence policy,
     TRL, validation or upstream role contracts.
     """
-    node = str(profile.get("swarm_assignment", {}).get("merge_target", ""))
+    node = (
+        str(profile.get("swarm_assignment", {}).get("merge_target", ""))
+        .strip()
+        .upper()
+    )
     if not node:
-        phase_node = next((f"S{i}" for i in range(1, 7) if f"S{i}" in phase), "")
-        node = phase_node
-    creative = node in {"S1", "S2", "S3", "S4"}
+        phase_match = re.search(r"(?<![A-Z0-9])S([1-6])(?![A-Z0-9])", phase.upper())
+        node = f"S{phase_match.group(1)}" if phase_match else ""
+    dynamic_defaults = load_dynamic_winning_json(
+        "common", section="runtime.dynamic_profile_defaults"
+    )
+    if not isinstance(dynamic_defaults, Mapping):
+        raise ValueError("dynamic runtime profile defaults must be an object")
+    skill_catalog = dynamic_defaults.get("skills", {})
+    if not isinstance(skill_catalog, Mapping):
+        skill_catalog = {}
     role = str(profile.get("scenario") or profile.get("role") or agent_id)[:180]
-    if creative:
-        skill = {
-            "S1": "对手制胜矛盾建模",
-            "S2": "任务关系与效应窗口创造",
-            "S3": "新质武器概念创造",
-            "S4": "跨域/反常规武器概念创造",
-        }.get(node, "Query驱动创造")
-    elif node == "S5":
-        skill = "独立组合语义判断"
-    elif node == "S6":
-        skill = "单装备能力画像编辑"
-    else:
-        skill = "动态制胜判断"
+    skill = str(
+        skill_catalog.get(node)
+        or dynamic_defaults.get("fallback_skill", "")
+    ).strip()
+    if not skill:
+        # A missing reviewed default is a resource/configuration error rather
+        # than a reason to reintroduce model-facing prose in execution code.
+        raise ValueError("dynamic runtime profile defaults missing skill")
     return {
         "agent_id": agent_id,
         "phase": phase,
@@ -537,9 +580,15 @@ def _minimal_dynamic_winning_runtime_profile(
         "skill": skill,
         "tools": [],
         "mission_node": node,
-        "military_mission_lens": "只围绕当前Query形成可理解的军事任务判断。",
-        "safety_boundary": "只做任务级、防御性研究，不输出可直接执行的攻击步骤或制造参数。",
-        "handoff_contract": "task_input是唯一业务上下文；只输出当前schema要求的结论。",
+        "military_mission_lens": str(
+            dynamic_defaults.get("military_mission_lens", "")
+        ).strip(),
+        "safety_boundary": str(
+            dynamic_defaults.get("safety_boundary", "")
+        ).strip(),
+        "handoff_contract": str(
+            dynamic_defaults.get("handoff_contract", "")
+        ).strip(),
     }
 
 
@@ -686,6 +735,91 @@ def _minimal_business_runtime_profile(
         result.pop("reference_expansion_lenses", None)
     if not result.get("disruptive_seed_context"):
         result.pop("disruptive_seed_context", None)
+    return result
+
+
+def _minimal_baseline_runtime_profile(
+    profile: Mapping[str, Any],
+    *,
+    agent_id: str,
+    phase: str,
+    blueprint: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Project a non-S1-S6 role into a bounded, task-first runtime card.
+
+    The baseline model already receives its assignment, discovery material and
+    compact upstream handoffs in ``task_input``. Repeating registry policies,
+    full A-H playbooks and output schemas in ``agent_runtime`` wastes tokens
+    and encourages the model to follow framework prose instead of the Query.
+    Keep only the role, phase tools, a few method/quality anchors and branch
+    identity needed for a correct independent result.
+    """
+
+    branch_rows: list[dict[str, Any]] = []
+    for item in list(profile.get("discovery_branches", []))[:2]:
+        if not isinstance(item, Mapping):
+            continue
+        branch_rows.append(
+            {
+                key: item.get(key)
+                for key in ("code", "name", "emphasis", "output_focus")
+                if item.get(key) not in (None, "", [], {})
+            }
+        )
+    branch = str(
+        blueprint.get("primary_branch")
+        or blueprint.get("discovery_branch")
+        or (branch_rows[0].get("code") if branch_rows else "")
+    )
+    selected_skill = _choose_single_skill(profile.get("skills", []), phase=phase)
+    result: dict[str, Any] = {
+        "agent_id": agent_id,
+        "phase": phase,
+        "role": str(profile.get("scenario", "结构化业务研究"))[:180],
+        "skill": selected_skill,
+        "tools": [str(item) for item in list(profile.get("tools", []))[:8]],
+        "method": [
+            str(item)[:140]
+            for item in list(profile.get("methodology", []))[:3]
+        ],
+        "output_focus": [
+            str(item)[:100]
+            for item in list(profile.get("output_focus", []))[:5]
+        ],
+        "quality_gates": [
+            str(item)[:140]
+            for item in list(profile.get("quality_gates", []))[:3]
+        ],
+        "military_mission_lens": str(
+            profile.get("military_mission_lens", "")
+        )[:280],
+        "branch_focus": {
+            "branch": branch,
+            "emphasis": [
+                str(item)[:100]
+                for item in list(blueprint.get("emphasis", []))[:3]
+            ],
+            "required_outputs": [
+                str(item)[:100]
+                for item in list(blueprint.get("required_outputs", []))[:5]
+            ],
+        },
+        "handoff_contract": (
+            "只交付本角色新增的事实、判断、证据引用、置信度、限制和开放问题；"
+            "不复述Query、检索过程、框架说明或其他Agent原文。"
+        ),
+        "safety_boundary": str(profile.get("safety_boundary", SAFETY_BOUNDARY)),
+        "role_card_id": str(profile.get("role_card_id", "")),
+    }
+    if branch_rows:
+        result["discovery_branches"] = branch_rows
+    expansion = profile.get("reference_expansion_lenses", [])
+    if expansion:
+        result["reference_expansion_lenses"] = [
+            str(item)[:100] for item in list(expansion)[:3]
+        ]
+    if agent_id in QUERY_DOMINANT_BUSINESS_AGENT_IDS:
+        result["analysis_anchor"] = "query_dominant_military_divergence"
     return result
 
 
@@ -870,14 +1004,7 @@ def _find_swarm_specialist_contract(
     }
     if archetype not in role_catalog:
         raise ValueError(f"unknown winning swarm specialist archetype: {archetype}")
-    candidates: list[Mapping[str, Any]] = [value]
-    for key in ("input", "task_input", "winning_mechanism_input"):
-        child = value.get(key)
-        if isinstance(child, Mapping):
-            candidates.append(child)
-            nested = child.get("input")
-            if isinstance(nested, Mapping):
-                candidates.append(nested)
+    candidates = _swarm_payload_candidates(value)
     task: Mapping[str, Any] = {}
     for candidate in candidates:
         raw_task = candidate.get("specialist_task")
@@ -938,6 +1065,44 @@ def _find_swarm_specialist_contract(
         "allow_child_spawn": False,
     }
     return {"role_contract": role_contract, "assignment": assignment}
+
+
+def _swarm_payload_candidates(value: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    """Flatten only the governed wrapper objects used by model calls.
+
+    ``run_core_json`` adds an ``input`` wrapper around the business payload and
+    runtime message construction can add another one.  The old two-level scan
+    could therefore find ``specialist_task`` while missing the sibling
+    ``execution_profile_id`` one wrapper deeper.  Dynamic S3 tasks assigned
+    from an S4 catalog archetype were then rejected before Codex was launched.
+
+    Keep the traversal deliberately narrow: it follows known wrapper keys,
+    never arbitrary candidate/evidence objects, and ignores repeated objects.
+    """
+
+    wrapper_keys = (
+        "input",
+        "task_input",
+        "winning_mechanism_input",
+        "assignment",
+        "context",
+        "visible_context",
+    )
+    pending: list[Mapping[str, Any]] = [value]
+    candidates: list[Mapping[str, Any]] = []
+    seen: set[int] = set()
+    while pending:
+        candidate = pending.pop(0)
+        identity = id(candidate)
+        if identity in seen:
+            continue
+        seen.add(identity)
+        candidates.append(candidate)
+        for key in wrapper_keys:
+            child = candidate.get(key)
+            if isinstance(child, Mapping):
+                pending.append(child)
+    return candidates
 
 
 def _unique(values: Sequence[Any] | Any) -> list[Any]:

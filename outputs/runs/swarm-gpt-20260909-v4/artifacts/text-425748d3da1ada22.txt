@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=media.defense.gov · FACT SHEET STRATEGY FOR COUNTERING UNMANNED SYSTEMS.PDF
+source_url=https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF
+claim=美国国防部提出提升探测、跟踪和特征判定能力，采用集成开放模块化方案，降低成本不对称并建立现实条件下的效能指标。
+excerpt=
+retrieval=Hosted web search citation metadata

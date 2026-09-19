@@ -8,6 +8,10 @@ from equipment_deep_research.delivery.quality_gate import (
 from equipment_deep_research.orchestration.capability_portrait import (
     assemble_capability_portrait_modules,
 )
+from equipment_deep_research.agents.workflows.reporting_support import (
+    _report_chapter_mechanical_issues,
+    _report_table_issues,
+)
 
 
 def _governed_capability_portrait(name: str) -> str:
@@ -46,6 +50,134 @@ def test_current_prefix_is_not_misread_as_a_dangling_conditional() -> None:
         "激光复合防空车转入漏网目标精确毁伤。"
     )
     assert _has_dangling_report_fragment("当导航欺骗识别晚于航路偏差形成。")
+
+
+def test_project_portrait_table_requires_four_columns_and_written_effect() -> None:
+    valid = """### （一）装备图像概述
+| 武器装备 | 核心技术 | 形成能力 | 作战概念与主要效果 |
+|---|---|---|---|
+| 关系锁定滑翔弹 | 关系导航 | 拒止环境接敌 | 以地形和目标关系校验航迹，末段闭合后实施打击 |
+"""
+    assert _report_table_issues(valid, project_mode=True) == []
+
+    blank_effect = valid.replace(
+        "以地形和目标关系校验航迹，末段闭合后实施打击",
+        "",
+    )
+    assert any(
+        "作战概念与主要效果为空" in issue
+        for issue in _report_table_issues(blank_effect, project_mode=True)
+    )
+
+    for value, label in (
+        ("关系导航", "核心技术为空"),
+        ("拒止环境接敌", "形成能力为空"),
+    ):
+        blank_cell = valid.replace(value, "")
+        assert any(
+            label in issue
+            for issue in _report_table_issues(blank_cell, project_mode=True)
+        )
+
+    legacy_five_columns = valid.replace(
+        "| 武器装备 | 核心技术 | 形成能力 | 作战概念与主要效果 |",
+        "| 装备系统方向 | 装备平台与方案 | 核心技术 | 形成能力 | 作战概念与主要效果 |",
+    ).replace(
+        "|---|---|---|---|",
+        "|---|---|---|---|---|",
+    ).replace(
+        "| 关系锁定滑翔弹 | 关系导航 | 拒止环境接敌 |",
+        "| 关系锁定滑翔弹 | 关系锁定滑翔弹 | 关系导航 | 拒止环境接敌 |",
+    )
+    assert any(
+        "表头必须合并为四列" in issue
+        for issue in _report_table_issues(legacy_five_columns, project_mode=True)
+    )
+
+    missing_separator = valid.replace("|---|---|---|---|\n", "")
+    assert any(
+        "缺少合法Markdown分隔行" in issue
+        for issue in _report_table_issues(missing_separator, project_mode=True)
+    )
+
+
+def test_project_architecture_rejects_equipment_name_rotation_of_one_skeleton() -> None:
+    names = [
+        "玄垣巡空微波拦截炮",
+        "蜂群并发拦巡子母弹",
+        "导电纤维云幕拦截弹",
+        "环翼折叠捕网拦截机",
+        "纤幕滑翔拦阻飞体",
+        "街谷乱流封控拒止弹",
+        "脉冲涡环拒巡迫降炮",
+    ]
+    report = "## 三、总体方案\n\n### （一）总体架构\n\n" + "\n".join(
+        f"- **{name}**：按{name}配置与任务结果直接相关的载荷、感知火控和接口；"
+        "不把未改变交战结果的公共节点另列为主体。"
+        for name in names
+    )
+
+    issues = _report_chapter_mechanical_issues(report, "chapter_3_solution")
+
+    assert any("装备条目近重复" in issue for issue in issues)
+
+
+def test_project_architecture_rejects_two_equipment_name_rotation() -> None:
+    report = """## 三、总体方案
+
+### （一）总体架构
+
+- **玄垣巡空微波拦截炮**：按玄垣巡空微波拦截炮配置与任务结果直接相关的载荷、感知火控和接口；不把未改变交战结果的公共节点另列为主体。
+- **蜂群并发拦巡子母弹**：按蜂群并发拦巡子母弹配置与任务结果直接相关的载荷、感知火控和接口；不把未改变交战结果的公共节点另列为主体。
+"""
+
+    issues = _report_chapter_mechanical_issues(report, "chapter_3_solution")
+
+    assert any("装备条目近重复" in issue for issue in issues)
+
+
+@pytest.mark.parametrize(
+    ("chapter", "heading", "sentence"),
+    [
+        (
+            "chapter_2_contribution",
+            "（三）体系贡献率分析",
+            "通过分布式感知、弹性协同和多样化任务效应提升复杂环境下的发现、压制抵抗、反制与任务续接能力",
+        ),
+        (
+            "chapter_2_indicators",
+            "（四）主要战技指标",
+            "指标画像尚未由研究专业研判形成：须回到前置质量门，依据直接战果和失效边界给出测量轴",
+        ),
+    ],
+)
+def test_project_portrait_rejects_repeated_process_placeholder(
+    chapter: str,
+    heading: str,
+    sentence: str,
+) -> None:
+    report = (
+        f"## 二、项目画像\n\n### {heading}\n\n"
+        f"- **玄垣巡空微波拦截炮**：{sentence}。\n"
+        f"- **蜂群并发拦巡子母弹**：{sentence}。"
+    )
+
+    issues = _report_chapter_mechanical_issues(report, chapter)
+
+    assert any("机械化重复短语" in issue or "装备条目近重复" in issue for issue in issues)
+
+
+def test_project_architecture_allows_shared_terms_with_distinct_causal_content() -> None:
+    report = """## 三、总体方案
+
+### （一）总体架构
+
+- **微波拦截炮**：车载相控阵把火控航迹转换为窄扇区照射许可，频率失配时终止发射，直接压低入口批次的电子部件可用率。
+- **捕网拦截机**：折叠环翼在目标侧后方展开捕网并保持低闭合速度，目标质量超限时脱离，直接阻断单架无人机继续前飞。
+- **纤维云幕弹**：在来袭航迹前方释放导电纤维形成短时空间云幕，风场超界时禁止布撒，以遮断特定频段链路而非毁伤平台。
+"""
+
+    assert _report_chapter_mechanical_issues(report, "chapter_3_solution") == []
 
 
 def _content_contract_report(names: list[str], portraits: str = "") -> str:
@@ -93,6 +225,35 @@ def test_quality_gate_recognizes_project_report_semantics() -> None:
     assert result.military_value.indicators["has_scenarios"] is True
     assert result.novelty.indicators["has_comparison"] is True
     assert result.novelty.indicators["has_breakthrough"] is True
+
+
+def test_quality_gate_blocks_visible_project_writing_instructions() -> None:
+    report = """# 动态蜂群项目论证报告
+
+## 二、项目画像
+
+### （二）作战运用模式
+
+#### 1. 作战运用流程
+
+按任务准备与装订、平台部署与进入、目标发现确认、火力分配、交战毁伤、效果评估和再组织分阶段说明装备使用方式与指标口径。
+
+#### 2. 链路闭环分析
+
+围绕时间链、信息与精度链、火力链、毁伤评估链分析单点短板、级联风险和制胜机理。
+"""
+
+    result = ReportQualityGate().validate(
+        report,
+        {
+            "execution_profile_id": "winning_swarm_dynamic_v2",
+            "report_template_mode": "project_argument_v1",
+            "delivery_owned_h1": True,
+        },
+    )
+
+    assert result.passed is False
+    assert "正式报告仍包含写作指令或模板占位句" in result.publication_blockers
 
 
 def test_capability_image_parser_ignores_english_direction_header() -> None:
@@ -981,7 +1142,8 @@ def test_project_argument_template_structure_and_compact_gate_payload() -> None:
     )
     fragmented_result = ReportQualityGate().validate(fragmented, metadata)
     assert fragmented_result.format_integrity.indicators["has_complete_paragraphs"] is False
-    assert fragmented_result.passed is True
+    assert fragmented_result.passed is False
+    assert any("残句" in item for item in fragmented_result.publication_blockers)
 
     complete_target_sentence = report.replace(
         "国际军事竞争加速无人化远程精确火力发展。",
@@ -1050,7 +1212,8 @@ def test_project_argument_template_structure_and_compact_gate_payload() -> None:
     )
     clipped_result = ReportQualityGate().validate(clipped_table, metadata)
     assert clipped_result.format_integrity.indicators["has_complete_paragraphs"] is False
-    assert clipped_result.passed is True
+    assert clipped_result.passed is False
+    assert any("截断" in item for item in clipped_result.publication_blockers)
 
     equipment_list_table = report.replace(
         "分散编组、发射、突防、交战与毁伤评估 |",

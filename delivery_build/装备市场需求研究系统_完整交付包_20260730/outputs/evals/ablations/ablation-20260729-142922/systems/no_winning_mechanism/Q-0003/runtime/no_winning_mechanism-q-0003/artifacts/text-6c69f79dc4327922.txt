@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=https://www.army.mil/article-amp/291321/portfolio_acquisition_executive_for_fires_hosts_precision_strike_missile_increment_4_industry_day?utm_source=openai
-source_url=https://www.army.mil/article-amp/291321/portfolio_acquisition_executive_for_fires_hosts_precision_strike_missile_increment_4_industry_day
-claim=PrSM Increment 4公开目标为1000公里以上、M142 HIMARS兼容，并面向移动海上和可迁移陆上目标，计划推进竞争飞行验证。
-excerpt=
-retrieval=Hosted web search citation metadata

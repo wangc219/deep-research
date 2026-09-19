@@ -1,0 +1,15 @@
+{
+  "artifact_ref": "html:c39507d4fcc67a99",
+  "connect_ip": "198.18.0.87",
+  "content_path": "html-c39507d4fcc67a99.html",
+  "content_type": "text/html",
+  "encoding": null,
+  "evidence_id": "ev-system_confrontation-web-8d325b5069ef",
+  "fetch_cache_hit": true,
+  "final_url": "https://www.darpa.mil/news/2026/rockn-enables-gps-free-operations",
+  "kind": "html",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "c39507d4fcc67a99a1140d33f4712241ff83437d999a495614ef6beef1312e62",
+  "url": "https://www.darpa.mil/news/2026/rockn-enables-gps-free-operations"
+}

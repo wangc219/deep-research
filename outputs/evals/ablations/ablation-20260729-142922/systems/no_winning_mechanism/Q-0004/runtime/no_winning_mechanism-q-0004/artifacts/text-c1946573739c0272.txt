@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=Engineering Resilient Fire Support in LSCO: Electromagnetic Warfare Considerations
-source_url=https://www.lineofdeparture.army.mil/Journals/Field-Artillery/Field-Artillery-Archive/Field-Artillery-2026-E-Edition/Engineering-Resilient-Fire-Support-in/
-claim=韧性火力资料支持在大规模作战和电磁对抗下不能依赖单一路径通信，火力流程需要退化环境下的互操作和多路径续接。
-excerpt=
-retrieval=Hosted web search citation metadata

@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=media.defense.gov · FACT SHEET STRATEGY FOR COUNTERING UNMANNED SYSTEMS.PDF
+source_url=https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF
+claim=DoD 反无人战略指出无人系统更廉价、更自主、更网络化并可能蜂群化，要求力量设计降低脆弱性并提升韧性。
+excerpt=
+retrieval=Hosted web search citation metadata

@@ -1,0 +1,45 @@
+{
+  "checkpoint": {
+    "budget_remaining": {
+      "baseline_tasks": 4,
+      "finalize_tasks": 1,
+      "rounds": 2
+    },
+    "checkpoint_id": "run-checkpoint-swarm-deepseek-20260909-v3",
+    "completed_task_ids": [],
+    "config_fingerprint": "sha256:eddfb7f0342ef5c30b685cce9b0ff3ed3185e971ae3cb07794808366630e85b2",
+    "created_at": "2026-09-09T11:25:27.806303+00:00",
+    "mode": "real",
+    "pending_task_ids": [
+      "baseline:international_situation",
+      "baseline:case_research",
+      "baseline:operational_employment",
+      "baseline:weapon_equipment",
+      "finalize:winning-report"
+    ],
+    "research_route": "war_case_learning",
+    "resolved_route": "war_case_learning",
+    "resume_count": 0,
+    "round_index": 1,
+    "run_id": "swarm-deepseek-20260909-v3",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "international_situation",
+      "case_research",
+      "operational_employment",
+      "weapon_equipment"
+    ],
+    "source_materials": [],
+    "status": "running",
+    "task_statuses": {
+      "baseline:case_research": "pending",
+      "baseline:international_situation": "pending",
+      "baseline:operational_employment": "pending",
+      "baseline:weapon_equipment": "pending",
+      "finalize:winning-report": "pending"
+    },
+    "topic": "俄乌战争无人机与反无人机作战案例对装备需求的可迁移启示",
+    "worker_reports": []
+  },
+  "savepoint_id": "checkpoint-c5b26d91af898c7d6b444394"
+}

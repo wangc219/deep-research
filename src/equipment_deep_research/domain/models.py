@@ -602,6 +602,8 @@ class WinningHypothesis:
     independence_thesis: str = ""
     project_function: str = ""
     reference_overview: str = ""
+    naming_style: str = ""
+    core_disruptive_difference: str = ""
     naming_rationale: str = ""
     decisive_advantage_thesis: str = ""
     cross_query_distinction: str = ""
@@ -680,7 +682,10 @@ class SpecialistContribution:
     original_paradigm: str = ""
     disruptive_shift: str = ""
     independence_thesis: str = ""
+    naming_style: str = ""
+    core_disruptive_difference: str = ""
     naming_rationale: str = ""
+    concise_winning_summary: str = ""
     decisive_advantage_thesis: str = ""
     cross_query_distinction: str = ""
     evidence_boundary: str = ""
@@ -1009,7 +1014,46 @@ class CapabilityImageItem:
     capability_outcome: str = ""
     winning_mechanism: str = ""
     verification_plan: list[str] = field(default_factory=list)
+    system_contribution_thesis: str = ""
     indicator_portrait: str = ""
+    portrait_authoring_status: str = "legacy_v1"
+    capability_portrait_modules: dict[str, Any] = field(default_factory=dict)
+    portrait_module_character_counts: dict[str, int] = field(default_factory=dict)
+    portrait_quality_warnings: list[str] = field(default_factory=list)
+    portrait_quality_contract_version: str = ""
+    # Weapon-facing battlefield dimensions are kept separate from the prose
+    # portrait so the UI can compare the primary and secondary effects
+    # without forcing S6 to encode them in the overview paragraph.
+    capability_classification: dict[str, Any] = field(default_factory=dict)
+    # Deterministic card-local calibration details used by the UI.  Keeping
+    # this additive preserves compatibility with historical artifacts while
+    # making the displayed confidence auditable without exposing S1–S6 traces.
+    confidence_components: dict[str, Any] = field(default_factory=dict)
+    # S6 provenance and identity are additive so cards can be checked again
+    # after persistence/API projection; older artifacts simply leave them
+    # empty.
+    hypothesis_id: str = ""
+    card_binding_id: str = ""
+    source_hypothesis_title: str = ""
+    primary_equipment_identity: str = ""
+    semantic_consistency_check: dict[str, Any] = field(default_factory=dict)
+    verification_status: str = "assessed"
+    confidence_limited: bool = False
+    # S5/S6 equipment-specific semantic spine.  These fields preserve the
+    # weapon's role, direct effect and causal chain for downstream report
+    # writing instead of forcing Reporter to reconstruct them from generic
+    # mission/effect labels.
+    unique_operational_role: str = ""
+    target_and_direct_effect: str = ""
+    mechanism_chain: list[str] = field(default_factory=list)
+    non_substitutable_difference: str = ""
+    adversary_adaptation: str = ""
+    failure_boundary: str = ""
+    # Candidate-local evidence roles. ``background`` may be shared across
+    # cards, while ``direct`` must contain material whose claim/excerpt names
+    # or otherwise entails this equipment identity.
+    evidence_binding: dict[str, Any] = field(default_factory=dict)
+    query_domain_mode: str = ""
 
     def validate(self) -> None:
         required = [
@@ -1033,10 +1077,23 @@ class CapabilityImageItem:
 class AuditResult:
     audit_id: str
     status: str
-    checks: dict[str, bool]
+    checks: dict[str, Any]
     comments: list[str]
     created_at: str = field(default_factory=now_iso)
     schema_version: str = "1.0"
+    # The five substantive checks are kept separate from the legacy
+    # mechanical fields in ``checks``.  These additive fields let the API/UI
+    # explain why a result is publishable without breaking historical audit
+    # artifacts that only contain the old boolean map.
+    substantive_checks: dict[str, bool] = field(default_factory=dict)
+    mechanical_diagnostics: dict[str, bool] = field(default_factory=dict)
+    hard_blockers: list[str] = field(default_factory=list)
+    advisories: list[str] = field(default_factory=list)
+    # ``audit_source`` makes the final decision authority explicit.  New
+    # runs use the independent model; the legacy value keeps old serialized
+    # AuditResult artifacts readable.
+    audit_source: str = "legacy"
+    model_review: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -1062,3 +1119,56 @@ class TraceEvent:
     payload: dict[str, Any] = field(default_factory=dict)
     created_at: str = field(default_factory=now_iso)
     schema_version: str = "1.0"
+
+
+@dataclass(frozen=True)
+class RetrievalEvent:
+    """Memory/prompt retrieval attribution for one S1--S6 model turn.
+
+    The event is intentionally additive to ``TraceEvent``.  Persisted traces
+    still use the existing append-only envelope, while callers that need a
+    typed contract (replay, analytics or API clients) can construct this
+    value directly.  ``selected`` and ``applied`` describe retrieval; the
+    remaining booleans/outcome are only claims about model usage after the
+    turn has completed.
+    """
+
+    retrieval_event_id: str
+    run_id: str
+    stage: str
+    memory_id: str = ""
+    selected: bool = False
+    applied: bool = False
+    adopted: bool = False
+    contradicted: bool = False
+    outcome: str = "inconclusive"
+    quality_delta: float | None = None
+    token_cost: int | None = None
+    cost_usd: float | None = None
+    latency_ms: float | None = None
+    query_hash: str = ""
+    evidence_snapshot_hash: str = ""
+    upstream_packet_hash: str = ""
+    prompt_bundle_hash: str = ""
+    memory_snapshot_hash: str = ""
+    agent_id: str = ""
+    phase: str = ""
+    memory_ids: list[str] = field(default_factory=list)
+    prompt_section_ids: list[str] = field(default_factory=list)
+    evidence_ids: list[str] = field(default_factory=list)
+    upstream_packet_ids: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
+    created_at: str = field(default_factory=now_iso)
+    schema_version: str = "1.0"
+    # Additive enterprise scope/attribution fields are kept after the legacy
+    # fields so positional construction by older embedders remains valid.
+    trace_id: str = ""
+    tenant_id: str = ""
+    workspace_id: str = ""
+    project_id: str = ""
+    profile_id: str = ""
+    route: str = ""
+    stage_scope: list[str] = field(default_factory=list)
+    selected_memory_ids: list[str] = field(default_factory=list)
+    applied_memory_ids: list[str] = field(default_factory=list)
+    truncation_reason: str = ""

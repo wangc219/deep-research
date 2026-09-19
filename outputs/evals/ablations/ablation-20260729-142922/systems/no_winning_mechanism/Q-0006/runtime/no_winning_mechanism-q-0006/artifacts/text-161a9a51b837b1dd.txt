@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=army.mil · precision strike missile increment 1 achieves milestone c approval
-source_url=https://www.army.mil/article/286878/precision_strike_missile_increment_1_achieves_milestone_c_approval
-claim=PrSM Increment 1已获Milestone C，进入生产部署阶段，射程公开口径为大于400公里，用于替代ATACMS并打击、压制或摧毁A2/AD和高价值目标。
-excerpt=
-retrieval=Hosted web search citation metadata

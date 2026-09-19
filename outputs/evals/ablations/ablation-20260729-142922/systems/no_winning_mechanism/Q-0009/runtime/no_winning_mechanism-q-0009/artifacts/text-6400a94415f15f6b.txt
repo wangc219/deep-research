@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=jcs.mil · jt partners course31jan20.pdf
-source_url=https://www.jcs.mil/Portals/36/Documents/Doctrine/training/jts/jt_partners_course31jan20.pdf?ver=ODSIVx1liGdd9-0zXKom9Q%3D%3D
-claim=联合目标相关资料以F2T2EA描述动态/时敏目标交战链，支撑将TST视为发现、定位、跟踪、瞄准、打击、评估闭环。
-excerpt=
-retrieval=Hosted web search citation metadata

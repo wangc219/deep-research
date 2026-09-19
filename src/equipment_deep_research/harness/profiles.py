@@ -7,7 +7,7 @@ from typing import Any
 
 import yaml
 
-from equipment_deep_research.agents.contracts import OBJECT_SCOPE_CATALOG, TOOL_CATALOG
+from equipment_deep_research.contracts.catalog import OBJECT_SCOPE_CATALOG, TOOL_CATALOG
 from equipment_deep_research.domain.identifiers import validate_internal_identifier
 
 
@@ -24,6 +24,14 @@ PROFILE_BUDGET_KEYS = frozenset(
         "max_concurrency",
         "max_waves",
         "minimum_expected_gain",
+        # Deep-divergence runs use stage-specific caps which are consumed by
+        # the deep-research coordinator rather than the generic task budget
+        # adapter.  Keep them in the profile schema so the catalog can load
+        # the profile, while ``task_budget`` below continues to expose only
+        # harness-native execution limits.
+        "max_s3_slots",
+        "max_s4_slots",
+        "max_candidates",
     }
 )
 
@@ -53,7 +61,9 @@ class HarnessProfile:
             "max_dynamic_instances": 21,
             "min_mission_graph_instances": 21,
             "target_mission_graph_instances": 21,
-            "max_concurrency": 6,
+            # Dynamic winning-swarm v2 uses eight parallel creative seats;
+            # legacy profiles remain at their lower configured values.
+            "max_concurrency": 8,
             "max_waves": 3,
             "minimum_expected_gain": 1.0,
         }

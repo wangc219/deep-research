@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=gao.gov · gao 21 320sp
-source_url=https://www.gao.gov/products/gao-21-320sp
-claim=GAO公开资料支持DOD依赖GPS/PNT并发展替代PNT，同时指出GPS失效、干扰或欺骗会影响飞机、舰船、弹药、车辆和地面人员。
-excerpt=
-retrieval=Hosted web search citation metadata

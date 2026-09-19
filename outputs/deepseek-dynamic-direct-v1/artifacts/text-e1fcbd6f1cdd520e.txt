@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=media.defense.gov · FACT SHEET STRATEGY FOR COUNTERING UNMANNED SYSTEMS.PDF
+source_url=https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF
+claim=反无人系统需以跨域分层的体系化架构处理，并覆盖探测、软硬杀伤与确认环节，自主末端被单列为难点。
+excerpt=
+retrieval=Hosted web search citation metadata

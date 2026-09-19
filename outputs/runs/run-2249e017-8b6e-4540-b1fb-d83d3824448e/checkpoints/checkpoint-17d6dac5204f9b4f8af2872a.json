@@ -1,0 +1,42 @@
+{
+  "checkpoint": {
+    "budget_remaining": {
+      "baseline_tasks": 3,
+      "finalize_tasks": 1,
+      "rounds": 2
+    },
+    "checkpoint_id": "run-checkpoint-run-2249e017-8b6e-4540-b1fb-d83d3824448e",
+    "completed_task_ids": [],
+    "config_fingerprint": "sha256:b26b85d19d0d878bf00946669706f85b74e7f629f563af8c807e7905d3459906",
+    "created_at": "2026-09-03T10:43:34.954862+00:00",
+    "mode": "real",
+    "pending_task_ids": [
+      "baseline:technology_radar",
+      "baseline:system_confrontation",
+      "baseline:weapon_equipment",
+      "finalize:winning-report"
+    ],
+    "research_route": "auto",
+    "resolved_route": "new_winning_mechanism",
+    "resume_count": 0,
+    "round_index": 1,
+    "run_id": "run-2249e017-8b6e-4540-b1fb-d83d3824448e",
+    "schema_version": "1.0",
+    "selected_agent_ids": [
+      "technology_radar",
+      "system_confrontation",
+      "weapon_equipment"
+    ],
+    "source_materials": [],
+    "status": "running",
+    "task_statuses": {
+      "baseline:system_confrontation": "pending",
+      "baseline:technology_radar": "pending",
+      "baseline:weapon_equipment": "pending",
+      "finalize:winning-report": "pending"
+    },
+    "topic": "无人低空远程精确打击全链条智能制胜机理研究",
+    "worker_reports": []
+  },
+  "savepoint_id": "checkpoint-17d6dac5204f9b4f8af2872a"
+}

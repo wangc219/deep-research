@@ -1,0 +1,388 @@
+[
+  {
+    "bundle_id": "claims-42e2d45402c3",
+    "claims": [
+      {
+        "claim_id": "claim-daf1e82e7baa",
+        "claim_type": "fact",
+        "confidence": 0.73,
+        "counter_evidence": [
+          "公开叙事同时强调“分布式低成本无人/反无人可规模化”与“C2共享、分类、接口和训练不足仍限制闭环”，两者在通信受限场景下存在张力。",
+          "部分材料将AI/自主蜂群描述为能缓解通信受限，但OFFSET等项目仍依赖人机界面、试验环境和通信架构；公开证据不能证明其可在强对抗DDIL环境中稳定形成战斗闭环。",
+          "反无人系统常宣称多传感器多效应器集成，但公开参数多是组件和采购口径，缺少在低空杂波、群目标、电子干扰和友邻空域条件下的可比性能数据。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-5fae80c02f40",
+          "ev-weapon_equipment-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.gao.gov/products/gao-25-106454",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "任务复述：任务对象是前沿分散节点在通信受限、态势不完整、目标窗口短、战果回传受限条件下，对小型低成本高频无人目标、分散短暂暴露目标实施可验证拦截、压制或低成本精确火力；威胁形态以小型UAS/FPV/蜂群、诱饵消耗、协同拥塞和评估延迟为核心；制胜矛盾不是单件火力射程，而是感知—分配—效应—评估闭环在DDIL通信下能否退化运行。"
+      },
+      {
+        "claim_id": "claim-ac76e696b8ed",
+        "claim_type": "hypothesis",
+        "confidence": 0.73,
+        "counter_evidence": [
+          "公开叙事同时强调“分布式低成本无人/反无人可规模化”与“C2共享、分类、接口和训练不足仍限制闭环”，两者在通信受限场景下存在张力。",
+          "部分材料将AI/自主蜂群描述为能缓解通信受限，但OFFSET等项目仍依赖人机界面、试验环境和通信架构；公开证据不能证明其可在强对抗DDIL环境中稳定形成战斗闭环。",
+          "反无人系统常宣称多传感器多效应器集成，但公开参数多是组件和采购口径，缺少在低空杂波、群目标、电子干扰和友邻空域条件下的可比性能数据。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-5fae80c02f40",
+          "ev-weapon_equipment-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.gao.gov/products/gao-25-106454",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "结论1：公开基线显示，美国CJADC2/JADC2方向仍受跨军种数据共享、分类、项目割裂和经验沉淀不足制约。军事任务影响：分布式低成本火力与反无人装备不能假设持续获得上级综合态势或跨域分配指令，本体必须具备局部目标确认、交战授权接口、降级协同和有限战果记录能力。证据边界：GAO证据支持C2数据共享和组织框架问题，不直接证明某型火力装备在实战中闭环失败。失效条件：若具体战术场景拥有稳定专用网、预设空域管制和本地一体化C2，该结论对装备本体自治需求的约束会下降。"
+      },
+      {
+        "claim_id": "claim-47ae8c50d361",
+        "claim_type": "hypothesis",
+        "confidence": 0.73,
+        "counter_evidence": [
+          "公开叙事同时强调“分布式低成本无人/反无人可规模化”与“C2共享、分类、接口和训练不足仍限制闭环”，两者在通信受限场景下存在张力。",
+          "部分材料将AI/自主蜂群描述为能缓解通信受限，但OFFSET等项目仍依赖人机界面、试验环境和通信架构；公开证据不能证明其可在强对抗DDIL环境中稳定形成战斗闭环。",
+          "反无人系统常宣称多传感器多效应器集成，但公开参数多是组件和采购口径，缺少在低空杂波、群目标、电子干扰和友邻空域条件下的可比性能数据。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-5fae80c02f40",
+          "ev-weapon_equipment-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.gao.gov/products/gao-25-106454",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "结论2：公开反无人装备案例以体系集成为主，如M-LIDS/Coyote等依赖雷达、EO/IR、电子战、FAAD C2、mesh-net IP radios等组成链路，说明现有低空反无人并非单一拦截器问题。军事任务影响：通信退化时，探测器、射手、电子压制和拦截器之间的链路质量会直接决定漏击、重击、误击和弹药浪费；新需求应优先核验“本地闭环最小作战单元”而非远程集中调度。证据边界：公开资料可确认系统组成和Group 1-3 UAS拦截定位，但缺少受干扰、拥塞、断网时的命中率、误报率和补击规则。失效条件：若目标为Group 4-5或高速高空UAS，M-LIDS/Coyote类近程小UAS防御边界不再覆盖。"
+      },
+      {
+        "claim_id": "claim-6601d9d9c1ba",
+        "claim_type": "hypothesis",
+        "confidence": 0.73,
+        "counter_evidence": [
+          "公开叙事同时强调“分布式低成本无人/反无人可规模化”与“C2共享、分类、接口和训练不足仍限制闭环”，两者在通信受限场景下存在张力。",
+          "部分材料将AI/自主蜂群描述为能缓解通信受限，但OFFSET等项目仍依赖人机界面、试验环境和通信架构；公开证据不能证明其可在强对抗DDIL环境中稳定形成战斗闭环。",
+          "反无人系统常宣称多传感器多效应器集成，但公开参数多是组件和采购口径，缺少在低空杂波、群目标、电子干扰和友邻空域条件下的可比性能数据。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-5fae80c02f40",
+          "ev-weapon_equipment-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.gao.gov/products/gao-25-106454",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "结论3：低成本精确火力与反无人共享闭环需求包括本地感知、目标去重、资源分配、效应确认和补击判断；但专用失效边界不同。低成本精确火力主要受目标识别可信度、坐标更新时效、末端引导与附带损伤控制约束；反无人主要受低空杂波、目标数量、电子干扰、非协同目标识别、空域安全和交战成本约束。军事任务影响：不能把“低成本弹药规模化”直接等同于“反蜂群能力”，否则会在高频低价值目标面前形成错误交换比。证据边界：GAO C-UAS概述和CNAS报告支持多传感器、多效应器、被动防护与C2集成必要性，但不提供统一性能阈值。失效条件：若目标可被电子压制或被动防护隔离而无需物理拦截，火力消耗需求会显著降低。"
+      },
+      {
+        "claim_id": "claim-a56111708925",
+        "claim_type": "hypothesis",
+        "confidence": 0.73,
+        "counter_evidence": [
+          "公开叙事同时强调“分布式低成本无人/反无人可规模化”与“C2共享、分类、接口和训练不足仍限制闭环”，两者在通信受限场景下存在张力。",
+          "部分材料将AI/自主蜂群描述为能缓解通信受限，但OFFSET等项目仍依赖人机界面、试验环境和通信架构；公开证据不能证明其可在强对抗DDIL环境中稳定形成战斗闭环。",
+          "反无人系统常宣称多传感器多效应器集成，但公开参数多是组件和采购口径，缺少在低空杂波、群目标、电子干扰和友邻空域条件下的可比性能数据。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-5fae80c02f40",
+          "ev-weapon_equipment-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.gao.gov/products/gao-25-106454",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "结论4：公开材料显示中美均重视无人集群、分布式作战和反无人，但中国公开体系更多体现“无人化、智能化、集群化”和大量低成本UAS/FPV运用趋势，公开反无人能力边界仍存在体系集成、抗蜂群和低成本持续防护压力。军事任务影响：后续装备需求应把对手数量饱和、链路攻击、地形遮蔽和诱骗作为默认反适应，而不是只对单架无人机设计交战流程。证据边界：关于中国百万级无人机采购、具体列装数量和实战性能多来自二级分析或公开报道汇总，需谨慎核验；可支持趋势判断，不支持精确规模和成熟度断言。失效条件：若对手无人装备实际受训练、后勤、电磁管制或目标识别限制，规模饱和压力可能低于公开叙事。"
+      }
+    ],
+    "packet_id": "packet-weapon_equipment",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-978ac9dc8329",
+    "claims": [
+      {
+        "claim_id": "claim-913409c78df2",
+        "claim_type": "fact",
+        "confidence": 0.86,
+        "counter_evidence": [
+          "SATCOM与远程传感/武器控制的韧性需求，和EABO对“assured communications”不再成立的判断形成张力：前者说明体系仍需可恢复回传，后者说明装备不能把回传当作任务前提。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-5824f31b34e3",
+          "ev-operational_employment-web-1f3003a466a5"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://files.gao.gov/reports/GAO-25-107034/index.html"
+        ],
+        "text": "通信受限时，决定性瓶颈不是单件火力性能，而是“发现-分配-处置-复核”闭环是否能在断链、低带宽和干扰下继续成立；对应三层九项中的感知、协同、火力、评估四项的任务闭环能力。"
+      },
+      {
+        "claim_id": "claim-6f73f353a862",
+        "claim_type": "hypothesis",
+        "confidence": 0.86,
+        "counter_evidence": [
+          "SATCOM与远程传感/武器控制的韧性需求，和EABO对“assured communications”不再成立的判断形成张力：前者说明体系仍需可恢复回传，后者说明装备不能把回传当作任务前提。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-5824f31b34e3",
+          "ev-operational_employment-web-1f3003a466a5"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://files.gao.gov/reports/GAO-25-107034/index.html"
+        ],
+        "text": "低成本精确火力的场景边界由平台生存性和再任务速度决定：若平台不能机动、隐蔽、快速转移并在局部自治下完成再打击，就无法支撑持续压制或拒止；对应三层九项中的火力与抗毁/保障恢复。"
+      },
+      {
+        "claim_id": "claim-5138902cbffd",
+        "claim_type": "fact",
+        "confidence": 0.86,
+        "counter_evidence": [
+          "SATCOM与远程传感/武器控制的韧性需求，和EABO对“assured communications”不再成立的判断形成张力：前者说明体系仍需可恢复回传，后者说明装备不能把回传当作任务前提。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-5824f31b34e3",
+          "ev-operational_employment-web-1f3003a466a5"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://files.gao.gov/reports/GAO-25-107034/index.html"
+        ],
+        "text": "反无人与精确火力共享的核心需求是本地感知、去中心化任务分发、抗毁链路和局部战果确认；但反无人更受小目标、低空、高机动和电磁副作用约束，失效边界比常规精确打击更窄。"
+      },
+      {
+        "claim_id": "claim-20faef01f45f",
+        "claim_type": "fact",
+        "confidence": 0.86,
+        "counter_evidence": [
+          "SATCOM与远程传感/武器控制的韧性需求，和EABO对“assured communications”不再成立的判断形成张力：前者说明体系仍需可恢复回传，后者说明装备不能把回传当作任务前提。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-5824f31b34e3",
+          "ev-operational_employment-web-1f3003a466a5"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://files.gao.gov/reports/GAO-25-107034/index.html"
+        ],
+        "text": "公开材料一致指向分布式、可替代节点和边缘自治优先于高依赖中心回传；这改变装备选择标准，优先筛选能在通信退化下继续生成目标数据、执行授权和完成最小BDA的体系。"
+      }
+    ],
+    "packet_id": "packet-operational_employment",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-d5cf0cba42e6",
+    "claims": [
+      {
+        "claim_id": "claim-8cc56ac141e4",
+        "claim_type": "fact",
+        "confidence": 0.86,
+        "counter_evidence": [
+          "公开材料一方面强调开放标准、共同框架和跨域共享，另一方面现实项目仍呈现专有接口和军种分裂实施，这使互操作与快速落地之间存在未闭合张力。",
+          "公开材料一方面强调分布式自治和本地决策，另一方面仍保留人类监督与授权链条，这使“本地闭环到什么程度”为未决边界。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-8952c3805d5a",
+          "ev-system_confrontation-web-5341b3aa85f5"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "https://www.marines.mil/Force-Design/linkId/100000118135009/"
+        ],
+        "text": "1) 该题的核心判断是：通信受限时，分布式低成本精确火力与反无人能力的胜负，不取决于单个射手或单个探测器性能，而取决于N1-N5闭环能否在低带宽、低时延、低置信度条件下保持可验证。军事任务价值在于决定拒止、压制和持续反制能否形成稳定战果。证据边界：公开材料只能支撑体系级需求和断点，不足以推出具体平台构型。失效条件：发现、识别、授权或战果回传任一环节持续退化。"
+      },
+      {
+        "claim_id": "claim-ac58e62d5282",
+        "claim_type": "fact",
+        "confidence": 0.86,
+        "counter_evidence": [
+          "公开材料一方面强调开放标准、共同框架和跨域共享，另一方面现实项目仍呈现专有接口和军种分裂实施，这使互操作与快速落地之间存在未闭合张力。",
+          "公开材料一方面强调分布式自治和本地决策，另一方面仍保留人类监督与授权链条，这使“本地闭环到什么程度”为未决边界。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-8952c3805d5a",
+          "ev-system_confrontation-web-5341b3aa85f5"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "https://www.marines.mil/Force-Design/linkId/100000118135009/"
+        ],
+        "text": "2) 低成本精确火力与反无人任务共享感知、协同、评估三段闭环，但失效边界不同：前者更依赖目标定位、PNT替代和补打节奏，后者更受多目标饱和、误判与并发接战负荷约束。军事任务价值在于避免把同一套闭环误当作通用解，从而低估不同任务的补链需求。证据边界：公开来源支持共享框架，不支持具体交战门槛。失效条件：把“可发现”误判为“可交战”，或把“可拦截”误判为“可持续消耗”。"
+      },
+      {
+        "claim_id": "claim-6bfcc7e0a053",
+        "claim_type": "fact",
+        "confidence": 0.86,
+        "counter_evidence": [
+          "公开材料一方面强调开放标准、共同框架和跨域共享，另一方面现实项目仍呈现专有接口和军种分裂实施，这使互操作与快速落地之间存在未闭合张力。",
+          "公开材料一方面强调分布式自治和本地决策，另一方面仍保留人类监督与授权链条，这使“本地闭环到什么程度”为未决边界。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-8952c3805d5a",
+          "ev-system_confrontation-web-5341b3aa85f5"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "https://www.marines.mil/Force-Design/linkId/100000118135009/"
+        ],
+        "text": "3) 在通信降级条件下，装备本体必须承担更多本地化判断：多源融合、最低必要数据摘要、任务式授权边界和本地停火条件。军事任务价值在于维持分散节点在失链情况下仍可执行局部打击、压制或驱离。证据边界：公开资料支持分布式作战和降级C2方向，不支持对具体自治深度作结论。失效条件：外部态势完全不可用且本地识别置信度不足。"
+      },
+      {
+        "claim_id": "claim-66f724241b1f",
+        "claim_type": "fact",
+        "confidence": 0.86,
+        "counter_evidence": [
+          "公开材料一方面强调开放标准、共同框架和跨域共享，另一方面现实项目仍呈现专有接口和军种分裂实施，这使互操作与快速落地之间存在未闭合张力。",
+          "公开材料一方面强调分布式自治和本地决策，另一方面仍保留人类监督与授权链条，这使“本地闭环到什么程度”为未决边界。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-8952c3805d5a",
+          "ev-system_confrontation-web-5341b3aa85f5"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "https://www.marines.mil/Force-Design/linkId/100000118135009/"
+        ],
+        "text": "4) 级联脆弱点主要集中在发现-识别断链、识别-授权断链和效果评估断链。军事任务价值在于明确哪一环先坏，就会先把火力变成等待、浪费或误击风险。证据边界：公开文献可证实这些断点普遍存在，但无法替代战区特定敌情。失效条件：多目标高频出现、窗口极短且回传受阻时，人工审批和系统切换无法赶上节奏。"
+      },
+      {
+        "claim_id": "claim-ff3e1b6b0799",
+        "claim_type": "fact",
+        "confidence": 0.86,
+        "counter_evidence": [
+          "公开材料一方面强调开放标准、共同框架和跨域共享，另一方面现实项目仍呈现专有接口和军种分裂实施，这使互操作与快速落地之间存在未闭合张力。",
+          "公开材料一方面强调分布式自治和本地决策，另一方面仍保留人类监督与授权链条，这使“本地闭环到什么程度”为未决边界。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-8952c3805d5a",
+          "ev-system_confrontation-web-5341b3aa85f5"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "https://www.marines.mil/Force-Design/linkId/100000118135009/"
+        ],
+        "text": "5) 真正有效的补链方向不是增加更多单点火力，而是让节点、接口和保障围绕“可替换、可摘要、可降级、可重构”组织。军事任务价值在于提升战损后续接、分散部署持续性和成本交换比。证据边界：公开材料支持模块化、开放标准和可替换节点原则，不支持任何成品方案。失效条件：接口碎片化、补给不连续或节点不可替换时，体系会迅速退化为局部孤岛。"
+      }
+    ],
+    "packet_id": "packet-system_confrontation",
+    "schema_version": "1.0"
+  }
+]

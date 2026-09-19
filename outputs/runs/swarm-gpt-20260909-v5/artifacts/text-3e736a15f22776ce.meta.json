@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:3e736a15f22776ce",
+  "content_path": "text-3e736a15f22776ce.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: cached_origin_failure:HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-cross_domain_fusion-web-5824f31b34e3",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "3e736a15f22776ce1387e007ecf171b72fb018f009a215b06e3790b61b63ce63",
+  "url": "https://www.marines.mil/Force-Design/"
+}

@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import asyncio
 from pathlib import Path
+import time
 from types import SimpleNamespace
 
 from equipment_deep_research.interfaces import worker as worker_interface
-from equipment_deep_research.queue.worker import WorkerOutcome
+from equipment_deep_research.queue.worker import ResearchWorker, WorkerOutcome
 
 
 def test_runtime_progress_events_update_user_facing_run_phase() -> None:
@@ -14,6 +15,18 @@ def test_runtime_progress_events_update_user_facing_run_phase() -> None:
     assert worker_interface.runtime_status_for_event("audit_completed") == "reviewing"
     assert worker_interface.runtime_status_for_event("report_model_call_started") == "reporting"
     assert worker_interface.runtime_status_for_event("baseline_model_call_progress") == ""
+
+
+def test_dynamic_swarm_internal_work_releases_outer_research_slot() -> None:
+    assert worker_interface.releases_research_slot_for_event(
+        "winning_mission_graph_planned"
+    )
+    assert worker_interface.releases_research_slot_for_event(
+        "winning_s6_card_authoring_started"
+    )
+    assert not worker_interface.releases_research_slot_for_event(
+        "baseline_model_call_started"
+    )
 
 
 def test_worker_survives_cancelled_run_and_releases_lease(tmp_path: Path) -> None:
@@ -78,6 +91,32 @@ def test_worker_survives_cancelled_run_and_releases_lease(tmp_path: Path) -> Non
     assert service.status == "failed"
     assert service.queue.acked == ["run-cancelled"]
     assert touches[-1] == ("idle", "")
+
+
+def test_worker_internal_lease_status_is_heartbeat_visible() -> None:
+    touches: list[tuple[str, str]] = []
+
+    class Service:
+        def touch_worker(
+            self,
+            worker_id: str,
+            *,
+            status: str,
+            current_run_id: str = "",
+        ) -> None:
+            del worker_id
+            touches.append((status, current_run_id))
+
+    worker = ResearchWorker(
+        service=Service(),
+        execute=lambda _: {},
+        heartbeat_interval_seconds=0.01,
+    )
+    worker.set_lease_status("internal")
+    with worker._heartbeat_during("run-s6"):
+        time.sleep(0.03)
+
+    assert ("internal", "run-s6") in touches
 
 
 def test_worker_resumes_when_run_directory_already_exists(

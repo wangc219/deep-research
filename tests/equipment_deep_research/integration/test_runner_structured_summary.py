@@ -7,8 +7,9 @@ import sqlite3
 import pytest
 
 from equipment_deep_research.agents.provider import FakeAgentProvider, ResponsesAgentProvider
-from equipment_deep_research.domain.models import TraceEvent
+from equipment_deep_research.domain.models import CapabilityImageItem, TraceEvent
 from equipment_deep_research.domain.store import TraceStore
+from equipment_deep_research.domain.store import DomainStore
 from equipment_deep_research.domain.workspace import RunWorkspace
 from equipment_deep_research.delivery.exporter import DeliveryExporter
 from equipment_deep_research.orchestration.runner import (
@@ -20,6 +21,7 @@ from equipment_deep_research.orchestration.runner import (
     _normalize_delivery_report_structure,
     _persisted_agent_model_call_count,
     _report_delivery_limit_payload,
+    _report_decision_brief,
 )
 from equipment_deep_research.providers.base import ProviderFinalTurn, ProviderStreamEvent
 from equipment_deep_research.providers.fake import ScriptedFakeProvider
@@ -27,6 +29,32 @@ from equipment_deep_research.providers.fake import ScriptedFakeProvider
 
 ROOT = Path(__file__).parents[3]
 CONFIG = ROOT / "configs/equipment_deep_research"
+
+
+def test_report_brief_preserves_trusted_s6_portrait_verbatim() -> None:
+    store = DomainStore()
+    item = CapabilityImageItem(
+        capability_id="cap-1",
+        name="可信S6原创装备",
+        equipment_category="具体武器",
+        capability_type="new_capability",
+        source_winning_logic="改变交战交换关系",
+        related_scenario="受扰环境",
+        priority="P1",
+        capability_gap="外部更新中断",
+        capability_image="原创画像-不含标准治理模块-保留原文",
+        deep_capability_portrait="原创画像-不含标准治理模块-保留原文",
+        portrait_authoring_status="s6_authored_semantically_consistent",
+        evidence_ids=[],
+        confidence=0.8,
+    )
+    store.capability_images[item.capability_id] = item
+
+    brief = _report_decision_brief(store=store, branch_output={}, convergence={})
+
+    assert brief["capability_decisions"][0]["capability_portrait"] == (
+        "原创画像-不含标准治理模块-保留原文"
+    )
 
 
 def test_compact_winning_blueprint_keeps_enabled_swarm_policy() -> None:
@@ -433,6 +461,18 @@ class _SwarmProgressProbeProvider(_WinningHarnessProbeProvider):
         return super().analyze_winning_mechanism(payload)
 
 
+class _ConvergenceProbeProvider(_SwarmProgressProbeProvider):
+    def __init__(self) -> None:
+        super().__init__()
+        self.convergence_calls = 0
+
+    def converge_discovery_outputs(self, payload: dict) -> dict:
+        self.convergence_calls += 1
+        result = super().converge_discovery_outputs(payload)
+        result["probe_model_convergence"] = True
+        return result
+
+
 class _FailedSwarmGateProbeProvider(_SwarmProgressProbeProvider):
     def __init__(self) -> None:
         super().__init__()
@@ -472,6 +512,13 @@ class _FailedSwarmGateProbeProvider(_SwarmProgressProbeProvider):
 
 class _CodexMetaReplanProbeProvider(_WinningHarnessProbeProvider):
     provider_kind = "codex_cli"
+
+    def __init__(self) -> None:
+        self.blueprint_payloads: list[dict] = []
+
+    def design_discovery_blueprint(self, payload: dict) -> dict:
+        self.blueprint_payloads.append(dict(payload))
+        return {}
 
     def review_discovery_meta_loop(self, payload: dict) -> dict:
         assert payload["convergence"]["clusters"]
@@ -542,6 +589,20 @@ class _MissingReportProvider(_WinningHarnessProbeProvider):
     draft_report = None  # type: ignore[assignment]
 
 
+class _WeaponBaselineTimeoutProvider(_WinningHarnessProbeProvider):
+    def run_baseline_agent(self, request):
+        if request.agent.agent_id == "weapon_equipment":
+            raise RuntimeError("Codex CLI timed out after external interruption")
+        return super().run_baseline_agent(request)
+
+
+class _AllBaselineTimeoutProvider(_WinningHarnessProbeProvider):
+    def run_baseline_agent(self, request):
+        raise RuntimeError(
+            f"{request.agent.agent_id} Codex CLI timed out after external interruption"
+        )
+
+
 def test_runner_exposes_provider_plan_reasoning_and_evidence_governance(tmp_path: Path) -> None:
     result = DeepResearchRunner(
         project_root=ROOT,
@@ -582,6 +643,79 @@ def test_runner_exposes_provider_plan_reasoning_and_evidence_governance(tmp_path
     assert summary["store_summary"]["scenario_model_count"] == 1
     assert summary["store_summary"]["equipment_observation_count"] == 1
     assert summary["store_summary"]["operational_synthesis_count"] == 1
+
+
+def test_single_weapon_baseline_timeout_does_not_fail_the_research_run(
+    tmp_path: Path,
+) -> None:
+    result = DeepResearchRunner(
+        project_root=ROOT,
+        output_root=tmp_path / "runs",
+        agent_config_path=CONFIG / "agents.yaml",
+        preset_config_path=CONFIG / "presets.yaml",
+        provider=_WeaponBaselineTimeoutProvider(),
+    ).run(
+        mode="real",
+        topic="不完备与不确定战场信息条件下精确打击研究",
+        research_route="traditional_gap",
+        run_id="weapon-baseline-soft-degradation",
+        agent_ids=[
+            "combat_scenario",
+            "weapon_equipment",
+            "operational_employment",
+        ],
+        analyst_confirmed=True,
+        max_rounds=1,
+    )
+
+    summary = json.loads(Path(result["summary_path"]).read_text(encoding="utf-8"))
+    weapon_report = next(
+        item
+        for item in summary["worker_reports"]
+        if item["agent_id"] == "weapon_equipment"
+    )
+    with sqlite3.connect(Path(result["run_dir"]) / "run.db") as connection:
+        packet = json.loads(
+            connection.execute(
+                "SELECT payload_json FROM domain_objects "
+                "WHERE object_type = 'BaselineFindingPacket' "
+                "AND object_id = 'packet-weapon_equipment'"
+            ).fetchone()[0]
+        )
+    event_types = {item["event_type"] for item in summary["trace_summary"]}
+
+    assert result["status"] == "completed"
+    assert weapon_report["status"] == "limited"
+    assert weapon_report["stop_reason"] == "recoverable_baseline_unavailable"
+    assert packet["payload_type"] == "baseline_availability_boundary_v1"
+    assert packet["findings"] == []
+    assert packet["evidence_ids"] == []
+    assert packet["admission_status"] == "limited"
+    assert "baseline_agent_limited" in event_types
+    assert "agent_failure_handoff_ready" not in event_types
+
+
+def test_all_baseline_timeouts_remain_a_hard_safety_failure(tmp_path: Path) -> None:
+    with pytest.raises(RuntimeError, match="all baseline agents were unavailable"):
+        DeepResearchRunner(
+            project_root=ROOT,
+            output_root=tmp_path / "runs",
+            agent_config_path=CONFIG / "agents.yaml",
+            preset_config_path=CONFIG / "presets.yaml",
+            provider=_AllBaselineTimeoutProvider(),
+        ).run(
+            mode="real",
+            topic="全体基线不可用边界验证",
+            research_route="traditional_gap",
+            run_id="all-baseline-hard-failure",
+            agent_ids=[
+                "combat_scenario",
+                "weapon_equipment",
+                "operational_employment",
+            ],
+            analyst_confirmed=True,
+            max_rounds=1,
+        )
 
 
 def test_audit_timeout_falls_back_and_still_generates_report(tmp_path: Path) -> None:
@@ -807,12 +941,13 @@ def test_codex_l4_meta_loop_replans_next_stage_and_persists_blueprint(
     monkeypatch,
 ) -> None:
     monkeypatch.setenv("EQUIPMENT_DR_ENABLE_L4_MODEL_REPLAN", "1")
+    provider = _CodexMetaReplanProbeProvider()
     result = DeepResearchRunner(
         project_root=ROOT,
         output_root=tmp_path / "runs",
         agent_config_path=CONFIG / "agents.yaml",
         preset_config_path=CONFIG / "presets.yaml",
-        provider=_CodexMetaReplanProbeProvider(),
+        provider=provider,
     ).run(
         mode="real",
         topic="跨域线索触发对手动向复核",
@@ -829,6 +964,8 @@ def test_codex_l4_meta_loop_replans_next_stage_and_persists_blueprint(
     )
 
     summary = json.loads(Path(result["summary_path"]).read_text(encoding="utf-8"))
+    assert len(provider.blueprint_payloads) == 1
+    assert provider.blueprint_payloads[0]["topic"] == "跨域线索触发对手动向复核"
     blueprint = summary["discovery_blueprint"]
     assert blueprint["loop_policy"]["meta_max_cycles"] == 1
     assert blueprint["secondary_branches"] == ["E"]
@@ -1008,6 +1145,17 @@ def test_swarm_progress_events_are_persisted_into_round_summary(
     assert "swarm_planned" in event_types
     assert "specialist_spawned" in event_types
     assert "swarm_gate_evaluated" in event_types
+    trace_rows = [
+        json.loads(line)["payload"]
+        for line in (run_dir / "trace.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    winning_harness_event = next(
+        item
+        for item in trace_rows
+        if item["event_type"] == "agent_harness_completed"
+        and item["actor"] == "winning_mechanism"
+    )
+    assert len(winning_harness_event["payload"]["active_skill_ids"]) > 1
     session_rows = [
         json.loads(line)
         for line in (
@@ -1017,15 +1165,46 @@ def test_swarm_progress_events_are_persisted_into_round_summary(
     assert any(row["event_type"] == "swarm_gate_evaluated" for row in session_rows)
 
 
-def test_failed_dynamic_swarm_gate_stops_before_reporter_model_call(
+def test_quality_swarm_uses_provider_convergence_instead_of_local_skip(
+    tmp_path: Path,
+) -> None:
+    provider = _ConvergenceProbeProvider()
+    result = DeepResearchRunner(
+        project_root=ROOT,
+        output_root=tmp_path / "runs",
+        agent_config_path=CONFIG / "agents.yaml",
+        preset_config_path=CONFIG / "presets.yaml",
+        provider=provider,
+    ).run(
+        mode="real",
+        topic="质量蜂群跨分支收敛模型调用验证",
+        research_route="new_winning_mechanism",
+        run_id="quality-swarm-model-convergence",
+        agent_ids=[
+            "international_situation",
+            "combat_scenario",
+            "weapon_equipment",
+            "operational_employment",
+        ],
+        analyst_confirmed=True,
+        max_rounds=1,
+        execution_profile_id="swarm_quality_v1",
+    )
+
+    summary = json.loads(Path(result["summary_path"]).read_text(encoding="utf-8"))
+    assert provider.convergence_calls == 1
+    assert summary["discovery_convergence"]["probe_model_convergence"] is True
+    assert summary["discovery_convergence"].get("model_call_skipped") is not True
+
+
+def test_dynamic_swarm_portfolio_gate_is_advisory_before_reporter_model_call(
     tmp_path: Path,
 ) -> None:
     output_root = tmp_path / "runs"
     run_id = "dynamic-swarm-gate-blocks-reporter"
     provider = _FailedSwarmGateProbeProvider()
 
-    with pytest.raises(RuntimeError, match="禁止确定性降级报告"):
-        DeepResearchRunner(
+    result = DeepResearchRunner(
             project_root=ROOT,
             output_root=output_root,
             agent_config_path=CONFIG / "agents.yaml",
@@ -1047,15 +1226,10 @@ def test_failed_dynamic_swarm_gate_stops_before_reporter_model_call(
             execution_profile_id="winning_swarm_dynamic_v2",
         )
 
-    assert provider.draft_report_calls == 0
+    assert provider.draft_report_calls == 1
     run_dir = output_root / run_id
-    failure = json.loads(
-        (run_dir / "report_failure.json").read_text(encoding="utf-8")
-    )
-    assert failure["portfolio_quality_gate"]["passed"] is False
-    assert failure["portfolio_quality_gate"][
-        "distinct_direct_equipment_family_count"
-    ] == 2
+    assert result["status"] == "completed"
+    assert (run_dir / "report.md").exists()
     with sqlite3.connect(run_dir / "run.db") as connection:
         trace = [
             {
@@ -1067,13 +1241,7 @@ def test_failed_dynamic_swarm_gate_stops_before_reporter_model_call(
                 "SELECT event_type, actor, payload_json FROM trace_events"
             )
         ]
-    assert not any(
-        item["event_type"] == "tool_call"
-        and item["actor"] == "reporter"
-        and item.get("payload", {}).get("tool_name") == "draft_report"
-        for item in trace
-    )
-    assert any(item["event_type"] == "report_model_failed" for item in trace)
+    assert any(item["event_type"] == "winning_portfolio_quality_advisory" for item in trace)
 
 
 def test_runner_materializes_responses_web_sources_before_formal_packet_linking(

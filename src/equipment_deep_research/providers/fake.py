@@ -4,8 +4,12 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator, Mapping, Sequence
 
-from equipment_deep_research.providers.base import ModelMessage, ProviderStreamEvent
-from equipment_deep_research.tools.definitions import ToolDefinition
+from equipment_deep_research.providers.base import (
+    ModelMessage,
+    ProviderCapabilities,
+    ProviderStreamEvent,
+)
+from equipment_deep_research.contracts.tools import ToolDefinition
 
 
 class ScriptedFakeProvider:
@@ -20,6 +24,13 @@ class ScriptedFakeProvider:
 
     def snapshot(self) -> dict[str, str]:
         return {"type": "fake", "model": self.model, "base_url_host": ""}
+
+    def capabilities(self) -> ProviderCapabilities:
+        return ProviderCapabilities(
+            streaming=True,
+            structured_output=True,
+            function_tools=True,
+        )
 
     async def stream(
         self,

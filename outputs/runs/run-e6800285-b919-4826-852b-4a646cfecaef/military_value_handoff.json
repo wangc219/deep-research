@@ -1,0 +1,202 @@
+{
+  "baseline_boundaries": [
+    {
+      "agent_id": "weapon_equipment",
+      "availability": "unavailable",
+      "downstream_obligations": [
+        "S3不得把基线缺失解释为候选不可行或收缩创新空间",
+        "S4按保留候选核验最近公开装备基线与直接反证",
+        "S5汇总候选级成熟度、成本产能、现役差距与未决证据"
+      ],
+      "limitations": [
+        "基线不可用原因：RuntimeError: weapon_equipment model turn completed but outer baseline result validation found no substantive findings"
+      ],
+      "open_questions": [
+        "S4/S5须针对保留的具体候选逐项核验公开装备基线、现役/在研边界、反证、成熟度与差距。"
+      ],
+      "packet_id": "packet-weapon_equipment"
+    }
+  ],
+  "branch_products": {},
+  "claims": [
+    {
+      "claim_id": "claim-60b3cfc702e6",
+      "claim_type": "fact",
+      "confidence": 0.82,
+      "downstream_steps": [
+        "S2",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-operational_employment-web-bc1c2e8c3176",
+        "ev-operational_employment-web-36638e192ebe"
+      ],
+      "failure_boundary": "追求快速授权可减少窗口损失，但过度压缩确认可能放大诱饵、误识别和附带风险；速度与可信度不存在无条件同步提升。",
+      "mechanism": "持续作战能力决定短窗口打击体系的真实战斗力。前沿节点、无人平台和待机弹药应允许战损替代、快速转移、模块化补给和任务重分配；同时必须控制操作员负荷、维修周转和弹药消耗。军事价值在于首轮节点遭压制后仍能恢复发现、确认和火力接入，避免体系退化为迟缓的后方火力等待。GAO及公开反无人系统材料支持对韧性、库存和反制压力的关注，但不足以给出具体规模或部署比例。失效条件是补给线暴露、备件和电源不足、无人系统损耗过快或训练有素人员枯竭。",
+      "military_effects": [
+        "打击歼灭",
+        "拦截反制",
+        "保障恢复",
+        "持续作战",
+        "体系协同"
+      ],
+      "packet_id": "packet-operational_employment",
+      "source_agent_id": "operational_employment",
+      "source_urls": [
+        "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience"
+      ]
+    },
+    {
+      "claim_id": "claim-57a4a10b1b68",
+      "claim_type": "fact",
+      "confidence": 0.49,
+      "downstream_steps": [
+        "S2",
+        "S3",
+        "S4"
+      ],
+      "evidence_ids": [
+        "ev-combat_scenario-web-5824f31b34e3",
+        "ev-combat_scenario-web-8952c3805d5a"
+      ],
+      "failure_boundary": "任务要求研究直接军事效果，但未限定目标类别、地域、对手或作战阶段，因此无法给出统一的窗口长度、确认阈值或射手响应指标。",
+      "mechanism": "在强干扰和拒止条件下，链路抗毁、局部自治和预授权任务包比单纯提高平台速度更直接影响杀伤链闭合；军事价值在于维持决策—协同—打击连续性，证据边界是公开来源通常证明通信、PNT和无人链路脆弱性，但不能证明某一具体自治架构的战果；失效条件是目标身份不确定、任务包过期或局部节点被诱导执行错误任务。",
+      "military_effects": [
+        "指挥决策",
+        "打击歼灭",
+        "拦截反制",
+        "拒止制衡",
+        "生存抗毁",
+        "体系协同"
+      ],
+      "packet_id": "packet-combat_scenario",
+      "source_agent_id": "combat_scenario",
+      "source_urls": [
+        "https://www.marines.mil/Force-Design/"
+      ]
+    },
+    {
+      "claim_id": "claim-16b6472f036a",
+      "claim_type": "fact",
+      "confidence": 0.82,
+      "downstream_steps": [
+        "S1",
+        "S2",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-operational_employment-web-bc1c2e8c3176",
+        "ev-operational_employment-web-36638e192ebe"
+      ],
+      "failure_boundary": "追求快速授权可减少窗口损失，但过度压缩确认可能放大诱饵、误识别和附带风险；速度与可信度不存在无条件同步提升。",
+      "mechanism": "前沿预布、空中持续监视和后方远程火力是三种互补运用形态。前沿分布式杀伤网闭环最短但暴露和补给压力高；空中长航时链覆盖连续但易受防空、电子战和天气影响；后方远程火力生存性较好但更依赖数据新鲜度、授权速度和库存。军事价值在于按威胁和窗口长度选择不同射手，而不是追求单一最优平台。Force Design及相关公开材料支持分布、机动和跨域协同方向，但不能外推具体交战效果。失效条件是敌方压制前沿节点、空域拒止、目标轨迹过期或弹药消耗超过补充能力。",
+      "military_effects": [
+        "指挥决策",
+        "打击歼灭",
+        "拦截反制",
+        "拒止制衡",
+        "生存抗毁",
+        "保障恢复",
+        "体系协同"
+      ],
+      "packet_id": "packet-operational_employment",
+      "source_agent_id": "operational_employment",
+      "source_urls": [
+        "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience"
+      ]
+    },
+    {
+      "claim_id": "claim-17eded15e0c7",
+      "claim_type": "fact",
+      "confidence": 0.49,
+      "downstream_steps": [
+        "S2",
+        "S3",
+        "S4"
+      ],
+      "evidence_ids": [
+        "ev-combat_scenario-web-5824f31b34e3",
+        "ev-combat_scenario-web-8952c3805d5a"
+      ],
+      "failure_boundary": "任务要求研究直接军事效果，但未限定目标类别、地域、对手或作战阶段，因此无法给出统一的窗口长度、确认阈值或射手响应指标。",
+      "mechanism": "分布式前沿感知能够缩短发现距离，却把低特征驻留、通信暴露、补给和反侦察风险前移；军事价值在于扩大有效窗口并提高首轮响应率，证据边界是公开战法材料可支持分散部署和韧性需求，不能直接外推特定装备在复杂地形中的生存率；失效条件是传感器、中继或射手被定位压制，形成“发现成功但无法持续闭合”。",
+      "military_effects": [
+        "侦察预警",
+        "拦截反制",
+        "生存抗毁",
+        "保障恢复",
+        "持续作战"
+      ],
+      "packet_id": "packet-combat_scenario",
+      "source_agent_id": "combat_scenario",
+      "source_urls": [
+        "https://www.marines.mil/Force-Design/"
+      ]
+    }
+  ],
+  "conflicts": [
+    "“快速授权”和“局部自治”可减少窗口损失，但可能放大误识别、诱饵误导、附带风险和责任归属问题；不能把授权压缩视为无条件增益。",
+    "前沿分布式节点能够缩短发现和响应距离，但同时增加低特征驻留、通信暴露、反侦察、补给和战损替代压力；分布式部署不等于持续作战能力。",
+    "长航时空中监视可延长目标保持时间，但在防空、电子战、天气或定位受限条件下，搜索、跟踪和效果评估能力可能同步下降。"
+  ],
+  "frontier_inspiration_rule": "仅在后续模型完成首次自由发散后作为可选启发；可重构或全部舍弃，不得视为装备答案、命名种子、技术目录或覆盖配额。",
+  "frontier_inspirations": [
+    {
+      "conventional_assumption_challenged": "传统上把传感器、指挥所和射手视为可顺序连接的固定链路，并假定更快平台即可弥补链路延迟。",
+      "downstream_question": "局部保持的目标状态在多源冲突、诱饵和链路断裂时，何种证据组合仍足以支撑有效授权？",
+      "evidence_boundary": "公开来源支持分布式、自治和韧性趋势，但没有证明在高不确定性目标上能够稳定降低误击与授权风险。",
+      "evidence_ids": [
+        "ev-combat_scenario-web-5824f31b34e3"
+      ],
+      "packet_id": "packet-combat_scenario",
+      "possible_military_discontinuity": "若目标状态能在受扰条件下由分布式节点局部保持并快速授权，杀伤链可能从中心化串行流程转为多点并行闭合，改变高价值目标的生存逻辑。",
+      "query_relevance": "直接对应发现—确认—决策—火力响应的时延断点，是短窗口精确效果形成的核心矛盾。",
+      "signal": "短窗口打击的关键瓶颈可能从平台飞行速度转移到“可信目标状态”的快速生成与局部保持。",
+      "source_agent_id": "combat_scenario",
+      "source_urls": [
+        "https://www.marines.mil/Force-Design/",
+        "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "传统假设是提高弹速或射程即可显著压缩时敏目标处置时间。",
+      "downstream_question": "在目标身份不完整、通信断续且授权风险较高时，哪些最小信息和人工判断条件足以维持可接受的直接军事效果？",
+      "evidence_boundary": "公开资料支持边缘处理、分布式运用和韧性C2的重要性，但尚不能证明其在强欺骗和强压制环境下保持可信授权。",
+      "evidence_ids": [
+        "ev-operational_employment-web-bc1c2e8c3176"
+      ],
+      "packet_id": "packet-operational_employment",
+      "possible_military_discontinuity": "当传感、确认、授权和射手接入在局部断网条件下仍可连续运行时，目标短暂暴露可能被转化为持续可交战状态，改变高价值目标依赖中心化链路的交换关系。",
+      "query_relevance": "直接对应发现至火力响应的累积时延断点和受扰条件下的链路级联失效。",
+      "signal": "短窗口打击的决定性瓶颈可能从“射手飞行时间”转移到目标身份、轨迹新鲜度和授权可信度；分布式边缘节点与可降级任务逻辑可能比更快单件武器产生更大作战收益。",
+      "source_agent_id": "operational_employment",
+      "source_urls": [
+        "https://www.defense.gov/News/Releases/Release/article/2970094/dod-announces-release-of-jadc2-implementation-plan/",
+        "https://www.marines.mil/Force-Design/"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    }
+  ],
+  "open_questions": [
+    "不同目标类别的可接受确认阈值和窗口长度如何改变杀伤链结构？",
+    "不同目标类别的可接受误击风险、确认门槛和直接军事效果尚未定义，导致授权压缩与识别可信度之间无法定量比较。",
+    "S4/S5须针对保留的具体候选逐项核验公开装备基线、现役/在研边界、反证、成熟度与差距。"
+  ],
+  "query_anchor": "高价值时敏目标快速精确打击研究",
+  "schema": "military_value_handoff_v1",
+  "statistics": {
+    "candidate_claim_count": 9,
+    "compression_ratio": 0.5839,
+    "evidence_url_count": 2,
+    "frontier_inspiration_count": 2,
+    "input_chars": 9737,
+    "input_packet_count": 3,
+    "limited_baseline_count": 1,
+    "output_chars": 5685,
+    "selected_claim_count": 4,
+    "source_agent_count": 2
+  }
+}

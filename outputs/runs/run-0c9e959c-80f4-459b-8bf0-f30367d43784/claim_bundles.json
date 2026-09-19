@@ -1,0 +1,365 @@
+[
+  {
+    "bundle_id": "claims-42e2d45402c3",
+    "claims": [
+      {
+        "claim_id": "claim-5efe01181ae1",
+        "claim_type": "hypothesis",
+        "confidence": 0.74,
+        "counter_evidence": [
+          "公开策略强调多层、模块化和体系融合，但单体能力宣传常给人以“单一系统可解决问题”的印象；两者在公开证据上并不一致。",
+          "一方面公开材料强调定向能/电子战可降低单次拦截成本，另一方面又承认其存在指向、距离和环境限制，说明‘低成本’并不等于‘无边界’。",
+          "公开项目展示了多种效应器并存，但没有证据表明现有公开装备已稳定实现从早期发现到效果评估的全自动闭环。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-8952c3805d5a",
+          "ev-weapon_equipment-web-b86d32a6f77b"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "https://files.gao.gov/reports/GAO-25-107491/index.html"
+        ],
+        "text": "低空小目标反制的公开主流边界已不是单一传感器或单一拦截器，而是“探测/识别/压制/硬杀伤”分层组合；美军公开材料明确把雷达、射频、电子战、动能拦截和定向能都纳入C-sUAS能力集。任务影响：后续装备项目应围绕链路断点而非孤立平台选型。失效条件：若目标环境中存在强电磁杂波、鸟群/小物体误报或多批次饱和，单点装备难以闭环。"
+      },
+      {
+        "claim_id": "claim-aeb72f887be1",
+        "claim_type": "hypothesis",
+        "confidence": 0.74,
+        "counter_evidence": [
+          "公开策略强调多层、模块化和体系融合，但单体能力宣传常给人以“单一系统可解决问题”的印象；两者在公开证据上并不一致。",
+          "一方面公开材料强调定向能/电子战可降低单次拦截成本，另一方面又承认其存在指向、距离和环境限制，说明‘低成本’并不等于‘无边界’。",
+          "公开项目展示了多种效应器并存，但没有证据表明现有公开装备已稳定实现从早期发现到效果评估的全自动闭环。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-8952c3805d5a",
+          "ev-weapon_equipment-web-b86d32a6f77b"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "https://files.gao.gov/reports/GAO-25-107491/index.html"
+        ],
+        "text": "公开证据反复强调低空反无人机的主要脆弱点在于误检、漏检、环境电磁干扰与交战几何限制；GAO指出电磁干扰和小型空中物体会降低探测能力或产生误报，定向能/电磁效应也受最小/最大有效距离和指向约束。任务影响：效果评估与复核节点是杀伤链的一部分，不能只看“击落”而忽略确认与补击。失效条件：若没有独立战果确认与再交战机制，闭环仍会断裂。"
+      },
+      {
+        "claim_id": "claim-71b1292f0cc3",
+        "claim_type": "hypothesis",
+        "confidence": 0.74,
+        "counter_evidence": [
+          "公开策略强调多层、模块化和体系融合，但单体能力宣传常给人以“单一系统可解决问题”的印象；两者在公开证据上并不一致。",
+          "一方面公开材料强调定向能/电子战可降低单次拦截成本，另一方面又承认其存在指向、距离和环境限制，说明‘低成本’并不等于‘无边界’。",
+          "公开项目展示了多种效应器并存，但没有证据表明现有公开装备已稳定实现从早期发现到效果评估的全自动闭环。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-8952c3805d5a",
+          "ev-weapon_equipment-web-b86d32a6f77b"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "https://files.gao.gov/reports/GAO-25-107491/index.html"
+        ],
+        "text": "美军公开项目层面已出现固定点与机动点结合的C-sUAS路线，如M-LIDS、FS-LIDS、Coyote、DE-MSHORAD等；Army预算与GAO材料说明其能力包通常包含火控、电子战和动能/非动能效应器。任务影响：后续候选装备更可能是“可嵌入体系的战斗节点”而不是纯感知系统。失效条件：如果装备不能接入统一指挥控制和目标分配，单体性能难以转化为杀伤链闭合。"
+      },
+      {
+        "claim_id": "claim-e9b82f2ab252",
+        "claim_type": "fact",
+        "confidence": 0.74,
+        "counter_evidence": [
+          "公开策略强调多层、模块化和体系融合，但单体能力宣传常给人以“单一系统可解决问题”的印象；两者在公开证据上并不一致。",
+          "一方面公开材料强调定向能/电子战可降低单次拦截成本，另一方面又承认其存在指向、距离和环境限制，说明‘低成本’并不等于‘无边界’。",
+          "公开项目展示了多种效应器并存，但没有证据表明现有公开装备已稳定实现从早期发现到效果评估的全自动闭环。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-8952c3805d5a",
+          "ev-weapon_equipment-web-b86d32a6f77b"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "https://files.gao.gov/reports/GAO-25-107491/index.html"
+        ],
+        "text": "DoD公开策略把“降低无人系统与反制措施之间的成本不对称”作为关键方向，并强调开放、模块化、快速试验与规模化。任务影响：低空反制的装备化价值不只在杀伤，更在交换比和批量持续作战。失效条件：如果成本、补给与批次一致性不可控，即便单次效果可行，也难以形成可持续战斗力。"
+      }
+    ],
+    "packet_id": "packet-weapon_equipment",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-c342e5d8a7a9",
+    "claims": [
+      {
+        "claim_id": "claim-5bd2619bb407",
+        "claim_type": "fact",
+        "confidence": 0.83,
+        "counter_evidence": [
+          "官方方向强调开放模块化、快速获取和协同自主，但公开的投资与进展框架仍不完整，说明‘体系化需求’与‘项目化证据’之间存在缺口。",
+          "协同自主希望减少对持续人工控制和带宽的依赖，但低空识别与交战授权仍受正识别、误伤控制和复杂背景影响，自动化与可确认性之间存在张力。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-technology_radar-web-36638e192ebe",
+          "ev-technology_radar-web-912bbaba1ca2"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://files.gao.gov/reports/GAO-25-106454/index.html",
+          "https://www.darpa.mil/research/programs/collaborative-operations-in-denied-environment"
+        ],
+        "text": "低空多源感知到软硬杀伤的主矛盾不是单个探测器或拦截器性能，而是发现-确认-排序-交战-复核之间的时延、断点和数据共享问题；这直接贡献于三层九项中的“任务依赖图”。"
+      },
+      {
+        "claim_id": "claim-cf09fb76fccc",
+        "claim_type": "fact",
+        "confidence": 0.83,
+        "counter_evidence": [
+          "官方方向强调开放模块化、快速获取和协同自主，但公开的投资与进展框架仍不完整，说明‘体系化需求’与‘项目化证据’之间存在缺口。",
+          "协同自主希望减少对持续人工控制和带宽的依赖，但低空识别与交战授权仍受正识别、误伤控制和复杂背景影响，自动化与可确认性之间存在张力。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-technology_radar-web-36638e192ebe",
+          "ev-technology_radar-web-912bbaba1ca2"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://files.gao.gov/reports/GAO-25-106454/index.html",
+          "https://www.darpa.mil/research/programs/collaborative-operations-in-denied-environment"
+        ],
+        "text": "最具装备化价值的断点集中在多源融合、抗干扰协同控制、决策辅助和效果评估四处，它们决定软杀伤与硬杀伤能否按威胁态势动态分配；这直接贡献于“装备形态与工程约束”。"
+      },
+      {
+        "claim_id": "claim-12ad990fd173",
+        "claim_type": "fact",
+        "confidence": 0.83,
+        "counter_evidence": [
+          "官方方向强调开放模块化、快速获取和协同自主，但公开的投资与进展框架仍不完整，说明‘体系化需求’与‘项目化证据’之间存在缺口。",
+          "协同自主希望减少对持续人工控制和带宽的依赖，但低空识别与交战授权仍受正识别、误伤控制和复杂背景影响，自动化与可确认性之间存在张力。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-technology_radar-web-36638e192ebe",
+          "ev-technology_radar-web-912bbaba1ca2"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://files.gao.gov/reports/GAO-25-106454/index.html",
+          "https://www.darpa.mil/research/programs/collaborative-operations-in-denied-environment"
+        ],
+        "text": "公开权威材料显示，低空反制正在从单平台防御转向模块化、开放式、可快速集成的体系对抗，强调韧性C2与软件使能器；这说明体系边界已从单机性能扩展到网格化闭环，但端到端闭环仍未被公开证实为稳定成熟。"
+      },
+      {
+        "claim_id": "claim-9b9da4122b08",
+        "claim_type": "inference",
+        "confidence": 0.83,
+        "counter_evidence": [
+          "官方方向强调开放模块化、快速获取和协同自主，但公开的投资与进展框架仍不完整，说明‘体系化需求’与‘项目化证据’之间存在缺口。",
+          "协同自主希望减少对持续人工控制和带宽的依赖，但低空识别与交战授权仍受正识别、误伤控制和复杂背景影响，自动化与可确认性之间存在张力。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-technology_radar-web-36638e192ebe",
+          "ev-technology_radar-web-912bbaba1ca2"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://files.gao.gov/reports/GAO-25-106454/index.html",
+          "https://www.darpa.mil/research/programs/collaborative-operations-in-denied-environment"
+        ],
+        "text": "对抗重点正在从“击落单目标”转向“在拒止、饱和和干扰下维持可确认战果与持续反制能力”，因此效果评估本身已成为作战节点而非事后统计；这直接贡献于“任务对象与直接效果”与“证据问题与淘汰条件”。"
+      }
+    ],
+    "packet_id": "packet-technology_radar",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-d5cf0cba42e6",
+    "claims": [
+      {
+        "claim_id": "claim-5b24aa2fc7d9",
+        "claim_type": "fact",
+        "confidence": 0.66,
+        "counter_evidence": [
+          "公开材料一方面强调中心化数据共享与综合框架，另一方面又强调拒止/降级环境下的前沿分布式韧性；两者不是互斥，但公开证据没有解决其在低空反制中的最优张力。",
+          "公开材料都支持软硬结合和效果度量，但没有公开证据表明‘低附带损伤’与‘高强度饱和反制’在同一体系中可以用同一评估标准闭合。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-5824f31b34e3",
+          "ev-system_confrontation-web-06d26c44006f"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://www.sda.mil/home/about-us/faq/"
+        ],
+        "text": "结论：低空多源感知至软硬杀伤闭环的主矛盾不是单一传感器或单一拦截器，而是发现、识别、授权、处置、复核之间的时延与置信度耦合。军事价值：它直接决定能否把低空拒止从“看见”推进到“可持续压制/歼灭”。证据边界：公开材料只支持分层防御、互操作和效果度量必要性，不足以证明具体融合门限或交战阈值。失效条件：一旦通信、分类或战果评估任一环节失真，闭环会退化为局部孤立交战。"
+      },
+      {
+        "claim_id": "claim-0fdb36ca49e3",
+        "claim_type": "hypothesis",
+        "confidence": 0.66,
+        "counter_evidence": [
+          "公开材料一方面强调中心化数据共享与综合框架，另一方面又强调拒止/降级环境下的前沿分布式韧性；两者不是互斥，但公开证据没有解决其在低空反制中的最优张力。",
+          "公开材料都支持软硬结合和效果度量，但没有公开证据表明‘低附带损伤’与‘高强度饱和反制’在同一体系中可以用同一评估标准闭合。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-5824f31b34e3",
+          "ev-system_confrontation-web-06d26c44006f"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://www.sda.mil/home/about-us/faq/"
+        ],
+        "text": "结论：多源并联感知是低空反制的基础条件，但其价值取决于能否消除格式不一、时空不同步和人工转录瓶颈。军事价值：它决定威胁排序能否在多批次进入时保持连续压制，而不是把目标积压到硬杀伤环节。证据边界：GAO与反无人机概览支持数据共享和多源探测必要性，但不证明特定平台组合在饱和场景下的稳定性。失效条件：若数据关联错误或手工融合占主导，多源只会放大误判。"
+      },
+      {
+        "claim_id": "claim-20ab171e6f48",
+        "claim_type": "fact",
+        "confidence": 0.66,
+        "counter_evidence": [
+          "公开材料一方面强调中心化数据共享与综合框架，另一方面又强调拒止/降级环境下的前沿分布式韧性；两者不是互斥，但公开证据没有解决其在低空反制中的最优张力。",
+          "公开材料都支持软硬结合和效果度量，但没有公开证据表明‘低附带损伤’与‘高强度饱和反制’在同一体系中可以用同一评估标准闭合。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-5824f31b34e3",
+          "ev-system_confrontation-web-06d26c44006f"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://www.sda.mil/home/about-us/faq/"
+        ],
+        "text": "结论：软杀伤与硬杀伤必须按统一C2分配，而不能各自独立优化。军事价值：这直接影响成本交换比、弹药消耗和持续拒止能力，尤其在低附带损伤约束下更关键。证据边界：公开来源支持分层防御、RF压制与动能拦截并列，但没有公开证据可确定何种软硬配比最优。失效条件：软杀伤效果不可确认时，会触发重复处置并挤占硬杀伤库存。"
+      },
+      {
+        "claim_id": "claim-e02f56637ca7",
+        "claim_type": "hypothesis",
+        "confidence": 0.66,
+        "counter_evidence": [
+          "公开材料一方面强调中心化数据共享与综合框架，另一方面又强调拒止/降级环境下的前沿分布式韧性；两者不是互斥，但公开证据没有解决其在低空反制中的最优张力。",
+          "公开材料都支持软硬结合和效果度量，但没有公开证据表明‘低附带损伤’与‘高强度饱和反制’在同一体系中可以用同一评估标准闭合。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-5824f31b34e3",
+          "ev-system_confrontation-web-06d26c44006f"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://www.sda.mil/home/about-us/faq/"
+        ],
+        "text": "结论：战果评估若依赖原始感知链路本身，会把前端误判带到闭环末端。军事价值：独立复核能缩短“误以为已击落”的暴露窗口，减少二次突防和重复火力浪费。证据边界：公开材料只说明需要效果度量与持续跟踪，不足以细化复核体系的具体组织方式。失效条件：若评估与主链同源同源同算，系统会把残余威胁提前清空出队列。"
+      },
+      {
+        "claim_id": "claim-bc8e0ab64ab6",
+        "claim_type": "hypothesis",
+        "confidence": 0.66,
+        "counter_evidence": [
+          "公开材料一方面强调中心化数据共享与综合框架，另一方面又强调拒止/降级环境下的前沿分布式韧性；两者不是互斥，但公开证据没有解决其在低空反制中的最优张力。",
+          "公开材料都支持软硬结合和效果度量，但没有公开证据表明‘低附带损伤’与‘高强度饱和反制’在同一体系中可以用同一评估标准闭合。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-5824f31b34e3",
+          "ev-system_confrontation-web-06d26c44006f"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://www.sda.mil/home/about-us/faq/"
+        ],
+        "text": "结论：在通信受损或电磁对抗强的环境下，前沿分布式边缘节点比纯中心化融合更能维持最低拒止能力。军事价值：它提高战损后续接续和局部自治处置能力，避免单点融合中心失效导致全链崩塌。证据边界：军种现代化与公开架构材料支持韧性网络、边缘处理和分布式战斗管理，但不证明其在低空低慢小目标场景下的实际闭环成功率。失效条件：若前沿节点缺乏一致授权和去冲突机制，分布式会转化为资源分裂。"
+      }
+    ],
+    "packet_id": "packet-system_confrontation",
+    "schema_version": "1.0"
+  }
+]

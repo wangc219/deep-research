@@ -1,0 +1,8 @@
+{
+  "advisories": [
+    "关键结论与公开来源绑定率低于80%（软门槛，仅作审阅提示）"
+  ],
+  "claim_source_binding_minimum": 0.8,
+  "claim_source_binding_rate": 0.444444,
+  "soft_gate": true
+}

@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=media.defense.gov · FACT SHEET STRATEGY FOR COUNTERING UNMANNED SYSTEMS.PDF
+source_url=https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF
+claim=DoD反无人机系统战略事实说明将无人系统视为需分层、跨域、成本可承受手段应对的扩散性威胁，承认单一手段不足以覆盖全部场景。
+excerpt=
+retrieval=Hosted web search citation metadata

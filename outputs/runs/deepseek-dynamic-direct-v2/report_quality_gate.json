@@ -1,0 +1,54 @@
+{
+  "blockers": [],
+  "core_gates": {
+    "内容闭环": {
+      "failed": [],
+      "passed": true,
+      "score": 1.0
+    },
+    "军事决策信息密度": {
+      "failed": [
+        "equipment_decision_bundles_complete"
+      ],
+      "passed": true,
+      "score": 0.8333
+    },
+    "发布安全": {
+      "failed": [],
+      "passed": true
+    },
+    "模板结构": {
+      "failed": [
+        "has_complete_paragraphs"
+      ],
+      "passed": false,
+      "score": 0.9286
+    },
+    "装备主体约束": {
+      "failed": [
+        "has_4_to_8_equipment_directions",
+        "has_at_least_4_direct_combat_weapons",
+        "has_remote_precision_missile_equipment",
+        "report_stays_in_unmanned_remote_fire_domain"
+      ],
+      "passed": true,
+      "score": 0.5556
+    },
+    "证据与验证边界": {
+      "failed": [],
+      "passed": true,
+      "score": 1.0
+    }
+  },
+  "diagnostics": {
+    "advisories": [
+      "修复残句、未闭合Markdown和超长段落"
+    ],
+    "depth": 1.0,
+    "foresight": 1.0,
+    "military_value": 1.0,
+    "novelty": 1.0
+  },
+  "overall_score": 0.8635,
+  "passed": true
+}

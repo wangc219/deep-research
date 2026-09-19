@@ -43,9 +43,10 @@ from .report_library import (
 )
 
 
+# Keep the default location project-relative so a checkout can be moved or
+# deployed on another host without carrying a developer-specific path.
 DEFAULT_EXPERT_WORKBOOK = Path(
-    "/Users/wangchen/equipment deep research/outputs/js-equipment-benchmark-v1/"
-    "expert-annotation/军事Query专家筛选标注表_300候选.xlsx"
+    "outputs/js-equipment-benchmark-v1/expert-annotation/军事Query专家筛选标注表_300候选.xlsx"
 )
 ALLOWED_BENCHMARK_SYSTEMS = {
     "full_method",
@@ -178,12 +179,17 @@ def create_benchmark_router(
     upload_root = output_root / "uploads"
     report_library = BaselineReportLibrary(output_root / "baseline-reports")
     prompt_path = root / "evals" / "pairwise_prompt_v1.md"
-    default_workbook = Path(
-        __import__("os").environ.get(
-            "EQUIPMENT_EVAL_DEFAULT_WORKBOOK",
-            str(DEFAULT_EXPERT_WORKBOOK),
-        )
-    ).expanduser().resolve()
+    configured_workbook = os.environ.get("EQUIPMENT_EVAL_DEFAULT_WORKBOOK")
+    if configured_workbook:
+        default_workbook = Path(configured_workbook).expanduser()
+        # Relative overrides follow the same project-root convention as the
+        # built-in default; absolute overrides remain supported for local CI
+        # and operator-managed datasets.
+        if not default_workbook.is_absolute():
+            default_workbook = root / default_workbook
+    else:
+        default_workbook = root / DEFAULT_EXPERT_WORKBOOK
+    default_workbook = default_workbook.resolve()
     router = APIRouter(prefix="/api/v1/benchmarks", tags=["benchmarks"])
     manifest_lock = Lock()
     control_lock = Lock()

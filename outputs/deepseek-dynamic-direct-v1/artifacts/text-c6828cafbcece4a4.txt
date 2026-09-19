@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · expeditionary advanced base operations eabo
+source_url=https://www.marines.mil/Force-Design/Priorities/Article/2708120/expeditionary-advanced-base-operations-eabo/
+claim=EABO要求在分布式前沿节点承受常态化ISR与打击威胁并保持低特征、机动与可撤收。
+excerpt=
+retrieval=Hosted web search citation metadata

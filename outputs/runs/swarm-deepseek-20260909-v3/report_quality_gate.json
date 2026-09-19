@@ -1,0 +1,58 @@
+{
+  "blockers": [],
+  "core_gates": {
+    "内容闭环": {
+      "failed": [
+        "solution_and_technology_present"
+      ],
+      "passed": true,
+      "score": 0.8333
+    },
+    "军事决策信息密度": {
+      "failed": [
+        "long_sentence_reuse_bounded",
+        "capability_portrait_contract_passed"
+      ],
+      "passed": false,
+      "score": 0.6667
+    },
+    "发布安全": {
+      "failed": [],
+      "passed": true
+    },
+    "模板结构": {
+      "failed": [
+        "has_complete_paragraphs"
+      ],
+      "passed": false,
+      "score": 0.9286
+    },
+    "装备主体约束": {
+      "failed": [
+        "has_at_least_4_direct_combat_weapons",
+        "direct_combat_weapons_are_portfolio_majority",
+        "has_remote_precision_missile_equipment"
+      ],
+      "passed": true,
+      "score": 0.6667
+    },
+    "证据与验证边界": {
+      "failed": [],
+      "passed": true,
+      "score": 1.0
+    }
+  },
+  "diagnostics": {
+    "advisories": [
+      "修复残句、未闭合Markdown和超长段落",
+      "跨章节长句复用过多：同一完整长句不得出现三次，重复长句实例占比不得超过8%",
+      "装备能力画像未通过精简交付门：“循源”反辐射巡飞弹：装备与技术实现明显过短，低于约180字告警线；请补足缺失论证，但不要用泛化句凑字；“循源”反辐射巡飞弹：装备与技术实现未说明关键原理如何落到装备本体；“循源”反辐射巡飞弹：装备能力画像存在跨栏重复（1组栏目复用相同或近似长句）；“循源”反辐射巡飞弹：装备能力画像栏目缺少独占信息：装备与技术实现、形成能力与作战效果"
+    ],
+    "depth": 1.0,
+    "foresight": 1.0,
+    "military_value": 1.0,
+    "novelty": 1.0
+  },
+  "overall_score": 0.819,
+  "passed": true
+}

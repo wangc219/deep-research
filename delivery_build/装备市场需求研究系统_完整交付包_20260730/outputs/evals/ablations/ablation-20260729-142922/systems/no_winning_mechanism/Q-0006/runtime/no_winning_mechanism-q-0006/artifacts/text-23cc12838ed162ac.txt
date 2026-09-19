@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=lineofdeparture.army.mil · IBCS Any Sensor Best Shooter
-source_url=https://www.lineofdeparture.army.mil/Journals/Air-Defense-Artillery/ADA-Archive/2024-Edition/IBCS-Any-Sensor-Best-Shooter/
-claim=该来源支持综合火控网络把传感器和效应器接入后，可增强识别、跟踪、交战和防御多样化威胁的能力。
-excerpt=
-retrieval=Hosted web search citation metadata

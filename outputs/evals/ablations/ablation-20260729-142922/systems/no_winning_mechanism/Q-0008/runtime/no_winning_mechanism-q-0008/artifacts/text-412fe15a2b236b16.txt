@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=asafm.army.mil · Missile%20Procurement%20Army.pdf
-source_url=https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/2027/Discretionary%20Budget/Procurement/Missile%20Procurement%20Army.pdf
-claim=FY2027陆军导弹采购预算显示PrSM、MRC、Tomahawk和SM-6等远程火力仍在采购和扩产轨道上。
-excerpt=
-retrieval=Hosted web search citation metadata

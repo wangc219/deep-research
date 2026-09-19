@@ -1,5 +1,0 @@
-来源：作战场景离线验证材料
-URL：https://fixture.local/combat_scenario
-claim：作战场景发现与“复杂地形下现役低空预警装备能力缺口”相关的关键能力信号。
-excerpt：围绕复杂地形下现役低空预警装备能力缺口的公开资料显示，作战场景维度存在可用于能力画像研判的信号。
-mode：fake

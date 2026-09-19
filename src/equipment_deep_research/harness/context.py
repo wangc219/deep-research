@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
+import re
 from typing import Any
 
 from equipment_deep_research.agents.registry import AgentDef
@@ -27,6 +28,112 @@ _HANDOFF_FIELD_HINTS = (
     "dependency",
     "scenario",
 )
+
+# A handoff is a query for the next role, not a serialized source packet.  Use
+# the consumer's role to choose the few fields with the highest decision value
+# before applying the generic size bound.  Unknown roles retain the generic
+# scoring for compatibility with persisted packets and custom Agents.
+_TARGET_HANDOFF_FIELD_HINTS: dict[str, tuple[str, ...]] = {
+    "international_situation": (
+        "strategic", "threat", "actor", "move", "timeline", "warning", "risk"
+    ),
+    "combat_scenario": (
+        "scenario", "phase", "threat", "environment", "constraint", "risk", "effect"
+    ),
+    "weapon_equipment": (
+        "equipment", "capability", "gap", "baseline", "parameter", "maturity", "requirement"
+    ),
+    "operational_employment": (
+        "operational", "employment", "coa", "scenario", "dependency", "constraint", "effect"
+    ),
+    "winning_mechanism": (
+        "finding", "assessment", "effect", "gap", "requirement", "risk", "constraint"
+    ),
+}
+
+
+_PRESCRIPTIVE_HANDOFF_PATTERNS = (
+    re.compile(
+        r"^(?:后续|下一步|后置(?:环节|Agent|智能体)?|后续研究|后续工作|进一步)"
+        r".{0,18}(?:应|应当|需要|需|必须|建议|优先|重点|继续|核验|验证|关注)"
+    ),
+    re.compile(r"^(?:应|应当|需要|需|必须|建议|请|务必|继续|优先|重点关注)"),
+    re.compile(r"(?:装备与技术|技术|装备|研究|证据|验证|核验)优先级应"),
+)
+
+
+def sanitize_handoff_summary(value: Any, *, fallback: str = "") -> str:
+    """Keep conclusions in a handoff while dropping upstream work orders.
+
+    A completed specialist may describe facts, judgments, evidence boundaries,
+    uncertainty and unresolved questions.  It must not prescribe how a later
+    agent should research, rank, verify or write the result.
+    """
+
+    text = " ".join(str(value or "").split())
+    if not text:
+        return " ".join(str(fallback or "").split())
+    parts = re.split(r"(?<=[。！？!?；;])", text)
+    kept = [part.strip() for part in parts if not _is_prescriptive_handoff_text(part)]
+    result = "".join(part for part in kept if part).strip()
+    if result:
+        return result
+    return " ".join(str(fallback or "").split())
+
+
+def sanitize_open_questions(values: Any) -> list[str]:
+    """Pass unresolved questions, not disguised downstream instructions."""
+
+    result: list[str] = []
+    for value in list(values or []):
+        text = sanitize_handoff_summary(value)
+        if not text or _is_prescriptive_handoff_text(text):
+            continue
+        result.append(text)
+    return result
+
+
+def sanitize_handoff_value(value: Any) -> Any:
+    """Recursively remove mechanical directions from cross-agent payloads."""
+
+    if isinstance(value, str):
+        return sanitize_handoff_summary(value)
+    if isinstance(value, dict):
+        result: dict[str, Any] = {}
+        for key, item in value.items():
+            normalized_key = str(key).lower()
+            if any(
+                marker in normalized_key
+                for marker in (
+                    "requested_next_action",
+                    "next_action",
+                    "next_step",
+                    "recommendation",
+                    "follow_up",
+                    "followup",
+                    "attention_point",
+                    "next_questions",
+                    "downstream_question",
+                    "required_next",
+                    "guidance",
+                    "advice",
+                    "suggestion",
+                )
+            ):
+                continue
+            cleaned = sanitize_handoff_value(item)
+            if cleaned not in (None, "", [], {}):
+                result[str(key)] = cleaned
+        return result
+    if isinstance(value, (list, tuple, set)):
+        result = [sanitize_handoff_value(item) for item in value]
+        return [item for item in result if item not in (None, "", [], {})]
+    return value
+
+
+def _is_prescriptive_handoff_text(value: Any) -> bool:
+    text = str(value or "").strip(" \t\r\n，,。；;：:")
+    return bool(text) and any(pattern.search(text) for pattern in _PRESCRIPTIVE_HANDOFF_PATTERNS)
 
 
 @dataclass(frozen=True)
@@ -84,9 +191,12 @@ class ContextProjector:
                 {
                     "agent_id": packet.agent_id,
                     "capability_tags": packet.capability_tags,
-                    "handoff_summary": packet.handoff_summary,
+                    "handoff_summary": sanitize_handoff_summary(
+                        packet.handoff_summary,
+                        fallback=(packet.findings[0] if packet.findings else ""),
+                    ),
                     "confidence": packet.confidence,
-                    "open_questions": packet.open_questions,
+                    "open_questions": sanitize_open_questions(packet.open_questions),
                     "evidence_ids": packet.evidence_ids,
                 }
                 for packet in list(store.baseline_packets.values())[
@@ -212,22 +322,31 @@ def _project_upstream_payload(
     source_agent_id: str,
     payload: Any,
 ) -> Any:
-    del target_agent_id, source_agent_id
+    del source_agent_id
     if not isinstance(payload, dict):
         return payload
     order = {key: index for index, key in enumerate(payload)}
-    candidates = [
-        (key, value)
-        for key, value in payload.items()
-        if value not in (None, "", [], {})
-    ]
-    candidates.sort(
-        key=lambda item: (
-            -sum(hint in str(item[0]).lower() for hint in _HANDOFF_FIELD_HINTS),
-            order[item[0]],
-        )
+    target_hints = _TARGET_HANDOFF_FIELD_HINTS.get(
+        str(target_agent_id), _HANDOFF_FIELD_HINTS
     )
-    return dict(candidates[:5])
+    candidates: list[tuple[str, Any, int]] = []
+    for key, value in payload.items():
+        if value in (None, "", [], {}):
+            continue
+        target_score = sum(hint in str(key).lower() for hint in target_hints)
+        generic_score = sum(hint in str(key).lower() for hint in _HANDOFF_FIELD_HINTS)
+        candidates.append((key, value, target_score * 2 + generic_score))
+    candidates.sort(key=lambda item: (-item[2], order[item[0]]))
+    positive = [item for item in candidates if item[2] > 0]
+    # Unnamed fields are not silently promoted over a role-relevant delta. If
+    # a custom packet has no recognizable field names, retain one bounded field
+    # as a compatibility escape hatch; summary/decisions remain authoritative.
+    selected = (
+        [(key, value, _score) for key, value, _score in candidates]
+        if len(candidates) <= 5
+        else positive[:5] if positive else candidates[:1]
+    )
+    return {key: value for key, value, _score in selected}
 
 
 def compact_packet_handoff(
@@ -256,6 +375,16 @@ def compact_packet_handoff(
             source_agent_id=agent_id,
             payload=payload,
         )
+    findings = [
+        sanitize_handoff_summary(item)
+        for item in list(getattr(packet, "findings", []))[:finding_limit]
+    ]
+    findings = [item for item in findings if item]
+    summary = sanitize_handoff_summary(
+        getattr(packet, "handoff_summary", ""),
+        fallback=findings[0] if findings else "",
+    )
+    open_questions = sanitize_open_questions(getattr(packet, "open_questions", []))
     return {
         "packet_id": str(getattr(packet, "packet_id", "")),
         "agent_id": agent_id,
@@ -265,18 +394,18 @@ def compact_packet_handoff(
         "payload_type": str(
             getattr(packet, "payload_type", "") or "legacy_analysis_sections"
         ),
-        "handoff_summary": _compact_text(
-            getattr(packet, "handoff_summary", ""), 260 if minimal else 520
-        ),
+        "handoff_summary": _compact_text(summary, 260 if minimal else 520),
         "key_findings": [
             _compact_text(item, 220 if minimal else 360)
-            for item in list(getattr(packet, "findings", []))[:finding_limit]
+            for item in findings
         ],
-        "payload": compact_handoff_value(
-            payload,
-            max_string_chars=string_limit,
-            max_list_items=list_limit,
-            max_mapping_items=18 if full_case_packet else (5 if minimal else 10),
+        "payload": sanitize_handoff_value(
+            compact_handoff_value(
+                payload,
+                max_string_chars=string_limit,
+                max_list_items=list_limit,
+                max_mapping_items=18 if full_case_packet else (5 if minimal else 10),
+            )
         ),
         "evidence_ids": list(getattr(packet, "evidence_ids", []))[
             : 6 if minimal else 14
@@ -295,9 +424,7 @@ def compact_packet_handoff(
         ],
         "open_questions": [
             _compact_text(item, 180 if minimal else 240)
-            for item in list(getattr(packet, "open_questions", []))[
-                : 1 if minimal else 3
-            ]
+            for item in open_questions[: 1 if minimal else 3]
         ],
     }
 
@@ -309,23 +436,34 @@ def _dependency_handoff(
     minimal: bool,
     query: str = "",
 ) -> dict[str, Any]:
-    payload = _project_upstream_payload(
+    payload = sanitize_handoff_value(_project_upstream_payload(
         target_agent_id=target_agent_id,
         source_agent_id=str(getattr(packet, "agent_id", "")),
         payload=getattr(packet, "payload", None)
         or getattr(packet, "analysis_sections", {}),
+    ))
+    findings = [
+        sanitize_handoff_summary(item)
+        for item in list(getattr(packet, "findings", []))
+    ]
+    findings = [item for item in findings if item]
+    summary = sanitize_handoff_summary(
+        getattr(packet, "handoff_summary", ""),
+        fallback=findings[0] if findings else "",
     )
+    open_questions = sanitize_open_questions(getattr(packet, "open_questions", []))
     if not minimal:
+        # Keep the historical shape for callers that explicitly request the
+        # expanded packet (for example release/audit persistence). Model
+        # prompts use the minimal projection below by default.
         return {
             "agent_id": str(getattr(packet, "agent_id", "")),
             "packet_id": str(getattr(packet, "packet_id", "")),
             "capability_tags": list(getattr(packet, "capability_tags", [])),
-            "handoff_summary": _compact_text(
-                getattr(packet, "handoff_summary", ""), 520
-            ),
+            "handoff_summary": _compact_text(summary, 520),
             "key_findings": [
                 _compact_text(item, 360)
-                for item in list(getattr(packet, "findings", []))[:4]
+                for item in findings[:4]
             ],
             "payload_type": str(
                 getattr(packet, "payload_type", "")
@@ -341,11 +479,10 @@ def _dependency_handoff(
             "confidence": getattr(packet, "confidence", None),
             "open_questions": [
                 _compact_text(item, 240)
-                for item in list(getattr(packet, "open_questions", []))[:3]
+                for item in open_questions[:3]
             ],
         }
     finding_limit = 3
-    open_questions = list(getattr(packet, "open_questions", []))
     uncertainties = [
         *list(getattr(packet, "limitations", []))[:2],
         *open_questions[:1],
@@ -357,33 +494,26 @@ def _dependency_handoff(
         # Keep the legacy alias for readers of older persisted checkpoints,
         # while all new scheduling and audit code uses agent_id/packet_id.
         "source": str(getattr(packet, "agent_id", "")),
-        "summary": _compact_text(
-            getattr(packet, "handoff_summary", ""),
-            300,
-        ),
+        "summary": _compact_text(summary, 240),
         "decisions": [
-            _compact_text(item, 260)
-            for item in list(getattr(packet, "findings", []))[:finding_limit]
+            _compact_text(item, 220)
+            for item in findings[: min(finding_limit, 3)]
         ],
         "context_delta": compact_handoff_value(
             payload,
-            max_string_chars=280,
-            max_list_items=4,
-            max_mapping_items=5,
+            max_string_chars=220,
+            max_list_items=3,
+            max_mapping_items=4,
         ),
         "evidence_refs": list(getattr(packet, "evidence_ids", []))[
             :8
         ],
         "confidence": getattr(packet, "confidence", None),
         "uncertainties": [
-            _compact_text(item, 180)
+            _compact_text(sanitize_handoff_summary(item), 160)
             for item in uncertainties
+            if sanitize_handoff_summary(item)
         ],
-        "requested_next_action": (
-            _compact_text(open_questions[0], 160)
-            if open_questions
-            else f"仅消费与当前Query“{_compact_text(query, 80)}”直接相关的增量。"
-        ),
     }
 
 

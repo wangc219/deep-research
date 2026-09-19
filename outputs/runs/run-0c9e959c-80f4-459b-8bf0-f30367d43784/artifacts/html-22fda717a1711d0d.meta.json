@@ -1,0 +1,15 @@
+{
+  "artifact_ref": "html:22fda717a1711d0d",
+  "connect_ip": "198.18.1.24",
+  "content_path": "html-22fda717a1711d0d.html",
+  "content_type": "text/html; charset=UTF-8",
+  "encoding": null,
+  "evidence_id": "ev-system_confrontation-web-06d26c44006f",
+  "fetch_cache_hit": true,
+  "final_url": "https://www.sda.mil/home/about-us/faq/",
+  "kind": "html",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "22fda717a1711d0d5027c2ceefcb6935c47ebaab9ad9161429d0bad3730c6f05",
+  "url": "https://www.sda.mil/home/about-us/faq/"
+}

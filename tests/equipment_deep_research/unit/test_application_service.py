@@ -3,6 +3,8 @@ from __future__ import annotations
 import pytest
 from equipment_deep_research.application.dto import CreateRunCommand, UpdateRunCommand
 from equipment_deep_research.application.run_service import InvalidRunTransition, ResearchApplicationService
+from equipment_deep_research.persistence.database import create_database_engine
+from equipment_deep_research.persistence.repositories import SqlRunQueue, SqlRunRepository
 
 
 def test_create_and_start_are_separate_commands() -> None:
@@ -203,6 +205,90 @@ def test_queued_run_can_be_permanently_deleted_but_active_run_cannot() -> None:
     service.set_status(active.run_id, "researching")
     with pytest.raises(InvalidRunTransition, match="researching cannot be permanently deleted"):
         service.delete_run(active.run_id)
+
+
+def test_parent_cancel_cascades_deep_child_run_and_job(tmp_path) -> None:
+    engine = create_database_engine(f"sqlite:///{tmp_path / 'cascade.db'}")
+    repository = SqlRunRepository(engine)
+    service = ResearchApplicationService(
+        repository=repository,
+        queue=SqlRunQueue(engine),
+    )
+    parent = service.create_run(CreateRunCommand("parent", "auto", [], 2, "analyst"))
+    child = service.create_run(
+        CreateRunCommand(
+            "child",
+            "auto",
+            [],
+            2,
+            "deep-thinking-agent",
+            execution={"parent_run_id": parent.run_id, "deep_job_id": "job-1"},
+        )
+    )
+    service.start_run(child.run_id, actor="deep-thinking-agent", idempotency_key="child-start")
+    repository.create_or_get_deep_job(
+        job_id="job-1",
+        parent_run_id=parent.run_id,
+        child_run_id=child.run_id,
+        idempotency_key="deep-request",
+        fingerprint="parent:hypothesis:query:focus",
+    )
+
+    stopped = service.cancel_run(parent.run_id, actor="analyst", idempotency_key="stop")
+
+    assert stopped.status == "cancel_requested"
+    assert service.get_run(child.run_id).status == "cancelled"
+    job = repository.get_deep_job("job-1")
+    assert job is not None
+    assert job["status"] == "cancelled"
+    assert job["stage"] == "publish"
+
+
+def test_parent_cancel_cascades_partial_deep_job(tmp_path) -> None:
+    """A partial deep job can still own active child work and must be fenced."""
+
+    engine = create_database_engine(f"sqlite:///{tmp_path / 'partial-cascade.db'}")
+    repository = SqlRunRepository(engine)
+    service = ResearchApplicationService(
+        repository=repository,
+        queue=SqlRunQueue(engine),
+    )
+    parent = service.create_run(CreateRunCommand("parent", "auto", [], 2, "analyst"))
+    repository.create_or_get_deep_job(
+        job_id="job-partial",
+        parent_run_id=parent.run_id,
+        session_id="session-partial",
+        idempotency_key="partial-request",
+        fingerprint="partial-fingerprint",
+    )
+    repository.update_deep_job(
+        "job-partial", stage="retrieval", status="partial", error="awaiting child"
+    )
+
+    service.cancel_run(parent.run_id, actor="analyst", idempotency_key="stop-partial")
+
+    job = repository.get_deep_job("job-partial")
+    assert job is not None
+    assert job["status"] == "cancelled"
+    assert job["stage"] == "publish"
+
+
+def test_archiving_parent_cancels_active_deep_job(tmp_path) -> None:
+    engine = create_database_engine(f"sqlite:///{tmp_path / 'archive-cascade.db'}")
+    repository = SqlRunRepository(engine)
+    service = ResearchApplicationService(repository=repository, queue=SqlRunQueue(engine))
+    parent = service.create_run(CreateRunCommand("parent", "auto", [], 2, "analyst"))
+    repository.create_or_get_deep_job(
+        job_id="job-archive",
+        parent_run_id=parent.run_id,
+        idempotency_key="archive-request",
+        fingerprint="archive-fingerprint",
+    )
+
+    archived = service.archive_run(parent.run_id, actor="analyst")
+
+    assert archived.status == "archived"
+    assert repository.get_deep_job("job-archive")["status"] == "cancelled"
 
 
 def test_orphaned_active_run_requires_manual_resume_after_worker_restart() -> None:

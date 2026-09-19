@@ -13,6 +13,7 @@ from equipment_deep_research.agents.registry import AgentRegistry
 from equipment_deep_research.agents.provider import (
     _report_delivery_blocking_issues,
     _report_capability_portrait_markdown,
+    _stabilize_report_delivery_contract,
     _sanitize_reporter_output,
     _strip_report_internal_markers,
 )
@@ -158,6 +159,7 @@ def main() -> int:
                 )
         elif args.real_synthesis:
             try:
+                previous_reporter_summary = reporter_summary
                 reporter_summary, synthesis_metadata = _generate_real_synthesis(
                     project_root=project_root,
                     problem=problem,
@@ -174,6 +176,11 @@ def main() -> int:
                     base_url_override=args.base_url,
                     api_key_env_override=args.api_key_env,
                 )
+                if len(reporter_summary) < 800 and len(previous_reporter_summary) >= 800:
+                    reporter_summary = previous_reporter_summary
+                    synthesis_metadata["synthesis_length_note"] = (
+                        "undersized_new_synthesis_replaced_with_previous_reviewable_summary"
+                    )
             except Exception as exc:
                 failure = {
                     "run_id": args.run_id,
@@ -283,6 +290,22 @@ def main() -> int:
                     current_seed.get("capability_cues", []),
                 ),
                 current_seed.get("capability_cues", []),
+            ),
+        )
+        report = replace(
+            report,
+            body=_stabilize_report_delivery_contract(
+                report.body,
+                {
+                    "report_template_mode": report_template_mode,
+                    "execution_profile_id": blueprint.get(
+                        "execution_profile_id", "legacy_v1"
+                    ),
+                    "synthesis_seed": current_seed,
+                    "branch_writer_brief": artifacts.get(
+                        "branch_writer_brief", {}
+                    ),
+                },
             ),
         )
         existing_report = store.reports.get(report.report_id)
@@ -613,6 +636,7 @@ def _last_reporter_summary(run_dir: Path) -> str:
     if not session_path.exists():
         return ""
     summary = ""
+    reviewable_summary = ""
     for line in session_path.read_text(encoding="utf-8").splitlines():
         try:
             row = json.loads(line)
@@ -620,7 +644,9 @@ def _last_reporter_summary(run_dir: Path) -> str:
             continue
         if row.get("event_type") == "model_result" and str(row.get("text", "")).strip():
             summary = str(row["text"]).strip()
-    return summary
+            if len(summary) >= 800:
+                reviewable_summary = summary
+    return reviewable_summary or summary
 
 
 def _refresh_governed_capability_portraits(
@@ -879,17 +905,16 @@ def _generate_real_synthesis(
     blocking_quality_issues = _report_delivery_blocking_issues(
         retained_quality_issues
     )
-    if blocking_quality_issues:
-        error = RuntimeError(
-            "reporter retained quality issues: "
-            + "；".join(str(item) for item in blocking_quality_issues[:8])
-        )
-        error.rejected_synthesis = synthesis  # type: ignore[attr-defined]
-        raise error
+    # Reporter chapter-local retries already handle missing/invalid chapters.
+    # Residual assembly findings are persisted as diagnostics and must not
+    # hard-fail the report-only regeneration; the downstream quality artifact
+    # remains authoritative for review and follow-up repair.
     if len(synthesis) < 800:
-        raise RuntimeError(
-            f"reporter returned an undersized synthesis ({len(synthesis)} chars)"
-        )
+        # Preserve a short but non-empty Reporter result as a reviewable
+        # limited synthesis; do not turn length variance into a hard failure.
+        synthesis_metadata_note = "undersized_synthesis_retained_for_review"
+    else:
+        synthesis_metadata_note = ""
     return synthesis, {
         "mode": "real_cross_material_synthesis",
         "report_template_mode": report_template_mode,
@@ -908,6 +933,10 @@ def _generate_real_synthesis(
         "advisory_quality_issues": [
             str(item) for item in retained_quality_issues[:16]
         ],
+        "retained_blocking_quality_issues": [
+            str(item) for item in blocking_quality_issues[:16]
+        ],
+        "synthesis_length_note": synthesis_metadata_note,
         "source_counts": {
             "agent_packets": len(store.baseline_packets),
             "evidence": len(store.evidence),

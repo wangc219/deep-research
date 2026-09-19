@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+import sys
 from types import SimpleNamespace
 
 from fastapi.testclient import TestClient
@@ -10,15 +11,141 @@ from equipment_deep_research.api.app import (
     _interaction_workflow_summary,
     _preferred_report_path,
     _public_trace_interaction,
+    _suppress_cross_card_capability_contamination,
     create_app,
 )
 from equipment_deep_research.application.dto import CreateRunCommand
 from equipment_deep_research.application.run_service import ResearchApplicationService
+from equipment_deep_research.domain.models import CapabilityImageItem, to_plain
 from equipment_deep_research.persistence.database import create_database_engine
 from equipment_deep_research.persistence.repositories import (
     SqlRunQueue,
     SqlRunRepository,
 )
+from equipment_deep_research.deep_runtime.gateways import (
+    GatewayIdentity,
+    TelegramGatewayAdapter,
+    VerifiedChannelGateway,
+    WebhookSignaturePolicy,
+)
+
+
+def test_api_exposes_deployment_mcp_config_without_starting_transport(tmp_path: Path) -> None:
+    config_path = tmp_path / "mcp-host.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "deep-mcp-host-v1",
+                "servers": [
+                    {
+                        "server_id": "host:echo",
+                        "transport": "stdio",
+                        "command": sys.executable,
+                        "args": ["missing-until-a-real-turn.py"],
+                        "allowed_tools": ["echo"],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    app = create_app(mcp_config_path=config_path)
+
+    with TestClient(app) as client:
+        response = client.get("/api/v1/deep-thinking/capabilities")
+        assert response.status_code == 200
+        host = response.json()["mcp_host"]
+        assert host["status"] == "configured"
+        assert host["reload"] == "per_turn"
+        assert host["servers"] == [
+            {
+                "server_id": "host:echo",
+                "transport": "stdio",
+                "allowed_tools": ["echo"],
+                "limits": {
+                    "max_concurrent_calls": 4,
+                    "max_calls_per_turn": 64,
+                    "max_result_bytes": 262144,
+                    "max_result_depth": 16,
+                    "max_result_items": 4096,
+                },
+            }
+        ]
+        assert app.state.deep_mcp_host._current._thread is None
+    assert app.state.deep_mcp_host._closed
+
+
+def test_api_channel_webhook_uses_verified_gateway_and_redacts_result() -> None:
+    policy = WebhookSignaturePolicy(secret="channel-test", tolerance_seconds=60)
+    adapter = TelegramGatewayAdapter(allowed_senders=["17"], allowed_chats=["42"])
+    calls = []
+
+    def resolve_session(identity: GatewayIdentity, _payload: dict) -> str:
+        assert identity.chat_id == "42"
+        return "run-1:session-1"
+
+    def execute(payload: dict) -> dict:
+        calls.append(payload)
+        assert payload["session_key"] == "run-1:session-1"
+        return {
+            "visible_summary": ["已完成深度发散"],
+            "provider_metadata": {"api_key": "private"},
+        }
+
+    gateway = VerifiedChannelGateway(
+        adapter=adapter,
+        signature_policy=policy,
+        session_resolver=resolve_session,
+        execute=execute,
+    )
+    app = create_app(channel_gateways={"telegram": gateway})
+    payload = {
+        "update_id": 1,
+        "message": {
+            "message_id": 9,
+            "from": {"id": 17},
+            "chat": {"id": 42},
+            "text": "继续发散",
+        },
+    }
+    body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    headers = {
+        "X-Deep-Gateway-Timestamp": "1000",
+        "X-Deep-Gateway-Nonce": "api-webhook-1",
+        "X-Deep-Gateway-Signature": policy.sign(
+            body, timestamp="1000", nonce="api-webhook-1"
+        ),
+    }
+    # The route uses wall clock time, so sign with a current timestamp for
+    # the HTTP request while retaining deterministic replay coverage in the
+    # gateway unit tests.
+    import time
+    timestamp = str(int(time.time()))
+    headers["X-Deep-Gateway-Timestamp"] = timestamp
+    headers["X-Deep-Gateway-Signature"] = policy.sign(
+        body, timestamp=timestamp, nonce="api-webhook-1"
+    )
+    with TestClient(app) as client:
+        response = client.post("/api/v1/channels/telegram/webhook", content=body, headers=headers)
+        rejected_replay = client.post("/api/v1/channels/telegram/webhook", content=body, headers=headers)
+        headers["X-Deep-Gateway-Nonce"] = "api-webhook-retry"
+        headers["X-Deep-Gateway-Signature"] = policy.sign(
+            body, timestamp=timestamp, nonce="api-webhook-retry"
+        )
+        retry = client.post("/api/v1/channels/telegram/webhook", content=body, headers=headers)
+        oversized = client.post("/api/v1/channels/telegram/webhook", content=b"x" * (256 * 1024 + 1))
+        unconfigured = client.post("/api/v1/channels/discord/webhook", content=body, headers=headers)
+    assert response.status_code == 200
+    assert rejected_replay.status_code == 403
+    assert retry.status_code == 200
+    assert retry.json() == response.json()
+    assert len(calls) == 1
+    assert oversized.status_code == 413
+    assert unconfigured.status_code == 404
+    result = response.json()
+    assert result["session_key"] == "run-1:session-1"
+    assert result["result"]["provider_metadata"] == "<redacted>"
+    assert result["deliveries"][0]["chat_id"] == "42"
 
 
 def test_api_creates_and_queues_run() -> None:
@@ -40,6 +167,198 @@ def test_api_creates_and_queues_run() -> None:
         headers={"Idempotency-Key": "start-1"},
     )
     assert started.json()["status"] == "queued"
+
+
+def test_deep_mutations_require_idempotency_key_even_without_sql_ledger() -> None:
+    """Merge/review commands must fail closed before any compatibility path."""
+
+    service = ResearchApplicationService()
+    client = TestClient(create_app(service))
+    created = client.post("/api/v1/runs", json={"topic": "deep key", "research_route": "auto"})
+    assert created.status_code == 201
+    run_id = created.json()["run_id"]
+
+    merge = client.post(
+        f"/api/v1/runs/{run_id}/deep-thinking/sessions/missing/merge",
+        json={"artifact_id": "artifact"},
+    )
+    assert merge.status_code == 400
+    assert "Idempotency-Key" in merge.json()["detail"]
+
+    verify = client.post(
+        f"/api/v1/runs/{run_id}/capability-versions/version-missing/verify",
+        headers={"X-Role": "reviewer"},
+        json={"status": "verified"},
+    )
+    assert verify.status_code == 400
+    assert "Idempotency-Key" in verify.json()["detail"]
+
+
+def test_reference_research_rejects_formal_card_without_selection_status(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """A formal S6 projection remains fenced even without legacy selection fields."""
+
+    output_root = tmp_path / "runs"
+    monkeypatch.setenv("EQUIPMENT_DR_OUTPUT_ROOT", str(output_root))
+    service = ResearchApplicationService()
+    run = service.create_run(CreateRunCommand("formal reference guard", "auto", [], 1, "analyst"))
+    run_dir = output_root / run.run_id
+    run_dir.mkdir(parents=True)
+    (run_dir / "capability_images.json").write_text(
+        json.dumps(
+            [
+                {
+                    "capability_id": "formal-capability",
+                    "card_binding_id": "formal-binding",
+                    "hypothesis_id": "formal-hypothesis",
+                    "name": "正式能力卡",
+                    "mechanism_chain": "通过末段诱导压缩对手交战窗口",
+                    "military_value": "直接压制目标并打开突防窗口",
+                    "version_status": "formal",
+                    "verification_status": "formal",
+                }
+            ],
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    service.set_status(run.run_id, "completed")
+    client = TestClient(create_app(service))
+
+    response = client.post(
+        f"/api/v1/runs/{run.run_id}/deep-thinking/reference-research",
+        headers={"Idempotency-Key": "formal-reference-guard"},
+        json={
+            "hypothesis_id": "formal-hypothesis",
+            "candidate": {"name": "正式能力卡"},
+        },
+    )
+
+    assert response.status_code == 409
+    assert "already passed" in response.json()["detail"]
+
+
+def test_capability_api_suppresses_legacy_cross_card_portrait() -> None:
+    rows = [
+        {
+            "name": "蜂群母弹式自寻的子弹药",
+            "capability_image": "概述：浪面跳跃无人爆破艇实施近岸末段爆破。",
+            "deep_capability_portrait": "概述：浪面跳跃无人爆破艇实施近岸末段爆破。",
+        },
+        {
+            "name": "浪面跳跃无人爆破艇",
+            "capability_image": "概述：浪面跳跃无人爆破艇实施近岸末段爆破。",
+        },
+    ]
+
+    safe = _suppress_cross_card_capability_contamination(rows)
+
+    assert safe[0]["verification_status"] == "pending"
+    assert safe[0]["confidence_limited"] is True
+    assert safe[0]["capability_image"] == ""
+    assert safe[1]["capability_image"]
+
+
+def test_capability_api_preserves_quality_limited_s6_provenance() -> None:
+    payload = _capability_api_view(
+        {
+            "name": "断链复核巡猎弹",
+            "capability_image": "概述：保留受限但可审阅的S6画像。",
+            "capability_portrait_modules": {"overview": "保留受限画像。"},
+            "portrait_authoring_status": "authored_quality_limited",
+            "portrait_module_character_counts": {"overview": 8},
+            "portrait_quality_warnings": ["概述低于380字增强触发线"],
+            "portrait_quality_contract_version": (
+                "s6-portrait-v3-target400x5-min380"
+            ),
+        }
+    )
+
+    assert payload["portrait_authoring_status"] == "authored_quality_limited"
+    assert payload["analysis_provenance_status"] == "limited_quality"
+    assert payload["portrait_quality_warnings"] == ["概述低于380字增强触发线"]
+
+
+def test_capability_api_withholds_portrait_when_independent_s6_authoring_failed() -> None:
+    payload = _capability_api_view(
+        {
+            "name": "崖影穿谷攻击无人机",
+            "portrait_authoring_status": "limited_provider_failure",
+            "capability_portrait_modules": {
+                "overview": "不应继续展示的历史回退概述。",
+            },
+            "capability_image": "概述：不应继续展示的历史回退概述。",
+            "deep_capability_portrait": "概述：不应继续展示的历史回退概述。",
+        }
+    )
+
+    assert payload["capability_portrait_modules"] == {}
+    assert payload["capability_image"] == ""
+    assert payload["deep_capability_portrait"] == ""
+    assert payload["analysis_provenance_status"] == "limited_failure"
+    assert any("停用回退模板" in item for item in payload["portrait_quality_warnings"])
+
+
+def test_quality_limited_status_survives_domain_to_api_projection() -> None:
+    item = CapabilityImageItem(
+        capability_id="s6-domain-limited",
+        name="断链复核巡猎弹",
+        equipment_category="远程精确打击弹药",
+        capability_type="new_capability",
+        source_winning_logic="把持续链路依赖改为弹上受控复核",
+        related_scenario="强干扰时敏目标猎歼",
+        priority="P1",
+        capability_gap="断链后目标复核不足",
+        capability_image="原创五栏画像",
+        evidence_ids=["ev-s6"],
+        confidence=0.68,
+        portrait_authoring_status="authored_quality_limited",
+        capability_portrait_modules={"overview": "受限画像"},
+        portrait_module_character_counts={"overview": 4},
+        portrait_quality_warnings=["overview低于380字增强触发线"],
+        portrait_quality_contract_version="s6-portrait-v3-target400x5-min380",
+    )
+
+    projected = _capability_api_view(to_plain(item))
+
+    assert projected["portrait_authoring_status"] == "authored_quality_limited"
+    assert projected["analysis_provenance_status"] == "limited_quality"
+    assert projected["portrait_module_character_counts"] == {"overview": 4}
+    assert projected["portrait_quality_contract_version"] == (
+        "s6-portrait-v3-target400x5-min380"
+    )
+
+
+def test_workflow_summary_prioritizes_limited_s6_release_status() -> None:
+    workflow = _interaction_workflow_summary(
+        [
+            {
+                "event_type": "winning_s6_release_gate_evaluated",
+                "details": {
+                    "passed": True,
+                    "failed": False,
+                    "limited": True,
+                    "warnings": ["一张画像仍低于当前逐栏质量合同"],
+                    "authored_cards": [],
+                },
+            }
+        ],
+        SimpleNamespace(
+            status="researching",
+            research_route="new_winning_mechanism",
+            discovery_branch="A",
+            execution_profile_id="winning_swarm_dynamic_v2",
+            execution={},
+            result={},
+        ),
+    )
+
+    gate = workflow["swarm_cluster"]["s6_release_gate"]
+    assert gate["passed"] is True
+    assert gate["limited"] is True
+    assert gate["status"] == "limited"
+    assert workflow["swarm_cluster"]["s6_authoring"]["status"] == "limited"
 
 
 def test_runtime_capacity_api_persists_capacity_and_updates_health(
@@ -153,16 +472,43 @@ def test_preferred_report_path_requires_a_passing_postfix_gate(tmp_path: Path) -
     original = tmp_path / "report.md"
     postfix = tmp_path / "report-postfix.md"
     gate = tmp_path / "report-quality-gate-postfix.json"
+    failure = tmp_path / "report_failure.json"
     original.write_text("original", encoding="utf-8")
     postfix.write_text("postfix", encoding="utf-8")
 
+    failure.write_text(
+        json.dumps(
+            {
+                "status": "limited_quality_gate",
+                "report_written": False,
+                "partial_report_path": "report-partial.md",
+                "partial_report_available": True,
+            }
+        ),
+        encoding="utf-8",
+    )
     gate.write_text(json.dumps({"passed": False}), encoding="utf-8")
-    assert _preferred_report_path(tmp_path) == original
+    assert _preferred_report_path(tmp_path) is None
 
     gate.write_text(json.dumps({"passed": True}), encoding="utf-8")
     assert _preferred_report_path(tmp_path) == postfix
 
     gate.write_text("not-json", encoding="utf-8")
+    assert _preferred_report_path(tmp_path) is None
+
+
+def test_preferred_report_path_exposes_completed_report_with_failed_quality_gate(
+    tmp_path: Path,
+) -> None:
+    """A quality-gate failure is advisory for a completed run, not a deletion."""
+
+    original = tmp_path / "report.md"
+    original.write_text("completed but quality-limited report", encoding="utf-8")
+    (tmp_path / "report_quality_gate.json").write_text(
+        json.dumps({"passed": False}),
+        encoding="utf-8",
+    )
+
     assert _preferred_report_path(tmp_path) == original
 
 
@@ -198,6 +544,68 @@ def test_report_api_prefers_approved_postfix_without_overwriting_original(
     assert response.status_code == 200
     assert response.text == "approved postfix"
     assert original.read_text(encoding="utf-8") == "original with internal marker"
+
+
+def test_report_api_allows_analyst_read_for_report_workspace(tmp_path: Path) -> None:
+    """The analyst-facing report workspace can read the immutable report."""
+
+    engine = create_database_engine(f"sqlite:///{tmp_path / 'analyst-report.db'}")
+    repository = SqlRunRepository(engine)
+    service = ResearchApplicationService(
+        repository=repository,
+        queue=SqlRunQueue(engine),
+    )
+    run = service.create_run(
+        CreateRunCommand("analyst report", "auto", [], 2, "analyst")
+    )
+    run_dir = tmp_path / run.run_id
+    run_dir.mkdir()
+    (run_dir / "report.md").write_text("analyst-visible report", encoding="utf-8")
+    service.set_result(run.run_id, {"run_dir": str(run_dir)})
+    service.set_status(run.run_id, "completed")
+
+    response = TestClient(create_app(service, event_repository=repository)).get(
+        f"/api/v1/runs/{run.run_id}/report",
+        headers={"X-Role": "analyst"},
+    )
+
+    assert response.status_code == 200
+    assert response.text == "analyst-visible report"
+
+
+def test_report_api_blocks_partial_quality_gate_download(tmp_path: Path) -> None:
+    engine = create_database_engine(f"sqlite:///{tmp_path / 'partial-report.db'}")
+    repository = SqlRunRepository(engine)
+    service = ResearchApplicationService(
+        repository=repository,
+        queue=SqlRunQueue(engine),
+    )
+    run = service.create_run(
+        CreateRunCommand("partial report", "auto", [], 2, "analyst")
+    )
+    run_dir = tmp_path / run.run_id
+    run_dir.mkdir()
+    (run_dir / "report.md").write_text("draft report", encoding="utf-8")
+    (run_dir / "report_failure.json").write_text(
+        json.dumps(
+            {
+                "status": "limited_quality_gate",
+                "report_written": False,
+                "partial_report_path": "report-partial.md",
+                "partial_report_available": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+    service.set_result(run.run_id, {"run_dir": str(run_dir)})
+    service.set_status(run.run_id, "completed")
+
+    response = TestClient(create_app(service)).get(
+        f"/api/v1/runs/{run.run_id}/report",
+        headers={"X-Role": "reviewer"},
+    )
+
+    assert response.status_code == 404
 
 
 def test_api_prefers_current_output_root_and_strips_path_fields(
@@ -310,6 +718,117 @@ def test_capability_api_view_projects_complete_process_and_verification() -> Non
     assert projected["verification_plan"] == ["开展接口联试"]
     assert projected["problem_statement"].endswith("任务闭合质量")
     assert projected["deep_capability_portrait"] == "旧画像"
+
+
+def test_capability_api_view_removes_repeated_legacy_verification_fill() -> None:
+    boilerplate = (
+        "对测试巡飞弹的样机考核还应覆盖"
+        "异常工况、授权撤销和失效后的安全处置。"
+    )
+    projected = _capability_api_view(
+        {
+            "name": "测试巡飞弹",
+            "equipment_form": "测试巡飞弹",
+            "capability_image": f"概述：保留原创判断。{boilerplate}",
+            "deep_capability_portrait": f"概述：保留原创判断。{boilerplate}",
+            "semantic_consistency_check": {"review": boilerplate},
+        }
+    )
+
+    assert projected["capability_image"] == "概述：保留原创判断。"
+    assert projected["deep_capability_portrait"] == "概述：保留原创判断。"
+    assert projected["semantic_consistency_check"]["review"] == ""
+
+
+def test_capability_api_view_preserves_current_v5_authored_overview() -> None:
+    overview = (
+        "敌方无人机群利用密集航路压缩末端拦截窗口；分布式裂群拦截弹在波前释放微型"
+        "拦截单元，优先冲击领航机与中继机，使编队失去协同并直接降低有效突防数量。"
+    )
+    row = {
+        "name": "分布式裂群拦截弹",
+        "portrait_authoring_status": "s6_authored_semantically_consistent",
+        "portrait_quality_contract_version": "s6-portrait-v5-target380x5-soft",
+        "capability_portrait_modules": {
+            "overview": overview,
+            "technology_implementation": "弹体释放机构与微型单元导引头、飞控和碰撞载荷联锁。",
+            "operational_process": "预警确认群体航迹后发射，母弹在波前裂群，子单元分区接敌。",
+            "capability_effects": "形成对领航、中继和高价值载荷节点的并行拦截能力。",
+            "winning_logic": "把逐架交换改为破坏编队结构，使密集队形转化为并行接敌机会。",
+        },
+    }
+
+    projected = _capability_api_view(row)
+
+    assert projected["capability_portrait_modules"]["overview"] == overview
+    assert "把原本依赖固定节奏的处置过程" not in projected[
+        "deep_capability_portrait"
+    ]
+
+
+def test_capability_api_view_preserves_complete_columns_over_400_characters() -> None:
+    long_complete = (
+        "敌方以持续机动隐藏目标，装备在有限窗口内完成复核并形成直接毁伤，"
+        "迫使其改变部署并暴露新的防护节点。"
+    ) * 10
+    modules = {
+        "overview": long_complete,
+        "technology_implementation": long_complete,
+        "operational_process": long_complete,
+        "capability_effects": long_complete,
+        "winning_logic": long_complete,
+    }
+
+    projected = _capability_api_view(
+        {
+            "name": "长栏完整性测试装备",
+            "portrait_authoring_status": "s6_authored_semantically_consistent",
+            "capability_portrait_modules": modules,
+        }
+    )
+
+    assert len(projected["capability_portrait_modules"]["overview"]) > 400
+    assert projected["capability_portrait_modules"] == modules
+    for label in (
+        "概述",
+        "装备与技术实现",
+        "关键作战流程",
+        "形成能力与作战效果",
+        "制胜逻辑机理",
+    ):
+        assert f"{label}：{long_complete}" in projected["deep_capability_portrait"]
+
+
+def test_capability_api_confidence_varies_with_card_evidence_fit() -> None:
+    common = {
+        "confidence": 0.58,
+        "equipment_form": "地形匹配末制导巡飞弹",
+        "target_scenario": "强干扰山谷中断链逼近雷达车",
+        "operational_mechanism": "惯导结合地形轮廓匹配并末段复核雷达车",
+        "evidence_ids": ["ev-1", "ev-2"],
+    }
+
+    matched = _capability_api_view(
+        {
+            **common,
+            "name": "断链地形匹配巡飞弹",
+            "evidence_basis": ["强干扰山谷中以地形匹配维持航迹并复核雷达车。"],
+            "direct_evidence_refs": ["ev-weapon-1", "ev-scene-1"],
+        }
+    )
+    generic = _capability_api_view(
+        {
+            **common,
+            "name": "通用保障巡飞弹",
+            "evidence_basis": ["公开材料仅讨论后勤韧性与人才培养。"],
+        }
+    )
+
+    assert 0.60 <= matched["confidence"] <= 0.80
+    assert matched["confidence"] > generic["confidence"]
+    assert matched["confidence_components"]["evidence_fit"] > generic[
+        "confidence_components"
+    ]["evidence_fit"]
 
 
 def test_capabilities_api_does_not_expose_s5_portfolio_as_s6_portrait(
@@ -1083,6 +1602,12 @@ def test_api_permanently_deletes_queued_run_queue_events_and_files(
     run_dir = output_root / run_id
     run_dir.mkdir(parents=True)
     (run_dir / "generated.txt").write_text("generated", encoding="utf-8")
+    legacy_run_dir = output_root.parent / run_id
+    legacy_run_dir.mkdir(parents=True)
+    (legacy_run_dir / "legacy-generated.txt").write_text("legacy", encoding="utf-8")
+    sidecar_dir = output_root.parent / "deep-thinking" / run_id
+    sidecar_dir.mkdir(parents=True)
+    (sidecar_dir / "session.json").write_text("{}", encoding="utf-8")
 
     response = client.delete(f"/api/v1/runs/{run_id}/permanent")
 
@@ -1100,6 +1625,8 @@ def test_api_permanently_deletes_queued_run_queue_events_and_files(
         "worker_heartbeats": 0,
     }
     assert not run_dir.exists()
+    assert not legacy_run_dir.exists()
+    assert not sidecar_dir.exists()
 
 
 def test_api_permanent_delete_stops_online_worker_run_and_clears_ownership(
@@ -1160,6 +1687,11 @@ def test_catalog_is_loaded_from_registry_and_invalid_selection_is_rejected() -> 
     assert [item["id"] for item in catalog["provider"]["provider_options"]] == [
         "codex",
         "responses",
+        "deepseek",
+        "codex_deepseek",
+        "codex_queen",
+        "claude",
+        "generic_cli",
     ]
     assert catalog["provider"]["execution_fields"] == [
         "provider",
@@ -1272,6 +1804,31 @@ def test_api_persists_interaction_mode_and_discovery_branch() -> None:
     assert created.status_code == 201
     assert created.json()["interaction_mode"] == "autonomous"
     assert created.json()["discovery_branch"] == "D"
+
+
+def test_api_persists_selected_report_template_mode() -> None:
+    client = TestClient(create_app())
+    three_layer = client.post(
+        "/api/v1/runs",
+        json={
+            "topic": "三层九项研究报告",
+            "research_route": "auto",
+            "report_template_mode": "three_layer_nine_item",
+        },
+    )
+    project = client.post(
+        "/api/v1/runs",
+        json={
+            "topic": "项目论证五章研究报告",
+            "research_route": "auto",
+            "report_template_mode": "project_argument_v1",
+        },
+    )
+
+    assert three_layer.status_code == 201
+    assert three_layer.json()["report_template_mode"] == "three_layer_nine_item"
+    assert project.status_code == 201
+    assert project.json()["report_template_mode"] == "project_argument_v1"
 
 
 def test_api_persists_real_execution_metadata_without_api_key() -> None:
@@ -1520,6 +2077,71 @@ def test_api_validates_and_persists_distinct_agent_model_profiles() -> None:
     )
     assert profiles["winning_mechanism"]["model"] == "winning-model"
     assert all("api_key" not in profile for profile in profiles.values())
+
+
+def test_api_migrates_legacy_deepseek_profile_id_on_create_and_update(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("EQUIPMENT_DR_MODE", "real")
+    monkeypatch.setenv("EQUIPMENT_DR_DEEPSEEK_MODEL", "deepseek-v4-flash")
+    monkeypatch.setenv("EQUIPMENT_DR_CODEX_DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "configured")
+    client = TestClient(create_app())
+
+    created = client.post(
+        "/api/v1/runs",
+        json={
+            "topic": "legacy DeepSeek profile migration",
+            "model_profile_id": "deepseek-openlux",
+            "execution": {"mode": "real"},
+        },
+    )
+
+    assert created.status_code == 201
+    created_payload = created.json()
+    assert created_payload["model_profile_id"] == "codex-deepseek"
+    assert created_payload["execution"]["model_profile_id"] == "codex-deepseek"
+
+    updated = client.patch(
+        f"/api/v1/runs/{created_payload['run_id']}",
+        json={
+            "topic": "legacy DeepSeek profile migration updated",
+            "research_route": "auto",
+            "selected_agent_ids": [],
+            "max_rounds": 2,
+            "model_profile_id": "deepseek-openlux",
+            "execution": {"mode": "real"},
+        },
+    )
+
+    assert updated.status_code == 200
+    assert updated.json()["model_profile_id"] == "codex-deepseek"
+    assert updated.json()["execution"]["model_profile_id"] == "codex-deepseek"
+
+
+def test_api_accepts_and_persists_queen_model_profile(monkeypatch) -> None:
+    monkeypatch.setenv("EQUIPMENT_DR_MODE", "real")
+    monkeypatch.setenv("EQUIPMENT_DR_QUEEN_MODEL", "qwen3.8-flash")
+    monkeypatch.setenv(
+        "EQUIPMENT_DR_QUEEN_BASE_URL",
+        "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    )
+    monkeypatch.setenv("QUEEN_API_KEY", "configured")
+    client = TestClient(create_app())
+
+    created = client.post(
+        "/api/v1/runs",
+        json={
+            "topic": "Queen model profile persistence",
+            "model_profile_id": "codex-queen",
+            "execution": {"mode": "real"},
+        },
+    )
+
+    assert created.status_code == 201
+    payload = created.json()
+    assert payload["model_profile_id"] == "codex-queen"
+    assert payload["execution"]["model_profile_id"] == "codex-queen"
 
 
 def test_interactions_are_visible_from_persistent_runtime_events_before_completion() -> (
@@ -2877,6 +3499,47 @@ def test_capability_api_preserves_codex_five_part_portrait_verbatim() -> None:
     assert "S6 从非支配候选" not in payload["deep_capability_portrait"]
 
 
+def test_capability_api_strips_structured_module_dict_dumps_from_portrait() -> None:
+    nested = {
+        "key_technologies": ["边缘在线强化学习与神经形态芯片"],
+        "system_architecture": "三层架构：指控层规划，边缘层在线学习，通信层动态组网。",
+        "implementation_path": "分三阶段完成实验室、对抗与集成验证。",
+        "key_bottlenecks": {"latency_requirement": "在线学习需毫秒级反馈。"},
+        "keyword_context": "在线学习指机载实时辨识并调整攻击参数。",
+    }
+    dump = str(nested)
+    portrait = (
+        "概述：敌方依托固定防御节奏消耗首波突防，本装备以代际经验继承改写蜂群交战窗口。\n"
+        f"- 装备与技术实现：{dump}\n"
+        "- 关键作战流程：装订任务后投放，机群在线学习并动态组网。\n"
+        "- 形成能力与作战效果：形成多波次经验继承下的持续突防能力。\n"
+        "- 制胜逻辑机理：传统蜂群依赖地面重规划，新构型把经验继承内化到机间交换。"
+    )
+
+    payload = _capability_api_view(
+        {
+            "name": "代际经验继承蜂群突防弹",
+            "capability_image": portrait,
+            "capability_portrait_modules": {
+                "overview": "敌方依托固定防御节奏消耗首波突防。",
+                "technology_implementation": nested,
+                "operational_process": "装订任务后投放，机群在线学习并动态组网。",
+                "capability_effects": "形成多波次经验继承下的持续突防能力。",
+                "winning_logic": "传统蜂群依赖地面重规划，新构型把经验继承内化到机间交换。",
+            },
+        }
+    )
+
+    rendered = payload["deep_capability_portrait"]
+    assert "key_technologies" not in rendered
+    assert "system_architecture" not in rendered
+    assert "keyword_context" not in rendered
+    assert "边缘在线强化学习与神经形态芯片" in rendered
+    assert "key_technologies" not in payload["capability_portrait_modules"][
+        "technology_implementation"
+    ]
+
+
 def test_capability_api_promotes_legacy_portrait_classification_for_display() -> None:
     payload = _capability_api_view(
         {
@@ -2897,6 +3560,27 @@ def test_capability_api_promotes_legacy_portrait_classification_for_display() ->
         "secondary_dimensions": ["突防维度", "压制维度"],
         "classification_basis": "由S6按该装备在当前任务场景中的主要战果与关键作战节点归类。",
     }
+
+
+def test_capability_api_marks_complete_legacy_record_as_structured_migrated() -> None:
+    payload = _capability_api_view(
+        {
+            "name": "历史反辐射弹",
+            "portrait_authoring_status": "legacy_v1",
+            "capability_image": (
+                "概述：在断链条件下追踪并毁伤真实辐射源。\n"
+                "- 装备与技术实现：弹载任务计算机融合被动射频导引头与位置历史。\n"
+                "- 关键作战流程：装订目标区后发射，复核辐射行为并受控攻击。\n"
+                "- 形成能力与作战效果：形成关机诱骗条件下的真实雷达猎歼能力。\n"
+                "- 制胜逻辑机理：迫使雷达在开机暴露和关机失能之间选择。"
+            ),
+            "military_utility": "压制真实防空雷达。",
+            "evidence_basis": ["公开反辐射导弹项目证据。"],
+            "reasoning_refs": ["reason-1"],
+        }
+    )
+
+    assert payload["analysis_provenance_status"] == "structured_migrated"
 
 
 def test_capability_api_preserves_agent_authored_weapon_name() -> None:

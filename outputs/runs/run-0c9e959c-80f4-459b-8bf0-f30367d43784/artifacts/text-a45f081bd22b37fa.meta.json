@@ -1,0 +1,20 @@
+{
+  "artifact_ref": "text:a45f081bd22b37fa",
+  "content_path": "text-a45f081bd22b37fa.txt",
+  "content_type": "text/plain; charset=utf-8",
+  "direct_error": "HTTPStatusError: cached_origin_failure:HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-8952c3805d5a",
+  "evidence_ids": [
+    "ev-weapon_equipment-web-8952c3805d5a",
+    "ev-technology_radar-web-8952c3805d5a",
+    "ev-system_confrontation-web-8952c3805d5a"
+  ],
+  "kind": "text",
+  "materialization_status": "reader_fetched",
+  "mode": "real",
+  "reader_attempt": 1,
+  "reader_url": "https://r.jina.ai/http://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+  "sha256": "a45f081bd22b37fa9fd6f4b1c5a92f8c7b6f7aa7ea254199617fdf3b67b5ed71",
+  "url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+}

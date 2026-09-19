@@ -1,0 +1,15 @@
+{
+  "artifact_ref": "raw:ed154a0542d6b1e2",
+  "connect_ip": "198.18.0.150",
+  "content_path": "raw-ed154a0542d6b1e2.bin",
+  "content_type": "application/pdf",
+  "encoding": null,
+  "evidence_id": "ev-combat_scenario-web-c038f0794402",
+  "fetch_cache_hit": false,
+  "final_url": "https://www.cna.org/reports/2025/07/PRC-Concepts-for-UAV-Swarms-in-Future-Warfare.pdf",
+  "kind": "raw",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "ed154a0542d6b1e2faeea9c6873a531555f76ff6e914422704d3eba02bb68ea1",
+  "url": "https://www.cna.org/reports/2025/07/PRC-Concepts-for-UAV-Swarms-in-Future-Warfare.pdf"
+}

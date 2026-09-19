@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=army.mil · army developing faster improved data kill chain for lethal and non lethal fires
-source_url=https://www.army.mil/article/263145/army_developing_faster_improved_data_kill_chain_for_lethal_and_non_lethal_fires
-claim=美国陆军公开资料称正在通过AI/ML、TITAN、火力指挥系统和统一数据网络压缩传感器到射手杀伤链。
-excerpt=
-retrieval=Hosted web search citation metadata

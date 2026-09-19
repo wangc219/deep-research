@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-import difflib
-import re
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
-from nanobot.agent.tools.base import tool_parameters
-from nanobot.agent.tools.filesystem import _FsTool
+from nanobot.agent.tools.base import ToolResult, tool_parameters
+from nanobot.agent.tools.filesystem import _FsTool  # pyright: ignore[reportPrivateUsage]
 from nanobot.agent.tools.schema import (
     ArraySchema,
     BooleanSchema,
@@ -17,62 +14,20 @@ from nanobot.agent.tools.schema import (
     StringSchema,
     tool_parameters_schema,
 )
-
-
-@dataclass(slots=True)
-class _PatchSummary:
-    action: str
-    path: str
-    added: int = 0
-    deleted: int = 0
+from nanobot.utils.file_edit_events import FileDiff, FileEditResult, display_file_edit_path
 
 
 class _PatchError(ValueError):
     pass
 
 
-_ABSOLUTE_WINDOWS_RE = re.compile(r"^[A-Za-z]:[\\/]")
-
-
-def _validate_relative_path(path: str) -> str:
+def _validate_patch_path(path: str) -> str:
     normalized = path.strip()
     if not normalized:
         raise _PatchError("patch path cannot be empty")
     if "\0" in normalized:
         raise _PatchError(f"patch path contains a null byte: {path!r}")
-    if normalized.startswith(("~", "/", "\\")) or _ABSOLUTE_WINDOWS_RE.match(normalized):
-        raise _PatchError(f"patch path must be relative: {path}")
-    if any(part == ".." for part in re.split(r"[\\/]+", normalized)):
-        raise _PatchError(f"patch path must not contain '..': {path}")
     return normalized
-
-
-def _lines_to_text(lines: list[str]) -> str:
-    if not lines:
-        return ""
-    return "\n".join(lines) + "\n"
-
-
-def _text_line_count(text: str) -> int:
-    if not text:
-        return 0
-    return len(text.splitlines())
-
-
-def _line_diff_stats(before: str, after: str) -> tuple[int, int]:
-    before_lines = before.replace("\r\n", "\n").splitlines()
-    after_lines = after.replace("\r\n", "\n").splitlines()
-    added = 0
-    deleted = 0
-    matcher = difflib.SequenceMatcher(a=before_lines, b=after_lines, autojunk=False)
-    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
-        if tag == "equal":
-            continue
-        if tag in ("replace", "delete"):
-            deleted += i2 - i1
-        if tag in ("replace", "insert"):
-            added += j2 - j1
-    return added, deleted
 
 
 def _append_text(content: str, addition: str) -> str:
@@ -87,18 +42,14 @@ def _append_text(content: str, addition: str) -> str:
     return combined
 
 
-def _format_summary(summary: _PatchSummary) -> str:
-    stats = ""
-    if summary.added or summary.deleted:
-        stats = f" (+{summary.added}/-{summary.deleted})"
-    return f"- {summary.action} {summary.path}{stats}"
-
-
 @tool_parameters(
     tool_parameters_schema(
         edits=ArraySchema(
             items=ObjectSchema(
-                path=StringSchema("Relative path to the file to edit."),
+                path=StringSchema(
+                    "Path to the file to edit. Relative paths resolve against the "
+                    "workspace; absolute paths and '..' obey the workspace access policy."
+                ),
                 action=StringSchema(
                     "Operation type: replace or add.",
                     enum=["replace", "add"],
@@ -138,13 +89,14 @@ class ApplyPatchTool(_FsTool):
             "Default tool for code edits. Supports multi-file changes in a single call. "
             "Provide a list of structured edits, each specifying a file path, action "
             "(replace/add), and the exact text to change. "
-            "Paths must be relative. Set dry_run=true to validate and preview without writing files. "
+            "Paths are resolved by the current workspace access policy. "
+            "Set dry_run=true to validate and preview without writing files. "
             "Use edit_file only for small exact replacements on a single file."
         )
 
     async def execute(
         self,
-        edits: list[dict] | None = None,
+        edits: list[object] | None = None,
         dry_run: bool = False,
         **kwargs: Any,
     ) -> str:
@@ -153,24 +105,27 @@ class ApplyPatchTool(_FsTool):
                 raise _PatchError("must provide edits")
 
             writes: dict[Path, str] = {}
-            summaries: list[_PatchSummary] = []
+            originals: dict[Path, str] = {}
+            actions: dict[Path, str] = {}
 
-            for edit in edits:
-                if not isinstance(edit, dict):
+            for edit_value in edits:
+                if not isinstance(edit_value, dict):
                     raise _PatchError("each edit must be an object")
+                edit = cast(dict[str, Any], edit_value)
                 raw_path = edit.get("path")
                 if not isinstance(raw_path, str):
                     raise _PatchError("path required for edit")
-                path = _validate_relative_path(raw_path)
+                path = _validate_patch_path(raw_path)
                 action = edit.get("action")
                 if not isinstance(action, str):
                     raise _PatchError(f"action required for edit: {path}")
-                source = self._resolve(path)
+                source = self._resolve_write(path)
 
                 if action == "add":
                     new_text = edit.get("new_text")
                     if new_text is None:
                         raise _PatchError(f"new_text required for add: {path}")
+                    new_text = cast(str, new_text)
 
                     pending = writes.get(source)
                     if pending is not None:
@@ -193,30 +148,23 @@ class ApplyPatchTool(_FsTool):
                         if uses_crlf:
                             new_norm = new_norm.replace("\n", "\r\n")
                         writes[source] = new_norm
-                        added, deleted = _line_diff_stats(content, new_norm)
                         action_name = "update"
                     else:
                         new_norm = new_text.replace("\r\n", "\n")
                         if new_norm and not new_norm.endswith("\n"):
                             new_norm += "\n"
                         writes[source] = new_norm
-                        added = _text_line_count(new_norm)
-                        deleted = 0
                         action_name = "add"
-
-                    summaries.append(
-                        _PatchSummary(
-                            action=action_name, path=path, added=added, deleted=deleted
-                        )
-                    )
 
                 elif action == "replace":
                     old_text = edit.get("old_text") or ""
                     if not old_text:
                         raise _PatchError(f"old_text required for replace: {path}")
+                    old_text = cast(str, old_text)
                     new_text = edit.get("new_text")
                     if new_text is None:
                         raise _PatchError(f"new_text required for replace: {path}")
+                    new_text = cast(str, new_text)
 
                     pending = writes.get(source)
                     if pending is not None:
@@ -254,20 +202,28 @@ class ApplyPatchTool(_FsTool):
                         new_norm = new_norm.replace("\n", "\r\n")
 
                     writes[source] = new_norm
-                    added, deleted = _line_diff_stats(content, new_norm)
-                    summaries.append(
-                        _PatchSummary(
-                            action="update", path=path, added=added, deleted=deleted
-                        )
-                    )
+                    action_name = "update"
 
                 else:
                     raise _PatchError(f"unknown action: {action}")
 
+                originals.setdefault(source, content)
+                actions.setdefault(source, action_name)
+
+            diffs = {
+                source: FileDiff.from_text(originals[source], content)
+                for source, content in writes.items()
+            }
+            summaries: list[str] = []
+            for source, diff in diffs.items():
+                action_name = actions[source]
+                path = display_file_edit_path(source, self._display_workspace())
+                added, deleted = diff.added, diff.deleted
+                stats = f" (+{added}/-{deleted})" if added or deleted else ""
+                summaries.append(f"- {action_name} {path}{stats}")
+
             if dry_run:
-                return "Patch dry-run succeeded:\n" + "\n".join(
-                    _format_summary(summary) for summary in summaries
-                )
+                return "Patch dry-run succeeded:\n" + "\n".join(summaries)
 
             backups: dict[Path, bytes | None] = {}
             for path in writes:
@@ -289,12 +245,10 @@ class ApplyPatchTool(_FsTool):
 
             for path in writes:
                 self._file_states.record_write(path)
-            return "Patch applied:\n" + "\n".join(
-                _format_summary(summary) for summary in summaries
-            )
+            return FileEditResult("Patch applied:\n" + "\n".join(summaries), diffs)
         except PermissionError as exc:
-            return f"Error: {exc}"
+            return ToolResult.error(f"Error: {exc}")
         except _PatchError as exc:
-            return f"Error applying patch: {exc}"
+            return ToolResult.error(f"Error applying patch: {exc}")
         except Exception as exc:
-            return f"Error applying patch: {exc}"
+            return ToolResult.error(f"Error applying patch: {exc}")

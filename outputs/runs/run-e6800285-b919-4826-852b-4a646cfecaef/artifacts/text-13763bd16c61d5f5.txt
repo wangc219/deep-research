@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=media.defense.gov · FACT SHEET STRATEGY FOR COUNTERING UNMANNED SYSTEMS.PDF
+source_url=https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF
+claim=公开战略材料反映无人系统具有规模化、低成本和持续威胁特征，同时要求建立侦测、识别、决策和反制的综合能力；不能据此推出特定无人装备的实际战果。
+excerpt=
+retrieval=Hosted web search citation metadata

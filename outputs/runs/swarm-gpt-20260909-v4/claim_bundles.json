@@ -1,0 +1,371 @@
+[
+  {
+    "bundle_id": "claims-42e2d45402c3",
+    "claims": [
+      {
+        "claim_id": "claim-6f59aea4fdfe",
+        "claim_type": "hypothesis",
+        "confidence": 0.84,
+        "counter_evidence": [
+          "公开资料一方面强调多源融合和分层防御，另一方面也显示不同传感器在电磁干扰、海空背景、小目标和鸟类目标条件下均存在独立失效模式；因此“多源叠加即可稳定解决问题”不能作为已证实结论。",
+          "公开战场材料显示蜂群规模和抗干扰能力持续提升，但蜂群是否能在台海特定海空环境中保持协同、通信和航迹稳定，缺少直接证据。",
+          "美国战略文件提出快速规模化和开放模块化方向，但公开材料没有证明这些方向已转化为在复杂海岛环境中可持续运行的成熟系统。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-dc55e947df2e",
+          "ev-weapon_equipment-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.defense.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "任务对象与制胜矛盾：台海相关海空—岛屿环境中的低空无人机及蜂群化目标，重点发生在持续预警和防御处置阶段；真正需要形成的直接军事效果不是单纯“看见”，而是在低空遮蔽、多目标涌入、通信不稳定和电磁压制下，持续提供可置信的发现、跟踪、识别结果并支撑后续物理拦截或压制。公开资料反复显示，小型无人机可能难以被常规雷达稳定发现，且电磁干扰、鸟类和复杂背景会提高虚警；失效条件是目标尺寸、飞行高度、背景杂波和干扰强度超出传感器或融合算法边界。军事影响：预警链断裂会把防御从有准备处置转变为临近目标反应。证据边界：公开资料足以支持一般性能力缺口，不能直接证明台海特定海岛或海空背景下的实际探测距离与告警时间。"
+      },
+      {
+        "claim_id": "claim-76dbc0c212a5",
+        "claim_type": "inference",
+        "confidence": 0.84,
+        "counter_evidence": [
+          "公开资料一方面强调多源融合和分层防御，另一方面也显示不同传感器在电磁干扰、海空背景、小目标和鸟类目标条件下均存在独立失效模式；因此“多源叠加即可稳定解决问题”不能作为已证实结论。",
+          "公开战场材料显示蜂群规模和抗干扰能力持续提升，但蜂群是否能在台海特定海空环境中保持协同、通信和航迹稳定，缺少直接证据。",
+          "美国战略文件提出快速规模化和开放模块化方向，但公开材料没有证明这些方向已转化为在复杂海岛环境中可持续运行的成熟系统。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-dc55e947df2e",
+          "ev-weapon_equipment-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.defense.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "公开装备边界表明，现有反无人系统通常依赖雷达、射频、红外、声学等异构手段，并分别承担探测、跟踪、识别和干扰或拦截；但公开评估指出，小型目标跟踪能力有限，部分干扰或处置手段作用距离较短，快速机动和不可预测航迹会进一步降低效果。军事影响：单一传感器或单一软杀伤手段难以承担蜂群条件下的连续预警，装备需求应优先关注多源信息在节点受损、通信不稳定和电磁压制下的局部闭环能力。失效条件：传感器间时空配准不可靠、数据链中断、误识别率过高或处置手段对民用及己方通信产生不可接受影响。证据边界：公开材料未给出面向台海环境的统一指标体系，也未证明任何现役系统能够稳定解决上述组合问题。"
+      },
+      {
+        "claim_id": "claim-19c3afd67263",
+        "claim_type": "hypothesis",
+        "confidence": 0.84,
+        "counter_evidence": [
+          "公开资料一方面强调多源融合和分层防御，另一方面也显示不同传感器在电磁干扰、海空背景、小目标和鸟类目标条件下均存在独立失效模式；因此“多源叠加即可稳定解决问题”不能作为已证实结论。",
+          "公开战场材料显示蜂群规模和抗干扰能力持续提升，但蜂群是否能在台海特定海空环境中保持协同、通信和航迹稳定，缺少直接证据。",
+          "美国战略文件提出快速规模化和开放模块化方向，但公开材料没有证明这些方向已转化为在复杂海岛环境中可持续运行的成熟系统。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-dc55e947df2e",
+          "ev-weapon_equipment-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.defense.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "对手适应正在改变预警对象本身：公开战场观察显示，无人机可能通过更大规模齐射、可变航线、提高速度或高度、增强抗干扰导航、使用诱饵和改变通信方式来压缩防御方判别时间；蜂群或混合编组的主要价值在于消耗拦截资源、制造目标分类负担和暴露防御节点，而非单个飞行器性能最大化。军事影响：预警链必须把“目标数量—航迹变化—编组行为—疑似诱饵”作为连续变化过程处理，而不能只按单机告警统计。失效条件：敌方采用低可观测、被动航行、通信静默或与海空背景高度相似的目标，导致行为特征无法稳定提取。证据边界：相关结论主要来自乌克兰战场和美国公开战略文件，对台海方向的适用性属于类比推断。"
+      },
+      {
+        "claim_id": "claim-53ab27242e0d",
+        "claim_type": "fact",
+        "confidence": 0.84,
+        "counter_evidence": [
+          "公开资料一方面强调多源融合和分层防御，另一方面也显示不同传感器在电磁干扰、海空背景、小目标和鸟类目标条件下均存在独立失效模式；因此“多源叠加即可稳定解决问题”不能作为已证实结论。",
+          "公开战场材料显示蜂群规模和抗干扰能力持续提升，但蜂群是否能在台海特定海空环境中保持协同、通信和航迹稳定，缺少直接证据。",
+          "美国战略文件提出快速规模化和开放模块化方向，但公开材料没有证明这些方向已转化为在复杂海岛环境中可持续运行的成熟系统。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-dc55e947df2e",
+          "ev-weapon_equipment-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.defense.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "公开战略和技术评估均把快速测试、开放式接口、模块化集成、降低防御交换成本和在真实电磁环境中持续评估列为关键方向，但尚未形成足以证明“体系完备”的公开证据。军事影响：后续装备需求的可验证核心应从单项探测性能转向链条级指标，例如在多目标、节点失效、通信中断、强干扰和海岛遮蔽组合条件下，告警连续率、航迹保持率、误警控制、目标分类稳定性以及向处置单元交接的有效率。失效条件：试验只在开阔、无干扰、单目标环境进行，或把通信、指挥和人工复核假定为始终可用。证据边界：公开来源未提供中国大陆或台湾一侧完整现役装备编成、部署密度、实际演训数据和台海专用指标，国内外装备对比应暂定为能力机制对比，而非数量或性能排名。"
+      }
+    ],
+    "packet_id": "packet-weapon_equipment",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-2c10f17e400f",
+    "claims": [
+      {
+        "claim_id": "claim-2fe7e8eda756",
+        "claim_type": "hypothesis",
+        "confidence": 0.83,
+        "counter_evidence": [
+          "台湾官方材料强调多传感器融合与人员最终处置权，而美国海军陆战队概念文件强调AI/机器学习交叉引导和实时航迹传输，二者在自动化授权边界上存在潜在张力。",
+          "公开演训显示干扰与实体拦截可以组合使用，但美国战略文件承认成本不对称问题，说明现有组合并不必然解决长期消耗压力。",
+          "体系文件强调受限电磁环境下的移动自组网和网关能力，但公开资料未证明其在持续压制、节点高损耗条件下仍能维持稳定路由。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-international_situation-web-46cf99366197",
+          "ev-international_situation-web-aa0d7c99c469"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.mnd.gov.tw/dio/Counter-DroneSystems.html",
+          "https://www.marines.mil/Portals/1/Docs/Force_Design_Update-October_2025.pdf"
+        ],
+        "text": "判断：台海低空无人系统预警的核心脆弱性不是单一传感器探测距离，而是海岛遮蔽、海空背景、电磁压制与节点受损共同造成的发现—跟踪—识别—处置链条迟滞。军事任务价值：直接决定防御方能否在有限时间窗内形成可信告警、完成威胁排序并维持拒止可信度。证据边界：台湾官方公开材料明确强调雷达、电子侦察、EO/IR、声学融合及航迹交叉验证，但未公开台海实战条件下的虚警率、连续跟踪率或抗毁表现。失效条件：若目标缺乏数量扩张、协同分散或电磁对抗特征，该判断对常规单机威胁的解释力下降。"
+      },
+      {
+        "claim_id": "claim-6f99b8cbf056",
+        "claim_type": "hypothesis",
+        "confidence": 0.83,
+        "counter_evidence": [
+          "台湾官方材料强调多传感器融合与人员最终处置权，而美国海军陆战队概念文件强调AI/机器学习交叉引导和实时航迹传输，二者在自动化授权边界上存在潜在张力。",
+          "公开演训显示干扰与实体拦截可以组合使用，但美国战略文件承认成本不对称问题，说明现有组合并不必然解决长期消耗压力。",
+          "体系文件强调受限电磁环境下的移动自组网和网关能力，但公开资料未证明其在持续压制、节点高损耗条件下仍能维持稳定路由。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-international_situation-web-46cf99366197",
+          "ev-international_situation-web-aa0d7c99c469"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.mnd.gov.tw/dio/Counter-DroneSystems.html",
+          "https://www.marines.mil/Portals/1/Docs/Force_Design_Update-October_2025.pdf"
+        ],
+        "text": "判断：公开力量建设趋势显示，反无人系统正从孤立装备采购转向开放式、模块化、可互操作的传感器—指挥—效应器体系。军事任务价值：联盟互操作、跨军兵种数据共享和快速替换节点可缩短预警恢复时间，提升在通信受限和局部节点损失后的持续作战能力，并增强威慑可信度。证据边界：美国国防部战略事实表和海军陆战队文件体现政策与概念方向，不能等同于已经形成成熟、统一部署的战区体系。失效条件：接口标准不一致、数据权限受限或通信中继被持续压制时，体系集成可能退化为多个孤立传感器网。"
+      },
+      {
+        "claim_id": "claim-9c410d2cc401",
+        "claim_type": "hypothesis",
+        "confidence": 0.83,
+        "counter_evidence": [
+          "台湾官方材料强调多传感器融合与人员最终处置权，而美国海军陆战队概念文件强调AI/机器学习交叉引导和实时航迹传输，二者在自动化授权边界上存在潜在张力。",
+          "公开演训显示干扰与实体拦截可以组合使用，但美国战略文件承认成本不对称问题，说明现有组合并不必然解决长期消耗压力。",
+          "体系文件强调受限电磁环境下的移动自组网和网关能力，但公开资料未证明其在持续压制、节点高损耗条件下仍能维持稳定路由。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-international_situation-web-46cf99366197",
+          "ev-international_situation-web-aa0d7c99c469"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.mnd.gov.tw/dio/Counter-DroneSystems.html",
+          "https://www.marines.mil/Portals/1/Docs/Force_Design_Update-October_2025.pdf"
+        ],
+        "text": "判断：对手低成本、多批次无人系统运用会把防御方推入成本和注意力不对称，单纯依赖高价值拦截弹药难以支撑长期预警与防御。军事任务价值：需要将探测预警、目标分类、软杀伤和实体拦截纳入统一威胁管理，维持弹药与值班资源的可持续性，避免以高成本手段应对低成本消耗。证据边界：美国战略文件明确提出降低成本不对称并建立效能指标；台湾演训公开了干扰、导航压制和实体拦截的组合，但没有公开消耗率、补充能力或蜂群规模。失效条件：若来袭无人系统具备强抗干扰、 автономous导航或显著载荷价值，软杀伤和低成本处置的效益会降低。"
+      },
+      {
+        "claim_id": "claim-09cdccfcb9e2",
+        "claim_type": "hypothesis",
+        "confidence": 0.83,
+        "counter_evidence": [
+          "台湾官方材料强调多传感器融合与人员最终处置权，而美国海军陆战队概念文件强调AI/机器学习交叉引导和实时航迹传输，二者在自动化授权边界上存在潜在张力。",
+          "公开演训显示干扰与实体拦截可以组合使用，但美国战略文件承认成本不对称问题，说明现有组合并不必然解决长期消耗压力。",
+          "体系文件强调受限电磁环境下的移动自组网和网关能力，但公开资料未证明其在持续压制、节点高损耗条件下仍能维持稳定路由。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-international_situation-web-46cf99366197",
+          "ev-international_situation-web-aa0d7c99c469"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.mnd.gov.tw/dio/Counter-DroneSystems.html",
+          "https://www.marines.mil/Portals/1/Docs/Force_Design_Update-October_2025.pdf"
+        ],
+        "text": "判断：预警链条的关键作战变量将从“首次发现”扩展为“多目标航迹可信度、身份判定速度、节点失效后的连续性和处置授权时延”。军事任务价值：这些变量直接支撑基地防护、关键交通节点防护及分散兵力生存，决定防御体系能否在袭扰与侦察持续存在时保持指挥决策质量。证据边界：台湾演训报道证明公开体系已按预警侦测—指挥管制—干扰—拦截流程组织训练；公开资料尚不足以证明其在高密度蜂群和强电磁环境下的闭环效能。失效条件：若威胁主要采取一次性突袭且不重复暴露，连续性指标的重要性会被首次告警时效性取代。"
+      }
+    ],
+    "packet_id": "packet-international_situation",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-39ff1148f328",
+    "claims": [
+      {
+        "claim_id": "claim-0c732c749890",
+        "claim_type": "fact",
+        "confidence": 0.82,
+        "counter_evidence": [
+          "S1描述的是公开文献中的蜂群运用概念，不能等同于现实部队的已部署能力。",
+          "S4声学探测在乌克兰的应用具有战例启发性，但台海海风、海浪、港口噪声和降雨条件可能显著改变其有效性。",
+          "S6关于复杂地形、海面杂波和异常传播的证据来自气象雷达，向军事低空目标探测的迁移属于类比推断。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-c038f0794402",
+          "ev-combat_scenario-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.cna.org/reports/2025/07/PRC-Concepts-for-UAV-Swarms-in-Future-Warfare.pdf",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "台海低空无人系统的主要作战效应不是单目标突防，而是以数量扩张、分散协同、诱骗和电磁对抗压缩防御方从首次发现到可信分类、授权处置的连续时间窗口；军事价值集中在维持可用航迹、目标优先级和处置闭环。证据支持来自蜂群任务概念与反无人系统原则，但不证明特定部队已具备全部能力；当目标规模有限、缺乏协同或电磁环境稳定时，该判断的压力强度下降。"
+      },
+      {
+        "claim_id": "claim-b7e78c468b95",
+        "claim_type": "hypothesis",
+        "confidence": 0.82,
+        "counter_evidence": [
+          "S1描述的是公开文献中的蜂群运用概念，不能等同于现实部队的已部署能力。",
+          "S4声学探测在乌克兰的应用具有战例启发性，但台海海风、海浪、港口噪声和降雨条件可能显著改变其有效性。",
+          "S6关于复杂地形、海面杂波和异常传播的证据来自气象雷达，向军事低空目标探测的迁移属于类比推断。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-c038f0794402",
+          "ev-combat_scenario-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.cna.org/reports/2025/07/PRC-Concepts-for-UAV-Swarms-in-Future-Warfare.pdf",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "多源感知和分布式节点比单一远程传感器更能缓解低空遮蔽、海面杂波、复杂地形和节点受损造成的预警断点，尤其适合承担发现补盲、断链告警和航迹续接。证据主要是蜂群反制研究、分布式声学战例和台湾复杂地形雷达研究的交叉推断；声学或光电节点在强风浪、港口噪声、降雨和异常传播下可能误警升高，不能据此推出稳定的战术性能。"
+      },
+      {
+        "claim_id": "claim-2dd14e58410e",
+        "claim_type": "fact",
+        "confidence": 0.82,
+        "counter_evidence": [
+          "S1描述的是公开文献中的蜂群运用概念，不能等同于现实部队的已部署能力。",
+          "S4声学探测在乌克兰的应用具有战例启发性，但台海海风、海浪、港口噪声和降雨条件可能显著改变其有效性。",
+          "S6关于复杂地形、海面杂波和异常传播的证据来自气象雷达，向军事低空目标探测的迁移属于类比推断。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-c038f0794402",
+          "ev-combat_scenario-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.cna.org/reports/2025/07/PRC-Concepts-for-UAV-Swarms-in-Future-Warfare.pdf",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "关键制胜变量是预警信息能否以统一质量表达跨越传感器、指挥节点和处置单元，而非传感器名义探测距离。多域C2公开审计材料支持数据集成、互操作和时效性的重要性；其局限是研究对象并非台海低空反无人体系，且数据共享障碍、授权迟滞和节点失联的具体程度仍属条件性判断。"
+      },
+      {
+        "claim_id": "claim-f0edd9bc17cd",
+        "claim_type": "hypothesis",
+        "confidence": 0.82,
+        "counter_evidence": [
+          "S1描述的是公开文献中的蜂群运用概念，不能等同于现实部队的已部署能力。",
+          "S4声学探测在乌克兰的应用具有战例启发性，但台海海风、海浪、港口噪声和降雨条件可能显著改变其有效性。",
+          "S6关于复杂地形、海面杂波和异常传播的证据来自气象雷达，向军事低空目标探测的迁移属于类比推断。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-c038f0794402",
+          "ev-combat_scenario-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.cna.org/reports/2025/07/PRC-Concepts-for-UAV-Swarms-in-Future-Warfare.pdf",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "装备本体的不可替代功能应表现为持续生成可信低空航迹、断链条件下本地识别与告警、在多目标拥塞时输出可比较的目标质量信息。若只能提供孤立告警、无法在传感器失效或链路中断时保持局部任务闭合，其体系军事价值会快速下降。"
+      }
+    ],
+    "packet_id": "packet-combat_scenario",
+    "schema_version": "1.0"
+  }
+]

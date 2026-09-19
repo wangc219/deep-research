@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=defense.gov · deputy secretary of defense kathleen hicks announces additional replicator all
+source_url=https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/
+claim=Replicator 1.2包含低成本远程打击和海上无人系统，并强调协同自治与大规模可消耗系统。
+excerpt=
+retrieval=Hosted web search citation metadata

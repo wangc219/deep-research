@@ -1,0 +1,38 @@
+skills:
+  - skill_id: constraint-reversal
+    description: 反转关键约束并比较常规吸收路径，生成可证伪的装备构型跃迁。
+    triggers: [约束, 反事实, 极限条件, 资源受限, 假设]
+    applies_to: [research_council, deepen]
+    allowed_tools: [generate_counterfactual_option, apply_triz_contradiction, test_competing_hypothesis, write_reasoning_node]
+    steps:
+      - 锁定当前方向赖以成立的关键约束和默认前提
+      - 分别执行删除、反转、延迟、转移四类约束变换
+      - 用最强常规升级路径做吸收测试并淘汰同义改写
+      - 为保留方向写出可观察结果、失败条件和回退路径
+    required_artifacts: [WinningReasoningNode, CompetingHypothesisSet]
+    quality_gates:
+      - 每个保留方向必须指出被改变的原始约束
+      - 常规升级能够取得同一任务效果时不得宣称颠覆性
+      - 事实、推断和假设必须分离
+    stop_conditions:
+      - 已形成最多三个互异且可证伪的方向
+      - 连续两次约束变换不再产生新的任务关系
+
+  - skill_id: countermeasure-stress-test
+    description: 以对手最低成本反制和任务链降级为压力条件，检验候选方向的持续制衡价值。
+    triggers: [反制, 对手, 失效, 韧性, 降级, 最低成本]
+    applies_to: [deepen]
+    allowed_tools: [test_competing_hypothesis, stress_test_scenario, compare_coa, write_reasoning_node]
+    steps:
+      - 写出对手最可能和最低成本的针对性反制
+      - 定位候选构型首先失效的感知、进入、作用或保障环节
+      - 设计不改变核心制胜关系的降级模式和替代链路
+      - 比较反制前后任务收益并标记残余风险
+    required_artifacts: [CountermeasureStressTest, WinningReasoningNode]
+    quality_gates:
+      - 反制必须与候选机理逐项对应
+      - 降级模式不得依赖未声明的新装备或无限资源
+      - 保留方向必须仍有可观察任务收益
+    stop_conditions:
+      - 已识别决定性反制和一个可验证降级模式
+      - 候选在最低成本反制下不再保持任务收益

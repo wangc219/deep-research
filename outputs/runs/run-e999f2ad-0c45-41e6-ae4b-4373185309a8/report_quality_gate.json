@@ -1,0 +1,162 @@
+{
+  "depth": {
+    "dimension": "深度性",
+    "indicators": {
+      "has_causality": true,
+      "has_detailed_analysis": true,
+      "has_evidence_bounded_feasibility": false,
+      "has_evidence_support": true,
+      "has_indicator_direction": true,
+      "has_mechanism": false,
+      "has_quantification": true
+    },
+    "passed": true,
+    "score": 0.75,
+    "suggestions": [
+      "解释底层机制和原理",
+      "成熟度、实现路径、证据边界和待验证指标必须成套出现，禁止把推断写成既成能力"
+    ]
+  },
+  "fitness": {
+    "内容闭环": {
+      "dimension": "内容闭环",
+      "indicators": {
+        "capability_projection_complete": true,
+        "core_indicators_present": false,
+        "detailed_capability_portraits_complete": false,
+        "operational_concept_and_process_present": false,
+        "solution_and_technology_present": false,
+        "system_contribution_present": false
+      },
+      "passed": false,
+      "score": 0.16666666666666666,
+      "suggestions": [
+        "逐装备能力画像需形成可区分的装备主体、实现路径、作战动作、直接效果与失效/适用边界；不要求每项重复同一组字段或验证标签",
+        "补齐作战概念、关键作战流程和链路闭环",
+        "逐装备说明体系贡献及可校准效能方向",
+        "说明与Query相关的作战效果、能力边界或可比较指标方向；不要求统一列出验证指标或补造点值",
+        "总体方案需落到子系统、硬件/软件和关键技术途径"
+      ]
+    },
+    "军事决策信息密度": {
+      "dimension": "军事决策信息密度",
+      "indicators": {
+        "decision_dense_paragraphs": true,
+        "equipment_decision_bundles_complete": true,
+        "generic_filler_bounded": true,
+        "long_sentence_reuse_bounded": true,
+        "section_density_bounded": true
+      },
+      "passed": true,
+      "score": 1.0,
+      "suggestions": []
+    },
+    "证据与验证边界": {
+      "dimension": "证据与验证边界",
+      "indicators": {
+        "evidence_handoff_available": true,
+        "fact_inference_boundary_present": true,
+        "validation_boundary_present": true
+      },
+      "passed": true,
+      "score": 1.0,
+      "suggestions": []
+    }
+  },
+  "foresight": {
+    "dimension": "前瞻性",
+    "indicators": {
+      "has_evolution_path": false,
+      "has_future_prediction": false,
+      "has_maturity_assessment": false,
+      "has_trend_analysis": true,
+      "has_trigger_conditions": true,
+      "has_uncertainty": true
+    },
+    "passed": false,
+    "score": 0.5,
+    "suggestions": [
+      "给出未来 3-10 年预测",
+      "描述技术成熟度演进路径",
+      "逐项给出定性成熟度、工程瓶颈与验证状态；无证据时明确待验证"
+    ]
+  },
+  "format_integrity": {
+    "dimension": "格式完整性",
+    "indicators": {
+      "has_bounded_heading_depth": true,
+      "has_bounded_tables": true,
+      "has_canonical_item_order": false,
+      "has_canonical_items": false,
+      "has_canonical_order": false,
+      "has_canonical_sections": false,
+      "has_canonical_subitem_order": false,
+      "has_canonical_subitems": false,
+      "has_complete_paragraphs": true,
+      "has_exact_capability_direction_set": true,
+      "has_exact_heading_counts": false,
+      "has_no_internal_candidate_prefix": true,
+      "has_no_internal_rewrite_boundary": true,
+      "has_no_report_owned_h1": true
+    },
+    "passed": false,
+    "score": 0.5,
+    "suggestions": [
+      "按需求分析、项目画像、总体方案、关键技术、研制基础五章组织",
+      "补齐项目论证模板规定的三级标题，保持章节内顺序",
+      "补齐需求概述、国内外现状、必要性和作战运用中的固定四级标题",
+      "只保留项目论证模板规定的五章及其三级、四级标题"
+    ]
+  },
+  "military_value": {
+    "dimension": "军事价值性",
+    "indicators": {
+      "has_capability_and_operational_concept": false,
+      "has_capability_gap": true,
+      "has_effectiveness": true,
+      "has_priority": false,
+      "has_resilience": true,
+      "has_scenarios": true,
+      "has_three_track_winning_effect": true,
+      "has_unmanned_remote_fire_domain_alignment": true
+    },
+    "passed": false,
+    "score": 0.75,
+    "suggestions": [
+      "指出建设优先级（高/中/低及理由）",
+      "装备能力图像需同时给出具体装备能力、指标画像和作战运用概念"
+    ]
+  },
+  "novelty": {
+    "dimension": "新颖性",
+    "indicators": {
+      "has_breakthrough": true,
+      "has_comparison": false,
+      "has_cross_domain": true,
+      "has_cross_generation_or_new_track": true,
+      "has_disruptive_relationship_diversity": true,
+      "has_evidence_grounded_novelty": false,
+      "has_innovation": false
+    },
+    "passed": true,
+    "score": 0.6666666666666666,
+    "suggestions": [
+      "指出创新点和新增价值",
+      "与基线或传统方案对比",
+      "创新性必须说明相对基线改变的作战关系，并给出对手反适应或失效边界"
+    ]
+  },
+  "overall_score": 0.6666666666666666,
+  "passed": false,
+  "publication_advisories": [],
+  "publication_blockers": [
+    "正式报告缺少规定二级栏目",
+    "正式报告二级栏目顺序错误",
+    "正式报告缺少规定三级栏目",
+    "正式报告三级栏目顺序错误",
+    "正式报告缺少规定四级栏目",
+    "正式报告四级栏目顺序错误",
+    "正式报告含重复或越界栏目"
+  ],
+  "summary": "质量门控: 未通过；核心得分 66.7%\n模板结构: 未通过\n内容闭环: 未通过\n证据与验证边界: 通过\n军事决策信息密度: 通过\n诊断分数: 深度75% / 军事价值75% / 创新67% / 前瞻50%\n改进提示: 逐装备能力画像需形成可区分的装备主体、实现路径、作战动作、直接效果与失效/适用边界；不要求每项重复同一组字段或验证标签；补齐作战概念、关键作战流程和链路闭环；逐装备说明体系贡献及可校准效能方向"
+}

@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:12ce41dfda1d9c86",
+  "content_path": "text-12ce41dfda1d9c86.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-case_research-web-80ecdfd893e8",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "12ce41dfda1d9c869b2ef44b328916608cbcf30e2901e316af0515badfda4c12",
+  "url": "https://newsukraine.rbc.ua/analytics/russia-s-fiber-optic-fpv-drones-on-rise-ukraine-1752818725.html"
+}

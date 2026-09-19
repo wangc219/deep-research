@@ -1,0 +1,15 @@
+{
+  "artifact_ref": "html:218bb8badf439076",
+  "connect_ip": "198.18.0.149",
+  "content_path": "html-218bb8badf439076.html",
+  "content_type": "text/html",
+  "encoding": null,
+  "evidence_id": "ev-international_situation-web-46cf99366197",
+  "fetch_cache_hit": true,
+  "final_url": "https://www.mnd.gov.tw/dio/Counter-DroneSystems.html",
+  "kind": "html",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "218bb8badf439076ad5fa2871f5486faa8dd0568e3695061f51cf73fbda93692",
+  "url": "https://www.mnd.gov.tw/dio/Counter-DroneSystems.html"
+}

@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=defense.gov · dod announces release of jadc2 implementation plan
+source_url=https://www.defense.gov/News/Releases/Release/article/2970094/dod-announces-release-of-jadc2-implementation-plan/
+claim=候选来源，当前未完成正文核验，不支持已确认事实。
+excerpt=
+retrieval=Hosted web search citation metadata

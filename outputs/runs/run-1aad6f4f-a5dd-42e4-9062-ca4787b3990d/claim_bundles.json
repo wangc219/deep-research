@@ -1,0 +1,176 @@
+[
+  {
+    "bundle_id": "claims-42e2d45402c3",
+    "claims": [],
+    "packet_id": "packet-weapon_equipment",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-f8e8bafe3c9c",
+    "claims": [
+      {
+        "claim_id": "claim-e3fafd88324d",
+        "claim_type": "fact",
+        "confidence": 0.45,
+        "counter_evidence": [
+          "本轮模型未返回可材料化公开来源，结论必须降级并进入补证或再调。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [],
+        "text": "{}"
+      }
+    ],
+    "packet_id": "packet-case_research",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-d5cf0cba42e6",
+    "claims": [
+      {
+        "claim_id": "claim-3dd97da43827",
+        "claim_type": "hypothesis",
+        "confidence": 0.62,
+        "counter_evidence": [
+          "DoD战略并行主张“低成本规模对抗”与“集中联合整合治理”，而GAO指出跨域集成与治理恰是滞后环节——扩大集成范围可能反增时延。",
+          "低成本防御单元规模化与高置信交战、误伤控制存在内在张力。",
+          "本角色既有载荷标称置信0.73-0.75但标注contextual_only且revalidation_required=true，不能视为已核验事实基线。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-8952c3805d5a",
+          "ev-system_confrontation-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "判断：蜂群先击穿的是“发现→分类→授权→处置→确认→恢复”任务链的连续性而非单装通道；三类节点断点不同，共同短板在链中段（分类可信、授权时延）与末段（软杀伤不可确认、补弹恢复）。价值：命题由增通道改写为保链连续与降决策时延。证据：DoD反无人战略与GAO-25-106454仅支撑方向、无性能量化。失效：敌规模或自主性远低于假设时此优先性下降。"
+      },
+      {
+        "claim_id": "claim-6493195c1ef9",
+        "claim_type": "fact",
+        "confidence": 0.62,
+        "counter_evidence": [
+          "DoD战略并行主张“低成本规模对抗”与“集中联合整合治理”，而GAO指出跨域集成与治理恰是滞后环节——扩大集成范围可能反增时延。",
+          "低成本防御单元规模化与高置信交战、误伤控制存在内在张力。",
+          "本角色既有载荷标称置信0.73-0.75但标注contextual_only且revalidation_required=true，不能视为已核验事实基线。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-8952c3805d5a",
+          "ev-system_confrontation-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "判断：红方胜机是跨波次成本-时间不对称：廉价诱饵/干扰先导消耗高价拦截并诱导固定节点辐射，防区外火力随后压制探测/能源节点，载荷续进；追求多波次后体系崩溃而非单波穿透。价值：判定标准取多波次拒止连续性而非单波拦截率。证据：DoD“低成本对低成本、规模对规模”为公开方向；敌波次编排属情报缺口。失效：载荷与蜂群无时序协同则退化为单波饱和。"
+      },
+      {
+        "claim_id": "claim-8d1cd9bb855f",
+        "claim_type": "fact",
+        "confidence": 0.62,
+        "counter_evidence": [
+          "DoD战略并行主张“低成本规模对抗”与“集中联合整合治理”，而GAO指出跨域集成与治理恰是滞后环节——扩大集成范围可能反增时延。",
+          "低成本防御单元规模化与高置信交战、误伤控制存在内在张力。",
+          "本角色既有载荷标称置信0.73-0.75但标注contextual_only且revalidation_required=true，不能视为已核验事实基线。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-8952c3805d5a",
+          "ev-system_confrontation-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "判断：蓝方前三体系脆弱点：海杂波/低空背景下微小型目标首检测与分类（污染全部下游）、软杀伤效果不可确认（任务假成功）、前沿节点恢复周期大于敌波次间隔（局部胜利不持续）。价值：直接给出补链与替代链路的设计位置。证据：GAO跨域数据缺口与Marines分布式远征保障为公开方向；我方能力基线与恢复周期无公开数据。失效：敌为慢速低密度大载荷突击时恢复约束不主导失效。"
+      },
+      {
+        "claim_id": "claim-df8ee2e9776e",
+        "claim_type": "fact",
+        "confidence": 0.62,
+        "counter_evidence": [
+          "DoD战略并行主张“低成本规模对抗”与“集中联合整合治理”，而GAO指出跨域集成与治理恰是滞后环节——扩大集成范围可能反增时延。",
+          "低成本防御单元规模化与高置信交战、误伤控制存在内在张力。",
+          "本角色既有载荷标称置信0.73-0.75但标注contextual_only且revalidation_required=true，不能视为已核验事实基线。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-8952c3805d5a",
+          "ev-system_confrontation-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "判断：替代链路空间收敛四类：分布式异构感知组网、成本分层过滤（低价迟滞识别前置、高价效应器保置信目标）、本地自治降级交战、可再部署发射+预置弹药轮换；共同先决是轨迹可信与授权前置而非带宽。价值：界定装备本体的体系前提，避免通道化采购。证据：C-UxS分层基调与Marines力设计为公开方向。失效：敌强欺骗令分类库快速失效时，预置自动交战放大误伤与暴露。"
+      },
+      {
+        "claim_id": "claim-1b522596a5b9",
+        "claim_type": "fact",
+        "confidence": 0.62,
+        "counter_evidence": [
+          "DoD战略并行主张“低成本规模对抗”与“集中联合整合治理”，而GAO指出跨域集成与治理恰是滞后环节——扩大集成范围可能反增时延。",
+          "低成本防御单元规模化与高置信交战、误伤控制存在内在张力。",
+          "本角色既有载荷标称置信0.73-0.75但标注contextual_only且revalidation_required=true，不能视为已核验事实基线。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-8952c3805d5a",
+          "ev-system_confrontation-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "判断：沿海（跨区空情/稳定电力）、岛礁（补给与再部署周期）、编队（杂波背景/有限弹舱）瓶颈各异；跨域数据、授权与多国标准接口的脆弱性高于任何单一节点。价值：把体系问题收敛为“接口+边缘节点”组合而非单装性能问题。证据：GAO、Overmatch五眼协议、SDA仅证互操作/天基跟踪为公开方向。失效：敌多路小群不依赖高精度时序协同时，接口时延不主导漏防。"
+      }
+    ],
+    "packet_id": "packet-system_confrontation",
+    "schema_version": "1.0"
+  }
+]

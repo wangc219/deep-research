@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-from equipment_deep_research.agents.registry import AgentDef
+from equipment_deep_research.contracts.agents import AgentSpec
 from equipment_deep_research.domain.messages import TaskEnvelope
 from equipment_deep_research.tools.definitions import ToolCall, ToolDefinition, ToolExecutionContext, ToolResult
 from equipment_deep_research.tools.permissions import ToolAuthorizationPolicy
@@ -37,7 +37,7 @@ class ToolRegistry:
     def names(self) -> tuple[str, ...]:
         return tuple(sorted(self._tools))
 
-    def active_for(self, agent: AgentDef, task: TaskEnvelope) -> tuple[ToolDefinition, ...]:
+    def active_for(self, agent: AgentSpec, task: TaskEnvelope) -> tuple[ToolDefinition, ...]:
         self._validate_task_identity(agent, task)
         requested = set(task.allowed_tools)
         undeclared = sorted(requested - set(agent.tools))
@@ -50,7 +50,7 @@ class ToolRegistry:
             raise ValueError(f"task requests unknown tools: {unknown}")
         return tuple(self._tools[name] for name in task.allowed_tools)
 
-    def execution_context(self, agent: AgentDef, task: TaskEnvelope) -> ToolExecutionContext:
+    def execution_context(self, agent: AgentSpec, task: TaskEnvelope) -> ToolExecutionContext:
         active = self.active_for(agent, task)
         agent_read = set(agent.object_read_scopes)
         agent_write = set(agent.object_write_scopes)
@@ -96,6 +96,6 @@ class ToolRegistry:
         )
 
     @staticmethod
-    def _validate_task_identity(agent: AgentDef, task: TaskEnvelope) -> None:
+    def _validate_task_identity(agent: AgentSpec, task: TaskEnvelope) -> None:
         if task.target_agent_id and task.target_agent_id != agent.agent_id:
             raise PermissionError("task target agent does not match execution agent")

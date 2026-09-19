@@ -13,6 +13,7 @@ from sqlalchemy import (
     Table,
     Text,
     and_,
+    delete,
     func,
     inspect,
     or_,
@@ -358,6 +359,51 @@ class QueryLibraryRepository:
             )
         return self.get_query(query_id)
 
+    def delete_query(self, query_id: str) -> None:
+        """Permanently remove one Query and detach it from generation results."""
+        with self._lock, self.engine.begin() as connection:
+            existing = connection.execute(
+                select(query_items.c.query_id).where(
+                    query_items.c.query_id == query_id
+                )
+            ).scalar_one_or_none()
+            if existing is None:
+                raise QueryNotFoundError(f"Query not found: {query_id}")
+
+            connection.execute(
+                delete(query_revisions).where(query_revisions.c.query_id == query_id)
+            )
+            connection.execute(
+                delete(query_items).where(query_items.c.query_id == query_id)
+            )
+
+            # Generation jobs keep result IDs as a JSON array. Keep the task
+            # record usable after a result is deleted from the library.
+            rows = connection.execute(
+                select(
+                    generation_jobs.c.generation_id,
+                    generation_jobs.c.result_query_ids,
+                )
+            ).mappings().all()
+            for row in rows:
+                ids = json.loads(row["result_query_ids"] or "[]")
+                if query_id not in ids:
+                    continue
+                connection.execute(
+                    update(generation_jobs)
+                    .where(
+                        generation_jobs.c.generation_id
+                        == row["generation_id"]
+                    )
+                    .values(
+                        result_query_ids=json.dumps(
+                            [item for item in ids if item != query_id],
+                            ensure_ascii=False,
+                        ),
+                        updated_at=now_iso(),
+                    )
+                )
+
     def list_revisions(self, query_id: str) -> list[QueryRevision]:
         self.get_query(query_id)
         with self.engine.connect() as connection:
@@ -495,6 +541,71 @@ class QueryLibraryRepository:
         if row is None:
             raise GenerationNotFoundError(f"generation not found: {generation_id}")
         return _row_to_generation(row)
+
+    def list_generations(
+        self,
+        *,
+        status: str | None = None,
+        limit: int = 20,
+    ) -> list[GenerationJob]:
+        statement = select(generation_jobs)
+        if status:
+            statement = statement.where(generation_jobs.c.status == status)
+        statement = statement.order_by(generation_jobs.c.created_at.desc()).limit(limit)
+        with self.engine.connect() as connection:
+            rows = connection.execute(statement).mappings().all()
+        return [_row_to_generation(row) for row in rows]
+
+    def delete_generation(self, generation_id: str) -> None:
+        with self._lock, self.engine.begin() as connection:
+            row = connection.execute(
+                select(generation_jobs.c.status).where(
+                    generation_jobs.c.generation_id == generation_id
+                )
+            ).one_or_none()
+            if row is None:
+                raise GenerationNotFoundError(f"generation not found: {generation_id}")
+            if str(row[0]) in {"queued", "running"}:
+                raise InvalidStatusTransition(
+                    "active Query generation tasks cannot be deleted"
+                )
+            connection.execute(
+                delete(generation_jobs).where(
+                    generation_jobs.c.generation_id == generation_id
+                )
+            )
+
+    def cancel_generation(self, generation_id: str) -> GenerationJob:
+        timestamp = now_iso()
+        with self._lock, self.engine.begin() as connection:
+            row = connection.execute(
+                select(generation_jobs.c.status).where(
+                    generation_jobs.c.generation_id == generation_id
+                )
+            ).one_or_none()
+            if row is None:
+                raise GenerationNotFoundError(f"generation not found: {generation_id}")
+            if str(row[0]) not in {"queued", "running"}:
+                raise InvalidStatusTransition(
+                    "only queued or running Query generation tasks can be cancelled"
+                )
+            connection.execute(
+                update(generation_jobs)
+                .where(
+                    generation_jobs.c.generation_id == generation_id,
+                    generation_jobs.c.status.in_(("queued", "running")),
+                )
+                .values(
+                    status="cancelled",
+                    stage="cancelled",
+                    error="用户已终止该 Query 发散任务。",
+                    lease_owner="",
+                    lease_expires_at="",
+                    completed_at=timestamp,
+                    updated_at=timestamp,
+                )
+            )
+        return self.get_generation(generation_id)
 
     def claim_next_generation(
         self,
@@ -678,7 +789,10 @@ class QueryLibraryRepository:
         with self.engine.begin() as connection:
             result = connection.execute(
                 update(generation_jobs)
-                .where(generation_jobs.c.generation_id == generation_id)
+                .where(
+                    generation_jobs.c.generation_id == generation_id,
+                    generation_jobs.c.status != "cancelled",
+                )
                 .values(
                     status="failed",
                     stage="failed",
@@ -693,6 +807,9 @@ class QueryLibraryRepository:
                 )
             )
         if result.rowcount != 1:
+            current = self.get_generation(generation_id)
+            if current.status == "cancelled":
+                return current
             raise GenerationNotFoundError(f"generation not found: {generation_id}")
         return self.get_generation(generation_id)
 

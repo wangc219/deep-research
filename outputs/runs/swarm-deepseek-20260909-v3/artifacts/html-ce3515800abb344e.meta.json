@@ -1,0 +1,19 @@
+{
+  "artifact_ref": "html:ce3515800abb344e",
+  "connect_ip": "198.18.0.137",
+  "content_path": "html-ce3515800abb344e.html",
+  "content_type": "text/html; charset=UTF-8",
+  "encoding": null,
+  "evidence_id": "ev-case_research-web-bc1c2e8c3176",
+  "evidence_ids": [
+    "ev-case_research-web-bc1c2e8c3176",
+    "ev-operational_employment-web-bc1c2e8c3176"
+  ],
+  "fetch_cache_hit": true,
+  "final_url": "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+  "kind": "html",
+  "materialization_status": "fetched",
+  "mode": "real",
+  "sha256": "ce3515800abb344eba92e5708193733615d37adb5e3a8e2d8d3f5836f7ca167f",
+  "url": "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience"
+}

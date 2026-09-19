@@ -1,0 +1,185 @@
+[
+  {
+    "feedback_id": "feedback-625cb141-ff34-4056-a90a-7c400a350f2c",
+    "run_id": "run-e6800285-b919-4826-852b-4a646cfecaef",
+    "capability_id": "cap-new-001",
+    "hypothesis_id": "hypothesis-71e97042aa814608",
+    "capability_name": "百链分散攻击巡飞弹",
+    "comment": "真实模型验收：请补强通信受限与多目标饱和条件下的边界证据，并明确可证伪验证路径。",
+    "important_information": "针对百链分散攻击巡飞弹：真实模型验收：请补强通信受限与多目标饱和条件下的边界证据，并明确可证伪验证路径。",
+    "learning_signal": "针对百链分散攻击巡飞弹：真实模型验收：请补强通信受限与多目标饱和条件下的边界证据，并明确可证伪验证路径。",
+    "verdict": "needs_revision",
+    "rating": 4,
+    "score_schema": "s5_five_dimension_v1",
+    "score_weights": {
+      "innovation": 0.3,
+      "demand": 0.3,
+      "feasibility": 0.2,
+      "effectiveness": 0.1,
+      "development": 0.1
+    },
+    "model_dimension_scores": {
+      "innovation": 0.78,
+      "demand": 0.82,
+      "feasibility": 0.61,
+      "effectiveness": 0.75,
+      "development": 0.7
+    },
+    "expert_dimension_scores": {
+      "innovation": 0.8,
+      "demand": 0.85,
+      "feasibility": 0.65,
+      "effectiveness": 0.78,
+      "development": 0.72
+    },
+    "score_deltas": {
+      "innovation": 0.02,
+      "demand": 0.03,
+      "feasibility": 0.04,
+      "effectiveness": 0.03,
+      "development": 0.02
+    },
+    "model_weighted_score": 0.747,
+    "expert_weighted_score": 0.775,
+    "dimensions": [
+      "innovation",
+      "demand",
+      "feasibility",
+      "effectiveness",
+      "development"
+    ],
+    "target_agent_ids": [
+      "S5"
+    ],
+    "reviewer_name": "真实模型验收",
+    "reviewer_role": "expert",
+    "profile_id": "",
+    "tenant_id": "",
+    "workspace_id": "",
+    "project_id": "",
+    "route": "new_winning_mechanism",
+    "stage_scope": [
+      "S5"
+    ],
+    "taxonomy": [
+      "evidence_boundary",
+      "causal_chain"
+    ],
+    "severity": "medium",
+    "confidence": 0.8,
+    "effect_status": "pending_validation",
+    "memory_status": "candidate",
+    "utility_ema": 0.0,
+    "ttl_days": 90,
+    "created_at": "2026-09-19T08:59:02.238616+00:00",
+    "learning_status": "processed",
+    "raw_comment": "真实模型验收：请补强通信受限与多目标饱和条件下的边界证据，并明确可证伪验证路径。",
+    "raw_important_information": "针对百链分散攻击巡飞弹：真实模型验收：请补强通信受限与多目标饱和条件下的边界证据，并明确可证伪验证路径。",
+    "derived": true,
+    "dedupe_key": "sha256:4c79fb7f9f77e1fd9f5d12ce6bf7833d0b397a3d8e6de8a9a339e1d96204a483",
+    "route_scores": {
+      "S1": 0,
+      "S2": 0,
+      "S3": 0,
+      "S4": 0,
+      "S5": 1,
+      "S6": 0
+    },
+    "route_reason": "结构化五维评分定向S5；沿用兼容客户端指定的目标 Agent",
+    "memory_processor": "expert_feedback_memory",
+    "processed_at": "2026-09-19T08:59:02.238753+00:00",
+    "dedupe_status": "canonical"
+  },
+  {
+    "feedback_id": "feedback-de826eb0-6cc6-41de-9d3c-e4520cc6b641",
+    "run_id": "run-e6800285-b919-4826-852b-4a646cfecaef",
+    "capability_id": "cap-new-001",
+    "hypothesis_id": "hypothesis-71e97042aa814608",
+    "capability_name": "百链分散攻击巡飞弹",
+    "comment": "真实模型验收：请补强通信受限与多目标饱和条件下的边界证据，并明确可证伪验证路径。",
+    "important_information": "针对百链分散攻击巡飞弹：真实模型验收：请补强通信受限与多目标饱和条件下的边界证据，并明确可证伪验证路径。",
+    "learning_signal": "针对百链分散攻击巡飞弹：真实模型验收：请补强通信受限与多目标饱和条件下的边界证据，并明确可证伪验证路径。",
+    "verdict": "needs_revision",
+    "rating": 4,
+    "score_schema": "s5_five_dimension_v1",
+    "score_weights": {
+      "innovation": 0.3,
+      "demand": 0.3,
+      "feasibility": 0.2,
+      "effectiveness": 0.1,
+      "development": 0.1
+    },
+    "model_dimension_scores": {
+      "innovation": 0.78,
+      "demand": 0.82,
+      "feasibility": 0.61,
+      "effectiveness": 0.75,
+      "development": 0.7
+    },
+    "expert_dimension_scores": {
+      "innovation": 0.8,
+      "demand": 0.85,
+      "feasibility": 0.65,
+      "effectiveness": 0.78,
+      "development": 0.72
+    },
+    "score_deltas": {
+      "innovation": 0.02,
+      "demand": 0.03,
+      "feasibility": 0.04,
+      "effectiveness": 0.03,
+      "development": 0.02
+    },
+    "model_weighted_score": 0.747,
+    "expert_weighted_score": 0.775,
+    "dimensions": [
+      "innovation",
+      "demand",
+      "feasibility",
+      "effectiveness",
+      "development"
+    ],
+    "target_agent_ids": [
+      "S5"
+    ],
+    "reviewer_name": "真实模型验收",
+    "reviewer_role": "expert",
+    "profile_id": "",
+    "tenant_id": "",
+    "workspace_id": "",
+    "project_id": "",
+    "route": "new_winning_mechanism",
+    "stage_scope": [
+      "S5"
+    ],
+    "taxonomy": [
+      "evidence_boundary",
+      "causal_chain"
+    ],
+    "severity": "medium",
+    "confidence": 0.8,
+    "effect_status": "pending_validation",
+    "memory_status": "candidate",
+    "utility_ema": 0.0,
+    "ttl_days": 90,
+    "created_at": "2026-09-19T08:59:02.252358+00:00",
+    "learning_status": "deduplicated",
+    "raw_comment": "真实模型验收：请补强通信受限与多目标饱和条件下的边界证据，并明确可证伪验证路径。",
+    "raw_important_information": "针对百链分散攻击巡飞弹：真实模型验收：请补强通信受限与多目标饱和条件下的边界证据，并明确可证伪验证路径。",
+    "derived": true,
+    "dedupe_key": "sha256:4c79fb7f9f77e1fd9f5d12ce6bf7833d0b397a3d8e6de8a9a339e1d96204a483",
+    "route_scores": {
+      "S1": 0,
+      "S2": 0,
+      "S3": 0,
+      "S4": 0,
+      "S5": 1,
+      "S6": 0
+    },
+    "route_reason": "结构化五维评分定向S5；沿用兼容客户端指定的目标 Agent",
+    "memory_processor": "expert_feedback_memory",
+    "processed_at": "2026-09-19T08:59:02.252418+00:00",
+    "dedupe_status": "duplicate",
+    "duplicate_of": "feedback-625cb141-ff34-4056-a90a-7c400a350f2c"
+  }
+]

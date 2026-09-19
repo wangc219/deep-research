@@ -1,0 +1,54 @@
+{
+  "blockers": [],
+  "core_gates": {
+    "内容闭环": {
+      "failed": [],
+      "passed": true,
+      "score": 1.0
+    },
+    "军事决策信息密度": {
+      "failed": [
+        "long_sentence_reuse_bounded",
+        "capability_portrait_contract_passed"
+      ],
+      "passed": false,
+      "score": 0.6667
+    },
+    "发布安全": {
+      "failed": [],
+      "passed": true
+    },
+    "模板结构": {
+      "failed": [
+        "has_complete_paragraphs"
+      ],
+      "passed": false,
+      "score": 0.9286
+    },
+    "装备主体约束": {
+      "failed": [
+        "has_remote_precision_missile_equipment"
+      ],
+      "passed": true,
+      "score": 0.8889
+    },
+    "证据与验证边界": {
+      "failed": [],
+      "passed": true,
+      "score": 1.0
+    }
+  },
+  "diagnostics": {
+    "advisories": [
+      "修复残句、未闭合Markdown和超长段落",
+      "跨章节长句复用过多：同一完整长句不得出现三次，重复长句实例占比不得超过8%",
+      "装备能力画像未通过精简交付门：镜羽掠海拦截弹：关键作战流程明显过短，低于约180字告警线（首轮软目标约350至400字；实际通常约300至350字）；潮礁伏猎雷：关键作战流程明显过短，低于约180字告警线（首轮软目标约350至400字；实际通常约300至350字）；潮栅浮航雷：制胜逻辑机理明显过短，低于约180字告警线（首轮软目标约350至400字；实际通常约300至350字）"
+    ],
+    "depth": 1.0,
+    "foresight": 1.0,
+    "military_value": 0.875,
+    "novelty": 0.8333
+  },
+  "overall_score": 0.8968,
+  "passed": true
+}

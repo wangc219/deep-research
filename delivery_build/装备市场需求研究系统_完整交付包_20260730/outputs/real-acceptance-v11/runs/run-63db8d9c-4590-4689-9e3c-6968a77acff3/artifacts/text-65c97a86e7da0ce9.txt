@@ -1,4 +1,0 @@
-fetch_failed
-url=https://www.act.nato.int/activities/lci-x/?utm_source=openai
-error=HTTPStatusError: HTTP 403: Forbidden
-该诊断用于保留真实联网smoke边界；正式结论不应仅依赖失败材料。

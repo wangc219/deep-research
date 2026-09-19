@@ -20,7 +20,10 @@ class LowThenHighProvider:
             f"ev-{request.agent.agent_id}{suffix}", "fixture", f"https://fixture.local/{request.agent.agent_id}{suffix}", "A",
             "可材料化公开证据", "可用于定向补充的直接摘录", "fixture:1", "fixture", request.agent.agent_id,
         )
-        confidence = .65 if round_index == 1 else .9
+        # Remain below the new calibrated L1 limited-mode floor so these tests
+        # still exercise a genuinely necessary recall rather than an exact-tag
+        # recall that the risk-based gates now intentionally suppress.
+        confidence = .5 if round_index == 1 else .9
         packet = BaselineFindingPacket(
             f"packet-{request.agent.agent_id}{suffix}", request.agent.agent_id, list(request.agent.capability_tags), request.topic,
             ["结构化发现"], [evidence.evidence_id], confidence, [], [], "定向补充完成", f"round={round_index}",
@@ -47,6 +50,13 @@ class RecallWithoutEvidenceProvider(LowThenHighProvider):
             f"round={request.round_index}",
         )
         return AgentRunResult(packet, [], "structured")
+
+
+class BudgetExhaustedOnRecallProvider(LowThenHighProvider):
+    def run_baseline_agent(self, request: AgentRunRequest) -> AgentRunResult:
+        if request.round_index > 1:
+            raise RuntimeError("Harness v2 model-call hard budget exhausted")
+        return super().run_baseline_agent(request)
 
 
 def test_runner_executes_routed_recall_and_reevaluates_gates_without_rerun(tmp_path: Path) -> None:
@@ -125,6 +135,36 @@ def test_recall_without_new_evidence_remains_limited_with_specific_reason(
     assert stages["L3"]["gate_passed"] is False
 
 
+def test_optional_recall_budget_exhaustion_preserves_completed_research(
+    tmp_path: Path,
+) -> None:
+    result = DeepResearchRunner(
+        project_root=ROOT,
+        output_root=tmp_path,
+        agent_config_path=CONFIG / "agents.yaml",
+        preset_config_path=CONFIG / "presets.yaml",
+        provider=BudgetExhaustedOnRecallProvider(),
+    ).run(
+        mode="fake",
+        topic="预算受限的可选再调",
+        research_route="new_winning_mechanism",
+        run_id="recall-budget-limited",
+    )
+
+    trace = [
+        json.loads(line)["payload"]
+        for line in (Path(result["run_dir"]) / "trace.jsonl")
+        .read_text(encoding="utf-8")
+        .splitlines()
+    ]
+    assert any(
+        row["event_type"] == "recall_skipped_budget_limited"
+        and row["payload"]["gate_impact"] == "non_blocking_residual"
+        for row in trace
+    )
+    assert Path(result["report_path"]).exists()
+
+
 def test_callback_agent_closes_coverage_and_rechecks_all_gates(tmp_path: Path) -> None:
     result = DeepResearchRunner(
         project_root=ROOT,
@@ -197,7 +237,9 @@ def test_callback_agent_closes_coverage_and_rechecks_all_gates(tmp_path: Path) -
     )
 
 
-def test_registry_fallback_routes_unplanned_situation_recall(tmp_path: Path) -> None:
+def test_explicit_agent_scope_does_not_recruit_unplanned_situation_agent(
+    tmp_path: Path,
+) -> None:
     result = DeepResearchRunner(
         project_root=ROOT,
         output_root=tmp_path,
@@ -220,14 +262,12 @@ def test_registry_fallback_routes_unplanned_situation_recall(tmp_path: Path) -> 
     )
     summary = json.loads(Path(result["summary_path"]).read_text())
 
-    assert summary["coverage"]["coverage_passed"] is True
-    assert summary["coverage"]["missing_required_tags"] == []
-    assert "international_situation" in summary["selected_agent_ids"]
+    assert summary["coverage"]["coverage_passed"] is False
+    assert summary["coverage"]["missing_required_tags"] == ["situation"]
+    assert "international_situation" not in summary["selected_agent_ids"]
     situation_recalls = [
         item
         for item in summary["recall_requests"]
         if item["target_capability_tag"] == "situation"
     ]
-    assert len(situation_recalls) == 1
-    assert situation_recalls[0]["target_agent_id"] == "international_situation"
-    assert situation_recalls[0]["status"] == "completed"
+    assert situation_recalls == []

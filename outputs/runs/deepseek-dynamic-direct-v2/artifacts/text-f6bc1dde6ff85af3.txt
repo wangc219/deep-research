@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=gao.gov
+source_url=https://www.gao.gov/
+claim=GAO监督关注反小型无人系统装备的集成风险与C4ISR/保障依赖，支持体系集成断点判断。
+excerpt=
+retrieval=Hosted web search citation metadata

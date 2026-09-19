@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=usni.org · wash sky clean drones
+source_url=https://www.usni.org/magazines/proceedings/2025/april/wash-sky-clean-drones
+claim=舰队防空对低慢小目标存在武器-目标错配：远程标准系列不适合拦截大量廉价UAV，末端近防系统在多目标饱和下通道受限。
+excerpt=
+retrieval=Hosted web search citation metadata

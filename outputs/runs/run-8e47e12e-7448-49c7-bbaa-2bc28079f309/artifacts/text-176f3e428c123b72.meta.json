@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:176f3e428c123b72",
+  "content_path": "text-176f3e428c123b72.txt",
+  "content_type": "text/plain",
+  "direct_error": "_NetworkSafetyError: host_resolution_failed",
+  "encoding": "utf-8",
+  "evidence_id": "ev-combat_scenario-web-9287bba9dad6",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "176f3e428c123b721604f34821dec4a95d9d5698ca802368dbc61cacdaa3dac9",
+  "url": "https://www.marines.mil/News/News-Display/Article/2708140/stand-in-forces/"
+}

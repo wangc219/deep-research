@@ -1,0 +1,62 @@
+{
+  "blueprint_required_outputs": [
+    "技术扫描",
+    "成熟度",
+    "能力潜力",
+    "颠覆场景",
+    "阶段验证",
+    "装备能力需求图像（需求卡片）",
+    "深度研究主报告（深度性、创新性、前瞻性、军事价值性）",
+    "分支专用收敛产物"
+  ],
+  "branch": "D",
+  "branch_name": "技术驱动发现",
+  "completion": {
+    "demand_cards": {
+      "actual": 0,
+      "met": false,
+      "target": 1
+    },
+    "equipment_forms": {
+      "actual": 0,
+      "met": false,
+      "target": 1
+    },
+    "future_scenarios": {
+      "actual": 0,
+      "met": false,
+      "target": 1
+    },
+    "technology_opportunities": {
+      "actual": 0,
+      "met": false,
+      "target": 1
+    }
+  },
+  "delivery_status": "limited",
+  "non_fabrication_rule": "未达到数量门槛时必须披露缺口，不得用同义改写或无证据条目凑数。",
+  "products": {
+    "demand_cards": [],
+    "equipment_forms": [],
+    "future_scenarios": [],
+    "technology_opportunities": []
+  },
+  "report_contract": {
+    "future_test": "明确技术成熟窗口、工程瓶颈、对抗性失效模式以及现役改装与全新装备形态的分界。",
+    "military_test": "重点检验技术能否带来探测、决策、打击、抗扰、机动、保障或成本交换上的任务级跃迁。",
+    "thesis": "从技术成熟度和可集成条件出发，证明技术如何改变任务机制与体系关系，再形成可验证的装备机会，而不是从技术名词直接跳到装备概念。"
+  },
+  "report_quality_requirements": {
+    "创新性": "说明相对现役基线改变的作战关系、对手反适应和失效边界，创新必须落实到具体装备。",
+    "制胜效能": "分别证明现役效能跃升、传统赛道跨代优势和新概念赛道开辟，并给出可校准效能方向。",
+    "可实现性（成熟度）": "逐项给出核心技术点、成熟度、工程瓶颈、证据边界和验证条件，禁止把推断写成既成能力。",
+    "装备能力图像": "逐项保留动态组合中证据闭环的具体直接战斗武器，给出差异化指标画像、军事作战流程、直接战果和装备谱系位置；数量不设固定配额。",
+    "领域属性符合性": "持续符合当前Query确定的具体军事装备领域；无人、低空、远程和精确打击仅在Query明确涉及时作为领域锚点，通信、C2、保障和工程只能作为具体武器装备的内部依赖。"
+  },
+  "required_sections": [
+    "技术机会谱系",
+    "成熟度与颠覆场景",
+    "技术牵引装备形态",
+    "装备能力需求图像（需求卡片）"
+  ]
+}

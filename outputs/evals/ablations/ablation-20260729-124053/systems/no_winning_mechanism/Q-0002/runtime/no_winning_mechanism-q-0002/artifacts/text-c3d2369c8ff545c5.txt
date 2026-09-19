@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=esd.whs.mil · 19 F 1098 DOC 45 JASSM SAR Dec 2018.pdf
-source_url=https://www.esd.whs.mil/Portals/54/Documents/FOID/Reading%20Room/Selected_Acquisition_Reports/FY_2018_SARS/19-F-1098_DOC_45_JASSM_SAR_Dec_2018.pdf
-claim=JASSM SAR提供历史公开精度口径和项目采购状态，但其精度数据不能直接外推到所有批次和强干扰条件。
-excerpt=
-retrieval=Hosted web search citation metadata

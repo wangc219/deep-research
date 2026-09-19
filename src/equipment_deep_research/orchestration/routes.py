@@ -6,7 +6,7 @@ from pathlib import Path
 
 import yaml
 
-from equipment_deep_research.agents.registry import AgentDef
+from equipment_deep_research.contracts.agents import AgentSpec
 from equipment_deep_research.domain.identifiers import validate_internal_identifier
 
 
@@ -67,13 +67,13 @@ class RoutePolicyRegistry:
     def execution_waves(
         self,
         route_id: str,
-        selected: Sequence[AgentDef],
-    ) -> list[list[AgentDef]]:
+        selected: Sequence[AgentSpec],
+    ) -> list[list[AgentSpec]]:
         if route_id not in self.policies:
             raise KeyError(f"unknown route policy: {route_id}")
         policy = self.policies[route_id]
         remaining = list(selected)
-        result: list[list[AgentDef]] = []
+        result: list[list[AgentSpec]] = []
         optional = [
             agent
             for agent in remaining

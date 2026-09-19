@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:8fc37d346bc78ac8",
+  "content_path": "text-8fc37d346bc78ac8.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: cached_origin_failure:HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-combat_scenario-web-5824f31b34e3",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "8fc37d346bc78ac8b81570af459f509706699faa148421bec0b26a4b15e7710d",
+  "url": "https://www.marines.mil/Force-Design/"
+}

@@ -19,6 +19,10 @@ from equipment_deep_research.domain.models import (
     EvidenceCard,
     now_iso,
 )
+from equipment_deep_research.harness.context import (
+    sanitize_handoff_summary,
+    sanitize_handoff_value,
+)
 
 
 _INDEX_LOCK = RLock()
@@ -116,9 +120,13 @@ class AgentKnowledgeIndex:
                     "memory_id": str(row.get("memory_id", "")),
                     "agent_id": agent_id,
                     "topic": str(row.get("topic", "")),
-                    "handoff_summary": str(row.get("handoff_summary", "")),
+                    "handoff_summary": sanitize_handoff_summary(
+                        row.get("handoff_summary", "")
+                    ),
                     "payload_type": str(row.get("payload_type", "")),
-                    "payload_projection": dict(row.get("payload_projection", {})),
+                    "payload_projection": sanitize_handoff_value(
+                        dict(row.get("payload_projection", {}))
+                    ),
                     "source_urls": list(row.get("source_urls", []))[:12],
                     "confidence": float(row.get("confidence", 0.0) or 0.0),
                     "last_verified_at": last_verified,
@@ -168,9 +176,12 @@ class AgentKnowledgeIndex:
             "agent_id": packet.agent_id,
             "topic": packet.topic_focus,
             "topic_terms": sorted(_terms(packet.topic_focus)),
-            "handoff_summary": packet.handoff_summary[:1200],
+            "handoff_summary": sanitize_handoff_summary(
+                packet.handoff_summary,
+                fallback=(packet.findings[0] if packet.findings else ""),
+            )[:1200],
             "payload_type": packet.payload_type,
-            "payload_projection": projection,
+            "payload_projection": sanitize_handoff_value(projection),
             "source_urls": source_urls,
             "confidence": packet.confidence,
             "last_verified_at": now_iso(),

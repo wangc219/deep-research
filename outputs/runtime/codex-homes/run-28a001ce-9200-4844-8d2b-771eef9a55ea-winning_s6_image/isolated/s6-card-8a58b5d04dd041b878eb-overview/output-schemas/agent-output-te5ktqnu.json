@@ -1,0 +1,1 @@
+{"type":"object","properties":{"module_key":{"type":"string"},"module_content":{"type":"string"},"card_binding_id":{"type":"string"},"hypothesis_id":{"type":"string"},"capability_image_draft":{"type":"string"}},"required":["module_key","module_content","card_binding_id","hypothesis_id","capability_image_draft"],"additionalProperties":false}

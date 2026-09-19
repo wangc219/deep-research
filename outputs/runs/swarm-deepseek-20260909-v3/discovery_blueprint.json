@@ -1,0 +1,387 @@
+{
+  "adaptive_winning_step_modes": {
+    "1": "skip",
+    "2": "skip",
+    "3": "deep",
+    "4": "deep",
+    "5": "standard",
+    "6": "deep"
+  },
+  "assumptions": [],
+  "baseline_agent_plan": [
+    {
+      "agent_id": "international_situation",
+      "mode": "required",
+      "reason": "任务涉及外部地区、国外力量或国际安全环境，需要建立战略态势与对手能力建设基线。"
+    },
+    {
+      "agent_id": "case_research",
+      "mode": "required",
+      "reason": "C分支确定性基线建议"
+    },
+    {
+      "agent_id": "operational_employment",
+      "mode": "required",
+      "reason": "任务涉及作战运用、任务链或力量协同，需要把场景和装备结论转化为可评估的运用约束。；C分支确定性基线建议"
+    },
+    {
+      "agent_id": "weapon_equipment",
+      "mode": "reference",
+      "reason": "任务要求装备现状、能力差距、升级或新研判断，需要装备证据与成熟度分析。；C分支确定性基线建议"
+    },
+    {
+      "agent_id": "combat_scenario",
+      "mode": "callback",
+      "reason": "C分支确定性基线建议"
+    }
+  ],
+  "baseline_execution_mode": "query_dominant_isolated_parallel",
+  "blueprint_id": "blueprint-c-33e2b8fc",
+  "blueprint_mode": "catalog",
+  "branch_name": "局部战争案例经验",
+  "callback_agent_ids": [
+    "combat_scenario"
+  ],
+  "confidence": 0.9,
+  "custom_blueprint": {
+    "dependencies": [],
+    "dependency_cycle_rejected": false,
+    "driver_type": "",
+    "preferred_agent_ids": [],
+    "rationale": "",
+    "required_capability_tags": [],
+    "required_outputs": [],
+    "s1_s6_modes": {},
+    "stop_conditions": [],
+    "waves": []
+  },
+  "driver_scores": [],
+  "dynamic_subagents": [],
+  "emphasis": [
+    "案例链",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "execution_contract": {
+    "absolute_deadline_seconds": 0,
+    "background_count": null,
+    "backtrack_map": {
+      "capability_mapping": [
+        4,
+        5,
+        6
+      ],
+      "case_fact": [
+        3,
+        4,
+        5,
+        6
+      ],
+      "report_section": [],
+      "transfer_boundary": [
+        3,
+        4,
+        6
+      ]
+    },
+    "branch": "C",
+    "branch_products": [
+      "case_research_packet",
+      "six_case_patterns",
+      "three_future_scenarios",
+      "four_emerging_equipment_categories",
+      "transfer_boundaries"
+    ],
+    "codex_concurrency": 8,
+    "contract_id": "branch-c-optimized-v2",
+    "critical_fast_finalize_seconds": 0,
+    "deadline_downshift_window_seconds": 240,
+    "delivery_grace_seconds": 0,
+    "delivery_retry_reserve_seconds": 45,
+    "fast_finalize_output_token_cap": 4200,
+    "hard_deadline_seconds": 0,
+    "logical_agent_dag": {
+      "S3": [
+        "case_research"
+      ],
+      "S4": [
+        "S3"
+      ],
+      "S5": [
+        "S4"
+      ],
+      "S6": [
+        "S4",
+        "S5"
+      ],
+      "case_research": [
+        "scenario_divergence"
+      ],
+      "reporter": [
+        "S6"
+      ],
+      "scenario_divergence": []
+    },
+    "maximum_delivery_model_calls": 8,
+    "maximum_model_calls": 10,
+    "maximum_model_calls_with_residuals": 14,
+    "maximum_quality_judge_model_calls": 2,
+    "maximum_rounds": 3,
+    "maximum_searches": 12,
+    "maximum_swarm_model_calls": 20,
+    "physical_cohorts": [
+      [
+        3,
+        4,
+        5
+      ]
+    ],
+    "scenarios_per_background": null,
+    "schema_version": "2.0",
+    "soft_deadline_seconds": 0,
+    "step_intensity": {
+      "1": "skip",
+      "2": "skip",
+      "3": "deep",
+      "4": "deep",
+      "5": "standard",
+      "6": "deep"
+    },
+    "stop_conditions": [
+      "all_required_branch_products_present",
+      "accepted_claims_traceable_to_public_sources",
+      "no_repeated_residual_without_new_evidence",
+      "estimated_quality_gain_below_0.03"
+    ],
+    "wall_clock_deadlines_enabled": false
+  },
+  "execution_profile_hash": "66cc1cf10cfa012bc1120c33afbe000a60ba6dda63575e1aaa53263491bf7b4c",
+  "execution_profile_id": "winning_swarm_dynamic_v2",
+  "focus_questions": [],
+  "generated_by": "deterministic_architecture_policy",
+  "hard_constraints": [],
+  "hard_dependencies": {
+    "case_research": [
+      "scenario_divergence"
+    ],
+    "scenario_divergence": []
+  },
+  "initial_baseline_agent_ids": [
+    "international_situation",
+    "case_research",
+    "operational_employment",
+    "weapon_equipment"
+  ],
+  "interaction_mode": "autonomous",
+  "loop_policy": {
+    "inner_max_iterations": 1,
+    "meta_max_cycles": 1,
+    "middle_max_cycles": 1,
+    "minimum_expected_gain": 0.03,
+    "outer_max_rounds": 3,
+    "residual_only_after_first_round": true
+  },
+  "maximum_business_agents": 3,
+  "meta_review": {
+    "added_secondary_branches": [],
+    "dynamic_subagents": [],
+    "focus_questions": [],
+    "rationale": "覆盖与收敛结果未触发实质性重规划条件，保留当前蓝图。",
+    "replan_required": false,
+    "step_mode_changes": [],
+    "step_mode_overrides": [],
+    "stop_reason": "lean_meta_gate_passed"
+  },
+  "meta_triggers": [
+    "出现跨分支高价值线索",
+    "当前分支无法覆盖关键能力标签",
+    "案例/技术/对手变化反向触发其他发现路径"
+  ],
+  "minimum_business_agents": 2,
+  "primary_branch": "C",
+  "promoted_callback_agent_ids": [],
+  "prompt_version": "2.8",
+  "rationale": "继承专家显式指定的war_case_learning研究路线。",
+  "reference_focus": {
+    "source_items": [
+      1
+    ],
+    "task_kernel": "近期局部冲突中的无人系统和远程火力运用→区分有效机制、失效条件和迁移边界→交付证据矩阵、装备启示和待验证假设。"
+  },
+  "required_capability_tags": [
+    "case_reconstruction",
+    "lessons",
+    "equipment",
+    "autonomous_discovery"
+  ],
+  "required_outputs": [
+    "事实时间线与关键决策点",
+    "因果链与跨案例对比",
+    "案例规律报告（6条核心规律）",
+    "未来场景预测（3类高置信场景）",
+    "装备需求图像（4大新兴装备类别）",
+    "迁移边界",
+    "深度研究主报告（深度性、创新性、前瞻性、军事价值性）",
+    "分支专用收敛产物"
+  ],
+  "runtime_budgets": {
+    "absolute_deadline_seconds": 0,
+    "codex_concurrency": 8,
+    "critical_fast_finalize_seconds": 0,
+    "deadline_downshift_window_seconds": 240,
+    "delivery_grace_seconds": 0,
+    "delivery_retry_reserve_seconds": 45,
+    "fast_finalize_output_token_cap": 4200,
+    "hard_deadline_seconds": 0,
+    "maximum_delivery_model_calls": 8,
+    "maximum_model_calls": 10,
+    "maximum_model_calls_with_residuals": 14,
+    "maximum_quality_judge_model_calls": 0,
+    "maximum_reporter_model_calls": 36,
+    "maximum_searches": 12,
+    "maximum_swarm_model_calls": 48,
+    "reporter_codex_concurrency": 12,
+    "s6_codex_concurrency": 32,
+    "soft_deadline_seconds": 0,
+    "wall_clock_deadlines_enabled": false
+  },
+  "runtime_route": "war_case_learning",
+  "secondary_branches": [],
+  "semantic_agent_signals": [
+    {
+      "agent_id": "international_situation",
+      "matched_signals": [
+        "台海"
+      ],
+      "mode": "required",
+      "priority": 140,
+      "reason": "任务涉及外部地区、国外力量或国际安全环境，需要建立战略态势与对手能力建设基线。"
+    },
+    {
+      "agent_id": "weapon_equipment",
+      "matched_signals": [
+        "装备"
+      ],
+      "mode": "reference",
+      "priority": 92,
+      "reason": "任务要求装备现状、能力差距、升级或新研判断，需要装备证据与成熟度分析。"
+    },
+    {
+      "agent_id": "operational_employment",
+      "matched_signals": [
+        "作战",
+        "战法"
+      ],
+      "mode": "required",
+      "priority": 88,
+      "reason": "任务涉及作战运用、任务链或力量协同，需要把场景和装备结论转化为可评估的运用约束。"
+    }
+  ],
+  "specialist_agent_ids": [
+    "scenario_divergence",
+    "case_research"
+  ],
+  "structured_query_brief": {
+    "battle_phase_and_constraints": [],
+    "combat_problem_frame": "",
+    "constraints_and_assumptions": [],
+    "core_query": "俄乌战争无人机与反无人机作战案例对装备需求的可迁移启示",
+    "enemy_target_profile": [],
+    "equipment_project_hypotheses": [],
+    "equipment_semantic_boundary": "",
+    "expansion_dimensions": [
+      "任务对象与直接效果",
+      "对手适应与失效边界",
+      "装备形态与工程约束",
+      "证据问题与淘汰条件",
+      "成本交换与效费比"
+    ],
+    "focus_questions": [
+      "按时间线梳理参战方、典型装备、新战法与作战效果，关注低成本无人机蜂群、电子战、反无人机和有人/无人协同，提炼不足、经验边界与对台海等海岛方向的可迁移装备需求",
+      "所有关键判断尽量给出来源"
+    ],
+    "frontier_technology_hypotheses": [],
+    "handoff_rule": "补充信息用于拓展分析方向；其中假设需验证，不视为既成事实。",
+    "query_specific_weapon_architectures": [],
+    "rejected_template_anchors": [],
+    "required_direct_military_effects": [],
+    "supplement_present": true,
+    "supplement_summary": "补充研究聚焦任务对象与直接效果、对手适应与失效边界、装备形态与工程约束、证据问题与淘汰条件等；已提取2个焦点问题和0项待验证约束/假设。",
+    "weapon_design_variables": [],
+    "winning_problem_propositions": []
+  },
+  "unmatched_driver": "",
+  "waves": [
+    [
+      "scenario_divergence"
+    ],
+    [
+      "case_research"
+    ],
+    [
+      "combat_scenario",
+      "weapon_equipment"
+    ],
+    [
+      "operational_employment"
+    ]
+  ],
+  "winning_swarm_policy": {
+    "archetypes": [
+      "disruptive_mechanism_generator",
+      "independent_portfolio_reviewer",
+      "innovative_equipment_dimension_generator",
+      "weak_signal_scout"
+    ],
+    "breadth_hypothesis_maximum": 24,
+    "breadth_hypothesis_minimum": 1,
+    "enabled": true,
+    "expert_candidate_pool_maximum": 0,
+    "expert_judge_critical_dimension_minimum": 0.52,
+    "expert_judge_enabled": false,
+    "expert_judge_minimum_score": 0.68,
+    "expert_judge_required": false,
+    "expert_repair_enabled": false,
+    "expert_repair_max_candidates": 0,
+    "expert_repair_minimum_score": 0.64,
+    "expert_repair_reserved_instances": 0,
+    "finalist_maximum": 7,
+    "finalist_minimum": 6,
+    "foresight_first_enabled": true,
+    "frontier_critical_dimension_minimum": 0.5,
+    "frontier_evidence_relaxation": true,
+    "frontier_expert_judge_minimum_score": 0.66,
+    "frontier_final_gate_minimum_score": 0.62,
+    "max_concurrency": 8,
+    "max_dynamic_instances": 21,
+    "max_waves": 3,
+    "minimum_direct_combat_equipment": 2,
+    "minimum_expected_gain": 0.03,
+    "mission_graph_max_instances": 21,
+    "mission_graph_min_instances": 16,
+    "mission_graph_target_instances": 16,
+    "pending_verification_backfill_enabled": false,
+    "pending_verification_critical_dimension_minimum": 0.42,
+    "pending_verification_minimum_score": 0.54,
+    "policy_id": "winning_swarm_dynamic_v2",
+    "preferred_distinct_direct_equipment": 3,
+    "promotion": {
+      "human_approval_required": true,
+      "maximum_evidence_hard_failures": 0,
+      "maximum_permission_hard_failures": 0,
+      "minimum_eligible_runs": 10,
+      "minimum_positive_increment_rate": 0.7,
+      "offline_evaluation_required": true
+    },
+    "raw_session_sharing_allowed": false,
+    "recursive_recruitment_allowed": false,
+    "s3_empty_reallocation_max": 2,
+    "s3_s4_candidate_maximum_per_session": 4,
+    "s3_s4_candidate_pool_maximum_per_session": 4,
+    "s3_s4_creative_passes": 3,
+    "s3_winning_thesis_capacity": 6,
+    "same_family_minimum_independent_axes": 2
+  }
+}

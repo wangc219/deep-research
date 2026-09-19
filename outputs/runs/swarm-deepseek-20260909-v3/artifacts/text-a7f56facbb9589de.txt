@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=media.defense.gov · FACT SHEET STRATEGY FOR COUNTERING UNMANNED SYSTEMS.PDF
+source_url=https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF
+claim=DoD 2024年12月反无人系统战略文件，主题为对UxS威胁的分层成体系应对、成本不对称与自身系统抗毁；本会话未逐页复核。
+excerpt=
+retrieval=Hosted web search citation metadata

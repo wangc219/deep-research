@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:1bbd7ccc87256fc1",
+  "content_path": "text-1bbd7ccc87256fc1.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-cross_domain_fusion-web-4471cf21534c",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "1bbd7ccc87256fc1f73d5f85b3f5e52bfe40adc998689b939ca30717d3456b0f",
+  "url": "https://media.defense.gov/2022/Mar/17/2002958406/-1/-1/1/SUMMARY-OFTHE-JOINT-ALL-DOMAIN-COMMAND-AND-CONTROL-STRATEGY.pdf"
+}

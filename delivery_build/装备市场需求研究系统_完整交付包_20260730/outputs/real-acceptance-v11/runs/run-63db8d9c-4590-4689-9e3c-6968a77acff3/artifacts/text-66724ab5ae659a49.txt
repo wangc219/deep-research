@@ -1,4 +1,0 @@
-fetch_failed
-url=https://www.armyupress.army.mil/Portals/7/military-review/Archives/English/JA-24/C-UAS%20Operations/C-UAS-Operations-UA.pdf
-error=HTTPStatusError: HTTP 403: Forbidden
-该诊断用于保留真实联网smoke边界；正式结论不应仅依赖失败材料。

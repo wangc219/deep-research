@@ -1,0 +1,7 @@
+import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, WidthType, PageOrientation, BorderStyle, TableLayoutType, VerticalAlignTable, ShadingType } from '/Users/hitsz/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/docx/dist/index.mjs';
+import { writeFile } from 'node:fs/promises';
+const chinese = { ascii:'Arial', hAnsi:'Arial', eastAsia:'STHeiti', cs:'Arial', hint:'eastAsia' };
+const text = (value, bold=false) => new TextRun({text:value,bold,size:20,font:chinese});
+const table = new Table({width:{size:100,type:WidthType.PERCENTAGE}, columnWidths:[2600,2600], layout:TableLayoutType.FIXED, rows:[['标题','分类'],['能力画像','侦察感知维度'],['装备与技术实现','采用无人机集群和边缘计算节点。']].map((r,i)=>new TableRow({tableHeader:i===0,cantSplit:true,children:r.map(c=>new TableCell({width:{size:2600,type:WidthType.DXA},shading:i===0?{fill:'2F5597',type:ShadingType.CLEAR}:undefined,verticalAlign:VerticalAlignTable.CENTER,margins:{top:100,bottom:100,left:120,right:120},children:[new Paragraph({children:[new TextRun({text:c,bold:i===0,size:20,color:i===0?'FFFFFF':'000000',font:chinese})]})]}))}))});
+const d=new Document({styles:{default:{document:{run:{font:chinese,size:22},paragraph:{spacing:{after:80}}}}},sections:[{properties:{page:{orientation:PageOrientation.LANDSCAPE,margin:{top:720,right:720,bottom:720,left:720}}},children:[new Paragraph({children:[text('能力画像导出测试',true)]}),table]}]});
+await writeFile('.tmp-docx-qa/font_test.docx',Buffer.from(await (await Packer.toBlob(d)).arrayBuffer()));

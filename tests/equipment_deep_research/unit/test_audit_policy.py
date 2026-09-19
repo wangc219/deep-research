@@ -69,3 +69,17 @@ def test_single_final_auditor_is_kept_when_no_upstream_expert_exists() -> None:
 
     assert decision.expert_judge_present is False
     assert decision.model_review_required is True
+
+
+def test_dynamic_swarm_uses_internal_innovation_audit_without_second_model() -> None:
+    decision = decide_final_audit_review(
+        trace_events=[],
+        deterministic_status="limited",
+        stage_outputs=[],
+        capability_images=[],
+        evidence_count=0,
+        execution_profile_id="winning_swarm_dynamic_v2",
+    )
+
+    assert decision.model_review_required is False
+    assert decision.reason == "dynamic_swarm_internal_innovation_audit"

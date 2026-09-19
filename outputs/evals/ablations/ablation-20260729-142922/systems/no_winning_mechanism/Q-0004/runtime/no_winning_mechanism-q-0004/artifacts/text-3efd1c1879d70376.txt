@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=Expeditionary Advanced Base Operations (EABO) > United States Marine Corps Flagship > News Display
-source_url=https://www.marines.mil/News/News-Display/Article/2708120/expeditionary-advanced-base-operations-eabo/
-claim=EABO支撑前沿分布式、低特征、机动和易维持力量运用，构成远域稀疏通信与低辐射任务续接背景。
-excerpt=
-retrieval=Hosted web search citation metadata

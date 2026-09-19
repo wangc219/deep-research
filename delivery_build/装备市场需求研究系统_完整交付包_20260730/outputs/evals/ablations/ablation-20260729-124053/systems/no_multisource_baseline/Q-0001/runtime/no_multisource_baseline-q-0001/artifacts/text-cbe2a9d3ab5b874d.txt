@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=darpa.mil · collaborative autonomy unmanned aerial systems
-source_url=https://www.darpa.mil/news/2018/collaborative-autonomy-unmanned-aerial-systems
-claim=CODE项目面向拒止或受争夺空域中的高机动地面和海上目标，强调多无人机在单一人类任务指挥员监督下导航、发现、跟踪、识别并按规则攻击目标。
-excerpt=
-retrieval=Hosted web search citation metadata

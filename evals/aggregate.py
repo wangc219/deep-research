@@ -161,3 +161,24 @@ def _mean_usage(rows: list[EvalRunResult]) -> dict[str, float]:
         key: round(statistics.fmean(float(row.usage.get(key, 0.0)) for row in rows), 3)
         for key in keys
     }
+
+
+def aggregate_replay(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    """Compatibility entry point for text-evolution replay aggregation.
+
+    Keep the implementation in ``evals.replay`` so the legacy pairwise
+    aggregator remains stable, while callers that naturally look in this
+    module can use the same API.
+    """
+
+    from .replay import aggregate_replay as _aggregate_replay
+
+    return _aggregate_replay(*args, **kwargs)
+
+
+def bootstrap_replay_ci(*args: Any, **kwargs: Any) -> tuple[float, float]:
+    """Compatibility wrapper for the paired replay bootstrap helper."""
+
+    from .replay import bootstrap_ci
+
+    return bootstrap_ci(*args, **kwargs)

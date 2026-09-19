@@ -18,6 +18,16 @@ class CreateRunCommand:
     execution_profile_id: str = ""
     report_template_mode: str = "three_layer_nine_item"
     supplemental_information: str = ""
+    model_profile_id: str = ""
+    # Evolution retrieval scope.  These fields are optional for backwards
+    # compatibility with existing CLI/in-process callers; API/worker paths
+    # persist them so a queued run cannot accidentally inherit another
+    # tenant's learning memory after a restart.
+    tenant_id: str = ""
+    workspace_id: str = ""
+    project_id: str = ""
+    profile_id: str = ""
+    stage_scope: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -33,6 +43,12 @@ class UpdateRunCommand:
     execution_profile_id: str = ""
     report_template_mode: str = ""
     supplemental_information: str | None = None
+    model_profile_id: str = ""
+    tenant_id: str = ""
+    workspace_id: str = ""
+    project_id: str = ""
+    profile_id: str = ""
+    stage_scope: list[str] | None = None
 
 
 @dataclass(frozen=True)
@@ -54,3 +70,9 @@ class RunView:
     report_template_mode: str = "three_layer_nine_item"
     updated_at: str = field(default_factory=now_iso)
     supplemental_information: str = ""
+    model_profile_id: str = ""
+    tenant_id: str = ""
+    workspace_id: str = ""
+    project_id: str = ""
+    profile_id: str = ""
+    stage_scope: list[str] = field(default_factory=list)

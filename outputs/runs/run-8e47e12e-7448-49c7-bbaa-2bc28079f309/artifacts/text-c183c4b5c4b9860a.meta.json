@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:c183c4b5c4b9860a",
+  "content_path": "text-c183c4b5c4b9860a.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: cached_origin_failure:HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-combat_scenario-web-de6b507b70c6",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "c183c4b5c4b9860a566655940cfc1fe246214b187399054bbea67eaafef5c85f",
+  "url": "https://www.war.gov/News/Releases/Release/Article/3986597/dod-announces-strategy-for-countering-unmanned-systems/"
+}

@@ -1,0 +1,260 @@
+[
+  {
+    "bundle_id": "claims-42e2d45402c3",
+    "claims": [],
+    "packet_id": "packet-weapon_equipment",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-d5cf0cba42e6",
+    "claims": [
+      {
+        "claim_id": "claim-988c0fb4075b",
+        "claim_type": "fact",
+        "confidence": 0.83,
+        "counter_evidence": [
+          "低成本平台的成本优势，与受拦截和受欺骗环境中的高消耗率之间存在直接冲突。",
+          "‘协同突防’依赖外部网络，但公开证据显示联合C2框架仍未成熟，协同能力不能被当作默认前提。",
+          "智能化越强，越依赖稳定目标质量；若目标识别误差高，智能会转化为错误分配而非增益。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-5824f31b34e3",
+          "ev-system_confrontation-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "1. 该题的核心不是‘巡飞弹药概念’本身，而是最短任务链能否在受干扰、受欺骗、受拦截条件下维持可验证命中；这直接贡献于三层九项中的信息链与任务链。"
+      },
+      {
+        "claim_id": "claim-eb766a7c47f9",
+        "claim_type": "fact",
+        "confidence": 0.83,
+        "counter_evidence": [
+          "低成本平台的成本优势，与受拦截和受欺骗环境中的高消耗率之间存在直接冲突。",
+          "‘协同突防’依赖外部网络，但公开证据显示联合C2框架仍未成熟，协同能力不能被当作默认前提。",
+          "智能化越强，越依赖稳定目标质量；若目标识别误差高，智能会转化为错误分配而非增益。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-5824f31b34e3",
+          "ev-system_confrontation-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "2. 外部C2和全域数据融合不能被默认成立；GAO关于CJADC2框架不成熟，说明协同突防、重规划和目标重分配都存在强接口脆弱性，这直接压缩协同打击的稳定性，贡献于指挥链。"
+      },
+      {
+        "claim_id": "claim-ecbd4f859a10",
+        "claim_type": "inference",
+        "confidence": 0.83,
+        "counter_evidence": [
+          "低成本平台的成本优势，与受拦截和受欺骗环境中的高消耗率之间存在直接冲突。",
+          "‘协同突防’依赖外部网络，但公开证据显示联合C2框架仍未成熟，协同能力不能被当作默认前提。",
+          "智能化越强，越依赖稳定目标质量；若目标识别误差高，智能会转化为错误分配而非增益。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-5824f31b34e3",
+          "ev-system_confrontation-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "3. 防御方的反无人系统逻辑已把‘探测-跟踪-识别-成本交换’前移，意味着低成本智能巡飞弹药必须靠本体自治和分布式消耗优势对冲拦截压力；这贡献于任务链与抗毁链。"
+      },
+      {
+        "claim_id": "claim-60395c542fa8",
+        "claim_type": "fact",
+        "confidence": 0.83,
+        "counter_evidence": [
+          "低成本平台的成本优势，与受拦截和受欺骗环境中的高消耗率之间存在直接冲突。",
+          "‘协同突防’依赖外部网络，但公开证据显示联合C2框架仍未成熟，协同能力不能被当作默认前提。",
+          "智能化越强，越依赖稳定目标质量；若目标识别误差高，智能会转化为错误分配而非增益。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-5824f31b34e3",
+          "ev-system_confrontation-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "4. 分布式网状与盟友互操作能放大覆盖和续接，但也把标准化、接入和中继节点变成新的失效面；这对保障链和信息链同时成立。"
+      }
+    ],
+    "packet_id": "packet-system_confrontation",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-c342e5d8a7a9",
+    "claims": [
+      {
+        "claim_id": "claim-fca15389b363",
+        "claim_type": "hypothesis",
+        "confidence": 0.79,
+        "counter_evidence": [
+          "公开基线显示单弹药巡飞打击已具备实用成熟度，但前沿叙事强调协同自治和体系融合尚未闭合，说明能力跃迁主要卡在体系而不是弹体。",
+          "GAO对CJADC2的评估显示跨域连接愿景很强，但投资与进展框架仍不完整，和模块化快速扩展的政策表述之间存在落地张力。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-technology_radar-web-912bbaba1ca2",
+          "ev-technology_radar-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.darpa.mil/research/programs/collaborative-operations-in-denied-environment",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "判断：岛链拒止环境下，智能巡飞精打弹药的核心增益不在单纯拉长航程，而在受干扰、受欺骗、受拦截条件下仍能把“发现-识别-交战”链条做成可验证闭环；军事任务价值：直接提升侦察预警后的精确打击、压制与持续施压能力；证据边界：公开材料只能证明低成本无人系统、抗扰自治和现役巡飞弹基线分别成立，不能证明在高强度防空/电子战下稳定合并成立；失效条件：若无GPS、低带宽和欺骗并存时仍无法完成稳定末段识别与交战，则该概念退化为普通巡飞弹。"
+      },
+      {
+        "claim_id": "claim-8723d2e40f3e",
+        "claim_type": "fact",
+        "confidence": 0.79,
+        "counter_evidence": [
+          "公开基线显示单弹药巡飞打击已具备实用成熟度，但前沿叙事强调协同自治和体系融合尚未闭合，说明能力跃迁主要卡在体系而不是弹体。",
+          "GAO对CJADC2的评估显示跨域连接愿景很强，但投资与进展框架仍不完整，和模块化快速扩展的政策表述之间存在落地张力。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-technology_radar-web-912bbaba1ca2",
+          "ev-technology_radar-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.darpa.mil/research/programs/collaborative-operations-in-denied-environment",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "判断：这类装备的可用性取决于“弹药本体承担什么、外部体系承担什么”的切分，弹药本体必须承担末段识别、有限自治航行和链路韧性，协同突防与跨域分发主要依赖外部ISR/C2；军事任务价值：决定它能否在第一岛链防区外接敌时持续形成打击窗口和拒止压力；证据边界：DARPA与GAO材料支持受限环境自治和跨域连接的方向，但未证明体系级融合已经战术闭合；失效条件：一旦把大规模协同、持续目标指示都压到单弹药上，任务价值会迅速塌缩。"
+      },
+      {
+        "claim_id": "claim-69f3e8d81c80",
+        "claim_type": "hypothesis",
+        "confidence": 0.79,
+        "counter_evidence": [
+          "公开基线显示单弹药巡飞打击已具备实用成熟度，但前沿叙事强调协同自治和体系融合尚未闭合，说明能力跃迁主要卡在体系而不是弹体。",
+          "GAO对CJADC2的评估显示跨域连接愿景很强，但投资与进展框架仍不完整，和模块化快速扩展的政策表述之间存在落地张力。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-technology_radar-web-912bbaba1ca2",
+          "ev-technology_radar-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.darpa.mil/research/programs/collaborative-operations-in-denied-environment",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "判断：公开基线已经足以说明该领域进入“可用但未封顶”的阶段，Switchblade 600类产品证明低成本巡飞精打弹药已具备管射、EO/IR、加密控制和一定射程/续航的实用门槛；军事任务价值：说明真正的新质空间更可能出现在抗扰、任务分配和体系接入，而不是单平台参数再堆高；证据边界：现有基线不等于在岛链拒止压力下的有效战果，尤其不等于对抗强EW和分层防空；失效条件：若公开基线在目标任务中已足够，则所谓创新只能算增量改良。"
+      },
+      {
+        "claim_id": "claim-f7c0d7d41916",
+        "claim_type": "hypothesis",
+        "confidence": 0.79,
+        "counter_evidence": [
+          "公开基线显示单弹药巡飞打击已具备实用成熟度，但前沿叙事强调协同自治和体系融合尚未闭合，说明能力跃迁主要卡在体系而不是弹体。",
+          "GAO对CJADC2的评估显示跨域连接愿景很强，但投资与进展框架仍不完整，和模块化快速扩展的政策表述之间存在落地张力。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-technology_radar-web-912bbaba1ca2",
+          "ev-technology_radar-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.darpa.mil/research/programs/collaborative-operations-in-denied-environment",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "判断：在防空、反导和反无人机压力下，智能巡飞弹药更像“可消耗的前沿节点”而不是传统意义上的单发精确武器；军事任务价值：可把防区外接敌的压力转化为持续侦搜、压制和消耗对方防空资源的手段；证据边界：DoD对无人系统的表述支持这种趋势，但并未给出岛链场景中的实战证明；失效条件：若对方具备高密度电子战、诱饵和近程拦截网，这类弹药的价值会被显著压低。"
+      },
+      {
+        "claim_id": "claim-115e5dc94e70",
+        "claim_type": "hypothesis",
+        "confidence": 0.79,
+        "counter_evidence": [
+          "公开基线显示单弹药巡飞打击已具备实用成熟度，但前沿叙事强调协同自治和体系融合尚未闭合，说明能力跃迁主要卡在体系而不是弹体。",
+          "GAO对CJADC2的评估显示跨域连接愿景很强，但投资与进展框架仍不完整，和模块化快速扩展的政策表述之间存在落地张力。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-technology_radar-web-912bbaba1ca2",
+          "ev-technology_radar-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.darpa.mil/research/programs/collaborative-operations-in-denied-environment",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "判断：对本题最有价值的装备研究方向是“低成本+抗扰自治+模块化载荷”的组合，而不是追求单一高性能极限；军事任务价值：可同时服务侦察预警、打击、压制和诱饵分担，提升拒止环境下的任务弹性；证据边界：公开材料只支持方向，不支持已成熟到大规模可靠部署的结论；失效条件：若模块化与自治只停留在演示层，无法在受扰链路中稳定复现，就不构成装备级跃迁。"
+      }
+    ],
+    "packet_id": "packet-technology_radar",
+    "schema_version": "1.0"
+  }
+]

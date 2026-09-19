@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:d289f5f208782a5a",
+  "content_path": "text-d289f5f208782a5a.txt",
+  "content_type": "text/plain",
+  "direct_error": "_NetworkSafetyError: host_resolution_failed",
+  "encoding": "utf-8",
+  "evidence_id": "ev-operational_employment-web-3d7959b9394f",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "d289f5f208782a5aad2f5b50a3cc189676dcaf8d440b179ceb9c0a9d41d5a293",
+  "url": "https://www.mcwl.marines.mil/TM-EABO/"
+}

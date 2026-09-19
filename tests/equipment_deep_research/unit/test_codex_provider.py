@@ -12,6 +12,9 @@ import time
 import pytest
 
 import equipment_deep_research.agents.provider as provider_module
+from equipment_deep_research.agents.dynamic_prompt_resources import (
+    load_dynamic_winning_prompt,
+)
 
 from equipment_deep_research.agents.provider import (
     ResponsesAgentProvider,
@@ -40,8 +43,14 @@ from equipment_deep_research.agents.provider import (
 )
 from equipment_deep_research.agents.workflows.winning import (
     _creative_s3_candidate_instruction,
+    _dynamic_s6_card_input,
     _minimal_s6_card_handoff,
     _parallel_s6_card_instruction,
+    _s6_portrait_module_lengths,
+    _s6_short_portrait_modules,
+)
+from equipment_deep_research.agents.workflows.s6_quality import (
+    _s6_cross_card_identity_issues,
 )
 from equipment_deep_research.domain.models import WinningHypothesis
 from equipment_deep_research.orchestration.capability_portrait import (
@@ -63,11 +72,82 @@ from equipment_deep_research.providers.codex_optimizations import (
     render_prompt_optimized,
 )
 from equipment_deep_research.providers.fake import ScriptedFakeProvider
-from equipment_deep_research.providers.responses import ProviderRequestError
+from equipment_deep_research.providers.responses import (
+    ProviderCapacityError,
+    ProviderRequestError,
+)
 
 
 class _RealLikeScriptedProvider(ScriptedFakeProvider):
     """Exercise deterministic Codex gates without launching an external model."""
+
+
+def _complete_s6_test_modules(name: str) -> dict[str, str]:
+    return {
+        "overview": (
+            f"{name}面向强干扰条件下的时敏目标交战，把传统依赖持续链路的目标复核、"
+            "受控接敌和直接毁伤前推到武器本体，使敌方不能仅靠断链、短促暴露和快速转场"
+            "换取完整逃逸窗口。装备在任务边界内保持对授权目标的连续判断，直接形成压制、"
+            "毁伤和后续补击空间，并让分散前沿火力在远端态势不完整时仍可产生可兑现战果。"
+            "这种能力把通信保障从任务成立的刚性前提降为效率增益，为纵深火力续接打开新的作战场景，"
+            "并保持战果可复核。相较依靠有人平台反复抵近确认的旧模式，任务编组可把有限链路优先留给"
+            "目标更新和禁击边界变化，不再持续传输完整原始数据；即使后方节点暂时失联，已经进入责任区的"
+            "武器仍能在预设权限内维持作用窗口，使敌方必须持续隐蔽或频繁转移，而不能用一次干扰换取整段安全时间。"
+            "任务成立的关键也因而从后方必须全程看清并持续下令，改为发射前划清权限、弹上保持可追溯判断。"
+            "部队由此可把同一批火力分布在多个短时责任区，对手则要为每次开机和转场同时准备隐蔽、诱骗与近防资源。"
+        ),
+        "technology_implementation": (
+            "主攻弹载多源复核与受约束任务控制，两者分别落在导引头、组合导航和任务计算单元。"
+            "前者须在定位漂移、目标遮挡和诱饵并存时维持同一目标轨迹，后者须在小体积、低功耗、"
+            "有限散热和末段时间压力下守住禁击边界。传统全量数据回传会受带宽与时延拖累，单一"
+            "传感器又容易被场景变化误导，因此必须让证据摘要、航迹可信度和剩余能量在弹上耦合，"
+            "既保留及时攻击窗口，也避免把自治退化为无约束盲打，关键约束均须可测量并可复核。"
+            "工程上还要把模型置信度、导航误差包线、目标机动余量和引信可用条件压缩成可实时计算的状态量，"
+            "通过软硬件联锁限制搜索范围与攻击姿态。这样才能在计算资源、视场更新率和能源同时受限时，"
+            "让每次目标确认都有可追溯依据，并在证据恶化时及时降级，而不是继续沿用依赖地面席位逐帧判读的实现方式。"
+            "为防止感知模块给出高置信但无法攻击的假结论，任务计算机还要将目标证据与可达域、会遇几何和引信触发条件同步更新。"
+            "软件输出必须能由独立安全监控通道否决，硬件则需在震动、温升和电源波动下保持门限计算一致，才能支撑实际落装。"
+        ),
+        "operational_process": (
+            "发射平台先装订任务区、目标类别、禁击对象和最大自主权限，随后释放武器沿组合导航"
+            "进入责任区。弹体发现候选目标后积累多源证据并检查航迹可达性，必要时利用短链交换"
+            "压缩摘要；证据达到交战门限且约束无冲突时转入末段攻击，完成毁伤后形成状态摘要并"
+            "触发补击或任务结束。证据不足、友军进入危险区、剩余能量低于安全边界或目标离开"
+            "责任区时，武器退出攻击姿态并拒打、转场或终止，保证每次状态转换都有明确条件，"
+            "指挥员可据此追溯转段理由。"
+            "若后方恢复连接，武器只接收边界修订和高价值目标优先级，不回退到全程遥控；多枚武器相遇时交换"
+            "目标占用和剩余作用时间，避免重复扑向同一目标。首枚攻击后，后续弹根据毁伤摘要决定补击、改攻或"
+            "退出责任区，从而把授权、接敌、效果确认和火力续接组织成连续状态机，而非若干互不衔接的人工口令。"
+            "责任区中若同时出现更高优先级目标，只有尚未锁定末段通道且剩余能量满足改攻条件的武器才能转段；已进入安全不可逆段的个体继续执行原任务。"
+            "编队指挥所依据每枚弹的状态摘要统一分配补击窗口，并在越界、证据冲突或无法安全脱离时下达全组终止。"
+        ),
+        "capability_effects": (
+            "该装备新增断链条件下的目标区自主复核、受控交战和火力续接能力，直接降低因图传"
+            "卡顿造成的任务放弃、重复发射与高价值平台暴露。它能够压缩从目标短时出现到武器"
+            "接敌的时间，提高对机动火力、临时雷达和通信节点的有效毁伤概率，同时用安全拒打"
+            "减少诱饵和非授权对象造成的弹药空耗。新的任务场景包括纵深时敏猎歼、前沿分散火力"
+            "伴随、强电磁压制区补击，以及链路间歇条件下的多批次连续攻击，并保持战果与弹药消耗可核算。"
+            "对部队而言，直接收益不是单纯提高命中率，而是把原本因通信不可用而无法下达的任务转化为可受控执行："
+            "前沿单元可在短暂获得目标线索后立即释放火力，后方只需维护边界和优先级。由此减少中继平台伴随、"
+            "有人机护航和重复侦察需求，并让敌方机动节点在每次短停、开机或发射时都面临持续在场的打击压力。"
+            "作战效果还体现为指挥所可以用更少中继和盯控席位维持更多同时任务，不再因单个链路拥塞整批撤销攻击。"
+            "敌方若要恢复安全间隙，除压制通信外还必须同时破坏弹上定位、制造足以通过多源复核的诱饵，或迫使真实目标长时间不得开机。"
+        ),
+        "winning_logic": (
+            "敌方原有优势是用低成本通信压制和短促暴露制造我方决策迟滞，迫使远程火力等待"
+            "完整回传、追加中继或放弃攻击。该装备把关键判断压缩到弹上短闭环，使断链只能"
+            "降低协同效率，不能直接清除已经在场的攻击关系。对手若要继续规避，必须同时投入"
+            "更逼真诱饵、更频繁机动、更长时间干扰和更多近防弹药，并承担真实节点反复暴露的"
+            "代价；我方则以有限算力和低带宽交换替代高价值支援，用较低体系成本换取更快接敌、"
+            "更少误耗和更高直接毁伤收益。"
+            "交换关系因此从双方争夺持续通信和完整态势，转为敌方必须同时对抗导航、感知、任务判断与末段效应。"
+            "其单点干扰收益下降，而维持多域欺骗和近程防御的成本随在场武器数量增长；我方即使部分武器被压制，"
+            "其余武器仍可独立闭合任务。只要权限边界和证据门限可靠，这种分布式受控自治就能以可接受弹药损耗"
+            "换取敌高价值节点更长暴露、更慢转场和更高防御负担。"
+            "这一逻辑成立的前提不是弹药能完全代替指挥员，而是权限、目标类别和禁击边界能在发射前被清楚装订，弹上证据门限在对抗中仍可验证。"
+            "一旦这些边界无法维持，武器必须拒打而非追求表面命中率，从而把自治的战术收益限定在可接受的政策与误伤风险之内。"
+        ),
+    }
 
 
 def _with_model_semantic_contract(
@@ -121,34 +201,224 @@ def test_s3_candidate_brief_preserves_creative_reasoning_without_rule_pileup() -
     assert "战争时空与体系经济逻辑、专名隐喻" in instruction
     assert "不要为覆盖类型而组合" in instruction
     assert "不要默认两字意象加弹/雷/器/系统" in instruction
+    assert "专名/代号型不得成为明显多数" in instruction
+    assert "只引专名/代号部分" in instruction
+    assert "名称没有专名或代号时，不得给整个名称加引号" in instruction
     assert "每个候选只输出name和concise_winning_summary" in instruction
     assert "不要输出其他字段、备选名或推理过程" in instruction
     assert "naming_self_check" not in instruction
-    assert len(instruction) < 1000
+    assert len(instruction) < 1200
 
 
 def test_parallel_s6_card_instruction_is_compact_but_preserves_authority() -> None:
     instruction = _parallel_s6_card_instruction()
 
+    assert instruction == load_dynamic_winning_prompt("S6")
     assert len(instruction) < 1600
     assert "独立Codex CLI会话中只完成这一张候选卡" in instruction
     assert "输入严格只有query_semantics、candidate_weapon、winning_logic_overview三项" in instruction
     assert "不得要求或臆造S5指标、分类、证据、验证" in instruction
     assert "你拥有本卡场景推演、技术论证、作战流程、能力分类和文字编辑权" in instruction
-    assert "每栏约120至150个中文字作为软编辑目标" in instruction
-    assert "决定性瓶颈、核心原理怎样落实到装备本体" in instruction
-    assert "接口/能源/材料/控制/制造约束" in instruction
-    assert "样机、半实物或对抗试验和判退结果" in instruction
-    assert "行动主体、进入条件、关键动作、任务状态变化" in instruction
-    assert "转入下一节点的条件" in instruction
-    assert "新任务或新场景" in instruction
-    assert "能力分类必须显示在画像开头" in instruction
-    assert "删除跨栏重复" in instruction
-    assert "生僻造词、无解释缩写" in instruction
-    assert "一线设计人员能直接理解的通俗准确中文" in instruction
-    assert "成熟度标签、热门技术或组件清单" in instruction
-    assert "发现—决策—打击—评估" in instruction
+    assert "同一次模型调用内部完成两遍工作" in instruction
+    assert "再以总编辑视角静默复核并直接返回唯一终稿" in instruction
+    assert "1至2项真正决定装备能否实现的主攻关键技术" in instruction
+    assert "五栏合计通常约2000至2250字" in instruction
+    assert "真实未来战场态势" in instruction
+    assert "敌方具体代价" in instruction
+    assert "装备落装" in instruction
+    assert "作战窗口" in instruction
+    assert "system_contribution_thesis、indicator_portrait" in instruction
+    assert "指标从制胜机理和风险反推" in instruction
+    assert "不得复用其他卡的骨架、指标、技术路线或验收句式" in instruction
+    assert "口号" in instruction and "因果" in instruction
+    assert "严禁为凑字复用跨栏句子" in instruction
+    assert "发现—判断—决策—打击—评估" in instruction
     assert "INNOVATIVE_CAPABILITY_IMAGE_GUIDANCE" not in instruction
+
+
+def test_s6_short_portrait_module_detector_checks_each_cjk_column() -> None:
+    modules = _complete_s6_test_modules("“潮锋”时敏打击弹")
+    assert not _s6_short_portrait_modules(modules)
+    modules["winning_logic"] = "敌方断链后我方仍可攻击。"
+    assert _s6_short_portrait_modules(modules) == ["winning_logic"]
+    assert _s6_portrait_module_lengths(modules)["winning_logic"] < 380
+    modules["capability_effects"] = "形成受控打击能力。"
+    assert _s6_short_portrait_modules(modules) == [
+        "capability_effects",
+        "winning_logic",
+    ]
+
+
+@pytest.mark.parametrize('failed_repair', [
+    'timeout', 'module_key', 'card_binding_id', 'hypothesis_id', 'missing_binding',
+])
+def test_dynamic_s6_repairs_only_failed_columns_and_isolates_failed_repairs(
+    monkeypatch, failed_repair,
+) -> None:
+    backend = _RealLikeScriptedProvider([])
+    backend.provider_type = "codex_cli"  # type: ignore[attr-defined]
+    backend.snapshot = lambda: {"type": "codex_cli"}  # type: ignore[attr-defined]
+    provider = ResponsesAgentProvider(backend)
+    phases: list[str] = []
+    payload_binding_ids: list[str] = []
+
+    portfolio = [
+        {
+            "hypothesis_id": "short-card-1",
+            "name": "“潮锋”时敏打击弹",
+            "type": "new_capability",
+            "equipment_form": "时敏精确打击弹",
+            "primary_equipment_identity": "时敏精确打击弹",
+            "target_and_direct_effect": "压制并毁伤高价值机动目标",
+            "concise_winning_summary": (
+                "传统远程火力依赖持续链路，对手可借短时暴露逃离；该弹把复核与受控交战前推到武器端。"
+            ),
+            "operational_process": ["装订任务并发射", "复核目标后受控交战"],
+            "baseline_system": "现役远程精确打击弹药",
+            "capability_gap": "断链后目标复核和火力续接不足",
+            "direct_evidence_refs": ["ev-1"],
+            "validation_plan": ["比较正确交战率和直接毁伤效果"],
+            "expert_score": 0.8,
+        }
+    ]
+
+    async def fake_run_core_json(
+        agent_id,
+        system,
+        payload,
+        schema,
+        max_output_tokens,
+        *,
+        phase,
+    ):
+        del agent_id, system, schema, max_output_tokens
+        phases.append(phase)
+        candidate = dict(payload["candidate_weapon"])
+        payload_binding_ids.append(str(candidate["card_binding_id"]))
+        modules = _complete_s6_test_modules(str(candidate["name"]))
+        if "repair" in phase:
+            module_key = payload['portrait_module_key']
+            await asyncio.sleep(0)
+            if module_key == 'winning_logic' and failed_repair == 'timeout':
+                raise TimeoutError("quality enhancement timed out")
+            repair = {
+                'module_key': module_key,
+                'module_content': modules[module_key],
+                'card_binding_id': candidate['card_binding_id'],
+                'hypothesis_id': candidate['hypothesis_id'],
+            }
+            if module_key == 'winning_logic':
+                if failed_repair == 'missing_binding':
+                    repair.pop('card_binding_id')
+                else:
+                    repair[failed_repair] = 'wrong-identity'
+            return json.dumps(repair, ensure_ascii=False)
+        modules["capability_effects"] = "形成受控打击能力。"
+        modules["winning_logic"] = "敌方断链后我方仍可攻击。"
+        if "_module_" in phase:
+            module_key = phase.rsplit("_module_", 1)[-1]
+            return json.dumps(
+                {
+                    "module_key": module_key,
+                    "module_content": modules[module_key],
+                    "card_binding_id": candidate["card_binding_id"],
+                    "hypothesis_id": candidate.get("hypothesis_id", ""),
+                    "capability_image_draft": "单卡画像",
+                },
+                ensure_ascii=False,
+            )
+        if phase.endswith("_spine"):
+            direction = {
+                **candidate,
+                "operational_process": ["装订任务并发射", "复核目标后受控交战"],
+                "capability_classification": {
+                    "primary_dimension": "打击维度",
+                    "secondary_dimensions": [],
+                },
+                "semantic_consistency_check": {
+                    "consistent": True,
+                    "checked_fields": ["name", "operational_process"],
+                },
+            }
+            return json.dumps(
+                {"direction": direction, "capability_image_draft": "单卡画像"},
+                ensure_ascii=False,
+            )
+        direction = {
+            **candidate,
+            "operational_process": ["装订任务并发射", "复核目标后受控交战"],
+            "capability_classification": {
+                "primary_dimension": "打击维度",
+                "secondary_dimensions": [],
+            },
+            "capability_portrait_modules": modules,
+            "semantic_consistency_check": {
+                "consistent": True,
+                "checked_fields": ["name", "operational_process"],
+            },
+        }
+        return json.dumps(
+            {"direction": direction, "capability_image_draft": "单卡画像"},
+            ensure_ascii=False,
+        )
+
+    monkeypatch.setattr(provider, "_run_core_json", fake_run_core_json)
+    monkeypatch.setattr(
+        provider_module,
+        "_capability_direction_quality_issues",
+        lambda result, *, handoff=None: [],
+    )
+    result = asyncio.run(
+        provider._analyze_winning_subagents(
+            {
+                "topic": "强干扰条件下时敏目标精确打击",
+                "research_route": "new_winning_mechanism",
+                "discovery_blueprint": {
+                    "primary_branch": "G",
+                    "execution_profile_id": "winning_swarm_dynamic_v2",
+                },
+                "execution_profile_id": "winning_swarm_dynamic_v2",
+                "packets": [],
+                "evidence_index": [],
+                "resume_steps": [6],
+                "prior_winning_analysis": {
+                    "concept_directions": portfolio,
+                    "winning_swarm": {
+                        "final_equipment_portfolio": portfolio,
+                        "portfolio_quality_gate": {"passed": True},
+                    },
+                },
+            }
+        )
+    )
+
+    assert len(phases) == 8  # Spine + five first-pass columns + two repairs.
+    assert sum(phase.endswith("_spine") for phase in phases) == 1
+    assert sum("_module_" in phase and "repair" not in phase for phase in phases) == 5
+    assert {phase.rsplit('_module_', 1)[-1] for phase in phases if 'repair' in phase} == {
+        'capability_effects', 'winning_logic',
+    }
+    assert all(
+        phase.startswith("winning_s6_parallel_card_resume_01")
+        or phase.startswith("winning_s6_parallel_card_repair_01")
+        for phase in phases
+    )
+    assert len(set(payload_binding_ids)) == 1
+    assert [item["name"] for item in result["concept_directions"]] == [
+        "“潮锋”时敏打击弹"
+    ]
+    card = result["concept_directions"][0]
+    final_modules = card['capability_portrait_modules']
+    complete_modules = _complete_s6_test_modules(card['name'])
+    for key in ('overview', 'technology_implementation', 'operational_process', 'capability_effects'):
+        assert final_modules[key] == complete_modules[key]
+    assert final_modules['winning_logic'] == '敌方断链后我方仍可攻击。'
+    assert any('栏目修复失败' in warning for warning in card['s6_authoring_quality_warnings'])
+    assert _s6_short_portrait_modules(card["capability_portrait_modules"])
+    assert card["s6_authoring_status"] == "authored_quality_limited"
+    assert result["s6_quality_gate_limited"] is True
+    assert result.get("s6_card_authoring_limited") in {None, False}
+    assert not result.get("s6_reference_weapons", [])
 
 
 def test_minimal_s6_card_handoff_keeps_decision_spine_and_drops_bulk_state() -> None:
@@ -184,6 +454,69 @@ def test_minimal_s6_card_handoff_keeps_decision_spine_and_drops_bulk_state() -> 
     assert len(json.dumps(handoff, ensure_ascii=False)) < 5000
 
 
+def test_dynamic_s6_card_input_carries_frozen_binding_identity() -> None:
+    payload = _dynamic_s6_card_input(
+        {
+            "hypothesis_id": "candidate-a",
+            "card_binding_id": "s6-card-fixed-a",
+            "name": "甲装备",
+            "primary_equipment_identity": "甲装备",
+            "equipment_form": "甲装备",
+            "target_and_direct_effect": "打击目标",
+            "concise_winning_summary": "改变交换关系",
+        },
+        query="测试任务",
+    )
+
+    assert payload["candidate_weapon"]["hypothesis_id"] == "candidate-a"
+    assert payload["candidate_weapon"]["card_binding_id"] == "s6-card-fixed-a"
+
+
+def test_dynamic_s6_card_input_preserves_frozen_codename_quotes() -> None:
+    payload = _dynamic_s6_card_input(
+        {
+            "hypothesis_id": "candidate-quoted",
+            "card_binding_id": "s6-card-quoted",
+            "name": "“玄鳞”可变散射攻顶弹",
+            "primary_equipment_identity": "“玄鳞”可变散射攻顶弹",
+            "equipment_form": "“玄鳞”可变散射攻顶弹",
+            "target_and_direct_effect": "打击顶部薄弱目标",
+            "concise_winning_summary": "改变识别与拦截交换关系",
+        },
+        query="测试任务",
+    )
+
+    assert payload["candidate_weapon"]["name"] == "“玄鳞”可变散射攻顶弹"
+    assert payload["candidate_weapon"]["primary_equipment_identity"] == (
+        "“玄鳞”可变散射攻顶弹"
+    )
+
+
+def test_dynamic_s6_card_input_carries_s5_mode_change_spine() -> None:
+    payload = _dynamic_s6_card_input(
+        {
+            "hypothesis_id": "candidate-mode",
+            "name": "可消耗分布式拦截弹",
+            "primary_equipment_identity": "可消耗分布式拦截弹",
+            "equipment_form": "拦截弹",
+            "target_and_direct_effect": "直接物理拦截来袭目标",
+            "concise_winning_summary": "在节点损耗后继续形成拦截战果。",
+            "innovation_basis": "将拦截权从少量高价值节点转为可补充弹体密度",
+            "disruption_tier": "new_quality_breakthrough",
+            "displaced_operational_mode": "依赖少量高价值节点逐目标拦截",
+            "new_operational_mode": "以可消耗弹体密度持续占位并接续交战",
+            "winning_relation_shift": "从平台价值交换转为持续效应密度交换",
+        },
+        query="饱和来袭下的区域拒止",
+    )
+
+    overview = payload["winning_logic_overview"]
+    assert "创新断点" in overview
+    assert "被淘汰的旧作战模式" in overview
+    assert "形成的新作战模式" in overview
+    assert "制胜关系改写" in overview
+
+
 def test_parallel_reporter_token_budget_is_rendered_as_soft_guidance() -> None:
     prompt = render_prompt_optimized(
         [ModelMessage("user", "完成指定报告栏目")],
@@ -215,6 +548,19 @@ def test_codex_command_cache_separates_search_context_sizes() -> None:
     assert high.endswith("search:high")
     assert medium.endswith("search:medium")
     assert low.endswith("search:low")
+
+
+def test_codex_command_can_omit_unsupported_search_context_size(monkeypatch) -> None:
+    provider = object.__new__(CodexCliProvider)
+    provider._command_cache = CommandCache()
+    provider._base_command = ["codex", "exec", "-"]
+    provider.search_extra_args = ()
+    monkeypatch.setenv("EQUIPMENT_DR_SEARCH_CONTEXT_SIZE_MODE", "omit")
+
+    command = provider._build_command({"web_search": {"search_context_size": "low"}})
+
+    assert 'web_search="live"' in command
+    assert not any("tools.web_search" in item for item in command)
 
 
 def test_query_led_combat_equipment_theme_contract_is_non_exhaustive() -> None:
@@ -441,6 +787,7 @@ def test_dynamic_portfolio_keeps_selected_identity_and_s6_authored_portrait() ->
             "target_scenario": "敌低噪潜艇借复杂海底地形脱离接触后的追踪交战窗口",
             "operational_process": ["载机布放", "水下自主复获", "授权后末段寻的"],
             "capability_portrait": "S6撰写的鱼雷专属能力画像",
+            "system_contribution_thesis": "鱼雷以水下自主复获续接载机撤离后的追击断点",
             "indicator_portrait": "以失联复获率和误击拒止率判退",
         },
         {
@@ -450,6 +797,7 @@ def test_dynamic_portfolio_keeps_selected_identity_and_s6_authored_portrait() ->
             "target_scenario": "编队有人平台撤出高威胁水域后的持续声学搜索阶段",
             "operational_process": ["隐蔽前出", "自主建图", "分类回传", "断链继续跟踪"],
             "capability_portrait": "S6撰写的潜航器专属能力画像",
+            "system_contribution_thesis": "潜航器以前出持续接触替代有人平台高风险驻留",
             "indicator_portrait": "以持续接触时间和暴露风险判退",
         },
     ]
@@ -463,8 +811,16 @@ def test_dynamic_portfolio_keeps_selected_identity_and_s6_authored_portrait() ->
     assert merged[0]["name"] == selected[0]["name"]
     assert merged[0]["direct_evidence_refs"] == ["ev-weapon_equipment-a"]
     assert merged[0]["capability_portrait"] == "S6撰写的潜航器专属能力画像"
+    assert merged[0]["system_contribution_thesis"] == (
+        "潜航器以前出持续接触替代有人平台高风险驻留"
+    )
+    assert merged[0]["indicator_portrait"] == "以持续接触时间和暴露风险判退"
     assert merged[0]["operational_process"][0] == "隐蔽前出"
     assert merged[1]["capability_portrait"] == "S6撰写的鱼雷专属能力画像"
+    assert merged[1]["system_contribution_thesis"] == (
+        "鱼雷以水下自主复获续接载机撤离后的追击断点"
+    )
+    assert merged[1]["indicator_portrait"] == "以失联复获率和误击拒止率判退"
     assert merged[1]["expert_score"] == 0.81
 
 
@@ -493,6 +849,113 @@ def test_dynamic_s6_portfolio_confidence_falls_back_to_authored_cards() -> None:
 
     assert provider_module._s6_portfolio_confidence(selected, authored) == 0.735
     assert provider_module._s6_portfolio_confidence(selected, [{}]) == 0.0
+
+
+def test_dynamic_s6_merge_keeps_selected_fallback_card_in_formal_portfolio() -> None:
+    selected = [
+        {"hypothesis_id": "ok", "name": "成稿装备"},
+        {"hypothesis_id": "failed", "name": "失败装备"},
+    ]
+    authored = [
+        {
+            "hypothesis_id": "ok",
+            "name": "成稿装备",
+            "s6_authoring_status": "authored_semantically_consistent",
+            "capability_portrait": "完整原创画像",
+        },
+        {
+            "hypothesis_id": "failed",
+            "name": "失败装备",
+            "s6_authoring_status": "limited_provider_failure",
+        },
+    ]
+
+    merged = provider_module._merge_dynamic_portfolio_with_s6_authored_cards(
+        selected,
+        authored,
+    )
+
+    assert [item["name"] for item in merged] == ["成稿装备", "失败装备"]
+    assert merged[0]["s6_authoring_status"] == "authored_semantically_consistent"
+
+
+def test_s6_cross_card_identity_gate_rejects_rebound_portrait() -> None:
+    source = {
+        "hypothesis_id": "candidate-a",
+        "name": "蜂群母弹式自寻的子弹药",
+        "primary_equipment_identity": "蜂群母弹式自寻的子弹药",
+        "equipment_form": "蜂群母弹式自寻的子弹药",
+        "capability_portrait": "概述：浪面跳跃无人爆破艇面向近岸节点实施末段爆破。",
+        "operational_process": ["分散释放", "末段接近", "近距爆破"],
+    }
+    sibling = {
+        "hypothesis_id": "candidate-b",
+        "name": "浪面跳跃无人爆破艇",
+        "primary_equipment_identity": "浪面跳跃无人爆破艇",
+        "equipment_form": "浪面跳跃无人爆破艇",
+    }
+
+    issues = _s6_cross_card_identity_issues(source, [source, sibling])
+
+    assert issues and "浪面跳跃无人爆破艇" in issues[0]
+
+
+def test_dynamic_s6_merge_drops_cross_card_contaminated_prose() -> None:
+    selected = [
+        {
+            "hypothesis_id": "candidate-a",
+            "name": "蜂群母弹式自寻的子弹药",
+            "primary_equipment_identity": "蜂群母弹式自寻的子弹药",
+            "equipment_form": "蜂群母弹式自寻的子弹药",
+        },
+        {
+            "hypothesis_id": "candidate-b",
+            "name": "浪面跳跃无人爆破艇",
+            "primary_equipment_identity": "浪面跳跃无人爆破艇",
+            "equipment_form": "浪面跳跃无人爆破艇",
+        },
+    ]
+    authored = [
+        {
+            "hypothesis_id": "candidate-a",
+            "name": "蜂群母弹式自寻的子弹药",
+            "s6_authoring_status": "authored_semantically_consistent",
+            "capability_portrait": "概述：浪面跳跃无人爆破艇实施末段爆破。",
+        },
+        {
+            "hypothesis_id": "candidate-b",
+            "name": "浪面跳跃无人爆破艇",
+            "s6_authoring_status": "authored_semantically_consistent",
+            "capability_portrait": "概述：浪面跳跃无人爆破艇实施末段爆破。",
+        },
+    ]
+
+    merged = provider_module._merge_dynamic_portfolio_with_s6_authored_cards(
+        selected, authored
+    )
+
+    assert [item["hypothesis_id"] for item in merged] == ["candidate-b"]
+
+
+def test_dynamic_s6_merge_never_positionally_cross_binds_known_ids() -> None:
+    selected = [
+        {"hypothesis_id": "candidate-a", "name": "甲装备"},
+        {"hypothesis_id": "candidate-b", "name": "乙装备"},
+    ]
+    authored = [
+        {
+            "hypothesis_id": "candidate-b",
+            "name": "乙装备",
+            "s6_authoring_status": "authored_semantically_consistent",
+            "capability_portrait": "乙装备专属画像",
+        }
+    ]
+
+    merged = provider_module._merge_dynamic_portfolio_with_s6_authored_cards(
+        selected, authored
+    )
+
+    assert [item["hypothesis_id"] for item in merged] == ["candidate-b"]
 
 
 def test_s6_authored_title_cannot_replace_s5_frozen_name() -> None:
@@ -639,6 +1102,11 @@ def test_s6_model_call_ignores_expired_run_deadline_without_downshifting() -> No
     assert options["_provider_timeout_seconds"] == 3600
     assert options["_allow_extended_provider_timeout"] is True
     assert options["_provider_retry_attempts"] == 2
+    assert options["web_search"] == {
+        "search_context_size": "medium",
+        "external_web_access": True,
+    }
+    assert options["require_web_search"] is True
 
 
 def test_s6_card_repair_uses_narrow_low_reasoning_profile() -> None:
@@ -668,7 +1136,7 @@ def test_s6_card_repair_uses_narrow_low_reasoning_profile() -> None:
     assert "_allow_extended_provider_timeout" not in options
 
 
-def test_parallel_s6_card_preserves_high_reasoning_with_existing_budget() -> None:
+def test_parallel_s6_card_uses_soft_timeout_and_single_provider_attempt() -> None:
     backend = ScriptedFakeProvider(
         [[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]]
     )
@@ -689,10 +1157,60 @@ def test_parallel_s6_card_preserves_high_reasoning_with_existing_budget() -> Non
     options = backend.inputs[0][2]
     assert options["reasoning_effort"] == "high"
     assert options["model_verbosity"] == "medium"
-    assert options["_provider_timeout_seconds"] == 240
     assert options["_provider_retry_attempts"] == 1
-    assert options["_disable_provider_timeout"] is False
-    assert options["_allow_extended_provider_timeout"] is True
+    assert options["_provider_timeout_seconds"] == 420
+    assert options["_disable_provider_timeout"] is True
+    assert "web_search" not in options
+    assert "require_web_search" not in options
+
+
+def test_parallel_s6_technology_column_enables_governed_live_search() -> None:
+    backend = ScriptedFakeProvider(
+        [[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]]
+    )
+    provider = ResponsesAgentProvider(backend)
+
+    result = asyncio.run(
+        provider._run_core_text(  # type: ignore[attr-defined]
+            "winning_s6_image",
+            "system",
+            {"candidate_weapon": {"name": "test"}},
+            3200,
+            phase="winning_s6_parallel_card_01_module_technology_implementation",
+            output_schema={"ok": "boolean"},
+        )
+    )
+
+    assert result == '{"ok":true}'
+    options = backend.inputs[0][2]
+    assert options["web_search"] == {
+        "search_context_size": "medium",
+        "external_web_access": True,
+    }
+    assert options["include_web_sources"] is True
+    assert options["require_web_search"] is True
+
+
+def test_parallel_s6_non_technology_column_does_not_force_live_search() -> None:
+    backend = ScriptedFakeProvider(
+        [[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]]
+    )
+    provider = ResponsesAgentProvider(backend)
+
+    asyncio.run(
+        provider._run_core_text(  # type: ignore[attr-defined]
+            "winning_s6_image",
+            "system",
+            {"candidate_weapon": {"name": "test"}},
+            3200,
+            phase="winning_s6_parallel_card_01_module_overview",
+            output_schema={"ok": "boolean"},
+        )
+    )
+
+    options = backend.inputs[0][2]
+    assert "web_search" not in options
+    assert "require_web_search" not in options
 
 
 def test_parallel_s6_resume_card_preserves_high_reasoning_profile() -> None:
@@ -715,9 +1233,9 @@ def test_parallel_s6_resume_card_preserves_high_reasoning_profile() -> None:
     options = backend.inputs[0][2]
     assert options["reasoning_effort"] == "high"
     assert options["model_verbosity"] == "medium"
-    assert options["_provider_timeout_seconds"] == 240
     assert options["_provider_retry_attempts"] == 1
-    assert options["_disable_provider_timeout"] is False
+    assert options["_provider_timeout_seconds"] == 480
+    assert options["_disable_provider_timeout"] is True
 
 
 def test_parallel_s6_card_repair_uses_shorter_medium_profile() -> None:
@@ -742,6 +1260,29 @@ def test_parallel_s6_card_repair_uses_shorter_medium_profile() -> None:
     assert options["model_verbosity"] == "low"
     assert options["_provider_timeout_seconds"] == 240
     assert options["_provider_retry_attempts"] == 1
+    assert options["_disable_provider_timeout"] is True
+
+
+def test_parallel_s6_card_can_opt_into_hard_timeout(monkeypatch) -> None:
+    monkeypatch.setenv("EQUIPMENT_DR_S6_HARD_TIMEOUTS", "1")
+    backend = ScriptedFakeProvider(
+        [[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]]
+    )
+    provider = ResponsesAgentProvider(backend)
+
+    asyncio.run(
+        provider._run_core_text(  # type: ignore[attr-defined]
+            "winning_s6_image",
+            "system",
+            {"query": "test", "assigned_card": {"name": "test"}},
+            3400,
+            phase="winning_s6_parallel_card_01",
+            output_schema={"ok": "boolean"},
+        )
+    )
+
+    options = backend.inputs[0][2]
+    assert options["_provider_timeout_seconds"] == 420
     assert options["_disable_provider_timeout"] is False
 
 
@@ -928,7 +1469,7 @@ def test_s5_handoff_contract_uses_bounded_authoring_profile() -> None:
     assert options["_disable_provider_timeout"] is False
 
 
-def test_project_parallel_report_uses_actual_chapter_count() -> None:
+def test_project_parallel_report_uses_actual_column_count() -> None:
     provider = ResponsesAgentProvider(_RealLikeScriptedProvider([]))
     calls: dict[str, int] = {}
 
@@ -958,11 +1499,18 @@ def test_project_parallel_report_uses_actual_chapter_count() -> None:
         )
 
     assert calls == {
-        "report_generation_chapter_1_demand": 4000,
-        "report_generation_chapter_2_portrait": 8000,
-        "report_generation_chapter_3_solution": 4000,
-        "report_generation_chapter_4_technology": 4000,
-        "report_generation_chapter_5_foundation": 4000,
+        "report_generation_chapter_1_demand_overview": 4000,
+        "report_generation_chapter_1_status": 4200,
+        "report_generation_chapter_1_necessity": 4200,
+        "report_generation_chapter_2_equipment_image": 5200,
+        "report_generation_chapter_2_operations": 6000,
+        "report_generation_chapter_2_contribution": 4000,
+        "report_generation_chapter_2_indicators": 4000,
+        "report_generation_chapter_3_architecture": 2400,
+        "report_generation_chapter_3_subsystems": 4400,
+        "report_generation_chapter_4_technology": 5600,
+        "report_generation_chapter_5_units": 2800,
+        "report_generation_chapter_5_technical_foundation": 3600,
     }
 
 
@@ -1458,7 +2006,7 @@ def test_dynamic_s6_handoff_passes_only_selected_direct_combat_weapons() -> None
         "“断链”自主末段猎歼弹"
     )
     assert handoff["s6_card_capacity"] == 12
-    assert handoff["s6_parallelism"] == 6
+    assert handoff["s6_parallelism"] == 32
     assert (
         "仅传入已通过动态组合评审的直接战斗武器" in handoff["selected_portfolio_rule"]
     )
@@ -1506,6 +2054,20 @@ def test_s6_direction_repair_cannot_rename_pre_s6_candidate() -> None:
         repaired["concept_directions"][0]["capability_portrait"]
         == "自然重写后的能力画像"
     )
+
+
+def test_capability_portrait_modules_preserve_frozen_weapon_codename_quotes() -> None:
+    portrait = provider_module.assemble_capability_portrait_modules(
+        {
+            "overview": "“玄鳞”可变散射攻顶弹针对传统固定特征库改变识别交换关系并形成直接毁伤",
+            "technology_implementation": "“玄鳞”把可重构散射表面集成到弹体并受飞控约束",
+            "operational_process": "“玄鳞”进入防区后改变散射状态并在末段恢复攻顶姿态",
+            "capability_effects": "“玄鳞”迫使敌方延迟分类并打击顶部薄弱目标",
+            "winning_logic": "“玄鳞”以弹体复杂度换取敌方反应时间和拦截资源",
+        }
+    )
+    assert "“玄鳞”可变散射攻顶弹" in portrait
+    assert portrait.count("“玄鳞”") == 5
 
 
 def test_s6_portrait_repair_changes_only_failed_module() -> None:
@@ -1652,7 +2214,7 @@ def test_s6_limited_provider_card_is_not_reused() -> None:
     )
 
 
-def test_s6_short_complete_decision_card_is_reusable_without_padding() -> None:
+def test_s6_short_complete_decision_card_is_not_reusable() -> None:
     portrait = provider_module.assemble_capability_portrait_modules(
         {
             "overview": "伴随防空分队以机动微波压制车掩护补给车队穿越低空蜂群伏击区",
@@ -1663,7 +2225,7 @@ def test_s6_short_complete_decision_card_is_reusable_without_padding() -> None:
         }
     )
 
-    assert provider_module._s6_card_is_reusable(
+    assert not provider_module._s6_card_is_reusable(
         {
             "name": "“静穹”机动微波压制车",
             "capability_portrait": portrait,
@@ -1932,6 +2494,15 @@ def test_s6_delivery_blocking_classifier_makes_every_local_issue_advisory() -> N
     assert blocking == []
 
 
+def test_s6_delivery_length_is_not_a_hard_gate() -> None:
+    issues = ["装备能力画像总长度超限（正文1100字，最多1000字）"]
+    assert provider_module._s6_delivery_blocking_issues(issues) == []
+    state = provider_module._s6_release_gate_state(issues, [])
+    assert state["passed"] is True
+    assert state["failed"] is False
+    assert state["limited"] is True
+
+
 def test_s6_frontier_new_capability_accepts_analogous_evidence_but_upgrade_does_not() -> (
     None
 ):
@@ -2158,6 +2729,58 @@ def test_parallel_s6_cards_receive_isolated_codex_sessions() -> None:
         )
         == ""
     )
+
+
+def test_dynamic_s6_card_binding_creates_distinct_codex_cli_providers() -> None:
+    created: list[str] = []
+
+    class Provider:
+        def __init__(self, isolation_id: str = "shared") -> None:
+            self.isolation_id = isolation_id
+
+        def snapshot(self) -> dict[str, str]:
+            return {
+                "type": "codex_cli",
+                "context_isolation": self.isolation_id,
+            }
+
+        def isolated_copy(self, isolation_id: str) -> "Provider":
+            created.append(isolation_id)
+            return Provider(isolation_id)
+
+    provider = ResponsesAgentProvider(Provider())  # type: ignore[arg-type]
+    payloads = [
+        {
+            "query_semantics": "query",
+            "candidate_weapon": {
+                "name": f"weapon-{index}",
+                "card_binding_id": f"s6-card-binding-{index}",
+            },
+            "winning_logic_overview": "winning logic",
+        }
+        for index in range(1, 4)
+    ]
+
+    isolation_ids = [
+        provider_module._swarm_provider_isolation_id(
+            "winning_s6_image",
+            payload,
+        )
+        for payload in payloads
+    ]
+    scoped = [
+        provider._provider_for("winning_s6_image", isolation_id=isolation_id)
+        for isolation_id in isolation_ids
+    ]
+
+    assert isolation_ids == [
+        "s6-card-binding-1",
+        "s6-card-binding-2",
+        "s6-card-binding-3",
+    ]
+    assert len({id(item) for item in scoped}) == 3
+    assert [item.snapshot()["context_isolation"] for item in scoped] == isolation_ids
+    assert created == isolation_ids
 
 
 def test_s6_quality_gate_does_not_use_cross_card_text_similarity() -> (
@@ -3279,8 +3902,13 @@ def test_pre_s6_contract_does_not_keyword_rewrite_s5_identity_and_strips_interna
     assert contract["query_relevance"] == ""
 
 
+@pytest.mark.parametrize(
+    "profile_id",
+    ["winning_swarm_dynamic_v2", "optimized_v2"],
+)
 def test_s6_only_resume_upgrades_legacy_portfolio_before_parallel_authoring(
     monkeypatch,
+    profile_id,
 ) -> None:
     backend = _RealLikeScriptedProvider([])
     backend.provider_type = "codex_cli"  # type: ignore[attr-defined]
@@ -3291,6 +3919,13 @@ def test_s6_only_resume_upgrades_legacy_portfolio_before_parallel_authoring(
     phases: list[str] = []
     systems: list[str] = []
     payload_key_sets: list[set[str]] = []
+    s6_payloads: list[dict] = []
+    card_binding_ids: list[str] = []
+    module_prompt_sections: list[tuple[str, str]] = []
+    module_attempts: list[tuple[str, str, int]] = []
+    active_s6_calls = 0
+    maximum_s6_concurrency = 0
+    initial_gate_limit = provider._call_gate.snapshot()["limit"]
 
     async def fake_run_core_json(
         agent_id,
@@ -3301,13 +3936,61 @@ def test_s6_only_resume_upgrades_legacy_portfolio_before_parallel_authoring(
         *,
         phase,
     ):
+        nonlocal active_s6_calls, maximum_s6_concurrency
         del agent_id, schema, max_output_tokens
         phases.append(phase)
         systems.append(system)
         payload_key_sets.append(set(payload))
+        if phase.startswith("winning_s6_parallel_card"):
+            s6_payloads.append(dict(payload))
+        card_binding_ids.append(
+            str(payload.get("candidate_weapon", {}).get("card_binding_id", ""))
+        )
+        if "_module_" in phase:
+            module_prompt_sections.append(
+                (
+                    str(payload.get("portrait_module_key", "")),
+                    str(payload.get("portrait_module_prompt_section", "")),
+                )
+            )
+            module_attempts.append(
+                (
+                    str(payload.get("candidate_weapon", {}).get("name", "")),
+                    str(payload.get("portrait_module_key", "")),
+                    int(payload.get("portrait_module_attempt", 0)),
+                )
+            )
+        active_s6_calls += 1
+        maximum_s6_concurrency = max(
+            maximum_s6_concurrency,
+            active_s6_calls,
+        )
+        try:
+            await asyncio.sleep(0.01)
+        finally:
+            active_s6_calls -= 1
         assigned = dict(payload["candidate_weapon"])
         assigned["concise_winning_summary"] = payload["winning_logic_overview"]
         name = assigned["name"]
+        modules = _complete_s6_test_modules(name)
+        if "_module_" in phase:
+            module_key = phase.rsplit("_module_", 1)[-1]
+            if (
+                name.endswith("-3")
+                and module_key == "capability_effects"
+                and int(payload.get("portrait_module_attempt", 0)) == 1
+            ):
+                raise ProviderRequestError("single column transient failure")
+            return json.dumps(
+                {
+                    "module_key": module_key,
+                    "module_content": modules[module_key],
+                    "card_binding_id": assigned.get("card_binding_id", ""),
+                    "hypothesis_id": assigned.get("hypothesis_id", ""),
+                    "capability_image_draft": f"{name}断链续接能力画像",
+                },
+                ensure_ascii=False,
+            )
         direction = {
             **assigned,
             "function": f"由{name}在强干扰火力窗口内完成目标复核与直接打击",
@@ -3336,34 +4019,6 @@ def test_s6_only_resume_upgrades_legacy_portfolio_before_parallel_authoring(
                 "secondary_dimensions": ["生存抗毁维度"],
                 "classification_basis": "S6错误地把技术路径当成主要战果。",
             },
-            "capability_portrait_modules": {
-                "overview": (
-                    f"面向卫星拒止下的纵深火力交战，{name}把目标复核前推到弹上，"
-                    "维持对授权目标的持续毁伤。"
-                ),
-                "technology_implementation": (
-                    "以非卫星导航、目标类别识别和授权边界装订形成弹上受控自治。"
-                ),
-                "operational_process": (
-                    "发射平台装订边界后释放武器，弹体进入责任区复核目标，满足门槛时交战，"
-                    "不满足时拒打并终止任务。"
-                ),
-                "capability_effects": (
-                    "在外部更新中断时保持正确交战和远程火力续接。"
-                ),
-                "winning_logic": (
-                    "把持续链路依赖转为弹上短闭环，使对手不能仅靠断链摆脱交战。"
-                ),
-            },
-            "capability_portrait": (
-                f"概述：面向卫星拒止下的纵深火力交战，{name}针对目标更新中断与导航欺骗，"
-                "依靠本地任务装订和多源导航完成目标复核、授权交战、毁伤摘要与补击续接，"
-                "形成弱网条件下持续压制和毁伤授权目标的能力。\n"
-                "- 装备与技术实现：采用非卫星导航、目标类别识别、授权边界装订和安全终止技术。\n"
-                "- 关键作战流程：装订任务后进入目标区，复核目标，满足门槛时交战并形成战果摘要。\n"
-                "- 形成能力与作战效果：维持远程精确火力的自主打击和补击续接。\n"
-                "- 制胜逻辑机理：传统打击依赖外部链路持续更新，该装备把目标复核前推为弹上受控自治，使对手无法仅靠断链摆脱交战。"
-            ),
             "semantic_consistency_check": {
                 "process_actor": name,
                 "launch_or_release_mode": "由装备既定发射域释放",
@@ -3381,6 +4036,21 @@ def test_s6_only_resume_upgrades_legacy_portfolio_before_parallel_authoring(
             "indicator_portrait": "通用指标待补充",
             "query_relevance": "与当前query相关",
         }
+        if not phase.endswith("_spine"):
+            direction["capability_portrait_modules"] = modules
+            direction["capability_portrait"] = (
+                "能力分类：主：突防维度；辅：生存抗毁维度。\n"
+                + "概述："
+                + modules["overview"]
+                + "\n- 装备与技术实现："
+                + modules["technology_implementation"]
+                + "\n- 关键作战流程："
+                + modules["operational_process"]
+                + "\n- 形成能力与作战效果："
+                + modules["capability_effects"]
+                + "\n- 制胜逻辑机理："
+                + modules["winning_logic"]
+            )
         return json.dumps(
             {
                 "direction": direction,
@@ -3429,13 +4099,13 @@ def test_s6_only_resume_upgrades_legacy_portfolio_before_parallel_authoring(
                 "research_route": "new_winning_mechanism",
                 "discovery_blueprint": {
                     "primary_branch": "G",
-                    "execution_profile_id": "winning_swarm_dynamic_v2",
+                    "execution_profile_id": profile_id,
                     "winning_swarm_policy": {
                         "finalist_maximum": 12,
                         "max_concurrency": 6,
                     },
                 },
-                "execution_profile_id": "winning_swarm_dynamic_v2",
+                "execution_profile_id": profile_id,
                 "packets": [],
                 "evidence_index": [],
                 "resume_steps": [6],
@@ -3453,21 +4123,110 @@ def test_s6_only_resume_upgrades_legacy_portfolio_before_parallel_authoring(
         )
     )
 
-    assert phases == [
-        f"winning_s6_parallel_card_resume_{index:02d}" for index in range(1, 6)
-    ]
     assert all(
-        keys
-        == {"query_semantics", "candidate_weapon", "winning_logic_overview"}
+        phase.startswith("winning_s6_parallel_card_resume_") for phase in phases
+    )
+    assert all(
+        {"query_semantics", "candidate_weapon", "winning_logic_overview"}.issubset(keys)
         for keys in payload_key_sets
     )
-    assert all("再直接写成决策短卡" in system for system in systems)
-    assert all("每栏约120至150个中文字作为软编辑目标" in system for system in systems)
-    assert all("不因篇幅偏差失败、重试或截断" in system for system in systems)
-    assert all("决定性瓶颈、核心原理怎样落实到装备本体" in system for system in systems)
-    assert all("行动主体、进入条件、关键动作" in system for system in systems)
-    assert all("删除跨栏重复" in system for system in systems)
-    assert all(len(system) < 1600 for system in systems)
+    forbidden_s6_context = {
+        "failure_boundary",
+        "failure_boundaries",
+        "evidence_boundary",
+        "direct_evidence_refs",
+        "evidence_refs",
+        "evidence_ids",
+        "validation_plan",
+        "indicator_portrait",
+    }
+    s6_payload_key_sets = [
+        keys
+        for phase, keys in zip(phases, payload_key_sets, strict=True)
+        if phase.startswith("winning_s6_parallel_card")
+    ]
+    assert all(
+        not (forbidden_s6_context & keys)
+        for keys in s6_payload_key_sets
+    )
+    if profile_id == "winning_swarm_dynamic_v2":
+        assert all(
+            not (
+                forbidden_s6_context
+                & set(payload.get("candidate_weapon", {}))
+            )
+            for payload in s6_payloads
+        )
+    assert len(set(card_binding_ids)) == 5
+    assert all(card_binding_ids)
+    if profile_id == "winning_swarm_dynamic_v2":
+        assert sum(phase.endswith("_spine") for phase in phases) == 5
+        assert sum("_module_" in phase for phase in phases) == 26
+        assert len(phases) == 31
+        assert maximum_s6_concurrency == 25
+        assert result["s6_parallel_authoring"]["portrait_modules_concurrent"] is True
+        assert result["s6_parallel_authoring"]["process_isolation"] == "new_process_per_turn"
+    else:
+        assert maximum_s6_concurrency == 25
+        assert len(phases) == 31
+        assert sum(1 for phase in phases if phase.endswith("_spine")) == 5
+        assert sum(1 for phase in phases if "_module_" in phase) == 26
+        assert all("parallel_card_id" in keys for keys in payload_key_sets)
+        spine_systems = [
+            system
+            for phase, system in zip(phases, systems, strict=True)
+            if phase.endswith("_spine")
+        ]
+        module_systems = [
+            system
+            for phase, system in zip(phases, systems, strict=True)
+            if "_module_" in phase
+        ]
+        assert spine_systems
+        assert all("五栏正文由其他并发会话撰写" in system for system in spine_systems)
+        assert all("只完成本卡当前指定栏目" in system for system in module_systems)
+        assert set(module_prompt_sections) == {
+            ("overview", "S6_1"),
+            ("technology_implementation", "S6_2"),
+            ("operational_process", "S6_3"),
+            ("capability_effects", "S6_4"),
+            ("winning_logic", "S6_5"),
+        }
+        assert sum(
+            1
+            for name, module_key, _attempt in module_attempts
+            if name.endswith("-3") and module_key == "capability_effects"
+        ) == 2
+        assert all(
+            sum(
+                1
+                for seen_name, seen_key, _attempt in module_attempts
+                if seen_name == name and seen_key == module_key
+            )
+            == (2 if name.endswith("-3") and module_key == "capability_effects" else 1)
+            for name in {item[0] for item in module_attempts}
+            for module_key in {
+                "overview",
+                "technology_implementation",
+                "operational_process",
+                "capability_effects",
+                "winning_logic",
+            }
+        )
+        assert result["s6_parallel_authoring"] == {
+            "cards_concurrent": True,
+            "cards_wave": "asyncio.gather",
+            "portrait_modules_concurrent": True,
+            "card_concurrency_limit": 32,
+            "portrait_module_prompt_sections": {
+                "overview": "S6_1",
+                "technology_implementation": "S6_2",
+                "operational_process": "S6_3",
+                "capability_effects": "S6_4",
+                "winning_logic": "S6_5",
+            },
+            "process_isolation": "new_process_per_turn",
+        }
     assert not any("任务输入、计算/处理" in system for system in systems)
     assert not any("到任务结果的实现链" in system for system in systems)
     assert not any("repair" in phase for phase in phases)
@@ -3476,14 +4235,26 @@ def test_s6_only_resume_upgrades_legacy_portfolio_before_parallel_authoring(
         for event in events
     )
     assert len(result["concept_directions"]) == 5
+    if profile_id != "winning_swarm_dynamic_v2":
+        assert result["s6_parallel_authoring"]["portrait_modules_concurrent"] is True
+    assert provider._call_gate.snapshot()["limit"] == initial_gate_limit
+    expected_primary_dimension = (
+        "突防维度" if profile_id == "winning_swarm_dynamic_v2" else "毁伤维度"
+    )
+    expected_portrait_prefix = (
+        "能力分类：主：突防维度；辅：生存抗毁维度。"
+        if profile_id == "winning_swarm_dynamic_v2"
+        else "能力分类：主：毁伤维度；辅："
+    )
     for direction in result["concept_directions"]:
-        assert direction["capability_classification"]["primary_dimension"] == "突防维度"
-        assert direction["capability_portrait"].startswith(
-            "能力分类：主：突防维度；辅：生存抗毁维度。"
+        assert (
+            direction["capability_classification"]["primary_dimension"]
+            == expected_primary_dimension
         )
+        assert direction["capability_portrait"].startswith(expected_portrait_prefix)
 
 
-def test_parallel_s6_failure_delivers_s5_card_as_limited_without_run_failure(
+def test_parallel_s6_failure_moves_card_to_reference_without_run_failure(
     monkeypatch,
 ) -> None:
     backend = _RealLikeScriptedProvider([])
@@ -3504,17 +4275,34 @@ def test_parallel_s6_failure_delivers_s5_card_as_limited_without_run_failure(
     ):
         del agent_id, system, schema, max_output_tokens
         assigned = dict(payload["candidate_weapon"])
-        if phase.endswith("_02"):
+        if "_02" in phase.split("_module_")[0]:
             raise ProviderRequestError("Agent timed out after 240 seconds")
+        modules = _complete_s6_test_modules(str(assigned["name"]))
+        if "_module_" in phase:
+            module_key = phase.rsplit("_module_", 1)[-1]
+            return json.dumps(
+                {
+                    "module_key": module_key,
+                    "module_content": modules[module_key],
+                    "card_binding_id": assigned.get("card_binding_id", ""),
+                    "hypothesis_id": assigned.get("hypothesis_id", ""),
+                    "capability_image_draft": "已完成卡片",
+                },
+                ensure_ascii=False,
+            )
         assigned.update(
             {
-                "capability_portrait": "基于候选制胜机理自然形成的装备能力画像。",
                 "semantic_consistency_check": {
                     "consistent": True,
                     "checked_fields": ["name", "operational_process"],
                 },
             }
         )
+        if not phase.endswith("_spine"):
+            assigned["capability_portrait_modules"] = modules
+            assigned["capability_portrait"] = (
+                provider_module.assemble_capability_portrait_modules(modules)
+            )
         return json.dumps(
             {
                 "direction": assigned,
@@ -3598,10 +4386,17 @@ def test_parallel_s6_failure_delivers_s5_card_as_limited_without_run_failure(
         "前置制胜装备-1",
         "前置制胜装备-2",
     ]
-    limited = result["concept_directions"][1]
+    assert len(result["s6_reference_weapons"]) == 1
+    limited = result["s6_reference_weapons"][0]
     assert limited["s6_authoring_status"] == "limited_provider_failure"
-    assert limited["s6_authoring_failure_type"] == "ProviderRequestError"
+    assert limited["s6_authoring_failure_type"] in {
+        "S6SpineAuthoringError",
+        "S6QualityError",
+        "ProviderRequestError",
+    }
     assert limited["name"] == "前置制胜装备-2"
+    assert limited["s6_eligible"] is True
+    assert limited["selection_status"] == "selected_limited"
     assert limited["concise_winning_summary"]
     assert any(
         event.get("event_type") == "winning_s6_card_authoring_limited"
@@ -3635,9 +4430,28 @@ def test_dynamic_s6_resume_reauthors_persisted_cards_from_minimal_input(
         source = next(
             item for item in completed_cards if item["name"] == candidate["name"]
         )
+        modules = source.get("capability_portrait_modules") or _complete_s6_test_modules(
+            candidate["name"]
+        )
+        if "_module_" in phase:
+            module_key = phase.rsplit("_module_", 1)[-1]
+            return json.dumps(
+                {
+                    "module_key": module_key,
+                    "module_content": modules[module_key],
+                    "card_binding_id": candidate.get("card_binding_id", ""),
+                    "hypothesis_id": candidate.get("hypothesis_id", ""),
+                    "capability_image_draft": f"{candidate['name']}重新生成能力画像",
+                },
+                ensure_ascii=False,
+            )
+        direction = {**source, **candidate}
+        if phase.endswith("_spine"):
+            direction.pop("capability_portrait_modules", None)
+            direction.pop("capability_portrait", None)
         return json.dumps(
             {
-                "direction": {**source, **candidate},
+                "direction": direction,
                 "capability_image_draft": f"{candidate['name']}重新生成能力画像",
             },
             ensure_ascii=False,
@@ -3682,13 +4496,19 @@ def test_dynamic_s6_resume_reauthors_persisted_cards_from_minimal_input(
                     "本地复核目标与授权边界",
                     "满足门槛后实施直接毁伤并形成战果摘要",
                 ],
+                "capability_portrait_modules": _complete_s6_test_modules(name),
                 "capability_portrait": (
-                    f"概述：{name}面向强干扰和链路间歇条件下的纵深火力窗口，依靠本地任务装订、"
-                    "非卫星导航和目标区自主复核维持授权交战，直接压制并毁伤高价值机动目标。\n"
-                    "装备与技术实现：采用受控自治、复合导航和安全终止约束。\n"
-                    "关键作战流程：进入责任区后复核目标，满足门槛即交战，否则拒打。\n"
-                    "形成能力与作战效果：维持断链条件下的自主打击和补击续接。\n"
-                    "制胜逻辑与边界：把外部链路依赖转为弹上闭环，授权失效时安全终止。"
+                    "能力分类：主：突防维度；辅：生存抗毁维度。\n"
+                    + "概述："
+                    + _complete_s6_test_modules(name)["overview"]
+                    + "\n- 装备与技术实现："
+                    + _complete_s6_test_modules(name)["technology_implementation"]
+                    + "\n- 关键作战流程："
+                    + _complete_s6_test_modules(name)["operational_process"]
+                    + "\n- 形成能力与作战效果："
+                    + _complete_s6_test_modules(name)["capability_effects"]
+                    + "\n- 制胜逻辑机理："
+                    + _complete_s6_test_modules(name)["winning_logic"]
                 ),
                 "semantic_consistency_check": {
                     "consistent": True,
@@ -3729,10 +4549,17 @@ def test_dynamic_s6_resume_reauthors_persisted_cards_from_minimal_input(
         )
     )
 
-    assert model_phases == [
-        "winning_s6_parallel_card_resume_01",
-        "winning_s6_parallel_card_resume_02",
-    ]
+    assert model_phases
+    assert sum(phase.endswith("_spine") for phase in model_phases) == 2
+    assert sum("_module_" in phase for phase in model_phases) == 10
+    assert sum(
+        1
+        for phase in model_phases
+        if phase.startswith("winning_s6_parallel_card_resume_0")
+    ) == 12
+    assert all(
+        phase.startswith("winning_s6_parallel_card_resume_0") for phase in model_phases
+    )
     assert [item["name"] for item in result["concept_directions"]] == [
         item["name"] for item in completed_cards
     ]
@@ -5151,6 +5978,154 @@ def test_transient_relay_invalid_key_response_gets_one_provider_retry() -> None:
     assert _is_retryable_failure(detail) is True
 
 
+@pytest.mark.parametrize(
+    "detail",
+    [
+        "Selected model is at capacity",
+        "remote gateway: model is at capacity, please retry later",
+        "upstream capacity exceeded",
+        "当前分组上游负载已饱和，请稍后再试",
+    ],
+)
+def test_codex_capacity_refusal_is_retryable(detail: str) -> None:
+    assert _is_retryable_failure(detail) is True
+
+
+def test_codex_capacity_retry_ignores_single_attempt_workflow_cap(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    monkeypatch.setattr(
+        "equipment_deep_research.providers.codex.shutil.which",
+        lambda command: f"/usr/local/bin/{command}",
+    )
+    monkeypatch.setenv("EQUIPMENT_DR_CODEX_CAPACITY_RETRY_ATTEMPTS", "4")
+    monkeypatch.setenv("EQUIPMENT_DR_CODEX_CAPACITY_RETRY_BACKOFF_SECONDS", "0")
+    monkeypatch.setenv("EQUIPMENT_DR_CODEX_CAPACITY_RETRY_JITTER_SECONDS", "0")
+
+    async def no_sleep(_delay: float) -> None:
+        return None
+
+    monkeypatch.setattr(
+        "equipment_deep_research.providers.codex.asyncio.sleep",
+        no_sleep,
+    )
+    provider = CodexCliProvider(
+        workspace_path=tmp_path,
+        retry_attempts=1,
+        include_default_skills=False,
+    )
+    calls = 0
+    success_stdout = json.dumps(
+        {
+            "type": "item.completed",
+            "item": {"type": "agent_message", "text": '{"ok":true}'},
+        }
+    )
+
+    def fake_execute(command, prompt):
+        nonlocal calls
+        del prompt
+        calls += 1
+        if calls < 4:
+            return subprocess.CompletedProcess(
+                command,
+                1,
+                stdout=json.dumps(
+                    {
+                        "type": "turn.failed",
+                        "error": {"message": "Selected model is at capacity"},
+                    }
+                ),
+                stderr="",
+            )
+        return subprocess.CompletedProcess(command, 0, stdout=success_stdout, stderr="")
+
+    monkeypatch.setattr(provider, "_execute", fake_execute)
+
+    async def collect():
+        return [
+            event
+            async for event in provider.stream(
+                [ModelMessage("user", "capacity")],
+                [],
+                {
+                    "output_schema": {"ok": "boolean"},
+                    "_provider_retry_attempts": 1,
+                },
+            )
+        ]
+
+    events = asyncio.run(collect())
+
+    assert calls == 4
+    assert events[-1].final_turn.text == '{"ok":true}'
+    assert events[-1].final_turn.metadata["attempts"] == 4
+    assert events[-1].final_turn.metadata["retry_reasons"] == (
+        "capacity",
+        "capacity",
+        "capacity",
+    )
+    assert events[-1].final_turn.metadata["capacity_retry_attempts"] == 4
+
+
+def test_codex_capacity_exhaustion_raises_typed_error(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    monkeypatch.setattr(
+        "equipment_deep_research.providers.codex.shutil.which",
+        lambda command: f"/usr/local/bin/{command}",
+    )
+    monkeypatch.setenv("EQUIPMENT_DR_CODEX_CAPACITY_RETRY_ATTEMPTS", "2")
+    monkeypatch.setenv("EQUIPMENT_DR_CODEX_CAPACITY_RETRY_BACKOFF_SECONDS", "0")
+    monkeypatch.setenv("EQUIPMENT_DR_CODEX_CAPACITY_RETRY_JITTER_SECONDS", "0")
+
+    async def no_sleep(_delay: float) -> None:
+        return None
+
+    monkeypatch.setattr(
+        "equipment_deep_research.providers.codex.asyncio.sleep",
+        no_sleep,
+    )
+    provider = CodexCliProvider(
+        workspace_path=tmp_path,
+        retry_attempts=1,
+        include_default_skills=False,
+    )
+
+    def fake_execute(command, prompt):
+        del prompt
+        return subprocess.CompletedProcess(
+            command,
+            1,
+            stdout=json.dumps(
+                {
+                    "type": "turn.failed",
+                    "error": {"message": "Selected model is at capacity"},
+                }
+            ),
+            stderr="",
+        )
+
+    monkeypatch.setattr(provider, "_execute", fake_execute)
+
+    async def collect():
+        return [
+            event
+            async for event in provider.stream(
+                [ModelMessage("user", "capacity")],
+                [],
+                {"output_schema": {"ok": "boolean"}},
+            )
+        ]
+
+    import asyncio
+
+    with pytest.raises(ProviderCapacityError, match="after 2 attempt\\(s\\)"):
+        asyncio.run(collect())
+
+
 def test_codex_cli_provider_retries_retryable_process_failure(
     monkeypatch,
     tmp_path,
@@ -6533,7 +7508,6 @@ def test_swarm_quality_profile_runs_three_bounded_waves_and_keeps_candidate_ledg
     assert "名称不是候选摘要" in quality_cluster_prompt
     assert "不得逐词拆解" in quality_cluster_prompt
     assert "高功率微波（HPM）巡飞弹" not in quality_cluster_prompt
-    assert "仿生扑翼微型侦察打击弹" not in quality_cluster_prompt
     assert "自由角度形成后才允许由模型" in quality_cluster_prompt
     assert "不得复制" in quality_cluster_prompt
 
@@ -6819,8 +7793,8 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
                     "max_output_tokens": max_output_tokens,
                 }
             )
-            # Force all four S3 producers to overlap at the shared refresh
-            # boundary. Exactly one selector call must serve every slot.
+                # Force all six S3/S4 producers to overlap at the shared
+                # refresh boundary. Exactly one selector call must serve every slot.
             await asyncio.sleep(0.02)
             raise ProviderRequestError(
                 "Codex CLI timed out after 120 seconds"
@@ -6907,6 +7881,7 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
             assigned_card["concise_winning_summary"] = payload[
                 "winning_logic_overview"
             ]
+            modules = _complete_s6_test_modules(str(assigned_card.get("name", "装备")))
             s6_authoring_inputs.append(
                 {
                     "phase": phase,
@@ -6919,9 +7894,20 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
                     "payload_keys": set(payload),
                 }
             )
+            if "_module_" in phase:
+                module_key = phase.rsplit("_module_", 1)[-1]
+                return json.dumps(
+                    {
+                        "module_key": module_key,
+                        "module_content": modules[module_key],
+                        "card_binding_id": assigned_card.get("card_binding_id", ""),
+                        "hypothesis_id": assigned_card.get("hypothesis_id", ""),
+                        "capability_image_draft": "S6 自然撰写完成",
+                    },
+                    ensure_ascii=False,
+                )
             assigned_card.update(
                 {
-                    "capability_portrait": "S6 Codex 会话基于候选身份自然撰写的作战能力画像。",
                     "operational_process": ["按候选专属制胜机理完成交战。"],
                     "semantic_consistency_check": {
                         "consistent": True,
@@ -6934,6 +7920,11 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
                     },
                 }
             )
+            if not phase.endswith("_spine"):
+                assigned_card["capability_portrait"] = (
+                    "S6 Codex 会话基于候选身份自然撰写的作战能力画像。"
+                )
+                assigned_card["capability_portrait_modules"] = modules
             return json.dumps(
                 {
                     "direction": assigned_card,
@@ -6943,7 +7934,8 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
             )
         if phase == "winning_swarm_dynamic_portfolio_review_fast":
             candidate_ledger = payload.get("candidate_ledger", {})
-            allowed_ids = list(candidate_ledger.get("allowed_hypothesis_ids", []))
+            candidate_rows = list(candidate_ledger.get("hypotheses", []))
+            allowed_ids = [item["hypothesis_id"] for item in candidate_rows]
             execution_order.append("downstream_start:S5:incremental-review")
             reviewer_inputs.append(
                 {
@@ -6951,7 +7943,13 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
                     "max_output_tokens": max_output_tokens,
                     "evidence_count": len(payload.get("evidence_index", [])),
                     "schema_keys": set(output_schema),
+                    "decision_keys": set(output_schema["decisions"][0]),
+                    "decision_schema": dict(output_schema["decisions"][0]),
+                    "system": str(system),
                     "allowed_ids": allowed_ids,
+                        "payload_keys": set(payload),
+                        "coverage_matrix": dict(payload.get("coverage_matrix", {})),
+                        "candidate_row_keys": [set(item) for item in candidate_rows],
                 }
             )
             visible_ids = [
@@ -6965,12 +7963,24 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
                         {
                             "hypothesis_id": hypothesis_id,
                             "decision": "retain",
-                            "merge_target_hypothesis_id": "",
                             "reason": "候选具有独立作战角色并可直接形成战果",
-                            "independent_axis": "core_mechanism",
-                            "direct_equipment": True,
-                        }
-                        for hypothesis_id in allowed_ids
+                                "independence_basis": "核心机理不同",
+                                "innovation_priority": (
+                                    0.9 if position % 2 else 0.7
+                                ),
+                                "innovation_basis": "改变接敌几何与敌我交换关系",
+                                "disruption_tier": (
+                                    "paradigm_disruption"
+                                    if position % 2
+                                    else "new_quality_breakthrough"
+                                ),
+                                "material_innovation_breakpoint_present": True,
+                                "ordinary_upgrade_or_function_packaging": False,
+                                "displaced_operational_mode": "依赖高价值平台逐目标接敌",
+                                "new_operational_mode": "以分布式效应体持续占位并自主接敌",
+                                "winning_relation_shift": "从高价值平台互换转为可消耗效应密度压制",
+                            }
+                        for position, hypothesis_id in enumerate(allowed_ids, start=1)
                     ],
                     "portfolio_order": allowed_ids,
                     "portfolio_summary": "增量候选保留进入组合",
@@ -7176,9 +8186,9 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
                                 "core_disruptive_difference": (
                                     f"改变断链条件下目标复获与直接毁伤关系-{marker}-{ordinal}"
                                 ),
-                                "concise_winning_summary": (
-                                    f"在强干扰窗口自主复获目标并直接形成压制或毁伤-{marker}-{ordinal}"
-                                ),
+                                    "concise_winning_summary": (
+                                        f"在强干扰窗口由{marker}自主复获临机目标，压缩交战空窗并直接完成压制与毁伤。"
+                                    ),
                             "original_paradigm": f"original-{marker}-{ordinal}",
                             "disruptive_shift": f"shift-{marker}-{ordinal}",
                             "independence_thesis": f"independent-{marker}-{ordinal}",
@@ -7311,7 +8321,7 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
                     "enabled": True,
                     "policy_id": "winning_swarm_dynamic_v2",
                     "mission_graph_target_instances": 15,
-                    "s3_winning_thesis_capacity": 8,
+                    "s3_winning_thesis_capacity": 10,
                     "expert_repair_reserved_instances": 3,
                     "expert_repair_max_candidates": 3,
                     "max_concurrency": 6,
@@ -7406,8 +8416,8 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
         if row.get("event_type") == "winning_pre_generation_angle_portfolio_planned"
     ]
     assert len(angle_plan_events) == 1
-    assert angle_plan_events[0]["assigned_angle_count"] == 8
-    assert angle_plan_events[0]["s3_capacity_slot_count"] == 8
+    assert 3 <= angle_plan_events[0]["assigned_angle_count"] <= 6
+    assert 3 <= angle_plan_events[0]["s3_capacity_slot_count"] <= 6
     assert angle_plan_events[0]["inactive_capacity_slot_count"] == 0
     materialized_events = [
         row
@@ -7415,7 +8425,7 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
         if row.get("event_type") == "winning_s3_active_agents_materialized"
     ]
     assert len(materialized_events) == 1
-    assert materialized_events[0]["active_instance_count"] == 8
+    assert 3 <= materialized_events[0]["active_instance_count"] <= 6
     assert materialized_events[0]["unused_capacity_count"] == 0
     assert not any(
         row.get("event_type") == "winning_s3_capacity_slot_skipped"
@@ -7492,9 +8502,17 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
         for prompt in candidate_policy_prompts["winning_swarm_dynamic_seed"]
     )
     assert "从Query的核心战场矛盾自由创造" in s3_policy
-    assert "形态物质、技术原理、任务能力" in s3_policy
+    assert "独特物理形态、结构构型、材料/介质、新物理原理" in s3_policy
+    assert "装备独特运动方式、反传统隐喻、数量/密度/规模" in s3_policy
+    assert "一般性的任务能力、功能效果和动作流程应进入concise_winning_summary" in s3_policy
+    assert "背景剥离诱显巡飞弹" in s3_policy
     assert "不要默认两字意象加弹/雷/器/系统" in s3_policy
     assert "每个候选只输出name和concise_winning_summary" in s3_policy
+    assert "可提交1—3个候选" in s3_policy
+    assert "宁缺毋滥" in s3_policy
+    assert "面向未来战争需要的多样性来自不同制胜断点" in s3_policy
+    assert "不来自同一装备更换代号、载荷或任务前缀" in s3_policy
+    assert "已占用的其他关系（仅用于避同构，不要求复述）" in s3_policy
     assert "严格按以下模型生成顺序" not in s3_policy
     assert s3_policy.count("装备开放探索约束") == 0
     assert "naming_comparison" not in s3_policy
@@ -7504,16 +8522,47 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
         for item in s3_generation_payloads
         if "counterfactual_disruptive_challenges" not in item
     )
-    assert set(first_s3_payload) == {
+    creative_payload_keys = {
         "query",
         "execution_profile_id",
         "specialist_task",
         "open_exploration_hint",
         "military_value_handoff",
+        "random_naming_style_assignment",
     }
+    # S4 carries the structured winning-dimension package so its downstream
+    # handoff remains auditable; S3 keeps the same dimension in its bounded
+    # task purpose for the compact creative contract.
+    # The compact creative contract remains stable, while coverage steering
+    # and bounded sibling summaries are additive controls for model
+    # divergence.  Keep the assertion explicit about the required core and
+    # the optional sidecars instead of freezing the transport to its old key
+    # set.
+    assert creative_payload_keys <= set(first_s3_payload)
+    assert set(first_s3_payload) - creative_payload_keys <= {
+        "winning_dimension_package",
+        "coverage_steer",
+        "occupied_sibling_concepts",
+        "occupied_s3_core_concepts",
+        "occupied_s3_boundary_rule",
+    }
+    assert first_s3_payload["coverage_steer"]["exclusive_axis"]
+    assert len(first_s3_payload["occupied_sibling_concepts"]) <= 12
+    if "winning_dimension_package" in first_s3_payload:
+        package = first_s3_payload["winning_dimension_package"]
+        assert package["code"].startswith("D")
+        assert package["dimension"]
+        assert package["winning_logic"]
+        assert package["forward_winning_question"]
     assert first_s3_payload["execution_profile_id"] == "winning_swarm_dynamic_v2"
     assert "battlefield_relationship" in first_s3_payload["open_exploration_hint"]
     assert "desired_direct_result" in first_s3_payload["open_exploration_hint"]
+    naming_assignment = first_s3_payload["random_naming_style_assignment"]
+    assert naming_assignment["selection_mode"] == "random_without_replacement"
+    assert naming_assignment["name_length"].startswith("名称主体尽量8—12个汉字")
+    assert [item["candidate_position"] for item in naming_assignment["candidate_order"]] == [1, 2, 3]
+    assert len({item["code"] for item in naming_assignment["candidate_order"]}) == 3
+    assert all(item["code"] in set("ABCDEFGHIJKLMNO") for item in naming_assignment["candidate_order"])
     creative_handoff = first_s3_payload["military_value_handoff"]
     assert set(creative_handoff) == {"claims"}
     assert len(creative_handoff["claims"]) == 2
@@ -7568,6 +8617,10 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
         row.get("separate_precommit_model_call") is False
         for row in self_admission_events
     )
+    assert all(
+        row.get("candidate_maximum_per_session") == 3
+        for row in self_admission_events
+    )
     assert not any(
         str(row.get("event_type", "")).startswith("winning_s3_precommit_")
         for row in progress_rows
@@ -7594,15 +8647,6 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
         for index, row in enumerate(execution_order)
         if row.startswith("s3_start:")
     )
-    last_s3_done = max(
-        index for index, row in enumerate(execution_order) if row.startswith("s3_done:")
-    )
-    first_downstream_start = min(
-        index
-        for index, row in enumerate(execution_order)
-        if row.startswith("downstream_start:S4")
-        or row.startswith("downstream_start:S5")
-    )
     assert last_reasoning_done < first_s3_start
     fanout_events = [
         row
@@ -7618,22 +8662,48 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
         allowed_ids and set(allowed_ids) <= set(visible_ids)
         for _, allowed_ids, visible_ids in s5_scopes
     )
-    last_s4_completed = max(
+    incremental_s4_events = [
+        row
+        for row in progress_rows
+        if row.get("event_type") == "winning_s4_incremental_boundary_opened"
+    ]
+    assert len(incremental_s4_events) == 1
+    first_s3_completed = min(
         index
         for index, row in enumerate(progress_rows)
         if row.get("event_type") == "winning_agent_session_completed"
+        and row.get("mission_node") == "S3"
+    )
+    last_s3_completed = max(
+        index
+        for index, row in enumerate(progress_rows)
+        if row.get("event_type") == "winning_agent_session_completed"
+        and row.get("mission_node") == "S3"
+    )
+    first_s4_started = min(
+        index
+        for index, row in enumerate(progress_rows)
+        if row.get("event_type") == "winning_agent_session_started"
         and row.get("mission_node") == "S4"
     )
+    assert incremental_s4_events[0]["completed_s3_instance_ids"]
+    assert first_s3_completed < first_s4_started < last_s3_completed
     first_s5_started = min(
         index
         for index, row in enumerate(progress_rows)
         if row.get("event_type") == "winning_agent_session_started"
         and row.get("mission_node") == "S5"
     )
-    # S5 is intentionally completion-driven: it may review early finished
-    # candidates while slower S3/S4 creators are still running. Later creator
-    # outputs schedule additional bounded reviewer passes.
-    assert first_s5_started < last_s4_completed
+    last_creative_completed = max(
+        index
+        for index, row in enumerate(progress_rows)
+        if row.get("event_type") == "winning_agent_session_completed"
+        and row.get("mission_node") in {"S3", "S4"}
+    )
+    # Cross-pool S5 waits for the live creator set, then 2-3 reviewers
+    # compare the complete candidate pool.
+    assert first_s5_started > last_creative_completed
+    assert 2 <= len(s5_scopes) <= 3
     assert not any(
         row.get("event_type") == "winning_contribution_rebase_required"
         for row in progress_rows
@@ -7670,12 +8740,93 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
         item["phase"] == "winning_swarm_dynamic_portfolio_review_fast"
         for item in reviewer_inputs
     )
-    assert all(item["max_output_tokens"] <= 1000 for item in reviewer_inputs)
+    assert all(item["max_output_tokens"] == 2400 for item in reviewer_inputs)
     assert all(item["evidence_count"] == 0 for item in reviewer_inputs)
     assert all(
         item["schema_keys"]
         == {"decisions", "portfolio_order", "portfolio_summary", "stop_reason"}
         for item in reviewer_inputs
+    )
+    assert all(
+        item["decision_keys"]
+        == {
+            "hypothesis_id",
+            "decision",
+            "reason",
+            "independence_basis",
+            "innovation_priority",
+            "dimension_scores",
+            "weighted_score",
+            "innovation_basis",
+            "s5_innovation_mechanism_score",
+            "naming_new_quality",
+            "naming_semantic_alignment",
+            "naming_semantics_aligned",
+            "naming_assessment_status",
+            "naming_anchor",
+            "naming_reason",
+            "direct_equipment",
+            "weapon_object_specific",
+            "support_dependency_only",
+            "known_science_consistent",
+            "weapon_body_mechanism_closes",
+            "material_innovation_breakpoint_present",
+            "ordinary_upgrade_or_function_packaging",
+            "disruption_tier",
+            "displaced_operational_mode",
+            "new_operational_mode",
+            "winning_relation_shift",
+            "merge_target_hypothesis_id",
+        }
+        for item in reviewer_inputs
+    )
+    assert all("candidate_ledger" in item["payload_keys"] for item in reviewer_inputs)
+    assert all(
+        item["payload_keys"] - {"candidate_ledger", "coverage_matrix", "expert_review_feedback"}
+        == set()
+        for item in reviewer_inputs
+    )
+    assert all(
+        "coverage_matrix" in item["payload_keys"]
+        and set(item["coverage_matrix"]) >= {
+            "coverage_ratio",
+            "duplicate_ratio",
+            "primary_gaps",
+        }
+        for item in reviewer_inputs
+    )
+    assert all(
+        all(keys == {"hypothesis_id", "name", "concise_winning_summary"} for keys in item["candidate_row_keys"])
+        for item in reviewer_inputs
+    )
+    assert all("只做创新性、颠覆性和候选独立性筛选" in item["system"] for item in reviewer_inputs)
+    assert all(
+        "普通性能加码、把现有功能智能化、流程提速" in item["system"]
+        for item in reviewer_inputs
+    )
+    assert all(
+        "最多保留创新性最强的7条" in item["system"]
+        and "禁止为凑数回收已经判退的普通方向" in item["system"]
+        for item in reviewer_inputs
+    )
+    assert all("不改名、不补写装备字段" in item["system"] for item in reviewer_inputs)
+    assert all("输入候选严格只有hypothesis_id、name和concise_winning_summary" in item["system"] for item in reviewer_inputs)
+    assert all("不得要求或使用Query" in item["system"] for item in reviewer_inputs)
+    selected_innovation = [
+        item["innovation_priority"] for item in swarm["final_equipment_portfolio"]
+    ]
+    assert selected_innovation == sorted(selected_innovation, reverse=True)
+    assert all(
+        item.get("disruption_tier")
+        in {"paradigm_disruption", "new_quality_breakthrough"}
+        and item.get("displaced_operational_mode")
+        and item.get("new_operational_mode")
+        and item.get("winning_relation_shift")
+        for item in swarm["final_equipment_portfolio"]
+    )
+    assert all(
+        item.get("innovation_priority") is not None
+        for item in swarm["candidate_lineage"]
     )
     # S6 card authoring and handoff contracts are covered by dedicated tests.
     # This integration probe ends at post-divergence convergence so it does
@@ -7695,8 +8846,10 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
         "输入严格只有query_semantics、candidate_weapon、winning_logic_overview三项"
         in item["system"]
         and "再直接写成决策短卡" in item["system"]
-        and "每栏约120至150个中文字作为软编辑目标" in item["system"]
-        and "不因篇幅偏差失败、重试或截断" in item["system"]
+        and "每栏都以约400个有效中文字为中心" in item["system"]
+        and "五栏合计通常约2000至2250字" in item["system"]
+        and "复杂因果尚未闭合时可适当略多" in item["system"]
+        and "禁止按字符硬切" in item["system"]
         and "决定性瓶颈、核心原理怎样落实到装备本体" in item["system"]
         and "样机、半实物或对抗试验和判退结果" in item["system"]
         and "行动主体、进入条件、关键动作" in item["system"]
@@ -7705,11 +8858,7 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
         and len(item["system"]) < 1600
         for item in s6_authoring_inputs
     )
-    assert all(
-        "150—200个中文字符" not in item["system"]
-        and "100—200个中文字符" not in item["system"]
-        for item in s6_authoring_inputs
-    )
+    assert all("不因篇幅偏差失败、重试、截断或机械扩写" in item["system"] for item in s6_authoring_inputs)
     assert all("删除重复背景" in item["system"] for item in s6_authoring_inputs)
     assert all(item["concise_winning_summary"] for item in s6_authoring_inputs)
     assert len(s5_handoff_inputs) == len(swarm["final_equipment_portfolio"])

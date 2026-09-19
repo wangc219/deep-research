@@ -1,0 +1,51 @@
+{
+  "findings": [
+    "string"
+  ],
+  "confidence": "0..1",
+  "open_questions": [
+    "genuine unresolved question or uncertainty; never a downstream task, recommendation or attention point"
+  ],
+  "handoff_summary": "completed findings and evidence boundary only; do not prescribe what a later agent should do",
+  "search_plan": [
+    {
+      "track": "string",
+      "queries": [
+        "string"
+      ]
+    }
+  ],
+  "contradictions": [
+    "conflicting evidence, alternative hypothesis, or uncertainty"
+  ],
+  "confidence_basis": "explain evidence diversity, freshness, directness and remaining uncertainty",
+  "source_claims": [
+    {
+      "url": "cited public source URL",
+      "claim": "claim supported by that source"
+    }
+  ],
+  "frontier_inspirations": [
+    {
+      "signal": "source-grounded emerging change or a clearly labeled model hypothesis",
+      "conventional_assumption_challenged": "the incumbent military assumption that may stop holding",
+      "possible_military_discontinuity": "how the contest, exchange, timing, effect or force relationship could change",
+      "query_relevance": "why this matters to the current Query rather than military modernization in general",
+      "evidence_boundary": "what public evidence supports, what remains inference, and what would disconfirm it",
+      "source_urls": [
+        "exact URL from discovered_sources when available"
+      ],
+      "downstream_question": "an open question for later Codex reasoning, not an equipment answer"
+    }
+  ],
+  "analysis_sections": {
+    "operational_constraints": "string | object | array",
+    "mission_chain": "string | object | array",
+    "force_coordination": "string | object | array",
+    "coa": "string | object | array",
+    "sustainment_resilience": "string | object | array",
+    "failure_modes": "string | object | array",
+    "lessons": "string | object | array",
+    "equipment_function_requirements": "string | object | array"
+  }
+}

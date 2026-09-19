@@ -1,0 +1,63 @@
+[
+  {
+    "accepted_claim_ids": [
+      "claim-77cdad038b25",
+      "claim-90af9a84c389",
+      "claim-10573466ae72",
+      "claim-e56de69bc477",
+      "claim-d90dadabd97f"
+    ],
+    "incremental_value": 1.0,
+    "packet_id": "packet-international_situation",
+    "reasons": [],
+    "rejected_claim_ids": [],
+    "scores": {
+      "claim_evidence_match": 1.0,
+      "incremental_value": 1.0,
+      "source_quality": 0.8,
+      "task_relevance": 1.0,
+      "upstream_acceptance": 1.0
+    },
+    "status": "accepted"
+  },
+  {
+    "accepted_claim_ids": [
+      "claim-979703469fc9",
+      "claim-103953909c56",
+      "claim-009a3db3ac42",
+      "claim-d229e8ecb795"
+    ],
+    "incremental_value": 1.0,
+    "packet_id": "packet-cross_domain_fusion",
+    "reasons": [],
+    "rejected_claim_ids": [],
+    "scores": {
+      "claim_evidence_match": 1.0,
+      "incremental_value": 1.0,
+      "source_quality": 0.8,
+      "task_relevance": 1.0,
+      "upstream_acceptance": 1.0
+    },
+    "status": "accepted"
+  },
+  {
+    "accepted_claim_ids": [
+      "claim-5e7d99e6bf69",
+      "claim-914fdc1601eb",
+      "claim-f49587ad297d",
+      "claim-ad66369dfa2c"
+    ],
+    "incremental_value": 1.0,
+    "packet_id": "packet-combat_scenario",
+    "reasons": [],
+    "rejected_claim_ids": [],
+    "scores": {
+      "claim_evidence_match": 1.0,
+      "incremental_value": 1.0,
+      "source_quality": 0.8,
+      "task_relevance": 1.0,
+      "upstream_acceptance": 1.0
+    },
+    "status": "accepted"
+  }
+]

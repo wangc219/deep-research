@@ -1,4 +1,0 @@
-fetch_failed
-url=https://media.defense.gov/2026/Jul/08/2003958884/-1/-1/1/SMALL-DRONES-BIG-PROBLEMS-A-FIRST-PRINCIPLES-APPROACH-TO-COUNTER-UAS.PDF?utm_source=openai
-error=SSLEOFError: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)
-该诊断用于保留真实联网smoke边界；正式结论不应仅依赖失败材料。

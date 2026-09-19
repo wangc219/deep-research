@@ -1,0 +1,249 @@
+{
+  "baseline_boundaries": [
+    {
+      "agent_id": "weapon_equipment",
+      "availability": "unavailable",
+      "downstream_obligations": [
+        "S3不得把基线缺失解释为候选不可行或收缩创新空间",
+        "S4按保留候选核验最近公开装备基线与直接反证",
+        "S5汇总候选级成熟度、成本产能、现役差距与未决证据"
+      ],
+      "limitations": [
+        "基线不可用原因：RuntimeError: weapon_equipment model turn completed but outer baseline result validation found no substantive findings"
+      ],
+      "open_questions": [
+        "S4/S5须针对保留的具体候选逐项核验公开装备基线、现役/在研边界、反证、成熟度与差距。"
+      ],
+      "packet_id": "packet-weapon_equipment"
+    }
+  ],
+  "branch_products": {
+    "case_patterns": [
+      "俄乌（陆）：干扰驱动威胁转向非RF链路，物理拦截成为兜底，验证'链路截断不可作单层主答案'",
+      "红海（海）：同一规律（小型UAS饱和、低价对高价拦截、需分层效应）成立，但海上杂波/热杂波与民用船只混杂使发现-识别瓶颈更陡，误击约束更强，陆战场结论不可直接平移",
+      "Shahed对乌/以：交换比与拦截率下滑规律跨场景成立，强化'成本交换比'作为否决性约束的可迁移性"
+    ],
+    "emerging_equipment_categories": [
+      "非辐射探测：分布式光电/声学/低频雷达组网（低RCS小目标、蓝方自扰环境下的发现-识别）",
+      "低位成本物理效应器：拦截无人机/低成本拦截弹/精确射弹（按交换比选型）",
+      "低边际成本可复用效应器：定向能（激光/HPM）反饱和与反光纤无人机",
+      "保底链路与阵地管理：抗干扰/非RF遥控链路、误击与民用混杂下的交战管理"
+    ],
+    "future_scenarios": [
+      "蓝方不占频谱优势+红方饱和突击：探测-识别（非辐射）为第一缺口，效应器需满足低位成本与饱和吞吐，干扰仅作辅助",
+      "红方转向光纤/视觉末制导自主UAS后，链路截断失效，防御收敛于分布式被动探测+低成本物理/定向能末端拦截",
+      "若防御方接受自损频谱：可形成'局部EMS让渡+广域干扰覆盖+非辐射兜底'的混合构型，改变'蓝方必须维持全域频谱清洁'的默认假设"
+    ],
+    "migration_boundaries": [
+      "陆战场低空遮蔽+民用混杂条件下的结论向海面转移时，受海杂波/热杂波影响，被动光电探测优势下降，需重算发现距离与虚警率",
+      "俄乌静态消耗战中的饱和节奏（高频、低值）不能直接外推到城市/要地场景——民用空中交通与误击代价会把'饱和容忍度'压低，改变分层与弹药选型",
+      "红方廉价可消耗属性建立在陆上短途+本地量产结构上；在需要远程投放或海运场景中，小型UAS数量与成本结构改变，需重新校准"
+    ]
+  },
+  "claims": [
+    {
+      "claim_id": "claim-21217c08ad41",
+      "claim_type": "hypothesis",
+      "confidence": 0.45,
+      "downstream_steps": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-system_confrontation-web-c8aba43133b8",
+        "ev-system_confrontation-web-1f6bd4975c3e"
+      ],
+      "failure_boundary": "公开条令/监督材料强调体系集成与频谱管理，但缺少复杂电磁条件下C-UAS全链路的失败实证，存在‘规划叙事强、验证证据弱’的落差",
+      "mechanism": "{'judgment': '体系韧性优先的替代链路方向是‘频谱非占优处置效应’(光电/声学/被动定位引导的硬杀伤与网捕/诱骗等非辐射效应)，其价值在于把关键依赖从‘频谱占有’转移到‘频谱规避’，使反制链首断环节前移至可自主闭环的节点。', 'military_task_value': '直接补强在被压制条件下的任务续接能力，是战损与电磁截断后恢复作战功能的核心杠杆。', 'evidence_boundary': '作为架构方向判断，符合Query‘不依赖频谱占优的处置所需效应与分配条件’的设问逻辑；公开证据支持此类效应存在(JCO/SAPIENT互操作生态)，但不支持其已具备复杂电磁下可靠闭环。', 'failure_condition': '若目标小UAS具备对抗非辐射",
+      "military_effects": [
+        "指挥决策",
+        "拦截反制",
+        "保障恢复",
+        "持续作战",
+        "体系协同"
+      ],
+      "packet_id": "packet-system_confrontation",
+      "source_agent_id": "system_confrontation",
+      "source_urls": [
+        "https://www.jcs.mil/Doctrine/"
+      ]
+    },
+    {
+      "claim_id": "claim-6da62b3d6cce",
+      "claim_type": "fact",
+      "confidence": 0.44,
+      "downstream_steps": [
+        "S1",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-case_research-web-fa6b7ef26d3a",
+        "ev-case_research-web-80ecdfd893e8"
+      ],
+      "failure_boundary": "公开材料同时显示干扰对RF-FPV'有效'（曾迫使乌方战术改变/加装抗干扰）与'不再决定胜负'（俄方靠数量与光纤翻盘），说明干扰效果受红方成本与改型速度调制，不能作为稳定常数",
+      "mechanism": "己方辐射与频谱自伤构成反制边界：蓝方压制链路时同步占用/烧毁本域EMS，压缩己方通信与遥控反制资源；俄方2024年决策将轻型反UAS EW装备月产提升至约5000套后，红方被迫转向光纤FPV等抗干扰手段，说明纯干扰型反制会驱动威胁转非RF，不能作为单层主答案，只能与不依赖射频链路的探测与效应器组合。",
+      "military_effects": [
+        "侦察预警",
+        "指挥决策",
+        "拦截反制"
+      ],
+      "packet_id": "packet-case_research",
+      "source_agent_id": "case_research",
+      "source_urls": [
+        "https://www.airforce-technology.com/analyst-comment/disruptive-innovation-electronic-warfare-arms-race/"
+      ]
+    },
+    {
+      "claim_id": "claim-7713d0b96263",
+      "claim_type": "hypothesis",
+      "confidence": 0.45,
+      "downstream_steps": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-system_confrontation-web-c8aba43133b8",
+        "ev-system_confrontation-web-1f6bd4975c3e"
+      ],
+      "failure_boundary": "公开条令/监督材料强调体系集成与频谱管理，但缺少复杂电磁条件下C-UAS全链路的失败实证，存在‘规划叙事强、验证证据弱’的落差",
+      "mechanism": "{'judgment': '小型无人防御任务的体系断点在探测-识别节点先于效应节点出现：复杂电磁条件下，主被动探测(雷达/射频侦测)与识别所需链路同时被压制/拥塞/自扰劣化时，效应器即使在位也因目标数据不可用或敌我置信度不足而无法合法接战，形成‘效应可用、闭环断开’的体系失效。', 'military_task_value': '直接决定反制闭环是否成立：识别置信度是误击约束下的发射门槛，频谱劣势使门槛无法跨越，反制能力被体系性冻结。', 'evidence_boundary': '基于公开对JCO演示将复杂电磁环境作为焦点条件、DOT&E对系统级集成与作战限制的评估以及GAO对集成风险的监督脉络形成的推断；缺乏公开定量误击门槛数据。', 'failure_conditi",
+      "military_effects": [
+        "侦察预警",
+        "指挥决策",
+        "拦截反制",
+        "体系协同"
+      ],
+      "packet_id": "packet-system_confrontation",
+      "source_agent_id": "system_confrontation",
+      "source_urls": [
+        "https://www.jcs.mil/Doctrine/"
+      ]
+    },
+    {
+      "claim_id": "claim-aa7ced5eb1cb",
+      "claim_type": "fact",
+      "confidence": 0.44,
+      "downstream_steps": [
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-case_research-web-fa6b7ef26d3a",
+        "ev-case_research-web-80ecdfd893e8"
+      ],
+      "failure_boundary": "公开材料同时显示干扰对RF-FPV'有效'（曾迫使乌方战术改变/加装抗干扰）与'不再决定胜负'（俄方靠数量与光纤翻盘），说明干扰效果受红方成本与改型速度调制，不能作为稳定常数",
+      "mechanism": "低成本饱和把成本交换比设为否决性约束：公开测算显示Shahed（约2-5万美元/架）拦截消耗导弹可达数十万至数百万美元，交换比约190:1不利；拦截率随饱和战术从约88.7%降至约70%，防御成本还随空袭警报与漏防后果近似指数增长。这使'高价值精确弹药换廉价无人机'在持续/饱和想定下不可持续，防御装备需求被改写为低位弹药成本、可再装填/可复用效应器与单发边际成本极低的体系。",
+      "military_effects": [
+        "拦截反制",
+        "体系协同"
+      ],
+      "packet_id": "packet-case_research",
+      "source_agent_id": "case_research",
+      "source_urls": [
+        "https://www.airforce-technology.com/analyst-comment/disruptive-innovation-electronic-warfare-arms-race/"
+      ]
+    }
+  ],
+  "conflicts": [
+    "失效主导叙事不统一：case_research视'探测-识别断链'为决定性瓶颈，system_confrontation认为持续/饱和场景下'交换比/保障链溃退'才是主导失效；两方均承认取决于威胁运用强度，公开来源未裁决，不可合并抹去。",
+    "干扰型反制效果存在同源生态口径冲突：既有'干扰对RF-FPV有效、曾迫使乌方改变战术'的叙事，也有'俄方靠数量与光纤翻盘使干扰不再决定胜负'的叙事；Shahed拦截率~70%且交换比190:1不利与'激光/低端拦截低成本有效'的宣传并存。",
+    "非辐射替代链路可否单链闭环未闭合：system_confrontation给出失败条件——目标具强遮蔽/低可观测特征且无辐射探测可用时，频谱规避链路同样被截断，需多模态互补而非单一替代；同时保留'常规探测在设定谱负载下仍充分则P1证伪收缩'的验证门。"
+  ],
+  "frontier_inspiration_rule": "仅在后续模型完成首次自由发散后作为可选启发；可重构或全部舍弃，不得视为装备答案、命名种子、技术目录或覆盖配额。",
+  "frontier_inspirations": [
+    {
+      "conventional_assumption_challenged": "默认防御链条以'频谱截断反制'为中间环节，默认红方小型UAS离开GNSS/数据链即失效",
+      "downstream_question": "在蓝方持续自扰下，分布式被动探测对低RCS小目标能否在交战窗口内给出可射击航迹？",
+      "evidence_boundary": "光纤FPV的战场存在有战例支撑；视觉末制导规模化与自主集群末端突防属推断，未见已证实的大规模战例",
+      "evidence_ids": [
+        "ev-case_research-web-80ecdfd893e8"
+      ],
+      "packet_id": "packet-case_research",
+      "possible_military_discontinuity": "若小型UAS完全脱离射频与GNSS依赖，电磁压制失去内层价值，防御必须预置'不依赖频谱占优'的发现（被动光电/声学）与低成本物理/定向能效应；EW优势从主导变量降级为外围变量",
+      "query_relevance": "直接改变反小型无人防御装备的探测-效应构型与优先级（首断环节从链路移到发现-识别）",
+      "signal": "光纤与视觉末制导正在让'链路不可抗'成为常态，红方小型UAS已不依赖GPS/射频即可完成末段打击",
+      "source_agent_id": "case_research",
+      "source_urls": [
+        "https://newsukraine.rbc.ua/analytics/russia-s-fiber-optic-fpv-drones-on-rise-ukraine-1752818725.html"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "以'拦截率/击杀数'衡量防御效果，默认单次拦截成本可被体系吸收",
+      "downstream_question": "是否存在把红方廉价UAS诱导进我方低成本效应区、把其数量优势转化为我方交换比优势的阵位与伪装设计？",
+      "evidence_boundary": "交换比与拦截率来自第三方建模测算，非官方口径；'防御被反利用为消耗陷阱'为逻辑推断",
+      "evidence_ids": [],
+      "packet_id": "packet-case_research",
+      "possible_military_discontinuity": "饱和与廉价消耗品的组合把防御从军事问题转成消耗战问题：蓝方拦截即失血、不拦截即失能，需要以拦截成本低于目标成本或复用效应器重新定义'有效防御'，否则防御本身可被反利用为流血陷阱",
+      "query_relevance": "决定装备形态应优先选择低位弹药成本与可复用/可再装填效应器（拦截无人机、定向能），并回答'换不起'约束",
+      "signal": "Shahed级消耗品约190:1交换比与饱和导致拦截率下滑，使'防御成功'在成本账上反而是红方胜利",
+      "source_agent_id": "case_research",
+      "source_urls": [
+        "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6375919"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "假设电磁对抗只发生在物理信号层；实际关键对抗可能上移到决策层的置信度生成与法律/规则可辩护性。",
+      "downstream_question": "蓝方识别系统在电磁截断与欺骗同时存在时，如何向人类指挥官生成可审计且时间上可用的交战证据，且不被反向利用为诱骗面？",
+      "evidence_boundary": "推断性前瞻；公开材料仅见规则/误击约束讨论，未见敌方针对识别证据链实施压制作战的成体系描述。",
+      "evidence_ids": [],
+      "packet_id": "packet-system_confrontation",
+      "possible_military_discontinuity": "防御胜负可能由‘谁能在压制作战条件下维持可辩护的自动识别并获授权交战’决定，而非由谁的雷达更远或干扰更强决定，改变对抗焦点到数据链与可信AI证据链。",
+      "query_relevance": "直接重定义‘防御装备需求’：需求重心从效应器转向支撑可辩护识别与自动授权交接的韧性计算与证据链装备。",
+      "signal": "在‘识别置信度=发射门槛’的约束下，频谱劣势的真正瓶颈不是探测距离而是‘可辩护的敌我判定’；公开讨论多聚焦雷达口径，弱信号指向交战规则与算法证据链成为新压制面。",
+      "source_agent_id": "system_confrontation",
+      "source_urls": [
+        "https://www.dote.osd.mil/",
+        "https://www.rand.org/topics/command-and-control.html"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "默认对抗发生在防御区域内的拦截瞬间；弱信号指向把交战前移到敌集结/航路规划阶段的体系动作，以破坏其批次经济性。",
+      "downstream_question": "在复杂电磁与民用混杂约束下，欺骗/伪目标手段的反向暴露风险(被敌利用为诱饵或引发误击)是否使其净收益为负，适用边界在哪里？",
+      "evidence_boundary": "基于成本交换比逻辑的外推；公开来源缺乏对前置消耗型对抗的实际效果评估，属未闭合命题。",
+      "evidence_ids": [
+        "ev-system_confrontation-web-1f6bd4975c3e"
+      ],
+      "packet_id": "packet-system_confrontation",
+      "possible_military_discontinuity": "防御体系的效能指标从‘单次拦截成功率’转向‘迫使敌方每次运用付出高于收益的前置代价’，可能使低成本的分布式主动(欺骗、诱骗、伪目标、航路扰动)获得超出其物理杀伤价值的体系地位。",
+      "query_relevance": "为‘不依赖频谱占优的处置所需效应与分配条件’提供非杀伤型频谱利用路径：主动制造敌我混杂与信息不确定。",
+      "signal": "若消耗型小UAS的成本使其可触发‘拦截弹耗尽→换不起’级联，则防御的经济解不是更便宜的弹，而是把‘对抗性投资’导向敌方的单次任务成本结构，即迫使敌人在抵达前消耗其航路冗余或暴露其批次意图。",
+      "source_agent_id": "system_confrontation",
+      "source_urls": [
+        "https://www.gao.gov/",
+        "https://www.rand.org/topics/command-and-control.html"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    }
+  ],
+  "open_questions": [
+    "复杂电磁条件下蓝方反制辐射与己方功能自扰的公开量化冲突案例是否存在及规模如何",
+    "复杂电磁+遮蔽条件下，分布式被动光电/声学探测对低RCS小型UAS的真实发现距离与虚警率（无充分公开数据）",
+    "S4/S5须针对保留的具体候选逐项核验公开装备基线、现役/在研边界、反证、成熟度与差距。"
+  ],
+  "query_anchor": "评估小型无人系统在复杂电磁环境下的防御装备需求",
+  "schema": "military_value_handoff_v1",
+  "statistics": {
+    "candidate_claim_count": 9,
+    "compression_ratio": 0.7407,
+    "evidence_url_count": 2,
+    "frontier_inspiration_count": 4,
+    "input_chars": 11417,
+    "input_packet_count": 3,
+    "limited_baseline_count": 1,
+    "output_chars": 8457,
+    "selected_claim_count": 4,
+    "source_agent_count": 2
+  }
+}

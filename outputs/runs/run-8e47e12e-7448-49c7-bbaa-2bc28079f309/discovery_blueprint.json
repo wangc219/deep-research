@@ -1,0 +1,512 @@
+{
+  "adaptive_winning_step_modes": {
+    "1": "light",
+    "2": "deep",
+    "3": "deep",
+    "4": "standard",
+    "5": "light",
+    "6": "deep"
+  },
+  "assumptions": [
+    "用户希望先形成需求与问题图，再进入候选装备生成与评分。",
+    "'低成本'按相对目标价值、拦截链成本和持续消耗能力理解。",
+    "'强干扰弱通信'默认包含GNSS受压、数据链不稳定和电磁压制。",
+    "'新质/颠覆'指可能改变接敌关系、效应方式或交换关系，而不是仅更换名称。"
+  ],
+  "baseline_agent_plan": [
+    {
+      "agent_id": "combat_scenario",
+      "mode": "required",
+      "reason": "任务包含未来高强度海空对抗与弱通信条件，需要先把阶段、环境和关键断点建清。"
+    },
+    {
+      "agent_id": "weapon_equipment",
+      "mode": "required",
+      "reason": "核心交付是低成本精确火力与反无人装备需求，必须由装备专用Agent承担能力边界、成熟度与现役/在研对比。"
+    },
+    {
+      "agent_id": "operational_employment",
+      "mode": "reference",
+      "reason": "用于把场景与装备映射到可执行的作战运用约束，但不作为首轮主导。"
+    }
+  ],
+  "baseline_execution_mode": "query_dominant_isolated_parallel",
+  "blueprint_id": "blueprint-a-d163ece6",
+  "blueprint_mode": "meta_composed",
+  "branch_name": "新战法发现",
+  "callback_agent_ids": [],
+  "confidence": 0.87,
+  "custom_blueprint": {
+    "dependencies": [
+      {
+        "downstream": "weapon_equipment",
+        "handoff": "Provide phase, environment, and engagement breakpoints before enumerating equipment demand candidates.",
+        "upstream": "combat_scenario"
+      },
+      {
+        "downstream": "operational_employment",
+        "handoff": "Provide scenario constraints and timing so employment analysis can map to task effects.",
+        "upstream": "combat_scenario"
+      }
+    ],
+    "dependency_cycle_rejected": false,
+    "driver_type": "A-centered scenario-to-equipment demand blueprint",
+    "preferred_agent_ids": [
+      "combat_scenario",
+      "weapon_equipment",
+      "operational_employment"
+    ],
+    "rationale": "A is the governing frame, while D and G remain supporting lenses. The plan keeps S1-S2 light because the user already supplies the combat frame, deepens S3-S4 because the task is to define open problems and demand space, keeps S5 standard for later candidate filtering, and keeps S6 light because the current turn must not preempt the later equipment answer.",
+    "required_capability_tags": [
+      "scenario",
+      "equipment",
+      "operation"
+    ],
+    "required_outputs": [
+      "Task boundary and failure breakpoint map",
+      "Candidate problem propositions",
+      "Equipment semantic boundary",
+      "Minimal agent DAG and loop triggers"
+    ],
+    "s1_s6_modes": {
+      "1": "skip",
+      "2": "light",
+      "3": "standard",
+      "4": "deep",
+      "5": "standard",
+      "6": "light"
+    },
+    "stop_conditions": [
+      "If scenario and equipment boundary are sufficient to drive downstream candidate generation, stop; do not expand into weapon architectures at blueprint stage."
+    ],
+    "waves": [
+      [
+        "combat_scenario"
+      ],
+      [
+        "weapon_equipment"
+      ],
+      [
+        "operational_employment"
+      ]
+    ]
+  },
+  "driver_scores": [
+    {
+      "branch": "A",
+      "exclusion_reason": "主分支，覆盖未来战法与场景牵引",
+      "score": 0.88,
+      "signals": [
+        "用户显式请求分支A",
+        "任务以未来高强度海空对抗中的作战运用与需求编排为中心",
+        "重点是从未来战法/场景反推装备需求与制胜问题",
+        "强调强干扰弱通信条件下的直接作战效果"
+      ]
+    },
+    {
+      "branch": "D",
+      "exclusion_reason": "非主分支，因为当前任务首先要完成未来作战需求与问题边界建模，而非先做技术雷达独立展开",
+      "score": 0.81,
+      "signals": [
+        "明确要求发散并筛选真正新质、创新、颠覆且可工程化的直接作战装备",
+        "需要S3/S4生成候选并做工程可行性筛选",
+        "强调模型自身军事装备专家能力",
+        "低成本精确火力与反无人装备均依赖技术成熟度判断"
+      ]
+    },
+    {
+      "branch": "G",
+      "exclusion_reason": "非主分支，因为跨域接口是重要约束，但核心交付仍是直接作战装备需求而不是完整跨域体系设计",
+      "score": 0.74,
+      "signals": [
+        "场景包含海空对抗",
+        "强干扰弱通信意味着通信、指挥与效应接口受压",
+        "低成本精确火力与反无人都涉及跨域传感-打击链路",
+        "需要考虑失联与降级协同"
+      ]
+    }
+  ],
+  "dynamic_subagents": [],
+  "emphasis": [
+    "S2",
+    "S3",
+    "S4"
+  ],
+  "execution_contract": {
+    "absolute_deadline_seconds": 0,
+    "background_count": 3,
+    "backtrack_map": {
+      "capability_mapping": [
+        4,
+        5,
+        6
+      ],
+      "electromagnetic_pressure": [
+        3,
+        4,
+        6
+      ],
+      "equipment_baseline": [
+        5,
+        6
+      ],
+      "report_section": [],
+      "tactic_distinctness": [
+        2,
+        3,
+        4,
+        6
+      ]
+    },
+    "branch": "A",
+    "branch_products": [
+      "three_backgrounds",
+      "six_scenarios",
+      "three_tactic_concepts",
+      "three_tactic_validations",
+      "five_tactic_combinations",
+      "eight_capability_domains",
+      "thirty_capability_indicators",
+      "equipment_forms"
+    ],
+    "codex_concurrency": 8,
+    "contract_id": "branch-a-optimized-v2",
+    "critical_fast_finalize_seconds": 0,
+    "deadline_downshift_window_seconds": 240,
+    "delivery_grace_seconds": 0,
+    "delivery_retry_reserve_seconds": 45,
+    "fast_finalize_output_token_cap": 4200,
+    "hard_deadline_seconds": 0,
+    "logical_agent_dag": {
+      "S1": [
+        "combat_scenario"
+      ],
+      "S2": [
+        "S1"
+      ],
+      "S3": [
+        "tactic_validation"
+      ],
+      "S4": [
+        "S3"
+      ],
+      "S5": [
+        "S4"
+      ],
+      "S6": [
+        "S4",
+        "S5"
+      ],
+      "combat_scenario": [
+        "international_situation"
+      ],
+      "international_situation": [],
+      "reporter": [
+        "S6"
+      ],
+      "tactic_validation": [
+        "S2"
+      ]
+    },
+    "maximum_delivery_model_calls": 8,
+    "maximum_model_calls": 10,
+    "maximum_model_calls_with_residuals": 14,
+    "maximum_quality_judge_model_calls": 2,
+    "maximum_rounds": 3,
+    "maximum_searches": 12,
+    "maximum_swarm_model_calls": 20,
+    "physical_cohorts": [
+      [
+        1,
+        2
+      ],
+      [
+        3,
+        4,
+        5
+      ]
+    ],
+    "scenarios_per_background": [
+      2,
+      2
+    ],
+    "schema_version": "2.0",
+    "soft_deadline_seconds": 0,
+    "step_intensity": {
+      "1": "light",
+      "2": "deep",
+      "3": "deep",
+      "4": "standard",
+      "5": "light",
+      "6": "deep"
+    },
+    "stop_conditions": [
+      "all_required_branch_products_present",
+      "accepted_claims_traceable_to_public_sources",
+      "no_repeated_residual_without_new_evidence",
+      "estimated_quality_gain_below_0.03"
+    ],
+    "wall_clock_deadlines_enabled": false
+  },
+  "execution_profile_hash": "e4846e700ee05079b2c6664b3b9d1172524e6f6492c1677a53d1a117460f66e6",
+  "execution_profile_id": "winning_swarm_dynamic_v2",
+  "focus_questions": [
+    "在强干扰、弱通信条件下，哪些直接战果必须由具体战斗装备本体承担，不能外包给外部指挥或高带宽链路？",
+    "哪些装备级机理能够在低成本前提下同时维持精确火力和反无人效能，并保持可持续交换比优势？",
+    "对手采取电子压制、饱和无人袭扰和目标诱饵后，哪些传统方案会先失效，失效边界在哪里？",
+    "什么证据与淘汰条件可以筛掉看似新颖但无法工程化、无法持续作战的方案？"
+  ],
+  "generated_by": "codex_orchestrator",
+  "hard_constraints": [
+    "本阶段不提前输出具体装备家族、技术路线、载荷组合或近似成品方案。",
+    "只做防御性、公开来源导向的需求研究。",
+    "事实、假设、推断和未知必须分开。",
+    "S3/S4可以发散候选，但当前阶段只编排问题、蓝图和Agent路径。"
+  ],
+  "hard_dependencies": {
+    "combat_scenario": [
+      "international_situation"
+    ],
+    "international_situation": [],
+    "tactic_validation": [
+      "S2"
+    ]
+  },
+  "initial_baseline_agent_ids": [
+    "combat_scenario",
+    "weapon_equipment",
+    "operational_employment"
+  ],
+  "interaction_mode": "expert",
+  "loop_policy": {
+    "inner_max_iterations": 1,
+    "meta_max_cycles": 1,
+    "middle_max_cycles": 1,
+    "minimum_expected_gain": 0.03,
+    "outer_max_rounds": 3,
+    "residual_only_after_first_round": true
+  },
+  "maximum_business_agents": 3,
+  "meta_review": {
+    "added_secondary_branches": [],
+    "dynamic_subagents": [],
+    "focus_questions": [],
+    "rationale": "覆盖与收敛结果未触发实质性重规划条件，保留当前蓝图。",
+    "replan_required": false,
+    "step_mode_changes": [],
+    "step_mode_overrides": [],
+    "stop_reason": "lean_meta_gate_passed"
+  },
+  "meta_triggers": [
+    "出现跨分支高价值线索",
+    "当前分支无法覆盖关键能力标签",
+    "案例/技术/对手变化反向触发其他发现路径",
+    "A-H运行基座无法解释OTHER驱动源，需动态组合蓝图",
+    "若后续明确特定战区或对手，E应进入首轮并补威胁形成链。",
+    "若发现现役短板主导而非未来新质需求主导，B应上调为主分支。",
+    "若任务需要验证级联失效、补链强链或失联降级模式，系统对抗仿真应从参考升级为必需。",
+    "若明确需要跨域接口或海空一体降级协同，G可由次分支升级为主交接。"
+  ],
+  "minimum_business_agents": 2,
+  "primary_branch": "A",
+  "prompt_version": "2.8",
+  "rationale": "任务主轴是未来海空高强度对抗下的装备需求与新质候选筛选，且用户显式指定A。A负责把未来作战条件、任务断点和制胜问题先定清；D补足新装备与工程可行性；G补足海空与弱通信条件下的跨域接口约束。任务不需要引入OTHER，因为A-H已能覆盖主要驱动。",
+  "reference_focus": {
+    "source_items": [
+      10
+    ],
+    "task_kernel": "智能化大规模全域联合作战场景→提炼任务组织、决策节奏和无人远火新运用机理→交付竞争性新战法、装备族和验证命题。"
+  },
+  "required_capability_tags": [
+    "equipment",
+    "operation",
+    "scenario"
+  ],
+  "required_outputs": [
+    "现有战法基线",
+    "战法概念集（3种新战法+5种战法组合）",
+    "装备能力需求图像（8大能力域+30项能力指标）",
+    "关联装备形态建议",
+    "效果链与验证路径",
+    "深度研究主报告（深度性、创新性、前瞻性、军事价值性）",
+    "分支专用收敛产物",
+    "Task boundary and failure breakpoint map",
+    "Candidate problem propositions",
+    "Equipment semantic boundary",
+    "Minimal agent DAG and loop triggers"
+  ],
+  "runtime_budgets": {
+    "absolute_deadline_seconds": 0,
+    "codex_concurrency": 8,
+    "critical_fast_finalize_seconds": 0,
+    "deadline_downshift_window_seconds": 240,
+    "delivery_grace_seconds": 0,
+    "delivery_retry_reserve_seconds": 45,
+    "fast_finalize_output_token_cap": 4200,
+    "hard_deadline_seconds": 0,
+    "maximum_delivery_model_calls": 8,
+    "maximum_model_calls": 10,
+    "maximum_model_calls_with_residuals": 14,
+    "maximum_quality_judge_model_calls": 0,
+    "maximum_searches": 12,
+    "maximum_swarm_model_calls": 48,
+    "s6_codex_concurrency": 8,
+    "soft_deadline_seconds": 0,
+    "wall_clock_deadlines_enabled": false
+  },
+  "runtime_route": "new_winning_mechanism",
+  "secondary_branches": [],
+  "semantic_agent_signals": [],
+  "specialist_agent_ids": [],
+  "structured_query_brief": {
+    "battle_phase_and_constraints": [
+      "未来高强度海空对抗",
+      "强干扰、弱通信、链路退化",
+      "低成本与可持续消耗约束",
+      "直接作战效果优先于流程优化",
+      "需要工程可行性而非概念展示"
+    ],
+    "combat_problem_frame": "在电磁强压制、通信脆弱、海空目标高速变化的条件下，如何形成低成本、可持续、可工程化的精确毁伤与反无人能力，并避免对稳定链路和高价值平台的过度依赖。",
+    "constraints_and_assumptions": [
+      "任务面向未来海空高强度对抗。",
+      "输出需聚焦直接作战装备需求，不提前展开具体成品方案。",
+      "创新性、颠覆性与工程化必须同时成立。",
+      "区分事实与待验证假设。"
+    ],
+    "core_query": "未来高强度海空对抗中，在强干扰、弱通信条件下识别低成本精确火力与反无人装备需求。",
+    "enemy_target_profile": [
+      "具备电子干扰、通信压制和诱饵化能力的对手",
+      "可能实施无人机/无人集群饱和袭扰的对手",
+      "能够利用海空复杂背景与弱链路环境削弱我方火力闭环的对手"
+    ],
+    "equipment_project_hypotheses": [],
+    "equipment_semantic_boundary": "后续必须由具体战斗装备本体承担的部分包括传感、接战、毁伤、发射与补给闭环；通信、指控、组网、数据融合和外部协同只能作为接口或保障，不能替代本体作战效能。",
+    "expansion_dimensions": [
+      "任务对象与直接效果",
+      "对手适应与失效边界",
+      "装备形态与工程约束",
+      "证据问题与淘汰条件"
+    ],
+    "focus_questions": [
+      "强干扰弱通信条件下，哪些直接作战效果必须由具体战斗装备本体承担？",
+      "哪些装备形态能在低成本前提下维持精确火力与反无人效能？",
+      "对手适应后，哪些机制会失效，失效边界在哪里？",
+      "用什么证据和淘汰条件筛掉不可工程化方案？"
+    ],
+    "frontier_technology_hypotheses": [],
+    "handoff_rule": "蓝图只保留问题图、证据问题和排他边界；下游S1-S6围绕这些边界自由推演，不得回填为既成事实。",
+    "query_specific_weapon_architectures": [],
+    "rejected_template_anchors": [
+      "只列装备名不建问题边界",
+      "先做技术清单再回填场景",
+      "把流程优化当作装备需求",
+      "把跨域协同等同于本体作战效能"
+    ],
+    "required_direct_military_effects": [
+      "低成本精确毁伤",
+      "反无人/反集群拦截",
+      "抗饱和",
+      "受扰环境下持续接战",
+      "保持有利交换比"
+    ],
+    "supplement_present": true,
+    "supplement_summary": "补充信息要求以军事装备专家视角发散并筛选真正新质、创新、颠覆且可工程化的直接作战装备；S3/S4产出约20个高质量候选，S5按给定权重筛至最多7个，S6形成能力画像，并严格区分事实与待验证假设。",
+    "weapon_design_variables": [],
+    "winning_problem_propositions": [
+      {
+        "changeable_variable": "把精度来源从持续通信转向更强的局部自治、任务前约束和末端独立判别。",
+        "conventional_assumption": "精确打击必须依赖持续高带宽回传与集中式任务重定向。",
+        "direct_military_result": "在受扰海空环境中维持低成本精确毁伤与快速拒止。",
+        "exclusion_and_falsification_boundary": "若方案仍必须依赖稳定数据链、昂贵传感器网络或高价值前置平台，则不纳入。",
+        "mechanism_search_question": "什么装备级机理能在链路退化时仍保持可接受的目标识别、接敌与终端修正，并把单次作战成本压到可持续消耗区间？",
+        "target_and_phase": "弱通信、强干扰下的海空远中程精确拦截",
+        "task_breakpoint": "传统精确火力依赖稳定链路、完整态势图和高价值平台，链路受压后命中率与反应时间会同时恶化。"
+      },
+      {
+        "changeable_variable": "把交换比、同时交战数量和目标分选逻辑作为核心变量。",
+        "conventional_assumption": "反无人主要靠更贵的拦截弹或单一火控链路堆叠。",
+        "direct_military_result": "对无人机、集群突袭和低慢小目标形成持续压制与拒止。",
+        "exclusion_and_falsification_boundary": "若无法在复杂海空背景下稳定分选并在成本上压过对手，则排除。",
+        "mechanism_search_question": "哪些装备级组合能在海空复杂背景与电子压制下，把单位拦截成本、反应速度和可持续抗饱和同时推到可用阈值？",
+        "target_and_phase": "近程至中程反无人/反集群防护",
+        "task_breakpoint": "现有点防御容易被饱和、诱饵化或成本交换劣化。"
+      },
+      {
+        "changeable_variable": "把前沿单元的自主接战、快速复用与低成本补充作为设计中心。",
+        "conventional_assumption": "前沿火力必须由连续任务规划和完整上级指挥闭环驱动。",
+        "direct_military_result": "提升海空前沿持续消耗、窗口封锁和机会打击能力。",
+        "exclusion_and_falsification_boundary": "若只能做一次性精确打击而难以快速恢复与再投入，则不成立。",
+        "mechanism_search_question": "怎样的装备本体与作战接口，能在通信受压时保持可重复、可补充、可快速再攻击的火力节奏？",
+        "target_and_phase": "弱链路条件下的前沿快速打击与再攻击",
+        "task_breakpoint": "火力从发现到重打击的闭环太长，且过度依赖外部更新。"
+      }
+    ]
+  },
+  "unmatched_driver": "无",
+  "waves": [
+    [
+      "combat_scenario"
+    ],
+    [
+      "weapon_equipment"
+    ],
+    [
+      "operational_employment"
+    ]
+  ],
+  "winning_swarm_policy": {
+    "archetypes": [
+      "disruptive_mechanism_generator",
+      "independent_portfolio_reviewer",
+      "innovative_equipment_dimension_generator",
+      "weak_signal_scout"
+    ],
+    "breadth_hypothesis_maximum": 20,
+    "breadth_hypothesis_minimum": 1,
+    "enabled": true,
+    "expert_candidate_pool_maximum": 0,
+    "expert_judge_critical_dimension_minimum": 0.52,
+    "expert_judge_enabled": false,
+    "expert_judge_minimum_score": 0.68,
+    "expert_judge_required": false,
+    "expert_repair_enabled": false,
+    "expert_repair_max_candidates": 0,
+    "expert_repair_minimum_score": 0.64,
+    "expert_repair_reserved_instances": 0,
+    "finalist_maximum": 7,
+    "finalist_minimum": 6,
+    "foresight_first_enabled": true,
+    "frontier_critical_dimension_minimum": 0.5,
+    "frontier_evidence_relaxation": true,
+    "frontier_expert_judge_minimum_score": 0.66,
+    "frontier_final_gate_minimum_score": 0.62,
+    "max_concurrency": 8,
+    "max_dynamic_instances": 21,
+    "max_waves": 3,
+    "minimum_direct_combat_equipment": 2,
+    "minimum_expected_gain": 0.03,
+    "mission_graph_max_instances": 21,
+    "mission_graph_min_instances": 8,
+    "mission_graph_target_instances": 15,
+    "pending_verification_backfill_enabled": false,
+    "pending_verification_critical_dimension_minimum": 0.42,
+    "pending_verification_minimum_score": 0.54,
+    "policy_id": "winning_swarm_dynamic_v2",
+    "preferred_distinct_direct_equipment": 3,
+    "promotion": {
+      "human_approval_required": true,
+      "maximum_evidence_hard_failures": 0,
+      "maximum_permission_hard_failures": 0,
+      "minimum_eligible_runs": 10,
+      "minimum_positive_increment_rate": 0.7,
+      "offline_evaluation_required": true
+    },
+    "raw_session_sharing_allowed": false,
+    "recursive_recruitment_allowed": false,
+    "s3_empty_reallocation_max": 2,
+    "s3_s4_candidate_maximum_per_session": 2,
+    "s3_s4_candidate_pool_maximum_per_session": 2,
+    "s3_winning_thesis_capacity": 10,
+    "same_family_minimum_independent_axes": 2
+  }
+}

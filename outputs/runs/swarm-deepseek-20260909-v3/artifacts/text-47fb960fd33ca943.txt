@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · Force Design
+source_url=https://www.marines.mil/Force-Design/
+claim=锚点登记：本运行仅收录URL（required_source_anchor），未提供正文与EvidenceCard引用位置；未据此作出内容级事实主张。
+excerpt=
+retrieval=Hosted web search citation metadata

@@ -1,0 +1,215 @@
+{
+  "baseline_boundaries": [
+    {
+      "agent_id": "weapon_equipment",
+      "availability": "unavailable",
+      "downstream_obligations": [
+        "S3不得把基线缺失解释为候选不可行或收缩创新空间",
+        "S4按保留候选核验最近公开装备基线与直接反证",
+        "S5汇总候选级成熟度、成本产能、现役差距与未决证据"
+      ],
+      "limitations": [
+        "基线不可用原因：RuntimeError: weapon_equipment model turn completed but outer baseline result validation found no substantive findings"
+      ],
+      "open_questions": [
+        "S4/S5须针对保留的具体候选逐项核验公开装备基线、现役/在研边界、反证、成熟度与差距。"
+      ],
+      "packet_id": "packet-weapon_equipment"
+    }
+  ],
+  "branch_products": {},
+  "claims": [
+    {
+      "claim_id": "claim-86bb22945d20",
+      "claim_type": "fact",
+      "confidence": 0.72,
+      "downstream_steps": [
+        "S2",
+        "S4"
+      ],
+      "evidence_ids": [
+        "ev-technology_radar-web-8952c3805d5a",
+        "ev-technology_radar-web-6c1c84a0e24e"
+      ],
+      "failure_boundary": "公开战略文件强调体系化和规模化，但厂商产品页通常强调单项拦截能力，二者之间存在从产品性能到体系闭环效果的证据缺口。",
+      "mechanism": "【贡献：颠覆场景/直接军事效果/失效边界】Coyote等反无人系统公开产品说明了硬杀伤拦截已经具备现实装备基线，但其军事价值边界取决于目标密度、补给节奏、识别置信度和交战窗口。技术雷达视角下，硬杀伤不是终点，而是闭环链中可被软杀伤、诱骗、定向能或机动规避替代/补充的效应节点。",
+      "military_effects": [
+        "指挥决策",
+        "拦截反制",
+        "生存抗毁",
+        "保障恢复"
+      ],
+      "packet_id": "packet-technology_radar",
+      "source_agent_id": "technology_radar",
+      "source_urls": [
+        "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+      ]
+    },
+    {
+      "claim_id": "claim-29637616872d",
+      "claim_type": "hypothesis",
+      "confidence": 0.35,
+      "downstream_steps": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "failure_boundary": "公开材料同时强调快速传感器到射手闭环与安全、可控、低附带损伤处置；两者在低空短时窗下存在天然张力。",
+      "mechanism": "判断：低空防御闭环的体系边界不是“发现即打击”，而是低空多源感知、目标身份可信化、连续航迹维持、威胁排序、效应分配、授权处置、战果评估和资源再分配的循环链。军事任务价值：把侦察预警、指挥决策、协同、压制、拦截和恢复纳入同一仿真边界，能够定位漏防、误伤和火力浪费的真实来源。证据边界：公开来源支持反无人系统需要分层防御、互操作、数据共享和快速传感器到射手闭环，但不证明任何特定架构已经成熟。失效条件：若威胁对象不是低空低慢小、多目标并发，或作战规则允许无差别区域杀伤，则该闭环边界的重要性下降。",
+      "military_effects": [
+        "侦察预警",
+        "指挥决策",
+        "打击歼灭",
+        "拦截反制",
+        "保障恢复",
+        "体系协同"
+      ],
+      "packet_id": "packet-system_confrontation",
+      "source_agent_id": "system_confrontation"
+    },
+    {
+      "claim_id": "claim-2a6b895122e9",
+      "claim_type": "hypothesis",
+      "confidence": 0.72,
+      "downstream_steps": [
+        "S4"
+      ],
+      "evidence_ids": [
+        "ev-technology_radar-web-8952c3805d5a",
+        "ev-technology_radar-web-6c1c84a0e24e"
+      ],
+      "failure_boundary": "公开战略文件强调体系化和规模化，但厂商产品页通常强调单项拦截能力，二者之间存在从产品性能到体系闭环效果的证据缺口。",
+      "mechanism": "【贡献：任务依赖图/反证判断/替代方案】DIU为Replicator选择软件供应商的事实表明，规模化低空对抗越来越依赖任务软件、感知融合、编队/群体控制和战术数据编排。由此反证：若某装备项目只证明了单机探测距离或单发毁伤概率，却不能证明多目标并行分配、交战授权、误报抑制和效果评估闭环，则不足以支撑“闭环杀伤链”需求。",
+      "military_effects": [
+        "侦察预警",
+        "指挥决策",
+        "打击歼灭",
+        "体系协同"
+      ],
+      "packet_id": "packet-technology_radar",
+      "source_agent_id": "technology_radar",
+      "source_urls": [
+        "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+      ]
+    },
+    {
+      "claim_id": "claim-65ee083199a2",
+      "claim_type": "hypothesis",
+      "confidence": 0.35,
+      "downstream_steps": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "failure_boundary": "公开材料同时强调快速传感器到射手闭环与安全、可控、低附带损伤处置；两者在低空短时窗下存在天然张力。",
+      "mechanism": "判断：替代链路应按任务效果而非装备类别组织：发现替代、识别替代、通信替代、效应替代、评估替代和指挥授权替代分别承担不同断链恢复功能。军事任务价值：在压制、干扰、饱和或局部毁伤下，替代链路决定战损后能否继续拒止低空威胁，而不是简单提升单节点性能。证据边界：公开来源能支撑分层防御和互操作需求，不能直接证明特定替代链路组合的战术有效性。失效条件：若替代链路共享同一数据源、通信路径或授权节点，则名义冗余不会转化为真实抗毁能力。",
+      "military_effects": [
+        "指挥决策",
+        "打击歼灭",
+        "拦截反制",
+        "拒止制衡",
+        "生存抗毁",
+        "保障恢复",
+        "持续作战"
+      ],
+      "packet_id": "packet-system_confrontation",
+      "source_agent_id": "system_confrontation"
+    }
+  ],
+  "conflicts": [
+    "技术雷达认为公开证据已足以支撑反无人系统从平台采购转向体系化、软件化、规模化和可消耗化；体系对抗包对具体架构成熟度、融合门限和交战规则保持低置信判断，二者在“可形成装备需求的证据强度”上存在差异。",
+    "硬杀伤拦截已有公开装备基线，但其是否应作为首选能力方向存在冲突：技术雷达强调抗饱和成本交换会削弱高成本单发拦截器普适性，体系对抗强调硬杀伤仍是闭环效应节点之一但必须受战果确认和资源再分配约束。",
+    "多源感知既被视为提高可信度的必要路径，也可能引入关联错误、接口拥塞和跨链污染；后续不能把“多源”天然等同于“更可靠”。"
+  ],
+  "frontier_inspiration_rule": "仅在后续模型完成首次自由发散后作为可选启发；可重构或全部舍弃，不得视为装备答案、命名种子、技术目录或覆盖配额。",
+  "frontier_inspirations": [
+    {
+      "conventional_assumption_challenged": "传统假设是防御方用少量高性能传感器和高可靠拦截器逐目标闭合杀伤链。",
+      "downstream_question": "多链并行低空防御中，哪一类节点失效会从局部漏防升级为体系性崩溃？",
+      "evidence_boundary": "公开证据只显示战略和采购方向，不能证明其在复杂电磁、城市/海岸杂波、多批次饱和目标中的闭环稳定性。",
+      "evidence_ids": [
+        "ev-technology_radar-web-8952c3805d5a",
+        "ev-technology_radar-web-6c1c84a0e24e"
+      ],
+      "packet_id": "packet-technology_radar",
+      "possible_military_discontinuity": "防御方可能把杀伤链拆成分布式感知、局部自治排序、低成本效应云和事后战果复核，使单个节点失效不再导致全链断裂，并迫使攻击方从突破某一防空点转向消耗整个低空防御生态。",
+      "query_relevance": "直接关系到低空多源感知与软硬杀伤闭环是否需要按单链闭合还是多链并行设计。",
+      "signal": "Replicator式规模化可消耗系统与反无人闭环战略同时出现，暗示低空防御可能从“发现后逐一拦截”转向“持续布设可消耗效应层”。",
+      "source_agent_id": "technology_radar",
+      "source_urls": [
+        "https://www.defense.gov/News/Releases/Release/Article/3963289/deputy-secretary-of-defense-kathleen-hicks-announces-additional-replicator-all/",
+        "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "常规装备论证容易把“探测设备+干扰设备+拦截弹”相加视为闭环。",
+      "downstream_question": "低空闭环中，任务软件可验证的直接军事效果应定义为缩短反应时间、降低误杀率、提高并发交战数，还是降低单位目标处置成本？",
+      "evidence_boundary": "公开信息可支撑软件化趋势，但不能判定算法鲁棒性、误报抑制能力或授权规则下的实际交战速度。",
+      "evidence_ids": [],
+      "packet_id": "packet-technology_radar",
+      "possible_military_discontinuity": "若任务软件能实时压缩识别、威胁排序、效应分配和战果评估，防御方的战斗力增长可能表现为同等硬件下的交战容量跃升，而非火力单元数量线性增加。",
+      "query_relevance": "命中本Query的核心断点：从多源感知到软硬杀伤之间的决策与分配延迟。",
+      "signal": "DIU软件供应商进入Replicator，显示闭环能力的增量可能来自任务软件和数据编排，而非新增一个传感器或拦截器。",
+      "source_agent_id": "technology_radar",
+      "source_urls": [
+        "https://www.diu.mil/latest/defense-innovation-unit-announces-software-vendors-to-support-replicator"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "防御方可以依靠更高性能拦截器和人工授权逐批处理低空目标。",
+      "downstream_question": "开放问题：如何定义能同时约束误伤、漏防和资源耗尽的闭环吞吐量指标。",
+      "evidence_boundary": "公开资料支持无人系统快速扩散和体系韧性压力；闭环吞吐量作为主指标是基于任务逻辑的推断，缺少公开统一度量。",
+      "evidence_ids": [],
+      "packet_id": "packet-system_confrontation",
+      "possible_military_discontinuity": "制胜点可能从单次杀伤概率转向可恢复的闭环吞吐量，即在不完全确认条件下维持可控拒止、持续评估和资源再分配。",
+      "query_relevance": "直接对应多源感知到软硬杀伤闭环中的威胁排序、效应选择和战果评估耦合。",
+      "signal": "低空威胁的单位成本、数量增长和短时窗特征，使传统“每个目标形成完整人工确认和单次硬杀伤”的交换关系承压。",
+      "source_agent_id": "system_confrontation",
+      "source_urls": [
+        "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+        "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "战果评估必须以物理摧毁或可见残骸为主。",
+      "downstream_question": "开放问题：何种公开可验证迹象能够把软杀伤的临时压制与真实任务失效区分开。",
+      "evidence_boundary": "公开来源支持低附带损伤效应和分层应对需求；软杀伤战果的可靠判据仍缺少公开实测证据。",
+      "evidence_ids": [],
+      "packet_id": "packet-system_confrontation",
+      "possible_military_discontinuity": "防御闭环可能形成软硬效应交替控制模式，以行为抑制和再捕获替代每次都追求物理歼灭。",
+      "query_relevance": "该信号影响软杀伤、硬杀伤和效果评估之间的接口定义，是闭环能否持续而不耗尽硬杀伤资源的关键。",
+      "signal": "软杀伤效果常存在不可见、可逆或延迟显现特征，可能使传统战果评估从“确认毁伤”转为“确认威胁行为被持续剥夺”。",
+      "source_agent_id": "system_confrontation",
+      "source_urls": [
+        "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    }
+  ],
+  "open_questions": [
+    "公开资料不足以判定低空多源融合中哪些传感器组合在复杂背景下能稳定降低误报与漏报。",
+    "公开材料不足以判定不同传感器组合在复杂低空背景下的误报率、漏警率和交叉验证收益。",
+    "S4/S5须针对保留的具体候选逐项核验公开装备基线、现役/在研边界、反证、成熟度与差距。"
+  ],
+  "query_anchor": "低空多源感知至软硬杀伤闭环杀伤链研究",
+  "schema": "military_value_handoff_v1",
+  "statistics": {
+    "candidate_claim_count": 9,
+    "compression_ratio": 0.7161,
+    "evidence_url_count": 1,
+    "frontier_inspiration_count": 4,
+    "input_chars": 9811,
+    "input_packet_count": 3,
+    "limited_baseline_count": 1,
+    "output_chars": 7026,
+    "selected_claim_count": 4,
+    "source_agent_count": 2
+  }
+}

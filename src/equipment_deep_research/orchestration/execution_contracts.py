@@ -15,6 +15,9 @@ from typing import Any, Literal, Mapping, Sequence
 from equipment_deep_research.orchestration.winning_swarm import (
     normalize_winning_swarm_policy,
 )
+from equipment_deep_research.domain.capability_portrait import (
+    S6_DEFAULT_CODEX_CONCURRENCY,
+)
 
 
 StepIntensity = Literal["skip", "light", "standard", "deep"]
@@ -356,16 +359,24 @@ def optimized_v2_profile() -> ExecutionProfile:
             "normal_model_calls": 10,
             "residual_model_calls": 14,
             "searches": 12,
-            "codex_concurrency": 5,
+            "codex_concurrency": 8,
             # Internal S6 card calls share this one run; they do not consume
             # additional research Worker slots.
-            "s6_codex_concurrency": 6,
+            "s6_codex_concurrency": S6_DEFAULT_CODEX_CONCURRENCY,
+            # Final report authoring is split by H3 column (12 project columns,
+            # 9 three-layer columns).  This ceiling is activated only for the
+            # Reporter wave and restored before returning to the shared gate.
+            "reporter_codex_concurrency": 12,
             "wall_clock_deadlines_enabled": False,
             "soft_deadline_seconds": 0,
             "hard_deadline_seconds": 0,
             "delivery_grace_seconds": 0,
             "absolute_deadline_seconds": 0,
             "maximum_delivery_model_calls": 8,
+            # Twelve single-column calls form the largest initial wave.  Keep
+            # one targeted primary repair and one fallback slot per column;
+            # completed columns are never replayed.
+            "maximum_reporter_model_calls": 36,
             "deadline_downshift_window_seconds": 240,
             "critical_fast_finalize_seconds": 0,
             "delivery_retry_reserve_seconds": 45,
@@ -432,13 +443,15 @@ def winning_swarm_dynamic_v2_profile() -> ExecutionProfile:
         },
         budgets={
             **dict(optimized_v2_profile().budgets),
-            # Keep the provider gate aligned with the mission graph's explicit
-            # six-instance concurrency contract.
-            "codex_concurrency": 6,
+            # Four S1/S2 seeds and up to eight independent S3/S4 creators are
+            # dependency-safe. Let the dynamic run use eight internal model
+            # lanes without consuming additional research Worker slots.
+            "codex_concurrency": 8,
+            "s6_codex_concurrency": S6_DEFAULT_CODEX_CONCURRENCY,
             "max_dynamic_instances": 21,
             "min_mission_graph_instances": 8,
-            "target_mission_graph_instances": 12,
-            "max_swarm_concurrency": 6,
+            "target_mission_graph_instances": 10,
+            "max_swarm_concurrency": 8,
             "max_swarm_waves": 3,
             "minimum_expected_gain": 0.03,
         },
@@ -446,6 +459,36 @@ def winning_swarm_dynamic_v2_profile() -> ExecutionProfile:
         approved=False,
         parent_profile_id="swarm_quality_v1",
         schema_version="2.0",
+    )
+
+
+def deep_divergence_v1_profile() -> ExecutionProfile:
+    """Bounded S3/S4/S6-only workflow used by expert deep research.
+
+    It intentionally skips S1/S2/S5 reruns and caps the open innovation
+    lanes at three S3 and three S4 candidates.  The parent run supplies the
+    canonical query/evidence snapshot and any retrieval escalation happens
+    inside the deep job.
+    """
+    contracts = {
+        branch: _contract(
+            branch,
+            dag={"S3": ("context",), "S4": ("S3",), "S6": ("S4",)},
+            modes=("skip", "skip", "deep", "deep", "skip", "deep"),
+            cohorts=((3, 4), (5, 6)),
+            products=("DeepDivergenceCandidates", "DeepCapabilityVersion"),
+            backtrack={"S3": (3,), "S4": (3, 4), "S6": (4, 6)},
+        ) for branch in "ABCDEFGH"
+    }
+    return ExecutionProfile(
+        profile_id="deep_divergence_v1",
+        harness_version="optimized_v2",
+        agent_mode="deep_divergence_contextual",
+        branch_contracts=contracts,
+        model_tiers={"S3": "quality", "S4": "quality", "S6": "quality"},
+        prompt_versions={"deep": "deep-divergence-v1"},
+        budgets={"max_s3_slots": 3, "max_s4_slots": 3, "max_candidates": 6, "max_searches": 6, "max_concurrency": 6},
+        status="challenger", approved=False, parent_profile_id="winning_swarm_dynamic_v2", schema_version="1.0",
     )
 
 
@@ -458,6 +501,8 @@ def resolve_execution_profile(profile_id: str | None) -> ExecutionProfile | None
         return swarm_quality_v1_profile()
     if profile_id == "winning_swarm_dynamic_v2":
         return winning_swarm_dynamic_v2_profile()
+    if profile_id == "deep_divergence_v1":
+        return deep_divergence_v1_profile()
     raise ValueError(f"unknown execution profile: {profile_id}")
 
 
@@ -509,22 +554,30 @@ def apply_execution_profile_to_blueprint(
             {
                 "policy_id": "winning_swarm_dynamic_v2",
                 "max_dynamic_instances": 21,
-                "max_concurrency": 6,
+                "max_concurrency": 8,
                 "mission_graph_min_instances": 8,
-                # Eight S3 slots are only semantic capacity.  The independent
-                # Query selector activates the number of genuinely distinct
-                # winning theses it finds; unused slots never start Codex.
-                "mission_graph_target_instances": 15,
+                # Heterogeneous first wave: complementary S1/S2, unique
+                # creative scouts, and 2-3 cross-pool S5 reviewers. Remaining
+                # capacity up to max_instances is for Gap Analyzer recruitment.
+                "mission_graph_target_instances": 10,
                 "mission_graph_max_instances": 21,
-                "s3_winning_thesis_capacity": 8,
+                "s3_winning_thesis_capacity": 4,
+                "coverage_expand_max_recruits": 2,
+                "breadth_hypothesis_maximum": 18,
                 "s3_empty_reallocation_max": 2,
-                "finalist_minimum": 2,
+                "s3_s4_candidate_maximum_per_session": 3,
+                "s3_s4_candidate_pool_maximum_per_session": 3,
+                # S5 is an innovation-first cut. The historical six-card value
+                # remains a dashboard preference only; admission has no floor,
+                # and rejected ordinary upgrades are never resurrected merely
+                # to fill the seven-card ceiling.
+                "finalist_minimum": 6,
                 "finalist_maximum": 7,
                 "minimum_direct_combat_equipment": 2,
                 "preferred_distinct_direct_equipment": 3,
-                "expert_candidate_pool_maximum": 12,
-                "expert_judge_enabled": True,
-                "expert_judge_required": True,
+                "expert_candidate_pool_maximum": 0,
+                "expert_judge_enabled": False,
+                "expert_judge_required": False,
                 "foresight_first_enabled": True,
                 "frontier_evidence_relaxation": True,
                 "frontier_final_gate_minimum_score": 0.62,
@@ -532,12 +585,12 @@ def apply_execution_profile_to_blueprint(
                 "frontier_critical_dimension_minimum": 0.50,
                 "expert_judge_minimum_score": 0.68,
                 "expert_judge_critical_dimension_minimum": 0.52,
-                "pending_verification_backfill_enabled": True,
+                "pending_verification_backfill_enabled": False,
                 "pending_verification_minimum_score": 0.54,
                 "pending_verification_critical_dimension_minimum": 0.42,
-                "expert_repair_enabled": True,
-                "expert_repair_max_candidates": 3,
-                "expert_repair_reserved_instances": 3,
+                "expert_repair_enabled": False,
+                "expert_repair_max_candidates": 0,
+                "expert_repair_reserved_instances": 0,
                 "expert_repair_minimum_score": 0.64,
             }
         )
@@ -582,7 +635,13 @@ def apply_execution_profile_to_blueprint(
         "maximum_searches": contract.maximum_searches,
         "codex_concurrency": runtime_codex_concurrency,
         "s6_codex_concurrency": int(
-            profile.budgets.get("s6_codex_concurrency", 6)
+            profile.budgets.get(
+                "s6_codex_concurrency",
+                S6_DEFAULT_CODEX_CONCURRENCY,
+            )
+        ),
+        "reporter_codex_concurrency": int(
+            profile.budgets.get("reporter_codex_concurrency", 12)
         ),
         "wall_clock_deadlines_enabled": contract.wall_clock_deadlines_enabled,
         "soft_deadline_seconds": contract.soft_deadline_seconds,
@@ -590,6 +649,12 @@ def apply_execution_profile_to_blueprint(
         "delivery_grace_seconds": contract.delivery_grace_seconds,
         "absolute_deadline_seconds": contract.absolute_deadline_seconds,
         "maximum_delivery_model_calls": contract.maximum_delivery_model_calls,
+        "maximum_reporter_model_calls": int(
+            profile.budgets.get(
+                "maximum_reporter_model_calls",
+                max(contract.maximum_delivery_model_calls, 36),
+            )
+        ),
         "maximum_swarm_model_calls": contract.maximum_swarm_model_calls,
         "maximum_quality_judge_model_calls": contract.maximum_quality_judge_model_calls,
         "deadline_downshift_window_seconds": contract.deadline_downshift_window_seconds,
@@ -597,14 +662,31 @@ def apply_execution_profile_to_blueprint(
         "delivery_retry_reserve_seconds": contract.delivery_retry_reserve_seconds,
         "fast_finalize_output_token_cap": contract.fast_finalize_output_token_cap,
     }
-    if profile.profile_id == "winning_swarm_dynamic_v2":
-        # Keep one final residual review available when the second review has
-        # enough passing cards but still misses the five-family hard gate. The
-        # extra review is fed only bounded repair deltas, not the full ledger.
+    if profile.profile_id == "deep_divergence_v1":
+        # The deep profile owns a smaller child budget than the ordinary
+        # branch contract.  Persist its limits into the runtime budget so
+        # search reservation and run-scoped call gates enforce the declared
+        # six-query/six-slot envelope rather than inheriting legacy defaults.
         result["runtime_budgets"].update(
             {
-                "maximum_swarm_model_calls": 36,
-                "maximum_quality_judge_model_calls": 3,
+                "maximum_searches": int(profile.budgets.get("max_searches", 6)),
+                "codex_concurrency": int(profile.budgets.get("max_concurrency", 6)),
+                "max_searches": int(profile.budgets.get("max_searches", 6)),
+                "max_concurrency": int(profile.budgets.get("max_concurrency", 6)),
+            }
+        )
+    if profile.profile_id == "winning_swarm_dynamic_v2":
+        # Dynamic-v2 has no quality-judge call budget. S5 incremental portfolio
+        # review is accounted within the ordinary swarm model-call ceiling.
+        result["runtime_budgets"].update(
+            {
+                # Compact first wave plus one or two coverage recruits, a
+                # selector, clustering and 2-3 cross-pool S5 reviewers.
+                "maximum_swarm_model_calls": 40,
+                # S6 owns a separate call ceiling so upstream recruitment
+                # cannot starve the five-column authoring wave.
+                "maximum_s6_model_calls": 80,
+                "maximum_quality_judge_model_calls": 0,
             }
         )
     return result
@@ -619,6 +701,7 @@ __all__ = [
     "optimized_v2_profile",
     "swarm_quality_v1_profile",
     "winning_swarm_dynamic_v2_profile",
+    "deep_divergence_v1_profile",
     "resolve_execution_profile",
     "apply_execution_profile_to_blueprint",
 ]

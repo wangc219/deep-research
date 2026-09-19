@@ -1,0 +1,503 @@
+[1] Report to Congressional Committees
+
+[2] GAO- 25-107034
+
+[3] United States Government Accountability Office
+
+[4] View GAO‑25‑107034 . For more information, contact Jon Ludwigson at (202) 512-4841 or ludwigsonj@gao.gov .
+
+[5] Highlights of GAO‑25‑107034 , a report to congressional committees
+
+[6] DOD SATELLITE COMMUNICATIONS
+
+[7] Reporting on Progress Needed to Provide Insight on New Approach
+
+[8] Why GAO Did This Study
+
+[9] GAO has reported for over a decade on the longstanding challenges DOD faces in acquiring and delivering SATCOM systems, including cost and schedule overruns. In 2020, the Chief of Space Operations declared that SATCOM had to evolve from disparate systems into a single enterprise to operate in contested environments, be more resilient, and address evolving threats. DOD is now starting to shift its approach to SATCOM acquisition to provide more secure, interoperable systems that aim to better leverage the $500 billion global space market. But, as GAO found in 2024, DOD averages 10 years to acquire and deliver new systems (GAO-24-106831) .
+
+[10] A Senate report includes a provision for GAO to review DOD’s SATCOM planning efforts. GAO’s report addresses (1) DOD’s coordination and acquisition of SATCOM, including any plans to use commercial SATCOM; and (2) the extent to which DOD is ensuring SATCOM acquisitions can deliver interoperable capabilities.
+
+[11] GAO reviewed and analyzed DOD’s operational needs, plans, and other relevant documentation. GAO also interviewed cognizant officials from across the Office of the Secretary of Defense, military departments, and the commercial SATCOM industry.
+
+[12] What GAO Recommends
+
+[13] GAO recommends that DOD reports to Congress annually on its progress implementing an enterprise approach to SATCOM, to include identifying outcomes, opportunities, and risks. DOD concurred with this recommendation.
+
+[14] What GAO Found
+
+[15] The Department of Defense (DOD) is implementing a new approach to satellite communications (SATCOM) that aims to integrate existing and planned DOD systems, as well as a range of commercial options, into a department-wide SATCOM enterprise. Traditionally, the SATCOM systems that the department depends upon to send and receive information over long distances have relied on a small number of high-cost satellites along with ground stations and user terminals that each connect to a single type of satellite. The failure of one part of these systems would disrupt transmissions.
+
+[16] With DOD’s new approach, satellite constellations, ground systems, and user terminals would operate as networked, integrated systems. Compared to the traditionally linear structure of independent SATCOM systems, these integrated architectures would allow multiple paths for communications to reach their destination and multiple points of access to add resilience. DOD plans to implement elements of the new approach within the next 5 years.
+
+[17] Shift from Linear Satellite Communications Systems to Integrated Architectures
+
+[18] To accomplish this shift, DOD is increasing coordination among SATCOM stakeholders and with commercial SATCOM providers. Implementing enterprise SATCOM also depends on DOD enacting two key components: automating resource allocation and implementing integrated architectures. To support these components, DOD is also expanding its use of commercial SATCOM capabilities.
+
+[19] Both components of this shift face challenges. First, while DOD has begun automating SATCOM resource allocation, obtaining the different forms of access and permissions to enable data sharing is a challenge, according to officials. Second, DOD is acquiring necessary SATCOM systems, such as user terminals that connect to multiple satellite systems or constellations. However, the historically slow speed of system acquisitions poses a challenge to fielding these systems in time to support DOD’s plans.
+
+[20] While DOD is making initial progress toward enterprise SATCOM, the harder part of this shift—developing and integrating hybrid SATCOM systems and networks—lies ahead. GAO found that while DOD tracks progress on the components of enterprise SATCOM, it lacks comprehensive reporting on progress toward these outcomes. Such reporting would help DOD identify and mitigate delays as early as possible, as well as inform Congress of progress.
+
+[21] Abbreviations
+
+[22] Chief Information Officer
+
+[23] Commercial Satellite Communications Office
+
+[24] Department of Defense
+
+[25] Enterprise Satellite Communications – Management and Control
+
+[26] geosynchronous Earth orbit
+
+[27] low Earth orbit
+
+[28] medium Earth orbit
+
+[29] satellite communications
+
+[30] Space Warfighting Analysis Center
+
+[31] Satellite Terminal (transportable) Non-Geostationary
+
+[32] This is a work of the U.S. government and is not subject to copyright protection in the United States. The published product may be reproduced and distributed in its entirety without further permission from GAO. However, because this work may contain copyrighted images or other material, permission from the copyright holder may be necessary if you wish to reproduce this material separately.
+
+[33] March 4, 2025
+
+[34] Congressional Committees
+
+[35] Department of Defense (DOD) satellite communications (SATCOM) capabilities provide more than battlefield communications to warfighters. SATCOM enables data transmission in support of broader DOD operations, including intelligence, surveillance, and reconnaissance; command and control; remote sensor or weapons control; and other vital tasks. In 2020, the Chief of Space Operations declared that SATCOM had to evolve from its current state of disparate, program-focused systems into a single enterprise to operate in support of other domains, including contested environments, and provide resilient “Fighting SATCOM.” [1] DOD is now starting to pivot its approach to SATCOM acquisition to provide more secure, interoperable systems that aim to better leverage the over $500 billion global space market.
+
+[36] DOD is also attempting this pivot to address evolving threats and needs. China and Russia are both expanding their capabilities in space, to include developing systems that could threaten U.S. space assets. To address this, and for other reasons, DOD is planning for its future SATCOM capabilities to be more resilient. DOD aims to deploy resilient SATCOM architectures that depend less on their individual parts to ensure safety from adversaries. Such architectures would also be less susceptible to disruption by potential acquisition and budget shortfalls that could delay fielding of some component systems.
+
+[37] Senate Report 117-39 to accompany the National Defense Authorization Act for Fiscal Year 2022 included a provision for us to review DOD SATCOM acquisition planning efforts. [2] Our report addresses (1) DOD’s efforts to coordinate and acquire SATCOM capabilities, (2) DOD’s planned use of commercial SATCOM, and (3) the extent to which DOD is ensuring SATCOM acquisitions can deliver interoperable warfighting capabilities.
+
+[38] To identify how DOD is coordinating and acquiring SATCOM capabilities, we reviewed documentation of the department’s plans for SATCOM and interviewed cognizant officials. We reviewed DOD policy and guidance to identify key roles and responsibilities of offices involved in the department’s plans for SATCOM, as well as recent changes. We then reviewed a timeline of major initiatives and interviewed officials, including acquisition program offices, to understand the statuses and effects of these changes. Additionally, we attended DOD coordination meetings to observe the content and accomplishments of these discussions.
+
+[39] To identify and describe DOD’s planned use of commercial SATCOM, we reviewed DOD-reported past usage of commercial SATCOM, departmental strategy documents for commercial SATCOM, and U.S. Space Force plans for future usage. We interviewed officials from across the services and organizations that work with commercial technologies for DOD. We also met with six commercial providers to obtain their perspectives on technologies and providing SATCOM capabilities to DOD. Additionally, we attended several major SATCOM industry conferences and workshops to further understand the state of the industry.
+
+[40] To assess the extent to which DOD is ensuring SATCOM acquisition can deliver interoperable capabilities, we conducted two analyses. First, we assessed the status of DOD’s Enterprise SATCOM Management and Control Implementation Plan to understand DOD’s progress. Second, we compared Space Warfighting Analysis Center force designs to DOD budget requests and documentation for new or ongoing systems to see which new and existing systems supporting the force designs are included in budget requests. To support both analyses, we interviewed officials who work across SATCOM segments in research, development, acquisition, and operational roles to understand current efforts and status.
+
+[41] More information on our objectives, scope, and methodology can be found in appendix I.
+
+[42] We conducted this performance audit from August 2023 to March 2025 in accordance with generally accepted auditing standards. Those standards require that we plan and perform the audit to obtain sufficient, appropriate evidence to provide a reasonable basis for our findings and conclusions based on our audit objectives. We believe that the evidence obtained provides a reasonable basis for our findings and conclusions based on our audit objectives.
+
+[43] DOD is highly dependent on space-based systems for communications over long distances. The SATCOM systems that DOD currently uses are either owned and operated by the military (military SATCOM), or access to them is procured as a commercial service (commercial SATCOM). Typically, an individual SATCOM system consists of three segments: user, ground, and space, though different combinations can exist. Figure 1 outlines these segments.
+
+[44] Figure 1: Department of Defense (DOD) Satellite Communications System
+
+[45] Communications satellites operate in different orbits to meet different communications and mission needs. The orbital location of a satellite affects data transmission latency and which parts of Earth can receive its signal. [3] Traditionally, military communications satellites have operated in geosynchronous Earth orbit (GEO), which has a wide field of view and can provide service over a large area. However, wide coverage sacrifices latency because it takes longer for the communications signals to traverse the longer distance to GEO from Earth. Newer constellations of satellites trade wide coverage for latency by using closer orbits, such as medium Earth orbit or low Earth orbit (LEO). These constellations require the use of more satellites to provide coverage worldwide due to their narrower field of view but have less latency of communications between satellites and the ground. For example, it can take a signal transmitted from a satellite in GEO approximately 20 times longer to reach the earth than from a satellite in LEO—a fraction of a second that can affect certain tasks. Figure 2 depicts these orbits.
+
+[46] Figure 2: Categories of Earth Orbits
+
+[47] We have reported for over a decade on the longstanding challenges DOD faces in acquiring and delivering SATCOM capabilities. These challenges include schedule delays of 5 or more years, cost increases of hundreds of millions or even billions of dollars, program cancelations due to development problems, and prioritization of space segment systems over terminal and ground systems, resulting in underutilized satellites. [4] For example, two of DOD’s currently-fielded military SATCOM systems cost more than twice the amount originally estimated and were delivered several years late. [5] Past issues in acquiring SATCOM systems are not limited to the space segment. DOD launched the first Mobile User Objective System satellite in 2012; however, our prior reporting found that, a dozen years after launch, DOD had not taken full advantage of the system’s capabilities because of delays in fielding user terminals. [6]
+
+[48] DOD has used commercial SATCOM services for decades to support its operations around the world for a variety of missions. For example, the military services use commercial SATCOM to support the command and control of military forces, such as moving ships or vehicles. Commercial companies develop, build, and launch satellites that provide these services, including voice, data, and other types of connectivity. DOD users are required, with few exceptions, to procure these services through the Commercial Satellite Communications Office (CSCO) which has entered into contracts with SATCOM providers. DOD reports procuring over 85 percent of its commercial SATCOM capability through CSCO over the past decade. Like existing military SATCOM, the majority of DOD’s current commercial SATCOM is through satellites in GEO. Figure 3 shows DOD’s spending on commercial SATCOM—amounting to $788 million in fiscal year 2023—by orbit.
+
+[49] Figure 3: Department of Defense (DOD)-Reported Commercial Satellite Communications Expenditures by Orbit, Fiscal Year 2023
+
+[50] To manage SATCOM, numerous offices in DOD have responsibilities associated with SATCOM acquisition planning roles. Table 1 includes key DOD SATCOM stakeholders.
+
+[51] Table 1: Key Department of Defense (DOD) Satellite Communications (SATCOM) Stakeholders
+
+[52] DOD Office of the Chief Information Officer
+
+[53] Develops DOD strategy, establishes policy and guidance, and provides oversight for SATCOM segment of DOD’s primary information network, including architectures, standards, and synchronization.
+
+[54] Defense Information Systems Agency
+
+[55] Oversees connections of SATCOM resources to the Defense Information Systems Network. Leads SATCOM ground data terminal modernization and sustainment. Maintains interfaces between SATCOM segment and other segments of the DOD Information Network.
+
+[56] Joint Space Requirements Integration Cell
+
+[57] Supports SATCOM requirements development, including stakeholder coordination of requirements and acquisition, as well as international community representation.
+
+[58] U.S. Space Force
+
+[59] Director of Operational Capability Requirements
+
+[60] Oversees and champions requirements for space in U.S. Space Force and DOD capability development and acquisition process.
+
+[61] Space Warfighting Analysis Center
+
+[62] Conducts performance-based, threat-informed, joint force, materiel solution analyses, called force designs.
+
+[63] Space Systems Command
+
+[64] · Space Systems Integration Office
+
+[65] Coordinates acquisition programs, to include solution prioritization and budget development. In 2024, DOD increased the responsibilities of this office by designating its Director as the Chief Space Systems Engineer. In this capacity, the individual will serve as the senior advisor for integration across all U.S. Space Force portfolios and over DOD mission partners.
+
+[66] · Commercial Space Office
+
+[67] Unifies and manages DOD’s commercial SATCOM procurement.
+
+[68] · Commercial Satellite Communications Office
+
+[69] Procures DOD’s commercial SATCOM services. It predates the U.S. Space Force and was previously organized under the Defense Information Systems Agency.
+
+[70] · Commercial Augmentation Space Reserve
+
+[71] Contracts for surge and special capabilities for commercial space services during times of conflict or emergency.
+
+[72] U.S. Space Command
+
+[73] Works with allies and partners to plan, execute, and integrate military spacepower into global operations. Operates military SATCOM systems worldwide.
+
+[74] Other Military Services
+
+[75] All military services are consumers of SATCOM capabilities. Offices within the services are responsible for developing and fielding terminals, ground systems, networking solutions, and applications. Many of these efforts are coordinated to support service command and control efforts such as Navy Project Overmatch and Air Force Advanced Battle Management System.
+
+[76] Source: GAO review of DOD documents. | GAO‑25‑107034
+
+[77] In response to the changing threats to U.S. space assets and in anticipation of replacing aging SATCOM systems, DOD initiated a series of requirements development efforts and studies, including several analyses of alternatives, to inform future acquisitions. [7] Table 2 lists these studies.
+
+[78] Table 2: Department of Defense (DOD) Satellite Communications Assessments Since 2010
+
+[79] 2010, updated in 2016 and 2023
+
+[80] Joint Space Communications Layer Initial Capabilities Document
+
+[81] Resilient Basis for Satellite Communications in Joint Operations Study Final Report
+
+[82] Air Force Space Command White Paper on “Impediments and New Approaches for Leveraging [Commercial Satellite Communications] in Support of Air Force and DOD”
+
+[83] DOD Satellite Communications Mix of Media Study
+
+[84] Protected Satellite Communications Services Analysis of Alternatives Final Report
+
+[85] Wideband Communications Services Analysis of Alternatives Final Report
+
+[86] 2024, completed, but final report not yet released
+
+[87] Narrowband Communications Services Analysis of Alternatives
+
+[88] Source: GAO review of DOD documents. | GAO‑25‑107034
+
+[89] The results of these efforts highlighted challenges with the monolithic, “stove-piped” nature of DOD SATCOM systems, meaning one type of user terminal often connects to one type of satellite in a linear communications pathway. In response, U.S. Space Force began efforts to make SATCOM more interoperable to support non-linear, multi-pathway communications and expand commercial SATCOM options. For example, the 2019 Wideband analysis of alternatives recommended that DOD explore more hybrid SATCOM systems, through which user terminals can connect to multiple satellite systems or constellations. That analysis of alternatives further recommended that DOD develop a more centralized, or enterprise, approach to SATCOM to better meet user needs and respond to threats. In 2020, the Chief of Space Operations developed the “United States Space Force Vision for Satellite Communications” to expand the U.S. Space Force’s approach to enterprise SATCOM. The vision paper cited both threats and organizational changes that provided an opportunity to pivot DOD SATCOM acquisition to provide capabilities across all types of DOD operations on the timeline that users need.
+
+[90] DOD and commercial SATCOM systems have historically been monolithic in nature. Traditional systems rely on a small number of high-cost satellites located far from Earth, as well as ground stations and user terminals that are dedicated to working with only one type of SATCOM satellite. Therefore, in monolithic constellations, each satellite is critical to the system’s continued operations, as well as expensive and difficult to replace. Further, a user can often only connect to a single constellation through a system-unique device. This approach limits the user’s options to communicate with others on different systems or adapt if one system is not functioning.
+
+[91] Over approximately the last 5 years, new terminal, ground, and networking technologies, such as cloud computing, open standards, and improved antennas, have enabled the design of integrated, hybrid architectures. These architectures make it possible for a user to connect to multiple systems as needed, like a cellular phone roaming between service providers. Simultaneously, in September 2022 we found that new technologies and lower launch costs support proliferated constellations—a larger number of smaller, lower-cost satellites, often in orbits much closer to Earth, such as LEO. [8] A proliferated constellation is more capable of continuing to operate through disruption because other satellites can absorb transmission if a satellite goes offline, whether from attack or natural event. Further, with lower cost and weight, such satellites are easier to replace than larger satellites in GEO. Figure 4 illustrates this shift from monolithic to hybrid SATCOM systems.
+
+[92] Figure 4: Evolution of Satellite Communications Systems From Monolithic to Hybrid
+
+[93] DOD Is Pivoting to a SATCOM Enterprise to Increase Resilience and Interoperability
+
+[94] DOD’s shift to enterprise SATCOM relies on multiple integrated SATCOM systems that can seamlessly convey information from sender to receiver without disruption. Pivoting to enterprise SATCOM increases the overall complexity of acquisition planning because more organizations are involved in both (1) enacting management and control, and (2) developing and fielding the systems to enable hybrid SATCOM architectures. To better coordinate these parallel efforts, in recent years DOD issued updated guidance to clarify roles and responsibilities and established new organizations and coordination mechanisms.
+
+[95] DOD’s pivot to enterprise SATCOM relies on multiple integrated SATCOM systems to seamlessly convey information from sender to receiver without disruption. It has two key components: Enterprise SATCOM Management and Control (ESC-MC) and hybrid SATCOM architectures. DOD intends for ESC-MC to automate monitoring and allocation of resources across SATCOM systems to meet mission needs. DOD plans for hybrid SATCOM architectures to provide resilient, interoperable communications pathways for SATCOM users. The department is in the early phases of enacting ESC-MC and hybridizing SATCOM systems into federated architectures, with efforts beginning in fiscal year 2022.
+
+[96] ESC-MC is an initiative to develop new processes and network connections to manage DOD’s SATCOM resources. The DOD Chief Information Officer (CIO) intends for ESC-MC to ensure that the right SATCOM capabilities are available in the right places, for the right users, at the right time. DOD CIO plans to achieve ESC-MC by modernizing the business and operations support processes and systems that enable SATCOM resource allocation and operations across DOD. Specifically, DOD CIO plans for ESC-MC to establish connections across diverse systems for situational awareness, identify authoritative data sources, set rules, and automate processes to accelerate the management and resource allocation of SATCOM users, systems, and their access to space and ground systems. DOD CIO broke these actions down into discrete tasks and an integrated schedule that officials use to track and manage implementation.
+
+[97] To increase the overall efficiency of SATCOM, DOD CIO plans to improve the networks that manage connections, security, and information that travels over the Defense Information Systems Network by revising and automating several time intensive processes. DOD CIO anticipates automating one area of SATCOM operations—satellite and ground access requests—by fiscal year 2028. DOD CIO is collaborating with the U.S. Space Force to automate the process by which SATCOM users request access to satellites and ground stations. DOD currently uses multiple systems to manually process these requests. Because of this slow processing, users must submit requests days and weeks in advance—a timeline that does not support tactical environments where the circumstances warfighters face can change rapidly. Automating the access request process is a key step in DOD CIO’s broader effort to implement ESC-MC, namely, connecting SATCOM networks and smoothing coordination through more holistic data sharing. If the proof of concept is successful, DOD CIO will have a foundation for improved automation and network integration across DOD.
+
+[98] The second component of DOD’s pivot to enterprise SATCOM is the development of hybrid SATCOM architectures that provide more options for communications transmissions. Successful satellite communication and data transmission require the operation and synchronization of a series of user terminals, ground stations, satellite systems, networks, and other users. Hybridizing these elements means using systems that can provide more than one type of connection, such as hybrid terminals. Figure 5 shows the movement of communications in a traditional, monolithic SATCOM system.
+
+[99] Figure 5: Information Flow Across a Notional Satellite Communications Network
+
+[100] Single points of failure exist in the monolithic, linear communications pathway shown above. For example, if the satellite becomes inoperable, users cannot communicate. DOD’s Space Warfighting Analysis Center (SWAC) assessed this type of vulnerability in its series of force designs, resulting in recommendations to make SATCOM systems more resilient. DOD plans to minimize single points of failure by introducing additional communication pathways, or routes data can take between users, thereby improving resilience and overall performance. These new pathways would travel across interconnected ground and space-based networks that DOD generally refers to as a ground data network and a space data network, though multiple networks can exist. Hybrid SATCOM architectures can have multiple pathways within and between each of these networks.
+
+[101] In addition to removing failure points, DOD plans for hybrid SATCOM architectures to improve SATCOM performance, such as data transmission speed and volume. Performance improvements come from flexibilities in the route used for communication, potentially using several networks during surge events, redirecting communications around slow, or missing, network segments, and the potential for overall network optimization. This is similar to how the internet functions even when individual websites may be offline or when an unusually large number of users is looking for the same information at the same time. Hybrid SATCOM architectures could also integrate commercial SATCOM systems, which we discuss in more detail below. Figure 6 shows a notional multi-pathway, multi-orbit architecture.
+
+[102] Figure 6: Notional Hybrid Satellite Communications Architecture
+
+[103] DOD plans for different technical solutions to work in combination to allow new and existing military SATCOM systems to operate as integrated hybrid SATCOM architectures. By selectively combining connections between previously disparate systems, DOD also plans to improve overall SATCOM performance. Each individual SATCOM system has unique areas of geographical coverage and performance characteristics. According to senior officials within the U.S. Space Force, hybrid SATCOM architectures can improve performance by leveraging the characteristics of different monolithic systems and allowing interconnections between them. For example, users dispersed over a vast geographical area could efficiently connect using the wide coverage a GEO satellite provides. Then, through a network that allows satellites in different orbits to communicate with one another, these users could share information with others in a highly concentrated area who need the low latency a satellite in LEO provides.
+
+[104] Several key technologies are needed to enable hybrid SATCOM architectures:
+
+[105] Hybrid terminals. Hybrid terminals are communication devices that can connect to multiple satellite systems. Hybrid terminals will allow users to connect to the satellite(s) they need, with the ability to quickly add connections to new satellites. Such terminals can be hardware-defined, meaning new connections can be added with additional physical circuit cards; software-defined, in which new connections are added via software; or a mix of both. While DOD is fielding limited numbers of hardware-enabled hybrid terminals, software-enabled hybrid terminals are still in research and development. The military departments take different approaches to such terminals but are sharing their results and service plans. Specifically, the military departments plan to procure each other’s demonstrated specialized terminals. For example, the Navy plans to purchase airframe-based terminals developed by the Air Force, rather than develop its own.
+
+[106] Ground station modernization . Information transmitted from the user through a satellite must then be received by a SATCOM station, or ground station, to enter terrestrial networks. DOD has identified that ground stations and other ground data network systems need modernizing to fully support the evolving hybrid SATCOM architecture. According to Defense Information Systems Agency officials, modernization will help the agency support dynamic changes in information routing, resource allocation, and remote management. DOD CIO officials, in collaboration with the Defense Information Systems Agency, are drafting a capabilities development document to specify modernization requirements for ground stations.
+
+[107] Network integration and orchestration. Connecting the many elements of space and ground systems requires network integration and network orchestration. To achieve these capabilities, DOD must integrate various communications networks and develop or procure software to orchestrate their use. Network orchestration entails managing users and traffic across multiple networks, based on previously established user prioritization protocols, automatically, and at machine speeds. This underlying capability enables the data and communications flow of hybrid SATCOM architectures. Network integration and orchestration are also critical to DOD CIO’s ESC-MC efforts to integrate SATCOM business and operations systems because these capabilities can help replace existing, manually intensive network management processes. Figure 7 shows a notional SATCOM network services orchestration capability.
+
+[108] Figure 7: Notional Diagram of Network Services Orchestration
+
+[109] Pivoting to enterprise SATCOM increases the overall complexity of acquisition planning because more organizations are involved in enacting ESC-MC and hybrid SATCOM architectures than were in developing older, monolithic systems. To better coordinate these efforts, DOD is establishing new organizations as well as adapting how existing organizations interact. DOD is also using a type of planning that considers mission needs, threats, and performance, known as mission-driven capability assessments, to foster information-sharing across many of the same stakeholders that support ESC-MC and hybrid SATCOM architectures. These are the initial steps of DOD’s pivot to enterprise SATCOM and success will depend on continued coordination.
+
+[110] As part of these efforts, DOD CIO revised DOD Instruction 8420.02, DOD Satellite Communications , in 2023 to clarify SATCOM stakeholder roles and responsibilities, as well as establish ESC-MC in policy. [9] This instruction designates DOD CIO as the department’s lead organization for SATCOM policy and enterprise modernization guidance, including enacting ESC-MC. This office also chairs the Enterprise SATCOM Steering Group, which replaced a prior SATCOM governance group. According to its May 2024 charter, the Enterprise SATCOM Steering Group is intended to provide governance to deliver the key concepts stated in the Chief of Space Operations’ Vision for SATCOM , including development of an integrated SATCOM enterprise in support of DOD capabilities. The other four chairs of the organization are:
+
+[111] · Joint Staff,
+
+[112] · U.S. Space Command,
+
+[113] · U.S. Space Force, and
+
+[114] · Office of the Under Secretary of Defense for Acquisition and Sustainment.
+
+[115] These actions illustrate the initial steps DOD CIO is taking to support the pivot to enterprise SATCOM.
+
+[116] Requirements are the starting point of the acquisition lifecycle and many SATCOM systems are based on joint requirements from across the military departments. To better coordinate joint needs, in early 2023, DOD established the Joint Space Requirements Integration Cell. According to officials who are members of the cell, when DOD consolidated existing space assets and acquisitions within the U.S. Space Force, identifying, coordinating, and approving joint service requirements became more complex. To address this complexity, the Joint Space Requirements Integration Cell hosts a weekly forum of space system acquisition stakeholders. This meeting includes acquisitions and operations representatives from across DOD and the intelligence community, including:
+
+[117] · Joint Staff,
+
+[118] · U.S. Space Command,
+
+[119] · U.S. Space Force and representatives from the other military services, and
+
+[120] · Office of the Under Secretary of Defense for Acquisition and Sustainment.
+
+[121] The Joint Space Requirements Integration Cell established various working groups to coordinate space requirements as they proceed through the joint requirements process. We observed several months’ worth of these meetings. Officials provided status updates on requirements development efforts, ongoing acquisitions, and planning. They also used discussions to consolidate different service needs and reach agreement on requirements.
+
+[122] To move from requirements to identifying the systems DOD could use to meet those requirements, SWAC develops force designs. These force designs use operational mission information and performance data on existing systems to develop recommendations for future system configurations to meet requirements. Additionally, these force designs can support identification of new requirements with the cognizant U.S. Space Force office and acquisition planning with Space Systems Command. SWAC completed its first force design in 2022, according to a senior official. SWAC’s recommendations include actions in support of hybrid SATCOM architectures. SWAC bases its analyses on many inputs and revises its analyses in response to new information. The adaptability of SWAC’s models and access to near–real time information on system performance also helps the U.S. Space Force track the progress of implementing hybrid SATCOM architectures to meet operational needs. SWAC documentation shows that the center also coordinates with the following organizations:
+
+[123] · Defense Information Systems Agency,
+
+[124] · U.S. Space Command,
+
+[125] · U.S. Space Force and representatives from the other military services, and
+
+[126] · Space Systems Command, including the Space Systems Integration Office and Commercial Space Office.
+
+[127] SWAC presents the results of its force designs in a conference format, which adds an informal coordination mechanism to its more structured analyses. According to officials we met with from across DOD, SWAC’s force designs provide multiple opportunities to coordinate and share information. Moreover, officials from all of the offices named above described collaborative interactions with SWAC.
+
+[128] After DOD identifies which systems can help implement hybrid SATCOM architectures, Space Systems Command, specifically the Space Systems Integration Office, is responsible for prioritizing U.S. Space Force acquisition development efforts to meet those needs. The Space Systems Integration Office integrates requirements, systems engineering, and budget planning. This office is responsible for integrating space systems engineering along with cross-program coordination. Working with program officials, this office makes prioritized recommendations to the service’s acquisition executive as part of DOD’s annual budget cycle. The Space Systems Integration Office coordinates with organizations across the U.S. Space Force as well as DOD, including U.S. Space Command, SWAC, and other military services. Officials explained that they also work internally with space system program executive offices that manage space acquisition programs to obtain information on the status and performance of their programs.
+
+[129] DOD Is Expanding Its Use of Commercial SATCOM to Support Pivot
+
+[130] Through the efforts of its commercial SATCOM procurement offices, DOD is adapting its approach to expand access to emerging commercial SATCOM capabilities and enable the hybrid SATCOM architecture component of the pivot. Additionally, DOD is leveraging commercial investments in SATCOM and other related technologies to potentially lower costs and accelerate the delivery of capability to warfighters.
+
+[131] Through the efforts of multiple offices within the Commercial Space Office, DOD is beginning to adapt its commercial SATCOM service procurement approach to expand access to emerging commercial capabilities and facilitate enhanced integration with military SATCOM. SWAC’s force design recommendations include commercial SATCOM integration, so that military and commercial SATCOM can be used interchangeably as the mission and the operating environment change.
+
+[132] CSCO is taking steps to support hybrid SATCOM architectures, to include awarding new contracts to obtain services from new commercial providers operating satellites in different orbits. Historically, most of DOD’s commercial SATCOM service providers operated in the more distant geosynchronous Earth orbit. According to CSCO officials, their office established contracts with providers operating at multiple orbits, including a contract with a ceiling of $13 billion with new providers operating in LEO, to meet emerging needs. [10] With this contract, CSCO expanded access to commercial SATCOM providers and gave the military services more SATCOM options, according to officials. The military departments are already integrating the services from these new providers—U.S. Space Command officials said they have nearly 3,000 users of the LEO services under CSCO’s contract. Navy and Air Force officials said they are developing new applications that can leverage the lower latency provided by satellites that are closer to Earth.
+
+[133] To continue expanding DOD access to commercial SATCOM, CSCO officials said they are focused on identifying changes to commercial procurements to support DOD’s plans for hybrid SATCOM architectures and growing operational needs. Officials from across the military departments as well as commercial SATCOM providers and integrators we spoke with generally expressed satisfaction with CSCO’s collaborative procurement efforts over the past several years.
+
+[134] Another DOD effort to expand access to commercial SATCOM focuses on assuring additional, or surge, capabilities in times of emergency or conflict. To accomplish this, the department plans to contract with U.S.-owned SATCOM providers during peacetime to integrate commercial SATCOM capabilities and share information. Officials from the Commercial Space Office told us they established the Commercial Augmentation Space Reserve to establish the agreements and award contracts to ensure DOD has access to surge SATCOM capacity and other wartime capabilities during a time of conflict or emergency. The Commercial Augmentation Space Reserve has not yet entered into contracts with commercial SATCOM providers.
+
+[135] DOD is using the Commercial Space Office and CSCO to adapt its procurement of commercial SATCOM. Some of these efforts have seen positive outcomes, such as the military services’ rapid adoption of commercial LEO SATCOM services using CSCO’s new contract. However, that contract is only one factor in enabling hybrid SATCOM architectures.
+
+[136] The commercial space market has grown over the past several years, including new, more prolific SATCOM offerings and related technologies. The Federal Aviation Administration reports that the number of commercial space launches has grown from 32 in 2019 to 113 in 2023, with continued growth predicted. The commercial space market provides additional opportunities for DOD to include new SATCOM service providers, opportunities for adapting commercially developed technologies for military applications, and procuring entire commercial systems for military use. Harnessing commercially developed technologies can help DOD deliver capabilities more quickly and potentially at lower cost compared to developing entirely new, specialized military systems. However, DOD has historically struggled to scale its adoption of commercial technology. Therefore, early initial success may not indicate long-term effectiveness.
+
+[137] According to CSCO officials, the growing commercial space industry for private sector use has resulted in lower costs for DOD. Officials attributed many of these reductions to competition from new providers, lower launch costs, and new technologies. DOD’s reporting generally shows shrinking costs for some types of SATCOM services. For example, the average monthly cost for sending data fell by over 25 percent between 2019 and 2023. Both CSCO and military service officials said the department is working to identify ways to ensure that future pricing structures for services reflect the flexibility DOD needs to support its long-term plans.
+
+[138] DOD is also leveraging new commercial technologies for military applications, including SATCOM-specific technologies as well as those developed for cellular communications. According to one senior U.S. Space Force official, the needs of the commercial marketplace and DOD are increasingly similar. For example, they explained that customers on commercial airline flights or cruises expect reliable high speed internet connectivity, a need that military pilots and sailors share.
+
+[139] DOD has multiple methods of leveraging commercial SATCOM investments, including:
+
+[140] Direct adoption of technology. DOD can directly incorporate new technology into military systems. For example, under its Satellite Terminal (transportable), Non-Geostationary (STtNG) effort, the Navy has deployed commercially-developed small, low cost, high performance antennas and terminals to ships to provide additional SATCOM capabilities. In 2025, the Navy and Air Force anticipate deploying similar capabilities onto aircraft using newer, smaller antennas and hybrid terminals the Air Force developed in its Global Lightning effort.
+
+[141] Early engagement with commercial development. DOD can engage with commercial technology developers and technical standards organizations directly and early in new technology development. DOD has established new organizations to conduct this engagement, such as the FutureG office within the Office of the Under Secretary of Defense for Research and Engineering. DOD created this office to assess technologies and engage with developers of 5G standards and future generations of cellular technology. FutureG officials described how the commercial market’s investments in direct-to-device communications have military applications that they are already adapting for DOD needs.
+
+[142] Direct procurement of commercial systems. DOD can also procure commercially developed SATCOM systems directly for military use. In 2024, DOD officials announced that the military intends to procure and launch over 100 commercially built satellites to populate a government-owned SATCOM constellation. According to a U.S. Space Force official, this approach will allow DOD to procure new systems faster than a traditional acquisition timeline by eliminating development time. Further, because DOD will own the satellites, it will not be restricted in how it uses them or have to pay for services based on usage as it would when leasing commercial SATCOM services.
+
+[143] DOD’s Pivot to a SATCOM Enterprise Is Underway but Lacks Comprehensive Reporting
+
+[144] Pivoting to enterprise SATCOM depends on DOD enacting two key components: ESC-MC and hybrid SATCOM architectures, but both efforts face challenges. ESC-MC underpins the function of hybrid SATCOM architectures because it connects the underlying business and operations support systems that manage and control SATCOM assets, but non-technical challenges could delay ESC-MC implementation. The department also faces challenges in acquiring and fielding the systems or commercial services to develop hybrid SATCOM architectures, including hybrid terminals, in time to support its plans. While DOD is making initial progress toward enterprise SATCOM, we found that the department lacks comprehensive progress reporting on its efforts that would help the department identify and mitigate delays as early as possible, as well as inform Congress of progress.
+
+[145] ESC-MC underpins the function of hybrid SATCOM architectures because it connects the underlying business and operations support systems that manage and control such architectures. DOD CIO plans for the ESC-MC effort to establish such connections as well as establish authoritative data sources, rules, and planning to manage SATCOM use and access across DOD. Most of the stakeholders and offices responsible for ESC-MC are also responsible for implementing SWAC’s force design recommendations, namely hybrid SATCOM architectures. In theory, such close collaboration should help DOD implement both ESC-MC and the force design recommendations.
+
+[146] DOD CIO developed the ESC-MC Reference Architecture and a schedule-based implementation plan that identified and assigned responsibility for the tasks that enable the ESC-MC concept. The implementation plan lists 54 tasks, some of which are interdependent and partially sequential across lines of effort through fiscal year 2032, though some tasks require updates or continuous improvement. These tasks include developing a Concept of Operations for ESC-MC, which U.S. Space Command officials said is in the final stages of approval as of August 2024. DOD CIO officials and other stakeholders track progress through quarterly updates with ESC-MC stakeholders. Based on responses we obtained from DOD CIO, the overall ESC-MC effort is making progress, with 41 tasks complete or in-progress, eight experiencing delays, and five that are not yet scheduled to begin. DOD CIO officials attributed delays to changing responsibilities for some tasks, ongoing negotiation on addressing a task, and other factors that officials said do not yet affect the overall ESC-MC schedule to deploy new automation capabilities by fiscal year 2028.
+
+[147] The main challenge to ESC-MC implementation is non-technical. DOD officials responsible for ESC-MC implementation work across DOD organizations and military departments and rely on data systems or networks within their respective organizations. Crossing organizational boundaries to share data or connect networks is their main challenge with ESC-MC, not new technology or software development. Officials said that working through different forms of access and permissions to connect systems, in addition to cybersecurity protocols, is a slow process. For example, a goal of ESC-MC is to establish authoritative data sources on SATCOM systems. The sources of those data may be spread across DOD, and obtaining permission to access them takes time, according to officials. To mitigate this challenge, DOD CIO plans to use its governance authorities in DOD Instruction 8420.02 and the Enterprise SATCOM Steering Group to assist ESC-MC stakeholders in overcoming these types of organizational boundaries.
+
+[148] DOD’s vision for enterprise SATCOM depends on hybrid SATCOM architectures that integrate systems across the space segments as well as across the military services. To ensure interoperability, DOD plans to develop new systems, connect legacy systems, and integrate commercial solutions. However, the department faces acquisition challenges in developing the systems to support the multi-system effort of establishing hybrid SATCOM architectures.
+
+[149] The main challenge DOD faces in procuring the systems to enable hybrid SATCOM architectures is the slow pace of developing and fielding new military SATCOM systems. Over the past 2 decades, we have reported on challenges DOD has faced in its acquisition of individual space systems, including development delays, increasing costs, and fractured leadership. [11] In June 2024, we reported that DOD remains alarmingly slow in delivering new and innovative weapon system capabilities. [12] Despite efforts to shorten acquisition timelines, DOD still faces a minimum of 2 years and an average of 10 years for a new acquisition program to field new assets and sometimes longer time frames for new space systems. With its expanded use of commercial SATCOM, DOD can procure commercial SATCOM services and capabilities more quickly, but commercial SATCOM does not meet all DOD needs.
+
+[150] To accelerate the fielding of new capabilities, the military services are adopting creative methods within DOD’s acquisition framework. For example, to develop its STtNG hybrid SATCOM terminal, the Navy procured commercial, off-the-shelf terminals as a new increment of an existing SATCOM terminal program. According to officials, this approach saved 18 months compared to initiating a new acquisition and has resulted in the service already fielding new terminals.
+
+[151] Another example relates to the decentralized acquisition of Air Force terminals. The Air Force decentralizes terminal acquisitions, meaning that each individual aircraft acquisition program must identify, purchase, and integrate this equipment, according to officials. In a large aircraft acquisition program with competing demands, this practice creates a vulnerability for the prioritization of individual program needs over the needs of the greater DOD enterprise. As a result, aircraft acquisition programs can delay purchasing SATCOM terminals, which can affect the fielding of enterprise capabilities. The Air Force is addressing this in two ways, first by centrally developing hybrid terminals for multiple aircraft under its Global Lightning effort. Second, the department is enacting new acquisition structures and protections to help address this concern, according to a senior Air Force official.
+
+[152] Timing of successful technological development and acquisition efforts to support hybrid SATCOM architectures is a challenge. SWAC force designs recommend a timeline for capability development and procurement over the 5-year period of the Future Years Defense Program. [13] The recommendations also depend on needed systems becoming available at the right time, i.e., the synchronization of development and fielding. However, the speed of technological change outpaces the responsiveness of the current acquisition structure. Hybrid SATCOM architectures are a more complex acquisition challenge because they depend on multiple ground and space systems, as well as networks being developed and fielded in time to use together. Through its modeling, SWAC can track when new systems become available, how they enable hybrid SATCOM architectures, and outcomes for capabilities. SWAC shares this information through its force design conferences and directly in support of U.S. Space Force acquisition planning.
+
+[153] To support nearer-term acquisition timelines, DOD is initiating acquisition efforts and budgeting for existing programs to support its plans now—the fiscal year 2025 budget request included over a dozen efforts in support of SWAC force design recommendations and hybrid SATCOM architectures. For example, the Protected Tactical Enterprise Services program budget submission outlined space and ground systems and capabilities in support of hybrid architectures. Senior service officials told us they plan to continue supporting acquisition efforts to implement SWAC’s recommendations to enable hybrid SATCOM architectures in future budget years.
+
+[154] The scope and breadth of DOD’s pivot to enterprise SATCOM demands high levels of coordination across different organizations. Our interviews with, and observations of, organizations from across the department indicate initial coordination of user needs, acquisitions, and other information needed to support this is going well. However, given the remaining system development and acquisition to support ESC-MC and hybrid SATCOM architectures, the harder part of the pivot—developing and integrating hybrid SATCOM systems and networks—lies ahead.
+
+[155] We found that DOD lacks comprehensive, or enterprise, reporting on its progress. Despite plans, policy updates, increasing coordination of SATCOM acquisition, and expanding commercial SATCOM use, the overall progress of these related efforts remains unclear. Both ESC-MC and the actions to support hybrid SATCOM architectures have measurable tasks and schedules that officials track and use to monitor progress among relevant offices. DOD CIO has additional independent information sources but does not currently provide a comprehensive report on progress toward delivering enterprise SATCOM outcomes with the many stakeholders across DOD, Congress, or oversight organizations.
+
+[156] DOD Instruction 8420.02, DOD Satellite Communications , includes several reporting requirements for DOD CIO and other organizations, including the U.S. Space Force, to provide SATCOM reporting to Congress and within DOD. These include reports on commercial SATCOM usage as well as individual SATCOM acquisition programs. The reporting elements that DOD Instruction 8420.02 identifies are:
+
+[157] · Adequacy of proposed budget to satisfy projected obligations and achieve synchronized and integrated SATCOM activities;
+
+[158] · Actions to improve the synchronization and integration of DOD SATCOM activities and resources within the DOD Information Environment;
+
+[159] · DOD SATCOM usage and expenditures, to include commercial and military SATCOM;
+
+[160] · Opportunities and risks for DOD users of emergent commercial SATCOM products and services; and
+
+[161] · Reporting on objects in space, such as debris or satellites in support of DOD communications network performance management, as well as fault detection, correlation, and correction.
+
+[162] Further, this instruction assigns responsibilities to the Chief of Space Operations to develop and maintain a SATCOM architecture that addresses funding as well as synchronization and integration of SATCOM resources. The U.S. Space Force manages key information on the capabilities to enable hybrid SATCOM architectures and is positioned to support DOD CIO reporting.
+
+[163] However, reporting requirements remain separate and independent—they do not reflect the integrated and interdependent nature of DOD’s pivot to enterprise SATCOM. They also do not capture outcomes, specifically whether new systems and capabilities are increasing or improving resilience. In the absence of such reporting, Congress and DOD do not have holistic, schedule-based updates on the progress of ESC-MC implementation or implementing hybrid architectures, though these parallel efforts are critical to DOD’s pivot to enterprise SATCOM and improving resilience. Reporting progress on the outcomes of ESC-MC implementation and fielding of key systems across the SATCOM segments should include schedule information to identify potential delays in advance of near-term deadlines. DOD CIO plans for ESC-MC to deliver initial capabilities by fiscal year 2028, while hybrid SATCOM architectures rely on acquiring systems or capabilities by 2030. Reporting on DOD’s progress implementing ESC-MC and hybrid SATCOM architectures through the year 2030 would help DOD identify and mitigate possible delays or other obstacles as early as possible. It would also ensure that programs are on the right path toward delivering these high-priority capabilities.
+
+[164] DOD is leveraging advancements in technology to deliver SATCOM capabilities that could provide the warfighter with multiple options for communicating on a challenging and dynamic future battlefield. The scale of DOD’s pivot from standalone systems to enterprise SATCOM and hybrid architectures is enormous and challenging, and the department has limited time to implement this approach. DOD needs to be vigilant of the progress and challenges in realizing its plans for hybrid SATCOM, particularly given its history of prioritizing satellites over ground systems and the complexities of integration.
+
+[165] Further challenges loom as the department faces the more complex elements of developing hybrid SATCOM architectures and the infrastructure for enterprise SATCOM. DOD is making many changes organizationally and to its acquisition approaches to fulfill its “fighting SATCOM” vision, but it is too soon to tell whether these changes will be sufficient. Thus, monitoring progress is important for DOD and for Congress. Current DOD reporting of information will not be adequate to monitor progress toward delivering integrated, enterprise capabilities to the warfighter, or provide timely information to decision-makers on opportunities and risks. Existing reporting responsive to DOD Instruction 8420.02 provides information about individual elements or systems. However, it lacks an enterprise-wide picture of status and impediments. A comprehensive report would provide Congress and DOD more holistic information to ensure that needed warfighting capabilities are prioritized, developed, and fielded in a cost-effective and timely manner. Given the central role DOD CIO has for these efforts and the reporting on individual efforts provided to this office, it is well situated to provide such information.
+
+[166] Recommendation for Executive Action
+
+[167] We are making one recommendation to the Secretary of Defense:
+
+[168] The Secretary of Defense should ensure that the DOD Chief Information Officer, supported by the U.S. Space Force, reports annually to Congress on the department’s progress implementing Enterprise SATCOM Management and Control and hybrid SATCOM architectures. This report should identify outcomes, opportunities, and risks associated with these efforts, and be submitted coinciding with the President’s budget submission through fiscal year 2030. (Recommendation 1)
+
+[169] Agency Comments
+
+[170] We provided a draft of this report to the DOD for review and comment. DOD concurred with our recommendation. DOD’s comments are reproduced in appendix II.
+
+[171] We are sending copies of this report to the appropriate congressional committees, the Secretary of Defense, the Secretary of the Air Force, and the Chief of Space Operations. In addition, the report is available at no charge on the GAO website at https://www.gao.gov .
+
+[172] If you or your staff have any questions about this report, please contact me at (202) 512-4841 or ludwigsonj@gao.gov . Contact points for our office of Congressional Relations and Public Affairs may be found on the last page of this report. GAO staff who made key contributions to this report are listed in appendix III.
+
+[173] Jon Ludwigson Director, Contracting and National Security Acquisitions
+
+[174] List of Committees
+
+[175] The Honorable Roger Wicker Chairman The Honorable Jack Reed Ranking Member Committee on Armed Services United States Senate
+
+[176] The Honorable Mitch McConnell Chair The Honorable Christopher Coons Ranking Member Subcommittee on Defense Committee on Appropriations United States Senate
+
+[177] The Honorable Mike Rogers Chairman The Honorable Adam Smith Ranking Member Committee on Armed Services House of Representatives
+
+[178] The Honorable Ken Calvert Chairman The Honorable Betty McCollum Ranking Member Subcommittee on Defense Committee on Appropriations House of Representatives
+
+[179] Appendix I: Objectives, Scope, and Methodology
+
+[180] This report addresses (1) Department of Defense (DOD) coordination and acquisition of satellite communications (SATCOM) capabilities, (2) DOD’s planned use of commercial SATCOM, and (3) the extent to which DOD is ensuring SATCOM acquisitions can deliver interoperable warfighting capabilities.
+
+[181] To identify how DOD is coordinating and acquiring SATCOM capabilities, we obtained and reviewed relevant DOD policy and guidance to identify key roles and responsibilities of offices, including recent changes and acquisition activities, as well as a develop a timeline of major initiatives. We reviewed previous and current versions of documents including DOD Instruction 8420.02, DOD Satellite Communications , to identify changes in DOD’s SATCOM acquisition, integration, and use. [14] To learn about DOD’s current activities to transition to an enterprise SATCOM capability, we interviewed cognizant officials within DOD’s Office of the Secretary of Defense and DOD departments, including acquisition program offices, to understand the status of policy change adoption, any challenges these organizations face supporting the revised policies, and related coordination efforts with other offices. To understand DOD’s coordination of SATCOM planning, we attended recurring DOD coordination meetings to observe content and accomplishments of these discussions. We toured a ground station facility to learn how these organizations are working with each other to facilitate DOD’s planned transition to an enterprise SATCOM.
+
+[182] To identify and describe DOD’s planned use of commercial SATCOM, we reviewed DOD’s reported past usage of commercial SATCOM, departmental strategy documents for commercial SATCOM integration, and U.S. Space Force plans for future usage. To learn about specific aspects of DOD’s planned commercial integration into an enterprise SATCOM, we reviewed DOD’s Commercial Space Integration Strategy and U.S. Space Force’s Commercial Space Strategy , as well as 4 years of annual commercial SATCOM expenditures and usage reports issued by the U.S. Space Force Commercial SATCOM Office. [15] To understand the status of commercial integration efforts, we interviewed officials from across the services and organizations that work with and procure commercial technologies for DOD. To obtain perspectives from vendors providing SATCOM capabilities to DOD, we met with six commercial providers to discuss their experiences with providing services, DOD acquisition, and examples of DOD using emerging technologies. We interviewed four companies that provide commercial SATCOM services: Artel, Iridium, SES Space and Defense, and SpaceX; a ground systems operator, Kongsberg Satellite Services; and a network orchestration company, Aalyria. To further understand the state of the industry, we attended several major SATCOM industry conferences and workshops, such as the Institute of Electrical and Electronics Engineers Military Communications conference.
+
+[183] To assess the extent to which DOD is ensuring SATCOM acquisition can deliver interoperable capabilities, we reviewed DOD’s plans for the pivot to an enterprise SATCOM capability to support joint space operations. Those plans are DOD’s Chief Information Officer’s implementation plan for Enterprise Satellite Communications Management and Control and the U.S. Space Force’s Space Warfighting Analysis Center force designs. [16] We conducted two analyses. The first assessed the status of DOD’s implementation plan for Enterprise SATCOM Management and Control to understand DOD’s progress across over 50 implementation plan tasks. For the second, we compared the Space Warfighting Analysis Center’s force designs to DOD’s fiscal year 2025 budget requests and documentation for new or ongoing system development efforts to determine the status of near-term activities and future support. To understand additional details of both efforts, we interviewed officials who work in SATCOM research, development, acquisition, and operational roles.
+
+[184] To support all three of our objectives, we interviewed officials from the following organizations to discuss DOD SATCOM acquisition:
+
+[185] · Office of DOD Chief Information Officer;
+
+[186] · Office of the Under Secretary of Defense for Acquisition and Sustainment;
+
+[187] · Office of Cost Assessment and Program Evaluation;
+
+[188] · Office of the Director, Operational Test and Evaluation;
+
+[189] · Office of the Under Secretary of Defense for Research and Engineering, FutureG Office;
+
+[190] · Office of the Director, Joint Chiefs of Staff – J6, Command, Control, Communications, and Computers and Chief Information Officer; and J8, Force Structure, Resources, and Assessment;
+
+[191] · Office of the Deputy Chief of Naval Operations N2/N6, Information Warfare/Director of Naval Intelligence;
+
+[192] · Naval Air Systems Command;
+
+[193] · Naval Information Warfare Systems Command;
+
+[194] · Navy Project Overmatch;
+
+[195] · Office of Assistant Secretary of the Army for Acquisition, Logistics, and Technology;
+
+[196] · Program Executive Office Command Control Communications - Tactical;
+
+[197] · Army Combat Capabilities Development Commands Command, Control, Communications, Computers, Cyber, Intelligence, Surveillance and Reconnaissance Center;
+
+[198] · Office of the Director, Chief of Staff of the Air Force A8, Plans and Programs;
+
+[199] · Air Force Research Laboratory;
+
+[200] · Program Executive Officer for Command, Control, Communications, and Battle Management;
+
+[201] · Space Force Deputy Chief of Staff for Strategy of Space Operations S5R, Director of Operational Capability Requirements;
+
+[202] · Space Force Deputy Chief of Space Operations S6C, Director of Cyber and Spectrum Operations Integration;
+
+[203] · Space Systems Command Space Systems Integration Office;
+
+[204] · Program Executive Officer for Military Communications and Position, Navigation, and Timing Program Management Offices for Strategic SATCOM, Tactical SATCOM, and Narrowband SATCOM;
+
+[205] · Commercial Space Office;
+
+[206] · Commercial SATCOM Office;
+
+[207] · Commercial Augmentation Space Reserve;
+
+[208] · Space Warfighting Analysis Center;
+
+[209] · U.S. Space Command Global Space Operations J36; and
+
+[210] · Defense Information Systems Agency.
+
+[211] We conducted this performance audit from August 2023 to March 2025 in accordance with generally accepted auditing standards. Those standards require that we plan and perform the audit to obtain sufficient, appropriate evidence to provide a reasonable basis for our findings and conclusions based on our audit objectives. We believe that the evidence obtained provides a reasonable basis for our findings and conclusions based on our audit objectives.
+
+[212] Appendix II: Comments from the Department of Defense
+
+[213] Appendix III: GAO Contact and Staff Acknowledgments
+
+[214] Jon Ludwigson, (202) 512-4841 or ludwigsonj@gao.gov
+
+[215] Staff Acknowledgments
+
+[216] In addition to the contact named above, Laura Hook (Assistant Director), Brian Fersch (Analyst-in-Charge), Burns C. Eckert, Lori Fields, Laura Greifner, Christine Pecora, and Clinton Thurlow made key contributions to this report.
+
+[217] GAO’s Mission
+
+[218] The Government Accountability Office, the audit, evaluation, and investigative arm of Congress, exists to support Congress in meeting its constitutional responsibilities and to help improve the performance and accountability of the federal government for the American people. GAO examines the use of public funds; evaluates federal programs and policies; and provides analyses, recommendations, and other assistance to help Congress make informed oversight, policy, and funding decisions. GAO’s commitment to good government is reflected in its core values of accountability, integrity, and reliability.
+
+[219] Obtaining Copies of GAO Reports and Testimony
+
+[220] The fastest and easiest way to obtain copies of GAO documents at no cost is through our website. Each weekday afternoon, GAO posts on its website newly released reports, testimony, and correspondence. You can also subscribe to GAO’s email updates to receive notification of newly posted products.
+
+[221] Order by Phone
+
+[222] The price of each GAO publication reflects GAO’s actual cost of production and distribution and depends on the number of pages in the publication and whether the publication is printed in color or black and white. Pricing and ordering information is posted on GAO’s website, https://www.gao.gov/ordering.htm .
+
+[223] Place orders by calling (202) 512-6000, toll free (866) 801-7077, or TDD (202) 512-2537.
+
+[224] Orders may be paid for using American Express, Discover Card, MasterCard, Visa, check, or money order. Call for additional information.
+
+[225] Connect with GAO
+
+[226] Connect with GAO on Facebook , Flickr , X , and YouTube . Subscribe to our RSS Feeds or Email Updates . Listen to our Podcasts . Visit GAO on the web at https://www.gao.gov .
+
+[227] To Report Fraud, Waste, and Abuse in Federal Programs
+
+[228] Contact FraudNet:
+
+[229] Website: https://www.gao.gov/about/what-gao-does/fraudnet
+
+[230] Automated answering system: (800) 424-5454 or (202) 512-7700
+
+[231] Congressional Relations
+
+[232] A. Nicole Clowers, Managing Director, ClowersA@gao.gov , (202) 512-4400, U.S. Government Accountability Office, 441 G Street NW, Room 7125, Washington, DC 20548
+
+[233] Public Affairs
+
+[234] Sarah Kaczmarek, Managing Director, KaczmarekS@gao.gov , (202) 512-4800, U.S. Government Accountability Office, 441 G Street NW, Room 7149 Washington, DC 20548
+
+[235] Strategic Planning and External Liaison
+
+[236] Stephen J. Sanford, Managing Director, spel@gao.gov , (202) 512-4707 U.S. Government Accountability Office, 441 G Street NW, Room 7814, Washington, DC 20548
+
+[237] [1] Department of Defense, Chief of Space Operations, United States Space Force Vision for Satellite Communications (Jan. 23, 2020).
+
+[238] [2] S. Rep. No. 117-39, at 296 (2022), Pub. L. No. 117-39 (2021).
+
+[239] [3] Latency refers to the time it takes for a signal to travel to and from a satellite.
+
+[240] [4] GAO, Space Acquisitions: DOD Faces Challenges and Opportunities with Acquiring Space Systems in a Changing Environment, GAO‑21‑520T (Washington, D.C.: May 24, 2021).
+
+[241] [5] GAO, Space Acquisitions: DOD Faces Significant Challenges as It Seeks to Address Threats and Accelerate Space Programs , GAO‑19‑482T (Washington, D.C.: Apr. 3, 2019).
+
+[242] [6] GAO, Satellite Communications: DOD Should Explore Options to Meet User Needs for Narrowband Capabilities , GAO‑21‑105283 (Washington, D.C.: Sep. 2, 2021).
+
+[243] [7] An analysis of alternatives is an analytical comparison of the operational effectiveness, suitability, and lifecycle cost of alternatives that satisfy established capability needs. See Department of Defense, Major Capability Acquisition , DOD Instruction 5000.85 (Aug. 6, 2020) (incorporating change 1, Nov. 4, 2021).
+
+[244] [8] GAO, Large Constellations of Satellites: Mitigating Environmental and Other Effects , GAO‑22‑105166 (Washington, D.C.: Sep. 29, 2022).
+
+[245] [9] Department of Defense, DOD Satellite Communications , DOD Instruction 8420.02 (Aug. 3, 2023).
+
+[246] [10] In 2024, CSCO reported managing nearly 150 active contracts or task orders. A CSCO official stated that in 2024, the ceiling for the LEO contract was increased from $900 million to $13 billion to accommodate increasing usage and ensure stability over the 10-year ordering period for the contract.
+
+[247] [11] GAO, Space Acquisition: Analysis of Two DOD Reports to Congress , GAO‑24‑106984 (Washington, D.C.: Mar. 26, 2024); and Defense Space Acquisitions: Too Early to Determine If Recent Changes Will Resolve Persistent Fragmentation in Management and Oversight , GAO‑16‑592R (Washington, D.C.: Jul. 27, 2016).
+
+[248] [12] GAO, Weapons Systems Annual Assessment: DOD Is Not Yet Well-Positioned to Field Systems with Speed , GAO‑24‑106831 (Washington, D.C.: Jun. 17, 2024).
+
+[249] [13] The Future Years Defense Program is a projection of the forces, resources, and programs to support DOD operations and is submitted annually in conjunction with the President’s budget request. See 10 U.S.C. § 221.
+
+[250] [14] Department of Defense, DOD Satellite Communications, DOD Instruction 8420.02 (Aug. 3, 2023).
+
+[251] [15] Department of Defense, Commercial Space Integration Strategy (Apr. 2, 2024). U.S. Space Force, Commercial Space Strategy (Apr. 8, 2024).
+
+[252] [16] Department of Defense, Chief Information Officer, Enterprise SATCOM Management and Control Implementation Plan (Dec. 8, 2022).

@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=media.defense.gov · SUMMARY OFTHE JOINT ALL DOMAIN COMMAND AND CONTROL STRATEGY.pdf
+source_url=https://media.defense.gov/2022/Mar/17/2002958406/-1/-1/1/SUMMARY-OFTHE-JOINT-ALL-DOMAIN-COMMAND-AND-CONTROL-STRATEGY.pdf
+claim=JADC2强调跨域数据融合、标准化接口、共同元数据、弹性通信及受损或受干扰环境下的任务式运行。
+excerpt=
+retrieval=Hosted web search citation metadata

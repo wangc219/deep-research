@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=airuniversity.af.edu · offense versus defense dominance unmanned systems and retrospective lessons fro
-source_url=https://www.airuniversity.af.edu/Office-of-Sponsored-Programs/Research/Article-Display/Article/4189093/offense-versus-defense-dominance-unmanned-systems-and-retrospective-lessons-fro/
-claim=该来源支持从无人系统公开战例中归纳攻防成本交换、电子战影响和无人系统效能边界，而不是直接迁移具体战术参数。
-excerpt=
-retrieval=Hosted web search citation metadata

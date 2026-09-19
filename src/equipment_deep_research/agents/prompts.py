@@ -55,7 +55,11 @@ class BaselinePromptBuilder:
                 "objective": agent.description,
                 "task": task,
                 "context": visible_context,
-                "output_rule": "只输出当前结构化契约需要的业务结论、证据、置信度、限制和下一步建议，不描述执行流程。",
+                "output_rule": (
+                    "只输出当前结构化契约需要的事实、专业判断、证据、置信度、限制和真正的未决问题，"
+                    "不描述执行流程；不得写‘后续应’‘下一步应’‘优先级应’等对后置Agent的工作要求、"
+                    "研究安排、注意点或机械化建议。handoff_summary只概括本角色已经形成的结论与证据边界。"
+                ),
                 "military_value_rule": military_mission_lens(agent.agent_id),
                 "safety": "公开来源、任务级能力研究；不输出坐标、攻击步骤或可直接执行参数。",
             }

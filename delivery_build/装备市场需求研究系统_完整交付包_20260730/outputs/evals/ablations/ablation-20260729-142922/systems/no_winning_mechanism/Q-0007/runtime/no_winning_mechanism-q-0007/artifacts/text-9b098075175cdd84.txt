@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=army.mil · the u s armys pae fires demonstrates autonomy and one to many control with lrpm at african lion 2026
-source_url=https://www.army.mil/article-amp/293800/the_u_s_armys_pae_fires_demonstrates_autonomy_and_one_to_many_control_with_lrpm_at_african_lion_2026
-claim=美国陆军公开LRPM在African Lion 2026演示一控多、在飞控制、半自主协同弹药、超过290公里射程和空/地发射，对远程无人打击装备族、技术成熟度和能力边界有贡献。
-excerpt=
-retrieval=Hosted web search citation metadata

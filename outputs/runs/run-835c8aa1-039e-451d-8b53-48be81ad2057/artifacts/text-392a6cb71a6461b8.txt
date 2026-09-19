@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=media.defense.gov · FACT SHEET STRATEGY FOR COUNTERING UNMANNED SYSTEMS.PDF
+source_url=https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF
+claim=美方公开把反无人机能力描述为多手段并存、无单一解，并将干扰类软杀伤列为核心效应、把鉴定与采办节奏视为持续问题。
+excerpt=
+retrieval=Hosted web search citation metadata

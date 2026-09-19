@@ -1,0 +1,64 @@
+[
+  {
+    "accepted_claim_ids": [
+      "claim-6f59aea4fdfe",
+      "claim-76dbc0c212a5",
+      "claim-19c3afd67263",
+      "claim-53ab27242e0d"
+    ],
+    "incremental_value": 1.0,
+    "packet_id": "packet-weapon_equipment",
+    "reasons": [],
+    "rejected_claim_ids": [],
+    "scores": {
+      "claim_evidence_match": 1.0,
+      "incremental_value": 1.0,
+      "source_quality": 0.8,
+      "task_relevance": 1.0,
+      "upstream_acceptance": 1.0
+    },
+    "status": "accepted"
+  },
+  {
+    "accepted_claim_ids": [
+      "claim-2fe7e8eda756",
+      "claim-6f99b8cbf056",
+      "claim-9c410d2cc401",
+      "claim-09cdccfcb9e2"
+    ],
+    "incremental_value": 1.0,
+    "packet_id": "packet-international_situation",
+    "reasons": [],
+    "rejected_claim_ids": [],
+    "scores": {
+      "claim_evidence_match": 1.0,
+      "incremental_value": 1.0,
+      "source_quality": 0.8,
+      "task_relevance": 1.0,
+      "upstream_acceptance": 1.0
+    },
+    "status": "accepted"
+  },
+  {
+    "accepted_claim_ids": [
+      "claim-0c732c749890",
+      "claim-b7e78c468b95",
+      "claim-2dd14e58410e",
+      "claim-f0edd9bc17cd"
+    ],
+    "incremental_value": 1.0,
+    "packet_id": "packet-combat_scenario",
+    "reasons": [
+      "upstream_handoff_not_consumed"
+    ],
+    "rejected_claim_ids": [],
+    "scores": {
+      "claim_evidence_match": 1.0,
+      "incremental_value": 1.0,
+      "source_quality": 0.8,
+      "task_relevance": 1.0,
+      "upstream_acceptance": 0.0
+    },
+    "status": "accepted"
+  }
+]

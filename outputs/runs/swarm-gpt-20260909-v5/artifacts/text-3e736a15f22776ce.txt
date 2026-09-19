@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=marines.mil · Force Design
+source_url=https://www.marines.mil/Force-Design/
+claim=海军陆战队公开规划强调分布式作战、融合多类数据源、弹性网络、快速发现到交战评估链条及分布式保障。
+excerpt=
+retrieval=Hosted web search citation metadata

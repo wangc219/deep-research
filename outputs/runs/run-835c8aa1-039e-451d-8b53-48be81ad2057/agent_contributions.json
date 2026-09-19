@@ -1,0 +1,163 @@
+[
+  {
+    "adopted_by_capability_ids": [],
+    "adopted_by_report_sections": [],
+    "adopted_by_s_steps": {},
+    "agent_id": "weapon_equipment",
+    "contributed": false,
+    "loao_quality_delta": null,
+    "model_calls": 0,
+    "observation_id": "contribution-packet-weapon_equipment",
+    "packet_id": "packet-weapon_equipment",
+    "produced_claim_ids": []
+  },
+  {
+    "adopted_by_capability_ids": [
+      "cap-new-001",
+      "cap-new-002",
+      "cap-new-003",
+      "cap-new-004",
+      "cap-new-005",
+      "cap-new-006",
+      "cap-new-007"
+    ],
+    "adopted_by_report_sections": [
+      "final_report"
+    ],
+    "adopted_by_s_steps": {
+      "S1": [
+        "claim-1fec8136e5d7",
+        "claim-53ea55a0ff66",
+        "claim-3ebe8e80ad5f",
+        "claim-c7f999662229",
+        "claim-7d90070dfea5",
+        "claim-b5265af6cfb8"
+      ],
+      "S2": [
+        "claim-1fec8136e5d7",
+        "claim-53ea55a0ff66",
+        "claim-3ebe8e80ad5f",
+        "claim-c7f999662229",
+        "claim-7d90070dfea5",
+        "claim-b5265af6cfb8"
+      ],
+      "S3": [
+        "claim-1fec8136e5d7",
+        "claim-53ea55a0ff66",
+        "claim-3ebe8e80ad5f",
+        "claim-c7f999662229",
+        "claim-7d90070dfea5",
+        "claim-b5265af6cfb8"
+      ],
+      "S4": [
+        "claim-1fec8136e5d7",
+        "claim-53ea55a0ff66",
+        "claim-3ebe8e80ad5f",
+        "claim-c7f999662229",
+        "claim-7d90070dfea5",
+        "claim-b5265af6cfb8"
+      ],
+      "S5": [
+        "claim-1fec8136e5d7",
+        "claim-53ea55a0ff66",
+        "claim-3ebe8e80ad5f",
+        "claim-c7f999662229",
+        "claim-7d90070dfea5",
+        "claim-b5265af6cfb8"
+      ],
+      "S6": [
+        "claim-1fec8136e5d7",
+        "claim-53ea55a0ff66",
+        "claim-3ebe8e80ad5f",
+        "claim-c7f999662229",
+        "claim-7d90070dfea5",
+        "claim-b5265af6cfb8"
+      ]
+    },
+    "agent_id": "operational_employment",
+    "contributed": true,
+    "loao_quality_delta": null,
+    "model_calls": 3,
+    "observation_id": "contribution-packet-operational_employment",
+    "packet_id": "packet-operational_employment",
+    "produced_claim_ids": [
+      "claim-1fec8136e5d7",
+      "claim-53ea55a0ff66",
+      "claim-3ebe8e80ad5f",
+      "claim-c7f999662229",
+      "claim-7d90070dfea5",
+      "claim-b5265af6cfb8"
+    ]
+  },
+  {
+    "adopted_by_capability_ids": [
+      "cap-new-001",
+      "cap-new-002",
+      "cap-new-003",
+      "cap-new-004",
+      "cap-new-005",
+      "cap-new-006",
+      "cap-new-007"
+    ],
+    "adopted_by_report_sections": [
+      "final_report"
+    ],
+    "adopted_by_s_steps": {
+      "S1": [
+        "claim-869deb07ff49",
+        "claim-85aff0305d59",
+        "claim-5b872540b5b8",
+        "claim-2ccda65f37c6",
+        "claim-59c07846f648"
+      ],
+      "S2": [
+        "claim-869deb07ff49",
+        "claim-85aff0305d59",
+        "claim-5b872540b5b8",
+        "claim-2ccda65f37c6",
+        "claim-59c07846f648"
+      ],
+      "S3": [
+        "claim-869deb07ff49",
+        "claim-85aff0305d59",
+        "claim-5b872540b5b8",
+        "claim-2ccda65f37c6",
+        "claim-59c07846f648"
+      ],
+      "S4": [
+        "claim-869deb07ff49",
+        "claim-85aff0305d59",
+        "claim-5b872540b5b8",
+        "claim-2ccda65f37c6",
+        "claim-59c07846f648"
+      ],
+      "S5": [
+        "claim-869deb07ff49",
+        "claim-85aff0305d59",
+        "claim-5b872540b5b8",
+        "claim-2ccda65f37c6",
+        "claim-59c07846f648"
+      ],
+      "S6": [
+        "claim-869deb07ff49",
+        "claim-85aff0305d59",
+        "claim-5b872540b5b8",
+        "claim-2ccda65f37c6",
+        "claim-59c07846f648"
+      ]
+    },
+    "agent_id": "combat_scenario",
+    "contributed": true,
+    "loao_quality_delta": null,
+    "model_calls": 3,
+    "observation_id": "contribution-packet-combat_scenario",
+    "packet_id": "packet-combat_scenario",
+    "produced_claim_ids": [
+      "claim-869deb07ff49",
+      "claim-85aff0305d59",
+      "claim-5b872540b5b8",
+      "claim-2ccda65f37c6",
+      "claim-59c07846f648"
+    ]
+  }
+]

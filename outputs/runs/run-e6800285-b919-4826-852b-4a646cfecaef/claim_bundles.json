@@ -1,0 +1,283 @@
+[
+  {
+    "bundle_id": "claims-42e2d45402c3",
+    "claims": [],
+    "packet_id": "packet-weapon_equipment",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-39ff1148f328",
+    "claims": [
+      {
+        "claim_id": "claim-7481e2d5f039",
+        "claim_type": "fact",
+        "confidence": 0.49,
+        "counter_evidence": [
+          "任务要求研究直接军事效果，但未限定目标类别、地域、对手或作战阶段，因此无法给出统一的窗口长度、确认阈值或射手响应指标。",
+          "公开材料强调分布式、自治和韧性可提升闭合能力，但同样显示其会增加误识别、链路暴露、责任归属和保障负担；技术存在不等于战果必然提升。",
+          "场景分支少于两个"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-5824f31b34e3",
+          "ev-combat_scenario-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "高价值时敏目标打击的决定性矛盾是“目标数据有效期”与“确认、授权、射手响应”总时延的竞争；军事价值在于把短暂可观测状态转化为直接效果，证据边界是公开材料多支持体系与概念层判断，缺乏统一的目标窗口和实战时延数据；失效条件是重复确认、授权串行化或射手不可用导致目标状态先于火力抵达而改变。"
+      },
+      {
+        "claim_id": "claim-57a4a10b1b68",
+        "claim_type": "fact",
+        "confidence": 0.49,
+        "counter_evidence": [
+          "任务要求研究直接军事效果，但未限定目标类别、地域、对手或作战阶段，因此无法给出统一的窗口长度、确认阈值或射手响应指标。",
+          "公开材料强调分布式、自治和韧性可提升闭合能力，但同样显示其会增加误识别、链路暴露、责任归属和保障负担；技术存在不等于战果必然提升。",
+          "场景分支少于两个"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-5824f31b34e3",
+          "ev-combat_scenario-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "在强干扰和拒止条件下，链路抗毁、局部自治和预授权任务包比单纯提高平台速度更直接影响杀伤链闭合；军事价值在于维持决策—协同—打击连续性，证据边界是公开来源通常证明通信、PNT和无人链路脆弱性，但不能证明某一具体自治架构的战果；失效条件是目标身份不确定、任务包过期或局部节点被诱导执行错误任务。"
+      },
+      {
+        "claim_id": "claim-17eded15e0c7",
+        "claim_type": "fact",
+        "confidence": 0.49,
+        "counter_evidence": [
+          "任务要求研究直接军事效果，但未限定目标类别、地域、对手或作战阶段，因此无法给出统一的窗口长度、确认阈值或射手响应指标。",
+          "公开材料强调分布式、自治和韧性可提升闭合能力，但同样显示其会增加误识别、链路暴露、责任归属和保障负担；技术存在不等于战果必然提升。",
+          "场景分支少于两个"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-5824f31b34e3",
+          "ev-combat_scenario-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "分布式前沿感知能够缩短发现距离，却把低特征驻留、通信暴露、补给和反侦察风险前移；军事价值在于扩大有效窗口并提高首轮响应率，证据边界是公开战法材料可支持分散部署和韧性需求，不能直接外推特定装备在复杂地形中的生存率；失效条件是传感器、中继或射手被定位压制，形成“发现成功但无法持续闭合”。"
+      },
+      {
+        "claim_id": "claim-bfa22f6590f5",
+        "claim_type": "inference",
+        "confidence": 0.49,
+        "counter_evidence": [
+          "任务要求研究直接军事效果，但未限定目标类别、地域、对手或作战阶段，因此无法给出统一的窗口长度、确认阈值或射手响应指标。",
+          "公开材料强调分布式、自治和韧性可提升闭合能力，但同样显示其会增加误识别、链路暴露、责任归属和保障负担；技术存在不等于战果必然提升。",
+          "场景分支少于两个"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-5824f31b34e3",
+          "ev-combat_scenario-web-8952c3805d5a"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.marines.mil/Force-Design/",
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+        ],
+        "text": "高价值目标环境中的多目标并发和诱饵会把问题从“能否快打”转为“能否在不确定性下正确排序并保留再组织能力”；军事价值在于避免火力被低价值目标牵引，并保持多轮打击能力，证据边界是公开研究可支持信息过载、诱饵和持续消耗的普遍风险，缺少针对特定对手的目标生成比例数据；失效条件是误判诱饵、射手过早暴露、BDA中断或保障消耗率超过恢复能力。"
+      }
+    ],
+    "packet_id": "packet-combat_scenario",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-978ac9dc8329",
+    "claims": [
+      {
+        "claim_id": "claim-270ca48c1a8d",
+        "claim_type": "fact",
+        "confidence": 0.82,
+        "counter_evidence": [
+          "追求快速授权可减少窗口损失，但过度压缩确认可能放大诱饵、误识别和附带风险；速度与可信度不存在无条件同步提升。",
+          "前沿分布式节点可缩短闭环，却也增加暴露、补给和战损替代压力；分布并不等于自动获得持续作战能力。",
+          "长航时ISR能够延长目标保持时间，但在防空和电子战环境下可能同时失去搜索、跟踪和战果评估能力。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-bc1c2e8c3176",
+          "ev-operational_employment-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "高价值时敏目标的核心矛盾是“确认可信度”与“闭环时延”的耦合，而非单纯提高武器速度。多源发现、连续跟踪、快速授权和可立即接入的射手必须并行运行，才能把短暂暴露转化为直接军事效果。军事价值在于降低发现后目标转移、隐蔽或任务完成的概率。公开联合火力 doctrine 可支撑任务链逻辑，但不足以证明任何特定平台组合在强对抗环境下的实际时延。失效条件是目标身份不确定、授权迟滞、链路中断或射手不可用。"
+      },
+      {
+        "claim_id": "claim-16b6472f036a",
+        "claim_type": "fact",
+        "confidence": 0.82,
+        "counter_evidence": [
+          "追求快速授权可减少窗口损失，但过度压缩确认可能放大诱饵、误识别和附带风险；速度与可信度不存在无条件同步提升。",
+          "前沿分布式节点可缩短闭环，却也增加暴露、补给和战损替代压力；分布并不等于自动获得持续作战能力。",
+          "长航时ISR能够延长目标保持时间，但在防空和电子战环境下可能同时失去搜索、跟踪和战果评估能力。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-bc1c2e8c3176",
+          "ev-operational_employment-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "前沿预布、空中持续监视和后方远程火力是三种互补运用形态。前沿分布式杀伤网闭环最短但暴露和补给压力高；空中长航时链覆盖连续但易受防空、电子战和天气影响；后方远程火力生存性较好但更依赖数据新鲜度、授权速度和库存。军事价值在于按威胁和窗口长度选择不同射手，而不是追求单一最优平台。Force Design及相关公开材料支持分布、机动和跨域协同方向，但不能外推具体交战效果。失效条件是敌方压制前沿节点、空域拒止、目标轨迹过期或弹药消耗超过补充能力。"
+      },
+      {
+        "claim_id": "claim-2907cfe3a58b",
+        "claim_type": "hypothesis",
+        "confidence": 0.82,
+        "counter_evidence": [
+          "追求快速授权可减少窗口损失，但过度压缩确认可能放大诱饵、误识别和附带风险；速度与可信度不存在无条件同步提升。",
+          "前沿分布式节点可缩短闭环，却也增加暴露、补给和战损替代压力；分布并不等于自动获得持续作战能力。",
+          "长航时ISR能够延长目标保持时间，但在防空和电子战环境下可能同时失去搜索、跟踪和战果评估能力。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-bc1c2e8c3176",
+          "ev-operational_employment-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "作战闭环必须包含战果评估与再攻击续接，否则“快速精确”可能只实现首轮命中而不能实现歼灭、失能或持续压制。评估节点应能在通信受扰和传感器不完整时提供最低限度的毁伤判断，并允许任务重新分配。军事价值在于防止诱饵、有限毁伤或目标转移造成任务失败。公开乌克兰经验分析和反无人系统战略支持“侦察、打击、评估、再续接”及消耗韧性的重要性，但公开证据不足以量化再攻击收益。失效条件是战果评估被压制、目标伪装持续有效、通信断裂或可用射手已耗尽。"
+      },
+      {
+        "claim_id": "claim-6c31fa5a8ac6",
+        "claim_type": "fact",
+        "confidence": 0.82,
+        "counter_evidence": [
+          "追求快速授权可减少窗口损失，但过度压缩确认可能放大诱饵、误识别和附带风险；速度与可信度不存在无条件同步提升。",
+          "前沿分布式节点可缩短闭环，却也增加暴露、补给和战损替代压力；分布并不等于自动获得持续作战能力。",
+          "长航时ISR能够延长目标保持时间，但在防空和电子战环境下可能同时失去搜索、跟踪和战果评估能力。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-bc1c2e8c3176",
+          "ev-operational_employment-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "力量协同的关键不是资产数量，而是跨域数据、授权边界、射手优先级和降级运行能否形成共同节奏。边缘节点需具备断连缓存、本地任务包和人工接管能力；后方C2需能消解冲突并在带宽受限时保留目标轨迹和交战所需最小信息。军事价值在于避免多域传感器同时发现却因排队、格式不兼容或授权链过长而错失窗口。JADC2相关公开材料能证明互操作和决策速度是体系问题，但不能证明某一网络架构已在高强度对抗中实现稳定闭环。失效条件是单一链路依赖、中心节点被摧毁、数据标准不兼容或人工负荷超过决策能力。"
+      },
+      {
+        "claim_id": "claim-60b3cfc702e6",
+        "claim_type": "fact",
+        "confidence": 0.82,
+        "counter_evidence": [
+          "追求快速授权可减少窗口损失，但过度压缩确认可能放大诱饵、误识别和附带风险；速度与可信度不存在无条件同步提升。",
+          "前沿分布式节点可缩短闭环，却也增加暴露、补给和战损替代压力；分布并不等于自动获得持续作战能力。",
+          "长航时ISR能够延长目标保持时间，但在防空和电子战环境下可能同时失去搜索、跟踪和战果评估能力。"
+        ],
+        "downstream_targets": [
+          "S1",
+          "S2",
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-operational_employment-web-bc1c2e8c3176",
+          "ev-operational_employment-web-36638e192ebe"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.csis.org/analysis/lessons-ukraine-conflict-modern-warfare-age-autonomy-information-and-resilience",
+          "https://files.gao.gov/reports/GAO-25-106454/index.html"
+        ],
+        "text": "持续作战能力决定短窗口打击体系的真实战斗力。前沿节点、无人平台和待机弹药应允许战损替代、快速转移、模块化补给和任务重分配；同时必须控制操作员负荷、维修周转和弹药消耗。军事价值在于首轮节点遭压制后仍能恢复发现、确认和火力接入，避免体系退化为迟缓的后方火力等待。GAO及公开反无人系统材料支持对韧性、库存和反制压力的关注，但不足以给出具体规模或部署比例。失效条件是补给线暴露、备件和电源不足、无人系统损耗过快或训练有素人员枯竭。"
+      }
+    ],
+    "packet_id": "packet-operational_employment",
+    "schema_version": "1.0"
+  }
+]
