@@ -8,7 +8,23 @@ from evals.config import config_status, load_eval_config, resolved_system_config
 ROOT = Path(__file__).parents[2]
 
 
-def test_real_baseline_config_is_valid_and_keeps_secrets_hidden(monkeypatch) -> None:
+def test_real_baseline_config_is_valid_and_keeps_secrets_hidden(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    auth_dir = tmp_path / ".codex"
+    auth_dir.mkdir()
+    (auth_dir / "auth.json").write_text("{}", encoding="utf-8")
+    monkeypatch.setenv("HOME", str(auth_dir.parent))
+    monkeypatch.setattr(
+        "evals.config._codex_status",
+        lambda command: {
+            "command": command,
+            "present": True,
+            "path": "/bin/codex",
+            "version": "test",
+        },
+    )
     monkeypatch.setenv("EQUIPMENT_EVAL_OPENAI_BASE_URL", "https://api.openai.com/v1")
     monkeypatch.setenv("EQUIPMENT_EVAL_OPENAI_API_KEY", "openai-secret")
     monkeypatch.setenv(
