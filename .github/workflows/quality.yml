@@ -34,7 +34,7 @@ jobs:
           PYTHONPATH=src python -m pytest -q 2>&1 | tee pytest.log
           status=${PIPESTATUS[0]}
           if [[ "$status" -ne 0 ]]; then
-            summary="$(tail -80 pytest.log | tr '\\n' ' ' | cut -c1-6000)"
+            summary="$(tail -80 pytest.log | tr '\n' ' ' | tr '\r' ' ' | cut -c1-6000)"
             echo "::error file=.github/workflows/quality.yml,line=32,title=pytest failure::$summary"
           fi
           exit "$status"
