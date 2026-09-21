@@ -73,9 +73,23 @@ def render_prompt_optimized(
 
     parts = [_PROMPT_HEADER]
 
-    # 条件模板 - 使用预编译常量
+    # Retrieval is optional at the transport boundary.  Technology-column
+    # prose must never repeat a gateway/source-status diagnostic when search
+    # is unavailable; keep that distinction in the private audit ledger.
     if isinstance(options.get("web_search"), Mapping):
-        parts.append(_PROMPT_SEARCH_HINT)
+        phase = str(options.get("phase", "") or "").strip().lower()
+        if (
+            "technology_implementation" in phase
+            or "s6_column_2" in phase
+            or "module_technology_implementation" in phase
+        ):
+            parts.append(
+                "Use Codex web research/search capabilities when available. Cite only public HTTPS URLs "
+                "that you actually inspected; if search is unavailable, continue the engineering analysis "
+                "without exposing a search-status or source-boundary notice in the returned prose."
+            )
+        else:
+            parts.append(_PROMPT_SEARCH_HINT)
 
     # 配置参数
     effort = str(options.get("reasoning_effort", "")).strip()

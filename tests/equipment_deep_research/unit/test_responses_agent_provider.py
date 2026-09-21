@@ -1530,7 +1530,57 @@ def test_deep_dialogue_s6_technology_column_enables_governed_live_search() -> No
         "external_web_access": True,
     }
     assert options["include_web_sources"] is True
-    assert options["require_web_search"] is True
+    assert options["require_web_search"] is False
+    assert options["_disable_provider_timeout"] is False
+    assert options["_provider_timeout_seconds"] == 180
+
+
+def test_deep_dialogue_s6_technology_retry_does_not_repeat_live_search() -> None:
+    backend = ScriptedFakeProvider(
+        [[ProviderStreamEvent.final(ProviderFinalTurn(text='{"content":"ok"}'))]]
+    )
+    provider = ResponsesAgentProvider(backend)
+
+    asyncio.run(
+        provider._run_core_text(
+            "deep_thinking_dialogue",
+            "recover S6 technology implementation",
+            {"input": {"run_id": "run-deep-tech-retry"}},
+            4200,
+            phase="deep_contextual_dialogue_s6_column_2_retry",
+        )
+    )
+
+    _, _, options = backend.inputs[0]
+    assert options["_disable_provider_timeout"] is False
+    assert options["_provider_timeout_seconds"] == 180
+    assert "web_search" not in options
+    assert "include_web_sources" not in options
+    assert "require_web_search" not in options
+
+
+def test_deep_dialogue_s6_technology_model_recovery_does_not_repeat_live_search() -> None:
+    backend = ScriptedFakeProvider(
+        [[ProviderStreamEvent.final(ProviderFinalTurn(text='{"content":"ok"}'))]]
+    )
+    provider = ResponsesAgentProvider(backend)
+
+    asyncio.run(
+        provider._run_core_text(
+            "deep_thinking_dialogue",
+            "recover S6 technology implementation from model knowledge",
+            {"input": {"run_id": "run-deep-tech-model-recovery"}},
+            3200,
+            phase="deep_contextual_dialogue_s6_column_2_model_recovery",
+        )
+    )
+
+    _, _, options = backend.inputs[0]
+    assert options["_disable_provider_timeout"] is False
+    assert options["_provider_timeout_seconds"] == 180
+    assert "web_search" not in options
+    assert "include_web_sources" not in options
+    assert "require_web_search" not in options
 
 
 def test_deep_dialogue_s6_non_technology_column_does_not_force_live_search() -> None:

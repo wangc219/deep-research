@@ -773,7 +773,7 @@
   min-width: 0;
   min-height: 0;
   flex-direction: column;
-  overflow: auto;
+  overflow: hidden;
   padding: 14px 12px;
   border-right: 1px solid #e5e9f3;
   background: #f4f6fb;
@@ -829,6 +829,17 @@
   background: #fff;
   color: #514dca;
   font-weight: 700;
+}
+
+.deep-session-history-scroll {
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding: 0 2px 8px;
 }
 
 .deep-session-row {
@@ -1722,10 +1733,10 @@
 .deep-next-questions button:hover:not(:disabled) { color: #4c49c5; background: #f0f0ff; }
 
 .deep-card-confirmation {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 9px;
   width: 100%;
   margin: 14px 0 4px;
   padding: 12px 13px;
@@ -1734,14 +1745,20 @@
   background: #f7fbf8;
 }
 
-.deep-card-confirmation > div { display: flex; align-items: center; gap: 9px; min-width: 0; }
-.deep-card-confirmation > div:first-child > svg { flex: none; color: #34795a; }
+.deep-card-confirmation-copy { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.deep-card-confirmation-copy > svg { flex: none; color: #34795a; }
 .deep-card-confirmation span { min-width: 0; }
 .deep-card-confirmation b,
 .deep-card-confirmation small { display: block; }
 .deep-card-confirmation b { color: #354d43; font-size: 11px; }
 .deep-card-confirmation small { margin-top: 3px; color: #71827a; font-size: 9px; line-height: 1.45; }
-.deep-card-confirmation button {
+.deep-card-confirmation-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 24px;
+}
+.deep-card-confirmation-actions button {
   display: inline-flex;
   min-height: 31px;
   align-items: center;
@@ -1756,9 +1773,9 @@
   font-weight: 700;
   white-space: nowrap;
 }
-.deep-card-confirmation button.primary { border-color: #3f8565; background: #3f8565; color: #fff; }
-.deep-card-confirmation button:hover:not(:disabled) { border-color: #77a58f; }
-.deep-card-confirmation button.primary:hover:not(:disabled) { background: #347455; }
+.deep-card-confirmation-actions button.primary { border-color: #3f8565; background: #3f8565; color: #fff; }
+.deep-card-confirmation-actions button:hover:not(:disabled) { border-color: #77a58f; }
+.deep-card-confirmation-actions button.primary:hover:not(:disabled) { background: #347455; }
 
 .deep-thinking-indicator {
   display: flex;
@@ -2338,6 +2355,27 @@
 .deep-process-parallel > article.fresh { border-color: #c9d0f4; background: #fbfcff; }
 .deep-process-critique { background: #f8f6ff; }
 .deep-process-columns { background: #f5faf8; }
+.deep-s6-progress { margin: 12px 0; padding: 14px; border: 1px solid #dce5e2; border-radius: 12px; background: #f8faf9; }
+.deep-s6-progress > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; }
+.deep-s6-progress-actions { display: inline-flex; align-items: center; justify-content: flex-end; gap: 8px; min-width: 0; }
+.deep-s6-progress > header span { color: #477062; font-variant-numeric: tabular-nums; }
+.deep-s6-progress-actions > button { display: inline-flex; align-items: center; gap: 4px; min-height: 24px; padding: 0 7px; border: 1px solid #cddfd6; border-radius: 6px; background: #fff; color: #287258; font-size: 10px; font-weight: 650; }
+.deep-s6-progress-actions > button:hover { border-color: #91c4ae; background: #f0faf5; }
+.deep-s6-progress > p { margin: 6px 0 12px; color: #66756f; font-size: 12px; }
+.deep-s6-grid { display: grid; gap: 8px; }
+.deep-s6-column { min-width: 0; border: 1px solid #e2e7e5; border-radius: 9px; background: #fff; transition: border-color .2s, background .2s; }
+.deep-s6-column > summary { display: flex; align-items: center; gap: 8px; padding: 11px; cursor: pointer; list-style: none; }
+.deep-s6-column > summary::-webkit-details-marker { display: none; }
+.deep-s6-column > summary:focus-visible { outline: 2px solid #31836a; outline-offset: 2px; border-radius: 8px; }
+.deep-s6-column > summary b { flex: 1; min-width: 0; font-size: 12px; overflow-wrap: anywhere; }
+.deep-s6-column > summary small { color: #6d7974; white-space: nowrap; font-size: 11px; }
+.deep-s6-column-icon { display: flex; color: #8b9791; }
+.deep-s6-column.completed { border-color: #91c4ae; background: #f0faf5; }
+.deep-s6-column.completed .deep-s6-column-icon, .deep-s6-column.completed > summary small { color: #247657; }
+.deep-s6-column.failed { border-color: #e5c5a2; }
+.deep-s6-column.failed .deep-s6-column-icon { color: #aa6a24; }
+.deep-s6-column > .deep-md, .deep-s6-column > p { max-height: 300px; overflow: auto; padding: 0 12px 12px; margin: 0; font-size: 12px; overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: reduce) { .deep-s6-column { transition: none; } .deep-s6-column .spin { animation: none; } }
 .deep-process-parallel > article > div { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; min-width: 0; }
 .deep-process-parallel > article em { color: #6a74b8; font-size: 9px; font-style: normal; }
 .deep-process-parallel > article b { min-width: 0; color: #3d4970; font-size: 11px; }
@@ -2351,6 +2389,7 @@
 .deep-process-draft .deep-process-live-text { max-height: 180px; border-color: #dce1f1; background: rgba(255,255,255,.78); }
 .deep-process-wait { display: flex; align-items: center; gap: 8px; color: #69758e; font-size: 10.5px; }
 .deep-process-wait .deep-process-typing { flex: none; margin: 0; }
+.deep-process-wait-latest { width: 100%; margin: 10px 0 4px; padding: 4px 2px; }
 
 .deep-artifacts {
   max-width: none;
@@ -2410,10 +2449,56 @@
   z-index: 3;
   flex: none;
   margin: 0;
-  padding: 10px 24px 14px;
+  padding: 8px 24px 8px;
   border-top: 1px solid #edf0f6;
   background: #fff;
   box-shadow: 0 -8px 24px rgba(35, 47, 85, .04);
+}
+
+.deep-composer-model-picker {
+  display: inline-flex;
+  max-width: 100%;
+  min-height: 26px;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  color: #747f94;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.deep-composer-model-picker > span {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+}
+
+.deep-composer-model-picker > span svg { color: #5b62bc; }
+
+.deep-composer-model-picker select {
+  min-height: 26px;
+  max-width: min(190px, 48vw);
+  padding: 0 24px 0 8px;
+  border: 1px solid #cfd6eb;
+  border-radius: 7px;
+  outline: 0;
+  background: #f8f9fd;
+  color: #46526c;
+  font: inherit;
+  font-weight: 700;
+}
+
+.deep-composer-model-picker select:focus { border-color: #929be0; box-shadow: 0 0 0 2px rgba(93, 90, 223, .1); }
+.deep-composer-model-picker select:disabled { cursor: not-allowed; color: #7b8499; opacity: .68; }
+
+.deep-composer-shell-footer {
+  display: flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 8px 6px 12px;
 }
 
 .deep-composer-shell {
@@ -2610,6 +2695,13 @@
   min-height: 21px;
 }
 .deep-deliberation-chip:hover { border-color: #b8bced; background: #eef0ff; }
+.deep-deliberation-candidate-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 6px 5px 0;
+}
+.deep-deliberation-candidate-row .deep-deliberation-chip { margin: 0; }
 .deep-deliberation-direction {
   display: block;
   width: 100%;
@@ -2637,6 +2729,35 @@
   border-radius: 0 8px 8px 0;
   background: #f7f8ff;
 }
+.deep-deliberation-directions .deep-deliberation-direction {
+  display: grid;
+  gap: 7px;
+}
+.deep-deliberation-direction > button:first-child {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.deep-deliberation-author {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 3px 8px;
+  border: 1px solid #cfd3f5;
+  border-radius: 999px;
+  background: #fff;
+  color: #5c62ad;
+  font-size: 10px;
+  cursor: pointer;
+}
+.deep-deliberation-author:hover { border-color: #8c8fe4; background: #f1f1ff; }
 .deep-deliberation-directions b { display: block; color: #33405b; font-size: 12px; }
 .deep-deliberation-directions small { display: block; margin-top: 4px; color: #7b869d; font-size: 10px; line-height: 1.5; }
 .deep-deliberation-note {
@@ -2784,9 +2905,9 @@
   display: block;
   width: 100%;
   min-height: 54px;
-  max-height: 160px;
+  max-height: 120px;
   resize: none;
-  padding: 15px 52px 13px 16px;
+  padding: 15px 16px 8px;
   border: 0;
   border-radius: 20px;
   background: transparent;
@@ -2798,9 +2919,7 @@
 
 .deep-composer textarea:focus { outline: none; }
 .deep-composer-send {
-  position: absolute;
-  right: 9px;
-  bottom: 9px;
+  position: static;
   display: inline-flex;
   width: 34px;
   height: 34px;
@@ -2885,7 +3004,7 @@
 .deep-run-mode-menu small { display: block; overflow-wrap: anywhere; }
 .deep-run-mode-menu b { color: #46526c; font-size: 10px; }
 .deep-run-mode-menu small { color: #8a94a7; font-size: 8px; line-height: 1.35; }
-.deep-composer-footer { display: flex; max-width: none; width: 100%; align-items: center; justify-content: space-between; gap: 10px; margin: 0; padding-top: 6px; }
+.deep-composer-footer { display: flex; max-width: none; width: 100%; align-items: center; justify-content: space-between; gap: 10px; margin: 0; padding-top: 4px; }
 .deep-composer-footer small { min-width: 0; overflow: hidden; color: #99a2b3; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
 .deep-composer-footer > span,
 .deep-composer-meta > span { flex: none; color: #a0a8b8; font-size: 9px; }
@@ -2897,7 +3016,7 @@
   .deep-thinking-overlay { align-items: stretch; justify-content: stretch; padding: 0; }
   .deep-thinking-panel { width: 100%; height: 100%; max-height: none; border: 0; border-radius: 0; }
   .deep-thinking-layout { grid-template-columns: 1fr; grid-template-rows: minmax(0, 88px) minmax(0, 1fr); }
-  .deep-session-list { display: block; min-height: 0; max-height: 88px; overflow-x: hidden; overflow-y: auto; padding: 10px 12px; border-right: 0; border-bottom: 1px solid #e5e9f3; }
+  .deep-session-list { display: flex; min-height: 0; max-height: 88px; overflow: hidden; padding: 10px 12px; border-right: 0; border-bottom: 1px solid #e5e9f3; }
   .deep-session-list > header { position: sticky; top: -10px; z-index: 2; width: auto; padding: 8px 2px 10px; background: #f4f6fb; }
   .deep-session-row { width: 100%; }
   .deep-session-empty { display: none; }
@@ -2913,6 +3032,8 @@
 }
 
 @media (max-width: 720px) {
+  .deep-thinking-header { gap: 8px; }
+  .deep-thinking-header > div:first-child { min-width: 0; }
   .deep-thinking-context { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 7px 13px; }
   .deep-thinking-context > div { padding: 6px 9px; }
   .deep-context-query { grid-column: auto; }
@@ -2946,6 +3067,10 @@
   .deep-thinking-header > div:first-child { min-width: 0; }
   .deep-thinking-header h2 { overflow: hidden; font-size: 17px; text-overflow: ellipsis; white-space: nowrap; }
   .deep-thinking-header-actions { gap: 6px; }
+  .deep-composer-shell-footer { gap: 6px; padding-left: 8px; }
+  .deep-composer-model-picker { min-width: 0; }
+  .deep-composer-model-picker > span { display: none; }
+  .deep-composer-model-picker select { min-width: 0; max-width: 140px; }
   .deep-capability-button { width: 38px; padding: 0; justify-content: center; }
   .deep-capability-button > span { display: none; }
   .deep-capability-button em { position: absolute; margin: -24px 0 0 25px; border: 1px solid #fff; }
@@ -2970,8 +3095,8 @@
   .deep-message.user { max-width: 92%; }
   .deep-message-body { font-size: 12px; }
   .deep-message-scroll { padding-left: 12px; padding-right: 12px; }
-  .deep-card-confirmation { align-items: stretch; flex-direction: column; }
-  .deep-card-confirmation > div:last-child { display: grid; grid-template-columns: 1fr 1fr; }
+  .deep-card-confirmation { align-items: stretch; }
+  .deep-card-confirmation-actions { display: grid; grid-template-columns: 1fr 1fr; padding-left: 24px; }
   .deep-process-console { padding: 11px 0 0; }
   .deep-process-console-head { align-items: flex-start; }
   .deep-process-console-head small { display: none; }
@@ -3013,4 +3138,310 @@
   .deep-stage-strip { padding: 6px 14px; }
   .deep-thread,
   .deep-message-scroll { min-height: 140px; }
+}
+
+/* Chat-first deep research layout. Keep the conversation viewport dominant,
+   while the research chrome stays compact like nanobot's thread shell. */
+.deep-thinking-overlay {
+  padding: 0;
+  background: rgba(27, 35, 66, .18);
+}
+
+.deep-thinking-panel {
+  width: 100vw;
+  height: 100vh;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
+}
+
+.deep-thinking-header {
+  padding: 10px 22px 9px;
+}
+
+.deep-thinking-header h2 { font-size: 17px; }
+
+.deep-thinking-context {
+  gap: 6px;
+  padding: 6px 22px;
+}
+
+.deep-thinking-context > div {
+  padding: 5px 9px;
+  border-radius: 8px;
+}
+
+.deep-thinking-context span { font-size: 9px; }
+.deep-thinking-context p { font-size: 10px; }
+
+.deep-stage-strip {
+  gap: 6px;
+  padding: 7px 22px;
+}
+
+.deep-stage-strip > div {
+  padding: 5px 7px;
+  border-radius: 8px;
+}
+
+.deep-stage-strip > div > i {
+  width: 21px;
+  height: 21px;
+  border-radius: 7px;
+}
+
+.deep-thinking-layout {
+  grid-template-columns: minmax(240px, 288px) minmax(0, 1fr);
+}
+
+.deep-message-scroll {
+  padding: 18px clamp(22px, 5vw, 76px) 28px;
+}
+
+.deep-composer {
+  padding-right: clamp(16px, 5vw, 76px);
+  padding-left: clamp(16px, 5vw, 76px);
+}
+
+/* Keep the activity cluster bounded like nanobot's reasoning shell. The
+   transcript remains the only page-level scroller, while the timeline and
+   returned snippets have their own small viewport. */
+.deep-process-timeline-scroll {
+  max-height: 190px;
+  overflow-y: auto;
+  mask-image: linear-gradient(180deg, transparent, #000 10px, #000 calc(100% - 10px), transparent);
+}
+
+.deep-process-md,
+.deep-process-live-text.deep-md {
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.deep-message.streaming .deep-message-body {
+  max-height: none;
+  overflow: visible;
+}
+
+.deep-message.streaming .deep-process-live-text.deep-md {
+  max-height: none;
+  overflow: visible;
+}
+
+.deep-process-console { margin-bottom: 16px; }
+.deep-deliberation { margin-top: 8px; }
+.deep-deliberation.live {
+  border-color: #d7dcf1;
+  background: #fafbff;
+}
+.deep-deliberation > header > div:first-child > span {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+.deep-deliberation-kicker {
+  color: #9aa3b5;
+  font-size: 9px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+.deep-deliberation.live .deep-deliberation-kicker { color: #737daa; }
+.deep-deliberation-header-meta {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px !important;
+  color: inherit !important;
+  font-size: inherit !important;
+}
+.deep-deliberation-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 24px;
+  padding: 0 7px;
+  border: 1px solid #dfe3ef;
+  border-radius: 999px;
+  background: #fff;
+  color: #6d7890;
+  font-size: 9px;
+}
+.deep-deliberation-toggle:hover { border-color: #c4c9e8; color: #555bc0; }
+.deep-deliberation-body { display: grid; gap: 0; }
+.deep-process-live-feed {
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 3px;
+}
+.deep-message-end-gap { height: 20px; flex: none; }
+
+@media (max-width: 960px) {
+  .deep-thinking-layout { grid-template-columns: 1fr; }
+  .deep-message-scroll { padding-right: 22px; padding-left: 22px; }
+  .deep-composer { padding-right: 14px; padding-left: 14px; }
+}
+
+/* The context and stage chrome should read as a compact status rail, leaving
+   the vertical space for the transcript itself. */
+.deep-thinking-context {
+  grid-auto-rows: minmax(36px, auto);
+}
+
+.deep-thinking-context > div {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+}
+
+.deep-thinking-context span {
+  margin-bottom: 0;
+  white-space: nowrap;
+}
+
+.deep-context-query-bg { display: none; }
+
+.deep-thinking-context p {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+@media (min-width: 961px) {
+  .deep-thinking-layout {
+    grid-template-columns: minmax(216px, 248px) minmax(0, 1fr);
+  }
+}
+
+.deep-stage-strip {
+  min-height: 44px;
+  max-height: 54px;
+  overflow: hidden;
+}
+
+.deep-stage-strip > div { min-height: 30px; }
+.deep-stage-strip small { white-space: nowrap; }
+
+@media (max-height: 600px) {
+  .deep-thinking-header {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+
+  .deep-thinking-header h2 { margin-top: 2px; }
+
+  .deep-thinking-context {
+    grid-auto-rows: 30px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+  }
+
+  .deep-thinking-context > div {
+    min-height: 28px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+  }
+
+  .deep-stage-strip {
+    min-height: 36px;
+    max-height: 42px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+
+  .deep-stage-strip > div {
+    min-height: 26px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+  }
+
+  .deep-stage-strip small { display: none; }
+  .deep-message-scroll { padding-top: 10px; padding-bottom: 16px; }
+}
+
+@media (max-height: 460px) {
+  /* At presentation-sized short windows the transcript is the primary
+     surface; context is still available from the Query/history metadata. */
+  .deep-thinking-context,
+  .deep-stage-strip { display: none; }
+}
+
+@media (min-width: 961px) and (max-height: 460px) {
+  .deep-thinking-layout { grid-template-columns: minmax(200px, 232px) minmax(0, 1fr); }
+}
+
+/* Keep all supporting context in the left rail so the right side is a single,
+   uninterrupted conversation surface. */
+.deep-sidebar {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid #e5e9f3;
+  background: #f4f6fb;
+}
+
+.deep-sidebar .deep-thinking-context {
+  display: grid;
+  flex: none;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  padding: 10px 10px 8px;
+  border-bottom: 1px solid #e5e9f3;
+}
+
+.deep-sidebar .deep-thinking-context > div {
+  grid-template-columns: max-content minmax(0, 1fr);
+  min-height: 30px;
+  padding: 5px 7px;
+  border-radius: 7px;
+}
+
+.deep-sidebar .deep-thinking-context span { font-size: 9px; }
+.deep-sidebar .deep-thinking-context p { font-size: 9px; }
+
+.deep-sidebar .deep-stage-strip {
+  display: grid;
+  flex: none;
+  grid-template-columns: 1fr;
+  gap: 5px;
+  min-height: 0;
+  max-height: 210px;
+  padding: 8px 10px;
+  overflow-y: auto;
+  border-bottom: 1px solid #e5e9f3;
+}
+
+.deep-sidebar .deep-stage-strip > span { margin-bottom: 1px; }
+.deep-sidebar .deep-stage-strip > div { min-height: 30px; }
+
+.deep-sidebar-history {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+}
+
+.deep-sidebar .deep-session-list {
+  width: 100%;
+  min-height: 0;
+  flex: 1;
+  border-right: 0;
+  padding: 12px 10px;
+}
+
+@media (max-width: 960px) {
+  .deep-sidebar {
+    max-height: 88px;
+    border-right: 0;
+    border-bottom: 1px solid #e5e9f3;
+  }
+
+  .deep-sidebar .deep-thinking-context,
+  .deep-sidebar .deep-stage-strip { display: none; }
+
+  .deep-sidebar-history,
+  .deep-sidebar .deep-session-list { min-height: 0; }
 }

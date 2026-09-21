@@ -67,12 +67,12 @@
     ],
     "severity": "medium",
     "confidence": 0.8,
-    "effect_status": "pending_validation",
-    "memory_status": "candidate",
+    "effect_status": "withdrawn",
+    "memory_status": "retired",
     "utility_ema": 0.0,
     "ttl_days": 90,
     "created_at": "2026-09-19T08:59:02.238616+00:00",
-    "learning_status": "processed",
+    "learning_status": "rolled_back",
     "raw_comment": "真实模型验收：请补强通信受限与多目标饱和条件下的边界证据，并明确可证伪验证路径。",
     "raw_important_information": "针对百链分散攻击巡飞弹：真实模型验收：请补强通信受限与多目标饱和条件下的边界证据，并明确可证伪验证路径。",
     "derived": true,
@@ -88,7 +88,21 @@
     "route_reason": "结构化五维评分定向S5；沿用兼容客户端指定的目标 Agent",
     "memory_processor": "expert_feedback_memory",
     "processed_at": "2026-09-19T08:59:02.238753+00:00",
-    "dedupe_status": "canonical"
+    "dedupe_status": "canonical",
+    "rollback_status": "rolled_back",
+    "rollback_reason": "清理测试反馈",
+    "rollback_actor_id": "analyst",
+    "rolled_back_at": "2026-09-20T03:23:43.802542+00:00",
+    "effect_history": [
+      {
+        "from_status": "pending_validation",
+        "to_status": "withdrawn",
+        "evaluator_id": "analyst",
+        "evaluation_id": "rollback:feedback-625cb141-ff34-4056-a90a-7c400a350f2c",
+        "reason": "清理测试反馈",
+        "recorded_at": "2026-09-20T03:23:43.802542+00:00"
+      }
+    ]
   },
   {
     "feedback_id": "feedback-de826eb0-6cc6-41de-9d3c-e4520cc6b641",
@@ -158,12 +172,12 @@
     ],
     "severity": "medium",
     "confidence": 0.8,
-    "effect_status": "pending_validation",
-    "memory_status": "candidate",
+    "effect_status": "withdrawn",
+    "memory_status": "retired",
     "utility_ema": 0.0,
     "ttl_days": 90,
     "created_at": "2026-09-19T08:59:02.252358+00:00",
-    "learning_status": "deduplicated",
+    "learning_status": "rolled_back",
     "raw_comment": "真实模型验收：请补强通信受限与多目标饱和条件下的边界证据，并明确可证伪验证路径。",
     "raw_important_information": "针对百链分散攻击巡飞弹：真实模型验收：请补强通信受限与多目标饱和条件下的边界证据，并明确可证伪验证路径。",
     "derived": true,
@@ -180,6 +194,20 @@
     "memory_processor": "expert_feedback_memory",
     "processed_at": "2026-09-19T08:59:02.252418+00:00",
     "dedupe_status": "duplicate",
-    "duplicate_of": "feedback-625cb141-ff34-4056-a90a-7c400a350f2c"
+    "duplicate_of": "feedback-625cb141-ff34-4056-a90a-7c400a350f2c",
+    "rollback_status": "rolled_back",
+    "rollback_reason": "清理测试反馈",
+    "rollback_actor_id": "analyst",
+    "rolled_back_at": "2026-09-20T03:23:43.811852+00:00",
+    "effect_history": [
+      {
+        "from_status": "pending_validation",
+        "to_status": "withdrawn",
+        "evaluator_id": "analyst",
+        "evaluation_id": "rollback:feedback-de826eb0-6cc6-41de-9d3c-e4520cc6b641",
+        "reason": "清理测试反馈",
+        "recorded_at": "2026-09-20T03:23:43.811852+00:00"
+      }
+    ]
   }
 ]

@@ -34,6 +34,7 @@ apps/web/test-results/
 # Runtime and generated working data
 outputs/runs/
 outputs/runtime/codex-home/
+outputs/runtime/start-local.lock/
 # Codex homes contain local authentication and session state. They may also be
 # nested inside captured run workspaces.
 outputs/**/codex-homes/

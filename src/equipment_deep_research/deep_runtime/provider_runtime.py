@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import inspect
 import json
+import os
 import re
 from collections.abc import AsyncIterator, Callable, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -579,6 +580,46 @@ class ProviderRuntime:
             # workflow priority selector. Keep interactive deep turns ahead
             # of background swarm work when the provider supports priorities.
             request_options.setdefault("_codex_call_priority", "critical")
+        if phase.startswith("deep_contextual_dialogue_s6_column_2"):
+            # The direct nanobot-style provider path bypasses the legacy
+            # workflow option builder. Mirror the bounded technology lane
+            # here so Responses and other adapters cannot wait indefinitely
+            # or issue the same live search on the recovery attempt.
+            try:
+                technology_timeout = int(
+                    os.environ.get(
+                        "EQUIPMENT_DR_DEEP_TECHNOLOGY_TIMEOUT_SECONDS", "180"
+                    )
+                )
+            except (TypeError, ValueError):
+                technology_timeout = 180
+            request_options.update(
+                {
+                    "_provider_timeout_seconds": max(
+                        45, min(300, technology_timeout)
+                    ),
+                    "_disable_provider_timeout": False,
+                    "_provider_retry_attempts": 1,
+                }
+            )
+            if not any(
+                phase.endswith(suffix)
+                for suffix in ("_retry", "_model_recovery", "_offline_recovery")
+            ):
+                request_options.update(
+                    {
+                        "web_search": {
+                            "search_context_size": "medium",
+                            "external_web_access": True,
+                        },
+                        "include_web_sources": True,
+                        # Search is preferred for this column, but it is not a
+                        # prerequisite for returning engineering prose. A
+                        # blocked domestic site or an adapter without
+                        # web-search support must not yield an empty column.
+                        "require_web_search": False,
+                    }
+                )
         model_payload = _model_visible_payload(dict(payload))
         request = ProviderRequest(
             messages=(

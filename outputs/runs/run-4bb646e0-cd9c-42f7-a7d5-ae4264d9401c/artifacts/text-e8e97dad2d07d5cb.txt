@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=gao.gov · gao 25 107034
-source_url=https://www.gao.gov/products/gao-25-107034
-claim=GAO指出企业化SATCOM依赖多路径和互联架构来提升韧性，单一路径失效会造成传输中断风险。
-excerpt=
-retrieval=Hosted web search citation metadata

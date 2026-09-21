@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+from urllib.parse import urlsplit, urlunsplit
+
 from equipment_deep_research.agents.workflows import coordinator as _legacy
 from equipment_deep_research.execution_model import (
     configured_model,
@@ -1054,6 +1056,41 @@ def provider_for(
         return scoped_provider
 
 
+def _normalize_discovery_responses_url(value: str) -> str:
+    """Normalize a configured API URL to the Responses endpoint.
+
+    Provider profiles commonly store either an API root (``.../v1``), a
+    complete Chat Completions URL (``.../v1/chat/completions``), or an
+    already-normalized Responses URL.  Appending ``/responses`` blindly to
+    the second form produces the invalid
+    ``.../chat/completions/responses`` route and makes discovery look like a
+    provider outage.  Keep query/fragment components intact for gateways
+    that use them for routing or tenancy.
+    """
+    raw = str(value or "").strip()
+    if not raw:
+        return raw
+    parsed = urlsplit(raw)
+    path = parsed.path.rstrip("/")
+    if path.endswith("/responses"):
+        normalized_path = path or "/responses"
+    elif path.endswith("/chat/completions"):
+        normalized_path = f"{path[:-len('/chat/completions')]}/responses"
+        if not normalized_path.startswith("/"):
+            normalized_path = f"/{normalized_path}"
+    else:
+        normalized_path = f"{path}/responses" if path else "/responses"
+    return urlunsplit(
+        (
+            parsed.scheme,
+            parsed.netloc,
+            normalized_path,
+            parsed.query,
+            parsed.fragment,
+        )
+    )
+
+
 def build_discovery_provider(host) -> ModelProvider | None:
     """为 web discovery 构建直连 Responses provider。
 
@@ -1073,35 +1110,66 @@ def build_discovery_provider(host) -> ModelProvider | None:
     # ``codex_queen`` still performed its hosted search with GPT.  Resolve a
     # profile-specific endpoint from the selected provider model first, while
     # retaining the legacy GPT variables as the final fallback.
-    selected_model = str(getattr(host.provider, "model", "") or "").strip()
+    # Prefer the already-instantiated primary adapter.  Embedded callers may
+    # construct a provider with explicit credentials instead of exporting the
+    # profile environment variables; falling back to the deployment-wide GPT
+    # endpoint in that case silently sends discovery through the wrong model.
+    selected_provider = getattr(host, "provider", None)
+    provider_chain = getattr(selected_provider, "providers", None)
+    if isinstance(provider_chain, (list, tuple)) and provider_chain:
+        selected_provider = provider_chain[0]
+    selected_model = str(getattr(selected_provider, "model", "") or "").strip()
     base_url = ""
     key_env = ""
+    direct_api_key = str(getattr(selected_provider, "api_key", "") or "").strip()
+    direct_base_url = str(getattr(selected_provider, "base_url", "") or "").strip()
+    if direct_base_url and direct_api_key:
+        base_url = direct_base_url
+    matched_profiles: list[tuple[str, str, str]] = []
     for env_name, env_value in os.environ.items():
         if not env_name.startswith("EQUIPMENT_DR_") or not env_name.endswith("_MODEL"):
             continue
-        if env_name in {"EQUIPMENT_DR_MODEL", "EQUIPMENT_DR_DEEPSEEK_MODEL"}:
+        if env_name == "EQUIPMENT_DR_MODEL":
             continue
         if not selected_model or str(env_value).strip() != selected_model:
             continue
         token = env_name[len("EQUIPMENT_DR_") : -len("_MODEL")]
-        base_url = os.environ.get(f"EQUIPMENT_DR_{token}_BASE_URL", "").strip()
-        key_env = os.environ.get(
+        candidate_base_url = os.environ.get(
+            f"EQUIPMENT_DR_{token}_BASE_URL", ""
+        ).strip()
+        candidate_key_env = os.environ.get(
             f"EQUIPMENT_DR_{token}_API_KEY_ENV", f"{token}_API_KEY"
         ).strip()
-        if base_url and key_env:
-            break
+        if candidate_base_url and candidate_key_env:
+            matched_profiles.append((token, candidate_base_url, candidate_key_env))
+    if matched_profiles:
+        # The routing helper materializes CODEX_* variables for DeepSeek
+        # (including the local Chat-Completions bridge). Prefer that resolved
+        # route over the original profile URL, regardless of environment
+        # insertion order; otherwise discovery can accidentally target the
+        # upstream relay and claim hosted search while the task runs through
+        # a bridge that cannot provide Responses web search.
+        matched_profiles.sort(
+            key=lambda item: (
+                0 if item[0].startswith("CODEX_") else 1,
+                item[0],
+            )
+        )
+        _token, matched_base_url, matched_key_env = matched_profiles[0]
+        if not base_url:
+            base_url = matched_base_url
+        if not key_env and not direct_api_key:
+            key_env = matched_key_env
     if not base_url:
         base_url = os.environ.get("EQUIPMENT_DR_CODEX_BASE_URL", "").strip()
-    if not key_env:
+    if not key_env and not direct_api_key:
         key_env = os.environ.get("EQUIPMENT_DR_CODEX_API_KEY_ENV", "").strip()
-    api_key = os.environ.get(key_env, "").strip() if key_env else ""
+    api_key = direct_api_key or (os.environ.get(key_env, "").strip() if key_env else "")
     if not base_url or not api_key:
         return None
     from equipment_deep_research.providers.responses import ResponsesProvider
 
-    endpoint = base_url.rstrip("/")
-    if not endpoint.endswith("/responses"):
-        endpoint = f"{endpoint}/responses"
+    endpoint = _normalize_discovery_responses_url(base_url)
     model = selected_model or configured_model()
     if not model:
         return None
@@ -1244,6 +1312,10 @@ async def run_core_text(
         else "high"
     )
     options = {
+        # Keep the phase in the internal provider envelope.  Prompt adapters
+        # use it to apply column-specific retrieval guidance, while the
+        # runtime strips this metadata from model payloads and public output.
+        "phase": phase,
         "reasoning_effort": _phase_reasoning_effort(
             agent_id,
             phase,
@@ -1365,21 +1437,52 @@ async def run_core_text(
                 }
             )
             # The technology-implementation column is the only deep-dialogue
-            # S6 column that must ground its recommendation in current,
-            # externally verifiable technology findings.  Keep live search
-            # scoped to column 2 (including its retry phase) so the other
-            # columns remain focused on equipment-specific reasoning.
+            # S6 column that benefits from current, externally verifiable
+            # technology findings. Keep live search scoped to its first turn;
+            # recovery turns use the model directly so a search outage cannot
+            # strand the card or make the other columns wait.
             if phase.startswith("deep_contextual_dialogue_s6_column_2"):
+                # Technology retrieval is the only S6 lane that can touch a
+                # remote search service. Give it a bounded wall and let the
+                # workflow's explicit retry/fallback handle outages; the old
+                # 900-second no-timeout profile left the whole card looking
+                # permanently stuck on column 2.
+                try:
+                    technology_timeout = int(
+                        os.environ.get(
+                            "EQUIPMENT_DR_DEEP_TECHNOLOGY_TIMEOUT_SECONDS",
+                            "180",
+                        )
+                    )
+                except ValueError:
+                    technology_timeout = 180
                 options.update(
                     {
-                        "web_search": {
-                            "search_context_size": "medium",
-                            "external_web_access": True,
-                        },
-                        "include_web_sources": True,
-                        "require_web_search": True,
+                        "_provider_timeout_seconds": max(
+                            45, min(300, technology_timeout)
+                        ),
+                        "_disable_provider_timeout": False,
                     }
                 )
+                # The first pass attempts live search. Recovery turns remain
+                # useful when the source endpoint is transiently unavailable,
+                # but they must not turn search availability into a hard
+                # publication gate or ask the model to expose a failure notice
+                # in prose.
+                if not any(
+                    phase.endswith(suffix)
+                    for suffix in ("_retry", "_model_recovery", "_offline_recovery")
+                ):
+                    options.update(
+                        {
+                            "web_search": {
+                                "search_context_size": "medium",
+                                "external_web_access": True,
+                            },
+                            "include_web_sources": True,
+                            "require_web_search": False,
+                        }
+                    )
     # ``run_core_json`` wraps business payloads under ``input``.  Preserve the
     # durable run identity in internal runtime options so collect_stream can
     # select the correct run-scoped concurrency gate.  Direct text callers are
@@ -1418,7 +1521,7 @@ async def run_core_text(
                     "external_web_access": True,
                 },
                 "include_web_sources": True,
-                "require_web_search": True,
+                "require_web_search": False,
             }
         )
     elif phase.startswith("winning_s6_parallel_card") and "_module_" in phase:
@@ -1454,7 +1557,59 @@ async def run_core_text(
                 "_ignore_runtime_deadline": True,
             }
         )
-        if "_module_technology_implementation" in phase:
+        # A technology column gets one live-search opportunity on its first
+        # authored attempt.  Module retries and quality-repair calls reuse the
+        # compact handoff instead of issuing another remote search: this keeps
+        # the five-column wave bounded when a gateway is slow or unavailable.
+        portrait_module_attempt_value: Any = None
+        attempt_payload: Any = payload
+        for _ in range(3):
+            if not isinstance(attempt_payload, Mapping):
+                break
+            if "portrait_module_attempt" in attempt_payload:
+                portrait_module_attempt_value = attempt_payload.get(
+                    "portrait_module_attempt"
+                )
+                break
+            nested_attempt_payload = attempt_payload.get("input")
+            if not isinstance(nested_attempt_payload, Mapping):
+                break
+            attempt_payload = nested_attempt_payload
+        try:
+            portrait_module_attempt = int(portrait_module_attempt_value or 1)
+        except (TypeError, ValueError):
+            portrait_module_attempt = 1
+        technology_module = "_module_technology_implementation" in phase
+        if technology_module:
+            # Unlike the four local-reasoning columns, this lane can block on
+            # an external search/tool request.  Keep every technology attempt
+            # bounded, including no-search retries and offline recovery, so a
+            # stalled provider cannot hold the five-column gather forever.
+            try:
+                technology_timeout = int(
+                    os.environ.get(
+                        "EQUIPMENT_DR_DEEP_TECHNOLOGY_TIMEOUT_SECONDS",
+                        "180",
+                    )
+                )
+            except (TypeError, ValueError):
+                technology_timeout = 180
+            options.update(
+                {
+                    "_provider_timeout_seconds": max(
+                        45, min(300, technology_timeout)
+                    ),
+                    "_disable_provider_timeout": False,
+                }
+            )
+        technology_search_allowed = (
+            portrait_module_attempt <= 1
+            and "repair" not in phase
+            and not phase.endswith("_offline_recovery")
+            and not phase.endswith("_retry")
+            and not phase.endswith("_model_recovery")
+        )
+        if technology_module and technology_search_allowed:
             # S6.md requires the technology-realization column to compare
             # genuinely available routes and identify recent enabling
             # technologies.  Enable the provider's governed live-search path
@@ -1468,7 +1623,7 @@ async def run_core_text(
                         "external_web_access": True,
                     },
                     "include_web_sources": True,
-                    "require_web_search": True,
+                    "require_web_search": False,
                 }
             )
     elif phase.startswith("winning_s6_parallel_card") and phase.endswith("_spine"):
@@ -1637,7 +1792,7 @@ async def run_core_text(
                         "external_web_access": True,
                     },
                     "include_web_sources": True,
-                    "require_web_search": True,
+                    "require_web_search": False,
                 }
             )
     elif phase in {"evidence_analysis", "evidence_analysis_repair"}:

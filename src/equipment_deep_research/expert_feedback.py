@@ -854,6 +854,103 @@ def append_feedback(
     return dict(processed)
 
 
+def rollback_feedback(
+    *,
+    run_root: Path,
+    output_root: Path,
+    feedback_id: str,
+    reason: str = "",
+    actor_id: str = "",
+) -> dict[str, Any]:
+    """Withdraw one task feedback item and retire its downstream memory.
+
+    Rollback is intentionally a tombstone transition instead of a physical
+    delete.  The task audit and cross-task index retain the original review,
+    while retrieval ignores the retired lesson and repeated requests remain
+    idempotent.
+    """
+
+    feedback_key = str(feedback_id or "").strip()
+    if not feedback_key:
+        raise ValueError("feedback_id is required")
+    with _lock:
+        run_path = _safe_storage_file(
+            Path(run_root), RUN_FEEDBACK_FILENAME, create_root=False
+        )
+        if run_path is None:
+            raise KeyError("feedback not found")
+        current_value = _read_json(run_path, [])
+        current = (
+            [dict(item) for item in current_value if isinstance(item, Mapping)]
+            if isinstance(current_value, list)
+            else []
+        )
+        target = next(
+            (item for item in current if str(item.get("feedback_id", "")) == feedback_key),
+            None,
+        )
+        if target is None:
+            raise KeyError("feedback not found")
+
+        # A retry after the first rollback returns the same tombstone without
+        # extending its history or changing its original reason.
+        if str(target.get("rollback_status", "")).strip().lower() == "rolled_back":
+            return dict(target)
+
+        rolled_back_at = _now()
+        prior_status = _normalize_effect_status(target.get("effect_status"))
+        target.update(
+            {
+                "effect_status": "withdrawn",
+                "memory_status": "retired",
+                "learning_status": "rolled_back",
+                "rollback_status": "rolled_back",
+                "rollback_reason": _clean_text(reason, 2000) or "反馈已由审核者回滚",
+                "rollback_actor_id": _clean_text(actor_id, 160),
+                "rolled_back_at": rolled_back_at,
+            }
+        )
+        history = target.get("effect_history")
+        if not isinstance(history, list):
+            history = []
+        history.append(
+            {
+                "from_status": prior_status,
+                "to_status": "withdrawn",
+                "evaluator_id": _clean_text(actor_id, 160),
+                "evaluation_id": f"rollback:{feedback_key}",
+                "reason": target["rollback_reason"],
+                "recorded_at": rolled_back_at,
+            }
+        )
+        target["effect_history"] = history[-32:]
+        for index, item in enumerate(current):
+            if str(item.get("feedback_id", "")) == feedback_key:
+                current[index] = target
+                break
+
+        knowledge_root = _knowledge_root(Path(output_root), create=False)
+        if knowledge_root is None:
+            raise ValueError("feedback storage path is unsafe")
+        index_path = _safe_storage_file(
+            knowledge_root, KNOWLEDGE_FEEDBACK_FILENAME, create_root=False
+        )
+        if index_path is None:
+            raise ValueError("feedback storage path is unsafe")
+        index_value = _read_json(index_path, [])
+        index = (
+            [dict(item) for item in index_value if isinstance(item, Mapping)]
+            if isinstance(index_value, list)
+            else []
+        )
+        for index_position, item in enumerate(index):
+            if str(item.get("feedback_id", "")) == feedback_key:
+                index[index_position] = dict(target)
+        _atomic_write(run_path, current, root=run_path.parent)
+        _atomic_write(index_path, index, root=knowledge_root)
+        return dict(target)
+
+
 def update_feedback_effect_status(
     *,
     output_root: Path,
@@ -1086,6 +1183,13 @@ def load_feedback_knowledge(
         return value, created_at
 
     relevant = [dict(item) for item in rows if isinstance(item, Mapping)]
+    # A user rollback is a hard memory boundary even for diagnostic callers
+    # that request unvalidated rows; the tombstone remains audit-only.
+    relevant = [
+        item
+        for item in relevant
+        if _normalize_effect_status(item.get("effect_status")) != "withdrawn"
+    ]
     if not include_unvalidated:
         relevant = [
             item
@@ -1259,6 +1363,7 @@ __all__ = [
     "load_run_feedback",
     "normalize_feedback",
     "process_feedback_memory",
+    "rollback_feedback",
     "run_feedback_path",
     "update_feedback_effect_status",
 ]

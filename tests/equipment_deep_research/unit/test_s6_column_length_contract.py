@@ -16,6 +16,7 @@ from equipment_deep_research.agents.workflows.winning_flows.helpers import (
     _parallel_s6_card_instruction,
 )
 from equipment_deep_research.agents.workflows.winning_flows.s6_authoring import (
+    _clean_s6_technology_prose,
     _merge_s6_repaired_modules,
     _parallel_s6_semantic_quality_issues,
     _portrait_repair_keys,
@@ -30,6 +31,15 @@ from equipment_deep_research.orchestration.capability_portrait import (
     cap_portrait_module_length,
     capability_portrait_quality_issues,
 )
+
+
+def test_empty_or_retrieval_only_technology_prose_does_not_become_a_template() -> None:
+    brief = {
+        "name": "测试装备",
+        "operational_mechanism": "闭合直接作用链",
+    }
+    assert _clean_s6_technology_prose("", brief) == ""
+    assert _clean_s6_technology_prose("本轮联网检索失败，未返回可靠公开来源。", brief) == ""
 
 
 def test_portrait_repair_preserves_complete_siblings():

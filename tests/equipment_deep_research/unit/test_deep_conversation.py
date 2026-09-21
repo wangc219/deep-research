@@ -106,6 +106,11 @@ def test_working_memory_keeps_closure_fields_for_card_restore() -> None:
                     "mission_kill_criterion": "目标关键任务舱段失效并退出当前任务周期",
                     "direct_military_effects": "延迟触发并压缩目标机动窗口",
                     "disruptive_difference": "从一次性弹药转为潜伏任务节点",
+                    "branch_id": "branch-2",
+                    "branch_type": "boundary_inversion",
+                    "counterfactual_test": "若边界失效则回退",
+                    "research_probe": "检索公开机理证据",
+                    "provider_trace": "不应进入工作记忆" * 1000,
                     "stable": True,
                 }
             ],
@@ -118,6 +123,9 @@ def test_working_memory_keeps_closure_fields_for_card_restore() -> None:
     assert prompt["candidate_directions"][0]["decisive_target"]
     assert prompt["candidate_directions"][0]["direct_military_effects"]
     assert prompt["candidate_directions"][0]["stable"] is True
+    assert prompt["candidate_directions"][0]["branch_type"] == "boundary_inversion"
+    assert prompt["candidate_directions"][0]["counterfactual_test"] == "若边界失效则回退"
+    assert "provider_trace" not in prompt["candidate_directions"][0]
 
 
 def test_working_memory_tracks_research_frontier_assumptions_and_strategy() -> None:

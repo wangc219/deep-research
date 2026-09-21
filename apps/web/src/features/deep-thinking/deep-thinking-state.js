@@ -416,6 +416,32 @@ const boundedMemoryStrings = (value, limit = 8) => (
     : []
 );
 
+const INTERNAL_RETRIEVAL_HINTS = [
+  '来源边界', '来源受限', '来源不可用', '来源或工程闭环提示',
+  '来源通道失败', '国内外来源不可达', '国内来源不可达', '国际来源不可达',
+  '无法访问来源', '无法访问某网站', '没有可引用来源', '证据不足',
+  '检索不通', '检索通道异常', '检索无结果', '检索不可用',
+  '联网检索不可用', '搜索失败', '检索失败', '本轮检索',
+  '未发现可靠可迁移的新技术', '未形成可靠可迁移的新技术结论',
+  '未获得可核验的公开来源', '未检索到可靠的新技术',
+  '未检索到可靠可迁移的新技术', '未找到可靠可迁移的新技术',
+];
+
+export const sanitizePublicResearchText = value => {
+  const raw = text(value);
+  if (!raw) return '';
+  const chunks = raw.split(/(?<=[。！？；;.!?])\s*/);
+  const kept = chunks.filter(chunk => (
+    chunk.trim()
+    && !INTERNAL_RETRIEVAL_HINTS.some(hint => chunk.includes(hint))
+  ));
+  return kept.join('').trim();
+};
+
+export const sanitizePublicResearchGap = value => {
+  return sanitizePublicResearchText(value);
+};
+
 const memoryDecision = value => {
   if (!value || typeof value !== 'object') return null;
   const candidate = text(value.candidate || value.name || value.title);
@@ -447,19 +473,19 @@ const memoryAssumption = value => {
 };
 
 const memoryResearchGap = value => {
-  if (typeof value === 'string') return text(value);
+  if (typeof value === 'string') return sanitizePublicResearchGap(value);
   if (!value || typeof value !== 'object') return '';
   const candidate = text(value.candidate_name || value.direction || value.name);
   const question = text(value.suggested_question || value.next_probe || value.question || value.reason);
   const dimensions = boundedMemoryStrings(value.missing_dimensions || value.missing_fields, 8);
   const detail = question || (dimensions.length > 0 ? `待补：${dimensions.join('、')}` : '');
-  return [candidate, detail].filter(Boolean).join('：');
+  return sanitizePublicResearchGap([candidate, detail].filter(Boolean).join('：'));
 };
 
 const memoryStrategy = value => {
   if (!value || typeof value !== 'object') return null;
   const mode = text(value.mode || value.strategy);
-  const rationale = text(value.rationale);
+  const rationale = sanitizePublicResearchText(value.rationale);
   const actions = boundedMemoryStrings(value.actions || value.tools, 6);
   const lenses = boundedMemoryStrings(value.lenses, 8);
   if (!mode && !rationale && actions.length === 0 && lenses.length === 0) return null;
@@ -501,19 +527,21 @@ export const projectDeepMemory = (session, branchId = 'main') => {
     schema_version: 'deep-memory-view-v1',
     branch_id: text(memory.branch_id) || text(branchId) || 'main',
     current_objective: text(memory.current_objective),
-    summaries: boundedMemoryStrings(memory.latest_summary, 6),
+    summaries: (Array.isArray(memory.latest_summary) ? memory.latest_summary : [])
+      .map(sanitizePublicResearchText).filter(Boolean).slice(0, 6),
     constraints: boundedMemoryStrings(memory.user_constraints, 12),
     decisions,
     rejected,
     directions,
-    open_questions: boundedMemoryStrings(memory.open_questions, 8),
+    open_questions: (Array.isArray(memory.open_questions) ? memory.open_questions : [])
+      .map(sanitizePublicResearchGap).filter(Boolean).slice(0, 8),
     research_iteration: Math.max(0, Number(memory.research_iteration) || 0),
     research_frontier: frontier,
     assumption_ledger: assumptions,
     explored_lenses: exploredLenses,
     research_gaps: researchGaps,
     last_research_strategy: lastStrategy,
-    selection_rationale: text(memory.selection_rationale),
+    selection_rationale: sanitizePublicResearchText(memory.selection_rationale),
     finalization_status: text(memory.finalization_status),
   };
   result.has_memory = Boolean(
@@ -949,7 +977,7 @@ export const extractDeepFollowUps = ({answer, messages = [], limit = 4} = {}) =>
   const seen = new Set();
   const rows = [];
   const push = value => {
-    const next = text(value);
+    const next = sanitizePublicResearchGap(value);
     if (!next || next.length < 8 || seen.has(next)) return;
     seen.add(next);
     rows.push(next);
@@ -1096,8 +1124,8 @@ export const projectLiveConversationFeedback = (events = []) => {
       return (leftSequence - rightSequence) || (left.index - right.index);
     });
 
-  const segmentsByKey = new Map();
-  const order = [];
+  const segments = [];
+  const seenSegments = new Set();
   let runningLabel = '';
   let runningExcerpt = '';
 
@@ -1123,9 +1151,16 @@ export const projectLiveConversationFeedback = (events = []) => {
     }
     const isAnswer = kind === 'answer' || type === 'deep_agent_completed';
     if (!isAnswer || !body) return;
-    const key = `${agentId || role}:${stage}:${round || kind}`;
-    if (!segmentsByKey.has(key)) order.push(key);
-    segmentsByKey.set(key, {
+    // One agent may return several useful answers in the same stage. Keep
+    // each event in order; agent/stage identity previously caused a later
+    // answer to overwrite an earlier visible result.
+    const key = text(event?.event_id)
+      || (Number.isFinite(Number(event?.sequence)) && Number(event.sequence) > 0
+        ? `sequence:${Number(event.sequence)}`
+        : `${agentId || role}:${stage}:${round || kind}:${body}`);
+    if (seenSegments.has(key)) return;
+    seenSegments.add(key);
+    segments.push({
       key,
       agent_id: agentId,
       role: role || '创新舱',
@@ -1139,10 +1174,9 @@ export const projectLiveConversationFeedback = (events = []) => {
     });
   });
 
-  const segments = order.map(key => segmentsByKey.get(key)).filter(Boolean);
   const markdown = segments.map(segment => {
     const title = [segment.role, segment.axis].filter(Boolean).join(' · ');
-    const excerpt = text(segment.text).replace(/\n- .*$/s, '');
+    const excerpt = text(segment.text);
     const names = segment.names.length ? `\n候选：${segment.names.join('、')}` : '';
     return `**${title}**\n${excerpt}${names}`;
   }).join('\n\n');

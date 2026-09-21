@@ -139,6 +139,7 @@ class DeepSessionCreateBody(BaseModel):
     candidate: dict[str, Any] = Field(default_factory=dict)
     reference_weapon: dict[str, Any] = Field(default_factory=dict)
     active_skill_ids: list[str] = Field(default_factory=list, max_length=6)
+    model_profile_id: str = Field(default="", max_length=128)
     create_artifact: bool = False
     auto_merge: bool = False
 
@@ -150,6 +151,7 @@ class DeepSessionMessageBody(BaseModel):
     branch_id: str = Field(default=DEFAULT_BRANCH_ID, max_length=128)
     parent_message_id: str = Field(default="", max_length=128)
     active_skill_ids: list[str] = Field(default_factory=list, max_length=6)
+    model_profile_id: str = Field(default="", max_length=128)
     channel: str | None = Field(default=None, pattern="^(web|cli|telegram|discord)$")
 
 
@@ -227,6 +229,10 @@ class EvolutionEffectBody(BaseModel):
     evaluation_id: str = Field(default="", max_length=160)
     reason: str = Field(default="", max_length=2000)
     metrics: dict[str, Any] = Field(default_factory=dict)
+
+
+class FeedbackRollbackBody(BaseModel):
+    reason: str = Field(default="", max_length=2000)
 
 
 class PromptReplayEvidenceBody(BaseModel):

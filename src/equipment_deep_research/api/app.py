@@ -41,6 +41,7 @@ from equipment_deep_research.api.schemas import (
     DeepWorkspaceResourceRestoreBody,
     DeleteRunsBody,
     EvolutionEffectBody,
+    FeedbackRollbackBody,
     FavoriteCreateBody,
     FavoriteUpdateBody,
     PromptEvolutionBody,
@@ -74,6 +75,11 @@ from equipment_deep_research.orchestration.blueprints import (
     winning_step_modes,
 )
 from equipment_deep_research.domain.models import ResearchProblem, new_stable_id, now_iso
+from equipment_deep_research.domain.research_gaps import (
+    sanitize_public_research_gap,
+    sanitize_public_research_gaps,
+    sanitize_public_research_prose,
+)
 from equipment_deep_research.orchestration.coverage import load_preset_policy
 from equipment_deep_research.orchestration.reporting import _branch_report_title
 from equipment_deep_research.providers.registry import ProviderRegistry
@@ -115,6 +121,7 @@ from equipment_deep_research.expert_feedback import (
     load_feedback_knowledge,
     load_run_feedback,
     normalize_feedback,
+    rollback_feedback,
     update_feedback_effect_status,
 )
 from equipment_deep_research.prompt_evolution import (
@@ -154,6 +161,7 @@ from equipment_deep_research.deep_thinking import (
     merge_capability_into_snapshot,
     save_reference_research,
     save_research_link,
+    sanitize_public_deep_answer,
     single_equipment_innovation_context,
     synthesize_reply,
     update_session as update_deep_session,
@@ -699,7 +707,7 @@ def _deep_public_text(value: object, *, limit: int) -> str:
     if isinstance(value, (Mapping, list, tuple, set, frozenset)):
         return ""
     safe = sanitize_runtime_payload(str(value or ""), max_string_length=limit)
-    return str(safe)[:limit]
+    return sanitize_public_research_prose(safe, limit=limit)
 
 
 def _is_deep_runtime_event(event_type: object, payload: object) -> bool:
@@ -728,14 +736,28 @@ def _deep_public_event_payload(
     kind = str(raw_delta.get("kind", source.get("kind", "summary")) or "summary")
     if kind not in _DEEP_EVENT_KINDS:
         kind = "summary"
-    text = _deep_public_text(
-        raw_delta.get("text", source.get("text", source.get("summary", ""))),
-        limit=2000,
-    )
+    raw_text = raw_delta.get("text", source.get("text", source.get("summary", "")))
+    text = _deep_public_text(raw_text, limit=2000)
+    if not text and str(raw_text or "").strip():
+        # Keep the event timeline legible without exposing a provider's
+        # retrieval diagnostic as if it were research prose.
+        text = "该阶段结果正在整理。"
     delta: dict[str, Any] = {
         "kind": kind,
         "text": text,
     }
+    column_key = raw_delta.get("column_key", source.get("column_key", ""))
+    if column_key in (
+        "overview", "technology_implementation", "operational_process",
+        "capability_effects", "winning_logic",
+    ):
+        delta["column_key"] = column_key
+        column_content = _deep_public_text(
+            raw_delta.get("column_content", source.get("column_content", "")),
+            limit=6000,
+        )
+        if kind == "answer" and column_content:
+            delta["column_content"] = column_content
     role = _deep_public_text(
         raw_delta.get("role", source.get("role", "")),
         limit=80,
@@ -2803,7 +2825,7 @@ def create_app(
         run_id: str,
         idempotency_key: str = Header(alias="Idempotency-Key"),
         x_role: str = Header(default="analyst", alias="X-Role"),
-        model_profile_id: str = "",
+        model_profile_id: str | None = None,
     ) -> dict:
         """Resume a paused run or retry a failed run from its checkpoint."""
 
@@ -4026,6 +4048,11 @@ def create_app(
             for key in public_keys
             if key in job
         }
+        for text_key, text_limit in (("text", 2000), ("error", 1000), ("start_error", 1000)):
+            if text_key in result:
+                result[text_key] = sanitize_public_research_prose(
+                    result.get(text_key), limit=text_limit
+                )
         live_progress = None
         job_key = str(job.get("job_id") or "")
         if job_key:
@@ -5926,11 +5953,17 @@ def create_app(
             cancel_event=cancel_event,
             branch_id=branch_id,
             source_channel=str(payload.get("channel") or "web"),
+            model_profile_id=str(payload.get("model_profile_id") or ""),
             active_skill_ids=(
                 payload.get("active_skill_ids", [])
                 if isinstance(payload.get("active_skill_ids", []), Sequence)
                 and not isinstance(payload.get("active_skill_ids", []), (str, bytes))
                 else []
+            ),
+            s6_column_checkpoint=(
+                row.get("checkpoint")
+                if isinstance(row.get("checkpoint"), Mapping)
+                else None
             ),
         )
         if cancel_event.is_set():
@@ -8381,6 +8414,30 @@ def create_app(
             )
         return requested
 
+    def _validated_deep_model_profile_id(value: object) -> str:
+        """Resolve one public model preset without accepting provider secrets."""
+
+        requested = normalize_profile_id(str(value or "").strip())
+        if not requested:
+            return ""
+        try:
+            profiles = public_profiles().get("profiles", [])
+        except Exception as exc:
+            raise HTTPException(
+                status_code=503, detail="model profile catalog unavailable"
+            ) from exc
+        selectable = {
+            str(item.get("id", ""))
+            for item in profiles
+            if isinstance(item, Mapping) and not bool(item.get("deprecated", False))
+        }
+        if requested not in selectable:
+            raise HTTPException(
+                status_code=422,
+                detail=f"deep-thinking model profile is unavailable: {requested}",
+            )
+        return requested
+
     @app.get("/api/v1/deep-thinking/capabilities")
     def get_deep_thinking_capabilities(
         x_role: str = Header(default="analyst", alias="X-Role"),
@@ -8404,6 +8461,7 @@ def create_app(
                     "servers": [],
                 }
             )
+            catalog["model_profiles"] = public_profiles()
             return catalog
         except Exception as exc:
             raise HTTPException(
@@ -8551,7 +8609,10 @@ def create_app(
         requested_create_artifact = _deep_authoring_requested(
             body.question, body.create_artifact
         )
+        model_profile_id = _validated_deep_model_profile_id(body.model_profile_id)
         body_payload = body.model_dump(mode="json")
+        if "model_profile_id" not in body.model_fields_set:
+            body_payload.pop("model_profile_id", None)
         body_payload["create_artifact"] = requested_create_artifact
         active_skill_ids = _validated_deep_skill_ids(body.active_skill_ids)
         # Validate the request key before any target lookup, but defer the
@@ -8635,6 +8696,7 @@ def create_app(
                                 focus=body.focus,
                                 create_artifact=requested_create_artifact,
                                 active_skill_ids=active_skill_ids,
+                                model_profile_id=model_profile_id,
                                 idempotency_key=idem,
                             )
                         )
@@ -8673,6 +8735,7 @@ def create_app(
         context["innovation_mode"] = SINGLE_EQUIPMENT_INNOVATION_MODE
         context["context_policy"] = "query_equipment_questions_only"
         context["active_skill_ids"] = active_skill_ids
+        context["model_profile_id"] = model_profile_id
         if candidate:
             context["candidate"] = candidate
             # This marker is server-owned.  A browser may send an advisory
@@ -8749,6 +8812,7 @@ def create_app(
                         focus=body.focus,
                         create_artifact=requested_create_artifact,
                         active_skill_ids=active_skill_ids,
+                        model_profile_id=model_profile_id,
                         idempotency_key=idem,
                     )
                 )
@@ -8800,6 +8864,8 @@ def create_app(
         branch_id: str = DEFAULT_BRANCH_ID,
         active_skill_ids: Sequence[str] = (),
         source_channel: str = "web",
+        model_profile_id: str = "",
+        s6_column_checkpoint: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         session_id = str(session.get("session_id", ""))
         normalized_branch = normalize_branch_id(branch_id)
@@ -8915,7 +8981,7 @@ def create_app(
             _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "s3_divergence", "status": "running", "progress": 0.20, "kind": "summary", "text": "创新舱正在基于当前 Query 下已有武器装备做内部多维发散，推理新质颠覆候选。"})
         elif "author_s6" in turn_plan:
             _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "context", "status": "completed", "progress": 0.15, "kind": "summary", "text": "上下文快照已固定，沿已收敛方向成卡，不再重开议事。"})
-            _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "s6_authoring", "status": "running", "progress": 0.55, "kind": "summary", "text": "创新舱正在读取决策记忆并逐栏写入五栏能力画像。"})
+            _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "s6_authoring", "status": "running", "progress": 0.55, "kind": "summary", "text": "创新舱正在并行生成五栏能力画像，各栏完成后即时回传。"})
         elif "deepen" in turn_plan:
             _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "context", "status": "completed", "progress": 0.15, "kind": "summary", "text": "上下文快照已固定，本轮在已有方向上做内部多维发散，不重开三席流水线。"})
             _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "s4_mapping", "status": "running", "progress": 0.40, "kind": "summary", "text": "综合总编正在沿多维度、多角度交叉发散，再收敛到本轮问题。"})
@@ -8951,7 +9017,7 @@ def create_app(
             if not isinstance(execution, Mapping):
                 return None
             mode = str(execution.get("mode", "fake") or "fake").strip().lower()
-            if mode != "real":
+            if mode != "real" and not model_profile_id:
                 return None
             provider_name = str(execution.get("provider", "") or "").strip()
             provider_model = str(execution.get("model", "") or "").strip()
@@ -8980,14 +9046,21 @@ def create_app(
             runtime_run_workspace = None
             try:
                 registry = ProviderRegistry.load(provider_path)
-                provider = registry.create(
-                    provider_name or None,
-                    model=provider_model or None,
-                    base_url=provider_base_url or None,
-                    api_key_env=provider_api_key_env or None,
-                    workspace_path=project_root,
-                    isolation_key=f"deep-thinking-{run_id}:orchestrator",
-                )
+                if model_profile_id:
+                    provider = registry.create_model_profile(
+                        model_profile_id,
+                        workspace_path=project_root,
+                        isolation_key=f"deep-thinking-{run_id}:orchestrator",
+                    )
+                else:
+                    provider = registry.create(
+                        provider_name or None,
+                        model=provider_model or None,
+                        base_url=provider_base_url or None,
+                        api_key_env=provider_api_key_env or None,
+                        workspace_path=project_root,
+                        isolation_key=f"deep-thinking-{run_id}:orchestrator",
+                    )
                 # ProviderRegistry returns a wire-level ModelProvider.  Deep
                 # thinking is a single-equipment conversation primitive, not
                 # a child S1-S6/deep-divergence workflow.  Prefer the dedicated
@@ -9152,6 +9225,10 @@ def create_app(
                         delta_payload["completed_count"] = min(completed_count, 8)
                     if total_count > 0:
                         delta_payload["total_count"] = min(total_count, 8)
+                    if row.get("column_key"):
+                        delta_payload["column_key"] = row["column_key"]
+                        if row.get("column_content"):
+                            delta_payload["column_content"] = row["column_content"]
                     persist_status = (
                         "running"
                         if event_type in lifecycle_event_types
@@ -9310,6 +9387,141 @@ def create_app(
                     )
                     if not checkpoint_payload:
                         raise RuntimeError("deep runtime checkpoint is empty")
+
+                    # S6 column results share the durable job checkpoint with
+                    # the runtime loop, but use a dedicated schema so a
+                    # reclaimed worker can resume only missing columns. The
+                    # merge is monotonic: a late empty/failure event cannot
+                    # erase a newer completed column.
+                    if checkpoint_payload.get("kind") == "deep_s6_column_checkpoint":
+                        current_job = _deep_job_get(job_id) or {}
+                        current_checkpoint = current_job.get("checkpoint", {})
+                        current_checkpoint = (
+                            dict(current_checkpoint)
+                            if isinstance(current_checkpoint, Mapping)
+                            else {}
+                        )
+                        existing_columns = current_checkpoint.get("s6_columns", {})
+                        existing_columns = (
+                            dict(existing_columns)
+                            if isinstance(existing_columns, Mapping)
+                            else {}
+                        )
+                        incoming_columns = checkpoint_payload.get("s6_columns", {})
+                        incoming_columns = (
+                            incoming_columns
+                            if isinstance(incoming_columns, Mapping)
+                            else {}
+                        )
+                        merged_columns = dict(existing_columns)
+                        changed_key = ""
+                        for raw_key, raw_row in incoming_columns.items():
+                            key = str(raw_key or "").strip()
+                            if not key or not isinstance(raw_row, Mapping):
+                                continue
+                            previous = merged_columns.get(key, {})
+                            previous = previous if isinstance(previous, Mapping) else {}
+                            previous_status = str(previous.get("status", "")).lower()
+                            incoming_status = str(raw_row.get("status", "")).lower()
+                            previous_content = str(previous.get("content", "") or "")
+                            incoming_content = str(raw_row.get("content", "") or "")
+                            if previous_status == "completed" and previous_content and (
+                                incoming_status != "completed" or not incoming_content
+                            ):
+                                continue
+                            if (
+                                previous_status == incoming_status
+                                and previous_content == incoming_content
+                                and int(previous.get("attempt", 0) or 0)
+                                >= int(raw_row.get("attempt", 0) or 0)
+                            ):
+                                continue
+                            merged_columns[key] = dict(raw_row)
+                            changed_key = key
+                        if not changed_key:
+                            return
+                        merged_checkpoint = {
+                            **current_checkpoint,
+                            **{
+                                key: checkpoint_payload[key]
+                                for key in (
+                                    "schema_version",
+                                    "kind",
+                                    "card_authoring_id",
+                                    "status",
+                                    "total_count",
+                                )
+                                if key in checkpoint_payload
+                            },
+                            "completed_count": sum(
+                                1
+                                for item in merged_columns.values()
+                                if isinstance(item, Mapping)
+                                and str(item.get("status", "")).lower() == "completed"
+                                and str(item.get("content", "") or "").strip()
+                            ),
+                            "s6_columns": merged_columns,
+                        }
+                        changed_row = merged_columns.get(changed_key, {})
+                        changed_row = changed_row if isinstance(changed_row, Mapping) else {}
+                        completed_count = int(merged_checkpoint.get("completed_count", 0) or 0)
+                        total_count = int(merged_checkpoint.get("total_count", 5) or 5)
+                        updated_checkpoint = _deep_job_update(
+                            job_id,
+                            run_id=run_id,
+                            session_id=session_id,
+                            stage="s6_authoring",
+                            status="running",
+                            persist_status="running",
+                            progress=min(0.90, 0.64 + 0.26 * completed_count / max(1, total_count)),
+                            text=(
+                                f"第{changed_row.get('index', '')}栏“{changed_row.get('label', changed_key)}”已持久化，"
+                                f"五栏进度 {completed_count}/{total_count}。"
+                            ),
+                            kind="answer" if str(changed_row.get("content", "") or "").strip() else "summary",
+                            delta={
+                                "column_key": changed_key,
+                                "column_content": str(changed_row.get("content", "") or "")[:6000],
+                                "column_status": str(changed_row.get("status", "") or "")[:32],
+                                "completed_count": completed_count,
+                                "total_count": total_count,
+                                "card_authoring_id": str(merged_checkpoint.get("card_authoring_id", ""))[:128],
+                                "checkpoint_persisted": True,
+                            },
+                            checkpoint=merged_checkpoint,
+                            event_type="deep_s6_column_checkpoint",
+                        )
+                        if not isinstance(updated_checkpoint, Mapping):
+                            raise RuntimeError("deep S6 column checkpoint persistence unavailable")
+                        persisted_checkpoint = updated_checkpoint.get("checkpoint", {})
+                        persisted_columns = (
+                            persisted_checkpoint.get("s6_columns", {})
+                            if isinstance(persisted_checkpoint, Mapping)
+                            else {}
+                        )
+                        if not isinstance(persisted_columns, Mapping) or changed_key not in persisted_columns:
+                            raise RuntimeError("deep S6 column checkpoint was not durably acknowledged")
+                        return
+
+                    # A normal runtime checkpoint must retain the S6 ledger
+                    # written earlier in the same job.
+                    current_job = _deep_job_get(job_id) or {}
+                    current_checkpoint = current_job.get("checkpoint", {})
+                    if (
+                        isinstance(current_checkpoint, Mapping)
+                        and isinstance(current_checkpoint.get("s6_columns"), Mapping)
+                        and "s6_columns" not in checkpoint_payload
+                    ):
+                        checkpoint_payload["s6_columns"] = dict(current_checkpoint["s6_columns"])
+                        for key in (
+                            "schema_version",
+                            "kind",
+                            "card_authoring_id",
+                            "completed_count",
+                            "total_count",
+                        ):
+                            if key in current_checkpoint and key not in checkpoint_payload:
+                                checkpoint_payload[key] = current_checkpoint[key]
                     tool_row: Mapping[str, Any] = {}
                     pending_tools = checkpoint_payload.get("pending_tool_calls", [])
                     completed_tools = checkpoint_payload.get(
@@ -9413,6 +9625,15 @@ def create_app(
                     ),
                     "expert_questions": expert_questions,
                     "active_skill_ids": requested_skill_ids,
+                    # A recovered S6 turn carries the durable per-column
+                    # ledger into the Agent Core. Completed columns are
+                    # reused; only pending/failed columns call the provider.
+                    "card_authoring_id": str(job_id or ""),
+                    "s6_column_checkpoint": (
+                        dict(s6_column_checkpoint)
+                        if isinstance(s6_column_checkpoint, Mapping)
+                        else {}
+                    ),
                     # Web deep research uses one optional observation-aware
                     # continuation after the first domain action. Explicit
                     # /diverge requests also receive two bounded, identity-
@@ -9477,6 +9698,12 @@ def create_app(
                         host.set_deep_dialogue_steer_callback(None)
                 if not isinstance(result, Mapping):
                     return None
+                # Treat the provider response as untrusted public prose.  This
+                # projection runs before completion checks, section assembly,
+                # SSE fallback events and working-memory persistence, so a
+                # retrieval diagnostic cannot turn into a false "finished"
+                # technology column or reappear after a session refresh.
+                result = sanitize_public_deep_answer(result)
                 nonlocal provider_workflow_status, provider_reported_workflow_status, provider_finalization_status, provider_runtime_managed, provider_authoring_completed
                 raw_runtime = result.get("runtime", {})
                 raw_runtime = raw_runtime if isinstance(raw_runtime, Mapping) else {}
@@ -9486,21 +9713,22 @@ def create_app(
                 raw_card_draft = (
                     raw_card_draft if isinstance(raw_card_draft, Mapping) else {}
                 )
+                required_card_fields = (
+                    "overview",
+                    "technology_implementation",
+                    "operational_process",
+                    "capability_effects",
+                    "winning_logic",
+                )
                 provider_runtime_managed = (
                     str(raw_runtime.get("engine", "") or "").strip()
                     == "equipment_deep_runtime_v2"
                 )
                 provider_authoring_completed = bool(
                     "author_s6" in runtime_tools
-                    and any(
+                    and all(
                         str(raw_card_draft.get(key, "") or "").strip()
-                        for key in (
-                            "overview",
-                            "technology_implementation",
-                            "operational_process",
-                            "capability_effects",
-                            "winning_logic",
-                        )
+                        for key in required_card_fields
                     )
                 )
                 raw_workflow_status = str(
@@ -9669,10 +9897,15 @@ def create_app(
                         detail = question or (
                             f"待补研究维度：{missing_text}" if missing_text else ""
                         )
-                        return "：".join(
+                        rendered = "：".join(
                             value for value in (candidate_name, detail) if value
                         )[:400]
-                    return str(item or "").strip()[:400]
+                    else:
+                        rendered = str(item or "").strip()[:400]
+                    # Search availability is an internal execution detail;
+                    # it must not become a user-facing gap or source-boundary
+                    # disclaimer in the delivered manuscript.
+                    return sanitize_public_research_gap(rendered)
 
                 raw_research_gaps: list[object] = []
                 for source in (
@@ -10043,9 +10276,8 @@ def create_app(
             ):
                 if isinstance(source, list):
                     legacy_gaps.extend(source)
-            normalized_gaps = [
-                str(item)[:400]
-                for item in [
+            normalized_gaps = sanitize_public_research_gaps(
+                [
                     *(
                         assessment.get("gaps", [])
                         if isinstance(assessment.get("gaps"), list)
@@ -10053,9 +10285,10 @@ def create_app(
                     ),
                     *projected_gaps,
                     *legacy_gaps,
-                ]
-                if str(item).strip()
-            ]
+                ],
+                limit=8,
+                item_limit=400,
+            )
             if authoring_requested and not (
                 canonical_target_bound
                 and provider_runtime_managed
@@ -10371,6 +10604,17 @@ def create_app(
             # candidate alone.  For formal-card follow-ups the session-bound
             # lineage remains authoritative; global/reference sessions may
             # adopt the provider's new hypothesis identity.
+            capability_draft = answer.get("capability_card_draft", {}) if isinstance(answer, Mapping) else {}
+            capability_draft = (
+                dict(capability_draft) if isinstance(capability_draft, Mapping) else {}
+            )
+            # Preserve every non-empty S6 column independently.  The provider
+            # may return a sparse direction list during recovery, but the
+            # five-column authoring result remains authoritative and must still
+            # reach the candidate/artifact projection.
+            if capability_draft:
+                candidate["capability_card_draft"] = capability_draft
+
             if provider_directions:
                 direction = next(
                     (
@@ -10415,9 +10659,6 @@ def create_app(
                         if value not in (None, "", [], {}):
                             candidate[target] = value
                             break
-                capability_draft = answer.get("capability_card_draft", {}) if isinstance(answer, Mapping) else {}
-                if isinstance(capability_draft, Mapping) and any(str(value or "").strip() for value in capability_draft.values()):
-                    candidate["capability_card_draft"] = dict(capability_draft)
                 # A formal-card follow-up is explicitly bound to the original
                 # card/hypothesis.  Global/reference sessions, however, may
                 # discover a genuinely new direction; when the provider does
@@ -10606,7 +10847,7 @@ def create_app(
                     authoring_text = "本轮发散结果已保留；尚未完成受控 S6 成卡动作，未创建能力画像版本。"
                 else:
                     authoring_text = "本轮发散结果已保留；运行服务未完整返回，暂未创建能力画像版本。"
-                _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "s6_authoring", "status": "partial" if provider_status == "provider_unavailable" else "completed", "progress": 0.78, "kind": "summary", "text": authoring_text})
+                _publish_deep_event(run_id, "deep_stage", {"job_id": job_id, "session_id": session_id, "stage": "s6_authoring", "status": "partial", "progress": 0.78, "kind": "summary", "text": authoring_text})
         check_cancel()
         version_record: dict[str, Any] | None = None
         version_error = ""
@@ -10899,6 +11140,7 @@ def create_app(
         branch_id: str = DEFAULT_BRANCH_ID,
         parent_message_id: str = "",
         parent_job_id: str = "",
+        model_profile_id: str = "",
     ) -> dict[str, Any]:
         """Persist and asynchronously execute one visible deep-thinking turn.
 
@@ -10914,6 +11156,16 @@ def create_app(
             raise ValueError("deep-thinking session id is required")
         create_artifact = _deep_authoring_requested(content, create_artifact)
         normalized_branch = normalize_branch_id(branch_id)
+        session_context = (
+            session.get("context_refs", {})
+            if isinstance(session.get("context_refs", {}), Mapping)
+            else {}
+        )
+        normalized_model_profile_id = _validated_deep_model_profile_id(
+            session_context.get("model_profile_id", "")
+            if model_profile_id is None
+            else model_profile_id
+        )
         normalized_parent_message_id = str(parent_message_id or "").strip()[:128]
         normalized_skill_ids: list[str] = []
         for value in active_skill_ids:
@@ -10995,7 +11247,7 @@ def create_app(
                 )
         if not fingerprint:
             fingerprint = hashlib.sha256(
-                f"{run_id}:{session_id}:{normalized_branch}:{normalized_parent_message_id}:{content}:{focus}:{bool(create_artifact)}:{json.dumps(normalized_skill_ids, ensure_ascii=False)}".encode("utf-8")
+                f"{run_id}:{session_id}:{normalized_branch}:{normalized_parent_message_id}:{content}:{focus}:{bool(create_artifact)}:{normalized_model_profile_id}:{json.dumps(normalized_skill_ids, ensure_ascii=False)}".encode("utf-8")
             ).hexdigest()
         row = _deep_store_job(
             job_id=generated_job_id,
@@ -11013,6 +11265,7 @@ def create_app(
                 "focus": str(focus or "")[:1600],
                 "create_artifact": bool(create_artifact),
                 "active_skill_ids": normalized_skill_ids,
+                "model_profile_id": normalized_model_profile_id,
                 "channel": (
                     source_channel
                     if source_channel in {"web", "cli", "telegram", "discord"}
@@ -11050,14 +11303,14 @@ def create_app(
                     raise _DeepJobCancelled()
                 _execute_deep_dialogue_job(
                     {
-                        **dict(row),
+                        **dict(current),
                         "job_id": job_id,
                         "parent_run_id": run_id,
                         "session_id": session_id,
                         "payload": {
                             **(
-                                dict(row.get("payload", {}))
-                                if isinstance(row.get("payload", {}), Mapping)
+                                dict(current.get("payload", {}))
+                                if isinstance(current.get("payload", {}), Mapping)
                                 else {}
                             ),
                             "session_id": session_id,
@@ -11065,6 +11318,7 @@ def create_app(
                             "focus": focus,
                             "create_artifact": bool(create_artifact),
                             "active_skill_ids": normalized_skill_ids,
+                            "model_profile_id": normalized_model_profile_id,
                             "channel": (
                                 source_channel
                                 if source_channel
@@ -11284,6 +11538,7 @@ def create_app(
                     "servers": [],
                 }
             )
+            catalog["model_profiles"] = public_profiles()
             return catalog
         except HTTPException:
             raise
@@ -12536,7 +12791,12 @@ def create_app(
         requested_create_artifact = _deep_authoring_requested(
             body.content, body.create_artifact
         )
+        requested_model_profile_id = _validated_deep_model_profile_id(
+            body.model_profile_id
+        )
         body_payload = body.model_dump(mode="json")
+        if "model_profile_id" not in body.model_fields_set:
+            body_payload.pop("model_profile_id", None)
         if body.channel is None:
             # Preserve fingerprints of requests saved before channel routing.
             body_payload.pop("channel", None)
@@ -12561,6 +12821,11 @@ def create_app(
             ) from exc
         if session is None:
             raise HTTPException(status_code=404, detail="deep-thinking session not found")
+        model_profile_id = (
+            requested_model_profile_id
+            if "model_profile_id" in body.model_fields_set
+            else None
+        )
         if "active_skill_ids" in body.model_fields_set:
             active_skill_ids = _validated_deep_skill_ids(
                 body.active_skill_ids, registry=_deep_session_capability_registry(run_id, session)
@@ -12598,6 +12863,7 @@ def create_app(
                 focus=body.focus,
                 create_artifact=requested_create_artifact,
                 active_skill_ids=active_skill_ids,
+                model_profile_id=model_profile_id,
                 branch_id=body.branch_id,
                 source_channel=body.channel or "web",
                 parent_message_id=body.parent_message_id,
@@ -15095,7 +15361,12 @@ def create_app(
         _require_role(x_role, {"analyst", "reviewer", "auditor", "admin"})
         view = read_view(run_id)
         root = _resolve_run_root(output_root, run_id, getattr(view, "result", {}))
-        items = load_run_feedback(root)
+        items = [
+            item
+            for item in load_run_feedback(root)
+            if str(item.get("rollback_status", "")).strip().lower() != "rolled_back"
+            and str(item.get("effect_status", "")).strip().lower() != "withdrawn"
+        ]
         scope = _effective_evolution_scope(
             body={
                 "tenant_id": getattr(view, "tenant_id", ""),
@@ -15356,6 +15627,85 @@ def create_app(
                 ),
             },
         }
+
+    @app.post("/api/v1/runs/{run_id}/expert-feedback/{feedback_id}/rollback")
+    def rollback_expert_feedback(
+        run_id: str,
+        feedback_id: str,
+        body: FeedbackRollbackBody | None = None,
+        x_role: str = Header(default="analyst", alias="X-Role"),
+        x_tenant_id: str = Header(default="", alias="X-Tenant-ID"),
+        x_workspace_id: str = Header(default="", alias="X-Workspace-ID"),
+        x_project_id: str = Header(default="", alias="X-Project-ID"),
+        x_profile_id: str = Header(default="", alias="X-Profile-ID"),
+        x_research_route: str = Header(default="", alias="X-Research-Route"),
+        x_evolution_stage_scope: str = Header(
+            default="", alias="X-Evolution-Stage-Scope"
+        ),
+    ) -> dict[str, Any]:
+        """Withdraw a reviewer submission and retire its memory signal."""
+
+        _require_role(x_role, {"analyst", "reviewer", "admin"})
+        try:
+            view = read_view(run_id)
+        except (KeyError, NoResultFound, RunNotFoundError) as exc:
+            raise HTTPException(status_code=404, detail="run not found") from exc
+        root = _resolve_run_root(output_root, run_id, getattr(view, "result", {}))
+        if root is None or not root.is_dir() or root.is_symlink():
+            raise HTTPException(status_code=404, detail="run output not found")
+        local_items = load_run_feedback(root)
+        target = next(
+            (item for item in local_items if str(item.get("feedback_id", "")) == feedback_id),
+            None,
+        )
+        if target is None:
+            raise HTTPException(status_code=404, detail="feedback not found")
+        request_scope = _scope_request(
+            tenant_id=x_tenant_id,
+            workspace_id=x_workspace_id,
+            project_id=x_project_id,
+            profile_id=x_profile_id,
+            route=x_research_route,
+            stage_scope=x_evolution_stage_scope,
+        )
+        run_route = str(
+            (getattr(view, "result", {}) or {}).get("route", "")
+            if isinstance(getattr(view, "result", {}), Mapping)
+            else ""
+        ).strip() or str(getattr(view, "research_route", "") or "").strip()
+        if x_research_route and run_route and _bounded_scope_id(x_research_route, limit=120) != _bounded_scope_id(run_route, limit=120):
+            raise HTTPException(status_code=403, detail="route scope mismatch")
+        # The run is the primary authorization boundary.  A legacy unscoped
+        # client may withdraw feedback from its selected run; explicit scope
+        # headers still have to match the persisted feedback row.
+        if _scope_is_supplied(request_scope) and not _evolution_scope_access(target, request_scope, role=x_role, write=True):
+            raise HTTPException(status_code=403, detail="evolution scope mismatch")
+        try:
+            saved = rollback_feedback(
+                run_root=root,
+                output_root=output_root,
+                feedback_id=feedback_id,
+                reason=(body.reason if body else ""),
+                actor_id=x_role,
+            )
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="feedback not found") from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        try:
+            service.publish_runtime_event(
+                run_id,
+                "expert_feedback_rolled_back",
+                {
+                    "feedback_id": feedback_id,
+                    "capability_id": saved.get("capability_id", ""),
+                    "capability_name": saved.get("capability_name", ""),
+                    "rollback_reason": saved.get("rollback_reason", ""),
+                },
+            )
+        except Exception:
+            pass
+        return {"rolled_back": True, "feedback": saved}
 
     @app.post("/api/v1/expert-feedback/{feedback_id}/effect")
     def evaluate_expert_feedback(

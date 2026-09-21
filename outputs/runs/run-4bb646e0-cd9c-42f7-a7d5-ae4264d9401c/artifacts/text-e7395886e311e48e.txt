@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=marines.mil · Force Design
-source_url=https://www.marines.mil/Force-Design/
-claim=美国海军陆战队Force Design公开强调面向现代威胁调整部队设计，支持将分布式、机动和体系韧性作为任务链分析背景。
-excerpt=
-retrieval=Hosted web search citation metadata

@@ -4,10 +4,11 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 import json
 from collections.abc import Mapping, Sequence
 import os
-from time import monotonic
+from time import monotonic, time as wall_time
 from typing import Any
 
 from equipment_deep_research.agents.workflows import coordinator as _legacy
@@ -16,6 +17,10 @@ from equipment_deep_research.agents.dynamic_prompt_resources import (
 )
 from equipment_deep_research.agents.workflows.winning_flows.naming import (
     allocate_s3_s4_naming_assignments,
+)
+from equipment_deep_research.domain.research_gaps import (
+    sanitize_public_research_gaps,
+    sanitize_public_research_prose,
 )
 
 globals().update(
@@ -379,13 +384,37 @@ DEEP_DIALOGUE_S6_COLUMN_SPECS: tuple[tuple[str, str], ...] = (
     ("winning_logic", "制胜逻辑机理"),
 )
 
+DEEP_DIALOGUE_S6_CARD_FIELDS: tuple[str, ...] = tuple(
+    key for key, _label in DEEP_DIALOGUE_S6_COLUMN_SPECS
+)
 
 def _deep_dialogue_s6_column_extra_contract(key: str) -> str:
     if key != "technology_implementation":
         return ""
     return """【装备与技术实现专属质量要求】
-本栏必须使用已开启的联网检索能力，围绕 synthesis_spine 锁定的装备概念、核心战果和工程瓶颈，检索可公开核验的新原理、新材料、新工艺、新器件、新算法或跨行业技术进展。只选能够提升能力、降低关键约束或支撑新质武器装备概念落地的具体技术；不要把“智能化、先进材料、无人化”等泛词当作答案。
-写作时必须给出：可选实现途径与主路径取舍、1至2项最关键工程瓶颈、新技术对应的装备落装位置或作用对象、该技术如何赋能作战窗口、公开来源线索与成熟度边界、从民用/邻域迁移到本装备的断点，以及公开事实、类比迁移、研发推演的区分。若联网检索未发现可靠可迁移的新技术，必须直说“未发现可靠可迁移的新技术”，并改为说明现有技术集成的边界与待验证条件，不得编造新技术。"""
+首轮优先使用已开启的联网检索能力，围绕 synthesis_spine 锁定的装备概念、核心战果和工程瓶颈，检索可公开核验的新原理、新材料、新工艺、新器件、新算法或跨行业技术进展；检索通道不可用时，直接利用模型已有能力完成同一工程分析，不得把检索失败当成空响应理由。只选能够提升能力、降低关键约束或支撑新质武器装备概念落地的具体技术；不要把“智能化、先进材料、无人化”等泛词当作答案。
+检索采用国内外混合策略：至少分别尝试中国大陆公开科研/工程来源与英文国际政府、科研机构、论文或标准来源；任一来源通道不可达时继续使用另一通道，不把单一地区访问失败升级为整栏失败。
+写作时必须给出：可选实现途径与主路径取舍、1至2项最关键工程瓶颈、新技术对应的装备落装位置或作用对象、该技术如何赋能作战窗口、从民用/邻域迁移到本装备的断点，以及公开事实、类比迁移、研发推演的区分。来源只作为内部检索依据，正文不要输出“检索不可用”“未发现可靠可迁移的新技术”“来源边界”或其他检索状态提示；没有可引用来源时，直接完成可复用的工程路线、约束、验证条件分析，不得编造具体引用。"""
+
+
+def _clean_technology_column_text(
+    text: Any,
+    synthesis_spine: Mapping[str, Any] | None = None,
+) -> str:
+    """Remove retrieval-status meta text before a technology column is shown.
+
+    Search availability is an internal runtime fact.  It must not become a
+    visible paragraph that makes a successfully recovered engineering answer
+    look like a failed result.  Keep substantive sentences intact; if a
+    provider returns only a status notice, return an empty value so the
+    caller can keep the column pending and trigger a resumable retry.
+    """
+
+    body = _deep_dialogue_text(text, 6000)
+    if not body:
+        return ""
+    cleaned = sanitize_public_research_prose(body, limit=6000)
+    return cleaned
 
 
 def _deep_dialogue_technology_column_publishable(text: Any) -> bool:
@@ -393,13 +422,13 @@ def _deep_dialogue_technology_column_publishable(text: Any) -> bool:
     if not body:
         return False
     required_marker_groups = (
-        ("检索", "公开", "来源", "论文", "专利", "标准", "科研机构", "未发现可靠"),
-        ("新技术", "新原理", "新材料", "新工艺", "新器件", "新算法", "跨行业", "前沿技术"),
-        ("路线", "途径", "主路径", "备选", "取舍", "切换"),
-        ("瓶颈", "约束", "卡住", "难点", "攻关"),
-        ("落装", "装备本体", "载荷", "平台", "接口", "作用对象"),
-        ("赋能", "支撑", "提升", "作战窗口", "能力跃迁", "落地"),
-        ("成熟度", "迁移", "移植", "断点", "边界", "事实", "类比", "推演"),
+        ("检索", "公开", "公开事实", "可核验", "来源", "论文", "专利", "标准", "科研机构", "国内", "中国", "未发现可靠"),
+        ("新技术", "新原理", "新材料", "新工艺", "新器件", "新算法", "技术进展", "工程技术", "跨行业", "前沿技术"),
+        ("路线", "技术路线", "途径", "实现途径", "主路径", "主攻", "备选", "方案", "取舍", "切换"),
+        ("瓶颈", "工程瓶颈", "约束", "卡住", "难点", "工程化", "攻关"),
+        ("落装", "装入", "集成", "装备本体", "载荷", "载荷舱", "平台", "接口", "任务计算机", "作用对象"),
+        ("赋能", "支撑", "提升", "作战窗口", "任务窗口", "能力跃迁", "能力提升", "落地"),
+        ("成熟度", "迁移", "移植", "断点", "边界", "事实", "类比", "推演", "验证"),
     )
     return all(any(marker in body for marker in group) for group in required_marker_groups)
 
@@ -630,7 +659,7 @@ def _compact_deep_dialogue_seed_payload(
 def _compact_deep_dialogue_synthesis_payload(
     payload: Mapping[str, Any],
 ) -> dict[str, Any]:
-    """Retain decision-bearing council data for one bounded authoring retry."""
+    """Build the bounded, decision-bearing handoff for synthesis and recovery."""
 
     compact = _compact_deep_dialogue_seed_payload(payload, include_naming=True)
     if isinstance(payload.get("adjudication_mission"), Mapping):
@@ -651,6 +680,14 @@ def _compact_deep_dialogue_synthesis_payload(
         "adversary_response",
         "feasibility_anchor",
         "rejection_risk",
+        # Preserve the branch identity and falsifiable boundary that let the
+        # synthesizer distinguish genuinely different mechanisms after the
+        # council has been compacted.
+        "branch_id",
+        "branch_type",
+        "novelty_delta",
+        "counterfactual_test",
+        "research_probe",
     )
     packets: list[dict[str, Any]] = []
     for packet in _deep_dialogue_list(payload.get("council_packets"))[:3]:
@@ -661,9 +698,9 @@ def _compact_deep_dialogue_synthesis_payload(
             if isinstance(proposal, Mapping):
                 proposals.append(
                     {
-                        key: proposal.get(key)
+                        key: _deep_dialogue_text(proposal.get(key), 400)
                         for key in proposal_fields
-                        if proposal.get(key) not in (None, "", [], {})
+                        if _deep_dialogue_text(proposal.get(key), 400)
                     }
                 )
         packets.append(
@@ -768,8 +805,17 @@ async def _write_deep_dialogue_s6_columns(
     synthesis_payload: Mapping[str, Any],
     synthesis_spine: Mapping[str, Any],
     provider_runtime: Any | None = None,
+    checkpoint_callback: Any | None = None,
+    card_authoring_id: str = "",
+    resume_checkpoint: Mapping[str, Any] | None = None,
 ) -> tuple[dict[str, str], list[str]]:
-    """Author S6 sequentially so every completed column is immediately visible."""
+    """Generate the five columns concurrently and stream completion events.
+
+    The columns are independent views of one already-locked synthesis spine,
+    so they do not need to wait on one another.  They remain one governed S6
+    deliverable: partial results are useful for live UI feedback, but the
+    caller only publishes a version when all five fields are present.
+    """
 
     completed: dict[str, str] = {}
     failures: list[str] = []
@@ -789,25 +835,115 @@ async def _write_deep_dialogue_s6_columns(
         ),
     }
     total = len(DEEP_DIALOGUE_S6_COLUMN_SPECS)
-    for index, (key, label) in enumerate(DEEP_DIALOGUE_S6_COLUMN_SPECS, start=1):
+
+    # S6 is one user-visible deliverable, but each column is an independent
+    # durable work item.  Only reuse a checkpoint that belongs to this exact
+    # authoring job; a stale card from another turn must never leak into the
+    # current portrait.
+    resume_rows: dict[str, dict[str, Any]] = {}
+    if isinstance(resume_checkpoint, Mapping):
+        checkpoint_id = str(resume_checkpoint.get("card_authoring_id", "") or "")
+        raw_columns = resume_checkpoint.get("s6_columns", {})
+        if (
+            raw_columns is None
+            or isinstance(raw_columns, Mapping)
+        ) and (
+            not card_authoring_id
+            or checkpoint_id == card_authoring_id
+        ):
+            for raw_key, raw_row in (raw_columns or {}).items():
+                key = str(raw_key or "").strip()
+                if key in dict(DEEP_DIALOGUE_S6_COLUMN_SPECS) and isinstance(raw_row, Mapping):
+                    status = str(raw_row.get("status", "") or "").strip().lower()
+                    content = _deep_dialogue_text(raw_row.get("content"), 6000)
+                    if status == "completed" and content:
+                        resume_rows[key] = {
+                            **dict(raw_row),
+                            "status": "completed",
+                            "content": content,
+                        }
+
+    checkpoint_rows: dict[str, dict[str, Any]] = dict(resume_rows)
+
+    async def _persist_column_checkpoint(
+        *,
+        key: str,
+        index: int,
+        label: str,
+        content: str,
+        status: str,
+        attempt: int,
+        fallback: bool = False,
+        quality_advisories: Sequence[str] = (),
+    ) -> None:
+        """Persist one monotonic column result before exposing it as done."""
+
+        if not callable(checkpoint_callback):
+            return
+        row = {
+            "key": key,
+            "index": index,
+            "label": label,
+            "status": status,
+            "content": _deep_dialogue_text(content, 6000),
+            "attempt": max(1, int(attempt or 1)),
+            "fallback": bool(fallback),
+            "quality_advisories": [
+                _deep_dialogue_text(item, 500)
+                for item in list(quality_advisories)[:4]
+                if _deep_dialogue_text(item, 500)
+            ],
+            "updated_at": wall_time(),
+        }
+        checkpoint_rows[key] = row
+        checkpoint = {
+            "schema_version": "deep-s6-columns-checkpoint-v1",
+            "kind": "deep_s6_column_checkpoint",
+            "card_authoring_id": str(card_authoring_id or ""),
+            "status": "running" if status != "failed" else "partial",
+            "completed_count": sum(
+                1
+                for item in checkpoint_rows.values()
+                if str(item.get("status", "")).lower() == "completed"
+                and _deep_dialogue_text(item.get("content"), 8)
+            ),
+            "total_count": total,
+            "s6_columns": dict(checkpoint_rows),
+        }
+        outcome = checkpoint_callback(checkpoint)
+        if inspect.isawaitable(outcome):
+            await outcome
+
+    async def _write_column(index: int, key: str, label: str) -> dict[str, Any]:
         column_payload = {
             **base_payload,
-            # Full text stays in ``completed`` for the final card. Downstream
-            # writers receive short continuity excerpts, preventing a
-            # quadratic context ramp across the five columns.
-            "completed_columns": {
-                completed_key: _deep_dialogue_text(completed_text, 700)
-                for completed_key, completed_text in completed.items()
-            },
+            # Parallel writers share the locked spine.  They intentionally do
+            # not depend on completion order, which keeps the five calls
+            # bounded and allows the UI to reveal whichever finishes first.
+            "completed_columns": {},
             "current_column": {
                 "index": index,
                 "key": key,
                 "label": label,
             },
         }
+        if key == "technology_implementation":
+            column_payload["technology_research_policy"] = {
+                "locale": "mixed",
+                "languages": ["zh-CN", "en"],
+                "mix_policy": "国内与国外来源并行取样，按同一事实标准交叉核验，不为凑对称虚构案例。",
+                "source_priority": [
+                    "中国大陆政府与科研机构公开页面",
+                    "国际政府、科研机构与高校公开页面",
+                    "国内外高校论文、公开专利与标准",
+                    "国内外可直接访问的公开原始来源交叉核验",
+                ],
+                "avoid": ["付费墙", "无法访问的二手转载", "无法核验的型号参数"],
+                "fallback": "检索不可用时继续完成工程路线、瓶颈、落装与验证条件分析，不编造具体引用。",
+            }
         prompt = f"""你是 S6 五栏能力画像的第 {index} 栏主笔。本次只写“{label}”，不重复其他栏目。
 装备身份、首选候选与制胜主线已经由 synthesis_spine 锁定；不得换装备、拼接互斥机理或退化为参数升级。必须保持明确打击对象、直接物理毁伤机理和任务失能判据在跨栏叙事中一致。认知、电磁、信息与自主能力只能作为发现、突防、进入或命中赋能。
-参考 completed_columns 消除重复并承接前文；若本栏是制胜逻辑机理，必须明确颠覆传统关系、先机来源、制衡方式和对手最低成本反制后的非对称收益。
+五栏并行生成，共享 synthesis_spine 的统一叙事约束；若本栏是制胜逻辑机理，必须明确颠覆传统关系、先机来源、制衡方式和对手最低成本反制后的非对称收益。
 
 【本栏原始规范】
 {_deep_dialogue_s6_column_contract(index)}
@@ -816,21 +952,38 @@ async def _write_deep_dialogue_s6_columns(
 
 只返回严格 JSON：{{"content": "本栏完整正文"}}。不要输出标题、其他栏、方法论说明或隐藏思维链。"""
         content = ""
-        for attempt in range(2):
+        technology_quality_gap = False
+        retry_used = False
+        attempts_used = 0
+        # Keep the live-search attempt separate from model-only recovery.  A
+        # transient search/tool outage should not consume the only chance to
+        # get useful engineering prose from the selected model.
+        maximum_attempts = 3 if key == "technology_implementation" else 2
+        for attempt in range(maximum_attempts):
+            attempts_used = attempt + 1
             phase = f"deep_contextual_dialogue_s6_column_{index}"
-            if attempt:
+            if attempt == 1:
                 phase += "_retry"
+            elif attempt >= 2:
+                phase += "_model_recovery"
+            recovery_instruction = ""
+            if attempt:
+                if key == "technology_implementation":
+                    recovery_instruction = (
+                        "\n这是该栏的模型恢复续写。优先复用已锁定的 synthesis_spine，"
+                        "不等待联网检索；直接利用模型已有知识完成路线比较、工程瓶颈、落装位置、"
+                        "迁移断点和验证条件。不得编造具体引用、不得输出检索状态，必须返回完整正文。"
+                    )
+                else:
+                    recovery_instruction = (
+                        "\n这是该栏的自动恢复续写；直接给出完整 content，不得省略或改写其他栏目。"
+                    )
             try:
                 raw = await _deep_dialogue_provider_json(
                     host,
                     provider_runtime,
                     "deep_thinking_dialogue",
-                    prompt
-                    + (
-                        "\n这是该栏的自动恢复续写；直接给出完整 content，不得省略。"
-                        if attempt
-                        else ""
-                    ),
+                    prompt + recovery_instruction,
                     column_payload,
                     {"content": "string"},
                     4200,
@@ -840,77 +993,253 @@ async def _write_deep_dialogue_s6_columns(
                 content = _deep_dialogue_text(parsed.get("content"), 6000)
                 # Backwards-compatible adapters may still return the former
                 # whole-card shape.  Consume only the requested field while
-                # keeping the new sequential progress contract.
+                # keeping the per-column progress contract.
                 if not content and isinstance(
                     parsed.get("capability_card_draft"), Mapping
                 ):
                     content = _deep_dialogue_text(
                         parsed["capability_card_draft"].get(key), 6000
                     )
+                if key == "technology_implementation" and content:
+                    content = _clean_technology_column_text(content, synthesis_spine)
                 if (
                     key == "technology_implementation"
                     and content
                     and not _deep_dialogue_technology_column_publishable(content)
                 ):
-                    if attempt:
-                        # A second non-compliant answer must not be promoted
-                        # merely because it is non-empty.  Leave the column
-                        # absent so the final quality gate reports the exact
-                        # publication blocker.
-                        content = ""
-                    raise ValueError(
-                        "装备与技术实现未闭合新技术检索、路线取舍、工程瓶颈、"
-                        "装备落装、赋能价值与迁移边界"
-                    )
+                    # Deep dialogue is exploratory.  Keep a non-empty model
+                    # answer visible and expose the missing dimensions as an
+                    # advisory; strict publication-quality checks belong to a
+                    # later review step and must not block the live card.
+                    technology_quality_gap = True
                 if content:
                     break
                 raise ValueError(f"S6 column {index} returned empty content")
-            except Exception:
-                if not attempt:
+            except Exception as exc:
+                if type(exc).__name__ in {
+                    "_DeepJobCancelled",
+                    "_DeepJobInterrupted",
+                    "_DeepJobClaimLost",
+                }:
+                    raise
+                content = ""
+                # A semantic contract miss is a quality failure that should
+                # stay visible. Transport/search failures are different: the
+                # bounded retry and model-only recovery get another chance to
+                # return useful prose without holding the other columns open.
+                if attempt < maximum_attempts - 1:
+                    retry_used = True
                     _emit_deep_dialogue_live_progress(
                         host,
                         {
                             "event_type": "deep_agent_progress",
                             "stage": "s6_authoring",
                             "status": "running",
-                            "progress": round(0.64 + 0.05 * (index - 1), 3),
+                            "progress": round(0.64 + 0.26 * len(completed) / total, 3),
                             "kind": "summary",
-                            "round": "synthesis",
-                            "role": "能力画像综合总编",
+                            "round": "authoring",
+                            "column_key": key,
+                            "axis": label,
+                            "role": f"S6 第{index}栏主笔",
                             "agent_id": "deep_thinking_dialogue",
                             "text": "",
-                            "summary_text": f"第{index}栏“{label}”链路短暂中断，正在单栏续写；已完成栏目不会重跑。",
+                            "summary_text": (
+                                f"第{index}栏“{label}”链路短暂中断，"
+                                f"正在执行第 {attempt + 2} 次模型续写；其他栏目无需等待。"
+                            ),
                         },
                     )
-        if not content:
-            failures.append(f"第{index}栏“{label}”未完成")
-            break
-        completed[key] = content
-        excerpt = _deep_dialogue_text(content, 220).replace("\n", " ")
+        used_fallback = False
+        if key == "technology_implementation" and not content:
+            # Search is an enrichment path, but the technology column itself
+            # remains atomic. After the live-search turn and bounded model-only
+            # recovery attempts, leave the field absent and let the caller
+            # expose a resumable pending state. This prevents a generic
+            # template from being mistaken for a delivered column.
+            _emit_deep_dialogue_live_progress(
+                host,
+                {
+                    "event_type": "deep_agent_progress",
+                    "stage": "s6_authoring",
+                    "status": "partial",
+                    "progress": round(0.64 + 0.26 * len(completed) / total, 3),
+                    "kind": "summary",
+                    "round": "authoring",
+                    "column_key": key,
+                    "axis": label,
+                    "role": f"S6 第{index}栏主笔",
+                    "agent_id": "deep_thinking_dialogue",
+                    "technology_research_status": "pending_retry",
+                    "text": "装备与技术实现暂未返回正文，已保留其他栏目并等待本栏可恢复重写。",
+                    "summary_text": "装备与技术实现待补全，五栏能力画像暂不成卡。",
+                },
+            )
+        return {
+            "index": index,
+            "key": key,
+            "label": label,
+            "content": content,
+            "fallback": used_fallback,
+            "technology_quality_gap": technology_quality_gap,
+            "retry_used": retry_used,
+            "attempts_used": attempts_used,
+        }
+
+    tasks = set()
+    for index, (key, label) in enumerate(DEEP_DIALOGUE_S6_COLUMN_SPECS, start=1):
+        if key in resume_rows:
+            completed[key] = resume_rows[key]["content"]
+            _emit_deep_dialogue_live_progress(
+                host,
+                {
+                    "event_type": "deep_agent_progress",
+                    "stage": "s6_authoring",
+                    "status": "running",
+                    "progress": round(0.64 + 0.26 * len(completed) / total, 3),
+                    "kind": "answer",
+                    "round": "authoring",
+                    "role": f"S6 第{index}栏主笔",
+                    "axis": label,
+                    "column_key": key,
+                    "column_content": resume_rows[key]["content"],
+                    "reused_from_checkpoint": True,
+                    "agent_id": "deep_thinking_dialogue",
+                    "completed_count": len(completed),
+                    "total_count": total,
+                    "text": f"第{index}/{total}栏 · {label}已从 checkpoint 恢复，跳过重复调用。",
+                    "summary_text": f"第{index}栏“{label}”已复用上次完成结果。",
+                },
+            )
+            continue
+        tasks.add(asyncio.create_task(_write_column(index, key, label)))
+    emitted_count = len(completed)
+    resumed_all = emitted_count == total and not tasks
+    if resumed_all:
         _emit_deep_dialogue_live_progress(
             host,
             {
                 "event_type": "deep_agent_progress",
                 "stage": "s6_authoring",
-                "status": "running",
-                "progress": round(0.64 + 0.05 * index, 3),
-                "kind": "answer",
+                "status": "completed",
+                "progress": 0.90,
+                "kind": "summary",
                 "round": "authoring",
-                "role": f"S6 第{index}栏主笔",
-                "axis": label,
+                "role": "能力画像综合总编",
+                "axis": "S6 五栏成卡",
                 "agent_id": "deep_thinking_dialogue",
-                "deliverable_refs": [label],
-                "completed_count": index,
+                "reused_from_checkpoint": True,
+                "completed_count": total,
                 "total_count": total,
-                "text": f"第{index}/{total}栏 · {label}已写入：{excerpt}",
-                "summary_text": (
-                    f"第{index}栏“{label}”已完成，正在承接下一栏。"
-                    if index < total
-                    else "S6 五栏已逐栏完成，正在执行统一质量校验。"
-                ),
+                "text": "S6 五栏已从 checkpoint 完整恢复，无需重复调用模型。",
+                "summary_text": "五栏能力画像已完整恢复，正在执行统一发布校验。",
             },
         )
-    return completed, failures
+    try:
+        for future in asyncio.as_completed(tasks):
+            result = await future
+            index = int(result["index"])
+            key = str(result["key"])
+            label = str(result["label"])
+            content = _deep_dialogue_text(result.get("content"), 6000)
+            used_fallback = bool(result.get("fallback"))
+            technology_quality_gap = bool(result.get("technology_quality_gap"))
+            attempts_used = max(1, int(result.get("attempts_used") or 1))
+            if not content:
+                failures.append(f"第{index}栏“{label}”未完成")
+                await _persist_column_checkpoint(
+                    key=key,
+                    index=index,
+                    label=label,
+                    content="",
+                    status="failed",
+                    attempt=attempts_used,
+                )
+                _emit_deep_dialogue_live_progress(
+                    host,
+                    {
+                        "event_type": "deep_agent_progress",
+                        "stage": "s6_authoring",
+                        "status": "partial",
+                        "progress": round(0.64 + 0.26 * emitted_count / total, 3),
+                        "kind": "summary",
+                        "round": "authoring",
+                        "role": "能力画像综合总编",
+                            "axis": label,
+                            "column_key": key,
+                            "agent_id": "deep_thinking_dialogue",
+                            "technology_research_status": (
+                                "pending_retry"
+                                if key == "technology_implementation"
+                                else "failed"
+                            ),
+                            "completed_count": emitted_count,
+                        "total_count": total,
+                        "text": f"第{index}/{total}栏“{label}”暂未完成，其他栏继续并行；整卡不会提前发布。",
+                    "summary_text": f"第{index}栏未完成，已保留缺口并继续并行五栏任务。",
+                    },
+                )
+                continue
+            completed[key] = content
+            emitted_count += 1
+            await _persist_column_checkpoint(
+                key=key,
+                index=index,
+                label=label,
+                content=content,
+                status="completed",
+                attempt=attempts_used,
+                fallback=used_fallback,
+                quality_advisories=(
+                    ["technology_quality_gap"] if technology_quality_gap else []
+                ),
+            )
+            excerpt = _deep_dialogue_text(content, 220).replace("\n", " ")
+            _emit_deep_dialogue_live_progress(
+                host,
+                {
+                    "event_type": "deep_agent_progress",
+                    "stage": "s6_authoring",
+                    "status": "running" if emitted_count < total else "completed",
+                    "progress": round(0.64 + 0.26 * emitted_count / total, 3),
+                    "kind": "answer",
+                    "round": "authoring",
+                    "role": f"S6 第{index}栏主笔",
+                    "axis": label,
+                    "column_key": key,
+                    "column_content": content,
+                    "technology_research_status": (
+                        "completed_without_live_search"
+                        if used_fallback
+                        else "advisory_quality_gap"
+                        if technology_quality_gap
+                        else "completed"
+                    ) if key == "technology_implementation" else "completed",
+                    "agent_id": "deep_thinking_dialogue",
+                    "deliverable_refs": [label],
+                    "completed_count": emitted_count,
+                    "total_count": total,
+                    "text": f"第{index}/{total}栏 · {label}已写入：{excerpt}",
+                    "summary_text": (
+                        (
+                            f"第{index}栏“{label}”已完成，已点亮 {emitted_count}/{total} 栏。"
+                            if used_fallback
+                            else (
+                                f"第{index}栏“{label}”已完成（质量提示已保留），已点亮 {emitted_count}/{total} 栏。"
+                                if technology_quality_gap
+                                else f"第{index}栏“{label}”已完成，已点亮 {emitted_count}/{total} 栏。"
+                            )
+                        )
+                        if emitted_count < total
+                        else "S6 五栏已并行完成，正在执行统一质量校验。"
+                    ),
+                },
+            )
+    finally:
+        for task in tasks:
+            if not task.done():
+                task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+    return {key: completed[key] for key in DEEP_DIALOGUE_S6_CARD_FIELDS if key in completed}, failures
 
 
 def _deep_dialogue_score(value: Any) -> float:
@@ -1682,13 +2011,7 @@ def _govern_deep_dialogue_final(
 
     draft = final.get("capability_card_draft", {})
     draft = draft if isinstance(draft, Mapping) else {}
-    s6_fields = (
-        "overview",
-        "technology_implementation",
-        "operational_process",
-        "capability_effects",
-        "winning_logic",
-    )
+    s6_fields = DEEP_DIALOGUE_S6_CARD_FIELDS
     missing_s6 = (
         [field for field in s6_fields if not _deep_dialogue_text(draft.get(field), 8)]
         if require_s6
@@ -1702,16 +2025,16 @@ def _govern_deep_dialogue_final(
             draft.get("technology_implementation")
         )
     )
-    if technology_quality_missing:
-        missing_s6.append("technology_implementation_quality")
     passed_directions = sum(1 for item in reviews if item["passed"])
     direction_ready = bool(directions)
-    has_s6_content = any(
-        _deep_dialogue_text(draft.get(field), 8) for field in s6_fields
+    has_s6_content = bool(
+        require_s6
+        and not missing_s6
+        and all(_deep_dialogue_text(draft.get(field), 8) for field in s6_fields)
     )
-    # S6 remains an explicit user-confirmed transition. Completeness is an
-    # advisory research signal: sparse public evidence or an unfinished column
-    # must not erase a useful divergent result or turn the job into ``blocked``.
+    # S6 is an explicit user-confirmed transition and an atomic deliverable:
+    # one missing column keeps the research result visible but can never mint a
+    # provisional capability version.
     publishable = bool(require_s6 and direction_ready and has_s6_content)
     advisories: list[str] = []
     if not directions:
@@ -1742,6 +2065,9 @@ def _govern_deep_dialogue_final(
             "S6 草稿仍可补充："
             + "、".join(column_labels.get(field, field) for field in missing_s6)
         )
+    # Keep the quality finding as machine-readable metadata only.  Retrieval
+    # availability or a soft engineering advisory must not be copied into the
+    # user's manuscript as a source-boundary notice.
     final["concept_directions"] = directions
     final["finalization_status"] = (
         "candidate_ready"
@@ -1756,6 +2082,7 @@ def _govern_deep_dialogue_final(
         "passed_directions": passed_directions,
         "candidate_reviews": reviews,
         "missing_s6_columns": missing_s6,
+        "technology_quality_gap": technology_quality_missing,
         "block_reasons": [],
         "advisories": advisories[:8],
         "non_blocking": True,
@@ -1783,7 +2110,10 @@ def _govern_deep_dialogue_final(
         "average_completeness": average_completeness,
         "gaps": advisories[:8],
     }
-    final["research_gaps"] = advisories[:8]
+    final["research_gaps"] = sanitize_public_research_gaps(
+        advisories, limit=8, item_limit=500
+    )
+    final["research_assessment"]["gaps"] = list(final["research_gaps"])
     return final
 
 
@@ -1975,6 +2305,61 @@ def _preserve_council_result_when_synthesis_fails(
         ],
         "confidence": 0.45,
     }
+
+
+def _deep_dialogue_no_proposal_result(
+    *,
+    seed_keys: Sequence[str] | None,
+    require_s6: bool,
+    reason: str,
+) -> dict[str, Any]:
+    """Return a visible exploratory result when every probe is unusable.
+
+    A divergent turn is allowed to produce no mergeable candidate.  Treating
+    that as a structured research gap keeps the conversation alive and lets a
+    follow-up steer recover it; raising here used to convert one provider or
+    validation miss into a hard failure for the whole deep dialogue.
+    """
+
+    final = _govern_deep_dialogue_final(
+        {
+            "concept_directions": [],
+            "capability_card_draft": {},
+            "new_hypothesis": False,
+            "open_questions": [
+                "本轮没有可合并候选；请调整问题或允许沿另一条假设继续发散。",
+                "是否优先改写任务窗口、装备构型或直接作用机理？",
+            ],
+        },
+        seed_keys=seed_keys,
+        require_s6=require_s6,
+    )
+    final["deep_divergence_status"] = "partial"
+    final["visible_summary"] = [
+        "本轮发散未形成可合并候选，已保留研究缺口；可以继续追问或更换发散角度。",
+        _deep_dialogue_text(reason, 360),
+    ]
+    final["adjudication"] = {
+        "review_summary": "未进入候选裁决；本轮结果作为探索性缺口保留。",
+        "mission_focus": "下一轮优先寻找能改写任务窗口并闭合直接作用机理的候选。",
+        "candidate_reviews": [],
+        "cross_candidate_conflicts": [],
+        "selection_order": [],
+        "priority_revision_targets": [],
+        "adjudication_complete": False,
+    }
+    final["agent_dialogue"] = []
+    final["orchestration"] = {
+        "pattern": "model_planned_parallel_probes_adversarial_review_synthesis",
+        "rounds": 1,
+        "phases": ["internal_multidim_divergence"],
+        "requested_agents": 0,
+        "completed_divergence_agents": 0,
+        "degraded": True,
+        "quality_gate_passed": False,
+        "finalization_status": "analysis_only",
+    }
+    return final
 
 
 async def _run_deep_dialogue_council(
@@ -2474,9 +2859,29 @@ async def _run_deep_dialogue_council(
             (item for item in proposal_results if isinstance(item, BaseException)),
             None,
         )
-        if first_error is not None:
-            raise first_error
-        raise RuntimeError("deep dialogue council returned no proposals")
+        _emit_deep_dialogue_live_progress(
+            host,
+            {
+                "event_type": "deep_agent_failed",
+                "stage": "s3_divergence",
+                "status": "partial",
+                "progress": _monotonic_progress(0.44),
+                "kind": "summary",
+                "round": "divergence",
+                "role": "深研发散协调器",
+                "agent_id": "deep_dialogue_council",
+                "summary_text": "本轮没有可合并候选，已转为探索性研究缺口；不会硬失败。",
+            },
+        )
+        return _deep_dialogue_no_proposal_result(
+            seed_keys=seed_keys,
+            require_s6=authoring_requested,
+            reason=(
+                "发散 Agent 未返回可合并候选，原因已降级为可追问提示。"
+                if first_error is None
+                else f"发散 Agent 未返回可合并候选（{type(first_error).__name__}），已降级为可追问提示。"
+            ),
+        )
 
     council_deliverables = [
         name
@@ -2506,7 +2911,12 @@ async def _run_deep_dialogue_council(
     )
     _consume_deep_dialogue_steers(host, governed_payload, "council_critique")
     critic_payload = _compact_deep_dialogue_seed_payload(governed_payload)
-    critic_payload["council_packets"] = packets
+    # The judge only needs decision-bearing candidate fields.  Keep the
+    # council's raw provider packets at the orchestration boundary so a
+    # verbose proposal, tool trace, or provider metadata cannot inflate the
+    # next agent's context.  Retry uses the same projection, so both paths
+    # have identical handoff semantics.
+    critic_payload["council_packets"] = _compact_council_packets_for_critic(packets)
     critic_payload["adjudication_mission"] = {
         "primary_goal": (
             "深度发散出具备颠覆传统制胜逻辑的新质创新武器装备，"
@@ -2692,6 +3102,11 @@ async def _run_deep_dialogue_council(
     synthesis_payload["council_packets"] = packets
     synthesis_payload["adjudication"] = adjudication
     synthesis_payload["adjudication_mission"] = critic_payload["adjudication_mission"]
+    # Synthesis is another agent boundary.  Pass the semantic handoff used by
+    # the recovery path up front instead of replaying the full council output.
+    # This keeps the happy path within the same bounded context budget as a
+    # retry and prevents raw tool/provider fields from crossing the boundary.
+    synthesis_payload = _compact_deep_dialogue_synthesis_payload(synthesis_payload)
     _emit_deep_dialogue_live_progress(
         host,
         {

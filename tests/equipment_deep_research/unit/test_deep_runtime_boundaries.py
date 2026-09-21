@@ -844,6 +844,33 @@ def test_direct_provider_routes_run_identity_to_fairness_without_model_metadata(
     assert "run-deep-1" not in captured["messages"][1].content
 
 
+def test_direct_provider_technology_lane_has_bounded_search_options() -> None:
+    captured: dict = {}
+
+    class Provider:
+        async def stream(self, _messages, _tools, options):
+            captured.update(options)
+            yield ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))
+
+    result = asyncio.run(
+        ProviderRuntime(Provider()).complete_json(
+            agent_id="deep_thinking_dialogue",
+            system="system",
+            payload={},
+            output_schema={"ok": "boolean"},
+            max_output_tokens=256,
+            phase="deep_contextual_dialogue_s6_column_2",
+        )
+    )
+
+    assert result == {"ok": True}
+    assert captured["_disable_provider_timeout"] is False
+    assert captured["_provider_timeout_seconds"] == 180
+    assert captured["web_search"]["external_web_access"] is True
+    assert captured["include_web_sources"] is True
+    assert captured["require_web_search"] is False
+
+
 def test_sync_callback_internal_type_error_is_not_retried() -> None:
     calls: list[str] = []
 

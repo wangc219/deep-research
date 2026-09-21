@@ -68,11 +68,25 @@ from equipment_deep_research.domain.capability_portrait import (
     parse_capability_portrait_modules,
     portrait_module_has_incomplete_ending,
 )
+from equipment_deep_research.domain.research_gaps import sanitize_public_research_prose
 from equipment_deep_research.contracts.runtime import CardRuntime
 
 
 class S6SpineAuthoringError(S6QualityError):
     """A card-level failure that is safe to recover by replaying the card."""
+
+
+def _clean_s6_technology_prose(value: Any, brief: Mapping[str, Any] | None = None) -> str:
+    """Keep retrieval diagnostics out of the authored portrait column."""
+
+    body = str(value or "").strip()
+    if not body:
+        # An empty provider response is a missing authored column, not an
+        # invitation to manufacture a generic engineering paragraph.  The
+        # caller owns the bounded retry and will keep the card pending when
+        # both attempts are empty.
+        return ""
+    return sanitize_public_research_prose(body, limit=6000)
 
 
 def _dynamic_s6_one_shot_enabled(dynamic_s6_authoring: bool) -> bool:
@@ -1220,6 +1234,7 @@ async def generate_parallel_s6_cards(
                 *,
                 module_attempt: int = 1,
                 module_retry_reason: str = "",
+                phase_suffix: str = "",
             ) -> tuple[str, str]:
                 label = labels[module_key]
                 retry_instruction = (
@@ -1232,6 +1247,12 @@ async def generate_parallel_s6_cards(
                     if module_attempt > 1
                     else ""
                 )
+                if module_key == "technology_implementation" and module_attempt > 1:
+                    retry_instruction += (
+                        " 本次是检索失败后的模型能力恢复，不要等待联网工具或重复检索；"
+                        "直接依据已锁定的装备构型与作用机理完成路线取舍、核心瓶颈、落装位置、"
+                        "迁移断点和验证条件。必须返回完整正文，不得把检索状态当作正文，也不得编造引用。"
+                    )
                 text = await run_scoped_json(
                     scope=(
                         module_key
@@ -1251,8 +1272,14 @@ async def generate_parallel_s6_cards(
                     # unusually deep model deliberation cannot hold the whole
                     # S6 wave hostage; the column gate still rejects missing
                     # or malformed content.
-                    max_output_tokens=1800,
-                    phase=f"{phase_prefix}_module_{module_key}",
+                    # Technology realization carries route comparison,
+                    # installation point and engineering bottleneck. Keep
+                    # retrieval status internal and give that column a little more room than
+                    # the narrative siblings so it can finish as one
+                    # auditable engineering chain instead of being truncated
+                    # at the JSON/prose boundary.
+                    max_output_tokens=(2400 if module_key == "technology_implementation" else 1800),
+                    phase=f"{phase_prefix}_module_{module_key}{phase_suffix}",
                     extra_payload={
                         "portrait_module_key": module_key,
                         "portrait_module_label": label,
@@ -1276,6 +1303,8 @@ async def generate_parallel_s6_cards(
                 if draft and not capability_image_draft:
                     capability_image_draft = draft
                 content = _extract_s6_module_content(parsed_module, module_key)
+                if module_key == "technology_implementation":
+                    content = _clean_s6_technology_prose(content, brief)
                 if not content:
                     raise S6QualityError(
                         f"S6并行第{position}张装备卡栏目{label}未返回正文"
@@ -1369,6 +1398,68 @@ async def generate_parallel_s6_cards(
                     )
                     if isinstance(item, BaseException)
                 ]
+            # Search-backed technology calls are the most sensitive to a
+            # transient gateway/tool lease failure. After the normal parallel
+            # rescue wave, give only this column one isolated, serial retry so
+            # four successful siblings never get replayed and the card is not
+            # prematurely marked limited. This is still an authored provider
+            # result, never a template or silent fallback.
+            if "technology_implementation" in failed_module_keys:
+                technology_failure = next(
+                    (
+                        item
+                        for key, item in zip(
+                            (key for key, _ in CAPABILITY_PORTRAIT_MODULES),
+                            module_results,
+                            strict=True,
+                        )
+                        if key == "technology_implementation"
+                    ),
+                    None,
+                )
+                try:
+                    rescued_technology = await author_module(
+                        "technology_implementation",
+                        module_attempt=maximum_module_attempts + 1,
+                        module_retry_reason=(
+                            "技术检索栏进入错峰恢复："
+                            f"{type(technology_failure).__name__}: {technology_failure}"
+                        ),
+                        phase_suffix="_offline_recovery",
+                    )
+                except asyncio.CancelledError:
+                    raise
+                except Exception as technology_rescue_error:
+                    module_authoring_warnings.append(
+                        "装备与技术实现错峰恢复失败："
+                        f"{type(technology_rescue_error).__name__}"
+                    )
+                    # Preserve the four independently authored siblings, but
+                    # keep this column as an exception so the card-level
+                    # transaction is withheld and can be resumed.  A generic
+                    # template would falsely light up the UI and pollute the
+                    # delivered portrait while giving no retrieval-backed
+                    # engineering claim.
+                else:
+                    for result_index, (key, _item) in enumerate(
+                        zip(
+                            (key for key, _ in CAPABILITY_PORTRAIT_MODULES),
+                            module_results,
+                            strict=True,
+                        )
+                    ):
+                        if key == "technology_implementation":
+                            module_results[result_index] = rescued_technology
+                            break
+                failed_module_keys = [
+                    key
+                    for key, item in zip(
+                        (key for key, _ in CAPABILITY_PORTRAIT_MODULES),
+                        module_results,
+                        strict=True,
+                    )
+                    if isinstance(item, BaseException)
+                ]
             if failed_module_keys:
                 # A missing independent column is a card-level authoring
                 # failure.  Never synthesize a generic replacement from the
@@ -1429,7 +1520,9 @@ async def generate_parallel_s6_cards(
                 assert isinstance(row, tuple)
                 module_key, content = row
                 authored_modules[str(module_key)] = coerce_portrait_module_prose(
-                    content,
+                    _clean_s6_technology_prose(content, brief)
+                    if str(module_key) == "technology_implementation"
+                    else content,
                     module_key=str(module_key),
                     allow_structured_salvage=False,
                 )
@@ -1461,7 +1554,9 @@ async def generate_parallel_s6_cards(
             if isinstance(authored_modules, Mapping):
                 authored_modules = {
                     str(key): coerce_portrait_module_prose(
-                        value,
+                        _clean_s6_technology_prose(value, brief)
+                        if str(key) == "technology_implementation"
+                        else value,
                         module_key=str(key),
                         allow_structured_salvage=False,
                     )
@@ -1471,6 +1566,12 @@ async def generate_parallel_s6_cards(
                 authored_modules = parse_capability_portrait_modules(
                     direction.get("capability_portrait", "")
                 )
+            if isinstance(authored_modules, Mapping):
+                authored_modules = dict(authored_modules)
+                if "technology_implementation" in authored_modules:
+                    authored_modules["technology_implementation"] = _clean_s6_technology_prose(
+                        authored_modules.get("technology_implementation", ""), brief
+                    )
 
         initial_short_modules = _s6_short_portrait_modules(authored_modules)
         quality_warnings: list[str] = list(module_authoring_warnings)
@@ -1575,7 +1676,14 @@ async def generate_parallel_s6_cards(
                             returned = parsed_repair.get(field)
                             if str(returned or "") != expected:
                                 raise S6QualityError(f"S6 repair {field} mismatch")
-                        return module_key, _extract_s6_module_content(parsed_repair, module_key)
+                        repaired_content = _extract_s6_module_content(
+                            parsed_repair, module_key
+                        )
+                        if module_key == "technology_implementation":
+                            repaired_content = _clean_s6_technology_prose(
+                                repaired_content, brief
+                            )
+                        return module_key, repaired_content
 
                     repaired_rows = await asyncio.gather(
                         *(
@@ -1629,6 +1737,10 @@ async def generate_parallel_s6_cards(
                             repaired.get("capability_portrait", "")
                         )
                     repaired_modules = dict(repaired_modules)
+                    if "technology_implementation" in repaired_modules:
+                        repaired_modules["technology_implementation"] = _clean_s6_technology_prose(
+                            repaired_modules.get("technology_implementation", ""), brief
+                        )
                     candidate_modules = _merge_s6_repaired_modules(
                         first_pass_modules,
                         repaired_modules,

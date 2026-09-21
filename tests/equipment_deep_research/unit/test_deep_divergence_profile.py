@@ -236,3 +236,44 @@ def test_deep_divergence_retrieval_is_bounded_and_stays_before_evidence_gate():
     assert result["deep_stage_plan"]["S6"]["failed"] is True
     assert any(item["stage"] == "S6" and "证据门" in item["error"] for item in result["deep_failures"])
     assert all("api_key" not in str(payload) for _phase, payload in host.prompts)
+
+
+class _UnavailableRetrievalHost(_RetrievalHost):
+    """Search transport failure must not erase the S3/S4 exploratory draft."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.search_options = []
+
+    async def _collect_stream(self, _provider, _messages, options, **_kwargs):
+        self.search_options.append(dict(options))
+        raise RuntimeError("web search unavailable")
+
+
+def test_deep_divergence_search_failure_keeps_drafts_and_optional_search() -> None:
+    host = _UnavailableRetrievalHost()
+    result = asyncio.run(
+        _analyze_deep_divergence_subagents(
+            host,
+            {
+                "run_id": "child-retrieval-failure",
+                "topic": "当前Query",
+                "research_route": "traditional_gap",
+                "execution_profile_id": "deep_divergence_v1",
+                "evidence_index": [],
+                "deep_parent_context": {
+                    "parent_run_id": "parent-1",
+                    "candidate": {"name": "参考武器"},
+                },
+            },
+        )
+    )
+
+    assert host.search_options
+    assert all(item.get("require_web_search") is False for item in host.search_options)
+    assert result["deep_divergence_status"] == "partial"
+    assert result["deep_stage_plan"]["S4"]["completed"] == 3
+    assert result["deep_drafts"]["mapped_concept_directions"]
+    # Transport diagnostics stay in the internal failure ledger; they are not
+    # copied into the exploratory draft shown to the user.
+    assert "web search unavailable" not in str(result["deep_drafts"])

@@ -56,12 +56,30 @@ export function normalizeDeepCapabilityCatalog(payload) {
     })).filter(server => server.server_id),
   };
   const maxActiveSkills = Math.max(1, Number(source.limits?.max_active_skills) || 6);
+  const modelProfileSource = source.model_profiles && typeof source.model_profiles === 'object'
+    ? source.model_profiles
+    : {};
+  const modelProfiles = rows(modelProfileSource.profiles).map(profile => ({
+    id: text(profile.id),
+    label: text(profile.label || profile.id),
+    provider: text(profile.provider),
+    protocol: text(profile.protocol),
+    model: text(profile.model),
+    endpoint_host: text(profile.endpoint_host),
+    credential_configured: Boolean(profile.credential_configured),
+    deprecated: Boolean(profile.deprecated),
+  })).filter(profile => profile.id && !profile.deprecated);
   return {
     schema_version: text(source.schema_version) || 'deep-capabilities-v1',
     skills,
     plugins,
     mcp_servers: mcpServers,
     mcp_host: mcpHost,
+    model_profiles: {
+      default_profile: text(modelProfileSource.default_profile),
+      active_profile: text(modelProfileSource.active_profile),
+      profiles: modelProfiles,
+    },
     limits: {max_active_skills: maxActiveSkills},
   };
 }

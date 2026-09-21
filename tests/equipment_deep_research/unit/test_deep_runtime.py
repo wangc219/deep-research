@@ -14,7 +14,7 @@ from equipment_deep_research.deep_runtime.conductor import (
     resolve_turn_plan,
 )
 from equipment_deep_research.deep_runtime.provider_runtime import ProviderRuntime
-from equipment_deep_research.deep_runtime.loop import _run_deep_research_turn
+from equipment_deep_research.deep_runtime.loop import _assemble, _run_deep_research_turn
 from equipment_deep_research.deep_runtime.planner import (
     inbound_from_payload,
     plan_turn,
@@ -72,6 +72,29 @@ def test_checkpoint_visible_text_handles_empty_research_gaps() -> None:
             ]
         }
     ) == ""
+
+
+def test_runtime_assembly_merges_non_empty_s6_columns_monotonically() -> None:
+    state = TurnState(
+        host=object(),
+        payload={},
+        inbound=inbound_from_payload({"question": "/card"}),
+        plan=["author_s6"],
+    )
+    state.completed_tools = ["author_s6"]
+    state.results = {
+        "author_s6": {
+            "capability_card_draft": {
+                "overview": "概述",
+                "technology_implementation": "技术栏已完成",
+                "operational_process": "流程",
+                "capability_effects": "效果",
+                "winning_logic": "制胜逻辑",
+            }
+        }
+    }
+    result = _assemble(state)
+    assert result["capability_card_draft"]["technology_implementation"] == "技术栏已完成"
 
 
 def test_research_strategy_commands_route_to_bounded_actions() -> None:
@@ -732,6 +755,9 @@ def test_follow_up_research_action_consumes_latest_observed_directions() -> None
         **_closed_direction(),
         "name": "发散后修订候选",
         "changed_assumption": "前序发散已经改写的关键假设",
+        "branch_type": "boundary_inversion",
+        "counterfactual_test": "若边界失效则回退",
+        "provider_trace": "不应进入后续模型上下文" * 2000,
     }
 
     class Host:
@@ -777,6 +803,9 @@ def test_follow_up_research_action_consumes_latest_observed_directions() -> None
     candidates = host.model_payloads[0]["working_memory"]["candidate_directions"]
     assert [item["name"] for item in candidates] == ["发散后修订候选"]
     assert candidates[0]["changed_assumption"] == "前序发散已经改写的关键假设"
+    assert candidates[0]["branch_type"] == "boundary_inversion"
+    assert candidates[0]["counterfactual_test"] == "若边界失效则回退"
+    assert "provider_trace" not in candidates[0]
 
 
 def test_research_assessment_is_non_blocking_and_exposes_string_gaps() -> None:
@@ -1130,3 +1159,114 @@ def test_author_s6_handler_fails_closed_without_confirmed_stable_memory() -> Non
     assert result["capability_card_draft"] == {}
     assert result["orchestration"]["pattern"] == "s6_authoring_blocked"
     assert result["quality_gate"]["publishable"] is False
+
+
+def test_author_s6_keeps_missing_technology_column_pending(monkeypatch) -> None:
+    from equipment_deep_research.agents.workflows import orchestrator
+
+    rows = []
+
+    class Host:
+        def _emit_deep_dialogue_progress(self, row):
+            rows.append(row)
+
+    async def incomplete_writer(*_args, **_kwargs):
+        return (
+            {
+                "overview": "概述",
+                "operational_process": "流程",
+                "capability_effects": "效果",
+                "winning_logic": "制胜逻辑",
+            },
+            [],
+        )
+
+    monkeypatch.setattr(
+        orchestrator, "_write_deep_dialogue_s6_columns", incomplete_writer
+    )
+    payload = {
+        "question": "/card",
+        "authoring_requested": True,
+        "deep_parent_context": {
+            "working_memory": {
+                "candidate_directions": [_closed_direction()],
+            }
+        },
+    }
+    inbound = inbound_from_payload(payload)
+    state = TurnState(host=Host(), payload=payload, inbound=inbound, plan=["author_s6"])
+
+    result = asyncio.run(tool_author_s6(state))
+
+    assert result["quality_gate"]["publishable"] is False
+    assert result["finalization_status"] == "analysis_only"
+    assert set(result["capability_card_draft"]) == {
+        "overview",
+        "operational_process",
+        "capability_effects",
+        "winning_logic",
+    }
+    assert "technology_implementation" in result["quality_gate"]["missing_s6_columns"]
+    assert "第2栏“装备与技术实现”未完成" in result["open_questions"]
+    assert any(
+        row.get("column_key") == "technology_implementation"
+        and row.get("technology_research_status") == "pending_retry"
+        and row.get("kind") == "summary"
+        for row in rows
+    )
+    assert not any(
+        row.get("column_key") == "technology_implementation"
+        and row.get("kind") == "answer"
+        and row.get("technology_research_status")
+        == "completed_without_live_search"
+        for row in rows
+    )
+
+
+def test_author_s6_keeps_engineering_text_and_hides_retrieval_status(monkeypatch) -> None:
+    from equipment_deep_research.agents.workflows import orchestrator
+
+    class Host:
+        def _emit_deep_dialogue_progress(self, _row):
+            return None
+
+    async def complete_writer(*_args, **_kwargs):
+        return (
+            {
+                "overview": "概述",
+                "technology_implementation": (
+                    "阵列接收器与任务计算机联锁，形成目标识别到作用的工程闭环。"
+                    "来源边界提示：国内外检索通道暂不可达。"
+                    "主路径采用模块化接口，验证条件是闭环联调通过。"
+                ),
+                "operational_process": "流程",
+                "capability_effects": "效果",
+                "winning_logic": "制胜逻辑",
+            },
+            [],
+        )
+
+    monkeypatch.setattr(
+        orchestrator, "_write_deep_dialogue_s6_columns", complete_writer
+    )
+    payload = {
+        "question": "/card",
+        "authoring_requested": True,
+        "deep_parent_context": {
+            "working_memory": {
+                "candidate_directions": [_closed_direction()],
+            }
+        },
+    }
+    inbound = inbound_from_payload(payload)
+    state = TurnState(host=Host(), payload=payload, inbound=inbound, plan=["author_s6"])
+
+    result = asyncio.run(tool_author_s6(state))
+
+    technology = result["capability_card_draft"]["technology_implementation"]
+    assert "阵列接收器与任务计算机联锁" in technology
+    assert "主路径采用模块化接口" in technology
+    assert "来源边界" not in technology
+    assert "检索通道暂不可达" not in technology
+    assert result["quality_gate"]["publishable"] is True
+    assert result["finalization_status"] == "candidate_ready"

@@ -14,6 +14,11 @@ import json
 from collections.abc import Mapping, Sequence
 from typing import Any
 
+from equipment_deep_research.domain.research_gaps import (
+    sanitize_public_research_prose,
+    sanitize_public_research_gaps,
+)
+
 
 DEFAULT_BRANCH_ID = "main"
 STEER_MODES = frozenset({"steer", "queue", "interrupt_steer", "interrupt_send"})
@@ -511,7 +516,7 @@ def _research_memory(
     assessment = assessment if isinstance(assessment, Mapping) else {}
     legacy_gate = source.get("quality_gate")
     legacy_gate = legacy_gate if isinstance(legacy_gate, Mapping) else {}
-    research_gaps = _string_list(
+    research_gaps = sanitize_public_research_gaps(
         [
             *(source.get("research_gaps", []) if isinstance(source.get("research_gaps"), list) else []),
             *(assessment.get("research_gaps", []) if isinstance(assessment.get("research_gaps"), list) else []),
@@ -614,6 +619,17 @@ def build_working_memory(
                     ("novelty", 500),
                     ("related_scenario", 400),
                     ("implementation_concept", 500),
+                    # Keep the falsifiable handoff fields available after a
+                    # refresh or branch switch; they are compact decision
+                    # metadata, not provider transcript.
+                    ("adversary_response", 420),
+                    ("feasibility_anchor", 420),
+                    ("rejection_risk", 320),
+                    ("branch_id", 120),
+                    ("branch_type", 80),
+                    ("novelty_delta", 420),
+                    ("counterfactual_test", 420),
+                    ("research_probe", 420),
                 )
                 if bounded_text(item.get(key), 8)
             }
@@ -670,27 +686,39 @@ def build_working_memory(
     if not rejected:
         rejected = inherited_decisions("rejected_directions")
 
-    summaries = _string_list(source.get("visible_summary", []), limit=4, item_limit=600)
+    summaries = [
+        clean
+        for item in _string_list(source.get("visible_summary", []), limit=4, item_limit=600)
+        for clean in [sanitize_public_research_prose(item, limit=600)]
+        if clean
+    ]
     if not summaries:
-        rationale = bounded_text(source.get("selection_rationale"), 1000)
+        rationale = sanitize_public_research_prose(
+            source.get("selection_rationale"), limit=1000
+        )
         if rationale:
             summaries = [rationale]
     if not summaries:
-        summaries = _string_list(
-            prior.get("latest_summary", []), limit=4, item_limit=600
-        )
+        summaries = [
+            clean
+            for item in _string_list(
+                prior.get("latest_summary", []), limit=4, item_limit=600
+            )
+            for clean in [sanitize_public_research_prose(item, limit=600)]
+            if clean
+        ]
 
-    selection_rationale = bounded_text(
+    selection_rationale = sanitize_public_research_prose(
         source.get("selection_rationale") or prior.get("selection_rationale"),
-        1000,
+        limit=1000,
     )
-    open_questions = _string_list(
+    open_questions = sanitize_public_research_gaps(
         source.get("next_questions") or source.get("open_questions") or [],
         limit=5,
         item_limit=500,
     )
     if not open_questions:
-        open_questions = _string_list(
+        open_questions = sanitize_public_research_gaps(
             prior.get("open_questions", []), limit=5, item_limit=500
         )
 
@@ -786,7 +814,23 @@ def working_memory_prompt(memory: Mapping[str, Any] | None) -> dict[str, Any]:
         "research_gaps",
         "last_research_strategy",
     )
-    return {key: memory.get(key) for key in allowed if memory.get(key) not in (None, "", [], {})}
+    projected = {
+        key: memory.get(key)
+        for key in allowed
+        if memory.get(key) not in (None, "", [], {})
+    }
+    for key, limit in (("latest_summary", 6), ("open_questions", 8)):
+        if key in projected:
+            projected[key] = sanitize_public_research_gaps(
+                projected.get(key, []), limit=limit, item_limit=700
+            )
+    if "selection_rationale" in projected:
+        projected["selection_rationale"] = sanitize_public_research_prose(
+            projected.get("selection_rationale"), limit=1200
+        )
+    return {
+        key: value for key, value in projected.items() if value not in (None, "", [], {})
+    }
 
 
 def branch_working_memory(

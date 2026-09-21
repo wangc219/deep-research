@@ -1106,7 +1106,7 @@ def test_s6_model_call_ignores_expired_run_deadline_without_downshifting() -> No
         "search_context_size": "medium",
         "external_web_access": True,
     }
-    assert options["require_web_search"] is True
+    assert options["require_web_search"] is False
 
 
 def test_s6_card_repair_uses_narrow_low_reasoning_profile() -> None:
@@ -1188,7 +1188,68 @@ def test_parallel_s6_technology_column_enables_governed_live_search() -> None:
         "external_web_access": True,
     }
     assert options["include_web_sources"] is True
-    assert options["require_web_search"] is True
+    assert options["require_web_search"] is False
+    assert options["_provider_timeout_seconds"] == 180
+    assert options["_disable_provider_timeout"] is False
+
+
+def test_parallel_s6_technology_module_retry_reuses_first_search_context() -> None:
+    backend = ScriptedFakeProvider(
+        [[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]]
+    )
+    provider = ResponsesAgentProvider(backend)
+
+    asyncio.run(
+        provider._run_core_text(  # type: ignore[attr-defined]
+            "winning_s6_image",
+            "recover S6 technology implementation",
+            {
+                "candidate_weapon": {"name": "test"},
+                "portrait_module_attempt": 2,
+            },
+            3200,
+            phase="winning_s6_parallel_card_01_module_technology_implementation",
+            output_schema={"ok": "boolean"},
+        )
+    )
+
+    _, _, options = backend.inputs[0]
+    assert "web_search" not in options
+    assert "include_web_sources" not in options
+    assert "require_web_search" not in options
+    assert options["_provider_timeout_seconds"] == 180
+    assert options["_disable_provider_timeout"] is False
+
+
+def test_parallel_s6_technology_offline_recovery_remains_bounded() -> None:
+    backend = ScriptedFakeProvider(
+        [[ProviderStreamEvent.final(ProviderFinalTurn(text='{"ok":true}'))]]
+    )
+    provider = ResponsesAgentProvider(backend)
+
+    asyncio.run(
+        provider._run_core_text(  # type: ignore[attr-defined]
+            "winning_s6_image",
+            "recover S6 technology implementation without another search",
+            {
+                "candidate_weapon": {"name": "test"},
+                "portrait_module_attempt": 3,
+            },
+            3200,
+            phase=(
+                "winning_s6_parallel_card_01_module_technology_implementation"
+                "_offline_recovery"
+            ),
+            output_schema={"ok": "boolean"},
+        )
+    )
+
+    _, _, options = backend.inputs[0]
+    assert "web_search" not in options
+    assert "include_web_sources" not in options
+    assert "require_web_search" not in options
+    assert options["_provider_timeout_seconds"] == 180
+    assert options["_disable_provider_timeout"] is False
 
 
 def test_parallel_s6_non_technology_column_does_not_force_live_search() -> None:

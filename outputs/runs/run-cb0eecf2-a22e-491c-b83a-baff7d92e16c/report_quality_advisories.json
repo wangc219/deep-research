@@ -1,6 +1,0 @@
-{
-  "advisories": [],
-  "claim_source_binding_minimum": 0.8,
-  "claim_source_binding_rate": 1.0,
-  "soft_gate": true
-}

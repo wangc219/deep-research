@@ -7,7 +7,14 @@ import json
 import equipment_deep_research.providers.responses as responses_module
 import pytest
 from equipment_deep_research.providers.base import ModelMessage
-from equipment_deep_research.providers.responses import ProviderRetryableError, ResponsesProvider, assistant_from_events, build_request_payload, parse_sse_event
+from equipment_deep_research.providers.responses import (
+    ProviderRequestError,
+    ProviderRetryableError,
+    ResponsesProvider,
+    assistant_from_events,
+    build_request_payload,
+    parse_sse_event,
+)
 from equipment_deep_research.tools.definitions import ToolCall, ToolDefinition, ToolExecutionContext, ToolResult
 
 
@@ -116,6 +123,128 @@ def test_responses_provider_honors_single_attempt_budget(monkeypatch) -> None:
         asyncio.run(collect())
 
     assert attempts == 1
+
+
+def test_optional_web_search_rejection_retries_without_search_tool(monkeypatch) -> None:
+    provider = ResponsesProvider(
+        model="gpt-5.5",
+        base_url="https://gateway.example/v1/responses",
+        api_key="test-key",
+    )
+    payloads: list[dict[str, object]] = []
+
+    def post(payload, **_kwargs):
+        payloads.append(dict(payload))
+        if len(payloads) == 1:
+            assert payload["tools"] == [
+                {"type": "web_search", "search_context_size": "medium"}
+            ]
+            raise ProviderRequestError("Responses request failed: status=400")
+        assert "tools" not in payload
+        assert "include" not in payload
+        return ['data: {"type":"response.completed","response":{"status":"completed"}}\n']
+
+    monkeypatch.setattr(provider, "_post", post)
+
+    async def collect():
+        return [
+            event
+            async for event in provider.stream(
+                [],
+                [],
+                {
+                    "web_search": {"search_context_size": "medium"},
+                    "include_web_sources": True,
+                    "_provider_retry_attempts": 1,
+                },
+            )
+        ]
+
+    events = asyncio.run(collect())
+
+    assert len(payloads) == 2
+    assert events[-1].event_type == "final"
+
+
+def test_required_web_search_rejection_is_not_downgraded(monkeypatch) -> None:
+    provider = ResponsesProvider(
+        model="gpt-5.5",
+        base_url="https://gateway.example/v1/responses",
+        api_key="test-key",
+    )
+    attempts = 0
+
+    def post(_payload, **_kwargs):
+        nonlocal attempts
+        attempts += 1
+        raise ProviderRequestError("Responses request failed: status=400")
+
+    monkeypatch.setattr(provider, "_post", post)
+
+    async def collect():
+        return [
+            event
+            async for event in provider.stream(
+                [],
+                [],
+                {
+                    "web_search": {"search_context_size": "medium"},
+                    "require_web_search": True,
+                    "_provider_retry_attempts": 1,
+                },
+            )
+        ]
+
+    with pytest.raises(ProviderRequestError):
+        asyncio.run(collect())
+
+    assert attempts == 1
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "HTTP Error 400: unsupported tool",
+        "gateway returned status_code: 422",
+        "request rejected with status=405",
+    ],
+)
+def test_optional_web_search_rejection_accepts_gateway_status_formats(
+    monkeypatch, message: str
+) -> None:
+    provider = ResponsesProvider(
+        model="gpt-5.5",
+        base_url="https://gateway.example/v1/responses",
+        api_key="test-key",
+    )
+    payloads: list[dict[str, object]] = []
+
+    def post(payload, **_kwargs):
+        payloads.append(dict(payload))
+        if len(payloads) == 1:
+            raise ProviderRequestError(message)
+        return ['data: {"type":"response.completed","response":{"status":"completed"}}\n']
+
+    monkeypatch.setattr(provider, "_post", post)
+
+    async def collect():
+        return [
+            event
+            async for event in provider.stream(
+                [],
+                [],
+                {
+                    "web_search": {"search_context_size": "medium"},
+                    "include_web_sources": True,
+                    "_provider_retry_attempts": 1,
+                },
+            )
+        ]
+
+    events = asyncio.run(collect())
+    assert events[-1].event_type == "final"
+    assert len(payloads) == 2
+    assert "tools" not in payloads[-1]
 
 
 async def _completed_sleep() -> None:

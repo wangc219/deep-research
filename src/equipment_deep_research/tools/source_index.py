@@ -187,6 +187,9 @@ class SourcePriorityIndex:
                 "url": str(row.get("url", "")),
                 "domain": urlsplit(str(row.get("url", ""))).hostname or "",
                 "source_type": str(row.get("source_type", "curated")),
+                "source_region": str(
+                    row.get("source_region") or row.get("region") or ""
+                ).strip(),
                 "search_focus": list(row.get("search_focus", [])),
                 "priority": int(row.get("priority", 50)),
                 "learned": False,

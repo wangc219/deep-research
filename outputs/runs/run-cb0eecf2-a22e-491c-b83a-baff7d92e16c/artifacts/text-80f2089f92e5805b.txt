@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=army.mil · army announces rapid acquisition authority contract for coyote interceptors
-source_url=https://www.army.mil/article-amp/273625/army_announces_rapid_acquisition_authority_contract_for_coyote_interceptors
-claim=美国陆军于2024年公布Coyote 2C拦截器采购扩产合同，并称其为反无人机系统之系统的重要组成部分，具备动能和非动能变体并集成固定/机动反无人机系统。
-excerpt=
-retrieval=Hosted web search citation metadata

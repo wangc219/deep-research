@@ -8,6 +8,7 @@ from equipment_deep_research.expert_feedback import (
     load_feedback_knowledge,
     normalize_feedback,
     process_feedback_memory,
+    rollback_feedback,
     update_feedback_effect_status,
 )
 
@@ -428,3 +429,43 @@ def test_duplicate_feedback_stays_in_audit_but_not_global_memory(tmp_path: Path)
     )
     assert len(audit_rows) == 2
     assert len(memory_rows) == 1
+
+
+def test_feedback_rollback_retires_task_and_index_memory(tmp_path: Path) -> None:
+    output_root = tmp_path / "outputs" / "runs"
+    run_root = output_root / "run-rollback"
+    saved = append_feedback(
+        run_root=run_root,
+        output_root=output_root,
+        feedback={
+            "feedback_id": "rollback-1",
+            "run_id": "run-rollback",
+            "capability_name": "测试卡",
+            "comment": "回滚这条测试反馈。",
+        },
+    )
+
+    rolled_back = rollback_feedback(
+        run_root=run_root,
+        output_root=output_root,
+        feedback_id=saved["feedback_id"],
+        reason="清理测试数据",
+        actor_id="analyst",
+    )
+
+    assert rolled_back["effect_status"] == "withdrawn"
+    assert rolled_back["memory_status"] == "retired"
+    assert rolled_back["rollback_status"] == "rolled_back"
+    assert load_feedback_knowledge(
+        output_root, "测试卡", include_unvalidated=True
+    ) == []
+    local = json.loads((run_root / "expert_feedback.json").read_text(encoding="utf-8"))
+    assert local[0]["rollback_reason"] == "清理测试数据"
+    retry = rollback_feedback(
+        run_root=run_root,
+        output_root=output_root,
+        feedback_id=saved["feedback_id"],
+        reason="重复回滚",
+        actor_id="analyst",
+    )
+    assert retry["rollback_reason"] == "清理测试数据"

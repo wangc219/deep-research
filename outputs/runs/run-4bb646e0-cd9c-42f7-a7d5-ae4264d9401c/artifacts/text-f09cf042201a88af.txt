@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=war.gov · dod announces release of jadc2 implementation plan
-source_url=https://www.war.gov/News/Releases/Release/article/2970094/dod-announces-release-of-jadc2-implementation-plan/
-claim=DoD公开将JADC2实施计划定位为更快的信息共享、决策和缩短作战缺口的体系化改进。
-excerpt=
-retrieval=Hosted web search citation metadata

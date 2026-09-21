@@ -28,6 +28,7 @@ import {
   projectDeepContextUsage,
   projectDeepMemory,
   projectLiveConversationFeedback,
+  sanitizePublicResearchGap,
   parseDeepTargetIdentity,
   resolveDeepHistoryFilterAfterMutation,
   resolveDeepBranchId,
@@ -36,6 +37,14 @@ import {
   resolveDeepTurnFocus,
   resolveBranchSkillSelection,
 } from './deep-thinking-state.js';
+
+test('retrieval status diagnostics stay out of public follow-up gaps', () => {
+  assert.equal(sanitizePublicResearchGap('来源边界：检索不可用'), '');
+  assert.equal(
+    sanitizePublicResearchGap('补充任务失能判据与落装接口'),
+    '补充任务失能判据与落装接口',
+  );
+});
 
 test('older poll response cannot replace newer SSE terminal state', () => {
   const completed = {
@@ -536,6 +545,55 @@ test('live feedback keeps internal deepen angles visible', () => {
   ]);
   assert.equal(projected.segments[0].round, 'deepen');
   assert.match(projected.markdown, /潜伏先机节点/);
+});
+
+test('later feedback from the same agent appends without replacing earlier text', () => {
+  const projected = projectLiveConversationFeedback([
+    {
+      sequence: 11,
+      event_type: 'deep_agent_completed',
+      status: 'completed',
+      stage: 's4_mapping',
+      delta: {
+        kind: 'answer',
+        round: 'deepen',
+        role: '候选方向综合总编',
+        agent_id: 'deep_thinking_dialogue',
+        text: '第一条完整反馈\n- 保留这一条中的明细 A\n- 保留明细 B',
+      },
+    },
+    {
+      sequence: 12,
+      event_type: 'deep_agent_completed',
+      status: 'completed',
+      stage: 's4_mapping',
+      delta: {
+        kind: 'answer',
+        round: 'deepen',
+        role: '候选方向综合总编',
+        agent_id: 'deep_thinking_dialogue',
+        text: '第二条反馈，应追加显示',
+      },
+    },
+  ]);
+
+  assert.equal(projected.segments.length, 2);
+  assert.match(projected.markdown, /第一条完整反馈/);
+  assert.match(projected.markdown, /保留明细 B/);
+  assert.match(projected.markdown, /第二条反馈，应追加显示/);
+  assert.ok(projected.markdown.indexOf('第一条完整反馈') < projected.markdown.indexOf('第二条反馈'));
+});
+
+test('replayed duplicate event does not duplicate its visible result', () => {
+  const event = {
+    event_id: 'deep-event-stable',
+    sequence: 15,
+    event_type: 'deep_agent_completed',
+    stage: 's3_divergence',
+    delta: {kind: 'answer', role: '开放探索 Agent', text: '稳定回放结果'},
+  };
+  const projected = projectLiveConversationFeedback([event, {...event}]);
+  assert.equal(projected.segments.length, 1);
 });
 
 test('quoted follow-up round-trips without wrapping slash commands', () => {

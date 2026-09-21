@@ -672,6 +672,11 @@ button.danger {
 .expert-feedback-history article > div { display:flex; align-items:flex-start; gap:6px; margin-top:8px; padding:8px; border-radius:6px; background:#f7f8fc; color:#586a9c; font-size:10px; line-height:1.55; }
 .expert-feedback-history article > div span { display:grid; gap:2px; }
 .expert-feedback-history article > div b { color:#5369c4; font-size:10px; }
+.expert-feedback-item-actions { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; padding-top:9px; border-top:1px solid #edf0f7; }
+.expert-feedback-item-actions small { color:#9aa4b8; font-size:9px; line-height:1.45; }
+.feedback-rollback-button { display:inline-flex; align-items:center; gap:5px; flex:0 0 auto; padding:5px 8px; border:1px solid #d9deea; border-radius:5px; background:#fff; color:#67738b; font:inherit; font-size:10px; cursor:pointer; }
+.feedback-rollback-button:hover:not(:disabled) { border-color:#b6c1df; background:#f7f8ff; color:#5369c4; }
+.feedback-rollback-button:disabled { cursor:wait; opacity:.65; }
 .feedback-verdict { padding:2px 7px; border-radius:999px; font-size:10px; font-style:normal; font-weight:700; }
 .feedback-verdict.approved { background:#e4f6ed; color:#25825b; }
 .feedback-verdict.needs_revision { background:#fff3d4; color:#96701e; }
@@ -698,9 +703,40 @@ button.danger {
 .capability-card-actions button:disabled { cursor:wait; opacity:.62; }
 .capability-card-actions .deep-followup-button { border-color:#c9c8f4; background:#f7f6ff; color:#5d59cf; }
 .capability-card-actions .deep-followup-button:hover:not(:disabled) { border-color:#8d89e8; background:#eeedff; }
+.capability-card-actions .capability-jump-button,
+.deep-research-comparison .capability-jump-button { border-color:#b9d8cc; background:#f2fbf6; color:#2f8060; }
+.capability-card-actions .capability-jump-button:hover:not(:disabled),
+.deep-research-comparison .capability-jump-button:hover:not(:disabled) { border-color:#72b596; background:#e6f7ee; }
 .deep-job-chip { display:inline-flex; align-items:center; gap:4px; padding:4px 7px; border:1px solid #c9d8f4; border-radius:999px; background:#f2f6ff; color:#5570bd; font-size:9px; }
 .deep-research-source { border-color:#b9d8cc !important; background:#eef9f3 !important; color:#2f8060 !important; }
 .deep-research-capability { border-color:#b8dcca; }
+.deep-research-jump-button { border-color:#b9d8cc !important; background:#f2fbf6 !important; color:#2f8060 !important; }
+.deep-research-jump-button:hover:not(:disabled) { border-color:#72b596 !important; background:#e6f7ee !important; }
+.deep-research-jump-button span { display:inline-grid; place-items:center; min-width:17px; height:17px; padding:0 4px; border-radius:999px; background:#d9f0e4; color:#2f8060; font-size:9px; font-weight:750; }
+.capability-deep-research-panel { display:grid; gap:12px; min-width:0; padding:15px; border:1px solid #b8dcca; border-radius:12px; background:linear-gradient(180deg,#fbfffd 0%,#f3fbf6 100%); scroll-margin-top:18px; }
+.capability-deep-research-panel > header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.capability-deep-research-panel > header > div:first-child { display:flex; align-items:flex-start; gap:9px; min-width:0; }
+.capability-deep-research-panel > header > div:first-child > span:last-child { display:grid; gap:3px; min-width:0; }
+.deep-research-panel-icon { display:grid; place-items:center; flex:0 0 auto; width:32px; height:32px; border-radius:9px; background:#dff3e8; color:#2f8060; }
+.capability-deep-research-panel > header b { color:#28684e; font-size:14px; }
+.capability-deep-research-panel > header small { color:#668374; font-size:10px; line-height:1.55; }
+.capability-deep-research-panel > header em { flex:0 0 auto; padding:4px 8px; border-radius:999px; background:#dff3e8; color:#2f8060; font-size:10px; font-style:normal; font-weight:750; }
+.capability-deep-research-list { display:grid; gap:12px; min-width:0; }
+.deep-research-comparison { display:grid; gap:10px; margin:0 20px 18px; padding:13px 14px; border:1px solid #cde5d7; border-radius:8px; background:#f7fcf9; }
+.deep-research-comparison > header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.deep-research-comparison > header > div { display:flex; align-items:flex-start; gap:8px; color:#2f8060; }
+.deep-research-comparison > header > div > span { display:grid; gap:3px; }
+.deep-research-comparison > header b { color:#28684e; font-size:12px; }
+.deep-research-comparison > header small { color:#6f8a7c; font-size:10px; line-height:1.45; }
+.deep-research-comparison-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.deep-research-comparison-grid > div { min-width:0; padding:11px 12px; border:1px solid #dbece2; border-radius:7px; background:#fff; }
+.deep-research-comparison-grid > div:last-child { border-color:#b8dcca; background:#f4fbf7; }
+.deep-research-comparison-grid strong { display:block; margin-bottom:8px; color:#4f6f61; font-size:11px; }
+.deep-research-comparison-grid > div:last-child strong { color:#28684e; }
+.deep-research-comparison-grid dl { display:grid; grid-template-columns:82px minmax(0,1fr); gap:8px; margin:0; padding:7px 0; border-top:1px solid #edf3ef; }
+.deep-research-comparison-grid dt { color:#829287; font-size:10px; }
+.deep-research-comparison-grid dd { min-width:0; margin:0; color:#53675c; font-size:10px; line-height:1.6; overflow-wrap:anywhere; white-space:pre-wrap; }
+.deep-research-comparison-grid > div:last-child dd { color:#315f49; }
 .capability-card-actions > span { display:inline-flex; align-items:center; gap:4px; color:#6e7b96; font-size:10px; }
 .capability-title-row { display:flex; align-items:center; gap:10px; min-width:0; }
 .capability-title-row h2 { min-width:0; }
@@ -902,6 +938,12 @@ button.danger {
   .capability-portrait { margin: 14px 12px; padding: 14px; }
   .capability-portrait-card { padding: 12px; }
   .capability-portrait-card p { font-size: 12px; line-height: 1.75; }
+  .capability-deep-research-panel { padding: 12px; }
+  .capability-deep-research-panel > header { align-items: flex-start; }
+  .capability-deep-research-panel > header em { margin-left: auto; }
+  .deep-research-comparison { margin: 0 12px 14px; }
+  .deep-research-comparison > header { align-items: flex-start; flex-direction: column; }
+  .deep-research-comparison-grid { grid-template-columns: 1fr; }
 }
 @media(max-width:560px){.capability-reference-grid{grid-template-columns:1fr}}
 .row-delete { color:#b94a55; }

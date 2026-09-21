@@ -44,6 +44,7 @@ import {
   projectDeepContextUsage,
   projectDeepMemory,
   projectLiveConversationFeedback,
+  sanitizePublicResearchGap,
   queuedSteerStatuses,
   resolveDeepHistoryFilterAfterMutation,
   resolveDeepBranchNavigation,
@@ -52,6 +53,8 @@ import {
   resolveBranchSkillSelection,
 } from './deep-thinking-state.js';
 import './deep-thinking.css';
+import {S6_COLUMNS, projectS6Columns, s6PortraitCompleteness} from './s6-progress.js';
+import {deepThinkingElapsedSeconds, resolveDeepThinkingStartedAt} from './thinking-elapsed.js';
 
 /*
  * A bounded expert conversation surface.
@@ -108,7 +111,7 @@ const copyText = async value => {
 const resizeComposer = node => {
   if (!node) return;
   node.style.height = 'auto';
-  node.style.height = `${Math.min(180, Math.max(54, node.scrollHeight))}px`;
+  node.style.height = `${Math.min(120, Math.max(54, node.scrollHeight))}px`;
 };
 const DEFAULT_BRANCH_ID = 'main';
 const EMPTY_DEEP_CAPABILITY_CATALOG = normalizeDeepCapabilityCatalog({});
@@ -609,6 +612,22 @@ function deepResultState({activeJob, session, artifacts = [], versions = [], sta
     if (sessionHypothesis && versionHypothesis) return sessionHypothesis === versionHypothesis;
     return Boolean(sessionBinding && versionBinding === sessionBinding);
   });
+  const persistedPortraitProgress = [
+    ...artifactRows,
+    ...relevantVersions.map(version => version?.snapshot),
+  ]
+    .filter(item => item && typeof item === 'object')
+    .map(item => s6PortraitCompleteness(extractPortraitModules(item)));
+  const eventPortraitProgress = s6PortraitCompleteness(
+    projectS6Columns(stageEvents)
+      .filter(item => item.status === 'completed' && safeText(item.text))
+      .map(item => ({label: item.label, text: item.text})),
+  );
+  const portraitProgress = [...persistedPortraitProgress, eventPortraitProgress]
+    .sort((left, right) => right.completed - left.completed)[0]
+    || s6PortraitCompleteness([]);
+  const hasPortraitRecord = artifactRows.length > 0 || relevantVersions.length > 0;
+  const hasCompletePortrait = portraitProgress.complete;
   const versionStatuses = [
     ...relevantVersions.map(item => normalizeCapabilityVersionStatus(item?.status)),
     // SQL is authoritative when present, but a session can briefly expose a
@@ -622,9 +641,9 @@ function deepResultState({activeJob, session, artifacts = [], versions = [], sta
   // A formal baseline is the immutable input to a follow-up, not a result of
   // the current turn.  Only an explicitly reviewed deep version should make
   // this panel claim that the newly produced result is verified.
-  const hasVerifiedVersion = versionStatuses.some(status => ['verified', 'approved', 'accepted'].includes(status));
-  const hasPendingVersion = versionStatuses.some(status => ['pending', 'pending_verification', 'unverified'].includes(status));
-  const hasMergedArtifact = artifactRows.some(item => ['merged', 'merged_pending_verification', 'accepted'].includes(safeText(item?.merge_status || item?.status).toLowerCase()));
+  const hasVerifiedVersion = hasCompletePortrait && versionStatuses.some(status => ['verified', 'approved', 'accepted'].includes(status));
+  const hasPendingVersion = hasCompletePortrait && versionStatuses.some(status => ['pending', 'pending_verification', 'unverified'].includes(status));
+  const hasMergedArtifact = hasCompletePortrait && artifactRows.some(item => ['merged', 'merged_pending_verification', 'accepted'].includes(safeText(item?.merge_status || item?.status).toLowerCase()));
   const hasCandidate = artifactRows.length > 0;
   const hasVisibleStageSummary = stageEvents.some(event => (
     safeText(event?.delta?.text) || safeText(event?.text) || safeText(event?.summary)
@@ -648,7 +667,7 @@ function deepResultState({activeJob, session, artifacts = [], versions = [], sta
         : Array.isArray(qualityGate?.block_reasons)
           ? qualityGate.block_reasons
           : []
-  ).map(safeText).filter(Boolean);
+  ).map(sanitizePublicResearchGap).filter(Boolean);
   const analysisOnlyFromEvents = stageEvents.some(event => {
     const text = safeText(event?.delta?.text || event?.text || event?.summary);
     return text.includes('未写入正式') || text.includes('发布质量门未通过');
@@ -690,6 +709,15 @@ function deepResultState({activeJob, session, artifacts = [], versions = [], sta
       tone: 'partial',
       title: cancelled ? '任务已取消 · 阶段成果已保留' : '阶段成果已保留',
       detail: friendlyDeepJobError(activeJob?.error) || (cancelled ? '任务已取消；可见分析、证据和草稿仍可继续查看或重试。' : '本轮未完整发布；可见分析、证据和草稿仍可继续查看或重试。'),
+    };
+  }
+  if (hasPortraitRecord && !hasCompletePortrait) {
+    return {
+      tone: 'partial',
+      title: `能力画像待补全 · ${portraitProgress.completed}/${portraitProgress.total} 栏`,
+      detail: portraitProgress.missing.length
+        ? `已完成栏目仍可查看；缺少“${portraitProgress.missing.join('、')}”，补齐前不会标记为五栏成卡。`
+        : '已保留当前草稿；补齐五栏前不会标记为正式成卡。',
     };
   }
   if (hasVerifiedVersion) {
@@ -846,10 +874,13 @@ const mergeTranscriptMessages = (session, extras = []) => {
 const applySessionSnapshot = (current, incoming, extras = []) => {
   const base = incoming && typeof incoming === 'object' ? incoming : current;
   if (!base) return mergeTranscriptMessages(current, extras);
-  const currentMessages = Array.isArray(current?.messages) ? current.messages : [];
+  const currentId = safeText(current?.session_id);
+  const incomingId = safeText(base?.session_id);
+  const sameSession = !currentId || !incomingId || currentId === incomingId;
+  const currentMessages = sameSession && Array.isArray(current?.messages) ? current.messages : [];
   const serverMessages = Array.isArray(base.messages) ? base.messages : [];
   return mergeTranscriptMessages(
-    {...current, ...base, messages: currentMessages},
+    {...(sameSession ? current : {}), ...base, messages: currentMessages},
     [...serverMessages, ...extras],
   );
 };
@@ -860,13 +891,7 @@ const localStageEvent = ({stage, status, text, progress = 0}) => ({
   delta: {kind: 'summary', text},
   local: true,
 });
-const PORTRAIT_MODULE_DEFS = [
-  ['overview', '概述'],
-  ['technology_implementation', '装备与技术实现'],
-  ['operational_process', '关键作战流程'],
-  ['capability_effects', '能力与作战效果'],
-  ['winning_logic', '制胜逻辑机理'],
-];
+const PORTRAIT_MODULE_DEFS = S6_COLUMNS;
 const PORTRAIT_LABEL_ALIASES = {
   概述: '概述',
   装备与技术实现: '装备与技术实现',
@@ -954,6 +979,21 @@ function AssistantMarkdown({children, className = ''}) {
   );
 }
 
+function extractGeneratedEquipmentName(content) {
+  const text = safeText(content);
+  if (!text) return '';
+  const patterns = [
+    /[“「"]([^”」"]{2,40})[”」"]\s*作为(?:本轮)?(?:主方向|首选方向)/,
+    /(?:装备名称|候选装备|能力画像名称|形成能力卡)\s*[：:]\s*[“「"]?([^”」"\n，。,；;]{2,40})/,
+    /\*\*([^*\n]{2,40}(?:弹|导弹|无人机|无人艇|拦截器|平台|系统|装备))\*\*/,
+  ];
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match?.[1]) return safeText(match[1]).replace(/[，。,；;。].*$/, '');
+  }
+  return '';
+}
+
 function PortraitViewer({portrait, onClose}) {
   const dialogRef = useOverlay(Boolean(portrait), {onEscape: onClose});
   if (!portrait) return null;
@@ -990,6 +1030,7 @@ function PortraitViewer({portrait, onClose}) {
 
 function CompleteAnswerView({content, onOpenPortrait, portraitName = ''}) {
   const sections = parseMarkdownSections(content);
+  const resolvedPortraitName = portraitName || extractGeneratedEquipmentName(content);
   if (!sections.length) {
     return <AssistantMarkdown className="deep-answer-fallback">{content || '正在整理可见回答…'}</AssistantMarkdown>;
   }
@@ -999,6 +1040,7 @@ function CompleteAnswerView({content, onOpenPortrait, portraitName = ''}) {
         const isPortrait = section.title.includes('五栏能力画像');
         if (isPortrait) {
           const modules = extractPortraitModules({text: section.text});
+          const portraitProgress = s6PortraitCompleteness(modules);
           return (
             <section key={section.title} className="deep-answer-section deep-answer-portrait-teaser">
               <div className="deep-answer-section-head">
@@ -1007,16 +1049,18 @@ function CompleteAnswerView({content, onOpenPortrait, portraitName = ''}) {
                   type="button"
                   className="deep-portrait-open"
                   onClick={() => onOpenPortrait?.({
-                    name: portraitName || '本轮五栏能力画像',
+                    name: resolvedPortraitName || '本轮五栏能力画像',
                     modules,
                     fallback: section.text,
-                    meta: '对话内预览 · 点击查看完整五栏',
+                    meta: portraitProgress.complete
+                      ? '对话内预览 · 五栏完整'
+                      : `对话内预览 · 已完成 ${portraitProgress.completed}/${portraitProgress.total} 栏`,
                   })}
                 >
-                  <Sparkles size={13}/>点击查看完整画像
+                  <Sparkles size={13}/>{portraitProgress.complete ? '点击查看完整画像' : `查看已完成 ${portraitProgress.completed} 栏`}
                 </button>
               </div>
-              <p className="deep-answer-portrait-hint">已生成可点击的美观五栏能力画像，可在对话窗口直接展开查看。</p>
+              <p className="deep-answer-portrait-hint">{portraitProgress.complete ? '五栏能力画像已全部生成，可在对话窗口直接展开查看。' : `当前已完成 ${portraitProgress.completed}/${portraitProgress.total} 栏，缺少“${portraitProgress.missing.join('、')}”；已完成栏目可先查看，补齐前不会成卡。`}</p>
               {modules.length > 0 && (
                 <div className="deep-portrait-mini">
                   {modules.slice(0, 5).map(item => (
@@ -1024,7 +1068,7 @@ function CompleteAnswerView({content, onOpenPortrait, portraitName = ''}) {
                       type="button"
                       key={item.label}
                       onClick={() => onOpenPortrait?.({
-                        name: portraitName || '本轮五栏能力画像',
+                        name: resolvedPortraitName || '本轮五栏能力画像',
                         modules,
                         fallback: section.text,
                         meta: '对话内预览',
@@ -1134,7 +1178,7 @@ function AssistantQuoteAction({containerRef, onQuote}) {
   );
 }
 
-function MessageBubble({message, onOpenPortrait, artifacts = [], steerReceipt = null, onCancelSteer, onFork, onQuote, onCopy, copied = false, branchPending = false, branchDisabled = false}) {
+function MessageBubble({message, onOpenPortrait, portraitName = '', artifacts = [], steerReceipt = null, onCancelSteer, onFork, onQuote, onCopy, copied = false, branchPending = false, branchDisabled = false}) {
   const role = safeText(message?.role) === 'user' ? 'user' : 'assistant';
   const content = safeText(message?.content);
   const messageKind = safeText(message?.message_kind);
@@ -1168,7 +1212,7 @@ function MessageBubble({message, onOpenPortrait, artifacts = [], steerReceipt = 
     data-prompt-id={role === 'user' ? safeText(message?.message_id) : undefined}
   >
     <div className="deep-message-meta"><span className="deep-message-avatar">{role === 'user' ? '你' : 'AI'}</span><b>{role === 'user' ? (isSteer ? '追问与纠偏' : '专家') : '创新舱'}</b><small>{message?.pending ? '正在接收' : (message?.created_at ? new Date(message.created_at).toLocaleString('zh-CN', {hour12: false}) : '')}</small></div>
-    <div className="deep-message-body" data-assistant-selectable={role === 'assistant' ? 'true' : undefined}>{role === 'assistant' ? <CompleteAnswerView content={content || '正在整理可见回答…'} onOpenPortrait={onOpenPortrait}/> : <UserMessageText content={content}/>}</div>
+    <div className="deep-message-body" data-assistant-selectable={role === 'assistant' ? 'true' : undefined}>{role === 'assistant' ? <CompleteAnswerView content={content || '正在整理可见回答…'} portraitName={extractGeneratedEquipmentName(content) || portraitName} onOpenPortrait={onOpenPortrait}/> : <UserMessageText content={content}/>}</div>
     {isSteer && <div className={`deep-steer-receipt ${steerStatus || 'accepted'}`} aria-live="polite"><span><CheckCircle2 size={12}/>{steerStatusLabel(steerStatus, steerMode)}</span>{canCancelSteer && <button type="button" onClick={() => onCancelSteer?.(steerReceipt)}> 取消</button>}</div>}
     {(refs.length > 0 || linkedArtifacts.length > 0) && (
       <div className="deep-message-artifact-ref">
@@ -1459,7 +1503,14 @@ function StageStrip({stages = []}) {
   </nav>;
 }
 
-function DeliberationBoard({answer, stageEvents = [], sending = false, onFocusDirection}) {
+function DeliberationBoard({answer, stageEvents = [], sending = false, onFocusDirection, onAuthorCard}) {
+  // Keep the board as a compact stage summary while work is live. The
+  // activity cluster below it owns the newest feedback, just like nanobot's
+  // collapsible reasoning block.
+  const [collapsed, setCollapsed] = useState(sending);
+  useEffect(() => {
+    setCollapsed(sending);
+  }, [sending]);
   const dialogue = Array.isArray(answer?.agent_dialogue) ? answer.agent_dialogue : [];
   const directions = Array.isArray(answer?.concept_directions) ? answer.concept_directions : [];
   const reviews = Array.isArray(answer?.adjudication?.candidate_reviews) ? answer.adjudication.candidate_reviews : [];
@@ -1489,11 +1540,11 @@ function DeliberationBoard({answer, stageEvents = [], sending = false, onFocusDi
     .filter((item, index, rows) => rows.findIndex(row => row.axis === item.axis) === index)
     .slice(0, 6);
   const axisRows = proposers.length
-    ? proposers.map(item => ({
+    ? proposers.map((item, index) => ({
       axis: safeText(item.axis) || safeText(item.role),
       summary: safeText(item.summary),
       proposals: mergeDeliberationProposals(item.proposal_names, item.summary),
-      key: item.agent_id || item.role,
+      key: `${item.agent_id || item.role || 'proposer'}-${safeText(item.round) || 'divergence'}-${index}`,
     }))
     : eventCards.map((item, index) => ({...item, key: `${item.axis}-${index}`}));
   const boardCandidates = mergeDeliberationProposals(
@@ -1510,7 +1561,7 @@ function DeliberationBoard({answer, stageEvents = [], sending = false, onFocusDi
         : Array.isArray(qualityGate?.block_reasons)
           ? qualityGate.block_reasons
           : []
-  ).map(safeText).filter(Boolean).slice(0, 3);
+  ).map(sanitizePublicResearchGap).filter(Boolean).slice(0, 3);
   if (!axisRows.length && !directions.length && !reviews.length && !later.length && !researchGaps.length && !boardCandidates.length) return null;
   const directionNames = new Set(directions.map(item => safeText(item.innovation_variant_name || item.name)).filter(Boolean));
   const chipSeen = new Set(directionNames);
@@ -1520,11 +1571,15 @@ function DeliberationBoard({answer, stageEvents = [], sending = false, onFocusDi
   }));
   const uniqueBoardCandidates = uniqueNamedValues(boardCandidates, chipSeen);
   const hasAxisChips = uniqueAxisRows.some(item => item.proposals?.length);
-  return <section className="deep-deliberation" aria-label="创新议事看板">
+  return <section className={`deep-deliberation${sending ? ' live' : ''}`} aria-label="创新议事阶段摘要">
     <header>
-      <div><Sparkles size={14}/><b>创新议事看板</b></div>
-      <small>{axisRows.length ? `${axisRows.length} 路已观察探索` : '动态研究汇总'}{sending ? ' · 实时汇入' : ''}</small>
+      <div><Sparkles size={14}/><span><b>创新议事阶段摘要</b><small className="deep-deliberation-kicker">{sending ? '中间产出 · 不是最终结果' : '本轮收束后的方向汇总'}</small></span></div>
+      <div className="deep-deliberation-header-meta">
+        <small>{axisRows.length ? `${axisRows.length} 路已观察探索` : '动态研究汇总'}{sending ? ' · 实时汇入' : ''}</small>
+        <button type="button" className="deep-deliberation-toggle" aria-expanded={!collapsed} onClick={() => setCollapsed(value => !value)}>{collapsed ? '查看摘要' : '收起'}<ChevronDown size={12}/></button>
+      </div>
     </header>
+    {!collapsed && <div className="deep-deliberation-body">
     {uniqueAxisRows.length > 0 && <div className="deep-deliberation-axes">
       {uniqueAxisRows.map(item => (
         <article key={item.key}>
@@ -1553,22 +1608,18 @@ function DeliberationBoard({answer, stageEvents = [], sending = false, onFocusDi
           <b>可继续深化</b>
           <span>
             {uniqueBoardCandidates.map(name => (
-              <button
-                type="button"
-                key={name}
-                className="deep-deliberation-chip"
-                onClick={() => onFocusDirection?.({name})}
-              >
-                {name}
-              </button>
+              <span className="deep-deliberation-candidate-row" key={name}>
+                <button type="button" className="deep-deliberation-chip" onClick={() => onFocusDirection?.({name})}>{name}</button>
+                <button type="button" className="deep-deliberation-author" onClick={() => onAuthorCard?.({name})}><Sparkles size={11}/>成卡</button>
+              </span>
             ))}
           </span>
         </article>
       </div>
     )}
     {later.length > 0 && <div className="deep-deliberation-review">
-      {later.map(item => (
-        <p key={item.agent_id || item.role}><b>{friendlyAgentLabel(item.role)}</b>{safeText(item.summary)}{Array.isArray(item.verdicts) && item.verdicts.length > 0 ? `（${item.verdicts.join('；')}）` : ''}</p>
+      {later.map((item, index) => (
+        <p key={`${item.agent_id || item.role || 'reviewer'}-${safeText(item.round) || 'review'}-${index}`}><b>{friendlyAgentLabel(item.role)}</b>{safeText(item.summary)}{Array.isArray(item.verdicts) && item.verdicts.length > 0 ? `（${item.verdicts.join('；')}）` : ''}</p>
       ))}
     </div>}
     {reviews.length > 0 && <div className="deep-deliberation-verdicts">
@@ -1599,18 +1650,17 @@ function DeliberationBoard({answer, stageEvents = [], sending = false, onFocusDi
     )}
     {directions.length > 0 && <div className="deep-deliberation-directions">
       {directions.slice(0, 3).map(item => (
-        <button
-          type="button"
-          className="deep-deliberation-direction"
-          key={item.name || item.innovation_variant_name}
-          onClick={() => onFocusDirection?.(item)}
-        >
-          <b>{safeText(item.innovation_variant_name || item.name)}</b>
-          <small>{[item.winning_angle && `角度：${item.winning_angle}`, item.changed_assumption && `假设：${item.changed_assumption}`, (item.innovation_equipment_form || item.equipment_form) && `构型：${item.innovation_equipment_form || item.equipment_form}`].filter(Boolean).join(' · ')}</small>
-        </button>
+        <article className="deep-deliberation-direction" key={item.name || item.innovation_variant_name}>
+          <button type="button" onClick={() => onFocusDirection?.(item)}>
+            <b>{safeText(item.innovation_variant_name || item.name)}</b>
+            <small>{[item.winning_angle && `角度：${item.winning_angle}`, item.changed_assumption && `假设：${item.changed_assumption}`, (item.innovation_equipment_form || item.equipment_form) && `构型：${item.innovation_equipment_form || item.equipment_form}`].filter(Boolean).join(' · ')}</small>
+          </button>
+          {safeText(item.innovation_variant_name || item.name) && <button type="button" className="deep-deliberation-author" onClick={() => onAuthorCard?.(item)}><Sparkles size={12}/>形成能力卡</button>}
+        </article>
       ))}
     </div>}
     {researchGaps.length > 0 && <p className="deep-deliberation-note"><BookOpen size={12}/><span><b>下一轮可补充</b>{researchGaps.join('；')}</span></p>}
+    </div>}
   </section>;
 }
 
@@ -1666,14 +1716,18 @@ function StreamingLabel({active = false, children}) {
   return <span className={active ? 'deep-streaming-sheen' : undefined} data-sheen-text={active ? label : undefined}>{label}</span>;
 }
 
-function ThinkingElapsed({active = false}) {
-  const [seconds, setSeconds] = useState(0);
+function ThinkingElapsed({active = false, startedAt = 0}) {
+  const localStartedAtRef = useRef(Date.now());
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    if (!active) { setSeconds(0); return undefined; }
-    const startedAt = Date.now();
-    const timer = setInterval(() => setSeconds(Math.floor((Date.now() - startedAt) / 1000)), 1000);
+    if (!active) return undefined;
+    if (!startedAt) localStartedAtRef.current = Date.now();
+    const tick = () => setNow(Date.now());
+    tick();
+    const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
-  }, [active]);
+  }, [active, startedAt]);
+  const seconds = deepThinkingElapsedSeconds(startedAt || localStartedAtRef.current, now);
   if (!active || seconds < 2) return null;
   const label = seconds >= 60 ? `${Math.floor(seconds / 60)} 分 ${seconds % 60} 秒` : `${seconds} 秒`;
   return <small className="deep-process-elapsed">已深度思考 {label}</small>;
@@ -1694,7 +1748,7 @@ const processRoleLabel = item => eventToolName(item)
   || ({context: '研究编排 Agent', s3_divergence: '开放探索 Agent', council_critique: '观点复核 Agent', s4_mapping: '方向深化 Agent', s6_authoring: '能力画像总编'}[normalizeDeepStage(item?.stage)])
   || '创新舱';
 
-function ProcessFeedbackThread({events = [], sending = false, liveAnswer = '', showLiveAnswer = false, activeJob = null, activeSkillIds = [], ownedCandidateNames = [], onQuoteCandidate}) {
+function ProcessFeedbackThread({events = [], sending = false, liveAnswer = '', showLiveAnswer = false, activeJob = null, activeSkillIds = [], ownedCandidateNames = [], onQuoteCandidate, onOpenPortrait}) {
   const [clusterOpen, setClusterOpen] = useState(true);
   const clusterTouchedRef = useRef(false);
   const [expandedAgentKey, setExpandedAgentKey] = useState('');
@@ -1702,7 +1756,9 @@ function ProcessFeedbackThread({events = [], sending = false, liveAnswer = '', s
   const activity = useMemo(() => projectDeepAgentActivity(events), [events]);
   useEffect(() => {
     if (sending) {
-      setClusterOpen(true);
+      // Keep the live surface readable: the current step and newest public
+      // segment stay visible, while the replayable detail remains opt-in.
+      setClusterOpen(false);
       clusterTouchedRef.current = false;
       return undefined;
     }
@@ -1725,6 +1781,7 @@ function ProcessFeedbackThread({events = [], sending = false, liveAnswer = '', s
     sending ? 'context' : '',
   );
   const progress = visibleProgress(events, activeJob, sending);
+  const thinkingStartedAt = resolveDeepThinkingStartedAt(activeJob, events);
   const continuingCue = processStageCue(activeStage || (sending ? 'context' : ''), activeJob?.status || latest?.status);
   const activityMode = inferProcessRosterMode(events, {sending, activeStage});
   const liveText = friendlyProcessText(liveAnswer);
@@ -1767,6 +1824,23 @@ function ProcessFeedbackThread({events = [], sending = false, liveAnswer = '', s
   const latestCountEvent = [...events].reverse().find(item => eventTotalCount(item) > 0 || eventCompletedCount(item) > 0);
   const completedCount = Math.max(parallelAnswers.length, eventCompletedCount(latestCountEvent));
   const totalCount = eventTotalCount(latestCountEvent);
+  const s6Columns = projectS6Columns(events, {sending});
+  const authoredColumnCount = s6Columns.filter(item => item.status === 'completed').length;
+  const openS6Portrait = () => {
+    const modules = s6Columns
+      .filter(item => item.status === 'completed' && safeText(item.text))
+      .map(item => ({label: item.label, text: item.text}));
+    if (!modules.length) return;
+    onOpenPortrait?.({
+      name: '本轮五栏能力画像',
+      modules,
+      fallback: '五栏能力画像正在生成，已完成栏目可先行查看。',
+      meta: authoredColumnCount === S6_COLUMNS.length
+        ? '五栏已完成 · 对话内查看'
+        : `已完成 ${authoredColumnCount}/${S6_COLUMNS.length} 栏 · 其余栏目仍在生成`,
+    });
+  };
+  const showS6Columns = activeStage === 's6_authoring' || columnAnswers.length > 0;
   const timelineEvents = displayEvents.filter(item => !(
     (isParallelCouncilEvent(item) || isColumnAuthorEvent(item))
     && safeText(eventDelta(item).kind || item?.kind) === 'answer'
@@ -1790,12 +1864,14 @@ function ProcessFeedbackThread({events = [], sending = false, liveAnswer = '', s
     };
   });
   const progressCue = sending
-    ? (activityMode === 'explore' && completedCount > 0
+    ? (showS6Columns
+      ? `五栏并行成卡 · 已完成 ${authoredColumnCount}/5 栏`
+      : activityMode === 'explore' && completedCount > 0
       ? totalCount > 0
         ? `开放探索 · 已回传 ${Math.min(completedCount, totalCount)}/${totalCount} 条`
         : `开放探索 · 已回传 ${completedCount} 条`
-      : activeStage === 's6_authoring' && columnAnswers.length
-        ? `五栏成卡 · 已写入 ${columnAnswers.length}/5 栏`
+      : activeStage === 's6_authoring' && authoredColumnCount
+        ? `五栏成卡 · 已完成 ${Math.min(5, authoredColumnCount)}/5 栏`
         : activityMode === 'deepen'
           ? '持续深化 · 动态扩展角度并收敛到本轮问题'
         : (activeStage ? `当前活动 · ${activeStageLabel(activeStage)}` : '正在实时研究'))
@@ -1847,7 +1923,7 @@ function ProcessFeedbackThread({events = [], sending = false, liveAnswer = '', s
     <section className="deep-process-console" aria-live="polite" aria-label="多智能体协作进展">
       <header className="deep-process-console-head">
         <div><span className="deep-process-orbit"><BrainCircuit size={15}/></span><span><b><StreamingLabel active={sending}>{sending ? '正在工作' : '本轮工作'}</StreamingLabel></b><small>{sending ? `${Math.max(runningAgents, activity.active_count)} 个 Agent 正在协作` : `${Math.max(doneAgents, activity.completed_count)} 个 Agent 已提交`}</small></span></div>
-        <div className="deep-process-head-actions"><div className={`deep-process-live-state${sending ? ' active' : ''}`}><i/>{sending ? 'LIVE' : '已记录'}<ThinkingElapsed active={sending}/></div><button type="button" className="deep-process-toggle" aria-expanded={clusterOpen} aria-label={clusterOpen ? '收起协作现场' : '展开协作现场'} title={clusterOpen ? '收起' : '展开'} onClick={() => { clusterTouchedRef.current = true; setClusterOpen(value => !value); }}>{clusterOpen ? <ChevronDown size={15}/> : <ChevronRight size={15}/>}</button></div>
+        <div className="deep-process-head-actions"><div className={`deep-process-live-state${sending ? ' active' : ''}`}><i/>{sending ? 'LIVE' : '已记录'}<ThinkingElapsed key={safeText(activeJob?.job_id) || thinkingStartedAt || 'local'} active={sending} startedAt={thinkingStartedAt}/></div><button type="button" className="deep-process-toggle" aria-expanded={clusterOpen} aria-label={clusterOpen ? '收起协作现场' : '展开协作现场'} title={clusterOpen ? '收起' : '展开'} onClick={() => { clusterTouchedRef.current = true; setClusterOpen(value => !value); }}>{clusterOpen ? <ChevronDown size={15}/> : <ChevronRight size={15}/>}</button></div>
       </header>
       <div
         className={`deep-process-progress${sending ? ' active' : ''}`}
@@ -1924,6 +2000,30 @@ function ProcessFeedbackThread({events = [], sending = false, liveAnswer = '', s
           </span>
         </div>
       )}
+      {showS6Columns && (
+        <section className="deep-s6-progress" aria-label="五栏成卡进度">
+          <header>
+            <b>五栏能力画像</b>
+            <div className="deep-s6-progress-actions">
+              <span role="status">{authoredColumnCount}/5 栏已完成</span>
+              {authoredColumnCount > 0 && <button type="button" onClick={openS6Portrait}><Sparkles size={12}/>查看画像</button>}
+            </div>
+          </header>
+          <p>{authoredColumnCount === 5 ? '五栏已齐，正在汇总本轮成果。' : sending ? '五栏同时生成，完成后即可展开查看。' : '已保留完成栏目，待五栏齐全后生成整卡。'}</p>
+          <div className="deep-s6-grid">
+            {s6Columns.map((column, index) => (
+              <details key={column.key} className={`deep-s6-column ${column.status}`}>
+                <summary>
+                  <span className="deep-s6-column-icon">{column.status === 'completed' ? <CheckCircle2 size={16}/> : column.status === 'failed' ? <CircleAlert size={16}/> : column.status === 'running' ? <RefreshCw size={16} className="spin"/> : <Clock3 size={16}/>}</span>
+                  <b>{index + 1}. {column.label}</b>
+                  <small>{({completed: '已完成 · 查看', failed: '待补全', running: '生成中', pending: '未完成'})[column.status]}</small>
+                </summary>
+                {column.preview ? <AssistantMarkdown>{column.text || column.preview}</AssistantMarkdown> : <p>{column.status === 'running' ? '本栏正在生成，完成后会自动点亮。' : '本栏尚未完成，已完成栏目仍可查看。'}</p>}
+              </details>
+            ))}
+          </div>
+        </section>
+      )}
       {(parallelAnswers.length > 0 || critiqueAnswers.length > 0 || columnAnswers.length > 0 || deepenAnswers.length > 0) && (
         <div className="deep-process-live-feed" aria-live="polite">
           {parallelAnswers.length > 0 && (
@@ -1944,20 +2044,13 @@ function ProcessFeedbackThread({events = [], sending = false, liveAnswer = '', s
               {deepenAnswers.map(renderLiveCard)}
             </div>
           )}
-          {columnAnswers.length > 0 && (
-            <div className="deep-process-parallel deep-process-columns" aria-label="五栏成卡回传">
-              <header><b>{sending ? '五栏成卡正在逐栏回传' : '五栏成卡回传'}</b><span>{columnAnswers.length}/5</span></header>
-              {columnAnswers.map(renderLiveCard)}
-            </div>
-          )}
         </div>
       )}
-      {sending && <footer className="deep-process-wait"><div className="deep-process-typing" aria-hidden="true"><span/><span/><span/></div><span>{continuingCue}</span></footer>}
     </section>
   );
 }
 
-function ArtifactCard({artifact, sessionId, apiBase, runId, onMerged, versions = [], scope = {}, onOpenPortrait}) {
+function ArtifactCard({artifact, sessionId, apiBase, runId, onMerged, versions = [], scope = {}, onOpenPortrait, fallbackModules = []}) {
   const [merging, setMerging] = useState(false);
   const [error, setError] = useState('');
   // Keep the action state responsive even when the parent session is only
@@ -1966,7 +2059,7 @@ function ArtifactCard({artifact, sessionId, apiBase, runId, onMerged, versions =
   const [mergedLocally, setMergedLocally] = useState(false);
   const identity = artifactId(artifact);
   useEffect(() => { setMergedLocally(false); setError(''); }, [identity]);
-  const name = safeText(artifact?.name || artifact?.title || artifact?.capability_name || '未命名候选能力');
+  const name = safeText(artifact?.innovation_variant_name || artifact?.name || artifact?.title || artifact?.capability_name || '未命名候选能力');
   const summary = safeText(artifact?.deep_capability_portrait || artifact?.capability_image || artifact?.summary || artifact?.overview);
   const matchingVersions = versions.filter(item => (
     (safeText(artifact?.version_id) && safeText(item?.version_id) === safeText(artifact?.version_id))
@@ -1985,6 +2078,12 @@ function ArtifactCard({artifact, sessionId, apiBase, runId, onMerged, versions =
     ...(version?.snapshot && typeof version.snapshot === 'object' ? version.snapshot : {}),
     capability_card_draft: artifact?.capability_card_draft || version?.snapshot?.capability_card_draft,
   });
+  (Array.isArray(fallbackModules) ? fallbackModules : []).forEach(item => {
+    if (!safeText(item?.label) || !safeText(item?.text)) return;
+    if (portraitModules.some(module => safeText(module?.label) === safeText(item.label))) return;
+    portraitModules.push({label: safeText(item.label), text: safeText(item.text)});
+  });
+  const portraitProgress = s6PortraitCompleteness(portraitModules);
   // The session artifact is a compatibility projection and can retain the
   // pre-review ``pending`` flag after a reviewer verifies the SQLite row.
   // Prefer the matched durable version status, then fall back to the artifact
@@ -1993,30 +2092,32 @@ function ArtifactCard({artifact, sessionId, apiBase, runId, onMerged, versions =
   const versionStatus = normalizeCapabilityVersionStatus(rawVersionStatus || 'pending_verification');
   const rejectedVersion = ['rejected', 'rolled_back', 'deleted'].includes(versionStatus);
   const failedVersion = ['cancelled', 'failed', 'blocked', 'partial'].includes(versionStatus);
-  // Modern deep turns persist a pending capability version and project it into
-  // the portrait automatically. Keep the legacy explicit merge action only
-  // for artifacts that predate the version ledger; otherwise the button would
-  // misleadingly suggest that the expert must perform a second merge.
+  // A pending capability version is only a durable draft. It becomes visible
+  // in the parent capability portrait after the analyst explicitly chooses
+  // this candidate and presses the merge action below.
   const projectionState = safeText(artifact?.draft_status || artifact?.merge_status || '').toLowerCase();
   const projectionIncomplete = ['partial', 'failed', 'blocked', 'error'].includes(projectionState)
     || failedVersion
     || rejectedVersion;
   const autoProjected = !projectionIncomplete && Boolean(
-    (version?.version_id && !['formal', 'baseline'].includes(versionStatus))
-    || (artifact?.version_id && !['formal', 'baseline', 'rejected', 'rolled_back', 'cancelled', 'failed', 'blocked', 'partial'].includes(versionStatus))
-    || ['merged_pending_verification', 'merged'].includes(safeText(artifact?.merge_status || '').toLowerCase())
+    ['merged_pending_verification', 'merged', 'accepted'].includes(safeText(artifact?.merge_status || '').toLowerCase())
     || artifact?.merged === true,
   );
   const merged = !rejectedVersion && (mergedLocally || ['merged', 'merged_pending_verification', 'accepted'].includes(safeText(artifact?.merge_status || artifact?.status)));
   const projected = !rejectedVersion && (merged || autoProjected);
-  const mergeUnavailable = rejectedVersion;
+  const mergeUnavailable = rejectedVersion || !portraitProgress.complete;
   const versionLabel = version?.version_no ? `v${version.version_no}` : artifact?.version_no ? `v${artifact.version_no}` : '';
   const evidenceRefs = Array.isArray(artifact?.evidence_ids) ? artifact.evidence_ids : Array.isArray(version?.evidence_refs) ? version.evidence_refs : [];
   const openPortrait = () => onOpenPortrait?.({
     name,
     modules: portraitModules,
     fallback: summary,
-    meta: [autoProjected || merged ? '已固定到能力画像导航页' : '深度思考生成', versionLabel].filter(Boolean).join(' · '),
+    meta: [
+      portraitProgress.complete
+        ? (autoProjected || merged ? '已固定到能力画像导航页' : '深度思考生成')
+        : `能力画像草稿 · 已完成 ${portraitProgress.completed}/${portraitProgress.total} 栏`,
+      versionLabel,
+    ].filter(Boolean).join(' · '),
   });
   const merge = async () => {
     if (!runId || !sessionId || merging || projected || mergeUnavailable) return;
@@ -2041,19 +2142,19 @@ function ArtifactCard({artifact, sessionId, apiBase, runId, onMerged, versions =
     onMerged?.(result.data);
     window.dispatchEvent(new CustomEvent('equipment-capabilities-changed', {detail: {runId, capability: result.data?.capability || artifact}}));
   };
-  return <article className={`deep-artifact-card${projected ? ' merged' : ''}`}>
+  return <article className={`deep-artifact-card${projected && portraitProgress.complete ? ' merged' : ''}${portraitProgress.complete ? '' : ' incomplete'}`}>
     <header>
       <span className="deep-artifact-icon"><Sparkles size={15}/></span>
       <div>
         <b>{name}</b>
-        <small>{autoProjected ? '已固定到能力画像导航页 · 待评议' : merged ? '已固定到能力画像导航页 · 待评议' : '深度思考生成 · 待固定'}{versionLabel ? ` · ${versionLabel}` : ''}</small>
+        <small>{portraitProgress.complete ? (autoProjected ? '已形成能力卡 · 待评议' : merged ? '已形成能力卡 · 待评议' : '深研候选 · 可选择成卡') : `深研草稿 · ${portraitProgress.completed}/${portraitProgress.total} 栏 · 待补全`}{versionLabel ? ` · ${versionLabel}` : ''}</small>
       </div>
-      <span className="deep-artifact-status">{autoProjected ? <><CheckCircle2 size={13}/>已固定</> : merged ? <><CheckCircle2 size={13}/>已固定</> : <><Clock3 size={13}/>候选</>}</span>
+      <span className="deep-artifact-status">{!portraitProgress.complete ? <><CircleAlert size={13}/>待补全</> : autoProjected ? <><CheckCircle2 size={13}/>已成卡</> : merged ? <><CheckCircle2 size={13}/>已成卡</> : <><Clock3 size={13}/>待选择</>}</span>
     </header>
     <button type="button" className="deep-artifact-portrait-launch" onClick={openPortrait}>
       <div className="deep-artifact-portrait-launch-copy">
-        <b>五栏能力画像</b>
-        <small>{portraitModules.length ? `${portraitModules.length} 栏已就绪 · 点击查看完整美观画像` : '点击查看能力画像'}</small>
+        <b>{portraitProgress.complete ? '五栏能力画像' : '能力画像草稿'}</b>
+        <small>{portraitModules.length ? (portraitProgress.complete ? '5 栏已就绪 · 点击查看完整画像' : `${portraitProgress.completed}/5 栏已就绪 · 缺少${portraitProgress.missing.join('、')}`) : '点击查看能力画像'}</small>
       </div>
       <ChevronRight size={15}/>
     </button>
@@ -2076,7 +2177,7 @@ function ArtifactCard({artifact, sessionId, apiBase, runId, onMerged, versions =
     <footer>
       {error && <span className="deep-inline-error"><CircleAlert size={13}/>{error}</span>}
       <button type="button" className="deep-artifact-view" onClick={openPortrait}><Sparkles size={13}/>查看画像</button>
-      <button type="button" className="primary" disabled={projected || merging || mergeUnavailable} onClick={() => void merge()}>{merging ? <><RefreshCw size={13} className="spin"/>固定中…</> : rejectedVersion ? <><CircleAlert size={13}/>已驳回 · 请重新追问</> : autoProjected ? <><CheckCircle2 size={13}/>已固定到能力画像页</> : merged ? <><CheckCircle2 size={13}/>已固定到能力画像页</> : <><ArrowUp size={13}/>固定到能力画像页</>}</button>
+      <button type="button" className="primary" disabled={projected || merging || mergeUnavailable} onClick={() => void merge()}>{merging ? <><RefreshCw size={13} className="spin"/>成卡中…</> : rejectedVersion ? <><CircleAlert size={13}/>已驳回 · 请重新追问</> : !portraitProgress.complete ? <><CircleAlert size={13}/>补齐五栏后可成卡</> : autoProjected ? <><CheckCircle2 size={13}/>已形成能力卡</> : merged ? <><CheckCircle2 size={13}/>已形成能力卡</> : <><ArrowUp size={13}/>选择并形成能力卡</>}</button>
     </footer>
   </article>;
 }
@@ -2153,6 +2254,9 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
   const workspaceResourceRequestRef = useRef(0);
   const [selectedSkillIds, setSelectedSkillIds] = useState(
     () => Array.isArray(context?.active_skill_ids) ? context.active_skill_ids.map(safeText).filter(Boolean) : [],
+  );
+  const [selectedModelProfileId, setSelectedModelProfileId] = useState(
+    () => safeText(context?.model_profile_id || run?.model_profile_id || run?.execution?.model_profile_id),
   );
   // The global launcher opens the same panel as card actions, but a turn may
   // only be submitted after one equipment target is selected.  Keep the
@@ -2264,6 +2368,7 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
   const forkRequestRef = useRef(new Map());
   const streamCursorRef = useRef(0);
   const streamSessionRef = useRef('');
+  const sessionUiCacheRef = useRef(new Map());
   const lastQuestionRef = useRef('');
   const lastTurnAuthoringRef = useRef(false);
   // After「新对话」, keep the composer on a blank draft.  Auto-selecting the
@@ -2288,6 +2393,39 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
   const streamStateRef = useRef('idle');
   useEffect(() => { sendingRef.current = sending; }, [sending]);
   useEffect(() => { streamStateRef.current = streamState; }, [streamState]);
+  const cacheSessionUiState = useCallback((targetRun = runId, sessionId = safeText(session?.session_id)) => {
+    if (!targetRun || !sessionId) return;
+    const key = `${targetRun}\u0000${sessionId}`;
+    sessionUiCacheRef.current.delete(key);
+    sessionUiCacheRef.current.set(key, {
+      stageEvents,
+      activeJob,
+      liveAnswer,
+      lastAnswer,
+      nextQuestions,
+      jobError,
+      steerReceipts,
+      sending,
+      streamCursor: streamSessionRef.current === sessionId ? streamCursorRef.current : 0,
+    });
+    while (sessionUiCacheRef.current.size > 20) {
+      sessionUiCacheRef.current.delete(sessionUiCacheRef.current.keys().next().value);
+    }
+  }, [activeJob, jobError, lastAnswer, liveAnswer, nextQuestions, runId, sending, session?.session_id, stageEvents, steerReceipts]);
+  const restoreSessionUiState = useCallback((targetRun, sessionId) => {
+    const cached = sessionUiCacheRef.current.get(`${targetRun}\u0000${sessionId}`);
+    setStageEvents(Array.isArray(cached?.stageEvents) ? cached.stageEvents : []);
+    setActiveJob(cached?.activeJob || null);
+    setLiveAnswer(safeText(cached?.liveAnswer));
+    setLastAnswer(cached?.lastAnswer || null);
+    setNextQuestions(Array.isArray(cached?.nextQuestions) ? cached.nextQuestions : []);
+    setJobError(safeText(cached?.jobError));
+    setSteerReceipts(cached?.steerReceipts && typeof cached.steerReceipts === 'object' ? cached.steerReceipts : {});
+    setSending(Boolean(cached?.sending));
+    streamSessionRef.current = sessionId;
+    streamCursorRef.current = Number(cached?.streamCursor) || 0;
+    return cached || null;
+  }, []);
   useEffect(() => {
     // A card/reference launcher supplies an explicit target.  A global launch
     // starts unbound and must be re-selected whenever its parent context/run
@@ -2641,6 +2779,24 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
     await loadCapabilities({quiet: true});
   };
   const capabilitySkillKey = capabilityCatalog.skills.map(skill => skill.skill_id).join('|');
+  const modelProfiles = capabilityCatalog.model_profiles?.profiles || [];
+  const modelProfileKey = modelProfiles.map(profile => `${profile.id}:${profile.model}:${profile.credential_configured ? 1 : 0}`).join('|');
+  const sessionModelProfileId = safeText(session?.context_refs?.model_profile_id);
+  useEffect(() => {
+    if (session?.session_id) {
+      setSelectedModelProfileId(sessionModelProfileId);
+      return;
+    }
+    const preferred = safeText(
+      normalizedContext.model_profile_id
+      || run?.model_profile_id
+      || run?.execution?.model_profile_id,
+    );
+    setSelectedModelProfileId(current => {
+      if (current === '' || modelProfiles.some(profile => profile.id === current)) return current;
+      return modelProfiles.some(profile => profile.id === preferred) ? preferred : '';
+    });
+  }, [modelProfileKey, normalizedContext.model_profile_id, run?.execution?.model_profile_id, run?.model_profile_id, session?.session_id, sessionModelProfileId]);
   const persistedBranchSkillIds = useMemo(() => branchActiveSkillIds(
     session,
     activeBranchId,
@@ -2795,21 +2951,15 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
   const openHistorySession = useCallback(async item => {
     const targetRun = sessionRunId(item) || runId || workbenchRunId;
     if (!item?.session_id || !targetRun) return;
+    cacheSessionUiState();
     freshCompositionRef.current = false;
     setDeleteConfirmSessionId('');
     setConversationRunId(targetRun);
     setError('');
     setJobError('');
-    setActiveJob(null);
     setActiveBranchId(DEFAULT_BRANCH_ID);
-    setSteerReceipts({});
     setShowRunModeMenu(false);
-    setLiveAnswer('');
-    setLastAnswer(null);
-    setStageEvents([]);
-    setSending(false);
-    streamCursorRef.current = 0;
-    streamSessionRef.current = '';
+    restoreSessionUiState(targetRun, safeText(item.session_id));
     setSession(item);
     onNavigationChange?.({
       sessionId: safeText(item.session_id),
@@ -2823,7 +2973,7 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
     setLoadingSession(false);
     if (!result.ok) { setError(result.detail || '无法读取会话内容。'); return; }
     setSession(result.data?.session || item);
-  }, [apiBase, normalizedContext, onNavigationChange, runId, selectedTargetKey, workbenchRunId]);
+  }, [apiBase, cacheSessionUiState, normalizedContext, onNavigationChange, restoreSessionUiState, runId, selectedTargetKey, workbenchRunId]);
 
   const loadSession = useCallback(async (sessionId, {silent = false} = {}) => {
     const requestId = ++sessionRequestRef.current;
@@ -2879,6 +3029,7 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
     // Invalidate an in-flight request whenever the workbench switches to a new
     // parent run or equipment target.  Selecting another Query's history session
     // only updates conversationRunId and must not wipe the transcript.
+    cacheSessionUiState();
     conversationNonceRef.current = newRequestNonce();
     messageNonceRef.current = newRequestNonce();
     sessionsRequestRef.current += 1;
@@ -2959,10 +3110,10 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
           // Modern events carry the monotonic SQLite sequence.  A few legacy
           // adapters omit it; retain those visible summaries instead of
           // repeatedly replacing every sequence-less row with the latest one.
-          if (!sequence) return [...current, payload].slice(-80);
+          if (!sequence) return [...current, payload].slice(-320);
           const next = [...current.filter(item => Number(item.sequence || 0) !== sequence), payload]
             .sort((left, right) => Number(left.sequence || 0) - Number(right.sequence || 0));
-          return next.slice(-80);
+          return next.slice(-320);
         });
         const eventType = safeText(payload.event_type);
         const isSteerReceiptEvent = ['deep_steer_accepted', 'deep_steer_applied', 'deep_steer_parked'].includes(eventType);
@@ -3069,6 +3220,10 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
                 // stale failure banner or retry action.
                 setJobError('');
               }
+            } else {
+              // Reopening a conversation while its durable job is still
+              // running must resume the live feedback surface immediately.
+              setSending(true);
             }
             return next;
           });
@@ -3186,7 +3341,7 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
           const cue = jobText || processStageCue(job.stage, job.status);
           const last = current[current.length - 1];
           if (safeText(last?.stage) === safeText(job.stage) && safeText(last?.status) === safeText(job.status) && safeText(last?.delta?.text) === cue) return current;
-          return [...current, localStageEvent({stage: job.stage, status: job.status, text: cue, progress: Number(job.progress || 0)})].slice(-80);
+          return [...current, localStageEvent({stage: job.stage, status: job.status, text: cue, progress: Number(job.progress || 0)})].slice(-320);
         });
       }
       const jobSessionId = safeText(job.session_id);
@@ -3232,7 +3387,7 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
       }
       if (sending) node.scrollTop = node.scrollHeight;
     });
-  }, [session?.messages?.length, sending, liveAnswer]);
+  }, [session?.messages?.length, sending, liveAnswer, stageEvents.length]);
   useEffect(() => {
     const node = messagesRef.current;
     const sessionId = safeText(session?.session_id);
@@ -3318,6 +3473,7 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
       focus: normalizedContext.focus || '',
       create_artifact: createArtifact,
       active_skill_ids: activeSkillIds,
+      model_profile_id: selectedModelProfileId,
       auto_merge: false,
     };
     // A new conversation must get a new idempotency key.  Scoping the key
@@ -3484,7 +3640,7 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
     setStageEvents(current => [
       ...current.filter(item => !item?.local || safeText(item?.delta?.text) !== processStageCue('queued', 'queued')),
       localStageEvent({stage: 'queued', status: 'queued', text: processStageCue('queued', 'queued'), progress: 0.02}),
-    ].slice(-80));
+    ].slice(-320));
     lastQuestionRef.current = content;
     lastTurnAuthoringRef.current = createArtifact;
     let result;
@@ -3493,7 +3649,7 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
     } else {
       const requestNonce = messageNonceRef.current;
       result = await apiRequest(apiBase, `/runs/${encodeRun(runId)}/deep-thinking/sessions/${encodeURIComponent(session.session_id)}/messages`, {
-        method: 'POST', headers: {...deepScopeHeaders(normalizedContext), 'Content-Type': 'application/json', 'Idempotency-Key': `message:${session.session_id}:${requestNonce}`}, body: JSON.stringify({content, create_artifact: createArtifact, focus: activeTurnFocus, branch_id: branchId, parent_message_id: parentMessageId, active_skill_ids: turnSkillIds}),
+        method: 'POST', headers: {...deepScopeHeaders(normalizedContext), 'Content-Type': 'application/json', 'Idempotency-Key': `message:${session.session_id}:${requestNonce}`}, body: JSON.stringify({content, create_artifact: createArtifact, focus: activeTurnFocus, branch_id: branchId, parent_message_id: parentMessageId, active_skill_ids: turnSkillIds, model_profile_id: selectedModelProfileId}),
       });
       const accepted = result.ok && registerAcceptedJob(result);
       if (result.ok) messageNonceRef.current = newRequestNonce();
@@ -3669,6 +3825,7 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
   };
 
   const startNew = () => {
+    cacheSessionUiState();
     conversationNonceRef.current = newRequestNonce();
     messageNonceRef.current = newRequestNonce();
     freshCompositionRef.current = true;
@@ -3842,6 +3999,12 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
     const name = safeText(item?.innovation_variant_name || item?.name || item?.candidate_name);
     void send(null, {content: formatQuotedDeepMessage(prompt, name)});
   };
+  const authorCard = item => {
+    const name = safeText(item?.innovation_variant_name || item?.name || item?.candidate_name);
+    if (!name || sending || jobRunning) return;
+    const prompt = `确认将候选装备「${name}」形成五栏能力画像卡。请只围绕该装备完成五栏成卡，保持装备名称、作用机理与直接军事价值一致，不要改成其他候选方向。`;
+    void send(null, {content: prompt, createArtifact: true});
+  };
   const contextUsage = useMemo(
     () => projectDeepContextUsage(session, activeBranchId),
     [activeBranchId, session],
@@ -3876,7 +4039,59 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
     );
     return !hiddenArtifactStatuses.has(status);
   });
-  const resultState = deepResultState({activeJob, session, artifacts, versions: capabilityVersions, stageEvents, sending, lastAnswer, jobError});
+  const generatedPortraitName = useMemo(() => {
+    for (const item of [...artifacts].reverse()) {
+      const payload = item?.payload && typeof item.payload === 'object' ? item.payload : item;
+      const name = deepEquipmentLabel({
+        name: payload?.innovation_variant_name || payload?.name,
+        title: payload?.innovation_variant_name || payload?.title,
+        capability_name: payload?.capability_name,
+        primary_equipment_identity: payload?.primary_equipment_identity,
+        equipment_form: payload?.equipment_form,
+      }) || safeText(payload?.innovation_variant_name);
+      if (name) return name;
+    }
+    return '';
+  }, [artifacts]);
+  const openPortrait = useCallback((portrait = {}) => {
+    const suppliedName = safeText(portrait?.name);
+    const genericName = !suppliedName || suppliedName === '本轮五栏能力画像' || suppliedName === '五栏能力画像';
+    setPortraitViewer({
+      ...portrait,
+      name: genericName ? (generatedPortraitName || suppliedName || '本轮五栏能力画像') : suppliedName,
+    });
+  }, [generatedPortraitName]);
+  const visibleStageEvents = stageEvents
+    .filter(item => safeText(item?.delta?.text || item?.text || item?.summary_text))
+    .filter(item => !looksLikeCompleteAnswerDump(item?.delta?.text || item?.text))
+    .filter((item, _index, rows) => {
+      if (!item?.local) return true;
+      return !rows.some(other => (
+        !other?.local
+        && normalizeDeepStage(other?.stage) === normalizeDeepStage(item.stage)
+        && safeText(other?.status) === safeText(item.status)
+      ));
+    })
+    .slice(-320);
+  const latestFeedbackJobId = activeJobId || safeText(
+    [...visibleStageEvents].reverse().find(item => safeText(item?.job_id))?.job_id,
+  );
+  const turnStageEvents = latestFeedbackJobId
+    ? visibleStageEvents.filter(item => (
+      safeText(item?.job_id) === latestFeedbackJobId
+      || (item?.local && sending)
+    ))
+    : visibleStageEvents;
+  const resultState = deepResultState({
+    activeJob,
+    session,
+    artifacts,
+    versions: capabilityVersions,
+    stageEvents: turnStageEvents,
+    sending,
+    lastAnswer,
+    jobError,
+  });
   const ResultStateIcon = resultState.tone === 'running'
     ? RefreshCw
     : resultState.tone === 'partial' || resultState.tone === 'analysis'
@@ -3902,22 +4117,25 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
           '在电磁静默或补给受限的极限条件下，构型如何跃迁？',
         ]
         : []));
-  const visibleStageEvents = stageEvents
-    .filter(item => safeText(item?.delta?.text || item?.text || item?.summary_text))
-    .filter(item => !looksLikeCompleteAnswerDump(item?.delta?.text || item?.text))
-    .filter((item, _index, rows) => {
-      if (!item?.local) return true;
-      return !rows.some(other => (
-        !other?.local
-        && normalizeDeepStage(other?.stage) === normalizeDeepStage(item.stage)
-        && safeText(other?.status) === safeText(item.status)
-      ));
-    })
-    .slice(-48);
-  const liveFeedback = useMemo(() => projectLiveConversationFeedback(visibleStageEvents), [visibleStageEvents]);
+  const currentTurnPortraitModules = projectS6Columns(turnStageEvents)
+    .filter(item => item.status === 'completed' && safeText(item.text))
+    .map(item => ({label: item.label, text: item.text}));
+  const latestTurnStageEvent = turnStageEvents[turnStageEvents.length - 1];
+  const feedbackActiveStage = furthestDeepStage(
+    activeJob?.stage,
+    latestTurnStageEvent?.stage,
+    sending ? 'context' : '',
+  );
+  const feedbackWaitCue = processStageCue(
+    feedbackActiveStage || (sending ? 'context' : ''),
+    activeJob?.status || latestTurnStageEvent?.status,
+  );
+  const liveFeedback = useMemo(() => projectLiveConversationFeedback(turnStageEvents), [turnStageEvents]);
+  // Render one growing assistant response. Completed feedback stays in
+  // chronological order and each new result appends below the previous one.
   const streamingDraft = liveFeedback.markdown
     || (showLiveAnswer && liveAnswer && !looksLikeCompleteAnswerDump(liveAnswer) ? liveAnswer : '');
-  const showProcessThread = sending || visibleStageEvents.length > 0 || showLiveAnswer;
+  const showProcessThread = sending || turnStageEvents.length > 0 || showLiveAnswer;
   // Keep chronological chat order: expert question → live process feedback →
   // final「本轮完整结果」assistant message. Previously the process thread was
   // appended after every message, so the complete answer appeared first.
@@ -3934,12 +4152,8 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
   const leadingMessages = visibleMessages.slice(0, processInsertIndex);
   const trailingMessages = visibleMessages.slice(processInsertIndex);
   const showStreamingBubble = Boolean(
-    (sending || showLiveAnswer || liveFeedback.segments.length)
-    && !trailingMessages.some(item => (
-      safeText(item?.role).toLowerCase() === 'assistant'
-      && !item?.pending
-      && safeText(item?.content)
-    ))
+    streamingDraft
+    && (sending || showLiveAnswer || liveFeedback.segments.length)
   );
   const liveDeliberationAnswer = (
     lastAnswer?.agent_dialogue?.length || lastAnswer?.concept_directions?.length
@@ -3952,14 +4166,14 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
     const directions = Array.isArray(answer.concept_directions) ? answer.concept_directions : [];
     const reviews = Array.isArray(answer.adjudication?.candidate_reviews) ? answer.adjudication.candidate_reviews : [];
     const proposers = dialogue.filter(item => safeText(item?.round) === 'divergence');
-    const eventNames = proposers.length ? [] : visibleStageEvents.flatMap(event => eventProposalNames(event));
+    const eventNames = proposers.length ? [] : turnStageEvents.flatMap(event => eventProposalNames(event));
     return mergeDeliberationProposals(
       proposers.flatMap(item => item?.proposal_names || []),
       eventNames,
       directions.map(item => item?.innovation_variant_name || item?.name),
       reviews.map(item => item?.candidate_name),
     );
-  }, [liveDeliberationAnswer, visibleStageEvents]);
+  }, [liveDeliberationAnswer, turnStageEvents]);
   const qualityAdvisoryBanner = isQualityAdvisoryText(jobError || activeJob?.error);
   const showJobBanner = Boolean(activeJob && !qualityAdvisoryBanner && (
     jobError
@@ -4056,20 +4270,22 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
         />
       )}
       <header className="deep-thinking-header"><div><span className="deep-thinking-eyebrow"><BrainCircuit size={15}/>{sessionKindLabel(kind)}{streamState !== 'idle' && <em className={`deep-stream-state ${streamState}`}>{streamState === 'connecting' ? '连接中' : streamState === 'reconnecting' ? '自动重连' : streamState === 'error' ? '连接受限' : '实时'}</em>}</span><h2>{title}</h2></div><div className="deep-thinking-header-actions">{activeJobId && !isTerminalJob(activeJob) && <button type="button" className="deep-cancel-job" onClick={() => void cancelActiveJob()}><X size={13}/>取消任务</button>}<button type="button" className={`deep-capability-button${capabilityDrawerOpen ? ' active' : ''}`} aria-expanded={capabilityDrawerOpen} onClick={() => setCapabilityDrawerOpen(true)}><Puzzle size={14}/><span>能力</span><em>{selectedSkillIds.length}</em></button><button type="button" className="deep-new-session" onClick={() => { setShowArchivedSessions(false); startNew(); }}><Plus size={14}/><span>新对话</span></button><button type="button" className="icon-button" aria-label="关闭深度思考" title="关闭" onClick={() => onClose?.()}><X size={17}/></button></div></header>
-      <div className="deep-thinking-context">
-        <div className="deep-context-query" title={historyQueryParts.full || '暂无 Query'}>
-          <span>当前 Query</span>
-          <p className="deep-context-query-topic">{historyQueryParts.topic || '暂无 Query'}</p>
-          {historyQueryParts.hasBackground && <p className="deep-context-query-bg">{historyQueryParts.background}</p>}
-        </div>
-        {focusedEquipmentLabel && <div className="deep-context-focus"><span>聚焦对象</span><p>{focusedEquipmentLabel}</p></div>}
-        <div className="deep-context-council"><span>研究方式</span><p>持续深度发散 · 动态调度专家 · 随时可继续追问</p></div>
-        <div className="deep-context-objective"><span>产出硬约束</span><p>新质颠覆 · 直接物理毁伤 · 单装闭环</p></div>
-        {runId && runId !== workbenchRunId && <div className="deep-context-focus"><span>历史任务</span><p>正在查看其他 Query 的定向深研会话</p></div>}
-      </div>
-      {showStageStrip && !showTargetPicker && <StageStrip stages={visibleStageStrip}/>} 
       <div className="deep-thinking-layout">
-        <aside className="deep-session-list">
+        <aside className="deep-sidebar">
+          <div className="deep-thinking-context">
+            <div className="deep-context-query" title={historyQueryParts.full || '暂无 Query'}>
+              <span>当前 Query</span>
+              <p className="deep-context-query-topic">{historyQueryParts.topic || '暂无 Query'}</p>
+              {historyQueryParts.hasBackground && <p className="deep-context-query-bg">{historyQueryParts.background}</p>}
+            </div>
+            {focusedEquipmentLabel && <div className="deep-context-focus"><span>聚焦对象</span><p>{focusedEquipmentLabel}</p></div>}
+            <div className="deep-context-council"><span>研究方式</span><p>持续深度发散 · 动态调度专家 · 随时可继续追问</p></div>
+            <div className="deep-context-objective"><span>产出硬约束</span><p>新质颠覆 · 直接物理毁伤 · 单装闭环</p></div>
+            {runId && runId !== workbenchRunId && <div className="deep-context-focus"><span>历史任务</span><p>正在查看其他 Query 的定向深研会话</p></div>}
+          </div>
+          {showStageStrip && !showTargetPicker && <StageStrip stages={visibleStageStrip}/>}
+          <div className="deep-sidebar-history">
+          <aside className="deep-session-list">
           <header>
             <div><b>定向深研历史</b><span>{visibleSessionCount}</span></div>
             <nav aria-label="对话历史筛选">
@@ -4077,51 +4293,55 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
               <button type="button" className={showArchivedSessions ? 'active' : ''} onClick={() => { setDeleteConfirmSessionId(''); setShowArchivedSessions(true); }}>归档 {archivedSessions.length}</button>
             </nav>
           </header>
-          {sessionsError && <p className="deep-panel-error"><CircleAlert size={13}/>{sessionsError}</p>}
-          {loadingSessions && !sessions.length ? (
-            <p className="deep-session-empty"><RefreshCw size={14} className="spin"/>读取中…</p>
-          ) : visibleGroups.length ? visibleGroups.map(group => {
-            const groupKey = safeText(group.group_key);
-            const collapsed = Boolean(collapsedGroups[groupKey]);
-            const queryParts = splitQueryDisplay(group.query);
-            const sessionCount = group.session_count || group.sessions.length;
-            return (
-              <section className={`deep-history-group${group.is_current ? ' current' : ''}${collapsed ? ' collapsed' : ''}`} key={groupKey || group.query}>
-                <button type="button" className="deep-history-group-toggle" onClick={() => setCollapsedGroups(current => ({...current, [groupKey]: !collapsed}))} aria-expanded={!collapsed} title={queryParts.full}>
-                  <span className="deep-history-group-chevron" aria-hidden="true">{collapsed ? <ChevronRight size={13}/> : <ChevronDown size={13}/>}</span>
-                  <span className="deep-history-group-main">
-                    <span className="deep-history-group-topic">{queryParts.topic}</span>
-                    <span className="deep-history-group-meta">
-                      <em className={group.is_current ? 'current' : ''}>{group.is_current ? '当前 Query' : '历史 Query'}</em>
-                      <span>{sessionCount} 段对话</span>
-                      {queryParts.hasBackground && <span className="deep-history-group-hint">含背景</span>}
+          <div className="deep-session-history-scroll">
+            {sessionsError && <p className="deep-panel-error"><CircleAlert size={13}/>{sessionsError}</p>}
+            {loadingSessions && !sessions.length ? (
+              <p className="deep-session-empty"><RefreshCw size={14} className="spin"/>读取中…</p>
+            ) : visibleGroups.length ? visibleGroups.map(group => {
+              const groupKey = safeText(group.group_key);
+              const collapsed = Boolean(collapsedGroups[groupKey]);
+              const queryParts = splitQueryDisplay(group.query);
+              const sessionCount = group.session_count || group.sessions.length;
+              return (
+                <section className={`deep-history-group${group.is_current ? ' current' : ''}${collapsed ? ' collapsed' : ''}`} key={groupKey || group.query}>
+                  <button type="button" className="deep-history-group-toggle" onClick={() => setCollapsedGroups(current => ({...current, [groupKey]: !collapsed}))} aria-expanded={!collapsed} title={queryParts.full}>
+                    <span className="deep-history-group-chevron" aria-hidden="true">{collapsed ? <ChevronRight size={13}/> : <ChevronDown size={13}/>}</span>
+                    <span className="deep-history-group-main">
+                      <span className="deep-history-group-topic">{queryParts.topic}</span>
+                      <span className="deep-history-group-meta">
+                        <em className={group.is_current ? 'current' : ''}>{group.is_current ? '当前 Query' : '历史 Query'}</em>
+                        <span>{sessionCount} 段对话</span>
+                        {queryParts.hasBackground && <span className="deep-history-group-hint">含背景</span>}
+                      </span>
                     </span>
-                  </span>
-                </button>
-                {!collapsed && (
-                  <div className="deep-history-group-body">
-                    {(queryParts.hasBackground || queryParts.topic.length > 28) && (
-                      <details className="deep-history-group-query">
-                        <summary>
-                          <span className="deep-history-group-query-label">完整 Query</span>
-                          <span className="deep-history-group-query-preview">
-                            {queryParts.hasBackground ? queryParts.backgroundPreview : queryParts.topic}
-                          </span>
-                        </summary>
-                        <div className="deep-history-group-query-body">
-                          <p><b>主题</b>{queryParts.topic}</p>
-                          {queryParts.hasBackground && <p><b>背景</b>{queryParts.background}</p>}
-                        </div>
-                      </details>
-                    )}
-                    <div className="deep-history-group-sessions">{group.sessions.map(renderSessionRow)}</div>
-                  </div>
-                )}
-              </section>
-            );
-          }) : (
-            <p className="deep-session-empty">{showArchivedSessions ? '没有已归档对话' : '还没有定向深研会话'}<br/><small>{showArchivedSessions ? '归档后可在这里恢复或删除' : '按 Query 任务分组后会出现在这里'}</small></p>
-          )}
+                  </button>
+                  {!collapsed && (
+                    <div className="deep-history-group-body">
+                      {(queryParts.hasBackground || queryParts.topic.length > 28) && (
+                        <details className="deep-history-group-query">
+                          <summary>
+                            <span className="deep-history-group-query-label">完整 Query</span>
+                            <span className="deep-history-group-query-preview">
+                              {queryParts.hasBackground ? queryParts.backgroundPreview : queryParts.topic}
+                            </span>
+                          </summary>
+                          <div className="deep-history-group-query-body">
+                            <p><b>主题</b>{queryParts.topic}</p>
+                            {queryParts.hasBackground && <p><b>背景</b>{queryParts.background}</p>}
+                          </div>
+                        </details>
+                      )}
+                      <div className="deep-history-group-sessions">{group.sessions.map(renderSessionRow)}</div>
+                    </div>
+                  )}
+                </section>
+              );
+            }) : (
+              <p className="deep-session-empty">{showArchivedSessions ? '没有已归档对话' : '还没有定向深研会话'}<br/><small>{showArchivedSessions ? '归档后可在这里恢复或删除' : '按 Query 任务分组后会出现在这里'}</small></p>
+            )}
+          </div>
+          </aside>
+          </div>
         </aside>
         <main className={`deep-conversation${conversationHandoff ? ' handoff' : ''}`}>
           {showTargetPicker ? (
@@ -4179,11 +4399,14 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
                 ) : (
                   <>
                     {visibleMessages.length
-                      ? leadingMessages.map(message => <MessageBubble key={message.message_id || `${message.role}-${message.created_at}`} message={message} artifacts={artifacts} onOpenPortrait={setPortraitViewer} steerReceipt={steerReceipts[safeText(message.message_id)]} onCancelSteer={cancelSteer} onFork={forkFromMessage} onQuote={excerpt => quoteIntoComposer(excerpt)} onCopy={copyMessage} copied={copiedMessageId === safeText(message.message_id)} branchPending={branchActionMessageId === safeText(message.message_id)} branchDisabled={jobRunning}/>)
+                      ? leadingMessages.map(message => <MessageBubble key={message.message_id || `${message.role}-${message.created_at}`} message={message} portraitName={generatedPortraitName} artifacts={artifacts} onOpenPortrait={openPortrait} steerReceipt={steerReceipts[safeText(message.message_id)]} onCancelSteer={cancelSteer} onFork={forkFromMessage} onQuote={excerpt => quoteIntoComposer(excerpt)} onCopy={copyMessage} copied={copiedMessageId === safeText(message.message_id)} branchPending={branchActionMessageId === safeText(message.message_id)} branchDisabled={jobRunning}/>)
                       : <div className="deep-welcome"><span><Sparkles size={19}/></span><h3>战创灵境·新质装备创新舱</h3><p>点选一条建议即可直接开场；也可在下方输入框自定义问题。Enter 发送，Shift+Enter 换行。</p><div className="deep-suggestions">{welcomeSuggestions.map(item => <button type="button" key={item} onClick={() => void send(null, {content: item})}>{item}<ArrowUp size={13}/></button>)}</div></div>}
+                    {/* The stage summary is intentionally above the live activity
+                        cluster. New feedback therefore remains the latest item. */}
+                    <DeliberationBoard answer={liveDeliberationAnswer} stageEvents={turnStageEvents} sending={sending} onFocusDirection={focusDirection} onAuthorCard={authorCard}/>
                     {showProcessThread && (
                       <ProcessFeedbackThread
-                        events={visibleStageEvents}
+                        events={turnStageEvents}
                         sending={sending}
                         liveAnswer={liveAnswer}
                         showLiveAnswer={showLiveAnswer}
@@ -4195,14 +4418,15 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
                             || `围绕「${name}」继续深化：闭合打击对象、直接毁伤机理与任务失能判据。`;
                           void send(null, {content: formatQuotedDeepMessage(prompt, name)});
                         }}
+                        onOpenPortrait={openPortrait}
                       />
                     )}
                     {showStreamingBubble && (
-                      <article className="deep-message assistant streaming" aria-live="polite" aria-label="正在回传的可见结果">
+                      <article className="deep-message assistant streaming" aria-live="polite" aria-label={sending ? '正在回传的可见结果' : '本轮过程反馈记录'}>
                         <div className="deep-message-meta">
                           <span className="deep-message-avatar">AI</span>
                           <b>创新舱</b>
-                          <small><StreamingLabel active={sending}>{sending ? (liveFeedback.running_label || '正在回传可见结果') : '本轮即时结果'}</StreamingLabel></small>
+                          <small><StreamingLabel active={sending}>{sending ? (liveFeedback.running_label || '正在回传可见结果') : '本轮过程反馈记录'}</StreamingLabel></small>
                         </div>
                         <div className="deep-message-body" data-assistant-selectable="true">
                           {streamingDraft
@@ -4212,15 +4436,16 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
                         </div>
                       </article>
                     )}
-                    {trailingMessages.map(message => <MessageBubble key={message.message_id || `trail-${message.role}-${message.created_at}`} message={message} artifacts={artifacts} onOpenPortrait={setPortraitViewer} steerReceipt={steerReceipts[safeText(message.message_id)]} onCancelSteer={cancelSteer} onFork={forkFromMessage} onQuote={excerpt => quoteIntoComposer(excerpt)} onCopy={copyMessage} copied={copiedMessageId === safeText(message.message_id)} branchPending={branchActionMessageId === safeText(message.message_id)} branchDisabled={jobRunning}/>)}
+                    {trailingMessages.map(message => <MessageBubble key={message.message_id || `trail-${message.role}-${message.created_at}`} message={message} portraitName={generatedPortraitName} artifacts={artifacts} onOpenPortrait={openPortrait} steerReceipt={steerReceipts[safeText(message.message_id)]} onCancelSteer={cancelSteer} onFork={forkFromMessage} onQuote={excerpt => quoteIntoComposer(excerpt)} onCopy={copyMessage} copied={copiedMessageId === safeText(message.message_id)} branchPending={branchActionMessageId === safeText(message.message_id)} branchDisabled={jobRunning}/>)}
                   </>
                 )}
-                {awaitingCardConfirmation && <section className="deep-card-confirmation" aria-label="确认是否形成能力卡"><div><Sparkles size={15}/><span><b>这个方向值得形成能力卡吗？</b><small>确认或输入 /card 后将当前方向整理为五栏画像；后续仍可在任意分支继续探索。</small></span></div><div><button type="button" className="secondary" onClick={() => { setDraft(followUpQuestions[0] || '继续深挖当前方向的关键机理、反制边界与任务失能判据。'); composerRef.current?.focus(); }}>继续深挖</button><button type="button" className="primary" onClick={() => void send(null, {content: CARD_AUTHORING_CONFIRMATION, createArtifact: true})}><CheckCircle2 size={14}/>形成能力卡</button></div></section>}
+                {awaitingCardConfirmation && <section className="deep-card-confirmation" aria-label="选择是否形成能力卡"><div className="deep-card-confirmation-copy"><Sparkles size={15}/><span><b>选择一个深研方向形成能力卡</b><small>可确认当前收敛方向，也可在上方候选装备旁单独点击“形成能力卡”。</small></span></div><div className="deep-card-confirmation-actions"><button type="button" className="secondary" onClick={() => { setDraft(followUpQuestions[0] || '继续深挖当前方向的关键机理、反制边界与任务失能判据。'); composerRef.current?.focus(); }}>继续深挖</button><button type="button" className="primary" onClick={() => void send(null, {content: CARD_AUTHORING_CONFIRMATION, createArtifact: true})}><CheckCircle2 size={14}/>形成当前方向能力卡</button></div></section>}
                 {followUpQuestions.length > 0 && visibleMessages.length > 0 && !sending && <div className="deep-next-questions"><span>继续追问 · 点击直接发送</span>{followUpQuestions.map(item => <button type="button" key={item} onClick={() => void send(null, {content: item})}>{item}<ArrowUp size={13}/></button>)}</div>}
-                <DeliberationBoard answer={liveDeliberationAnswer} stageEvents={visibleStageEvents} sending={sending} onFocusDirection={focusDirection}/>
                 {!sending && showResultState && <section className={`deep-result-state deep-result-state-inline ${resultState.tone}`} aria-live="polite"><span className="deep-result-state-icon"><ResultStateIcon size={14}/></span><div><b>{resultState.title}</b><small>{resultState.detail}</small></div></section>}
-                {!sending && artifacts.length > 0 && <section className="deep-artifacts"><header><div><Sparkles size={15}/><b>最终成果 · 五栏能力画像</b></div><span>{artifacts.length} 张候选卡</span></header>{artifacts.slice(-3).reverse().map((artifact, index) => <ArtifactCard key={artifactId(artifact) || index} artifact={artifact?.payload || artifact} sessionId={session?.session_id} apiBase={apiBase} runId={runId} scope={normalizedContext} versions={capabilityVersions} onMerged={onChanged} onOpenPortrait={setPortraitViewer}/>)}</section>}
+                {!sending && artifacts.length > 0 && <section className="deep-artifacts"><header><div><Sparkles size={15}/><b>成卡候选 · 能力画像</b></div><span>{artifacts.length} 张草稿 · 五栏齐全后可选择成卡</span></header>{artifacts.slice(-3).reverse().map((artifact, index) => <ArtifactCard key={artifactId(artifact) || index} artifact={artifact?.payload || artifact} sessionId={session?.session_id} apiBase={apiBase} runId={runId} scope={normalizedContext} versions={capabilityVersions} fallbackModules={artifacts.length === 1 ? currentTurnPortraitModules : []} onMerged={onChanged} onOpenPortrait={openPortrait}/>)}</section>}
                 {!sending && session?.session_id && (visibleMessages.length > 0 || artifacts.length > 0) && capabilityVersions.length > 0 && <section className="deep-versions"><header><div><GitCompare size={14}/><b>版本链</b></div><span>{capabilityVersions.length} 个版本 · 原卡保持不可变</span></header>{capabilityVersions.slice().reverse().map(version => <article key={version.version_id}><div><b>v{version.version_no || '?'}</b><span className={`deep-version-status ${version.status || 'pending_verification'}`}>{version.status === 'formal' || version.status === 'verified' ? '已核验' : version.status === 'rejected' ? '已驳回' : version.status === 'rolled_back' ? '已回滚' : '待核验'}</span><small>{version.source || 'deep-thinking'} · {version.created_at ? new Date(version.created_at).toLocaleString('zh-CN', {hour12:false}) : ''}</small></div>{version.evidence_refs?.length > 0 && <p>证据 {version.evidence_refs.length} 条：{version.evidence_refs.slice(0, 6).map((ref, index) => <code key={`${version.version_id}-${index}`}>{safeText(ref)}</code>)}</p>}{version.diff && <details><summary>查看结构化差异</summary><pre>{JSON.stringify(version.diff, null, 2)}</pre></details>}</article>)}</section>}
+                {sending && <footer className="deep-process-wait deep-process-wait-latest" role="status" aria-live="polite"><div className="deep-process-typing" aria-hidden="true"><span/><span/><span/></div><span>{feedbackWaitCue}</span></footer>}
+                <div className="deep-message-end-gap" aria-hidden="true" />
               </div>
               {showJumpBottom && (
                 <button type="button" className="deep-jump-bottom" onClick={jumpToLatest}>
@@ -4339,11 +4564,30 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
                     placeholder={viewingArchivedSession ? "归档会话只读，恢复后可继续追问…" : (jobRunning ? "正在深度发散：Enter 立即纳入，Tab 排到下一轮，Shift+Enter 换行…" : "继续追问，Enter 发送，Shift+Enter 换行，或输入 / 调用命令…")}
                     aria-label="输入深度思考问题"
                   />
-                  {jobRunning && !draft.trim() && !quotedContext ? (
-                    <button type="button" className="deep-composer-send stop" aria-label="停止当前研究" onClick={() => void cancelActiveJob()}><Square size={13}/></button>
-                  ) : (
-                    <button type="submit" className="deep-composer-send" aria-label={jobRunning ? '发送即时追问' : '发送'} disabled={(!draft.trim() && !quotedContext) || !runId || viewingArchivedSession || steerSubmitting || (sending && !activeJobId)}>{steerSubmitting ? <RefreshCw size={15} className="spin"/> : <ArrowUp size={17}/>}</button>
-                  )}
+                  <div className="deep-composer-shell-footer">
+                    {modelProfiles.length > 0 && (
+                      <label className="deep-composer-model-picker" title="每轮发送前可独立选择模型；当前生成任务启动后锁定">
+                        <span><BrainCircuit size={12}/>本轮模型</span>
+                        <select
+                          aria-label="本轮深研模型"
+                          value={selectedModelProfileId}
+                          disabled={sending || viewingArchivedSession}
+                          onChange={event => setSelectedModelProfileId(event.target.value)}
+                        >
+                          <option value="">跟随任务模型</option>
+                          {modelProfiles.map(profile => {
+                            const ready = Boolean(profile.model && profile.credential_configured);
+                            return <option key={profile.id} value={profile.id} disabled={!ready}>{profile.label}{ready ? '' : ' · 未配置'}</option>;
+                          })}
+                        </select>
+                      </label>
+                    )}
+                    {jobRunning && !draft.trim() && !quotedContext ? (
+                      <button type="button" className="deep-composer-send stop" aria-label="停止当前研究" onClick={() => void cancelActiveJob()}><Square size={13}/></button>
+                    ) : (
+                      <button type="submit" className="deep-composer-send" aria-label={jobRunning ? '发送即时追问' : '发送'} disabled={(!draft.trim() && !quotedContext) || !runId || viewingArchivedSession || steerSubmitting || (sending && !activeJobId)}>{steerSubmitting ? <RefreshCw size={15} className="spin"/> : <ArrowUp size={17}/>}</button>
+                    )}
+                  </div>
                 </div>
                 {jobRunning && <div className="deep-run-mode-row"><span>本条追问</span><div className="deep-run-mode-selector"><button type="button" aria-haspopup="menu" aria-expanded={showRunModeMenu} onClick={() => setShowRunModeMenu(current => !current)}><SelectedSteerModeIcon size={13}/><b>{selectedSteerMode.label}</b><ChevronDown size={12}/></button>{showRunModeMenu && <div className="deep-run-mode-menu" role="menu">{DEEP_STEER_MODES.map(item => { const ModeIcon = item.icon; return <button type="button" role="menuitem" className={duringRunMode === item.id ? 'active' : ''} key={item.id} onClick={() => { setDuringRunMode(item.id); setShowRunModeMenu(false); composerRef.current?.focus(); }}><ModeIcon size={14}/><span><b>{item.label}</b><small>{item.detail}</small></span>{duringRunMode === item.id && <Check size={13}/>}</button>; })}</div>}</div><small>{selectedSteerMode.detail} · Enter 立即纳入 · Tab 排队</small></div>}
                 <div className="deep-composer-footer">

@@ -26,6 +26,13 @@ from threading import RLock
 from typing import Any
 from uuid import uuid4
 
+from equipment_deep_research.domain.research_gaps import (
+    sanitize_public_research_gap,
+    sanitize_public_research_gaps,
+    sanitize_public_research_prose,
+    sanitize_public_research_value,
+)
+
 
 SCHEMA_VERSION = "deep-thinking-v1"
 MAX_SESSIONS_PER_RUN = 100
@@ -1251,6 +1258,151 @@ def _pretty_section_body(text: str) -> str:
     return body
 
 
+_DEEP_PUBLIC_CARD_FIELDS = (
+    "overview",
+    "technology_implementation",
+    "operational_process",
+    "capability_effects",
+    "winning_logic",
+)
+
+
+def sanitize_public_deep_answer(answer: Mapping[str, Any] | None) -> dict[str, Any]:
+    """Project a provider answer onto a clean, user-facing deep result.
+
+    Retrieval availability and provider diagnostics are runtime facts.  They
+    may remain in internal audit records, but must not reappear in the final
+    transcript, SSE summaries, or the branch memory used after a refresh.
+    Keep this projection deliberately explicit so adding a new provider field
+    cannot accidentally expose its raw prose.
+    """
+
+    source = dict(answer) if isinstance(answer, Mapping) else {}
+    # Start with a recursive, status-only scrub so newly added provider fields
+    # cannot smuggle retrieval failures into a persisted public projection.
+    # The explicit projections below still enforce tighter limits/contracts on
+    # the fields consumed by the UI and completion gate.
+    result = sanitize_public_research_value(source, limit=12000)
+    if not isinstance(result, dict):
+        result = {}
+
+    def clean_list(value: Any, *, limit: int, item_limit: int = 600) -> list[str]:
+        if not isinstance(value, (list, tuple)):
+            return []
+        return sanitize_public_research_gaps(
+            list(value), limit=limit, item_limit=item_limit
+        )
+
+    for key, limit in (
+        ("visible_summary", 6),
+        ("next_questions", 6),
+        ("open_questions", 6),
+        ("research_gaps", 8),
+    ):
+        if key in source:
+            result[key] = clean_list(source.get(key), limit=limit)
+
+    for key, limit in (
+        ("selection_rationale", 1400),
+        ("summary", 1600),
+    ):
+        if key in source:
+            result[key] = sanitize_public_research_prose(source.get(key), limit=limit)
+
+    draft = source.get("capability_card_draft")
+    if isinstance(draft, Mapping):
+        result["capability_card_draft"] = {
+            key: sanitize_public_research_prose(draft.get(key), limit=6000)
+            for key in _DEEP_PUBLIC_CARD_FIELDS
+            if sanitize_public_research_prose(draft.get(key), limit=6000)
+        }
+
+    directions = source.get("concept_directions")
+    if isinstance(directions, list):
+        projected_directions: list[dict[str, Any]] = []
+        for item in directions:
+            if not isinstance(item, Mapping):
+                continue
+            projected_item: dict[str, Any] = {}
+            for key, value in item.items():
+                if isinstance(value, str):
+                    projected_item[key] = sanitize_public_research_prose(
+                        value, limit=1200
+                    )
+                else:
+                    projected_item[key] = value
+            projected_directions.append(projected_item)
+        result["concept_directions"] = projected_directions
+
+    sections = source.get("sections")
+    if isinstance(sections, list):
+        clean_sections: list[dict[str, str]] = []
+        for item in sections:
+            if not isinstance(item, Mapping):
+                continue
+            title = " ".join(str(item.get("title", "") or "").split()).strip()
+            text = sanitize_public_research_prose(item.get("text"), limit=9000)
+            # A provider can emit a diagnostic-only heading even when its body
+            # was removed.  Drop that whole section instead of showing an
+            # empty/ambiguous card to the user.
+            if not title or not text or not sanitize_public_research_gap(title):
+                continue
+            clean_sections.append({"title": title[:120], "text": text})
+        result["sections"] = clean_sections
+
+    for key in ("research_assessment", "quality_gate"):
+        value = source.get(key)
+        if not isinstance(value, Mapping):
+            continue
+        projected = dict(value)
+        for list_key in ("gaps", "research_gaps", "advisories", "block_reasons"):
+            if list_key in projected:
+                projected[list_key] = clean_list(
+                    projected.get(list_key), limit=8, item_limit=500
+                )
+        result[key] = projected
+
+    for key in ("adjudication",):
+        value = source.get(key)
+        if isinstance(value, Mapping):
+            projected = dict(value)
+            for text_key, limit in (
+                ("review_summary", 1400),
+                ("mission_focus", 900),
+            ):
+                if text_key in projected:
+                    projected[text_key] = sanitize_public_research_prose(
+                        projected.get(text_key), limit=limit
+                    )
+            result[key] = projected
+
+    for key in ("agent_dialogue", "divergence_steps"):
+        rows = source.get(key)
+        if not isinstance(rows, list):
+            continue
+        projected_rows: list[dict[str, Any]] = []
+        for row in rows:
+            if not isinstance(row, Mapping):
+                continue
+            projected_row = dict(row)
+            for text_key, limit in (
+                ("summary", 1600),
+                ("text", 1600),
+            ):
+                if text_key in projected_row:
+                    projected_row[text_key] = sanitize_public_research_prose(
+                        projected_row.get(text_key), limit=limit
+                    )
+            if any(
+                str(projected_row.get(text_key, "") or "").strip()
+                for text_key in ("summary", "text")
+            ):
+                projected_rows.append(projected_row)
+        result[key] = projected_rows
+
+    return result
+
+
 def format_deep_complete_answer(answer: Mapping[str, Any] | None) -> str:
     """Build the durable assistant transcript for one finished deep turn.
 
@@ -1259,7 +1411,7 @@ def format_deep_complete_answer(answer: Mapping[str, Any] | None) -> str:
     the process thread settles.
     """
 
-    payload = answer if isinstance(answer, Mapping) else {}
+    payload = sanitize_public_deep_answer(answer)
     sections = payload.get("sections", [])
     sections = sections if isinstance(sections, list) else []
     blocks: list[str] = []
@@ -1303,17 +1455,26 @@ def build_deep_complete_sections(
 ) -> list[dict[str, str]]:
     """Assemble the complete end-of-turn summary sections for deep dialogue."""
 
-    summaries = [str(item).strip() for item in (visible_summary or []) if str(item).strip()]
+    summaries = [
+        clean
+        for item in (visible_summary or [])
+        for clean in [sanitize_public_research_prose(item, limit=1600)]
+        if clean
+    ]
     dialogue = [item for item in (agent_dialogue or []) if isinstance(item, Mapping)]
     steps = [item for item in (dialogue_steps or []) if isinstance(item, Mapping)]
     direction_rows = [item for item in (directions or []) if isinstance(item, Mapping)]
     draft = capability_card_draft if isinstance(capability_card_draft, Mapping) else {}
     adjudication_row = adjudication if isinstance(adjudication, Mapping) else {}
-    questions = [str(item).strip() for item in (open_questions or []) if str(item).strip()]
-    reasons = [str(item).strip() for item in (block_reasons or []) if str(item).strip()]
-    rationale = str(selection_rationale or "").strip()
-    mission = str(adjudication_row.get("mission_focus", "") or "").strip()
-    review = str(adjudication_row.get("review_summary", "") or "").strip()
+    questions = sanitize_public_research_gaps(open_questions or [], limit=6, item_limit=500)
+    reasons = sanitize_public_research_gaps(block_reasons or [], limit=6, item_limit=500)
+    rationale = sanitize_public_research_prose(selection_rationale, limit=1400)
+    mission = sanitize_public_research_prose(
+        adjudication_row.get("mission_focus", ""), limit=900
+    )
+    review = sanitize_public_research_prose(
+        adjudication_row.get("review_summary", ""), limit=1400
+    )
     seed_label = str(source_equipment_label or "").strip()
     catalog_names = [
         str(item).strip()
@@ -1367,7 +1528,7 @@ def build_deep_complete_sections(
             "text": "\n\n".join(
                 (
                     f"**{item.get('axis') or item.get('role') or '发散'}**\n"
-                    f"{str(item.get('summary', '') or '').strip()}"
+                    f"{sanitize_public_research_prose(item.get('summary', ''), limit=1600)}"
                     + (
                         f"\n- 候选：{'、'.join(str(name) for name in item.get('proposal_names', [])[:3] if str(name).strip())}"
                         if isinstance(item.get("proposal_names"), list)
@@ -1380,7 +1541,7 @@ def build_deep_complete_sections(
                 and str(item.get("summary", "") or "").strip()
             )[:5200]
             or "\n\n".join(
-                f"**{item.get('title') or '步骤'}**\n{item.get('text') or ''}".strip()
+                f"**{item.get('title') or '步骤'}**\n{sanitize_public_research_prose(item.get('text', ''), limit=1600)}".strip()
                 for item in steps
                 if str(item.get("text", "") or "").strip()
             )[:4200]
@@ -1391,7 +1552,7 @@ def build_deep_complete_sections(
             "text": "\n\n".join(
                 (
                     f"**{item.get('role') or '议事 Agent'}**\n"
-                    f"{str(item.get('summary', '') or '').strip()}"
+                    f"{sanitize_public_research_prose(item.get('summary', ''), limit=1600)}"
                     + (
                         f"\n- {'、'.join(str(name) for name in (item.get('verdicts') or item.get('proposal_names') or [])[:6] if str(name).strip())}"
                         if (item.get("verdicts") or item.get("proposal_names"))
@@ -1453,7 +1614,7 @@ def build_deep_complete_sections(
         },
     ]
     draft_text = "\n\n".join(
-        f"#### {label}\n{str(draft.get(key, '') or '').strip()}"
+        f"#### {label}\n{sanitize_public_research_prose(draft.get(key, ''), limit=6000)}"
         for key, label in (
             ("overview", "概述"),
             ("technology_implementation", "装备与技术实现"),
@@ -1461,7 +1622,7 @@ def build_deep_complete_sections(
             ("capability_effects", "能力与作战效果"),
             ("winning_logic", "制胜逻辑机理"),
         )
-        if str(draft.get(key, "") or "").strip()
+        if sanitize_public_research_prose(draft.get(key, ""), limit=6000)
     )[:9000]
     if draft_text:
         sections.append({"title": "五栏能力画像", "text": draft_text})
@@ -1519,12 +1680,20 @@ def _default_module_texts(candidate: Mapping[str, Any], *, query: str, focus: st
     else:
         drafted_modules = {}
     # Preserve explicitly authored module fields supplied by an upstream
-    # adapter, but never derive prose from generic equipment metadata.
+    # adapter, including a prior formal/research card projection.  This is a
+    # recovery source only: it prevents an empty retry from erasing a column
+    # that the same canonical equipment already completed.
+    prior_modules = candidate.get("capability_portrait_modules")
+    prior_modules = prior_modules if isinstance(prior_modules, Mapping) else {}
     for key in module_keys:
         if key not in drafted_modules:
             direct = _bounded_text(candidate.get(key, ""), 6000)
             if direct:
                 drafted_modules[key] = direct
+        if key not in drafted_modules:
+            prior = _bounded_text(prior_modules.get(key, ""), 6000)
+            if prior:
+                drafted_modules[key] = prior
     if drafted_modules:
         return {key: drafted_modules.get(key, "") for key in module_keys}
 

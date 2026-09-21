@@ -36,6 +36,12 @@ def test_curated_equipment_sources_are_available_without_history(tmp_path) -> No
     rows = index.recommend("weapon_equipment", "装备能力缺口", limit=20)
 
     assert any(row["url"].startswith("https://www.gao.gov/") for row in rows)
+    assert any(row["url"].endswith(".cn/") for row in rows)
+    assert any(
+        row.get("source_region") == "domestic"
+        for row in rows
+        if row["url"].endswith(".cn/")
+    )
     assert all(row["learned"] is False for row in rows)
 
 

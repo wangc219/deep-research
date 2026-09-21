@@ -1,6 +1,0 @@
-hosted_search_citation
-source_title=mcwl.marines.mil · TM EABO
-source_url=https://www.mcwl.marines.mil/TM-EABO/
-claim=TM EABO被描述为权威但非最终定型的迭代性基线，用于支撑实兵、虚拟和构造实验，验证力量结构与能力需求。
-excerpt=
-retrieval=Hosted web search citation metadata

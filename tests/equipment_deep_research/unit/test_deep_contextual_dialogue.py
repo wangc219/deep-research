@@ -462,7 +462,22 @@ def test_deep_contextual_dialogue_compacts_agent_handoffs() -> None:
             captured.setdefault(phase, []).append(payload)
             captured_prompts.setdefault(phase, []).append(prompt)
             if phase == "deep_contextual_dialogue_divergence":
-                return {"agent_summary": "独立提案", "proposals": [_closed_proposal(agent_id)]}
+                proposal = _closed_proposal(agent_id)
+                proposal.update(
+                    {
+                        "branch_id": f"branch-{agent_id}",
+                        "branch_type": "mechanism_mutation",
+                        "novelty_delta": "把作用窗口前移",
+                        "counterfactual_test": "若边界失效则回退",
+                        "research_probe": "检索公开机理证据",
+                        "raw_provider_trace": "不应跨 agent 传播" * 2000,
+                    }
+                )
+                return {
+                    "agent_summary": "独立提案" + "原始过程" * 2000,
+                    "proposals": [proposal],
+                    "raw_packet": "不应跨 agent 传播" * 2000,
+                }
             if phase == "deep_contextual_dialogue_critique":
                 return {"review_summary": "通过", "selection_order": []}
             if phase.startswith("deep_contextual_dialogue_s6_column_"):
@@ -517,6 +532,18 @@ def test_deep_contextual_dialogue_compacts_agent_handoffs() -> None:
     critic = captured["deep_contextual_dialogue_critique"][0]
     assert "random_naming_style_assignment" not in critic
     assert len(critic["council_packets"]) == 3
+    assert all(
+        "raw_packet" not in packet
+        and "raw_provider_trace" not in str(packet)
+        and len(str(packet["agent_summary"])) <= 500
+        for packet in critic["council_packets"]
+    )
+    assert all(
+        proposal["branch_type"] == "mechanism_mutation"
+        and proposal["counterfactual_test"]
+        for packet in critic["council_packets"]
+        for proposal in packet["proposals"]
+    )
     assert all("random_naming_style_assignment" in item for item in divergence)
     first_codes = [
         item["random_naming_style_assignment"]["candidate_order"][0]["code"]
@@ -528,6 +555,18 @@ def test_deep_contextual_dialogue_compacts_agent_handoffs() -> None:
     synthesis = captured["deep_contextual_dialogue_synthesis"][0]
     assert "random_naming_style_assignment" in synthesis
     assert "existing_result" not in synthesis
+    assert all(
+        "raw_packet" not in packet
+        and "raw_provider_trace" not in str(packet)
+        and len(str(packet["agent_summary"])) <= 700
+        for packet in synthesis["council_packets"]
+    )
+    assert all(
+        proposal["branch_id"].startswith("branch-")
+        and proposal["novelty_delta"]
+        for packet in synthesis["council_packets"]
+        for proposal in packet["proposals"]
+    )
 
     # A council handoff is analysis-only. S6 receives a separate confirmed
     # turn after this direction has been committed to working memory.
@@ -670,14 +709,16 @@ def test_deep_contextual_dialogue_drops_thin_linear_upgrades() -> None:
                 raise AssertionError("thin proposals must not reach critique")
             return {"visible_summary": []}
 
-    try:
-        deep_contextual_dialogue(Host(), {"query": "单装备"})
-        raise AssertionError("expected empty council to raise")
-    except RuntimeError as exc:
-        assert "no proposals" in str(exc)
+    result = deep_contextual_dialogue(Host(), {"query": "单装备"})
+    assert result["finalization_status"] == "analysis_only"
+    assert result["deep_divergence_status"] == "partial"
+    assert result["quality_gate"]["non_blocking"] is True
+    assert result["quality_gate"]["block_reasons"] == []
+    assert result["concept_directions"] == []
+    assert any("未形成可合并候选" in item for item in result["visible_summary"])
 
 
-def test_deep_contextual_dialogue_keeps_incomplete_s6_as_non_blocking_draft() -> None:
+def test_deep_contextual_dialogue_keeps_exploratory_s6_text_and_advisory() -> None:
     class Host:
         async def _run_core_json(self, agent_id, prompt, payload, schema, budget, *, phase):
             if phase == "deep_contextual_dialogue_divergence":
@@ -705,11 +746,10 @@ def test_deep_contextual_dialogue_keeps_incomplete_s6_as_non_blocking_draft() ->
 
     assert result["finalization_status"] == "candidate_ready"
     assert result["quality_gate"]["publishable"] is True
-    assert result["quality_gate"]["non_blocking"] is True
-    assert result["quality_gate"]["candidate_reviews"][0]["closure_score"] == 1.0
+    assert result["quality_gate"]["missing_s6_columns"] == []
     assert result["orchestration"]["quality_gate_passed"] is True
-    assert result["quality_gate"]["block_reasons"] == []
-    assert any("S6" in gap for gap in result["research_gaps"])
+    assert len(result["capability_card_draft"]) == 5
+    assert any("装备与技术实现" in gap for gap in result["research_gaps"])
 
 
 def test_deep_contextual_dialogue_emits_live_mid_phase_progress() -> None:

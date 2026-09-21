@@ -4483,7 +4483,13 @@ async def _analyze_deep_divergence_subagents(
             options = {
                 "web_search": {"search_context_size": "medium", "external_web_access": True},
                 "include_web_sources": True,
-                "require_web_search": True,
+                # Retrieval enriches a deep direction but is not a prerequisite
+                # for returning the S3/S4 draft.  Some provider profiles (and
+                # transient gateway failures) reject a forced hosted-search
+                # tool call before producing any text; keeping the tool
+                # optional lets the workflow preserve the already completed
+                # direction and continue through the evidence gate normally.
+                "require_web_search": False,
                 "_run_id": run_id,
                 "_provider_retry_attempts": 1,
             }

@@ -10,6 +10,7 @@ from equipment_deep_research.deep_thinking import (
     create_session,
     format_deep_complete_answer,
     get_session,
+    sanitize_public_deep_answer,
     single_equipment_innovation_context,
     synthesize_reply,
     update_session,
@@ -340,3 +341,26 @@ def test_build_deep_complete_sections_states_leap_from_query_weapons() -> None:
     assert "折脊穿隙攻击无人机" in lead
     assert "潜伏先机节点" in lead
     assert "Query 已有装备" in lead
+
+
+def test_public_deep_answer_scrubs_nested_retrieval_status_before_persistence() -> None:
+    projected = sanitize_public_deep_answer(
+        {
+            "sections": [
+                {
+                    "title": "本轮结果",
+                    "text": "主路径先闭合供能与热控。来源边界提示：国内外检索通道不可达。",
+                }
+            ],
+            "provider_metadata": {
+                "diagnostic": "检索失败：gateway timeout",
+                "engineering_note": "落装位置仍需验证。",
+            },
+        }
+    )
+
+    encoded = json.dumps(projected, ensure_ascii=False)
+    assert "来源边界" not in encoded
+    assert "检索失败" not in encoded
+    assert "主路径先闭合供能与热控" in encoded
+    assert "落装位置仍需验证" in encoded

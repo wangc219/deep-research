@@ -11,6 +11,7 @@ from collections.abc import AsyncIterator, Iterable, Mapping, Sequence
 from http.client import RemoteDisconnected
 import json
 import os
+import re
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -99,6 +100,63 @@ def build_request_payload(
             }
         }
     return payload
+
+
+def _without_optional_web_search(payload: Mapping[str, Any]) -> dict[str, Any]:
+    """Remove only the hosted-search decoration from a retry payload.
+
+    Some Responses-compatible gateways implement the core endpoint but reject
+    the optional ``web_search`` tool.  Keep function tools, schemas and model
+    input intact so the caller still receives a useful structured answer.
+    """
+    downgraded = dict(payload)
+    declared_tools = payload.get("tools")
+    if isinstance(declared_tools, list):
+        remaining_tools = [
+            item
+            for item in declared_tools
+            if not (isinstance(item, Mapping) and item.get("type") == "web_search")
+        ]
+        if remaining_tools:
+            downgraded["tools"] = remaining_tools
+        else:
+            downgraded.pop("tools", None)
+    include = payload.get("include")
+    if isinstance(include, list):
+        remaining_include = [
+            item
+            for item in include
+            if str(item) != "web_search_call.action.sources"
+        ]
+        if remaining_include:
+            downgraded["include"] = remaining_include
+        else:
+            downgraded.pop("include", None)
+    tool_choice = payload.get("tool_choice")
+    if isinstance(tool_choice, Mapping) and tool_choice.get("type") == "web_search":
+        downgraded.pop("tool_choice", None)
+    return downgraded
+
+
+def _can_downgrade_optional_web_search(
+    exc: BaseException,
+    options: Mapping[str, Any],
+) -> bool:
+    """Allow a single search-less retry for optional-tool request rejects."""
+    if not isinstance(options.get("web_search"), Mapping):
+        return False
+    if bool(options.get("require_web_search")):
+        return False
+    detail = str(exc).lower()
+    # Gateways format the same rejection as ``status=400``, ``status_code:
+    # 400`` or ``HTTP Error 400``.  Read only the status token and keep the
+    # allow-list narrow so authentication, quota and server failures are
+    # never hidden behind a search-less retry.
+    status_matches = re.findall(
+        r"(?:status(?:_code)?\s*[:=]\s*|http(?:\s+error)?\s+)(\d{3})\b",
+        detail,
+    )
+    return any(int(value) in {400, 404, 405, 422} for value in status_matches)
 
 
 def _compact_contract_to_json_schema(value: object) -> dict[str, Any]:
@@ -378,31 +436,40 @@ class ResponsesProvider:
         the small injection seam used by tests and embedders.
         """
 
+        post_kwargs: dict[str, Any] = {}
         if bool(options.get("_disable_provider_timeout", False)):
-            return self._post(payload, disable_timeout=True)
-        requested = options.get("_provider_timeout_seconds")
-        if requested is not None:
-            try:
-                ceiling = float(self.timeout_seconds)
-                if bool(options.get("_allow_extended_provider_timeout", False)):
-                    try:
-                        configured_ceiling = float(
-                            os.environ.get(
-                                "EQUIPMENT_DR_BLUEPRINT_MAX_TIMEOUT_SECONDS",
-                                "180",
+            post_kwargs["disable_timeout"] = True
+        else:
+            requested = options.get("_provider_timeout_seconds")
+            if requested is not None:
+                try:
+                    ceiling = float(self.timeout_seconds)
+                    if bool(options.get("_allow_extended_provider_timeout", False)):
+                        try:
+                            configured_ceiling = float(
+                                os.environ.get(
+                                    "EQUIPMENT_DR_BLUEPRINT_MAX_TIMEOUT_SECONDS",
+                                    "180",
+                                )
                             )
-                        )
-                    except (TypeError, ValueError):
-                        configured_ceiling = 180.0
-                    ceiling = max(ceiling, configured_ceiling)
-                timeout_seconds = max(
-                    1.0,
-                    min(ceiling, float(requested)),
-                )
-            except (TypeError, ValueError):
-                timeout_seconds = float(self.timeout_seconds)
-            return self._post(payload, timeout_seconds=timeout_seconds)
-        return self._post(payload)
+                        except (TypeError, ValueError):
+                            configured_ceiling = 180.0
+                        ceiling = max(ceiling, configured_ceiling)
+                    post_kwargs["timeout_seconds"] = max(
+                        1.0,
+                        min(ceiling, float(requested)),
+                    )
+                except (TypeError, ValueError):
+                    post_kwargs["timeout_seconds"] = float(self.timeout_seconds)
+        try:
+            return self._post(payload, **post_kwargs)
+        except ProviderRequestError as exc:
+            if not _can_downgrade_optional_web_search(exc, options):
+                raise
+            # Search is an enrichment path for these workflows.  A gateway
+            # that rejects the optional tool can still complete the same
+            # contract without silently losing the whole discovery lane.
+            return self._post(_without_optional_web_search(payload), **post_kwargs)
 
     def _post(
         self,

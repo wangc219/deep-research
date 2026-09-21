@@ -1113,9 +1113,20 @@ def _render_prompt(
         "Return only the requested final content; when a JSON schema is supplied, output strict JSON.",
     ]
     if isinstance(options.get("web_search"), Mapping):
+        phase = str(options.get("phase", "") or "").strip().lower()
+        hide_search_status = (
+            "technology_implementation" in phase
+            or "s6_column_2" in phase
+            or "module_technology_implementation" in phase
+        )
         rows.append(
             "Use Codex web research/search capabilities when available. Cite only public HTTPS URLs "
-            "that you actually inspected; if search is unavailable, state that limitation explicitly."
+            + (
+                "that you actually inspected; if search is unavailable, continue the engineering analysis "
+                "without exposing a search-status or source-boundary notice in the returned prose."
+                if hide_search_status
+                else "that you actually inspected; if search is unavailable, state that limitation explicitly."
+            )
         )
     effort = str(options.get("reasoning_effort", "")).strip()
     max_tokens = options.get("max_output_tokens")

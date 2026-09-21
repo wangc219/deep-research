@@ -2,7 +2,7 @@ import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import {Activity, AlignLeft, Archive, ArrowUp, BarChart3, BookOpenCheck, Bot, BrainCircuit, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, CircleAlert, ClipboardCheck, Clock3, Command, Copy, CornerDownLeft, Database, Download, Eye, FileCheck2, FileSpreadsheet, FlaskConical, Gauge, GitCompare, History, Keyboard, Layers3, Lightbulb, ListFilter, MessageSquare, Pencil, Play, Plus, Printer, RefreshCw, Save, Search, Send, ShieldAlert, ShieldCheck, Sparkles, Star, Trash2, Upload, Wrench, X, Zap} from 'lucide-react';
+import {Activity, AlignLeft, Archive, ArrowUp, BarChart3, BookOpenCheck, Bot, BrainCircuit, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, CircleAlert, ClipboardCheck, Clock3, Command, Copy, CornerDownLeft, Database, Download, Eye, FileCheck2, FileSpreadsheet, FlaskConical, Gauge, GitCompare, History, Keyboard, Layers3, Lightbulb, ListFilter, MessageSquare, Pencil, Play, Plus, Printer, RefreshCw, Save, Search, Send, ShieldAlert, ShieldCheck, Sparkles, Star, Trash2, Undo2, Upload, Wrench, X, Zap} from 'lucide-react';
 import './styles.css';
 import './responsive-nav.css';
 import './live.css';
@@ -2231,6 +2231,48 @@ function capabilityLineageKey(row = {}) {
   const form = normalizeFavoriteText(source.equipment_form || source.equipment_category);
   return `legacy:${name}|${form}`;
 }
+// A deep-research projection may intentionally share the formal card's
+// hypothesis_id/card_binding_id. Those fields describe lineage, not a unique
+// visible card. Prefer the durable version identity and keep a deep/base
+// namespace for legacy rows so a refresh cannot replace the formal card.
+function capabilitySnapshotKey(row = {}) {
+  const source = row && typeof row === 'object' ? row : {};
+  const versionId = normalizeFavoriteText(source.version_id);
+  if (versionId) return `version:${versionId}`;
+  const capabilityId = normalizeFavoriteText(source.capability_id);
+  if (capabilityId) return `capability:${capabilityId}`;
+  const hypothesisId = normalizeFavoriteText(source.hypothesis_id);
+  const deep = isCapabilityDeepResearch(source);
+  const version = deep ? normalizeFavoriteText(source.version_no || source.research_version) : '';
+  if (hypothesisId) return `${deep ? 'deep' : 'formal'}:${hypothesisId}:${version}`;
+  const name = normalizeFavoriteText(source.name || source.title || source.capability_name);
+  return `${deep ? 'deep' : 'formal'}:name:${name}:${version}`;
+}
+function isCapabilityDeepResearch(row = {}) {
+  const source = row && typeof row === 'object' ? row : {};
+  const meta = capabilityDeepMeta(source);
+  const status = String(meta.status || '').toLowerCase();
+  const formalBaselineVersion = String(source.version_id || '').startsWith('baseline-') && source.is_deep_research !== true;
+  // Formal S6 rows may carry a ledger-backed v1/version_id.  Treat an
+  // explicit deep source or a non-formal verification state as the boundary;
+  // this keeps the immutable baseline out of the deep-research section.
+  return Boolean(
+    !formalBaselineVersion && source.is_deep_research
+    || !formalBaselineVersion && meta.source !== 'formal_s6'
+    || !formalBaselineVersion && ['pending', 'pending_verification', 'unverified', 'partial', 'rejected', 'rolled_back'].includes(status)
+    || !formalBaselineVersion && (meta.version && status && status !== 'formal' && status !== 'verified' && status !== 'approved' && status !== 'accepted'),
+  );
+}
+function capabilityCardDomKey(row = {}) {
+  const source = row && typeof row === 'object' ? row : {};
+  if (isCapabilityDeepResearch(source)) {
+    const versionId = normalizeFavoriteText(source.version_id);
+    if (versionId) return `deep:${versionId}`;
+    const identity = normalizeFavoriteText(source.capability_id || source.name || source.title || source.capability_name);
+    return identity ? `deep:${identity}` : `deep:${stableClientHash(JSON.stringify(source))}`;
+  }
+  return favoriteCardKey(source);
+}
 function capabilityVersionRank(row = {}, index = 0) {
   const meta = capabilityDeepMeta(row);
   const formal = ['formal', 'verified', 'approved', 'accepted'].includes(meta.status);
@@ -2267,6 +2309,7 @@ function CapabilityImageView({rows, referenceWeapons = [], runId = '', run = nul
   const [feedbackVerdict, setFeedbackVerdict] = useState('needs_revision');
   const [feedbackExpertScores, setFeedbackExpertScores] = useState(() => Object.fromEntries(S5_SCORE_DIMENSIONS.map(({key}) => [key, ''])));
   const [feedbackSaving, setFeedbackSaving] = useState(false);
+  const [feedbackMutationBusy, setFeedbackMutationBusy] = useState({});
   const [feedbackError, setFeedbackError] = useState('');
   const [feedbackLoadError, setFeedbackLoadError] = useState('');
   const feedbackDialogRef = useOverlay(feedbackOpen, {onEscape: () => setFeedbackOpen(false)});
@@ -2361,9 +2404,9 @@ function CapabilityImageView({rows, referenceWeapons = [], runId = '', run = nul
     const research = Array.isArray(result.data?.research) ? result.data.research : [];
     if (research.length) setSnapshotRows(current => {
       const base = Array.isArray(current) ? current : displayedRows;
-      const byKey = new Map(base.map(item => [String(item?.hypothesis_id || item?.capability_id || ''), item]));
+      const byKey = new Map(base.map(item => [capabilitySnapshotKey(item), item]));
       research.forEach(item => {
-        const key = String(item?.hypothesis_id || item?.capability_id || '');
+        const key = capabilitySnapshotKey(item);
         if (key) byKey.set(key, item);
       });
       return [...byKey.values()];
@@ -2498,9 +2541,43 @@ function CapabilityImageView({rows, referenceWeapons = [], runId = '', run = nul
     const timer = setTimeout(() => target.classList.remove('capability-highlight'), 2600);
     return () => clearTimeout(timer);
   }, [highlightedCardKey, rows]);
+  const focusCapabilityCard = cardKey => {
+    const targetKey = String(cardKey || '').trim();
+    if (!targetKey) return;
+    const target = [...document.querySelectorAll('.capability-sheet')].find(node => node.dataset.cardKey === targetKey);
+    if (!target) return;
+    target.scrollIntoView({behavior: 'smooth', block: 'start'});
+    target.classList.remove('capability-highlight');
+    // Restart the short focus animation when the user jumps between cards.
+    void target.offsetWidth;
+    target.classList.add('capability-highlight');
+    window.setTimeout(() => target.classList.remove('capability-highlight'), 2600);
+  };
+  const focusCapabilityRow = row => focusCapabilityCard(capabilityCardDomKey(row));
+  const focusDeepResearchPanel = () => {
+    const panel = document.getElementById('deep-research-cards');
+    if (!panel) return;
+    panel.scrollIntoView({behavior: 'smooth', block: 'start'});
+  };
+  const formalRows = useMemo(() => displayedRows.filter(row => !isCapabilityDeepResearch(row)), [displayedRows]);
+  const deepResearchRows = useMemo(() => displayedRows.filter(row => isCapabilityDeepResearch(row)), [displayedRows]);
+  const deepResearchCards = useMemo(() => {
+    const findFormalBaseline = row => {
+      const fields = ['hypothesis_id', 'card_binding_id', 'capability_id'];
+      for (const field of fields) {
+        const value = normalizeFavoriteText(row?.[field]);
+        if (!value) continue;
+        const byIdentity = formalRows.find(candidate => normalizeFavoriteText(candidate?.[field]) === value);
+        if (byIdentity) return byIdentity;
+      }
+      const name = normalizeFavoriteText(row?.equipment_direction || row?.primary_equipment_identity || row?.name || row?.title || row?.capability_name);
+      return name ? formalRows.find(candidate => normalizeFavoriteText(candidate?.name || candidate?.title || candidate?.capability_name) === name) || null : null;
+    };
+    return deepResearchRows.map((row, index) => ({row, index, formalRow: findFormalBaseline(row)}));
+  }, [deepResearchRows, formalRows]);
   const capabilityVersionGroups = useMemo(() => {
     const groups = new Map();
-    displayedRows.forEach((row, index) => {
+    formalRows.forEach((row, index) => {
       const key = capabilityLineageKey(row) || `row:${index}`;
       if (!groups.has(key)) groups.set(key, {key, rows: []});
       groups.get(key).rows.push({row, index});
@@ -2515,13 +2592,9 @@ function CapabilityImageView({rows, referenceWeapons = [], runId = '', run = nul
         return 0;
       });
       const name = ordered[0]?.row?.name || ordered[0]?.row?.title || ordered[0]?.row?.capability_name || '未命名能力';
-      const hasVersionChain = ordered.length > 1 || ordered.some(({row}) => {
-        const meta = capabilityDeepMeta(row);
-        return Boolean(row?.is_deep_research || meta.version || meta.source !== 'formal_s6');
-      });
-      return {...group, rows: ordered, name, hasVersionChain};
+      return {...group, rows: ordered, name, hasVersionChain: false};
     });
-  }, [displayedRows]);
+  }, [formalRows]);
   const feedbackCapability = displayedRows.find(row => String(row.capability_id || row.name) === feedbackTarget);
   const feedbackModelScores = portfolioS5Scores(feedbackCapability);
   const storedFeedbackWeighted = feedbackCapability?.s5_weighted_score;
@@ -2556,6 +2629,27 @@ function CapabilityImageView({rows, referenceWeapons = [], runId = '', run = nul
     const saved = result.data?.feedback || (result.data?.feedback_id ? result.data : null);
     if (!saved) { setFeedbackError('反馈接口返回了无效结果，请刷新后重试。'); return; }
     setFeedbackItems(current => [...current, saved]); setFeedbackLoadError(''); setFeedbackComment(''); resetFeedbackScores(); setFeedbackOpen(false);
+  };
+  const rollbackFeedback = async item => {
+    const feedbackId = String(item?.feedback_id || '').trim();
+    if (!encodedRunId || !feedbackId || feedbackMutationBusy[feedbackId]) return;
+    if (!window.confirm(`确定回滚“${item?.capability_name || '本任务整体反馈'}”吗？\n\n该反馈会从当前审核列表移除，并停止作为后续 Agent 的记忆输入。原始审计记录仍会保留。`)) return;
+    setFeedbackMutationBusy(current => ({...current, [feedbackId]: true}));
+    const mutationNonce = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+    const result = await requestResult(`/runs/${encodedRunId}/expert-feedback/${encodeURIComponent(feedbackId)}/rollback`, {
+      method: 'POST',
+      headers: {...deepScopeHeadersForRun(run), 'Content-Type': 'application/json', 'Idempotency-Key': `rollback-feedback:${feedbackId}:${mutationNonce}`},
+      body: JSON.stringify({reason: '审核者从任务反馈面板回滚'}),
+    });
+    setFeedbackMutationBusy(current => ({...current, [feedbackId]: false}));
+    if (!result.ok) {
+      setFeedbackLoadError(result.detail || '反馈回滚失败，请稍后重试。');
+      notify('反馈回滚失败', 'error');
+      return;
+    }
+    setFeedbackItems(current => current.filter(entry => String(entry?.feedback_id || '') !== feedbackId));
+    setFeedbackLoadError('');
+    notify('反馈已回滚，后续 Agent 将不再读取该记忆', 'ok');
   };
   const feedbackCount = feedbackItems.length;
   const versionStatusLabel = status => ({formal:'正式基线', verified:'已核验', pending_verification:'待核验', pending:'待核验', rejected:'已驳回', rolled_back:'已回滚', deleted:'已删除', partial:'部分结果', blocked:'已阻塞', failed:'失败', cancelled:'已取消'}[String(status || '').toLowerCase()] || String(status || '待核验'));
@@ -2620,7 +2714,7 @@ function CapabilityImageView({rows, referenceWeapons = [], runId = '', run = nul
       console.error('DOCX export failed', error); notify('DOCX 导出失败，请稍后重试', 'error');
     }
   };
-  const renderCapabilityCard = ({row, index}) => {
+  const renderCapabilityCard = ({row, index, formalRow = null}) => {
     const portrait = completeCapabilityText(row.deep_capability_portrait || row.capability_image);
     const meta = capabilityDeepMeta(row);
     const equipmentName = capabilityEquipmentName(row) || row.name || '未命名装备';
@@ -2629,28 +2723,45 @@ function CapabilityImageView({rows, referenceWeapons = [], runId = '', run = nul
     // A ledger-backed formal S6 baseline also carries version_no=v1.  Version
     // metadata alone must not relabel that immutable baseline as a deep result
     // or expose a delete control that the server will correctly reject.
-    const formalBaseline = meta.status === 'formal' && meta.source === 'formal_s6' && !row.is_deep_research;
-    const deepResearch = !formalBaseline && Boolean(row.is_deep_research || meta.source !== 'formal_s6' || meta.version);
+    const deepResearch = isCapabilityDeepResearch(row);
     const components = row.confidence_components || {};
     const scoreTitle = `证据贴合 ${Math.round((components.evidence_fit || 0) * 100)}% · 前瞻可验证 ${Math.round((components.foresight || 0) * 100)}%`;
     const cardFeedback = feedbackItems.filter(item => (item.capability_id && item.capability_id === row.capability_id) || (item.capability_name && item.capability_name === row.name));
-    const cardKey = favoriteCardKey(row);
-    const favorite = favoriteIndex?.[favoriteIndexKey(runId, row)] || (row.favorited ? {favorite_id: row.favorite_id || row.id || '', card_key: cardKey} : null);
-    const favorited = Boolean(favorite || row.favorited);
+    const cardKey = capabilityCardDomKey(row);
+    // A deep card can share the formal card's binding ID for lineage. Do not
+    // inherit the formal card's favorite state through that shared index key.
+    const favorite = !deepResearch && (favoriteIndex?.[favoriteIndexKey(runId, row)] || (row.favorited ? {favorite_id: row.favorite_id || row.id || '', card_key: cardKey} : null));
+    const favorited = Boolean(favorite || (!deepResearch && row.favorited));
     const favoriteEligible = capabilityPortraitIsComplete(row) && !pendingVerification;
     const favoritePending = Boolean(favorite?.pending);
+    const comparisonFields = formalRow ? [
+      ['装备名称', capabilityEquipmentName(formalRow) || formalRow.name || '—', equipmentName || '—'],
+      ['装备方向', capabilityEquipmentDirection(formalRow) || capabilityDisplayEquipmentForm(formalRow) || '—', equipmentDirection || '—'],
+      ['能力分类', capabilityClassificationText(formalRow.capability_classification), capabilityClassificationText(row.capability_classification)],
+      ['概述', parseCapabilityPortrait(completeCapabilityText(formalRow.deep_capability_portrait || formalRow.capability_image)).overview || '—', parseCapabilityPortrait(portrait).overview || '—'],
+      ...['装备与技术实现', '关键作战流程', '形成能力与作战效果', '制胜逻辑'].map(label => {
+        const formalParsed = parseCapabilityPortrait(completeCapabilityText(formalRow.deep_capability_portrait || formalRow.capability_image));
+        const researchParsed = parseCapabilityPortrait(portrait);
+        const formalPoints = Object.fromEntries(formalParsed.points.map(item => [item.label, item.text]));
+        const researchPoints = Object.fromEntries(researchParsed.points.map(item => [item.label, item.text]));
+        const fallback = value => value || '—';
+        return [label, fallback(formalPoints[label] || (label === '制胜逻辑' ? formalPoints['制胜逻辑机理'] : '')), fallback(researchPoints[label] || (label === '制胜逻辑' ? researchPoints['制胜逻辑机理'] : ''))];
+      }),
+    ] : [];
     return <article className={`capability-sheet${pendingVerification ? ' pending-verification' : ''}${deepResearch ? ' deep-research-capability' : ''}`} data-card-key={cardKey} key={`${row.capability_id || row.name || 'capability'}-${index}`}>
-      <header><div><div className="capability-title-row"><div className="capability-identity"><span>装备名称</span><h2>{equipmentName}{meta.version ? <small className="capability-version-label">v{meta.version}</small> : null}</h2>{equipmentDirection && <p><b>装备方向</b>{equipmentDirection}</p>}</div>{deepResearch && <span className="capability-source-badge deep-research-source">深研结果</span>}<button type="button" className={`favorite-star${favorited ? ' is-favorited' : ''}${favoritePending ? ' is-pending' : ''}`} disabled={(!favoriteEligible && !favorited) || favoritePending || !onFavoriteToggle} aria-pressed={favorited} aria-label={favorited ? `取消收藏：${equipmentName}` : `收藏：${equipmentName}`} title={!favoriteEligible && !favorited ? '仅完整 S6 能力画像可收藏' : favorited ? '取消收藏' : '收藏能力画像'} onClick={() => void onFavoriteToggle(row, runId, !favorited)}><Star size={17} fill={favorited ? 'currentColor' : 'none'}/></button></div><div className="capability-card-actions"><button type="button" onClick={() => openFeedback(row.capability_id || row.name)}><MessageSquare size={13}/>针对本卡反馈</button><button type="button" className="deep-followup-button" onClick={() => openDeepContext('capability-followup', {row, ...row, capability_name: equipmentName}, `以“${equipmentName}”为种子，从不同制胜角度改写其构型、作用机理与作战角色。`)}><BrainCircuit size={13}/>定向深研 / 追问</button>{deepResearch && row.version_id && <button type="button" className="capability-version-delete" disabled={Boolean(versionMutationBusy[row.version_id])} onClick={() => void mutateCapabilityVersion({version_id: row.version_id, version_no: row.version_no || meta.version, status: meta.status, snapshot: row})}><Trash2 size={13}/>{versionMutationBusy[row.version_id] ? '删除中…' : '删除此版本'}</button>}{cardFeedback.length > 0 && <span><MessageSquare size={12}/> {cardFeedback.length} 条反馈</span>}{deepResearch && <span className="deep-job-chip">{meta.statusLabel} · {meta.source || '深研来源'}</span>}</div></div><div className="capability-score" title={scoreTitle}><b>{confidencePercent(row.confidence)}</b><small>{pendingVerification ? '综合置信度（待核验）' : '综合置信度'}</small></div></header>
+      <header><div><div className="capability-title-row"><div className="capability-identity"><span>装备名称</span><h2>{equipmentName}{meta.version ? <small className="capability-version-label">v{meta.version}</small> : null}</h2>{equipmentDirection && <p><b>装备方向</b>{equipmentDirection}</p>}</div>{deepResearch && <span className="capability-source-badge deep-research-source">深研结果</span>}<button type="button" className={`favorite-star${favorited ? ' is-favorited' : ''}${favoritePending ? ' is-pending' : ''}`} disabled={(!favoriteEligible && !favorited) || favoritePending || !onFavoriteToggle} aria-pressed={favorited} aria-label={favorited ? `取消收藏：${equipmentName}` : `收藏：${equipmentName}`} title={!favoriteEligible && !favorited ? '仅完整 S6 能力画像可收藏' : favorited ? '取消收藏' : '收藏能力画像'} onClick={() => void onFavoriteToggle(row, runId, !favorited)}><Star size={17} fill={favorited ? 'currentColor' : 'none'}/></button></div><div className="capability-card-actions"><button type="button" onClick={() => openFeedback(row.capability_id || row.name)}><MessageSquare size={13}/>针对本卡反馈</button><button type="button" className="deep-followup-button" onClick={() => openDeepContext('capability-followup', {row, ...row, capability_name: equipmentName}, `以“${equipmentName}”为种子，从不同制胜角度改写其构型、作用机理与作战角色。`)}><BrainCircuit size={13}/>定向深研 / 追问</button>{deepResearch && formalRow && <button type="button" className="capability-jump-button" onClick={() => focusCapabilityRow(formalRow)}><Eye size={13}/>查看正式原卡</button>}{deepResearch && row.version_id && <button type="button" className="capability-version-delete" disabled={Boolean(versionMutationBusy[row.version_id])} onClick={() => void mutateCapabilityVersion({version_id: row.version_id, version_no: row.version_no || meta.version, status: meta.status, snapshot: row})}><Trash2 size={13}/>{versionMutationBusy[row.version_id] ? '删除中…' : '删除此版本'}</button>}{cardFeedback.length > 0 && <span><MessageSquare size={12}/> {cardFeedback.length} 条反馈</span>}{deepResearch && <span className="deep-job-chip">{meta.statusLabel} · {meta.source || '深研来源'}</span>}</div></div><div className="capability-score" title={scoreTitle}><b>{confidencePercent(row.confidence)}</b><small>{pendingVerification ? '综合置信度（待核验）' : '综合置信度'}</small></div></header>
       <WeaponDimensions classification={row.capability_classification}/>{portrait ? <CapabilityPortrait value={portrait}/> : <div className="capability-legacy-note">等待 S6 单卡成稿</div>}
+      {deepResearch && formalRow && <section className="deep-research-comparison"><header><div><GitCompare size={15}/><span><b>与正式原卡对比</b><small>正式卡保持不变，以下仅展示本次深研形成的独立版本差异。</small></span></div><button type="button" className="capability-jump-button" onClick={() => focusCapabilityRow(formalRow)}><Eye size={13}/>定位正式原卡</button></header><div className="deep-research-comparison-grid"><div><strong>正式原卡</strong>{comparisonFields.map(([label, formalValue]) => <dl key={`formal-${label}`}><dt>{label}</dt><dd>{formalValue}</dd></dl>)}</div><div><strong>当前深研卡片</strong>{comparisonFields.map(([label, _formalValue, researchValue]) => <dl key={`research-${label}`}><dt>{label}</dt><dd>{researchValue}</dd></dl>)}</div></div></section>}
     </article>;
   };
   return <section className="capability-view">
-    <div className="capability-toolbar"><div><b>能力画像成果</b><small>深研命名复用 S3/S4 的 A–O 类型分配；画像正文严格复用 S6 五栏原始写作规范，并保留可删除、可恢复的版本链</small></div><div><button type="button" className="deep-toolbar-button" onClick={() => openDeepContext('deep-thinking', {title: '当前研究的深度思考'}, '选择一个目标装备，经内部多维深度发散形成新质构型、机理与作战角色，并收敛为五栏能力画像。')}><BrainCircuit size={14}/>深度思考 Agent</button><button type="button" className={versionManagerOpen ? 'is-active' : ''} onClick={() => { const next = !versionManagerOpen; setVersionManagerOpen(next); if (next) void loadVersionLedger(); }}><GitCompare size={14}/>深研版本管理</button><button type="button" onClick={() => void exportCapabilityCards()}><Download size={14}/>导出 DOCX</button><button type="button" className="primary" onClick={() => window.print()}><Printer size={14}/>打印 / 导出 PDF</button></div></div>
+    <div className="capability-toolbar"><div><b>能力画像成果</b><small>正式 S6 基线与深研对话结果分区保留；深研卡片可定位原卡并展开差异对比</small></div><div>{deepResearchRows.length > 0 && <button type="button" className="deep-research-jump-button" onClick={focusDeepResearchPanel}><Layers3 size={14}/>深研卡片 <span>{deepResearchRows.length}</span></button>}<button type="button" className="deep-toolbar-button" onClick={() => openDeepContext('deep-thinking', {title: '当前研究的深度思考'}, '选择一个目标装备，经内部多维深度发散形成新质构型、机理与作战角色，并收敛为五栏能力画像。')}><BrainCircuit size={14}/>深度思考 Agent</button><button type="button" className={versionManagerOpen ? 'is-active' : ''} onClick={() => { const next = !versionManagerOpen; setVersionManagerOpen(next); if (next) void loadVersionLedger(); }}><GitCompare size={14}/>深研版本管理</button><button type="button" onClick={() => void exportCapabilityCards()}><Download size={14}/>导出 DOCX</button><button type="button" className="primary" onClick={() => window.print()}><Printer size={14}/>打印 / 导出 PDF</button></div></div>
     {versionManagerOpen && <section className="capability-version-manager"><header><div><GitCompare size={16}/><span><b>深研版本管理</b><small>正式 S6 基线不可删除；深研版本可先隐藏后恢复，也可对已隐藏版本永久删除。</small></span></div><button type="button" className="icon-button" onClick={() => setVersionManagerOpen(false)} aria-label="关闭版本管理"><X size={16}/></button></header>{versionManagerError && <p className="form-error"><CircleAlert size={14}/>{versionManagerError}</p>}{versionManagerLoading ? <div className="capability-version-manager-empty"><RefreshCw size={15} className="spin"/>正在读取版本链…</div> : versionLedger.length ? <div className="capability-version-manager-list">{versionLedger.slice().reverse().map(version => { const status = String(version.status || 'pending_verification').toLowerCase(); const deleted = status === 'deleted'; const formal = status === 'formal'; const versionName = version?.snapshot?.name || version?.snapshot?.title || '未命名能力画像'; const busy = Boolean(versionMutationBusy[version.version_id]); return <article className={deleted ? 'is-deleted' : ''} key={version.version_id}><div><b>{versionName}</b><span><em>v{version.version_no || '?'}</em><small className={`version-manager-status ${status}`}>{versionStatusLabel(status)}</small><small>{version.created_at ? new Date(version.created_at).toLocaleString('zh-CN', {hour12:false}) : ''}</small></span></div>{formal ? <span className="version-manager-protected"><ShieldCheck size={13}/>不可变基线</span> : deleted ? <div className="version-manager-actions"><button type="button" className="version-restore-button" disabled={busy} onClick={() => void mutateCapabilityVersion(version, 'restore')}>{busy ? <RefreshCw size={13} className="spin"/> : <History size={13}/>} {busy ? '处理中…' : '恢复'}</button><button type="button" className="capability-version-purge" disabled={busy} onClick={() => void mutateCapabilityVersion(version, 'purge')}>{busy ? <RefreshCw size={13} className="spin"/> : <Trash2 size={13}/>} {busy ? '处理中…' : '永久删除'}</button></div> : <button type="button" className="capability-version-delete" disabled={busy} onClick={() => void mutateCapabilityVersion(version, 'delete')}>{busy ? <RefreshCw size={13} className="spin"/> : <Trash2 size={13}/>} {busy ? '处理中…' : '删除'}</button>}</article>; })}</div> : <div className="capability-version-manager-empty">当前任务尚无深研版本。</div>}</section>}
     <div className={`capability-print-table ${capabilityPageProfile.pageClass}`}><h1>能力画像</h1><table><colgroup>{capabilityColumnWidths.map((width, index) => <col key={`cap-col-${index}`} style={{width: `${width}%`}} />)}</colgroup><thead><tr>{capabilityTableHeaders.map(label => <th key={label}>{label}</th>)}</tr></thead><tbody>{capabilityTableRows.map((cells, index) => <tr key={`print-${displayedRows[index]?.version_id || displayedRows[index]?.capability_id || 'capability'}-${index}`}>{cells.map((cell, cellIndex) => <td key={`${index}-${cellIndex}`}>{cell}</td>)}</tr>)}</tbody></table>{referenceTableRows.length > 0 && <section className={`capability-reference-print-block ${capabilityPageProfile.pageClass === 'page-a3' ? 'page-break-before' : ''}`}><h2>参考装备</h2><table><colgroup>{referenceColumnWidths.map((width, index) => <col key={`ref-col-${index}`} style={{width: `${width}%`}} />)}</colgroup><thead><tr><th>参考装备</th><th>概述</th></tr></thead><tbody>{referenceTableRows.map((cells, index) => <tr key={`print-ref-${index}`}>{cells.map((cell, cellIndex) => <td key={`${index}-${cellIndex}`}>{cell}</td>)}</tr>)}</tbody></table></section>}</div>
-    <section className="expert-feedback-panel"><header><div><span className="expert-feedback-icon"><MessageSquare size={17}/></span><span><b>专家审核反馈</b><small>画像卡反馈统一记录五维评分与意见；任务整体反馈保留为文字意见。</small></span></div><div className="expert-feedback-head-actions"><em>{feedbackCount ? `已记录 ${feedbackCount} 条` : '尚未反馈'}</em><button type="button" className="primary" onClick={() => openFeedback('')}><MessageSquare size={14}/>提交反馈</button></div></header><div className="expert-feedback-learning"><Sparkles size={15}/><span><b>记忆处理 Agent 已接入</b><small>自动去重、压缩、相关性评分，并限制每个后续 Agent 读取的记忆数量，避免多卡反馈造成上下文噪声。</small></span></div>{feedbackLoadError && <p className="form-error"><CircleAlert size={14}/>{feedbackLoadError}</p>}{feedbackCount > 0 && <div className="expert-feedback-history">{feedbackItems.slice(-3).reverse().map(item => <article key={item.feedback_id}><header><span className="feedback-verdict processed">已处理</span><b>{item.capability_name || '本任务整体'}</b>{Number.isFinite(Number(item.expert_weighted_score)) && item.expert_weighted_score != null && <span className="feedback-score-chip">专家综合 {Math.round(Number(item.expert_weighted_score) * 100)}</span>}<small>{item.created_at ? new Date(item.created_at).toLocaleString('zh-CN', {hour12:false}) : ''}</small></header><p>{item.comment || '未填写反馈意见。'}</p>{item.learning_signal && <div><Sparkles size={13}/><span><b>已提炼高价值记忆 · {Array.isArray(item.target_agent_ids) ? item.target_agent_ids.join('、') : '自动路由'}</b>{item.learning_signal}</span></div>}</article>)}</div>}</section>
+    <section className="expert-feedback-panel"><header><div><span className="expert-feedback-icon"><MessageSquare size={17}/></span><span><b>专家审核反馈</b><small>画像卡反馈统一记录五维评分与意见；任务整体反馈保留为文字意见。</small></span></div><div className="expert-feedback-head-actions"><em>{feedbackCount ? `已记录 ${feedbackCount} 条` : '尚未反馈'}</em><button type="button" className="primary" onClick={() => openFeedback('')}><MessageSquare size={14}/>提交反馈</button></div></header><div className="expert-feedback-learning"><Sparkles size={15}/><span><b>记忆处理 Agent 已接入</b><small>自动去重、压缩、相关性评分，并限制每个后续 Agent 读取的记忆数量，避免多卡反馈造成上下文噪声。</small></span></div>{feedbackLoadError && <p className="form-error"><CircleAlert size={14}/>{feedbackLoadError}</p>}{feedbackCount > 0 && <div className="expert-feedback-history">{feedbackItems.slice(-3).reverse().map(item => { const feedbackId = String(item?.feedback_id || ''); const busy = Boolean(feedbackMutationBusy[feedbackId]); return <article key={feedbackId}><header><span className="feedback-verdict processed">已处理</span><b>{item.capability_name || '本任务整体'}</b>{Number.isFinite(Number(item.expert_weighted_score)) && item.expert_weighted_score != null && <span className="feedback-score-chip">专家综合 {Math.round(Number(item.expert_weighted_score) * 100)}</span>}<small>{item.created_at ? new Date(item.created_at).toLocaleString('zh-CN', {hour12:false}) : ''}</small></header><p>{item.comment || '未填写反馈意见。'}</p>{item.learning_signal && <div><Sparkles size={13}/><span><b>已提炼高价值记忆 · {Array.isArray(item.target_agent_ids) ? item.target_agent_ids.join('、') : '自动路由'}</b>{item.learning_signal}</span></div>}<footer className="expert-feedback-item-actions"><small>回滚后保留审计记录，但不再进入后续记忆。</small><button type="button" className="feedback-rollback-button" disabled={busy} onClick={() => void rollbackFeedback(item)}>{busy ? <RefreshCw size={13} className="spin"/> : <Undo2 size={13}/>} {busy ? '回滚中…' : '回滚反馈'}</button></footer></article>; })}</div>}</section>
     {feedbackOpen && <div className="expert-feedback-modal-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) setFeedbackOpen(false); }}><form className="expert-feedback-form portfolio-score-feedback-form" ref={feedbackDialogRef} role="dialog" aria-modal="true" aria-label="提交专家审核意见" onSubmit={submitFeedback} onMouseDown={event => event.stopPropagation()}><header><div><b>{feedbackCapability ? '针对本卡反馈' : '提交专家审核意见'}</b><small>{feedbackCapability ? `${feedbackCapability.name || '能力画像'} · 五维评分与 S5 保持同一口径` : '任务整体反馈将自动处理后路由给相关 S1–S6 Agent。'}</small></div><button type="button" className="icon-button" onClick={() => setFeedbackOpen(false)} aria-label="关闭反馈表单"><X size={16}/></button></header><label className="expert-feedback-target"><span>反馈对象</span><select value={feedbackTarget} onChange={event => { setFeedbackTarget(event.target.value); setFeedbackVerdict('needs_revision'); resetFeedbackScores(); }}><option value="">本任务整体能力画像</option>{displayedRows.map((row, index) => <option key={`${row.version_id || row.capability_id || row.name || 'capability'}-${index}`} value={row.capability_id || row.name}>{row.name}</option>)}</select></label>{feedbackCapability && <><section className="portfolio-score-comparison" aria-label="模型评分与专家评分对照"><header><span>评分维度</span><span>当前 S5</span><span>专家评分</span></header>{S5_SCORE_DIMENSIONS.map(({key, label, weight}) => <label key={key}><span><b>{label}</b><small>权重 {Math.round(weight * 100)}%</small></span><output>{Number.isFinite(feedbackModelScores[key]) ? Math.round(feedbackModelScores[key] * 100) : '—'}</output><span className="portfolio-score-input"><input type="number" min="0" max="100" step="1" inputMode="numeric" value={feedbackExpertScores[key]} onChange={event => setFeedbackExpertScores(current => ({...current, [key]: event.target.value}))} aria-label={`${label}专家评分`} required/><em>分</em></span></label>)}<footer><span>综合评分</span><output>{feedbackModelWeighted == null ? '—' : Math.round(feedbackModelWeighted * 100)}</output><b>{feedbackExpertWeighted == null ? '待填写' : Math.round(feedbackExpertWeighted * 100)}</b></footer></section><label><span>审核结论</span><select value={feedbackVerdict} onChange={event => setFeedbackVerdict(event.target.value)}><option value="approved">认可画像</option><option value="needs_revision">建议修订</option><option value="rejected">建议淘汰</option></select></label></>}<label><span>反馈意见</span><textarea value={feedbackComment} onChange={event => setFeedbackComment(event.target.value)} maxLength={4000} placeholder={feedbackCapability ? '说明评分差异、关键依据或需要修订的判断……' : '指出整体画像中最有价值、最不准确或需要补强的地方……'} required/></label>{feedbackCapability && <div className="portfolio-calibration-note"><Sparkles size={14}/><span><b>评分校准样本</b><small>模型原分、专家分与差值一并保存；通过回放或专家裁决验证后，才用于后续 S5 评分校准。</small></span></div>}{feedbackError && <p className="form-error"><CircleAlert size={14}/>{feedbackError}</p>}<footer><small>{feedbackCapability ? '权重仍按 30/30/20/10/10 计算并定向路由到 S5' : '保存后自动提炼、去重并路由到相关 Agent'}</small><button type="submit" className="primary" disabled={feedbackSaving}>{feedbackSaving ? '保存中…' : feedbackCapability ? '提交评分反馈' : '提交反馈'}<Send size={14}/></button></footer></form></div>}
     {capabilityVersionGroups.map(group => <section className={`capability-version-group${group.hasVersionChain ? ' has-version-chain' : ''}`} key={group.key}>{group.hasVersionChain && <header className="capability-version-group-header"><div><GitCompare size={14}/><b>{group.name}</b></div><span>{group.rows.length > 1 ? `正式版本 + ${group.rows.length - 1} 个深研版本` : '深研版本'}</span></header>}{group.rows.map(item => renderCapabilityCard(item))}</section>)}
+    {deepResearchCards.length > 0 && <section className="capability-deep-research-panel" id="deep-research-cards"><header><div><span className="deep-research-panel-icon"><GitCompare size={17}/></span><span><b>深研卡片</b><small>来自深研对话的独立能力画像，不覆盖正式原卡；选择卡片可定位原卡或查看差异。</small></span></div><em>{deepResearchCards.length} 张</em></header><div className="capability-deep-research-list">{deepResearchCards.map(item => renderCapabilityCard({row: item.row, index: `deep-${item.index}`, formalRow: item.formalRow}))}</div></section>}
     {visibleReferenceWeapons.length > 0 && <section className="capability-reference-library"><header><div><b>参考武器</b><small>仅展示具备明确装备名称或形态、但未进入本轮 S6 详细画像的候选；深度研究锁定单个装备，在当前 Query 下对话式发散，不重新执行完整 S1–S6</small></div><em>{visibleReferenceWeapons.length} 条</em></header>{referenceResearchError && <p className="reference-research-error"><CircleAlert size={13}/>{referenceResearchError}</p>}<div className="capability-reference-grid">{visibleReferenceWeapons.map((candidate, index) => { const weaponName = weaponCandidateTitle(candidate); const equipmentForm = weaponCandidateForm(candidate); const overview = swarmCandidateOverview(candidate); const researchKey = referenceResearchKey(candidate); const job = referenceResearchJobFor(candidate); const busy = Boolean(referenceResearchBusy[researchKey]); const jobStatus = String(job?.status || '').toLowerCase(); const merged = Boolean(job?.merged || String(job?.merge_status || '').toLowerCase() === 'merged_pending_verification'); return <article className={`capability-reference-card${merged ? ' deep-research-started' : ''}`} key={candidate.hypothesis_id || `${weaponName}-${index}`}><header><span className="capability-reference-badge">参考</span><span><b>{weaponName || equipmentForm}</b>{equipmentForm && equipmentForm !== weaponName && <small>{equipmentForm}</small>}</span></header><p>{overview || '暂无参考概述。'}</p><footer className="capability-reference-actions"><span className="reference-research-status">{busy ? <><RefreshCw size={12} className="spin"/>打开中…</> : merged ? <><CheckCircle2 size={12}/>已固定到能力画像页</> : jobStatus === 'failed_to_queue' || jobStatus === 'failed' ? <><CircleAlert size={12}/>排队失败，可重试</> : job ? <><Clock3 size={12}/>研究任务：{statusLabel(jobStatus)}</> : '创新候选 · 可继续深挖'}</span><div><button type="button" className="reference-research-button" disabled={busy || merged || !encodedRunId} onClick={() => void startReferenceResearch(candidate)}>{busy ? '打开中…' : merged ? '已固定到能力画像页' : '定向深研 / 追问'}<BrainCircuit size={13}/></button></div></footer></article>; })}</div></section>}
   </section>;
 }
@@ -2897,6 +3008,11 @@ function capabilityEquipmentName(row = {}) {
   const explicit = row.equipment_name || row.equipmentName || row.weapon_name || row.primary_equipment_name;
   if (String(explicit || '').trim() && String(explicit).trim() !== direction) return String(explicit).trim();
   const name = String(row.name || row.title || row.capability_name || '').trim();
+  // Deep-research snapshots commonly repeat the canonical equipment identity
+  // in both `name` and `equipment_direction`. In that case the portrait body
+  // may still mention the seed hypothesis; never let that prose rename the
+  // visible equipment card.
+  if (name && name === direction) return name;
   if (name && name !== direction && !/(?:型|方向|类别|路线|构型)$/.test(name)) return name;
   const modules = row.capability_portrait_modules && typeof row.capability_portrait_modules === 'object'
     ? Object.values(row.capability_portrait_modules)

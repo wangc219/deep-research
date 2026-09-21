@@ -47,6 +47,37 @@ test('nested deep-thinking dialogs own the focus trap and modal state', () => {
   assert.match(panelSource, /aria-modal=\{nestedModalOpen \? undefined : true\}/);
 });
 
+test('S6 progress exposes the portrait viewer only from authored columns', () => {
+  assert.match(panelSource, /const openS6Portrait = \(\) =>/);
+  assert.match(panelSource, /item\.status === 'completed' && safeText\(item\.text\)/);
+  assert.match(panelSource, /className="deep-s6-progress-actions"/);
+  assert.match(panelSource, /onOpenPortrait=\{openPortrait\}/);
+});
+
+test('an incomplete portrait stays viewable but cannot be promoted as a five-column card', () => {
+  assert.match(panelSource, /const portraitProgress = s6PortraitCompleteness\(portraitModules\)/);
+  assert.match(panelSource, /const mergeUnavailable = rejectedVersion \|\| !portraitProgress\.complete/);
+  assert.match(panelSource, /补齐五栏后可成卡/);
+  assert.match(panelSource, /能力画像草稿/);
+  assert.match(panelSource, /hasPortraitRecord && !hasCompletePortrait/);
+  assert.match(panelSource, /能力画像待补全/);
+  assert.match(panelSource, /五栏齐全后可选择成卡/);
+  assert.match(panelSource, /fallbackModules=\{artifacts\.length === 1 \? currentTurnPortraitModules : \[\]\}/);
+});
+
+test('result state only uses events from the current deep-research job', () => {
+  const turnEvents = panelSource.indexOf('const turnStageEvents = latestFeedbackJobId');
+  const resultState = panelSource.indexOf('const resultState = deepResultState({');
+
+  assert.ok(turnEvents >= 0, 'current-turn event projection must exist');
+  assert.ok(resultState > turnEvents, 'result state must be derived after current-turn filtering');
+  assert.match(
+    panelSource.slice(resultState, resultState + 420),
+    /stageEvents: turnStageEvents/,
+    'older completed S6 events must not mark the current turn complete',
+  );
+});
+
 test('memory drawer is an independent modal layered above deep thinking', () => {
   assert.match(panelSource, /const dialogRef = useOverlay\(Boolean\(open\), \{onEscape: onToggle\}\)/);
   assert.match(panelSource, /className="deep-memory-backdrop" role="presentation"/);
@@ -76,4 +107,40 @@ test('research activity is dynamic and quality assessment stays non-blocking', (
   assert.doesNotMatch(panelSource, /const PROCESS_AGENTS =/);
   assert.doesNotMatch(panelSource, /未过发布门/);
   assert.doesNotMatch(panelSource, /不再重开三席发散/);
+});
+
+test('completed answer keeps the accumulated innovation-cabin process visible', () => {
+  const visibilityStart = panelSource.indexOf('const showStreamingBubble = Boolean(');
+  const visibilityEnd = panelSource.indexOf('const liveDeliberationAnswer', visibilityStart);
+  const visibilitySource = panelSource.slice(visibilityStart, visibilityEnd);
+
+  assert.ok(visibilityStart >= 0, 'streaming process visibility must be defined');
+  assert.match(visibilitySource, /streamingDraft\s*&&\s*\(sending \|\| showLiveAnswer \|\| liveFeedback\.segments\.length\)/);
+  assert.doesNotMatch(
+    visibilitySource,
+    /trailingMessages\.some/,
+    'a durable final assistant message must not hide prior process feedback',
+  );
+  assert.match(panelSource, /本轮过程反馈记录/);
+  assert.match(panelSource, /\.slice\(-320\);/);
+});
+
+test('the active processing cue stays below every feedback message', () => {
+  const trailingMessages = panelSource.indexOf('{trailingMessages.map(message =>');
+  const latestCue = panelSource.indexOf('className="deep-process-wait deep-process-wait-latest"');
+  const endGap = panelSource.indexOf('className="deep-message-end-gap"');
+  assert.ok(trailingMessages >= 0, 'trailing feedback messages must be rendered');
+  assert.ok(latestCue > trailingMessages, 'the active cue must follow all current-turn feedback');
+  assert.ok(endGap > latestCue, 'only the terminal scroll spacer may follow the active cue');
+  assert.equal(panelSource.match(/deep-process-wait deep-process-wait-latest/g)?.length, 1);
+});
+
+test('deep conversations can switch the unified model profile per turn', () => {
+  assert.match(panelSource, /className="deep-composer-model-picker"/);
+  assert.match(panelSource, /className="deep-composer-shell-footer"/);
+  assert.match(panelSource, /aria-label="本轮深研模型"/);
+  assert.match(panelSource, /跟随任务模型/);
+  assert.match(panelSource, /model_profile_id: selectedModelProfileId/);
+  assert.doesNotMatch(panelSource, /模型在创建对话时固定/);
+  assert.doesNotMatch(panelSource, /Boolean\(session\?\.session_id\)/);
 });

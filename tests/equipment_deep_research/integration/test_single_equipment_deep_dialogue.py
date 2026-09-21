@@ -288,6 +288,11 @@ def test_plugin_state_is_admin_only_and_capability_catalog_is_redacted(
     catalog_response = client.get("/api/v1/deep-thinking/capabilities")
     assert catalog_response.status_code == 200
     catalog = catalog_response.json()
+    assert [item["id"] for item in catalog["model_profiles"]["profiles"]] == [
+        "codex-gpt",
+        "codex-deepseek",
+        "codex-queen",
+    ]
     plugin = next(
         item
         for item in catalog["plugins"]
@@ -336,6 +341,88 @@ def test_plugin_state_is_admin_only_and_capability_catalog_is_redacted(
             },
         )
         assert rejected.status_code == 422
+
+
+def test_deep_dialogue_routes_explicit_deepseek_and_queen_model_profiles(
+    tmp_path: Path, monkeypatch
+) -> None:
+    service, repository, run, _ = _reference_fixture(tmp_path, monkeypatch)
+    selected_profiles: list[str] = []
+
+    class _Provider:
+        def deep_contextual_dialogue(self, _payload):
+            return {
+                "visible_summary": ["已由指定模型完成深研。"],
+                "concept_directions": [],
+                "deep_divergence_status": "completed",
+            }
+
+    class _Registry:
+        @classmethod
+        def load(cls, _path):
+            return cls()
+
+        def create_model_profile(self, profile_id, **_kwargs):
+            selected_profiles.append(profile_id)
+            return _Provider()
+
+        def create(self, *_args, **_kwargs):
+            raise AssertionError("explicit deep model profile must not use the parent provider")
+
+    client = TestClient(create_app(service, event_repository=repository))
+    monkeypatch.setattr(app_module, "ProviderRegistry", _Registry)
+    created = client.post(
+        f"/api/v1/runs/{run.run_id}/deep-thinking/sessions",
+        headers={"Idempotency-Key": "deepseek-deep-dialogue"},
+        json={
+            "kind": "deep-thinking",
+            "hypothesis_id": "hypothesis-reference",
+            "candidate": {"hypothesis_id": "hypothesis-reference"},
+            "question": "请用 DeepSeek 分析当前装备。",
+            "model_profile_id": "codex-deepseek",
+        },
+    )
+    assert created.status_code == 201, created.text
+    assert created.json()["session"]["context_refs"]["model_profile_id"] == "codex-deepseek"
+    first_job = _wait_for_deep_job(repository, created.json()["job"]["job_id"])
+    assert first_job["status"] == "completed", first_job
+    assert first_job["payload"]["model_profile_id"] == "codex-deepseek"
+
+    session_id = created.json()["session"]["session_id"]
+    followup = client.post(
+        f"/api/v1/runs/{run.run_id}/deep-thinking/sessions/{session_id}/messages",
+        headers={"Idempotency-Key": "queen-deep-dialogue"},
+        json={
+            "content": "改用 Queen 复核前述结论。",
+            "model_profile_id": "codex-queen",
+        },
+    )
+    assert followup.status_code == 202, followup.text
+    second_job = _wait_for_deep_job(repository, followup.json()["job"]["job_id"])
+    assert second_job["status"] == "completed", second_job
+    assert second_job["payload"]["model_profile_id"] == "codex-queen"
+    assert selected_profiles == ["codex-deepseek", "codex-queen"]
+
+    task_default = client.post(
+        f"/api/v1/runs/{run.run_id}/deep-thinking/sessions/{session_id}/messages",
+        headers={"Idempotency-Key": "task-default-deep-dialogue"},
+        json={
+            "content": "下一轮恢复使用任务模型。",
+            "model_profile_id": "",
+        },
+    )
+    assert task_default.status_code == 202, task_default.text
+    third_job = _wait_for_deep_job(repository, task_default.json()["job"]["job_id"])
+    assert third_job["status"] == "completed", third_job
+    assert third_job["payload"]["model_profile_id"] == ""
+    assert selected_profiles == ["codex-deepseek", "codex-queen"]
+
+    rejected = client.post(
+        f"/api/v1/runs/{run.run_id}/deep-thinking/sessions",
+        headers={"Idempotency-Key": "unknown-deep-model"},
+        json={"question": "不可用模型", "model_profile_id": "unknown-model"},
+    )
+    assert rejected.status_code == 422
 
 
 def test_same_message_text_with_distinct_parent_messages_keeps_separate_turns(
@@ -1952,6 +2039,18 @@ def test_confirmed_card_persists_despite_advisory_quality_gaps(
         def deep_contextual_dialogue(self, payload):
             authoring_requested = bool(payload.get("authoring_requested"))
             authoring_requests.append(authoring_requested)
+            capability_card_draft = {
+                "overview": "当前仅形成初步能力画像，后续继续补充工程边界。",
+            }
+            if authoring_requested:
+                capability_card_draft.update(
+                    {
+                        "technology_implementation": "以分布式被动感知、边缘任务计算和自主触发组件形成可验证的工程实现链。",
+                        "operational_process": "任务前部署节点，任务中持续观察并完成目标复核，在授权窗口内自主触发拦截。",
+                        "capability_effects": "压缩低空目标突防窗口，并降低持续有人值守和集中火控链路依赖。",
+                        "winning_logic": "用长期潜伏观察换取短时闭环优势，在对手暴露关键动作后完成低时延断链。",
+                    }
+                )
             return {
                 "visible_summary": ["保留一个仍需后续补证的颠覆方向"],
                 "concept_directions": [
@@ -1964,18 +2063,21 @@ def test_confirmed_card_persists_despite_advisory_quality_gaps(
                         "stable": False,
                     }
                 ],
-                "capability_card_draft": {
-                    "overview": "当前仅形成初步能力画像，后续继续补充工程边界。",
-                },
+                "capability_card_draft": capability_card_draft,
                 "quality_gate": {
                     "publishable": False,
-                    "direction_ready": False,
+                    "direction_ready": authoring_requested,
                     "passed_directions": 0,
-                    "missing_s6_columns": [
-                        "technology_implementation",
-                        "operational_process",
-                    ],
-                    "block_reasons": ["证据不足", "S6 五栏尚未全部补齐"],
+                    "missing_s6_columns": (
+                        []
+                        if authoring_requested
+                        else ["technology_implementation", "operational_process"]
+                    ),
+                    "block_reasons": (
+                        ["证据不足"]
+                        if authoring_requested
+                        else ["证据不足", "S6 五栏尚未全部补齐"]
+                    ),
                 },
                 "runtime": {
                     "engine": "equipment_deep_runtime_v2",

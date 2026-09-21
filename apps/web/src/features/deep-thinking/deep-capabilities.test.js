@@ -60,3 +60,26 @@ test('workspace resources normalize editable config skill and plugin files', () 
   assert.deepEqual(catalog.resources.plugin, ['methods/plugin.json']);
   assert.equal(catalog.limits.max_resource_bytes, 4096);
 });
+
+test('deep model profiles expose ready GPT DeepSeek and Queen presets', () => {
+  const catalog = normalizeDeepCapabilityCatalog({
+    model_profiles: {
+      default_profile: 'codex-gpt',
+      active_profile: 'codex-deepseek',
+      profiles: [
+        {id: 'codex-gpt', label: 'GPT', model: 'gpt-5.5', credential_configured: true},
+        {id: 'codex-deepseek', label: 'DeepSeek', model: 'deepseek-chat', credential_configured: true},
+        {id: 'codex-queen', label: 'Queen', model: 'qwen3.8-flash', credential_configured: true},
+        {id: 'old', label: 'Old', deprecated: true},
+      ],
+    },
+  });
+
+  assert.equal(catalog.model_profiles.default_profile, 'codex-gpt');
+  assert.equal(catalog.model_profiles.active_profile, 'codex-deepseek');
+  assert.deepEqual(catalog.model_profiles.profiles.map(item => item.id), [
+    'codex-gpt',
+    'codex-deepseek',
+    'codex-queen',
+  ]);
+});

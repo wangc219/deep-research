@@ -2,6 +2,8 @@
   "schema_version": "1.0",
   "agents": {
     "international_situation": [
+      {"url": "https://www.mod.gov.cn/", "source_type": "domestic_government", "source_region": "domestic", "priority": 94, "search_focus": ["国防政策", "军队建设", "安全形势"]},
+      {"url": "https://www.gov.cn/", "source_type": "domestic_government", "source_region": "domestic", "priority": 88, "search_focus": ["国家政策", "战略规划", "重大工程"]},
       {"url": "https://www.defense.gov/", "source_type": "government", "priority": 95, "search_focus": ["strategy", "posture", "alliances"]},
       {"url": "https://www.pacom.mil/", "source_type": "military", "priority": 95, "search_focus": ["posture", "exercises", "deployments"]},
       {"url": "https://www.gao.gov/", "source_type": "oversight", "priority": 92, "search_focus": ["readiness", "industrial base", "program risk"]},
@@ -10,6 +12,8 @@
       {"url": "https://www.minister.defence.gov.au/", "source_type": "allied_government", "priority": 84, "search_focus": ["AUKUS", "force posture", "industrial strategy"]}
     ],
     "opponent_monitoring": [
+      {"url": "https://www.mod.gov.cn/", "source_type": "domestic_government", "source_region": "domestic", "priority": 94, "search_focus": ["装备发展", "演训动态", "国防政策"]},
+      {"url": "https://www.chinamil.com.cn/", "source_type": "domestic_military", "source_region": "domestic", "priority": 90, "search_focus": ["部队动态", "装备公开信息", "训练演习"]},
       {"url": "https://www.defense.gov/", "source_type": "government", "priority": 95, "search_focus": ["annual reports", "capability baseline"]},
       {"url": "https://www.pacom.mil/", "source_type": "military", "priority": 94, "search_focus": ["exercises", "posture", "warning indicators"]},
       {"url": "https://comptroller.defense.gov/", "source_type": "budget", "priority": 92, "search_focus": ["PDI", "procurement", "milestones"]},
@@ -18,6 +22,8 @@
       {"url": "https://www.marines.mil/Force-Design/", "source_type": "military", "priority": 86, "search_focus": ["force design", "stand-in forces", "sea denial"]}
     ],
     "combat_scenario": [
+      {"url": "https://www.mod.gov.cn/", "source_type": "domestic_government", "source_region": "domestic", "priority": 92, "search_focus": ["联合作战", "演训场景", "任务链"]},
+      {"url": "https://www.gov.cn/", "source_type": "domestic_government", "source_region": "domestic", "priority": 86, "search_focus": ["应急体系", "战略任务", "重大行动"]},
       {"url": "https://www.jcs.mil/Doctrine/", "source_type": "doctrine", "priority": 96, "search_focus": ["joint doctrine", "mission chains"]},
       {"url": "https://www.marines.mil/Force-Design/", "source_type": "military", "priority": 94, "search_focus": ["EABO", "distributed operations"]},
       {"url": "https://www.navy.mil/Leadership/Chief-of-Naval-Operations/", "source_type": "military", "priority": 92, "search_focus": ["distributed maritime operations", "readiness"]},
@@ -26,6 +32,8 @@
       {"url": "https://www.gao.gov/", "source_type": "oversight", "priority": 86, "search_focus": ["exercise support", "PDI governance", "readiness gaps"]}
     ],
     "weapon_equipment": [
+      {"url": "https://www.mod.gov.cn/", "source_type": "domestic_government", "source_region": "domestic", "priority": 96, "search_focus": ["装备发展", "试验鉴定", "体系建设"]},
+      {"url": "https://www.cas.cn/", "source_type": "domestic_research", "source_region": "domestic", "priority": 90, "search_focus": ["前沿技术", "新材料", "新器件", "工程化"]},
       {"url": "https://www.gao.gov/weapon-systems-annual-assessment", "source_type": "oversight", "priority": 100, "search_focus": ["program status", "cost", "schedule", "technology risk"]},
       {"url": "https://comptroller.defense.gov/Budget-Materials/", "source_type": "budget", "priority": 98, "search_focus": ["procurement", "RDT&E", "quantities", "milestones"]},
       {"url": "https://www.dote.osd.mil/", "source_type": "test_evaluation", "priority": 98, "search_focus": ["operational test", "limitations", "reliability"]},
@@ -40,6 +48,8 @@
       {"url": "https://www.northropgrumman.com/", "source_type": "manufacturer", "priority": 72, "search_focus": ["C4ISR", "autonomy", "sensors", "platforms"]}
     ],
     "operational_employment": [
+      {"url": "https://www.mod.gov.cn/", "source_type": "domestic_government", "source_region": "domestic", "priority": 92, "search_focus": ["作战运用", "联合作战", "后勤保障"]},
+      {"url": "https://www.gov.cn/", "source_type": "domestic_government", "source_region": "domestic", "priority": 84, "search_focus": ["应急运用", "体系协同", "保障机制"]},
       {"url": "https://www.jcs.mil/Doctrine/", "source_type": "doctrine", "priority": 98, "search_focus": ["joint operations", "command", "logistics"]},
       {"url": "https://www.army.mil/", "source_type": "military", "priority": 86, "search_focus": ["multi-domain operations", "sustainment"]},
       {"url": "https://www.navy.mil/", "source_type": "military", "priority": 86, "search_focus": ["fleet concepts", "exercises", "readiness"]},
@@ -48,6 +58,8 @@
       {"url": "https://www.gao.gov/", "source_type": "oversight", "priority": 84, "search_focus": ["readiness", "maintenance", "sustainment"]}
     ],
     "system_confrontation": [
+      {"url": "https://www.mod.gov.cn/", "source_type": "domestic_government", "source_region": "domestic", "priority": 92, "search_focus": ["体系对抗", "指挥协同", "装备体系"]},
+      {"url": "https://www.cas.cn/", "source_type": "domestic_research", "source_region": "domestic", "priority": 86, "search_focus": ["系统工程", "信息网络", "关键技术"]},
       {"url": "https://www.jcs.mil/Doctrine/", "source_type": "doctrine", "priority": 96, "search_focus": ["joint functions", "command relationships", "mission chains"]},
       {"url": "https://www.gao.gov/", "source_type": "oversight", "priority": 92, "search_focus": ["integration risk", "C4ISR", "sustainment dependencies"]},
       {"url": "https://www.rand.org/topics/command-and-control.html", "source_type": "independent_research", "priority": 88, "search_focus": ["C2 resilience", "distributed operations", "degraded networks"]},

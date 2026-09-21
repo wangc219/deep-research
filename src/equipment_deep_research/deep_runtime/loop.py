@@ -296,6 +296,33 @@ def _assemble(state: TurnState) -> dict[str, Any]:
                 "finalization_status": "analysis_only",
             },
         }
+    # S6 columns are independent durable outputs.  A late runtime adapter or
+    # replay may assemble an older wrapper with an empty field even though the
+    # authoritative author_s6 observation already contains that column. Merge
+    # only non-empty values so completion is monotonic and no finished column
+    # can be erased by a later empty result.
+    merged_draft = result.get("capability_card_draft")
+    merged_draft = dict(merged_draft) if isinstance(merged_draft, Mapping) else {}
+    for tool_name in ("author_s6", *reversed(state.completed_tools)):
+        candidate = state.results.get(tool_name)
+        if not isinstance(candidate, Mapping):
+            continue
+        draft = candidate.get("capability_card_draft")
+        if not isinstance(draft, Mapping):
+            continue
+        for key in (
+            "overview",
+            "technology_implementation",
+            "operational_process",
+            "capability_effects",
+            "winning_logic",
+        ):
+            if not str(merged_draft.get(key, "") or "").strip() and str(
+                draft.get(key, "") or ""
+            ).strip():
+                merged_draft[key] = draft[key]
+    if merged_draft:
+        result["capability_card_draft"] = merged_draft
     result["runtime"] = {
         "engine": "equipment_deep_runtime_v2",
         "identity": IDENTITY_NAME,

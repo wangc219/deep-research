@@ -86,13 +86,152 @@ def _provider_neutral_source_anchor_rows(
                 "url": url,
                 "title": str(item.get("title", "")).strip() or url,
                 "snippet": str(item.get("snippet", "")).strip(),
+                "source_region": _source_region(item, url),
                 "retrieval_lane": "provider_neutral_source_anchor_fallback",
                 "required_source_anchor": True,
             }
         )
-        if len(rows) >= max(1, limit):
-            break
-    return rows
+    # A provider-neutral fallback has no hosted search to balance the evidence
+    # set. Interleave domestic and international anchors whenever both are
+    # available, while preserving priority order within each region.
+    return _interleave_source_regions(rows, limit=max(1, limit))
+
+
+def _source_region(item: Mapping[str, Any], url: str = "") -> str:
+    """Classify a source for bounded domestic/international balancing."""
+
+    declared = str(
+        item.get("source_region")
+        or item.get("region")
+        or item.get("locale")
+        or ""
+    ).strip().lower()
+    if declared in {"domestic", "cn", "china", "中国", "国内"}:
+        return "domestic"
+    if declared in {
+        "international",
+        "foreign",
+        "overseas",
+        "global",
+        "国外",
+        "国际",
+    }:
+        return "international"
+    try:
+        hostname = (urlsplit(str(url or item.get("url", ""))).hostname or "").lower()
+    except ValueError:
+        hostname = ""
+    # Unknown hosts stay in the international bucket; only explicit Chinese
+    # country-code domains are classified as domestic by default.
+    return "domestic" if hostname.endswith(".cn") else "international"
+
+
+def _interleave_source_regions(
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    limit: int,
+) -> list[dict[str, Any]]:
+    """Return a bounded, stable domestic/international alternation."""
+
+    bounded_limit = max(0, int(limit))
+    if bounded_limit == 0:
+        return []
+    buckets: dict[str, list[Mapping[str, Any]]] = {
+        "domestic": [],
+        "international": [],
+    }
+    for row in rows:
+        region = _source_region(row, str(row.get("url", "")))
+        buckets[region].append(row)
+    first_region = (
+        _source_region(rows[0], str(rows[0].get("url", "")))
+        if rows
+        else "international"
+    )
+    other_region = "international" if first_region == "domestic" else "domestic"
+    result: list[dict[str, Any]] = []
+    while len(result) < bounded_limit and (
+        buckets[first_region] or buckets[other_region]
+    ):
+        for region in (first_region, other_region):
+            if buckets[region] and len(result) < bounded_limit:
+                result.append(dict(buckets[region].pop(0)))
+    return result
+
+
+def _provider_has_hosted_web_search(provider: Any, *, host: Any = None) -> bool:
+    """Return whether discovery can actually emit hosted web-search sources.
+
+    ``provider_kind`` is only a routing label; it is not proof that the
+    selected provider exposes the Responses ``web_search`` capability. In
+    particular, a Codex CLI primary provider may have no dedicated discovery
+    backend and therefore must use the source-anchor route. Read the
+    provider capability object first, retain deterministic fake-provider
+    compatibility used by offline tests, and use legacy host flags only as a
+    final fallback for older embedders.
+    """
+    if provider is None:
+        return False
+    provider_kind = str(getattr(host, "provider_kind", "")).strip()
+    # The production coordinator initializes this field even when no
+    # dedicated Responses backend could be built. Lightweight legacy adapters
+    # expose the same method but do not carry the field, so they should retain
+    # their primary provider capability for compatibility.
+    has_coordinator_discovery_slot = bool(
+        host is not None and hasattr(host, "discovery_provider")
+    )
+    discovery_backend = str(getattr(host, "discovery_backend", "")).strip()
+    capabilities_fn = getattr(provider, "capabilities", None)
+    explicit = getattr(provider, "hosted_web_search", None)
+    if (
+        provider_kind == "codex_cli"
+        and has_coordinator_discovery_slot
+        and getattr(host, "discovery_provider", None) is None
+        and (not discovery_backend or discovery_backend == provider_kind)
+        and (callable(capabilities_fn) or explicit is not None)
+    ):
+        # Codex CLI's static capability advertises the optional hosted tool,
+        # but a CLI process without a dedicated Responses discovery backend
+        # cannot guarantee that the tool is available to this workflow.
+        return False
+
+    if callable(capabilities_fn):
+        try:
+            capabilities = capabilities_fn()
+        except Exception:
+            capabilities = None
+        if capabilities is not None and hasattr(capabilities, "hosted_web_search"):
+            declared = bool(getattr(capabilities, "hosted_web_search", False))
+            if declared or provider_kind == "fake":
+                return True
+            # Legacy standalone adapters sometimes change ``provider_kind``
+            # after construction to emulate Codex in tests/integrations. If
+            # their discovery backend still records the original provider,
+            # retain the adapter's explicit legacy flag; a production
+            # coordinator with no discovery backend records a matching
+            # ``codex_cli`` backend and therefore remains source-anchor only.
+            if (
+                provider_kind == "codex_cli"
+                and str(getattr(host, "discovery_backend", "")).strip()
+                not in {"", provider_kind}
+                and bool(getattr(host, "uses_hosted_web_search", False))
+            ):
+                return True
+            return False
+
+    if explicit is not None:
+        return bool(explicit)
+    if provider_kind == "fake":
+        return True
+    if not callable(capabilities_fn):
+        # Older provider adapters predate ``ProviderCapabilities``. Preserve
+        # their established Codex/Responses behavior unless the coordinator
+        # explicitly has no discovery backend (handled above).
+        return bool(
+            getattr(host, "uses_hosted_web_search", False)
+            or provider_kind in {"responses", "codex", "codex_cli"}
+        )
+    return bool(getattr(host, "uses_hosted_web_search", False))
 
 
 def run_baseline_agent(host, request: AgentRunRequest) -> AgentRunResult:
@@ -933,9 +1072,17 @@ async def discover(
         )
     )
     fast_lane_enabled = bool(known_urls)
-    hosted_search_available = bool(
-        getattr(host, "uses_hosted_web_search", False)
-        or getattr(host, "provider_kind", "") in {"responses", "codex", "codex_cli"}
+    try:
+        discovery_provider = host._discovery_provider_for(request.agent.agent_id)
+    except (AttributeError, RuntimeError, TypeError):
+        # Keep lightweight embedders and unit-test hosts compatible with the
+        # production coordinator seam.
+        discovery_provider = getattr(host, "discovery_provider", None) or getattr(
+            host, "provider", None
+        )
+    hosted_search_available = _provider_has_hosted_web_search(
+        discovery_provider,
+        host=host,
     )
     lanes: list[dict[str, Any]] = []
     if search_intensity == "light":
@@ -1203,7 +1350,13 @@ async def discover(
                     "external_web_access": hosted_search_available,
                 },
                 "include_web_sources": hosted_search_available,
-                "require_web_search": hosted_search_available,
+                # Search is an enrichment tool, not a hard publication gate.
+                # Keeping it optional lets a Responses-compatible gateway
+                # continue with the same engineering task when its hosted
+                # search tool is temporarily unavailable or rejects an
+                # optional field.  ``web_search`` remains declared, so the
+                # model still uses it on normal successful calls.
+                "require_web_search": False,
                 **(
                     {
                         "output_schema": host.baseline_workflow.output_schema(
@@ -1229,7 +1382,7 @@ async def discover(
         started_at = monotonic()
         try:
             text, metadata = await host._collect_stream(
-                host._discovery_provider_for(request.agent.agent_id),
+                discovery_provider,
                 host._runtime_messages(
                     request.agent.agent_id,
                     discovery_system,

@@ -1,7 +1,7 @@
 """Equipment-research tools executed by the adapted nanobot runner.
 
-Isolated proposers, the adversarial judge and sequential S6 columns remain
-orchestrator implementations.  Follow-up turns prefer one model-led deepen
+Isolated proposers, the adversarial judge and parallel S6 column writers remain
+orchestrator implementations. Follow-up turns prefer one model-led deepen
 call that still does internal multi-dimensional, multi-angle divergence.
 """
 
@@ -14,6 +14,10 @@ from equipment_deep_research.deep_runtime.commands import help_visible_summary
 from equipment_deep_research.deep_runtime.identity import IDENTITY_NAME
 from equipment_deep_research.deep_runtime.provider_runtime import run_json_with_provider
 from equipment_deep_research.deep_runtime.state import TurnState
+from equipment_deep_research.domain.research_gaps import (
+    sanitize_public_research_gaps,
+    sanitize_public_research_prose,
+)
 
 ToolHandler = Callable[[TurnState], Awaitable[dict[str, Any]]]
 
@@ -36,6 +40,17 @@ _DIRECTION_FIELDS = (
     "novelty",
     "disruptive_difference",
     "implementation_concept",
+    # Keep the research frontier's falsifiable branch metadata across
+    # follow-up turns while dropping provider-only fields from the model
+    # handoff.
+    "adversary_response",
+    "feasibility_anchor",
+    "rejection_risk",
+    "branch_id",
+    "branch_type",
+    "novelty_delta",
+    "counterfactual_test",
+    "research_probe",
 )
 
 _RESEARCH_DIMENSIONS: tuple[tuple[str, tuple[str, ...]], ...] = (
@@ -126,8 +141,8 @@ def _directions_from_memory(memory: Mapping[str, Any]) -> list[dict[str, Any]]:
 def _summaries_from_memory(memory: Mapping[str, Any]) -> list[str]:
     raw = memory.get("latest_summary")
     if isinstance(raw, list):
-        return [_text(item, 600) for item in raw[:4] if _text(item, 600)]
-    rationale = _text(memory.get("selection_rationale"), 900)
+        return sanitize_public_research_gaps(raw[:4], limit=4, item_limit=600)
+    rationale = sanitize_public_research_prose(memory.get("selection_rationale"), limit=900)
     return [rationale] if rationale else []
 
 
@@ -135,7 +150,7 @@ def _questions_from_memory(memory: Mapping[str, Any]) -> list[str]:
     raw = memory.get("open_questions")
     if not isinstance(raw, list):
         return []
-    return [_text(item, 400) for item in raw[:4] if _text(item, 400)]
+    return sanitize_public_research_gaps(raw[:4], limit=4, item_limit=400)
 
 
 def _adjudication_from_memory(memory: Mapping[str, Any]) -> dict[str, Any]:
@@ -237,6 +252,20 @@ def _latest_observed_directions(state: TurnState) -> list[dict[str, Any]]:
             if directions:
                 return directions
     return []
+
+
+def _compact_direction_handoff(
+    directions: list[Mapping[str, Any]] | list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Project observed directions before sending them into a new model turn.
+
+    Tool results can contain evidence, provider diagnostics, or UI metadata
+    alongside the decision.  Follow-up reasoning only needs the bounded
+    candidate projection, so keep the same shape as restored working memory
+    and prevent those incidental fields from growing the next context window.
+    """
+
+    return _directions_from_memory({"candidate_directions": list(directions)})
 
 
 def _research_topology(action: str) -> str:
@@ -714,6 +743,7 @@ async def tool_author_s6(state: TurnState) -> dict[str, Any]:
         _consume_deep_dialogue_steers,
         _emit_deep_dialogue_live_progress,
         _govern_deep_dialogue_final,
+        _clean_technology_column_text,
         _seed_identity_keys,
         _write_deep_dialogue_s6_columns,
     )
@@ -834,7 +864,7 @@ async def tool_author_s6(state: TurnState) -> dict[str, Any]:
             "agent_id": "deep_thinking_dialogue",
             "deliverable_refs": names,
             "proposal_names": names,
-            "summary_text": "已锁定工作记忆中的稳定方向，正在逐栏写入能力画像。",
+            "summary_text": "已锁定工作记忆中的稳定方向，正在并行生成五栏能力画像；各栏完成后即时回传。",
         },
     )
     synthesis_payload = _compact_deep_dialogue_seed_payload(
@@ -846,7 +876,61 @@ async def tool_author_s6(state: TurnState) -> dict[str, Any]:
         synthesis_payload=synthesis_payload,
         synthesis_spine=preview,
         provider_runtime=state.provider_runtime,
+        checkpoint_callback=state.payload.get("checkpoint_callback"),
+        card_authoring_id=str(
+            state.payload.get("card_authoring_id")
+            or state.payload.get("job_id")
+            or ""
+        ),
+        resume_checkpoint=(
+            state.payload.get("s6_column_checkpoint")
+            if isinstance(state.payload.get("s6_column_checkpoint"), Mapping)
+            else None
+        ),
     )
+    # Keep the atomic five-field card invariant at the tool boundary as well
+    # as inside the parallel writer.  Older adapters can still return a
+    # four-field projection after a failed technology call; preserve that
+    # missing field as an honest, resumable research boundary.  Never inject
+    # a generic paragraph here: only an actual model response may complete the
+    # technology column.
+    technology_text = _text(draft.get("technology_implementation"), 6000)
+    if technology_text:
+        draft = dict(draft)
+        draft["technology_implementation"] = _clean_technology_column_text(
+            technology_text, preview
+        )
+    if not _text(draft.get("technology_implementation"), 8):
+        draft = dict(draft)
+        draft.pop("technology_implementation", None)
+        technology_failure_present = any(
+            "technology_implementation" in str(item)
+            or "装备与技术实现" in str(item)
+            for item in failures
+        )
+        if not technology_failure_present:
+            failures = [*failures, "第2栏“装备与技术实现”未完成"]
+        # The parallel writer already emits this state for its own failures.
+        # Emit it here only for legacy adapters that returned a missing field
+        # without a failure marker, avoiding duplicate status bubbles.
+        if not technology_failure_present:
+            _emit_deep_dialogue_live_progress(
+                state.host,
+                {
+                    "event_type": "deep_agent_progress",
+                    "stage": "s6_authoring",
+                    "status": "partial",
+                    "progress": 0.86,
+                    "kind": "summary",
+                    "round": "authoring",
+                    "role": "装备与技术实现栏主笔",
+                    "agent_id": "deep_thinking_dialogue",
+                    "column_key": "technology_implementation",
+                    "technology_research_status": "pending_retry",
+                    "text": "第 2 栏模型恢复尚未返回正文，已保留其他栏目；本轮不伪造完成状态。",
+                    "summary_text": "第 2 栏待模型恢复后补写，五栏能力画像暂不发布。",
+                },
+            )
     preview["capability_card_draft"] = draft
     if failures:
         preview["finalization_status"] = "analysis_only"
@@ -878,10 +962,13 @@ async def tool_author_s6(state: TurnState) -> dict[str, Any]:
     missing_columns = [
         name for name in required_columns if not _text(draft.get(name), 8)
     ]
-    # Explicit user confirmation fixes the current direction as a draft even
-    # when some columns remain terse or absent. Those omissions stay visible
-    # as research gaps and no longer act as a publication blocker.
-    structurally_complete = bool(final.get("concept_directions")) and bool(draft)
+    # Explicit user confirmation fixes the current direction as a draft only
+    # after the shared five-column task has returned every required field.
+    structurally_complete = bool(final.get("concept_directions")) and bool(
+        draft
+    ) and not missing_columns and all(
+        _text(draft.get(name), 8) for name in required_columns
+    )
     if structurally_complete:
         final["finalization_status"] = "candidate_ready"
         governed_gate.update(
@@ -894,6 +981,7 @@ async def tool_author_s6(state: TurnState) -> dict[str, Any]:
             }
         )
     else:
+        final["finalization_status"] = "analysis_only"
         governed_gate.update(
             {
                 "publishable": False,
@@ -967,7 +1055,7 @@ async def tool_author_s6(state: TurnState) -> dict[str, Any]:
         {
             "event_type": "deep_agent_completed",
             "stage": "s6_authoring",
-            "status": "completed",
+            "status": "completed" if structurally_complete else "partial",
             "progress": 0.92,
             "kind": "answer",
             "round": "synthesis",
@@ -976,8 +1064,18 @@ async def tool_author_s6(state: TurnState) -> dict[str, Any]:
             "agent_id": "deep_thinking_dialogue",
             "deliverable_refs": names,
             "proposal_names": names,
-            "text": f"综合成卡：{_text(final.get('selection_rationale'), 900)}"[:1200],
-            "summary_text": "综合总编已按工作记忆完成成卡，正在整理完整结果。",
+            "completed_count": len(required_columns) - len(missing_columns),
+            "total_count": len(required_columns),
+            "text": (
+                "五栏已全部完成，正在整理完整结果。"
+                if structurally_complete
+                else f"已完成 {len(required_columns) - len(missing_columns)}/5 栏；仍有缺口，未创建能力画像版本。"
+            ),
+            "summary_text": (
+                "五栏已全部完成，正在整理完整结果。"
+                if structurally_complete
+                else "五栏任务已结束但仍有缺口，已保留研究结果，未创建能力画像版本。"
+            ),
         },
     )
     return _annotate_runtime(final, state)
@@ -1008,9 +1106,17 @@ async def tool_deepen(state: TurnState) -> dict[str, Any]:
     inspected = state.results.get("inspect_memory")
     inspected = inspected if isinstance(inspected, Mapping) else {}
     previous_directions = _latest_observed_directions(state)
-    directions = previous_directions or _directions_from_memory(memory) or list(
-        inspected.get("concept_directions") or []
-    )
+    directions = _compact_direction_handoff(previous_directions)
+    if not directions:
+        directions = _directions_from_memory(memory)
+    if not directions:
+        directions = _compact_direction_handoff(
+            [
+                item
+                for item in (inspected.get("concept_directions") or [])
+                if isinstance(item, Mapping)
+            ]
+        )
     if not directions and mode != "diverge":
         return await tool_research_council(state)
 
