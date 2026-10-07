@@ -1,0 +1,149 @@
+{
+  "baseline_boundaries": [],
+  "branch_products": {},
+  "claims": [
+    {
+      "claim_id": "claim-4d864067f3d4",
+      "claim_type": "hypothesis",
+      "confidence": 0.71,
+      "downstream_steps": [
+        "S1",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-weapon_equipment-web-8952c3805d5a",
+        "ev-weapon_equipment-web-4fbe26be89e6"
+      ],
+      "failure_boundary": "公开厂商和项目材料强调“分层、可扩展、能对付蜂群”，但CBO等评估提示低空全覆盖需要密集布设，显示体系成本、覆盖重叠和部署密度可能抵消部分可扩展性。",
+      "mechanism": "公开中国相关资料显示，反蜂群方向至少存在高功率微波、激光、弹炮/导弹复合、防空网络化等公开展示或报道路线。军事任务影响：这类路线把“逐目标拦截”部分转向“区域效应、低单次发射成本或多层火力覆盖”，与本Query中多方向饱和和真假混合压力存在直接因果关系。证据边界：中国公开资料多来自展会、媒体或百科化汇编，现役状态、批量部署、实战可靠性、复杂天气/城市遮蔽下效果均缺少可核验数据；不能把展出能力等同于成体系实战能力。失效条件：若高能效应受视线、天气、电磁安全、功率持续性或目标抗毁/诱骗设计限制，仍需与传统探测、C2和动能拦截形成互补，而不能单独承担一体防御。",
+      "military_effects": [
+        "侦察预警",
+        "打击歼灭",
+        "拦截反制",
+        "生存抗毁",
+        "体系协同"
+      ],
+      "packet_id": "packet-weapon_equipment",
+      "source_agent_id": "weapon_equipment",
+      "source_urls": [
+        "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+      ]
+    },
+    {
+      "claim_id": "claim-5dc5337b4f8c",
+      "claim_type": "fact",
+      "confidence": 0.25,
+      "downstream_steps": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-system_confrontation-web-06d26c44006f",
+        "ev-system_confrontation-web-8d325b5069ef"
+      ],
+      "failure_boundary": "evidence_analysis_limited:ProviderRequestError:Codex CLI timed out after 90 seconds",
+      "mechanism": "体系对抗仿真本轮检索受限，保留已登记来源并进入后续定向补证。",
+      "military_effects": [
+        "体系协同"
+      ],
+      "packet_id": "packet-system_confrontation",
+      "source_agent_id": "system_confrontation",
+      "source_urls": [
+        "https://www.sda.mil/home/about-us/faq/"
+      ]
+    },
+    {
+      "claim_id": "claim-78ad46f0086e",
+      "claim_type": "hypothesis",
+      "confidence": 0.71,
+      "downstream_steps": [
+        "S1",
+        "S2",
+        "S4",
+        "S5"
+      ],
+      "evidence_ids": [
+        "ev-weapon_equipment-web-8952c3805d5a",
+        "ev-weapon_equipment-web-4fbe26be89e6"
+      ],
+      "failure_boundary": "公开厂商和项目材料强调“分层、可扩展、能对付蜂群”，但CBO等评估提示低空全覆盖需要密集布设，显示体系成本、覆盖重叠和部署密度可能抵消部分可扩展性。",
+      "mechanism": "公开基线显示，美军现有反小型无人机路线已经从孤立设备转向分层一体化防御：固定/机动LIDS、Coyote拦截弹、电子战、30毫米炮、Ku波段雷达、FAAD C2等被作为传感器—指控—软硬杀伤组合使用。军事任务影响：可为低空蜂群渗透提供多层拦截和火力/非火力组合，但其公开证据更强地支持“体系集成与多效应器分配”而非证明已能可靠承受高密度、真假混合、复杂背景下的全阶段蜂群压迫。证据边界：公开材料多为项目、演示、采购和厂商说明，缺少同一复杂场景下的漏警率、误识别率、交战容量、再装填与毁伤评估闭环数据。失效条件：若目标密度超过同时跟踪/交战容量，或诱饵使识别和效应器分配失真，分层防御仍可能被消耗、迟滞或错配。",
+      "military_effects": [
+        "指挥决策",
+        "打击歼灭",
+        "拦截反制",
+        "生存抗毁",
+        "体系协同"
+      ],
+      "packet_id": "packet-weapon_equipment",
+      "source_agent_id": "weapon_equipment",
+      "source_urls": [
+        "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+      ]
+    }
+  ],
+  "conflicts": [
+    "公开材料支持分层集成、低成本感知和多效应器协同是发展方向，但尚不足以证明在高密度、真假混合、复杂低空背景下具备稳定的全链路抗饱和能力。",
+    "电子战和非动能手段具有低成本、低附带损伤潜力，但自主化、抗干扰或无射频依赖目标可能削弱其有效性，不能替代动能或定向能硬杀伤。",
+    "区域效应、高功率微波和激光可缓解逐目标拦截的弹药交换比压力，但其全天候性能、视线条件、持续功率、抗诱骗和现役部署状态缺少充分公开证据。"
+  ],
+  "frontier_inspiration_rule": "仅在后续模型完成首次自由发散后作为可选启发；可重构或全部舍弃，不得视为装备答案、命名种子、技术目录或覆盖配额。",
+  "frontier_inspirations": [
+    {
+      "conventional_assumption_challenged": "常规假设是以少量高性能雷达、C2节点和拦截器构成重点目标防御圈即可应对小型无人机；弱信号显示未来关键可能转向大量低成本感知/效应节点形成可消耗、可重构的防御织网。",
+      "downstream_question": "后续Codex应破解：是否存在一种直接承担拒止/压制/毁伤的低成本分布式效应装备，使其在不依赖单点高端火控的情况下，通过局部自主分配和可接受损耗来改变蜂群饱和交换比？",
+      "evidence_boundary": "公开事实仅证明美方正在征集低成本感知和低附带损伤能力，并且低空覆盖存在密集布设问题；尚不能证明某种具体节点群装备已具备可靠识别、分配和处置能力。",
+      "evidence_ids": [
+        "ev-weapon_equipment-web-4fbe26be89e6"
+      ],
+      "packet_id": "packet-weapon_equipment",
+      "possible_military_discontinuity": "若成立，反蜂群防御的交换关系会从“高价值拦截器逐个命中目标”转向“低成本节点群先行削弱、隔离、迟滞和分流蜂群”，核心战果不再只是击落数量，而是阻断蜂群在时间窗口内形成同步压迫。",
+      "query_relevance": "直接对应低空遮蔽、多方向接近、时间窗口短和跨单元协同压力，是本Query中防止级联失效的核心机制级线索。",
+      "signal": "美军Replicator 2、低附带损伤征集、低成本感知挑战与CBO关于低空全覆盖需要密集布设的评估同时出现，说明传统少量高端节点防御在低空蜂群面前可能被部署密度和交战成本压垮。",
+      "source_agent_id": "weapon_equipment",
+      "source_urls": [
+        "https://www.diu.mil/latest/diu-usnorthcom-us-army-announce-finalists-for-c-uas-low-cost-sensing",
+        "https://www.diu.mil/latest/diu-northcom-jco-announce-solicitation-for-joint-low-collateral-defeat"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    },
+    {
+      "conventional_assumption_challenged": "常规假设是找到一种更强传感器或更强效应器即可解决反蜂群；弱信号显示决定性瓶颈可能在“识别置信度—效应器选择—附带风险—再攻击机会”的动态闭环，而非单一杀伤机理。",
+      "downstream_question": "后续Codex应破解：能否形成一种以可调处置强度为核心的直接防御武器，使其在目标身份不完全确定时先隔离/压制，再按威胁升级实施毁伤，从而减少被诱饵牵引的火力浪费？",
+      "evidence_boundary": "公开事实支持多效应器和战斗管理是主流方向；推断部分是未来装备价值可能集中在可变强度、可复用或可低附带损伤的直接处置能力。",
+      "evidence_ids": [],
+      "packet_id": "packet-weapon_equipment",
+      "possible_military_discontinuity": "若成立，未来优势装备可能不是射程或威力最大者，而是能在极短窗口内把目标分类结果转化为不同强度处置动作的战斗效应器，从而避免过度杀伤、误杀非威胁目标或被诱饵耗尽。",
+      "query_relevance": "高度对应本Query的接近识别、告警分发、处置分配和效果评估阶段，尤其针对真假目标混合与诱骗饱和。",
+      "signal": "公开体系材料反复把电子战、动能拦截、炮、定向能、低附带损伤和战斗管理并列，而不是押注单一路线；这暗示蜂群渗透的关键反适应来自真假混合、抗干扰、目标密度和附带损伤约束的组合。",
+      "source_agent_id": "weapon_equipment",
+      "source_urls": [
+        "https://www.lockheedmartin.com/en-us/news/features/2025/the-counter-uas-challenge-closing-the-gap-in-drone-swarm-defense.html",
+        "https://asc.army.mil/web/news-innovation-draws-international-interest/"
+      ],
+      "status": "optional_post_divergence_inspiration"
+    }
+  ],
+  "open_questions": [
+    "复杂背景、低空遮蔽和真假目标混合条件下，各类公开C-sUAS体系的探测概率、误警率、识别置信度阈值和稳定跟踪中断率缺少公开可比数据。",
+    "evidence_analysis_limited:ProviderRequestError:Codex CLI timed out after 90 seconds；已有来源数=6，需在候选级核验。"
+  ],
+  "query_anchor": "低空蜂群渗透下反无人机一体防御体系研究",
+  "schema": "military_value_handoff_v1",
+  "statistics": {
+    "candidate_claim_count": 5,
+    "compression_ratio": 0.6705,
+    "evidence_url_count": 2,
+    "frontier_inspiration_count": 2,
+    "input_chars": 7559,
+    "input_packet_count": 3,
+    "limited_baseline_count": 0,
+    "output_chars": 5068,
+    "selected_claim_count": 3,
+    "source_agent_count": 2
+  }
+}

@@ -126,6 +126,17 @@ class CapabilityFeedbackBody(BaseModel):
     reviewer_role: str = Field(default="expert", max_length=80)
 
 
+class AgentSpecBody(BaseModel):
+    model_profile_id: str = Field(default="", max_length=128)
+    system_prompt: str = Field(default="", max_length=4000)
+    tools: list[str] | None = Field(default=None, max_length=16)
+    skills: list[str] | None = Field(default=None, max_length=6)
+    preload_skills: list[str] = Field(default_factory=list, max_length=6)
+    mcps: list[str] | None = Field(default=None, max_length=16)
+    subagents: list[str] | None = Field(default=None, max_length=8)
+    enable_subagents: bool | None = None
+
+
 class DeepSessionCreateBody(BaseModel):
     kind: str = Field(default="deep-thinking", max_length=64)
     title: str = Field(default="深度思考会话", max_length=240)
@@ -140,6 +151,7 @@ class DeepSessionCreateBody(BaseModel):
     reference_weapon: dict[str, Any] = Field(default_factory=dict)
     active_skill_ids: list[str] = Field(default_factory=list, max_length=6)
     model_profile_id: str = Field(default="", max_length=128)
+    agent_spec: AgentSpecBody | None = None
     create_artifact: bool = False
     auto_merge: bool = False
 
@@ -152,6 +164,7 @@ class DeepSessionMessageBody(BaseModel):
     parent_message_id: str = Field(default="", max_length=128)
     active_skill_ids: list[str] = Field(default_factory=list, max_length=6)
     model_profile_id: str = Field(default="", max_length=128)
+    agent_spec: AgentSpecBody | None = None
     channel: str | None = Field(default=None, pattern="^(web|cli|telegram|discord)$")
 
 

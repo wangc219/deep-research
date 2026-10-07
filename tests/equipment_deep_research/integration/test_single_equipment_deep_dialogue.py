@@ -289,6 +289,7 @@ def test_plugin_state_is_admin_only_and_capability_catalog_is_redacted(
     assert catalog_response.status_code == 200
     catalog = catalog_response.json()
     assert [item["id"] for item in catalog["model_profiles"]["profiles"]] == [
+        "platform-chat",
         "codex-gpt",
         "codex-deepseek",
         "codex-queen",

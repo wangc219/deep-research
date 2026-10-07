@@ -1,0 +1,4 @@
+recursive-include platform_core/config/static *.txt *.yaml
+recursive-include platform_core/agents/skills *.md
+graft platform_core/agents/skills/buildin
+global-exclude *.py[cod]

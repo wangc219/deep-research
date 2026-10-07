@@ -1,9 +1,26 @@
+# Model profiles remain routing metadata only. Runtime model id / URL / secrets
+# are taken from platform_core Model Provider / Model Spec (`provider_id:model_id`)
+# configured in the 「模型设置」 page. The YAML env mappings below are worker-internal
+# aliases; do not treat `.env` as the product model-settings UX.
 version: 1
 default_profile: codex-gpt
 
-# Model profiles are routing metadata only. Model ids / URLs / secrets live in
-# the unified `.env` (see `.env.example`). UI picks a profile per research task.
+# Model profiles are routing metadata only. Live runs bind the platform-chat
+# profile from 「模型设置」; leftover CLI paths may still read env aliases.
 profiles:
+  # 平台「模型设置」中的聊天模型。Worker 会把 EQUIPMENT_DR_PROFILE 指到这里，
+  # 避免 swarm / reporter 回落到默认的 Codex CLI。
+  platform-chat:
+    label: 平台模型设置
+    provider: platform
+    protocol: chat_completions
+    model_env: EQUIPMENT_DR_MODEL
+    base_url_env: EQUIPMENT_DR_BASE_URL
+    api_key_env: EQUIPMENT_DR_API_KEY
+    fallback:
+      policy: none
+      profiles: []
+
   # GPT or any OpenAI-compatible Codex / Responses relay.
   codex-gpt:
     label: GPT

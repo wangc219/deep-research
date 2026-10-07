@@ -528,6 +528,14 @@ skills:
     quality_gates: [传统范式关系跃迁常规不可吸收性和独立性命题齐全, 删除关系跃迁后常规方案不能原样完成制胜链, 突破方向具体可验证, 效果链可追溯, 至少一个替代方向]
     stop_conditions: [S3突破方向效果链与验证建议完整]
     object_write_scopes: [WinningReasoningNode, RecallRequest]
+  - skill_id: deep_research_orchestration
+    triggers: [深度研究, 并行调研, SubAgent, 核验综合]
+    allowed_tools: [generate_counterfactual_option, test_competing_hypothesis, build_causal_chain, write_reasoning_node]
+    steps: [澄清本轮范围, 拆成正交子问题, 先并行派发调研探索员, 再核验关键论断与冲突, 由主智能体综合而不是拼接原文, 证据饱和或无法增益时停止并登记缺口]
+    required_artifacts: [BaselineFindingPacket]
+    quality_gates: [子问题正交且可独立调研, 关键结论经过核验或显式降级, 综合围绕论证而不是资料堆砌, 不覆盖单装备身份锁]
+    stop_conditions: [本轮问题得到最小充分回答且剩余未知已登记]
+    object_write_scopes: [BaselineFindingPacket]
   - skill_id: dotmlpf_capability_mapping
     triggers: [S4, DOTMLPF, 能力任务映射]
     allowed_tools: [map_dotmlpf_requirement, write_reasoning_node, write_stage_output, create_recall_request]

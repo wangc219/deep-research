@@ -1,0 +1,1010 @@
+[
+  {
+    "path": "/knowledge",
+    "available": 356,
+    "content": 356,
+    "height": 822,
+    "page": 355,
+    "width": 355
+  },
+  {
+    "path": "/equipment/runs",
+    "available": 343,
+    "content": 343,
+    "height": 822,
+    "page": 355,
+    "width": 355
+  },
+  {
+    "path": "/equipment/queries",
+    "available": 343,
+    "content": 343,
+    "height": 822,
+    "page": 355,
+    "width": 355
+  },
+  {
+    "path": "/equipment/capabilities",
+    "available": 343,
+    "content": 343,
+    "height": 822,
+    "page": 355,
+    "width": 355
+  },
+  {
+    "path": "/equipment/reports",
+    "available": 343,
+    "content": 343,
+    "height": 822,
+    "page": 355,
+    "width": 355
+  },
+  {
+    "path": "/equipment/favorites",
+    "available": 343,
+    "content": 343,
+    "height": 822,
+    "page": 355,
+    "width": 355
+  },
+  {
+    "path": "/equipment/deep-thinking",
+    "available": 356,
+    "content": 356,
+    "height": 822,
+    "page": 355,
+    "width": 355
+  },
+  {
+    "path": "/agent",
+    "available": 356,
+    "content": 356,
+    "height": 822,
+    "page": 355,
+    "width": 355
+  },
+  {
+    "path": "/workspace",
+    "available": 356,
+    "content": 356,
+    "height": 822,
+    "page": 355,
+    "width": 355
+  },
+  {
+    "path": "/models",
+    "available": 343,
+    "content": 343,
+    "height": 822,
+    "page": 355,
+    "width": 355
+  },
+  {
+    "path": "/agent-manage",
+    "available": 343,
+    "content": 343,
+    "height": 822,
+    "page": 355,
+    "width": 355
+  },
+  {
+    "path": "/extensions",
+    "available": 356,
+    "content": 356,
+    "height": 822,
+    "page": 355,
+    "width": 355
+  },
+  {
+    "path": "/dashboard",
+    "available": 343,
+    "content": 343,
+    "height": 822,
+    "page": 355,
+    "width": 355
+  },
+  {
+    "path": "/enterprise",
+    "available": 356,
+    "content": 356,
+    "height": 822,
+    "page": 355,
+    "width": 355
+  },
+  {
+    "path": "/knowledge",
+    "available": 308,
+    "content": 308,
+    "height": 740,
+    "page": 320,
+    "width": 320
+  },
+  {
+    "path": "/equipment/runs",
+    "available": 308,
+    "content": 308,
+    "height": 740,
+    "page": 320,
+    "width": 320
+  },
+  {
+    "path": "/equipment/queries",
+    "available": 308,
+    "content": 308,
+    "height": 740,
+    "page": 320,
+    "width": 320
+  },
+  {
+    "path": "/equipment/capabilities",
+    "available": 308,
+    "content": 308,
+    "height": 740,
+    "page": 320,
+    "width": 320
+  },
+  {
+    "path": "/equipment/reports",
+    "available": 308,
+    "content": 308,
+    "height": 740,
+    "page": 320,
+    "width": 320
+  },
+  {
+    "path": "/equipment/favorites",
+    "available": 308,
+    "content": 308,
+    "height": 740,
+    "page": 320,
+    "width": 320
+  },
+  {
+    "path": "/equipment/deep-thinking",
+    "available": 320,
+    "content": 320,
+    "height": 740,
+    "page": 320,
+    "width": 320
+  },
+  {
+    "path": "/agent",
+    "available": 320,
+    "content": 320,
+    "height": 740,
+    "page": 320,
+    "width": 320
+  },
+  {
+    "path": "/workspace",
+    "available": 320,
+    "content": 320,
+    "height": 740,
+    "page": 320,
+    "width": 320
+  },
+  {
+    "path": "/models",
+    "available": 308,
+    "content": 308,
+    "height": 740,
+    "page": 320,
+    "width": 320
+  },
+  {
+    "path": "/agent-manage",
+    "available": 308,
+    "content": 308,
+    "height": 740,
+    "page": 320,
+    "width": 320
+  },
+  {
+    "path": "/extensions",
+    "available": 320,
+    "content": 320,
+    "height": 740,
+    "page": 320,
+    "width": 320
+  },
+  {
+    "path": "/dashboard",
+    "available": 308,
+    "content": 308,
+    "height": 740,
+    "page": 320,
+    "width": 320
+  },
+  {
+    "path": "/enterprise",
+    "available": 320,
+    "content": 320,
+    "height": 740,
+    "page": 320,
+    "width": 320
+  },
+  {
+    "path": "/knowledge",
+    "available": 376,
+    "content": 376,
+    "height": 812,
+    "page": 375,
+    "width": 375
+  },
+  {
+    "path": "/equipment/runs",
+    "available": 363,
+    "content": 363,
+    "height": 812,
+    "page": 375,
+    "width": 375
+  },
+  {
+    "path": "/equipment/queries",
+    "available": 363,
+    "content": 363,
+    "height": 812,
+    "page": 375,
+    "width": 375
+  },
+  {
+    "path": "/equipment/capabilities",
+    "available": 363,
+    "content": 363,
+    "height": 812,
+    "page": 375,
+    "width": 375
+  },
+  {
+    "path": "/equipment/reports",
+    "available": 363,
+    "content": 363,
+    "height": 812,
+    "page": 375,
+    "width": 375
+  },
+  {
+    "path": "/equipment/favorites",
+    "available": 363,
+    "content": 363,
+    "height": 812,
+    "page": 375,
+    "width": 375
+  },
+  {
+    "path": "/equipment/deep-thinking",
+    "available": 376,
+    "content": 376,
+    "height": 812,
+    "page": 375,
+    "width": 375
+  },
+  {
+    "path": "/agent",
+    "available": 376,
+    "content": 376,
+    "height": 812,
+    "page": 375,
+    "width": 375
+  },
+  {
+    "path": "/workspace",
+    "available": 376,
+    "content": 376,
+    "height": 812,
+    "page": 375,
+    "width": 375
+  },
+  {
+    "path": "/models",
+    "available": 363,
+    "content": 363,
+    "height": 812,
+    "page": 375,
+    "width": 375
+  },
+  {
+    "path": "/agent-manage",
+    "available": 363,
+    "content": 363,
+    "height": 812,
+    "page": 375,
+    "width": 375
+  },
+  {
+    "path": "/extensions",
+    "available": 376,
+    "content": 376,
+    "height": 812,
+    "page": 375,
+    "width": 375
+  },
+  {
+    "path": "/dashboard",
+    "available": 363,
+    "content": 363,
+    "height": 812,
+    "page": 375,
+    "width": 375
+  },
+  {
+    "path": "/enterprise",
+    "available": 376,
+    "content": 376,
+    "height": 812,
+    "page": 375,
+    "width": 375
+  },
+  {
+    "path": "/knowledge",
+    "available": 430,
+    "content": 430,
+    "height": 932,
+    "page": 430,
+    "width": 430
+  },
+  {
+    "path": "/equipment/runs",
+    "available": 418,
+    "content": 418,
+    "height": 932,
+    "page": 430,
+    "width": 430
+  },
+  {
+    "path": "/equipment/queries",
+    "available": 418,
+    "content": 418,
+    "height": 932,
+    "page": 430,
+    "width": 430
+  },
+  {
+    "path": "/equipment/capabilities",
+    "available": 418,
+    "content": 418,
+    "height": 932,
+    "page": 430,
+    "width": 430
+  },
+  {
+    "path": "/equipment/reports",
+    "available": 418,
+    "content": 418,
+    "height": 932,
+    "page": 430,
+    "width": 430
+  },
+  {
+    "path": "/equipment/favorites",
+    "available": 418,
+    "content": 418,
+    "height": 932,
+    "page": 430,
+    "width": 430
+  },
+  {
+    "path": "/equipment/deep-thinking",
+    "available": 430,
+    "content": 430,
+    "height": 932,
+    "page": 430,
+    "width": 430
+  },
+  {
+    "path": "/agent",
+    "available": 430,
+    "content": 430,
+    "height": 932,
+    "page": 430,
+    "width": 430
+  },
+  {
+    "path": "/workspace",
+    "available": 430,
+    "content": 430,
+    "height": 932,
+    "page": 430,
+    "width": 430
+  },
+  {
+    "path": "/models",
+    "available": 418,
+    "content": 418,
+    "height": 932,
+    "page": 430,
+    "width": 430
+  },
+  {
+    "path": "/agent-manage",
+    "available": 418,
+    "content": 418,
+    "height": 932,
+    "page": 430,
+    "width": 430
+  },
+  {
+    "path": "/extensions",
+    "available": 430,
+    "content": 430,
+    "height": 932,
+    "page": 430,
+    "width": 430
+  },
+  {
+    "path": "/dashboard",
+    "available": 418,
+    "content": 418,
+    "height": 932,
+    "page": 430,
+    "width": 430
+  },
+  {
+    "path": "/enterprise",
+    "available": 430,
+    "content": 430,
+    "height": 932,
+    "page": 430,
+    "width": 430
+  },
+  {
+    "path": "/knowledge",
+    "available": 539,
+    "content": 539,
+    "height": 1024,
+    "page": 769,
+    "width": 769
+  },
+  {
+    "path": "/equipment/runs",
+    "available": 527,
+    "content": 527,
+    "height": 1024,
+    "page": 769,
+    "width": 769
+  },
+  {
+    "path": "/equipment/queries",
+    "available": 527,
+    "content": 527,
+    "height": 1024,
+    "page": 769,
+    "width": 769
+  },
+  {
+    "path": "/equipment/capabilities",
+    "available": 539,
+    "content": 539,
+    "height": 1024,
+    "page": 769,
+    "width": 769
+  },
+  {
+    "path": "/equipment/reports",
+    "available": 527,
+    "content": 527,
+    "height": 1024,
+    "page": 769,
+    "width": 769
+  },
+  {
+    "path": "/equipment/favorites",
+    "available": 539,
+    "content": 539,
+    "height": 1024,
+    "page": 769,
+    "width": 769
+  },
+  {
+    "path": "/equipment/deep-thinking",
+    "available": 539,
+    "content": 539,
+    "height": 1024,
+    "page": 769,
+    "width": 769
+  },
+  {
+    "path": "/agent",
+    "available": 539,
+    "content": 539,
+    "height": 1024,
+    "page": 769,
+    "width": 769
+  },
+  {
+    "path": "/workspace",
+    "available": 539,
+    "content": 539,
+    "height": 1024,
+    "page": 769,
+    "width": 769
+  },
+  {
+    "path": "/models",
+    "available": 527,
+    "content": 527,
+    "height": 1024,
+    "page": 769,
+    "width": 769
+  },
+  {
+    "path": "/agent-manage",
+    "available": 527,
+    "content": 527,
+    "height": 1024,
+    "page": 769,
+    "width": 769
+  },
+  {
+    "path": "/extensions",
+    "available": 539,
+    "content": 539,
+    "height": 1024,
+    "page": 769,
+    "width": 769
+  },
+  {
+    "path": "/dashboard",
+    "available": 527,
+    "content": 527,
+    "height": 1024,
+    "page": 769,
+    "width": 769
+  },
+  {
+    "path": "/enterprise",
+    "available": 539,
+    "content": 539,
+    "height": 1024,
+    "page": 769,
+    "width": 769
+  },
+  {
+    "path": "/knowledge",
+    "available": 602,
+    "content": 602,
+    "height": 390,
+    "page": 844,
+    "width": 844
+  },
+  {
+    "path": "/equipment/runs",
+    "available": 602,
+    "content": 602,
+    "height": 390,
+    "page": 844,
+    "width": 844
+  },
+  {
+    "path": "/equipment/queries",
+    "available": 602,
+    "content": 602,
+    "height": 390,
+    "page": 844,
+    "width": 844
+  },
+  {
+    "path": "/equipment/capabilities",
+    "available": 602,
+    "content": 602,
+    "height": 390,
+    "page": 844,
+    "width": 844
+  },
+  {
+    "path": "/equipment/reports",
+    "available": 602,
+    "content": 602,
+    "height": 390,
+    "page": 844,
+    "width": 844
+  },
+  {
+    "path": "/equipment/favorites",
+    "available": 602,
+    "content": 602,
+    "height": 390,
+    "page": 844,
+    "width": 844
+  },
+  {
+    "path": "/equipment/deep-thinking",
+    "available": 614,
+    "content": 614,
+    "height": 390,
+    "page": 844,
+    "width": 844
+  },
+  {
+    "path": "/agent",
+    "available": 614,
+    "content": 614,
+    "height": 390,
+    "page": 844,
+    "width": 844
+  },
+  {
+    "path": "/workspace",
+    "available": 614,
+    "content": 614,
+    "height": 390,
+    "page": 844,
+    "width": 844
+  },
+  {
+    "path": "/models",
+    "available": 602,
+    "content": 602,
+    "height": 390,
+    "page": 844,
+    "width": 844
+  },
+  {
+    "path": "/agent-manage",
+    "available": 602,
+    "content": 602,
+    "height": 390,
+    "page": 844,
+    "width": 844
+  },
+  {
+    "path": "/extensions",
+    "available": 614,
+    "content": 614,
+    "height": 390,
+    "page": 844,
+    "width": 844
+  },
+  {
+    "path": "/dashboard",
+    "available": 602,
+    "content": 602,
+    "height": 390,
+    "page": 844,
+    "width": 844
+  },
+  {
+    "path": "/enterprise",
+    "available": 614,
+    "content": 614,
+    "height": 390,
+    "page": 844,
+    "width": 844
+  },
+  {
+    "path": "/knowledge",
+    "available": 1210,
+    "content": 1210,
+    "height": 900,
+    "page": 1440,
+    "width": 1440
+  },
+  {
+    "path": "/equipment/runs",
+    "available": 1198,
+    "content": 1198,
+    "height": 900,
+    "page": 1440,
+    "width": 1440
+  },
+  {
+    "path": "/equipment/queries",
+    "available": 1198,
+    "content": 1198,
+    "height": 900,
+    "page": 1440,
+    "width": 1440
+  },
+  {
+    "path": "/equipment/capabilities",
+    "available": 1198,
+    "content": 1198,
+    "height": 900,
+    "page": 1440,
+    "width": 1440
+  },
+  {
+    "path": "/equipment/reports",
+    "available": 1198,
+    "content": 1198,
+    "height": 900,
+    "page": 1440,
+    "width": 1440
+  },
+  {
+    "path": "/equipment/favorites",
+    "available": 1210,
+    "content": 1210,
+    "height": 900,
+    "page": 1440,
+    "width": 1440
+  },
+  {
+    "path": "/equipment/deep-thinking",
+    "available": 1210,
+    "content": 1210,
+    "height": 900,
+    "page": 1440,
+    "width": 1440
+  },
+  {
+    "path": "/agent",
+    "available": 1210,
+    "content": 1210,
+    "height": 900,
+    "page": 1440,
+    "width": 1440
+  },
+  {
+    "path": "/workspace",
+    "available": 1210,
+    "content": 1210,
+    "height": 900,
+    "page": 1440,
+    "width": 1440
+  },
+  {
+    "path": "/models",
+    "available": 1210,
+    "content": 1210,
+    "height": 900,
+    "page": 1440,
+    "width": 1440
+  },
+  {
+    "path": "/agent-manage",
+    "available": 1210,
+    "content": 1210,
+    "height": 900,
+    "page": 1440,
+    "width": 1440
+  },
+  {
+    "path": "/extensions",
+    "available": 1210,
+    "content": 1210,
+    "height": 900,
+    "page": 1440,
+    "width": 1440
+  },
+  {
+    "path": "/dashboard",
+    "available": 1198,
+    "content": 1198,
+    "height": 900,
+    "page": 1440,
+    "width": 1440
+  },
+  {
+    "path": "/enterprise",
+    "available": 1210,
+    "content": 1210,
+    "height": 900,
+    "page": 1440,
+    "width": 1440
+  },
+  {
+    "path": "/knowledge",
+    "available": 768,
+    "content": 768,
+    "height": 1024,
+    "page": 768,
+    "width": 768
+  },
+  {
+    "path": "/equipment/runs",
+    "available": 756,
+    "content": 756,
+    "height": 1024,
+    "page": 768,
+    "width": 768
+  },
+  {
+    "path": "/equipment/queries",
+    "available": 756,
+    "content": 756,
+    "height": 1024,
+    "page": 768,
+    "width": 768
+  },
+  {
+    "path": "/equipment/capabilities",
+    "available": 756,
+    "content": 756,
+    "height": 1024,
+    "page": 768,
+    "width": 768
+  },
+  {
+    "path": "/equipment/reports",
+    "available": 756,
+    "content": 756,
+    "height": 1024,
+    "page": 768,
+    "width": 768
+  },
+  {
+    "path": "/equipment/favorites",
+    "available": 768,
+    "content": 768,
+    "height": 1024,
+    "page": 768,
+    "width": 768
+  },
+  {
+    "path": "/equipment/deep-thinking",
+    "available": 768,
+    "content": 768,
+    "height": 1024,
+    "page": 768,
+    "width": 768
+  },
+  {
+    "path": "/agent",
+    "available": 768,
+    "content": 768,
+    "height": 1024,
+    "page": 768,
+    "width": 768
+  },
+  {
+    "path": "/workspace",
+    "available": 768,
+    "content": 768,
+    "height": 1024,
+    "page": 768,
+    "width": 768
+  },
+  {
+    "path": "/models",
+    "available": 768,
+    "content": 768,
+    "height": 1024,
+    "page": 768,
+    "width": 768
+  },
+  {
+    "path": "/agent-manage",
+    "available": 768,
+    "content": 768,
+    "height": 1024,
+    "page": 768,
+    "width": 768
+  },
+  {
+    "path": "/extensions",
+    "available": 768,
+    "content": 768,
+    "height": 1024,
+    "page": 768,
+    "width": 768
+  },
+  {
+    "path": "/dashboard",
+    "available": 756,
+    "content": 756,
+    "height": 1024,
+    "page": 768,
+    "width": 768
+  },
+  {
+    "path": "/enterprise",
+    "available": 768,
+    "content": 768,
+    "height": 1024,
+    "page": 768,
+    "width": 768
+  },
+  {
+    "path": "/knowledge",
+    "available": 390,
+    "content": 390,
+    "height": 844,
+    "page": 390,
+    "width": 390
+  },
+  {
+    "path": "/equipment/runs",
+    "available": 378,
+    "content": 378,
+    "height": 844,
+    "page": 390,
+    "width": 390
+  },
+  {
+    "path": "/equipment/queries",
+    "available": 378,
+    "content": 378,
+    "height": 844,
+    "page": 390,
+    "width": 390
+  },
+  {
+    "path": "/equipment/capabilities",
+    "available": 378,
+    "content": 378,
+    "height": 844,
+    "page": 390,
+    "width": 390
+  },
+  {
+    "path": "/equipment/reports",
+    "available": 378,
+    "content": 378,
+    "height": 844,
+    "page": 390,
+    "width": 390
+  },
+  {
+    "path": "/equipment/favorites",
+    "available": 378,
+    "content": 378,
+    "height": 844,
+    "page": 390,
+    "width": 390
+  },
+  {
+    "path": "/equipment/deep-thinking",
+    "available": 390,
+    "content": 390,
+    "height": 844,
+    "page": 390,
+    "width": 390
+  },
+  {
+    "path": "/agent",
+    "available": 390,
+    "content": 390,
+    "height": 844,
+    "page": 390,
+    "width": 390
+  },
+  {
+    "path": "/workspace",
+    "available": 390,
+    "content": 390,
+    "height": 844,
+    "page": 390,
+    "width": 390
+  },
+  {
+    "path": "/models",
+    "available": 390,
+    "content": 390,
+    "height": 844,
+    "page": 390,
+    "width": 390
+  },
+  {
+    "path": "/agent-manage",
+    "available": 378,
+    "content": 378,
+    "height": 844,
+    "page": 390,
+    "width": 390
+  },
+  {
+    "path": "/extensions",
+    "available": 390,
+    "content": 390,
+    "height": 844,
+    "page": 390,
+    "width": 390
+  },
+  {
+    "path": "/dashboard",
+    "available": 378,
+    "content": 378,
+    "height": 844,
+    "page": 390,
+    "width": 390
+  },
+  {
+    "path": "/enterprise",
+    "available": 390,
+    "content": 390,
+    "height": 844,
+    "page": 390,
+    "width": 390
+  }
+]

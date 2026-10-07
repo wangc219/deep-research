@@ -50,8 +50,10 @@ from equipment_deep_research.agents.workflows.winning_flows.helpers import (
 )
 from equipment_deep_research.agents.workflows.coordinator import _parse_json_object
 from equipment_deep_research.agents.workflows.winning_flows.dynamic_swarm import (
+    _reconcile_cross_pool_s5_reviews,
     _s3_s4_first_pass_structurally_complete,
     _s3_s4_structural_dimension_identities,
+    _s5_diverse_six_order,
 )
 from equipment_deep_research.domain.models import ResearchProblem
 
@@ -122,7 +124,10 @@ def test_s3_naming_prefers_physical_structure_principle_motion_and_scale() -> No
     assert "装备独特运动方式" in instruction
     assert "反传统隐喻" in instruction
     assert "数量/密度/规模" in instruction
-    assert "一般性的任务能力、功能效果和动作流程应进入concise_winning_summary" in instruction
+    assert (
+        "一般性的任务能力、功能效果和动作流程应进入concise_winning_summary"
+        in instruction
+    )
     assert "背景剥离诱显巡飞弹" in instruction
     assert "功能/动作短语直接粘装备尾词" in instruction
     assert "具体作用、作用对象、核心机理和直接战果" in instruction
@@ -170,9 +175,7 @@ def test_winning_summary_language_gate_rejects_generation_defects(
 
 
 def test_winning_summary_language_gate_does_not_use_local_result_word_table() -> None:
-    summary = (
-        "磁足附着把末段追踪转化为车体近距接触，定向破甲战斗部直接击穿关键舱段。"
-    )
+    summary = "磁足附着把末段追踪转化为车体近距接触，定向破甲战斗部直接击穿关键舱段。"
 
     assert winning_summary_language_issues(summary) == []
 
@@ -212,6 +215,143 @@ def test_s5_disruption_tier_rank_prioritizes_paradigm_change_over_score() -> Non
     )
 
 
+def _s5_review_row(
+    hypothesis_id: str,
+    *,
+    decision: str = "retain",
+    score: float = 0.8,
+    merge_target: str = "",
+) -> dict[str, object]:
+    return {
+        "hypothesis_id": hypothesis_id,
+        "decision": decision,
+        "merge_target_hypothesis_id": merge_target,
+        "direct_equipment": True,
+        "weapon_object_specific": True,
+        "weapon_body_mechanism_closes": True,
+        "known_science_consistent": True,
+        "material_innovation_breakpoint_present": True,
+        "ordinary_upgrade_or_function_packaging": False,
+        "naming_semantics_aligned": True,
+        "disruption_tier": "significant_innovation",
+        "innovation_priority": score,
+        "dimension_scores": {
+            "innovation": score,
+            "demand": score,
+            "feasibility": score,
+            "effectiveness": score,
+            "development": score,
+        },
+    }
+
+
+def test_cross_pool_s5_reconciliation_does_not_intersect_reviewer_survivors() -> None:
+    candidates = [
+        _hypothesis(hypothesis_id="a"),
+        _hypothesis(hypothesis_id="b"),
+        _hypothesis(hypothesis_id="c"),
+    ]
+    result = _reconcile_cross_pool_s5_reviews(
+        candidates,
+        [
+            {
+                "reviewer_id": "reviewer-a",
+                "decisions": [
+                    _s5_review_row("a", score=0.91),
+                    _s5_review_row("b", score=0.81),
+                    _s5_review_row("c", decision="reject", score=0.40),
+                ],
+            },
+            {
+                "reviewer_id": "reviewer-b",
+                "decisions": [
+                    _s5_review_row("a", decision="reject", score=0.70),
+                    _s5_review_row("b", score=0.89),
+                    # c is intentionally omitted; omission is not a rejection.
+                ],
+            },
+        ],
+        query_domain_mode="direct_combat",
+    )
+
+    assert result["eligible_hypothesis_ids"] == ["a", "b"]
+    assert result["rejected_hypothesis_ids"] == ["c"]
+    assert result["omitted_by_reviewer"]["reviewer-b"] == ["c"]
+    assert result["aggregates"]["a"]["weighted_score"] == pytest.approx(0.805)
+
+
+def test_cross_pool_s5_isomorphic_group_keeps_highest_aggregate_score() -> None:
+    candidates = [
+        _hypothesis(hypothesis_id="lower"),
+        _hypothesis(hypothesis_id="higher"),
+    ]
+    result = _reconcile_cross_pool_s5_reviews(
+        candidates,
+        [
+            {
+                "reviewer_id": "reviewer-a",
+                "decisions": [
+                    _s5_review_row(
+                        "lower", decision="merge", merge_target="higher", score=0.60
+                    ),
+                    _s5_review_row("higher", score=0.90),
+                ],
+            },
+            {
+                "reviewer_id": "reviewer-b",
+                "decisions": [
+                    _s5_review_row("lower", score=0.70),
+                    _s5_review_row("higher", score=0.80),
+                ],
+            },
+        ],
+        query_domain_mode="direct_combat",
+    )
+
+    assert result["eligible_hypothesis_ids"] == ["higher"]
+    assert result["merge_map"] == {"lower": "higher"}
+
+
+def test_s5_six_order_backfills_least_overlapping_identity_before_score() -> None:
+    candidates = [
+        _hypothesis(hypothesis_id=f"d{index}", combat_dimension=f"D{index}")
+        for index in range(1, 6)
+    ]
+    candidates.extend(
+        [
+            _hypothesis(
+                hypothesis_id="d1-similar",
+                combat_dimension="D1",
+                score=0.99,
+            ),
+            _hypothesis(
+                hypothesis_id="d1-less-similar",
+                combat_dimension="D1",
+                changed_confrontation_variable="改写授权时序",
+                mechanism_chain=["离线授权", "局部判定", "窗口突防"],
+                direct_military_effects=["打断对方任务接续"],
+                equipment_forms=["分布式授权扰断弹"],
+                score=0.50,
+            ),
+        ]
+    )
+    scores = {item.hypothesis_id: item.score for item in candidates}
+    selected, audit = _s5_diverse_six_order(
+        candidates,
+        weighted_scores=scores,
+        innovation_priorities={},
+        disruption_tiers={},
+        portfolio_order_hints={},
+        target=6,
+    )
+
+    selected_ids = [item.hypothesis_id for item in selected]
+    assert len(selected_ids) == 6
+    assert "d1-less-similar" in selected_ids
+    assert "d1" not in selected_ids
+    assert audit["similarity_backfill"][0]["hypothesis_id"] == "d1-less-similar"
+
+
 def test_s5_portfolio_order_keeps_only_strongest_candidate_per_dimension() -> None:
     first = _hypothesis(hypothesis_id="first", combat_dimension="D1")
     second = _hypothesis(hypothesis_id="second", combat_dimension="D1")
@@ -248,7 +388,9 @@ def test_s5_portfolio_order_keeps_legacy_rows_as_independent_lanes() -> None:
     assert audit["selected_backup_ids"] == ["legacy"]
 
 
-def test_s5_portfolio_order_prefers_uncovered_dimension_over_same_dimension_runner_up() -> None:
+def test_s5_portfolio_order_prefers_uncovered_dimension_over_same_dimension_runner_up() -> (
+    None
+):
     """A strong second idea cannot crowd out a weaker, uncovered lens."""
 
     same_dimension_best = _hypothesis(
@@ -342,7 +484,9 @@ def test_s5_portfolio_order_treats_dimension_code_only_rows_as_explicit_lanes() 
     assert audit["selected_backup_ids"] == ["legacy"]
 
 
-def test_s5_portfolio_order_supports_mapping_rows_and_never_backfills_explicit_runner_up() -> None:
+def test_s5_portfolio_order_supports_mapping_rows_and_never_backfills_explicit_runner_up() -> (
+    None
+):
     """The portfolio helper accepts normalized mapping envelopes as well."""
 
     candidates = [
@@ -381,9 +525,7 @@ def test_s5_dimension_key_keeps_distinct_other_relations_separate() -> None:
         "combat_dimension": "授权断裂",
     }
 
-    assert _s5_dimension_key(authorization_break) == (
-        "dimension:other:授权断裂"
-    )
+    assert _s5_dimension_key(authorization_break) == ("dimension:other:授权断裂")
     assert _s5_dimension_key(cost_exchange) == "dimension:other:成本交换"
     assert _s5_dimension_key(authorization_break) == _s5_dimension_key(
         explicit_authorization
@@ -391,16 +533,21 @@ def test_s5_dimension_key_keeps_distinct_other_relations_separate() -> None:
 
     # A custom id that merely contains ``D1`` remains custom; dimension
     # grouping must follow the authored marker, not a substring guess.
-    assert _s5_dimension_key(
-        {
-            "hypothesis_id": "custom-d1",
-            "dimension_code": "X-D1",
-            "combat_dimension": "X-D1",
-        }
-    ) == "dimension:xd1"
+    assert (
+        _s5_dimension_key(
+            {
+                "hypothesis_id": "custom-d1",
+                "dimension_code": "X-D1",
+                "combat_dimension": "X-D1",
+            }
+        )
+        == "dimension:xd1"
+    )
 
 
-def test_s5_dimension_key_uses_resolver_angle_suffix_when_code_field_is_absent() -> None:
+def test_s5_dimension_key_uses_resolver_angle_suffix_when_code_field_is_absent() -> (
+    None
+):
     """Resolver angle ids preserve a custom code on legacy hypothesis rows."""
 
     first = {
@@ -428,7 +575,9 @@ def test_s5_dimension_key_ignores_open_angle_suffix_and_keeps_label() -> None:
     assert _s5_dimension_key(row) == "candidate:open-angle"
 
 
-def test_s5_dimension_key_ignores_open_slot_label_and_keeps_candidate_isolated() -> None:
+def test_s5_dimension_key_ignores_open_slot_label_and_keeps_candidate_isolated() -> (
+    None
+):
     """A controller slot label is capacity metadata, not a shared dimension."""
 
     row = {
@@ -462,9 +611,7 @@ def test_resolver_preserves_custom_other_dimension_identity() -> None:
     )
 
     assert resolved_authorization["dimension_code"] == "OTHER:授权断裂"
-    assert resolved_authorization["winning_angle_id"].endswith(
-        "::OTHER:授权断裂"
-    )
+    assert resolved_authorization["winning_angle_id"].endswith("::OTHER:授权断裂")
     assert resolved_cost["dimension_code"] == "OTHER:成本交换"
     assert resolved_authorization["dimension_code"] != resolved_cost["dimension_code"]
 
@@ -496,13 +643,19 @@ def test_s5_portfolio_order_hard_caps_at_seven_distinct_dimensions() -> None:
     assert len(selected) == 7
 
 
-def test_s5_merge_target_validation_rejects_empty_self_unknown_and_cross_scope() -> None:
+def test_s5_merge_target_validation_rejects_empty_self_unknown_and_cross_scope() -> (
+    None
+):
     known = {"source", "target", "other"}
 
     assert _s5_merge_target_is_valid("source", "target", known, {"source", "target"})
     assert not _s5_merge_target_is_valid("source", "", known, {"source", "target"})
-    assert not _s5_merge_target_is_valid("source", "source", known, {"source", "target"})
-    assert not _s5_merge_target_is_valid("source", "missing", known, {"source", "target"})
+    assert not _s5_merge_target_is_valid(
+        "source", "source", known, {"source", "target"}
+    )
+    assert not _s5_merge_target_is_valid(
+        "source", "missing", known, {"source", "target"}
+    )
     assert not _s5_merge_target_is_valid("source", "other", known, {"source", "target"})
     # A non-paired/legacy reviewer with no scope can merge into any live
     # candidate, subject to the non-empty/non-self checks.
@@ -619,9 +772,7 @@ def test_s3_s4_dimension_assignments_always_include_source_forward_lane() -> Non
     assert len(assignments) == len(seats)
     assert len(set(codes)) == len(seats)
     assert "D7" in codes
-    assert set(codes) <= {
-        str(item["code"]) for item in S3_S4_WINNING_DIMENSION_PACKS
-    }
+    assert set(codes) <= {str(item["code"]) for item in S3_S4_WINNING_DIMENSION_PACKS}
 
 
 def test_s3_s4_dimension_assignments_are_replay_stable_for_retries() -> None:
@@ -678,13 +829,17 @@ def test_s3_s4_open_dimension_slots_fix_capacity_not_dimension_taxonomy() -> Non
     )
     # D7 is auditable as a reference, while the generated slot remains open
     # instead of becoming a hard D7 production lane.
-    assert sum(
-        bool(item.get("reference_dimension_codes")) for item in portfolios.values()
-    ) == 1
-    assert sum(
-        bool(item.get("reference_only_dimension_codes"))
-        for item in portfolios.values()
-    ) == 1
+    assert (
+        sum(bool(item.get("reference_dimension_codes")) for item in portfolios.values())
+        == 1
+    )
+    assert (
+        sum(
+            bool(item.get("reference_only_dimension_codes"))
+            for item in portfolios.values()
+        )
+        == 1
+    )
     assert all(
         item.get("reference_only_dimension_codes", [])
         == item.get("reference_dimension_codes", [])
@@ -720,7 +875,9 @@ def test_s3_s4_dimension_catalog_keeps_model_authored_open_other_slot() -> None:
     assert any(row["label"] == "断裂授权" for row in catalog)
 
 
-def test_s3_s4_structural_dimension_trace_preserves_custom_relations_and_markers() -> None:
+def test_s3_s4_structural_dimension_trace_preserves_custom_relations_and_markers() -> (
+    None
+):
     identities = _s3_s4_structural_dimension_identities(
         [
             "D1",
@@ -746,9 +903,15 @@ def test_s3_s4_open_slot_labels_are_transport_markers_not_shared_dimensions() ->
     )
 
     assert identities == set()
-    assert _s5_dimension_key(
-        {"hypothesis_id": "seat-a-candidate", "combat_dimension": "Query开放制胜槽位1"}
-    ) == "candidate:seat-a-candidate"
+    assert (
+        _s5_dimension_key(
+            {
+                "hypothesis_id": "seat-a-candidate",
+                "combat_dimension": "Query开放制胜槽位1",
+            }
+        )
+        == "candidate:seat-a-candidate"
+    )
 
 
 def test_dynamic_open_marker_is_not_counted_as_a_real_dimension() -> None:
@@ -757,13 +920,16 @@ def test_dynamic_open_marker_is_not_counted_as_a_real_dimension() -> None:
     )
 
     assert identities == {"d1", "d2"}
-    assert _s5_dimension_key(
-        {
-            "hypothesis_id": "seat-a-candidate",
-            "dimension_code": "DYNAMIC-OPEN",
-            "combat_dimension": "DYNAMIC-OPEN",
-        }
-    ) == "candidate:seat-a-candidate"
+    assert (
+        _s5_dimension_key(
+            {
+                "hypothesis_id": "seat-a-candidate",
+                "dimension_code": "DYNAMIC-OPEN",
+                "combat_dimension": "DYNAMIC-OPEN",
+            }
+        )
+        == "candidate:seat-a-candidate"
+    )
 
 
 def test_structural_dimension_gate_canonicalizes_label_and_code_aliases() -> None:
@@ -848,11 +1014,14 @@ def test_dynamic_v2_profile_prioritizes_frontloaded_s3_capacity() -> None:
     assert blueprint["winning_swarm_policy"]["expert_judge_enabled"] is False
     assert blueprint["winning_swarm_policy"]["expert_judge_required"] is False
     assert blueprint["winning_swarm_policy"]["finalist_minimum"] == 6
-    assert blueprint["winning_swarm_policy"]["finalist_maximum"] == 7
+    assert blueprint["winning_swarm_policy"]["finalist_maximum"] == 6
     assert blueprint["winning_swarm_policy"]["mission_graph_target_instances"] == 10
     assert blueprint["winning_swarm_policy"]["s3_winning_thesis_capacity"] == 4
     assert blueprint["winning_swarm_policy"]["s3_s4_candidate_maximum_per_session"] == 3
-    assert blueprint["winning_swarm_policy"]["s3_s4_candidate_pool_maximum_per_session"] == 3
+    assert (
+        blueprint["winning_swarm_policy"]["s3_s4_candidate_pool_maximum_per_session"]
+        == 3
+    )
     assert blueprint["winning_swarm_policy"]["breadth_hypothesis_maximum"] == 18
     assert blueprint["winning_swarm_policy"]["expert_candidate_pool_maximum"] == 0
     assert blueprint["winning_swarm_policy"]["expert_repair_reserved_instances"] == 0
@@ -983,7 +1152,9 @@ def test_frontier_candidate_metadata_survives_in_auditable_fields() -> None:
     assert "前瞻窗口：5-10年" in candidate.trl_constraints
 
 
-def test_dynamic_candidate_prefers_schema_name_and_preserves_concise_winning_summary() -> None:
+def test_dynamic_candidate_prefers_schema_name_and_preserves_concise_winning_summary() -> (
+    None
+):
     controller = WinningSwarmController(
         {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
     )
@@ -1069,7 +1240,10 @@ def test_s4_contribution_preserves_naming_and_concise_winning_summary() -> None:
     assert updated.title == "潮汐折线跨域效应器"
     assert updated.naming_style == "D/E/I任务能力"
     assert updated.core_disruptive_difference == "旧颠覆性"
-    assert updated.reference_overview == "在目标恢复前持续改写有效交战时间窗，直接延长拒止效果。"
+    assert (
+        updated.reference_overview
+        == "在目标恢复前持续改写有效交战时间窗，直接延长拒止效果。"
+    )
 
 
 def test_frontloaded_diagnostics_record_missing_paradigm_without_rejecting() -> None:
@@ -1218,7 +1392,9 @@ def test_policy_clamps_instance_concurrency_wave_and_gain_bounds() -> None:
     assert policy["promotion"]["minimum_positive_increment_rate"] == 0.70
 
 
-def test_policy_accepts_legacy_harness_instance_keys_with_canonical_precedence() -> None:
+def test_policy_accepts_legacy_harness_instance_keys_with_canonical_precedence() -> (
+    None
+):
     legacy = normalize_winning_swarm_policy(
         {
             "enabled": True,
@@ -1306,7 +1482,9 @@ def test_dynamic_v2_mission_graph_frontloads_quality_into_s5_before_s6_cards() -
     )
     assert not contracts_by_node["S6"]
     assert all(
-        not any("至少两项" in item or "最低分" in item for item in contract.quality_gates)
+        not any(
+            "至少两项" in item or "最低分" in item for item in contract.quality_gates
+        )
         for contract in graph.role_contracts
     )
     by_archetype = {item.archetype: item for item in graph.agent_instances}
@@ -1355,14 +1533,18 @@ def test_dynamic_v2_target_instances_controls_creator_capacity() -> None:
     assert sum(item.mission_node in {"S3", "S4"} for item in small.agent_instances) == 3
     assert sum(item.mission_node == "S5" for item in small.agent_instances) == 2
     assert len(medium.agent_instances) == 11
-    assert sum(item.mission_node in {"S3", "S4"} for item in medium.agent_instances) == 4
+    assert (
+        sum(item.mission_node in {"S3", "S4"} for item in medium.agent_instances) == 4
+    )
     assert sum(item.mission_node == "S5" for item in medium.agent_instances) == 3
     assert len(large.agent_instances) == 11
     assert sum(item.mission_node == "S5" for item in large.agent_instances) == 3
     assert large.maximum_instances >= 15
 
 
-def test_dynamic_v2_keeps_s3_s4_role_contracts_open_before_dimension_selection() -> None:
+def test_dynamic_v2_keeps_s3_s4_role_contracts_open_before_dimension_selection() -> (
+    None
+):
     controller = WinningSwarmController(
         {"enabled": True, "policy_id": "winning_swarm_dynamic_v2"}
     )
@@ -1409,8 +1591,7 @@ def test_dynamic_v2_keeps_s3_s4_role_contracts_open_before_dimension_selection()
     assert all("静默坐底拒止器" not in item.purpose for item in creative_contracts)
     assert all("尾流反捕获拦截弹" not in item.purpose for item in creative_contracts)
     assert all(
-        "独立检验Query蓝图制胜命题" not in item.purpose
-        for item in creative_contracts
+        "独立检验Query蓝图制胜命题" not in item.purpose for item in creative_contracts
     )
     assert all(
         any("轻型创造会话" in step for step in item.methodology)
@@ -1466,7 +1647,10 @@ def test_dynamic_v2_does_not_frontload_blueprint_equipment_names_into_s3() -> No
     assert "原理突破＋装备身份" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
     assert "不是模板、配额或分类覆盖任务" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
     assert "功能/动作短语＋装备类别尾词" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
-    assert "不建立意象词库、后缀表、字符串评分或本地命名硬门" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    assert (
+        "不建立意象词库、后缀表、字符串评分或本地命名硬门"
+        in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    )
     assert "frontier_principle" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
     assert "它长什么样" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
     assert "它凭什么做到" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
@@ -1479,29 +1663,53 @@ def test_dynamic_v2_does_not_frontload_blueprint_equipment_names_into_s3() -> No
     assert "背景剥离诱显巡飞弹" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
     assert "具体物理武器本体" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
     assert "读者只看名称就应能判断" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
-    assert "火控节点、目标标记器、航迹灯、诱显器" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
-    assert "不能仅靠增加‘器、群、弹、作战’等尾词" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
-    assert "抽象意象和双引号代号必须与任务场景" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
-    assert "不得为了显得新颖选取生僻、玄虚或与装备无关的词" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
-    assert "‘玄磁’对应电磁/超材料低可探测机理" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    assert (
+        "火控节点、目标标记器、航迹灯、诱显器"
+        in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    )
+    assert (
+        "不能仅靠增加‘器、群、弹、作战’等尾词"
+        in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    )
+    assert (
+        "抽象意象和双引号代号必须与任务场景" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    )
+    assert (
+        "不得为了显得新颖选取生僻、玄虚或与装备无关的词"
+        in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    )
+    assert (
+        "‘玄磁’对应电磁/超材料低可探测机理" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    )
     assert "‘蜂鸟’对应小尺度扑翼运动" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
     assert "‘逐浪’对应海面或跨介质运动" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
     assert "同批命名必须主动检查句法同构" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
-    assert "断链、强扰、静默、智能、双模、多模、蜂群" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    assert (
+        "断链、强扰、静默、智能、双模、多模、蜂群"
+        in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
+    )
     assert "专名/代号型成为明显多数" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
     assert "不得给整个装备名称加中文双引号" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
     assert "中文双引号只包住专名/代号本身" in QUERY_SPECIFIC_WEAPON_NAMING_CONVENTION
 
 
-def test_s3_s4_scientific_realizability_is_principle_not_engineering_assignment() -> None:
+def test_s3_s4_scientific_realizability_is_principle_not_engineering_assignment() -> (
+    None
+):
     instruction = _creative_s3_candidate_instruction()
 
     assert "静默检查科学可实现性" in instruction
     assert "不得违反已知物理" in instruction
     assert "核心效应须有合理作用载体并能落到武器本体" in instruction
     assert "本阶段不写工程瓶颈、成熟度、参数或验证边界" in instruction
-    assert "S3/S4只需在内部完成科学合理性自检" in SCIENTIFIC_WEAPON_REALIZABILITY_CONVENTION
-    assert "不要求输出工程瓶颈、成熟度、参数、验证方案或可证伪边界" in SCIENTIFIC_WEAPON_REALIZABILITY_CONVENTION
+    assert (
+        "S3/S4只需在内部完成科学合理性自检"
+        in SCIENTIFIC_WEAPON_REALIZABILITY_CONVENTION
+    )
+    assert (
+        "不要求输出工程瓶颈、成熟度、参数、验证方案或可证伪边界"
+        in SCIENTIFIC_WEAPON_REALIZABILITY_CONVENTION
+    )
 
 
 def test_s3_candidate_instruction_centers_deployable_weapon_objects() -> None:
@@ -1516,7 +1724,9 @@ def test_s3_candidate_instruction_centers_deployable_weapon_objects() -> None:
     assert "重复底名换皮不算多样" in instruction
 
 
-def test_s3_s4_quality_first_instruction_limits_each_session_to_strong_candidates() -> None:
+def test_s3_s4_quality_first_instruction_limits_each_session_to_strong_candidates() -> (
+    None
+):
     instruction = _s3_s4_quality_first_instruction()
 
     assert "至少三种不同的装备架构" in instruction
@@ -1942,9 +2152,9 @@ def test_dynamic_portfolio_retains_all_reliable_independent_weapons_up_to_s6_cap
 
     decision = controller.portfolio_decision(controller.create_ledger(hypotheses))
 
-    assert len(decision.selected_hypothesis_ids) == 7
+    assert len(decision.selected_hypothesis_ids) == 6
     assert decision.selected_hypothesis_ids == [
-        item.hypothesis_id for item in hypotheses[:7]
+        item.hypothesis_id for item in hypotheses[:6]
     ]
 
 
@@ -3428,9 +3638,7 @@ def test_promotion_requires_ten_runs_seventy_percent_and_no_hard_failures() -> N
 
 def test_parse_json_object_accepts_prose_prefix_markdown_and_trailing_commas() -> None:
     assert _parse_json_object(
-        "```json\n"
-        '{"hypotheses":[{"name":"x","concise_winning_summary":"y"}]}\n'
-        "```"
+        '```json\n{"hypotheses":[{"name":"x","concise_winning_summary":"y"}]}\n```'
     )["hypotheses"]
     assert _parse_json_object(
         "这是结果：\n"

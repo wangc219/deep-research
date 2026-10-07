@@ -1767,6 +1767,8 @@ class DiscoveryScheduler:
             "evidence_assessed",
             "baseline_result",
             "savepoint",
+            "agent_model_call_completed",
+            "winning_model_call_completed",
         }
         event_type = str(record.get("event_type", ""))
         if event_type not in allowed_events:
@@ -1802,6 +1804,17 @@ class DiscoveryScheduler:
             "checkpoint_id",
             "output_refs",
             "worker_report_id",
+            "model",
+            "model_spec",
+            "provider",
+            "provider_kind",
+            "phase",
+            "elapsed_seconds",
+            "queue_wait_seconds",
+            "usage",
+            "input_tokens",
+            "output_tokens",
+            "total_tokens",
         }
         self.event_sink(
             event_type,

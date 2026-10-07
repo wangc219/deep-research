@@ -1,0 +1,71 @@
+/* Shared overlays are teleported to body, outside individual page styles. */
+@media (max-width: 768px) {
+  .ant-drawer-left > .ant-drawer-content-wrapper,
+  .ant-drawer-right > .ant-drawer-content-wrapper {
+    max-width: 100%;
+  }
+
+  .ant-drawer-body {
+    min-width: 0;
+    padding: 16px;
+  }
+
+  .ant-modal .ant-modal-content {
+    padding: 16px;
+  }
+
+  .ant-modal .ant-modal-title {
+    padding-right: 28px;
+    overflow-wrap: anywhere;
+  }
+
+  .ant-modal .ant-modal-body,
+  .ant-drawer .ant-drawer-body {
+    overflow-wrap: anywhere;
+  }
+
+  .ant-modal .ant-modal-footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .ant-modal .ant-modal-footer > .ant-btn + .ant-btn {
+    margin-inline-start: 0;
+  }
+
+  .ant-table-wrapper,
+  .ant-table-content {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .ant-pagination {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  .settings-content .header-section,
+  .user-management .header-section,
+  .department-management .header-section,
+  .apikey-management .header-section {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .user-management .ant-table-content table,
+  .department-management .ant-table-content table,
+  .apikey-management .ant-table-content table {
+    min-width: 640px;
+  }
+
+  /* iOS otherwise zooms the entire page when focusing small text fields. */
+  @supports (-webkit-touch-callout: none) {
+    input:not([type='checkbox']):not([type='radio']),
+    textarea,
+    select {
+      font-size: 16px;
+    }
+  }
+}

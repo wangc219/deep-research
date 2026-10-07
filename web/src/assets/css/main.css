@@ -1,0 +1,843 @@
+@import './base.css';
+@import './base.dark.css';
+@import './shorts.css';
+@import './dashboard.css';
+@import './code-highlight.less';
+@import './equipment.css';
+@import './mobile.css';
+
+:root {
+  --header-height: 45px;
+  --min-width: 450px;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --min-width: 0px;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  position: relative;
+  font-weight: normal;
+}
+
+/* Normalize native buttons before feature styles are applied.  The equipment
+ * workbench shares its visual CSS with the React reference implementation,
+ * whose base stylesheet already removes the browser's 2px outset button
+ * chrome.  Vue previously loaded only the feature/theme layers, so any rule
+ * that changed just border-color still rendered as a dark native bevel. */
+button {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid transparent;
+  background-color: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+body {
+  display: flow-root;
+  min-height: 100vh;
+  color: var(--gray-900);
+  background: var(--gray-0);
+  line-height: 1.6;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Noto Sans SC', 'Roboto', 'HarmonyOS Sans SC', 'Segoe UI',
+    'Helvetica Neue', Arial, sans-serif;
+  font-size: 15px;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Keep every page reached from the main navigation on the shared equipment backdrop. */
+.app-navigation-page {
+  background: transparent !important;
+}
+
+html.dark #app-router-view {
+  background:
+    linear-gradient(rgba(14, 19, 31, 0.88), rgba(14, 19, 31, 0.88)),
+    url('/equipment-login-hero.png') center / cover no-repeat;
+}
+
+/* Form controls must not keep feature-level hard-coded white surfaces in dark mode. */
+html.dark .app-navigation-page {
+  color-scheme: dark;
+}
+
+html.dark .app-navigation-page :where(
+    input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']),
+    textarea,
+    select,
+    [contenteditable='true'],
+    .searchbox,
+    .ant-input,
+    .ant-input-affix-wrapper,
+    .ant-input-number,
+    .ant-input-number-input,
+    .ant-input-group-addon,
+    .ant-mentions,
+    .ant-picker,
+    .ant-select:not(.ant-select-customize-input) .ant-select-selector
+  ) {
+  border-color: #343b4d !important;
+  background-color: #141925 !important;
+  color: #e4e8f2 !important;
+  box-shadow: none;
+}
+
+html.dark .app-navigation-page :where(
+    input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']),
+    textarea,
+    select,
+    [contenteditable='true'],
+    .ant-input-affix-wrapper,
+    .ant-input-number,
+    .ant-picker,
+    .ant-select:not(.ant-select-customize-input) .ant-select-selector
+  ):focus,
+html.dark .app-navigation-page :where(
+    .ant-input-affix-wrapper,
+    .ant-input-number,
+    .ant-picker,
+    .ant-select:not(.ant-select-customize-input) .ant-select-selector
+  ):focus-within {
+  border-color: var(--main-500) !important;
+  box-shadow: 0 0 0 2px rgba(123, 120, 243, 0.16) !important;
+}
+
+html.dark .app-navigation-page :where(input, textarea)::placeholder,
+html.dark .app-navigation-page :where(
+    .ant-input::placeholder,
+    .ant-select-selection-placeholder,
+    .ant-picker-input > input::placeholder
+  ) {
+  color: #858da0 !important;
+}
+
+html.dark :where(
+    .ant-select-dropdown,
+    .ant-cascader-dropdown,
+    .ant-picker-dropdown .ant-picker-panel-container,
+    .ant-dropdown-menu
+  ) {
+  border-color: #343b4d !important;
+  background-color: #141925 !important;
+  color: #e4e8f2 !important;
+}
+
+html.dark :where(.ant-select-item-option-active, .ant-select-item-option-selected) {
+  background-color: #292b55 !important;
+}
+
+/* Research forms are composed from cards, footers and custom pickers around the
+ * native controls. Keep the whole control surface dark instead of leaving a
+ * white frame around a correctly themed input. */
+html.dark .app-navigation-page :where(
+    .research-query-composer,
+    .research-query-composer > footer,
+    .research-query-inline-config-shell,
+    .research-mode-picker > summary,
+    .research-model-picker,
+    .research-mode-menu,
+    .research-runtime-panel,
+    .research-runtime-panel > header,
+    .runtime-capacity-editor,
+    .runtime-slot-grid article,
+    .research-runtime-panel > footer,
+    .config-dropdown-overlay .config-dropdown-panel
+  ) {
+  border-color: #343b4d !important;
+  background: #141925 !important;
+  color: #e4e8f2 !important;
+}
+
+html.dark .app-navigation-page :where(
+    .research-query-composer > footer,
+    .research-query-inline-config-shell,
+    .research-mode-picker > summary,
+    .research-model-picker,
+    .research-runtime-panel > header,
+    .runtime-capacity-editor,
+    .runtime-slot-grid article,
+    .research-runtime-panel > footer
+  ) {
+  background: #171d2a !important;
+}
+
+html.dark .app-navigation-page :where(
+    .research-mode-menu > div > button:hover,
+    .research-mode-menu > div > button.selected,
+    .config-dropdown-overlay .config-dropdown-item:hover,
+    .config-dropdown-overlay .config-dropdown-item.selected,
+    .runtime-slot-grid article.busy
+  ) {
+  border-color: #4b5270 !important;
+  background: #242b3c !important;
+}
+
+html.dark .app-navigation-page :where(
+    .recommendation-card,
+    .recommendation-card.current
+  ) {
+  border-color: #3b4358 !important;
+  background: rgba(20, 25, 37, 0.94) !important;
+  color: #e4e8f2 !important;
+}
+
+html.dark .app-navigation-page :where(
+    .runtime-heading b,
+    .runtime-capacity-editor b,
+    .runtime-slot-grid b,
+    .recommendation-card b,
+    .research-mode-menu > header b,
+    .research-mode-menu button b,
+    .config-dropdown-overlay .config-dropdown-item-label
+  ) {
+  color: #e4e8f2 !important;
+}
+
+html.dark .app-navigation-page :where(
+    .runtime-heading small,
+    .runtime-capacity-editor small,
+    .runtime-slot-grid span,
+    .runtime-slot-grid small,
+    .research-runtime-panel > footer,
+    .recommendation-card p,
+    .research-mode-menu > header small,
+    .research-mode-menu button small,
+    .research-mode-menu button code,
+    .research-mode-menu-note,
+    .config-dropdown-overlay .config-dropdown-hint
+  ) {
+  color: #929bad !important;
+}
+
+html.dark .app-navigation-page :where(
+    .research-mode-menu > header em,
+    .research-mode-menu .mode-icon,
+    .research-mode-menu button b em,
+    .config-dropdown-overlay .config-dropdown-item-badge
+  ) {
+  background: #292b55 !important;
+  color: #c9c7ff !important;
+}
+
+html.dark .app-navigation-page :where(
+    .research-mode-menu-note,
+    .config-dropdown-overlay .config-dropdown-divider
+  ) {
+  border-color: #343b4d !important;
+}
+
+/* Complete the dark research workspace: overview cards, filters and result
+ * cards are interactive form surfaces too, so they must not fall back to the
+ * light-only feature stylesheet. */
+html.dark .app-navigation-page :where(
+    .research-query-hero,
+    .workspace-pulse,
+    .research-run-center
+  ) {
+  border-color: #343b4d !important;
+  background: rgba(17, 22, 34, 0.92) !important;
+  color: #e4e8f2 !important;
+}
+
+html.dark .app-navigation-page :where(
+    .pulse-metric,
+    .pulse-next,
+    .filter-select,
+    .research-run-card,
+    .run-live-note,
+    .run-scroll-loader button,
+    .pulse-next button,
+    .run-card-counts span,
+    .run-card-artifacts button,
+    .research-run-center .list-pager
+  ) {
+  border-color: #343b4d !important;
+  background: #171d2a !important;
+  color: #cfd5e2 !important;
+}
+
+html.dark .app-navigation-page :where(
+    .run-status-tabs button:hover,
+    .run-card-artifacts button:hover,
+    .run-card-artifacts .run-card-deep-link,
+    .run-card-artifacts .run-card-deep-link:hover,
+    .run-card-artifacts button span
+  ) {
+  border-color: #4b5270 !important;
+  background: #292b55 !important;
+  color: #c9c7ff !important;
+}
+
+html.dark .app-navigation-page :where(
+    .pulse-heading b,
+    .pulse-metric strong,
+    .pulse-next b,
+    .run-card-title b,
+    .run-card-counts b
+  ) {
+  color: #e4e8f2 !important;
+}
+
+html.dark .app-navigation-page :where(
+    .pulse-heading small,
+    .pulse-metric span,
+    .pulse-metric small,
+    .pulse-next small,
+    .run-card-title small,
+    .run-card-meta,
+    .run-card-footer > span:nth-child(2),
+    .run-search-row > span,
+    .run-select-page
+  ) {
+  color: #929bad !important;
+}
+
+html.dark .app-navigation-page :where(
+    .research-run-card,
+    .research-run-card:hover,
+    .run-card-footer
+  ) {
+  border-color: #343b4d !important;
+}
+
+html.dark .app-navigation-page :where(
+    .query-generation-mode-tabs button.active,
+    .query-knowledge-scope,
+    .query-detail-knowledge,
+    .query-source-list article
+  ) {
+  border-color: #4b5270 !important;
+  background: #242b3c !important;
+  color: #c9c7ff !important;
+}
+
+html.dark .app-navigation-page :where(
+    .query-detail-knowledge b,
+    .query-source-list article b,
+    .query-generation-mode-tabs button.active b
+  ) {
+  color: #e4e8f2 !important;
+}
+
+html.dark .app-navigation-page :where(
+    .query-detail-knowledge small,
+    .query-source-list article small,
+    .query-generation-mode-tabs button.active small
+  ) {
+  color: #929bad !important;
+}
+
+/* Deep-research history uses scoped, light-only cards that sit outside the
+ * normal input system. */
+html.dark .app-navigation-page :where(
+    .deep-sidebar,
+    .deep-session-list,
+    .deep-session-list > header,
+    .deep-history-group,
+    .deep-history-group-toggle,
+    .deep-history-group-body,
+    .deep-history-group-query,
+    .deep-history-group-query-body
+  ) {
+  border-color: #343b4d !important;
+  background: #141925 !important;
+  color: #e4e8f2 !important;
+}
+
+html.dark .app-navigation-page :where(
+    .deep-history-group.current,
+    .deep-history-group.current .deep-history-group-toggle,
+    .deep-session-list > header nav button.active
+  ) {
+  border-color: #4b5270 !important;
+  background: #242b3c !important;
+}
+
+html.dark .app-navigation-page :where(
+    .deep-history-group-topic,
+    .deep-history-group-query-body b,
+    .deep-sidebar-title
+  ) {
+  color: #e4e8f2 !important;
+}
+
+html.dark .app-navigation-page :where(
+    .deep-history-group-meta,
+    .deep-history-group-query-preview,
+    .deep-history-group-query-body p
+  ) {
+  color: #929bad !important;
+}
+
+/* Capability and report workspaces share this task-picker shell. */
+html.dark .app-navigation-page :where(
+    .workspace-stage-nav,
+    .task-review-rail,
+    .task-review-content
+  ) {
+  border-color: #343b4d !important;
+  background: rgba(17, 22, 34, 0.94) !important;
+  color: #e4e8f2 !important;
+}
+
+html.dark .app-navigation-page :where(
+    .workspace-artifact-card,
+    .workspace-stage-nav button:first-child,
+    .task-picker-toggle,
+    .task-review-rail > div > header,
+    .task-review-filters,
+    .task-review-context,
+    .task-review-list > button
+  ) {
+  border-color: #343b4d !important;
+  background: #171d2a !important;
+  color: #cfd5e2 !important;
+}
+
+html.dark .app-navigation-page :where(
+    .workspace-stage-nav button.active,
+    .task-review-list > button:hover,
+    .task-review-list > button.selected
+  ) {
+  border-color: #4b5270 !important;
+  background: #242b3c !important;
+  color: #c9c7ff !important;
+}
+
+html.dark .app-navigation-page :where(
+    .task-picker-toggle b,
+    .task-review-rail header b,
+    .task-review-list button > span b,
+    .task-review-context b
+  ) {
+  color: #e4e8f2 !important;
+}
+
+html.dark .app-navigation-page :where(
+    .task-picker-toggle small,
+    .task-review-rail header small,
+    .task-review-list button > span small,
+    .task-review-list button em,
+    .task-review-context small
+  ) {
+  color: #929bad !important;
+}
+
+/* Favorites have their own editable cards and module reader. */
+html.dark .app-navigation-page :where(
+    .favorites-list,
+    .favorite-card,
+    .favorite-card > header,
+    .favorite-note,
+    .favorite-evidence,
+    .favorite-source,
+    .favorite-card-source,
+    .favorites-pager,
+    .favorite-reader,
+    .favorite-reader > header
+  ) {
+  border-color: #343b4d !important;
+  background: #141925 !important;
+  color: #e4e8f2 !important;
+}
+
+html.dark .app-navigation-page :where(
+    .favorite-module,
+    .favorite-module:first-child,
+    .favorite-module:hover,
+    .favorite-module:focus-visible,
+    .favorite-card-meta span,
+    .favorite-card-actions button,
+    .favorite-edit-form > div button,
+    .favorite-dimensions > span,
+    .favorite-reader > header button,
+    .favorite-reader-nav,
+    .favorites-pager button
+  ) {
+  border-color: #343b4d !important;
+  background: #171d2a !important;
+  color: #cfd5e2 !important;
+}
+
+html.dark .app-navigation-page :where(
+    .favorite-module b,
+    .favorite-card-title h3,
+    .favorite-card-stats b,
+    .favorite-reader > header h3,
+    .favorite-reader-body p
+  ) {
+  color: #e4e8f2 !important;
+}
+
+html.dark .app-navigation-page :where(
+    .favorite-module small,
+    .favorite-card-stats small,
+    .favorite-note > p,
+    .favorite-evidence li,
+    .favorite-card-source
+  ) {
+  color: #929bad !important;
+}
+
+html.dark .app-navigation-page .run-card-capability-preview {
+  border-color: #4b5270 !important;
+  background: #242b3c !important;
+  color: #c9c7ff !important;
+}
+
+html.dark .app-navigation-page :where(
+    .run-card-capability-copy b,
+    .run-card-capability-copy strong
+  ) {
+  color: #e4e8f2 !important;
+}
+
+html.dark .app-navigation-page .run-card-capability-copy small {
+  color: #929bad !important;
+}
+
+/* Capability portraits and their deep-research comparison are document-like
+ * components with independent light palettes. */
+html.dark .app-navigation-page :where(
+    .capability-toolbar,
+    .expert-feedback-panel,
+    .expert-feedback-learning,
+    .capability-sheet,
+    .capability-sheet > header,
+    .capability-dimensions,
+    .capability-deep-version-switcher,
+    .capability-portrait,
+    .capability-portrait-card,
+    .capability-deep-research-panel,
+    .deep-research-comparison,
+    .deep-research-comparison-grid > div,
+    .deep-research-comparison-grid > div:last-child
+  ) {
+  border-color: #343b4d !important;
+  background: #141925 !important;
+  color: #e4e8f2 !important;
+}
+
+html.dark .app-navigation-page :where(
+    .capability-portrait,
+    .expert-feedback-panel,
+    .capability-deep-research-panel,
+    .deep-research-comparison
+  ) {
+  background: #171d2a !important;
+}
+
+html.dark .app-navigation-page :where(
+    .capability-toolbar button:not(.primary),
+    .capability-jump-button,
+    .capability-deep-version-switcher button
+  ) {
+  border-color: #4b5270 !important;
+  background: #242b3c !important;
+  color: #c9c7ff !important;
+}
+
+html.dark .app-navigation-page :where(
+    .capability-toolbar b,
+    .expert-feedback-panel b,
+    .capability-sheet h2,
+    .capability-dimensions-head b,
+    .capability-portrait-card p,
+    .capability-deep-research-panel > header b,
+    .deep-research-comparison > header b,
+    .deep-research-comparison-grid strong,
+    .deep-research-comparison-grid dd
+  ) {
+  color: #e4e8f2 !important;
+}
+
+html.dark .app-navigation-page :where(
+    .capability-toolbar small,
+    .expert-feedback-panel small,
+    .capability-sheet header p,
+    .capability-dimensions-head span,
+    .capability-dimensions > p,
+    .capability-deep-research-panel > header small,
+    .deep-research-comparison > header small,
+    .deep-research-comparison-grid dt
+  ) {
+  color: #929bad !important;
+}
+
+/* The current Vue favorites view uses classless buttons inside
+ * .favorite-modules and a compact .reader modal. */
+html.dark .app-navigation-page :where(
+    .favorite-modules button,
+    .favorite-modules button:hover,
+    .favorite-meta em,
+    .favorite-actions button,
+    .reader,
+    .reader > header,
+    .reader-nav
+  ) {
+  border-color: #343b4d !important;
+  background: #171d2a !important;
+  color: #cfd5e2 !important;
+}
+
+html.dark .app-navigation-page :where(
+    .favorite-title h3,
+    .favorite-modules b,
+    .reader h3,
+    .reader > p
+  ) {
+  color: #e4e8f2 !important;
+}
+
+html.dark .app-navigation-page .favorite-modules small {
+  color: #929bad !important;
+}
+
+/* Shared title treatment for the research task and intelligent chat entry points. */
+.research-theme-title {
+  margin: 8px 0 5px;
+  color: #33377f;
+  font-family: inherit;
+  font-size: 29px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.03em;
+}
+
+html.dark .research-theme-title {
+  color: #d9ddff;
+}
+
+@media (max-width: 700px) {
+  .research-theme-title {
+    font-size: 24px;
+    text-align: center;
+  }
+}
+
+/* layout */
+
+.layout-container {
+  width: 100%;
+
+  h2 {
+    margin: 20px 0 10px 0;
+  }
+}
+
+.lucide-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.lucide-icon-btn svg {
+  flex-shrink: 0;
+}
+
+.lucide-menu-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 22px;
+  line-height: 1;
+}
+
+.lucide-menu-item svg {
+  flex-shrink: 0;
+}
+
+.lucide-menu-item > span {
+  line-height: 20px;
+}
+
+.ant-btn.lucide-icon-btn,
+.lucide-icon-btn.ant-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ant-btn .ant-btn-icon,
+.ant-btn .anticon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  background: var(--gray-100);
+  color: var(--gray-600);
+  border-radius: 4px;
+}
+
+.card-tag.tag-purple,
+.card-tag.tag-cyan {
+  background: var(--color-accent-50);
+  color: var(--color-accent-700);
+}
+
+.card-tag.tag-blue {
+  background: var(--color-info-50);
+  color: var(--color-info-700);
+}
+
+.card-tag.tag-red,
+.card-tag.tag-orange {
+  background: var(--color-error-50);
+  color: var(--color-error-700);
+}
+
+.card-tag.tag-green {
+  background: var(--color-success-50);
+  color: var(--color-success-700);
+}
+
+.card-tag.tag-gold {
+  background: var(--color-warning-50);
+  color: var(--color-warning-900);
+}
+
+.config-dropdown-overlay .config-dropdown-panel {
+  min-width: 188px;
+  max-width: min(260px, calc(100vw - 24px));
+  padding: 4px;
+  background: var(--gray-0);
+  border: 1px solid var(--gray-100);
+  border-radius: 8px;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.config-dropdown-overlay .config-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  width: 100%;
+  padding: 6px 8px;
+  margin: 3px 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:first-child {
+    margin-top: 0;
+  }
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.config-dropdown-overlay .config-dropdown-item:hover,
+.config-dropdown-overlay .config-dropdown-item.selected {
+  background: var(--gray-50);
+}
+
+.config-dropdown-overlay .config-dropdown-item.disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.config-dropdown-overlay .config-dropdown-item.action-item {
+  color: var(--gray-800);
+}
+
+.config-dropdown-overlay .config-dropdown-actions {
+  display: flex;
+}
+
+.config-dropdown-overlay .config-dropdown-actions .config-dropdown-item {
+  flex: 1;
+  width: auto;
+  margin: 0;
+}
+
+.config-dropdown-overlay .config-dropdown-item-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--gray-800);
+}
+
+.config-dropdown-overlay .config-dropdown-item-icon,
+.config-dropdown-overlay .config-dropdown-item-icon-image,
+.config-dropdown-overlay .config-dropdown-item-icon-empty {
+  flex-shrink: 0;
+}
+
+.config-dropdown-overlay .config-dropdown-item-icon {
+  color: var(--gray-700);
+}
+
+.config-dropdown-overlay .config-dropdown-item-icon-image,
+.config-dropdown-overlay .config-dropdown-item-icon-empty {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+}
+
+.config-dropdown-overlay .config-dropdown-item-icon-image {
+  object-fit: cover;
+}
+
+.config-dropdown-overlay .config-dropdown-item-badge {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--gray-100);
+  color: var(--gray-600);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.config-dropdown-overlay .config-dropdown-item-check {
+  flex-shrink: 0;
+  color: var(--main-600);
+}
+
+.config-dropdown-overlay .config-dropdown-hint {
+  padding: 6px 8px;
+  color: var(--gray-500);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.config-dropdown-overlay .config-dropdown-divider {
+  height: 1px;
+  margin: 4px 4px;
+  background: var(--gray-100);
+}

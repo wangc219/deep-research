@@ -653,6 +653,41 @@ def _compact_deep_dialogue_seed_payload(
         compact["random_naming_style_assignment"] = dict(
             payload["random_naming_style_assignment"]
         )
+    subagent_rows = payload.get("subagent_context")
+    if not isinstance(subagent_rows, Sequence) or isinstance(subagent_rows, (str, bytes)):
+        subagent_rows = parent.get("subagent_findings")
+    if isinstance(subagent_rows, Sequence) and not isinstance(subagent_rows, (str, bytes)):
+        findings = []
+        for item in list(subagent_rows)[:4]:
+            if not isinstance(item, Mapping):
+                continue
+            finding = item.get("finding")
+            if isinstance(finding, Mapping):
+                finding = finding.get("summary") or finding.get("finding") or finding
+            text = _deep_dialogue_text(finding, 400)
+            if not text:
+                continue
+            assumptions = item.get("assumptions", [])
+            if not isinstance(assumptions, Sequence) or isinstance(assumptions, (str, bytes)):
+                assumptions = []
+            findings.append(
+                {
+                    "role": _deep_dialogue_text(item.get("role"), 80),
+                    "slug": _deep_dialogue_text(item.get("slug"), 80),
+                    "finding": text,
+                    "next_probe": _deep_dialogue_text(item.get("next_probe"), 240),
+                    "assumptions": [
+                        _deep_dialogue_text(value, 160)
+                        for value in list(assumptions)[:3]
+                        if _deep_dialogue_text(value, 160)
+                    ],
+                }
+            )
+        if findings:
+            compact["subagent_findings"] = findings
+            compact["subagent_merge_policy"] = (
+                "综合这些可合并发现，不要原文拼接；核验未通过或存疑的结论必须降级为研究缺口。"
+            )
     return compact
 
 

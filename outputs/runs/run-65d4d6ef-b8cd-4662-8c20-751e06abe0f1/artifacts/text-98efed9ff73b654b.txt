@@ -1,0 +1,6 @@
+hosted_search_citation
+source_title=cbo.gov · 62563
+source_url=https://www.cbo.gov/publication/62563
+claim=CBO指出小型无人机低空飞行高度下，要实现完整保护需要反小型无人机系统布设得较近并形成覆盖重叠，显示低空防御存在部署密度和成本边界。
+excerpt=
+retrieval=Hosted web search citation metadata

@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {
   Archive,
   ArrowLeft,
@@ -29,7 +29,24 @@ import {
 import './styles.css';
 import './embedded.css';
 import './navigation.css';
-import {autonomousDiscoveryTopic, selectAutonomousDiscoveryAngle} from './autonomous-discovery.mjs';
+import {
+  AUTONOMOUS_DISCOVERY_ANGLES,
+  AUTONOMOUS_FOCUS_OPTIONS,
+  GENERATION_PROFILES,
+  autonomousDiscoveryTopic,
+  buildGenerationContext,
+  defaultGenerationProfile,
+  resolveAutonomousDiscoveryAngle,
+} from './autonomous-discovery.mjs';
+import {
+  accessibleKnowledgeUrl,
+  createKnowledgeScope,
+  inheritKnowledgeScope,
+  knowledgeScopeSummary,
+  normalizeAccessibleKnowledgeBases,
+} from './knowledge-scope.mjs';
+import {platformRunExecution, queryGenerationModelConfig, queryLineageModelSpec} from './model-routing.mjs';
+import {scrollHostTo} from '../../scroll-host.js';
 
 const STATUS_LABELS = {draft: '待审核', published: '已发布', archived: '已归档'};
 const SOURCE_LABELS = {agent: 'Agent 生成', manual: '人工录入', import: '资料导入'};
@@ -43,6 +60,7 @@ const formatDateTime = value => {
 const STAGE_LABELS = {
   queued: '等待生成 Worker',
   web_validation: '联网校验公开线索',
+  demand_divergence: '需求规划智能体发散假设',
   query_generation: '多维发散生成需求选题',
   persisting: '质量门控与原子入库',
   completed: '生成完成',
@@ -69,7 +87,8 @@ function validateReferenceUrls(urls) {
   return '';
 }
 
-function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBatchResearchStarted, onBack, embedded = false}) {
+function QueryLibraryPage({apiBase, platformModelSpec = '', onModelSelectorMount, onUseQuery, onDirectResearch, onBatchResearchStarted, onBack, embedded = false}) {
+  const platformManaged = Boolean(globalThis.__EQUIPMENT_WORKBENCH_EMBEDDED__);
   const [queries, setQueries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -77,6 +96,31 @@ function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBatchResearc
   const [status, setStatus] = useState('all');
   const [sourceType, setSourceType] = useState('all');
   const [selectedId, setSelectedId] = useState('');
+  const detailRef = useRef(null);
+  const listRef = useRef(null);
+  const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
+  const [detailRequest, setDetailRequest] = useState(0);
+  const selectQuery = (queryId, fromGeneration = false) => {
+    setSelectedId(queryId);
+    if (window.matchMedia('(max-width: 760px)').matches) {
+      setMobileDetailOpen(true);
+      setDetailRequest(value => value + 1);
+    } else if (fromGeneration) {
+      scrollHostTo({top: document.querySelector('.query-library-shell')?.offsetTop || 0, behavior: 'smooth'});
+    }
+  };
+  useEffect(() => {
+    if (!detailRequest) return undefined;
+    const frame = requestAnimationFrame(() => detailRef.current?.scrollIntoView({block: 'start'}));
+    return () => cancelAnimationFrame(frame);
+  }, [detailRequest]);
+  const returnToList = () => {
+    setMobileDetailOpen(false);
+    requestAnimationFrame(() => {
+      listRef.current?.scrollIntoView({block: 'start'});
+      listRef.current?.querySelector('input')?.focus({preventScroll: true});
+    });
+  };
   const [selectedQueryIds, setSelectedQueryIds] = useState([]);
   const [topic, setTopic] = useState('');
   const [generationMode, setGenerationMode] = useState('guided');
@@ -85,6 +129,11 @@ function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBatchResearc
   const [demandDimension, setDemandDimension] = useState('');
   const [technologyDimension, setTechnologyDimension] = useState('');
   const [generationCount, setGenerationCount] = useState(8);
+  const [generationProfile, setGenerationProfile] = useState('balanced');
+  const [guidedDetailsOpen, setGuidedDetailsOpen] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [autonomousAngleId, setAutonomousAngleId] = useState('auto');
+  const [autonomousFocuses, setAutonomousFocuses] = useState([]);
   const [modelOptions, setModelOptions] = useState({providers: [], default_provider: 'codex', reasoning_efforts: ['low', 'medium', 'high', 'xhigh']});
   const [modelProvider, setModelProvider] = useState('codex');
   const [reasoningEffort, setReasoningEffort] = useState('high');
@@ -94,6 +143,11 @@ function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBatchResearc
   const [showApiKey, setShowApiKey] = useState(false);
   const [referenceOpen, setReferenceOpen] = useState(false);
   const [referenceText, setReferenceText] = useState('https://www.81.cn/');
+  const [knowledgeBases, setKnowledgeBases] = useState([]);
+  const [knowledgeLoading, setKnowledgeLoading] = useState(true);
+  const [knowledgeError, setKnowledgeError] = useState('');
+  const [knowledgeEnabled, setKnowledgeEnabled] = useState(true);
+  const [selectedKnowledgeIds, setSelectedKnowledgeIds] = useState([]);
   const [generationTasks, setGenerationTasks] = useState([]);
   const [deletingGenerationId, setDeletingGenerationId] = useState('');
   const [cancellingGenerationId, setCancellingGenerationId] = useState('');
@@ -105,7 +159,13 @@ function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBatchResearc
     const {headers = {}, ...rest} = options;
     const response = await fetch(`${apiBase}${path}`, {
       ...rest,
-      headers: {'X-Role': 'analyst', ...headers},
+      headers: {
+        'X-Role': 'analyst',
+        ...(typeof window !== 'undefined' && window.localStorage.getItem('user_token')
+          ? {Authorization: `Bearer ${window.localStorage.getItem('user_token')}`}
+          : {}),
+        ...headers,
+      },
     });
     const payload = await response.json().catch(() => null);
     if (!response.ok) throw new Error(payload?.detail || `HTTP ${response.status}`);
@@ -146,6 +206,30 @@ function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBatchResearc
       setModelProvider(value.default_provider || value.providers?.[0]?.id || 'codex');
     }).catch(() => {});
   }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    const token = typeof window !== 'undefined' ? window.localStorage.getItem('user_token') : '';
+    setKnowledgeLoading(true);
+    setKnowledgeError('');
+    fetch(accessibleKnowledgeUrl(apiBase, typeof window !== 'undefined' ? window.location.href : undefined), {
+      signal: controller.signal,
+      credentials: 'same-origin',
+      headers: {
+        'X-Role': 'analyst',
+        ...(token ? {Authorization: `Bearer ${token}`} : {}),
+      },
+    }).then(async response => {
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(payload?.detail || `HTTP ${response.status}`);
+      setKnowledgeBases(normalizeAccessibleKnowledgeBases(payload));
+    }).catch(reason => {
+      if (reason?.name === 'AbortError') return;
+      setKnowledgeError(reason?.message || '知识库列表读取失败');
+    }).finally(() => {
+      if (!controller.signal.aborted) setKnowledgeLoading(false);
+    });
+    return () => controller.abort();
+  }, [apiBase]);
   useEffect(() => {
     const activeTasks = generationTasks.filter(item => ['queued', 'running'].includes(item.status));
     if (!activeTasks.length) return undefined;
@@ -190,6 +274,11 @@ function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBatchResearc
     agent: queries.filter(item => item.source_type === 'agent' && item.status !== 'archived').length,
   }), [queries]);
   const referenceUrls = useMemo(() => parseReferenceUrls(referenceText), [referenceText]);
+  const suggestedAutonomousAngle = useMemo(
+    () => resolveAutonomousDiscoveryAngle('auto', generationTasks),
+    [generationTasks],
+  );
+  const activeAutonomousAngle = resolveAutonomousDiscoveryAngle(autonomousAngleId, generationTasks);
   const environmentDefaults = modelOptions.environment_defaults || {};
   const environmentApiKeyLabel = environmentDefaults.api_key_source || 'EQUIPMENT_DR_API_KEY';
   const environmentBaseUrlLabel = environmentDefaults.base_url_source || 'EQUIPMENT_DR_BASE_URL';
@@ -200,23 +289,26 @@ function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBatchResearc
     if (referenceError) { setError(referenceError); setReferenceOpen(true); return; }
     setSubmitting(true); setError('');
     try {
-      const autonomousAngle = generationMode === 'autonomous' ? selectAutonomousDiscoveryAngle(generationTasks) : null;
+      const autonomousAngle = generationMode === 'autonomous' ? activeAutonomousAngle : null;
       const generationTopic = autonomousAngle ? autonomousDiscoveryTopic(autonomousAngle) : topic.trim();
-      const generationContext = generationMode === 'autonomous'
-        ? `自动态势发散模式。\n本次轮换视角：${autonomousAngle.label}。\n${supplement.trim() ? `用户补充偏好：${supplement.trim()}` : '优先检索该视角下最新、权威的公开态势信号。'}\n因果链：外部态势→任务压力→作战缺口→武器装备能力与发展需求。\n发散框架：同时覆盖需求牵引、技术驱动、体系实战、颠覆逻辑与规模建设。`
-        : [
-            expectedAngle.trim() && `预期角度：${expectedAngle.trim()}`,
-            demandDimension.trim() && `需求牵引维度：${demandDimension.trim()}`,
-            technologyDimension.trim() && `技术驱动维度：${technologyDimension.trim()}`,
-            supplement.trim() && `其他发散偏好：${supplement.trim()}`,
-          ].filter(Boolean).join('\n');
-      const modelConfig = {
+      const generationContext = buildGenerationContext({
+        mode: generationMode,
+        profileId: generationProfile,
+        autonomousAngle,
+        autonomousFocuses,
+        supplement,
+        expectedAngle,
+        demandDimension,
+        technologyDimension,
+      });
+      const modelConfig = queryGenerationModelConfig({
+        platformManaged,
+        platformModelSpec,
         provider: modelProvider,
-        model: '',
-        reasoning_effort: reasoningEffort,
-        base_url: customBaseUrl.trim(),
-        api_key: customApiKey.trim(),
-      };
+        reasoningEffort,
+        baseUrl: customBaseUrl,
+        apiKey: customApiKey,
+      });
       const value = await request('/query-library/generations', {
         method: 'POST',
         headers: {'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID()},
@@ -226,6 +318,7 @@ function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBatchResearc
           reference_urls: referenceUrls,
           count: generationCount,
           model_config: modelConfig,
+          ...createKnowledgeScope({enabled: knowledgeEnabled, selectedIds: selectedKnowledgeIds}),
         }),
       });
       setGenerationTasks(current => [value, ...current.filter(item => item.generation_id !== value.generation_id)].slice(0, 12));
@@ -298,6 +391,7 @@ function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBatchResearc
     const results = await Promise.all(targets.map(async item => {
       try {
         const current = publishedById.get(item.query_id) || item;
+        const inheritedModelSpec = queryLineageModelSpec(item, generationTasks, platformModelSpec);
         const body = {
           topic: current.query,
           supplemental_information: current.supplemental_information || '',
@@ -305,6 +399,10 @@ function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBatchResearc
           execution_profile_id: 'winning_swarm_dynamic_v2', max_rounds: 2,
           selected_agent_ids: [], analyst_confirmed: true,
           source_query_id: current.query_id, source_query_version: current.version,
+          ...inheritKnowledgeScope(current),
+          ...(platformRunExecution(platformManaged, inheritedModelSpec)
+            ? {execution: platformRunExecution(platformManaged, inheritedModelSpec)}
+            : {}),
         };
         const created = await request('/runs', {method: 'POST', headers: {'Content-Type': 'application/json', 'Idempotency-Key': `query-batch:${batchRequestId}:${current.query_id}`}, body: JSON.stringify(body)});
         await request(`/runs/${encodeURIComponent(String(created.run_id || '').trim())}/start`, {method: 'POST', headers: {'Idempotency-Key': `query-batch-start:${batchRequestId}:${created.run_id}`}});
@@ -388,8 +486,9 @@ function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBatchResearc
   };
 
   const useForResearch = async item => {
+    const inheritedModelSpec = queryLineageModelSpec(item, generationTasks, platformModelSpec);
     const published = item.status === 'published' ? item : await publish(item);
-    if (published) onUseQuery?.(published);
+    if (published) onUseQuery?.({...published, model_spec: inheritedModelSpec});
   };
 
   return <div className={`query-library-page ${embedded ? 'embedded' : ''}`}>
@@ -400,26 +499,35 @@ function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBatchResearc
       <h1>多维发散思考，发现装备需求 Query</h1>
       <p>可输入选题角度、场景描述或文档材料，也可由 Agent 结合公开态势自主发现方向；从需求牵引、技术驱动、体系实战和颠覆逻辑等维度形成简洁研究选题。</p>
       <div className="query-generation-mode-tabs" aria-label="Query 生成模式">
-        <button className={generationMode === 'guided' ? 'active' : ''} onClick={() => setGenerationMode('guided')}><Lightbulb size={15}/><span><b>围绕母题发散</b><small>输入一个方向，向多维度深挖</small></span></button>
-        <button className={generationMode === 'autonomous' ? 'active' : ''} onClick={() => { setGenerationMode('autonomous'); setModelProvider('codex'); }}><Sparkles size={15}/><span><b>自动态势发散</b><small>无需母题，Agent 自主发现研究方向</small></span></button>
+        <button className={generationMode === 'guided' ? 'active' : ''} onClick={() => { setGenerationMode('guided'); setGenerationProfile(defaultGenerationProfile('guided')); }}><Lightbulb size={15}/><span><b>围绕母题发散</b><small>已有方向 · 多维扩展与批判收敛</small></span><em>适合定向研究</em></button>
+        <button className={generationMode === 'autonomous' ? 'active' : ''} onClick={() => { setGenerationMode('autonomous'); setGenerationProfile(defaultGenerationProfile('autonomous')); setModelProvider('codex'); }}><Sparkles size={15}/><span><b>中国态势自动发散</b><small>无需母题 · 从中国面临的态势与作战需要发现方向</small></span><em>默认高效检索</em></button>
       </div>
       <div className="query-generator-card">
-        {generationMode === 'guided' ? <><label>需求母题 / 发散材料</label><textarea value={topic} onChange={event => setTopic(event.target.value)} placeholder="例如：输入‘复杂电磁环境下精确打击装备能力需求’，Agent 将围绕场景、任务、技术、体系和颠覆方向发散生成多条短 Query。" maxLength={500}/></> : <div className="query-autonomous-context"><Sparkles size={23}/><span><b>快速研判中国周边态势并发现装备发展方向</b><p>聚焦邻国、周边海域、岛链与边境任务环境，检索最新公开信号，再按“外部态势→任务压力→作战缺口→装备需求”快速转译为研究 Query。</p><em>无人、低空反制、颠覆性远打和精打武器是高关注方向，但不设封闭目录或固定配额；由模型根据本次态势因果链自主发现更多高价值武器装备需求。</em></span></div>}
+        {generationMode === 'guided' ? <div className="query-guided-primary"><label>需求母题 / 发散材料</label><textarea value={topic} onChange={event => setTopic(event.target.value)} placeholder="输入一个装备方向、作战问题或材料片段，例如：复杂电磁环境下精确打击装备能力需求。" maxLength={500}/><div className="query-example-row"><span>快速套用</span>{DIVERGENCE_EXAMPLES.map(example => <button key={example.label} onClick={() => {setTopic(example.topic); setExpectedAngle(example.angle); setDemandDimension(example.demand); setTechnologyDimension(example.technology); setGuidedDetailsOpen(true);}}>{example.label}</button>)}</div></div> : <div className="query-autonomous-context"><Sparkles size={23}/><span><b>围绕中国面临的态势与未来作战需要自动发现装备需求</b><p>模型聚焦检索中国周边安全环境、潜在任务压力、对手能力变化与技术信号，再按“态势→任务→缺口→装备需求”快速转译。</p><em>国外动态仅作为威胁与约束基线；最终 Query 必须回答中国需要完成什么任务、补齐什么能力、发展什么装备。</em></span></div>}
         {generationMode === 'guided' && <div className="query-divergence-framework">
-          <div className="query-framework-heading"><span><Sparkles size={15}/><b>多维发散框架</b><small>先明确研究意图，再由 Agent 深度发散，避免只做同义改写</small></span><div>{DIVERGENCE_EXAMPLES.map(example => <button key={example.label} onClick={() => {setTopic(example.topic); setExpectedAngle(example.angle); setDemandDimension(example.demand); setTechnologyDimension(example.technology);}}>{example.label}</button>)}</div></div>
-          <label><span><b>预期角度</b><small>希望牵引什么发展</small></span><textarea value={expectedAngle} onChange={event => setExpectedAngle(event.target.value)} placeholder="例如：以天基与地面导弹平台相互赋能为主线，牵引双方装备与体系发展。"/></label>
-          <label><span><b>需求牵引维度</b><small>场景、威胁、手段与痛点</small></span><textarea value={demandDimension} onChange={event => setDemandDimension(event.target.value)} placeholder="当前与未来任务场景是什么？对手能力和威胁形式是什么？现有手段有哪些？单装与体系还存在哪些缺口？"/></label>
-          <label><span><b>技术驱动维度</b><small>现状、规划与能力映射</small></span><textarea value={technologyDimension} onChange={event => setTechnologyDimension(event.target.value)} placeholder="相关资源和技术能力达到什么水平？成熟度与路线图如何？哪些技术可映射为装备能力并改变发展方向？"/></label>
-          <label><span><b>其他发散偏好</b><small>体系、颠覆与规模建设</small></span><textarea id="query-generation-context" value={supplement} onChange={event => setSupplement(event.target.value)} placeholder="可限定作战环境、时间范围，并指定体系韧性、颠覆逻辑、工业化或需要排除的角度。" maxLength={8000}/></label>
+          <div className="query-framework-heading"><span><Sparkles size={15}/><b>研究约束（可选）</b><small>母题清楚时可直接生成；需要精确控制再展开</small></span><button className="query-details-toggle" onClick={() => setGuidedDetailsOpen(value => !value)}>{guidedDetailsOpen ? '收起约束' : '完善约束'}<ChevronDown size={13}/></button></div>
+          {guidedDetailsOpen && <><label><span><b>预期角度</b><small>希望牵引什么发展</small></span><textarea value={expectedAngle} onChange={event => setExpectedAngle(event.target.value)} placeholder="例如：以天基与地面导弹平台相互赋能为主线，牵引双方装备与体系发展。"/></label>
+            <label><span><b>需求牵引维度</b><small>场景、威胁、手段与痛点</small></span><textarea value={demandDimension} onChange={event => setDemandDimension(event.target.value)} placeholder="当前与未来任务场景是什么？对手能力和威胁形式是什么？现有手段有哪些？"/></label>
+            <label><span><b>技术驱动维度</b><small>现状、规划与能力映射</small></span><textarea value={technologyDimension} onChange={event => setTechnologyDimension(event.target.value)} placeholder="哪些成熟技术可映射为装备能力并改变发展方向？"/></label>
+            <label><span><b>其他偏好</b><small>环境、时间、排除项</small></span><textarea id="query-generation-context" value={supplement} onChange={event => setSupplement(event.target.value)} placeholder="可限定环境与时间范围，或写明需要排除的方向。" maxLength={8000}/></label></>}
         </div>}
-        {generationMode === 'autonomous' && <textarea id="query-generation-context" className="query-generation-context autonomous" value={supplement} onChange={event => setSupplement(event.target.value)} placeholder="自主发现偏好（可选）：希望重点关注的装备领域、区域态势、技术方向或时间范围。" maxLength={8000}/>} 
+        {generationMode === 'autonomous' && <div className="query-autonomous-controls"><label><span><b>态势视角</b><small>智能轮换可减少连续任务重复</small></span><select value={autonomousAngleId} onChange={event => setAutonomousAngleId(event.target.value)}><option value="auto">智能轮换 · 本次建议：{suggestedAutonomousAngle.label}</option>{AUTONOMOUS_DISCOVERY_ANGLES.map(angle => <option key={angle.id} value={angle.id}>{angle.label}</option>)}</select></label><div className="query-focus-picker"><span><b>重点方向</b><small>不选则完全由模型判断</small></span><div>{AUTONOMOUS_FOCUS_OPTIONS.map(focus => <button key={focus} className={autonomousFocuses.includes(focus) ? 'active' : ''} onClick={() => setAutonomousFocuses(current => current.includes(focus) ? current.filter(item => item !== focus) : [...current, focus])}>{focus}</button>)}</div></div><textarea id="query-generation-context" className="query-generation-context autonomous" value={supplement} onChange={event => setSupplement(event.target.value)} placeholder="补充偏好（可选）：可指定时间范围、关注区域，或需要排除的方向。" maxLength={8000}/></div>}
         <div className="query-agent-config">
           <div className="query-count-control"><span><b>生成数量</b><small>按本次需要灵活选择</small></span><div>{[4, 6, 8, 12, 16, 20].map(value => <button className={generationCount === value ? 'active' : ''} key={value} onClick={() => setGenerationCount(value)}>{value}</button>)}</div></div>
-          <label><span>Agent</span><select value={modelProvider} onChange={event => setModelProvider(event.target.value)}>{modelOptions.providers?.map(item => <option key={item.id} value={item.id}>{item.id === 'codex' ? '智能体' : item.label}</option>)}</select></label>
-          <label><span>思考强度</span><select value={reasoningEffort} onChange={event => setReasoningEffort(event.target.value)}>{(modelOptions.reasoning_efforts || []).map(value => <option key={value} value={value}>{({low: '快速', medium: '均衡', high: '深度', xhigh: '极深'})[value] || value}</option>)}</select></label>
-          <button className={`query-connection-toggle ${connectionOpen || customBaseUrl || customApiKey ? 'active' : ''}`} onClick={() => setConnectionOpen(value => !value)}><ShieldCheck size={15}/><span><b>连接设置</b><small>{customApiKey ? '本次密钥已填写' : environmentDefaults.api_key_configured ? '项目环境已配置' : 'URL / API Key'}</small></span></button>
+          <div className="query-profile-control"><span><b>生成策略</b><small>{GENERATION_PROFILES.find(item => item.id === generationProfile)?.description}</small></span><div>{GENERATION_PROFILES.map(profile => <button key={profile.id} className={generationProfile === profile.id ? 'active' : ''} onClick={() => setGenerationProfile(profile.id)}>{profile.label}</button>)}</div></div>
+          {platformManaged && <div className="platform-query-model-selector" ref={onModelSelectorMount} />}
+          <button className={`query-advanced-toggle ${advancedOpen ? 'active' : ''}`} onClick={() => setAdvancedOpen(value => !value)}><ShieldCheck size={14}/><span><b>高级设置</b><small>模型、知识库与连接</small></span><ChevronDown size={13}/></button>
         </div>
-        {connectionOpen && <div className="query-provider-connection">
+        {advancedOpen && <div className="query-advanced-panel">{!platformManaged && <div className="query-advanced-model"><label><span>Agent</span><select value={modelProvider} onChange={event => setModelProvider(event.target.value)}>{modelOptions.providers?.map(item => <option key={item.id} value={item.id}>{item.id === 'codex' ? '智能体' : item.label}</option>)}</select></label><label><span>思考强度</span><select value={reasoningEffort} onChange={event => setReasoningEffort(event.target.value)}>{(modelOptions.reasoning_efforts || []).map(value => <option key={value} value={value}>{({low: '快速', medium: '均衡', high: '深度', xhigh: '极深'})[value] || value}</option>)}</select></label><button className={`query-connection-toggle ${connectionOpen || customBaseUrl || customApiKey ? 'active' : ''}`} onClick={() => setConnectionOpen(value => !value)}><ShieldCheck size={15}/><span><b>连接设置</b><small>{customApiKey ? '本次密钥已填写' : environmentDefaults.api_key_configured ? '项目环境已配置' : 'URL / API Key'}</small></span></button></div>}<KnowledgeScopePicker
+          databases={knowledgeBases}
+          loading={knowledgeLoading}
+          error={knowledgeError}
+          enabled={knowledgeEnabled}
+          selectedIds={selectedKnowledgeIds}
+          onEnabledChange={setKnowledgeEnabled}
+          onSelectedIdsChange={setSelectedKnowledgeIds}
+        />{platformManaged && <span className="platform-query-model-note">Query 继承当前平台模型；知识库仅作为后续研究的按需可用范围。</span>}</div>}
+        {advancedOpen && !platformManaged && connectionOpen && <div className="query-provider-connection">
           <label><span><b>API URL</b><small>默认：{environmentBaseUrlLabel}</small></span><input type="url" value={customBaseUrl} onChange={event => setCustomBaseUrl(event.target.value)} placeholder={`留空使用 ${environmentBaseUrlLabel}`} spellCheck={false}/></label>
           <label><span><b>API Key</b><small>{environmentDefaults.api_key_configured ? `已从 ${environmentApiKeyLabel} 配置` : `默认读取 ${environmentApiKeyLabel}`}</small></span><div className="query-api-key-input"><input type={showApiKey ? 'text' : 'password'} value={customApiKey} onChange={event => setCustomApiKey(event.target.value)} placeholder={`留空使用 ${environmentApiKeyLabel}`} autoComplete="new-password" spellCheck={false}/><button type="button" aria-label={showApiKey ? '隐藏 API Key' : '显示 API Key'} onClick={() => setShowApiKey(value => !value)}>{showApiKey ? <EyeOff size={15}/> : <Eye size={15}/>}</button></div></label>
           <p><ShieldCheck size={13}/>优先使用本次填写；其次使用 Query 模块专用变量；最后回退到项目通用 EQUIPMENT_DR_BASE_URL / EQUIPMENT_DR_API_KEY。环境密钥不会回显。</p>
@@ -439,11 +547,11 @@ function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBatchResearc
         {generationMode === 'guided'
           ? <article><span>1</span><div><b>输入母题</b><small>可以是一句话，也可以是文档中的长段落</small></div></article>
           : <article><span>1</span><div><b>研判公开态势</b><small>从安全环境、任务与技术信号中自主发现方向</small></div></article>}
-        <article><span>2</span><div><b>多维深度发散</b><small>从需求、技术、体系和颠覆角度寻找研究机会</small></div></article>
-        <article><span>3</span><div><b>形成短选题</b><small>标题保持简洁，详细研究维度单独保存</small></div></article>
+        <article><span>2</span><div><b>过量发散需求假设</b><small>规划 Agent 从任务、对手、技术、体系、颠覆和规模等维度比较替代方向</small></div></article>
+        <article><span>3</span><div><b>批判收敛为短选题</b><small>按因果性、差异性和可研究性反向质检，完整牵引链独立保存</small></div></article>
       </div>
       <GenerationTaskSlots generations={generationTasks}/>
-      <GenerationTaskList generations={generationTasks} libraryQueries={queries} refresh={() => void loadGenerationTasks()} remove={deleteGenerationTask} cancel={cancelGenerationTask} deletingId={deletingGenerationId} cancellingId={cancellingGenerationId} selectQuery={queryId => { setSelectedId(queryId); window.scrollTo({top: document.querySelector('.query-library-shell')?.offsetTop || 0, behavior: 'smooth'}); }} publishQuery={publish} researchQuery={useForResearch} deleteQuery={deleteQuery}/>
+      <GenerationTaskList generations={generationTasks} libraryQueries={queries} refresh={() => void loadGenerationTasks()} remove={deleteGenerationTask} cancel={cancelGenerationTask} deletingId={deletingGenerationId} cancellingId={cancellingGenerationId} selectQuery={queryId => selectQuery(queryId, true)} publishQuery={publish} researchQuery={useForResearch} deleteQuery={deleteQuery}/>
     </section>
 
     {error && <div className="query-error"><CircleAlert size={16}/>{error}<button onClick={() => setError('')}><X size={14}/></button></div>}
@@ -453,7 +561,16 @@ function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBatchResearc
       <div><button onClick={() => setManualOpen(value => !value)}><FilePlus2 size={15}/>人工录入</button><button onClick={() => { void load(); void loadGenerationTasks(); }}><RefreshCw size={15}/>刷新</button></div>
     </section>
 
-    {manualOpen && <ManualQueryForm request={request} close={() => setManualOpen(false)} saved={item => { setManualOpen(false); void load(item.query_id); }}/>} 
+    {manualOpen && <ManualQueryForm
+      request={request}
+      databases={knowledgeBases}
+      knowledgeLoading={knowledgeLoading}
+      knowledgeError={knowledgeError}
+      initialKnowledgeEnabled={knowledgeEnabled}
+      initialKnowledgeIds={selectedKnowledgeIds}
+      close={() => setManualOpen(false)}
+      saved={item => { setManualOpen(false); void load(item.query_id); }}
+    />}
 
     <section className="query-metrics">
       <Metric icon={Database} label="当前 Query" value={counts.total}/>
@@ -463,7 +580,7 @@ function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBatchResearc
     </section>
 
     <section className="query-library-shell">
-      <div className="query-list-column">
+      <div className="query-list-column" ref={listRef}>
         <div className="query-library-toolbar">
           <label><Search size={15}/><input value={search} onChange={event => setSearch(event.target.value)} placeholder="搜索 Query、理由或研究角度"/></label>
           <select value={status} onChange={event => setStatus(event.target.value)}><option value="all">全部状态</option><option value="draft">待审核</option><option value="published">已发布</option><option value="archived">已归档</option></select>
@@ -474,9 +591,9 @@ function QueryLibraryPage({apiBase, onUseQuery, onDirectResearch, onBatchResearc
           <label><input type="checkbox" aria-label="选择当前筛选结果" checked={visible.length > 0 && visible.every(item => selectedQueryIds.includes(item.query_id))} onChange={event => setSelectedQueryIds(event.target.checked ? [...new Set([...selectedQueryIds, ...visible.map(item => item.query_id)])] : selectedQueryIds.filter(id => !visible.some(item => item.query_id === id)))} /><span>选择当前结果</span></label>
           {selectedQueryIds.length > 0 && <><span className="query-bulk-count">已选 {selectedQueryIds.length} 条</span><button disabled={mutating || !selectedItems.some(item => item.status === 'draft')} onClick={publishSelected}><BookOpenCheck size={14}/>批量审核发布</button><button className="primary" disabled={mutating || !selectedItems.some(item => item.status !== 'archived')} onClick={startSelectedResearch}><Play size={14}/>批量启动研究</button><button className="danger" disabled={mutating} onClick={deleteSelectedQueries}><Trash2 size={14}/>批量删除</button><button disabled={mutating} onClick={() => setSelectedQueryIds([])}><X size={14}/>清除</button></>}
         </div>
-        {loading ? <div className="query-empty"><LoaderCircle className="spin"/>正在读取 Query 库</div> : visible.length ? <div className="query-card-grid">{visible.map(item => <QueryCard key={item.query_id} item={item} selected={item.query_id === selectedId} checked={selectedQueryIds.includes(item.query_id)} toggle={() => toggleQuerySelection(item)} choose={() => setSelectedId(item.query_id)}/>)}</div> : <div className="query-empty"><Search/>没有匹配的 Query</div>}
+        {loading ? <div className="query-empty"><LoaderCircle className="spin"/>正在读取 Query 库</div> : visible.length ? <div className="query-card-grid">{visible.map(item => <QueryCard key={item.query_id} item={item} selected={item.query_id === selectedId} checked={selectedQueryIds.includes(item.query_id)} toggle={() => toggleQuerySelection(item)} choose={() => selectQuery(item.query_id)}/>)}</div> : <div className="query-empty"><Search/>没有匹配的 Query</div>}
       </div>
-      <QueryDetail item={selected} mutating={mutating} publish={publish} archiveQuery={archiveQuery} deleteQuery={deleteQuery} useForResearch={useForResearch}/>
+      <QueryDetail item={selected} panelRef={detailRef} mobileOpen={mobileDetailOpen} onBack={returnToList} mutating={mutating} publish={publish} archiveQuery={archiveQuery} deleteQuery={deleteQuery} useForResearch={useForResearch}/>
     </section>
   </div>;
 }
@@ -574,11 +691,14 @@ function QueryCard({item, selected, checked, toggle, choose}) {
   </article>;
 }
 
-function QueryDetail({item, mutating, publish, archiveQuery, deleteQuery, useForResearch}) {
+function QueryDetail({item, panelRef, mobileOpen, onBack, mutating, publish, archiveQuery, deleteQuery, useForResearch}) {
   if (!item) return <aside className="query-detail-panel empty"><Lightbulb/><p>选择一条短 Query，查看它对应的详细研究维度、生成理由和来源依据。</p></aside>;
-  return <aside className="query-detail-panel">
+  return <aside ref={panelRef} className={`query-detail-panel${mobileOpen ? ' mobile-detail-active' : ''}`}>
+    <button type="button" className="query-detail-return" onClick={onBack}><ArrowLeft size={15}/>返回 Query 列表</button>
     <header><div><span className={`query-status ${item.status}`}>{STATUS_LABELS[item.status]}</span><em>{SOURCE_LABELS[item.source_type]} · v{item.version} · {item.source_type === 'agent' ? '生成于' : '录入于'} {formatDateTime(item.created_at)}</em></div><small>{item.query_id}</small></header>
     <h3>{item.query}</h3>
+    <div className={`query-detail-knowledge ${item.knowledge_enabled === false ? 'disabled' : ''}`}><Database size={14}/><span><b>{knowledgeScopeSummary(item)}</b><small>这是运行级可用范围；仅在 Agent 判断有必要时调用，不会预取正文或注入蜂群上下文。</small></span></div>
+    {item.demand_chain && Object.keys(item.demand_chain).length > 0 && <DetailBlock title="态势牵引链" text={formatDemandChain(item.demand_chain)}/>}
     <DetailBlock title="研究角度与补充信息" text={item.supplemental_information || '暂无补充信息，可在启动研究前继续编辑。'}/>
     <DetailBlock title="生成理由" text={item.generation_rationale || '该条为人工或资料导入 Query，尚未补充生成理由。'}/>
     <section className="query-source-list"><b>来源依据</b>{item.source_references?.length ? item.source_references.map((source, index) => <article key={`${source.url}-${index}`}><span>{source.url ? <a href={source.url} target="_blank" rel="noreferrer">{displaySourceTitle(source.title)}<ExternalLink size={12}/></a> : displaySourceTitle(source.title)}<small>{source.relevance_note || '用于形成 Query 的背景线索'}</small></span></article>) : <p>暂无直接来源，后续研究仍需独立采集与核验正式证据。</p>}<em>{item.source_disclaimer}</em></section>
@@ -587,12 +707,63 @@ function QueryDetail({item, mutating, publish, archiveQuery, deleteQuery, useFor
 }
 
 function DetailBlock({title, text}) { return <section className="query-detail-block"><b>{title}</b><p>{text}</p></section>; }
+function formatDemandChain(chain = {}) {
+  return [
+    ['态势信号', chain.situation_signal],
+    ['未来任务', chain.future_mission],
+    ['任务约束', chain.task_constraint],
+    ['能力缺口', chain.capability_gap],
+    ['装备需求', chain.weapon_requirement],
+    ['反证条件', chain.disconfirmation_condition],
+  ].filter(([, value]) => value).map(([label, value]) => `${label}：${value}`).join(' → ');
+}
 function Metric({icon: Icon, label, value}) { return <article><Icon size={18}/><span><small>{label}</small><b>{value}</b></span></article>; }
 
-function ManualQueryForm({request, close, saved}) {
+function KnowledgeScopePicker({databases, loading, error, enabled, selectedIds, onEnabledChange, onSelectedIdsChange}) {
+  const [open, setOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
+  const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const databaseById = useMemo(() => new Map(databases.map(item => [item.kb_id, item])), [databases]);
+  const keyword = searchValue.trim().toLowerCase();
+  const visibleDatabases = databases.filter(item => !keyword || `${item.name} ${item.description}`.toLowerCase().includes(keyword));
+  const toggleKnowledge = knowledgeId => {
+    if (selectedSet.has(knowledgeId)) {
+      onSelectedIdsChange(selectedIds.filter(item => item !== knowledgeId));
+      return;
+    }
+    if (selectedIds.length >= 64) return;
+    onSelectedIdsChange([...selectedIds, knowledgeId]);
+  };
+  return <section className={`query-knowledge-scope ${enabled ? 'enabled' : 'disabled'}`}>
+    <header>
+      <div><Database size={16}/><span><b>知识库辅助</b><small>借鉴智能对话的检索方式，仅提供运行级候选范围</small></span></div>
+      <div className="query-knowledge-actions">
+        <button type="button" className={`query-knowledge-enable ${enabled ? 'active' : ''}`} aria-pressed={enabled} onClick={() => onEnabledChange(!enabled)}>{enabled ? <CheckCircle2 size={13}/> : <X size={13}/>} {enabled ? '按需可用' : '已关闭'}</button>
+        <button type="button" className="query-knowledge-expand" aria-expanded={open} aria-label={open ? '收起知识库选择' : '展开知识库选择'} onClick={() => setOpen(value => !value)}><ChevronDown size={15}/></button>
+      </div>
+    </header>
+    <div className="query-knowledge-summary">
+      <span>{!enabled ? '本次 Query 与后续研究均不开放知识库检索。' : selectedIds.length ? `仅允许从选中的 ${selectedIds.length} 个知识库按需检索。` : '未限定具体库：保留原默认行为，可从当前有权访问的知识库中按需检索。'}</span>
+      <small>不会自动检索、不会预取文档，也不会把知识库内容强行注入动态蜂群 Agent 上下文。</small>
+    </div>
+    {enabled && selectedIds.length > 0 && <div className="query-knowledge-chips">{selectedIds.map(knowledgeId => <span key={knowledgeId}>@{databaseById.get(knowledgeId)?.name || '已绑定知识库'}<button type="button" aria-label="移除此知识库" onClick={() => toggleKnowledge(knowledgeId)}><X size={11}/></button></span>)}<button type="button" onClick={() => onSelectedIdsChange([])}>恢复全部可见</button></div>}
+    {open && <div className="query-knowledge-picker">
+      <div className="query-knowledge-picker-toolbar"><label><Search size={14}/><input value={searchValue} onChange={event => setSearchValue(event.target.value)} placeholder="搜索可访问知识库"/></label><em>{selectedIds.length ? `已选 ${selectedIds.length}/64` : '全部可见'}</em></div>
+      {!enabled ? <p className="query-knowledge-state"><X size={14}/>知识库能力已关闭；重新启用后可继续选择范围。</p>
+        : loading ? <p className="query-knowledge-state"><LoaderCircle className="spin" size={14}/>正在读取可访问知识库…</p>
+          : error ? <p className="query-knowledge-state error"><CircleAlert size={14}/>{error}；不影响保持默认范围继续执行。</p>
+            : visibleDatabases.length ? <div className="query-knowledge-options">{visibleDatabases.map(item => <label key={item.kb_id} title={item.description || item.name}><input type="checkbox" checked={selectedSet.has(item.kb_id)} disabled={!selectedSet.has(item.kb_id) && selectedIds.length >= 64} onChange={() => toggleKnowledge(item.kb_id)}/><span><b>@{item.name}</b><small>{item.description || (item.supports_documents ? '可按需检索' : '外部知识源')}</small></span></label>)}</div>
+              : <p className="query-knowledge-state"><Database size={14}/>{keyword ? '没有匹配的知识库。' : '当前没有可访问的知识库。'}</p>}
+    </div>}
+  </section>;
+}
+
+function ManualQueryForm({request, databases, knowledgeLoading, knowledgeError, initialKnowledgeEnabled, initialKnowledgeIds, close, saved}) {
   const [query, setQuery] = useState(''); const [supplement, setSupplement] = useState(''); const [rationale, setRationale] = useState(''); const [saving, setSaving] = useState(false); const [error, setError] = useState('');
-  const submit = async () => { setSaving(true); setError(''); try { saved(await request('/query-library/queries', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({query, supplemental_information: supplement, generation_rationale: rationale})})); } catch (reason) { setError(reason.message || '保存失败'); } finally { setSaving(false); } };
-  return <section className="manual-query-form"><header><div><FilePlus2 size={17}/><span><b>人工录入短 Query</b><small>详细研究范围请放在补充信息中</small></span></div><button onClick={close}><X size={15}/></button></header><label>研究选题<textarea value={query} onChange={event => setQuery(event.target.value)} placeholder="例如：卫星拒止条件下多源自主导航精打武器研究"/></label><div><label>详细研究维度与补充信息<textarea value={supplement} onChange={event => setSupplement(event.target.value)}/></label><label>生成/选题理由<textarea value={rationale} onChange={event => setRationale(event.target.value)}/></label></div>{error && <p>{error}</p>}<footer><button onClick={close}>取消</button><button className="primary" disabled={saving || !query.trim()} onClick={submit}>{saving ? '保存中' : '保存草稿'}</button></footer></section>;
+  const [manualKnowledgeEnabled, setManualKnowledgeEnabled] = useState(initialKnowledgeEnabled !== false);
+  const [manualKnowledgeIds, setManualKnowledgeIds] = useState(() => [...(initialKnowledgeIds || [])]);
+  const submit = async () => { setSaving(true); setError(''); try { saved(await request('/query-library/queries', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({query, supplemental_information: supplement, generation_rationale: rationale, ...createKnowledgeScope({enabled: manualKnowledgeEnabled, selectedIds: manualKnowledgeIds})})})); } catch (reason) { setError(reason.message || '保存失败'); } finally { setSaving(false); } };
+  return <section className="manual-query-form"><header><div><FilePlus2 size={17}/><span><b>人工录入短 Query</b><small>详细研究范围请放在补充信息中</small></span></div><button onClick={close}><X size={15}/></button></header><label>研究选题<textarea value={query} onChange={event => setQuery(event.target.value)} placeholder="例如：卫星拒止条件下多源自主导航精打武器研究"/></label><div><label>详细研究维度与补充信息<textarea value={supplement} onChange={event => setSupplement(event.target.value)}/></label><label>生成/选题理由<textarea value={rationale} onChange={event => setRationale(event.target.value)}/></label></div><KnowledgeScopePicker databases={databases} loading={knowledgeLoading} error={knowledgeError} enabled={manualKnowledgeEnabled} selectedIds={manualKnowledgeIds} onEnabledChange={setManualKnowledgeEnabled} onSelectedIdsChange={setManualKnowledgeIds}/>{error && <p>{error}</p>}<footer><button onClick={close}>取消</button><button className="primary" disabled={saving || !query.trim()} onClick={submit}>{saving ? '保存中' : '保存草稿'}</button></footer></section>;
 }
 
 export default {id: 'query-library', label: '需求 Query', icon: WandSparkles, probePath: '/query-library/health', Component: QueryLibraryPage};

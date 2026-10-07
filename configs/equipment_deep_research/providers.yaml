@@ -26,6 +26,24 @@ providers:
     base_url_env: EQUIPMENT_DR_BASE_URL
     api_key_env: EQUIPMENT_DR_API_KEY
     timeout_seconds: 120
+# 平台「模型设置」注入的 OpenAI 兼容 Chat Completions 通道。
+# 凭证与模型 id 来自前端「模型设置」，由 platform_core 在执行前注入；不要写进 .env。
+  platform:
+    type: openai_compatible
+    label: 平台模型设置
+    fallback_providers: []
+    fallback_policy: any
+    model: ""
+    base_url: ""
+    base_url_env: EQUIPMENT_DR_BASE_URL
+    api_key_env: EQUIPMENT_DR_API_KEY
+    timeout_seconds: 180
+    structured_mode: json_object
+    capabilities:
+      structured_output: true
+      function_tools: true
+      streaming: true
+      cancellation: true
   deepseek:
     type: openai_compatible
     label: DeepSeek API

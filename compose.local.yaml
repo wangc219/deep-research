@@ -1,0 +1,36 @@
+# 日常运行覆盖层：保留全部业务服务，关闭开发监听，前端使用静态构建。
+# 与 compose.yaml 合并使用；开发时仅使用 compose.yaml。
+services:
+  api:
+    command: python -m uvicorn server.main:app --host 0.0.0.0 --port 5050 --timeout-graceful-shutdown 30
+    environment:
+      UV_COMPILE_BYTECODE: "0"
+      POSTGRES_POOL_SIZE: ${LOCAL_API_POSTGRES_POOL_SIZE:-12}
+      POSTGRES_MAX_OVERFLOW: ${LOCAL_API_POSTGRES_MAX_OVERFLOW:-8}
+      REDIS_MAX_CONNECTIONS: ${LOCAL_REDIS_MAX_CONNECTIONS:-64}
+  worker:
+    command: python -m server.worker_main
+    environment:
+      UV_COMPILE_BYTECODE: "0"
+      ARQ_MAX_JOBS: ${LOCAL_ARQ_MAX_JOBS:-24}
+      POSTGRES_POOL_SIZE: ${LOCAL_WORKER_POSTGRES_POOL_SIZE:-12}
+      POSTGRES_MAX_OVERFLOW: ${LOCAL_WORKER_POSTGRES_MAX_OVERFLOW:-8}
+      LANGGRAPH_POSTGRES_POOL_SIZE: ${LOCAL_LANGGRAPH_POSTGRES_POOL_SIZE:-12}
+      REDIS_MAX_CONNECTIONS: ${LOCAL_REDIS_MAX_CONNECTIONS:-64}
+    healthcheck:
+      test: ["CMD", "arq", "--check", "server.worker_main.WorkerSettings"]
+      interval: 30s
+  storage-migrator:
+    command: python -m platform_core.storage_migration
+    environment:
+      UV_COMPILE_BYTECODE: "0"
+  web:
+    build:
+      target: production
+    image: ${COMPOSE_PROJECT_NAME:-deep-research}-web-runtime:${DEEP_RESEARCH_VERSION:-0.7.3}
+    volumes: !reset []
+    ports: !override
+      - "${DEEP_RESEARCH_WEB_PORT:-5173}:80"
+    environment:
+      NODE_ENV: production
+    command: ["nginx", "-g", "daemon off;"]

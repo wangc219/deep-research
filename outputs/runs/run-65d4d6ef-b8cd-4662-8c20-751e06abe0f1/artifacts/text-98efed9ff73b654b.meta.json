@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:98efed9ff73b654b",
+  "content_path": "text-98efed9ff73b654b.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-4fbe26be89e6",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "98efed9ff73b654b4a63eb4727f5e62062e91e97c0d782f79f645e2e98954af0",
+  "url": "https://www.cbo.gov/publication/62563"
+}

@@ -1,0 +1,25 @@
+# 单位信息配置文件
+# 用于配置网站的基本信息、品牌信息等
+
+# 组织信息
+organization:
+  name: "equipment deep research"               # 完整组织名称
+  logo: "/favicon.svg"       # Logo文件路径（放在 web/public 目录下）
+  avatar: "/favicon.svg"      # 头像文件路径（放在 web/public 目录下）
+  login_bg: "/login-bg.jpg"  # 登录背景图片路径（放在 web/public 目录下）
+
+# 项目信息
+branding:
+  name: "equipment deep research"
+  title: "面向企业的装备深度研究与知识协同平台"     # 系统标题
+  subtitle: "模型 × 知识库 × 多智能体 × 深研编排，统一驱动正式研究交付"   # 副标题（subtitles 为空时使用）
+  subtitles:
+    - "登录后进入领域知识总门户，研究任务与证据可追溯"
+    - "智能对话与定向深研共享模型、知识库、技能和 Subagent"
+    - "从问题澄清、并行研究到能力画像与报告交付全程可审计"
+
+# 页脚信息
+footer:
+  copyright: "© equipment deep research"
+  user_agreement_url: "/protocols/user-agreement.template.html"
+  privacy_policy_url: "/protocols/privacy-policy.template.html"

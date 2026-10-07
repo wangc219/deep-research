@@ -3040,25 +3040,59 @@
       "url": "https://fixture.local/case_research"
     },
     "https://fixture.local/combat_scenario": {
-      "accepted_count": 705,
+      "accepted_count": 771,
       "agent_ids": [
         "combat_scenario"
       ],
       "domain": "fixture.local",
-      "failure_count": 6,
+      "failure_count": 21,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-19T14:59:23.063939+00:00",
+      "last_seen_at": "2026-09-26T05:58:23.845295+00:00",
       "last_status": "fixture_materialized",
-      "success_count": 705,
+      "success_count": 771,
       "title": "作战场景离线验证材料",
       "topics": [
-        "矩阵冒烟 winning_swarm_dynamic_v2 war_case_learning",
-        "低空公开资料研究",
-        "评估小型无人系统在复杂电磁环境下的防御装备需求",
-        "面向高威胁海空封锁条件下的远程反介入作战，研究能够直接改变敌方侦察、指挥与火力链耦合关系的新质武器装备",
-        "强电磁环境下高机动现场检测装备能力缺口研究"
+        "编辑草稿回归 94ae5345",
+        "编辑草稿回归 830968ea",
+        "编辑草稿回归 0f8021a0",
+        "编辑草稿回归 f172810b",
+        "编辑草稿回归 8b1abfd9"
       ],
       "url": "https://fixture.local/combat_scenario"
+    },
+    "https://fixture.local/combat_scenario-r2": {
+      "accepted_count": 1,
+      "agent_ids": [
+        "combat_scenario"
+      ],
+      "domain": "fixture.local",
+      "failure_count": 0,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-09-23T14:33:19.024557+00:00",
+      "last_status": "fixture_materialized",
+      "success_count": 1,
+      "title": "fixture",
+      "topics": [
+        "定向再调"
+      ],
+      "url": "https://fixture.local/combat_scenario-r2"
+    },
+    "https://fixture.local/cross_domain_fusion": {
+      "accepted_count": 0,
+      "agent_ids": [
+        "cross_domain_fusion"
+      ],
+      "domain": "fixture.local",
+      "failure_count": 1,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-09-24T05:08:10.487271+00:00",
+      "last_status": "network_safety_rejected",
+      "success_count": 0,
+      "title": "跨域融合离线验证材料",
+      "topics": [
+        "跨域线索触发对手动向复核"
+      ],
+      "url": "https://fixture.local/cross_domain_fusion"
     },
     "https://fixture.local/custom.agent_01-v2": {
       "accepted_count": 1,
@@ -3096,23 +3130,23 @@
       "url": "https://fixture.local/generic_researcher"
     },
     "https://fixture.local/international_situation": {
-      "accepted_count": 57,
+      "accepted_count": 111,
       "agent_ids": [
         "international_situation"
       ],
       "domain": "fixture.local",
-      "failure_count": 0,
+      "failure_count": 12,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-25T06:27:35.516847+00:00",
-      "last_status": "fixture_materialized",
-      "success_count": 57,
+      "last_seen_at": "2026-09-24T05:08:15.196999+00:00",
+      "last_status": "network_safety_rejected",
+      "success_count": 111,
       "title": "国际形势离线验证材料",
       "topics": [
-        "低空无人机蜂群威胁下的城市要地防护",
-        "挖掘在西太反介入体系下的装备能力缺口（门控再调闭环验证）",
-        "挖掘在西太反介入体系下的装备能力缺口",
-        "并行冒烟：西太反介入装备能力缺口",
-        "多智能体治理机制验收"
+        "民用仓储设备可靠性研究",
+        "体系对抗关键链路韧性",
+        "弹性制胜机理 Agent 群持久化验证",
+        "质量蜂群跨分支收敛模型调用验证",
+        "动态制胜组合门失败时不得启动报告模型"
       ],
       "url": "https://fixture.local/international_situation"
     },
@@ -3134,121 +3168,159 @@
       "url": "https://fixture.local/nontraditional_security"
     },
     "https://fixture.local/operational_employment": {
-      "accepted_count": 679,
+      "accepted_count": 738,
       "agent_ids": [
         "operational_employment"
       ],
       "domain": "fixture.local",
-      "failure_count": 7,
+      "failure_count": 21,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-19T14:59:23.156392+00:00",
+      "last_seen_at": "2026-09-26T05:58:24.112323+00:00",
       "last_status": "fixture_materialized",
-      "success_count": 679,
+      "success_count": 738,
       "title": "作战运用离线验证材料",
       "topics": [
-        "低空公开资料研究",
-        "评估小型无人系统在复杂电磁环境下的防御装备需求",
-        "未来强干扰弱通信海空对抗中的分布式精确火力与反无人新质装备研究（DeepSeek修复验收）",
-        "第一岛链无人蜂群防护反制装备研究",
-        "强电磁环境下高机动现场检测装备能力缺口研究"
+        "编辑草稿回归 94ae5345",
+        "编辑草稿回归 830968ea",
+        "编辑草稿回归 0f8021a0",
+        "编辑草稿回归 f172810b",
+        "编辑草稿回归 8b1abfd9"
       ],
       "url": "https://fixture.local/operational_employment"
     },
     "https://fixture.local/opponent_monitoring": {
-      "accepted_count": 1,
+      "accepted_count": 5,
       "agent_ids": [
         "opponent_monitoring"
       ],
       "domain": "fixture.local",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-20T07:36:58.466722+00:00",
+      "last_seen_at": "2026-09-23T14:33:23.425470+00:00",
       "last_status": "fixture_materialized",
-      "success_count": 1,
+      "success_count": 5,
       "title": "对手动向监测离线验证材料",
       "topics": [
-        "挖掘在西太反介入体系下的装备能力缺口（门控再调闭环验证）"
+        "挖掘在西太反介入体系下的装备能力缺口（门控再调闭环验证）",
+        "南海通信遮断无人协同压力能力研究",
+        "挖掘在西太反介入体系下的装备能力缺口"
       ],
       "url": "https://fixture.local/opponent_monitoring"
     },
+    "https://fixture.local/public-report": {
+      "accepted_count": 1,
+      "agent_ids": [
+        "international_situation"
+      ],
+      "domain": "fixture.local",
+      "failure_count": 0,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-09-24T05:08:15.559710+00:00",
+      "last_status": "fixture_materialized",
+      "success_count": 1,
+      "title": "公开威胁报告",
+      "topics": [
+        "低空无人机探测预警能力"
+      ],
+      "url": "https://fixture.local/public-report"
+    },
     "https://fixture.local/scenario_divergence": {
-      "accepted_count": 7,
+      "accepted_count": 8,
       "agent_ids": [
         "scenario_divergence"
       ],
       "domain": "fixture.local",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-08-01T09:51:39.843065+00:00",
+      "last_seen_at": "2026-09-24T05:08:09.685606+00:00",
       "last_status": "fixture_materialized",
-      "success_count": 7,
+      "success_count": 8,
       "title": "场景发散离线验证材料",
       "topics": [
         "西太反介入环境下低带宽任务网络与分布式保障装备能力需求",
         "从近年局部战争中挖掘我军装备发展需求",
         "复杂电磁压制条件下远程精确打击与低空反无人体系制胜机理",
-        "低空无人体系装备能力缺口效率回归"
+        "低空无人体系装备能力缺口效率回归",
+        "量子传感技术驱动装备需求"
       ],
       "url": "https://fixture.local/scenario_divergence"
     },
     "https://fixture.local/system_confrontation": {
-      "accepted_count": 7,
+      "accepted_count": 11,
       "agent_ids": [
         "system_confrontation"
       ],
       "domain": "fixture.local",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-20T19:12:21.502434+00:00",
+      "last_seen_at": "2026-09-23T14:33:23.460998+00:00",
       "last_status": "fixture_materialized",
-      "success_count": 7,
+      "success_count": 11,
       "title": "体系对抗仿真离线验证材料",
       "topics": [
-        "西太反介入环境下低带宽任务网络与分布式保障装备能力需求",
         "隔离验证：低带宽任务网络装备能力需求",
         "挖掘在西太反介入体系下的装备能力缺口（门控再调闭环验证）",
         "挖掘在西太反介入体系下的装备能力缺口",
-        "并行冒烟：西太反介入装备能力缺口"
+        "并行冒烟：西太反介入装备能力缺口",
+        "南海通信遮断无人协同压力能力研究"
       ],
       "url": "https://fixture.local/system_confrontation"
     },
     "https://fixture.local/technology_radar": {
-      "accepted_count": 1,
+      "accepted_count": 2,
       "agent_ids": [
         "technology_radar"
       ],
       "domain": "fixture.local",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-07-19T15:25:09.713567+00:00",
+      "last_seen_at": "2026-09-24T05:08:09.781295+00:00",
       "last_status": "fixture_materialized",
-      "success_count": 1,
+      "success_count": 2,
       "title": "技术雷达离线验证材料",
       "topics": [
-        "量子传感技术驱动的探测装备机会"
+        "量子传感技术驱动的探测装备机会",
+        "量子传感技术驱动装备需求"
       ],
       "url": "https://fixture.local/technology_radar"
     },
     "https://fixture.local/weapon_equipment": {
-      "accepted_count": 714,
+      "accepted_count": 804,
       "agent_ids": [
         "weapon_equipment"
       ],
       "domain": "fixture.local",
-      "failure_count": 4,
+      "failure_count": 18,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-19T14:59:23.073712+00:00",
+      "last_seen_at": "2026-09-26T05:58:23.828014+00:00",
       "last_status": "fixture_materialized",
-      "success_count": 714,
+      "success_count": 804,
       "title": "武器装备离线验证材料",
       "topics": [
-        "矩阵冒烟 winning_swarm_dynamic_v2 new_winning_mechanism",
-        "矩阵冒烟 winning_swarm_dynamic_v2 traditional_gap",
-        "矩阵冒烟 winning_swarm_dynamic_v2 war_case_learning",
-        "低空公开资料研究",
-        "强电磁环境下高机动现场检测装备能力缺口研究"
+        "编辑草稿回归 94ae5345",
+        "编辑草稿回归 830968ea",
+        "编辑草稿回归 0f8021a0",
+        "编辑草稿回归 f172810b",
+        "编辑草稿回归 8b1abfd9"
       ],
       "url": "https://fixture.local/weapon_equipment"
+    },
+    "https://fixture.local/weapon_equipment-r2": {
+      "accepted_count": 1,
+      "agent_ids": [
+        "weapon_equipment"
+      ],
+      "domain": "fixture.local",
+      "failure_count": 0,
+      "last_decision": "accepted",
+      "last_seen_at": "2026-09-23T13:58:57.256354+00:00",
+      "last_status": "fixture_materialized",
+      "success_count": 1,
+      "title": "fixture",
+      "topics": [
+        "定向再调"
+      ],
+      "url": "https://fixture.local/weapon_equipment-r2"
     },
     "https://forecast.weather.gov/glossary.php?word=TYPHOON": {
       "accepted_count": 2,
@@ -4255,7 +4327,7 @@
       "url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS"
     },
     "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF": {
-      "accepted_count": 247,
+      "accepted_count": 248,
       "agent_ids": [
         "international_situation",
         "weapon_equipment",
@@ -4270,18 +4342,18 @@
         "winning_s6_image"
       ],
       "domain": "media.defense.gov",
-      "failure_count": 11,
+      "failure_count": 14,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-19T04:23:50.901471+00:00",
-      "last_status": "network_safety_rejected",
-      "success_count": 357,
+      "last_seen_at": "2026-09-25T06:42:19.870691+00:00",
+      "last_status": "fetch_failed",
+      "success_count": 358,
       "title": "media.defense.gov · FACT SHEET STRATEGY FOR COUNTERING UNMANNED SYSTEMS.PDF",
       "topics": [
-        "台海低空无人系统探测预警与新制胜机制",
-        "高价值时敏目标快速精确打击研究",
         "未来5至15年无人远程精确打击装备的能力缺口与高潜力市场方向",
         "低空无人机集群在复杂电磁环境下的探测与拦截装备能力缺口",
-        "强电磁压制环境下高机动多传感器现场检测装备能力缺口与项目论证研究"
+        "强电磁压制环境下高机动多传感器现场检测装备能力缺口与项目论证研究",
+        "低空蜂群渗透下反无人机一体防御体系研究",
+        "低空无人集群复杂电磁环境闭环反制装备研究"
       ],
       "url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
     },
@@ -11526,7 +11598,7 @@
       "url": "https://www.avinc.com/solution/switchblade-600-block-2/"
     },
     "https://www.avinc.com/solution/switchblade-600/": {
-      "accepted_count": 55,
+      "accepted_count": 57,
       "agent_ids": [
         "weapon_equipment",
         "technology_radar",
@@ -11535,16 +11607,16 @@
       "domain": "www.avinc.com",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-19T11:04:15.813573+00:00",
+      "last_seen_at": "2026-09-25T10:37:59.864939+00:00",
       "last_status": "fetched",
-      "success_count": 56,
+      "success_count": 58,
       "title": "Switchblade® 600 - AeroVironment",
       "topics": [
-        "强电磁压制与卫星拒止条件下，如何形成面向高价值机动目标的低成本远程精确毁伤新质武器装备组合，并通过新的感知、授权、突防与毁伤机理压缩对手反应窗口？",
-        "大规模离散目标低成本精确打击研究",
         "小型化高性能战术精打武器研究",
         "评估中低空反无人机体系在复杂电磁环境下的探测、识别、跟踪与拦截能力缺口，形成可验证的装备需求",
-        "强电磁压制下高价值机动目标的断链时敏精确打击能力研究，要求形成装备身份明确、五栏能力画像完整的动态蜂群交付"
+        "强电磁压制下高价值机动目标的断链时敏精确打击能力研究，要求形成装备身份明确、五栏能力画像完整的动态蜂群交付",
+        "低空无人集群复杂电磁环境闭环反制装备研究",
+        "复杂电磁与弱通信条件下，面向要地低空无人机群持续防护，研究可快速部署、低成本、可独立成项的探测—判别—拦截闭环装备。先发散后收敛，明确装备功能、直接军事效果、公开基线、失效边界和可证伪验证方法。"
       ],
       "url": "https://www.avinc.com/solution/switchblade-600/"
     },
@@ -11862,7 +11934,7 @@
       "url": "https://www.cbo.gov/publication/62262"
     },
     "https://www.cbo.gov/publication/62563": {
-      "accepted_count": 15,
+      "accepted_count": 16,
       "agent_ids": [
         "combat_scenario",
         "technology_radar",
@@ -11872,16 +11944,16 @@
       "domain": "www.cbo.gov",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-19T07:25:30.906276+00:00",
+      "last_seen_at": "2026-09-21T05:31:55.609281+00:00",
       "last_status": "hosted_search_citation",
-      "success_count": 15,
+      "success_count": 16,
       "title": "cbo.gov · 62563",
       "topics": [
-        "深度研究、理解并长期记忆复杂电磁环境和强对抗条件的突防抗扰设计不足和发展需求；",
         "【技术革命】依托前沿技术赋能与新域跨界拓展构建非对称优势，是突破传统瓶颈、重塑战场规则的关键路径，深度挖掘人工智能、量子信息、无人系统、太空技术、电磁XX等颠覆性技术方向，深度思考颠覆性技术突破催生了哪些潜在的新型作战空间和新质装备跨代能力；",
         "面向2030年前后高强度近海多域对抗，研究营旅级机动部队在GNSS持续压制、战术通信间歇、低空小型无人机与巡飞弹多波次饱和突击、弹药与能源补给受限条件下，如何形成伴随式反无人蜂群制胜能力。最终必须收敛为3—6项可独立识别、可研制或可改装验证的具体前瞻新型武器装备（给出明确装备形态/平台—载荷组合/任务对象，禁止仅写‘智能化探测系统’‘综合反制平台’等泛化能力名词）；入选装备与参考装备分开列示。每项装备能力画像必须围绕一个真实可复现的军事制胜场景，按敌情与环境约束—装备进入战位—探测识别—决策交战—毁伤/失效判据—再装填或能源恢复—与现役体系接口的连续任务链撰写，并用公开可核验的具体装备/项目/试验案例支撑。重点比较定向能、微波、低成本动能拦截、电子对抗与被动探测的组合边界、饱和容量、单位交战成本、机动部署和持续作战瓶颈；不得机械罗列技术指标，不得从场景跳步到装备结论。",
         "高强度灰色地带低空无人监视反制装备研究",
-        "强电磁干扰与低空蜂群突防条件下的无人拦截装备能力缺口"
+        "强电磁干扰与低空蜂群突防条件下的无人拦截装备能力缺口",
+        "低空蜂群渗透下反无人机一体防御体系研究"
       ],
       "url": "https://www.cbo.gov/publication/62563"
     },
@@ -14344,7 +14416,7 @@
       "url": "https://www.darpa.mil/news/2026/long-shot-success"
     },
     "https://www.darpa.mil/news/2026/rockn-enables-gps-free-operations": {
-      "accepted_count": 28,
+      "accepted_count": 30,
       "agent_ids": [
         "operational_employment",
         "scenario_divergence",
@@ -14356,16 +14428,16 @@
       "domain": "www.darpa.mil",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-19T08:30:43.949450+00:00",
+      "last_seen_at": "2026-09-25T10:37:42.933996+00:00",
       "last_status": "fetched",
-      "success_count": 28,
+      "success_count": 30,
       "title": "ROCkN enables GPS-free operations | DARPA",
       "topics": [
-        "强电磁压制下精确打击任务续接装备研究",
-        "【技术革命】依托前沿技术赋能与新域跨界拓展构建非对称优势，是突破传统瓶颈、重塑战场规则的关键路径，深度挖掘人工智能、量子信息、无人系统、太空技术、电磁XX等颠覆性技术方向，深度思考颠覆性技术突破催生了哪些潜在的新型作战空间和新质装备跨代能力；",
         "卫星受扰条件下跨域自主远程精确火力研究",
         "强电磁压制与卫星拒止条件下，如何形成面向高价值机动目标的低成本远程精确毁伤新质武器装备组合，并通过新的感知、授权、突防与毁伤机理压缩对手反应窗口？",
-        "低空无人集群复杂电磁环境闭环反制装备研究"
+        "低空无人集群复杂电磁环境闭环反制装备研究",
+        "低空蜂群渗透下反无人机一体防御体系研究",
+        "复杂电磁与弱通信条件下，面向要地低空无人机群持续防护，研究可快速部署、低成本、可独立成项的探测—判别—拦截闭环装备。先发散后收敛，明确装备功能、直接军事效果、公开基线、失效边界和可证伪验证方法。"
       ],
       "url": "https://www.darpa.mil/news/2026/rockn-enables-gps-free-operations"
     },
@@ -16381,18 +16453,18 @@
         "cross_domain_fusion"
       ],
       "domain": "www.defense.gov",
-      "failure_count": 1,
+      "failure_count": 3,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-19T08:30:43.924328+00:00",
-      "last_status": "hosted_search_citation",
+      "last_seen_at": "2026-09-21T05:35:07.917119+00:00",
+      "last_status": "fetch_failed",
       "success_count": 31,
       "title": "defense.gov · dod announces release of jadc2 implementation plan",
       "topics": [
-        "卫星受扰条件下跨域自主远程精确火力研究",
         "高价值时敏目标快速精确打击研究",
         "高速机动海空目标精确打击研究",
         "天基低时延信息支撑精确打击体系研究",
-        "低空无人集群复杂电磁环境闭环反制装备研究"
+        "低空无人集群复杂电磁环境闭环反制装备研究",
+        "低空蜂群渗透下反无人机一体防御体系研究"
       ],
       "url": "https://www.defense.gov/News/Releases/Release/article/2970094/dod-announces-release-of-jadc2-implementation-plan/"
     },
@@ -19668,23 +19740,23 @@
       "url": "https://www.iai.co.il/p/"
     },
     "https://www.iai.co.il/p/harop": {
-      "accepted_count": 80,
+      "accepted_count": 82,
       "agent_ids": [
         "weapon_equipment"
       ],
       "domain": "www.iai.co.il",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-19T11:04:15.801505+00:00",
+      "last_seen_at": "2026-09-25T10:37:59.847775+00:00",
       "last_status": "fetched",
-      "success_count": 80,
+      "success_count": 82,
       "title": "iai.co.il · harop",
       "topics": [
-        "面向2030年前后高强度近海多域对抗，研究营旅级机动部队在GNSS持续压制、战术通信间歇、低空小型无人机与巡飞弹多波次饱和突击、弹药与能源补给受限条件下，如何形成伴随式反无人蜂群制胜能力。最终必须收敛为3—6项可独立识别、可研制或可改装验证的具体前瞻新型武器装备（给出明确装备形态/平台—载荷组合/任务对象，禁止仅写‘智能化探测系统’‘综合反制平台’等泛化能力名词）；入选装备与参考装备分开列示。每项装备能力画像必须围绕一个真实可复现的军事制胜场景，按敌情与环境约束—装备进入战位—探测识别—决策交战—毁伤/失效判据—再装填或能源恢复—与现役体系接口的连续任务链撰写，并用公开可核验的具体装备/项目/试验案例支撑。重点比较定向能、微波、低成本动能拦截、电子对抗与被动探测的组合边界、饱和容量、单位交战成本、机动部署和持续作战瓶颈；不得机械罗列技术指标，不得从场景跳步到装备结论。",
-        "电磁—红外多谱段低可探测精打武器研究",
         "强电磁压制与卫星拒止条件下，如何形成面向高价值机动目标的低成本远程精确毁伤新质武器装备组合，并通过新的感知、授权、突防与毁伤机理压缩对手反应窗口？",
         "评估中低空反无人机体系在复杂电磁环境下的探测、识别、跟踪与拦截能力缺口，形成可验证的装备需求",
-        "强电磁压制下高价值机动目标的断链时敏精确打击能力研究，要求形成装备身份明确、五栏能力画像完整的动态蜂群交付"
+        "强电磁压制下高价值机动目标的断链时敏精确打击能力研究，要求形成装备身份明确、五栏能力画像完整的动态蜂群交付",
+        "低空无人集群复杂电磁环境闭环反制装备研究",
+        "复杂电磁与弱通信条件下，面向要地低空无人机群持续防护，研究可快速部署、低成本、可独立成项的探测—判别—拦截闭环装备。先发散后收敛，明确装备功能、直接军事效果、公开基线、失效边界和可证伪验证方法。"
       ],
       "url": "https://www.iai.co.il/p/harop"
     },
@@ -21214,7 +21286,7 @@
       "url": "https://www.lockheedmartin.com/en-us/products/long-range-anti-ship-missile/lrasm-media-kit.html"
     },
     "https://www.lockheedmartin.com/en-us/products/precision-strike-missile.html": {
-      "accepted_count": 45,
+      "accepted_count": 47,
       "agent_ids": [
         "weapon_equipment",
         "operational_employment"
@@ -21222,16 +21294,16 @@
       "domain": "www.lockheedmartin.com",
       "failure_count": 0,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-19T11:45:21.076146+00:00",
+      "last_seen_at": "2026-09-25T10:36:12.380913+00:00",
       "last_status": "fetched",
-      "success_count": 46,
+      "success_count": 48,
       "title": "Precision Strike Missile (PrSM) | Lockheed Martin",
       "topics": [
-        "强电磁压制与卫星拒止条件下，如何形成面向高价值机动目标的低成本远程精确毁伤新质武器装备组合，并通过新的感知、授权、突防与毁伤机理压缩对手反应窗口？",
-        "未来强干扰弱通信海空对抗中的分布式精确火力与反无人新质装备研究（DeepSeek动态蜂群验收）",
         "强电磁干扰与低空蜂群突防条件下的无人拦截装备能力缺口",
         "评估中低空反无人机体系在复杂电磁环境下的探测、识别、跟踪与拦截能力缺口，形成可验证的装备需求",
-        "强电磁压制下高价值机动目标的断链时敏精确打击能力研究，要求形成装备身份明确、五栏能力画像完整的动态蜂群交付"
+        "强电磁压制下高价值机动目标的断链时敏精确打击能力研究，要求形成装备身份明确、五栏能力画像完整的动态蜂群交付",
+        "低空无人集群复杂电磁环境闭环反制装备研究",
+        "复杂电磁与弱通信条件下，面向要地低空无人机群持续防护，研究可快速部署、低成本、可独立成项的探测—判别—拦截闭环装备。先发散后收敛，明确装备功能、直接军事效果、公开基线、失效边界和可证伪验证方法。"
       ],
       "url": "https://www.lockheedmartin.com/en-us/products/precision-strike-missile.html"
     },
@@ -28844,7 +28916,7 @@
       "url": "https://www.rusi.org/explore-our-research/publications/occasional-papers/competitive-electronic-warfare-modern-land-operations"
     },
     "https://www.rusi.org/explore-our-research/publications/occasional-papers/mass-precision-strike-designing-uav-complexes-land-forces": {
-      "accepted_count": 37,
+      "accepted_count": 40,
       "agent_ids": [
         "combat_scenario",
         "operational_employment",
@@ -28853,16 +28925,16 @@
       "domain": "www.rusi.org",
       "failure_count": 0,
       "last_decision": "duplicate",
-      "last_seen_at": "2026-09-19T11:45:21.089613+00:00",
+      "last_seen_at": "2026-09-25T10:37:38.467588+00:00",
       "last_status": "fetched",
-      "success_count": 41,
-      "title": "rusi.org · mass precision strike designing uav complexes land forces",
+      "success_count": 46,
+      "title": "Mass Precision Strike: Designing UAV Complexes for Land Forces | Royal United Services Institute",
       "topics": [
-        "大规模离散目标低成本精确打击研究",
-        "强干扰低空蜂群拦截装备的公开能力边界",
         "评估中低空反无人机体系在复杂电磁环境下的探测、识别、跟踪与拦截能力缺口，形成可验证的装备需求",
         "低空无人集群复杂电磁环境闭环反制装备研究",
-        "强电磁压制下高价值机动目标的断链时敏精确打击能力研究，要求形成装备身份明确、五栏能力画像完整的动态蜂群交付"
+        "强电磁压制下高价值机动目标的断链时敏精确打击能力研究，要求形成装备身份明确、五栏能力画像完整的动态蜂群交付",
+        "低空蜂群渗透下反无人机一体防御体系研究",
+        "复杂电磁与弱通信条件下，面向要地低空无人机群持续防护，研究可快速部署、低成本、可独立成项的探测—判别—拦截闭环装备。先发散后收敛，明确装备功能、直接军事效果、公开基线、失效边界和可证伪验证方法。"
       ],
       "url": "https://www.rusi.org/explore-our-research/publications/occasional-papers/mass-precision-strike-designing-uav-complexes-land-forces"
     },
@@ -29398,7 +29470,7 @@
       "url": "https://www.sda.mil/custody/"
     },
     "https://www.sda.mil/home/about-us/faq/": {
-      "accepted_count": 36,
+      "accepted_count": 39,
       "agent_ids": [
         "cross_domain_fusion",
         "system_confrontation",
@@ -29412,16 +29484,16 @@
       "domain": "www.sda.mil",
       "failure_count": 1,
       "last_decision": "accepted",
-      "last_seen_at": "2026-09-19T11:10:15.492995+00:00",
+      "last_seen_at": "2026-09-25T10:37:38.483451+00:00",
       "last_status": "fetched",
-      "success_count": 45,
+      "success_count": 50,
       "title": "FAQ – Space Development Agency",
       "topics": [
-        "低空多源感知至软硬杀伤闭环杀伤链研究",
-        "无人低空远程精确打击全链条智能制胜机理研究",
         "强干扰低空蜂群拦截装备的公开能力边界",
         "低空无人集群复杂电磁环境闭环反制装备研究",
-        "强电磁压制下高价值机动目标的断链时敏精确打击能力研究，要求形成装备身份明确、五栏能力画像完整的动态蜂群交付"
+        "强电磁压制下高价值机动目标的断链时敏精确打击能力研究，要求形成装备身份明确、五栏能力画像完整的动态蜂群交付",
+        "低空蜂群渗透下反无人机一体防御体系研究",
+        "复杂电磁与弱通信条件下，面向要地低空无人机群持续防护，研究可快速部署、低成本、可独立成项的探测—判别—拦截闭环装备。先发散后收敛，明确装备功能、直接军事效果、公开基线、失效边界和可证伪验证方法。"
       ],
       "url": "https://www.sda.mil/home/about-us/faq/"
     },
@@ -31689,5 +31761,5 @@
       "url": "https://zh.wikipedia.org/wiki/FK-3000%E9%98%B2%E7%A9%BA%E7%B3%BB%E7%BB%9F"
     }
   },
-  "updated_at": "2026-09-19T14:59:23.156394+00:00"
+  "updated_at": "2026-09-26T05:58:24.112330+00:00"
 }

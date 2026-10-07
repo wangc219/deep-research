@@ -725,6 +725,19 @@ export const deepSessionMatchesTarget = (item, context) => {
   return false;
 };
 
+/** Session reads must use the parent run that owns the row, not the open workbench run. */
+export const resolveDeepSessionRunId = ({
+  session,
+  conversationRunId = '',
+  workbenchRunId = '',
+} = {}) => {
+  if (text(session?.session_id)) {
+    const parentRunId = text(session?.parent_run_id || session?.run_id);
+    if (parentRunId) return parentRunId;
+  }
+  return text(conversationRunId || workbenchRunId);
+};
+
 export const pickDeepSessionForTarget = (sessions, context, options = {}) => {
   const allRows = Array.isArray(sessions) ? sessions : [];
   const preferredId = text(options.preferredSessionId);

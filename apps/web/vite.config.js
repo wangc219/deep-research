@@ -46,5 +46,9 @@ export default defineConfig(({mode}) => {
       strictPort: true,
       allowedHosts,
     },
+    // Keep CSS minification disabled until Vite's lightningcss native binding
+    // is available on every supported desktop host. Nginx compression still
+    // handles transfer size, and this keeps local macOS builds reproducible.
+    build: {cssMinify: false},
   };
 });

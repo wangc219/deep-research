@@ -4587,7 +4587,11 @@ class DeepResearchRunner:
                         event_id="trace-auditor-model-skipped",
                         event_type="audit_model_review_skipped",
                         actor="auditor",
-                        summary="模型审计路由异常：未调用精简模型审计",
+                        summary=(
+                            "已复用 S5 业务评审，无需重复调用精简模型审计"
+                            if audit_review_decision.reason == "upstream_s5_business_judgement"
+                            else "模型审计路由异常：未调用精简模型审计"
+                        ),
                         payload={
                             "reason": audit_review_decision.reason,
                             "dynamic_s5_passed": audit_review_decision.expert_judge_passed,

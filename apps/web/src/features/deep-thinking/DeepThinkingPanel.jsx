@@ -2,20 +2,31 @@ import React, {useCallback, useEffect, useLayoutEffect, useMemo, useRef, useStat
 import {createPortal} from 'react-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import {Archive, ArrowDown, ArrowUp, BookOpen, BrainCircuit, Check, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, CircleAlert, Clock3, Copy, CornerDownRight, FileText, GitBranch, GitCompare, Layers, ListPlus, MessageSquare, Package, Pencil, Plug, Plus, Puzzle, Quote, RefreshCw, RotateCcw, Save, Search, Send, Settings2, Slash, Sparkles, Square, Target, Trash2, X} from 'lucide-react';
+import {Archive, ArrowDown, ArrowUp, BookOpen, Bot, BrainCircuit, Check, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, CircleAlert, Clock3, Copy, CornerDownRight, FileText, GitBranch, GitCompare, Layers, ListPlus, MessageSquare, Package, Pencil, Plug, Plus, Puzzle, Quote, RefreshCw, RotateCcw, Save, Search, Send, Settings2, Slash, Sparkles, Square, Target, Trash2, Users, X} from 'lucide-react';
 import {useOverlay} from '../../ux.jsx';
 import {
+  normalizeAgentSpec,
   normalizeDeepCapabilityCatalog,
   normalizeDeepWorkspaceResources,
   reconcileActiveSkillIds,
+  RESEARCH_TOOLS,
+  specSelectionCount,
   toggleActiveSkillId,
+  toggleSpecResource,
 } from './deep-capabilities.js';
 import {
+  CLOSE_DEEP_THINKING_EVENT,
   OPEN_DEEP_THINKING_EVENT,
   clearDeepThinkingLocation,
   readDeepThinkingLocation,
   writeDeepThinkingLocation,
 } from './open-deep-thinking.js';
+import {
+  capabilityWelcomeSuggestions,
+  normalizePortraitSections,
+  portraitSectionHint,
+  portraitSectionPrompt,
+} from './deep-portrait-sections.js';
 import {
   DEEP_STAGES,
   THREAD_NEAR_BOTTOM_PX,
@@ -38,6 +49,7 @@ import {
   parseQuotedDeepMessage,
   parseDeepTargetIdentity,
   pickDeepSessionForTarget,
+  resolveDeepSessionRunId,
   shouldShowJumpToLatest,
   projectDeepAgentActivity,
   projectDeepActivityRoster,
@@ -229,6 +241,7 @@ function DeepCapabilityDrawer({
   loading,
   error,
   selectedSkillIds,
+  agentSpec,
   pluginPendingId,
   workspaceResources = EMPTY_WORKSPACE_RESOURCES,
   workspaceResourceLoading = false,
@@ -239,6 +252,7 @@ function DeepCapabilityDrawer({
   workspacePackageSaving = false,
   onToggleSkill,
   onTogglePlugin,
+  onChangeAgentSpec,
   onReload,
   onReloadWorkspaceResources,
   onOpenWorkspaceResource,
@@ -292,11 +306,70 @@ function DeepCapabilityDrawer({
     <div className="deep-capability-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) onClose?.(); }}>
       <aside className="deep-capability-drawer" ref={dialogRef} role="dialog" aria-modal="true" aria-label="深研能力目录" onMouseDown={event => event.stopPropagation()}>
         <header>
-          <div><span><Puzzle size={14}/>能力目录</span><h3>Plugin 与程序化 Skill</h3></div>
-          <button type="button" className="icon-button" aria-label="关闭能力目录" onClick={onClose}><X size={16}/></button>
+          <div><span><Bot size={14}/>智能体装配</span><h3>模型、提示词、知识、工具与 SubAgents</h3></div>
+          <button type="button" className="icon-button" aria-label="关闭智能体装配" onClick={onClose}><X size={16}/></button>
         </header>
         <div className="deep-capability-drawer-body">
           {error && <div className="deep-capability-error"><CircleAlert size={13}/><span>{error}</span>{canReload && <button type="button" onClick={onReload}><RefreshCw size={12}/>重试</button>}</div>}
+          <section className="deep-capability-section">
+            <div className="deep-capability-section-title"><span><BrainCircuit size={13}/><b>基座模型</b></span></div>
+            {catalog.model_profiles?.profiles?.length ? (
+              <label className="deep-agent-model">
+                <select
+                  aria-label="智能体基座模型"
+                  value={agentSpec?.model_profile_id || ''}
+                  onChange={event => onChangeAgentSpec?.({...normalizeAgentSpec(agentSpec, catalog), model_profile_id: event.target.value})}
+                >
+                  <option value="">跟随任务模型</option>
+                  {catalog.model_profiles.profiles.map(profile => {
+                    const ready = Boolean(profile.model && profile.credential_configured);
+                    return <option key={profile.id} value={profile.id} disabled={!ready}>{profile.label}{ready ? '' : ' · 未配置'}</option>;
+                  })}
+                </select>
+              </label>
+            ) : <p className="deep-capability-empty">模型目录加载后可在此切换基座。</p>}
+          </section>
+          <section className="deep-capability-section">
+            <div className="deep-capability-section-title"><span><Settings2 size={13}/><b>系统提示词</b></span></div>
+            <textarea
+              className="deep-agent-prompt"
+              value={agentSpec?.system_prompt || ''}
+              maxLength={4000}
+              placeholder="追加在身份锁之后的角色说明。不能覆盖单装备身份与成卡确认边界。"
+              onChange={event => onChangeAgentSpec?.({...normalizeAgentSpec(agentSpec, catalog), system_prompt: event.target.value})}
+            />
+            <p className="deep-capability-note">主智能体负责规划拆解；复杂任务会先并行调研正交子问题，再核验关键论断，最后由主智能体综合而不是拼接原文。</p>
+          </section>
+          <section className="deep-capability-section">
+            <div className="deep-capability-section-title"><span><Sparkles size={13}/><b>工具调用</b></span><em>{specSelectionCount(agentSpec, 'tools', RESEARCH_TOOLS.map(item => item.tool_id))}</em></div>
+            <div className="deep-agent-chip-list">
+              {RESEARCH_TOOLS.map(tool => {
+                const selectedSet = new Set(agentSpec?.tools == null ? RESEARCH_TOOLS.map(item => item.tool_id) : agentSpec.tools);
+                return (
+                  <label key={tool.tool_id} className={selectedSet.has(tool.tool_id) ? 'selected' : ''}>
+                    <input type="checkbox" checked={selectedSet.has(tool.tool_id)} onChange={event => onChangeAgentSpec?.(toggleSpecResource(agentSpec, 'tools', tool.tool_id, event.target.checked, catalog))}/>
+                    {tool.label}
+                  </label>
+                );
+              })}
+            </div>
+          </section>
+          <section className="deep-capability-section">
+            <div className="deep-capability-section-title"><span><Users size={13}/><b>专用 SubAgents</b></span><em>{specSelectionCount(agentSpec, 'subagents', catalog.subagents.map(item => item.slug))}</em></div>
+            {catalog.subagents.length ? <div className="deep-skill-list">{catalog.subagents.map(item => {
+              const selectedSet = new Set(agentSpec?.subagents == null ? catalog.subagents.map(row => row.slug) : agentSpec.subagents);
+              return (
+                <article key={item.slug} className={selectedSet.has(item.slug) ? 'selected' : ''}>
+                  <label>
+                    <input type="checkbox" checked={selectedSet.has(item.slug)} onChange={event => onChangeAgentSpec?.(toggleSpecResource(agentSpec, 'subagents', item.slug, event.target.checked, catalog))}/>
+                    <span><b>{item.name}</b><small>{item.role} · {item.kind}</small></span>
+                  </label>
+                  {item.description && <p>{item.description}</p>}
+                </article>
+              );
+            })}</div> : <p className="deep-capability-empty">内置调研、核验、分析与内容生成子智能体将在目录加载后出现。</p>}
+            <p className="deep-capability-note">调研探索员可按子问题并行多开；事实核查员在第一波发现返回后再核验。子智能体不能再派生子级。</p>
+          </section>
           <section className="deep-capability-section">
             <div className="deep-capability-section-title"><span><Package size={13}/><b>Agent Plugin</b></span><em>{catalog.plugins.length}</em></div>
             {catalog.plugins.length ? <div className="deep-plugin-list">{catalog.plugins.map(plugin => (
@@ -307,8 +380,19 @@ function DeepCapabilityDrawer({
             ))}</div> : <p className="deep-capability-empty">当前仅加载内置 Skill。</p>}
           </section>
           <section className="deep-capability-section">
-            <div className="deep-capability-section-title"><span><Plug size={13}/><b>MCP 能力</b></span><em>{declaredMcp.length}</em></div>
-            {declaredMcp.length ? <div className="deep-mcp-list">{declaredMcp.map(server => <div key={server.server_id}><span><b>{server.server_id}</b><small>{server.transport || '未指定 transport'}{server.source === 'deployment_host' && server.allowed_tools?.length ? ` · ${server.allowed_tools.length} 个白名单工具` : ''}</small></span><em>{mcpStatusLabel(server)}</em></div>)}</div> : <p className="deep-capability-empty">暂无 MCP 声明或部署连接。</p>}
+            <div className="deep-capability-section-title"><span><Plug size={13}/><b>MCP 能力</b></span><em>{specSelectionCount(agentSpec, 'mcps', declaredMcp.map(item => item.server_id))}</em></div>
+            {declaredMcp.length ? <div className="deep-mcp-list">{declaredMcp.map(server => {
+              const selectedSet = new Set(agentSpec?.mcps == null ? declaredMcp.map(item => item.server_id) : agentSpec.mcps);
+              return (
+                <div key={server.server_id}>
+                  <label>
+                    <input type="checkbox" checked={selectedSet.has(server.server_id)} onChange={event => onChangeAgentSpec?.(toggleSpecResource(agentSpec, 'mcps', server.server_id, event.target.checked, catalog))}/>
+                    <span><b>{server.server_id}</b><small>{server.transport || '未指定 transport'}{server.source === 'deployment_host' && server.allowed_tools?.length ? ` · ${server.allowed_tools.length} 个白名单工具` : ''}</small></span>
+                  </label>
+                  <em>{mcpStatusLabel(server)}</em>
+                </div>
+              );
+            })}</div> : <p className="deep-capability-empty">暂无 MCP 声明或部署连接。</p>}
             {catalog.mcp_host?.reload === 'per_turn' && <p className="deep-capability-note">部署配置按轮热重载；进行中的研究继续使用其已租用连接。</p>}
           </section>
           <section className="deep-capability-section deep-workspace-resource-section">
@@ -471,6 +555,9 @@ const jobStatusLabel = status => ({queued: '待处理', running: '思考中', pa
 const friendlyDeepJobError = value => {
   const text = safeText(value);
   if (!text) return '';
+  if (/deep-thinking session not found/i.test(text)) {
+    return '没有找到这段深研对话。它属于另一条 Query，已改用原任务重新连接；若仍失败，请从左侧历史重新打开。';
+  }
   if (/模型提供方不可用|provider.?unavailable|api[_ ]?key|authentication/i.test(text)) {
     return '模型提供方暂不可用，已返回可见上下文分析；可点重试继续本轮问题。';
   }
@@ -1276,6 +1363,8 @@ async function apiRequest(apiBase, path, options = {}) {
 function deepScopeHeaders(context = {}, {legacyRole = 'analyst'} = {}) {
   const scope = context?.scope && typeof context.scope === 'object' ? context.scope : context;
   const headers = {'X-Role': resolveDeepRequestRole(context, legacyRole)};
+  const token = globalThis.localStorage?.getItem('user_token');
+  if (token) headers.Authorization = `Bearer ${token}`;
   for (const [key, header] of [['tenant_id', 'X-Tenant-ID'], ['workspace_id', 'X-Workspace-ID'], ['project_id', 'X-Project-ID'], ['profile_id', 'X-Profile-ID']]) {
     const value = safeText(scope?.[key]);
     if (value) headers[header] = value;
@@ -1482,6 +1571,10 @@ const randomWelcomeSuggestions = (context, count = 3) => {
     || context?.reference_weapon
     || {name: context?.capability_name || context?.title},
   );
+  // Opened from a real card, the useful openings are its own five columns.
+  // The generic pool only ever proposes inventing a different weapon.
+  const sectionOpenings = capabilityWelcomeSuggestions(equipment, context?.capability_sections, count);
+  if (sectionOpenings.length) return sectionOpenings;
   const picked = shufflePick(WELCOME_SUGGESTION_POOL, count);
   if (!equipment) return picked;
   const bodyIndex = picked.findIndex(item => !item.startsWith('围绕') && !item.includes(equipment));
@@ -2255,6 +2348,7 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
   const [selectedSkillIds, setSelectedSkillIds] = useState(
     () => Array.isArray(context?.active_skill_ids) ? context.active_skill_ids.map(safeText).filter(Boolean) : [],
   );
+  const [agentSpec, setAgentSpec] = useState(() => normalizeAgentSpec(context?.agent_spec));
   const [selectedModelProfileId, setSelectedModelProfileId] = useState(
     () => safeText(context?.model_profile_id || run?.model_profile_id || run?.execution?.model_profile_id),
   );
@@ -2308,7 +2402,11 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
   const selectedTargetKey = deepTargetOptionKey(selectedTarget)
     || selectedTargetIdentity
     || safeText(normalizedContext.target_identity || normalizedContext.targetIdentity);
-  const runId = safeText(conversationRunId || workbenchRunId);
+  const runId = resolveDeepSessionRunId({
+    session,
+    conversationRunId,
+    workbenchRunId,
+  });
   const requiresTarget = kind === 'deep-thinking' && !selectedTarget && !session?.session_id;
   const historyQueryLabel = safeText(session?.query || normalizedContext.query || run?.topic);
   const historyQueryParts = useMemo(() => splitQueryDisplay(historyQueryLabel), [historyQueryLabel]);
@@ -2383,6 +2481,14 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
     || normalizedContext.candidate
     || normalizedContext.reference_weapon
     || {name: normalizedContext.capability_name},
+  );
+  // The bound card's five columns travel with the launcher and are persisted
+  // on the session, so a reopened transcript can still drill into them.
+  const boundSections = useMemo(
+    () => normalizePortraitSections(
+      session?.context_refs?.capability_sections || normalizedContext.capability_sections,
+    ),
+    [session?.context_refs, normalizedContext.capability_sections],
   );
   const [welcomeSuggestions, setWelcomeSuggestions] = useState(() => randomWelcomeSuggestions(normalizedContext));
   // Keep the stream loop aware of work that starts after an idle stream has
@@ -2463,8 +2569,8 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
     const requestId = ++capabilityRequestRef.current;
     if (!quiet) setCapabilityCatalogLoading(true);
     setCapabilityCatalogError('');
-    const capabilityPath = session?.session_id && workbenchRunId
-      ? `/runs/${encodeURIComponent(workbenchRunId)}/deep-thinking/sessions/${encodeURIComponent(session.session_id)}/capabilities`
+    const capabilityPath = session?.session_id && runId
+      ? `/runs/${encodeRun(runId)}/deep-thinking/sessions/${encodeURIComponent(session.session_id)}/capabilities`
       : '/deep-thinking/capabilities';
     const result = await apiRequest(apiBase, capabilityPath, {
       headers: deepScopeHeaders(normalizedContext),
@@ -2479,7 +2585,7 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
     setCapabilityCatalog(next);
     setSelectedSkillIds(current => reconcileActiveSkillIds(current, next));
     return next;
-  }, [apiBase, normalizedContext, session?.session_id, workbenchRunId]);
+  }, [apiBase, normalizedContext, runId, session?.session_id]);
   useEffect(() => { void loadCapabilities(); }, [loadCapabilities]);
   const workspaceResourceBasePath = useMemo(() => {
     const targetRun = runId || workbenchRunId;
@@ -2797,6 +2903,9 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
       return modelProfiles.some(profile => profile.id === preferred) ? preferred : '';
     });
   }, [modelProfileKey, normalizedContext.model_profile_id, run?.execution?.model_profile_id, run?.model_profile_id, session?.session_id, sessionModelProfileId]);
+  useEffect(() => {
+    setAgentSpec(normalizeAgentSpec(session?.agent_spec || normalizedContext.agent_spec, capabilityCatalog));
+  }, [session?.session_id, capabilityCatalog.subagents.map(item => item.slug).join('|')]);
   const persistedBranchSkillIds = useMemo(() => branchActiveSkillIds(
     session,
     activeBranchId,
@@ -2833,14 +2942,15 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
     }
     setCapabilityCatalogError('');
     setSelectedSkillIds(result.selected);
+    setAgentSpec(current => ({...normalizeAgentSpec(current, capabilityCatalog), skills: result.selected}));
   };
   const togglePlugin = async (plugin, enabled) => {
     const pluginId = safeText(plugin?.plugin_id);
     if (!pluginId || pluginPendingId) return;
     setPluginPendingId(pluginId);
     setCapabilityCatalogError('');
-    const pluginPath = plugin.source === 'workspace' && session?.session_id && workbenchRunId
-      ? `/runs/${encodeURIComponent(workbenchRunId)}/deep-thinking/sessions/${encodeURIComponent(session.session_id)}/plugins/${encodeURIComponent(pluginId)}`
+    const pluginPath = plugin.source === 'workspace' && session?.session_id && runId
+      ? `/runs/${encodeRun(runId)}/deep-thinking/sessions/${encodeURIComponent(session.session_id)}/plugins/${encodeURIComponent(pluginId)}`
       : `/deep-thinking/plugins/${encodeURIComponent(pluginId)}`;
     const result = await apiRequest(apiBase, pluginPath, {
       method: 'PATCH',
@@ -3474,6 +3584,11 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
       create_artifact: createArtifact,
       active_skill_ids: activeSkillIds,
       model_profile_id: selectedModelProfileId,
+      agent_spec: {
+        ...normalizeAgentSpec(agentSpec, capabilityCatalog),
+        skills: activeSkillIds,
+        model_profile_id: selectedModelProfileId,
+      },
       auto_merge: false,
     };
     // A new conversation must get a new idempotency key.  Scoping the key
@@ -3649,7 +3764,7 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
     } else {
       const requestNonce = messageNonceRef.current;
       result = await apiRequest(apiBase, `/runs/${encodeRun(runId)}/deep-thinking/sessions/${encodeURIComponent(session.session_id)}/messages`, {
-        method: 'POST', headers: {...deepScopeHeaders(normalizedContext), 'Content-Type': 'application/json', 'Idempotency-Key': `message:${session.session_id}:${requestNonce}`}, body: JSON.stringify({content, create_artifact: createArtifact, focus: activeTurnFocus, branch_id: branchId, parent_message_id: parentMessageId, active_skill_ids: turnSkillIds, model_profile_id: selectedModelProfileId}),
+        method: 'POST', headers: {...deepScopeHeaders(normalizedContext), 'Content-Type': 'application/json', 'Idempotency-Key': `message:${session.session_id}:${requestNonce}`}, body: JSON.stringify({content, create_artifact: createArtifact, focus: activeTurnFocus, branch_id: branchId, parent_message_id: parentMessageId, active_skill_ids: turnSkillIds, model_profile_id: selectedModelProfileId, agent_spec: {...normalizeAgentSpec(agentSpec, capabilityCatalog), skills: turnSkillIds, model_profile_id: selectedModelProfileId}}),
       });
       const accepted = result.ok && registerAcceptedJob(result);
       if (result.ok) messageNonceRef.current = newRequestNonce();
@@ -4241,6 +4356,7 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
           loading={capabilityCatalogLoading}
           error={capabilityCatalogError}
           selectedSkillIds={selectedSkillIds}
+          agentSpec={agentSpec}
           pluginPendingId={pluginPendingId}
           workspaceResources={workspaceResources}
           workspaceResourceLoading={workspaceResourceLoading}
@@ -4251,6 +4367,12 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
           workspacePackageSaving={workspacePackageSaving}
           onToggleSkill={toggleSkill}
           onTogglePlugin={togglePlugin}
+          onChangeAgentSpec={next => {
+            setAgentSpec(next);
+            if (typeof next?.model_profile_id === 'string') {
+              setSelectedModelProfileId(next.model_profile_id);
+            }
+          }}
           onReload={() => void loadCapabilities()}
           onReloadWorkspaceResources={() => void loadWorkspaceResources()}
           onOpenWorkspaceResource={(kind, name) => void openWorkspaceResource(kind, name)}
@@ -4269,7 +4391,7 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
           onClose={() => setCapabilityDrawerOpen(false)}
         />
       )}
-      <header className="deep-thinking-header"><div><span className="deep-thinking-eyebrow"><BrainCircuit size={15}/>{sessionKindLabel(kind)}{streamState !== 'idle' && <em className={`deep-stream-state ${streamState}`}>{streamState === 'connecting' ? '连接中' : streamState === 'reconnecting' ? '自动重连' : streamState === 'error' ? '连接受限' : '实时'}</em>}</span><h2>{title}</h2></div><div className="deep-thinking-header-actions">{activeJobId && !isTerminalJob(activeJob) && <button type="button" className="deep-cancel-job" onClick={() => void cancelActiveJob()}><X size={13}/>取消任务</button>}<button type="button" className={`deep-capability-button${capabilityDrawerOpen ? ' active' : ''}`} aria-expanded={capabilityDrawerOpen} onClick={() => setCapabilityDrawerOpen(true)}><Puzzle size={14}/><span>能力</span><em>{selectedSkillIds.length}</em></button><button type="button" className="deep-new-session" onClick={() => { setShowArchivedSessions(false); startNew(); }}><Plus size={14}/><span>新对话</span></button><button type="button" className="icon-button" aria-label="关闭深度思考" title="关闭" onClick={() => onClose?.()}><X size={17}/></button></div></header>
+      <header className="deep-thinking-header"><div><span className="deep-thinking-eyebrow"><BrainCircuit size={15}/>{sessionKindLabel(kind)}{streamState !== 'idle' && <em className={`deep-stream-state ${streamState}`}>{streamState === 'connecting' ? '连接中' : streamState === 'reconnecting' ? '自动重连' : streamState === 'error' ? '连接受限' : '实时'}</em>}</span><h2>{title}</h2></div><div className="deep-thinking-header-actions">{activeJobId && !isTerminalJob(activeJob) && <button type="button" className="deep-cancel-job" onClick={() => void cancelActiveJob()}><X size={13}/>取消任务</button>}<button type="button" className={`deep-capability-button${capabilityDrawerOpen ? ' active' : ''}`} aria-expanded={capabilityDrawerOpen} onClick={() => setCapabilityDrawerOpen(true)}><Bot size={14}/><span>智能体</span><em>{selectedSkillIds.length + specSelectionCount(agentSpec, 'subagents', capabilityCatalog.subagents.map(item => item.slug))}</em></button><button type="button" className="deep-new-session" onClick={() => { setShowArchivedSessions(false); startNew(); }}><Plus size={14}/><span>新对话</span></button><button type="button" className="icon-button" aria-label="关闭深度思考" title="关闭" onClick={() => onClose?.()}><X size={17}/></button></div></header>
       <div className="deep-thinking-layout">
         <aside className="deep-sidebar">
           <div className="deep-thinking-context">
@@ -4279,6 +4401,17 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
               {historyQueryParts.hasBackground && <p className="deep-context-query-bg">{historyQueryParts.background}</p>}
             </div>
             {focusedEquipmentLabel && <div className="deep-context-focus"><span>聚焦对象</span><p>{focusedEquipmentLabel}</p></div>}
+            {boundSections.length > 0 && (
+              <div className="deep-context-sections">
+                <span>已注入五栏</span>
+                {boundSections.map(item => (
+                  <details key={item.label}>
+                    <summary>{item.label}</summary>
+                    <p>{item.text}</p>
+                  </details>
+                ))}
+              </div>
+            )}
             <div className="deep-context-council"><span>研究方式</span><p>持续深度发散 · 动态调度专家 · 随时可继续追问</p></div>
             <div className="deep-context-objective"><span>产出硬约束</span><p>新质颠覆 · 直接物理毁伤 · 单装闭环</p></div>
             {runId && runId !== workbenchRunId && <div className="deep-context-focus"><span>历史任务</span><p>正在查看其他 Query 的定向深研会话</p></div>}
@@ -4453,6 +4586,33 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
                 </button>
               )}
               </div>
+              {boundSections.length > 0 && (
+                <nav className="deep-section-dive" aria-label="按五栏继续深挖">
+                  <span><Layers size={12}/>深挖本卡五栏</span>
+                  <div>
+                    {boundSections.map(item => (
+                      <button
+                        type="button"
+                        key={item.label}
+                        disabled={sending || jobRunning}
+                        title={portraitSectionHint(item.label)}
+                        onClick={() => void send(null, {content: portraitSectionPrompt(item.label, focusedEquipmentLabel, item.text)})}
+                      >
+                        <b>{item.label}</b><small>{portraitSectionHint(item.label)}</small>
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    className="deep-section-author"
+                    disabled={sending || jobRunning}
+                    onClick={() => void send(null, {
+                      content: `综合本次深研结论，为「${focusedEquipmentLabel || '当前装备'}」重写一版完整五栏能力画像卡：保持装备身份不变，逐栏写明本次修订之处与依据，证据不足处标注待核验。`,
+                      createArtifact: true,
+                    })}
+                  ><Sparkles size={13}/>形成新版能力卡</button>
+                </nav>
+              )}
               <form className="deep-composer" onSubmit={send}>
                 {queuedPrompts.length > 0 && (
                   <div className="deep-queued-prompts" aria-label="已排队追问">
@@ -4572,7 +4732,11 @@ export function DeepThinkingPanel({apiBase, run, context = {}, onClose, onChange
                           aria-label="本轮深研模型"
                           value={selectedModelProfileId}
                           disabled={sending || viewingArchivedSession}
-                          onChange={event => setSelectedModelProfileId(event.target.value)}
+                          onChange={event => {
+                            const id = event.target.value;
+                            setSelectedModelProfileId(id);
+                            setAgentSpec(current => ({...normalizeAgentSpec(current, capabilityCatalog), model_profile_id: id}));
+                          }}
                         >
                           <option value="">跟随任务模型</option>
                           {modelProfiles.map(profile => {
@@ -4640,6 +4804,7 @@ export function DeepThinkingDock({apiBase, run, enabled = true, onChanged}) {
       setOpen(true);
     };
     const syncFromLocation = () => {
+      if (globalThis.__EQUIPMENT_WORKBENCH_EMBEDDED__) return;
       const location = readDeepThinkingLocation();
       setOpen(location.open);
       setContext(current => location.open ? {
@@ -4650,10 +4815,16 @@ export function DeepThinkingDock({apiBase, run, enabled = true, onChanged}) {
         targetIdentity: location.targetIdentity,
       } : {kind: 'deep-thinking'});
     };
+    const closeFromEvent = () => {
+      clearDeepThinkingLocation({replace: true});
+      setOpen(false);
+    };
     window.addEventListener(OPEN_DEEP_THINKING_EVENT, openFromEvent);
+    window.addEventListener(CLOSE_DEEP_THINKING_EVENT, closeFromEvent);
     window.addEventListener('popstate', syncFromLocation);
     return () => {
       window.removeEventListener(OPEN_DEEP_THINKING_EVENT, openFromEvent);
+      window.removeEventListener(CLOSE_DEEP_THINKING_EVENT, closeFromEvent);
       window.removeEventListener('popstate', syncFromLocation);
     };
   }, [runId]);
@@ -4671,7 +4842,7 @@ export function DeepThinkingDock({apiBase, run, enabled = true, onChanged}) {
   }, [runId]);
   const close = useCallback(() => {
     const location = readDeepThinkingLocation();
-    if (location.open && window.history.state?.deepOpen) {
+    if (location.open && window.history.state?.deepOpen && !globalThis.__EQUIPMENT_WORKBENCH_EMBEDDED__) {
       window.history.back();
       return;
     }

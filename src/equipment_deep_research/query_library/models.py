@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from hashlib import sha256
 import re
 from typing import Any, Literal
@@ -16,7 +16,7 @@ SOURCE_DISCLAIMER = "Query 生成参考线索，不等同于后续研究结论�
 
 
 def now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def new_id(prefix: str) -> str:
@@ -43,7 +43,7 @@ class SourceReference:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, value: dict[str, Any]) -> "SourceReference":
+    def from_dict(cls, value: dict[str, Any]) -> SourceReference:
         return cls(
             title=str(value.get("title", "")).strip(),
             url=str(value.get("url", "")).strip(),
@@ -142,6 +142,8 @@ class GeneratedCandidate:
     supplemental_information: str
     generation_rationale: str
     source_references: tuple[SourceReference, ...]
+    demand_chain: dict[str, str] = field(default_factory=dict)
+    quality_review: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

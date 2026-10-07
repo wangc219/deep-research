@@ -15,6 +15,7 @@ import {
   isThreadNearBottom,
   shouldShowJumpToLatest,
   pickDeepSessionForTarget,
+  resolveDeepSessionRunId,
   extractDeliberationCandidates,
   mergeDeliberationProposals,
   uniqueNamedValues,
@@ -639,6 +640,27 @@ test('opening a card does not steal another equipment transcript', () => {
     }).session_id,
     's-dihuan',
   );
+});
+
+test('an open historical session is read from its owning run', () => {
+  const session = {
+    session_id: 'thinking-1',
+    parent_run_id: 'run-owner',
+    run_id: 'run-owner',
+  };
+  assert.equal(resolveDeepSessionRunId({
+    session,
+    conversationRunId: '',
+    workbenchRunId: 'run-current',
+  }), 'run-owner');
+  assert.equal(resolveDeepSessionRunId({
+    session: null,
+    conversationRunId: 'run-history',
+    workbenchRunId: 'run-current',
+  }), 'run-history');
+  assert.equal(resolveDeepSessionRunId({
+    workbenchRunId: 'run-current',
+  }), 'run-current');
 });
 
 test('an explicit URL session restores an archived transcript', () => {

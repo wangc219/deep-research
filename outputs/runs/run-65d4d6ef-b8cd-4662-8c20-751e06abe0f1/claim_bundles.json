@@ -1,0 +1,179 @@
+[
+  {
+    "bundle_id": "claims-42e2d45402c3",
+    "claims": [
+      {
+        "claim_id": "claim-39c1454cd1c6",
+        "claim_type": "fact",
+        "confidence": 0.71,
+        "counter_evidence": [
+          "公开厂商和项目材料强调“分层、可扩展、能对付蜂群”，但CBO等评估提示低空全覆盖需要密集布设，显示体系成本、覆盖重叠和部署密度可能抵消部分可扩展性。",
+          "公开材料同时强调电子战/非动能对蜂群有效和低附带损伤需求上升，但自主化、抗干扰、无射频依赖或预编程目标可能削弱传统干扰/迫降手段，迫使体系保留动能或定向能硬杀伤。",
+          "中国公开展示的高功率微波/激光反蜂群能力与其现役部署、全天候性能之间存在证据落差；不能用展会表述直接推定战场可用性。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-8952c3805d5a",
+          "ev-weapon_equipment-web-4fbe26be89e6"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "https://www.cbo.gov/publication/62563"
+        ],
+        "text": "任务语义复述：本Query对象是低空小型无人平台、复合目标群和多方向分散接近的蜂群化目标；威胁形态包含真假目标混合、诱骗、饱和压迫和小慢低特征；作战阶段集中在预警发现、接近识别、告警分发、处置分配和效果评估；地域/环境约束是低空遮蔽、复杂背景杂波、近程时间窗口短、跨单元协同压力大。核心制胜矛盾不是单个传感器或单个拦截器性能，而是低空连续感知—可信识别—快速分配—分层处置在饱和压力下不发生级联失效。"
+      },
+      {
+        "claim_id": "claim-78ad46f0086e",
+        "claim_type": "hypothesis",
+        "confidence": 0.71,
+        "counter_evidence": [
+          "公开厂商和项目材料强调“分层、可扩展、能对付蜂群”，但CBO等评估提示低空全覆盖需要密集布设，显示体系成本、覆盖重叠和部署密度可能抵消部分可扩展性。",
+          "公开材料同时强调电子战/非动能对蜂群有效和低附带损伤需求上升，但自主化、抗干扰、无射频依赖或预编程目标可能削弱传统干扰/迫降手段，迫使体系保留动能或定向能硬杀伤。",
+          "中国公开展示的高功率微波/激光反蜂群能力与其现役部署、全天候性能之间存在证据落差；不能用展会表述直接推定战场可用性。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-8952c3805d5a",
+          "ev-weapon_equipment-web-4fbe26be89e6"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "https://www.cbo.gov/publication/62563"
+        ],
+        "text": "公开基线显示，美军现有反小型无人机路线已经从孤立设备转向分层一体化防御：固定/机动LIDS、Coyote拦截弹、电子战、30毫米炮、Ku波段雷达、FAAD C2等被作为传感器—指控—软硬杀伤组合使用。军事任务影响：可为低空蜂群渗透提供多层拦截和火力/非火力组合，但其公开证据更强地支持“体系集成与多效应器分配”而非证明已能可靠承受高密度、真假混合、复杂背景下的全阶段蜂群压迫。证据边界：公开材料多为项目、演示、采购和厂商说明，缺少同一复杂场景下的漏警率、误识别率、交战容量、再装填与毁伤评估闭环数据。失效条件：若目标密度超过同时跟踪/交战容量，或诱饵使识别和效应器分配失真，分层防御仍可能被消耗、迟滞或错配。"
+      },
+      {
+        "claim_id": "claim-42e3be1b9498",
+        "claim_type": "hypothesis",
+        "confidence": 0.71,
+        "counter_evidence": [
+          "公开厂商和项目材料强调“分层、可扩展、能对付蜂群”，但CBO等评估提示低空全覆盖需要密集布设，显示体系成本、覆盖重叠和部署密度可能抵消部分可扩展性。",
+          "公开材料同时强调电子战/非动能对蜂群有效和低附带损伤需求上升，但自主化、抗干扰、无射频依赖或预编程目标可能削弱传统干扰/迫降手段，迫使体系保留动能或定向能硬杀伤。",
+          "中国公开展示的高功率微波/激光反蜂群能力与其现役部署、全天候性能之间存在证据落差；不能用展会表述直接推定战场可用性。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-8952c3805d5a",
+          "ev-weapon_equipment-web-4fbe26be89e6"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "https://www.cbo.gov/publication/62563"
+        ],
+        "text": "公开基线显示，近期美国需求重点正在向“低附带损伤、可规模化、低成本感知、可接入既有C-sUAS项目”的方向移动。军事任务影响：这直接对应本Query中的近程复杂环境、非威胁目标混杂和责任单元处置约束，说明仅依靠高价值拦截器并不足以解决城市、基地、边境、关键设施等场景的蜂群防御；低成本分布式传感与低附带损伤效应器会改变告警分发、责任区覆盖和弹药交换比。证据边界：DIU和USNORTHCOM公开的是挑战赛、征集和实验安排，能证明需求牵引和试验方向，不能证明最终部署性能。失效条件：若低成本传感器不能在杂波中给出足够可信的识别，或低附带损伤效应器无法在短窗口内形成有效处置，体系仍会回到少量高端节点过载。"
+      },
+      {
+        "claim_id": "claim-4d864067f3d4",
+        "claim_type": "hypothesis",
+        "confidence": 0.71,
+        "counter_evidence": [
+          "公开厂商和项目材料强调“分层、可扩展、能对付蜂群”，但CBO等评估提示低空全覆盖需要密集布设，显示体系成本、覆盖重叠和部署密度可能抵消部分可扩展性。",
+          "公开材料同时强调电子战/非动能对蜂群有效和低附带损伤需求上升，但自主化、抗干扰、无射频依赖或预编程目标可能削弱传统干扰/迫降手段，迫使体系保留动能或定向能硬杀伤。",
+          "中国公开展示的高功率微波/激光反蜂群能力与其现役部署、全天候性能之间存在证据落差；不能用展会表述直接推定战场可用性。"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-weapon_equipment-web-8952c3805d5a",
+          "ev-weapon_equipment-web-4fbe26be89e6"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF",
+          "https://www.cbo.gov/publication/62563"
+        ],
+        "text": "公开中国相关资料显示，反蜂群方向至少存在高功率微波、激光、弹炮/导弹复合、防空网络化等公开展示或报道路线。军事任务影响：这类路线把“逐目标拦截”部分转向“区域效应、低单次发射成本或多层火力覆盖”，与本Query中多方向饱和和真假混合压力存在直接因果关系。证据边界：中国公开资料多来自展会、媒体或百科化汇编，现役状态、批量部署、实战可靠性、复杂天气/城市遮蔽下效果均缺少可核验数据；不能把展出能力等同于成体系实战能力。失效条件：若高能效应受视线、天气、电磁安全、功率持续性或目标抗毁/诱骗设计限制，仍需与传统探测、C2和动能拦截形成互补，而不能单独承担一体防御。"
+      }
+    ],
+    "packet_id": "packet-weapon_equipment",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-d5cf0cba42e6",
+    "claims": [
+      {
+        "claim_id": "claim-5dc5337b4f8c",
+        "claim_type": "fact",
+        "confidence": 0.25,
+        "counter_evidence": [
+          "evidence_analysis_limited:ProviderRequestError:Codex CLI timed out after 90 seconds"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-system_confrontation-web-06d26c44006f",
+          "ev-system_confrontation-web-8d325b5069ef"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.sda.mil/home/about-us/faq/",
+          "https://www.darpa.mil/news/2026/rockn-enables-gps-free-operations"
+        ],
+        "text": "体系对抗仿真本轮检索受限，保留已登记来源并进入后续定向补证。"
+      }
+    ],
+    "packet_id": "packet-system_confrontation",
+    "schema_version": "1.0"
+  },
+  {
+    "bundle_id": "claims-39ff1148f328",
+    "claims": [
+      {
+        "claim_id": "claim-0f4639d55004",
+        "claim_type": "fact",
+        "confidence": 0.25,
+        "counter_evidence": [
+          "evidence_analysis_limited:ProviderRequestError:Codex CLI timed out after 90 seconds"
+        ],
+        "downstream_targets": [
+          "S3",
+          "S4",
+          "S5",
+          "S6"
+        ],
+        "evidence_ids": [
+          "ev-combat_scenario-web-6fbc3dab99d5"
+        ],
+        "parent_background_ids": [],
+        "parent_scenario_ids": [],
+        "source_urls": [
+          "https://www.rusi.org/explore-our-research/publications/occasional-papers/mass-precision-strike-designing-uav-complexes-land-forces"
+        ],
+        "text": "作战场景本轮检索受限，保留已登记来源并进入后续定向补证。"
+      }
+    ],
+    "packet_id": "packet-combat_scenario",
+    "schema_version": "1.0"
+  }
+]

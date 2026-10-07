@@ -4,8 +4,11 @@ import assert from 'node:assert/strict';
 import {
   normalizeDeepCapabilityCatalog,
   normalizeDeepWorkspaceResources,
+  normalizeAgentSpec,
   reconcileActiveSkillIds,
+  specSelectionCount,
   toggleActiveSkillId,
+  toggleSpecResource,
 } from './deep-capabilities.js';
 
 test('capability catalog normalizes plugin, skill and declaration-only MCP rows', () => {
@@ -31,6 +34,15 @@ test('capability catalog normalizes plugin, skill and declaration-only MCP rows'
     execution_status: 'host_configured',
     source: 'deployment_host',
   });
+});
+
+test('capability catalog normalizes subagents and agent composition', () => {
+  const catalog = normalizeDeepCapabilityCatalog({
+    subagents: [{slug: 'research-explorer', name: '调研探索员', kind: 'research', role: '深度调研'}],
+    agent_composition: {parallel_dispatch: 'start_then_await', subagent_nesting: false},
+  });
+  assert.equal(catalog.subagents[0].slug, 'research-explorer');
+  assert.equal(catalog.agent_composition.parallel_dispatch, 'start_then_await');
 });
 
 test('active skills are bounded and removed when no longer available', () => {
@@ -59,6 +71,21 @@ test('workspace resources normalize editable config skill and plugin files', () 
   assert.deepEqual(catalog.resources.skill, ['frontier/SKILL.md']);
   assert.deepEqual(catalog.resources.plugin, ['methods/plugin.json']);
   assert.equal(catalog.limits.max_resource_bytes, 4096);
+});
+
+test('agent spec toggles subagent selections', () => {
+  const catalog = normalizeDeepCapabilityCatalog({
+    subagents: [{slug: 'research-explorer'}, {slug: 'fact-verifier'}],
+  });
+  const spec = normalizeAgentSpec({}, catalog);
+  const withoutSubagents = toggleSpecResource(spec, 'subagents', 'research-explorer', false, catalog);
+  assert.deepEqual(withoutSubagents.subagents, ['fact-verifier']);
+  assert.equal(withoutSubagents.enable_subagents, true);
+  const none = toggleSpecResource(withoutSubagents, 'subagents', 'fact-verifier', false, catalog);
+  assert.deepEqual(none.subagents, []);
+  assert.equal(none.enable_subagents, false);
+  assert.equal(specSelectionCount(spec, 'subagents', ['research-explorer', 'fact-verifier']), 2);
+  assert.equal(specSelectionCount(none, 'subagents', ['research-explorer', 'fact-verifier']), 0);
 });
 
 test('deep model profiles expose ready GPT DeepSeek and Queen presets', () => {

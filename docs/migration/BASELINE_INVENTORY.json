@@ -1,0 +1,52 @@
+{
+  "created_at": "2026-09-22",
+  "yuxi_version": "0.7.3",
+  "yuxi_commit": "9b67368c6baeb731f89e1076da8a1b68ff52178a",
+  "platform_module": "backend/package/platform_core",
+  "application": {
+    "path": "/Users/wangchen/equipment research 3/outputs/application.db",
+    "size_bytes": 41734144,
+    "tables": [
+      "capability_versions",
+      "deep_branches",
+      "deep_events",
+      "deep_idempotency",
+      "deep_jobs",
+      "deep_messages",
+      "deep_run_links",
+      "deep_sessions",
+      "deep_steers",
+      "favorites",
+      "gateway_deliveries",
+      "message_bus",
+      "run_queue",
+      "runs",
+      "runtime_events",
+      "worker_heartbeats"
+    ],
+    "runs": 11,
+    "run_status": [{ "status": "completed", "n": 11 }],
+    "events": 14420,
+    "favorites": 1,
+    "capability_versions": 15,
+    "deep_sessions": 1,
+    "deep_messages": 4,
+    "deep_jobs": 2,
+    "deep_branches": 1,
+    "deep_steers": 0
+  },
+  "query_library": {
+    "path": "/Users/wangchen/equipment research 3/outputs/query-library.db",
+    "size_bytes": 532480,
+    "tables": [
+      "query_generation_jobs",
+      "query_library_items",
+      "query_library_provider_credentials",
+      "query_library_revisions",
+      "query_library_seed_imports"
+    ],
+    "queries": 179,
+    "query_revisions": 99,
+    "generation_jobs": 10
+  }
+}

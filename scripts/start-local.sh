@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# 默认启动融合平台；独立旧项目仅在明确指定时保留原启动路径。
+if [[ "${EQUIPMENT_DR_STANDALONE:-0}" != "1" ]]; then
+  exec bash "$(dirname "${BASH_SOURCE[0]}")/platform.sh" "$@"
+fi
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 

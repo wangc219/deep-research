@@ -17,6 +17,25 @@ test('DeepThinkingDock calls every hook before its disabled-state return', () =>
   assert.ok(disabledReturn > navigationHook, 'disabled return must follow all Dock hooks');
 });
 
+test('DeepThinkingDock can be closed when its cached host is deactivated', () => {
+  const dockStart = panelSource.indexOf('export function DeepThinkingDock');
+  const dockSource = panelSource.slice(dockStart);
+
+  assert.match(dockSource, /window\.addEventListener\(CLOSE_DEEP_THINKING_EVENT, closeFromEvent\)/);
+  assert.match(dockSource, /window\.removeEventListener\(CLOSE_DEEP_THINKING_EVENT, closeFromEvent\)/);
+  assert.match(dockSource, /const closeFromEvent = \(\) => \{[\s\S]*?setOpen\(false\)/);
+});
+
+test('embedded workbench never mounts the legacy deep dock', () => {
+  const appSource = readFileSync(new URL('../../main.jsx', import.meta.url), 'utf8');
+
+  assert.match(
+    appSource,
+    /\{!embed && activeRun &&[\s\S]*?<DeepThinkingDock/,
+    'Vue 平台嵌入模式必须只使用原生深研路由，旧 Dock 仅保留给独立 React 应用',
+  );
+});
+
 test('admin plugin mutation and branch fork carry their route contracts', () => {
   assert.match(
     panelSource,

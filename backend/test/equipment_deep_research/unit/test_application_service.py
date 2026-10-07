@@ -1,0 +1,399 @@
+from __future__ import annotations
+
+import pytest
+from equipment_deep_research.application.dto import CreateRunCommand, UpdateRunCommand
+from equipment_deep_research.application.run_service import InvalidRunTransition, ResearchApplicationService
+from equipment_deep_research.persistence.database import create_database_engine
+from equipment_deep_research.persistence.repositories import SqlRunQueue, SqlRunRepository
+
+
+def test_create_and_start_are_separate_commands() -> None:
+    service = ResearchApplicationService()
+    created = service.create_run(CreateRunCommand("低空无人机探测预警能力", "new_winning_mechanism", ["international_situation"], 5, "analyst-1"))
+    assert created.status == "draft"
+    started = service.start_run(created.run_id, actor="analyst-1", idempotency_key="start-1")
+    assert started.status == "queued"
+    assert service.queue.pending_run_ids() == [created.run_id]
+
+
+def test_invalid_transition_is_rejected() -> None:
+    service = ResearchApplicationService()
+    run = service.create_run(CreateRunCommand("topic", "auto", [], 5, "analyst"))
+    with pytest.raises(InvalidRunTransition, match="draft.*queued"):
+        service.resume_run(run.run_id, actor="analyst", idempotency_key="resume")
+
+
+def test_failed_run_can_resume_from_checkpoint_and_clears_error() -> None:
+    service = ResearchApplicationService()
+    run = service.create_run(CreateRunCommand("topic", "auto", [], 3, "analyst"))
+    service.set_status(run.run_id, "researching")
+    service.set_error(run.run_id, "transient serialization failure")
+    service.set_status(run.run_id, "failed")
+
+    resumed = service.resume_run(
+        run.run_id,
+        actor="analyst",
+        idempotency_key="resume-failed",
+    )
+
+    assert resumed.status == "queued"
+    assert resumed.error == ""
+    assert service.queue.pending_run_ids() == [run.run_id]
+
+
+def test_resume_can_refresh_server_managed_execution_configuration() -> None:
+    service = ResearchApplicationService()
+    run = service.create_run(CreateRunCommand(
+        "topic",
+        "auto",
+        [],
+        3,
+        "analyst",
+        {
+            "mode": "real",
+            "provider": "codex",
+            "model": "old-model",
+            "base_url": "https://old.example.test/v1",
+            "api_key_env": "OLD_KEY",
+        },
+    ))
+    service.set_status(run.run_id, "researching")
+    service.set_status(run.run_id, "failed")
+
+    refreshed = {
+        **run.execution,
+        "model": "new-model",
+        "base_url": "https://new.example.test/v1",
+        "api_key_env": "NEW_KEY",
+    }
+    resumed = service.resume_run(
+        run.run_id,
+        actor="analyst",
+        idempotency_key="resume-with-current-config",
+        execution=refreshed,
+    )
+
+    assert resumed.execution == refreshed
+    assert service.get_run(run.run_id).execution == refreshed
+
+
+def test_limited_completed_delivery_can_resume_for_release_repair() -> None:
+    service = ResearchApplicationService()
+    run = service.create_run(CreateRunCommand("topic", "auto", [], 3, "analyst"))
+    service.set_result(run.run_id, {"audit_status": "limited"})
+    service.set_status(run.run_id, "completed")
+
+    resumed = service.resume_run(
+        run.run_id,
+        actor="analyst",
+        idempotency_key="resume-limited-delivery",
+    )
+
+    assert resumed.status == "queued"
+    assert service.queue.pending_run_ids() == [run.run_id]
+
+
+def test_approved_completed_delivery_cannot_resume() -> None:
+    service = ResearchApplicationService()
+    run = service.create_run(CreateRunCommand("topic", "auto", [], 3, "analyst"))
+    service.set_result(run.run_id, {"audit_status": "approved"})
+    service.set_status(run.run_id, "completed")
+
+    with pytest.raises(InvalidRunTransition, match="completed.*queued"):
+        service.resume_run(
+            run.run_id,
+            actor="analyst",
+            idempotency_key="resume-approved-delivery",
+        )
+
+
+def test_execution_configuration_is_preserved_on_a_run() -> None:
+    service = ResearchApplicationService()
+    run = service.create_run(
+        CreateRunCommand(
+            "topic", "auto", [], 5, "analyst",
+            {"mode": "real", "model": "gpt-5.5", "api_key_env": "MODEL_KEY"},
+        )
+    )
+    assert run.execution["mode"] == "real"
+    assert service.get_run(run.run_id).execution["api_key_env"] == "MODEL_KEY"
+
+
+def test_supplemental_information_is_preserved_and_editable_on_draft() -> None:
+    service = ResearchApplicationService()
+    run = service.create_run(
+        CreateRunCommand(
+            "query",
+            "auto",
+            [],
+            2,
+            "analyst",
+            supplemental_information="初始补充信息",
+        )
+    )
+
+    updated = service.update_run(
+        run.run_id,
+        UpdateRunCommand(
+            "query",
+            "auto",
+            [],
+            2,
+            supplemental_information="精简后的补充方向",
+        ),
+        actor="analyst",
+    )
+
+    assert updated.supplemental_information == "精简后的补充方向"
+
+    preserved = service.update_run(
+        run.run_id,
+        UpdateRunCommand("query v2", "auto", [], 2),
+        actor="analyst",
+    )
+    assert preserved.supplemental_information == "精简后的补充方向"
+
+
+def test_draft_knowledge_scope_distinguishes_omitted_all_and_empty() -> None:
+    service = ResearchApplicationService()
+    run = service.create_run(
+        CreateRunCommand(
+            "query",
+            "auto",
+            [],
+            2,
+            "analyst",
+            knowledge_ids=["kb-a"],
+        )
+    )
+
+    preserved = service.update_run(
+        run.run_id,
+        UpdateRunCommand("query", "auto", [], 2),
+        actor="analyst",
+    )
+    assert preserved.knowledge_ids == ["kb-a"]
+
+    all_visible = service.update_run(
+        run.run_id,
+        UpdateRunCommand(
+            "query",
+            "auto",
+            [],
+            2,
+            knowledge_ids=None,
+            knowledge_ids_present=True,
+        ),
+        actor="analyst",
+    )
+    assert all_visible.knowledge_ids is None
+
+    disabled = service.update_run(
+        run.run_id,
+        UpdateRunCommand(
+            "query",
+            "auto",
+            [],
+            2,
+            knowledge_ids=[],
+            knowledge_ids_present=True,
+        ),
+        actor="analyst",
+    )
+    assert disabled.knowledge_ids == []
+
+
+def test_draft_can_be_updated_and_terminal_run_can_be_archived() -> None:
+    service = ResearchApplicationService()
+    run = service.create_run(CreateRunCommand("topic", "auto", [], 5, "analyst"))
+    updated = service.update_run(
+        run.run_id,
+        UpdateRunCommand(
+            "updated topic",
+            "traditional_gap",
+            ["weapon_equipment"],
+            3,
+            {"mode": "fake"},
+        ),
+        actor="analyst",
+    )
+    assert updated.topic == "updated topic"
+    assert updated.research_route == "traditional_gap"
+    assert updated.max_rounds == 3
+    archived = service.archive_run(run.run_id, actor="analyst")
+    assert archived.status == "archived"
+
+
+def test_started_run_cannot_be_edited_or_archived() -> None:
+    service = ResearchApplicationService()
+    run = service.create_run(CreateRunCommand("topic", "auto", [], 5, "analyst"))
+    service.start_run(run.run_id, actor="analyst", idempotency_key="start")
+    with pytest.raises(InvalidRunTransition):
+        service.update_run(
+            run.run_id,
+            UpdateRunCommand("changed", "auto", [], 5, {"mode": "fake"}),
+            actor="analyst",
+        )
+    with pytest.raises(InvalidRunTransition):
+        service.archive_run(run.run_id, actor="analyst")
+
+
+def test_queued_run_can_be_permanently_deleted_but_active_run_cannot() -> None:
+    service = ResearchApplicationService()
+    queued = service.create_run(CreateRunCommand("queued", "auto", [], 5, "analyst"))
+    service.start_run(queued.run_id, actor="analyst", idempotency_key="start-queued")
+
+    deleted = service.delete_run(queued.run_id)
+
+    assert deleted.status == "queued"
+    assert service.queue.pending_run_ids() == []
+    with pytest.raises(KeyError):
+        service.get_run(queued.run_id)
+
+    active = service.create_run(CreateRunCommand("active", "auto", [], 5, "analyst"))
+    service.set_status(active.run_id, "researching")
+    with pytest.raises(InvalidRunTransition, match="researching cannot be permanently deleted"):
+        service.delete_run(active.run_id)
+
+
+def test_parent_cancel_cascades_deep_child_run_and_job(tmp_path) -> None:
+    engine = create_database_engine(f"sqlite:///{tmp_path / 'cascade.db'}")
+    repository = SqlRunRepository(engine)
+    service = ResearchApplicationService(
+        repository=repository,
+        queue=SqlRunQueue(engine),
+    )
+    parent = service.create_run(CreateRunCommand("parent", "auto", [], 2, "analyst"))
+    child = service.create_run(
+        CreateRunCommand(
+            "child",
+            "auto",
+            [],
+            2,
+            "deep-thinking-agent",
+            execution={"parent_run_id": parent.run_id, "deep_job_id": "job-1"},
+        )
+    )
+    service.start_run(child.run_id, actor="deep-thinking-agent", idempotency_key="child-start")
+    repository.create_or_get_deep_job(
+        job_id="job-1",
+        parent_run_id=parent.run_id,
+        child_run_id=child.run_id,
+        idempotency_key="deep-request",
+        fingerprint="parent:hypothesis:query:focus",
+    )
+
+    stopped = service.cancel_run(parent.run_id, actor="analyst", idempotency_key="stop")
+
+    assert stopped.status == "cancel_requested"
+    assert service.get_run(child.run_id).status == "cancelled"
+    job = repository.get_deep_job("job-1")
+    assert job is not None
+    assert job["status"] == "cancelled"
+    assert job["stage"] == "publish"
+
+
+def test_parent_cancel_cascades_partial_deep_job(tmp_path) -> None:
+    """A partial deep job can still own active child work and must be fenced."""
+
+    engine = create_database_engine(f"sqlite:///{tmp_path / 'partial-cascade.db'}")
+    repository = SqlRunRepository(engine)
+    service = ResearchApplicationService(
+        repository=repository,
+        queue=SqlRunQueue(engine),
+    )
+    parent = service.create_run(CreateRunCommand("parent", "auto", [], 2, "analyst"))
+    repository.create_or_get_deep_job(
+        job_id="job-partial",
+        parent_run_id=parent.run_id,
+        session_id="session-partial",
+        idempotency_key="partial-request",
+        fingerprint="partial-fingerprint",
+    )
+    repository.update_deep_job(
+        "job-partial", stage="retrieval", status="partial", error="awaiting child"
+    )
+
+    service.cancel_run(parent.run_id, actor="analyst", idempotency_key="stop-partial")
+
+    job = repository.get_deep_job("job-partial")
+    assert job is not None
+    assert job["status"] == "cancelled"
+    assert job["stage"] == "publish"
+
+
+def test_archiving_parent_cancels_active_deep_job(tmp_path) -> None:
+    engine = create_database_engine(f"sqlite:///{tmp_path / 'archive-cascade.db'}")
+    repository = SqlRunRepository(engine)
+    service = ResearchApplicationService(repository=repository, queue=SqlRunQueue(engine))
+    parent = service.create_run(CreateRunCommand("parent", "auto", [], 2, "analyst"))
+    repository.create_or_get_deep_job(
+        job_id="job-archive",
+        parent_run_id=parent.run_id,
+        idempotency_key="archive-request",
+        fingerprint="archive-fingerprint",
+    )
+
+    archived = service.archive_run(parent.run_id, actor="analyst")
+
+    assert archived.status == "archived"
+    assert repository.get_deep_job("job-archive")["status"] == "cancelled"
+
+
+def test_orphaned_active_run_requires_manual_resume_after_worker_restart() -> None:
+    service = ResearchApplicationService()
+    run = service.create_run(CreateRunCommand("topic", "auto", [], 2, "analyst"))
+    service.set_status(run.run_id, "researching")
+
+    recovered = service.recover_orphaned_runs(stale_after_seconds=0)
+
+    assert recovered == [run.run_id]
+    assert service.get_run(run.run_id).status == "failed"
+    assert "人工点击" in service.get_run(run.run_id).error
+    assert service.queue.pending_run_ids() == []
+
+
+@pytest.mark.parametrize("status", ["synthesizing", "reviewing", "reporting"])
+def test_orphaned_late_phase_run_requires_manual_resume_after_worker_restart(status: str) -> None:
+    service = ResearchApplicationService()
+    run = service.create_run(CreateRunCommand("topic", "auto", [], 2, "analyst"))
+    service.set_status(run.run_id, status)
+
+    recovered = service.recover_orphaned_runs(stale_after_seconds=0)
+
+    assert recovered == [run.run_id]
+    assert service.get_run(run.run_id).status == "failed"
+    assert "人工点击" in service.get_run(run.run_id).error
+    assert service.queue.pending_run_ids() == []
+
+
+def test_recently_claimed_run_is_not_recovered_by_another_starting_worker() -> None:
+    service = ResearchApplicationService()
+    run = service.create_run(CreateRunCommand("topic", "auto", [], 2, "analyst"))
+    service.set_status(run.run_id, "planning")
+
+    recovered = service.recover_orphaned_runs(stale_after_seconds=15)
+
+    assert recovered == []
+    assert service.get_run(run.run_id).status == "planning"
+    assert service.queue.pending_run_ids() == []
+
+
+def test_runtime_health_tolerates_invalid_worker_concurrency(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("EQUIPMENT_DR_RESEARCH_WORKER_CONCURRENCY", "invalid")
+    monkeypatch.setenv("EQUIPMENT_DR_WORKER_POOL_CONFIG", str(tmp_path / "worker-pool.json"))
+
+    health = ResearchApplicationService().runtime_health()
+
+    assert health["configured_worker_capacity"] == 1
+    assert health["worker_capacity"] == 0
+    assert health["available_slots"] == 0
+
+
+def test_runtime_health_caps_configured_worker_concurrency_at_eight(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("EQUIPMENT_DR_RESEARCH_WORKER_CONCURRENCY", "99")
+    monkeypatch.setenv("EQUIPMENT_DR_WORKER_POOL_CONFIG", str(tmp_path / "worker-pool.json"))
+
+    health = ResearchApplicationService().runtime_health()
+
+    assert health["configured_worker_capacity"] == 8

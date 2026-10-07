@@ -424,6 +424,14 @@ def test_dynamic_mission_graph_uses_markdown_at_provider_boundary(monkeypatch):
         event_names = [args[0] for args, _ in events if args]
         assert "winning_semantic_cluster_skipped" in event_names
         assert not accumulated["winning_swarm"]["final_equipment_portfolio"]
+        quantity_gate = accumulated["winning_swarm"]["portfolio_quality_gate"]
+        assert quantity_gate["passed"] is False
+        assert quantity_gate["quantity_gate_passed"] is False
+        assert quantity_gate["target_direction_count"] == 6
+        assert quantity_gate["quantity_shortfall"] == 6
+        assert accumulated["winning_swarm"]["stop_reason"] == (
+            "mission_graph_limited_insufficient_s5_finalists"
+        )
         planned = [
             details
             for args, details in events
@@ -439,7 +447,9 @@ def test_dynamic_mission_graph_uses_markdown_at_provider_boundary(monkeypatch):
     asyncio.run(scenario())
 
 
-def test_dynamic_v2_cross_pool_s5_reviews_remaining_candidates_when_one_creator_is_empty(monkeypatch):
+def test_dynamic_v2_cross_pool_s5_reviews_remaining_candidates_when_one_creator_is_empty(
+    monkeypatch,
+):
     """An empty creator branch must not waste a dedicated S5 slice."""
 
     import json
@@ -634,9 +644,7 @@ def test_dynamic_v2_low_concurrency_dispatches_s4_before_s3_tail(
                         {
                             "hypotheses": [
                                 {
-                                    "name": (
-                                        f"前出实体武器{instance_id[-4:]}"
-                                    ),
+                                    "name": (f"前出实体武器{instance_id[-4:]}"),
                                     "concise_winning_summary": (
                                         "具体武器在任务链断点前出接敌并直接压制目标，"
                                         "改变对手原有防御交换关系。"
@@ -709,14 +717,14 @@ def test_dynamic_v2_low_concurrency_dispatches_s4_before_s3_tail(
                 "evidence_index": [],
             },
             state=state,
-                swarm_controller=WinningSwarmController(
-                    {
-                        "policy_id": "winning_swarm_dynamic_v2",
-                        "enabled": True,
-                        "max_concurrency": max_concurrency,
-                        "coverage_expand_max_recruits": 0,
-                    }
-                ),
+            swarm_controller=WinningSwarmController(
+                {
+                    "policy_id": "winning_swarm_dynamic_v2",
+                    "enabled": True,
+                    "max_concurrency": max_concurrency,
+                    "coverage_expand_max_recruits": 0,
+                }
+            ),
             valid_reference_ids=set(),
         )
 
@@ -759,8 +767,8 @@ def test_dynamic_v2_low_concurrency_dispatches_s4_before_s3_tail(
     asyncio.run(scenario())
 
 
-def test_dynamic_s5_invalid_merge_target_rejects_source_candidate(monkeypatch):
-    """Malformed S5 merges must not inherit the default-retain state."""
+def test_dynamic_s5_invalid_merge_target_rejects_only_that_reviewer_vote(monkeypatch):
+    """Malformed merge votes stay auditable without erasing another retain vote."""
 
     import json
 
@@ -881,9 +889,9 @@ def test_dynamic_s5_invalid_merge_target_rejects_source_candidate(monkeypatch):
         ]
         assert invalid_rows
         rejected_id = invalid_rows[0]["hypothesis_id"]
-        assert rejected_id not in {
-            row["hypothesis_id"]
-            for row in accumulated["winning_swarm"]["hypotheses"]
+        assert invalid_rows[0]["review_vote_only"] is True
+        assert rejected_id in {
+            row["hypothesis_id"] for row in accumulated["winning_swarm"]["hypotheses"]
         }
         assert any(
             args

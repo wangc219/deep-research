@@ -31,14 +31,17 @@ apps/web/dist/
 apps/web/playwright-report/
 apps/web/test-results/
 
-# Runtime and generated working data
-outputs/runs/
-outputs/runtime/codex-home/
-outputs/runtime/start-local.lock/
+# Runtime scratch and secret-bearing session state. Completed research outputs
+# remain versioned; only local process/session state is excluded.
+outputs/runtime/
+outputs/runs/runtime/
 # Codex homes contain local authentication and session state. They may also be
 # nested inside captured run workspaces.
+outputs/**/codex-home/
 outputs/**/codex-homes/
 outputs/**/auth.json
+outputs/**/.env
+outputs/**/.env.*
 tmp/
 *.db
 *.db-shm
@@ -47,3 +50,29 @@ tmp/
 
 # Local planning UI state
 .superpowers/brainstorm/
+
+# Platform fusion
+web/dist/
+web/.vite/
+docker/volumes/
+.migration-backup/
+.yuxi/
+
+# Generated research artifacts are committed. Local service databases and
+# transient SQLite sidecars are rebuilt on each deployment.
+*.db-shm
+*.db-wal
+*.sqlite-shm
+*.sqlite-wal
+outputs/application.db
+outputs/query-library.db
+outputs/research-queue.sqlite
+outputs/model-call-outbox.db
+
+# Per-run databases are part of the auditable research deliverable.
+!outputs/**/run.db
+
+# Migration-period third-party trees; not a product runtime dependency
+reference/Yuxi-main/
+reference/LibreChat-main/
+reference/nanobot-main/

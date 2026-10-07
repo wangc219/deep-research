@@ -127,22 +127,25 @@ def _s3_s4_structural_dimension_identities(value: Any) -> set[str]:
         marker = token.casefold().replace(" ", "")
         if "::open-dimension::" in marker:
             return True
-        return marker in {
-            "open",
-            "open_slot",
-            "open-slot",
-            "auto",
-            "dynamic",
-            "dynamic-open",
-            "dynamic_open",
-            "dynamicopen",
-            "query开放制胜维度",
-        } or bool(
-            re.match(r"^query开放制胜(?:槽位|维度)\d*$", marker)
-        ) or bool(
-            re.match(
-                r"^open(?:[_-]?slot)?[-_:][a-z0-9]{4,}(?:[-_:][a-z0-9]+)*$",
-                marker,
+        return (
+            marker
+            in {
+                "open",
+                "open_slot",
+                "open-slot",
+                "auto",
+                "dynamic",
+                "dynamic-open",
+                "dynamic_open",
+                "dynamicopen",
+                "query开放制胜维度",
+            }
+            or bool(re.match(r"^query开放制胜(?:槽位|维度)\d*$", marker))
+            or bool(
+                re.match(
+                    r"^open(?:[_-]?slot)?[-_:][a-z0-9]{4,}(?:[-_:][a-z0-9]+)*$",
+                    marker,
+                )
             )
         )
 
@@ -162,9 +165,7 @@ def _s3_s4_structural_dimension_identities(value: Any) -> set[str]:
                 or ""
             ).strip()
             angle = str(
-                raw.get("winning_angle_id")
-                or raw.get("angle_id")
-                or ""
+                raw.get("winning_angle_id") or raw.get("angle_id") or ""
             ).strip()
             if code and not is_transport_marker(code):
                 raw, fallback_label = code, label
@@ -172,10 +173,7 @@ def _s3_s4_structural_dimension_identities(value: Any) -> set[str]:
                 raw = label
             elif (
                 angle
-                and (
-                    "::" in angle
-                    or angle.casefold().startswith("self-proposed:")
-                )
+                and ("::" in angle or angle.casefold().startswith("self-proposed:"))
                 and not is_transport_marker(angle)
             ):
                 raw = angle.rsplit("::", 1)[-1]
@@ -190,11 +188,7 @@ def _s3_s4_structural_dimension_identities(value: Any) -> set[str]:
         return _canonical_dimension_identity(token, fallback=fallback_label).strip()
 
     values = value if isinstance(value, (list, tuple, set)) else [value]
-    return {
-        normalized
-        for item in values
-        if (normalized := identity(item))
-    }
+    return {normalized for item in values if (normalized := identity(item))}
 
 
 def _s3_s4_first_pass_structurally_complete(
@@ -237,6 +231,346 @@ def _s3_s4_first_pass_structurally_complete(
     return bool(rows) and len(identities) >= 3, identities
 
 
+def _reconcile_cross_pool_s5_reviews(
+    candidates: Sequence[WinningHypothesis],
+    reviews: Sequence[Mapping[str, Any]],
+    *,
+    query_domain_mode: str,
+) -> dict[str, Any]:
+    """在完整候选池上稳定聚合并发 S5 评审结果。"""
+
+    candidate_by_id = {
+        item.hypothesis_id: item
+        for item in candidates
+        if str(item.hypothesis_id).strip()
+    }
+    candidate_ids = set(candidate_by_id)
+    rows_by_id: dict[str, list[dict[str, Any]]] = {
+        candidate_id: [] for candidate_id in candidate_ids
+    }
+    positive_ids: set[str] = set()
+    merge_edges: list[tuple[str, str]] = []
+    omitted_by_reviewer: dict[str, list[str]] = {}
+    invalid_rows: list[dict[str, str]] = []
+    portfolio_positions: dict[str, list[int]] = {}
+
+    for review in sorted(
+        (item for item in reviews if isinstance(item, Mapping)),
+        key=lambda item: str(item.get("reviewer_id", "")),
+    ):
+        reviewer_id = str(review.get("reviewer_id", "")).strip() or "s5-reviewer"
+        raw_decisions = review.get("decisions", [])
+        if not isinstance(raw_decisions, list):
+            raw_decisions = []
+        decisions_by_id: dict[str, Mapping[str, Any]] = {}
+        for raw in raw_decisions:
+            if not isinstance(raw, Mapping):
+                continue
+            candidate_id = str(raw.get("hypothesis_id", "")).strip()
+            if candidate_id in candidate_ids:
+                decisions_by_id[candidate_id] = raw
+        omitted_by_reviewer[reviewer_id] = sorted(candidate_ids - set(decisions_by_id))
+
+        raw_order = review.get("portfolio_order", [])
+        if isinstance(raw_order, list):
+            for position, value in enumerate(raw_order, start=1):
+                candidate_id = str(value).strip()
+                if candidate_id in candidate_ids:
+                    portfolio_positions.setdefault(candidate_id, []).append(position)
+
+        for candidate_id, raw in decisions_by_id.items():
+            reported_decision = str(raw.get("decision", "")).strip().lower()
+            decision = reported_decision
+            target_id = str(raw.get("merge_target_hypothesis_id", "")).strip()
+            contract_passed = False
+            invalid_reason = ""
+            if decision not in {"retain", "reject", "merge"}:
+                decision = "reject"
+                invalid_reason = "invalid_decision"
+            elif decision == "merge" and (
+                not target_id
+                or target_id == candidate_id
+                or target_id not in candidate_ids
+            ):
+                decision = "reject"
+                invalid_reason = "invalid_merge_target"
+            elif decision in {"retain", "merge"}:
+                contract_passed = _s5_retain_passes_concrete_weapon_contract(
+                    raw,
+                    query_domain_mode=query_domain_mode,
+                )
+                if not contract_passed:
+                    decision = "reject"
+                    invalid_reason = "concrete_weapon_contract_failed"
+
+            dimension_scores, weighted_score = _s5_dimension_scores(raw)
+            try:
+                innovation_priority = max(
+                    0.0,
+                    min(1.0, float(raw.get("innovation_priority", 0.0) or 0.0)),
+                )
+            except (TypeError, ValueError):
+                innovation_priority = 0.0
+            naming_assessment = _s5_naming_assessment(raw)
+            normalized = {
+                "reviewer_id": reviewer_id,
+                "hypothesis_id": candidate_id,
+                "reported_decision": reported_decision,
+                "decision": decision,
+                "merge_target_hypothesis_id": target_id if decision == "merge" else "",
+                "reason": str(raw.get("reason", "")).strip()[:500],
+                "contract_passed": contract_passed,
+                "dimension_scores": dimension_scores,
+                "weighted_score": weighted_score,
+                "innovation_priority": innovation_priority,
+                "disruption_tier": str(raw.get("disruption_tier", "")).strip(),
+                "displaced_operational_mode": str(
+                    raw.get("displaced_operational_mode", "")
+                ).strip()[:500],
+                "new_operational_mode": str(
+                    raw.get("new_operational_mode", "")
+                ).strip()[:500],
+                "winning_relation_shift": str(
+                    raw.get("winning_relation_shift", "")
+                ).strip()[:500],
+                "naming_assessment": naming_assessment,
+                "innovation_basis": _s5_innovation_basis(
+                    raw,
+                    dimension_scores=dimension_scores,
+                    naming_assessment=naming_assessment,
+                ),
+            }
+            rows_by_id[candidate_id].append(normalized)
+            if invalid_reason:
+                invalid_rows.append(
+                    {
+                        "reviewer_id": reviewer_id,
+                        "hypothesis_id": candidate_id,
+                        "reason": invalid_reason,
+                    }
+                )
+            if decision in {"retain", "merge"}:
+                positive_ids.add(candidate_id)
+            if decision == "merge":
+                merge_edges.append((candidate_id, target_id))
+
+    def average(values: Sequence[float]) -> float:
+        return round(sum(values) / len(values), 6) if values else 0.0
+
+    aggregates: dict[str, dict[str, Any]] = {}
+    score_keys = ("innovation", "demand", "feasibility", "effectiveness", "development")
+    for candidate_id, rows in rows_by_id.items():
+        dimension_scores = {
+            key: average(
+                [
+                    float(row["dimension_scores"][key])
+                    for row in rows
+                    if key in row["dimension_scores"]
+                ]
+            )
+            for key in score_keys
+            if any(key in row["dimension_scores"] for row in rows)
+        }
+        best_row = max(
+            rows,
+            key=lambda row: (
+                float(row["weighted_score"]),
+                float(row["innovation_priority"]),
+                str(row["reviewer_id"]),
+            ),
+            default={},
+        )
+        aggregates[candidate_id] = {
+            "review_count": len(rows),
+            "positive_review_count": sum(
+                row["decision"] in {"retain", "merge"} for row in rows
+            ),
+            "reject_review_count": sum(row["decision"] == "reject" for row in rows),
+            "dimension_scores": dimension_scores,
+            "weighted_score": average([float(row["weighted_score"]) for row in rows]),
+            "innovation_priority": average(
+                [float(row["innovation_priority"]) for row in rows]
+            ),
+            "best_row": best_row,
+            "review_rows": rows,
+        }
+
+    parent = {candidate_id: candidate_id for candidate_id in candidate_ids}
+
+    def find(value: str) -> str:
+        root = value
+        while parent[root] != root:
+            root = parent[root]
+        while parent[value] != value:
+            next_value = parent[value]
+            parent[value] = root
+            value = next_value
+        return root
+
+    def union(left: str, right: str) -> None:
+        left_root, right_root = find(left), find(right)
+        if left_root != right_root:
+            parent[right_root] = left_root
+
+    for source_id, target_id in merge_edges:
+        union(source_id, target_id)
+    groups: dict[str, set[str]] = {}
+    for candidate_id in candidate_ids:
+        groups.setdefault(find(candidate_id), set()).add(candidate_id)
+
+    def representative_rank(candidate_id: str) -> tuple[float, float, int, float, str]:
+        aggregate = aggregates[candidate_id]
+        best_row = aggregate.get("best_row", {})
+        tier = _s5_disruption_tier_rank(
+            best_row.get("disruption_tier"),
+            aggregate["innovation_priority"],
+        )
+        return (
+            float(aggregate["weighted_score"]),
+            float(aggregate["innovation_priority"]),
+            tier,
+            float(candidate_by_id[candidate_id].score or 0.0),
+            candidate_id,
+        )
+
+    merge_map: dict[str, str] = {}
+    eligible_ids: set[str] = set()
+    for members in groups.values():
+        representative = max(members, key=representative_rank)
+        if members & positive_ids:
+            eligible_ids.add(representative)
+        for member in members:
+            if member != representative:
+                merge_map[member] = representative
+
+    ordered_hints = {
+        candidate_id: position
+        for position, candidate_id in enumerate(
+            sorted(
+                portfolio_positions,
+                key=lambda value: (
+                    average([float(item) for item in portfolio_positions[value]]),
+                    value,
+                ),
+            ),
+            start=1,
+        )
+    }
+    rejected_ids = candidate_ids - eligible_ids - set(merge_map)
+    return {
+        "aggregates": aggregates,
+        "eligible_hypothesis_ids": sorted(eligible_ids),
+        "rejected_hypothesis_ids": sorted(rejected_ids),
+        "merge_map": dict(sorted(merge_map.items())),
+        "portfolio_order_hints": ordered_hints,
+        "omitted_by_reviewer": omitted_by_reviewer,
+        "invalid_rows": invalid_rows,
+        "reviewer_count": len(reviews),
+    }
+
+
+def _s5_diverse_six_order(
+    candidates: Sequence[WinningHypothesis],
+    *,
+    weighted_scores: Mapping[str, float],
+    innovation_priorities: Mapping[str, float],
+    disruption_tiers: Mapping[str, str],
+    portfolio_order_hints: Mapping[str, int],
+    target: int,
+) -> tuple[list[WinningHypothesis], dict[str, Any]]:
+    """先取互异制胜维度，再以五轴身份差异和高分补齐。"""
+
+    limit = max(1, int(target))
+    selected, audit = _s5_diverse_portfolio_order(
+        candidates,
+        weighted_scores=weighted_scores,
+        innovation_priorities=innovation_priorities,
+        disruption_tiers=disruption_tiers,
+        portfolio_order_hints=portfolio_order_hints,
+        maximum=limit,
+    )
+    selected_ids = {item.hypothesis_id for item in selected}
+
+    def identity_components(item: WinningHypothesis) -> tuple[str, ...]:
+        values = (
+            item.combat_dimension,
+            item.changed_confrontation_variable,
+            "；".join(item.mechanism_chain[:5]),
+            "；".join(item.direct_military_effects[:3]),
+            "；".join(item.equipment_forms[:2]),
+        )
+        return tuple(
+            re.sub(r"\s+", "", str(value or "")).casefold() for value in values
+        )
+
+    def identity_overlap(left: WinningHypothesis, right: WinningHypothesis) -> float:
+        left_parts = identity_components(left)
+        right_parts = identity_components(right)
+        compared = [
+            left_value == right_value
+            for left_value, right_value in zip(left_parts, right_parts, strict=True)
+            if left_value and right_value
+        ]
+        return sum(compared) / len(compared) if compared else 0.0
+
+    def score_rank(item: WinningHypothesis) -> tuple[float, int, float, float, str]:
+        candidate_id = item.hypothesis_id
+        priority = float(innovation_priorities.get(candidate_id, 0.0) or 0.0)
+        return (
+            float(weighted_scores.get(candidate_id, item.score) or 0.0),
+            _s5_disruption_tier_rank(disruption_tiers.get(candidate_id), priority),
+            priority,
+            float(item.score or 0.0),
+            candidate_id,
+        )
+
+    backfill_audit: list[dict[str, Any]] = []
+    remaining = [item for item in candidates if item.hypothesis_id not in selected_ids]
+    while len(selected) < limit and remaining:
+        ranked: list[
+            tuple[float, tuple[float, int, float, float, str], WinningHypothesis]
+        ] = []
+        for item in remaining:
+            maximum_overlap = max(
+                (identity_overlap(item, chosen) for chosen in selected),
+                default=0.0,
+            )
+            ranked.append((maximum_overlap, score_rank(item), item))
+        maximum_overlap, _rank, chosen = min(
+            ranked,
+            key=lambda row: (
+                row[0],
+                tuple(-value for value in row[1][:-1]),
+                row[1][-1],
+            ),
+        )
+        selected.append(chosen)
+        selected_ids.add(chosen.hypothesis_id)
+        remaining = [
+            item for item in remaining if item.hypothesis_id != chosen.hypothesis_id
+        ]
+        backfill_audit.append(
+            {
+                "hypothesis_id": chosen.hypothesis_id,
+                "maximum_five_axis_identity_overlap": round(maximum_overlap, 4),
+                "weighted_score": score_rank(chosen)[0],
+            }
+        )
+
+    audit = dict(audit)
+    audit.update(
+        {
+            "selection_rule": (
+                "different_winning_dimensions_first_then_lowest_five_axis_identity_overlap_then_s5_score"
+            ),
+            "similarity_backfill": backfill_audit,
+            "target_count": limit,
+            "selected_count": len(selected),
+        }
+    )
+    return selected, audit
+
+
 async def execute_dynamic_mission_graph(
     *,
     accumulated: dict[str, Any],
@@ -264,18 +598,14 @@ async def execute_dynamic_mission_graph(
     # Dynamic-v2 has no reserved legacy repair or quality-judge capacity.
     repair_reserve = 0
     bounds = resolve_dynamic_v2_instance_bounds(
-        minimum_instances=swarm_controller.policy.get(
-            "mission_graph_min_instances", 8
-        ),
+        minimum_instances=swarm_controller.policy.get("mission_graph_min_instances", 8),
         target_instances=swarm_controller.policy.get(
             "mission_graph_target_instances", 10
         ),
         maximum_instances=swarm_controller.policy.get(
             "mission_graph_max_instances", 21
         ),
-        hard_maximum_instances=swarm_controller.policy.get(
-            "max_dynamic_instances", 21
-        ),
+        hard_maximum_instances=swarm_controller.policy.get("max_dynamic_instances", 21),
         reserved_instances=repair_reserve,
     )
     target_instances = bounds.target_instances
@@ -334,6 +664,13 @@ async def execute_dynamic_mission_graph(
     candidate_winning_relation_shifts: dict[str, str] = {}
     portfolio_order_hints: dict[str, int] = {}
     portfolio_order_sequence = 0
+    cross_pool_s5_reviews: list[dict[str, Any]] = []
+    cross_pool_s5_audit: dict[str, Any] = {
+        "status": "not_run",
+        "reviewer_count": 0,
+        "omitted_by_reviewer": {},
+        "invalid_rows": [],
+    }
     pending_incremental_review_ids: set[str] = set()
     review_targets_by_instance: dict[str, set[str]] = {}
     semantic_clustered_ledger_version = -1
@@ -396,9 +733,7 @@ async def execute_dynamic_mission_graph(
         lock_context = lock if lock is not None else nullcontext()
         with lock_context:
             try:
-                used_calls = int(
-                    getattr(host, "_budget_started_swarm_calls", 0) or 0
-                )
+                used_calls = int(getattr(host, "_budget_started_swarm_calls", 0) or 0)
             except (TypeError, ValueError):
                 used_calls = 0
             try:
@@ -485,9 +820,7 @@ async def execute_dynamic_mission_graph(
 
         try:
             configured = int(
-                swarm_controller.policy.get(
-                    "s3_s4_candidate_maximum_per_session", 3
-                )
+                swarm_controller.policy.get("s3_s4_candidate_maximum_per_session", 3)
             )
         except (TypeError, ValueError):
             configured = 3
@@ -577,9 +910,7 @@ async def execute_dynamic_mission_graph(
             naming_plan.get("assignment_version", NAMING_ASSIGNMENT_VERSION)
         ),
         allocation_mode=str(
-            naming_plan.get(
-                "allocation_mode", "portfolio_deterministic_balanced"
-            )
+            naming_plan.get("allocation_mode", "portfolio_deterministic_balanced")
         ),
         seed_digest=str(naming_plan.get("seed_digest", "")),
         seat_count=len(producer_ids),
@@ -1165,7 +1496,11 @@ async def execute_dynamic_mission_graph(
             """Flatten selector dimension envelopes without prescribing codes."""
 
             if isinstance(value, Mapping):
-                nested = value.get("dimensions") or value.get("dimension_slots") or value.get("slots")
+                nested = (
+                    value.get("dimensions")
+                    or value.get("dimension_slots")
+                    or value.get("slots")
+                )
                 if isinstance(nested, list):
                     return list(nested)
                 return [dict(value)]
@@ -1217,7 +1552,11 @@ async def execute_dynamic_mission_graph(
                         or row.get("producer_id")
                         or row.get("seat_index")
                     )
-                    nested = row.get("dimensions") or row.get("dimension_slots") or row.get("slots")
+                    nested = (
+                        row.get("dimensions")
+                        or row.get("dimension_slots")
+                        or row.get("slots")
+                    )
                     if seat_key is not None and nested is not None:
                         token = str(seat_key).strip()
                         target = token
@@ -1268,7 +1607,9 @@ async def execute_dynamic_mission_graph(
                     }
                 )
         dimension_hint_payload: Mapping[str, Any] | Sequence[Any] | None = (
-            dimension_hints_by_seat if dimension_hints_by_seat else dimension_hints_global
+            dimension_hints_by_seat
+            if dimension_hints_by_seat
+            else dimension_hints_global
         )
         dimension_portfolios = _s3_s4_open_dimension_slots(
             dimension_assignment_seed,
@@ -1304,9 +1645,7 @@ async def execute_dynamic_mission_graph(
             hydrated["reference_only_dimension_codes"] = list(
                 portfolio.get("reference_dimension_codes", [])
             )
-            hydrated["dimension_slot_count"] = int(
-                portfolio.get("slot_count", 3) or 3
-            )
+            hydrated["dimension_slot_count"] = int(portfolio.get("slot_count", 3) or 3)
             hydrated["dimension_selection_rule"] = str(
                 portfolio.get("dimension_selection_rule", "")
             )
@@ -1458,9 +1797,7 @@ async def execute_dynamic_mission_graph(
                         for item in open_portfolio.get("dimension_portfolio", [])
                         if isinstance(item, Mapping)
                     ],
-                    "dimension_codes": list(
-                        open_portfolio.get("dimension_codes", [])
-                    ),
+                    "dimension_codes": list(open_portfolio.get("dimension_codes", [])),
                     "reference_dimension_codes": list(
                         open_portfolio.get("reference_dimension_codes", [])
                     ),
@@ -1493,8 +1830,7 @@ async def execute_dynamic_mission_graph(
                 seat_dimension_traces[instance.instance_id] = [
                     str(item.get("code", ""))
                     for item in open_portfolio.get("dimension_portfolio", [])
-                    if isinstance(item, Mapping)
-                    and str(item.get("code", "")).strip()
+                    if isinstance(item, Mapping) and str(item.get("code", "")).strip()
                 ][:3]
                 continue
             thesis = blueprint_theses[index] if index < len(blueprint_theses) else {}
@@ -1744,9 +2080,7 @@ async def execute_dynamic_mission_graph(
                     "assignment_id": item.get("assignment_id", ""),
                     "dimension_code": item.get("dimension_code", ""),
                     "combat_dimension": item.get("combat_dimension", ""),
-                    "dimension_winning_logic": item.get(
-                        "dimension_winning_logic", ""
-                    ),
+                    "dimension_winning_logic": item.get("dimension_winning_logic", ""),
                     "changed_confrontation_variable": item.get(
                         "changed_confrontation_variable", ""
                     ),
@@ -1838,8 +2172,7 @@ async def execute_dynamic_mission_graph(
 
             dimension_catalog = _s3_s4_dimension_catalog(assignment)
             dimension_catalog_text = "；".join(
-                f"{item['code']} {item['label']}"
-                for item in dimension_catalog
+                f"{item['code']} {item['label']}" for item in dimension_catalog
             )
             display_name = f"开放创新武器 Agent {label}"
             semantic_parts = [
@@ -1908,17 +2241,19 @@ async def execute_dynamic_mission_graph(
                     or result
                     or purpose_default("desired_result"),
                     forward_question=(
-                        forward_question
-                        or purpose_default("forward_question")
+                        forward_question or purpose_default("forward_question")
                     ),
                     exclusion_boundary=(
-                        exclusion_boundary
-                        or purpose_default("exclusion_boundary")
+                        exclusion_boundary or purpose_default("exclusion_boundary")
                     ),
                 ) + load_dynamic_winning_prompt(
                     "common", section="task_for_instance.purpose.1"
                 )
-        elif instance.mission_node == "S5" and instance.archetype == "independent_portfolio_reviewer" and not instance.hypothesis_id:
+        elif (
+            instance.mission_node == "S5"
+            and instance.archetype == "independent_portfolio_reviewer"
+            and not instance.hypothesis_id
+        ):
             producers = creative_producer_instances()
             try:
                 reviewer_position = producers.index(
@@ -1933,7 +2268,9 @@ async def execute_dynamic_mission_graph(
                 )
             except ValueError:
                 reviewer_position = 0
-            display_name = f"S5创新评分 Agent {chr(ord('A') + min(reviewer_position, 25))}"
+            display_name = (
+                f"S5创新评分 Agent {chr(ord('A') + min(reviewer_position, 25))}"
+            )
         output_budget = (
             2400
             if instance.archetype == "independent_portfolio_reviewer"
@@ -2053,16 +2390,11 @@ async def execute_dynamic_mission_graph(
         # instance carries a hypothesis_id and follows the patch/repair path,
         # so it still needs its scoped ledger context. Keep the full snapshot
         # path for downstream reviewers, where the ledger is actual model input.
-        context_free_node = (
-            str(swarm_controller.policy.get("policy_id"))
-            == "winning_swarm_dynamic_v2"
-            and (
-                instance.mission_node in {"S1", "S2"}
-                or (
-                    instance.mission_node in {"S3", "S4"}
-                    and not instance.hypothesis_id
-                )
-            )
+        context_free_node = str(
+            swarm_controller.policy.get("policy_id")
+        ) == "winning_swarm_dynamic_v2" and (
+            instance.mission_node in {"S1", "S2"}
+            or (instance.mission_node in {"S3", "S4"} and not instance.hypothesis_id)
         )
         compact_evidence_index: list[Any] = []
         if context_free_node:
@@ -2119,8 +2451,7 @@ async def execute_dynamic_mission_graph(
                 }
             else:
                 candidate_snapshot = [
-                    _compact_swarm_candidate_handoff(item)
-                    for item in ledger_candidates
+                    _compact_swarm_candidate_handoff(item) for item in ledger_candidates
                 ]
                 # Non-reviewer roles do not receive a semantic spine in the
                 # generic envelope; avoid computing rich handoffs for them.
@@ -2145,180 +2476,180 @@ async def execute_dynamic_mission_graph(
         )
         common_input = (
             {
-            # Carry durable identity into every isolated dynamic turn
-            # so model progress is attributable to one S-node and
-            # refreshes the Worker lease while the CLI is running.
-            "run_id": shared.get("run_id", ""),
-            "agent_instance_id": instance.instance_id,
-            "batch": batch_index,
-            "mission_node": instance.mission_node,
-            "topic": shared["topic"],
-            "research_route": shared["research_route"],
-            "execution_profile_id": shared["execution_profile_id"],
-            "discovery_branch": primary_branch,
-            "query_led_combat_equipment_themes": (
-                _open_s3_theme_contract()
-                if instance.mission_node in {"S1", "S2", "S3", "S4"}
-                else _query_led_combat_equipment_theme_contract()
-            ),
-            "query_combat_equipment_divergence_brief": (
-                _open_s3_exploration_brief(
-                    str(shared.get("topic", "")),
-                    shared.get("structured_query_brief", {}),
-                )
-                if instance.mission_node in {"S1", "S2", "S3", "S4"}
-                else _query_combat_equipment_divergence_brief(
-                    str(shared.get("topic", "")),
-                    structured_query_brief=shared.get("structured_query_brief", {}),
-                )
-            ),
-            "query_domain_contract": query_domain,
-            "mission_graph": {
-                "graph_id": graph.graph_id,
-                "mission_objective": graph.mission_objective,
-            },
-            "equipment_portfolio_contract": {
-                "selection_rule": (
-                    load_dynamic_winning_prompt(
-                        "common", section="call_instance.selection_rule.1"
+                # Carry durable identity into every isolated dynamic turn
+                # so model progress is attributable to one S-node and
+                # refreshes the Worker lease while the CLI is running.
+                "run_id": shared.get("run_id", ""),
+                "agent_instance_id": instance.instance_id,
+                "batch": batch_index,
+                "mission_node": instance.mission_node,
+                "topic": shared["topic"],
+                "research_route": shared["research_route"],
+                "execution_profile_id": shared["execution_profile_id"],
+                "discovery_branch": primary_branch,
+                "query_led_combat_equipment_themes": (
+                    _open_s3_theme_contract()
+                    if instance.mission_node in {"S1", "S2", "S3", "S4"}
+                    else _query_led_combat_equipment_theme_contract()
+                ),
+                "query_combat_equipment_divergence_brief": (
+                    _open_s3_exploration_brief(
+                        str(shared.get("topic", "")),
+                        shared.get("structured_query_brief", {}),
+                    )
+                    if instance.mission_node in {"S1", "S2", "S3", "S4"}
+                    else _query_combat_equipment_divergence_brief(
+                        str(shared.get("topic", "")),
+                        structured_query_brief=shared.get("structured_query_brief", {}),
                     )
                 ),
-                "minimum_direct_combat_equipment": (
-                    1 if query_domain["requires_direct_combat_weapon"] else 0
-                ),
-                "minimum_query_equipment": 1,
-                "direct_equipment_definition": (
-                    query_domain["subject_label"]
-                    + "；"
-                    + query_domain["direct_effect_label"]
-                    + "。"
-                    + "不得把"
-                    + "、".join(query_domain["forbidden_subjects"])
-                    + "作为主体。"
-                ),
-                "priority_lanes": [
-                    load_dynamic_winning_prompt(
-                        "common", section="call_instance.priority_lanes.1"
+                "query_domain_contract": query_domain,
+                "mission_graph": {
+                    "graph_id": graph.graph_id,
+                    "mission_objective": graph.mission_objective,
+                },
+                "equipment_portfolio_contract": {
+                    "selection_rule": (
+                        load_dynamic_winning_prompt(
+                            "common", section="call_instance.selection_rule.1"
+                        )
                     ),
-                    load_dynamic_winning_prompt(
-                        "common", section="call_instance.priority_lanes.2"
+                    "minimum_direct_combat_equipment": (
+                        1 if query_domain["requires_direct_combat_weapon"] else 0
                     ),
-                    load_dynamic_winning_prompt(
-                        "common", section="call_instance.priority_lanes.3"
+                    "minimum_query_equipment": 1,
+                    "direct_equipment_definition": (
+                        query_domain["subject_label"]
+                        + "；"
+                        + query_domain["direct_effect_label"]
+                        + "。"
+                        + "不得把"
+                        + "、".join(query_domain["forbidden_subjects"])
+                        + "作为主体。"
                     ),
-                    load_dynamic_winning_prompt(
-                        "common", section="call_instance.priority_lanes.4"
+                    "priority_lanes": [
+                        load_dynamic_winning_prompt(
+                            "common", section="call_instance.priority_lanes.1"
+                        ),
+                        load_dynamic_winning_prompt(
+                            "common", section="call_instance.priority_lanes.2"
+                        ),
+                        load_dynamic_winning_prompt(
+                            "common", section="call_instance.priority_lanes.3"
+                        ),
+                        load_dynamic_winning_prompt(
+                            "common", section="call_instance.priority_lanes.4"
+                        ),
+                    ],
+                    "priority_lane_rule": (
+                        load_dynamic_winning_prompt(
+                            "common", section="call_instance.priority_lane_rule.1"
+                        )
                     ),
-                ],
-                "priority_lane_rule": (
-                    load_dynamic_winning_prompt(
-                        "common", section="call_instance.priority_lane_rule.1"
-                    )
-                ),
-                "disruptive_lenses": [
-                    {
-                        "logic": load_dynamic_winning_prompt(
-                            "common", section="call_instance.logic.1"
-                        ),
-                        "shift": load_dynamic_winning_prompt(
-                            "common", section="call_instance.shift.1"
-                        ),
-                        "essential_change": load_dynamic_winning_prompt(
-                            "common", section="call_instance.essential_change.1"
-                        ),
-                    },
-                    {
-                        "logic": load_dynamic_winning_prompt(
-                            "common", section="call_instance.logic.2"
-                        ),
-                        "shift": load_dynamic_winning_prompt(
-                            "common", section="call_instance.shift.2"
-                        ),
-                        "essential_change": load_dynamic_winning_prompt(
-                            "common", section="call_instance.essential_change.2"
-                        ),
-                    },
-                    {
-                        "logic": load_dynamic_winning_prompt(
-                            "common", section="call_instance.logic.3"
-                        ),
-                        "shift": load_dynamic_winning_prompt(
-                            "common", section="call_instance.shift.3"
-                        ),
-                        "essential_change": load_dynamic_winning_prompt(
-                            "common", section="call_instance.essential_change.3"
-                        ),
-                    },
-                    {
-                        "logic": load_dynamic_winning_prompt(
-                            "common", section="call_instance.logic.4"
-                        ),
-                        "shift": load_dynamic_winning_prompt(
-                            "common", section="call_instance.shift.4"
-                        ),
-                        "essential_change": load_dynamic_winning_prompt(
-                            "common", section="call_instance.essential_change.4"
-                        ),
-                    },
-                    {
-                        "logic": load_dynamic_winning_prompt(
-                            "common", section="call_instance.logic.5"
-                        ),
-                        "shift": load_dynamic_winning_prompt(
-                            "common", section="call_instance.shift.5"
-                        ),
-                        "essential_change": load_dynamic_winning_prompt(
-                            "common", section="call_instance.essential_change.5"
-                        ),
-                    },
-                    {
-                        "logic": load_dynamic_winning_prompt(
-                            "common", section="call_instance.logic.6"
-                        ),
-                        "shift": load_dynamic_winning_prompt(
-                            "common", section="call_instance.shift.6"
-                        ),
-                        "essential_change": load_dynamic_winning_prompt(
-                            "common", section="call_instance.essential_change.6"
-                        ),
-                    },
-                ],
-                "disruptive_lens_rule": (
-                    load_dynamic_winning_prompt(
-                        "common", section="call_instance.disruptive_lens_rule.1"
-                    )
-                ),
-            },
-            "role_contract": _dynamic_role_contract_handoff(contract, task),
-            "specialist_task": to_plain(task),
-            "candidate_ledger": {
-                "ledger_id": ledger_snapshot.ledger_id if ledger_snapshot else "",
-                "version": ledger_snapshot.version if ledger_snapshot else 0,
-                "hypotheses": candidate_snapshot,
-                "semantic_spine": (
-                    candidate_semantic_spine
-                    if instance.archetype == "independent_portfolio_reviewer"
-                    else {}
-                ),
-                "allowed_hypothesis_ids": sorted(candidate_scope),
-                "handoff_schema": (
-                    "portfolio_semantic_spine_v2"
-                    if instance.archetype == "independent_portfolio_reviewer"
-                    else "compact_decision_spine_v1"
-                ),
-            },
-            "evidence_index": compact_evidence_index,
-            "valid_reference_ids": sorted(valid_reference_ids),
-            "isolation_contract": {
-                "raw_other_agent_sessions_visible": False,
-                "may_recruit_child_agent": False,
-                "declared_merge_target": instance.merge_target,
-            },
-            "upstream_reasoning_seeds": [
-                seed
-                for dependency in instance.depends_on
-                for seed in reasoning_seeds_by_instance.get(dependency, [])
-            ][: 6 if instance.mission_node in {"S3", "S4"} else 12],
+                    "disruptive_lenses": [
+                        {
+                            "logic": load_dynamic_winning_prompt(
+                                "common", section="call_instance.logic.1"
+                            ),
+                            "shift": load_dynamic_winning_prompt(
+                                "common", section="call_instance.shift.1"
+                            ),
+                            "essential_change": load_dynamic_winning_prompt(
+                                "common", section="call_instance.essential_change.1"
+                            ),
+                        },
+                        {
+                            "logic": load_dynamic_winning_prompt(
+                                "common", section="call_instance.logic.2"
+                            ),
+                            "shift": load_dynamic_winning_prompt(
+                                "common", section="call_instance.shift.2"
+                            ),
+                            "essential_change": load_dynamic_winning_prompt(
+                                "common", section="call_instance.essential_change.2"
+                            ),
+                        },
+                        {
+                            "logic": load_dynamic_winning_prompt(
+                                "common", section="call_instance.logic.3"
+                            ),
+                            "shift": load_dynamic_winning_prompt(
+                                "common", section="call_instance.shift.3"
+                            ),
+                            "essential_change": load_dynamic_winning_prompt(
+                                "common", section="call_instance.essential_change.3"
+                            ),
+                        },
+                        {
+                            "logic": load_dynamic_winning_prompt(
+                                "common", section="call_instance.logic.4"
+                            ),
+                            "shift": load_dynamic_winning_prompt(
+                                "common", section="call_instance.shift.4"
+                            ),
+                            "essential_change": load_dynamic_winning_prompt(
+                                "common", section="call_instance.essential_change.4"
+                            ),
+                        },
+                        {
+                            "logic": load_dynamic_winning_prompt(
+                                "common", section="call_instance.logic.5"
+                            ),
+                            "shift": load_dynamic_winning_prompt(
+                                "common", section="call_instance.shift.5"
+                            ),
+                            "essential_change": load_dynamic_winning_prompt(
+                                "common", section="call_instance.essential_change.5"
+                            ),
+                        },
+                        {
+                            "logic": load_dynamic_winning_prompt(
+                                "common", section="call_instance.logic.6"
+                            ),
+                            "shift": load_dynamic_winning_prompt(
+                                "common", section="call_instance.shift.6"
+                            ),
+                            "essential_change": load_dynamic_winning_prompt(
+                                "common", section="call_instance.essential_change.6"
+                            ),
+                        },
+                    ],
+                    "disruptive_lens_rule": (
+                        load_dynamic_winning_prompt(
+                            "common", section="call_instance.disruptive_lens_rule.1"
+                        )
+                    ),
+                },
+                "role_contract": _dynamic_role_contract_handoff(contract, task),
+                "specialist_task": to_plain(task),
+                "candidate_ledger": {
+                    "ledger_id": ledger_snapshot.ledger_id if ledger_snapshot else "",
+                    "version": ledger_snapshot.version if ledger_snapshot else 0,
+                    "hypotheses": candidate_snapshot,
+                    "semantic_spine": (
+                        candidate_semantic_spine
+                        if instance.archetype == "independent_portfolio_reviewer"
+                        else {}
+                    ),
+                    "allowed_hypothesis_ids": sorted(candidate_scope),
+                    "handoff_schema": (
+                        "portfolio_semantic_spine_v2"
+                        if instance.archetype == "independent_portfolio_reviewer"
+                        else "compact_decision_spine_v1"
+                    ),
+                },
+                "evidence_index": compact_evidence_index,
+                "valid_reference_ids": sorted(valid_reference_ids),
+                "isolation_contract": {
+                    "raw_other_agent_sessions_visible": False,
+                    "may_recruit_child_agent": False,
+                    "declared_merge_target": instance.merge_target,
+                },
+                "upstream_reasoning_seeds": [
+                    seed
+                    for dependency in instance.depends_on
+                    for seed in reasoning_seeds_by_instance.get(dependency, [])
+                ][: 6 if instance.mission_node in {"S3", "S4"} else 12],
             }
             if not context_free_node
             and instance.archetype != "independent_portfolio_reviewer"
@@ -2511,12 +2842,10 @@ async def execute_dynamic_mission_graph(
                             "name": candidate.title,
                             "winning_angle_id": candidate.winning_angle_id,
                             "combat_dimension": candidate.combat_dimension,
-                            "equipment_form": "；".join(
-                                candidate.equipment_forms[:2]
-                            )[:220],
-                            "mechanism": "；".join(
-                                candidate.mechanism_chain[:3]
-                            )[:300],
+                            "equipment_form": "；".join(candidate.equipment_forms[:2])[
+                                :220
+                            ],
+                            "mechanism": "；".join(candidate.mechanism_chain[:3])[:300],
                             "core_difference": (
                                 candidate.core_disruptive_difference
                                 or candidate.disruptive_shift
@@ -2563,8 +2892,7 @@ async def execute_dynamic_mission_graph(
                 axis_label=mission.axis_label,
                 focus_labels="、".join(mission.labels(mission.focus_values))
                 or "尚未覆盖的互补轴",
-                avoid_labels="、".join(mission.labels(mission.avoid_values))
-                or "无",
+                avoid_labels="、".join(mission.labels(mission.avoid_values)) or "无",
                 occupied="；".join(mission.occupied_cluster_keys) or "无",
                 salient="、".join(mission.labels(mission.query_salient_values))
                 or "Query未显式锁定单轴",
@@ -2621,13 +2949,15 @@ async def execute_dynamic_mission_graph(
                             "dimension": str(
                                 dimension_assignment.get("combat_dimension")
                                 or load_dynamic_winning_prompt(
-                                    "common", section="s3_s4.open_dimension_package_label"
+                                    "common",
+                                    section="s3_s4.open_dimension_package_label",
                                 )
                             ),
                             "winning_logic": str(
                                 dimension_assignment.get("dimension_winning_logic")
                                 or load_dynamic_winning_prompt(
-                                    "common", section="s3_s4.open_dimension_package_logic"
+                                    "common",
+                                    section="s3_s4.open_dimension_package_logic",
                                 )
                             ),
                             "task_chain_breakpoint": str(
@@ -2733,9 +3063,7 @@ async def execute_dynamic_mission_graph(
             # providers, while transporting the creator's actual dimension
             # choice in an auditable sidecar owned by common.md.
             output_schema = _dynamic_output_schema("s3_s4.output_schema")
-            hypothesis_template = dict(
-                (output_schema.get("hypotheses") or [{}])[0]
-            )
+            hypothesis_template = dict((output_schema.get("hypotheses") or [{}])[0])
             output_schema["hypotheses"] = [
                 {
                     **hypothesis_template,
@@ -2779,7 +3107,7 @@ async def execute_dynamic_mission_graph(
                 "\n【Query语义硬边界】当前任务属于检测/感知/保障装备研究。"
                 f"候选主体只能是{query_domain['subject_label']}；"
                 f"直接效果只能写{query_domain['direct_effect_label']}。"
-                f"禁止输出{ '、'.join(query_domain['forbidden_subjects']) }。"
+                f"禁止输出{'、'.join(query_domain['forbidden_subjects'])}。"
                 "如证据只支持背景能力，不得将其升级为攻击装备，返回待验证假设或淘汰。"
             )
         emit_swarm_event(
@@ -2800,7 +3128,10 @@ async def execute_dynamic_mission_graph(
             ),
             **runtime_contract,
         )
-        if instance.mission_node == "S5" and instance.archetype == "independent_portfolio_reviewer":
+        if (
+            instance.mission_node == "S5"
+            and instance.archetype == "independent_portfolio_reviewer"
+        ):
             emit_swarm_event(
                 "winning_s5_parallel_score_started",
                 actor=instance.instance_id,
@@ -2868,6 +3199,7 @@ async def execute_dynamic_mission_graph(
                 creative_considered_dimensions.append(value)
                 if len(creative_considered_dimensions) >= 3:
                     break
+
         try:
             configured_creative_passes = int(
                 os.environ.get(
@@ -3504,9 +3836,9 @@ async def execute_dynamic_mission_graph(
                         candidate_dimension_scores[source_id]
                     )
                 if source_id in candidate_innovation_bases:
-                    candidate_innovation_bases[target_id] = (
-                        candidate_innovation_bases[source_id]
-                    )
+                    candidate_innovation_bases[target_id] = candidate_innovation_bases[
+                        source_id
+                    ]
                 if source_id in candidate_naming_assessments:
                     candidate_naming_assessments[target_id] = dict(
                         candidate_naming_assessments[source_id]
@@ -3520,7 +3852,10 @@ async def execute_dynamic_mission_graph(
                     target_id,
                     candidate_innovation_bases.get(source_id, ""),
                 )
-                if target_id not in candidate_naming_assessments and source_id in candidate_naming_assessments:
+                if (
+                    target_id not in candidate_naming_assessments
+                    and source_id in candidate_naming_assessments
+                ):
                     candidate_naming_assessments[target_id] = dict(
                         candidate_naming_assessments[source_id]
                     )
@@ -3639,9 +3974,7 @@ async def execute_dynamic_mission_graph(
         # A semantic merge is not a rejection.  Remove only its source alias
         # from the rejection set; genuine S5 rejects remain auditable.
         portfolio_rejected_ids.difference_update(canonical_merge_map)
-        state.swarm_hypotheses = {
-            item.hypothesis_id: item for item in clustered
-        }
+        state.swarm_hypotheses = {item.hypothesis_id: item for item in clustered}
 
         known_merge_keys = {
             (
@@ -3656,7 +3989,9 @@ async def execute_dynamic_mission_graph(
             source_id = row["source_hypothesis_id"]
             target_id = canonical_merge_map.get(
                 source_id,
-                canonical_merge_map.get(row["target_hypothesis_id"], row["target_hypothesis_id"]),
+                canonical_merge_map.get(
+                    row["target_hypothesis_id"], row["target_hypothesis_id"]
+                ),
             )
             if source_id == target_id:
                 continue
@@ -3760,8 +4095,7 @@ async def execute_dynamic_mission_graph(
         """
 
         return (
-            str(swarm_controller.policy.get("policy_id"))
-            == "winning_swarm_dynamic_v2"
+            str(swarm_controller.policy.get("policy_id")) == "winning_swarm_dynamic_v2"
             and item.mission_node == "S5"
             and item.archetype == "independent_portfolio_reviewer"
             and len(item.depends_on) == 1
@@ -3901,8 +4235,7 @@ async def execute_dynamic_mission_graph(
             remaining_instances,
             max(
                 0,
-                int(budget["remaining_calls"] or 0)
-                - mandatory_pending_calls,
+                int(budget["remaining_calls"] or 0) - mandatory_pending_calls,
             ),
         )
         decision = decide_adaptive_action(
@@ -3947,9 +4280,7 @@ async def execute_dynamic_mission_graph(
             already_used=used_archetypes,
             expected_quality_gain=0.05,
         )
-        contracts.update(
-            {item.role_contract_id: item for item in graph.role_contracts}
-        )
+        contracts.update({item.role_contract_id: item for item in graph.role_contracts})
         for item in graph.agent_instances:
             if item.instance_id in pending:
                 pending[item.instance_id] = item
@@ -4067,6 +4398,7 @@ async def execute_dynamic_mission_graph(
                     "common", section="s3_s4.incremental_boundary_rule"
                 ),
             )
+
         def _creative_dispatch_priority(item: WinningAgentInstance) -> int:
             """Prefer S4 once its incremental boundary has opened.
 
@@ -4112,9 +4444,8 @@ async def execute_dynamic_mission_graph(
             }:
                 if item.mission_node == "S4" and not item.hypothesis_id:
                     creative_rank = 0
-                elif (
-                    is_dynamic_paired_reviewer(item)
-                    and bool(effective_scope_for_instance(item, ledger))
+                elif is_dynamic_paired_reviewer(item) and bool(
+                    effective_scope_for_instance(item, ledger)
                 ):
                     creative_rank = 1
                 elif item.mission_node == "S3" and not item.hypothesis_id:
@@ -4141,10 +4472,7 @@ async def execute_dynamic_mission_graph(
                 item
                 for item in pending.values()
                 if all(dep in completed_instances for dep in item.depends_on)
-                and (
-                    item.mission_node != "S4"
-                    or s4_boundary_ready
-                )
+                and (item.mission_node != "S4" or s4_boundary_ready)
                 and (
                     item.mission_node not in {"S3", "S4"}
                     or all(
@@ -4423,6 +4751,7 @@ async def execute_dynamic_mission_graph(
                     for item in _s3_s4_dimension_catalog(assignment_for_trace)
                     if str(item.get("code", "")).strip()
                 }
+
                 # ``allowed_codes`` describes the three open containers sent
                 # to this seat; it is *not* a taxonomy or whitelist.  A model
                 # may (and should) replace a container with a Query-specific
@@ -4439,22 +4768,25 @@ async def execute_dynamic_mission_graph(
                     marker = token.casefold().replace(" ", "")
                     if "::open-dimension::" in marker:
                         return True
-                    return marker in {
-                        "open",
-                        "open_slot",
-                        "open-slot",
-                        "auto",
-                        "dynamic",
-                        "dynamic-open",
-                        "dynamic_open",
-                        "dynamicopen",
-                        "query开放制胜维度",
-                    } or bool(
-                        re.match(r"^query开放制胜(?:槽位|维度)\d*$", marker)
-                    ) or bool(
-                        re.match(
-                            r"^open(?:[_-]?slot)?[-_:][a-z0-9]{4,}(?:[-_:][a-z0-9]+)*$",
-                            marker,
+                    return (
+                        marker
+                        in {
+                            "open",
+                            "open_slot",
+                            "open-slot",
+                            "auto",
+                            "dynamic",
+                            "dynamic-open",
+                            "dynamic_open",
+                            "dynamicopen",
+                            "query开放制胜维度",
+                        }
+                        or bool(re.match(r"^query开放制胜(?:槽位|维度)\d*$", marker))
+                        or bool(
+                            re.match(
+                                r"^open(?:[_-]?slot)?[-_:][a-z0-9]{4,}(?:[-_:][a-z0-9]+)*$",
+                                marker,
+                            )
                         )
                     )
 
@@ -4473,9 +4805,7 @@ async def execute_dynamic_mission_graph(
                             or ""
                         ).strip()
                         angle = str(
-                            value.get("winning_angle_id")
-                            or value.get("angle_id")
-                            or ""
+                            value.get("winning_angle_id") or value.get("angle_id") or ""
                         ).strip()
                         # A mapping with ``dimension_code=OTHER`` and a
                         # richer label is one authored relation, not the
@@ -4749,9 +5079,7 @@ async def execute_dynamic_mission_graph(
                         ),
                         changed_confrontation_variable=(
                             candidate.changed_confrontation_variable
-                            or str(
-                                assignment.get("task_chain_breakpoint", "")
-                            ).strip()
+                            or str(assignment.get("task_chain_breakpoint", "")).strip()
                         ),
                     )
                     resolved_code = str(
@@ -4898,11 +5226,7 @@ async def execute_dynamic_mission_graph(
                             ],
                             maximum=min(
                                 7,
-                                int(
-                                    swarm_controller.policy.get(
-                                        "finalist_maximum", 7
-                                    )
-                                ),
+                                int(swarm_controller.policy.get("finalist_maximum", 7)),
                             ),
                         )
                         raw_decisions = fallback_result.get("decisions", [])
@@ -4929,6 +5253,70 @@ async def execute_dynamic_mission_graph(
                                 "保守排序，不补写武器属性。"
                             ),
                         )
+                    is_cross_pool_reviewer = (
+                        str(swarm_controller.policy.get("policy_id"))
+                        == "winning_swarm_dynamic_v2"
+                        and len(instance.depends_on) > 1
+                    )
+                    if is_cross_pool_reviewer:
+                        # Every cross-pool reviewer was dispatched against an
+                        # immutable full-ledger snapshot.  Keep each response
+                        # as an independent vote and reconcile them only after
+                        # all reviewers finish.  Mutating the live ledger here
+                        # made the second completion operate on the first
+                        # reviewer's survivors, turning concurrent opinions
+                        # into an order-dependent set intersection.
+                        cross_pool_s5_reviews.append(
+                            {
+                                "reviewer_id": instance.instance_id,
+                                "candidate_scope": sorted(candidate_scope),
+                                "decisions": [
+                                    dict(row)
+                                    for row in raw_decisions
+                                    if isinstance(row, Mapping)
+                                ],
+                                "portfolio_order": [
+                                    str(value)
+                                    for value in result.get("portfolio_order", [])
+                                    if str(value).strip()
+                                ],
+                                "portfolio_summary": str(
+                                    result.get("portfolio_summary", "")
+                                )[:500],
+                            }
+                        )
+                        reviewed_now = {
+                            canonical_candidate_id(str(row.get("hypothesis_id", "")))
+                            for row in raw_decisions
+                            if isinstance(row, Mapping)
+                            and canonical_candidate_id(
+                                str(row.get("hypothesis_id", ""))
+                            )
+                            in known_ids
+                        }
+                        reviewed_candidate_ids.update(reviewed_now)
+                        pending_incremental_review_ids.difference_update(reviewed_now)
+                        review_targets_by_instance.pop(instance.instance_id, None)
+                        emit_swarm_event(
+                            "winning_s5_parallel_score_completed",
+                            actor=instance.instance_id,
+                            graph_id=graph.graph_id,
+                            reviewed_candidate_ids=sorted(reviewed_now),
+                            omitted_candidate_ids=sorted(required_ids - reviewed_now),
+                            remaining_candidate_ids=sorted(
+                                pending_incremental_review_ids
+                            ),
+                            portfolio_order=[
+                                str(value)
+                                for value in result.get("portfolio_order", [])
+                                if str(value).strip()
+                            ],
+                            portfolio_summary=str(result.get("portfolio_summary", ""))[
+                                :500
+                            ],
+                            aggregation_pending=True,
+                        )
+                        continue
                     # Model responses can be truncated or contain a repeated
                     # row. Treat the reviewer output as an unordered patch:
                     # keep the last valid decision for each candidate and
@@ -5142,7 +5530,10 @@ async def execute_dynamic_mission_graph(
                                 reason=decision_reason,
                             )
 
-                        if decision in {"retain", "merge"} and not _s5_retain_passes_concrete_weapon_contract(
+                        if decision in {
+                            "retain",
+                            "merge",
+                        } and not _s5_retain_passes_concrete_weapon_contract(
                             raw,
                             query_domain_mode=query_domain["mode"],
                         ):
@@ -5187,8 +5578,8 @@ async def execute_dynamic_mission_graph(
                                 )
                                 != "assessed"
                             ):
-                                candidate_naming_assessments[target_id] = (
-                                    dict(candidate_naming_assessments[source_id])
+                                candidate_naming_assessments[target_id] = dict(
+                                    candidate_naming_assessments[source_id]
                                 )
                             if weighted_score > candidate_weighted_scores.get(
                                 target_id, -1.0
@@ -5594,6 +5985,178 @@ async def execute_dynamic_mission_graph(
                         resulting_ledger_version=receipt.resulting_ledger_version,
                     )
 
+    if ledger is not None and cross_pool_s5_reviews:
+        source_candidates = list(ledger.hypotheses)
+        reconciliation = _reconcile_cross_pool_s5_reviews(
+            source_candidates,
+            cross_pool_s5_reviews,
+            query_domain_mode=str(query_domain["mode"]),
+        )
+        cross_pool_s5_audit = {
+            "status": "completed",
+            "reviewer_count": reconciliation["reviewer_count"],
+            "candidate_count_before": len(source_candidates),
+            "eligible_count_after": len(reconciliation["eligible_hypothesis_ids"]),
+            "merge_map": reconciliation["merge_map"],
+            "omitted_by_reviewer": reconciliation["omitted_by_reviewer"],
+            "invalid_rows": reconciliation["invalid_rows"],
+            "aggregation_rule": (
+                "完整候选池独立评审；五维分取多评审均值；遗漏不等同判退；"
+                "至少一个有效保留/合并意见方可准入；同构组保留均分最高候选"
+            ),
+        }
+        portfolio_order_hints.update(reconciliation["portfolio_order_hints"])
+        eligible_ids = set(reconciliation["eligible_hypothesis_ids"])
+        rejected_ids = set(reconciliation["rejected_hypothesis_ids"])
+        merge_map = dict(reconciliation["merge_map"])
+        aggregates = reconciliation["aggregates"]
+
+        for invalid_row in reconciliation["invalid_rows"]:
+            invalid_reason = str(invalid_row.get("reason", ""))
+            candidate_id = str(invalid_row.get("hypothesis_id", ""))
+            reviewer_id = str(invalid_row.get("reviewer_id", ""))
+            stage = (
+                "full_pool_s5_invalid_merge_target"
+                if invalid_reason == "invalid_merge_target"
+                else "full_pool_s5_portfolio_contract_gate"
+                if invalid_reason == "concrete_weapon_contract_failed"
+                else "full_pool_s5_invalid_decision"
+            )
+            state.swarm_rejections.append(
+                {
+                    "hypothesis_id": candidate_id,
+                    "reason": f"{reviewer_id}:{invalid_reason}",
+                    "stage": stage,
+                    "review_vote_only": True,
+                }
+            )
+            if invalid_reason == "invalid_merge_target":
+                emit_swarm_event(
+                    "winning_s5_invalid_merge_rejected",
+                    actor=reviewer_id,
+                    graph_id=graph.graph_id,
+                    hypothesis_id=candidate_id,
+                    merge_target_hypothesis_id="",
+                    reported_decision="merge",
+                    reason="S5合并目标无效；仅判退该评审票，不覆盖其他跨池评审意见",
+                    review_vote_only=True,
+                )
+
+        for candidate_id, aggregate in aggregates.items():
+            candidate_dimension_scores[candidate_id] = dict(
+                aggregate.get("dimension_scores", {})
+            )
+            candidate_weighted_scores[candidate_id] = float(
+                aggregate.get("weighted_score", 0.0) or 0.0
+            )
+            candidate_innovation_priorities[candidate_id] = float(
+                aggregate.get("innovation_priority", 0.0) or 0.0
+            )
+            best_row = aggregate.get("best_row", {})
+            if not isinstance(best_row, Mapping):
+                best_row = {}
+            naming_assessment = best_row.get("naming_assessment", {})
+            if not isinstance(naming_assessment, Mapping):
+                naming_assessment = {}
+            candidate_naming_assessments[candidate_id] = {
+                "naming_assessment_status": naming_assessment.get(
+                    "status", "unassessed"
+                ),
+                "s5_innovation_mechanism_score": naming_assessment.get(
+                    "s5_innovation_mechanism_score"
+                ),
+                "naming_new_quality": naming_assessment.get("naming_new_quality"),
+                "naming_semantic_alignment": naming_assessment.get(
+                    "naming_semantic_alignment"
+                ),
+                "effective_innovation": naming_assessment.get("effective_innovation"),
+                "naming_anchor": naming_assessment.get("naming_anchor", ""),
+                "naming_reason": naming_assessment.get("naming_reason", ""),
+            }
+            candidate_innovation_bases[candidate_id] = str(
+                best_row.get("innovation_basis", "")
+            )
+            candidate_disruption_tiers[candidate_id] = str(
+                best_row.get("disruption_tier", "")
+            )
+            for mapping, field_name in (
+                (candidate_displaced_modes, "displaced_operational_mode"),
+                (candidate_new_operational_modes, "new_operational_mode"),
+                (candidate_winning_relation_shifts, "winning_relation_shift"),
+            ):
+                value = str(best_row.get(field_name, "")).strip()
+                if value:
+                    mapping[candidate_id] = value
+            if int(aggregate.get("review_count", 0) or 0) > 0:
+                reviewed_candidate_ids.add(candidate_id)
+            emit_swarm_event(
+                "winning_full_pool_portfolio_decision_aggregated",
+                actor="winning_swarm_independent_portfolio_reviewer",
+                graph_id=graph.graph_id,
+                hypothesis_id=candidate_id,
+                review_count=int(aggregate.get("review_count", 0) or 0),
+                positive_review_count=int(
+                    aggregate.get("positive_review_count", 0) or 0
+                ),
+                reject_review_count=int(aggregate.get("reject_review_count", 0) or 0),
+                dimension_scores=candidate_dimension_scores[candidate_id],
+                weighted_score=candidate_weighted_scores[candidate_id],
+                disposition=(
+                    "merge"
+                    if candidate_id in merge_map
+                    else "retain"
+                    if candidate_id in eligible_ids
+                    else "reject"
+                ),
+                merge_target_hypothesis_id=merge_map.get(candidate_id, ""),
+            )
+
+        for source_id, target_id in merge_map.items():
+            candidate_id_aliases[source_id] = target_id
+            merge_row = {
+                "source_hypothesis_id": source_id,
+                "target_hypothesis_id": target_id,
+                "reason": "cross_pool_s5_winning_dimension_isomorphism",
+            }
+            state.swarm_merges.append(merge_row)
+            emit_swarm_event("hypothesis_merged", **merge_row)
+        portfolio_rejected_ids.update(rejected_ids)
+        for candidate_id in sorted(rejected_ids):
+            state.swarm_rejections.append(
+                {
+                    "hypothesis_id": candidate_id,
+                    "reason": "并发S5聚合后无有效保留意见或未通过具体装备准入合同",
+                    "stage": "cross_pool_s5_reconciliation",
+                }
+            )
+
+        retained_hypotheses = [
+            item for item in source_candidates if item.hypothesis_id in eligible_ids
+        ]
+        if {item.hypothesis_id for item in retained_hypotheses} != {
+            item.hypothesis_id for item in source_candidates
+        }:
+            ledger = HypothesisLedgerVersion(
+                ledger_id=ledger.ledger_id,
+                version=ledger.version + 1,
+                parent_version=ledger.version,
+                hypotheses=retained_hypotheses,
+                merge_receipts=list(ledger.merge_receipts),
+                change_summary="cross_pool_s5_reviews_reconciled",
+                created_by="winning_swarm_independent_portfolio_reviewer",
+            )
+        emit_swarm_event(
+            "winning_cross_pool_s5_reconciliation_completed",
+            actor="winning_swarm_independent_portfolio_reviewer",
+            graph_id=graph.graph_id,
+            reviewer_count=reconciliation["reviewer_count"],
+            candidate_count_before=len(source_candidates),
+            eligible_count_after=len(retained_hypotheses),
+            merged_count=len(merge_map),
+            rejected_count=len(rejected_ids),
+            omitted_by_reviewer=reconciliation["omitted_by_reviewer"],
+        )
+
     if ledger is None:
         ledger = swarm_controller.create_ledger([])
     else:
@@ -5622,23 +6185,22 @@ async def execute_dynamic_mission_graph(
                 scope_id="dynamic-v2-closeout",
                 changed_hypothesis_ids=None,
             )
-    # The dynamic portfolio is the direct result of six paired S5 scoring
-    # passes over the S3/S4 outputs. There is no second expert score,
-    # evidence/TRL audit, repair wave, or completeness ranker. The controller
-    # merges the per-seat judgements, globally orders retained candidates by
-    # the five-axis score, and sends at most seven finalists to concurrent S6
-    # card authoring.
-    maximum = min(
-        7,
+    # S5 freezes a six-equipment portfolio.  Distinct winning dimensions take
+    # priority; when fewer than six dimensions survive, independently admitted
+    # rows from the least-overlapping five-axis identity are used as backfill,
+    # with the aggregated S5 score breaking ties.
+    finalist_target = min(
+        max(1, int(swarm_controller.policy.get("finalist_minimum", 6))),
         max(1, int(swarm_controller.policy.get("finalist_maximum", 7))),
     )
-    ordered_hypotheses, portfolio_diversity_audit = _s5_diverse_portfolio_order(
+    maximum = finalist_target
+    ordered_hypotheses, portfolio_diversity_audit = _s5_diverse_six_order(
         ledger.hypotheses,
         weighted_scores=candidate_weighted_scores,
         innovation_priorities=candidate_innovation_priorities,
         disruption_tiers=candidate_disruption_tiers,
         portfolio_order_hints=portfolio_order_hints,
-        maximum=maximum,
+        target=finalist_target,
     )
     selected_ids_ordered = [item.hypothesis_id for item in ordered_hypotheses]
     selected_ids = set(selected_ids_ordered)
@@ -5647,16 +6209,12 @@ async def execute_dynamic_mission_graph(
     # durable universe so UI/audit consumers see a truthful rejected count;
     # the previous hard-coded zero hid both kinds of disposition.
     all_authored_ids = {
-        item.hypothesis_id
-        for item in hypotheses
-        if getattr(item, "hypothesis_id", "")
+        item.hypothesis_id for item in hypotheses if getattr(item, "hypothesis_id", "")
     }
     all_authored_ids.update(candidate_id_aliases)
     all_authored_ids.update(portfolio_rejected_ids)
     rejected_ids_ordered = [
-        item
-        for item in sorted(all_authored_ids)
-        if item not in selected_ids
+        item for item in sorted(all_authored_ids) if item not in selected_ids
     ]
     # Keep active-ledger ordering first for compatibility, then append merged
     # or pre-ledger rejects in stable ID order.
@@ -5724,11 +6282,14 @@ async def execute_dynamic_mission_graph(
         },
         dominance_reasons={},
         expert_assessment_ids=[],
-        # Compatibility field on the shared decision model. In dynamic-v2
-        # this means only "S5 produced a non-empty portfolio"; no quality
-        # judge exists or is invoked.
-        quality_judge_passed=bool(selected_ids_ordered),
-        status="accepted_by_full_pool_s5",
+        # Dynamic-v2 requires a complete six-equipment handoff.  A smaller
+        # portfolio remains inspectable but cannot be reported as completed.
+        quality_judge_passed=len(selected_ids_ordered) >= finalist_target,
+        status=(
+            "accepted_by_full_pool_s5"
+            if len(selected_ids_ordered) >= finalist_target
+            else "limited_insufficient_s5_finalists"
+        ),
         requires_human_review=False,
     )
     emit_swarm_event(
@@ -5767,12 +6328,18 @@ async def execute_dynamic_mission_graph(
         # bounded comparison spine for S6 instead of leaving the audit-facing
         # fields empty.  The fallback is deliberately category-level: it does
         # not claim that the public sources validate this particular concept.
-        baseline = item.nearest_public_baseline.strip() or load_dynamic_winning_prompt(
-            "common", section="s6.dynamic_defaults.baseline"
-        ).strip()
-        evidence_boundary = item.evidence_boundary.strip() or load_dynamic_winning_prompt(
-            "common", section="s6.dynamic_defaults.evidence_boundary"
-        ).strip()
+        baseline = (
+            item.nearest_public_baseline.strip()
+            or load_dynamic_winning_prompt(
+                "common", section="s6.dynamic_defaults.baseline"
+            ).strip()
+        )
+        evidence_boundary = (
+            item.evidence_boundary.strip()
+            or load_dynamic_winning_prompt(
+                "common", section="s6.dynamic_defaults.evidence_boundary"
+            ).strip()
+        )
         validation_plan = list(item.validation_plan[:8]) or [
             load_dynamic_winning_prompt(
                 "common", section="s6.dynamic_defaults.validation"
@@ -5865,7 +6432,7 @@ async def execute_dynamic_mission_graph(
     ]
     # Keep the S5 disposition counters mutually intelligible: a semantic
     # merge is not a rejection, while a retained candidate that falls past
-    # the seven-card portfolio cap is an overflow disposition.  The legacy
+    # the six-card portfolio target is an overflow disposition.  The legacy
     # ``rejected_count`` field remains the sum of genuine S5 rejects and
     # overflow rows for downstream consumers that only understand that field.
     merged_source_ids = {
@@ -5879,9 +6446,7 @@ async def execute_dynamic_mission_graph(
         if candidate_id and candidate_id not in merged_source_ids
     }
     authored_ids = {
-        item.hypothesis_id
-        for item in hypotheses
-        if getattr(item, "hypothesis_id", "")
+        item.hypothesis_id for item in hypotheses if getattr(item, "hypothesis_id", "")
     }
     authored_ids.update(candidate_id_aliases)
     authored_ids.update(portfolio_rejected_ids)
@@ -5904,7 +6469,11 @@ async def execute_dynamic_mission_graph(
         s5_rejected_count=s5_rejected_count,
         merged_source_count=merged_source_count,
         overflow_count=overflow_count,
-        status="completed",
+        status=(
+            "completed"
+            if len(equipment_portfolio) >= finalist_target
+            else "limited_insufficient_finalists"
+        ),
         contract_owner="s5_full_pool_portfolio_reviewer",
         pre_freeze_naming_repair_allowed=False,
         post_freeze_naming_mutation_allowed=False,
@@ -5979,11 +6548,13 @@ async def execute_dynamic_mission_graph(
     remote_precision_present = any(
         _is_remote_precision_portfolio_direction(item) for item in equipment_portfolio
     )
-    # Ratios and completeness counters below are diagnostics. They must
-    # not turn a model-selected, independently authored portfolio into a
-    # failed run. Semantic admission belongs to the Codex review; this
-    # layer only records whether there is something concrete to deliver.
-    portfolio_quality_gate_passed = bool(equipment_portfolio)
+    # Dynamic-v2 promises six finalized equipment cards.  Semantic admission
+    # still belongs to S5, but a smaller set is an explicit incomplete result,
+    # not a successful run with a silently weakened quantity contract.
+    portfolio_quantity_shortfall = max(0, finalist_target - len(equipment_portfolio))
+    portfolio_quality_gate_passed = (
+        len(equipment_portfolio) >= finalist_target and s6_handoff_gate_passed
+    )
     direct_equipment_diversity_limited = bool(
         not direct_equipment_diversity_passed
         and distinct_direct_equipment_family_count > 0
@@ -6106,9 +6677,7 @@ async def execute_dynamic_mission_graph(
                 "primary_dimension_label": str(
                     assignment.get("primary_dimension_label", "")
                 ),
-                "dimension_codes": list(
-                    assignment.get("dimension_codes", [])
-                ),
+                "dimension_codes": list(assignment.get("dimension_codes", [])),
                 "reference_dimension_codes": list(
                     assignment.get("reference_dimension_codes", [])
                 ),
@@ -6129,9 +6698,7 @@ async def execute_dynamic_mission_graph(
         },
         "dimension_mode": "multi_dimensional_per_seat",
         "dimension_catalog_size": len(
-            _s3_s4_dimension_catalog(
-                next(iter(winning_angle_assignments.values()), {})
-            )
+            _s3_s4_dimension_catalog(next(iter(winning_angle_assignments.values()), {}))
         ),
         "candidate_id_aliases": dict(sorted(candidate_id_aliases.items())),
         "candidate_lineage": candidate_lineage,
@@ -6141,12 +6708,16 @@ async def execute_dynamic_mission_graph(
         "merge_receipts": [to_plain(item) for item in merge_receipts],
         "portfolio_decision": to_plain(decision),
         "portfolio_diversity_audit": portfolio_diversity_audit,
+        "cross_pool_s5_audit": cross_pool_s5_audit,
         "semantic_cluster_audit": semantic_cluster_audit,
         "finalists": [to_plain(item) for item in final_hypotheses],
         "final_equipment_portfolio": equipment_portfolio,
         "portfolio_quality_gate": {
             "passed": portfolio_quality_gate_passed,
             "direction_count": len(equipment_portfolio),
+            "target_direction_count": finalist_target,
+            "quantity_gate_passed": len(equipment_portfolio) >= finalist_target,
+            "quantity_shortfall": portfolio_quantity_shortfall,
             "direct_combat_equipment_count": direct_combat_count,
             "mission_equipment_count": mission_equipment_count,
             "query_domain_mode": query_domain_mode,
@@ -6192,13 +6763,12 @@ async def execute_dynamic_mission_graph(
             "remote_precision_required": False,
             "remote_precision_present": remote_precision_present,
             "selection_rule": (
-                "多选制：增量五轴语义聚类与六个并发S5独立评分席位决定保留、合并和判退；"
-                "先在同一制胜维度内竞优并压缩同构候选，再跨维度优先覆盖互异制胜关系；"
-                "最多保留7项，随后由S6逐卡并发撰写能力画像"
+                f"多选制：{len(cross_pool_s5_reviews)}个跨池S5评审对完整候选池独立五维评分，"
+                "统一判定制胜维度同构并在同构组内保留高分候选；"
+                "先覆盖不同制胜维度，维度不足时选择五轴身份重叠更低者，"
+                f"同等差异下按综合分补齐{finalist_target}项，再由S6逐卡并发撰写能力画像"
             ),
-            "s6_card_capacity": int(
-                swarm_controller.policy.get("finalist_maximum", 7)
-            ),
+            "s6_card_capacity": finalist_target,
             "direct_combat_equipment_must_be_main_body": (
                 query_domain_mode == "direct_combat"
             ),
@@ -6208,7 +6778,7 @@ async def execute_dynamic_mission_graph(
         "s5_fallback_activated": s5_fallback_activated,
         "s5_fallback_reason": s5_fallback_reason,
         "s5_decision_scope": "innovation_disruption_only",
-        "s5_scoring_mode": "parallel_per_creative_agent",
+        "s5_scoring_mode": "parallel_cross_pool_then_stable_reconciliation",
         "s5_reviewer_count": sum(
             item.archetype == "independent_portfolio_reviewer"
             and item.mission_node == "S5"
@@ -6237,7 +6807,7 @@ async def execute_dynamic_mission_graph(
             else (
                 "mission_graph_complete"
                 if portfolio_quality_gate_passed
-                else "mission_graph_limited_no_deliverable_portfolio"
+                else "mission_graph_limited_insufficient_s5_finalists"
             )
         ),
     }

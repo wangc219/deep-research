@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "latest",
+    "@vitejs/plugin-react": "^5.0.4",
     "buffer": "^6.0.3",
     "docx": "^9.5.1",
     "lucide-react": "latest",
@@ -17,6 +17,6 @@
     "react-dom": "latest",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
-    "vite": "latest"
+    "vite": "^7.1.7"
   }
 }

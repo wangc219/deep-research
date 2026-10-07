@@ -1,3 +1,4 @@
+import { AuthenticatedEventSource } from './authenticated-event-source.js';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import ReactMarkdown from 'react-markdown';
@@ -13,10 +14,15 @@ import './research-launch.css';
 // chrome above (focus rings, motion, status pills, scrollbars).
 import './theme.css';
 import {FRONTEND_FEATURE_FLAGS, isFrontendFeatureEnabled} from './feature-flags.js';
+import {getScrollHostOffset, observeScrollHost, scrollHostToTop} from './scroll-host.js';
 import {searchQueryItems} from './query-search.js';
 import {ErrorBoundary, Skeleton, ToastHost, clearPersisted, copyWithToast, downloadText, notify, relativeTime, useOverlay, usePersistentDraft, usePersistentState} from './ux.jsx';
 import {DeepThinkingDock} from './features/deep-thinking/DeepThinkingPanel.jsx';
 import {openDeepThinking} from './features/deep-thinking/open-deep-thinking.js';
+import {publishDeepLaunchCard, recallDeepLaunchContext, rememberDeepLaunchContext} from './features/deep-thinking/deep-launch-context.js';
+import {capabilitySeedFocus} from './features/deep-thinking/deep-portrait-sections.js';
+import {inheritKnowledgeScope} from './features/query-library/knowledge-scope.mjs';
+import {isGlobalBusinessRole} from './platform-role.js';
 
 if (FRONTEND_FEATURE_FLAGS.benchmark) void import('./benchmark.css');
 
@@ -95,7 +101,7 @@ const FAVORITE_META_STORAGE_KEY = 'equipment-dr.favorite-meta.v1';
 const readFavoriteMeta = () => {
   if (typeof window === 'undefined') return {};
   try {
-    const raw = window.localStorage.getItem(FAVORITE_META_STORAGE_KEY);
+    const raw = window.localStorage.getItem(`${FAVORITE_META_STORAGE_KEY}:${globalThis.__EQUIPMENT_USER_ID__ || "standalone"}`);
     const parsed = raw ? JSON.parse(raw) : {};
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
     return Object.fromEntries(Object.entries(parsed).filter(([, value]) => value && typeof value === 'object').map(([key, value]) => [String(key), {
@@ -109,7 +115,7 @@ const readFavoriteMeta = () => {
 const writeFavoriteMeta = value => {
   if (typeof window === 'undefined') return;
   try {
-    window.localStorage.setItem(FAVORITE_META_STORAGE_KEY, JSON.stringify(value || {}));
+    window.localStorage.setItem(`${FAVORITE_META_STORAGE_KEY}:${globalThis.__EQUIPMENT_USER_ID__ || "standalone"}`, JSON.stringify(value || {}));
   } catch (_error) { /* Private browsing or quota limits should not block CRUD. */ }
 };
 // Run IDs come from persisted task/artifact directories and are opaque. Keep
@@ -218,7 +224,12 @@ const capabilityPortraitIsComplete = row => {
     return tokenized.split('_').some(token => rejectedTokens.has(token)) || ['回退', '受限', '失败', '错误', '拒绝', '驳回', '取消', '待核验', '待验证', '待审核', '审核中', '未核验', '未验证', '待校准', '待成稿', '临时', '参考', '未完成', '未成稿', '草稿'].some(marker => value.includes(marker));
   };
   if ([...authoringStatuses, ...provenance, ...types].some(disallowedStatus)) return false;
-  if (['pending', 'unverified', 'rejected', '待核验', '待验证'].includes(normalized(source.verification_status)) || disallowedStatus(normalized(source.verification_status)) || favoriteBoolean(source.confidence_limited)) return false;
+  // Verification describes evidence maturity, not whether S6 authoring is
+  // complete.  Users must be able to bookmark a complete formal portrait for
+  // later review even when its confidence is limited or its evidence remains
+  // pending.  Only an explicit negative verification outcome is a hard stop.
+  const verificationStatus = normalized(source.verification_status);
+  if (['rejected', 'failed', 'failure', 'error', 'cancelled', 'canceled', '拒绝', '驳回', '失败', '错误', '取消'].some(marker => verificationStatus === marker || verificationStatus.includes(marker))) return false;
   const modules = source.capability_portrait_modules;
   const hasModules = modules && typeof modules === 'object' && FAVORITE_MODULE_KEYS.every(key => String(modules[key] || '').trim());
   const portrait = String(source.deep_capability_portrait || source.capability_image || '').trim();
@@ -258,14 +269,19 @@ const shuffleRecommendations = items => {
   }
   return rows;
 };
-function App() {
+export function App({platformModelSpec = '', platformUserRole = '', onModelSelectorMount, embed = false, view: controlledView, onNavigate, runId: controlledRunId = '', deepOpen = false, deepSessionId = '', cap: controlledCap = ''} = {}) {
   const initialNavigation = useMemo(() => readNavigationState(), []);
-  const [view, setView] = useState(initialNavigation.view);
-  const [favoriteScope, setFavoriteScope] = useState(initialNavigation.scope === FAVORITE_SCOPE_PRIVATE ? FAVORITE_SCOPE_PRIVATE : FAVORITE_SCOPE_GLOBAL);
+  const [view, setView] = useState(controlledView || initialNavigation.view);
+  // The platform router owns navigation in embedded mode. Rendering directly
+  // from its prop prevents the Vue shell and the React island from showing two
+  // different pages while React's state-sync effect catches up.
+  const currentView = embed && controlledView ? controlledView : view;
+  const [favoriteScope, setFavoriteScope] = useState(embed || initialNavigation.scope === FAVORITE_SCOPE_PRIVATE ? FAVORITE_SCOPE_PRIVATE : FAVORITE_SCOPE_GLOBAL);
   const [focusCardKey, setFocusCardKey] = useState(initialNavigation.cap || '');
   const [runs, setRuns] = useState([]);
   const [runTotal, setRunTotal] = useState(0);
   const [runStatusCounts, setRunStatusCounts] = useState({});
+  const [deepSessionCounts, setDeepSessionCounts] = useState({});
   const [hasMoreRuns, setHasMoreRuns] = useState(false);
   const [catalog, setCatalog] = useState({routes: [], agents: [], interaction_modes: [], discovery_branches: [], execution_profiles: [], report_templates: [], provider: {}});
   const [pendingQuery, setPendingQuery] = useState(null);
@@ -293,6 +309,9 @@ function App() {
   const loadMoreInFlightRef = useRef(null);
   const runOffsetRef = useRef(0);
   const hasMoreRunsRef = useRef(false);
+  const controlledRunIdRef = useRef(controlledRunId);
+  const lastDeepOpenKeyRef = useRef('');
+  controlledRunIdRef.current = controlledRunId;
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const requestedView = params.get('view');
@@ -305,8 +324,97 @@ function App() {
       window.history.replaceState({view: 'runs', runId: ''}, '', `${params.size ? `?${params}` : ''}${window.location.hash}`);
     }
   }, []);
+  useEffect(() => {
+    if (controlledView && controlledView !== view) setView(controlledView);
+  }, [controlledView, view]);
+  useEffect(() => {
+    if (!embed) return undefined;
+    const controller = new AbortController();
+    const headers = {};
+    const token = window.localStorage.getItem('user_token');
+    if (token) headers.Authorization = `Bearer ${token}`;
+    void fetch('/api/equipment/deep-thinking', {headers, signal: controller.signal})
+      .then(response => response.ok ? response.json() : [])
+      .then(items => {
+        if (!Array.isArray(items)) return;
+        const counts = {};
+        items.forEach(item => {
+          const runKey = String(item?.run_id || '');
+          if (runKey) counts[runKey] = (counts[runKey] || 0) + 1;
+        });
+        setDeepSessionCounts(counts);
+      })
+      .catch(error => { if (error?.name !== 'AbortError') setDeepSessionCounts({}); });
+    return () => controller.abort();
+  }, [embed]);
+  // Embedded, the workbench topbar is hidden because the platform owns the
+  // chrome. Publish its state and accept its actions so the service status,
+  // command palette and shortcut sheet stay reachable from the shell header.
+  useEffect(() => {
+    if (!embed) return;
+    window.dispatchEvent(new CustomEvent('equipment:workbench-status', {detail: {healthy, runtime}}));
+  }, [embed, healthy, runtime]);
+  useEffect(() => {
+    if (!embed) return;
+    const openPalette = () => setPaletteOpen(true);
+    const openShortcuts = () => setShortcutsOpen(true);
+    window.addEventListener('equipment:open-command-palette', openPalette);
+    window.addEventListener('equipment:open-shortcuts', openShortcuts);
+    return () => {
+      window.removeEventListener('equipment:open-command-palette', openPalette);
+      window.removeEventListener('equipment:open-shortcuts', openShortcuts);
+    };
+  }, [embed]);
+  useEffect(() => {
+    if (controlledCap) setFocusCardKey(controlledCap);
+  }, [controlledCap]);
+  useEffect(() => {
+    if (!embed || !controlledRunId) return;
+    const found = runs.find(item => item.run_id === controlledRunId);
+    if (found) {
+      setActiveRun(current => current?.run_id === found.run_id ? current : found);
+      return;
+    }
+    void request(runApiPath(controlledRunId), null, {headers: {'X-Role': 'analyst'}}).then(detail => {
+      if (detail?.run_id) setActiveRun(current => current?.run_id === detail.run_id ? current : detail);
+    });
+  }, [embed, controlledRunId, runs]);
+  useEffect(() => {
+    if (!embed) return;
+    if (!deepOpen) {
+      lastDeepOpenKeyRef.current = '';
+      return;
+    }
+    if (!activeRun?.run_id) return;
+    const key = `${activeRun.run_id}:${deepSessionId || ''}:${controlledCap || ''}`;
+    if (lastDeepOpenKeyRef.current === key) return;
+    lastDeepOpenKeyRef.current = key;
+    const targetIdentity = controlledCap ? `capability-followup:card_binding_id:${controlledCap}` : '';
+    // The card launcher already resolved the portrait, the focus and the
+    // surrounding result context before asking the host router to come here.
+    // Replay it, otherwise this bare re-open drops the reader onto an
+    // unconfigured conversation that has to be set up by hand.
+    const launched = recallDeepLaunchContext({card_binding_id: controlledCap, targetIdentity});
+    openDeepThinking({
+      ...(launched || {}),
+      runId: activeRun.run_id,
+      sessionId: deepSessionId || undefined,
+      kind: launched?.kind || 'capability-followup',
+      card_binding_id: controlledCap || '',
+      targetIdentity,
+    });
+  }, [embed, deepOpen, deepSessionId, controlledCap, activeRun?.run_id]);
   const navigate = (nextView, options = {}) => {
     const nextRun = options.run === undefined ? activeRun : options.run;
+    onNavigate?.(nextView, {run: nextRun, ...options});
+    if (embed) {
+      setView(nextView);
+      if (options.run !== undefined) setActiveRun(options.run);
+      if (options.scope) setFavoriteScope(options.scope === FAVORITE_SCOPE_PRIVATE ? FAVORITE_SCOPE_PRIVATE : FAVORITE_SCOPE_GLOBAL);
+      if (options.cap !== undefined) setFocusCardKey(options.cap || '');
+      if (options.scroll !== false) scrollHostToTop();
+      return;
+    }
     const params = new URLSearchParams(window.location.search);
     if (nextView === 'runs') params.delete('view'); else params.set('view', nextView);
     if (nextRun?.run_id && (TASK_WORKSPACE_VIEWS.includes(nextView) || TASK_ARTIFACT_VIEWS.includes(nextView))) params.set('run', nextRun.run_id); else params.delete('run');
@@ -329,15 +437,16 @@ function App() {
     setFavoriteScope(nextView === 'favorites' && (options.scope || params.get('scope')) === FAVORITE_SCOPE_PRIVATE ? FAVORITE_SCOPE_PRIVATE : FAVORITE_SCOPE_GLOBAL);
     setFocusCardKey(nextView === 'capabilities' ? (options.cap || params.get('cap') || '') : '');
     if (options.run !== undefined) { setActiveRun(nextRun || null); setSelected(null); }
-    if (options.scroll !== false) window.scrollTo({top:0, behavior: options.instant ? 'auto' : 'smooth'});
+    if (options.scroll !== false) scrollHostToTop({behavior: options.instant ? 'auto' : 'smooth'});
   };
   const syncFavoriteIndex = async () => {
     // The API caps a page at 200 rows. Walk all pages so the app-wide index
     // remains correct even after a workspace grows beyond that limit.
     const rows = [];
     let offset = 0;
+    const requestedScope = embed ? FAVORITE_SCOPE_PRIVATE : FAVORITE_SCOPE_GLOBAL;
     while (true) {
-      const result = await requestResult(`/favorites?scope=global&limit=200&offset=${offset}`, {headers: {'X-Role': 'analyst'}});
+      const result = await requestResult(`/favorites?scope=${requestedScope}&limit=200&offset=${offset}`, {headers: {'X-Role': 'analyst'}});
       if (!result.ok) return false;
       const pageRows = favoriteRowsFromPayload(result.data);
       rows.push(...pageRows);
@@ -389,7 +498,7 @@ function App() {
           method: 'POST',
           headers: {'Content-Type': 'application/json', 'X-Role': 'analyst'},
           body: JSON.stringify({
-            scope: FAVORITE_SCOPE_GLOBAL,
+            scope: embed ? FAVORITE_SCOPE_PRIVATE : FAVORITE_SCOPE_GLOBAL,
             run_id: effectiveRunId,
             card_key: favoriteCardKey(row),
             card_binding_id: row.card_binding_id || row.card_id || '',
@@ -418,9 +527,10 @@ function App() {
       if (!result.ok) {
         updateFavoriteIndex(row, effectiveRunId, previous, Boolean(previous));
         const detail = String(result.detail || '');
-        notify(result.status === 403 ? '公共收藏仅管理员可取消，请联系管理员' : detail || (desired ? '收藏失败，请稍后重试' : '取消收藏失败，请稍后重试'), 'error');
+        const forbiddenMessage = embed ? '无权修改此收藏' : '公共收藏仅管理员可取消，请联系管理员';
+        notify(result.status === 403 ? forbiddenMessage : detail || (desired ? '收藏失败，请稍后重试' : '取消收藏失败，请稍后重试'), 'error');
       } else if (desired) {
-        notify('已加入公共收藏', 'ok');
+        notify(embed ? (isGlobalBusinessRole(platformUserRole) ? '已收藏' : '已加入个人收藏') : '已加入公共收藏', 'ok');
       } else {
         notify('已取消收藏', 'ok');
       }
@@ -485,14 +595,14 @@ function App() {
           return merged;
         });
         setActiveRun(current => {
-          const locationRunId = new URLSearchParams(window.location.search).get('run');
-          const targetId = current?.run_id || locationRunId;
+          const locationRunId = (embed && controlledRunIdRef.current) || new URLSearchParams(window.location.search).get('run');
+          const targetId = locationRunId || current?.run_id;
           const latest = rows => [...rows].sort((a, b) => String(b.updated_at || b.created_at || '').localeCompare(String(a.updated_at || a.created_at || '')))[0];
           const next = targetId ? runRows.find(item => item.run_id === targetId) : latest(runRows.filter(item => item.status === 'completed')) || latest(runRows) || null;
           if (!next) return current;
           return current && current.run_id === next.run_id && current.status === next.status && current.updated_at === next.updated_at ? current : next;
         });
-        const locationRunId = new URLSearchParams(window.location.search).get('run');
+        const locationRunId = (embed && controlledRunIdRef.current) || new URLSearchParams(window.location.search).get('run');
         if (locationRunId && !runRows.some(item => item.run_id === locationRunId)) {
           void request(runApiPath(locationRunId), null, {headers: {'X-Role': 'analyst'}}).then(detail => {
             if (!detail?.run_id) return;
@@ -602,6 +712,7 @@ function App() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
   useEffect(() => {
+    if (embed) return undefined;
     const onPopState = () => {
       const next = readNavigationState();
       setView(next.view);
@@ -609,16 +720,16 @@ function App() {
       setFocusCardKey(next.cap || '');
       setSelected(null);
       setActiveRun(current => next.runId ? runs.find(item => item.run_id === next.runId) || current : current);
-      window.scrollTo({top:0});
+      scrollHostToTop();
     };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
-  }, [runs]);
+  }, [embed, runs]);
   useEffect(() => {
     let cancelled = false;
     Promise.all(workbenchExtensions.map(async extension => {
       try {
-        const response = await fetch(`${api}${extension.probePath || `/${extension.id}s/overview`}`, {headers:{'X-Role':'analyst'}});
+        const response = await fetch(`${api}${extension.probePath || `/${extension.id}s/overview`}`, {headers: platformRequestHeaders({'X-Role':'analyst'})});
         return response.ok ? extension.id : null;
       } catch (_reason) { return null; }
     })).then(ids => { if (!cancelled) setEnabledExtensionIds(ids.filter(Boolean)); });
@@ -626,7 +737,7 @@ function App() {
   }, []);
   const visibleNav = nav.filter(([id]) => id !== 'query-library' && (!workbenchExtensions.some(extension => extension.id === id) || enabledExtensionIds.includes(id)));
   const openRun = run => { setActiveRun(run); setSelected(run); };
-  return <div className="app-shell">
+  return <div className={`app-shell${embed ? ' platform-embed' : ''}`}>
     <header className="topbar">
       <div className="brand-mark"><img src={`${import.meta.env.BASE_URL}favicon.svg`} alt=""/></div><div className="brand-copy"><b>JS装备需求挖掘</b><span>DEEP RESEARCH WORKBENCH</span></div>
       <button className="command-trigger" onClick={() => setPaletteOpen(true)} title={`打开命令面板（${COMMAND_KEY_LABEL} + K）`}><Search size={14}/><span>搜索任务、跳转视图…</span><kbd>{COMMAND_KEY_LABEL}</kbd><kbd>K</kbd></button>
@@ -635,23 +746,25 @@ function App() {
     </header>
     <aside className="sidebar">
       <div className="sidebar-label">功能导航</div>
-      <div className="sidebar-nav">{visibleNav.map(([id, label, Icon]) => <button key={id} data-view={id} className={view === id ? 'active' : ''} aria-current={view === id ? 'page' : undefined} onClick={() => navigate(id)}><span className="sidebar-icon"><Icon size={19}/></span><span className="sidebar-button-copy"><b>{label}</b></span><ChevronRight className="sidebar-chevron" size={15}/></button>)}</div>
+      <div className="sidebar-nav">{visibleNav.map(([id, label, Icon]) => <button key={id} data-view={id} className={currentView === id ? 'active' : ''} aria-current={currentView === id ? 'page' : undefined} onClick={() => navigate(id)}><span className="sidebar-icon"><Icon size={19}/></span><span className="sidebar-button-copy"><b>{label}</b></span><ChevronRight className="sidebar-chevron" size={15}/></button>)}</div>
       <div className="sidebar-note"><span className="sidebar-note-icon"><ShieldCheck size={16}/></span><span><b>可信研究环境</b><small>最小权限 · 全程审计留痕</small></span></div>
     </aside>
-    <nav className="mobile-nav" aria-label="研究工作台导航">{visibleNav.map(([id, label, Icon]) => <button key={id} className={view === id ? 'active' : ''} aria-current={view === id ? 'page' : undefined} onClick={event => { navigate(id); event.currentTarget.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'}); }}><Icon size={16}/><span>{label}</span></button>)}</nav>
-    <main><ErrorBoundary resetKey={view} fallback={(error, retry) => <WorkbenchErrorView error={error} retry={retry} home={() => { navigate('runs', {run: null}); retry(); }}/>}>{view === 'runs' ? <RunPage runs={runs} runTotal={runTotal} runStatusCounts={runStatusCounts} hasMoreRemoteRuns={hasMoreRuns} loadMoreRuns={loadMoreRuns} removeRuns={removeRuns} catalog={catalog} runtime={runtime} refresh={refresh} loaded={loaded} syncing={syncing} lastSyncedAt={lastSyncedAt} initialQuery={pendingQuery} clearInitialQuery={() => setPendingQuery(null)} openQueryLibrary={() => navigate('query-library')} open={openRun} openArtifact={(run, target) => navigate(target, {run})}/> : view === 'favorites' ? <FavoritesPage scope={favoriteScope} runs={runs} favoriteItems={Object.values(favoriteIndex)} favoriteIndex={favoriteIndex} navigate={navigate} onFavoriteToggle={toggleFavorite} onFavoriteUpdate={updateFavorite} onRefresh={syncFavoriteIndex}/> : FRONTEND_FEATURE_FLAGS.benchmark && view === 'benchmark' ? <BenchmarkPage/> : workbenchExtensions.some(extension => extension.id === view) ? React.createElement(workbenchExtensions.find(extension => extension.id === view).Component, {apiBase: api, onUseQuery: queryItem => { setPendingQuery(queryItem); navigate('runs'); }, onDirectResearch: queryItem => { setPendingQuery(queryItem); navigate('runs'); }, onBatchResearchStarted: count => { setPendingQuery(null); notify(`已批量创建并启动 ${count} 个研究任务`, 'ok'); void refresh(); }, onBack: () => navigate('runs')}) : <WorkspacePage view={view} run={activeRun} runs={runs} runTotal={runTotal} runStatusCounts={runStatusCounts} hasMoreRuns={hasMoreRuns} loadMoreRuns={loadMoreRuns} catalog={catalog} runtime={runtime} loaded={loaded} navigate={navigate} focusCardKey={focusCardKey} favoriteIndex={favoriteIndex} onFavoriteToggle={toggleFavorite} selectRun={run => navigate(view, {run, scroll:false})}/>}</ErrorBoundary></main>
+    <nav className="mobile-nav" aria-label="研究工作台导航">{visibleNav.map(([id, label, Icon]) => <button key={id} className={currentView === id ? 'active' : ''} aria-current={currentView === id ? 'page' : undefined} onClick={event => { navigate(id); event.currentTarget.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'}); }}><Icon size={16}/><span>{label}</span></button>)}</nav>
+    <main><ErrorBoundary resetKey={currentView} fallback={(error, retry) => <WorkbenchErrorView error={error} retry={retry} home={() => { navigate('runs', {run: null}); retry(); }}/>}>{currentView === 'runs' ? <RunPage platformModelSpec={platformModelSpec} onModelSelectorMount={onModelSelectorMount} runs={runs} runTotal={runTotal} runStatusCounts={runStatusCounts} deepSessionCounts={deepSessionCounts} hasMoreRemoteRuns={hasMoreRuns} loadMoreRuns={loadMoreRuns} removeRuns={removeRuns} catalog={catalog} runtime={runtime} refresh={refresh} loaded={loaded} syncing={syncing} lastSyncedAt={lastSyncedAt} initialQuery={pendingQuery} clearInitialQuery={() => setPendingQuery(null)} openQueryLibrary={() => navigate('query-library')} open={openRun} openArtifact={(run, target) => navigate(target, {run})}/> : currentView === 'favorites' ? <FavoritesPage scope={favoriteScope} platformMode={embed} platformUserRole={platformUserRole} runs={runs} favoriteItems={Object.values(favoriteIndex)} favoriteIndex={favoriteIndex} navigate={navigate} onFavoriteToggle={toggleFavorite} onFavoriteUpdate={updateFavorite} onRefresh={syncFavoriteIndex}/> : FRONTEND_FEATURE_FLAGS.benchmark && currentView === 'benchmark' ? <BenchmarkPage/> : workbenchExtensions.some(extension => extension.id === currentView) ? React.createElement(workbenchExtensions.find(extension => extension.id === currentView).Component, {apiBase: api, platformModelSpec, onModelSelectorMount, onUseQuery: queryItem => { setPendingQuery(queryItem); navigate('runs'); }, onDirectResearch: queryItem => { setPendingQuery(queryItem); navigate('runs'); }, onBatchResearchStarted: count => { setPendingQuery(null); notify(`已批量创建并启动 ${count} 个研究任务`, 'ok'); void refresh(); }, onBack: () => navigate('runs')}) : <WorkspacePage view={currentView} run={activeRun} runs={runs} runTotal={runTotal} runStatusCounts={runStatusCounts} hasMoreRuns={hasMoreRuns} loadMoreRuns={loadMoreRuns} catalog={catalog} runtime={runtime} loaded={loaded} navigate={navigate} focusCardKey={focusCardKey} favoriteIndex={favoriteIndex} onFavoriteToggle={toggleFavorite} selectRun={run => navigate(currentView, {run, scroll:false})}/>}</ErrorBoundary></main>
     {selected && (
       <RunDrawer run={selected} catalog={catalog} close={() => setSelected(null)} inspect={target => navigate(target, {run:selected})} changed={updated => { setSelected(updated); setActiveRun(current => current?.run_id === updated.run_id ? updated : current); void load(); }}/>
     )}
-    <CommandPalette open={paletteOpen} close={() => setPaletteOpen(false)} runs={runs} navItems={visibleNav} view={view} navigate={navigate} openRun={openRun} refresh={refresh} openShortcuts={() => { setPaletteOpen(false); setShortcutsOpen(true); }}/>
+    <CommandPalette open={paletteOpen} close={() => setPaletteOpen(false)} runs={runs} navItems={visibleNav} view={currentView} navigate={navigate} openRun={openRun} refresh={refresh} openShortcuts={() => { setPaletteOpen(false); setShortcutsOpen(true); }}/>
     <ShortcutSheet open={shortcutsOpen} close={() => setShortcutsOpen(false)}/>
-    {activeRun && (TASK_WORKSPACE_VIEWS.includes(view) || TASK_ARTIFACT_VIEWS.includes(view)) && <DeepThinkingDock apiBase={api} run={activeRun} onChanged={() => { void load({markSynced: false}); }}/>}
+    {!embed && activeRun && (TASK_WORKSPACE_VIEWS.includes(currentView) || TASK_ARTIFACT_VIEWS.includes(currentView)) && (
+      <DeepThinkingDock apiBase={api} run={activeRun} onChanged={() => { void load({markSynced: false}); }}/>
+    )}
     <BackToTop/>
     <ToastHost/>
   </div>;
 }
 
-function RunPage({runs, runTotal, runStatusCounts, hasMoreRemoteRuns, loadMoreRuns, removeRuns, catalog, runtime, refresh, loaded, syncing, lastSyncedAt, initialQuery, clearInitialQuery, openQueryLibrary, open, openArtifact}) {
+function RunPage({platformModelSpec = '', onModelSelectorMount, runs, runTotal, runStatusCounts, deepSessionCounts = {}, hasMoreRemoteRuns, loadMoreRuns, removeRuns, catalog, runtime, refresh, loaded, syncing, lastSyncedAt, initialQuery, clearInitialQuery, openQueryLibrary, open, openArtifact}) {
   const [query, setQuery] = useState('');
   // Only the three tab values are remembered; a narrow dropdown status would
   // otherwise come back after a reload and look like an empty task list.
@@ -778,9 +891,9 @@ function RunPage({runs, runTotal, runStatusCounts, hasMoreRemoteRuns, loadMoreRu
     notify(`已从断点继续：${run.topic}`, 'ok');
     await refresh();
   };
-  const renderInlineBuilder = (queryItem, executionProfileId, onExecutionProfileChange, modelProfileId, startRequestId, onSubmitStateChange) => <CreateRun inline catalog={catalog} runtime={runtime} initialQuery={queryItem} executionProfileId={executionProfileId} onExecutionProfileChange={onExecutionProfileChange} modelProfileId={modelProfileId} startRequestId={startRequestId} onSubmitStateChange={onSubmitStateChange} openQueryLibrary={openQueryLibrary} done={(run, started) => { clearInitialQuery(); clearPersisted(COMPOSER_QUERY_DRAFT_KEY); clearPersisted(COMPOSER_SUPPLEMENT_DRAFT_KEY); void refresh(); notify(started ? `研究任务已启动：${run.topic}` : '研究草稿已创建', 'ok'); started ? focusRunCard(run.run_id) : open(run); }}/>;
+  const renderInlineBuilder = (queryItem, executionProfileId, onExecutionProfileChange, modelProfileId, startRequestId, onSubmitStateChange) => <CreateRun platformModelSpec={platformModelSpec} inline catalog={catalog} runtime={runtime} initialQuery={queryItem} executionProfileId={executionProfileId} onExecutionProfileChange={onExecutionProfileChange} modelProfileId={modelProfileId} startRequestId={startRequestId} onSubmitStateChange={onSubmitStateChange} openQueryLibrary={openQueryLibrary} done={(run, started) => { clearInitialQuery(); clearPersisted(COMPOSER_QUERY_DRAFT_KEY); clearPersisted(COMPOSER_SUPPLEMENT_DRAFT_KEY); void refresh(); notify(started ? `研究任务已启动：${run.topic}` : '研究草稿已创建', 'ok'); started ? focusRunCard(run.run_id) : open(run); }}/>;
   return <>
-    <ResearchQueryEntry catalog={catalog} runtime={runtime} openQueryLibrary={openQueryLibrary} initialQuery={initialQuery} renderInlineBuilder={renderInlineBuilder}/>
+    <ResearchQueryEntry onModelSelectorMount={onModelSelectorMount} catalog={catalog} runtime={runtime} openQueryLibrary={openQueryLibrary} initialQuery={initialQuery} renderInlineBuilder={renderInlineBuilder}/>
     <PageTitle eyebrow="RESEARCH WORKSPACE" title="研究任务与运行记录" subtitle="Query 审核后可直接带入研究任务；运行过程、证据、能力画像和报告持续留痕。">
       <span className="sync-state">{!loaded ? '正在同步数据…' : lastSyncedAt ? `数据已同步 · ${relativeTime(lastSyncedAt)}` : 'API 未连接 · 数据可能不完整'}</span>
       <button className="icon-button" title="刷新任务" disabled={syncing} onClick={refresh}><RefreshCw className={syncing ? 'spin' : ''} size={17}/></button>
@@ -811,13 +924,14 @@ function RunPage({runs, runTotal, runStatusCounts, hasMoreRemoteRuns, loadMoreRu
         {hasMoreRemoteRuns && <button type="button" onClick={() => void loadMoreRuns()}><RefreshCw size={14}/>加载更早任务</button>}
       </Empty> : <div className="research-run-scroll" ref={runScrollRef} aria-label="研究任务连续滚动列表"><div className="research-run-grid">{pageRows.map(run => {
         const assignedWorker = workerForRun(run); const position = queuePosition(run); const orphanedActive = isRunActive(run, runtime) && !assignedWorker && !['queued', 'pause_requested', 'cancel_requested'].includes(run.status); const displayStatus = orphanedActive && position > 0 ? 'queued' : run.status;
-        const artifactCounts = run.artifact_counts || {}; const sourceCount = Number(artifactCounts.sources || run.result?.source_count || 0); const evidenceCount = Number(artifactCounts.evidence || run.result?.evidence_count || 0); const candidateCount = Number(artifactCounts.capabilities || run.result?.capability_count || 0); const winningStepCount = Number(artifactCounts.winning_steps || run.result?.stage_count || 0); const reportCount = Number(artifactCounts.reports || (run.result?.report_available ? 1 : 0));
+        const artifactCounts = run.artifact_counts || {}; const sourceCount = Number(artifactCounts.sources || run.result?.source_count || 0); const evidenceCount = Number(artifactCounts.evidence || run.result?.evidence_count || 0); const candidateCount = Number(artifactCounts.capabilities || run.result?.capability_count || 0); const winningStepCount = Number(artifactCounts.winning_steps || run.result?.stage_count || 0); const reportCount = Number(artifactCounts.reports || (run.result?.report_available ? 1 : 0)); const deepSessionCount = Math.max(Number(artifactCounts.deep_sessions || 0), Number(deepSessionCounts[run.run_id] || 0));
         const runtimeText = assignedWorker ? assignedWorker.status === 'internal' ? `S6 内部并行 · ${assignedWorker.worker_id}` : `槽位 #${workerSlotIndex(assignedWorker) || '?'} · ${assignedWorker.worker_id}` : position > 0 ? `队列第 ${position} 位` : orphanedActive ? '执行已中断，等待人工断点恢复' : run.status === 'draft' ? '等待启动' : formatRunUpdatedAt(run.updated_at);
         return <article className={`research-run-card ${displayStatus}`} data-run-id={run.run_id} key={run.run_id}>
           <div className="run-card-heading"><label className="run-card-select" title="选择任务"><input type="checkbox" aria-label={`选择 ${run.topic}`} checked={selectedIds.includes(run.run_id)} onChange={() => toggleSelected(run.run_id)}/></label><button className="run-card-title" onClick={() => open(run)}><b>{run.topic}</b><small>{run.supplemental_information || run.run_id}</small></button><Status value={displayStatus}/></div>
-          <div className="run-card-counts" aria-label="研究产物数量"><span><b>{sourceCount}</b> 信源</span><span><b>{evidenceCount}</b> 证据</span><span><b>{candidateCount}</b> 能力图像</span><span><b>{winningStepCount}</b> S1–S6</span><span><b>{reportCount}</b> 报告</span></div>
+          <div className="run-card-counts" aria-label="研究产物数量"><span><b>{sourceCount}</b> 信源</span><span><b>{evidenceCount}</b> 证据</span><span><b>{candidateCount}</b> 能力图像</span><span><b>{winningStepCount}</b> S1–S6</span><span><b>{reportCount}</b> 报告</span><span className={deepSessionCount ? 'has-deep-sessions' : ''}><b>{deepSessionCount}</b> 深研</span></div>
           {run.status === 'completed' && <button type="button" className="run-card-capability-preview" onClick={() => openArtifact(run, 'capabilities')}><span className="run-card-capability-icon"><FlaskConical size={14}/></span><span className="run-card-capability-copy"><b>能力图像 <em>{candidateCount}</em></b><small>点击查看完整能力画像与论证</small></span><ChevronRight size={14}/></button>}
           <div className="run-card-artifacts" aria-label="研究产物快捷入口">
+            <button type="button" className="run-card-deep-link" onClick={() => openArtifact(run, 'deep-thinking')}><MessageSquare size={13}/>{deepSessionCount ? '继续深研' : '发起深研'}<span>{deepSessionCount}</span></button>
             <button type="button" onClick={() => openArtifact(run, 'interactions')}><Layers3 size={13}/>交互过程</button>
             <button type="button" onClick={() => openArtifact(run, 'evidence')}><Search size={13}/>证据中心<span>{evidenceCount}</span></button>
             <button type="button" onClick={() => openArtifact(run, 'winning')}><BrainCircuit size={13}/>S1–S6 Agent<span>{winningStepCount}</span></button>
@@ -846,7 +960,7 @@ function WorkspacePulse({runs, runtime, runStatusCounts = {}, onView}) {
       <article className="pulse-metric success"><span>已完成</span><strong>{completed}</strong><small>可直接阅读报告</small></article>
       <article className="pulse-metric warn"><span>需要处理</span><strong>{failed}</strong><small>{failed ? '可从断点继续' : '暂无异常任务'}</small></article>
     </div>
-    <div className="pulse-next"><div><span className="pulse-next-icon"><Sparkles size={16}/></span><span><b>{recent ? '继续使用最近成果' : '从一个研究问题开始'}</b><small>{recent ? recent.topic : '输入 Query，系统会自动规划信源、Agent 和报告结构。'}</small></span></div><button type="button" onClick={recent ? () => window.scrollTo({top:0, behavior:'smooth'}) : onView}>{recent ? '新建研究' : '打开问题库'}<ChevronRight size={14}/></button></div>
+    <div className="pulse-next"><div><span className="pulse-next-icon"><Sparkles size={16}/></span><span><b>{recent ? '继续使用最近成果' : '从一个研究问题开始'}</b><small>{recent ? recent.topic : '输入 Query，系统会自动规划信源、Agent 和报告结构。'}</small></span></div><button type="button" onClick={recent ? () => scrollHostToTop({behavior:'smooth'}) : onView}>{recent ? '新建研究' : '打开问题库'}<ChevronRight size={14}/></button></div>
   </section>;
 }
 
@@ -909,7 +1023,7 @@ function formatRunUpdatedAt(value) {
   return label ? `更新于 ${label}` : '已更新';
 }
 
-function ResearchQueryEntry({catalog, runtime, openQueryLibrary, initialQuery, renderInlineBuilder}) {
+function ResearchQueryEntry({onModelSelectorMount, catalog, runtime, openQueryLibrary, initialQuery, renderInlineBuilder}) {
   // A half-written Query survives a reload or a detour into the query library
   // instead of being retyped. Cleared once a run actually starts.
   const [query, setQuery] = usePersistentDraft(COMPOSER_QUERY_DRAFT_KEY, {limit: 4000});
@@ -986,7 +1100,7 @@ function ResearchQueryEntry({catalog, runtime, openQueryLibrary, initialQuery, r
       <div className={`research-query-composer ${runConfigOpen ? 'config-open' : ''}`}>
         <textarea id="research-query-input" aria-label="Deep Research Query" value={query} onChange={event => { setQuery(event.target.value); setSelectedRecommendation(null); }} onKeyDown={event => { if ((event.metaKey || event.ctrlKey) && event.key === 'Enter' && query.trim() && runtime.worker_online && !launching) { event.preventDefault(); triggerStart(); } }} placeholder="输入需要进行 Deep Research 的 Query，例如：研究低空无人装备在强对抗环境中的体系能力缺口" maxLength={4000}/>
         <div className="research-query-input-state"><span>{query.trim() ? `已输入 ${query.trim().length} 字` : '等待输入研究问题'}</span><span><kbd>⌘/Ctrl</kbd> + <kbd>Enter</kbd> 快速启动</span>{query && <button aria-label="清空 Query" onClick={() => { setQuery(''); setSupplement(''); setSelectedRecommendation(null); document.getElementById('research-query-input')?.focus(); }}><X size={12}/>清空</button>}</div>
-        <ModelProfileSwitcher profiles={catalog.model_profiles || catalog.provider?.model_profiles} value={resolvedModelProfileId} onChange={setModelProfileId} />
+        {globalThis.__EQUIPMENT_WORKBENCH_EMBEDDED__ ? <div className="platform-research-model-selector" ref={onModelSelectorMount} /> : <ModelProfileSwitcher profiles={catalog.model_profiles || catalog.provider?.model_profiles} value={resolvedModelProfileId} onChange={setModelProfileId} />}
         <footer><div className="research-query-footer-left"><button onClick={openSupplement}><Plus size={14}/>补充背景与约束</button><ResearchModePicker profiles={catalog.execution_profiles || []} value={executionProfileId} onChange={setExecutionProfileId}/></div><div className="research-query-footer-right"><button onClick={openQueryLibrary}><Sparkles size={15}/>AI 生成 Query</button><button className={`research-config-trigger ${runConfigOpen ? 'active' : ''}`} onClick={() => setRunConfigOpen(value => !value)}><Wrench size={14}/>{runConfigOpen ? '收起运行配置' : '研究运行配置'}<ChevronDown size={13}/></button><button className="primary research-start-trigger" disabled={!query.trim() || !runtime.worker_online || launching} title={!runtime.worker_online ? '研究 Worker 未在线' : launching ? '正在创建并启动研究任务' : '按当前模式和配置直接启动研究'} onClick={triggerStart}><Play size={14}/>{launching ? '启动中…' : '启动研究'}</button></div></footer>
         <div className="research-query-inline-config-shell" hidden={!runConfigOpen} aria-hidden={!runConfigOpen}>
           <textarea id="research-query-supplement" className="research-query-supplement" value={supplement} onChange={event => setSupplement(event.target.value)} placeholder="可选：补充作战场景、时间范围、约束、前提假设或希望覆盖的技术/装备类型。" maxLength={8000}/>
@@ -1088,7 +1202,7 @@ function ParallelRuntimePanel({runtime, runs, onCapacityChanged}) {
   </section>;
 }
 
-function CreateRun({catalog, done, runtime, initialQuery, openQueryLibrary, inline = false, executionProfileId: controlledExecutionProfileId = '', onExecutionProfileChange, modelProfileId = '', startRequestId = 0, onSubmitStateChange}) {
+function CreateRun({platformModelSpec = '', catalog, done, runtime, initialQuery, openQueryLibrary, inline = false, executionProfileId: controlledExecutionProfileId = '', onExecutionProfileChange, modelProfileId = '', startRequestId = 0, onSubmitStateChange}) {
   const workerOnline = runtime.worker_online;
   const [topic, setTopic] = useState(initialQuery?.query || ''); const [supplementalInformation, setSupplementalInformation] = useState(initialQuery?.supplemental_information || ''); const [route, setRoute] = useState('auto'); const [interactionMode, setInteractionMode] = useState('expert'); const [branch, setBranch] = useState('auto'); const [localExecutionProfileId, setLocalExecutionProfileId] = useState(DEFAULT_EXECUTION_PROFILE_ID); const [reportTemplateMode, setReportTemplateMode] = useState('project_argument_v1'); const [agents, setAgents] = useState([]); const [rounds, setRounds] = useState(2); const [submitting, setSubmitting] = useState(false); const [error, setError] = useState(''); const [agentPreview, setAgentPreview] = useState(null);
   const executionProfileId = controlledExecutionProfileId || localExecutionProfileId;
@@ -1143,7 +1257,7 @@ function CreateRun({catalog, done, runtime, initialQuery, openQueryLibrary, inli
   const submit = async (startImmediately = true) => {
     if (submitLockRef.current) return;
     if (startImmediately && !workerOnline) { setError('研究 Worker 未在线，已阻止任务进入无人消费的队列；你仍可先保存为草稿。'); return; }
-    if (startImmediately && catalog.provider.default_mode === 'real' && catalog.provider.codex_available === false) { setError('后端未检测到 Agent 运行组件；可先保存草稿，配置运行环境后再启动。'); return; }
+    if (!globalThis.__EQUIPMENT_WORKBENCH_EMBEDDED__ && startImmediately && catalog.provider.default_mode === 'real' && catalog.provider.codex_available === false) { setError('后端未检测到 Agent 运行组件；可先保存草稿，配置运行环境后再启动。'); return; }
     // A deliberate start action is the analyst confirmation. Avoid native
     // confirm dialogs: embedded browsers can leave them hidden while blocking
     // the JavaScript thread, which makes the launch button appear unresponsive.
@@ -1151,7 +1265,8 @@ function CreateRun({catalog, done, runtime, initialQuery, openQueryLibrary, inli
     submitLockRef.current = true;
     setSubmitting(true); setError('');
     const submittedAgentIds = executionProfileId !== 'legacy_v1' ? manualAgentIds : effectiveAgentIds;
-    const createPayload = {topic: topic.trim(), supplemental_information: supplementalInformation.trim(), research_route: route, interaction_mode: interactionMode, discovery_branch: branch, execution_profile_id: executionProfileId, report_template_mode: reportTemplateMode, selected_agent_ids: submittedAgentIds, max_rounds: rounds, analyst_confirmed: analystConfirmed, source_query_id: selectedLibraryQuery?.query_id || '', source_query_version: selectedLibraryQuery?.version || null, publish_source_query_on_create: startImmediately && selectedLibraryQuery?.status === 'draft', model_profile_id: modelProfileId};
+    const inheritedModelSpec = selectedLibraryQuery?.model_spec || platformModelSpec;
+    const createPayload = {topic: topic.trim(), supplemental_information: supplementalInformation.trim(), research_route: route, interaction_mode: interactionMode, discovery_branch: branch, execution_profile_id: executionProfileId, report_template_mode: reportTemplateMode, selected_agent_ids: submittedAgentIds, max_rounds: rounds, analyst_confirmed: analystConfirmed, source_query_id: selectedLibraryQuery?.query_id || '', source_query_version: selectedLibraryQuery?.version || null, publish_source_query_on_create: startImmediately && selectedLibraryQuery?.status === 'draft', model_profile_id: globalThis.__EQUIPMENT_WORKBENCH_EMBEDDED__ ? '' : modelProfileId, ...(selectedLibraryQuery ? inheritKnowledgeScope(selectedLibraryQuery) : {}), ...(globalThis.__EQUIPMENT_WORKBENCH_EMBEDDED__ ? {execution: {model_spec: inheritedModelSpec}} : {})};
     const createFingerprint = JSON.stringify(createPayload);
     if (pendingCreateRequestRef.current.fingerprint !== createFingerprint) pendingCreateRequestRef.current = {key:crypto.randomUUID(), fingerprint:createFingerprint};
     const createRequestId = pendingCreateRequestRef.current.key;
@@ -1283,13 +1398,13 @@ function WorkspacePage({view, run, runs, runTotal, runStatusCounts = {}, hasMore
       // Capability images are the page's primary content. Render them as soon
       // as the small image artifact arrives, then enrich with candidate lineage
       // in the background for legacy/reference cards.
-      load = request(runApiPath(run.run_id, '/capabilities'), null, {headers: {'X-Role': 'analyst'}}).then(rows => {
+      load = request(runApiPath(run.run_id, '/capabilities'), null, {headers: deepScopeHeadersForRun(run)}).then(rows => {
         if (Array.isArray(rows) && rows.length) return rows;
-        return request(runApiPath(run.run_id, '/capabilities'), [], {headers: {'X-Role': 'analyst'}});
+        return request(runApiPath(run.run_id, '/capabilities'), [], {headers: deepScopeHeadersForRun(run)});
       }).then(rows => {
         const initial = projectCapabilities(rows);
         if (!cancelled) setPayload(initial);
-        void request(runApiPath(run.run_id, '/interactions?compact=true'), null, {headers: {'X-Role': 'analyst'}}).then(interactions => {
+        void request(runApiPath(run.run_id, '/interactions?compact=true'), null, {headers: deepScopeHeadersForRun(run)}).then(interactions => {
           if (!cancelled) setPayload(current => ({...(current || initial), ...projectCapabilities(rows, interactions)}));
         });
         return initial;
@@ -1298,12 +1413,12 @@ function WorkspacePage({view, run, runs, runTotal, runStatusCounts = {}, hasMore
       // Start both reads together, but publish the small S6 artifact as soon as
       // it arrives. Waiting for the report promise here would defeat the
       // report page's early-capability contract on a slow report response.
-      void request(runApiPath(run.run_id, '/capabilities'), [], {headers: {'X-Role': 'analyst'}}).then(capabilities => {
+      void request(runApiPath(run.run_id, '/capabilities'), [], {headers: deepScopeHeadersForRun(run)}).then(capabilities => {
         if (!cancelled) setEarlyCapabilityRows(Array.isArray(capabilities) ? capabilities : []);
       });
-      load = request(runApiPath(run.run_id, '/report'), null, {headers: {'X-Role': 'analyst'}});
+      load = request(runApiPath(run.run_id, '/report'), null, {headers: deepScopeHeadersForRun(run)});
     } else {
-      load = request(runApiPath(run.run_id, routes[view]), null, {headers: {'X-Role': 'analyst'}});
+      load = request(runApiPath(run.run_id, routes[view]), null, {headers: deepScopeHeadersForRun(run)});
     }
     load.then(value => {
       // An empty/failed report read must not replace the null sentinel: doing
@@ -1370,12 +1485,12 @@ function WorkspacePage({view, run, runs, runTotal, runStatusCounts = {}, hasMore
       try {
         // Keep these requests independent: a slow/blocked report read must not
         // delay the capability image, which is intentionally available first.
-        const reportRequest = request(runApiPath(run.run_id, '/report'), null, {headers: {'X-Role': 'analyst'}}).then(report => {
+        const reportRequest = request(runApiPath(run.run_id, '/report'), null, {headers: deepScopeHeadersForRun(run)}).then(report => {
           if (!cancelled && typeof report === 'string' && report.trim()) setPayload(report);
         });
         const capabilitiesRequest = earlyCapabilityRows?.length
           ? Promise.resolve()
-          : request(runApiPath(run.run_id, '/capabilities'), [], {headers: {'X-Role': 'analyst'}}).then(capabilities => {
+          : request(runApiPath(run.run_id, '/capabilities'), [], {headers: deepScopeHeadersForRun(run)}).then(capabilities => {
             if (!cancelled && Array.isArray(capabilities) && capabilities.length) setEarlyCapabilityRows(capabilities);
           });
         await Promise.allSettled([reportRequest, capabilitiesRequest]);
@@ -1403,10 +1518,10 @@ function WorkspacePage({view, run, runs, runTotal, runStatusCounts = {}, hasMore
   const earlyCapabilityLabel = ['completed', 'failed', 'cancelled', 'archived'].includes(run?.status)
     ? '报告正文暂不可读，先展示已完成的能力图像'
     : '报告仍在后台撰写，先展示已完成的能力图像';
-  const capabilityProps = {favoriteIndex, onFavoriteToggle, highlightedCardKey: focusCardKey, run};
+  const capabilityProps = {favoriteIndex, onFavoriteToggle, highlightedCardKey: focusCardKey, run, onOpenDirectedDeep: (cap) => navigate('deep-thinking', {run, cap, scroll: false})};
   const content = !run ? (loaded ? <Empty text="请选择研究任务"/> : <PaneSkeleton/>) : busy && current == null && !(view === 'reports' && earlyCapabilityRows?.length) ? <PaneSkeleton/> : view === 'reports' && reportPhaseStatus === 'failed' ? <ReportFailureView run={run} detail={reportFailureDetail} resuming={resumingReport} resume={resumeReport} error={reportResumeError} capabilityRows={earlyCapabilityRows || []} {...capabilityProps}/> : current == null && view === 'reports' && earlyCapabilityRows?.length ? <section className="report-view enhanced"><div><span><FileCheck2 size={18}/><b>研究报告</b></span><em>{earlyCapabilityLabel}</em></div><CapabilityImageView rows={earlyCapabilityRows} referenceWeapons={[]} runId={run?.run_id} run={run} {...capabilityProps}/></section> : current == null ? <Empty text={run?.historical_snapshot ? '历史快照未包含原始产物' : run.status === 'completed' ? '产物读取失败，请刷新后重试' : '任务完成后可查看本页'}/> : view === 'interactions' ? <InteractionView data={current} live={live.connected && !['completed', 'failed', 'cancelled', 'archived'].includes(run.status)} completed={run.status === 'completed'} terminalStatus={run.status}/> : view === 'reports' ? <ReportView text={current} run={run} capabilityRows={earlyCapabilityRows || []} {...capabilityProps}/> : view === 'winning' ? <WinningMechanismView data={current}/> : <ObjectGrid view={view} rows={current} runId={run?.run_id} run={run} {...capabilityProps}/>;
   const availableTotal = Math.max(0, Number(runTotal || availableRuns.length) - Number(runStatusCounts.archived || 0));
-  return <><PageTitle eyebrow={hasTaskNavigator ? '交互中心' : '研究运行产物'} title={item?.[1] || '研究运行产物'} subtitle={hasTaskNavigator ? '直接选择研究任务，连续查看交互、证据、S Agent、能力画像和研究报告产物。' : run ? `当前任务：${run.topic}` : '请在研究任务列表中选择一项运行。'}/>{hasTaskNavigator && <nav className="workspace-stage-nav" ref={stageNavRef} aria-label="当前任务产物导航"><button onClick={() => navigate('runs', {run:null})}><Archive size={15}/>研究任务</button><section className="workspace-artifact-card" aria-label="当前任务产物导航"><span>当前任务产物</span><div>{[['capabilities','能力图像',FlaskConical],['reports','研究报告',FileCheck2]].map(([stage,label,StageIcon]) => <button key={stage} className={view === stage ? 'active' : ''} aria-current={view === stage ? 'page' : undefined} disabled={!run} onClick={() => navigate(stage, {run})}><StageIcon size={15}/>{label}</button>)}</div></section></nav>}{hasTaskNavigator ? <div className={`task-review-workspace ${run ? 'has-selected-task' : ''} ${fullWidthCapabilities ? 'capability-workspace' : ''}`}><section className="task-review-rail">{fullWidthCapabilities && <button type="button" className="task-picker-toggle" aria-expanded={!run || taskPickerOpen} aria-controls="capability-task-picker" onClick={() => setTaskPickerOpen(open => !open)} disabled={!run}><ListFilter size={17}/><span><b>研究任务</b><small>{run ? run.topic : '选择任务，查看能力画像'}</small></span><em>{!run || taskPickerOpen ? '收起任务列表' : '切换任务'}</em><ChevronDown size={16}/></button>}<div id={fullWidthCapabilities ? 'capability-task-picker' : undefined} hidden={fullWidthCapabilities && !!run && !taskPickerOpen}><header><div><ListFilter size={17}/><span><b>研究任务</b><small>{visibleRuns.length} / {availableTotal}</small></span></div></header><div className="task-review-filters"><div className="searchbox"><Search size={15}/><input value={taskQuery} onChange={event => setTaskQuery(event.target.value)} placeholder="搜索任务或运行 ID"/></div><select value={taskStatus} onChange={event => setTaskStatus(event.target.value)}><option value="all">全部状态</option><option value="active">进行中</option><option value="completed">已完成</option><option value="failed">失败</option><option value="draft">草稿</option></select></div><div className="task-review-list">{visibleRuns.length ? visibleRuns.map(itemRun => <button className={run?.run_id === itemRun.run_id ? 'selected' : ''} key={itemRun.run_id} onClick={() => chooseTask(itemRun)}><span><b>{itemRun.topic}</b><small>{itemRun.run_id}</small></span><div><Status value={itemRun.status}/><em>{routeLabel(itemRun.research_route)}</em></div></button>) : !loaded ? <div className="task-row-skeletons" aria-hidden="true">{[0, 1, 2, 3, 4].map(index => <TaskRowSkeleton key={index}/>)}</div> : <Empty text="当前已加载任务中没有匹配结果"/>}{hasMoreRuns && <button type="button" className="task-review-load-more" onClick={() => void loadMoreRuns()}><RefreshCw size={13}/>加载更早任务</button>}</div></div></section><section ref={contentRef} className={`task-review-content ${view}`}>{run && <header className="task-review-context"><div><span>{contextLabel}</span><b>{run.topic}</b><small>{run.run_id} · {routeLabel(run.research_route)} · {statusLabel(run.status)}</small></div><Status value={run.status}/></header>}{content}</section></div> : content}</>;
+  return <><PageTitle eyebrow={hasTaskNavigator ? '交互中心' : '研究运行产物'} title={item?.[1] || '研究运行产物'} subtitle={hasTaskNavigator ? '直接选择研究任务，连续查看交互、证据、S Agent、能力画像、深研对话和研究报告。' : run ? `当前任务：${run.topic}` : '请在研究任务列表中选择一项运行。'}/>{hasTaskNavigator && <nav className="workspace-stage-nav" ref={stageNavRef} aria-label="当前任务产物导航"><div className="workspace-stage-nav-inner"><button onClick={() => navigate('runs', {run:null})}><Archive size={15}/>研究任务</button><section className="workspace-artifact-card" aria-label="当前任务产物导航"><span>当前任务产物</span><div>{[['capabilities','能力图像',FlaskConical],['deep-thinking','深研对话',MessageSquare],['reports','研究报告',FileCheck2]].map(([stage,label,StageIcon]) => <button key={stage} className={view === stage ? 'active' : ''} aria-current={view === stage ? 'page' : undefined} disabled={!run} onClick={() => navigate(stage, {run})}><StageIcon size={15}/>{label}</button>)}</div></section></div></nav>}{hasTaskNavigator ? <div className={`task-review-workspace ${run ? 'has-selected-task' : ''} ${fullWidthCapabilities ? 'capability-workspace' : ''}`}><section className="task-review-rail">{fullWidthCapabilities && <button type="button" className="task-picker-toggle" aria-expanded={!run || taskPickerOpen} aria-controls="capability-task-picker" onClick={() => setTaskPickerOpen(open => !open)} disabled={!run}><ListFilter size={17}/><span><b>研究任务</b><small>{run ? run.topic : '选择任务，查看能力画像'}</small></span><em>{!run || taskPickerOpen ? '收起任务列表' : '切换任务'}</em><ChevronDown size={16}/></button>}<div id={fullWidthCapabilities ? 'capability-task-picker' : undefined} hidden={fullWidthCapabilities && !!run && !taskPickerOpen}><header><div><ListFilter size={17}/><span><b>研究任务</b><small>{visibleRuns.length} / {availableTotal}</small></span></div></header><div className="task-review-filters"><div className="searchbox"><Search size={15}/><input value={taskQuery} onChange={event => setTaskQuery(event.target.value)} placeholder="搜索任务或运行 ID"/></div><select value={taskStatus} onChange={event => setTaskStatus(event.target.value)}><option value="all">全部状态</option><option value="active">进行中</option><option value="completed">已完成</option><option value="failed">失败</option><option value="draft">草稿</option></select></div><div className="task-review-list">{visibleRuns.length ? visibleRuns.map(itemRun => <button className={run?.run_id === itemRun.run_id ? 'selected' : ''} key={itemRun.run_id} onClick={() => chooseTask(itemRun)}><span><b>{itemRun.topic}</b><small>{itemRun.run_id}</small></span><div><Status value={itemRun.status}/><em>{routeLabel(itemRun.research_route)}</em></div></button>) : !loaded ? <div className="task-row-skeletons" aria-hidden="true">{[0, 1, 2, 3, 4].map(index => <TaskRowSkeleton key={index}/>)}</div> : <Empty text="当前已加载任务中没有匹配结果"/>}{hasMoreRuns && <button type="button" className="task-review-load-more" onClick={() => void loadMoreRuns()}><RefreshCw size={13}/>加载更早任务</button>}</div></div></section><section ref={contentRef} className={`task-review-content ${view}`}>{run && <header className="task-review-context"><div><span>{contextLabel}</span><b>{run.topic}</b><small>{run.run_id} · {routeLabel(run.research_route)} · {statusLabel(run.status)}</small></div><Status value={run.status}/></header>}{content}</section></div> : content}</>;
 }
 
 function BenchmarkPage() {
@@ -1652,7 +1767,7 @@ function useLiveInteractions(run, enabled) {
     const scheduleRefresh = () => { if (refreshTimer) clearTimeout(refreshTimer); refreshTimer = setTimeout(() => void refresh(), 120); };
     void refresh();
     if (['completed', 'failed', 'cancelled', 'archived'].includes(run.status)) { setConnected(false); return () => { cancelled = true; if (refreshTimer) clearTimeout(refreshTimer); }; }
-    const source = new EventSource(`${api}${runApiPath(run.run_id, '/events')}`);
+    const source = new AuthenticatedEventSource(`${api}${runApiPath(run.run_id, '/events')}`);
     source.onopen = () => {
       if (disconnectTimer) { clearTimeout(disconnectTimer); disconnectTimer = null; }
       if (!cancelled) setConnected(true);
@@ -2107,6 +2222,13 @@ function parseCapabilityPortrait(value) {
   });
   return {overview, points};
 }
+/** The card's five authored columns, shaped for injection into a deep session. */
+function capabilityPortraitSections(row) {
+  const {overview, points} = parseCapabilityPortrait(row?.deep_capability_portrait || row?.capability_image);
+  return [{label: '概述', text: overview}, ...points]
+    .filter(item => item.text)
+    .map(item => ({label: item.label, text: String(item.text).replace(/\s+/g, ' ').slice(0, 1200)}));
+}
 const PORTRAIT_SCHEMA_LEAK_KEY_PATTERN = /\b(?:key_technologies|system_architecture|implementation_path|key_bottlenecks|keyword_context|intelligence_requirement|latency_requirement|coordination_requirement|enabling_technologies|module_content|operational_steps|capability_portrait_modules)\b/;
 function sanitizeCapabilityPortraitSection(text) {
   const raw = String(text || '').trim();
@@ -2281,7 +2403,7 @@ function capabilityVersionRank(row = {}, index = 0) {
 }
 function CapabilityPortrait({value}) { const {overview, points} = parseCapabilityPortrait(value); const modules = [{label:'概述', text:overview}, ...points].filter(item => item.text); return <section className="capability-portrait"><small>装备能力画像 · 五模块作战论证</small><div className="capability-portrait-cards">{modules.map((item, index) => <article className="capability-portrait-card" key={`${item.label}-${index}`}><b>{item.label}</b><p>{item.text}</p></article>)}</div></section>; }
 
-function CapabilityImageView({rows, referenceWeapons = [], runId = '', run = null, favoriteIndex = {}, onFavoriteToggle, highlightedCardKey = ''}) {
+function CapabilityImageView({rows, referenceWeapons = [], runId = '', run = null, favoriteIndex = {}, onFavoriteToggle, highlightedCardKey = '', onOpenDirectedDeep}) {
   const confidencePercent = value => `${(Number(value || 0) * 100).toFixed(1)}%`;
   const [snapshotRows, setSnapshotRows] = useState(null);
   const [versionLedger, setVersionLedger] = useState([]);
@@ -2344,6 +2466,7 @@ function CapabilityImageView({rows, referenceWeapons = [], runId = '', run = nul
     source: row?.source || '',
     deep_capability_portrait: compactDeepText(row?.deep_capability_portrait || row?.capability_image),
     capability_portrait_modules: row?.capability_portrait_modules || undefined,
+    capability_sections: capabilityPortraitSections(row),
     evidence_ids: Array.isArray(row?.evidence_ids) ? row.evidence_ids.slice(0, 8) : [],
   })), [displayedRows]);
   const compactReferenceContext = useMemo(() => visibleReferenceWeapons.slice(0, 16).map(candidate => ({
@@ -2355,25 +2478,40 @@ function CapabilityImageView({rows, referenceWeapons = [], runId = '', run = nul
     overview: compactDeepText(swarmCandidateOverview(candidate)),
     score: candidate?.score ?? candidate?.evaluation_score ?? candidate?.composite_score ?? null,
   })), [visibleReferenceWeapons]);
-  const openDeepContext = (kind, target = {}, focus = '') => {
-    openDeepThinking({
+  const openDeepContext = (kind, target = {}, focus = '', sections = []) => {
+    const cardBindingId = target.card_binding_id || target.row?.card_binding_id || '';
+    const payload = {
       runId,
       kind,
       title: target.title || target.name || target.capability_name || (kind === 'deep-thinking' ? '当前研究的深度思考' : ''),
       capability_id: target.capability_id || '',
-      card_binding_id: target.card_binding_id || target.row?.card_binding_id || '',
+      card_binding_id: cardBindingId,
       capability_name: target.capability_name || target.name || target.title || '',
       hypothesis_id: target.hypothesis_id || '',
       candidate: target.candidate || target.reference_weapon || target.row || target || {},
       reference_weapon: target.reference_weapon || target.candidate || target.row || target || {},
       query: deepQuery,
       focus,
+      capability_sections: sections,
+      targetIdentity: cardBindingId ? `${kind}:card_binding_id:${cardBindingId}` : '',
       current_result_context: {
         selected: target.row || target.candidate || target,
         capability_cards: compactCapabilityContext,
         reference_weapons: compactReferenceContext,
       },
+    };
+    // Switching to the deep-research route makes the workbench re-open the
+    // dock with only the binding id, so park the resolved payload first.
+    rememberDeepLaunchContext(payload);
+    publishDeepLaunchCard({
+      card_key: cardBindingId,
+      run_id: runId,
+      capability_id: payload.capability_id,
+      name: payload.capability_name || payload.title,
+      sections,
     });
+    openDeepThinking(payload);
+    onOpenDirectedDeep?.(cardBindingId);
   };
   const loadCapabilitySnapshot = async () => {
     const requestId = ++capabilitySnapshotRequestRef.current;
@@ -2520,7 +2658,7 @@ function CapabilityImageView({rows, referenceWeapons = [], runId = '', run = nul
     setFeedbackItems([]);
     setFeedbackLoadError('');
     if (!encodedRunId) return undefined;
-    requestResult(`/runs/${encodedRunId}/expert-feedback`, {headers: {'X-Role': 'analyst'}}).then(result => {
+    requestResult(`/runs/${encodedRunId}/expert-feedback`, {headers: deepScopeHeadersForRun(run)}).then(result => {
       if (cancelled) return;
       if (!result.ok) {
         setFeedbackLoadError(result.detail || '无法读取当前任务的专家反馈。');
@@ -2619,7 +2757,7 @@ function CapabilityImageView({rows, referenceWeapons = [], runId = '', run = nul
     // genuinely new comment to create a new feedback record.  The server is
     // authoritative; this key is only a stable request hint.
     const feedbackKey = `feedback:${encodedRunId}:${stableClientHash(JSON.stringify(feedbackPayload))}`;
-    const result = await requestResult(`/runs/${encodedRunId}/expert-feedback`, {method: 'POST', headers: {'Content-Type': 'application/json', 'X-Role': 'analyst', 'Idempotency-Key': feedbackKey}, body: JSON.stringify(feedbackPayload)});
+    const result = await requestResult(`/runs/${encodedRunId}/expert-feedback`, {method: 'POST', headers: {...deepScopeHeadersForRun(run), 'Content-Type': 'application/json', 'Idempotency-Key': feedbackKey}, body: JSON.stringify(feedbackPayload)});
     setFeedbackSaving(false);
     if (!result.ok) {
       const detail = String(result.detail || '');
@@ -2732,7 +2870,7 @@ function CapabilityImageView({rows, referenceWeapons = [], runId = '', run = nul
     // inherit the formal card's favorite state through that shared index key.
     const favorite = !deepResearch && (favoriteIndex?.[favoriteIndexKey(runId, row)] || (row.favorited ? {favorite_id: row.favorite_id || row.id || '', card_key: cardKey} : null));
     const favorited = Boolean(favorite || (!deepResearch && row.favorited));
-    const favoriteEligible = capabilityPortraitIsComplete(row) && !pendingVerification;
+    const favoriteEligible = capabilityPortraitIsComplete(row);
     const favoritePending = Boolean(favorite?.pending);
     const comparisonFields = formalRow ? [
       ['装备名称', capabilityEquipmentName(formalRow) || formalRow.name || '—', equipmentName || '—'],
@@ -2749,7 +2887,7 @@ function CapabilityImageView({rows, referenceWeapons = [], runId = '', run = nul
       }),
     ] : [];
     return <article className={`capability-sheet${pendingVerification ? ' pending-verification' : ''}${deepResearch ? ' deep-research-capability' : ''}`} data-card-key={cardKey} key={`${row.capability_id || row.name || 'capability'}-${index}`}>
-      <header><div><div className="capability-title-row"><div className="capability-identity"><span>装备名称</span><h2>{equipmentName}{meta.version ? <small className="capability-version-label">v{meta.version}</small> : null}</h2>{equipmentDirection && <p><b>装备方向</b>{equipmentDirection}</p>}</div>{deepResearch && <span className="capability-source-badge deep-research-source">深研结果</span>}<button type="button" className={`favorite-star${favorited ? ' is-favorited' : ''}${favoritePending ? ' is-pending' : ''}`} disabled={(!favoriteEligible && !favorited) || favoritePending || !onFavoriteToggle} aria-pressed={favorited} aria-label={favorited ? `取消收藏：${equipmentName}` : `收藏：${equipmentName}`} title={!favoriteEligible && !favorited ? '仅完整 S6 能力画像可收藏' : favorited ? '取消收藏' : '收藏能力画像'} onClick={() => void onFavoriteToggle(row, runId, !favorited)}><Star size={17} fill={favorited ? 'currentColor' : 'none'}/></button></div><div className="capability-card-actions"><button type="button" onClick={() => openFeedback(row.capability_id || row.name)}><MessageSquare size={13}/>针对本卡反馈</button><button type="button" className="deep-followup-button" onClick={() => openDeepContext('capability-followup', {row, ...row, capability_name: equipmentName}, `以“${equipmentName}”为种子，从不同制胜角度改写其构型、作用机理与作战角色。`)}><BrainCircuit size={13}/>定向深研 / 追问</button>{deepResearch && formalRow && <button type="button" className="capability-jump-button" onClick={() => focusCapabilityRow(formalRow)}><Eye size={13}/>查看正式原卡</button>}{deepResearch && row.version_id && <button type="button" className="capability-version-delete" disabled={Boolean(versionMutationBusy[row.version_id])} onClick={() => void mutateCapabilityVersion({version_id: row.version_id, version_no: row.version_no || meta.version, status: meta.status, snapshot: row})}><Trash2 size={13}/>{versionMutationBusy[row.version_id] ? '删除中…' : '删除此版本'}</button>}{cardFeedback.length > 0 && <span><MessageSquare size={12}/> {cardFeedback.length} 条反馈</span>}{deepResearch && <span className="deep-job-chip">{meta.statusLabel} · {meta.source || '深研来源'}</span>}</div></div><div className="capability-score" title={scoreTitle}><b>{confidencePercent(row.confidence)}</b><small>{pendingVerification ? '综合置信度（待核验）' : '综合置信度'}</small></div></header>
+      <header><div><div className="capability-title-row"><div className="capability-identity"><span>装备名称</span><h2>{equipmentName}{meta.version ? <small className="capability-version-label">v{meta.version}</small> : null}</h2>{equipmentDirection && <p><b>装备方向</b>{equipmentDirection}</p>}</div>{deepResearch && <span className="capability-source-badge deep-research-source">深研结果</span>}<button type="button" className={`favorite-star${favorited ? ' is-favorited' : ''}${favoritePending ? ' is-pending' : ''}`} disabled={(!favoriteEligible && !favorited) || favoritePending || !onFavoriteToggle} aria-pressed={favorited} aria-label={favorited ? `取消收藏：${equipmentName}` : `收藏：${equipmentName}`} title={!favoriteEligible && !favorited ? '仅完整 S6 能力画像可收藏' : favorited ? '取消收藏' : '收藏能力画像'} onClick={() => void onFavoriteToggle(row, runId, !favorited)}><Star size={17} fill={favorited ? 'currentColor' : 'none'}/></button></div><div className="capability-card-actions"><button type="button" onClick={() => openFeedback(row.capability_id || row.name)}><MessageSquare size={13}/>针对本卡反馈</button><button type="button" className="deep-followup-button" onClick={() => { const sections = capabilityPortraitSections(row); openDeepContext('capability-followup', {row, ...row, capability_name: equipmentName}, capabilitySeedFocus(equipmentName, sections), sections); }}><BrainCircuit size={13}/>定向深研 / 追问</button>{deepResearch && formalRow && <button type="button" className="capability-jump-button" onClick={() => focusCapabilityRow(formalRow)}><Eye size={13}/>查看正式原卡</button>}{deepResearch && row.version_id && <button type="button" className="capability-version-delete" disabled={Boolean(versionMutationBusy[row.version_id])} onClick={() => void mutateCapabilityVersion({version_id: row.version_id, version_no: row.version_no || meta.version, status: meta.status, snapshot: row})}><Trash2 size={13}/>{versionMutationBusy[row.version_id] ? '删除中…' : '删除此版本'}</button>}{cardFeedback.length > 0 && <span><MessageSquare size={12}/> {cardFeedback.length} 条反馈</span>}{deepResearch && <span className="deep-job-chip">{meta.statusLabel} · {meta.source || '深研来源'}</span>}</div></div><div className="capability-score" title={scoreTitle}><b>{confidencePercent(row.confidence)}</b><small>{pendingVerification ? '综合置信度（待核验）' : '综合置信度'}</small></div></header>
       <WeaponDimensions classification={row.capability_classification}/>{portrait ? <CapabilityPortrait value={portrait}/> : <div className="capability-legacy-note">等待 S6 单卡成稿</div>}
       {deepResearch && formalRow && <section className="deep-research-comparison"><header><div><GitCompare size={15}/><span><b>与正式原卡对比</b><small>正式卡保持不变，以下仅展示本次深研形成的独立版本差异。</small></span></div><button type="button" className="capability-jump-button" onClick={() => focusCapabilityRow(formalRow)}><Eye size={13}/>定位正式原卡</button></header><div className="deep-research-comparison-grid"><div><strong>正式原卡</strong>{comparisonFields.map(([label, formalValue]) => <dl key={`formal-${label}`}><dt>{label}</dt><dd>{formalValue}</dd></dl>)}</div><div><strong>当前深研卡片</strong>{comparisonFields.map(([label, _formalValue, researchValue]) => <dl key={`research-${label}`}><dt>{label}</dt><dd>{researchValue}</dd></dl>)}</div></div></section>}
     </article>;
@@ -2829,13 +2967,13 @@ function favoriteDisplayRow(item) {
   };
 }
 const favoriteRowId = item => String(item?.favorite_id || item?.id || item?.card_key || `${item?.run_id || ''}-${item?.name || ''}`);
-function FavoritesPage({scope = FAVORITE_SCOPE_GLOBAL, runs = [], favoriteItems = [], navigate, onFavoriteToggle, onFavoriteUpdate, onRefresh}) {
+function FavoritesPage({scope = FAVORITE_SCOPE_GLOBAL, platformMode = false, platformUserRole = '', runs = [], favoriteItems = [], navigate, onFavoriteToggle, onFavoriteUpdate, onRefresh}) {
   const [rows, setRows] = useState(() => favoriteItems.map(favoriteDisplayRow));
   const [query, setQuery] = useState('');
   const [capabilityType, setCapabilityType] = useState('all');
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(favoriteItems.length);
-  const [loading, setLoading] = useState(scope === FAVORITE_SCOPE_GLOBAL);
+  const [loading, setLoading] = useState(platformMode || scope === FAVORITE_SCOPE_GLOBAL);
   const [error, setError] = useState('');
   const [busyIds, setBusyIds] = useState(() => new Set());
   const [loadedSourceRuns, setLoadedSourceRuns] = useState({});
@@ -2848,12 +2986,12 @@ function FavoritesPage({scope = FAVORITE_SCOPE_GLOBAL, runs = [], favoriteItems 
   const pageSize = FAVORITE_PAGE_SIZE;
   const loadPage = async (targetPage = 1) => {
     const sequence = ++loadSequenceRef.current;
-    if (scope !== FAVORITE_SCOPE_GLOBAL) {
+    if (!platformMode && scope !== FAVORITE_SCOPE_GLOBAL) {
       setRows([]); setTotal(0); setLoading(false); setError('');
       return;
     }
     setLoading(true); setError('');
-    const params = new URLSearchParams({scope: FAVORITE_SCOPE_GLOBAL, limit: String(pageSize), offset: String((targetPage - 1) * pageSize)});
+    const params = new URLSearchParams({scope: platformMode ? FAVORITE_SCOPE_PRIVATE : FAVORITE_SCOPE_GLOBAL, limit: String(pageSize), offset: String((targetPage - 1) * pageSize)});
     if (query.trim()) params.set('search', query.trim());
     if (capabilityType !== 'all') params.set('capability_type', capabilityType);
     const result = await requestResult(`/favorites?${params.toString()}`, {headers: {'X-Role': 'analyst'}});
@@ -2916,7 +3054,7 @@ function FavoritesPage({scope = FAVORITE_SCOPE_GLOBAL, runs = [], favoriteItems 
       });
     setSavingEditId('');
     if (!result?.ok) {
-      setEditError(result?.status === 403 ? '当前身份没有编辑该公共收藏的权限。' : result?.detail || '收藏信息保存失败，请重试。');
+      setEditError(result?.status === 403 ? '当前身份没有编辑该收藏的权限。' : result?.detail || '收藏信息保存失败，请重试。');
       return;
     }
     const saved = result.favorite || result.data?.favorite || result.data || {};
@@ -2979,11 +3117,13 @@ function FavoritesPage({scope = FAVORITE_SCOPE_GLOBAL, runs = [], favoriteItems 
     if (run?.status === 'archived' || /archiv|归档/i.test(String(item.source_status || ''))) return '来源任务已归档';
     return item.source_topic || run?.topic || item.run_id || '来源任务未知';
   };
+  const globalBusinessAccess = isGlobalBusinessRole(platformUserRole);
+  const platformScopeTitle = globalBusinessAccess ? '全局收藏' : '个人收藏';
   return <section className="favorites-page">
     <PageTitle eyebrow="能力资产" title="收藏" subtitle="保存完整能力画像快照，来源任务归档或删除后仍可独立审阅。"><button type="button" onClick={() => void loadPage(page)} disabled={loading}><RefreshCw size={14} className={loading ? 'spin' : ''}/>刷新</button></PageTitle>
     <section className="favorites-shell">
-      <header className="favorites-header"><div><span className="favorites-eyebrow"><Star size={16}/>能力画像收藏</span><h2>{scope === FAVORITE_SCOPE_PRIVATE ? '个人收藏' : '公共收藏'}</h2><p>{scope === FAVORITE_SCOPE_PRIVATE ? '个人收藏将随账户登录启用，当前不会读取或写入匿名数据。' : `${total} 张完整能力画像快照`}</p></div><div className="favorites-scope-tabs" role="tablist" aria-label="收藏范围"><button type="button" role="tab" aria-selected={scope === FAVORITE_SCOPE_GLOBAL} className={scope === FAVORITE_SCOPE_GLOBAL ? 'active' : ''} onClick={() => changeScope(FAVORITE_SCOPE_GLOBAL)}>公共收藏</button><button type="button" role="tab" aria-selected={scope === FAVORITE_SCOPE_PRIVATE} className={scope === FAVORITE_SCOPE_PRIVATE ? 'active' : ''} onClick={() => changeScope(FAVORITE_SCOPE_PRIVATE)}>个人收藏</button></div></header>
-      {scope === FAVORITE_SCOPE_PRIVATE ? <div className="favorites-login-placeholder"><Star size={26}/><h3>登录后使用个人收藏</h3><p>当前版本只开放公共收藏；接入账户体系后，个人收藏会按账户隔离。</p></div> : <>
+      <header className="favorites-header"><div><span className="favorites-eyebrow"><Star size={16}/>能力画像收藏</span><h2>{platformMode ? platformScopeTitle : scope === FAVORITE_SCOPE_PRIVATE ? '个人收藏' : '公共收藏'}</h2><p>{platformMode ? `${total} 张完整能力画像快照 · ${globalBusinessAccess ? '全局管理员可查看全部用户收藏' : '按当前账户隔离'}` : scope === FAVORITE_SCOPE_PRIVATE ? '个人收藏需登录后使用。' : `${total} 张完整能力画像快照`}</p></div>{!platformMode && <div className="favorites-scope-tabs" role="tablist" aria-label="收藏范围"><button type="button" role="tab" aria-selected={scope === FAVORITE_SCOPE_GLOBAL} className={scope === FAVORITE_SCOPE_GLOBAL ? 'active' : ''} onClick={() => changeScope(FAVORITE_SCOPE_GLOBAL)}>公共收藏</button><button type="button" role="tab" aria-selected={scope === FAVORITE_SCOPE_PRIVATE} className={scope === FAVORITE_SCOPE_PRIVATE ? 'active' : ''} onClick={() => changeScope(FAVORITE_SCOPE_PRIVATE)}>个人收藏</button></div>}</header>
+      {!platformMode && scope === FAVORITE_SCOPE_PRIVATE ? <div className="favorites-login-placeholder"><Star size={26}/><h3>登录后使用个人收藏</h3><p>请从平台登录入口进入工作台，个人收藏将按账户隔离。</p></div> : <>
         <div className="favorites-filters"><label className="searchbox"><Search size={15}/><input value={query} onChange={event => setQuery(event.target.value)} placeholder="搜索收藏名称" aria-label="搜索收藏名称"/></label><select value={capabilityType} onChange={event => setCapabilityType(event.target.value)} aria-label="按能力类型筛选"><option value="all">全部能力类型</option><option value="new_capability">新能力</option><option value="upgrade">能力升级</option></select></div>
         {error && <div className="favorites-error"><CircleAlert size={16}/><span>{error}</span><button type="button" onClick={() => void loadPage(page)}>重试</button></div>}
         {loading && !rows.length ? <div className="favorites-loading"><RefreshCw size={20} className="spin"/>正在加载收藏…</div> : !rows.length ? <Empty text={query || capabilityType !== 'all' ? '没有匹配的收藏' : '还没有收藏完整能力画像'}><button type="button" onClick={() => navigate('capabilities')}>去能力图像页看看</button></Empty> : <div className="favorites-list">{rows.map(item => { const run = runById.get(String(item.run_id || '')); const sourceUnavailable = item.source_deleted || /deleted|删除|unavailable|不可读/i.test(String(item.source_status || '')); const itemId = favoriteRowId(item); const displayName = String(item.display_name || item.name || item.title || '未命名能力画像'); const note = String(item.note ?? ''); const tags = Array.isArray(item.tags) ? item.tags : []; return <article className={`favorite-card${sourceUnavailable ? ' source-unavailable' : ''}`} key={itemId}><header><div><div className="favorite-card-title"><span className="favorite-badge"><Star size={13} fill="currentColor"/>已收藏</span><h3>{displayName}</h3></div><div className="favorite-card-meta">{(item.equipment_form || item.equipment_category) && <span>{item.equipment_form || item.equipment_category}</span>}<span>{item.capability_type === 'upgrade' ? '能力升级' : '新能力'}</span>{tags.map(tag => <span key={`${itemId}-tag-${tag}`}>#{tag}</span>)}</div></div><div className="favorite-card-actions"><button type="button" className="favorite-open" disabled={sourceUnavailable} onClick={() => void open(item)} title={sourceUnavailable ? '来源不可读，仅保留快照' : !run ? '将按需读取来源任务' : '返回原能力卡并定位'}><Eye size={14}/>{sourceUnavailable ? '仅查看快照' : '查看原卡'}</button><button type="button" className="favorite-edit" onClick={() => startEdit(item)} aria-expanded={editingId === itemId} title="编辑收藏显示信息"><Pencil size={14}/>编辑</button><button type="button" className="favorite-remove" disabled={busyIds.has(itemId)} onClick={() => void remove(item)}><Trash2 size={14}/>取消收藏</button></div></header>{editingId === itemId && <form className="favorite-edit-form" onSubmit={event => void saveEdit(event, item)}><label><span>显示名称</span><input value={editDraft.displayName} maxLength={400} onChange={event => setEditDraft(current => ({...current, displayName: event.target.value}))} placeholder={item.name || '未命名能力画像'}/></label><label><span>备注</span><textarea value={editDraft.note} maxLength={4000} onChange={event => setEditDraft(current => ({...current, note: event.target.value}))} placeholder="记录复核结论、使用场景或后续动作"/></label><label><span>标签</span><input value={editDraft.tags} maxLength={1200} onChange={event => setEditDraft(current => ({...current, tags: event.target.value}))} placeholder="用逗号分隔，例如：重点、待复核"/><small>保存到服务器；原始五模块能力快照保持不变。</small></label>{editError && <p className="form-error"><CircleAlert size={14}/>{editError}</p>}<div><button type="button" onClick={cancelEdit} disabled={savingEditId === itemId}>取消</button><button type="submit" className="primary" disabled={savingEditId === itemId}><Save size={13}/>{savingEditId === itemId ? '保存中…' : '保存'}</button></div></form>}{note && <div className="favorite-note"><span><Pencil size={12}/>备注</span><p>{note}</p></div>}<FavoriteDimensions classification={item.capability_classification}/><FavoritePortrait row={item}/><div className="favorite-card-source"><span>{sourceLabel(item)}</span><time dateTime={item.created_at || undefined}>收藏时间：{item.created_at ? new Date(item.created_at).toLocaleString('zh-CN', {hour12:false}) : '—'}</time></div></article>; })}</div>}
@@ -3681,7 +3821,7 @@ function RunDrawer({run, catalog, close, inspect, changed}) {
   const stop = async () => { if (!window.confirm(`确定停止研究任务“${run.topic}”吗？将终止该任务启动的所有 Agent 进程。`)) return; setSaving(true); setError(''); const result = await requestResult(runApiPath(run.run_id, '/stop'), {method:'POST', headers:{'Idempotency-Key':`stop:${run.run_id}`, 'X-Role':'analyst'}}); setSaving(false); if (result.ok) { changed(result.data); notify('已请求停止任务', 'info'); void loadHistory(); } else { setError(result.detail || '停止任务失败。'); notify('停止任务失败', 'error'); } };
   const resume = async () => { setSaving(true); setError(''); const result = await requestResult(runApiPath(run.run_id, '/resume'), {method: 'POST', headers: {'Idempotency-Key': crypto.randomUUID(), 'X-Role': 'analyst'}}); setSaving(false); if (result.ok) { changed(result.data); notify('已从断点继续执行', 'ok'); void loadHistory(); } else { setError(result.detail || '断点恢复失败，请检查 Worker 与模型配置。'); notify('断点恢复失败', 'error'); } };
   const harnessLabel = run.execution_profile_id === 'winning_swarm_dynamic_v2' ? 'Winning Swarm Dynamic v2 Challenger' : run.execution_profile_id === 'swarm_quality_v1' ? 'Swarm Quality v1 Challenger' : run.execution_profile_id === 'optimized_v2' ? 'Optimized v2 Challenger' : 'Legacy v1';
-  return <div className="drawer-backdrop" onClick={close}><aside className="run-drawer" ref={drawerRef} role="dialog" aria-modal="true" aria-label={`研究任务详情：${run.topic}`} onClick={event => event.stopPropagation()}><button className="drawer-close icon-button" title="关闭" onClick={close}><X size={16}/></button><span className="drawer-eyebrow">研究任务 · <em className="drawer-run-id">{run.run_id}</em><button type="button" className="inline-copy" title="复制运行 ID" aria-label="复制运行 ID" onClick={() => void copyWithToast(run.run_id, '运行 ID')}><Copy size={12}/></button></span>{editing ? <section className="drawer-editor"><Field label="研究主题"><input value={form.topic} onChange={event => set('topic', event.target.value)}/></Field><Field label="补充信息（可选）"><textarea className="supplement-input" value={form.supplemental_information} maxLength={8000} onChange={event => set('supplemental_information', event.target.value)}/></Field><div className="drawer-edit-grid"><Field label="研究路线"><select value={form.research_route} onChange={event => set('research_route', event.target.value)}><option value="auto">按发现分支自动映射</option>{catalog.routes.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="交互模式"><select value={form.interaction_mode} onChange={event => set('interaction_mode', event.target.value)}>{(catalog.interaction_modes || []).map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="A–H 发现分支"><select value={form.discovery_branch} onChange={event => set('discovery_branch', event.target.value)}><option value="auto">Agent 自动选择</option>{(catalog.discovery_branches || []).map(item => <option key={item.id} value={item.id}>{item.id} · {item.name}</option>)}</select></Field><Field label="运行模式"><select value={form.execution_profile_id} onChange={event => set('execution_profile_id', event.target.value)}>{(catalog.execution_profiles || [{id:'legacy_v1',name:'Legacy v1'}]).filter(item => item.selectable !== false).map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="最大轮次"><select value={form.max_rounds} onChange={event => set('max_rounds', Number(event.target.value))}>{[1,2,3,...(form.execution_profile_id === 'legacy_v1' ? [4,5] : [])].map(item => <option key={item} value={item}>{item} 轮</option>)}</select></Field></div><div className="drawer-agent-list">{businessAgents(catalog).map(agent => <label key={agent.agent_id} className={form.selected_agent_ids.includes(agent.agent_id) ? 'selected' : ''}><input type="checkbox" checked={form.selected_agent_ids.includes(agent.agent_id)} onChange={() => toggleAgent(agent.agent_id)}/><span>{agent.display_name}</span></label>)}</div><div className="drawer-editor-actions"><button onClick={() => setEditing(false)}><X size={15}/>取消</button><button className="primary" disabled={saving || !form.topic.trim()} onClick={save}><Save size={15}/>{saving ? '保存中' : '保存草稿'}</button></div></section> : <><h2>{run.topic}</h2><Status value={run.status}/>{run.supplemental_information && <section className="drawer-supplement"><b>用户补充信息</b><p>{run.supplemental_information}</p><small>执行时由主控 Agent 压缩并结构化传递</small></section>}<dl><dt>研究路线</dt><dd>{routeLabel(run.research_route)}</dd><dt>交互模式</dt><dd>{run.interaction_mode === 'autonomous' ? '智能元编排' : '专家约束编排'}</dd><dt>A–H 分支</dt><dd>{run.discovery_branch === 'auto' ? 'Agent 自动选择' : run.discovery_branch}</dd><dt>Harness</dt><dd>{harnessLabel}</dd><dt>执行方式</dt><dd><ExecutionBadge execution={run.execution}/></dd><dt>业务 Agent</dt><dd>{run.selected_agent_ids.length ? run.selected_agent_ids.map(agentModelLabel).join('、') : '由编排 Agent 智能选择'}</dd><dt>最大轮次</dt><dd>{run.max_rounds}</dd></dl><div className="drawer-steps">{['问题解析与任务委派', '基线 Agent 研判', 'S1–S6 轻量门控与按需回溯', '五判据审计', '研究报告输出'].map((item, index) => { const failed = reportStageFailed && index === 4; return <div key={item}><i className={failed ? 'failed' : index < stageIndex ? 'done' : index === stageIndex ? 'active' : ''}/><span>{item}</span>{failed && <Status value="failed"/>}</div>; })}</div>{(done || ['queued', 'planning', 'researching', 'recalling', 'synthesizing', 'reviewing', 'reporting', 'failed', 'cancel_requested'].includes(run.status)) && <div className="drawer-actions">{canStop && <button className="danger" disabled={saving} onClick={stop}><X size={15}/>{saving ? '停止中' : '停止任务'}</button>}<button onClick={() => inspect('interactions')}><History size={15}/>交互过程</button>{run.status === 'failed' && <button className="primary" disabled={saving} onClick={resume}>{saving ? '恢复中' : '从断点继续'}</button>}{done && <><button onClick={() => inspect('evidence')}>证据中心</button><button onClick={() => inspect('winning')}>S1–S6 Agent</button><button className="primary" onClick={() => inspect('capabilities')}>能力画像</button></>}</div>}{canEdit && <button className="drawer-manage" onClick={() => setEditing(true)}><Pencil size={15}/>编辑草稿</button>}{canArchive && <div className="archive-action">{archiveConfirm ? <><span>归档后任务从当前列表隐藏，审计产物仍保留。</span><button onClick={() => setArchiveConfirm(false)}>取消</button><button className="danger" disabled={saving} onClick={archive}><Trash2 size={14}/>确认归档</button></> : <button onClick={() => setArchiveConfirm(true)}><Archive size={15}/>归档任务</button>}</div>}</>}{error && <p className="form-error"><CircleAlert size={15}/>{error}</p>}<section className="run-history"><div><History size={16}/><b>执行历史</b><span>{historyRows.length} 个事件</span></div>{historyRows.length ? historyRows.slice(-24).reverse().map(row => <article key={row.sequence}><i/><span><b>{eventLabel(row.event_type)}</b><small>#{row.sequence} · {historySummary(row, run.result?.audit_status)}</small></span></article>) : <p>尚无历史事件</p>}</section></aside></div>;
+  return <div className="drawer-backdrop" onClick={close}><aside className="run-drawer" ref={drawerRef} role="dialog" aria-modal="true" aria-label={`研究任务详情：${run.topic}`} onClick={event => event.stopPropagation()}><button className="drawer-close icon-button" title="关闭" onClick={close}><X size={16}/></button><span className="drawer-eyebrow">研究任务 · <em className="drawer-run-id">{run.run_id}</em><button type="button" className="inline-copy" title="复制运行 ID" aria-label="复制运行 ID" onClick={() => void copyWithToast(run.run_id, '运行 ID')}><Copy size={12}/></button></span>{editing ? <section className="drawer-editor"><Field label="研究主题"><input value={form.topic} onChange={event => set('topic', event.target.value)}/></Field><Field label="补充信息（可选）"><textarea className="supplement-input" value={form.supplemental_information} maxLength={8000} onChange={event => set('supplemental_information', event.target.value)}/></Field><div className="drawer-edit-grid"><Field label="研究路线"><select value={form.research_route} onChange={event => set('research_route', event.target.value)}><option value="auto">按发现分支自动映射</option>{catalog.routes.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="交互模式"><select value={form.interaction_mode} onChange={event => set('interaction_mode', event.target.value)}>{(catalog.interaction_modes || []).map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="A–H 发现分支"><select value={form.discovery_branch} onChange={event => set('discovery_branch', event.target.value)}><option value="auto">Agent 自动选择</option>{(catalog.discovery_branches || []).map(item => <option key={item.id} value={item.id}>{item.id} · {item.name}</option>)}</select></Field><Field label="运行模式"><select value={form.execution_profile_id} onChange={event => set('execution_profile_id', event.target.value)}>{(catalog.execution_profiles || [{id:'legacy_v1',name:'Legacy v1'}]).filter(item => item.selectable !== false).map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="最大轮次"><select value={form.max_rounds} onChange={event => set('max_rounds', Number(event.target.value))}>{[1,2,3,...(form.execution_profile_id === 'legacy_v1' ? [4,5] : [])].map(item => <option key={item} value={item}>{item} 轮</option>)}</select></Field></div><div className="drawer-agent-list">{businessAgents(catalog).map(agent => <label key={agent.agent_id} className={form.selected_agent_ids.includes(agent.agent_id) ? 'selected' : ''}><input type="checkbox" checked={form.selected_agent_ids.includes(agent.agent_id)} onChange={() => toggleAgent(agent.agent_id)}/><span>{agent.display_name}</span></label>)}</div><div className="drawer-editor-actions"><button onClick={() => setEditing(false)}><X size={15}/>取消</button><button className="primary" disabled={saving || !form.topic.trim()} onClick={save}><Save size={15}/>{saving ? '保存中' : '保存草稿'}</button></div></section> : <><h2>{run.topic}</h2><Status value={run.status}/>{run.supplemental_information && <section className="drawer-supplement"><b>用户补充信息</b><p>{run.supplemental_information}</p><small>执行时由主控 Agent 压缩并结构化传递</small></section>}<dl><dt>研究路线</dt><dd>{routeLabel(run.research_route)}</dd><dt>交互模式</dt><dd>{run.interaction_mode === 'autonomous' ? '智能元编排' : '专家约束编排'}</dd><dt>A–H 分支</dt><dd>{run.discovery_branch === 'auto' ? 'Agent 自动选择' : run.discovery_branch}</dd><dt>Harness</dt><dd>{harnessLabel}</dd><dt>执行方式</dt><dd><ExecutionBadge execution={run.execution}/></dd><dt>业务 Agent</dt><dd>{run.selected_agent_ids.length ? run.selected_agent_ids.map(agentModelLabel).join('、') : '由编排 Agent 智能选择'}</dd><dt>最大轮次</dt><dd>{run.max_rounds}</dd></dl><div className="drawer-steps">{['问题解析与任务委派', '基线 Agent 研判', 'S1–S6 轻量门控与按需回溯', '五判据审计', '研究报告输出'].map((item, index) => { const failed = reportStageFailed && index === 4; return <div key={item}><i className={failed ? 'failed' : index < stageIndex ? 'done' : index === stageIndex ? 'active' : ''}/><span>{item}</span>{failed && <Status value="failed"/>}</div>; })}</div>{(done || ['queued', 'planning', 'researching', 'recalling', 'synthesizing', 'reviewing', 'reporting', 'failed', 'cancel_requested'].includes(run.status)) && <div className="drawer-actions">{canStop && <button className="danger" disabled={saving} onClick={stop}><X size={15}/>{saving ? '停止中' : '停止任务'}</button>}<button className="drawer-deep-link" onClick={() => inspect('deep-thinking')}><MessageSquare size={15}/>打开深研对话</button><button onClick={() => inspect('interactions')}><History size={15}/>交互过程</button>{run.status === 'failed' && <button className="primary" disabled={saving} onClick={resume}>{saving ? '恢复中' : '从断点继续'}</button>}{done && <><button onClick={() => inspect('evidence')}>证据中心</button><button onClick={() => inspect('winning')}>S1–S6 Agent</button><button className="primary" onClick={() => inspect('capabilities')}>能力画像</button></>}</div>}{canEdit && <button className="drawer-manage" onClick={() => setEditing(true)}><Pencil size={15}/>编辑草稿</button>}{canArchive && <div className="archive-action">{archiveConfirm ? <><span>归档后任务从当前列表隐藏，审计产物仍保留。</span><button onClick={() => setArchiveConfirm(false)}>取消</button><button className="danger" disabled={saving} onClick={archive}><Trash2 size={14}/>确认归档</button></> : <button onClick={() => setArchiveConfirm(true)}><Archive size={15}/>归档任务</button>}</div>}</>}{error && <p className="form-error"><CircleAlert size={15}/>{error}</p>}<section className="run-history"><div><History size={16}/><b>执行历史</b><span>{historyRows.length} 个事件</span></div>{historyRows.length ? historyRows.slice(-24).reverse().map(row => <article key={row.sequence}><i/><span><b>{eventLabel(row.event_type)}</b><small>#{row.sequence} · {historySummary(row, run.result?.audit_status)}</small></span></article>) : <p>尚无历史事件</p>}</section></aside></div>;
 }
 
 /* ------------------------------------------------------------- placeholders */
@@ -3793,13 +3933,12 @@ function ShortcutSheet({open, close}) {
 function BackToTop() {
   const [visible, setVisible] = useState(false);
   useEffect(() => {
-    const onScroll = () => setVisible(window.scrollY > 420);
+    const onScroll = () => setVisible(getScrollHostOffset() > 420);
     onScroll();
-    window.addEventListener('scroll', onScroll, {passive: true});
-    return () => window.removeEventListener('scroll', onScroll);
+    return observeScrollHost(onScroll);
   }, []);
   if (!visible) return null;
-  return <button type="button" className="back-to-top" title="回到页面顶部" aria-label="回到页面顶部" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}><ArrowUp size={17}/></button>;
+  return <button type="button" className="back-to-top" title="回到页面顶部" aria-label="回到页面顶部" onClick={() => scrollHostToTop({behavior: 'smooth'})}><ArrowUp size={17}/></button>;
 }
 
 function providerDisplayLabel() { return 'Agent'; }
@@ -3864,13 +4003,22 @@ function Detail({label, value}) { return <div className="detail"><small>{label}<
 function Status({value}) { return <span className={`status ${value}`}><i/>{statusLabel(value)}</span>; }
 function ExecutionBadge({execution = {}}) { const real = execution.mode === 'real'; return <span className={`execution ${real ? 'real' : 'fake'}`}><i/>{real ? `${providerDisplayLabel(execution.provider)} · ${modelDisplayLabel(execution.model || 'gpt-5.5')}` : 'Fake · 离线'}</span>; }
 function Empty({text, children}) { return <div className="empty"><Activity size={23}/>{text}{children ? <div className="empty-actions">{children}</div> : null}</div>; }
-async function request(path, fallback, options) { try { const response = await fetch(`${api}${path}`, options); if (!response.ok) return fallback; return (response.headers.get('content-type') || '').includes('application/json') ? await response.json() : await response.text(); } catch { return fallback; } }
+function platformRequestHeaders(headers = {}) {
+  const next = {...headers};
+  try {
+    const token = window.localStorage.getItem('user_token');
+    if (token && !next.Authorization && !next.authorization) next.Authorization = `Bearer ${token}`;
+  } catch (_error) { /* private browsing */ }
+  if (!next['X-Role'] && !next['x-role']) next['X-Role'] = 'analyst';
+  return next;
+}
+async function request(path, fallback, options = {}) { try { const response = await fetch(`${api}${path}`, {...options, headers: platformRequestHeaders(options.headers)}); if (!response.ok) return fallback; return (response.headers.get('content-type') || '').includes('application/json') ? await response.json() : await response.text(); } catch { return fallback; } }
 async function requestResult(path, options = {}, requestOptions = {}) {
   const controller = new AbortController();
   const timeoutMs = Number(requestOptions.timeoutMs || 0);
   const timer = timeoutMs > 0 ? setTimeout(() => controller.abort(), timeoutMs) : null;
   try {
-    const response = await fetch(`${api}${path}`, {...options, signal: options.signal || controller.signal});
+    const response = await fetch(`${api}${path}`, {...options, headers: platformRequestHeaders(options.headers), signal: options.signal || controller.signal});
     const data = (response.headers.get('content-type') || '').includes('application/json') ? await response.json() : await response.text();
     return response.ok ? {ok:true,data} : {ok:false,status:response.status,detail:typeof data === 'object' ? data.detail : data};
   } catch (error) {
@@ -3899,6 +4047,8 @@ function displayEventLabel(value) { return ADDITIONAL_EVENT_LABELS[value] || DYN
 function routeLabel(value) { return {new_winning_mechanism: '新制胜机理', traditional_gap: '传统能力缺口', war_case_learning: '局部战争案例', auto: '自动'}[value] || value; }
 function statusLabel(value) { return {queued: '已排队', draft: '草稿', planning: '规划中', researching: '研究中', recalling: '再调中', synthesizing: 'S1–S6 综合中', reviewing: '审计中', reporting: '报告生成中', pause_requested: '请求暂停', paused: '已暂停', cancel_requested: '正在停止', cancelled: '已取消', completed: '已完成', failed: '失败', archived: '已归档'}[value] || value; }
 const rootElement = document.getElementById('root');
-const appRoot = globalThis.__equipmentDeepResearchRoot || createRoot(rootElement);
-globalThis.__equipmentDeepResearchRoot = appRoot;
-appRoot.render(<App/>);
+if (rootElement && !globalThis.__EQUIPMENT_WORKBENCH_EMBEDDED__) {
+  const appRoot = globalThis.__equipmentDeepResearchRoot || createRoot(rootElement);
+  globalThis.__equipmentDeepResearchRoot = appRoot;
+  appRoot.render(<App/>);
+}

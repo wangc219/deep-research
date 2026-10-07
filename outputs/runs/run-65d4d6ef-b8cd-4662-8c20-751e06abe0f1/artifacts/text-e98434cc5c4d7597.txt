@@ -1,0 +1,85 @@
+[1] Frequently Asked Questions
+
+[2] SDA contributes to the defense of our nation by designing and rapidly deploying the Proliferated Warfighter Space Architecture, a threat-driven constellation of small satellites that deliver critical services to our warfighters from space. Services include low-latency data transport integrated with tactical data links, tracking of advanced missile threats, custody of time-critical land and maritime targets, and space-based battle management, to name a few.
+
+[3] Latin for "always faster". SDA recognizes that good enough capabilities in the hands of the joint warfighter sooner may be better than delivering the perfect solution too late. Because of this, it means we as an agency accept a higher level of risk, employ novel business models, and move to develop and field capabilities more quickly than you might see in "traditional" government agencies. We believe this builds resiliency into our people and our product-the Proliferated Warfighter Space Architecture.
+
+[4] When we say "semper citius", we mean that we are moving at or ahead of the speed of the threat because we know the joint warfighter is counting on us.
+
+[5] pLEO stands for proliferated low Earth orbit. This means a constellation of many (hundreds or thousands, potentially) satellites orbiting at altitudes of less than 2000 km. Many current space-based military systems are orbiting further from the earth in orbits called medium Earth orbit (MEO) or geosynchronous Earth orbit (GEO).
+
+[6] A proliferated architecture of small satellites allows for resilience by providing capabilities that are not compromised by disruption or defeat of a small number of assets. By employing such design principles as mesh networks, the Proliferated Warfighter Space Architecture (PWSA) is built to continue functioning in the event that individual nodes become unavailable. The satellites that comprise the PWSA are also smaller, cheaper, and quicker to deliver and replace than some of our exquisite defense space assets deployed in limited quantities.
+
+[7] SDA's model relies on proliferation as a key tenet. And our initial architecture will be primarily in low Earth orbit.
+
+[8] Low Earth orbit offers a number of benefits when compared to orbits of higher altitude, including less expensive orbit insertion, better viewing geometries for space-based earth observation, and lower latencies and power requirements for communications transmissions to terrestrial systems. For these reasons, there has also been an emergence of technology providers in the commercial sector seeking to deliver communications capabilities through satellite constellations in LEO. These are some of the reason why SDA will initially proliferate capabilities in LEO.
+
+[9] A "layer" in SDA's Proliferated Warfighter Space Architecture is a particular function of the architecture that delivers or enables a warfighting capability. For instance, the Transport Layer will provide a mesh network comprised of communication satellites that connect to one another and to other space vehicles and ground stations via optical intersatellite links (OISLs). The Tracking Layer and Custody Layer provide sensing functions for advanced missile threats and time-critical land and maritime targets, and connect to the Transport Layer to provide threat indications and targeting data to our warfighters in real time.
+
+[10] Not every layer will have a dedicated constellation of satellites. Some layers will deliver capabilities with sensors, processors or other technologies hosted on another layer's satellites. For instance, the Battle Management Layer will provide a software framework and processing capabilities that will be hosted on most or all of the PWSA satellites
+
+[11] A tranche is essentially one generation, or iteration, of SDA's Proliferated Warfighter Space Architecture.
+
+[12] Tranche 0 (FY22) - Warfighter immersion: Demonstrated the feasibility of a proliferated architecture in cost, schedule, and scalability towards necessary performance for beyond line of sight targeting and advanced missile detection and tracking.
+
+[13] Tranche 1 (FY24) - Initial warfighting capability: Regional persistence for Link 16, advanced missile detection, and beyond line of sight targeting plus demonstration of UHF and S-band tactical satellite communications.
+
+[14] Tranche 2 (FY26) - Enhanced warfighting capability: Global persistence for all in Tranche 1 plus demonstration of advanced tactical data link(s) and future proliferated missions.
+
+[15] Tranche 3 (FY28) - Sustained capability: Advanced improvements over Tranche 2 plus future warfighting applications. This includes better sensitivity and accuracy for missile tracking, better targeting capabilities for BLOS, additional PNT capabilities, advances in lasercom, tactical data links, and RF communications, and advancements in autonomous operations.
+
+[16] Tranche 4 (FY30) - Autonomous operations: Continual advances across the architecture.
+
+[17] Spiral development is the process of incrementally delivering new capabilities. SDA is committed to delivering new defense space capabilities in two-year tranches - with each tranche improving upon the last - and informing the development of those capabilities with the latest available technology advancements and intelligence assessments. Spiraling also enables SDA plans and architecture designs to quickly pivot in response or even preemptively to advances in the threat.
+
+[18] These are all mechanisms federal agencies use to solicit input from potential product, capability, and service providers. Some of them, like a Request for Information (RFI), seek industry feedback and do not result in a contract award. Others, like a Broad Agency Announcement (BAA) or Request for Proposals (RFP), are looking for prospective performers to submit various types of proposals to an evaluation process likely resulting in some number of contracts awarded.
+
+[19] SDA is often limited in their capacity to answer specific questions following the publication of solicitations so as not to provide an unfair advantage to one bidder over another.
+
+[20] The Space Development Agency became part of the U.S. Space Force on October 1, 2022. As a direct reporting unit in the USSF, SDA reports to the Assistant Secretary of the Air Force for Space Acquisition and Integration for acquisition matters and to the Chief of Space Operations for all other matters.
+
+[21] SDA originally stood up in March 2019 under the Office of the Under Secretary of Defense for Research and Engineering as an independent defense agency with the understanding that it would eventually become part of the USSF.
+
+[22] Independence, regardless of alignment, is critical for SDA to continue to be the Department's constructive disruptor for space, and to allow the agency to innovate, flourish, and deliver.
+
+[23] SDA's focus is on delivering the Proliferated Warfighter Space Architecture (PWSA) on a two-year spiral development model beginning with our inaugural tranche in 2022.
+
+[24] DARPA and the Space Rapid Capabilities Office work to develop leap-ahead technologies that might enable the capabilities brought to the warfighter through the PWSA. SDA works in partnership with these organizations to potentially transition their technologies into further development and fielding.
+
+[25] Space Systems Command (SSC) works to deliver many of the space-based systems on which the joint warfighter relies today. SDA is working closely with SSC to ensure the PWSA complements those systems and shares common resources, such as ground architecture and launch services, where feasible.
+
+[26] SDA programs are an integral part of the space architecture in areas such as communications, data transport, and missile warning and tracking. Within the USSF, SDA, Space Systems Command, and the Space Rapid Capabilities Office provide space capabilities critical to ensuring the resilient architecture needed to counter today's emerging threats.
+
+[27] The Space Development Agency, responsible for rapid delivery of space-based capabilities to the joint warfighter, transferred to the U.S. Space Force, Oct. 1, 2022, as part of a planned realignment mandated by Congress in the National Defense Authorization Act.
+
+[28] SDA brings a unique acquisition strategy focused on proliferation and spiral development that enables faster and cheaper capability delivery by designing and rapidly deploying a threat-driven constellation of small satellites. SDA aims to provide responsive and resilient space capabilities and support the joint force, increasing the warfighter's lethality, maneuverability, and survivability.
+
+[29] SDA will practice responsible space traffic management to both orbit and deorbit safely and securely as required by national standards and international norms.
+
+[30] No. SDA strictly adheres to Department of Defense policy regarding Earth imaging that protects the privacy of U.S. citizens.
+
+[31] SDA is looking for the best technology to support our warfighters and we will always chose the best performers to support that through our competitive process. SDA will work with our Allies where it is practical and makes sense to deliver the best capabilities to the warfighter.
+
+[32] International partners, both industry and Government, can get involved in a variety of ways, including:
+
+[33] flying sensors, other payloads and/or Optical Communication Terminals (OCTs) that meet SDA interoperability standards and provide critical warfighter capabilities,
+
+[34] flying sensors, other payloads and/or Optical Communication Terminals (OCTs) that meet SDA interoperability standards and provide critical warfighter capabilities,
+
+[35] hosting optical or other ground terminal sites, interoperable with the PWSA, in support of their indigenous constellations,
+
+[36] hosting optical or other ground terminal sites, interoperable with the PWSA, in support of their indigenous constellations,
+
+[37] teaming with U.S. industry already participating in, or planning to participate in, the PWSA, and
+
+[38] teaming with U.S. industry already participating in, or planning to participate in, the PWSA, and
+
+[39] investing in systems, components, and technologies for proliferated Architectures which could prove of value to the PWSA in a future tranche.
+
+[40] investing in systems, components, and technologies for proliferated Architectures which could prove of value to the PWSA in a future tranche.
+
+[41] Any international partnership will be subject to specific security and data information sharing standards prior to fully engaging with SDA.
+
+[42] The Proliferated Warfighter Space Architecture (PWSA), formerly known as the "National Defense Space Architecture," was renamed to more specifically reflect the agency's mission to deliver needed space-based capabilities to the joint warfighter to support terrestrial missions through development, fielding, and operation of a proliferated low Earth orbit (pLEO) constellation of satellites. The spiral development and fielding of SDA's mesh network has matured successfully, but the constellations' original name did not accurately convey its current scope and purpose. The new name was the outcome of an internal process that included SDA staff, SDA leadership, and Department of the Air Force leadership. The new constellation name became effective January 23, 2023.
+
+[43] The constellation name change will have no impact to the SDA mission. Leveraging speed, delivery, and agility, SDA will continue to quickly deliver needed space-based capabilities to the joint warfighter to support terrestrial missions through development, fielding, and operation of the PWSA.

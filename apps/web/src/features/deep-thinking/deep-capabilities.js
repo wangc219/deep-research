@@ -4,6 +4,87 @@ const strings = (value, limit = 32) => (
   Array.isArray(value) ? [...new Set(value.map(text).filter(Boolean))].slice(0, limit) : []
 );
 
+export const RESEARCH_TOOLS = [
+  {tool_id: 'deepen', label: '深化'},
+  {tool_id: 'diverge', label: '发散'},
+  {tool_id: 'challenge', label: '对抗核验'},
+  {tool_id: 'synthesize', label: '综合'},
+  {tool_id: 'research_council', label: '隔离议事'},
+  {tool_id: 'author_s6', label: '成卡'},
+];
+
+export function emptyAgentSpec() {
+  return {
+    schema_version: 'deep-agent-spec-v1',
+    model_profile_id: '',
+    system_prompt: '',
+    tools: null,
+    skills: null,
+    preload_skills: [],
+    mcps: null,
+    subagents: null,
+    enable_subagents: true,
+  };
+}
+
+export function normalizeAgentSpec(raw, catalog) {
+  const source = raw && typeof raw === 'object' ? raw : {};
+  const skills = strings(source.skills, catalog?.limits?.max_active_skills || 6);
+  const availableSkills = new Set(rows(catalog?.skills).map(item => text(item.skill_id)).filter(Boolean));
+  const availableTools = new Set((catalog?.agent_composition?.tools || RESEARCH_TOOLS).map(item => text(item.tool_id || item)).filter(Boolean));
+  const availableSubagents = new Set(rows(catalog?.subagents).map(item => text(item.slug)).filter(Boolean));
+  const availableMcps = new Set([
+    ...(catalog?.mcp_host?.servers || []),
+    ...(catalog?.mcp_servers || []),
+    ...rows(catalog?.plugins).flatMap(plugin => plugin.mcp_servers || []),
+  ].map(item => text(item.server_id)).filter(Boolean));
+  const listOrAll = (value, allowed) => {
+    if (value == null) return null;
+    if (!Array.isArray(value)) return null;
+    if (!allowed.size) return strings(value, 16);
+    return strings(value, 16).filter(item => allowed.has(item));
+  };
+  return {
+    ...emptyAgentSpec(),
+    model_profile_id: text(source.model_profile_id),
+    system_prompt: text(source.system_prompt).slice(0, 4000),
+    tools: listOrAll(source.tools, availableTools),
+    skills: availableSkills.size ? skills.filter(item => availableSkills.has(item)) : skills,
+    preload_skills: strings(source.preload_skills, 6).filter(item => !availableSkills.size || availableSkills.has(item)),
+    mcps: listOrAll(source.mcps ?? source.mcp_servers, availableMcps),
+    subagents: listOrAll(source.subagents, availableSubagents),
+    enable_subagents: source.enable_subagents !== false && !(Array.isArray(source.subagents) && source.subagents.length === 0),
+  };
+}
+
+export function specSelectionCount(spec, field, catalogIds = []) {
+  const fallback = Array.isArray(catalogIds) ? catalogIds.filter(Boolean) : [];
+  if (spec?.[field] == null) return fallback.length;
+  return Array.isArray(spec[field]) ? spec[field].length : 0;
+}
+
+export function toggleSpecResource(spec, field, id, enabled, catalog) {
+  const current = normalizeAgentSpec(spec, catalog);
+  const selected = current[field] == null
+    ? (
+      field === 'subagents' ? rows(catalog?.subagents).map(item => text(item.slug)).filter(Boolean)
+      : field === 'mcps' ? [
+        ...(catalog?.mcp_host?.servers || []),
+        ...(catalog?.mcp_servers || []),
+        ...rows(catalog?.plugins).flatMap(plugin => plugin.mcp_servers || []),
+      ].map(item => text(item.server_id)).filter(Boolean)
+      : field === 'tools' ? RESEARCH_TOOLS.map(item => item.tool_id)
+      : []
+    )
+    : [...current[field]];
+  const next = enabled ? [...new Set([...selected, text(id)].filter(Boolean))] : selected.filter(item => item !== text(id));
+  return {
+    ...current,
+    [field]: next,
+    enable_subagents: field === 'subagents' ? next.length > 0 : current.enable_subagents,
+  };
+}
+
 export function normalizeDeepCapabilityCatalog(payload) {
   const source = payload?.catalog && typeof payload.catalog === 'object' ? payload.catalog : (payload || {});
   const skills = rows(source.skills).map(skill => ({
@@ -81,6 +162,16 @@ export function normalizeDeepCapabilityCatalog(payload) {
       profiles: modelProfiles,
     },
     limits: {max_active_skills: maxActiveSkills},
+    subagents: rows(source.subagents).map(item => ({
+      slug: text(item.slug || item.id),
+      name: text(item.name || item.slug),
+      description: text(item.description),
+      role: text(item.role),
+      kind: text(item.kind) || 'research',
+    })).filter(item => item.slug),
+    agent_composition: source.agent_composition && typeof source.agent_composition === 'object'
+      ? source.agent_composition
+      : {schema_version: 'deep-agent-spec-v1', subagent_nesting: false, parallel_dispatch: 'start_then_await'},
   };
 }
 

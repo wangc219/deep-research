@@ -76,6 +76,8 @@ _MECHANICAL_SUMMARY_START_RE = re.compile(
 _UNEXPLAINED_SUMMARY_ABBREVIATION_RE = re.compile(
     r"(?<![A-Za-z0-9])(?:[A-Z]{2,}(?:[-/][A-Z0-9]+)*)(?![A-Za-z0-9])"
 )
+
+
 def winning_summary_language_issues(value: Any) -> list[str]:
     """Return authoring defects without rewriting specialist terminology."""
 
@@ -153,6 +155,7 @@ CORE_STEP_DEPENDENCIES: dict[int, tuple[int, ...]] = {
     6: (4, 5),
 }
 
+
 def _load_role_catalog() -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
     """Load model-facing role purposes from the reviewed Markdown catalog."""
 
@@ -163,6 +166,7 @@ def _load_role_catalog() -> tuple[dict[str, dict[str, Any]], dict[str, dict[str,
     core = value.get("core")
     if not isinstance(specialists, Mapping) or not isinstance(core, Mapping):
         raise ValueError("dynamic role_catalog requires specialists and core objects")
+
     def normalize(source: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
         rows: dict[str, dict[str, Any]] = {}
         for key, raw in source.items():
@@ -175,6 +179,7 @@ def _load_role_catalog() -> tuple[dict[str, dict[str, Any]], dict[str, dict[str,
             row["residuals"] = [str(item) for item in row.get("residuals", [])]
             rows[str(key)] = row
         return rows
+
     return normalize(specialists), normalize(core)
 
 
@@ -214,6 +219,7 @@ MISSION_GRAPH_SEED_ARCHETYPES: dict[str, tuple[str, ...]] = {
     "S5": ("independent_portfolio_reviewer",),
 }
 
+
 def _all_role_archetypes() -> dict[str, dict[str, Any]]:
     return {**SWARM_SPECIALIST_ARCHETYPES, **MISSION_GRAPH_CORE_ARCHETYPES}
 
@@ -237,7 +243,11 @@ def _frontloaded_role_governance(
     ]
     nodes = resource.get("nodes", {})
     node_key = "S3_S4" if mission_node in {"S3", "S4"} else mission_node
-    node = nodes.get(node_key, nodes.get("default", {})) if isinstance(nodes, Mapping) else {}
+    node = (
+        nodes.get(node_key, nodes.get("default", {}))
+        if isinstance(nodes, Mapping)
+        else {}
+    )
     if not isinstance(node, Mapping):
         node = {}
     methods = [str(item) for item in node.get("methodology", []) if str(item).strip()]
@@ -298,11 +308,12 @@ def default_winning_swarm_policy(
         # activated S3 set does not collapse after a sound semantic rejection. Every retry
         # still uses a thesis selected before S3; no local family filling.
         "s3_empty_reallocation_max": 2 if dynamic_v2 else 0,
-        # Kept as a compatibility preference for downstream dashboards; the
-        # dynamic S5 reviewer does not use it as an admission floor or refill
-        # target. Only genuinely disruptive rows are retained up to the cap.
+        # Dynamic-v2 treats six finalists as a delivery contract. S5 still
+        # owns semantic admission: the controller may not invent weak rows to
+        # fill the target, and must expose a failed quantity gate when fewer
+        # than six independently admissible candidates survive.
         "finalist_minimum": 6 if dynamic_v2 else 5 if quality_cluster else 2,
-        "finalist_maximum": 7 if dynamic_v2 else 7 if quality_cluster else 4,
+        "finalist_maximum": 6 if dynamic_v2 else 7 if quality_cluster else 4,
         "minimum_direct_combat_equipment": 2
         if dynamic_v2
         else 3
@@ -315,7 +326,11 @@ def default_winning_swarm_policy(
         "raw_session_sharing_allowed": False,
         "expert_judge_enabled": False if dynamic_v2 else quality_cluster,
         "expert_judge_required": False if dynamic_v2 else quality_cluster,
-        "expert_candidate_pool_maximum": 0 if dynamic_v2 else 10 if quality_cluster else 8,
+        "expert_candidate_pool_maximum": 0
+        if dynamic_v2
+        else 10
+        if quality_cluster
+        else 8,
         "foresight_first_enabled": quality_cluster,
         "frontier_evidence_relaxation": quality_cluster,
         "frontier_final_gate_minimum_score": 0.62,
@@ -343,9 +358,7 @@ def default_winning_swarm_policy(
     }
 
 
-def _policy_value(
-    raw: Mapping[str, Any], canonical: str, *aliases: str
-) -> Any:
+def _policy_value(raw: Mapping[str, Any], canonical: str, *aliases: str) -> Any:
     """Read a canonical policy key while accepting legacy harness aliases.
 
     Harness profiles historically used ``*_mission_graph_instances`` while
@@ -403,7 +416,9 @@ def normalize_winning_swarm_policy(
                 int(base["max_concurrency"]),
             ),
             "max_waves": _bounded_int(raw.get("max_waves"), 1, 3, 3),
-            "coverage_expand_max_recruits": 0 if not dynamic_v2 else _bounded_int(
+            "coverage_expand_max_recruits": 0
+            if not dynamic_v2
+            else _bounded_int(
                 raw.get("coverage_expand_max_recruits"),
                 0,
                 4,
@@ -507,12 +522,12 @@ def normalize_winning_swarm_policy(
             ),
             "recursive_recruitment_allowed": False,
             "raw_session_sharing_allowed": False,
-            "expert_judge_enabled": False if dynamic_v2 else bool(
-                raw.get("expert_judge_enabled", quality_cluster)
-            ),
-            "expert_judge_required": False if dynamic_v2 else bool(
-                raw.get("expert_judge_required", quality_cluster)
-            ),
+            "expert_judge_enabled": False
+            if dynamic_v2
+            else bool(raw.get("expert_judge_enabled", quality_cluster)),
+            "expert_judge_required": False
+            if dynamic_v2
+            else bool(raw.get("expert_judge_required", quality_cluster)),
             "foresight_first_enabled": bool(
                 raw.get("foresight_first_enabled", quality_cluster)
             ),
@@ -528,7 +543,9 @@ def normalize_winning_swarm_policy(
             "frontier_critical_dimension_minimum": _bounded_float(
                 raw.get("frontier_critical_dimension_minimum"), 0.0, 1.0, 0.50
             ),
-            "expert_candidate_pool_maximum": 0 if dynamic_v2 else _bounded_int(
+            "expert_candidate_pool_maximum": 0
+            if dynamic_v2
+            else _bounded_int(
                 raw.get("expert_candidate_pool_maximum"),
                 5,
                 12,
@@ -558,10 +575,12 @@ def normalize_winning_swarm_policy(
                 1.0,
                 0.42,
             ),
-            "expert_repair_enabled": False if dynamic_v2 else bool(
-                raw.get("expert_repair_enabled", quality_cluster)
-            ),
-            "expert_repair_max_candidates": 0 if dynamic_v2 else _bounded_int(
+            "expert_repair_enabled": False
+            if dynamic_v2
+            else bool(raw.get("expert_repair_enabled", quality_cluster)),
+            "expert_repair_max_candidates": 0
+            if dynamic_v2
+            else _bounded_int(
                 raw.get("expert_repair_max_candidates"),
                 0,
                 6,
@@ -573,7 +592,9 @@ def normalize_winning_swarm_policy(
                 1.0,
                 0.64 if quality_cluster else 0.70,
             ),
-            "expert_repair_reserved_instances": 0 if dynamic_v2 else _bounded_int(
+            "expert_repair_reserved_instances": 0
+            if dynamic_v2
+            else _bounded_int(
                 raw.get("expert_repair_reserved_instances"),
                 0,
                 6,
@@ -1164,9 +1185,7 @@ class WinningSwarmController:
     ) -> WinningMissionGraph:
         """Govern and insert one Gap Analyzer recruit, then rewire S5."""
 
-        node, archetype = recruit_archetype_for_gap(
-            gap_axis, already_used=already_used
-        )
+        node, archetype = recruit_archetype_for_gap(gap_axis, already_used=already_used)
         spec = _all_role_archetypes()[archetype]
         graph_prompt_resources = load_dynamic_winning_json(
             "common", section="mission_graph_contracts"
@@ -2459,9 +2478,7 @@ class WinningSwarmController:
                 or "",
                 limit=900,
             ),
-            changed_confrontation_variable=(
-                changed_variable or reference_overview
-            ),
+            changed_confrontation_variable=(changed_variable or reference_overview),
             mechanism_chain=(mechanism_chain or [reference_overview]),
             direct_military_effects=(direct_effects or [reference_overview]),
             equipment_forms=(equipment_forms or [title]),
@@ -2847,8 +2864,7 @@ class WinningSwarmController:
                 contribution.technology_horizon or hypothesis.technology_horizon
             ),
             engineering_bottleneck=(
-                contribution.engineering_bottleneck
-                or hypothesis.engineering_bottleneck
+                contribution.engineering_bottleneck or hypothesis.engineering_bottleneck
             ),
             # Ordinary S4/S5 work may complete a missing thesis but cannot
             # silently rewrite the S3 identity. Explicit expert repair uses
@@ -2871,8 +2887,7 @@ class WinningSwarmController:
                 contribution.naming_rationale or hypothesis.naming_rationale
             ),
             reference_overview=(
-                contribution.concise_winning_summary
-                or hypothesis.reference_overview
+                contribution.concise_winning_summary or hypothesis.reference_overview
             ),
             decisive_advantage_thesis=(
                 contribution.decisive_advantage_thesis
@@ -3015,9 +3030,7 @@ class WinningSwarmController:
             residuals.append("equipment_not_concrete")
         if not hypothesis.project_function.strip():
             residuals.append("project_function_missing")
-        residuals.extend(
-            winning_summary_language_issues(hypothesis.reference_overview)
-        )
+        residuals.extend(winning_summary_language_issues(hypothesis.reference_overview))
         if frontloaded_quality and not hypothesis.system_interfaces:
             residuals.append("system_interfaces_missing")
         if frontloaded_quality:
@@ -3382,8 +3395,7 @@ class WinningSwarmController:
             (
                 item
                 for item in assessments.values()
-                if item.verdict == "revise"
-                and not is_non_repairable_duplicate(item)
+                if item.verdict == "revise" and not is_non_repairable_duplicate(item)
             ),
             key=lambda item: (-item.weighted_score, item.hypothesis_id),
         )

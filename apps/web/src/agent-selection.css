@@ -1,18 +1,18 @@
 .agent-choice.recommended {
-  border-color: #b9c7f5;
+  border-color: #bab9f5;
   background: #f8faff;
-  box-shadow: inset 3px 0 #6179dd;
+  box-shadow: inset 3px 0 #6461dd;
 }
 
 .agent-choice.default-selected input:disabled {
   opacity: 1;
-  accent-color: #536bd2;
+  accent-color: #5653d2;
 }
 
 .agent-choice.manual-added {
-  border-color: #6f91df;
+  border-color: #716fdf;
   background: #f3f7ff;
-  box-shadow: inset 3px 0 #3f86d8;
+  box-shadow: inset 3px 0 #423fd8;
 }
 
 .agent-choice b {
@@ -25,7 +25,7 @@
   padding: 2px 5px;
   border-radius: 8px;
   background: #e8edff;
-  color: #4e64c6;
+  color: #504ec6;
   font-size: 10px;
   font-style: normal;
   font-weight: 650;
@@ -33,7 +33,7 @@
 
 .agent-choice b i.manual {
   background: #e7f3ff;
-  color: #286cae;
+  color: #2b28ae;
 }
 
 .agent-choice strong {
@@ -57,7 +57,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #4f66ca;
+  color: #524fca;
 }
 
 .agent-selection-preview header span {
@@ -87,7 +87,7 @@
 }
 
 .agent-selection-preview > div b { font-size: 11px; }
-.agent-selection-preview > div em { color: #5268c9; font-size: 10px; font-style: normal; }
+.agent-selection-preview > div em { color: #5452c9; font-size: 10px; font-style: normal; }
 .agent-selection-preview > div small { grid-column: 1 / -1; color: #6d798d; font-size: 10px; line-height: 1.45; }
 .agent-selection-preview footer { margin-top: 9px; color: #7a869a; font-size: 10px; }
 

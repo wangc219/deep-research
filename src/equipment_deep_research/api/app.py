@@ -179,6 +179,8 @@ from equipment_deep_research.domain.conversation import (
 )
 from equipment_deep_research.deep_runtime.planner import preview_turn_plan
 from equipment_deep_research.deep_runtime.runner import checkpoint_visible_text
+from equipment_deep_research.deep_runtime.agent_spec import AgentSpec, composition_catalog
+from equipment_deep_research.deep_runtime.subagents import builtin_subagent_catalog
 from equipment_deep_research.deep_runtime.commands import (
     is_card_confirmation,
     parse_slash_command,
@@ -5954,6 +5956,11 @@ def create_app(
             branch_id=branch_id,
             source_channel=str(payload.get("channel") or "web"),
             model_profile_id=str(payload.get("model_profile_id") or ""),
+            agent_spec=(
+                payload.get("agent_spec")
+                if isinstance(payload.get("agent_spec"), Mapping)
+                else None
+            ),
             active_skill_ids=(
                 payload.get("active_skill_ids", [])
                 if isinstance(payload.get("active_skill_ids", []), Sequence)
@@ -7406,6 +7413,11 @@ def create_app(
             and not isinstance(raw_active_skills, (str, bytes))
             else []
         )
+        raw_agent_spec = branch_memory.get("agent_spec")
+        if not isinstance(raw_agent_spec, Mapping):
+            raw_agent_spec = context_refs.get("agent_spec")
+        if isinstance(raw_agent_spec, Mapping):
+            public["agent_spec"] = AgentSpec.from_mapping(raw_agent_spec).public_payload()
         public["context_usage"] = sanitize_runtime_payload(
             conversation_context_usage(
                 messages=branch_message_path(
@@ -8438,6 +8450,50 @@ def create_app(
             )
         return requested
 
+    def _validated_deep_agent_spec(
+        value: object,
+        *,
+        registry=None,
+        model_profile_id: str = "",
+    ) -> dict[str, Any]:
+        from equipment_deep_research.deep_runtime.agent_spec import AgentSpec
+
+        spec = AgentSpec.from_mapping(value if isinstance(value, Mapping) else {})
+        payload = spec.public_payload()
+        profile_id = spec.model_profile_id or str(model_profile_id or "").strip()
+        if profile_id:
+            payload["model_profile_id"] = _validated_deep_model_profile_id(profile_id)
+        if spec.skills:
+            _validated_deep_skill_ids(spec.skills, registry=registry)
+        if spec.preload_skills:
+            _validated_deep_skill_ids(spec.preload_skills, registry=registry)
+        allowed_subagents = {
+            item["slug"] for item in builtin_subagent_catalog()
+        }
+        if spec.subagents:
+            unknown = [slug for slug in spec.subagents if slug not in allowed_subagents]
+            if unknown:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"deep subagent is unavailable: {', '.join(unknown)}",
+                )
+        return AgentSpec.from_mapping(payload).public_payload()
+
+    def _decorate_deep_capability_catalog(catalog: dict[str, Any]) -> dict[str, Any]:
+        catalog["subagents"] = list(builtin_subagent_catalog())
+        catalog["agent_composition"] = composition_catalog(
+            subagents=catalog["subagents"],
+            mcp_servers=[
+                item
+                for item in [
+                    *list(catalog.get("mcp_servers") or []),
+                    *list((catalog.get("mcp_host") or {}).get("servers") or []),
+                ]
+                if isinstance(item, Mapping)
+            ],
+        )
+        return catalog
+
     @app.get("/api/v1/deep-thinking/capabilities")
     def get_deep_thinking_capabilities(
         x_role: str = Header(default="analyst", alias="X-Role"),
@@ -8462,7 +8518,7 @@ def create_app(
                 }
             )
             catalog["model_profiles"] = public_profiles()
-            return catalog
+            return _decorate_deep_capability_catalog(catalog)
         except Exception as exc:
             raise HTTPException(
                 status_code=503, detail="deep capability registry unavailable"
@@ -8736,6 +8792,13 @@ def create_app(
         context["context_policy"] = "query_equipment_questions_only"
         context["active_skill_ids"] = active_skill_ids
         context["model_profile_id"] = model_profile_id
+        agent_spec = _validated_deep_agent_spec(
+            body.agent_spec.model_dump()
+            if body.agent_spec is not None
+            else (body.context_refs.get("agent_spec") if isinstance(body.context_refs, Mapping) else {}),
+            model_profile_id=model_profile_id,
+        )
+        context["agent_spec"] = agent_spec
         if candidate:
             context["candidate"] = candidate
             # This marker is server-owned.  A browser may send an advisory
@@ -8813,6 +8876,7 @@ def create_app(
                         create_artifact=requested_create_artifact,
                         active_skill_ids=active_skill_ids,
                         model_profile_id=model_profile_id,
+                        agent_spec=agent_spec,
                         idempotency_key=idem,
                     )
                 )
@@ -8865,6 +8929,7 @@ def create_app(
         active_skill_ids: Sequence[str] = (),
         source_channel: str = "web",
         model_profile_id: str = "",
+        agent_spec: Mapping[str, Any] | None = None,
         s6_column_checkpoint: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         session_id = str(session.get("session_id", ""))
@@ -8917,6 +8982,23 @@ def create_app(
             for value in list(active_skill_ids)[:6]
             if str(value or "").strip()
         ]
+        resolved_agent_spec = AgentSpec.from_mapping(
+            agent_spec
+            if isinstance(agent_spec, Mapping)
+            else (context.get("agent_spec") if isinstance(context, Mapping) else {})
+        ).public_payload()
+        if model_profile_id and not resolved_agent_spec.get("model_profile_id"):
+            resolved_agent_spec["model_profile_id"] = str(model_profile_id)
+        if resolved_agent_spec.get("skills"):
+            requested_skill_ids = list(
+                dict.fromkeys(
+                    [
+                        *(resolved_agent_spec.get("preload_skills") or []),
+                        *resolved_agent_spec["skills"],
+                        *requested_skill_ids,
+                    ]
+                )
+            )[:6]
         # Treat the explicit S6 command/confirmation as the user confirmation
         # signal at the API boundary too.  The WebUI sets ``create_artifact``
         # for its confirmation button, but direct API clients may send the
@@ -9377,6 +9459,7 @@ def create_app(
                 dialogue_context = {
                     **innovation_context,
                     "active_skill_ids": requested_skill_ids,
+                    "agent_spec": resolved_agent_spec,
                 }
 
                 def _checkpoint_deep_runtime(
@@ -9625,6 +9708,7 @@ def create_app(
                     ),
                     "expert_questions": expert_questions,
                     "active_skill_ids": requested_skill_ids,
+                    "agent_spec": resolved_agent_spec,
                     # A recovered S6 turn carries the durable per-column
                     # ledger into the Agent Core. Completed columns are
                     # reused; only pending/failed columns call the provider.
@@ -9641,7 +9725,12 @@ def create_app(
                     # Agent rather than a standing multi-agent workflow.
                     "adaptive_tool_loop": True,
                     "enable_subagents": (
-                        "diverge" in turn_plan and not authoring_requested
+                        not authoring_requested
+                        and bool(resolved_agent_spec.get("enable_subagents", True))
+                        and any(
+                            name in turn_plan
+                            for name in ("diverge", "research_council", "deepen", "challenge", "synthesize")
+                        )
                     ),
                 }
                 if runtime_workspace is not None:
@@ -10986,6 +11075,8 @@ def create_app(
             source_message_id=str(assistant_message.get("message_id", "")),
             source_sequence=int(assistant_message.get("sequence", 0) or 0),
         )
+        if resolved_agent_spec:
+            checkpoint["agent_spec"] = dict(resolved_agent_spec)
         next_context_usage = conversation_context_usage(
             messages=[
                 *conversation_messages,
@@ -11141,6 +11232,7 @@ def create_app(
         parent_message_id: str = "",
         parent_job_id: str = "",
         model_profile_id: str = "",
+        agent_spec: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Persist and asynchronously execute one visible deep-thinking turn.
 
@@ -11174,6 +11266,12 @@ def create_app(
                 normalized_skill_ids.append(skill_id)
             if len(normalized_skill_ids) >= 6:
                 break
+        resolved_agent_spec = _validated_deep_agent_spec(
+            agent_spec
+            if isinstance(agent_spec, Mapping)
+            else session_context.get("agent_spec"),
+            model_profile_id=normalized_model_profile_id,
+        )
         known_branches = session.get("branches", [])
         if isinstance(known_branches, Sequence) and not isinstance(
             known_branches, (str, bytes)
@@ -11246,8 +11344,11 @@ def create_app(
                     },
                 )
         if not fingerprint:
+            spec_fingerprint = json.dumps(
+                resolved_agent_spec, ensure_ascii=False, sort_keys=True, default=str
+            )
             fingerprint = hashlib.sha256(
-                f"{run_id}:{session_id}:{normalized_branch}:{normalized_parent_message_id}:{content}:{focus}:{bool(create_artifact)}:{normalized_model_profile_id}:{json.dumps(normalized_skill_ids, ensure_ascii=False)}".encode("utf-8")
+                f"{run_id}:{session_id}:{normalized_branch}:{normalized_parent_message_id}:{content}:{focus}:{bool(create_artifact)}:{normalized_model_profile_id}:{json.dumps(normalized_skill_ids, ensure_ascii=False)}:{spec_fingerprint}".encode("utf-8")
             ).hexdigest()
         row = _deep_store_job(
             job_id=generated_job_id,
@@ -11266,6 +11367,7 @@ def create_app(
                 "create_artifact": bool(create_artifact),
                 "active_skill_ids": normalized_skill_ids,
                 "model_profile_id": normalized_model_profile_id,
+                "agent_spec": resolved_agent_spec,
                 "channel": (
                     source_channel
                     if source_channel in {"web", "cli", "telegram", "discord"}
@@ -11319,6 +11421,7 @@ def create_app(
                             "create_artifact": bool(create_artifact),
                             "active_skill_ids": normalized_skill_ids,
                             "model_profile_id": normalized_model_profile_id,
+                            "agent_spec": resolved_agent_spec,
                             "channel": (
                                 source_channel
                                 if source_channel
@@ -11539,7 +11642,7 @@ def create_app(
                 }
             )
             catalog["model_profiles"] = public_profiles()
-            return catalog
+            return _decorate_deep_capability_catalog(catalog)
         except HTTPException:
             raise
         except Exception as exc:
@@ -12864,6 +12967,11 @@ def create_app(
                 create_artifact=requested_create_artifact,
                 active_skill_ids=active_skill_ids,
                 model_profile_id=model_profile_id,
+                agent_spec=(
+                    body.agent_spec.model_dump()
+                    if body.agent_spec is not None
+                    else None
+                ),
                 branch_id=body.branch_id,
                 source_channel=body.channel or "web",
                 parent_message_id=body.parent_message_id,
@@ -20205,15 +20313,27 @@ def _validated_execution(value: dict, provider: dict) -> dict:
                 if isinstance(model_profiles, dict)
                 else []
             )
-            for profile_row in profile_rows:
-                if not isinstance(profile_row, dict):
-                    continue
-                if str(profile_row.get("model", "")).strip() != model:
-                    continue
-                routed_provider = str(profile_row.get("provider", "")).strip()
-                if routed_provider and routed_provider in available:
-                    provider_name = routed_provider
-                break
+            matching_profiles = [
+                profile_row
+                for profile_row in profile_rows
+                if isinstance(profile_row, dict)
+                and str(profile_row.get("model", "")).strip() == model
+            ]
+            # Several routing profiles can intentionally expose the same
+            # model id (for example platform-chat and codex-gpt).  Preserve
+            # the deployment-selected provider whenever it is one of those
+            # matches; otherwise the first profile row would silently reroute
+            # an explicit server default merely because of catalog order.
+            current_provider_matches = any(
+                str(profile_row.get("provider", "")).strip() == provider_name
+                for profile_row in matching_profiles
+            )
+            if not current_provider_matches:
+                for profile_row in matching_profiles:
+                    routed_provider = str(profile_row.get("provider", "")).strip()
+                    if routed_provider and routed_provider in available:
+                        provider_name = routed_provider
+                        break
     default_base_url, default_api_key_env = _provider_credentials_defaults(
         provider, provider_name
     )

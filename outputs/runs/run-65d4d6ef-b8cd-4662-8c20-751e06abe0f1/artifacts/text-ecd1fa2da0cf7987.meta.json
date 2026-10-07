@@ -1,0 +1,13 @@
+{
+  "artifact_ref": "text:ecd1fa2da0cf7987",
+  "content_path": "text-ecd1fa2da0cf7987.txt",
+  "content_type": "text/plain",
+  "direct_error": "HTTPStatusError: HTTP 403: Forbidden",
+  "encoding": "utf-8",
+  "evidence_id": "ev-weapon_equipment-web-8952c3805d5a",
+  "kind": "text",
+  "materialization_status": "hosted_search_citation",
+  "mode": "real",
+  "sha256": "ecd1fa2da0cf79873130a7e1ee319f382177b0a94b3826125ca37f65ec0fc1a8",
+  "url": "https://media.defense.gov/2024/Dec/05/2003599149/-1/-1/0/FACT-SHEET-STRATEGY-FOR-COUNTERING-UNMANNED-SYSTEMS.PDF"
+}

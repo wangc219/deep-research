@@ -1,0 +1,179 @@
+html:has(.equipment-workbench-host) {
+  overflow: hidden;
+  scrollbar-gutter: auto;
+}
+
+.equipment-workbench-frame {
+  min-height: 100%;
+  min-width: 0;
+  background:
+    radial-gradient(circle at 72% -10%, rgba(111, 130, 232, 0.12), transparent 31%),
+    #f5f7fb;
+}
+
+/* Keep the island mounted while the placeholder shows so React can paint into
+   a laid-out node instead of a zero-height one. */
+.equipment-workbench-frame.is-booting .equipment-workbench-host {
+  position: absolute;
+  width: 100%;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.equipment-workbench-placeholder {
+  animation: equipment-placeholder-in 160ms ease both;
+}
+
+@keyframes equipment-placeholder-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.equipment-workbench-host {
+  min-height: 100%;
+  min-width: 0;
+  overflow: visible;
+}
+
+.equipment-workbench-host .app-shell.platform-embed {
+  min-height: 100%;
+  padding: 0;
+  overflow: visible;
+}
+
+.equipment-workbench-host .app-shell.platform-embed > .topbar,
+.equipment-workbench-host .app-shell.platform-embed > .sidebar,
+.equipment-workbench-host .app-shell.platform-embed > .mobile-nav {
+  display: none;
+}
+
+.equipment-workbench-host .app-shell.platform-embed > main {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  padding: 28px 32px 40px;
+}
+
+/* The platform router is the scroll container and already starts below its
+   header. Sticky children therefore pin to the router's own top edge; adding
+   the header height again leaves an unnecessary gap and makes the stage nav
+   appear to keep scrolling on narrow screens. */
+.equipment-workbench-frame {
+  --equipment-header-height: 48px;
+}
+
+.equipment-workbench-host .workspace-stage-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  margin-top: 0;
+  background: #fff;
+}
+
+.equipment-workbench-host .task-review-rail {
+  top: calc(var(--equipment-header-height) + 58px);
+}
+
+.equipment-workbench-host .task-review-content {
+  scroll-margin-top: calc(var(--equipment-header-height) + 64px);
+}
+
+.equipment-workbench-host .report-view.enhanced > div {
+  top: var(--equipment-header-height);
+}
+
+@media (max-width: 900px) {
+  .equipment-workbench-host .app-shell.platform-embed > main {
+    padding: 18px 16px 28px;
+  }
+}
+
+@media (max-width: 820px) {
+  .equipment-workbench-host .task-review-rail {
+    top: auto;
+  }
+}
+
+/* Embedded pages share the platform viewport; intrinsic grid/form widths must
+   not force the outer workspace wider than a phone. */
+@media (max-width: 600px) {
+  .equipment-workbench-host .workspace-artifact-card {
+    flex: 0 0 auto;
+    flex-direction: row;
+    padding: 0;
+    border: 0;
+  }
+
+  .equipment-workbench-host .workspace-artifact-card > span {
+    display: none;
+  }
+
+  .equipment-workbench-host .workspace-artifact-card > div {
+    flex-wrap: nowrap;
+  }
+
+  .equipment-workbench-host .workspace-stage-nav-inner {
+    min-height: 50px;
+    scrollbar-width: thin;
+  }
+
+  .equipment-workbench-host .report-view.enhanced > div {
+    position: relative;
+    top: auto;
+  }
+
+  .equipment-workbench-host .report-view.enhanced > div > .report-view-actions {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .equipment-workbench-host .report-view-actions button {
+    min-height: 36px;
+  }
+
+  .equipment-workbench-host .report-markdown .report-table-scroll > table {
+    min-width: 600px;
+  }
+
+  .equipment-workbench-host .app-shell.platform-embed > main {
+    padding: 16px 12px 24px;
+  }
+
+  .equipment-workbench-host .query-agent-config,
+  .equipment-workbench-host .query-generation-mode-tabs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .equipment-workbench-host .query-agent-config > label,
+  .equipment-workbench-host .query-agent-config select,
+  .equipment-workbench-host .query-agent-config input,
+  .equipment-workbench-host .research-query-footer-left > *,
+  .equipment-workbench-host .research-query-footer-right > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .equipment-workbench-host .query-library-heading > div:last-child,
+  .equipment-workbench-host .query-detail-actions,
+  .equipment-workbench-host .query-generation-task-list-metrics,
+  .equipment-workbench-host .run-card-footer {
+    flex-wrap: wrap;
+  }
+
+  .equipment-workbench-host .query-detail-panel,
+  .equipment-workbench-host .report-markdown {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .equipment-workbench-host .report-markdown pre {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+}

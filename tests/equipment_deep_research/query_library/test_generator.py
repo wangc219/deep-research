@@ -8,13 +8,53 @@ from equipment_deep_research.providers.base import (
     ProviderStreamEvent,
 )
 from equipment_deep_research.providers.fake import ScriptedFakeProvider
-from equipment_deep_research.query_library.generator import ModelQueryGenerator
-from equipment_deep_research.query_library.models import SourceReference
+from equipment_deep_research.query_library.generator import (
+    ModelQueryGenerator,
+    _generation_profile,
+    _generation_token_budget,
+    _hypothesis_target,
+)
+from equipment_deep_research.query_library.models import GeneratedCandidate, SourceReference
 from equipment_deep_research.query_library.quality import (
     coverage_plan,
     near_duplicate,
     sanitize_source_reference,
+    validate_generated_candidate,
 )
+
+
+def _quality_fields(query: str) -> dict[str, object]:
+    return {
+        "demand_chain": {
+            "situation_signal": "公开资料显示相关任务环境和对抗方式正在持续变化",
+            "future_mission": "未来高强度对抗中需要持续完成跨域装备运用任务",
+            "task_constraint": "复杂环境、短时窗口和体系节点受损限制任务完成",
+            "capability_gap": "现有装备在自主协同和持续运用方面存在能力缺口",
+            "weapon_requirement": f"形成与{query}直接对应的装备能力需求",
+            "evidence_status": "inferred",
+            "disconfirmation_condition": "若代表性试验表明现有装备已稳定满足任务要求，则该需求不成立",
+        },
+        "quality_review": {
+            "causal_specificity": "pass",
+            "differentiation": "pass",
+            "researchability": "pass",
+            "verdict": "pass",
+            "revision_note": "已完成反向质检。",
+        },
+    }
+
+
+DIVERGENCE = {
+    "hypotheses": [
+        {
+            "hypothesis_id": "H01",
+            "dimension": "未来任务",
+            **_quality_fields("无人远程火力装备研究")["demand_chain"],
+            "candidate_equipment_forms": ["无人平台", "智能弹药"],
+            "priority_reason": "任务窗口和现有能力缺口同时存在。",
+        }
+    ]
+}
 
 
 def test_generator_returns_all_twelve_coverage_slots_with_sources() -> None:
@@ -31,10 +71,11 @@ def test_generator_returns_all_twelve_coverage_slots_with_sources() -> None:
     }
     rows = []
     for index, slot in enumerate(coverage_plan(12), start=1):
+        query = f"无人远程火力装备第{index}类{slot.split('-', 1)[-1]}研究"
         rows.append(
             {
                 "coverage_slot": slot,
-                "query": f"无人远程火力装备第{index}类{slot.split('-', 1)[-1]}研究",
+                "query": query,
                 "supplemental_information": (
                     "面向未来高强度对抗，分析任务约束、技术趋势、体系效能、失效边界、"
                     "指标方向和验证场景；兼顾智能自主、传统现役跨代做优、新质蓝海颠覆拓新、"
@@ -47,6 +88,7 @@ def test_generator_returns_all_twelve_coverage_slots_with_sources() -> None:
                         "relevance_note": "该来源支持当前术语和发展方向的校验。",
                     }
                 ],
+                **_quality_fields(query),
             }
         )
     provider = ScriptedFakeProvider(
@@ -59,6 +101,7 @@ def test_generator_returns_all_twelve_coverage_slots_with_sources() -> None:
                     )
                 )
             ],
+            [ProviderStreamEvent.final(ProviderFinalTurn(text=json.dumps(DIVERGENCE, ensure_ascii=False)))],
             [
                 ProviderStreamEvent.final(
                     ProviderFinalTurn(
@@ -90,8 +133,11 @@ def test_generator_returns_all_twelve_coverage_slots_with_sources() -> None:
     assert grounding_request["reference_urls"] == [
         "https://example.test/manual-reference"
     ]
-    assert "web_search" not in provider.inputs[1][2]
-    generation_request = json.loads(provider.inputs[1][0][1].content)
+    divergence_request = json.loads(provider.inputs[1][0][1].content)
+    assert divergence_request["target_hypothesis_count"] == 24
+    assert len(divergence_request["divergence_dimensions"]) >= 8
+    assert "web_search" not in provider.inputs[2][2]
+    generation_request = json.loads(provider.inputs[2][0][1].content)
     requirements = "".join(generation_request["requirements"])
     assert "coverage_slot只是思考发生维度" in requirements
     assert "具体装备项目" in requirements
@@ -111,10 +157,12 @@ def test_generator_records_codex_situation_assessment_without_web_results() -> N
         "supplemental_information": "面向复杂对抗任务，分析作战场景、威胁约束、装备能力缺口、失效边界和可验证的发展方向。",
         "generation_rationale": "将输入母题中的任务牵引转化为可独立论证的装备能力研究问题。",
         "sources": [],
+        **_quality_fields("未来无人精确打击装备任务需求研究"),
     }
     provider = ScriptedFakeProvider(
         [
             [ProviderStreamEvent.final(ProviderFinalTurn(text=json.dumps(grounding, ensure_ascii=False)))],
+            [ProviderStreamEvent.final(ProviderFinalTurn(text=json.dumps(DIVERGENCE, ensure_ascii=False)))],
             [ProviderStreamEvent.final(ProviderFinalTurn(text=json.dumps({"queries": [row]}, ensure_ascii=False)))],
         ]
     )
@@ -143,7 +191,7 @@ def test_generator_records_codex_situation_assessment_without_web_results() -> N
     assert "外部态势→任务压力→作战缺口→武器装备能力与发展需求" in grounding_request["task"]
     assert provider.inputs[0][2]["web_search"]["search_context_size"] == "low"
     assert provider.inputs[0][2]["_provider_retry_attempts"] == 1
-    generation_request = json.loads(provider.inputs[1][0][1].content)
+    generation_request = json.loads(provider.inputs[2][0][1].content)
     requirements = "".join(generation_request["requirements"])
     assert "实质不同的装备需求矛盾" in requirements
     assert "高关注方向" in requirements
@@ -152,7 +200,7 @@ def test_generator_records_codex_situation_assessment_without_web_results() -> N
     assert "被态势直接牵引的武器装备需求" in requirements
     assert "direct_strike_priority_slots" not in generation_request
     assert "不写成时事摘要" in requirements
-    assert provider.inputs[1][2]["_provider_retry_attempts"] == 2
+    assert provider.inputs[2][2]["_provider_retry_attempts"] == 2
 
 
 def test_source_sanitizer_removes_sensitive_query_parameters() -> None:
@@ -172,4 +220,34 @@ def test_near_duplicate_normalizes_punctuation_and_spacing() -> None:
     assert near_duplicate(
         "研究 无人远程火力装备：体系能力需求",
         "研究无人远程火力装备体系能力需求",
+    )
+
+
+def test_quality_gate_rejects_title_without_auditable_demand_chain() -> None:
+    candidate = GeneratedCandidate(
+        coverage_slot=coverage_plan(1)[0],
+        query="未来无人精确打击装备任务需求研究",
+        supplemental_information="面向未来复杂对抗任务，分析威胁约束、能力缺口、失效边界和装备发展方向。",
+        generation_rationale="从未来作战任务反推装备能力需求。",
+        source_references=(SourceReference(title="模型分析", source_kind="document"),),
+    )
+
+    issues = validate_generated_candidate(
+        candidate,
+        expected_slot=coverage_plan(1)[0],
+        existing_queries=[],
+        accepted_queries=[],
+    )
+
+    assert any("demand_chain.future_mission" in issue for issue in issues)
+    assert "quality_review.verdict must pass after self-revision" in issues
+
+
+def test_generation_profiles_bound_divergence_and_output_budgets() -> None:
+    assert _generation_profile("生成策略：高效") == "efficient"
+    assert _hypothesis_target(12, "efficient") == 18
+    assert _hypothesis_target(12, "balanced") == 24
+    assert _hypothesis_target(20, "deep") == 30
+    assert _generation_token_budget(8, autonomous_discovery=True, profile="efficient") < (
+        _generation_token_budget(8, autonomous_discovery=True, profile="deep")
     )

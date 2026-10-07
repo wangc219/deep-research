@@ -199,16 +199,16 @@ export function relativeTime(value) {
 
 /* ------------------------------------------------------- persisted preferences */
 
-const STORAGE_PREFIX = 'edr-ui:';
+const storagePrefix = () => globalThis.__EQUIPMENT_WORKBENCH_EMBEDDED__ ? `edr-ui:${globalThis.__EQUIPMENT_USER_ID__ || 'anonymous'}:` : 'edr-ui:';
 
 function readStored(key) {
-  try { return window.localStorage.getItem(`${STORAGE_PREFIX}${key}`); } catch (_reason) { return null; }
+  try { return window.localStorage.getItem(`${storagePrefix()}${key}`); } catch (_reason) { return null; }
 }
 
 function writeStored(key, value) {
   try {
-    if (value === null || value === '') window.localStorage.removeItem(`${STORAGE_PREFIX}${key}`);
-    else window.localStorage.setItem(`${STORAGE_PREFIX}${key}`, value);
+    if (value === null || value === '') window.localStorage.removeItem(`${storagePrefix()}${key}`);
+    else window.localStorage.setItem(`${storagePrefix()}${key}`, value);
   } catch (_reason) { /* private mode or a full quota simply disables the memory */ }
 }
 

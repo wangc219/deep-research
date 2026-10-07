@@ -50,6 +50,8 @@ def _clip_complete_report_phrase(text: str, maximum: int) -> str:
     )
 
     return _clip(text, maximum)
+
+
 from equipment_deep_research.domain.capability_portrait import (
     CAPABILITY_PORTRAIT_MODULES,
     S6_DEFAULT_CODEX_CONCURRENCY,
@@ -63,10 +65,14 @@ from equipment_deep_research.domain.capability_portrait import (
 from equipment_deep_research.orchestration.capability_confidence import (
     calibrate_capability_confidence,
 )
-from equipment_deep_research.agents.workflows.shared_context import query_domain_contract
+from equipment_deep_research.agents.workflows.shared_context import (
+    query_domain_contract,
+)
+
 
 def _normalized_source_title(title: str, url: str) -> str:
     return _legacy._normalized_source_title(title, url)
+
 
 def _without_tracking_parameters(url: str) -> str:
     return _legacy._without_tracking_parameters(url)
@@ -96,11 +102,15 @@ def _equipment_semantic_assessment(
 
     raw = direction.get("equipment_semantic_assessment", {})
     assessment = dict(raw) if isinstance(raw, Mapping) else {}
-    classification = str(
-        assessment.get("classification")
-        or direction.get("equipment_classification")
-        or ""
-    ).strip().lower()
+    classification = (
+        str(
+            assessment.get("classification")
+            or direction.get("equipment_classification")
+            or ""
+        )
+        .strip()
+        .lower()
+    )
     if classification in _S6_EQUIPMENT_CLASSIFICATIONS:
         assessment["classification"] = classification
     else:
@@ -109,33 +119,25 @@ def _equipment_semantic_assessment(
     if "direct_combat_effect" not in assessment and isinstance(
         direction.get("direct_combat_equipment"), bool
     ):
-        assessment["direct_combat_effect"] = direction[
-            "direct_combat_equipment"
-        ]
+        assessment["direct_combat_effect"] = direction["direct_combat_equipment"]
     if classification:
         assessment.setdefault(
             "support_only",
             classification in {"system_link", "support_only", "non_equipment"},
         )
-        assessment.setdefault(
-            "unmanned_combat", classification == "unmanned_combat"
-        )
+        assessment.setdefault("unmanned_combat", classification == "unmanned_combat")
         assessment.setdefault(
             "direct_combat_effect",
             classification in {"direct_combat", "unmanned_combat"},
         )
-        assessment.setdefault(
-            "concrete_equipment", classification != "non_equipment"
-        )
+        assessment.setdefault("concrete_equipment", classification != "non_equipment")
     return assessment
 
 
 def _has_combat_effect_signal(direction: Mapping[str, Any]) -> bool:
     """Read the Agent's direct-effect judgement; never scan prose."""
 
-    return _equipment_semantic_assessment(direction).get(
-        "direct_combat_effect"
-    ) is True
+    return _equipment_semantic_assessment(direction).get("direct_combat_effect") is True
 
 
 def _has_high_order_combat_value(direction: Mapping[str, Any]) -> bool:
@@ -231,9 +233,7 @@ def _is_unmanned_combat_equipment_direction(direction: Mapping[str, Any]) -> boo
 
 
 def _is_lethal_weapon_equipment_direction(direction: Mapping[str, Any]) -> bool:
-    return _equipment_semantic_assessment(direction).get(
-        "direct_combat_effect"
-    ) is True
+    return _equipment_semantic_assessment(direction).get("direct_combat_effect") is True
 
 
 def _is_missile_precision_munition_direction(
@@ -429,9 +429,7 @@ def _normalize_concept_direction_priorities(value: Mapping[str, Any]) -> dict[st
     if not isinstance(rows, list):
         return result
     result["concept_directions"] = [
-        {**dict(item), "priority": f"P{index}"}
-        if isinstance(item, Mapping)
-        else item
+        {**dict(item), "priority": f"P{index}"} if isinstance(item, Mapping) else item
         for index, item in enumerate(rows, start=1)
     ]
     return result
@@ -590,6 +588,7 @@ def _evidence_boundary_is_public_semantic(value: Any) -> bool:
     text = " ".join(str(value or "").split()).strip()
     return bool(text) and not _CAPABILITY_HANDOFF_INTERNAL_PATTERN.search(text)
 
+
 def _query_relevance_issues(
     position: int,
     direction: Mapping[str, Any],
@@ -606,7 +605,10 @@ def _query_relevance_issues(
     if assessment.get("query_alignment_confirmed") is False:
         return [f"S6第{position}项结构化Query关联合同未通过"]
     semantic_check = direction.get("semantic_consistency_check", {})
-    if isinstance(semantic_check, Mapping) and semantic_check.get("consistent") is False:
+    if (
+        isinstance(semantic_check, Mapping)
+        and semantic_check.get("consistent") is False
+    ):
         return [f"S6第{position}项结构化语义一致性合同未通过"]
     return []
 
@@ -623,14 +625,14 @@ def _truncate_complete_text(text: str, *, limit: int) -> str:
     return text
 
 
-def _clean_capability_handoff_text(
-    value: Any, *, limit: int | None = 360
-) -> str:
+def _clean_capability_handoff_text(value: Any, *, limit: int | None = 360) -> str:
     """Remove orchestration language before S6 sees an upstream judgment."""
 
     text = " ".join(str(value or "").replace("\n", " ").split())
     text = _CAPABILITY_HANDOFF_INTERNAL_PATTERN.sub("", text)
-    text = re.sub(r"(?:packet|claim|reasoning|trace)-[A-Za-z0-9_.:-]+", "", text, flags=re.I)
+    text = re.sub(
+        r"(?:packet|claim|reasoning|trace)-[A-Za-z0-9_.:-]+", "", text, flags=re.I
+    )
     text = re.sub(r"\s{2,}", " ", text).strip(" ；,，")
     return text if limit is None else _truncate_complete_text(text, limit=limit)
 
@@ -659,13 +661,14 @@ def _capability_handoff_statement(value: Any, *, limit: int = 360) -> str:
             for field in preferred
             if value.get(field) not in (None, "", [], {})
         ]
-        return _clean_capability_handoff_text("；".join(dict.fromkeys(parts)), limit=limit)
+        return _clean_capability_handoff_text(
+            "；".join(dict.fromkeys(parts)), limit=limit
+        )
     if isinstance(value, list):
-        parts = [
-            _capability_handoff_statement(item, limit=180)
-            for item in value[:3]
-        ]
-        return _clean_capability_handoff_text("；".join(filter(None, parts)), limit=limit)
+        parts = [_capability_handoff_statement(item, limit=180) for item in value[:3]]
+        return _clean_capability_handoff_text(
+            "；".join(filter(None, parts)), limit=limit
+        )
     return _clean_capability_handoff_text(value, limit=limit)
 
 
@@ -753,7 +756,9 @@ def _capability_synthesis_handoff(
         if not isinstance(item, Mapping):
             continue
         row = {
-            "capability": _clean_capability_handoff_text(item.get("capability"), limit=100),
+            "capability": _clean_capability_handoff_text(
+                item.get("capability"), limit=100
+            ),
             "grade": _clean_capability_handoff_text(item.get("grade"), limit=40),
             "gap": _clean_capability_handoff_text(
                 item.get("gap_statement") or item.get("basis"), limit=260
@@ -761,9 +766,7 @@ def _capability_synthesis_handoff(
             "verification": _clean_capability_handoff_text(
                 item.get("verification"), limit=160
             ),
-            "evidence_refs": [
-                str(ref) for ref in item.get("evidence_refs", [])[:4]
-            ],
+            "evidence_refs": [str(ref) for ref in item.get("evidence_refs", [])[:4]],
         }
         gaps.append({key: value for key, value in row.items() if value not in ("", [])})
         if len(gaps) >= 3:
@@ -793,17 +796,14 @@ def _capability_synthesis_handoff(
         allowed_agents={"weapon_equipment"},
         limit=12,
     )
-    selected_evidence_ids = {
-        str(item.get("evidence_id", "")) for item in evidence_rows
-    }
+    selected_evidence_ids = {str(item.get("evidence_id", "")) for item in evidence_rows}
     if len(evidence_rows) < 14:
         evidence_rows.extend(
             _prioritized_evidence_index(
                 [
                     item
                     for item in raw_evidence_rows
-                    if str(item.get("evidence_id", ""))
-                    not in selected_evidence_ids
+                    if str(item.get("evidence_id", "")) not in selected_evidence_ids
                 ],
                 preferred_ids=preferred_ids,
                 allowed_agents=set(),
@@ -819,9 +819,7 @@ def _capability_synthesis_handoff(
             ),
             "url": str(item.get("source_url", "")).strip(),
             "claim": _clean_capability_handoff_text(item.get("claim"), limit=220),
-            "excerpt": _clean_capability_handoff_text(
-                item.get("excerpt"), limit=260
-            ),
+            "excerpt": _clean_capability_handoff_text(item.get("excerpt"), limit=260),
             "quality": _clean_capability_handoff_text(
                 item.get("quality_assessment") or item.get("source_tier"),
                 limit=100,
@@ -903,20 +901,38 @@ def _capability_synthesis_handoff(
             projected = {
                 key: item.get(key)
                 for key in (
-                    "hypothesis_id", "name", "source_hypothesis_title", "type", "equipment_form",
+                    "hypothesis_id",
+                    "name",
+                    "source_hypothesis_title",
+                    "type",
+                    "equipment_form",
                     "direct_combat_equipment",
-                    "primary_equipment_identity", "target_scenario", "problem_statement",
-                    "military_value", "mission_effects", "equipment_forms",
-                    "baseline_system", "capability_gap", "direct_evidence_refs",
+                    "primary_equipment_identity",
+                    "target_scenario",
+                    "problem_statement",
+                    "military_value",
+                    "mission_effects",
+                    "equipment_forms",
+                    "baseline_system",
+                    "capability_gap",
+                    "direct_evidence_refs",
                     "evidence_ids",
-                    "validation_plan", "indicator_portrait", "query_relevance",
-                    "capability_classification", "equipment_classification",
+                    "validation_plan",
+                    "indicator_portrait",
+                    "query_relevance",
+                    "capability_classification",
+                    "equipment_classification",
                     "equipment_semantic_assessment",
                     "concise_winning_summary",
-                    "unique_operational_role", "launch_or_release_domain",
-                    "target_and_direct_effect", "non_substitutable_difference",
-                    "portfolio_identity_contract", "foresight_evidence_status",
-                    "evidence_boundary", "expert_score", "expert_assessment_id",
+                    "unique_operational_role",
+                    "launch_or_release_domain",
+                    "target_and_direct_effect",
+                    "non_substitutable_difference",
+                    "portfolio_identity_contract",
+                    "foresight_evidence_status",
+                    "evidence_boundary",
+                    "expert_score",
+                    "expert_assessment_id",
                 )
                 if item.get(key) not in (None, "", [])
             }
@@ -984,9 +1000,7 @@ def _capability_synthesis_handoff(
         "query": _clean_capability_handoff_text(topic, limit=600),
         "structured_query_brief": (
             dict(prior_step_outputs.get("structured_query_brief", {}))
-            if isinstance(
-                prior_step_outputs.get("structured_query_brief", {}), Mapping
-            )
+            if isinstance(prior_step_outputs.get("structured_query_brief", {}), Mapping)
             else {}
         ),
         "branch": str(branch),
@@ -1177,7 +1191,11 @@ def _s6_first_pass_quality_contract(
             "rule": "这些问题必须在首次S6调用内部解决；不得先提交不合格组合再依赖质量门修复。",
         },
         "portfolio": {
-            "direction_count": "由动态蜂群传入的合格直接战斗武器数量决定，不设固定配额",
+            "direction_count": (
+                "动态蜂群目标固定为6项：优先覆盖不同制胜维度；"
+                "互异维度不足时，以五轴身份差异优先、S5综合分次优补齐；"
+                "合格候选不足6项时必须标记数量门失败，不得按正常完成交付"
+            ),
             "membership_and_identity_locked_before_s6": True,
             "same_family_independence_rule": (
                 "同一装备族必须在平台或发射域、目标效果、核心机理、授权时序、"
@@ -1196,7 +1214,7 @@ def _s6_first_pass_quality_contract(
             ),
             "direct_weapon_portfolio_rule": (
                 "具体打击、歼灭、杀伤或反杀伤武器必须构成组合主体；"
-                "不使用固定数量或固定类别配额"
+                "动态蜂群按6项组合交付，但不设置固定武器类别配额"
             ),
             "maximum_standalone_support_directions": (
                 "由S5模型依据结构化Query语义决定，不由本地Query字符串分类"
@@ -1463,9 +1481,7 @@ def _normalize_s6_deterministic_format(
         assembled_portrait = assemble_capability_portrait_modules(portrait_modules)
         if assembled_portrait:
             direction["capability_portrait"] = assembled_portrait
-        evidence_boundary = str(
-            direction.get("evidence_boundary", "") or ""
-        ).strip()
+        evidence_boundary = str(direction.get("evidence_boundary", "") or "").strip()
         if evidence_boundary:
             if _evidence_boundary_is_public_semantic(evidence_boundary):
                 direction["evidence_boundary"] = _clean_capability_handoff_text(
@@ -1542,9 +1558,7 @@ def _normalize_s6_deterministic_format(
             direction["upgrade_package"] = [
                 cleaned
                 for item in direction["upgrade_package"]
-                if (
-                    cleaned := _clean_capability_handoff_text(item, limit=180)
-                )
+                if (cleaned := _clean_capability_handoff_text(item, limit=180))
             ][:6]
 
         # Confidence is always recalibrated at card level.  The previous
@@ -1573,9 +1587,7 @@ def _normalize_s6_deterministic_format(
         directions.append(direction)
 
     names_before_uniquify = [
-        str(direction.get("name", "")).strip()
-        if isinstance(direction, Mapping)
-        else ""
+        str(direction.get("name", "")).strip() if isinstance(direction, Mapping) else ""
         for direction in directions
     ]
     unique_directions = _uniquify_compacted_capability_titles(directions)
@@ -1608,9 +1620,10 @@ def _equipment_form_identity_text(value: Any) -> str:
 
 
 def _direction_is_defensive_only(direction: Mapping[str, Any]) -> bool:
-    return bool(direction.get("defensive_only")) or str(
-        direction.get("combat_posture", "")
-    ).strip() == "defensive_only"
+    return (
+        bool(direction.get("defensive_only"))
+        or str(direction.get("combat_posture", "")).strip() == "defensive_only"
+    )
 
 
 def _s6_frontier_evidence_allowance(direction: Mapping[str, Any]) -> bool:
@@ -1623,8 +1636,7 @@ def _s6_frontier_evidence_allowance(direction: Mapping[str, Any]) -> bool:
     )
     return bool(
         str(direction.get("type", "")).strip() == "new_capability"
-        and status
-        in {"analogous_project_evidence", "component_mechanism_evidence"}
+        and status in {"analogous_project_evidence", "component_mechanism_evidence"}
         and has_traceable_evidence
         and str(direction.get("evidence_boundary", "")).strip()
     )
@@ -1662,9 +1674,11 @@ def _prepare_pre_s6_card_contract(
         raw_evidence_boundary,
         limit=None,
     )
-    if raw_evidence_boundary and _evidence_boundary_is_public_semantic(
+    if (
         raw_evidence_boundary
-    ) and _evidence_boundary_is_public_semantic(cleaned_evidence_boundary):
+        and _evidence_boundary_is_public_semantic(raw_evidence_boundary)
+        and _evidence_boundary_is_public_semantic(cleaned_evidence_boundary)
+    ):
         card["evidence_boundary"] = cleaned_evidence_boundary
         evidence_boundary_status = "accepted_public_epistemic_boundary"
     else:
@@ -1679,9 +1693,7 @@ def _prepare_pre_s6_card_contract(
         for field in fields:
             raw = card.get(field)
             if isinstance(raw, list):
-                text = "；".join(
-                    str(item).strip() for item in raw if str(item).strip()
-                )
+                text = "；".join(str(item).strip() for item in raw if str(item).strip())
             else:
                 text = str(raw or "").strip()
             if text:
@@ -1810,9 +1822,10 @@ def _capability_direction_quality_issues(
             issues.append(f"S6第{position}项operational_process缺失")
 
         classification = direction.get("capability_classification", {})
-        if not isinstance(classification, Mapping) or not str(
-            classification.get("primary_dimension", "") or ""
-        ).strip():
+        if (
+            not isinstance(classification, Mapping)
+            or not str(classification.get("primary_dimension", "") or "").strip()
+        ):
             issues.append(f"S6第{position}项缺少Query驱动的主要能力分类维度")
 
         assessment = _equipment_semantic_assessment(direction)
@@ -1834,8 +1847,7 @@ def _capability_direction_quality_issues(
             ]
             if missing_flags:
                 issues.append(
-                    f"S6第{position}项模型装备语义合同缺少"
-                    + ",".join(missing_flags)
+                    f"S6第{position}项模型装备语义合同缺少" + ",".join(missing_flags)
                 )
         if assessment.get("query_alignment_confirmed") is False:
             issues.append(f"S6第{position}项模型判定与当前Query不一致")
@@ -1908,9 +1920,7 @@ def _capability_direction_quality_issues(
             )
         ]
         if leaked:
-            issues.append(
-                f"S6第{position}项{','.join(leaked[:4])}混入内部执行语言"
-            )
+            issues.append(f"S6第{position}项{','.join(leaked[:4])}混入内部执行语言")
 
         if str(direction.get("type", "") or "") == "upgrade":
             upgrade_required = (
@@ -1925,28 +1935,23 @@ def _capability_direction_quality_issues(
                 if not str(direction.get(field, "") or "").strip()
             ]
             package = direction.get("upgrade_package", [])
-            if not isinstance(package, list) or len(
-                [item for item in package if str(item).strip()]
-            ) < 2:
+            if (
+                not isinstance(package, list)
+                or len([item for item in package if str(item).strip()]) < 2
+            ):
                 upgrade_missing.append("upgrade_package>=2")
             if upgrade_missing:
                 issues.append(
-                    f"S6第{position}项现役升级论证缺少"
-                    + ",".join(upgrade_missing)
+                    f"S6第{position}项现役升级论证缺少" + ",".join(upgrade_missing)
                 )
 
     if len(hypothesis_ids) != len(set(hypothesis_ids)):
         issues.append("S6存在重复hypothesis_id")
     duplicate_names = [
-        name
-        for name, count in Counter(direction_names).items()
-        if count > 1
+        name for name, count in Counter(direction_names).items() if count > 1
     ]
     if duplicate_names:
-        issues.append(
-            "S6最终方向名称必须互异："
-            + "、".join(duplicate_names[:3])
-        )
+        issues.append("S6最终方向名称必须互异：" + "、".join(duplicate_names[:3]))
     return list(dict.fromkeys(issues))[:64]
 
 
@@ -2089,9 +2094,7 @@ def _requires_s6_combat_value_rewrite(issues: Sequence[Any]) -> bool:
     return False
 
 
-def _s6_repair_targets(
-    result: Mapping[str, Any], issues: Sequence[Any]
-) -> list[int]:
+def _s6_repair_targets(result: Mapping[str, Any], issues: Sequence[Any]) -> list[int]:
     """Resolve deterministic S6 issues to the smallest card set to rewrite."""
 
     directions = [
@@ -2122,7 +2125,9 @@ def _s6_repair_targets(
 
     if not targets and issues:
         targets.add(max(1, len(directions)))
-    return sorted(position for position in targets if 1 <= position <= len(directions))[:8]
+    return sorted(position for position in targets if 1 <= position <= len(directions))[
+        :8
+    ]
 
 
 def _s6_portrait_module_repair_targets(
@@ -2147,15 +2152,10 @@ def _s6_portrait_module_repair_targets(
         issue = str(raw_issue)
         if not any(marker in issue for marker in local_markers):
             return {}
-        positions = {
-            int(value)
-            for value in re.findall(r"(?:S6)?第(\d+)项", issue)
-        }
+        positions = {int(value) for value in re.findall(r"(?:S6)?第(\d+)项", issue)}
         if not positions:
             return {}
-        module_keys = {
-            key for label, key in label_to_key.items() if label in issue
-        }
+        module_keys = {key for label, key in label_to_key.items() if label in issue}
         if "概述" in issue:
             module_keys.add("overview")
         if "关键作战流程" in issue:
@@ -2172,11 +2172,7 @@ def _s6_portrait_module_repair_targets(
             targets.setdefault(position, set()).update(module_keys)
     direction_count = len(result.get("concept_directions", []))
     return {
-        position: [
-            key
-            for key, _ in CAPABILITY_PORTRAIT_MODULES
-            if key in module_keys
-        ]
+        position: [key for key, _ in CAPABILITY_PORTRAIT_MODULES if key in module_keys]
         for position, module_keys in sorted(targets.items())
         if 1 <= position <= direction_count
     }
@@ -2463,9 +2459,7 @@ def _merge_dynamic_portfolio_with_s6_authored_cards(
         if not merged.get("evidence_ids") and merged.get("direct_evidence_refs"):
             merged["evidence_ids"] = list(merged["direct_evidence_refs"])
         merged["s6_authoring_status"] = str(
-            authored_card.get(
-                "s6_authoring_status", "authored_semantically_consistent"
-            )
+            authored_card.get("s6_authoring_status", "authored_semantically_consistent")
         )
         merged_rows.append(merged)
     return merged_rows
@@ -2478,4 +2472,66 @@ _sync_legacy_globals()
 if _legacy is not None:
     _legacy._bind_s6_quality_helpers(sys.modules[__name__])
 
-__all__ = ['_equipment_semantic_assessment', '_has_combat_effect_signal', '_has_high_order_combat_value', '_is_ordinary_support_direction', '_direction_name_has_equipment_object', '_is_ancillary_support_equipment_direction', '_query_explicitly_requests_support_equipment', '_weapon_equipment_identity', '_equipment_direction_categories', '_is_unmanned_combat_equipment_direction', '_is_lethal_weapon_equipment_direction', '_is_missile_precision_munition_direction', '_dedupe_capability_title', '_s6_title_requires_structural_repair', '_capability_title_equipment_anchor', '_capability_upgrade_effect_anchor', '_compact_capability_direction_title', '_uniquify_compacted_capability_titles', '_capability_portrait_alignment_issues', '_capability_language_issues', '_collect_reference_ids', '_normalize_effect_chain_references', '_normalize_concept_direction_priorities', '_normalize_priority_references', '_prioritized_evidence_index', '_compact_s6_prior_outputs', '_evidence_boundary_is_public_semantic', '_query_relevance_issues', '_truncate_complete_text', '_clean_capability_handoff_text', '_capability_handoff_statement', '_capability_synthesis_handoff', '_s6_card_is_reusable', '_s6_first_pass_quality_contract', '_capability_text_similarity', '_capability_primary_equipment_family', '_s6_primary_equipment_object_kind', '_s6_primary_equipment_identity_mismatch', '_s6_cross_card_identity_issues', '_build_direction_capability_portrait', '_normalize_s6_deterministic_format', '_equipment_form_identity_text', '_direction_is_defensive_only', '_s6_frontier_evidence_allowance', '_indicator_portrait_is_specific', '_query_relevance_is_specific', '_prepare_pre_s6_card_contract', '_capability_direction_quality_issues', '_s6_delivery_blocking_issues', '_s6_portrait_repair_issues', '_s6_release_gate_state', '_recover_invalid_s6_result', '_requires_s6_combat_value_rewrite', '_s6_repair_targets', '_s6_portrait_module_repair_targets', '_s6_can_use_lightweight_card_repair', '_merge_s6_direction_repairs', '_merge_s6_portrait_module_repairs', '_s6_portfolio_confidence', '_s6_weapon_title_is_descriptive_sentence', '_merge_dynamic_portfolio_with_s6_authored_cards']
+__all__ = [
+    "_equipment_semantic_assessment",
+    "_has_combat_effect_signal",
+    "_has_high_order_combat_value",
+    "_is_ordinary_support_direction",
+    "_direction_name_has_equipment_object",
+    "_is_ancillary_support_equipment_direction",
+    "_query_explicitly_requests_support_equipment",
+    "_weapon_equipment_identity",
+    "_equipment_direction_categories",
+    "_is_unmanned_combat_equipment_direction",
+    "_is_lethal_weapon_equipment_direction",
+    "_is_missile_precision_munition_direction",
+    "_dedupe_capability_title",
+    "_s6_title_requires_structural_repair",
+    "_capability_title_equipment_anchor",
+    "_capability_upgrade_effect_anchor",
+    "_compact_capability_direction_title",
+    "_uniquify_compacted_capability_titles",
+    "_capability_portrait_alignment_issues",
+    "_capability_language_issues",
+    "_collect_reference_ids",
+    "_normalize_effect_chain_references",
+    "_normalize_concept_direction_priorities",
+    "_normalize_priority_references",
+    "_prioritized_evidence_index",
+    "_compact_s6_prior_outputs",
+    "_evidence_boundary_is_public_semantic",
+    "_query_relevance_issues",
+    "_truncate_complete_text",
+    "_clean_capability_handoff_text",
+    "_capability_handoff_statement",
+    "_capability_synthesis_handoff",
+    "_s6_card_is_reusable",
+    "_s6_first_pass_quality_contract",
+    "_capability_text_similarity",
+    "_capability_primary_equipment_family",
+    "_s6_primary_equipment_object_kind",
+    "_s6_primary_equipment_identity_mismatch",
+    "_s6_cross_card_identity_issues",
+    "_build_direction_capability_portrait",
+    "_normalize_s6_deterministic_format",
+    "_equipment_form_identity_text",
+    "_direction_is_defensive_only",
+    "_s6_frontier_evidence_allowance",
+    "_indicator_portrait_is_specific",
+    "_query_relevance_is_specific",
+    "_prepare_pre_s6_card_contract",
+    "_capability_direction_quality_issues",
+    "_s6_delivery_blocking_issues",
+    "_s6_portrait_repair_issues",
+    "_s6_release_gate_state",
+    "_recover_invalid_s6_result",
+    "_requires_s6_combat_value_rewrite",
+    "_s6_repair_targets",
+    "_s6_portrait_module_repair_targets",
+    "_s6_can_use_lightweight_card_repair",
+    "_merge_s6_direction_repairs",
+    "_merge_s6_portrait_module_repairs",
+    "_s6_portfolio_confidence",
+    "_s6_weapon_title_is_descriptive_sentence",
+    "_merge_dynamic_portfolio_with_s6_authored_cards",
+]

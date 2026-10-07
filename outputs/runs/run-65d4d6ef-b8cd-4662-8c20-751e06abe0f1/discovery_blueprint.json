@@ -1,0 +1,429 @@
+{
+  "adaptive_winning_step_modes": {
+    "1": "skip",
+    "2": "skip",
+    "3": "deep",
+    "4": "deep",
+    "5": "deep",
+    "6": "deep"
+  },
+  "assumptions": [
+    "研究对象为公开来源可支撑的反无人机一体防御体系需求，不预设具体装备型号或技术路线。",
+    "低空蜂群威胁被视为包含数量饱和、时空分散、真假目标混合和多方向接近的复合任务压力。",
+    "补充信息中的威胁样式和动作链要求是研究方向，需后续证据验证。"
+  ],
+  "baseline_agent_plan": [
+    {
+      "agent_id": "system_confrontation",
+      "mode": "required",
+      "reason": "F分支确定性基线建议"
+    },
+    {
+      "agent_id": "combat_scenario",
+      "mode": "reference",
+      "reason": "F分支确定性基线建议"
+    },
+    {
+      "agent_id": "weapon_equipment",
+      "mode": "reference",
+      "reason": "F分支确定性基线建议"
+    },
+    {
+      "agent_id": "operational_employment",
+      "mode": "callback",
+      "reason": "F分支确定性基线建议"
+    }
+  ],
+  "baseline_execution_mode": "query_dominant_isolated_parallel",
+  "blueprint_id": "blueprint-f-15e16d4e",
+  "blueprint_mode": "catalog",
+  "blueprint_runtime": {
+    "elapsed_seconds": 62.55,
+    "fallback": false,
+    "status": "model_completed",
+    "transport": "codex_cli"
+  },
+  "branch_name": "体系对抗博弈发现",
+  "callback_agent_ids": [
+    "operational_employment"
+  ],
+  "confidence": 0.84,
+  "custom_blueprint": {
+    "dependencies": [],
+    "dependency_cycle_rejected": false,
+    "driver_type": "",
+    "preferred_agent_ids": [],
+    "rationale": "",
+    "required_capability_tags": [],
+    "required_outputs": [],
+    "s1_s6_modes": {},
+    "stop_conditions": [],
+    "waves": []
+  },
+  "driver_scores": [
+    {
+      "branch": "F",
+      "exclusion_reason": "",
+      "score": 0.88,
+      "signals": []
+    },
+    {
+      "branch": "B",
+      "exclusion_reason": "",
+      "score": 0.72,
+      "signals": []
+    },
+    {
+      "branch": "D",
+      "exclusion_reason": "",
+      "score": 0.55,
+      "signals": []
+    }
+  ],
+  "dynamic_subagents": [],
+  "emphasis": [
+    "体系仿真",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "execution_contract": {
+    "absolute_deadline_seconds": 0,
+    "background_count": null,
+    "backtrack_map": {
+      "driver": [
+        3,
+        4,
+        6
+      ],
+      "mapping": [
+        4,
+        5,
+        6
+      ],
+      "report_section": []
+    },
+    "branch": "F",
+    "branch_products": [
+      "system_driver",
+      "cascade_failure",
+      "replacement_chain",
+      "capability_need",
+      "equipment_form",
+      "validation_route"
+    ],
+    "codex_concurrency": 8,
+    "contract_id": "branch-f-optimized-v2",
+    "critical_fast_finalize_seconds": 0,
+    "deadline_downshift_window_seconds": 240,
+    "delivery_grace_seconds": 0,
+    "delivery_retry_reserve_seconds": 45,
+    "fast_finalize_output_token_cap": 4200,
+    "hard_deadline_seconds": 0,
+    "logical_agent_dag": {
+      "S3": [
+        "driver_agent"
+      ],
+      "S4": [
+        "S3"
+      ],
+      "S6": [
+        "S4"
+      ],
+      "driver_agent": [],
+      "reporter": [
+        "S6"
+      ]
+    },
+    "maximum_delivery_model_calls": 8,
+    "maximum_model_calls": 10,
+    "maximum_model_calls_with_residuals": 14,
+    "maximum_quality_judge_model_calls": 2,
+    "maximum_rounds": 3,
+    "maximum_searches": 12,
+    "maximum_swarm_model_calls": 20,
+    "physical_cohorts": [
+      [
+        3,
+        4,
+        5
+      ]
+    ],
+    "scenarios_per_background": null,
+    "schema_version": "2.0",
+    "soft_deadline_seconds": 0,
+    "step_intensity": {
+      "1": "skip",
+      "2": "skip",
+      "3": "deep",
+      "4": "deep",
+      "5": "deep",
+      "6": "deep"
+    },
+    "stop_conditions": [
+      "all_required_branch_products_present",
+      "accepted_claims_traceable_to_public_sources",
+      "no_repeated_residual_without_new_evidence",
+      "estimated_quality_gain_below_0.03"
+    ],
+    "wall_clock_deadlines_enabled": false
+  },
+  "execution_profile_hash": "31b13bc8f67c8990d412591e67d271d3c352cb3da4e95176c4cd4e6c58d46022",
+  "execution_profile_id": "winning_swarm_dynamic_v2",
+  "focus_questions": [
+    "低空渗透、蜂群袭扰、假目标混合、多方向饱和条件下，蓝方发现到处置链路在哪些节点最先失效。",
+    "谁在何种条件下完成监视、识别、告警、决策、处置和复盘，各节点交接指标如何证伪。",
+    "公开基线与未来威胁之间的能力缺口如何转化为可立项、可试验、可淘汰的防御项目。"
+  ],
+  "generated_by": "codex_orchestrator",
+  "hard_constraints": [
+    "只使用公开来源开展战略、能力、装备市场与防御性需求研究。",
+    "不得输出实时目标定位、具体攻击步骤、规避防护方法、可直接执行伤害行动或制造参数。",
+    "首轮不得引入固定装备目录、公开型号清单或预设技术路线。",
+    "所有装备项目只能由任务断点、能力缺口和可证伪指标收敛生成。"
+  ],
+  "hard_dependencies": {
+    "driver_agent": []
+  },
+  "initial_baseline_agent_ids": [
+    "system_confrontation",
+    "combat_scenario",
+    "weapon_equipment"
+  ],
+  "interaction_mode": "expert",
+  "loop_policy": {
+    "inner_max_iterations": 1,
+    "meta_max_cycles": 1,
+    "middle_max_cycles": 1,
+    "minimum_expected_gain": 0.03,
+    "outer_max_rounds": 3,
+    "residual_only_after_first_round": true
+  },
+  "maximum_business_agents": 3,
+  "meta_review": {
+    "added_secondary_branches": [],
+    "dynamic_subagents": [],
+    "focus_questions": [],
+    "rationale": "覆盖与收敛结果未触发实质性重规划条件，保留当前蓝图。",
+    "replan_required": false,
+    "step_mode_changes": [],
+    "step_mode_overrides": [],
+    "stop_reason": "lean_meta_gate_passed"
+  },
+  "meta_triggers": [
+    "出现跨分支高价值线索",
+    "当前分支无法覆盖关键能力标签",
+    "案例/技术/对手变化反向触发其他发现路径"
+  ],
+  "minimum_business_agents": 2,
+  "primary_branch": "F",
+  "promoted_callback_agent_ids": [],
+  "prompt_version": "2.9",
+  "rationale": "以体系对抗为主轴，先构建红方低空饱和渗透任务链与蓝方一体防御链，再识别断点、补链方向和可验证防御项目；不进入具体攻击步骤、武器制造参数或实时目标定位。",
+  "reference_focus": {
+    "source_items": [
+      3,
+      6
+    ],
+    "task_kernel": "穿透性制空、隐身水下平台及马赛克/决策中心体系→拆解制胜机理和关键依赖→交付反穿透/反体系装备族、韧性方案和压力测试。"
+  },
+  "required_capability_tags": [
+    "system_modeling",
+    "equipment",
+    "coordination"
+  ],
+  "required_outputs": [
+    "体系边界",
+    "任务依赖图",
+    "脆弱点",
+    "替代方案",
+    "补链强链",
+    "装备能力需求图像（需求卡片）",
+    "深度研究主报告（深度性、创新性、前瞻性、军事价值性）",
+    "分支专用收敛产物"
+  ],
+  "runtime_budgets": {
+    "absolute_deadline_seconds": 0,
+    "codex_concurrency": 8,
+    "critical_fast_finalize_seconds": 0,
+    "deadline_downshift_window_seconds": 240,
+    "delivery_grace_seconds": 0,
+    "delivery_retry_reserve_seconds": 45,
+    "fast_finalize_output_token_cap": 4200,
+    "hard_deadline_seconds": 0,
+    "maximum_delivery_model_calls": 8,
+    "maximum_model_calls": 10,
+    "maximum_model_calls_with_residuals": 14,
+    "maximum_quality_judge_model_calls": 0,
+    "maximum_reporter_model_calls": 36,
+    "maximum_s6_model_calls": 80,
+    "maximum_searches": 12,
+    "maximum_swarm_model_calls": 40,
+    "reporter_codex_concurrency": 12,
+    "s6_codex_concurrency": 32,
+    "soft_deadline_seconds": 0,
+    "wall_clock_deadlines_enabled": false
+  },
+  "runtime_route": "traditional_gap",
+  "secondary_branches": [
+    "B",
+    "D"
+  ],
+  "semantic_agent_signals": [],
+  "specialist_agent_ids": [
+    "system_confrontation"
+  ],
+  "structured_query_brief": {
+    "battle_phase_and_constraints": [
+      "重点阶段为预警发现、接近识别、告警分发、处置分配、效果评估。",
+      "约束包括低空遮蔽、背景杂波、目标小慢低特征、时间窗口短、真假混合、跨单元协同压力。"
+    ],
+    "combat_problem_frame": "在低空、近程、复杂背景和多方向饱和压力下，蓝方需要维持连续感知、可信识别、及时告警、协同决策和有效处置，避免单点探测、识别误差、告警迟滞、火力或非火力处置不足引发级联失效。",
+    "constraints_and_assumptions": [
+      "不预设装备名称、装备家族或技术路线。",
+      "补充信息为研究方向而非既成事实。",
+      "后续事实判断须由公开证据材料化支撑。"
+    ],
+    "core_query": "低空蜂群渗透下反无人机一体防御体系研究",
+    "enemy_target_profile": [
+      "低空小型无人平台或复合目标群",
+      "多方向、低空、分散接近的蜂群化目标",
+      "真假目标混合、诱骗与饱和压迫并存的目标集"
+    ],
+    "equipment_project_hypotheses": [],
+    "equipment_semantic_boundary": "研究边界是反无人机一体防御体系及其可独立立项的监视、识别、告警、指挥协同、处置和评估类防御项目；不限定具体装备型号、平台家族、传感器路线或效应器路线。",
+    "expansion_dimensions": [
+      "任务对象与直接效果",
+      "对手适应与失效边界",
+      "装备形态与工程约束",
+      "证据问题与淘汰条件"
+    ],
+    "focus_questions": [
+      "低空蜂群复合威胁如何压迫反无人机防御体系的发现、识别、告警、决策和处置链路。",
+      "哪些防御链路断点可以形成可公开验证、可试验淘汰的具体防御项目。"
+    ],
+    "frontier_technology_hypotheses": [],
+    "handoff_rule": "向下游仅传递结构化任务语义、问题命题、禁止边界、S1-S6强度和Agent交接字段；不传递其他Agent原始会话，不把未经验证假设作为事实。",
+    "query_equipment_mode": "direct_combat",
+    "query_specific_weapon_architectures": [],
+    "rejected_template_anchors": [
+      "固定颠覆种子",
+      "共享示例装备目录",
+      "公开型号罗列",
+      "单一技术路线先验",
+      "按关键词套用非战斗保障装备模板"
+    ],
+    "required_direct_military_effects": [
+      "发现低空渗透目标并保持连续跟踪。",
+      "区分威胁目标、假目标和非威胁目标，降低误报漏报。",
+      "及时告警并把目标、威胁等级和处置建议交给责任单元。",
+      "对威胁目标实施拒止、压制、迫降、毁伤或隔离等防御性处置。",
+      "在饱和压力下维持重点区域抗毁和持续防护。"
+    ],
+    "supplement_present": true,
+    "supplement_summary": "先发散低空渗透、蜂群袭扰、假目标混合和多方向饱和威胁，再收敛到统一监视、识别、告警、处置的防御项目，并说明动作链主体、条件、公开基线、失效边界和可证伪指标。",
+    "weapon_design_variables": [],
+    "winning_problem_propositions": [
+      {
+        "changeable_variable": "多源感知协同、覆盖重叠、交接时序和目标置信度融合方式",
+        "conventional_assumption": "提高单点探测性能即可覆盖低空蜂群压力",
+        "direct_military_result": "提升早期发现和持续跟踪能力，为后续处置争取时间窗口",
+        "exclusion_and_falsification_boundary": "若公开基线显示单链路已能稳定覆盖该威胁组合，或多源协同不能改善漏报与中断指标，则该命题降级。",
+        "mechanism_search_question": "何种体系链路能在复杂低空背景下把发现概率、连续跟踪和告警时效同时维持在可验证阈值内",
+        "target_and_phase": "低空小型目标群进入重点区域前的发现与连续跟踪阶段",
+        "task_breakpoint": "单一感知链路在遮蔽、杂波和多方向目标下漏报或跟踪中断"
+      },
+      {
+        "changeable_variable": "目标分级规则、识别证据链、告警优先级和处置资源分配机制",
+        "conventional_assumption": "把所有疑似目标等同处置即可压低风险",
+        "direct_military_result": "减少误报占用和漏报风险，提高有限处置资源对真实威胁的有效覆盖",
+        "exclusion_and_falsification_boundary": "若分级机制不能在公开案例或试验指标中降低错配率，或引入不可接受时延，则该命题淘汰。",
+        "mechanism_search_question": "如何在不依赖不可公开细节的情况下建立可审计的识别-告警-处置分级指标",
+        "target_and_phase": "真假目标混合与蜂群袭扰进入识别、告警和处置分配阶段",
+        "task_breakpoint": "识别置信不足导致告警泛滥、处置资源错配或关键目标漏处置"
+      },
+      {
+        "changeable_variable": "跨单元任务分配、处置队列、火力与非火力协同、效果评估回传机制",
+        "conventional_assumption": "增加单类处置资源数量即可解决饱和问题",
+        "direct_military_result": "形成持续拒止和抗毁防护能力，降低饱和突防概率",
+        "exclusion_and_falsification_boundary": "若协同调度不能提升处置吞吐、缩短再分配时间或减少防护空窗，则不进入项目收敛。",
+        "mechanism_search_question": "何种协同链路能在饱和压力下维持重点目标防护、处置效率和体系韧性",
+        "target_and_phase": "多方向饱和威胁下的协同处置与持续防护阶段",
+        "task_breakpoint": "多节点、多手段处置缺乏统一调度，导致重复打击、空窗区和级联失效"
+      }
+    ]
+  },
+  "unmatched_driver": "",
+  "waves": [
+    [
+      "combat_scenario",
+      "weapon_equipment"
+    ],
+    [
+      "system_confrontation"
+    ],
+    [
+      "operational_employment"
+    ]
+  ],
+  "winning_swarm_policy": {
+    "archetypes": [
+      "adversary_counter_adaptation_red_team",
+      "cross_scenario_stress_tester",
+      "disruptive_mechanism_generator",
+      "independent_portfolio_reviewer",
+      "innovative_equipment_dimension_generator",
+      "weak_signal_scout"
+    ],
+    "breadth_hypothesis_maximum": 18,
+    "breadth_hypothesis_minimum": 1,
+    "coverage_expand_max_recruits": 2,
+    "enabled": true,
+    "expert_candidate_pool_maximum": 0,
+    "expert_judge_critical_dimension_minimum": 0.52,
+    "expert_judge_enabled": false,
+    "expert_judge_minimum_score": 0.68,
+    "expert_judge_required": false,
+    "expert_repair_enabled": false,
+    "expert_repair_max_candidates": 0,
+    "expert_repair_minimum_score": 0.64,
+    "expert_repair_reserved_instances": 0,
+    "finalist_maximum": 7,
+    "finalist_minimum": 6,
+    "foresight_first_enabled": true,
+    "frontier_critical_dimension_minimum": 0.5,
+    "frontier_evidence_relaxation": true,
+    "frontier_expert_judge_minimum_score": 0.66,
+    "frontier_final_gate_minimum_score": 0.62,
+    "max_concurrency": 8,
+    "max_dynamic_instances": 21,
+    "max_waves": 3,
+    "minimum_direct_combat_equipment": 2,
+    "minimum_expected_gain": 0.03,
+    "mission_graph_max_instances": 21,
+    "mission_graph_min_instances": 8,
+    "mission_graph_target_instances": 10,
+    "pending_verification_backfill_enabled": false,
+    "pending_verification_critical_dimension_minimum": 0.42,
+    "pending_verification_minimum_score": 0.54,
+    "policy_id": "winning_swarm_dynamic_v2",
+    "preferred_distinct_direct_equipment": 3,
+    "promotion": {
+      "human_approval_required": true,
+      "maximum_evidence_hard_failures": 0,
+      "maximum_permission_hard_failures": 0,
+      "minimum_eligible_runs": 10,
+      "minimum_positive_increment_rate": 0.7,
+      "offline_evaluation_required": true
+    },
+    "raw_session_sharing_allowed": false,
+    "recursive_recruitment_allowed": false,
+    "s3_empty_reallocation_max": 2,
+    "s3_s4_candidate_maximum_per_session": 3,
+    "s3_s4_candidate_pool_maximum_per_session": 3,
+    "s3_s4_creative_passes": 3,
+    "s3_winning_thesis_capacity": 4,
+    "same_family_minimum_independent_axes": 2
+  }
+}

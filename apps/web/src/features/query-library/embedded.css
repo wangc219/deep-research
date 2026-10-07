@@ -3,7 +3,7 @@
   border-color: #dadff0 !important;
   border-radius: 10px !important;
   background: #fff !important;
-  color: #5967b8 !important;
+  color: #5b59b8 !important;
   font-weight: 700;
 }
 
@@ -11,4 +11,20 @@
   margin-bottom: 30px;
   padding-bottom: 28px;
   border-bottom: 1px solid #e2e6f1;
+}
+
+.query-detail-return { display: none; }
+
+@media (max-width: 760px) {
+  .query-detail-panel { display: none; }
+  .query-detail-panel.mobile-detail-active {
+    display: grid;
+    order: -1;
+    scroll-margin-top: 64px;
+  }
+  .query-detail-return { display: inline-flex; justify-self: start; min-height: 40px; }
+  .query-detail-panel > header { flex-wrap: wrap; }
+  .query-detail-panel > header > div { flex-wrap: wrap; }
+  .query-detail-panel .query-status { flex-shrink: 0; white-space: nowrap; }
+  .query-list-column { scroll-margin-top: 64px; }
 }
