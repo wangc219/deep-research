@@ -293,7 +293,7 @@ async def _release_runtime_if_idle(run: AgentRun) -> bool:
     async with pg_manager.get_async_session_context() as db:
         await db.execute(
             text("SELECT pg_advisory_xact_lock(hashtext(:lock_key))"),
-            {"lock_key": f"yuxi-runtime-cleanup:{run.uid}:{runtime_scope_id}"},
+            {"lock_key": f"deep-research:runtime-cleanup:{run.uid}:{runtime_scope_id}"},
         )
         current = await db.scalar(select(AgentRun).where(AgentRun.id == run.id).with_for_update())
         if current is None:

@@ -84,7 +84,7 @@ async def stats_store(monkeypatch):
             )
         yield schema, sessions, redis
     finally:
-        await redis.delete(f"yuxi:kb_file_stats:{schema}", f"yuxi:knowledge_base:{schema}:lock")
+        await redis.delete(f"deep-research:kb-file-stats:{schema}", f"deep-research:knowledge-base:{schema}:lock")
         await close_async_redis_client()
         await engine.dispose()
         async with admin.begin() as connection:
@@ -99,7 +99,7 @@ async def test_operation_refresh_ignores_cached_stats(stats_store, tmp_path, fai
     cached = await KnowledgeFileRepository().get_kb_file_stats(kb_id)
     assert cached["pending_index_count"] == 1
     # 延长本测试缓存存活期，消除慢 CI 下自然过期导致的假通过。
-    await redis.expire(f"yuxi:kb_file_stats:{kb_id}", 300)
+    await redis.expire(f"deep-research:kb-file-stats:{kb_id}", 300)
     manager = KnowledgeBaseManager(str(tmp_path))
 
     async def operation():
@@ -205,7 +205,7 @@ async def test_repair_returns_fresh_persisted_stats(stats_store, tmp_path, monke
     """文件缺失统计修复后，响应与持久投影都忽略旧缓存。"""
     kb_id, sessions, redis = stats_store
     await KnowledgeFileRepository().get_kb_file_stats(kb_id)
-    await redis.expire(f"yuxi:kb_file_stats:{kb_id}", 300)
+    await redis.expire(f"deep-research:kb-file-stats:{kb_id}", 300)
     async with sessions.begin() as session:
         row = (await session.execute(select(KnowledgeFile))).scalar_one()
         row.status = "indexed"

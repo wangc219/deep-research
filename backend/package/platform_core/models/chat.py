@@ -60,10 +60,10 @@ def load_chat_model(fully_specified_name: str | None, *, session_id: str | None 
     metadata = dict(kwargs.pop("metadata", {}) or {})
     metadata.update(
         {
-            "yuxi_provider_id": info.provider_id,
-            "yuxi_provider_type": info.provider_type,
-            "yuxi_model_id": info.model_id,
-            "yuxi_model_spec": info.spec,
+            "platform_provider_id": info.provider_id,
+            "platform_provider_type": info.provider_type,
+            "platform_model_id": info.model_id,
+            "platform_model_spec": info.spec,
         }
     )
     kwargs["metadata"] = metadata

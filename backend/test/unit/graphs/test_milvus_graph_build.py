@@ -49,7 +49,7 @@ def test_graph_vector_store_uses_connection_alias_for_database_selection(monkeyp
     store.connection_alias = "milvus-graph-test"
     store.milvus_uri = "http://milvus:19530"
     store.milvus_token = ""
-    store.milvus_db = "yuxi"
+    store.milvus_db = "deep_research"
 
     monkeypatch.setattr(milvus_graph_vector_store_module.connections, "has_connection", lambda alias: False)
     monkeypatch.setattr(
@@ -78,8 +78,8 @@ def test_graph_vector_store_uses_connection_alias_for_database_selection(monkeyp
     assert calls == [
         ("connect", {"alias": "milvus-graph-test", "uri": "http://milvus:19530", "token": ""}),
         ("list", {"using": "milvus-graph-test"}),
-        ("create", "yuxi", {"using": "milvus-graph-test"}),
-        ("use", "yuxi", {"using": "milvus-graph-test"}),
+        ("create", "deep_research", {"using": "milvus-graph-test"}),
+        ("use", "deep_research", {"using": "milvus-graph-test"}),
     ]
 
 

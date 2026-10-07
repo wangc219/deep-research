@@ -56,6 +56,8 @@ web/dist/
 web/.vite/
 docker/volumes/
 .migration-backup/
+.deep-research/
+# Legacy local state; migrated by scripts/migrate-environment.sh.
 .yuxi/
 
 # Generated research artifacts are committed. Local service databases and

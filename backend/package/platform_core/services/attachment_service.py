@@ -162,7 +162,7 @@ async def _write_workdir_file(workdir, path: str, content: bytes) -> None:
     """通过受信任 no-follow 文件边界写入实时 Workdir。"""
     temp_path = ""
     try:
-        with tempfile.NamedTemporaryFile(prefix="yuxi-attachment-", delete=False) as temp_file:
+        with tempfile.NamedTemporaryFile(prefix="deep-research-attachment-", delete=False) as temp_file:
             temp_path = temp_file.name
             temp_file.write(content)
         await asyncio.to_thread(workdir.copy_file_from_path, path, temp_path)

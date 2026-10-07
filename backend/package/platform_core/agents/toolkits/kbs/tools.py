@@ -483,7 +483,7 @@ async def download_kb_file(
     output_path = _resolve_download_output_path(backend, workdir_path, data, normalized_file_id, save_as)
     temp_path = ""
     try:
-        with tempfile.NamedTemporaryFile(prefix="yuxi-kb-download-", delete=False) as temp_file:
+        with tempfile.NamedTemporaryFile(prefix="deep-research-kb-download-", delete=False) as temp_file:
             temp_path = temp_file.name
             temp_file.write(data["content"])
         await asyncio.to_thread(

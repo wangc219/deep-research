@@ -19,7 +19,7 @@ SUPERADMIN_UID = "zwj"
 SUPERADMIN_NAME = "张文杰"
 SUPERADMIN_PHONE_NUMBER = "15251638888"
 SUPERADMIN_PASSWORD = "zwj12138"
-DEFAULT_USER_PASSWORD = "yuxi123456"
+DEFAULT_USER_PASSWORD = "deepresearch123456"
 
 
 class DepartmentSeed(TypedDict):
@@ -139,7 +139,7 @@ def main() -> int:
         "3 个部门、6 个部门管理员和 14 个普通用户。"
     )
     print("超级管理员密码：zwj12138")
-    print("部门管理员和普通用户默认密码：yuxi123456")
+    print("部门管理员和普通用户默认密码：deepresearch123456")
     return 0
 
 

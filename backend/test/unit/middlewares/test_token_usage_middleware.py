@@ -22,10 +22,10 @@ def _request(*, run_id: str, model_spec: str, state: dict | None = None, model_n
         model=SimpleNamespace(
             profile={"max_input_tokens": 2000},
             metadata={
-                "yuxi_provider_id": model_spec.split(":", 1)[0],
-                "yuxi_provider_type": "openai",
-                "yuxi_model_id": model_name,
-                "yuxi_model_spec": model_spec,
+                "platform_provider_id": model_spec.split(":", 1)[0],
+                "platform_provider_type": "openai",
+                "platform_model_id": model_name,
+                "platform_model_spec": model_spec,
             },
         ),
         state=state or {"messages": [HumanMessage(content="old message")]},

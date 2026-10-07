@@ -16,7 +16,7 @@ from typing import Any
 from platform_core.storage.redis import sync_redis_client
 from platform_core.utils.logging_config import logger
 
-REDIS_CACHE_KEY = "yuxi:model_cache"
+REDIS_CACHE_KEY = "deep-research:model-cache"
 _CACHE_TTL_SECONDS = 5
 
 

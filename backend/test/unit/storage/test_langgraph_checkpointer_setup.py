@@ -18,7 +18,7 @@ def test_langgraph_pool_checks_connections_before_checkout(monkeypatch):
         def __init__(self, **kwargs):
             captured.update(kwargs)
 
-    monkeypatch.setenv("POSTGRES_URL", "postgresql+asyncpg://user:pass@postgres/yuxi")
+    monkeypatch.setenv("POSTGRES_URL", "postgresql+asyncpg://user:pass@postgres/deep_research")
     monkeypatch.setattr(manager_module, "AsyncConnectionPool", Pool)
     monkeypatch.setattr(manager_module, "create_async_engine", lambda *_args, **_kwargs: object())
     monkeypatch.setattr(manager_module, "async_sessionmaker", lambda **_kwargs: object())
@@ -44,7 +44,7 @@ def test_postgres_pool_capacity_uses_environment(monkeypatch):
         def __init__(self, **kwargs):
             pool_options.update(kwargs)
 
-    monkeypatch.setenv("POSTGRES_URL", "postgresql+asyncpg://user:pass@postgres/yuxi")
+    monkeypatch.setenv("POSTGRES_URL", "postgresql+asyncpg://user:pass@postgres/deep_research")
     monkeypatch.setenv("POSTGRES_POOL_SIZE", "120")
     monkeypatch.setenv("POSTGRES_MAX_OVERFLOW", "30")
     monkeypatch.setenv("POSTGRES_POOL_TIMEOUT_SECONDS", "60")

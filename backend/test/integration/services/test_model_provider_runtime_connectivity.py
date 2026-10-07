@@ -137,7 +137,7 @@ async def test_provider_db_rerank_model_connectivity():
         base_url=spec["base_url"],
         parameters=spec["parameters"],
     )
-    scores = await reranker.acompute_score(("Yuxi knowledge base", ["Yuxi is a RAG platform.", "Unrelated text."]))
+    scores = await reranker.acompute_score(("深度研究平台 knowledge base", ["深度研究平台 is a RAG platform.", "Unrelated text."]))
     await reranker.aclose()
 
     assert len(scores) == 2

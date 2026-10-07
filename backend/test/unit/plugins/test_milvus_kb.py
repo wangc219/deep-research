@@ -84,7 +84,7 @@ def test_init_connection_uses_the_same_alias_for_database_selection(monkeypatch)
     kb.connection_alias = "milvus-test"
     kb.milvus_uri = "http://milvus:19530"
     kb.milvus_token = ""
-    kb.milvus_db = "yuxi"
+    kb.milvus_db = "deep_research"
 
     monkeypatch.setattr(
         milvus_module.connections,
@@ -112,8 +112,8 @@ def test_init_connection_uses_the_same_alias_for_database_selection(monkeypatch)
     assert calls == [
         ("connect", {"alias": "milvus-test", "uri": "http://milvus:19530", "token": ""}),
         ("list", {"using": "milvus-test"}),
-        ("create", "yuxi", {"using": "milvus-test"}),
-        ("use", "yuxi", {"using": "milvus-test"}),
+        ("create", "deep_research", {"using": "milvus-test"}),
+        ("use", "deep_research", {"using": "milvus-test"}),
     ]
 
 

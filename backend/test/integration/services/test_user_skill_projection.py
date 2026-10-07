@@ -83,7 +83,7 @@ async def test_projection_refresh_waits_for_lock_then_reloads_revoked_authorizat
     skill_id: int | None = None
     refresh_task: asyncio.Task[dict[str, str]] | None = None
     policy_task: asyncio.Task[None] | None = None
-    lock_scope = f"yuxi:skills:user-projection:v1:{uid}"
+    lock_scope = f"deep-research:skills:user-projection:v1:{uid}"
 
     try:
         async with session_factory() as db:

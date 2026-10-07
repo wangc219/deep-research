@@ -179,7 +179,7 @@ class Workspace:
 
         parent_fd = self._open_directory(base, parts[:-1])
         target_fd = None
-        temp_name = f".yuxi-replace-{uuid.uuid4().hex}"
+        temp_name = f".deep-research-replace-{uuid.uuid4().hex}"
         try:
             try:
                 target_stat = os.stat(parts[-1], dir_fd=parent_fd, follow_symlinks=False)
@@ -249,7 +249,7 @@ class Workspace:
             raise IsADirectoryError(path)
         parent_fd = self._open_directory(base, parts[:-1], create=create_parents)
         source_fd = target_fd = None
-        temp_name = f".yuxi-write-{uuid.uuid4().hex}"
+        temp_name = f".deep-research-write-{uuid.uuid4().hex}"
         try:
             source_fd = os.open(source_path, os.O_RDONLY | os.O_NOFOLLOW)
             if not stat.S_ISREG(os.fstat(source_fd).st_mode):

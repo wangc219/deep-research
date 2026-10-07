@@ -15,7 +15,7 @@ from platform_core.workspace.paths import normalize_workdir_path, user_workdir_h
 from platform_core.config import get_user_data_dir
 from platform_core.storage.postgres.models_business import AGENT_RUN_TERMINAL_STATUSES
 
-TEST_RESOURCE_PREFIX = "YUXI_TEST_"
+TEST_RESOURCE_PREFIX = "DEEP_RESEARCH_TEST_"
 TEST_CONVERSATION_TITLE_PREFIX = f"{TEST_RESOURCE_PREFIX}CONVERSATION_"
 PYTEST_RESOURCE_PREFIXES = ("pytest", "py_test")
 LEGACY_TEST_CONVERSATION_TITLE_PATTERNS = (
@@ -82,9 +82,9 @@ def make_test_resource_id(label: str) -> str:
 def make_test_conversation_metadata(test_name: str, *, e2e: bool = False, **extra: object) -> dict[str, object]:
     """生成带测试资源标记的 Conversation metadata。"""
 
-    metadata: dict[str, object] = {"_yuxi_test": True, "test": test_name}
+    metadata: dict[str, object] = {"_deep_research_test": True, "test": test_name}
     if e2e:
-        metadata["_yuxi_e2e"] = True
+        metadata["_deep_research_e2e"] = True
     metadata.update(extra)
     return metadata
 
@@ -136,7 +136,7 @@ async def cleanup_provisioned_sandboxes(
 
 def _postgres_dsn() -> str:
     """返回测试环境 PostgreSQL DSN（去掉 SQLAlchemy 驱动前缀）。"""
-    return os.getenv("POSTGRES_URL", "postgresql+asyncpg://postgres:postgres@postgres:5432/yuxi").replace(
+    return os.getenv("POSTGRES_URL", "postgresql+asyncpg://postgres:postgres@postgres:5432/deep_research").replace(
         "+asyncpg", ""
     )
 
@@ -189,11 +189,11 @@ def _is_test_thread(thread: object) -> bool:
         return False
 
     metadata = _parse_metadata(thread.get("metadata") or thread.get("extra_metadata"))
-    if metadata.get("_yuxi_test") is True:
+    if metadata.get("_deep_research_test") is True:
         return True
-    if metadata.get("_yuxi_e2e") is True and (
+    if metadata.get("_deep_research_e2e") is True and (
         metadata.get("test") in E2E_THREAD_TEST_MARKERS
-        or _has_prefix(metadata.get("marker"), ("YUXI_SUBAGENT_STREAM_E2E_",))
+        or _has_prefix(metadata.get("marker"), ("DEEP_RESEARCH_SUBAGENT_STREAM_E2E_",))
     ):
         return True
     if is_test_conversation_title(thread.get("title")):
@@ -284,7 +284,7 @@ async def delete_e2e_run_rows(thread_ids: set[str]) -> None:
     """删除 E2E 测试线程对应的 agent_runs 审计行。
 
     线程删除 API 只软删对话，run 行作为审计事实不会级联；测试 run 若不
-    清理会永久残留并污染运行历史，因此按已识别（带 _yuxi_e2e 标记）的
+    清理会永久残留并污染运行历史，因此按已识别（带 _deep_research_e2e 标记）的
     线程 id 直接删除。外键链 agent_run_requests/messages/tool_calls/
     message_feedbacks 均无级联，按叶子到根的顺序删除；attempt 由级联
     外键一并删除。

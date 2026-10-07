@@ -10,7 +10,7 @@ from langgraph.graph import END, START, MessagesState, StateGraph
 from platform_core.models.chat import load_chat_model
 from platform_core.models.utils import parse_assistant_message_body
 from platform_core.models.providers.cache import ModelInfo
-from platform_core.services.chat_service import _protocol_event_yuxi_event
+from platform_core.services.chat_service import _protocol_event_platform_event
 
 REASONING = " First\nthen check. "
 TOOL = {"type": "function", "function": {"name": "inspect_code", "parameters": {"type": "object", "properties": {}}}}
@@ -155,7 +155,7 @@ async def test_real_v3_reasoning_projection_and_checkpoint(monkeypatch):
     async for event in run:
         if event["method"] == "messages":
             raw, metadata = event["params"]["data"]
-            projected = _protocol_event_yuxi_event(raw, message_id="m", thread_id="t", namespace=[])
+            projected = _protocol_event_platform_event(raw, message_id="m", thread_id="t", namespace=[])
             if projected:
                 emitted.append(projected)
     assert "".join(e.get("reasoning_content", "") for e in emitted) == REASONING

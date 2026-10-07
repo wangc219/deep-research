@@ -1584,7 +1584,7 @@ async def test_durable_task_publication_failure_does_not_refresh_health(monkeypa
 
 def test_worker_settings_publish_short_ttl_versioned_health_contract():
     assert run_worker.WorkerSettings.max_jobs == run_worker.worker_max_jobs()
-    assert run_worker.WorkerSettings.health_check_key == "yuxi:worker:health:agent-run-v1"
+    assert run_worker.WorkerSettings.health_check_key == "deep-research:worker:health:agent-run-v1"
     assert 0 < run_worker.WorkerSettings.health_check_interval <= 10
 
 

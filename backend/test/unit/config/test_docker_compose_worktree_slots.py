@@ -113,7 +113,7 @@ def test_development_compose_is_parameterized_for_parallel_worktree_slots() -> N
     assert f"{STATE_ROOT}/redis" in state_sources
     assert f"{STATE_ROOT}/milvus/milvus" in state_sources
     assert f"{STATE_ROOT}/neo4j/data" in state_sources
-    assert f"{STATE_ROOT}/yuxi/threads" in state_sources
+    assert f"{STATE_ROOT}/platform/threads" in state_sources
 
 
 def test_slot_isolation_guard_rejects_fixed_host_resources() -> None:
@@ -121,9 +121,9 @@ def test_slot_isolation_guard_rejects_fixed_host_resources() -> None:
     compose = deepcopy(_load_compose())
     compose["services"]["api"]["container_name"] = "api-dev"
     compose["services"]["api"]["ports"] = ["5050:5050"]
-    compose["services"]["api"]["image"] = "yuxi-api:latest"
+    compose["services"]["api"]["image"] = "deep-research-api:latest"
     compose["services"]["postgres"]["volumes"][0]["source"] = "./docker/volumes/postgresql"
-    compose["networks"]["app-network"]["name"] = "yuxi-app-network"
+    compose["networks"]["app-network"]["name"] = "deep-research-app-network"
 
     assert {
         "container:api",

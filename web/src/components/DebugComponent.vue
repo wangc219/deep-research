@@ -1147,7 +1147,7 @@ const switchToUser = async (user) => {
 }
 
 // ==================== LOCALSTORAGE TAB LOGIC ====================
-const systemKeyPrefixes = ['user_token', 'yuxi_', 'theme', 'vueuse', 'loglevel']
+const systemKeyPrefixes = ['user_token', 'deep_research_', 'theme', 'vueuse', 'loglevel']
 
 const formatBytes = (bytes) => {
   if (bytes === 0) return '0 B'

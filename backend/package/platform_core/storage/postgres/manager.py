@@ -30,7 +30,8 @@ from platform_core.utils.singleton import SingletonMeta
 AGENT_RUN_TERMINAL_STATUS_SQL = ", ".join(f"'{status}'" for status in AGENT_RUN_TERMINAL_STATUSES)
 BUSINESS_SCHEMA_VERSION = 12
 KNOWLEDGE_SCHEMA_VERSION = 2
-SCHEMA_VERSION_TABLE = "yuxi_schema_migrations"
+SCHEMA_VERSION_TABLE = "platform_schema_migrations"
+LEGACY_SCHEMA_VERSION_TABLE = "yuxi_schema_migrations"
 EQUIPMENT_RESEARCH_SCHEMA_STATEMENTS = (
     """
     CREATE TABLE IF NOT EXISTS equipment_research_runs (
@@ -668,7 +669,7 @@ class PostgresManager(metaclass=SingletonMeta):
         """用独立 PostgreSQL session 串行化唯一 Schema migrator。"""
         self._check_initialized()
         async with self.async_engine.connect() as conn:
-            params = {"lock_scope": "yuxi:schema-migration"}
+            params = {"lock_scope": "deep-research:schema-migration"}
             await conn.execute(text("SELECT pg_advisory_lock(hashtextextended(:lock_scope, 0))"), params)
             await conn.commit()
             try:
@@ -687,6 +688,21 @@ class PostgresManager(metaclass=SingletonMeta):
         """创建轻量 Schema 版本表；仅允许迁移器调用。"""
         self._check_initialized()
         async with self.async_engine.begin() as conn:
+            # Adopt the historical table in place so upgrades retain their applied versions.
+            await conn.execute(
+                text(
+                    f"""
+                    DO $$
+                    BEGIN
+                        IF to_regclass('public.{SCHEMA_VERSION_TABLE}') IS NULL
+                           AND to_regclass('public.{LEGACY_SCHEMA_VERSION_TABLE}') IS NOT NULL THEN
+                            ALTER TABLE {LEGACY_SCHEMA_VERSION_TABLE} RENAME TO {SCHEMA_VERSION_TABLE};
+                        END IF;
+                    END
+                    $$
+                    """
+                )
+            )
             await conn.execute(
                 text(
                     f"""

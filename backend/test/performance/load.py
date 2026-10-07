@@ -1,4 +1,4 @@
-"""通过真实 Yuxi HTTP、SSE、worker 与模型链路执行轻量 Agent 压测。"""
+"""通过真实 深度研究平台 HTTP、SSE、worker 与模型链路执行轻量 Agent 压测。"""
 
 from __future__ import annotations
 
@@ -537,7 +537,7 @@ def record_run_timing(result: TaskResult, submit_started_at: datetime, payload: 
 
 
 class AgentLoadClient:
-    """封装压测所需的最小 Yuxi HTTP 与 SSE 协议。"""
+    """封装压测所需的最小 深度研究平台 HTTP 与 SSE 协议。"""
 
     def __init__(self, client: httpx.AsyncClient, headers: dict[str, str], timeout_seconds: float):
         self.client = client
@@ -1129,7 +1129,7 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--base-url",
         default=os.getenv("DEEP_RESEARCH_LOAD_BASE_URL", "http://localhost:5050"),
-        help="Yuxi API 根地址，默认 %(default)s",
+        help="深度研究平台 API 根地址，默认 %(default)s",
     )
     parser.add_argument("--agent-slug", help="测试 Agent slug；省略时使用默认 Agent")
     parser.add_argument("--scenario", choices=("chat", "sandbox"), default="sandbox")
@@ -1145,17 +1145,19 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument(
         "--compose-project",
-        default=os.getenv("COMPOSE_PROJECT_NAME", "yuxi"),
+        default=os.getenv("COMPOSE_PROJECT_NAME", "deep-research"),
         help="资源采样使用的 Compose project，默认 %(default)s",
     )
     parser.add_argument(
         "--sandbox-container-prefix",
-        default=os.getenv("SANDBOX_DOCKER_SANDBOX_PREFIX") or f"{os.getenv('COMPOSE_PROJECT_NAME', 'yuxi')}-sandbox",
+        default=os.getenv("SANDBOX_DOCKER_SANDBOX_PREFIX")
+        or f"{os.getenv('COMPOSE_PROJECT_NAME', 'deep-research')}-sandbox",
         help="动态 Sandbox 容器名称前缀",
     )
     parser.add_argument(
         "--sandbox-network-prefix",
-        default=os.getenv("SANDBOX_DOCKER_NETWORK_PREFIX") or f"{os.getenv('COMPOSE_PROJECT_NAME', 'yuxi')}-sandbox",
+        default=os.getenv("SANDBOX_DOCKER_NETWORK_PREFIX")
+        or f"{os.getenv('COMPOSE_PROJECT_NAME', 'deep-research')}-sandbox",
         help="动态 Sandbox 网络名称前缀",
     )
     parser.add_argument("--resource-interval-seconds", type=float, default=2.0)

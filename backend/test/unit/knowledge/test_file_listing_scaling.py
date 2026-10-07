@@ -162,7 +162,7 @@ def patch_repositories(monkeypatch):
 
 
 async def test_get_database_info_omits_files_by_default():
-    manager = KnowledgeBaseManager("/tmp/yuxi-test")
+    manager = KnowledgeBaseManager("/tmp/deep-research-test")
 
     result = await manager.get_database_info("kb_1")
 
@@ -173,7 +173,7 @@ async def test_get_database_info_omits_files_by_default():
 
 
 async def test_get_databases_does_not_initialize_knowledge_backend(monkeypatch):
-    manager = KnowledgeBaseManager("/tmp/yuxi-test")
+    manager = KnowledgeBaseManager("/tmp/deep-research-test")
 
     def fail_if_initialized(_kb_type):
         pytest.fail("知识库列表不应初始化 Milvus 等后端实例")
@@ -238,7 +238,7 @@ async def test_get_databases_skips_rows_with_invalid_metadata(monkeypatch):
         MultiKnowledgeBaseRepository,
     )
 
-    manager = KnowledgeBaseManager("/tmp/yuxi-test")
+    manager = KnowledgeBaseManager("/tmp/deep-research-test")
     result = await manager.get_databases()
 
     assert [db.kb_id for db in result] == ["kb_good"]
@@ -256,7 +256,7 @@ async def test_get_databases_by_user_sets_permission_and_redacts_readonly_secret
         "platform_core.repositories.knowledge_base_repository.KnowledgeBaseRepository",
         SecretKnowledgeBaseRepository,
     )
-    manager = KnowledgeBaseManager("/tmp/yuxi-test")
+    manager = KnowledgeBaseManager("/tmp/deep-research-test")
 
     readonly = await manager.get_databases_by_user({"uid": "user_2", "role": "user", "department_id": None})
     owner = await manager.get_databases_by_user({"uid": "user_1", "role": "user", "department_id": None})
@@ -323,7 +323,7 @@ async def test_get_databases_by_user_sets_permission_and_redacts_readonly_secret
     ],
 )
 async def test_list_document_files_passes_expected_parameters(scenario, kwargs, expected_call):
-    manager = KnowledgeBaseManager("/tmp/yuxi-test")
+    manager = KnowledgeBaseManager("/tmp/deep-research-test")
 
     result = await manager.list_document_files("kb_1", **kwargs)
 
@@ -353,7 +353,7 @@ async def test_list_document_files_passes_expected_parameters(scenario, kwargs, 
 
 
 async def test_list_document_files_keeps_virtual_folder_contract():
-    manager = KnowledgeBaseManager("/tmp/yuxi-test")
+    manager = KnowledgeBaseManager("/tmp/deep-research-test")
     virtual_record = SimpleNamespace(
         file_id="__virtual_folder__:root:资料/",
         kb_id="kb_1",
@@ -383,7 +383,7 @@ async def test_list_document_files_keeps_virtual_folder_contract():
 
 
 async def test_document_file_exists_delegates_exact_filename_to_repository():
-    manager = KnowledgeBaseManager("/tmp/yuxi-test")
+    manager = KnowledgeBaseManager("/tmp/deep-research-test")
 
     assert await manager.document_file_exists("kb_1", " docs/Guide.md ") is True
     assert await manager.document_file_exists("kb_1", "docs/guide.md") is False
@@ -394,7 +394,7 @@ async def test_document_file_exists_delegates_exact_filename_to_repository():
 
 
 async def test_list_document_file_ids_by_statuses_delegates_to_repository():
-    manager = KnowledgeBaseManager("/tmp/yuxi-test")
+    manager = KnowledgeBaseManager("/tmp/deep-research-test")
 
     result = await manager.list_document_file_ids_by_statuses(
         "kb_1",

@@ -662,7 +662,7 @@ class SubagentHandle:
 
 
 class SubagentPool:
-    """Yuxi-style start-then-await pool with bounded parallel execution.
+    """Platform-native start-then-await pool with bounded parallel execution.
 
     Independent tasks are started first so they overlap, then awaited.
     Child runs cannot spawn another SubAgent layer.

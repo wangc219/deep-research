@@ -117,8 +117,9 @@ def snapshot_baseline() -> dict[str, object]:
     query_db = ROOT / "outputs" / "query-library.db"
     inventory = {
         "created_at": "2026-09-22",
-        "yuxi_version": YUXI_VERSION,
-        "yuxi_commit": YUXI_COMMIT,
+        "source_project": "Yuxi",
+        "source_version": YUXI_VERSION,
+        "source_commit": YUXI_COMMIT,
         "application": sqlite_counts(
             app_db,
             {

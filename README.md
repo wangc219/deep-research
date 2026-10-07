@@ -1,8 +1,10 @@
 # 装备智能研究平台
 
-本仓库是「装备智能研究平台」。`platform_core` 是平台内核（用户、权限、对话、知识库、模型设置），`equipment_deep_research` 提供装备研究编排与交付。
+本仓库是「装备智能研究平台」的完整单体仓库。`platform_core` 提供共享平台内核，`equipment_deep_research` 封装装备研究领域能力，二者共享同一身份、项目、知识、模型、任务、审计和交付体系。
 
 平台将多智能体深度研究、装备需求 Query 生成、知识库、知识图谱、模型管理和企业权限整合在同一套 Web 工作台中。仓库同时保留当前产品源码、迁移工具、测试、设计文档、参考实现以及可公开的报告、截图和研究产物，便于在新设备上完整恢复开发与部署环境。
+
+架构采用“产品一体化、领域高内聚、协作低耦合”：用户看到一条连续的 Query → 研究 → 证据 → 能力画像 → 深研 → 报告链路；代码内部通过稳定端口和事件契约隔离平台通用能力与装备研究规则。详见 [一体化系统架构](docs/ARCHITECTURE.md)。
 
 ## 主要能力
 
@@ -103,7 +105,7 @@ docker compose exec api python -c "import httpx; print(httpx.get('http://open-we
 
 ## 知识库能力
 
-知识库功能与 [Yuxi](https://github.com/xerrors/Yuxi) `main` 分支 README 的知识库能力保持同一基线，并结合本项目的装备研究链路复用同一套授权与检索服务：
+知识库是平台内建共享能力，与智能对话、需求 Query、装备研究和深研链路复用同一套身份授权、检索、引用和审计服务：
 
 - 管理文件与真实目录，展示解析、分块、Chunk、Token 和向量入库状态；支持 PDF、Word、PPT、Excel、Markdown 等常用格式与多种 OCR/解析引擎。
 - 支持向量、BM25 和混合检索，可配置相似度阈值、候选数量、融合权重、图检索与 Rerank，并在检索工作台查看分数、来源文件和 Chunk 引用。
@@ -170,10 +172,11 @@ docker compose --env-file .env -f compose.yaml -f compose.local.yaml config --qu
 - [集成指南](docs/INTEGRATION_GUIDE.md)
 - [验收说明](docs/ACCEPTANCE.md)
 - [模型运行时集成](docs/MODEL_RUNTIME_INTEGRATION.md)
-- [知识库能力对齐](docs/KNOWLEDGE_BASE_ALIGNMENT.md)
+- [平台知识库能力基线](docs/KNOWLEDGE_BASE_ALIGNMENT.md)
+- [平台内核来源与融合记录](docs/migration/PLATFORM_CORE_PROVENANCE.md)
 - [企业多用户与权限](docs/ENTERPRISE_MULTIUSER.md)
 - [第三方来源与许可证](THIRD_PARTY_NOTICES.md)
 
-第三方代码来源与许可证见 `THIRD_PARTY_NOTICES.md`。旧的 `docker-compose.yml`、`src/` 与 `apps/web` 仅作为历史源码和迁移对照，不进入新系统构建或在线运行。研究任务、需求 Query 与深研对话统一由 Vue、`/api/equipment`、PostgreSQL 和平台 Durable Task Worker 承载；旧数据只读迁移后继续展示。
+第三方代码来源与许可证见 `THIRD_PARTY_NOTICES.md`。旧的 `docker-compose.yml`、`apps/web` 以及根目录 `src/` 下的迁移前实现仅作为历史源码和比对材料，不进入当前 Compose 在线运行；当前可执行包统一位于 `backend/package/`。研究任务、需求 Query 与深研对话统一由 Vue、`/api/equipment`、PostgreSQL 和平台 Durable Task Worker 承载；旧数据只读迁移后继续展示。
 
 资源实测、启动模式、构建缓存与故障回退见 [运行与资源优化](docs/RUNTIME_OPERATIONS.md)。

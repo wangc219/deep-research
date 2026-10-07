@@ -1,4 +1,4 @@
-"""Yuxi Schema 版本事实在真实 PostgreSQL 上的集成测试。"""
+"""深度研究平台 Schema 版本事实在真实 PostgreSQL 上的集成测试。"""
 
 from __future__ import annotations
 

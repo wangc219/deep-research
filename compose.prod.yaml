@@ -14,9 +14,9 @@ x-api-worker-env: &api-worker-env
   PYTHONPATH: /app/package
   JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env.prod}
   API_KEY_DERIVATION_SECRET: ${API_KEY_DERIVATION_SECRET:?Set API_KEY_DERIVATION_SECRET in .env.prod}
-  RAPIDOCR_MODEL_DIR: /home/yuxi/.cache/rapidocr/models
+  RAPIDOCR_MODEL_DIR: /home/platform/.cache/rapidocr/models
   DEEP_RESEARCH_INSTANCE_ID: ${DEEP_RESEARCH_INSTANCE_ID:?Set DEEP_RESEARCH_INSTANCE_ID in .env.prod}
-  POSTGRES_URL: ${POSTGRES_URL:-postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.prod}@postgres:5432/${POSTGRES_DB:-yuxi}}
+  POSTGRES_URL: ${POSTGRES_URL:-postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.prod}@postgres:5432/${POSTGRES_DB:-deep_research}}
   REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
   RUN_CANCEL_KEY_TTL_SECONDS: ${RUN_CANCEL_KEY_TTL_SECONDS:-1800}
   RUN_EVENTS_STREAM_TTL_SECONDS: ${RUN_EVENTS_STREAM_TTL_SECONDS:-7200}
@@ -86,9 +86,9 @@ services:
     networks:
       - app-network
     volumes:
-      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/yuxi/threads:/app/user-data
-      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/yuxi/skill-sources:/app/skill-sources
-      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/yuxi/skill-projections:/app/skill-projections
+      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/threads:/app/user-data
+      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/skill-sources:/app/skill-sources
+      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/skill-projections:/app/skill-projections
       - ./configs:/app/configs:ro
       - ./outputs:/app/outputs
     extra_hosts:
@@ -141,9 +141,9 @@ services:
     networks:
       - app-network
     volumes:
-      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/yuxi/threads:/app/user-data
-      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/yuxi/skill-sources:/app/skill-sources
-      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/yuxi/skill-projections:/app/skill-projections
+      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/threads:/app/user-data
+      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/skill-sources:/app/skill-sources
+      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/skill-projections:/app/skill-projections
       - ./configs:/app/configs:ro
       - ./outputs:/app/outputs
     extra_hosts:
@@ -194,7 +194,7 @@ services:
     volumes:
       - ./configs:/app/configs:ro
       - ./outputs:/app/outputs
-      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/yuxi/threads:/app/user-data
+      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/threads:/app/user-data
     env_file:
       - ${DEEP_RESEARCH_ENV_FILE:-.env.prod}
     environment:
@@ -221,10 +221,10 @@ services:
     networks:
       - app-network
     volumes:
-      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/yuxi:/app/legacy-saves
-      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/yuxi/threads:/app/user-data
-      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/yuxi/skill-sources:/app/skill-sources
-      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/yuxi/skill-projections:/app/skill-projections
+      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform:/app/legacy-saves
+      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/threads:/app/user-data
+      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/skill-sources:/app/skill-sources
+      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/skill-projections:/app/skill-projections
     env_file:
       - ${DEEP_RESEARCH_ENV_FILE:-.env.prod}
     environment:
@@ -246,8 +246,8 @@ services:
       dockerfile: Dockerfile
     image: ${COMPOSE_PROJECT_NAME:-deep-research}-sandbox-provisioner:${DEEP_RESEARCH_VERSION:-0.7.3}
     volumes:
-      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/yuxi/threads:/app/user-data
-      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/yuxi/skill-projections:/app/skill-projections
+      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/threads:/app/user-data
+      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/skill-projections:/app/skill-projections
       - ${SANDBOX_ENV_FILE:-./docker/sandbox_provisioner/sandbox.env}:/app/sandbox.env:ro
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
@@ -283,11 +283,11 @@ services:
       - DOCKER_SKILL_PROJECTIONS_HOST_PATH=${SANDBOX_DOCKER_SKILL_PROJECTIONS_HOST_PATH:-}
       - DOCKER_SANDBOX_PREFIX=${SANDBOX_DOCKER_SANDBOX_PREFIX:-${COMPOSE_PROJECT_NAME:-deep-research}-sandbox}
       # Kubernetes backend only
-      - K8S_NAMESPACE=${SANDBOX_K8S_NAMESPACE:-yuxi-know}
+      - K8S_NAMESPACE=${SANDBOX_K8S_NAMESPACE:-deep-research}
       - NODE_HOST=${SANDBOX_NODE_HOST:-host.docker.internal}
       - KUBECONFIG_PATH=${KUBECONFIG_PATH:-}
-      - USER_DATA_PVC=${USER_DATA_PVC:-yuxi-user-data}
-      - SKILLS_PVC=${SKILLS_PVC:-yuxi-skills}
+      - USER_DATA_PVC=${USER_DATA_PVC:-deep-research-user-data}
+      - SKILLS_PVC=${SKILLS_PVC:-deep-research-skills}
     command: ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8002"]
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health').read()"]
@@ -420,12 +420,12 @@ services:
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.prod}
-      - POSTGRES_DB=${POSTGRES_DB:-yuxi}
+      - POSTGRES_DB=${POSTGRES_DB:-deep_research}
       - TZ=${TZ:-Asia/Shanghai}
     volumes:
       - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/postgresql:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-yuxi} || exit 1"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-deep_research} || exit 1"]
       interval: 5s
       timeout: 3s
       retries: 30

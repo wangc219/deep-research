@@ -14,8 +14,13 @@ from platform_core.config.environment import LEGACY_PREFIX, deep_research_env
 
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION = 7 * 24 * 60 * 60
-JWT_AUDIENCE = "yuxi-know-api"
-PUBLIC_DEFAULT_JWT_SECRET_KEY = "yuxi_know_secure_key"
+JWT_AUDIENCE = "deep-research-api"
+JWT_ISSUER_PREFIX = "deep-research"
+# These values are accepted only to keep existing sessions and deterministic API keys valid.
+LEGACY_JWT_AUDIENCE = "yuxi-know-api"
+LEGACY_JWT_ISSUER_PREFIX = "yuxi-know"
+LEGACY_PUBLIC_DEFAULT_JWT_SECRET_KEY = "yuxi_know_secure_key"
+LEGACY_API_KEY_DERIVATION_DOMAIN = "yuxi-api-key-v1"
 PASSWORD_HASHER = PasswordHasher()
 SECURITY_SECRET_NAMES = (
     "JWT_SECRET_KEY",
@@ -80,7 +85,7 @@ def _get_jwt_secret_key() -> str:
         secret_key = secrets.token_hex(32)
         os.environ["JWT_SECRET_KEY"] = secret_key
         print("JWT_SECRET_KEY 未配置，开发环境已自动生成临时随机值，服务重启后会重新生成。")
-    if _is_production_env() and secret_key == PUBLIC_DEFAULT_JWT_SECRET_KEY:
+    if _is_production_env() and secret_key == LEGACY_PUBLIC_DEFAULT_JWT_SECRET_KEY:
         raise ValueError("JWT_SECRET_KEY 不能使用公开默认密钥，请重新生成随机强密钥")
     _validate_configured_security_secrets(required_names=("JWT_SECRET_KEY",))
     return secret_key
@@ -98,7 +103,41 @@ def _get_jwt_issuer() -> str:
         lambda: f"instance-{secrets.token_hex(8)}",
         legacy_names=(f"{LEGACY_PREFIX}INSTANCE_ID",),
     )
-    return f"yuxi-know:{instance_id}"
+    return f"{JWT_ISSUER_PREFIX}:{instance_id}"
+
+
+def _get_legacy_jwt_issuer() -> str:
+    instance_id = _get_or_create_dev_env(
+        "DEEP_RESEARCH_INSTANCE_ID",
+        lambda: f"instance-{secrets.token_hex(8)}",
+        legacy_names=(f"{LEGACY_PREFIX}INSTANCE_ID",),
+    )
+    return f"{LEGACY_JWT_ISSUER_PREFIX}:{instance_id}"
+
+
+def _decode_token_with_compat(token: str) -> dict[str, Any]:
+    """Verify the platform identity first, then the read-only legacy identity."""
+
+    secret = _get_jwt_secret_key()
+    last_error: jwt.InvalidTokenError | None = None
+    for issuer, audience in (
+        (_get_jwt_issuer(), JWT_AUDIENCE),
+        (_get_legacy_jwt_issuer(), LEGACY_JWT_AUDIENCE),
+    ):
+        try:
+            return jwt.decode(
+                token,
+                secret,
+                algorithms=[JWT_ALGORITHM],
+                issuer=issuer,
+                audience=audience,
+                options={"require": ["exp", "sub", "iss", "aud"]},
+            )
+        except jwt.ExpiredSignatureError:
+            raise
+        except jwt.InvalidTokenError as exc:
+            last_error = exc
+    raise last_error or jwt.InvalidTokenError("token identity did not match")
 
 
 class AuthUtils:
@@ -117,7 +156,9 @@ class AuthUtils:
         scope = str(idempotency_scope).strip()
         if not scope:
             raise ValueError("API Key 幂等域不能为空")
-        payload = f"yuxi-api-key-v1:{subject_id}:{scope}".encode()
+        # Keep the historical derivation domain: changing it would invalidate
+        # deterministic keys already issued by deployed installations.
+        payload = f"{LEGACY_API_KEY_DERIVATION_DOMAIN}:{subject_id}:{scope}".encode()
         digest = hmac.new(_get_api_key_derivation_secret().encode(), payload, hashlib.sha256).hexdigest()
         full_key = f"yxkey_{digest[:48]}"
         return full_key, hashlib.sha256(full_key.encode()).hexdigest(), full_key[:12]
@@ -158,28 +199,14 @@ class AuthUtils:
     @staticmethod
     def decode_token(token: str) -> dict[str, Any] | None:
         try:
-            return jwt.decode(
-                token,
-                _get_jwt_secret_key(),
-                algorithms=[JWT_ALGORITHM],
-                issuer=_get_jwt_issuer(),
-                audience=JWT_AUDIENCE,
-                options={"require": ["exp", "sub", "iss", "aud"]},
-            )
+            return _decode_token_with_compat(token)
         except (jwt.PyJWTError, ValueError):
             return None
 
     @staticmethod
     def verify_access_token(token: str) -> dict[str, Any]:
         try:
-            return jwt.decode(
-                token,
-                _get_jwt_secret_key(),
-                algorithms=[JWT_ALGORITHM],
-                issuer=_get_jwt_issuer(),
-                audience=JWT_AUDIENCE,
-                options={"require": ["exp", "sub", "iss", "aud"]},
-            )
+            return _decode_token_with_compat(token)
         except jwt.ExpiredSignatureError:
             raise ValueError("令牌已过期")
         except jwt.InvalidTokenError:

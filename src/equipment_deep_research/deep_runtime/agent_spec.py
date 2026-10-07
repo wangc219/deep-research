@@ -1,8 +1,8 @@
-"""Yuxi-style composition for one directed deep-research Agent.
+"""Platform-native composition for one directed deep-research Agent.
 
 A main Agent is a bounded combination of model, system prompt, tools,
 Skills, MCP servers and specialized SubAgents.  Resource fields follow
-Yuxi selection semantics:
+Resource selection semantics:
 
 * omitted or ``null`` uses every currently accessible resource;
 * an explicit empty list disables that class of resource;

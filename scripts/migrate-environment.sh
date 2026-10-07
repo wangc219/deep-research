@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-time, value-preserving migration from legacy YUXI_* environment names.
+# One-time, value-preserving migration from legacy environment and state names.
 set -euo pipefail
 
 TASK_ENV_FILE="${1:-.env}"
@@ -63,7 +63,26 @@ for TASK_SUFFIX in "${TASK_MAPPINGS[@]}"; do
   fi
 done
 
+# The unified platform uses a product-neutral state directory. Preserve an
+# existing deployment in place and retain its historical PostgreSQL database
+# name only when migrating real state; fresh deployments use deep_research.
+TASK_STATE_ROOT="$(task_read_env_value DEEP_RESEARCH_STATE_DIR)"
+TASK_STATE_ROOT="${TASK_STATE_ROOT:-./docker/volumes}"
+TASK_LEGACY_STATE_DIR="${TASK_STATE_ROOT%/}/yuxi"
+TASK_PLATFORM_STATE_DIR="${TASK_STATE_ROOT%/}/platform"
+if [[ -d "$TASK_LEGACY_STATE_DIR" && ! -e "$TASK_PLATFORM_STATE_DIR" ]]; then
+  mv "$TASK_LEGACY_STATE_DIR" "$TASK_PLATFORM_STATE_DIR"
+  if ! grep -qE '^POSTGRES_DB=' "$TASK_ENV_FILE"; then
+    task_set_env_value POSTGRES_DB yuxi
+  fi
+  if ! grep -qE '^MILVUS_DB=' "$TASK_ENV_FILE"; then
+    task_set_env_value MILVUS_DB yuxi
+  fi
+  TASK_MIGRATED=$((TASK_MIGRATED + 1))
+  echo "✅ 已将历史状态目录迁移为 ${TASK_PLATFORM_STATE_DIR}"
+fi
+
 chmod 600 "$TASK_ENV_FILE"
 if (( TASK_MIGRATED > 0 )); then
-  echo "✅ 已将 ${TASK_MIGRATED} 项历史环境配置迁移为 DEEP_RESEARCH_*"
+  echo "✅ 已完成 ${TASK_MIGRATED} 项平台兼容迁移"
 fi

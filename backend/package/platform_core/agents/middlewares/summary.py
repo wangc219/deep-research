@@ -1,4 +1,4 @@
-"""Yuxi 对 DeepAgents 会话摘要中间件的适配。"""
+"""平台对 DeepAgents 会话摘要中间件的适配。"""
 
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ from platform_core.agents.context import (
     DEFAULT_SUMMARY_KEEP_MESSAGES,
     DEFAULT_SUMMARY_THRESHOLD_K,
     DEFAULT_SUMMARY_TOOL_RESULT_TOKEN_LIMIT,
-    DEFAULT_YUXI_SUMMARY_PROMPT,
+    DEFAULT_PLATFORM_SUMMARY_PROMPT,
 )
 from platform_core.models.chat import load_chat_model, resolve_chat_model_spec
 from platform_core.utils.logging_config import logger
@@ -39,16 +39,16 @@ _APPROX_CHARS_PER_TOKEN = 4
 _DEFAULT_SUMMARY_TOOL_RESULT_LIMIT_TOKENS = 300
 _DEFAULT_TOOL_ARG_MAX_LENGTH = 2000
 _TRUNCATED_TOOL_ARG_TEXT = "...(argument truncated for context view)"
-_TOOL_RESULT_SAVED_MARKER = "yuxi_tool_result_saved"
+_TOOL_RESULT_SAVED_MARKER = "deep_research_tool_result_saved"
 _STRUCTURED_SEARCH_TOOL_NAMES = {"query_kb", "web_search"}
 _SEARCH_CONTENT_KEYS = ("content", "text", "snippet", "summary")
 _SUMMARY_COMPRESSION_STATE: ContextVar[dict[str, bool] | None] = ContextVar(
-    "yuxi_summary_compression_state",
+    "deep_research_summary_compression_state",
     default=None,
 )
 
 
-class YuxiSummarizationMiddleware(SummarizationMiddleware):
+class PlatformSummarizationMiddleware(SummarizationMiddleware):
     """先确定性压缩工具结果，再按同一压力阈值决定是否生成摘要。"""
 
     _SUMMARY_INVOKE_CONFIG = {"metadata": {"lc_source": "summarization"}, "tags": [TAG_NOSTREAM]}
@@ -468,7 +468,7 @@ def create_summary_middleware(
     summary_prompt: str | None = None,
     trim_tokens_to_summarize: int | None = None,
     tool_result_offload_token_limit: int | None = _DEFAULT_SUMMARY_TOOL_RESULT_LIMIT_TOKENS,
-) -> YuxiSummarizationMiddleware:
+) -> PlatformSummarizationMiddleware:
     """创建绑定单次运行 backend 的摘要中间件。"""
     middleware_kwargs = {
         "model": model,
@@ -481,10 +481,10 @@ def create_summary_middleware(
     }
     if summary_prompt and summary_prompt.strip():
         middleware_kwargs["summary_prompt"] = summary_prompt
-    return YuxiSummarizationMiddleware(**middleware_kwargs)
+    return PlatformSummarizationMiddleware(**middleware_kwargs)
 
 
-def create_summary_middleware_from_context(context, *, backend) -> YuxiSummarizationMiddleware:
+def create_summary_middleware_from_context(context, *, backend) -> PlatformSummarizationMiddleware:
     """按 Agent 运行时配置创建自动与主动压缩共用的摘要器。"""
     trigger_tokens = getattr(context, "summary_threshold", DEFAULT_SUMMARY_THRESHOLD_K) * 1024
     model_spec = resolve_chat_model_spec(context.model)
@@ -493,7 +493,7 @@ def create_summary_middleware_from_context(context, *, backend) -> YuxiSummariza
         backend=backend,
         trigger=("tokens", trigger_tokens),
         keep=("messages", getattr(context, "summary_keep_messages", DEFAULT_SUMMARY_KEEP_MESSAGES)),
-        summary_prompt=getattr(context, "summary_prompt", None) or DEFAULT_YUXI_SUMMARY_PROMPT,
+        summary_prompt=getattr(context, "summary_prompt", None) or DEFAULT_PLATFORM_SUMMARY_PROMPT,
         trim_tokens_to_summarize=trigger_tokens,
         tool_result_offload_token_limit=getattr(
             context,

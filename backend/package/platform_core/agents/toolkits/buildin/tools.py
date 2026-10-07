@@ -1030,7 +1030,7 @@ async def ocr_parse_file(file_path: str, runtime: ToolRuntime, ocr_engine: str |
     output_temp = ""
     try:
         suffix = PurePosixPath(source_virtual_path).suffix
-        with tempfile.NamedTemporaryFile(prefix="yuxi-ocr-source-", suffix=suffix, delete=False) as temp_file:
+        with tempfile.NamedTemporaryFile(prefix="deep-research-ocr-source-", suffix=suffix, delete=False) as temp_file:
             source_temp = temp_file.name
         try:
             await asyncio.to_thread(
@@ -1044,7 +1044,7 @@ async def ocr_parse_file(file_path: str, runtime: ToolRuntime, ocr_engine: str |
         markdown = await parse_document(source_temp, params={"ocr_engine": engine})
         workdir_path = str(_runtime_scope_value(runtime, "workdir_path") or "").rstrip("/")
         parsed_path = _next_ocr_output_path(backend, workdir_path, PurePosixPath(source_virtual_path))
-        with tempfile.NamedTemporaryFile(prefix="yuxi-ocr-output-", delete=False) as temp_file:
+        with tempfile.NamedTemporaryFile(prefix="deep-research-ocr-output-", delete=False) as temp_file:
             output_temp = temp_file.name
             temp_file.write(markdown.encode("utf-8"))
         await asyncio.to_thread(backend.upload_authorized_file_from_path, parsed_path, output_temp)

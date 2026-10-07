@@ -8,7 +8,12 @@ import jwt
 import pytest
 from platform_core.utils.datetime_utils import utc_now
 
-from platform_core.utils.auth_utils import JWT_ALGORITHM, JWT_AUDIENCE, AuthUtils
+from platform_core.utils.auth_utils import (
+    JWT_ALGORITHM,
+    JWT_AUDIENCE,
+    LEGACY_JWT_AUDIENCE,
+    AuthUtils,
+)
 
 
 def test_generate_api_key_returns_secret_hash_and_prefix():
@@ -101,7 +106,7 @@ def test_access_token_contains_instance_claims(monkeypatch):
     payload = AuthUtils.verify_access_token(token)
 
     assert payload["sub"] == "1"
-    assert payload["iss"] == "yuxi-know:pytest-instance"
+    assert payload["iss"] == "deep-research:pytest-instance"
     assert payload["aud"] == JWT_AUDIENCE
 
 
@@ -141,7 +146,7 @@ def test_access_token_auto_generates_dev_instance_id(monkeypatch):
 
     token = AuthUtils.create_access_token({"sub": "1"})
 
-    assert AuthUtils.verify_access_token(token)["iss"].startswith("yuxi-know:instance-")
+    assert AuthUtils.verify_access_token(token)["iss"].startswith("deep-research:instance-")
     assert os.environ["DEEP_RESEARCH_INSTANCE_ID"].startswith("instance-")
 
 
@@ -158,7 +163,7 @@ def test_verify_access_token_rejects_wrong_issuer(monkeypatch):
     monkeypatch.setenv("JWT_SECRET_KEY", "test-secret-key-with-enough-randomness")
     monkeypatch.setenv("DEEP_RESEARCH_INSTANCE_ID", "pytest-instance")
     token = jwt.encode(
-        {"sub": "1", "exp": utc_now() + timedelta(minutes=5), "iss": "yuxi-know:other", "aud": JWT_AUDIENCE},
+        {"sub": "1", "exp": utc_now() + timedelta(minutes=5), "iss": "deep-research:other", "aud": JWT_AUDIENCE},
         "test-secret-key-with-enough-randomness",
         algorithm=JWT_ALGORITHM,
     )
@@ -166,11 +171,28 @@ def test_verify_access_token_rejects_wrong_issuer(monkeypatch):
     assert AuthUtils.decode_token(token) is None
 
 
+def test_verify_access_token_accepts_legacy_identity_during_migration(monkeypatch):
+    monkeypatch.setenv("JWT_SECRET_KEY", "test-secret-key-with-enough-randomness")
+    monkeypatch.setenv("DEEP_RESEARCH_INSTANCE_ID", "pytest-instance")
+    token = jwt.encode(
+        {
+            "sub": "1",
+            "exp": utc_now() + timedelta(minutes=5),
+            "iss": "yuxi-know:pytest-instance",
+            "aud": LEGACY_JWT_AUDIENCE,
+        },
+        "test-secret-key-with-enough-randomness",
+        algorithm=JWT_ALGORITHM,
+    )
+
+    assert AuthUtils.verify_access_token(token)["sub"] == "1"
+
+
 def test_verify_access_token_rejects_wrong_audience(monkeypatch):
     monkeypatch.setenv("JWT_SECRET_KEY", "test-secret-key-with-enough-randomness")
     monkeypatch.setenv("DEEP_RESEARCH_INSTANCE_ID", "pytest-instance")
     token = jwt.encode(
-        {"sub": "1", "exp": utc_now() + timedelta(minutes=5), "iss": "yuxi-know:pytest-instance", "aud": "other-api"},
+        {"sub": "1", "exp": utc_now() + timedelta(minutes=5), "iss": "deep-research:pytest-instance", "aud": "other-api"},
         "test-secret-key-with-enough-randomness",
         algorithm=JWT_ALGORITHM,
     )

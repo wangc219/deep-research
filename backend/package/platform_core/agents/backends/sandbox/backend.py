@@ -387,7 +387,7 @@ class ProvisionerSandboxBackend(BaseSandbox):
 
     def _read_file_base64(self, path: str) -> str:
         path_b64 = base64.b64encode(path.encode("utf-8")).decode("ascii")
-        output_path = f"/tmp/yuxi-read-file-{uuid.uuid4().hex}.b64"
+        output_path = f"/tmp/deep-research-read-file-{uuid.uuid4().hex}.b64"
         output_path_b64 = base64.b64encode(output_path.encode("utf-8")).decode("ascii")
         command = (
             'python3 -c "'
@@ -824,7 +824,7 @@ finally:
         if normalized_path == _USER_DATA_ROOT or not _is_same_or_child(normalized_path, _USER_DATA_ROOT):
             raise ValueError(f"write path is outside authorized roots: {normalized_path}")
         relative_parts = normalized_path[len(_USER_DATA_ROOT) + 1 :].split("/")
-        export_path = f"/tmp/.yuxi-file-upload-{uuid.uuid4().hex}"
+        export_path = f"/tmp/.deep-research-file-upload-{uuid.uuid4().hex}"
         with open(source_path, "rb") as source:
             result = self._get_client().file.upload_file(
                 file=source,
@@ -840,7 +840,7 @@ import stat
 root = {_USER_DATA_ROOT!r}
 parts = {relative_parts!r}
 source_path = {export_path!r}
-temp_name = {f".yuxi-write-{uuid.uuid4().hex}"!r}
+temp_name = {f".deep-research-write-{uuid.uuid4().hex}"!r}
 directory_fd = None
 source_fd = None
 target_fd = None
@@ -929,7 +929,7 @@ try:
             "size": 0 if stat.S_ISDIR(item_stat.st_mode) else item_stat.st_size,
             "modified_at": item_stat.st_mtime,
         }})
-    print("YUXI_SAFE_LIST " + base64.b64encode(json.dumps(entries).encode()).decode())
+    print("DEEP_RESEARCH_SAFE_LIST " + base64.b64encode(json.dumps(entries).encode()).decode())
 finally:
     os.close(directory_fd)
 """
@@ -939,9 +939,9 @@ finally:
             raise FileNotFoundError(normalized_path)
         payload = next(
             (
-                line.removeprefix("YUXI_SAFE_LIST ")
+                line.removeprefix("DEEP_RESEARCH_SAFE_LIST ")
                 for line in (result.output or "").splitlines()
-                if line.startswith("YUXI_SAFE_LIST ")
+                if line.startswith("DEEP_RESEARCH_SAFE_LIST ")
             ),
             None,
         )
@@ -1081,7 +1081,7 @@ finally:
             raise ValueError("file download limit must be non-negative")
 
         relative_parts = normalized_path[len(root) + 1 :].split("/")
-        export_path = f"/tmp/.yuxi-file-snapshot-{uuid.uuid4().hex}"
+        export_path = f"/tmp/.deep-research-file-snapshot-{uuid.uuid4().hex}"
         script = f"""
 import hashlib
 import os
@@ -1122,7 +1122,7 @@ try:
             offset += os.write(target_fd, chunk[offset:])
     os.close(target_fd)
     target_fd = None
-    print(f"YUXI_FILE_SNAPSHOT {{size}} {{digest.hexdigest()}}")
+    print(f"DEEP_RESEARCH_FILE_SNAPSHOT {{size}} {{digest.hexdigest()}}")
 except Exception:
     if target_fd is not None:
         os.close(target_fd)
@@ -1148,7 +1148,11 @@ finally:
                     f"authorized file snapshot failed: {normalized_path}",
                 )
             snapshot_line = next(
-                (line for line in str(result.output or "").splitlines() if line.startswith("YUXI_FILE_SNAPSHOT ")),
+                (
+                    line
+                    for line in str(result.output or "").splitlines()
+                    if line.startswith("DEEP_RESEARCH_FILE_SNAPSHOT ")
+                ),
                 None,
             )
             if snapshot_line is None:
@@ -1162,7 +1166,7 @@ finally:
                     "size=sum((digest.update(chunk) or len(chunk)) "
                     "for chunk in iter(lambda:os.read(fd,1048576),b'')); "
                     "os.close(fd); "
-                    "print(f'YUXI_FILE_SNAPSHOT {size} {digest.hexdigest()}')\""
+                    "print(f'DEEP_RESEARCH_FILE_SNAPSHOT {size} {digest.hexdigest()}')\""
                 )
                 if metadata_result.exit_code not in (0, None):
                     _raise_authorized_path_operation_error(
@@ -1174,7 +1178,7 @@ finally:
                     (
                         line
                         for line in str(metadata_result.output or "").splitlines()
-                        if line.startswith("YUXI_FILE_SNAPSHOT ")
+                        if line.startswith("DEEP_RESEARCH_FILE_SNAPSHOT ")
                     ),
                     None,
                 )

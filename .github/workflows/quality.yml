@@ -14,44 +14,38 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: pip
-      - name: Install dependencies
-        run: python -m pip install -r requirements.txt pytest-timeout
-      - name: Compile source
-        run: PYTHONPATH=src python -m compileall -q src
-      - name: Check architecture boundaries
-        run: PYTHONPATH=src python -m equipment_deep_research.architecture
-      - name: Run Python tests
-        shell: bash
-        run: |
-          set +e
-          PYTHONPATH=src python -m pytest -q --timeout=60 --timeout-method=thread 2>&1 | tee pytest.log
-          status=${PIPESTATUS[0]}
-          if [[ "$status" -ne 0 ]]; then
-            summary="$(tail -80 pytest.log | tr '\n' ' ' | tr '\r' ' ' | cut -c1-6000)"
-            echo "::error file=.github/workflows/quality.yml,line=32,title=pytest failure::$summary"
-          fi
-          exit "$status"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Install platform dependencies
+        run: uv sync --project backend --frozen
+      - name: Compile and check active architecture
+        run: make check
 
   web:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: apps/web
+        working-directory: web
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.24.0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: apps/web/package-lock.json
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
+      - name: Run unit tests
+        run: pnpm test:unit
       - name: Build workbench
-        run: npm run build
+        run: pnpm build

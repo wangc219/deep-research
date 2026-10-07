@@ -369,7 +369,7 @@ async def record_group(report, group, path, since):
 async def main(args):
     """准备测试身份、运行矩阵并清理精确测试资源。"""
     project = os.getenv("COMPOSE_PROJECT_NAME", "")
-    if project != "yuxi-alpha" or os.getenv("DEEP_RESEARCH_STATE_DIR") != "../.yuxi/slots/alpha":
+    if project != "deep-research-alpha" or os.getenv("DEEP_RESEARCH_STATE_DIR") != "../.deep-research/slots/alpha":
         raise RuntimeError("本实验只允许显式指定 Alpha project 与状态目录")
     rounds_by_level = {level: channel_rounds(level, args.rounds_per_thread) for level in args.concurrency}
     args.output_dir.mkdir(parents=True, exist_ok=True)

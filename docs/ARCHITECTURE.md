@@ -1,58 +1,95 @@
-# 项目模块边界
+# 一体化深度研究平台架构
 
-本项目按“业务规则稳定、执行适配可替换、入口负责组装”的方向组织。模块之间通过小型契约和端口通信，避免业务模块直接依赖具体数据库、Provider 或 HTTP 框架。
+本项目是一个统一产品、统一代码库、统一身份与数据平面的装备深度研究平台。知识库、知识图谱、通用 Agent、装备需求研究、制胜机理研判、报告交付和企业治理不是多个系统的拼接，而是同一平台内按领域边界协作的能力模块。
+
+架构目标是：产品与运行体验一体化，领域实现高内聚，模块协作低耦合。
+
+## 总体架构
 
 ```text
-interfaces / api                 用户入口与协议适配
-        |\
-application --------------------- 用例编排与运行生命周期
-        |  \
-config   domain   contracts       不含业务实现的稳定值对象与共享契约
-        |      |
-persistence  providers  harness/tools  orchestration
-        |
-       SQL / 文件 / 外部服务适配
+┌──────────────────────────────────────────────────────────────┐
+│                    Vue 统一工作台（web）                     │
+│ 对话｜知识门户｜装备研究｜Query｜深研｜报告｜企业管理｜模型设置 │
+└──────────────────────────────┬───────────────────────────────┘
+                               │ HTTP / SSE / 统一身份
+┌──────────────────────────────▼───────────────────────────────┐
+│                 FastAPI 接入与应用组合层                     │
+│ backend/server：路由、鉴权、协议适配、依赖组装、事件流         │
+└───────────────┬───────────────────────┬──────────────────────┘
+                │                       │
+┌───────────────▼────────────────┐  ┌───▼──────────────────────┐
+│ platform_core 共享平台内核      │  │ 装备深度研究领域引擎      │
+│ 用户/组织/权限/项目/对话         │  │ equipment_deep_research   │
+│ 模型/知识库/知识图谱/任务/审计   │  │ 路线/蜂群/S1-S6/画像/报告 │
+└───────────────┬────────────────┘  └───┬──────────────────────┘
+                │      稳定端口与事件契约 │
+                └───────────┬───────────┘
+                            │
+┌───────────────────────────▼──────────────────────────────────┐
+│                    统一基础设施与数据平面                     │
+│ PostgreSQL｜Redis｜Milvus｜Neo4j｜MinIO｜Sandbox｜模型/检索接口 │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-## 目录职责
+需求发现与知识图谱增强能力位于 `knowledgegraph`，通过平台知识端口和研究编排契约接入；它不建立第二套用户、权限、模型或存储系统。所有领域最终共享同一套项目身份、知识授权、模型目录、任务生命周期、事件审计和交付物管理。
 
-- `domain`：研究问题、Packet、证据、报告和安全工作区等业务对象；不能导入入口、运行时或基础设施实现。
-- `contracts`：Provider、工具、Agent 配置共享的稳定类型和名称目录；不包含网络、数据库或编排逻辑。
-- `contracts.agents`：只描述 Agent 元数据和目录能力的 Protocol；具体 Registry 可以替换，工具与策略模块无需加载 Prompt/Provider 实现。
-- `contracts.runtime`：Winning 工作流需要的最小运行时 Protocol（模型调用、蜂群、卡片和预算）；执行实现只依赖这些端口。
-- `config`：进程边界配置和项目路径；只解析显式环境映射，不导入任何业务、框架或基础设施模块。入口通过 `load_settings()` 注入配置。
-- `domain.conversation`、`domain.capability_portrait`：分支会话规则和能力画像格式化等纯业务规则；历史路径只保留兼容 re-export。
-- `domain.swarm_strategy`：Query 派生的覆盖、招募决策、首波构成和运行状态；`SwarmState` 是领域对象，Agent 工作流旧路径仅保留兼容 re-export。
-- `application`：创建、启动、恢复、归档研究任务等用例；通过 `application.ports` 依赖 Repository/Queue 协议。
-- `orchestration`：研究路线、波次、制胜机理和交付策略；不负责 HTTP、CLI 或数据库连接。
-- `harness`：Agent 会话、预算、上下文、检查点和恢复运行时。
-- `providers`：模型后端适配；只消费 `contracts` 与 Provider 自身协议，不反向依赖工具执行器。
-- `tools`：工具定义、权限、证据材料化和工具执行器。
-- `persistence`：SQL/文件存储适配，实现应用端口和持久化接口。
-- `api`、`interfaces`：组合根，负责把配置、端口和实现组装起来。
+## 一体化原则
 
-API 请求模型集中在 `api/schemas.py`；`api/app.py` 只负责组合路由、依赖和运行时服务，并通过兼容导出保持历史导入路径可用。应用工厂接受 `Settings` 注入，因此 API、Worker 和测试可以共享同一套配置解析。Winning 工作流的无副作用上下文投影集中在 `agents/workflows/shared_context.py`，错误类型集中在 `agents/workflows/errors.py`，各执行模式不再互相复制或反向导入实现细节。
+1. **一个产品身份**：对外统一使用「装备智能研究平台」，不存在独立子产品或上游产品入口。
+2. **一个控制平面**：登录、租户、部门、角色、模型设置、任务调度和运行监控由 `platform_core` 统一提供。
+3. **一个数据平面**：领域模块通过仓储与知识端口访问 PostgreSQL、Milvus、Neo4j 和 MinIO，不建设旁路数据库或第二套授权。
+4. **一个交付闭环**：Query、研究任务、证据、能力画像、深研会话和报告共享项目与运行标识，可相互追溯。
+5. **领域高内聚**：装备研究规则、S1–S6 推理、蜂群策略和报告规则封装在 `equipment_deep_research` 内。
+6. **协作低耦合**：跨模块只依赖稳定 Protocol、DTO、事件和应用服务，不直接依赖对方的数据库表、Web 组件或具体 Provider。
 
-## 开发约定
+## 代码与运行边界
 
-1. 新增跨模块数据结构先放入 `domain` 或 `contracts`，不要放进 Provider、API 或某个 Agent 实现文件。
-2. 新增基础设施能力先定义端口（`Protocol`），再在 `persistence`、`providers` 或 `interfaces` 中实现。
-3. 旧导入路径只保留兼容 re-export；新代码使用 canonical 路径，例如 `contracts.tools` 和 `contracts.catalog`。
-4. 不在 `domain` 内部导入 `deep_runtime`。可选运行时通过注册式 adapter 接入，避免低层模块被运行时实现反向绑死。
-5. 工具授权、路由、规划和覆盖只依赖 `contracts.agents.AgentSpec`；具体 `AgentRegistry` 只在 Agent 组合层和运行时组装处出现。
-6. 提交前运行：
+| 层级 | 主要目录 | 职责 | 禁止事项 |
+| --- | --- | --- | --- |
+| 产品体验 | `web/` | 统一导航、工作台和状态呈现 | 自建后端权限判断或保存模型密钥 |
+| 接入组合 | `backend/server/` | HTTP/SSE、鉴权、依赖注入、运行组装 | 承载领域推理规则 |
+| 平台内核 | `backend/package/platform_core/` | 身份、项目、知识、模型、任务、审计、存储端口 | 反向依赖具体装备研究工作流 |
+| 装备研究 | `backend/package/equipment_deep_research/` | Query、路线、蜂群、S1–S6、画像和报告 | 绕过平台权限与模型目录 |
+| 知识增强 | `backend/package/knowledgegraph/` | 需求发现、证据与图谱增强 | 建立独立用户或任务体系 |
+| 基础设施 | `compose*.yaml`、`docker/` | 数据库、向量库、图数据库、对象存储和沙箱 | 暴露领域业务语义 |
 
-   ```bash
-   PYTHONPATH=src python -m equipment_deep_research.architecture
-   pytest tests/equipment_deep_research/unit/test_architecture_boundaries.py -q
-   ```
+## 关键业务链路
 
-   或运行统一入口：
+```text
+用户/项目
+   └─► Query 生成与审核
+          └─► 装备研究任务
+                 ├─► 授权知识库与公网证据
+                 ├─► 动态 Agent / S1–S6 / 检查点
+                 ├─► 能力画像与候选版本
+                 └─► 深研对话与正式报告
+                          └─► 统一审计、引用与交付清单
+```
 
-   ```bash
-   make check
-   ```
+每一步都携带 `owner_uid`、`project_id`、知识范围、模型快照和运行标识。平台层负责身份、权限和生命周期；领域层负责研究决策。这种分工保证用户看到的是连续的一体化流程，同时允许研究引擎、检索实现和模型 Provider 独立演进。
 
-架构检查使用 AST，不会执行应用代码；因此即使某个入口需要较重依赖，也能在干净环境中检查越层引用。默认还会检查模块的导入时强连通分量；如果需要审计函数内部的延迟适配器，可使用 `find_import_cycles(..., include_nested=True)` 查看延迟依赖环。
+## 模块开发约定
 
-`module_metrics()` 和 `oversized_modules()` 提供静态重构雷达，不把历史大文件直接变成阻断性门禁。当前优先拆分顺序是：`api/app.py` 的路由与展示投影、`orchestration/runner.py` 的流水线阶段、`persistence/repositories.py` 的聚合仓储。拆分时保留旧导入路径的兼容 re-export，并为每个新边界增加单元测试，避免多人并行开发时发生隐式 API 破坏。
+- `domain` 保存研究问题、证据、报告、能力画像等纯业务对象，不导入 HTTP、数据库或具体模型实现。
+- `contracts` 和 `application.ports` 定义跨模块稳定契约；新增基础设施能力时先定义端口，再添加实现。
+- `application` 组织用例和生命周期，`orchestration` 组织研究路线与波次，`harness` 管理 Agent 会话、预算、检查点和恢复。
+- `providers`、`persistence`、`tools` 是可替换适配器，不得成为领域对象的反向依赖。
+- API、Worker 和 CLI 只作为组合根；模型与知识权限必须从平台服务解析，不能在领域模块内复制配置。
+- 历史导入路径仅用于数据兼容。新代码、文档、资源名和部署默认值统一使用 `platform_core` / `deep-research` 命名。
+
+## 第三方来源边界
+
+仓库依法保留第三方来源和许可证记录，但这些来源不构成当前产品的运行时子系统、架构边界或品牌。已吸收的通用能力现由 `platform_core` 独立维护；`reference/` 仅用于许可证审计和历史比对，不参与构建和启动。详见 [平台内核来源记录](migration/PLATFORM_CORE_PROVENANCE.md) 与 [第三方声明](../THIRD_PARTY_NOTICES.md)。
+
+## 架构验证
+
+```bash
+PYTHONPATH=backend:backend/package uv run --project backend \
+  python -m equipment_deep_research.architecture
+uv run --project backend pytest -q \
+  backend/test/unit/architecture/test_equipment_domain_boundaries.py \
+  backend/test/equipment_deep_research/unit/test_architecture_boundaries.py
+make check
+```
+
+架构检查使用 AST 验证越层引用和循环依赖。`module_metrics()` 与 `oversized_modules()` 提供静态重构雷达；拆分模块时应保留稳定契约，并为新的边界补充单元测试。

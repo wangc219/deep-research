@@ -1,7 +1,7 @@
 import sys
 
 
-def test_import_yuxi_does_not_eagerly_import_knowledge(monkeypatch):
+def test_import_platform_core_does_not_eagerly_import_knowledge(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
     monkeypatch.delitem(sys.modules, "platform-core", raising=False)
     monkeypatch.delitem(sys.modules, "platform_core.knowledge", raising=False)

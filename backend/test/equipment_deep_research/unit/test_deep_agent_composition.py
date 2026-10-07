@@ -14,7 +14,7 @@ from equipment_deep_research.deep_runtime.subagents import (
 )
 
 
-def test_resource_selection_matches_yuxi_semantics() -> None:
+def test_resource_selection_matches_platform_semantics() -> None:
     spec = AgentSpec.from_mapping(
         {
             "tools": ["deepen", "challenge", "unknown"],

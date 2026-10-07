@@ -10,7 +10,7 @@ from typing import Any
 from platform_core.storage.redis import get_async_redis_client
 from platform_core.utils.logging_config import logger
 
-KNOWLEDGE_BASE_CACHE_KEY_PREFIX = "yuxi:knowledge_base:"
+KNOWLEDGE_BASE_CACHE_KEY_PREFIX = "deep-research:knowledge-base:"
 KNOWLEDGE_BASE_CACHE_TTL_SECONDS = 3600
 KNOWLEDGE_BASE_CACHE_LOCK_TIMEOUT_SECONDS = 30
 KNOWLEDGE_BASE_CACHE_LOCK_WAIT_SECONDS = 10

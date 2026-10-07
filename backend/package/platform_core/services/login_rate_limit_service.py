@@ -23,8 +23,8 @@ LOGIN_FAILURE_WINDOW_SECONDS = 600
 LOGIN_FAILURE_IP_ACCOUNT_MAX = 10
 LOGIN_FAILURE_IP_MAX = 30
 
-_IP_KEY_PREFIX = "yuxi:login-failure:ip:"
-_IP_ACCOUNT_KEY_PREFIX = "yuxi:login-failure:ipacct:"
+_IP_KEY_PREFIX = "deep-research:login-failure:ip:"
+_IP_ACCOUNT_KEY_PREFIX = "deep-research:login-failure:ipacct:"
 
 
 def _ip_key(ip: str) -> str:

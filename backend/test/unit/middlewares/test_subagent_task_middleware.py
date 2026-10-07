@@ -9,7 +9,7 @@ import platform_core.services.agent_run_service as agent_run_service
 import platform_core.services.subagent_run_service as subagent_run_service
 from langgraph.prebuilt.tool_node import ToolRuntime
 from langgraph.types import Command
-from platform_core.agents.middlewares.subagent_task import YuxiSubAgentMiddleware
+from platform_core.agents.middlewares.subagent_task import PlatformSubAgentMiddleware
 from platform_core.repositories.agent_repository import SUB_AGENT_BACKEND_ID
 from platform_core.services.input_message_service import AgentRunInputMessage
 from platform_core.utils.hash_utils import subagent_child_thread_id
@@ -48,7 +48,7 @@ def _patch_subagent_run_service(monkeypatch, service_class) -> None:
     )
 
 
-def _async_tool_middleware(*, model: str | None = None) -> YuxiSubAgentMiddleware:
+def _async_tool_middleware(*, model: str | None = None) -> PlatformSubAgentMiddleware:
     parent_context = SimpleNamespace(
         thread_id="parent-thread",
         runtime_scope_id="parent-thread",
@@ -58,7 +58,7 @@ def _async_tool_middleware(*, model: str | None = None) -> YuxiSubAgentMiddlewar
     )
     if model:
         parent_context.model = model
-    return YuxiSubAgentMiddleware(
+    return PlatformSubAgentMiddleware(
         parent_context=parent_context,
         subagents=[
             SimpleNamespace(
@@ -208,7 +208,7 @@ async def test_create_task_middleware_loads_all_visible_subagents_when_empty(mon
         SimpleNamespace(thread_id="parent-thread", uid="user-1", subagents=[]),
     )
 
-    assert isinstance(middleware, YuxiSubAgentMiddleware)
+    assert isinstance(middleware, PlatformSubAgentMiddleware)
     assert {tool.name for tool in middleware.tools} == {
         "subagent_start",
         "subagent_status",
@@ -239,7 +239,7 @@ async def test_create_task_middleware_does_not_load_subagents_when_runtime_disab
 
 @pytest.mark.asyncio
 async def test_subagent_start_rejects_unconfigured_subagent() -> None:
-    middleware = YuxiSubAgentMiddleware(
+    middleware = PlatformSubAgentMiddleware(
         parent_context=SimpleNamespace(thread_id="parent-thread", uid="user-1", model=""),
         subagents=[
             SimpleNamespace(
@@ -272,7 +272,7 @@ async def test_subagent_start_invokes_subagent_with_child_scope(monkeypatch) -> 
     captured = {}
     _patch_start(monkeypatch, captured, thread_id="child-thread")
 
-    middleware = YuxiSubAgentMiddleware(
+    middleware = PlatformSubAgentMiddleware(
         parent_context=SimpleNamespace(
             thread_id="child-runtime-thread",
             runtime_scope_id="parent-thread",
@@ -316,7 +316,7 @@ async def test_subagent_start_leaves_model_resolution_to_service(monkeypatch) ->
     captured = {}
     _patch_start(monkeypatch, captured)
 
-    middleware = YuxiSubAgentMiddleware(
+    middleware = PlatformSubAgentMiddleware(
         parent_context=SimpleNamespace(
             thread_id="parent-thread",
             runtime_scope_id="parent-thread",
@@ -350,7 +350,7 @@ async def test_subagent_start_continues_existing_subagent_thread(monkeypatch) ->
     captured = {}
     _patch_start(monkeypatch, captured, thread_id="child-thread")
 
-    middleware = YuxiSubAgentMiddleware(
+    middleware = PlatformSubAgentMiddleware(
         parent_context=SimpleNamespace(
             thread_id="parent-thread",
             runtime_scope_id="parent-thread",
@@ -395,7 +395,7 @@ async def test_subagent_start_rejects_invalid_continuation_thread(monkeypatch) -
     _patch_session(monkeypatch)
 
     _patch_subagent_run_service(monkeypatch, _SubagentRunService)
-    middleware = YuxiSubAgentMiddleware(
+    middleware = PlatformSubAgentMiddleware(
         parent_context=SimpleNamespace(
             thread_id="parent-thread",
             runtime_scope_id="parent-thread",
@@ -634,7 +634,7 @@ async def test_subagent_cancel_and_await_use_parent_run_scope(monkeypatch) -> No
         return {"status": "completed", "output": "awaited result"}
 
     _patch_session(monkeypatch)
-    monkeypatch.setattr(YuxiSubAgentMiddleware, "_get_verified_subagent_run", fake_get_verified_subagent_run)
+    monkeypatch.setattr(PlatformSubAgentMiddleware, "_get_verified_subagent_run", fake_get_verified_subagent_run)
     monkeypatch.setattr(agent_run_service, "request_cancel_agent_run", fake_request_cancel_agent_run)
     monkeypatch.setattr(agent_run_service, "await_agent_run_result", fake_await_agent_run_result)
 
@@ -684,7 +684,7 @@ async def test_subagent_await_reports_timeout_when_run_is_still_active(monkeypat
         )
 
     _patch_session(monkeypatch)
-    monkeypatch.setattr(YuxiSubAgentMiddleware, "_get_verified_subagent_run", fake_get_verified_subagent_run)
+    monkeypatch.setattr(PlatformSubAgentMiddleware, "_get_verified_subagent_run", fake_get_verified_subagent_run)
     monkeypatch.setattr(agent_run_service, "await_agent_run_result", fake_await_agent_run_result)
 
     result = await {item.name: item for item in _async_tool_middleware().tools}["subagent_await"].coroutine(

@@ -17,7 +17,7 @@ DEFAULT_SUMMARY_KEEP_MESSAGES = 10
 DEFAULT_SUMMARY_TOOL_RESULT_TOKEN_LIMIT = 300
 DEFAULT_MAX_EXECUTION_STEPS = 300
 DEFAULT_TOOL_RESULT_EVICTION_K_TOKENS = 3
-DEFAULT_YUXI_SUMMARY_PROMPT = """你是对话上下文压缩助手。
+DEFAULT_PLATFORM_SUMMARY_PROMPT = """你是对话上下文压缩助手。
 你的任务是把下面的对话历史压缩成后续智能体继续工作所需的高价值上下文。
 
 请特别保留并清晰记录：
@@ -323,7 +323,7 @@ class BaseContext:
     )
 
     summary_prompt: str = field(
-        default=DEFAULT_YUXI_SUMMARY_PROMPT,
+        default=DEFAULT_PLATFORM_SUMMARY_PROMPT,
         metadata={
             "name": "上下文摘要提示词",
             "description": "触发上下文摘要时使用的提示词，必须能接收 {messages} 作为待摘要消息占位符。",

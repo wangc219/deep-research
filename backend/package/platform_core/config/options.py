@@ -19,8 +19,8 @@ from platform_core.storage.postgres.models_business import ConfigOption
 from platform_core.storage.redis import get_async_redis_client
 from platform_core.utils.logging_config import logger
 
-OPTION_CACHE_PREFIX = "yuxi:config_option:"
-OPTION_CACHE_VERSION_PREFIX = "yuxi:config_option_version:"
+OPTION_CACHE_PREFIX = "deep-research:config-option:"
+OPTION_CACHE_VERSION_PREFIX = "deep-research:config-option-version:"
 OPTION_CACHE_TTL_SECONDS = 300
 SYSTEM_OPTIONS_MIGRATION_VERSION_PARAM = "migration_version"
 

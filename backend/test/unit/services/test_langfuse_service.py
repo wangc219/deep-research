@@ -206,7 +206,7 @@ def test_submit_user_feedback_score_creates_boolean_score(monkeypatch):
     assert client.scores == [
         {
             "trace_id": "trace-1",
-            "score_id": "yuxi-message-feedback-12",
+            "score_id": "deep-research-message-feedback-12",
             "name": "user-feedback",
             "value": 0,
             "data_type": "BOOLEAN",

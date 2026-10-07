@@ -305,7 +305,7 @@ async def download_workspace_file(*, path: str, current_user: User) -> FileRespo
     file_name = PurePosixPath(workspace_path).name or "download"
     media_type = detect_media_type(file_name)
     headers = {"Content-Disposition": f"attachment; filename*=UTF-8''{quote(file_name)}"}
-    descriptor, temp_path = tempfile.mkstemp(prefix="yuxi-workspace-download-", suffix=PurePosixPath(file_name).suffix)
+    descriptor, temp_path = tempfile.mkstemp(prefix="deep-research-workspace-download-", suffix=PurePosixPath(file_name).suffix)
     os.close(descriptor)
     try:
         await asyncio.to_thread(
@@ -407,7 +407,7 @@ def _list_workspace_directory(
 
 
 async def _write_workspace_upload(file: UploadFile, backend: Workspace, target: str) -> dict:
-    descriptor, temp_path = tempfile.mkstemp(prefix="yuxi-workspace-upload-")
+    descriptor, temp_path = tempfile.mkstemp(prefix="deep-research-workspace-upload-")
     os.close(descriptor)
     try:
         await write_upload_to_path(

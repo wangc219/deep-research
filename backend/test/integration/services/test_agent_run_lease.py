@@ -636,7 +636,7 @@ async def test_tool_audit_lifecycle_owns_compatibility_projection_and_is_lease_f
                 operation_id="call-tool-1",
                 sequence=3,
                 started_at=now,
-                metadata={"tool_calls": [{"id": "call-tool-1", "name": "search", "args": {"q": "Yuxi"}}]},
+                metadata={"tool_calls": [{"id": "call-tool-1", "name": "search", "args": {"q": "深度研究平台"}}]},
             )
             await model_repo.finish(
                 run_id=run_id,
@@ -658,7 +658,7 @@ async def test_tool_audit_lifecycle_owns_compatibility_projection_and_is_lease_f
                 worker_id=owner,
                 tool_call_id="call-tool-1",
                 tool_name="search",
-                tool_input={"q": "effective Yuxi"},
+                tool_input={"q": "effective 深度研究平台"},
                 sequence=5,
                 started_at=now + timedelta(milliseconds=60),
             )
@@ -669,7 +669,7 @@ async def test_tool_audit_lifecycle_owns_compatibility_projection_and_is_lease_f
                 worker_id=owner,
                 tool_call_id="call-tool-1",
                 tool_name="search",
-                tool_input={"q": "effective Yuxi"},
+                tool_input={"q": "effective 深度研究平台"},
                 sequence=5,
                 started_at=now + timedelta(milliseconds=70),
             )
@@ -722,12 +722,12 @@ async def test_tool_audit_lifecycle_owns_compatibility_projection_and_is_lease_f
             assert completed.execution_status == "completed"
             assert completed.content == "result"
             assert completed.duration_ms == 100
-            assert completed.extra_metadata["input"] == {"q": "effective Yuxi"}
+            assert completed.extra_metadata["input"] == {"q": "effective 深度研究平台"}
             assert completed.extra_metadata["source_model_operation_id"] == "call-tool-1"
             persisted_model = await model_repo.get(run_id=run_id, operation_id="call-tool-1")
             assert persisted_model.id == model_message.id
             assert tool_call.message_id == model_message.id
-            assert tool_call.tool_input == {"q": "effective Yuxi"}
+            assert tool_call.tool_input == {"q": "effective 深度研究平台"}
             assert tool_call.tool_output == "result"
             assert tool_call.status == "success"
 
@@ -1741,7 +1741,7 @@ async def test_cancel_execution_tree_locks_root_before_descendants(lease_databas
     """取消执行树等待 root 时不能提前持有 child 行锁。"""
     _, session_factory = lease_database
     suffix = uuid.uuid4().hex
-    application_name = f"yuxi-lock-order-{suffix}"
+    application_name = f"deep-research-lock-order-{suffix}"
     now = utc_now_naive()
     root_id, root_thread, _ = await _create_run(session_factory)
     async with session_factory() as db:

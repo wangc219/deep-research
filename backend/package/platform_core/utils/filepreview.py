@@ -142,7 +142,7 @@ def _convert_office_to_pdf_sync(filename: str, content: bytes) -> bytes:
         raise OfficePreviewConversionError("当前文件类型不支持转换为 PDF 预览")
 
     executable = _office_converter_executable()
-    with tempfile.TemporaryDirectory(prefix="yuxi-office-preview-") as temp_dir:
+    with tempfile.TemporaryDirectory(prefix="deep-research-office-preview-") as temp_dir:
         temp_path = Path(temp_dir)
         input_path = temp_path / f"source{suffix}"
         output_path = temp_path / "source.pdf"

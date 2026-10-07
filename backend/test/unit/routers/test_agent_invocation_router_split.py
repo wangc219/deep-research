@@ -93,14 +93,14 @@ def test_agent_eval_router_adapts_payload(monkeypatch):
         json={
             "query": "2+2=?",
             "agent_slug": "default-chatbot",
-            "thread_id": "YUXI_TEST_eval-thread",
+            "thread_id": "DEEP_RESEARCH_TEST_eval-thread",
             "evaluation": {"dataset_name": "dataset-1", "ignored": "drop"},
             "meta": {"request_id": "eval-1"},
         },
     )
     assert response.status_code == 200, response.text
     assert response.json()["output"] == "ok"
-    assert calls["request_input"].thread_id == "YUXI_TEST_eval-thread"
+    assert calls["request_input"].thread_id == "DEEP_RESEARCH_TEST_eval-thread"
     assert calls["request_input"].origin.metadata == {
         "agent_invocation_meta": {"evaluation": {"dataset_name": "dataset-1"}}
     }

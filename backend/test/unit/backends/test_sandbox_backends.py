@@ -990,7 +990,7 @@ def test_provisioner_read_file_base64_reads_temp_file_not_shell_output(monkeypat
         )
 
     def _read_file(**kwargs):
-        assert kwargs["file"].startswith("/tmp/yuxi-read-file-")
+        assert kwargs["file"].startswith("/tmp/deep-research-read-file-")
         return SimpleNamespace(data=SimpleNamespace(content=expected))
 
     fake_client = SimpleNamespace(
@@ -1004,7 +1004,7 @@ def test_provisioner_read_file_base64_reads_temp_file_not_shell_output(monkeypat
     assert result == expected
     assert len(shell_calls) == 2
     assert shell_calls[0]["command"].startswith("python3 -c")
-    assert shell_calls[1]["command"].startswith("rm -f /tmp/yuxi-read-file-")
+    assert shell_calls[1]["command"].startswith("rm -f /tmp/deep-research-read-file-")
 
 
 @pytest.mark.parametrize(
@@ -1484,7 +1484,7 @@ def test_authorized_download_enforces_limit_during_actual_transfer(monkeypatch, 
         execute_calls += 1
         return SimpleNamespace(
             exit_code=0,
-            output=f"YUXI_FILE_SNAPSHOT {len(content)} {hashlib.sha256(content).hexdigest()}",
+            output=f"DEEP_RESEARCH_FILE_SNAPSHOT {len(content)} {hashlib.sha256(content).hexdigest()}",
             truncated=False,
         )
 
@@ -1573,7 +1573,7 @@ def test_authorized_download_recovers_snapshot_metadata_when_first_stdout_is_mis
         thread_id="thread-1", uid="user-1", workdir_path="projects/11111111-1111-4111-8111-111111111111"
     )
     content = b"live bytes"
-    marker = f"YUXI_FILE_SNAPSHOT {len(content)} {hashlib.sha256(content).hexdigest()}"
+    marker = f"DEEP_RESEARCH_FILE_SNAPSHOT {len(content)} {hashlib.sha256(content).hexdigest()}"
     execute_results = iter(
         [
             SimpleNamespace(exit_code=0, output="", truncated=False),
@@ -1634,7 +1634,7 @@ def test_authorized_snapshot_cleanup_failure_blocks_download(monkeypatch, tmp_pa
         [
             SimpleNamespace(
                 exit_code=0,
-                output=f"YUXI_FILE_SNAPSHOT {len(content)} {hashlib.sha256(content).hexdigest()}",
+                output=f"DEEP_RESEARCH_FILE_SNAPSHOT {len(content)} {hashlib.sha256(content).hexdigest()}",
                 truncated=False,
             ),
             SimpleNamespace(exit_code=1, output="cleanup failed", truncated=False),

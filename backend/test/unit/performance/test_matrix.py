@@ -185,8 +185,8 @@ class ContinuousChannelsTest(unittest.IsolatedAsyncioTestCase):
                 patch.dict(
                     "os.environ",
                     {
-                        "COMPOSE_PROJECT_NAME": "yuxi-alpha",
-                        "DEEP_RESEARCH_STATE_DIR": "../.yuxi/slots/alpha",
+                        "COMPOSE_PROJECT_NAME": "deep-research-alpha",
+                        "DEEP_RESEARCH_STATE_DIR": "../.deep-research/slots/alpha",
                     },
                 ),
                 patch("test.performance.matrix.authenticate") as authenticate,
@@ -426,7 +426,7 @@ class ObservationPersistenceTest(unittest.IsolatedAsyncioTestCase):
                 )
                 with (
                     patch.dict(
-                        "os.environ", {"COMPOSE_PROJECT_NAME": "yuxi-alpha", "DEEP_RESEARCH_STATE_DIR": "../.yuxi/slots/alpha"}
+                        "os.environ", {"COMPOSE_PROJECT_NAME": "deep-research-alpha", "DEEP_RESEARCH_STATE_DIR": "../.deep-research/slots/alpha"}
                     ),
                     patch("test.performance.matrix.httpx.AsyncClient", return_value=client),
                     patch("test.performance.matrix.authenticate", new=AsyncMock(return_value={})),

@@ -59,7 +59,7 @@ async def _clear_login_failure_keys():
     # 每个用例的事件循环不同，不复用共享单例客户端
     redis = await create_async_redis_client()
     try:
-        keys = [key async for key in redis.scan_iter(match="yuxi:login-failure:*")]
+        keys = [key async for key in redis.scan_iter(match="deep-research:login-failure:*")]
         if keys:
             await redis.delete(*keys)
     finally:

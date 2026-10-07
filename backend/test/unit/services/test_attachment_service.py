@@ -11,7 +11,7 @@ import pytest
 
 os.environ.setdefault("OPENAI_API_KEY", "test-key")
 os.environ.setdefault(
-    "DEEP_RESEARCH_RUNTIME_DIR", os.path.join(os.environ.get("CLAUDE_JOB_DIR", tempfile.gettempdir()), "yuxi-test-saves")
+    "DEEP_RESEARCH_RUNTIME_DIR", os.path.join(os.environ.get("CLAUDE_JOB_DIR", tempfile.gettempdir()), "deep-research-test-saves")
 )
 
 from platform_core.agents.backends.paths import workdir_scope_from_runtime_path

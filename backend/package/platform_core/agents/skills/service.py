@@ -77,7 +77,7 @@ SKILL_DRAFT_TTL_SECONDS = 60 * 60
 PERSONAL_SKILL_SOURCE_TYPE = "personal"
 _USER_SKILLS_LOCK = threading.Lock()
 _USER_SKILLS_LOCKS: dict[str, threading.Lock] = {}
-_USER_SKILL_PROJECTION_LOCK_SCOPE = "yuxi:skills:user-projection:v1:"
+_USER_SKILL_PROJECTION_LOCK_SCOPE = "deep-research:skills:user-projection:v1:"
 SKILL_STORAGE_LOCK = 0x5958534B
 
 

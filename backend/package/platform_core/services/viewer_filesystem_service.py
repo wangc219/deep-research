@@ -110,7 +110,7 @@ async def search_viewer_files(*, thread_id: str, query: str, current_user, db) -
 
 
 async def _download_to_temp(workdir, path: str, max_bytes: int) -> str:
-    descriptor, temp_path = tempfile.mkstemp(prefix="yuxi-viewer-", suffix=PurePosixPath(path).suffix)
+    descriptor, temp_path = tempfile.mkstemp(prefix="deep-research-viewer-", suffix=PurePosixPath(path).suffix)
     os.close(descriptor)
     try:
         await asyncio.to_thread(workdir.copy_file_to_path, path, temp_path, max_bytes)
@@ -238,7 +238,7 @@ async def upload_viewer_files(*, thread_id: str, parent_path: str, files: list[U
 
     entries: list[dict] = []
     for upload, file_name in zip(files, file_names, strict=True):
-        descriptor, temp_path = tempfile.mkstemp(prefix="yuxi-viewer-upload-")
+        descriptor, temp_path = tempfile.mkstemp(prefix="deep-research-viewer-upload-")
         os.close(descriptor)
         try:
             await write_upload_to_path(

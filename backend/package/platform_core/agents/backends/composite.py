@@ -14,11 +14,11 @@ from platform_core.agents.skills.service import refresh_user_skill_projection_as
 
 from .sandbox import ProvisionerSandboxBackend
 
-# Yuxi 在 DeepAgents 内建排除集之上额外豁免知识库文档工具结果，
+# 平台在 DeepAgents 内建排除集之上额外豁免知识库文档工具结果，
 # 避免 read_file/offload 循环：该工具自带分页与引用语义。
 _TOOL_RESULT_EVICTION_EXEMPT_TOOLS = frozenset(TOOLS_EXCLUDED_FROM_EVICTION) | {"open_kb_document"}
 
-# 文件工具 allowlist：显式排除 destructive delete。Yuxi backend 未实现 delete，
+# 文件工具 allowlist：显式排除 destructive delete。平台 backend 未实现 delete，
 # 且删除语义需要审批与审计设计，开放前不应让模型看到该工具。
 _AGENT_FS_TOOLS: tuple[FsToolName, ...] = (
     "ls",
@@ -31,7 +31,7 @@ _AGENT_FS_TOOLS: tuple[FsToolName, ...] = (
 )
 
 
-class YuxiFilesystemMiddleware(FilesystemMiddleware):
+class PlatformFilesystemMiddleware(FilesystemMiddleware):
     """Filesystem middleware that budgets large tool outputs before they hit model context."""
 
     def wrap_tool_call(self, request, handler):
@@ -94,7 +94,7 @@ class _BackendScope:
         if not self.workdir_relative_path:
             raise ValueError("workdir path is required in runtime context")
         # artifacts_root 指向 outputs 目录：Filesystem/Summarization middleware 由此
-        # 派生 large_tool_results 与 conversation_history 前缀，与 Yuxi 契约一致。
+        # 派生 large_tool_results 与 conversation_history 前缀，与平台契约一致。
         return CompositeBackend(
             default=ProvisionerSandboxBackend(
                 thread_id=self.runtime_scope_id,
@@ -130,7 +130,7 @@ def create_agent_filesystem_middleware(
     disabled_tools: frozenset[str] = frozenset(),
 ) -> FilesystemMiddleware:
     """构造文件系统中间件，在 ToolNode 注册前排除禁用工具。"""
-    return YuxiFilesystemMiddleware(
+    return PlatformFilesystemMiddleware(
         backend=backend,
         tool_token_limit_before_evict=tool_token_limit_before_evict,
         tools=[name for name in _AGENT_FS_TOOLS if name not in disabled_tools],

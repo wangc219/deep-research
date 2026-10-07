@@ -49,10 +49,10 @@ def _docker_backend(module, tmp_path, run_container):
     backend._delete_slots = threading.BoundedSemaphore(16)
     backend._stop_timeout_seconds = 2
     backend._container_port = 8080
-    backend._network_prefix = "yuxi-know-sandbox"
+    backend._network_prefix = "deep-research-sandbox-network"
     backend._network_pool = None
     backend._sandbox_image = "sandbox-image"
-    backend._container_prefix = "yuxi-sandbox"
+    backend._container_prefix = "deep-research-sandbox"
     backend._sandbox_env = {}
     backend._health_timeout_seconds = 1
     backend._user_data_host_path = str(tmp_path)
@@ -83,7 +83,7 @@ def _docker_backend_with_running_container(monkeypatch, tmp_path):
     captured = []
 
     class FakeContainer:
-        name = "yuxi-sandbox-sandbox-1"
+        name = "deep-research-sandbox-sandbox-1"
         status = "running"
         labels = {"thread-id": "thread-1"}
         attrs = {"State": {"Status": "running"}}
@@ -937,9 +937,9 @@ def test_docker_backend_uses_private_network_without_published_port(monkeypatch,
 
     record = backend.create("sandbox-1", "thread-1", "user-1")
 
-    assert record.sandbox_url == "http://yuxi-sandbox-sandbox-1:8080"
+    assert record.sandbox_url == "http://deep-research-sandbox-sandbox-1:8080"
     assert captured[0][0] == "sandbox-image"
-    assert captured[0][1]["network"] == "yuxi-know-sandbox-sandbox-1"
+    assert captured[0][1]["network"] == "deep-research-sandbox-network-sandbox-1"
     assert "ports" not in captured[0][1]
 
 
@@ -1077,7 +1077,7 @@ def test_kubernetes_workdir_contract_uses_user_workspace_subpath(monkeypatch):
     }
     assert claims == {"user-data": "threads-rwx", "skills-data": "skills-rwx"}
     assert pod.metadata.annotations["workdir-path"] == "projects/11111111-1111-4111-8111-111111111111"
-    assert pod.metadata.labels["managed-by"] == "yuxi-sandbox-provisioner"
+    assert pod.metadata.labels["managed-by"] == "deep-research-sandbox-provisioner"
     assert pod.spec.security_context.run_as_user == 0
     assert getattr(pod.spec.security_context, "fs_group", None) is None
     sandbox_env = {item.name: item.value for item in sandbox.env}
@@ -1215,7 +1215,7 @@ def test_kubernetes_pod_conflict_is_revalidated_before_creating_service(monkeypa
     backend = object.__new__(module.KubernetesProvisionerBackend)
     backend._lock = threading.RLock()
     backend._core_api = FakeCoreApi()
-    backend._namespace = "yuxi"
+    backend._namespace = "deep_research"
     backend._pod_name = lambda _sandbox_id: "pod-1"
     backend._service_name = lambda _sandbox_id: "service-1"
     backend.discover = lambda _sandbox_id: None
@@ -1268,7 +1268,7 @@ def test_kubernetes_delete_uses_uid_generation_precondition(monkeypatch):
     backend._core_api = FakeCoreApi()
     backend._client = FakeKubernetesClient()
     backend._lock = threading.RLock()
-    backend._namespace = "yuxi"
+    backend._namespace = "deep_research"
     backend._pod_name = lambda _sandbox_id: "pod-1"
     backend._service_name = lambda _sandbox_id: "service-1"
 
@@ -1292,7 +1292,7 @@ def test_docker_backend_cleans_up_sandbox_and_network_on_failure(monkeypatch, tm
     deleted_networks = []
 
     class FakeContainer:
-        name = "yuxi-sandbox-sandbox-1"
+        name = "deep-research-sandbox-sandbox-1"
         status = "running"
         labels = {"thread-id": "thread-1"}
         attrs = {"State": {"Status": "running"}}
@@ -1339,13 +1339,13 @@ def test_docker_backend_assigns_each_sandbox_a_distinct_network(monkeypatch):
     module = _load_module()
     backend = object.__new__(module.LocalContainerProvisionerBackend)
     backend._lock = threading.RLock()
-    backend._network_prefix = "yuxi-know-sandbox"
+    backend._network_prefix = "deep-research-sandbox-network"
 
     first_network = backend._network_name("sandbox-1")
     second_network = backend._network_name("sandbox-2")
 
-    assert first_network == "yuxi-know-sandbox-sandbox-1"
-    assert second_network == "yuxi-know-sandbox-sandbox-2"
+    assert first_network == "deep-research-sandbox-network-sandbox-1"
+    assert second_network == "deep-research-sandbox-network-sandbox-2"
     assert first_network != second_network
     assert backend._is_on_expected_network(
         SimpleNamespace(attrs={"NetworkSettings": {"Networks": {first_network: {}}}}),
@@ -1374,7 +1374,7 @@ def test_docker_backend_creates_network_from_dedicated_address_pool(monkeypatch)
     class FakeNetwork:
         attrs = {
             "Labels": {
-                "managed-by": "yuxi-sandbox-provisioner",
+                "managed-by": "deep-research-sandbox-provisioner",
                 "sandbox-id": "sandbox-1",
             },
             "Containers": {},
@@ -1390,7 +1390,7 @@ def test_docker_backend_creates_network_from_dedicated_address_pool(monkeypatch)
     captured = []
     backend = object.__new__(module.LocalContainerProvisionerBackend)
     backend._lock = threading.RLock()
-    backend._network_prefix = "yuxi-know-sandbox"
+    backend._network_prefix = "deep-research-sandbox-network"
     backend._network_pool = (module.ipaddress.ip_network("10.253.240.0/20"), 28)
     backend._docker = SimpleNamespace(types=SimpleNamespace(IPAMPool=IPAMPool, IPAMConfig=IPAMConfig))
     backend._provisioner_container = SimpleNamespace(id="provisioner-id")
@@ -1410,7 +1410,7 @@ def test_docker_backend_creates_network_from_dedicated_address_pool(monkeypatch)
 
     network_name = backend._ensure_network("sandbox-1")
 
-    assert network_name == "yuxi-know-sandbox-sandbox-1"
+    assert network_name == "deep-research-sandbox-network-sandbox-1"
     assert captured[0][0] == network_name
     assert captured[0][1]["ipam"].pool_configs[0].subnet == "10.253.240.0/28"
 
@@ -1561,7 +1561,7 @@ def test_docker_backend_serializes_create_and_delete_for_same_sandbox(monkeypatc
 
     class FakeContainer:
         id = "generation-1"
-        name = "yuxi-sandbox-sandbox-1"
+        name = "deep-research-sandbox-sandbox-1"
         status = "running"
         labels = {
             "thread-id": "thread-1",
@@ -1601,7 +1601,7 @@ def test_docker_backend_serializes_create_and_delete_for_same_sandbox(monkeypatc
         backend.delete("sandbox-1", expected_generation="generation-1")
 
     backend._get_container = get_container
-    backend._ensure_network = lambda _sandbox_id: "yuxi-know-sandbox-sandbox-1"
+    backend._ensure_network = lambda _sandbox_id: "deep-research-sandbox-network-sandbox-1"
     backend._delete_network = lambda _sandbox_id: None
     backend._is_expected_skills_mount = lambda _container, _uid: True
     backend._is_on_expected_network = lambda _container, _sandbox_id: True
@@ -1632,9 +1632,9 @@ def test_docker_backend_reconnects_provisioner_before_reusing_sandbox(monkeypatc
     connected = []
 
     class FakeNetwork:
-        name = "yuxi-know-sandbox-sandbox-1"
+        name = "deep-research-sandbox-network-sandbox-1"
         attrs = {
-            "Labels": {"managed-by": "yuxi-sandbox-provisioner", "sandbox-id": "sandbox-1"},
+            "Labels": {"managed-by": "deep-research-sandbox-provisioner", "sandbox-id": "sandbox-1"},
             "Containers": {},
         }
 
@@ -1645,7 +1645,7 @@ def test_docker_backend_reconnects_provisioner_before_reusing_sandbox(monkeypatc
             connected.append((container.id, aliases))
 
     class FakeContainer:
-        name = "yuxi-sandbox-sandbox-1"
+        name = "deep-research-sandbox-sandbox-1"
         status = "running"
         labels = {"thread-id": "thread-1"}
         attrs = {"State": {"Status": "running"}}
@@ -1664,7 +1664,7 @@ def test_docker_backend_reconnects_provisioner_before_reusing_sandbox(monkeypatc
 
     record = backend.create("sandbox-1", "thread-1", "user-1")
 
-    assert record.sandbox_url == "http://yuxi-sandbox-sandbox-1:8080"
+    assert record.sandbox_url == "http://deep-research-sandbox-sandbox-1:8080"
     assert connected == [("provisioner-id", ["sandbox-provisioner"])]
 
 
@@ -1676,7 +1676,7 @@ def test_docker_backend_does_not_remove_unowned_network(monkeypatch, tmp_path):
     removed = []
 
     class FakeNetwork:
-        name = "yuxi-know-sandbox-sandbox-1"
+        name = "deep-research-sandbox-network-sandbox-1"
         attrs = {
             "Labels": {"managed-by": "operator", "sandbox-id": "sandbox-1"},
             "Containers": {"provisioner-id": {}},
@@ -1723,7 +1723,7 @@ def test_kubernetes_inventory_includes_pod_without_service_and_fails_closed(
     pod = SimpleNamespace(
         metadata=SimpleNamespace(
             labels={
-                "app": "yuxi-sandbox",
+                "app": "deep-research-sandbox",
                 "sandbox-id": "orphan-1",
             },
             annotations={"workdir-path": "projects/11111111-1111-4111-8111-111111111111"},
@@ -1744,7 +1744,7 @@ def test_kubernetes_inventory_includes_pod_without_service_and_fails_closed(
 
     backend = object.__new__(module.KubernetesProvisionerBackend)
     backend._core_api = FakeCoreApi()
-    backend._namespace = "yuxi"
+    backend._namespace = "deep_research"
 
     assert backend.list() == [
         module.SandboxRecord(
@@ -1755,7 +1755,7 @@ def test_kubernetes_inventory_includes_pod_without_service_and_fails_closed(
             workdir_path="projects/11111111-1111-4111-8111-111111111111",
         )
     ]
-    assert backend._core_api.selectors == ["app=yuxi-sandbox"]
+    assert backend._core_api.selectors == ["app=deep-research-sandbox"]
     backend._core_api.fail = True
     with pytest.raises(ApiException, match="inventory unavailable"):
         backend.list()

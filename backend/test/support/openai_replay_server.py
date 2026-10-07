@@ -93,7 +93,7 @@ def _validate_request(authorization: str | None, request: dict) -> str | None:
 def _stream_payloads(model: str, messages: list[dict]) -> list[dict]:
     serialized_messages = json.dumps(messages, ensure_ascii=False)
     common = {
-        "id": "chatcmpl-yuxi-deterministic",
+        "id": "chatcmpl-deep-research-deterministic",
         "object": "chat.completion.chunk",
         "created": int(time.time()),
         "model": model,

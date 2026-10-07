@@ -241,7 +241,7 @@ async def test_subagent_stream_records_run_and_shares_output_files(
     assert uid, me
 
     suffix = uuid.uuid4().hex[:8]
-    marker = f"YUXI_SUBAGENT_STREAM_E2E_{suffix}"
+    marker = f"DEEP_RESEARCH_SUBAGENT_STREAM_E2E_{suffix}"
     sub_slug = f"e2e-subagent-{suffix}"
     main_slug = f"e2e-main-{suffix}"
     parent_input_path: str | None = None
@@ -250,7 +250,7 @@ async def test_subagent_stream_records_run_and_shares_output_files(
     output_viewer_path: str | None = None
     expected_content = "由这个子智能体创建"
     runtime_content = f"runtime-shared-{suffix}"
-    runtime_marker = f"/tmp/yuxi-execution-tree-{suffix}"
+    runtime_marker = f"/tmp/deep-research-execution-tree-{suffix}"
     created_agents: list[str] = []
     run_id: str | None = None
     thread_id: str | None = None

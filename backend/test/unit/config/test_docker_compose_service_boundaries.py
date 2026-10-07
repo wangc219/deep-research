@@ -206,7 +206,7 @@ def test_api_image_applies_owner_only_umask_before_dropping_to_runtime_identity(
     entrypoint = (root / "docker/api-entrypoint.sh").read_text()
 
     assert "USER 1000:1000" in dockerfile
-    assert 'ENTRYPOINT ["/usr/local/bin/yuxi-entrypoint"]' in dockerfile
+    assert 'ENTRYPOINT ["/usr/local/bin/deep-research-entrypoint"]' in dockerfile
     assert "umask 077" in entrypoint
     assert 'exec "$@"' in entrypoint
 

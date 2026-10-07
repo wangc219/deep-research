@@ -10,7 +10,7 @@ const source = readFileSync(
   new URL('../../src/components/ApiKeyManagementComponent.vue', import.meta.url),
   'utf8'
 )
-const storageKey = 'yuxi_pending_api_key_request_id'
+const storageKey = 'deep_research_pending_api_key_request_id'
 
 /** 在无 randomUUID 的环境执行真实组件脚本。 */
 function setupComponent({

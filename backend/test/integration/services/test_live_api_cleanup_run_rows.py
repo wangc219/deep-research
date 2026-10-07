@@ -57,7 +57,7 @@ async def _seed_thread(session_factory, *, thread_prefix: str) -> dict:
     uid = f"pytest-user-{uuid.uuid4()}"
     run_id = str(uuid.uuid4())
     request_id = f"cleanup-req-{uuid.uuid4()}"
-    workdir_path = f"projects/YUXI_TEST_cleanup-{uuid.uuid4()}"
+    workdir_path = f"projects/DEEP_RESEARCH_TEST_cleanup-{uuid.uuid4()}"
     project_id = str(uuid.uuid4())
     async with session_factory() as db:
         db.add(User(username=uid, uid=uid, password_hash="test"))
@@ -324,7 +324,7 @@ async def test_request_prefix_matching_treats_underscores_literally(cleanup_data
     conversation_ids: list[int] = []
     project_ids = [str(uuid.uuid4()), str(uuid.uuid4())]
     message_ids: list[int] = []
-    request_ids = [f"YUXI_TEST_valid_{uuid.uuid4()}", f"YUXI-TEST-ordinary-{uuid.uuid4()}"]
+    request_ids = [f"DEEP_RESEARCH_TEST_valid_{uuid.uuid4()}", f"DEEP-RESEARCH-TEST-ordinary-{uuid.uuid4()}"]
     try:
         async with session_factory() as db:
             db.add(User(username=uid, uid=uid, password_hash="test"))
@@ -604,7 +604,7 @@ async def test_resource_cleanup_reports_file_failure_after_database_commit(clean
 
     session_factory = cleanup_database
     target = await _seed_thread(session_factory, thread_prefix="pytest-cleanup-file-failure")
-    workdir_path = f"projects/YUXI_TEST_failure-{uuid.uuid4()}"
+    workdir_path = f"projects/DEEP_RESEARCH_TEST_failure-{uuid.uuid4()}"
     async with session_factory() as db:
         conversation = await db.get(Conversation, target["conversation_id"])
         project = await db.get(Project, target["project_id"])

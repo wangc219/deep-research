@@ -141,7 +141,7 @@ async def resolve_thread_artifact_view(
     normalized = _normalize_artifact_path(runtime_user_data_path(access.workdir.root_path), path)
     skill_source = await _require_skill_artifact_access(normalized_path=normalized, current_uid=current_uid, db=db)
     is_preview = preview and not download
-    descriptor, temp_path = tempfile.mkstemp(prefix="yuxi-artifact-", suffix=PurePosixPath(normalized).suffix)
+    descriptor, temp_path = tempfile.mkstemp(prefix="deep-research-artifact-", suffix=PurePosixPath(normalized).suffix)
     os.close(descriptor)
     try:
         await _copy_artifact_to_path(
@@ -222,7 +222,7 @@ async def save_thread_artifact_to_workspace_view(
         if not destination_item["is_dir"]:
             raise HTTPException(status_code=400, detail="artifact destination is not a directory")
     skill_source = await _require_skill_artifact_access(normalized_path=normalized, current_uid=current_uid, db=db)
-    descriptor, temp_path = tempfile.mkstemp(prefix="yuxi-save-artifact-")
+    descriptor, temp_path = tempfile.mkstemp(prefix="deep-research-save-artifact-")
     os.close(descriptor)
     try:
         await _copy_artifact_to_path(access, normalized, skill_source, temp_path)

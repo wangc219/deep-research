@@ -80,7 +80,7 @@ async def test_two_sandboxes_share_project_files_but_not_runtime_state():
     second_scope = f"pytest-runtime-b-{suffix}"
     project_root = f"/home/gem/user-data/{workdir_path}"
     project_file = f"{project_root}/outputs/shared.txt"
-    runtime_file = f"/tmp/yuxi-runtime-{suffix}"
+    runtime_file = f"/tmp/deep-research-runtime-{suffix}"
 
     first = ProvisionerSandboxBackend(thread_id=first_scope, uid=uid, workdir_path=workdir_path)
     second = ProvisionerSandboxBackend(thread_id=second_scope, uid=uid, workdir_path=workdir_path)
@@ -141,7 +141,7 @@ async def test_recreated_runtime_keeps_project_files_and_drops_process_state():
     second_scope = f"pytest-runtime-after-{suffix}"
     project_root = f"/home/gem/user-data/{workdir_path}"
     project_file = f"{project_root}/outputs/persistent.txt"
-    runtime_file = f"/tmp/yuxi-runtime-{suffix}"
+    runtime_file = f"/tmp/deep-research-runtime-{suffix}"
     provider = get_sandbox_provider()
 
     first = ProvisionerSandboxBackend(thread_id=first_scope, uid=uid, workdir_path=workdir_path)

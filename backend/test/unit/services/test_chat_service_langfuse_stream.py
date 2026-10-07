@@ -904,7 +904,7 @@ async def test_stream_agent_chat_output_persistence_failure_is_terminal_error(
 
 
 @pytest.mark.asyncio
-async def test_stream_agent_chat_maps_raw_protocol_events_to_yuxi_stream_events(
+async def test_stream_agent_chat_maps_raw_protocol_events_to_platform_stream_events(
     monkeypatch: pytest.MonkeyPatch,
 ):
     class FakeGraph:

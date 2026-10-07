@@ -34,15 +34,15 @@ MEMORY_SYSTEM_PROMPT = """## 用户级 Memory
 </memory_data>"""
 
 
-async def create_memory_middleware(context) -> YuxiMemoryMiddleware | None:
+async def create_memory_middleware(context) -> PlatformMemoryMiddleware | None:
     """仅在用户开启 Memory 时创建主 Agent middleware。"""
     memory_content = await load_memory_prompt(str(getattr(context, "uid", "") or ""))
     if memory_content is None:
         return None
-    return YuxiMemoryMiddleware(memory_content)
+    return PlatformMemoryMiddleware(memory_content)
 
 
-class YuxiMemoryMiddleware(AgentMiddleware[Any, ContextT, ResponseT]):
+class PlatformMemoryMiddleware(AgentMiddleware[Any, ContextT, ResponseT]):
     """为主 Agent 注入用户 Memory 并注册受限读写工具。"""
 
     def __init__(self, memory_content: str) -> None:

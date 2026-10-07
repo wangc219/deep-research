@@ -6,7 +6,7 @@
  * 线程创建成功后由调用方清理临时草稿（内容已随消息发送）。
  */
 
-const STORAGE_KEY_PREFIX = 'yuxi:thread-input-draft:'
+const STORAGE_KEY_PREFIX = 'deep-research:thread-input-draft:'
 
 // 普通智能对话使用默认作用域；业务模块必须传入自己的稳定作用域，避免草稿串线。
 export const DEFAULT_DRAFT_SCOPE = 'agent-chat'

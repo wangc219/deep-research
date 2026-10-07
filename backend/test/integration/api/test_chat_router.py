@@ -23,7 +23,7 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.integration]
 
 
 def _postgres_dsn() -> str:
-    return os.getenv("POSTGRES_URL", "postgresql+asyncpg://postgres:postgres@postgres:5432/yuxi").replace(
+    return os.getenv("POSTGRES_URL", "postgresql+asyncpg://postgres:postgres@postgres:5432/deep_research").replace(
         "+asyncpg", ""
     )
 
@@ -223,7 +223,7 @@ async def test_thread_message_audits_return_persisted_facts_without_leaking_into
                 {
                     "tool_call_id": "call-1",
                     "tool_name": "search",
-                    "input": {"q": "Yuxi"},
+                    "input": {"q": "深度研究平台"},
                     "output": {"type": "tool", "content": "查询结果", "status": "success"},
                     "source_model_operation_id": "operation-1",
                     "finished_sequence": 7,
@@ -300,7 +300,7 @@ async def test_thread_message_audits_return_persisted_facts_without_leaking_into
     assert [audit["operation_id"] for audit in timeline[:2]] == ["call-1", "operation-2"]
     assert [audit["type"] for audit in timeline[:2]] == ["tool", "ai"]
     assert timeline[0]["tool_name"] == "search"
-    assert timeline[0]["tool_input"] == {"q": "Yuxi"}
+    assert timeline[0]["tool_input"] == {"q": "深度研究平台"}
     assert timeline[0]["content"] == "查询结果"
     assert timeline[0]["duration_ms"] == 400
     assert timeline[1]["sequence"] == 7

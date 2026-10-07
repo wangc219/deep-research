@@ -198,7 +198,13 @@ class TokenUsageMiddleware(AgentMiddleware[TokenUsageState]):
         usage = _model_usage_from_response(response) if response else None
         usage = usage or {}
         metadata = getattr(request.model, "metadata", None) or {}
-        spec = str(metadata.get("yuxi_model_spec") or getattr(context, "model", None) or "unknown")
+        spec = str(
+            metadata.get("platform_model_spec")
+            # Read-only compatibility for model objects created before platform unification.
+            or metadata.get("yuxi_model_spec")
+            or getattr(context, "model", None)
+            or "unknown"
+        )
         row = {
             "id": str(uuid4()), "model_spec": spec[:512], "surface": "智能对话",
             "run_id": str(getattr(context, "run_id", None) or "")[:256], "phase": "agent_model",
@@ -601,13 +607,13 @@ def _model_identity(request: ModelRequest, response: ModelResponse) -> dict[str,
     configured_spec = configured_spec.strip() if isinstance(configured_spec, str) else ""
 
     identity: dict[str, str] = {}
-    for key, meta_key in (
-        ("provider_id", "yuxi_provider_id"),
-        ("provider_type", "yuxi_provider_type"),
-        ("configured_model_id", "yuxi_model_id"),
-        ("configured_model_spec", "yuxi_model_spec"),
+    for key, meta_key, legacy_key in (
+        ("provider_id", "platform_provider_id", "yuxi_provider_id"),
+        ("provider_type", "platform_provider_type", "yuxi_provider_type"),
+        ("configured_model_id", "platform_model_id", "yuxi_model_id"),
+        ("configured_model_spec", "platform_model_spec", "yuxi_model_spec"),
     ):
-        value = model_metadata.get(meta_key)
+        value = model_metadata.get(meta_key) or model_metadata.get(legacy_key)
         if isinstance(value, str) and value:
             identity[key] = value
 

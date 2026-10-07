@@ -1,12 +1,12 @@
-# 知识库能力对齐基线
+# 平台知识库能力基线
 
-审计日期：2026-09-27。对照来源为 Yuxi `main` 分支提交
-`23576378fb22bed5c5373a4223e1948327dab157` 的 README。仓库内
-`reference/Yuxi-main/README.md` 与该版本内容一致。
+审计日期：2026-09-27。本文定义装备智能研究平台内建知识能力的验收基线。知识库不是外挂子系统，而是 `platform_core` 共享数据平面的一部分，由智能对话、需求 Query、装备研究和深研 Agent 通过同一授权检索端口使用。
+
+初始能力核对曾参考第三方公开实现；来源版本与许可证只记录在 [平台内核来源与融合记录](migration/PLATFORM_CORE_PROVENANCE.md)，不构成当前产品的模块边界。
 
 ## 能力矩阵
 
-| Yuxi README 能力 | 本项目入口 | 验证重点 |
+| 平台知识能力 | 统一实现入口 | 验证重点 |
 | --- | --- | --- |
 | 多格式入库、解析、分块、Chunk/Token 状态 | `platform_core.knowledge.parser`、`chunking`、知识库文件管理页 | 格式白名单、文件大小、解析状态、失败重试、统计修复 |
 | Embedding、BM25、混合检索、Rerank | `MilvusKB.retrieve`、知识库检索配置与检索测试页 | 阈值、候选数、融合权重、最终 Top K、引用字段 |

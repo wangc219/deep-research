@@ -1,10 +1,11 @@
 {
   "created_at": "2026-09-22",
-  "yuxi_version": "0.7.3",
-  "yuxi_commit": "9b67368c6baeb731f89e1076da8a1b68ff52178a",
+  "source_project": "Yuxi",
+  "source_version": "0.7.3",
+  "source_commit": "9b67368c6baeb731f89e1076da8a1b68ff52178a",
   "platform_module": "backend/package/platform_core",
   "application": {
-    "path": "/Users/wangchen/equipment research 3/outputs/application.db",
+    "path": "outputs/application.db",
     "size_bytes": 41734144,
     "tables": [
       "capability_versions",
@@ -36,7 +37,7 @@
     "deep_steers": 0
   },
   "query_library": {
-    "path": "/Users/wangchen/equipment research 3/outputs/query-library.db",
+    "path": "outputs/query-library.db",
     "size_bytes": 532480,
     "tables": [
       "query_generation_jobs",

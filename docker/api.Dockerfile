@@ -62,14 +62,14 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY backend/server /app/server
 COPY docker/api-entrypoint.sh /usr/local/bin/deep-research-entrypoint
 
-RUN groupadd --gid 1000 yuxi \
-    && useradd --uid 1000 --gid 1000 --create-home yuxi \
-    && mkdir -p /app/runtime /home/yuxi/.cache/rapidocr/models \
-    && chown -R 1000:1000 /app/runtime /home/yuxi \
+RUN groupadd --gid 1000 platform \
+    && useradd --uid 1000 --gid 1000 --create-home platform \
+    && mkdir -p /app/runtime /home/platform/.cache/rapidocr/models \
+    && chown -R 1000:1000 /app/runtime /home/platform \
     && chmod 0755 /usr/local/bin/deep-research-entrypoint
 
-ENV HOME=/home/yuxi \
-    RAPIDOCR_MODEL_DIR=/home/yuxi/.cache/rapidocr/models
+ENV HOME=/home/platform \
+    RAPIDOCR_MODEL_DIR=/home/platform/.cache/rapidocr/models
 
 USER 1000:1000
 

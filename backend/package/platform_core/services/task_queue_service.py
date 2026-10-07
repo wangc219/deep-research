@@ -10,7 +10,7 @@ from platform_core.utils.logging_config import logger
 TASK_LEASE_SECONDS = 30.0
 TASK_HEARTBEAT_SECONDS = 10.0
 TASK_RECONCILIATION_SECONDS = 30.0
-TASK_RECONCILIATION_HEALTH_KEY = "yuxi:worker:health:durable-task-reconciliation-v1"
+TASK_RECONCILIATION_HEALTH_KEY = "deep-research:worker:health:durable-task-reconciliation-v1"
 TASK_RECONCILIATION_HEALTH_TTL_SECONDS = int(TASK_RECONCILIATION_SECONDS * 2 + 5)
 
 

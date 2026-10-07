@@ -1,6 +1,6 @@
 """测试分块 token 上限保护：general parser 对超长 chunk 的硬切分。
 
-nlp.py / general.py 只依赖 re 和标准库，用 sys.modules 占位绕过 yuxi 包的
+nlp.py / general.py 只依赖 re 和标准库，用 sys.modules 占位绕过平台包的
 重依赖链（langchain / pydantic / .env 配置等），实现纯单元测试。
 跑完后清理 sys.modules，避免污染其他测试。
 """

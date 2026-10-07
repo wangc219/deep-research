@@ -1,15 +1,20 @@
 .PHONY: check test architecture compile
 
-PYTHON ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
+UV ?= uv
+PLATFORM_PYTHONPATH := backend:backend/package
 
 architecture:
-	PYTHONPATH=src $(PYTHON) -m equipment_deep_research.architecture
+	PYTHONPATH=$(PLATFORM_PYTHONPATH) $(UV) run --project backend python -m equipment_deep_research.architecture
 
 test:
-	PYTHONPATH=src $(PYTHON) -m pytest -q
+	$(UV) run --project backend pytest -q backend/test/unit
 
 compile:
-	PYTHONPATH=src $(PYTHON) -m compileall -q src
+	PYTHONPATH=$(PLATFORM_PYTHONPATH) $(UV) run --project backend python -m compileall -q \
+		backend/package/platform_core backend/package/equipment_deep_research backend/server
 
 check: architecture compile
-	PYTHONPATH=src $(PYTHON) -m pytest -q tests/equipment_deep_research/unit/test_architecture_boundaries.py tests/equipment_deep_research/unit/test_settings.py
+	$(UV) run --project backend pytest -q \
+		backend/test/unit/architecture/test_equipment_domain_boundaries.py \
+		backend/test/equipment_deep_research/unit/test_architecture_boundaries.py \
+		backend/test/equipment_deep_research/unit/test_settings.py

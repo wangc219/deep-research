@@ -198,7 +198,7 @@ async def test_cleanup_deletes_e2e_threads_before_temporary_agents(tmp_path, mon
                 "id": "thread-viewer",
                 "title": "viewer-fs-e2e-deadbeef",
                 "agent_id": "default-chatbot",
-                "metadata": {"_yuxi_e2e": True, "test": "viewer-fs-e2e"},
+                "metadata": {"_deep_research_e2e": True, "test": "viewer-fs-e2e"},
             },
             {
                 "id": "thread-user",
@@ -210,7 +210,7 @@ async def test_cleanup_deletes_e2e_threads_before_temporary_agents(tmp_path, mon
                 "id": "thread-marked",
                 "title": "未使用固定前缀",
                 "agent_id": "e2e-main-deadbeef",
-                "metadata": {"_yuxi_e2e": True, "marker": "YUXI_SUBAGENT_STREAM_E2E_deadbeef"},
+                "metadata": {"_deep_research_e2e": True, "marker": "DEEP_RESEARCH_SUBAGENT_STREAM_E2E_deadbeef"},
             },
         ],
         "/api/agent": {
@@ -288,7 +288,7 @@ async def test_cleanup_only_exempts_projects_whose_managed_workdir_is_deleted(tm
             return httpx.Response(
                 200,
                 json=[
-                    {"id": thread_id, "metadata": {"_yuxi_test": True}}
+                    {"id": thread_id, "metadata": {"_deep_research_test": True}}
                     for thread_id in resources
                 ],
             )
@@ -342,7 +342,7 @@ async def test_cleanup_paginates_active_threads(tmp_path, monkeypatch):
                     {
                         "id": "thread-page-2",
                         "title": "任意标题",
-                        "metadata": {"_yuxi_e2e": True, "test": "viewer-fs-e2e"},
+                        "metadata": {"_deep_research_e2e": True, "test": "viewer-fs-e2e"},
                     }
                 ],
             )
@@ -437,8 +437,8 @@ async def test_test_resource_names_use_one_visible_prefix():
     metadata = make_test_conversation_metadata("viewer-filesystem")
 
     assert title.startswith(TEST_CONVERSATION_TITLE_PREFIX)
-    assert metadata["_yuxi_test"] is True
-    assert make_test_resource_id("agent-call").startswith("YUXI_TEST_")
+    assert metadata["_deep_research_test"] is True
+    assert make_test_resource_id("agent-call").startswith("DEEP_RESEARCH_TEST_")
 
 
 async def test_legacy_title_matching_is_exact_and_does_not_capture_user_titles():
@@ -469,7 +469,7 @@ async def test_cleanup_discovery_failure_has_no_destructive_side_effect(tmp_path
         if request.url.path == "/api/chat/threads":
             return httpx.Response(
                 200,
-                json=[{"id": "thread-marked", "metadata": {"_yuxi_test": True}}],
+                json=[{"id": "thread-marked", "metadata": {"_deep_research_test": True}}],
             )
         if request.url.path == "/api/agent":
             raise AssertionError("agent cleanup must not run after discovery failure")
@@ -518,7 +518,7 @@ async def test_cleanup_guard_failure_has_no_destructive_side_effect(tmp_path, mo
             destructive_paths.append(request.url.path)
             return httpx.Response(200, json={})
         if request.url.path == "/api/chat/threads":
-            return httpx.Response(200, json=[{"id": "thread-marked", "metadata": {"_yuxi_test": True}}])
+            return httpx.Response(200, json=[{"id": "thread-marked", "metadata": {"_deep_research_test": True}}])
         if request.url.path == "/api/agent":
             raise AssertionError("agent cleanup must not run after guard failure")
         raise AssertionError(f"unexpected request: {request.method} {request.url}")
@@ -555,7 +555,7 @@ async def test_cleanup_stops_when_cancelled_request_remains_queued(tmp_path, mon
         return None
 
     async def still_queued(_thread_ids: set[str]) -> list[str]:
-        return ["YUXI_TEST_queued_request"]
+        return ["DEEP_RESEARCH_TEST_queued_request"]
 
     monkeypatch.setattr("test.live_api_cleanup.list_test_conversation_resources", fake_list_resources)
     monkeypatch.setattr("test.live_api_cleanup.validate_test_workdirs_exclusive", fake_validate)
@@ -564,7 +564,7 @@ async def test_cleanup_stops_when_cancelled_request_remains_queued(tmp_path, mon
 
     def handle_request(request: httpx.Request) -> httpx.Response:
         if request.url.path == "/api/chat/threads":
-            return httpx.Response(200, json=[{"id": "thread-marked", "metadata": {"_yuxi_test": True}}])
+            return httpx.Response(200, json=[{"id": "thread-marked", "metadata": {"_deep_research_test": True}}])
         if request.method == "POST" and request.url.path.endswith("/cancel"):
             return httpx.Response(200, json={"status": "cancelled"})
         if request.method == "DELETE":
@@ -635,10 +635,10 @@ async def test_remove_test_workdir_is_idempotent_when_directory_is_gone(tmp_path
 async def test_is_e2e_thread_recognizes_marker_or_e2e_agent_prefix():
     from test.live_api_cleanup import _is_e2e_thread
 
-    marked = {"id": "t1", "agent_id": "default-chatbot", "metadata": {"_yuxi_e2e": True, "test": "viewer-fs-e2e"}}
+    marked = {"id": "t1", "agent_id": "default-chatbot", "metadata": {"_deep_research_e2e": True, "test": "viewer-fs-e2e"}}
     agent_prefix = {"id": "invocation_x", "agent_id": "e2e-agent-call-deadbeef"}
     unified = {"id": "t3", "title": f"{TEST_CONVERSATION_TITLE_PREFIX}viewer_deadbeef", "metadata": {}}
-    explicit = {"id": "t4", "metadata": {"_yuxi_test": True}}
+    explicit = {"id": "t4", "metadata": {"_deep_research_test": True}}
     plain = {"id": "t2", "agent_id": "default-chatbot"}
 
     assert _is_e2e_thread(marked)

@@ -348,7 +348,7 @@ async def test_thread_history_hides_internal_metadata_from_published_model_audit
             message_id=audit.id,
             langgraph_tool_call_id="call-a",
             tool_name="search",
-            tool_input={"q": "Yuxi"},
+            tool_input={"q": "深度研究平台"},
             tool_output="safe result",
             status="success",
         )

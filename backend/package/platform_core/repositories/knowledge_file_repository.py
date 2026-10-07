@@ -653,7 +653,7 @@ class KnowledgeFileRepository:
         """获取知识库文件统计；结果带短 TTL 缓存，避免高频列表请求反复全表聚合。"""
         from platform_core.storage.redis import get_async_redis_client
 
-        cache_key = f"yuxi:kb_file_stats:{kb_id}"
+        cache_key = f"deep-research:kb-file-stats:{kb_id}"
         redis_client = await get_async_redis_client()
         try:
             cached = await redis_client.get(cache_key)

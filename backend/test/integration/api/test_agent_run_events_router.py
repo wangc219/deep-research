@@ -44,7 +44,7 @@ async def test_stream_batch_preserves_payload_and_expiry():
 
 
 def _postgres_dsn() -> str:
-    return os.getenv("POSTGRES_URL", "postgresql+asyncpg://postgres:postgres@postgres:5432/yuxi").replace(
+    return os.getenv("POSTGRES_URL", "postgresql+asyncpg://postgres:postgres@postgres:5432/deep_research").replace(
         "+asyncpg", ""
     )
 

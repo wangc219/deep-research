@@ -1,9 +1,9 @@
-"""拥有 Yuxi 的 ARQ 领取适配，执行与恢复协议仍由 ARQ 管理。"""
+"""平台内建 ARQ 领取适配，执行与恢复协议仍由 ARQ 管理。"""
 
 from arq.worker import Worker, get_kwargs
 
 
-class YuxiWorker(Worker):
+class PlatformWorker(Worker):
     """跳过本进程仍在执行的候选，减少补位请求之前的重复 Redis 往返。"""
 
     async def start_jobs(self, job_ids: list[bytes]) -> None:
@@ -18,4 +18,4 @@ class YuxiWorker(Worker):
 
 def run_worker(settings: type) -> None:
     """让正式入口和诊断入口复用同一 Worker 与既有生命周期。"""
-    YuxiWorker(**get_kwargs(settings)).run()
+    PlatformWorker(**get_kwargs(settings)).run()

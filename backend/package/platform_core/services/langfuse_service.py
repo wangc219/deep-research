@@ -204,7 +204,7 @@ def submit_user_feedback_score(
     try:
         client.create_score(
             trace_id=trace_id,
-            score_id=f"yuxi-message-feedback-{feedback_id}",
+            score_id=f"deep-research-message-feedback-{feedback_id}",
             name="user-feedback",
             value=value,
             data_type="BOOLEAN",

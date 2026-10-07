@@ -204,9 +204,7 @@ async def load_info_config():
             content = await file.read()
 
         # 注入版本号占位符
-        content = content.replace("{{DEEP_RESEARCH_VERSION}}", get_version()).replace(
-            "{{YUXI_VERSION}}", get_version()
-        )
+        content = content.replace("{{DEEP_RESEARCH_VERSION}}", get_version())
 
         config = yaml.safe_load(content)
 
