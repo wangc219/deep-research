@@ -5,7 +5,7 @@ import json
 import math
 import re
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from urllib.parse import parse_qsl, urlsplit, urlunsplit
 
 import httpx
@@ -433,7 +433,7 @@ class HttpProviders:
                         "excerpt_end": end,
                         "page": None,
                         "origin": "public",
-                        "fetched_at": datetime.now(timezone.utc).isoformat(),
+                        "fetched_at": datetime.now(UTC).isoformat(),
                     }
                 )
             except ProviderConfigurationError:
@@ -482,7 +482,7 @@ class HttpProviders:
         sources, seen = [], set()
         filtered = False
         truncated = len(rows) > MAX_PUBLIC_SEARCH_RESULTS
-        fetched_at = datetime.now(timezone.utc).isoformat()
+        fetched_at = datetime.now(UTC).isoformat()
         for row in rows:
             if (
                 not isinstance(row, dict)

@@ -228,3 +228,22 @@ GitHub Actions 与本机结果分开：发布后首次查询未返回本提交�
 ### 已发布版本的回滚
 
 先保存自己的后续修改并停止受影响的本机服务，在自己的分支执行 `git revert 2116cd4782fb88e935dc5af8d2776444c06be50b` 可生成反向提交，审核后正常推送自己的 fork；不要强推或重置历史。没有实际执行回滚。该实现提交同时包含上轮模型兼容修复与本轮检索增强，撤销它会一起撤销这批未发布前的改动；专用数据与密钥配置不受 Git revert 管理，不应删除。仓库外保留发布前内容副本以供选择性恢复。
+
+## 2026-10-12 同步到 wangc219/main 后的独立复验
+
+fork 的 5 个提交已以普通快进方式同步至 `wangc219/deep-research` 的 `main`。同步后两边远端均为 `47958e74362b929bfd3e35092e3fdf9437242cdc`；保留原始提交历史、全部 65 个文件的增量和本地未提交文件。原 backend 相对基线仍没有源码差异。
+
+本次仅补充 Python 3.12+ 已支持的标准别名：解析超时使用内置 `TimeoutError`，提供商时间戳使用 `datetime.UTC`，解决 Ruff 0.17 的三处旧别名提示。没有修改模型、检索、权限或任务协议。
+
+实际复验结果：
+
+- 专用 Python 测试 263/263，通过；保留一条已有 Starlette/httpx 弃用提示。Ruff 检查及 18 文件格式检查通过。
+- 原平台 `make check` 的架构检查、编译及 13 项回归通过。前端在当天同步验证中 520/520、lint、生产构建通过；本次后续没有修改前端源码。大包提示保留。
+- 最终代码在真实 Google Chrome、实际 Vue/Vite 代理、生产 `create_app`/Engine/解析子进程/SQLite 下通过 12 个综合场景。只有外部模型为明确标记的 loopback 合成 HTTP 提供商，没有使用真实账户或原平台资料。覆盖四种格式上传、损坏 PDF 提示、选库/空选择/零命中、无模型调用的检索预览、逐字引用与来源跳转、图谱端点过滤、刷新恢复、亮暗主题、390px 布局、两种启动入口的 202 响应丢失恢复、取消与迟到响应、伪造引句拒绝、提供商错误、身份隔离及删除。没有浏览器异常或原平台 API 请求。
+- 可选 Compose 配置、独立服务镜像和生产 Web 镜像构建通过。在独立验收项目实际启动服务与 Nginx，验证专用配置 0600、health、鉴权、上传/解析/预览/检索/删除、Nginx 配置和代理，以及生产静态页面与未配置模型提示均通过。没有启动该项目的原 API/worker/数据服务。
+
+首轮失败与处理：浏览器删除场景的按钮名称匹配写错，修正验收脚本后完整重跑；Docker 首次 HTTP 检查早于服务 ready，改为等待健康检查后复验通过。这两项是验收脚本问题，没有以修改产品行为绕过。标准别名修正后重新执行 Python、Ruff 和全部页面场景。
+
+证据：[结果与源码指纹](validation/document-research/main-sync-20261012/results.json)、[引用问答](validation/document-research/main-sync-20261012/answer-desktop-light.png)、[移动端深色](validation/document-research/main-sync-20261012/answer-mobile-dark.png)、[深研启动响应丢失恢复](validation/document-research/main-sync-20261012/research-response-loss-recovered.png)、[Docker 静态入口](validation/document-research/main-sync-20261012/docker-static-entry.png)。验收服务已停止、独立合成测试卷已移除，4296/4297/4298 均无监听。
+
+运行范围：现有 5173 页面没有启用可选文档研究服务，其专用 API 检查返回 502；默认 Compose 不启用新服务属于本轮原有部署设计。本次独立部署验收成功不代表已将新服务启用到现有完整平台。未提供专用配置路径，本次没有重新调用真实智谱知识库、公开搜索或真实模型；此前真实提供商记录仍保留原日期。复杂表格保真、OCR、解析性能、专业报告语义与生产负载仍未验证。GitHub Actions 查询受到匿名 API 限流，未取得云端结论，不将本机结果标为云端通过。

@@ -129,7 +129,7 @@ async def parse_upload(name: str, content: bytes) -> list[dict]:
             if monitor in done:
                 monitor.result()
             stdout, _ = await communication
-    except (ValueError, asyncio.TimeoutError, asyncio.CancelledError) as exc:
+    except (ValueError, TimeoutError, asyncio.CancelledError) as exc:
         if process.returncode is None:
             process.kill()
         await process.wait()
