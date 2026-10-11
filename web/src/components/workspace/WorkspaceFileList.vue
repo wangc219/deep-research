@@ -58,7 +58,7 @@
     </template>
 
     <template #row-actions="{ row }">
-      <a-dropdown v-if="!row.is_dir || (!readonly && !row.readonly)" :trigger="['click']">
+      <a-dropdown v-if="!row.is_dir || row.source !== 'knowledge' || (!readonly && !row.readonly)" :trigger="['click']">
         <button
           type="button"
           class="more-action"
@@ -70,10 +70,10 @@
         </button>
         <template #overlay>
           <a-menu>
-            <a-menu-item v-if="!row.is_dir" key="download" @click="$emit('download-entry', row)">
+            <a-menu-item v-if="!row.is_dir || row.source !== 'knowledge'" key="download" @click="$emit('download-entry', row)">
               <span class="menu-item-content">
                 <Download :size="14" />
-                <span>下载</span>
+                <span>{{ row.is_dir ? '打包下载 ZIP' : '下载' }}</span>
               </span>
             </a-menu-item>
             <a-menu-item

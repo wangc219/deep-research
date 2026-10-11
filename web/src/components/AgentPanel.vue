@@ -176,11 +176,10 @@
               <template #actions="{ node }">
                 <div class="node-actions-container">
                   <button
-                    v-if="node.isLeaf"
                     class="tree-action-btn tree-download-btn"
                     @click.stop="downloadFile(node.fileData)"
-                    title="下载文件"
-                    aria-label="下载文件"
+                    :title="node.isLeaf ? '下载文件' : '打包下载 ZIP'"
+                    :aria-label="node.isLeaf ? '下载文件' : '打包下载 ZIP'"
                   >
                     <Download :size="14" />
                   </button>

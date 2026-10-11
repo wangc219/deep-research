@@ -1,0 +1,22 @@
+{
+  "backend/package/platform_core/services/workspace_service.py": "bda86c5b4dd938ce37944ed62b424ca7ef3744b80234be1542ba1b6a822e9a93",
+  "backend/package/platform_core/workspace/filesystem.py": "75504fbdb936d07bd5075c2600891fedc5a98ac8b45123cd3325517ed37f642d",
+  "backend/test/unit/services/test_workspace_service.py": "22c8f2222233b60658e7a9182bc0a97d87c8b907bb18a960ba7230b0c8cca0b3",
+  "backend/test/unit/workspace/test_filesystem.py": "2bd24ee979d44a9e0e304397600d5b02aaf826c34446a2f3d34fd506e0bc2173",
+  "document_research/config.py": "3cd54dc9d4da8a3ab92f6d04f2841dd6607a89f616f20f36b5e32d56cc88a8dd",
+  "document_research/deliveries.py": "c74f2f9c7bf23dc5400985bab93ba53938a871e890613895025e1813b5a1d29a",
+  "document_research/service.py": "69eee6d572a734354bb383cccfa04104ced8ff4d4636f0af0020a6ca3da3b79a",
+  "document_research/settings.py": "273fc65484bf528d389f87924d0f56bceda848a63ea71f320920488cd1fa454b",
+  "document_research/tests/test_delivery_settings.py": "c2803f54bc4597ce1e978f306d933f2e7ebcc038b6354675143cd0a9230bf5d3",
+  "web/src/apis/document_research_api.js": "dd611f54ead40462e62a89384add627e067b4b58282cbfa4d1d1965258d62508",
+  "web/src/components/AgentPanel.vue": "1261d14bfeebaf5f163ee8696ba2cf9d40897e717a1cd9091612d83ff5848646",
+  "web/src/components/common/PdfPreview.vue": "daa98a188520b0c9b7c7d56530bd41aa08d6e7244f7f35f90a3d2d707099b7e3",
+  "web/src/components/workspace/WorkspaceFileList.vue": "f1ea6107706da085a12a3a686a3fa8208d42b5d1eea40520a1821c3087d17675",
+  "web/src/views/DocumentResearchView.vue": "3ad31f45db05d1e36d079c19592e56188217772f95a7d646cfbfa9fb2ce7ef3f",
+  "web/src/views/WorkspaceView.vue": "dd70872b7c7f1e9f87eb1a150616216b0b8eaa5add4b915908539ad9950967c2",
+  "web/src/views/document-research/DeliveryPanel.vue": "733a1ce0a4ef5657b547f80d06ad3b81e41c05df665725cb7253c0b25578e90f",
+  "web/src/views/document-research/ModelSettings.vue": "3326badae4897b743ed311c39268ab4b9ae468671509e96b3ed371e14ce97130",
+  "web/test/documentResearchDeliveryApi.test.js": "b0ee026790c2e02c92840db4636afeb6ff247292a76bb0c9a207cb306d15a4d2",
+  "web/test/fixtures/AgentWorkspaceParity.vue": "73ae92682b2e6319d717c0c7618d6fc4b8bcd7b75b067471a3fd3f951d6a2622",
+  "web/test/fixtures/agent-workspace-parity.html": "4ed1b6870290502d79cc4de22f339abf2acbc732b2c85a778c71cfa9c2a09ee9"
+}

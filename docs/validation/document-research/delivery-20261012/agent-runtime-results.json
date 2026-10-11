@@ -1,0 +1,40 @@
+{
+  "production_chatbot_graph": true,
+  "real_docker_sandbox": true,
+  "real_postgresql_checkpoint": true,
+  "synthetic_model": true,
+  "artifacts": [
+    "/home/gem/user-data/projects/11111111-1111-4111-8111-111111111111/outputs/report.md",
+    "/home/gem/user-data/projects/11111111-1111-4111-8111-111111111111/outputs/table.csv",
+    "/home/gem/user-data/projects/11111111-1111-4111-8111-111111111111/outputs/chart.svg",
+    "/home/gem/user-data/projects/11111111-1111-4111-8111-111111111111/outputs/page.html",
+    "/home/gem/user-data/projects/11111111-1111-4111-8111-111111111111/outputs/report.pdf",
+    "/home/gem/user-data/projects/11111111-1111-4111-8111-111111111111/analyze.py"
+  ],
+  "tool_results": [
+    {
+      "name": "read_file",
+      "content": "1  name,value\n2  a,10\n3  b,20\n4  c,30\n\n[Read 4 lines (lines 1-4). More lines remain from offset 4.]"
+    },
+    {
+      "name": "write_file",
+      "content": "Updated file /home/gem/user-data/projects/11111111-1111-4111-8111-111111111111/analyze.py"
+    },
+    {
+      "name": "execute",
+      "content": "mean=20.0\n[Command succeeded with exit code 0]"
+    },
+    {
+      "name": "read_file",
+      "content": "Error: permission denied for read on '/etc/passwd'"
+    },
+    {
+      "name": "write_file",
+      "content": "Failed to write file '/tmp/escape.txt': permission_denied"
+    },
+    {
+      "name": "present_artifacts",
+      "content": "已将交付物展示给用户"
+    }
+  ]
+}

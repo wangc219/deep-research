@@ -30,6 +30,7 @@
 <script setup>
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { CircleAlert, LoaderCircle } from '@lucide/vue'
+import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import { resolvePdfLoadErrorMessage } from '@/utils/pdfPreviewErrors'
 
 const props = defineProps({
@@ -82,12 +83,9 @@ const cancelOngoingRenders = () => {
 const getPdfjs = async () => {
   if (pdfjsLibInstance) return pdfjsLibInstance
 
-  const [pdfjs, workerUrlModule] = await Promise.all([
-    import('pdfjs-dist'),
-    import('pdfjs-dist/build/pdf.worker.min.mjs?url')
-  ])
+  const pdfjs = await import('pdfjs-dist')
 
-  pdfjs.GlobalWorkerOptions.workerSrc = workerUrlModule.default || workerUrlModule
+  pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl
   pdfjsLibInstance = pdfjs
   return pdfjs
 }

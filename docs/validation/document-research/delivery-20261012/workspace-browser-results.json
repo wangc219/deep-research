@@ -1,0 +1,35 @@
+{
+  "checks": [
+    {
+      "name": "真实生产交付卡片与任务目录显示",
+      "status": "PASS"
+    },
+    {
+      "name": "交付卡片打开HTML并在隔离iframe内交互",
+      "status": "PASS"
+    },
+    {
+      "name": "图表、PDF与可执行代码在线预览",
+      "status": "PASS"
+    },
+    {
+      "name": "Markdown在生产预览组件中编辑、保存与重新读取",
+      "status": "PASS"
+    },
+    {
+      "name": "工作区目录菜单打包下载真实ZIP",
+      "status": "PASS"
+    },
+    {
+      "name": "聊天交付卡片下载及保存到另一工作区目录",
+      "status": "PASS"
+    },
+    {
+      "name": "真实HTTP拒绝另一身份、路径穿越和符号链接",
+      "status": "PASS"
+    }
+  ],
+  "page_errors": [],
+  "synthetic_identity_transport": true,
+  "production_components_and_services": true
+}

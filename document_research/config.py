@@ -57,6 +57,7 @@ def init_config(data_dir: str | Path) -> Path:
     path = directory / "config.json"
     config = {
         "tokens": {"local": secrets.token_urlsafe(32)},
+        "settings_admins": ["local"],
         "model": {"base_url": "", "api_key": "", "model": ""},
         "zhipu": {"api_key": "", "libraries": {"local": []}},
     }

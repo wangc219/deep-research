@@ -876,7 +876,7 @@ const deleteEntries = async (targetEntries) => {
 }
 
 const downloadEntry = async (entry) => {
-  if (!entry || entry.is_dir) return
+  if (!entry || (entry.is_dir && entry.source === 'knowledge')) return
 
   try {
     const response =

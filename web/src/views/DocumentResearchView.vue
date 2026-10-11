@@ -6,10 +6,13 @@ import { createDocumentResearchApi, createDocumentTaskMonitor, createDocumentRet
 import EvidenceSources from './document-research/EvidenceSources.vue'
 import RetrievalStatus from './document-research/RetrievalStatus.vue'
 import ReportPanel from './document-research/ReportPanel.vue'
+import ModelSettings from './document-research/ModelSettings.vue'
+import DeliveryPanel from './document-research/DeliveryPanel.vue'
 
 const theme = useThemeStore()
 const token = ref('')
 const user = ref('')
+const settingsOpen = ref(false)
 const health = ref(null)
 const healthError = ref('')
 const error = ref('')
@@ -153,6 +156,7 @@ async function connect() {
   })
 }
 function disconnect() {
+  settingsOpen.value = false
   invalidateTaskScope()
   monitor.stop()
   remember(DOCUMENT_TOKEN_KEY, null)
@@ -276,13 +280,13 @@ onUnmounted(() => { alive = false; invalidateTaskScope(); monitor.stop(); clearR
     <div class="page-content">
       <div class="intro"><div class="eyebrow"><FileSearch :size="17" />软件研发 / 文档解析</div><h1>让解析方案有据可依</h1><p>先检索资料、核对原文，再获取有来源的回答或制定可验证的研发方案。</p></div>
       <div v-if="healthError" class="notice error" role="alert">{{ healthError }} <button type="button" @click="checkHealth">重新检查</button></div>
-      <div v-else-if="health && !health.model_configured" class="notice" role="status">模型尚未配置。资料管理和检索预览可以使用；生成回答或报告前，请管理员配置文档研发服务的模型地址、模型名和密钥。<button type="button" @click="checkHealth">重新检查</button></div>
+      <div v-else-if="health && !health.model_configured" class="notice" role="status">模型尚未配置。资料管理和检索预览可以使用；生成回答或报告前，请管理员连接后打开“模型设置”，填写模型地址、模型名和密钥。<button type="button" @click="checkHealth">重新检查</button></div>
       <div v-if="error" class="notice error" role="alert">{{ error }}</div>
 
       <form v-if="!user" class="panel connect" @submit.prevent="connect">
         <h2>连接文档研发服务</h2><p class="muted">使用管理员提供的专用访问令牌。只在本标签页会话中保存。</p>
         <label for="document-token">专用访问令牌</label><div class="inline"><input id="document-token" v-model="token" type="password" autocomplete="off" required :disabled="!!busy" placeholder="输入专用令牌" /><button type="submit" class="primary" :disabled="!!busy || !token.trim()">{{ busy || '连接服务' }}</button></div>
-        <p class="muted">此入口管理通用文档解析任务与资料。模型及智谱 API 密钥由管理员在服务端配置。</p>
+        <p class="muted">此入口管理通用文档解析任务与资料。模型密钥可由管理员在此页的“模型设置”中配置；智谱检索密钥及库授权仍由服务端管理。</p>
       </form>
 
       <div v-else class="workspace">
@@ -313,6 +317,8 @@ onUnmounted(() => { alive = false; invalidateTaskScope(); monitor.stop(); clearR
         </aside>
 
         <div class="research-main">
+          <button type="button" class="quiet" @click="settingsOpen = !settingsOpen">{{ settingsOpen ? '关闭模型设置' : '模型设置' }}</button>
+          <ModelSettings v-if="settingsOpen" :key="user + token" :api="api" @saved="checkHealth" />
           <form v-if="!task" class="panel research-form" @submit.prevent="createTask">
             <div class="section-heading"><h2>{{ fields.mode === 'answer' ? '基于资料提问' : '定义研究问题' }}</h2><span class="badge">已选 {{ selected.length }} 个库</span></div>
             <div class="mode-switch" role="group" aria-label="工作模式"><button type="button" :aria-pressed="fields.mode === 'answer'" @click="fields.mode = 'answer'">证据问答</button><button type="button" :aria-pressed="fields.mode === 'research'" @click="fields.mode = 'research'">深研方案</button></div>
@@ -356,6 +362,7 @@ onUnmounted(() => { alive = false; invalidateTaskScope(); monitor.stop(); clearR
             <div v-if="task.status === 'failed'" class="notice error" role="alert">{{ task.error || '任务未完成，请检查服务配置或证据后新建研究。' }}</div>
             <div v-if="task.status === 'completed' && !task.report" class="notice error">任务标记完成，但未返回报告。请检查服务日志。</div>
             <ReportPanel v-if="task.status === 'completed' && task.report" :report="task.report" />
+            <DeliveryPanel v-if="task.status === 'completed' && task.report" :key="task.id + user + token" :api="api" :task-id="task.id" />
           </section>
           <div v-if="!task" class="workflow"><span><Check :size="15" />来源可追溯</span><span><Check :size="15" />事实与推断分开</span><span><Check :size="15" />未实测结果明确标注</span></div>
         </div>

@@ -242,3 +242,49 @@ def test_search_tree_entry_budget_limits_actual_directory_iteration(tmp_path: Pa
     )
 
     assert examined == 7
+
+
+def test_directory_bundle_is_confined_and_preserves_nested_files(tmp_path, monkeypatch):
+    import zipfile
+
+    root = tmp_path / "workspace"
+    (root / "deliveries" / "nested").mkdir(parents=True)
+    (root / "deliveries" / "empty").mkdir()
+    (root / "deliveries" / "nested" / "report.md").write_text("# report")
+    (root / "unselected-secret.txt").write_text("secret")
+    monkeypatch.setattr(workspace_filesystem_module, "user_workspace_dir", lambda _uid: root)
+    target = tmp_path / "bundle.zip"
+    assert Workspace("user").download_authorized_directory_to_path("/deliveries", str(target), 100) == 8
+    with zipfile.ZipFile(target) as archive:
+        assert set(archive.namelist()) == {"nested/", "nested/report.md", "empty/"}
+        assert archive.read("nested/report.md") == b"# report"
+
+
+@pytest.mark.parametrize("kind", ["symlink", "fifo", "bytes", "entries", "depth", "unsafe-name"])
+def test_directory_bundle_rejects_escape_and_resource_exhaustion(tmp_path, monkeypatch, kind):
+    from platform_core.workspace.errors import FileTransferLimitError
+
+    root = tmp_path / "workspace"
+    root.mkdir()
+    outside = tmp_path / "secret.txt"
+    outside.write_text("outside-secret")
+    (root / "report.txt").write_text("report")
+    monkeypatch.setattr(workspace_filesystem_module, "user_workspace_dir", lambda _uid: root)
+    options = {}
+    max_bytes = 100
+    if kind == "symlink":
+        (root / "escape").symlink_to(outside)
+    elif kind == "fifo":
+        os.mkfifo(root / "fifo")
+    elif kind == "bytes":
+        max_bytes = 3
+    elif kind == "entries":
+        options["max_entries"] = 0
+    elif kind == "depth":
+        (root / "nested").mkdir()
+        options["max_depth"] = 0
+    else:
+        (root / "bad\\name").write_text("unsafe")
+    with pytest.raises((PermissionError, FileTransferLimitError)):
+        Workspace("user").download_authorized_directory_to_path("/", str(tmp_path / "bundle.zip"), max_bytes, **options)
+    assert outside.read_text() == "outside-secret"

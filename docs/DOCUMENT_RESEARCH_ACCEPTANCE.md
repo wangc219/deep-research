@@ -247,3 +247,11 @@ fork 的 5 个提交已以普通快进方式同步至 `wangc219/deep-research` �
 证据：[结果与源码指纹](validation/document-research/main-sync-20261012/results.json)、[引用问答](validation/document-research/main-sync-20261012/answer-desktop-light.png)、[移动端深色](validation/document-research/main-sync-20261012/answer-mobile-dark.png)、[深研启动响应丢失恢复](validation/document-research/main-sync-20261012/research-response-loss-recovered.png)、[Docker 静态入口](validation/document-research/main-sync-20261012/docker-static-entry.png)。验收服务已停止、独立合成测试卷已移除，4296/4297/4298 均无监听。
 
 运行范围：现有 5173 页面没有启用可选文档研究服务，其专用 API 检查返回 502；默认 Compose 不启用新服务属于本轮原有部署设计。本次独立部署验收成功不代表已将新服务启用到现有完整平台。未提供专用配置路径，本次没有重新调用真实智谱知识库、公开搜索或真实模型；此前真实提供商记录仍保留原日期。复杂表格保真、OCR、解析性能、专业报告语义与生产负载仍未验证。GitHub Actions 查询受到匿名 API 限流，未取得云端结论，不将本机结果标为云端通过。
+
+## 2026-10-12 智能对话工作区与文档研究交付验收
+
+按用户选择复用原智能对话，保留原平台沙盒和工作区，增加目录 ZIP 下载、修复 PDF 预览 worker；独立文档研究增加前端模型设置和 Markdown/HTML/CSV/JSON 文件交付、Markdown 编辑持久化及 ZIP 下载。对照 Yuxi 固定版本，功能映射、具体证据和限制见 [本轮完整验收记录](validation/document-research/delivery-20261012/README.md)。
+
+真实生产 ChatbotAgent 执行图、Docker 沙盒和独立 PostgreSQL 检查点完成 CSV 分析、脚本执行及六种文件交付，越界文件工具调用被拒绝。真实 Chrome 通过文档入口 14 场景及智能对话生产组件 7 场景，覆盖交互 HTML、PDF canvas、图表/代码预览、Markdown 编辑和文件/目录下载。文档服务生产容器通过配置保存、0600/no-store 和重启持久化检查。模型为合成提供商；工作区 HTTP 使用合成身份适配器，不声称完成真实提供商或完整生产登录/worker/SSE 验收。
+
+最终文档 Python 276、前端 522、工作区最终专项 45、独立数据库集成 3 项通过；lint、构建和 Ruff 通过。全量后端为 2573 passed、11 failed；在干净的原 main 基线复测受影响文件，同样 11 项失败，无新增失败，详见记录。现有完整平台尚未启用专用服务，用户需按启动说明部署并通过前端填入真实模型配置。此前阶段的“未发布”描述保留为历史状态。

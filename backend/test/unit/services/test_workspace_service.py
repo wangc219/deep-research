@@ -425,3 +425,48 @@ def test_workspace_entry_preserves_v071_virtual_path_contract() -> None:
     assert root["virtual_path"] == "/home/gem/user-data"
     assert directory["path"] == "/notes/"
     assert directory["virtual_path"] == "/home/gem/user-data/notes/"
+
+
+@pytest.mark.asyncio
+async def test_download_directory_as_zip_and_cleanup(tmp_path, monkeypatch):
+    import zipfile
+
+    monkeypatch.setenv("DEEP_RESEARCH_USER_DATA_DIR", str(tmp_path / "threads"))
+    user = _user()
+    root = _workspace_root(user)
+    (root / "deliveries" / "nested").mkdir(parents=True)
+    (root / "deliveries" / "nested" / "report.md").write_text("# report")
+    response = await svc.download_workspace_file(path="/deliveries", current_user=user)
+    temporary = Path(response.path)
+    assert response.media_type == "application/zip"
+    assert "deliveries.zip" in response.headers["content-disposition"]
+    with zipfile.ZipFile(temporary) as archive:
+        assert archive.read("nested/report.md") == b"# report"
+    await response.background()
+    assert not temporary.exists()
+
+
+@pytest.mark.asyncio
+async def test_directory_download_rejects_symlink_and_cleans_temporary_file(tmp_path, monkeypatch):
+    monkeypatch.setenv("DEEP_RESEARCH_USER_DATA_DIR", str(tmp_path / "threads"))
+    user = _user()
+    root = _workspace_root(user)
+    (root / "deliveries").mkdir()
+    outside = tmp_path / "secret"
+    outside.write_text("secret")
+    (root / "deliveries" / "escape").symlink_to(outside)
+    import tempfile
+
+    original = tempfile.mkstemp
+    created = []
+
+    def tracked(**kwargs):
+        result = original(**kwargs)
+        created.append(Path(result[1]))
+        return result
+
+    monkeypatch.setattr(svc.tempfile, "mkstemp", tracked)
+    with pytest.raises(HTTPException) as error:
+        await svc.download_workspace_file(path="/deliveries", current_user=user)
+    assert error.value.status_code == 403
+    assert created and all(not path.exists() for path in created)

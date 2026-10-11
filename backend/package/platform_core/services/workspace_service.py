@@ -303,16 +303,29 @@ async def download_workspace_file(*, path: str, current_user: User) -> FileRespo
     backend = _workspace_backend(current_user)
     workspace_path = _workspace_path(path)
     file_name = PurePosixPath(workspace_path).name or "download"
-    media_type = detect_media_type(file_name)
+    try:
+        metadata = await asyncio.to_thread(backend.stat_authorized_path, workspace_path, root=WORKSPACE_SCOPE_ROOT)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="文件不存在") from exc
+    except (PermissionError, NotADirectoryError, ValueError) as exc:
+        raise HTTPException(status_code=403, detail="Access denied") from exc
+    is_directory = metadata["is_dir"]
+    if is_directory:
+        file_name += ".zip"
+    media_type = "application/zip" if is_directory else detect_media_type(file_name)
     headers = {"Content-Disposition": f"attachment; filename*=UTF-8''{quote(file_name)}"}
-    descriptor, temp_path = tempfile.mkstemp(prefix="deep-research-workspace-download-", suffix=PurePosixPath(file_name).suffix)
+    descriptor, temp_path = tempfile.mkstemp(
+        prefix="deep-research-workspace-download-", suffix=PurePosixPath(file_name).suffix
+    )
     os.close(descriptor)
     try:
         await asyncio.to_thread(
-            backend.download_authorized_file_to_path,
+            backend.download_authorized_directory_to_path if is_directory else backend.download_authorized_file_to_path,
             workspace_path,
             temp_path,
-            MAX_WORKSPACE_DOWNLOAD_SIZE_BYTES,
+            min(MAX_WORKSPACE_DOWNLOAD_SIZE_BYTES, 256 * 1024 * 1024)
+            if is_directory
+            else MAX_WORKSPACE_DOWNLOAD_SIZE_BYTES,
         )
     except FileNotFoundError as exc:
         with contextlib.suppress(FileNotFoundError):
@@ -321,11 +334,15 @@ async def download_workspace_file(*, path: str, current_user: User) -> FileRespo
     except FileTransferLimitError as exc:
         with contextlib.suppress(FileNotFoundError):
             os.unlink(temp_path)
-        raise HTTPException(status_code=413, detail="文件超过下载大小限制") from exc
+        raise HTTPException(status_code=413, detail="下载超过大小、文件数量或目录深度限制") from exc
     except (PermissionError, IsADirectoryError, NotADirectoryError, ValueError) as exc:
         with contextlib.suppress(FileNotFoundError):
             os.unlink(temp_path)
         raise HTTPException(status_code=403, detail="Access denied") from exc
+    except OSError:
+        with contextlib.suppress(FileNotFoundError):
+            os.unlink(temp_path)
+        raise
     return FileResponse(
         path=temp_path,
         media_type=media_type,

@@ -1,0 +1,9 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><div id="app"></div><script type="module">
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
+import Antd from 'ant-design-vue';
+import '/src/assets/css/base.css';
+import Fixture from '/test/fixtures/AgentWorkspaceParity.vue';
+localStorage.setItem('user_token','synthetic-workspace-token');
+createApp(Fixture).use(createPinia()).use(Antd).mount('#app');
+</script></body></html>

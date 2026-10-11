@@ -7,6 +7,7 @@ import itertools
 import os
 import stat
 import uuid
+import zipfile
 from pathlib import Path, PurePosixPath
 
 from platform_core.utils.paths import open_directory_fd, open_regular_file_fd
@@ -111,6 +112,54 @@ class Workspace:
             os.close(directory_fd)
         entries.sort(key=lambda item: str(item["name"]).lower())
         return entries, examined_entries
+
+    def download_authorized_directory_to_path(
+        self, path: str, target_path: str, max_bytes: int, *, max_entries: int = 5000, max_depth: int = 32
+    ) -> int:
+        """以固定目录 fd 有界打包，拒绝链接、特殊文件和不安全 ZIP 名称。"""
+        base, parts = self._resolve_path(path)
+        directory_fd = self._open_directory(base, parts)
+        total = count = 0
+
+        def add_directory(archive, parent_fd, prefix, depth):
+            nonlocal total, count
+            if depth > max_depth:
+                raise FileTransferLimitError("directory depth limit exceeded")
+            with os.scandir(parent_fd) as entries:
+                for entry in entries:
+                    count += 1
+                    if count > max_entries:
+                        raise FileTransferLimitError("archive entry limit exceeded")
+                    if "\\" in entry.name or ":" in entry.name:
+                        raise PermissionError("unsafe archive name")
+                    relative = f"{prefix}{entry.name}"
+                    item_stat = entry.stat(follow_symlinks=False)
+                    if stat.S_ISDIR(item_stat.st_mode):
+                        child_fd = self._open_directory(parent_fd, (entry.name,))
+                        try:
+                            archive.writestr(relative + "/", b"")
+                            add_directory(archive, child_fd, relative + "/", depth + 1)
+                        finally:
+                            os.close(child_fd)
+                    elif stat.S_ISREG(item_stat.st_mode):
+                        with open_regular_file_fd(parent_fd, (entry.name,)) as (file_fd, file_stat):
+                            if total + file_stat.st_size > max_bytes:
+                                raise FileTransferLimitError("archive byte limit exceeded")
+                            with archive.open(relative, "w", force_zip64=True) as target:
+                                while chunk := os.read(file_fd, 1024 * 1024):
+                                    total += len(chunk)
+                                    if total > max_bytes:
+                                        raise FileTransferLimitError("archive byte limit exceeded")
+                                    target.write(chunk)
+                    else:
+                        raise PermissionError("archive contains symlink or special file")
+
+        try:
+            with zipfile.ZipFile(target_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+                add_directory(archive, directory_fd, "", 0)
+            return total
+        finally:
+            os.close(directory_fd)
 
     def download_authorized_file_to_path(self, path: str, target_path: str, max_bytes: int) -> int:
         """把授权普通文件有界复制到服务临时文件。"""

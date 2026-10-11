@@ -1,0 +1,10 @@
+{
+  "production_container": true,
+  "settings_secret_not_returned": true,
+  "key_preserved": true,
+  "restart_persistence": true,
+  "explicit_key_clear": true,
+  "config_mode": "0o600",
+  "synthetic_config_only": true,
+  "external_provider_called": false
+}

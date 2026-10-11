@@ -1,0 +1,25 @@
+{
+  "base_commit": "5fdb9ec65d57c50b157e6b58eecc09753fa782e4",
+  "full_current_unit_run": {
+    "passed": 2573,
+    "failed": 11
+  },
+  "baseline_affected_files_run": {
+    "passed": 131,
+    "failed": 11
+  },
+  "identical_failed_test_ids": true,
+  "failed_tests": [
+    "test/unit/config/test_docker_compose_checkpointer.py::test_arq_dependency_changes_trigger_real_dispatch_regression",
+    "test/unit/config/test_docker_compose_checkpointer.py::test_backend_unit_workflow_runs_for_initialization_contract_changes",
+    "test/unit/config/test_docker_compose_checkpointer.py::test_initialization_scripts_enforce_security_secret_contract",
+    "test/unit/config/test_docker_compose_checkpointer.py::test_worker_healthcheck_uses_arq_health_contract_in_development_and_production",
+    "test/unit/config/test_docker_compose_service_boundaries.py::test_default_agent_capacity_supports_one_hundred_concurrent_runs[compose.yaml]",
+    "test/unit/config/test_docker_compose_service_boundaries.py::test_storage_migration_script_quiesces_runtime_before_issuing_proof",
+    "test/unit/config/test_docker_compose_service_boundaries.py::test_storage_migration_script_recovers_stopped_production_deployment",
+    "test/unit/migration/test_legacy_sqlite_inventory.py::test_legacy_sqlite_inventory_uses_real_query_tables",
+    "test/unit/routers/test_chat_artifact_stream.py::test_artifact_route_returns_realtime_workdir_response",
+    "test/unit/services/test_equipment_superadmin_delegation.py::test_superadmin_updates_run_scope_without_changing_owner",
+    "test/unit/services/test_skill_service.py::test_knowledge_base_builtin_skill_spec"
+  ]
+}

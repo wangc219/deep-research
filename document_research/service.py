@@ -13,13 +13,15 @@ from typing import Annotated, Literal
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from .config import load_config, validate_data_dir
 from .contracts import ResearchError
+from .deliveries import MEDIA, NAMES, Deliveries, digest
 from .parsing import MAX_UPLOAD, parse_upload
 from .providers import ProviderError
+from .settings import public_settings, require_admin, save_settings
 from .storage import Store
 
 PREFIX = "/document-research-api"
@@ -90,6 +92,33 @@ class TaskPatch(Input):
     accept_assumptions: bool | None = None
 
 
+class ModelSettingsInput(Input):
+    base_url: str = Field(max_length=2000)
+    model: str = Field(min_length=1, max_length=200)
+    api_key: str = Field(default="", max_length=4096)
+    clear_api_key: bool = False
+    reasoning_effort: Literal["", "low", "high", "max"] = ""
+
+    @field_validator("api_key")
+    @classmethod
+    def valid_key(cls, value):
+        value = value.strip()
+        if any(ord(character) < 33 or ord(character) > 126 for character in value):
+            raise ValueError("API 密钥不能包含空白或控制字符。")
+        return value
+
+    @model_validator(mode="after")
+    def key_action(self):
+        if self.api_key and self.clear_api_key:
+            raise ValueError("不能同时设置和清空密钥。")
+        return self
+
+
+class DeliveryPatch(Input):
+    content: str = Field(max_length=4 * 1024 * 1024)
+    expected_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+
+
 @dataclass(frozen=True)
 class Identity:
     owner: str
@@ -125,6 +154,7 @@ def create_app(data_dir: str | Path, engine=None) -> FastAPI:
         directory
     )  # Fail visibly at startup; never use implicit or platform credentials.
     store = Store(directory)
+    deliveries = Deliveries(store)
     if engine is None:
         from .engine import Engine
 
@@ -164,6 +194,12 @@ def create_app(data_dir: str | Path, engine=None) -> FastAPI:
     app.state.store = store
     app.state.engine = engine
     app.state.stopping = False
+
+    @app.middleware("http")
+    async def private_responses(request, call_next):
+        response = await call_next(request)
+        response.headers["Cache-Control"] = "no-store"
+        return response
 
     @app.exception_handler(PermissionError)
     async def permission_error(_request, _exc):
@@ -308,6 +344,101 @@ def create_app(data_dir: str | Path, engine=None) -> FastAPI:
     @app.get(PREFIX + "/session")
     def session(identity: Auth):
         return {"user": identity.owner}
+
+    @app.get(PREFIX + "/settings/model")
+    def model_settings(identity: Auth):
+        config = current_config(identity)
+        require_admin(config, identity.owner, identity.token)
+        return public_settings(config)
+
+    @app.put(PREFIX + "/settings/model")
+    def update_model_settings(body: ModelSettingsInput, identity: Auth):
+        try:
+            return save_settings(
+                directory, identity.owner, identity.token, body.model_dump()
+            )
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
+
+    def delivery_task(identity, task_id):
+        task = get_task(identity, task_id)
+        if task["status"] != "completed" or not task.get("report"):
+            raise HTTPException(409, "任务完成后才可交付文件。")
+        return task
+
+    @app.get(PREFIX + "/tasks/{task_id}/artifacts")
+    def artifacts(task_id: str, identity: Auth):
+        task = delivery_task(identity, task_id)
+        try:
+            files = deliveries.files(task)
+        except ValueError as exc:
+            raise HTTPException(413, str(exc)) from None
+        authorize_task(identity, task)
+        return {
+            "items": [
+                {
+                    "name": name,
+                    "size": len(files[name].encode()),
+                    "media_type": media,
+                    "editable": name == "report.md",
+                }
+                for name, media in zip(NAMES, MEDIA, strict=True)
+            ]
+        }
+
+    @app.get(PREFIX + "/tasks/{task_id}/delivery.zip")
+    def delivery_zip(task_id: str, identity: Auth):
+        task = delivery_task(identity, task_id)
+        content = deliveries.bundle(task)
+        authorize_task(identity, task)
+        return Response(
+            content,
+            media_type="application/zip",
+            headers={
+                "Content-Disposition": 'attachment; filename="document-research.zip"',
+                "Cache-Control": "no-store",
+            },
+        )
+
+    def delivery_file(identity, task_id, name):
+        if name not in NAMES:
+            raise HTTPException(404, "交付文件不存在。")
+        task = delivery_task(identity, task_id)
+        content = deliveries.files(task)[name]
+        authorize_task(identity, task)
+        return task, content
+
+    @app.get(PREFIX + "/tasks/{task_id}/artifacts/{name}")
+    def artifact(task_id: str, name: str, identity: Auth):
+        _, content = delivery_file(identity, task_id, name)
+        return {"name": name, "content": content, "sha256": digest(content)}
+
+    @app.get(PREFIX + "/tasks/{task_id}/artifacts/{name}/download")
+    def artifact_download(task_id: str, name: str, identity: Auth):
+        _, content = delivery_file(identity, task_id, name)
+        return Response(
+            content.encode(),
+            media_type=MEDIA[NAMES.index(name)],
+            headers={
+                "Content-Disposition": f'attachment; filename="{name}"',
+                "Cache-Control": "no-store",
+                "X-Content-Type-Options": "nosniff",
+            },
+        )
+
+    @app.put(PREFIX + "/tasks/{task_id}/artifacts/{name}")
+    def edit_artifact(task_id: str, name: str, body: DeliveryPatch, identity: Auth):
+        if name != "report.md":
+            raise HTTPException(400, "仅 Markdown 交付副本可以编辑。")
+        task = delivery_task(identity, task_id)
+        try:
+            result = deliveries.save(task, body.content, body.expected_sha256)
+            authorize_task(identity, task)
+            return result
+        except FileExistsError as exc:
+            raise HTTPException(409, str(exc)) from None
+        except ValueError as exc:
+            raise HTTPException(413, str(exc)) from None
 
     @app.get(PREFIX + "/libraries")
     def libraries(identity: Auth):

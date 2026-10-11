@@ -12,7 +12,7 @@ export class DocumentResearchError extends Error {
 
 // 本入口只携带专用 token；不导入平台 client，不附带浏览器 cookie。
 export function createDocumentResearchApi(getToken, fetcher = globalThis.fetch) {
-  async function request(path, { method = 'GET', body, signal, publicRequest = false, timeout = 60000 } = {}) {
+  async function request(path, { method = 'GET', body, signal, publicRequest = false, timeout = 60000, blob = false } = {}) {
     const token = getToken()?.trim()
     if (!publicRequest && !token) throw new DocumentResearchError('请输入文档研发服务的专用访问令牌。', 401)
     const headers = { Accept: 'application/json' }
@@ -32,6 +32,7 @@ export function createDocumentResearchApi(getToken, fetcher = globalThis.fetch) 
       if (timeoutSignal.aborted) throw new DocumentResearchError('等待服务响应超时。远端请求可能仍在执行，请稍后再试。')
       throw new DocumentResearchError('无法连接文档研发服务，请确认本机 4198 端口已启动，再重试。')
     }
+    if (response.ok && blob) return response.blob()
     let data
     try { data = await response.json() } catch {
       throw new DocumentResearchError('服务返回了非 JSON 响应，请检查专用服务及代理配置。', response.status)
@@ -46,6 +47,13 @@ export function createDocumentResearchApi(getToken, fetcher = globalThis.fetch) 
   return {
     health: () => request('/health', { publicRequest: true }),
     session: () => request('/session'),
+    modelSettings: () => request('/settings/model'),
+    saveModelSettings: (body) => request('/settings/model', { method: 'PUT', body }),
+    artifacts: (taskId) => request(`/tasks/${id(taskId)}/artifacts`),
+    artifact: (taskId, name) => request(`/tasks/${id(taskId)}/artifacts/${id(name)}`),
+    saveArtifact: (taskId, name, body) => request(`/tasks/${id(taskId)}/artifacts/${id(name)}`, { method: 'PUT', body }),
+    downloadArtifact: (taskId, name) => request(`/tasks/${id(taskId)}/artifacts/${id(name)}/download`, { blob: true }),
+    downloadBundle: (taskId) => request(`/tasks/${id(taskId)}/delivery.zip`, { blob: true }),
     libraries: () => request('/libraries'),
     createLibrary: (name) => request('/libraries', { method: 'POST', body: { name } }),
     deleteLibrary: (libraryId) => request(`/libraries/${id(libraryId)}`, { method: 'DELETE' }),
