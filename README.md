@@ -1,4 +1,4 @@
-# 装备智能研究平台
+# 智能研究平台
 
 本仓库保留完整装备研究平台源码，并整合面向通用软件研发的文档解析研究入口和 AMiner 学术检索。文档入口的合并变化见 [来源与差异说明](CHANGES_FROM_DEEP_RESEARCH.md)，实际通过、失败和未验证项见 [文档研究验收记录](docs/DOCUMENT_RESEARCH_ACCEPTANCE.md) 和 [AMiner 最终测试记录](artifacts/aminer-integration/final-validation.json)。
 
