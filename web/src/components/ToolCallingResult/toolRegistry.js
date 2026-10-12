@@ -20,6 +20,9 @@ import {
 } from '@lucide/vue'
 
 export const TOOL_ICON_MAP = {
+  academic_search: BookOpen,
+  academic_get_papers: FileText,
+  academic_get_references: Network,
   ask_user_question: HelpCircle,
   bash: SquareTerminal,
   calculator: Calculator,
@@ -64,6 +67,9 @@ export const TOOL_ICON_MAP = {
 // 例如 FilesystemMiddleware / TodoListMiddleware 等 middleware 注入的工具。
 // 内置工具与知识库工具的 display_name 由后端定义（@tool 装饰器），通过工具列表下发。
 export const TOOL_NAME_MAP = {
+  academic_search: '论文搜索',
+  academic_get_papers: '论文摘要与详情',
+  academic_get_references: '论文参考文献',
   bash: '执行命令',
   cmd: '执行命令',
   execute: '执行命令',
@@ -167,6 +173,27 @@ export const getToolCallStatus = (toolCall) => {
     parseToolCallResult(toolCall)?.status
   ]
   if (statuses.some((status) => status === 'error' || status === 'failed')) return 'error'
+  if (
+    ['academic_search', 'academic_get_papers', 'academic_get_references'].includes(
+      getToolCallId(toolCall)
+    )
+  ) {
+    const academicStatus = parseToolCallResult(toolCall)?.status
+    if (
+      [
+        'auth_failed',
+        'rate_limited',
+        'unavailable',
+        'budget_exhausted',
+        'limit_reached',
+        'disabled',
+        'denied',
+        'invalid_request'
+      ].includes(academicStatus)
+    )
+      return 'error'
+  }
+
   if (
     toolCall?.tool_call_result != null ||
     toolCall?.result != null ||

@@ -1,6 +1,6 @@
 # 装备智能研究平台
 
-本 fork 基于 [wangc219/deep-research](https://github.com/wangc219/deep-research)，保留原完整系统源码，新增面向通用软件研发的文档解析研究入口。具体变化见 [上游差异说明](CHANGES_FROM_DEEP_RESEARCH.md)，实际通过、失败和未验证项见 [验收记录](docs/DOCUMENT_RESEARCH_ACCEPTANCE.md)。
+本仓库保留完整装备研究平台源码，并整合面向通用软件研发的文档解析研究入口和 AMiner 学术检索。文档入口的合并变化见 [来源与差异说明](CHANGES_FROM_DEEP_RESEARCH.md)，实际通过、失败和未验证项见 [文档研究验收记录](docs/DOCUMENT_RESEARCH_ACCEPTANCE.md) 和 [AMiner 最终测试记录](artifacts/aminer-integration/final-validation.json)。
 
 本仓库是「装备智能研究平台」的完整单体仓库。`platform_core` 提供共享平台内核，`equipment_deep_research` 封装装备研究领域能力，二者共享同一身份、项目、知识、模型、任务、审计和交付体系。
 
@@ -13,6 +13,7 @@
 - 多路线装备需求研究：新制胜机理、传统能力缺口和局部战争案例。
 - 动态 Agent 编排：独立上下文、工具权限、预算、检查点、失败交接和有界并发。
 - 研究证据治理：公网检索、材料化、正文定位、质量评分、引用与交付清单。
+- AMiner 学术检索：智能对话、深研对话及技术攻关舱共享论文发现、摘要补证与一层参考文献追溯；父子智能体共享费用预算。
 - 企业级平台能力：用户、租户、部门、角色权限、任务队列、SSE 事件回放和运行监控。
 - 知识基础设施：文档解析、混合检索、RAG 评估、知识图谱和知识导图。
 - 可审计交付：研究报告、能力画像、运行摘要、追踪事件、检查点和 SHA-256 清单。
@@ -28,10 +29,10 @@
 
 ### 从 GitHub 完整恢复
 
-2026-10-09 验收状态：新增资料入口的可选 Docker 部署已实测通过；原完整栈受既有 MinIO 固定版本下载不可用阻断，登录与完整就绪尚未验证。以下保留原平台启动流程，暂不能据此认为本分支已通过全栈部署验收；详情及可独立运行的入口见 [使用说明](docs/DOCUMENT_RESEARCH.md)。
+2026-10-12 验收状态：现有完整开发栈的 API、PostgreSQL、Redis 和 Worker 就绪检查通过，AMiner 的应用侧检索链路已验证；本轮未覆盖新设备首次冷安装。通用文档入口的可选 Docker 部署与独立启动方式见 [使用说明](docs/DOCUMENT_RESEARCH.md)。
 
 ```bash
-git clone https://github.com/3119744613-crypto/deep-research.git
+git clone https://github.com/wangc219/deep-research.git
 cd deep-research
 bash scripts/platform.sh start
 ```
@@ -107,6 +108,54 @@ docker compose exec open-websearch node build/index.js status --base-url http://
 docker compose exec api python -c "import httpx; print(httpx.get('http://open-websearch:3210/health').json())"
 ```
 
+## AMiner 学术检索
+
+管理员或超级管理员在「模型设置」(`/models`) 的「AMiner 学术检索」卡片填写 AMiner 用户 ID 和 API Key，保存后使用「测试连接」验证免费标题搜索，再启用并保存。也可以先测试当前表单；测试输入不会被保存。新配置默认停用，普通用户使用平台提供的检索能力。密钥只返回脱敏状态，编辑时留空保留原密钥，替换或清除使用对应操作；不要将凭证写入仓库或 `.env`。免费连接测试不代表已经取得所有付费接口权限。
+
+两类对话共用以下内置工具，调研探索员和事实核查员也可使用：
+
+| 工具 | 使用方式 |
+| --- | --- |
+| `academic_search` | 主题发现使用 Pro 搜索，已知论文标题使用免费标题搜索；候选先补齐免费题录与部分摘要。 |
+| `academic_get_papers` | 筛选拟引用论文后，按需获取完整摘要；支持仅补齐免费题录。 |
+| `academic_get_references` | 追溯核心论文引用的参考文献，只扩展一层；不是后续引用者列表。 |
+
+论文、研究进展和技术路线比较问题优先使用 AMiner，技术攻关舱预加载深研技能时也遵循这一策略。一般问答保持原流程，其他公开事实使用网页检索，内部事实使用已授权知识库。只向 AMiner 发送简短公开科研检索词，禁止发送完整会话、内部文档或能力画像原文。题录、部分摘要和完整摘要均不等于论文全文；精确实验数据只能引用实际取得的证据，同一论文经多个渠道找到仍只算一个独立来源。
+
+管理员可在高级设置中调整以下每轮共享限额。主智能体、子智能体和恢复运行使用同一父 Run 账本；外部请求发送前通过 PostgreSQL 事务预占次数和费用，重试也计入限额，缓存命中不占付费预算。
+
+| 默认限额 | 智能对话 | 深研对话（含技术攻关舱） |
+| --- | ---: | ---: |
+| Pro 搜索次数 | 2 | 6 |
+| 完整摘要详情次数 | 3 | 10 |
+| 参考文献查询次数 | 1 | 2 |
+| 预估费用上限 | 0.20 元 | 0.50 元 |
+
+预估账本按 Pro 搜索、详情各 0.01 元/次，参考文献 0.10 元/次计算，实际价格和权限以 [AMiner 官方文档](https://www.aminer.cn/open/board?tab=doc) 为准。搜索缓存 1 小时，题录、详情和参考文献缓存 24 小时。每次请求超时 10 秒，临时网络或服务错误最多重试一次。配置修改后后续调用读取新配置；鉴权失败、限流、停用或额度耗尽时，模型使用网页、知识库和已有证据继续完成回答。
+
+2026-10-12 应用侧验收：116 项后端相关回归、10 个真实模型自动调用场景、529 项前端测试以及前端 Lint 和构建通过。场景覆盖智能对话、深研、技术攻关舱全部技能预加载、研究子智能体、参考文献追溯、故障降级和引用来源核对。浏览器确认论文卡片和正文 URL/DOI 引用可点击。**本轮没有配置 AMiner 凭证，供应商响应采用模拟数据；真实鉴权、付费权限、检索质量和延迟仍需配置后验证。**具体运行边界见 [最终测试记录](artifacts/aminer-integration/final-validation.json)。
+
+相关验证命令（需已启动完整开发栈并安装测试依赖）：
+
+```bash
+docker compose exec api python -m pytest \
+  test/unit/services/test_aminer.py \
+  test/integration/services/test_academic_retrieval.py \
+  test/integration/api/test_aminer_api.py -q
+docker compose exec web pnpm run lint:check
+docker compose exec web pnpm run test:unit
+docker compose exec web pnpm run build
+```
+
+真实模型探针默认跳过。显式设置下面两个环境变量时会调用平台已配置的模型，产生模型服务用量；AMiner 仍使用隔离模拟响应，不修改在线凭证配置：
+
+```bash
+docker compose exec \
+  -e RUN_AMINER_MODEL_PROBE=1 \
+  -e AMINER_PROBE_MODEL='<供应商ID>:<已配置模型ID>' \
+  api python -m pytest test/integration/services/test_academic_retrieval.py -k live_model -q
+```
+
 ## 知识库能力
 
 知识库是平台内建共享能力，与智能对话、需求 Query、装备研究和深研链路复用同一套身份授权、检索、引用和审计服务：
@@ -171,6 +220,12 @@ docker compose --env-file .env -f compose.yaml -f compose.local.yaml config --qu
 
 ## 文档索引
 
+- [简洁使用说明](docs/研究平台简洁使用说明.docx)
+- [管理员与普通用户详细使用手册](docs/研究平台使用说明-详细版.docx)
+- [装备智能研究平台简洁使用说明](docs/装备智能研究平台简洁使用说明.docx)
+- [系统功能测试说明](系统功能测试说明.docx)
+- [AMiner 最终测试记录与场景明细](artifacts/aminer-integration/final-validation.json)
+- [文档研究合并验收记录](artifacts/main-sync-validation-20261012/results.json)
 - [系统架构](docs/ARCHITECTURE.md)
 - [快速上手](docs/QUICK_START.md)
 - [集成指南](docs/INTEGRATION_GUIDE.md)

@@ -172,7 +172,11 @@ test('思考描述显示最后一行，展开后保留完整内容', async () =>
   const expanded = await render(ReasoningBlock, { content, defaultExpanded: true })
   assert.match(expanded, /<p class="reasoning-content"/)
   assert.match(expanded, /先检查文件。\n再确认结果。/)
-  for (const text of ['先检查文件。\r\n再确认结果。\r\n  ', '再确认结果。', '先检查文件。\r再确认结果。']) {
+  for (const text of [
+    '先检查文件。\r\n再确认结果。\r\n  ',
+    '再确认结果。',
+    '先检查文件。\r再确认结果。'
+  ]) {
     const preview = await render(ReasoningBlock, { content: text, isActive: true })
     assert.match(preview, /再确认结果。/)
     assert.doesNotMatch(preview, /先检查文件。/)
@@ -235,4 +239,61 @@ test('知识库列表错误不显示暂无知识库', async () => {
   assert.match(html, /执行失败/)
   assert.match(html, /列表读取失败/)
   assert.doesNotMatch(html, /暂无知识库/)
+})
+
+test('三个学术工具渲染论文证据、摘要与参考文献方向，保留降级结果', async () => {
+  for (const name of ['academic_search', 'academic_get_papers', 'academic_get_references']) {
+    const html = await render(ToolCallRenderer, {
+      toolCall: {
+        name,
+        args: { query: '公开科研关键词' },
+        tool_call_result: {
+          content: JSON.stringify({
+            status: 'partial',
+            message: '详情预算用尽',
+            relation: name === 'academic_get_references' ? 'references' : undefined,
+            results: [
+              {
+                id: 'p',
+                doi: '10.1/test',
+                title: 'Paper title',
+                authors: ['Author'],
+                year: 2025,
+                venue: 'Journal',
+                url: 'https://doi.org/10.1/test',
+                content: '取得的摘要',
+                content_level: 'partial_abstract'
+              }
+            ]
+          })
+        }
+      },
+      defaultExpanded: true
+    })
+    assert.match(html, /Paper title/)
+    assert.match(html, /部分摘要/)
+    assert.match(html, /取得的摘要/)
+    assert.match(html, /详情预算用尽/)
+    assert.match(html, /href="https:\/\/doi.org\/10.1\/test"/)
+    if (name === 'academic_get_references') assert.match(html, /非后续引用者/)
+  }
+})
+
+test('学术检索失败保留原因，空结果单独展示', async () => {
+  for (const [status, message] of [
+    ['auth_failed', '鉴权失败'],
+    ['ok', '']
+  ]) {
+    const html = await render(ToolCallRenderer, {
+      toolCall: {
+        name: 'academic_search',
+        tool_call_result: {
+          content: JSON.stringify({ status, message, results: [] })
+        }
+      },
+      defaultExpanded: true
+    })
+    assert.match(html, status === 'ok' ? /未找到相关论文/ : /鉴权失败/)
+    if (status !== 'ok') assert.doesNotMatch(html, /未找到相关论文/)
+  }
 })

@@ -1310,6 +1310,30 @@ Index(
 Index("ix_agent_runs_status_lease_expires", AgentRun.status, AgentRun.lease_expires_at)
 
 
+class AcademicRetrievalCall(Base):
+    """AMiner 调用预占与结果账本，父子运行和恢复运行共享根 Run 额度。"""
+
+    __tablename__ = "academic_retrieval_calls"
+    __table_args__ = (
+        UniqueConstraint("root_run_id", "request_key", "attempt_no", name="uq_academic_call_attempt"),
+        CheckConstraint("cost_cents >= 0", name="ck_academic_call_cost"),
+        CheckConstraint("status IN ('pending', 'succeeded', 'failed')", name="ck_academic_call_status"),
+        Index("ix_academic_call_cache", "request_key", "status", "finished_at"),
+    )
+
+    id = Column(String(64), primary_key=True)
+    root_run_id = Column(String(64), ForeignKey("agent_runs.id", ondelete="CASCADE"), nullable=False, index=True)
+    run_id = Column(String(64), ForeignKey("agent_runs.id", ondelete="CASCADE"), nullable=False)
+    request_key = Column(String(64), nullable=False)
+    endpoint = Column(String(32), nullable=False)
+    attempt_no = Column(Integer, nullable=False)
+    cost_cents = Column(Integer, nullable=False)
+    status = Column(String(16), nullable=False, default="pending")
+    result = Column(JSON_VALUE, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=utc_now_naive)
+    finished_at = Column(DateTime, nullable=True)
+
+
 class AgentRunAttempt(Base):
     """AgentRunAttempt table - 单次执行占有的不可变事实记录。
 

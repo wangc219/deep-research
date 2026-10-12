@@ -1,0 +1,207 @@
+{
+  "date": "2026-10-12",
+  "backend_regression_passed": 116,
+  "real_model_scenarios_passed": 10,
+  "extra_citation_audit": "全部 10 个记录的引用均来自实际工具结果；参考文献场景专项复测通过",
+  "model": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash",
+  "forced_tool_choice": false,
+  "assembly": {
+    "agent_graph": "production ChatbotAgent and SubAgentBackend graphs and middleware",
+    "postgres": "real isolated schemas; trusted run ownership and shared root ledger",
+    "aminer": "httpx.MockTransport; no live provider requests",
+    "web": "mock provider responses; production web_search tool",
+    "checkpointer": "InMemorySaver; not an HTTP/SSE/ARQ worker end-to-end run",
+    "technology_cabin": "production domain context and overrides, three installed/preloaded research skills, default available tools"
+  },
+  "frontend": {
+    "unit_passed": 529,
+    "lint": "passed",
+    "build": "passed",
+    "browser": "URL and bare DOI citations become clickable links in production MarkdownPreview",
+    "screenshot": "citations-final.png"
+  },
+  "configuration": {
+    "enabled": false,
+    "credentials_configured": false,
+    "updated_builtin_skills_installed": true
+  },
+  "fixes_from_testing": [
+    "搜索结果提示筛选后读取拟引用论文完整摘要",
+    "精确实验数据与工程外推的证据边界",
+    "深研技能加载时明确实际学术检索要求",
+    "正文 URL 与 DOI 引用生成安全来源链接",
+    "引用模板占位符必须替换为实际来源"
+  ],
+  "cases": [
+    {
+      "case": "deep_research",
+      "status": "passed",
+      "tools": [
+        "academic_search",
+        "academic_search",
+        "academic_get_papers"
+      ],
+      "provider_request_count": 6,
+      "simulated_cost_cents": 4,
+      "seconds": 24.92,
+      "citations_match_obtained_sources": true,
+      "preloaded_skills": [],
+      "record": "artifacts/aminer-integration/model-cases/deep_research.json"
+    },
+    {
+      "case": "fact_verifier",
+      "status": "passed",
+      "tools": [
+        "academic_search",
+        "academic_get_papers"
+      ],
+      "provider_request_count": 3,
+      "simulated_cost_cents": 1,
+      "seconds": 10.17,
+      "citations_match_obtained_sources": true,
+      "preloaded_skills": [],
+      "record": "artifacts/aminer-integration/model-cases/fact_verifier.json"
+    },
+    {
+      "case": "research_explorer",
+      "status": "passed",
+      "tools": [
+        "academic_search",
+        "academic_search",
+        "academic_get_papers"
+      ],
+      "provider_request_count": 6,
+      "simulated_cost_cents": 4,
+      "seconds": 16.97,
+      "citations_match_obtained_sources": true,
+      "preloaded_skills": [],
+      "record": "artifacts/aminer-integration/model-cases/research_explorer.json"
+    },
+    {
+      "case": "smart_general",
+      "status": "passed",
+      "tools": [],
+      "provider_request_count": 0,
+      "simulated_cost_cents": 0,
+      "seconds": 1.75,
+      "citations_match_obtained_sources": true,
+      "preloaded_skills": [],
+      "record": "artifacts/aminer-integration/model-cases/smart_general.json"
+    },
+    {
+      "case": "smart_title",
+      "status": "passed",
+      "tools": [
+        "academic_search",
+        "academic_get_papers"
+      ],
+      "provider_request_count": 3,
+      "simulated_cost_cents": 1,
+      "seconds": 21.03,
+      "citations_match_obtained_sources": true,
+      "preloaded_skills": [],
+      "record": "artifacts/aminer-integration/model-cases/smart_title.json"
+    },
+    {
+      "case": "smart_topic",
+      "status": "passed",
+      "tools": [
+        "academic_search",
+        "academic_search",
+        "academic_get_papers"
+      ],
+      "provider_request_count": 7,
+      "simulated_cost_cents": 3,
+      "seconds": 5.52,
+      "citations_match_obtained_sources": true,
+      "preloaded_skills": [],
+      "record": "artifacts/aminer-integration/model-cases/smart_topic.json"
+    },
+    {
+      "case": "technology_auth_failure",
+      "status": "passed",
+      "tools": [
+        "academic_search",
+        "web_search",
+        "web_search",
+        "web_search",
+        "web_search",
+        "web_search"
+      ],
+      "provider_request_count": 1,
+      "simulated_cost_cents": 1,
+      "seconds": 11.79,
+      "citations_match_obtained_sources": true,
+      "preloaded_skills": [],
+      "record": "artifacts/aminer-integration/model-cases/technology_auth_failure.json"
+    },
+    {
+      "case": "technology_cabin",
+      "status": "passed",
+      "tools": [
+        "academic_search",
+        "academic_search",
+        "academic_get_papers"
+      ],
+      "provider_request_count": 6,
+      "simulated_cost_cents": 4,
+      "seconds": 26.15,
+      "citations_match_obtained_sources": true,
+      "preloaded_skills": [],
+      "record": "artifacts/aminer-integration/model-cases/technology_cabin.json"
+    },
+    {
+      "case": "technology_preloaded",
+      "status": "passed",
+      "tools": [
+        "academic_search",
+        "academic_search",
+        "academic_get_papers"
+      ],
+      "provider_request_count": 6,
+      "simulated_cost_cents": 4,
+      "seconds": 6.96,
+      "citations_match_obtained_sources": true,
+      "preloaded_skills": [
+        "equipment-deep-conversation",
+        "equipment-research",
+        "deep-research"
+      ],
+      "record": "artifacts/aminer-integration/model-cases/technology_preloaded.json"
+    },
+    {
+      "case": "title_references",
+      "status": "passed",
+      "tools": [
+        "academic_search",
+        "academic_get_references"
+      ],
+      "provider_request_count": 3,
+      "simulated_cost_cents": 10,
+      "seconds": 17.67,
+      "citations_match_obtained_sources": true,
+      "preloaded_skills": [],
+      "record": "artifacts/aminer-integration/model-cases/title_references.json"
+    }
+  ],
+  "limitations": [
+    "AMiner 未提供凭证，真实鉴权与接口权限、供应商数据质量和延迟尚未验证。",
+    "真实模型测试只覆盖上述公开技术问题，不代表所有问题或所有模型的效果保证。"
+  ],
+  "commands": {
+    "model": "RUN_AMINER_MODEL_PROBE=1 AMINER_PROBE_MODEL=<已配置模型> python -m pytest test/integration/services/test_academic_retrieval.py -k live_model -q",
+    "related_backend": "python -m pytest test/unit/config/test_options.py test/unit/services/test_aminer.py test/unit/services/test_equipment_deep_integration_service.py test/unit/agents/test_context_auth.py test/unit/agents/test_search_resilience.py test/unit/middlewares/test_summary_middleware.py test/integration/services/test_academic_retrieval.py test/integration/services/test_schema_migration_version.py test/integration/api/test_aminer_api.py -q",
+    "frontend": [
+      "pnpm run lint:check",
+      "pnpm run test:unit",
+      "pnpm run build"
+    ]
+  },
+  "runtime_refresh": {
+    "api": "healthy",
+    "worker": "healthy",
+    "ready": true,
+    "degraded": false,
+    "active_runs_before_refresh": 0
+  }
+}

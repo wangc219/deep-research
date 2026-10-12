@@ -521,7 +521,8 @@ async def test_system_context_requires_public_search_with_source_traceability(mo
     )
 
     assert "本会话已启用公网检索能力" in prompt
-    assert "必须优先调用 web_search" in prompt
+    assert "academic_search 可用时优先使用 AMiner" in prompt
+    assert "其他公开事实使用 web_search" in prompt
     assert "至少两个独立来源交叉核验" in prompt
     assert "保留可点击的原始 URL" in prompt
 

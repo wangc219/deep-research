@@ -20,6 +20,7 @@ import { computed, ref } from 'vue'
 import BaseToolCall from './BaseToolCall.vue'
 
 import WebSearchTool from './tools/WebSearchTool.vue'
+import AcademicSearchTool from './tools/AcademicSearchTool.vue'
 import ListKbsTool from './tools/ListKbsTool.vue'
 import GetMindmapTool from './tools/GetMindmapTool.vue'
 import QueryKbTool from './tools/QueryKbTool.vue'
@@ -65,6 +66,9 @@ const props = defineProps({
 const toolId = computed(() => getToolCallId(props.toolCall))
 
 const TOOL_RENDERERS = {
+  academic_search: AcademicSearchTool,
+  academic_get_papers: AcademicSearchTool,
+  academic_get_references: AcademicSearchTool,
   ask_user_question: AskUserQuestionTool,
   bash: ExecuteTool,
   calculator: CalculatorTool,

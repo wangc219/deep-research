@@ -27,21 +27,13 @@ def test_research_capacity_defaults_to_four_and_preserves_integer_type(monkeypat
     monkeypatch.delenv("EQUIPMENT_RESEARCH_MAX_RUNNING", raising=False)
     assert options.system_options.resolve({})["equipment_research_max_running"] == 4
 
-    field = next(
-        item
-        for item in options.system_options.fields
-        if item["key"] == "equipment_research_max_running"
-    )
+    field = next(item for item in options.system_options.fields if item["key"] == "equipment_research_max_running")
     assert options.normalize_option_value(field, "7") == 7
 
 
 @pytest.mark.parametrize("value", [0, 9, "invalid", True])
 def test_research_capacity_rejects_values_outside_safe_range(value):
-    field = next(
-        item
-        for item in options.system_options.fields
-        if item["key"] == "equipment_research_max_running"
-    )
+    field = next(item for item in options.system_options.fields if item["key"] == "equipment_research_max_running")
     with pytest.raises(ValueError):
         options.normalize_option_value(field, value)
 
@@ -177,3 +169,24 @@ async def test_first_implicit_option_read_initializes_cache_version(monkeypatch)
 
 async def _async_value(value):
     return value
+
+
+@pytest.mark.asyncio
+async def test_aminer_secret_preserve_replace_clear_and_disabled_defaults(db_session):
+    """保存保留空白密钥，替换和清除显式执行；默认关闭并支持零预算。"""
+    await options.ensure_options_in_db(db_session)
+    key = options.aminer_api_opts.key
+    assert options.aminer_api_opts.resolve({})["enabled"] is False
+    assert options.aminer_api_opts.resolve({"chat_budget_cents": 0})["chat_budget_cents"] == 0
+    record = await options.update_option_value(db_session, key, {"user_id": "u", "api_key": "first-secret"}, "admin")
+    for value in ["", "   "]:
+        await options.update_option_value(db_session, key, {"api_key": value}, "admin")
+        assert record.value["api_key"] == "first-secret"
+    await options.update_option_value(db_session, key, {"api_key": "second-secret", "enabled": True}, "admin")
+    serialized = options.serialize_option(record)
+    assert serialized["value"]["api_key"] == ""
+    assert serialized["sensitive_configured"]["api_key"] is True
+    await options.update_option_value(db_session, key, {"api_key": None, "enabled": False}, "admin")
+    assert record.value["api_key"] == ""
+    with pytest.raises(ValueError):
+        await options.update_option_value(db_session, key, {"enabled": True}, "admin")

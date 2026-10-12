@@ -4,7 +4,7 @@ import aiofiles
 import yaml
 from fastapi import APIRouter, Body, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field, SecretStr
 from sqlalchemy.ext.asyncio import AsyncSession
 from platform_core import get_version
 from platform_core.config.environment import deep_research_env
@@ -16,6 +16,30 @@ from platform_core.utils.logging_config import LOG_FILE, logger
 from server.utils.auth_middleware import get_admin_user, get_db, get_required_user
 
 system = APIRouter(prefix="/system", tags=["system"])
+
+
+class AMinerTestPayload(BaseModel):
+    """只用于一次免费连接测试，不保存草稿凭证。"""
+
+    model_config = ConfigDict(extra="forbid")
+    user_id: str | None = Field(default=None, max_length=128)
+    api_key: SecretStr | None = None
+
+
+@system.post("/aminer/test")
+async def test_aminer(
+    payload: AMinerTestPayload,
+    current_user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """管理员测试 AMiner 草稿或已保存配置。"""
+    from platform_core.services.academic_retrieval_service import test_aminer_connection
+
+    return await test_aminer_connection(
+        db,
+        user_id=payload.user_id,
+        api_key=payload.api_key.get_secret_value() if payload.api_key is not None else None,
+    )
 
 
 # =============================================================================
@@ -189,9 +213,7 @@ async def load_info_config():
     """加载信息配置文件"""
     try:
         # 配置文件路径
-        brand_file_path = deep_research_env(
-            "BRAND_FILE_PATH", "package/platform_core/config/static/info.local.yaml"
-        )
+        brand_file_path = deep_research_env("BRAND_FILE_PATH", "package/platform_core/config/static/info.local.yaml")
         config_path = Path(brand_file_path)
 
         # 检查文件是否存在

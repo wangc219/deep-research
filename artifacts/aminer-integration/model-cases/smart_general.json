@@ -1,0 +1,18 @@
+{
+  "case": "smart_general",
+  "model": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash",
+  "question": "今天心情不好，给我一句简短的鼓励。",
+  "tool_calls": [],
+  "http_requests": [],
+  "model_requests": 1,
+  "web_calls": 0,
+  "cost_cents": 0,
+  "root_budget_shared": true,
+  "seconds": 1.75,
+  "answer": "别难过，坏心情只是一阵风，吹过去之后，阳光还是会照回来的。深呼吸，给自己一个微笑。",
+  "tool_results": [],
+  "preloaded_skills": [],
+  "aminer_transport": "httpx.MockTransport",
+  "checkpointer": "InMemorySaver",
+  "live_aminer_calls": 0
+}

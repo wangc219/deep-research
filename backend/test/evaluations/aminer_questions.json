@@ -1,0 +1,24 @@
+{
+  "purpose": "用同一组公开科研问题比较 AMiner 接入前后，禁止把模拟供应商结果当作质量提升实测。",
+  "conditions": {
+    "baseline": "固定同一聊天模型、提示和知识库权限，仅开放现有网页及知识库检索。",
+    "aminer": "开放共享 academic_search、academic_get_papers、academic_get_references；智能对话与深研分别评估。",
+    "budget": "使用管理员配置的默认限额，每次评估新建父 Run；冷缓存和热缓存结果分别记录。"
+  },
+  "questions": [
+    {"id": "title", "question": "定位 Attention Is All You Need，并基于实际取得的摘要说明其主要贡献。", "expected_route": "title_search", "checks": ["论文定位正确", "DOI或AMiner ID可追溯", "不声称读过全文"]},
+    {"id": "sensors", "question": "近五年用于旋转机械故障诊断的振动信号分析有哪些研究路线？比较适用条件和证据。", "expected_route": "search", "checks": ["中英文检索词", "相关原始研究", "比较依据来自取得的证据"]},
+    {"id": "energy", "question": "锂离子电池状态估计中，物理模型和数据驱动方法的研究进展有什么差异？", "expected_route": "search", "checks": ["不同原始研究交叉核验", "限制和不确定性", "不从题录编造实验数据"]},
+    {"id": "digital-twin", "question": "工业设备数字孪生如何验证模型准确性？找出论文并追溯一篇核心论文的参考文献。", "expected_route": "references", "checks": ["只扩展一层", "参考文献不是后续引用者", "同论文跨渠道不重复计来源"]},
+    {"id": "quantitative", "question": "请找出一项轴承故障诊断研究的具体准确率和实验条件；如果摘要没有给出，明确证据缺口。", "expected_route": "detail", "checks": ["数字必须出现在已读取证据中", "缺失时保留未知", "摘要不等于全文"]},
+    {"id": "general", "question": "帮我拟一份设备维护会议议程。", "expected_route": "no_academic_call", "checks": ["一般问题不调用付费学术接口"]}
+  ],
+  "metrics": {
+    "relevant_paper_hit_rate": "人工标注的相关论文数 / 返回论文数，同时记录每个子问题是否至少命中一篇相关论文。",
+    "citation_traceability": "可跳转到实际检索论文且标识一致的引用数 / 论文引用数。",
+    "evidence_sufficiency": "关键科研结论中具有实际取得的支持证据的数量 / 关键科研结论数量。",
+    "elapsed_seconds": "用户提交至回答完成的墙钟耗时。",
+    "estimated_cost_cents": "academic_retrieval_calls 中该 root_run_id 的 cost_cents 合计，含失败和重试预占；并记录各 endpoint 调用次数。"
+  },
+  "live_status": "尚未提供 AMiner 凭证，真实供应商质量与耗时评估待配置后执行。"
+}

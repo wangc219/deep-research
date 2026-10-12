@@ -268,12 +268,20 @@ async def test_v072_business_converges_current_schema_idempotently() -> None:
             "ix_scheduled_agent_runs_job_created",
             "ix_scheduled_agent_runs_dispatching",
         }.issubset(scheduled_indexes)
-        assert BUSINESS_SCHEMA_VERSION == 12
+        assert BUSINESS_SCHEMA_VERSION == 13
         async with scoped_engine.connect() as conn:
-            columns = (await conn.execute(text(
-                "SELECT column_name FROM information_schema.columns "
-                "WHERE table_schema = current_schema() AND table_name = 'platform_model_calls'"
-            ))).scalars().all()
+            columns = (
+                (
+                    await conn.execute(
+                        text(
+                            "SELECT column_name FROM information_schema.columns "
+                            "WHERE table_schema = current_schema() AND table_name = 'platform_model_calls'"
+                        )
+                    )
+                )
+                .scalars()
+                .all()
+            )
         assert {"model_spec", "surface", "run_id", "status", "duration_ms", "total_tokens"} <= set(columns)
     finally:
         await _drop_isolated_schema(schema, admin_engine, scoped_engine)

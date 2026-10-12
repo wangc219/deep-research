@@ -9,6 +9,7 @@ import { normalizeCodeLanguage } from './file_preview.js'
 import { renderSvgBlocks } from './svgRenderer.js'
 import { renderHtmlPreviewBlocks } from './htmlPreviewRenderer.js'
 import { createMarkdownRenderCache } from './markdownRenderCache.js'
+import { markdownItSourceCitations } from './sourceCitations.js'
 
 const markdownKatexPlugin = markdownItKatex.default || markdownItKatex
 const FRONTMATTER_MARKER = '---'
@@ -187,6 +188,7 @@ export const createMarkdownRenderer = ({ themeName, highlighter }) =>
     .use(markdownKatexPlugin, { throwOnError: false, errorColor: '#cc0000', trust: false })
     .use(taskLists, { enabled: false, label: false, labelAfter: false })
     .use(markdownItFrontmatterCard)
+    .use(markdownItSourceCitations)
 
 const getRenderer = async (theme, needsHighlight) => {
   const themeName = normalizeTheme(theme)

@@ -64,3 +64,32 @@ def test_search_budget_rejects_extra_tool_execution():
     assert called is False
     assert blocked.status == "error"
     assert "已在本轮熔断" in blocked.content
+
+
+def test_academic_degradation_and_web_degradation_are_independent():
+    """任一检索渠道故障时保留另一个渠道。"""
+    middleware = SearchResilienceMiddleware()
+    request = SimpleNamespace(tool_call={"id": "academic-1", "name": "academic_search"})
+    middleware.wrap_tool_call(
+        request,
+        lambda _: ToolMessage(content='{"status":"partial","aminer_status":"auth_failed"}', tool_call_id="academic-1"),
+    )
+    assert "academic_get_papers" in middleware.blocked_academic_tools
+    assert middleware.search_blocked is False
+    other = SearchResilienceMiddleware()
+    other.wrap_tool_call(
+        SimpleNamespace(tool_call={"id": "web", "name": "web_search"}),
+        lambda _: ToolMessage(content='{"status":"degraded"}', tool_call_id="web"),
+    )
+    assert other.search_blocked
+    assert not other.blocked_academic_tools
+
+
+def test_academic_endpoint_limit_only_blocks_its_tool():
+    """详情限额耗尽仍允许发现论文。"""
+    middleware = SearchResilienceMiddleware()
+    middleware.wrap_tool_call(
+        SimpleNamespace(tool_call={"id": "detail", "name": "academic_get_papers"}),
+        lambda _: ToolMessage(content='{"status":"partial","aminer_status":"limit_reached"}', tool_call_id="detail"),
+    )
+    assert middleware.blocked_academic_tools == {"academic_get_papers"}

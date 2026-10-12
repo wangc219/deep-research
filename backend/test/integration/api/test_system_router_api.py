@@ -159,6 +159,7 @@ async def test_ocr_options_and_config_options_permissions(
         "pp_structure_v3_ocr_host_opts",
         "paddleocr_api_opts",
         "remote_skill_source_policy",
+        "aminer_api_opts",
     }
     assert all("deepseek" not in item["key"] for item in configs)
     official = next(item for item in configs if item["key"] == "mineru_official_api_opts")
@@ -269,9 +270,7 @@ async def test_retired_system_config_field_is_hidden_rejected_and_preserved(test
             previous_updated_at = record.updated_at
             seeded_value = {**previous_value, retired_field: True}
             await db.execute(
-                update(ConfigOption)
-                .where(ConfigOption.key == "system_options")
-                .values(value=seeded_value)
+                update(ConfigOption).where(ConfigOption.key == "system_options").values(value=seeded_value)
             )
             await db.commit()
         await invalidate_option_cache("system_options")

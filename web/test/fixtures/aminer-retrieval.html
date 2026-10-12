@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>AMiner 学术检索验收</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module">
+      import { createApp } from 'vue'
+      import { createPinia } from 'pinia'
+      import '/src/assets/css/main.css'
+      import Fixture from '/test/fixtures/AMinerRetrieval.vue'
+      createApp(Fixture).use(createPinia()).mount('#app')
+    </script>
+  </body>
+</html>

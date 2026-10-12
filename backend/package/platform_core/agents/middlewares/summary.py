@@ -40,7 +40,8 @@ _DEFAULT_SUMMARY_TOOL_RESULT_LIMIT_TOKENS = 300
 _DEFAULT_TOOL_ARG_MAX_LENGTH = 2000
 _TRUNCATED_TOOL_ARG_TEXT = "...(argument truncated for context view)"
 _TOOL_RESULT_SAVED_MARKER = "deep_research_tool_result_saved"
-_STRUCTURED_SEARCH_TOOL_NAMES = {"query_kb", "web_search"}
+_ACADEMIC_SEARCH_TOOL_NAMES = {"academic_search", "academic_get_papers", "academic_get_references"}
+_STRUCTURED_SEARCH_TOOL_NAMES = {"query_kb", "web_search", *_ACADEMIC_SEARCH_TOOL_NAMES}
 _SEARCH_CONTENT_KEYS = ("content", "text", "snippet", "summary")
 _SUMMARY_COMPRESSION_STATE: ContextVar[dict[str, bool] | None] = ContextVar(
     "deep_research_summary_compression_state",
@@ -643,7 +644,11 @@ def _structured_search_preview(tool_name: str | None, raw_content: Any, max_char
         compact = _encode_search_preview(preview, [], len(results))
         minimal = _encode_search_preview(
             {
-                "kind": "knowledge_base" if tool_name == "query_kb" else "web_search",
+                "kind": "academic"
+                if tool_name in _ACADEMIC_SEARCH_TOOL_NAMES
+                else "knowledge_base"
+                if tool_name == "query_kb"
+                else "web_search",
                 "result_count": len(results),
             },
             [],
@@ -695,10 +700,24 @@ def _parse_structured_tool_result(content: Any) -> dict[str, Any] | None:
 
 def _search_header(tool_name: str, parsed: dict[str, Any], result_count: int) -> dict[str, Any]:
     preview = {
-        "kind": "knowledge_base" if tool_name == "query_kb" else "web_search",
+        "kind": "academic"
+        if tool_name in _ACADEMIC_SEARCH_TOOL_NAMES
+        else "knowledge_base"
+        if tool_name == "query_kb"
+        else "web_search",
         "result_count": result_count,
     }
-    for key in ("kb_id", "query", "response_time", "error"):
+    for key in (
+        "kb_id",
+        "query",
+        "response_time",
+        "error",
+        "status",
+        "aminer_status",
+        "message",
+        "relation",
+        "paper_id",
+    ):
         if parsed.get(key) is not None:
             preview[key] = _bounded_search_scalar(parsed[key])
     return preview
@@ -713,6 +732,8 @@ def _search_result_record(tool_name: str, result: Any) -> tuple[dict[str, Any], 
         if tool_name == "query_kb"
         else ("title", "url", "site_name", "publish_time", "score")
     )
+    if tool_name in _ACADEMIC_SEARCH_TOOL_NAMES:
+        keys = ("id", "doi", "title", "url", "authors", "year", "venue", "source", "content_level", "retrieved_at")
     record = {key: _bounded_search_scalar(result[key]) for key in keys if result.get(key) is not None}
     if tool_name == "query_kb" and isinstance(result.get("metadata"), dict):
         metadata = result["metadata"]

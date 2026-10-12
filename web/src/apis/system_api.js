@@ -63,6 +63,15 @@ export const configOptionsApi = {
     apiAdminPut(`/api/system/config/options/${encodeURIComponent(key)}`, { value })
 }
 
+export const aminerApi = {
+  getConfig: async () => {
+    const data = await configOptionsApi.getOptions()
+    return data.options?.find((option) => option.key === 'aminer_api_opts')
+  },
+  saveConfig: (value) => configOptionsApi.updateOption('aminer_api_opts', value),
+  testConnection: (value = {}) => apiAdminPost('/api/system/aminer/test', value)
+}
+
 // =============================================================================
 // === 信息管理分组 ===
 // =============================================================================

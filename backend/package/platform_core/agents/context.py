@@ -603,6 +603,14 @@ async def prepare_agent_runtime_context(
             if hasattr(context, field_name):
                 setattr(context, field_name, normalized.get(field_name, []))
 
+        from platform_core.config.options import aminer_api_opts
+        from platform_core.services.aminer_client import ACADEMIC_TOOL_NAMES
+
+        if ACADEMIC_TOOL_NAMES.intersection(context.tools):
+            academic_config = await aminer_api_opts.get(db)
+            if not academic_config["enabled"] or not academic_config["user_id"] or not academic_config["api_key"]:
+                context.tools = [name for name in context.tools if name not in ACADEMIC_TOOL_NAMES]
+
         from platform_core.agents.backends.knowledge_base_backend import resolve_visible_knowledge_bases_for_context
 
         await resolve_visible_knowledge_bases_for_context(context)

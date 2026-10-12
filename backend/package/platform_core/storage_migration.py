@@ -40,6 +40,7 @@ from platform_core.storage_migrations.v072_runtime_identity import (
     runtime_storage_requires_quiescence,
 )
 
+
 def _legacy_skill_roots_exist() -> bool:
     """判断是否仍有会被停机迁移删除的历史共享 Skill 目录。"""
     if v071_skill_migration_completed():
@@ -119,7 +120,7 @@ async def main() -> None:
                 "business",
                 business_version,
                 BUSINESS_SCHEMA_VERSION,
-                upgrade_from=(2, 7, 8, 9, 10, 11),
+                upgrade_from=(2, 7, 8, 9, 10, 11, 12),
             )
             knowledge_version = versions.get("knowledge")
             _require_supported_version(
@@ -139,7 +140,7 @@ async def main() -> None:
                     await rewrite_v071_workdir_paths(session)
                     await verify_workdir_bindings(session)
                     await session.commit()
-            if business_version in {None, 2, 7, 8, 9, 10, 11}:
+            if business_version in {None, 2, 7, 8, 9, 10, 11, 12}:
                 await pg_manager.ensure_business_schema()
                 if business_version is None:
                     await pg_manager.setup_langgraph_checkpointer()

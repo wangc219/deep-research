@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import ModelProviderManagePanel from '@/components/model-management/ModelProviderManagePanel.vue'
+import AMinerSettingsCard from '@/components/model-management/AMinerSettingsCard.vue'
 import ModelSelectorComponent from '@/components/ModelSelectorComponent.vue'
 import EmbeddingModelSelector from '@/components/EmbeddingModelSelector.vue'
 import RerankModelSelector from '@/components/RerankModelSelector.vue'
@@ -11,7 +12,9 @@ import { useUserStore } from '@/stores/user'
 const providerPanelRef = ref(null)
 const configStore = useConfigStore()
 const userStore = useUserStore()
-const loading = computed(() => providerPanelRef.value?.loading || providerPanelRef.value?.saving || false)
+const loading = computed(
+  () => providerPanelRef.value?.loading || providerPanelRef.value?.saving || false
+)
 const stats = computed(() => providerPanelRef.value?.stats || {})
 
 const setOption = (key, spec) => {
@@ -37,13 +40,16 @@ onMounted(() => {
     </PageHeader>
     <div class="model-settings-content">
       <p class="page-lead">
-        在本页管理供应商与模型。智能对话、装备研究任务、需求 Query 生成和深研对话都会使用这里启用的聊天模型；请勿再通过
+        在本页管理供应商与模型。智能对话、装备研究任务、需求 Query
+        生成和深研对话都会使用这里启用的聊天模型；请勿再通过
         <code>.env</code> 配置模型 ID 或 API Key。
       </p>
       <section v-if="userStore.isSuperAdmin" class="defaults-card">
         <h2>系统默认模型</h2>
         <p>
-          在此页添加供应商、填写 API Key、启用聊天模型，再指定系统默认模型。智能对话、装备研究任务（S1–S6）、需求 Query 生成和深研对话共用这套配置，请不要再把模型 ID 或密钥写进
+          在此页添加供应商、填写 API
+          Key、启用聊天模型，再指定系统默认模型。智能对话、装备研究任务（S1–S6）、需求 Query
+          生成和深研对话共用这套配置，请不要再把模型 ID 或密钥写进
           <code>.env</code>。Embedding / Re-Ranker 仅用于知识库。
         </p>
         <div class="defaults-grid">
@@ -74,6 +80,7 @@ onMounted(() => {
           </label>
         </div>
       </section>
+      <AMinerSettingsCard v-if="userStore.isAdmin" />
       <ModelProviderManagePanel ref="providerPanelRef" />
     </div>
   </div>

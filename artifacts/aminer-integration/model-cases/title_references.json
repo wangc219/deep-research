@@ -1,0 +1,121 @@
+{
+  "case": "title_references",
+  "model": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash",
+  "question": "查找 Attention Is All You Need，追溯其引用的基础工作，只扩展一层参考文献并列出来源，200字内。",
+  "tool_calls": [
+    {
+      "name": "academic_search",
+      "args": {
+        "query": "Attention Is All You Need",
+        "mode": "title"
+      },
+      "id": "01a12c8cfbbd1bf5d98329e56089584c",
+      "type": "tool_call"
+    },
+    {
+      "name": "academic_get_references",
+      "args": {
+        "paper_id": "probe-attention",
+        "limit": 20
+      },
+      "id": "01a12c8d21d822f7157afdd7b30b96dd",
+      "type": "tool_call"
+    }
+  ],
+  "http_requests": [
+    {
+      "path": "search",
+      "payload": {
+        "page": "1",
+        "size": "10",
+        "title": "Attention Is All You Need"
+      }
+    },
+    {
+      "path": "info",
+      "payload": {
+        "ids": [
+          "probe-attention"
+        ]
+      }
+    },
+    {
+      "path": "relation",
+      "payload": {
+        "id": "probe-attention"
+      }
+    }
+  ],
+  "model_requests": 3,
+  "web_calls": 0,
+  "cost_cents": 10,
+  "root_budget_shared": true,
+  "seconds": 17.67,
+  "answer": "检索到《Attention Is All You Need》（Vaswani 等，NeurIPS 2017，DOI: 10.48550/arXiv.1706.03762）<cite source=\"https://doi.org/10.48550/arXiv.1706.03762\" type=\"url\">1</cite>。\n\n追溯其引用的基础工作（一层参考文献）：\n\n- **Bahdanau 等, \"Neural Machine Translation by Jointly Learning to Align and Translate\"**（2015，arXiv:1409.0473）<cite source=\"https://doi.org/10.48550/arXiv.1409.0473\" type=\"url\">2</cite>——这是注意力机制（attention）早期的基础性工作，Transformer 的 self-attention 直接建立在其对齐/翻译联合学习的注意力框架之上。\n\n补充说明：AMiner 只返回了这一条引用记录，属于部分参考文献列表，并非全集。Transformer 还通常引用 Sutskever 的序列到序列学习、Ling/Word2Vec 词向量、以及卷积/循环等并行架构工作，但本轮工具仅能确认上述 Bahdanau 一篇。若要完整列出一层引用，需要以其他文献库交叉核验。",
+  "tool_results": [
+    {
+      "status": "ok",
+      "aminer_status": "ok",
+      "query": "Attention Is All You Need",
+      "source": "aminer",
+      "results": [
+        {
+          "id": "probe-attention",
+          "doi": "10.48550/arXiv.1706.03762",
+          "title": "Attention Is All You Need",
+          "title_zh": null,
+          "authors": [
+            "Ashish Vaswani"
+          ],
+          "year": 2017,
+          "venue": "NeurIPS",
+          "url": "https://doi.org/10.48550/arXiv.1706.03762",
+          "content": "The Transformer relies solely on attention mechanisms.",
+          "content_level": "partial_abstract",
+          "citation_bucket": null,
+          "source": "aminer",
+          "retrieved_at": "2026-10-11T20:00:02.732065Z"
+        }
+      ],
+      "evidence_notice": "只依据本次返回的 content 支持结论。题录、部分摘要、完整摘要均不是论文全文或实验表格。没有出现在 content 中的实验数值、硬件型号和测评细节不得作为已核实事实引用，即使你从模型记忆中知道它们；需要这些信息时另取原始证据，否则说明本轮未核实。",
+      "cached": false,
+      "message": "",
+      "total": null,
+      "retrieval_guidance": "这是论文发现结果，含题录或部分摘要。先筛选相关候选，引用论文支持技术结论前调用 academic_get_papers(paper_ids=[拟引用的实际 ID], full_abstract=True) 读取完整摘要；若详情不可用，明确证据层级与缺口，只能依据已取得内容给出有限结论。"
+    },
+    {
+      "status": "ok",
+      "aminer_status": "ok",
+      "query": "",
+      "source": "aminer",
+      "results": [
+        {
+          "id": "probe-bahdanau",
+          "doi": "10.48550/arXiv.1409.0473",
+          "title": "Neural Machine Translation by Jointly Learning to Align and Translate",
+          "title_zh": null,
+          "authors": [],
+          "year": 2015,
+          "venue": "",
+          "url": "https://doi.org/10.48550/arXiv.1409.0473",
+          "content": "",
+          "content_level": "metadata",
+          "citation_bucket": null,
+          "source": "aminer",
+          "retrieved_at": "2026-10-11T20:00:09.161429Z"
+        }
+      ],
+      "evidence_notice": "只依据本次返回的 content 支持结论。题录、部分摘要、完整摘要均不是论文全文或实验表格。没有出现在 content 中的实验数值、硬件型号和测评细节不得作为已核实事实引用，即使你从模型记忆中知道它们；需要这些信息时另取原始证据，否则说明本轮未核实。",
+      "cached": false,
+      "message": "",
+      "total": null,
+      "paper_id": "probe-attention",
+      "relation": "references",
+      "one_hop": true
+    }
+  ],
+  "preloaded_skills": [],
+  "aminer_transport": "httpx.MockTransport",
+  "checkpointer": "InMemorySaver",
+  "live_aminer_calls": 0
+}

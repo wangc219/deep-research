@@ -399,6 +399,7 @@ platform_core/agents/middlewares/dynamic_tool.py
 platform_core/agents/middlewares/memory.py
 platform_core/agents/middlewares/model_input.py
 platform_core/agents/middlewares/network_retry.py
+platform_core/agents/middlewares/search_resilience.py
 platform_core/agents/middlewares/skills.py
 platform_core/agents/middlewares/steer.py
 platform_core/agents/middlewares/subagent_task.py
@@ -407,6 +408,8 @@ platform_core/agents/middlewares/token_usage.py
 platform_core/agents/presets/__init__.py
 platform_core/agents/presets/deep_research.py
 platform_core/agents/presets/default_chatbot.py
+platform_core/agents/presets/equipment_capability_portrait.py
+platform_core/agents/presets/weapon_equipment_scheme.py
 platform_core/agents/presets/subagents/__init__.py
 platform_core/agents/presets/subagents/fact_verifier.py
 platform_core/agents/presets/subagents/general_purpose.py
@@ -434,6 +437,7 @@ platform_core/agents/toolkits/registry.py
 platform_core/agents/toolkits/service.py
 platform_core/agents/toolkits/utils.py
 platform_core/agents/toolkits/buildin/__init__.py
+platform_core/agents/toolkits/buildin/academic.py
 platform_core/agents/toolkits/buildin/install_skill.py
 platform_core/agents/toolkits/buildin/tools.py
 platform_core/agents/toolkits/debug/__init__.py
@@ -526,6 +530,7 @@ platform_core/permissions/personal_resource.py
 platform_core/permissions/resource_permission.py
 platform_core/permissions/roles.py
 platform_core/repositories/__init__.py
+platform_core/repositories/academic_retrieval_repository.py
 platform_core/repositories/agent_env_repository.py
 platform_core/repositories/agent_repository.py
 platform_core/repositories/agent_run_output_repository.py
@@ -550,11 +555,13 @@ platform_core/repositories/subagent_thread_repository.py
 platform_core/repositories/task_repository.py
 platform_core/repositories/tool_message_audit_repository.py
 platform_core/repositories/user_repository.py
+platform_core/services/academic_retrieval_service.py
 platform_core/services/agent_config_service.py
 platform_core/services/agent_request_queue_service.py
 platform_core/services/agent_request_service.py
 platform_core/services/agent_run_manifest_service.py
 platform_core/services/agent_run_service.py
+platform_core/services/aminer_client.py
 platform_core/services/arq_worker.py
 platform_core/services/artifact_service.py
 platform_core/services/attachment_service.py
@@ -625,6 +632,8 @@ platform_core/storage_migrations/v071_workdirs.py
 platform_core/storage_migrations/v072_runtime_identity.py
 platform_core/storage_migrations/v073_enterprise.py
 platform_core/storage_migrations/v074_model_calls.py
+platform_core/storage_migrations/v075_user_uid.py
+platform_core/storage_migrations/v076_academic_retrieval.py
 platform_core/utils/__init__.py
 platform_core/utils/auth_utils.py
 platform_core/utils/datetime_utils.py

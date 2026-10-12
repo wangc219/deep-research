@@ -88,11 +88,17 @@
           v-if="hasResult || forceShowResult || hasToolError"
         >
           <div v-if="hasToolError" class="tool-error-result">
-            <pre>{{
-              formatResultData(
-                hasResult ? parsedResultData : toolCall.error_message || '工具执行失败'
-              )
-            }}</pre>
+            <slot
+              name="error"
+              :result-content="resultContent"
+              :error-message="toolCall.error_message"
+            >
+              <pre>{{
+                formatResultData(
+                  hasResult ? parsedResultData : toolCall.error_message || '工具执行失败'
+                )
+              }}</pre>
+            </slot>
           </div>
           <slot v-else name="result" :tool-call="toolCall" :result-content="resultContent">
             <div class="tool-result-content" :data-tool-call-id="toolCall.id">

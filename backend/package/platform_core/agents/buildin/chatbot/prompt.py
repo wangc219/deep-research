@@ -1,4 +1,6 @@
 from platform_core.utils.datetime_utils import shanghai_now
+from platform_core.services.academic_retrieval_service import ACADEMIC_RETRIEVAL_PROMPT
+from platform_core.services.aminer_client import ACADEMIC_TOOL_NAMES
 
 PROMPT = """
 你是一个交互式智能体。
@@ -55,4 +57,6 @@ def build_prompt_with_context(context):
     system_prompt = (
         f"{current_date}\n\n{PROMPT.strip()}\n\n{filesystem_prompt.strip()}\n\n{context.system_prompt or ''}"
     )
+    if ACADEMIC_TOOL_NAMES.intersection(getattr(context, "tools", None) or []):
+        system_prompt += f"\n\n{ACADEMIC_RETRIEVAL_PROMPT.strip()}"
     return system_prompt.strip()

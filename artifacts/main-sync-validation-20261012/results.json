@@ -1,0 +1,144 @@
+{
+  "date": "2026-10-12",
+  "synthetic_external_model": true,
+  "production_service_engine": true,
+  "browser": "Google Chrome",
+  "scenarios": [
+    {
+      "name": "独立入口、实际前端代理及服务健康",
+      "status": "PASS"
+    },
+    {
+      "name": "鉴权拒绝错误令牌并正常连接专用身份",
+      "status": "PASS"
+    },
+    {
+      "name": "UI创建专用库、四种格式上传解析及损坏PDF失败提示",
+      "status": "PASS"
+    },
+    {
+      "name": "按选库检索预览命中、空选择和零命中分别展示且零模型调用",
+      "status": "PASS"
+    },
+    {
+      "name": "有据问答、逐字引文、来源跳转和无依据图谱过滤",
+      "status": "PASS"
+    },
+    {
+      "name": "刷新恢复报告、深色和390px布局无横向溢出",
+      "status": "PASS"
+    },
+    {
+      "name": "问答启动202响应丢失后恢复，只启动和调用一次",
+      "status": "PASS"
+    },
+    {
+      "name": "深研三个追问、假设、方案报告及启动响应丢失恢复",
+      "status": "PASS"
+    },
+    {
+      "name": "取消和模型迟到响应不会覆盖取消终态",
+      "status": "PASS"
+    },
+    {
+      "name": "伪造引句和提供商故障明确失败，不保存伪造报告",
+      "status": "PASS"
+    },
+    {
+      "name": "身份隔离、未授权读取拒绝和专用库删除",
+      "status": "PASS"
+    },
+    {
+      "name": "无浏览器异常，无原平台API调用",
+      "status": "PASS"
+    }
+  ],
+  "passed": 12,
+  "failed": 0,
+  "page_errors": [],
+  "shared_platform_requests": [],
+  "run_posts": [
+    "/document-research-api/tasks/3f66b9d92516457ab22f045aac06754e/run",
+    "/document-research-api/tasks/c60ef5e806374786a3bce38441c1fddc/run",
+    "/document-research-api/tasks/22bc23e911fc49c08d45e13ba2dcf25f/run",
+    "/document-research-api/tasks/a8f526db9eb54b779b01bc6ddcaffa6e/run",
+    "/document-research-api/tasks/7e2d6b2e831c4091bb2729487d8efc59/run",
+    "/document-research-api/tasks/13b71ba9b8ae4ea0bb472abbbf9490b4/run"
+  ],
+  "provider_state": {
+    "calls": 6,
+    "delay": 0.25,
+    "invalid_quote": false,
+    "fail": false
+  },
+  "base_commit": "47958e74362b929bfd3e35092e3fdf9437242cdc",
+  "tested_worktree_changes": [
+    "Use builtin TimeoutError in document parsing",
+    "Use datetime.UTC in provider timestamps"
+  ],
+  "source_sha256": {
+    "docker/document-research/entrypoint.py": "c17c11820f1a086dbc5c7a4b5a73efb72c66a0e58cf0fb950ef8faa4f75a1f04",
+    "document_research/__init__.py": "f84ceba6a28b3b0ff980cfca660139cd3b19d5ae86121eb97b00a07348fcc328",
+    "document_research/__main__.py": "0b9f2efce800b0bc201d90ef97f0583e15699ea34dde7da7d961986adedf8671",
+    "document_research/config.py": "30b9618ab84748443a917a94fc82da02dd71bb40a5254fecbe8b784a0b3b47ef",
+    "document_research/contracts.py": "ff3238e8960a0917c9b2edee8210b5070975de2929ec7e49bb092d0e0563c513",
+    "document_research/engine.py": "279356751e124af246ee6119000d366d5fec7ba40c38987c59cbbd2e5c95ec5d",
+    "document_research/parsing.py": "d9d84aeeabd9a28556ef23e8c0b04bd4b3ff5abf5efa219f92d6f2c7537b44ca",
+    "document_research/providers.py": "2a2faafb112ba26dbe3f5cb77694670d1edd884b147eb7b518e86c6fbeb37f46",
+    "document_research/service.py": "d9763236b62858895af8f625fd78a095ea751b8f2faa7483bb7b6f1135ca217b",
+    "document_research/storage.py": "6faa92ef4869c830edb4e4d78dfdc397b0dfc0fefb1c470892b8dba671424477",
+    "web/src/apis/document_research_api.js": "f9efcd77a6887b84e0a50d3d629b859a6a6fbe2ba088f337eb5820802a56965a",
+    "web/src/views/DocumentResearchView.vue": "c37423e0a9909c7fbbc1b687f9c2096b3d5e2cf9cdc68283fce638099833f455",
+    "web/src/views/document-research/EvidenceSources.vue": "8d2ef5ee8d033cb41ab3bc80d442abe4866a1a27af7936ee6b9090a17d0798d9",
+    "web/src/views/document-research/ReportPanel.vue": "a0f65a84fdad73b581f7cf3ea949f96d4969728fcec5b1e60b8952b6ee464198",
+    "web/src/views/document-research/RetrievalStatus.vue": "c19716b784cbe9fa7d94c4667c389c538a000446b5a01f9846cf417065d6dedd",
+    "web/src/views/document-research/evidencePresentation.js": "8c2a64c54e6e01df36eacc2ab56d3e0f749751063dc82816aa376525c94bf536"
+  },
+  "checks": {
+    "document_research_pytest": {
+      "passed": 263,
+      "failed": 0,
+      "warning": "Existing Starlette/httpx deprecation warning"
+    },
+    "platform_make_check": {
+      "passed": 13,
+      "architecture": "PASS",
+      "compile": "PASS"
+    },
+    "web_tests": {
+      "passed": 520,
+      "failed": 0,
+      "execution": "Same-day synchronization validation; web source unchanged in this follow-up"
+    },
+    "web_lint": "PASS",
+    "web_build": "PASS; existing large chunk warning",
+    "ruff_0_17_0_check": "PASS",
+    "ruff_format": "PASS; 18 files",
+    "optional_compose_config": "PASS",
+    "docker_service_build": "PASS",
+    "docker_production_web_build": "PASS",
+    "docker_service_health": "PASS",
+    "docker_private_config_permissions": "PASS",
+    "docker_authentication": "PASS",
+    "docker_upload_parse_preview_retrieve_delete": "PASS",
+    "nginx_config_and_proxy": "PASS",
+    "docker_static_browser_entry": "PASS"
+  },
+  "retry_notes": [
+    "First browser run had an incorrect accessible-name matcher for the library button. Harness corrected; all scenarios rerun successfully.",
+    "Initial Docker HTTP check ran before readiness and got connection refused. Waited for Compose health; checks then passed.",
+    "Ruff 0.17 reported three old alias usages. Updated TimeoutError and datetime.UTC, then reran Ruff, Python tests and browser scenarios."
+  ],
+  "not_verified": [
+    "No new real Zhipu knowledge/search or real model requests in this run; dedicated configuration path not provided.",
+    "No parser performance, OCR, complex table fidelity, professional report semantics or production load validation.",
+    "Existing full platform at port 5173 has not enabled the optional document research service; its dedicated API returned HTTP 502 during inspection."
+  ],
+  "test_services_stopped": true,
+  "synthetic_test_volume_removed": true,
+  "ports_without_listeners_after_cleanup": [
+    4296,
+    4297,
+    4298
+  ]
+}

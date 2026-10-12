@@ -66,7 +66,7 @@ class Option:
         resolved = {}
         for field in self.fields:
             field_key = field["key"]
-            if field_key in stored and field.get("type") == "list[str]":
+            if field_key in stored and field.get("type") in {"list[str]", "boolean", "integer"}:
                 resolved[field_key] = stored[field_key]
                 continue
 
@@ -232,6 +232,40 @@ remote_skill_source_policy = Option(
     },
 )
 
+aminer_api_opts = Option(
+    key="aminer_api_opts",
+    name="AMiner 学术检索",
+    description="智能对话与深研对话共用的论文检索服务。",
+    params={
+        "fields": [
+            {"key": "enabled", "label": "启用学术检索", "type": "boolean", "default": False},
+            {"key": "user_id", "label": "AMiner 用户 ID", "type": "string", "default": ""},
+            {"key": "api_key", "label": "API Key", "type": "password", "sensitive": True},
+            *[
+                {
+                    "key": key,
+                    "label": label,
+                    "type": "integer",
+                    "default": default,
+                    "minimum": 0,
+                    "maximum": maximum,
+                }
+                for key, label, default, maximum in (
+                    ("chat_budget_cents", "智能对话单轮预算（分）", 20, 1000),
+                    ("deep_budget_cents", "深研对话单轮预算（分）", 50, 5000),
+                    ("chat_search_limit", "智能对话 Pro 搜索次数", 2, 20),
+                    ("chat_detail_limit", "智能对话详情次数", 3, 50),
+                    ("chat_reference_limit", "智能对话参考文献次数", 1, 10),
+                    ("deep_search_limit", "深研 Pro 搜索次数", 6, 50),
+                    ("deep_detail_limit", "深研详情次数", 10, 100),
+                    ("deep_reference_limit", "深研参考文献次数", 2, 20),
+                )
+            ],
+        ]
+    },
+)
+
+
 OPTION_DEFINITIONS = {
     option.key: option
     for option in (
@@ -240,6 +274,7 @@ OPTION_DEFINITIONS = {
         pp_structure_v3_ocr_host_opts,
         paddleocr_api_opts,
         remote_skill_source_policy,
+        aminer_api_opts,
         system_options,
     )
 }
@@ -350,7 +385,17 @@ async def update_option_value(
     updated = dict(record.value or {})
     for field_key, raw_value in value.items():
         field = fields[field_key]
+        if (
+            key == aminer_api_opts.key
+            and field_key == "api_key"
+            and isinstance(raw_value, str)
+            and not raw_value.strip()
+        ):
+            continue
         updated[field_key] = normalize_option_value(field, raw_value)
+    if key == aminer_api_opts.key and updated.get("enabled"):
+        if not updated.get("user_id") or not updated.get("api_key"):
+            raise ValueError("启用 AMiner 前请填写用户 ID 和 API Key")
     record.value = updated
     record.updated_by = updated_by
     await db.flush()
@@ -379,6 +424,11 @@ def _fields(record: ConfigOption) -> list[dict[str, Any]]:
 
 
 def normalize_option_value(field: dict[str, Any], value: Any) -> Any:
+    if field.get("type") == "boolean":
+        if not isinstance(value, bool):
+            raise ValueError("配置值必须是布尔值")
+        return value
+
     if field.get("type") == "list[str]":
         if not isinstance(value, list):
             raise ValueError("配置值必须是列表")
@@ -393,6 +443,8 @@ def normalize_option_value(field: dict[str, Any], value: Any) -> Any:
             normalized_integer = int(value)
         except (TypeError, ValueError) as exc:
             raise ValueError("配置值必须是整数") from exc
+        if isinstance(value, float) and value != normalized_integer:
+            raise ValueError("配置值必须是整数")
         minimum = field.get("minimum")
         maximum = field.get("maximum")
         if minimum is not None and normalized_integer < int(minimum):

@@ -24,11 +24,12 @@ from platform_core.storage.postgres import models_equipment as _equipment_models
 from platform_core.storage_migrations.v073_enterprise import ENTERPRISE_SCHEMA_STATEMENTS
 from platform_core.storage_migrations.v074_model_calls import MODEL_CALL_SCHEMA_STATEMENTS
 from platform_core.storage_migrations.v075_user_uid import USER_UID_SCHEMA_STATEMENTS
+from platform_core.storage_migrations.v076_academic_retrieval import ACADEMIC_RETRIEVAL_SCHEMA_STATEMENTS
 from platform_core.utils import logger
 from platform_core.utils.singleton import SingletonMeta
 
 AGENT_RUN_TERMINAL_STATUS_SQL = ", ".join(f"'{status}'" for status in AGENT_RUN_TERMINAL_STATUSES)
-BUSINESS_SCHEMA_VERSION = 12
+BUSINESS_SCHEMA_VERSION = 13
 KNOWLEDGE_SCHEMA_VERSION = 2
 SCHEMA_VERSION_TABLE = "platform_schema_migrations"
 LEGACY_SCHEMA_VERSION_TABLE = "yuxi_schema_migrations"
@@ -1715,6 +1716,7 @@ class PostgresManager(metaclass=SingletonMeta):
             """,
             "CREATE INDEX IF NOT EXISTS ix_agent_run_requests_dispatched_run_id ON agent_run_requests(dispatched_run_id)",  # noqa: E501
             *TASK_DURABLE_SCHEMA_STATEMENTS,
+            *ACADEMIC_RETRIEVAL_SCHEMA_STATEMENTS,
         ]
         async with self.async_engine.begin() as conn:
             # 历史未绑定用户的 API Key 会在下方迁移语句里被静默删除，先计数告警

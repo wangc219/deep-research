@@ -1,0 +1,88 @@
+{
+  "case": "technology_auth_failure",
+  "model": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash",
+  "question": "围绕长序列推理显存瓶颈比较稀疏注意力与 FlashAttention 的解决路径，结合公开证据，200字内。",
+  "tool_calls": [
+    {
+      "name": "academic_search",
+      "args": {
+        "query": "FlashAttention long sequence inference memory KV cache"
+      },
+      "id": "01a12c8acdebe539afe911dc722d464c",
+      "type": "tool_call"
+    },
+    {
+      "name": "web_search",
+      "args": {
+        "query": "sparse attention vs FlashAttention long context memory bottleneck"
+      },
+      "id": "01a12c8acdebe539afe911dc722d464d",
+      "type": "tool_call"
+    },
+    {
+      "name": "web_search",
+      "args": {
+        "query": "FlashAttention 2 memory savings KV cache long context paper Dao"
+      },
+      "id": "01a12c8ae6bc70f1414f30e6bdf81ae0",
+      "type": "tool_call"
+    },
+    {
+      "name": "web_search",
+      "args": {
+        "query": "sparse attention sliding window memory reduction long context transformer"
+      },
+      "id": "01a12c8ae6bc70f1414f30e6bdf81ae1",
+      "type": "tool_call"
+    },
+    {
+      "name": "web_search",
+      "args": {
+        "query": "FlashAttention reduces memory from quadratic to linear Dao 2022"
+      },
+      "id": "01a12c8add1e10b995f7346828e8c85d",
+      "type": "tool_call"
+    },
+    {
+      "name": "web_search",
+      "args": {
+        "query": "streaming-llm sliding window KV cache memory long context inference"
+      },
+      "id": "01a12c8add1e10b995f7346828e8c85e",
+      "type": "tool_call"
+    }
+  ],
+  "http_requests": [
+    {
+      "path": "search/pro",
+      "payload": {
+        "page": "0",
+        "size": "10",
+        "keyword": "FlashAttention long sequence inference memory KV cache"
+      }
+    }
+  ],
+  "model_requests": 4,
+  "web_calls": 5,
+  "cost_cents": 1,
+  "root_budget_shared": true,
+  "seconds": 11.79,
+  "answer": "当前 web 检索返回受限（仅取得 FlashAttention 原始论文题录，其余查询被缓存截断），以下基于已核验来源给出比较，其余作为判断。\n\n两路针对长序列推理显存瓶颈的机理不同：\n\n**FlashAttention 路径**：IO 感知的分块精确注意力，通过前向/反向计算时不物化 N×N 注意力矩阵，把访存由 O(N²) 降为 O(N)，属于显存“访问量”的优化，且精确无精度损失 <cite source=\"https://arxiv.org/abs/2205.14135\" type=\"url\">1</cite>；但它不缩减需保留的全部 KV 缓存，总缓存容量不变。\n\n**稀疏注意力路径**（如滑动窗口/StreamingLLM）：通过注意力掩码限制参与计算的 token，既减计算又截断长历史 KV 保留，直接压缩缓存规模；代价是牺牲长程依赖，属近似方案，需重计算或额外构件补偿。\n\n结论：FlashAttention 治“访问效率”，稀疏注意治“缓存规模”，可组合使用；加速倍数依赖硬件与负载，非普适值。本轮未核验稀疏注意力的具体论文条目，属证据缺口。",
+  "tool_results": [
+    {
+      "status": "auth_failed",
+      "aminer_status": "auth_failed",
+      "query": "FlashAttention long sequence inference memory KV cache",
+      "source": "aminer",
+      "results": [],
+      "evidence_notice": "只依据本次返回的 content 支持结论。题录、部分摘要、完整摘要均不是论文全文或实验表格。没有出现在 content 中的实验数值、硬件型号和测评细节不得作为已核实事实引用，即使你从模型记忆中知道它们；需要这些信息时另取原始证据，否则说明本轮未核实。",
+      "cached": false,
+      "message": "AMiner 鉴权失败，请检查用户 ID、API Key 和接口权限",
+      "total": null
+    }
+  ],
+  "preloaded_skills": [],
+  "aminer_transport": "httpx.MockTransport",
+  "checkpointer": "InMemorySaver",
+  "live_aminer_calls": 0
+}

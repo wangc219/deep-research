@@ -1,0 +1,78 @@
+{
+  "feature": "AMiner 内置学术检索",
+  "date": "2026-10-12",
+  "configuration": {
+    "enabled": false,
+    "credentials_configured": false,
+    "chat_budget_cents": 20,
+    "deep_budget_cents": 50
+  },
+  "schema": {
+    "business_version": 13,
+    "migration_idempotence": "真实 PostgreSQL 通过；旧表缺失升级和保留既有账本均已验证"
+  },
+  "verification": {
+    "backend_targeted": {
+      "passed": 116,
+      "scope": [
+        "JWT REST 协议与业务错误",
+        "真实 HTTP 管理员权限与配置保存",
+        "密钥留空保留、替换、清除和脱敏",
+        "真实 PostgreSQL 父子并发额度、恢复、重试与缓存 TTL",
+        "深研父 Run 六次搜索额度",
+        "ToolNode 运行时身份注入与学术问题提示",
+        "压缩保留论文标识和证据层级"
+      ]
+    },
+    "backend_full_unit": {
+      "passed": 2540,
+      "skipped": 58,
+      "failed": 3,
+      "baseline_failures_reproduced_on_original_code": [
+        "test_artifact_route_returns_realtime_workdir_response",
+        "test_superadmin_updates_run_scope_without_changing_owner",
+        "test_knowledge_base_builtin_skill_spec"
+      ]
+    },
+    "backend_changed_files_ruff": "check 和 format --check 通过（26 个文件）",
+    "backend_repository_ruff": "现有全库 819 个 lint 问题，未对无关代码做批量修复",
+    "frontend": {
+      "unit_passed": 529,
+      "lint": "passed",
+      "production_build": "passed"
+    },
+    "browser": [
+      "实际模型设置页面加载与保存反馈",
+      "预算及额度初值",
+      "390 px 与 1280 px 布局",
+      "生产论文卡片在合成夹具中的摘要展开、缺失摘要、空结果、错误和加载态",
+      "浅色和深色"
+    ],
+    "live_aminer_calls": 0,
+    "limitations": [
+      "未提供 AMiner 凭证；真实供应商鉴权、付费接口权限和效果/耗时对比待配置后执行。",
+      "真实模型已自动调用生产工具与执行图；AMiner 响应为模拟数据，尚未跑连接真实 AMiner 的对话。",
+      "题录、部分摘要和完整摘要均不等于全文。"
+    ],
+    "real_model_automatic_routing": {
+      "passed": 10,
+      "report": "final-validation.json",
+      "aminer_transport": "simulated",
+      "model": "siliconflow-cn:deepseek-ai/DeepSeek-V4-Flash"
+    }
+  },
+  "evaluation_fixture": "backend/test/evaluations/aminer_questions.json",
+  "activation_steps": [
+    "管理员在模型设置的 AMiner 学术检索卡片填写用户 ID 和 API Key。",
+    "先使用免费标题搜索测试连接。",
+    "确认权限及预算后启用并保存。"
+  ],
+  "screenshots": [
+    "settings-desktop.jpg",
+    "settings-mobile.jpg",
+    "papers-light.jpg",
+    "papers-dark.jpg",
+    "papers-mobile.jpg",
+    "citations-final.png"
+  ]
+}
