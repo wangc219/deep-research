@@ -34,8 +34,15 @@ def hit(**overrides):
     }
 
 
-def provider_for(data):
+def zhipu_provider(transport):
+    """显式选择保留的智谱搜索协议，避免依赖默认提供商。"""
     return HttpProviders(
+        transport, config_loader=lambda: {"web_search": {"provider": "zhipu"}}
+    )
+
+
+def provider_for(data):
+    return zhipu_provider(
         httpx.MockTransport(lambda request: httpx.Response(200, json=data))
     )
 
@@ -48,7 +55,7 @@ def test_public_search_wire_contract_and_excerpt_provenance():
         return httpx.Response(200, json={"search_result": [hit()]})
 
     sources, warnings = run(
-        HttpProviders(httpx.MockTransport(handle)).search_public(
+        zhipu_provider(httpx.MockTransport(handle)).search_public(
             "synthetic-key", "Docling complex tables", lambda: checks.append(1)
         )
     )
@@ -83,7 +90,7 @@ def test_public_query_must_be_explicit_and_fit_current_api(query):
 
     with pytest.raises(ResearchError, match="公开关键词"):
         run(
-            HttpProviders(httpx.MockTransport(unexpected)).search_public(
+            zhipu_provider(httpx.MockTransport(unexpected)).search_public(
                 "synthetic-key", query, lambda: None
             )
         )
@@ -112,7 +119,7 @@ def test_http_failure_has_fixed_error_and_does_not_follow_redirect(status):
 
     with pytest.raises(ProviderError, match=f"状态 {status}") as error:
         run(
-            HttpProviders(httpx.MockTransport(handle)).search_public(
+            zhipu_provider(httpx.MockTransport(handle)).search_public(
                 "synthetic-key", "tables", lambda: None
             )
         )
@@ -152,7 +159,7 @@ def test_malformed_or_oversized_structure_fails_instead_of_appearing_empty(respo
     [b"not json", b'{"search_result":[],"search_result":[]}', b'{"search_result":NaN}'],
 )
 def test_strict_json_response(body):
-    provider = HttpProviders(
+    provider = zhipu_provider(
         httpx.MockTransport(lambda request: httpx.Response(200, content=body))
     )
     with pytest.raises(ProviderError, match="JSON"):
@@ -160,7 +167,7 @@ def test_strict_json_response(body):
 
 
 def test_response_body_has_total_size_limit():
-    provider = HttpProviders(
+    provider = zhipu_provider(
         httpx.MockTransport(
             lambda request: httpx.Response(200, content=b" " * (MAX_RESPONSE_BYTES + 1))
         )
@@ -288,7 +295,7 @@ def test_instruction_like_snippets_are_only_data_and_never_trigger_network_actio
         return httpx.Response(200, json={"search_result": [hit(content=injection)]})
 
     sources, _ = run(
-        HttpProviders(httpx.MockTransport(handle)).search_public(
+        zhipu_provider(httpx.MockTransport(handle)).search_public(
             "synthetic-key", "public table keywords", lambda: None
         )
     )
@@ -313,7 +320,7 @@ def test_revocation_before_request_or_after_response_discards_results(revoke_at)
 
     with pytest.raises(PermissionError, match="revoked"):
         run(
-            HttpProviders(httpx.MockTransport(handle)).search_public(
+            zhipu_provider(httpx.MockTransport(handle)).search_public(
                 "synthetic-key", "tables", authorize
             )
         )
@@ -326,7 +333,7 @@ def test_connection_failure_is_not_an_empty_search():
 
     with pytest.raises(ProviderError, match="连接失败") as error:
         run(
-            HttpProviders(httpx.MockTransport(handle)).search_public(
+            zhipu_provider(httpx.MockTransport(handle)).search_public(
                 "synthetic-key", "tables", lambda: None
             )
         )

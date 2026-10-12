@@ -25,6 +25,8 @@ from .settings import public_settings, require_admin, save_settings
 from .storage import Store
 
 PREFIX = "/document-research-api"
+CONTEXT_QUESTIONS = 3
+CONTEXT_QUESTION_LENGTH = 2000
 QUESTIONS = {
     "parser_version": "当前使用的解析器名称、版本和关键配置是什么？",
     "expected_result": "失败样本对应的正确表格结果应是什么？",
@@ -53,6 +55,14 @@ class RetrievalInput(Input):
     allow_public: bool = False
     public_query: str = Field(default="", max_length=500)
     allow_web_search: bool = False
+    parent_task_id: str | None = Field(default=None, min_length=1, max_length=100)
+
+    @field_validator("parent_task_id")
+    @classmethod
+    def parent_nonblank(cls, value):
+        if value is not None and not value.strip():
+            raise ValueError("上一轮任务标识不能为空。")
+        return value
 
     @field_validator("problem")
     @classmethod
@@ -92,12 +102,23 @@ class TaskPatch(Input):
     accept_assumptions: bool | None = None
 
 
+class WebSearchSettingsInput(Input):
+    """独立公网检索的提供商、地址和引擎设置。"""
+
+    provider: Literal["open-websearch", "zhipu"] = "open-websearch"
+    base_url: str = Field(max_length=2000)
+    engines: list[Literal["bing", "duckduckgo", "startpage", "sogou", "baidu"]] = Field(
+        min_length=1, max_length=5
+    )
+
+
 class ModelSettingsInput(Input):
     base_url: str = Field(max_length=2000)
     model: str = Field(min_length=1, max_length=200)
     api_key: str = Field(default="", max_length=4096)
     clear_api_key: bool = False
     reasoning_effort: Literal["", "low", "high", "max"] = ""
+    web_search: WebSearchSettingsInput | None = None
 
     @field_validator("api_key")
     @classmethod
@@ -289,7 +310,7 @@ def create_app(data_dir: str | Path, engine=None) -> FastAPI:
             raise HTTPException(400, "智谱资料库仅用于只读检索，不能在本入口管理文档。")
         return library
 
-    def authorize_task(identity: Identity, task: dict, check_revision=True):
+    def authorize_task_scope(identity: Identity, task: dict, check_revision=True):
         current_config(identity)
         if task["owner"] != identity.owner:
             raise HTTPException(404, "任务不存在。")
@@ -303,6 +324,23 @@ def create_app(data_dir: str | Path, engine=None) -> FastAPI:
             ):
                 raise PermissionError("library evidence changed")
 
+    def authorize_task(identity: Identity, task: dict, check_revision=True):
+        authorize_task_scope(identity, task, check_revision)
+        # Keep authorization work bounded to the questions actually retained. Old
+        # answers and evidence are never inherited, including from these tasks.
+        for context_id in task.get("context_task_ids", []):
+            context = store.task(context_id)
+            if (
+                context is None
+                or context["owner"] != identity.owner
+                or context["status"] != "completed"
+                or set(context["library_ids"]) != set(task["library_ids"])
+            ):
+                raise PermissionError("follow-up context unavailable")
+            # This check is required even when rerunning/editing the child with
+            # check_revision=False: a stale parent must not silently be reused.
+            authorize_task_scope(identity, context)
+
     def get_task(identity: Identity, task_id: str, check_revision=True) -> dict:
         task = store.task(task_id)
         if task is None:
@@ -314,7 +352,39 @@ def create_app(data_dir: str | Path, engine=None) -> FastAPI:
         return {
             key: value
             for key, value in task.items()
-            if key not in ("owner", "library_revisions")
+            if key not in ("owner", "library_revisions", "context_task_ids")
+        }
+
+    def followup_context(identity: Identity, task: dict) -> dict:
+        parent_id = task.get("parent_task_id")
+        if parent_id is None:
+            return {
+                "context_questions": [],
+                "context_task_ids": [],
+                "context_truncated": False,
+            }
+        parent = get_task(identity, parent_id)
+        if parent["status"] != "completed":
+            raise HTTPException(409, "上一轮任务尚未完成，请完成后再继续追问。")
+        if set(parent["library_ids"]) != set(task["library_ids"]):
+            raise HTTPException(
+                409, "继续追问须保留上一轮的资料库选择；更换资料库请新建对话。"
+            )
+        questions = parent.get("context_questions", []) + [parent["problem"]]
+        context_ids = parent.get("context_task_ids", []) + [parent_id]
+        return {
+            "context_questions": [
+                question[:CONTEXT_QUESTION_LENGTH]
+                for question in questions[-CONTEXT_QUESTIONS:]
+            ],
+            "context_task_ids": context_ids[-CONTEXT_QUESTIONS:],
+            "context_truncated": bool(
+                parent.get("context_truncated")
+                or len(questions) > CONTEXT_QUESTIONS
+                or any(
+                    len(question) > CONTEXT_QUESTION_LENGTH for question in questions
+                )
+            ),
         }
 
     def refresh_questions(task: dict):
@@ -549,6 +619,7 @@ def create_app(data_dir: str | Path, engine=None) -> FastAPI:
     @app.post(PREFIX + "/retrieve")
     async def retrieve(body: RetrievalInput, identity: Auth, request: Request):
         task = body.model_dump() | {"owner": identity.owner}
+        task.update(followup_context(identity, task))
         sources, revisions = collect_sources(identity, task)
         task["library_revisions"] = revisions
 
@@ -567,7 +638,10 @@ def create_app(data_dir: str | Path, engine=None) -> FastAPI:
                             raise HTTPException(499, "检索请求已断开。")
                     result = await job
                     authorize()
-                    return result
+                    return result | {
+                        "context_questions": task["context_questions"],
+                        "context_truncated": task["context_truncated"],
+                    }
             except TimeoutError:
                 raise HTTPException(504, "检索超时，请缩小范围或稍后重试。") from None
             except (ResearchError, ProviderError) as exc:
@@ -596,6 +670,7 @@ def create_app(data_dir: str | Path, engine=None) -> FastAPI:
             "report": None,
             "accept_assumptions": False,
         }
+        task.update(followup_context(identity, task))
         refresh_questions(task)
         store.save_task(task)
         return task_response(task)
@@ -701,7 +776,22 @@ def create_app(data_dir: str | Path, engine=None) -> FastAPI:
 
     @app.post(PREFIX + "/tasks/{task_id}/cancel")
     async def cancel_task(task_id: str, identity: Auth):
-        task = get_task(identity, task_id, check_revision=False)
+        # Stopping an owned in-flight request must remain possible after its
+        # evidence or parent becomes unavailable. This does not grant permission
+        # to read its old question, context, selected libraries or report.
+        current_config(identity)
+        task = store.task(task_id)
+        if task is None or task["owner"] != identity.owner:
+            raise HTTPException(404, "任务不存在。")
+        readable = True
+        try:
+            authorize_task(identity, task)
+        except PermissionError:
+            # Do not confuse a revoked login with a revoked evidence scope.
+            current_config(identity)
+            if task["status"] != "running":
+                raise
+            readable = False
         if task["status"] == "running":
             previous = copy.deepcopy(task)
             task.update(status="cancelled", report=None, error=None)
@@ -709,6 +799,19 @@ def create_app(data_dir: str | Path, engine=None) -> FastAPI:
                 return task_response(get_task(identity, task_id))
             if job := jobs.get(task_id):
                 job.cancel()
+        if not readable:
+            return {
+                "id": task_id,
+                "status": "cancelled",
+                "mode": task.get("mode", "research"),
+                "library_ids": [],
+                "problem": "资料权限或内容已变更，已取消本地等待与结果输出。",
+                "questions": [],
+                "assumptions": [],
+                "context_questions": [],
+                "report": None,
+                "scope_invalidated": True,
+            }
         return task_response(task)
 
     return app

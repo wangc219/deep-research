@@ -46,6 +46,16 @@ def load_config(data_dir: str | Path) -> dict:
         token_values.append(token)
     if len(set(token_values)) != len(token_values):
         raise ValueError("独立访问令牌不得重复。")
+    config.setdefault(
+        "web_search",
+        {
+            "provider": "open-websearch",
+            "base_url": os.environ.get(
+                "DOCUMENT_RESEARCH_WEBSEARCH_URL", "http://127.0.0.1:3210"
+            ),
+            "engines": ["bing", "duckduckgo"],
+        },
+    )
     return config
 
 
@@ -59,6 +69,13 @@ def init_config(data_dir: str | Path) -> Path:
         "tokens": {"local": secrets.token_urlsafe(32)},
         "settings_admins": ["local"],
         "model": {"base_url": "", "api_key": "", "model": ""},
+        "web_search": {
+            "provider": "open-websearch",
+            "base_url": os.environ.get(
+                "DOCUMENT_RESEARCH_WEBSEARCH_URL", "http://127.0.0.1:3210"
+            ),
+            "engines": ["bing", "duckduckgo"],
+        },
         "zhipu": {"api_key": "", "libraries": {"local": []}},
     }
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)

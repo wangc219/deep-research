@@ -74,6 +74,60 @@ class ProviderConfigurationError(ProviderError):
     """显式网络配置错误不能降级为公开资料获取失败。"""
 
 
+def web_search_settings(config: dict) -> dict:
+    """读取独立公网搜索设置；默认使用无智谱密钥依赖的 Open Websearch。"""
+    settings = config.get("web_search", {})
+    if not isinstance(settings, dict):
+        raise ProviderConfigurationError("公网搜索配置无效。")
+    provider = settings.get("provider", "open-websearch")
+    url = settings.get("base_url", "http://127.0.0.1:3210")
+    engines = settings.get("engines", ["bing", "duckduckgo"])
+    if provider not in {"open-websearch", "zhipu"}:
+        raise ProviderConfigurationError("公网搜索提供商无效。")
+    try:
+        parts = urlsplit(url)
+        if (
+            not isinstance(url, str)
+            or len(url) > 2000
+            or any(character.isspace() for character in url)
+            or not parts.hostname
+            or parts.username
+            or parts.password
+            or parts.query
+            or parts.fragment
+            or parts.path not in {"", "/"}
+            or (parts.port is not None and parts.port < 1)
+            or not (
+                parts.scheme == "https"
+                or parts.scheme == "http"
+                and parts.hostname
+                in {
+                    "localhost",
+                    "127.0.0.1",
+                    "::1",
+                    "document-websearch",
+                    "open-websearch",
+                }
+            )
+        ):
+            raise ValueError
+    except (TypeError, ValueError, AttributeError):
+        raise ProviderConfigurationError(
+            "Open Websearch 地址须为 HTTPS、本机 HTTP 或专用容器服务地址，不得含凭据或参数。"
+        ) from None
+    if (
+        not isinstance(engines, list)
+        or not 1 <= len(engines) <= 5
+        or any(
+            not isinstance(engine, str)
+            or engine not in {"bing", "duckduckgo", "startpage", "sogou", "baidu"}
+            for engine in engines
+        )
+    ):
+        raise ProviderConfigurationError("Open Websearch 搜索引擎配置无效。")
+    return {"provider": provider, "base_url": url.rstrip("/"), "engines": engines}
+
+
 def safe_source_url(value: object) -> str | None:
     if not isinstance(value, str) or len(value) > 2000:
         return None
@@ -279,7 +333,13 @@ class HttpProviders:
                 raise ProviderConfigurationError(
                     "独立网络代理配置无效，请检查 network.proxy_url。"
                 ) from None
-        if urlsplit(url).hostname in {"127.0.0.1", "localhost", "::1"}:
+        if urlsplit(url).hostname in {
+            "127.0.0.1",
+            "localhost",
+            "::1",
+            "document-websearch",
+            "open-websearch",
+        }:
             return None
         return proxy_url or None
 
@@ -452,31 +512,68 @@ class HttpProviders:
             or len(public_query) > 70
         ):
             raise ResearchError("联网搜索需要单独填写 1 至 70 字符的公开关键词。")
-        if not isinstance(api_key, str) or not api_key.strip():
-            raise ProviderError("未配置独立的智谱联网搜索密钥。")
-        data = strict_json(
-            await self._request(
-                "POST",
-                ZHIPU_WEB_SEARCH_URL,
-                authorize,
-                headers={"Authorization": f"Bearer {api_key}"},
-                payload={
-                    "search_query": public_query,
-                    "search_engine": "search_std",
-                    "search_intent": False,
-                    "count": MAX_PUBLIC_SEARCH_RESULTS,
-                    "content_size": "medium",
-                    "search_recency_filter": "noLimit",
-                },
+        settings = web_search_settings(self.config_loader())
+        partial = False
+        if settings["provider"] == "open-websearch":
+            data = strict_json(
+                await self._request(
+                    "POST",
+                    settings["base_url"] + "/search",
+                    authorize,
+                    payload={
+                        "query": public_query.strip(),
+                        "limit": MAX_PUBLIC_SEARCH_RESULTS,
+                        "engines": settings["engines"],
+                        "searchMode": "request",
+                    },
+                )
             )
-        )
-        if (
-            not isinstance(data, dict)
-            or "error" in data
-            or not isinstance(data.get("search_result"), list)
-        ):
-            raise ProviderError("智谱联网搜索返回失败状态或不兼容的响应结构。")
-        rows = data["search_result"]
+            if (
+                not isinstance(data, dict)
+                or data.get("status") != "ok"
+                or not isinstance(data.get("data"), dict)
+                or not isinstance(data["data"].get("results"), list)
+                or not isinstance(data["data"].get("partialFailures", []), list)
+            ):
+                raise ProviderError("Open Websearch 返回失败状态或不兼容的响应结构。")
+            rows = data["data"]["results"]
+            partial = bool(data["data"].get("partialFailures"))
+            if any(not isinstance(row, dict) for row in rows):
+                raise ProviderError("Open Websearch 返回了无效来源片段。")
+            rows = [
+                {
+                    "title": row.get("title"),
+                    "content": row.get("description"),
+                    "link": row.get("url"),
+                }
+                for row in rows
+            ]
+        else:
+            if not isinstance(api_key, str) or not api_key.strip():
+                raise ProviderError("未配置独立的智谱联网搜索密钥。")
+            data = strict_json(
+                await self._request(
+                    "POST",
+                    ZHIPU_WEB_SEARCH_URL,
+                    authorize,
+                    headers={"Authorization": f"Bearer {api_key}"},
+                    payload={
+                        "search_query": public_query,
+                        "search_engine": "search_std",
+                        "search_intent": False,
+                        "count": MAX_PUBLIC_SEARCH_RESULTS,
+                        "content_size": "medium",
+                        "search_recency_filter": "noLimit",
+                    },
+                )
+            )
+            if (
+                not isinstance(data, dict)
+                or "error" in data
+                or not isinstance(data.get("search_result"), list)
+            ):
+                raise ProviderError("智谱联网搜索返回失败状态或不兼容的响应结构。")
+            rows = data["search_result"]
         if len(rows) > 50:
             raise ProviderError("联网搜索返回结果数量超限。")
         sources, seen = [], set()
@@ -528,6 +625,10 @@ class HttpProviders:
             )
         if truncated:
             warnings.append("联网搜索结果超过片段或数量上限，仅保留有界摘要。")
+        if partial:
+            warnings.append(
+                "Open Websearch 部分搜索引擎失败；已保留其他引擎结果，结果可能不完整。"
+            )
         return sources, warnings
 
     async def model_report(

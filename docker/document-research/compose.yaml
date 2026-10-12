@@ -4,12 +4,29 @@
 # docker compose -f compose.yaml -f docker/document-research/compose.yaml up -d document-research web
 # 只验收独立模块时最后一条加 --no-deps，避免启动原平台业务服务。
 services:
+  document-websearch:
+    image: ${OPEN_WEBSEARCH_IMAGE:-ghcr.io/aas-ee/open-web-search@sha256:748f1d083c9930db8e8b5f017834e1efa9ec77844dbed01baef2acf3ad47e81a}
+    command: ["node", "build/index.js", "serve", "--host", "0.0.0.0", "--port", "3210"]
+    environment:
+      DEFAULT_SEARCH_ENGINE: bing
+      ALLOWED_SEARCH_ENGINES: bing,startpage,sogou,duckduckgo,baidu
+      SEARCH_MODE: request
+      USE_PROXY: ${OPEN_WEBSEARCH_USE_PROXY:-false}
+      PROXY_URL: ${OPEN_WEBSEARCH_PROXY_URL:-http://host.docker.internal:7890}
+      OPEN_WEBSEARCH_QUIET_STARTUP: "true"
+    networks: [document-research-network]
+    expose: ["3210"]
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    restart: unless-stopped
+
   document-research:
     build:
       context: .
       dockerfile: docker/document-research/Dockerfile
     image: ${COMPOSE_PROJECT_NAME:-deep-research}-document-research:local
     user: "1000:1000"
+    environment:
+      DOCUMENT_RESEARCH_WEBSEARCH_URL: http://document-websearch:3210
     read_only: true
     init: true
     cap_drop: [ALL]

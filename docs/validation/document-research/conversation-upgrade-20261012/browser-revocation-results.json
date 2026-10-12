@@ -1,0 +1,18 @@
+{
+  "synthetic": true,
+  "real_external_providers": false,
+  "passed": 2,
+  "failed": 0,
+  "scenarios": [
+    {
+      "name": "正在运行的追问遇到本地资料版本变化后，轮询403清除受保护问题、背景和报告，保留停止任务入口",
+      "status": "PASS"
+    },
+    {
+      "name": "同一用户可停止失去读取权限的运行任务，仅返回最小终态，存储已取消且无报告",
+      "status": "PASS"
+    }
+  ],
+  "page_errors": [],
+  "shared_requests": []
+}

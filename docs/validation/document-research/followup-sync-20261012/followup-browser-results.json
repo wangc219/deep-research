@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-12",
+  "checks": [
+    {
+      "name": "智谱未配置时可跳过，前端设置Open Websearch并使用真实公网检索",
+      "status": "PASS"
+    },
+    {
+      "name": "证据关系关键词、类型与来源筛选，原文定位及手机深色布局",
+      "status": "PASS"
+    },
+    {
+      "name": "继续追问重新检索与确认外发，独立交付副本不继承旧编辑",
+      "status": "PASS"
+    },
+    {
+      "name": "追问转深研、问题背景及新报告ZIP文件交付",
+      "status": "PASS"
+    },
+    {
+      "name": "资料版本变化后停止运行中的追问，撤销交付读取且清空旧问题",
+      "status": "PASS"
+    },
+    {
+      "name": "融合场景无浏览器异常和原平台API请求",
+      "status": "PASS"
+    }
+  ],
+  "page_errors": [],
+  "shared_platform_requests": [],
+  "real_open_websearch": true,
+  "synthetic_generation_model": true
+}

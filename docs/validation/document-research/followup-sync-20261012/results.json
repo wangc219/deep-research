@@ -1,0 +1,131 @@
+{
+  "date": "2026-10-12",
+  "main_base": "a952347052dbd96e573b5d912bdf0e64da695cca",
+  "fork_head": "f4bdcf1cbfc0484503a8669829e4ce1ecdcd5d9e",
+  "synthetic_external_model": true,
+  "production_service_engine": true,
+  "browser": "Google Chrome",
+  "scenarios": [
+    {
+      "name": "独立入口、实际前端代理及服务健康",
+      "status": "PASS"
+    },
+    {
+      "name": "鉴权拒绝错误令牌并正常连接专用身份",
+      "status": "PASS"
+    },
+    {
+      "name": "前端设置模型、保留密钥、拒绝不安全地址且不触发模型调用",
+      "status": "PASS"
+    },
+    {
+      "name": "UI创建专用库、四种格式上传解析及损坏PDF失败提示",
+      "status": "PASS"
+    },
+    {
+      "name": "按选库检索预览命中、空选择和零命中分别展示且零模型调用",
+      "status": "PASS"
+    },
+    {
+      "name": "有据问答、逐字引文、来源跳转和无依据图谱过滤",
+      "status": "PASS"
+    },
+    {
+      "name": "交付卡片、HTML隔离预览、Markdown编辑保存和单文件与ZIP下载",
+      "status": "PASS"
+    },
+    {
+      "name": "刷新恢复报告、深色和390px布局无横向溢出",
+      "status": "PASS"
+    },
+    {
+      "name": "问答启动202响应丢失后恢复，只启动和调用一次",
+      "status": "PASS"
+    },
+    {
+      "name": "深研三个追问、假设、方案报告及启动响应丢失恢复",
+      "status": "PASS"
+    },
+    {
+      "name": "取消和模型迟到响应不会覆盖取消终态",
+      "status": "PASS"
+    },
+    {
+      "name": "伪造引句和提供商故障明确失败，不保存伪造报告",
+      "status": "PASS"
+    },
+    {
+      "name": "身份隔离、未授权读取拒绝和专用库删除",
+      "status": "PASS"
+    },
+    {
+      "name": "无浏览器异常，无原平台API调用",
+      "status": "PASS"
+    }
+  ],
+  "passed": 14,
+  "failed": 0,
+  "page_errors": [],
+  "shared_platform_requests": [],
+  "run_posts": [
+    "/document-research-api/tasks/26d6dda795d54d0ba7222519fbdda8ee/run",
+    "/document-research-api/tasks/99e63e196c4d4ae1a32a8ca48a2d0370/run",
+    "/document-research-api/tasks/facca8a6873b46469fc9b6c141513cca/run",
+    "/document-research-api/tasks/8771cea156b24468a2a39eec71d8f9e0/run",
+    "/document-research-api/tasks/c6eb320b56604f2a9ffd91b9afb6b2d7/run",
+    "/document-research-api/tasks/1c87f5df494e4e438b8cd2ccc68101da/run"
+  ],
+  "provider_state": {
+    "calls": 6,
+    "delay": 0.25,
+    "invalid_quote": false,
+    "fail": false,
+    "requests": [
+      {
+        "problem": "跨页表头应该如何处理？",
+        "context_questions": [],
+        "source_ids": [
+          "S1",
+          "S2",
+          "S3"
+        ]
+      },
+      {
+        "problem": "跨页表头应该如何处理？",
+        "context_questions": [],
+        "source_ids": [
+          "S1",
+          "S2",
+          "S3"
+        ]
+      },
+      {
+        "problem": "跨页表头应该如何处理？",
+        "context_questions": [],
+        "source_ids": [
+          "S1",
+          "S2",
+          "S3"
+        ]
+      },
+      {
+        "problem": "跨页表头应该如何处理？",
+        "context_questions": [],
+        "source_ids": [
+          "S1",
+          "S2",
+          "S3"
+        ]
+      },
+      {
+        "problem": "跨页表头应该如何处理？",
+        "context_questions": [],
+        "source_ids": [
+          "S1",
+          "S2",
+          "S3"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "real_open_websearch_daemon": true,
+  "real_public_search": true,
+  "zhipu_configured": false,
+  "query": "Docling document conversion",
+  "engines": [
+    "duckduckgo"
+  ],
+  "retained_sources": 4,
+  "source_urls": [
+    "https://docling-project.github.io/docling/reference/document_converter/",
+    "https://github.com/docling-project/docling",
+    "https://arxiv.org/html/2501.17887",
+    "https://arxiv.org/pdf/2501.17887"
+  ],
+  "warnings": [
+    "联网来源为搜索服务返回的摘要，未读取网页全文；引用仅能核对这些片段。",
+    "部分搜索结果不属于本模块允许的官方文档、代码或论文来源，已排除。"
+  ]
+}

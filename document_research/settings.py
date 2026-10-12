@@ -8,7 +8,7 @@ import tempfile
 from contextlib import contextmanager
 
 from .config import load_config
-from .providers import model_configured
+from .providers import ProviderConfigurationError, model_configured, web_search_settings
 
 
 def require_admin(config, owner, token):
@@ -33,12 +33,21 @@ def public_settings(config):
     valid_url = model_configured(
         {"model": model | {"model": "validation", "api_key": "validation"}}
     )
+    try:
+        search = web_search_settings(config)
+    except ProviderConfigurationError:
+        search = {
+            "provider": "open-websearch",
+            "base_url": "",
+            "engines": ["bing", "duckduckgo"],
+        }
     return {
         "base_url": model.get("base_url", "") if valid_url else "",
         "model": model.get("model", ""),
         "reasoning_effort": model.get("reasoning_effort", ""),
         "has_api_key": bool(model.get("api_key")),
         "model_configured": model_configured(config),
+        "web_search": search,
     }
 
 
@@ -81,6 +90,13 @@ def save_settings(directory, owner, token, values):
                 "模型地址须为 HTTPS 或本机 HTTP，不得含凭据、查询或片段；模型名称不能为空。"
             )
         config["model"] = model
+        if values.get("web_search") is not None:
+            try:
+                config["web_search"] = web_search_settings(
+                    {"web_search": values["web_search"]}
+                )
+            except ProviderConfigurationError as exc:
+                raise ValueError(str(exc)) from None
         fd, temporary = tempfile.mkstemp(prefix=".config-", dir=directory)
         try:
             with os.fdopen(fd, "w", encoding="utf-8") as file:

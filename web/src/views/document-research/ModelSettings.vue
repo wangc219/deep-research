@@ -3,6 +3,7 @@ import { onMounted, onUnmounted, reactive, ref } from 'vue'
 const props = defineProps({ api: { type: Object, required: true } })
 const emit = defineEmits(['saved'])
 const fields = reactive({ base_url: '', model: '', api_key: '', clear_api_key: false, reasoning_effort: '' })
+const search = reactive({ provider: 'open-websearch', base_url: 'http://127.0.0.1:3210', engines: ['bing', 'duckduckgo'] })
 const loading = ref(true)
 const saving = ref(false)
 const allowed = ref(false)
@@ -16,6 +17,7 @@ onMounted(async () => {
     const data = await props.api.modelSettings()
     if (!alive) return
     Object.assign(fields, { base_url: data.base_url, model: data.model, reasoning_effort: data.reasoning_effort })
+    if (data.web_search) Object.assign(search, data.web_search)
     hasKey.value = data.has_api_key
     allowed.value = true
   } catch (cause) { if (alive) error.value = cause.status === 403 ? '此账号无模型配置权限，请联系独立服务管理员。' : cause.message }
@@ -25,7 +27,7 @@ async function save() {
   if (saving.value) return
   saving.value = true; error.value = ''; message.value = ''
   try {
-    const data = await props.api.saveModelSettings({ ...fields, api_key: fields.clear_api_key ? '' : fields.api_key })
+    const data = await props.api.saveModelSettings({ ...fields, api_key: fields.clear_api_key ? '' : fields.api_key, web_search: { ...search } })
     if (!alive) return
     fields.api_key = ''; fields.clear_api_key = false
     hasKey.value = data.has_api_key
@@ -47,6 +49,11 @@ async function save() {
       <label>API 密钥<input v-model="fields.api_key" type="password" autocomplete="new-password" maxlength="4096" :disabled="saving || fields.clear_api_key" :placeholder="hasKey ? '已保存；留空保留现有密钥' : '请输入 API 密钥'" /></label>
       <label class="check"><input v-model="fields.clear_api_key" type="checkbox" :disabled="saving" />清除已保存密钥</label>
       <label>思考强度<select v-model="fields.reasoning_effort" :disabled="saving"><option value="">提供商默认</option><option value="low">low</option><option value="high">high</option><option value="max">max</option></select></label>
+      <h3>公网检索</h3>
+      <label>搜索提供商<select v-model="search.provider" :disabled="saving"><option value="open-websearch">Open Websearch（无需智谱密钥）</option><option value="zhipu">智谱公开搜索（使用独立服务的智谱密钥）</option></select></label>
+      <label v-if="search.provider === 'open-websearch'">Open Websearch 服务地址<input v-model="search.base_url" required maxlength="2000" :disabled="saving" placeholder="http://127.0.0.1:3210" /></label>
+      <label v-if="search.provider === 'open-websearch'">搜索引擎<select v-model="search.engines" multiple :disabled="saving"><option value="bing">Bing</option><option value="duckduckgo">DuckDuckGo</option><option value="startpage">Startpage</option><option value="sogou">搜狗</option><option value="baidu">百度</option></select></label>
+      <p>仅在任务勾选“启用公开网络检索”时搜索。智谱知识库可跳过；配置后仅使用本次勾选的库。搜索仅发送单独填写的公开关键词。</p>
       <p>保存会更新此独立服务所有任务使用的模型；不会发送测试请求。密钥不回显，也不保存到浏览器存储。</p>
       <button type="submit" :disabled="saving">{{ saving ? '正在保存…' : '保存模型设置' }}</button>
       <p v-if="message" role="status">{{ message }}</p>

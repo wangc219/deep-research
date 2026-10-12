@@ -118,6 +118,72 @@ def test_non_admin_and_revocation(environment):
     assert client.get(url).status_code == 401
 
 
+def test_search_settings_save_and_preserve_independent_grants(environment):
+    client, directory, _ = environment
+    previous = load_config(directory)
+    search = {
+        "provider": "open-websearch",
+        "base_url": "http://document-websearch:3210",
+        "engines": ["duckduckgo"],
+    }
+    response = client.put(
+        PREFIX + "/settings/model", json=model_body(web_search=search)
+    )
+    assert response.status_code == 200
+    assert response.json()["web_search"] == search
+    assert client.get(PREFIX + "/settings/model").json()["web_search"] == search
+    assert load_config(directory)["zhipu"] == previous["zhipu"]
+    assert (
+        client.put(PREFIX + "/settings/model", json=model_body(api_key="")).status_code
+        == 200
+    )
+    assert load_config(directory)["web_search"] == search
+
+
+def test_legacy_config_uses_explicit_document_search_address(environment, monkeypatch):
+    _, directory, _ = environment
+    config = load_config(directory)
+    config.pop("web_search")
+    (directory / "config.json").write_text(json.dumps(config))
+    monkeypatch.setenv(
+        "DOCUMENT_RESEARCH_WEBSEARCH_URL", "http://document-websearch:3210"
+    )
+    assert (
+        load_config(directory)["web_search"]["base_url"]
+        == "http://document-websearch:3210"
+    )
+    assert load_config(directory)["web_search"]["provider"] == "open-websearch"
+
+
+@pytest.mark.parametrize(
+    "search",
+    [
+        {"provider": "other", "base_url": "http://localhost:3210", "engines": ["bing"]},
+        {
+            "provider": "open-websearch",
+            "base_url": "http://user:private-key@localhost:3210",
+            "engines": ["bing"],
+        },
+        {
+            "provider": "open-websearch",
+            "base_url": "http://localhost:3210",
+            "engines": [],
+        },
+    ],
+)
+def test_invalid_search_settings_do_not_change_model_or_echo_secrets(
+    environment, search
+):
+    client, directory, _ = environment
+    previous = load_config(directory)
+    response = client.put(
+        PREFIX + "/settings/model", json=model_body(web_search=search)
+    )
+    assert response.status_code == 422
+    assert "private-key" not in response.text
+    assert load_config(directory) == previous
+
+
 def test_delivery_exports_edits_bundle_and_restart(environment):
     client, directory, _ = environment
     item = completed(environment)

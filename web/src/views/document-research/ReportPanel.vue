@@ -2,6 +2,8 @@
 import { computed, ref } from 'vue'
 import EvidenceSources from './EvidenceSources.vue'
 import RetrievalStatus from './RetrievalStatus.vue'
+import EvidenceGraph from './EvidenceGraph.vue'
+import EvidenceCoverage from './EvidenceCoverage.vue'
 import { citedSourceIds } from './evidencePresentation'
 const props = defineProps({ report: { type: Object, required: true } })
 const sources = ref(null)
@@ -18,6 +20,7 @@ function openSource(id) { sources.value?.openSource(id) }
     <section v-if="report.warnings?.length" class="notice"><h3>本次限制</h3><ul><li v-for="(item, i) in report.warnings" :key="i">{{ item }}</li></ul></section>
 
     <RetrievalStatus :items="report.retrieval_status || []" />
+    <EvidenceCoverage :coverage="report.evidence_coverage" @open-source="openSource" />
     <section v-if="isAnswer" aria-label="回答与原文">
       <p v-if="!report.answer?.length">当前证据不足，暂时无法给出有依据的回答。请查看下方证据缺口。</p>
       <div v-for="(item, i) in report.answer" :key="i" class="comparison"><p>{{ item.text }}</p><blockquote>{{ item.quote }}</blockquote><a :href="`#document-source-${encodeURIComponent(item.source_id)}`" @click.prevent="openSource(item.source_id)">[{{ item.source_id }}] 查看来源原文</a></div>
@@ -48,15 +51,7 @@ function openSource(id) { sources.value?.openSource(id) }
     <section v-if="report.assumptions?.length"><h3>假设</h3><ul><li v-for="(item, i) in report.assumptions" :key="i">{{ item }}</li></ul></section>
     <section v-if="report.gaps?.length"><h3>证据缺口与待验证项</h3><ul><li v-for="(item, i) in report.gaps" :key="i">{{ item }}</li></ul></section>
 
-    <section><h3>证据关系</h3><p>新生成的关系会核对主体、客体是否出现在所引原文中。该校验不等于关系语义已获独立核实；推断仍需验证。</p>
-      <p v-if="!report.graph?.length">本次没有可展示的证据关系，可能是证据不足或未通过原文与端点校验；补充原始资料后可重新提问。</p>
-      <div v-for="(edge, i) in report.graph" :key="i" class="relation">
-        <span class="badge">{{ edge.kind === 'fact' ? '原文陈述 · 未独立核实' : '推断 · 待验证' }}</span><span class="badge">{{ edge.grounding_status === 'endpoints_in_quote' ? '原文端点已校验' : '历史结果 · 端点未校验' }}</span>
-        <p><strong>{{ edge.subject }}</strong> → {{ edge.relation }} → <strong>{{ edge.object }}</strong></p>
-        <blockquote v-if="edge.quote">{{ edge.quote }}</blockquote>
-        <a v-if="edge.source_id" :href="`#document-source-${encodeURIComponent(edge.source_id)}`" @click.prevent="openSource(edge.source_id)">[{{ edge.source_id }}]</a>
-      </div>
-    </section>
+    <EvidenceGraph :graph="report.graph || []" :sources="report.sources || []" :removed-count="report.graph_removed_count || 0" @open-source="openSource" />
 
     <section><h3>本次提供给模型的来源</h3><p>以下来源曾提供给模型；标记说明哪些被回答、方案或证据关系实际引用。</p><p v-if="!report.sources?.length">没有可用来源。</p>
       <EvidenceSources ref="sources" :sources="report.sources || []" :cited-ids="citedIds" />

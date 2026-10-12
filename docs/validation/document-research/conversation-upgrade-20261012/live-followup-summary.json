@@ -1,0 +1,37 @@
+{
+  "real_provider": true,
+  "synthetic_document_only": true,
+  "scope": "Engine follow-up retrieval and answer; browser separately synthetic",
+  "status": "PASS",
+  "sources": 1,
+  "answer_claims": 2,
+  "graph_edges": 0,
+  "graph_removed": 1,
+  "coverage": {
+    "kind": "text_mentions_only",
+    "total_sources": 1,
+    "candidates": [
+      {
+        "name": "Docling",
+        "source_ids": []
+      },
+      {
+        "name": "PaddleOCR",
+        "source_ids": []
+      },
+      {
+        "name": "Unstructured",
+        "source_ids": []
+      }
+    ],
+    "missing_candidates": [
+      "Docling",
+      "PaddleOCR",
+      "Unstructured"
+    ]
+  },
+  "retrieval_calls": 1,
+  "model_calls": 1,
+  "public_calls": 0,
+  "elapsed_seconds": 4.65
+}

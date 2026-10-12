@@ -1,0 +1,10 @@
+{
+  "production_document_container": true,
+  "real_open_websearch_container_network": true,
+  "zhipu_configured": false,
+  "model_called": false,
+  "frontend_settings_contract": true,
+  "retained_public_sources": 6,
+  "no_store": true,
+  "secret_not_returned": true
+}

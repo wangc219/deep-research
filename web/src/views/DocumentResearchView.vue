@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { ArrowLeft, BookOpen, Check, FileSearch, LogOut, Moon, Plus, RefreshCw, Sun, Upload } from '@lucide/vue'
 import { useThemeStore } from '@/stores/theme'
 import { createDocumentResearchApi, createDocumentTaskMonitor, createDocumentRetrievalPreview, runDocumentTaskOnce, DOCUMENT_TOKEN_KEY, documentTaskKey } from '@/apis/document_research_api'
@@ -8,6 +8,8 @@ import RetrievalStatus from './document-research/RetrievalStatus.vue'
 import ReportPanel from './document-research/ReportPanel.vue'
 import ModelSettings from './document-research/ModelSettings.vue'
 import DeliveryPanel from './document-research/DeliveryPanel.vue'
+import EvidenceCoverage from './document-research/EvidenceCoverage.vue'
+import { createFollowupDraft } from './document-research/followupDraft'
 
 const theme = useThemeStore()
 const token = ref('')
@@ -24,6 +26,9 @@ const documents = ref([])
 const preview = ref(null)
 const libraryName = ref('')
 const task = ref(null)
+const followup = ref(null)
+const previewSources = ref(null)
+const unreadableTask = ref(null)
 const connectionError = ref('')
 const runUnconfirmed = ref(false)
 const deletion = ref(null)
@@ -64,10 +69,11 @@ function retrieveEvidence() {
   clearRetrieval()
   void retrievalPreview.start({
     problem: fields.problem, library_ids: [...selected.value], allow_public: fields.allow_public,
-    public_query: fields.public_query, allow_web_search: fields.allow_web_search
+    public_query: fields.public_query, allow_web_search: fields.allow_web_search,
+    ...(followup.value ? { parent_task_id: followup.value.parent_task_id } : {})
   })
 }
-watch(() => [token.value, user.value, JSON.stringify(selected.value), fields.problem, fields.public_query, fields.allow_public, fields.allow_web_search, fields.mode], clearRetrieval, { flush: 'sync' })
+watch(() => [token.value, user.value, JSON.stringify(selected.value), fields.problem, fields.public_query, fields.allow_public, fields.allow_web_search, fields.mode, followup.value?.parent_task_id], clearRetrieval, { flush: 'sync' })
 
 function remember(key, value) {
   try { value === null ? sessionStorage.removeItem(key) : sessionStorage.setItem(key, value) } catch { /* 禁用存储时本页仍可使用。 */ }
@@ -80,16 +86,28 @@ function acceptTask(next) {
   task.value = next
   selected.value = [...next.library_ids]
   connectionError.value = ''
-  remember(documentTaskKey(user.value), next.id)
+  if (next.scope_invalidated) {
+    followup.value = null
+    unreadableTask.value = null
+    clearRetrieval()
+    preview.value = null
+    documents.value = []
+    Object.assign(fields, { problem: '', parser_version: '', expected_result: '', constraints: '', allow_external_model: false, allow_public: false, allow_web_search: false, public_query: '' })
+  }
+  remember(documentTaskKey(user.value), next.scope_invalidated ? null : next.id)
   for (const field of Object.keys(answers)) answers[field] = next[field] || ''
 }
 function showError(cause) {
   error.value = cause.message || '请求失败，请重试。'
   if ([401, 403, 404].includes(cause.status)) {
+    if (cause.status === 403 && task.value?.status === 'running') unreadableTask.value = { id: task.value.id }
     invalidateTaskScope()
     monitor.stop()
     clearRetrieval()
     task.value = null
+    followup.value = null
+    Object.assign(fields, { problem: '', parser_version: '', expected_result: '', constraints: '', allow_external_model: false, allow_public: false, allow_web_search: false, public_query: '' })
+    for (const field of Object.keys(answers)) answers[field] = ''
     preview.value = null
     documents.value = []
     if (user.value) remember(documentTaskKey(user.value), null)
@@ -122,7 +140,7 @@ function currentTaskScope(taskId) {
   const credential = token.value
   return () => alive && generation === taskGeneration && !!identity && identity === user.value && credential === token.value && (!taskId || task.value?.id === taskId)
 }
-watch(() => [token.value, user.value], () => { invalidateTaskScope(); monitor.stop() }, { flush: 'sync' })
+watch(() => [token.value, user.value], () => { invalidateTaskScope(); monitor.stop(); unreadableTask.value = null }, { flush: 'sync' })
 async function startKnownTask(taskId, isCurrent = currentTaskScope(taskId)) {
   await runDocumentTaskOnce({
     taskId, runTask: api.runTask, isCurrent, onTask: acceptTask, monitor,
@@ -161,6 +179,7 @@ function disconnect() {
   monitor.stop()
   remember(DOCUMENT_TOKEN_KEY, null)
   token.value = ''; user.value = ''; task.value = null; libraries.value = []; selected.value = []
+  followup.value = null
   documents.value = []; activeLibrary.value = null; preview.value = null; error.value = ''; connectionError.value = ''
   deletion.value = null
   Object.assign(fields, { mode: 'research', allow_web_search: false, problem: '', parser_version: '', expected_result: '', constraints: '', allow_public: false, public_query: '', allow_external_model: false })
@@ -217,7 +236,7 @@ async function createTask() {
     monitor.stop()
     invalidateTaskScope()
     clearRetrieval()
-    const payload = { ...fields, library_ids: [...selected.value] }
+    const payload = { ...fields, library_ids: [...selected.value], ...(followup.value ? { parent_task_id: followup.value.parent_task_id } : {}) }
     if (fields.mode === 'answer') Object.assign(payload, { parser_version: '', expected_result: '', constraints: '' })
     const isCurrent = currentTaskScope()
     const created = await api.createTask(payload)
@@ -253,11 +272,38 @@ async function cancelTask() {
     }
   })
 }
+async function cancelUnreadableTask() {
+  const taskId = unreadableTask.value?.id
+  if (!taskId) return
+  const identity = user.value
+  const credential = token.value
+  await action('停止已失效任务', async () => {
+    const result = await api.cancelTask(taskId)
+    if (!alive || user.value !== identity || token.value !== credential || unreadableTask.value?.id !== taskId) return
+    if (result.status === 'cancelled') {
+      unreadableTask.value = null
+      remember(documentTaskKey(identity), null)
+    }
+  })
+}
 function newTask() {
   invalidateTaskScope()
   monitor.stop()
   remember(documentTaskKey(user.value), null)
   task.value = null; connectionError.value = ''; error.value = ''
+  followup.value = null
+  clearRetrieval()
+  Object.assign(fields, { mode: 'research', problem: '', parser_version: '', expected_result: '', constraints: '', allow_public: false, allow_web_search: false, public_query: '', allow_external_model: false })
+}
+async function startFollowup(mode) {
+  const draft = createFollowupDraft(task.value, mode)
+  if (!draft) return
+  newTask()
+  followup.value = draft
+  selected.value = [...draft.library_ids]
+  Object.assign(fields, draft.fields)
+  await nextTick()
+  document.getElementById('research-problem')?.focus()
 }
 onMounted(async () => {
   token.value = recalled(DOCUMENT_TOKEN_KEY)
@@ -282,6 +328,7 @@ onUnmounted(() => { alive = false; invalidateTaskScope(); monitor.stop(); clearR
       <div v-if="healthError" class="notice error" role="alert">{{ healthError }} <button type="button" @click="checkHealth">重新检查</button></div>
       <div v-else-if="health && !health.model_configured" class="notice" role="status">模型尚未配置。资料管理和检索预览可以使用；生成回答或报告前，请管理员连接后打开“模型设置”，填写模型地址、模型名和密钥。<button type="button" @click="checkHealth">重新检查</button></div>
       <div v-if="error" class="notice error" role="alert">{{ error }}</div>
+      <div v-if="unreadableTask && user" class="notice" role="status">资料访问已变化，结果不可读取；运行中的任务尚未确认停止。<button type="button" :disabled="!!busy" @click="cancelUnreadableTask">停止已失效任务</button></div>
 
       <form v-if="!user" class="panel connect" @submit.prevent="connect">
         <h2>连接文档研发服务</h2><p class="muted">使用管理员提供的专用访问令牌。只在本标签页会话中保存。</p>
@@ -295,11 +342,11 @@ onUnmounted(() => { alive = false; invalidateTaskScope(); monitor.stop(); clearR
           <p class="muted">勾选本次研究可检索的库。未勾选的库不会被读取。</p>
           <div v-if="!libraries.length" class="empty">还没有资料库。创建一个本地库，上传需求或失败样本。</div>
           <div v-for="library in libraries" :key="library.id" class="library-row" :class="{ selected: activeLibrary?.id === library.id }">
-            <input :id="`library-${library.id}`" v-model="selected" type="checkbox" :value="library.id" :disabled="!!task || !!busy" :aria-label="`选择资料库 ${library.name}`" />
+            <input :id="`library-${library.id}`" v-model="selected" type="checkbox" :value="library.id" :disabled="!!task || !!followup || !!busy" :aria-label="`选择资料库 ${library.name}`" />
             <button class="library-open" type="button" :disabled="!!busy" @click="openLibrary(library)"><strong>{{ library.name }}</strong><span>{{ library.kind === 'zhipu' ? `智谱 · 只读 · ${library.document_count == null ? '文档数量未知' : library.document_count + ' 份资料'}` : `本地 · ${library.document_count} 份资料` }}</span></button>
           </div>
           <form class="new-library" @submit.prevent="createLibrary"><label for="library-name">新建本地资料库</label><div class="inline"><input id="library-name" v-model="libraryName" maxlength="100" placeholder="例如：复杂表格失败样本" required :disabled="!!busy" /><button type="submit" class="icon-button" :disabled="!!busy || !libraryName.trim()" aria-label="创建资料库"><Plus :size="19" /></button></div></form>
-          <p class="muted small">智谱已有知识库由管理员授权后列于上方。这里仅检索，不上传、同步或删除智谱文档。</p>
+          <p class="muted small">智谱知识库为可选项，未配置可跳过；配置后仅检索本次勾选的库。本地资料与 Open Websearch 公网检索均可独立使用。这里不上传、同步或删除智谱文档。</p>
 
           <section v-if="activeLibrary" class="documents">
             <h3>{{ activeLibrary.name }}</h3>
@@ -322,16 +369,22 @@ onUnmounted(() => { alive = false; invalidateTaskScope(); monitor.stop(); clearR
           <form v-if="!task" class="panel research-form" @submit.prevent="createTask">
             <div class="section-heading"><h2>{{ fields.mode === 'answer' ? '基于资料提问' : '定义研究问题' }}</h2><span class="badge">已选 {{ selected.length }} 个库</span></div>
             <div class="mode-switch" role="group" aria-label="工作模式"><button type="button" :aria-pressed="fields.mode === 'answer'" @click="fields.mode = 'answer'">证据问答</button><button type="button" :aria-pressed="fields.mode === 'research'" @click="fields.mode = 'research'">深研方案</button></div>
-            <p class="muted small">{{ fields.mode === 'answer' ? '每个问题都会重新检索已选资料，回答逐条附原文；暂不自动带入上一个问题的对话历史。' : '比较方案、制定实验步骤与验收指标；缺失条件会先向你确认。' }}</p>
+            <p class="muted small">{{ fields.mode === 'answer' ? '每个问题都会重新检索已选资料，回答逐条附原文；完成后可继续追问，或据此细化研究方案。' : '比较方案、制定实验步骤与验收指标；缺失条件会先向你确认。' }}</p>
+            <section v-if="followup" class="notice followup-context" aria-label="追问背景">
+              <div class="section-heading"><h3>沿用的问题背景</h3><button type="button" :disabled="!!busy" @click="newTask">改为独立新问题</button></div>
+              <ol><li v-for="(question, i) in followup.questions" :key="i">{{ question }}</li></ol>
+              <p class="muted small">仅带入最近最多 3 个用户问题，每个最多 2000 字符。旧回答和旧来源不会作为证据复用；本次会重新检索同一资料范围。</p>
+              <p v-if="followup.truncated" class="muted small">较早或过长的问题背景已截断，请在本次问题中补齐必要条件。</p>
+            </section>
             <label for="research-problem">{{ fields.mode === 'answer' ? '想了解的问题' : '需求与当前瓶颈' }}</label><textarea id="research-problem" v-model="fields.problem" rows="4" required maxlength="8000" placeholder="例如：跨页表格与合并单元格识别不准。请结合已上传需求、失败样本，比较 Docling、PaddleOCR、Unstructured，给出实验步骤与验收指标。" />
             <div v-if="fields.mode === 'research'" class="supplement-fields"><label v-for="(label, field) in questionLabels" :key="field" :for="`research-${field}`">{{ label }}<textarea :id="`research-${field}`" v-model="fields[field]" rows="2" maxlength="4000" placeholder="可以暂时留空；创建后最多补充 3 个问题。" /></label></div>
             <fieldset><legend>证据与数据发送范围</legend>
               <label class="check-label"><input v-model="fields.allow_public" type="checkbox" />补充官方项目资料</label><p class="muted small">读取 Docling、PaddleOCR、Unstructured 的官方 README，并在本地选取片段；不向这些站点发送问题或文档。</p>
-              <label class="check-label"><input v-model="fields.allow_web_search" type="checkbox" />启用公开网络检索</label><p class="muted small">仅将你下方明确填写的公开检索词发送给智谱搜索服务。搜索摘要不等于已核实的完整原文；私人问题和文档不会作为公开搜索词发送。</p>
+              <label class="check-label"><input v-model="fields.allow_web_search" type="checkbox" />启用公开网络检索</label><p class="muted small">使用模型设置中的搜索提供商，默认 Open Websearch，无需智谱知识库或密钥。仅发送下方明确填写的公开检索词；搜索摘要不等于已核实的完整原文，私人问题和文档不会作为公开搜索词发送。</p>
               <label v-if="fields.allow_public || fields.allow_web_search" for="public-query">公开检索词<input id="public-query" v-model="fields.public_query" :maxlength="fields.allow_web_search ? 70 : 500" :placeholder="fields.allow_web_search ? 'site:docling-project.github.io/docling table' : '例如：document parsing complex tables'" required /><span class="small muted">{{ fields.allow_web_search ? `将发送给搜索服务（${fields.public_query.length}/70 字符）。` : '仅在本地选择官方项目片段。' }}请勿填写客户名、内部项目名或文档内容。</span></label>
               <p v-if="fields.allow_web_search" class="muted small">建议限定官方站点，例如 site:docling-project.github.io/docling table；无匹配时请调整关键词或补充官方项目资料。</p>
-              <p v-if="hasZhipuSelection" class="notice">已选择智谱库：预览检索或启动任务时，问题会发送给智谱用于检索；不会上传原文件。</p>
-              <label class="check-label"><input v-model="fields.allow_external_model" type="checkbox" />我同意将研究问题、补充信息和选中资料的检索片段发送给管理员配置的外部模型。</label>
+              <p v-if="hasZhipuSelection" class="notice">已选择智谱库：预览检索或启动任务时，{{ followup ? '当前问题及上方问题背景' : '问题' }}会发送给智谱用于检索；不会上传原文件。</p>
+              <label class="check-label"><input v-model="fields.allow_external_model" type="checkbox" />我同意将{{ followup ? '当前问题、上方问题背景、补充信息' : '研究问题、补充信息' }}和选中资料的检索片段发送给管理员配置的外部模型。</label>
             </fieldset>
             <section class="retrieval-preview" aria-label="检索预览">
               <div class="inline wrap"><button type="button" :disabled="!!busy || retrievalLoading || !fields.problem.trim() || publicQueryInvalid" @click="retrieveEvidence">预览检索结果</button><button v-if="retrievalLoading" type="button" @click="stopRetrieval">停止等待</button><span class="muted small">只检索，不调用生成模型，也不需要勾选外部模型同意。</span></div>
@@ -343,7 +396,8 @@ onUnmounted(() => { alive = false; invalidateTaskScope(); monitor.stop(); clearR
                 <RetrievalStatus :items="retrievalResult.retrieval_status || []" />
                 <div v-if="retrievalResult.warnings?.length" class="notice"><ul><li v-for="(warning, i) in retrievalResult.warnings" :key="i">{{ warning }}</li></ul></div>
                 <p v-if="!retrievalResult.sources.length" class="empty">未找到可用片段。可以调整问题或选择其他资料库；这不表示资料库没有文档。</p>
-                <EvidenceSources :sources="retrievalResult.sources" prefix="preview-source" />
+                <EvidenceCoverage v-if="retrievalResult.evidence_coverage" :coverage="retrievalResult.evidence_coverage" source-prefix="preview-source" @open-source="previewSources?.openSource($event)" />
+                <EvidenceSources ref="previewSources" :sources="retrievalResult.sources" prefix="preview-source" />
                 <p class="muted small">这是当前检索结果。生成回答或方案时会重新检索，结果可能发生变化。</p>
               </div>
             </section>
@@ -353,6 +407,8 @@ onUnmounted(() => { alive = false; invalidateTaskScope(); monitor.stop(); clearR
           <section v-else class="panel task-panel" aria-label="研究任务">
             <div class="section-heading"><h2>{{ statusLabels[task.status] || task.status }}</h2><button v-if="!isRunning" type="button" class="quiet" :disabled="!!busy" @click="newTask"><Plus :size="15" />新问题 / 研究</button></div>
             <p class="task-problem">{{ task.problem }}</p><p class="muted small">{{ task.mode === 'answer' ? '证据问答' : '深研方案' }} · 任务 {{ task.id }} · 资料范围已固定；新问题可重新选库。</p>
+            <details v-if="task.context_questions?.length" class="notice followup-context"><summary>本次沿用的问题背景（{{ task.context_questions.length }} 个）</summary><ol><li v-for="(question, i) in task.context_questions" :key="i">{{ question }}</li></ol><p class="muted small">仅用户问题作为背景，证据已重新检索。{{ task.context_truncated ? '较早或过长的问题已截断。' : '' }}</p></details>
+            <div v-if="task.status === 'completed'" class="inline wrap followup-actions" role="group" aria-label="继续研究"><button type="button" :disabled="!!busy" @click="startFollowup('answer')">继续追问</button><button type="button" :disabled="!!busy" @click="startFollowup('research')">据此细化方案</button><span class="muted small">重新检索，外发选项需重新确认。</span></div>
             <div v-if="connectionError" class="notice error" role="alert">{{ connectionError }}<button type="button" @click="monitor.start(task.id)">立即重试</button></div>
             <div v-if="task.status === 'needs_input'" class="questions"><h3>开始前，补充几个关键信息</h3><label v-for="question in task.questions.slice(0, 3)" :key="question.field" :for="`answer-${question.field}`">{{ question.question }}<textarea :id="`answer-${question.field}`" v-model="answers[question.field]" rows="2" maxlength="4000" /></label><div class="inline wrap"><button type="button" class="primary" :disabled="!!busy" @click="supplement(false)">保存补充信息</button><button type="button" :disabled="!!busy" @click="supplement(true)">接受剩余未知项为假设</button></div><p class="muted small">未知项会在报告中标注，并给出验证建议。</p></div>
             <div v-if="task.assumptions?.length" class="notice"><strong>本次假设</strong><ul><li v-for="(assumption, i) in task.assumptions" :key="i">{{ assumption }}</li></ul></div>
@@ -395,6 +451,7 @@ button:hover:not(:disabled) { background: var(--gray-50); } button:disabled { op
 .supplement-fields { margin-top: 20px; display: grid; gap: 12px; } fieldset { border: 1px solid var(--gray-200); padding: 16px; border-radius: 10px; margin: 20px 0; } legend { font-size: 13px; font-weight: 600; width: auto; padding: 0 6px; } .check-label { display: flex; align-items: flex-start; gap: 9px; font-weight: 400; } .check-label input { margin-top: 3px; }
 .badge { background: var(--main-50); color: var(--main-800); font-size: 12px; border-radius: 5px; padding: 3px 8px; white-space: nowrap; } .notice { padding: 14px 16px; border: 1px solid var(--main-200); background: var(--main-20); color: var(--gray-800); border-radius: 9px; margin-bottom: 18px; overflow-wrap: anywhere; } .notice button { margin-left: 5px; padding: 4px 8px; font-size: 12px; } .notice.error { border-color: var(--color-error-100); background: var(--gray-0); color: var(--color-error-700); }
 .form-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; } .workflow { flex-wrap: wrap; justify-content: center; color: var(--gray-600); margin-top: 20px; font-size: 12px; gap: 18px; } .workflow span { gap: 5px; }
+.followup-context li { white-space: pre-wrap; overflow-wrap: anywhere; margin: 8px 0; } .followup-context ol { padding-left: 22px; max-height: 220px; overflow-y: auto; } .followup-actions { margin: 18px 0; }
 .questions { padding: 20px 0; } .questions label { margin-bottom: 18px; } .task-problem { white-space: pre-wrap; overflow-wrap: anywhere; } .run-ready { padding-top: 14px; } .running { display: flex; align-items: center; gap: 14px; border: 1px solid var(--main-200); border-radius: 9px; padding: 18px; margin-top: 22px; } .running > div { flex: 1; } .running p { margin: 4px 0 0; font-size: 13px; color: var(--gray-600); } .pulse { height: 10px; width: 10px; flex-shrink: 0; background: var(--main-color); border-radius: 50%; animation: pulse 1.5s ease infinite; } .busy-indicator { position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); padding: 8px 18px; background: var(--gray-900); color: var(--gray-0); border-radius: 20px; box-shadow: 0 2px 8px var(--shadow-2); }
 @keyframes pulse { 50% { opacity: .4; } } @media (prefers-reduced-motion: reduce) { .pulse { animation: none; } }
 @media (max-width: 850px) { .workspace { grid-template-columns: 1fr; } .page-content { padding: 22px 16px; } .topbar { padding: 10px 16px; } .form-footer, .running { align-items: flex-start; flex-wrap: wrap; } .panel { padding: 20px; } }
