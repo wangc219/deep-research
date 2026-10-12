@@ -12,6 +12,8 @@
 
 - 多路线装备需求研究：新制胜机理、传统能力缺口和局部战争案例。
 - 动态 Agent 编排：独立上下文、工具权限、预算、检查点、失败交接和有界并发。
+- 沙盒工作区与文件交付：智能体读写授权范围内的文件，生成文档、表格、图表、交互网页和代码；支持浏览器预览、Markdown 编辑保存、聊天交付卡片及目录 ZIP 下载。
+- 通用文档研究：本地资料问答、连续追问、转为深研方案、BM25 检索排序、候选证据覆盖与关系筛选，以及 Markdown/HTML/CSV/JSON 交付。
 - 研究证据治理：公网检索、材料化、正文定位、质量评分、引用与交付清单。
 - AMiner 学术检索：智能对话、深研对话及技术攻关舱共享论文发现、摘要补证与一层参考文献追溯；父子智能体共享费用预算。
 - 企业级平台能力：用户、租户、部门、角色权限、任务队列、SSE 事件回放和运行监控。
@@ -32,7 +34,7 @@
 2026-10-12 验收状态：现有完整开发栈的 API、PostgreSQL、Redis 和 Worker 就绪检查通过，AMiner 的应用侧检索链路已验证；本轮未覆盖新设备首次冷安装。通用文档入口的可选 Docker 部署与独立启动方式见 [使用说明](docs/DOCUMENT_RESEARCH.md)。
 
 ```bash
-git clone https://github.com/wangc219/deep-research.git
+git clone git@github.com:wangc219/deep-research.git
 cd deep-research
 bash scripts/platform.sh start
 ```
@@ -192,14 +194,14 @@ python scripts/migration/import_legacy_sqlite.py validate --batch-id <batch-id>
 后端依赖使用 `uv` 锁定，前端依赖使用 `pnpm` 锁定：
 
 ```bash
-uv sync --project backend
+uv sync --project backend --group test
 pnpm --dir=web install --frozen-lockfile
 ```
 
 常用检查：
 
 ```bash
-uv run --project backend pytest backend/test/unit -q
+uv run --project backend --group test python -m pytest backend/test/unit -m "not slow" -q
 pnpm --dir=web test:unit
 pnpm --dir=web build
 docker compose --env-file .env -f compose.yaml -f compose.local.yaml config --quiet
@@ -226,6 +228,9 @@ docker compose --env-file .env -f compose.yaml -f compose.local.yaml config --qu
 - [系统功能测试说明](系统功能测试说明.docx)
 - [AMiner 最终测试记录与场景明细](artifacts/aminer-integration/final-validation.json)
 - [文档研究合并验收记录](artifacts/main-sync-validation-20261012/results.json)
+- [文档研究最新同步与可选公网检索验收](docs/validation/document-research/followup-sync-20261012/README.md)
+- [沙盒工作区与文件交付验收](docs/validation/document-research/delivery-20261012/README.md)
+- [文档研究配置与启动说明](docs/DOCUMENT_RESEARCH.md)
 - [系统架构](docs/ARCHITECTURE.md)
 - [快速上手](docs/QUICK_START.md)
 - [集成指南](docs/INTEGRATION_GUIDE.md)
@@ -242,6 +247,18 @@ docker compose --env-file .env -f compose.yaml -f compose.local.yaml config --qu
 
 ## 通用文档解析研发入口
 
-当前分支新增 `/document-research`：上传普通软件需求与失败样本，生成带来源的候选方案比较、建议实验步骤和拟定验收指标。原 Agent 系统和现有路由保留。新入口使用专用服务、数据和凭据，不接入原共享知识库、装备研发或作战推演流程，也不执行候选解析器性能实验。
+入口位于 `/document-research`，用于普通软件文档解析研究：上传 PDF、DOCX、TXT、Markdown 需求或失败样本，先预览检索证据，再获取带原文引用的回答或生成比较方案、实验步骤与拟定验收指标。完成后可继续追问，或据此细化深研方案；每轮重新检索，最多沿用三个用户问题，重新确认外发范围。
 
-启动方式、智谱只读检索配置及限制见 [文档解析研发入口](docs/DOCUMENT_RESEARCH.md)；实际测试结果见 [验收记录](docs/DOCUMENT_RESEARCH_ACCEPTANCE.md)。
+| 来源或产物 | 使用方式 |
+| --- | --- |
+| 本地资料 | 按本次任务勾选资料库；无需智谱知识库配置即可问答和研究。 |
+| 智谱知识库 | 可选的只读来源；配置后仅检索当前任务勾选且授权的库，未配置或未勾选可跳过。 |
+| Open Websearch | 默认公网搜索提供商，无需智谱密钥；按需勾选“启用公开网络检索”，只发送单独填写的公开关键词。管理员可设置地址、搜索引擎，也可显式切换为智谱公开搜索。 |
+| 模型设置 | 连接专用服务后在页面配置地址、模型名、密钥和思考强度；密钥不回显，留空保留，显式清除才删除。 |
+| 研究文件交付 | 预览和下载 Markdown、HTML、CSV、JSON，支持 ZIP 打包；Markdown 可编辑保存，编辑副本不改变原报告及其他格式。 |
+
+此入口使用专用服务、数据、访问令牌和模型配置，与原平台 `/models` 设置分别管理。默认 `scripts/platform.sh start` 不启用该服务；需按 [配置与启动说明](docs/DOCUMENT_RESEARCH.md) 启动本机服务，或启用可选 `docker/document-research/compose.yaml` 覆盖层及专用搜索服务，再连接页面。原智能对话、沙盒工作区和其他路由继续使用原平台。
+
+2026-10-12 最新同步验收：文档研究 373 项、前端 530 项、浏览器 20 场景通过，真实 Open Websearch 公网检索和独立生产容器接线通过。生成模型使用合成提供商；该结果不等于真实模型报告质量、候选解析器性能或当前完整平台部署已验收。此处前端数量对应文档研究同步版本，AMiner 的验收范围单独记录于上文。
+
+功能边界、实际失败过程和测试证据见 [最新同步验收](docs/validation/document-research/followup-sync-20261012/README.md) 与 [完整验收历史](docs/DOCUMENT_RESEARCH_ACCEPTANCE.md)。
