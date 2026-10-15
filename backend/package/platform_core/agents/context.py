@@ -603,6 +603,11 @@ async def prepare_agent_runtime_context(
             if hasattr(context, field_name):
                 setattr(context, field_name, normalized.get(field_name, []))
 
+        # skills=None 会在权限解析后展开为全部技能，仍需遵守本轮显式提及规则。
+        if getattr(context, "_knowledge_retrieval_enabled", None) is False:
+            context.skills = [slug for slug in context.skills if slug != "knowledge-base"]
+            context.preload_skills = [slug for slug in context.preload_skills if slug != "knowledge-base"]
+
         from platform_core.config.options import aminer_api_opts
         from platform_core.services.aminer_client import ACADEMIC_TOOL_NAMES
 

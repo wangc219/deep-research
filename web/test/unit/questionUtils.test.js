@@ -6,7 +6,9 @@ import {
   normalizeOptions,
   normalizeQuestions,
   isQuestionAnswered,
-  buildQuestionAnswer
+  buildQuestionAnswer,
+  getRecommendedOption,
+  buildRecommendedAnswers
 } from '../../src/utils/questionUtils.js'
 
 test('parseBool 能够正确解析字符串、数值和布尔值', () => {
@@ -129,4 +131,20 @@ test('选择题答案保持单选、多选和自行填写格式', () => {
     buildQuestionAnswer({ ...single, allowOther: false }, [], '补充说明', true),
     undefined
   )
+})
+
+
+test('推荐默认答案兼容中文英文标记，缺少推荐和纯问答不自动提交', () => {
+  const questions = normalizeQuestions([
+    { question_id: 'q1', question: '装备？', options: ['水面', '水下（推荐）'] },
+    { question_id: 'q2', question: '重点？', multi_select: true,
+      options: ['能力 (Recommended)', '技术'] }
+  ])
+  assert.equal(getRecommendedOption(questions[0]).value, '水下（推荐）')
+  assert.deepEqual(buildRecommendedAnswers(questions), {
+    q1: '水下（推荐）', q2: ['能力 (Recommended)']
+  })
+  assert.equal(buildRecommendedAnswers([]), null)
+  assert.equal(buildRecommendedAnswers(normalizeQuestions([{ question: '参数？' }])), null)
+  assert.equal(buildRecommendedAnswers(normalizeQuestions([{ question: '装备？', options: ['水下', '水面'] }])), null)
 })

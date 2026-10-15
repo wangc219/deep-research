@@ -22,6 +22,8 @@ from platform_core.agents.middlewares import (
     create_summary_middleware_from_context,
 )
 from platform_core.agents.middlewares.skills import SkillsMiddleware
+from platform_core.agents.middlewares.artifacts import ArtifactDeliveryMiddleware
+from platform_core.agents.middlewares.knowledge_opt_in import KnowledgeOptInMiddleware
 from platform_core.agents.middlewares.subagent_task import create_subagent_task_middleware
 from platform_core.agents.tool_approval import create_tool_approval_middleware, normalize_tool_approval_mode
 from platform_core.agents.toolkits.service import resolve_configured_runtime_tools
@@ -41,6 +43,7 @@ async def _build_middlewares(context, backend):
             backend=backend,
         ),
         SkillsMiddleware(),
+        ArtifactDeliveryMiddleware(),
     ]
     memory_middleware = await create_memory_middleware(context)
     if memory_middleware:
@@ -54,6 +57,7 @@ async def _build_middlewares(context, backend):
             TodoListMiddleware(system_prompt=TODO_MID_PROMPT),
             PatchToolCallsMiddleware(),
             SearchResilienceMiddleware(),
+            KnowledgeOptInMiddleware(enabled=getattr(context, "_knowledge_retrieval_enabled", False)),
             # 网络类错误(断网/连接抖动)按预算(默认600s)持续重试，非网络错误按 max_retries
             # 次数重试——两者合并进 NetworkRetryMiddleware，避免拆成两个中间件后因装配顺序
             # 或外层重试网络错误而放大预算。

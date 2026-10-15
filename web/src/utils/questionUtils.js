@@ -159,3 +159,18 @@ export const buildQuestionAnswer = (
   }
   return question?.multiSelect ? selected : selected[0]
 }
+
+/** 获取明确标注的推荐项，不把普通第一项当成推荐。 */
+export const getRecommendedOption = (question) =>
+  question?.options?.find((option) => /[（(]\s*(?:Recommended|推荐)\s*[）)]/i.test(option.label))
+
+/** 只有每题都有推荐项时，才允许整组自动回答。 */
+export const buildRecommendedAnswers = (questions) => {
+  if (!questions.length || questions.some((question) => !getRecommendedOption(question))) return null
+  return Object.fromEntries(
+    questions.map((question) => {
+      const value = getRecommendedOption(question).value
+      return [question.questionId, question.multiSelect ? [value] : value]
+    })
+  )
+}

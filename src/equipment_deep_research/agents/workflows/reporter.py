@@ -18,6 +18,10 @@ from equipment_deep_research.agents.workflows.reporting_support import (
     _report_table_issues,
 )
 from equipment_deep_research.providers.responses import ProviderRequestError
+from equipment_deep_research.agents.workflows.task_lifecycle import (
+    gather_isolated,
+    is_budget_exhausted,
+)
 
 
 _REPORT_PROMPT_DIR = Path(__file__).resolve().parents[1] / "prompts"
@@ -105,6 +109,63 @@ def _repair_reason_fingerprint(reasons: Sequence[str]) -> tuple[str, ...]:
             root = text[:180]
         roots.add(root)
     return tuple(sorted(roots))
+
+
+def _merge_report_column_block(
+    report: str,
+    *,
+    parent_heading: str,
+    heading: str,
+    new_block: str,
+    following_headings: Sequence[str] = (),
+    following_parents: Sequence[str] = (),
+) -> str:
+    """Replace or insert one recovered H3 without rewriting healthy siblings."""
+
+    parent_pattern = rf"^##\s+{re.escape(parent_heading)}\s*$"
+    parent = re.search(parent_pattern, report, flags=re.MULTILINE)
+    if parent is None:
+        next_parent = next(
+            (
+                match for title in following_parents
+                if (match := re.search(
+                    rf"^##\s+{re.escape(title)}\s*$", report, flags=re.MULTILINE
+                )) is not None
+            ),
+            None,
+        )
+        position = next_parent.start() if next_parent else len(report)
+        report = (
+            report[:position].rstrip() + f"\n\n## {parent_heading}\n\n"
+            + report[position:]
+        )
+        parent = re.search(parent_pattern, report, flags=re.MULTILINE)
+    assert parent is not None
+    next_parent = re.search(r"^##\s+", report[parent.end():], flags=re.MULTILINE)
+    parent_end = parent.end() + next_parent.start() if next_parent else len(report)
+    body = report[parent.end():parent_end]
+    existing = re.search(
+        rf"^###\s+{re.escape(heading)}\s*$\n.*?(?=^###\s|\Z)",
+        body,
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    if existing:
+        start, end = existing.span()
+    else:
+        next_heading = next(
+            (
+                match for title in following_headings
+                if (match := re.search(
+                    rf"^###\s+{re.escape(title)}\s*$", body, flags=re.MULTILINE
+                )) is not None
+            ),
+            None,
+        )
+        start = end = next_heading.start() if next_heading else len(body)
+    # Use literal slicing: model prose may contain backslashes (e.g. LaTeX)
+    # which must never be interpreted as regex replacement escapes.
+    body = body[:start] + "\n\n" + new_block.strip() + "\n\n" + body[end:]
+    return report[:parent.end()] + body + report[parent_end:]
 
 
 def _parallel_column_navigation_preamble(*, project_mode: bool) -> str:
@@ -1559,14 +1620,21 @@ def draft_parallel_report(
         calls = []
         call_indexes: list[int] = []
         reused_results: list[str] = [""] * len(sections)
+        initial_call_capacity = _reporter_calls_remaining(host)
         for index, (layer_id, h2, h3s, target_chars, token_cap, additional_h2s) in enumerate(sections):
             if existing_resume_report and layer_id not in resume_failed_layers:
                 reused = extract_resume_fragment(
                     existing_resume_report, h2, h3s, additional_h2s
                 )
-                if reused:
+                if reused and assigned_output_is_reviewable(
+                    reused, h2, h3s, section_required_h4(sections[index]),
+                    layer_id, target_chars=target_chars,
+                ):
                     reused_results[index] = reused
                     continue
+                resume_failed_layers.add(layer_id)
+            if initial_call_capacity is not None and len(calls) >= initial_call_capacity:
+                continue
             layer_input = dict(reporter_input)
             if project_mode:
                 handoff = layer_input.get("research_handoff", {})
@@ -1662,7 +1730,7 @@ def draft_parallel_report(
                 )
             )
             call_indexes.append(index)
-        first_results = await asyncio.gather(*calls, return_exceptions=True)
+        first_results = await gather_isolated(*calls)
         results: list[str] = list(reused_results)
         failure_reasons: list[list[str]] = [[] for _ in sections]
         # A repair wave is useful only when it changes the diagnosed root
@@ -1675,9 +1743,12 @@ def draft_parallel_report(
         last_repair_roots: list[tuple[str, ...]] = [() for _ in sections]
         transport_retry_counts: list[int] = [0 for _ in sections]
         stalled_repair_columns: set[int] = set()
+        budget_exhausted_columns: set[int] = set()
         for index, item in zip(call_indexes, first_results):
             results[index] = item if isinstance(item, str) else ""
             if isinstance(item, BaseException):
+                if is_budget_exhausted(item):
+                    budget_exhausted_columns.add(index)
                 failure_reasons[index] = [f"模型调用异常：{type(item).__name__}"]
             elif not str(item or "").strip():
                 failure_reasons[index] = ["模型未返回栏目正文"]
@@ -1705,6 +1776,8 @@ def draft_parallel_report(
                 break
             for index, (section, result) in enumerate(zip(sections, results)):
                 layer_id, h2, h3s, target_chars, token_cap, additional_h2s = section
+                if index in budget_exhausted_columns:
+                    continue
                 required_h4 = section_required_h4(section)
                 # Empty/exceptional calls are always retried. Structural
                 # repair is enabled only when the Reporter has real handoff
@@ -1862,7 +1935,7 @@ def draft_parallel_report(
                 )
             if not retry_calls:
                 break
-            retry_results = await asyncio.gather(*retry_calls, return_exceptions=True)
+            retry_results = await gather_isolated(*retry_calls)
             for index, item in zip(retry_indexes, retry_results):
                 if isinstance(item, str) and item.strip():
                     results[index] = item
@@ -1876,6 +1949,8 @@ def draft_parallel_report(
                         target_chars=section[3],
                     )
                 elif isinstance(item, BaseException):
+                    if is_budget_exhausted(item):
+                        budget_exhausted_columns.add(index)
                     failure_reasons[index] = [
                         f"定向重试调用异常：{type(item).__name__}"
                     ]
@@ -1912,7 +1987,7 @@ def draft_parallel_report(
         fallback_indexes = [
             index
             for index in fallback_indexes
-            if index not in stalled_repair_columns
+            if index not in stalled_repair_columns and index not in budget_exhausted_columns
         ]
         remaining_budget = _reporter_calls_remaining(host)
         if remaining_budget is not None:
@@ -2027,7 +2102,7 @@ def draft_parallel_report(
                         target_chars=target_chars,
                     )
                 )
-            fallback_results = await asyncio.gather(*fallback_calls, return_exceptions=True)
+            fallback_results = await gather_isolated(*fallback_calls)
             for index, item in zip(fallback_indexes, fallback_results):
                 section = sections[index]
                 if isinstance(item, str) and item.strip() and assigned_output_is_reviewable(
@@ -2125,12 +2200,27 @@ def draft_parallel_report(
                 if not replacement:
                     continue
                 new_block = f"### {heading}\n{replacement.group('body').strip()}"
-                merged = re.sub(
-                    rf"^###\s*{re.escape(heading)}\s*$\n.*?(?=^###\s|^##\s|\Z)",
-                    new_block + "\n\n",
+                parent_heading = (
+                    _additional_h2s[0]
+                    if _additional_h2s and heading != h3s[0] else h2
+                )
+                parent_order = list(dict.fromkeys(
+                    parent
+                    for item in sections
+                    for parent in (item[1], *item[5])
+                ))
+                heading_order = [
+                    child
+                    for item in sections
+                    for child in item[2]
+                ]
+                merged = _merge_report_column_block(
                     merged,
-                    count=1,
-                    flags=re.MULTILINE | re.DOTALL,
+                    parent_heading=parent_heading,
+                    heading=heading,
+                    new_block=new_block,
+                    following_headings=heading_order[heading_order.index(heading) + 1:],
+                    following_parents=parent_order[parent_order.index(parent_heading) + 1:],
                 )
     else:
         assembled: list[str] = []

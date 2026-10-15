@@ -59,6 +59,7 @@ import { threadApi } from '@/apis/agent_api'
 import FileTypeIcon from '@/components/common/FileTypeIcon.vue'
 import WorkspacePathPicker from '@/components/WorkspacePathPicker.vue'
 import { parseDownloadFilename } from '@/utils/file_utils'
+import { downloadBlob } from '@/utils/download'
 
 const props = defineProps({
   artifacts: {
@@ -113,14 +114,7 @@ const downloadFile = async (file) => {
     const contentDisposition =
       response.headers.get('Content-Disposition') || response.headers.get('content-disposition')
     const filename = parseDownloadFilename(contentDisposition) || file.name
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = filename
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
+    downloadBlob(blob, filename)
   } catch (error) {
     message.error(error?.message || '下载文件失败')
   }

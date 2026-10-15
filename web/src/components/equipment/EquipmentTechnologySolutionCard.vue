@@ -6,6 +6,7 @@ import { technologySolutionFromSession } from '@/utils/equipmentTechnologySoluti
 const props = defineProps({
   equipmentName: { type: String, default: '当前装备' },
   session: { type: Object, default: null },
+  readOnly: { type: Boolean, default: false },
   loading: { type: Boolean, default: false }
 })
 
@@ -58,7 +59,7 @@ const updatedLabel = computed(() => {
       <pre>{{ preview }}</pre>
       <footer>
         <small>{{ updatedLabel ? `最近形成：${updatedLabel}` : '已形成可继续迭代的方案' }}</small>
-        <button type="button" @click="$emit('open')">继续完善方案<ArrowRight :size="13" /></button>
+        <button type="button" :disabled="readOnly" @click="$emit('open')">继续完善方案<ArrowRight :size="13" /></button>
       </footer>
     </div>
 
@@ -67,7 +68,7 @@ const updatedLabel = computed(() => {
         <b>{{ activeJob ? '正在形成技术实现方案' : '原卡技术描述仅作为攻关线索' }}</b>
         <p>围绕研发所需核心技术、真实卡点、工程实现与验证路线继续深挖，形成可供一线研发人员执行的具体方案。</p>
       </div>
-      <button type="button" :disabled="loading || activeJob" @click="$emit('open')">
+      <button type="button" :disabled="readOnly || loading || activeJob" @click="$emit('open')">
         {{ props.session ? '继续技术攻关' : '进入技术攻关舱' }}<ArrowRight :size="13" />
       </button>
     </div>

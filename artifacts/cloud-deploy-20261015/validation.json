@@ -1,0 +1,250 @@
+{
+  "verified_at": "2026-10-15T19:39:18.663364+08:00",
+  "server": "49.232.128.56",
+  "url": "https://www.deepquest.space",
+  "source": "current working tree including existing uncommitted changes",
+  "public_https": "passed: browser login page and external API readiness, normal TLS verification",
+  "server_https": "passed with normal certificate validation",
+  "api_readiness": {
+    "status": "ready",
+    "degraded": false
+  },
+  "services": [
+    {
+      "Health": "healthy",
+      "Image": "deepquest-api:0.7.3",
+      "Publishers": [
+        {
+          "URL": "127.0.0.1",
+          "TargetPort": 5050,
+          "PublishedPort": 6050,
+          "Protocol": "tcp"
+        }
+      ],
+      "Service": "api",
+      "State": "running"
+    },
+    {
+      "Health": "",
+      "Image": "deepquest-api:0.7.3",
+      "Publishers": [],
+      "Service": "equipment-query-worker",
+      "State": "running"
+    },
+    {
+      "Health": "",
+      "Image": "deepquest-api:0.7.3",
+      "Publishers": [],
+      "Service": "equipment-worker",
+      "State": "running"
+    },
+    {
+      "Health": "healthy",
+      "Image": "quay.io/coreos/etcd:v3.5.5",
+      "Publishers": [
+        {
+          "URL": "",
+          "TargetPort": 2379,
+          "PublishedPort": 0,
+          "Protocol": "tcp"
+        },
+        {
+          "URL": "",
+          "TargetPort": 2380,
+          "PublishedPort": 0,
+          "Protocol": "tcp"
+        }
+      ],
+      "Service": "etcd",
+      "State": "running"
+    },
+    {
+      "Health": "healthy",
+      "Image": "neo4j:5.26.29",
+      "Publishers": [
+        {
+          "URL": "",
+          "TargetPort": 7473,
+          "PublishedPort": 0,
+          "Protocol": "tcp"
+        },
+        {
+          "URL": "127.0.0.1",
+          "TargetPort": 7474,
+          "PublishedPort": 8474,
+          "Protocol": "tcp"
+        },
+        {
+          "URL": "127.0.0.1",
+          "TargetPort": 7687,
+          "PublishedPort": 8687,
+          "Protocol": "tcp"
+        }
+      ],
+      "Service": "graph",
+      "State": "running"
+    },
+    {
+      "Health": "healthy",
+      "Image": "milvusdb/milvus:v2.5.6",
+      "Publishers": [
+        {
+          "URL": "127.0.0.1",
+          "TargetPort": 9091,
+          "PublishedPort": 10091,
+          "Protocol": "tcp"
+        },
+        {
+          "URL": "127.0.0.1",
+          "TargetPort": 19530,
+          "PublishedPort": 20530,
+          "Protocol": "tcp"
+        }
+      ],
+      "Service": "milvus",
+      "State": "running"
+    },
+    {
+      "Health": "healthy",
+      "Image": "minio/minio:RELEASE.2023-03-20T20-16-18Z",
+      "Publishers": [
+        {
+          "URL": "127.0.0.1",
+          "TargetPort": 9000,
+          "PublishedPort": 10000,
+          "Protocol": "tcp"
+        },
+        {
+          "URL": "127.0.0.1",
+          "TargetPort": 9001,
+          "PublishedPort": 10001,
+          "Protocol": "tcp"
+        }
+      ],
+      "Service": "minio",
+      "State": "running"
+    },
+    {
+      "Health": "healthy",
+      "Image": "ghcr.io/aas-ee/open-web-search@sha256:748f1d083c9930db8e8b5f017834e1efa9ec77844dbed01baef2acf3ad47e81a",
+      "Publishers": [
+        {
+          "URL": "",
+          "TargetPort": 3000,
+          "PublishedPort": 0,
+          "Protocol": "tcp"
+        },
+        {
+          "URL": "",
+          "TargetPort": 3210,
+          "PublishedPort": 0,
+          "Protocol": "tcp"
+        }
+      ],
+      "Service": "open-websearch",
+      "State": "running"
+    },
+    {
+      "Health": "healthy",
+      "Image": "postgres:16",
+      "Publishers": [
+        {
+          "URL": "127.0.0.1",
+          "TargetPort": 5432,
+          "PublishedPort": 6432,
+          "Protocol": "tcp"
+        }
+      ],
+      "Service": "postgres",
+      "State": "running"
+    },
+    {
+      "Health": "healthy",
+      "Image": "redis:7.4.10-alpine",
+      "Publishers": [
+        {
+          "URL": "127.0.0.1",
+          "TargetPort": 6379,
+          "PublishedPort": 7379,
+          "Protocol": "tcp"
+        }
+      ],
+      "Service": "redis",
+      "State": "running"
+    },
+    {
+      "Health": "healthy",
+      "Image": "deepquest-sandbox-provisioner:0.7.3",
+      "Publishers": [
+        {
+          "URL": "127.0.0.1",
+          "TargetPort": 8002,
+          "PublishedPort": 9002,
+          "Protocol": "tcp"
+        }
+      ],
+      "Service": "sandbox-provisioner",
+      "State": "running"
+    },
+    {
+      "Health": "",
+      "Image": "deepquest-api:0.7.3",
+      "Publishers": [],
+      "Service": "storage-migrator",
+      "State": "exited"
+    },
+    {
+      "Health": "",
+      "Image": "deepquest-web:0.7.3",
+      "Publishers": [
+        {
+          "URL": "127.0.0.1",
+          "TargetPort": 80,
+          "PublishedPort": 8088,
+          "Protocol": "tcp"
+        }
+      ],
+      "Service": "web",
+      "State": "running"
+    },
+    {
+      "Health": "healthy",
+      "Image": "deepquest-api:0.7.3",
+      "Publishers": [],
+      "Service": "worker",
+      "State": "running"
+    }
+  ],
+  "passed": [
+    "superadmin user CRUD, login, role boundaries (real HTTP)",
+    "native deep session user isolation (real HTTP)",
+    "sandbox document libraries, persistent file IO, forbidden /etc path"
+  ],
+  "not_passed": [
+    "legacy enterprise test: /api/v1 not mounted",
+    "legacy promotion test: outdated query response shape",
+    "research delivery test: default model API Key not configured"
+  ],
+  "not_verified": [
+    "real model research",
+    "paid AMiner retrieval",
+    "load capacity",
+    "restore drill"
+  ],
+  "self_registration": false,
+  "secrets": "not included",
+  "initial_backup": "/var/backups/deepquest/initial-20261015",
+  "firewall": {
+    "protocol": "TCP",
+    "port": 443,
+    "source": "0.0.0.0/0",
+    "status": "active",
+    "authorization": "explicit user confirmation"
+  },
+  "http_redirect": "passed: 301 to https://www.deepquest.space/",
+  "migration": "completed; see migration-validation.json",
+  "administrator": "Hitsz504",
+  "dqadmin": "disabled",
+  "browser_title": "创新为帆 探索未至之境",
+  "model_credentials": "3 enabled providers restored from local database; no paid model probe executed"
+}

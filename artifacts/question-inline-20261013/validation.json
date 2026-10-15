@@ -1,0 +1,34 @@
+{
+  "presentation": "提问卡片在输入框上方显示，与输入框间隔 8px；无遮罩、居中浮层、Teleport 或焦点锁定。",
+  "unchanged": [
+    "推荐选项",
+    "自由补充",
+    "120秒未作答自动采用推荐",
+    "选择或输入停止倒计时",
+    "刷新保留截止时间"
+  ],
+  "verification": {
+    "frontend_tests": 541,
+    "lint": "passed",
+    "build": "passed",
+    "desktop": {
+      "card_bottom": 590,
+      "input_top": 598,
+      "backdrops": 0,
+      "aria_modal": null,
+      "role": "region"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "scroll_width": 390,
+      "card_bottom": 699,
+      "input_top": 707,
+      "input_bottom": 815
+    }
+  },
+  "screenshots": [
+    "question-above-input.jpg",
+    "question-above-input-mobile.jpg"
+  ]
+}

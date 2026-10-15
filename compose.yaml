@@ -57,6 +57,8 @@ x-api-worker-env: &api-worker-env
   OPEN_WEBSEARCH_URL: ${OPEN_WEBSEARCH_URL:-http://open-websearch:3210}
   OPEN_WEBSEARCH_ENGINES: ${OPEN_WEBSEARCH_ENGINES:-bing,duckduckgo}
   OPEN_WEBSEARCH_TIMEOUT_SECONDS: ${OPEN_WEBSEARCH_TIMEOUT_SECONDS:-15}
+  WEB_SEARCH_QUEUE_WAIT_SECONDS: ${WEB_SEARCH_QUEUE_WAIT_SECONDS:-60}
+  WEB_SEARCH_MIN_INTERVAL_SECONDS: ${WEB_SEARCH_MIN_INTERVAL_SECONDS:-1.5}
   # 其他环境变量
   NO_PROXY: localhost,127.0.0.1,milvus,graph,minio,etcd,mineru,paddlex,sandbox-provisioner,open-websearch,api.siliconflow.cn
   no_proxy: localhost,127.0.0.1,milvus,graph,minio,etcd,mineru,paddlex,sandbox-provisioner,open-websearch,api.siliconflow.cn
@@ -99,13 +101,13 @@ services:
       - ./configs:/app/configs:ro
       - ./outputs:/app/outputs
       - type: bind
-        source: ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/threads
+        source: ${DEEP_RESEARCH_PLATFORM_DIR:-${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform}/threads
         target: /app/user-data
       - type: bind
-        source: ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/skill-sources
+        source: ${DEEP_RESEARCH_PLATFORM_DIR:-${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform}/skill-sources
         target: /app/skill-sources
       - type: bind
-        source: ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/skill-projections
+        source: ${DEEP_RESEARCH_PLATFORM_DIR:-${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform}/skill-projections
         target: /app/skill-projections
       - ./backend/test:/app/test
       - ./backend/scripts:/app/scripts
@@ -168,13 +170,13 @@ services:
       - ./configs:/app/configs:ro
       - ./outputs:/app/outputs
       - type: bind
-        source: ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/threads
+        source: ${DEEP_RESEARCH_PLATFORM_DIR:-${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform}/threads
         target: /app/user-data
       - type: bind
-        source: ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/skill-sources
+        source: ${DEEP_RESEARCH_PLATFORM_DIR:-${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform}/skill-sources
         target: /app/skill-sources
       - type: bind
-        source: ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/skill-projections
+        source: ${DEEP_RESEARCH_PLATFORM_DIR:-${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform}/skill-projections
         target: /app/skill-projections
       - ./backend/test:/app/test
       - ./backend/scripts:/app/scripts
@@ -232,16 +234,16 @@ services:
       - ./backend/package:/app/package:ro
       - ./configs:/app/configs:ro
       - type: bind
-        source: ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform
+        source: ${DEEP_RESEARCH_PLATFORM_DIR:-${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform}
         target: /app/legacy-saves
       - type: bind
-        source: ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/threads
+        source: ${DEEP_RESEARCH_PLATFORM_DIR:-${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform}/threads
         target: /app/user-data
       - type: bind
-        source: ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/skill-sources
+        source: ${DEEP_RESEARCH_PLATFORM_DIR:-${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform}/skill-sources
         target: /app/skill-sources
       - type: bind
-        source: ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/skill-projections
+        source: ${DEEP_RESEARCH_PLATFORM_DIR:-${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform}/skill-projections
         target: /app/skill-projections
     networks:
       - app-network
@@ -258,6 +260,12 @@ services:
       postgres:
         condition: service_healthy
 
+  sandbox-runtime:
+    profiles: [sandbox-build]
+    image: ${COMPOSE_PROJECT_NAME:-deep-research}-sandbox-runtime:1.11.0-artifacts
+    build:
+      context: ./docker/sandbox_runtime
+
   sandbox-provisioner:
     build:
       context: ./docker/sandbox_provisioner
@@ -265,10 +273,10 @@ services:
     image: ${COMPOSE_PROJECT_NAME:-deep-research}-sandbox-provisioner:${DEEP_RESEARCH_VERSION:-0.7.3}
     volumes:
       - type: bind
-        source: ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/threads
+        source: ${DEEP_RESEARCH_PLATFORM_DIR:-${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform}/threads
         target: /app/user-data
       - type: bind
-        source: ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/skill-projections
+        source: ${DEEP_RESEARCH_PLATFORM_DIR:-${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform}/skill-projections
         target: /app/skill-projections
       - ./docker/sandbox_provisioner/app.py:/app/app.py:ro
       - ${SANDBOX_ENV_FILE:-./docker/sandbox_provisioner/sandbox.env}:/app/sandbox.env:ro

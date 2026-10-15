@@ -11,6 +11,7 @@ from equipment_deep_research.agents.provider import (
 )
 from equipment_deep_research.providers.fake import ScriptedFakeProvider
 from equipment_deep_research.providers.base import ProviderFinalTurn, ProviderStreamEvent
+from equipment_deep_research.agents.workflows.reporter import _merge_report_column_block
 
 
 def _research_handoff() -> dict[str, Any]:
@@ -39,6 +40,126 @@ def _valid_legacy_column(contract: dict[str, Any]) -> str:
     for heading in contract["required_h3"]:
         parts.append(f"### {heading}\n{filler}")
     return "\n".join(parts)
+
+
+@pytest.mark.parametrize("missing_parent", [False, True])
+def test_report_resume_inserts_missing_column_in_outline_order(missing_parent):
+    report = "## 第一章\n\n### 已有栏目\n保留原文和引用。\n\n"
+    if not missing_parent:
+        report += "## 第二章\n\n### 后续栏目\n原有表格。\n\n"
+    report += "## 第三章\n\n### 结论\n保留结论。"
+    recovered = _merge_report_column_block(
+        report, parent_heading="第二章", heading="缺失栏目",
+        new_block="### 缺失栏目\n新生成的完整正文。",
+        following_headings=["后续栏目", "结论"], following_parents=["第三章"],
+    )
+    assert recovered.index("## 第一章") < recovered.index("## 第二章") < recovered.index("## 第三章")
+    assert "### 已有栏目\n保留原文和引用。" in recovered
+    assert "### 缺失栏目\n新生成的完整正文。" in recovered
+    if not missing_parent:
+        assert recovered.index("### 缺失栏目") < recovered.index("### 后续栏目")
+        assert "### 后续栏目\n原有表格。" in recovered
+    assert "### 结论\n保留结论。" in recovered
+
+
+def test_report_resume_treats_recovered_prose_as_literal_text():
+    report = "## 章节\n\n### 修复栏\n旧稿。\n\n### 健康栏\n保持不变。"
+    recovered = _merge_report_column_block(
+        report, parent_heading="章节", heading="修复栏",
+        new_block="### 修复栏\n公式 \\theta 与 \\1 都保留原文。",
+    )
+    assert "公式 \\theta 与 \\1 都保留原文。" in recovered
+    assert "旧稿。" not in recovered
+    assert "### 健康栏\n保持不变。" in recovered
+
+
+def test_report_resume_discovers_unlisted_missing_columns_and_keeps_healthy_ones(monkeypatch):
+    from equipment_deep_research.agents.workflows import reporter
+
+    provider = ResponsesAgentProvider(ScriptedFakeProvider([]))
+    calls = []
+
+    async def author(system, payload, max_output_tokens, **kwargs):
+        contract = payload["parallel_section_contract"]
+        calls.append(contract["layer_id"])
+        return _valid_legacy_column(contract)
+
+    provider._run_reporter_text = author
+    monkeypatch.setattr(reporter, "_report_draft_quality_issues", lambda *args: [])
+    monkeypatch.setattr(reporter, "_minimum_viable_model_report", lambda *args: True)
+    original = provider._draft_parallel_report(
+        {"topic": "generic fixture"}, reporter_input={}, output_token_budget=5000,
+    )
+    import re
+    incomplete = re.sub(
+        r"^### ④ 能力实现途径\s*$\n.*?(?=^###\s|^##\s|\Z)",
+        "", original, flags=re.MULTILINE | re.DOTALL,
+    )
+    assert "### ④ 能力实现途径" not in incomplete
+    calls.clear()
+    recovered = provider._draft_parallel_report(
+        {
+            "topic": "generic fixture",
+            "delivery_resume": {"existing_report": incomplete, "failed_columns": []},
+        }, reporter_input={}, output_token_budget=5000,
+    )
+    assert calls == ["item_4_realization_path"]
+    assert "### ④ 能力实现途径" in recovered
+    for heading in ("① 典型作战场景", "⑨ 建设优先级与推进建议"):
+        # Healthy columns retain their complete authored content.
+        block = re.search(
+            rf"^### {re.escape(heading)}\s*$\n.*?(?=^###\s|^##\s|\Z)",
+            original, flags=re.MULTILINE | re.DOTALL,
+        )
+        if block:
+            assert block.group(0).strip() in recovered
+
+
+def test_parallel_report_initial_wave_honors_remaining_call_budget(monkeypatch):
+    from equipment_deep_research.agents.workflows import reporter
+
+    provider = ResponsesAgentProvider(ScriptedFakeProvider([]))
+    provider.configure_run_budget({"maximum_reporter_model_calls": 2})
+    calls = []
+
+    async def author(system, payload, max_output_tokens, **kwargs):
+        calls.append(payload["parallel_section_contract"]["layer_id"])
+        provider._budget_started_reporter_calls += 1
+        return _valid_legacy_column(payload["parallel_section_contract"])
+
+    provider._run_reporter_text = author
+    monkeypatch.setattr(reporter, "_report_draft_quality_issues", lambda *args: [])
+    provider._draft_parallel_report(
+        {"topic": "generic fixture", "parallel_report_skip_mechanical_retries": True},
+        reporter_input={}, output_token_budget=5000,
+    )
+    assert len(calls) == 2
+    assert len(provider._last_report_failed_columns) == 7
+
+
+def test_parallel_report_cancellation_drains_peers_and_restores_runtime_gate():
+    provider = ResponsesAgentProvider(ScriptedFakeProvider([]))
+    prior_limit = provider._call_gate.snapshot()["limit"]
+    drained = []
+    calls = []
+
+    async def author(system, payload, max_output_tokens, **kwargs):
+        calls.append(payload["parallel_section_contract"]["layer_id"])
+        if len(calls) == 1:
+            try:
+                await asyncio.Event().wait()
+            finally:
+                drained.append(True)
+        raise asyncio.CancelledError()
+
+    provider._run_reporter_text = author
+    with pytest.raises(asyncio.CancelledError):
+        provider._draft_parallel_report(
+            {"topic": "generic fixture"}, reporter_input={}, output_token_budget=5000,
+        )
+    assert drained == [True]
+    assert len(calls) == 9
+    assert provider._call_gate.snapshot()["limit"] == prior_limit
 
 
 def test_reporter_generation_payload_builds_immutable_report_spine() -> None:

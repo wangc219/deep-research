@@ -70,10 +70,118 @@ from equipment_deep_research.domain.capability_portrait import (
 )
 from equipment_deep_research.domain.research_gaps import sanitize_public_research_prose
 from equipment_deep_research.contracts.runtime import CardRuntime
+from equipment_deep_research.agents.workflows.task_lifecycle import (
+    gather_isolated,
+    is_budget_exhausted,
+)
 
 
 class S6SpineAuthoringError(S6QualityError):
     """A card-level failure that is safe to recover by replaying the card."""
+
+
+_S6_SHARED_INNOVATION_FIELDS = (
+    "solution_thesis",
+    "core_innovation_thesis",
+)
+
+
+def _normalized_s6_anchor_text(value: Any) -> str:
+    """Normalize presentation punctuation without weakening anchor identity."""
+
+    return re.sub(r"[^\u3400-\u4dbf\u4e00-\u9fffA-Za-z0-9]", "", str(value or ""))
+
+
+def _validated_s6_shared_innovation_anchors(
+    direction: Mapping[str, Any] | object,
+    *,
+    position: int | None = None,
+) -> dict[str, str]:
+    """Return the two card-local S6 anchors or reject an unfrozen spine."""
+
+    source = direction if isinstance(direction, Mapping) else {}
+    anchors = {
+        key: str(source.get(key, "") or "").strip()
+        for key in _S6_SHARED_INNOVATION_FIELDS
+    }
+    card_label = f"第{position}张装备卡" if position is not None else "装备卡"
+    if any(
+        len(re.findall(r"[\u3400-\u4dbf\u4e00-\u9fff]", value)) < 12
+        for value in anchors.values()
+    ):
+        raise S6QualityError(f"S6{card_label}缺少可冻结的解决思路或核心创新")
+    if (
+        _normalized_s6_anchor_text(anchors["solution_thesis"])
+        == _normalized_s6_anchor_text(anchors["core_innovation_thesis"])
+    ):
+        raise S6QualityError(f"S6{card_label}的解决思路与核心创新不得复制为同一句")
+    return anchors
+
+
+def _validate_s6_response_identity(
+    response: Mapping[str, Any],
+    *,
+    binding_id: str,
+    hypothesis_id: str,
+    module_key: str | None = None,
+) -> None:
+    """Reject explicit misrouting before frozen fields can overwrite it.
+
+    Legacy providers may omit routing fields. They cannot return a different
+    identity, whether at the top level or inside a whole-card wrapper.
+    """
+
+    expected = {"card_binding_id": binding_id, "hypothesis_id": hypothesis_id}
+    if module_key is not None:
+        expected["module_key"] = module_key
+    direction = _extract_s6_direction(response)
+    for record in (response, direction):
+        for field, value in expected.items():
+            returned = record.get(field)
+            if returned not in (None, "") and str(returned) != value:
+                raise S6QualityError(f"S6 {field} mismatch")
+
+
+async def _author_s6_module_with_retry(
+    module_key: str,
+    *,
+    author_module: Callable[..., Any],
+    maximum_attempts: int,
+    on_retry: Callable[..., Any],
+) -> tuple[str, str]:
+    """Recover a failed column immediately while healthy siblings continue."""
+
+    previous_error: Exception | None = None
+    for attempt in range(1, maximum_attempts + 1):
+        try:
+            return await author_module(
+                module_key,
+                module_attempt=attempt,
+                module_retry_reason=(
+                    f"{type(previous_error).__name__}: {previous_error}"
+                    if previous_error is not None else ""
+                ),
+            )
+        except Exception as error:
+            if is_budget_exhausted(error):
+                raise
+            previous_error = error
+            if attempt < maximum_attempts:
+                on_retry(module_key=module_key, attempt=attempt + 1, error=error)
+                await asyncio.sleep(min(2.0, 0.2 * 2 ** (attempt - 1)))
+    assert previous_error is not None
+    if module_key != "technology_implementation":
+        raise previous_error
+    on_retry(module_key=module_key, attempt=maximum_attempts + 1, error=previous_error)
+    return await author_module(
+        module_key,
+        module_attempt=maximum_attempts + 1,
+        module_retry_reason=(
+            "技术检索栏进入错峰恢复："
+            f"{type(previous_error).__name__}: {previous_error}"
+        ),
+        phase_suffix="_offline_recovery",
+    )
 
 
 def _clean_s6_technology_prose(value: Any, brief: Mapping[str, Any] | None = None) -> str:
@@ -244,12 +352,28 @@ def _s6_repair_root_fingerprints(issues: Sequence[str]) -> frozenset[str]:
 
 def _parallel_s6_semantic_quality_issues(
     modules: Mapping[str, Any] | object,
+    *,
+    shared_anchors: Mapping[str, Any] | object | None = None,
 ) -> list[str]:
     """Catch hollow but well-sized columns before publishing a dynamic card."""
 
-    issues = capability_portrait_repair_issues(modules)
     if not isinstance(modules, Mapping):
-        return issues
+        return capability_portrait_repair_issues(modules)
+
+    # The overview and technology columns must repeat the same two frozen
+    # anchors verbatim. Remove only those mandated phrases before the generic
+    # cross-column duplication detector runs, then validate their presence
+    # explicitly below. All other repeated prose remains a repair issue.
+    generic_quality_modules = dict(modules)
+    if isinstance(shared_anchors, Mapping):
+        for module_key in ("overview", "technology_implementation"):
+            prose = str(generic_quality_modules.get(module_key, "") or "")
+            for anchor_key in _S6_SHARED_INNOVATION_FIELDS:
+                anchor = str(shared_anchors.get(anchor_key, "") or "").strip()
+                if anchor:
+                    prose = prose.replace(anchor, "")
+            generic_quality_modules[module_key] = prose
+    issues = capability_portrait_repair_issues(generic_quality_modules)
 
     short_modules = _s6_short_portrait_modules(modules)
     labels = dict(CAPABILITY_PORTRAIT_MODULES)
@@ -260,6 +384,37 @@ def _parallel_s6_semantic_quality_issues(
         )
         if issue not in issues:
             issues.append(issue)
+
+    overview = str(modules.get("overview", "") or "")
+    if any(
+        not re.search(rf"{label}\s*[：:]", overview)
+        for label in ("当前背景", "解决思路", "达到效果", "核心创新")
+    ):
+        issues.append("概述未按当前背景、解决思路、达到效果、核心创新四项分条")
+
+    technology = str(modules.get("technology_implementation", "") or "")
+    if "解决思路" not in technology or "核心创新" not in technology:
+        issues.append("装备与技术实现未显式承接共享的解决思路和核心创新")
+
+    if isinstance(shared_anchors, Mapping):
+        anchors = {
+            key: str(shared_anchors.get(key, "") or "").strip()
+            for key in _S6_SHARED_INNOVATION_FIELDS
+        }
+        normalized_overview = _normalized_s6_anchor_text(overview)
+        normalized_technology = _normalized_s6_anchor_text(technology)
+        if any(
+            anchor
+            and _normalized_s6_anchor_text(anchor) not in normalized_overview
+            for anchor in anchors.values()
+        ):
+            issues.append("概述未逐字承接冻结的解决思路和核心创新")
+        if any(
+            anchor
+            and _normalized_s6_anchor_text(anchor) not in normalized_technology
+            for anchor in anchors.values()
+        ):
+            issues.append("装备与技术实现未逐字追溯冻结的解决思路和核心创新")
 
     marker_rules = {
         "technology_implementation": (
@@ -376,6 +531,12 @@ async def generate_parallel_s6_cards(
     card_direction_schema["adversary_adaptation"] = prompt_contract[
         "adversary_adaptation"
     ]
+    card_direction_schema["solution_thesis"] = (
+        "S5入选后在S6只生成一次并冻结的卡片级解决思路；说明改变哪个核心断点、作用于哪个关键对象或关系、为何可能奏效"
+    )
+    card_direction_schema["core_innovation_thesis"] = (
+        "与解决思路同源但职责不同的卡片级核心创新；说明相对既有方式改变了哪个关键前提、约束或关系"
+    )
     # Keep all model-visible field guidance in the reviewed Markdown resource;
     # only the structural keys come from the caller's schema.
     direction_guidance = load_dynamic_winning_json(
@@ -405,6 +566,8 @@ async def generate_parallel_s6_cards(
             "system_contribution_thesis",
             "indicator_portrait",
             "adversary_adaptation",
+            "solution_thesis",
+            "core_innovation_thesis",
             "capability_portrait_modules",
         )
         if key in card_direction_schema
@@ -1043,6 +1206,12 @@ async def generate_parallel_s6_cards(
                     "evidence_boundary",
                 }
             }
+            spine_schema["solution_thesis"] = (
+                "S5入选后形成的一条创新解决思路；说明如何改变核心断点，供概述和技术实现共同引用"
+            )
+            spine_schema["core_innovation_thesis"] = (
+                "S5入选后形成的一条不可替代核心创新；说明改变的关键前提或关系，供概述和技术实现共同引用"
+            )
             spine_instruction = _dynamic_s6_spine_instruction()
             if not dynamic_s6_authoring:
                 # Keep the legacy/optimized schema, but use the same isolated
@@ -1067,22 +1236,22 @@ async def generate_parallel_s6_cards(
                 )
             }
             module_exclusive_contract = {
-                "overview": "只负责旧模式失效、关系变化、直接战果和新增任务空间；不展开技术清单或逐步流程。",
-                "technology_implementation": "只负责装备本体、可选实现路径、推荐主路径、关键耦合和工程约束；不复述作战流程或效果总结。",
+                "overview": "只按当前背景、解决思路、达到效果、核心创新四项分条简述；解决思路与核心创新逐字承接共享创新锚点，但不展开工程路线、组件、参数、试验或逐步流程。",
+                "technology_implementation": "与概述并列，显式承接同一solution_thesis与core_innovation_thesis；只围绕该创新的原理假设、依据、关键约束、可选路径、验证判据和可行性结论研究，不复述作战流程或泛化效果。",
                 "operational_process": "只负责行动主体、进入条件、关键动作、状态变化、授权/拒打和终止/续接；不重新论证技术路线。",
                 "capability_effects": "只负责过去不能执行的任务、新增能力、可观察战果、指标边界和对手约束；不复述旧规则推演。",
                 "winning_logic": "只负责旧规则、被逆转假设、新交换关系、对手新增代价和成立边界；不重复技术落装或流程步骤。",
             }
             module_completion_contract = {
                 "overview": {
-                    "objective": "让决策者看懂本装备为何在特定战场断点产生直接制胜价值。",
-                    "must_deliver": ["敌方优势", "传统模式失效", "本装备介入", "直接战果", "新增任务空间"],
-                    "avoid": ["技术清单", "逐步操作流程", "泛化指标"],
+                    "objective": "用四项短条目让决策者一眼看清背景、解决思路、预期效果和核心创新，并把后两项固定为技术栏的共享研究输入。",
+                    "must_deliver": ["当前背景：", "解决思路：", "达到效果：", "核心创新："],
+                    "avoid": ["工程路线", "组件或参数", "试验方案", "多条次要创新", "功能清单", "颠覆性口号"],
                 },
                 "technology_implementation": {
-                    "objective": "说明本装备沿哪条工程路线才能形成核心作战能力。",
-                    "must_deliver": ["可选路线比较", "推荐主路径", "1至2项主攻瓶颈", "落装位置", "工程取舍"],
-                    "avoid": ["零部件清单", "无关技术趋势", "作战流程复述"],
+                    "objective": "验证共享解决思路和核心创新是否可行，并说明哪些路径、条件和证据支持继续或否定。",
+                    "must_deliver": ["承接解决思路", "围绕核心创新", "原理假设与公开依据", "关键约束", "可选路线比较", "验证判据", "可行性结论"],
+                    "avoid": ["另起技术主题", "无关后阶段配套问题", "零部件清单", "无关技术趋势", "作战流程复述"],
                 },
                 "operational_process": {
                     "objective": "说明本装备如何在真实交战条件下进入、改变并交付一个作战窗口。",
@@ -1148,6 +1317,11 @@ async def generate_parallel_s6_cards(
                 nonlocal output_length, capability_image_draft, spine_context
                 output_length += len(text)
                 parsed_spine = _parse_json_object(text)
+                _validate_s6_response_identity(
+                    parsed_spine,
+                    binding_id=binding_id,
+                    hypothesis_id=str(brief.get("hypothesis_id", "")),
+                )
                 draft = str(parsed_spine.get("capability_image_draft", "")).strip()
                 if draft and not capability_image_draft:
                     capability_image_draft = draft
@@ -1160,6 +1334,11 @@ async def generate_parallel_s6_cards(
                     direction_spine,
                     brief,
                 )
+                shared_anchors = _validated_s6_shared_innovation_anchors(
+                    stabilized_spine,
+                    position=position,
+                )
+                stabilized_spine.update(shared_anchors)
                 spine_context = {
                     key: stabilized_spine.get(key)
                     for key in (
@@ -1171,6 +1350,8 @@ async def generate_parallel_s6_cards(
                         "displaced_operational_mode",
                         "new_operational_mode",
                         "winning_relation_shift",
+                        "solution_thesis",
+                        "core_innovation_thesis",
                     )
                     if stabilized_spine.get(key) not in (None, "", [], {})
                 }
@@ -1180,9 +1361,10 @@ async def generate_parallel_s6_cards(
                 field_map = {
                     "overview": (
                         "non_substitutable_difference",
-                        "innovation_basis",
+                        "frontier_principle",
                         "displaced_operational_mode",
                         "new_operational_mode",
+                        "winning_relation_shift",
                     ),
                     "technology_implementation": (
                         "non_substitutable_difference",
@@ -1219,6 +1401,15 @@ async def generate_parallel_s6_cards(
                     },
                     "overview": card_payload.get("winning_logic_overview", ""),
                 }
+                if module_key in {"overview", "technology_implementation"}:
+                    for shared_key in ("solution_thesis", "core_innovation_thesis"):
+                        value = spine_context.get(shared_key)
+                        if value not in (None, "", [], {}):
+                            context[shared_key] = _compact_prompt_value(
+                                value,
+                                max_string_chars=520,
+                                max_list_items=3,
+                            )
                 for field in field_map.get(module_key, ()):
                     value = brief.get(field)
                     if value not in (None, "", [], {}):
@@ -1290,7 +1481,7 @@ async def generate_parallel_s6_cards(
                         "module_authoring_context": module_authoring_context(module_key),
                         "module_completion_contract": module_completion_contract[module_key],
                         "parallel_quality_check": (
-                            "提交前静默检查：先确认任务目标、五项必答内容和栏目独占边界；"
+                            "提交前静默检查：先确认任务目标、本栏must_deliver全部必答内容和栏目独占边界；"
                             "再检查约360至400字、完整句、装备专属事实、与兄弟栏无长句重复。"
                             "任何一项不满足都在本次调用内重写，不输出检查过程。"
                         ),
@@ -1299,6 +1490,12 @@ async def generate_parallel_s6_cards(
                 nonlocal output_length, capability_image_draft
                 output_length += len(text)
                 parsed_module = _parse_json_object(text)
+                _validate_s6_response_identity(
+                    parsed_module,
+                    binding_id=binding_id,
+                    hypothesis_id=str(brief.get("hypothesis_id", "")),
+                    module_key=module_key,
+                )
                 draft = str(parsed_module.get("capability_image_draft", "")).strip()
                 if draft and not capability_image_draft:
                     capability_image_draft = draft
@@ -1319,147 +1516,43 @@ async def generate_parallel_s6_cards(
                 spine_result = await author_spine()
             except asyncio.CancelledError:
                 raise
-            except BaseException as exc:
+            except Exception as exc:
                 raise S6SpineAuthoringError(
                     f"S6并行第{position}张装备卡决策脊柱失败："
                     f"{type(exc).__name__}: {exc}"
                 ) from (exc if isinstance(exc, Exception) else None)
-            module_results = list(
-                await asyncio.gather(
-                    *[author_module(key) for key, _ in CAPABILITY_PORTRAIT_MODULES],
-                    return_exceptions=True,
+            def module_retry_event(*, module_key: str, attempt: int, error: Exception) -> None:
+                emit_swarm_event(
+                    "winning_s6_module_authoring_retry_started",
+                    actor=agent_id,
+                    card_position=position,
+                    hypothesis_id=str(brief.get("hypothesis_id", "")),
+                    portrait_module_key=module_key,
+                    attempt=attempt,
+                    failure_type=type(error).__name__,
+                    retry_reason=str(error)[:320],
+                )
+
+            module_results = await gather_isolated(
+                *(
+                    _author_s6_module_with_retry(
+                        key,
+                        author_module=author_module,
+                        maximum_attempts=_s6_card_attempt_limit(),
+                        on_retry=module_retry_event,
+                    )
+                    for key, _ in CAPABILITY_PORTRAIT_MODULES
                 )
             )
-            # A single malformed column must not throw away four good
-            # independent drafts (or force a mechanical frozen-card fallback).
-            # Retry only failed modules in their own card-scoped isolation
-            # lanes, preserving successful siblings byte-for-byte. A card
-            # replay is reserved exclusively for a failed decision spine.
+            # Each column owns its retries. A quick failure can recover while
+            # slower siblings are still writing, without replaying their work.
             failed_module_keys = [
                 key
-                for key, item in zip(
-                    (key for key, _ in CAPABILITY_PORTRAIT_MODULES),
-                    module_results,
-                    strict=True,
+                for (key, _label), item in zip(
+                    CAPABILITY_PORTRAIT_MODULES, module_results, strict=True
                 )
-                if isinstance(item, BaseException)
+                if isinstance(item, Exception)
             ]
-            maximum_module_attempts = _s6_card_attempt_limit()
-            for module_attempt in range(2, maximum_module_attempts + 1):
-                if not failed_module_keys:
-                    break
-                previous_failures = {
-                    key: item
-                    for key, item in zip(
-                        (key for key, _ in CAPABILITY_PORTRAIT_MODULES),
-                        module_results,
-                        strict=True,
-                    )
-                    if isinstance(item, BaseException)
-                }
-                rescue_results = await asyncio.gather(
-                    *(
-                        author_module(
-                            key,
-                            module_attempt=module_attempt,
-                            module_retry_reason=(
-                                f"{type(previous_failures[key]).__name__}: "
-                                f"{previous_failures[key]}"
-                            ),
-                        )
-                        for key in failed_module_keys
-                    ),
-                    return_exceptions=True,
-                )
-                rescued_by_key = {
-                    key: item
-                    for key, item in zip(
-                        failed_module_keys,
-                        rescue_results,
-                        strict=True,
-                    )
-                    if not isinstance(item, BaseException)
-                }
-                for index, (key, item) in enumerate(
-                    zip(
-                        (key for key, _ in CAPABILITY_PORTRAIT_MODULES),
-                        module_results,
-                        strict=True,
-                    )
-                ):
-                    if isinstance(item, BaseException) and key in rescued_by_key:
-                        module_results[index] = rescued_by_key[key]
-                failed_module_keys = [
-                    key
-                    for key, item in zip(
-                        (key for key, _ in CAPABILITY_PORTRAIT_MODULES),
-                        module_results,
-                        strict=True,
-                    )
-                    if isinstance(item, BaseException)
-                ]
-            # Search-backed technology calls are the most sensitive to a
-            # transient gateway/tool lease failure. After the normal parallel
-            # rescue wave, give only this column one isolated, serial retry so
-            # four successful siblings never get replayed and the card is not
-            # prematurely marked limited. This is still an authored provider
-            # result, never a template or silent fallback.
-            if "technology_implementation" in failed_module_keys:
-                technology_failure = next(
-                    (
-                        item
-                        for key, item in zip(
-                            (key for key, _ in CAPABILITY_PORTRAIT_MODULES),
-                            module_results,
-                            strict=True,
-                        )
-                        if key == "technology_implementation"
-                    ),
-                    None,
-                )
-                try:
-                    rescued_technology = await author_module(
-                        "technology_implementation",
-                        module_attempt=maximum_module_attempts + 1,
-                        module_retry_reason=(
-                            "技术检索栏进入错峰恢复："
-                            f"{type(technology_failure).__name__}: {technology_failure}"
-                        ),
-                        phase_suffix="_offline_recovery",
-                    )
-                except asyncio.CancelledError:
-                    raise
-                except Exception as technology_rescue_error:
-                    module_authoring_warnings.append(
-                        "装备与技术实现错峰恢复失败："
-                        f"{type(technology_rescue_error).__name__}"
-                    )
-                    # Preserve the four independently authored siblings, but
-                    # keep this column as an exception so the card-level
-                    # transaction is withheld and can be resumed.  A generic
-                    # template would falsely light up the UI and pollute the
-                    # delivered portrait while giving no retrieval-backed
-                    # engineering claim.
-                else:
-                    for result_index, (key, _item) in enumerate(
-                        zip(
-                            (key for key, _ in CAPABILITY_PORTRAIT_MODULES),
-                            module_results,
-                            strict=True,
-                        )
-                    ):
-                        if key == "technology_implementation":
-                            module_results[result_index] = rescued_technology
-                            break
-                failed_module_keys = [
-                    key
-                    for key, item in zip(
-                        (key for key, _ in CAPABILITY_PORTRAIT_MODULES),
-                        module_results,
-                        strict=True,
-                    )
-                    if isinstance(item, BaseException)
-                ]
             if failed_module_keys:
                 # A missing independent column is a card-level authoring
                 # failure.  Never synthesize a generic replacement from the
@@ -1543,6 +1636,11 @@ async def generate_parallel_s6_cards(
                 )
             output_length = len(card_text)
             parsed = _parse_json_object(card_text)
+            _validate_s6_response_identity(
+                parsed,
+                binding_id=binding_id,
+                hypothesis_id=str(brief.get("hypothesis_id", "")),
+            )
             capability_image_draft = str(
                 parsed.get("capability_image_draft", "")
             ).strip()
@@ -1573,6 +1671,11 @@ async def generate_parallel_s6_cards(
                         authored_modules.get("technology_implementation", ""), brief
                     )
 
+        shared_innovation_anchors = _validated_s6_shared_innovation_anchors(
+            direction,
+            position=position,
+        )
+        direction.update(shared_innovation_anchors)
         initial_short_modules = _s6_short_portrait_modules(authored_modules)
         quality_warnings: list[str] = list(module_authoring_warnings)
         authoring_audit_notes: list[str] = []
@@ -1582,8 +1685,11 @@ async def generate_parallel_s6_cards(
         # enters one bounded repair wave; only the same root cause is collapsed
         # inside that wave.
         repair_issues = (
-            _parallel_s6_semantic_quality_issues(authored_modules)
-            if dynamic_s6_authoring
+            _parallel_s6_semantic_quality_issues(
+                authored_modules,
+                shared_anchors=shared_innovation_anchors,
+            )
+            if dynamic_s6_authoring or parallel_portrait_modules
             else capability_portrait_repair_issues(authored_modules)
         )
         if repair_issues:
@@ -1628,6 +1734,9 @@ async def generate_parallel_s6_cards(
                                     ),
                                     "current_module_content": first_pass_modules.get(
                                         module_key, ""
+                                    ),
+                                    "shared_innovation_anchors": dict(
+                                        shared_innovation_anchors
                                     ),
                                     # Give a repaired column visibility into
                                     # its siblings.  Without this context a
@@ -1685,12 +1794,11 @@ async def generate_parallel_s6_cards(
                             )
                         return module_key, repaired_content
 
-                    repaired_rows = await asyncio.gather(
+                    repaired_rows = await gather_isolated(
                         *(
                             repair_module(module_key)
                             for module_key in repair_module_keys
                         ),
-                        return_exceptions=True,
                     )
                     repaired_modules = dict(first_pass_modules)
                     for row in repaired_rows:
@@ -1715,6 +1823,9 @@ async def generate_parallel_s6_cards(
                                 "current_direction": dict(direction),
                                 "quality_issues": repair_issues[:8],
                                 "short_module_keys": initial_short_modules,
+                                "shared_innovation_anchors": dict(
+                                    shared_innovation_anchors
+                                ),
                             },
                             {
                                 "direction": active_card_direction_schema,
@@ -1755,8 +1866,11 @@ async def generate_parallel_s6_cards(
                         candidate_modules
                     )
                     repaired_issues = (
-                        _parallel_s6_semantic_quality_issues(candidate_modules)
-                        if dynamic_s6_authoring
+                        _parallel_s6_semantic_quality_issues(
+                            candidate_modules,
+                            shared_anchors=shared_innovation_anchors,
+                        )
+                        if dynamic_s6_authoring or parallel_portrait_modules
                         else capability_portrait_repair_issues(candidate_modules)
                     )
                     identity_probe = {
@@ -1766,7 +1880,7 @@ async def generate_parallel_s6_cards(
                     }
                     before_roots = _s6_repair_root_fingerprints(repair_issues)
                     after_roots = _s6_repair_root_fingerprints(repaired_issues)
-                    repair_progress = not after_roots or len(after_roots) < len(before_roots)
+                    repair_progress = not after_roots or after_roots < before_roots
                     if (
                         repair_progress
                         and _s6_repair_meets_length_contract(
@@ -1949,8 +2063,11 @@ async def generate_parallel_s6_cards(
             S6_PORTRAIT_QUALITY_CONTRACT_VERSION
         )
         remaining_issues = (
-            _parallel_s6_semantic_quality_issues(authored_modules)
-            if dynamic_s6_authoring
+            _parallel_s6_semantic_quality_issues(
+                authored_modules,
+                shared_anchors=shared_innovation_anchors,
+            )
+            if dynamic_s6_authoring or parallel_portrait_modules
             else capability_portrait_quality_issues(authored_modules)
         )
         for issue in remaining_issues:
@@ -2025,9 +2142,9 @@ async def generate_parallel_s6_cards(
                     ),
                 )
             except recoverable as error:
-                if previous_error is not None:
+                if previous_error is not None and error.__cause__ is None:
                     error.__cause__ = previous_error
-                if attempt >= maximum_attempts:
+                if attempt >= maximum_attempts or is_budget_exhausted(error):
                     raise
                 previous_error = error
                 emit_swarm_event(
@@ -2168,12 +2285,11 @@ async def generate_parallel_s6_cards(
             except Exception:
                 previous_gate_limit = None
         try:
-            card_results = await asyncio.gather(
+            card_results = await gather_isolated(
                 *(
                     author_card_with_retry(position, brief)
                     for position, brief in pending_cards
                 ),
-                return_exceptions=True,
             )
         finally:
             if previous_gate_limit is not None:
@@ -2187,7 +2303,7 @@ async def generate_parallel_s6_cards(
             strict=True,
         ):
             if isinstance(card_result, BaseException):
-                if isinstance(card_result, S6SpineAuthoringError):
+                if isinstance(card_result, S6SpineAuthoringError) and not is_budget_exhausted(card_result):
                     # Parallel gateways often fail in correlated bursts. Once
                     # the whole wave has drained, make one final serial rescue
                     # for this card's failed spine. Column failures never enter

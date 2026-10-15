@@ -248,6 +248,7 @@ import {
 import GlobalSearchModal from '@/components/GlobalSearchModal.vue'
 import { normalizePreviewResponse } from '@/utils/file_preview'
 import { parseDownloadFilename } from '@/utils/file_utils'
+import { downloadBlob } from '@/utils/download'
 
 const userStore = useUserStore()
 const route = useRoute()
@@ -887,14 +888,7 @@ const downloadEntry = async (entry) => {
     const contentDisposition =
       response.headers.get('Content-Disposition') || response.headers.get('content-disposition')
     const filename = parseDownloadFilename(contentDisposition) || entry.name || 'download'
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = filename
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
+    downloadBlob(blob, filename)
   } catch (error) {
     console.warn('下载文件失败:', error)
     message.error(error?.message || '下载文件失败')

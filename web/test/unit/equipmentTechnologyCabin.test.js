@@ -35,11 +35,18 @@ test('装备与技术实现使用技术攻关舱入口，其他栏目继续使�
 })
 
 test('技术攻关舱提示词覆盖七级研究方案链、验证与成熟度风险', () => {
-  const prompt = portraitSectionPrompt('装备与技术实现', '测试装备', '现有技术描述')
-  assert.ok(prompt.length < 900, '初始预填应足够明确且避免冗长')
+  const overview =
+    '当前背景：既有方式存在断点。解决思路：用受约束自治恢复任务窗口。达到效果：保持连续作用。核心创新：把任务成立前提从全程在线改为本地证据门控。'
+  const prompt = portraitSectionPrompt('装备与技术实现', '测试装备', '现有技术描述', overview)
+  assert.ok(prompt.length < 1200, '初始预填应足够明确且避免冗长')
   assert.match(prompt, /保持装备身份/)
   assert.match(prompt, /原卡中的相关技术仅作为研究线索/)
   assert.match(prompt, /纠偏只作为方案设计输入/)
+  assert.match(prompt, /共享创新来源/)
+  assert.match(prompt, /解决思路/)
+  assert.match(prompt, /核心创新/)
+  assert.match(prompt, /不得改写锚点或另起主题/)
+  assert.match(prompt, /用受约束自治恢复任务窗口/)
   const workflow = TECHNOLOGY_CABIN_ACTIONS.map((item) =>
     technologyCabinPrompt('测试装备', '', item.id)
   ).join('\n')
@@ -64,6 +71,9 @@ test('技术攻关舱提示词覆盖七级研究方案链、验证与成熟度�
   const solution = technologyCabinPrompt('测试装备', '', 'implementation_plan')
   assert.match(solution, /一线研发人员/)
   assert.match(solution, /能力—设计—技术—关键项—难点—路径—实现/)
+  assert.match(solution, /共享创新来源/)
+  assert.match(solution, /每章开头说明本章支撑哪一条锚点/)
+  assert.match(solution, /不得提出替代创新或另起主题/)
   for (const chapter of TECHNOLOGY_SOLUTION_CHAPTERS) {
     assert.match(solution, new RegExp(chapter.title))
   }
@@ -96,7 +106,11 @@ test('深研页呈现七级技术攻关链并默认调用武器装备研究方�
   assert.match(deepView, /WEAPON_SCHEME_AGENT_SLUG/)
   assert.match(deepView, /weaponSchemeAgentAvailable/)
   assert.match(deepView, /session\.payload\?\.agent_name \|\| '武器装备研究方案'/)
-  assert.match(deepView, /technologyCabinPrompt\(target, sectionBody, actionId\)/)
+  assert.match(deepView, /technologyCabinPrompt\(target, sectionBody, actionId, overviewBody\)/)
+  assert.match(
+    deepView,
+    /portraitSectionPrompt\(item\.label, boundEquipment\.value, item\.text, overviewBody\)/
+  )
   assert.match(
     deepView,
     /const prefillDeepAction = async[\s\S]*?submitPrompt\(prompt, \{ send: false \}\)/
@@ -121,6 +135,9 @@ test('形成新版能力卡在生成阶段执行正式 S6 五栏逐栏自检', (
     assert.match(prompt, new RegExp(label))
   }
   assert.match(prompt, /先分别起草五栏，再逐栏检查/)
+  assert.match(prompt, /S5只负责入选/)
+  assert.match(prompt, /冻结为共享创新锚点/)
+  assert.match(prompt, /当前背景、解决思路、达到效果、核心创新/)
   assert.match(prompt, /360–400 个有效中文字/)
   assert.match(prompt, /不加“修订”等后缀/)
   assert.match(prompt, /save_equipment_capability_draft/)
@@ -136,7 +153,7 @@ test('形成新版能力卡在生成阶段执行正式 S6 五栏逐栏自检', (
   assert.match(deepView, /能力画像智能体择优生成五栏卡/)
 })
 
-test('最终技术方案从定稿动作后的回答提取，并挂在对应原卡上方', () => {
+test('最终技术方案从定稿动作后的回答提取，并融合到对应原卡技术栏目', () => {
   const session = {
     session_id: 'tech-1',
     updated_at: '2026-09-28T10:00:00Z',
@@ -152,7 +169,8 @@ test('最终技术方案从定稿动作后的回答提取，并挂在对应原�
     technologySolutionFromSession(session)?.content,
     '研发目标与指标\n形成具体技术实现方案'
   )
-  assert.match(capabilitiesView, /<EquipmentTechnologySolutionCard[\s\S]*?<CapabilityPortraitCard/)
+  assert.match(capabilitiesView, /<CapabilityPortraitCard[\s\S]*?<template #technology-solution>[\s\S]*?<EquipmentTechnologySolutionCard[\s\S]*?<\/CapabilityPortraitCard>/)
+  assert.match(capabilitiesView, /v-if="technologySessionFor\(item\)"/)
   assert.match(capabilitiesView, /loadTechnologySessions\(\)/)
   assert.match(solutionCard, /原能力画像配套研发成果/)
   assert.match(solutionCard, /核心技术[\s\S]*卡点根因[\s\S]*工程实现[\s\S]*试验验证/)

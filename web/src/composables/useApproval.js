@@ -58,6 +58,7 @@ export function useApproval({ getThreadState, fetchThreadMessages }) {
     showModal: false,
     questions: [],
     kind: '',
+    source: '',
     actionRequests: [],
     status: '',
     threadId: null,
@@ -68,6 +69,7 @@ export function useApproval({ getThreadState, fetchThreadMessages }) {
     approvalState.showModal = true
     approvalState.questions = pendingInterrupt.questions || []
     approvalState.kind = pendingInterrupt.kind || 'question'
+    approvalState.source = pendingInterrupt.source || ''
     approvalState.actionRequests = pendingInterrupt.actionRequests || []
     approvalState.status = pendingInterrupt.status || ''
     approvalState.threadId = pendingInterrupt.threadId || fallbackThreadId
@@ -78,6 +80,7 @@ export function useApproval({ getThreadState, fetchThreadMessages }) {
     approvalState.showModal = false
     approvalState.questions = []
     approvalState.kind = ''
+    approvalState.source = ''
     approvalState.actionRequests = []
     approvalState.status = ''
     approvalState.threadId = null

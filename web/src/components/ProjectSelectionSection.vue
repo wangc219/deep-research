@@ -1,6 +1,7 @@
 <template>
   <section class="project-selection" :aria-label="ariaLabel">
-    <ActionDropdown :upward="upward" v-model:open="dropdownOpen" :disabled="disabled" :width="300">
+    <slot v-if="$slots['create-trigger']" name="create-trigger" :open-create="openCreateModal" />
+    <ActionDropdown v-else :upward="upward" v-model:open="dropdownOpen" :disabled="disabled" :width="300">
       <template #trigger>
         <ActionTrigger
           :label="currentProjectLabel"
@@ -143,10 +144,14 @@
     v-model:open="createModalOpen"
     title="新建项目"
     width="640px"
-    ok-text="创建并选择"
+    :ok-text="createOkText"
     cancel-text="取消"
     :confirm-loading="creatingProject"
     :ok-button-props="{ disabled: !canCreateProject }"
+    :closable="!creatingProject"
+    :mask-closable="!creatingProject"
+    :keyboard="!creatingProject"
+    :cancel-button-props="{ disabled: creatingProject }"
     @ok="handleCreateProject"
   >
     <div class="project-form">
@@ -155,6 +160,7 @@
         <a-input
           v-model:value="projectName"
           :maxlength="100"
+          :disabled="creatingProject"
           autofocus
           placeholder="例如：产品发布计划"
           @press-enter="canCreateProject && handleCreateProject()"
@@ -209,9 +215,10 @@ const props = defineProps({
   allowAuto: { type: Boolean, default: true },
   eagerLoad: { type: Boolean, default: false },
   ownerUid: { type: String, default: '' },
-  ariaLabel: { type: String, default: '新对话项目' }
+  ariaLabel: { type: String, default: '新对话项目' },
+  createOkText: { type: String, default: '创建并选择' }
 })
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'created'])
 const projectsStore = useProjectsStore()
 const userStore = useUserStore()
 const { projects, isLoading: loadingProjects, error: projectsError } = storeToRefs(projectsStore)
@@ -300,7 +307,7 @@ const openCreateModal = (selectedPath = '', ownerUid = '') => {
 }
 
 const handleCreateProject = async () => {
-  if (!canCreateProject.value) return
+  if (!canCreateProject.value || creatingProject.value) return
   creatingProject.value = true
   try {
     const project = await projectApi.createProject({
@@ -313,6 +320,7 @@ const handleCreateProject = async () => {
     addAndSelectProject(project)
     createModalOpen.value = false
     message.success('项目已创建')
+    emit('created', project)
   } catch (error) {
     message.error(getErrorMessage(error, '项目创建失败'))
   } finally {

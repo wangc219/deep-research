@@ -26,6 +26,12 @@ from platform_core.agents.backends.paths import (
 from platform_core.agents.backends.sandbox import ProvisionerSandboxBackend
 from platform_core.agents.toolkits.registry import ToolExtraMetadata, _all_tool_instances, _extra_registry, tool
 from platform_core.config.options import system_options
+from platform_core.services.web_search_coordinator import (
+    coordinated_search,
+    get_active_search_coordinator,
+    rate_limit_delay,
+    search_failure,
+)
 from platform_core.utils import logger
 from platform_core.utils.question_utils import normalize_questions
 
@@ -83,7 +89,11 @@ PUBLIC_SEARCH_DESCRIPTION = """执行公网网页搜索，返回可核验的网�
 2. 核验时效性事实、技术路线、工程瓶颈和公开试验结果
 3. 为能力画像中的事实性结论保留可追溯来源
 
-检索要求：查询词应简短明确；重要结论至少交叉核验两个独立来源，优先原始资料和权威机构。
+检索要求：每次围绕一个明确证据缺口，用实体名 + 技术/指标的 2-5 个关键词；不要把整个任务写成查询。
+每次保留核心对象/实体名，不要只查询“数据、发展、效率”等泛词；中文命中差时可用对应英文术语做一次定向查询。
+结果经过关键词相关性过滤，仍需核验是否回答当前子问题；只出现泛词的页面不能作为证据。
+重要结论至少交叉核验两个独立来源，优先原始资料和权威机构。结果摘要不等于阅读全文。
+status=empty 表示本次查询无有效命中，可针对具体缺口调整一次；status=degraded 表示服务故障，停止网页重试。
 """
 
 
@@ -142,7 +152,12 @@ def _parse_doubao_search_response(query: str, data: dict) -> dict:
     error_info = data.get("ResponseMetadata", {}).get("Error")
     if error_info:
         logger.error(f"Doubao search API returned error: {error_info}")
-        return {"query": query, "results": [], "error": error_info.get("Message", "Unknown error")}
+        return {
+            "query": query,
+            "results": [],
+            "error": error_info.get("Message", "Unknown error"),
+            "code": error_info.get("Code"),
+        }
 
     result_data = data.get("Result") or {}
     results = []
@@ -189,7 +204,7 @@ def _doubao_search(
             data = resp.json()
     except Exception as exc:
         logger.error(f"Doubao search failed: {exc}")
-        return {"query": query, "results": [], "error": str(exc)}
+        return {"query": query, **search_failure(exc)}
 
     return _parse_doubao_search_response(query, data)
 
@@ -224,11 +239,13 @@ def _parse_open_websearch_response(
     *,
     count: int,
     block_hosts: list[str] | None = None,
+    sites: list[str] | None = None,
 ) -> dict:
     """把 open-websearch daemon 响应规范为平台统一检索协议。"""
 
     blocked = {_normalize_search_host(host) for host in (block_hosts or [])}
     blocked.discard("")
+    allowed = {_normalize_search_host(host) for host in (sites or [])} - {""}
     results = []
     seen_urls: set[str] = set()
     for item in data.get("results") or []:
@@ -239,6 +256,8 @@ def _parse_open_websearch_response(
         if parsed.scheme not in {"http", "https"} or not parsed.netloc or url in seen_urls:
             continue
         hostname = _normalize_search_host(url)
+        if allowed and not any(hostname == host or hostname.endswith(f".{host}") for host in allowed):
+            continue
         if any(hostname == host or hostname.endswith(f".{host}") for host in blocked):
             continue
         title = " ".join(str(item.get("title") or "").split())
@@ -256,8 +275,6 @@ def _parse_open_websearch_response(
         if item.get("engine"):
             result["search_engine"] = str(item["engine"])
         results.append(result)
-        if len(results) >= max(1, min(int(count), 50)):
-            break
 
     output = {
         "query": query,
@@ -268,9 +285,13 @@ def _parse_open_websearch_response(
     partial_failures = data.get("partialFailures")
     if isinstance(partial_failures, list) and partial_failures:
         output["partial_failures"] = partial_failures
-    if not results:
-        output["error"] = "open-websearch 未返回可用结果"
-    return output
+    engines = data.get("engines") or []
+    failed_engines = {item.get("engine") for item in (partial_failures or []) if isinstance(item, dict)}
+    if not results and engines and set(engines).issubset(failed_engines):
+        output["error"] = "open-websearch 所有请求引擎均失败"
+    elif not results:
+        output["status"] = "empty"
+    return _filter_search_results(output, query, count=count, sites=sites, block_hosts=block_hosts)
 
 
 @langchain_tool("web_search", args_schema=DoubaoSearchInput, description=PUBLIC_SEARCH_DESCRIPTION)
@@ -303,14 +324,26 @@ def _open_websearch(
         }
 
     timeout = _web_search_float_env("OPEN_WEBSEARCH_TIMEOUT_SECONDS", 15.0, minimum=3.0, maximum=60.0)
+    coordinator = get_active_search_coordinator()
+    delays = {
+        engine: coordinator.engine_remaining(engine) if coordinator else 0 for engine in _open_websearch_engines()
+    }
+    engines = [engine for engine, delay in delays.items() if delay == 0]
+    if not engines:
+        return {
+            "query": normalized_query,
+            "results": [],
+            "status": "rate_limited",
+            "retry_after_seconds": min(delays.values()),
+            "error": "搜索引擎正在按限流响应冷却",
+        }
     with httpx.Client(timeout=timeout, follow_redirects=False) as client:
         response = client.post(
             f"{base_url}/search",
             json={
                 "query": search_query,
                 "limit": max(1, min(int(count), 50)),
-                "engines": _open_websearch_engines(),
-                "searchMode": "request",
+                "engines": engines,
             },
         )
         response.raise_for_status()
@@ -338,6 +371,7 @@ def _open_websearch(
         data,
         count=count,
         block_hosts=block_hosts,
+        sites=sites,
     )
 
 
@@ -376,6 +410,7 @@ def _parse_public_search_response(
     *,
     count: int,
     block_hosts: list[str] | None = None,
+    sites: list[str] | None = None,
 ) -> dict:
     """解析公开搜索页，只输出标题、摘要和原始 URL。"""
 
@@ -412,9 +447,13 @@ def _parse_public_search_response(
                 "site_name": hostname,
             }
         )
-        if len(results) >= max(1, min(int(count), 50)):
-            break
-    return {"query": query, "results": results, "provider": "public"}
+    return _filter_search_results(
+        {"query": query, "results": results, "provider": "public"},
+        query,
+        count=count,
+        sites=sites,
+        block_hosts=block_hosts,
+    )
 
 
 def _looks_academic_query(query: str, sites: list[str] | None = None) -> bool:
@@ -533,7 +572,12 @@ def _public_search(
         ("bing", _BING_SEARCH_URL, {"q": search_query}),
     )
     failures: list[dict[str, str | int]] = []
-    if _looks_academic_query(normalized_query, sites):
+    coordinator = get_active_search_coordinator()
+    retry_after = 0.0
+    academic_query = _looks_academic_query(normalized_query, sites)
+    crossref_delay = coordinator.engine_remaining("crossref") if academic_query and coordinator else 0
+    retry_after = max(retry_after, crossref_delay)
+    if academic_query and not crossref_delay:
         try:
             academic = _search_crossref(
                 normalized_query,
@@ -541,13 +585,26 @@ def _public_search(
                 timeout=timeout,
                 headers=headers,
             )
+            academic = _filter_search_results(
+                academic, normalized_query, count=count, sites=sites, block_hosts=block_hosts
+            )
             if academic["results"]:
                 return academic
             failures.append({"endpoint": "crossref", "error": "empty_response"})
         except Exception as exc:
+            delay = rate_limit_delay(search_failure(exc))
+            if delay:
+                retry_after = max(retry_after, delay)
+                if coordinator:
+                    coordinator.cool_engine("crossref", delay)
             failures.append({"endpoint": "crossref", "error": f"{type(exc).__name__}: {str(exc)[:200]}"})
             logger.warning(f"Public search endpoint 'crossref' failed: {exc}")
     for endpoint, url, endpoint_params in endpoints:
+        remaining = coordinator.engine_remaining(endpoint) if coordinator else 0
+        if remaining:
+            retry_after = max(retry_after, remaining)
+            failures.append({"endpoint": endpoint, "error": "rate_limit_cooldown"})
+            continue
         try:
             with httpx.Client(timeout=timeout, follow_redirects=True, headers=headers) as client:
                 response = client.get(url, params=endpoint_params)
@@ -557,6 +614,7 @@ def _public_search(
                 response.text,
                 count=count,
                 block_hosts=block_hosts,
+                sites=sites,
             )
             if result["results"]:
                 result["search_endpoint"] = endpoint
@@ -565,10 +623,17 @@ def _public_search(
                 {
                     "endpoint": endpoint,
                     "status_code": response.status_code,
-                    "error": "empty_or_antibot_response",
+                    "error": (
+                        "irrelevant_results" if result.get("filtered_irrelevant_count") else "empty_or_antibot_response"
+                    ),
                 }
             )
         except Exception as exc:
+            delay = rate_limit_delay(search_failure(exc))
+            if delay:
+                retry_after = max(retry_after, delay)
+                if coordinator:
+                    coordinator.cool_engine(endpoint, delay)
             failures.append({"endpoint": endpoint, "error": f"{type(exc).__name__}: {str(exc)[:200]}"})
             logger.warning(f"Public search endpoint '{endpoint}' failed: {exc}")
     return {
@@ -576,7 +641,15 @@ def _public_search(
         "results": [],
         "provider": "public",
         "failures": failures,
-        "error": "公网检索入口均未返回可解析结果",
+        **(
+            {"status": "empty"}
+            if any(item["error"] in {"irrelevant_results", "empty_response"} for item in failures)
+            else (
+                {"status": "rate_limited", "retry_after_seconds": retry_after, "error": "公网后端临时限流"}
+                if retry_after
+                else {"error": "公网检索入口均未返回可解析结果"}
+            )
+        ),
     }
 
 
@@ -672,6 +745,7 @@ def _web_search_cached(key: tuple, now: float) -> dict | None:
             return None
         result = copy.deepcopy(value)
     result["cache_hit"] = True
+    result["queue_wait_seconds"] = 0.0
     return result
 
 
@@ -732,17 +806,124 @@ def _normalize_provider_search_result(provider: str, query: str, raw: object) ->
     return result
 
 
-def _invoke_search_provider(provider: str, arguments: dict) -> dict:
-    """Invoke a provider implementation without creating a nested Tool lifecycle.
+def _search_query_terms(query: str) -> set[str]:
+    """提取主题词，排除站点操作符、年份和不提供主题信息的泛词。"""
+    ignored = {
+        "the",
+        "and",
+        "for",
+        "with",
+        "from",
+        "what",
+        "how",
+        "of",
+        "in",
+        "on",
+        "to",
+        "a",
+        "an",
+        "site",
+        "https",
+        "www",
+        "research",
+        "study",
+        "analysis",
+        "data",
+        "development",
+        "资料",
+        "相关",
+        "研究",
+        "分析",
+        "发展",
+        "数据",
+        "型号",
+        "代表",
+        "介绍",
+        "技术",
+        "计划",
+    }
+    detail = re.sub(r"\bsite:\S+|(?<!\S)-\S+", " ", query.casefold())
+    terms = set(re.findall(r"[a-z0-9]+(?:[.-][a-z0-9]+)*|[\u4e00-\u9fff]+", detail)) - ignored
+    return {term for term in terms if len(term) >= 2 and not re.fullmatch(r"(?:19|20)\d{2}", term)}
 
-    ``web_search`` is already the model-declared LangChain tool.  Calling a
-    provider via ``BaseTool.invoke`` from inside it emits a second
-    ``tool-started`` event with a generated call id.  That id was never
-    declared by a model message, so the durable ModelMessage/ToolMessage audit
-    correctly rejected it and aborted parallel research runs.  Call the raw
-    implementation here instead; provider failover remains an implementation
-    detail of the single, model-declared ``web_search`` operation.
-    """
+
+def _rank_search_results(query: str, results: list[dict]) -> list[dict]:
+    """按独立主题词覆盖排序，避免一个长词的零散双字片段凑成相关命中。"""
+    terms = _search_query_terms(query)
+    if not terms:
+        return []
+    scored = []
+    for item in results:
+        if not isinstance(item, dict):
+            continue
+        text = (
+            BeautifulSoup(f"{item.get('title', '')} {item.get('content', '')}", "html.parser")
+            .get_text(" ", strip=True)
+            .casefold()
+        )
+        score = 0
+        for term in terms:
+            if re.fullmatch(r"[\u4e00-\u9fff]+", term):
+                # 长中文复合词允许词序/部分修饰变化，但必须覆盖大部分，且只计一个主题词。
+                pairs = {term[index : index + 2] for index in range(len(term) - 1)}
+                covered = sum(pair in text for pair in pairs)
+                matched = term in text or (len(term) >= 4 and covered >= 2 and covered / len(pairs) >= 0.6)
+            else:
+                matched = bool(re.search(rf"(?<![a-z0-9]){re.escape(term)}(?![a-z0-9])", text))
+            score += matched
+        scored.append((score, item))
+    minimum_coverage = min(2, len(terms))
+    return [item for score, item in sorted(scored, key=lambda pair: pair[0], reverse=True) if score >= minimum_coverage]
+
+
+def _filter_search_results(
+    result: dict,
+    query: str,
+    *,
+    count: int = 10,
+    sites: list[str] | None = None,
+    block_hosts: list[str] | None = None,
+) -> dict:
+    """统一执行相关性、域名和数量约束，先筛选再截断。"""
+    original = result.get("results") or []
+    allowed = {_normalize_search_host(host) for host in sites or []} - {""}
+    blocked = {_normalize_search_host(host) for host in block_hosts or []} - {""}
+    scoped = []
+    for item in original:
+        if not isinstance(item, dict):
+            continue
+        host = _normalize_search_host(item.get("url") or "")
+        if allowed and not any(host == domain or host.endswith(f".{domain}") for domain in allowed):
+            continue
+        if any(host == domain or host.endswith(f".{domain}") for domain in blocked):
+            continue
+        scoped.append(item)
+    relevant = _rank_search_results(query, scoped)
+    filtered = int(result.get("filtered_irrelevant_count") or 0) + len(original) - len(relevant)
+    output = {**result, "query": query, "results": relevant[: max(1, min(int(count), 50))]}
+    if filtered:
+        output["filtered_irrelevant_count"] = filtered
+    if (
+        not relevant
+        and not output.get("error")
+        and output.get("status")
+        not in {
+            "rate_limited",
+            "unavailable",
+            "degraded",
+        }
+    ):
+        output["status"] = "empty"
+    return output
+
+
+def _invoke_search_provider(provider: str, arguments: dict) -> dict:
+    """跨 worker 协调原始供应商调用，避免子智能体并发造成限流。"""
+    return coordinated_search(provider, arguments, lambda: _invoke_raw_search_provider(provider, arguments))
+
+
+def _invoke_raw_search_provider(provider: str, arguments: dict) -> dict:
+    """执行供应商原始实现，避免嵌套工具事件生成无声明的调用 ID。"""
 
     _, factory, _ = _WEB_SEARCH_PROVIDERS[provider]
     tool = factory()
@@ -783,6 +964,13 @@ def _resilient_web_search(primary: str, arguments: dict) -> dict:
 
     query = " ".join(str(arguments.get("query") or "").split())[:100]
     arguments = {**arguments, "query": query}
+    if not _search_query_terms(query):
+        return {
+            "query": query,
+            "results": [],
+            "status": "empty",
+            "next_action": "查询缺少明确主题词；请使用核心对象/实体名和具体技术/指标，禁止只查询单字或泛词。",
+        }
     providers = _web_search_provider_order(primary)
     now = time.monotonic()
     cache_key = _web_search_cache_key(providers, arguments)
@@ -795,6 +983,8 @@ def _resilient_web_search(primary: str, arguments: dict) -> dict:
     failures: list[dict[str, object]] = []
     attempted_providers: list[str] = []
     retry_after = 0.0
+    empty_result = None
+    limited_result = None
 
     for provider in providers:
         circuit_open, remaining = _provider_circuit_open(provider, time.monotonic())
@@ -811,12 +1001,15 @@ def _resilient_web_search(primary: str, arguments: dict) -> dict:
             try:
                 result = _invoke_search_provider(provider, arguments)
             except Exception as exc:  # provider SDKs do not share one exception hierarchy
-                result = {
-                    "query": query,
-                    "results": [],
-                    "provider": provider,
-                    "error": f"{type(exc).__name__}: {str(exc)[:300]}",
-                }
+                result = {"query": query, "provider": provider, **search_failure(exc)}
+            # 每个供应商（包括公网兜底）都执行同一规则，HTTP 成功不代表命中相关。
+            result = _filter_search_results(
+                result,
+                query,
+                count=arguments.get("count", 10),
+                sites=arguments.get("sites"),
+                block_hosts=arguments.get("block_hosts"),
+            )
             if result.get("results"):
                 _record_provider_success(provider)
                 result.update(
@@ -828,6 +1021,19 @@ def _resilient_web_search(primary: str, arguments: dict) -> dict:
                 )
                 _cache_web_search_result(cache_key, result, time.monotonic())
                 return result
+
+            if result.get("status") == "rate_limited" or rate_limit_delay(result):
+                # 短暂限流由共享调度器恢复；等待预算用完后切换后端，不即时重试或永久熔断本轮。
+                limited_result = result
+                retry_after = max(retry_after, rate_limit_delay(result))
+                failures.append({"provider": provider, "error": "rate_limited"})
+                break
+
+            if result.get("status") == "empty" or not result.get("error"):
+                # 无命中属于查询结果，不能污染跨子任务共享的服务健康状态。
+                _record_provider_success(provider)
+                empty_result = {**result, "status": "empty", "results": []}
+                break
 
             failures.append(
                 {
@@ -844,6 +1050,28 @@ def _resilient_web_search(primary: str, arguments: dict) -> dict:
                 retry_after = max(retry_after, remaining)
                 break
 
+    if empty_result is not None:
+        return {
+            **empty_result,
+            "attempted_providers": attempted_providers,
+            "next_action": "本次查询未找到有效命中；只针对尚未覆盖的证据缺口调整一次，再无增量则交付已有发现。",
+        }
+
+    if limited_result is not None:
+        return {
+            "query": query,
+            "results": [],
+            "status": "rate_limited",
+            "retryable": True,
+            "retry_after_seconds": max(1, int(retry_after + 0.999)),
+            "attempted_providers": attempted_providers,
+            "failures": failures[-6:],
+            "next_action": (
+                "共享调度已完成有界排队、冷却恢复和后端切换；暂时限流不代表整轮检索永久不可用。"
+                "不要反复改写同一查询；使用其他可用证据完成分领域报告，逐项标注缺口，不能只返回限流说明。"
+            ),
+        }
+
     return {
         "query": query,
         "results": [],
@@ -854,8 +1082,8 @@ def _resilient_web_search(primary: str, arguments: dict) -> dict:
         "failures": failures[-6:],
         "error": "所有可用公网检索后端均暂不可用",
         "next_action": (
-            "本次子任务不要再次调用 web_search 或改写同义查询；立即改用 query_kbs 跨库检索、"
-            "已获得来源和任务上下文继续，并在最终结果中标注仍缺少的公网证据。"
+            "本次子任务不要再次调用 web_search 或改写同义查询；仅本轮用户显式 @知识库且工具可用时，"
+            "可用 query_kbs 跨库检索；否则使用已获得来源和任务上下文继续，并标注仍缺少的公网证据。"
         ),
     }
 
@@ -1154,10 +1382,15 @@ ASK_USER_QUESTION_DESCRIPTION = """
 使用规范：
 1. questions 提供 1-5 个问题，每项包含 question，并可包含 options、multi_select、allow_other
 2. 纯问答不提供 options（或传空列表），用户将直接填写文本
-3. 选择题的 options 提供 2-5 个有区分度的选项，每项包含 label 和 value
-4. 若有推荐选项：把推荐项放在第一位，并在 label 末尾加 "(Recommended)"
+3. 选择题的 options 提供 2-5 个有区分度的选项，每项包含 label、value 和 description。
+   label 写简短选项名称；description 用一句话解释该选项的范围、产出或取舍，推荐项说明推荐理由。
+   description 会以小字显示在选项下方，不要只在聊天正文里提供说明，也不要重复选项名称。
+4. 需求澄清应提供一个基于上下文的推荐项：放在第一位，并在 label 末尾加“（推荐）”（兼容 "(Recommended)"）
 5. 若需要多选：将该问题的 multi_select 设为 true
 6. allow_other 只用于选择题，通常保持 true，让用户可自行填写答案
+7. 智能对话、深研对话的范围澄清必须调用本工具，不要只在正文列出澄清点。
+   每题都有推荐项时，页面两分钟未作答会采用推荐项并继续；用户开始选择或填写后停止自动选择。
+   没有推荐项或需要用户提供真实事实的纯问答不会自动回答；操作授权走专门审批机制。
 
 注意事项：
 1. 不要用这个工具询问“是否继续执行”“计划是否准备好”这类流程控制问题
@@ -1181,7 +1414,7 @@ def ask_user_question(
     questions: Annotated[
         list[dict] | str | None,
         "问题列表；纯问答格式 {question}，选择题格式 "
-        "{question, options, multi_select, allow_other, question_id(optional)}",
+        "{question, options:[{label,value,description}], multi_select, allow_other, question_id(optional)}",
     ] = None,
 ) -> dict:
     """向用户发起问题并等待回答。"""

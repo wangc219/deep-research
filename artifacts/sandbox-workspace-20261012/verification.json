@@ -1,0 +1,53 @@
+{
+  "reference": "https://github.com/xerrors/Yuxi",
+  "demo_url": "http://localhost:5173/agent/665c2826-141b-4f17-8054-b6372b84e8c9",
+  "research_report_url": "http://localhost:5173/agent/ddfe1974-e7de-486c-af9b-d19c0519012f",
+  "sandbox_image": "equipmentresearch3-sandbox-runtime:1.11.0-artifacts",
+  "verified": {
+    "agent_write_and_read": true,
+    "shell_relative_outputs_in_persistent_workdir": true,
+    "persistence_after_sandbox_recreation": true,
+    "cross_user_access_denied": true,
+    "path_traversal_denied": true,
+    "skill_directory_readonly": true,
+    "delivery_cards": 9,
+    "preview_formats": [
+      "Markdown",
+      "HTML",
+      "PDF",
+      "PNG",
+      "CSV",
+      "XLSX (PDF preview)",
+      "Python",
+      "DOCX (PDF preview)"
+    ],
+    "html_interaction": true,
+    "markdown_edit_and_save": true,
+    "downloaded_html_matches_workspace": true,
+    "downloaded_edited_markdown_matches_workspace": true,
+    "directory_zip_members": 9,
+    "directory_zip_crc_valid": true,
+    "directory_zip_contents_matched_at_download": true,
+    "original_report_download_matches_workspace": true
+  },
+  "validation": {
+    "backend_targeted_tests_passed": 153,
+    "frontend_full_tests_passed": 539,
+    "additional_workspace_preview_tests_passed": 2,
+    "compose_worktree_tests_passed": 4,
+    "live_http_integration_passed": true,
+    "frontend_lint_and_build_passed": true,
+    "targeted_python_lint_passed": true
+  },
+  "known_preexisting_deployment_check_failures": [
+    "ARQ_MAX_JOBS test expects 140 while HEAD defaults to 24",
+    "scripts/migrate-storage.sh is absent; two migration-script checks fail"
+  ],
+  "screenshots": [
+    "html-preview.jpg",
+    "workspace-files.jpg",
+    "pdf-preview.jpg",
+    "markdown-edit.jpg",
+    "report-preview.jpg"
+  ]
+}

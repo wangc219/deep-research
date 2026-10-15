@@ -4,7 +4,7 @@
       v-if="visible"
       class="approval-modal"
       :class="{ 'is-tool-approval': isToolApproval, 'is-question-dialog': !isToolApproval }"
-      role="dialog"
+      :role="isToolApproval ? 'dialog' : 'region'"
       :aria-labelledby="isToolApproval ? 'tool-approval-question' : 'question-dialog-title'"
       :aria-describedby="isToolApproval ? 'tool-approval-summary' : undefined"
     >
@@ -76,10 +76,15 @@
         </div>
 
         <div v-else class="question-dialog-header">
-          <div class="question-dialog-heading">
-            <CircleHelp :size="19" aria-hidden="true" />
-            <span>问题</span>
-          </div>
+          <h4
+            v-if="activeQuestion"
+            id="question-dialog-title"
+            ref="questionTitleRef"
+            class="question-title"
+            tabindex="-1"
+          >
+            {{ activeQuestion.question }}
+          </h4>
           <div class="question-dialog-navigation">
             <button
               type="button"
@@ -115,14 +120,7 @@
         </div>
 
         <div v-if="!isToolApproval && activeQuestion" class="question-block">
-          <h4
-            id="question-dialog-title"
-            ref="questionTitleRef"
-            class="question-title"
-            tabindex="-1"
-          >
-            <span>{{ questionTypeLabel }}：</span>{{ activeQuestion.question }}
-          </h4>
+          <p v-if="activeQuestion.multiSelect" class="question-selection-hint">可选择多个选项</p>
 
           <div v-if="activeQuestion.operation" class="approval-operation">
             <span class="label">操作：</span>
@@ -160,8 +158,7 @@
                 <span
                   class="option-label"
                   :class="{
-                    recommended:
-                      optionIndex === 0 && String(optionItem.label).includes('(Recommended)')
+                    recommended: getRecommendedOption(activeQuestion)?.value === optionItem.value
                   }"
                 >
                   {{ optionItem.label }}
@@ -226,6 +223,12 @@
               </button>
             </div>
           </div>
+          <p v-if="countdown" class="question-timeout" role="status">
+            {{ countdown }} 后未作答，将自动采用各题推荐选项并继续。选择或填写后停止倒计时。
+          </p>
+          <p v-else-if="manual && autoRecommend" class="question-timeout">
+            自动选择已停止，请完成回答后提交。
+          </p>
         </div>
       </div>
 
@@ -263,7 +266,6 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  CircleHelp,
   PencilLine,
   Wrench,
   X
@@ -271,8 +273,10 @@ import {
 import {
   buildQuestionAnswer as buildQuestionAnswerValue,
   isQuestionAnswered as hasQuestionAnswer,
-  normalizeQuestions
+  normalizeQuestions,
+  getRecommendedOption
 } from '@/utils/questionUtils'
+import { useQuestionTimeout } from '@/composables/useQuestionTimeout'
 import { getToolIcon } from '@/components/ToolCallingResult/toolRegistry'
 import {
   buildToolApprovalDecisions,
@@ -290,6 +294,8 @@ const props = defineProps({
   visible: { type: Boolean, default: false },
   questions: { type: Array, default: () => [] },
   kind: { type: String, default: 'question' },
+  autoRecommend: { type: Boolean, default: false },
+  requestKey: { type: String, default: '' },
   actionRequests: { type: Array, default: () => [] }
 })
 
@@ -329,11 +335,6 @@ const activeQuestion = computed(() => {
   const index = Math.min(activeQuestionIndex.value, normalizedQuestions.value.length - 1)
   return normalizedQuestions.value[index]
 })
-const questionTypeLabel = computed(() => {
-  if (activeQuestion.value?.answerMode === 'text') return '问答题'
-  return activeQuestion.value?.multiSelect ? '多选题' : '单选题'
-})
-
 const resetForm = () => {
   isProcessing.value = false
   activeQuestionIndex.value = 0
@@ -379,6 +380,7 @@ const markQuestionAnswered = (questionId) => {
 }
 
 const handleTextInput = (questionId, event) => {
+  markInteracted()
   answerTexts.value[questionId] = event.target.value
   if (activeQuestion.value?.answerMode !== 'text') {
     selectOtherAnswer(questionId)
@@ -390,6 +392,7 @@ const handleTextInput = (questionId, event) => {
 const selectOtherAnswer = (questionId) => {
   const question = normalizedQuestions.value.find((item) => item.questionId === questionId)
   if (!question || question.answerMode === 'text' || !question.allowOther) return
+  markInteracted()
 
   if (!question.multiSelect) selectedValues.value[questionId] = []
   if (!customAnswerQuestionIds.value.includes(questionId)) {
@@ -502,6 +505,7 @@ watch(
 
 const toggleSelect = (questionId, value) => {
   if (isProcessing.value) return
+  markInteracted()
 
   customAnswerQuestionIds.value = customAnswerQuestionIds.value.filter((id) => id !== questionId)
   const current = getSelected(questionId)
@@ -518,6 +522,7 @@ const toggleSelect = (questionId, value) => {
 
 const setSingle = (questionId, value) => {
   if (isProcessing.value) return
+  markInteracted()
   selectedValues.value[questionId] = [value]
   customAnswerQuestionIds.value = customAnswerQuestionIds.value.filter((id) => id !== questionId)
   markQuestionAnswered(questionId)
@@ -592,6 +597,7 @@ const buildAnswer = () => {
 
 const handleSubmit = () => {
   if (isSubmitDisabled.value) return
+  markInteracted()
   isProcessing.value = true
   emit('submit', buildAnswer())
 }
@@ -609,11 +615,13 @@ const handlePrimaryAction = () => {
 
 const handleCancel = () => {
   if (isProcessing.value) return
+  markInteracted()
   emit('cancel')
 }
 
 const handleSkip = () => {
   if (isProcessing.value || !activeQuestion.value) return
+  markInteracted()
 
   const questionId = activeQuestion.value.questionId
   if (!skippedQuestionIds.value.includes(questionId)) {
@@ -649,6 +657,18 @@ const handleToolDecision = (decision) => {
 const toolDisplayName = (name) => TOOL_DISPLAY_NAMES[name] || '工具调用'
 
 const formattedToolArgs = computed(() => formatToolApprovalArgs(activeToolRequest.value?.args))
+
+const { countdown, manual, markInteracted } = useQuestionTimeout({
+  visible: computed(() => props.visible),
+  enabled: computed(() => props.autoRecommend && !isToolApproval.value && !isProcessing.value),
+  requestKey: computed(() => props.requestKey),
+  questions: normalizedQuestions,
+  submit: (answers) => {
+    if (isProcessing.value) return
+    isProcessing.value = true
+    emit('submit', answers)
+  }
+})
 </script>
 
 <style scoped lang="less">
@@ -663,13 +683,16 @@ const formattedToolArgs = computed(() => formatToolApprovalArgs(activeToolReques
   border: 1px solid var(--gray-200);
 
   &.is-question-dialog {
+    box-sizing: border-box;
     align-self: stretch;
     width: 100%;
     max-width: none;
+    max-height: min(420px, 45dvh);
+    overflow-y: auto;
     min-width: 0;
-    margin: 0;
-    border-radius: 24px;
-    box-shadow: 0 6px 18px var(--shadow-1);
+    margin: 0 0 8px;
+    border-radius: 20px;
+    box-shadow: 0 4px 14px var(--shadow-1);
   }
 
   &.is-tool-approval {
@@ -702,23 +725,20 @@ const formattedToolArgs = computed(() => formatToolApprovalArgs(activeToolReques
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 12px;
+
+  .question-title {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    line-height: 1.5;
+  }
 }
 
-.question-dialog-heading,
 .question-dialog-navigation {
   display: flex;
   align-items: center;
-}
-
-.question-dialog-heading {
-  gap: 8px;
-  color: var(--color-text-secondary);
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.question-dialog-navigation {
   gap: 4px;
+  flex-shrink: 0;
 }
 
 .question-progress {
@@ -994,7 +1014,20 @@ const formattedToolArgs = computed(() => formatToolApprovalArgs(activeToolReques
 .question-options {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+}
+
+.question-timeout {
+  margin: 8px 4px 0;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.question-selection-hint {
+  margin: 0 0 8px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
 }
 
 .option-item {
@@ -1003,10 +1036,10 @@ const formattedToolArgs = computed(() => formatToolApprovalArgs(activeToolReques
   gap: 12px;
   box-sizing: border-box;
   width: 100%;
-  min-height: 40px;
-  padding: 4px 8px;
+  min-height: 52px;
+  padding: 8px 10px;
   border: 1px solid transparent;
-  border-radius: 7px;
+  border-radius: 12px;
   color: var(--color-text);
   font-size: 14px;
   cursor: pointer;
@@ -1056,7 +1089,7 @@ const formattedToolArgs = computed(() => formatToolApprovalArgs(activeToolReques
 .option-content {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   min-width: 0;
   flex: 1;
 }
@@ -1064,6 +1097,7 @@ const formattedToolArgs = computed(() => formatToolApprovalArgs(activeToolReques
 .option-label {
   line-height: 1.4;
   color: var(--color-text);
+  font-weight: 500;
 
   &.recommended {
     color: var(--main-color);
@@ -1072,9 +1106,9 @@ const formattedToolArgs = computed(() => formatToolApprovalArgs(activeToolReques
 }
 
 .option-description {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--color-text-secondary);
-  line-height: 1.45;
+  line-height: 1.5;
   word-break: break-word;
 }
 
@@ -1301,16 +1335,24 @@ const formattedToolArgs = computed(() => formatToolApprovalArgs(activeToolReques
     width: 100%;
   }
 
+  .approval-modal.is-question-dialog {
+    width: 100%;
+    max-height: min(480px, 55dvh);
+  }
+
   .approval-content {
     padding: 12px 16px;
   }
 
   .question-dialog-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
     margin-bottom: 10px;
   }
 
-  .question-dialog-heading {
-    font-size: 13px;
+  .question-dialog-navigation {
+    justify-self: end;
   }
 
   .question-icon-button {

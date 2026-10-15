@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-15",
+  "scope": "通用画像展示：合并重复面板、概述分条、详情折叠；未修改研究提示词和研究流程",
+  "checks": {
+    "lint": "passed",
+    "build": "passed",
+    "unit_tests": {
+      "passed": 545,
+      "failed": 0
+    }
+  },
+  "browser": {
+    "actual_page": "能力画像页12个详情默认关闭，鼠标展开1个，Enter收起后0个展开",
+    "neutral_fixture": "四项概述标签顺序正确，浅色/深色/390px窄屏已检查，窄屏无横向溢出",
+    "screenshots": [
+      "overview-light.jpg",
+      "overview-dark.jpg",
+      "overview-mobile.jpg"
+    ]
+  },
+  "temporary_fixture_removed": true
+}

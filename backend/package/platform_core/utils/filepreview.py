@@ -18,6 +18,7 @@ _MARKDOWN_EXTENSIONS = frozenset({".md", ".markdown", ".mdx"})
 _PDF_EXTENSIONS = frozenset({".pdf"})
 _HTML_EXTENSIONS = frozenset({".html", ".htm"})
 _OFFICE_PDF_PREVIEW_EXTENSIONS = frozenset({".docx", ".pptx"})
+_SPREADSHEET_PDF_PREVIEW_EXTENSIONS = frozenset({".xlsx"})
 _OFFICE_MEDIA_TYPES = {
     ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
@@ -115,8 +116,11 @@ class PreviewResult:
         }
 
 
-def is_office_pdf_preview_file(path: str) -> bool:
-    return PurePosixPath(path).suffix.lower() in _OFFICE_PDF_PREVIEW_EXTENSIONS
+def is_office_pdf_preview_file(path: str, *, include_spreadsheets: bool = False) -> bool:
+    extensions = _OFFICE_PDF_PREVIEW_EXTENSIONS
+    if include_spreadsheets:
+        extensions = extensions | _SPREADSHEET_PDF_PREVIEW_EXTENSIONS
+    return PurePosixPath(path).suffix.lower() in extensions
 
 
 def preview_too_large() -> PreviewResult:
@@ -138,7 +142,7 @@ def _office_converter_executable() -> str:
 
 def _convert_office_to_pdf_sync(filename: str, content: bytes) -> bytes:
     suffix = PurePosixPath(filename).suffix.lower()
-    if suffix not in _OFFICE_PDF_PREVIEW_EXTENSIONS:
+    if suffix not in _OFFICE_PDF_PREVIEW_EXTENSIONS | _SPREADSHEET_PDF_PREVIEW_EXTENSIONS:
         raise OfficePreviewConversionError("当前文件类型不支持转换为 PDF 预览")
 
     executable = _office_converter_executable()

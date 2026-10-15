@@ -17,11 +17,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from platform_core.agents.backends.paths import runtime_workdir_path
 from platform_core.agents.buildin import get_agent_backend
 from platform_core.agents.context import BaseContext, prepare_agent_runtime_context
+from platform_core.agents.middlewares.knowledge_opt_in import apply_knowledge_retrieval_policy, has_knowledge_mention
 from platform_core.agents.skills.service import PERSONAL_SKILL_SOURCE_TYPE
 from platform_core.config.environment import deep_research_env
 from platform_core.repositories.agent_repository import AgentRepository
 from platform_core.services.workdir_service import AuthorizedWorkdir
-from platform_core.storage.postgres.models_business import AgentRun, User
+from platform_core.storage.postgres.models_business import AgentRun, Message, User
 
 MANIFEST_SCHEMA_VERSION = 2
 # 直接进入 manifest 的关键 limit 字段；未列出的 context 字段只以 config_digest 形式存在。
@@ -200,7 +201,11 @@ async def prepare_run_execution(
         parent_thread_id = str((payload.get("runtime") or {}).get("parent_thread_id") or "").strip()
         if not parent_thread_id:
             raise ValueError("子智能体运行缺少必需的 parent_thread_id")
-        context.update({"parent_thread_id": parent_thread_id, "is_subagent_runtime": True})
+        context.update(
+            {"parent_thread_id": parent_thread_id, "is_subagent_runtime": True, "agent_slug": run.agent_slug}
+        )
+    knowledge_enabled = await resolve_run_knowledge_opt_in(run, db)
+    apply_knowledge_retrieval_policy(context, enabled=knowledge_enabled)
     context = await prepare_agent_runtime_context(context)
     if not getattr(context, "_runtime_prepared", False):
         raise ValueError("执行用户不存在，无法准备 Context")
@@ -219,3 +224,22 @@ async def prepare_run_execution(
         code_revision=resolve_code_revision(),
     )
     return PreparedRunExecution(manifest=manifest, context=context, backend_id=agent_item.backend_id)
+
+
+async def resolve_run_knowledge_opt_in(run: AgentRun, db: AsyncSession) -> bool:
+    """从本轮原始用户输入决定检索开关，子任务和审批续跑沿用发起轮次。"""
+    source_run = run
+    visited = set()
+    while source_run.run_type in {"subagent", "resume"}:
+        creator_id = getattr(source_run, "created_by_run_id", None)
+        if not creator_id or creator_id in visited:
+            return False
+        visited.add(creator_id)
+        source_run = await db.get(AgentRun, creator_id)
+        if source_run is None or source_run.uid != run.uid:
+            return False
+    message_id = getattr(source_run, "input_message_id", None)
+    if message_id is None:
+        return False
+    message = await db.get(Message, message_id)
+    return bool(message and has_knowledge_mention(message.content or ""))

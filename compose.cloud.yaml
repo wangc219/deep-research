@@ -1,0 +1,16 @@
+# 腾讯云 4C/8G：在 compose.prod.yaml 上叠加，公网入口由宿主 Nginx/TLS 提供。
+services:
+  api:
+    ports: !override
+      - "127.0.0.1:6050:5050"
+  web:
+    ports: !override
+      - "127.0.0.1:8088:80"
+  minio:
+    # 同一官方版本；Quay 在本地域返回 401，Docker Hub 镜像可经腾讯镜像站获取。
+    image: minio/minio:RELEASE.2023-03-20T20-16-18Z
+  graph:
+    environment:
+      NEO4J_server_memory_heap_initial__size: 256m
+      NEO4J_server_memory_heap_max__size: 512m
+      NEO4J_server_memory_pagecache_size: 128m

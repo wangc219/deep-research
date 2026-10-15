@@ -218,6 +218,11 @@ async def test_manifest_uses_prepared_context_and_persisted_overrides(monkeypatc
     if empty_config:
         agent.config_json["context"] = None
     expected_prompt = "You are a helpful assistant." if empty_config else "base"
+    expected_runtime_prompt = (
+        f"{expected_prompt}\n\nequipment runtime policy\n\n# 本轮知识库检索规则\n"
+        "本轮用户未显式 @知识库，禁止检索、列举或读取知识库；"
+        "公网或学术检索失败也不得自动转查知识库。使用已有来源完成任务并标注证据缺口。"
+    )
     monkeypatch.setattr(
         service, "AgentRepository", lambda db: SimpleNamespace(get_visible_by_slug=AsyncMock(return_value=agent))
     )
@@ -232,7 +237,7 @@ async def test_manifest_uses_prepared_context_and_persisted_overrides(monkeypatc
         assert context.skills == ["equipment-deep-conversation"]
         assert context.preload_skills == ["equipment-deep-conversation"]
         assert context.knowledges == []
-        assert context.system_prompt == f"{expected_prompt}\n\nequipment runtime policy"
+        assert context.system_prompt == expected_runtime_prompt
         await _append_workspace_agent_prompt(context)
         seen.append(context)
         context.tools = ["read_file"]
@@ -275,13 +280,14 @@ async def test_manifest_uses_prepared_context_and_persisted_overrides(monkeypatc
     assert result.context is seen[0]
     assert result.context.model == result.manifest["model"]["spec"] == "chosen"
     assert result.context.tool_approval_mode == result.manifest["tool_approval_mode"] == "always_trust"
-    assert result.context.system_prompt == f"{expected_prompt}\n\nequipment runtime policy\n\nworkspace policy"
+    assert result.context.system_prompt == f"{expected_runtime_prompt}\n\nworkspace policy"
     assert result.manifest["limits"]["model_retry_times"] == result.context.model_retry_times == 2
     assert (
         result.manifest["resources"]["skills"][0]["preload_content_hash"] == hashlib.sha256(b"frozen skill").hexdigest()
     )
     assert result.context.is_subagent_runtime is (run_type == "subagent")
     assert result.context.parent_thread_id == ("parent" if run_type == "subagent" else None)
+    assert result.context.agent_slug == ("agent" if run_type == "subagent" else "")
     assert result.context.uid == "user"
     assert (result.context.run_id, result.context.request_id, result.context.worker_id) == ("run", "request", "owner")
 
@@ -296,7 +302,7 @@ async def test_manifest_uses_prepared_context_and_persisted_overrides(monkeypatc
         run=run, user=SimpleNamespace(uid="user"), db=object(), workdir_binding=binding, worker_id="owner"
     )
     assert changed.manifest["config_digest"] != first_digest
-    assert result.context.system_prompt == f"{expected_prompt}\n\nequipment runtime policy\n\nworkspace policy"
+    assert result.context.system_prompt == f"{expected_runtime_prompt}\n\nworkspace policy"
 
 
 @pytest.mark.asyncio

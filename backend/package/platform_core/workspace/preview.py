@@ -22,7 +22,7 @@ async def preview_workspace_file(
     office_cache_key: str,
 ) -> PreviewResult:
     """把 UserWorkspace 文件字节渲染为预览结果。"""
-    if is_office_pdf_preview_file(path):
+    if is_office_pdf_preview_file(path, include_spreadsheets=True):
         pdf_content = await _convert_office_to_pdf_cached(path, raw_content, office_cache_key)
         return PreviewResult(
             content=pdf_content,

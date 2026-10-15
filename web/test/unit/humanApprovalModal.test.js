@@ -58,7 +58,7 @@ const find = (node, predicate) => {
 const textContent = (node) =>
   [node.text, ...(node.children || []).map((child) => textContent(child))].join('')
 
-test('问题弹窗提交纯文本，并在跳过时省略当前题答案', async () => {
+test('输入框上方提问卡片提交纯文本，并在跳过时省略当前题答案', async (t) => {
   globalThis.window = {
     getComputedStyle: () => ({
       lineHeight: '20',
@@ -118,6 +118,8 @@ test('问题弹窗提交纯文本，并在跳过时省略当前题答案', async
     )
     app.mount(host)
     await nextTick()
+    assert.equal(find(host, (node) => node.props.role === 'region').props['aria-modal'], undefined)
+    assert.equal(find(host, (node) => node.props.class === 'question-dialog-backdrop'), undefined)
 
     const answer = find(host, (node) => node.props.placeholder === '请输入你的回答…')
     assert.ok(answer)
@@ -245,6 +247,100 @@ test('问题弹窗提交纯文本，并在跳过时省略当前题答案', async
     assert.equal(multipleSubmit.props.disabled, false)
     multipleSubmit.props.onClick()
     assert.deepEqual(submissions, [{ cities: ['杭州'] }])
+
+
+    app.unmount()
+    t.mock.timers.enable({ apis: ['Date', 'setInterval'], now: 1_000_000 })
+    const savedStates = new Map()
+    window.sessionStorage = {
+      getItem: (key) => savedStates.get(key) || null,
+      setItem: (key, value) => savedStates.set(key, value)
+    }
+    const recommendedQuestions = [
+      { question_id: 'equipment', question: '聚焦哪类装备？', options: [
+        { label: '水下装备（推荐）', value: 'underwater', description: '适合深水长期观测，重点研究续航与感知能力。' },
+        { label: '水面装备', value: 'surface' }
+      ] },
+      { question_id: 'focus', question: '侧重哪些维度？', multi_select: true, options: [
+        { label: '能力画像 (Recommended)', value: 'capability' },
+        { label: '技术路径', value: 'technology' }
+      ] }
+    ]
+    const mountQuestions = (props = {}) => {
+      submissions.length = 0
+      const root = makeNode('root')
+      app = renderer.createApp(() => h(HumanApprovalModal, {
+        visible: true, autoRecommend: true, questions: recommendedQuestions,
+        onSubmit: (value) => submissions.push(value), ...props
+      }))
+      app.mount(root)
+      return root
+    }
+    const timedHost = mountQuestions({ requestKey: 'thread:run-auto' })
+    await nextTick()
+    assert.ok(textContent(timedHost).includes('2:00 后未作答'))
+    const description = find(timedHost, (node) => node.props.class === 'option-description')
+    assert.equal(textContent(description), '适合深水长期观测，重点研究续航与感知能力。')
+    assert.ok(description.parent.children.find((node) => String(node.props.class || '').includes('option-label')))
+    assert.equal(textContent(find(timedHost, (node) => node.props.id === 'question-dialog-title')), '聚焦哪类装备？')
+    t.mock.timers.tick(119_750)
+    await nextTick()
+    assert.deepEqual(submissions, [])
+    t.mock.timers.tick(250)
+    await nextTick()
+    assert.deepEqual(submissions, [{ equipment: 'underwater', focus: ['capability'] }])
+    t.mock.timers.tick(120_000)
+    assert.equal(submissions.length, 1)
+
+    app.unmount()
+    const restoredHost = mountQuestions({ requestKey: 'thread:run-auto' })
+    await nextTick()
+    t.mock.timers.tick(120_000)
+    assert.deepEqual(submissions, [])
+    assert.ok(textContent(restoredHost).includes('自动选择已停止'))
+
+    app.unmount()
+    const manualHost = mountQuestions({ requestKey: 'thread:run-manual' })
+    await nextTick()
+    find(manualHost, (node) => node.type === 'input' && node.props.value === 'surface').props.onChange()
+    await nextTick()
+    t.mock.timers.tick(120_000)
+    assert.deepEqual(submissions, [])
+    assert.ok(textContent(manualHost).includes('自动选择已停止'))
+
+    app.unmount()
+    const customTimedHost = mountQuestions({ requestKey: 'thread:run-custom' })
+    await nextTick()
+    find(customTimedHost, (node) => node.props.placeholder === '或自行填写回答')
+      .props.onInput({ target: { value: '跨域协同' } })
+    await nextTick()
+    t.mock.timers.tick(120_000)
+    assert.deepEqual(submissions, [])
+
+    app.unmount()
+    mountQuestions({ requestKey: 'thread:run-refresh' })
+    await nextTick()
+    t.mock.timers.tick(60_000)
+    app.unmount()
+    const refreshedHost = mountQuestions({ requestKey: 'thread:run-refresh' })
+    await nextTick()
+    assert.ok(textContent(refreshedHost).includes('1:00 后未作答'))
+    t.mock.timers.tick(60_000)
+    await nextTick()
+    assert.equal(submissions.length, 1)
+
+    app.unmount()
+    mountQuestions({ requestKey: 'thread:run-no-default', questions })
+    await nextTick()
+    t.mock.timers.tick(120_000)
+    assert.deepEqual(submissions, [])
+
+    app.unmount()
+    mountQuestions({ requestKey: 'thread:run-approval', kind: 'tool_approval',
+      actionRequests: [{ name: 'execute', args: { command: 'example' } }] })
+    await nextTick()
+    t.mock.timers.tick(120_000)
+    assert.deepEqual(submissions, [])
   } finally {
     app?.unmount()
     await server.close()

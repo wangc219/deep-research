@@ -123,16 +123,16 @@
                 <div class="tree-node-name" :title="node.title">
                   <span class="name-start">{{ node.nameStart || node.title }}</span>
                   <span class="name-end" v-if="node.nameEnd">{{ node.nameEnd }}</span>
+                  <span v-if="node.isLeaf" class="tree-file-size">{{ node.sizeLabel }}</span>
                 </div>
               </template>
               <template #actions="{ node }">
                 <div class="node-actions-container">
                   <button
-                    v-if="node.isLeaf"
                     class="tree-action-btn tree-download-btn"
                     @click.stop="downloadFile(node.fileData)"
-                    title="下载文件"
-                    aria-label="下载文件"
+                    :title="node.isLeaf ? '下载文件' : '打包下载 ZIP'"
+                    :aria-label="node.isLeaf ? '下载文件' : '打包下载 ZIP'"
                   >
                     <Download :size="14" />
                   </button>
@@ -202,7 +202,10 @@
           :showClose="false"
           :showDownload="true"
           :showFullscreen="true"
+          :editable="Boolean(editableWorkspacePath(currentFile))"
+          :saving="savingPreviewFile"
           @download="downloadFile"
+          @save="savePreviewFile"
         />
         <div v-else class="preview-empty">正在加载文件内容...</div>
       </div>
@@ -297,10 +300,13 @@ import {
   downloadWorkspaceFile,
   getWorkspaceFileContent,
   getWorkspaceTree,
+  saveWorkspaceFileContent,
   searchWorkspaceFiles
 } from '@/apis/workspace_api'
 import { normalizePreviewResponse } from '@/utils/file_preview'
-import { parseDownloadFilename } from '@/utils/file_utils'
+import { formatFileSize, parseDownloadFilename } from '@/utils/file_utils'
+import { downloadBlob } from '@/utils/download'
+import { editableWorkspacePath } from '@/utils/workspace_preview'
 import { threadApi } from '@/apis/agent_api'
 
 const props = defineProps({
@@ -375,6 +381,7 @@ const emit = defineEmits([
 const currentFile = ref(null)
 const currentFilePath = ref('')
 const loadingFiles = ref(false)
+const savingPreviewFile = ref(false)
 const filesystemError = ref('')
 
 const dynamicTreeData = ref([])
@@ -499,13 +506,14 @@ const createTreeNode = (entry, extraFileData = {}) => {
     nameStart,
     nameEnd,
     isLeaf,
+    sizeLabel: isLeaf ? formatFileSize(Number(entry?.size || 0)) : '',
     children: isLeaf ? undefined : [],
     fileData: {
       ...entry,
       path: fullPath,
       name: title,
       type: isLeaf ? 'file' : 'directory',
-      workdir: isLeaf,
+      workdir: true,
       ...extraFileData
     },
     class: isLeaf ? 'file-node' : 'folder-node'
@@ -1041,6 +1049,37 @@ const confirmDeleteNode = (node) => {
   })
 }
 
+const savePreviewFile = async (content) => {
+  const file = currentFile.value
+  const workspacePath = editableWorkspacePath(file)
+  const requestedThreadId = props.threadId
+  if (!workspacePath || savingPreviewFile.value) return
+  savingPreviewFile.value = true
+  try {
+    const response = await saveWorkspaceFileContent(workspacePath, content)
+    if (requestedThreadId !== props.threadId || file.path !== props.activePreviewPath) return
+    const updatedFile = {
+      ...file,
+      content,
+      size: response.entry?.size,
+      modified_at: response.entry?.modified_at
+    }
+    const cacheKey = file.workspace
+      ? workspacePreviewCacheKey(file.path)
+      : previewCacheKey(file.path, requestedThreadId)
+    props.previewCache.set(cacheKey, { status: 'ready', file: updatedFile, lastAccessed: Date.now() })
+    currentFile.value = updatedFile
+    emit('open-preview', updatedFile, false)
+    if (file.workspace) await refreshWorkspaceTree({ force: true })
+    else await refreshFileSystem({ silent: true, ensure: true })
+    message.success('文件保存成功')
+  } catch (error) {
+    message.error(error?.message || '文件保存失败')
+  } finally {
+    savingPreviewFile.value = false
+  }
+}
+
 const downloadFile = async (fileItem) => {
   if (!fileItem?.path) return
   if (!fileItem.workspace && !props.threadId) return
@@ -1055,16 +1094,10 @@ const downloadFile = async (fileItem) => {
     const contentDisposition =
       response.headers.get('Content-Disposition') || response.headers.get('content-disposition')
     const filename = parseDownloadFilename(contentDisposition) || getFileName(fileItem)
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = filename
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
+    downloadBlob(blob, filename)
   } catch (error) {
     console.error('下载文件失败:', error)
+    message.error(error?.message || '下载失败，请重试')
   }
 }
 
@@ -1790,6 +1823,13 @@ watch(
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+.tree-file-size {
+  flex-shrink: 0;
+  margin-left: 8px;
+  font-size: 11px;
+  color: var(--gray-500);
 }
 
 .tree-action-btn {

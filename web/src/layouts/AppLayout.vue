@@ -435,6 +435,7 @@ const handleCreateProjectChat = async (projectId) => {
   if (!projectId || projectPendingId.value || threadCreationInFlight.value) return
   await router.push({ name: 'AgentComp', query: { project_id: projectId } })
   chatThreadsStore.setCurrentThreadId(null)
+  closeMobileNav()
 }
 
 const searchWorkspace = (query) => searchWorkspaceFiles(query)
@@ -666,6 +667,7 @@ provide('settingsModal', {
           @toggle-pin="handleTogglePinChat"
           @rename-project="handleRenameProject"
           @delete-project="handleDeleteProject"
+          @create-project="closeMobileNav"
           @create-project-chat="handleCreateProjectChat"
           @retry-projects="loadProjects"
           @load-more-chats="() => chatThreadsStore.loadMoreThreads()"
@@ -771,7 +773,7 @@ provide('settingsModal', {
   display: flex;
   flex-direction: row;
   width: 100%;
-  height: 100vh;
+  height: calc(100vh - var(--site-footer-height));
   min-width: var(--min-width);
   overflow: hidden;
 }
@@ -1172,7 +1174,7 @@ div.header,
 @media (max-width: 768px) {
   .app-layout {
     flex-direction: column;
-    height: 100dvh;
+    height: calc(100dvh - var(--site-footer-height));
     min-width: 0;
   }
 

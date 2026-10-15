@@ -14,7 +14,14 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from platform_core.repositories.agent_run_repository import AgentRunRepository
 from platform_core.storage.postgres.manager import AGENT_RUN_FACT_SCHEMA_STATEMENTS, AGENT_RUN_TIMING_SCHEMA_STATEMENTS
-from platform_core.storage.postgres.models_business import AgentRun, AgentRunAttempt, Conversation, Message, Project, User
+from platform_core.storage.postgres.models_business import (
+    AgentRun,
+    AgentRunAttempt,
+    Conversation,
+    Message,
+    Project,
+    User,
+)
 from platform_core.utils.datetime_utils import utc_now_naive
 
 from agent_run_test_helpers import create_agent_run
@@ -70,6 +77,60 @@ async def _persisted_attempts(session_factory, run_id: str) -> list[AgentRunAtte
     async with session_factory() as db:
         attempts = list((await db.scalars(select(AgentRunAttempt).where(AgentRunAttempt.run_id == run_id))).all())
         return sorted(attempts, key=lambda attempt: attempt.attempt_no)
+
+
+@pytest.mark.parametrize("content,expected", [("调研", False), ("@知识库 调研", True), ("@knowledge:kb 调研", True)])
+async def test_knowledge_opt_in_reads_current_persisted_input_and_resume(fact_database, content, expected):
+    """真实输入消息决定本轮开关，审批续跑沿用原始轮次。"""
+    import uuid
+    from platform_core.services.agent_run_manifest_service import resolve_run_knowledge_opt_in
+
+    _, session_factory = fact_database
+    run_id, thread_id, _ = await create_agent_run(
+        session_factory, prefix="kb-opt-in", message_content=content, input_payload={}, status="completed"
+    )
+    try:
+        async with session_factory() as db:
+            original = await db.get(AgentRun, run_id)
+            resumed = AgentRun(
+                id=str(uuid.uuid4()),
+                request_id=str(uuid.uuid4()),
+                conversation_thread_id=thread_id,
+                runtime_scope_id=thread_id,
+                conversation_id=original.conversation_id,
+                agent_slug=original.agent_slug,
+                uid=original.uid,
+                created_by_run_id=run_id,
+                run_type="resume",
+                input_payload={},
+                status="completed",
+            )
+            db.add(resumed)
+            await db.commit()
+            assert await resolve_run_knowledge_opt_in(original, db) is expected
+            assert await resolve_run_knowledge_opt_in(resumed, db) is expected
+
+            next_input = Message(conversation_id=original.conversation_id, role="user", content="继续调研")
+            db.add(next_input)
+            await db.flush()
+            next_run = AgentRun(
+                id=str(uuid.uuid4()),
+                request_id=str(uuid.uuid4()),
+                conversation_thread_id=thread_id,
+                runtime_scope_id=thread_id,
+                conversation_id=original.conversation_id,
+                agent_slug=original.agent_slug,
+                uid=original.uid,
+                input_message_id=next_input.id,
+                run_type="chat",
+                input_payload={},
+                status="completed",
+            )
+            db.add(next_run)
+            await db.commit()
+            assert await resolve_run_knowledge_opt_in(next_run, db) is False
+    finally:
+        await _cleanup_runs(session_factory, [thread_id])
 
 
 async def test_run_fact_schema_evolution_is_idempotent(fact_database):

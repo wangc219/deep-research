@@ -8,6 +8,7 @@
 
 :root {
   --header-height: 45px;
+  --site-footer-height: calc(32px + env(safe-area-inset-bottom, 0px));
   --min-width: 450px;
 }
 

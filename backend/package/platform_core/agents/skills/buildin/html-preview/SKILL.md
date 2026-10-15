@@ -1,10 +1,20 @@
 ---
 name: html-preview
-description: "使用 Markdown `html:preview` 围栏输出轻量静态 HTML/CSS 可视化。当普通 Markdown 难以清晰表达数值对比、层级关系、流程、时间线、关键指标或布局示意，或用户明确要求可视化 HTML 预览时使用。询问 HTML 源码、教程示例或可复制代码时不要使用。"
-version: "2026.07.23"
+description: "生成工作区中可预览、下载的 HTML 页面，或使用 Markdown html:preview 围栏输出轻量静态 HTML/CSS 可视化。适用于交互页面、图表报告、数值对比、流程和时间线。"
+version: "2026.10.15"
 ---
 
 # HTML Preview
+
+## 可下载的 HTML 文件
+
+用户要求生成网页、交互图表、HTML 报告或可下载页面时，使用文件工具在当前 Project Workdir 的 `outputs/` 中实际写入完整 `.html` 文件，读取核验后由主智能体调用 `present_artifacts` 交付。不能只输出围栏替代文件。
+
+文件使用 UTF-8、响应式布局和自包含的 CSS、图表数据；本地交互可使用内嵌 JavaScript，图片尽量使用 data URL。避免依赖外部网络请求、登录态、父页面访问或本地绝对资源路径。预览运行在隔离 iframe 中，同时保证下载后可独立打开。子智能体把真实文件路径与核验结果返回主智能体统一交付。
+
+## 对话内的静态组件
+
+以下约束只适用于 `html:preview` 围栏，不限制上述独立 HTML 文件的本地交互。
 
 将 Markdown 作为回答主体。只有可视化能明显降低理解成本时，才补充一个
 `html:preview` 静态组件；标题、列表、表格或代码块已经足够清楚时，继续使用普通 Markdown。

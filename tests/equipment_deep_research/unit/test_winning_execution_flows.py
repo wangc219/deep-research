@@ -235,6 +235,8 @@ def test_dynamic_prompt_contracts_are_distinct_and_covered():
     assert "S5独立组合评审" in s5_prompt
     assert "完整候选池" in s5_prompt
     assert "不得只在单一创作者切片内打分" in s5_prompt
+    assert "S5只负责决定候选入选、合并或淘汰" in s5_prompt
+    assert "只能在候选入选后由S6为每张卡生成一次" in s5_prompt
     assert "coverage_steer" in load_dynamic_winning_prompt("S3")
     assert "{axis_label}" in load_dynamic_winning_prompt(
         "common", section="coverage_steer.instruction"
@@ -245,8 +247,24 @@ def test_dynamic_prompt_contracts_are_distinct_and_covered():
     assert "禁止按字符硬切" in s6_prompt
     assert "不能用总字数或平均数抵消短栏" in s6_prompt
     assert "五栏合计通常约2000至2250字" in s6_prompt
+    overview_prompt = load_dynamic_winning_prompt("S6", section="S6_1")
+    for required in (
+        "当前背景",
+        "解决思路",
+        "达到效果",
+        "核心创新",
+        "逐字写入",
+        "不展开工程路线",
+    ):
+        assert required in overview_prompt
     technology_prompt = load_dynamic_winning_prompt("S6", section="S6_2")
     for required in (
+        "solution_thesis",
+        "core_innovation_thesis",
+        "逐字复述",
+        "原理假设",
+        "验证判据",
+        "可行性结论",
         "可选实现途径",
         "推荐主路径",
         "核心攻关顺序",

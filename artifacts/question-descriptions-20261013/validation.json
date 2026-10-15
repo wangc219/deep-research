@@ -1,0 +1,23 @@
+{
+  "presentation": "输入框上方提问卡片：顶部问题标题，每个选项下方为灰色小字说明，底部显示作答和倒计时提示。",
+  "prompt_rule": "智能对话、深研对话的每个选项提供 label、value 和 description，说明范围、产出或取舍。",
+  "verification": {
+    "web_tests": 541,
+    "backend_relevant_tests": 28,
+    "web_lint": "passed",
+    "build": "passed",
+    "backend_targeted_ruff": "passed",
+    "live_model": "生成三个含 description 的选项",
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "card_height": 430,
+      "card_scroll_height": 430,
+      "input_bottom": 815
+    }
+  },
+  "screenshots": [
+    "question-descriptions.jpg",
+    "question-descriptions-mobile.jpg"
+  ]
+}

@@ -521,6 +521,7 @@ const canEdit = computed(() => {
   const previewType = props.file?.previewType
   return (
     props.editable &&
+    props.file?.truncated !== true &&
     props.file?.supported !== false &&
     typeof props.file?.content === 'string' &&
     (previewType === 'text' || previewType === 'markdown') &&

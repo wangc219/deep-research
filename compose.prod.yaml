@@ -86,9 +86,9 @@ services:
     networks:
       - app-network
     volumes:
-      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/threads:/app/user-data
-      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/skill-sources:/app/skill-sources
-      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/skill-projections:/app/skill-projections
+      - ${DEEP_RESEARCH_PLATFORM_DIR:-${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform}/threads:/app/user-data
+      - ${DEEP_RESEARCH_PLATFORM_DIR:-${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform}/skill-sources:/app/skill-sources
+      - ${DEEP_RESEARCH_PLATFORM_DIR:-${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform}/skill-projections:/app/skill-projections
       - ./configs:/app/configs:ro
       - ./outputs:/app/outputs
     extra_hosts:
@@ -141,9 +141,9 @@ services:
     networks:
       - app-network
     volumes:
-      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/threads:/app/user-data
-      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/skill-sources:/app/skill-sources
-      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/skill-projections:/app/skill-projections
+      - ${DEEP_RESEARCH_PLATFORM_DIR:-${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform}/threads:/app/user-data
+      - ${DEEP_RESEARCH_PLATFORM_DIR:-${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform}/skill-sources:/app/skill-sources
+      - ${DEEP_RESEARCH_PLATFORM_DIR:-${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform}/skill-projections:/app/skill-projections
       - ./configs:/app/configs:ro
       - ./outputs:/app/outputs
     extra_hosts:
@@ -194,7 +194,7 @@ services:
     volumes:
       - ./configs:/app/configs:ro
       - ./outputs:/app/outputs
-      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/threads:/app/user-data
+      - ${DEEP_RESEARCH_PLATFORM_DIR:-${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform}/threads:/app/user-data
     env_file:
       - ${DEEP_RESEARCH_ENV_FILE:-.env.prod}
     environment:
@@ -221,10 +221,10 @@ services:
     networks:
       - app-network
     volumes:
-      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform:/app/legacy-saves
-      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/threads:/app/user-data
-      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/skill-sources:/app/skill-sources
-      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/skill-projections:/app/skill-projections
+      - ${DEEP_RESEARCH_PLATFORM_DIR:-${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform}:/app/legacy-saves
+      - ${DEEP_RESEARCH_PLATFORM_DIR:-${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform}/threads:/app/user-data
+      - ${DEEP_RESEARCH_PLATFORM_DIR:-${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform}/skill-sources:/app/skill-sources
+      - ${DEEP_RESEARCH_PLATFORM_DIR:-${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform}/skill-projections:/app/skill-projections
     env_file:
       - ${DEEP_RESEARCH_ENV_FILE:-.env.prod}
     environment:
@@ -246,8 +246,8 @@ services:
       dockerfile: Dockerfile
     image: ${COMPOSE_PROJECT_NAME:-deep-research}-sandbox-provisioner:${DEEP_RESEARCH_VERSION:-0.7.3}
     volumes:
-      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/threads:/app/user-data
-      - ${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform/skill-projections:/app/skill-projections
+      - ${DEEP_RESEARCH_PLATFORM_DIR:-${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform}/threads:/app/user-data
+      - ${DEEP_RESEARCH_PLATFORM_DIR:-${DEEP_RESEARCH_STATE_DIR:-./docker/volumes}/platform}/skill-projections:/app/skill-projections
       - ${SANDBOX_ENV_FILE:-./docker/sandbox_provisioner/sandbox.env}:/app/sandbox.env:ro
       - /var/run/docker.sock:/var/run/docker.sock
     networks:

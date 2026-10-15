@@ -100,7 +100,7 @@ test('侧边栏同时展示项目和最近分组，最近只展示其他对话',
   assert.ok(projectHeadingIndex < recentHeadingIndex)
   assert.match(
     source,
-    /<section\s+v-if="projectsLoading \|\| projectsError \|\| projectGroups\.length"\s+class="history-group project-history-group"/
+    /<section class="history-group project-history-group">/
   )
   assert.ok(recentSectionStart >= 0)
   assert.match(recentSection, /v-if="projectsLoading"[^>]*>正在加载对话/)

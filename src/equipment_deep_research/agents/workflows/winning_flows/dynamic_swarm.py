@@ -99,6 +99,10 @@ from equipment_deep_research.orchestration.winning_swarm import (
     winning_summary_language_issues,
 )
 
+from equipment_deep_research.agents.workflows.task_lifecycle import (
+    WorkflowTaskScope,
+    is_budget_exhausted,
+)
 from equipment_deep_research.contracts.runtime import SwarmRuntime
 
 
@@ -109,6 +113,17 @@ def _dynamic_output_schema(section: str) -> dict[str, Any]:
     if not isinstance(value, Mapping):
         raise ValueError(f"dynamic output schema must be an object: {section}")
     return dict(value)
+
+
+def _s5_review_output_budget(candidate_count: int) -> int:
+    """Size the full-pool JSON envelope to the number of required decisions.
+
+    Each row carries scores, naming checks, boolean judgments and rationale.
+    A fixed 2400-token cap cannot hold those fields for an entire live pool.
+    Keep small reviews cheap and bound larger reviews without slicing the pool.
+    """
+
+    return max(2400, min(16384, 1024 + 768 * max(0, candidate_count)))
 
 
 def _s3_s4_structural_dimension_identities(value: Any) -> set[str]:
@@ -586,6 +601,42 @@ async def execute_dynamic_mission_graph(
     swarm_controller: WinningSwarmController,
     valid_reference_ids: set[str],
 ) -> None:
+    """Run the graph with ownership of every model and advisory task."""
+
+    async with WorkflowTaskScope() as tasks:
+        await _execute_dynamic_mission_graph(
+            accumulated=accumulated,
+            baseline_boundaries=baseline_boundaries,
+            cluster_hypotheses_with_independent_codex=cluster_hypotheses_with_independent_codex,
+            creative_military_value_handoff=creative_military_value_handoff,
+            emit_swarm_event=emit_swarm_event,
+            host=host,
+            primary_branch=primary_branch,
+            runs=runs,
+            shared=shared,
+            state=state,
+            swarm_controller=swarm_controller,
+            valid_reference_ids=valid_reference_ids,
+            tasks=tasks,
+        )
+
+
+async def _execute_dynamic_mission_graph(
+    *,
+    tasks: WorkflowTaskScope,
+    accumulated: dict[str, Any],
+    baseline_boundaries: Sequence[str],
+    cluster_hypotheses_with_independent_codex: Callable[..., Any],
+    creative_military_value_handoff: Callable[..., Any],
+    emit_swarm_event: Callable[..., Any],
+    host: SwarmRuntime,
+    primary_branch: str,
+    runs: list[dict[str, Any]],
+    shared: Mapping[str, Any],
+    state: SwarmState,
+    swarm_controller: WinningSwarmController,
+    valid_reference_ids: set[str],
+) -> None:
     """Execute the v2 S1-S6 role graph as isolated, dependency-ready turns.
 
     Unlike ``swarm_quality_v1`` this path does not run one fixed Codex
@@ -649,7 +700,7 @@ async def execute_dynamic_mission_graph(
     seat_dimension_traces: dict[str, list[str]] = {}
     seat_realized_dimensions: dict[str, set[str]] = {}
     query_equipment_blueprint: dict[str, Any] = {}
-    winning_angle_refresh_task: asyncio.Task[None] | None = None
+    winning_angle_refresh_task: asyncio.Future[None] | None = None
     candidate_id_aliases: dict[str, str] = {}
     portfolio_rejected_ids: set[str] = set()
     reviewed_candidate_ids: set[str] = set()
@@ -709,10 +760,10 @@ async def execute_dynamic_mission_graph(
     s5_fallback_activated = False
     s5_fallback_reason = ""
     running_instances: dict[
-        asyncio.Task[tuple[WinningAgentInstance, dict[str, Any], int]],
+        asyncio.Future[tuple[WinningAgentInstance, dict[str, Any], int]],
         tuple[WinningAgentInstance, set[str], int],
     ] = {}
-    running_started_at: dict[asyncio.Task[Any], float] = {}
+    running_started_at: dict[asyncio.Future[Any], float] = {}
 
     def _remaining_swarm_budget(
         graph_capacity: int,
@@ -2107,7 +2158,7 @@ async def execute_dynamic_mission_graph(
             # No await occurs between the guard and task assignment,
             # so all concurrently awakened S3 producers observe the
             # same task on the single asyncio event loop.
-            winning_angle_refresh_task = asyncio.create_task(
+            winning_angle_refresh_task = tasks.create_task(
                 _refresh_winning_angle_assignments_once()
             )
         await asyncio.shield(winning_angle_refresh_task)
@@ -3098,6 +3149,18 @@ async def execute_dynamic_mission_graph(
             )
             output_schema["decisions"] = [decision_template]
             instruction = load_dynamic_winning_prompt("S5", section="system")
+            task = replace(
+                task,
+                max_output_tokens=_s5_review_output_budget(len(candidate_snapshot)),
+            )
+            common_input["review_completion_contract"] = {
+                "required_candidate_ids": [
+                    item["hypothesis_id"] for item in candidate_snapshot
+                ],
+                "expected_decision_count": len(candidate_snapshot),
+                "every_candidate_exactly_once": True,
+                "full_pool_comparison": True,
+            }
         # The reviewed S3/S4/S5 resources contain legacy combat vocabulary.
         # Append the resolved Query contract at the final instruction boundary
         # so a sensing/inspection Query cannot be pulled back into an attack
@@ -3117,6 +3180,7 @@ async def execute_dynamic_mission_graph(
             mission_node=instance.mission_node,
             batch=batch_index,
             candidate_handoff_count=len(candidate_snapshot),
+            max_output_tokens=task.max_output_tokens,
             candidate_handoff_chars=candidate_handoff_chars,
             evidence_handoff_count=len(compact_evidence_index),
             evidence_handoff_chars=evidence_handoff_chars,
@@ -3269,7 +3333,7 @@ async def execute_dynamic_mission_graph(
                     phase=iteration_phase,
                 )
                 parsed_iteration = _parse_json_object(iteration_text)
-            except BaseException:
+            except Exception as error:
                 # A capacity/transient failure in the optional critique
                 # must not erase a valid first creative draft.  When the
                 # first pass itself fails structurally, consume the reserved
@@ -3285,6 +3349,8 @@ async def execute_dynamic_mission_graph(
                         retained_previous=True,
                     )
                     break
+                if is_budget_exhausted(error):
+                    raise
                 if creative_iteration < creative_passes:
                     emit_swarm_event(
                         "winning_s3_s4_creative_iteration_retrying",
@@ -4205,7 +4271,6 @@ async def execute_dynamic_mission_graph(
             topic=str(shared.get("topic", "")),
             previous_cluster_keys=previous_coverage_cluster_keys,
         )
-        previous_coverage_cluster_keys = tuple(snapshot.cluster_counts)
         coverage_signature = tuple(
             sorted(
                 (
@@ -4215,12 +4280,14 @@ async def execute_dynamic_mission_graph(
                 for item in snapshot.candidates
             )
         )
-        if coverage_signature != last_coverage_signature:
-            if snapshot.marginal_novelty < 0.08:
-                consecutive_low_novelty += 1
-            else:
-                consecutive_low_novelty = 0
-            last_coverage_signature = coverage_signature
+        if coverage_signature == last_coverage_signature:
+            return
+        previous_coverage_cluster_keys = tuple(snapshot.cluster_counts)
+        if snapshot.marginal_novelty < 0.08:
+            consecutive_low_novelty += 1
+        else:
+            consecutive_low_novelty = 0
+        last_coverage_signature = coverage_signature
         used_archetypes = tuple(
             item.archetype
             for item in graph.agent_instances
@@ -4547,7 +4614,7 @@ async def execute_dynamic_mission_graph(
             for item in selected:
                 pending.pop(item.instance_id, None)
                 inherited_scope = effective_scope_for_instance(item, snapshot)
-                call = asyncio.create_task(
+                call = tasks.create_task(
                     call_instance(
                         item,
                         ledger_snapshot=snapshot,
@@ -4608,7 +4675,9 @@ async def execute_dynamic_mission_graph(
             running_started_at.pop(completed_call, None)
             try:
                 outcome: object = completed_call.result()
-            except BaseException as exc:  # soft-isolate one role instance
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:  # soft-isolate one role instance
                 outcome = exc
             # A failed competing instance is a soft failure: downstream
             # roles may still use the surviving branches.
@@ -4616,7 +4685,7 @@ async def execute_dynamic_mission_graph(
             instance_hypothesis_ids[instance.instance_id] = set(candidate_scope)
             if isinstance(outcome, BaseException):
                 retry_count = dynamic_instance_retry_counts.get(instance.instance_id, 0)
-                if retry_count < 1:
+                if retry_count < 1 and not is_budget_exhausted(outcome):
                     dynamic_instance_retry_counts[instance.instance_id] = (
                         retry_count + 1
                     )

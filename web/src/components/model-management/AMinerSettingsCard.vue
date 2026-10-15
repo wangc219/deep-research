@@ -146,13 +146,14 @@ onMounted(load)
               placeholder="在 AMiner 控制台账号资料中查看"
           /></label>
           <label for="aminer-api-key"
-            >API Key<input
+            >API Key / 控制台 Token<input
               id="aminer-api-key"
               v-model="draft.api_key"
               type="password"
               autocomplete="new-password"
-              placeholder="填写或替换密钥；留空保留已保存密钥"
-            /><small>已保存：{{ keyPreview }}。密钥不会回显。</small></label
+              placeholder="填写 API Key 或控制台生成的 Token；留空保留已保存凭证"
+            /><small>已保存：{{ keyPreview }}。凭证不会回显。</small>
+            <small>API Key 自动生成短期 JWT；控制台 Token 直接使用，到期后需重新生成并替换。</small></label
           >
         </div>
         <details class="advanced">

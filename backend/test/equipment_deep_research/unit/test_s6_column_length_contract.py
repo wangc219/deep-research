@@ -1,7 +1,10 @@
 from hashlib import sha256
 import json
 
+import pytest
+
 from equipment_deep_research.agents.dynamic_prompt_resources import load_dynamic_winning_prompt
+from equipment_deep_research.agents.workflows.coordinator import S6QualityError
 from equipment_deep_research.agents.runtime_profiles import (
     build_codex_runtime_profile,
     is_dynamic_winning_payload,
@@ -22,6 +25,7 @@ from equipment_deep_research.agents.workflows.winning_flows.s6_authoring import 
     _portrait_repair_keys,
     _s6_repair_root_fingerprints,
     _s6_repair_meets_length_contract,
+    _validated_s6_shared_innovation_anchors,
 )
 from equipment_deep_research.orchestration.capability_portrait import (
     CAPABILITY_PORTRAIT_MODULES,
@@ -152,13 +156,14 @@ def test_dynamic_quality_gate_detects_hollow_but_long_columns():
 def test_dynamic_quality_gate_routes_short_columns_without_semantic_defects():
     modules = {
         "overview": (
-            "敌方依靠持续机动保持优势，传统模式因窗口短而失效；本装备介入后改变暴露关系，"
+            "当前背景：敌方依靠持续机动保持优势，传统模式因窗口短而失效。解决思路：本装备介入后改变暴露关系，"
             "在确认目标后形成直接战果，并打开过去无法执行的时敏任务空间。它把原本需要多级链路维持的"
             "追击任务压缩到一次可控接敌，使我方不必先暴露大型平台即可完成复核。敌方因此必须在机动、"
             "伪装和防护之间重新分配资源，原有依靠拖延窗口消耗我方的办法不再稳定。该变化直接影响"
-            "任务编组的先后顺序和接敌距离，使装备选择从能否维持链路转向能否在断链时完成自主闭环。"
+            "任务编组的先后顺序和接敌距离。达到效果：使短窗口重新可用。核心创新：把持续链路依赖改为断链时的自主闭环。"
         ),
         "technology_implementation": (
+            "承接解决思路：把持续链路依赖改为弹上受控复核。围绕核心创新：让断链时的自主闭环成为任务成立前提。"
             "主路径采用弹上复核方案，备选为外部节点引导；前者减少链路依赖但增加算力与散热取舍，"
             "核心瓶颈是低时延识别，需将算法写入弹上处理模块并按先感知后控制顺序攻关。主路径适合断链"
             "窗口，备选路径适合平台仍能稳定提供引导的场景；两者的取舍取决于抗干扰余量、能源和舱内空间。"
@@ -291,7 +296,7 @@ def test_dynamic_s6_cache_fingerprint_includes_quality_contract_version():
     )
     legacy_fingerprint = sha256(legacy_serialized.encode('utf-8')).hexdigest()
 
-    assert S6_PORTRAIT_QUALITY_CONTRACT_VERSION.startswith('s6-portrait-v5-')
+    assert S6_PORTRAIT_QUALITY_CONTRACT_VERSION.startswith('s6-portrait-v6-')
     assert f'target{CAPABILITY_PORTRAIT_REPAIR_TRIGGER_CHARS}' not in (
         S6_PORTRAIT_QUALITY_CONTRACT_VERSION
     )
@@ -300,6 +305,52 @@ def test_dynamic_s6_cache_fingerprint_includes_quality_contract_version():
     )
     assert _dynamic_s6_input_fingerprint(payload) != legacy_fingerprint
     assert _dynamic_s6_input_fingerprint(payload) == _dynamic_s6_input_fingerprint(payload)
+
+
+def test_shared_innovation_anchors_must_be_complete_and_distinct() -> None:
+    with pytest.raises(S6QualityError, match="缺少可冻结"):
+        _validated_s6_shared_innovation_anchors({"solution_thesis": "过短"})
+
+    duplicate = "把持续链路依赖改为装备端自主闭环并维持任务窗口"
+    with pytest.raises(S6QualityError, match="不得复制为同一句"):
+        _validated_s6_shared_innovation_anchors(
+            {
+                "solution_thesis": duplicate,
+                "core_innovation_thesis": f"{duplicate}。",
+            }
+        )
+
+
+def test_overview_and_technology_must_repeat_the_same_frozen_anchors() -> None:
+    anchors = {
+        "solution_thesis": "把持续链路依赖改为装备端受约束自主复核以恢复任务窗口",
+        "core_innovation_thesis": "将任务成立前提从全程在线指挥改为发射前授权与装备端证据门控",
+    }
+    modules = {
+        "overview": (
+            f"当前背景：现有方式在链路中断后失去复核窗口。解决思路：{anchors['solution_thesis']}。"
+            f"达到效果：短时责任区可继续受控执行。核心创新：{anchors['core_innovation_thesis']}。"
+        ),
+        "technology_implementation": (
+            f"承接解决思路：{anchors['solution_thesis']}。围绕核心创新：{anchors['core_innovation_thesis']}。"
+            "原理假设与公开依据需要分别核验；比较主路径与备选路径的关键约束、工程取舍和验证判据后形成可行性结论。"
+        ),
+        "operational_process": "授权进入后执行动作并更新状态，异常时拒打或终止，条件恢复后续接任务。",
+        "capability_effects": "过去无法执行的短窗任务现在形成直接战果，并迫使敌方增加防护成本和资源代价。",
+        "winning_logic": "旧规则依赖全程链路，新交换关系迫使对手用更多兵力、时间和防御成本反制并增加暴露。",
+    }
+
+    issues = _parallel_s6_semantic_quality_issues(modules, shared_anchors=anchors)
+    assert "概述未逐字承接冻结的解决思路和核心创新" not in issues
+    assert "装备与技术实现未逐字追溯冻结的解决思路和核心创新" not in issues
+
+    modules["technology_implementation"] = modules["technology_implementation"].replace(
+        anchors["core_innovation_thesis"],
+        "另一个未经冻结的创新主题",
+    )
+    assert "装备与技术实现未逐字追溯冻结的解决思路和核心创新" in (
+        _parallel_s6_semantic_quality_issues(modules, shared_anchors=anchors)
+    )
 
 
 def test_isolated_s6_payload_gets_s6_runtime_identity_without_generic_quality_card():

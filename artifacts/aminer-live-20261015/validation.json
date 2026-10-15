@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-15",
+  "configured": true,
+  "enabled": true,
+  "credential_mode": "official_console_jwt",
+  "token_expires_at_shanghai": "2026-11-14 11:50",
+  "credential_values_recorded": false,
+  "connection_test": "passed; real free title search",
+  "live_api_acceptance": {
+    "query": "FlashAttention",
+    "search_status": "ok",
+    "search_results": 3,
+    "selected_paper": {
+      "id": "682be5de163c01c850f605ac",
+      "title": "FlashBias: Fast Computation of Attention with Bias",
+      "url": "https://doi.org/10.52202/085713-0699"
+    },
+    "detail_status": "ok",
+    "evidence_level": "abstract",
+    "abstract_characters": 1564,
+    "references_status": "ok",
+    "references_count": 3,
+    "relation": "references",
+    "estimated_cost_cents": 12,
+    "persistence": "production service and client with real AMiner transport and isolated PostgreSQL run ledger; isolated schema removed"
+  },
+  "budgets": {
+    "chat_cents_per_round": 20,
+    "deep_cents_per_round": 50
+  },
+  "fixes": [
+    "Accept official console JWT directly; never re-sign a JWT credential",
+    "Interpret documented business errors before generic HTTP 500 fallback",
+    "Normalize successful data:null to an empty result"
+  ],
+  "verification": {
+    "backend_related_passed": 36,
+    "prior_http_api_test": "passed before activation",
+    "frontend_targeted_passed": 22,
+    "frontend_lint": "passed",
+    "ruff": "passed",
+    "frontend_build": "passed",
+    "runtime_ready": true
+  },
+  "scope": "Real supplier endpoints verified; a new live-model dialogue was not run in this activation session.",
+  "browser": {
+    "url": "http://localhost:5173/models",
+    "authenticated": true,
+    "enabled_checkbox_checked": true,
+    "credential_input_blank_saved_mask_visible": true,
+    "connection_test": "passed; page shows 连接正常 and 免费标题搜索鉴权成功",
+    "budgets_and_call_limits": "verified against planned defaults for chat and deep research",
+    "screenshot": "artifacts/aminer-live-20261015/settings-connected.png"
+  }
+}

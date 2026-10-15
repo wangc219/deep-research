@@ -1,0 +1,84 @@
+{
+  "date": "2026-10-15T20:03:51.204052+08:00",
+  "source": "local project database and persistent files",
+  "destination": "https://www.deepquest.space",
+  "administrator": "Hitsz504",
+  "password": "unchanged; use original account password",
+  "dqadmin": "disabled; old database retained only as rollback backup",
+  "postgres_tables_verified": 61,
+  "counts": {
+    "users": 6,
+    "projects": 19,
+    "conversations": 63,
+    "messages": 1959,
+    "equipment_research_runs": 18,
+    "equipment_queries": 179,
+    "knowledge_bases": 1,
+    "knowledge_files": 6,
+    "knowledge_chunks": 91,
+    "model_providers": 24
+  },
+  "files_hash_verified": 5623,
+  "sqlite_integrity_verified": 21,
+  "sqlite_snapshot_notes": [
+    {
+      "path": "outputs/application.db",
+      "action": "snapshot freelist rebuilt with VACUUM; source unchanged"
+    },
+    {
+      "path": "outputs/model-call-outbox.db",
+      "action": "closed database copied; integrity verified"
+    }
+  ],
+  "object_buckets": 2,
+  "object_count": 41,
+  "object_bytes": 27308534,
+  "vector_collections": [
+    {
+      "name": "kb_zcfj9omke9",
+      "source_database": "yuxi",
+      "rows": 91
+    },
+    {
+      "name": "kb_zcfj9omke9_triple",
+      "source_database": "yuxi",
+      "rows": 489
+    },
+    {
+      "name": "kb_zcfj9omke9_entity",
+      "source_database": "yuxi",
+      "rows": 505
+    }
+  ],
+  "vector_verification": "all object SHA-256, vector IDs and float32 embeddings verified; historical yuxi collections also restored to current deep_research namespace",
+  "graph": {
+    "nodes": 596,
+    "relationships": 1120,
+    "verified": true
+  },
+  "reports_downloaded": 18,
+  "original_pdfs_downloaded": 6,
+  "historical_uid_file_materialization": {
+    "from": "wc504",
+    "to": "Hitsz504",
+    "projects": 2,
+    "files": 215,
+    "no_conflicts": true
+  },
+  "configured_provider_credentials_migrated": 3,
+  "paid_model_calls_for_migration": 0,
+  "cloud_rollback_database": "deep_research_before_migration_20261015",
+  "cloud_backup_directory": "/var/backups/deepquest/pre-migration-20261015",
+  "cloud_private_migration_directory": "/opt/deep-research/migration-20261015",
+  "local_services": "resumed; original files unchanged; local and cloud are independent copies",
+  "public_readiness": {
+    "status": "ready",
+    "degraded": false
+  },
+  "completed_at": "2026-10-15T20:07:22.573271+08:00",
+  "private_user_isolation": "passed; private research hidden from other ordinary users; 17 pre-existing shared read-only legacy records retain their original access policy",
+  "migrated_admin_sandbox": "passed; workspace write/read/delete and forbidden /etc write",
+  "browser_title": "创新为帆 探索未至之境",
+  "browser_title_verification": "passed on actual public website and HTTP HTML",
+  "status": "complete"
+}

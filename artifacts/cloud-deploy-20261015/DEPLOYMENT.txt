@@ -1,0 +1,72 @@
+最新状态（2026-10-15 20:07，Asia/Shanghai）：旧数据迁移完成；管理员为 Hitsz504，沿用原密码；dqadmin 已停用。
+浏览器标题已改为「创新为帆 探索未至之境」。
+迁移数量、文件/对象/向量校验和备份位置详见 migration-validation.json。
+下文为首次空库部署过程的历史记录，初始账号和待配置模型说明已被本次迁移替代。
+
+部署记录（2026-10-15，Asia/Shanghai）
+
+主机：Ubuntu-Vhh8 / 49.232.128.56 / lhins-1s4a12ng
+网站：https://www.deepquest.space
+目录：/opt/deep-research
+源码：本工作区当前源码，包括部署前尚未提交的修改；未自动提交或推送 Git。
+数据：独立新库，未迁移本机历史账号、研究数据、模型及 AMiner 凭证。
+
+运维命令（SSH 登录后）：
+  cd /opt/deep-research
+  sudo bash scripts/cloud.sh ps -a
+  sudo bash scripts/cloud.sh logs --tail 100 api worker
+  sudo bash scripts/cloud.sh config --quiet
+  sudo bash scripts/cloud.sh build api web sandbox-provisioner
+  sudo bash scripts/cloud.sh up -d --no-build
+API 和三个 Worker 共享一个镜像，领域源码更新时须一起替换。
+云端必须使用 cloud.sh，以保留 API 和静态服务的回环端口绑定。
+
+安全与容量：
+  新生成生产密钥，.env.prod 和 .env.admin 权限 0600。
+  初始超级管理员 dqadmin，密码仅在私有 .env.admin 文件交付。
+  关闭公开自助注册，由管理员通过企业/成员管理创建用户。
+  平台任务并发 4，数据库连接池已按 4C/8G 调低；未做容量压测。
+  API、数据库、对象存储、向量库、图数据库和沙盒管理端口仅绑定回环地址。
+  Nginx 覆盖外来 X-Forwarded-For，避免伪造首段客户端 IP 绕过登录限速。
+  修复数据库启动日志意外输出连接凭据的问题，已轮换该数据库密码并替换应用镜像。
+  Docker 日志每文件 20MB、最多 3 个文件；Docker 与 Nginx 开机自启。
+
+HTTPS：
+  Let's Encrypt 证书签发成功，2027-01-13 到期。
+  certbot.timer 已启用，续期后自动 reload Nginx。
+  HTTP 跳转到 HTTPS，ACME webroot 验证路径保留。
+  用户已明确确认开放 TCP 443 至全部 IPv4 地址；规则已生效。
+  外部浏览器登录页、正常证书校验的公网 API readiness、HTTP 到 HTTPS 跳转均通过。
+
+验证：
+  API readiness 为 ready，degraded=false。
+  API、平台 Worker、PostgreSQL、Redis、MinIO、Milvus、etcd、Neo4j、
+  open-websearch、sandbox-provisioner 健康检查通过，两个领域 Worker 正在运行。
+  新镜像下真实 HTTP 超级管理员成员 CRUD、登录、角色管理：1 passed。
+  新镜像下真实 HTTP 原生深研会话跨用户隔离及管理员读取边界：1 passed。
+  实际 Docker 沙盒：文档/表格/绘图库导入、文件持久化及 /etc 写入拒绝均通过。
+  浏览器已通过 SSH 隧道检查实际云端登录页。
+  服务器本地使用正式域名、正常证书校验的 HTTPS 请求成功。
+
+未通过或未覆盖的检查：
+  旧 test_enterprise_isolation_live 使用 /api/v1 路由，当前原生产品未挂载该旧入口，返回 404。
+  旧 test_admin_global_promotion_live 对 Query 列表仍按旧响应结构解码，失败。
+  test_platform_research_delivery_live 在任务创建时要求已配置默认模型 API Key，
+  当前独立云库没有模型凭证，返回 422；未完成整条研究队列交付验收。
+  以上检查没有被记为通过。未调用真实模型或付费 AMiner 接口。
+  初次把多个旧异步测试放在同一 pytest 进程时出现事件循环复用错误；
+  成员和原生会话隔离两个场景已在新镜像中分别独立运行并通过。
+  未进行高并发压测、故障恢复演练或实际模型研究质量验证。
+
+首次使用：
+  1. 访问网站，用私有登录文件中的管理员账号登录。
+  2. 在模型设置填写供应商、API Key 和默认对话模型；知识库还需嵌入模型。
+  3. 如需 AMiner 检索，另行配置云端 AMiner 凭证。
+  4. 在企业/成员管理中新增用户并按需分配部门与权限。
+
+初始备份：
+  /var/backups/deepquest/initial-20261015/postgres.dump
+  /var/backups/deepquest/initial-20261015/app-state.tar.gz
+  备份目录权限 0700，备份文件权限 0600。
+  此次是初始数据库和应用文件备份，未创建周期性备份计划，未执行恢复演练。
+  后续知识库增长后还需备份 MinIO、Milvus、Neo4j 各自的数据。

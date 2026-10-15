@@ -100,6 +100,7 @@ async def test_runtime_overrides_enforce_knowledge_and_subagent_isolation(monkey
         AsyncMock(
             return_value={
                 "skills": [
+                    {"key": "html-preview"},
                     {"key": "custom-analysis"},
                     {"key": "deep-research"},
                     {"key": "equipment-research"},
@@ -134,12 +135,31 @@ async def test_runtime_overrides_enforce_knowledge_and_subagent_isolation(monkey
     assert overrides["context"]["subagents_enabled"] is False
     assert "knowledge-base" not in overrides["context"]["skills"]
     assert "knowledge-base" not in overrides["context"]["preload_skills"]
+    assert "html-preview" in overrides["context"]["skills"]
+    assert "html-preview" not in overrides["context"]["preload_skills"]
     assert {
         "custom-analysis",
         "deep-research",
         "equipment-research",
         "equipment-deep-conversation",
     } <= set(overrides["context"]["skills"])
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("create_artifact", [False, True])
+async def test_file_delivery_independent_of_capability_card_and_research_tools(monkeypatch, create_artifact):
+    """关闭领域能力或未请求成卡时仍保留真实文件交付契约。"""
+    monkeypatch.setattr(service, "get_session_research_context", AsyncMock(return_value={}))
+    prompt = await service.build_system_context(
+        db=object(),
+        user=SimpleNamespace(uid="user-1"),
+        session=SimpleNamespace(payload={"knowledge_enabled": False, "subagents_enabled": False}),
+        create_artifact=create_artifact,
+    )
+    assert "沙盒文件工具与持久化工作区" in prompt
+    assert "present_artifacts" in prompt
+    assert "开关关闭时仍可生成、预览、编辑和下载研究文件" in prompt
+    assert "用户只要求文件时不调用 save_equipment_capability_draft" in prompt
 
 
 @pytest.mark.asyncio

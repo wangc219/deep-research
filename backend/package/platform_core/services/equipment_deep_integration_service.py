@@ -28,6 +28,7 @@ CAPABILITY_PORTRAIT_AGENT_SLUG = "equipment-capability-portrait"
 DEEP_SESSION_SCHEMA_VERSION = "equipment-deep-native-v2"
 DEEP_SKILL_SLUG = "equipment-deep-conversation"
 _REQUIRED_SKILLS = (DEEP_SKILL_SLUG, "equipment-research", "deep-research")
+_WORKSPACE_SKILLS = ("html-preview",)
 SECTION_DEEPEN_MODE = "section_deepen"
 NEW_WEAPON_DIVERGE_MODE = "new_weapon_diverge"
 _DEEP_RESEARCH_MODES = {SECTION_DEEPEN_MODE, NEW_WEAPON_DIVERGE_MODE}
@@ -244,7 +245,7 @@ async def build_runtime_context_overrides(
     configured_skills = agent_context.get("skills")
     skills = accessible_skills if configured_skills is None else _unique_strings(configured_skills)
     skills = [slug for slug in skills if slug in accessible_set]
-    for slug in (*_REQUIRED_SKILLS, *_unique_strings(active_skill_ids)):
+    for slug in (*_REQUIRED_SKILLS, *_WORKSPACE_SKILLS, *_unique_strings(active_skill_ids)):
         if slug in accessible_set and slug not in skills:
             skills.append(slug)
 
@@ -317,6 +318,11 @@ async def build_system_context(
             "再基于已有来源完成回答并标注具体证据缺口。不得以‘继续尝试’开启无界工具循环。"
         ),
         "需要读取关联任务、能力版本或研究产物时，优先调用 equipment_deep_context 工具，不要猜测内部数据。",
+        "深研对话已启用沙盒文件工具与持久化工作区。用户要求研究文档、数据表、图表、HTML 页面或代码时，"
+        "必须实际生成文件，在当前 Project Workdir 的 outputs 下保存并核验，再由主智能体调用 present_artifacts 交付；"
+        "子智能体生成文件后返回真实路径与摘要，主智能体核验后统一交付。需要交互页面时读取 html-preview 技能。",
+        "普通文件交付独立于‘形成能力画像草案’开关；开关关闭时仍可生成、预览、编辑和下载研究文件。"
+        "用户只要求文件时不调用 save_equipment_capability_draft，也不要求先成卡；只有实际写入成功才能声明已生成文件。",
         "形成能力画像草案时保持原版本不可变，只能通过 save_equipment_capability_draft 新增待核验版本。",
         "用户可以输入深研命令：/diverge 表示重新开放发散正交假设，/challenge 表示对抗检验反例与失效边界，"
         "/synthesize 表示综合归纳已有方向，/memory 表示只读查看当前决策记忆中的候选方向、裁决与待追问，"
@@ -369,7 +375,7 @@ async def build_system_context(
             ]
         )
     if payload.get("knowledge_enabled", True):
-        rules.append("需要外部或内部事实依据时可以检索本会话已授权知识库，并标明来源与证据缺口。")
+        rules.append("仅本轮用户显式 @知识库时可以检索本会话已授权知识库，并标明来源与证据缺口。")
     else:
         rules.append("本会话运行时已禁用知识库，不得声称检索了内部知识库。")
     if payload.get("subagents_enabled", True):

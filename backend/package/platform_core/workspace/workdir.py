@@ -74,6 +74,10 @@ class Workdir:
     def copy_file_to_path(self, path: str, target_path: str, max_bytes: int) -> int:
         return self.workspace.download_authorized_file_to_path(self.resolve_path(path), target_path, max_bytes)
 
+    def copy_directory_to_path(self, path: str, target_path: str, max_bytes: int) -> int:
+        """将当前 Workdir 内的真实目录有界打包为 ZIP。"""
+        return self.workspace.download_authorized_directory_to_path(self.resolve_path(path), target_path, max_bytes)
+
     def copy_file_from_path(self, path: str, source_path: str, *, overwrite: bool = True) -> dict:
         return self.workspace.upload_authorized_file_from_path(
             self.resolve_path(path),

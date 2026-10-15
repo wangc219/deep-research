@@ -2,29 +2,45 @@
   <section class="conversation-nav-section" :class="{ collapsed }">
     <div v-if="showHistory && !collapsed" class="history-panel">
       <div class="conversation-list">
-        <section
-          v-if="projectsLoading || projectsError || projectGroups.length"
-          class="history-group project-history-group"
-        >
-          <button
-            type="button"
-            class="history-label"
-            :aria-expanded="projectsExpanded"
-            @click="projectsExpanded = !projectsExpanded"
-          >
-            <span class="history-label-main">
-              <FolderKanban :size="14" />
-              <span>项目</span>
-              <span v-if="projectGroups.length" class="history-count">{{
-                projectGroups.length
-              }}</span>
-            </span>
-            <ChevronDown
-              :size="14"
-              class="collapse-icon"
-              :class="{ collapsed: !projectsExpanded }"
-            />
-          </button>
+        <section class="history-group project-history-group">
+          <div class="project-heading">
+            <button
+              type="button"
+              class="history-label"
+              :aria-expanded="projectsExpanded"
+              @click="projectsExpanded = !projectsExpanded"
+            >
+              <span class="history-label-main">
+                <FolderKanban :size="14" />
+                <span>项目</span>
+                <span v-if="projectGroups.length" class="history-count">{{
+                  projectGroups.length
+                }}</span>
+              </span>
+              <ChevronDown
+                :size="14"
+                class="collapse-icon"
+                :class="{ collapsed: !projectsExpanded }"
+              />
+            </button>
+            <ProjectSelectionSection
+              aria-label="新建侧栏项目"
+              create-ok-text="创建并新建对话"
+              @created="handleProjectCreated"
+            >
+              <template #create-trigger="{ openCreate }">
+                <button
+                  type="button"
+                  class="project-heading-create"
+                  aria-label="新建项目"
+                  title="新建项目"
+                  @click="openCreate(); $emit('create-project')"
+                >
+                  <Plus :size="17" />
+                </button>
+              </template>
+            </ProjectSelectionSection>
+          </div>
           <CollapseTransition>
             <div v-if="projectsExpanded" class="project-list">
               <div v-if="projectsLoading" class="list-state">正在加载项目...</div>
@@ -33,6 +49,7 @@
                 <button type="button" @click="$emit('retry-projects')">重试</button>
               </div>
               <template v-else>
+                <div v-if="!projectGroups.length" class="list-state">暂无项目，点击 + 新建</div>
                 <section
                   v-for="group in projectGroups"
                   :key="group.project.id"
@@ -212,6 +229,7 @@ import {
   Trash2
 } from '@lucide/vue'
 import ConversationNavItem from '@/components/ConversationNavItem.vue'
+import ProjectSelectionSection from '@/components/ProjectSelectionSection.vue'
 import CollapseTransition from '@/components/common/CollapseTransition.vue'
 import { buildProjectConversationGroups } from '@/utils/projectConversationGroups'
 import { projectDisplayName } from '@/utils/projectSelection'
@@ -238,6 +256,7 @@ const emit = defineEmits([
   'load-more-chats',
   'rename-project',
   'delete-project',
+  'create-project',
   'create-project-chat',
   'retry-projects'
 ])
@@ -264,6 +283,12 @@ const projectGroups = computed(() =>
   })
 )
 const otherConversations = computed(() => groupedNavigation.value.otherConversations)
+
+const handleProjectCreated = (project) => {
+  projectsExpanded.value = true
+  expandedProjects.value = new Set([...expandedProjects.value, project.id])
+  emit('create-project-chat', project.id)
+}
 
 /** 展开当前项目的下一批对话。 */
 function showMoreProjectConversations(group) {
@@ -364,6 +389,36 @@ const confirmDeleteProject = (project) => {
   min-width: 0;
   align-items: center;
   gap: 7px;
+}
+.project-heading {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  .history-label {
+    flex: 1;
+    min-width: 0;
+  }
+}
+.project-heading-create {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--gray-500);
+  cursor: pointer;
+  &:hover {
+    background: var(--gray-100);
+    color: var(--gray-800);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--main-300);
+    outline-offset: -2px;
+  }
 }
 .history-count {
   display: inline-flex;
@@ -564,6 +619,10 @@ const confirmDeleteProject = (project) => {
   font-size: 12px;
 }
 @media (hover: none) {
+  .project-heading-create {
+    width: 40px;
+    height: 40px;
+  }
   .project-row {
     min-height: 40px;
     padding-right: 16px;

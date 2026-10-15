@@ -618,12 +618,6 @@ onActivated(() => { if (versions.value.length) load() })
             :key="capabilityCardKey(item)"
             class="capability-version-group"
           >
-            <EquipmentTechnologySolutionCard
-              :equipment-name="capabilityTitle(item)"
-              :session="technologySessionFor(item)"
-              :loading="technologySessionsLoading"
-              @open="openTechnologyCabin(item)"
-            />
             <CapabilityPortraitCard
               :item="item"
               :deep-versions="deepVersionsFor(item)"
@@ -637,7 +631,18 @@ onActivated(() => { if (versions.value.length) load() })
               @favorite="toggleFavorite"
               @jump="focusCapabilityCard"
               @delete-version="(row) => mutateVersion(row, 'delete')"
-            />
+            >
+              <template #technology-solution>
+                <EquipmentTechnologySolutionCard
+                  v-if="technologySessionFor(item)"
+                  :equipment-name="capabilityTitle(item)"
+                  :session="technologySessionFor(item)"
+                  :loading="technologySessionsLoading"
+                  :read-only="selectedRunReadOnly"
+                  @open="openTechnologyCabin(item)"
+                />
+              </template>
+            </CapabilityPortraitCard>
           </section>
 
           <section v-if="deepCards.length" id="deep-research-cards" class="capability-deep-research-panel"><header><div><span class="deep-research-panel-icon"><GitCompare :size="17" /></span><span><b>深研卡片</b><small>来自深研对话的独立能力画像，不覆盖正式原卡；选择卡片可定位原卡或查看差异。</small></span></div><em>{{ deepCards.length }} 张</em></header><div class="capability-deep-research-list"><CapabilityPortraitCard v-for="entry in deepCards" :key="capabilityCardKey(entry.item)" :item="entry.item" :formal-item="entry.formalItem" :feedback-count="feedbackFor(entry.item).length" :version-busy="versionBusy === (entry.item.version_id || entry.item.id)" :read-only="selectedRunReadOnly" @feedback="openFeedback" @deep="openDeep" @jump="focusCapabilityCard" @delete-version="(row) => mutateVersion(row, 'delete')" /></div></section>

@@ -58,7 +58,7 @@ const technologySolutionOutline = () =>
   ).join('；')
 
 const technologyImplementationPlanPrompt = () =>
-  `${TECHNOLOGY_SOLUTION_TRIGGER}，供一线研发人员直接拆任务、做样机和测指标。纠偏结论只作简短设计输入，正文必须以${technologySolutionOutline()}为七个一级章节，前一章结论必须成为后一章输入，形成“能力—设计—技术—关键项—难点—路径—实现”追溯链。每章落实到分系统、输入输出接口、指标与预算、负责人专业、阶段交付物和验收判据；具体实现章还须覆盖原理、算法、结构、材料、器件、控制、软件、工艺、集成顺序、样机阶段、WBS、试验矩阵、TRL跃迁、里程碑与决策门、风险/FMEA/降级策略，以及30/60/90天启动包。事实、工程判断和待验证参数必须分开；无可靠依据的数值标注“工程假设/TBD”，不得重复写成长篇纠错报告。若已有攻关任务书，应另建“研发与技术实现方案”交付物，不得覆盖原文件。`
+  `${TECHNOLOGY_SOLUTION_TRIGGER}，供一线研发人员直接拆任务、做样机和测指标。先逐字列出冻结的“解决思路”和“核心创新”，将其作为共享创新来源；七章不得提出替代创新或另起主题。纠偏结论只作简短设计输入，正文必须以${technologySolutionOutline()}为七个一级章节，每章开头说明本章支撑哪一条锚点、验证哪项成立条件，前一章结论必须成为后一章输入，形成“锚点—能力—设计—技术—关键项—难点—路径—实现—验证”追溯链。每章落实到分系统、输入输出接口、指标与预算、负责人专业、阶段交付物和验收判据；具体实现章还须覆盖原理、算法、结构、材料、器件、控制、软件、工艺、集成顺序、样机阶段、WBS、试验矩阵、TRL跃迁、里程碑与决策门、风险/FMEA/降级策略，以及30/60/90天启动包。事实、工程判断和待验证参数必须分开；无可靠依据的数值标注“工程假设/TBD”。导航、平台适配、保障等配套内容只有直接决定锚点可行性时才进入主线，不得重复写成长篇纠错报告。若已有攻关任务书，应另建“研发与技术实现方案”交付物，不得覆盖原文件。`
 
 export const TECHNOLOGY_CABIN_ACTIONS = [
   {
@@ -121,7 +121,7 @@ export function s6CapabilityCardPrompt(equipment = '当前装备', lead = '') {
   const target = text(equipment) || '当前装备'
   const purpose =
     text(lead) || '综合本次深研结论重写一版能力画像，保持装备身份、任务定位和已经收敛的作用机理一致'
-  return `${purpose}。为「${target}」形成正式 S6 五栏能力卡：正文只能依次使用“概述、装备与技术实现、关键作战流程、形成能力与作战效果、制胜逻辑机理”五个精确栏名，不加“修订”等后缀，不增加第六栏。概述闭合场景、对象、定位和关键变化；技术栏写主路径、备选路径、构型、分系统、部件、接口与取舍；流程栏闭合主体、条件、动作、状态、异常和转段；效果栏区分新增任务、直接战果、体系收益、敌方代价与判据；制胜栏闭合旧规则、作用链、交换关系、对手经济反制及新增代价。先分别起草五栏，再逐栏检查职责、完整因果、长度和跨栏重复，发现短栏或缺口必须先补写。每栏以 360–400 个有效中文字为常规目标，复杂因果可略多，禁止硬切、机械凑字、重复栏和跨栏复用。五栏全部通过自检后，调用 save_equipment_capability_draft 新增待核验版本，并在 structured_fields 中同时提交 capability_portrait_modules 与 capability_card_draft，两者均使用 ${S6_PORTRAIT_MODULE_KEYS.join('、')} 五个键；不得覆盖正式卡。`
+  return `${purpose}。为「${target}」形成正式 S6 五栏能力卡：正文只能依次使用“概述、装备与技术实现、关键作战流程、形成能力与作战效果、制胜逻辑机理”五个精确栏名，不加“修订”等后缀，不增加第六栏。S5只负责入选；成卡前先为本卡生成一次创新、新颖且因果闭合的“解决思路”和“核心创新”，冻结为共享创新锚点，概述和技术实现必须共同引用且不得各自换题。概述严格按“当前背景、解决思路、达到效果、核心创新”四项分条简述，不写技术实现；技术栏与概述并列，显式承接同一解决思路和核心创新，围绕原理假设、依据、关键约束、候选路径、验证判据和可行性结论研究，后阶段配套问题仅在直接决定核心创新成立时纳入。流程栏闭合主体、条件、动作、状态、异常和转段；效果栏区分新增任务、直接战果、体系收益、敌方代价与判据；制胜栏闭合旧规则、作用链、交换关系、对手经济反制及新增代价。先分别起草五栏，再逐栏检查职责、完整因果、长度和跨栏重复，发现短栏或缺口必须先补写。每栏以 360–400 个有效中文字为常规目标，复杂因果可略多，禁止硬切、机械凑字、重复栏和跨栏复用。五栏全部通过自检后，调用 save_equipment_capability_draft 新增待核验版本，并在 structured_fields 中同时提交 capability_portrait_modules 与 capability_card_draft，两者均使用 ${S6_PORTRAIT_MODULE_KEYS.join('、')} 五个键；不得覆盖正式卡。`
 }
 
 const SECTION_ALIASES = new Map([
@@ -185,13 +185,16 @@ const TECHNOLOGY_CABIN_TASKS = {
 }
 
 /** Specialized R&D prompt used by the technology breakthrough cabin. */
-export function technologyCabinPrompt(equipment = '', body = '', action = 'mission') {
+export function technologyCabinPrompt(equipment = '', body = '', action = 'mission', overview = '') {
   const target = text(equipment) ? `「${text(equipment)}」` : '当前装备'
   const task = TECHNOLOGY_CABIN_TASKS[action] || TECHNOLOGY_CABIN_TASKS.mission
   const sourceRule = text(body)
     ? '原卡中的相关技术仅作为研究线索，不视为完整或正确答案，应主动补充遗漏并纠正概念化表述。'
     : '不要假定现有技术描述已经完整。'
-  return `围绕${target}开展技术攻关，保持装备身份和任务定位不变。${sourceRule}${task}避免空泛罗列和无依据的精确参数。`
+  const overviewRule = text(overview)
+    ? `以下概述是冻结的共享创新来源：${text(overview).slice(0, 760)}。只提取其中“解决思路”和“核心创新”作为研究主线，不得改写锚点或另起主题。`
+    : '先从已绑定能力画像中读取冻结的“解决思路”和“核心创新”；若缺失，先标记画像缺口，不得用技术栏自行发明替代主题。'
+  return `围绕${target}开展技术攻关，保持装备身份和任务定位不变。${overviewRule}${sourceRule}${task}所有路线、难点、判据和结论都必须逐项说明其支撑哪条解决思路或核心创新；无直接因果关系的后阶段配套问题不作为主线。避免空泛罗列和无依据的精确参数。`
 }
 
 const PARSEABLE_LABELS = [
@@ -265,11 +268,11 @@ export function portraitSectionDigest(sections, { budget = 1300 } = {}) {
 }
 
 /** One turn that deepens a single column without diverging off the card. */
-export function portraitSectionPrompt(label, equipment = '', body = '') {
+export function portraitSectionPrompt(label, equipment = '', body = '', overview = '') {
   const section = portraitSectionLabel(label)
   if (!section) return ''
   if (isTechnologyCabinSection(section)) {
-    return technologyCabinPrompt(equipment, body)
+    return technologyCabinPrompt(equipment, body, 'mission', overview)
   }
   const ask = SECTION_ASKS[section] || `围绕「${section}」继续深挖，给出更具体、可核验的结论。`
   const target = text(equipment) ? `「${text(equipment)}」` : '当前装备'
@@ -312,5 +315,8 @@ export function newWeaponDivergencePrompt(equipment = '', section = '') {
 export function capabilityWelcomeSuggestions(equipment, sections, count = 4) {
   const rows = normalizePortraitSections(sections)
   if (!rows.length) return []
-  return rows.slice(0, count).map((item) => portraitSectionPrompt(item.label, equipment, item.text))
+  const overview = rows.find((item) => item.label === '概述')?.text || ''
+  return rows.slice(0, count).map((item) =>
+    portraitSectionPrompt(item.label, equipment, item.text, overview)
+  )
 }

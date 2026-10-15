@@ -723,7 +723,9 @@ def test_provider_maps_external_uid_only_at_provisioner_filesystem_boundary(monk
 
     provider = _make_provider(FakeClient())
     logical_uid = "oidc:12345678-1234-1234-1234-123456789abc"
-    monkeypatch.setattr("platform_core.agents.backends.sandbox.provider.load_user_agent_env", lambda uid: {"OWNER": uid})
+    monkeypatch.setattr(
+        "platform_core.agents.backends.sandbox.provider.load_user_agent_env", lambda uid: {"OWNER": uid}
+    )
 
     provider.get("thread-1", uid=logical_uid, create_if_missing=True)
 
@@ -1444,6 +1446,20 @@ def test_provisioner_execute_applies_timeout_to_command_and_http_request(monkeyp
             "request_options": {"timeout_in_seconds": 300},
         }
     ]
+
+
+def test_execute_uses_strict_project_workdir_for_relative_file_outputs(monkeypatch):
+    monkeypatch.setattr("platform_core.agents.backends.sandbox.backend.get_sandbox_provider", lambda: object())
+    backend = ProvisionerSandboxBackend(thread_id="thread-1", uid="user-1", workdir_path=WORKDIR_RELATIVE_PATH)
+    calls = []
+
+    def execute(**kwargs):
+        calls.append(kwargs)
+        return SimpleNamespace(data=SimpleNamespace(exit_code=0, output="done"))
+
+    monkeypatch.setattr(backend, "_get_client", lambda: SimpleNamespace(shell=SimpleNamespace(exec_command=execute)))
+    assert backend.execute("python generate_report.py").exit_code == 0
+    assert calls == [{"command": "python generate_report.py", "exec_dir": WORKDIR_PATH, "strict": True}]
 
 
 def test_provisioner_download_files_streams_binary_bytes(monkeypatch) -> None:

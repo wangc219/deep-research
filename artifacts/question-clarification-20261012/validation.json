@@ -1,0 +1,39 @@
+{
+  "behavior": "智能对话、深研对话在澄清需求时使用独立提问弹窗，提供推荐选项及自由填写。",
+  "timeout_seconds": 120,
+  "timeout_scope": "当前页面展示的 ask_user_question，且每题都有明确推荐项。",
+  "interaction": "选择、输入、跳过或取消后停止自动提交；同一运行在刷新后保留截止时间。",
+  "exclusions": [
+    "工具操作审批",
+    "缺少明确推荐项的问题",
+    "纯问答"
+  ],
+  "verification": {
+    "web_unit_tests": 541,
+    "backend_targeted_tests": 41,
+    "web_lint": "passed",
+    "web_build": "passed",
+    "backend_targeted_ruff": "passed",
+    "smart_chat_live": [
+      "两分钟自动提交推荐并续跑",
+      "刷新不重置截止时间",
+      "填写自定义回答并续跑"
+    ],
+    "deep_chat_live": [
+      "独立提问弹窗",
+      "390px 手机布局",
+      "选择非推荐项并续跑"
+    ]
+  },
+  "screenshots": [
+    "deep-question-dialog-mobile.jpg",
+    "deep-question-dialog.jpg",
+    "deep-question-resumed.jpg",
+    "question-dialog-custom.jpg",
+    "question-dialog.jpg",
+    "question-resumed.jpg"
+  ],
+  "limitations": [
+    "倒计时由打开的聊天页面执行；关闭页面或切换离开会话期间，不由后端定时续跑。"
+  ]
+}

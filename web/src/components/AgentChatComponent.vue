@@ -282,9 +282,12 @@
                 :class="{ 'has-tool-approval': currentToolApprovalVisible }"
               >
                 <HumanApprovalModal
+                  :key="`${approvalState.threadId || ''}:${approvalState.interruptedRunId || ''}`"
                   :visible="currentApprovalModalVisible"
                   :questions="currentApprovalQuestions"
                   :kind="approvalState.kind"
+                  :auto-recommend="approvalState.kind === 'question' && approvalState.source === 'ask_user_question'"
+                  :request-key="`${approvalState.threadId || ''}:${approvalState.interruptedRunId || ''}`"
                   :action-requests="approvalState.actionRequests"
                   @submit="handleQuestionSubmit"
                   @cancel="handleQuestionCancel"
@@ -1813,6 +1816,13 @@ const currentArtifacts = computed(() => {
   const artifacts = currentAgentState.value?.artifacts
   return Array.isArray(artifacts) ? artifacts : []
 })
+
+watch(
+  () => currentArtifacts.value.join('\n'),
+  () => {
+    agentPanelFilesystemRefreshVersion.value += 1
+  }
+)
 const currentArtifactFiles = computed(() =>
   currentArtifacts.value
     .map((path) => String(path || '').trim())

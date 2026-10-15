@@ -5,6 +5,8 @@ from platform_core.agents.context import BaseContext
 
 @dataclass(kw_only=True)
 class SubAgentContext(BaseContext):
+    agent_slug: str = field(default="", metadata={"configurable": False, "hide": True})
+
     parent_thread_id: str | None = field(
         default=None,
         metadata={"name": "父线程ID", "configurable": False, "hide": True},

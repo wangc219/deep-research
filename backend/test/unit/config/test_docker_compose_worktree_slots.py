@@ -107,13 +107,22 @@ def test_development_compose_is_parameterized_for_parallel_worktree_slots() -> N
         str(volume.get("source"))
         for service in compose["services"].values()
         for volume in service.get("volumes") or []
-        if isinstance(volume, dict) and str(volume.get("source") or "").startswith(STATE_ROOT)
+        if isinstance(volume, dict) and STATE_ROOT in str(volume.get("source") or "")
     }
     assert f"{STATE_ROOT}/postgresql" in state_sources
     assert f"{STATE_ROOT}/redis" in state_sources
     assert f"{STATE_ROOT}/milvus/milvus" in state_sources
     assert f"{STATE_ROOT}/neo4j/data" in state_sources
-    assert f"{STATE_ROOT}/platform/threads" in state_sources
+    platform_root = f"${{DEEP_RESEARCH_PLATFORM_DIR:-{STATE_ROOT}/platform}}"
+    assert f"{platform_root}/threads" in state_sources
+    for service in ("api", "worker", "sandbox-provisioner"):
+        mounts = {
+            volume["target"]: volume["source"]
+            for volume in compose["services"][service]["volumes"]
+            if isinstance(volume, dict)
+        }
+        assert mounts["/app/user-data"] == f"{platform_root}/threads"
+        assert mounts["/app/skill-projections"] == f"{platform_root}/skill-projections"
 
 
 def test_slot_isolation_guard_rejects_fixed_host_resources() -> None:

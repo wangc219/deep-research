@@ -148,7 +148,9 @@ class SkillsMiddleware(AgentMiddleware):
         gated: set[str] = set()
         for slug in effective_skills:
             gated.update(runtime_skills.get(slug, {}).get("tools", []))
-        return gated - base_tool_names
+        from platform_core.agents.toolkits.service import WORKSPACE_RUNTIME_TOOLS
+
+        return gated - base_tool_names - WORKSPACE_RUNTIME_TOOLS
 
     async def _get_mcp_tools_from_context(
         self,

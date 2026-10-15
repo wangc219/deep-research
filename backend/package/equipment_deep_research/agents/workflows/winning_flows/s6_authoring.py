@@ -76,6 +76,44 @@ class S6SpineAuthoringError(S6QualityError):
     """A card-level failure that is safe to recover by replaying the card."""
 
 
+_S6_SHARED_INNOVATION_FIELDS = (
+    "solution_thesis",
+    "core_innovation_thesis",
+)
+
+
+def _normalized_s6_anchor_text(value: Any) -> str:
+    """Normalize presentation punctuation without weakening anchor identity."""
+
+    return re.sub(r"[^\u3400-\u4dbf\u4e00-\u9fffA-Za-z0-9]", "", str(value or ""))
+
+
+def _validated_s6_shared_innovation_anchors(
+    direction: Mapping[str, Any] | object,
+    *,
+    position: int | None = None,
+) -> dict[str, str]:
+    """Return the two card-local S6 anchors or reject an unfrozen spine."""
+
+    source = direction if isinstance(direction, Mapping) else {}
+    anchors = {
+        key: str(source.get(key, "") or "").strip()
+        for key in _S6_SHARED_INNOVATION_FIELDS
+    }
+    card_label = f"第{position}张装备卡" if position is not None else "装备卡"
+    if any(
+        len(re.findall(r"[\u3400-\u4dbf\u4e00-\u9fff]", value)) < 12
+        for value in anchors.values()
+    ):
+        raise S6QualityError(f"S6{card_label}缺少可冻结的解决思路或核心创新")
+    if (
+        _normalized_s6_anchor_text(anchors["solution_thesis"])
+        == _normalized_s6_anchor_text(anchors["core_innovation_thesis"])
+    ):
+        raise S6QualityError(f"S6{card_label}的解决思路与核心创新不得复制为同一句")
+    return anchors
+
+
 async def _gather_s6_wave(
     awaitables: Sequence,
     *,
@@ -266,12 +304,28 @@ def _s6_repair_root_fingerprints(issues: Sequence[str]) -> frozenset[str]:
 
 def _parallel_s6_semantic_quality_issues(
     modules: Mapping[str, Any] | object,
+    *,
+    shared_anchors: Mapping[str, Any] | object | None = None,
 ) -> list[str]:
     """Catch hollow but well-sized columns before publishing a dynamic card."""
 
-    issues = capability_portrait_repair_issues(modules)
     if not isinstance(modules, Mapping):
-        return issues
+        return capability_portrait_repair_issues(modules)
+
+    # The overview and technology columns must repeat the same two frozen
+    # anchors verbatim. Remove only those mandated phrases before the generic
+    # cross-column duplication detector runs, then validate their presence
+    # explicitly below. All other repeated prose remains a repair issue.
+    generic_quality_modules = dict(modules)
+    if isinstance(shared_anchors, Mapping):
+        for module_key in ("overview", "technology_implementation"):
+            prose = str(generic_quality_modules.get(module_key, "") or "")
+            for anchor_key in _S6_SHARED_INNOVATION_FIELDS:
+                anchor = str(shared_anchors.get(anchor_key, "") or "").strip()
+                if anchor:
+                    prose = prose.replace(anchor, "")
+            generic_quality_modules[module_key] = prose
+    issues = capability_portrait_repair_issues(generic_quality_modules)
 
     short_modules = _s6_short_portrait_modules(modules)
     labels = dict(CAPABILITY_PORTRAIT_MODULES)
@@ -282,6 +336,37 @@ def _parallel_s6_semantic_quality_issues(
         )
         if issue not in issues:
             issues.append(issue)
+
+    overview = str(modules.get("overview", "") or "")
+    if any(
+        not re.search(rf"{label}\s*[：:]", overview)
+        for label in ("当前背景", "解决思路", "达到效果", "核心创新")
+    ):
+        issues.append("概述未按当前背景、解决思路、达到效果、核心创新四项分条")
+
+    technology = str(modules.get("technology_implementation", "") or "")
+    if "解决思路" not in technology or "核心创新" not in technology:
+        issues.append("装备与技术实现未显式承接共享的解决思路和核心创新")
+
+    if isinstance(shared_anchors, Mapping):
+        anchors = {
+            key: str(shared_anchors.get(key, "") or "").strip()
+            for key in _S6_SHARED_INNOVATION_FIELDS
+        }
+        normalized_overview = _normalized_s6_anchor_text(overview)
+        normalized_technology = _normalized_s6_anchor_text(technology)
+        if any(
+            anchor
+            and _normalized_s6_anchor_text(anchor) not in normalized_overview
+            for anchor in anchors.values()
+        ):
+            issues.append("概述未逐字承接冻结的解决思路和核心创新")
+        if any(
+            anchor
+            and _normalized_s6_anchor_text(anchor) not in normalized_technology
+            for anchor in anchors.values()
+        ):
+            issues.append("装备与技术实现未逐字追溯冻结的解决思路和核心创新")
 
     marker_rules = {
         "technology_implementation": (
@@ -398,6 +483,12 @@ async def generate_parallel_s6_cards(
     card_direction_schema["adversary_adaptation"] = prompt_contract[
         "adversary_adaptation"
     ]
+    card_direction_schema["solution_thesis"] = (
+        "S5入选后在S6只生成一次并冻结的卡片级解决思路；说明改变哪个核心断点、作用于哪个关键对象或关系、为何可能奏效"
+    )
+    card_direction_schema["core_innovation_thesis"] = (
+        "与解决思路同源但职责不同的卡片级核心创新；说明相对既有方式改变了哪个关键前提、约束或关系"
+    )
     # Keep all model-visible field guidance in the reviewed Markdown resource;
     # only the structural keys come from the caller's schema.
     direction_guidance = load_dynamic_winning_json(
@@ -427,6 +518,8 @@ async def generate_parallel_s6_cards(
             "system_contribution_thesis",
             "indicator_portrait",
             "adversary_adaptation",
+            "solution_thesis",
+            "core_innovation_thesis",
             "capability_portrait_modules",
         )
         if key in card_direction_schema
@@ -1071,6 +1164,12 @@ async def generate_parallel_s6_cards(
                     "evidence_boundary",
                 }
             }
+            spine_schema["solution_thesis"] = (
+                "S5入选后形成的一条创新解决思路；说明如何改变核心断点，供概述和技术实现共同引用"
+            )
+            spine_schema["core_innovation_thesis"] = (
+                "S5入选后形成的一条不可替代核心创新；说明改变的关键前提或关系，供概述和技术实现共同引用"
+            )
             spine_instruction = _dynamic_s6_spine_instruction()
             if not dynamic_s6_authoring:
                 # Keep the legacy/optimized schema, but use the same isolated
@@ -1095,22 +1194,22 @@ async def generate_parallel_s6_cards(
                 )
             }
             module_exclusive_contract = {
-                "overview": "只负责旧模式失效、关系变化、直接战果和新增任务空间；不展开技术清单或逐步流程。",
-                "technology_implementation": "只负责装备本体、可选实现路径、推荐主路径、关键耦合和工程约束；不复述作战流程或效果总结。",
+                "overview": "只按当前背景、解决思路、达到效果、核心创新四项分条简述；解决思路与核心创新逐字承接共享创新锚点，但不展开工程路线、组件、参数、试验或逐步流程。",
+                "technology_implementation": "与概述并列，显式承接同一solution_thesis与core_innovation_thesis；只围绕该创新的原理假设、依据、关键约束、可选路径、验证判据和可行性结论研究，不复述作战流程或泛化效果。",
                 "operational_process": "只负责行动主体、进入条件、关键动作、状态变化、授权/拒打和终止/续接；不重新论证技术路线。",
                 "capability_effects": "只负责过去不能执行的任务、新增能力、可观察战果、指标边界和对手约束；不复述旧规则推演。",
                 "winning_logic": "只负责旧规则、被逆转假设、新交换关系、对手新增代价和成立边界；不重复技术落装或流程步骤。",
             }
             module_completion_contract = {
                 "overview": {
-                    "objective": "让决策者看懂本装备为何在特定战场断点产生直接制胜价值。",
-                    "must_deliver": ["敌方优势", "传统模式失效", "本装备介入", "直接战果", "新增任务空间"],
-                    "avoid": ["技术清单", "逐步操作流程", "泛化指标"],
+                    "objective": "用四项短条目让决策者一眼看清背景、解决思路、预期效果和核心创新，并把后两项固定为技术栏的共享研究输入。",
+                    "must_deliver": ["当前背景：", "解决思路：", "达到效果：", "核心创新："],
+                    "avoid": ["工程路线", "组件或参数", "试验方案", "多条次要创新", "功能清单", "颠覆性口号"],
                 },
                 "technology_implementation": {
-                    "objective": "说明本装备沿哪条工程路线才能形成核心作战能力。",
-                    "must_deliver": ["可选路线比较", "推荐主路径", "1至2项主攻瓶颈", "落装位置", "工程取舍"],
-                    "avoid": ["零部件清单", "无关技术趋势", "作战流程复述"],
+                    "objective": "验证共享解决思路和核心创新是否可行，并说明哪些路径、条件和证据支持继续或否定。",
+                    "must_deliver": ["承接解决思路", "围绕核心创新", "原理假设与公开依据", "关键约束", "可选路线比较", "验证判据", "可行性结论"],
+                    "avoid": ["另起技术主题", "无关后阶段配套问题", "零部件清单", "无关技术趋势", "作战流程复述"],
                 },
                 "operational_process": {
                     "objective": "说明本装备如何在真实交战条件下进入、改变并交付一个作战窗口。",
@@ -1188,6 +1287,11 @@ async def generate_parallel_s6_cards(
                     direction_spine,
                     brief,
                 )
+                shared_anchors = _validated_s6_shared_innovation_anchors(
+                    stabilized_spine,
+                    position=position,
+                )
+                stabilized_spine.update(shared_anchors)
                 spine_context = {
                     key: stabilized_spine.get(key)
                     for key in (
@@ -1199,6 +1303,8 @@ async def generate_parallel_s6_cards(
                         "displaced_operational_mode",
                         "new_operational_mode",
                         "winning_relation_shift",
+                        "solution_thesis",
+                        "core_innovation_thesis",
                     )
                     if stabilized_spine.get(key) not in (None, "", [], {})
                 }
@@ -1247,6 +1353,15 @@ async def generate_parallel_s6_cards(
                     },
                     "overview": card_payload.get("winning_logic_overview", ""),
                 }
+                if module_key in {"overview", "technology_implementation"}:
+                    for shared_key in ("solution_thesis", "core_innovation_thesis"):
+                        value = spine_context.get(shared_key)
+                        if value not in (None, "", [], {}):
+                            context[shared_key] = _compact_prompt_value(
+                                value,
+                                max_string_chars=520,
+                                max_list_items=3,
+                            )
                 for field in field_map.get(module_key, ()):
                     value = brief.get(field)
                     if value not in (None, "", [], {}):
@@ -1599,6 +1714,11 @@ async def generate_parallel_s6_cards(
                         authored_modules.get("technology_implementation", ""), brief
                     )
 
+        shared_innovation_anchors = _validated_s6_shared_innovation_anchors(
+            direction,
+            position=position,
+        )
+        direction.update(shared_innovation_anchors)
         initial_short_modules = _s6_short_portrait_modules(authored_modules)
         quality_warnings: list[str] = list(module_authoring_warnings)
         authoring_audit_notes: list[str] = []
@@ -1608,8 +1728,11 @@ async def generate_parallel_s6_cards(
         # enters one bounded repair wave; only the same root cause is collapsed
         # inside that wave.
         repair_issues = (
-            _parallel_s6_semantic_quality_issues(authored_modules)
-            if dynamic_s6_authoring
+            _parallel_s6_semantic_quality_issues(
+                authored_modules,
+                shared_anchors=shared_innovation_anchors,
+            )
+            if dynamic_s6_authoring or parallel_portrait_modules
             else capability_portrait_repair_issues(authored_modules)
         )
         if repair_issues:
@@ -1654,6 +1777,9 @@ async def generate_parallel_s6_cards(
                                     ),
                                     "current_module_content": first_pass_modules.get(
                                         module_key, ""
+                                    ),
+                                    "shared_innovation_anchors": dict(
+                                        shared_innovation_anchors
                                     ),
                                     # Give a repaired column visibility into
                                     # its siblings.  Without this context a
@@ -1741,6 +1867,9 @@ async def generate_parallel_s6_cards(
                                 "current_direction": dict(direction),
                                 "quality_issues": repair_issues[:8],
                                 "short_module_keys": initial_short_modules,
+                                "shared_innovation_anchors": dict(
+                                    shared_innovation_anchors
+                                ),
                             },
                             {
                                 "direction": active_card_direction_schema,
@@ -1781,8 +1910,11 @@ async def generate_parallel_s6_cards(
                         candidate_modules
                     )
                     repaired_issues = (
-                        _parallel_s6_semantic_quality_issues(candidate_modules)
-                        if dynamic_s6_authoring
+                        _parallel_s6_semantic_quality_issues(
+                            candidate_modules,
+                            shared_anchors=shared_innovation_anchors,
+                        )
+                        if dynamic_s6_authoring or parallel_portrait_modules
                         else capability_portrait_repair_issues(candidate_modules)
                     )
                     identity_probe = {
@@ -1975,8 +2107,11 @@ async def generate_parallel_s6_cards(
             S6_PORTRAIT_QUALITY_CONTRACT_VERSION
         )
         remaining_issues = (
-            _parallel_s6_semantic_quality_issues(authored_modules)
-            if dynamic_s6_authoring
+            _parallel_s6_semantic_quality_issues(
+                authored_modules,
+                shared_anchors=shared_innovation_anchors,
+            )
+            if dynamic_s6_authoring or parallel_portrait_modules
             else capability_portrait_quality_issues(authored_modules)
         )
         for issue in remaining_issues:

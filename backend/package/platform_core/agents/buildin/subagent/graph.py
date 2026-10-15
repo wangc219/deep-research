@@ -25,6 +25,7 @@ from platform_core.agents.middlewares import (
     create_summary_middleware_from_context,
 )
 from platform_core.agents.middlewares.skills import SkillsMiddleware
+from platform_core.agents.middlewares.knowledge_opt_in import KnowledgeOptInMiddleware
 from platform_core.agents.tool_approval import SENSITIVE_BACKEND_TOOLS, normalize_tool_approval_mode
 from platform_core.agents.toolkits.service import resolve_configured_runtime_tools
 from platform_core.models.chat import load_chat_model, resolve_chat_model_spec
@@ -100,8 +101,9 @@ async def _build_middlewares(context, backend, tool_approval_mode: str):
         create_summary_middleware_from_context(context, backend=backend),
         TodoListMiddleware(system_prompt=TODO_MID_PROMPT),
         PatchToolCallsMiddleware(),
-        SearchResilienceMiddleware(),
+        SearchResilienceMiddleware(research_mode=getattr(context, "agent_slug", "") == "research-explorer"),
         _SubAgentToolFilterMiddleware(tool_approval_mode),
+        KnowledgeOptInMiddleware(enabled=getattr(context, "_knowledge_retrieval_enabled", False)),
         NetworkRetryMiddleware(),
         ImageInputCompatibilityMiddleware(),
         TokenUsageMiddleware(),

@@ -82,10 +82,24 @@ class _RealLikeScriptedProvider(ScriptedFakeProvider):
     """Exercise deterministic Codex gates without launching an external model."""
 
 
+def _s6_test_shared_innovation_anchors(name: str) -> dict[str, str]:
+    return {
+        "solution_thesis": (
+            f"{name}把持续链路依赖改为装备端受约束自主复核以恢复短时任务窗口"
+        ),
+        "core_innovation_thesis": (
+            "将任务成立前提从全程在线指挥改为发射前授权与装备端证据门控"
+        ),
+    }
+
+
 def _complete_s6_test_modules(name: str) -> dict[str, str]:
+    anchors = _s6_test_shared_innovation_anchors(name)
     return {
         "overview": (
-            f"{name}面向强干扰条件下的时敏目标交战，把传统依赖持续链路的目标复核、"
+            f"当前背景：{name}面向强干扰条件下的时敏目标交战，传统持续链路容易在关键窗口中断。"
+            f"解决思路：{anchors['solution_thesis']}。达到效果：武器在既定任务边界内仍可形成可观察战果。"
+            f"核心创新：{anchors['core_innovation_thesis']}。该装备把目标复核、"
             "受控接敌和直接毁伤前推到武器本体，使敌方不能仅靠断链、短促暴露和快速转场"
             "换取完整逃逸窗口。装备在任务边界内保持对授权目标的连续判断，直接形成压制、"
             "毁伤和后续补击空间，并让分散前沿火力在远端态势不完整时仍可产生可兑现战果。"
@@ -97,6 +111,7 @@ def _complete_s6_test_modules(name: str) -> dict[str, str]:
             "部队由此可把同一批火力分布在多个短时责任区，对手则要为每次开机和转场同时准备隐蔽、诱骗与近防资源。"
         ),
         "technology_implementation": (
+            f"承接解决思路：{anchors['solution_thesis']}。围绕核心创新：{anchors['core_innovation_thesis']}。"
             "主攻弹载多源复核与受约束任务控制，两者分别落在导引头、组合导航和任务计算单元。"
             "前者须在定位漂移、目标遮挡和诱饵并存时维持同一目标轨迹，后者须在小体积、低功耗、"
             "有限散热和末段时间压力下守住禁击边界。传统全量数据回传会受带宽与时延拖累，单一"
@@ -223,16 +238,18 @@ def test_parallel_s6_card_instruction_is_compact_but_preserves_authority() -> No
     assert "再以总编辑视角静默复核并直接返回唯一终稿" in instruction
     assert "1至2项真正决定装备能否实现的主攻关键技术" in instruction
     assert "五栏合计通常约2000至2250字" in instruction
-    assert "真实未来战场态势" in instruction
+    assert "S5只负责入选" in instruction
+    assert "solution_thesis" in instruction
+    assert "core_innovation_thesis" in instruction
+    assert "当前背景、解决思路、达到效果、核心创新" in instruction
     assert "敌方具体代价" in instruction
-    assert "装备落装" in instruction
-    assert "作战窗口" in instruction
+    assert "原理假设、公开依据、关键约束、候选路径、验证判据" in instruction
     assert "system_contribution_thesis、indicator_portrait" in instruction
     assert "指标从制胜机理和风险反推" in instruction
     assert "不得复用其他卡的骨架、指标、技术路线或验收句式" in instruction
     assert "口号" in instruction and "因果" in instruction
     assert "严禁为凑字复用跨栏句子" in instruction
-    assert "发现—判断—决策—打击—评估" in instruction
+    assert "导航精度、平台适配、保障" in instruction
     assert "INNOVATIVE_CAPABILITY_IMAGE_GUIDANCE" not in instruction
 
 
@@ -330,6 +347,7 @@ def test_dynamic_s6_repairs_only_failed_columns_and_isolates_failed_repairs(
         if phase.endswith("_spine"):
             direction = {
                 **candidate,
+                **_s6_test_shared_innovation_anchors(str(candidate["name"])),
                 "operational_process": ["装订任务并发射", "复核目标后受控交战"],
                 "capability_classification": {
                     "primary_dimension": "打击维度",
@@ -3806,7 +3824,8 @@ def test_s6_first_pass_contract_frontloads_query_specific_weapon_preflight() -> 
         contract["portfolio"]["missile_and_unmanned_must_be_separate_cards"]
         == "only_when_both_are_query_aligned_and_selected"
     )
-    assert "固定数量" in contract["portfolio"]["direct_weapon_portfolio_rule"]
+    assert "按6项组合交付" in contract["portfolio"]["direct_weapon_portfolio_rule"]
+    assert "不设置固定武器类别配额" in contract["portfolio"]["direct_weapon_portfolio_rule"]
     assert contract["portfolio"]["membership_and_identity_locked_before_s6"] is True
     assert "至少两项" in contract["portfolio"]["same_family_independence_rule"]
     assert "只修复质量残差命中的位置" in contract["portfolio"]["resume_rule"]
@@ -4054,6 +4073,7 @@ def test_s6_only_resume_upgrades_legacy_portfolio_before_parallel_authoring(
             )
         direction = {
             **assigned,
+            **_s6_test_shared_innovation_anchors(name),
             "function": f"由{name}在强干扰火力窗口内完成目标复核与直接打击",
             "operational_mechanism": "以本地任务装订和非卫星导航维持目标区自主交战闭环",
             "target_scenario": "联合战役纵深打击阶段遭卫星拒止、导航欺骗和防空压制",
@@ -4218,6 +4238,24 @@ def test_s6_only_resume_upgrades_legacy_portfolio_before_parallel_authoring(
             )
             for payload in s6_payloads
         )
+    shared_anchor_payloads = [
+        payload
+        for payload in s6_payloads
+        if payload.get("portrait_module_key")
+        in {"overview", "technology_implementation"}
+    ]
+    assert len(shared_anchor_payloads) == 10
+    anchors_by_card: dict[str, set[tuple[str, str]]] = {}
+    for payload in shared_anchor_payloads:
+        context = payload.get("module_authoring_context", {})
+        pair = (
+            str(context.get("solution_thesis", "")),
+            str(context.get("core_innovation_thesis", "")),
+        )
+        assert all(pair)
+        binding = str(payload["candidate_weapon"]["card_binding_id"])
+        anchors_by_card.setdefault(binding, set()).add(pair)
+    assert all(len(pairs) == 1 for pairs in anchors_by_card.values())
     assert len(set(card_binding_ids)) == 5
     assert all(card_binding_ids)
     if profile_id == "winning_swarm_dynamic_v2":
@@ -4351,6 +4389,7 @@ def test_parallel_s6_failure_moves_card_to_reference_without_run_failure(
                 },
                 ensure_ascii=False,
             )
+        assigned.update(_s6_test_shared_innovation_anchors(str(assigned["name"])))
         assigned.update(
             {
                 "semantic_consistency_check": {
@@ -4507,6 +4546,7 @@ def test_dynamic_s6_resume_reauthors_persisted_cards_from_minimal_input(
                 ensure_ascii=False,
             )
         direction = {**source, **candidate}
+        direction.update(_s6_test_shared_innovation_anchors(str(candidate["name"])))
         if phase.endswith("_spine"):
             direction.pop("capability_portrait_modules", None)
             direction.pop("capability_portrait", None)
@@ -7967,6 +8007,9 @@ def test_dynamic_v2_assigns_distinct_angles_and_converges_before_downstream_merg
                     },
                     ensure_ascii=False,
                 )
+            assigned_card.update(
+                _s6_test_shared_innovation_anchors(str(assigned_card.get("name", "装备")))
+            )
             assigned_card.update(
                 {
                     "operational_process": ["按候选专属制胜机理完成交战。"],

@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from urllib.parse import urlsplit, urlunsplit
 
+from equipment_deep_research.contracts.runtime import ModelBudgetExhausted
+
 from equipment_deep_research.agents.workflows import coordinator as _legacy
 from equipment_deep_research.execution_model import (
     configured_model,
@@ -340,9 +342,9 @@ def reserve_model_call(
                 )
             )
             if wall_clock_deadlines_enabled and elapsed >= hard_deadline:
-                raise RuntimeError("Harness v2 S6 deadline reached")
+                raise ModelBudgetExhausted("Harness v2 S6 deadline reached")
             if count_toward_model_budget and host._budget_started_s6_calls >= s6_calls:
-                raise RuntimeError("Harness v2 S6 model-call budget exhausted")
+                raise ModelBudgetExhausted("Harness v2 S6 model-call budget exhausted")
             if count_toward_model_budget:
                 host._budget_started_s6_calls += 1
             return (
@@ -355,12 +357,12 @@ def reserve_model_call(
                 host._runtime_budgets.get("maximum_swarm_model_calls", 16)
             )
             if wall_clock_deadlines_enabled and elapsed >= hard_deadline:
-                raise RuntimeError("Harness v2 swarm deadline reached")
+                raise ModelBudgetExhausted("Harness v2 swarm deadline reached")
             if (
                 count_toward_model_budget
                 and host._budget_started_swarm_calls >= swarm_calls
             ):
-                raise RuntimeError(
+                raise ModelBudgetExhausted(
                     "Harness v2 swarm model-call budget exhausted"
                 )
             if count_toward_model_budget:
@@ -377,14 +379,14 @@ def reserve_model_call(
                 )
             )
             if wall_clock_deadlines_enabled and elapsed >= hard_deadline:
-                raise RuntimeError(
+                raise ModelBudgetExhausted(
                     "Harness v2 quality-judge deadline reached"
                 )
             if (
                 count_toward_model_budget
                 and host._budget_started_quality_judge_calls >= quality_calls
             ):
-                raise RuntimeError(
+                raise ModelBudgetExhausted(
                     "Harness v2 quality-judge model-call budget exhausted"
                 )
             if count_toward_model_budget:
@@ -420,7 +422,7 @@ def reserve_model_call(
                 )
             )
             if wall_clock_deadlines_enabled and elapsed >= delivery_deadline:
-                raise RuntimeError(
+                raise ModelBudgetExhausted(
                     "Harness v2 delivery deadline reached; report model call may not start"
                 )
             budget_attr = (
@@ -430,7 +432,7 @@ def reserve_model_call(
             )
             budget_used = int(getattr(host, budget_attr, 0))
             if count_toward_model_budget and budget_used >= delivery_calls:
-                raise RuntimeError(
+                raise ModelBudgetExhausted(
                     "Harness v2 reporter model-call budget exhausted"
                     if reporter_lane
                     else "Harness v2 delivery model-call budget exhausted"
@@ -459,7 +461,7 @@ def reserve_model_call(
             return max(0.1, remaining)
         if wall_clock_deadlines_enabled and elapsed >= hard_deadline:
             if priority != "critical":
-                raise RuntimeError(
+                raise ModelBudgetExhausted(
                     "Harness v2 hard deadline reached; no new model call may start"
                 )
             critical_fast_deadline = min(
@@ -476,12 +478,12 @@ def reserve_model_call(
                 ),
             )
             if elapsed >= critical_fast_deadline:
-                raise RuntimeError(
+                raise ModelBudgetExhausted(
                     "Harness v2 critical fast-finalize deadline reached; "
                     "use the latest complete checkpoint"
                 )
         if count_toward_model_budget and host._budget_started_calls >= hard_calls:
-            raise RuntimeError("Harness v2 model-call hard budget exhausted")
+            raise ModelBudgetExhausted("Harness v2 model-call hard budget exhausted")
         if count_toward_model_budget and priority != "critical" and (
             (
                 wall_clock_deadlines_enabled
@@ -489,7 +491,7 @@ def reserve_model_call(
             )
             or host._budget_started_calls >= soft_calls
         ):
-            raise RuntimeError("Harness v2 soft budget reached; optional model call skipped")
+            raise ModelBudgetExhausted("Harness v2 soft budget reached; optional model call skipped")
         if count_toward_model_budget:
             host._budget_started_calls += 1
         if not wall_clock_deadlines_enabled:

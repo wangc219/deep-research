@@ -11,6 +11,10 @@ from collections.abc import Mapping
 from typing import Any, Protocol
 
 
+class ModelBudgetExhausted(RuntimeError):
+    """No further model call can start in this run's budget/deadline lane."""
+
+
 class ModelRuntime(Protocol):
     async def _run_core_json(
         self,
@@ -43,4 +47,6 @@ class BudgetRuntime(Protocol):
     ) -> bool: ...
 
 
-__all__ = ["BudgetRuntime", "CardRuntime", "ModelRuntime", "SwarmRuntime"]
+__all__ = [
+    "BudgetRuntime", "CardRuntime", "ModelBudgetExhausted", "ModelRuntime", "SwarmRuntime"
+]

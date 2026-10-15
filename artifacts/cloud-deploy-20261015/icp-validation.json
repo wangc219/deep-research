@@ -1,0 +1,18 @@
+{
+  "verified_at": "2026-10-15T20:15:30.775156+08:00",
+  "site": "https://www.deepquest.space",
+  "registration": "皖ICP备2026035589号",
+  "link": "https://beian.miit.gov.cn/",
+  "target": "_blank",
+  "rel": "noopener noreferrer",
+  "placement": "global page footer; login and authenticated routes",
+  "reference": "https://cloud.tencent.com/document/product/243/61412",
+  "checks": {
+    "targeted_eslint": "passed",
+    "production_build": "passed",
+    "desktop_footer_visible": "passed",
+    "mobile_390x844_footer_visible": "passed",
+    "browser_title": "创新为帆 探索未至之境",
+    "api_readiness": "ready, degraded=false"
+  }
+}

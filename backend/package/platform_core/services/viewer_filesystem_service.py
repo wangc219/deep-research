@@ -109,11 +109,18 @@ async def search_viewer_files(*, thread_id: str, query: str, current_user, db) -
     return {"entries": entries}
 
 
-async def _download_to_temp(workdir, path: str, max_bytes: int) -> str:
-    descriptor, temp_path = tempfile.mkstemp(prefix="deep-research-viewer-", suffix=PurePosixPath(path).suffix)
+async def _download_to_temp(workdir, path: str, max_bytes: int, *, is_directory: bool = False) -> str:
+    descriptor, temp_path = tempfile.mkstemp(
+        prefix="deep-research-viewer-", suffix=".zip" if is_directory else PurePosixPath(path).suffix
+    )
     os.close(descriptor)
     try:
-        await asyncio.to_thread(workdir.copy_file_to_path, path, temp_path, max_bytes)
+        await asyncio.to_thread(
+            workdir.copy_directory_to_path if is_directory else workdir.copy_file_to_path,
+            path,
+            temp_path,
+            max_bytes,
+        )
     except Exception:
         try:
             os.unlink(temp_path)
@@ -152,11 +159,17 @@ async def read_viewer_file_content(*, thread_id: str, path: str, current_user, d
 
 
 async def download_viewer_file(*, thread_id: str, path: str, current_user, db) -> FileResponse:
-    """从实时 Workdir 流式下载普通文件。"""
+    """从实时 Workdir 下载普通文件或有界打包目录。"""
     access = await _viewer_state(thread_id=thread_id, current_user=current_user, db=db)
     _validate_viewer_path(access, path)
     try:
-        temp_path = await _download_to_temp(access.workdir, path, MAX_VIEWER_DOWNLOAD_BYTES)
+        is_directory = (await asyncio.to_thread(access.workdir.stat, path))["is_dir"]
+        temp_path = await _download_to_temp(
+            access.workdir,
+            path,
+            min(MAX_VIEWER_DOWNLOAD_BYTES, 256 * 1024 * 1024) if is_directory else MAX_VIEWER_DOWNLOAD_BYTES,
+            is_directory=is_directory,
+        )
     except PermissionError as exc:
         raise HTTPException(status_code=403, detail="Access denied") from exc
     except IsADirectoryError as exc:
@@ -166,6 +179,8 @@ async def download_viewer_file(*, thread_id: str, path: str, current_user, db) -
     except (FileNotFoundError, NotADirectoryError, ValueError) as exc:
         raise HTTPException(status_code=404, detail="文件不存在") from exc
     file_name = PurePosixPath(path).name or "download"
+    if is_directory:
+        file_name += ".zip"
     return FileResponse(
         temp_path,
         media_type=mimetypes.guess_type(file_name)[0] or "application/octet-stream",

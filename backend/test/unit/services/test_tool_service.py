@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+import pytest
+
 from platform_core.agents.toolkits import service as tool_service
 
 
@@ -46,3 +48,16 @@ def test_get_tool_metadata_includes_config_guide(monkeypatch):
     ]
 
     tool_service._metadata_cache.clear()
+
+
+@pytest.mark.asyncio
+async def test_question_tool_is_available_without_explicit_tool_selection(monkeypatch):
+    """澄清工具默认可用，并与配置中的同名工具去重。"""
+    tools = [SimpleNamespace(name=name) for name in ("present_artifacts", "ask_user_question")]
+    monkeypatch.setattr(tool_service, "get_tool_instances_by_category", lambda _: tools)
+    monkeypatch.setattr("platform_core.agents.skills.runtime.resolve_skill_gated_tools", lambda _: [])
+
+    result = await tool_service.resolve_configured_runtime_tools(SimpleNamespace(tools=[], mcps=[]))
+    assert {tool.name for tool in result} == {"present_artifacts", "ask_user_question"}
+    result = await tool_service.resolve_configured_runtime_tools(SimpleNamespace(tools=["ask_user_question"], mcps=[]))
+    assert [tool.name for tool in result].count("ask_user_question") == 1

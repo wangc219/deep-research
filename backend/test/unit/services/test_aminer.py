@@ -35,6 +35,37 @@ async def test_jwt_and_bulk_post_are_official_rest_protocol():
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("endpoint", ["search", "title_search", "info", "detail", "references"])
+async def test_success_with_null_data_is_an_empty_result(endpoint):
+    """真实供应商的成功空响应不能误触发故障降级。"""
+    client = AMinerClient(
+        {"user_id": "u", "api_key": "test-key-with-at-least-32-characters"},
+        transport=httpx.MockTransport(lambda _: httpx.Response(200, json={"code": 200, "success": True, "data": None})),
+    )
+    assert (await client.request(endpoint, {}))["data"] == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("prefix", ["", "Bearer "])
+async def test_official_console_token_is_sent_without_resigning(prefix):
+    """控制台 JWT 可直接接入，兼容粘贴 Bearer 前缀且不二次签名。"""
+    token = jwt.encode(
+        {"user_id": "test-user", "exp": 2_000_000_000}, "test-key-with-at-least-32-characters", algorithm="HS256"
+    )
+
+    def handler(request):
+        assert request.headers["Authorization"] == token
+        return httpx.Response(200, json={"code": 200, "success": True, "data": []})
+
+    client = AMinerClient(
+        {"user_id": "test-user", "api_key": prefix + token},
+        transport=httpx.MockTransport(handler),
+    )
+    assert (await client.request("title_search", {"title": "public paper"}))["data"] == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("http_status", [200, 500])
 @pytest.mark.parametrize(
     "code,status,retryable",
     [
@@ -47,12 +78,12 @@ async def test_jwt_and_bulk_post_are_official_rest_protocol():
         (50001, "unavailable", True),
     ],
 )
-async def test_business_error_does_not_leak_response(code, status, retryable):
+async def test_business_error_does_not_leak_response(code, status, retryable, http_status):
     """稳定业务状态控制重试，不透出供应商原始错误。"""
     client = AMinerClient(
         {"user_id": "u", "api_key": "test-key-with-at-least-32-characters"},
         transport=httpx.MockTransport(
-            lambda request: httpx.Response(200, json={"code": code, "message": "secret-response"})
+            lambda request: httpx.Response(http_status, json={"code": code, "message": "secret-response"})
         ),
     )
     with pytest.raises(AMinerError) as error:

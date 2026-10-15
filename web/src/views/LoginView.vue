@@ -806,7 +806,7 @@ onUnmounted(() => {
   --auth-accent: #4d55c7;
   position: relative;
   display: block;
-  min-height: 100svh;
+  min-height: calc(100svh - var(--site-footer-height));
   overflow: hidden auto;
   color: var(--auth-ink);
   background: #f7f8ff;
@@ -876,7 +876,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: 100svh;
+  min-height: calc(100svh - var(--site-footer-height));
   padding: 24px;
 }
 
@@ -1187,7 +1187,7 @@ onUnmounted(() => {
 
   .login-main {
     width: 100%;
-    min-height: 100svh;
+    min-height: calc(100svh - var(--site-footer-height));
     padding: 92px 16px 16px;
   }
 

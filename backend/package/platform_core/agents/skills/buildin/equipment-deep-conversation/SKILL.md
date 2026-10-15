@@ -2,7 +2,7 @@
 name: equipment-deep-conversation
 slug: equipment-deep-conversation
 description: "在 equipment deep research 平台原生会话中延续武器装备深研：读取关联任务、证据产物和能力版本，并将成熟结论保存为待核验能力画像草案。"
-version: "2026.09.28"
+version: "2026.10.15"
 tool_dependencies: ["equipment_deep_context", "save_equipment_capability_draft"]
 ---
 
@@ -21,6 +21,16 @@ AMiner 不可用时继续使用网页、授权知识库和已有来源。专利�
 
 - `equipment_deep_context`：读取当前会话关联的研究任务、既有能力版本、研究产物索引及分支来源。需要引用内部研究事实、延续既有结论或判断版本关系时先调用。
 - `save_equipment_capability_draft`：新增一条 `pending_verification` 能力画像版本。它不会覆盖正式版本。
+
+## 工作区与文件交付
+
+深研对话与智能对话共用沙盒及当前项目的持久化工作区，可读取上传资料、写入研究成果，并通过文件面板预览与下载。
+
+- 用户要求文档、数据表、图表、HTML 或代码时，实际写入当前 Project Workdir 的 `outputs/`，使用文件工具读取或执行核验后，由主智能体调用 `present_artifacts` 登记真实绝对路径。
+- HTML 可视化先读取 `html-preview` 技能，尽量内嵌样式、脚本与图片，保证隔离预览与离线下载可用。Markdown、PDF、图片、表格和代码按用户要求生成；Markdown 可在预览器中编辑保存，目录可打包下载。
+- 子智能体使用同一工作区，按任务分配不同输出文件名，完成后返回真实文件路径、摘要及验证结果，由主智能体核验并统一交付。
+- 文件交付不受“形成能力画像草案”开关限制。用户只要求研究文件时直接生成，不要求先保存能力卡，也不调用能力画像保存工具。
+- 只有写入成功并确认文件存在后，才声明生成成功；失败时报告实际错误，不能用聊天正文或拟保存路径冒充文件。
 
 ## 双模式合同
 

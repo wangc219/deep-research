@@ -21,3 +21,12 @@ def test_chatbot_prompt_declares_workspace_visibility_and_default_write_boundary
     assert "未经用户明确要求，不得在当前 Project Workdir 之外" in prompt
     assert "/home/gem/user-data/agents/skills/" in prompt
     assert "html:preview" not in prompt
+
+
+def test_subagent_returns_real_files_for_parent_delivery():
+    """子智能体不应被提示调用运行时明确禁用的交付工具。"""
+    prompt = build_prompt_with_context(
+        SimpleNamespace(workdir_path="/home/gem/user-data/projects/deep", system_prompt="", is_subagent_runtime=True)
+    )
+    assert "向主智能体返回真实文件绝对路径与摘要" in prompt
+    assert "再调用 present_artifacts 登记绝对路径" not in prompt

@@ -14,6 +14,20 @@ PROMPT = """
 
 <| 风格规范 |>
 保持专业严谨，减少使用 Emoji，减少 bullet points，尽量使用完整的句子和段落。对于复杂问题，尽量提供详细的解释和背景信息。
+
+<| 澄清与选择 |>
+在智能对话和深研对话中，需要澄清研究对象、地域场景、研究重点、期望产出或方案取舍时，
+必须调用 ask_user_question 展示可交互提问卡片，不要只在正文列出“建议的澄清点”让用户自行回复。
+一次集中提出 1-3 个关键问题，每题尽量提供 2-4 个有区分度的选项及简短说明，allow_other=true。
+每个选项必须提供 label、value 和 description。label 是简短的选项名称；description 用一句简短中文说明
+选择该项会研究什么、产出什么或有哪些取舍，推荐项同时说明推荐理由。不要重复选项名称或只写“推荐”。
+提问卡片会在每个选项下方以小字显示 description，因此不要把选项说明只放在正文里。
+根据已有上下文为每题选出一个推荐项，放在首位，并在 label 末尾标注“（推荐）”。
+例如研究对象可选水下装备、水面装备、跨域协同；地域场景和研究重点分别作为独立问题。
+所有问题都有明确推荐项时，页面等待两分钟仍未作答会采用各题推荐项并继续；用户开始选择或填写后停止自动选择。
+收到工具返回的答案后按选择继续研究，不要重复确认同一问题。信息已经明确时直接执行，不要强行提问。
+必须由用户提供且无法合理推荐的事实（如真实参数、身份、凭据）使用无选项的纯问答，不启用自动选择。
+提问工具只用于需求和偏好澄清，涉及操作授权时遵循专门审批机制，不得把超时推荐当成操作批准。
 """
 
 # 效果不好，暂时不启用
@@ -43,6 +57,12 @@ def build_prompt_with_context(context):
     workdir_path = str(getattr(context, "workdir_path", "") or "").rstrip("/")
     if not workdir_path:
         raise ValueError("Agent context 缺少当前 Workdir 路径")
+    delivery_instruction = (
+        "用 read_file 或 execute 核验内容，并向主智能体返回真实文件绝对路径与摘要，"
+        "由主智能体统一调用 present_artifacts 交付。"
+        if getattr(context, "is_subagent_runtime", False)
+        else "用 read_file 或 execute 核验内容，再调用 present_artifacts 登记绝对路径。"
+    )
     filesystem_prompt = f"""
 <| 文件系统约束 |>
 当前 Project Workdir 为 {workdir_path}，也是默认工作目录：
@@ -53,6 +73,12 @@ def build_prompt_with_context(context):
 - /home/gem/user-data/agents/skills/：当前用户的个人 Skill 目录
 - 未经用户明确要求，不得在当前 Project Workdir 之外创建、修改、移动或删除文件
 - 父子智能体共享同一个 Project Workdir 与执行树 runtime；并发写同一路径遵循真实 POSIX 结果
+
+<| 文件产物交付 |>
+用户要求文档、数据表、图表、HTML 页面或代码时，必须使用文件工具实际创建文件，不能只给出拟保存路径。
+将最终成果写入 {workdir_path}/outputs/，{delivery_instruction}
+只有工具确认写入成功且文件存在，才能告知用户已保存；失败时准确说明具体错误，不得把工具失败当成成功。
+HTML 的 CSS、脚本和图表尽量内嵌，图片使用 data URL，使隔离预览和离线下载都能使用。
 """
     system_prompt = (
         f"{current_date}\n\n{PROMPT.strip()}\n\n{filesystem_prompt.strip()}\n\n{context.system_prompt or ''}"

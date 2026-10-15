@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { BrainCircuit, Eye, GitCompare, MessageSquare, Star, Trash2, Wrench } from '@lucide/vue'
+import { BrainCircuit, ChevronDown, Eye, GitCompare, MessageSquare, Star, Trash2, Wrench } from '@lucide/vue'
 import CapabilityDeepVersionSwitcher from '@/components/equipment/CapabilityDeepVersionSwitcher.vue'
 import {
   capabilityCardKey,
@@ -16,6 +16,7 @@ import {
   isCapabilityDeepResearch
 } from '@/utils/equipmentCapabilities'
 import { isTechnologyCabinSection } from '@/utils/equipmentDeepPortraitSections.js'
+import { portraitOverview } from '@/utils/portraitOverview.js'
 
 const props = defineProps({
   item: { type: Object, required: true },
@@ -41,6 +42,7 @@ const meta = computed(() => capabilityVersionMeta(props.item))
 const deepResearch = computed(() => isCapabilityDeepResearch(props.item))
 const pendingVerification = computed(() => ['pending', 'pending_verification', 'unverified'].includes(meta.value.status) || props.item.confidence_limited === true)
 const modules = computed(() => capabilityPortraitModules(props.item))
+const overview = computed(() => portraitOverview(modules.value.find((entry) => entry.label === '概述')?.text))
 const dimensionData = computed(() => capabilityDimensions(props.item))
 const favoriteEligible = computed(() => !deepResearch.value && capabilityPortraitComplete(props.item))
 const comparisonFields = computed(() => props.formalItem ? capabilityComparisonFields(props.formalItem, props.item) : [])
@@ -64,7 +66,7 @@ const scoreTitle = computed(() => {
           <div class="capability-identity">
             <span>装备名称</span>
             <h2>{{ title }}<small v-if="meta.version" class="capability-version-label">v{{ meta.version }}</small></h2>
-            <p v-if="direction"><b>装备方向</b>{{ direction }}</p>
+            <p v-if="direction && direction !== title"><b>装备方向</b>{{ direction }}</p>
           </div>
           <span v-if="deepResearch" class="capability-source-badge deep-research-source">深研结果</span>
           <button
@@ -98,7 +100,7 @@ const scoreTitle = computed(() => {
     <section v-if="dimensionData.values.length" class="capability-dimensions">
       <div class="capability-dimensions-head"><b>武器维度</b><span>按当前装备的主要战果与作战节点匹配，维度不限制 S6 继续推演新的能力关系。</span></div>
       <div class="capability-dimension-tags"><span v-for="(value, index) in dimensionData.values" :key="value" :class="{ primary: index === 0 }"><i>{{ index === 0 ? '主' : '辅' }}</i>{{ value }}</span></div>
-      <p v-if="dimensionData.basis">{{ dimensionData.basis }}</p>
+      <details v-if="dimensionData.basis" class="dimension-basis"><summary>分类依据</summary><p>{{ dimensionData.basis }}</p></details>
     </section>
 
     <CapabilityDeepVersionSwitcher
@@ -108,11 +110,11 @@ const scoreTitle = computed(() => {
     />
 
     <section v-if="modules.length" class="capability-portrait">
-      <small>装备能力画像 · S6 五栏作战论证 · 可直接深挖任一栏</small>
+      <small>装备能力画像 · 概述分条阅读，详细描述按需展开</small>
       <div class="capability-portrait-cards">
         <article
           v-for="entry in modules"
-          :key="entry.label"
+          :key="`${capabilityCardKey(item)}-${entry.label}`"
           class="capability-portrait-card"
           :class="{ 'technology-cabin-card': isTechnologyCabinSection(entry.label) }"
         >
@@ -132,7 +134,22 @@ const scoreTitle = computed(() => {
               {{ isTechnologyCabinSection(entry.label) ? '技术攻关舱' : '深挖本栏' }}
             </button>
           </header>
-          <p>{{ entry.text }}</p>
+          <div v-if="entry.label === '概述'" class="portrait-overview">
+            <ul v-if="overview.paragraphs.length" class="overview-points">
+              <li v-for="(paragraph, index) in overview.paragraphs" :key="index">{{ paragraph }}</li>
+            </ul>
+            <dl v-if="overview.fields.length" class="overview-fields">
+              <div v-for="field in overview.fields" :key="field.label">
+                <dt>{{ field.label }}</dt><dd :class="{ 'is-missing': !field.text }">{{ field.text || '原文未单独说明' }}</dd>
+              </div>
+            </dl>
+            <small v-else class="overview-legacy-note">历史概述按原文分条展示，尚未标注背景、思路、效果与创新。</small>
+          </div>
+          <details v-else class="portrait-description">
+            <summary><span class="description-closed">展开详细描述</span><span class="description-open">收起详细描述</span><ChevronDown :size="14" /></summary>
+            <p>{{ entry.text }}</p>
+            <slot v-if="isTechnologyCabinSection(entry.label)" name="technology-solution" />
+          </details>
         </article>
       </div>
     </section>
@@ -149,6 +166,50 @@ const scoreTitle = computed(() => {
 </template>
 
 <style scoped>
+.portrait-description { margin-top: 10px; }
+.portrait-description > summary,
+.dimension-basis > summary {
+  width: fit-content;
+  color: var(--main-700);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.portrait-description > summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  list-style: none;
+}
+.portrait-description > summary::-webkit-details-marker { display: none; }
+.portrait-description > summary:focus-visible,
+.dimension-basis > summary:focus-visible { outline: 2px solid var(--main-400); outline-offset: 4px; }
+.description-open,
+.portrait-description[open] .description-closed { display: none; }
+.portrait-description[open] .description-open { display: inline; }
+.portrait-description[open] > summary svg { transform: rotate(180deg); }
+.portrait-description :deep(.technology-solution) { margin: 14px 0 0; }
+.portrait-overview { margin-top: 12px; color: var(--gray-800); font-size: 14px; line-height: 1.8; overflow-wrap: anywhere; }
+.overview-points { margin: 0; padding-left: 22px; }
+.overview-points li + li { margin-top: 8px; }
+.overview-fields { display: grid; gap: 10px; margin: 0; }
+.overview-points + .overview-fields { margin-top: 12px; }
+.overview-fields > div { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 12px; }
+.overview-fields dt { color: var(--main-700); font-weight: 650; }
+.overview-fields dd { margin: 0; white-space: pre-wrap; }
+.overview-fields .is-missing,
+.overview-legacy-note { color: var(--gray-500); }
+.overview-legacy-note { display: block; margin-top: 10px; font-size: 11px; }
+:global(html.dark) .portrait-description > p { color: var(--gray-800); }
+@media (max-width: 640px) {
+  .overview-fields > div { grid-template-columns: 1fr; gap: 2px; }
+  .portrait-overview { font-size: 13px; }
+}
+@media print {
+  .portrait-description > summary { display: none; }
+  .portrait-description:not([open]) > p { display: block; }
+}
+
 .capability-portrait-card > header {
   display: flex;
   align-items: center;

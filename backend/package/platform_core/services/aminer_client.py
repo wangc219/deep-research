@@ -47,12 +47,19 @@ class AMinerClient:
     async def request(self, endpoint: str, payload: dict[str, Any]) -> dict[str, Any]:
         """将 HTTP 与 JSON 业务错误转为可降级状态。"""
         now = int(utc_now_naive().replace(tzinfo=UTC).timestamp())
-        token = jwt.encode(
-            {"user_id": self.credentials["user_id"], "exp": now + 600, "timestamp": now},
-            self.credentials["api_key"],
-            algorithm="HS256",
-            headers={"sign_type": "SIGN"},
-        )
+        credential = self.credentials["api_key"].strip()
+        if credential.lower().startswith("bearer "):
+            credential = credential[7:].strip()
+        if credential.startswith("eyJ") and credential.count(".") == 2:
+            # 官方控制台生成的 JWT 直接用作鉴权，不能把 Token 再作为签名密钥。
+            token = credential
+        else:
+            token = jwt.encode(
+                {"user_id": self.credentials["user_id"], "exp": now + 600, "timestamp": now},
+                credential,
+                algorithm="HS256",
+                headers={"sign_type": "SIGN"},
+            )
         method, path, _cost, _kind = ENDPOINTS[endpoint]
         try:
             async with httpx.AsyncClient(timeout=10.0, transport=self.transport, follow_redirects=False) as client:
@@ -69,13 +76,13 @@ class AMinerClient:
             raise AMinerError("auth_failed", "AMiner 鉴权失败，请检查用户 ID、API Key 和接口权限")
         if response.status_code == 429:
             raise AMinerError("rate_limited", "AMiner 调用频率受限，请稍后再试")
-        if response.status_code >= 500:
-            raise AMinerError("unavailable", "AMiner 服务暂不可用", retryable=True)
-        if response.status_code != 200:
+        if response.status_code != 200 and response.status_code < 500:
             raise AMinerError("invalid_request", "AMiner 未接受当前检索参数")
         try:
             data = response.json()
         except ValueError as exc:
+            if response.status_code >= 500:
+                raise AMinerError("unavailable", "AMiner 服务暂不可用", retryable=True) from exc
             raise AMinerError("unavailable", "AMiner 返回了无效数据", retryable=True) from exc
         if not isinstance(data, dict):
             raise AMinerError("unavailable", "AMiner 返回了无效数据")
@@ -88,6 +95,12 @@ class AMinerClient:
             raise AMinerError("unavailable", "AMiner 服务暂不可用", retryable=True)
         if code == "40001":
             raise AMinerError("invalid_request", "AMiner 未接受当前检索参数")
+        # 供应商会用 HTTP 500 承载鉴权/限流等业务错误，先保留上面的稳定语义。
+        if response.status_code >= 500:
+            raise AMinerError("unavailable", "AMiner 服务暂不可用", retryable=True)
+        if data.get("success") is True and code == "200" and "data" in data and data["data"] is None:
+            # 实际服务在无命中时返回 data:null，不应把空结果熔断成供应商故障。
+            data["data"] = []
         if data.get("success") is not True or code != "200" or not isinstance(data.get("data"), list):
             raise AMinerError("unavailable", "AMiner 返回了无效数据")
         return data

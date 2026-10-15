@@ -31,6 +31,7 @@ from deepagents.backends.utils import _get_file_type
 from platform_core.agents.backends.paths import (
     VIRTUAL_PATH_PREFIX,
     VIRTUAL_SKILLS_PATH,
+    runtime_workdir_path,
 )
 from platform_core.utils.logging_config import logger
 from platform_core.workspace.errors import FileTransferLimitError
@@ -545,6 +546,8 @@ class ProvisionerSandboxBackend(BaseSandbox):
         """
         try:
             kwargs: dict[str, Any] = {"command": command}
+            if self._workdir_path:
+                kwargs.update(exec_dir=runtime_workdir_path(self._workdir_path), strict=True)
             if timeout is not None:
                 kwargs["timeout"] = timeout
                 kwargs["hard_timeout"] = timeout

@@ -4,6 +4,7 @@ from platform_core.utils import logger
 
 # 工具元数据缓存
 _metadata_cache: list[dict] = []
+WORKSPACE_RUNTIME_TOOLS = frozenset({"present_artifacts", "ask_user_question"})
 
 
 def _extract_tool_info(tool_obj) -> dict:
@@ -102,7 +103,7 @@ async def resolve_configured_runtime_tools(context) -> list[Any]:
     selected_tool_sources: dict[str, str] = {}
     buildin_tools = {tool.name: tool for tool in get_tool_instances_by_category("buildin")}
 
-    for tool_name in getattr(context, "tools", None) or []:
+    for tool_name in [*sorted(WORKSPACE_RUNTIME_TOOLS), *(getattr(context, "tools", None) or [])]:
         if not isinstance(tool_name, str) or tool_name in selected_tool_names:
             continue
         tool = buildin_tools.get(tool_name)

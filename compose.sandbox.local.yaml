@@ -1,0 +1,11 @@
+# 本机 API/Worker 当前使用 yuxi 存储；sandbox-provisioner 必须挂载同一目录。
+# docker compose -f compose.yaml -f compose.sandbox.local.yaml up -d --no-deps sandbox-provisioner
+services:
+  sandbox-provisioner:
+    volumes:
+      - type: bind
+        source: ./docker/volumes/yuxi/threads
+        target: /app/user-data
+      - type: bind
+        source: ./docker/volumes/yuxi/skill-projections
+        target: /app/skill-projections

@@ -1,9 +1,187 @@
+import json
 from types import SimpleNamespace
 
+import pytest
+
+from langchain.agents import create_agent
 from langchain.agents.middleware.types import ModelRequest, ModelResponse
+from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, ToolMessage
+from langchain_core.outputs import ChatGeneration, ChatResult
+from langchain_core.tools import StructuredTool
 
 from platform_core.agents.middlewares.search_resilience import SearchResilienceMiddleware
+
+
+def _search_request(query):
+    """构建一次可区分的搜索调用。"""
+    return SimpleNamespace(tool_call={"id": query, "name": "web_search", "args": {"query": query}})
+
+
+def _sources(*indexes):
+    """模拟带标题、摘要和原始链接的检索协议。"""
+    return {
+        "status": "ok",
+        "results": [
+            {"url": f"https://source{index}.org/paper", "title": f"paper {index}", "content": "abstract"}
+            for index in indexes
+        ],
+    }
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("use_async", [False, True])
+async def test_explorer_reaches_source_threshold_and_blocks_further_tools(use_async):
+    """达到整理阈值后进入成稿，同步与异步执行规则一致。"""
+    middleware = SearchResilienceMiddleware(research_mode=True)
+
+    async def async_handler(request):
+        return ToolMessage(
+            content=json.dumps(_sources(*range(4 if request.tool_call["id"] == "first" else 8))),
+            tool_call_id=request.tool_call["id"],
+        )
+
+    def handler(request):
+        return ToolMessage(
+            content=json.dumps(_sources(*range(4 if request.tool_call["id"] == "first" else 8))),
+            tool_call_id=request.tool_call["id"],
+        )
+
+    for query in ["first", "second"]:
+        if use_async:
+            await middleware.awrap_tool_call(_search_request(query), async_handler)
+        else:
+            middleware.wrap_tool_call(_search_request(query), handler)
+    assert len(middleware.research_sources) == 8
+    request = ModelRequest(model=SimpleNamespace(), messages=[], tools=[SimpleNamespace(name="web_search")])
+    prepared = middleware._prepare_model_request(request)
+    assert prepared.tools == []
+    assert "资料整理阈值" in str(prepared.system_message.content)
+    assert "不代表事实已证实" in str(prepared.system_message.content)
+    executed = []
+    denial = middleware.wrap_tool_call(_search_request("third"), lambda _: executed.append(True))
+    assert "delivery_required" in denial.content
+    assert executed == []
+
+
+def test_explorer_counts_deduplicated_sources_and_stops_on_no_progress():
+    middleware = SearchResilienceMiddleware(research_mode=True)
+    for query in ["first", "second", "third"]:
+        middleware.wrap_tool_call(_search_request(query), lambda _: _sources(1, 1))
+    assert len(middleware.research_sources) == 1
+    assert "无新增" in middleware.research_stop_reason
+
+
+def test_explorer_intercepts_repeated_query_without_searching_again():
+    middleware = SearchResilienceMiddleware(research_mode=True)
+    executed = []
+
+    def handler(_):
+        executed.append(True)
+        return _sources(1)
+
+    middleware.wrap_tool_call(_search_request("RADAR   drone"), handler)
+    for _ in range(2):
+        denial = middleware.wrap_tool_call(_search_request("radar drone"), handler)
+        assert "重复查询" in denial.content
+    assert executed == [True]
+    assert middleware.research_stop_reason
+
+
+def test_explorer_total_budget_prevents_switching_to_another_tool_forever():
+    middleware = SearchResilienceMiddleware(research_mode=True)
+    request = SimpleNamespace(tool_call={"id": "kb", "name": "query_kbs", "args": {}})
+    for index in range(12):
+        request.tool_call["args"] = {"query": str(index)}
+        middleware.wrap_tool_call(request, lambda _: "knowledge")
+    prepared = middleware._prepare_model_request(ModelRequest(model=SimpleNamespace(), messages=[], tools=[]))
+    assert "12 次" in str(prepared.system_message.content)
+    assert "delivery_required" in middleware.wrap_tool_call(request, lambda _: pytest.fail("budget bypass")).content
+
+
+def test_explorer_deadline_stops_before_next_tool(monkeypatch):
+    middleware = SearchResilienceMiddleware(research_mode=True)
+    monkeypatch.setattr("platform_core.agents.middlewares.search_resilience.time.monotonic", lambda: 10)
+    middleware.wrap_tool_call(_search_request("first"), lambda _: _sources(1))
+    monkeypatch.setattr("platform_core.agents.middlewares.search_resilience.time.monotonic", lambda: 131)
+    denial = middleware.wrap_tool_call(_search_request("second"), lambda _: pytest.fail("deadline bypass"))
+    assert "120 秒" in denial.content
+
+
+def test_ordinary_chat_does_not_use_explorer_source_threshold():
+    middleware = SearchResilienceMiddleware()
+    for query in ["first", "second"]:
+        middleware.wrap_tool_call(_search_request(query), lambda _: _sources(*range(10)))
+    assert not middleware.research_stop_reason
+    assert not middleware.search_blocked
+
+
+def test_temporary_rate_limit_does_not_permanently_disable_web_search():
+    middleware = SearchResilienceMiddleware(research_mode=True)
+    middleware.wrap_tool_call(_search_request("first"), lambda _: {"status": "rate_limited", "results": []})
+    assert not middleware.search_blocked
+    middleware.wrap_tool_call(_search_request("second"), lambda _: _sources(1, 2, 3, 4))
+    assert len(middleware.research_sources) == 4
+    assert not middleware.search_blocked
+
+
+def test_queue_wait_does_not_consume_active_research_budget_but_wall_time_remains_bounded(monkeypatch):
+    middleware = SearchResilienceMiddleware(research_mode=True)
+    middleware.research_started_at = 0
+    monkeypatch.setattr("platform_core.agents.middlewares.search_resilience.time.monotonic", lambda: 170)
+    middleware._record_research_result(_search_request("one"), {**_sources(1), "queue_wait_seconds": 60})
+    middleware._check_research_deadline()
+    assert not middleware.research_stop_reason
+    monkeypatch.setattr("platform_core.agents.middlewares.search_resilience.time.monotonic", lambda: 250)
+    middleware.research_queue_wait_seconds = 180
+    middleware._check_research_deadline()
+    assert "240 秒" in middleware.research_stop_reason
+
+
+class _SearchUntilToolsRemovedModel(BaseChatModel):
+    """模拟只要工具可见就持续搜索的模型，验证执行图能进入最终输出。"""
+
+    tools_enabled: bool = False
+
+    @property
+    def _llm_type(self):
+        return "search-until-delivery"
+
+    def bind_tools(self, tools, **kwargs):
+        return self.model_copy(update={"tools_enabled": bool(tools)})
+
+    def _generate(self, messages, stop=None, run_manager=None, **kwargs):
+        round_number = sum(isinstance(message, ToolMessage) for message in messages) + 1
+        if self.tools_enabled:
+            message = AIMessage(
+                content="",
+                tool_calls=[{"name": "web_search", "args": {"query": str(round_number)}, "id": f"call-{round_number}"}],
+            )
+        else:
+            message = AIMessage(content="已交付已有资料及证据缺口。")
+        return ChatResult(generations=[ChatGeneration(message=message)])
+
+
+@pytest.mark.asyncio
+async def test_explorer_graph_exits_search_loop_and_returns_final_result():
+    """通过真实 LangGraph 工具循环验证阈值移除工具后正常交付。"""
+    executed = []
+
+    def search(query: str):
+        executed.append(query)
+        return _sources(*range(4 if query == "1" else 8))
+
+    graph = create_agent(
+        model=_SearchUntilToolsRemovedModel(),
+        tools=[StructuredTool.from_function(name="web_search", description="网页检索", func=search)],
+        middleware=[SearchResilienceMiddleware(research_mode=True)],
+    )
+    result = await graph.ainvoke(
+        {"messages": [{"role": "user", "content": "调研子问题"}]}, config={"recursion_limit": 8}
+    )
+    assert executed == ["1", "2"]
+    assert result["messages"][-1].content == "已交付已有资料及证据缺口。"
+    assert not result["messages"][-1].tool_calls
 
 
 def test_degraded_search_removes_tool_and_injects_hard_stop_prompt():

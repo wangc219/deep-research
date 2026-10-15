@@ -877,7 +877,10 @@ const prefillRequestedSection = async () => {
 const diveIntoSection = async (item) => {
   researchMode.value = 'section_deepen'
   activeResearchSection.value = String(item?.label || '').trim()
-  const prompt = portraitSectionPrompt(item.label, boundEquipment.value, item.text)
+  const overviewBody = boundSections.value.find(
+    (section) => String(section?.label || '').trim() === '概述'
+  )?.text
+  const prompt = portraitSectionPrompt(item.label, boundEquipment.value, item.text, overviewBody)
   if (prompt) await nativeChat.value?.submitPrompt(prompt, { send: false })
 }
 
@@ -886,6 +889,9 @@ const prefillDeepAction = async (actionId) => {
   const section = activeResearchSection.value || '当前画像栏目'
   const sectionBody = boundSections.value.find(
     (item) => String(item?.label || '').trim() === section
+  )?.text
+  const overviewBody = boundSections.value.find(
+    (item) => String(item?.label || '').trim() === '概述'
   )?.text
   const sectionPrompts = {
     bottlenecks: `围绕研发「${target}」深挖「${section}」：拆解关键技术卡点、工程痛点、指标耦合和系统集成难题，逐项说明根因、影响链路与必须突破的程度，不要只罗列技术名词。`,
@@ -902,7 +908,7 @@ const prefillDeepAction = async (actionId) => {
       '对当前优先候选做红队检验：寻找对手最低成本反制、关键假设失效、交战窗口坍缩和成本交换逆转条件，并给出保留、重构或淘汰建议。'
   }
   const prompt = technologyCabinMode.value
-    ? technologyCabinPrompt(target, sectionBody, actionId)
+    ? technologyCabinPrompt(target, sectionBody, actionId, overviewBody)
     : (isSectionDeepen.value ? sectionPrompts : divergencePrompts)[actionId]
   if (prompt) await nativeChat.value?.submitPrompt(prompt, { send: false })
 }
@@ -918,6 +924,14 @@ const authorNextCard = async () => {
     { send: false }
   )
   researchControlOpen.value = false
+}
+
+const prepareFileDelivery = async () => {
+  const prepared = await nativeChat.value?.submitPrompt(
+    '请将当前深研结论整理为可下载的 Markdown 研究报告，并将适合表格呈现的数据另存为 CSV；如有需要交互查看的图表，再生成独立 HTML 页面。保留来源与证据缺口，实际生成并核验文件后交付，不创建能力画像草案。',
+    { send: false, onlyIfEmpty: true }
+  )
+  if (prepared === false) message.info('输入框已有草稿，请先发送或清空后再生成文件交付指令。')
 }
 
 const focusCandidateDirection = async (item) => {
@@ -1531,7 +1545,7 @@ onBeforeUnmount(() => {
               <h2>从问题出发，完整追踪研究过程</h2>
               <p>
                 在下方输入问题；可引用资料或技能。运行后，步骤、子任务、工具调用和 Token
-                用量会随任务更新。
+                用量会随任务更新。可生成研究文档、数据表、图表和 HTML 页面，在「文件」中预览、编辑 Markdown 或打包下载。
               </p>
               <div class="deep-mention-shortcuts" aria-label="快速引用">
                 <button
@@ -1685,6 +1699,15 @@ onBeforeUnmount(() => {
               :session-id="sessionId"
               placement="top"
             />
+            <button
+              type="button"
+              class="artifact-toggle file-delivery-action"
+              title="将文件交付要求填入输入框，确认后发送；无需开启能力画像草案"
+              @click="prepareFileDelivery"
+            >
+              <FileText :size="14" />
+              <span>生成研究文件</span>
+            </button>
             <label class="artifact-toggle" :class="{ active: createArtifact }">
               <FileCheck2 :size="14" />
               <span>形成能力画像草案</span>
@@ -2642,6 +2665,14 @@ onBeforeUnmount(() => {
   border-color: var(--main-200);
   color: var(--main-color);
   background: var(--main-50);
+}
+.file-delivery-action {
+  background: transparent;
+  cursor: pointer;
+}
+.file-delivery-action:hover {
+  color: var(--main-color);
+  border-color: var(--main-200);
 }
 .context-sections {
   display: grid;

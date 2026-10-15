@@ -5,6 +5,7 @@ import { useUserStore } from '@/stores/user'
 import { useThemeStore } from '@/stores/theme'
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import SiteFooter from '@/components/SiteFooter.vue'
 
 const agentStore = useAgentStore()
 const userStore = useUserStore()
@@ -20,5 +21,6 @@ onMounted(async () => {
 <template>
   <a-config-provider :theme="themeStore.currentTheme" :locale="zhCN">
     <router-view />
+    <SiteFooter />
   </a-config-provider>
 </template>
