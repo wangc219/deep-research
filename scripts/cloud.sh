@@ -38,4 +38,14 @@ if [[ "${1:-}" == "document-init" ]]; then
   exec "${compose[@]}" run --rm --no-deps document-research init "$@"
 fi
 
+# 业务代码发布只构建一次共享 API 镜像；所有执行池随后复用同一镜像。
+# 稳定的 ASR/Playwright 层由 Dockerfile 顺序保证命中缓存。
+if [[ "${1:-}" == "app-up" ]]; then
+  shift
+  "${compose[@]}" build api
+  exec "${compose[@]}" up -d --no-build "$@" \
+    api worker equipment-worker equipment-query-worker \
+    chat-worker deep-worker subagent-worker
+fi
+
 exec "${compose[@]}" "$@"

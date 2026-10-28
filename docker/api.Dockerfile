@@ -55,19 +55,8 @@ RUN set -ex \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# 复制项目配置文件
-COPY backend/pyproject.toml /app/pyproject.toml
-COPY backend/.python-version /app/.python-version
-COPY backend/uv.lock /app/uv.lock
-
-# 依赖层只依赖锁文件和包元数据；修改业务代码不重新安装全部依赖。
-COPY backend/package/pyproject.toml backend/package/README.md /app/package/
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --group test --no-dev --frozen --no-install-project --no-install-package platform-core
-
-COPY backend/package /app/package
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --group test --no-dev --frozen
+# 大体积、低频变化的运行时依赖必须位于业务源码 COPY 之前。这样修改 Agent、
+# API 或 Worker Python 代码时，只重建后面的轻量应用层。
 
 # 视频号识别引擎使用独立的 Python 3.12，避免污染平台模型依赖。
 ARG INSTALL_VIDEO_TRANSCRIBER=true
@@ -99,20 +88,37 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     && PLAYWRIGHT_DOWNLOAD_HOST="$PLAYWRIGHT_DOWNLOAD_HOST" \
         PLAYWRIGHT_BROWSERS_PATH=/opt/wechat-mp-browsers /opt/wechat-mp/bin/playwright install --with-deps chromium
 ENV PLAYWRIGHT_BROWSERS_PATH=/opt/wechat-mp-browsers
-COPY backend/wechat_mp /app/wechat_mp
 
-# 复制 server 代码
-COPY backend/server /app/server
-COPY backend/video_collector /app/video_collector
+# 编译产物、入口和运行身份同样与业务 Python 源码解耦。
 COPY --from=video-collectors /collectors /app/video_collector/bin
 COPY vendor/wx_channels_download /app/vendor/wx_channels_download
 COPY docker/api-entrypoint.sh /usr/local/bin/deep-research-entrypoint
-
 RUN groupadd --gid 1000 platform \
     && useradd --uid 1000 --gid 1000 --create-home platform \
     && mkdir -p /app/runtime /home/platform/.cache/rapidocr/models \
     && chown -R 1000:1000 /app/runtime /home/platform \
     && chmod 0755 /usr/local/bin/deep-research-entrypoint
+
+# 复制项目配置文件
+COPY backend/pyproject.toml /app/pyproject.toml
+COPY backend/.python-version /app/.python-version
+COPY backend/uv.lock /app/uv.lock
+
+# 依赖层只依赖锁文件和包元数据；修改业务代码不重新安装全部依赖。
+COPY backend/package/pyproject.toml backend/package/README.md /app/package/
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --group test --no-dev --frozen --no-install-project --no-install-package platform-core
+
+COPY backend/package /app/package
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --group test --no-dev --frozen
+
+# 高频变化的业务源码集中在镜像尾部。
+COPY backend/wechat_mp /app/wechat_mp
+
+# 复制 server 代码
+COPY backend/server /app/server
+COPY backend/video_collector /app/video_collector
 
 ENV HOME=/home/platform \
     RAPIDOCR_MODEL_DIR=/home/platform/.cache/rapidocr/models

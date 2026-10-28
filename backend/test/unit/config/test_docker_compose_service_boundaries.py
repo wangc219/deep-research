@@ -213,6 +213,41 @@ def test_api_image_applies_owner_only_umask_before_dropping_to_runtime_identity(
     assert 'exec "$@"' in entrypoint
 
 
+def test_api_image_keeps_stable_heavy_dependencies_before_business_source() -> None:
+    """普通 Agent/API 代码修改不得重新安装 ASR、Torch 或 Playwright。"""
+    dockerfile = (_project_root() / "docker/api.Dockerfile").read_text()
+    business_source = dockerfile.index("COPY backend/package /app/package")
+
+    for stable_marker in (
+        "COPY backend/video-transcriber-requirements.txt",
+        "torch==2.5.1+cpu",
+        "COPY backend/wechat_mp/requirements-mp.txt",
+        "playwright install --with-deps chromium",
+        "COPY --from=video-collectors /collectors",
+    ):
+        assert dockerfile.index(stable_marker) < business_source
+    assert dockerfile.index("COPY backend/server /app/server") > business_source
+
+
+def test_cloud_workers_share_one_identical_build_graph() -> None:
+    """同一部署不能因 Worker 名称不同而重复构建大依赖层。"""
+    compose = (_project_root() / "compose.cloud.yaml").read_text()
+
+    assert compose.count("build: *cloud-api-build") == 6
+    assert compose.count("VIDEO_PIP_INDEX_URL: ${CLOUD_VIDEO_PIP_INDEX_URL") == 1
+    assert compose.count("PLAYWRIGHT_DOWNLOAD_HOST: ${CLOUD_PLAYWRIGHT_DOWNLOAD_HOST") == 1
+
+
+def test_cloud_app_up_builds_shared_image_once_before_reuse() -> None:
+    script = (_project_root() / "scripts/cloud.sh").read_text()
+    build = script.index('"${compose[@]}" build api')
+    reuse = script.index('exec "${compose[@]}" up -d --no-build')
+
+    assert build < reuse
+    for service in ("api", "worker", "equipment-worker", "chat-worker", "deep-worker", "subagent-worker"):
+        assert service in script[reuse:]
+
+
 def test_workspace_owners_do_not_reintroduce_cross_uid_permission_patches() -> None:
     """运行时 Owner 不得重新承担部署身份兼容。"""
     source = "\n".join((_project_root() / path).read_text() for path in WORKSPACE_PERMISSION_OWNER_PATHS)

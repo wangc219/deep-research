@@ -40,10 +40,12 @@ CLOUD_CAPACITY_ENV_FILE=configs/cloud/4c16g.env.example bash scripts/cloud.sh co
 
 ```bash
 CLOUD_CAPACITY_ENV_FILE=configs/cloud/4c16g.env.example bash scripts/cloud.sh up -d --wait postgres
-CLOUD_CAPACITY_ENV_FILE=configs/cloud/4c16g.env.example bash scripts/cloud.sh up -d --no-deps --wait worker chat-worker deep-worker subagent-worker equipment-worker equipment-query-worker api
+CLOUD_CAPACITY_ENV_FILE=configs/cloud/4c16g.env.example bash scripts/cloud.sh app-up --wait
 ```
 
 应用第二份环境文件后，后续运维命令继续携带相同 `CLOUD_CAPACITY_ENV_FILE`，或将已验收的容量键合并进 `.env.prod`。省略叠加文件会恢复默认档位，因此不要混用不同档位执行重建命令。
+
+`app-up` 固定只构建一次共享 API 镜像，再让 API、后台 Worker、装备 Worker 和三个 Agent 执行池复用该镜像。`docker/api.Dockerfile` 将 ASR、Torch、Playwright/Chromium、公众号依赖及 Go 采集器放在业务源码之前；普通 Agent/API Python 改动只重建平台包和末尾源码层。只有相应 requirements、锁文件、基础镜像或构建参数变化时，才重新安装这些大依赖。
 
 按当前 2 个 API 进程、4 个执行池及 2 个领域 Worker 预算，异步 SQL/LangGraph 池上限合计约 112 个连接；另为同步模型计量及运维预留余量，PostgreSQL 上限设为 160。新增 Worker 副本或独立子进程时，必须重新核对实际进程树的连接预算。LangGraph 池必须至少为 4。连接池按需创建，最大值不代表常态连接数。
 

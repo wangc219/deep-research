@@ -15,17 +15,23 @@ x-cloud-task-env: &cloud-task-env
   RESOURCE_GOVERNOR_ENABLED: ${CLOUD_RESOURCE_GOVERNOR_ENABLED:-false}
   RESOURCE_BUDGET_PATH: /app/outputs/runtime/resource-budget.json
 
+# API、后台 Worker 与各 Agent Worker 共用同一镜像和完全相同的构建参数。
+# BuildKit 因此只执行一条构建图，避免同一次部署重复安装 ASR/Playwright。
+x-cloud-api-build: &cloud-api-build
+  context: .
+  dockerfile: docker/api.Dockerfile
+  args:
+    GOPROXY: ${CLOUD_GOPROXY:-https://goproxy.cn,direct}
+    VIDEO_PIP_INDEX_URL: ${CLOUD_VIDEO_PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}
+    WECHAT_MP_PIP_INDEX_URL: ${CLOUD_WECHAT_MP_PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}
+    PLAYWRIGHT_DOWNLOAD_HOST: ${CLOUD_PLAYWRIGHT_DOWNLOAD_HOST:-https://npmmirror.com/mirrors/playwright}
+
 services:
   api:
     cpu_shares: 1024
     # 4 核云机以两个 API 进程服务并发页面，其余核心留给采集、识别与数据库。
     command: ["sh", "-c", "python -m server.wait_dependencies && exec python -m uvicorn server.main:app --host 0.0.0.0 --port 5050 --workers $${API_WEB_CONCURRENCY}"]
-    build:
-      args:
-        GOPROXY: ${CLOUD_GOPROXY:-https://goproxy.cn,direct}
-        VIDEO_PIP_INDEX_URL: ${CLOUD_VIDEO_PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}
-        WECHAT_MP_PIP_INDEX_URL: ${CLOUD_WECHAT_MP_PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}
-        PLAYWRIGHT_DOWNLOAD_HOST: ${CLOUD_PLAYWRIGHT_DOWNLOAD_HOST:-https://npmmirror.com/mirrors/playwright}
+    build: *cloud-api-build
     environment:
       <<: *cloud-task-env
       API_WEB_CONCURRENCY: ${CLOUD_API_WORKERS:-2}
@@ -41,6 +47,7 @@ services:
       - "127.0.0.1:6050:5050"
   worker:
     cpu_shares: 512
+    build: *cloud-api-build
     command: ["sh", "-c", "python -m server.wait_dependencies && exec python -m server.worker_main"]
     environment:
       <<: *cloud-task-env
@@ -66,6 +73,7 @@ services:
       file: compose.prod.yaml
       service: worker
     profiles: [agent-pools]
+    build: *cloud-api-build
     command: ["sh", "-c", "python -m server.wait_dependencies && exec python -m server.worker_main"]
     environment:
       <<: *cloud-task-env
@@ -82,6 +90,7 @@ services:
       file: compose.prod.yaml
       service: worker
     profiles: [agent-pools]
+    build: *cloud-api-build
     command: ["sh", "-c", "python -m server.wait_dependencies && exec python -m server.worker_main"]
     environment:
       <<: *cloud-task-env
@@ -98,6 +107,7 @@ services:
       file: compose.prod.yaml
       service: worker
     profiles: [agent-pools]
+    build: *cloud-api-build
     command: ["sh", "-c", "python -m server.wait_dependencies && exec python -m server.worker_main"]
     environment:
       <<: *cloud-task-env
@@ -116,6 +126,8 @@ services:
       POSTGRES_MAX_OVERFLOW: ${CLOUD_QUERY_POSTGRES_MAX_OVERFLOW:-2}
       LANGGRAPH_POSTGRES_POOL_SIZE: ${CLOUD_QUERY_LANGGRAPH_POOL_SIZE:-4}
       REDIS_MAX_CONNECTIONS: ${CLOUD_QUERY_REDIS_MAX_CONNECTIONS:-32}
+  storage-migrator:
+    build: *cloud-api-build
   web:
     ports: !override
       - "127.0.0.1:8088:80"
