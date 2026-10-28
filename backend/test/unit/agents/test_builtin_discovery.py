@@ -493,6 +493,35 @@ def test_generic_deep_research_has_no_fixed_winning_lens_count():
     assert "第 4 个" not in content
 
 
+def test_generic_research_can_handoff_to_existing_equipment_chain_at_convergence():
+    """附件任务按目标在后段复用装备链，而不是创建任务书专用流程。"""
+
+    found = {preset.slug: preset for preset in presets.discover_agent_presets()}
+    specs = {spec["slug"]: spec for spec in skill_service.list_builtin_skill_specs()}
+    policy = found["default-chatbot"].context["system_prompt"]
+    content = (specs["deep-research"]["source_dir"] / "SKILL.md").read_text(encoding="utf-8")
+
+    for requirement in (
+        "通用研究能力",
+        "正式 S1–S6 研究",
+        "能力画像",
+        "完整装备研发技术方案",
+        "后段链路",
+        "equipment-research",
+    ):
+        assert requirement in policy
+    for requirement in (
+        "与装备研究能力衔接",
+        "start_equipment_research",
+        "后段链路",
+        "是否衔接、衔接时点和起始层级",
+        "只要求技术清单、科学问题、专业方向或一般研究",
+    ):
+        assert requirement in content
+    assert "任务书专用" not in policy
+    assert "任务书专用" not in content
+
+
 @pytest.mark.parametrize(
     "registered_tool",
     [start_equipment_research, equipment_deep_context, save_equipment_capability_draft],
