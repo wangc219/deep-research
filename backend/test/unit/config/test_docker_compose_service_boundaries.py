@@ -220,12 +220,15 @@ def test_api_image_keeps_stable_heavy_dependencies_before_business_source() -> N
 
     for stable_marker in (
         "COPY backend/video-transcriber-requirements.txt",
+        "for attempt in 1 2 3",
         "torch==2.5.1+cpu",
         "COPY backend/wechat_mp/requirements-mp.txt",
         "playwright install --with-deps chromium",
         "COPY --from=video-collectors /collectors",
     ):
         assert dockerfile.index(stable_marker) < business_source
+    assert dockerfile.count("id=deepquest-uv-cache") == 4
+    assert dockerfile.count("sharing=locked") == 4
     assert dockerfile.index("COPY backend/server /app/server") > business_source
 
 

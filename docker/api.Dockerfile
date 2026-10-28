@@ -21,9 +21,11 @@ COPY --from=node:24-slim /usr/local/share /usr/local/share
 WORKDIR /app
 
 # 环境变量设置
+ARG UV_HTTP_TIMEOUT=60
 ENV TZ=Asia/Shanghai \
     UV_PROJECT_ENVIRONMENT="/usr/local" \
     UV_COMPILE_BYTECODE=1 \
+    UV_HTTP_TIMEOUT=${UV_HTTP_TIMEOUT} \
     DEBIAN_FRONTEND=noninteractive
 
 # 设置 npm 镜像源，为 MCP 和 Skills 安装依赖
@@ -64,9 +66,15 @@ ARG VIDEO_PIP_INDEX_URL=https://pypi.org/simple
 ARG VIDEO_TORCH_INDEX_URL=https://download.pytorch.org/whl/cpu
 COPY backend/video-transcriber-requirements.txt /app/video-transcriber-requirements.txt
 ENV UV_PYTHON_INSTALL_DIR=/opt/video-python
-RUN --mount=type=cache,target=/root/.cache/uv \
+RUN --mount=type=cache,id=deepquest-uv-cache,target=/root/.cache/uv,sharing=locked \
     if [ "$INSTALL_VIDEO_TRANSCRIBER" = "true" ]; then \
-      uv venv --python 3.12 /opt/video-asr \
+      python_ready=0; \
+      for attempt in 1 2 3; do \
+        if uv python install 3.12; then python_ready=1; break; fi; \
+        sleep $((attempt * 2)); \
+      done; \
+      [ "$python_ready" = "1" ] \
+      && UV_PYTHON_DOWNLOADS=never uv venv --python 3.12 /opt/video-asr \
       && if [ "$(uname -m)" = "x86_64" ]; then \
         uv --no-config pip install --index-url "$VIDEO_TORCH_INDEX_URL" --no-deps \
           --python /opt/video-asr/bin/python 'torch==2.5.1+cpu' 'torchaudio==2.5.1+cpu'; \
@@ -81,7 +89,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 ARG WECHAT_MP_PIP_INDEX_URL=https://pypi.org/simple
 ARG PLAYWRIGHT_DOWNLOAD_HOST
 COPY backend/wechat_mp/requirements-mp.txt /app/wechat-mp-requirements.txt
-RUN --mount=type=cache,target=/root/.cache/uv \
+RUN --mount=type=cache,id=deepquest-uv-cache,target=/root/.cache/uv,sharing=locked \
     uv venv --python /usr/local/bin/python /opt/wechat-mp \
     && uv --no-config pip install --index-url "$WECHAT_MP_PIP_INDEX_URL" \
         --python /opt/wechat-mp/bin/python -r /app/wechat-mp-requirements.txt \
@@ -106,11 +114,11 @@ COPY backend/uv.lock /app/uv.lock
 
 # 依赖层只依赖锁文件和包元数据；修改业务代码不重新安装全部依赖。
 COPY backend/package/pyproject.toml backend/package/README.md /app/package/
-RUN --mount=type=cache,target=/root/.cache/uv \
+RUN --mount=type=cache,id=deepquest-uv-cache,target=/root/.cache/uv,sharing=locked \
     uv sync --group test --no-dev --frozen --no-install-project --no-install-package platform-core
 
 COPY backend/package /app/package
-RUN --mount=type=cache,target=/root/.cache/uv \
+RUN --mount=type=cache,id=deepquest-uv-cache,target=/root/.cache/uv,sharing=locked \
     uv sync --group test --no-dev --frozen
 
 # 高频变化的业务源码集中在镜像尾部。
