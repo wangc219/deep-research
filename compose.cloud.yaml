@@ -11,6 +11,7 @@ x-cloud-task-env: &cloud-task-env
   # auto/0 不设置每用户固定子 Agent 数；实际并发由 subagent worker 空闲槽、
   # PostgreSQL/模型供应商背压、费用账本与运行取消共同收敛。
   AGENT_USER_SUBAGENT_MAX_RUNNING: ${CLOUD_USER_SUBAGENT_MAX_RUNNING:-auto}
+  AGENT_ADAPTIVE_TOOL_PARALLELISM: ${CLOUD_ADAPTIVE_TOOL_PARALLELISM:-true}
   RESOURCE_GOVERNOR_ENABLED: ${CLOUD_RESOURCE_GOVERNOR_ENABLED:-false}
   RESOURCE_BUDGET_PATH: /app/outputs/runtime/resource-budget.json
 
@@ -101,7 +102,9 @@ services:
     environment:
       <<: *cloud-task-env
       AGENT_WORKER_KIND: subagent
-      ARQ_MAX_JOBS: ${CLOUD_SUBAGENT_MAX_JOBS:-4}
+      # auto 只设置随主机扩展的 ARQ 轮询窗口；实时接纳量由共享资源快照决定，
+      # PostgreSQL 中的 pending Run 不受窗口大小限制并可在容量恢复后继续执行。
+      ARQ_MAX_JOBS: ${CLOUD_SUBAGENT_MAX_JOBS:-auto}
       POSTGRES_POOL_SIZE: 4
       POSTGRES_MAX_OVERFLOW: 2
       LANGGRAPH_POSTGRES_POOL_SIZE: 4

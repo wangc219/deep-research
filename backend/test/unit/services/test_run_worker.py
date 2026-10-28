@@ -1621,6 +1621,43 @@ def test_worker_settings_max_jobs_uses_environment():
         assert run_worker.worker_max_jobs() == 50
 
 
+def test_worker_settings_auto_max_jobs_uses_host_derived_window(monkeypatch):
+    monkeypatch.setenv("ARQ_MAX_JOBS", "auto")
+    monkeypatch.setattr(
+        "platform_core.services.resource_budget.adaptive_worker_max_jobs",
+        lambda: 37,
+    )
+
+    assert run_worker.worker_max_jobs() == 37
+
+
+@pytest.mark.asyncio
+async def test_mark_run_running_passes_dynamic_lane_capacity_to_atomic_claim(monkeypatch):
+    run = SimpleNamespace(run_type="subagent", source="subagent", agent_slug="research-explorer")
+    repository = SimpleNamespace(
+        get_run=AsyncMock(return_value=run),
+        mark_running=AsyncMock(return_value=(run, True)),
+    )
+
+    @asynccontextmanager
+    async def fake_session():
+        yield object()
+
+    monkeypatch.setattr(run_worker.pg_manager, "get_async_session_context", fake_session)
+    monkeypatch.setattr(run_worker, "AgentRunRepository", lambda _db: repository)
+    monkeypatch.setattr(run_worker, "split_agent_queues", lambda: True)
+    monkeypatch.setattr(run_worker, "user_run_limit", lambda _lane: None)
+    monkeypatch.setattr(run_worker, "lane_run_limit", lambda _lane: 13)
+
+    assert await run_worker.mark_run_running("run-1", "worker-1") is True
+    repository.mark_running.assert_awaited_once_with(
+        "run-1",
+        worker_id="worker-1",
+        lease_seconds=run_worker.RUN_LEASE_SECONDS,
+        max_lane_running=13,
+    )
+
+
 def test_worker_settings_reject_invalid_redis_dsn_instead_of_using_arq_default():
     env = os.environ.copy()
     env["REDIS_URL"] = "http://configured-redis.invalid:6379/0"

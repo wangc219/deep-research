@@ -34,6 +34,7 @@ from platform_core.agents.harness.tool_execution import ToolExecutionGovernorMid
 from platform_core.agents.tool_approval import SENSITIVE_BACKEND_TOOLS, normalize_tool_approval_mode
 from platform_core.agents.toolkits.service import resolve_configured_runtime_tools
 from platform_core.models.chat import load_chat_model, resolve_chat_model_spec
+from platform_core.services.run_scheduling import tool_parallelism_limit
 
 _SUBAGENT_DISABLED_TOOLS = frozenset({"present_artifacts", "ask_user_question", "install_skill"})
 # 默认审批模式额外隐藏敏感 backend 工具，避免子智能体绕过主线程逐项审批。
@@ -118,6 +119,9 @@ async def _build_middlewares(context, backend, tool_approval_mode: str):
         _SubAgentToolFilterMiddleware(tool_approval_mode),
         ToolExecutionGovernorMiddleware(
             max_parallel_tools=getattr(context, "max_parallel_tool_calls", 4),
+            capacity_resolver=lambda: tool_parallelism_limit(
+                getattr(context, "max_parallel_tool_calls", 4)
+            ),
         ),
         KnowledgeOptInMiddleware(enabled=getattr(context, "_knowledge_retrieval_enabled", False)),
         ModelCallSupervisorMiddleware(),

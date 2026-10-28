@@ -65,3 +65,28 @@ def test_explicit_user_capacity_is_still_supported(monkeypatch):
     monkeypatch.setenv("AGENT_USER_SUBAGENT_MAX_RUNNING", "7")
 
     assert scheduling.user_run_limit("subagent") == 7
+
+
+def test_subagent_lane_capacity_follows_shared_resource_snapshot(monkeypatch):
+    monkeypatch.setattr(
+        "platform_core.services.resource_budget.read_budget",
+        lambda: {"subagent_slots": 13},
+    )
+
+    assert scheduling.lane_run_limit("subagent") == 13
+    assert scheduling.lane_run_limit("chat") is None
+
+
+def test_subagent_lane_capacity_is_unbounded_when_governor_is_disabled(monkeypatch):
+    monkeypatch.setattr("platform_core.services.resource_budget.read_budget", lambda: None)
+
+    assert scheduling.lane_run_limit("subagent") is None
+
+
+def test_tool_parallelism_uses_dynamic_capacity_only_when_enabled(monkeypatch):
+    monkeypatch.setattr(scheduling, "lane_run_limit", lambda _lane: 13)
+    monkeypatch.delenv("AGENT_ADAPTIVE_TOOL_PARALLELISM", raising=False)
+    assert scheduling.tool_parallelism_limit(4) == 4
+
+    monkeypatch.setenv("AGENT_ADAPTIVE_TOOL_PARALLELISM", "true")
+    assert scheduling.tool_parallelism_limit(4) == 13

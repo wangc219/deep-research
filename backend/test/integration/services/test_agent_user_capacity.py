@@ -24,6 +24,7 @@ async def test_concurrent_claims_respect_user_and_lane_capacity():
         async with engine.begin() as db:
             await db.run_sync(Base.metadata.create_all)
         run_ids = []
+        subagent_run_ids = []
         async with factory() as db:
             for user_index in range(2):
                 uid = f"user-{user_index}"
@@ -66,12 +67,42 @@ async def test_concurrent_claims_respect_user_and_lane_capacity():
                             status="pending",
                         )
                     )
+                for _ in range(2):
+                    thread = str(uuid4())
+                    conversation = Conversation(thread_id=thread, uid=uid, project_id=project_id, agent_id="child")
+                    db.add(conversation)
+                    await db.flush()
+                    message = Message(conversation_id=conversation.id, role="user", content="subagent capacity")
+                    db.add(message)
+                    await db.flush()
+                    run_id = str(uuid4())
+                    subagent_run_ids.append(run_id)
+                    db.add(
+                        AgentRun(
+                            id=run_id,
+                            request_id=str(uuid4()),
+                            uid=uid,
+                            agent_slug="child",
+                            run_type="subagent",
+                            source="subagent",
+                            conversation_thread_id=thread,
+                            runtime_scope_id=thread,
+                            conversation_id=conversation.id,
+                            input_message_id=message.id,
+                            input_payload={},
+                            status="pending",
+                        )
+                    )
             await db.commit()
 
-        async def claim(run_id, limit):
+        async def claim(run_id, limit=None, lane_limit=None):
             async with factory() as db:
                 row, acquired = await AgentRunRepository(db).mark_running(
-                    run_id, worker_id="claim-" + run_id, lease_seconds=120, max_user_running=limit
+                    run_id,
+                    worker_id="claim-" + run_id,
+                    lease_seconds=120,
+                    max_user_running=limit,
+                    max_lane_running=lane_limit,
                 )
                 await db.commit()
                 return row.id, acquired
@@ -86,6 +117,9 @@ async def test_concurrent_claims_respect_user_and_lane_capacity():
             await db.execute(update(AgentRun).where(AgentRun.id == winner).values(status="failed"))
             await db.commit()
         assert (await claim(deferred, 2))[1], "Released capacity must accept a pending run"
+
+        lane_results = await asyncio.gather(*(claim(run_id, lane_limit=3) for run_id in subagent_run_ids))
+        assert sum(acquired for _, acquired in lane_results) == 3, "Dynamic lane capacity must be global across users"
     finally:
         await engine.dispose()
         async with admin.begin() as db:

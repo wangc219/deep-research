@@ -14,6 +14,18 @@ def test_idle_asr_borrows_all_cores_and_busy_interaction_has_priority():
     busy = policy.plan_budget(cores=4, available_mib=10000, other_cpu=0.85, interactive=12, research=2)
     assert idle["asr_threads"] == 4 and idle["research_slots"] == 8
     assert busy["asr_threads"] == 1 and busy["research_slots"] == 2
+    assert idle["subagent_slots"] > busy["subagent_slots"] >= 1
+
+
+def test_subagent_capacity_scales_with_host_instead_of_plateauing_at_four():
+    small = policy.plan_budget(cores=2, available_mib=6000, other_cpu=0.1, interactive=0, research=0)
+    large = policy.plan_budget(cores=8, available_mib=30000, other_cpu=0.1, interactive=0, research=0)
+
+    assert small["subagent_slots"] > 4
+    assert large["subagent_slots"] > small["subagent_slots"]
+    assert policy.adaptive_worker_max_jobs(cores=8, total_mib=30000) > policy.adaptive_worker_max_jobs(
+        cores=2, total_mib=6000
+    )
 
 
 def test_critical_memory_holds_new_heavy_tasks():
@@ -31,6 +43,7 @@ def test_snapshot_expires_and_rejects_invalid_thread_budget(monkeypatch, tmp_pat
         "asr_threads": 1,
         "research_slots": 0,
         "bulk_slots": 0,
+        "subagent_slots": 0,
         "memory_pressure": True,
     }
     path.write_text(json.dumps(value))

@@ -33,6 +33,7 @@ from platform_core.agents.harness.tool_execution import ToolExecutionGovernorMid
 from platform_core.agents.tool_approval import create_tool_approval_middleware, normalize_tool_approval_mode
 from platform_core.agents.toolkits.service import resolve_configured_runtime_tools
 from platform_core.models.chat import load_chat_model, resolve_chat_model_spec
+from platform_core.services.run_scheduling import tool_parallelism_limit
 
 from .context import ChatBotContext
 from .prompt import TODO_MID_PROMPT, build_prompt_with_context
@@ -87,6 +88,9 @@ async def _build_middlewares(context, backend):
     middlewares.append(
         ToolExecutionGovernorMiddleware(
             max_parallel_tools=getattr(context, "max_parallel_tool_calls", 4),
+            capacity_resolver=lambda: tool_parallelism_limit(
+                getattr(context, "max_parallel_tool_calls", 4)
+            ),
         )
     )
     return middlewares

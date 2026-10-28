@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import time
 import uuid
 from contextlib import aclosing
@@ -56,6 +57,7 @@ from platform_core.services.task_service import TASKER_DEFAULT_TIMEOUT_SECONDS, 
 from platform_core.services.run_scheduling import (
     AGENT_QUEUES,
     agent_health_key,
+    lane_run_limit,
     run_lane,
     split_agent_queues,
     user_run_limit,
@@ -87,7 +89,12 @@ _TASK_RECONCILIATION_TASK_KEY = "durable_task_reconciliation_task"
 
 
 def worker_max_jobs() -> int:
-    """读取单个 ARQ worker 的并发任务上限。"""
+    """读取 ARQ 轮询窗口；auto 按主机资源扩展，不作为 Agent 数量规则。"""
+    raw_value = os.getenv("ARQ_MAX_JOBS", "10").strip().casefold()
+    if raw_value in {"auto", "adaptive"}:
+        from platform_core.services.resource_budget import adaptive_worker_max_jobs
+
+        return adaptive_worker_max_jobs()
     return get_int_env("ARQ_MAX_JOBS", 10)
 
 
@@ -411,9 +418,13 @@ async def mark_run_running(run_id: str, worker_id: str) -> bool:
             run = await repo.get_run(run_id)
             if run is None:
                 return False
-            max_user_running = user_run_limit(run_lane(run))
+            lane = run_lane(run)
+            max_user_running = user_run_limit(lane)
             if max_user_running is not None:
                 capacity["max_user_running"] = max_user_running
+            max_lane_running = lane_run_limit(lane)
+            if max_lane_running is not None:
+                capacity["max_lane_running"] = max_lane_running
         _, acquired = await repo.mark_running(
             run_id,
             worker_id=worker_id,

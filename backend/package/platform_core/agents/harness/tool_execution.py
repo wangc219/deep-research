@@ -67,10 +67,15 @@ class ToolBatchProgress:
 class BoundedToolScheduler:
     """按模型顺序保留独占屏障，并滚动填充并行执行槽位。"""
 
-    def __init__(self, max_parallel_tools: int) -> None:
+    def __init__(
+        self,
+        max_parallel_tools: int,
+        capacity_resolver: Callable[[], int] | None = None,
+    ) -> None:
         if max_parallel_tools < 1:
             raise ValueError("max_parallel_tools must be positive")
         self.max_parallel_tools = max_parallel_tools
+        self._capacity_resolver = capacity_resolver
         self._condition = asyncio.Condition()
         self._batches: dict[tuple[str, ...], _BatchState] = {}
 
@@ -124,9 +129,18 @@ class BoundedToolScheduler:
         mode = state.modes[index]
         if mode == "exclusive":
             return not state.active and all(previous in state.completed for previous in range(index))
-        if len(state.active) >= self.max_parallel_tools:
+        if len(state.active) >= self._parallel_limit():
             return False
         return all(state.modes[previous] != "exclusive" or previous in state.completed for previous in range(index))
+
+    def _parallel_limit(self) -> int:
+        if self._capacity_resolver is None:
+            return self.max_parallel_tools
+        try:
+            return max(1, int(self._capacity_resolver()))
+        except Exception:  # noqa: BLE001 - 动态快照异常时保留原配置，不阻断工具执行
+            logger.warning("Failed to resolve adaptive tool capacity", exc_info=True)
+            return self.max_parallel_tools
 
     @staticmethod
     def _progress(state: _BatchState) -> ToolBatchProgress:
@@ -146,9 +160,14 @@ class BoundedToolScheduler:
 class ToolExecutionGovernorMiddleware(AgentMiddleware):
     """自动治理主智能体与子智能体的真实工具执行。"""
 
-    def __init__(self, *, max_parallel_tools: int = 4) -> None:
+    def __init__(
+        self,
+        *,
+        max_parallel_tools: int = 4,
+        capacity_resolver: Callable[[], int] | None = None,
+    ) -> None:
         self.max_parallel_tools = max_parallel_tools
-        self._scheduler = BoundedToolScheduler(max_parallel_tools)
+        self._scheduler = BoundedToolScheduler(max_parallel_tools, capacity_resolver)
         self._settlements: set[asyncio.Task[ToolBatchProgress]] = set()
 
     def wrap_tool_call(self, request, handler):

@@ -436,6 +436,7 @@ class AgentRunRepository:
         lease_seconds: float,
         now: datetime | None = None,
         max_user_running: int | None = None,
+        max_lane_running: int | None = None,
     ) -> tuple[AgentRun | None, bool]:
         """由一个 worker 原子取得或续接尚未过期的 Run ownership。"""
         if not worker_id.strip():
@@ -443,30 +444,56 @@ class AgentRunRepository:
         if lease_seconds <= 0:
             raise ValueError("lease_seconds 必须大于 0")
 
-        if max_user_running is not None:
+        if max_user_running is not None and max_user_running <= 0:
+            raise ValueError("max_user_running 必须大于 0")
+        if max_lane_running is not None and max_lane_running < 0:
+            raise ValueError("max_lane_running 不能小于 0")
+
+        if max_user_running is not None or max_lane_running is not None:
             from platform_core.services.run_scheduling import run_lane
 
-            # 同一用户的不同线程以事务锁串行领取；不把 Python 进程锁当跨容器配额。
             candidate = await self.get_run(run_id)
             if candidate is None:
                 return None, False
-            await self.db.execute(
-                text("SELECT pg_advisory_xact_lock(hashtextextended(:scope, 0))"),
-                {"scope": f"agent-user-capacity:{candidate.uid}"},
-            )
             lane = run_lane(candidate)
-            active = (
-                await self.db.scalars(
-                    select(AgentRun).where(
-                        AgentRun.uid == candidate.uid,
-                        AgentRun.id != candidate.id,
-                        AgentRun.status.in_(LEASED_RUN_STATUSES),
-                        AgentRun.lease_expires_at > (now or utc_now_naive()),
-                    )
+            current_time = now or utc_now_naive()
+
+            if max_lane_running is not None:
+                # 所有容器按 lane 共用同一把事务锁，保证动态容量检查与领取原子化。
+                await self.db.execute(
+                    text("SELECT pg_advisory_xact_lock(hashtextextended(:scope, 0))"),
+                    {"scope": f"agent-lane-capacity:{lane}"},
                 )
-            ).all()
-            if sum(run_lane(item) == lane for item in active) >= max_user_running:
-                return candidate, False
+                active_in_lane = (
+                    await self.db.scalars(
+                        select(AgentRun).where(
+                            AgentRun.id != candidate.id,
+                            AgentRun.status.in_(LEASED_RUN_STATUSES),
+                            AgentRun.lease_expires_at > current_time,
+                        )
+                    )
+                ).all()
+                if sum(run_lane(item) == lane for item in active_in_lane) >= max_lane_running:
+                    return candidate, False
+
+            if max_user_running is not None:
+                # 同一用户的不同线程以事务锁串行领取；不把 Python 进程锁当跨容器配额。
+                await self.db.execute(
+                    text("SELECT pg_advisory_xact_lock(hashtextextended(:scope, 0))"),
+                    {"scope": f"agent-user-capacity:{candidate.uid}"},
+                )
+                active_for_user = (
+                    await self.db.scalars(
+                        select(AgentRun).where(
+                            AgentRun.uid == candidate.uid,
+                            AgentRun.id != candidate.id,
+                            AgentRun.status.in_(LEASED_RUN_STATUSES),
+                            AgentRun.lease_expires_at > current_time,
+                        )
+                    )
+                ).all()
+                if sum(run_lane(item) == lane for item in active_for_user) >= max_user_running:
+                    return candidate, False
         run = await self._lock_run(run_id)
         if not run:
             return None, False

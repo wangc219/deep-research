@@ -69,6 +69,35 @@ async def test_governor_bounds_parallel_tools_and_preserves_exclusive_barriers(m
 
 
 @pytest.mark.asyncio
+async def test_governor_uses_runtime_capacity_instead_of_fixed_fallback(monkeypatch) -> None:
+    monkeypatch.setattr(module, "get_stream_writer", lambda: lambda _event: None)
+    capacity = 3
+    middleware = ToolExecutionGovernorMiddleware(
+        max_parallel_tools=1,
+        capacity_resolver=lambda: capacity,
+    )
+    requests = _requests(["a", "b", "c"], ["parallel", "parallel", "parallel"])
+    entered = 0
+    all_entered = asyncio.Event()
+    release = asyncio.Event()
+
+    async def handler(request):
+        nonlocal entered
+        entered += 1
+        if entered == 3:
+            all_entered.set()
+        await release.wait()
+        return ToolMessage(content="ok", tool_call_id=request.tool_call["id"])
+
+    tasks = [asyncio.create_task(middleware.awrap_tool_call(request, handler)) for request in requests]
+    await asyncio.wait_for(all_entered.wait(), timeout=0.2)
+    release.set()
+    await asyncio.gather(*tasks)
+
+    assert entered == 3
+
+
+@pytest.mark.asyncio
 async def test_governor_propagates_cancellation_and_releases_active_slot(monkeypatch) -> None:
     monkeypatch.setattr(module, "get_stream_writer", lambda: lambda _event: None)
     middleware = ToolExecutionGovernorMiddleware(max_parallel_tools=1)
