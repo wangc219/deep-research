@@ -23,6 +23,9 @@ x-cloud-api-build: &cloud-api-build
   args:
     GOPROXY: ${CLOUD_GOPROXY:-https://goproxy.cn,direct}
     VIDEO_PIP_INDEX_URL: ${CLOUD_VIDEO_PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}
+    # 中国云主机直连 PyTorch 官方 wheel 源通常只有几十 KB/s；默认使用提供相同
+    # CPU wheel 与哈希的国内镜像。非中国部署仍可通过环境变量切回官方源。
+    VIDEO_TORCH_INDEX_URL: ${CLOUD_VIDEO_TORCH_INDEX_URL:-https://mirror.sjtu.edu.cn/pytorch-wheels/cpu}
     WECHAT_MP_PIP_INDEX_URL: ${CLOUD_WECHAT_MP_PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}
     PLAYWRIGHT_DOWNLOAD_HOST: ${CLOUD_PLAYWRIGHT_DOWNLOAD_HOST:-https://npmmirror.com/mirrors/playwright}
 

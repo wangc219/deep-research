@@ -238,6 +238,8 @@ def test_cloud_workers_share_one_identical_build_graph() -> None:
 
     assert compose.count("build: *cloud-api-build") == 6
     assert compose.count("VIDEO_PIP_INDEX_URL: ${CLOUD_VIDEO_PIP_INDEX_URL") == 1
+    assert compose.count("VIDEO_TORCH_INDEX_URL: ${CLOUD_VIDEO_TORCH_INDEX_URL") == 1
+    assert "https://mirror.sjtu.edu.cn/pytorch-wheels/cpu" in compose
     assert compose.count("PLAYWRIGHT_DOWNLOAD_HOST: ${CLOUD_PLAYWRIGHT_DOWNLOAD_HOST") == 1
 
 
