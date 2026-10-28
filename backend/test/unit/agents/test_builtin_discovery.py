@@ -508,6 +508,9 @@ def test_generic_research_can_handoff_to_existing_equipment_chain_at_convergence
         "完整装备研发技术方案",
         "后段链路",
         "equipment-research",
+        "附件语义",
+        "不是关键词匹配",
+        "不得以通用研究报告",
     ):
         assert requirement in policy
     for requirement in (
@@ -516,6 +519,10 @@ def test_generic_research_can_handoff_to_existing_equipment_chain_at_convergence
         "后段链路",
         "是否衔接、衔接时点和起始层级",
         "只要求技术清单、科学问题、专业方向或一般研究",
+        "不做关键词硬路由",
+        "研究探索员/事实核查员",
+        "通用 Harness 只提高并行检索",
+        "不能以通用报告",
     ):
         assert requirement in content
     assert "任务书专用" not in policy
