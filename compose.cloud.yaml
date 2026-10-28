@@ -20,13 +20,12 @@ x-cloud-task-env: &cloud-task-env
 x-cloud-api-build: &cloud-api-build
   context: .
   dockerfile: docker/api.Dockerfile
-  # BuildKit 在部分 Docker/Compose 组合下不会自动把刚导出的本地镜像作为
-  # 下一次构建缓存。显式导入共享 API 镜像，并把缓存元数据内嵌回镜像，确保
-  # ASR、Torch、Chromium、LibreOffice 等稳定层跨部署持续命中。
+  # 缓存独立于镜像标签持久保存在宿主机。cloud.sh 每次成功构建后原子轮换
+  # current/next，避免腾讯镜像代理把本地镜像缓存误当远端 Registry 拉取。
   cache_from:
-    - ${COMPOSE_PROJECT_NAME:-deep-research}-api:${DEEP_RESEARCH_VERSION:-0.7.3}
+    - type=local,src=${CLOUD_BUILDKIT_CACHE_FROM:-/var/cache/deepquest-buildkit/api/current}
   cache_to:
-    - type=inline
+    - type=local,dest=${CLOUD_BUILDKIT_CACHE_TO:-/var/cache/deepquest-buildkit/api/next},mode=max
   args:
     GOPROXY: ${CLOUD_GOPROXY:-https://goproxy.cn,direct}
     VIDEO_PIP_INDEX_URL: ${CLOUD_VIDEO_PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}

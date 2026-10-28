@@ -239,7 +239,9 @@ def test_cloud_workers_share_one_identical_build_graph() -> None:
     assert compose.count("build: *cloud-api-build") == 6
     assert compose.count("cache_from:") == 1
     assert compose.count("cache_to:") == 1
-    assert "- type=inline" in compose
+    assert "type=local,src=${CLOUD_BUILDKIT_CACHE_FROM" in compose
+    assert "type=local,dest=${CLOUD_BUILDKIT_CACHE_TO" in compose
+    assert "mode=max" in compose
     assert compose.count("VIDEO_PIP_INDEX_URL: ${CLOUD_VIDEO_PIP_INDEX_URL") == 1
     assert compose.count("VIDEO_TORCH_INDEX_URL: ${CLOUD_VIDEO_TORCH_INDEX_URL") == 1
     assert "https://mirror.sjtu.edu.cn/pytorch-wheels/cpu" in compose
@@ -248,10 +250,13 @@ def test_cloud_workers_share_one_identical_build_graph() -> None:
 
 def test_cloud_app_up_builds_shared_image_once_before_reuse() -> None:
     script = (_project_root() / "scripts/cloud.sh").read_text()
-    build = script.index('"${compose[@]}" build api')
+    build = script.index("build_api_image\n")
     reuse = script.index('exec "${compose[@]}" up -d --no-build')
 
     assert build < reuse
+    assert '[[ ! -f "$cache_next/index.json" ]]' in script
+    assert 'mv "$cache_next" "$cache_current"' in script
+    assert 'if [[ "${1:-}" == "build" ]]' in script
     for service in ("api", "worker", "equipment-worker", "chat-worker", "deep-worker", "subagent-worker"):
         assert service in script[reuse:]
 
