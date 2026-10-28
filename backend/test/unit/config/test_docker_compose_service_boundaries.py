@@ -237,6 +237,9 @@ def test_cloud_workers_share_one_identical_build_graph() -> None:
     compose = (_project_root() / "compose.cloud.yaml").read_text()
 
     assert compose.count("build: *cloud-api-build") == 6
+    assert compose.count("cache_from:") == 1
+    assert compose.count("cache_to:") == 1
+    assert "- type=inline" in compose
     assert compose.count("VIDEO_PIP_INDEX_URL: ${CLOUD_VIDEO_PIP_INDEX_URL") == 1
     assert compose.count("VIDEO_TORCH_INDEX_URL: ${CLOUD_VIDEO_TORCH_INDEX_URL") == 1
     assert "https://mirror.sjtu.edu.cn/pytorch-wheels/cpu" in compose
